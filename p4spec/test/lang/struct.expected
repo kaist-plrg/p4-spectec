@@ -30837,6 +30837,9 @@ syntax builtinPushFrontMethodCallee =
 syntax builtinPopFrontMethodCallee = 
    | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
 
+syntax builtinSizeMethodCallee = 
+   | BUILTIN_SIZE nameIR typeIR (from builtinSizeMethodCallee) 
+
 syntax externMethodCallee = 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
 
@@ -30855,6 +30858,7 @@ syntax methodCallee =
    | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
    | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
    | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE nameIR typeIR (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -30869,6 +30873,7 @@ syntax callee =
    | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
    | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
    | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE nameIR typeIR (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -37665,7 +37670,111 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
       1. Else Dangling#11677
 
-      2. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+1. Else Dangling#11656
+
+2. (Let (argumentIR)*{argumentIR <- argumentIR*} be argumentListIR)
+
+  1. If ((callableTargetIR' matches pattern `% . %`)), then
+
+    1. (Let (typedExpressionIR_base '.' nameIR) be callableTargetIR')
+
+      1. If (((argumentIR)*{argumentIR <- argumentIR*} matches pattern [])), then
+
+        1. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
+
+          1. (Let (_expressionIR '#' (`( typeIR_base _ctk `))) be typedExpressionIR_base)
+
+            1. (Let builtinSizeMethodCallee be (BUILTIN_SIZE nameIR typeIR_base))
+
+              1. Result in: % % % |- % `< '_' `> `( % `) : EC ARCH ((_CONT (builtinSizeMethodCallee as callee)) as calleeResult)
+
+        1. Else Dangling#11772
+
+      1. Else Dangling#11771
+
+  1. Else Dangling#11769
+
+3. If ((callableTargetIR' matches pattern `% . %`)), then
+
+  1. (Let (typedExpressionIR '.' nameIR) be callableTargetIR')
+
+    1. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+
+      1. If (((typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
+
+        1. (Let ?(typedLvalueIR) be (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?})
+
+          1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult)
+
+            1. Case analysis on storageReferenceResult
+
+              1. Case (% has type abortResult)
+
+                1. (Let abortResult be (storageReferenceResult as abortResult))
+
+                  1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 (abortResult as calleeResult)
+
+              2. Case (% has type continueResult<storageReference?>)
+
+                1. (Let (_CONT (storageReference')?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
+
+                  1. If (((storageReference')?{storageReference' <- storageReference'?} matches pattern (_))), then
+
+                    1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
+
+                      1. (Lvalue_read: p EC_1 ARCH_1 |- storageReference : value)
+
+                        1. If ((value has type objectReferenceValue)), then
+
+                          1. (Let (REF objectId) be (value as objectReferenceValue))
+
+                            1. (Let (object')?{object' <- object'?} be $find_object_e(ARCH_1, objectId))
+
+                              1. If (((object')?{object' <- object'?} matches pattern (_))), then
+
+                                1. (Let ?(object) be (object')?{object' <- object'?})
+
+                                  1. If ((object has type externObject)), then
+
+                                    1. (Let (EXTERN _typeId `< theta `> `{ _objectState frame externMethodDefEnv `}) be (object as externObject))
+
+                                      1. (Let callTargetKey be $callTargetKey(nameIR, argumentListIR))
+
+                                        1. (Let (callResolution<externMethodDef>)?{callResolution<externMethodDef> <- callResolution<externMethodDef>?} be $find_overloaded<externMethodDef>(externMethodDefEnv, callTargetKey, $parameterListIR_of_externMethodDef))
+
+                                          1. If (((callResolution<externMethodDef>)?{callResolution<externMethodDef> <- callResolution<externMethodDef>?} matches pattern (_))), then
+
+                                            1. (Let ?((_callableId ':' externMethodDef '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*})) be (callResolution<externMethodDef>)?{callResolution<externMethodDef> <- callResolution<externMethodDef>?})
+
+                                              1. If ((externMethodDef matches pattern `EXTERN_METHOD % <%> (%) %`)), then
+
+                                                1. (Let (EXTERN_METHOD nameIR' `< typeParameterListIR `> `( parameterListIR `) (blockStatementIR)?{blockStatementIR <- blockStatementIR?}) be externMethodDef)
+
+                                                  1. If ((nameIR' = nameIR)), then
+
+                                                    1. (Let externMethodCallee be (EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `) `{ theta ';' frame ';' (blockStatementIR)?{blockStatementIR <- blockStatementIR?} `}))
+
+                                                      1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (externMethodCallee as callee)) as calleeResult)
+
+                                                  1. Else Dangling#11802
+
+                                              1. Else Dangling#11800
+
+                                          1. Else Dangling#11798
+
+                                  1. Else Dangling#11794
+
+                              1. Else Dangling#11792
+
+                        1. Else Dangling#11789
+
+                  1. Else Dangling#11786
+
+      1. Else Dangling#11779
+
+    2. If ((nameIR = "apply")), then
+
+      1. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
 
         1. If (((typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
 
@@ -37675,13 +37784,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
               1. Case analysis on storageReferenceResult
 
-                1. Case (% has type abortResult)
-
-                  1. (Let abortResult be (storageReferenceResult as abortResult))
-
-                    1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 (abortResult as calleeResult)
-
-                2. Case (% has type continueResult<storageReference?>)
+                1. Case (% has type continueResult<storageReference?>)
 
                   1. (Let (_CONT (storageReference')?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
 
@@ -37701,139 +37804,69 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                                   1. (Let ?(object) be (object')?{object' <- object'?})
 
-                                    1. If ((object has type externObject)), then
+                                    1. Case analysis on object
 
-                                      1. (Let (EXTERN _typeId `< theta `> `{ _objectState frame externMethodDefEnv `}) be (object as externObject))
+                                      1. Case (% has type parserObject)
 
-                                        1. (Let callTargetKey be $callTargetKey(t, argumentListIR))
+                                        1. (Let (PARSER `< theta `> `( parameterListIR `) `{ frame parserLocalDeclarationListIR stateEnv `}) be (object as parserObject))
 
-                                          1. (Let (callResolution<externMethodDef>)?{callResolution<externMethodDef> <- callResolution<externMethodDef>?} be $find_overloaded<externMethodDef>(externMethodDefEnv, callTargetKey, $parameterListIR_of_externMethodDef))
+                                          1. (Let callableId be $callableId_IR("apply", parameterListIR))
 
-                                            1. If (((callResolution<externMethodDef>)?{callResolution<externMethodDef> <- callResolution<externMethodDef>?} matches pattern (_))), then
+                                            1. (Let parserApplyMethodDef be (PARSER_APPLY `( parameterListIR `) `{ parserLocalDeclarationListIR ';' stateEnv `}))
 
-                                              1. (Let ?((_callableId ':' externMethodDef '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*})) be (callResolution<externMethodDef>)?{callResolution<externMethodDef> <- callResolution<externMethodDef>?})
+                                              1. (Let callTargetKey be $callTargetKey("apply", argumentListIR))
 
-                                                1. If ((externMethodDef matches pattern `EXTERN_METHOD % <%> (%) %`)), then
+                                                1. (Let (callResolution<parserApplyMethodDef>)?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?} be $find_overloaded<parserApplyMethodDef>((`{ [(callableId ':' parserApplyMethodDef)] `}), callTargetKey, $parameterListIR_of_parserApplyMethodDef))
 
-                                                  1. (Let (EXTERN_METHOD nameIR `< typeParameterListIR `> `( parameterListIR `) (blockStatementIR)?{blockStatementIR <- blockStatementIR?}) be externMethodDef)
+                                                  1. If (((callResolution<parserApplyMethodDef>)?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?} matches pattern (_))), then
 
-                                                    1. If ((nameIR = t)), then
+                                                    1. (Let ?((_callableId ':' _parserApplyMethodDef '#' (id_default)*{id_default <- id_default*} '#' (_nameIR)*{_nameIR <- _nameIR*})) be (callResolution<parserApplyMethodDef>)?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?})
 
-                                                      1. (Let externMethodCallee be (EXTERN_METHOD objectId '.' t `< typeParameterListIR `> `( parameterListIR '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `) `{ theta ';' frame ';' (blockStatementIR)?{blockStatementIR <- blockStatementIR?} `}))
+                                                      1. (Let parserApplyMethodCallee be (PARSER objectId '.' APPLY `( parameterListIR '#' (id_default)*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `}))
 
-                                                        1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (externMethodCallee as callee)) as calleeResult)
+                                                        1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (parserApplyMethodCallee as callee)) as calleeResult)
 
-                                                    1. Else Dangling#11792
+                                                  1. Else Dangling#11826
 
-                                                1. Else Dangling#11790
+                                      2. Case (% has type controlObject)
 
-                                            1. Else Dangling#11788
+                                        1. (Let (CONTROL `< theta `> `( parameterListIR `) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR `}) be (object as controlObject))
 
-                                    1. Else Dangling#11784
+                                          1. (Let callableId be $callableId_IR("apply", parameterListIR))
 
-                                1. Else Dangling#11782
+                                            1. (Let controlApplyMethodDef be (CONTROL_APPLY `( parameterListIR `) `{ controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `}))
 
-                          1. Else Dangling#11779
+                                              1. (Let callTargetKey be $callTargetKey("apply", argumentListIR))
 
-                    1. Else Dangling#11776
+                                                1. (Let (callResolution<controlApplyMethodDef>)?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?} be $find_overloaded<controlApplyMethodDef>((`{ [(callableId ':' controlApplyMethodDef)] `}), callTargetKey, $parameterListIR_of_controlApplyMethodDef))
 
-        1. Else Dangling#11769
+                                                  1. If (((callResolution<controlApplyMethodDef>)?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?} matches pattern (_))), then
 
-      3. If ((t = "apply")), then
+                                                    1. (Let ?((_callableId ':' _controlApplyMethodDef '#' (id_default)*{id_default <- id_default*} '#' (_nameIR)*{_nameIR <- _nameIR*})) be (callResolution<controlApplyMethodDef>)?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?})
 
-        1. (Let (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} be $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
+                                                      1. (Let controlApplyMethodCallee be (CONTROL objectId '.' APPLY `( parameterListIR '#' (id_default)*{id_default <- id_default*} `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `}))
 
-          1. If (((typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?} matches pattern (_))), then
+                                                        1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (controlApplyMethodCallee as callee)) as calleeResult)
 
-            1. (Let ?(typedLvalueIR) be (typedLvalueIR')?{typedLvalueIR' <- typedLvalueIR'?})
+                                                  1. Else Dangling#11835
 
-              1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult)
+                                    1. Else Dangling#11820
 
-                1. Case analysis on storageReferenceResult
+                                1. Else Dangling#11818
 
-                  1. Case (% has type continueResult<storageReference?>)
+                          1. Else Dangling#11815
 
-                    1. (Let (_CONT (storageReference')?{storageReference' <- storageReference'?}) be (storageReferenceResult as continueResult<storageReference?>))
+                    1. Else Dangling#11812
 
-                      1. If (((storageReference')?{storageReference' <- storageReference'?} matches pattern (_))), then
+              1. Else Dangling#11810
 
-                        1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
+        1. Else Dangling#11807
 
-                          1. (Lvalue_read: p EC_1 ARCH_1 |- storageReference : value)
+    2. Else Dangling#11805
 
-                            1. If ((value has type objectReferenceValue)), then
+3. Else Dangling#11776
 
-                              1. (Let (REF objectId) be (value as objectReferenceValue))
-
-                                1. (Let (object')?{object' <- object'?} be $find_object_e(ARCH_1, objectId))
-
-                                  1. If (((object')?{object' <- object'?} matches pattern (_))), then
-
-                                    1. (Let ?(object) be (object')?{object' <- object'?})
-
-                                      1. Case analysis on object
-
-                                        1. Case (% has type parserObject)
-
-                                          1. (Let (PARSER `< theta `> `( parameterListIR `) `{ frame parserLocalDeclarationListIR stateEnv `}) be (object as parserObject))
-
-                                            1. (Let callableId be $callableId_IR("apply", parameterListIR))
-
-                                              1. (Let parserApplyMethodDef be (PARSER_APPLY `( parameterListIR `) `{ parserLocalDeclarationListIR ';' stateEnv `}))
-
-                                                1. (Let callTargetKey be $callTargetKey("apply", argumentListIR))
-
-                                                  1. (Let (callResolution<parserApplyMethodDef>)?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?} be $find_overloaded<parserApplyMethodDef>((`{ [(callableId ':' parserApplyMethodDef)] `}), callTargetKey, $parameterListIR_of_parserApplyMethodDef))
-
-                                                    1. If (((callResolution<parserApplyMethodDef>)?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?} matches pattern (_))), then
-
-                                                      1. (Let ?((_callableId ':' _parserApplyMethodDef '#' (id_default)*{id_default <- id_default*} '#' (_nameIR)*{_nameIR <- _nameIR*})) be (callResolution<parserApplyMethodDef>)?{callResolution<parserApplyMethodDef> <- callResolution<parserApplyMethodDef>?})
-
-                                                        1. (Let parserApplyMethodCallee be (PARSER objectId '.' APPLY `( parameterListIR '#' (id_default)*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `}))
-
-                                                          1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (parserApplyMethodCallee as callee)) as calleeResult)
-
-                                                    1. Else Dangling#11816
-
-                                        2. Case (% has type controlObject)
-
-                                          1. (Let (CONTROL `< theta `> `( parameterListIR `) `{ frame controlLocalDeclarationListIR actionDefEnv controlBodyIR `}) be (object as controlObject))
-
-                                            1. (Let callableId be $callableId_IR("apply", parameterListIR))
-
-                                              1. (Let controlApplyMethodDef be (CONTROL_APPLY `( parameterListIR `) `{ controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `}))
-
-                                                1. (Let callTargetKey be $callTargetKey("apply", argumentListIR))
-
-                                                  1. (Let (callResolution<controlApplyMethodDef>)?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?} be $find_overloaded<controlApplyMethodDef>((`{ [(callableId ':' controlApplyMethodDef)] `}), callTargetKey, $parameterListIR_of_controlApplyMethodDef))
-
-                                                    1. If (((callResolution<controlApplyMethodDef>)?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?} matches pattern (_))), then
-
-                                                      1. (Let ?((_callableId ':' _controlApplyMethodDef '#' (id_default)*{id_default <- id_default*} '#' (_nameIR)*{_nameIR <- _nameIR*})) be (callResolution<controlApplyMethodDef>)?{callResolution<controlApplyMethodDef> <- callResolution<controlApplyMethodDef>?})
-
-                                                        1. (Let controlApplyMethodCallee be (CONTROL objectId '.' APPLY `( parameterListIR '#' (id_default)*{id_default <- id_default*} `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `}))
-
-                                                          1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (controlApplyMethodCallee as callee)) as calleeResult)
-
-                                                    1. Else Dangling#11825
-
-                                      1. Else Dangling#11810
-
-                                  1. Else Dangling#11808
-
-                            1. Else Dangling#11805
-
-                      1. Else Dangling#11802
-
-                1. Else Dangling#11800
-
-          1. Else Dangling#11797
-
-      3. Else Dangling#11795
-
-1. Else Dangling#11656
-
-2. (Let (argumentIR)*{argumentIR <- argumentIR*} be argumentListIR)
+4. (Let (argumentIR)*{argumentIR <- argumentIR*} be argumentListIR)
 
   1. If ((callableTargetIR' matches pattern `% . %`)), then
 
@@ -37887,23 +37920,23 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                                               1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (tableApplyMethodCallee as callee)) as calleeResult)
 
-                                        1. Else Dangling#11850
+                                        1. Else Dangling#11860
 
-                                    1. Else Dangling#11848
+                                    1. Else Dangling#11858
 
-                              1. Else Dangling#11845
+                              1. Else Dangling#11855
 
-                        1. Else Dangling#11842
+                        1. Else Dangling#11852
 
-            1. Else Dangling#11835
+            1. Else Dangling#11845
 
-        1. Else Dangling#11833
+        1. Else Dangling#11843
 
-      1. Else Dangling#11832
+      1. Else Dangling#11842
 
-  1. Else Dangling#11830
+  1. Else Dangling#11840
 
-3. If ((callableTargetIR' matches pattern `(%)`)), then
+5. If ((callableTargetIR' matches pattern `(%)`)), then
 
   1. (Let (`( callableTargetIR `)) be callableTargetIR')
 
@@ -37911,7 +37944,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
       1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 calleeResult
 
-3. Else Dangling#11854
+5. Else Dangling#11864
 
 syntax copyInArgumentResult = 
    | _CONT storageReference? (from continueResult<storageReference?>) 
@@ -37940,7 +37973,7 @@ relation Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 (_annotationList direction 
 
             1. Result in: % |- % % % '@' % % % ~> ARCH_1 EC_caller_1 EC_callee_1 '#' ((_CONT ?()) as copyInArgumentResult)
 
-1. Else Dangling#11858
+1. Else Dangling#11868
 
 2. Case analysis on direction
 
@@ -37970,7 +38003,7 @@ relation Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 (_annotationList direction 
 
                     1. Result in: % |- % % % '@' % % % ~> ARCH_1 EC_caller_1 EC_callee_1 '#' ((_CONT ?(storageReference)) as copyInArgumentResult)
 
-            1. Else Dangling#11872
+            1. Else Dangling#11882
 
   2. Case (% matches pattern `OUT`)
 
@@ -37996,7 +38029,7 @@ relation Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 (_annotationList direction 
 
                   1. Result in: % |- % % % '@' % % % ~> ARCH_1 EC_caller_1 EC_callee_1 '#' ((_CONT (storageReference)?{storageReference <- storageReference?}) as copyInArgumentResult)
 
-2. Else Dangling#11866
+2. Else Dangling#11876
 
 syntax copyInResult = 
    | _CONT storageReference?* (from continueResult<storageReference?*>) 
@@ -38015,7 +38048,7 @@ relation Copy_in: p_shared ARCH |- p_caller EC (parameterIR)*{parameterIR <- par
 
         1. Result in: % % |- % % % '@' % % % ~> ARCH EC EC_callee_1 '#' ((_CONT []) as copyInResult)
 
-    1. Else Dangling#11887
+    1. Else Dangling#11897
 
   2. Case (% matches pattern _ :: _)
 
@@ -38057,7 +38090,7 @@ relation Copy_in: p_shared ARCH |- p_caller EC (parameterIR)*{parameterIR <- par
 
                             1. Result in: % % |- % % % '@' % % % ~> ARCH_2 EC_caller_2 EC_callee_2 '#' ((_CONT ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*}) as copyInResult)
 
-      1. Else Dangling#11891
+      1. Else Dangling#11901
 
 relation Copy_in_default: (parameterIR)*{parameterIR <- parameterIR*} '@' p_callee EC_callee_0 ~> %
 
@@ -38075,9 +38108,9 @@ relation Copy_in_default: (parameterIR)*{parameterIR <- parameterIR*} '@' p_call
 
             1. Result in: % '@' % % ~> EC_callee_1
 
-      1. Else Dangling#11908
+      1. Else Dangling#11918
 
-  1. Else Dangling#11906
+  1. Else Dangling#11916
 
 relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (_annotationList direction typeIR nameIR _parameterInitializerOptIR) '@' p_callee EC_callee (storageReference')?{storageReference' <- storageReference'?} ~> %
 
@@ -38089,13 +38122,13 @@ relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (_annotationList direct
 
       1. Result in: % |- % % % '@' % % % ~> EC_caller_0
 
-    1. Else Dangling#11913
+    1. Else Dangling#11923
 
     2. If (((direction = (OUT)) \/ (direction = (INOUT)))), then
 
       1. Result in: % |- % % % '@' % % % ~> EC_caller_0
 
-    2. Else Dangling#11915
+    2. Else Dangling#11925
 
   2. Case (% matches pattern (_))
 
@@ -38109,7 +38142,7 @@ relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (_annotationList direct
 
             1. Result in: % |- % % % '@' % % % ~> EC_caller_1
 
-      1. Else Dangling#11918
+      1. Else Dangling#11928
 
 relation Copy_out: p_shared ARCH |- p_caller EC_caller_0 parameterListIR '@' p_callee EC_callee ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> %
 
@@ -38163,7 +38196,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                   1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 ((EXIT) as callResult)
 
-                            1. Else Dangling#11939
+                            1. Else Dangling#11949
 
                             2. If ((actionResult = ((RETURN ?()) as actionResult))), then
 
@@ -38171,11 +38204,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                 1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 ((RETURN ?()) as callResult)
 
-                            2. Else Dangling#11943
+                            2. Else Dangling#11953
 
-                  1. Else Dangling#11933
+                  1. Else Dangling#11943
 
-        1. Else Dangling#11928
+        1. Else Dangling#11938
 
     2. Case (% has type definedFunctionCallee)
 
@@ -38215,9 +38248,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                   1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 (definedFunctionResult as callResult)
 
-            1. Else Dangling#11949
+            1. Else Dangling#11959
 
-  1. Else Dangling#11926
+  1. Else Dangling#11936
 
   2. (Let (argumentIR)*{argumentIR <- argumentIR*} be argumentListIR)
 
@@ -38271,9 +38304,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                         1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 callResult
 
-            1. Else Dangling#11967
+            1. Else Dangling#11977
 
-    1. Else Dangling#11963
+    1. Else Dangling#11973
 
   3. Case analysis on callee
 
@@ -38305,7 +38338,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                               1. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_1 (abortResult as callResult)
 
-                          1. Else Dangling#11995
+                          1. Else Dangling#12005
 
                         2. (Let n_size be |(value_element)*{value_element <- value_element*}|)
 
@@ -38349,9 +38382,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                                                 1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                                                  1. Else Dangling#12011
+                                                  1. Else Dangling#12021
 
-                                          1. Else Dangling#12007
+                                          1. Else Dangling#12017
 
                                           2. If ((n_count >= n_size)), then
 
@@ -38365,19 +38398,19 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                                     1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                                          2. Else Dangling#12019
+                                          2. Else Dangling#12029
 
-                                      1. Else Dangling#12005
+                                      1. Else Dangling#12015
 
-                                1. Else Dangling#12002
+                                1. Else Dangling#12012
 
-                            1. Else Dangling#12000
+                            1. Else Dangling#12010
 
-                  1. Else Dangling#11991
+                  1. Else Dangling#12001
 
-          1. Else Dangling#11987
+          1. Else Dangling#11997
 
-        1. Else Dangling#11986
+        1. Else Dangling#11996
 
     2. Case (% has type builtinPopFrontMethodCallee)
 
@@ -38407,7 +38440,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                               1. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_1 (abortResult as callResult)
 
-                          1. Else Dangling#12035
+                          1. Else Dangling#12045
 
                         2. (Let n_size be |(value_element)*{value_element <- value_element*}|)
 
@@ -38449,9 +38482,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                                               1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                                              1. Else Dangling#12049
+                                              1. Else Dangling#12059
 
-                                          1. Else Dangling#12047
+                                          1. Else Dangling#12057
 
                                           2. If ((n_count >= n_size)), then
 
@@ -38469,23 +38502,23 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                                         1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                                                1. Else Dangling#12061
+                                                1. Else Dangling#12071
 
-                                          2. Else Dangling#12058
+                                          2. Else Dangling#12068
 
-                                      1. Else Dangling#12045
+                                      1. Else Dangling#12055
 
-                                1. Else Dangling#12042
+                                1. Else Dangling#12052
 
-                            1. Else Dangling#12040
+                            1. Else Dangling#12050
 
-                  1. Else Dangling#12031
+                  1. Else Dangling#12041
 
-          1. Else Dangling#12027
+          1. Else Dangling#12037
 
-        1. Else Dangling#12026
+        1. Else Dangling#12036
 
-  3. Else Dangling#11984
+  3. Else Dangling#11994
 
   4. (Let (argumentIR)*{argumentIR <- argumentIR*} be argumentListIR)
 
@@ -38531,11 +38564,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                   1. Result in: % % % |- % '@' `< % `> `( % `) : EC_0 ARCH_0 (returnResult as callResult)
 
-                  1. Else Dangling#12073
+                  1. Else Dangling#12083
 
-            1. Else Dangling#12070
+            1. Else Dangling#12080
 
-          1. Else Dangling#12069
+          1. Else Dangling#12079
 
       2. Case (% has type builtinSetValidMethodCallee)
 
@@ -38563,11 +38596,11 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                               1. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_0 (returnResult as callResult)
 
-                  1. Else Dangling#12090
+                  1. Else Dangling#12100
 
-            1. Else Dangling#12087
+            1. Else Dangling#12097
 
-          1. Else Dangling#12086
+          1. Else Dangling#12096
 
       3. Case (% has type builtinSetInvalidMethodCallee)
 
@@ -38595,13 +38628,31 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                               1. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_0 (returnResult as callResult)
 
-                  1. Else Dangling#12102
+                  1. Else Dangling#12112
 
-            1. Else Dangling#12099
+            1. Else Dangling#12109
 
-          1. Else Dangling#12098
+          1. Else Dangling#12108
 
-      4. Case (% has type externMethodCallee)
+      4. Case (% has type builtinSizeMethodCallee)
+
+        1. (Let builtinSizeMethodCallee be (callee as builtinSizeMethodCallee))
+
+          1. If (((typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} matches pattern [])), then
+
+            1. If (((argumentIR)*{argumentIR <- argumentIR*} matches pattern [])), then
+
+              1. (Let (BUILTIN_SIZE nameIR typeIR_base) be builtinSizeMethodCallee)
+
+                1. (Let returnResult be (RETURN ?($sizeof(typeIR_base, nameIR))))
+
+                  1. Result in: % % % |- % '@' `< % `> `( % `) : EC_0 ARCH_0 (returnResult as callResult)
+
+            1. Else Dangling#12121
+
+          1. Else Dangling#12120
+
+      5. Case (% has type externMethodCallee)
 
         1. (Let externMethodCallee be (callee as externMethodCallee))
 
@@ -38649,7 +38700,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                               1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 (definedFunctionResult as callResult)
 
-                        1. Else Dangling#12116
+                        1. Else Dangling#12132
 
               2. Case (% matches pattern ())
 
@@ -38701,9 +38752,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                                   1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 callResult
 
-                      1. Else Dangling#12132
+                      1. Else Dangling#12148
 
-    1. Else Dangling#12067
+    1. Else Dangling#12077
 
 2. Case analysis on callee
 
@@ -38771,9 +38822,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                           1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_3 ((RETURN ?()) as callResult)
 
-                                  1. Else Dangling#12168
+                                  1. Else Dangling#12184
 
-                  1. Else Dangling#12157
+                  1. Else Dangling#12173
 
   2. Case (% has type controlApplyMethodCallee)
 
@@ -38833,7 +38884,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                             1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_3 ((EXIT) as callResult)
 
-                                      1. Else Dangling#12195
+                                      1. Else Dangling#12211
 
                                       2. If ((controlBodyResult = ((RETURN ?()) as controlBodyResult))), then
 
@@ -38841,9 +38892,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                           1. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_3 ((RETURN ?()) as callResult)
 
-                                      2. Else Dangling#12199
+                                      2. Else Dangling#12215
 
-                    1. Else Dangling#12183
+                    1. Else Dangling#12199
 
   3. Case (% has type tableApplyMethodCallee)
 
@@ -38881,9 +38932,9 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                             1. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_1 (returnResult as callResult)
 
-              1. Else Dangling#12207
+              1. Else Dangling#12223
 
-2. Else Dangling#12149
+2. Else Dangling#12165
 
 extern relation ExternFunctionCall_eval: EC ARCH |- nameIR `( (nameIR')*{nameIR' <- nameIR'*} `) : % % %
 
@@ -38899,7 +38950,7 @@ def $match_keysets((setValue')*{setValue' <- setValue'*}, (value)*{value <- valu
 
       1. Return true
 
-    1. Else Dangling#12218
+    1. Else Dangling#12234
 
   2. Case (% matches pattern [ _/1 ])
 
@@ -38913,9 +38964,9 @@ def $match_keysets((setValue')*{setValue' <- setValue'*}, (value)*{value <- valu
 
             1. Return $match_keyset(setValue, value_key)
 
-          1. Else Dangling#12223
+          1. Else Dangling#12239
 
-      1. Else Dangling#12221
+      1. Else Dangling#12237
 
   3. Case (% matches pattern _ :: _)
 
@@ -38939,19 +38990,19 @@ def $match_keysets((setValue')*{setValue' <- setValue'*}, (value)*{value <- valu
 
                   1. Return false
 
-            1. Else Dangling#12229
+            1. Else Dangling#12245
 
-          1. Else Dangling#12228
+          1. Else Dangling#12244
 
-      1. Else Dangling#12226
+      1. Else Dangling#12242
 
-1. Else Dangling#12217
+1. Else Dangling#12233
 
 2. If (((setValue')*{setValue' <- setValue'*} = [(SET `{ '...' `})])), then
 
   1. Return true
 
-2. Else Dangling#12233
+2. Else Dangling#12249
 
 def $match_keyset(setValue, value_key)
 
@@ -39038,11 +39089,11 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
                                 1. Result in: % % |- % : EC_1 ARCH_1 ((_CONT setValue) as simpleKeysetExpressionResult)
 
-                          1. Else Dangling#12259
+                          1. Else Dangling#12275
 
-                      1. Else Dangling#12257
+                      1. Else Dangling#12273
 
-              1. Else Dangling#12252
+              1. Else Dangling#12268
 
   2. Case (% matches pattern `% &&& %`)
 
@@ -39116,7 +39167,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
                         1. Result in: % % |- % : EC_2 ARCH_2 ((_CONT setValue) as simpleKeysetExpressionResult)
 
-1. Else Dangling#12245
+1. Else Dangling#12261
 
 2. If (((simpleKeysetExpressionIR = (DEFAULT)) \/ (simpleKeysetExpressionIR = ('_')))), then
 
@@ -39124,7 +39175,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
     1. Result in: % % |- % : EC_0 ARCH_0 ((_CONT setValue) as simpleKeysetExpressionResult)
 
-2. Else Dangling#12289
+2. Else Dangling#12305
 
 relation Eval_keysets_simple: EC ARCH |- (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} : % % %
 
@@ -39220,7 +39271,7 @@ relation ForUpdateStmts_eval: EC ARCH |- (forUpdateStatementIR)*{forUpdateStatem
 
                 1. Result in: % % |- % : EC_2 ARCH_2 statementResult
 
-        1. Else Dangling#12318
+        1. Else Dangling#12334
 
 relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
@@ -39240,7 +39291,7 @@ relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
               1. Result in: % % |- % : EC_1 ARCH ((_EMPTY) as statementResult)
 
-      1. Else Dangling#12326
+      1. Else Dangling#12342
 
     2. (Let (annotationList typeIR nameIR initializerOptIR) be forInitStatementIR)
 
@@ -39266,7 +39317,7 @@ relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
                     1. Result in: % % |- % : EC_2 ARCH_1 ((_EMPTY) as statementResult)
 
-      1. Else Dangling#12332
+      1. Else Dangling#12348
 
   2. Case (% has type forUpdateStatementIR)
 
@@ -39306,7 +39357,7 @@ relation ForInitStmts_eval: EC ARCH |- (forInitStatementIR)*{forInitStatementIR 
 
                 1. Result in: % % |- % : EC_2 ARCH_2 statementResult
 
-        1. Else Dangling#12348
+        1. Else Dangling#12364
 
 relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
 
@@ -39318,7 +39369,7 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
       1. Result in: % % |- % % % : EC_1 ARCH_1 (abortResult as statementResult)
 
-  1. Else Dangling#12355
+  1. Else Dangling#12371
 
   2. Case analysis on expressionResult
 
@@ -39350,7 +39401,7 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
               1. Result in: % % |- % % % : EC_2 ARCH_2 ((_EMPTY) as statementResult)
 
-        1. Else Dangling#12361
+        1. Else Dangling#12377
 
         2. If (((statementResult' = ((_EMPTY) as statementResult)) \/ (statementResult' = ((CONTINUE) as statementResult)))), then
 
@@ -39372,11 +39423,11 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
                     1. Result in: % % |- % % % : EC_4 ARCH_4 statementResult
 
-            1. Else Dangling#12370
+            1. Else Dangling#12386
 
-        2. Else Dangling#12368
+        2. Else Dangling#12384
 
-  2. Else Dangling#12358
+  2. Else Dangling#12374
 
 relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % %
 
@@ -39426,7 +39477,7 @@ relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % 
 
                       1. Result in: % % |- % : EC_1 ARCH_1 ((_CONT (value)*{value <- value*}) as expressionListResult)
 
-              1. Else Dangling#12383
+              1. Else Dangling#12399
 
   2. Case (% matches pattern `% .. %`)
 
@@ -39480,21 +39531,21 @@ def $values_of_setValue((SET `< typeIR `>), setValue)
 
           1. Return value_l :: $values_of_setValue((SET `< typeIR `>), (SET `{ value_l_inc '..' value_r `}))
 
-    1. Else Dangling#12409
+    1. Else Dangling#12425
 
     2. If ($bin_eq(value_l, value_r)), then
 
       1. Return [value_l]
 
-    2. Else Dangling#12413
+    2. Else Dangling#12429
 
     3. If ($bin_gt(value_l, value_r)), then
 
       1. Return []
 
-    3. Else Dangling#12415
+    3. Else Dangling#12431
 
-1. Else Dangling#12407
+1. Else Dangling#12423
 
 relation ForInStmt_eval: EC ARCH |- nameIR (value)*{value <- value*} statementIR : % % %
 
@@ -39532,7 +39583,7 @@ relation ForInStmt_eval: EC ARCH |- nameIR (value)*{value <- value*} statementIR
 
                 1. Result in: % % |- % % % : EC_2 ARCH_1 ((_EMPTY) as statementResult)
 
-          1. Else Dangling#12422
+          1. Else Dangling#12438
 
           2. If (((statementResult' = ((_EMPTY) as statementResult)) \/ (statementResult' = ((CONTINUE) as statementResult)))), then
 
@@ -39540,7 +39591,7 @@ relation ForInStmt_eval: EC ARCH |- nameIR (value)*{value <- value*} statementIR
 
               1. Result in: % % |- % % % : EC_3 ARCH_2 statementResult
 
-          2. Else Dangling#12429
+          2. Else Dangling#12445
 
 relation Switch_table_eval: EC_0 ARCH_0 |- SWITCH `( id_enum `) `{ (switchCaseIR)*{switchCaseIR <- switchCaseIR*} `} : % % %
 
@@ -39638,15 +39689,15 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)*{switchCaseIR <- switchCas
 
                           1. Result in: % |- % : ?(blockStatementIR)
 
-                      1. Else Dangling#12462
+                      1. Else Dangling#12478
 
-                  1. Else Dangling#12460
+                  1. Else Dangling#12476
 
                 2. If (($filter_<switchCaseIR>((switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}, ($is_non_fallthrough_switchCaseIR(switchCaseIR_t))*{switchCaseIR_t <- switchCaseIR_t*}) matches pattern [])), then
 
                   1. Result in: % |- % : ?()
 
-                2. Else Dangling#12465
+                2. Else Dangling#12481
 
               2. Case false
 
@@ -39702,7 +39753,7 @@ relation SwitchLabel_general_eval: p EC_0 ARCH_0 |- switchLabelIR : % % %
 
           1. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-1. Else Dangling#12478
+1. Else Dangling#12494
 
 def $match_switchLabelIR_general(value, value')
 
@@ -39754,7 +39805,7 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- (switchCaseIR)*{switch
 
                           1. Result in: % % % % |- % : EC_2 ARCH_2 (blockStatementIR)?{blockStatementIR <- blockStatementIR?}
 
-                1. Else Dangling#12495
+                1. Else Dangling#12511
 
           2. Case (% matches pattern `% :`)
 
@@ -39782,15 +39833,15 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- (switchCaseIR)*{switch
 
                                   1. Result in: % % % % |- % : EC_1 ARCH_1 ?(blockStatementIR)
 
-                              1. Else Dangling#12509
+                              1. Else Dangling#12525
 
-                          1. Else Dangling#12507
+                          1. Else Dangling#12523
 
                         2. If (($filter_<switchCaseIR>((switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}, ($is_non_fallthrough_switchCaseIR(switchCaseIR_t))*{switchCaseIR_t <- switchCaseIR_t*}) matches pattern [])), then
 
                           1. Result in: % % % % |- % : EC_1 ARCH_1 ?()
 
-                        2. Else Dangling#12512
+                        2. Else Dangling#12528
 
                       2. Case false
 
@@ -39798,9 +39849,9 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- (switchCaseIR)*{switch
 
                           1. Result in: % % % % |- % : EC_2 ARCH_2 (blockStatementIR)?{blockStatementIR <- blockStatementIR?}
 
-                1. Else Dangling#12503
+                1. Else Dangling#12519
 
-1. Else Dangling#12488
+1. Else Dangling#12504
 
 syntax selectCaseMatchResult = 
    | _CONT nameIR? (from continueResult<nameIR?>) 
@@ -39832,7 +39883,7 @@ relation SelectCase_match: EC_0 ARCH_0 (value_key)*{value_key <- value_key*} |- 
 
             1. Result in: % % % |- % : EC_1 ARCH_1 ((_CONT ?(nameIR)) as selectCaseMatchResult)
 
-  1. Else Dangling#12517
+  1. Else Dangling#12533
 
 relation SelectCases_match: EC ARCH (value_key)*{value_key <- value_key*} |- (selectCaseIR)*{selectCaseIR <- selectCaseIR*} : % % %
 
@@ -39866,7 +39917,7 @@ relation SelectCases_match: EC ARCH (value_key)*{value_key <- value_key*} |- (se
 
                   1. Result in: % % % |- % : EC_1 ARCH_1 ((_CONT ?(nameIR_state)) as selectCaseMatchResult)
 
-              1. Else Dangling#12532
+              1. Else Dangling#12548
 
         2. If ((selectCaseMatchResult' = ((_CONT ?()) as selectCaseMatchResult))), then
 
@@ -39874,7 +39925,7 @@ relation SelectCases_match: EC ARCH (value_key)*{value_key <- value_key*} |- (se
 
             1. Result in: % % % |- % : EC_2 ARCH_2 selectCaseMatchResult
 
-        2. Else Dangling#12535
+        2. Else Dangling#12551
 
 syntax tableKeyValue = 
    | value ':' nameIR (from tableKeyValue) 
@@ -39903,7 +39954,7 @@ relation TableKey_eval: EC_0 ARCH_0 |- (typedExpressionIR '#' _nameIR ':' nameIR
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((_CONT tableKeyValue) as tableKeyResult)
 
-  1. Else Dangling#12539
+  1. Else Dangling#12555
 
 syntax tableKeysResult = 
    | _CONT tableKeyValue* (from continueResult<tableKeyValue*>) 
@@ -39973,7 +40024,7 @@ def $get_tableEntryPriority((tableEntryPriorityIR)?{tableEntryPriorityIR <- tabl
 
             1. Return ?(n)
 
-        1. Else Dangling#12564
+        1. Else Dangling#12580
 
 syntax tableMatch = 
    | nat? ':' tableActionReferenceIR (from tableMatch) 
@@ -40016,7 +40067,7 @@ relation TableMatch_eval: EC_0 ARCH_0 |- (tableKeyValue)*{tableKeyValue <- table
 
                     1. Result in: % % |- % '@' % : EC_1 ARCH_1 ((_CONT ?(tableMatch)) as tableMatchResult)
 
-      1. Else Dangling#12570
+      1. Else Dangling#12586
 
 syntax tableMatchesResult = 
    | _CONT tableMatch* (from continueResult<tableMatch*>) 
@@ -40086,17 +40137,17 @@ def $largest_priority_wins(TBL)
 
                 1. Return b
 
-            1. Else Dangling#12600
+            1. Else Dangling#12616
 
-        1. Else Dangling#12598
+        1. Else Dangling#12614
 
-    1. Else Dangling#12596
+    1. Else Dangling#12612
 
   2. If (($filter_<tableCustomPropertyIR>((tableCustomPropertyIR)*{tableCustomPropertyIR <- tableCustomPropertyIR*}, ($is_largest_priority_wins(tableCustomPropertyIR))*{tableCustomPropertyIR <- tableCustomPropertyIR*}) matches pattern [])), then
 
     1. Return true
 
-  2. Else Dangling#12603
+  2. Else Dangling#12619
 
 def $is_largest_priority_wins(tableCustomPropertyIR)
 
@@ -40130,7 +40181,7 @@ def $select_action(TBL, (tableMatch')*{tableMatch' <- tableMatch'*})
 
         1. Return tableActionReferenceIR
 
-1. Else Dangling#12610
+1. Else Dangling#12626
 
 2. If ((|(tableMatch')*{tableMatch' <- tableMatch'*}| > 1)), then
 
@@ -40154,7 +40205,7 @@ def $select_action(TBL, (tableMatch')*{tableMatch' <- tableMatch'*})
 
                     1. Return tableActionReferenceIR_h
 
-                1. Else Dangling#12623
+                1. Else Dangling#12639
 
             2. Case false
 
@@ -40164,11 +40215,11 @@ def $select_action(TBL, (tableMatch')*{tableMatch' <- tableMatch'*})
 
                   1. Return tableActionReferenceIR_h
 
-              1. Else Dangling#12626
+              1. Else Dangling#12642
 
-    1. Else Dangling#12618
+    1. Else Dangling#12634
 
-2. Else Dangling#12616
+2. Else Dangling#12632
 
 relation Copy_out_inner: ARCH |- p_caller EC (parameterIR)*{parameterIR <- parameterIR*} '@' p_callee EC_callee ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> %
 
@@ -40180,7 +40231,7 @@ relation Copy_out_inner: ARCH |- p_caller EC (parameterIR)*{parameterIR <- param
 
       1. Result in: % |- % % % '@' % % % ~> EC
 
-    1. Else Dangling#12630
+    1. Else Dangling#12646
 
   2. Case (% matches pattern _ :: _)
 
@@ -40198,7 +40249,7 @@ relation Copy_out_inner: ARCH |- p_caller EC (parameterIR)*{parameterIR <- param
 
                 1. Result in: % |- % % % '@' % % % ~> EC_caller_2
 
-        1. Else Dangling#12634
+        1. Else Dangling#12650
 
 syntax actionResult = 
    | EXIT (from exitResult) 
@@ -40222,13 +40273,13 @@ relation ActionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
         1. Result in: % % |- % : EC_1 ARCH_1 ((EXIT) as actionResult)
 
-  1. Else Dangling#12640
+  1. Else Dangling#12656
 
   2. If ((statementResult = ((RETURN ?()) as statementResult))), then
 
     1. Result in: % % |- % : EC_1 ARCH_1 ((RETURN ?()) as actionResult)
 
-  2. Else Dangling#12645
+  2. Else Dangling#12661
 
 syntax definedFunctionResult = 
    | EXIT (from exitResult) 
@@ -40258,7 +40309,7 @@ relation DefinedFunctionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
         1. Result in: % % |- % : EC_1 ARCH_1 (returnResult as definedFunctionResult)
 
-  1. Else Dangling#12648
+  1. Else Dangling#12664
 
 relation Var_init: EC_0 |- typeIR nameIR : %
 
@@ -40292,11 +40343,11 @@ relation Extern_init: EC ARCH_0 |- nameIR_extern nameIR : %
 
                     1. Result in: % % |- % % : ARCH_2
 
-        1. Else Dangling#12662
+        1. Else Dangling#12678
 
-      1. Else Dangling#12661
+      1. Else Dangling#12677
 
-    1. Else Dangling#12660
+    1. Else Dangling#12676
 
 relation Program_init: |- p4program : % %
 
@@ -40436,9 +40487,9 @@ def $reverse_bytes_of_hex(t)
 
           1. Return "0x" ++ $reverse_bytes_of_hex'(t[2 : n_len_bytes])
 
-      1. Else Dangling#12728
+      1. Else Dangling#12744
 
-1. Else Dangling#12725
+1. Else Dangling#12741
 
 def $reverse_bytes_of_hex'(t)
 
@@ -40446,7 +40497,7 @@ def $reverse_bytes_of_hex'(t)
 
   1. Return t
 
-1. Else Dangling#12731
+1. Else Dangling#12747
 
 2. (Let n_len be |t|)
 
@@ -40466,9 +40517,9 @@ def $reverse_bytes_of_hex'(t)
 
                 1. Return t_bytes_rev ++ t_byte
 
-        1. Else Dangling#12737
+        1. Else Dangling#12753
 
-  1. Else Dangling#12734
+  1. Else Dangling#12750
 
 syntax tableEntryPriorityInterface = int?
 
@@ -40520,7 +40571,7 @@ def $tableObject_create_entry_priority(tableEntryPriorityInterface)
 
     1. Return ?()
 
-  1. Else Dangling#12751
+  1. Else Dangling#12767
 
 2. If ((tableEntryPriorityInterface matches pattern (_))), then
 
@@ -40532,9 +40583,9 @@ def $tableObject_create_entry_priority(tableEntryPriorityInterface)
 
         1. Return ?((PRIORITY '=' (D (n_priority as int)) ':'))
 
-    1. Else Dangling#12755
+    1. Else Dangling#12771
 
-2. Else Dangling#12753
+2. Else Dangling#12769
 
 def $needs_priority_tableKeysPropertyIR((KEY '=' `{ (tableKeyIR)*{tableKeyIR <- tableKeyIR*} `}))
 
@@ -40576,11 +40627,11 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                               1. Return simpleKeysetExpressionIR
 
-                      1. Else Dangling#12770
+                      1. Else Dangling#12786
 
-            1. Else Dangling#12765
+            1. Else Dangling#12781
 
-      1. Else Dangling#12762
+      1. Else Dangling#12778
 
   2. Case (% = "ternary")
 
@@ -40624,9 +40675,9 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                                           1. Return simpleKeysetExpressionIR
 
-                                    1. Else Dangling#12790
+                                    1. Else Dangling#12806
 
-                        1. Else Dangling#12784
+                        1. Else Dangling#12800
 
             2. Case (% matches pattern `_BIN %`)
 
@@ -40660,13 +40711,13 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                                           1. Return simpleKeysetExpressionIR
 
-                                    1. Else Dangling#12805
+                                    1. Else Dangling#12821
 
-                        1. Else Dangling#12799
+                        1. Else Dangling#12815
 
-          1. Else Dangling#12778
+          1. Else Dangling#12794
 
-      1. Else Dangling#12776
+      1. Else Dangling#12792
 
   3. Case (% = "lpm")
 
@@ -40714,11 +40765,11 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                                               1. Return simpleKeysetExpressionIR
 
-                                        1. Else Dangling#12826
+                                        1. Else Dangling#12842
 
-                            1. Else Dangling#12820
+                            1. Else Dangling#12836
 
-                  1. Else Dangling#12815
+                  1. Else Dangling#12831
 
             2. Case (% matches pattern `_BIN %`)
 
@@ -40756,11 +40807,11 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                                               1. Return simpleKeysetExpressionIR
 
-                                        1. Else Dangling#12843
+                                        1. Else Dangling#12859
 
-                            1. Else Dangling#12837
+                            1. Else Dangling#12853
 
-                  1. Else Dangling#12832
+                  1. Else Dangling#12848
 
             3. Case (% matches pattern `% _SLASH %`)
 
@@ -40802,17 +40853,17 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                                                   1. Return simpleKeysetExpressionIR
 
-                                            1. Else Dangling#12862
+                                            1. Else Dangling#12878
 
-                                    1. Else Dangling#12858
+                                    1. Else Dangling#12874
 
-                          1. Else Dangling#12853
+                          1. Else Dangling#12869
 
-                      1. Else Dangling#12851
+                      1. Else Dangling#12867
 
-          1. Else Dangling#12812
+          1. Else Dangling#12828
 
-      1. Else Dangling#12810
+      1. Else Dangling#12826
 
   4. Case (% = "optional")
 
@@ -40856,15 +40907,15 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                                           1. Return simpleKeysetExpressionIR
 
-                                    1. Else Dangling#12882
+                                    1. Else Dangling#12898
 
-                        1. Else Dangling#12876
+                        1. Else Dangling#12892
 
-              1. Else Dangling#12871
+              1. Else Dangling#12887
 
-          1. Else Dangling#12869
+          1. Else Dangling#12885
 
-      1. Else Dangling#12867
+      1. Else Dangling#12883
 
   5. Case (% = "selector")
 
@@ -40880,9 +40931,9 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
               1. Return simpleKeysetExpressionIR
 
-        1. Else Dangling#12888
+        1. Else Dangling#12904
 
-1. Else Dangling#12760
+1. Else Dangling#12776
 
 def $tableObject_create_entry_keys(EC, ((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeysetInterface)
 
@@ -40890,7 +40941,7 @@ def $tableObject_create_entry_keys(EC, ((nameIR, nameIR, typeIR))*{(nameIR, name
 
   1. Return []
 
-1. Else Dangling#12892
+1. Else Dangling#12908
 
 2. (Let (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*} be tableKeysetInterface)
 
@@ -40902,7 +40953,7 @@ def $tableObject_create_entry_keys(EC, ((nameIR, nameIR, typeIR))*{(nameIR, name
 
         1. Return simpleKeysetExpressionIR_h :: $tableObject_create_entry_keys(EC, ((nameIR_key_t, nameIR_matchKind_t, typeIR_t))*{nameIR_key_t <- nameIR_key_t*, nameIR_matchKind_t <- nameIR_matchKind_t*, typeIR_t <- typeIR_t*}, (tableKeyInterface)*{tableKeyInterface <- tableKeyInterface*})
 
-  1. Else Dangling#12895
+  1. Else Dangling#12911
 
 def $interface_of_tableKeyIR((typedExpressionIR '#' nameIR_key ':' nameIR_matchKind annotationList ';'))
 
@@ -40932,7 +40983,7 @@ def $tableObject_create_entry_keyset(EC, (KEY '=' `{ (tableKeyIR)*{tableKeyIR <-
 
           1. Return ((`( (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `)) as keysetExpressionIR)
 
-      1. Else Dangling#12907
+      1. Else Dangling#12923
 
 def $alias_to_original_lookup_map((parameterIR)*{parameterIR <- parameterIR*})
 
@@ -40956,9 +41007,9 @@ def $alias_to_original_lookup_map((parameterIR)*{parameterIR <- parameterIR*})
 
                   1. Return $extend_map<nameIR, nameIR>((`{ ((nameIR_alias ':' nameIR_original))*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} `}), (`{ ((id ':' id))*{id <- id*} `}))
 
-                1. Else Dangling#12918
+                1. Else Dangling#12934
 
-            1. Else Dangling#12916
+            1. Else Dangling#12932
 
 def $align_tableActionArgumentInterfaces((parameterIR)*{parameterIR <- parameterIR*}, ((nameIR_arg, i_arg))*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*})
 
@@ -40978,9 +41029,9 @@ def $align_tableActionArgumentInterfaces((parameterIR)*{parameterIR <- parameter
 
               1. Return (i_aligned)*{i_aligned <- i_aligned*}
 
-          1. Else Dangling#12925
+          1. Else Dangling#12941
 
-    1. Else Dangling#12922
+    1. Else Dangling#12938
 
 def $align_tableActionArgumentInterfaces'((`{ ((id_arg ':' i_arg))*{i_arg <- i_arg*, id_arg <- id_arg*} `}), (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR))
 
@@ -40992,13 +41043,13 @@ def $align_tableActionArgumentInterfaces'((`{ ((id_arg ':' i_arg))*{i_arg <- i_a
 
       1. Return i
 
-  1. Else Dangling#12929
+  1. Else Dangling#12945
 
 2. If (($find_map<id, int>((`{ ((id_arg ':' i_arg))*{i_arg <- i_arg*, id_arg <- id_arg*} `}), nameIR_param) matches pattern ())), then
 
   1. Return (0 as int)
 
-2. Else Dangling#12932
+2. Else Dangling#12948
 
 def $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR)
 
@@ -41020,7 +41071,7 @@ def $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionI
 
             1. Return $find_tableActionIR_qualified((tableActionIR_t)*{tableActionIR_t <- tableActionIR_t*}, nameIR)
 
-          1. Else Dangling#12939
+          1. Else Dangling#12955
 
           2. If ((?(nameIR) = controlPlaneNameIR)), then
 
@@ -41028,7 +41079,7 @@ def $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionI
 
               1. Return ?((nameIR_action, tableActionIR_h))
 
-          2. Else Dangling#12941
+          2. Else Dangling#12957
 
 def $find_tableActionIR_unqualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR)
 
@@ -41040,7 +41091,7 @@ def $find_tableActionIR_unqualified((tableActionIR)*{tableActionIR <- tableActio
 
       1. Return $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action)
 
-  1. Else Dangling#12945
+  1. Else Dangling#12961
 
 def $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR)
 
@@ -41074,7 +41125,7 @@ def $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActi
 
                         1. Return $find_tableActionIR_unqualified'((tableActionIR_t)*{tableActionIR_t <- tableActionIR_t*}, nameIR)
 
-                      1. Else Dangling#12959
+                      1. Else Dangling#12975
 
                       2. If ((nameIR = nameIR_unqualified)), then
 
@@ -41082,11 +41133,11 @@ def $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActi
 
                           1. Return ?((nameIR_action, tableActionIR_h))
 
-                      2. Else Dangling#12961
+                      2. Else Dangling#12977
 
-                  1. Else Dangling#12957
+                  1. Else Dangling#12973
 
-          1. Else Dangling#12953
+          1. Else Dangling#12969
 
 def $tableObject_create_entry_action(EC, (ACTIONS '=' `{ (tableActionIR)*{tableActionIR <- tableActionIR*} `}), (nameIR_action_update, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
 
@@ -41116,11 +41167,11 @@ def $tableObject_create_entry_action(EC, (ACTIONS '=' `{ (tableActionIR)*{tableA
 
                         1. Return ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
 
-                  1. Else Dangling#12973
+                  1. Else Dangling#12989
 
-              1. Else Dangling#12971
+              1. Else Dangling#12987
 
-  1. Else Dangling#12965
+  1. Else Dangling#12981
 
 2. If (($find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action_update) matches pattern ())), then
 
@@ -41150,13 +41201,13 @@ def $tableObject_create_entry_action(EC, (ACTIONS '=' `{ (tableActionIR)*{tableA
 
                           1. Return ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
 
-                    1. Else Dangling#12987
+                    1. Else Dangling#13003
 
-                1. Else Dangling#12985
+                1. Else Dangling#13001
 
-    1. Else Dangling#12979
+    1. Else Dangling#12995
 
-2. Else Dangling#12977
+2. Else Dangling#12993
 
 def $tableObject_add_entry(EC, (TABLE typeId `{ frame TBL `}), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
@@ -41196,7 +41247,7 @@ def $tableObject_add_default_action(EC, (TABLE typeId `{ frame TBL `}), tableAct
 
           1. Return (TABLE typeId `{ frame TBL_updated `})
 
-  1. Else Dangling#13002
+  1. Else Dangling#13018
 
 relation V1Model_init: |- p4program : % %
 
@@ -41230,9 +41281,9 @@ relation V1Model_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                     1. Result in: % % |- % : EC_1 ARCH_2
 
-          1. Else Dangling#13015
+          1. Else Dangling#13031
 
-      1. Else Dangling#13013
+      1. Else Dangling#13029
 
 relation V1Model_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
@@ -41258,9 +41309,9 @@ relation V1Model_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
                     1. Result in: % % |- % : EC_1 ARCH_2
 
-          1. Else Dangling#13026
+          1. Else Dangling#13042
 
-      1. Else Dangling#13024
+      1. Else Dangling#13040
 
 relation V1Model_init_globals: EC_0 ARCH |- i_port : %
 
@@ -41308,15 +41359,15 @@ relation V1Model_init_globals: EC_0 ARCH |- i_port : %
 
                                           1. Result in: % % |- % : EC_4
 
-                            1. Else Dangling#13046
+                            1. Else Dangling#13062
 
-                  1. Else Dangling#13041
+                  1. Else Dangling#13057
 
-            1. Else Dangling#13038
+            1. Else Dangling#13054
 
-      1. Else Dangling#13035
+      1. Else Dangling#13051
 
-  1. Else Dangling#13033
+  1. Else Dangling#13049
 
 def $V1Model_setup_packet_in_argument(EC)
 
@@ -41332,7 +41383,7 @@ def $V1Model_setup_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Dangling#13055
+  1. Else Dangling#13071
 
 def $V1Model_setup_packet_out_argument(EC)
 
@@ -41348,7 +41399,7 @@ def $V1Model_setup_packet_out_argument(EC)
 
           1. Return argumentIR_packet_out
 
-  1. Else Dangling#13061
+  1. Else Dangling#13077
 
 def $V1Model_setup_hdr_argument(ARCH)
 
@@ -41372,11 +41423,11 @@ def $V1Model_setup_hdr_argument(ARCH)
 
                   1. Return argumentIR_hdr
 
-            1. Else Dangling#13072
+            1. Else Dangling#13088
 
-      1. Else Dangling#13069
+      1. Else Dangling#13085
 
-  1. Else Dangling#13067
+  1. Else Dangling#13083
 
 def $V1Model_setup_meta_argument(ARCH)
 
@@ -41400,11 +41451,11 @@ def $V1Model_setup_meta_argument(ARCH)
 
                   1. Return argumentIR_meta
 
-            1. Else Dangling#13082
+            1. Else Dangling#13098
 
-      1. Else Dangling#13079
+      1. Else Dangling#13095
 
-  1. Else Dangling#13077
+  1. Else Dangling#13093
 
 def $V1Model_setup_standard_metadata_argument(EC)
 
@@ -41420,7 +41471,7 @@ def $V1Model_setup_standard_metadata_argument(EC)
 
           1. Return argumentIR_standard_metadata
 
-  1. Else Dangling#13087
+  1. Else Dangling#13103
 
 def $V1Model_setup_main_callee(EC, ARCH)
 
@@ -41458,15 +41509,15 @@ def $V1Model_setup_main_callee(EC, ARCH)
 
                                 1. Return typedExpressionIR_main
 
-                        1. Else Dangling#13104
+                        1. Else Dangling#13120
 
-                  1. Else Dangling#13101
+                  1. Else Dangling#13117
 
-            1. Else Dangling#13098
+            1. Else Dangling#13114
 
-        1. Else Dangling#13096
+        1. Else Dangling#13112
 
-  1. Else Dangling#13093
+  1. Else Dangling#13109
 
 def $V1Model_setup_parser_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -41504,15 +41555,15 @@ def $V1Model_setup_parser_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_parser
 
-                        1. Else Dangling#13121
+                        1. Else Dangling#13137
 
-                  1. Else Dangling#13118
+                  1. Else Dangling#13134
 
-            1. Else Dangling#13115
+            1. Else Dangling#13131
 
-        1. Else Dangling#13113
+        1. Else Dangling#13129
 
-  1. Else Dangling#13110
+  1. Else Dangling#13126
 
 def $V1Model_setup_verify_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -41550,15 +41601,15 @@ def $V1Model_setup_verify_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_verify
 
-                        1. Else Dangling#13138
+                        1. Else Dangling#13154
 
-                  1. Else Dangling#13135
+                  1. Else Dangling#13151
 
-            1. Else Dangling#13132
+            1. Else Dangling#13148
 
-        1. Else Dangling#13130
+        1. Else Dangling#13146
 
-  1. Else Dangling#13127
+  1. Else Dangling#13143
 
 def $V1Model_setup_ingress_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -41596,15 +41647,15 @@ def $V1Model_setup_ingress_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_ingress
 
-                        1. Else Dangling#13155
+                        1. Else Dangling#13171
 
-                  1. Else Dangling#13152
+                  1. Else Dangling#13168
 
-            1. Else Dangling#13149
+            1. Else Dangling#13165
 
-        1. Else Dangling#13147
+        1. Else Dangling#13163
 
-  1. Else Dangling#13144
+  1. Else Dangling#13160
 
 def $V1Model_setup_egress_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -41642,15 +41693,15 @@ def $V1Model_setup_egress_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_egress
 
-                        1. Else Dangling#13172
+                        1. Else Dangling#13188
 
-                  1. Else Dangling#13169
+                  1. Else Dangling#13185
 
-            1. Else Dangling#13166
+            1. Else Dangling#13182
 
-        1. Else Dangling#13164
+        1. Else Dangling#13180
 
-  1. Else Dangling#13161
+  1. Else Dangling#13177
 
 def $V1Model_setup_check_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -41688,15 +41739,15 @@ def $V1Model_setup_check_callee(EC, ARCH, typedExpressionIR_main)
 
                                 1. Return typedExpressionIR_check
 
-                        1. Else Dangling#13189
+                        1. Else Dangling#13205
 
-                  1. Else Dangling#13186
+                  1. Else Dangling#13202
 
-            1. Else Dangling#13183
+            1. Else Dangling#13199
 
-        1. Else Dangling#13181
+        1. Else Dangling#13197
 
-  1. Else Dangling#13178
+  1. Else Dangling#13194
 
 def $V1Model_setup_deparse_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -41728,13 +41779,13 @@ def $V1Model_setup_deparse_callee(EC, ARCH, typedExpressionIR_main)
 
                           1. Return typedExpressionIR_deparse
 
-                  1. Else Dangling#13203
+                  1. Else Dangling#13219
 
-            1. Else Dangling#13200
+            1. Else Dangling#13216
 
-        1. Else Dangling#13198
+        1. Else Dangling#13214
 
-  1. Else Dangling#13195
+  1. Else Dangling#13211
 
 relation V1Model_parser: EC_0 ARCH_0 |- % % %
 
@@ -41770,7 +41821,7 @@ relation V1Model_parser: EC_0 ARCH_0 |- % % %
 
                         1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-                  1. Else Dangling#13217
+                  1. Else Dangling#13233
 
 relation V1Model_verify: EC_0 ARCH_0 |- % % %
 
@@ -41802,7 +41853,7 @@ relation V1Model_verify: EC_0 ARCH_0 |- % % %
 
                     1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-              1. Else Dangling#13229
+              1. Else Dangling#13245
 
 relation V1Model_ingress: EC_0 ARCH_0 |- % % %
 
@@ -41836,7 +41887,7 @@ relation V1Model_ingress: EC_0 ARCH_0 |- % % %
 
                       1. Result in: % % |- EC_1 ARCH_1 ((RETURN ?()) as callResult)
 
-                1. Else Dangling#13242
+                1. Else Dangling#13258
 
 relation V1Model_egress: EC_0 ARCH_0 |- % % %
 
@@ -41870,7 +41921,7 @@ relation V1Model_egress: EC_0 ARCH_0 |- % % %
 
                       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-                1. Else Dangling#13255
+                1. Else Dangling#13271
 
 relation V1Model_check: EC_0 ARCH_0 |- % % %
 
@@ -41902,7 +41953,7 @@ relation V1Model_check: EC_0 ARCH_0 |- % % %
 
                     1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-              1. Else Dangling#13267
+              1. Else Dangling#13283
 
 relation V1Model_deparse: EC_0 ARCH_0 |- % % %
 
@@ -41934,7 +41985,7 @@ relation V1Model_deparse: EC_0 ARCH_0 |- % % %
 
                     1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-              1. Else Dangling#13279
+              1. Else Dangling#13295
 
 def $field_list_annotation_index(annotationList)
 
@@ -42056,13 +42107,13 @@ def $V1Model_meta_fields_of_index(ARCH, integerLiteral_index)
 
                       1. Return (nameIR_field)*{nameIR_field <- nameIR_field*}
 
-                1. Else Dangling#13328
+                1. Else Dangling#13344
 
-            1. Else Dangling#13326
+            1. Else Dangling#13342
 
-      1. Else Dangling#13323
+      1. Else Dangling#13339
 
-  1. Else Dangling#13321
+  1. Else Dangling#13337
 
 relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- (nameIR)*{nameIR <- nameIR*} : %
 
@@ -42112,11 +42163,11 @@ relation V1Model_setup_preserved_meta_fields: EC_0 ARCH |- integerLiteral_index 
 
                       1. Result in: % % |- % : EC_2
 
-            1. Else Dangling#13346
+            1. Else Dangling#13362
 
-      1. Else Dangling#13343
+      1. Else Dangling#13359
 
-  1. Else Dangling#13341
+  1. Else Dangling#13357
 
 relation EBPF_init: |- p4program : % %
 
@@ -42150,9 +42201,9 @@ relation EBPF_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                     1. Result in: % % |- % : EC_1 ARCH_2
 
-          1. Else Dangling#13360
+          1. Else Dangling#13376
 
-      1. Else Dangling#13358
+      1. Else Dangling#13374
 
 relation EBPF_init_globals: EC_0 ARCH |- %
 
@@ -42178,11 +42229,11 @@ relation EBPF_init_globals: EC_0 ARCH |- %
 
                     1. Result in: % % |- EC_2
 
-            1. Else Dangling#13372
+            1. Else Dangling#13388
 
-      1. Else Dangling#13369
+      1. Else Dangling#13385
 
-  1. Else Dangling#13367
+  1. Else Dangling#13383
 
 def $eBPF_setup_packet_in_argument(EC)
 
@@ -42198,7 +42249,7 @@ def $eBPF_setup_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Dangling#13378
+  1. Else Dangling#13394
 
 def $eBPF_setup_headers_argument(ARCH)
 
@@ -42222,11 +42273,11 @@ def $eBPF_setup_headers_argument(ARCH)
 
                   1. Return argumentIR_headers
 
-            1. Else Dangling#13389
+            1. Else Dangling#13405
 
-      1. Else Dangling#13386
+      1. Else Dangling#13402
 
-  1. Else Dangling#13384
+  1. Else Dangling#13400
 
 def $eBPF_setup_main_callee(EC, ARCH)
 
@@ -42258,13 +42309,13 @@ def $eBPF_setup_main_callee(EC, ARCH)
 
                           1. Return typedExpressionIR_main
 
-                  1. Else Dangling#13402
+                  1. Else Dangling#13418
 
-            1. Else Dangling#13399
+            1. Else Dangling#13415
 
-        1. Else Dangling#13397
+        1. Else Dangling#13413
 
-  1. Else Dangling#13394
+  1. Else Dangling#13410
 
 def $eBPF_setup_parse_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -42296,13 +42347,13 @@ def $eBPF_setup_parse_callee(EC, ARCH, typedExpressionIR_main)
 
                           1. Return typedExpressionIR_parse
 
-                  1. Else Dangling#13416
+                  1. Else Dangling#13432
 
-            1. Else Dangling#13413
+            1. Else Dangling#13429
 
-        1. Else Dangling#13411
+        1. Else Dangling#13427
 
-  1. Else Dangling#13408
+  1. Else Dangling#13424
 
 def $eBPF_setup_filter_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -42334,13 +42385,13 @@ def $eBPF_setup_filter_callee(EC, ARCH, typedExpressionIR_main)
 
                           1. Return typedExpressionIR_filter
 
-                  1. Else Dangling#13430
+                  1. Else Dangling#13446
 
-            1. Else Dangling#13427
+            1. Else Dangling#13443
 
-        1. Else Dangling#13425
+        1. Else Dangling#13441
 
-  1. Else Dangling#13422
+  1. Else Dangling#13438
 
 relation EBPF_parse: EC_0 ARCH_0 |- % % %
 
@@ -42372,7 +42423,7 @@ relation EBPF_parse: EC_0 ARCH_0 |- % % %
 
                     1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-              1. Else Dangling#13442
+              1. Else Dangling#13458
 
 relation EBPF_filter: EC_0 ARCH_0 |- % % %
 
@@ -42404,7 +42455,7 @@ relation EBPF_filter: EC_0 ARCH_0 |- % % %
 
                     1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-              1. Else Dangling#13454
+              1. Else Dangling#13470
 
 relation PSA_init: |- p4program : % %
 
@@ -42436,11 +42487,11 @@ def $PSA_setup_normal_meta_argument(ARCH)
 
                   1. Return argumentIR_normal_meta
 
-            1. Else Dangling#13468
+            1. Else Dangling#13484
 
-      1. Else Dangling#13465
+      1. Else Dangling#13481
 
-  1. Else Dangling#13463
+  1. Else Dangling#13479
 
 def $PSA_setup_clone_i2e_meta_argument(ARCH)
 
@@ -42464,11 +42515,11 @@ def $PSA_setup_clone_i2e_meta_argument(ARCH)
 
                   1. Return argumentIR_clone_i2e_meta
 
-            1. Else Dangling#13478
+            1. Else Dangling#13494
 
-      1. Else Dangling#13475
+      1. Else Dangling#13491
 
-  1. Else Dangling#13473
+  1. Else Dangling#13489
 
 def $PSA_setup_clone_e2e_meta_argument(ARCH)
 
@@ -42492,11 +42543,11 @@ def $PSA_setup_clone_e2e_meta_argument(ARCH)
 
                   1. Return argumentIR_clone_e2e_meta
 
-            1. Else Dangling#13488
+            1. Else Dangling#13504
 
-      1. Else Dangling#13485
+      1. Else Dangling#13501
 
-  1. Else Dangling#13483
+  1. Else Dangling#13499
 
 def $PSA_setup_resubmit_meta_argument(ARCH)
 
@@ -42520,11 +42571,11 @@ def $PSA_setup_resubmit_meta_argument(ARCH)
 
                   1. Return argumentIR_resubmit_meta
 
-            1. Else Dangling#13498
+            1. Else Dangling#13514
 
-      1. Else Dangling#13495
+      1. Else Dangling#13511
 
-  1. Else Dangling#13493
+  1. Else Dangling#13509
 
 def $PSA_setup_recirculate_meta_argument(ARCH)
 
@@ -42548,11 +42599,11 @@ def $PSA_setup_recirculate_meta_argument(ARCH)
 
                   1. Return argumentIR_recirculate_meta
 
-            1. Else Dangling#13508
+            1. Else Dangling#13524
 
-      1. Else Dangling#13505
+      1. Else Dangling#13521
 
-  1. Else Dangling#13503
+  1. Else Dangling#13519
 
 def $PSA_setup_main_callee(EC, ARCH)
 
@@ -42634,29 +42685,29 @@ def $PSA_setup_main_callee(EC, ARCH)
 
                                                                             1. Return typedExpressionIR_main
 
-                                                                  1. Else Dangling#13545
+                                                                  1. Else Dangling#13561
 
-                                                            1. Else Dangling#13542
+                                                            1. Else Dangling#13558
 
-                                                      1. Else Dangling#13539
+                                                      1. Else Dangling#13555
 
-                                                1. Else Dangling#13536
+                                                1. Else Dangling#13552
 
-                                          1. Else Dangling#13533
+                                          1. Else Dangling#13549
 
-                                    1. Else Dangling#13530
+                                    1. Else Dangling#13546
 
-                              1. Else Dangling#13527
+                              1. Else Dangling#13543
 
-                        1. Else Dangling#13524
+                        1. Else Dangling#13540
 
-                  1. Else Dangling#13521
+                  1. Else Dangling#13537
 
-            1. Else Dangling#13518
+            1. Else Dangling#13534
 
-        1. Else Dangling#13516
+        1. Else Dangling#13532
 
-  1. Else Dangling#13513
+  1. Else Dangling#13529
 
 relation PSA_ingress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
@@ -42682,9 +42733,9 @@ relation PSA_ingress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                     1. Result in: % % |- % : EC_1 ARCH_2
 
-          1. Else Dangling#13556
+          1. Else Dangling#13572
 
-      1. Else Dangling#13554
+      1. Else Dangling#13570
 
 relation PSA_ingress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
@@ -42710,9 +42761,9 @@ relation PSA_ingress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % 
 
                     1. Result in: % % |- % : EC_1 ARCH_2
 
-          1. Else Dangling#13567
+          1. Else Dangling#13583
 
-      1. Else Dangling#13565
+      1. Else Dangling#13581
 
 relation PSA_ingress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : %
 
@@ -42890,27 +42941,27 @@ relation PSA_ingress_init_globals: EC_0 ARCH |- i_port : %
 
                                                                                           1. Result in: % % |- % : EC_10
 
-                                                                              1. Else Dangling#13649
+                                                                              1. Else Dangling#13665
 
-                                                                        1. Else Dangling#13646
+                                                                        1. Else Dangling#13662
 
-                                                                  1. Else Dangling#13643
+                                                                  1. Else Dangling#13659
 
-                                                            1. Else Dangling#13640
+                                                            1. Else Dangling#13656
 
-                                                1. Else Dangling#13634
+                                                1. Else Dangling#13650
 
-                                      1. Else Dangling#13629
+                                      1. Else Dangling#13645
 
-                            1. Else Dangling#13624
+                            1. Else Dangling#13640
 
-                  1. Else Dangling#13619
+                  1. Else Dangling#13635
 
-            1. Else Dangling#13616
+            1. Else Dangling#13632
 
-      1. Else Dangling#13613
+      1. Else Dangling#13629
 
-  1. Else Dangling#13611
+  1. Else Dangling#13627
 
 def $PSA_setup_ingress_packet_in_argument(EC)
 
@@ -42926,7 +42977,7 @@ def $PSA_setup_ingress_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Dangling#13657
+  1. Else Dangling#13673
 
 def $PSA_setup_ingress_packet_out_argument(EC)
 
@@ -42942,7 +42993,7 @@ def $PSA_setup_ingress_packet_out_argument(EC)
 
           1. Return argumentIR_packet_out
 
-  1. Else Dangling#13663
+  1. Else Dangling#13679
 
 def $PSA_setup_ingress_hdr_argument(ARCH)
 
@@ -42966,11 +43017,11 @@ def $PSA_setup_ingress_hdr_argument(ARCH)
 
                   1. Return argumentIR_hdr
 
-            1. Else Dangling#13674
+            1. Else Dangling#13690
 
-      1. Else Dangling#13671
+      1. Else Dangling#13687
 
-  1. Else Dangling#13669
+  1. Else Dangling#13685
 
 def $PSA_setup_ingress_user_meta_argument(ARCH)
 
@@ -42994,11 +43045,11 @@ def $PSA_setup_ingress_user_meta_argument(ARCH)
 
                   1. Return argumentIR_user_meta
 
-            1. Else Dangling#13684
+            1. Else Dangling#13700
 
-      1. Else Dangling#13681
+      1. Else Dangling#13697
 
-  1. Else Dangling#13679
+  1. Else Dangling#13695
 
 def $PSA_setup_ingress_parser_input_metadata_argument(EC)
 
@@ -43014,7 +43065,7 @@ def $PSA_setup_ingress_parser_input_metadata_argument(EC)
 
           1. Return argumentIR_parser_input_metadata
 
-  1. Else Dangling#13689
+  1. Else Dangling#13705
 
 def $PSA_setup_ingress_input_metadata_argument(EC)
 
@@ -43030,7 +43081,7 @@ def $PSA_setup_ingress_input_metadata_argument(EC)
 
           1. Return argumentIR_input_metadata
 
-  1. Else Dangling#13695
+  1. Else Dangling#13711
 
 def $PSA_setup_ingress_output_metadata_argument(EC)
 
@@ -43046,7 +43097,7 @@ def $PSA_setup_ingress_output_metadata_argument(EC)
 
           1. Return argumentIR_output_metadata
 
-  1. Else Dangling#13701
+  1. Else Dangling#13717
 
 def $PSA_setup_ingress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -43110,23 +43161,23 @@ def $PSA_setup_ingress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
                                                           1. Return typedExpressionIR_ingress_pipeline
 
-                                                1. Else Dangling#13730
+                                                1. Else Dangling#13746
 
-                                          1. Else Dangling#13727
+                                          1. Else Dangling#13743
 
-                                    1. Else Dangling#13724
+                                    1. Else Dangling#13740
 
-                              1. Else Dangling#13721
+                              1. Else Dangling#13737
 
-                        1. Else Dangling#13718
+                        1. Else Dangling#13734
 
-                  1. Else Dangling#13715
+                  1. Else Dangling#13731
 
-            1. Else Dangling#13712
+            1. Else Dangling#13728
 
-        1. Else Dangling#13710
+        1. Else Dangling#13726
 
-  1. Else Dangling#13707
+  1. Else Dangling#13723
 
 def $PSA_setup_ingress_parser_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
@@ -43178,19 +43229,19 @@ def $PSA_setup_ingress_parser_callee(EC, ARCH, typedExpressionIR_ingress_pipelin
 
                                               1. Return typedExpressionIR_ingress_parser
 
-                                    1. Else Dangling#13754
+                                    1. Else Dangling#13770
 
-                              1. Else Dangling#13751
+                              1. Else Dangling#13767
 
-                        1. Else Dangling#13748
+                        1. Else Dangling#13764
 
-                  1. Else Dangling#13745
+                  1. Else Dangling#13761
 
-            1. Else Dangling#13742
+            1. Else Dangling#13758
 
-        1. Else Dangling#13740
+        1. Else Dangling#13756
 
-  1. Else Dangling#13737
+  1. Else Dangling#13753
 
 def $PSA_setup_ingress_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
@@ -43230,15 +43281,15 @@ def $PSA_setup_ingress_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
                                   1. Return typedExpressionIR_ingress
 
-                        1. Else Dangling#13772
+                        1. Else Dangling#13788
 
-                  1. Else Dangling#13769
+                  1. Else Dangling#13785
 
-            1. Else Dangling#13766
+            1. Else Dangling#13782
 
-        1. Else Dangling#13764
+        1. Else Dangling#13780
 
-  1. Else Dangling#13761
+  1. Else Dangling#13777
 
 def $PSA_setup_ingress_deparser_callee(EC, ARCH, typedExpressionIR_ingress_pipeline)
 
@@ -43296,21 +43347,21 @@ def $PSA_setup_ingress_deparser_callee(EC, ARCH, typedExpressionIR_ingress_pipel
 
                                                     1. Return typedExpressionIR_ingress_deparser
 
-                                          1. Else Dangling#13799
+                                          1. Else Dangling#13815
 
-                                    1. Else Dangling#13796
+                                    1. Else Dangling#13812
 
-                              1. Else Dangling#13793
+                              1. Else Dangling#13809
 
-                        1. Else Dangling#13790
+                        1. Else Dangling#13806
 
-                  1. Else Dangling#13787
+                  1. Else Dangling#13803
 
-            1. Else Dangling#13784
+            1. Else Dangling#13800
 
-        1. Else Dangling#13782
+        1. Else Dangling#13798
 
-  1. Else Dangling#13779
+  1. Else Dangling#13795
 
 relation PSA_ingress_parser: EC_0 ARCH_0 |- % % %
 
@@ -43352,7 +43403,7 @@ relation PSA_ingress_parser: EC_0 ARCH_0 |- % % %
 
                               1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-                        1. Else Dangling#13817
+                        1. Else Dangling#13833
 
 relation PSA_ingress: EC_0 ARCH_0 |- % % %
 
@@ -43390,7 +43441,7 @@ relation PSA_ingress: EC_0 ARCH_0 |- % % %
 
                           1. Result in: % % |- EC_1 ARCH_1 ((RETURN ?()) as callResult)
 
-                    1. Else Dangling#13832
+                    1. Else Dangling#13848
 
 relation PSA_ingress_deparser: EC_0 ARCH_0 |- % % %
 
@@ -43434,7 +43485,7 @@ relation PSA_ingress_deparser: EC_0 ARCH_0 |- % % %
 
                                 1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-                          1. Else Dangling#13850
+                          1. Else Dangling#13866
 
 relation PSA_egress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
@@ -43460,9 +43511,9 @@ relation PSA_egress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
                     1. Result in: % % |- % : EC_1 ARCH_2
 
-          1. Else Dangling#13860
+          1. Else Dangling#13876
 
-      1. Else Dangling#13858
+      1. Else Dangling#13874
 
 relation PSA_egress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
@@ -43488,9 +43539,9 @@ relation PSA_egress_init_packet_out: EC_0 ARCH_0 |- objectState_packet_out : % %
 
                     1. Result in: % % |- % : EC_1 ARCH_2
 
-          1. Else Dangling#13871
+          1. Else Dangling#13887
 
-      1. Else Dangling#13869
+      1. Else Dangling#13885
 
 relation PSA_egress_init_parser_input_metadata: EC_0 ARCH |- i_port t_path : %
 
@@ -43670,25 +43721,25 @@ relation PSA_egress_init_globals: EC_0 ARCH |- i_port : %
 
                                                                                       1. Result in: % % |- % : EC_8
 
-                                                                                1. Else Dangling#13956
+                                                                                1. Else Dangling#13972
 
-                                                                      1. Else Dangling#13951
+                                                                      1. Else Dangling#13967
 
-                                                          1. Else Dangling#13945
+                                                          1. Else Dangling#13961
 
-                                                1. Else Dangling#13940
+                                                1. Else Dangling#13956
 
-                                      1. Else Dangling#13935
+                                      1. Else Dangling#13951
 
-                            1. Else Dangling#13930
+                            1. Else Dangling#13946
 
-                  1. Else Dangling#13925
+                  1. Else Dangling#13941
 
-            1. Else Dangling#13922
+            1. Else Dangling#13938
 
-      1. Else Dangling#13919
+      1. Else Dangling#13935
 
-  1. Else Dangling#13917
+  1. Else Dangling#13933
 
 def $PSA_setup_egress_packet_in_argument(EC)
 
@@ -43704,7 +43755,7 @@ def $PSA_setup_egress_packet_in_argument(EC)
 
           1. Return argumentIR_packet_in
 
-  1. Else Dangling#13961
+  1. Else Dangling#13977
 
 def $PSA_setup_egress_packet_out_argument(EC)
 
@@ -43720,7 +43771,7 @@ def $PSA_setup_egress_packet_out_argument(EC)
 
           1. Return argumentIR_packet_out
 
-  1. Else Dangling#13967
+  1. Else Dangling#13983
 
 def $PSA_setup_egress_hdr_argument(ARCH)
 
@@ -43744,11 +43795,11 @@ def $PSA_setup_egress_hdr_argument(ARCH)
 
                   1. Return argumentIR_hdr
 
-            1. Else Dangling#13978
+            1. Else Dangling#13994
 
-      1. Else Dangling#13975
+      1. Else Dangling#13991
 
-  1. Else Dangling#13973
+  1. Else Dangling#13989
 
 def $PSA_setup_egress_user_meta_argument(ARCH)
 
@@ -43772,11 +43823,11 @@ def $PSA_setup_egress_user_meta_argument(ARCH)
 
                   1. Return argumentIR_user_meta
 
-            1. Else Dangling#13988
+            1. Else Dangling#14004
 
-      1. Else Dangling#13985
+      1. Else Dangling#14001
 
-  1. Else Dangling#13983
+  1. Else Dangling#13999
 
 def $PSA_setup_egress_parser_input_metadata_argument(EC)
 
@@ -43792,7 +43843,7 @@ def $PSA_setup_egress_parser_input_metadata_argument(EC)
 
           1. Return argumentIR_parser_input_metadata
 
-  1. Else Dangling#13993
+  1. Else Dangling#14009
 
 def $PSA_setup_egress_input_metadata_argument(EC)
 
@@ -43808,7 +43859,7 @@ def $PSA_setup_egress_input_metadata_argument(EC)
 
           1. Return argumentIR_input_metadata
 
-  1. Else Dangling#13999
+  1. Else Dangling#14015
 
 def $PSA_setup_egress_output_metadata_argument(EC)
 
@@ -43824,7 +43875,7 @@ def $PSA_setup_egress_output_metadata_argument(EC)
 
           1. Return argumentIR_output_metadata
 
-  1. Else Dangling#14005
+  1. Else Dangling#14021
 
 def $PSA_setup_egress_deparser_input_metadata_argument(EC)
 
@@ -43840,7 +43891,7 @@ def $PSA_setup_egress_deparser_input_metadata_argument(EC)
 
           1. Return argumentIR_deparser_input_metadata
 
-  1. Else Dangling#14011
+  1. Else Dangling#14027
 
 def $PSA_setup_egress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
@@ -43904,23 +43955,23 @@ def $PSA_setup_egress_pipeline_callee(EC, ARCH, typedExpressionIR_main)
 
                                                           1. Return typedExpressionIR_egress_pipeline
 
-                                                1. Else Dangling#14040
+                                                1. Else Dangling#14056
 
-                                          1. Else Dangling#14037
+                                          1. Else Dangling#14053
 
-                                    1. Else Dangling#14034
+                                    1. Else Dangling#14050
 
-                              1. Else Dangling#14031
+                              1. Else Dangling#14047
 
-                        1. Else Dangling#14028
+                        1. Else Dangling#14044
 
-                  1. Else Dangling#14025
+                  1. Else Dangling#14041
 
-            1. Else Dangling#14022
+            1. Else Dangling#14038
 
-        1. Else Dangling#14020
+        1. Else Dangling#14036
 
-  1. Else Dangling#14017
+  1. Else Dangling#14033
 
 def $PSA_setup_egress_parser_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
@@ -43978,21 +44029,21 @@ def $PSA_setup_egress_parser_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
                                                     1. Return typedExpressionIR_egress_parser
 
-                                          1. Else Dangling#14067
+                                          1. Else Dangling#14083
 
-                                    1. Else Dangling#14064
+                                    1. Else Dangling#14080
 
-                              1. Else Dangling#14061
+                              1. Else Dangling#14077
 
-                        1. Else Dangling#14058
+                        1. Else Dangling#14074
 
-                  1. Else Dangling#14055
+                  1. Else Dangling#14071
 
-            1. Else Dangling#14052
+            1. Else Dangling#14068
 
-        1. Else Dangling#14050
+        1. Else Dangling#14066
 
-  1. Else Dangling#14047
+  1. Else Dangling#14063
 
 def $PSA_setup_egress_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
@@ -44032,15 +44083,15 @@ def $PSA_setup_egress_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
                                   1. Return typedExpressionIR_egress
 
-                        1. Else Dangling#14085
+                        1. Else Dangling#14101
 
-                  1. Else Dangling#14082
+                  1. Else Dangling#14098
 
-            1. Else Dangling#14079
+            1. Else Dangling#14095
 
-        1. Else Dangling#14077
+        1. Else Dangling#14093
 
-  1. Else Dangling#14074
+  1. Else Dangling#14090
 
 def $PSA_setup_egress_deparser_callee(EC, ARCH, typedExpressionIR_egress_pipeline)
 
@@ -44092,19 +44143,19 @@ def $PSA_setup_egress_deparser_callee(EC, ARCH, typedExpressionIR_egress_pipelin
 
                                               1. Return typedExpressionIR_egress_deparser
 
-                                    1. Else Dangling#14109
+                                    1. Else Dangling#14125
 
-                              1. Else Dangling#14106
+                              1. Else Dangling#14122
 
-                        1. Else Dangling#14103
+                        1. Else Dangling#14119
 
-                  1. Else Dangling#14100
+                  1. Else Dangling#14116
 
-            1. Else Dangling#14097
+            1. Else Dangling#14113
 
-        1. Else Dangling#14095
+        1. Else Dangling#14111
 
-  1. Else Dangling#14092
+  1. Else Dangling#14108
 
 relation PSA_egress_parser: EC_0 ARCH_0 |- % % %
 
@@ -44148,7 +44199,7 @@ relation PSA_egress_parser: EC_0 ARCH_0 |- % % %
 
                                 1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-                          1. Else Dangling#14128
+                          1. Else Dangling#14144
 
 relation PSA_egress: EC_0 ARCH_0 |- % % %
 
@@ -44186,7 +44237,7 @@ relation PSA_egress: EC_0 ARCH_0 |- % % %
 
                           1. Result in: % % |- EC_1 ARCH_1 ((RETURN ?()) as callResult)
 
-                    1. Else Dangling#14143
+                    1. Else Dangling#14159
 
 relation PSA_egress_deparser: EC_0 ARCH_0 |- % % %
 
@@ -44230,4 +44281,4 @@ relation PSA_egress_deparser: EC_0 ARCH_0 |- % % %
 
                                 1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-                          1. Else Dangling#14161
+                          1. Else Dangling#14177
