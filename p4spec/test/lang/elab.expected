@@ -13562,8 +13562,20 @@ syntax functionCallee =
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* `) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
 
-syntax builtinMethodCallee = 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+syntax builtinIsValidMethodCallee = 
+   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
+
+syntax builtinSetValidMethodCallee = 
+   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
+
+syntax builtinSetInvalidMethodCallee = 
+   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
+
+syntax builtinPushFrontMethodCallee = 
+   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
+
+syntax builtinPopFrontMethodCallee = 
+   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
 
 syntax externMethodCallee = 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
@@ -13578,7 +13590,11 @@ syntax tableApplyMethodCallee =
    | TABLE objectId '.' APPLY `{ frame ';' tableObjectProperty `} (from tableApplyMethodCallee) 
 
 syntax methodCallee = 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -13588,7 +13604,11 @@ syntax callee =
    | ACTION cursor '.' nameIR `( parameterListIR '#' id* `) blockStatementIR (from actionCallee) 
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* `) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -16508,62 +16528,60 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- if (FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR `) blockStatementIR = definedFunctionDef)
     -- if (definedFunctionCallee = FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id_default*{id_default <- id_default*} `) blockStatementIR)
 
-  rulegroup builtinMethodCallee-header-stack-push-front
+  rulegroup builtinPushFrontMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "push_front" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "push_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "push_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinPushFrontMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?())
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `))
+    -- if (builtinPushFrontMethodCallee = BUILTIN_PUSHFRONT storageReference)
 
-  rulegroup builtinMethodCallee-header-stack-pop-front
+  rulegroup builtinPopFrontMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "pop_front" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "pop_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "pop_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinPopFrontMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?())
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `))
+    -- if (builtinPopFrontMethodCallee = BUILTIN_POPFRONT storageReference)
 
-  rulegroup builtinMethodCallee-header-isValid
+  rulegroup builtinIsValidMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "isValid" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "isValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "isValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinIsValidMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "isValid" `< [] `> `( [] `))
+    -- if (builtinIsValidMethodCallee = BUILTIN_ISVALID storageReference)
 
-  rulegroup builtinMethodCallee-header-setValid
+  rulegroup builtinSetValidMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "setValid" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinSetValidMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "setValid" `< [] `> `( [] `))
+    -- if (builtinSetValidMethodCallee = BUILTIN_SETVALID storageReference)
 
-  rulegroup builtinMethodCallee-header-setInvalid
+  rulegroup builtinSetInvalidMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "setInvalid" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setInvalid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setInvalid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinSetInvalidMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "setInvalid" `< [] `> `( [] `))
+    -- if (builtinSetInvalidMethodCallee = BUILTIN_SETINVALID storageReference)
 
   rulegroup externMethodCallee
 
@@ -16812,16 +16830,16 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if ~callResult <: rejectTransitionResult
     -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
 
-  rulegroup builtinMethodCallee-header-stack-push-front
+  rulegroup builtinPushFrontMethodCallee
 
-    rule abort: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule abort: p EC_0 ARCH_0 |- builtinPushFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
+    -- if (BUILTIN_PUSHFRONT storageReference = builtinPushFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult as expressionResult
 
-    rule cont: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont: p EC_0 ARCH_0 |- builtinPushFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_PUSHFRONT storageReference = builtinPushFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16837,8 +16855,8 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-    rule cont-overflow: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont-overflow: p EC_0 ARCH_0 |- builtinPushFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_PUSHFRONT storageReference = builtinPushFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16850,16 +16868,16 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-  rulegroup builtinMethodCallee-header-stack-pop-front
+  rulegroup builtinPopFrontMethodCallee
 
-    rule abort: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule abort: p EC_0 ARCH_0 |- builtinPopFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
+    -- if (BUILTIN_POPFRONT storageReference = builtinPopFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult as expressionResult
 
-    rule cont: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont: p EC_0 ARCH_0 |- builtinPopFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_POPFRONT storageReference = builtinPopFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16875,8 +16893,8 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-    rule cont-overflow: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont-overflow: p EC_0 ARCH_0 |- builtinPopFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_POPFRONT storageReference = builtinPopFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16888,38 +16906,38 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-  rulegroup builtinMethodCallee-header-isValid
+  rulegroup builtinIsValidMethodCallee-header
 
-    rule builtinMethodCallee-header-isValid: p EC ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "isValid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinIsValidMethodCallee-header: p EC ARCH |- builtinIsValidMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
+    -- if (BUILTIN_ISVALID storageReference = builtinIsValidMethodCallee)
     -- Lvalue_read: p EC ARCH |- storageReference : headerValue as value
     -- if (HEADER _typeId `{ b_valid ';' _fieldValue*{_fieldValue <- _fieldValue*} `} = headerValue)
     -- if (returnResult = RETURN ?(_B b_valid as value))
 
-  rulegroup builtinMethodCallee-header-setValid
+  rulegroup builtinSetValidMethodCallee
 
-    rule builtinMethodCallee-header-setValid: p EC_0 ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "setValid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinSetValidMethodCallee: p EC_0 ARCH |- builtinSetValidMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
+    -- if (BUILTIN_SETVALID storageReference = builtinSetValidMethodCallee)
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue as value
     -- if (HEADER typeId `{ _b ';' fieldValue*{fieldValue <- fieldValue*} `} = headerValue)
     -- if (value = HEADER typeId `{ true ';' fieldValue*{fieldValue <- fieldValue*} `} as value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
     -- if (returnResult = RETURN ?())
 
-  rulegroup builtinMethodCallee-header-setInvalid
+  rulegroup builtinSetInvalidMethodCallee
 
-    rule builtinMethodCallee-header-setInvalid: p EC_0 ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "setInvalid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinSetInvalidMethodCallee: p EC_0 ARCH |- builtinSetInvalidMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
+    -- if (BUILTIN_SETINVALID storageReference = builtinSetInvalidMethodCallee)
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue as value
     -- if (HEADER typeId `{ _b ';' fieldValue*{fieldValue <- fieldValue*} `} = headerValue)
     -- if (value = HEADER typeId `{ false ';' fieldValue*{fieldValue <- fieldValue*} `} as value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
     -- if (returnResult = RETURN ?())
 
-  rulegroup builtinMethodCallee-header-union-isValid
+  rulegroup builtinIsValidMethodCallee-header-union
 
-    rule builtinMethodCallee-header-union-isValid: p EC ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "isValid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinIsValidMethodCallee-header-union: p EC ARCH |- builtinIsValidMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
+    -- if (BUILTIN_ISVALID storageReference = builtinIsValidMethodCallee)
     -- Lvalue_read: p EC ARCH |- storageReference : headerUnionValue as value
     -- if (HEADER_UNION typeId `{ fieldValue*{fieldValue <- fieldValue*} `} = headerUnionValue)
     -- (if (value_field _nameIR ';' = fieldValue))*{_nameIR <- _nameIR*, fieldValue <- fieldValue*, value_field <- value_field*}

@@ -30,9 +30,11 @@ syntax functionCallee =
 ;;;; Method callees
 ;;
 
-syntax builtinMethodCallee =
-  BUILTIN_METHOD storageReference '.' nameIR
-    `< typeArgumentListIR `> `( parameterListIR `)
+syntax builtinIsValidMethodCallee    = BUILTIN_ISVALID storageReference
+syntax builtinSetValidMethodCallee   = BUILTIN_SETVALID storageReference
+syntax builtinSetInvalidMethodCallee = BUILTIN_SETINVALID storageReference
+syntax builtinPushFrontMethodCallee  = BUILTIN_PUSHFRONT storageReference
+syntax builtinPopFrontMethodCallee   = BUILTIN_POPFRONT storageReference
 
 syntax externMethodCallee =
   EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `>
@@ -51,7 +53,11 @@ syntax tableApplyMethodCallee =
   TABLE objectId '.' APPLY `{ frame ';' tableObjectProperty `}
 
 syntax methodCallee =
-  | builtinMethodCallee
+  | builtinIsValidMethodCallee
+  | builtinSetValidMethodCallee
+  | builtinSetInvalidMethodCallee
+  | builtinPushFrontMethodCallee
+  | builtinPopFrontMethodCallee
   | externMethodCallee
   | parserApplyMethodCallee
   | controlApplyMethodCallee

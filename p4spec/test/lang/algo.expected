@@ -23117,8 +23117,20 @@ syntax functionCallee =
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* `) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
 
-syntax builtinMethodCallee = 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+syntax builtinIsValidMethodCallee = 
+   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
+
+syntax builtinSetValidMethodCallee = 
+   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
+
+syntax builtinSetInvalidMethodCallee = 
+   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
+
+syntax builtinPushFrontMethodCallee = 
+   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
+
+syntax builtinPopFrontMethodCallee = 
+   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
 
 syntax externMethodCallee = 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
@@ -23133,7 +23145,11 @@ syntax tableApplyMethodCallee =
    | TABLE objectId '.' APPLY `{ frame ';' tableObjectProperty `} (from tableApplyMethodCallee) 
 
 syntax methodCallee = 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -23143,7 +23159,11 @@ syntax callee =
    | ACTION cursor '.' nameIR `( parameterListIR '#' id* `) blockStatementIR (from actionCallee) 
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* `) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -29480,7 +29500,7 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- let definedFunctionCallee = FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id_default*{id_default <- id_default*} `) blockStatementIR
     -- output: % % % |- % `< '_' `> `( % `) : EC ARCH _CONT definedFunctionCallee as callee as calleeResult
 
-  rulegroup builtinMethodCallee-header-stack-push-front
+  rulegroup builtinPushFrontMethodCallee
 
    match
 
@@ -29514,11 +29534,10 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- let _CONT storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- let parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?()
-    -- let builtinMethodCallee = BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `)
-    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    -- let builtinPushFrontMethodCallee = BUILTIN_PUSHFRONT storageReference
+    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinPushFrontMethodCallee as callee as calleeResult
 
-  rulegroup builtinMethodCallee-header-stack-pop-front
+  rulegroup builtinPopFrontMethodCallee
 
    match
 
@@ -29552,11 +29571,10 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- let _CONT storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- let parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?()
-    -- let builtinMethodCallee = BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `)
-    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    -- let builtinPopFrontMethodCallee = BUILTIN_POPFRONT storageReference
+    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinPopFrontMethodCallee as callee as calleeResult
 
-  rulegroup builtinMethodCallee-header-isValid
+  rulegroup builtinIsValidMethodCallee
 
    match
 
@@ -29588,10 +29606,10 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- let _CONT storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- let builtinMethodCallee = BUILTIN_METHOD storageReference '.' "isValid" `< [] `> `( [] `)
-    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    -- let builtinIsValidMethodCallee = BUILTIN_ISVALID storageReference
+    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinIsValidMethodCallee as callee as calleeResult
 
-  rulegroup builtinMethodCallee-header-setValid
+  rulegroup builtinSetValidMethodCallee
 
    match
 
@@ -29623,10 +29641,10 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- let _CONT storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- let builtinMethodCallee = BUILTIN_METHOD storageReference '.' "setValid" `< [] `> `( [] `)
-    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    -- let builtinSetValidMethodCallee = BUILTIN_SETVALID storageReference
+    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinSetValidMethodCallee as callee as calleeResult
 
-  rulegroup builtinMethodCallee-header-setInvalid
+  rulegroup builtinSetInvalidMethodCallee
 
    match
 
@@ -29658,8 +29676,8 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- let _CONT storageReference'?{storageReference' <- storageReference'?} = storageReferenceResult as continueResult<storageReference?>
     -- if storageReference'?{storageReference' <- storageReference'?} matches (_)
     -- let ?(storageReference) = storageReference'?{storageReference' <- storageReference'?}
-    -- let builtinMethodCallee = BUILTIN_METHOD storageReference '.' "setInvalid" `< [] `> `( [] `)
-    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    -- let builtinSetInvalidMethodCallee = BUILTIN_SETINVALID storageReference
+    -- output: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 _CONT builtinSetInvalidMethodCallee as callee as calleeResult
 
   rulegroup externMethodCallee
 
@@ -30239,14 +30257,14 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
     -- output: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 callResult
 
-  rulegroup builtinMethodCallee-header-stack-push-front
+  rulegroup builtinPushFrontMethodCallee
 
    match
 
-    (signature) p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : % % %
+    (signature) p EC_0 ARCH_0 |- builtinPushFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : % % %
     p EC_0 ARCH_0 |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentListIR `) : % % %
-    -- if callee <: builtinMethodCallee
-    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if callee <: builtinPushFrontMethodCallee
+    -- let builtinPushFrontMethodCallee = callee as builtinPushFrontMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentListIR matches [ _/1 ]
     -- let [argumentIR] = argumentListIR
@@ -30254,11 +30272,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
    paths
 
     rulepath abort
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterListIR `) = builtinMethodCallee
-    -- if (t = "push_front")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterListIR matches [ _/1 ]
-    -- let [parameterIR] = parameterListIR
+    -- let BUILTIN_PUSHFRONT storageReference = builtinPushFrontMethodCallee
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
@@ -30269,11 +30283,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- output: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_1 abortResult as callResult
 
     rulepath cont
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterListIR `) = builtinMethodCallee
-    -- if (t = "push_front")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterListIR matches [ _/1 ]
-    -- let [parameterIR] = parameterListIR
+    -- let BUILTIN_PUSHFRONT storageReference = builtinPushFrontMethodCallee
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
@@ -30301,11 +30311,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- output: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 RETURN ?() as callResult
 
     rulepath cont-overflow
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterListIR `) = builtinMethodCallee
-    -- if (t = "push_front")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterListIR matches [ _/1 ]
-    -- let [parameterIR] = parameterListIR
+    -- let BUILTIN_PUSHFRONT storageReference = builtinPushFrontMethodCallee
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
@@ -30326,14 +30332,14 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 RETURN ?() as callResult
 
-  rulegroup builtinMethodCallee-header-stack-pop-front
+  rulegroup builtinPopFrontMethodCallee
 
    match
 
-    (signature) p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : % % %
+    (signature) p EC_0 ARCH_0 |- builtinPopFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : % % %
     p EC_0 ARCH_0 |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentListIR `) : % % %
-    -- if callee <: builtinMethodCallee
-    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if callee <: builtinPopFrontMethodCallee
+    -- let builtinPopFrontMethodCallee = callee as builtinPopFrontMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentListIR matches [ _/1 ]
     -- let [argumentIR] = argumentListIR
@@ -30341,11 +30347,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
    paths
 
     rulepath abort
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterListIR `) = builtinMethodCallee
-    -- if (t = "pop_front")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterListIR matches [ _/1 ]
-    -- let [parameterIR] = parameterListIR
+    -- let BUILTIN_POPFRONT storageReference = builtinPopFrontMethodCallee
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
@@ -30356,11 +30358,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- output: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_1 abortResult as callResult
 
     rulepath cont
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterListIR `) = builtinMethodCallee
-    -- if (t = "pop_front")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterListIR matches [ _/1 ]
-    -- let [parameterIR] = parameterListIR
+    -- let BUILTIN_POPFRONT storageReference = builtinPopFrontMethodCallee
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
@@ -30388,11 +30386,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- output: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 RETURN ?() as callResult
 
     rulepath cont-overflow
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterListIR `) = builtinMethodCallee
-    -- if (t = "pop_front")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterListIR matches [ _/1 ]
-    -- let [parameterIR] = parameterListIR
+    -- let BUILTIN_POPFRONT storageReference = builtinPopFrontMethodCallee
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : value
     -- if value <: headerStackValue
     -- let headerStackValue = value as headerStackValue
@@ -30415,24 +30409,21 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
     -- output: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 RETURN ?() as callResult
 
-  rulegroup builtinMethodCallee-header-isValid
+  rulegroup builtinIsValidMethodCallee-header
 
    match
 
-    (signature) p EC ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : % % %
+    (signature) p EC ARCH |- builtinIsValidMethodCallee as callee '@' `< [] `> `( [] `) : % % %
     p EC ARCH |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : % % %
-    -- if callee <: builtinMethodCallee
-    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if callee <: builtinIsValidMethodCallee
+    -- let builtinIsValidMethodCallee = callee as builtinIsValidMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
 
-    rulepath builtinMethodCallee-header-isValid
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterIR*{parameterIR <- parameterIR*} `) = builtinMethodCallee
-    -- if (t = "isValid")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    rulepath builtinIsValidMethodCallee-header
+    -- let BUILTIN_ISVALID storageReference = builtinIsValidMethodCallee
     -- Lvalue_read: p EC ARCH |- storageReference : value
     -- if value <: headerValue
     -- let headerValue = value as headerValue
@@ -30440,24 +30431,21 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let returnResult = RETURN ?(_B b_valid as value)
     -- output: % % % |- % '@' `< % `> `( % `) : EC ARCH returnResult as callResult
 
-  rulegroup builtinMethodCallee-header-setValid
+  rulegroup builtinSetValidMethodCallee
 
    match
 
-    (signature) p EC_0 ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : % % %
+    (signature) p EC_0 ARCH |- builtinSetValidMethodCallee as callee '@' `< [] `> `( [] `) : % % %
     p EC_0 ARCH |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : % % %
-    -- if callee <: builtinMethodCallee
-    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if callee <: builtinSetValidMethodCallee
+    -- let builtinSetValidMethodCallee = callee as builtinSetValidMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
 
-    rulepath builtinMethodCallee-header-setValid
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterIR*{parameterIR <- parameterIR*} `) = builtinMethodCallee
-    -- if (t = "setValid")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    rulepath builtinSetValidMethodCallee
+    -- let BUILTIN_SETVALID storageReference = builtinSetValidMethodCallee
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
     -- if value' <: headerValue
     -- let headerValue = value' as headerValue
@@ -30467,24 +30455,21 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let returnResult = RETURN ?()
     -- output: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH returnResult as callResult
 
-  rulegroup builtinMethodCallee-header-setInvalid
+  rulegroup builtinSetInvalidMethodCallee
 
    match
 
-    (signature) p EC_0 ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : % % %
+    (signature) p EC_0 ARCH |- builtinSetInvalidMethodCallee as callee '@' `< [] `> `( [] `) : % % %
     p EC_0 ARCH |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : % % %
-    -- if callee <: builtinMethodCallee
-    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if callee <: builtinSetInvalidMethodCallee
+    -- let builtinSetInvalidMethodCallee = callee as builtinSetInvalidMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
 
-    rulepath builtinMethodCallee-header-setInvalid
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterIR*{parameterIR <- parameterIR*} `) = builtinMethodCallee
-    -- if (t = "setInvalid")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    rulepath builtinSetInvalidMethodCallee
+    -- let BUILTIN_SETINVALID storageReference = builtinSetInvalidMethodCallee
     -- Lvalue_read: p EC_0 ARCH |- storageReference : value'
     -- if value' <: headerValue
     -- let headerValue = value' as headerValue
@@ -30494,24 +30479,21 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let returnResult = RETURN ?()
     -- output: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH returnResult as callResult
 
-  rulegroup builtinMethodCallee-header-union-isValid
+  rulegroup builtinIsValidMethodCallee-header-union
 
    match
 
-    (signature) p EC ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : % % %
+    (signature) p EC ARCH |- builtinIsValidMethodCallee as callee '@' `< [] `> `( [] `) : % % %
     p EC ARCH |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : % % %
-    -- if callee <: builtinMethodCallee
-    -- let builtinMethodCallee = callee as builtinMethodCallee
+    -- if callee <: builtinIsValidMethodCallee
+    -- let builtinIsValidMethodCallee = callee as builtinIsValidMethodCallee
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
 
-    rulepath builtinMethodCallee-header-union-isValid
-    -- let BUILTIN_METHOD storageReference '.' t `< typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} `> `( parameterIR*{parameterIR <- parameterIR*} `) = builtinMethodCallee
-    -- if (t = "isValid")
-    -- if typeArgumentIR'*{typeArgumentIR' <- typeArgumentIR'*} matches []
-    -- if parameterIR*{parameterIR <- parameterIR*} matches []
+    rulepath builtinIsValidMethodCallee-header-union
+    -- let BUILTIN_ISVALID storageReference = builtinIsValidMethodCallee
     -- Lvalue_read: p EC ARCH |- storageReference : value
     -- if value <: headerUnionValue
     -- let headerUnionValue = value as headerUnionValue
