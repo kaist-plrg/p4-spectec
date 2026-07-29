@@ -37,6 +37,14 @@ syntax builtinPushFrontMethodCallee  = BUILTIN_PUSHFRONT storageReference
 syntax builtinPopFrontMethodCallee   = BUILTIN_POPFRONT storageReference
 syntax builtinSizeMethodCallee       = BUILTIN_SIZE nameIR typeIR
 
+syntax builtinMethodCallee =
+  | builtinIsValidMethodCallee
+  | builtinSetValidMethodCallee
+  | builtinSetInvalidMethodCallee
+  | builtinPushFrontMethodCallee
+  | builtinPopFrontMethodCallee
+  | builtinSizeMethodCallee
+
 syntax externMethodCallee =
   EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `>
     `( parameterListIR '#' id* '#' id* `)
@@ -54,12 +62,7 @@ syntax tableApplyMethodCallee =
   TABLE objectId '.' APPLY `{ frame ';' tableObjectProperty `}
 
 syntax methodCallee =
-  | builtinIsValidMethodCallee
-  | builtinSetValidMethodCallee
-  | builtinSetInvalidMethodCallee
-  | builtinPushFrontMethodCallee
-  | builtinPopFrontMethodCallee
-  | builtinSizeMethodCallee
+  | builtinMethodCallee
   | externMethodCallee
   | parserApplyMethodCallee
   | controlApplyMethodCallee
