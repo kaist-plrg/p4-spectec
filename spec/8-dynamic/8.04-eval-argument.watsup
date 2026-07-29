@@ -13,7 +13,7 @@ rulegroup Argument_eval {
                                 : EC_1 ARCH_1 expressionResult
 
   rule Argument_eval/nameIR-typedExpressionIR:
-    p EC_0 ARCH_0 |- nameIR `= typedExpressionIR
+    p EC_0 ARCH_0 |- nameIR '=' typedExpressionIR
                   : EC_1 ARCH_1 expressionResult
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR
                                 : EC_1 ARCH_1 expressionResult
@@ -41,7 +41,7 @@ rulegroup Argument_eval_lvalue {
                       : EC_1 ARCH_1 storageReferenceResult
 
   rule Argument_eval_lvalue/nameIR-typedExpressionIR:
-    p EC_0 ARCH_0 |- nameIR `= typedExpressionIR
+    p EC_0 ARCH_0 |- nameIR '=' typedExpressionIR
                   : EC_1 ARCH_1 storageReferenceResult
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
@@ -50,9 +50,9 @@ rulegroup Argument_eval_lvalue {
                       : EC_1 ARCH_1 storageReferenceResult
 
   rule Argument_eval_lvalue/nameIR-dontcare:
-    p EC ARCH |- nameIR `= `_ : EC ARCH (`` eps)
+    p EC ARCH |- nameIR '=' '_' : EC ARCH (_CONT eps)
 
   rule Argument_eval_lvalue/dontcare:
-    p EC ARCH |- `_ : EC ARCH (`` eps)
+    p EC ARCH |- '_' : EC ARCH (_CONT eps)
 
 }

@@ -18,14 +18,14 @@ let named_args (value_ids : Value.t) (value_args : Value.t) :
 (* boolValue = `B bool *)
 
 let unpack_p4_bool (value : Value.t) : bool =
-  Value.Get.(value |>> "`B bool" |> one |> bool)
+  Value.Get.(value |>> "_B bool" |> one |> bool)
 
 (* errorValue = ERROR `. id *)
 (* matchKindValue = MATCH_KIND `. id *)
 (* stringValue = stringLiteral *)
 
 let unpack_p4_string (value : Value.t) : string =
-  Value.Get.(value |>> "`\" text `\"" |> one |> text)
+  Value.Get.(value |>> "'\"' text '\"'" |> one |> text)
 
 (* D int *)
 
@@ -51,7 +51,7 @@ let unpack_p4_fixedInt (value : Value.t) : Bigint.t * Bigint.t =
 
 let unpack_p4_variableBit (value : Value.t) : Bigint.t * Bigint.t * Bigint.t =
   Value.Get.(
-    value |>> "nat `. nat V int" |> three
+    value |>> "nat '.' nat V int" |> three
     |> fun (value_width_max, value_width, value_int) ->
     let width_max = value_width_max |> num |> Num.to_int in
     let width = value_width |> num |> Num.to_int in
@@ -71,7 +71,7 @@ let unpack_p4_precision_numberValue (value : Value.t) : Bigint.t * Bigint.t =
 (* tupleValue = TUPLE `( value* ) *)
 
 let unpack_p4_tuple (value : Value.t) : Value.t list =
-  Value.Get.(value |>> "TUPLE `( value* )" |> one |> list)
+  Value.Get.(value |>> "TUPLE `( value* `)" |> one |> list)
 
 (* headerStackValue = HEADER_STACK `[ value* `( nat; nat ) ] *)
 (* structValue = STRUCT tid `{ fieldValue* } *)
@@ -82,7 +82,7 @@ let unpack_p4_tuple (value : Value.t) : Value.t list =
 
 let unpack_p4_enum (value : Value.t) : string * string =
   Value.Get.(
-    value |>> "tid `. id" |> two |> fun (value_tid, value_id) ->
+    value |>> "tid '.' id" |> two |> fun (value_tid, value_id) ->
     let tid = value_tid |> text in
     let id = value_id |> text in
     (tid, id))
@@ -95,7 +95,7 @@ let unpack_p4_enum (value : Value.t) : string * string =
 (* SEQ `( value* ) *)
 
 let unpack_p4_sequence (value : Value.t) : Value.t list =
-  Value.Get.(value |>> "SEQ `( value* )" |> one |> list)
+  Value.Get.(value |>> "SEQ `( value* `)" |> one |> list)
 
 (* SEQ `( value* `, `... ) *)
 (* RECORD `{ fieldValue* } *)

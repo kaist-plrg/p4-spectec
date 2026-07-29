@@ -154,7 +154,7 @@ module Make () = struct
       (name : string) : Value.t =
     let value_prefixedNameIR =
       let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      Value.Make.("_BARE nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     !call "find_var_value_t" []
       [ value_prefixedNameIR; value_cursor; value_ctx ]
@@ -173,7 +173,7 @@ module Make () = struct
       : Value.t =
     let value_prefixedNameIR =
       let value_nameIR = Value.Make.text name in
-      Value.Make.("`` nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
+      Value.Make.("_BARE nameIR" <| [ value_nameIR ] <<| "prefixedNameIR")
     in
     !call "find_var_e" [] [ value_prefixedNameIR; value_cursor; value_ctx ]
 

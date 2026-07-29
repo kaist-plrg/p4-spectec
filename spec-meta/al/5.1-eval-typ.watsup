@@ -11,8 +11,8 @@ def $upcast(C, INT, val) = FAIL
   -- if ~(val <: num)
 
 def $upcast(C, VAR id targ*, val) = $upcast(C, typ', val)
-  -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
-  -- if theta = `{ (tparam `: targ)* }
+  -- if (DEF tparam* '->' (ALIAS typ)) = $find_typ(C, id)
+  -- if theta = `{ (tparam ':' targ)* `}
   -- if typ' = $subst_typ(theta, typ)
 
 def $upcast(C, TUP typ*, TUP val*) = OK (TUP val_upcast*)
@@ -40,8 +40,8 @@ def $downcast(C, NAT, val) = FAIL
     -- if ~(val <: num)
 
 def $downcast(C, VAR id targ*, val) = $downcast(C, typ', val)
-    -- if (DEF tparam* `-> (ALIAS typ)) = $find_typ(C, id)
-    -- if theta = `{ (tparam `: targ)* }
+    -- if (DEF tparam* '->' (ALIAS typ)) = $find_typ(C, id)
+    -- if theta = `{ (tparam ':' targ)* `}
     -- if typ' = $subst_typ(theta, typ)
 
 def $downcast(C, TUP typ*, TUP val*) = OK (TUP val_downcast*)
@@ -77,16 +77,16 @@ def $subtyp(tdenv, VAR id targ*, EXT json) = true
 
 def $subtyp(tdenv, VAR id targ*, val)
   = $subtyp(tdenv, typ_subst, val)
-  -- if DEF tparam* `-> (ALIAS typ)
+  -- if DEF tparam* '->' (ALIAS typ)
       = $find_map<id, typdef>(tdenv, id)
-  -- if theta = `{ (tparam `: targ)* }
+  -- if theta = `{ (tparam ':' targ)* `}
   -- if typ_subst = $subst_typ(theta, typ)
 
 def $subtyp(tdenv, VAR id targ*, INJ (mixop val*))
   = $forall_($subtyp(tdenv, typ_case_found_subst, val)*)
-  -- if DEF tparam* `-> (VARIANT typcase*)
+  -- if DEF tparam* '->' (VARIANT typcase*)
       = $find_map<id, typdef>(tdenv, id)
-  -- if theta = `{ (tparam `: targ)* }
+  -- if theta = `{ (tparam ':' targ)* `}
   -- if (mixop_case typ_case* = typcase)*
   -- if mixop <- mixop_case*
   -- if typ_case_found*
@@ -95,11 +95,11 @@ def $subtyp(tdenv, VAR id targ*, INJ (mixop val*))
 
 def $subtyp(tdenv, VAR id targ*, STR valfield*)
   = $forall_($subtyp(tdenv, typ_field_subst, val_field)*)
-  -- if DEF tparam* `-> (STRUCT typfield*)
+  -- if DEF tparam* '->' (STRUCT typfield*)
       = $find_map<id, typdef>(tdenv, id)
   -- if (atom typ_field = typfield)*
   -- if (atom val_field = valfield)*
-  -- if theta = `{ (tparam `: targ)* }
+  -- if theta = `{ (tparam ':' targ)* `}
   -- if (typ_field_subst = $subst_typ(theta, typ_field))*
 
 def $subtyp(tdenv, TUP typ*, TUP val*)

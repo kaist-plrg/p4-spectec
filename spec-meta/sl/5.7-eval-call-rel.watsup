@@ -3,13 +3,13 @@
 ;;; Defined relations
 
 relation Call_defined_rel:
-  ctx |- definedRelDef `@ `( val* ) : res<val*>
+  ctx |- definedRelDef '@' `( val* `) : res<val*>
   hint(input %0 %1 %2)
   hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
   hint(prose_out %3)
 
 rule Call_defined_rel/succ:
-  C |- definedRelDef `@ `( val* ) : OK val_out*
+  C |- definedRelDef '@' `( val* `) : OK val_out*
   -- if DEF exp* block block_els? = definedRelDef
   -- if C_local = C[ .LOCAL = $empty_layer ]
   -- Assign_exps: C_local |- exp* := val* : C_local'
@@ -17,7 +17,7 @@ rule Call_defined_rel/succ:
   -- Eval_block: C_local' |- block_all : RES val_out*
 
 rule Call_defined_rel/fail:
-  C |- definedRelDef `@ `( val* ) : FAIL
+  C |- definedRelDef '@' `( val* `) : FAIL
   -- otherwise
 
 ;; Relation dispatch
@@ -32,7 +32,7 @@ rulegroup Call_rel_dispatch {
     rule Call_rel_dispatch/defined:
       C |- definedRelDef val* : valsres
       -- Call_defined_rel:
-          C |- definedRelDef `@ `( val* ) : valsres
+          C |- definedRelDef '@' `( val* `) : valsres
 
 }
 
