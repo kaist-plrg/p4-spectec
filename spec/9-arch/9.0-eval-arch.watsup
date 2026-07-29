@@ -17,7 +17,7 @@ relation Var_init:
 rule Var_init:
   EC_0 |- typeIR nameIR : EC_1
   -- if value = $default(typeIR)
-  -- if EC_1 = $add_var_e(GLOBAL, EC_0, `` nameIR, value)
+  -- if EC_1 = $add_var_e(GLOBAL, EC_0, _BARE nameIR, value)
 
 ;;
 ;;;; Extern initialization
@@ -39,11 +39,11 @@ rule Extern_init:
                BLOCK EC.BLOCK,
                LOCAL EC.LOCAL }
   -- Constructor_inst:
-      GLOBAL IC |- (`` nameIR_extern) `< eps > `( eps )
-                 : constructorDef `< eps > `( `# eps `# eps )
+      GLOBAL IC |- (_BARE nameIR_extern) `< eps `> `( eps `)
+                 : constructorDef `< eps `> `( '#' eps '#' eps `)
   -- if STO = ARCH_0.STORE
   -- Constructor_call:
-      GLOBAL IC STO |- constructorDef `< eps > `( eps `# eps `# eps )
+      GLOBAL IC STO |- constructorDef `< eps `> `( eps '#' eps '#' eps `)
                      : STO_1 object
   -- if ARCH_1 = ARCH_0[ .STORE = STO_1 ]
   -- if objectId_object = [ nameIR ]

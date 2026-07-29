@@ -3,7 +3,7 @@
 ;;; Relation premises
 
 rule Eval_prem/relpr:
-  C |- REL id `: exp* `-> exp_out* : OK C'
+  C |- REL id ':' exp* '->' exp_out* : OK C'
   -- (Eval_exp: C |- exp : OK val)*
   -- Call_rel: C |- id val* : OK val_out*
   -- Assign_exps : C |- exp_out* := val_out* : C'
@@ -27,12 +27,12 @@ rulegroup Eval_prem/ifpr {
 rulegroup Eval_prem/ifholdpr {
 
   rule Eval_prem/hold:
-    C |- IFHOLD id `: exp* : OK C
+    C |- IFHOLD id ':' exp* : OK C
     -- (Eval_exp: C |- exp : OK val_input)*
     -- Call_rel: C |- id val_input* : OK eps
 
   rule Eval_prem/nothold:
-    C |- IFNOTHOLD id `: exp* : OK C
+    C |- IFNOTHOLD id ':' exp* : OK C
     -- (Eval_exp: C |- exp : OK val_input)*
     -- Call_rel: C |- id val_input* : FAIL
 
@@ -41,7 +41,7 @@ rulegroup Eval_prem/ifholdpr {
 ;;; Let premises
 
 rule Eval_prem/letpr:
-  C |- LET exp_l `= exp_r : OK C'
+  C |- LET exp_l '=' exp_r : OK C'
   -- Eval_exp: C |- exp_r : OK val_r
   -- Assign_exp: C |- exp_l := val_r : C'
 

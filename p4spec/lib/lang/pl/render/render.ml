@@ -88,7 +88,7 @@ let code_of_varid (id_var : id) : Adoc.code =
 
 let string_of_atom (atom : atom) : string =
   match atom.it with
-  | Atom.Tick -> ""
+  | Atom.Tag _ -> ""
   | _ -> "+" ^ Atom.string_of_atom atom.it ^ "+"
 
 let code_of_atom (atom : atom) : Adoc.code =
