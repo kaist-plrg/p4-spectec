@@ -163,6 +163,7 @@ and rename_arg (ctx : Ctx.t) (renv : REnv.t) (arg : arg) : Ctx.t * REnv.t * arg
       let arg = ExpA exp $ at in
       (ctx, renv, arg)
   | DefA _ -> (ctx, renv, arg)
+  | TableA _ -> (ctx, renv, arg)
 
 and rename_args (ctx : Ctx.t) (renv : REnv.t) (args : arg list) :
     Ctx.t * REnv.t * arg list =

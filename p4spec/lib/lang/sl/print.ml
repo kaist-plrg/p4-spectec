@@ -157,6 +157,9 @@ and string_of_param param =
   | DefP (defid, tparams, params, typ) ->
       string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
+  | TableP (defid, params, typ) ->
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ
 
 and string_of_params params =
   match params with
@@ -174,6 +177,7 @@ and string_of_arg arg =
   match arg.it with
   | Il.ExpA exp -> string_of_exp exp
   | Il.DefA defid -> string_of_defid defid
+  | Il.TableA defid -> "tbldef " ^ string_of_defid defid
 
 and string_of_args args =
   match args with
@@ -433,8 +437,8 @@ let rec string_of_def def =
   | ExternDecD externfunc -> "extern def " ^ string_of_extern_func externfunc
   | BuiltinDecD builtinfunc ->
       "builtin def " ^ string_of_builtin_func builtinfunc
-  | TableDecD tablefunc -> "tbl def " ^ string_of_table_func tablefunc
   | FuncDecD func -> "def " ^ string_of_defined_func func
+  | TableDecD tablefunc -> "tbldef " ^ string_of_table_func tablefunc
 
 and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 

@@ -21,6 +21,15 @@ let rec boot_param (param : Il.param) : Value.t =
         mop_def_param
         <|! [ value_id; value_tparams; value_params; value_typ ]
         <<|! typ_param <<<| at)
+  | TableP (id, params, typ) ->
+      let value_id = boot_id id in
+      let value_tparams = boot_tparams [] in
+      let value_params = boot_params params in
+      let value_typ = boot_typ typ in
+      Value.Make.(
+        mop_def_param
+        <|! [ value_id; value_tparams; value_params; value_typ ]
+        <<|! typ_param <<<| at)
 
 and boot_params (params : Il.param list) : Value.t =
   let values_params = List.map boot_param params in
@@ -212,10 +221,10 @@ let rec boot_def (def : Al.def) : Value.t option =
       boot_extern_func_def at id tparams params typ |> wrap_some
   | BuiltinDecD (id, tparams, params, typ, _) ->
       boot_builtin_func_def at id tparams params typ |> wrap_some
-  | TableDecD (id, params, typ, tablerows, _) ->
-      boot_table_func_def at id params typ tablerows |> wrap_some
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, _) ->
       boot_func_def at id tparams params typ clauses elseclause_opt |> wrap_some
+  | TableDecD (id, params, typ, tablerows, _) ->
+      boot_table_func_def at id params typ tablerows |> wrap_some
 
 and boot_extern_typ_def (at : region) (id : Il.id) : Value.t =
   let value_id = boot_id id in

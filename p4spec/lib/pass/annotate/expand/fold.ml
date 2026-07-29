@@ -38,6 +38,7 @@ type ('a_exp, 'a_arg, 'a_path) folder = {
   f_DotP : typ' -> region -> 'a_path -> atom -> 'a_path;
   f_ExpA : region -> 'a_exp -> 'a_arg;
   f_DefA : region -> id -> 'a_arg;
+  f_TableA : region -> id -> 'a_arg;
 }
 
 (* Default folder that takes the parts of each expression and constructs the expression *)
@@ -95,6 +96,7 @@ let identity : (exp, arg, path) folder =
     f_DotP = (fun note at path atom -> { it = DotP (path, atom); at; note });
     f_ExpA = (fun at exp -> { it = ExpA exp; at; note = () });
     f_DefA = (fun at id -> { it = DefA id; at; note = () });
+    f_TableA = (fun at id -> { it = TableA id; at; note = () });
   }
 
 let rec fold_exp (alg : ('a_exp, 'a_arg, 'a_path) folder) (e : exp) : 'a_exp =
@@ -191,6 +193,7 @@ and fold_arg (alg : ('a_exp, 'a_arg, 'a_path) folder) (arg : arg) : 'a_arg =
       let acc = fold_exp alg exp in
       alg.f_ExpA at acc
   | DefA id -> alg.f_DefA at id
+  | TableA id -> alg.f_TableA at id
 
 and fold_args (alg : ('a_exp, 'a_arg, 'a_path) folder) (args : arg list) :
     'a_arg list =

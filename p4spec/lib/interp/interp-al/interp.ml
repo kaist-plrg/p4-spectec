@@ -61,6 +61,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typs values_input)
         id_rel.at
         (F.sprintf "relation input of %s does not match the expected type"
@@ -80,6 +81,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typs values_output)
         id_rel.at
         (F.sprintf "relation output of %s does not match the expected type"
@@ -106,6 +108,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         (Value.Match.subs
            (Ctx.find_typdef_opt ctx_local)
            (Ctx.find_func_signature ctx_local)
+           (Ctx.find_table_signature ctx_local)
            typs_params values_input)
         id_func.at
         (F.sprintf "function argument of %s does not match the parameter type"
@@ -120,6 +123,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check
         (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
            (Ctx.find_func_signature ctx)
+           (Ctx.find_table_signature ctx)
            typ_output value_output)
         id_func.at
         (F.sprintf
@@ -268,6 +272,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match arg.it with
     | ExpA exp -> assign_arg_exp ctx_callee exp value
     | DefA id -> assign_arg_def ctx_caller ctx_callee id value
+    | TableA id -> assign_arg_table ctx_caller ctx_callee id value
 
   and assign_args (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (args : arg list)
       (values : value list) : Ctx.t =
@@ -292,6 +297,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | _ ->
         error id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
+             (Il.Print.string_of_value ~short:true value)
+             id.it)
+
+  and assign_arg_table (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
+      (value : value) : Ctx.t =
+    match value.it with
+    | TableV id_t ->
+        let _, table = Ctx.find_table ctx_caller id_t in
+        Ctx.add_table ctx_callee id table
+    | _ ->
+        error id.at
+          (F.asprintf "cannot assign a value %s to a table %s"
              (Il.Print.string_of_value ~short:true value)
              id.it)
 
@@ -554,6 +571,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
+        (Ctx.find_table_signature ctx)
         typ value
     in
     let value_res = Value.Make.bool sub in
@@ -997,7 +1015,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           List.map (Type.Subst.subst_typ theta) targs
     in
     let* values_args = eval_args ctx args in
-    invoke_func ctx id targs values_args
+    invoke_arrow ctx id targs values_args
 
   (* Iterated expression evaluation *)
 
@@ -1048,6 +1066,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | DefA id ->
         let tparams, typs, typ = Ctx.find_func_signature ctx id in
         let value_res = Value.Make.func id tparams typs typ in
+        Ok value_res
+    | TableA id ->
+        let _, typs, typ = Ctx.find_table_signature ctx id in
+        let value_res = Value.Make.table id typs typ in
         Ok value_res
 
   and eval_args (ctx : Ctx.t) (args : arg list) : value list backtrack =
@@ -1387,19 +1409,74 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and is_high_order_func (values_input : value list) : bool =
     List.exists
       (fun value_input ->
-        match value_input.it with Il.FuncV _ -> true | _ -> false)
+        match value_input.it with
+        | Il.FuncV _ | Il.TableV _ -> true
+        | _ -> false)
       values_input
+
+  and invoke_arrow ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+      (targs : targ list) (values_input : value list) : value backtrack =
+    match Ctx.find_func_opt ctx id with
+    | Some _ -> invoke_func ~internal ctx id targs values_input
+    | None -> (
+        match Ctx.find_table_opt ctx id with
+        | Some _ ->
+            Hook.on_func_enter id values_input;
+            let cursor, (_, _, tablerows) = Ctx.find_table ctx id in
+            let invoke_body () = invoke_table ctx id tablerows values_input in
+            let anon = cursor = Ctx.Local in
+            let result =
+              if
+                !cache_enabled && (not anon)
+                && not (is_high_order_func values_input)
+              then (
+                let cache_result =
+                  CCache.find !func_cache (id.it, values_input)
+                in
+                match cache_result with
+                | Some value_output -> Ok value_output
+                | None ->
+                    let checkpoint_before = Interface.checkpoint () in
+                    let extern_checkpoint_before = Extern.checkpoint () in
+                    let* value_output = invoke_body () in
+                    let checkpoint_after = Interface.checkpoint () in
+                    let extern_checkpoint_after = Extern.checkpoint () in
+                    (* Cache if neither the interface nor the extern created a side-effect *)
+                    if
+                      (not (Interface.seff checkpoint_before checkpoint_after))
+                      && not
+                           (Extern.seff extern_checkpoint_before
+                              extern_checkpoint_after)
+                    then CCache.add !func_cache (id.it, values_input) value_output;
+                    Ok value_output)
+              else (
+                if not internal then check_func_inputs ctx id targs values_input;
+                invoke_body ())
+            in
+            Hook.on_func_exit id;
+            result
+            |> back_nest id.at (fun () ->
+                   F.asprintf "invocation of function %s%s failed"
+                     (Il.Print.string_of_defid id)
+                     (Il.Print.string_of_targs targs))
+        | None ->
+            error id.at (F.asprintf "function or table `%s` is undefined" id.it))
 
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value backtrack =
     Hook.on_func_enter id values_input;
-    (* Find the function *)
-    let cursor, func = Ctx.find_func ctx id in
+    (* Find the callee *)
+    let cursor, is_extern, invoke_body =
+      match Ctx.find_func_opt ctx id with
+      | Some (cursor, func) ->
+          let invoke () = invoke_func_body ctx id func targs values_input in
+          (cursor, is_extern_func func, invoke)
+      | None -> error id.at (F.asprintf "function `%s` is undefined" id.it)
+    in
     let anon = cursor = Ctx.Local in
     let result =
       if
-        !cache_enabled && (not anon)
-        && (not (is_extern_func func))
+        !cache_enabled && (not anon) && (not is_extern)
         && not (is_high_order_func values_input)
       then (
         let cache_result = CCache.find !func_cache (id.it, values_input) in
@@ -1408,9 +1485,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | None ->
             let checkpoint_before = Interface.checkpoint () in
             let extern_checkpoint_before = Extern.checkpoint () in
-            let* value_output =
-              invoke_func_body ctx id func targs values_input
-            in
+            let* value_output = invoke_body () in
             let checkpoint_after = Interface.checkpoint () in
             let extern_checkpoint_after = Extern.checkpoint () in
             (* Cache if neither the interface nor the extern created a side-effect *)
@@ -1422,7 +1497,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             Ok value_output)
       else (
         if not internal then check_func_inputs ctx id targs values_input;
-        invoke_func_body ctx id func targs values_input)
+        invoke_body ())
     in
     Hook.on_func_exit id;
     result
@@ -1438,8 +1513,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         invoke_extern_func ctx id tparams targs values_input typ
     | Func.Builtin (tparams, _, typ) ->
         invoke_builtin_func ctx id tparams targs values_input typ
-    | Func.Table (_, _, tablerows) ->
-        invoke_table_func ctx id tablerows values_input
     | Func.Defined (tparams, _, _, clauses, elseclause_opt) ->
         invoke_defined_func ctx id tparams clauses elseclause_opt targs
           values_input
@@ -1465,42 +1538,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       check_func_output ctx id tparams typ_output targs value_output;
       Ok value_output
     with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
-
-  and match_tablerow (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
-      (tablerow : tablerow) (values_input : value list) :
-      Ctx.t * arg list * prem list * exp =
-    let _, args_input, exp_output, prems = tablerow.it in
-    check
-      (List.length args_input = List.length values_input)
-      tablerow.at "arity mismatch while matching table row";
-    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
-    (ctx, args_input, prems, exp_output)
-
-  and invoke_table_func (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
-      (values_input : value list) : value backtrack =
-    let backtrack_tablerow' (ctx_local : Ctx.t) (prems : prem list)
-        (exp_output : exp) : value backtrack =
-      let* ctx_local = eval_prems ctx_local prems in
-      let* value_output = eval_exp ctx_local exp_output in
-      Ok value_output
-    in
-    tablerows
-    |> List.mapi (fun _idx_row tablerow ->
-           let backtrack_tablerow () : value backtrack =
-             (* Create a subtrace for the table row *)
-             let ctx_local = Ctx.localize ctx in
-             (* Try to match the table row *)
-             let ctx_local, args_input, prems, exp_output =
-               match_tablerow ctx ctx_local tablerow values_input
-             in
-             (* Try evaluating the row *)
-             backtrack_tablerow' ctx_local prems exp_output
-             |> back_nest id.at (fun () ->
-                    F.asprintf "application of table row %s%s failed" id.it
-                      (Il.Print.string_of_args args_input))
-           in
-           backtrack_tablerow)
-    |> choose_sequential
 
   and match_clause (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (clause : clause)
       (values_input : value list) : Ctx.t * arg list * prem list * exp =
@@ -1572,6 +1609,42 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           (F.asprintf "non-deterministic application of function %s: %d, %d"
              id.it idx_clause_a idx_clause_b)
 
+  and match_tablerow (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
+      (tablerow : tablerow) (values_input : value list) :
+      Ctx.t * arg list * prem list * exp =
+    let _, args_input, exp_output, prems = tablerow.it in
+    check
+      (List.length args_input = List.length values_input)
+      tablerow.at "arity mismatch while matching table row";
+    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
+    (ctx, args_input, prems, exp_output)
+
+  and invoke_table (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
+      (values_input : value list) : value backtrack =
+    let backtrack_tablerow' (ctx_local : Ctx.t) (prems : prem list)
+        (exp_output : exp) : value backtrack =
+      let* ctx_local = eval_prems ctx_local prems in
+      let* value_output = eval_exp ctx_local exp_output in
+      Ok value_output
+    in
+    tablerows
+    |> List.mapi (fun _idx_row tablerow ->
+           let backtrack_tablerow () : value backtrack =
+             (* Create a subtrace for the table row *)
+             let ctx_local = Ctx.localize ctx in
+             (* Try to match the table row *)
+             let ctx_local, args_input, prems, exp_output =
+               match_tablerow ctx ctx_local tablerow values_input
+             in
+             (* Try evaluating the row *)
+             backtrack_tablerow' ctx_local prems exp_output
+             |> back_nest id.at (fun () ->
+                    F.asprintf "application of table row %s%s failed" id.it
+                      (Il.Print.string_of_args args_input))
+           in
+           backtrack_tablerow)
+    |> choose_sequential
+
   (* Entry points for evaluation *)
 
   let clear () : unit =
@@ -1587,7 +1660,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let do_eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : value backtrack =
     let ctx = Ctx.empty in
-    invoke_func ~internal:false ctx (funcname $ no_region) targs values_input
+    invoke_arrow ~internal:false ctx (funcname $ no_region) targs values_input
 
   let eval_program (relname : string) (includes_p4 : string list)
       (path_p4 : string) : Run.program_result =

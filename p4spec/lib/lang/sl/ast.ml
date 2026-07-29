@@ -94,6 +94,7 @@ type param = param' phrase [@@deriving yojson]
 and param' =
   | ExpP of typ * exp
   | DefP of id * tparam list * param list * typ
+  | TableP of id * param list * typ
   [@@deriving yojson]
 
 (* Type arguments *)
@@ -222,10 +223,10 @@ and def' =
   | ExternDecD of externfunc
   (* `builtin` `dec` builtinfunc *)
   | BuiltinDecD of builtinfunc
-  (* `tbl` `dec` tablefunc *)
-  | TableDecD of tablefunc
   (* `dec` func *)
   | FuncDecD of definedfunc
+  (* `tbl` `dec` tablefunc *)
+  | TableDecD of tablefunc
 [@@deriving yojson]
 
 (* Spec *)

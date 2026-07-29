@@ -55,6 +55,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     check
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
          (Ctx.find_func_signature ctx)
+         (Ctx.find_table_signature ctx)
          typs values_input)
       id_rel.at
       (F.sprintf "relation input of %s does not match the expected type"
@@ -72,6 +73,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     check
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
          (Ctx.find_func_signature ctx)
+         (Ctx.find_table_signature ctx)
          typs values_output)
       id_rel.at
       (F.sprintf "relation output of %s does not match the expected type"
@@ -96,6 +98,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (Value.Match.subs
          (Ctx.find_typdef_opt ctx_local)
          (Ctx.find_func_signature ctx_local)
+         (Ctx.find_table_signature ctx_local)
          typs_params values_input)
       id_func.at
       (F.sprintf "function argument of %s does not match the parameter type"
@@ -108,6 +111,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     check
       (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
          (Ctx.find_func_signature ctx)
+         (Ctx.find_table_signature ctx)
          typ_output value_output)
       id_func.at
       (F.sprintf "return value of function %s does not match the expected type"
@@ -236,6 +240,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match param.it with
     | ExpP (_typ, exp) -> assign_param_exp ctx_callee exp value
     | DefP (id, _, _, _) -> assign_param_def ctx_caller ctx_callee id value
+    | TableP (id, _, _) -> assign_param_table ctx_caller ctx_callee id value
 
   and assign_params (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (params : param list) (values : value list) : Ctx.t =
@@ -260,6 +265,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | _ ->
         back_err id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
+             (Sl.Print.string_of_value ~short:true value)
+             id.it)
+
+  and assign_param_table (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
+      (value : value) : Ctx.t =
+    match value.it with
+    | TableV id_t ->
+        let _, table = Ctx.find_table ctx_caller id_t in
+        Ctx.add_table ctx_callee id table
+    | _ ->
+        back_err id.at
+          (F.asprintf "cannot assign a value %s to a table %s"
              (Sl.Print.string_of_value ~short:true value)
              id.it)
 
@@ -537,6 +554,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
+        (Ctx.find_table_signature ctx)
         typ value
     in
     let value_res = Value.Make.bool sub in
@@ -1054,6 +1072,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | DefA id ->
         let tparams, typs_params, typ = Ctx.find_func_signature ctx id in
         let value_res = Value.Make.func id tparams typs_params typ in
+        Hook.on_value value_res;
+        value_res
+    | TableA id ->
+        let _, typs_params, typ = Ctx.find_table_signature ctx id in
+        let value_res = Value.Make.table id typs_params typ in
         Hook.on_value value_res;
         value_res
 
@@ -1778,6 +1801,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
+        (Ctx.find_table_signature ctx)
         typ_target value
     in
     if sub then
@@ -1930,7 +1954,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and is_high_order_func (values_input : value list) : bool =
     List.exists
       (fun value_input ->
-        match value_input.it with Il.FuncV _ -> true | _ -> false)
+        match value_input.it with
+        | Il.FuncV _ | Il.TableV _ -> true
+        | _ -> false)
       values_input
 
   and invoke_func (ctx : Ctx.t) (id : id) (targs : targ list) (args : arg list)
@@ -1956,30 +1982,88 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           List.map (Type.Subst.subst_typ theta) targs
     in
     let values_input = eval_args ctx args in
-    invoke_func_with_values ctx id targs values_input
+    invoke_arrow ctx id targs values_input
+
+  and invoke_arrow ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+      (targs : targ list) (values_input : value list) : value =
+    match Ctx.find_func_opt ctx id with
+    | Some _ -> invoke_func_with_values ~internal ctx id targs values_input
+    | None -> (
+        match Ctx.find_table_opt ctx id with
+        | Some _ -> (
+            try
+              Hook.on_func_enter id values_input;
+              let cursor, (params, _, tablerows) = Ctx.find_table ctx id in
+              let invoke_func_with_values' () =
+                invoke_table ctx id params tablerows values_input
+              in
+              let anon = cursor = Ctx.Local in
+              let value_output =
+                if
+                  !cache_enabled && (not anon)
+                  && not (is_high_order_func values_input)
+                then (
+                  let cache_result =
+                    CCache.find !func_cache (id.it, values_input)
+                  in
+                  match cache_result with
+                  | Some value_output -> value_output
+                  | None ->
+                      let checkpoint_before = Interface.checkpoint () in
+                      let extern_checkpoint_before = Extern.checkpoint () in
+                      let value_output = invoke_func_with_values' () in
+                      let checkpoint_after = Interface.checkpoint () in
+                      let extern_checkpoint_after = Extern.checkpoint () in
+                      if
+                        (not
+                           (Interface.seff checkpoint_before checkpoint_after))
+                        && not
+                             (Extern.seff extern_checkpoint_before
+                                extern_checkpoint_after)
+                      then
+                        CCache.add !func_cache (id.it, values_input)
+                          value_output;
+                      value_output)
+                else (
+                  if not internal then
+                    check_func_inputs ctx id targs values_input;
+                  invoke_func_with_values' ())
+              in
+              Hook.on_func_exit id;
+              value_output
+            with Backtrace backtrace ->
+              Hook.on_func_exit id;
+              back_nest id.at
+                (fun () -> F.asprintf "function %s failed" id.it)
+                backtrace)
+        | None ->
+            back_err id.at
+              (F.asprintf "function or table `%s` is undefined" id.it))
 
   and invoke_func_with_values ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value =
     try
       Hook.on_func_enter id values_input;
-      let cursor, func = Ctx.find_func ctx id in
-      let anon = cursor = Ctx.Local in
-      let invoke_func_with_values' () =
-        match func with
-        | Func.Extern (tparams, _, typ) ->
-            invoke_extern_func ctx id tparams targs values_input typ
-        | Func.Builtin (tparams, _, typ) ->
-            invoke_builtin_func ctx id tparams targs values_input typ
-        | Func.Table (params, _, tablerows) ->
-            invoke_table_func ctx id params tablerows values_input
-        | Func.Defined (tparams, params, _, instr, elseblock_opt) ->
-            invoke_defined_func ctx id tparams params instr elseblock_opt targs
-              values_input
+      let cursor, is_extern, invoke_func_with_values' =
+        match Ctx.find_func_opt ctx id with
+        | Some (cursor, func) ->
+            let invoke () =
+              match func with
+              | Func.Extern (tparams, _, typ) ->
+                  invoke_extern_func ctx id tparams targs values_input typ
+              | Func.Builtin (tparams, _, typ) ->
+                  invoke_builtin_func ctx id tparams targs values_input typ
+              | Func.Defined (tparams, params, _, instr, elseblock_opt) ->
+                  invoke_defined_func ctx id tparams params instr elseblock_opt
+                    targs values_input
+            in
+            (cursor, is_extern_func func, invoke)
+        | None -> back_err id.at (F.asprintf "function `%s` is undefined" id.it)
       in
+      let anon = cursor = Ctx.Local in
       let value_output =
         if
-          !cache_enabled && (not anon)
-          && (not (is_extern_func func))
+          !cache_enabled && (not anon) && (not is_extern)
           && not (is_high_order_func values_input)
         then (
           let cache_result = CCache.find !func_cache (id.it, values_input) in
@@ -2044,22 +2128,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       values_input;
     value_output
 
-  and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
-      (tablerows : tablerow list) (values_input : value list) : value =
-    let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
-    let ctx_local = assign_params ctx ctx_local params values_input in
-    let block = List.concat_map (fun (_, _, block) -> block) tablerows in
-    let _, flow = eval_block ctx_local block in
-    match flow with
-    | Ret value_output ->
-        List.iteri
-          (fun idx_arg value_input ->
-            Hook.on_value_dependency value_output value_input
-              (Dep.Edges.Func (id, idx_arg)))
-          values_input;
-        value_output
-    | _ -> back_err id.at "table did not return a value"
-
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (params : param list) (block : block) (elseblock_opt : elseblock option)
       (targs : targ list) (values_input : value list) : value =
@@ -2094,6 +2162,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | Cont traces -> Unmatch traces |> back
     | Tailcall_func _ | Tailcall_rel _ -> assert false
 
+  and invoke_table (ctx : Ctx.t) (id : id) (params : param list)
+      (tablerows : tablerow list) (values_input : value list) : value =
+    let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
+    let ctx_local = assign_params ctx ctx_local params values_input in
+    let block = List.concat_map (fun (_, _, block) -> block) tablerows in
+    let _, flow = eval_block ctx_local block in
+    match flow with
+    | Ret value_output ->
+        List.iteri
+          (fun idx_arg value_input ->
+            Hook.on_value_dependency value_output value_input
+              (Dep.Edges.Func (id, idx_arg)))
+          values_input;
+        value_output
+    | _ -> back_err id.at "table did not return a value"
+
   (* Entry points for evaluation *)
 
   let clear () : unit =
@@ -2118,7 +2202,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       let ctx = Ctx.empty () in
       let value_output =
-        invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
+        invoke_arrow ~internal:false ctx (funcname $ no_region) targs
           values_input
       in
       value_output

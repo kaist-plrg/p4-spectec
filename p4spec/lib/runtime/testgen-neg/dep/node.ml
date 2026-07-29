@@ -18,6 +18,7 @@ and mirror' =
   | OptN of vid option
   | ListN of vid list
   | FuncN of id
+  | TableN of id
   | ExternN of Yojson.Safe.t
 
 (* Taint represents whether they are from the source P4 program or not *)
@@ -67,6 +68,7 @@ let dot_of_mirror (mirror : mirror) : string =
       Format.asprintf "[ %s ]"
         (String.concat ", " (List.map Sl.Print.string_of_vid vids))
   | FuncN id -> Sl.Print.string_of_defid id
+  | TableN id -> Sl.Print.string_of_defid id
   | ExternN _ -> "extern"
 
 let dot_of_taint (taint : taint) : string =

@@ -71,7 +71,10 @@ and infer_path' (path : path) (iters : iter list) (venv : VEnv.t) : VEnv.t =
   | DotP (path, _) -> infer_path' path iters venv
 
 and infer_arg' (arg : arg) (iters : iter list) (venv : VEnv.t) : VEnv.t =
-  match arg.it with ExpA exp -> infer_exp' exp iters venv | DefA _ -> venv
+  match arg.it with
+  | ExpA exp -> infer_exp' exp iters venv
+  | DefA _ -> venv
+  | TableA _ -> venv
 
 and infer_args' (args : arg list) (iters : iter list) (venv : VEnv.t) : VEnv.t =
   List.fold_left (fun venv arg -> infer_arg' arg iters venv) venv args

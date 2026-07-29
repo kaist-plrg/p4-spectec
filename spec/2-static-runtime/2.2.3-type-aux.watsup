@@ -36,10 +36,10 @@ def $width_of_integerTypeIR(VARBIT `< n >) = n
 
 ;;; Default
 
-tbl dec $is_defaultable_typeIR(typeIR) : bool
+tbldec $is_defaultable_typeIR(typeIR) : bool
   hint(prose_true %0 "can be default-initialized")
   hint(prose_false %0 "cannot be default-initialized")
-tbl def $is_defaultable_typeIR =
+tbldef $is_defaultable_typeIR =
   | BOOL => true
   | ERROR => true
   | STRING => true
@@ -58,10 +58,10 @@ tbl def $is_defaultable_typeIR =
 
 ;;; Equals
 
-tbl dec $is_equalable_typeIR(typeIR) : bool
+tbldec $is_equalable_typeIR(typeIR) : bool
   hint(prose_true %0 "supports equality comparison")
   hint(prose_false %0 "does not support equality comparison")
-tbl def $is_equalable_typeIR =
+tbldef $is_equalable_typeIR =
   | VOID => false
   | `` typeId => false
   | TYPEDEF _ typeIR => $is_equalable_typeIR(typeIR)
@@ -80,10 +80,10 @@ tbl def $is_equalable_typeIR =
 
 ;;; Assignable
 
-tbl dec $is_assignable_typeIR(typeIR) : bool
+tbldec $is_assignable_typeIR(typeIR) : bool
   hint(prose_true %0 "supports assignment")
   hint(prose_false %0 "does not support assignment")
-tbl def $is_assignable_typeIR =
+tbldef $is_assignable_typeIR =
   | VOID => false
   | STRING => false
   | INT => false

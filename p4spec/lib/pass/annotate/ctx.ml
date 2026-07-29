@@ -245,8 +245,8 @@ let load_def (ctx : t) (def : def) : t =
       load_hints ctx (`Rel id) hints
   | ExternDecD (id, _, _, _, hints)
   | BuiltinDecD (id, _, _, _, hints)
-  | TableDecD (id, _, _, _, hints)
-  | FuncDecD (id, _, _, _, _, _, hints) ->
+  | FuncDecD (id, _, _, _, _, _, hints)
+  | TableDecD (id, _, _, _, hints) ->
       load_hints ctx (`Func id) hints
 
 let load_spec (ctx : t) (spec : Sl.spec) : t = List.fold_left load_def ctx spec

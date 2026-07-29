@@ -193,6 +193,7 @@ let rec populate_arg_template (uenv : UEnv.t) (arg_template : arg) (arg : arg) :
   match (arg_template.it, arg.it) with
   | ExpA exp_template, ExpA exp -> populate_exp_template uenv exp_template exp
   | DefA id_template, DefA id when Il.Eq.eq_id id_template id -> []
+  | TableA id_template, TableA id when Il.Eq.eq_id id_template id -> []
   | _ ->
       Format.asprintf "cannot populate anti-unified arguments %s and %s"
         (Il.Print.string_of_arg arg_template)
@@ -218,6 +219,8 @@ let antiunify_arg (frees : IdSet.t) (uenv : UEnv.t) (arg_template : arg)
       let arg_template = Il.ExpA exp_template $ arg_template.at in
       (frees, uenv, arg_template)
   | DefA id_template, DefA id when Il.Eq.eq_id id_template id ->
+      (frees, uenv, arg_template)
+  | TableA id_template, TableA id when Il.Eq.eq_id id_template id ->
       (frees, uenv, arg_template)
   | _ -> assert false
 

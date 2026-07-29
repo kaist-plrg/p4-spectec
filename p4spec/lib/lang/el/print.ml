@@ -180,6 +180,9 @@ and string_of_param param =
       string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
+  | TableP (defid, params, plaintyp) ->
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
 
 and string_of_params params =
   match params with
@@ -202,6 +205,7 @@ and string_of_arg arg =
   match arg.it with
   | ExpA exp -> string_of_exp exp
   | DefA defid -> string_of_defid defid
+  | TableA defid -> "tbldef " ^ string_of_defid defid
 
 and string_of_args args =
   match args with
@@ -286,19 +290,19 @@ let string_of_def def =
       "builtin dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
-  | TableDecD (defid, params, plaintyp, _hints) ->
-      "tbl dec " ^ string_of_defid defid ^ string_of_params params ^ " : "
-      ^ string_of_plaintyp plaintyp
   | FuncDecD (defid, tparams, params, plaintyp, _hints) ->
       "dec " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : "
       ^ string_of_plaintyp plaintyp
-  | TableDefD (defid, tablerows) ->
-      "tbl def " ^ string_of_defid defid ^ " =\n  "
-      ^ string_of_tablerows tablerows
+  | TableDecD (defid, params, plaintyp, _hints) ->
+      "tbldec " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_plaintyp plaintyp
   | FuncDefD (defid, tparams, args, exp, prems) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_args args ^ " = " ^ string_of_exp exp ^ string_of_prems prems
+  | TableDefD (defid, tablerows) ->
+      "tbldef " ^ string_of_defid defid ^ " =\n  "
+      ^ string_of_tablerows tablerows
   | SepD -> "\n\n"
 
 (* Spec *)

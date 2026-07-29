@@ -73,11 +73,11 @@ rule Type_wf/nameTypeIR:
 
 ;;; Alias types
 
-tbl dec $nestable_typedef(typeIR) : bool
+tbldec $nestable_typedef(typeIR) : bool
   hint(prose_true %0 "can be used in a typedef")
   hint(prose_false %0 "cannot be used in a typedef")
 
-tbl def $nestable_typedef =
+tbldef $nestable_typedef =
   | BOOL => true
   | ERROR => true
   | STRING => true
@@ -97,11 +97,11 @@ rule Type_wf/typedefTypeIR:
   -- if $nestable_typedef(typeIR)
   -- Type_wf: B |- typeIR
 
-tbl dec $nestable_new(typeIR) : bool
+tbldec $nestable_new(typeIR) : bool
   hint(prose_true %0 "can be used in a new type")
   hint(prose_false %0 "cannot be used in a new type")
 
-tbl def $nestable_new =
+tbldef $nestable_new =
   | BOOL => true
   | BIT `< _ > => true
   | INT `< _ > => true
@@ -117,11 +117,11 @@ rule Type_wf/newTypeIR:
 
 ;;; Data types
 
-tbl dec $nestable_list(typeIR) : bool
+tbldec $nestable_list(typeIR) : bool
   hint(prose_true %0 "can be nested in a list type")
   hint(prose_false %0 "cannot be nested in a list type")
 
-tbl def $nestable_list =
+tbldef $nestable_list =
   | BOOL => true
   | ERROR => true
   | MATCH_KIND => true
@@ -144,14 +144,14 @@ rule Type_wf/listTypeIR:
   -- if $nestable_list(typeIR)
   -- Type_wf: B |- typeIR
 
-tbl dec $nestable_tuple(typeIR) : bool
+tbldec $nestable_tuple(typeIR) : bool
   hint(prose_true %0 "can be nested in a tuple type")
   hint(prose_false %0 "cannot be nested in a tuple type")
-tbl dec $nestable_array_in_tuple(typeIR) : bool
+tbldec $nestable_array_in_tuple(typeIR) : bool
   hint(prose_true %0 "can be used in an array nested in a tuple type")
   hint(prose_false %0 "cannot be used in an array nested in a tuple type")
 
-tbl def $nestable_tuple =
+tbldef $nestable_tuple =
   | BOOL => true
   | ERROR => true
   | BIT `< _ > => true
@@ -169,7 +169,7 @@ tbl def $nestable_tuple =
   | enumTypeIR => true
   | _ => false
 
-tbl def $nestable_array_in_tuple =
+tbldef $nestable_array_in_tuple =
   | BOOL => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -187,11 +187,11 @@ rule Type_wf/tupleTypeIR:
   -- if $nestable_tuple(typeIR)*
   -- (Type_wf: B |- typeIR)*
   
-tbl dec $nestable_array(typeIR) : bool
+tbldec $nestable_array(typeIR) : bool
   hint(prose_true %0 "can be nested in an array type")
   hint(prose_false %0 "cannot be nested in an array type")
 
-tbl def $nestable_array =
+tbldef $nestable_array =
   | BOOL => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -210,11 +210,11 @@ rule Type_wf/arrayTypeIR:
   -- if $nestable_array(typeIR)
   -- Type_wf: B |- typeIR
 
-tbl dec $nestable_headerStack(typeIR) : bool
+tbldec $nestable_headerStack(typeIR) : bool
   hint(prose_true %0 "can be nested in a header stack type")
   hint(prose_false %0 "cannot be nested in a header stack type")
 
-tbl def $nestable_headerStack =
+tbldef $nestable_headerStack =
   | nameTypeIR => true
   | TYPEDEF _ typeIR => $nestable_headerStack(typeIR)
   | headerTypeIR => true
@@ -238,17 +238,17 @@ rule Type_wf/structTypeIR:
   -- if $nestable_struct(typeIR_field)*
   -- (Type_wf: B |- typeIR_field)*
 
-tbl dec $nestable_header(typeIR) : bool
+tbldec $nestable_header(typeIR) : bool
   hint(prose_true %0 "can be used in a header type")
   hint(prose_false %0 "cannot be used in a header type")
-tbl dec $nestable_struct_in_header(typeIR) : bool
+tbldec $nestable_struct_in_header(typeIR) : bool
   hint(prose_true %0 "can be used in a struct nested in a header type")
   hint(prose_false %0 "cannot be used in a struct nested in a header type")
-tbl dec $nestable_array_in_header(typeIR) : bool
+tbldec $nestable_array_in_header(typeIR) : bool
   hint(prose_true %0 "can be used in an array nested in a header type")
   hint(prose_false %0 "cannot be used in an array nested in a header type")
 
-tbl def $nestable_header =
+tbldef $nestable_header =
   | BOOL => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -262,7 +262,7 @@ tbl def $nestable_header =
   | ARRAY typeIR `[ _ ] => $nestable_array_in_header(typeIR)
   | _ => false
 
-tbl def $nestable_struct_in_header =
+tbldef $nestable_struct_in_header =
   | BOOL => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -274,7 +274,7 @@ tbl def $nestable_struct_in_header =
       $forall_($nestable_struct_in_header(typeIR_field)*)
   | _ => false
 
-tbl def $nestable_array_in_header =
+tbldef $nestable_array_in_header =
   | BOOL => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -293,11 +293,11 @@ rule Type_wf/headerTypeIR:
   -- if $nestable_header(typeIR_field)*
   -- (Type_wf: B |- typeIR_field)*
 
-tbl dec $nestable_headerUnion(typeIR) : bool
+tbldec $nestable_headerUnion(typeIR) : bool
   hint(prose_true %0 "can be used in a header union type")
   hint(prose_false %0 "cannot be used in a header union type")
 
-tbl def $nestable_headerUnion =
+tbldef $nestable_headerUnion =
   | nameTypeIR => true
   | TYPEDEF _ typeIR => $nestable_headerUnion(typeIR)
   | newTypeIR => true
@@ -310,14 +310,14 @@ rule Type_wf/headerUnionTypeIR:
   -- if $nestable_headerUnion(typeIR_field)*
   -- (Type_wf: B |- typeIR_field)*
 
-tbl dec $nestable_enum_serializable(typeIR) : bool
+tbldec $nestable_enum_serializable(typeIR) : bool
   hint(prose_true %0 "can be used in a serializable enum type")
   hint(prose_false %0 "cannot be used in a serializable enum type")
-tbl dec $nestable_new_in_enum_serializable(typeIR) : bool
+tbldec $nestable_new_in_enum_serializable(typeIR) : bool
   hint(prose_true %0 "can be used in a new type nested in a serializable enum type")
   hint(prose_false %0 "cannot be used in a new type nested in a serializable enum type")
 
-tbl def $nestable_enum_serializable =
+tbldef $nestable_enum_serializable =
   | INT `< _ > => true
   | BIT `< _ > => true
   | nameTypeIR => true
@@ -325,7 +325,7 @@ tbl def $nestable_enum_serializable =
   | TYPE _ typeIR => $nestable_new_in_enum_serializable(typeIR)
   | _ => false
 
-tbl def $nestable_new_in_enum_serializable =
+tbldef $nestable_new_in_enum_serializable =
   | INT `< _ > => true
   | BIT `< _ > => true
   | nameTypeIR => true
@@ -403,17 +403,17 @@ rulegroup Type_wf/recordTypeIR {
 
 }
 
-tbl dec $nestable_set(typeIR) : bool
+tbldec $nestable_set(typeIR) : bool
   hint(prose_true %0 "can be used in a set type")
   hint(prose_false %0 "cannot be used in a set type")
-tbl dec $nestable_tuple_in_set(typeIR) : bool
+tbldec $nestable_tuple_in_set(typeIR) : bool
   hint(prose_true %0 "can be used in a tuple nested in a set type")
   hint(prose_false %0 "cannot be used in a tuple nested in a set type")
-tbl dec $nestable_sequence_in_set(typeIR) : bool
+tbldec $nestable_sequence_in_set(typeIR) : bool
   hint(prose_true %0 "can be used in a sequence nested in a set type")
   hint(prose_false %0 "cannot be used in a sequence nested in a set type")
 
-tbl def $nestable_set =
+tbldef $nestable_set =
   | BOOL => true
   | ERROR => true
   | INT `< _ > => true
@@ -426,7 +426,7 @@ tbl def $nestable_set =
   | SEQ `< typeIR* > => $forall_($nestable_sequence_in_set(typeIR)*)
   | _ => false
 
-tbl def $nestable_tuple_in_set =
+tbldef $nestable_tuple_in_set =
   | BOOL => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -437,7 +437,7 @@ tbl def $nestable_tuple_in_set =
   | enumTypeIR => true
   | _ => false
 
-tbl def $nestable_sequence_in_set =
+tbldef $nestable_sequence_in_set =
   | BOOL => true
   | INT `< _ > => true
   | BIT `< _ > => true
@@ -548,11 +548,11 @@ def $directionless_trailing'(_, direction_h :: direction_t*)
   = $directionless_trailing'(false, direction_t*)
   -- if direction_h =/= `EMPTY
 
-tbl dec $nestable_action(typeIR) : bool
+tbldec $nestable_action(typeIR) : bool
   hint(prose_true %0 "can be used in an action type")
   hint(prose_false %0 "cannot be used in an action type")
 
-tbl def $nestable_action =
+tbldef $nestable_action =
   | INT => false
   | TYPEDEF _ typeIR => $nestable_action(typeIR)
   | objectTypeIR => false
@@ -569,11 +569,11 @@ rule CallableType_wf/actionTypeIR:
 
 ;;; Function types
 
-tbl dec $nestable_definedFunction(typeIR) : bool
+tbldec $nestable_definedFunction(typeIR) : bool
   hint(prose_true %0 "can be used in a defined function type")
   hint(prose_false %0 "cannot be used in a defined function type")
 
-tbl def $nestable_definedFunction =
+tbldef $nestable_definedFunction =
   | TYPEDEF _ typeIR => $nestable_definedFunction(typeIR)
   | objectTypeIR => false
   | synthesizedTypeIR => false
@@ -587,11 +587,11 @@ rule CallableType_wf/definedFunctionTypeIR:
   -- if $nestable_definedFunction(typeIR)*
   -- ReturnType_wf: B |- typeIR_ret
 
-tbl dec $nestable_externFunction(typeIR) : bool
+tbldec $nestable_externFunction(typeIR) : bool
   hint(prose_true %0 "can be used in an extern function type")
   hint(prose_false %0 "cannot be used in an extern function type")
 
-tbl def $nestable_externFunction =
+tbldef $nestable_externFunction =
   | TYPEDEF _ typeIR => $nestable_externFunction(typeIR)
   | parserObjectTypeIR => false
   | controlObjectTypeIR => false
@@ -614,11 +614,11 @@ rule CallableType_wf/builtinMethodTypeIR:
   -- if (~$is_optional_parameterIR(parameterIR))*
   -- ReturnType_wf: B |- typeIR_ret
 
-tbl dec $nestable_externMethod(typeIR) : bool
+tbldec $nestable_externMethod(typeIR) : bool
   hint(prose_true %0 "can be used in an extern method type")
   hint(prose_false %0 "cannot be used in an extern method type")
 
-tbl def $nestable_externMethod =
+tbldef $nestable_externMethod =
   | TYPEDEF _ typeIR => $nestable_externMethod(typeIR)
   | parserObjectTypeIR => false
   | controlObjectTypeIR => false
@@ -645,11 +645,11 @@ rulegroup CallableType_wf/externMethodTypeIR {
 
 }
 
-tbl dec $nestable_parserApplyMethod(typeIR) : bool
+tbldec $nestable_parserApplyMethod(typeIR) : bool
   hint(prose_true %0 "can be used in a parser apply method type")
   hint(prose_false %0 "cannot be used in a parser apply method type")
 
-tbl def $nestable_parserApplyMethod =
+tbldef $nestable_parserApplyMethod =
   | TYPEDEF _ typeIR => $nestable_parserApplyMethod(typeIR)
   | parserObjectTypeIR => false
   | controlObjectTypeIR => false
@@ -664,11 +664,11 @@ rule CallableType_wf/parserApplyMethodTypeIR:
   -- if (_ _ typeIR _ _ = parameterIR)* 
   -- if $nestable_parserApplyMethod(typeIR)*
 
-tbl dec $nestable_controlApplyMethod(typeIR) : bool
+tbldec $nestable_controlApplyMethod(typeIR) : bool
   hint(prose_true %0 "can be used in a control apply method type")
   hint(prose_false %0 "cannot be used in a control apply method type")
 
-tbl def $nestable_controlApplyMethod =
+tbldef $nestable_controlApplyMethod =
   | TYPEDEF _ typeIR => $nestable_controlApplyMethod(typeIR)
   | parserObjectTypeIR => false
   | packageObjectTypeIR => false
@@ -715,11 +715,11 @@ rule ConstructorParameterType_wf:
 ;;;; Well-formedness of constructor types
 ;;
 
-tbl dec $nestable_constructor_extern(typeIR) : bool
+tbldec $nestable_constructor_extern(typeIR) : bool
   hint(prose_true %0 "can be used in an extern constructor type")
   hint(prose_false %0 "cannot be used in an extern constructor type")
 
-tbl def $nestable_constructor_extern =
+tbldef $nestable_constructor_extern =
   | TYPEDEF _ typeIR => $nestable_constructor_extern(typeIR)
   | parserObjectTypeIR => false
   | controlObjectTypeIR => false
@@ -735,11 +735,11 @@ rule ConstructorType_wf/externObjectTypeIR:
   -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_extern(typeIR)*
 
-tbl dec $nestable_constructor_parser(typeIR) : bool
+tbldec $nestable_constructor_parser(typeIR) : bool
   hint(prose_true %0 "can be used in a parser constructor type")
   hint(prose_false %0 "cannot be used in a parser constructor type")
 
-tbl def $nestable_constructor_parser =
+tbldef $nestable_constructor_parser =
   | TYPEDEF _ typeIR => $nestable_constructor_parser(typeIR)
   | controlObjectTypeIR => false
   | packageObjectTypeIR => false
@@ -755,10 +755,10 @@ rule ConstructorType_wf/parserObjectTypeIR:
   -- if (_ _ typeIR _ _ = parameterIR)*
   -- if $nestable_constructor_parser(typeIR)*
 
-tbl dec $nestable_constructor_control(typeIR) : bool
+tbldec $nestable_constructor_control(typeIR) : bool
   hint(prose_true %0 "can be used in a control constructor type")
   hint(prose_false %0 "cannot be used in a control constructor type")
-tbl def $nestable_constructor_control =
+tbldef $nestable_constructor_control =
   | TYPEDEF _ typeIR => $nestable_constructor_control(typeIR)
   | parserObjectTypeIR => false
   | packageObjectTypeIR => false
@@ -779,10 +779,10 @@ rule ConstructorType_wf/tableObjectTypeIR:
   -- Type_wf: B |- typeIR_object
   -- if tableObjectTypeIR = $unroll_typeIR(typeIR_object)
 
-tbl dec $nestable_constructor_package(typeIR) : bool
+tbldec $nestable_constructor_package(typeIR) : bool
   hint(prose_true %0 "can be used in a package constructor type")
   hint(prose_false %0 "cannot be used in a package constructor type")
-tbl def $nestable_constructor_package =
+tbldef $nestable_constructor_package =
   | TYPEDEF _ typeIR => $nestable_constructor_package(typeIR)
   | tableObjectTypeIR => false
   | _ => true
@@ -799,11 +799,11 @@ rule ConstructorType_wf/packageObjectTypeIR:
 ;;;; Well-formedness of constructor definitions
 ;;
 
-tbl dec $definable_constructor(typeIR) : bool
+tbldec $definable_constructor(typeIR) : bool
   hint(prose_true %0 "can be constructed")
   hint(prose_false %0 "cannot be constructed")
 
-tbl def $definable_constructor =
+tbldef $definable_constructor =
   | TYPEDEF _ typeIR => $definable_constructor(typeIR)
   | externObjectTypeIR => true
   | parserObjectTypeIR => true

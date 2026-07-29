@@ -119,7 +119,10 @@ and infer_path (dctx : Dimctx.t) (path : path) (iters : iter list) : Dimctx.t =
 (* Argument inference *)
 
 and infer_arg (dctx : Dimctx.t) (arg : arg) (iters : iter list) : Dimctx.t =
-  match arg.it with ExpA exp -> infer_exp dctx exp iters | DefA _ -> dctx
+  match arg.it with
+  | ExpA exp -> infer_exp dctx exp iters
+  | DefA _ -> dctx
+  | TableA _ -> dctx
 
 and infer_args (dctx : Dimctx.t) (args : arg list) (iters : iter list) :
     Dimctx.t =
@@ -389,6 +392,7 @@ and annotate_arg (bounds : VEnv.t) (arg : arg) : VEnv.t * arg =
       let arg = ExpA exp $ at in
       (occurs, arg)
   | DefA _ -> (empty, arg)
+  | TableA _ -> (empty, arg)
 
 and annotate_args (bounds : VEnv.t) (args : arg list) : VEnv.t * arg list =
   match args with
@@ -512,14 +516,14 @@ let analyze_def (def : def) : def =
       let rulegroups = List.map analyze_rulegroup rulegroups in
       let elsegroup_opt = Option.map analyze_elsegroup elsegroup_opt in
       RelD (id, nottyp, inputs, rulegroups, elsegroup_opt, hints) $ def.at
-  | TableDecD (id, params, typ, tablerows, hints) ->
-      let tablerows = List.map analyze_tablerow tablerows in
-      TableDecD (id, params, typ, tablerows, hints) $ def.at
   | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints) ->
       let clauses = List.map analyze_clause clauses in
       let elseclause_opt = Option.map analyze_clause elseclause_opt in
       FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, hints)
       $ def.at
+  | TableDecD (id, params, typ, tablerows, hints) ->
+      let tablerows = List.map analyze_tablerow tablerows in
+      TableDecD (id, params, typ, tablerows, hints) $ def.at
   | _ -> def
 
 let analyze_spec (spec : spec) : spec = List.map analyze_def spec

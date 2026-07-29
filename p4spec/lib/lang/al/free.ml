@@ -61,7 +61,10 @@ and free_path (path : path) : t =
 (* Arguments *)
 
 and free_arg (arg : arg) : t =
-  match arg.it with ExpA exp -> free_exp exp | DefA _ -> empty
+  match arg.it with
+  | ExpA exp -> free_exp exp
+  | DefA _ -> empty
+  | TableA _ -> empty
 
 and free_args (args : arg list) : t =
   args |> List.map free_arg |> List.fold_left ( + ) empty
@@ -141,7 +144,7 @@ let free_def (def : def) : t =
   match def.it with
   | RelD (_, _, _, rulegroups, elsegroup_opt, _) ->
       free_rulegroups rulegroups + free_elsegroup_opt elsegroup_opt
-  | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
   | FuncDecD (_, _, _, _, clauses, elseclause_opt, _) ->
       free_clauses clauses + free_elseclause_opt elseclause_opt
+  | TableDecD (_, _, _, tablerows, _) -> free_tablerows tablerows
   | _ -> empty

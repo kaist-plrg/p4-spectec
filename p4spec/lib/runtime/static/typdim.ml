@@ -22,6 +22,7 @@ let compare (typ_a, iters_a) (typ_b, iters_b) =
       | TupleT _ -> 4
       | IterT _ -> 5
       | FuncT _ -> 6
+      | TableT _ -> 7
     in
     match (typ_a.it, typ_b.it) with
     | NumT n_a, NumT n_b -> Num.compare_typ n_a n_b

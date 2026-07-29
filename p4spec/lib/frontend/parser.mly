@@ -77,7 +77,7 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 %token EQ NEQ UP BAR
 
 %token LATEX BOOL NAT INT TEXT
-%token SYNTAX EXTERN TABLE RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
+%token SYNTAX EXTERN TABLEDEC TABLEDEF RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
 %token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
@@ -667,6 +667,10 @@ param_ :
     { DefP ($3, $5, [], $8) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp exit_scope
     { DefP ($3, $5, $7, $10) }
+  | TABLEDEF DOLLAR defid COLON plaintyp
+    { TableP ($3, [], $5) }
+  | TABLEDEF DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp exit_scope
+    { TableP ($3, $5, $8) }
 
 (* Type parameters *)
 
@@ -678,6 +682,7 @@ arg : arg_ { $1 @@@ $sloc }
 arg_ :
   | exp_bin { ExpA $1 }
   | DEF DOLLAR defid { DefA $3 }
+  | TABLEDEF DOLLAR defid { TableA $3 }
 
 (* Type arguments *)
 
@@ -806,9 +811,9 @@ def_ :
   | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
     { BuiltinDecD ($4, $6, $8, $11, $12) }
   (* Table function declaration *)
-  | TABLE DEC DOLLAR id = defid COLON typ_ret = plaintyp hints = hint*
+  | TABLEDEC DOLLAR id = defid COLON typ_ret = plaintyp hints = hint*
     { TableDecD (id, [], typ_ret, hints) }
-  | TABLE DEC DOLLAR id = defid_lparen params = comma_list(param) RPAREN COLON typ_ret = plaintyp hints = hint*
+  | TABLEDEC DOLLAR id = defid_lparen params = comma_list(param) RPAREN COLON typ_ret = plaintyp hints = hint*
     { TableDecD (id, params, typ_ret, hints) }
   (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
@@ -820,7 +825,7 @@ def_ :
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
     { FuncDecD ($3, $5, $7, $10, $11) }
   (* Table function body definition *)
-  | TABLE DEF DOLLAR id = defid EQ body = table_body
+  | TABLEDEF DOLLAR id = defid EQ body = table_body
     { TableDefD (id, body) }
   (* Function clause declaration *)
   | DEF DOLLAR defid EQ exp prem_list

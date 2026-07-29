@@ -57,6 +57,8 @@ let rec string_of_typ typ =
   | FuncT (tparams, typs, typ) ->
       string_of_tparams tparams ^ "(" ^ string_of_typs ", " typs ^ ") : "
       ^ string_of_typ typ
+  | TableT (typs, typ) ->
+      "(" ^ string_of_typs ", " typs ^ ") : " ^ string_of_typ typ
 
 and string_of_typs sep typs = String.concat sep (List.map string_of_typ typs)
 
@@ -131,6 +133,7 @@ and string_of_value ?(short = false) ?(level = 0) value =
               values))
         (indent level)
   | FuncV id -> string_of_defid id
+  | TableV id -> string_of_defid id
   | ExternV _ -> "extern"
 
 and string_of_notval ?(level = 0) notval =
@@ -249,6 +252,9 @@ and string_of_param param =
   | DefP (defid, tparams, params, typ) ->
       string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
+  | TableP (defid, params, typ) ->
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ
 
 and string_of_params params =
   match params with
@@ -271,6 +277,7 @@ and string_of_arg arg =
   match arg.it with
   | ExpA exp -> string_of_exp exp
   | DefA defid -> string_of_defid defid
+  | TableA defid -> "tbldef " ^ string_of_defid defid
 
 and string_of_args args =
   match args with
@@ -427,15 +434,15 @@ let rec string_of_def def =
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
-  | TableDecD (defid, params, typ, tablerows, _) ->
-      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
-      ^ string_of_typ typ ^ " ="
-      ^ string_of_tablerows tablerows
   | FuncDecD (defid, tparams, params, typ, clauses, elseclause_opt, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses
       ^ string_of_elseclause_opt elseclause_opt
+  | TableDecD (defid, params, typ, tablerows, _) ->
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ ^ " ="
+      ^ string_of_tablerows tablerows
 
 and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 

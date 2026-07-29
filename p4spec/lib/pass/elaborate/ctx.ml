@@ -40,6 +40,8 @@ type t = {
   renv : REnv.t;
   (* Map from function ids to functions *)
   fenv : FEnv.t;
+  (* Map from table ids to tables *)
+  tenv : TEnv.t;
 }
 
 (* Constructors *)
@@ -52,6 +54,7 @@ let empty : t =
     menv = MEnv.empty;
     renv = REnv.empty;
     fenv = FEnv.empty;
+    tenv = TEnv.empty;
   }
 
 let init () : t =
@@ -148,19 +151,18 @@ let bound_rulegroup (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : bool =
 
 (* Finders for definitions *)
 
-let find_table_func_opt (ctx : t) (fid : FId.t) :
+let find_table_opt (ctx : t) (fid : FId.t) :
     (Il.param list * Il.typ * Il.tablerow list) option =
-  let func_opt = FEnv.find_opt fid ctx.fenv in
-  Option.bind func_opt (function
-    | Func.Table (params_il, typ_il, tablerows_il) ->
-        Some (params_il, typ_il, tablerows_il)
-    | Func.Defined _ | Func.Extern _ | Func.Builtin _ -> None)
+  TEnv.find_opt fid ctx.tenv
 
-let find_table_func (ctx : t) (fid : FId.t) :
+let find_table (ctx : t) (fid : FId.t) :
     Il.param list * Il.typ * Il.tablerow list =
-  match find_table_func_opt ctx fid with
+  match find_table_opt ctx fid with
   | Some (params_il, typ_il, tablerows_il) -> (params_il, typ_il, tablerows_il)
   | None -> error_undef fid.at "table function" fid.it
+
+let bound_table (ctx : t) (fid : FId.t) : bool =
+  find_table_opt ctx fid |> Option.is_some
 
 let find_defined_func_opt (ctx : t) (fid : FId.t) :
     (Il.tparam list
@@ -174,7 +176,7 @@ let find_defined_func_opt (ctx : t) (fid : FId.t) :
     | Func.Defined (tparams_il, params_il, typ_il, clauses_il, elseclause_il_opt)
       ->
         Some (tparams_il, params_il, typ_il, clauses_il, elseclause_il_opt)
-    | Func.Table _ | Func.Extern _ | Func.Builtin _ -> None)
+    | Func.Extern _ | Func.Builtin _ -> None)
 
 let find_defined_func (ctx : t) (fid : FId.t) :
     Il.tparam list * Il.param list * Il.typ * Il.clause list * Il.clause option
@@ -194,14 +196,25 @@ let find_func_signature_opt (ctx : t) (fid : FId.t) :
        | Func.Extern (tparams_il, params_il, typ_il)
        | Func.Builtin (tparams_il, params_il, typ_il)
        | Func.Defined (tparams_il, params_il, typ_il, _, _) ->
-           (tparams_il, params_il, typ_il)
-       | Func.Table (params_il, typ_il, _) -> ([], params_il, typ_il))
+           (tparams_il, params_il, typ_il))
+
+(* a table resolves to its monomorphic signature (empty tparams) *)
+let find_table_signature_opt (ctx : t) (fid : FId.t) :
+    (Il.tparam list * Il.param list * Il.typ) option =
+  find_table_opt ctx fid
+  |> Option.map (fun (params_il, typ_il, _) -> ([], params_il, typ_il))
 
 let find_func_signature (ctx : t) (fid : FId.t) :
     Il.tparam list * Il.param list * Il.typ =
   match find_func_signature_opt ctx fid with
   | Some (tparams_il, params_il, typ_il) -> (tparams_il, params_il, typ_il)
   | None -> error_undef fid.at "function" fid.it
+
+let find_table_signature (ctx : t) (fid : FId.t) :
+    Il.tparam list * Il.param list * Il.typ =
+  match find_table_signature_opt ctx fid with
+  | Some (tparams_il, params_il, typ_il) -> (tparams_il, params_il, typ_il)
+  | None -> error_undef fid.at "table" fid.it
 
 let bound_func (ctx : t) (fid : FId.t) : bool =
   find_func_signature_opt ctx fid |> Option.is_some
@@ -303,12 +316,12 @@ let add_builtin_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
-let add_table_func_dec (ctx : t) (fid : FId.t) (params_il : Il.param list)
+let add_table_dec (ctx : t) (fid : FId.t) (params_il : Il.param list)
     (typ_il : Il.typ) : t =
-  if bound_func ctx fid then error_dup fid.at "table function" fid.it;
-  let func = Func.Table (params_il, typ_il, []) in
-  let fenv = FEnv.add fid func ctx.fenv in
-  { ctx with fenv }
+  if bound_table ctx fid then error_dup fid.at "table function" fid.it;
+  let table = (params_il, typ_il, []) in
+  let tenv = TEnv.add fid table ctx.tenv in
+  { ctx with tenv }
 
 let add_defined_func_dec (ctx : t) (fid : FId.t) (tparams_il : Il.tparam list)
     (params_il : Il.param list) (typ_il : Il.typ) : t =
@@ -317,16 +330,16 @@ let add_defined_func_dec (ctx : t) (fid : FId.t) (tparams_il : Il.tparam list)
   let fenv = FEnv.add fid func ctx.fenv in
   { ctx with fenv }
 
-let add_table_func_tablerows (ctx : t) (fid : FId.t)
+let add_table_rows (ctx : t) (fid : FId.t)
     (tablerows : Il.tablerow list) : t =
-  if not (bound_func ctx fid) then
+  if not (bound_table ctx fid) then
     error_undef (List.hd tablerows).at "table function" fid.it;
-  let params, plaintyp, tablerows_found = find_table_func ctx fid in
+  let params, plaintyp, tablerows_found = find_table ctx fid in
   if List.length tablerows_found > 0 then
     error_dup (List.hd tablerows_found).at "table function" fid.it;
-  let func = Func.Table (params, plaintyp, tablerows) in
-  let fenv = FEnv.add fid func ctx.fenv in
-  { ctx with fenv }
+  let table = (params, plaintyp, tablerows) in
+  let tenv = TEnv.add fid table ctx.tenv in
+  { ctx with tenv }
 
 let add_defined_func_clause (ctx : t) (fid : FId.t) (clause : Il.clause) : t =
   if not (bound_func ctx fid) then error_undef clause.at "function" fid.it;

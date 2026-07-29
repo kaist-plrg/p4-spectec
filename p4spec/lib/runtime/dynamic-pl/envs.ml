@@ -18,3 +18,8 @@ module RTbl = MakeRIdTbl (Rel)
 
 module FEnv = MakeFIdEnv (Func)
 module FTbl = MakeFIdTbl (Func)
+
+(* Table environment *)
+
+module TEnv = MakeFIdEnv (Table)
+module TTbl = MakeFIdTbl (Table)

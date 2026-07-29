@@ -48,6 +48,7 @@ and typ' =
   | TupleT of typ list                    (* `(` list(typ, `,`) `)` *)
   | IterT of typ * iter                   (* typ iter *)
   | FuncT of tparam list * typ list * typ (* `<` list(tparam, `,`) `>` `(` list(typ, `,`) `)` `:` typ *)
+  | TableT of typ list * typ              (* `(` list(typ, `,`) `)` `:` typ *)
 [@@deriving yojson]
 
 (* Defined types *)
@@ -89,6 +90,7 @@ and value' =
   | OptV of value option
   | ListV of value list
   | FuncV of id
+  | TableV of id
   | ExternV of Yojson.Safe.t
 [@@deriving yojson]
 
@@ -163,6 +165,8 @@ and param' =
   | ExpP of typ
   (* `def` `$`id ` (`<` list(tparam, `,`) `>`)? (`(` list(param, `,`) `)`)? `:` typ *)
   | DefP of id * tparam list * param list * typ
+  (* `tbldef` `$`id (`(` list(param, `,`) `)`)? `:` typ *)
+  | TableP of id * param list * typ
 
 (* Type parameters *)
 
@@ -175,6 +179,7 @@ and arg = arg' phrase
 and arg' =
   | ExpA of exp   (* exp *)
   | DefA of id    (* `$`id *)
+  | TableA of id  (* `$`id *)
 
 (* Type arguments *)
 
@@ -241,10 +246,10 @@ and def' =
   | ExternDecD of id * tparam list * param list * typ * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ hint* *)
   | BuiltinDecD of id * tparam list * param list * typ * hint list
-  (* `table` `dec` id list(param, `,`) `:` typ hint* *)
-  | TableDecD of id * param list * typ * tablerow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
   | FuncDecD of id * tparam list * param list * typ * clause list * elseclause option * hint list
+  (* `table` `dec` id list(param, `,`) `:` typ hint* *)
+  | TableDecD of id * param list * typ * tablerow list * hint list
 
 (* Spec *)
 

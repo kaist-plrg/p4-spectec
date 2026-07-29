@@ -42,6 +42,8 @@ module Make () = struct
     rtbl : RTbl.t;
     (* Map from function ids to functions *)
     ftbl : FTbl.t;
+    (* Map from table ids to tables *)
+    ttbl : TTbl.t;
   }
 
   (* Local layer *)
@@ -65,6 +67,8 @@ module Make () = struct
         tdenv : TDEnv.t;
         (* Map from function ids to functions *)
         fenv : FEnv.t;
+        (* Map from table ids to tables *)
+        tenv : TEnv.t;
         (* Map from variables to values *)
         venv : VEnv.t;
       }
@@ -77,7 +81,8 @@ module Make () = struct
     let tdtbl = TDTbl.create ~size:500 in
     let rtbl = RTbl.create ~size:500 in
     let ftbl = FTbl.create ~size:500 in
-    { tdtbl; rtbl; ftbl }
+    let ttbl = TTbl.create ~size:500 in
+    { tdtbl; rtbl; ftbl; ttbl }
 
   (* Adders for globals *)
 
@@ -95,6 +100,11 @@ module Make () = struct
     if FTbl.find_opt fid global.ftbl |> Option.is_some then
       error_dup fid.at "function" fid.it;
     FTbl.add fid func global.ftbl
+
+  let add_table_global (fid : FId.t) (table : Table.t) : unit =
+    if TTbl.find_opt fid global.ttbl |> Option.is_some then
+      error_dup fid.at "table" fid.it;
+    TTbl.add fid table global.ttbl
 
   (* Global initializer *)
 
@@ -121,12 +131,11 @@ module Make () = struct
     | BuiltinDecD (id, tparams, params, typ, _) ->
         let func = Func.Builtin (tparams, params, typ) in
         add_func_global id func
-    | TableDecD (id, params, typ, tablerows, _) ->
-        let func = Func.Table (params, typ, tablerows) in
-        add_func_global id func
     | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
         let func = Func.Defined (tparams, params, typ, block, elseblock_opt) in
         add_func_global id func
+    | TableDecD (id, params, typ, tablerows, _) ->
+        add_table_global id (params, typ, tablerows)
 
   let init ~(det : bool) (spec : spec) : unit =
     is_det := det;
@@ -238,17 +247,51 @@ module Make () = struct
 
   let find_func_signature_opt (ctx : t) (fid : FId.t) :
       (tparam list * typ list * typ) option =
-    find_func_opt ctx fid
-    |> Option.map (fun (_, func) -> Func.get_signature func)
+    find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
 
   let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
       =
     match find_func_signature_opt ctx fid with
-    | Some (tparams, typs, typ) -> (tparams, typs, typ)
+    | Some signature -> signature
     | None -> back_undef fid.at "function" fid.it
 
   let bound_func (ctx : t) (fid : FId.t) : bool =
     find_func_opt ctx fid |> Option.is_some
+
+  (* Finders for tables *)
+
+  let find_table_opt (ctx : t) (fid : FId.t) : (cursor * Table.t) option =
+    let tenv =
+      match ctx.local with
+      | Empty | Rel _ -> TEnv.empty
+      | Func { tenv; _ } -> tenv
+    in
+    match TEnv.find_opt fid tenv with
+    | Some table -> Some (Local, table)
+    | None ->
+        TTbl.find_opt fid ctx.global.ttbl
+        |> Option.map (fun table -> (Global, table))
+
+  let find_table (ctx : t) (fid : FId.t) : cursor * Table.t =
+    match find_table_opt ctx fid with
+    | Some (cursor, table) -> (cursor, table)
+    | None -> back_undef fid.at "table" fid.it
+
+  let find_table_signature_opt (ctx : t) (fid : FId.t) :
+      (tparam list * typ list * typ) option =
+    find_table_opt ctx fid
+    |> Option.map (fun (_, table) ->
+           let typs, typ = Table.get_signature table in
+           ([], typs, typ))
+
+  let find_table_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
+      =
+    match find_table_signature_opt ctx fid with
+    | Some signature -> signature
+    | None -> back_undef fid.at "table" fid.it
+
+  let bound_table (ctx : t) (fid : FId.t) : bool =
+    find_table_opt ctx fid |> Option.is_some
 
   (* Adders *)
 
@@ -262,9 +305,9 @@ module Make () = struct
     | Rel { rid; values_input; venv } ->
         let venv = VEnv.add var value venv in
         { ctx with local = Rel { rid; values_input; venv } }
-    | Func { fid; values_input; tdenv; fenv; venv } ->
+    | Func { fid; values_input; tdenv; fenv; tenv; venv } ->
         let venv = VEnv.add var value venv in
-        { ctx with local = Func { fid; values_input; tdenv; fenv; venv } }
+        { ctx with local = Func { fid; values_input; tdenv; fenv; tenv; venv } }
 
   (* Adders for type definitions *)
 
@@ -273,9 +316,9 @@ module Make () = struct
     match ctx.local with
     | Empty -> back_err tid.at "cannot add type to empty local context"
     | Rel _ -> back_err tid.at "cannot add type to rule context"
-    | Func { fid; values_input; tdenv; fenv; venv } ->
+    | Func { fid; values_input; tdenv; fenv; tenv; venv } ->
         let tdenv = TDEnv.add tid td tdenv in
-        { ctx with local = Func { fid; values_input; tdenv; fenv; venv } }
+        { ctx with local = Func { fid; values_input; tdenv; fenv; tenv; venv } }
 
   (* Adders for functions *)
 
@@ -284,11 +327,27 @@ module Make () = struct
     match ctx.local with
     | Empty -> back_err fid.at "cannot add function to empty local context"
     | Rel _ -> back_err fid.at "cannot add function to relation context"
-    | Func { fid = fid_local; values_input; tdenv; fenv; venv } ->
+    | Func { fid = fid_local; values_input; tdenv; fenv; tenv; venv } ->
         let fenv = FEnv.add fid func fenv in
         {
           ctx with
-          local = Func { fid = fid_local; values_input; tdenv; fenv; venv };
+          local =
+            Func { fid = fid_local; values_input; tdenv; fenv; tenv; venv };
+        }
+
+  (* Adders for tables *)
+
+  let add_table (ctx : t) (fid : FId.t) (table : Table.t) : t =
+    if bound_table ctx fid then back_dup fid.at "table" fid.it;
+    match ctx.local with
+    | Empty -> back_err fid.at "cannot add table to empty local context"
+    | Rel _ -> back_err fid.at "cannot add table to relation context"
+    | Func { fid = fid_local; values_input; tdenv; fenv; tenv; venv } ->
+        let tenv = TEnv.add fid table tenv in
+        {
+          ctx with
+          local =
+            Func { fid = fid_local; values_input; tdenv; fenv; tenv; venv };
         }
 
   (* Constructors *)
@@ -304,7 +363,15 @@ module Make () = struct
   let localize_func (ctx : t) (fid : FId.t) (values_input : value list)
       (tdenv : TDEnv.t) : t =
     let local =
-      Func { fid; values_input; tdenv; fenv = FEnv.empty; venv = VEnv.empty }
+      Func
+        {
+          fid;
+          values_input;
+          tdenv;
+          fenv = FEnv.empty;
+          tenv = TEnv.empty;
+          venv = VEnv.empty;
+        }
     in
     { ctx with local }
 
@@ -313,10 +380,11 @@ module Make () = struct
     | Empty -> back_err no_region "cannot clear empty local context"
     | Rel { rid; values_input; _ } ->
         { ctx with local = Rel { rid; values_input; venv = VEnv.empty } }
-    | Func { fid; values_input; tdenv; fenv; _ } ->
+    | Func { fid; values_input; tdenv; fenv; tenv; _ } ->
         {
           ctx with
-          local = Func { fid; values_input; tdenv; fenv; venv = VEnv.empty };
+          local =
+            Func { fid; values_input; tdenv; fenv; tenv; venv = VEnv.empty };
         }
 
   (* Constructing sub-contexts *)

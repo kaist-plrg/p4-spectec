@@ -214,6 +214,7 @@ and render_arg arg =
   match arg.it with
   | ExpA exp -> render_exp exp
   | DefA id_def -> render_defid id_def
+  | TableA id_def -> render_defid id_def
 
 and render_args args =
   match args with
@@ -298,8 +299,8 @@ let render_def def =
       render_rulegroup_def id_rel id_rulegroup rules
   | ExternDecD _ -> ""
   | BuiltinDecD _ -> ""
-  | TableDecD _ -> ""
   | FuncDecD _ -> ""
-  | TableDefD _ -> ""
+  | TableDecD _ -> ""
   | FuncDefD _ -> ""
+  | TableDefD _ -> ""
   | SepD -> "\n\n"

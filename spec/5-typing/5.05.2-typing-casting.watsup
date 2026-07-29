@@ -448,24 +448,24 @@ def $reduce_serenum(typedExpressionIR) = typedExpressionIR
 
 dec $reduce_serenum_unary(
     typedExpressionIR,
-    def $check(typeIR) : bool)
+    tbldef $check(typeIR) : bool)
   : typedExpressionIR?
   hint(prose_in "the result of reducing serializable enums in" %0 "until" %1 "is satisfied")
 
-def $reduce_serenum_unary(typedExpressionIR, def $check)
+def $reduce_serenum_unary(typedExpressionIR, tbldef $check)
   = typedExpressionIR
   -- if _ `# `( typeIR _ ) = typedExpressionIR
   -- if $check(typeIR)
 
-def $reduce_serenum_unary(typedExpressionIR, def $check)
-  = $reduce_serenum_unary(typedExpressionIR_cast, def $check)
+def $reduce_serenum_unary(typedExpressionIR, tbldef $check)
+  = $reduce_serenum_unary(typedExpressionIR_cast, tbldef $check)
   -- if _ `# `( typeIR ctk ) = typedExpressionIR
   -- if ~$check(typeIR)
   -- if ENUM _ `< typeIR_underlying > `{ _ } = $unroll_typeIR(typeIR)
   -- if typedExpressionIR_cast
       = (`(typeIR_underlying) typedExpressionIR) `# `( typeIR_underlying ctk )
 
-def $reduce_serenum_unary(typedExpressionIR, def $check) = eps
+def $reduce_serenum_unary(typedExpressionIR, tbldef $check) = eps
   -- otherwise
 
 ;;; Binary case

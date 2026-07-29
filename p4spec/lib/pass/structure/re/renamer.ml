@@ -186,6 +186,7 @@ and rename_arg (renamer : t) (arg : arg) : arg =
       let exp = rename_exp renamer exp in
       Il.ExpA exp $ at
   | DefA _ -> arg
+  | TableA _ -> arg
 
 and rename_args (renamer : t) (args : arg list) : arg list =
   List.map (rename_arg renamer) args

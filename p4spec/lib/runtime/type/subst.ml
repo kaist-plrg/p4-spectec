@@ -47,6 +47,10 @@ let rec subst_typ_inner (theta : theta) (typ : typ) : typ =
         typ_ret |> subst_typ_inner theta_fresh |> subst_typ_inner theta
       in
       FuncT (tparams, typs_params, typ_ret) $ typ.at
+  | TableT (typs_params, typ_ret) ->
+      let typs_params = subst_typs_inner theta typs_params in
+      let typ_ret = subst_typ_inner theta typ_ret in
+      TableT (typs_params, typ_ret) $ typ.at
 
 and subst_typs_inner (theta : theta) (typs : typ list) : typ list =
   List.map (subst_typ_inner theta) typs
@@ -85,6 +89,10 @@ let rec subst_param (theta : theta) (param : param) : param =
       let params = params |> subst_params theta_fresh |> subst_params theta in
       let typ = typ |> subst_typ theta_fresh |> subst_typ theta in
       DefP (id, tparams, params, typ) $ param.at
+  | TableP (id, params, typ) ->
+      let params = subst_params theta params in
+      let typ = subst_typ theta typ in
+      TableP (id, params, typ) $ param.at
 
 and subst_params (theta : theta) (params : param list) : param list =
   List.map (subst_param theta) params

@@ -311,6 +311,7 @@ and annotate_arg (ctx : Ctx.t) (arg : arg) : Pl.arg =
       let exp_pl = annotate_exp ctx exp in
       Pl.ExpA exp_pl $ at
   | DefA id -> Pl.DefA id $ at
+  | TableA id -> Pl.TableA id $ at
 
 and annotate_args (ctx : Ctx.t) (args : arg list) : Pl.arg list =
   List.map (annotate_arg ctx) args
@@ -326,6 +327,9 @@ let rec annotate_param (ctx : Ctx.t) (param : param) : Pl.param =
   | DefP (id, tparams, params, typ) ->
       let params_pl = annotate_params ctx params in
       Pl.DefP (id, tparams, params_pl, typ) $ at
+  | TableP (id, params, typ) ->
+      let params_pl = annotate_params ctx params in
+      Pl.TableP (id, params_pl, typ) $ at
 
 and annotate_params (ctx : Ctx.t) (params : param list) : Pl.param list =
   List.map (annotate_param ctx) params
@@ -509,22 +513,6 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
       let node = Pl.BuiltinDecD (id, tparams, params_pl, typ) $ at in
       let hints = hints_of_func_def ctx id in
       { node; hints }
-  | TableDecD (id, params, typ, tablerows, _) ->
-      let params_pl = annotate_params ctx params in
-      let tablerows_pl =
-        List.map
-          (fun (exps_in, exp_out, block) ->
-            let exps_pl_in = annotate_exps ctx exps_in in
-            let exp_pl_out = annotate_exp ctx exp_out in
-            let block_pl =
-              block |> Linearize.linearize_block |> annotate_block ctx
-            in
-            (exps_pl_in, exp_pl_out, block_pl))
-          tablerows
-      in
-      let node = Pl.TableDecD (id, params_pl, typ, tablerows_pl) $ at in
-      let hints = hints_of_func_def ctx id in
-      { node; hints }
   | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
       let ctx_local = Ctx.add_tparams ctx tparams in
       let params_pl = annotate_params ctx_local params in
@@ -540,6 +528,22 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
         Pl.FuncDecD (id, tparams, params_pl, typ, block_pl, elseblock_pl_opt)
         $ at
       in
+      let hints = hints_of_func_def ctx id in
+      { node; hints }
+  | TableDecD (id, params, typ, tablerows, _) ->
+      let params_pl = annotate_params ctx params in
+      let tablerows_pl =
+        List.map
+          (fun (exps_in, exp_out, block) ->
+            let exps_pl_in = annotate_exps ctx exps_in in
+            let exp_pl_out = annotate_exp ctx exp_out in
+            let block_pl =
+              block |> Linearize.linearize_block |> annotate_block ctx
+            in
+            (exps_pl_in, exp_pl_out, block_pl))
+          tablerows
+      in
+      let node = Pl.TableDecD (id, params_pl, typ, tablerows_pl) $ at in
       let hints = hints_of_func_def ctx id in
       { node; hints }
 

@@ -183,6 +183,7 @@ and replace_arg (replacer : t) (arg : arg) : arg =
       let exp = replace_exp replacer exp in
       Il.ExpA exp $ at
   | DefA _ -> arg
+  | TableA _ -> arg
 
 and replace_args (replacer : t) (args : arg list) : arg list =
   List.map (replace_arg replacer) args

@@ -128,6 +128,8 @@ and param' =
   | ExpP of plaintyp
   (* `def` `$`id ` (`<` list(tparam, `,`) `>`)? (`(` list(param, `,`) `)`)? `:` plaintyp *)
   | DefP of id * tparam list * param list * plaintyp
+  (* `tbldef` `$`id (`(` list(param, `,`) `)`)? `:` plaintyp *)
+  | TableP of id * param list * plaintyp
 
 (* Type parameters *)
 
@@ -140,6 +142,7 @@ and arg = arg' phrase
 and arg' =
   | ExpA of exp   (* exp *)
   | DefA of id    (* `$`id *)
+  | TableA of id  (* `$`id *)
 
 (* Type arguments *)
 
@@ -196,14 +199,14 @@ and def' =
   | ExternDecD of id * tparam list * param list * plaintyp * hint list
   (* `builtin` `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | BuiltinDecD of id * tparam list * param list * plaintyp * hint list
-  (* `tbl` `dec` id list(param, `,`) `:` plaintyp hint* *)
-  | TableDecD of id * param list * plaintyp * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` plaintyp hint* *)
   | FuncDecD of id * tparam list * param list * plaintyp * hint list
-  (* `tbl` `def` id `=` list(`|` tablerow, nl) *)
-  | TableDefD of id * tablerow list
+  (* `tbl` `dec` id list(param, `,`) `:` plaintyp hint* *)
+  | TableDecD of id * param list * plaintyp * hint list
   (* `def` id `<` list(tparam, `,`) `>` list(arg, `,`) `=` exp list(`--` prem, nl) *)
   | FuncDefD of id * tparam list * arg list * exp * prem list
+  (* `tbl` `def` id `=` list(`|` tablerow, nl) *)
+  | TableDefD of id * tablerow list
   | SepD
 
 (* Spec *)

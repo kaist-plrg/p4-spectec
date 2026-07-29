@@ -245,15 +245,15 @@ let string_of_def def =
   | BuiltinDecD (defid, tparams, params, typ, _) ->
       "builtin def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ
-  | TableDecD (defid, params, typ, tablerows, _) ->
-      "tbl def " ^ string_of_defid defid ^ string_of_params params ^ " : "
-      ^ string_of_typ typ ^ " ="
-      ^ string_of_tablerows tablerows
   | FuncDecD (defid, tparams, params, typ, clauses, elseclause_opt, _) ->
       "def " ^ string_of_defid defid ^ string_of_tparams tparams
       ^ string_of_params params ^ " : " ^ string_of_typ typ ^ " ="
       ^ string_of_clauses clauses
       ^ string_of_elseclause_opt elseclause_opt
+  | TableDecD (defid, params, typ, tablerows, _) ->
+      "tbldef " ^ string_of_defid defid ^ string_of_params params ^ " : "
+      ^ string_of_typ typ ^ " ="
+      ^ string_of_tablerows tablerows
 
 let string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 

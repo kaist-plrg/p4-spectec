@@ -267,6 +267,13 @@ let shorten_def (def : def) : def =
         RelD (id, rel_signature, exps, block, elseblock_opt) $$ (at, note)
       in
       { def with node }
+  | FuncDecD (id, tparams, params, typ, block, elseblock_opt) ->
+      let block = shorten_block block in
+      let elseblock_opt = Option.map shorten_block elseblock_opt in
+      let node =
+        FuncDecD (id, tparams, params, typ, block, elseblock_opt) $$ (at, note)
+      in
+      { def with node }
   | TableDecD (id, params, typ, tablerows) ->
       let tablerows =
         List.map
@@ -276,13 +283,6 @@ let shorten_def (def : def) : def =
           tablerows
       in
       let node = TableDecD (id, params, typ, tablerows) $$ (at, note) in
-      { def with node }
-  | FuncDecD (id, tparams, params, typ, block, elseblock_opt) ->
-      let block = shorten_block block in
-      let elseblock_opt = Option.map shorten_block elseblock_opt in
-      let node =
-        FuncDecD (id, tparams, params, typ, block, elseblock_opt) $$ (at, note)
-      in
       { def with node }
   | _ -> def
 

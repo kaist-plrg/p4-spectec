@@ -267,20 +267,6 @@ let expand_def (def : def) : def =
           Option.map (expand_block_top frees) elseblock_opt
         in
         RelD (id, rel_signature, exps, body', elseblock_opt', hints)
-    | TableDecD (id, params, typ, tablerows, hints) ->
-        let tablerows' =
-          List.map
-            (fun (exps_in, exp_out, body) ->
-              let frees =
-                IdSet.union
-                  (Sl.Free.free_exps exps_in)
-                  (IdSet.union (Sl.Free.free_exp exp_out)
-                     (Sl.Free.free_block body))
-              in
-              (exps_in, exp_out, expand_block_top frees body))
-            tablerows
-        in
-        TableDecD (id, params, typ, tablerows', hints)
     | FuncDecD (id, tparams, params, typ, body, elseblock_opt, hints) ->
         let frees =
           IdSet.union (Sl.Free.free_params params) (Sl.Free.free_block body)
@@ -295,6 +281,20 @@ let expand_def (def : def) : def =
           Option.map (expand_block_top frees) elseblock_opt
         in
         FuncDecD (id, tparams, params, typ, body', elseblock_opt', hints)
+    | TableDecD (id, params, typ, tablerows, hints) ->
+        let tablerows' =
+          List.map
+            (fun (exps_in, exp_out, body) ->
+              let frees =
+                IdSet.union
+                  (Sl.Free.free_exps exps_in)
+                  (IdSet.union (Sl.Free.free_exp exp_out)
+                     (Sl.Free.free_block body))
+              in
+              (exps_in, exp_out, expand_block_top frees body))
+            tablerows
+        in
+        TableDecD (id, params, typ, tablerows', hints)
     | _ -> it
   in
   it' $ at

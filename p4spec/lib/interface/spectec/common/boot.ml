@@ -91,6 +91,7 @@ and boot_typ (typ : Il.typ) : Value.t =
   | TupleT typs -> boot_tuple_typ at typs
   | IterT (typ, iter) -> boot_iter_typ at typ iter
   | FuncT (_, _, _) -> boot_func_typ at
+  | TableT (_, _) -> boot_func_typ at
 
 and boot_typs (typs : Il.typ list) : Value.t =
   let values_typs = List.map boot_typ typs in
@@ -191,6 +192,7 @@ and boot_value (value : Il.value) : Value.t =
         | OptV value_opt -> boot_opt_value at value_opt
         | ListV values -> boot_list_value at values
         | FuncV id -> boot_func_value at id
+        | TableV id -> boot_func_value at id
         | ExternV json -> boot_extern_value at json
       in
       !add_boot_value_cache value value_value;
@@ -349,6 +351,9 @@ and boot_arg (arg : Il.arg) : Value.t =
       let value_exp = boot_exp e in
       Value.Make.(mop_exp_arg <|! [ value_exp ] <<|! typ_arg <<<| at)
   | DefA id ->
+      let value_id = boot_id id in
+      Value.Make.(mop_def_arg <|! [ value_id ] <<|! typ_arg <<<| at)
+  | TableA id ->
       let value_id = boot_id id in
       Value.Make.(mop_def_arg <|! [ value_id ] <<|! typ_arg <<<| at)
 

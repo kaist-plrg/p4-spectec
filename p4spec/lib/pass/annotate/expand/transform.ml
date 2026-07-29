@@ -350,6 +350,7 @@ let transform_first_with_iters
         let* exp_inner', iter_state = transform_exp acc exp_inner in
         Some (ExpA exp_inner' $ at, iter_state)
     | DefA _ -> None
+    | TableA _ -> None
   and transform_args acc (args : arg list) : (arg list * iter_state) option =
     transform_list (transform_arg acc) Vars.free_arg args
   and transform_path acc (path : path) : (path * iter_state) option =
