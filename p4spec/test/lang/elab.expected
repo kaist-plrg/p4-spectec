@@ -3004,6 +3004,36 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
   row 6 :
     (_typeIR) -> true
 
+tbl def $is_serializable_typeIR(typeIR) : bool =
+  row 0 :
+    (BOOL as typeIR) -> true
+  row 1 :
+    (INT `< _nat `> as typeIR) -> true
+  row 2 :
+    (BIT `< _nat `> as typeIR) -> true
+  row 3 :
+    (VARBIT `< _nat `> as typeIR) -> true
+  row 4 :
+    (TYPEDEF _typeId typeIR as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 5 :
+    (TYPE _typeId typeIR as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 6 :
+    (ENUM _typeId `< typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 7 :
+    (TUPLE `< typeIR*{typeIR <- typeIR*} `> as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 8 :
+    (ARRAY typeIR `[ _nat `] as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 9 :
+    (HEADER_STACK typeIR `[ _nat `] as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 10 :
+    (STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 11 :
+    (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 12 :
+    (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 13 :
+    (_typeIR) -> false
+
 def $typeId_of_typeDefIR(typeDefIR) : typeId =
 
   clause 0 : (_NAME typeId as typeDefIR) = typeId
@@ -11736,9 +11766,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rule builtinMethodTypeIR-size: p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (typeIR_base_unroll = $unroll_typeIR(typeIR_base))
-    -- if ~typeIR_base_unroll <: objectTypeIR
-    -- if ~typeIR_base_unroll <: synthesizedTypeIR
+    -- if $is_serializable_typeIR(typeIR_base)
     -- if (methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' INT as typeIR as methodTypeIR)
 
   rulegroup builtinMethodTypeIR-header-stack

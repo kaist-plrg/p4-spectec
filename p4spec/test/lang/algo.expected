@@ -3581,6 +3581,77 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
     (signature) _typeIR
     (_typeIR) -> true
 
+tbl def $is_serializable_typeIR(typeIR) : bool =
+  row 0 :
+    (signature) BOOL as typeIR
+    (typeIR) -> true
+    -- if typeIR <: boolTypeIR
+    -- let boolTypeIR = typeIR as boolTypeIR
+    -- if (boolTypeIR = BOOL)
+  row 1 :
+    (signature) INT `< _nat `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedIntTypeIR
+    -- let INT `< _nat `> = typeIR as fixedIntTypeIR
+  row 2 :
+    (signature) BIT `< _nat `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: fixedBitTypeIR
+    -- let BIT `< _nat `> = typeIR as fixedBitTypeIR
+  row 3 :
+    (signature) VARBIT `< _nat `> as typeIR
+    (typeIR) -> true
+    -- if typeIR <: varBitTypeIR
+    -- let VARBIT `< _nat `> = typeIR as varBitTypeIR
+  row 4 :
+    (signature) TYPEDEF _typeId typeIR as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: typedefTypeIR
+    -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
+  row 5 :
+    (signature) TYPE _typeId typeIR as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: newTypeIR
+    -- let TYPE _typeId typeIR = typeIR' as newTypeIR
+  row 6 :
+    (signature) ENUM _typeId `< typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: serializableEnumTypeIR
+    -- let ENUM _typeId `< typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR' as serializableEnumTypeIR
+  row 7 :
+    (signature) TUPLE `< typeIR*{typeIR <- typeIR*} `> as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: tupleTypeIR
+    -- let TUPLE `< typeIR*{typeIR <- typeIR*} `> = typeIR' as tupleTypeIR
+  row 8 :
+    (signature) ARRAY typeIR `[ _nat `] as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: arrayTypeIR
+    -- let ARRAY typeIR `[ _nat `] = typeIR' as arrayTypeIR
+  row 9 :
+    (signature) HEADER_STACK typeIR `[ _nat `] as typeIR
+    (typeIR') -> $is_serializable_typeIR(typeIR)
+    -- if typeIR' <: headerStackTypeIR
+    -- let HEADER_STACK typeIR `[ _nat `] = typeIR' as headerStackTypeIR
+  row 10 :
+    (signature) STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as structTypeIR
+  row 11 :
+    (signature) HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerTypeIR
+  row 12 :
+    (signature) HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR
+    (typeIR') -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+    -- if typeIR' <: headerUnionTypeIR
+    -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerUnionTypeIR
+  row 13 :
+    (signature) _typeIR
+    (_typeIR) -> false
+
 def $typeId_of_typeDefIR(typeDefIR) : typeId =
 
   clause 0 : (typeDefIR) = typeId
@@ -19619,9 +19690,7 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rulepath builtinMethodTypeIR-size
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
-    -- let typeIR_base_unroll = $unroll_typeIR(typeIR_base)
-    -- if ~typeIR_base_unroll <: objectTypeIR
-    -- if ~typeIR_base_unroll <: synthesizedTypeIR
+    -- if $is_serializable_typeIR(typeIR_base)
     -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' INT as typeIR as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 

@@ -1112,6 +1112,28 @@ xref:is_assignable_typeIR[``typeIR''`` supports assignment]:
 
 |===
 
+xref:is_serializable_typeIR[``typeIR''`` has a defined size]:
+[cols="2", options="header"]
+|===
+| (``typeIR''``) | Result 
+
+| +BOOL+ | true
+| +INT+ +`<+ ++_++ +`>+ | true
+| +BIT+ +`<+ ++_++ +`>+ | true
+| +VARBIT+ +`<+ ++_++ +`>+ | true
+| +TYPEDEF+ ++_++ typeIR | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +TYPE+ ++_++ typeIR | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +ENUM+ ++_++ +`<+ typeIR +`>+ +`{+ ++_++^{asterisk}^ +`}+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +TUPLE+ +`<+ typeIR^{asterisk}^ +`>+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| +ARRAY+ typeIR +`[+ ++_++ +`]+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +HEADER_STACK+ typeIR +`[+ ++_++ +`]+ | xref:is_serializable_typeIR[$is_serializable_typeIR(typeIR)]
+| +STRUCT+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ( ++_++ typeIR ++_++ +';'+ )^{asterisk}^ +`}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| +HEADER+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ( ++_++ typeIR ++_++ +';'+ )^{asterisk}^ +`}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| +HEADER_UNION+ ++_++ +`<+ ++_++^{asterisk}^ +`>+ +`{+ ( ++_++ typeIR ++_++ +';'+ )^{asterisk}^ +`}+ | xref:forall_[$forall_($is_serializable_typeIR(typeIR)^{asterisk}^)]
+| ++_++ | false
+
+|===
+
 xref:typeId_of_typeDefIR[The name of ``typeDefIR``]
 
 . If let ``typeId`` be ``typeDefIR``:
@@ -12369,9 +12391,7 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
 
 . Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-. Let ``typeIR~base_unroll~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. Check that ``typeIR~base_unroll~`` does not have type ``objectTypeIR``.
-. Check that ``typeIR~base_unroll~`` does not have type ``synthesizedTypeIR``.
+. Check that xref:is_serializable_typeIR[``typeIR~base~`` has a defined size].
 . Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+`)+`` ``+':'+`` ``+INT+``.
 . Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
