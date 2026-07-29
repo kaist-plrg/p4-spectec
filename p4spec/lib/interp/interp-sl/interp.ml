@@ -1147,7 +1147,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (args : arg list) : value =
     let targs = resolve_targs ctx targs in
     let values_args = eval_args ctx args in
-    invoke_func ctx id targs values_args
+    invoke_arrow ctx id targs values_args
 
   (* Iterated expression evaluation *)
 
@@ -1876,10 +1876,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           | Some (cursor, _) ->
               let anon = cursor = Ctx.Local in
               if anon || is_high_order_func values_args then
-                Flow.Ret (invoke_func ctx id targs values_args)
+                Flow.Ret (invoke_arrow ctx id targs values_args)
               else Flow.Tailcall_func (id, targs, values_args)
-          (* a table: invoke directly, invoke_func resolves via the table env *)
-          | None -> Flow.Ret (invoke_func ctx id targs values_args))
+          (* a table: invoke directly, invoke_arrow resolves via the table env *)
+          | None -> Flow.Ret (invoke_arrow ctx id targs values_args))
       | _ -> Flow.Ret (eval_exp ctx exp)
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
@@ -2020,6 +2020,53 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | _ -> false)
       values_input
 
+  and invoke_arrow ?(internal : bool = true) (ctx : Ctx.t) (id : id)
+      (targs : targ list) (values_input : value list) : value =
+    match Ctx.find_func_opt ctx id with
+    | Some _ -> invoke_func ~internal ctx id targs values_input
+    | None -> (
+        match Ctx.find_table_opt ctx id with
+        | Some _ -> (
+            try
+              Hook.on_func_enter id values_input;
+              let cursor, (params, _, tablerows) = Ctx.find_table ctx id in
+              let anon = cursor = Ctx.Local in
+              let value_output =
+                if
+                  !cache_enabled && (not anon)
+                  && not (is_high_order_func values_input)
+                then
+                  match CCache.find !func_cache (id.it, values_input) with
+                  | Some value_output -> value_output
+                  | None ->
+                      let checkpoint_before = Interface.checkpoint () in
+                      let extern_checkpoint_before = Extern.checkpoint () in
+                      let value_output =
+                        invoke_table ctx id params tablerows values_input
+                      in
+                      let checkpoint_after = Interface.checkpoint () in
+                      let extern_checkpoint_after = Extern.checkpoint () in
+                      if
+                        (not
+                           (Interface.seff checkpoint_before checkpoint_after))
+                        && not
+                             (Extern.seff extern_checkpoint_before
+                                extern_checkpoint_after)
+                      then
+                        CCache.add !func_cache (id.it, values_input)
+                          value_output;
+                      value_output
+                else invoke_table ctx id params tablerows values_input
+              in
+              Hook.on_func_exit id;
+              value_output
+            with Backtrace backtrace ->
+              Hook.on_func_exit id;
+              back_nest id.at
+                (fun () -> F.asprintf "function %s failed" id.it)
+                backtrace)
+        | None -> back_err id.at (F.asprintf "function or table `%s` is undefined" id.it))
+
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value =
     let rec loop id targs values_input =
@@ -2072,38 +2119,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             | Tailcall_func (id_tail, targs_tail, values_tail) ->
                 Hook.on_func_exit id;
                 loop id_tail targs_tail values_tail)
-        | None ->
-            (* Transitional: a table call is resolved through the table env.
-               A later elaborator change emits a distinct table-call node. *)
-            let cursor, (params, _, tablerows) = Ctx.find_table ctx id in
-            let anon = cursor = Ctx.Local in
-            let value_output =
-              if
-                !cache_enabled && (not anon)
-                && not (is_high_order_func values_input)
-              then
-                match CCache.find !func_cache (id.it, values_input) with
-                | Some value_output -> value_output
-                | None ->
-                    let checkpoint_before = Interface.checkpoint () in
-                    let extern_checkpoint_before = Extern.checkpoint () in
-                    let value_output =
-                      invoke_table_func ctx id params tablerows values_input
-                    in
-                    let checkpoint_after = Interface.checkpoint () in
-                    let extern_checkpoint_after = Extern.checkpoint () in
-                    if
-                      (not (Interface.seff checkpoint_before checkpoint_after))
-                      && not
-                           (Extern.seff extern_checkpoint_before
-                              extern_checkpoint_after)
-                    then
-                      CCache.add !func_cache (id.it, values_input) value_output;
-                    value_output
-              else invoke_table_func ctx id params tablerows values_input
-            in
-            Hook.on_func_exit id;
-            value_output
+        | None -> back_err id.at (F.asprintf "function `%s` is undefined" id.it)
       with Backtrace backtrace ->
         Hook.on_func_exit id;
         back_nest id.at
@@ -2160,22 +2176,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       values_input;
     value_output
 
-  and invoke_table_func (ctx : Ctx.t) (id : id) (params : param list)
-      (tablerows : tablerow list) (values_input : value list) : value =
-    let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
-    let ctx_local = assign_params ctx ctx_local params values_input in
-    let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
-    let flow = eval_block_sequential ~tail:true ctx_local instrs in
-    match flow with
-    | Ret value_output ->
-        List.iteri
-          (fun idx_arg value_input ->
-            Hook.on_value_dependency value_output value_input
-              (Dep.Edges.Func (id, idx_arg)))
-          values_input;
-        value_output
-    | _ -> back_err id.at "table did not return a value"
-
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (params : param list) (block : block) (elseblock_opt : elseblock option)
       (targs : targ list) (values_input : value list) : func_result =
@@ -2210,6 +2210,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         back_err id.at "function cannot produce a relation tail call"
     | Flow.Cont traces -> Unmatch traces |> back
 
+  and invoke_table (ctx : Ctx.t) (id : id) (params : param list)
+      (tablerows : tablerow list) (values_input : value list) : value =
+    let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
+    let ctx_local = assign_params ctx ctx_local params values_input in
+    let instrs = List.concat_map (fun (_, _, instrs) -> instrs) tablerows in
+    let flow = eval_block_sequential ~tail:true ctx_local instrs in
+    match flow with
+    | Ret value_output ->
+        List.iteri
+          (fun idx_arg value_input ->
+            Hook.on_value_dependency value_output value_input
+              (Dep.Edges.Func (id, idx_arg)))
+          values_input;
+        value_output
+    | _ -> back_err id.at "table did not return a value"
+
   (* Entry points for evaluation *)
 
   let clear () : unit =
@@ -2230,7 +2246,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (values_input : value list) : value =
     try
       let ctx = Ctx.empty () in
-      invoke_func ~internal:false ctx (funcname $ no_region) targs values_input
+      invoke_arrow ~internal:false ctx (funcname $ no_region) targs values_input
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
       let msg = Util.Attempt.string_of_failtraces_short failtraces in

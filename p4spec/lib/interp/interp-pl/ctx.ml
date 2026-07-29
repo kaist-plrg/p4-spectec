@@ -245,6 +245,21 @@ module Make () = struct
     | Some (cursor, func) -> (cursor, func)
     | None -> back_undef fid.at "function" fid.it
 
+  let find_func_signature_opt (ctx : t) (fid : FId.t) :
+      (tparam list * typ list * typ) option =
+    find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
+
+  let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
+      =
+    match find_func_signature_opt ctx fid with
+    | Some signature -> signature
+    | None -> back_undef fid.at "function" fid.it
+
+  let bound_func (ctx : t) (fid : FId.t) : bool =
+    find_func_opt ctx fid |> Option.is_some
+
+  (* Finders for tables *)
+
   let find_table_opt (ctx : t) (fid : FId.t) : (cursor * Table.t) option =
     let tenv =
       match ctx.local with
@@ -262,11 +277,6 @@ module Make () = struct
     | Some (cursor, table) -> (cursor, table)
     | None -> back_undef fid.at "table" fid.it
 
-  let find_func_signature_opt (ctx : t) (fid : FId.t) :
-      (tparam list * typ list * typ) option =
-    find_func_opt ctx fid |> Option.map (fun (_, func) -> Func.get_signature func)
-
-  (* A table id resolves to a monomorphic signature (empty tparams). *)
   let find_table_signature_opt (ctx : t) (fid : FId.t) :
       (tparam list * typ list * typ) option =
     find_table_opt ctx fid
@@ -274,20 +284,14 @@ module Make () = struct
            let typs, typ = Table.get_signature table in
            ([], typs, typ))
 
-  let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
-      =
-    match find_func_signature_opt ctx fid with
-    | Some signature -> signature
-    | None -> back_undef fid.at "function" fid.it
-
   let find_table_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
       =
     match find_table_signature_opt ctx fid with
     | Some signature -> signature
     | None -> back_undef fid.at "table" fid.it
 
-  let bound_func (ctx : t) (fid : FId.t) : bool =
-    find_func_opt ctx fid |> Option.is_some
+  let bound_table (ctx : t) (fid : FId.t) : bool =
+    find_table_opt ctx fid |> Option.is_some
 
   (* Adders *)
 
@@ -334,8 +338,7 @@ module Make () = struct
   (* Adders for tables *)
 
   let add_table (ctx : t) (fid : FId.t) (table : Table.t) : t =
-    if find_table_opt ctx fid |> Option.is_some then
-      back_dup fid.at "table" fid.it;
+    if bound_table ctx fid then back_dup fid.at "table" fid.it;
     match ctx.local with
     | Empty -> back_err fid.at "cannot add table to empty local context"
     | Rel _ -> back_err fid.at "cannot add table to relation context"
