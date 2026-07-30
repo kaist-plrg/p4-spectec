@@ -4799,30 +4799,30 @@ syntax functionTypeIR =
    | EXTERN_FUNCTION nameIR `( parameterIR* `) ':' typeIR (from externFunctionTypeIR) 
 
 syntax builtinIsValidMethodTypeIR = 
-   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
 
 syntax builtinSetValidMethodTypeIR = 
-   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
 
 syntax builtinSetInvalidMethodTypeIR = 
-   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
 
 syntax builtinPushFrontMethodTypeIR = 
-   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
 
 syntax builtinPopFrontMethodTypeIR = 
-   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
 
 syntax builtinSizeMethodTypeIR = 
-   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
 
 syntax builtinMethodTypeIR = 
-   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
-   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
-   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
-   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
-   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
-   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
 
 def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR)
 
@@ -4878,12 +4878,12 @@ syntax tableApplyMethodTypeIR =
    | TABLE_APPLY ':' tableMetadataStructTypeIR (from tableApplyMethodTypeIR) 
 
 syntax methodTypeIR = 
-   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
-   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
-   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
-   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
-   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
-   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | PARSER_APPLY `( parameterIR* `) (from parserApplyMethodTypeIR) 
@@ -4894,12 +4894,12 @@ syntax callableTypeIR =
    | annotationList ACTION nameIR `( parameterIR* `) (from actionTypeIR) 
    | FUNCTION nameIR `( parameterIR* `) ':' typeIR (from definedFunctionTypeIR) 
    | EXTERN_FUNCTION nameIR `( parameterIR* `) ':' typeIR (from externFunctionTypeIR) 
-   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
-   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
-   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
-   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
-   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
-   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | PARSER_APPLY `( parameterIR* `) (from parserApplyMethodTypeIR) 
@@ -26391,7 +26391,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
               1. If ($is_serializable_typeIR(typeIR_base)), then
 
-                1. (Let methodTypeIR be ((BUILTIN_SIZE) as methodTypeIR))
+                1. (Let methodTypeIR be ((BUILTIN_SIZE_OF) as methodTypeIR))
 
                   1. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -26409,7 +26409,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   1. If ((typeIR has type headerTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_ISVALID) as methodTypeIR))
+                    1. (Let methodTypeIR be ((BUILTIN_IS_VALID) as methodTypeIR))
 
                       1. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -26423,7 +26423,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   1. If ((typeIR has type headerTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_SETVALID) as methodTypeIR))
+                    1. (Let methodTypeIR be ((BUILTIN_SET_VALID) as methodTypeIR))
 
                       1. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -26437,7 +26437,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   1. If ((typeIR has type headerTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_SETINVALID) as methodTypeIR))
+                    1. (Let methodTypeIR be ((BUILTIN_SET_INVALID) as methodTypeIR))
 
                       1. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -26463,7 +26463,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   1. If ((typeIR has type headerStackTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_PUSHFRONT) as methodTypeIR))
+                    1. (Let methodTypeIR be ((BUILTIN_PUSH_FRONT) as methodTypeIR))
 
                       1. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -26485,7 +26485,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   1. If ((typeIR has type headerStackTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_POPFRONT) as methodTypeIR))
+                    1. (Let methodTypeIR be ((BUILTIN_POP_FRONT) as methodTypeIR))
 
                       1. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -26507,7 +26507,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< (typeArgumentIR)*{typeArg
 
                   1. If ((typeIR has type headerUnionTypeIR)), then
 
-                    1. (Let methodTypeIR be ((BUILTIN_ISVALID) as methodTypeIR))
+                    1. (Let methodTypeIR be ((BUILTIN_IS_VALID) as methodTypeIR))
 
                       1. Result in: % % |- % `< % `> `( % `) : (methodTypeIR as callableTypeIR) `< '#' [] `> `( '#' [] '#' [] `)
 
@@ -30944,30 +30944,30 @@ syntax functionCallee =
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
 
 syntax builtinIsValidMethodCallee = 
-   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
 
 syntax builtinSetValidMethodCallee = 
-   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
 
 syntax builtinSetInvalidMethodCallee = 
-   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
 
 syntax builtinPushFrontMethodCallee = 
-   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
 
 syntax builtinPopFrontMethodCallee = 
-   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
 
 syntax builtinSizeMethodCallee = 
-   | BUILTIN_SIZE nameIR typeIR (from builtinSizeMethodCallee) 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
 
 syntax builtinMethodCallee = 
-   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
-   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
-   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
-   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
-   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
-   | BUILTIN_SIZE nameIR typeIR (from builtinSizeMethodCallee) 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
 
 syntax externMethodCallee = 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
@@ -30982,12 +30982,12 @@ syntax tableApplyMethodCallee =
    | TABLE objectId '.' APPLY `{ frame ';' tableObjectProperty `} (from tableApplyMethodCallee) 
 
 syntax methodCallee = 
-   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
-   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
-   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
-   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
-   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
-   | BUILTIN_SIZE nameIR typeIR (from builtinSizeMethodCallee) 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -30997,12 +30997,12 @@ syntax callee =
    | ACTION cursor '.' nameIR `( parameterListIR '#' id* `) blockStatementIR (from actionCallee) 
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* `) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
-   | BUILTIN_ISVALID storageReference (from builtinIsValidMethodCallee) 
-   | BUILTIN_SETVALID storageReference (from builtinSetValidMethodCallee) 
-   | BUILTIN_SETINVALID storageReference (from builtinSetInvalidMethodCallee) 
-   | BUILTIN_PUSHFRONT storageReference (from builtinPushFrontMethodCallee) 
-   | BUILTIN_POPFRONT storageReference (from builtinPopFrontMethodCallee) 
-   | BUILTIN_SIZE nameIR typeIR (from builtinSizeMethodCallee) 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -37585,7 +37585,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                           1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
 
-                            1. (Let builtinPushFrontMethodCallee be (BUILTIN_PUSHFRONT storageReference))
+                            1. (Let builtinPushFrontMethodCallee be (BUILTIN_PUSH_FRONT storageReference))
 
                               1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinPushFrontMethodCallee as callee)) as calleeResult)
 
@@ -37635,7 +37635,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                           1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
 
-                            1. (Let builtinPopFrontMethodCallee be (BUILTIN_POPFRONT storageReference))
+                            1. (Let builtinPopFrontMethodCallee be (BUILTIN_POP_FRONT storageReference))
 
                               1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinPopFrontMethodCallee as callee)) as calleeResult)
 
@@ -37685,7 +37685,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                           1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
 
-                            1. (Let builtinIsValidMethodCallee be (BUILTIN_ISVALID storageReference))
+                            1. (Let builtinIsValidMethodCallee be (BUILTIN_IS_VALID storageReference))
 
                               1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinIsValidMethodCallee as callee)) as calleeResult)
 
@@ -37735,7 +37735,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                           1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
 
-                            1. (Let builtinSetValidMethodCallee be (BUILTIN_SETVALID storageReference))
+                            1. (Let builtinSetValidMethodCallee be (BUILTIN_SET_VALID storageReference))
 
                               1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinSetValidMethodCallee as callee)) as calleeResult)
 
@@ -37785,7 +37785,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                           1. (Let ?(storageReference) be (storageReference')?{storageReference' <- storageReference'?})
 
-                            1. (Let builtinSetInvalidMethodCallee be (BUILTIN_SETINVALID storageReference))
+                            1. (Let builtinSetInvalidMethodCallee be (BUILTIN_SET_INVALID storageReference))
 
                               1. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinSetInvalidMethodCallee as callee)) as calleeResult)
 
@@ -37813,7 +37813,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
           1. (Let (_expressionIR '#' (`( typeIR_base _ctk `))) be typedExpressionIR_base)
 
-            1. (Let builtinSizeMethodCallee be (BUILTIN_SIZE nameIR typeIR_base))
+            1. (Let builtinSizeMethodCallee be (BUILTIN_SIZE_OF nameIR typeIR_base))
 
               1. Result in: % % % |- % `< '_' `> `( % `) : EC ARCH ((_CONT (builtinSizeMethodCallee as callee)) as calleeResult)
 
@@ -38449,7 +38449,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
             1. (Let [argumentIR] be argumentListIR)
 
-              1. (Let (BUILTIN_PUSHFRONT storageReference) be builtinPushFrontMethodCallee)
+              1. (Let (BUILTIN_PUSH_FRONT storageReference) be builtinPushFrontMethodCallee)
 
                 1. (Lvalue_read: p EC_0 ARCH_0 |- storageReference : value)
 
@@ -38551,7 +38551,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
             1. (Let [argumentIR] be argumentListIR)
 
-              1. (Let (BUILTIN_POPFRONT storageReference) be builtinPopFrontMethodCallee)
+              1. (Let (BUILTIN_POP_FRONT storageReference) be builtinPopFrontMethodCallee)
 
                 1. (Lvalue_read: p EC_0 ARCH_0 |- storageReference : value)
 
@@ -38661,7 +38661,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
             1. If (((argumentIR)*{argumentIR <- argumentIR*} matches pattern [])), then
 
-              1. (Let (BUILTIN_ISVALID storageReference) be builtinIsValidMethodCallee)
+              1. (Let (BUILTIN_IS_VALID storageReference) be builtinIsValidMethodCallee)
 
                 1. (Lvalue_read: p EC_0 ARCH_0 |- storageReference : value)
 
@@ -38707,7 +38707,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
             1. If (((argumentIR)*{argumentIR <- argumentIR*} matches pattern [])), then
 
-              1. (Let (BUILTIN_SETVALID storageReference) be builtinSetValidMethodCallee)
+              1. (Let (BUILTIN_SET_VALID storageReference) be builtinSetValidMethodCallee)
 
                 1. (Lvalue_read: p EC_0 ARCH_0 |- storageReference : value')
 
@@ -38739,7 +38739,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
             1. If (((argumentIR)*{argumentIR <- argumentIR*} matches pattern [])), then
 
-              1. (Let (BUILTIN_SETINVALID storageReference) be builtinSetInvalidMethodCallee)
+              1. (Let (BUILTIN_SET_INVALID storageReference) be builtinSetInvalidMethodCallee)
 
                 1. (Lvalue_read: p EC_0 ARCH_0 |- storageReference : value')
 
@@ -38771,7 +38771,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
             1. If (((argumentIR)*{argumentIR <- argumentIR*} matches pattern [])), then
 
-              1. (Let (BUILTIN_SIZE nameIR typeIR_base) be builtinSizeMethodCallee)
+              1. (Let (BUILTIN_SIZE_OF nameIR typeIR_base) be builtinSizeMethodCallee)
 
                 1. (Let returnResult be (RETURN ?($sizeof(typeIR_base, nameIR))))
 

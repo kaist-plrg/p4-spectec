@@ -355,7 +355,7 @@ rulegroup Call_eval/externFunctionCallee {
 ;;; syntax methodCallee
 
 ;;;; builtinPushFrontMethodCallee
-;;;; syntax builtinPushFrontMethodCallee = BUILTIN_PUSHFRONT storageReference
+;;;; syntax builtinPushFrontMethodCallee = BUILTIN_PUSH_FRONT storageReference
 
 rulegroup Call_eval/builtinPushFrontMethodCallee {
 
@@ -363,7 +363,7 @@ rulegroup Call_eval/builtinPushFrontMethodCallee {
     p EC_0 ARCH_0 |- builtinPushFrontMethodCallee '@' `< eps `> `( argumentIR `)
                    : EC_1 ARCH_1 abortResult
     ---- ;; unpack the builtin method callee
-    -- if BUILTIN_PUSHFRONT storageReference
+    -- if BUILTIN_PUSH_FRONT storageReference
         = builtinPushFrontMethodCallee
     ---- ;; read the value
     -- Lvalue_read:
@@ -378,7 +378,7 @@ rulegroup Call_eval/builtinPushFrontMethodCallee {
     p EC_0 ARCH_0 |- builtinPushFrontMethodCallee '@' `< eps `> `( argumentIR `)
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
-    -- if BUILTIN_PUSHFRONT storageReference
+    -- if BUILTIN_PUSH_FRONT storageReference
         = builtinPushFrontMethodCallee
     ---- ;; read the value
     -- Lvalue_read: 
@@ -410,7 +410,7 @@ rulegroup Call_eval/builtinPushFrontMethodCallee {
     p EC_0 ARCH_0 |- builtinPushFrontMethodCallee '@' `< eps `> `( argumentIR `)
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
-    -- if BUILTIN_PUSHFRONT storageReference
+    -- if BUILTIN_PUSH_FRONT storageReference
         = builtinPushFrontMethodCallee
     ---- ;; read the value
     -- Lvalue_read:
@@ -437,7 +437,7 @@ rulegroup Call_eval/builtinPushFrontMethodCallee {
 }
 
 ;;;; builtinPopFrontMethodCallee
-;;;; syntax builtinPopFrontMethodCallee = BUILTIN_POPFRONT storageReference
+;;;; syntax builtinPopFrontMethodCallee = BUILTIN_POP_FRONT storageReference
 
 rulegroup Call_eval/builtinPopFrontMethodCallee {
 
@@ -445,7 +445,7 @@ rulegroup Call_eval/builtinPopFrontMethodCallee {
     p EC_0 ARCH_0 |- builtinPopFrontMethodCallee '@' `< eps `> `( argumentIR `)
                    : EC_1 ARCH_1 abortResult
     ---- ;; unpack the builtin method callee
-    -- if BUILTIN_POPFRONT storageReference
+    -- if BUILTIN_POP_FRONT storageReference
         = builtinPopFrontMethodCallee
     ---- ;; read the value
     -- Lvalue_read:
@@ -460,7 +460,7 @@ rulegroup Call_eval/builtinPopFrontMethodCallee {
     p EC_0 ARCH_0 |- builtinPopFrontMethodCallee '@' `< eps `> `( argumentIR `)
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
-    -- if BUILTIN_POPFRONT storageReference
+    -- if BUILTIN_POP_FRONT storageReference
         = builtinPopFrontMethodCallee
     ---- ;; read the value
     -- Lvalue_read: 
@@ -492,7 +492,7 @@ rulegroup Call_eval/builtinPopFrontMethodCallee {
     p EC_0 ARCH_0 |- builtinPopFrontMethodCallee '@' `< eps `> `( argumentIR `)
                    : EC_2 ARCH_1 (RETURN eps)
     ---- ;; unpack the builtin method callee
-    -- if BUILTIN_POPFRONT storageReference
+    -- if BUILTIN_POP_FRONT storageReference
         = builtinPopFrontMethodCallee
     ---- ;; read the value
     -- Lvalue_read: 
@@ -519,13 +519,13 @@ rulegroup Call_eval/builtinPopFrontMethodCallee {
 }
 
 ;;;; builtinIsValidMethodCallee
-;;;; syntax builtinIsValidMethodCallee = BUILTIN_ISVALID storageReference
+;;;; syntax builtinIsValidMethodCallee = BUILTIN_IS_VALID storageReference
 
 rule Call_eval/builtinIsValidMethodCallee-header:
   p EC ARCH |- builtinIsValidMethodCallee '@' `< eps `> `( eps `)
              : EC ARCH returnResult
   ---- ;; unpack the builtin method callee
-  -- if BUILTIN_ISVALID storageReference
+  -- if BUILTIN_IS_VALID storageReference
       = builtinIsValidMethodCallee
   ---- ;; read the value
   -- Lvalue_read:
@@ -534,13 +534,13 @@ rule Call_eval/builtinIsValidMethodCallee-header:
   -- if returnResult = RETURN (_B b_valid)
 
 ;;;; builtinSetValidMethodCallee
-;;;; syntax builtinSetValidMethodCallee = BUILTIN_SETVALID storageReference
+;;;; syntax builtinSetValidMethodCallee = BUILTIN_SET_VALID storageReference
 
 rule Call_eval/builtinSetValidMethodCallee:
   p EC_0 ARCH |- builtinSetValidMethodCallee '@' `< eps `> `( eps `)
              : EC_1 ARCH returnResult
   ---- ;; unpack the builtin method callee
-  -- if BUILTIN_SETVALID storageReference
+  -- if BUILTIN_SET_VALID storageReference
       = builtinSetValidMethodCallee
   ---- ;; read the value
   -- Lvalue_read:
@@ -552,13 +552,13 @@ rule Call_eval/builtinSetValidMethodCallee:
   -- if returnResult = RETURN eps
 
 ;;;; builtinSetInvalidMethodCallee
-;;;; syntax builtinSetInvalidMethodCallee = BUILTIN_SETINVALID storageReference
+;;;; syntax builtinSetInvalidMethodCallee = BUILTIN_SET_INVALID storageReference
 
 rule Call_eval/builtinSetInvalidMethodCallee:
   p EC_0 ARCH |- builtinSetInvalidMethodCallee '@' `< eps `> `( eps `)
                : EC_1 ARCH returnResult
   ---- ;; unpack the builtin method callee
-  -- if BUILTIN_SETINVALID storageReference
+  -- if BUILTIN_SET_INVALID storageReference
       = builtinSetInvalidMethodCallee
   ---- ;; read the value
   -- Lvalue_read:
@@ -573,7 +573,7 @@ rule Call_eval/builtinIsValidMethodCallee-header-union:
   p EC ARCH |- builtinIsValidMethodCallee '@' `< eps `> `( eps `)
              : EC ARCH returnResult
   ---- ;; unpack the builtin method callee
-  -- if BUILTIN_ISVALID storageReference
+  -- if BUILTIN_IS_VALID storageReference
       = builtinIsValidMethodCallee
   ---- ;; read the value
   -- Lvalue_read:
@@ -587,13 +587,13 @@ rule Call_eval/builtinIsValidMethodCallee-header-union:
   -- if returnResult = RETURN (_B b_valid)
 
 ;;;; builtinSizeMethodCallee
-;;;; syntax builtinSizeMethodCallee = BUILTIN_SIZE nameIR typeIR
+;;;; syntax builtinSizeMethodCallee = BUILTIN_SIZE_OF nameIR typeIR
 
 rule Call_eval/builtinSizeMethodCallee:
   p EC ARCH |- builtinSizeMethodCallee '@' `< eps `> `( eps `)
              : EC ARCH returnResult
   ---- ;; unpack the builtin method callee
-  -- if BUILTIN_SIZE nameIR typeIR_base
+  -- if BUILTIN_SIZE_OF nameIR typeIR_base
       = builtinSizeMethodCallee
   ---- ;; compute the size from the receiver's static type
   -- if returnResult = RETURN $sizeof(typeIR_base, nameIR)
