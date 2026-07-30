@@ -43,17 +43,11 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Counter(bit<32> n_counters, PSA_CounterType_t type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
-      let value_size, value_type =
-        match values_arg with
-        | [ value_size; value_type ] -> (value_size, value_type)
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "Counter constructor expects 2 arguments, but %d were given"
-                 (List.length values_arg))
-      in
+    let init (_value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
+      let args = assoc_args value_ids value_args in
+      let value_size = List.assoc "n_counters" args in
+      let value_type = List.assoc "type" args in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
       let id_enum, id_type = unpack_p4_enum value_type in
@@ -117,17 +111,11 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Meter(bit<32> n_meters, PSA_MeterType_t type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
-      let value_size, value_type =
-        match values_arg with
-        | [ value_size; value_type ] -> (value_size, value_type)
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "Meter constructor expects 2 arguments, but %d were given"
-                 (List.length values_arg))
-      in
+    let init (_value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
+      let args = assoc_args value_ids value_args in
+      let value_size = List.assoc "n_meters" args in
+      let value_type = List.assoc "type" args in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
       let id_enum, id_type = unpack_p4_enum value_type in
@@ -195,7 +183,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Register(bit<32> size, T initial_value); *)
 
-    let init (value_type_args : Value.t) (value_args : Value.t) : t =
+    let init (value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
       let values_type_arg = Value.Get.list value_type_args in
       let value_type =
         match values_type_arg with
@@ -207,17 +196,12 @@ module Make (Spec_Func : Spec.Func.S) = struct
                   given"
                  (List.length values_type_arg))
       in
-      let values_arg = Value.Get.list value_args in
-      let value_size, value_initial =
-        match values_arg with
-        | [ value_size ] -> (value_size, Spec_Func.default value_type)
-        | [ value_size; value_initial ] -> (value_size, value_initial)
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "Register constructor expects 1 or 2 arguments, but %d were \
-                  given"
-                 (List.length values_arg))
+      let args = assoc_args value_ids value_args in
+      let value_size = List.assoc "size" args in
+      let value_initial =
+        match List.assoc_opt "initial_value" args with
+        | Some value_initial -> value_initial
+        | None -> Spec_Func.default value_type
       in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
@@ -278,17 +262,10 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        Hash(PSA_HashAlgorithm_t algo); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
-      let value_algo =
-        match values_arg with
-        | [ value_algo ] -> value_algo
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "Hash constructor expects 1 argument, but %d were given"
-                 (List.length values_arg))
-      in
+    let init (_value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
+      let args = assoc_args value_ids value_args in
+      let value_algo = List.assoc "algo" args in
       match unpack_p4_enum value_algo with
       | "PSA_HashAlgorithm_t", "IDENTITY" -> "identity"
       | "PSA_HashAlgorithm_t", "CRC32" -> "crc32"
@@ -379,7 +356,8 @@ module Make (Spec_Func : Spec.Func.S) = struct
 
        InternetChecksum(); *)
 
-    let init (_value_type_args : Value.t) (_value_args : Value.t) : t =
+    let init (_value_type_args : Value.t) (_value_ids : Value.t)
+        (_value_args : Value.t) : t =
       Bigint.zero
 
     (* Reset internal state and prepare unit for computation. Every

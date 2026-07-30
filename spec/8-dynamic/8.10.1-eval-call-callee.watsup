@@ -55,7 +55,7 @@ rule Callee_eval/definedFunctionCallee:
 
 ;;;; Builtin method call
 
-rulegroup Callee_eval/builtinMethodCallee-header-stack-push-front {
+rulegroup Callee_eval/builtinPushFrontMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "push_front") `< '_' `> `( argumentListIR `)
@@ -69,7 +69,7 @@ rulegroup Callee_eval/builtinMethodCallee-header-stack-push-front {
 
   rule Callee_eval/cont:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "push_front") `< '_' `> `( argumentIR `)
-                   : EC_1 ARCH_1 (_CONT builtinMethodCallee)
+                   : EC_1 ARCH_1 (_CONT builtinPushFrontMethodCallee)
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
@@ -77,13 +77,11 @@ rulegroup Callee_eval/builtinMethodCallee-header-stack-push-front {
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (_CONT storageReference)
     ---- ;; prepare the callee
-    -- if parameterIR = _EMPTY _EMPTY INT "count" eps
-    -- if builtinMethodCallee
-        = BUILTIN_METHOD storageReference '.' "push_front" `< eps `> `( parameterIR `)
+    -- if builtinPushFrontMethodCallee = BUILTIN_PUSH_FRONT storageReference
 
 }
 
-rulegroup Callee_eval/builtinMethodCallee-header-stack-pop-front {
+rulegroup Callee_eval/builtinPopFrontMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "pop_front") `< '_' `> `( argumentListIR `)
@@ -97,7 +95,7 @@ rulegroup Callee_eval/builtinMethodCallee-header-stack-pop-front {
 
   rule Callee_eval/cont:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "pop_front") `< '_' `> `( argumentIR `)
-                   : EC_1 ARCH_1 (_CONT builtinMethodCallee)
+                   : EC_1 ARCH_1 (_CONT builtinPopFrontMethodCallee)
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
@@ -105,13 +103,11 @@ rulegroup Callee_eval/builtinMethodCallee-header-stack-pop-front {
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (_CONT storageReference)
     ---- ;; prepare the callee
-    -- if parameterIR = _EMPTY _EMPTY INT "count" eps
-    -- if builtinMethodCallee
-        = BUILTIN_METHOD storageReference '.' "pop_front" `< eps `> `( parameterIR `)
+    -- if builtinPopFrontMethodCallee = BUILTIN_POP_FRONT storageReference
 
 }
 
-rulegroup Callee_eval/builtinMethodCallee-header-isValid {
+rulegroup Callee_eval/builtinIsValidMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "isValid") `< '_' `> `( argumentListIR `)
@@ -125,7 +121,7 @@ rulegroup Callee_eval/builtinMethodCallee-header-isValid {
 
   rule Callee_eval/cont:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "isValid") `< '_' `> `( eps `)
-                   : EC_1 ARCH_1 (_CONT builtinMethodCallee)
+                   : EC_1 ARCH_1 (_CONT builtinIsValidMethodCallee)
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
@@ -133,12 +129,11 @@ rulegroup Callee_eval/builtinMethodCallee-header-isValid {
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (_CONT storageReference)
     ---- ;; prepare the callee
-    -- if builtinMethodCallee
-        = BUILTIN_METHOD storageReference '.' "isValid" `< eps `> `( eps `)
+    -- if builtinIsValidMethodCallee = BUILTIN_IS_VALID storageReference
 
 }
 
-rulegroup Callee_eval/builtinMethodCallee-header-setValid {
+rulegroup Callee_eval/builtinSetValidMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "setValid") `< '_' `> `( argumentListIR `)
@@ -152,7 +147,7 @@ rulegroup Callee_eval/builtinMethodCallee-header-setValid {
 
   rule Callee_eval/cont:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "setValid") `< '_' `> `( eps `)
-                   : EC_1 ARCH_1 (_CONT builtinMethodCallee)
+                   : EC_1 ARCH_1 (_CONT builtinSetValidMethodCallee)
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
@@ -160,12 +155,11 @@ rulegroup Callee_eval/builtinMethodCallee-header-setValid {
         p EC_0 ARCH_0 |- typedLvalueIR
                        : EC_1 ARCH_1 (_CONT storageReference)
     ---- ;; prepare the callee
-    -- if builtinMethodCallee
-        = BUILTIN_METHOD storageReference '.' "setValid" `< eps `> `( eps `)
+    -- if builtinSetValidMethodCallee = BUILTIN_SET_VALID storageReference
 
 }
 
-rulegroup Callee_eval/builtinMethodCallee-header-setInvalid {
+rulegroup Callee_eval/builtinSetInvalidMethodCallee {
 
   rule Callee_eval/abort:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "setInvalid") `< '_' `> `( argumentListIR `)
@@ -179,7 +173,7 @@ rulegroup Callee_eval/builtinMethodCallee-header-setInvalid {
 
   rule Callee_eval/cont:
     p EC_0 ARCH_0 |- (typedExpressionIR '.' "setInvalid") `< '_' `> `( eps `)
-                   : EC_1 ARCH_1 (_CONT builtinMethodCallee)
+                   : EC_1 ARCH_1 (_CONT builtinSetInvalidMethodCallee)
     ---- ;; get storage reference of expression base
     -- if typedLvalueIR
         = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR)
@@ -187,8 +181,24 @@ rulegroup Callee_eval/builtinMethodCallee-header-setInvalid {
         p EC_0 ARCH_0 |- typedLvalueIR
                       : EC_1 ARCH_1 (_CONT storageReference)
     ---- ;; prepare the callee
-    -- if builtinMethodCallee
-        = BUILTIN_METHOD storageReference '.' "setInvalid" `< eps `> `( eps `)
+    -- if builtinSetInvalidMethodCallee = BUILTIN_SET_INVALID storageReference
+
+}
+
+;;;; Builtin size method call
+
+rulegroup Callee_eval/builtinSizeMethodCallee {
+
+  rule Callee_eval/cont:
+    p EC ARCH |- (typedExpressionIR_base '.' nameIR) `< '_' `> `( eps `)
+               : EC ARCH (_CONT builtinSizeMethodCallee)
+    ---- ;; if the method is min/maxSizeInBits/Bytes builtin
+    -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
+                      "maxSizeInBits", "maxSizeInBytes" ]
+    ---- ;; read the receiver's static type from the note
+    -- if _ '#' `( typeIR_base _ `) = typedExpressionIR_base
+    ---- ;; prepare the callee
+    -- if builtinSizeMethodCallee = BUILTIN_SIZE_OF nameIR typeIR_base
 
 }
 

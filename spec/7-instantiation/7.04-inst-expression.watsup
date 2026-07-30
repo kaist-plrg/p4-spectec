@@ -201,7 +201,7 @@ rulegroup Expr_inst/memberAccessExpressionIR-typedExpressionIR {
 
   rule Expr_inst/header-stack-size:
     p IC STO |- (typedExpressionIR_base '.' nameIR) '#' _
-              : STO (D n_size)
+              : STO (32 W n_size)
     -- if typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if HEADER_STACK _ `[ n_size `] = $unroll_typeIR(typeIR_base)
     -- if nameIR = "size"
@@ -282,7 +282,7 @@ rulegroup Expr_inst/sliceAccessExpressionIR {
     -- Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo
 
   rule Expr_inst/offset:
-    p IC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_l ':' typedExpressionIR_w `]) '#' _
+    p IC STO_0 |- (typedExpressionIR_base `[ typedExpressionIR_l '+:' typedExpressionIR_w `]) '#' _
                 : STO_3 $bitacc_offset_op(value_base, value_l, value_w)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_l : STO_2 value_l

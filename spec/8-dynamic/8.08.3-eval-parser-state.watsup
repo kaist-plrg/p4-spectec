@@ -6,26 +6,34 @@ rulegroup ParserState_eval {
 
   rule ParserState_eval/reject:
     EC_0 ARCH_0 |- parserStateIR
-                : EC_1 ARCH_1 rejectTransitionResult
+                : EC_3 ARCH_1 rejectTransitionResult
     -- if annotationList STATE nameIR
             `{ parserBlockElementStatementListIR transitionStatementIR `}
         = parserStateIR
+    ---- ;; enter a fresh local frame for the state's locals
+    -- if EC_1 = $enter_e(EC_0)
     -- ParserBlockElementStmtList_eval:
-        EC_0 ARCH_0 |- parserBlockElementStatementListIR
-                     : EC_1 ARCH_1 rejectTransitionResult
+        EC_1 ARCH_0 |- parserBlockElementStatementListIR
+                     : EC_2 ARCH_1 rejectTransitionResult
+    ---- ;; exit the state's local frame so its locals do not leak
+    -- if EC_3 = $exit_e(EC_2)
 
   rule ParserState_eval/cont:
     EC_0 ARCH_0 |- parserStateIR
-                 : EC_2 ARCH_2 transitionResult
+                 : EC_4 ARCH_2 transitionResult
     -- if annotationList STATE nameIR
             `{ parserBlockElementStatementListIR transitionStatementIR `}
         = parserStateIR
+    ---- ;; enter a fresh local frame for the state's locals
+    -- if EC_1 = $enter_e(EC_0)
     -- ParserBlockElementStmtList_eval:
-        EC_0 ARCH_0 |- parserBlockElementStatementListIR
-                     : EC_1 ARCH_1 _EMPTY
+        EC_1 ARCH_0 |- parserBlockElementStatementListIR
+                     : EC_2 ARCH_1 _EMPTY
     -- ParserTransition_eval:
-        EC_1 ARCH_1 |- transitionStatementIR
-                    : EC_2 ARCH_2 transitionResult
+        EC_2 ARCH_1 |- transitionStatementIR
+                    : EC_3 ARCH_2 transitionResult
+    ---- ;; exit the state's local frame so its locals do not leak
+    -- if EC_4 = $exit_e(EC_3)
 
 }
 
