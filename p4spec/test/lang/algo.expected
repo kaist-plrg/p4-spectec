@@ -3854,8 +3854,31 @@ syntax functionTypeIR =
    | FUNCTION nameIR `( parameterIR* `) ':' typeIR (from definedFunctionTypeIR) 
    | EXTERN_FUNCTION nameIR `( parameterIR* `) ':' typeIR (from externFunctionTypeIR) 
 
+syntax builtinIsValidMethodTypeIR = 
+   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
+
+syntax builtinSetValidMethodTypeIR = 
+   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
+
+syntax builtinSetInvalidMethodTypeIR = 
+   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
+
+syntax builtinPushFrontMethodTypeIR = 
+   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
+
+syntax builtinPopFrontMethodTypeIR = 
+   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
+
+syntax builtinSizeMethodTypeIR = 
+   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
+
 syntax builtinMethodTypeIR = 
-   | BUILTIN_METHOD nameIR `( parameterIR* `) ':' typeIR (from builtinMethodTypeIR) 
+   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
 
 syntax externMethodTypeIR = 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
@@ -3871,7 +3894,12 @@ syntax tableApplyMethodTypeIR =
    | TABLE_APPLY ':' tableMetadataStructTypeIR (from tableApplyMethodTypeIR) 
 
 syntax methodTypeIR = 
-   | BUILTIN_METHOD nameIR `( parameterIR* `) ':' typeIR (from builtinMethodTypeIR) 
+   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | PARSER_APPLY `( parameterIR* `) (from parserApplyMethodTypeIR) 
@@ -3882,7 +3910,12 @@ syntax callableTypeIR =
    | annotationList ACTION nameIR `( parameterIR* `) (from actionTypeIR) 
    | FUNCTION nameIR `( parameterIR* `) ':' typeIR (from definedFunctionTypeIR) 
    | EXTERN_FUNCTION nameIR `( parameterIR* `) ':' typeIR (from externFunctionTypeIR) 
-   | BUILTIN_METHOD nameIR `( parameterIR* `) ':' typeIR (from builtinMethodTypeIR) 
+   | BUILTIN_ISVALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SETVALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SETINVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSHFRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | PARSER_APPLY `( parameterIR* `) (from parserApplyMethodTypeIR) 
@@ -4274,11 +4307,9 @@ def $free_callableTypeIR(callableTypeIR) : bound =
   -- let B_params = $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*})
   -- let B_ret = $free_typeIR(typeIR)
 
-  clause 3 : (callableTypeIR) = $union_set<typeId>(B_params, B_ret)
+  clause 3 : (callableTypeIR) = `{ [] `}
   -- if callableTypeIR <: builtinMethodTypeIR
-  -- let BUILTIN_METHOD _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR = callableTypeIR as builtinMethodTypeIR
-  -- let B_params = $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*})
-  -- let B_ret = $free_typeIR(typeIR)
+  -- let builtinMethodTypeIR = callableTypeIR as builtinMethodTypeIR
 
   clause 4 : (callableTypeIR) = $union_set<typeId>(B_params, B_ret)
   -- if callableTypeIR <: externMethodTypeIR
@@ -4561,11 +4592,9 @@ def $subst_callableTypeIR'(theta, callableTypeIR) : callableTypeIR =
   -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
   -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
 
-  clause 3 : (theta, callableTypeIR) = BUILTIN_METHOD nameIR `( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} `) ':' typeIR_subst as callableTypeIR
+  clause 3 : (theta, callableTypeIR) = builtinMethodTypeIR as callableTypeIR
   -- if callableTypeIR <: builtinMethodTypeIR
-  -- let BUILTIN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR = callableTypeIR as builtinMethodTypeIR
-  -- (let parameterIR_subst = $subst_parameterIR'(theta, parameterIR))*{parameterIR <- parameterIR*, parameterIR_subst -> parameterIR_subst*}
-  -- let typeIR_subst = $subst_typeIR'(theta, typeIR)
+  -- let builtinMethodTypeIR = callableTypeIR as builtinMethodTypeIR
 
   clause 4 : (theta, callableTypeIR) = EXTERN_METHOD nameIR `( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} `) ':' typeIR_subst as callableTypeIR
   -- if callableTypeIR <: externMethodTypeIR
@@ -12199,17 +12228,14 @@ relation CallableType_wf: bound |- callableTypeIR
 
    match
 
-    (signature) B |- BUILTIN_METHOD _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret as callableTypeIR
+    (signature) B |- builtinMethodTypeIR as callableTypeIR
     B |- callableTypeIR
     -- if callableTypeIR <: builtinMethodTypeIR
-    -- let BUILTIN_METHOD _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = callableTypeIR as builtinMethodTypeIR
+    -- let builtinMethodTypeIR = callableTypeIR as builtinMethodTypeIR
 
    paths
 
     rulepath builtinMethodTypeIR
-    -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
-    -- (if ~$is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*}
-    -- if ReturnType_wf: B |- typeIR_ret holds
     -- the relation holds
 
   rulegroup externMethodTypeIR
@@ -19563,9 +19589,8 @@ def $is_static_callableTypeIR(callableTypeIR) : ctk =
   -- if (t = "static_assert")
 
   clause 1 : (callableTypeIR) = LCTK
-  -- if callableTypeIR <: builtinMethodTypeIR
-  -- let BUILTIN_METHOD nameIR `( _parameterIR*{_parameterIR <- _parameterIR*} `) ':' _typeIR = callableTypeIR as builtinMethodTypeIR
-  -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
+  -- if callableTypeIR <: builtinSizeMethodTypeIR
+  -- let builtinSizeMethodTypeIR = callableTypeIR as builtinSizeMethodTypeIR
 
   clause -1 : (_callableTypeIR) = DYN
 
@@ -19704,84 +19729,115 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- if $is_serializable_typeIR(typeIR_base)
-    -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' INT as typeIR as methodTypeIR
+    -- let methodTypeIR = BUILTIN_SIZE as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
-  rulegroup builtinMethodTypeIR-header-stack
+  rulegroup builtinMethodTypeIR-header-stack-push-front
 
    match
 
-    (signature) p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [argumentIR] `) : % `< '#' % `> `( '#' % '#' % `)
+    (signature) p TC |- typedExpressionIR_base '.' "push_front" `< [] `> `( [argumentIR] `) : % `< '#' % `> `( '#' % '#' % `)
     p TC |- callableTargetIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR'*{argumentIR' <- argumentIR'*} `) : % `< '#' % `> `( '#' % '#' % `)
     -- if callableTargetIR matches `% . %`
-    -- let typedExpressionIR_base '.' nameIR = callableTargetIR
+    -- let typedExpressionIR_base '.' t = callableTargetIR
+    -- if (t = "push_front")
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentIR'*{argumentIR' <- argumentIR'*} matches [ _/1 ]
     -- let [argumentIR] = argumentIR'*{argumentIR' <- argumentIR'*}
 
    paths
 
-    rulepath builtinMethodTypeIR-header-stack
-    -- if nameIR <- ["push_front", "pop_front"]
+    rulepath builtinMethodTypeIR-header-stack-push-front
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR' = $unroll_typeIR(typeIR_base)
     -- if typeIR' <: headerStackTypeIR
     -- let HEADER_STACK typeIR `[ _nat `] = typeIR' as headerStackTypeIR
-    -- let parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?()
-    -- let methodTypeIR = BUILTIN_METHOD nameIR `( [parameterIR] `) ':' VOID as typeIR as methodTypeIR
+    -- let methodTypeIR = BUILTIN_PUSHFRONT as methodTypeIR
+    -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
+
+  rulegroup builtinMethodTypeIR-header-stack-pop-front
+
+   match
+
+    (signature) p TC |- typedExpressionIR_base '.' "pop_front" `< [] `> `( [argumentIR] `) : % `< '#' % `> `( '#' % '#' % `)
+    p TC |- callableTargetIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR'*{argumentIR' <- argumentIR'*} `) : % `< '#' % `> `( '#' % '#' % `)
+    -- if callableTargetIR matches `% . %`
+    -- let typedExpressionIR_base '.' t = callableTargetIR
+    -- if (t = "pop_front")
+    -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
+    -- if argumentIR'*{argumentIR' <- argumentIR'*} matches [ _/1 ]
+    -- let [argumentIR] = argumentIR'*{argumentIR' <- argumentIR'*}
+
+   paths
+
+    rulepath builtinMethodTypeIR-header-stack-pop-front
+    -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- let typeIR' = $unroll_typeIR(typeIR_base)
+    -- if typeIR' <: headerStackTypeIR
+    -- let HEADER_STACK typeIR `[ _nat `] = typeIR' as headerStackTypeIR
+    -- let methodTypeIR = BUILTIN_POPFRONT as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
   rulegroup builtinMethodTypeIR-header
 
    match
 
-    (signature) p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [] `) : % `< '#' % `> `( '#' % '#' % `)
+    (signature) p TC |- typedExpressionIR_base '.' t `< [] `> `( [] `) : % `< '#' % `> `( '#' % '#' % `)
     p TC |- callableTargetIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : % `< '#' % `> `( '#' % '#' % `)
     -- if callableTargetIR matches `% . %`
-    -- let typedExpressionIR_base '.' nameIR = callableTargetIR
+    -- let typedExpressionIR_base '.' t = callableTargetIR
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
 
     rulepath isValid
-    -- if nameIR <- ["isValid"]
+    -- if (t = "isValid")
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR = $unroll_typeIR(typeIR_base)
     -- if typeIR <: headerTypeIR
     -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
-    -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' BOOL as typeIR as methodTypeIR
+    -- let methodTypeIR = BUILTIN_ISVALID as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
-    rulepath setValidInvalid
-    -- if nameIR <- ["setValid", "setInvalid"]
+    rulepath setValid
+    -- if (t = "setValid")
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR = $unroll_typeIR(typeIR_base)
     -- if typeIR <: headerTypeIR
     -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
-    -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' VOID as typeIR as methodTypeIR
+    -- let methodTypeIR = BUILTIN_SETVALID as methodTypeIR
+    -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
+
+    rulepath setInvalid
+    -- if (t = "setInvalid")
+    -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
+    -- let methodTypeIR = BUILTIN_SETINVALID as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
   rulegroup builtinMethodTypeIR-header-union
 
    match
 
-    (signature) p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [] `) : % `< '#' % `> `( '#' % '#' % `)
+    (signature) p TC |- typedExpressionIR_base '.' "isValid" `< [] `> `( [] `) : % `< '#' % `> `( '#' % '#' % `)
     p TC |- callableTargetIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : % `< '#' % `> `( '#' % '#' % `)
     -- if callableTargetIR matches `% . %`
-    -- let typedExpressionIR_base '.' nameIR = callableTargetIR
+    -- let typedExpressionIR_base '.' t = callableTargetIR
+    -- if (t = "isValid")
     -- if typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} matches []
     -- if argumentIR*{argumentIR <- argumentIR*} matches []
 
    paths
 
     rulepath isValid
-    -- if nameIR <- ["isValid"]
     -- let typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base)
     -- let typeIR = $unroll_typeIR(typeIR_base)
     -- if typeIR <: headerUnionTypeIR
     -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerUnionTypeIR
-    -- let methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' BOOL as typeIR as methodTypeIR
+    -- let methodTypeIR = BUILTIN_ISVALID as methodTypeIR
     -- output: % % |- % `< % `> `( % `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
 
   rulegroup externMethodTypeIR
@@ -19985,7 +20041,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
    paths
 
     rulepath builtinMethodTypeIR
-    -- let BUILTIN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = builtinMethodTypeIR
+    -- let (parameterIR*{parameterIR <- parameterIR*}, typeIR_ret) = $signature_of_builtinMethodTypeIR(builtinMethodTypeIR)
     -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % `< % '#' % `> `( % '#' % '#' % `) : typeIR_ret `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
@@ -23007,6 +23063,38 @@ def $callable_externFunction(cursor, typingContext, nameIR) : bool =
   clause 5 : (p, TC, nameIR) = true
   -- if p matches `LOCAL`
   -- if (nameIR =/= "verify")
+
+def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR) : (parameterIR*, typeIR) =
+
+  clause 0 : (builtinMethodTypeIR) = ([], BOOL as typeIR)
+  -- if builtinMethodTypeIR <: builtinIsValidMethodTypeIR
+  -- let builtinIsValidMethodTypeIR = builtinMethodTypeIR as builtinIsValidMethodTypeIR
+  -- if (builtinIsValidMethodTypeIR = BUILTIN_ISVALID)
+
+  clause 1 : (builtinMethodTypeIR) = ([], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinSetValidMethodTypeIR
+  -- let builtinSetValidMethodTypeIR = builtinMethodTypeIR as builtinSetValidMethodTypeIR
+  -- if (builtinSetValidMethodTypeIR = BUILTIN_SETVALID)
+
+  clause 2 : (builtinMethodTypeIR) = ([], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinSetInvalidMethodTypeIR
+  -- let builtinSetInvalidMethodTypeIR = builtinMethodTypeIR as builtinSetInvalidMethodTypeIR
+  -- if (builtinSetInvalidMethodTypeIR = BUILTIN_SETINVALID)
+
+  clause 3 : (builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinPushFrontMethodTypeIR
+  -- let builtinPushFrontMethodTypeIR = builtinMethodTypeIR as builtinPushFrontMethodTypeIR
+  -- if (builtinPushFrontMethodTypeIR = BUILTIN_PUSHFRONT)
+
+  clause 4 : (builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinPopFrontMethodTypeIR
+  -- let builtinPopFrontMethodTypeIR = builtinMethodTypeIR as builtinPopFrontMethodTypeIR
+  -- if (builtinPopFrontMethodTypeIR = BUILTIN_POPFRONT)
+
+  clause 5 : (builtinMethodTypeIR) = ([], INT as typeIR)
+  -- if builtinMethodTypeIR <: builtinSizeMethodTypeIR
+  -- let builtinSizeMethodTypeIR = builtinMethodTypeIR as builtinSizeMethodTypeIR
+  -- if (builtinSizeMethodTypeIR = BUILTIN_SIZE)
 
 def $callable_externMethod(cursor, typingContext) : bool =
 

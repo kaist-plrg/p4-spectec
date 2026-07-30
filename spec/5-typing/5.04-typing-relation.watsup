@@ -521,9 +521,7 @@ dec $is_static_callableTypeIR(callableTypeIR) : ctk
   hint(prose_in "compile-time known-ness of" %0)
 def $is_static_callableTypeIR(EXTERN_FUNCTION "static_assert" `( _ `) ':' _)
   = LCTK
-def $is_static_callableTypeIR(BUILTIN_METHOD nameIR `( _ `) ':' _) = LCTK
-  -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
-                    "maxSizeInBits", "maxSizeInBytes" ]
+def $is_static_callableTypeIR(builtinSizeMethodTypeIR) = LCTK
 def $is_static_callableTypeIR(_) = DYN
   -- otherwise
 

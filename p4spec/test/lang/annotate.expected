@@ -1624,19 +1624,21 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
  .. Let ``B~params~`` be xref:unions_set[the union of the sets ``bound''^{asterisk}^``].
  .. Let ``B~ret~`` be xref:free_typeIR[free type identifiers in ``typeIR``].
  .. Return xref:union_set[the union of the sets ``B~params~`` and ``B~ret~``].
-. Else if let ``+BUILTIN_METHOD+`` ``++_++`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR`` be ``callableTypeIR``:
- .. Let ``bound'''^{asterisk}^`` be the list obtained by repeating:
+. Else if ``callableTypeIR`` has type ``builtinMethodTypeIR``:
+ .. Return ``+`{+`` ``·`` ``+`}+``.
+. Else if let ``externMethodTypeIR`` be ``callableTypeIR``:
+ .. If let ``+EXTERN_METHOD+`` ``++_++`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR`` be ``externMethodTypeIR``:
+  ... Let ``bound'''^{asterisk}^`` be the list obtained by repeating:
 +
 --
-  *** Let ``bound'''`` be xref:free_parameterIR[free type identifiers in ``parameterIR``].
+   **** Let ``bound'''`` be xref:free_parameterIR[free type identifiers in ``parameterIR``].
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
- .. Let ``B~params~`` be xref:unions_set[the union of the sets ``bound'''^{asterisk}^``].
- .. Let ``B~ret~`` be xref:free_typeIR[free type identifiers in ``typeIR``].
- .. Return xref:union_set[the union of the sets ``B~params~`` and ``B~ret~``].
-. Else if let ``externMethodTypeIR`` be ``callableTypeIR``:
- .. If let ``+EXTERN_METHOD+`` ``++_++`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR`` be ``externMethodTypeIR``:
+  ... Let ``B~params~`` be xref:unions_set[the union of the sets ``bound'''^{asterisk}^``].
+  ... Let ``B~ret~`` be xref:free_typeIR[free type identifiers in ``typeIR``].
+  ... Return xref:union_set[the union of the sets ``B~params~`` and ``B~ret~``].
+ .. Else:
   ... Let ``bound''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -1647,18 +1649,17 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
   ... Let ``B~params~`` be xref:unions_set[the union of the sets ``bound''''^{asterisk}^``].
   ... Let ``B~ret~`` be xref:free_typeIR[free type identifiers in ``typeIR``].
   ... Return xref:union_set[the union of the sets ``B~params~`` and ``B~ret~``].
- .. Else:
-  ... Let ``bound'''''^{asterisk}^`` be the list obtained by repeating:
+. Else if let ``+PARSER_APPLY+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``callableTypeIR``:
+ .. Let ``bound'''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
-   **** Let ``bound'''''`` be xref:free_parameterIR[free type identifiers in ``parameterIR``].
+  *** Let ``bound'''''`` be xref:free_parameterIR[free type identifiers in ``parameterIR``].
 --
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
-  ... Let ``B~params~`` be xref:unions_set[the union of the sets ``bound'''''^{asterisk}^``].
-  ... Let ``B~ret~`` be xref:free_typeIR[free type identifiers in ``typeIR``].
-  ... Return xref:union_set[the union of the sets ``B~params~`` and ``B~ret~``].
-. Else if let ``+PARSER_APPLY+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``callableTypeIR``:
+ .. Let ``B~params~`` be xref:unions_set[the union of the sets ``bound'''''^{asterisk}^``].
+ .. Return ``B~params~``.
+. Else if let ``+CONTROL_APPLY+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``callableTypeIR``:
  .. Let ``bound''''''^{asterisk}^`` be the list obtained by repeating:
 +
 --
@@ -1667,16 +1668,6 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
 +
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
  .. Let ``B~params~`` be xref:unions_set[the union of the sets ``bound''''''^{asterisk}^``].
- .. Return ``B~params~``.
-. Else if let ``+CONTROL_APPLY+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``callableTypeIR``:
- .. Let ``bound'''''''^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``bound'''''''`` be xref:free_parameterIR[free type identifiers in ``parameterIR``].
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
- .. Let ``B~params~`` be xref:unions_set[the union of the sets ``bound'''''''^{asterisk}^``].
  .. Return ``B~params~``.
 . Else:
  .. Return ``+`{+`` ``·`` ``+`}+``.
@@ -2042,16 +2033,8 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
 for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
  .. Let ``typeIR~subst~`` be xref:subst_typeIR'[``typeIR`` substituted by a non-empty ``theta``].
  .. Return ``+EXTERN_FUNCTION+`` ``nameIR`` ``+`(+`` ``parameterIR~subst~^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~subst~``.
-. Else if let ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR`` be ``callableTypeIR``:
- .. Let ``parameterIR~subst~^{asterisk}^`` be the list obtained by repeating:
-+
---
-  *** Let ``parameterIR~subst~`` be xref:subst_parameterIR'[``parameterIR`` substituted by a non-empty ``theta``].
---
-+
-for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
- .. Let ``typeIR~subst~`` be xref:subst_typeIR'[``typeIR`` substituted by a non-empty ``theta``].
- .. Return ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR~subst~^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~subst~``.
+. Else if let ``builtinMethodTypeIR`` be ``callableTypeIR``:
+ .. Return ``builtinMethodTypeIR``.
 . Else if let ``externMethodTypeIR`` be ``callableTypeIR``:
  .. If let ``+EXTERN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR`` be ``externMethodTypeIR``:
   ... Let ``parameterIR~subst~^{asterisk}^`` be the list obtained by repeating:
@@ -7574,12 +7557,9 @@ for each ``parameterIR`` in ``parameterIR^{asterisk}^``.
  .. If xref:ReturnType_wf[``typeIR~ret~`` is a well-formed return type, with bound type variables ``B``]:
   ... Then, the relation holds.
 
-xref:CallableType_wf[``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` is a well-formed callable type, with bound type variables ``B``]:
+xref:CallableType_wf[``builtinMethodTypeIR`` is a well-formed callable type, with bound type variables ``B``]:
 
-. If xref:ParameterType_wf[``parameterIR`` is a well-formed parameter, with bound type variables ``B``], for all ``parameterIR`` in ``parameterIR^{asterisk}^``:
- .. Check that xref:is_optional_parameterIR[``parameterIR`` is not an optional parameter], for all ``parameterIR`` in ``parameterIR^{asterisk}^``.
- .. If xref:ReturnType_wf[``typeIR~ret~`` is a well-formed return type, with bound type variables ``B``]:
-  ... Then, the relation holds.
+. Then, the relation holds.
 
 xref:CallableType_wf[``externMethodTypeIR`` is a well-formed callable type, with bound type variables ``B``]:
 
@@ -12323,7 +12303,6 @@ xref:is_static_callableTypeIR[Compile-time known-ness of ``callableTypeIR``]
  .. Check that ``t`` is equal to ``"static_assert"``.
  .. Return ``+LCTK+``.
 . Else:
- .. Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
  .. Return ``+LCTK+``.
 
 . Otherwise:
@@ -12403,41 +12382,52 @@ xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` `
 . Check that ``nameIR`` is in ``+[+`` ``"minSizeInBits",`` ``"minSizeInBytes",`` ``"maxSizeInBits",`` ``"maxSizeInBytes"`` ``+]+``.
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
 . Check that xref:is_serializable_typeIR[``typeIR~base~`` has a defined size].
-. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+`)+`` ``+':'+`` ``+INT+``.
+. Let ``methodTypeIR`` be ``+BUILTIN_SIZE+``.
 . Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``·`` ``+`)+``, under cursor ``p`` and context ``TC``]:
 
-. If ``nameIR`` is in ``"isValid"``:
+. If ``nameIR`` is equal to ``"isValid"``:
  .. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
  .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
  .. Check that ``typeIR`` has type ``headerTypeIR``.
- .. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+`)+`` ``+':'+`` ``+BOOL+``.
+ .. Let ``methodTypeIR`` be ``+BUILTIN_ISVALID+``.
  .. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
-. Else if ``nameIR`` is in ``+[+`` ``"setValid",`` ``"setInvalid"`` ``+]+``:
+. Else if ``nameIR`` is equal to ``"setValid"``:
  .. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
  .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
  .. Check that ``typeIR`` has type ``headerTypeIR``.
- .. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+`)+`` ``+':'+`` ``+VOID+``.
+ .. Let ``methodTypeIR`` be ``+BUILTIN_SETVALID+``.
+ .. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+. Else if ``nameIR`` is equal to ``"setInvalid"``:
+ .. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+ .. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+ .. Check that ``typeIR`` has type ``headerTypeIR``.
+ .. Let ``methodTypeIR`` be ``+BUILTIN_SETINVALID+``.
  .. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
-xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``·`` ``+`)+``, under cursor ``p`` and context ``TC``]:
+xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``"push_front"`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR`` ``+`)+``, under cursor ``p`` and context ``TC``]:
 
-. Check that ``nameIR`` is in ``"isValid"``.
-. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. Check that ``typeIR`` has type ``headerUnionTypeIR``.
-. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``·`` ``+`)+`` ``+':'+`` ``+BOOL+``.
-. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
-
-xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR`` ``+`)+``, under cursor ``p`` and context ``TC``]:
-
-. Check that ``nameIR`` is in ``+[+`` ``"push_front",`` ``"pop_front"`` ``+]+``.
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
 . Check that ``typeIR`` has type ``headerStackTypeIR``.
-. Let ``parameterIR`` be ```` ```` ``+INT+`` ``"count"`` ``·``.
-. Let ``methodTypeIR`` be ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR`` ``+`)+`` ``+':'+`` ``+VOID+``.
+. Let ``methodTypeIR`` be ``+BUILTIN_PUSHFRONT+``.
+. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+
+xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``"pop_front"`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR`` ``+`)+``, under cursor ``p`` and context ``TC``]:
+
+. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+. Check that ``typeIR`` has type ``headerStackTypeIR``.
+. Let ``methodTypeIR`` be ``+BUILTIN_POPFRONT+``.
+. Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
+
+xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``"isValid"`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``·`` ``+`)+``, under cursor ``p`` and context ``TC``]:
+
+. Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
+. Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+. Check that ``typeIR`` has type ``headerUnionTypeIR``.
+. Let ``methodTypeIR`` be ``+BUILTIN_ISVALID+``.
 . Result in callable type ``methodTypeIR`` with fresh type variables ``·``, defaults ``·`` and optionals ``·``.
 
 xref:CallableType_ok[Finding type of callable call ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR'^{asterisk}^`` ``+`)+``, under cursor ``p`` and context ``TC``]:
@@ -12573,7 +12563,7 @@ for each ``parameterIR~aligned~`` in ``parameterIR~aligned~^{asterisk}^``.
 
 xref:Call_ok[Typing invocation ``builtinMethodTypeIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
-. Let ``+BUILTIN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``builtinMethodTypeIR``.
+. Let ``(`` ``parameterIR^{asterisk}^,`` ``typeIR~ret~`` ``)`` be ``xref:signature_of_builtinMethodTypeIR[$signature_of_builtinMethodTypeIR(builtinMethodTypeIR)]``.
 . Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let casted ``argumentIR~cast~^{asterisk}^`` be
 * the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
@@ -14508,6 +14498,21 @@ xref:callable_externFunction[$callable_externFunction(p, TC, nameIR)]
   ... Let ``localKind`` be ``TC.+LOCAL+.+KIND+``.
   ... Return ``localKind`` is equal to ``+PARSER_STATE+``.
  .. Else: return ``true``.
+
+xref:signature_of_builtinMethodTypeIR[$signature_of_builtinMethodTypeIR(builtinMethodTypeIR)]
+
+. If let ``builtinIsValidMethodTypeIR`` be ``builtinMethodTypeIR``:
+ .. Return ( ``·``, ``+BOOL+`` ).
+. Else if let ``builtinSetValidMethodTypeIR`` be ``builtinMethodTypeIR``:
+ .. Return ( ``·``, ``+VOID+`` ).
+. Else if let ``builtinSetInvalidMethodTypeIR`` be ``builtinMethodTypeIR``:
+ .. Return ( ``·``, ``+VOID+`` ).
+. Else if let ``builtinPushFrontMethodTypeIR`` be ``builtinMethodTypeIR``:
+ .. Return ( ```` ```` ``+INT+`` ``"count"`` ``·``, ``+VOID+`` ).
+. Else if let ``builtinPopFrontMethodTypeIR`` be ``builtinMethodTypeIR``:
+ .. Return ( ```` ```` ``+INT+`` ``"count"`` ``·``, ``+VOID+`` ).
+. Else:
+ .. Return ( ``·``, ``+INT+`` ).
 
 xref:callable_externMethod[$callable_externMethod(p, TC)]
 
