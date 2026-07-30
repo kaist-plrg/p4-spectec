@@ -3184,6 +3184,20 @@ syntax builtinMethodTypeIR =
    | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
    | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
 
+def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR) : (parameterIR*, typeIR) =
+
+  clause 0 : (BUILTIN_ISVALID as builtinMethodTypeIR) = ([], BOOL as typeIR)
+
+  clause 1 : (BUILTIN_SETVALID as builtinMethodTypeIR) = ([], VOID as typeIR)
+
+  clause 2 : (BUILTIN_SETINVALID as builtinMethodTypeIR) = ([], VOID as typeIR)
+
+  clause 3 : (BUILTIN_PUSHFRONT as builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+
+  clause 4 : (BUILTIN_POPFRONT as builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+
+  clause 5 : (BUILTIN_SIZE as builtinMethodTypeIR) = ([], INT as typeIR)
+
 syntax externMethodTypeIR = 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
@@ -13474,20 +13488,6 @@ def $callable_externFunction(cursor, typingContext, nameIR) : bool =
 
   clause 5 : (LOCAL, TC, nameIR) = true
   -- if (nameIR =/= "verify")
-
-def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR) : (parameterIR*, typeIR) =
-
-  clause 0 : (BUILTIN_ISVALID as builtinMethodTypeIR) = ([], BOOL as typeIR)
-
-  clause 1 : (BUILTIN_SETVALID as builtinMethodTypeIR) = ([], VOID as typeIR)
-
-  clause 2 : (BUILTIN_SETINVALID as builtinMethodTypeIR) = ([], VOID as typeIR)
-
-  clause 3 : (BUILTIN_PUSHFRONT as builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
-
-  clause 4 : (BUILTIN_POPFRONT as builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
-
-  clause 5 : (BUILTIN_SIZE as builtinMethodTypeIR) = ([], INT as typeIR)
 
 def $callable_externMethod(cursor, typingContext) : bool =
 

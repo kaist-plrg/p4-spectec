@@ -57,6 +57,17 @@ syntax builtinMethodTypeIR =
   | builtinPopFrontMethodTypeIR
   | builtinSizeMethodTypeIR
 
+;; the parameter list and return type of each builtin method
+dec $signature_of_builtinMethodTypeIR(builtinMethodTypeIR) : (parameterIR*, typeIR)
+def $signature_of_builtinMethodTypeIR(BUILTIN_ISVALID) = (eps, BOOL)
+def $signature_of_builtinMethodTypeIR(BUILTIN_SETVALID) = (eps, VOID)
+def $signature_of_builtinMethodTypeIR(BUILTIN_SETINVALID) = (eps, VOID)
+def $signature_of_builtinMethodTypeIR(BUILTIN_PUSHFRONT)
+  = ([ _EMPTY _EMPTY INT "count" eps ], VOID)
+def $signature_of_builtinMethodTypeIR(BUILTIN_POPFRONT)
+  = ([ _EMPTY _EMPTY INT "count" eps ], VOID)
+def $signature_of_builtinMethodTypeIR(BUILTIN_SIZE) = (eps, INT)
+
 syntax externMethodTypeIR =
   | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR
   | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR

@@ -3880,6 +3880,38 @@ syntax builtinMethodTypeIR =
    | BUILTIN_POPFRONT (from builtinPopFrontMethodTypeIR) 
    | BUILTIN_SIZE (from builtinSizeMethodTypeIR) 
 
+def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR) : (parameterIR*, typeIR) =
+
+  clause 0 : (builtinMethodTypeIR) = ([], BOOL as typeIR)
+  -- if builtinMethodTypeIR <: builtinIsValidMethodTypeIR
+  -- let builtinIsValidMethodTypeIR = builtinMethodTypeIR as builtinIsValidMethodTypeIR
+  -- if (builtinIsValidMethodTypeIR = BUILTIN_ISVALID)
+
+  clause 1 : (builtinMethodTypeIR) = ([], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinSetValidMethodTypeIR
+  -- let builtinSetValidMethodTypeIR = builtinMethodTypeIR as builtinSetValidMethodTypeIR
+  -- if (builtinSetValidMethodTypeIR = BUILTIN_SETVALID)
+
+  clause 2 : (builtinMethodTypeIR) = ([], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinSetInvalidMethodTypeIR
+  -- let builtinSetInvalidMethodTypeIR = builtinMethodTypeIR as builtinSetInvalidMethodTypeIR
+  -- if (builtinSetInvalidMethodTypeIR = BUILTIN_SETINVALID)
+
+  clause 3 : (builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinPushFrontMethodTypeIR
+  -- let builtinPushFrontMethodTypeIR = builtinMethodTypeIR as builtinPushFrontMethodTypeIR
+  -- if (builtinPushFrontMethodTypeIR = BUILTIN_PUSHFRONT)
+
+  clause 4 : (builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+  -- if builtinMethodTypeIR <: builtinPopFrontMethodTypeIR
+  -- let builtinPopFrontMethodTypeIR = builtinMethodTypeIR as builtinPopFrontMethodTypeIR
+  -- if (builtinPopFrontMethodTypeIR = BUILTIN_POPFRONT)
+
+  clause 5 : (builtinMethodTypeIR) = ([], INT as typeIR)
+  -- if builtinMethodTypeIR <: builtinSizeMethodTypeIR
+  -- let builtinSizeMethodTypeIR = builtinMethodTypeIR as builtinSizeMethodTypeIR
+  -- if (builtinSizeMethodTypeIR = BUILTIN_SIZE)
+
 syntax externMethodTypeIR = 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
@@ -23063,38 +23095,6 @@ def $callable_externFunction(cursor, typingContext, nameIR) : bool =
   clause 5 : (p, TC, nameIR) = true
   -- if p matches `LOCAL`
   -- if (nameIR =/= "verify")
-
-def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR) : (parameterIR*, typeIR) =
-
-  clause 0 : (builtinMethodTypeIR) = ([], BOOL as typeIR)
-  -- if builtinMethodTypeIR <: builtinIsValidMethodTypeIR
-  -- let builtinIsValidMethodTypeIR = builtinMethodTypeIR as builtinIsValidMethodTypeIR
-  -- if (builtinIsValidMethodTypeIR = BUILTIN_ISVALID)
-
-  clause 1 : (builtinMethodTypeIR) = ([], VOID as typeIR)
-  -- if builtinMethodTypeIR <: builtinSetValidMethodTypeIR
-  -- let builtinSetValidMethodTypeIR = builtinMethodTypeIR as builtinSetValidMethodTypeIR
-  -- if (builtinSetValidMethodTypeIR = BUILTIN_SETVALID)
-
-  clause 2 : (builtinMethodTypeIR) = ([], VOID as typeIR)
-  -- if builtinMethodTypeIR <: builtinSetInvalidMethodTypeIR
-  -- let builtinSetInvalidMethodTypeIR = builtinMethodTypeIR as builtinSetInvalidMethodTypeIR
-  -- if (builtinSetInvalidMethodTypeIR = BUILTIN_SETINVALID)
-
-  clause 3 : (builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
-  -- if builtinMethodTypeIR <: builtinPushFrontMethodTypeIR
-  -- let builtinPushFrontMethodTypeIR = builtinMethodTypeIR as builtinPushFrontMethodTypeIR
-  -- if (builtinPushFrontMethodTypeIR = BUILTIN_PUSHFRONT)
-
-  clause 4 : (builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
-  -- if builtinMethodTypeIR <: builtinPopFrontMethodTypeIR
-  -- let builtinPopFrontMethodTypeIR = builtinMethodTypeIR as builtinPopFrontMethodTypeIR
-  -- if (builtinPopFrontMethodTypeIR = BUILTIN_POPFRONT)
-
-  clause 5 : (builtinMethodTypeIR) = ([], INT as typeIR)
-  -- if builtinMethodTypeIR <: builtinSizeMethodTypeIR
-  -- let builtinSizeMethodTypeIR = builtinMethodTypeIR as builtinSizeMethodTypeIR
-  -- if (builtinSizeMethodTypeIR = BUILTIN_SIZE)
 
 def $callable_externMethod(cursor, typingContext) : bool =
 
