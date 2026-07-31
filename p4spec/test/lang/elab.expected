@@ -3004,6 +3004,36 @@ tbl def $is_assignable_typeIR(typeIR) : bool =
   row 6 :
     (_typeIR) -> true
 
+tbl def $is_serializable_typeIR(typeIR) : bool =
+  row 0 :
+    (BOOL as typeIR) -> true
+  row 1 :
+    (INT `< _nat `> as typeIR) -> true
+  row 2 :
+    (BIT `< _nat `> as typeIR) -> true
+  row 3 :
+    (VARBIT `< _nat `> as typeIR) -> true
+  row 4 :
+    (TYPEDEF _typeId typeIR as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 5 :
+    (TYPE _typeId typeIR as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 6 :
+    (ENUM _typeId `< typeIR `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 7 :
+    (TUPLE `< typeIR*{typeIR <- typeIR*} `> as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 8 :
+    (ARRAY typeIR `[ _nat `] as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 9 :
+    (HEADER_STACK typeIR `[ _nat `] as typeIR) -> $is_serializable_typeIR(typeIR)
+  row 10 :
+    (STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 11 :
+    (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 12 :
+    (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) -> $forall_($is_serializable_typeIR(typeIR)*{typeIR <- typeIR*})
+  row 13 :
+    (_typeIR) -> false
+
 def $typeId_of_typeDefIR(typeDefIR) : typeId =
 
   clause 0 : (_NAME typeId as typeDefIR) = typeId
@@ -3128,8 +3158,45 @@ syntax functionTypeIR =
    | FUNCTION nameIR `( parameterIR* `) ':' typeIR (from definedFunctionTypeIR) 
    | EXTERN_FUNCTION nameIR `( parameterIR* `) ':' typeIR (from externFunctionTypeIR) 
 
+syntax builtinIsValidMethodTypeIR = 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
+
+syntax builtinSetValidMethodTypeIR = 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
+
+syntax builtinSetInvalidMethodTypeIR = 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
+
+syntax builtinPushFrontMethodTypeIR = 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
+
+syntax builtinPopFrontMethodTypeIR = 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
+
+syntax builtinSizeMethodTypeIR = 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
+
 syntax builtinMethodTypeIR = 
-   | BUILTIN_METHOD nameIR `( parameterIR* `) ':' typeIR (from builtinMethodTypeIR) 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
+
+def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR) : (parameterIR*, typeIR) =
+
+  clause 0 : (BUILTIN_IS_VALID as builtinMethodTypeIR) = ([], BOOL as typeIR)
+
+  clause 1 : (BUILTIN_SET_VALID as builtinMethodTypeIR) = ([], VOID as typeIR)
+
+  clause 2 : (BUILTIN_SET_INVALID as builtinMethodTypeIR) = ([], VOID as typeIR)
+
+  clause 3 : (BUILTIN_PUSH_FRONT as builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+
+  clause 4 : (BUILTIN_POP_FRONT as builtinMethodTypeIR) = ([_EMPTY _EMPTY INT as typeIR "count" ?()], VOID as typeIR)
+
+  clause 5 : (BUILTIN_SIZE_OF as builtinMethodTypeIR) = ([], INT as typeIR)
 
 syntax externMethodTypeIR = 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
@@ -3145,7 +3212,12 @@ syntax tableApplyMethodTypeIR =
    | TABLE_APPLY ':' tableMetadataStructTypeIR (from tableApplyMethodTypeIR) 
 
 syntax methodTypeIR = 
-   | BUILTIN_METHOD nameIR `( parameterIR* `) ':' typeIR (from builtinMethodTypeIR) 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | PARSER_APPLY `( parameterIR* `) (from parserApplyMethodTypeIR) 
@@ -3156,7 +3228,12 @@ syntax callableTypeIR =
    | annotationList ACTION nameIR `( parameterIR* `) (from actionTypeIR) 
    | FUNCTION nameIR `( parameterIR* `) ':' typeIR (from definedFunctionTypeIR) 
    | EXTERN_FUNCTION nameIR `( parameterIR* `) ':' typeIR (from externFunctionTypeIR) 
-   | BUILTIN_METHOD nameIR `( parameterIR* `) ':' typeIR (from builtinMethodTypeIR) 
+   | BUILTIN_IS_VALID (from builtinIsValidMethodTypeIR) 
+   | BUILTIN_SET_VALID (from builtinSetValidMethodTypeIR) 
+   | BUILTIN_SET_INVALID (from builtinSetInvalidMethodTypeIR) 
+   | BUILTIN_PUSH_FRONT (from builtinPushFrontMethodTypeIR) 
+   | BUILTIN_POP_FRONT (from builtinPopFrontMethodTypeIR) 
+   | BUILTIN_SIZE_OF (from builtinSizeMethodTypeIR) 
    | EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR (from externMethodTypeIR) 
    | PARSER_APPLY `( parameterIR* `) (from parserApplyMethodTypeIR) 
@@ -3419,9 +3496,7 @@ def $free_callableTypeIR(callableTypeIR) : bound =
   -- if (B_params = $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
   -- if (B_ret = $free_typeIR(typeIR))
 
-  clause 3 : (BUILTIN_METHOD _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR as callableTypeIR) = $union_set<typeId>(B_params, B_ret)
-  -- if (B_params = $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
-  -- if (B_ret = $free_typeIR(typeIR))
+  clause 3 : (builtinMethodTypeIR as callableTypeIR) = `{ [] `}
 
   clause 4 : (EXTERN_METHOD _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR as callableTypeIR) = $union_set<typeId>(B_params, B_ret)
   -- if (B_params = $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*}))
@@ -3609,9 +3684,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR) : callableTypeIR =
   -- (if (parameterIR_subst = $subst_parameterIR'(theta, parameterIR)))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
   -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))
 
-  clause 3 : (theta, BUILTIN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR as callableTypeIR) = BUILTIN_METHOD nameIR `( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} `) ':' typeIR_subst as callableTypeIR
-  -- (if (parameterIR_subst = $subst_parameterIR'(theta, parameterIR)))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
-  -- if (typeIR_subst = $subst_typeIR'(theta, typeIR))
+  clause 3 : (theta, builtinMethodTypeIR as callableTypeIR) = builtinMethodTypeIR as callableTypeIR
 
   clause 4 : (theta, EXTERN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR as callableTypeIR) = EXTERN_METHOD nameIR `( parameterIR_subst*{parameterIR_subst <- parameterIR_subst*} `) ':' typeIR_subst as callableTypeIR
   -- (if (parameterIR_subst = $subst_parameterIR'(theta, parameterIR)))*{parameterIR <- parameterIR*, parameterIR_subst <- parameterIR_subst*}
@@ -3956,6 +4029,10 @@ def $un_op(unop, value) : value =
 def $un_bnot(value) : value =
 
   clause 0 : (w W i as value) = w W i'' as value
+  -- if (i' = $bneg(i))
+  -- if (i'' = $ite<int>((i' >= 0 as int), i', ($pow2(w) + i')))
+
+  clause 1 : (w S i as value) = w S i'' as value
   -- if (i' = $bneg(i))
   -- if (i'' = $ite<int>((i' >= 0 as int), i', ($pow2(w) + i')))
 
@@ -4381,37 +4458,40 @@ def $cast_op(typeIR, value) : value =
   clause 2 : (typeIR, errorValue as value) = $cast_error(typeIR_unroll, errorValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 3 : (typeIR, listValue as value) = $cast_list(typeIR_unroll, listValue)
+  clause 3 : (typeIR, stringValue as value) = $cast_string(typeIR_unroll, stringValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 4 : (typeIR, arrayValue as value) = $cast_array(typeIR_unroll, arrayValue)
+  clause 4 : (typeIR, listValue as value) = $cast_list(typeIR_unroll, listValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 5 : (typeIR, headerStackValue as value) = $cast_header_stack(typeIR_unroll, headerStackValue)
+  clause 5 : (typeIR, arrayValue as value) = $cast_array(typeIR_unroll, arrayValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 6 : (typeIR, structValue as value) = $cast_struct(typeIR_unroll, structValue)
+  clause 6 : (typeIR, headerStackValue as value) = $cast_header_stack(typeIR_unroll, headerStackValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 7 : (typeIR, headerValue as value) = $cast_header(typeIR_unroll, headerValue)
+  clause 7 : (typeIR, structValue as value) = $cast_struct(typeIR_unroll, structValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 8 : (typeIR, enumValue as value) = $cast_enum(typeIR_unroll, enumValue)
+  clause 8 : (typeIR, headerValue as value) = $cast_header(typeIR_unroll, headerValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 9 : (typeIR, sequenceValue as value) = $cast_sequence(typeIR_unroll, sequenceValue)
+  clause 9 : (typeIR, enumValue as value) = $cast_enum(typeIR_unroll, enumValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 10 : (typeIR, recordValue as value) = $cast_record(typeIR_unroll, recordValue)
+  clause 10 : (typeIR, sequenceValue as value) = $cast_sequence(typeIR_unroll, sequenceValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 11 : (typeIR, DEFAULT as value) = $cast_default(typeIR_unroll, DEFAULT)
+  clause 11 : (typeIR, recordValue as value) = $cast_record(typeIR_unroll, recordValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 12 : (typeIR, invalidHeaderValue as value) = $cast_invalid_header(typeIR_unroll)
+  clause 12 : (typeIR, DEFAULT as value) = $cast_default(typeIR_unroll, DEFAULT)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
-  clause 13 : (typeIR, setValue as value) = $cast_set(typeIR_unroll, setValue)
+  clause 13 : (typeIR, invalidHeaderValue as value) = $cast_invalid_header(typeIR_unroll)
+  -- if (typeIR_unroll = $unroll_typeIR(typeIR))
+
+  clause 14 : (typeIR, setValue as value) = $cast_set(typeIR_unroll, setValue)
   -- if (typeIR_unroll = $unroll_typeIR(typeIR))
 
 def $default(typeIR) : value =
@@ -4546,6 +4626,10 @@ def $cast_error(typeIR, errorValue) : value =
 
   clause 1 : (SET `< typeIR `> as typeIR, errorValue) = SET `{ $cast_op(typeIR, errorValue as value) `} as value
 
+def $cast_string(typeIR, stringValue) : value =
+
+  clause 0 : (STRING as typeIR, stringValue) = stringValue as value
+
 def $cast_list(typeIR, listValue) : value =
 
   clause 0 : (LIST `< typeIR `> as typeIR, LIST `[ value*{value <- value*} `]) = LIST `[ $cast_op(typeIR, value)*{value <- value*} `] as value
@@ -4583,28 +4667,75 @@ def $cast_sequence(typeIR, sequenceValue) : value =
 
   clause 1 : (TUPLE `< typeIR*{typeIR <- typeIR*} `> as typeIR, SEQ `( value*{value <- value*} `)) = TUPLE `( $cast_op(typeIR, value)*{typeIR <- typeIR*, value <- value*} `) as value
 
-  clause 2 : (ARRAY typeIR `[ n_size `] as typeIR, SEQ `( value*{value <- value*} `)) = ARRAY `[ value_cast*{value_cast <- value_cast*} `] as value
+  clause 2 : (SEQ `< typeIR*{typeIR <- typeIR*} `> as typeIR, SEQ `( value*{value <- value*} `)) = SEQ `( $cast_op(typeIR, value)*{typeIR <- typeIR*, value <- value*} `) as value
+
+  clause 3 : (ARRAY typeIR `[ n_size `] as typeIR, SEQ `( value*{value <- value*} `)) = ARRAY `[ value_cast*{value_cast <- value_cast*} `] as value
   -- (if (value_cast = $cast_op(typeIR, value)))*{value <- value*, value_cast <- value_cast*}
 
-  clause 3 : (HEADER_STACK typeIR `[ n_size `] as typeIR, SEQ `( value*{value <- value*} `)) = HEADER_STACK `[ value_cast*{value_cast <- value_cast*} `( n_idx `) `] as value
+  clause 4 : (HEADER_STACK typeIR `[ n_size `] as typeIR, SEQ `( value*{value <- value*} `)) = HEADER_STACK `[ value_cast*{value_cast <- value_cast*} `( n_idx `) `] as value
   -- (if (value_cast = $cast_op(typeIR, value)))*{value <- value*, value_cast <- value_cast*}
   -- if (n_idx = |value*{value <- value*}|)
 
-  clause 4 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} as typeIR, SEQ `( value*{value <- value*} `)) = STRUCT typeId `{ value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
+  clause 5 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} as typeIR, SEQ `( value*{value <- value*} `)) = STRUCT typeId `{ value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
   -- (if (value_cast = $cast_op(typeIR_field, value)))*{typeIR_field <- typeIR_field*, value <- value*, value_cast <- value_cast*}
 
-  clause 5 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} as typeIR, SEQ `( value*{value <- value*} `)) = HEADER typeId `{ true ';' value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
+  clause 6 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} as typeIR, SEQ `( value*{value <- value*} `)) = HEADER typeId `{ true ';' value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
   -- (if (value_cast = $cast_op(typeIR_field, value)))*{typeIR_field <- typeIR_field*, value <- value*, value_cast <- value_cast*}
+
+  clause 7 : (TUPLE `< typeIR*{typeIR <- typeIR*} `> as typeIR, SEQ `( value*{value <- value*} ',' '...' `)) = TUPLE `( value_cast*{value_cast <- value_cast*} `) as value
+  -- if ((typeIR_given*{typeIR_given <- typeIR_given*}, typeIR_rest*{typeIR_rest <- typeIR_rest*}) = $partition_<typeIR>(typeIR*{typeIR <- typeIR*}, |value*{value <- value*}|))
+  -- (if (value_given = $cast_op(typeIR_given, value)))*{typeIR_given <- typeIR_given*, value <- value*, value_given <- value_given*}
+  -- (if (value_rest = $default(typeIR_rest)))*{typeIR_rest <- typeIR_rest*, value_rest <- value_rest*}
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+
+  clause 8 : (ARRAY typeIR `[ n_size `] as typeIR, SEQ `( value*{value <- value*} ',' '...' `)) = ARRAY `[ value_cast*{value_cast <- value_cast*} `] as value
+  -- (if (value_given = $cast_op(typeIR, value)))*{value <- value*, value_given <- value_given*}
+  -- if (n_rest as int = (n_size - |value*{value <- value*}|))
+  -- if (value_rest*{value_rest <- value_rest*} = $repeat_<value>($default(typeIR), n_rest))
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+
+  clause 9 : (HEADER_STACK typeIR `[ n_size `] as typeIR, SEQ `( value*{value <- value*} ',' '...' `)) = HEADER_STACK `[ value_cast*{value_cast <- value_cast*} `( n_idx `) `] as value
+  -- (if (value_given = $cast_op(typeIR, value)))*{value <- value*, value_given <- value_given*}
+  -- if (n_rest as int = (n_size - |value*{value <- value*}|))
+  -- if (value_rest*{value_rest <- value_rest*} = $repeat_<value>($default(typeIR), n_rest))
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+  -- if (n_idx = |value*{value <- value*}|)
+
+  clause 10 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} as typeIR, SEQ `( value*{value <- value*} ',' '...' `)) = STRUCT typeId `{ value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
+  -- if ((typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}, typeIR_field_rest*{typeIR_field_rest <- typeIR_field_rest*}) = $partition_<typeIR>(typeIR_field*{typeIR_field <- typeIR_field*}, |value*{value <- value*}|))
+  -- (if (value_given = $cast_op(typeIR_field_given, value)))*{typeIR_field_given <- typeIR_field_given*, value <- value*, value_given <- value_given*}
+  -- (if (value_rest = $default(typeIR_field_rest)))*{typeIR_field_rest <- typeIR_field_rest*, value_rest <- value_rest*}
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
+
+  clause 11 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} as typeIR, SEQ `( value*{value <- value*} ',' '...' `)) = HEADER typeId `{ true ';' value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
+  -- if ((typeIR_field_given*{typeIR_field_given <- typeIR_field_given*}, typeIR_field_rest*{typeIR_field_rest <- typeIR_field_rest*}) = $partition_<typeIR>(typeIR_field*{typeIR_field <- typeIR_field*}, |value*{value <- value*}|))
+  -- (if (value_given = $cast_op(typeIR_field_given, value)))*{typeIR_field_given <- typeIR_field_given*, value <- value*, value_given <- value_given*}
+  -- (if (value_rest = $default(typeIR_field_rest)))*{typeIR_field_rest <- typeIR_field_rest*, value_rest <- value_rest*}
+  -- if (value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*})
 
 def $cast_record(typeIR, recordValue) : value =
 
-  clause 0 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} as typeIR, RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}) = STRUCT typeId `{ value_field_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} `} as value
+  clause 0 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} as typeIR, RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}) = STRUCT typeId `{ value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
   -- (if (?(value_field') = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field)))*{id_t_field <- id_t_field*, value_field' <- value_field'*}
   -- (if (value_field_cast = $cast_op(typeIR_t_field, value_field')))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast <- value_field_cast*}
 
-  clause 1 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} as typeIR, RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}) = HEADER typeId `{ true ';' value_field_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field_cast <- value_field_cast*} `} as value
+  clause 1 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} as typeIR, RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}) = HEADER typeId `{ true ';' value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
   -- (if (?(value_field') = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field)))*{id_t_field <- id_t_field*, value_field' <- value_field'*}
   -- (if (value_field_cast = $cast_op(typeIR_t_field, value_field')))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast <- value_field_cast*}
+
+  clause 2 : (STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} as typeIR, RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} ',' '...' `}) = STRUCT typeId `{ value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
+  -- (if (value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `})))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast <- value_field_cast*}
+
+  clause 3 : (HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} as typeIR, RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} ',' '...' `}) = HEADER typeId `{ true ';' value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
+  -- (if (value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `})))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast <- value_field_cast*}
+
+def $cast_record_field(typeIR, id, map<id, value>) : value =
+
+  clause 0 : (typeIR, id, `{ id_field ':' value_field*{id_field <- id_field*, value_field <- value_field*} `}) = $cast_op(typeIR, value_found)
+  -- if (?(value_found) = $find_map<id, value>(`{ id_field ':' value_field*{id_field <- id_field*, value_field <- value_field*} `}, id))
+
+  clause 1 : (typeIR, id, `{ id_field ':' value_field*{id_field <- id_field*, value_field <- value_field*} `}) = $default(typeIR)
+  -- if (?() = $find_map<id, value>(`{ id_field ':' value_field*{id_field <- id_field*, value_field <- value_field*} `}, id))
 
 def $cast_default(typeIR, defaultValue) : value =
 
@@ -4655,10 +4786,25 @@ def $bitacc_range_replace_op(value, value, value, value) : value =
   -- if (_nat W i_r as integerValue = integerValue_r)
   -- if (i = $bitacc_replace(i_b, i_h, i_l, i_r))
 
+  clause 1 : (integerValue_b as value, integerValue_h as value, integerValue_l as value, integerValue_r as value) = w S i as value
+  -- if (w S i_b as integerValue = integerValue_b)
+  -- if (i_h = $int_of_integerValue(integerValue_h))
+  -- if (i_l = $int_of_integerValue(integerValue_l))
+  -- if (_nat W i_r as integerValue = integerValue_r)
+  -- if (i = $bitacc_replace(i_b, i_h, i_l, i_r))
+
 def $bitacc_offset_replace_op(value, value, value, value) : value =
 
   clause 0 : (integerValue_b as value, integerValue_l as value, integerValue_w as value, integerValue_r as value) = w W i as value
   -- if (w W i_b as integerValue = integerValue_b)
+  -- if (i_l = $int_of_integerValue(integerValue_l))
+  -- if (?(n_w) = $nat_of_integerValue(integerValue_w))
+  -- if (i_h = ((i_l + n_w as int) - 1 as int))
+  -- if (_nat W i_r as integerValue = integerValue_r)
+  -- if (i = $bitacc_replace(i_b, i_h, i_l, i_r))
+
+  clause 1 : (integerValue_b as value, integerValue_l as value, integerValue_w as value, integerValue_r as value) = w S i as value
+  -- if (w S i_b as integerValue = integerValue_b)
   -- if (i_l = $int_of_integerValue(integerValue_l))
   -- if (?(n_w) = $nat_of_integerValue(integerValue_w))
   -- if (i_h = ((i_l + n_w as int) - 1 as int))
@@ -7535,6 +7681,14 @@ def $add_parameter_t(cursor, typingContext, parameterIR) : typingContext =
   -- if (varTypeIR = direction typeIR DYN ?())
   -- if (TC' = $add_var_t(cursor, TC, id, varTypeIR))
 
+def $add_parameters_t(cursor, typingContext, parameterIR*) : typingContext =
+
+  clause 0 : (cursor, TC, []) = TC
+
+  clause 1 : (cursor, TC, parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*}) = TC''
+  -- if (TC' = $add_parameter_t(cursor, TC, parameterIR_h))
+  -- if (TC'' = $add_parameters_t(cursor, TC', parameterIR_t*{parameterIR_t <- parameterIR_t*}))
+
 def $add_constructorParameter_t(typingContext, parameterIR) : typingContext =
 
   clause 0 : (TC, _annotationList direction typeIR id _parameterInitializerOptIR) = TC'
@@ -8160,10 +8314,7 @@ relation CallableType_wf: bound |- callableTypeIR
 
   rulegroup builtinMethodTypeIR
 
-    rule builtinMethodTypeIR: B |- BUILTIN_METHOD _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret as callableTypeIR
-    -- (if ParameterType_wf: B |- parameterIR holds)*{parameterIR <- parameterIR*}
-    -- (if ~$is_optional_parameterIR(parameterIR))*{parameterIR <- parameterIR*}
-    -- if ReturnType_wf: B |- typeIR_ret holds
+    rule builtinMethodTypeIR: B |- builtinMethodTypeIR as callableTypeIR
 
   rulegroup externMethodTypeIR
 
@@ -8530,10 +8681,8 @@ tbl def $nestable_headerUnion(typeIR) : bool =
   row 1 :
     (TYPEDEF _typeId typeIR as typeIR) -> $nestable_headerUnion(typeIR)
   row 2 :
-    (newTypeIR as typeIR) -> true
-  row 3 :
     (headerTypeIR as typeIR) -> true
-  row 4 :
+  row 3 :
     (_typeIR) -> false
 
 tbl def $nestable_enum_serializable(typeIR) : bool =
@@ -8889,7 +9038,7 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
 
   rulegroup memberAccessExpressionIR-typedExpressionIR
 
-    rule header-stack-size: p TC |- typedExpressionIR_base as memberAccessBaseIR '.' nameIR as expressionIR '#' _expressionNoteIR ~> D n_size as int as value
+    rule header-stack-size: p TC |- typedExpressionIR_base as memberAccessBaseIR '.' nameIR as expressionIR '#' _expressionNoteIR ~> 32 W n_size as int as value
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_STACK _typeIR `[ n_size `] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (nameIR = "size")
@@ -9138,6 +9287,7 @@ relation TypeArgument_ok: cursor typingContext |- typeArgument : typeArgumentIR 
 
     rule nonTypeName: p TC |- nonTypeName as typeArgument : _NAME typeId as typeIR '#' []
     -- if (typeId = $name(nonTypeName as name))
+    -- if Type_wf: $bound(p, TC) |- _NAME typeId as typeIR holds
 
 relation TypeArguments_ok: cursor typingContext |- typeArgument* : typeArgumentListIR '#' typeId*
 
@@ -9753,6 +9903,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (name_f_t '=' expression_f_t*{expression_f_t <- expression_f_t*, name_f_t <- name_f_t*} = $flatten_namedExpressionList(namedExpressionList_t))
     -- if (name_f*{name_f <- name_f*} = name_f_h :: name_f_t*{name_f_t <- name_f_t*})
     -- (if (nameIR_f = $name(name_f)))*{nameIR_f <- nameIR_f*, name_f <- name_f*}
+    -- if $distinct_<nameIR>(nameIR_f*{nameIR_f <- nameIR_f*})
     -- if (expression_f*{expression_f <- expression_f*} = expression_f_h :: expression_f_t*{expression_f_t <- expression_f_t*})
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f <- typedExpressionIR_f*}
     -- (if (typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)))*{typeIR_f <- typeIR_f*, typedExpressionIR_f <- typedExpressionIR_f*}
@@ -9765,6 +9916,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (name_f_t '=' expression_f_t*{expression_f_t <- expression_f_t*, name_f_t <- name_f_t*} = $flatten_namedExpressionList(namedExpressionList_t))
     -- if (name_f*{name_f <- name_f*} = name_f_h :: name_f_t*{name_f_t <- name_f_t*})
     -- (if (nameIR_f = $name(name_f)))*{nameIR_f <- nameIR_f*, name_f <- name_f*}
+    -- if $distinct_<nameIR>(nameIR_f*{nameIR_f <- nameIR_f*})
     -- if (expression_f*{expression_f <- expression_f*} = expression_f_h :: expression_f_t*{expression_f_t <- expression_f_t*})
     -- (Expr_ok: p TC |- expression_f : typedExpressionIR_f)*{expression_f <- expression_f*, typedExpressionIR_f <- typedExpressionIR_f*}
     -- (if (typeIR_f = $type_of_typedExpressionIR(typedExpressionIR_f)))*{typeIR_f <- typeIR_f*, typedExpressionIR_f <- typedExpressionIR_f*}
@@ -10029,7 +10181,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w as value
     -- if (?(n_w) = $nat_of_integerValue(integerValue_w))
     -- if (typeIR = BIT `< n_w `> as typeIR)
-    -- if (expressionNoteIR = `( typeIR ctk_base_reduced `))
+    -- if (ctk = $joins_ctk([ctk_base_reduced, ctk_l_reduced, ctk_w_reduced]))
+    -- if (expressionNoteIR = `( typeIR ctk `))
 
   rulegroup callExpression-callable
 
@@ -10389,7 +10542,7 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
 
   rulegroup forStatement-three-clause
 
-    rule forStatement-three-clause: LOCAL TC_0 |- annotationList FOR `( forInitStatementList ';' expression ';' forUpdateStatementList `) statement as statement : TC_6 forStatementIR as statementIR
+    rule forStatement-three-clause: LOCAL TC_0 |- annotationList FOR `( forInitStatementList ';' expression ';' forUpdateStatementList `) statement as statement : TC_7 forStatementIR as statementIR
     -- if (TC_1 = $enter_t(TC_0))
     -- ForInitStmtList_ok: TC_1 |- forInitStatementList : TC_2 forInitStatementIR*{forInitStatementIR <- forInitStatementIR*}
     -- Expr_ok: LOCAL TC_2 |- expression : typedExpressionIR
@@ -10399,12 +10552,13 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- if (TC_3 = $enter_loop_t(TC_2))
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     -- if (TC_5 = $exit_t(TC_4))
-    -- if (TC_6 = $set_loop_t(TC_5, TC_3.LOOP))
+    -- if (TC_6 = $set_control_t(TC_5, TC_2.CONTROL))
+    -- if (TC_7 = $set_loop_t(TC_6, TC_3.LOOP))
     -- if (forStatementIR = annotationList FOR `( forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} ';' typedExpressionIR ';' forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} `) statementIR)
 
   rulegroup forStatement-in
 
-    rule no-annotations: LOCAL TC_0 |- annotationList FOR `( type name IN forCollectionExpression `) statement as statement : TC_6 forStatementIR as statementIR
+    rule no-annotations: LOCAL TC_0 |- annotationList FOR `( type name IN forCollectionExpression `) statement as statement : TC_7 forStatementIR as statementIR
     -- Type_ok: LOCAL TC_0 |- type as typeOrVoid : typeIR '#' []
     -- if Type_wf: $bound(LOCAL, TC_0) |- typeIR holds
     -- if $is_assignable_typeIR(typeIR)
@@ -10415,7 +10569,8 @@ relation Stmt_ok: cursor typingContext |- statement : typingContext statementIR
     -- if (TC_3 = $enter_loop_t(TC_2))
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     -- if (TC_5 = $exit_t(TC_4))
-    -- if (TC_6 = $set_loop_t(TC_5, TC_3.LOOP))
+    -- if (TC_6 = $set_control_t(TC_5, TC_2.CONTROL))
+    -- if (TC_7 = $set_loop_t(TC_6, TC_3.LOOP))
     -- if (forStatementIR = annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR `) statementIR)
 
     rule annotations: LOCAL TC_0 |- annotationList FOR `( annotationListNonEmpty type name IN forCollectionExpression `) statement as statement : TC_1 forStatementIR as statementIR
@@ -10484,52 +10639,50 @@ relation Block_ok: typingContext |- blockStatement : typingContext blockStatemen
     -- BlockElementStmtList_ok: TC_0 |- blockElementStatementList : TC_1 blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
     -- if (blockStatementIR = annotationList `{ blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} `})
 
-relation Parameter_ok: cursor typingContext |- parameter : typingContext parameterIR '#' typeId*
+relation Parameter_ok: cursor typingContext |- parameter : parameterIR '#' typeId*
 
   rulegroup 
 
-    rule non-initializer: p TC_0 |- annotationList direction type name _EMPTY : TC_1 parameterIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- Type_ok: p TC_0 |- type as typeOrVoid : typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- if (B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} `}))
+    rule non-initializer: p TC |- annotationList direction type name _EMPTY : parameterIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} `}))
     -- if Type_wf: B |- typeIR holds
     -- if (nameIR = $name(name))
     -- if (parameterIR = annotationList direction typeIR nameIR ?())
-    -- if (TC_1 = $add_parameter_t(p, TC_0, parameterIR))
 
-    rule initializer-ctk: p TC_0 |- annotationList direction type name '=' expression_init as initializerOpt : TC_1 parameterIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- Type_ok: p TC_0 |- type as typeOrVoid : typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- if (B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} `}))
+    rule initializer-ctk: p TC |- annotationList direction type name '=' expression_init as initializerOpt : parameterIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} `}))
     -- if Type_wf: B |- typeIR holds
-    -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
+    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- if (typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init))
     -- if (CTK = $ctk_of_typedExpressionIR(typedExpressionIR_init))
     -- if (?(typedExpressionIR_init_cast) = $cast_unary(typedExpressionIR_init, typeIR))
     -- if (nameIR = $name(name))
     -- if (parameterInitializerIR = '=' typedExpressionIR_init_cast as parameterInitializerIR)
     -- if (parameterIR = annotationList direction typeIR nameIR ?(parameterInitializerIR))
-    -- if (TC_1 = $add_parameter_t(p, TC_0, parameterIR))
 
-    rule initializer-lctk: p TC_0 |- annotationList direction type name '=' expression_init as initializerOpt : TC_1 parameterIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- Type_ok: p TC_0 |- type as typeOrVoid : typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- if (B = $union_set<typeId>($bound(p, TC_0), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} `}))
+    rule initializer-lctk: p TC |- annotationList direction type name '=' expression_init as initializerOpt : parameterIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Type_ok: p TC |- type as typeOrVoid : typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh*{typeId_fresh <- typeId_fresh*} `}))
     -- if Type_wf: B |- typeIR holds
-    -- Expr_ok: p TC_0 |- expression_init : typedExpressionIR_init
+    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
     -- if (typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init))
     -- if (LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init))
     -- if (?(typedExpressionIR_init_cast) = $cast_unary(typedExpressionIR_init, typeIR))
     -- if (nameIR = $name(name))
-    -- Expr_eval_lctk: p TC_0 |- typedExpressionIR_init_cast ~> value_init
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~> value_init
     -- if (parameterInitializerIR = '=' _VALUE value_init as parameterInitializerIR)
     -- if (parameterIR = annotationList direction typeIR nameIR ?(parameterInitializerIR))
-    -- if (TC_1 = $add_parameter_t(p, TC_0, parameterIR))
 
 relation ParameterList_ok: cursor typingContext |- parameterList : typingContext parameterListIR '#' typeId*
 
   rulegroup 
 
-    rule : p TC_0 |- parameterList : TC_1 parameterListIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    rule : p TC_0 |- parameterList : TC_1 parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- if (parameter*{parameter <- parameter*} = $flatten_parameterList(parameterList))
-    -- Parameters_ok: p TC_0 |- parameter*{parameter <- parameter*} : TC_1 parameterListIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: p TC_0 |- parameter*{parameter <- parameter*} : parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (TC_1 = $add_parameters_t(p, TC_0, parameterIR*{parameterIR <- parameterIR*}))
 
 relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterListOpt : typingContext constructorParameterListIR '#' typeId*
 
@@ -10537,7 +10690,8 @@ relation ConstructorParameterListOpt_ok: typingContext |- constructorParameterLi
 
     rule : TC_0 |- constructorParameterListOpt : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- if (constructorParameter*{constructorParameter <- constructorParameter*} = $flatten_constructorParameterListOpt(constructorParameterListOpt))
-    -- Parameters_ok: BLOCK TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : TC_1 constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameters_ok: BLOCK TC_0 |- constructorParameter*{constructorParameter <- constructorParameter*} : constructorParameterIR*{constructorParameterIR <- constructorParameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- if (TC_1 = $add_parameters_t(BLOCK, TC_0, constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}))
 
 def $callableId_of_externMethodPrototype(externMethodPrototype) : callableId =
 
@@ -11050,6 +11204,7 @@ relation TableProperty_ok: typingContext tableContext |- tableProperty : tableCo
     -- if (typeIR = $type_of_typedExpressionIR(typedExpressionIR))
     -- if (typeIR_unroll = $unroll_typeIR(typeIR))
     -- if (typeIR_unroll <: integerTypeIR /\ ~typeIR_unroll <: varBitTypeIR)
+    -- if (DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR))
     -- if (constOptIR = $flatten_constOpt(constOpt))
     -- if (tablePropertyIR = annotationList constOptIR CUSTOM "size" '=' typedExpressionIR ';' as tablePropertyIR)
 
@@ -11078,6 +11233,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableKeysProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableActionsProperty(tableProperty)*{tableProperty <- tableProperty*})| = 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableDefaultActionProperty(tableProperty)*{tableProperty <- tableProperty*})| = 0)
+    -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableLargestPriorityWinsProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (TBLC_0 = $empty_tableContext)
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
     -- if (tablePropertyIR_default_action = _EMPTY ?() DEFAULT_ACTION '=' _BARE "NoAction" ?() `( [] `) ';' as tablePropertyIR)
@@ -11087,6 +11243,7 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableKeysProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableActionsProperty(tableProperty)*{tableProperty <- tableProperty*})| = 1)
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableDefaultActionProperty(tableProperty)*{tableProperty <- tableProperty*})| = 1)
+    -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableLargestPriorityWinsProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- if (TBLC_0 = $empty_tableContext)
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
 
@@ -11443,7 +11600,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if (TC_1 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typeDefIR_typedef))
     -- if (typedefDeclarationIR = annotationList TYPEDEF typeIR as typedefIR nameIR ';')
 
-    rule derivedTypeDeclaration-mono: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name ';' as declaration : TC_1 typedefDeclarationIR as declarationIR
+    rule derivedTypeDeclaration-mono: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name ';' as declaration : TC_2 typedefDeclarationIR as declarationIR
     -- Decl_ok: TC_0 |- derivedTypeDeclaration as declaration : TC_1 derivedTypeDeclarationIR as declarationIR
     -- if (`{ [typeId] `} = $diff_set<typeId>($dom_map<typeId, typeDefIR>(TC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(TC_0.GLOBAL.TYPE)))
     -- if (?(typeDefIR) = $find_typeDef_t(GLOBAL, TC_1, _BARE typeId))
@@ -11452,10 +11609,10 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if (nameIR = $name(name))
     -- if (typedefTypeIR = TYPEDEF nameIR typeIR)
     -- if TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR as typeDefIR holds
-    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR as typeDefIR))
+    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR as typeDefIR))
     -- if (typedefDeclarationIR = annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR ';')
 
-    rule derivedTypeDeclaration-poly: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name ';' as declaration : TC_1 typedefDeclarationIR as declarationIR
+    rule derivedTypeDeclaration-poly: TC_0 |- annotationList TYPEDEF derivedTypeDeclaration as typedef name ';' as declaration : TC_2 typedefDeclarationIR as declarationIR
     -- Decl_ok: TC_0 |- derivedTypeDeclaration as declaration : TC_1 derivedTypeDeclarationIR as declarationIR
     -- if (`{ [typeId] `} = $diff_set<typeId>($dom_map<typeId, typeDefIR>(TC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(TC_0.GLOBAL.TYPE)))
     -- if (?(typeDefIR) = $find_typeDef_t(GLOBAL, TC_1, _BARE typeId))
@@ -11465,7 +11622,7 @@ relation Decl_ok: typingContext |- declaration : typingContext declarationIR
     -- if (typeIR = $specialize_typeDefIR(typeDefIR, []))
     -- if (typedefTypeIR = TYPEDEF nameIR typeIR)
     -- if TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR as typeDefIR holds
-    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR as typeDefIR))
+    -- if (TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR as typeDefIR))
     -- if (typedefDeclarationIR = annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR ';')
 
   rulegroup typedefDeclaration-newtype
@@ -11602,8 +11759,7 @@ def $is_static_callableTypeIR(callableTypeIR) : ctk =
 
   clause 0 : (EXTERN_FUNCTION "static_assert" `( _parameterIR*{_parameterIR <- _parameterIR*} `) ':' _typeIR as callableTypeIR) = LCTK
 
-  clause 1 : (BUILTIN_METHOD nameIR `( _parameterIR*{_parameterIR <- _parameterIR*} `) ':' _typeIR as callableTypeIR) = LCTK
-  -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
+  clause 1 : (builtinSizeMethodTypeIR as callableTypeIR) = LCTK
 
   clause -1 : (_callableTypeIR) = DYN
 
@@ -11659,41 +11815,46 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rule builtinMethodTypeIR-size: p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
-    -- if (typeIR_base_unroll = $unroll_typeIR(typeIR_base))
-    -- if ~typeIR_base_unroll <: objectTypeIR
-    -- if ~typeIR_base_unroll <: synthesizedTypeIR
-    -- if (methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' INT as typeIR as methodTypeIR)
+    -- if $is_serializable_typeIR(typeIR_base)
+    -- if (methodTypeIR = BUILTIN_SIZE_OF as methodTypeIR)
 
-  rulegroup builtinMethodTypeIR-header-stack
+  rulegroup builtinMethodTypeIR-header-stack-push-front
 
-    rule builtinMethodTypeIR-header-stack: p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [argumentIR] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
-    -- if nameIR <- ["push_front", "pop_front"]
+    rule builtinMethodTypeIR-header-stack-push-front: p TC |- typedExpressionIR_base '.' "push_front" `< [] `> `( [argumentIR] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_STACK typeIR `[ _nat `] as typeIR = $unroll_typeIR(typeIR_base))
-    -- if (parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?())
-    -- if (methodTypeIR = BUILTIN_METHOD nameIR `( [parameterIR] `) ':' INT as typeIR as methodTypeIR)
+    -- if (methodTypeIR = BUILTIN_PUSH_FRONT as methodTypeIR)
+
+  rulegroup builtinMethodTypeIR-header-stack-pop-front
+
+    rule builtinMethodTypeIR-header-stack-pop-front: p TC |- typedExpressionIR_base '.' "pop_front" `< [] `> `( [argumentIR] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
+    -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
+    -- if (HEADER_STACK typeIR `[ _nat `] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (methodTypeIR = BUILTIN_POP_FRONT as methodTypeIR)
 
   rulegroup builtinMethodTypeIR-header
 
-    rule isValid: p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
-    -- if nameIR <- ["isValid"]
+    rule isValid: p TC |- typedExpressionIR_base '.' "isValid" `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
-    -- if (methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' BOOL as typeIR as methodTypeIR)
+    -- if (methodTypeIR = BUILTIN_IS_VALID as methodTypeIR)
 
-    rule setValidInvalid: p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
-    -- if nameIR <- ["setValid", "setInvalid"]
+    rule setValid: p TC |- typedExpressionIR_base '.' "setValid" `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
-    -- if (methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' VOID as typeIR as methodTypeIR)
+    -- if (methodTypeIR = BUILTIN_SET_VALID as methodTypeIR)
+
+    rule setInvalid: p TC |- typedExpressionIR_base '.' "setInvalid" `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
+    -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
+    -- if (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (methodTypeIR = BUILTIN_SET_INVALID as methodTypeIR)
 
   rulegroup builtinMethodTypeIR-header-union
 
-    rule isValid: p TC |- typedExpressionIR_base '.' nameIR `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
-    -- if nameIR <- ["isValid"]
+    rule isValid: p TC |- typedExpressionIR_base '.' "isValid" `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
-    -- if (methodTypeIR = BUILTIN_METHOD nameIR `( [] `) ':' BOOL as typeIR as methodTypeIR)
+    -- if (methodTypeIR = BUILTIN_IS_VALID as methodTypeIR)
 
   rulegroup externMethodTypeIR
 
@@ -11781,7 +11942,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
   rulegroup builtinMethodTypeIR
 
     rule builtinMethodTypeIR: p TC |- builtinMethodTypeIR as callableTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' [] `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_ret `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
-    -- if (BUILTIN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = builtinMethodTypeIR)
+    -- if ((parameterIR*{parameterIR <- parameterIR*}, typeIR_ret) = $signature_of_builtinMethodTypeIR(builtinMethodTypeIR))
     -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
@@ -12258,15 +12419,15 @@ def $is_concrete_extern_object''(externMethodTypeDefIR) : bool =
 
   clause -1 : (externMethodTypeDefIR) = false
 
-relation Parameters_ok: cursor typingContext |- parameter* : typingContext parameterListIR '#' typeId*
+relation Parameters_ok: cursor typingContext |- parameter* : parameterListIR '#' typeId*
 
   rulegroup 
 
-    rule nil: p TC |- [] : TC [] '#' []
+    rule nil: p TC |- [] : [] '#' []
 
-    rule cons: p TC_0 |- parameter_h :: parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
-    -- Parameter_ok: p TC_0 |- parameter_h : TC_1 parameterIR_h '#' typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
-    -- Parameters_ok: p TC_1 |- parameter_t*{parameter_t <- parameter_t*} : TC_2 parameterIR_t*{parameterIR_t <- parameterIR_t*} '#' typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
+    rule cons: p TC |- parameter_h :: parameter_t*{parameter_t <- parameter_t*} : parameterIR*{parameterIR <- parameterIR*} '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
+    -- Parameter_ok: p TC |- parameter_h : parameterIR_h '#' typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*}
+    -- Parameters_ok: p TC |- parameter_t*{parameter_t <- parameter_t*} : parameterIR_t*{parameterIR_t <- parameterIR_t*} '#' typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*}
     -- if (parameterIR*{parameterIR <- parameterIR*} = parameterIR_h :: parameterIR_t*{parameterIR_t <- parameterIR_t*})
     -- if (typeId_fresh*{typeId_fresh <- typeId_fresh*} = typeId_fresh_h*{typeId_fresh_h <- typeId_fresh_h*} ++ typeId_fresh_t*{typeId_fresh_t <- typeId_fresh_t*})
 
@@ -12531,6 +12692,7 @@ relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationLi
     -- if (typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} = typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ _NAME typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*})
     -- if (typeId_infer*{typeId_infer <- typeId_infer*} = typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*})
     -- Inst_ok: p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_object `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
+    -- if $is_concrete_extern_object(typeIR_object)
     -- if (nameIR = $name(name))
     -- if (TC_1 = $add_var_t(p, TC_0, nameIR, _EMPTY typeIR_object CTK ?()))
     -- if (constructorTargetIR_inferred = prefixedNameIR `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>)
@@ -13013,6 +13175,13 @@ def $is_tableDefaultActionProperty(tableProperty) : bool =
 
   clause -1 : (_tableProperty) = false
 
+def $is_tableLargestPriorityWinsProperty(tableProperty) : bool =
+
+  clause 0 : (_annotationList _constOpt tableCustomName _initializer ';') = true
+  -- if ("largest_priority_wins" = $tableCustomName(tableCustomName))
+
+  clause -1 : (_tableProperty) = false
+
 def $insert_NoAction_tablePropertyIR(tableContext, tablePropertyIR*) : (tableContext, tablePropertyIR*) =
 
   clause 0 : (TBLC, []) = (TBLC, [])
@@ -13476,8 +13645,31 @@ syntax functionCallee =
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* `) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
 
+syntax builtinIsValidMethodCallee = 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
+
+syntax builtinSetValidMethodCallee = 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
+
+syntax builtinSetInvalidMethodCallee = 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
+
+syntax builtinPushFrontMethodCallee = 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
+
+syntax builtinPopFrontMethodCallee = 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
+
+syntax builtinSizeMethodCallee = 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
+
 syntax builtinMethodCallee = 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
 
 syntax externMethodCallee = 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
@@ -13492,7 +13684,12 @@ syntax tableApplyMethodCallee =
    | TABLE objectId '.' APPLY `{ frame ';' tableObjectProperty `} (from tableApplyMethodCallee) 
 
 syntax methodCallee = 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -13502,7 +13699,12 @@ syntax callee =
    | ACTION cursor '.' nameIR `( parameterListIR '#' id* `) blockStatementIR (from actionCallee) 
    | FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* `) blockStatementIR (from definedFunctionCallee) 
    | EXTERN_FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) (from externFunctionCallee) 
-   | BUILTIN_METHOD storageReference '.' nameIR `< typeArgumentListIR `> `( parameterListIR `) (from builtinMethodCallee) 
+   | BUILTIN_IS_VALID storageReference (from builtinIsValidMethodCallee) 
+   | BUILTIN_SET_VALID storageReference (from builtinSetValidMethodCallee) 
+   | BUILTIN_SET_INVALID storageReference (from builtinSetInvalidMethodCallee) 
+   | BUILTIN_PUSH_FRONT storageReference (from builtinPushFrontMethodCallee) 
+   | BUILTIN_POP_FRONT storageReference (from builtinPopFrontMethodCallee) 
+   | BUILTIN_SIZE_OF nameIR typeIR (from builtinSizeMethodCallee) 
    | EXTERN_METHOD objectId '.' nameIR `< typeParameterListIR `> `( parameterListIR '#' id* '#' id* `) `{ theta ';' frame ';' blockStatementIR? `} (from externMethodCallee) 
    | PARSER objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} (from parserApplyMethodCallee) 
    | CONTROL objectId '.' APPLY `( parameterListIR '#' id* `) `{ theta ';' frame ';' controlLocalDeclarationListIR ';' actionDefEnv ';' controlBodyIR `} (from controlApplyMethodCallee) 
@@ -13540,7 +13742,7 @@ extern syntax objectState
 
 syntax externMethodDefEnv = map<callableId, externMethodDef>
 
-extern def $init_objectState(nameIR, typeIR*, value*) : objectState
+extern def $init_objectState(nameIR, typeIR*, id*, value*) : objectState
 
 syntax externObject = 
    | EXTERN typeId `< theta `> `{ objectState frame externMethodDefEnv `} (from externObject) 
@@ -13910,7 +14112,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
 
   rulegroup memberAccessExpressionIR-typedExpressionIR
 
-    rule header-stack-size: p IC STO |- typedExpressionIR_base as memberAccessBaseIR '.' nameIR as expressionIR '#' _expressionNoteIR : STO D n_size as int as value
+    rule header-stack-size: p IC STO |- typedExpressionIR_base as memberAccessBaseIR '.' nameIR as expressionIR '#' _expressionNoteIR : STO 32 W n_size as int as value
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_STACK _typeIR `[ n_size `] as typeIR = $unroll_typeIR(typeIR_base))
     -- if (nameIR = "size")
@@ -13963,7 +14165,7 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_hi : STO_2 value_hi
     -- Expr_inst: p IC STO_2 |- typedExpressionIR_lo : STO_3 value_lo
 
-    rule offset: p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR_l ':' typedExpressionIR_w `] as expressionIR '#' _expressionNoteIR : STO_3 $bitacc_offset_op(value_base, value_l, value_w)
+    rule offset: p IC STO_0 |- typedExpressionIR_base `[ typedExpressionIR_l '+:' typedExpressionIR_w `] as expressionIR '#' _expressionNoteIR : STO_3 $bitacc_offset_op(value_base, value_l, value_w)
     -- Expr_inst: p IC STO_0 |- typedExpressionIR_base : STO_1 value_base
     -- Expr_inst: p IC STO_1 |- typedExpressionIR_l : STO_2 value_l
     -- Expr_inst: p IC STO_2 |- typedExpressionIR_w : STO_3 value_w
@@ -14633,24 +14835,24 @@ relation Decl_inst: instContext store |- declarationIR : instContext store
     -- if (aliasTypeDefIR = TYPEDEF nameIR typeIR as aliasTypeIR)
     -- if (IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR as typeDefIR))
 
-    rule derivedTypeDeclarationIR-monomorphic: IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR ';' as declarationIR : IC_1 STO
-    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_local _STO
-    -- if (`{ [typeId_newtype] `} = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_local.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE)))
-    -- if (?(typeDefIR) = $find_typeDef_i(GLOBAL, IC_local, '.' typeId_newtype))
+    rule derivedTypeDeclarationIR-monomorphic: IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR ';' as declarationIR : IC_2 STO
+    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_1 _STO
+    -- if (`{ [typeId_newtype] `} = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE)))
+    -- if (?(typeDefIR) = $find_typeDef_i(GLOBAL, IC_1, '.' typeId_newtype))
     -- if $is_monomorphic_typeDefIR(typeDefIR)
     -- if (typeIR = $typeIR_of_typeDefIR(typeDefIR))
     -- if (aliasTypeDefIR = TYPEDEF nameIR typeIR as aliasTypeIR)
-    -- if (IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, aliasTypeDefIR as typeDefIR))
+    -- if (IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, aliasTypeDefIR as typeDefIR))
 
-    rule derivedTypeDeclaration-poly: IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR ';' as declarationIR : IC_1 STO
-    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_local _STO
-    -- if (`{ [typeId_newtype] `} = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_local.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE)))
-    -- if (?(typeDefIR) = $find_typeDef_i(GLOBAL, IC_local, '.' typeId_newtype))
+    rule derivedTypeDeclaration-poly: IC_0 STO |- annotationList TYPEDEF derivedTypeDeclarationIR as typedefIR nameIR ';' as declarationIR : IC_2 STO
+    -- Decl_inst: IC_0 $empty_store |- derivedTypeDeclarationIR as declarationIR : IC_1 _STO
+    -- if (`{ [typeId_newtype] `} = $diff_set<typeId>($dom_map<typeId, typeDefIR>(IC_1.GLOBAL.TYPE), $dom_map<typeId, typeDefIR>(IC_0.GLOBAL.TYPE)))
+    -- if (?(typeDefIR) = $find_typeDef_i(GLOBAL, IC_1, '.' typeId_newtype))
     -- if ~$is_monomorphic_typeDefIR(typeDefIR)
     -- if (([], []) = $typeParameterListIR_of_typeDefIR(typeDefIR))
     -- if (typeIR = $specialize_typeDefIR(typeDefIR, []))
     -- if (typedefTypeIR = TYPEDEF nameIR typeIR)
-    -- if (IC_1 = $add_typeDef_i(GLOBAL, IC_0, nameIR, typedefTypeIR as typeDefIR))
+    -- if (IC_2 = $add_typeDef_i(GLOBAL, IC_1, nameIR, typedefTypeIR as typeDefIR))
 
   rulegroup typedefDeclarationIR-newtype
 
@@ -14774,12 +14976,13 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (if (_annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
-    -- Copy_in_inst_default: STO_0 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
+    -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
     -- ExternMethods_inst: IC_callee_3 |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} : IC_callee_4
     -- if (`{ callableId ':' externMethodDef as callableDef*{callableId <- callableId*, externMethodDef <- externMethodDef*} `} = IC_callee_4.BLOCK.CALLABLE)
-    -- (if (_annotationList' _direction' _typeIR' id_cparam _parameterInitializerOptIR' = constructorParameterIR))*{_annotationList' <- _annotationList'*, _direction' <- _direction'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, _typeIR' <- _typeIR'*, constructorParameterIR <- constructorParameterIR*, id_cparam <- id_cparam*}
+    -- (if (_annotationList' _direction' _typeIR' id_default _parameterInitializerOptIR' = constructorParameterIR_default))*{_annotationList' <- _annotationList'*, _direction' <- _direction'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, _typeIR' <- _typeIR'*, constructorParameterIR_default <- constructorParameterIR_default*, id_default <- id_default*}
+    -- if (id_cparam*{id_cparam <- id_cparam*} = id_aligned*{id_aligned <- id_aligned*} ++ id_default*{id_default <- id_default*})
     -- (if (?(value_cparam) = $find_map<id, value>(IC_callee_4.BLOCK.FRAME, id_cparam)))*{id_cparam <- id_cparam*, value_cparam <- value_cparam*}
-    -- if (objectState = $init_objectState(nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, value_cparam*{value_cparam <- value_cparam*}))
+    -- if (objectState = $init_objectState(nameIR, typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}, id_cparam*{id_cparam <- id_cparam*}, value_cparam*{value_cparam <- value_cparam*}))
     -- if (theta_extern = IC_callee_4.BLOCK.TYPE)
     -- if (frame_extern = IC_callee_4.BLOCK.FRAME)
     -- if (externMethodDefEnv_extern = `{ callableId ':' externMethodDef*{callableId <- callableId*, externMethodDef <- externMethodDef*} `})
@@ -14796,7 +14999,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (if (_annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
-    -- Copy_in_inst_default: STO_0 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
+    -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
     -- ParserLocalDecls_inst: IC_callee_3 STO_2 |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} : IC_local STO_3 parserLocalDeclarationIR_inst*{parserLocalDeclarationIR_inst <- parserLocalDeclarationIR_inst*}
     -- ParserStates_inst: IC_local STO_3 |- parserStateIR*{parserStateIR <- parserStateIR*} : IC_state STO_4
     -- if (frame_parser = IC_callee_3.BLOCK.FRAME)
@@ -14814,7 +15017,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (if (_annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
-    -- Copy_in_inst_default: STO_0 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
+    -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
     -- ControlLocalDecls_inst: IC_callee_3 STO_2 |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : IC_local_0 STO_3 controlLocalDeclarationIR_inst*{controlLocalDeclarationIR_inst <- controlLocalDeclarationIR_inst*}
     -- Block_inst: IC_local_0 STO_3 |- controlBodyIR : IC_local_1 STO_4 controlBodyIR_inst
     -- if (frame_control = IC_callee_3.BLOCK.FRAME)
@@ -15369,7 +15572,7 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
     -- if (HEADER_STACK `[ value_elem*{value_elem <- value_elem*} `( _nat `) `] = headerStackValue_base)
     -- if (nameIR = "size")
     -- if (n_size = |value_elem*{value_elem <- value_elem*}|)
-    -- if (expressionResult = _CONT D n_size as int as value as expressionResult)
+    -- if (expressionResult = _CONT 32 W n_size as int as value as expressionResult)
 
     rule stack-last-out-of-bounds: p EC_0 ARCH_0 |- typedExpressionIR_base as memberAccessBaseIR '.' nameIR as expressionIR '#' `( typeIR_base _ctk `) : EC_1 ARCH_1 rejectTransitionResult as expressionResult
     -- Expr_eval: p EC_0 ARCH_0 |- typedExpressionIR_base : EC_1 ARCH_1 _CONT headerStackValue_base as value as expressionResult
@@ -15590,6 +15793,24 @@ relation Lvalue_eval: cursor evalContext arch |- typedLvalueIR : evalContext arc
     -- if (n_idx < n_size)
     -- if (storageReferenceResult = _CONT ?(storageReference '.' nameIR) as storageReferenceResult)
 
+    rule stack-last-out-of-bounds: p EC_0 ARCH_0 |- typedLvalueIR '.' nameIR '#' _lvalueNoteIR : EC_1 ARCH_1 rejectTransitionResult as storageReferenceResult
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
+    -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : headerStackValue as value
+    -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
+    -- if (nameIR = "last")
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
+    -- if ((n_idx < 1) \/ (n_idx > n_size))
+    -- if (rejectTransitionResult = REJECT ERROR '.' "StackOutOfBounds")
+
+    rule stack-last-in-bounds: p EC_0 ARCH_0 |- typedLvalueIR '.' nameIR '#' _lvalueNoteIR : EC_1 ARCH_1 storageReferenceResult
+    -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
+    -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : headerStackValue as value
+    -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
+    -- if (nameIR = "last")
+    -- if ~((n_idx < 1) \/ (n_idx > n_size))
+    -- if (storageReferenceResult = _CONT ?(storageReference '.' nameIR) as storageReferenceResult)
+
     rule cont: p EC_0 ARCH_0 |- typedLvalueIR '.' nameIR '#' _lvalueNoteIR : EC_1 ARCH_1 storageReferenceResult
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
     -- Lvalue_read: p EC_1 ARCH_1 |- storageReference : value
@@ -15651,6 +15872,15 @@ relation Lvalue_read: cursor evalContext arch |- storageReference : value
     -- if (n_size = |value_element*{value_element <- value_element*}|)
     -- if (n_idx < n_size)
     -- if (value = value_element*{value_element <- value_element*}[n_idx])
+
+    rule stack-last: p EC_0 ARCH |- storageReference '.' nameIR : value
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
+    -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue_base)
+    -- if (nameIR = "last")
+    -- if (n_size = |value_element*{value_element <- value_element*}|)
+    -- if ~((n_idx < 1) \/ (n_idx > n_size))
+    -- if (n_idx_last as int = (n_idx - 1))
+    -- if (value = value_element*{value_element <- value_element*}[n_idx_last])
 
     rule struct: p EC_0 ARCH |- storageReference '.' nameIR : value
     -- Lvalue_read: p EC_0 ARCH |- storageReference : structValue_base as value
@@ -15734,6 +15964,15 @@ relation Lvalue_write: cursor evalContext arch |- storageReference := value : ev
     -- if (nameIR = "next")
     -- if (value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx] = value])
     -- if (headerStackValue_base_update = HEADER_STACK `[ value_element_update*{value_element_update <- value_element_update*} `( (n_idx + 1) `) `])
+    -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
+
+    rule stack-last: p EC_0 ARCH |- storageReference '.' nameIR := value : EC_1
+    -- Lvalue_read: p EC_0 ARCH |- storageReference : headerStackValue_base as value
+    -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue_base)
+    -- if (nameIR = "last")
+    -- if (n_idx_last as int = (n_idx - 1))
+    -- if (value_element_update*{value_element_update <- value_element_update*} = value_element*{value_element <- value_element*}[[n_idx_last] = value])
+    -- if (headerStackValue_base_update = HEADER_STACK `[ value_element_update*{value_element_update <- value_element_update*} `( n_idx `) `])
     -- Lvalue_write: p EC_0 ARCH |- storageReference := headerStackValue_base_update as value : EC_1
 
     rule struct: p EC_0 ARCH |- storageReference '.' nameIR := value : EC_1
@@ -15870,10 +16109,10 @@ relation Stmt_eval: cursor evalContext arch |- statementIR : evalContext arch st
     -- if (assignop = '=')
     -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 abortResult as expressionResult
 
-    rule typedLvalueIR-cont-compound-typedExpressionIR-exit: p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ';' as statementIR : EC_2 ARCH_2 EXIT as statementResult
+    rule typedLvalueIR-cont-compound-typedExpressionIR-abort: p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ';' as statementIR : EC_2 ARCH_2 abortResult as statementResult
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
     -- if (assignop =/= '=')
-    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 EXIT as expressionResult
+    -- Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 abortResult as expressionResult
 
     rule typedLvalueIR-cont-eq-typedExpressionIR-cont: p EC_0 ARCH_0 |- typedLvalueIR assignop typedExpressionIR ';' as statementIR : EC_3 ARCH_2 _EMPTY as statementResult
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
@@ -16082,6 +16321,9 @@ relation ParserStmt_eval: evalContext arch |- parserStatementIR : evalContext ar
     rule non-else-cont-false: EC ARCH |- IF `( typedExpressionIR_cond `) parserStatementIR_then as parserStatementIR : EC_cond ARCH_cond _EMPTY as parserStatementResult
     -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond _CONT _B false as value as expressionResult
 
+    rule else-reject: EC ARCH |- IF `( typedExpressionIR_cond `) parserStatementIR_then ELSE parserStatementIR_else as parserStatementIR : EC_cond ARCH_cond rejectTransitionResult as parserStatementResult
+    -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond rejectTransitionResult as expressionResult
+
     rule else-cont-true: EC ARCH |- IF `( typedExpressionIR_cond `) parserStatementIR_then ELSE parserStatementIR_else as parserStatementIR : EC_then ARCH_then parserStatementResult
     -- Expr_eval: LOCAL EC ARCH |- typedExpressionIR_cond : EC_cond ARCH_cond _CONT _B true as value as expressionResult
     -- ParserStmt_eval: EC_cond ARCH_cond |- parserStatementIR_then : EC_then ARCH_then parserStatementResult
@@ -16179,14 +16421,18 @@ relation ParserState_eval: evalContext arch |- parserStateIR : evalContext arch 
 
   rulegroup 
 
-    rule reject: EC_0 ARCH_0 |- parserStateIR : EC_1 ARCH_1 rejectTransitionResult as transitionResult
+    rule reject: EC_0 ARCH_0 |- parserStateIR : EC_3 ARCH_1 rejectTransitionResult as transitionResult
     -- if (annotationList STATE nameIR `{ parserBlockElementStatementListIR transitionStatementIR `} = parserStateIR)
-    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 rejectTransitionResult as parserStatementResult
+    -- if (EC_1 = $enter_e(EC_0))
+    -- ParserBlockElementStmtList_eval: EC_1 ARCH_0 |- parserBlockElementStatementListIR : EC_2 ARCH_1 rejectTransitionResult as parserStatementResult
+    -- if (EC_3 = $exit_e(EC_2))
 
-    rule cont: EC_0 ARCH_0 |- parserStateIR : EC_2 ARCH_2 transitionResult
+    rule cont: EC_0 ARCH_0 |- parserStateIR : EC_4 ARCH_2 transitionResult
     -- if (annotationList STATE nameIR `{ parserBlockElementStatementListIR transitionStatementIR `} = parserStateIR)
-    -- ParserBlockElementStmtList_eval: EC_0 ARCH_0 |- parserBlockElementStatementListIR : EC_1 ARCH_1 _EMPTY as parserStatementResult
-    -- ParserTransition_eval: EC_1 ARCH_1 |- transitionStatementIR : EC_2 ARCH_2 transitionResult
+    -- if (EC_1 = $enter_e(EC_0))
+    -- ParserBlockElementStmtList_eval: EC_1 ARCH_0 |- parserBlockElementStatementListIR : EC_2 ARCH_1 _EMPTY as parserStatementResult
+    -- ParserTransition_eval: EC_2 ARCH_1 |- transitionStatementIR : EC_3 ARCH_2 transitionResult
+    -- if (EC_4 = $exit_e(EC_3))
 
 relation ParserState_trans: evalContext arch |- TRANSITION nameIR : evalContext arch transitionResult
 
@@ -16332,7 +16578,7 @@ relation VarDecl_eval: cursor evalContext arch |- variableDeclarationIR : evalCo
   rulegroup 
 
     rule non-initializer: p EC_0 ARCH |- annotationList typeIR nameIR ?() ';' : EC_1 ARCH _EMPTY as declarationResult
-    -- if (typeIR_subst = $subst_type_e(BLOCK, EC_0, typeIR))
+    -- if (typeIR_subst = $subst_type_e(LOCAL, EC_0, typeIR))
     -- if (value_init = $default(typeIR_subst))
     -- if (EC_1 = $add_var_e(p, EC_0, _BARE nameIR, value_init))
 
@@ -16378,62 +16624,67 @@ relation Callee_eval: cursor evalContext arch |- callableTargetIR `< '_' `> `( a
     -- if (FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR `) blockStatementIR = definedFunctionDef)
     -- if (definedFunctionCallee = FUNCTION nameIR `< typeParameterListIR `> `( parameterListIR '#' id_default*{id_default <- id_default*} `) blockStatementIR)
 
-  rulegroup builtinMethodCallee-header-stack-push-front
+  rulegroup builtinPushFrontMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "push_front" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "push_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "push_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinPushFrontMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?())
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `))
+    -- if (builtinPushFrontMethodCallee = BUILTIN_PUSH_FRONT storageReference)
 
-  rulegroup builtinMethodCallee-header-stack-pop-front
+  rulegroup builtinPopFrontMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "pop_front" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "pop_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "pop_front" `< '_' `> `( [argumentIR] `) : EC_1 ARCH_1 _CONT builtinPopFrontMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (parameterIR = _EMPTY _EMPTY INT as typeIR "count" ?())
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `))
+    -- if (builtinPopFrontMethodCallee = BUILTIN_POP_FRONT storageReference)
 
-  rulegroup builtinMethodCallee-header-isValid
+  rulegroup builtinIsValidMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "isValid" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "isValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "isValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinIsValidMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "isValid" `< [] `> `( [] `))
+    -- if (builtinIsValidMethodCallee = BUILTIN_IS_VALID storageReference)
 
-  rulegroup builtinMethodCallee-header-setValid
+  rulegroup builtinSetValidMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "setValid" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setValid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinSetValidMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "setValid" `< [] `> `( [] `))
+    -- if (builtinSetValidMethodCallee = BUILTIN_SET_VALID storageReference)
 
-  rulegroup builtinMethodCallee-header-setInvalid
+  rulegroup builtinSetInvalidMethodCallee
 
     rule abort: p EC_0 ARCH_0 |- typedExpressionIR '.' "setInvalid" `< '_' `> `( argumentListIR `) : EC_1 ARCH_1 abortResult as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 abortResult as storageReferenceResult
 
-    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setInvalid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinMethodCallee as callee as calleeResult
+    rule cont: p EC_0 ARCH_0 |- typedExpressionIR '.' "setInvalid" `< '_' `> `( [] `) : EC_1 ARCH_1 _CONT builtinSetInvalidMethodCallee as callee as calleeResult
     -- if (?(typedLvalueIR) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR))
     -- Lvalue_eval: p EC_0 ARCH_0 |- typedLvalueIR : EC_1 ARCH_1 _CONT ?(storageReference) as storageReferenceResult
-    -- if (builtinMethodCallee = BUILTIN_METHOD storageReference '.' "setInvalid" `< [] `> `( [] `))
+    -- if (builtinSetInvalidMethodCallee = BUILTIN_SET_INVALID storageReference)
+
+  rulegroup builtinSizeMethodCallee
+
+    rule cont: p EC ARCH |- typedExpressionIR_base '.' nameIR `< '_' `> `( [] `) : EC ARCH _CONT builtinSizeMethodCallee as callee as calleeResult
+    -- if nameIR <- ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]
+    -- if (_expressionIR '#' `( typeIR_base _ctk `) = typedExpressionIR_base)
+    -- if (builtinSizeMethodCallee = BUILTIN_SIZE_OF nameIR typeIR_base)
 
   rulegroup externMethodCallee
 
@@ -16682,16 +16933,16 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if ~callResult <: rejectTransitionResult
     -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_4 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
 
-  rulegroup builtinMethodCallee-header-stack-push-front
+  rulegroup builtinPushFrontMethodCallee
 
-    rule abort: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule abort: p EC_0 ARCH_0 |- builtinPushFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
+    -- if (BUILTIN_PUSH_FRONT storageReference = builtinPushFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult as expressionResult
 
-    rule cont: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont: p EC_0 ARCH_0 |- builtinPushFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_PUSH_FRONT storageReference = builtinPushFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16707,8 +16958,8 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-    rule cont-overflow: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "push_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont-overflow: p EC_0 ARCH_0 |- builtinPushFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_PUSH_FRONT storageReference = builtinPushFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16720,16 +16971,16 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-  rulegroup builtinMethodCallee-header-stack-pop-front
+  rulegroup builtinPopFrontMethodCallee
 
-    rule abort: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule abort: p EC_0 ARCH_0 |- builtinPopFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_1 ARCH_1 abortResult as callResult
+    -- if (BUILTIN_POP_FRONT storageReference = builtinPopFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- Argument_eval: p EC_0 ARCH_0 |- argumentIR : EC_1 ARCH_1 abortResult as expressionResult
 
-    rule cont: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont: p EC_0 ARCH_0 |- builtinPopFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_POP_FRONT storageReference = builtinPopFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16745,8 +16996,8 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-    rule cont-overflow: p EC_0 ARCH_0 |- builtinMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "pop_front" `< [] `> `( [parameterIR] `) = builtinMethodCallee)
+    rule cont-overflow: p EC_0 ARCH_0 |- builtinPopFrontMethodCallee as callee '@' `< [] `> `( [argumentIR] `) : EC_2 ARCH_1 RETURN ?() as callResult
+    -- if (BUILTIN_POP_FRONT storageReference = builtinPopFrontMethodCallee)
     -- Lvalue_read: p EC_0 ARCH_0 |- storageReference : headerStackValue as value
     -- if (HEADER_STACK `[ value_element*{value_element <- value_element*} `( n_idx `) `] = headerStackValue)
     -- if (n_size = |value_element*{value_element <- value_element*}|)
@@ -16758,38 +17009,38 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (headerStackValue_updated = HEADER_STACK `[ value_element_updated*{value_element_updated <- value_element_updated*} `( n_idx_updated `) `])
     -- Lvalue_write: p EC_1 ARCH_1 |- storageReference := headerStackValue_updated as value : EC_2
 
-  rulegroup builtinMethodCallee-header-isValid
+  rulegroup builtinIsValidMethodCallee-header
 
-    rule builtinMethodCallee-header-isValid: p EC ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "isValid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinIsValidMethodCallee-header: p EC ARCH |- builtinIsValidMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
+    -- if (BUILTIN_IS_VALID storageReference = builtinIsValidMethodCallee)
     -- Lvalue_read: p EC ARCH |- storageReference : headerValue as value
     -- if (HEADER _typeId `{ b_valid ';' _fieldValue*{_fieldValue <- _fieldValue*} `} = headerValue)
     -- if (returnResult = RETURN ?(_B b_valid as value))
 
-  rulegroup builtinMethodCallee-header-setValid
+  rulegroup builtinSetValidMethodCallee
 
-    rule builtinMethodCallee-header-setValid: p EC_0 ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "setValid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinSetValidMethodCallee: p EC_0 ARCH |- builtinSetValidMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
+    -- if (BUILTIN_SET_VALID storageReference = builtinSetValidMethodCallee)
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue as value
     -- if (HEADER typeId `{ _b ';' fieldValue*{fieldValue <- fieldValue*} `} = headerValue)
     -- if (value = HEADER typeId `{ true ';' fieldValue*{fieldValue <- fieldValue*} `} as value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
     -- if (returnResult = RETURN ?())
 
-  rulegroup builtinMethodCallee-header-setInvalid
+  rulegroup builtinSetInvalidMethodCallee
 
-    rule builtinMethodCallee-header-setInvalid: p EC_0 ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "setInvalid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinSetInvalidMethodCallee: p EC_0 ARCH |- builtinSetInvalidMethodCallee as callee '@' `< [] `> `( [] `) : EC_1 ARCH returnResult as callResult
+    -- if (BUILTIN_SET_INVALID storageReference = builtinSetInvalidMethodCallee)
     -- Lvalue_read: p EC_0 ARCH |- storageReference : headerValue as value
     -- if (HEADER typeId `{ _b ';' fieldValue*{fieldValue <- fieldValue*} `} = headerValue)
     -- if (value = HEADER typeId `{ false ';' fieldValue*{fieldValue <- fieldValue*} `} as value)
     -- Lvalue_write: p EC_0 ARCH |- storageReference := value : EC_1
     -- if (returnResult = RETURN ?())
 
-  rulegroup builtinMethodCallee-header-union-isValid
+  rulegroup builtinIsValidMethodCallee-header-union
 
-    rule builtinMethodCallee-header-union-isValid: p EC ARCH |- builtinMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
-    -- if (BUILTIN_METHOD storageReference '.' "isValid" `< [] `> `( [] `) = builtinMethodCallee)
+    rule builtinIsValidMethodCallee-header-union: p EC ARCH |- builtinIsValidMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
+    -- if (BUILTIN_IS_VALID storageReference = builtinIsValidMethodCallee)
     -- Lvalue_read: p EC ARCH |- storageReference : headerUnionValue as value
     -- if (HEADER_UNION typeId `{ fieldValue*{fieldValue <- fieldValue*} `} = headerUnionValue)
     -- (if (value_field _nameIR ';' = fieldValue))*{_nameIR <- _nameIR*, fieldValue <- fieldValue*, value_field <- value_field*}
@@ -16797,7 +17048,36 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (b_valid = (fieldValue_valid*{fieldValue_valid <- fieldValue_valid*} = []))
     -- if (returnResult = RETURN ?(_B b_valid as value))
 
+  rulegroup builtinSizeMethodCallee
+
+    rule builtinSizeMethodCallee: p EC ARCH |- builtinSizeMethodCallee as callee '@' `< [] `> `( [] `) : EC ARCH returnResult as callResult
+    -- if (BUILTIN_SIZE_OF nameIR typeIR_base = builtinSizeMethodCallee)
+    -- if (returnResult = RETURN ?($sizeof(typeIR_base, nameIR)))
+
   rulegroup externMethodCallee
+
+    rule copyin-abort-initializer: p EC_0 ARCH_0 |- externMethodCallee as callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : EC_1 ARCH_1 abortResult as callResult
+    -- if (EXTERN_METHOD objectId '.' nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) `{ theta ';' frame ';' ?(blockStatementIR) `} = externMethodCallee)
+    -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
+    -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
+    -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
+    -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (p_shared = GLOBAL)
+    -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' abortResult as copyInResult
+
+    rule copyin-cont-initializer: p EC_0 ARCH_0 |- externMethodCallee as callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : EC_2 ARCH_2 definedFunctionResult as callResult
+    -- if (EXTERN_METHOD objectId '.' nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) `{ theta ';' frame ';' ?(blockStatementIR) `} = externMethodCallee)
+    -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
+    -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
+    -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
+    -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (p_shared = GLOBAL)
+    -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
+    -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_4 ~> EC_callee_5
+    -- DefinedFunctionBody_eval: EC_callee_5 ARCH_1 |- blockStatementIR : EC_callee_6 ARCH_2 definedFunctionResult
+    -- Copy_out: p_shared ARCH_2 |- p EC_1 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_6 storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> EC_2
 
     rule copyin-abort: p EC_0 ARCH_0 |- externMethodCallee as callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : EC_1 ARCH_1 abortResult as callResult
     -- if (EXTERN_METHOD objectId '.' nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) `{ theta ';' frame ';' ?() `} = externMethodCallee)
@@ -17256,6 +17536,11 @@ relation SwitchCases_table_eval: id |- switchCaseListIR : blockStatementIR?
     -- if $match_switchLabelIR_table(id, switchLabelIR_h)
     -- if (_switchLabelIR ':' blockStatementIR :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
 
+    rule cons-fallthrough-match-no-block: id |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : ?()
+    -- if (switchLabelIR_h ':' = switchCaseIR_h)
+    -- if $match_switchLabelIR_table(id, switchLabelIR_h)
+    -- if ([] = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
+
     rule cons-fallthrough-no-match: id |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- if (switchLabelIR_h ':' = switchCaseIR_h)
     -- if ~$match_switchLabelIR_table(id, switchLabelIR_h)
@@ -17315,6 +17600,12 @@ relation SwitchCases_general_eval: cursor evalContext arch value |- switchCaseLi
     -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 _CONT value_label as expressionResult
     -- if $match_switchLabelIR_general(value, value_label)
     -- if (_switchLabelIR ':' blockStatementIR :: _switchCaseIR*{_switchCaseIR <- _switchCaseIR*} = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
+
+    rule cons-fallthrough-match-no-block: LOCAL EC_0 ARCH_0 value |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_1 ARCH_1 ?()
+    -- if (switchLabelIR_h ':' = switchCaseIR_h)
+    -- SwitchLabel_general_eval: LOCAL EC_0 ARCH_0 |- switchLabelIR_h : EC_1 ARCH_1 _CONT value_label as expressionResult
+    -- if $match_switchLabelIR_general(value, value_label)
+    -- if ([] = $filter_<switchCaseIR>(switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*}, $is_non_fallthrough_switchCaseIR(switchCaseIR_t)*{switchCaseIR_t <- switchCaseIR_t*}))
 
     rule cons-fallthrough-no-match: LOCAL EC_0 ARCH_0 value |- switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} : EC_2 ARCH_2 blockStatementIR?{blockStatementIR <- blockStatementIR?}
     -- if (switchLabelIR_h ':' = switchCaseIR_h)

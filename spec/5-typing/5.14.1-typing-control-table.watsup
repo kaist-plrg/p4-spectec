@@ -885,6 +885,7 @@ rulegroup TableProperty_ok/size-and-others {
     -- if typeIR_unroll = $unroll_typeIR(typeIR)
     -- if (typeIR_unroll <: integerTypeIR)
           /\ ~(typeIR_unroll <: varBitTypeIR)
+    -- if DYN =/= $ctk_of_typedExpressionIR(typedExpressionIR)
     ---- ;; create IR
     -- if constOptIR = $flatten_constOpt(constOpt)
     -- if tablePropertyIR
@@ -952,6 +953,12 @@ def $is_tableDefaultActionProperty(_ _ tableCustomName _ ';') = true
 def $is_tableDefaultActionProperty(_) = false
   -- otherwise
 
+dec $is_tableLargestPriorityWinsProperty(tableProperty) : bool
+def $is_tableLargestPriorityWinsProperty(_ _ tableCustomName _ ';') = true
+  -- if "largest_priority_wins" = $tableCustomName(tableCustomName)
+def $is_tableLargestPriorityWinsProperty(_) = false
+  -- otherwise
+
 dec $insert_NoAction_tablePropertyIR(
     tableContext,
     tablePropertyIR*)
@@ -1005,6 +1012,9 @@ rulegroup Table_ok {
     ---- ;; check that the table no default action property
     -- if |$filter_<tableProperty>(
             tableProperty*, $is_tableDefaultActionProperty(tableProperty)*)| = 0
+    ---- ;; check that the table has at most one largest_priority_wins property
+    -- if $(|$filter_<tableProperty>(
+              tableProperty*, $is_tableLargestPriorityWinsProperty(tableProperty)*)| <= 1)
     ---- ;; check table properties
     -- if TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*
@@ -1025,6 +1035,9 @@ rulegroup Table_ok {
     ---- ;; check that the table has one default action property
     -- if |$filter_<tableProperty>(
             tableProperty*, $is_tableDefaultActionProperty(tableProperty)*)| = 1
+    ---- ;; check that the table has at most one largest_priority_wins property
+    -- if $(|$filter_<tableProperty>(
+              tableProperty*, $is_tableLargestPriorityWinsProperty(tableProperty)*)| <= 1)
     ---- ;; check table properties
     -- if TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty* : TBLC_1 tablePropertyIR*

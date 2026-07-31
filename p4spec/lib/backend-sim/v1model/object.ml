@@ -58,17 +58,11 @@ module Make (Spec : Spec.S) = struct
 
        counter(bit<32> size, CounterType type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
-      let value_size, value_type =
-        match values_arg with
-        | [ value_size; value_type ] -> (value_size, value_type)
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "counter constructor expects 2 arguments, but %d were given"
-                 (List.length values_arg))
-      in
+    let init (_value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
+      let args = assoc_args value_ids value_args in
+      let value_size = List.assoc "size" args in
+      let value_type = List.assoc "type" args in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
       let id_enum, id_type = unpack_p4_enum value_type in
@@ -167,7 +161,8 @@ module Make (Spec : Spec.S) = struct
 
        register(bit<32> size); *)
 
-    let init (value_type_args : Value.t) (value_args : Value.t) : t =
+    let init (value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
       let values_type_arg = Value.Get.list value_type_args in
       let value_type =
         match values_type_arg with
@@ -179,16 +174,8 @@ module Make (Spec : Spec.S) = struct
                   given"
                  (List.length values_type_arg))
       in
-      let values_arg = Value.Get.list value_args in
-      let value_size =
-        match values_arg with
-        | [ value_size ] -> value_size
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "register constructor expects 1 argument, but %d were given"
-                 (List.length values_arg))
-      in
+      let args = assoc_args value_ids value_args in
+      let value_size = List.assoc "size" args in
       let value_default = Spec.Func.default value_type in
       let _, size = unpack_p4_fixedBit value_size in
       let size = Bigint.to_int_exn size in
@@ -318,18 +305,10 @@ module Make (Spec : Spec.S) = struct
 
        direct_counter(CounterType type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
-      let value_type =
-        match values_arg with
-        | [ value_type ] -> value_type
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "direct_counter constructor expects 1 argument, but %d were \
-                  given"
-                 (List.length values_arg))
-      in
+    let init (_value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
+      let args = assoc_args value_ids value_args in
+      let value_type = List.assoc "type" args in
       let id_enum, id_type = unpack_p4_enum value_type in
       match (id_enum, id_type) with
       | "CounterType", "packets" -> Packets Bigint.zero
@@ -409,18 +388,10 @@ module Make (Spec : Spec.S) = struct
 
        direct_meter(MeterType type); *)
 
-    let init (_value_type_args : Value.t) (value_args : Value.t) : t =
-      let values_arg = Value.Get.list value_args in
-      let value_type =
-        match values_arg with
-        | [ value_type ] -> value_type
-        | _ ->
-            error_no_region
-              (Format.asprintf
-                 "direct_counter constructor expects 1 argument, but %d were \
-                  given"
-                 (List.length values_arg))
-      in
+    let init (_value_type_args : Value.t) (value_ids : Value.t)
+        (value_args : Value.t) : t =
+      let args = assoc_args value_ids value_args in
+      let value_type = List.assoc "type" args in
       let id_enum, id_type = unpack_p4_enum value_type in
       match (id_enum, id_type) with
       | "MeterType", "packets" -> Packets Bigint.zero

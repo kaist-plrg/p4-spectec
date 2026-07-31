@@ -1299,8 +1299,10 @@ derivedTypeDeclaration:
 (* >> Typedef and newtype declarations *)
 typedef:
 	| t = typeRef
-	| t = derivedTypeDeclaration
 		{ t }
+	| t = derivedTypeDeclaration
+		{ declare_type (id_of_declaration t) (has_type_params_declaration t);
+		  t }
 ;
 
 typedefDeclaration:

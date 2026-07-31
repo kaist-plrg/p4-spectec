@@ -156,10 +156,10 @@ relation Block_ok:
 
 relation Parameter_ok:
   cursor typingContext |- parameter
-                        : typingContext parameterIR '#' typeId*
+                        : parameterIR '#' typeId*
   hint(input %0 %1 %2)
   hint(prose_in "typing" %2#", under context" %1 "at" %0)
-  hint(prose_out "context" %3#"," %4#", and fresh type variables" %5)
+  hint(prose_out "parameter" %3#", and fresh type variables" %4)
 
 relation ParameterList_ok:
   cursor typingContext |- parameterList
@@ -521,9 +521,7 @@ dec $is_static_callableTypeIR(callableTypeIR) : ctk
   hint(prose_in "compile-time known-ness of" %0)
 def $is_static_callableTypeIR(EXTERN_FUNCTION "static_assert" `( _ `) ':' _)
   = LCTK
-def $is_static_callableTypeIR(BUILTIN_METHOD nameIR `( _ `) ':' _) = LCTK
-  -- if nameIR <- [ "minSizeInBits", "minSizeInBytes",
-                    "maxSizeInBits", "maxSizeInBytes" ]
+def $is_static_callableTypeIR(builtinSizeMethodTypeIR) = LCTK
 def $is_static_callableTypeIR(_) = DYN
   -- otherwise
 

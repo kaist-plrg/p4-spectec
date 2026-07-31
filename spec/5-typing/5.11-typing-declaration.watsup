@@ -118,6 +118,7 @@ rule InstDecl_non_objectInitializer_ok:
       p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer* '#' typeId_infer* `>
                         `( argumentIR* '#' id_default* '#' id_optional* `)
                     : typeIR_object `< typeArgumentIR_inferred* `> `( argumentIR_cast* `)
+  -- if $is_concrete_extern_object(typeIR_object)
   ---- ;; update the context with the instantiated object
   -- if nameIR = $name(name)
   -- if TC_1 = $add_var_t(p, TC_0, nameIR, _EMPTY typeIR_object CTK eps)
@@ -983,7 +984,7 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
 
   rule Decl_ok/derivedTypeDeclaration-mono:
     TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name ';'
-          : TC_1 typedefDeclarationIR
+          : TC_2 typedefDeclarationIR
     ---- ;; check type
     -- Decl_ok: TC_0 |- derivedTypeDeclaration
                       : TC_1 derivedTypeDeclarationIR
@@ -999,14 +1000,14 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
     -- if nameIR = $name(name)
     -- if typedefTypeIR = TYPEDEF nameIR typeIR
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR
-    -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR)
+    -- if TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR)
     ---- ;; create IR
     -- if typedefDeclarationIR
         = annotationList TYPEDEF derivedTypeDeclarationIR nameIR ';'
 
   rule Decl_ok/derivedTypeDeclaration-poly:
     TC_0 |- annotationList TYPEDEF derivedTypeDeclaration name ';'
-          : TC_1 typedefDeclarationIR
+          : TC_2 typedefDeclarationIR
     ---- ;; check type
     -- Decl_ok: TC_0 |- derivedTypeDeclaration
                       : TC_1 derivedTypeDeclarationIR
@@ -1023,7 +1024,7 @@ rulegroup Decl_ok/typedefDeclaration-typedef {
     -- if typeIR = $specialize_typeDefIR(typeDefIR, eps)
     -- if typedefTypeIR = TYPEDEF nameIR typeIR
     -- TypeDef_wf: $bound(GLOBAL, TC_0) |- typedefTypeIR
-    -- if TC_2 = $add_typeDef_t(GLOBAL, TC_0, nameIR, typedefTypeIR)
+    -- if TC_2 = $add_typeDef_t(GLOBAL, TC_1, nameIR, typedefTypeIR)
     ---- ;; create IR
     -- if typedefDeclarationIR
         = annotationList TYPEDEF derivedTypeDeclarationIR nameIR ';'
