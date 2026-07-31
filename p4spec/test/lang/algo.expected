@@ -14440,7 +14440,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR '#' typeId*
     -- let typeIR = $specialize_typeDefIR(typeDefIR, typeIR_arg*{typeIR_arg <- typeIR_arg*})
     -- output: % % |- % : typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-  rulegroup arrayType
+  rulegroup headerStackType
 
    match
 
@@ -14451,7 +14451,7 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR '#' typeId*
 
    paths
 
-    rulepath headerStack
+    rulepath headerStackType
     -- Type_ok: p TC |- type as typeOrVoid : typeIR_base '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- let typeIR_base' = $unroll_typeIR(typeIR_base)
     -- if (typeIR_base' <: headerTypeIR \/ typeIR_base' <: headerUnionTypeIR)
@@ -14466,7 +14466,18 @@ relation Type_ok: cursor typingContext |- typeOrVoid : typeIR '#' typeId*
     -- if (n_size > 0)
     -- output: % % |- % : HEADER_STACK typeIR_base `[ n_size `] as typeIR '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
 
-    rulepath array
+  rulegroup arrayType
+
+   match
+
+    (signature) p TC |- type `[ expression_size `] as typeOrVoid : % '#' %
+    p TC |- typeOrVoid : % '#' %
+    -- if typeOrVoid <: arrayType
+    -- let type `[ expression_size `] = typeOrVoid as arrayType
+
+   paths
+
+    rulepath arrayType
     -- Type_ok: p TC |- type as typeOrVoid : typeIR_base '#' typeId_fresh*{typeId_fresh <- typeId_fresh*}
     -- let typeIR_base' = $unroll_typeIR(typeIR_base)
     -- if ~(typeIR_base' <: headerTypeIR \/ typeIR_base' <: headerUnionTypeIR)

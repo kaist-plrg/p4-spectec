@@ -8633,26 +8633,32 @@ xref:Type_ok[Typing ``prefixedTypeName`` ``+`<+`` ``typeArgumentList`` ``+`>+``,
 . Let ``typeIR~base~`` and fresh type variables ``typeId~fresh~^{asterisk}^`` be
 * the result of xref:Type_ok[typing ``type``, under context ``TC`` at ``p``].
 . Let ``typeIR~base'~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
-. If ``typeIR~base'~`` has type ``headerTypeIR`` or ``typeIR~base'~`` has type ``headerUnionTypeIR``:
- .. Let ``typedExpressionIR~size~`` be
- ** the result of xref:Expr_ok[typing ``expression~size~``, under context ``TC`` at ``p``].
- .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~size~``] is ``+LCTK+``.
- .. Let ``value`` be
- ** the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~size~``, under context ``TC`` at ``p``].
- .. Let!~type~ ``integerValue~size~`` be ``value``.
- .. Let ``n~size~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~size~``].
- .. Check that ``n~size~`` is greater than ``0``.
- .. Result in ``+HEADER_STACK+`` ``typeIR~base~`` ``+`[+`` ``n~size~`` ``+`]+`` and fresh type variables ``typeId~fresh~^{asterisk}^``.
-. Else:
- .. Let ``typedExpressionIR~size~`` be
- ** the result of xref:Expr_ok[typing ``expression~size~``, under context ``TC`` at ``p``].
- .. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~size~``] is ``+LCTK+``.
- .. Let ``value`` be
- ** the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~size~``, under context ``TC`` at ``p``].
- .. Let!~type~ ``integerValue~size~`` be ``value``.
- .. Let ``n~size~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~size~``].
- .. Check that ``n~size~`` is greater than ``0``.
- .. Result in ``+ARRAY+`` ``typeIR~base~`` ``+`[+`` ``n~size~`` ``+`]+`` and fresh type variables ``typeId~fresh~^{asterisk}^``.
+. Check that ``typeIR~base'~`` has type ``headerTypeIR`` or ``typeIR~base'~`` has type ``headerUnionTypeIR``.
+. Let ``typedExpressionIR~size~`` be
+* the result of xref:Expr_ok[typing ``expression~size~``, under context ``TC`` at ``p``].
+. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~size~``] is ``+LCTK+``.
+. Let ``value`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~size~``, under context ``TC`` at ``p``].
+. Let!~type~ ``integerValue~size~`` be ``value``.
+. Let ``n~size~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~size~``].
+. Check that ``n~size~`` is greater than ``0``.
+. Result in ``+HEADER_STACK+`` ``typeIR~base~`` ``+`[+`` ``n~size~`` ``+`]+`` and fresh type variables ``typeId~fresh~^{asterisk}^``.
+
+<<Type_ok,Typing ``type`` ``+`[+`` ``expression~size~`` ``+`]+``, under context ``TC`` at ``p``>>:
+
+. Let ``typeIR~base~`` and fresh type variables ``typeId~fresh~^{asterisk}^`` be
+* the result of xref:Type_ok[typing ``type``, under context ``TC`` at ``p``].
+. Let ``typeIR~base'~`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].
+. Check that ``~typeIR~base'~`` ``has`` ``type`` ``headerTypeIR`` ``\/`` ``typeIR~base'~`` ``has`` ``type`` ``headerUnionTypeIR``.
+. Let ``typedExpressionIR~size~`` be
+* the result of xref:Expr_ok[typing ``expression~size~``, under context ``TC`` at ``p``].
+. Check that xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~size~``] is ``+LCTK+``.
+. Let ``value`` be
+* the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~size~``, under context ``TC`` at ``p``].
+. Let!~type~ ``integerValue~size~`` be ``value``.
+. Let ``n~size~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~size~``].
+. Check that ``n~size~`` is greater than ``0``.
+. Result in ``+ARRAY+`` ``typeIR~base~`` ``+`[+`` ``n~size~`` ``+`]+`` and fresh type variables ``typeId~fresh~^{asterisk}^``.
 
 xref:Type_ok[Typing ``+LIST+`` ``+`<+`` ``typeArgument`` ``+`>+``, under context ``TC`` at ``p``]:
 
