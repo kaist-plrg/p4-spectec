@@ -830,13 +830,10 @@ let rec render_instr ?(level : int = 0)
 and render_instrs ?(level : int = 0) ?(head : Adoc.block option = None)
     ?(backtrack : Backtrack.ctx option = None) (instrs : block) : Adoc.block =
   match instrs with
-  | [
-   ({ node = { it = ReturnI ({ node = { it = BoolE _; _ }; _ } as e); _ }; _ } :
-     instr);
-  ] -> (
-      let p =
-        Adoc.(text " return " ++ code_prose (code_of_exp e) ++ text ".")
-      in
+  (* a single short return folds onto the guard line: "If ...: return ..." *)
+  | [ ({ node = { it = ReturnI e; _ }; _ } : instr) ]
+    when Adoc.width_prose (prose_of_exp e) <= adoc_width_short -> (
+      let p = Adoc.(text " return " ++ prose_of_exp e ++ text ".") in
       match head with
       | Some head -> Adoc.concat_block [ head; Adoc.inline_block p ]
       | None -> Adoc.inline_block p)
