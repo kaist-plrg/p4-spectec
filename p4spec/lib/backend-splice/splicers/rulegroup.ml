@@ -72,13 +72,17 @@ module Prose = struct
       |> List.map (fun (instr : Pl.instr) ->
              (* collect_groups_instr only emits GroupI -- the splicer's
                 values are guaranteed to be rulegroups. *)
-             let id_rel =
+             let id_rulegroup, id_rel =
                match instr.node.it with
-               | GroupI (_, id_rel, _, _, _) -> id_rel
+               | GroupI (id_rulegroup, id_rel, _, _, _) ->
+                   (id_rulegroup, id_rel)
                | _ -> assert false
              in
              Pl.Render.Backtrack.Label.set_namespace id_rel.it;
-             Pl.Render.render_group instr)
+             let anchor =
+               Pl.Render.string_of_rulegroup_anchor id_rel id_rulegroup
+             in
+             "[[" ^ anchor ^ "]]\n" ^ Pl.Render.render_group instr)
       |> String.concat "\n\n"
   end
 

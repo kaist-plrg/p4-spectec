@@ -70,6 +70,13 @@ let string_of_text (text : text) : string = Il.Print.string_of_text text
 let string_of_varid (varid : id) : string = Il.Print.string_of_varid varid
 let string_of_relid (relid : id) : string = Il.Print.string_of_relid relid
 
+(* e.g. (Type_alpha, enumTypeIR) -> "Type_alpha-enumTypeIR" *)
+let string_of_rulegroup_anchor (id_rel : id) (id_rulegroup : id) : string =
+  let sanitize s = String.map (fun c -> if c = '/' then '-' else c) s in
+  sanitize (string_of_relid id_rel)
+  ^ "-"
+  ^ sanitize (string_of_relid id_rulegroup)
+
 let string_of_defid ?(link = false) (defid : id) : string =
   if link then Il.Print.string_of_varid defid
   else Il.Print.string_of_defid defid
