@@ -88,7 +88,9 @@ let pp_num fmt (num : Il.num) : unit =
 let pp_atom fmt (atom : Il.atom) : unit =
   match atom.it with
   | Atom.Tag _ -> ()
-  | _ -> atom.it |> Atom.render_atom |> String.lowercase_ascii |> F.fprintf fmt "%s"
+  | _ ->
+      atom.it |> Atom.render_atom |> String.lowercase_ascii
+      |> F.fprintf fmt "%s"
 
 let pp_atoms fmt (atoms : Il.atom list) : unit =
   match atoms with

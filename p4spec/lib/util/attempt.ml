@@ -36,12 +36,10 @@ let nest at msg attempt =
   | Ok a -> Ok a
   | Fail failtraces -> Fail [ Failtrace (at, (fun () -> msg), failtraces) ]
 
-(* Error with backfailtraces *)
+(* Error with backfailtraces
 
-(* Show at most [short_window] frames of each root-to-leaf path: a node is kept
-   when its subtree height is within the window of its deepest leaf. The cutoff
-   is decided per node from its own height, so shallow branches survive intact
-   and each pruned branch reports its own omission count. *)
+   Show at most [short_window] frames of each root-to-leaf path *)
+
 let short_window = 10
 
 let region_line (indent : string) (region : region) : string =
@@ -50,8 +48,6 @@ let region_line (indent : string) (region : region) : string =
 let rec string_of_failtrace ~(indent : string) ~(run : int) ~(root : bool)
     ~(last : bool) ~(bullet : string) (failtrace : failtrace) : string =
   let (Failtrace (region, msg, failtraces_sub)) = failtrace in
-  (* Hidden nodes are tunneled through, accumulating [run] to report as an
-     omission count at the first shown descendant of the branch. *)
   if (not root) && depth_of failtrace > short_window then
     string_of_failtraces ~indent ~run:(run + 1) failtraces_sub
   else
@@ -61,13 +57,12 @@ let rec string_of_failtrace ~(indent : string) ~(run : int) ~(root : bool)
         Format.asprintf "%s│ ··· omitting %d traces ···\n" indent run
       else ""
     in
-    (* The root and any first-shown node after a pruned run head their subtree
-       without a tree prefix; deeper shown nodes are drawn as branches. *)
     let boundary = root || run > 0 in
     let node, indent_sub =
       if boundary then
-        ( Format.asprintf "%s%s%s%s\n" indent (region_line indent region) bullet
-            msg,
+        ( Format.asprintf "%s%s%s%s\n" indent
+            (region_line indent region)
+            bullet msg,
           indent )
       else
         let prefix = if last then "└── " else "├── " in
@@ -77,7 +72,8 @@ let rec string_of_failtrace ~(indent : string) ~(run : int) ~(root : bool)
             bullet msg,
           indent_sub )
     in
-    marker ^ node ^ string_of_failtraces ~indent:indent_sub ~run:0 failtraces_sub
+    marker ^ node
+    ^ string_of_failtraces ~indent:indent_sub ~run:0 failtraces_sub
 
 and string_of_failtraces ~(indent : string) ~(run : int)
     (failtraces : failtrace list) : string =

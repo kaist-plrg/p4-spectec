@@ -110,12 +110,16 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
     let name_extern = Value.Get.text value_name_extern in
     match name_extern with
     | "counter" ->
-        let counter = Object.Counter.init value_type_args value_ids value_args in
+        let counter =
+          Object.Counter.init value_type_args value_ids value_args
+        in
         let counter = Counter counter in
         counter |> object_state_to_yojson
         |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "register" ->
-        let register = Object.Register.init value_type_args value_ids value_args in
+        let register =
+          Object.Register.init value_type_args value_ids value_args
+        in
         let register = Register register in
         register |> object_state_to_yojson
         |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
@@ -127,7 +131,9 @@ module Make (Spec : Spec.S) : Sim.ARCH = struct
         direct_counter |> object_state_to_yojson
         |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
     | "direct_meter" ->
-        let direct_meter = Object.DirectMeter.init value_type_args value_ids value_args in
+        let direct_meter =
+          Object.DirectMeter.init value_type_args value_ids value_args
+        in
         let direct_meter = DirectMeter direct_meter in
         direct_meter |> object_state_to_yojson
         |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])

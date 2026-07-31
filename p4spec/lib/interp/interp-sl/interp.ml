@@ -1389,10 +1389,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     if cond then eval_block ~tail ctx block_then
     else
       let trace =
-          ( exp_cond.at,
-            fun () ->
-              F.asprintf "condition %s was not met"
-                (Sl.Print.string_of_exp exp_cond) )
+        ( exp_cond.at,
+          fun () ->
+            F.asprintf "condition %s was not met"
+              (Sl.Print.string_of_exp exp_cond) )
       in
       Cont [ trace ]
 
@@ -1572,7 +1572,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         let trace =
           ( exp.at,
             fun () ->
-              F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp) )
+              F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp)
+          )
         in
         Cont [ trace ]
 

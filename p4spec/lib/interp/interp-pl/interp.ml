@@ -1410,7 +1410,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         let trace =
           ( exp.node.at,
             fun () ->
-              F.asprintf "no case matched for %s" (Pl.Print.string_of_exp exp) )
+              F.asprintf "no case matched for %s" (Pl.Print.string_of_exp exp)
+          )
         in
         (ctx, Flow.Cont [ trace ])
 
