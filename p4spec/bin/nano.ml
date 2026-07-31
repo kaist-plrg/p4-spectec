@@ -275,6 +275,34 @@ let test_eval_command =
        Format.printf "\n[PASS] %d/%d  [FAIL] %d/%d\n" (total - fails) total
          fails total)
 
+let splice_command =
+  Core.Command.basic ~summary:"splice a skeleton nano-P4 specification document"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and paths_input = flag "-splice" (listed string) ~doc:"skeleton documents"
+     and paths_output = flag "-out" (listed string) ~doc:"output files"
+     and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
+     fun () ->
+       try
+         if (not inplace) && List.length paths_input <> List.length paths_output
+         then raise (CommandError "number of input and output files must match");
+         let paths =
+           if inplace then List.combine paths_input paths_input
+           else List.combine paths_input paths_output
+         in
+         let spec = Pass.parse paths_spec in
+         let spec_pl = Pass.annotate paths_spec in
+         Backend_splice.Driver.splice_files spec spec_pl paths
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | ProseError (at, msg)
+       | SpliceError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
+
 let command =
   Core.Command.group
     ~summary:"nano-p4spectec: a language design framework for nano-P4"
@@ -285,6 +313,7 @@ let command =
       ("eval", eval_command);
       ("test-check", test_check_command);
       ("test-eval", test_eval_command);
+      ("splice", splice_command);
     ]
 
 let () = Command_unix.run command
