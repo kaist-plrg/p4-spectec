@@ -819,10 +819,12 @@ and render_instrs ?(level : int = 0) ?(head : Adoc.block option = None)
   match instrs with
   | [ ({ node = { it = ReturnI exp; _ }; _ } : instr) ]
     when Adoc.width_prose (prose_of_exp exp) <= adoc_width_short -> (
-      let p = Adoc.(text " return " ++ prose_of_exp exp ++ text ".") in
+      let prose_return =
+        Adoc.(text " return " ++ prose_of_exp exp ++ text ".")
+      in
       match head with
-      | Some head -> Adoc.concat_block [ head; Adoc.inline_block p ]
-      | None -> Adoc.inline_block p)
+      | Some head -> Adoc.concat_block [ head; Adoc.inline_block prose_return ]
+      | None -> Adoc.inline_block prose_return)
   | _ -> (
       let children = List.map (render_instr ~level ~backtrack) instrs in
       match head with
@@ -945,13 +947,13 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         (cases
         |> List.mapi (fun idx (guard, block_then) ->
                if idx = n - 1 && total then
-                 let else_head =
+                 let block_else =
                    Adoc.bullet_inline_block (`Ordered level) (Adoc.text "Else:")
                  in
                  (* a binding guard must still show its binding under "Else" *)
                  (match guard with
                  | CheckLetSubG (_, target) | CheckLetMatchG (_, target) ->
-                     let bind_step =
+                     let block_bind =
                        Adoc.bullet_inline_block
                          (`Ordered (level + 1))
                          Adoc.(
@@ -960,12 +962,12 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
                            ++ text " be " ++ prose_of_exp exp_scrut ++ text ".")
                      in
                      Adoc.seq_block
-                       (else_head :: bind_step
+                       (block_else :: block_bind
                        :: List.map
                             (render_instr ~level:(level + 1) ~backtrack)
                             block_then)
                  | _ ->
-                     render_instrs ~head:(Some else_head) ~level:(level + 1)
+                     render_instrs ~head:(Some block_else) ~level:(level + 1)
                        ~backtrack block_then)
                else
                  let keyword = if idx = 0 then "If" else "Else if" in
