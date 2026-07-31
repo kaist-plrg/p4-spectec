@@ -1100,7 +1100,19 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       List.fold_left
         (fun (ctx, flow) instr ->
           match flow with
-          | Flow.Cont _ -> eval_instr ctx instr
+          | Flow.Cont traces_pre -> (
+              let ctx_post, flow_post = eval_instr ctx instr in
+              match flow_post with
+              (* Retain the deeper trace chain so an exhausted
+                 block reports the branch that progressed furthest *)
+              | Flow.Cont traces_post ->
+                  let traces =
+                    if List.length traces_post >= List.length traces_pre then
+                      traces_post
+                    else traces_pre
+                  in
+                  (ctx_post, Flow.Cont traces)
+              | _ -> (ctx_post, flow_post))
           | _ -> (ctx, flow))
         (ctx, Flow.Cont []) block
     in
@@ -1199,8 +1211,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (* Evaluate the then branch if the condition holds *)
     if cond then eval_block ctx block_then
     else
-      let flow = Flow.Cont [] in
-      (ctx, flow)
+      let trace =
+        ( exp_cond.node.at,
+          fun () ->
+            F.asprintf "condition %s was not met"
+              (Pl.Print.string_of_exp exp_cond) )
+      in
+      (ctx, Flow.Cont [ trace ])
 
   (* Hold instruction evaluation *)
 
@@ -1310,15 +1327,20 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
         if cond then eval_block ctx block_hold
         else
-          let flow = Flow.Cont [] in
-          (ctx, flow)
+          let trace =
+            (id.at, fun () -> F.asprintf "condition hold %s was not met" id.it)
+          in
+          (ctx, Flow.Cont [ trace ])
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
         if not cond then eval_block ctx block_not_hold
         else
-          let flow = Flow.Cont [] in
-          (ctx, flow)
+          let trace =
+            ( id.at,
+              fun () -> F.asprintf "condition not-hold %s was not met" id.it )
+          in
+          (ctx, Flow.Cont [ trace ])
 
   (* Case analysis instruction evaluation *)
 
@@ -1385,8 +1407,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match block_opt with
     | Some (ctx, block) -> eval_block ctx block
     | None ->
-        let flow = Flow.Cont [] in
-        (ctx, flow)
+        let trace =
+          ( exp.node.at,
+            fun () ->
+              F.asprintf "no case matched for %s" (Pl.Print.string_of_exp exp)
+          )
+        in
+        (ctx, Flow.Cont [ trace ])
 
   (* Group instruction evaluation *)
 
@@ -1408,7 +1435,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         | Cont traces_pre -> (
             match flow_post with
             | Cont traces_post ->
-                let flow = Cont (traces_pre @ traces_post) in
+                (* Retain the deeper trace chain, to report
+                   the arm that progressed furthest *)
+                let traces =
+                  if List.length traces_post >= List.length traces_pre then
+                    traces_post
+                  else traces_pre
+                in
+                let flow = Cont traces in
                 (ctx_post, flow)
             | _ -> (ctx_post, flow_post))
         | Res _ -> (
@@ -1444,7 +1478,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           | Flow.Cont traces -> (
               try eval_block ctx arm
               with Backtrace (Unmatch traces_post) ->
-                let flow = Flow.Cont (traces @ traces_post) in
+                (* Retain the deeper trace chain, to report
+                   the arm that progressed furthest *)
+                let traces =
+                  if List.length traces_post >= List.length traces then
+                    traces_post
+                  else traces
+                in
+                let flow = Flow.Cont traces in
                 (ctx, flow))
           | _ -> (ctx, flow))
         (ctx, Flow.Cont []) arms
@@ -1790,8 +1831,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       in
       match ctx_opt with
       | Some ctx -> eval_block ctx block_inner
-      | None -> (ctx, Flow.Cont [])
-    else (ctx, Flow.Cont [])
+      | None ->
+          let trace =
+            ( exp_r.node.at,
+              fun () ->
+                F.asprintf "binding %s failed" (Pl.Print.string_of_exp exp_l) )
+          in
+          (ctx, Flow.Cont [ trace ])
+    else
+      let trace =
+        ( exp_r.node.at,
+          fun () ->
+            F.asprintf "%s is not a subtype of %s"
+              (Pl.Print.string_of_exp exp_r)
+              (Sl.Print.string_of_typ typ_target) )
+      in
+      (ctx, Flow.Cont [ trace ])
 
   (* Check-let on match instruction evaluation *)
 
@@ -1814,7 +1869,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     if matches then
       let ctx = assign_exp ctx exp_l value in
       eval_block ctx block_inner
-    else (ctx, Flow.Cont [])
+    else
+      let trace =
+        ( exp_r.node.at,
+          fun () ->
+            F.asprintf "%s does not match the expected pattern"
+              (Pl.Print.string_of_exp exp_r) )
+      in
+      (ctx, Flow.Cont [ trace ])
 
   (* Option-get instruction evaluation *)
 
@@ -1826,8 +1888,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         let ctx = assign_exp ctx exp_l value_inner in
         eval_block ctx block
     | _ ->
-        let flow = Flow.Cont [] in
-        (ctx, flow)
+        let trace =
+          ( exp_r.node.at,
+            fun () ->
+              F.asprintf "%s evaluated to an empty option"
+                (Pl.Print.string_of_exp exp_r) )
+        in
+        (ctx, Flow.Cont [ trace ])
 
   (* Invoke a relation *)
 

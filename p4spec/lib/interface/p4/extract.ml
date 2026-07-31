@@ -68,7 +68,8 @@ let id_of_declaration (value : value) : string =
         fun values -> values |> Value.Get.nth 1 |> id_of_name );
       ( "annotationList ENUM name `{ nameList trailingCommaOpt `}",
         fun values -> values |> Value.Get.nth 1 |> id_of_name );
-      ( "annotationList ENUM type name `{ namedExpressionList trailingCommaOpt `}",
+      ( "annotationList ENUM type name `{ namedExpressionList trailingCommaOpt \
+         `}",
         fun values -> values |> Value.Get.nth 2 |> id_of_name );
       ( "annotationList STRUCT name typeParameterListOpt `{ typeFieldList `}",
         fun values -> values |> Value.Get.nth 1 |> id_of_name );
@@ -83,9 +84,11 @@ let id_of_declaration (value : value) : string =
         fun values -> values |> Value.Get.nth 2 |> id_of_name );
       ( "annotationList PARSER name typeParameterListOpt `( parameterList `) ';'",
         fun values -> values |> Value.Get.nth 1 |> id_of_name );
-      ( "annotationList CONTROL name typeParameterListOpt `( parameterList `) ';'",
+      ( "annotationList CONTROL name typeParameterListOpt `( parameterList `) \
+         ';'",
         fun values -> values |> Value.Get.nth 1 |> id_of_name );
-      ( "annotationList PACKAGE name typeParameterListOpt `( parameterList `) ';'",
+      ( "annotationList PACKAGE name typeParameterListOpt `( parameterList `) \
+         ';'",
         fun values -> values |> Value.Get.nth 1 |> id_of_name );
       ( "annotationList TABLE name `{ tablePropertyList `}",
         fun values -> values |> Value.Get.nth 1 |> id_of_name );
@@ -191,8 +194,10 @@ let has_type_params_declaration (value : value) : bool =
          constructorParameterListOpt `{ controlLocalDeclarationList APPLY \
          controlBody `}",
         fun values -> values |> Value.Get.nth 2 |> has_type_params );
-      ("annotationList ENUM name `{ nameList trailingCommaOpt `}", fun _ -> false);
-      ( "annotationList ENUM type name `{ namedExpressionList trailingCommaOpt `}",
+      ( "annotationList ENUM name `{ nameList trailingCommaOpt `}",
+        fun _ -> false );
+      ( "annotationList ENUM type name `{ namedExpressionList trailingCommaOpt \
+         `}",
         fun _ -> false );
       ( "annotationList STRUCT name typeParameterListOpt `{ typeFieldList `}",
         fun values -> values |> Value.Get.nth 2 |> has_type_params );
@@ -205,9 +210,11 @@ let has_type_params_declaration (value : value) : bool =
       ("annotationList TYPE type name ';'", fun _ -> false);
       ( "annotationList PARSER name typeParameterListOpt `( parameterList `) ';'",
         fun values -> values |> Value.Get.nth 2 |> has_type_params );
-      ( "annotationList CONTROL name typeParameterListOpt `( parameterList `) ';'",
+      ( "annotationList CONTROL name typeParameterListOpt `( parameterList `) \
+         ';'",
         fun values -> values |> Value.Get.nth 2 |> has_type_params );
-      ( "annotationList PACKAGE name typeParameterListOpt `( parameterList `) ';'",
+      ( "annotationList PACKAGE name typeParameterListOpt `( parameterList `) \
+         ';'",
         fun values -> values |> Value.Get.nth 2 |> has_type_params );
       ("annotationList TABLE name `{ tablePropertyList `}", fun _ -> false);
     ]

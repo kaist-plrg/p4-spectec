@@ -98,7 +98,9 @@ let atom_of_string = function
   | "`]" -> RBrack
   | "`{" -> LBrace
   | "`}" -> RBrace
-  | s when String.length s >= 2 && s.[0] = '\'' && s.[String.length s - 1] = '\'' ->
+  | s
+    when String.length s >= 2 && s.[0] = '\'' && s.[String.length s - 1] = '\''
+    ->
       Operator (String.sub s 1 (String.length s - 2))
   | s when String.length s >= 2 && s.[0] = '_' ->
       Tag (String.sub s 1 (String.length s - 1))
@@ -141,10 +143,13 @@ let is_upid (s : string) : bool =
   String.length s > 0
   && (match s.[0] with 'A' .. 'Z' -> true | _ -> false)
   && String.for_all
-       (function 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '_' | '\'' -> true | _ -> false)
+       (function
+         | 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '_' | '\'' -> true
+         | _ -> false)
        s
 
-let is_operator atom s = match atom with Operator o -> String.equal o s | _ -> false
+let is_operator atom s =
+  match atom with Operator o -> String.equal o s | _ -> false
 
 (* Constructors *)
 
