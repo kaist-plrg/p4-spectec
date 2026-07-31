@@ -1,0 +1,58 @@
+[#sec-preprocessing]
+=== Preprocessing
+
+// 87
+To aid the composition of programs from multiple source files, P4 compilers
+should support the following subset of the C preprocessor functionality:
+
+// 88
+*	`+#define+` for defining macros (without arguments)
+*	`+#undef+`
+*	`+#if #else #endif #ifdef #ifndef #elif+`
+*	`+#include+`
+
+// 89
+The preprocessor should also remove the sequence backslash newline (ASCII codes
+92, 10) to facilitate splitting content across multiple lines when convenient
+for formatting.
+
+// 90
+Additional C preprocessor capabilities may be supported, but are not
+guaranteed---e.g., macros with arguments.  Similar to C, `+#include+` can
+specify a file name either within double quotes or within `<>`.
+
+// 91
+[source,p4]
+----
+# include <system_file>
+# include "user_file"
+----
+
+// 92
+The difference between the two forms is the order in which the preprocessor
+searches for header files when the path is incompletely specified.
+
+// 93
+P4 compilers should correctly handle `+#line+` directives that may be generated
+during preprocessing.  This functionality allows P4 programs to be built from
+multiple source files, potentially produced by different programmers at
+different times:
+
+// 94
+* the P4 core library, defined in this document,
+* the architecture, defining data plane interfaces and extern blocks,
+* user-defined libraries of useful components (e.g. standard protocol header
+  definitions), and
+* the P4 programs that specify the behavior of each programmable block.
+
+// 95
+The P4 language specification defines a core library that includes several
+common programming constructs. A description of the core library is provided in
+<<sec-p4-core-lib>>. All P4 programs must include the core library. Including
+the core library is done with
+
+// 96
+[source,p4]
+----
+# include <core.p4>
+----

@@ -1,0 +1,73 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:19.076
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr1);
+# [ExtractSuccess] hdr.eth_hdr1@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr1.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr1.src_addr = 0x0000_0000_0000 | hdr.eth_hdr1.eth_type = 0x0003
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr2);
+# [ExtractFailure] hdr.eth_hdr2@112 | Condition: !(|*packetLen_bits(bit<32>)| >= 224); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: sm.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [If Statement]: val == 1 Condition: |pktvar_2(bit<16>)| == 1; Result: false
+# [If Statement]: val == 2 Condition: |pktvar_2(bit<16>)| == 2; Result: false
+# [P4Testgen MethodCall]: retval.setValid();
+# [AssignmentStatement]: return {3, 3, 3};| Computed: retval.dst_addr = 3;
+# [AssignmentStatement]: return {3, 3, 3};| Computed: retval.src_addr = 3;
+# [AssignmentStatement]: return {3, 3, 3};| Computed: retval.eth_type = 3;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen MethodCall]: inlinedRetval_1/inlinedRetval.setValid();
+# [P4Testgen AssignmentStatement]: inlinedRetval_1/inlinedRetval.dst_addr = 3;
+# [P4Testgen AssignmentStatement]: inlinedRetval_1/inlinedRetval.src_addr = 3;
+# [P4Testgen AssignmentStatement]: inlinedRetval_1/inlinedRetval.eth_type = 3;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h.eth_hdr1.setValid();
+# [AssignmentStatement]: h.eth_hdr1 = do_function_1(h.eth_hdr1.eth_type);| Computed: h.eth_hdr1.dst_addr = 3;
+# [AssignmentStatement]: h.eth_hdr1 = do_function_1(h.eth_hdr1.eth_type);| Computed: h.eth_hdr1.src_addr = 3;
+# [AssignmentStatement]: h.eth_hdr1 = do_function_1(h.eth_hdr1.eth_type);| Computed: h.eth_hdr1.eth_type = 3;
+# [P4Testgen MethodCall]: retval_0.setValid();
+# [AssignmentStatement]: return {1, 1, 1};| Computed: retval_0.dst_addr = 1;
+# [AssignmentStatement]: return {1, 1, 1};| Computed: retval_0.src_addr = 1;
+# [AssignmentStatement]: return {1, 1, 1};| Computed: retval_0.eth_type = 1;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen MethodCall]: inlinedRetval_2/inlinedRetval_0.setValid();
+# [P4Testgen AssignmentStatement]: inlinedRetval_2/inlinedRetval_0.dst_addr = 1;
+# [P4Testgen AssignmentStatement]: inlinedRetval_2/inlinedRetval_0.src_addr = 1;
+# [P4Testgen AssignmentStatement]: inlinedRetval_2/inlinedRetval_0.eth_type = 1;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h.eth_hdr2.setValid();
+# [AssignmentStatement]: h.eth_hdr2 = do_function_2();| Computed: h.eth_hdr2.dst_addr = 1;
+# [AssignmentStatement]: h.eth_hdr2 = do_function_2();| Computed: h.eth_hdr2.src_addr = 1;
+# [AssignmentStatement]: h.eth_hdr2 = do_function_2();| Computed: h.eth_hdr2.eth_type = 1;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr1);
+# [Emit]: {$headerValid:true;;    dst_addr:3;  src_addr:3;  eth_type:3;  }
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr2);
+# [Emit]: {$headerValid:true;;    dst_addr:1;  src_addr:1;  eth_type:1;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000000000000000000300
+expect 0 0000000000030000000000030003000000000001000000000001000100$
+

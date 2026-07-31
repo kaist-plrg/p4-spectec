@@ -1,6 +1,8 @@
 %{
+open Domain
+open Lang
 open Xl
-open El.Ast
+open El
 open Error
 open Util.Source
 
@@ -37,46 +39,58 @@ let exit_scope () = vars := List.hd !scopes; scopes := List.tl !scopes
 
 %}
 
+%token<string> TAG_UPID
+%token<string> OPERATOR
+%token TICK_LPAREN TICK_RPAREN TICK_LBRACK TICK_RBRACK
+%token TICK_LBRACE TICK_RBRACE TICK_LANGLE TICK_RANGLE
+
+%token NL_BAR NL2 NL3
+%token SUB TURNSTILE TILESTURN
+%token ARROW ARROW_SUB
+%token DOUBLE_ARROW DOUBLE_ARROW_SUB DOUBLE_ARROW_BOTH DOUBLE_ARROW_LONG
+%token SQARROW SQARROW_STAR
+
+%token AND OR
+%token DOT DOT2 DOT3
+%token COMMA COMMA_NL SEMICOLON COLON COLON2 COLON_SLASH COLON_EQ
+%token HASH HASH2 DOLLAR QUEST TILDE TILDE2
+%token LANGLE LANGLE_DASH LANGLE_EQ
+%token RANGLE RANGLE_EQ RANGLE_LPAREN
 %token LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE
-%token COLON COLONCOLON COLONSLASH SEMICOLON COMMA DOT DOTDOT DOTDOTDOT BAR DASH
-%token BIGAND BIGOR BIGADD BIGMUL BIGCAT
-%token COMMA_NL NL_BAR NL_NL NL_NL_NL
-%token EQ NE LANGLE RANGLE RANGLE_LPAREN LE GE APPROX EQUIV ASSIGN SUB SUP
-%token NOT AND OR
-%token QUEST PLUS MINUS STAR SLASH BACKSLASH UP CAT
-%token ARROW ARROW2 ARROWSUB ARROW2SUB DARROW2 SQARROW SQARROWSTAR
-%token MEM PREC SUCC TURNSTILE TILESTURN
-%token DOLLAR TICK
-%token BOT TOP
-%token HOLE MULTIHOLE NOTHING FUSE FUSEFUSE LATEX
-%token<int> HOLEN
-%token BOOL NAT INT TEXT
-%token SYNTAX RELATION RULE VAR DEC DEF
-%token IF OTHERWISE HINT_LPAREN
-%token EPS INFINITY
+%token PLUS PLUS2 MINUS DASH STAR SLASH BACKSLASH
+%token HOLE
+%token<int> HOLE_NUM
+%token HOLE_MULTI HOLE_NIL
+%token EQ NEQ UP BAR
+
+%token LATEX BOOL NAT INT TEXT
+%token SYNTAX EXTERN TABLE RELATION RULEGROUP RULE VAR BUILTIN DEC DEF
+%token IF OTHERWISE DEBUG HINT_LPAREN EPS
 %token<bool> BOOLLIT
 %token<Bigint.t> NATLIT HEXLIT
 %token<string> TEXTLIT
-%token<string> UPID LOID DOTID UPID_LPAREN LOID_LPAREN UPID_LANGLE LOID_LANGLE
+%token<string> UPID LOID DOTID
+%token<string> UPID_LPAREN LOID_LPAREN UPID_LANGLE LOID_LANGLE
 %token EOF
 
-%right ARROW2 DARROW2 ARROW2SUB
+%right DOUBLE_ARROW DOUBLE_ARROW_BOTH DOUBLE_ARROW_SUB DOUBLE_ARROW_LONG
 %left OR
 %left AND
 %nonassoc TURNSTILE
 %nonassoc TILESTURN
-%right SQARROW SQARROWSTAR PREC SUCC BIGAND BIGOR BIGADD BIGMUL BIGCAT
-%left COLON SUB SUP ASSIGN EQUIV APPROX
-%right EQ NE LANGLE RANGLE LE GE MEM
-%right COLONCOLON
-%right ARROW ARROWSUB
+%right SQARROW SQARROW_STAR
+%left COLON COLON_EQ SUB TILDE2
+%right EQ NEQ LANGLE RANGLE LANGLE_EQ RANGLE_EQ LANGLE_DASH
+%right COLON2
+%right ARROW ARROW_SUB
 %left SEMICOLON
-%left DOT DOTDOT DOTDOTDOT
-%left PLUS MINUS CAT
+%left DOT DOT2 DOT3
+%left PLUS MINUS PLUS2 
 %left STAR SLASH BACKSLASH
 
-%start spec check_atom
-%type<El.Ast.spec> spec
+%start spec check_typ check_atom
+%type<El.spec> spec
+%type<El.typ> check_typ
 %type<bool> check_atom
 
 %%
@@ -94,12 +108,10 @@ check_atom :
 (* Lists *)
 
 %inline bar :
-  | BAR {}
-  | NL_BAR {}
+  | BAR | NL_BAR {}
 
 %inline comma :
-  | COMMA {}
-  | COMMA_NL {}
+  | COMMA | COMMA_NL {}
 
 comma_list(X) :
   | (* empty *) { [] }
@@ -115,6 +127,10 @@ dash_list(X) :
   | (* empty *) { [] }
   | DASH DASH dash_list(X) { $3 }
   | DASH X dash_list(X) { $2 :: $3 }
+
+newline_list(X) :
+  | (* empty *) { [] }
+  | X NL2 newline_list(X) { $1 :: $3 }
 
 (* Identifiers *)
 
@@ -136,16 +152,19 @@ atomid_lparen : UPID_LPAREN { $1 }
 atomid_langle : UPID_LANGLE { $1 }
 atomid : atomid_ { $1 } | atomid DOTID { $1 ^ "." ^ $2 }
 
-dotid : DOTID { Atom.Atom $1 @@@ $sloc }
+dotid : DOTID { Atom.keyword $1 @@@ $sloc }
 
 fieldid :
-  | atomid_ { Atom.Atom $1 @@@ $sloc }
+  | atomid_ { Atom.keyword $1 @@@ $sloc }
 
 relid : id { $1 @@@ $sloc }
 
 ruleid : ruleid_ { $1 }
 ruleid_ :
   | id { $1 }
+  | TEXT { "text" }
+  | EXTERN { "extern" }
+  | BUILTIN { "builtin" }
   | NATLIT { Bigint.to_string $1 }
   | BOOLLIT { Bool.string_of_bool $1 }
   | ruleid_ DOTID { $1 ^ "." ^ $2 }
@@ -162,35 +181,18 @@ hintid : id { $1 }
 
 synid :
   | varid { ($1, []) }
-  | varid_langle_bind enter_scope comma_list(tparam) exit_scope RANGLE { ($1, $3) }
+  | varid_langle_bind enter_scope comma_list(tparam) RANGLE exit_scope { ($1, $3) }
 
 (* Atoms *)
 
 atom :
   | atom_ { $1 @@@ $sloc }
 atom_ :
-  | atomid { Atom.Atom $1 }
+  | atomid { Atom.keyword $1 }
   | atom_escape { $1 }
 atom_escape :
-  | TICK EQ { Atom.Equal }
-  | TICK NE { Atom.NotEqual }
-  | TICK LANGLE { Atom.Less }
-  | TICK RANGLE { Atom.Greater }
-  | TICK LE { Atom.LessEqual }
-  | TICK GE { Atom.GreaterEqual }
-  | TICK MEM { Atom.Mem }
-  | TICK QUEST { Atom.Quest }
-  | TICK PLUS { Atom.Plus }
-  | TICK STAR { Atom.Star }
-  | TICK BAR { Atom.Bar }
-  | TICK CAT { Atom.Cat }
-  | TICK COMMA { Atom.Comma }
-  | TICK ARROW2 { Atom.Arrow2 }
-  | TICK infixop_ { $2 }
-  | TICK relop_ { $2 }
-  | BOT { Atom.Bot }
-  | TOP { Atom.Top }
-  | INFINITY { Atom.Infinity }
+  | TAG_UPID { Atom.tag $1 }
+  | OPERATOR { Atom.operator $1 }
 
 (* Iterations *)
 
@@ -236,17 +238,21 @@ typ_prim_ :
     {
       NotationT (AtomT $1 @@@ $loc($1))
     }
-  | TICK LPAREN typ RPAREN
+  | TICK_LANGLE typ TICK_RANGLE
     {
-      NotationT (BrackT (Atom.LParen @@@ $loc($2), $3, Atom.RParen @@@ $loc($4)) @@@ $loc($1))
+      NotationT (BrackT (Atom.LAngle @@@ $loc($1), $2, Atom.RAngle @@@ $loc($3)) @@@ $loc($1))
     }
-  | TICK LBRACK typ RBRACK
+  | TICK_LPAREN typ TICK_RPAREN
     {
-      NotationT (BrackT (Atom.LBrack @@@ $loc($2), $3, Atom.RBrack @@@ $loc($4)) @@@ $loc($1))
+      NotationT (BrackT (Atom.LParen @@@ $loc($1), $2, Atom.RParen @@@ $loc($3)) @@@ $loc($1))
     }
-  | TICK LBRACE typ RBRACE
+  | TICK_LBRACK typ TICK_RBRACK
     {
-      NotationT (BrackT (Atom.LBrace @@@ $loc($2), $3, Atom.RBrace @@@ $loc($4)) @@@ $loc($1))
+      NotationT (BrackT (Atom.LBrack @@@ $loc($1), $2, Atom.RBrack @@@ $loc($3)) @@@ $loc($1))
+    }
+  | TICK_LBRACE typ TICK_RBRACE
+    {
+      NotationT (BrackT (Atom.LBrace @@@ $loc($1), $2, Atom.RBrace @@@ $loc($3)) @@@ $loc($1))
     }
 
 typ_seq : typ_seq_ { $1 }
@@ -292,6 +298,9 @@ typ_rel_ :
     }
 
 typ : typ_rel { $1 }
+
+check_typ :
+  | typ EOF { $1 }
 
 (* Type definitions *)
 
@@ -347,7 +356,7 @@ deftyp_ :
 (* Operations *)
 
 %inline unop :
-  | NOT { `NotOp }
+  | TILDE { `NotOp }
   | PLUS { `PlusOp }
   | MINUS { `MinusOp }
 
@@ -360,48 +369,43 @@ deftyp_ :
 
 %inline cmpop :
   | EQ { `EqOp }
-  | NE { `NeOp }
+  | NEQ { `NeOp }
+
+%inline cmpop_arith :
+  | EQ { `EqOp }
+  | NEQ { `NeOp }
   | LANGLE { `LtOp }
   | RANGLE { `GtOp }
-  | LE { `LeOp }
-  | GE { `GeOp }
+  | LANGLE_EQ { `LeOp }
+  | RANGLE_EQ { `GeOp }
 
 %inline boolop :
   | AND { `AndOp }
   | OR { `OrOp }
-  | ARROW2 { `ImplOp }
-  | DARROW2 { `EquivOp }
+  | DOUBLE_ARROW { `ImplOp }
+  | DOUBLE_ARROW_BOTH { `EquivOp }
 
 %inline infixop :
   | infixop_ { $1 @@@ $sloc }
 %inline infixop_ :
   | DOT { Atom.Dot }
-  | DOTDOT { Atom.Dot2 }
-  | DOTDOTDOT { Atom.Dot3 }
+  | DOT2 { Atom.Dot2 }
+  | DOT3 { Atom.Dot3 }
   | SEMICOLON { Atom.Semicolon }
   | BACKSLASH { Atom.Backslash }
   | ARROW { Atom.Arrow }
-  | ARROWSUB { Atom.ArrowSub }
-  | ARROW2SUB { Atom.Arrow2Sub }
-  | BIGAND { Atom.BigAnd }
-  | BIGOR { Atom.BigOr }
-  | BIGADD { Atom.BigAdd }
-  | BIGMUL { Atom.BigMul }
-  | BIGCAT { Atom.BigCat }
+  | ARROW_SUB { Atom.ArrowSub }
+  | DOUBLE_ARROW_SUB { Atom.DoubleArrowSub }
+  | DOUBLE_ARROW_LONG { Atom.DoubleArrowLong }
 
 %inline relop :
   | relop_ { $1 @@@ $sloc }
 %inline relop_ :
   | COLON { Atom.Colon }
-  | SUB { Atom.Sub }
-  | SUP { Atom.Sup }
-  | ASSIGN { Atom.Assign }
-  | EQUIV { Atom.Equiv }
-  | APPROX { Atom.Approx }
+  | COLON_EQ { Atom.ColonEq }
+  | TILDE2 { Atom.Tilde2 }
   | SQARROW { Atom.SqArrow }
-  | SQARROWSTAR { Atom.SqArrowStar }
-  | PREC { Atom.Prec }
-  | SUCC { Atom.Succ }
+  | SQARROW_STAR { Atom.SqArrowStar }
   | TILESTURN { Atom.Tilesturn }
   | TURNSTILE { Atom.Turnstile }
 
@@ -438,10 +442,10 @@ arith_bin : arith_bin_ { $1 @@@ $sloc }
 arith_bin_ :
   | arith_un_ { $1 }
   | arith_bin binop arith_bin { BinE ($1, $2, $3) }
-  | arith_bin cmpop arith_bin { CmpE ($1, $2, $3) }
+  | arith_bin cmpop_arith arith_bin { CmpE ($1, $2, $3) }
   | arith_bin boolop arith_bin { BinE ($1, $2, $3) }
-  | arith_bin CAT arith_bin { CatE ($1, $3) }
-  | arith_bin MEM arith_bin { MemE ($1, $3) }
+  | arith_bin PLUS2 arith_bin { CatE ($1, $3) }
+  | arith_bin LANGLE_DASH arith_bin { MemE ($1, $3) }
 
 arith : arith_bin { $1 }
 
@@ -470,10 +474,10 @@ exp_call_ :
     { CallE ($2, $3, $5) }
 
 exp_hole_ :
-  | HOLEN { HoleE (`Num $1) }
+  | HOLE_NUM { HoleE (`Num $1) }
   | HOLE { HoleE `Next }
-  | MULTIHOLE { HoleE `Rest }
-  | NOTHING { HoleE `None }
+  | HOLE_MULTI { HoleE `Rest }
+  | HOLE_NIL { HoleE `None }
   | LATEX LPAREN list(TEXTLIT) RPAREN { LatexE (String.concat " " $3) }
 
 fieldexp :
@@ -495,14 +499,16 @@ exp_prim_ :
       | [ exp ] -> ParenE exp
       | exps -> TupleE exps
     }
-  | TICK LPAREN exp RPAREN
-    { BrackE (Atom.LParen @@@ $loc($2), $3, Atom.RParen @@@ $loc($4)) }
-  | TICK LBRACK exp RBRACK
-    { BrackE (Atom.LBrack @@@ $loc($2), $3, Atom.RBrack @@@ $loc($4)) }
-  | TICK LBRACE exp RBRACE
-    { BrackE (Atom.LBrace @@@ $loc($2), $3, Atom.RBrace @@@ $loc($4)) }
+  | TICK_LANGLE exp TICK_RANGLE
+    { BrackE (Atom.LAngle @@@ $loc($1), $2, Atom.RAngle @@@ $loc($3)) }
+  | TICK_LPAREN exp TICK_RPAREN
+    { BrackE (Atom.LParen @@@ $loc($1), $2, Atom.RParen @@@ $loc($3)) }
+  | TICK_LBRACK exp TICK_RBRACK
+    { BrackE (Atom.LBrack @@@ $loc($1), $2, Atom.RBrack @@@ $loc($3)) }
+  | TICK_LBRACE exp TICK_RBRACE
+    { BrackE (Atom.LBrace @@@ $loc($1), $2, Atom.RBrace @@@ $loc($3)) }
   | DOLLAR LPAREN arith RPAREN { $3.it }
-  | FUSEFUSE exp_prim { UnparenE $2 }
+  | HASH2 exp_prim { UnparenE $2 }
 
 exp_post : exp_post_ { $1 @@@ $sloc }
 exp_post_ :
@@ -519,7 +525,7 @@ exp_atom_ :
   | atom { AtomE $1 }
   | atomid_lparen exp RPAREN
     { SeqE [
-        AtomE (Atom.Atom $1 @@@ $loc($1)) @@@ $loc($1);
+        AtomE (Atom.keyword $1 @@@ $loc($1)) @@@ $loc($1);
         ParenE $2 @@@ $loc($2)
       ] }
 
@@ -541,7 +547,7 @@ exp_seq_ :
       in
       SeqE (exps @ [ $2 ])
     }
-  | exp_seq FUSE exp_atom { FuseE ($1, $3) }
+  | exp_seq HASH exp_atom { FuseE ($1, $3) }
 
 exp_un : exp_un_ { $1 @@@ $sloc }
 exp_un_ :
@@ -556,9 +562,10 @@ exp_bin_ :
   | exp_bin infixop exp_bin { InfixE ($1, $2, $3) }
   | exp_bin cmpop exp_bin { CmpE ($1, $2, $3) }
   | exp_bin boolop exp_bin { BinE ($1, $2, $3) }
-  | exp_bin COLONCOLON exp_bin { ConsE ($1, $3) }
-  | exp_bin CAT exp_bin { CatE ($1, $3) }
-  | exp_bin MEM exp_bin { MemE ($1, $3) }
+  | exp_bin COLON2 exp_bin { ConsE ($1, $3) }
+  | exp_bin PLUS2 exp_bin { CatE ($1, $3) }
+  | exp_bin LANGLE_DASH exp_bin { MemE ($1, $3) }
+  | exp_bin SUB plaintyp { SubE ($1, $3) }
 
 exp_rel : exp_rel_ { $1 @@@ $sloc }
 exp_rel_ :
@@ -614,7 +621,7 @@ prem_list :
 prem_post_ :
   | OTHERWISE { ElsePr }
   | LPAREN prem RPAREN iter*
-    { 
+    {
       let rec iterate prem = function
         | [] -> prem
         | iter :: iters -> iterate (IterPr (prem, iter) @@@ $sloc) iters
@@ -626,10 +633,10 @@ prem : prem_ { $1 @@@ $sloc }
 prem_ :
   | prem_post_ { $1 }
   | relid COLON exp { RulePr ($1, $3) }
-  | relid COLONSLASH exp { RuleNotPr ($1, $3) }
+  | relid COLON_SLASH exp { RuleNotPr ($1, $3) }
   | VAR varid_bind COLON plaintyp { VarPr ($2, $4) }
   | IF exp
-    { 
+    {
       let rec iterate exp =
         match exp.it with
         | IterE (exp, iter) -> IterPr ((iterate exp $ exp.at), iter)
@@ -637,6 +644,17 @@ prem_ :
       in
       iterate $2
     }
+  | DEBUG exp { DebugPr $2 }
+
+(* Matchecases *)
+
+table_body :
+  | bar tablerows = bar_list(tablerow) { tablerows }
+
+tablerow :
+  | pattern = exp_seq DOUBLE_ARROW body = exp_bin
+    { let region = over_region [ pattern.at; body.at ] in
+      (pattern, body) $ region }
 
 (* Hints *)
 
@@ -646,11 +664,30 @@ hint :
   | HINT_LPAREN hintid RPAREN
     { { hintid = $2 @@@ $loc($2); hintexp = SeqE [] @@@ $loc($2) } }
 
+(* Rules *)
+
+rule :
+  | rule_ { $1 @@@ $sloc }
+rule_ :
+  | RULE relid ruleids COLON exp prem_list
+    { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
+      ($2, id @@@ $loc($3), $5, $6) }
+
+rules :
+  | (* empty *) { [] }
+  | NL2 rules { $2 }
+  | NL3 rules { $2 }
+  | rule rules { $1 :: $2 }
+
 (* Definitions *)
 
 def :
-  | def_ NL_NL* { $1 @@@ $loc($1) }
+  | def_ NL2* { $1 @@@ $loc($1) }
 def_ :
+  (* Extern syntax declaration *)
+  | EXTERN SYNTAX varid hint*
+    { ExternSynD ($3, $4) }
+  (* Syntax declaration *)
   | SYNTAX comma_list(synid)
     {
       match $2 with
@@ -661,33 +698,74 @@ def_ :
     { TypD ($2, [], $5, $3) }
   | SYNTAX varid_langle_bind enter_scope comma_list(tparam) RANGLE hint* EQ deftyp exit_scope
     { TypD ($2, $4, $8, $6) }
+  (* Variable declaration *)
   | VAR varid_bind COLON plaintyp hint*
     { VarD ($2, $4, $5) }
+  (* Extern relation declaration *)
+  | EXTERN RELATION relid COLON nottyp hint*
+    { ExternRelD ($3, $5, $6) }
+  (* Relation declaration *)
   | RELATION relid COLON nottyp hint*
     { RelD ($2, $4, $5) }
+  (* Rule group declaration *)
+  | RULEGROUP relid ruleids LBRACE rules RBRACE
+    { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
+      RuleGroupD ($2, id @@@ $loc($3), $5) }
+  (* Rule declaration *)
   | RULE relid ruleids COLON exp prem_list
     { let id = if $3 = "" then "" else String.sub $3 1 (String.length $3 - 1) in
-      RuleD ($2, id @@@ $loc($3), $5, $6) }
+      let region = over_region [ (at $loc($1)); (at $loc($6)) ] in
+      let rule = ($2, id @@@ $loc($3), $5, $6) $ region in
+      RuleGroupD ($2, id @@@ $loc($3), [ rule ]) }
+  (* Extern function declaration *)
+  | EXTERN DEC DOLLAR defid COLON plaintyp hint*
+    { ExternDecD ($4, [], [], $6, $7) }
+  | EXTERN DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { ExternDecD ($4, [], $6, $9, $10) }
+  | EXTERN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
+    { ExternDecD ($4, $6, [], $9, $10) }
+  | EXTERN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { ExternDecD ($4, $6, $8, $11, $12) }
+  (* Builtin function declaration *)
+  | BUILTIN DEC DOLLAR defid COLON plaintyp hint*
+    { BuiltinDecD ($4, [], [], $6, $7) }
+  | BUILTIN DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, [], $6, $9, $10) }
+  | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, $6, [], $9, $10) }
+  | BUILTIN DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
+    { BuiltinDecD ($4, $6, $8, $11, $12) }
+  (* Table function declaration *)
+  | TABLE DEC DOLLAR id = defid COLON typ_ret = plaintyp hints = hint*
+    { TableDecD (id, [], typ_ret, hints) }
+  | TABLE DEC DOLLAR id = defid_lparen params = comma_list(param) RPAREN COLON typ_ret = plaintyp hints = hint*
+    { TableDecD (id, params, typ_ret, hints) }
+  (* Function declaration *)
   | DEC DOLLAR defid COLON plaintyp hint*
-    { DecD ($3, [], [], $5, $6) }
+    { FuncDecD ($3, [], [], $5, $6) }
   | DEC DOLLAR defid_lparen enter_scope comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { DecD ($3, [], $5, $8, $9) }
+    { FuncDecD ($3, [], $5, $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE COLON plaintyp hint* exit_scope
-    { DecD ($3, $5, [], $8, $9) }
+    { FuncDecD ($3, $5, [], $8, $9) }
   | DEC DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(param) RPAREN COLON plaintyp hint* exit_scope
-    { DecD ($3, $5, $7, $10, $11) }
+    { FuncDecD ($3, $5, $7, $10, $11) }
+  (* Table function body definition *)
+  | TABLE DEF DOLLAR id = defid EQ body = table_body
+    { TableDefD (id, body) }
+  (* Function clause declaration *)
   | DEF DOLLAR defid EQ exp prem_list
-    { DefD ($3, [], [], $5, $6) }
+    { FuncDefD ($3, [], [], $5, $6) }
   | DEF DOLLAR defid_lparen enter_scope comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { DefD ($3, [], $5, $8, $9) }
+    { FuncDefD ($3, [], $5, $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE EQ exp prem_list exit_scope
-    { DefD ($3, $5, [], $8, $9) }
+    { FuncDefD ($3, $5, [], $8, $9) }
   | DEF DOLLAR defid_langle enter_scope comma_list(tparam) RANGLE_LPAREN comma_list(arg) RPAREN EQ exp prem_list exit_scope
-    { DefD ($3, $5, $7, $10, $11) }
-  | NL_NL_NL
+    { FuncDefD ($3, $5, $7, $10, $11) }
+  (* Separator *)
+  | NL3
     { SepD }
 
 (* Spec *)
 
 spec :
-  | NL_NL* def* EOF { $2 }
+  | NL2* def* EOF { $2 }

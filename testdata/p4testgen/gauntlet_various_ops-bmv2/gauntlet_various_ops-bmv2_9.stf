@@ -1,0 +1,85 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:25.408
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr.src_addr = 0x0000_0000_0000 | hdr.eth_hdr.eth_type = 0x0000
+# [MethodCall]: pkt.extract<OVERFLOW>(hdr.overflow);
+# [ExtractFailure] hdr.overflow@112 | Condition: !(|*packetLen_bits(bit<32>)| >= 128); | Extract Size: 16
+# [P4Testgen AssignmentStatement]: sm.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: h.overflow.a = 8w255 |+| 8w2;| Computed: h.overflow.a = 255;
+# [AssignmentStatement]: h.overflow.b = 8w3 |+| 8w0;| Computed: h.overflow.b = 3;
+# [AssignmentStatement]: h.underflow.a = 8w1 |-| 8w2;| Computed: h.underflow.a = 0;
+# [AssignmentStatement]: h.underflow.b = 8w3 |-| 8w0;| Computed: h.underflow.b = 3;
+# [AssignmentStatement]: h.underflow.c = uflow_tmp |-| uflow_tmp;| Computed: h.underflow.c = 0;
+# [AssignmentStatement]: h.mod.a = 4w1 % 4w8;| Computed: h.mod.a = 1;
+# [AssignmentStatement]: h.mod.b = 4w15 % 4w2;| Computed: h.mod.b = 1;
+# [AssignmentStatement]: h.mod.c = 1 % 4w8;| Computed: h.mod.c = 1;
+# [AssignmentStatement]: h.mod.d = 3 % 2;| Computed: h.mod.d = 1;
+# [AssignmentStatement]: h.rshift.a = tmp / 4w2;| Computed: h.rshift.a = 7;
+# [AssignmentStatement]: h.rshift.b = 4s7 >> 1 >> 1;| Computed: h.rshift.b = 1;
+# [AssignmentStatement]: h.rshift.c = 4w15 >> 1 >> 1;| Computed: h.rshift.c = 3;
+# [AssignmentStatement]: h.rshift.d = -4s7 >> 1 >> 1;| Computed: h.rshift.d = -2;
+# [AssignmentStatement]: h.rshift.e = tmp >> 1 >> 1;| Computed: h.rshift.e = 3;
+# [AssignmentStatement]: h.rshift.g = 4w1 >> 8w16;| Computed: h.rshift.g = 0;
+# [AssignmentStatement]: h.rshift.h = (bit<8>)~(4w1 >> 8w1);| Computed: h.rshift.h = 15;
+# [AssignmentStatement]: h.lshift.a = (bit<8>)(4w4 << 8w2);| Computed: h.lshift.a = 0;
+# [AssignmentStatement]: h.lshift.b = (bit<8>)(4w4 << 8w16);| Computed: h.lshift.b = 0;
+# [AssignmentStatement]: h.lshift.c = 1 << 1;| Computed: h.lshift.c = 2;
+# [AssignmentStatement]: h.lshift.d = (bit<8>)1 << 256;| Computed: h.lshift.d = 0;
+# [AssignmentStatement]: h.lshift.e = 8w1 << 8w0;| Computed: h.lshift.e = 1;
+# [AssignmentStatement]: if (4w15 > 2) { h.comp.a = 1; }| Computed: h.comp.a = 1;
+# [AssignmentStatement]: if (4w3 > 2) { h.comp.b = 1; }| Computed: h.comp.b = 1;
+# [AssignmentStatement]: if (-1 > 4w8) { h.comp.c = 1; }| Computed: h.comp.c = 1;
+# [AssignmentStatement]: h.div.a = (bit<8>)(4 / 1w1);| Computed: h.div.a = 0;
+# [AssignmentStatement]: h.div.b = (3 - 8w2 / 2);| Computed: h.div.b = 2;
+# [AssignmentStatement]: h.div.c = (8w2 / 2 - 3 );| Computed: h.div.c = 254;
+# [AssignmentStatement]: h.b.a = 1 == 1;| Computed: h.b.a = true;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  eth_type:0;  }
+# [MethodCall]: pkt.emit<OVERFLOW>(h.overflow);
+# [Invalid emit: { a = TaintedExpression(bit<8>), b = TaintedExpression(bit<8>) }]
+# [MethodCall]: pkt.emit<UNDERFLOW>(h.underflow);
+# [Invalid emit: { a = TaintedExpression(bit<8>), b = TaintedExpression(bit<8>), c = TaintedExpression(bit<8>) }]
+# [MethodCall]: pkt.emit<RSH>(h.rshift);
+# [Invalid emit: { a = TaintedExpression(bit<4>), b = TaintedExpression(int<4>), c = TaintedExpression(bit<4>), d = TaintedExpression(int<4>), e = TaintedExpression(bit<4>), g = TaintedExpression(bit<4>), h = TaintedExpression(bit<8>) }]
+# [MethodCall]: pkt.emit<LSH>(h.lshift);
+# [Invalid emit: { a = TaintedExpression(bit<8>), b = TaintedExpression(bit<8>), c = TaintedExpression(bit<8>), d = TaintedExpression(bit<8>), e = TaintedExpression(bit<8>) }]
+# [MethodCall]: pkt.emit<MOD>(h.mod);
+# [Invalid emit: { a = TaintedExpression(bit<4>), b = TaintedExpression(bit<4>), c = TaintedExpression(bit<4>), d = TaintedExpression(bit<4>) }]
+# [MethodCall]: pkt.emit<COMPARE>(h.comp);
+# [Invalid emit: { a = TaintedExpression(bit<8>), b = TaintedExpression(bit<8>), c = TaintedExpression(bit<8>), d = TaintedExpression(bit<8>), e = TaintedExpression(bit<8>) }]
+# [MethodCall]: pkt.emit<DIV>(h.div);
+# [Invalid emit: { a = TaintedExpression(bit<8>), b = TaintedExpression(bit<8>), c = TaintedExpression(bit<8>) }]
+# [MethodCall]: pkt.emit<BOOL>(h.b);
+# [Invalid emit: { a = TaintedExpression(bool), padding = TaintedExpression(bit<7>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000000
+expect 0 0000000000000000000000000000$
+

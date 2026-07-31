@@ -1,0 +1,50 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:32.642
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr.src_addr = 0x0000_0000_0000 | hdr.eth_hdr.eth_type = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: simple_table_0/simple_table.apply();
+# [Table Branch: ingress.simple_table | Key(s): |pktvar_2(bit<16>)|| Chosen action: ingress.simple_action]
+# [MethodCall]: simple_action();
+# [AssignmentStatement]: h.eth_hdr.dst_addr = 2;| Computed: h.eth_hdr.dst_addr = 2;
+# [P4Testgen AssignmentStatement]: tmp = true;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: if(simple_table.apply().hit && h.eth_hdr.src_addr == h.eth_hdr.dst_addr) {| Computed: tmp_0 = false;
+# [If Statement]: h.eth_hdr.src_addr == h.eth_hdr.dst_addr Condition: |pktvar_1(bit<48>)| == 2; Result: false
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:2;  src_addr:0;  eth_type:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.simple_table
+add "ingress.simple_table" "dummy_name":0x0000 "ingress.simple_action"()
+
+
+packet 0 000000000000000000000000000000000000000000
+expect 0 000000000002000000000000000000000000000000$
+

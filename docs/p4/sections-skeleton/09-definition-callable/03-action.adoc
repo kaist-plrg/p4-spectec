@@ -1,0 +1,86 @@
+[#sec-action]
+=== Actions
+
+// 878
+.Actions contain code and data. The code is in the P4 program, while the data is provided in the table entries, typically populated by the control plane. Other parameters are bound by the data plane.
+[#fig-actions]
+image::actions.png[width=400,align="center"]
+
+// 879
+Actions are code fragments that can read and write the data being processed.
+Actions may contain data values that can be written by the control plane and
+read by the data plane. Actions are the main construct by which the control
+plane can dynamically influence the behavior of the data plane. <<fig-actions>>
+shows the abstract model of an `action`.
+
+// 880 - Modified
+${syntax: actionDeclaration}
+
+// 881
+Syntactically actions resemble functions with no return value. Actions may be
+declared within a control block; in this case they can only be used within
+instances of that control block.
+
+// 882
+The following example shows an action declaration:
+
+// 883
+[source,p4]
+----
+action Forward_a(out bit<9> outputPort, bit<9> port) {
+    outputPort = port;
+}
+----
+
+// 884
+Action parameters may not have `extern` types. Action parameters that have no
+direction (e.g., `port` in the previous example) indicate "action data." All
+such parameters must appear at the end of the parameter list. When used in a
+match-action table (see <<sec-table-action-list>>), these parameters will be
+provided by the table entries (e.g., as specified by the control plane, the
+`default_action` table property, or the `entries` table property).
+
+// 885
+The body of an action consists of a sequence of statements and declarations.
+No `table`, `control`, or `parser` applications can appear within actions.
+
+// 886
+Some targets may impose additional restrictions on action bodies--e.g., only
+allowing straight-line code, with no conditional statements or expressions.
+
+// 887
+Actions can be executed in two ways:
+
+// 888
+* Implicitly: by tables during match-action processing.
+* Explicitly: either from a `control` block or from another `action`. In either
+  case, the values for all action parameters must be supplied explicitly,
+  including values for the directionless parameters. In this case, the
+  directionless parameters behave like `in` parameters.
+
+// Added
+Actions are introduced by `action` declarations. Its typing and instantiation
+rules are explained in <<sec-action-declaration>>. It introduces an action type
+definition:
+
+// Added
+${syntax: actionTypeDefIR}
+
+// Added
+Because actions cannot be generic, the action type is the same as the action
+type definition:
+
+// Added
+${syntax: actionTypeIR}
+
+// Added
+The runtime representation of an action is as follows:
+
+// Added
+${syntax: actionDef}
+
+==== Well-formedness
+
+// Added
+${rulegroup-source: CallableType_wf/actionTypeIR}
+${rulegroup-prose: CallableType_wf/actionTypeIR}

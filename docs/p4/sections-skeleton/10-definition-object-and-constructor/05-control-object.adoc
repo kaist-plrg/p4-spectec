@@ -1,0 +1,48 @@
+[#sec-control-object]
+=== Control objects
+
+// 870
+P4 parsers are responsible for extracting bits from a packet into headers.
+These headers (and other metadata) can be manipulated and transformed within
+`control` blocks. The body of a control block resembles a traditional
+imperative program. Within the body of a control block, match-action units can
+be invoked to perform data transformations. Match-action units are represented
+in P4 by constructs called `tables`.
+
+// 871
+Syntactically, a `control` block is declared with a name, parameters, optional
+type parameters, and a sequence of declarations of constants, variables,
+``action``s, ``table``s, and other instantiations:
+
+// 872 - Modified
+${syntax: controlDeclaration controlLocalDeclaration controlBody}
+
+// 873 - Modified
+It is illegal to instantiate a `parser` within a `control` block.
+
+// 874
+P4 does not support exceptional control-flow within a `control` block. The only
+statement which has a non-local effect on control flow is `exit`, which causes
+execution of the enclosing control block to immediately terminate. That is,
+there is no equivalent of the `verify` statement or the `reject` state from
+parsers. Hence, all error handling must be performed explicitly by the
+programmer.
+
+// Added
+A `control` declaration introduces a control object constructor, represented
+as:
+
+// Added
+${syntax: controlObjectConstructorDef}
+
+// Added
+Control objects are then instantiated by constructor invocations to yield:
+
+// Added
+${syntax: controlObject}
+
+==== Well-formedness
+
+// Added
+${rulegroup-source: ConstructorType_wf/controlObjectTypeIR}
+${rulegroup-prose: ConstructorType_wf/controlObjectTypeIR}

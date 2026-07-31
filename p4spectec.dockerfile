@@ -18,40 +18,40 @@ FROM base AS source
 
 RUN git clone https://github.com/kaist-plrg/p4-spectec.git && \
     cd p4-spectec && \
-    git checkout ntt-syntax && \
+    git checkout concrete && \
     git submodule update --init --recursive
 
 WORKDIR /home/p4-spectec
 
-# ---------------------------------------
+# --------------------------------------
 # Stage 3: P4-SpecTec dependencies
-# ---------------------------------------
+# --------------------------------------
 FROM source AS opambase
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Seoul
 
 RUN apt-get update && \
-    apt-get install -y opam libgmp-dev pkg-config && \
+    apt-get install -y sudo opam libgmp-dev pkg-config time && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Initialize opam
 RUN opam init --disable-sandboxing --auto-setup && \
     opam switch create 5.1.0 && \
     eval $(opam env) && \
-    opam install dune menhir bignum core core_unix bisect_ppx -y
+    opam install dune 'menhir=20240715' 'menhirLib=20240715' bignum core core_unix bisect_ppx yojson ppx_deriving_yojson -y
 
 # Set opam environment permanently
 ENV OPAM_SWITCH_PREFIX=/root/.opam/5.1.0
 ENV PATH=$OPAM_SWITCH_PREFIX/bin:$PATH
 ENV CAML_LD_LIBRARY_PATH=$OPAM_SWITCH_PREFIX/lib/stublibs:$OPAM_SWITCH_PREFIX/lib/ocaml/stublibs:$OPAM_SWITCH_PREFIX/lib/ocaml
 
-# ---------------------------------------
+# --------------------------------------
 # Stage 4: Build P4-SpecTec
-# ---------------------------------------
+# --------------------------------------
 FROM opambase AS p4specbase
 
-RUN make build-spec && \
+RUN make build && \
     chmod a+x ./p4spectec
 
 # --------------------------------------
@@ -64,7 +64,15 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m pip install psutil
-COPY patches/creduce /usr/bin/creduce
+COPY creduce-patches/creduce /usr/bin/creduce
 RUN chmod +x /usr/bin/creduce
 
 ENV P4SPECTEC_PATH=/home/p4-spectec
+
+# --------------------------------------
+# Stage 6: Asciidoc dependencies
+# --------------------------------------
+RUN apt-get update
+RUN docs/install-asciidoctor-linux.sh
+
+RUN echo 'source /usr/local/rvm/scripts/rvm' >> ~/.bashrc

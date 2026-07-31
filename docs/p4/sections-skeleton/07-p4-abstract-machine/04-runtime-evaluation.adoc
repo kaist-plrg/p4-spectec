@@ -1,0 +1,192 @@
+[#sec-runtime-evaluation]
+=== Runtime evaluation
+
+// 1139 - Modified
+The runtime evaluation of a P4 program is orchestrated by the architecture
+model. Each architecture model needs to specify the order and the conditions
+under which the various P4 component programs are dynamically executed. For
+example, in the Simple Switch example from <<sec-vss-arch>> the execution flow
+goes `Parser -> Pipe -> Deparser`.
+
+// 1140 - Modified
+Once a P4 execution block is invoked its execution proceeds until termination
+according to the semantics defined in this document. P4 execution blocks are
+represented as objects in the global store, which is statically allocated
+during instantiation.
+
+==== Evaluating a P4 program
+
+// Added
+P4 program evaluation proceeds by invoking the objects in the global store. A
+call to a programmable block invokes the corresponding abstract machine:
+
+// Added
+${relation-title-source: Call_eval}
+${relation-title-prose: Call_eval}
+
+// Added
+A call to an extern function invokes the corresponding extern function:
+
+// Added
+${relation-title-source: ExternFunctionCall_eval}
+${relation-title-prose: ExternFunctionCall_eval}
+
+// Added
+A call to an extern method invokes the corresponding extern method:
+
+// Added
+${relation-title-source: ExternMethodCall_eval}
+${relation-title-prose: ExternMethodCall_eval}
+
+==== Evaluation context
+
+// Added
+${syntax: globalEvalLayer blockEvalLayer localEvalLayer evalContext}
+
+// Added
+An evaluation context is used to keep track of the types and compile-time
+known values of all named declarations in scope at a given program point.
+
+// Added
+* A global evaluation layer, which contains all declarations at the top level of a
+  P4 program.
+* A block evaluation layer, which contains all declarations in the current block
+  scope.
+* A local evaluation layer, which contains all declarations in the current local
+  scope.
+
+// Added
+The layers are the same as in the instantiation context, except that the
+`frame` is a map from variable names to their current runtime values.
+
+// Added
+The following sections describe the abstract machines that define the dynamic
+semantics of the programmable blocks in a P4 target.
+
+// Added
+ifndef::release[]
+NOTE: Added explanation for the evaluation context. Is this the right place?
+endif::[]
+
+[#sec-dynamic-evaluation-parser]
+==== The parser abstract machine
+
+// 767
+A parser starts execution in the `start` state and ends execution when one of
+the `reject` or `accept` states has been reached.
+
+// 769
+An architecture must specify the behavior when the `accept` and `reject` states
+are reached. For example, an architecture may specify that all packets reaching
+the `reject` state are dropped without further processing. Alternatively, it
+may specify that such packets are passed to the next block after the parser,
+with intrinsic metadata indicating that the parser reached the `reject` state,
+along with the error recorded.
+
+==== The match-action pipeline abstract machine
+
+// 1004
+We can describe the computational model of a match-action pipeline, embodied by
+a control block: the body of the control block is executed, similarly to the
+execution of a traditional imperative program:
+
+// 1005
+* At runtime, statements within a block are executed in the order they appear in
+  the control block.
+* Execution of the `return` statement causes the immediate termination of the
+  execution of the current `control` block and a return to the caller.
+* Execution of the `exit` statement causes the immediate termination of the
+  execution of the current `control` block and of all the enclosing caller
+  `control` blocks.
+* Applying a `table` executes the corresponding match-action unit.
+
+[#sec-concurrency-model]
+==== Concurrency model
+
+// 1141
+A typical packet processing system needs to execute multiple simultaneous
+logical "threads." At the very least there is a thread executing the control
+plane, which can modify the contents of the tables. Architecture specifications
+should describe in detail the interactions between the control-plane and the
+data-plane. The data plane can exchange information with the control plane
+through `extern` function and method calls. Moreover, high-throughput
+packet-processing systems may be processing multiple packets simultaneously,
+e.g., in a pipelined fashion, or concurrently parsing a first packet while
+performing match-action operations on a second packet. This section specifies
+the semantics of P4 programs with respect to such concurrent executions.
+
+// 1142
+Each top-level `parser` or `control` block is executed as a separate thread
+when invoked by the architecture. All the parameters of the block and all local
+variables are thread-local -- i.e., each thread has a private copy of these
+resources. This applies to the `packet_in` and `packet_out` parameters of
+parsers and deparsers.
+
+// 1143
+As long as a P4 block uses only thread-local storage (e.g., metadata, packet
+headers, local variables), its behavior in the presence of concurrency is
+identical with the behavior in isolation, since any interleaving of statements
+from different threads must produce the same output.
+
+// 1144
+In contrast, `extern` blocks instantiated by a P4 program are global, shared
+across all threads. If `extern` blocks mediate access to state (e.g., counters,
+registers) -- i.e., the methods of the `extern` block read and write state,
+these stateful operations are subject to data races. P4 mandates that execution
+of a method call on an extern instance is atomic.
+
+// 1145
+To allow users to express atomic execution of larger code blocks, P4 provides
+an `@atomic` annotation, which can be applied to block statements, parser
+states, control blocks, or whole parsers.
+
+// 1146
+Consider the following example:
+
+// 1147
+[source,p4]
+----
+extern Register { /* body omitted */ }
+control Ingress() {
+  Register() r;
+  table flowlet { /* read state of r in an action */ }
+  table new_flowlet { /* write state of r in an action */ }
+  apply {
+    @atomic {
+       flowlet.apply();
+       if (ingress_metadata.flow_ipg > FLOWLET_INACTIVE_TIMEOUT)
+          new_flowlet.apply();
+}}}
+----
+
+// 1148
+This program accesses an extern object `r` of type `Register` in actions
+invoked from tables `flowlet` (reading) and `new_flowlet` (writing). Without
+the `@atomic` annotation these two operations would not execute atomically: a
+second packet may read the state of `r` before the first packet had a chance to
+update it.
+
+// 1149
+Note that even within an `action` definition, if the action does something like
+reading a register, modifying it, and writing it back, in a way that only the
+modified value should be visible to the next packet, then, to guarantee correct
+execution in all cases, that portion of the action definition should be
+enclosed within a block annotated with `@atomic`.
+
+// 1150
+A compiler backend must reject a program containing `@atomic` blocks if it
+cannot implement the atomic execution of the instruction sequence. In such
+cases, the compiler should provide reasonable diagnostics.
+
+// Added
+The P4 semantics described throughout this document assumes a sequential
+execution model. Thus, it does not describe the interactions between multiple
+threads accessing shared state. The purpose of this document is to clearly
+define the semantics of P4 constructs in isolation. The exact concurrency
+model, including the interactions between multiple threads, is target-dependent
+and beyond the scope of this document.
+
+// Added
+ifndef::release[]
+NOTE: Added disclaimer about concurrency model.
+endif::[]

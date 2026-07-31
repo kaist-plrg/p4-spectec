@@ -1,0 +1,96 @@
+[#sec-argument-semantics]
+=== Semantics of arguments
+
+// 615 - Modified
+An invocation can optionally specify for each argument the corresponding
+parameter name. It is illegal to use names only for some arguments: either all
+or no arguments must specify the parameter name. Arguments are evaluated in the
+order they appear, left to right, before the invocation takes place.
+
+// 619 - Modified
+The "don't care" identifier (`_`) can only be used for an `out` argument, when
+the value of returned in that argument is ignored by subsequent computations.
+When used in generic functions or methods, the compiler may reject the program
+if it is unable to infer a type for the don't care argument.
+
+==== Type checking
+
+// Added
+${relation-title-source: Argument_ok}
+${relation-title-prose: Argument_ok}
+
+// Added
+After type checking, arguments are represented in P4~IR~ as follows:
+
+// Added
+${syntax: argumentIR}
+
+// Added
+${rulegroup-source: Argument_ok}
+${rulegroup-prose: Argument_ok}
+
+A list of arguments is type checked with:
+
+// Added
+${relation-title-source: ArgumentList_ok}
+${relation-title-prose: ArgumentList_ok}
+
+// Added
+${rulegroup-source: ArgumentList_ok}
+${rulegroup-prose: ArgumentList_ok}
+
+==== Local Compile-time evaluation
+
+// Added
+${relation-title-source: Argument_eval_lctk}
+${relation-title-prose: Argument_eval_lctk}
+
+// Added
+${rulegroup-source: Argument_eval_lctk}
+${rulegroup-prose: Argument_eval_lctk}
+
+// Added
+Local compile-time known arguments are evaluated with the above relation.
+
+==== Compile-time evaluation
+
+// Added
+${relation-title-source: Argument_inst}
+${relation-title-prose: Argument_inst}
+
+// Added
+${rulegroup-source: Argument_inst}
+${rulegroup-prose: Argument_inst}
+
+// Added
+Compile-time known arguments are evaluated with the above relation.
+
+==== Runtime evaluation
+
+// Added
+At runtime, an argument may be evaluated to a value, or a storage reference,
+depending on the direction of the corresponding parameter.
+
+===== `in` and directionless arguments
+
+Arguments for `in` and directionless parameters are evaluated to values at runtime.
+
+// Added
+${relation-title-source: Argument_eval}
+${relation-title-prose: Argument_eval}
+
+// Added
+${rulegroup-source: Argument_eval}
+${rulegroup-prose: Argument_eval}
+
+===== `out` and `inout` arguments
+
+Arguments for `out` and `inout` parameters are evaluated to storage references at runtime.
+
+// Added
+${relation-title-source: Argument_eval_lvalue}
+${relation-title-prose: Argument_eval_lvalue}
+
+// Added
+${rulegroup-source: Argument_eval_lvalue}
+${rulegroup-prose: Argument_eval_lvalue}

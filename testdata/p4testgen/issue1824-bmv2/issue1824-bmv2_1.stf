@@ -1,0 +1,41 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:39.588
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: pkt.extract<test_header>(hdr.h1);
+# [ExtractSuccess] hdr.h1@0 | Condition: |*packetLen_bits(bit<32>)| >= 96; | Extract Size: 96 -> hdr.h1.dstAddr = 0x0000_0000_0000 | hdr.h1.srcAddr = 0x0000_0000_0000
+# [MethodCall]: verify(false, 10);
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [If Statement]: stdmeta.parser_error != error.NoError Condition: 10 != 0; Result: true
+# [AssignmentStatement]: hdr.h1.dstAddr = 0xbad;| Computed: hdr.h1.dstAddr = 2989;
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: packet.emit<test_header>(hdr.h1);
+# [Emit]: {$headerValid:true;;    dstAddr:2989;  srcAddr:0;  }
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000000000000000000000000
+expect 0 000000000BAD0000000000000000000000000000000000$
+

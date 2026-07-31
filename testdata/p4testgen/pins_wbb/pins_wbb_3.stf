@@ -1,0 +1,49 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:46.076
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("packet_parser");
+# [Parser] packet_parser
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("packet_parser");
+# [P4Testgen MethodCall]: *.copy_in("verify_ipv4_checksum");
+# [Control verify_ipv4_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("verify_ipv4_checksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: bit<8> ttl = 0;| Computed: acl_wbb_ingress_ttl/ttl = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: acl_wbb_ingress_acl_wbb_ingress_table/acl_wbb_ingress_table.apply();
+# [Table Branch: ingress.acl_wbb_ingress.acl_wbb_ingress_table | Key(s): (bit<1>)false;, (bit<1>)false;, TaintedExpression(bit<16>), 0, TaintedExpression(bit<16>)[11:0];| Chosen action: ingress.acl_wbb_ingress.acl_wbb_ingress_trap]
+# [MethodCall]: acl_wbb_ingress_acl_wbb_ingress_trap_0/acl_wbb_ingress_trap();
+# [MethodCall]: acl_wbb_ingress_acl_wbb_ingress_meter/acl_wbb_ingress_meter.read(local_metadata.color);
+# [MethodCall]: clone(0, 255);
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [MethodCall]: acl_wbb_ingress_acl_wbb_ingress_counter/acl_wbb_ingress_counter.count();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("compute_ipv4_checksum");
+# [Control compute_ipv4_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("compute_ipv4_checksum");
+# [P4Testgen MethodCall]: *.copy_in("packet_deparser");
+# [Control packet_deparser start]
+# [P4Testgen MethodCall]: *.copy_out("packet_deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress.acl_wbb_ingress.acl_wbb_ingress_table
+add "ingress.acl_wbb_ingress.acl_wbb_ingress_table" 1 "ether_type":0b**************** "is_ipv4":0b* "is_ipv6":0b* "outer_vlan_id":0b************ "ttl":0b******** "ingress.acl_wbb_ingress.acl_wbb_ingress_trap"()
+
+
+packet 0 00000000000000
+

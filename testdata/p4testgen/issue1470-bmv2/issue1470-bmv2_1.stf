@@ -1,0 +1,48 @@
+# p4testgen seed: none
+# Date generated: 2026-02-20-02:10:41.831
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("OuterParser");
+# [Parser] OuterParser
+# [State] start
+# [MethodCall]: hdr.eth.setInvalid();
+# [MethodCall]: hdr.ipv4.setInvalid();
+# [State] start
+# [MethodCall]: pkt.extract<eth_h>(hdr.eth);
+# [ExtractSuccess] hdr.eth@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth.dst = 0x0000_0000_0000 | hdr.eth.src = 0x0000_0000_0000 | hdr.eth.type = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: pkt.extract<ipv4_h>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.tos = 0x00 | hdr.ipv4.len = 0x0000 | hdr.ipv4.id = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.frag = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.proto = 0x00 | hdr.ipv4.chksum = 0x0000 | hdr.ipv4.src = 0x0000_0000 | hdr.ipv4.dst = 0x0000_0000
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("OuterParser");
+# [P4Testgen MethodCall]: *.copy_in("NoVerify");
+# [Control NoVerify start]
+# [P4Testgen MethodCall]: *.copy_out("NoVerify");
+# [P4Testgen MethodCall]: *.copy_in("NoIngress");
+# [Control NoIngress start]
+# [P4Testgen MethodCall]: *.copy_out("NoIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("NoEgress");
+# [Control NoEgress start]
+# [P4Testgen MethodCall]: *.copy_out("NoEgress");
+# [P4Testgen MethodCall]: *.copy_in("NoCheck");
+# [Control NoCheck start]
+# [P4Testgen MethodCall]: *.copy_out("NoCheck");
+# [P4Testgen MethodCall]: *.copy_in("SimpleDeparser");
+# [Control SimpleDeparser start]
+# [MethodCall]: pkt.emit<eth_h>(hdr.eth);
+# [Emit]: {$headerValid:true;;    dst:0;  src:0;  type:2048;  }
+# [MethodCall]: pkt.emit<ipv4_h>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  tos:0;  len:0;  id:0;  flags:0;  frag:0;  ttl:0;  proto:0;  chksum:0;  src:0;  dst:0;  }
+# [P4Testgen MethodCall]: *.copy_out("SimpleDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 00000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

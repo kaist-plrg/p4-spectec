@@ -1,0 +1,82 @@
+;; P4 boot tests
+
+(test
+ (name test)
+ (preprocess
+  (pps ppx_let))
+ (modules test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix)
+ (action
+  (progn
+   (ignore-outputs
+    (diff boot_2_pos_sl.expected boot_2_pos_sl.actual))
+   (ignore-outputs
+    (diff boot_2_neg_sl.expected boot_2_neg_sl.actual)))))
+
+(rule
+ (alias boot)
+ (action
+  (progn
+   (ignore-outputs
+    (diff boot_2_pos_sl.expected boot_2_pos_sl.actual))
+   (ignore-outputs
+    (diff boot_2_neg_sl.expected boot_2_neg_sl.actual)))))
+
+(rule
+ (target boot_2_pos_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../spec-meta)
+  (source_tree ../../../towers)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../excludes)
+  (source_tree ../../../p4c/testdata/p4_16_samples))
+ (action
+  (with-stdout-to
+   boot_2_pos_sl.actual
+   (with-stderr-to
+    boot_2_pos_sl.err
+    (run
+     ./test.exe
+     boot
+     -tower
+     ../../../towers/al.json
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -p
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target boot_2_neg_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../spec-meta)
+  (source_tree ../../../towers)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../excludes)
+  (source_tree ../../../p4c/testdata/p4_16_errors))
+ (action
+  (with-stdout-to
+   boot_2_neg_sl.actual
+   (with-stderr-to
+    boot_2_neg_sl.err
+    (run
+     ./test.exe
+     boot
+     -neg
+     -tower
+     ../../../towers/al.json
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -p
+     ../../../p4c/testdata/p4_16_errors)))))

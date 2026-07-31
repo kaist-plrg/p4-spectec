@@ -1,0 +1,54 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:28.144
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0xDEAD
+# [State] parse_custom
+# [MethodCall]: packet.extract<custom_t>(hdr.custom);
+# [ExtractSuccess] hdr.custom@112 | Condition: |*packetLen_bits(bit<32>)| >= 248; | Extract Size: 136 -> hdr.custom.e = 0x00 | hdr.custom.ed = 0x00 | hdr.custom.et = 0x00 | hdr.custom.edd = 0x00 | hdr.custom.edt = 0x00 | hdr.custom.etd = 0x00 | hdr.custom.ett = 0x00 | hdr.custom.eddd = 0x00 | hdr.custom.eddt = 0x00 | hdr.custom.edtd = 0x00 | hdr.custom.edtt = 0x00 | hdr.custom.etdd = 0x00 | hdr.custom.etdt = 0x00 | hdr.custom.ettd = 0x00 | hdr.custom.ettt = 0x00 | hdr.custom.checksum = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [MethodCall]: verify_checksum<tuple_0, bit<16>>(hdr.custom.isValid(), {  f0:hdr.custom.e;  f1:hdr.custom.ed;  f2:hdr.custom.et;  f3:hdr.custom.edd;  f4:hdr.custom.edt;  f5:hdr.custom.etd;  f6:hdr.custom.ett;  f7:hdr.custom.eddd;  f8:hdr.custom.eddt;  f9:hdr.custom.edtd;  f10:hdr.custom.edtt;  f11:hdr.custom.etdd;  f12:hdr.custom.etdt;  f13:hdr.custom.ettd;  f14:hdr.custom.ettt; }, hdr.custom.checksum, 6);
+# [P4Testgen AssignmentStatement]: *standard_metadata.checksum_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: custom_table_0/custom_table.apply();
+# [Table Branch: ingress.custom_table | Key(s): |pktvar_1(bit<48>)|, |pktvar_0(bit<48>)|, |pktvar_3(bit<8>)|, |pktvar_4(bit<8>)|, |pktvar_5(bit<8>)|, |pktvar_6(bit<8>)|, |pktvar_11(bit<8>)|, |pktvar_12(bit<8>)|, |pktvar_13(bit<8>)|, |pktvar_14(bit<8>)|, |pktvar_15(bit<8>)|, |pktvar_16(bit<8>)|, |pktvar_17(bit<8>)|| Chosen action: ingress.my_drop]
+# [MethodCall]: my_drop();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.custom.isValid(), {  f0:hdr.custom.e;  f1:hdr.custom.ed;  f2:hdr.custom.et;  f3:hdr.custom.edd;  f4:hdr.custom.edt;  f5:hdr.custom.etd;  f6:hdr.custom.ett;  f7:hdr.custom.eddd;  f8:hdr.custom.eddt;  f9:hdr.custom.edtd;  f10:hdr.custom.edtt;  f11:hdr.custom.etdd;  f12:hdr.custom.etdt;  f13:hdr.custom.ettd;  f14:hdr.custom.ettt; }, hdr.custom.checksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:57005;  }
+# [MethodCall]: packet.emit<custom_t>(hdr.custom);
+# [Emit]: {$headerValid:true;;    e:0;  ed:0;  et:0;  edd:0;  edt:0;  etd:0;  ett:0;  eddd:0;  eddt:0;  edtd:0;  edtt:0;  etdd:0;  etdt:0;  ettd:0;  ettt:0;  checksum:0;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.custom_table
+add "ingress.custom_table" "hdr.custom.e":0x00 "hdr.custom.ed":0x00 "hdr.custom.edd":0x00 "hdr.custom.eddt":0x00 "hdr.custom.edtd":0x00 "hdr.custom.edtt":0x00 "hdr.custom.et":0x00 "hdr.custom.etdd":0x00 "hdr.custom.etdt":0x00 "hdr.custom.ettd":0x00 "hdr.custom.ettt":0x00 "hdr.ethernet.dstAddr":0x000000000000 "hdr.ethernet.srcAddr":0x000000000000 "ingress.my_drop"()
+
+
+packet 0 000000000000000000000000DEAD000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 000000000000000000000000DEAD000000000000000000000000000000FFFF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

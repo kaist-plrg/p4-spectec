@@ -1,0 +1,329 @@
+module Typ = Runtime.Type.Typ
+module Value = Runtime.Value
+module IO = Runtime.Sim.Io
+module Sim = Runtime.Sim.Signature
+open Spec.Unpack
+open Util.Source
+open Error
+
+module Make (Spec : Spec.S) : Sim.ARCH = struct
+  (* Core externs *)
+
+  module Core = struct
+    module Func = Core.Func.Make (Spec.Func)
+    module Object = Core.Object.Make (Spec.Func) (Spec.Rel)
+  end
+
+  (* EBPF-specific externs *)
+
+  module Object = Object.Make (Spec.Func)
+
+  (* STF transformation *)
+
+  let transform_stf_stmt (stmt : Stf.Ast.stmt) : Stf.Ast.stmt =
+    let transform_name name =
+      Stf.Transform.Name.(
+        name
+        |> replace_substring ~substrings:[ "pipe_c1_" ]
+             ~replacement:"main.filt.c1."
+        |> replace_substring ~substrings:[ "pipe_" ] ~replacement:"main.filt."
+        |> replace_substring ~substrings:[ "pipe" ] ~replacement:"main.filt")
+    in
+    let transform_action (name, args) =
+      Stf.Transform.Action.(
+        let name =
+          name
+          |> replace_substring ~substrings:[ "pipe_c1_" ]
+               ~replacement:"main.filt.c1."
+          |> replace_substring ~substrings:[ "pipe_" ] ~replacement:"main.filt."
+          |> replace_substring ~substrings:[ "_NoAction" ]
+               ~replacement:"NoAction"
+        in
+        into_unqualified (name, args))
+    in
+    match stmt with
+    | Add (name, priority_opt, mtches, action, id_opt) ->
+        let name = transform_name name in
+        let action = transform_action action in
+        Add (name, priority_opt, mtches, action, id_opt)
+    | SetDefault (name, action) ->
+        let name = transform_name name in
+        let action = transform_action action in
+        SetDefault (name, action)
+    | _ -> stmt
+
+  (* Extern objects *)
+
+  type arch_state = unit [@@deriving yojson]
+
+  let init_arch_state =
+    () |> arch_state_to_yojson
+    |> Value.Make.extern (Typ.Make.var ("archState" $ no_region) [])
+
+  type extern =
+    | PacketIn of Core.Object.PacketIn.t
+    | CounterArray of Object.CounterArray.t
+  [@@deriving yojson]
+
+  let get_extern (value_arch : Value.t) (value_oid : Value.t) : extern =
+    Spec.Func.find_objectState_e value_arch value_oid
+    |> Value.Get.extern |> extern_of_yojson |> Result.get_ok
+
+  (* Extern calls *)
+
+  let eval_extern_init (values_input : Value.t list) : Value.t =
+    let value_name_extern, value_type_args, value_ids, value_args =
+      match values_input with
+      | [ value_name; value_type_args; value_ids; value_args ] ->
+          (value_name, value_type_args, value_ids, value_args)
+      | _ -> error_no_region "unexpected number of arguments to extern init"
+    in
+    let name_extern = Value.Get.text value_name_extern in
+    match name_extern with
+    | "CounterArray" ->
+        let counter_array =
+          Object.CounterArray.init value_type_args value_ids value_args
+        in
+        let counter_array = CounterArray counter_array in
+        counter_array |> extern_to_yojson
+        |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+    | _ -> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) []) `Null
+
+  let eval_extern_func_lctk_call (values_input : Value.t list) : Value.t list =
+    let value_ctx, value_name_func, value_names_param =
+      match values_input with
+      | [ value_ctx; value_name_func; value_names_param ] ->
+          (value_ctx, value_name_func, value_names_param)
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to local compile-time known extern \
+             function call"
+    in
+    let name_func = Value.Get.text value_name_func in
+    let names_param =
+      value_names_param |> Value.Get.list |> List.map Value.Get.text
+    in
+    match (name_func, names_param) with
+    | "static_assert", [ "check"; "message" ] ->
+        [ Core.Func.static_assert ~message:true value_ctx ]
+    | "static_assert", [ "check" ] ->
+        [ Core.Func.static_assert ~message:false value_ctx ]
+    | _ ->
+        error_no_region
+          ("unsupported local compile-time known extern function call: "
+         ^ name_func ^ "("
+          ^ String.concat ", " names_param
+          ^ ")")
+
+  let eval_extern_func_call (values_input : Value.t list) : Value.t list =
+    let value_ctx, value_arch, value_name_func, value_names_param =
+      match values_input with
+      | [ value_ctx; value_arch; value_name_func; value_names_param ] ->
+          (value_ctx, value_arch, value_name_func, value_names_param)
+      | _ ->
+          error_no_region
+            "unexpected number of arguments to extern function call"
+    in
+    let name_func = Value.Get.text value_name_func in
+    let names_param =
+      value_names_param |> Value.Get.list |> List.map Value.Get.text
+    in
+    let value_ctx, value_arch, value_callResult =
+      match (name_func, names_param) with
+      | "verify", [ "check"; "toSignal" ] ->
+          Core.Func.verify value_ctx value_arch
+      | _ ->
+          error_no_region
+            ("unsupported extern function call: " ^ name_func ^ "("
+            ^ String.concat ", " names_param
+            ^ ")")
+    in
+    [ value_ctx; value_arch; value_callResult ]
+
+  let eval_extern_method_call (values_input : Value.t list) : Value.t list =
+    let value_ctx, value_arch, value_oid, value_name_method, value_names_param =
+      match values_input with
+      | [
+       value_ctx; value_arch; value_oid; value_name_method; value_names_param;
+      ] ->
+          ( value_ctx,
+            value_arch,
+            value_oid,
+            value_name_method,
+            value_names_param )
+      | _ ->
+          error_no_region "unexpected number of arguments to extern method call"
+    in
+    let extern = get_extern value_arch value_oid in
+    let name_method = Value.Get.text value_name_method in
+    let names_param =
+      value_names_param |> Value.Get.list |> List.map Value.Get.text
+    in
+    let extern, value_ctx, value_arch, value_callResult =
+      match (extern, name_method, names_param) with
+      | PacketIn packet_in, "extract", [ "hdr" ] ->
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.extract value_ctx value_arch packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_arch, value_callResult)
+      | ( PacketIn packet_in,
+          "extract",
+          [ "variableSizeHeader"; "variableFieldSizeInBits" ] ) ->
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.extract_varsize value_ctx value_arch packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_arch, value_callResult)
+      | PacketIn packet_in, "lookahead", [] ->
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.lookahead value_ctx value_arch packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_arch, value_callResult)
+      | PacketIn packet_in, "advance", [ "sizeInBits" ] ->
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.advance value_ctx value_arch packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_arch, value_callResult)
+      | PacketIn packet_in, "length", [] ->
+          let packet_in, value_ctx, value_arch, value_callResult =
+            Core.Object.PacketIn.length value_ctx value_arch packet_in
+          in
+          let packet_in = PacketIn packet_in in
+          (packet_in, value_ctx, value_arch, value_callResult)
+      | CounterArray counter_array, "increment", [ "index" ] ->
+          let counter_array, value_ctx, value_arch, value_callResult =
+            Object.CounterArray.increment value_ctx value_arch counter_array
+          in
+          let counter_array = CounterArray counter_array in
+          (counter_array, value_ctx, value_arch, value_callResult)
+      | CounterArray counter_array, "add", [ "index"; "value" ] ->
+          let counter_array, value_ctx, value_arch, value_callResult =
+            Object.CounterArray.add value_ctx value_arch counter_array
+          in
+          let counter_array = CounterArray counter_array in
+          (counter_array, value_ctx, value_arch, value_callResult)
+      | _ ->
+          let oid =
+            value_oid |> Value.Get.list |> List.map Value.Get.text
+            |> String.concat "."
+          in
+          error_no_region
+            ("unsupported extern method call: " ^ oid ^ "." ^ name_method ^ "("
+            ^ String.concat ", " names_param
+            ^ ")")
+    in
+    let value_extern =
+      extern |> extern_to_yojson
+      |> Value.Make.extern (Typ.Make.var ("objectState" $ no_region) [])
+    in
+    let value_arch =
+      Spec.Func.update_objectState_e value_arch value_oid value_extern
+    in
+    [ value_ctx; value_arch; value_callResult ]
+
+  (* Mirror session interface *)
+
+  let add_mirror_session _session _port =
+    error_no_region
+      "add_mirror_session is not implemented for the ebpf simulator"
+
+  let add_mirror_session_mc _session _multicast_group =
+    error_no_region
+      "add_mirror_session_mc is not implemented for the ebpf simulator"
+
+  let mc_mgrp_create (_value_arch : Value.t) (_mgid : int) : Value.t =
+    error_no_region "mc_mgrp_create is not implemented for the ebpf simulator"
+
+  let mc_node_create (_value_arch : Value.t) (_rid : int) (_port : int list) :
+      Value.t =
+    error_no_region "mc_node_create is not implemented for the ebpf simulator"
+
+  let mc_node_associate (_value_arch : Value.t) (_mgid : int) (_handle : int) :
+      Value.t =
+    error_no_region
+      "mc_node_associate is not implemented for the ebpf simulator"
+
+  (* Register interface *)
+
+  let register_read (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      : Value.t =
+    error_no_region "register_read is not implemented for the ebpf simulator"
+
+  let register_write (_value_arch : Value.t) (_reg_name : string) (_index : int)
+      (_value : int) : Value.t =
+    error_no_region "register_write is not implemented for the ebpf simulator"
+
+  let register_reset (_value_arch : Value.t) (_reg_name : string) : Value.t =
+    error_no_region "register_reset is not implemented for the ebpf simulator"
+
+  (* Pipeline initializer *)
+
+  let init_pipe (includes_p4 : string list) (filename_p4 : string) :
+      Value.t * Value.t =
+    Spec.Pgm.ebpf_init includes_p4 filename_p4
+
+  (* Pipeline driver *)
+
+  let setup_rx (value_ctx : Value.t) (value_arch : Value.t) (rx : IO.rx) :
+      Value.t * Value.t =
+    let _, packet_in = rx in
+    (* Setup packet_in extern *)
+    let packet_in = PacketIn (Core.Object.PacketIn.init packet_in) in
+    let packet_in_state = extern_to_yojson packet_in in
+    let value_packet_in_state =
+      Value.Make.extern
+        (Typ.Make.var ("objectState" $ no_region) [])
+        packet_in_state
+    in
+    let value_ctx, value_arch =
+      Spec.Rel.ebpf_init_packet_in value_ctx value_arch value_packet_in_state
+    in
+    (* Setup global variables *)
+    let value_ctx = Spec.Rel.ebpf_init_globals value_ctx value_arch in
+    (value_ctx, value_arch)
+
+  let drive_prs (value_ctx : Value.t) (value_arch : Value.t) :
+      Value.t * Value.t * bool =
+    let value_ctx, value_arch, value_parse_result =
+      Spec.Rel.ebpf_parse value_ctx value_arch
+    in
+    let drop =
+      Value.Get.(value_parse_result |>>? "REJECT errorValue" |> Option.is_some)
+    in
+    (value_ctx, value_arch, drop)
+
+  let drive_filt (value_ctx : Value.t) (value_arch : Value.t) :
+      Value.t * Value.t * Value.t =
+    Spec.Rel.ebpf_filter value_ctx value_arch
+
+  let drive_pipe (value_ctx : Value.t) (value_arch : Value.t) (rx : IO.rx) :
+      Value.t * Value.t * IO.tx list =
+    (* Setup packet *)
+    let value_ctx, value_arch = setup_rx value_ctx value_arch rx in
+    (* Parse block *)
+    let value_ctx, value_arch, drop = drive_prs value_ctx value_arch in
+    if drop then (value_ctx, value_arch, [])
+    else
+      (* Filter block *)
+      let value_ctx, value_arch, _value_filter_result =
+        drive_filt value_ctx value_arch
+      in
+      (* Check if packet is accepted *)
+      let value_accept =
+        Spec.Rel.lvalue_read_var_global value_ctx value_arch "accept"
+      in
+      let accept = unpack_p4_bool value_accept in
+      if accept then (value_ctx, value_arch, [ rx ])
+      else (value_ctx, value_arch, [])
+
+  include Extern.Make (struct
+    let eval_extern_init = eval_extern_init
+    let eval_extern_func_lctk_call = eval_extern_func_lctk_call
+    let eval_extern_func_call = eval_extern_func_call
+    let eval_extern_method_call = eval_extern_method_call
+    let init_arch_state = init_arch_state
+  end)
+end

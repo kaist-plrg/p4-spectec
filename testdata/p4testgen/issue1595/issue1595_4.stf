@@ -1,0 +1,48 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:19.502
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserI");
+# [Parser] parserI
+# [State] start
+# [MethodCall]: pkt.extract<Ethernet_h>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parserI");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("cIngress");
+# [Control cIngress start]
+# [MethodCall]: t1_0/t1.apply();
+# [Table Branch: cIngress.t1 | Key(s): |pktvar_0(bit<48>)|| Chosen action: cIngress.a3]
+# [MethodCall]: a3();
+# [AssignmentStatement]: hdr.ethernet.srcAddr[47:40] = 3;| Computed: hdr.ethernet.srcAddr = 3298534883328;
+# [SwitchCase]: a3
+# [AssignmentStatement]: a3: { hdr.ethernet.srcAddr[39:32] = 3; }| Computed: hdr.ethernet.srcAddr = 3311419785216;
+# [P4Testgen MethodCall]: *.copy_out("cIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("cEgress");
+# [Control cEgress start]
+# [P4Testgen MethodCall]: *.copy_out("cEgress");
+# [P4Testgen MethodCall]: *.copy_in("uc");
+# [Control uc start]
+# [P4Testgen MethodCall]: *.copy_out("uc");
+# [P4Testgen MethodCall]: *.copy_in("DeparserI");
+# [Control DeparserI start]
+# [MethodCall]: packet.emit<Ethernet_h>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:3311419785216;  etherType:0;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserI");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table cIngress.t1
+add "cIngress.t1" "hdr.ethernet.dstAddr":0x000000000000 "cIngress.a3"()
+
+
+packet 0 000000000000000000000000000000000000000000
+expect 0 000000000000030300000000000000000000000000$
+

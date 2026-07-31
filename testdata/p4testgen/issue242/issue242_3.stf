@@ -1,0 +1,53 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:24.089
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("P");
+# [Parser] P
+# [State] start
+# [MethodCall]: b.extract<ethernet_t>(p.ethernet);
+# [ExtractSuccess] p.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> p.ethernet.dstAddr = 0x0000_0000_0000 | p.ethernet.srcAddr = 0x0000_0000_0000 | p.ethernet.etherType = 0x0000
+# [NoMatch]: Parser select expression did not match any alternatives.
+# [P4Testgen MethodCall]: *.copy_out("P");
+# [P4Testgen MethodCall]: *.copy_in("Verify");
+# [Control Verify start]
+# [P4Testgen MethodCall]: *.copy_out("Verify");
+# [P4Testgen MethodCall]: *.copy_in("Ing");
+# [Control Ing start]
+# [AssignmentStatement]: standard_meta.egress_spec = 0;| Computed: standard_meta.egress_spec = 0;
+# [P4Testgen MethodCall]: *.copy_out("Ing");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("Eg");
+# [Control Eg start]
+# [MethodCall]: test();
+# [AssignmentStatement]: bit<32> inc = _pred ? 32w1 : 0;| Computed: tmp = 0;
+# [AssignmentStatement]: debug.write(0, _pred ? 32w1 : 32w0); // Print _pred| Computed: tmp_0 = 0;
+# [MethodCall]: debug_0/debug.write(0, tmp_0);
+# [RegisterWrite: Value 0 into index 0]
+# [MethodCall]: debug_0/debug.write(1, tmp);
+# [RegisterWrite: Value 0 into index 1]
+# [MethodCall]: debug_0/debug.write(2, tmp);
+# [RegisterWrite: Value 0 into index 2]
+# [MethodCall]: reg_0/reg.write(0, 1);
+# [RegisterWrite: Value 1 into index 0]
+# [P4Testgen MethodCall]: *.copy_out("Eg");
+# [P4Testgen MethodCall]: *.copy_in("Compute");
+# [Control Compute start]
+# [P4Testgen MethodCall]: *.copy_out("Compute");
+# [P4Testgen MethodCall]: *.copy_in("DP");
+# [Control DP start]
+# [MethodCall]: b.emit<ethernet_t>(p.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:0;  }
+# [MethodCall]: b.emit<ipv4_t>(p.ip);
+# [Invalid emit: { version = TaintedExpression(bit<4>), ihl = TaintedExpression(bit<4>), diffserv = TaintedExpression(bit<8>), packet_length = TaintedExpression(bit<16>), identification = TaintedExpression(bit<16>), flags = TaintedExpression(bit<3>), fragOffset = TaintedExpression(bit<13>), ttl = TaintedExpression(bit<8>), protocol = TaintedExpression(bit<8>), hdrChecksum = TaintedExpression(bit<16>), srcAddr = TaintedExpression(bit<32>), dstAddr = TaintedExpression(bit<32>) }]
+# [P4Testgen MethodCall]: *.copy_out("DP");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000000000000000000000000000000000
+expect 0 000000000000000000000000000000000000000000$
+

@@ -1,0 +1,77 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:10.404
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ProtParser");
+# [Parser] ProtParser
+# [State] start
+# [MethodCall]: packet.extract<addr_type_t>(hdr.addr_type);
+# [ExtractSuccess] hdr.addr_type@0 | Condition: |*packetLen_bits(bit<32>)| >= 16; | Extract Size: 16 -> hdr.addr_type.dstType = 0x02 | hdr.addr_type.srcType = 0x01
+# [P4Testgen AssignmentStatement]: addrType_0 = 2;
+# [MethodCall]: addr_0.ipv4.setInvalid();
+# [MethodCall]: addr_0.ipv6.setInvalid();
+# [State] start
+# [State] ipv6
+# [MethodCall]: packet.extract<addr_ipv6_t>(addr_0.ipv6);
+# [ExtractSuccess] addr_0.ipv6@16 | Condition: |*packetLen_bits(bit<32>)| >= 144; | Extract Size: 128 -> addr_0.ipv6.addr = 0x0000_0000_0000_0000_0000_0000_0000_0000
+# [State] start
+# [State] start_0_false
+# [P4Testgen MethodCall]: hdr.addr_dst.ipv4.setInvalid();
+# [State] start_0_join
+# [State] start_0_true_0
+# [P4Testgen MethodCall]: hdr.addr_dst.ipv6.setValid();
+# [P4Testgen AssignmentStatement]: hdr.addr_dst.ipv6.addr = 0;
+# [State] start_0_join_0
+# [P4Testgen AssignmentStatement]: addrType_0 = 1;
+# [MethodCall]: addr_0.ipv4.setInvalid();
+# [MethodCall]: addr_0.ipv6.setInvalid();
+# [State] start
+# [State] ipv4
+# [MethodCall]: packet.extract<addr_ipv4_t>(addr_0.ipv4);
+# [ExtractSuccess] addr_0.ipv4@144 | Condition: |*packetLen_bits(bit<32>)| >= 176; | Extract Size: 32 -> addr_0.ipv4.addr = 0x0000_0000
+# [State] start
+# [State] start_1_true
+# [P4Testgen MethodCall]: hdr.addr_src.ipv4.setValid();
+# [P4Testgen AssignmentStatement]: hdr.addr_src.ipv4.addr = 0;
+# [State] start_1_join
+# [State] start_1_false_0
+# [P4Testgen MethodCall]: hdr.addr_src.ipv6.setInvalid();
+# [State] start_1_join_0
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ProtParser");
+# [P4Testgen MethodCall]: *.copy_in("ProtVerifyChecksum");
+# [Control ProtVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("ProtVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ProtIngress");
+# [Control ProtIngress start]
+# [P4Testgen MethodCall]: *.copy_out("ProtIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("ProtEgress");
+# [Control ProtEgress start]
+# [P4Testgen MethodCall]: *.copy_out("ProtEgress");
+# [P4Testgen MethodCall]: *.copy_in("ProtComputeChecksum");
+# [Control ProtComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("ProtComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ProtDeparser");
+# [Control ProtDeparser start]
+# [MethodCall]: packet.emit<addr_type_t>(hdr.addr_type);
+# [Emit]: {$headerValid:true;;    dstType:2;  srcType:1;  }
+# [MethodCall]: packet.emit<addr_ipv4_t>(hdr.addr_dst.ipv4);
+# [Invalid emit: { addr = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<addr_ipv6_t>(hdr.addr_dst.ipv6);
+# [Emit]: {$headerValid:true;;    addr:0;  }
+# [MethodCall]: packet.emit<addr_ipv4_t>(hdr.addr_src.ipv4);
+# [Emit]: {$headerValid:true;;    addr:0;  }
+# [MethodCall]: packet.emit<addr_ipv6_t>(hdr.addr_src.ipv6);
+# [Invalid emit: { addr = TaintedExpression(bit<128>) }]
+# [P4Testgen MethodCall]: *.copy_out("ProtDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0201000000000000000000000000000000000000000000000000
+expect 0 0201000000000000000000000000000000000000000000000000$
+

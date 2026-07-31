@@ -1,0 +1,52 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:29.744
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(h.eth_hdr);
+# [ExtractSuccess] h.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> h.eth_hdr.dst_addr = 0x0000_0000_0000 | h.eth_hdr.src_addr = 0x0000_0000_0000 | h.eth_hdr.eth_type = 0x0000
+# [MethodCall]: pkt.extract<H>(h.h);
+# [ExtractSuccess] h.h@112 | Condition: |*packetLen_bits(bit<32>)| >= 184; | Extract Size: 72 -> h.h.a = 0x0000_0000 | h.h.b = 0x0000_0000 | h.h.c = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: m.test = 1;| Computed: m.test = 1;
+# [AssignmentStatement]: h.a + h.a: exact @name("e") ;| Computed: key_0 = 0;
+# [MethodCall]: c_t/t_0.apply();
+# [Table Branch: ingress.c.t | Key(s): |pktvar_3(bit<32>)| + |pktvar_3(bit<32>)|;| Chosen action: NoAction]
+# [MethodCall]: NoAction_1/NoAction();
+# [AssignmentStatement]: h.h.c = tmp;| Computed: h.h.c = 1;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  eth_type:0;  }
+# [MethodCall]: pkt.emit<H>(h.h);
+# [Emit]: {$headerValid:true;;    a:0;  b:0;  c:1;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.c.t
+add "ingress.c.t" "e":0x00000000 "NoAction"()
+
+
+packet 0 0000000000000000000000000000000000000000000000
+expect 0 0000000000000000000000000000000000000000000001$
+

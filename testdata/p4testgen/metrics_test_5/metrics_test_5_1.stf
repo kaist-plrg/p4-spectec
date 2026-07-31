@@ -1,0 +1,63 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-04:14:08.771
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: pkt.extract<Ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [MethodCall]: hdr.ethernet.setValid();
+# [AssignmentStatement]: hdr.ethernet.srcAddr = 0x001122334455;| Computed: hdr.ethernet.srcAddr = 73588229205;
+# [AssignmentStatement]: meta.var1 = 42;| Computed: meta.var1 = 42;
+# [AssignmentStatement]: meta.var2 = 1000;| Computed: meta.var2 = 1000;
+# [AssignmentStatement]: meta.var3 = 5;| Computed: meta.var3 = 5;
+# [State] parse_ipv4
+# [MethodCall]: pkt.extract<IPv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.tos = 0x00 | hdr.ipv4.length = 0x0000 | hdr.ipv4.id = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.checksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x0000_0000
+# [MethodCall]: hdr.ipv4.setValid();
+# [AssignmentStatement]: hdr.ipv4.ttl = 64;| Computed: hdr.ipv4.ttl = 64;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: bit<9> temp_2 = 8;| Computed: temp/temp_2 = 8;
+# [MethodCall]: forward();
+# [P4Testgen AssignmentStatement]: param/param_0 = 8;
+# [If Statement]: param > 2 Condition: 8 > 2; Result: true
+# [AssignmentStatement]: param = param + 50 * 2;| Computed: param/param_0 = 108;
+# [AssignmentStatement]: standard_metadata.egress_spec = port;| Computed: standard_metadata.egress_spec = 108;
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 108;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [AssignmentStatement]: hdr.ipv4.ttl = hdr.ipv4.ttl + 1;| Computed: hdr.ipv4.ttl = 65;
+# [MethodCall]: clear();
+# [AssignmentStatement]: hdr.ipv4.version = 0;| Computed: hdr.ipv4.version = 0;
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: pkt.emit<Ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:73588229205;  etherType:2048;  }
+# [MethodCall]: pkt.emit<IPv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  tos:0;  length:0;  id:0;  flags:0;  fragOffset:0;  ttl:65;  protocol:0;  checksum:0;  srcAddr:0;  dstAddr:0;  }
+# [MethodCall]: pkt.emit<IPv6_t>(hdr.ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), trafficClass = TaintedExpression(bit<8>), flowLabel = TaintedExpression(bit<20>), payloadLength = TaintedExpression(bit<16>), nextHeader = TaintedExpression(bit<8>), hopLimit = TaintedExpression(bit<8>), srcAddr = TaintedExpression(bit<128>), dstAddr = TaintedExpression(bit<128>) }]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 108; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 108 00000000000000112233445508000000000000000000410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

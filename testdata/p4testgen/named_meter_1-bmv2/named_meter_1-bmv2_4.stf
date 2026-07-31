@@ -1,0 +1,54 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:24.379
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] ParserImpl.start
+# [State] ParserImpl.parse_ethernet
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: m_table_0/m_table.apply();
+# [Table Branch: ingress.m_table | Key(s): |pktvar_1(bit<48>)|| Chosen action: ingress.m_action_2]
+# [MethodCall]: m_action_0(|ingress.m_table_ingress.m_action_2_arg_meter_idx(bit<9>)|);
+# [AssignmentStatement]: standard_metadata.egress_spec = meter_idx;| Computed: standard_metadata.egress_spec = 511;
+# [MethodCall]: my_meter.read(meta.meta.meter_tag);
+# [MethodCall]: m_filter_0/m_filter.apply();
+# [Table Branch: ingress.m_filter | Key(s): 0| Chosen action: ingress._nop]
+# [MethodCall]: _nop();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:0;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |ingress.m_table_ingress.m_action_2_arg_meter_idx(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress.m_table
+add "ingress.m_table" "hdr.ethernet.srcAddr":0x000000000000 "ingress.m_action_2"("meter_idx":0x1FF)
+
+# Table ingress.m_filter
+add "ingress.m_filter" "meta.meta.meter_tag":0x00000000 "ingress._nop"()
+
+
+packet 0 000000000000000000000000000000000000000000
+

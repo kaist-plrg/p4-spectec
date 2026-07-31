@@ -1,0 +1,44 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:27.453
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr.src_addr = 0x0000_0000_005F | hdr.eth_hdr.eth_type = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [If Statement]: val_0 <= 100 Condition: |pktvar_1(bit<48>)| <= 100; Result: true
+# [If Statement]: val_0 <= 50 Condition: |pktvar_1(bit<48>)| <= 50; Result: false
+# [AssignmentStatement]: val_1 = 48w12;| Computed: val_1/val_2 = 12;
+# [If Statement]: val_0 <= 25 Condition: |pktvar_1(bit<48>)| <= 25; Result: false
+# [P4Testgen AssignmentStatement]: h.eth_hdr.src_addr = 12;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:12;  eth_type:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000005F000000000000000000
+expect 0 00000000000000000000000C000000000000000000$
+

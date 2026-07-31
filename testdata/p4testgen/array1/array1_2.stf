@@ -1,0 +1,47 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-04:14:08.899
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<data_t>(hdr.data);
+# [ExtractFailure] hdr.data@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 224); | Extract Size: 224
+# [P4Testgen AssignmentStatement]: stdmeta.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: hdr.data.arr[0] = hdr.data.f1[0+:8];| Computed: hdr.data.arr[0] = "Taint";
+# [AssignmentStatement]: hdr.data.arr[1] = hdr.data.f1[8+:8];| Computed: hdr.data.arr[1] = "Taint";
+# [AssignmentStatement]: hdr.data.arr[2] = hdr.data.f1[16+:8];| Computed: hdr.data.arr[2] = "Taint";
+# [AssignmentStatement]: hdr.data.arr[3] = hdr.data.f1[24+:8];| Computed: hdr.data.arr[3] = "Taint";
+# [AssignmentStatement]: hdr.data.arr[4] = hdr.data.f2[0+:8];| Computed: hdr.data.arr[4] = "Taint";
+# [AssignmentStatement]: hdr.data.arr[5] = hdr.data.f2[8+:8];| Computed: hdr.data.arr[5] = "Taint";
+# [AssignmentStatement]: hdr.data.arr[6] = hdr.data.f2[16+:8];| Computed: hdr.data.arr[6] = "Taint";
+# [AssignmentStatement]: hdr.data.arr[7] = hdr.data.f2[24+:8];| Computed: hdr.data.arr[7] = "Taint";
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("uc");
+# [Control uc start]
+# [P4Testgen MethodCall]: *.copy_out("uc");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: packet.emit<data_t>(hdr.data);
+# [Invalid emit: { f1 = TaintedExpression(bit<32>), f2 = TaintedExpression(bit<32>), h1 = TaintedExpression(bit<16>), h2 = TaintedExpression(bit<16>), arr = { TaintedExpression(bit<32>)[7:0], TaintedExpression(bit<32>)[15:8], TaintedExpression(bit<32>)[23:16], TaintedExpression(bit<32>)[31:24], TaintedExpression(bit<32>)[7:0], TaintedExpression(bit<32>)[15:8], TaintedExpression(bit<32>)[23:16], TaintedExpression(bit<32>)[31:24], 8w0, 8w0, 8w0, 8w0, 8w0, 8w0, 8w0, 8w0 } }]
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000
+expect 0 00000000000000$
+

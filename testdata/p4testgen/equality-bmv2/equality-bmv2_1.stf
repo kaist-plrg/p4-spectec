@@ -1,0 +1,70 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:41.661
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<H>(hdr.h, 32);
+# [ExtractSuccess] hdr.h@0 | Condition: |*packetLen_bits(bit<32>)| >= 40; | Extract Size: 8 -> hdr.h.s = 0x00 | hdr.h.v = 0x0000_0000
+# [MethodCall]: b.extract<H>(hdr.a[0], 32);
+# [ExtractSuccess] hdr.a[32w0]@40 | Condition: |*packetLen_bits(bit<32>)| >= 80; | Extract Size: 8 -> hdr.a[32w0].s = 0x00 | hdr.a[32w0].v = 0x0000_0000
+# [MethodCall]: b.extract<H>(hdr.a[1], 32);
+# [ExtractSuccess] hdr.a[32w1]@80 | Condition: |*packetLen_bits(bit<32>)| >= 120; | Extract Size: 8 -> hdr.a[32w1].s = 0x00 | hdr.a[32w1].v = 0x0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: hdr.same.setValid();
+# [AssignmentStatement]: hdr.same.same = 0;| Computed: hdr.same.same = 0;
+# [AssignmentStatement]: stdmeta.egress_spec = 0;| Computed: stdmeta.egress_spec = 0;
+# [If Statement]: hdr.h.s == hdr.a[0].s Condition: |pktvar_0(bit<8>)| == |pktvar_2(bit<8>)|; Result: true
+# [AssignmentStatement]: hdr.same.same = hdr.same.same | 1;| Computed: hdr.same.same = 1;
+# [If Statement]: hdr.h.v == hdr.a[0].v Condition: (SizedVarbit<32><32>)|pktvar_1(bit<32>)| == (SizedVarbit<32><32>)|pktvar_3(bit<32>)|; Result: true
+# [AssignmentStatement]: hdr.same.same = hdr.same.same | 2;| Computed: hdr.same.same = 3;
+# [If Statement]: hdr.h == hdr.a[0] Condition: !true && !true || true && true && |pktvar_0(bit<8>)| == |pktvar_2(bit<8>)| && (SizedVarbit<32><32>)|pktvar_1(bit<32>)| == (SizedVarbit<32><32>)|pktvar_3(bit<32>)|; Result: true
+# [AssignmentStatement]: hdr.same.same = hdr.same.same | 4;| Computed: hdr.same.same = 7;
+# [MethodCall]: tmp_0/tmp[0].setInvalid();
+# [MethodCall]: tmp_0/tmp[1].setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: tmp_0/tmp[0].setValid();
+# [AssignmentStatement]: tmp[0] = hdr.h;| Computed: tmp_0/tmp[0].s = 0;
+# [AssignmentStatement]: tmp[0] = hdr.h;| Computed: tmp_0/tmp[0].v = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: tmp_0/tmp[1].setValid();
+# [AssignmentStatement]: tmp[1] = hdr.a[0];| Computed: tmp_0/tmp[1].s = 0;
+# [AssignmentStatement]: tmp[1] = hdr.a[0];| Computed: tmp_0/tmp[1].v = 0;
+# [If Statement]: tmp == hdr.a Condition: (!true && !true || true && true && |pktvar_0(bit<8>)| == |pktvar_2(bit<8>)| && (SizedVarbit<32><32>)|pktvar_1(bit<32>)| == (SizedVarbit<32><32>)|pktvar_3(bit<32>)|) && (!true && !true || true && true && |pktvar_2(bit<8>)| == |pktvar_4(bit<8>)| && (SizedVarbit<32><32>)|pktvar_3(bit<32>)| == (SizedVarbit<32><32>)|pktvar_5(bit<32>)|); Result: true
+# [AssignmentStatement]: hdr.same.same = hdr.same.same | 8;| Computed: hdr.same.same = 15;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("uc");
+# [Control uc start]
+# [P4Testgen MethodCall]: *.copy_out("uc");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: packet.emit<H>(hdr.h);
+# [Emit]: {$headerValid:true;;    s:0;  v:0;  }
+# [MethodCall]: packet.emit<H>(hdr.a[0]);
+# [Emit]: {$headerValid:true;;    s:0;  v:0;  }
+# [MethodCall]: packet.emit<H>(hdr.a[1]);
+# [Emit]: {$headerValid:true;;    s:0;  v:0;  }
+# [MethodCall]: packet.emit<Same>(hdr.same);
+# [Emit]: {$headerValid:true;;    same:15;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000000000000000000000000000000
+expect 0 0000000000000000000000000000000F0000000000000000000000$
+

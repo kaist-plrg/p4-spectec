@@ -1,0 +1,81 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:52.552
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserImpl");
+# [Parser] parserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractFailure] hdr.ethernet@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: stdmeta.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("parserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [MethodCall]: log_msg("GREPME Packet ingress begin");
+# [GREPME Packet ingress begin]
+# [MethodCall]: log_msg<tuple_0>("GREPME bool1={}", {  f0:(bool)hdr.ethernet.dstAddr[0:0]; });
+# [GREPME bool1={}: {  f0:(bool)TaintedExpression(bit<48>)[0:0];; }]
+# [MethodCall]: log_msg<tuple_1>("GREPME (bit<1>) bool1={}", {  f0:(bit<1>)(bool)hdr.ethernet.dstAddr[0:0]; });
+# [GREPME (bit<1>) bool1={}: {  f0:(bit<1>)(bool)TaintedExpression(bit<48>)[0:0];; }]
+# [MethodCall]: log_msg<tuple_1>("GREPME (bit<1>) (!bool1)={}", {  f0:(bit<1>)!(bool)hdr.ethernet.dstAddr[0:0]; });
+# [GREPME (bit<1>) (!bool1)={}: {  f0:(bit<1>)!(bool)TaintedExpression(bit<48>)[0:0];; }]
+# [MethodCall]: log_msg<tuple_1>("GREPME bit1={}", {  f0:hdr.ethernet.dstAddr[0:0]; });
+# [GREPME bit1={}: {  f0:TaintedExpression(bit<48>)[0:0];; }]
+# [MethodCall]: log_msg<tuple_2>("GREPME signed1={}", {  f0:-128; });
+# [GREPME signed1={}: {  f0:-128; }]
+# [MethodCall]: log_msg<tuple_3>("GREPME unsigned1={}", {  f0:128; });
+# [GREPME unsigned1={}: {  f0:128; }]
+# [MethodCall]: log_msg<tuple_4>("GREPME hdr.ethernet.dstAddr[1:0]={}", {  f0:hdr.ethernet.dstAddr[1:0]; });
+# [GREPME hdr.ethernet.dstAddr[1:0]={}: {  f0:TaintedExpression(bit<48>)[1:0];; }]
+# [Tainted If Statement]: 
+# [AssignmentStatement]: enum1 = MyEnum_t.VAL1;| Computed: enum1_0/enum1 = 0;
+# [Tainted If Statement]: 
+# [AssignmentStatement]: enum1 = MyEnum_t.VAL2;| Computed: enum1_0/enum1 = 1;
+# [AssignmentStatement]: enum1 = MyEnum_t.VAL3;| Computed: enum1_0/enum1 = 2;
+# [MethodCall]: log_msg<tuple_5>("GREPME enum1={}", {  f0:enum1_0/enum1; });
+# [GREPME enum1={}: {  f0:TaintedExpression(bit<32>); }]
+# [Tainted If Statement]: 
+# [AssignmentStatement]: serenum1 = MySerializableEnum_t.VAL17;| Computed: serenum1_0/serenum1 = 17;
+# [Tainted If Statement]: 
+# [AssignmentStatement]: serenum1 = MySerializableEnum_t.VAL23;| Computed: serenum1_0/serenum1 = 23;
+# [AssignmentStatement]: serenum1 = MySerializableEnum_t.VAL19;| Computed: serenum1_0/serenum1 = 19;
+# [MethodCall]: log_msg<tuple_6>("GREPME serenum1={}", {  f0:serenum1_0/serenum1; });
+# [GREPME serenum1={}: {  f0:TaintedExpression(bit<10>); }]
+# [MethodCall]: log_msg<tuple_0>("GREPME hdr.ethernet.isValid()={}", {  f0:hdr.ethernet.isValid(); });
+# [GREPME hdr.ethernet.isValid()={}: {  f0:false;; }]
+# [MethodCall]: log_msg<tuple_7>("GREPME hdr.ethernet={}", {  f0:hdr.ethernet; });
+# [GREPME hdr.ethernet={}: {  f0:{  $headerValid:false;;        dstAddr:TaintedExpression(bit<48>);    srcAddr:TaintedExpression(bit<48>);    etherType:TaintedExpression(bit<16>);    }; }]
+# [MethodCall]: log_msg<tuple_0>("GREPME hdr.ipv4.isValid()={}", {  f0:hdr.ipv4.isValid(); });
+# [GREPME hdr.ipv4.isValid()={}: {  f0:false;; }]
+# [MethodCall]: log_msg<tuple_8>("GREPME hdr.ipv4={}", {  f0:hdr.ipv4; });
+# [GREPME hdr.ipv4={}: {  f0:{  $headerValid:false;;        version:TaintedExpression(bit<4>);    ihl:TaintedExpression(bit<4>);    diffserv:TaintedExpression(bit<8>);    totalLen:TaintedExpression(bit<16>);    identification:TaintedExpression(bit<16>);    flags:TaintedExpression(bit<3>);    fragOffset:TaintedExpression(bit<13>);    ttl:TaintedExpression(bit<8>);    protocol:TaintedExpression(bit<8>);    hdrChecksum:TaintedExpression(bit<16>);    srcAddr:TaintedExpression(bit<32>);    dstAddr:TaintedExpression(bit<32>);    }; }]
+# [MethodCall]: log_msg<tuple_9>("GREPME stdmeta={}", {  f0:stdmeta; });
+# [GREPME stdmeta={}: {  f0:{    ingress_port:|bmv2_ingress_port(bit<9>)|;    egress_spec:0;    egress_port:0;    instance_type:0;    packet_length:|*packetLen_bits(bit<32>)| >> 3;;    enq_timestamp:0;    enq_qdepth:0;    deq_timedelta:0;    deq_qdepth:0;    ingress_global_timestamp:0;    egress_global_timestamp:0;    mcast_grp:0;    egress_rid:0;    checksum_error:0;    parser_error:1;    priority:0; }; }]
+# [MethodCall]: log_msg<tuple_5>("GREPME error.PacketTooShort={}", {  f0:1; });
+# [GREPME error.PacketTooShort={}: {  f0:1; }]
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparserImpl");
+# [Control deparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Invalid emit: { dstAddr = TaintedExpression(bit<48>), srcAddr = TaintedExpression(bit<48>), etherType = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000
+expect 0 0000000000$
+

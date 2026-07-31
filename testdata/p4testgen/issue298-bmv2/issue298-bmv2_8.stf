@@ -1,0 +1,64 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:23.935
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("TopParser");
+# [Parser] TopParser
+# [State] start
+# [MethodCall]: b.extract<ethernet_t>(p.ethernet);
+# [ExtractSuccess] p.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> p.ethernet.dstAddr = 0x0000_0000_0000 | p.ethernet.srcAddr = 0x0000_0000_0000 | p.ethernet.etherType = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: b.extract<ipv4_t>(p.ipv4);
+# [ExtractSuccess] p.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> p.ipv4.version = 0x0 | p.ipv4.ihl = 0x0 | p.ipv4.diffserv = 0x00 | p.ipv4.totalLen = 0x0000 | p.ipv4.identification = 0x0000 | p.ipv4.flags = 0x0 | p.ipv4.fragOffset = 0x0000 | p.ipv4.ttl = 0x00 | p.ipv4.protocol = 0x11 | p.ipv4.hdrChecksum = 0xFFEE | p.ipv4.srcAddr = 0x0000_0000 | p.ipv4.dstAddr = 0x0000_0000
+# [State] parse_udp
+# [MethodCall]: b.extract<udp_t>(p.udp);
+# [ExtractSuccess] p.udp@272 | Condition: |*packetLen_bits(bit<32>)| >= 336; | Extract Size: 64 -> p.udp.srcPort = 0x0000 | p.udp.dstPort = 0x8888 | p.udp.length_ = 0x0000 | p.udp.checksum = 0x0000
+# [State] parse_myhdr
+# [MethodCall]: b.extract<myhdr_t>(p.myhdr);
+# [ExtractFailure] p.myhdr@336 | Condition: !(|*packetLen_bits(bit<32>)| >= 400); | Extract Size: 64
+# [P4Testgen AssignmentStatement]: standard_metadata.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("TopParser");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [MethodCall]: verify_checksum<tuple_0, bit<16>>(hdr.ipv4.isValid(), {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [MethodCall]: drop_tbl_0/drop_tbl.apply();
+# [Table Branch: egress.drop_tbl | Key(s): 0| Chosen action: NoAction]
+# [MethodCall]: NoAction_1/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.ipv4.isValid(), {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("TopDeparser");
+# [Control TopDeparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  diffserv:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:0;  protocol:17;  hdrChecksum:0;  srcAddr:0;  dstAddr:0;  }
+# [MethodCall]: packet.emit<udp_t>(hdr.udp);
+# [Emit]: {$headerValid:true;;    srcPort:0;  dstPort:34952;  length_:0;  checksum:0;  }
+# [MethodCall]: packet.emit<myhdr_t>(hdr.myhdr);
+# [Invalid emit: { msgtype = TaintedExpression(bit<16>), inst = TaintedExpression(bit<32>), rnd = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("TopDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table egress.drop_tbl
+add "egress.drop_tbl" "meta.ingress_metadata.set_drop":0x0 "NoAction"()
+
+
+packet 0 000000000000000000000000080000000000000000000011FFEE0000000000000000000088880000000000000000000000
+expect 0 000000000000000000000000080000000000000000000011FFEE0000000000000000000088880000000000000000000000$
+

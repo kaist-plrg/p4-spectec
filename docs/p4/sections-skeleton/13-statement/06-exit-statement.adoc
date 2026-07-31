@@ -1,0 +1,88 @@
+[#sec-exit-statement]
+=== Exit statements
+
+// 715
+The `exit` statement immediately terminates the execution of all the blocks
+currently executing: the current `action` (if invoked within an `action`), the
+current `control`, and all its callers. `exit` statements are not allowed
+within parsers or functions.
+
+// 716
+Any copy-out behavior due to direction `out` or `inout` parameters of the
+enclosing `action` or `control`, and all of its callers, are still performed
+after the execution of the `exit` statement. See <<sec-call-convention>> for
+details on copy-out behavior.
+
+// 717 - Modified
+${syntax: exitStatement}
+
+// 718
+There are some expressions whose evaluation might cause an `exit` statement to
+be executed. Examples include:
+
+// 719
+* `table.apply().action_run`, which can only appear as the expression
+  of a `switch` statement (see <<sec-switch-statement>>), and when
+  it appears there, it must be the entire expression.
+* Any expression containing `table.apply().hit` or
+  `table.apply().miss` (see <<sec-match-action-table-invocation>>), which can
+  be part of arbitrarily complex expressions in many places of a P4 program,
+  such as:
+** the expression in an `if` statement.
+** the expression `e1` in a conditional expression `e1 ? e2 : e3`.
+** in an assignment statement, in the left and/or right hand sides.
+** an argument passed to a function or method call.
+** an expression to calculate a table key (see <<sec-mau-semantics>>).
+
+// 720
+This list is not intended to be exhaustive.
+
+// 721
+If applying the table causes an action to be executed, which in turn causes an
+`exit` statement to be executed, then evaluation of the expression ends
+immediately, and the rest of the current expression or statement does not
+complete its execution. See <<sec-expression-semantics>> for the order of
+evaluation of the parts of an expression.  For the examples listed above, it
+also means the following behavior after the expression evaluation is
+interrupted.
+
+// 722
+* For a `switch` statement, if `table.apply()` exits, then none of the
+  blocks in the `switch` statement are executed.
+* If `table.apply().hit` or `table.apply().miss` cause an exit during
+  the evaluation of an expression:
+** If it is the expression of an `if` statement, then neither the
+   'then' nor 'else' branches of the `if` statement are executed.
+** If it is the expression `e1` in a conditional expression `e1 ? e2 : e3`,
+   then neither expression `e2` nor `e3` are evaluated.
+** If the expression is the right hand side of an assignment
+   statement, or part of the calculation of the L-value on the left
+   hand side (e.g. the index expression of a header stack reference),
+   then no assignment occurs.
+** If the expression is an argument passed to a function or method
+   call, then the function/method call does not occur.
+** If the expression is a table key, then the table is not applied.
+
+==== Type checking
+
+// Added
+After type checking, an `exit` statement is represented in P4~IR~ as:
+
+// Added
+${syntax: exitStatementIR}
+
+// Added
+${rulegroup-source: Stmt_ok/exitStatement}
+${rulegroup-prose: Stmt_ok/exitStatement}
+
+==== Compile-time evaluation
+
+// Added
+${rulegroup-source: Stmt_inst/exitStatementIR}
+${rulegroup-prose: Stmt_inst/exitStatementIR}
+
+==== Runtime evaluation
+
+// Added
+${rulegroup-source: Stmt_eval/exitStatementIR}
+${rulegroup-prose: Stmt_eval/exitStatementIR}

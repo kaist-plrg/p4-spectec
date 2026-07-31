@@ -1,0 +1,65 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:15.153
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: b.extract<ethernet_t>(hdr.ether);
+# [ExtractSuccess] hdr.ether@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ether.dstAddr = 0x0000_0000_0000 | hdr.ether.srcAddr = 0x0000_0000_0000 | hdr.ether.etherType = 0x8100
+# [State] start
+# [AssignmentStatement]: bit<16> etherType = hdr.ether.etherType;| Computed: l3_etherType/etherType = 33024;
+# [State] start_0
+# [State] i
+# [MethodCall]: b.extract<I>(hdr.i);
+# [ExtractSuccess] hdr.i@112 | Condition: |*packetLen_bits(bit<32>)| >= 128; | Extract Size: 16 -> hdr.i.etherType = 0x8100
+# [AssignmentStatement]: etherType = hdr.i.etherType;| Computed: l3_etherType/etherType = 33024;
+# [State] start_0
+# [State] i
+# [MethodCall]: b.extract<I>(hdr.i);
+# [ExtractSuccess] hdr.i@128 | Condition: |*packetLen_bits(bit<32>)| >= 144; | Extract Size: 16 -> hdr.i.etherType = 0x8100
+# [AssignmentStatement]: etherType = hdr.i.etherType;| Computed: l3_etherType/etherType = 33024;
+# [State] start_0
+# [State] i
+# [MethodCall]: b.extract<I>(hdr.i);
+# [ExtractSuccess] hdr.i@144 | Condition: |*packetLen_bits(bit<32>)| >= 160; | Extract Size: 16 -> hdr.i.etherType = 0x0800
+# [AssignmentStatement]: etherType = hdr.i.etherType;| Computed: l3_etherType/etherType = 2048;
+# [State] start_0
+# [State] h0
+# [MethodCall]: b.extract<H>(hdr.h);
+# [ExtractSuccess] hdr.h@160 | Condition: |*packetLen_bits(bit<32>)| >= 168; | Extract Size: 8 -> hdr.h.a = 0x00
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: b.emit<ethernet_t>(hdr.ether);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:33024;  }
+# [MethodCall]: b.emit<H>(hdr.h);
+# [Emit]: {$headerValid:true;;    a:0;  }
+# [MethodCall]: b.emit<I>(hdr.i);
+# [Emit]: {$headerValid:true;;    etherType:2048;  }
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000081008100810008000000
+expect 0 000000000000000000000000810000080000$
+

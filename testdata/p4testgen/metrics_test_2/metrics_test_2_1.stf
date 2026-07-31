@@ -1,0 +1,86 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-04:14:09.105
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: pkt.extract<Ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [MethodCall]: hdr.ethernet.setValid();
+# [MethodCall]: hdr.h[1].setValid();
+# [AssignmentStatement]: hdr.ethernet.srcAddr = 0x001122334455;| Computed: hdr.ethernet.srcAddr = 73588229205;
+# [State] start_true
+# [MethodCall]: hdr.ipv4.setInvalid();
+# [State] start_join
+# [State] parse_ipv4
+# [MethodCall]: pkt.extract<IPv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.tos = 0x00 | hdr.ipv4.length = 0x0000 | hdr.ipv4.id = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.checksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x0A00_0001
+# [AssignmentStatement]: hdr.ipv4.ttl = 64;| Computed: hdr.ipv4.ttl = 64;
+# [MethodCall]: verify(false, 7);
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [If Statement]: hdr.ipv4.dstAddr == 0x0A000001 Condition: |pktvar_14(bit<32>)| == 167772161; Result: true
+# [MethodCall]: set_priority_0/set_priority();
+# [AssignmentStatement]: meta.priority = value;| Computed: meta.priority = 255;
+# [MethodCall]: ipv4_lpm.apply();
+# [Table Branch: MyIngress.ipv4_lpm | Key(s): |pktvar_14(bit<32>)|, |pktvar_11(bit<8>)|| Chosen action: MyIngress.forward]
+# [MethodCall]: forward_0/forward(|MyIngress.ipv4_lpm_MyIngress.forward_arg_port(bit<9>)|);
+# [AssignmentStatement]: standard_metadata.egress_spec = port;| Computed: standard_metadata.egress_spec = 0;
+# [Tainted If Statement]: 
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [MethodCall]: switch_0_table.apply();
+# [Constant Table Branch: switch_0_table | Key(s): 255 | Chosen action: switch_0_case()]
+# [MethodCall]: switch_0_case();
+# [SwitchCase]: 
+# [MethodCall]: forward_1/forward();
+# [AssignmentStatement]: standard_metadata.egress_spec = port;| Computed: standard_metadata.egress_spec = 1;
+# [Tainted If Statement]: 
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = "Taint";
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [AssignmentStatement]: hdr.h[1].i2 = hdr.h[1].i2 + 1;| Computed: hdr.h[1].i2 = 1;
+# [If Statement]: meta.priority == 255 Condition: 255 == 255; Result: true
+# [MethodCall]: set_priority_4/set_priority();
+# [AssignmentStatement]: meta.priority = val;| Computed: meta.priority = 1;
+# [AssignmentStatement]: standard_metadata.egress_spec = port;| Computed: standard_metadata.egress_spec = 2;
+# [AssignmentStatement]: hdr.ipv4.ttl = new_ttl;| Computed: hdr.ipv4.ttl = 32;
+# [AssignmentStatement]: hdr.h[0].i1 = 0;| Computed: hdr.h[0].i1 = 0;
+# [AssignmentStatement]: hdr.h[0].i2 = 0;| Computed: hdr.h[0].i2 = 0;
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: pkt.emit<Ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:73588229205;  etherType:2048;  }
+# [MethodCall]: pkt.emit<IPv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  tos:0;  length:0;  id:0;  flags:0;  fragOffset:0;  ttl:32;  protocol:0;  checksum:0;  srcAddr:0;  dstAddr:167772161;  }
+# [MethodCall]: pkt.emit<h_stack>(hdr.h[0]);
+# [Invalid emit: { i1 = TaintedExpression(bit<9>), i2 = TaintedExpression(bit<7>) }]
+# [MethodCall]: pkt.emit<h_stack>(hdr.h[1]);
+# [Emit]: {$headerValid:true;;    i1:0;  i2:1;  }
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 2; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table MyIngress.ipv4_lpm
+add "MyIngress.ipv4_lpm" 1 "hdr.ipv4.dstAddr":0b00001010000000000000000000000001 "hdr.ipv4.protocol":0x00 "MyIngress.forward"("port":0x000)
+
+
+packet 0 0000000000000000000000000800000000000000000000000000000000000A00000100
+expect 2 0000000000000011223344550800000000000000000020000000000000000A000001000100$
+

@@ -1,0 +1,47 @@
+# p4testgen seed: none
+# Date generated: 2026-02-20-02:10:41.837
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("OuterParser");
+# [Parser] OuterParser
+# [State] start
+# [MethodCall]: hdr.eth.setInvalid();
+# [MethodCall]: hdr.ipv4.setInvalid();
+# [State] start
+# [MethodCall]: pkt.extract<eth_h>(hdr.eth);
+# [ExtractSuccess] hdr.eth@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth.dst = 0x0000_0000_0000 | hdr.eth.src = 0x0000_0000_0000 | hdr.eth.type = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: pkt.extract<ipv4_h>(hdr.ipv4);
+# [ExtractFailure] hdr.ipv4@112 | Condition: !(|*packetLen_bits(bit<32>)| >= 272); | Extract Size: 160
+# [P4Testgen AssignmentStatement]: meta.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("OuterParser");
+# [P4Testgen MethodCall]: *.copy_in("NoVerify");
+# [Control NoVerify start]
+# [P4Testgen MethodCall]: *.copy_out("NoVerify");
+# [P4Testgen MethodCall]: *.copy_in("NoIngress");
+# [Control NoIngress start]
+# [P4Testgen MethodCall]: *.copy_out("NoIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("NoEgress");
+# [Control NoEgress start]
+# [P4Testgen MethodCall]: *.copy_out("NoEgress");
+# [P4Testgen MethodCall]: *.copy_in("NoCheck");
+# [Control NoCheck start]
+# [P4Testgen MethodCall]: *.copy_out("NoCheck");
+# [P4Testgen MethodCall]: *.copy_in("SimpleDeparser");
+# [Control SimpleDeparser start]
+# [MethodCall]: pkt.emit<eth_h>(hdr.eth);
+# [Emit]: {$headerValid:true;;    dst:0;  src:0;  type:2048;  }
+# [MethodCall]: pkt.emit<ipv4_h>(hdr.ipv4);
+# [Invalid emit: { version = TaintedExpression(bit<4>), ihl = TaintedExpression(bit<4>), tos = TaintedExpression(bit<8>), len = TaintedExpression(bit<16>), id = TaintedExpression(bit<16>), flags = TaintedExpression(bit<3>), frag = TaintedExpression(bit<13>), ttl = TaintedExpression(bit<8>), proto = TaintedExpression(bit<8>), chksum = TaintedExpression(bit<16>), src = TaintedExpression(bit<32>), dst = TaintedExpression(bit<32>) }]
+# [P4Testgen MethodCall]: *.copy_out("SimpleDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000000000000000080000000000000000
+expect 0 000000000000000000000000080000000000000000$
+

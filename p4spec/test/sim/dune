@@ -1,0 +1,1775 @@
+;; P4 simulation tests
+
+(test
+ (name test)
+ (preprocess
+  (pps ppx_let))
+ (modules test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_al.expected sim_v1model_p4c_al.actual))
+   (ignore-outputs
+    (diff sim_v1model_p4c_sl.expected sim_v1model_p4c_sl.actual))
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_al.expected sim_v1model_p4testgen_al.actual))
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_sl.expected sim_v1model_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_al.expected sim_v1model_custom_al.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_sl.expected sim_v1model_custom_sl.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_al.expected sim_ebpf_p4c_al.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_sl.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_al.expected sim_ebpf_p4testgen_al.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_al.expected sim_psa_p4c_al.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_regression_sl.expected
+     sim_v1model_regression_sl.actual)))))
+
+;; Fast aliases (no -det)
+
+(rule
+ (alias sim-al)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_al.expected sim_v1model_p4c_al.actual))
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_al.expected sim_v1model_p4testgen_al.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_al.expected sim_v1model_custom_al.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_al.expected sim_ebpf_p4c_al.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_al.expected sim_ebpf_p4testgen_al.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_al.expected sim_psa_p4c_al.actual)))))
+
+(rule
+ (alias sim-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_sl.expected sim_v1model_p4c_sl.actual))
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_sl.expected sim_v1model_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_sl.expected sim_v1model_custom_sl.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_sl.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_regression_sl.expected
+     sim_v1model_regression_sl.actual)))))
+
+(rule
+ (alias sim-v1model-p4c-al)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_al.expected sim_v1model_p4c_al.actual)))))
+
+(rule
+ (alias sim-v1model-p4c-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_sl.expected sim_v1model_p4c_sl.actual)))))
+
+(rule
+ (alias sim-v1model-p4testgen-al)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_al.expected sim_v1model_p4testgen_al.actual)))))
+
+(rule
+ (alias sim-v1model-p4testgen-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_sl.expected sim_v1model_p4testgen_sl.actual)))))
+
+(rule
+ (alias sim-v1model-custom-al)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_custom_al.expected sim_v1model_custom_al.actual)))))
+
+(rule
+ (alias sim-v1model-custom-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_custom_sl.expected sim_v1model_custom_sl.actual)))))
+
+(rule
+ (alias sim-ebpf-p4c-al)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4c_al.expected sim_ebpf_p4c_al.actual)))))
+
+(rule
+ (alias sim-ebpf-p4c-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_sl.actual)))))
+
+(rule
+ (alias sim-ebpf-p4testgen-al)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_al.expected sim_ebpf_p4testgen_al.actual)))))
+
+(rule
+ (alias sim-ebpf-p4testgen-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual)))))
+
+(rule
+ (alias sim-psa-p4c-al)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_p4c_al.expected sim_psa_p4c_al.actual)))))
+
+(rule
+ (alias sim-psa-p4c-sl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual)))))
+
+;; Slow aliases (with -det)
+
+(rule
+ (alias sim-al-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_al.expected sim_v1model_p4c_al_det.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_p4testgen_al.expected
+     sim_v1model_p4testgen_al_det.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_al.expected sim_v1model_custom_al_det.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_al.expected sim_ebpf_p4c_al_det.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_al.expected sim_ebpf_p4testgen_al_det.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_al.expected sim_psa_p4c_al_det.actual)))))
+
+(rule
+ (alias sim-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_sl.expected sim_v1model_p4c_sl_det.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_p4testgen_sl.expected
+     sim_v1model_p4testgen_sl_det.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_sl.expected sim_v1model_custom_sl_det.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_sl_det.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl_det.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl_det.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_regression_sl.expected
+     sim_v1model_regression_sl_det.actual)))))
+
+(rule
+ (alias sim-v1model-p4c-al-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_al.expected sim_v1model_p4c_al_det.actual)))))
+
+(rule
+ (alias sim-v1model-p4c-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_sl.expected sim_v1model_p4c_sl_det.actual)))))
+
+(rule
+ (alias sim-v1model-p4testgen-al-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff
+     sim_v1model_p4testgen_al.expected
+     sim_v1model_p4testgen_al_det.actual)))))
+
+(rule
+ (alias sim-v1model-p4testgen-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff
+     sim_v1model_p4testgen_sl.expected
+     sim_v1model_p4testgen_sl_det.actual)))))
+
+(rule
+ (alias sim-v1model-custom-al-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_custom_al.expected sim_v1model_custom_al_det.actual)))))
+
+(rule
+ (alias sim-v1model-custom-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_custom_sl.expected sim_v1model_custom_sl_det.actual)))))
+
+(rule
+ (alias sim-ebpf-p4c-al-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4c_al.expected sim_ebpf_p4c_al_det.actual)))))
+
+(rule
+ (alias sim-ebpf-p4c-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4c_sl.expected sim_ebpf_p4c_sl_det.actual)))))
+
+(rule
+ (alias sim-ebpf-p4testgen-al-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_al.expected sim_ebpf_p4testgen_al_det.actual)))))
+
+(rule
+ (alias sim-ebpf-p4testgen-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl_det.actual)))))
+
+(rule
+ (alias sim-psa-p4c-al-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_p4c_al.expected sim_psa_p4c_al_det.actual)))))
+
+(rule
+ (alias sim-psa-p4c-sl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl_det.actual)))))
+
+;; Rules to generate outputs (fast, no -det)
+
+(rule
+ (target sim_v1model_p4c_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4c_al.actual
+   (with-stderr-to
+    sim_v1model_p4c_al.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4c_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4c_sl.actual
+   (with-stderr-to
+    sim_v1model_p4c_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4testgen_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4testgen_al.actual
+   (with-stderr-to
+    sim_v1model_p4testgen_al.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4testgen_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4testgen_sl.actual
+   (with-stderr-to
+    sim_v1model_p4testgen_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_custom_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_custom_al.actual
+   (with-stderr-to
+    sim_v1model_custom_al.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../testdata/custom
+     -stf-dir
+     ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_custom_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_custom_sl.actual
+   (with-stderr-to
+    sim_v1model_custom_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../testdata/custom
+     -stf-dir
+     ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+;; Regression corpus (testdata/regression): SL-only, one witness per fixed issue
+
+(rule
+ (target sim_v1model_regression_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_regression_sl.actual
+   (with-stderr-to
+    sim_v1model_regression_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -p4-dir
+     ../../../testdata/regression/sim
+     -stf-dir
+     ../../../testdata/regression/sim
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_ebpf_p4c_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4c_al.actual
+   (with-stderr-to
+    sim_ebpf_p4c_al.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_ebpf_p4c_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4c_sl.actual
+   (with-stderr-to
+    sim_ebpf_p4c_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_ebpf_p4testgen_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4testgen_al.actual
+   (with-stderr-to
+    sim_ebpf_p4testgen_al.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen)))))
+
+(rule
+ (target sim_ebpf_p4testgen_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4testgen_sl.actual
+   (with-stderr-to
+    sim_ebpf_p4testgen_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen)))))
+
+(rule
+ (target sim_psa_p4c_al.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_psa_p4c_al.actual
+   (with-stderr-to
+    sim_psa_p4c_al.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -arch
+     psa
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_psa_p4c_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_psa_p4c_sl.actual
+   (with-stderr-to
+    sim_psa_p4c_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     psa
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+;; Rules to generate outputs (slow, with -det)
+
+(rule
+ (target sim_v1model_p4c_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4c_al_det.actual
+   (with-stderr-to
+    sim_v1model_p4c_al_det.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4c_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4c_sl_det.actual
+   (with-stderr-to
+    sim_v1model_p4c_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4testgen_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4testgen_al_det.actual
+   (with-stderr-to
+    sim_v1model_p4testgen_al_det.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4testgen_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4testgen_sl_det.actual
+   (with-stderr-to
+    sim_v1model_p4testgen_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_custom_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_custom_al_det.actual
+   (with-stderr-to
+    sim_v1model_custom_al_det.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../testdata/custom
+     -stf-dir
+     ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_custom_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_custom_sl_det.actual
+   (with-stderr-to
+    sim_v1model_custom_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../testdata/custom
+     -stf-dir
+     ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+;; Regression corpus (testdata/regression): SL-only, one witness per fixed issue
+
+(rule
+ (target sim_v1model_regression_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_regression_sl_det.actual
+   (with-stderr-to
+    sim_v1model_regression_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -p4-dir
+     ../../../testdata/regression/sim
+     -stf-dir
+     ../../../testdata/regression/sim
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_ebpf_p4c_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4c_al_det.actual
+   (with-stderr-to
+    sim_ebpf_p4c_al_det.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -det
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_ebpf_p4c_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4c_sl_det.actual
+   (with-stderr-to
+    sim_ebpf_p4c_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_ebpf_p4testgen_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4testgen_al_det.actual
+   (with-stderr-to
+    sim_ebpf_p4testgen_al_det.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -det
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen)))))
+
+(rule
+ (target sim_ebpf_p4testgen_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4testgen_sl_det.actual
+   (with-stderr-to
+    sim_ebpf_p4testgen_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen)))))
+
+(rule
+ (target sim_psa_p4c_al_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_psa_p4c_al_det.actual
+   (with-stderr-to
+    sim_psa_p4c_al_det.err
+    (run
+     ./test.exe
+     sim
+     -al
+     -det
+     -arch
+     psa
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_psa_p4c_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_psa_p4c_sl_det.actual
+   (with-stderr-to
+    sim_psa_p4c_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     psa
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+;; PL interpreter mirrored rules (auto-generated)
+
+(rule
+ (alias sim-pl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_pl.expected sim_v1model_p4c_pl.actual))
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_pl.expected sim_v1model_p4testgen_pl.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_pl.expected sim_v1model_custom_pl.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_pl.expected sim_ebpf_p4c_pl.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_pl.expected sim_ebpf_p4testgen_pl.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_pl.expected sim_psa_p4c_pl.actual)))))
+
+(rule
+ (alias sim-v1model-p4c-pl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_pl.expected sim_v1model_p4c_pl.actual)))))
+
+(rule
+ (alias sim-v1model-p4testgen-pl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4testgen_pl.expected sim_v1model_p4testgen_pl.actual)))))
+
+(rule
+ (alias sim-v1model-custom-pl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_custom_pl.expected sim_v1model_custom_pl.actual)))))
+
+(rule
+ (alias sim-ebpf-p4c-pl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4c_pl.expected sim_ebpf_p4c_pl.actual)))))
+
+(rule
+ (alias sim-ebpf-p4testgen-pl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_pl.expected sim_ebpf_p4testgen_pl.actual)))))
+
+(rule
+ (alias sim-psa-p4c-pl)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_p4c_pl.expected sim_psa_p4c_pl.actual)))))
+
+;; Slow aliases (with -det)
+
+(rule
+ (alias sim-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_pl.expected sim_v1model_p4c_pl_det.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_p4testgen_pl.expected
+     sim_v1model_p4testgen_pl_det.actual))
+   (ignore-outputs
+    (diff sim_v1model_custom_pl.expected sim_v1model_custom_pl_det.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4c_pl.expected sim_ebpf_p4c_pl_det.actual))
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_pl.expected sim_ebpf_p4testgen_pl_det.actual))
+   (ignore-outputs
+    (diff sim_psa_p4c_pl.expected sim_psa_p4c_pl_det.actual)))))
+
+(rule
+ (alias sim-v1model-p4c-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_p4c_pl.expected sim_v1model_p4c_pl_det.actual)))))
+
+(rule
+ (alias sim-v1model-p4testgen-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff
+     sim_v1model_p4testgen_pl.expected
+     sim_v1model_p4testgen_pl_det.actual)))))
+
+(rule
+ (alias sim-v1model-custom-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_v1model_custom_pl.expected sim_v1model_custom_pl_det.actual)))))
+
+(rule
+ (alias sim-ebpf-p4c-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4c_pl.expected sim_ebpf_p4c_pl_det.actual)))))
+
+(rule
+ (alias sim-ebpf-p4testgen-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_ebpf_p4testgen_pl.expected sim_ebpf_p4testgen_pl_det.actual)))))
+
+(rule
+ (alias sim-psa-p4c-pl-det)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_psa_p4c_pl.expected sim_psa_p4c_pl_det.actual)))))
+
+;; Rules to generate outputs (fast, no -det)
+
+(rule
+ (target sim_v1model_p4c_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4c_pl.actual
+   (with-stderr-to
+    sim_v1model_p4c_pl.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4testgen_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4testgen_pl.actual
+   (with-stderr-to
+    sim_v1model_p4testgen_pl.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_custom_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_custom_pl.actual
+   (with-stderr-to
+    sim_v1model_custom_pl.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../testdata/custom
+     -stf-dir
+     ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_ebpf_p4c_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4c_pl.actual
+   (with-stderr-to
+    sim_ebpf_p4c_pl.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_ebpf_p4testgen_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4testgen_pl.actual
+   (with-stderr-to
+    sim_ebpf_p4testgen_pl.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen)))))
+
+(rule
+ (target sim_psa_p4c_pl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_psa_p4c_pl.actual
+   (with-stderr-to
+    sim_psa_p4c_pl.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -arch
+     psa
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+;; Rules to generate outputs (slow, with -det)
+
+(rule
+ (target sim_v1model_p4c_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4c_pl_det.actual
+   (with-stderr-to
+    sim_v1model_p4c_pl_det.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_p4testgen_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_p4testgen_pl_det.actual
+   (with-stderr-to
+    sim_v1model_p4testgen_pl_det.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_v1model_custom_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_custom_pl_det.actual
+   (with-stderr-to
+    sim_v1model_custom_pl_det.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../testdata/custom
+     -stf-dir
+     ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+(rule
+ (target sim_ebpf_p4c_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4c_pl_det.actual
+   (with-stderr-to
+    sim_ebpf_p4c_pl_det.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -det
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))
+
+(rule
+ (target sim_ebpf_p4testgen_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_ebpf_p4testgen_pl_det.actual
+   (with-stderr-to
+    sim_ebpf_p4testgen_pl_det.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -det
+     -arch
+     ebpf
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../testdata/p4testgen)))))
+
+(rule
+ (target sim_psa_p4c_pl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../p4c/testdata/p4_16_samples)
+  (source_tree ../../../p4c/testdata/p4_16_errors)
+  (source_tree ../../../excludes)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_psa_p4c_pl_det.actual
+   (with-stderr-to
+    sim_psa_p4c_pl_det.err
+    (run
+     ./test.exe
+     sim
+     -pl
+     -det
+     -arch
+     psa
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -e
+     ../../../excludes/static
+     -e
+     ../../../excludes/dynamic
+     -p4-dir
+     ../../../p4c/testdata/p4_16_samples
+     -stf-dir
+     ../../../p4c/testdata/p4_16_samples)))))

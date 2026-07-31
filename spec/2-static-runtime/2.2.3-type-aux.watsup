@@ -1,0 +1,114 @@
+;;
+;; Unrolling outer typedefs
+;;
+
+dec $unroll_typeIR(typeIR) : typeIR
+  hint(prose_in %0 "with typedefs unrolled")
+def $unroll_typeIR(TYPEDEF _ typeIR) = $unroll_typeIR(typeIR)
+def $unroll_typeIR(typeIR) = typeIR
+  -- otherwise
+
+;;
+;; Unrolling outer aliases
+;;
+
+dec $unroll_aliasType(typeIR) : typeIR
+  hint(prose_in %0 "with aliases unrolled")
+def $unroll_aliasType(TYPE _ typeIR) = $unroll_aliasType(typeIR)
+def $unroll_aliasType(TYPEDEF _ typeIR) = $unroll_aliasType(typeIR)
+def $unroll_aliasType(typeIR) = typeIR
+  -- otherwise
+
+;;
+;; Width of integer types
+;;
+
+dec $width_of_integerTypeIR(integerTypeIR) : nat?
+  hint(prose_in "width of integer type" %0)
+def $width_of_integerTypeIR(INT) = eps
+def $width_of_integerTypeIR(INT `< n `>) = n
+def $width_of_integerTypeIR(BIT `< n `>) = n
+def $width_of_integerTypeIR(VARBIT `< n `>) = n
+
+;;
+;; Checkers for type properties
+;;
+
+;;; Default
+
+tbl dec $is_defaultable_typeIR(typeIR) : bool
+  hint(prose_true %0 "can be default-initialized")
+  hint(prose_false %0 "cannot be default-initialized")
+tbl def $is_defaultable_typeIR =
+  | BOOL => true
+  | ERROR => true
+  | STRING => true
+  | integerTypeIR => true
+  | TYPEDEF _ typeIR => $is_defaultable_typeIR(typeIR)
+  | TYPE _ typeIR => $is_defaultable_typeIR(typeIR)
+  | TUPLE `< typeIR* `> => $forall_($is_defaultable_typeIR(typeIR)*)
+  | ARRAY typeIR `[ _ `] => $is_defaultable_typeIR(typeIR)
+  | HEADER_STACK typeIR `[ _ `] => $is_defaultable_typeIR(typeIR)
+  | STRUCT _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_defaultable_typeIR(typeIR)*)
+  | HEADER _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_defaultable_typeIR(typeIR)*)
+  | HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_defaultable_typeIR(typeIR)*)
+  | ENUM _ `{ _ `} => true
+  | ENUM _ `< typeIR `> `{ _ `} => $is_defaultable_typeIR(typeIR)
+  | _ => false
+
+;;; Equals
+
+tbl dec $is_equalable_typeIR(typeIR) : bool
+  hint(prose_true %0 "supports equality comparison")
+  hint(prose_false %0 "does not support equality comparison")
+tbl def $is_equalable_typeIR =
+  | VOID => false
+  | _NAME typeId => false
+  | TYPEDEF _ typeIR => $is_equalable_typeIR(typeIR)
+  | externObjectTypeIR => false
+  | parserObjectTypeIR => false
+  | controlObjectTypeIR => false
+  | packageObjectTypeIR => false
+  | tableObjectTypeIR => false
+  | DEFAULT => false
+  | sequenceTypeIR => false
+  | recordTypeIR => false
+  | HEADER_INVALID => false
+  | setTypeIR => false
+  | tableMetadataTypeIR => false
+  | _ => true
+
+;;; Assignable
+
+tbl dec $is_assignable_typeIR(typeIR) : bool
+  hint(prose_true %0 "supports assignment")
+  hint(prose_false %0 "does not support assignment")
+tbl def $is_assignable_typeIR =
+  | VOID => false
+  | STRING => false
+  | INT => false
+  | TYPEDEF _ typeIR => $is_assignable_typeIR(typeIR)
+  | objectTypeIR => false
+  | synthesizedTypeIR => false
+  | _ => true
+
+;;; Serializable
+
+tbl dec $is_serializable_typeIR(typeIR) : bool
+  hint(prose_true %0 "has a defined size")
+  hint(prose_false %0 "has no defined size")
+tbl def $is_serializable_typeIR =
+  | BOOL => true
+  | INT `< _ `> => true
+  | BIT `< _ `> => true
+  | VARBIT `< _ `> => true
+  | TYPEDEF _ typeIR => $is_serializable_typeIR(typeIR)
+  | TYPE _ typeIR => $is_serializable_typeIR(typeIR)
+  | ENUM _ `< typeIR `> `{ _ `} => $is_serializable_typeIR(typeIR)
+  | TUPLE `< typeIR* `> => $forall_($is_serializable_typeIR(typeIR)*)
+  | ARRAY typeIR `[ _ `] => $is_serializable_typeIR(typeIR)
+  | HEADER_STACK typeIR `[ _ `] => $is_serializable_typeIR(typeIR)
+  | STRUCT _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_serializable_typeIR(typeIR)*)
+  | HEADER _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_serializable_typeIR(typeIR)*)
+  | HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `} => $forall_($is_serializable_typeIR(typeIR)*)
+  | _ => false

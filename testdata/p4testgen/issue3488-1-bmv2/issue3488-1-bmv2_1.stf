@@ -1,0 +1,69 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:39.729
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("test_parser");
+# [Parser] test_parser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hd.ethernet);
+# [ExtractSuccess] hd.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hd.ethernet.dst_addr = 0x0000_0000_0000 | hd.ethernet.src_addr = 0x0000_0000_0000 | hd.ethernet.ether_type = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hd.ipv4);
+# [ExtractSuccess] hd.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hd.ipv4.version = 0x0 | hd.ipv4.ihl = 0x0 | hd.ipv4.diffserv = 0x00 | hd.ipv4.total_len = 0x0000 | hd.ipv4.identification = 0x0000 | hd.ipv4.flags = 0x0 | hd.ipv4.frag_offset = 0x0000 | hd.ipv4.ttl = 0x00 | hd.ipv4.protocol = 0x00 | hd.ipv4.hdr_checksum = 0x0000 | hd.ipv4.src_addr = 0x0000_0000 | hd.ipv4.dst_addr = 0x0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("test_parser");
+# [P4Testgen MethodCall]: *.copy_in("test_verify_checksum");
+# [Control test_verify_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("test_verify_checksum");
+# [P4Testgen MethodCall]: *.copy_in("test_ingress");
+# [Control test_ingress start]
+# [AssignmentStatement]: meta.dropped = false;| Computed: meta.dropped = false;
+# [AssignmentStatement]: standard_metadata.egress_spec = standard_metadata.ingress_port;| Computed: standard_metadata.egress_spec = 511;
+# [MethodCall]: pre_tbl1_0/pre_tbl1.apply();
+# [Table Branch: test_ingress.pre_tbl1 | Key(s): |pktvar_14(bit<32>)|| Chosen action: test_ingress.action1]
+# [MethodCall]: action1();
+# [AssignmentStatement]: meta.src_ip_addr = hdr.ipv4.dst_addr;| Computed: meta.src_ip_addr = 0;
+# [SwitchCase]: action2
+# [MethodCall]: in_tbl2_0/in_tbl2.apply();
+# [Table Branch: test_ingress.in_tbl2 | Key(s): |pktvar_11(bit<8>)|| Chosen action: test_ingress.action4]
+# [MethodCall]: action4();
+# [AssignmentStatement]: meta.direction = direction_t.OUTBOUND;| Computed: meta.direction = 1;
+# [MethodCall]: post_tbl3_0/post_tbl3.apply();
+# [Table Branch: test_ingress.post_tbl3 | Key(s): |pktvar_13(bit<32>)|| Chosen action: test_ingress.action5]
+# [MethodCall]: action5(|test_ingress.post_tbl3_test_ingress.action5_arg_neighbor_mac(bit<48>)|);
+# [AssignmentStatement]: meta.ethernet_addr = neighbor_mac;| Computed: meta.ethernet_addr = 0;
+# [If Statement]: false Condition: false; Result: false
+# [P4Testgen MethodCall]: *.copy_out("test_ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("test_egress");
+# [Control test_egress start]
+# [P4Testgen MethodCall]: *.copy_out("test_egress");
+# [P4Testgen MethodCall]: *.copy_in("test_compute_checksum");
+# [Control test_compute_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("test_compute_checksum");
+# [P4Testgen MethodCall]: *.copy_in("test_deparser");
+# [Control test_deparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  ether_type:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  diffserv:0;  total_len:0;  identification:0;  flags:0;  frag_offset:0;  ttl:0;  protocol:0;  hdr_checksum:0;  src_addr:0;  dst_addr:0;  }
+# [P4Testgen MethodCall]: *.copy_out("test_deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |bmv2_ingress_port(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table test_ingress.pre_tbl1
+add "test_ingress.pre_tbl1" "hdr.ipv4.dst_addr":0x00000000 "test_ingress.action1"()
+
+# Table test_ingress.in_tbl2
+add "test_ingress.in_tbl2" "hdr.ipv4.protocol":0x00 "test_ingress.action4"()
+
+# Table test_ingress.post_tbl3
+add "test_ingress.post_tbl3" "hdr.ipv4.src_addr":0x00000000 "test_ingress.action5"("neighbor_mac":0x000000000000)
+
+
+packet 511 00000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

@@ -1,0 +1,52 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:22.031
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [MethodCall]: packet.extract<S>(hdr.base);
+# [ExtractSuccess] hdr.base@0 | Condition: |*packetLen_bits(bit<32>)| >= 8; | Extract Size: 8 -> hdr.base.t = 0x01
+# [State] parseO2
+# [MethodCall]: packet.extract<O2>(hdr.u.short);
+# [ExtractSuccess] hdr.u.short@8 | Condition: |*packetLen_bits(bit<32>)| >= 24; | Extract Size: 16 -> hdr.u.short.data = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: hdr.u.short.isValid(): exact;| Computed: key_0 = true;
+# [MethodCall]: debug_hdr_0/debug_hdr.apply();
+# [Table Branch: ingress.debug_hdr Choosing default action: NoAction_1/NoAction;]
+# [MethodCall]: NoAction_1/NoAction();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: hdr.u.short.data = 0xFFFF;| Computed: hdr.u.short.data = 65535;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<S>(hdr.base);
+# [Emit]: {$headerValid:true;;    t:1;  }
+# [MethodCall]: packet.emit<O1>(hdr.u.byte);
+# [Invalid emit: { data = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<O2>(hdr.u.short);
+# [Emit]: {$headerValid:true;;    data:65535;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 010000000000000000000000000000000000000000000000000000000000000000
+expect 0 01FFFF000000000000000000000000000000000000000000000000000000000000$
+

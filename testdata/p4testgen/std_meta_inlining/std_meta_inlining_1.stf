@@ -1,0 +1,42 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:06.938
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: t0_0/t0.apply();
+# [Table Branch: ingress.t0 | Key(s): |bmv2_ingress_port(bit<9>)|| Chosen action: send_to_cpu]
+# [MethodCall]: send_to_cpu_0/send_to_cpu();
+# [AssignmentStatement]: actions = { send_to_cpu(standard_metadata); }| Computed: standard_metadata.egress_spec = 64;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 64;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 64; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.t0
+add "ingress.t0" 1 "standard_metadata.ingress_port":0b********* "send_to_cpu"()
+
+
+packet 1 00000000000000
+expect 64 00000000000000$
+

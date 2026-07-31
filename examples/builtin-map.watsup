@@ -1,0 +1,25 @@
+var i : int
+
+syntax set<K> = `{ K* }
+syntax pair<K, V> = K `: V
+syntax map<K, V> = set<pair<K, V>>
+
+dec $empty_map<K, V> : map<K, V>
+def $empty_map<K, V> = `{ eps }
+
+builtin dec $find_map<K, V>(map<K, V>, K) : V?
+builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+
+syntax imap = map<text, int>
+
+dec $main() : int
+def $main() = i
+  -- if imap_0 = $empty_map<text, int>
+  -- if imap_1 = $add_map<text, int>(imap_0, "one", 1)
+  -- if imap_2 = $add_map<text, int>(imap_1, "two", 2)
+  -- if imap_3 = $add_map<text, int>(imap_2, "three", 3)
+  -- if imap_4 = $add_map<text, int>(imap_3, "three", 42)
+  -- if i_1 = $find_map<text, int>(imap_4, "one")
+  -- if i_2 = $find_map<text, int>(imap_4, "two")
+  -- if i_3 = $find_map<text, int>(imap_4, "three")
+  -- if i = $(i_1 + i_2 + i_3)

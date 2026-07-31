@@ -1,0 +1,83 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:30.099
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0000
+# [MethodCall]: packet.extract<ml_hdr_t>(hdr.ml);
+# [ExtractSuccess] hdr.ml@112 | Condition: |*packetLen_bits(bit<32>)| >= 120; | Extract Size: 8 -> hdr.ml.idx = 0x00
+# [MethodCall]: packet.extract<vec_e_t>(hdr.vector[0]);
+# [ExtractSuccess] hdr.vector[0]@120 | Condition: |*packetLen_bits(bit<32>)| >= 128; | Extract Size: 8 -> hdr.vector[0].e = 0x00
+# [MethodCall]: packet.extract<vec_e_t>(hdr.vector[1]);
+# [ExtractSuccess] hdr.vector[1]@128 | Condition: |*packetLen_bits(bit<32>)| >= 136; | Extract Size: 8 -> hdr.vector[1].e = 0x00
+# [MethodCall]: packet.extract<vec_e_t>(hdr.vector[2]);
+# [ExtractSuccess] hdr.vector[2]@136 | Condition: |*packetLen_bits(bit<32>)| >= 144; | Extract Size: 8 -> hdr.vector[2].e = 0x00
+# [MethodCall]: packet.extract<aggregator_t>(hdr.pool[0]);
+# [ExtractSuccess] hdr.pool[0]@144 | Condition: |*packetLen_bits(bit<32>)| >= 184; | Extract Size: 40 -> hdr.pool[0].base0 = 0x00 | hdr.pool[0].base1 = 0x00 | hdr.pool[0].base2 = 0x00 | hdr.pool[0].base3 = 0x00 | hdr.pool[0].val = 0x00
+# [MethodCall]: packet.extract<aggregator_t>(hdr.pool[1]);
+# [ExtractSuccess] hdr.pool[1]@184 | Condition: |*packetLen_bits(bit<32>)| >= 224; | Extract Size: 40 -> hdr.pool[1].base0 = 0x00 | hdr.pool[1].base1 = 0x00 | hdr.pool[1].base2 = 0x00 | hdr.pool[1].base3 = 0x00 | hdr.pool[1].val = 0x00
+# [MethodCall]: packet.extract<aggregator_t>(hdr.pool[2]);
+# [ExtractSuccess] hdr.pool[2]@224 | Condition: |*packetLen_bits(bit<32>)| >= 264; | Extract Size: 40 -> hdr.pool[2].base0 = 0x00 | hdr.pool[2].base1 = 0x00 | hdr.pool[2].base2 = 0x00 | hdr.pool[2].base3 = 0x00 | hdr.pool[2].val = 0x00
+# [AssignmentStatement]: meta.counter = 0;| Computed: meta.counter = 0;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: meta.counter = meta.counter + 1;| Computed: meta.counter = 1;
+# [AssignmentStatement]: hdr.vector[0].e = hdr.pool[1].val + 1;| Computed: hdr.vector[0].e = 1;
+# [AssignmentStatement]: hdr.pool[i].val = hdr.vector[0].e;| Computed: hsiVar = 0;
+# [If Statement]: hdr.pool[i] Condition: (int<8>)(int<8>)|pktvar_3(bit<8>)| == 0; Result: true
+# [AssignmentStatement]: hdr.pool[i].val = hdr.vector[0].e;| Computed: hdr.pool[0].val = 1;
+# [AssignmentStatement]: hdr.pool[i].base2 = hdr.vector[0].e;| Computed: hsiVar = 0;
+# [If Statement]: hdr.pool[i] Condition: (int<8>)(int<8>)|pktvar_3(bit<8>)| == 0; Result: true
+# [AssignmentStatement]: hdr.pool[i].base2 = hdr.vector[0].e;| Computed: hdr.pool[0].base2 = 1;
+# [AssignmentStatement]: hdr.vector[1].e = hdr.pool[i].base0;| Computed: hsiVar = 0;
+# [If Statement]: hdr.pool[i] Condition: (int<8>)(int<8>)|pktvar_3(bit<8>)| == 0; Result: true
+# [AssignmentStatement]: hdr.vector[1].e = hdr.pool[i].base0;| Computed: hdr.vector[1].e = 0;
+# [AssignmentStatement]: hdr.pool[i].base0 = hdr.pool[i].base1 + 1;| Computed: hsiVar = 0;
+# [If Statement]: hdr.pool[i] Condition: (int<8>)(int<8>)|pktvar_3(bit<8>)| == 0; Result: true
+# [AssignmentStatement]: hdr.pool[i].base0 = hdr.pool[i].base1 + 1;| Computed: hdr.pool[0].base0 = 1;
+# [AssignmentStatement]: standard_metadata.egress_spec = standard_metadata.ingress_port;| Computed: standard_metadata.egress_spec = 511;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:0;  }
+# [MethodCall]: packet.emit<ml_hdr_t>(hdr.ml);
+# [Emit]: {$headerValid:true;;    idx:0;  }
+# [MethodCall]: packet.emit<vec_e_t>(hdr.vector[0]);
+# [Emit]: {$headerValid:true;;    e:1;  }
+# [MethodCall]: packet.emit<vec_e_t>(hdr.vector[1]);
+# [Emit]: {$headerValid:true;;    e:0;  }
+# [MethodCall]: packet.emit<vec_e_t>(hdr.vector[2]);
+# [Emit]: {$headerValid:true;;    e:0;  }
+# [MethodCall]: packet.emit<aggregator_t>(hdr.pool[0]);
+# [Emit]: {$headerValid:true;;    base0:1;  base1:0;  base2:1;  base3:0;  val:1;  }
+# [MethodCall]: packet.emit<aggregator_t>(hdr.pool[1]);
+# [Emit]: {$headerValid:true;;    base0:0;  base1:0;  base2:0;  base3:0;  val:0;  }
+# [MethodCall]: packet.emit<aggregator_t>(hdr.pool[2]);
+# [Emit]: {$headerValid:true;;    base0:0;  base1:0;  base2:0;  base3:0;  val:0;  }
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |bmv2_ingress_port(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+
+packet 511 00000000000000000000000000000000000000000000000000000000000000000000
+

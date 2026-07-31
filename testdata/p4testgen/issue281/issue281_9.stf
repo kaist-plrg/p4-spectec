@@ -1,0 +1,87 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:18.751
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: hdr.ether.setInvalid();
+# [MethodCall]: hdr.vlan.setInvalid();
+# [MethodCall]: hdr.ipv4.setInvalid();
+# [State] start
+# [MethodCall]: hdr.ether.setInvalid();
+# [State] start
+# [MethodCall]: b.extract<ethernet_t>(hdr.ether);
+# [ExtractSuccess] hdr.ether@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ether.dstAddr = 0x0000_0000_0000 | hdr.ether.srcAddr = 0x0000_0000_0000 | hdr.ether.etherType = 0x8100
+# [State] start
+# [State] start
+# [State] start
+# [AssignmentStatement]: bit<16> etherType = hdr.ether.etherType;| Computed: l3_etherType/etherType = 33024;
+# [State] start_0
+# [State] vlan
+# [MethodCall]: hdr.vlan.setInvalid();
+# [State] start
+# [MethodCall]: b.extract<vlan_t>(hdr.vlan);
+# [ExtractSuccess] hdr.vlan@112 | Condition: |*packetLen_bits(bit<32>)| >= 144; | Extract Size: 32 -> hdr.vlan.pcp = 0x0 | hdr.vlan.cfi = 0x0 | hdr.vlan.vid = 0x000 | hdr.vlan.etherType = 0x8100
+# [State] vlan
+# [AssignmentStatement]: etherType = hdr.vlan.etherType;| Computed: l3_etherType/etherType = 33024;
+# [State] start_0
+# [State] vlan
+# [MethodCall]: hdr.vlan.setInvalid();
+# [State] start
+# [MethodCall]: b.extract<vlan_t>(hdr.vlan);
+# [ExtractSuccess] hdr.vlan@144 | Condition: |*packetLen_bits(bit<32>)| >= 176; | Extract Size: 32 -> hdr.vlan.pcp = 0x0 | hdr.vlan.cfi = 0x0 | hdr.vlan.vid = 0x000 | hdr.vlan.etherType = 0x8100
+# [State] vlan
+# [AssignmentStatement]: etherType = hdr.vlan.etherType;| Computed: l3_etherType/etherType = 33024;
+# [State] start_0
+# [State] vlan
+# [MethodCall]: hdr.vlan.setInvalid();
+# [State] start
+# [MethodCall]: b.extract<vlan_t>(hdr.vlan);
+# [ExtractSuccess] hdr.vlan@176 | Condition: |*packetLen_bits(bit<32>)| >= 208; | Extract Size: 32 -> hdr.vlan.pcp = 0x0 | hdr.vlan.cfi = 0x0 | hdr.vlan.vid = 0x000 | hdr.vlan.etherType = 0x8100
+# [State] vlan
+# [AssignmentStatement]: etherType = hdr.vlan.etherType;| Computed: l3_etherType/etherType = 33024;
+# [State] start_0
+# [State] vlan
+# [MethodCall]: hdr.vlan.setInvalid();
+# [State] start
+# [MethodCall]: b.extract<vlan_t>(hdr.vlan);
+# [ExtractSuccess] hdr.vlan@208 | Condition: |*packetLen_bits(bit<32>)| >= 240; | Extract Size: 32 -> hdr.vlan.pcp = 0x0 | hdr.vlan.cfi = 0x0 | hdr.vlan.vid = 0x000 | hdr.vlan.etherType = 0x0800
+# [State] vlan
+# [AssignmentStatement]: etherType = hdr.vlan.etherType;| Computed: l3_etherType/etherType = 2048;
+# [State] start_0
+# [State] ipv4
+# [MethodCall]: hdr.ipv4.setInvalid();
+# [State] start
+# [MethodCall]: b.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@240 | Condition: |*packetLen_bits(bit<32>)| >= 400; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x0000_0000
+# [State] ipv4
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000081000000810000008100000081000000080000000000000000000000000000000000000000000000000000000000000000
+expect 0 0000000000000000000000$
+

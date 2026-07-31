@@ -1,0 +1,47 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:20.922
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("VerifyChecksumImpl");
+# [Control VerifyChecksumImpl start]
+# [P4Testgen MethodCall]: *.copy_out("VerifyChecksumImpl");
+# [P4Testgen MethodCall]: *.copy_in("IngressImpl");
+# [Control IngressImpl start]
+# [MethodCall]: testRegister_0/testRegister.read(registerData_0/registerData, 0);
+# [RegisterRead: Index 0 into field registerData_0/registerData;]
+# [P4Testgen AssignmentStatement]: registerData_0/registerData = 0;
+# [AssignmentStatement]: meta.test = (bool) registerData; // does not work| Computed: meta.test = false;
+# [MethodCall]: debug_table_0/debug_table.apply();
+# [Table Branch: IngressImpl.debug_table | Key(s): (bit<1>)false;| Chosen action: IngressImpl.drop]
+# [MethodCall]: drop();
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("IngressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("EgressImpl");
+# [Control EgressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("EgressImpl");
+# [P4Testgen MethodCall]: *.copy_in("ComputeChecksumImpl");
+# [Control ComputeChecksumImpl start]
+# [P4Testgen MethodCall]: *.copy_out("ComputeChecksumImpl");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table IngressImpl.debug_table
+add "IngressImpl.debug_table" "meta.test":0x0 "IngressImpl.drop"()
+
+
+packet 0 00000000000000
+

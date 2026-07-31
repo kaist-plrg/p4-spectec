@@ -1,0 +1,104 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:19.040
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x5 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.hdrChecksum = 0xFA00 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x00FF_FFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [MethodCall]: verify_checksum<tuple_0, bit<16>>(hdr.ipv4.ihl == 5, {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: ipv4_da_lpm_0/ipv4_da_lpm.apply();
+# [Table Branch: ingress.ipv4_da_lpm | Key(s): |pktvar_14(bit<32>)|| Chosen action: ingress.set_l2ptr]
+# [MethodCall]: set_l2ptr(|ingress.ipv4_da_lpm_ingress.set_l2ptr_arg_l2ptr_1(bit<32>)|);
+# [MethodCall]: ipv4_da_lpm_stats_0/ipv4_da_lpm_stats.count();
+# [AssignmentStatement]: meta.fwd_metadata.l2ptr = l2ptr;| Computed: meta.fwd_metadata.l2ptr = 0;
+# [MethodCall]: mac_da_0/mac_da.apply();
+# [Table Branch: ingress.mac_da | Key(s): |ingress.ipv4_da_lpm_ingress.set_l2ptr_arg_l2ptr_1(bit<32>)|| Chosen action: ingress.set_bd_dmac_intf]
+# [MethodCall]: set_bd_dmac_intf(|ingress.mac_da_ingress.set_bd_dmac_intf_arg_bd(bit<24>)|, |ingress.mac_da_ingress.set_bd_dmac_intf_arg_dmac(bit<48>)|, |ingress.mac_da_ingress.set_bd_dmac_intf_arg_intf(bit<9>)|);
+# [AssignmentStatement]: meta.fwd_metadata.out_bd = bd;| Computed: meta.fwd_metadata.out_bd = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr = dmac;| Computed: hdr.ethernet.dstAddr = 0;
+# [AssignmentStatement]: standard_metadata.egress_spec = intf;| Computed: standard_metadata.egress_spec = 0;
+# [AssignmentStatement]: hdr.ipv4.ttl = hdr.ipv4.ttl - 1;| Computed: hdr.ipv4.ttl = 255;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [MethodCall]: send_frame_0/send_frame.apply();
+# [Table Branch: egress.send_frame | Key(s): |ingress.mac_da_ingress.set_bd_dmac_intf_arg_bd(bit<24>)|| Chosen action: my_drop]
+# [MethodCall]: my_drop_2/my_drop();
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.ingress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.egress_spec = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.egress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.instance_type = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.packet_length = 277;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.enq_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.enq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.deq_timedelta = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.deq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.ingress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.egress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.mcast_grp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.egress_rid = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.checksum_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.parser_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_2/smeta.priority = 0;
+# [MethodCall]: mark_to_drop(smeta_2/smeta);
+# [mark_to_drop executed.]
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.ingress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_spec = 511;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.instance_type = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.packet_length = 277;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.enq_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.enq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.deq_timedelta = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.deq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.ingress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.mcast_grp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_rid = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.checksum_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.parser_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.priority = 0;
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.ipv4.ihl == 5, {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:5;  diffserv:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:255;  protocol:0;  hdrChecksum:0;  srcAddr:0;  dstAddr:16777215;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress.ipv4_da_lpm
+add "ingress.ipv4_da_lpm" 1 "hdr.ipv4.dstAddr":0b00000000111111111111111111111111 "ingress.set_l2ptr"("l2ptr":0x00000000)
+
+# Table ingress.mac_da
+add "ingress.mac_da" "meta.fwd_metadata.l2ptr":0x00000000 "ingress.set_bd_dmac_intf"("bd":0x000000,"dmac":0x000000000000,"intf":0x000)
+
+# Table egress.send_frame
+add "egress.send_frame" "meta.fwd_metadata.out_bd":0x000000 "my_drop"()
+
+
+packet 0 000000000000000000000000080005000000000000000000FA000000000000FFFFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

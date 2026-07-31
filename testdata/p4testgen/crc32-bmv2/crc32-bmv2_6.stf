@@ -1,0 +1,88 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:31.530
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x1234
+# [State] check_p4calc
+# [Lookahead result]: 106608266829293960861506308371929628672
+# [Lookahead Condition: |*packetLen_bits(bit<32>)| >= 240;]
+# [AssignmentStatement]: transition select(packet.lookahead<p4calc_t>().p,| Computed: tmp_6 = 106608266829293960861506308371929628672;
+# [P4Testgen MethodCall]: tmp_0.setValid();
+# [P4Testgen AssignmentStatement]: tmp_0.p = 80;
+# [P4Testgen AssignmentStatement]: tmp_0.four = 52;
+# [P4Testgen AssignmentStatement]: tmp_0.ver = 1;
+# [P4Testgen AssignmentStatement]: tmp_0.op = 94;
+# [P4Testgen AssignmentStatement]: tmp_0.operand_a = 0;
+# [P4Testgen AssignmentStatement]: tmp_0.operand_b = 0;
+# [P4Testgen AssignmentStatement]: tmp_0.res = 0;
+# [Lookahead result]: 106608266829293960861506308371929628672
+# [Lookahead Condition: |*packetLen_bits(bit<32>)| >= 112;]
+# [AssignmentStatement]: packet.lookahead<p4calc_t>().four,| Computed: tmp_7 = 106608266829293960861506308371929628672;
+# [P4Testgen MethodCall]: tmp_2.setValid();
+# [P4Testgen AssignmentStatement]: tmp_2.p = 80;
+# [P4Testgen AssignmentStatement]: tmp_2.four = 52;
+# [P4Testgen AssignmentStatement]: tmp_2.ver = 1;
+# [P4Testgen AssignmentStatement]: tmp_2.op = 94;
+# [P4Testgen AssignmentStatement]: tmp_2.operand_a = 0;
+# [P4Testgen AssignmentStatement]: tmp_2.operand_b = 0;
+# [P4Testgen AssignmentStatement]: tmp_2.res = 0;
+# [Lookahead result]: 106608266829293960861506308371929628672
+# [Lookahead Condition: |*packetLen_bits(bit<32>)| >= 112;]
+# [AssignmentStatement]: packet.lookahead<p4calc_t>().ver) {| Computed: tmp_8 = 106608266829293960861506308371929628672;
+# [P4Testgen MethodCall]: tmp_4.setValid();
+# [P4Testgen AssignmentStatement]: tmp_4.p = 80;
+# [P4Testgen AssignmentStatement]: tmp_4.four = 52;
+# [P4Testgen AssignmentStatement]: tmp_4.ver = 1;
+# [P4Testgen AssignmentStatement]: tmp_4.op = 94;
+# [P4Testgen AssignmentStatement]: tmp_4.operand_a = 0;
+# [P4Testgen AssignmentStatement]: tmp_4.operand_b = 0;
+# [P4Testgen AssignmentStatement]: tmp_4.res = 0;
+# [State] parse_p4calc
+# [MethodCall]: packet.extract<p4calc_t>(hdr.p4calc);
+# [ExtractSuccess] hdr.p4calc@112 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 128 -> hdr.p4calc.p = 0x50 | hdr.p4calc.four = 0x34 | hdr.p4calc.ver = 0x01 | hdr.p4calc.op = 0x5E | hdr.p4calc.operand_a = 0x0000_0000 | hdr.p4calc.operand_b = 0x0000_0000 | hdr.p4calc.res = 0x0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: calculate_0/calculate.apply();
+# [Constant Table Branch: MyIngress.calculate | Key(s): |pktvar_3(bit<128>)|[103:96]; | Chosen action: operation_xor()]
+# [MethodCall]: operation_xor();
+# [AssignmentStatement]: hdr.p4calc.res = result;| Computed: hdr.p4calc.res = 0;
+# [AssignmentStatement]: tmp = hdr.ethernet.dstAddr;| Computed: tmp_5/tmp = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;| Computed: hdr.ethernet.dstAddr = 0;
+# [AssignmentStatement]: hdr.ethernet.srcAddr = tmp;| Computed: hdr.ethernet.srcAddr = 0;
+# [AssignmentStatement]: standard_metadata.egress_spec = standard_metadata.ingress_port;| Computed: standard_metadata.egress_spec = 0;
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<32>>(hdr.p4calc.isValid(), {  f0:hdr.p4calc.operand_a; }, hdr.p4calc.res, 0);
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:4660;  }
+# [MethodCall]: packet.emit<p4calc_t>(hdr.p4calc);
+# [Emit]: {$headerValid:true;;    p:80;  four:52;  ver:1;  op:94;  operand_a:0;  operand_b:0;  res:0;  }
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |bmv2_ingress_port(bit<9>)|; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000012345034015E0000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 00000000000000000000000012345034015E00000000000000002144DF1C0000000000000000000000000000000000000000000000$
+

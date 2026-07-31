@@ -1,0 +1,333 @@
+open Domain.Lib
+module Mixfix = Domain.Mixfix
+open Lang
+open Al
+open Error
+open Util.Source
+
+(* Unification environment: a map from original id to its unified id *)
+
+module UEnv = struct
+  include MakeIdEnv (Id)
+
+  let unified id uenv =
+    uenv |> bindings
+    |> List.exists (fun (_, id_unifier) -> Id.compare id id_unifier = 0)
+
+  let extend uenv uenv_ext = union (fun _ -> assert false) uenv uenv_ext
+end
+
+(* Populating expression templates *)
+
+let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
+    prem list =
+  let populate_exp_template_unequal () =
+    match (exp_template.it, exp.it) with
+    | VarE id_template, _ when UEnv.unified id_template uenv ->
+        let at = over_region [ exp.at; exp_template.at ] in
+        let prem = Il.LetPr (exp, exp_template) $ at in
+        [ prem ]
+    | TupleE exps_template, TupleE exps ->
+        populate_exps_templates uenv exps_template exps
+    | CaseE notexp_template, CaseE notexp
+      when Mixfix.eq_mixop notexp_template notexp ->
+        populate_exps_templates uenv
+          (Mixfix.args notexp_template)
+          (Mixfix.args notexp)
+    | StrE expfields_template, StrE expfields ->
+        let exps_template = List.map snd expfields_template in
+        let exps = List.map snd expfields in
+        populate_exps_templates uenv exps_template exps
+    | ( IterE (exp_template, (iter_template, vars_template)),
+        IterE (exp, (iter, vars)) )
+      when Il.Eq.eq_iter iter_template iter ->
+        let at = over_region [ exp.at; exp_template.at ] in
+        let iterprem = (iter_template, vars_template, vars) in
+        let prem = Il.LetPr (exp, exp_template) $ at in
+        let prem = Il.IterPr (prem, iterprem) $ at in
+        [ prem ]
+    | _ ->
+        Format.asprintf "cannot populate anti-unified expressions %s and %s"
+          (Il.Print.string_of_exp exp_template)
+          (Il.Print.string_of_exp exp)
+        |> failwith
+  in
+  if Il.Eq.eq_exp exp_template exp then [] else populate_exp_template_unequal ()
+
+and populate_exps_templates (uenv : UEnv.t) (exps_template : exp list)
+    (exps : exp list) : prem list =
+  List.fold_left2
+    (fun prems exp_template exp ->
+      prems @ populate_exp_template uenv exp_template exp)
+    [] exps_template exps
+
+(* Anti-unification of expressions *)
+
+let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
+    (exp : exp) : IdSet.t * UEnv.t * exp =
+  let fail () =
+    error exp.at
+      (Format.asprintf "cannot anti-unify expressions %s and %s"
+         (Il.Print.string_of_exp exp_template)
+         (Il.Print.string_of_exp exp))
+  in
+  let antiunify_exp_unequal () =
+    let at, note = (exp_template.at, exp_template.note) in
+    match (exp_template.it, exp.it) with
+    | VarE id_template, _ when UEnv.unified id_template uenv ->
+        let uenv = UEnv.add id_template id_template uenv in
+        (frees, uenv, exp_template)
+    | VarE id_template, _ ->
+        let id_fresh = Fresh.id frees id_template in
+        let frees = IdSet.add id_fresh frees in
+        let uenv = UEnv.add id_template id_fresh uenv in
+        let exp_template = Il.VarE id_fresh $$ (at, note) in
+        (frees, uenv, exp_template)
+    | _, VarE id ->
+        let id_fresh = Fresh.id frees id in
+        let frees = IdSet.add id_fresh frees in
+        let uenv = UEnv.add id id_fresh uenv in
+        let exp_template = Il.VarE id_fresh $$ (at, note) in
+        (frees, uenv, exp_template)
+    | TupleE exps_template, TupleE exps ->
+        let frees, uenv, exps_template =
+          antiunify_exps frees uenv exps_template exps
+        in
+        let exp_template = Il.TupleE exps_template $$ (at, note) in
+        (frees, uenv, exp_template)
+    | CaseE notexp_template, CaseE notexp
+      when Mixfix.eq_mixop notexp_template notexp ->
+        let mixop, exps_template = Mixfix.split notexp_template in
+        let exps = Mixfix.args notexp in
+        let frees, uenv, exps_template =
+          antiunify_exps frees uenv exps_template exps
+        in
+        let exp_template =
+          Il.CaseE (Mixfix.fill mixop exps_template) $$ (at, note)
+        in
+        (frees, uenv, exp_template)
+    | StrE expfields_template, StrE expfields ->
+        let atoms_template, exps_template = List.split expfields_template in
+        let atoms, exps = List.split expfields in
+        if not (List.for_all2 Il.Eq.eq_atom atoms_template atoms) then fail ();
+        let frees, uenv, exps_template =
+          antiunify_exps frees uenv exps_template exps
+        in
+        let expfields_template = List.combine atoms_template exps_template in
+        let exp_template = Il.StrE expfields_template $$ (at, note) in
+        (frees, uenv, exp_template)
+    | ( IterE (exp_template, (iter_template, vars_template)),
+        IterE (exp, (iter, vars)) )
+      when Il.Eq.eq_iter iter_template iter ->
+        let frees, uenv, exp_template =
+          antiunify_exp frees uenv exp_template exp
+        in
+        let vars_template =
+          vars_template @ vars
+          |> List.fold_left
+               (fun vars_template (id, typ, iters) ->
+                 match UEnv.find_opt id uenv with
+                 | Some id_unifier ->
+                     let var = (id_unifier, typ, iters) in
+                     if List.exists (Il.Eq.eq_var var) vars_template then
+                       vars_template
+                     else vars_template @ [ var ]
+                 | None -> vars_template)
+               []
+        in
+        let exp_template =
+          Il.IterE (exp_template, (iter_template, vars_template)) $$ (at, note)
+        in
+        (frees, uenv, exp_template)
+    | _ -> fail ()
+  in
+  if Il.Eq.eq_exp exp_template exp then (frees, uenv, exp_template)
+  else antiunify_exp_unequal ()
+
+and antiunify_exps (frees : IdSet.t) (uenv : UEnv.t) (exps_template : exp list)
+    (exps : exp list) : IdSet.t * UEnv.t * exp list =
+  List.fold_left2
+    (fun (frees, uenv, exps_template) exp_template exp ->
+      let frees, uenv, exp_template =
+        antiunify_exp frees uenv exp_template exp
+      in
+      (frees, uenv, exps_template @ [ exp_template ]))
+    (frees, uenv, []) exps_template exps
+
+let antiunify_exp_group (frees : IdSet.t) (exps : exp list) :
+    IdSet.t * UEnv.t * exp =
+  let exp_template, exps = (List.hd exps, List.tl exps) in
+  List.fold_left
+    (fun (frees, uenv, exp_template) exp ->
+      antiunify_exp frees uenv exp_template exp)
+    (frees, UEnv.empty, exp_template)
+    exps
+
+let antiunify_exps_group (frees : IdSet.t) (exps_group : exp list list) :
+    UEnv.t * exp list =
+  match exps_group with
+  | [] -> (UEnv.empty, [])
+  | _ ->
+      let exps_batch =
+        let width = exps_group |> List.hd |> List.length in
+        let height = List.length exps_group in
+        List.init width (fun j ->
+            List.init height (fun i -> List.nth (List.nth exps_group i) j))
+      in
+      let _, uenv_acc, exps_template =
+        List.fold_left
+          (fun (frees, uenv_acc, exps_template) exp_batch ->
+            let frees, uenv, exp_template =
+              antiunify_exp_group frees exp_batch
+            in
+            let uenv_acc = UEnv.extend uenv_acc uenv in
+            (frees, uenv_acc, exps_template @ [ exp_template ]))
+          (frees, UEnv.empty, []) exps_batch
+      in
+      (uenv_acc, exps_template)
+
+(* Populating argument templates *)
+
+let rec populate_arg_template (uenv : UEnv.t) (arg_template : arg) (arg : arg) :
+    prem list =
+  match (arg_template.it, arg.it) with
+  | ExpA exp_template, ExpA exp -> populate_exp_template uenv exp_template exp
+  | DefA id_template, DefA id when Il.Eq.eq_id id_template id -> []
+  | _ ->
+      Format.asprintf "cannot populate anti-unified arguments %s and %s"
+        (Il.Print.string_of_arg arg_template)
+        (Il.Print.string_of_arg arg)
+      |> failwith
+
+and populate_args_templates (uenv : UEnv.t) (args_template : arg list)
+    (args : arg list) : prem list =
+  List.fold_left2
+    (fun prems arg_template arg ->
+      prems @ populate_arg_template uenv arg_template arg)
+    [] args_template args
+
+(* Anti-unification of arguments *)
+
+let antiunify_arg (frees : IdSet.t) (uenv : UEnv.t) (arg_template : arg)
+    (arg : arg) : IdSet.t * UEnv.t * arg =
+  match (arg_template.it, arg.it) with
+  | ExpA exp_template, ExpA exp ->
+      let frees, uenv, exp_template =
+        antiunify_exp frees uenv exp_template exp
+      in
+      let arg_template = Il.ExpA exp_template $ arg_template.at in
+      (frees, uenv, arg_template)
+  | DefA id_template, DefA id when Il.Eq.eq_id id_template id ->
+      (frees, uenv, arg_template)
+  | _ -> assert false
+
+let antiunify_arg_group (frees : IdSet.t) (args : arg list) :
+    IdSet.t * UEnv.t * arg =
+  let arg_template, args = (List.hd args, List.tl args) in
+  List.fold_left
+    (fun (frees, uenv, arg_template) arg ->
+      antiunify_arg frees uenv arg_template arg)
+    (frees, UEnv.empty, arg_template)
+    args
+
+let antiunify_args_group (frees : IdSet.t) (args_group : arg list list) :
+    UEnv.t * arg list =
+  match args_group with
+  | [] -> (UEnv.empty, [])
+  | _ ->
+      let args_batch =
+        let width = args_group |> List.hd |> List.length in
+        let height = List.length args_group in
+        List.init width (fun j ->
+            List.init height (fun i -> List.nth (List.nth args_group i) j))
+      in
+      let _, uenv_acc, args_template =
+        List.fold_left
+          (fun (frees, uenv_acc, args_template) arg_batch ->
+            let frees, uenv, arg_template =
+              antiunify_arg_group frees arg_batch
+            in
+            let uenv_acc = UEnv.extend uenv_acc uenv in
+            (frees, uenv_acc, args_template @ [ arg_template ]))
+          (frees, UEnv.empty, []) args_batch
+      in
+      (uenv_acc, args_template)
+
+(* Anti-unification of rule matches *)
+
+let antiunify_rule_match_group (frees : IdSet.t)
+    (exps_match_group : exp list list) (exps_match_else_opt : exp list option) :
+    exp list * prem list list * prem list option =
+  let uenv, exps_match_template =
+    let exps_match_group =
+      exps_match_group
+      @
+      match exps_match_else_opt with
+      | Some exps_match_else -> [ exps_match_else ]
+      | None -> []
+    in
+    antiunify_exps_group frees exps_match_group
+  in
+  let prems_match_group =
+    List.map (populate_exps_templates uenv exps_match_template) exps_match_group
+  in
+  let prems_match_else_opt =
+    Option.map
+      (populate_exps_templates uenv exps_match_template)
+      exps_match_else_opt
+  in
+  (exps_match_template, prems_match_group, prems_match_else_opt)
+
+(* Anti-unification of clauses *)
+
+let antiunify_clauses (clauses : clause list) (elseclause_opt : clause option) :
+    arg list * (prem list * exp) list * (prem list * exp) option =
+  let args_input_group, exp_output_group, prems_group, frees =
+    List.fold_left
+      (fun (args_input_group, exp_output_group, prems_group, frees) clause ->
+        let args_input, exp_output, prems = clause.it in
+        let args_input_group = args_input_group @ [ args_input ] in
+        let exp_output_group = exp_output_group @ [ exp_output ] in
+        let prems_group = prems_group @ [ prems ] in
+        let frees = clause |> Il.Free.free_clause |> IdSet.union frees in
+        (args_input_group, exp_output_group, prems_group, frees))
+      ([], [], [], IdSet.empty) clauses
+  in
+  let args_input_else_opt, exp_output_else_opt, prems_else_opt, frees =
+    match elseclause_opt with
+    | Some elseclause ->
+        let args_input, exp_output, prems = elseclause.it in
+        let frees = elseclause |> Il.Free.free_clause |> IdSet.union frees in
+        (Some args_input, Some exp_output, Some prems, frees)
+    | None -> (None, None, None, frees)
+  in
+  let uenv, args_input_template =
+    let args_input_group =
+      args_input_group
+      @
+      match args_input_else_opt with
+      | Some args_input_else -> [ args_input_else ]
+      | None -> []
+    in
+    antiunify_args_group frees args_input_group
+  in
+  let prems_group =
+    List.map2
+      (fun args_input prems ->
+        let prems_template =
+          populate_args_templates uenv args_input_template args_input
+        in
+        prems_template @ prems)
+      args_input_group prems_group
+  in
+  let paths = List.combine prems_group exp_output_group in
+  let path_else_opt =
+    match (args_input_else_opt, prems_else_opt, exp_output_else_opt) with
+    | Some args_input_else, Some prems_else, Some exp_output_else ->
+        let prems_template =
+          populate_args_templates uenv args_input_template args_input_else
+        in
+        Some (prems_template @ prems_else, exp_output_else)
+    | _ -> None
+  in
+  (args_input_template, paths, path_else_opt)

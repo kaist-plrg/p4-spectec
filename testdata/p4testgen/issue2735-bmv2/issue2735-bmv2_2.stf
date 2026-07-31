@@ -1,0 +1,39 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:22.971
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("SnvsParser");
+# [Parser] SnvsParser
+# [State] start
+# [MethodCall]: packet.extract<Ethernet_h>(hdr.eth);
+# [ExtractFailure] hdr.eth@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: standard_metadata.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("SnvsParser");
+# [P4Testgen MethodCall]: *.copy_in("SnvsVerifyChecksum");
+# [Control SnvsVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("SnvsVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("SnvsIngress");
+# [Control SnvsIngress start]
+# [P4Testgen MethodCall]: *.copy_out("SnvsIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("SnvsEgress");
+# [Control SnvsEgress start]
+# [P4Testgen MethodCall]: *.copy_out("SnvsEgress");
+# [P4Testgen MethodCall]: *.copy_in("SnvsComputeChecksum");
+# [Control SnvsComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("SnvsComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("SnvsDeparser");
+# [Control SnvsDeparser start]
+# [MethodCall]: packet.emit<Ethernet_h>(hdr.eth);
+# [Invalid emit: { dst = TaintedExpression(bit<48>), src = TaintedExpression(bit<48>), type = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("SnvsDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000
+expect 0 00000000000000$
+

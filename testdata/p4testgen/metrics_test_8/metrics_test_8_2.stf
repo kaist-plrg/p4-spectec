@@ -1,0 +1,74 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-04:14:09.289
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x06 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x00FF_FFFF
+# [State] parse_tcp
+# [MethodCall]: packet.extract<tcp_t>(hdr.tcp);
+# [ExtractSuccess] hdr.tcp@272 | Condition: |*packetLen_bits(bit<32>)| >= 432; | Extract Size: 160 -> hdr.tcp.srcPort = 0x0000 | hdr.tcp.dstPort = 0x0000 | hdr.tcp.seqNo = 0x0000_0000 | hdr.tcp.ackNo = 0x0000_0000 | hdr.tcp.dataOffset = 0x0 | hdr.tcp.res = 0x0 | hdr.tcp.ecn = 0x0 | hdr.tcp.ctrl = 0x00 | hdr.tcp.window = 0x0000 | hdr.tcp.checksum = 0x0000 | hdr.tcp.urgentPtr = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [MethodCall]: ecmp_group_0/ecmp_group.apply();
+# [Table Branch: MyIngress.ecmp_group | Key(s): |pktvar_14(bit<32>)|| Chosen action: MyIngress.drop]
+# [MethodCall]: drop();
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [MethodCall]: ecmp_nhop_0/ecmp_nhop.apply();
+# [Table Branch: MyIngress.ecmp_nhop | Key(s): 0| Chosen action: MyIngress.drop]
+# [MethodCall]: drop_2/drop();
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [MethodCall]: send_frame_0/send_frame.apply();
+# [Table Branch: MyEgress.send_frame | Key(s): 511| Chosen action: MyEgress.drop]
+# [MethodCall]: drop_3/drop();
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.ipv4.isValid(), {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  diffserv:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:0;  protocol:6;  hdrChecksum:0;  srcAddr:0;  dstAddr:16777215;  }
+# [MethodCall]: packet.emit<tcp_t>(hdr.tcp);
+# [Emit]: {$headerValid:true;;    srcPort:0;  dstPort:0;  seqNo:0;  ackNo:0;  dataOffset:0;  res:0;  ecn:0;  ctrl:0;  window:0;  checksum:0;  urgentPtr:0;  }
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table MyIngress.ecmp_group
+add "MyIngress.ecmp_group" 1 "hdr.ipv4.dstAddr":0b00000000111111111111111111111111 "MyIngress.drop"()
+
+# Table MyIngress.ecmp_nhop
+add "MyIngress.ecmp_nhop" "meta.ecmp_select":0x0000 "MyIngress.drop"()
+
+# Table MyEgress.send_frame
+add "MyEgress.send_frame" "standard_metadata.egress_port":0x1FF "MyEgress.drop"()
+
+
+packet 0 00000000000000000000000008000000000000000000000600000000000000FFFFFF0000000000000000000000000000000000000000
+

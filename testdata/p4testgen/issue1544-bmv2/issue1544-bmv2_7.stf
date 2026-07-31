@@ -1,0 +1,79 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:07.536
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0006 | hdr.ethernet.etherType = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: mac_da_0/mac_da.apply();
+# [Table Branch: ingress.mac_da Choosing default action: my_drop_0/my_drop;]
+# [MethodCall]: my_drop_0/my_drop();
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.ingress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.egress_spec = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.egress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.instance_type = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.packet_length = 21;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.enq_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.enq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.deq_timedelta = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.deq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.ingress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.egress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.mcast_grp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.egress_rid = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.checksum_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.parser_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: smeta_0/smeta.priority = 0;
+# [MethodCall]: mark_to_drop(smeta_0/smeta);
+# [mark_to_drop executed.]
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.ingress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_spec = 511;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_port = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.instance_type = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.packet_length = 21;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.enq_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.enq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.deq_timedelta = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.deq_qdepth = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.ingress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_global_timestamp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.mcast_grp = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.egress_rid = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.checksum_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.parser_error = 0;
+# [AssignmentStatement]: my_drop(standard_metadata);| Computed: standard_metadata.priority = 0;
+# [If Statement]: x > 5 Condition: |pktvar_1(bit<48>)|[15:0] > 5; Result: true
+# [AssignmentStatement]: return x - 1;| Computed: retval = 5;
+# [AssignmentStatement]: hdr.ethernet.srcAddr[15:0] = sometimes_dec(hdr.ethernet.srcAddr[15:0]);| Computed: hdr.ethernet.srcAddr = 5;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:5;  etherType:0;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+
+packet 0 000000000000000000000006000000000000000000
+

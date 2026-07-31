@@ -1,0 +1,47 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:50.432
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserI");
+# [Parser] parserI
+# [State] start
+# [MethodCall]: pkt.extract<Ethernet_h>(hdr.ethernet);
+# [ExtractFailure] hdr.ethernet@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: stdmeta.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("parserI");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("cIngress");
+# [Control cIngress start]
+# [MethodCall]: tbl1_0/tbl1.apply();
+# [Table Branch: cIngress.tbl1| Overriding default action: cIngress.foo]
+# [MethodCall]: foo(|cIngress.tbl1_cIngress.foo_arg_bar(bit<16>)|);
+# [If Statement]: bar == 16w0xf00d Condition: |cIngress.tbl1_cIngress.foo_arg_bar(bit<16>)| == 61453; Result: false
+# [AssignmentStatement]: hdr.ethernet.srcAddr = ~48w0xdeadbeeff00d;| Computed: hdr.ethernet.srcAddr = 36637162606578;
+# [P4Testgen MethodCall]: *.copy_out("cIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("cEgress");
+# [Control cEgress start]
+# [P4Testgen MethodCall]: *.copy_out("cEgress");
+# [P4Testgen MethodCall]: *.copy_in("uc");
+# [Control uc start]
+# [P4Testgen MethodCall]: *.copy_out("uc");
+# [P4Testgen MethodCall]: *.copy_in("DeparserI");
+# [Control DeparserI start]
+# [MethodCall]: packet.emit<Ethernet_h>(hdr.ethernet);
+# [Invalid emit: { dstAddr = TaintedExpression(bit<48>), srcAddr = TaintedExpression(bit<48>), etherType = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("DeparserI");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table cIngress.tbl1
+setdefault "cIngress.tbl1" "cIngress.foo"("bar":0x0000)
+
+
+packet 0 0000000000
+expect 0 0000000000$
+

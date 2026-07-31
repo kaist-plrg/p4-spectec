@@ -1,0 +1,239 @@
+=== Object types and values
+
+// Added
+${syntax: objectTypeIR objectReferenceValue}
+
+// Added
+Stateful objects are represented using `objectTypeIR`. At runtime, these
+objects are passed along directionless parameters as references
+(`objectReferenceValue`).
+
+// 353 - Modified
+The types `parser`, `control`, and `package` cannot be used as types of
+arguments for actions, functions, methods, parsers, controls, or tables. They
+_can_ be used as types for the arguments passed to constructors.
+
+[#sec-extern-object-type]
+==== Extern object types
+
+// 332 - Modified
+An extern object declaration declares an object and all methods that can be
+invoked to perform computations and to alter the state of the object. Extern
+declarations may only appear as allowed by the architecture model and may be
+specific to a target.
+
+// 333 - Modified
+${syntax: externConstructorPrototype externMethodPrototype
+          externConstructorOrMethodPrototype externObjectDeclaration}
+
+// 334
+For example, the P4 core library introduces two extern objects `packet_in` and
+`packet_out` used for manipulating packets (see <<sec-packet-data-extraction>>
+and <<sec-deparse>>). Here is an example showing how the methods of these
+objects can be invoked on a packet:
+
+// 335
+[source,p4]
+----
+extern packet_out {
+    void emit<T>(in T hdr);
+}
+control d(packet_out b, in Hdr h) {
+    apply {
+        b.emit(h.ipv4);       // write ipv4 header into output packet
+    }                         // by calling emit method
+}
+----
+
+// Added
+An extern object declaration introduces a new extern object type definition.
+
+// Added
+${syntax: externObjectTypeDefIR}
+
+// Added
+Extern object types can be referred to using their name. Internally, extern
+object types are represented as:
+
+// Added
+${syntax: externObjectTypeIR}
+
+===== Type checking
+
+// Added
+Extern object types are introduced by `extern` declarations. Its typing rule is
+explained in <<sem-extern-object-declaration>>. Extern object types are then
+used by referencing their names. Thus extern object types can be obtained from
+named types, as illustrated in <<sec-named-type>>.
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: Type_wf/externObjectTypeIR}
+${rulegroup-prose: Type_wf/externObjectTypeIR}
+
+[#sec-parser-object-type]
+==== Parser object types
+
+// 354
+A parser type declaration describes the signature of a parser. A parser should
+have at least one argument of type `packet_in`, representing the received
+packet that is processed.
+
+// 355 - Modified
+${syntax: parserTypeDeclaration}
+
+// 356
+For example, the following is a type declaration of a parser type named `P`
+that is parameterized on a type variable `H`. That parser receives as input a
+`packet_in` value `b` and produces two values:
+
+// 357
+* A value with a user-defined type `H`
+* A value with a predefined type `Counters`
+
+// 358
+[source,p4]
+----
+struct Counters { /* Fields omitted */ }
+parser P<H>(packet_in b,
+            out H packetHeaders,
+            out Counters counters);
+----
+
+// Added
+A parser type declaration introduces a new parser object type definition.
+
+// Added
+${syntax: parserObjectTypeDefIR}
+
+// Added
+Parser types can be referred to using their name and type arguments.
+Internally, parser types are represented as:
+
+// Added
+${syntax: parserObjectTypeIR}
+
+===== Type checking
+
+// Added
+Parser object types are introduced by parser type declarations. Its typing rule is
+explained in <<sec-parser-type-declaration>>. Parser object types are then used
+by referencing their names. Thus parser object types can be obtained from named
+types, as illustrated in <<sec-named-type>>.
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: Type_wf/parserObjectTypeIR}
+${rulegroup-prose: Type_wf/parserObjectTypeIR}
+
+[#sec-control-object-type]
+==== Control object types
+
+// 359
+A control type declaration describes the signature of a control block.
+
+// 360 - Modified
+${syntax: controlTypeDeclaration}
+
+// 361
+Control type declarations are similar to parser type declarations.
+
+// Added
+A control type declaration introduces a new control object type definition.
+
+// Added
+${syntax: controlObjectTypeDefIR}
+
+// Added
+Control types can be referred to using their name and type arguments.
+Internally, control types are represented as:
+
+// Added
+${syntax: controlObjectTypeIR}
+
+===== Type checking
+
+// Added
+Control object types are introduced by control type declarations. Its typing rule
+is explained in <<sec-control-type-declaration>>. Control object types are then
+used by referencing their names. Thus control object types can be obtained from
+named types, as illustrated in <<sec-named-type>>.
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: Type_wf/controlObjectTypeIR}
+${rulegroup-prose: Type_wf/controlObjectTypeIR}
+
+[#sec-package-object-type]
+==== Package object types
+
+// 362
+A package type describes the signature of a package.
+
+// 363 - Modified
+${syntax: packageTypeDeclaration}
+
+// Added
+This introduces a new package object type definition.
+
+// Added
+${syntax: packageObjectTypeDefIR}
+
+// Added
+Package types can be referred to using their name and type arguments.
+Internally, package types are represented as:
+
+// Added
+${syntax: packageObjectTypeIR}
+
+===== Type checking
+
+// Added
+Package object types are introduced by `package` declarations. Its typing rule
+is explained in <<sec-package-type-declaration>>. Package object types are then
+used by referencing their names. Thus package object types can be obtained from
+named types, as illustrated in <<sec-named-type>>.
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: Type_wf/packageObjectTypeIR}
+${rulegroup-prose: Type_wf/packageObjectTypeIR}
+
+==== Table object types
+
+// 892 - Modified
+A `table` declaration introduces a table instance and a table type definition.
+
+// Added
+${syntax: tableDeclaration tableObjectTypeDefIR}
+
+// Added
+Internally, table types are represented as:
+
+// Added
+${syntax: tableObjectTypeIR}
+
+// Added
+Table metadata types are introduced in <<sec-table-metadata-type-and-value>>.
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: Type_wf/tableObjectTypeIR}
+${rulegroup-prose: Type_wf/tableObjectTypeIR}
+
+==== Object reference values
+
+// Added
+P4 objects are stateful, thus their values are references to the actual objects
+allocated in the global store.
+
+// Added
+${syntax: objectId objectReferenceValue}
+
+// Added
+Objects are referred to by their fully-qualified names from the top-level scope.

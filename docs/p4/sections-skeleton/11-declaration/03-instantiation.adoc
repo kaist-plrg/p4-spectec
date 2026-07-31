@@ -1,0 +1,243 @@
+[#sec-instantiation-declaration]
+=== Instantiations
+
+// 688
+Instantiations are similar to variable declarations, but are reserved for the
+types with constructors (``extern`` objects, ``control`` blocks, ``parser``s,
+and ``package``s):
+
+// 689 - Modified
+${syntax: instantiation}
+
+// 690 - Modified
+An instantiation is written as a constructor invocation followed by a name.
+Instantiations are always executed at compilation time (Section
+<<sec-instantiation>>). The effect is to allocate an object with the specified
+name, and to bind it to the result of the constructor invocation. Note that
+instantiation arguments can be specified by name.
+
+// 691
+For example, a hypothetical bank of counter objects can be instantiated as
+follows:
+
+// 692
+[source,p4]
+----
+// from target library
+enum CounterType {
+   Packets,
+   Bytes,
+   Both
+}
+extern Counter {
+    Counter(bit<32> size, CounterType type);
+    void increment(in bit<32> index);
+}
+// user program
+control c(/* parameters omitted */) {
+    Counter(32w1024, CounterType.Both) ctr;  // instantiation
+    apply { /* body omitted */ }
+}
+----
+
+// 699
+A P4 program may not instantiate controls and parsers at the top-level. This
+restriction is designed to ensure that most state resides in the architecture
+itself, or is local to a ``parser`` or ``control``. For example, the following
+program is not valid:
+
+// 700
+[source,p4]
+----
+// Program
+control c(/* parameters omitted */) { /* body omitted */ }
+c() c1;  // illegal top-level instantiation
+----
+
+// 701
+because control `c1` is instantiated at the top-level. Note that top-level
+declarations of constants and instantiations of extern objects are permitted.
+
+[#sec-instantiation-abstract-method]
+==== Objects with abstract methods
+
+// 693
+When instantiating an extern type that has ``abstract`` methods users have to
+supply implementations for all such methods. This is done using object
+initializers:
+
+// 694 - Modified
+${syntax: objectInitializer objectDeclarationList objectDeclaration}
+          
+// Added
+In P4~IR~, object initializers have the syntax:
+
+// Added
+${syntax: objectInitializerIR objectDeclarationListIR objectDeclarationIR}
+
+// 695
+Abstract method implementations must use the same number of parameters, and the
+same parameter directions as those declared in the extern object declaration.
+Note that overloading of abstract methods is not allowed, thus an
+implementation could be matched to a declaration only with the method name.
+
+// 696 - Modified
+Abstract method implementations can only use the supplied arguments or refer to
+values that are in the same initializer block or the top-level scope. When
+calling another method of the same instance the `this` keyword is used to
+indicate the current object instance:
+
+// 697
+[source,p4]
+----
+// Instantiate a balancer
+Balancer() b = {  // provide an implementation for the abstract methods
+    bit<4> on_new_flow(in bit<32> address) {
+        // uses the address and the number of flows to balance the load
+        bit<32> count = this.getFlowCount();  // call method of the same instance
+        return (address + count)[3:0];
+    }
+}
+----
+
+// 698
+Abstract methods may be invoked by users explicitly, or they may be invoked by
+the target architecture. The architectural description has to specify when the
+abstract methods are invoked and what the meaning of their arguments and return
+values is; target architectures may impose additional constraints on abstract
+methods.
+
+===== Type checking
+
+// Added
+An object declaration is type checked with the relation:
+
+// Added
+${relation-title-source: ObjectDecl_ok}
+${relation-title-prose: ObjectDecl_ok}
+
+// Added
+It is defined by the following rules:
+
+// Added
+${rulegroup-source: ObjectDecl_ok}
+${rulegroup-prose: ObjectDecl_ok}
+
+// Added
+A list of object declarations is type checked with the relation:
+
+// Added
+${relation-title-source: ObjectDeclList_ok}
+${relation-title-prose: ObjectDeclList_ok}
+
+// Added
+${rulegroup-source: ObjectDeclList_ok}
+${rulegroup-prose: ObjectDeclList_ok}
+
+// Added
+${relation-title-source: ObjectDecls_ok}
+${relation-title-prose: ObjectDecls_ok}
+
+// Added
+${rulegroup-source: ObjectDecls_ok}
+${rulegroup-prose: ObjectDecls_ok}
+
+// Added
+===== Compile-time evaluation
+
+// Added
+At compile-time, an object declaration is loaded with the relation:
+
+// Added
+${relation-title-source: ObjectDecl_inst}
+${relation-title-prose: ObjectDecl_inst}
+
+// Added
+It is defined by the following rules:
+
+// Added
+${rulegroup-source: ObjectDecl_inst}
+${rulegroup-prose: ObjectDecl_inst}
+
+// Added
+A list of object declarations is loaded with the relation:
+
+// Added
+${relation-title-source: ObjectDecls_inst}
+${relation-title-prose: ObjectDecls_inst}
+
+// Added
+${rulegroup-source: ObjectDecls_inst}
+${rulegroup-prose: ObjectDecls_inst}
+
+==== Type checking
+
+// Added
+Instantiations are type checked with the relation:
+
+// Added
+${relation-title-source: InstDecl_ok}
+${relation-title-prose: InstDecl_ok}
+
+// Added
+After type checking, in P4~IR~, instantiations have the syntax:
+
+// Added
+${syntax: instantiationIR}
+
+// Added
+${rulegroup-source: InstDecl_ok}
+${rulegroup-prose: InstDecl_ok}
+
+// Added
+When used as a top-level declaration, instantiations are typed with:
+
+// Added
+${rulegroup-source: Decl_ok/instantiation}
+${rulegroup-prose: Decl_ok/instantiation}
+
+// Added
+There are two sub-relations, depending on whether object initializers were
+provided or not.
+
+[discrete]
+===== When object initializers are absent
+
+// Added
+${relation-title-source: InstDecl_non_objectInitializer_ok}
+${relation-title-prose: InstDecl_non_objectInitializer_ok}
+
+// Added
+${rulegroup-source: InstDecl_non_objectInitializer_ok}
+${rulegroup-prose: InstDecl_non_objectInitializer_ok}
+
+[discrete]
+===== When object initializers are present
+
+// Added
+${relation-title-source: InstDecl_objectInitializer_ok}
+${relation-title-prose: InstDecl_objectInitializer_ok}
+
+// Added
+${rulegroup-source: InstDecl_objectInitializer_ok}
+${rulegroup-prose: InstDecl_objectInitializer_ok}
+
+==== Compile-time evaluation
+
+// Added
+Instantiations are evaluated at compile-time with the relation:
+
+// Added
+${relation-title-source: InstDecl_inst}
+${relation-title-prose: InstDecl_inst}
+
+// Added
+${rulegroup-source: InstDecl_inst}
+${rulegroup-prose: InstDecl_inst}
+
+// Added
+When used as a top-level declaration, instantiations are evaluated with:
+
+// Added
+${rulegroup-source: Decl_inst/instantiationIR}
+${rulegroup-prose: Decl_inst/instantiationIR}

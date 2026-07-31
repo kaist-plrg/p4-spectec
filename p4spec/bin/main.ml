@@ -1,304 +1,612 @@
+open Lang
+open Runtime.Sim.Signature
 open Util.Error
 open Util.Source
 
 let version = "0.1"
 
-(* File collector *)
+exception CommandError of string
 
-let rec collect_files ~(suffix : string) dir =
-  let files = Sys_unix.readdir dir in
-  Array.sort String.compare files;
-  Array.fold_left
-    (fun files file ->
-      let filename = dir ^ "/" ^ file in
-      if Sys_unix.is_directory_exn filename && file <> "include" then
-        files @ collect_files ~suffix filename
-      else if String.ends_with ~suffix filename then files @ [ filename ]
-      else files)
-    [] files
+(* Operations *)
 
-(* Exclude collector *)
-
-let collect_exclude filename_exclude =
-  let ic = open_in filename_exclude in
-  let rec parse_lines excludes =
-    try
-      let exclude = input_line ic in
-      if String.starts_with ~prefix:"#" exclude then parse_lines excludes
-      else parse_lines (exclude :: excludes)
-    with End_of_file -> excludes
+let run_with_instr (module Simulator : SIM) spec_sim relname includes_p4 path_p4
+    =
+  let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+    Inst.Coverage_instr.make ()
   in
-  let excludes = parse_lines [] in
-  close_in ic;
-  excludes
+  Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Simulator.Interp.eval_program relname includes_p4 path_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_instr () in
+  (result, cover)
 
-let collect_excludes (paths_exclude : string list) =
-  let filenames_exclude =
-    List.concat_map (collect_files ~suffix:".exclude") paths_exclude
+let run_with_dangling (module Simulator : SIM) spec_sim relname includes_p4
+    path_p4 =
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
   in
-  List.concat_map collect_exclude filenames_exclude
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Simulator.Interp.eval_program relname includes_p4 path_p4 in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
+
+let sim_with_instr (module Simulator : SIM) spec_sim includes_p4 path_p4
+    path_stf =
+  let (module IH : Inst.Handler.HANDLER), read_coverage_instr =
+    Inst.Coverage_instr.make ()
+  in
+  Inst.Hook.register [ (module IH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
+  Inst.Hook.finish ();
+  let cover = read_coverage_instr () in
+  (result, cover)
+
+let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 path_p4
+    path_stf =
+  let (module DH : Inst.Handler.HANDLER), read_coverage_dangling =
+    Inst.Coverage_dangling.make ()
+  in
+  Inst.Hook.register [ (module DH : Inst.Handler.HANDLER) ];
+  Inst.Hook.init_spec spec_sim;
+  let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
+  Inst.Hook.finish ();
+  let cover = read_coverage_dangling () in
+  (result, cover)
+
+let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
+    paths_p4 path_cov =
+  let spec_sim, (module Simulator) =
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
+  in
+  let spec_sl =
+    match spec_sim with
+    | SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Instr.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left
+      (fun cover_multi path_p4 ->
+        let _, cover_single =
+          run_with_instr (module Simulator) spec_sim relname includes_p4 path_p4
+        in
+        Coverage.Instr.Multi.extend cover_multi path_p4 cover_single)
+      cover_multi paths_p4
+  in
+  Coverage.Instr.Log.log_spec ~path_cov_opt:(Some path_cov) cover_multi spec_sl
+
+let cover_run_dangling ?(arch : string option) mode paths_spec relname
+    includes_p4 paths_p4 path_cov =
+  let spec_sim, (module Simulator) =
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
+  in
+  let spec_sl =
+    match spec_sim with
+    | SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Dangling.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left
+      (fun cover_multi path_p4 ->
+        let program_result, cover_single =
+          run_with_dangling
+            (module Simulator)
+            spec_sim relname includes_p4 path_p4
+        in
+        let wellformed, welltyped =
+          match program_result with
+          | Pass _ -> (true, true)
+          | Fail (`Syntax _) -> (false, false)
+          | Fail (`Runtime _) -> (true, false)
+        in
+        Coverage.Dangling.Multi.extend cover_multi path_p4 wellformed welltyped
+          cover_single)
+      cover_multi paths_p4
+  in
+  Coverage.Dangling.Multi.log ~path_cov_opt:(Some path_cov) cover_multi
+
+let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
+    paths_stf path_cov =
+  let spec_sim, (module Simulator) =
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
+  in
+  let spec_sl =
+    match spec_sim with
+    | SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Instr.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left2
+      (fun cover_multi path_p4 path_stf ->
+        let _, cover_single =
+          sim_with_instr
+            (module Simulator)
+            spec_sim includes_p4 path_p4 path_stf
+        in
+        Coverage.Instr.Multi.extend cover_multi path_p4 cover_single)
+      cover_multi paths_p4 paths_stf
+  in
+  Coverage.Instr.Log.log_spec ~path_cov_opt:(Some path_cov) cover_multi spec_sl
+
+let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
+    paths_p4 paths_stf path_cov =
+  let spec_sim, (module Simulator) =
+    Backend_sim.Build.build ?arch ~final:true mode paths_spec
+  in
+  let spec_sl =
+    match spec_sim with
+    | SL spec_sl -> spec_sl
+    | _ -> raise (CommandError "dangling coverage is only supported for SL")
+  in
+  let cover_multi = Coverage.Dangling.Multi.init spec_sl in
+  let cover_multi =
+    List.fold_left2
+      (fun cover_multi path_p4 path_stf ->
+        let program_result, cover_single =
+          sim_with_dangling
+            (module Simulator)
+            spec_sim includes_p4 path_p4 path_stf
+        in
+        let wellformed, welltyped =
+          match program_result with
+          | Pass -> (true, true)
+          | Fail (`Syntax _) -> (true, false)
+          | Fail (`Runtime _) -> (false, false)
+        in
+        Coverage.Dangling.Multi.extend cover_multi path_p4 wellformed welltyped
+          cover_single)
+      cover_multi paths_p4 paths_stf
+  in
+  Coverage.Dangling.Multi.log ~path_cov_opt:(Some path_cov) cover_multi
 
 (* Commands *)
 
 let elab_command =
-  Core.Command.basic ~summary:"parse and elaborate a p4_16 spec"
+  Core.Command.basic ~summary:"parse and elaborate a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames = anon (sequence ("filename" %: string)) in
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
+     in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames in
-         let spec_il = Elaborate.Elab.elab_spec spec in
+         let spec_il = Pass.elab paths_spec in
          Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
          ()
        with
+       | CommandError msg -> Format.printf "%s\n" msg
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
-let struct_command =
-  Core.Command.basic ~summary:"insert structured control flow to a p4_16 spec"
+let algo_command =
+  Core.Command.basic ~summary:"check algorithmic property of a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames = anon (sequence ("filename" %: string)) in
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
+     in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_al = Pass.algo paths_spec in
+         Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
+         ()
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | AlgoError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let struct_command =
+  Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
+     in
+     fun () ->
+       try
+         let spec_sl = Pass.structure ~final:true paths_spec in
          Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
          ()
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
+         Format.printf "%s\n" (string_of_error at msg))
 
-let run_il_command =
-  Core.Command.basic
-    ~summary:"run static semantics of a p4_16 spec based on backtracking IL"
+let prose_command =
+  Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and debug = flag "-dbg" no_arg ~doc:"print debug traces" in
-     fun () ->
-       try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         match
-           Interp_il.Typing.run_typing ~debug spec_il includes_p4 filename_p4
-         with
-         | WellTyped -> Format.printf "well-typed\n"
-         | IllTyped (_, msg) -> Format.printf "ill-typed: %s\n" msg
-         | IllFormed (_, msg) -> Format.printf "ill-formed: %s\n" msg
-       with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
-
-let run_sl_command =
-  Core.Command.basic
-    ~summary:"run static semantics of a p4_16 spec based on non-backtracking SL"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and derive = flag "-derive" no_arg ~doc:"derive value dependency graph"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         match
-           Interp_sl.Typing.run_typing ~derive spec_sl includes_p4 filename_p4
-             filenames_ignore
-         with
-         | WellTyped _ -> Format.printf "well-typed\n"
-         | IllTyped (_, msg, _) -> Format.printf "ill-typed: %s\n" msg
-         | IllFormed (_, msg, _) -> Format.printf "ill-formed: %s\n" msg
+         let spec_pl = Pass.annotate paths_spec in
+         Format.printf "%s\n" (Pl.Render.render_spec spec_pl);
+         ()
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | ProseError (at, msg)
+       ->
+         Format.printf "%s\n" (string_of_error at msg))
 
-let cover_dangling_command =
-  Core.Command.basic ~summary:"measure dangling coverage of the P4 type system"
+let run_command =
+  Core.Command.basic ~summary:"execute the P4 spec against a P4 program"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and dirnames_p4 =
-       flag "-d" (listed string) ~doc:"p4 directories to typecheck"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
-     and filename_cov =
-       flag "-cov" (required string) ~doc:"output coverage file"
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and path_p4 = flag "-p" (required string) ~doc:"P4 program"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
+     and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
+           flag "sl" no_arg ~doc:"run SL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
+         ]
+         ~if_nothing_chosen:(Default_to SL_mode)
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         let excludes_p4 = collect_excludes excludes_p4 in
-         let filenames_p4 =
-           List.concat_map (collect_files ~suffix:".p4") dirnames_p4
+         let cache = not no_cache in
+         let spec_sim, (module Simulator) =
+           Backend_sim.Build.build ~cache ~det ~guard ~final:true mode
+             paths_spec
          in
-         let filenames_p4 =
-           List.filter
-             (fun filename_p4 ->
-               not (List.exists (String.equal filename_p4) excludes_p4))
-             filenames_p4
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
          in
-         let cover =
-           Interp_sl.Typing.cover_typings spec_sl includes_p4 filenames_p4
-             filenames_ignore
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
          in
-         Runtime_testgen.Cov.Multiple.log ~filename_cov_opt:(Some filename_cov)
-           cover
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec_sim;
+         let result =
+           Simulator.Interp.eval_program relname includes_p4 path_p4
+         in
+         Inst.Hook.finish ();
+         match result with
+         | Pass _ -> Format.printf "passed\n"
+         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg)
+       | InterpError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
+let sim_command =
+  Core.Command.basic
+    ~summary:"simulate a target architecture with a P4 program and P4 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and path_p4 = flag "-p" (required string) ~doc:"P4 program"
+     and path_stf = flag "-stf" (required string) ~doc:"stf test file"
+     and arch = flag "-arch" (required string) ~doc:"target architecture"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
+     and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and guard =
+       flag "-guard" no_arg ~doc:"enable guard for builtins and externs"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
+     and trace =
+       Command.Param.choose_one
+         [
+           flag "-trace" no_arg ~doc:"emit execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Simple));
+           flag "-trace-full" no_arg ~doc:"emit full execution trace"
+           |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
+         ]
+         ~if_nothing_chosen:(Default_to None)
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
+           flag "sl" no_arg ~doc:"run SL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+           flag "pl" no_arg ~doc:"run PL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b PL_mode);
+         ]
+         ~if_nothing_chosen:(Default_to SL_mode)
+     in
+     fun () ->
+       try
+         let cache = not no_cache in
+         let spec_sim, (module Simulator) =
+           Backend_sim.Build.build ~cache ~det ~guard ~arch ~final:true mode
+             paths_spec
+         in
+         let handlers =
+           if profile then
+             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+             [ (module PH : Inst.Handler.HANDLER) ]
+           else []
+         in
+         let handlers =
+           match trace with
+           | Some level ->
+               let (module TH : Inst.Handler.HANDLER) =
+                 Inst.Trace.make ~level ()
+               in
+               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+           | None -> handlers
+         in
+         Inst.Hook.register handlers;
+         Inst.Hook.init_spec spec_sim;
+         let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
+         Inst.Hook.finish ();
+         match result with
+         | Pass -> Format.printf "passed\n"
+         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
+         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg)
+       | StfError msg -> Format.printf "%s\n" (string_of_error no_region msg))
+
+let cover_run_command =
+  Core.Command.basic ~summary:"measure coverage of the spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"P4 test directories"
+     and path_cov = flag "-cov" (required string) ~doc:"output coverage file"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
+     in
+     fun () ->
+       try
+         let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
+         let paths_p4 =
+           testdirs_p4
+           |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
+           |> List.filter (fun path_p4 ->
+                  not (List.exists (String.equal path_p4) excludes_p4))
+         in
+         match mode with
+         | `Instr ->
+             cover_run_instr SL_mode paths_spec relname includes_p4 paths_p4
+               path_cov
+         | `Dangling ->
+             cover_run_dangling SL_mode paths_spec relname includes_p4 paths_p4
+               path_cov
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
+
+let cover_sim_command =
+  Core.Command.basic
+    ~summary:"measure coverage of the spec when simulated on STF"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
+     and testdirs_p4 = flag "-p4-dir" (listed string) ~doc:"P4 test directories"
+     and testdirs_stf =
+       flag "-stf-dir" (listed string) ~doc:"STF test directories"
+     and patchdir =
+       flag "-patch-dir" (listed string) ~doc:"directory for P4/STF patches"
+     and path_cov = flag "-cov" (required string) ~doc:"output coverage file"
+     and arch = flag "-arch" (required string) ~doc:"target architecture"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "instr" no_arg ~doc:"measure instruction coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Instr);
+           flag "dangling" no_arg ~doc:"measure dangling coverage"
+           |> map ~f:(fun b -> Core.Option.some_if b `Dangling);
+         ]
+         ~if_nothing_chosen:(Default_to `Instr)
+     in
+     fun () ->
+       try
+         let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
+         let paths_p4, paths_stf =
+           Util.Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
+           |> List.map (fun (path_p4, path_stf, _) -> (path_p4, path_stf))
+           |> List.filter (fun (path_p4, _) ->
+                  not (List.exists (String.equal path_p4) excludes_p4))
+           |> List.split
+         in
+         match mode with
+         | `Instr ->
+             cover_sim_instr ~arch SL_mode paths_spec includes_p4 paths_p4
+               paths_stf path_cov
+         | `Dangling ->
+             cover_sim_dangling ~arch SL_mode paths_spec includes_p4 paths_p4
+               paths_stf path_cov
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let run_testgen_command =
   Core.Command.basic
     ~summary:"generate negative type checker tests from a p4_16 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
      and fuel = flag "-fuel" (required int) ~doc:"fuel for test generation"
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and excludes_p4 = flag "-e" (listed string) ~doc:"p4 test exclude paths"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
-     and dirname_gen =
-       flag "-gen" (required string) ~doc:"directory for generated p4 programs"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and excludes_p4 = flag "-e" (listed string) ~doc:"P4 test exclude paths"
+     and gendir =
+       flag "-gen-dir" (required string)
+         ~doc:"directory for generated p4 programs"
      and name_campaign =
        flag "-name" (optional string)
          ~doc:"name of the test generation campaign"
      and silent = flag "-silent" no_arg ~doc:"do not print logs to stdout"
      and randseed =
        flag "-seed" (optional int) ~doc:"seed for random number generator"
-     and dirname_cold_boot =
-       flag "-cold" (optional string) ~doc:"seed p4 directory for cold boot"
-     and filename_boot =
-       flag "-warm" (optional string) ~doc:"coverage file for warm boot"
+     and bootdir =
+       flag "-boot-dir" (optional string) ~doc:"seed p4 directory for boot"
+     and path_boot =
+       flag "-boot-file" (optional string) ~doc:"coverage file for boot"
      and random = flag "-random" no_arg ~doc:"randomize AST selection"
      and hybrid =
        flag "-hybrid" no_arg
          ~doc:"randomize AST selection when no derivations exist"
      and strict =
        flag "-strict" no_arg
-         ~doc:"cover a new phantom only if it was intended by a mutation"
+         ~doc:"cover a new dangling only if it was intended by a mutation"
      in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
+         let spec_sl = Pass.structure ~final:true paths_spec in
          let logmode =
-           if silent then Testgen.Modes.Silent else Testgen.Modes.Verbose
+           if silent then Backend_testgen_neg.Modes.Silent
+           else Backend_testgen_neg.Modes.Verbose
          in
          let bootmode =
-           match (dirname_cold_boot, filename_boot) with
-           | Some dirname_cold_boot, None ->
-               Testgen.Modes.Cold (excludes_p4, dirname_cold_boot)
-           | None, Some filename_boot -> Testgen.Modes.Warm filename_boot
+           match (bootdir, path_boot) with
+           | Some bootdir, None ->
+               Backend_testgen_neg.Modes.Cold (excludes_p4, bootdir)
+           | None, Some path_boot -> Backend_testgen_neg.Modes.Warm path_boot
            | Some _, Some _ ->
-               Format.asprintf
-                 "Error: should specify only one of -cold or -warm\n"
-               |> failwith
+               raise
+                 (CommandError
+                    "Error: should specify only one of -boot-dir or -boot-file")
            | None, None ->
-               Format.asprintf "Error: should specify either -cold or -warm\n"
-               |> failwith
+               raise
+                 (CommandError "Error: should specify either -cold or -warm")
          in
          let mutationmode =
-           if random then Testgen.Modes.Random
-           else if hybrid then Testgen.Modes.Hybrid
-           else Testgen.Modes.Derive
+           if random then Backend_testgen_neg.Modes.Random
+           else if hybrid then Backend_testgen_neg.Modes.Hybrid
+           else Backend_testgen_neg.Modes.Derive
          in
          let covermode =
-           if strict then Testgen.Modes.Strict else Testgen.Modes.Relaxed
+           if strict then Backend_testgen_neg.Modes.Strict
+           else Backend_testgen_neg.Modes.Relaxed
          in
-         Testgen.Gen.fuzz_typing fuel spec_sl includes_p4 filenames_ignore
-           dirname_gen name_campaign randseed logmode bootmode mutationmode
-           covermode
+         Backend_testgen_neg.Gen.fuzzer fuel spec_sl relname includes_p4 gendir
+           name_campaign randseed logmode bootmode mutationmode covermode
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let run_testgen_debug_command =
   Core.Command.basic
     ~summary:"debug close-AST deriver in negative type checker generator"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
-     and dirname_debug =
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and relname = flag "-rel" (required string) ~doc:"spec relation to run"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and path_p4 = flag "-p" (required string) ~doc:"P4 program"
+     and debugdir =
        flag "-debug" (required string) ~doc:"directory for debug files"
-     and pid = flag "-pid" (required int) ~doc:"phantom id to close-miss" in
+     and iid = flag "-iid" (required int) ~doc:"dangling id to close-miss" in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         Testgen.Derive.debug_phantom spec_sl includes_p4 filename_p4
-           filenames_ignore dirname_debug pid
+         let spec_sl = Pass.structure ~final:true paths_spec in
+         Backend_testgen_neg.Derive.debug_dangling spec_sl relname includes_p4
+           path_p4 debugdir iid
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let interesting_command =
-  Core.Command.basic ~summary:"interestingness test for reducing p4_16 programs"
+  Core.Command.basic ~summary:"interestingness test for reducing P4 programs"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filenames_spec = anon (sequence ("filename" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and relname = flag "-rel" (required string) ~doc:"relation to run"
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and check_well_typed =
        flag "-well" no_arg
          ~doc:"'interesting' if well-typed (default: ill-typed)"
      and check_close_miss =
        flag "-close" no_arg ~doc:"'interesting' if close-miss (default: hit)"
-     and pid = flag "-pid" (required int) ~doc:"phantom id to test"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
-     and dbg = flag "-dbg" no_arg ~doc:"print single coverage"
-     and filenames_ignore =
-       flag "-ignore" (listed string)
-         ~doc:"relations or functions to ignore when reporting coverage"
-     in
+     and iid = flag "-iid" (required int) ~doc:"dangling id to test"
+     and path_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
-         let spec = List.concat_map Frontend.Parse.parse_file filenames_spec in
-         let spec_il = Elaborate.Elab.elab_spec spec in
-         let spec_sl = Structure.Struct.struct_spec spec_il in
-         let typing_result =
-           Interp_sl.Typing.run_typing spec_sl includes_p4 filename_p4
-             filenames_ignore
+         let spec_sim, (module Simulator) =
+           Backend_sim.Build.build ~final:true SL_mode paths_spec
          in
-         if dbg then
-           match typing_result with
-           | IllTyped (_, _, cover_single) | WellTyped (_, _, cover_single) ->
-               Interp_sl.Interp.SCov.Cover.iter
-                 (fun pid (branch : Interp_sl.Interp.SCov.Branch.t) ->
-                   match branch.status with
-                   | Hit -> Printf.printf "%d Hit\n" pid
-                   | Miss [] -> Printf.printf "%d Miss\n" pid
-                   | Miss _ -> Printf.printf "%d Close\n" pid)
-                 cover_single
-           | _ -> ()
-         else ();
-         match typing_result with
-         | WellTyped (_, _, cover_single) ->
+         let result, cover =
+           run_with_dangling
+             (module Simulator)
+             spec_sim relname includes_p4 path_p4
+         in
+         match result with
+         | Pass _ ->
              if check_well_typed then (
-               let branch = Interp_sl.Interp.SCov.Cover.find pid cover_single in
+               let branch = Coverage.Dangling.Single.Cover.find iid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "WellTyped: Hit\n";
@@ -312,12 +620,15 @@ let interesting_command =
              else (
                Printf.printf "WellTyped\n";
                exit 11)
-         | IllTyped (_, _, cover_single) -> (
+         | Fail (`Syntax _) ->
+             Printf.printf "IllFormed";
+             exit 12
+         | Fail (`Runtime _) -> (
              if check_well_typed then (
                Printf.printf "IllTyped\n";
                exit 10)
              else
-               let branch = Interp_sl.Interp.SCov.Cover.find pid cover_single in
+               let branch = Coverage.Dangling.Single.Cover.find iid cover in
                match branch.status with
                | Hit ->
                    Printf.printf "IllTyped: Hit\n";
@@ -328,46 +639,82 @@ let interesting_command =
                | Miss [] ->
                    Printf.printf "IllTyped: Miss\n";
                    exit 1)
-         | IllFormed _ ->
-             Printf.printf "IllFormed";
-             exit 12
        with
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | InterpError (at, msg)
+       | ExternError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
+
+let splice_command =
+  Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and paths_input = flag "-splice" (listed string) ~doc:"skeleton documents"
+     and paths_output = flag "-out" (listed string) ~doc:"output files"
+     and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
+     fun () ->
+       try
+         if (not inplace) && List.length paths_input <> List.length paths_output
+         then raise (CommandError "number of input and output files must match");
+         let paths =
+           if inplace then List.combine paths_input paths_input
+           else List.combine paths_input paths_output
+         in
+         let spec = Pass.parse paths_spec in
+         let spec_pl = Pass.annotate paths_spec in
+         Backend_splice.Driver.splice_files spec spec_pl paths
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg)
+       | ElabError (at, msg)
+       | StructError (at, msg)
+       | ProseError (at, msg)
+       | SpliceError (at, msg) ->
+           Format.eprintf "%s\n" (string_of_error at msg);
+           Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to typecheck"
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and path_p4 = flag "-p" (required string) ~doc:"P4 program"
      and roundtrip =
        flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
      in
      fun () ->
        try
-         let parsed_il_file =
-           Interface.Parse.parse_file includes_p4 filename_p4
+         let _, (module Simulator) =
+           Backend_sim.Build.build ~final:true AL_mode paths_spec
          in
-         let string_p4 =
-           Format.asprintf "%a\n" Interface.Unparse.pp_program parsed_il_file
+         let value_program =
+           match Simulator.Interface.parse_program includes_p4 [ path_p4 ] with
+           | Pass value_program -> value_program
+           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
+         let str_program = Simulator.Interface.unparse_program value_program in
          if roundtrip then
-           let parsed_il_str =
-             Interface.Parse.parse_string filename_p4 string_p4
+           let value_program_roundtrip =
+             match Simulator.Interface.parse_string path_p4 str_program with
+             | Pass value_program_roundtrip -> value_program_roundtrip
+             | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
            in
-           Il.Eq.eq_value ~dbg:true parsed_il_file parsed_il_str
+           Il.Eq.eq_value ~dbg:true value_program value_program_roundtrip
            |> (fun b ->
                 if b then "Roundtrip successful" else "Roundtrip failed")
            |> print_endline
-         else string_p4 |> print_endline
+         else str_program |> print_endline
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
        | ElabError (at, msg) ->
            Format.printf "Elaboration error: %s\n" (string_of_error at msg)
        | ParseError (at, msg) ->
            Format.printf "Parse error: %s\n" (string_of_error at msg)
-       | Interface.Lexer.Error msg -> Format.printf "Lexer error: %s\n" msg
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
 let json_ast_command =
@@ -387,15 +734,13 @@ let json_ast_command =
            |> map ~f:(fun b -> Core.Option.some_if b `Parse);
          ]
          ~if_nothing_chosen:(Default_to `Emit)
-     and filenames = anon (non_empty_sequence_as_list ("filename" %: string)) in
+     and paths = anon (non_empty_sequence_as_list ("path" %: string)) in
      fun () ->
        match mode with
        | `Emit -> (
            try
-             let spec = List.concat_map Frontend.Parse.parse_file filenames in
-             let spec_il = Elaborate.Elab.elab_spec spec in
-             let spec_sl = Structure.Struct.struct_spec spec_il in
-             let sl_ast_json = Sl.Ast.spec_to_yojson spec_sl in
+             let spec_sl = Pass.structure ~final:true paths in
+             let sl_ast_json = Sl.spec_to_yojson spec_sl in
              Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
              ()
            with
@@ -405,28 +750,32 @@ let json_ast_command =
                Format.printf "%s\n" (string_of_error at msg))
        | `Parse -> (
            (* only take the first argument *)
-           let filename = List.hd filenames in
-           let parsed =
-             Yojson.Safe.from_file filename |> Sl.Ast.spec_of_yojson
-           in
+           let path = List.hd paths in
+           let parsed = Yojson.Safe.from_file path |> Sl.spec_of_yojson in
            match parsed with
-           | Ok spec -> Format.printf "%s\n" (Sl.Print.string_of_spec spec)
-           | Error err ->
-               Format.printf "Error while parsing %s: %s" filename err))
+           | Ok spec_sl ->
+               Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)
+           | Error err -> Format.printf "Error while parsing %s: %s" path err))
 
 let p4_program_value_json_command =
   Core.Command.basic
     ~summary:"convert a P4 program to a value and output as JSON"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map includes_p4 = flag "-i" (listed string) ~doc:"p4 include paths"
-     and filename_p4 = flag "-p" (required string) ~doc:"p4 file to convert" in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
+     and path_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
+       let _, (module Simulator) =
+         Backend_sim.Build.build ~final:true AL_mode paths_spec
+       in
        try
          let value_program =
-           Interp_sl.Typing.convert_program_to_value includes_p4 filename_p4
+           match Simulator.Interface.parse_program includes_p4 [ path_p4 ] with
+           | Pass value_program -> value_program
+           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         let json = Sl.Ast.value_to_yojson value_program in
+         let json = Sl.value_to_yojson value_program in
          Yojson.Safe.to_string json |> print_string
        with ParseError (at, msg) ->
          Format.printf "ill-formed: %s\n" (string_of_error at msg))
@@ -436,17 +785,22 @@ let unparse_json_value_command =
     ~summary:"parse a JSON value and unparse it back to P4 source code"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map filename_json = flag "-j" (required string) ~doc:"JSON file containing value" in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and path_json =
+       flag "-j" (required string) ~doc:"JSON file containing value"
+     in
      fun () ->
        try
-         let json = Yojson.Safe.from_file filename_json in
-         let value_result = Sl.Ast.value_of_yojson json in
+         let _, (module Simulator) =
+           Backend_sim.Build.build ~final:true AL_mode paths_spec
+         in
+         let json = Yojson.Safe.from_file path_json in
+         let value_result = Sl.value_of_yojson json in
          match value_result with
          | Ok value ->
-             let p4_source = Format.asprintf "%a\n" Interface.Unparse.pp_program value in
+             let p4_source = Simulator.Interface.unparse_program value in
              print_string p4_source
-         | Error err ->
-             Format.printf "Error parsing JSON value: %s\n" err
+         | Error err -> Format.printf "Error parsing JSON value: %s\n" err
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
        | Yojson.Json_error msg -> Format.printf "JSON parsing error: %s\n" msg
@@ -454,17 +808,28 @@ let unparse_json_value_command =
 
 let command =
   Core.Command.group
-    ~summary:"p4spec: a language design framework for the p4_16 language"
+    ~summary:"p4spectec: a language design framework for the p4_16 language"
     [
+      (* Transformations *)
       ("elab", elab_command);
+      ("algo", algo_command);
       ("struct", struct_command);
-      ("run-il", run_il_command);
-      ("run-sl", run_sl_command);
-      ("cover-dangling", cover_dangling_command);
+      ("prose", prose_command);
+      (* Execution *)
+      ("run", run_command);
+      ("sim", sim_command);
+      (* Coverage *)
+      ("cover-run", cover_run_command);
+      ("cover-sim", cover_sim_command);
+      (* Negative type checker test generation and coverage *)
       ("testgen", run_testgen_command);
       ("testgen-dbg", run_testgen_debug_command);
       ("interesting", interesting_command);
+      (* Splicing *)
+      ("splice", splice_command);
+      (* Interfacing with P4 *)
       ("parse", parse_command);
+      (* Interfacing with external tools via JSON *)
       ("json-ast", json_ast_command);
       ("p4-program-value-json", p4_program_value_json_command);
       ("unparse-json-value", unparse_json_value_command);

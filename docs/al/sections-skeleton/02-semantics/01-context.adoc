@@ -1,0 +1,46 @@
+=== Context
+
+A context holds the environments used for evaluation. It consists of two
+layers, global and local, each holding four environments: a value environment
+for variable bindings (`venv`), a type definition environment (`tdenv`), a
+function definition environment (`fenv`), and a relation definition environment
+(`renv`). The global layer is populated once during the loading phase and
+remains constant throughout evaluation; the local layer is created fresh at
+each function or relation call and discarded upon return. Variable values are
+looked up only in the local layer; type and function definitions are looked up
+in the local layer first, falling back to the global layer if not found there.
+
+${syntax: context layer}
+${syntax: tdenv renv fenv venv}
+
+==== Loading a context
+
+Before evaluation can begin, a context must be loaded from the specification
+script. Loading iterates over all definitions in the script and registers each
+one in the appropriate environment of the global layer. Type definitions,
+relation definitions, and function definitions are loaded by separate helper
+functions that translate each definition form into its runtime representation
+and insert it into the context under the definition's identifier.
+
+${func-prose: load}
+
+${func-prose: load_typdef}
+
+${func-prose: load_reldef}
+
+${func-prose: load_funcdef}
+
+==== Creating sub-contexts for iteration
+
+When evaluating a premise or expression that is decorated with an iterator (`?`
+or `*`), the evaluator must operate on a collection of sub-contexts, one for
+each element of the iterated sequence. Each sub-context holds the slice of the
+current context relevant to a single iteration step. The sub-context creation
+functions decompose the current context along the bound iteration variables and
+yield the resulting collection of contexts.
+
+${func-prose: sub_opt}
+
+${func-prose: sub_list}
+
+${func-prose: sub_list'}

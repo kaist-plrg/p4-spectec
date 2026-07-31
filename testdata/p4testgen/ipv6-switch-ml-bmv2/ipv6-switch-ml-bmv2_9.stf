@@ -1,0 +1,57 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:34.307
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x86DD
+# [State] ipv6
+# [MethodCall]: packet.extract<ipv6_t>(hdr.ipv6);
+# [ExtractSuccess] hdr.ipv6@112 | Condition: |*packetLen_bits(bit<32>)| >= 432; | Extract Size: 320 -> hdr.ipv6.version = 0x0 | hdr.ipv6.traffic_class = 0x00 | hdr.ipv6.flow_label = 0x0000_0000 | hdr.ipv6.payload_length = 0x0000 | hdr.ipv6.nextHdr = 0x3A | hdr.ipv6.hopLimit = 0x00 | hdr.ipv6.srcAddr = 0x0000_0000_0000_0000_0000_0000_0000_0000 | hdr.ipv6.dstAddr = 0x0000_0000_0000_0000_0000_0000_0000_0000
+# [State] icmp6
+# [MethodCall]: packet.extract<icmp6_t>(hdr.icmp6);
+# [ExtractSuccess] hdr.icmp6@432 | Condition: |*packetLen_bits(bit<32>)| >= 464; | Extract Size: 32 -> hdr.icmp6.type = 0x00 | hdr.icmp6.code = 0x00 | hdr.icmp6.checksum = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: (hdr.ipv6.dstAddr[127:120] == 8w0xff) : exact @name("mcast_key");| Computed: key_0 = false;
+# [MethodCall]: ipv6_tbl_0/ipv6_tbl.apply();
+# [Table Branch: ingress.ipv6_tbl Choosing default action: NoAction_2/NoAction;]
+# [P4Testgen MethodCall]: NoAction_2/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [If Statement]: standard_metadata.instance_type == BMV2_V1MODEL_INSTANCE_TYPE_REPLICATION Condition: 0 == 5; Result: false
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:34525;  }
+# [MethodCall]: packet.emit<ipv6_t>(hdr.ipv6);
+# [Emit]: {$headerValid:true;;    version:0;  traffic_class:0;  flow_label:0;  payload_length:0;  nextHdr:58;  hopLimit:0;  srcAddr:0;  dstAddr:0;  }
+# [MethodCall]: packet.emit<icmp6_t>(hdr.icmp6);
+# [Emit]: {$headerValid:true;;    type:0;  code:0;  checksum:0;  }
+# [MethodCall]: packet.emit<udp_t>(hdr.udp);
+# [Invalid emit: { srcPort = TaintedExpression(bit<16>), dstPort = TaintedExpression(bit<16>), length_ = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000086DD0000000000003A0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 00000000000000000000000086DD0000000000003A0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

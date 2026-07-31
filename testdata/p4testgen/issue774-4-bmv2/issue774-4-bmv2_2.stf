@@ -1,0 +1,41 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:32.878
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("prs");
+# [Parser] prs
+# [State] start
+# [MethodCall]: p.extract<Header>(arg);
+# [ExtractSuccess] arg@0 | Condition: |*packetLen_bits(bit<32>)| >= 32; | Extract Size: 32 -> arg.data = 0x0000_0000
+# [MethodCall]: p.extract<Header>(h.h);
+# [ExtractFailure] h.h@32 | Condition: !(|*packetLen_bits(bit<32>)| >= 64); | Extract Size: 32
+# [P4Testgen AssignmentStatement]: s.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("prs");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("i");
+# [Control i start]
+# [P4Testgen MethodCall]: *.copy_out("i");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("e");
+# [Control e start]
+# [P4Testgen MethodCall]: *.copy_out("e");
+# [P4Testgen MethodCall]: *.copy_in("cc");
+# [Control cc start]
+# [P4Testgen MethodCall]: *.copy_out("cc");
+# [P4Testgen MethodCall]: *.copy_in("d");
+# [Control d start]
+# [MethodCall]: b.emit<Header>(hdr.h);
+# [Invalid emit: { data = TaintedExpression(bit<32>) }]
+# [P4Testgen MethodCall]: *.copy_out("d");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000
+expect 0 000000$
+

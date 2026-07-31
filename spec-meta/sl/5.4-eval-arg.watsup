@@ -1,0 +1,19 @@
+;; Argument evaluation rules
+
+rule Eval_arg/exp:
+  C |- EXP exp : OK val
+  -- Eval_exp: C |- exp : OK val
+
+rule Eval_arg/fun:
+  C |- FUN id : OK (FUNC id)
+
+rule Eval_arg/fail:
+  C |- arg : FAIL
+  -- otherwise
+
+;; Type argument evaluation rules
+
+rule Eval_targs:
+  C |- targ* : targ_subst*
+  -- if theta = $theta_of_tdenv(C.LOCAL.TYP)
+  -- if (targ_subst = $subst_typ(theta, targ))*

@@ -1,0 +1,206 @@
+[#sec-methods]
+=== Methods 
+
+// Added
+Objects in P4 can have methods associated with them. Specifically, `extern`
+objects have methods declared in their definitions. `parser`, `control`, and
+`table` objects have built-in `apply` methods.
+
+// Added
+Further, P4 allows built-in methods for certain types, such as `isValid()`
+and `setValid()` methods for header types.
+
+// Added
+The internal representation of methods is defined as follows:
+
+// Added
+${syntax: methodTypeDefIR methodTypeIR methodDef}
+
+[#sec-extern-method]
+==== Extern methods
+
+// 332 - Modified
+An extern object declaration declares an object and all methods that
+can be invoked to perform computations and to alter the state of the
+object.
+
+// 333 - Modified
+${syntax: externConstructorPrototype externMethodPrototype
+          externConstructorOrMethodPrototype externObjectDeclaration}
+
+// 334
+For example, the P4 core library introduces two extern objects `packet_in`
+and `packet_out` used for manipulating packets (see
+<<sec-packet-data-extraction>> and <<sec-deparse>>). Here is an example
+showing how the methods of these objects can be invoked on a packet:
+
+// 335
+[source,p4]
+----
+extern packet_out {
+    void emit<T>(in T hdr);
+}
+control d(packet_out b, in Hdr h) {
+    apply {
+        b.emit(h.ipv4);       // write ipv4 header into output packet
+    }                         // by calling emit method
+}
+----
+
+// Added
+Internally, extern methods are represented as follows:
+
+// Added
+${syntax: externMethodTypeDefIR externMethodTypeIR externMethodDef}
+
+// 339
+Typical extern object methods are implemented by the target architecture. P4
+programmers can only call such methods.
+
+// 340 - Modified
+Some types of extern objects may provide methods that can be implemented by
+the P4 programmers. Such methods are described with the `abstract` keyword
+prior to the method definition. Here is an example:
+
+// 341
+[source,p4]
+----
+extern Balancer {
+    Balancer();
+    // get the number of active flows
+    bit<32> getFlowCount();
+    // return port index used for load-balancing
+    // @param address: IPv4 source address of flow
+    abstract bit<4> on_new_flow(in bit<32> address);
+}
+----
+
+// 342
+When such an object is instantiated the user has to supply an implementation
+of all the `abstract` methods (see <<sec-instantion-abstract-method>>).
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: CallableType_wf/externMethodTypeIR}
+${rulegroup-prose: CallableType_wf/externMethodTypeIR}
+
+==== Parser apply methods
+
+// 851
+P4 allows parsers to invoke the services of other parsers, similar to
+subroutines. To invoke the services of another parser, the sub-parser must be
+first instantiated; the services of an instance are invoked by calling it using
+its `apply` method.
+
+// 852
+The following example shows a sub-parser invocation:
+
+// 853
+[source,p4]
+----
+parser callee(packet_in packet, out IPv4 ipv4) { /* body omitted */ }
+parser caller(packet_in packet, out Headers h) {
+     callee() subparser;  // instance of callee
+     state subroutine {
+          subparser.apply(packet, h.ipv4);  // invoke sub-parser
+          transition accept;  // accept if sub-parser ends in accept state
+     }
+}
+----
+
+// Added
+A parser apply method type definition is implicitly introduced by a ``parser``
+declaration. Its semantics is explained in <<sec-parser-declaration>>. A parser
+apply method is represented internally as follows:
+
+// Added
+${syntax: parserApplyMethodTypeDefIR parserApplyMethodTypeIR parserApplyMethodDef}
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: CallableType_wf/parserApplyMethodTypeIR}
+${rulegroup-prose: CallableType_wf/parserApplyMethodTypeIR}
+
+==== Control apply methods
+
+// 1006
+P4 allows controls to invoke the services of other controls, similar to
+subroutines. To invoke the services of another control, it must be first
+instantiated; the services of an instance are invoked by calling it using its
+`apply` method.
+
+// 1007
+The following example shows a control invocation:
+
+// 1008
+[source,p4]
+----
+control Callee(inout IPv4 ipv4) { /* body omitted */ }
+control Caller(inout Headers h) {
+     Callee() instance;  // instance of callee
+     apply {
+          instance.apply(h.ipv4);  // invoke control
+     }
+}
+----
+
+// Added
+A control apply method type definition is implicitly introduced by a
+``control`` declaration. Its semantics is explained in
+<<sec-control-declaration>>. A control apply method is represented internally
+as follows:
+
+// Added
+${syntax: controlApplyMethodTypeDefIR controlApplyMethodTypeIR controlApplyMethodDef}
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: CallableType_wf/controlApplyMethodTypeIR}
+${rulegroup-prose: CallableType_wf/controlApplyMethodTypeIR}
+
+==== Table apply methods
+
+// 989 - Modified
+A `table` can be invoked by calling its `apply` method. Calling an apply method
+on a table instance returns a synthesized table metadata structure, explained
+in <<sec-table-metadata>>.
+
+// Added
+A table apply method definition is introduced by a ``table`` declaration. Its
+semantics rule is explained in <<sec-table-declaration>>. A table declaration
+may not be generic. Thus, the table apply method type definition does not have
+type parameters, and is same as the table apply method type. A table apply
+method is represented internally as follows:
+
+// Added
+${syntax: tableApplyMethodTypeDefIR tableApplyMethodTypeIR tableApplyMethodDef}
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: CallableType_wf/tableApplyMethodTypeIR}
+${rulegroup-prose: CallableType_wf/tableApplyMethodTypeIR}
+
+==== Built-in methods
+
+// Added
+Built-in methods are methods associated with certain types defined by the P4
+language. Thus, they do not have method type definitions, and only have method
+types. The internal representations are:
+
+// Added
+${syntax: builtinMethodTypeIR}
+
+// Added
+ifndef::release[]
+NOTE: Refine builtin methods to concretely show which builtins are offered.
+endif::[]
+
+===== Well-formedness
+
+// Added
+${rulegroup-source: CallableType_wf/builtinMethodTypeIR}
+${rulegroup-prose: CallableType_wf/builtinMethodTypeIR}

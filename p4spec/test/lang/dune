@@ -1,0 +1,83 @@
+;; Elaboration, structuring, and annotate tests for specification language
+
+(test
+ (name test)
+ (preprocess
+  (pps ppx_let))
+ (modules test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix)
+ (action
+  (progn
+   (ignore-outputs
+    (diff elab.expected elab.actual))
+   (ignore-outputs
+    (diff algo.expected algo.actual))
+   (ignore-outputs
+    (diff struct.expected struct.actual))
+   (ignore-outputs
+    (diff annotate.expected annotate.actual)))))
+
+(rule
+ (alias speclang)
+ (action
+  (progn
+   (ignore-outputs
+    (diff elab.expected elab.actual))
+   (ignore-outputs
+    (diff algo.expected algo.actual))
+   (ignore-outputs
+    (diff struct.expected struct.actual))
+   (ignore-outputs
+    (diff annotate.expected annotate.actual)))))
+
+;; Rules to generate outputs
+
+(rule
+ (target elab.actual)
+ (deps
+  (source_tree ../../../spec))
+ (action
+  (with-stdout-to
+   elab.actual
+   (with-stderr-to
+    elab.err
+    (run ./test.exe elab -s ../../../spec)))))
+
+(rule
+ (target algo.actual)
+ (deps
+  (source_tree ../../../spec))
+ (action
+  (with-stdout-to
+   algo.actual
+   (with-stderr-to
+    algo.err
+    (run ./test.exe algo -s ../../../spec)))))
+
+(rule
+ (target struct.actual)
+ (deps
+  (source_tree ../../../spec))
+ (action
+  (with-stdout-to
+   struct.actual
+   (with-stderr-to
+    struct.err
+    (run ./test.exe struct -s ../../../spec)))))
+
+(rule
+ (target annotate.actual)
+ (deps
+  (source_tree ../../../spec))
+ (action
+  (with-stdout-to
+   annotate.actual
+   (with-stderr-to
+    annotate.err
+    (run ./test.exe annotate -s ../../../spec)))))

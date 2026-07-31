@@ -1,0 +1,96 @@
+=== Functions
+
+Function calls are dispatched through a layered chain of relations that first
+checks a memo cache for a previously computed result, then resolves the
+function definition from the context, and finally dispatches to the appropriate
+evaluation strategy based on the function's kind.
+
+An entry point for function calls is the following relation:
+
+${relation-title-prose: Call_func}
+${rulegroup-prose: Call_func}
+
+A meta-cache is used for performance reasons. Before evaluating a function call
+from scratch, the cache is consulted for a previously computed result with the
+same identifier, type arguments, and value arguments. If found, the cached
+result is returned immediately; otherwise, the result is computed and stored in
+the cache for future reuse.
+
+${relation-title-prose: Call_func_cache}
+${rulegroup-prose: Call_func_cache}
+
+The actual function call is performed by the following relation, dispatching
+according to the function type. The function definition is looked up in the
+context and its kind determines which evaluation strategy is used.
+
+${relation-title-prose: Call_func_dispatch}
+${rulegroup-prose: Call_func_dispatch}
+
+==== Extern functions
+
+Extern functions are declared in the specification but implemented outside of
+it. Calling an extern function invokes the external implementation registered
+under its identifier. The specification leaves the semantics of extern
+functions unspecified at this level.
+
+${relation-title-prose: Call_extern_func}
+
+==== Built-in functions
+
+Built-in functions are primitive operations whose semantics are defined
+directly in the interpreter, rather than by a specification body. They are
+looked up by name and applied to their arguments by the interpreter's built-in
+dispatch mechanism.
+
+${relation-title-prose: Call_builtin_func}
+
+==== Table functions
+
+A table function is defined by an ordered list of table rows. Each row
+specifies argument patterns and guarding premises; the function is evaluated by
+trying the rows in order and returning the result of the first matching row.
+Table functions present the same behavior as clause-based functions but use a
+flat tabular layout for readability.
+
+${relation-title-prose: Call_table_func}
+${rulegroup-prose: Call_table_func}
+
+Table rows are evaluated as follows. Each row is tried in order. For each row,
+a fresh local context is created from the global context, argument assignment
+is performed for that row's argument patterns against the actual argument
+values, and the row's premises are evaluated. The first row whose argument
+patterns match and whose premises all succeed provides the result expression.
+
+${relation-title-prose: Eval_tblrows}
+${rulegroup-prose: Eval_tblrows}
+
+${relation-title-prose: Eval_tblrow}
+${rulegroup-prose: Eval_tblrow/succ}
+${rulegroup-prose: Eval_tblrow/fail}
+
+==== User-defined functions
+
+A user-defined function is defined by an ordered list of clauses, optionally
+followed by an else clause. Calling a user-defined function creates a fresh
+local context from the global context, with the function's type parameters
+registered in the type environment so that type-parameter substitution works
+correctly during evaluation. Argument values are then assigned and clauses are
+tried in order; the first clause whose argument patterns match the actual
+arguments and whose premises all succeed provides the result. If no clause
+matches, the else clause is used as a fallback; if there is none, the call
+fails.
+
+${relation-title-prose: Call_defined_func}
+${rulegroup-prose: Call_defined_func}
+
+Function clauses are evaluated as follows. The clause sequence is tried in
+order. For each clause, argument assignment is attempted; if it succeeds and
+all premises hold, the result expression is evaluated and returned. Otherwise
+evaluation moves to the next clause.
+
+${relation-title-prose: Eval_clauses}
+${rulegroup-prose: Eval_clauses}
+
+${relation-title-prose: Eval_clause}
+${rulegroup-prose: Eval_clause/succ}
+${rulegroup-prose: Eval_clause/fail}

@@ -1,0 +1,94 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:58.351
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserI");
+# [Parser] ParserI
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserI");
+# [P4Testgen MethodCall]: *.copy_in("VerifyChecksumI");
+# [Control VerifyChecksumI start]
+# [P4Testgen MethodCall]: *.copy_out("VerifyChecksumI");
+# [P4Testgen MethodCall]: *.copy_in("IngressI");
+# [Control IngressI start]
+# [MethodCall]: h1_0/h1.setInvalid();
+# [MethodCall]: h2_0/h2.setInvalid();
+# [MethodCall]: s1_0_h1.setInvalid();
+# [MethodCall]: s1_0_h2.setInvalid();
+# [MethodCall]: s2_0_h1.setInvalid();
+# [MethodCall]: s2_0_h2.setInvalid();
+# [MethodCall]: h1_0/h1.setValid();
+# [AssignmentStatement]: h1 = { 1 };| Computed: h1_0/h1.data = 1;
+# [Tainted If Statement]: 
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h2_0/h2.setValid();
+# [AssignmentStatement]: h2 = h1;| Computed: h2_0/h2.data = 1;
+# [MethodCall]: h2_0/h2.setValid();
+# [AssignmentStatement]: h2.data = 0;| Computed: h2_0/h2.data = 0;
+# [AssignmentStatement]: hdr.h2.data = h2.data; // h2 valid at this point| Computed: hdr.h2.data = "Taint";
+# [Tainted If Statement]: 
+# [MethodCall]: h1_0/h1.setInvalid();
+# [AssignmentStatement]: hdr.h1.data = h1.data; // h1 potentially invalid at this point| Computed: hdr.h1.data = "Taint";
+# [Tainted If Statement]: 
+# [MethodCall]: h1_0/h1.setValid();
+# [AssignmentStatement]: h1 = h2; // h1 valid again| Computed: h1_0/h1.data = "Taint";
+# [MethodCall]: h1_0/h1.setInvalid();
+# [Tainted If Statement]: 
+# [Tainted If Statement]: 
+# [MethodCall]: s1_0_h1.setValid();
+# [AssignmentStatement]: s1 = { h1, h2 };| Computed: s1_0_h1.data = "Taint";
+# [MethodCall]: s1_0_h1.setInvalid();
+# [Tainted If Statement]: 
+# [MethodCall]: s1_0_h2.setValid();
+# [AssignmentStatement]: s1 = { h1, h2 };| Computed: s1_0_h2.data = "Taint";
+# [MethodCall]: s1_0_h2.setInvalid();
+# [Tainted If Statement]: 
+# [MethodCall]: s2_0_h1.setValid();
+# [AssignmentStatement]: s2 = s1;| Computed: s2_0_h1.data = "Taint";
+# [MethodCall]: s2_0_h1.setInvalid();
+# [Tainted If Statement]: 
+# [MethodCall]: s2_0_h2.setValid();
+# [AssignmentStatement]: s2 = s1;| Computed: s2_0_h2.data = "Taint";
+# [MethodCall]: s2_0_h2.setInvalid();
+# [Tainted If Statement]: 
+# [Tainted If Statement]: 
+# [MethodCall]: s1_0_h1.setInvalid();
+# [MethodCall]: s1_0_h1.setInvalid();
+# [AssignmentStatement]: hdr.h1.data = s1.h1.data; // s1.h1 invalid at this point| Computed: hdr.h1.data = "Taint";
+# [MethodCall]: s1_0_h1.setValid();
+# [AssignmentStatement]: hdr.h2.data = s1.h1.data; // s1.h1 potentially invalid at this point| Computed: hdr.h2.data = "Taint";
+# [MethodCall]: invalid_H();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: s_0_h1.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: s_0_h2.setInvalid();
+# [MethodCall]: s_0_h1.setInvalid();
+# [MethodCall]: s_0_h2.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.h1.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.h2.setInvalid();
+# [AssignmentStatement]: hdr.h1.data = 1; //  hdr.h1 invalid at this point| Computed: hdr.h1.data = 1;
+# [AssignmentStatement]: hdr.h2.data = 1; //  hdr.h2 invalid at this point| Computed: hdr.h2.data = 1;
+# [P4Testgen MethodCall]: *.copy_out("IngressI");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("EgressI");
+# [Control EgressI start]
+# [P4Testgen MethodCall]: *.copy_out("EgressI");
+# [P4Testgen MethodCall]: *.copy_in("ComputeChecksumI");
+# [Control ComputeChecksumI start]
+# [P4Testgen MethodCall]: *.copy_out("ComputeChecksumI");
+# [P4Testgen MethodCall]: *.copy_in("DeparserI");
+# [Control DeparserI start]
+# [P4Testgen MethodCall]: *.copy_out("DeparserI");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000
+expect 0 00000000000000$
+

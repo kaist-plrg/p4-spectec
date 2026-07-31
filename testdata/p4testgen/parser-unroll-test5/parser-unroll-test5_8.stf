@@ -1,0 +1,42 @@
+# p4testgen seed: none
+# Date generated: 2026-02-20-02:10:41.412
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [AssignmentStatement]: hdr.index = 0;| Computed: hdr.index = 0;
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0002
+# [State] access2
+# [AssignmentStatement]: hdr.index = hdr.index + 1;| Computed: hdr.index = 1;
+# [MethodCall]: packet.extract<srcRoute_t>(hdr.srcRoutes2);
+# [ExtractFailure] hdr.srcRoutes2@112 | Condition: !(|*packetLen_bits(bit<32>)| >= 129); | Extract Size: 17
+# [P4Testgen AssignmentStatement]: standard_metadata.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("mau");
+# [Control mau start]
+# [P4Testgen MethodCall]: *.copy_out("mau");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("mau");
+# [Control mau start]
+# [P4Testgen MethodCall]: *.copy_out("mau");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparse");
+# [Control deparse start]
+# [P4Testgen MethodCall]: *.copy_out("deparse");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000002
+expect 0 $
+

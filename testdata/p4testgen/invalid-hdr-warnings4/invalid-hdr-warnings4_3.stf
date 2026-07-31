@@ -1,0 +1,65 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:37.475
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserI");
+# [Parser] ParserI
+# [State] start
+# [MethodCall]: pkt.extract<Header>(hdr.h1[0]);
+# [ExtractSuccess] hdr.h1[0]@0 | Condition: |*packetLen_bits(bit<32>)| >= 32; | Extract Size: 32 -> hdr.h1[0].data = 0x0000_0000
+# [State] init
+# [MethodCall]: pkt.extract<Header>(hdr.h1[1]);
+# [ExtractFailure] hdr.h1[1]@32 | Condition: !(|*packetLen_bits(bit<32>)| >= 64); | Extract Size: 32
+# [P4Testgen AssignmentStatement]: smeta.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("ParserI");
+# [P4Testgen MethodCall]: *.copy_in("VerifyChecksumI");
+# [Control VerifyChecksumI start]
+# [P4Testgen MethodCall]: *.copy_out("VerifyChecksumI");
+# [P4Testgen MethodCall]: *.copy_in("IngressI");
+# [Control IngressI start]
+# [MethodCall]: h_0_h1[0].setInvalid();
+# [MethodCall]: h_0_h1[1].setInvalid();
+# [MethodCall]: h_0_h2[0].setInvalid();
+# [MethodCall]: h_0_h2[1].setInvalid();
+# [MethodCall]: h_copy_0_h1[0].setInvalid();
+# [MethodCall]: h_copy_0_h1[1].setInvalid();
+# [MethodCall]: h_copy_0_h2[0].setInvalid();
+# [MethodCall]: h_copy_0_h2[1].setInvalid();
+# [MethodCall]: h_copy2_0_h1[0].setInvalid();
+# [MethodCall]: h_copy2_0_h1[1].setInvalid();
+# [MethodCall]: h_copy2_0_h2[0].setInvalid();
+# [MethodCall]: h_copy2_0_h2[1].setInvalid();
+# [MethodCall]: validateHeader();
+# [MethodCall]: hd_10/hd.setValid();
+# [MethodCall]: invalidateHeader();
+# [MethodCall]: hd_12/hd.setInvalid();
+# [MethodCall]: validateHeader_1/validateHeader();
+# [MethodCall]: hd_11/hd.setValid();
+# [MethodCall]: invalidateStack();
+# [MethodCall]: hd_0/hd.setInvalid();
+# [MethodCall]: hd_1/hd_2.setInvalid();
+# [MethodCall]: invalidateStack_1/invalidateStack();
+# [MethodCall]: hd_8/hd.setInvalid();
+# [MethodCall]: hd_9/hd_2.setInvalid();
+# [MethodCall]: h_0_h1[1].setValid();
+# [P4Testgen MethodCall]: *.copy_out("IngressI");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("EgressI");
+# [Control EgressI start]
+# [P4Testgen MethodCall]: *.copy_out("EgressI");
+# [P4Testgen MethodCall]: *.copy_in("ComputeChecksumI");
+# [Control ComputeChecksumI start]
+# [P4Testgen MethodCall]: *.copy_out("ComputeChecksumI");
+# [P4Testgen MethodCall]: *.copy_in("DeparserI");
+# [Control DeparserI start]
+# [P4Testgen MethodCall]: *.copy_out("DeparserI");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000
+expect 0 000000$
+

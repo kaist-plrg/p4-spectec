@@ -1,0 +1,14 @@
+type atom = Mixfix.atom
+type mixop = Mixfix.mixop
+type t = mixop
+
+let compare = Mixfix.compare_mixop
+let eq = Mixfix.eq_mixop
+let arity = Mixfix.arity
+let atoms = Mixfix.atoms
+let atoms_matrix = Mixfix.atoms_matrix
+let string_of_mixop = Mixfix.to_string
+
+let assemble ~(string_of_atom : atom -> string) (mixop : t) (args : string list)
+    : string =
+  Mixfix.render ~string_of_atom ~string_of_arg:Fun.id (Mixfix.fill mixop args)

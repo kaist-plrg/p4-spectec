@@ -1,0 +1,43 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:49.595
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser_0");
+# [Parser] MyParser_0
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_h>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dst = 0x0000_0000_0000 | hdr.ethernet.src = 0x0000_0000_0000 | hdr.ethernet.type = 0x86DD
+# [State] parse_ipv6
+# [MethodCall]: pkt.extract<ipv6_h>(hdr.ipv6);
+# [ExtractSuccess] hdr.ipv6@112 | Condition: |*packetLen_bits(bit<32>)| >= 432; | Extract Size: 320 -> hdr.ipv6.version = 0x0 | hdr.ipv6.tc = 0x00 | hdr.ipv6.fl = 0x0000_0000 | hdr.ipv6.plen = 0x0000 | hdr.ipv6.nh = 0x06 | hdr.ipv6.hl = 0x00 | hdr.ipv6.src = 0x0000_0000_0000_0000_0000_0000_0000_0000 | hdr.ipv6.dst = 0x0000_0000_0000_0000_0000_0000_0000_0000
+# [State] parse_tcp
+# [MethodCall]: pkt.extract<tcp_h>(hdr.tcp);
+# [ExtractSuccess] hdr.tcp@432 | Condition: |*packetLen_bits(bit<32>)| >= 592; | Extract Size: 160 -> hdr.tcp.sport = 0x0000 | hdr.tcp.dport = 0x0000 | hdr.tcp.seq = 0x0000_0000 | hdr.tcp.ack = 0x0000_0000 | hdr.tcp.dataofs = 0x0 | hdr.tcp.reserved = 0x0 | hdr.tcp.flags = 0x00 | hdr.tcp.window = 0x0000 | hdr.tcp.chksum = 0x0000 | hdr.tcp.urgptr = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser_0");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000086DD0000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

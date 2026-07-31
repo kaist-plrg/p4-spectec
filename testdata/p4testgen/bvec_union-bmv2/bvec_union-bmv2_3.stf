@@ -1,0 +1,48 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:20.709
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<Hdr1>(h.h1);
+# [ExtractSuccess] h.h1@0 | Condition: |*packetLen_bits(bit<32>)| >= 40; | Extract Size: 40 -> h.h1._a0 = 0x20 | h.h1._row0_alt0_valid1 = 0x0 | h.h1._row0_alt0_port2 = 0x00 | h.h1._row0_alt1_valid3 = 0x0 | h.h1._row0_alt1_port4 = 0x00 | h.h1._row1_alt0_valid5 = 0x0 | h.h1._row1_alt0_port6 = 0x00 | h.h1._row1_alt1_valid7 = 0x0 | h.h1._row1_alt1_port8 = 0x00
+# [State] getH2
+# [MethodCall]: b.extract<Hdr2>(h.u.h2);
+# [ExtractSuccess] h.u.h2@40 | Condition: |*packetLen_bits(bit<32>)| >= 72; | Extract Size: 32 -> h.u.h2._b0 = 0x0000 | h.u.h2._row_alt0_valid1 = 0x0 | h.u.h2._row_alt0_port2 = 0x00 | h.u.h2._row_alt1_valid3 = 0x0 | h.u.h2._row_alt1_port4 = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h.u.h2.setInvalid();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<Hdr1>(h.h1);
+# [Emit]: {$headerValid:true;;    _a0:32;  _row0_alt0_valid1:0;  _row0_alt0_port2:0;  _row0_alt1_valid3:0;  _row0_alt1_port4:0;  _row1_alt0_valid5:0;  _row1_alt0_port6:0;  _row1_alt1_valid7:0;  _row1_alt1_port8:0;  }
+# [MethodCall]: b.emit<Hdr1>(h.u.h1);
+# [Invalid emit: { _a0 = TaintedExpression(bit<8>), _row0_alt0_valid1 = TaintedExpression(bit<1>), _row0_alt0_port2 = TaintedExpression(bit<7>), _row0_alt1_valid3 = TaintedExpression(bit<1>), _row0_alt1_port4 = TaintedExpression(bit<7>), _row1_alt0_valid5 = TaintedExpression(bit<1>), _row1_alt0_port6 = TaintedExpression(bit<7>), _row1_alt1_valid7 = TaintedExpression(bit<1>), _row1_alt1_port8 = TaintedExpression(bit<7>) }]
+# [MethodCall]: b.emit<Hdr2>(h.u.h2);
+# [Invalid emit: { _b0 = TaintedExpression(bit<16>), _row_alt0_valid1 = TaintedExpression(bit<1>), _row_alt0_port2 = TaintedExpression(bit<7>), _row_alt1_valid3 = TaintedExpression(bit<1>), _row_alt1_port4 = TaintedExpression(bit<7>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 2000000000000000000000000000
+expect 0 20000000000000000000$
+

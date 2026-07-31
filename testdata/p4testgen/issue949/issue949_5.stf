@@ -1,0 +1,48 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:25.394
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: someTable_0/someTable.apply();
+# [Table Branch: ingress.someTable | Key(s): |pktvar_1(bit<48>)|| Chosen action: ingress.setDest]
+# [MethodCall]: setDest();
+# [AssignmentStatement]: hdr.ethernet.dstAddr = 48w0x_6A_F3_40_04_26_D3;| Computed: hdr.ethernet.dstAddr = 117592983611091;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:117592983611091;  srcAddr:0;  etherType:0;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Invalid emit: { version = TaintedExpression(bit<4>), ihl = TaintedExpression(bit<4>), diffserv = TaintedExpression(bit<8>) }]
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.someTable
+add "ingress.someTable" "hdr.ethernet.srcAddr":0x000000000000 "ingress.setDest"()
+
+
+packet 0 0000000000000000000000000000
+expect 0 6AF3400426D30000000000000000$
+

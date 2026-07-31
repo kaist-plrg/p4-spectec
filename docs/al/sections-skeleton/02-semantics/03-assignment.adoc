@@ -1,0 +1,120 @@
+=== Assignments
+
+This section describes the semantics of assignments in the language. An
+assignment occurs when evaluating a let premise, and when invoking a function
+or relation.
+
+==== Assigning a value to an expression
+
+On a let premise and relation invocation, a value is assigned to an expression.
+Assignment interprets the expression as a pattern, matching the value's
+structure against the expression's shape and binding the corresponding
+sub-values to variables in the context. This makes assignment the bridge
+between computed values and the variable bindings that downstream premises can
+observe.
+
+${relation-title-prose: Assign_exp}
+
+A sequence of assignments is defined as follows:
+
+${relation-title-prose: Assign_exps}
+${rulegroup-prose: Assign_exps}
+
+Only a subset of expressions can be assigned to. The assignable forms are those
+that can serve as patterns: variable references, tuples, case constructors,
+structs, options, lists, and cons cells. An assignment to an assignable
+expression extends the context with the bindings it introduces, while a
+mismatch causes the enclosing rule to fail.
+
+===== Variable references
+
+Assigning to a variable reference simply binds the variable to the given value
+in the local layer of the context, replacing any existing binding for that
+name.
+
+${rulegroup-prose: Assign_exp/variable}
+
+===== Tuple expressions
+
+Assigning to a tuple expression destructures the value as a tuple and assigns
+each component value to the corresponding component expression, extending the
+context with all introduced bindings.
+
+${rulegroup-prose: Assign_exp/tuple}
+
+===== Case expressions
+
+Assigning to a case expression checks that the value is tagged with the
+matching union case constructor, then assigns the payload value to the case's
+inner expression.
+
+${rulegroup-prose: Assign_exp/inj}
+
+===== Struct expressions
+
+Assigning to a struct expression destructures the value as a struct and assigns
+each field value to the corresponding field expression, extending the context
+with bindings for all fields.
+
+${rulegroup-prose: Assign_exp/str}
+
+===== Option expressions
+
+Assigning to an option expression checks whether the value is present or absent
+and, if present, assigns the inner value to the contained expression.
+
+${rulegroup-prose: Assign_exp/opt}
+
+===== List expressions
+
+Assigning to a list expression destructures the value as a list of the same
+length and assigns each element value to the corresponding element expression.
+
+${rulegroup-prose: Assign_exp/list}
+
+===== Cons expressions
+
+Assigning to a cons expression checks that the value is a non-empty list, then
+assigns the head element to the head expression and the tail list to the tail
+expression.
+
+${rulegroup-prose: Assign_exp/cons}
+
+===== Iterator expressions
+
+Assigning to an iterator expression distributes the assignment across an
+iterated collection, assigning each element of the value to the corresponding
+element expression in the matching sub-context.
+
+${rulegroup-prose: Assign_exp/iter}
+
+==== Assigning a value to a function argument
+
+When invoking a function, argument values are assigned to the formal argument
+patterns. This is the entry point from call-site values to the parameter
+bindings that the function body sees. Unlike expression assignment, argument
+assignment must also handle higher-order function arguments, which pass a
+function name rather than a value.
+
+${relation-title-prose: Assign_arg}
+
+A sequence of argument assignments is defined as follows:
+
+${relation-title-prose: Assign_args}
+${rulegroup-prose: Assign_args}
+
+===== Expression arguments
+
+An expression argument assignment receives a pre-computed value (produced by
+`Eval_arg` at the call site under the caller's context) and assigns it to the
+formal parameter expression under the callee's context.
+
+${rulegroup-prose: Assign_arg/exp}
+
+===== Function arguments
+
+A function argument assignment records the supplied function name in the
+callee's context under the formal function parameter's name, enabling
+higher-order function calls within the function body.
+
+${rulegroup-prose: Assign_arg/fun}

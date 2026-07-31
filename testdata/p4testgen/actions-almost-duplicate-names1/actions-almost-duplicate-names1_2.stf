@@ -1,0 +1,56 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:21.042
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserImpl");
+# [Parser] parserImpl
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [AssignmentStatement]: tmp1 = hdr.ethernet.srcAddr[7:0];| Computed: tmp1_0/tmp1 = 0;
+# [AssignmentStatement]: tmp2 = hdr.ethernet.dstAddr[7:0];| Computed: tmp2_0/tmp2 = 0;
+# [MethodCall]: c1_t2/t2.apply();
+# [Table Branch: ingressImpl.c1.t2 | Key(s): |pktvar_1(bit<48>)|| Chosen action: ingressImpl.c1.bar]
+# [MethodCall]: c1_bar_0/suba1(|ingressImpl.c1.t2_ingressImpl.c1.bar_arg_x_10(bit<8>)|, |ingressImpl.c1.t2_ingressImpl.c1.bar_arg_y_10(bit<8>)|);
+# [AssignmentStatement]: @name("bar") action suba1 (bit<8> x, bit<8> y) { tmp1 = x; tmp2 = y >> 3; }| Computed: tmp1_0/tmp1 = 0;
+# [AssignmentStatement]: @name("bar") action suba1 (bit<8> x, bit<8> y) { tmp1 = x; tmp2 = y >> 3; }| Computed: tmp2_0/tmp2 = 0;
+# [MethodCall]: t1_0/t1.apply();
+# [Table Branch: ingressImpl.t1 | Key(s): |pktvar_2(bit<16>)|| Chosen action: baz]
+# [MethodCall]: foo3_0/foo3();
+# [AssignmentStatement]: hdr.ethernet.etherType = (bit<16>) (tmp1 - tmp2);| Computed: hdr.ethernet.etherType = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparserImpl");
+# [Control deparserImpl start]
+# [MethodCall]: pkt.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingressImpl.c1.t2
+add "ingressImpl.c1.t2" "hdr.ethernet.srcAddr":0x000000000000 "ingressImpl.c1.bar"("x":0x00,"y":0x00)
+
+# Table ingressImpl.t1
+add "ingressImpl.t1" "hdr.ethernet.etherType":0x0000 "baz"()
+
+
+packet 0 000000000000000000000000000000000000000000
+expect 0 000000000000000000000000000000000000000000$
+

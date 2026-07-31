@@ -1,0 +1,64 @@
+;; Relation invocation
+
+;;; Defined relations
+
+relation Call_defined_rel:
+  ctx |- definedRelDef '@' `( val* `) : res<val*>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %1 "with inputs" %2 "under" %0)
+  hint(prose_out %3)
+
+rule Call_defined_rel/succ:
+  C |- definedRelDef '@' `( val* `) : OK val_out*
+  -- if DEF exp* block block_els? = definedRelDef
+  -- if C_local = C[ .LOCAL = $empty_layer ]
+  -- Assign_exps: C_local |- exp* := val* : C_local'
+  -- if block_all = block ++ $elsblock_as_block(block_els?)
+  -- Eval_block: C_local' |- block_all : RES val_out*
+
+rule Call_defined_rel/fail:
+  C |- definedRelDef '@' `( val* `) : FAIL
+  -- otherwise
+
+;; Relation dispatch
+
+rulegroup Call_rel_dispatch {
+
+    rule Call_rel_dispatch/ext:
+      C |- (EXT id) val* : valsres
+      -- Call_extern_rel:
+          |- id val* : valsres
+
+    rule Call_rel_dispatch/defined:
+      C |- definedRelDef val* : valsres
+      -- Call_defined_rel:
+          C |- definedRelDef '@' `( val* `) : valsres
+
+}
+
+;; Relation call wrapper with cache
+
+rule Call_rel:
+  C |- id val* : valsres
+  -- if relcache = $cache_find_rel(id, val*)
+  -- Call_rel_cache: C |- id val* relcache : valsres
+
+rulegroup Call_rel_cache {
+
+  rule Call_rel_cache/hit:
+    C |- id val_input* (OK val_cached*) : OK val_cached*
+
+  rule Call_rel_cache/miss:
+    C |- id val_input* NONE : valsres
+    -- if reldef = $find_rel(C, id)
+    -- if cp_before = $cache_checkpoint()
+    -- Call_rel_dispatch: C |- reldef val_input* : valsres
+    -- if cp_after = $cache_checkpoint()
+    -- if b_ext = (reldef <: externRelDef)
+    -- if b_seff = $cache_seff(cp_before, cp_after)
+    -- if $cache_add_rel_maybe(
+            b_ext \/ b_seff,
+            ;; true,
+            id, val_input*, valsres)
+
+}

@@ -1,0 +1,229 @@
+;; Context
+
+syntax layer =
+  { TYP tdenv,
+    REL renv,
+    FUNC fenv,
+    VAL venv }
+
+dec $empty_layer : layer
+  hint(prose_in "empty layer")
+def $empty_layer =
+  { TYP $empty_map<id, typdef>,
+    REL $empty_map<id, reldef>,
+    FUNC $empty_map<id, funcdef>,
+    VAL $empty_map<varr, val> }
+
+syntax ctx = { GLOBAL layer, LOCAL layer }
+
+dec $empty_ctx : ctx
+  hint(prose_in "empty context")
+def $empty_ctx = { GLOBAL $empty_layer, LOCAL $empty_layer }
+
+var C : ctx
+
+;; Loading context from a script
+
+dec $load_typdef(ctx, id, typdef) : ctx
+  hint(prose_in %0 "with type" %2 "loaded as" %1)
+def $load_typdef(C, id, typdef)
+  = C[ .GLOBAL.TYP = tdenv_update ]
+  ;; -- debug ("load type " ++ id)
+  -- if tdenv_update = $add_map<id, typdef>(C.GLOBAL.TYP, id, typdef)
+
+dec $load_reldef(ctx, id, reldef) : ctx
+  hint(prose_in %0 "with relation" %2 "loaded as" %1)
+def $load_reldef(C, id, reldef)
+  = C[ .GLOBAL.REL = renv_update ]
+  ;; -- debug ("load rel " ++ id)
+  -- if renv_update = $add_map<id, reldef>(C.GLOBAL.REL, id, reldef)
+
+dec $load_funcdef(ctx, id, funcdef) : ctx
+  hint(prose_in %0 "with function" %2 "loaded as" %1)
+def $load_funcdef(C, id, funcdef)
+  = C[ .GLOBAL.FUNC = fenv_update ]
+  ;; -- debug ("load func " ++ id)
+  -- if fenv_update = $add_map<id, funcdef>(C.GLOBAL.FUNC, id, funcdef)
+
+dec $load(ctx, script) : ctx
+  hint(prose_in %0 "with script" %1 "loaded")
+
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if EXTTYP id = defn_h
+  -- if C' = $load_typdef(C, id, EXT)
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if TYP id tparam* '=' deftyp = defn_h
+  -- if C' = $load_typdef(C, id, DEF tparam* '->' deftyp)
+
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if EXTREL id ':' typ_input* '->' typ_output* = defn_h
+  -- if C' = $load_reldef(C, id, EXT id)
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if REL id ':' typ_input* '->' typ_output* '=' rulgroup* elsgroup? = defn_h
+  -- if C' = $load_reldef(C, id, DEF rulgroup* elsgroup?)
+
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if EXTFUNC id tparam* param* ':' typ = defn_h
+  -- if C' = $load_funcdef(C, id, EXT id)
+
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if BUILTINFUNC id tparam* param* ':' typ = defn_h
+  -- if C' = $load_funcdef(C, id, BUILTIN id tparam* param*)
+
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if TABLEFUNC id param* ':' typ '=' tblrow* = defn_h
+  -- if C' = $load_funcdef(C, id, TABLE param* '->' tblrow*)
+
+def $load(C, defn_h :: defn_t*)
+  = $load(C', defn_t*)
+  -- if FUNC id tparam* param* ':' typ '=' clause* elsclause? = defn_h
+  -- if C' = $load_funcdef(C, id, DEF tparam* '->' clause* elsclause?)
+
+def $load(C, eps) = C
+
+;; Adders
+
+;;; Value adders
+
+dec $add_vari(ctx, vari, val) : ctx
+  hint(prose_in %0 "where" %1 "to" %2 "added locally")
+def $add_vari(C, vari, val)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if id _ iter* = vari
+  -- if venv_update = $add_map<varr, val>(C.LOCAL.VAL, id iter*, val)
+
+dec $add_varr(ctx, varr, val) : ctx
+  hint(prose_in %0 "where" %1 "to" %2 "added locally")
+def $add_varr(C, varr, val)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if venv_update = $add_map<varr, val>(C.LOCAL.VAL, varr, val)
+
+dec $add_varis(ctx, vari*, val*) : ctx
+  hint(prose_in %0 "where each of" %1 "to each of" %2 "added locally")
+def $add_varis(C, vari*, val*)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if (id _ iter* = vari)*
+  -- if venv_update = $adds_map<varr, val>(C.LOCAL.VAL, (id iter*)*, val*)
+
+dec $add_varrs(ctx, varr*, val*) : ctx
+  hint(prose_in %0 "where each of" %1 "to each of" %2 "added locally")
+def $add_varrs(C, varr*, val*)
+  = C[ .LOCAL.VAL = venv_update ]
+  -- if venv_update = $adds_map<varr, val>(C.LOCAL.VAL, varr*, val*)
+
+;;; Typedef adders
+
+dec $add_typ(ctx, id, typdef) : ctx
+  hint(prose_in %0 "where type" %1 "to" %2 "added locally")
+
+def $add_typ(C, id, typdef)
+  = C[ .LOCAL.TYP = tdenv_update ]
+  -- if tdenv_update = $add_map<id, typdef>(C.LOCAL.TYP, id, typdef)
+
+;;; Function adders
+
+dec $add_func(ctx, id, funcdef) : ctx
+  hint(prose_in %0 "where function" %1 "to" %2 "added locally")
+
+def $add_func(C, id, funcdef)
+  = C[ .LOCAL.FUNC = fenv_update ]
+  -- if fenv_update = $add_map<id, funcdef>(C.LOCAL.FUNC, id, funcdef)
+
+;; Finders
+
+;;; Value finders
+
+dec $find_vari(ctx, vari) : val?
+  hint(prose_in "the value of" %1 "in" %0)
+def $find_vari(C, vari) = val
+  -- if id _ iter* = vari
+  -- if val = $find_map<varr, val>(C.LOCAL.VAL, id iter*)
+
+dec $find_varr(ctx, varr) : val?
+  hint(prose_in "the value of" %1 "in" %0)
+def $find_varr(C, varr) = $find_map<varr, val>(C.LOCAL.VAL, varr)
+
+dec $find_varis(ctx, vari*) : val*?
+  hint(prose_in "the values of" %1 "in" %0)
+def $find_varis(C, vari*) = val*
+  -- if (val = $find_vari(C, vari))*
+def $find_varis(C, vari*) = eps
+  -- otherwise
+
+dec $find_varrs(ctx, varr*) : val*?
+  hint(prose_in "the values of" %1 "in" %0)
+def $find_varrs(C, varr*) = val*
+  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, varr))*
+def $find_varrs(C, varr*) = eps
+  -- otherwise
+
+dec $finds_vari(ctx*, vari) : val*?
+  hint(prose_in "the value of" %1 "in each of" %0)
+def $finds_vari(C*, vari) = val*
+  -- if id _ iter* = vari
+  -- if (val = $find_map<varr, val>(C.LOCAL.VAL, id iter*))*
+def $finds_vari(C*, vari) = eps
+  -- otherwise
+
+;;; Typedef finders
+
+dec $find_typ(ctx, id) : typdef?
+  hint(prose_in "the type definition of" %1 "in" %0)
+
+def $find_typ(C, id) = typdef
+  -- if typdef = $find_map<id, typdef>(C.LOCAL.TYP, id)
+def $find_typ(C, id) = $find_map<id, typdef>(C.GLOBAL.TYP, id)
+  -- if eps = $find_map<id, typdef>(C.LOCAL.TYP, id)
+
+;;; Function finders
+
+dec $find_func(ctx, id) : (cursor, funcdef)?
+  hint(prose_in "the function definition of" %1 "in" %0)
+
+def $find_func(C, id) = (LOCAL, funcdef)
+  -- if funcdef = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
+def $find_func(C, id) = (GLOBAL, funcdef)
+  -- if eps = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
+  -- if funcdef = $find_map<id, funcdef>(C.GLOBAL.FUNC, id)
+def $find_func(C, id) = eps
+  -- otherwise
+
+;;; Relation finders
+
+dec $find_rel(ctx, id) : reldef?
+  hint(prose_in "the relation definition of" %1 "in" %0)
+
+def $find_rel(C, id) = $find_map<id, reldef>(C.GLOBAL.REL, id)
+
+;; Sub-context construction for iteration
+
+dec $sub_opt(ctx, vari*) : ctx?
+  hint(prose_in "the sub-context of" %0 "for optional iterators" %1)
+dec $sub_list(ctx, vari*) : ctx*
+  hint(prose_in "the sub-contexts of" %0 "for list iterators" %1)
+
+def $sub_opt(C, vari*) = $add_varis(C, vari*, val*)
+  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (OPT val = $find_vari(C, vari_iter))*
+def $sub_opt(C, vari*) = eps
+  -- if (vari_iter = $iter_vari(vari, QUEST))*
+  -- if (OPT eps = $find_vari(C, vari_iter))*
+
+dec $sub_list'(ctx, vari*, val*) : ctx
+def $sub_list'(C, eps, eps) = C
+def $sub_list'(C, vari_h :: vari_t*, val_h :: val_t*)
+  = $sub_list'(C', vari_t*, val_t*)
+  -- if C' = $add_vari(C, vari_h, val_h)
+
+def $sub_list(C, vari*) = C'*
+  -- if (vari_iter = $iter_vari(vari, STAR))*
+  -- if (LIST val* = $find_vari(C, vari_iter))*
+  -- if val_trans** = $transpose_<val>(val**)
+  -- if (C' = $sub_list'(C, vari*, val_trans*))*

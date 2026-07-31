@@ -1,0 +1,864 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:39.671
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("dash_parser");
+# [Parser] dash_parser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hd.u0_ethernet);
+# [ExtractSuccess] hd.u0_ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hd.u0_ethernet.dst_addr = 0x0000_0000_0000 | hd.u0_ethernet.src_addr = 0x0000_0000_0000 | hd.u0_ethernet.ether_type = 0x0800
+# [State] parse_u0_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hd.u0_ipv4);
+# [ExtractSuccess] hd.u0_ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hd.u0_ipv4.version = 0x4 | hd.u0_ipv4.ihl = 0x5 | hd.u0_ipv4.diffserv = 0x00 | hd.u0_ipv4.total_len = 0x0000 | hd.u0_ipv4.identification = 0x0000 | hd.u0_ipv4.flags = 0x0 | hd.u0_ipv4.frag_offset = 0x0000 | hd.u0_ipv4.ttl = 0x00 | hd.u0_ipv4.protocol = 0x11 | hd.u0_ipv4.hdr_checksum = 0x0000 | hd.u0_ipv4.src_addr = 0x0000_0000 | hd.u0_ipv4.dst_addr = 0x0000_0000
+# [MethodCall]: verify(hd.u0_ipv4.version == 4, 0);
+# [MethodCall]: verify(hd.u0_ipv4.ihl >= 5, 2);
+# [State] dispatch_on_u0_protocol
+# [State] parse_u0_udp
+# [MethodCall]: packet.extract<udp_t>(hd.u0_udp);
+# [ExtractSuccess] hd.u0_udp@272 | Condition: |*packetLen_bits(bit<32>)| >= 336; | Extract Size: 64 -> hd.u0_udp.src_port = 0x0000 | hd.u0_udp.dst_port = 0x12B5 | hd.u0_udp.length = 0x0000 | hd.u0_udp.checksum = 0x0000
+# [State] parse_u0_vxlan
+# [MethodCall]: packet.extract<vxlan_t>(hd.u0_vxlan);
+# [ExtractSuccess] hd.u0_vxlan@336 | Condition: |*packetLen_bits(bit<32>)| >= 400; | Extract Size: 64 -> hd.u0_vxlan.flags = 0x00 | hd.u0_vxlan.reserved = 0x0000_0000 | hd.u0_vxlan.vni = 0x0000_0000 | hd.u0_vxlan.reserved_2 = 0x00
+# [MethodCall]: packet.extract<ethernet_t>(hd.customer_ethernet);
+# [ExtractSuccess] hd.customer_ethernet@400 | Condition: |*packetLen_bits(bit<32>)| >= 512; | Extract Size: 112 -> hd.customer_ethernet.dst_addr = 0x0000_0000_0000 | hd.customer_ethernet.src_addr = 0x0000_0000_0000 | hd.customer_ethernet.ether_type = 0x0800
+# [State] parse_customer_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hd.customer_ipv4);
+# [ExtractSuccess] hd.customer_ipv4@512 | Condition: |*packetLen_bits(bit<32>)| >= 672; | Extract Size: 160 -> hd.customer_ipv4.version = 0x4 | hd.customer_ipv4.ihl = 0x5 | hd.customer_ipv4.diffserv = 0x00 | hd.customer_ipv4.total_len = 0x0000 | hd.customer_ipv4.identification = 0x0000 | hd.customer_ipv4.flags = 0x0 | hd.customer_ipv4.frag_offset = 0x0000 | hd.customer_ipv4.ttl = 0x00 | hd.customer_ipv4.protocol = 0x11 | hd.customer_ipv4.hdr_checksum = 0x0000 | hd.customer_ipv4.src_addr = 0xFFFF_FFFF | hd.customer_ipv4.dst_addr = 0x0000_0000
+# [MethodCall]: verify(hd.customer_ipv4.version == 4, 0);
+# [MethodCall]: verify(hd.customer_ipv4.ihl == 5, 1);
+# [State] parse_customer_udp
+# [MethodCall]: packet.extract<udp_t>(hd.customer_udp);
+# [ExtractSuccess] hd.customer_udp@672 | Condition: |*packetLen_bits(bit<32>)| >= 736; | Extract Size: 64 -> hd.customer_udp.src_port = 0xFFFF | hd.customer_udp.dst_port = 0xFFFF | hd.customer_udp.length = 0x0000 | hd.customer_udp.checksum = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("dash_parser");
+# [P4Testgen MethodCall]: *.copy_in("dash_verify_checksum");
+# [Control dash_verify_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("dash_verify_checksum");
+# [P4Testgen MethodCall]: *.copy_in("dash_ingress");
+# [Control dash_ingress start]
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: vip_0/vip.apply();
+# [Table Branch: dash_ingress.vip | Key(s): |pktvar_14(bit<32>)|| Chosen action: dash_ingress.accept]
+# [MethodCall]: accept_1/accept();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: meta.encap_data.underlay_sip = hdr.u0_ipv4.dst_addr;| Computed: meta.encap_data.underlay_sip = 0;
+# [MethodCall]: direction_lookup_stage_direction_lookup/direction_lookup.apply();
+# [Table Branch: dash_ingress.direction_lookup_stage.direction_lookup | Key(s): |pktvar_21(bit<24>)|| Chosen action: dash_ingress.direction_lookup_stage.set_outbound_direction]
+# [MethodCall]: direction_lookup_stage_set_outbound_direction_0/set_outbound_direction();
+# [AssignmentStatement]: meta.direction = dash_direction_t.OUTBOUND;| Computed: meta.direction = 1;
+# [MethodCall]: appliance_0/appliance.apply();
+# [Table Branch: dash_ingress.appliance | Key(s): 0| Chosen action: dash_ingress.set_appliance]
+# [MethodCall]: set_appliance(|dash_ingress.appliance_dash_ingress.set_appliance_arg_neighbor_mac(bit<48>)|, |dash_ingress.appliance_dash_ingress.set_appliance_arg_mac(bit<48>)|);
+# [AssignmentStatement]: meta.encap_data.underlay_dmac = neighbor_mac;| Computed: meta.encap_data.underlay_dmac = 0;
+# [AssignmentStatement]: meta.encap_data.underlay_smac = mac;| Computed: meta.encap_data.underlay_smac = 0;
+# [If Statement]: meta.direction == dash_direction_t.OUTBOUND Condition: 1 == 1; Result: true
+# [AssignmentStatement]: meta.eni_addr = (meta.direction == dash_direction_t.OUTBOUND ? hdr.customer_ethernet.src_addr : hdr.customer_ethernet.dst_addr);| Computed: eni_lookup_stage_tmp = 0;
+# [AssignmentStatement]: meta.eni_addr = (meta.direction == dash_direction_t.OUTBOUND ? hdr.customer_ethernet.src_addr : hdr.customer_ethernet.dst_addr);| Computed: meta.eni_addr = 0;
+# [MethodCall]: eni_lookup_stage_eni_ether_address_map/eni_ether_address_map.apply();
+# [Table Branch: dash_ingress.eni_lookup_stage.eni_ether_address_map | Key(s): |pktvar_24(bit<48>)|| Chosen action: dash_ingress.eni_lookup_stage.set_eni]
+# [MethodCall]: eni_lookup_stage_set_eni_0/set_eni(|dash_ingress.eni_lookup_stage.eni_ether_address_map_dash_ingress.eni_lookup_stage.set_eni_arg_eni_id_1(bit<16>)|);
+# [AssignmentStatement]: meta.eni_id = eni_id;| Computed: meta.eni_id = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: meta.eni_data.dscp_mode = dash_tunnel_dscp_mode_t.PRESERVE_MODEL;| Computed: meta.eni_data.dscp_mode = 0;
+# [AssignmentStatement]: meta.eni_data.dscp = (bit<6>)hdr.u0_ipv4.diffserv;| Computed: meta.eni_data.dscp = 0;
+# [If Statement]: meta.direction == dash_direction_t.OUTBOUND Condition: 1 == 1; Result: true
+# [MethodCall]: tunnel_decap_2/tunnel_decap();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_1_u0_ethernet.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ethernet.dst_addr = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ethernet.src_addr = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_1_u0_ipv4.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.version = 4;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.ihl = 5;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.diffserv = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.total_len = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.identification = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.flags = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.frag_offset = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.ttl = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.protocol = 17;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.src_addr = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_1_u0_udp.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_udp.src_port = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_udp.dst_port = 4789;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_udp.length = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_1_u0_vxlan.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_vxlan.flags = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_vxlan.reserved = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_vxlan.vni = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_u0_vxlan.reserved_2 = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_1_customer_ethernet.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_1_customer_ipv4.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.version = 4;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.ihl = 5;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.total_len = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.identification = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.flags = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.ttl = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.protocol = 17;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_1_customer_udp.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_udp.src_port = 65535;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_udp.dst_port = 65535;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_udp.length = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr_1_customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_1_customer_tcp.setInvalid();
+# [MethodCall]: hdr_1_u0_ethernet.setInvalid();
+# [MethodCall]: hdr_1_u0_ipv4.setInvalid();
+# [MethodCall]: hdr_1_u0_ipv6.setInvalid();
+# [MethodCall]: hdr_1_u0_nvgre.setInvalid();
+# [MethodCall]: hdr_1_u0_vxlan.setInvalid();
+# [MethodCall]: hdr_1_u0_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ethernet.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ipv4.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.version = 4;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.ihl = 5;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.total_len = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.identification = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.flags = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.ttl = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.protocol = 17;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_udp.setValid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_udp.src_port = 65535;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_udp.dst_port = 65535;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_udp.length = 0;
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: hdr.customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_tcp.setInvalid();
+# [AssignmentStatement]: tunnel_decap(hdr, meta);| Computed: meta.tunnel_pointer = 0;
+# [AssignmentStatement]: meta.is_overlay_ip_v6 = 0;| Computed: meta.is_overlay_ip_v6 = 0;
+# [AssignmentStatement]: meta.ip_protocol = 0;| Computed: meta.ip_protocol = 0;
+# [AssignmentStatement]: meta.dst_ip_addr = 0;| Computed: meta.dst_ip_addr = 0;
+# [AssignmentStatement]: meta.src_ip_addr = 0;| Computed: meta.src_ip_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: meta.ip_protocol = hdr.customer_ipv4.protocol;| Computed: meta.ip_protocol = 17;
+# [AssignmentStatement]: meta.src_ip_addr = (bit<128>)hdr.customer_ipv4.src_addr;| Computed: meta.src_ip_addr = 4294967295;
+# [AssignmentStatement]: meta.dst_ip_addr = (bit<128>)hdr.customer_ipv4.dst_addr;| Computed: meta.dst_ip_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: meta.src_l4_port = hdr.customer_udp.src_port;| Computed: meta.src_l4_port = 65535;
+# [AssignmentStatement]: meta.dst_l4_port = hdr.customer_udp.dst_port;| Computed: meta.dst_l4_port = 65535;
+# [MethodCall]: eni_0/eni.apply();
+# [Table Branch: dash_ingress.eni | Key(s): |dash_ingress.eni_lookup_stage.eni_ether_address_map_dash_ingress.eni_lookup_stage.set_eni_arg_eni_id_1(bit<16>)|| Chosen action: dash_ingress.set_eni_attrs]
+# [MethodCall]: set_eni_attrs(|dash_ingress.eni_dash_ingress.set_eni_attrs_arg_cps_1(bit<32>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_pps_1(bit<32>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_flows_1(bit<32>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_admin_state_1(bit<1>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_vm_underlay_dip(bit<32>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_vm_vni(bit<24>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_vnet_id_1(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_pl_sip_1(bit<128>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_pl_sip_mask_1(bit<128>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_pl_underlay_sip_1(bit<32>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_v4_meter_policy_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_v6_meter_policy_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_dash_tunnel_dscp_mode(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_dscp_1(bit<6>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v4_stage1_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v4_stage2_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v4_stage3_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v4_stage4_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v4_stage5_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v6_stage1_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v6_stage2_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v6_stage3_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v6_stage4_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_inbound_v6_stage5_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage1_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage2_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage3_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage4_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage5_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v6_stage1_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v6_stage2_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v6_stage3_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v6_stage4_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v6_stage5_dash_acl_group_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_disable_fast_path_icmp_flow_redirection(bit<1>)|);
+# [AssignmentStatement]: meta.eni_data.cps = cps;| Computed: meta.eni_data.cps = 0;
+# [AssignmentStatement]: meta.eni_data.pps = pps;| Computed: meta.eni_data.pps = 0;
+# [AssignmentStatement]: meta.eni_data.flows = flows;| Computed: meta.eni_data.flows = 0;
+# [AssignmentStatement]: meta.eni_data.admin_state = admin_state;| Computed: meta.eni_data.admin_state = 0;
+# [AssignmentStatement]: meta.eni_data.pl_sip = pl_sip;| Computed: meta.eni_data.pl_sip = 0;
+# [AssignmentStatement]: meta.eni_data.pl_sip_mask = pl_sip_mask;| Computed: meta.eni_data.pl_sip_mask = 0;
+# [AssignmentStatement]: meta.eni_data.pl_underlay_sip = pl_underlay_sip;| Computed: meta.eni_data.pl_underlay_sip = 0;
+# [AssignmentStatement]: meta.encap_data.underlay_dip = vm_underlay_dip;| Computed: meta.encap_data.underlay_dip = 1614839808;
+# [If Statement]: dash_tunnel_dscp_mode == dash_tunnel_dscp_mode_t.PIPE_MODEL Condition: |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_dash_tunnel_dscp_mode(bit<16>)| == 1; Result: true
+# [AssignmentStatement]: meta.eni_data.dscp = dscp;| Computed: meta.eni_data.dscp = 0;
+# [AssignmentStatement]: meta.encap_data.vni = vm_vni;| Computed: meta.encap_data.vni = 0;
+# [AssignmentStatement]: meta.vnet_id = vnet_id;| Computed: meta.vnet_id = 0;
+# [If Statement]: meta.is_overlay_ip_v6 == 1 Condition: 0 == 1; Result: false
+# [If Statement]: meta.direction == dash_direction_t.OUTBOUND Condition: 1 == 1; Result: true
+# [AssignmentStatement]: meta.stage1_dash_acl_group_id = outbound_v4_stage1_dash_acl_group_id;| Computed: meta.stage1_dash_acl_group_id = 1;
+# [AssignmentStatement]: meta.stage2_dash_acl_group_id = outbound_v4_stage2_dash_acl_group_id;| Computed: meta.stage2_dash_acl_group_id = 0;
+# [AssignmentStatement]: meta.stage3_dash_acl_group_id = outbound_v4_stage3_dash_acl_group_id;| Computed: meta.stage3_dash_acl_group_id = 0;
+# [AssignmentStatement]: meta.stage4_dash_acl_group_id = outbound_v4_stage4_dash_acl_group_id;| Computed: meta.stage4_dash_acl_group_id = 0;
+# [AssignmentStatement]: meta.stage5_dash_acl_group_id = outbound_v4_stage5_dash_acl_group_id;| Computed: meta.stage5_dash_acl_group_id = 0;
+# [AssignmentStatement]: meta.meter_policy_id = v4_meter_policy_id;| Computed: meta.meter_policy_id = 0;
+# [AssignmentStatement]: meta.fast_path_icmp_flow_redirection_disabled = disable_fast_path_icmp_flow_redirection;| Computed: meta.fast_path_icmp_flow_redirection_disabled = 0;
+# [If Statement]: meta.eni_data.admin_state == 0 Condition: |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_admin_state_1(bit<1>)| == 0; Result: true
+# [MethodCall]: deny_4/deny();
+# [AssignmentStatement]: meta.dropped = true;| Computed: meta.dropped = true;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: acl_group_0/acl_group.apply();
+# [Table Branch: dash_ingress.acl_group | Key(s): |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage1_dash_acl_group_id(bit<16>)|| Chosen action: dash_ingress.set_acl_group_attrs]
+# [MethodCall]: set_acl_group_attrs(|dash_ingress.acl_group_dash_ingress.set_acl_group_attrs_arg_ip_addr_family(bit<32>)|);
+# [If Statement]: ip_addr_family == 0 Condition: |dash_ingress.acl_group_dash_ingress.set_acl_group_attrs_arg_ip_addr_family(bit<32>)| == 0; Result: true
+# [If Statement]: meta.is_overlay_ip_v6 == 1 Condition: 0 == 1; Result: false
+# [If Statement]: meta.direction == dash_direction_t.OUTBOUND Condition: 1 == 1; Result: true
+# [AssignmentStatement]: meta.target_stage = dash_pipeline_stage_t.OUTBOUND_ROUTING;| Computed: meta.target_stage = 200;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen AssignmentStatement]: outbound_acl_hasReturned = false;
+# [If Statement]: meta.stage1_dash_acl_group_id != 0 Condition: |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage1_dash_acl_group_id(bit<16>)| != 0; Result: true
+# [MethodCall]: outbound_acl_stage1/stage1.apply();
+# [Table Branch: dash_ingress.outbound.acl.stage1 | Key(s): |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_outbound_v4_stage1_dash_acl_group_id(bit<16>)|, (bit<128>)|pktvar_37(bit<32>)|;, (bit<128>)|pktvar_36(bit<32>)|;, |pktvar_34(bit<8>)|, |pktvar_38(bit<16>)|, |pktvar_39(bit<16>)|| Chosen action: dash_ingress.outbound.acl.permit]
+# [MethodCall]: outbound_acl_permit_0/permit();
+# [SwitchCase]: permit
+# [AssignmentStatement]: return;| Computed: outbound_acl_hasReturned = true;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: meta.lkup_dst_ip_addr = meta.dst_ip_addr;| Computed: meta.lkup_dst_ip_addr = 0;
+# [AssignmentStatement]: meta.is_lkup_dst_ip_v6 = meta.is_overlay_ip_v6;| Computed: meta.is_lkup_dst_ip_v6 = 0;
+# [MethodCall]: outbound_outbound_routing_stage_routing/routing.apply();
+# [Table Branch: dash_ingress.outbound.outbound_routing_stage.routing | Key(s): |dash_ingress.eni_lookup_stage.eni_ether_address_map_dash_ingress.eni_lookup_stage.set_eni_arg_eni_id_1(bit<16>)|, 0, (bit<128>)|pktvar_37(bit<32>)|;| Chosen action: route_vnet]
+# [MethodCall]: route_vnet_0/route_vnet(|dash_ingress.outbound.outbound_routing_stage.routing_route_vnet_arg_dst_vnet_id_2(bit<16>)|, |dash_ingress.outbound.outbound_routing_stage.routing_route_vnet_arg_meter_policy_en_0(bit<1>)|, |dash_ingress.outbound.outbound_routing_stage.routing_route_vnet_arg_meter_class_9(bit<16>)|);
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_5_customer_ethernet.setValid();
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_5_customer_ipv4.setValid();
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.version = 4;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.ihl = 5;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.total_len = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.identification = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.flags = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.ttl = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.protocol = 17;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_5_customer_udp.setValid();
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_udp.src_port = 65535;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_udp.dst_port = 65535;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_udp.length = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr_5_customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_5_customer_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ethernet.setValid();
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ipv4.setValid();
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.version = 4;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.ihl = 5;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.total_len = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.identification = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.flags = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.ttl = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.protocol = 17;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_udp.setValid();
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_udp.src_port = 65535;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_udp.dst_port = 65535;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_udp.length = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: hdr.customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_tcp.setInvalid();
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: meta.dst_vnet_id = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: meta.meter_policy_en = 1;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: meta.route_meter_class = 0;
+# [AssignmentStatement]: route_vnet(hdr, meta);| Computed: meta.target_stage = 201;
+# [If Statement]: meta.target_stage != dash_pipeline_stage_t.OUTBOUND_MAPPING Condition: 201 != 201; Result: false
+# [MethodCall]: outbound_outbound_mapping_stage_ca_to_pa/ca_to_pa.apply();
+# [Table Branch: dash_ingress.outbound.outbound_mapping_stage.ca_to_pa | Key(s): |dash_ingress.outbound.outbound_routing_stage.routing_route_vnet_arg_dst_vnet_id_2(bit<16>)|, 0, (bit<128>)|pktvar_37(bit<32>)|;| Chosen action: set_tunnel_mapping]
+# [MethodCall]: set_tunnel_mapping_0/set_tunnel_mapping(|dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_underlay_dip_7(bit<32>)|, |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_overlay_dmac(bit<48>)|, |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_use_dst_vnet_vni(bit<1>)|, |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_meter_class_13(bit<16>)|, |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_meter_class_override(bit<1>)|);
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_9_customer_ethernet.setValid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_9_customer_ipv4.setValid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.version = 4;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.ihl = 5;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.total_len = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.identification = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.flags = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.ttl = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.protocol = 17;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_9_customer_udp.setValid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_udp.src_port = 65535;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_udp.dst_port = 65535;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_udp.length = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr_9_customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_9_customer_tcp.setInvalid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta_42_vnet_id = 0;
+# [If Statement]: use_dst_vnet_vni == 1 Condition: |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_use_dst_vnet_vni(bit<1>)| == 1; Result: true
+# [AssignmentStatement]: meta.vnet_id = meta.dst_vnet_id;| Computed: meta_42_vnet_id = 0;
+# [AssignmentStatement]: meta.encap_data.vni = (vni == 0 ? meta.encap_data.vni : vni);| Computed: tmp_7 = 0;
+# [AssignmentStatement]: meta.encap_data.underlay_smac = (underlay_smac == 0 ? meta.encap_data.underlay_smac : underlay_smac);| Computed: tmp_8 = 0;
+# [AssignmentStatement]: meta.encap_data.underlay_dmac = (underlay_dmac == 0 ? meta.encap_data.underlay_dmac : underlay_dmac);| Computed: tmp_9 = 0;
+# [AssignmentStatement]: meta.encap_data.underlay_sip = (underlay_sip == 0 ? meta.encap_data.underlay_sip : underlay_sip);| Computed: tmp_10 = 0;
+# [If Statement]: underlay_dip == 0 Condition: |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_underlay_dip_7(bit<32>)| == 0; Result: true
+# [AssignmentStatement]: meta.encap_data.underlay_dip = (underlay_dip == 0 ? meta.encap_data.underlay_dip : underlay_dip);| Computed: tmp_39 = 1614839808;
+# [If Statement]: overlay_dmac == 0 Condition: |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_overlay_dmac(bit<48>)| == 0; Result: true
+# [AssignmentStatement]: meta.overlay_data.dmac = (overlay_dmac == 0 ? meta.overlay_data.dmac : overlay_dmac);| Computed: tmp_40 = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ethernet.setValid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ipv4.setValid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.version = 4;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.ihl = 5;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.total_len = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.identification = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.flags = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.ttl = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.protocol = 17;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_udp.setValid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_udp.src_port = 65535;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_udp.dst_port = 65535;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_udp.length = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: hdr.customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_tcp.setInvalid();
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.vnet_id = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.mapping_meter_class_override = 1;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.mapping_meter_class = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.target_stage = 300;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.routing_actions = 1;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.encap_data.vni = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.encap_data.underlay_sip = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.encap_data.underlay_dip = 1614839808;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.encap_data.underlay_smac = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.encap_data.underlay_dmac = 0;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.encap_data.dash_encapsulation = 1;
+# [AssignmentStatement]: set_tunnel_mapping(hdr, meta);| Computed: meta.overlay_data.dmac = 0;
+# [SwitchCase]: set_tunnel_mapping
+# [MethodCall]: outbound_outbound_mapping_stage_vnet/vnet.apply();
+# [Table Branch: dash_ingress.outbound.outbound_mapping_stage.vnet | Key(s): |dash_ingress.outbound.outbound_routing_stage.routing_route_vnet_arg_dst_vnet_id_2(bit<16>)|| Chosen action: dash_ingress.outbound.outbound_mapping_stage.set_vnet_attrs]
+# [MethodCall]: outbound_outbound_mapping_stage_set_vnet_attrs_0/set_vnet_attrs(|dash_ingress.outbound.outbound_mapping_stage.vnet_dash_ingress.outbound.outbound_mapping_stage.set_vnet_attrs_arg_vni_2(bit<24>)|);
+# [AssignmentStatement]: meta.encap_data.vni = vni;| Computed: meta.encap_data.vni = 0;
+# [If Statement]: meta.routing_actions & dash_routing_actions_t.NAT46 == 0 Condition: 1 & 2 == 0; Result: true
+# [If Statement]: meta.routing_actions & dash_routing_actions_t.NAT64 == 0 Condition: 1 & 4 == 0; Result: true
+# [If Statement]: meta.routing_actions & dash_routing_actions_t.STATIC_ENCAP == 0 Condition: 1 & 1 == 0; Result: false
+# [If Statement]: meta.encap_data.dash_encapsulation == dash_encapsulation_t.VXLAN Condition: 1 == 1; Result: true
+# [If Statement]: meta.tunnel_pointer == 0 Condition: 0 == 0; Result: true
+# [MethodCall]: push_vxlan_tunnel_u0_2/push_vxlan_tunnel_u0();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_25_customer_ethernet.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_25_customer_ipv4.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.version = 4;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.ihl = 5;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.total_len = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.identification = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.flags = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.ttl = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.protocol = 17;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr_25_customer_udp.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_udp.src_port = 65535;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_udp.dst_port = 65535;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_udp.length = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr_25_customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr_25_customer_tcp.setInvalid();
+# [If Statement]: overlay_dmac == 0 Condition: 0 == 0; Result: true
+# [AssignmentStatement]: hdr.customer_ethernet.dst_addr = (overlay_dmac == 0 ? hdr.customer_ethernet.dst_addr : overlay_dmac);| Computed: tmp_50 = 0;
+# [AssignmentStatement]: hdr.customer_ethernet.dst_addr = (overlay_dmac == 0 ? hdr.customer_ethernet.dst_addr : overlay_dmac);| Computed: hdr_25_customer_ethernet.dst_addr = 0;
+# [MethodCall]: hdr_25_u0_ethernet.setValid();
+# [AssignmentStatement]: hdr.u0_ethernet.dst_addr = underlay_dmac;| Computed: hdr_25_u0_ethernet.dst_addr = 0;
+# [AssignmentStatement]: hdr.u0_ethernet.src_addr = underlay_smac;| Computed: hdr_25_u0_ethernet.src_addr = 0;
+# [AssignmentStatement]: hdr.u0_ethernet.ether_type = 0x800;| Computed: hdr_25_u0_ethernet.ether_type = 2048;
+# [MethodCall]: hdr_25_u0_ipv4.setValid();
+# [AssignmentStatement]: hdr.u0_ipv4.total_len = hdr.customer_ipv4.total_len * (bit<16>)(bit<1>)hdr.customer_ipv4.isValid() + hdr.customer_ipv6.payload_length * (bit<16>)(bit<1>)hdr.customer_ipv6.isValid() + IPV6_HDR_SIZE * (bit<16>)(bit<1>)hdr.customer_ipv6.isValid() + ETHER_HDR_SIZE + IPV4_HDR_SIZE + UDP_HDR_SIZE + VXLAN_HDR_SIZE;| Computed: hdr_25_u0_ipv4.total_len = "Taint";
+# [AssignmentStatement]: hdr.u0_ipv4.version = 4;| Computed: hdr_25_u0_ipv4.version = 4;
+# [AssignmentStatement]: hdr.u0_ipv4.ihl = 5;| Computed: hdr_25_u0_ipv4.ihl = 5;
+# [AssignmentStatement]: hdr.u0_ipv4.diffserv = 0;| Computed: hdr_25_u0_ipv4.diffserv = 0;
+# [AssignmentStatement]: hdr.u0_ipv4.identification = 1;| Computed: hdr_25_u0_ipv4.identification = 1;
+# [AssignmentStatement]: hdr.u0_ipv4.flags = 0;| Computed: hdr_25_u0_ipv4.flags = 0;
+# [AssignmentStatement]: hdr.u0_ipv4.frag_offset = 0;| Computed: hdr_25_u0_ipv4.frag_offset = 0;
+# [AssignmentStatement]: hdr.u0_ipv4.ttl = 64;| Computed: hdr_25_u0_ipv4.ttl = 64;
+# [AssignmentStatement]: hdr.u0_ipv4.protocol = 17;| Computed: hdr_25_u0_ipv4.protocol = 17;
+# [AssignmentStatement]: hdr.u0_ipv4.dst_addr = underlay_dip;| Computed: hdr_25_u0_ipv4.dst_addr = 1614839808;
+# [AssignmentStatement]: hdr.u0_ipv4.src_addr = underlay_sip;| Computed: hdr_25_u0_ipv4.src_addr = 0;
+# [AssignmentStatement]: hdr.u0_ipv4.hdr_checksum = 0;| Computed: hdr_25_u0_ipv4.hdr_checksum = 0;
+# [MethodCall]: hdr_25_u0_udp.setValid();
+# [AssignmentStatement]: hdr.u0_udp.src_port = 0;| Computed: hdr_25_u0_udp.src_port = 0;
+# [AssignmentStatement]: hdr.u0_udp.dst_port = 4789;| Computed: hdr_25_u0_udp.dst_port = 4789;
+# [AssignmentStatement]: hdr.u0_udp.length = hdr.customer_ipv4.total_len * (bit<16>)(bit<1>)hdr.customer_ipv4.isValid() + hdr.customer_ipv6.payload_length * (bit<16>)(bit<1>)hdr.customer_ipv6.isValid() + IPV6_HDR_SIZE * (bit<16>)(bit<1>)hdr.customer_ipv6.isValid() + UDP_HDR_SIZE + VXLAN_HDR_SIZE + ETHER_HDR_SIZE;| Computed: hdr_25_u0_udp.length = "Taint";
+# [AssignmentStatement]: hdr.u0_udp.checksum = 0;| Computed: hdr_25_u0_udp.checksum = 0;
+# [MethodCall]: hdr_25_u0_vxlan.setValid();
+# [AssignmentStatement]: hdr.u0_vxlan.reserved = 0;| Computed: hdr_25_u0_vxlan.reserved = 0;
+# [AssignmentStatement]: hdr.u0_vxlan.reserved_2 = 0;| Computed: hdr_25_u0_vxlan.reserved_2 = 0;
+# [AssignmentStatement]: hdr.u0_vxlan.flags = 0x8;| Computed: hdr_25_u0_vxlan.flags = 8;
+# [AssignmentStatement]: hdr.u0_vxlan.vni = tunnel_key;| Computed: hdr_25_u0_vxlan.vni = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ethernet.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_udp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_vxlan.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u1_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.u0_ethernet.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ethernet.dst_addr = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ethernet.src_addr = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.u0_ipv4.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.version = 4;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.ihl = 5;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.diffserv = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.total_len = 50;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.identification = 1;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.flags = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.frag_offset = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.ttl = 64;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.protocol = 17;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.src_addr = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_ipv4.dst_addr = 1614839808;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv4options.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.u0_udp.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_udp.src_port = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_udp.dst_port = 4789;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_udp.length = "Taint";
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_tcp.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.u0_vxlan.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_vxlan.flags = 8;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_vxlan.reserved = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_vxlan.vni = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.u0_vxlan.reserved_2 = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.u0_nvgre.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ethernet.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ethernet.dst_addr = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ethernet.src_addr = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ethernet.ether_type = 2048;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_ipv4.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.version = 4;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.ihl = 5;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.diffserv = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.total_len = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.identification = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.flags = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.frag_offset = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.ttl = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.protocol = 17;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.hdr_checksum = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.src_addr = 4294967295;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_ipv4.dst_addr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_ipv6.setInvalid();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.customer_udp.setValid();
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_udp.src_port = 65535;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_udp.dst_port = 65535;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_udp.length = 0;
+# [AssignmentStatement]: push_vxlan_tunnel_u0(hdr, meta.overlay_data.dmac, meta.encap_data.underlay_dmac, meta.encap_data.underlay_smac, meta.encap_data.underlay_dip, meta.encap_data.underlay_sip, meta.encap_data.vni);| Computed: hdr.customer_udp.checksum = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [MethodCall]: hdr.customer_tcp.setInvalid();
+# [AssignmentStatement]: meta.tunnel_pointer = meta.tunnel_pointer + 1;| Computed: meta.tunnel_pointer = 1;
+# [AssignmentStatement]: meta.dst_ip_addr = (bit<128>)hdr.u0_ipv4.dst_addr;| Computed: meta.dst_ip_addr = 1614839808;
+# [MethodCall]: underlay_underlay_routing/underlay_routing.apply();
+# [Table Branch: dash_ingress.underlay.underlay_routing | Key(s): (bit<128>)|dash_ingress.eni_dash_ingress.set_eni_attrs_arg_vm_underlay_dip(bit<32>)|;| Chosen action: dash_ingress.underlay.pkt_act]
+# [MethodCall]: underlay_pkt_act_0/pkt_act(|dash_ingress.underlay.underlay_routing_dash_ingress.underlay.pkt_act_arg_packet_action(bit<9>)|, |dash_ingress.underlay.underlay_routing_dash_ingress.underlay.pkt_act_arg_next_hop_id(bit<9>)|);
+# [If Statement]: packet_action == 0 Condition: |dash_ingress.underlay.underlay_routing_dash_ingress.underlay.pkt_act_arg_packet_action(bit<9>)| == 0; Result: true
+# [AssignmentStatement]: meta.dropped = true;| Computed: meta.dropped = true;
+# [If Statement]: meta.meter_policy_en == 1 Condition: |dash_ingress.outbound.outbound_routing_stage.routing_route_vnet_arg_meter_policy_en_0(bit<1>)| == 1; Result: true
+# [MethodCall]: metering_update_stage_meter_policy/meter_policy.apply();
+# [Table Branch: dash_ingress.metering_update_stage.meter_policy | Key(s): |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_v4_meter_policy_id(bit<16>)|| Chosen action: dash_ingress.metering_update_stage.check_ip_addr_family]
+# [MethodCall]: metering_update_stage_check_ip_addr_family_0/check_ip_addr_family(|dash_ingress.metering_update_stage.meter_policy_dash_ingress.metering_update_stage.check_ip_addr_family_arg_ip_addr_family_2(bit<32>)|);
+# [If Statement]: ip_addr_family == 0 Condition: |dash_ingress.metering_update_stage.meter_policy_dash_ingress.metering_update_stage.check_ip_addr_family_arg_ip_addr_family_2(bit<32>)| == 0; Result: true
+# [If Statement]: meta.is_overlay_ip_v6 == 1 Condition: 0 == 1; Result: false
+# [MethodCall]: metering_update_stage_meter_rule/meter_rule.apply();
+# [Table Branch: dash_ingress.metering_update_stage.meter_rule | Key(s): |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_v4_meter_policy_id(bit<16>)|, |dash_ingress.eni_dash_ingress.set_eni_attrs_arg_vm_underlay_dip(bit<32>)|| Chosen action: dash_ingress.metering_update_stage.set_policy_meter_class]
+# [MethodCall]: metering_update_stage_set_policy_meter_class_0/set_policy_meter_class(|dash_ingress.metering_update_stage.meter_rule_dash_ingress.metering_update_stage.set_policy_meter_class_arg_meter_class_15(bit<16>)|);
+# [AssignmentStatement]: meta.policy_meter_class = meter_class;| Computed: meta.policy_meter_class = 0;
+# [If Statement]: meta.meter_policy_en == 1 Condition: |dash_ingress.outbound.outbound_routing_stage.routing_route_vnet_arg_meter_policy_en_0(bit<1>)| == 1; Result: true
+# [AssignmentStatement]: meta.meter_class = meta.policy_meter_class;| Computed: meta.meter_class = 0;
+# [If Statement]: meta.meter_class == 0 || meta.mapping_meter_class_override == 1 Condition: |dash_ingress.metering_update_stage.meter_rule_dash_ingress.metering_update_stage.set_policy_meter_class_arg_meter_class_15(bit<16>)| == 0 || |dash_ingress.outbound.outbound_mapping_stage.ca_to_pa_set_tunnel_mapping_arg_meter_class_override(bit<1>)| == 1; Result: true
+# [AssignmentStatement]: meta.meter_class = meta.mapping_meter_class;| Computed: meta.meter_class = 0;
+# [MethodCall]: metering_update_stage_meter_bucket/meter_bucket.apply();
+# [Table Branch: dash_ingress.metering_update_stage.meter_bucket Choosing default action: NoAction_7/NoAction;]
+# [MethodCall]: NoAction_7/NoAction();
+# [If Statement]: meta.direction == dash_direction_t.OUTBOUND Condition: 1 == 1; Result: true
+# [MethodCall]: metering_update_stage_meter_bucket_outbound/meter_bucket_outbound.count(meta.meter_bucket_index);
+# [MethodCall]: metering_update_stage_eni_meter/eni_meter.apply();
+# [Table Branch: dash_ingress.metering_update_stage.eni_meter | Key(s): |dash_ingress.eni_lookup_stage.eni_ether_address_map_dash_ingress.eni_lookup_stage.set_eni_arg_eni_id_1(bit<16>)|, 1, (bit<1>)true;| Chosen action: NoAction]
+# [MethodCall]: NoAction_8/NoAction();
+# [If Statement]: true Condition: true; Result: true
+# [MethodCall]: drop_action();
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("dash_ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("dash_egress");
+# [Control dash_egress start]
+# [P4Testgen MethodCall]: *.copy_out("dash_egress");
+# [P4Testgen MethodCall]: *.copy_in("dash_compute_checksum");
+# [Control dash_compute_checksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.u0_ipv4.isValid(), {  f0:hdr.u0_ipv4.version;  f1:hdr.u0_ipv4.ihl;  f2:hdr.u0_ipv4.diffserv;  f3:hdr.u0_ipv4.total_len;  f4:hdr.u0_ipv4.identification;  f5:hdr.u0_ipv4.frag_offset;  f6:hdr.u0_ipv4.flags;  f7:hdr.u0_ipv4.ttl;  f8:hdr.u0_ipv4.protocol;  f9:hdr.u0_ipv4.src_addr;  f10:hdr.u0_ipv4.dst_addr; }, hdr.u0_ipv4.hdr_checksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("dash_compute_checksum");
+# [P4Testgen MethodCall]: *.copy_in("dash_deparser");
+# [Control dash_deparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.u0_ethernet);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  ether_type:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.u0_ipv4);
+# [Emit]: {$headerValid:true;;    version:4;  ihl:5;  diffserv:0;  total_len:50;  identification:1;  flags:0;  frag_offset:0;  ttl:64;  protocol:17;  hdr_checksum:0;  src_addr:0;  dst_addr:1614839808;  }
+# [MethodCall]: packet.emit<ipv4options_t>(hdr.u0_ipv4options);
+# [Invalid emit: { options = TaintedExpression(SizedVarbit<320><0>) }]
+# [MethodCall]: packet.emit<ipv6_t>(hdr.u0_ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), traffic_class = TaintedExpression(bit<8>), flow_label = TaintedExpression(bit<20>), payload_length = TaintedExpression(bit<16>), next_header = TaintedExpression(bit<8>), hop_limit = TaintedExpression(bit<8>), src_addr = TaintedExpression(bit<128>), dst_addr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<udp_t>(hdr.u0_udp);
+# [Emit]: {$headerValid:true;;    src_port:0;  dst_port:4789;  length:30;  checksum:0;  }
+# [MethodCall]: packet.emit<tcp_t>(hdr.u0_tcp);
+# [Invalid emit: { src_port = TaintedExpression(bit<16>), dst_port = TaintedExpression(bit<16>), seq_no = TaintedExpression(bit<32>), ack_no = TaintedExpression(bit<32>), data_offset = TaintedExpression(bit<4>), res = TaintedExpression(bit<3>), ecn = TaintedExpression(bit<3>), flags = TaintedExpression(bit<6>), window = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>), urgent_ptr = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<vxlan_t>(hdr.u0_vxlan);
+# [Emit]: {$headerValid:true;;    flags:8;  reserved:0;  vni:0;  reserved_2:0;  }
+# [MethodCall]: packet.emit<nvgre_t>(hdr.u0_nvgre);
+# [Invalid emit: { flags = TaintedExpression(bit<4>), reserved = TaintedExpression(bit<9>), version = TaintedExpression(bit<3>), protocol_type = TaintedExpression(bit<16>), vsid = TaintedExpression(bit<24>), flow_id = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.customer_ethernet);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  ether_type:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.customer_ipv4);
+# [Emit]: {$headerValid:true;;    version:4;  ihl:5;  diffserv:0;  total_len:0;  identification:0;  flags:0;  frag_offset:0;  ttl:0;  protocol:17;  hdr_checksum:0;  src_addr:4294967295;  dst_addr:0;  }
+# [MethodCall]: packet.emit<ipv6_t>(hdr.customer_ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), traffic_class = TaintedExpression(bit<8>), flow_label = TaintedExpression(bit<20>), payload_length = TaintedExpression(bit<16>), next_header = TaintedExpression(bit<8>), hop_limit = TaintedExpression(bit<8>), src_addr = TaintedExpression(bit<128>), dst_addr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<tcp_t>(hdr.customer_tcp);
+# [Invalid emit: { src_port = TaintedExpression(bit<16>), dst_port = TaintedExpression(bit<16>), seq_no = TaintedExpression(bit<32>), ack_no = TaintedExpression(bit<32>), data_offset = TaintedExpression(bit<4>), res = TaintedExpression(bit<3>), ecn = TaintedExpression(bit<3>), flags = TaintedExpression(bit<6>), window = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>), urgent_ptr = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<udp_t>(hdr.customer_udp);
+# [Emit]: {$headerValid:true;;    src_port:65535;  dst_port:65535;  length:0;  checksum:0;  }
+# [P4Testgen MethodCall]: *.copy_out("dash_deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table dash_ingress.vip
+add "dash_ingress.vip" "hdr.u0_ipv4.dst_addr":0x00000000 "dash_ingress.accept"()
+
+# Table dash_ingress.direction_lookup_stage.direction_lookup
+add "dash_ingress.direction_lookup_stage.direction_lookup" "hdr.u0_vxlan.vni":0x000000 "dash_ingress.direction_lookup_stage.set_outbound_direction"()
+
+# Table dash_ingress.appliance
+add "dash_ingress.appliance" 1 "meta.appliance_id":0b******** "dash_ingress.set_appliance"("neighbor_mac":0x000000000000,"mac":0x000000000000)
+
+# Table dash_ingress.eni_lookup_stage.eni_ether_address_map
+add "dash_ingress.eni_lookup_stage.eni_ether_address_map" "meta.eni_addr":0x000000000000 "dash_ingress.eni_lookup_stage.set_eni"("eni_id":0x0000)
+
+# Table dash_ingress.eni
+add "dash_ingress.eni" "meta.eni_id":0x0000 "dash_ingress.set_eni_attrs"("cps":0x00000000,"pps":0x00000000,"flows":0x00000000,"admin_state":0x0,"vm_underlay_dip":0x60408000,"vm_vni":0x000000,"vnet_id":0x0000,"pl_sip":0x00000000000000000000000000000000,"pl_sip_mask":0x00000000000000000000000000000000,"pl_underlay_sip":0x00000000,"v4_meter_policy_id":0x0000,"v6_meter_policy_id":0x0000,"dash_tunnel_dscp_mode":0x0001,"dscp":0x00,"inbound_v4_stage1_dash_acl_group_id":0x0000,"inbound_v4_stage2_dash_acl_group_id":0x0000,"inbound_v4_stage3_dash_acl_group_id":0x0000,"inbound_v4_stage4_dash_acl_group_id":0x0000,"inbound_v4_stage5_dash_acl_group_id":0x0000,"inbound_v6_stage1_dash_acl_group_id":0x0000,"inbound_v6_stage2_dash_acl_group_id":0x0000,"inbound_v6_stage3_dash_acl_group_id":0x0000,"inbound_v6_stage4_dash_acl_group_id":0x0000,"inbound_v6_stage5_dash_acl_group_id":0x0000,"outbound_v4_stage1_dash_acl_group_id":0x0001,"outbound_v4_stage2_dash_acl_group_id":0x0000,"outbound_v4_stage3_dash_acl_group_id":0x0000,"outbound_v4_stage4_dash_acl_group_id":0x0000,"outbound_v4_stage5_dash_acl_group_id":0x0000,"outbound_v6_stage1_dash_acl_group_id":0x0000,"outbound_v6_stage2_dash_acl_group_id":0x0000,"outbound_v6_stage3_dash_acl_group_id":0x0000,"outbound_v6_stage4_dash_acl_group_id":0x0000,"outbound_v6_stage5_dash_acl_group_id":0x0000,"disable_fast_path_icmp_flow_redirection":0x0)
+
+# Table dash_ingress.acl_group
+add "dash_ingress.acl_group" "meta.stage1_dash_acl_group_id":0x0001 "dash_ingress.set_acl_group_attrs"("ip_addr_family":0x00000000)
+
+# Table dash_ingress.outbound.acl.stage1
+add "dash_ingress.outbound.acl.stage1" 1 "meta.dst_ip_addr":0b******************************************************************************************************************************** "meta.dst_l4_port":0b**************** "meta.ip_protocol":0b******** "meta.src_ip_addr":0b******************************************************************************************************************************** "meta.src_l4_port":0b**************** "meta.stage1_dash_acl_group_id":0x0001 "dash_ingress.outbound.acl.permit"()
+
+# Table dash_ingress.outbound.outbound_routing_stage.routing
+add "dash_ingress.outbound.outbound_routing_stage.routing" 1 "meta.dst_ip_addr":0b******************************************************************************************************************************** "meta.eni_id":0x0000 "meta.is_overlay_ip_v6":0x0 "route_vnet"("dst_vnet_id":0x0000,"meter_policy_en":0x1,"meter_class":0x0000)
+
+# Table dash_ingress.outbound.outbound_mapping_stage.ca_to_pa
+add "dash_ingress.outbound.outbound_mapping_stage.ca_to_pa" "meta.dst_vnet_id":0x0000 "meta.is_lkup_dst_ip_v6":0x0 "meta.lkup_dst_ip_addr":0x00000000000000000000000000000000 "set_tunnel_mapping"("underlay_dip":0x00000000,"overlay_dmac":0x000000000000,"use_dst_vnet_vni":0x1,"meter_class":0x0000,"meter_class_override":0x1)
+
+# Table dash_ingress.outbound.outbound_mapping_stage.vnet
+add "dash_ingress.outbound.outbound_mapping_stage.vnet" "meta.vnet_id":0x0000 "dash_ingress.outbound.outbound_mapping_stage.set_vnet_attrs"("vni":0x000000)
+
+# Table dash_ingress.underlay.underlay_routing
+add "dash_ingress.underlay.underlay_routing" 1 "meta.dst_ip_addr":0b0******************************************************************************************************************************* "dash_ingress.underlay.pkt_act"("packet_action":0x000,"next_hop_id":0x000)
+
+# Table dash_ingress.metering_update_stage.meter_policy
+add "dash_ingress.metering_update_stage.meter_policy" "meta.meter_policy_id":0x0000 "dash_ingress.metering_update_stage.check_ip_addr_family"("ip_addr_family":0x00000000)
+
+# Table dash_ingress.metering_update_stage.meter_rule
+add "dash_ingress.metering_update_stage.meter_rule" 1 "hdr.u0_ipv4.dst_addr":0b******************************** "meta.meter_policy_id":0x0000 "dash_ingress.metering_update_stage.set_policy_meter_class"("meter_class":0x0000)
+
+# Table dash_ingress.metering_update_stage.eni_meter
+add "dash_ingress.metering_update_stage.eni_meter" "meta.direction":0x0001 "meta.dropped":0x1 "meta.eni_id":0x0000 "NoAction"()
+
+
+packet 0 00000000000000000000000008004500000000000000001100000000000000000000000012B50000000000000000000000000000000000000000000000000800450000000000000000110000FFFFFFFF00000000FFFFFFFF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

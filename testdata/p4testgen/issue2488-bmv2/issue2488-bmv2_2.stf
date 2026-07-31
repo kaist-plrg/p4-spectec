@@ -1,0 +1,53 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:28.872
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractFailure] hdr.eth_hdr@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: sm.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen MethodCall]: tmp_0.setValid();
+# [AssignmentStatement]: Headers tmp = { { h.eth_hdr.dst_addr, set(h.eth_hdr.dst_addr), 1 } };| Computed: tmp_0.dst_addr = "Taint";
+# [AssignmentStatement]: Headers tmp = { { h.eth_hdr.dst_addr, set(h.eth_hdr.dst_addr), 1 } };| Computed: tmp_0.src_addr = 2;
+# [AssignmentStatement]: Headers tmp = { { h.eth_hdr.dst_addr, set(h.eth_hdr.dst_addr), 1 } };| Computed: tmp_0.eth_type = 1;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: tmp_eth_hdr.setValid();
+# [AssignmentStatement]: Headers tmp = { { h.eth_hdr.dst_addr, set(h.eth_hdr.dst_addr), 1 } };| Computed: tmp_eth_hdr.dst_addr = "Taint";
+# [AssignmentStatement]: Headers tmp = { { h.eth_hdr.dst_addr, set(h.eth_hdr.dst_addr), 1 } };| Computed: tmp_eth_hdr.src_addr = 2;
+# [AssignmentStatement]: Headers tmp = { { h.eth_hdr.dst_addr, set(h.eth_hdr.dst_addr), 1 } };| Computed: tmp_eth_hdr.eth_type = 1;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h.eth_hdr.setValid();
+# [AssignmentStatement]: h = tmp;| Computed: h.eth_hdr.dst_addr = "Taint";
+# [AssignmentStatement]: h = tmp;| Computed: h.eth_hdr.src_addr = 2;
+# [AssignmentStatement]: h = tmp;| Computed: h.eth_hdr.eth_type = 1;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:2;  eth_type:1;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000
+expect 0 ************000000000002000100000000000000$
+

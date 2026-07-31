@@ -1,0 +1,42 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:40.329
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<data_t>(hdr.data);
+# [ExtractSuccess] hdr.data@0 | Condition: |*packetLen_bits(bit<32>)| >= 128; | Extract Size: 128 -> hdr.data.f1 = 0x0000_0000 | hdr.data.f2 = 0x0000_0000 | hdr.data.h1 = 0x0000 | hdr.data.h2 = 0x0000 | hdr.data.b1 = 0x00 | hdr.data.b2 = 0x00 | hdr.data.b3 = 0x00 | hdr.data.b4 = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: hdr.data.h1 += hdr.data.h2;| Computed: hdr.data.h1 = 0;
+# [AssignmentStatement]: hdr.data.b1 -= hdr.data.b2;| Computed: hdr.data.b1 = 0;
+# [AssignmentStatement]: hdr.data.b3 ^= hdr.data.b4;| Computed: hdr.data.b3 = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("uc");
+# [Control uc start]
+# [P4Testgen MethodCall]: *.copy_out("uc");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: packet.emit<data_t>(hdr.data);
+# [Emit]: {$headerValid:true;;    f1:0;  f2:0;  h1:0;  h2:0;  b1:0;  b2:0;  b3:0;  b4:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000000000000000000000000
+expect 0 0000000000000000000000000000000000000000000000$
+

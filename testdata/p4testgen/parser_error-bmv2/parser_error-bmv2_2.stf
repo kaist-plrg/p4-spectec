@@ -1,0 +1,45 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:36.164
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parse");
+# [Parser] parse
+# [State] start
+# [MethodCall]: pk.extract<Ethernet>(hdr.eth);
+# [ExtractFailure] hdr.eth@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: standard_metadata.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("parse");
+# [P4Testgen MethodCall]: *.copy_in("verify_checks");
+# [Control verify_checks start]
+# [P4Testgen MethodCall]: *.copy_out("verify_checks");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [If Statement]: standard_metadata.parser_error == error.PacketTooShort Condition: 1 == 1; Result: true
+# [MethodCall]: hdr.eth.setValid();
+# [AssignmentStatement]: hdr.eth.type = 0;| Computed: hdr.eth.type = 0;
+# [AssignmentStatement]: hdr.eth.src = 0;| Computed: hdr.eth.src = 0;
+# [AssignmentStatement]: hdr.eth.dst = 0;| Computed: hdr.eth.dst = 0;
+# [AssignmentStatement]: standard_metadata.egress_spec = 0;| Computed: standard_metadata.egress_spec = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("compute_checksum");
+# [Control compute_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("compute_checksum");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<Ethernet>(hdr.eth);
+# [Emit]: {$headerValid:true;;    src:0;  dst:0;  type:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000
+expect 0 000000000000000000000000000000000000000000$
+

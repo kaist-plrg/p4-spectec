@@ -1,0 +1,56 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:59.854
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x207D_FFC0_0008 | hdr.eth_hdr.src_addr = 0x207D_FFC0_0000 | hdr.eth_hdr.eth_type = 0x4003
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: bit<8> ret = 0;| Computed: ret_0/ret = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: t1_0/t1.apply();
+# [Table Branch: ingress.t1 | Key(s): |pktvar_0(bit<48>)|| Chosen action: ingress.top_a1]
+# [MethodCall]: top_a1(|ingress.t1_ingress.top_a1_arg_y(bit<16>)|);
+# [If Statement]: h.eth_hdr.eth_type >= (x + 10) Condition: |pktvar_2(bit<16>)| >= |ingress.t1_ingress.top_a1_arg_y(bit<16>)| + 10; Result: false
+# [If Statement]: h.eth_hdr.eth_type >= (x + 5) Condition: |pktvar_2(bit<16>)| >= |ingress.t1_ingress.top_a1_arg_y(bit<16>)| + 5; Result: false
+# [If Statement]: h.eth_hdr.eth_type == x Condition: |pktvar_2(bit<16>)| == |ingress.t1_ingress.top_a1_arg_y(bit<16>)|; Result: false
+# [AssignmentStatement]: ret = ret + 8;| Computed: ret_0/ret = 8;
+# [AssignmentStatement]: h.eth_hdr.src_addr[7:0] = ret;| Computed: h.eth_hdr.src_addr = 35725533773832;
+# [If Statement]: h.eth_hdr.src_addr == h.eth_hdr.dst_addr Condition: |pktvar_1(bit<48>)| & 281474976710400 | 8 == |pktvar_0(bit<48>)|; Result: true
+# [AssignmentStatement]: ret = ret + 16;| Computed: ret_0/ret = 24;
+# [AssignmentStatement]: ret = ret + 64;| Computed: ret_0/ret = 88;
+# [AssignmentStatement]: h.eth_hdr.src_addr[7:0] = ret;| Computed: h.eth_hdr.src_addr = 35725533773912;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:35725533773832;  src_addr:35725533773912;  eth_type:16387;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.t1
+add "ingress.t1" "h.eth_hdr.dst_addr":0x207DFFC00008 "ingress.top_a1"("y":0x7FF8)
+
+
+packet 0 207DFFC00008207DFFC00000400300000000000000
+expect 0 207DFFC00008207DFFC00058400300000000000000$
+

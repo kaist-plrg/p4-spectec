@@ -1,0 +1,31 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-07:08:19.907
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("prs");
+# [Parser] prs
+# [State] start
+# [MethodCall]: p.extract<Ethernet_h>(headers.ethernet);
+# [ExtractSuccess] headers.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> headers.ethernet.dstAddr = 0x0000_0000_0000 | headers.ethernet.srcAddr = 0x0000_0000_0000 | headers.ethernet.etherType = 0x0800
+# [State] ip
+# [MethodCall]: p.extract<IPv4_h>(headers.ipv4);
+# [ExtractSuccess] headers.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> headers.ipv4.version = 0x0 | headers.ipv4.ihl = 0x0 | headers.ipv4.diffserv = 0x00 | headers.ipv4.totalLen = 0x0000 | headers.ipv4.identification = 0x0000 | headers.ipv4.flags = 0x0 | headers.ipv4.fragOffset = 0x0000 | headers.ipv4.ttl = 0x00 | headers.ipv4.protocol = 0x00 | headers.ipv4.hdrChecksum = 0x0000 | headers.ipv4.srcAddr = 0x7FFF_FFFF | headers.ipv4.dstAddr = 0x7FFF_FFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("prs");
+# [P4Testgen MethodCall]: *.copy_in("pipe");
+# [Control pipe start]
+# [AssignmentStatement]: headers.ipv4.srcAddr + 1 : exact @name(" headers.ipv4.srcAddr");| Computed: key_0 = 2147483648;
+# [AssignmentStatement]: headers.ipv4.dstAddr + 1 : exact @name("headers.ipv4.dstAddr");| Computed: key_1 = 2147483648;
+# [MethodCall]: t_0/t.apply();
+# [Table Branch: pipe.t | Key(s): |pktvar_13(bit<32>)| + 1;, |pktvar_14(bit<32>)| + 1;, |pktvar_0(bit<48>)|, |pktvar_1(bit<48>)|| Chosen action: pipe.drop]
+# [MethodCall]: drop();
+# [AssignmentStatement]: pass = false;| Computed: pass = false;
+# [P4Testgen MethodCall]: *.copy_out("pipe");
+# [P4Testgen If Statement]: Condition: !false; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table pipe.t
+add pipe.t  headers.ipv4.srcAddr:0x80000000 headers.ethernet.dstAddr:0x000000000000 headers.ethernet.srcAddr:0x000000000000 headers.ipv4.dstAddr:0x80000000 pipe.drop()
+
+packet 0 00000000000000000000000008000000000000000000000000007FFFFFFF7FFFFFFF0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

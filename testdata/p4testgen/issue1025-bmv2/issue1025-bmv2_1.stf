@@ -1,0 +1,56 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:32.509
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserI");
+# [Parser] parserI
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [State] parse_ipv4
+# [Lookahead result]: 4
+# [Lookahead Condition: |*packetLen_bits(bit<32>)| >= 120;]
+# [AssignmentStatement]: (bit<9>) (pkt.lookahead<IPv4_up_to_ihl_only_h >().ihl)));| Computed: tmp_2 = 4;
+# [P4Testgen MethodCall]: tmp.setValid();
+# [P4Testgen AssignmentStatement]: tmp.version = 0;
+# [P4Testgen AssignmentStatement]: tmp.ihl = 4;
+# [MethodCall]: pkt.extract<ipv4_t>(hdr.ipv4, (bit<32>)((bit<9>)tmp_2[3:0] << 3));
+# [ExtractSuccess] hdr.ipv4@112 | Condition: (8 > 112 + ((bit<32>)((bit<9>)|pktvar_3(bit<8>)|[3:0] << 3) + 160) || |*packetLen_bits(bit<32>)| >= 112 + ((bit<32>)((bit<9>)|pktvar_3(bit<8>)|[3:0] << 3) + 160) - 8) && ((bit<32>)((bit<9>)|pktvar_3(bit<8>)|[3:0] << 3) <= 32 && (bit<32>)((bit<9>)|pktvar_3(bit<8>)|[3:0] << 3) % 8 == 0) && 192 == (bit<32>)((bit<9>)|pktvar_3(bit<8>)|[3:0] << 3) + 160; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x4 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x06 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x0000_0000 | hdr.ipv4.options = 0x0000_0000
+# [State] parse_tcp
+# [MethodCall]: pkt.extract<tcp_t>(hdr.tcp);
+# [ExtractSuccess] hdr.tcp@304 | Condition: |*packetLen_bits(bit<32>)| >= 464; | Extract Size: 160 -> hdr.tcp.srcPort = 0x0000 | hdr.tcp.dstPort = 0x0000 | hdr.tcp.seqNo = 0x0000_0000 | hdr.tcp.ackNo = 0x0000_0000 | hdr.tcp.dataOffset = 0x0 | hdr.tcp.res = 0x0 | hdr.tcp.ecn = 0x0 | hdr.tcp.ctrl = 0x00 | hdr.tcp.window = 0x0000 | hdr.tcp.checksum = 0x0000 | hdr.tcp.urgentPtr = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parserI");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("cIngress");
+# [Control cIngress start]
+# [AssignmentStatement]: hdr.ethernet.dstAddr = (24w0 ++| Computed: hdr.ethernet.dstAddr = 65793;
+# [P4Testgen MethodCall]: *.copy_out("cIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("cEgress");
+# [Control cEgress start]
+# [P4Testgen MethodCall]: *.copy_out("cEgress");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserI");
+# [Control DeparserI start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:65793;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:4;  diffserv:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:0;  protocol:6;  hdrChecksum:0;  srcAddr:0;  dstAddr:0;  options:0;  }
+# [MethodCall]: packet.emit<tcp_t>(hdr.tcp);
+# [Emit]: {$headerValid:true;;    srcPort:0;  dstPort:0;  seqNo:0;  ackNo:0;  dataOffset:0;  res:0;  ecn:0;  ctrl:0;  window:0;  checksum:0;  urgentPtr:0;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserI");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000000000000000080004000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 000000010101000000000000080004000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000$
+

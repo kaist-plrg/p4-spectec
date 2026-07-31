@@ -1,0 +1,72 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:09.192
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserImpl");
+# [Parser] parserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.priority = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x00FF_FFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: prio = hdr.ipv4.priority;| Computed: prio_0/prio = 0;
+# [MethodCall]: ipv4_da_lpm_0/ipv4_da_lpm.apply();
+# [Table Branch: ingressImpl.ipv4_da_lpm | Key(s): |pktvar_14(bit<32>)|| Chosen action: ingressImpl.set_l2ptr_and_prio]
+# [MethodCall]: set_l2ptr_and_prio(|ingressImpl.ipv4_da_lpm_ingressImpl.set_l2ptr_and_prio_arg_l2ptr_1(bit<32>)|, |ingressImpl.ipv4_da_lpm_ingressImpl.set_l2ptr_and_prio_arg_priority_1(bit<8>)|);
+# [AssignmentStatement]: meta.fwd_metadata.l2ptr = l2ptr;| Computed: meta.fwd_metadata.l2ptr = 0;
+# [AssignmentStatement]: prio = priority;| Computed: prio_0/prio = 0;
+# [MethodCall]: mac_da_0/mac_da.apply();
+# [Table Branch: ingressImpl.mac_da | Key(s): |ingressImpl.ipv4_da_lpm_ingressImpl.set_l2ptr_and_prio_arg_l2ptr_1(bit<32>)|| Chosen action: ingressImpl.set_bd_dmac_intf]
+# [MethodCall]: set_bd_dmac_intf(|ingressImpl.mac_da_ingressImpl.set_bd_dmac_intf_arg_bd(bit<24>)|, |ingressImpl.mac_da_ingressImpl.set_bd_dmac_intf_arg_dmac(bit<48>)|, |ingressImpl.mac_da_ingressImpl.set_bd_dmac_intf_arg_intf(bit<9>)|);
+# [AssignmentStatement]: meta.fwd_metadata.out_bd = bd;| Computed: meta.fwd_metadata.out_bd = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr = dmac;| Computed: hdr.ethernet.dstAddr = 0;
+# [AssignmentStatement]: stdmeta.egress_spec = intf;| Computed: stdmeta.egress_spec = 511;
+# [AssignmentStatement]: hdr.ipv4.ttl = hdr.ipv4.ttl - 1;| Computed: hdr.ipv4.ttl = 255;
+# [AssignmentStatement]: hdr.ipv4.priority = priority;| Computed: hdr.ipv4.priority = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [MethodCall]: send_frame_0/send_frame.apply();
+# [Table Branch: egressImpl.send_frame | Key(s): |ingressImpl.mac_da_ingressImpl.set_bd_dmac_intf_arg_bd(bit<24>)|| Chosen action: egressImpl.rewrite_mac]
+# [MethodCall]: rewrite_mac(|egressImpl.send_frame_egressImpl.rewrite_mac_arg_smac(bit<48>)|);
+# [AssignmentStatement]: hdr.ethernet.srcAddr = smac;| Computed: hdr.ethernet.srcAddr = 0;
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparserImpl");
+# [Control deparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  priority:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:255;  protocol:0;  hdrChecksum:0;  srcAddr:0;  dstAddr:16777215;  }
+# [P4Testgen MethodCall]: *.copy_out("deparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |ingressImpl.mac_da_ingressImpl.set_bd_dmac_intf_arg_intf(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingressImpl.ipv4_da_lpm
+add "ingressImpl.ipv4_da_lpm" 1 "hdr.ipv4.dstAddr":0b00000000111111111111111111111111 "ingressImpl.set_l2ptr_and_prio"("l2ptr":0x00000000,"priority":0x00)
+
+# Table ingressImpl.mac_da
+add "ingressImpl.mac_da" "meta.fwd_metadata.l2ptr":0x00000000 "ingressImpl.set_bd_dmac_intf"("bd":0x000000,"dmac":0x000000000000,"intf":0x1FF)
+
+# Table egressImpl.send_frame
+add "egressImpl.send_frame" "meta.fwd_metadata.out_bd":0x000000 "egressImpl.rewrite_mac"("smac":0x000000000000)
+
+
+packet 0 00000000000000000000000008000000000000000000000000000000000000FFFFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

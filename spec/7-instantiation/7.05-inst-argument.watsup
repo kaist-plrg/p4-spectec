@@ -1,0 +1,20 @@
+;;
+;; Argument evaluation for instantiation
+;;
+;; syntax argumentIR
+;;
+
+rulegroup Argument_inst {
+
+  rule Argument_inst/typedExpressionIR:
+    p IC STO_0 |- typedExpressionIR : STO_1 value
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value
+
+  rule Argument_inst/nameIR-typedExpressionIR:
+    p IC STO_0 |- nameIR '=' typedExpressionIR : STO_1 value
+    -- Expr_inst: p IC STO_0 |- typedExpressionIR : STO_1 value
+
+}
+
+;;; nameIR `= `_ and `_
+;;; instantiation arguments must not be missing

@@ -1,0 +1,32 @@
+module Typ = Runtime.Type.Typ
+open Util.Source
+
+(* Pre-computed type constants *)
+
+let typ_iter = Typ.Make.var ("iter" $ no_region) []
+let typ_vari = Typ.Make.var ("vari" $ no_region) []
+let typ_optyp = Typ.Make.var ("optyp" $ no_region) []
+let typ_numtyp = Typ.Make.var ("numtyp" $ no_region) []
+let typ_typ = Typ.Make.var ("typ" $ no_region) []
+let typ_deftyp = Typ.Make.var ("deftyp" $ no_region) []
+let typ_typfield = Typ.Make.var ("typfield" $ no_region) []
+let typ_typcase = Typ.Make.var ("typcase" $ no_region) []
+let typ_num = Typ.Make.var ("num" $ no_region) []
+let typ_val = Typ.Make.var ("val" $ no_region) []
+let typ_valfield = Typ.Make.var ("valfield" $ no_region) []
+let typ_valcase = Typ.Make.var ("valcase" $ no_region) []
+let typ_boolunop = Typ.Make.var ("boolunop" $ no_region) []
+let typ_numunop = Typ.Make.var ("numunop" $ no_region) []
+let typ_boolbinop = Typ.Make.var ("boolbinop" $ no_region) []
+let typ_numbinop = Typ.Make.var ("numbinop" $ no_region) []
+let typ_polycmpop = Typ.Make.var ("polycmpop" $ no_region) []
+let typ_numcmpop = Typ.Make.var ("numcmpop" $ no_region) []
+let typ_arg = Typ.Make.var ("arg" $ no_region) []
+let typ_exp = Typ.Make.var ("exp" $ no_region) []
+let typ_expcase = Typ.Make.var ("expcase" $ no_region) []
+let typ_expfield = Typ.Make.var ("expfield" $ no_region) []
+let typ_path = Typ.Make.var ("path" $ no_region) []
+let typ_pattern = Typ.Make.var ("pattern" $ no_region) []
+let typ_listpattern = Typ.Make.var ("listpattern" $ no_region) []
+let typ_optpattern = Typ.Make.var ("optpattern" $ no_region) []
+let typ_iterexp = Typ.Make.var ("iterexp" $ no_region) []

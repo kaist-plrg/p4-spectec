@@ -1,0 +1,43 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:07.699
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<hdr>(h.h);
+# [ExtractSuccess] h.h@0 | Condition: |*packetLen_bits(bit<32>)| >= 40; | Extract Size: 40 -> h.h.a = 0x0000 | h.h.b = 0x0000 | h.h.c = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: t_0/t.apply();
+# [Table Branch: ingress.t Choosing default action: case0;]
+# [MethodCall]: case0();
+# [AssignmentStatement]: action case0() { h.h.c = (bit<8>)((16w0 ++ h.h.a ++ 16w0)[31:0]); }| Computed: h.h.c = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<hdr>(h.h);
+# [Emit]: {$headerValid:true;;    a:0;  b:0;  c:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000
+expect 0 000000000000$
+

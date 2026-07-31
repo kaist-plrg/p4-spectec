@@ -1,0 +1,39 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-07:08:19.134
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("prs");
+# [Parser] prs
+# [State] start
+# [MethodCall]: p.extract<Ethernet_h>(headers.ethernet);
+# [ExtractSuccess] headers.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> headers.ethernet.dstAddr = 0x0000_0000_0000 | headers.ethernet.srcAddr = 0x0000_0000_0000 | headers.ethernet.etherType = 0x0800
+# [State] ip
+# [MethodCall]: p.extract<IPv4_h>(headers.ipv4);
+# [ExtractSuccess] headers.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> headers.ipv4.version = 0x0 | headers.ipv4.ihl = 0x0 | headers.ipv4.diffserv = 0x00 | headers.ipv4.totalLen = 0x0000 | headers.ipv4.identification = 0x0000 | headers.ipv4.flags = 0x0 | headers.ipv4.fragOffset = 0x0000 | headers.ipv4.ttl = 0x00 | headers.ipv4.protocol = 0x00 | headers.ipv4.hdrChecksum = 0x0000 | headers.ipv4.srcAddr = 0x0000_0000 | headers.ipv4.dstAddr = 0x0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("prs");
+# [P4Testgen MethodCall]: *.copy_in("pipe");
+# [Control pipe start]
+# [AssignmentStatement]: pass = true;| Computed: pass = true;
+# [MethodCall]: Check_src_ip_0/Check_src_ip.apply();
+# [Table Branch: pipe.Check_src_ip | Key(s): |pktvar_13(bit<32>)|| Chosen action: pipe.Reject]
+# [MethodCall]: Reject(|pipe.Check_src_ip_pipe.Reject_arg_add_1(bit<32>)|);
+# [AssignmentStatement]: pass = false;| Computed: pass = false;
+# [AssignmentStatement]: headers.ipv4.srcAddr = add;| Computed: headers.ipv4.srcAddr = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: Check_src_ip_0/Check_src_ip.apply();
+# [Table Branch: pipe.Check_src_ip | Key(s): |pipe.Check_src_ip_pipe.Reject_arg_add_1(bit<32>)|| Chosen action: pipe.Reject]
+# [MethodCall]: Reject(|pipe.Check_src_ip_pipe.Reject_arg_add_1(bit<32>)|);
+# [AssignmentStatement]: pass = false;| Computed: pass = false;
+# [AssignmentStatement]: headers.ipv4.srcAddr = add;| Computed: headers.ipv4.srcAddr = 0;
+# [SwitchCase]: Reject
+# [AssignmentStatement]: pass = false;| Computed: pass = false;
+# [P4Testgen MethodCall]: *.copy_out("pipe");
+# [P4Testgen If Statement]: Condition: !false; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table pipe.Check_src_ip
+add pipe.Check_src_ip headers.ipv4.srcAddr:0x00000000 pipe.Reject(add:0x00000000)
+
+packet 0 000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

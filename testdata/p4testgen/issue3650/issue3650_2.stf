@@ -1,0 +1,45 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:44.312
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: packet.extract<payload_t>(hdr.payload);
+# [ExtractSuccess] hdr.payload@0 | Condition: |*packetLen_bits(bit<32>)| >= 8; | Extract Size: 8 -> hdr.payload.x = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [MethodCall]: switch_2_table.apply();
+# [Constant Table Branch: switch_2_table | Key(s): |pktvar_0(bit<8>)| | Chosen action: switch_2_case_0()]
+# [MethodCall]: switch_2_case_0();
+# [SwitchCase]: 
+# [MethodCall]: switch_1_table.apply();
+# [Table Branch: switch_1_table Choosing default action: switch_1_case_0;]
+# [P4Testgen MethodCall]: switch_1_case_0();
+# [SwitchCase]: 
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000
+expect 0 0000$
+

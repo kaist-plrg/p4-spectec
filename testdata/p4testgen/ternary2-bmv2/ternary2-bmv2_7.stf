@@ -1,0 +1,83 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:35.573
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<data_h>(hdrs.data);
+# [ExtractSuccess] hdrs.data@0 | Condition: |*packetLen_bits(bit<32>)| >= 96; | Extract Size: 96 -> hdrs.data.f1 = 0x00FF_FFFF | hdrs.data.f2 = 0x00FF_FFFF | hdrs.data.h1 = 0x0000 | hdrs.data.b1 = 0x00 | hdrs.data.b2 = 0x00
+# [State] extra
+# [MethodCall]: b.extract<extra_h>(hdrs.extra[0]);
+# [ExtractSuccess] hdrs.extra[32w0]@96 | Condition: |*packetLen_bits(bit<32>)| >= 128; | Extract Size: 32 -> hdrs.extra[32w0].h = 0x00FF | hdrs.extra[32w0].b1 = 0x00 | hdrs.extra[32w0].b2 = 0x80
+# [State] extra1
+# [MethodCall]: b.extract<extra_h>(hdrs.extra[1]);
+# [ExtractSuccess] hdrs.extra[32w1]@128 | Condition: |*packetLen_bits(bit<32>)| >= 160; | Extract Size: 32 -> hdrs.extra[32w1].h = 0x0000 | hdrs.extra[32w1].b1 = 0x00 | hdrs.extra[32w1].b2 = 0x80
+# [State] extra2
+# [MethodCall]: b.extract<extra_h>(hdrs.extra[2]);
+# [ExtractSuccess] hdrs.extra[32w2]@160 | Condition: |*packetLen_bits(bit<32>)| >= 192; | Extract Size: 32 -> hdrs.extra[32w2].h = 0x0000 | hdrs.extra[32w2].b1 = 0x00 | hdrs.extra[32w2].b2 = 0x80
+# [State] extra3
+# [MethodCall]: b.extract<extra_h>(hdrs.extra[3]);
+# [ExtractSuccess] hdrs.extra[32w3]@192 | Condition: |*packetLen_bits(bit<32>)| >= 224; | Extract Size: 32 -> hdrs.extra[32w3].h = 0x0000 | hdrs.extra[32w3].b1 = 0x00 | hdrs.extra[32w3].b2 = 0x80
+# [State] extra4
+# [State] stateOutOfBound
+# [P4Testgen MethodCall]: verify(false, 3);
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: test1_0/test1.apply();
+# [Table Branch: ingress.test1 | Key(s): |pktvar_0(bit<32>)|| Chosen action: ingress.setb1]
+# [MethodCall]: setb1(|ingress.test1_ingress.setb1_arg_port(bit<9>)|, |ingress.test1_ingress.setb1_arg_val(bit<8>)|);
+# [AssignmentStatement]: hdrs.data.b1 = val;| Computed: hdrs.data.b1 = 0;
+# [AssignmentStatement]: meta.egress_spec = port;| Computed: meta.egress_spec = 511;
+# [MethodCall]: ex1_0/ex1.apply();
+# [Table Branch: ingress.ex1 | Key(s): |pktvar_5(bit<16>)|| Chosen action: ingress.act3]
+# [MethodCall]: act3(|ingress.ex1_ingress.act3_arg_val_11(bit<8>)|);
+# [AssignmentStatement]: action act3(bit<8> val) { hdrs.extra[0].b1 = val; }| Computed: hdrs.extra[0].b1 = 0;
+# [SwitchCase]: act3
+# [MethodCall]: tbl3_0/tbl3.apply();
+# [Table Branch: ingress.tbl3 | Key(s): |pktvar_1(bit<32>)|| Chosen action: ingress.noop]
+# [MethodCall]: noop_4/noop();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<data_h>(hdrs.data);
+# [Emit]: {$headerValid:true;;    f1:16777215;  f2:16777215;  h1:0;  b1:0;  b2:0;  }
+# [MethodCall]: b.emit<extra_h>(hdrs.extra[0]);
+# [Emit]: {$headerValid:true;;    h:255;  b1:0;  b2:128;  }
+# [MethodCall]: b.emit<extra_h>(hdrs.extra[1]);
+# [Emit]: {$headerValid:true;;    h:0;  b1:0;  b2:128;  }
+# [MethodCall]: b.emit<extra_h>(hdrs.extra[2]);
+# [Emit]: {$headerValid:true;;    h:0;  b1:0;  b2:128;  }
+# [MethodCall]: b.emit<extra_h>(hdrs.extra[3]);
+# [Emit]: {$headerValid:true;;    h:0;  b1:0;  b2:128;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |ingress.test1_ingress.setb1_arg_port(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress.test1
+add "ingress.test1" 1 "hdrs.data.f1":0b******************************** "ingress.setb1"("port":0x1FF,"val":0x00)
+
+# Table ingress.ex1
+add "ingress.ex1" 1 "hdrs.extra[0].h":0b**************** "ingress.act3"("val":0x00)
+
+# Table ingress.tbl3
+add "ingress.tbl3" 1 "hdrs.data.f2":0b******************************** "ingress.noop"()
+
+
+packet 0 00FFFFFF00FFFFFF0000000000FF0080000000800000008000000080
+

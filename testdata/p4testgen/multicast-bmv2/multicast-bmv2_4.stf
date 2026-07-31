@@ -1,0 +1,65 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:30.458
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] ParserImpl.start
+# [State] ParserImpl.parse_ethernet
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [State] ParserImpl.parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x00FF_FFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: ipv4_lpm_0/ipv4_lpm.apply();
+# [Table Branch: ingress.ipv4_lpm | Key(s): |pktvar_14(bit<32>)|| Chosen action: set_nhop]
+# [MethodCall]: set_nhop(|ingress.ipv4_lpm_set_nhop_arg_nhop_ipv4_1(bit<32>)|, |ingress.ipv4_lpm_set_nhop_arg_port(bit<9>)|);
+# [AssignmentStatement]: meta.routing_metadata.nhop_ipv4 = nhop_ipv4;| Computed: meta.routing_metadata.nhop_ipv4 = 0;
+# [AssignmentStatement]: standard_metadata.egress_spec = port;| Computed: standard_metadata.egress_spec = 511;
+# [AssignmentStatement]: hdr.ipv4.ttl = hdr.ipv4.ttl + 8w255;| Computed: hdr.ipv4.ttl = 255;
+# [MethodCall]: forward_0/forward.apply();
+# [Table Branch: ingress.forward | Key(s): |ingress.ipv4_lpm_set_nhop_arg_nhop_ipv4_1(bit<32>)|| Chosen action: set_dmac]
+# [MethodCall]: set_dmac(|ingress.forward_set_dmac_arg_dmac(bit<48>)|);
+# [AssignmentStatement]: hdr.ethernet.dstAddr = dmac;| Computed: hdr.ethernet.dstAddr = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [MethodCall]: send_frame_0/send_frame.apply();
+# [Table Branch: egress.send_frame Choosing default action: NoAction_2/NoAction;]
+# [P4Testgen MethodCall]: NoAction_2/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  diffserv:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:255;  protocol:0;  hdrChecksum:0;  srcAddr:0;  dstAddr:16777215;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |ingress.ipv4_lpm_set_nhop_arg_port(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress.ipv4_lpm
+add "ingress.ipv4_lpm" 1 "hdr.ipv4.dstAddr":0b00000000111111111111111111111111 "set_nhop"("nhop_ipv4":0x00000000,"port":0x1FF)
+
+# Table ingress.forward
+add "ingress.forward" "meta.routing_metadata.nhop_ipv4":0x00000000 "set_dmac"("dmac":0x000000000000)
+
+
+packet 0 00000000000000000000000008000000000000000000000000000000000000FFFFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

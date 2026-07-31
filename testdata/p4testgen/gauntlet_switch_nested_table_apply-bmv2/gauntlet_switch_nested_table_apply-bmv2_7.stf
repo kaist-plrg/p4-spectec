@@ -1,0 +1,59 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:43.239
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractFailure] hdr.eth_hdr@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: sm.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: 48w1: exact @name("qkgOtm") ;| Computed: key_1 = 1;
+# [MethodCall]: simple_table_0/simple_table_2.apply();
+# [Table Branch: ingress.simple_table_2 Choosing default action: NoAction_2/NoAction;]
+# [P4Testgen MethodCall]: NoAction_2/NoAction();
+# [SwitchCase]: NoAction
+# [AssignmentStatement]: 128w1 : exact @name("JGOUaj") ;| Computed: key_0 = 1;
+# [MethodCall]: simple_table/simple_table_1.apply();
+# [Table Branch: ingress.simple_table_1 | Key(s): 1| Chosen action: ingress.set_valid_action]
+# [MethodCall]: set_valid_action();
+# [MethodCall]: tmp_0_eth_hdr.setValid();
+# [AssignmentStatement]: tmp.eth_hdr.dst_addr = 1;| Computed: tmp_0_eth_hdr.dst_addr = 1;
+# [AssignmentStatement]: tmp.eth_hdr.src_addr = 1;| Computed: tmp_0_eth_hdr.src_addr = 1;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h.eth_hdr.setValid();
+# [AssignmentStatement]: set_valid_action(h);| Computed: h.eth_hdr.dst_addr = 1;
+# [AssignmentStatement]: set_valid_action(h);| Computed: h.eth_hdr.src_addr = 1;
+# [AssignmentStatement]: set_valid_action(h);| Computed: h.eth_hdr.eth_type = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:1;  src_addr:1;  eth_type:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.simple_table_1
+add "ingress.simple_table_1" "JGOUaj":0x00000000000000000000000000000001 "ingress.set_valid_action"()
+
+
+packet 0 0000000000
+expect 0 00000000000100000000000100000000000000$
+

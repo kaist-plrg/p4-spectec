@@ -1,0 +1,69 @@
+;;
+;; Objects
+;;
+
+;;
+;;;; Extern object
+;;;; Name of the extern object (tid), bound type variables (tenv),
+;;;; value environment (frame), and routine environment for methods (renv)
+;;
+
+syntax externObject = EXTERN tid `< theta > `{ frame renv }
+
+;;
+;;;; Parser object
+;;;; Apply parameters (parameterListIR), value environment (frame),
+;;;; local declarations (parserLocalDeclarationListIR), and state environment (senv)
+;;
+
+syntax parserObject =
+  PARSER `( parameterListIR )
+    `{ frame
+       parserLocalDeclarationListIR
+       senv }
+
+;;
+;;;; Control object
+;;;; Apply parameters (parameterListIR), value environment (frame),
+;;;; local declarations (controlLocalDeclarationListIR),
+;;;; routine environment for actions (renv), and body (controlBodyIR)
+;;
+
+syntax controlObject =
+  CONTROL `( parameterListIR )
+    `{ frame
+       controlLocalDeclarationListIR
+       renv
+       controlBodyIR }
+
+;;
+;;;; Package object
+;;;; Name of the package (tid), bound type variables (theta),
+;;;; and value environment (frame)
+;;
+
+syntax packageObject = PACKAGE `< theta > `{ frame }
+
+;;
+;;;; Table object
+;;;; Name of the table (tid) and value environment (frame)
+;;
+
+syntax tableObjectProperty =
+  { KEYS tableKeysPropertyIR,
+    ACTIONS tableActionsPropertyIR,
+    DEFAULT_ACTION tableDefaultActionPropertyIR,
+    ENTRIES tableEntriesPropertyIR,
+    CUSTOMS tableCustomPropertyIR* }
+
+var TBL : tableObjectProperty
+
+syntax tableObject =
+  TABLE tid `{ frame tableObjectProperty }
+
+syntax object =
+  | externObject
+  | parserObject
+  | controlObject
+  | packageObject
+  | tableObject

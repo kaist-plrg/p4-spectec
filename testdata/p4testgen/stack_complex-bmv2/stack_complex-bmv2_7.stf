@@ -1,0 +1,47 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:28.084
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<hdr>(h.hs[0]);
+# [ExtractFailure] h.hs[32w0]@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 64); | Extract Size: 64
+# [P4Testgen AssignmentStatement]: sm.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: t_0/t.apply();
+# [Table Branch: ingress.t Choosing default action: set_port;]
+# [MethodCall]: set_port();
+# [AssignmentStatement]: action set_port() { sm.egress_spec = (bit<9>)m.v; }| Computed: sm.egress_spec = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<hdr>(h.hs[0]);
+# [Invalid emit: { f1 = TaintedExpression(bit<32>), f2 = TaintedExpression(bit<32>) }]
+# [MethodCall]: b.emit<hdr>(h.hs[1]);
+# [Invalid emit: { f1 = TaintedExpression(bit<32>), f2 = TaintedExpression(bit<32>) }]
+# [MethodCall]: b.emit<hdr>(h.hs[2]);
+# [Invalid emit: { f1 = TaintedExpression(bit<32>), f2 = TaintedExpression(bit<32>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000
+expect 0 00000000$
+

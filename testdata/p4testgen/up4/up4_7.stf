@@ -1,0 +1,128 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:21.412
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [State] parse_packet_out
+# [MethodCall]: packet.extract<packet_out_t>(hdr.packet_out);
+# [ExtractSuccess] hdr.packet_out@0 | Condition: |*packetLen_bits(bit<32>)| >= 8; | Extract Size: 8 -> hdr.packet_out.reserved = 0x00
+# [State] parse_ethernet
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@8 | Condition: |*packetLen_bits(bit<32>)| >= 120; | Extract Size: 112 -> hdr.ethernet.dst_addr = 0xFFFF_FFFF_FFFF | hdr.ethernet.src_addr = 0xFFFF_FFFF_FFFF | hdr.ethernet.ether_type = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@120 | Condition: |*packetLen_bits(bit<32>)| >= 280; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.dscp = 0x00 | hdr.ipv4.ecn = 0x0 | hdr.ipv4.total_len = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.frag_offset = 0x0000 | hdr.ipv4.ttl = 0x01 | hdr.ipv4.proto = 0x11 | hdr.ipv4.checksum = 0xFEEE | hdr.ipv4.src_addr = 0xFFFF_FF7F | hdr.ipv4.dst_addr = 0xFFFF_FFFF
+# [State] parse_udp
+# [MethodCall]: packet.extract<udp_t>(hdr.udp);
+# [ExtractSuccess] hdr.udp@280 | Condition: |*packetLen_bits(bit<32>)| >= 344; | Extract Size: 64 -> hdr.udp.sport = 0x0000 | hdr.udp.dport = 0x2693 | hdr.udp.len = 0x0000 | hdr.udp.checksum = 0x0000
+# [AssignmentStatement]: local_meta.l4_sport = hdr.udp.sport;| Computed: local_meta.l4_sport = 0;
+# [AssignmentStatement]: local_meta.l4_dport = hdr.udp.dport;| Computed: local_meta.l4_dport = 9875;
+# [Lookahead result]: 0
+# [Lookahead Condition: |*packetLen_bits(bit<32>)| >= 408;]
+# [AssignmentStatement]: gtpu_t gtpu = packet.lookahead<gtpu_t>();| Computed: tmp = 0;
+# [P4Testgen MethodCall]: gtpu_0/gtpu.setValid();
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.version = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.pt = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.spare = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.ex_flag = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.seq_flag = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.npdu_flag = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.msgtype = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.msglen = 0;
+# [P4Testgen AssignmentStatement]: gtpu_0/gtpu.teid = 0;
+# [State] parse_inner_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.inner_ipv4);
+# [ExtractSuccess] hdr.inner_ipv4@344 | Condition: |*packetLen_bits(bit<32>)| >= 440; | Extract Size: 160 -> hdr.inner_ipv4.version = 0x0 | hdr.inner_ipv4.ihl = 0x0 | hdr.inner_ipv4.dscp = 0x00 | hdr.inner_ipv4.ecn = 0x0 | hdr.inner_ipv4.total_len = 0x0000 | hdr.inner_ipv4.identification = 0x0000 | hdr.inner_ipv4.flags = 0x0 | hdr.inner_ipv4.frag_offset = 0x0000 | hdr.inner_ipv4.ttl = 0x00 | hdr.inner_ipv4.proto = 0x11 | hdr.inner_ipv4.checksum = 0xFFEE | hdr.inner_ipv4.src_addr = 0x0000_0000 | hdr.inner_ipv4.dst_addr = 0x0000_0000
+# [State] parse_inner_udp
+# [MethodCall]: packet.extract<udp_t>(hdr.inner_udp);
+# [ExtractSuccess] hdr.inner_udp@504 | Condition: |*packetLen_bits(bit<32>)| >= 568; | Extract Size: 64 -> hdr.inner_udp.sport = 0xFFFF | hdr.inner_udp.dport = 0xFFFF | hdr.inner_udp.len = 0x0000 | hdr.inner_udp.checksum = 0x0000
+# [AssignmentStatement]: local_meta.l4_sport = hdr.inner_udp.sport;| Computed: local_meta.l4_sport = 65535;
+# [AssignmentStatement]: local_meta.l4_dport = hdr.inner_udp.dport;| Computed: local_meta.l4_dport = 65535;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("VerifyChecksumImpl");
+# [Control VerifyChecksumImpl start]
+# [MethodCall]: verify_checksum<tuple_0, bit<16>>(hdr.ipv4.isValid(), {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.dscp;  f3:hdr.ipv4.ecn;  f4:hdr.ipv4.total_len;  f5:hdr.ipv4.identification;  f6:hdr.ipv4.flags;  f7:hdr.ipv4.frag_offset;  f8:hdr.ipv4.ttl;  f9:hdr.ipv4.proto;  f10:hdr.ipv4.src_addr;  f11:hdr.ipv4.dst_addr; }, hdr.ipv4.checksum, 6);
+# [MethodCall]: verify_checksum<tuple_0, bit<16>>(hdr.inner_ipv4.isValid(), {  f0:hdr.inner_ipv4.version;  f1:hdr.inner_ipv4.ihl;  f2:hdr.inner_ipv4.dscp;  f3:hdr.inner_ipv4.ecn;  f4:hdr.inner_ipv4.total_len;  f5:hdr.inner_ipv4.identification;  f6:hdr.inner_ipv4.flags;  f7:hdr.inner_ipv4.frag_offset;  f8:hdr.inner_ipv4.ttl;  f9:hdr.inner_ipv4.proto;  f10:hdr.inner_ipv4.src_addr;  f11:hdr.inner_ipv4.dst_addr; }, hdr.inner_ipv4.checksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("VerifyChecksumImpl");
+# [P4Testgen MethodCall]: *.copy_in("PreQosPipe");
+# [Control PreQosPipe start]
+# [P4Testgen AssignmentStatement]: hasReturned_0 = false;
+# [MethodCall]: _initialize_metadata();
+# [AssignmentStatement]: local_meta.session_meter_idx_internal = DEFAULT_SESSION_METER_IDX;| Computed: local_meta.session_meter_idx_internal = 0;
+# [AssignmentStatement]: local_meta.app_meter_idx_internal = DEFAULT_APP_METER_IDX;| Computed: local_meta.app_meter_idx_internal = 0;
+# [AssignmentStatement]: local_meta.application_id = APP_ID_UNKNOWN;| Computed: local_meta.application_id = 0;
+# [AssignmentStatement]: local_meta.preserved_ingress_port = std_meta.ingress_port;| Computed: local_meta.preserved_ingress_port = 255;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hdr.packet_out.setInvalid();
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: hdr.ipv4.ttl = hdr.ipv4.ttl - 1;| Computed: hdr.ipv4.ttl = 0;
+# [If Statement]: hdr.ipv4.ttl == 0 Condition: |pktvar_12(bit<8>)| + 255 == 0; Result: true
+# [MethodCall]: Routing_drop_0/drop();
+# [MethodCall]: mark_to_drop(std_meta);
+# [mark_to_drop executed.]
+# [If Statement]: hdr.ethernet.isValid() && hdr.ipv4.isValid() Condition: true && true; Result: true
+# [MethodCall]: Acl_acls/acls.apply();
+# [Table Branch: PreQosPipe.Acl.acls | Key(s): |bmv2_ingress_port(bit<9>)|, 0, |pktvar_2(bit<48>)|, |pktvar_1(bit<48>)|, |pktvar_3(bit<16>)|, |pktvar_15(bit<32>)|, |pktvar_16(bit<32>)|, |pktvar_13(bit<8>)|, |pktvar_27(bit<16>)|, |pktvar_28(bit<16>)|| Chosen action: PreQosPipe.Acl.punt]
+# [MethodCall]: Acl_punt_0/punt();
+# [AssignmentStatement]: std_meta.egress_spec = port;| Computed: std_meta.egress_spec = 255;
+# [P4Testgen MethodCall]: *.copy_out("PreQosPipe");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 255;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("PostQosPipe");
+# [Control PostQosPipe start]
+# [MethodCall]: post_qos_counter_0/post_qos_counter.count(local_meta.ctr_idx);
+# [If Statement]: std_meta.egress_port == 255 Condition: 255 == 255; Result: true
+# [MethodCall]: hdr.packet_in.setValid();
+# [AssignmentStatement]: hdr.packet_in.ingress_port = local_meta.preserved_ingress_port;| Computed: hdr.packet_in.ingress_port = 255;
+# [Exit]
+# [P4Testgen MethodCall]: *.copy_out("PostQosPipe");
+# [P4Testgen MethodCall]: *.copy_in("ComputeChecksumImpl");
+# [Control ComputeChecksumImpl start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.ipv4.isValid(), {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.dscp;  f3:hdr.ipv4.ecn;  f4:hdr.ipv4.total_len;  f5:hdr.ipv4.identification;  f6:hdr.ipv4.flags;  f7:hdr.ipv4.frag_offset;  f8:hdr.ipv4.ttl;  f9:hdr.ipv4.proto;  f10:hdr.ipv4.src_addr;  f11:hdr.ipv4.dst_addr; }, hdr.ipv4.checksum, 6);
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.inner_ipv4.isValid(), {  f0:hdr.inner_ipv4.version;  f1:hdr.inner_ipv4.ihl;  f2:hdr.inner_ipv4.dscp;  f3:hdr.inner_ipv4.ecn;  f4:hdr.inner_ipv4.total_len;  f5:hdr.inner_ipv4.identification;  f6:hdr.inner_ipv4.flags;  f7:hdr.inner_ipv4.frag_offset;  f8:hdr.inner_ipv4.ttl;  f9:hdr.inner_ipv4.proto;  f10:hdr.inner_ipv4.src_addr;  f11:hdr.inner_ipv4.dst_addr; }, hdr.inner_ipv4.checksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("ComputeChecksumImpl");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<packet_in_t>(hdr.packet_in);
+# [Emit]: {$headerValid:true;;    ingress_port:255;  _pad:0;  }
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dst_addr:281474976710655;  src_addr:281474976710655;  ether_type:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  dscp:0;  ecn:0;  total_len:0;  identification:0;  flags:0;  frag_offset:0;  ttl:0;  proto:17;  checksum:0;  src_addr:4294967167;  dst_addr:4294967295;  }
+# [MethodCall]: packet.emit<udp_t>(hdr.udp);
+# [Emit]: {$headerValid:true;;    sport:0;  dport:9875;  len:0;  checksum:0;  }
+# [MethodCall]: packet.emit<tcp_t>(hdr.tcp);
+# [Invalid emit: { sport = TaintedExpression(bit<16>), dport = TaintedExpression(bit<16>), seq_no = TaintedExpression(bit<32>), ack_no = TaintedExpression(bit<32>), data_offset = TaintedExpression(bit<4>), res = TaintedExpression(bit<3>), ecn = TaintedExpression(bit<3>), ctrl = TaintedExpression(bit<6>), window = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>), urgent_ptr = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<icmp_t>(hdr.icmp);
+# [Invalid emit: { icmp_type = TaintedExpression(bit<8>), icmp_code = TaintedExpression(bit<8>), checksum = TaintedExpression(bit<16>), identifier = TaintedExpression(bit<16>), sequence_number = TaintedExpression(bit<16>), timestamp = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<gtpu_t>(hdr.gtpu);
+# [Invalid emit: { version = TaintedExpression(bit<3>), pt = TaintedExpression(bit<1>), spare = TaintedExpression(bit<1>), ex_flag = TaintedExpression(bit<1>), seq_flag = TaintedExpression(bit<1>), npdu_flag = TaintedExpression(bit<1>), msgtype = TaintedExpression(bit<8>), msglen = TaintedExpression(bit<16>), teid = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<gtpu_options_t>(hdr.gtpu_options);
+# [Invalid emit: { seq_num = TaintedExpression(bit<16>), n_pdu_num = TaintedExpression(bit<8>), next_ext = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<gtpu_ext_psc_t>(hdr.gtpu_ext_psc);
+# [Invalid emit: { len = TaintedExpression(bit<8>), type = TaintedExpression(bit<4>), spare0 = TaintedExpression(bit<4>), ppp = TaintedExpression(bit<1>), rqi = TaintedExpression(bit<1>), qfi = TaintedExpression(bit<6>), next_ext = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<ipv4_t>(hdr.inner_ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  dscp:0;  ecn:0;  total_len:0;  identification:0;  flags:0;  frag_offset:0;  ttl:0;  proto:17;  checksum:0;  src_addr:0;  dst_addr:0;  }
+# [MethodCall]: packet.emit<udp_t>(hdr.inner_udp);
+# [Emit]: {$headerValid:true;;    sport:65535;  dport:65535;  len:0;  checksum:0;  }
+# [MethodCall]: packet.emit<tcp_t>(hdr.inner_tcp);
+# [Invalid emit: { sport = TaintedExpression(bit<16>), dport = TaintedExpression(bit<16>), seq_no = TaintedExpression(bit<32>), ack_no = TaintedExpression(bit<32>), data_offset = TaintedExpression(bit<4>), res = TaintedExpression(bit<3>), ecn = TaintedExpression(bit<3>), ctrl = TaintedExpression(bit<6>), window = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>), urgent_ptr = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<icmp_t>(hdr.inner_icmp);
+# [Invalid emit: { icmp_type = TaintedExpression(bit<8>), icmp_code = TaintedExpression(bit<8>), checksum = TaintedExpression(bit<16>), identifier = TaintedExpression(bit<16>), sequence_number = TaintedExpression(bit<16>), timestamp = TaintedExpression(bit<64>) }]
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 255; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table PreQosPipe.Acl.acls
+add "PreQosPipe.Acl.acls" 1 "eth_dst":0b************************************************ "eth_src":0b************************************************ "eth_type":0b**************** "inport":0b********* "ipv4_dst":0b******************************** "ipv4_proto":0b******** "ipv4_src":0b******************************** "l4_dport":0b**************** "l4_sport":0b**************** "src_iface":0b******** "PreQosPipe.Acl.punt"()
+
+
+packet 255 00FFFFFFFFFFFFFFFFFFFFFFFF080000000000000000000111FF6EFFFFFF7FFFFFFFFF000026930000000000000000000000000011FFEE0000000000000000FFFFFFFF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 255 7F**FFFFFFFFFFFFFFFFFFFFFFFF080000000000000000000011006FFFFFFF7FFFFFFFFF000026930000000000000000000000000011FFEE0000000000000000FFFFFFFF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

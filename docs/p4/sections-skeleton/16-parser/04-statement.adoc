@@ -1,0 +1,321 @@
+[#sec-parser-statement]
+=== Parser statements
+
+// 774
+The syntax for parser statements is given by the following grammar rules:
+
+// 775 - Modified
+${syntax: parserStatement
+          parserBlockElementStatement
+          parserBlockElementStatementList
+          parserBlockStatement
+          parserConditionalStatement}
+
+==== Semantics of parser statements
+
+===== Type checking
+
+// Added
+${relation-title-source: ParserStmt_ok}
+${relation-title-prose: ParserStmt_ok}
+
+// Added
+After type checking, parser statements are represented in P4~IR~ as follows:
+
+// Added
+${syntax: parserStatementIR
+          parserBlockElementStatementIR
+          parserBlockElementStatementListIR
+          parserBlockStatementIR
+          parserConditionalStatementIR}
+
+===== Compile-time evaluation
+
+// Added
+${relation-title-source: ParserStmt_inst}
+${relation-title-prose: ParserStmt_inst}
+
+===== Runtime evaluation
+
+// Added
+${relation-title-source: ParserStmt_eval}
+${relation-title-prose: ParserStmt_eval}
+
+// Added
+Evaluation of a parser statement yields:
+
+${syntax: parserStatementResult
+          continueEmptyResult rejectTransitionResult}
+
+// Added
+The subsequent sections describe each kind of statement in detail.
+
+==== Empty statement
+
+// Added
+See <<sec-empty-statement>> for general information about empty statements.
+
+===== Type checking
+
+// Added
+${rulegroup-source: ParserStmt_ok/emptyStatement}
+${rulegroup-prose: ParserStmt_ok/emptyStatement}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: ParserStmt_inst/emptyStatementIR}
+${rulegroup-prose: ParserStmt_inst/emptyStatementIR}
+
+===== Runtime evaluation
+
+// Added
+${rulegroup-source: ParserStmt_eval/emptyStatementIR}
+${rulegroup-prose: ParserStmt_eval/emptyStatementIR}
+
+==== Assignment statement
+
+// Added
+See <<sec-assignment-statement>> for general information about assignment
+statements.
+
+===== Type checking
+
+// Added
+${rulegroup-source: ParserStmt_ok/assignmentStatement}
+${rulegroup-prose: ParserStmt_ok/assignmentStatement}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: ParserStmt_inst/assignmentStatementIR}
+${rulegroup-prose: ParserStmt_inst/assignmentStatementIR}
+
+===== Runtime evaluation
+
+// Added
+${rulegroup-source: ParserStmt_eval/assignmentStatementIR}
+${rulegroup-prose: ParserStmt_eval/assignmentStatementIR}
+
+==== Call statement
+
+// Added
+See <<sec-call-statement>> for general information about call statements.
+
+===== Type checking
+
+// Added
+${rulegroup-source: ParserStmt_ok/callStatement}
+${rulegroup-prose: ParserStmt_ok/callStatement}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: ParserStmt_inst/callStatementIR}
+${rulegroup-prose: ParserStmt_inst/callStatementIR}
+
+===== Runtime evaluation
+
+// Added
+${rulegroup-source: ParserStmt_eval/callStatementIR}
+${rulegroup-prose: ParserStmt_eval/callStatementIR}
+
+==== Direct type invocation
+
+// Added
+See <<sec-direct-type-invocation>> for general information about direct type
+invocations.
+
+===== Type checking
+
+// Added
+${rulegroup-source: ParserStmt_ok/directApplicationStatement}
+${rulegroup-prose: ParserStmt_ok/directApplicationStatement}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: ParserStmt_inst/directApplicationStatementIR}
+${rulegroup-prose: ParserStmt_inst/directApplicationStatementIR}
+
+==== Block statement
+
+// Added
+A parser block statement is a sequence of parser statements or declarations
+enclosed in braces. It is similar to a block statement explained in
+<<sec-block-statement>>, but it can only contain parser statements,
+constant declarations, and variable declarations.
+
+// Added
+${syntax: parserBlockStatement
+          parserBlockElementStatementList
+          parserBlockElementStatement}
+
+===== Type checking
+
+// Added
+After type checking, a parser block statement is represented in P4~IR~ as:
+
+// Added
+${syntax: parserBlockStatement
+          parserBlockElementStatementListIR
+          parserBlockElementStatementIR}
+
+${rulegroup-source: ParserStmt_ok/parserBlockStatement}
+${rulegroup-prose: ParserStmt_ok/parserBlockStatement}
+
+// Added
+A parser block is type checked by the relation:
+
+// Added
+${relation-title-source: ParserBlock_ok}
+${relation-title-prose: ParserBlock_ok}
+
+// Added
+${rulegroup-source: ParserBlock_ok}
+${rulegroup-prose: ParserBlock_ok}
+
+// Added
+A statement or declaration within a parser block statement is type checked by
+the relation:
+
+// Added
+${relation-title-source: ParserBlockElementStmt_ok}
+${relation-title-prose: ParserBlockElementStmt_ok}
+
+// Added
+${rulegroup-source: ParserBlockElementStmt_ok}
+${rulegroup-prose: ParserBlockElementStmt_ok}
+
+// Added
+A list of block elements is type checked by the relation:
+
+// Added
+${relation-title-source: ParserBlockElementStmtList_ok}
+${relation-title-prose: ParserBlockElementStmtList_ok}
+
+// Added
+${rulegroup-source: ParserBlockElementStmtList_ok}
+${rulegroup-prose: ParserBlockElementStmtList_ok}
+
+// Added
+${relation-title-source: ParserBlockElementStmts_ok}
+${relation-title-prose: ParserBlockElementStmts_ok}
+
+// Added
+${rulegroup-source: ParserBlockElementStmts_ok}
+${rulegroup-prose: ParserBlockElementStmts_ok}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: ParserStmt_inst/parserBlockStatementIR}
+${rulegroup-prose: ParserStmt_inst/parserBlockStatementIR}
+
+// Added
+A parser block is compile-time evaluated by the relation:
+
+// Added
+${relation-title-source: ParserBlock_inst}
+${relation-title-prose: ParserBlock_inst}
+
+// Added
+${rulegroup-source: ParserBlock_inst}
+${rulegroup-prose: ParserBlock_inst}
+
+// Added
+A parser block element is compile-time evaluated by the relation:
+
+// Added
+${relation-title-source: ParserBlockElementStmt_inst}
+${relation-title-prose: ParserBlockElementStmt_inst}
+
+// Added
+${rulegroup-source: ParserBlockElementStmt_inst}
+${rulegroup-prose: ParserBlockElementStmt_inst}
+
+// Added
+A list of parser block elements is compile-time evaluated by the relation:
+
+// Added
+${relation-title-source: ParserBlockElementStmtList_inst}
+${relation-title-prose: ParserBlockElementStmtList_inst}
+
+// Added
+${rulegroup-source: ParserBlockElementStmtList_inst}
+${rulegroup-prose: ParserBlockElementStmtList_inst}
+
+===== Runtime evaluation
+
+// Added
+${rulegroup-source: ParserStmt_eval/parserBlockStatementIR}
+${rulegroup-prose: ParserStmt_eval/parserBlockStatementIR}
+
+// Added
+A parser block is runtime evaluated by the relation:
+
+// Added
+${relation-title-source: ParserBlock_eval}
+${relation-title-prose: ParserBlock_eval}
+
+// Added
+${rulegroup-source: ParserBlock_eval}
+${rulegroup-prose: ParserBlock_eval}
+
+// Added
+A parser block element is runtime evaluated by the relation:
+
+// Added
+${relation-title-source: ParserBlockElementStmt_eval}
+${relation-title-prose: ParserBlockElementStmt_eval}
+
+// Added
+${rulegroup-source: ParserBlockElementStmt_eval}
+${rulegroup-prose: ParserBlockElementStmt_eval}
+
+// Added
+A list of block elements is runtime evaluated by the relation:
+
+// Added
+${relation-title-source: ParserBlockElementStmtList_eval}
+${relation-title-prose: ParserBlockElementStmtList_eval}
+
+// Added
+${rulegroup-source: ParserBlockElementStmtList_eval}
+${rulegroup-prose: ParserBlockElementStmtList_eval}
+
+==== Conditional statement
+
+// Added
+A parser conditional statement is defined as:
+
+// Added
+${syntax: parserConditionalStatement}
+
+// Added
+It is similar to a conditional statement explained in
+<<sec-conditional-statement>>, but it can only contain parser statements in its
+branches.
+
+===== Type checking
+
+// Added
+After type checking, a parser conditional statement is represented in P4~IR~ as:
+
+// Added
+${syntax: parserConditionalStatementIR}
+
+${rulegroup-source: ParserStmt_ok/parserConditionalStatement}
+${rulegroup-prose: ParserStmt_ok/parserConditionalStatement}
+
+===== Compile-time evaluation
+
+// Added
+${rulegroup-source: ParserStmt_inst/parserConditionalStatementIR}
+${rulegroup-prose: ParserStmt_inst/parserConditionalStatementIR}
+
+===== Runtime evaluation
+
+// Added
+${rulegroup-source: ParserStmt_eval/parserConditionalStatementIR}
+${rulegroup-prose: ParserStmt_eval/parserConditionalStatementIR}

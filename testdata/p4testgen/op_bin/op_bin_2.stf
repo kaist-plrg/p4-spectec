@@ -1,0 +1,29 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-07:08:20.063
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("prs");
+# [Parser] prs
+# [State] start
+# [MethodCall]: p.extract<Ethernet_h>(headers.ethernet);
+# [ExtractSuccess] headers.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> headers.ethernet.dstAddr = 0x0000_0000_0000 | headers.ethernet.srcAddr = 0x0000_0000_0000 | headers.ethernet.etherType = 0x86DD
+# [State] ipv6
+# [MethodCall]: p.extract<IPv6_h>(headers.ipv6);
+# [ExtractSuccess] headers.ipv6@112 | Condition: |*packetLen_bits(bit<32>)| >= 432; | Extract Size: 320 -> headers.ipv6.ip_version_traffic_class_and_flow_label = 0x0000_0000 | headers.ipv6.payload_length = 0x0000 | headers.ipv6.protocol = 0x00 | headers.ipv6.hop_limit = 0x00 | headers.ipv6.src_address = 0x0000_0000_0000_0000_0000_0000_0000_0000 | headers.ipv6.dst_address = 0x0000_0000_0000_0000_0000_0000_0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("prs");
+# [P4Testgen MethodCall]: *.copy_in("pipe");
+# [Control pipe start]
+# [AssignmentStatement]: xout = true;| Computed: xout = true;
+# [MethodCall]: filter_tbl_0/filter_tbl.apply();
+# [Table Branch: pipe.filter_tbl Choosing default action: NoAction_1/NoAction;]
+# [P4Testgen MethodCall]: NoAction_1/NoAction();
+# [If Statement]: headers.ipv6.isValid() && ((headers.ethernet.etherType == 0x86dd) ... Condition: true && (|pktvar_2(bit<16>)| == 34525 || |pktvar_6(bit<8>)| == 255); Result: true
+# [AssignmentStatement]: headers.ipv6.protocol = 17;| Computed: headers.ipv6.protocol = 17;
+# [If Statement]: headers.ethernet.etherType == 0x0800 Condition: |pktvar_2(bit<16>)| == 2048; Result: false
+# [P4Testgen MethodCall]: *.copy_out("pipe");
+# [P4Testgen If Statement]: Condition: !true; Result: false
+
+
+packet 0 00000000000000000000000086DD000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 00000000000000000000000086DD000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

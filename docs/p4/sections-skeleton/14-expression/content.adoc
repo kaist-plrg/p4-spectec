@@ -1,0 +1,144 @@
+[#sec-expression]
+== Expressions
+
+// Added
+The syntax of expressions is defined as follows:
+
+// Added
+${syntax: expression}
+
+[#sec-expression-semantics]
+=== Semantics of expressions
+
+// 391
+Given a compound expression, the order in which sub-expressions are evaluated
+is important when the sub-expressions have side-effects. P4 expressions are
+evaluated as follows:
+
+// 392
+* Boolean operators `&&` and `||` use short-circuit evaluation--i.e.,
+  the second operand is only evaluated if necessary.
+* The conditional operator `e1 ? e2 : e3` evaluates `e1`, and then
+  either evaluates `e2` or `e3`.
+* All other expressions are evaluated left-to-right as they appear in
+  the source program.
+* Method and function calls are evaluated as described in
+  <<sec-call-convention>>.
+
+==== Type checking
+
+// Added
+${relation-title-source: Expr_ok}
+${relation-title-prose: Expr_ok}
+
+// Added
+After type checking, expressions are represented in P4~IR~ as follows:
+
+// Added
+${syntax: typedExpressionIR expressionIR expressionNoteIR}
+
+// Added
+Notice that after type checking, expressions in P4 are annotated with their
+types and their compile-time known-ness. See <<sec-compile-time-known>> for
+more details of compile-time known and local compile-time known values.
+
+// Added
+The following helper functions are used to fetch the type and compile-time
+known-ness of an expression:
+
+// Added
+${func-source: type_of_typedExpressionIR}
+${func-prose: type_of_typedExpressionIR}
+
+// Added
+${func-source: ctk_of_typedExpressionIR}
+${func-prose: ctk_of_typedExpressionIR}
+
+==== Local compile-time evaluation
+
+// Added
+${relation-title-source: Expr_eval_lctk}
+${relation-title-prose: Expr_eval_lctk}
+
+// Added
+Local compile-time known expressions are evaluated with the above relation.
+
+==== Compile-time evaluation
+
+// Added
+${relation-title-source: Expr_inst}
+${relation-title-prose: Expr_inst}
+
+// Added
+Compile-time known expressions are evaluated with the above relation. A
+sequence of expressions can be evaluated with the following relation:
+
+// Added
+${relation-title-source: Exprs_inst}
+${relation-title-prose: Exprs_inst}
+
+// Added
+A list of expressions is evaluated with the following relation:
+
+// Added
+${relation-title-source: Exprs_inst}
+${relation-title-prose: Exprs_inst}
+
+// Added
+${rulegroup-source: Exprs_inst}
+${rulegroup-prose: Exprs_inst}
+
+==== Runtime evaluation
+
+// Added
+${relation-title-source: Expr_eval}
+${relation-title-prose: Expr_eval}
+
+// Added
+The result of evaluating an expression is represented as follows:
+
+// Added
+${syntax: expressionResult
+          continueResult
+          abortResult
+          exitResult
+          rejectTransitionResult}
+
+// Added
+See <<sec-exit-statement>> and <<sec-packet>> for more details on exit and
+reject results.
+
+// Added
+A list of expressions can be evaluated with the following relation:
+
+// Added
+${relation-title-source: Exprs_eval}
+${relation-title-prose: Exprs_eval}
+
+// Added
+The result of evaluating a list of expressions is represented as follows:
+
+// Added
+${syntax: expressionListResult}
+
+// Added
+${rulegroup-source: Exprs_eval}
+${rulegroup-prose: Exprs_eval}
+
+include::01-literal-expression.adoc[]
+include::02-reference-expression.adoc[]
+include::03-default-expression.adoc[]
+include::04-unary-expression.adoc[]
+include::05-binary-expression.adoc[]
+include::06-ternary-expression.adoc[]
+include::07-cast-expression.adoc[]
+include::08-invalid-header-expression.adoc[]
+include::09-sequence-expression.adoc[]
+include::10-record-expression.adoc[]
+include::11-error-access-expression.adoc[]
+include::12-member-access-expression.adoc[]
+include::13-index-access-expression.adoc[]
+include::14-bitslice-access-expression.adoc[]
+include::15-call-expression.adoc[]
+include::16-parenthesized-expression.adoc[]
+include::17-keyset-expression.adoc[]

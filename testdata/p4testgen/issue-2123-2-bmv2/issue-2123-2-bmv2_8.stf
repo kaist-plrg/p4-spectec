@@ -1,0 +1,68 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:19.461
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0900
+# [State] parse_h3
+# [MethodCall]: packet.extract<h3_t>(hdr.h3);
+# [ExtractFailure] hdr.h3@112 | Condition: !(|*packetLen_bits(bit<32>)| >= 120); | Extract Size: 8
+# [P4Testgen AssignmentStatement]: standard_metadata.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [AssignmentStatement]: hdr.ethernet.dstAddr[44:44] = hdr.h4.isValid() ? 1w1 : 0;| Computed: tmp = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr[44:44] = hdr.h4.isValid() ? 1w1 : 0;| Computed: hdr.ethernet.dstAddr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [AssignmentStatement]: hdr.ethernet.dstAddr[43:43] = hdr.h3.isValid() ? 1w1 : 0;| Computed: tmp_0 = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr[43:43] = hdr.h3.isValid() ? 1w1 : 0;| Computed: hdr.ethernet.dstAddr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [AssignmentStatement]: hdr.ethernet.dstAddr[42:42] = hdr.h2.isValid() ? 1w1 : 0;| Computed: tmp_1 = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr[42:42] = hdr.h2.isValid() ? 1w1 : 0;| Computed: hdr.ethernet.dstAddr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [AssignmentStatement]: hdr.ethernet.dstAddr[41:41] = hdr.h1.isValid() ? 1w1 : 0;| Computed: tmp_2 = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr[41:41] = hdr.h1.isValid() ? 1w1 : 0;| Computed: hdr.ethernet.dstAddr = 0;
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [AssignmentStatement]: hdr.ethernet.dstAddr[40:40] = hdr.h0.isValid() ? 1w1 : 0;| Computed: tmp_3 = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr[40:40] = hdr.h0.isValid() ? 1w1 : 0;| Computed: hdr.ethernet.dstAddr = 0;
+# [AssignmentStatement]: standard_metadata.egress_spec = 3;| Computed: standard_metadata.egress_spec = 3;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 3;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2304;  }
+# [MethodCall]: packet.emit<h0_t>(hdr.h0);
+# [Invalid emit: { f0 = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<h1_t>(hdr.h1);
+# [Invalid emit: { f1 = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<h2_t>(hdr.h2);
+# [Invalid emit: { f2 = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<h3_t>(hdr.h3);
+# [Invalid emit: { f3 = TaintedExpression(bit<8>) }]
+# [MethodCall]: packet.emit<h4_t>(hdr.h4);
+# [Invalid emit: { f4 = TaintedExpression(bit<8>) }]
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 3; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000900
+expect 3 0000000000000000000000000900$
+

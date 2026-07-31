@@ -1,0 +1,490 @@
+[#sec-instantiation]
+=== Instantiation
+
+// 1083 - Modified
+Instantiation of a program proceeds in order of declarations, starting in the
+top-level namespace:
+
+// 1084
+* All declarations (e.g., `parsers`, `controls`, types, constants) evaluate to
+  themselves.
+* Each `table` evaluates to a table instance.
+* Constructor invocations evaluate to stateful objects of the corresponding type.
+  For this purpose, all constructor arguments are evaluated recursively and bound
+  to the constructor parameters. Constructor arguments must be compile-time known
+  values. The order of evaluation of the constructor arguments should be
+  unimportant --- all evaluation orders should produce the same results.
+* Instantiations evaluate to named stateful objects.
+* The instantiation of a `parser` or `control` block recursively evaluates all
+  stateful instantiations declared in the block.
+* The result of the program's evaluation is the value of the top-level `main`
+  variable.
+
+// 1085
+Note that all stateful values are instantiated at compilation time.
+
+// 1086
+As an example, consider the following program fragment:
+
+// 1087
+[source,p4]
+----
+// architecture declaration
+parser P(/* parameters omitted */);
+control C(/* parameters omitted */);
+control D(/* parameters omitted */);
+
+package Switch(P prs, C ctrl, D dep);
+
+extern Checksum16 { /* body omitted */}
+
+// user code
+Checksum16() ck16; // checksum unit instance
+
+parser TopParser(/* parameters omitted */)(Checksum16 unit) { /* body omitted */}
+control Pipe(/* parameters omitted */) { /* body omitted */}
+control TopDeparser(/* parameters omitted */)(Checksum16 unit) { /* body omitted */}
+
+Switch(TopParser(ck16),
+       Pipe(),
+       TopDeparser(ck16)) main;
+----
+
+// 1088
+The evaluation of this program proceeds as follows:
+
+// 1089
+. The declarations of `P`, `C`, `D`, `Switch`, and `Checksum16` all evaluate to
+  themselves.
+. The `Checksum16() ck16` instantiation is evaluated and it produces an object
+  named `ck16` with type `Checksum16`.
+. The declarations for `TopParser`, `Pipe`, and `TopDeparser` evaluate as
+  themselves.
+. The `main` variable instantiation is evaluated:
+  .. The arguments to the constructor are evaluated recursively.
+  .. `TopParser(ck16)` is a constructor invocation.
+     ... Its argument is evaluated recursively; it evaluates to the `ck16` object.
+  .. The constructor itself is evaluated, leading to the instantiation of an object
+     of type `TopParser`.
+  .. Similarly, `Pipe()` and `TopDeparser(ck16)` are evaluated as constructor calls.
+  .. All the arguments of the `Switch` package constructor have been evaluated (they
+     are an instance of `TopParser`, an instance of `Pipe`, and an instance of
+     `TopDeparser`). Their signatures are matched with the `Switch` declaration.
+  .. Finally, the `Switch` constructor can be evaluated. The result is an instance
+     of the `Switch` package (that contains a `TopParser` named `prs` the first
+     parameter of the `Switch`; a `Pipe` named `ctrl`; and a `TopDeparser` named
+     `dep`).
+. The result of the program evaluation is the value of the `main` variable, which
+  is the above instance of the `Switch` `package`.
+
+// 1090
+<<fig-compileeval>> shows the result of the evaluation in a graphical form. The
+result is always a graph of instances. There is only one instance of
+`Checksum16`, called `ck16`, shared between the `TopParser` and `TopDeparser`.
+Whether this is possible is architecture-dependent. Specific target compilers
+may require distinct checksum units to be used in distinct blocks.
+
+// 1091
+.Evaluation result.
+[#fig-compileeval]
+image::compileeval.png[width=250,align="center"]
+
+[#sec-control-plane-names]
+==== Control-plane names
+
+// 1092
+Every controllable entity exposed in a P4 program must be assigned a unique,
+fully-qualified name, which the control plane may use to interact with that
+entity. The following entities are controllable.
+
+// 1093
+* value sets
+* tables
+* keys
+* actions
+* extern instances
+
+// 1094
+A fully qualified name consists of the local name of a controllable entity
+prepended with the fully qualified name of its enclosing namespace. Hence, the
+following program constructs, which enclose controllable entities, must
+themselves have unique, fully-qualified names.
+
+// 1095
+* control instances
+* parser instances
+
+// 1096
+Evaluation may create multiple instances from one type, each of which must have
+a unique, fully-qualified name.
+
+===== Computing control-plane names
+
+// 1097
+The fully-qualified name of a construct is derived by concatenating the
+fully-qualified name of its enclosing construct with its local name. Constructs
+with no enclosing namespace, i.e. those defined at the global scope, have the
+same local and fully-qualified names. The local names of controllable entities
+and enclosing constructs are derived from the syntax of a P4 program as
+follows.
+
+====== Value sets
+
+// 1098
+For each `value_set` construct, its syntactic name becomes the local name of
+the value set. For example:
+
+// 1099
+[source,p4]
+----
+struct vsk_t {
+    @match(ternary)
+    bit<16> port;
+}
+value_set<vsk_t>(4) pvs;
+----
+
+// 1100
+This value_set's local name is `pvs`.
+
+====== Tables
+
+// 1101
+For each `table` construct, its syntactic name becomes the local name of the
+table.  For example:
+
+// 1102
+[source,p4]
+----
+control c(/* parameters omitted */)() {
+    table t { /* body omitted */ }
+}
+----
+
+// 1103
+This table's local name is `t`.
+
+====== Keys
+
+// 1104
+Syntactically, table keys are expressions. For simple expressions, the local
+key name can be generated from the expression itself; the algorithm by which a
+compiler derives control-plane names for complex key expressions is
+target-dependent.
+
+// 1105
+The spec suggests, but does not mandate, the following algorithm for generating
+names for some kinds of key expressions:
+
+// 1106
+[.center,cols="1,1,1",width=80%]
+|===
+
+| Kind | Example | Name
+
+| The `isValid()` method. | `h.isValid()` | `"h.isValid()"`
+
+| Array accesses. | `header_stack[1]` | `"header_stack[1]"`
+
+| Constants. | `1` | `"1"`
+
+| Field projections. | `data.f1` | `"data.f1"`
+
+| Slices. | `f1[3:0]` | `"f1[3:0]"`
+
+| Masks. | `h.src & 0xFFFF` | `"h.src & 0xFFFF"`
+
+|===
+
+// 1107
+In the following example, the previous algorithm would derive for table `t` two
+keys with names `data.f1` and `hdrs[3].f2`.
+
+// 1108
+[source,p4]
+----
+table t {
+    keys = {
+        data.f1 : exact;
+        hdrs[3].f2 : exact;
+    }
+    actions = { /* body omitted */ }
+}
+----
+
+// 1109
+If a compiler cannot generate a name for a key it _requires_ the key expression
+to be annotated with a `@name` annotation
+(<<sec-control-plane-api-annotations>>), as in the following example:
+
+// 1110
+[source,p4]
+----
+table t {
+    keys = {
+        data.f1 + 1 : exact @name("f1_mask");
+    }
+    actions = { /* body omitted */ }
+}
+----
+
+// 1111
+Here, the `@name("f1_mask")` annotation assigns the local name `"f1_mask"` to
+this key.
+
+====== Actions
+
+// 1112
+For each `action` construct, its syntactic name is the local name of the
+action. For example:
+
+// 1113
+[source,p4]
+----
+control c(/* parameters omitted */)() {
+    action a(...) { /* body omitted */ }
+}
+----
+
+// 1114
+This action's local name is `a`.
+
+[#sec-control-plane-instance]
+====== Instances
+
+// 1115
+The local names of `extern`, `parser`, and `control` instances are derived
+based on how the instance is used. If the instance is bound to a name, that
+name becomes its local control plane name.  For example, if `control` `C` is
+declared as,
+
+// 1116
+[source,p4]
+----
+control C(/* parameters omitted */)() { /* body omitted */ }
+----
+
+// 1107
+and instantiated as,
+
+// 1118
+[source,p4]
+----
+C() c_inst;
+----
+
+// 1119
+then the local name of the instance is `c_inst`.
+
+// 1120
+Alternatively, if the instance is created as an actual argument, then its local
+name is the name of the formal parameter to which it will be bound. For
+example, if `extern` `E` and `control` `C` are declared as,
+
+// 1121
+[source,p4]
+----
+extern E { /* body omitted */ }
+control C(/* parameters omitted */)(E e_in) { /* body omitted */ }
+----
+
+// 1122
+and instantiated as,
+
+// 1123
+[source,p4]
+----
+C(E()) c_inst;
+----
+
+// 1124
+then the local name of the extern instance is `e_in`.
+
+// 1125
+If the construct being instantiated is passed as an argument to a package, the
+instance name is derived from the user-supplied type definition when possible.
+In the following example, the local name of the instance of `MyC` is `c`, and
+the local name of the `extern` is `e2`, not `e1`.
+
+// 1126
+[source,p4]
+----
+extern E { /* body omitted */ }
+control ArchC(E e1);
+package Arch(ArchC c);
+
+control MyC(E e2)() { /* body omitted */ }
+Arch(MyC()) main;
+----
+
+// 1127
+Note that in this example, the architecture will supply an instance of the
+extern when it applies the instance of `MyC` passed to the `Arch` package. The
+fully-qualified name of that instance is `main.c.e2`.
+
+// 1128
+Next, consider a larger example that demonstrates name generation when there
+are multiple instances.
+
+// 1129
+[source,p4]
+----
+control Callee() {
+    table t { /* body omitted */ }
+    apply { t.apply(); }
+}
+control Caller() {
+    Callee() c1;
+    Callee() c2;
+    apply {
+       c1.apply();
+       c2.apply();
+    }
+}
+control Simple();
+package Top(Simple s);
+Top(Caller()) main;
+----
+
+// 1130
+The compile-time evaluation of this program produces the structure in
+<<fig-evalmultiple>>. Notice that there are two instances of the `table t`.
+These instances must both be exposed to the control plane. To name an object in
+this hierarchy, one uses a path composed of the names of containing instances.
+In this case, the two tables have names `s.c1.t` and `s.c2.t`, where `s` is the
+name of the argument to the package instantiation, which is derived from the
+name of its corresponding formal parameter.
+
+// 1131
+.Evaluating a program that has several instantiations of the same component.
+[#fig-evalmultiple]
+image::evalmultiple.png[width=250,align="center"]
+
+===== Annotations controlling naming
+
+// 1132
+Control plane-related annotations (<<sec-control-plane-api-annotations>>) can
+alter the names exposed to the control plane in the following ways.
+
+// 1133
+* The `@hidden` annotation hides a controllable entity from the
+  control plane.  This is the only case in which a controllable entity
+  is not required to have a unique, fully-qualified name.
+* The `@name` annotation may be used to change the local name of a
+  controllable entity.
+
+// 1134
+Programs that yield the same fully-qualified name for two different
+controllable entities are invalid.
+
+// Added
+ifndef::release[]
+NOTE: `@hidden` is not yet supported in P4-SpecTec.
+endif::[]
+
+===== Recommendations
+
+// 1135
+The control plane may refer to a controllable entity by a postfix of its fully
+qualified name when it is unambiguous in the context in which it is used.
+Consider the following example.
+
+// 1136
+[source,p4]
+----
+control c(/* parameters omitted */)() {
+    action a (/* parameters omitted */) { /* body omitted */ }
+    table t {
+        keys = { /* body omitted */ }
+        actions = { a; } }
+}
+c() c_inst;
+----
+
+// 1137
+Control plane software may refer to action `c_inst.a` as `a` when inserting
+rules into table `c_inst.t`, because it is clear from the definition of the
+table which action `a` refers to.
+
+// 1138
+Not all unambiguous postfix shortcuts are recommended. For instance, consider
+the last example in <<sec-control-plane-instance>>. One might be tempted to
+refer to `s.c1` simply as `c1`, as no other instance named `c1` appears in the
+program. However, this leads to a brittle program since future modifications
+can never introduce an instance named `c1`, or include libraries of P4 code
+that contain instances with that name.
+
+==== Instantiating a P4 program
+
+// Added
+${syntax: objectId object}
+
+// Added
+The stateful elements of a P4 program are represented as ``object``s. These
+objects are identified by their fully-qualified names (`objectId`).
+
+// Added
+${syntax: store}
+
+// Added
+A P4~16~ program is first type checked to yield a P4~IR~ program, and is then
+instantiated to create a ``store``, which maps ``objectId``s to ``object``s.
+
+// Added
+${relation-title-source: Program_inst}
+${relation-title-prose: Program_inst}
+
+// Added
+${rulegroup-source: Program_inst}
+${rulegroup-prose: Program_inst}
+
+==== Instantiation context
+
+// Added
+${syntax: globalInstLayer blockInstLayer localInstLayer instContext}
+
+// Added
+An instantiation context is used to keep track of the types and compile-time
+known values of all named declarations in scope at a given program point.
+
+// Added
+* A global instantiation layer, which contains all declarations at the top level of a
+  P4 program.
+* A block instantiation layer, which contains all declarations in the current block
+  scope.
+* A local instantiation layer, which contains all declarations in the current local
+  scope.
+
+// Added
+${syntax: value frame}
+
+// Added
+`frame` is a map from variable names to their compile-time known values,
+`value`. The compile-time known-ness is discussed in
+<<sec-compile-time-known>>.
+
+// Added
+${syntax: typeDefIR typeDefEnv}
+
+// Added
+`typeDefEnv` is a map from type names to their type definitions, `typeDefIR`.
+`typeDefIR` is a type constructor, derived from user-defined type declarations.
+
+// Added
+${syntax: callableDef callableDefEnv}
+
+// Added
+`callableDefEnv` is a map from callable names to their definitions,
+`callableDef`.
+
+// Added
+${syntax: constructorDef constructorDefEnv}
+
+// Added
+Stateful objects are instantiated using constructors. `constructorDefEnv` is a
+map from constructor names to their definitions, `constructorDef`.
+
+// Added
+ifndef::release[]
+NOTE: Added explanation for the instantiation context. Is this the right place?
+endif::[]

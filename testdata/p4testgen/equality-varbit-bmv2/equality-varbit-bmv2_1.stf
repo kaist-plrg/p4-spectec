@@ -1,0 +1,46 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:21.641
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<H>(hdr.h, 32);
+# [ExtractSuccess] hdr.h@0 | Condition: |*packetLen_bits(bit<32>)| >= 40; | Extract Size: 8 -> hdr.h.s = 0x00 | hdr.h.v = 0x0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: stdmeta.egress_spec = 0;| Computed: stdmeta.egress_spec = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h_0/h.setValid();
+# [AssignmentStatement]: H h = hdr.h;| Computed: h_0/h.s = 0;
+# [AssignmentStatement]: H h = hdr.h;| Computed: h_0/h.v = 0;
+# [If Statement]: hdr.h.v == h.v Condition: (SizedVarbit<32><32>)|pktvar_1(bit<32>)| == (SizedVarbit<32><32>)|pktvar_1(bit<32>)|; Result: true
+# [AssignmentStatement]: stdmeta.egress_spec = 1;| Computed: stdmeta.egress_spec = 1;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 1;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("uc");
+# [Control uc start]
+# [P4Testgen MethodCall]: *.copy_out("uc");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: packet.emit<H>(hdr.h);
+# [Emit]: {$headerValid:true;;    s:0;  v:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 1; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000
+expect 1 000000000000$
+

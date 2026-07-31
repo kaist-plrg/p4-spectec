@@ -1,0 +1,66 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:34.113
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("IngressParserImpl");
+# [Parser] IngressParserImpl
+# [State] start
+# [MethodCall]: buffer.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0xFFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("IngressParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: user_meta.fwd_meta.tmp = tmp;| Computed: user_meta.fwd_meta.tmp = 0;
+# [AssignmentStatement]: user_meta.fwd_meta.x1 = x1;| Computed: user_meta.fwd_meta.x1 = 0;
+# [AssignmentStatement]: user_meta.fwd_meta.x2 = x2;| Computed: user_meta.fwd_meta.x2 = 0;
+# [AssignmentStatement]: user_meta.fwd_meta.x3 = (bit<32>) ~hdr.ethernet.etherType;| Computed: user_meta.fwd_meta.x3 = 0;
+# [AssignmentStatement]: user_meta.fwd_meta.x4 = ~((bit<32>) hdr.ethernet.etherType);| Computed: user_meta.fwd_meta.x4 = 4294901760;
+# [AssignmentStatement]: user_meta.fwd_meta.exp_etherType = 0x0800;| Computed: user_meta.fwd_meta.exp_etherType = 2048;
+# [AssignmentStatement]: user_meta.fwd_meta.exp_x1 = (bit<32>) (~16w0x0800);| Computed: user_meta.fwd_meta.exp_x1 = 63487;
+# [AssignmentStatement]: user_meta.fwd_meta.exp_x2 = (~16w0x0800);| Computed: user_meta.fwd_meta.exp_x2 = 63487;
+# [AssignmentStatement]: user_meta.fwd_meta.exp_x3 = (bit<32>) (~16w0x0800);| Computed: user_meta.fwd_meta.exp_x3 = 63487;
+# [AssignmentStatement]: user_meta.fwd_meta.exp_x4 = (~32w0x0800);| Computed: user_meta.fwd_meta.exp_x4 = 4294965247;
+# [AssignmentStatement]: hdr.ethernet.dstAddr = 0;| Computed: hdr.ethernet.dstAddr = 0;
+# [If Statement]: hdr.ethernet.etherType != user_meta.fwd_meta.exp_etherType Condition: |pktvar_2(bit<16>)| != 2048; Result: true
+# [AssignmentStatement]: hdr.ethernet.dstAddr[47:40] = 1;| Computed: hdr.ethernet.dstAddr = 1099511627776;
+# [If Statement]: user_meta.fwd_meta.x1 != user_meta.fwd_meta.exp_x1 Condition: (bit<32>)~|pktvar_2(bit<16>)| != 63487; Result: true
+# [AssignmentStatement]: hdr.ethernet.dstAddr[39:32] = 1;| Computed: hdr.ethernet.dstAddr = 1103806595072;
+# [If Statement]: user_meta.fwd_meta.x2 != user_meta.fwd_meta.exp_x2 Condition: ((bit<32>)~|pktvar_2(bit<16>)|)[31:16] + ((bit<32>)~|pktvar_2(bit<16>)|)[15:0] != 63487; Result: true
+# [AssignmentStatement]: hdr.ethernet.dstAddr[31:24] = 1;| Computed: hdr.ethernet.dstAddr = 1103823372288;
+# [If Statement]: user_meta.fwd_meta.x3 != user_meta.fwd_meta.exp_x3 Condition: (bit<32>)~|pktvar_2(bit<16>)| != 63487; Result: true
+# [AssignmentStatement]: hdr.ethernet.dstAddr[23:16] = 1;| Computed: hdr.ethernet.dstAddr = 1103823437824;
+# [If Statement]: user_meta.fwd_meta.x4 != user_meta.fwd_meta.exp_x4 Condition: ~(bit<32>)|pktvar_2(bit<16>)| != 4294965247; Result: true
+# [AssignmentStatement]: hdr.ethernet.dstAddr[15:8] = 1;| Computed: hdr.ethernet.dstAddr = 1103823438080;
+# [MethodCall]: debug_table_cksum1_0/debug_table_cksum1.apply();
+# [Table Branch: ingress.debug_table_cksum1 | Key(s): |pktvar_1(bit<48>)|, 1103823438080, |pktvar_2(bit<16>)|, 2048, ~|pktvar_2(bit<16>)|;, 63487, (bit<32>)~|pktvar_2(bit<16>)|;, 63487, ((bit<32>)~|pktvar_2(bit<16>)|)[31:16] + ~|pktvar_2(bit<16>)|;, 63487, (bit<32>)~|pktvar_2(bit<16>)|;, 4294965247, ~(bit<32>)|pktvar_2(bit<16>)|;| Chosen action: NoAction]
+# [MethodCall]: NoAction_1/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:1103823438080;  srcAddr:0;  etherType:65535;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.debug_table_cksum1
+add "ingress.debug_table_cksum1" "hdr.ethernet.dstAddr":0x010101010100 "hdr.ethernet.etherType":0xFFFF "hdr.ethernet.srcAddr":0x000000000000 "user_meta.fwd_meta.exp_etherType":0x0800 "user_meta.fwd_meta.exp_x1":0x0000F7FF "user_meta.fwd_meta.exp_x2":0xF7FF "user_meta.fwd_meta.exp_x3":0x0000F7FF "user_meta.fwd_meta.exp_x4":0xFFFFF7FF "user_meta.fwd_meta.tmp":0x0000 "user_meta.fwd_meta.x1":0x00000000 "user_meta.fwd_meta.x2":0x0000 "user_meta.fwd_meta.x3":0x00000000 "user_meta.fwd_meta.x4":0xFFFF0000 "NoAction"()
+
+
+packet 0 000000000000000000000000FFFF00000000000000
+expect 0 010101010100000000000000FFFF00000000000000$
+

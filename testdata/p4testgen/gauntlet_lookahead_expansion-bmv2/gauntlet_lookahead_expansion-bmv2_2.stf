@@ -1,0 +1,44 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:02.291
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [Lookahead result]: 0
+# [Lookahead Condition: |*packetLen_bits(bit<32>)| >= 112;]
+# [AssignmentStatement]: transition select(pkt.lookahead<ethernet_t>().eth_type) {| Computed: tmp_1 = 0;
+# [P4Testgen MethodCall]: tmp_0.setValid();
+# [P4Testgen AssignmentStatement]: tmp_0.dst_addr = 0;
+# [P4Testgen AssignmentStatement]: tmp_0.src_addr = 0;
+# [P4Testgen AssignmentStatement]: tmp_0.eth_type = 0;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Invalid emit: { dst_addr = TaintedExpression(bit<48>), src_addr = TaintedExpression(bit<48>), eth_type = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000000000000000000000000000000000
+expect 0 000000000000000000000000000000000000000000$
+

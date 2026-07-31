@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 1
+
+    - name: Set up OCaml
+      uses: ocaml/setup-ocaml@v3
+      with:
+        ocaml-compiler: 5.1.0
+        dune-cache: true
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Install OCaml dependencies
+      run: |
+        opam update
+        opam install dune bignum menhir core core_unix bisect_ppx yojson ppx_deriving_yojson
+        opam install . --deps-only --with-test
+
+    - name: Build project
+      run: |
+        cd p4spec && opam exec -- dune build --profile=release bin/main.exe
+        cd ../
+        ln -f _build/default/p4spec/bin/main.exe ./p4spectec
+
+    - name: Run tests
+      run: |
+        cd p4spec && opam exec -- dune runtest --profile=release
+        cd ../
+
+    - name: Generate JSON AST
+      run: ./p4spectec json-ast spec/*.watsup > ast.json
+
+    - name: Validate JSON output
+      run: python3 -m json.tool ast.json > /dev/null

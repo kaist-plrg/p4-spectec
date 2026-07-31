@@ -1,0 +1,87 @@
+# p4testgen seed: none
+# Date generated: 2026-03-12-04:14:09.495
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ingressParserImpl");
+# [Parser] ingressParserImpl
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_h>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dst_addr = 0x0000_0000_0000 | hdr.ethernet.src_addr = 0x0000_0000_0000 | hdr.ethernet.ether_type = 0xFFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ingressParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [MethodCall]: t1_0/t1.apply();
+# [Table Branch: ingressImpl.t1 | Key(s): |pktvar_1(bit<48>)|, |pktvar_2(bit<16>)|| Chosen action: ingressImpl.a]
+# [MethodCall]: a();
+# [MethodCall]: t1b_0/t1b.apply();
+# [Table Branch: ingressImpl.t1b | Key(s): |pktvar_1(bit<48>)|, |pktvar_2(bit<16>)|| Chosen action: ingressImpl.a]
+# [MethodCall]: a_1/a();
+# [MethodCall]: t2_0/t2.apply();
+# [Table Branch: ingressImpl.t2 | Key(s): |pktvar_1(bit<48>)|, |pktvar_2(bit<16>)|| Chosen action: ingressImpl.a]
+# [MethodCall]: a_2/a();
+# [MethodCall]: t2b_0/t2b.apply();
+# [Table Branch: ingressImpl.t2b | Key(s): |pktvar_1(bit<48>)|, |pktvar_2(bit<16>)|| Chosen action: ingressImpl.a]
+# [MethodCall]: a_3/a();
+# [MethodCall]: t3_0/t3.apply();
+# [Table Branch: ingressImpl.t3 | Key(s): |pktvar_1(bit<48>)|, |pktvar_2(bit<16>)|| Chosen action: ingressImpl.a]
+# [MethodCall]: a_4/a();
+# [MethodCall]: t3b_0/t3b.apply();
+# [Table Branch: ingressImpl.t3b | Key(s): |pktvar_1(bit<48>)|, |pktvar_2(bit<16>)|| Chosen action: ingressImpl.a]
+# [MethodCall]: a_5/a();
+# [MethodCall]: t4_0/t4.apply();
+# [Table Branch: ingressImpl.t4 | Key(s): |pktvar_1(bit<48>)|, |pktvar_2(bit<16>)|| Chosen action: ingressImpl.a]
+# [MethodCall]: a_6/a();
+# [MethodCall]: t4b_0/t4b.apply();
+# [Table Branch: ingressImpl.t4b Choosing default action: a_7/a;]
+# [MethodCall]: a_7/a();
+# [MethodCall]: t5_0/t5.apply();
+# [Table Branch: ingressImpl.t5 Choosing default action: a_8/a;]
+# [MethodCall]: a_8/a();
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("egressDeparserImpl");
+# [Control egressDeparserImpl start]
+# [MethodCall]: pkt.emit<ethernet_h>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  ether_type:65535;  }
+# [P4Testgen MethodCall]: *.copy_out("egressDeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingressImpl.t1
+add "ingressImpl.t1" 1 "hdr.ethernet.ether_type":0b**************** "hdr.ethernet.src_addr":0x000000000000 "ingressImpl.a"()
+
+# Table ingressImpl.t1b
+add "ingressImpl.t1b" 1 "hdr.ethernet.ether_type":0b**************** "hdr.ethernet.src_addr":0x000000000000 "ingressImpl.a"()
+
+# Table ingressImpl.t2
+add "ingressImpl.t2" 1 "hdr.ethernet.ether_type":0b**************** "hdr.ethernet.src_addr":0x000000000000 "ingressImpl.a"()
+
+# Table ingressImpl.t2b
+add "ingressImpl.t2b" 1 "hdr.ethernet.ether_type":0b**************** "hdr.ethernet.src_addr":0x000000000000 "ingressImpl.a"()
+
+# Table ingressImpl.t3
+add "ingressImpl.t3" 1 "hdr.ethernet.ether_type":0b**************** "hdr.ethernet.src_addr":0x000000000000 "ingressImpl.a"()
+
+# Table ingressImpl.t3b
+add "ingressImpl.t3b" 1 "hdr.ethernet.ether_type":0b**************** "hdr.ethernet.src_addr":0x000000000000 "ingressImpl.a"()
+
+# Table ingressImpl.t4
+add "ingressImpl.t4" 1 "hdr.ethernet.ether_type":0b**************** "hdr.ethernet.src_addr":0x000000000000 "ingressImpl.a"()
+
+
+packet 0 000000000000000000000000FFFF00000000000000
+expect 0 000000000000000000000000FFFF00000000000000$
+

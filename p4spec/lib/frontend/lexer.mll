@@ -1,4 +1,5 @@
 {
+open Lang
 open Xl
 open Parser
 open Error
@@ -143,98 +144,105 @@ rule after_nl = parse
 
 and after_nl_nl = parse
   | indent* "|"[' ''\t'] { NL_BAR }
-  | indent* '\n' { Lexing.new_line lexbuf; NL_NL_NL }
+  | indent* '\n' { Lexing.new_line lexbuf; NL3 }
   | indent* line_comment '\n' { Lexing.new_line lexbuf; after_nl_nl lexbuf }
   | indent* line_comment? eof { EOF }
-  | "" { NL_NL }
+  | "" { NL2 }
 
 and token = parse
+  (* Silent tag, concrete operator, and target brackets *)
+  | "_"(upid as s) { TAG_UPID s }
+  | "'" ([^ '\'' '\n']* as s) "'" { OPERATOR s }
+  | "`(" { TICK_LPAREN }
+  | "`)" { TICK_RPAREN }
+  | "`[" { TICK_LBRACK }
+  | "`]" { TICK_RBRACK }
+  | "`{" { TICK_LBRACE }
+  | "`}" { TICK_RBRACE }
+  | "`<" { TICK_LANGLE }
+  | "`>" { TICK_RANGLE }
+  (* Notational tokens *)
+  | "|-" { TURNSTILE }
+  | "-|" { TILESTURN }
+  | "->" { ARROW }
+  | "->_" { ARROW_SUB }
+  | "=>" { DOUBLE_ARROW }
+  | "=>_" { DOUBLE_ARROW_SUB }
+  | "<=>" { DOUBLE_ARROW_BOTH }
+  | "==>" { DOUBLE_ARROW_LONG }
+  | "~>" { SQARROW }
+  | "~>*" { SQARROW_STAR }
+  (* Tokens *)
+  | "/\\" { AND }
+  | "\\/" { OR }
+  | "." { DOT }
+  | ".." { DOT2 }
+  | "..." { DOT3 }
+  | "," { COMMA }
+  | "," indent* line_comment? '\n' { Lexing.new_line lexbuf; COMMA_NL }
+  | ";" { SEMICOLON }
+  | ":" { COLON }
+  | "::" { COLON2 }
+  | ":/" { COLON_SLASH }
+  | ":=" { COLON_EQ }
+  | "#" { HASH }
+  | "##" { HASH2 }
+  | "$" { DOLLAR }
+  | "?" { QUEST }
+  | "<:" { SUB }
+  | "~" { TILDE }
+  | "~~" { TILDE2 }
+  | "<" { LANGLE }
+  | "<-" { LANGLE_DASH }
+  | "<=" { LANGLE_EQ }
+  | ">" { RANGLE }
+  | ">=" { RANGLE_EQ }
+  | ">(" { RANGLE_LPAREN }
   | "(" { LPAREN }
   | ")" { RPAREN }
   | "[" { LBRACK }
   | "]" { RBRACK }
   | "{" { LBRACE }
   | "}" { RBRACE }
-  | ":" { COLON }
-  | "::" { COLONCOLON }
-  | ":/" { COLONSLASH }
-  | ";" { SEMICOLON }
-  | "," { COMMA }
-  | "." { DOT }
-  | ".." { DOTDOT }
-  | "..." { DOTDOTDOT }
-  | "|" { BAR }
-  | "--" { DASH }
-  | "," indent* line_comment? '\n' { Lexing.new_line lexbuf; COMMA_NL }
-  | line_comment? '\n' { Lexing.new_line lexbuf; after_nl lexbuf }
-  | "=" { EQ }
-  | "=/=" { NE }
-  | "<" { LANGLE }
-  | ">" { RANGLE }
-  | ">(" { RANGLE_LPAREN }
-  | "<=" { LE }
-  | ">=" { GE }
-  | "~~" { APPROX }
-  | "<:" { SUB }
-  | ":>" { SUP }
-  | ":=" { ASSIGN }
-  | "==" { EQUIV }
-  | "~" { NOT }
-  | "/\\" { AND }
-  | "\\/" { OR }
-  | "(/\\)" { BIGAND }
-  | "(\\/)" { BIGOR }
-  | "(+)" { BIGADD }
-  | "(*)" { BIGMUL }
-  | "(++)" { BIGCAT }
-  | "?" { QUEST }
   | "+" { PLUS }
+  | "++" { PLUS2 }
   | "-" { MINUS }
+  | "--" { DASH }
   | "*" { STAR }
   | "/" { SLASH }
   | "\\" { BACKSLASH }
-  | "^" { UP }
-  | "++" { CAT }
-  | "<-" { MEM }
-  | "->" { ARROW }
-  | "=>" { ARROW2 }
-  | "->_" { ARROWSUB }
-  | "=>_" { ARROW2SUB }
-  | "<=>" { DARROW2 }
-  | "~>" { SQARROW }
-  | "~>*" { SQARROWSTAR }
-  | "<<" { PREC }
-  | ">>" { SUCC }
-  | "|-" { TURNSTILE }
-  | "-|" { TILESTURN }
-  | "$" { DOLLAR }
-  | "_|_" { BOT }
-  | "^|^" { TOP }
   | "%" { HOLE }
-  | "%"(nat as s) { HOLEN (int lexbuf s) }
-  | "%%" { MULTIHOLE }
-  | "!%" { NOTHING }
-  | "#" { FUSE }
-  | "##" { FUSEFUSE }
+  | "%"(nat as s) { HOLE_NUM (int lexbuf s) }
+  | "%%" { HOLE_MULTI }
+  | "!%" { HOLE_NIL }
+  | "=" { EQ }
+  | "=/=" { NEQ }
+  | "^" { UP }
+  | "|" { BAR }
+  (* Textual tokens *)
+  | line_comment? '\n' { Lexing.new_line lexbuf; after_nl lexbuf }
   | "%latex" { LATEX }
-  | "`" { TICK }
   | "bool" { BOOL }
   | "nat" { NAT }
   | "int" { INT }
   | "text" { TEXT }
   | "syntax" { SYNTAX }
+  | "extern" { EXTERN }
+  | "tbl" { TABLE }
   | "relation" { RELATION }
+  | "rulegroup" { RULEGROUP }
   | "rule" { RULE }
   | "var" { VAR }
+  | "builtin" { BUILTIN }
   | "dec" { DEC }
   | "def" { DEF }
   | "if" { IF }
   | "otherwise" { OTHERWISE }
+  | "debug" { DEBUG }
   | "hint(" { HINT_LPAREN }
   | "eps" { EPS }
   | "true" { BOOLLIT true }
   | "false" { BOOLLIT false }
-  | "infinity" { INFINITY }
   | nat as s { NATLIT (nat lexbuf s) }
   | ("0x" hex) as s { HEXLIT (hex lexbuf s) }
   | text as s { TEXTLIT (text lexbuf s) }

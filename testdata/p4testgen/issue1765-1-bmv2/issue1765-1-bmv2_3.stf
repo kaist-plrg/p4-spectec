@@ -1,0 +1,70 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:10.003
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dst_addr = 0x0000_0000_0000 | hdr.ethernet.src_addr = 0x0000_0000_0000 | hdr.ethernet.ethertype = 0x0800
+# [State] ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.diff_serv = 0x00 | hdr.ipv4.ecn = 0x0 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x06 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.src_addr = 0x0000_0000 | hdr.ipv4.dst_addr = 0x00FF_FFFF
+# [AssignmentStatement]: meta.tcp_length = hdr.ipv4.totalLen - 16w20;| Computed: meta.tcp_length = 65516;
+# [State] tcp
+# [MethodCall]: packet.extract<tcp_t>(hdr.tcp);
+# [ExtractSuccess] hdr.tcp@272 | Condition: |*packetLen_bits(bit<32>)| >= 432; | Extract Size: 160 -> hdr.tcp.src_port = 0x0000 | hdr.tcp.dst_port = 0x0000 | hdr.tcp.seqNo = 0x0000_0000 | hdr.tcp.ackNo = 0x0000_0000 | hdr.tcp.data_offset = 0x0 | hdr.tcp.res = 0x0 | hdr.tcp.cwr = 0x0 | hdr.tcp.ece = 0x0 | hdr.tcp.urg = 0x0 | hdr.tcp.ack = 0x0 | hdr.tcp.psh = 0x0 | hdr.tcp.rst = 0x0 | hdr.tcp.syn = 0x0 | hdr.tcp.fin = 0x0 | hdr.tcp.window = 0x0000 | hdr.tcp.checksum = 0x0000 | hdr.tcp.urgentPtr = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: v4_networks_0/v4_networks.apply();
+# [Table Branch: MyIngress.v4_networks | Key(s): |pktvar_15(bit<32>)|| Chosen action: NoAction]
+# [MethodCall]: NoAction_3/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [If Statement]: standard_metadata.instance_type == 1 Condition: 0 == 1; Result: false
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [MethodCall]: update_checksum_with_payload<tuple_0, bit<16>>(meta.do_cksum == 1, {  f0:hdr.ipv6.src_addr;  f1:hdr.ipv6.dst_addr;  f2:(bit<32>)hdr.ipv6.payload_length;  f3:0;  f4:58; }, hdr.icmp6.checksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  ethertype:2048;  }
+# [MethodCall]: packet.emit<cpu_t>(hdr.cpu);
+# [Invalid emit: { task = TaintedExpression(bit<16>), ingress_port = TaintedExpression(bit<16>), ethertype = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  diff_serv:0;  ecn:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:0;  protocol:6;  hdrChecksum:0;  src_addr:0;  dst_addr:16777215;  }
+# [MethodCall]: packet.emit<ipv6_t>(hdr.ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), traffic_class = TaintedExpression(bit<8>), flow_label = TaintedExpression(bit<20>), payload_length = TaintedExpression(bit<16>), next_header = TaintedExpression(bit<8>), hop_limit = TaintedExpression(bit<8>), src_addr = TaintedExpression(bit<128>), dst_addr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<tcp_t>(hdr.tcp);
+# [Emit]: {$headerValid:true;;    src_port:0;  dst_port:0;  seqNo:0;  ackNo:0;  data_offset:0;  res:0;  cwr:0;  ece:0;  urg:0;  ack:0;  psh:0;  rst:0;  syn:0;  fin:0;  window:0;  checksum:0;  urgentPtr:0;  }
+# [MethodCall]: packet.emit<udp_t>(hdr.udp);
+# [Invalid emit: { src_port = TaintedExpression(bit<16>), dst_port = TaintedExpression(bit<16>), payload_length = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<icmp_t>(hdr.icmp);
+# [Invalid emit: { type = TaintedExpression(bit<8>), code = TaintedExpression(bit<8>), checksum = TaintedExpression(bit<16>), rest = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<icmp6_t>(hdr.icmp6);
+# [Invalid emit: { type = TaintedExpression(bit<8>), code = TaintedExpression(bit<8>), checksum = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table MyIngress.v4_networks
+add "MyIngress.v4_networks" 1 "hdr.ipv4.dst_addr":0b00000000111111111111111111111111 "NoAction"()
+
+
+packet 0 00000000000000000000000008000000000000000000000600000000000000FFFFFF0000000000000000000000000000000000000000
+expect 0 00000000000000000000000008000000000000000000000600000000000000FFFFFF0000000000000000000000000000000000000000$
+

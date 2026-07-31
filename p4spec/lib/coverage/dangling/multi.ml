@@ -1,0 +1,280 @@
+open Domain.Lib
+open Lang
+open Sl
+open Util.Source
+
+(* Dangling branch *)
+
+module Branch = struct
+  (* Enclosing relation or function id *)
+
+  type origin = id
+
+  (* Status of a branch:
+     if hit, record the paths that hit it with its likeliness;
+     if missed, record the closest-missing paths;
+     note that close-missing files must be well-formed and well-typed *)
+
+  type status = Hit of bool * string list | Miss of string list
+
+  (* Type *)
+
+  type t = { origin : origin; status : status }
+
+  (* Constructor *)
+
+  let init (id : id) : t = { origin = id; status = Miss [] }
+
+  (* Equivalence *)
+
+  let eq (branch_a : t) (branch_b : t) : bool =
+    branch_a.origin.it = branch_b.origin.it && branch_a.status = branch_b.status
+
+  (* Printer *)
+
+  let to_string (branch : t) : string =
+    match branch.status with
+    | Hit _ -> "H" ^ branch.origin.it
+    | Miss _ -> "M" ^ branch.origin.it
+end
+
+(* Dangling coverage map:
+
+   Note that its domain must be set-up initially,
+   and no new dangling branch is added during the analysis *)
+
+module Cover = struct
+  include MakeIIdEnv (Branch)
+
+  (* Constructor *)
+
+  let is_ignored (hints : hint list) : bool =
+    Hints.Flag.init hints "testgen_ignore"
+
+  let rec init_instr (cover : t) (id : id) (instr : instr) : t =
+    let iid = instr.note.iid in
+    match instr.it with
+    | IfI (_, _, block_then, dangle) ->
+        let cover = init_block cover id block_then in
+        if dangle then
+          let branch = Branch.init id in
+          add iid branch cover
+        else cover
+    | HoldI (_, _, _, holdcase) -> (
+        match holdcase with
+        | BothH (block_hold, block_nothold) ->
+            let cover = init_block cover id block_hold in
+            init_block cover id block_nothold
+        | HoldH (block_hold, dangle) ->
+            let cover = init_block cover id block_hold in
+            if dangle then
+              let branch = Branch.init id in
+              add iid branch cover
+            else cover
+        | NotHoldH (block_nothold, dangle) ->
+            let cover = init_block cover id block_nothold in
+            if dangle then
+              let branch = Branch.init id in
+              add iid branch cover
+            else cover)
+    | CaseI (_, cases, dangle) ->
+        let blocks = cases |> List.split |> snd in
+        let cover =
+          List.fold_left
+            (fun cover block -> init_block cover id block)
+            cover blocks
+        in
+        if dangle then
+          let branch = Branch.init id in
+          add iid branch cover
+        else cover
+    | GroupI (_, _, _, block_group) -> init_block cover id block_group
+    | LetI (_, _, _, block) -> init_block cover id block
+    | RuleI (_, _, _, _, block) -> init_block cover id block
+    | _ -> cover
+
+  and init_block (cover : t) (id : id) (block : block) : t =
+    List.fold_left (fun cover instr -> init_instr cover id instr) cover block
+
+  let init_tablerow (cover : t) (id : id) (tablerow : tablerow) : t =
+    let _, _, block = tablerow in
+    init_block cover id block
+
+  let init_tablerows (cover : t) (id : id) (tablerows : tablerow list) : t =
+    List.fold_left
+      (fun cover tablerow -> init_tablerow cover id tablerow)
+      cover tablerows
+
+  let init_def (cover : t) (def : def) : t =
+    match def.it with
+    | RelD (id, _, _, block, elseblock_opt, hints) when not (is_ignored hints)
+      -> (
+        let cover = init_block cover id block in
+        match elseblock_opt with
+        | Some elseblock -> init_block cover id elseblock
+        | None -> cover)
+    | FuncDecD (id, _, _, _, block, elseblock_opt, hints)
+      when not (is_ignored hints) -> (
+        let cover = init_block cover id block in
+        match elseblock_opt with
+        | Some elseblock -> init_block cover id elseblock
+        | None -> cover)
+    | TableDecD (id, _, _, tablerows, hints) when not (is_ignored hints) ->
+        init_tablerows cover id tablerows
+    | _ -> cover
+
+  let init_spec (spec : spec) : t = List.fold_left init_def empty spec
+
+  (* Load from file *)
+
+  let load_line (line : string) : iid * Branch.t =
+    let data = String.split_on_char ' ' line in
+    match data with
+    | iid :: status :: origin :: paths ->
+        let iid = int_of_string iid in
+        let status =
+          match status with
+          | "Hit_likely" -> Branch.Hit (true, paths)
+          | "Hit_unlikely" -> Branch.Hit (false, paths)
+          | "Miss" ->
+              if List.length paths == 1 && String.length (List.hd paths) < 2
+              then Branch.Miss []
+              else Branch.Miss paths
+          | _ -> assert false
+        in
+        let origin = origin $ no_region in
+        let branch = Branch.{ origin; status } in
+        (iid, branch)
+    | _ -> assert false
+
+  let rec load_lines (cover : t) (ic : in_channel) : t =
+    try
+      let line = input_line ic in
+      if String.starts_with ~prefix:"#" line then load_lines cover ic
+      else
+        let iid, branch = load_line line in
+        let cover = add iid branch cover in
+        load_lines cover ic
+    with End_of_file -> cover
+
+  let load_file (path : string) : t = open_in path |> load_lines empty
+end
+
+(* Dangling coverage *)
+
+type t = Cover.t
+
+(* Querying coverage *)
+
+let is_hit (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
+  match branch.status with Hit _ -> true | Miss _ -> false
+
+let is_miss (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
+  match branch.status with Hit _ -> false | Miss _ -> true
+
+let is_close_miss (cover : t) (iid : iid) : bool =
+  let branch = Cover.find iid cover in
+  match branch.status with
+  | Hit _ -> false
+  | Miss paths -> List.length paths > 0
+
+(* Measuring coverage *)
+
+let measure_coverage (cover : t) : int * int * float =
+  let total = Cover.cardinal cover in
+  let hits =
+    Cover.fold
+      (fun _ (branch : Branch.t) (hits : int) ->
+        match branch.status with Hit _ -> hits + 1 | Miss _ -> hits)
+      cover 0
+  in
+  let coverage =
+    if total = 0 then 0. else float_of_int hits /. float_of_int total *. 100.
+  in
+  (total, hits, coverage)
+
+(* Extension from single coverage:
+
+   A close-miss is added only if the program is well-typed and well-formed *)
+
+let extend (cover : t) (path_p4 : string) (wellformed : bool) (welltyped : bool)
+    (cover_single : Single.t) : t =
+  Cover.mapi
+    (fun (iid : iid) (branch : Branch.t) ->
+      let branch_single = Single.Cover.find iid cover_single in
+      match branch.status with
+      | Hit (likely, paths_p4) -> (
+          match branch_single.status with
+          | Hit ->
+              let likely = likely && not (wellformed && welltyped) in
+              let paths_p4 = path_p4 :: paths_p4 in
+              { branch with status = Hit (likely, paths_p4) }
+          | _ -> branch)
+      | Miss paths_p4 -> (
+          match branch_single.status with
+          | Hit ->
+              let likely = not (wellformed && welltyped) in
+              let paths_p4 = [ path_p4 ] in
+              { branch with status = Hit (likely, paths_p4) }
+          | Miss (_ :: _) when wellformed && welltyped ->
+              let paths_p4 = path_p4 :: paths_p4 in
+              { branch with status = Miss paths_p4 }
+          | Miss _ -> branch))
+    cover
+
+(* Logging *)
+
+let log ~(path_cov_opt : string option) (cover : t) : unit =
+  let output oc_opt =
+    match oc_opt with Some oc -> output_string oc | None -> print_string
+  in
+  let oc_opt = Option.map open_out path_cov_opt in
+  (* Output overall coverage *)
+  let total, hits, coverage = measure_coverage cover in
+  Format.asprintf "# Overall Coverage: %d/%d (%.2f%%)\n" hits total coverage
+  |> output oc_opt;
+  (* Collect covers by origin *)
+  let covers_origin =
+    Cover.fold
+      (fun (iid : iid) (branch : Branch.t) (covers_origin : t IdMap.t) ->
+        let origin = branch.origin in
+        let cover_origin =
+          match IdMap.find_opt origin covers_origin with
+          | Some cover_origin -> Cover.add iid branch cover_origin
+          | None -> Cover.add iid branch Cover.empty
+        in
+        IdMap.add origin cover_origin covers_origin)
+      cover IdMap.empty
+  in
+  IdMap.iter
+    (fun origin cover_origin ->
+      let total, hits, coverage = measure_coverage cover_origin in
+      Format.asprintf "# Coverage for %s: %d/%d (%.2f%%)\n" origin.it hits total
+        coverage
+      |> output oc_opt;
+      Cover.iter
+        (fun (iid : iid) (branch : Branch.t) ->
+          let origin = branch.origin in
+          match branch.status with
+          | Hit (likely, paths) ->
+              let paths = String.concat " " paths in
+              Format.asprintf "%d Hit_%s %s %s\n" iid
+                (if likely then "likely" else "unlikely")
+                origin.it paths
+              |> output oc_opt
+          | Miss [] ->
+              Format.asprintf "%d Miss %s\n" iid origin.it |> output oc_opt
+          | Miss paths ->
+              let paths = String.concat " " paths in
+              Format.asprintf "%d Miss %s %s\n" iid origin.it paths
+              |> output oc_opt)
+        cover_origin)
+    covers_origin;
+  Option.iter close_out oc_opt
+
+(* Constructor *)
+
+let init (spec : spec) : t = Cover.init_spec spec
+let load (path : string) : t = Cover.load_file path

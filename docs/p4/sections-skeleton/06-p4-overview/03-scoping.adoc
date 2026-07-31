@@ -1,0 +1,111 @@
+[#sec-scoping]
+=== Scoping
+
+// Added
+Scopes are used to organize P4 programs into nested namespaces. There are three
+kinds of scopes in P4, from outermost to innermost: the top-level scope (global
+namespace), the scope within a `parser`, `control`, or `extern` declaration
+(block namespace), and the scope within a block statement (local namespace).
+Local namespaces can be nested within other local namespaces.
+
+// Added
+[source,p4]
+----
+// top-level (global) scope
+const bit<8> GLOBAL = 255;
+
+control c() {
+  // block scope within a control
+  bit<8> block = GLOBAL;
+
+  apply {
+    // local scope
+    bit<8> local = block;
+  }
+}
+
+bit<8> f() {
+  // local scope
+  bit<8> local = GLOBAL;
+  {
+    // nested local scope
+    bit<8> local_nested = local;
+  }
+  return local;
+}
+----
+
+// Added
+Cursors are used to track scopes while defining the semantic rules of P4.
+
+// Added
+${syntax: cursor}
+
+// Added
+ifndef::release[]
+NOTE: The division of global/block/local scopes and `cursor` is newly introduced.
+Maybe add more explanation here later. Also introduce a metavariable for `cursor`.
+endif::[]
+
+[#sec-name-resolution]
+==== Name resolution
+
+// Added
+P4 namespaces are organized in a hierarchical fashion.
+
+// Added
+${syntax: prefixedNonTypeName prefixedTypeName}
+
+// 182
+Identifiers prefixed with a dot are always resolved in the top-level namespace.
+
+// 183
+[source,p4]
+----
+const bit<32> x = 2;
+control c() {
+   int<32> x = 0;
+   apply {
+       x = x + (int<32>).x;  // x is the int<32> local variable,
+                             // .x is the top-level bit<32> variable
+   }
+}
+----
+
+// 184
+References to resolve an identifier are attempted inside-out, starting with the
+current scope and proceeding to all lexically enclosing scopes. The compiler
+may provide a warning if multiple resolutions are possible for the same name
+(name shadowing).
+
+// 185
+[source,p4]
+----
+const bit<4> x = 1;
+control c() {
+    const bit<8> x = 8;    // x declaration shadows global x
+    const bit<4> y = .x;   // reference to top-level x
+    const bit<8> z = x;    // reference to c's local x
+    apply {}
+}
+----
+
+// 135
+The order of declarations is important; with the exception of parser states,
+all uses of a symbol must follow the symbol's declaration. (This is a departure
+from P4~14~, which allows declarations in any order. This requirement
+significantly simplifies the implementation of compilers for P4, allowing
+compilers to use additional information about declared identifiers to resolve
+ambiguities.)
+
+// Added
+See <<sec-reference-expression>> for how variable references are resolved with
+respect to scopes.
+
+[#sec-scoping-name-visibility]
+==== Name visibility
+
+// 186
+Identifiers defined in the top-level namespace are globally visible.
+Declarations within a `parser` or `control` are private and cannot be referred
+to from outside of the enclosing `parser` or `control`.

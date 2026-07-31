@@ -1,0 +1,46 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:27.726
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserImpl");
+# [Parser] parserImpl
+# [State] start
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet_1);
+# [ExtractFailure] hdr.ethernet_1@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: stdmeta.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("parserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparserImpl");
+# [Control deparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet_1);
+# [Invalid emit: { dstAddr = TaintedExpression(bit<48>), srcAddr = TaintedExpression(bit<48>), etherType = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4_1);
+# [Invalid emit: { version = TaintedExpression(bit<4>), ihl = TaintedExpression(bit<4>), diffserv = TaintedExpression(bit<8>), totalLen = TaintedExpression(bit<16>), identification = TaintedExpression(bit<16>), flags = TaintedExpression(bit<3>), fragOffset = TaintedExpression(bit<13>), ttl = TaintedExpression(bit<8>), protocol = TaintedExpression(bit<8>), hdrChecksum = TaintedExpression(bit<16>), srcAddr = TaintedExpression(bit<32>), dstAddr = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet_2);
+# [Invalid emit: { dstAddr = TaintedExpression(bit<48>), srcAddr = TaintedExpression(bit<48>), etherType = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4_2);
+# [Invalid emit: { version = TaintedExpression(bit<4>), ihl = TaintedExpression(bit<4>), diffserv = TaintedExpression(bit<8>), totalLen = TaintedExpression(bit<16>), identification = TaintedExpression(bit<16>), flags = TaintedExpression(bit<3>), fragOffset = TaintedExpression(bit<13>), ttl = TaintedExpression(bit<8>), protocol = TaintedExpression(bit<8>), hdrChecksum = TaintedExpression(bit<16>), srcAddr = TaintedExpression(bit<32>), dstAddr = TaintedExpression(bit<32>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000000
+expect 0 00000000000000000000000000$
+

@@ -1,0 +1,60 @@
+[#sec-callable-definition]
+=== Callable definitions (callable constructors)
+
+// Added
+Similar to how type declarations introduce type definitions (see
+<<sec-type-definition>>), callable declarations introduce callable
+definitions. These are constructors for callable types, that are parameterized
+by type parameters (if any).
+
+// Added
+${syntax: actionTypeDefIR functionTypeDefIR methodTypeDefIR callableTypeDefIR}
+
+// Added
+When specialized with concrete type arguments, callable type definitions yield callable types:
+
+${syntax: actionTypeIR functionTypeIR methodTypeIR callableTypeIR}
+
+// Added
+For example, a function declaration introduces a function type definition:
+
+// Added
+[source,p4]
+----
+T identity<T>(in T t) { return t; }
+----
+
+// Added
+`identity` is a generic function type definition that falls into:
+
+// Added
+${syntax: definedFunctionTypeDefIR}
+
+// Added
+Notice that `definedFunctionTypeDefIR` does _not_ include the function body.
+Because callable type definitions are used during type checking, the body of
+the callable is not part of the type definition. After specialization with
+proper type argument(s), it yields a function type:
+
+// Added
+${syntax: definedFunctionTypeIR}
+
+==== Well-formedness
+
+// Added
+${relation-title-source: CallableTypeDef_wf}
+${relation-title-prose: CallableTypeDef_wf}
+
+// Added
+${rulegroup-source: CallableTypeDef_wf}
+${rulegroup-prose: CallableTypeDef_wf}
+
+==== Well-formedness of return types
+
+// Added
+${relation-title-source: ReturnType_wf}
+${relation-title-prose: ReturnType_wf}
+
+// Added
+${rulegroup-source: ReturnType_wf}
+${rulegroup-prose: ReturnType_wf}

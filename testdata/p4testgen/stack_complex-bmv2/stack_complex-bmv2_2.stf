@@ -1,0 +1,59 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:28.078
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<hdr>(h.hs[0]);
+# [ExtractSuccess] h.hs[32w0]@0 | Condition: |*packetLen_bits(bit<32>)| >= 64; | Extract Size: 64 -> h.hs[32w0].f1 = 0x0000_0000 | h.hs[32w0].f2 = 0x0000_0000
+# [AssignmentStatement]: m.v = h.hs.last.f2;| Computed: m.v = 0;
+# [AssignmentStatement]: m.v = m.v + h.hs.last.f2;| Computed: m.v = 0;
+# [State] start1
+# [MethodCall]: b.extract<hdr>(h.hs[1]);
+# [ExtractSuccess] h.hs[32w1]@64 | Condition: |*packetLen_bits(bit<32>)| >= 128; | Extract Size: 64 -> h.hs[32w1].f1 = 0x0000_0000 | h.hs[32w1].f2 = 0x0000_0000
+# [AssignmentStatement]: m.v = h.hs.last.f2;| Computed: m.v = 0;
+# [AssignmentStatement]: m.v = m.v + h.hs.last.f2;| Computed: m.v = 0;
+# [State] start2
+# [MethodCall]: b.extract<hdr>(h.hs[2]);
+# [ExtractSuccess] h.hs[32w2]@128 | Condition: |*packetLen_bits(bit<32>)| >= 192; | Extract Size: 64 -> h.hs[32w2].f1 = 0x0000_0001 | h.hs[32w2].f2 = 0x0000_0000
+# [AssignmentStatement]: m.v = h.hs.last.f2;| Computed: m.v = 0;
+# [AssignmentStatement]: m.v = m.v + h.hs.last.f2;| Computed: m.v = 0;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: t_0/t.apply();
+# [Table Branch: ingress.t Choosing default action: set_port;]
+# [MethodCall]: set_port();
+# [AssignmentStatement]: action set_port() { sm.egress_spec = (bit<9>)m.v; }| Computed: sm.egress_spec = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<hdr>(h.hs[0]);
+# [Emit]: {$headerValid:true;;    f1:0;  f2:0;  }
+# [MethodCall]: b.emit<hdr>(h.hs[1]);
+# [Emit]: {$headerValid:true;;    f1:0;  f2:0;  }
+# [MethodCall]: b.emit<hdr>(h.hs[2]);
+# [Emit]: {$headerValid:true;;    f1:1;  f2:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == (bit<9>)(|pktvar_5(bit<32>)| + |pktvar_5(bit<32>)|); Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000000000000000000010000000000000000
+expect 0 00000000000000000000000000000000000000010000000000000000$
+

@@ -1,0 +1,48 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:22.303
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: b.extract<myhdr_t>(h.myhdr);
+# [ExtractSuccess] h.myhdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 24; | Extract Size: 24 -> h.myhdr.reg_idx_to_update = 0x00 | h.myhdr.value_to_add = 0x00 | h.myhdr.debug_last_reg_value_written = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: r.write((bit<32>)h.myhdr.reg_idx_to_update, 42);
+# [RegisterWrite: Value 42 into index (bit<32>)|pktvar_0(bit<8>)|;]
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [MethodCall]: r.read(tmp_0/tmp, (bit<32>)h.myhdr.reg_idx_to_update);
+# [RegisterRead: Index (bit<32>)|pktvar_0(bit<8>)|; into field tmp_0/tmp;]
+# [P4Testgen AssignmentStatement]: tmp_0/tmp = 42;
+# [AssignmentStatement]: tmp = tmp + h.myhdr.value_to_add;| Computed: tmp_0/tmp = 42;
+# [MethodCall]: r.write((bit<32>)h.myhdr.reg_idx_to_update, tmp_0/tmp);
+# [RegisterWrite: Value |pktvar_1(bit<8>)| + 42; into index (bit<32>)|pktvar_0(bit<8>)|;]
+# [AssignmentStatement]: h.myhdr.debug_last_reg_value_written = tmp;| Computed: h.myhdr.debug_last_reg_value_written = 42;
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<myhdr_t>(h.myhdr);
+# [Emit]: {$headerValid:true;;    reg_idx_to_update:0;  value_to_add:0;  debug_last_reg_value_written:42;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000
+expect 0 00002A0000$
+

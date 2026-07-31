@@ -1,0 +1,78 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:26.654
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserImpl");
+# [Parser] parserImpl
+# [State] start
+# [AssignmentStatement]: meta.depth = 2 - 1;| Computed: meta.depth = 1;
+# [MethodCall]: pkt.extract<ethernet_t>(hdrs.ethernet);
+# [ExtractSuccess] hdrs.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdrs.ethernet.dstAddr = 0x0000_0000_0000 | hdrs.ethernet.srcAddr = 0x0000_0000_0000 | hdrs.ethernet.etherType = 0x8100
+# [State] parse_vlan_tag
+# [MethodCall]: pkt.extract<vlan_tag_h>(hdrs.vlan_tag[0]);
+# [ExtractSuccess] hdrs.vlan_tag[32w0]@112 | Condition: |*packetLen_bits(bit<32>)| >= 144; | Extract Size: 32 -> hdrs.vlan_tag[32w0].pcp = 0x0 | hdrs.vlan_tag[32w0].cfi = 0x0 | hdrs.vlan_tag[32w0].vid = 0x001 | hdrs.vlan_tag[32w0].ether_type = 0x0000
+# [AssignmentStatement]: meta.depth = meta.depth - 1;| Computed: meta.depth = 0;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [AssignmentStatement]: switch (hdrs.vlan_tag[meta.depth].vid) {| Computed: hsiVar = 0;
+# [If Statement]: hdrs.vlan_tag[meta.depth] Condition: 0 == 0; Result: true
+# [AssignmentStatement]: switch (hdrs.vlan_tag[meta.depth].vid) {| Computed: key_1 = 1;
+# [MethodCall]: switch_0_table.apply();
+# [Constant Table Branch: switch_0_table | Key(s): |pktvar_5(bit<12>)| | Chosen action: switch_0_case()]
+# [MethodCall]: switch_0_case();
+# [SwitchCase]: 
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth].vid : exact;| Computed: hsiVar = 0;
+# [If Statement]: hdrs.vlan_tag[meta.depth] Condition: 0 == 0; Result: true
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth].vid : exact;| Computed: key_0 = 1;
+# [MethodCall]: stub_0/stub.apply();
+# [Table Branch: ingressImpl.stub | Key(s): |pktvar_5(bit<12>)|| Chosen action: ingressImpl.execute]
+# [MethodCall]: execute();
+# [AssignmentStatement]: meta.ethType = hdrs.vlan_tag[meta.depth - 1].ether_type;| Computed: hsiVar_0 = 3;
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 == 0; Result: false
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 == 1; Result: false
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 >= 1; Result: true
+# [AssignmentStatement]: meta.ethType = hdrs.vlan_tag[meta.depth - 1].ether_type;| Computed: meta.ethType = 0;
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth - 1].ether_type = (ether_type_t)16w2;| Computed: hsiVar_0 = 3;
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 == 0; Result: false
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 == 1; Result: false
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth].vid = (bit<12>)hdrs.vlan_tag[meta.depth].cfi;| Computed: hsiVar = 0;
+# [If Statement]: hdrs.vlan_tag[meta.depth] Condition: 0 == 0; Result: true
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth].vid = (bit<12>)hdrs.vlan_tag[meta.depth].cfi;| Computed: hdrs.vlan_tag[0].vid = 0;
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth].vid = hdrs.vlan_tag[meta.depth-1].vid;| Computed: hsiVar = 0;
+# [If Statement]: hdrs.vlan_tag[meta.depth] Condition: 0 == 0; Result: true
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth].vid = hdrs.vlan_tag[meta.depth-1].vid;| Computed: hsiVar_0 = 3;
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 == 0; Result: false
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 == 1; Result: false
+# [If Statement]: hdrs.vlan_tag[meta.depth - 1] Condition: 3 >= 1; Result: true
+# [AssignmentStatement]: hdrs.vlan_tag[meta.depth].vid = hdrs.vlan_tag[meta.depth-1].vid;| Computed: hdrs.vlan_tag[0].vid = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparserImpl");
+# [Control deparserImpl start]
+# [MethodCall]: pkt.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:33024;  }
+# [P4Testgen MethodCall]: *.copy_out("deparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingressImpl.stub
+add "ingressImpl.stub" "hdrs.vlan_tag[meta.depth].vid":0x001 "ingressImpl.execute"()
+
+
+packet 0 00000000000000000000000081000001000000
+expect 0 000000000000000000000000810000$
+

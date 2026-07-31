@@ -1,0 +1,54 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:42.830
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parse");
+# [Parser] parse
+# [State] start
+# [MethodCall]: pk.extract<bitvec_hdr>(h.bvh0);
+# [ExtractSuccess] h.bvh0@0 | Condition: |*packetLen_bits(bit<32>)| >= 80; | Extract Size: 80 -> h.bvh0._row_alt0_valid0 = 0x0 | h.bvh0._row_alt0_port1 = 0x00 | h.bvh0._row_alt0_hashRes2 = 0x00 | h.bvh0._row_alt0_useHash3 = 0x0 | h.bvh0._row_alt0_type4 = 0x0000 | h.bvh0._row_alt0_pad5 = 0x00 | h.bvh0._row_alt1_valid6 = 0x0 | h.bvh0._row_alt1_port7 = 0x00 | h.bvh0._row_alt1_hashRes8 = 0x00 | h.bvh0._row_alt1_useHash9 = 0x0 | h.bvh0._row_alt1_type10 = 0x0000 | h.bvh0._row_alt1_pad11 = 0x00
+# [MethodCall]: pk.extract<bitvec_hdr>(h.bvh1);
+# [ExtractSuccess] h.bvh1@80 | Condition: |*packetLen_bits(bit<32>)| >= 160; | Extract Size: 80 -> h.bvh1._row_alt0_valid0 = 0x0 | h.bvh1._row_alt0_port1 = 0x00 | h.bvh1._row_alt0_hashRes2 = 0x00 | h.bvh1._row_alt0_useHash3 = 0x0 | h.bvh1._row_alt0_type4 = 0x0000 | h.bvh1._row_alt0_pad5 = 0x00 | h.bvh1._row_alt1_valid6 = 0x0 | h.bvh1._row_alt1_port7 = 0x00 | h.bvh1._row_alt1_hashRes8 = 0x00 | h.bvh1._row_alt1_useHash9 = 0x0 | h.bvh1._row_alt1_type10 = 0x0000 | h.bvh1._row_alt1_pad11 = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parse");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: bh_0/bh.setInvalid();
+# [MethodCall]: tns_0/tns.apply();
+# [Table Branch: ingress.tns Choosing default action: NoAction_1/NoAction;]
+# [P4Testgen MethodCall]: NoAction_1/NoAction();
+# [AssignmentStatement]: bh.row.alt1.type = EthTypes.IPv4;| Computed: bh_0/bh._row_alt1_type10 = 2048;
+# [AssignmentStatement]: h.bvh0.row.alt1.type = bh.row.alt1.type;| Computed: h.bvh0._row_alt1_type10 = 2048;
+# [AssignmentStatement]: local_metadata.row0.alt0.useHash = true;| Computed: local_metadata.row0.alt0.useHash = true;
+# [MethodCall]: clone_preserving_field_list(0, 1, 0);
+# [Exit]
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("compute_checksum");
+# [Control compute_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("compute_checksum");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<bitvec_hdr>(h.bvh0);
+# [Emit]: {$headerValid:true;;    _row_alt0_valid0:0;  _row_alt0_port1:0;  _row_alt0_hashRes2:0;  _row_alt0_useHash3:false;;  _row_alt0_type4:0;  _row_alt0_pad5:0;  _row_alt1_valid6:0;  _row_alt1_port7:0;  _row_alt1_hashRes8:0;  _row_alt1_useHash9:false;;  _row_alt1_type10:0;  _row_alt1_pad11:0;  }
+# [MethodCall]: b.emit<bitvec_hdr>(h.bvh1);
+# [Emit]: {$headerValid:true;;    _row_alt0_valid0:0;  _row_alt0_port1:0;  _row_alt0_hashRes2:0;  _row_alt0_useHash3:false;;  _row_alt0_type4:0;  _row_alt0_pad5:0;  _row_alt1_valid6:0;  _row_alt1_port7:0;  _row_alt1_hashRes8:0;  _row_alt1_useHash9:false;;  _row_alt1_type10:0;  _row_alt1_pad11:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+mirroring_add 1 64
+packet 0 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 64 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+expect 0
+

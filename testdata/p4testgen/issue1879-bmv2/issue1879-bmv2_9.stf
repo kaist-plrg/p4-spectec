@@ -1,0 +1,153 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:31.212
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("PROTParser");
+# [Parser] PROTParser
+# [State] start
+# [MethodCall]: packet.extract<preamble_t>(hdr.preamble);
+# [ExtractSuccess] hdr.preamble@0 | Condition: |*packetLen_bits(bit<32>)| >= 336; | Extract Size: 336 -> hdr.preamble.data = 0x0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000
+# [MethodCall]: packet.extract<prot_common_t>(hdr.prot_common);
+# [ExtractSuccess] hdr.prot_common@336 | Condition: |*packetLen_bits(bit<32>)| >= 400; | Extract Size: 64 -> hdr.prot_common.version = 0x0 | hdr.prot_common.dstType = 0x00 | hdr.prot_common.srcType = 0x01 | hdr.prot_common.totalLen = 0x0000 | hdr.prot_common.hdrLen = 0x00 | hdr.prot_common.curri = 0x04 | hdr.prot_common.currh = 0x00 | hdr.prot_common.nextHdr = 0x00
+# [MethodCall]: packet.extract<prot_addr_common_t>(hdr.prot_addr_common);
+# [ExtractSuccess] hdr.prot_addr_common@400 | Condition: |*packetLen_bits(bit<32>)| >= 528; | Extract Size: 128 -> hdr.prot_addr_common.data = 0x0000_0000_0000_0000_0000_0000_0000_0000
+# [AssignmentStatement]: meta.headerLen = hdr.prot_common.hdrLen;| Computed: meta.headerLen = 0;
+# [MethodCall]: packet.extract<prot_host_addr_ipv4_t>(hdr.prot_host_addr_dst.ipv4);
+# [ExtractSuccess] hdr.prot_host_addr_dst.ipv4@528 | Condition: |*packetLen_bits(bit<32>)| >= 560; | Extract Size: 32 -> hdr.prot_host_addr_dst.ipv4.addr = 0x0000_0000
+# [AssignmentStatement]: meta.addrLen = 32;| Computed: meta.addrLen = 32;
+# [State] parse_prot_host_addr_src_ipv4
+# [MethodCall]: packet.extract<prot_host_addr_ipv4_t>(hdr.prot_host_addr_src.ipv4);
+# [ExtractSuccess] hdr.prot_host_addr_src.ipv4@560 | Condition: |*packetLen_bits(bit<32>)| >= 592; | Extract Size: 32 -> hdr.prot_host_addr_src.ipv4.addr = 0x0000_0000
+# [AssignmentStatement]: meta.addrLen = meta.addrLen + 32;| Computed: meta.addrLen = 64;
+# [MethodCall]: packet.extract<prot_host_addr_padding_t>(hdr.prot_host_addr_padding, (bit<32>)(64 - (meta.addrLen & 63) & 63));
+# [ExtractSuccess] hdr.prot_host_addr_padding@592 | Condition: (0 > 592 + ((bit<32>)(64 - (64 & 63) & 63) + 0) || |*packetLen_bits(bit<32>)| >= 592 + ((bit<32>)(64 - (64 & 63) & 63) + 0) - 0) && ((bit<32>)(64 - (64 & 63) & 63) <= 32 && (bit<32>)(64 - (64 & 63) & 63) % 8 == 0) && 0 == (bit<32>)(64 - (64 & 63) & 63) + 0; | Extract Size: 0 -> 
+# [AssignmentStatement]: meta.addrLen = meta.addrLen + paddingLen;| Computed: meta.addrLen = 64;
+# [AssignmentStatement]: meta.currPos = (bit<8>)(1 + 2 + meta.addrLen / 64);| Computed: meta.currPos = 4;
+# [MethodCall]: inf_0.setInvalid();
+# [P4Testgen AssignmentStatement]: meta_0_headerLen = 0;
+# [P4Testgen AssignmentStatement]: meta_0_hLeft = 0;
+# [P4Testgen AssignmentStatement]: meta_0_addrLen = 64;
+# [P4Testgen AssignmentStatement]: meta_0_currPos = 4;
+# [P4Testgen AssignmentStatement]: meta_0_currenti.upDirection = 0;
+# [P4Testgen AssignmentStatement]: currI_0 = 4;
+# [State] start
+# [MethodCall]: packet.extract<prot_i_t>(inf_0);
+# [ExtractSuccess] inf_0@592 | Condition: |*packetLen_bits(bit<32>)| >= 656; | Extract Size: 64 -> inf_0.data = 0x00 | inf_0.upDirection = 0x0 | inf_0.data2 = 0x0000_0000_0000 | inf_0.segLen = 0x01
+# [AssignmentStatement]: meta.currenti.upDirection = meta.currenti.upDirection + (bit<1>)currentISelected2 * inf.upDirection;//DOES NOT WORK| Computed: meta_0_currenti.upDirection = 0;
+# [AssignmentStatement]: meta.hLeft = inf.segLen;| Computed: meta_0_hLeft = 1;
+# [AssignmentStatement]: meta.currPos = meta.currPos + 1;| Computed: meta_0_currPos = 5;
+# [State] parse_prot_host_addr_src_ipv4
+# [State] parse_prot_host_addr_src_ipv4_0_true
+# [P4Testgen MethodCall]: hdr.prot_inf_0.setValid();
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_0.data = 0;
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_0.upDirection = 0;
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_0.data2 = 0;
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_0.segLen = 1;
+# [State] parse_prot_host_addr_src_ipv4_0_join
+# [P4Testgen AssignmentStatement]: meta.headerLen = 0;
+# [P4Testgen AssignmentStatement]: meta.hLeft = 1;
+# [P4Testgen AssignmentStatement]: meta.addrLen = 64;
+# [P4Testgen AssignmentStatement]: meta.currPos = 5;
+# [P4Testgen AssignmentStatement]: meta.currenti.upDirection = 0;
+# [State] parse_prot_h_0_pre
+# [State] parse_prot_h_0
+# [MethodCall]: packet.extract<prot_h_t>(hdr.prot_h_0[0]);
+# [ExtractSuccess] hdr.prot_h_0[32w0]@656 | Condition: |*packetLen_bits(bit<32>)| >= 720; | Extract Size: 64 -> hdr.prot_h_0[32w0].data = 0x0000_0000_0000_0000
+# [AssignmentStatement]: meta.hLeft = meta.hLeft - 1;| Computed: meta.hLeft = 0;
+# [AssignmentStatement]: meta.currPos = meta.currPos + 1;| Computed: meta.currPos = 6;
+# [State] parse_prot_h_0_pre1
+# [State] parse_prot_1
+# [State] parse_prot_inf_1
+# [MethodCall]: inf_0.setInvalid();
+# [P4Testgen AssignmentStatement]: meta_0_headerLen = 0;
+# [P4Testgen AssignmentStatement]: meta_0_hLeft = 0;
+# [P4Testgen AssignmentStatement]: meta_0_addrLen = 64;
+# [P4Testgen AssignmentStatement]: meta_0_currPos = 6;
+# [P4Testgen AssignmentStatement]: meta_0_currenti.upDirection = 0;
+# [P4Testgen AssignmentStatement]: currI_0 = 4;
+# [State] start
+# [MethodCall]: packet.extract<prot_i_t>(inf_0);
+# [ExtractSuccess] inf_0@720 | Condition: |*packetLen_bits(bit<32>)| >= 784; | Extract Size: 64 -> inf_0.data = 0x00 | inf_0.upDirection = 0x0 | inf_0.data2 = 0x0000_0000_0000 | inf_0.segLen = 0x00
+# [AssignmentStatement]: meta.currenti.upDirection = meta.currenti.upDirection + (bit<1>)currentISelected2 * inf.upDirection;//DOES NOT WORK| Computed: meta_0_currenti.upDirection = 0;
+# [AssignmentStatement]: meta.hLeft = inf.segLen;| Computed: meta_0_hLeft = 0;
+# [AssignmentStatement]: meta.currPos = meta.currPos + 1;| Computed: meta_0_currPos = 7;
+# [State] parse_prot_inf_1
+# [State] parse_prot_inf_true
+# [P4Testgen MethodCall]: hdr.prot_inf_1.setValid();
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_1.data = 0;
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_1.upDirection = 0;
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_1.data2 = 0;
+# [P4Testgen AssignmentStatement]: hdr.prot_inf_1.segLen = 0;
+# [State] parse_prot_inf_join
+# [P4Testgen AssignmentStatement]: meta.headerLen = 0;
+# [P4Testgen AssignmentStatement]: meta.hLeft = 0;
+# [P4Testgen AssignmentStatement]: meta.addrLen = 64;
+# [P4Testgen AssignmentStatement]: meta.currPos = 7;
+# [P4Testgen AssignmentStatement]: meta.currenti.upDirection = 0;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("PROTParser");
+# [P4Testgen MethodCall]: *.copy_in("PROTVerifyChecksum");
+# [Control PROTVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("PROTVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("PROTIngress");
+# [Control PROTIngress start]
+# [If Statement]: meta.currenti.upDirection == 0 Condition: (bit<1>)(|pktvar_6(bit<8>)| == 4) * |pktvar_13(bit<1>)| + (bit<1>)(|pktvar_6(bit<8>)| == 6) * |pktvar_18(bit<1>)| == 0; Result: true
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("PROTIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("PROTEgress");
+# [Control PROTEgress start]
+# [P4Testgen MethodCall]: *.copy_out("PROTEgress");
+# [P4Testgen MethodCall]: *.copy_in("PROTComputeChecksum");
+# [Control PROTComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("PROTComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("PROTDeparser");
+# [Control PROTDeparser start]
+# [MethodCall]: packet.emit<preamble_t>(hdr.preamble);
+# [Emit]: {$headerValid:true;;    data:0;  }
+# [MethodCall]: packet.emit<prot_common_t>(hdr.prot_common);
+# [Emit]: {$headerValid:true;;    version:0;  dstType:0;  srcType:1;  totalLen:0;  hdrLen:0;  curri:4;  currh:0;  nextHdr:0;  }
+# [MethodCall]: packet.emit<prot_addr_common_t>(hdr.prot_addr_common);
+# [Emit]: {$headerValid:true;;    data:0;  }
+# [MethodCall]: packet.emit<prot_host_addr_ipv4_t>(hdr.prot_host_addr_dst.ipv4);
+# [Emit]: {$headerValid:true;;    addr:0;  }
+# [MethodCall]: packet.emit<prot_host_addr_ipv4_t>(hdr.prot_host_addr_src.ipv4);
+# [Emit]: {$headerValid:true;;    addr:0;  }
+# [MethodCall]: packet.emit<prot_host_addr_padding_t>(hdr.prot_host_addr_padding);
+# [Emit]: {$headerValid:true;;    padding:0;  }
+# [MethodCall]: packet.emit<prot_i_t>(hdr.prot_inf_0);
+# [Emit]: {$headerValid:true;;    data:0;  upDirection:0;  data2:0;  segLen:1;  }
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[0]);
+# [Emit]: {$headerValid:true;;    data:0;  }
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[1]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[2]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[3]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[4]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[5]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[6]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[7]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[8]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_h_t>(hdr.prot_h_0[9]);
+# [Invalid emit: { data = TaintedExpression(bit<64>) }]
+# [MethodCall]: packet.emit<prot_i_t>(hdr.prot_inf_1);
+# [Emit]: {$headerValid:true;;    data:0;  upDirection:0;  data2:0;  segLen:0;  }
+# [P4Testgen MethodCall]: *.copy_out("PROTDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+
+packet 0 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000400000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

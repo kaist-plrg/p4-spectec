@@ -1,0 +1,47 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:38.518
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserImpl");
+# [Parser] parserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractFailure] hdr.ethernet@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: stdmeta.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("parserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [MethodCall]: lpm1_0/lpm1.apply();
+# [MethodCall]: act_hit(1);
+# [AssignmentStatement]: hdr.ethernet.srcAddr = x;| Computed: hdr.ethernet.srcAddr = "Taint";
+# [MethodCall]: act_hit(2);
+# [AssignmentStatement]: hdr.ethernet.srcAddr = x;| Computed: hdr.ethernet.srcAddr = "Taint";
+# [MethodCall]: act_hit(3);
+# [AssignmentStatement]: hdr.ethernet.srcAddr = x;| Computed: hdr.ethernet.srcAddr = "Taint";
+# [AssignmentStatement]: stdmeta.egress_spec = 1;| Computed: stdmeta.egress_spec = 1;
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 1;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparserImpl");
+# [Control deparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Invalid emit: { dstAddr = TaintedExpression(bit<48>), srcAddr = TaintedExpression(bit<48>), etherType = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 1; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000
+expect 1 0000000000$
+

@@ -1,0 +1,142 @@
+;; Assignments
+
+relation Assign_exp:
+  ctx |- exp := val : ctx
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning" %2 "to" %1 "under" %0)
+  hint(prose_out %3)
+
+relation Assign_exps:
+  ctx |- exp* := val* : ctx
+  hint(input %0 %1 %2)
+  hint(prose_in "assigning each of" %2 "to each of" %1 "under" %0)
+  hint(prose_out %3)
+
+relation Assign_arg:
+  ctx '/' ctx |- arg := val : ctx
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "assigning" %2 "to" %1
+                "under caller" %1 "and callee" %0)
+  hint(prose_out %4)
+
+relation Assign_args:
+  ctx '/' ctx  |- arg* := val* : ctx
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "assigning each of" %2 "to each of" %1
+                "under caller" %1 "and callee" %0)
+
+;;; Assigning to an expression
+
+rule Assign_exp/variable:
+  C |- VAR id := val : C'
+  -- if C' = $add_varr(C, id eps, val)
+
+rule Assign_exp/tup:
+  C |- TUP exp* := TUP val* : C'
+  -- Assign_exps: C |- exp* := val* : C'
+
+rule Assign_exp/inj:
+  C |- INJ (mixop exp*) := INJ (mixop val*) : C'
+  -- Assign_exps: C |- exp* := val* : C'
+
+rule Assign_exp/str:
+  C |- STR expfield* := STR valfield* : C'
+  -- (if atom val = valfield)*
+  -- (if atom exp = expfield)*
+  -- Assign_exps: C |- exp* := val* : C'
+
+rulegroup Assign_exp/opt {
+
+  rule Assign_exp/opt-some:
+    C |- OPT exp := OPT val : C'
+    -- Assign_exp: C |- exp := val : C'
+
+  rule Assign_exp/opt-none:
+    C |- OPT eps := OPT eps : C
+
+}
+
+rule Assign_exp/list:
+  C |- LIST exp* := LIST val* : C'
+  -- Assign_exps: C |- exp* := val* : C'
+
+rule Assign_exp/cons:
+  C |- CONS exp_h exp_t := LIST (val_h :: val_t*) : C''
+  -- Assign_exp: C |- exp_h := val_h : C'
+  -- Assign_exp: C' |- exp_t := LIST val_t* : C''
+
+rulegroup Assign_exp/iter {
+
+  rule Assign_exp/simple:
+    C |- ITER exp iterexp := val : C'
+    -- if varr = $is_iter_on_var(ITER exp iterexp)
+    -- if C' = $add_varr(C, varr, val)
+
+  rule Assign_exp/opt-none:
+    C |- ITER exp iterexp := OPT eps : C'
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
+    -- if (vari_iter = $iter_vari(vari, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_iter*|)
+    -- if C' = $add_varis(C, vari_iter*, val_bind*)
+
+  rule Assign_exp/opt-some:
+    C |- ITER exp iterexp := OPT val : C''
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
+    -- Assign_exp: C |- exp := val : C'
+    -- if (vari_iter = $iter_vari(vari, QUEST))*
+    -- if (val_sub = $find_vari(C', vari))*
+    -- if C'' = $add_varis(C', vari_iter*, OPT val_sub)*
+
+  rule Assign_exp/list:
+    C |- ITER exp iterexp := LIST val* : C'
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if STAR vari* = iterexp
+    -- if C_local = C[ .LOCAL.VAL = $empty_map<varr, val> ]
+    -- (Assign_exp: C_local |- exp := val : C_sub)*
+    -- if (vari_iter = $iter_vari(vari, STAR))*
+    -- if (val_sub* = $finds_vari(C_sub*, vari))*
+    -- if (val_bind = LIST val_sub*)*
+    -- if C' = $add_varis(C, vari_iter*, val_bind*)
+
+}
+
+;;; Assigning to a sequence of expressions
+
+rulegroup Assign_exps {
+
+  rule Assign_exps/nil:
+    C |- eps := eps : C 
+
+  rule Assign_exps/cons:
+    C |- exp_h :: exp_t* := val_h :: val_t* : C''
+    -- Assign_exp: C |- exp_h := val_h : C'
+    -- Assign_exps: C' |- exp_t* := val_t* : C''
+
+}
+
+;;; Assigning to an argument
+
+rule Assign_arg/exp:
+  C_callee '/' _ |- EXP exp := val : C_callee'
+  -- Assign_exp: C_callee |- exp := val : C_callee'
+
+rule Assign_arg/fun:
+  C_callee '/' C_caller |- FUN id_callee := FUNC id_caller : C_callee'
+  -- if (_, funcdef) = $find_func(C_caller, id_caller)
+  -- if C_callee' = $add_func(C_callee, id_callee, funcdef)
+
+;;; Assigning to a sequence of arguments
+
+rulegroup Assign_args {
+
+  rule Assign_args/nil:
+    C_callee '/' _ |- eps := eps : C_callee
+
+  rule Assign_args/cons:
+    C_callee '/' C_caller |- arg_h :: arg_t* := val_h :: val_t* : C_callee''
+    -- Assign_arg: C_callee '/' C_caller |- arg_h := val_h : C_callee'
+    -- Assign_args: C_callee' '/' C_caller |- arg_t* := val_t* : C_callee''
+
+}

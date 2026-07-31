@@ -1,0 +1,53 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:32.957
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: l_0_h[0].setInvalid();
+# [MethodCall]: l_0_h[1].setInvalid();
+# [MethodCall]: l_0_h[2].setInvalid();
+# [Lookahead result]: 256
+# [Lookahead Condition: |*packetLen_bits(bit<32>)| >= 24;]
+# [AssignmentStatement]: l = b.lookahead<h>();| Computed: tmp = 256;
+# [P4Testgen MethodCall]: l_0_h[0].setValid();
+# [P4Testgen AssignmentStatement]: l_0_h[0].f1 = 0;
+# [P4Testgen MethodCall]: l_0_h[1].setValid();
+# [P4Testgen AssignmentStatement]: l_0_h[1].f1 = 1;
+# [P4Testgen MethodCall]: l_0_h[2].setValid();
+# [P4Testgen AssignmentStatement]: l_0_h[2].f1 = 0;
+# [State] two
+# [MethodCall]: b.extract<h1>(hdrs.h[0]);
+# [ExtractSuccess] hdrs.h[32w0]@0 | Condition: |*packetLen_bits(bit<32>)| >= 0; | Extract Size: 8 -> hdrs.h[32w0].f1 = 0x00
+# [MethodCall]: b.extract<h1>(hdrs.h[1]);
+# [ExtractSuccess] hdrs.h[32w1]@8 | Condition: |*packetLen_bits(bit<32>)| >= 0; | Extract Size: 8 -> hdrs.h[32w1].f1 = 0x01
+# [AssignmentStatement]: meta.h_count = 2;| Computed: meta.h_count = 2;
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00010000
+expect 0 0000$
+

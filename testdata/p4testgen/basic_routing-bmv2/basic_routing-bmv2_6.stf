@@ -1,0 +1,89 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:19.173
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserImpl");
+# [Parser] ParserImpl
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr = hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr = hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0xFFFF_FFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [MethodCall]: verify_checksum<tuple_0, bit<16>>(condition = true, data = {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, checksum = hdr.ipv4.hdrChecksum, algo = 6);
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: port_mapping_0/port_mapping.apply();
+# [Table Branch: ingress.port_mapping | Key(s): |bmv2_ingress_port(bit<9>)|| Chosen action: ingress.set_bd]
+# [MethodCall]: set_bd(|ingress.port_mapping_ingress.set_bd_arg_bd_0(bit<16>)|);
+# [AssignmentStatement]: meta.ingress_metadata.bd = bd;| Computed: meta.ingress_metadata.bd = 0;
+# [MethodCall]: bd_1/bd.apply();
+# [Table Branch: ingress.bd | Key(s): |ingress.port_mapping_ingress.set_bd_arg_bd_0(bit<16>)|| Chosen action: ingress.set_vrf]
+# [MethodCall]: set_vrf(|ingress.bd_ingress.set_vrf_arg_vrf_1(bit<12>)|);
+# [AssignmentStatement]: meta.ingress_metadata.vrf = vrf;| Computed: meta.ingress_metadata.vrf = 0;
+# [MethodCall]: ipv4_fib_0/ipv4_fib.apply();
+# [Table Branch: ingress.ipv4_fib | Key(s): |ingress.bd_ingress.set_vrf_arg_vrf_1(bit<12>)|, |pktvar_14(bit<32>)|| Chosen action: ingress.on_miss]
+# [MethodCall]: on_miss_2/on_miss();
+# [SwitchCase]: on_miss
+# [MethodCall]: ipv4_fib_lpm_0/ipv4_fib_lpm.apply();
+# [Table Branch: ingress.ipv4_fib_lpm | Key(s): |ingress.bd_ingress.set_vrf_arg_vrf_1(bit<12>)|, |pktvar_14(bit<32>)|| Chosen action: ingress.on_miss]
+# [MethodCall]: on_miss_3/on_miss();
+# [MethodCall]: nexthop_0/nexthop.apply();
+# [Table Branch: ingress.nexthop | Key(s): 0| Chosen action: ingress.set_egress_details]
+# [MethodCall]: set_egress_details(|ingress.nexthop_ingress.set_egress_details_arg_egress_spec_1(bit<9>)|);
+# [AssignmentStatement]: standard_metadata.egress_spec = egress_spec;| Computed: standard_metadata.egress_spec = 511;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [MethodCall]: rewrite_mac_0/rewrite_mac.apply();
+# [Table Branch: egress.rewrite_mac | Key(s): 0| Chosen action: egress.rewrite_src_dst_mac]
+# [MethodCall]: rewrite_src_dst_mac(|egress.rewrite_mac_egress.rewrite_src_dst_mac_arg_smac(bit<48>)|, |egress.rewrite_mac_egress.rewrite_src_dst_mac_arg_dmac(bit<48>)|);
+# [AssignmentStatement]: hdr.ethernet.srcAddr = smac;| Computed: hdr.ethernet.srcAddr = 0;
+# [AssignmentStatement]: hdr.ethernet.dstAddr = dmac;| Computed: hdr.ethernet.dstAddr = 0;
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("computeChecksum");
+# [Control computeChecksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(condition = true, data = {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, checksum = hdr.ipv4.hdrChecksum, algo = 6);
+# [P4Testgen MethodCall]: *.copy_out("computeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("DeparserImpl");
+# [Control DeparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr = hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr = hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  diffserv:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:0;  protocol:0;  hdrChecksum:0;  srcAddr:0;  dstAddr:4294967295;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |ingress.nexthop_ingress.set_egress_details_arg_egress_spec_1(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress.port_mapping
+add "ingress.port_mapping" "standard_metadata.ingress_port":0x000 "ingress.set_bd"("bd":0x0000)
+
+# Table ingress.bd
+add "ingress.bd" "meta.ingress_metadata.bd":0x0000 "ingress.set_vrf"("vrf":0x000)
+
+# Table ingress.ipv4_fib
+add "ingress.ipv4_fib" "hdr.ipv4.dstAddr":0xFFFFFFFF "meta.ingress_metadata.vrf":0x000 "ingress.on_miss"()
+
+# Table ingress.ipv4_fib_lpm
+add "ingress.ipv4_fib_lpm" 1 "hdr.ipv4.dstAddr":0b11111111111111111111111111111111 "meta.ingress_metadata.vrf":0x000 "ingress.on_miss"()
+
+# Table ingress.nexthop
+add "ingress.nexthop" "meta.ingress_metadata.nexthop_index":0x0000 "ingress.set_egress_details"("egress_spec":0x1FF)
+
+# Table egress.rewrite_mac
+add "egress.rewrite_mac" "meta.ingress_metadata.nexthop_index":0x0000 "egress.rewrite_src_dst_mac"("smac":0x000000000000,"dmac":0x000000000000)
+
+
+packet 0 000000000000000000000000080000000000000000000000000000000000FFFFFFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

@@ -1,0 +1,92 @@
+;;
+;; Metavariables for int, nat, bool, and text
+;;
+
+var b : bool
+
+var i : int
+
+var n : nat
+
+var t : text
+
+;;
+;; General bool functions
+;;
+
+dec $ite<X>(bool, X, X) : X
+  hint(prose_in %1 "if" %0 "otherwise" %2)
+def $ite<X>(true, X_t, X_f) = X_t
+def $ite<X>(false, X_t, X_f) = X_f
+
+;;
+;; General option functions
+;;
+
+dec $opt_as_seq_<X>(X?) : X*
+def $opt_as_seq_<X>(eps) = eps
+def $opt_as_seq_<X>(X) = [ X ]
+
+;;
+;; General sequence functions
+;;
+
+dec $exists_(bool*) : bool
+  hint(prose_true "some of" %0 "is true")
+  hint(prose_false "none of" %0 "is true")
+def $exists_(eps) = false
+def $exists_(b_h :: b_t*) = b_h \/ $exists_(b_t*)
+
+dec $forall_(bool*) : bool
+  hint(prose_true "all" %0 "are true")
+  hint(prose_false "not all" %0 "are true")
+def $forall_(eps) = true
+def $forall_(b_h :: b_t*) = b_h /\ $forall_(b_t*)
+
+dec $repeat_<X>(X, nat) : X*
+  hint(prose_in "a list of" %1 "copies of" %0)
+def $repeat_<X>(X, 0) = eps
+def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+builtin dec $rev_<X>(X*) : X*
+  hint(prose_in "the reversal of" %0)
+
+builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
+  hint(prose_in "the value associated to" %0 "in" %1)
+
+builtin dec $transpose_<X>(X**) : X**
+
+;;
+;; General set functions
+;;
+
+syntax set<K> = `{ K* `}
+
+dec $empty_set<K> : set<K>
+def $empty_set<K> = `{ eps `}
+
+;;
+;; General map functions
+;;
+
+syntax pair<K, V> = K ':' V
+
+syntax map<K, V> = set<pair<K, V>>
+
+dec $empty_map<K, V> : map<K, V>
+  hint(prose_in "an empty map")
+def $empty_map<K, V> = `{ eps `}
+
+builtin dec $find_map<K, V>(map<K, V>, K) : V?
+  hint(prose_in "the value of" %1 "in map" %0)
+
+builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
+  hint(prose_in "the value of" %1 "in maps" %0)
+
+builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+  hint(prose_in %0 "where" %1 "to" %2 "is added")
+
+builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+  hint(prose_in %0 "where each of" %1 "to" %2 "are added")

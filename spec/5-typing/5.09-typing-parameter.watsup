@@ -1,0 +1,132 @@
+;;
+;; Parameter typing
+;;
+;; syntax parameter =
+;;  annotationList direction type name initializerOpt
+;;
+
+;;; syntax initializerOpt
+
+;;;; `EMPTY
+;;;; initializer
+
+rulegroup Parameter_ok {
+
+  rule Parameter_ok/non-initializer:
+    p TC |- annotationList direction type name _EMPTY
+          : parameterIR '#' typeId_fresh*
+    ---- ;; check parameter type
+    -- Type_ok: p TC |- type : typeIR '#' typeId_fresh*
+    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh* `})
+    -- Type_wf: B |- typeIR
+    ---- ;; construct parameter IR
+    -- if nameIR = $name(name)
+    -- if parameterIR
+        = annotationList direction typeIR nameIR eps
+
+  rule Parameter_ok/initializer-ctk:
+    p TC |- annotationList direction type name ('=' expression_init)
+          : parameterIR '#' typeId_fresh*
+    ---- ;; check parameter type
+    -- Type_ok: p TC |- type : typeIR '#' typeId_fresh*
+    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh* `})
+    -- Type_wf: B |- typeIR
+    ---- ;; check initializer
+    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
+    -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
+    -- if CTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
+    ---- ;; check that the initializer type is
+    ---- ;; compatible with the parameter type
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_init_cast
+        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- if nameIR = $name(name)
+    ---- ;; construct parameter IR
+    -- if parameterInitializerIR = '=' typedExpressionIR_init_cast
+    -- if parameterIR
+        = annotationList direction typeIR nameIR parameterInitializerIR
+
+  rule Parameter_ok/initializer-lctk:
+    p TC |- annotationList direction type name ('=' expression_init)
+          : parameterIR '#' typeId_fresh*
+    ---- ;; check parameter type
+    -- Type_ok: p TC |- type : typeIR '#' typeId_fresh*
+    -- if B = $union_set<typeId>($bound(p, TC), `{ typeId_fresh* `})
+    -- Type_wf: B |- typeIR
+    ---- ;; check initializer
+    -- Expr_ok: p TC |- expression_init : typedExpressionIR_init
+    -- if typeIR_init = $type_of_typedExpressionIR(typedExpressionIR_init)
+    -- if LCTK = $ctk_of_typedExpressionIR(typedExpressionIR_init)
+    ---- ;; check that the initializer type is
+    ---- ;; compatible with the parameter type
+    ---- ;; while inserting implicit casts if necessary
+    -- if typedExpressionIR_init_cast
+        = $cast_unary(typedExpressionIR_init, typeIR)
+    -- if nameIR = $name(name)
+    ---- ;; evaluate the initializer
+    -- Expr_eval_lctk: p TC |- typedExpressionIR_init_cast ~> value_init
+    ---- ;; construct parameter IR
+    -- if parameterInitializerIR = '=' _VALUE value_init
+    -- if parameterIR
+        = annotationList direction typeIR nameIR parameterInitializerIR
+
+}
+
+;;
+;; Parameter list typing
+;;
+;; syntax parameterList
+;;
+
+relation Parameters_ok:
+  cursor typingContext |- parameter*
+                        : parameterListIR '#' typeId*
+  hint(input %0 %1 %2)
+  hint(prose_in "typing" %2#", under context" %1 "at" %0)
+  hint(prose_out "parameters" %3#", and fresh type variables" %4)
+
+rulegroup Parameters_ok {
+
+  rule Parameters_ok/nil:
+    p TC |- eps : eps '#' eps
+
+  rule Parameters_ok/cons:
+    p TC |- parameter_h :: parameter_t*
+          : parameterIR* '#' typeId_fresh*
+    ---- ;; every parameter is checked under the same context, so a default
+    ---- ;; cannot alias a sibling parameter
+    -- Parameter_ok:
+        p TC |- parameter_h
+              : parameterIR_h '#' typeId_fresh_h*
+    -- Parameters_ok:
+        p TC |- parameter_t*
+              : parameterIR_t* '#' typeId_fresh_t*
+    -- if parameterIR* = parameterIR_h :: parameterIR_t*
+    -- if typeId_fresh* = typeId_fresh_h* ++ typeId_fresh_t*
+
+}
+
+rule ParameterList_ok:
+  p TC_0 |- parameterList
+          : TC_1 parameterIR* '#' typeId_fresh*
+  -- if parameter* = $flatten_parameterList(parameterList)
+  -- Parameters_ok:
+      p TC_0 |- parameter*
+              : parameterIR* '#' typeId_fresh*
+  -- if TC_1 = $add_parameters_t(p, TC_0, parameterIR*)
+
+;;
+;; Constructor list typing
+;;
+;; syntax constructorParameterList
+;;
+
+rule ConstructorParameterListOpt_ok:
+  TC_0 |- constructorParameterListOpt
+        : TC_1 constructorParameterIR* '#' typeId_fresh*
+  -- if constructorParameter*
+      = $flatten_constructorParameterListOpt(constructorParameterListOpt)
+  -- Parameters_ok:
+      BLOCK TC_0 |- constructorParameter*
+                  : constructorParameterIR* '#' typeId_fresh*
+  -- if TC_1 = $add_parameters_t(BLOCK, TC_0, constructorParameterIR*)

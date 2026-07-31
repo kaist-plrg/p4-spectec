@@ -1,0 +1,370 @@
+;; Expression evaluation rules
+
+;;; Boolean, number, and text evaluation rules
+
+rulegroup Eval_exp/literal {
+
+  rule Eval_exp/boolean:
+    C |- BOOL b : OK (BOOL b)
+
+  rule Eval_exp/number:
+    C |- num : OK num
+
+  rule Eval_exp/string:
+    C |- TEXT t : OK (TEXT t)
+
+}
+
+;;; Variable evaluation rules
+
+rule Eval_exp/variable:
+  C |- VAR id : OK val
+  -- if val = $find_varr(C, id eps)
+
+;;; Unary, binary, and comparison evaluation rules
+
+rulegroup Eval_exp/unary {
+
+  rule Eval_exp/boolean:
+    C |- UN NOT exp : OK (BOOL (~b))
+    -- Eval_exp: C |- exp : OK (BOOL b)
+
+  rule Eval_exp/number:
+    C |- UN numunop exp : OK val_res
+    -- Eval_exp: C |- exp : OK num
+    -- if val_res = $unop_number(numunop, num)
+
+}
+
+rulegroup Eval_exp/binary {
+
+  rule Eval_exp/boolean:
+    C |- BIN boolbinop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK (BOOL b_l)
+    -- Eval_exp: C |- exp_r : OK (BOOL b_r)
+    -- if b_res = $binop_bool(boolbinop, b_l, b_r)
+
+  rule Eval_exp/number:
+    C |- BIN numbinop exp_l exp_r : OK val_res
+    -- Eval_exp: C |- exp_l : OK num_l
+    -- Eval_exp: C |- exp_r : OK num_r
+    -- if val_res = $binop_number(numbinop, num_l, num_r)
+
+}
+
+rulegroup Eval_exp/compare {
+
+  rule Eval_exp/poly:
+    C |- CMP polycmpop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK val_l
+    -- Eval_exp: C |- exp_r : OK val_r
+    -- if b_res = $cmpop_poly(polycmpop, val_l, val_r)
+
+  rule Eval_exp/number:
+    C |- CMP numcmpop exp_l exp_r : OK (BOOL b_res)
+    -- Eval_exp: C |- exp_l : OK num_l
+    -- Eval_exp: C |- exp_r : OK num_r
+    -- if b_res = $cmpop_number(numcmpop, num_l, num_r)
+
+}
+
+;;; Upcasting, downcasting, and subtyping evaluation rules
+
+rule Eval_exp/upcast:
+  C |- UPCAST typ exp : $upcast(C, typ, val)
+  -- Eval_exp: C |- exp : OK val
+
+rule Eval_exp/downcast:
+  C |- DOWNCAST typ exp : $downcast(C, typ, val)
+  -- Eval_exp: C |- exp : OK val
+
+rule Eval_exp/subtype:
+  C |- SUB exp typ : OK (BOOL b)
+  -- Eval_exp: C |- exp : OK val
+  -- if tdenv = $extend_tdenv(C.GLOBAL.TYP, C.LOCAL.TYP)
+  -- if b = $subtyp(tdenv, typ, val)
+
+;;; Match evaluation rules
+
+rulegroup Eval_exp/match {
+
+  rule Eval_exp/inj:
+    C |- MATCH exp (INJ mixop_p) : OK (BOOL (mixop_p = mixop_v))
+    -- Eval_exp: C |- exp : OK (INJ (mixop_v _))
+
+  rule Eval_exp/list-cons:
+    C |- MATCH exp CONS : OK (BOOL $(|val*| > 0))
+    -- Eval_exp: C |- exp : OK (LIST val*)
+
+  rule Eval_exp/list-fixed:
+    C |- MATCH exp (FIXED n) : OK (BOOL (|val*| = n))
+    -- Eval_exp: C |- exp : OK (LIST val*)
+
+  rule Eval_exp/list-nil:
+    C |- MATCH exp NIL : OK (BOOL (|val*| = 0))
+    -- Eval_exp: C |- exp : OK (LIST val*)
+
+  rule Eval_exp/opt-some:
+    C |- MATCH exp SOME : OK (BOOL (val? =/= eps))
+    -- Eval_exp: C |- exp : OK (OPT val?)
+
+  rule Eval_exp/opt-none:
+    C |- MATCH exp NONE : OK (BOOL (val? = eps))
+    -- Eval_exp: C |- exp : OK (OPT val?)
+  
+}
+
+;;; Tuple evaluation rules
+
+rule Eval_exp/tuple:
+  C |- TUP exp* : OK (TUP val*)
+  -- (Eval_exp: C |- exp : OK val)*
+
+;;; Case evaluation rules
+
+rule Eval_exp/case:
+  C |- INJ (mixop exp*) : OK (INJ (mixop val*))
+  -- (Eval_exp: C |- exp : OK val)*
+
+;;; Struct evaluation rules
+
+rule Eval_exp/struct:
+  C |- STR expfield* : OK (STR valfield*)
+  -- (if atom exp = expfield)*
+  -- (Eval_exp: C |- exp : OK val)*
+  -- (if valfield = atom val)*
+
+;;; Option evaluation rules
+
+rulegroup Eval_exp/opt {
+
+  rule Eval_exp/some:
+    C |- OPT exp : OK (OPT val)
+    -- Eval_exp : C |- exp : OK val
+
+  rule Eval_exp/none:
+    C |- OPT eps : OK (OPT eps)
+}
+
+;;; List evaluation rules
+
+rule Eval_exp/list:
+  C |- LIST exp* : OK (LIST val*)
+  -- (Eval_exp: C |- exp : OK val)*
+
+;;; Cons-list evaluation rules
+
+rule Eval_exp/cons:
+  C |- CONS exp_h exp_t : OK (LIST (val_h :: val_t*))
+  -- Eval_exp: C |- exp_h : OK val_h
+  -- Eval_exp: C |- exp_t : OK (LIST val_t*)
+
+;;; Concatentation evaluation rules
+
+rulegroup Eval_exp/concat {
+
+  rule Eval_exp/text:
+  C |- CAT exp_l exp_r : OK (TEXT (text_l ++ text_r))
+  -- Eval_exp: C |- exp_l : OK (TEXT text_l)
+  -- Eval_exp: C |- exp_r : OK (TEXT text_r)
+
+  rule Eval_exp/list: 
+  C |- CAT exp_l exp_r : OK (LIST (val_l* ++ val_r*))
+  -- Eval_exp: C |- exp_l : OK (LIST val_l*)
+  -- Eval_exp: C |- exp_r : OK (LIST val_r*)
+
+}
+
+;;; Membership evaluation rules
+
+rule Eval_exp/mem:
+  C |- MEM exp_e exp_s : OK (BOOL $exists_((val_e = val)*))
+  -- Eval_exp: C |- exp_e : OK val_e
+  -- Eval_exp: C |- exp_s : OK (LIST val*)
+
+;;; Length evaluation rules
+
+rulegroup Eval_exp/len {
+
+  rule Eval_exp/text:
+    C |- LEN exp : OK (NAT (|text|))
+    -- Eval_exp: C |- exp : OK (TEXT text)
+
+  rule Eval_exp/list:
+    C |- LEN exp : OK (NAT (|val*|))
+    -- Eval_exp: C |- exp : OK (LIST val*)
+
+}
+
+;;; Dot, indexing, and slicing evaluation rules
+
+relation Eval_path:
+  ctx |- val path : res<val>
+  hint(input %0 %1 %2)
+  hint(prose_in "accessing" %2 "of" %1 "under" %0)
+  hint(prose_out %3)
+
+rule Eval_path/root:
+  C |- val_b ROOT : OK val_b
+
+rule Eval_path/dot:
+  C |- val_b (DOT path atom) : OK val
+  -- Eval_path: C |- val_b path : OK (STR valfield*)
+  -- if (atom_field val_field = valfield)*
+  -- if val = $assoc_<atom, val>(atom, (atom_field, val_field)*)
+
+rulegroup Eval_path/idx {
+
+  rule Eval_path/text:
+    C |- val_b (IDX path exp_i) : OK (TEXT t[n])
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n)
+  
+  rule Eval_path/list:
+    C |- val_b (IDX path exp_i) : OK val*[n]
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n)
+
+}
+
+rulegroup Eval_path/slice {
+
+  rule Eval_path/text:
+    C |- val_b (SLICE path exp_i exp_n) : OK (TEXT t[n_i : n_n])
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+
+  rule Eval_path/list:
+    C |- val_b (SLICE path exp_i exp_n) : OK (LIST val*[n_i : n_n])
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+
+}
+
+rule Eval_path/fail:
+  C |- val path : FAIL
+  -- otherwise
+
+rule Eval_exp/dot:
+  C |- DOT exp atom : valres
+  -- Eval_exp: C |- exp : OK val
+  -- Eval_path: C |- val (DOT ROOT atom) : valres
+
+rule Eval_exp/idx:
+  C |- IDX exp_b exp_i : valres
+  -- Eval_exp: C |- exp_b : OK val_b
+  -- Eval_path: C |- val_b (IDX ROOT exp_i) : valres
+
+rule Eval_exp/slice:
+  C |- SLICE exp_b exp_i exp_n : valres
+  -- Eval_exp: C |- exp_b : OK val_b
+  -- Eval_path: C |- val_b (SLICE ROOT exp_i exp_n) : valres
+
+;;; Update evaluation rules
+
+relation Eval_path_upd:
+  ctx |- val path := val : res<val>
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "updating" %2 "of" %1 "with" %3 "under" %0)
+  hint(prose_out %4)
+
+rule Eval_path_upd/root:
+  C |- val_b ROOT := val_n : OK val_n
+
+rulegroup Eval_path_upd/idx {
+
+  rule Eval_path_upd/text:
+    C |- val_b (IDX path exp_i) := TEXT t_n : valres
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+    -- if |t_n| = 1
+    -- Eval_path_upd:
+        C |- val_b path := (TEXT t[ [n_target] = t_n ]) : valres
+
+  rule Eval_path_upd/list:
+    C |- val_b (IDX path exp_i) := val_n : valres
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n_target)
+    -- Eval_path_upd:
+        C |- val_b path := (LIST val*[ [n_target] = val_n ]) : valres
+
+}
+
+rulegroup Eval_path_upd/slice {
+
+  rule Eval_path_upd/text:
+    C |- val_b (SLICE path exp_i exp_n) := TEXT t_n : valres
+    -- Eval_path: C |- val_b path : OK (TEXT t)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    -- if |t_n| = n_n
+    -- Eval_path_upd:
+        C |- val_b path := (TEXT t[ [n_i : n_n] = t_n ]) : valres
+
+  rule Eval_path_upd/list:
+    C |- val_b (SLICE path exp_i exp_n) := val_n : valres
+    -- Eval_path: C |- val_b path : OK (LIST val*)
+    -- Eval_exp: C |- exp_i : OK (NAT n_i)
+    -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    -- Eval_path_upd:
+        C |- val_b path := (LIST val*[ [n_i : n_n] = val_n ]) : valres
+
+}
+
+rule Eval_path_upd/dot:
+  C |- val_b (DOT path atom) := val_n : valres
+  -- Eval_path: C |- val_b path : OK (STR valfield*)
+  -- if (atom_field val_field = valfield)*
+  -- if (valfield_new
+      = atom_field $ite<val>(atom = atom_field, val_n, val_field))*
+  -- Eval_path_upd:
+      C |- val_b path := (STR valfield_new*) : valres
+
+rule Eval_path_upd/fail:
+  C |- val_b path := val_n : FAIL
+  -- otherwise
+
+rule Eval_exp/upd:
+  C |- UPD exp_b path exp_f : valres
+  -- Eval_exp: C |- exp_b : OK val_b
+  -- Eval_exp: C |- exp_f : OK val_f
+  -- Eval_path_upd: C |- val_b path := val_f : valres
+
+;;; Meta-function call evaluation rules
+
+rule Eval_exp/call:
+  C |- CALL id targ* arg* : valres
+  -- Eval_targs: C |- targ* : typ_input*
+  -- (Eval_arg: C |- arg : OK val_input)*
+  -- Call_func: C |- id targ* val_input* : valres
+
+;;; Iterated expression evaluation rules
+
+rulegroup Eval_exp/iter {
+
+  rule Eval_exp/simple:
+    C |- ITER exp iterexp : OK val
+    -- if varr = $is_iter_on_var(ITER exp iterexp)
+    -- if val = $find_varr(C, varr)
+
+  rule Eval_exp/opt:
+    C |- ITER exp iterexp : OK (OPT val?)
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if QUEST vari* = iterexp
+    -- if C_sub? = $sub_opt(C, vari*)
+    -- (Eval_exp: C_sub |- exp : OK val)?
+   
+  rule Eval_exp/list:
+    C |- ITER exp iterexp : OK (LIST val*)
+    -- if eps = $is_iter_on_var(ITER exp iterexp)
+    -- if STAR vari* = iterexp
+    -- if C_sub* = $sub_list(C, vari*)
+    -- (Eval_exp: C_sub |- exp : OK val)*
+
+}
+
+rule Eval_exp/fail:
+  C |- exp : FAIL
+  -- otherwise

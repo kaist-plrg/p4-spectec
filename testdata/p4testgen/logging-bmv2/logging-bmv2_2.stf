@@ -1,0 +1,49 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:16.531
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractFailure] hdr.eth_hdr@0 | Condition: !(|*packetLen_bits(bit<32>)| >= 112); | Extract Size: 112
+# [P4Testgen AssignmentStatement]: sm.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: t_0/t.apply();
+# [Table Branch: ingress.t| Overriding default action: ingress.a]
+# [MethodCall]: a();
+# [MethodCall]: log_msg("Logging message.");
+# [Logging message.]
+# [MethodCall]: log_msg<tuple_0>("Logging values {} and {}", {  f0:h.eth_hdr.dst_addr;  f1:h.eth_hdr.src_addr; });
+# [Logging values {} and {}: {  f0:TaintedExpression(bit<48>);  f1:TaintedExpression(bit<48>); }]
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Invalid emit: { dst_addr = TaintedExpression(bit<48>), src_addr = TaintedExpression(bit<48>), eth_type = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingress.t
+setdefault "ingress.t" "ingress.a"()
+
+
+packet 0 00000000000000
+expect 0 00000000000000$
+

@@ -1,0 +1,149 @@
+[#sec-syntax-and-semantics]
+=== Syntax and semantics
+
+==== Grammar
+
+// 79
+The complete grammar of P4~16~ is given in <<sec-grammar>>, using
+Yacc/Bison grammar description language. This text is based on the same
+grammar. We adopt several standard conventions when we provide excerpts from
+the grammar:
+
+// 80
+* `UPPERCASE` symbols denote terminals in the grammar.
+* Excerpts from the grammar are given in BNF notation as follows:
+
+// 81 - Modified
+${syntax: p4program}
+
+==== Semantics and the P4 abstract machines
+
+// 84 - Modified
+We describe the semantics of P4 in terms of abstract machines executing
+traditional imperative code.
+
+// 85
+P4 compilers are free to reorganize the code they generate in any way as long
+as the externally visible behaviors of the P4 programs are preserved as
+described by this specification where externally visible behavior is defined
+as:
+
+// 86
+* The input/output behavior of all P4 blocks, and
+* The state maintained by extern blocks.
+
+// Added
+Throughout this specification, the P4 semantics is described using a combination of:
+
+// Added
+* P4 code snippets
+* Pseudo-code snippets
+* Prose algorithms
+ifdef::backend-html5[]
+* Formal inference rules
+endif::[]
+
+===== Pseudo-code snippets
+
+// 82
+Pseudo-code (mostly used for describing the semantics of various P4 constructs)
+are shown with fixed-size fonts as in the following example:
+
+// 83
+[source,p4pseudo]
+----
+ParserModel.verify(bool condition, error err) {
+    if (condition == false) {
+        ParserModel.parserError = err;
+        goto reject;
+    }
+}
+----
+
+===== Prose algorithms
+
+// Added
+The semantics of P4 constructs are also described using prose algorithms.
+For example, below is the signature of an algorithm used to describe
+type checking of P4 expressions.
+
+// Added
+${relation-title-prose: Expr_ok}
+
+// Added
+Detailed discussion of what `cursor`, `typingContext`, and
+`typedExpressionIR` mean is given in <<sec-type-checking>>. For now, it
+suffices to know that `Expr_ok` takes an `expression`, a `cursor`, and a
+`typingContext` as inputs and results in a `typedExpressionIR`.
+
+// Added
+An algorithm is defined in terms of case-analysis, where each case corresponds
+to a variant of a P4 construct. For example, the following algorithm defines
+how to type check logical not expressions.
+
+// Added
+${rulegroup-prose: Expr_ok/unaryExpression-lnot}
+
+// Added
+The shorthand *!* in step 2 is explained in <<option_get>> and
+`$compat_lnot` is a helper function used to check compatibility of the
+operand with logical not expressions. And the following algorithm defines
+type checking of bitwise negation expressions. 
+
+// Added
+${rulegroup-prose: Expr_ok/unaryExpression-bnot}
+
+// Added
+And so on for other variants of P4 expressions. These prose algorithms are
+presented throughout this specification.
+
+[[option_get]]
+====== Prose algorithm shorthands
+
+// Added
+To make the prose algorithms concise, we often use the shorthand *!*.
+Some algorithms result in an optional result to indicate possible failure. The
+following example algorithm computes modulo of two natural numbers
+(including zero).
+
+// Added
+${func-prose: modulo}
+
+// Added
+Because the divisor may be zero, the result is optional. Now consider the case
+when the algorithm is called.
+
+// Added
+${func-prose: modulo_42}
+
+// Added
+Here, *!* indicates unwrapping of the optional result. This shortened form is
+equivalent to first getting the optional result, checking that it is not
+`None`, and then unwrapping it.
+
+ifdef::backend-html5[]
+===== Formal inference rules
+
+// Added
+Alongside prose algorithms, we also present formal inference rules. In fact,
+the prose algorithms are _automatically generated_ from the formal inference
+rules. Although the prose algorithms are enough to understand the P4 semantics,
+the formal inference rules are included to aid comprehension.
+
+// Added
+For example, the following formal inference rule defines type checking of
+logical not expressions.
+
+// Added
+${rulegroup-source: Expr_ok/unaryExpression-lnot}
+
+// Added
+It is defined using mathematical notations such as turnstile (`|-`). The lines
+leading with `--` are called premises.
+
+// Added
+ifndef::release[]
+NOTE: Add more explanation of the formal inference rules here.
+endif::[]
+
+endif::[]

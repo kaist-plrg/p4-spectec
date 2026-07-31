@@ -1,0 +1,63 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:41.509
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserI");
+# [Parser] parserI
+# [State] start
+# [MethodCall]: pkt.extract<h1_t>(hdr.h1);
+# [ExtractSuccess] hdr.h1@0 | Condition: |*packetLen_bits(bit<32>)| >= 24; | Extract Size: 24 -> hdr.h1.op1 = 0x10 | hdr.h1.op2 = 0x00 | hdr.h1.out1 = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parserI");
+# [P4Testgen MethodCall]: *.copy_in("vc");
+# [Control vc start]
+# [P4Testgen MethodCall]: *.copy_out("vc");
+# [P4Testgen MethodCall]: *.copy_in("cIngress");
+# [Control cIngress start]
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen MethodCall]: hdr_0_h1.setValid();
+# [P4Testgen AssignmentStatement]: hdr_0_h1.op1 = 16;
+# [P4Testgen AssignmentStatement]: hdr_0_h1.op2 = 0;
+# [P4Testgen AssignmentStatement]: hdr_0_h1.out1 = 0;
+# [If Statement]: op == 0x00 Condition: |pktvar_0(bit<8>)| == 0; Result: false
+# [If Statement]: op[7:4] == 1 Condition: |pktvar_0(bit<8>)|[7:4] == 1; Result: true
+# [AssignmentStatement]: hdr.h1.out1 = 4;| Computed: hdr_0_h1.out1 = 4;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen MethodCall]: hdr.h1.setValid();
+# [P4Testgen AssignmentStatement]: hdr.h1.op1 = 16;
+# [P4Testgen AssignmentStatement]: hdr.h1.op2 = 0;
+# [P4Testgen AssignmentStatement]: hdr.h1.out1 = 4;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen MethodCall]: hdr_0_h1.setValid();
+# [P4Testgen AssignmentStatement]: hdr_0_h1.op1 = 16;
+# [P4Testgen AssignmentStatement]: hdr_0_h1.op2 = 0;
+# [P4Testgen AssignmentStatement]: hdr_0_h1.out1 = 4;
+# [If Statement]: op == 0x00 Condition: |pktvar_1(bit<8>)| == 0; Result: true
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [P4Testgen MethodCall]: hdr.h1.setValid();
+# [P4Testgen AssignmentStatement]: hdr.h1.op1 = 16;
+# [P4Testgen AssignmentStatement]: hdr.h1.op2 = 0;
+# [P4Testgen AssignmentStatement]: hdr.h1.out1 = 4;
+# [P4Testgen MethodCall]: *.copy_out("cIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("cEgress");
+# [Control cEgress start]
+# [P4Testgen MethodCall]: *.copy_out("cEgress");
+# [P4Testgen MethodCall]: *.copy_in("uc");
+# [Control uc start]
+# [P4Testgen MethodCall]: *.copy_out("uc");
+# [P4Testgen MethodCall]: *.copy_in("DeparserI");
+# [Control DeparserI start]
+# [MethodCall]: packet.emit<h1_t>(hdr.h1);
+# [Emit]: {$headerValid:true;;    op1:16;  op2:0;  out1:4;  }
+# [P4Testgen MethodCall]: *.copy_out("DeparserI");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 10000000
+expect 0 10000400$
+

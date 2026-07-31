@@ -1,0 +1,101 @@
+[#sec-declaration]
+== Declarations
+
+// Added
+The syntax of top-level declarations is defined as follows:
+
+// Added
+${syntax: declaration externDeclaration typeDeclaration}
+
+// Added
+As described in <<sec-p4-abstract-machine>>, declarations are type checked,
+instantiated at compile time, and evaluated at runtime.
+
+=== Semantics of declarations
+
+==== Type checking
+
+// Added
+${relation-title-source: Decl_ok}
+${relation-title-prose: Decl_ok}
+
+// Added
+After type checking, declarations are represented in P4~IR~ as follows:
+
+// Added
+${syntax: declarationIR externDeclarationIR typeDeclarationIR}
+
+// Added
+A list of declarations is type checked as follows:
+
+// Added
+${relation-title-source: Decls_ok}
+${relation-title-prose: Decls_ok}
+
+// Added
+${rulegroup-source: Decls_ok}
+${rulegroup-prose: Decls_ok}
+
+// Added
+Some declarations introduce type parameters. These are checked as follows:
+
+// Added
+${relation-title-source: TypeParameterListOpt_ok}
+${relation-title-prose: TypeParameterListOpt_ok}
+
+// Added
+${rulegroup-source: TypeParameterListOpt_ok}
+${rulegroup-prose: TypeParameterListOpt_ok}
+
+==== Compile-time evaluation
+
+// Added
+${relation-title-source: Decl_inst}
+${relation-title-prose: Decl_inst}
+
+// Added
+Instantiation statically allocates instantiated objects in the global
+`store`. <<sec-instantiation-declaration>> describes how objects are
+instantiated from a declaration.
+
+// Added
+A list of declarations is instantiated as follows:
+
+// Added
+${relation-title-source: Decls_inst}
+${relation-title-prose: Decls_inst}
+
+// Added
+${rulegroup-source: Decls_inst}
+${rulegroup-prose: Decls_inst}
+
+==== Runtime evaluation
+
+// Added
+All declarations except constant and variable declarations are evaluated at
+compile-time. See <<sec-variable-declaration>> for the runtime evaluation of
+variable declarations and <<sec-constant-declaration>> for the runtime
+evaluation of constant declarations.
+
+// Added
+The subsequent sections describe each kind of declaration in detail.
+
+include::01-variable-declaration.adoc[]
+include::02-constant-declaration.adoc[]
+include::03-instantiation.adoc[]
+include::04-function-declaration.adoc[]
+include::05-action-declaration.adoc[]
+include::06-error-declaration.adoc[]
+include::07-match-kind-declaration.adoc[]
+include::08-extern-function-declaration.adoc[]
+include::09-extern-object-declaration.adoc[]
+include::10-parser-declaration.adoc[]
+include::11-control-declaration.adoc[]
+include::12-enum-type-declaration.adoc[]
+include::13-struct-type-declaration.adoc[]
+include::14-header-type-declaration.adoc[]
+include::15-header-union-type-declaration.adoc[]
+include::16-typedef-declaration.adoc[]
+include::17-parser-type-declaration.adoc[]
+include::18-control-type-declaration.adoc[]
+include::19-package-type-declaration.adoc[]

@@ -1,0 +1,60 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:15.301
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parse");
+# [Parser] parse
+# [State] start
+# [MethodCall]: pk.extract<bitvec_hdr>(h.bvh0);
+# [ExtractSuccess] h.bvh0@0 | Condition: |*packetLen_bits(bit<32>)| >= 16; | Extract Size: 16 -> h.bvh0._row_alt0_valid0 = 0x0 | h.bvh0._row_alt0_port1 = 0x00 | h.bvh0._row_alt1_valid2 = 0x0 | h.bvh0._row_alt1_port3 = 0x00
+# [MethodCall]: pk.extract<bitvec_hdr>(h.bvh1);
+# [ExtractSuccess] h.bvh1@16 | Condition: |*packetLen_bits(bit<32>)| >= 32; | Extract Size: 16 -> h.bvh1._row_alt0_valid0 = 0x0 | h.bvh1._row_alt0_port1 = 0x00 | h.bvh1._row_alt1_valid2 = 0x0 | h.bvh1._row_alt1_port3 = 0x00
+# [MethodCall]: pk.extract<bitvec_hdr>(local_metadata.col.bvh);
+# [ExtractSuccess] local_metadata.col.bvh@32 | Condition: |*packetLen_bits(bit<32>)| >= 48; | Extract Size: 16 -> local_metadata.col.bvh._row_alt0_valid0 = 0x0 | local_metadata.col.bvh._row_alt0_port1 = 0x00 | local_metadata.col.bvh._row_alt1_valid2 = 0x0 | local_metadata.col.bvh._row_alt1_port3 = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parse");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: s_0_col_bvh.setInvalid();
+# [MethodCall]: s_0_bvh0.setInvalid();
+# [MethodCall]: s_0_bvh1.setInvalid();
+# [MethodCall]: bh_0/bh.setInvalid();
+# [MethodCall]: tns_0/tns.apply();
+# [Table Branch: ingress.tns Choosing default action: NoAction_1/NoAction;]
+# [P4Testgen MethodCall]: NoAction_1/NoAction();
+# [AssignmentStatement]: local_metadata.col.bvh.row.alt0.valid = 0;| Computed: local_metadata.col.bvh._row_alt0_valid0 = 0;
+# [AssignmentStatement]: local_metadata.row0.alt0 = local_metadata.row1.alt1;| Computed: local_metadata.row0.alt0.valid = 0;
+# [AssignmentStatement]: local_metadata.row0.alt0 = local_metadata.row1.alt1;| Computed: local_metadata.row0.alt0.port = 0;
+# [AssignmentStatement]: local_metadata.row1.alt0.valid = 1;| Computed: local_metadata.row1.alt0.valid = 1;
+# [AssignmentStatement]: local_metadata.row1.alt1.port = local_metadata.row0.alt1.port + 1;| Computed: local_metadata.row1.alt1.port = 1;
+# [MethodCall]: clone_preserving_field_list(0, 1, 0);
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("compute_checksum");
+# [Control compute_checksum start]
+# [P4Testgen MethodCall]: *.copy_out("compute_checksum");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<bitvec_hdr>(h.bvh0);
+# [Emit]: {$headerValid:true;;    _row_alt0_valid0:0;  _row_alt0_port1:0;  _row_alt1_valid2:0;  _row_alt1_port3:0;  }
+# [MethodCall]: b.emit<bitvec_hdr>(h.bvh1);
+# [Emit]: {$headerValid:true;;    _row_alt0_valid0:0;  _row_alt0_port1:0;  _row_alt1_valid2:0;  _row_alt1_port3:0;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+mirroring_add 1 64
+packet 0 000000000000
+expect 64
+expect 0 00000000$
+

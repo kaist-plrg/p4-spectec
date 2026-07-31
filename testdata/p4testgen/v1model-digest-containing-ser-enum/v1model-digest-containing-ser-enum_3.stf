@@ -1,0 +1,76 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:29.788
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser
+# [State] start
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@112 | Condition: |*packetLen_bits(bit<32>)| >= 272; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x00FF_FFFF
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [MethodCall]: ipv4_lpm_0/ipv4_lpm.apply();
+# [Table Branch: MyIngress.ipv4_lpm | Key(s): |pktvar_14(bit<32>)|| Chosen action: MyIngress.set_nhop]
+# [MethodCall]: set_nhop(|MyIngress.ipv4_lpm_MyIngress.set_nhop_arg_dstAddr_3(bit<32>)|, |MyIngress.ipv4_lpm_MyIngress.set_nhop_arg_port(bit<9>)|);
+# [AssignmentStatement]: hdr.ipv4.dstAddr = dstAddr;| Computed: hdr.ipv4.dstAddr = 0;
+# [AssignmentStatement]: standard_metadata.egress_spec = port;| Computed: standard_metadata.egress_spec = 511;
+# [MethodCall]: forward_0/forward.apply();
+# [Table Branch: MyIngress.forward | Key(s): |MyIngress.ipv4_lpm_MyIngress.set_nhop_arg_dstAddr_3(bit<32>)|| Chosen action: MyIngress.set_dmac]
+# [MethodCall]: set_dmac(|MyIngress.forward_MyIngress.set_dmac_arg_dstAddr_2(bit<48>)|);
+# [AssignmentStatement]: hdr.ethernet.dstAddr = dstAddr;| Computed: hdr.ethernet.dstAddr = 0;
+# [MethodCall]: send_digest();
+# [AssignmentStatement]: meta.test_digest.in_mac_srcAddr = hdr.ethernet.srcAddr;| Computed: meta.test_digest.in_mac_srcAddr = 0;
+# [AssignmentStatement]: meta.test_digest.my_parser_error = error.PacketTooShort;| Computed: meta.test_digest.my_parser_error = 1;
+# [AssignmentStatement]: meta.test_digest.pkt_type = MyPacketTypes.IPv4;| Computed: meta.test_digest.pkt_type = 0;
+# [MethodCall]: digest<test_digest_t>(1, meta.test_digest);
+# [AssignmentStatement]: meta.test_digest2.in_mac_dstAddr = hdr.ethernet.dstAddr;| Computed: meta.test_digest2.in_mac_dstAddr = 0;
+# [AssignmentStatement]: meta.test_digest2.my_thing = MySerEnum1.gah;| Computed: meta.test_digest2.my_thing = 42;
+# [MethodCall]: digest<test_digest2_t>(2, meta.test_digest2);
+# [AssignmentStatement]: meta.test_digest3.in_mac_etherType = hdr.ethernet.etherType;| Computed: meta.test_digest3.in_mac_etherType = 2048;
+# [MethodCall]: digest<test_digest3_t>(3, meta.test_digest3);
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [MethodCall]: send_frame_0/send_frame.apply();
+# [Table Branch: MyEgress.send_frame | Key(s): |MyIngress.ipv4_lpm_MyIngress.set_nhop_arg_port(bit<9>)|| Chosen action: NoAction]
+# [MethodCall]: NoAction_4/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(hdr.ipv4.isValid(), {  f0:hdr.ipv4.version;  f1:hdr.ipv4.ihl;  f2:hdr.ipv4.diffserv;  f3:hdr.ipv4.totalLen;  f4:hdr.ipv4.identification;  f5:hdr.ipv4.flags;  f6:hdr.ipv4.fragOffset;  f7:hdr.ipv4.ttl;  f8:hdr.ipv4.protocol;  f9:hdr.ipv4.srcAddr;  f10:hdr.ipv4.dstAddr; }, hdr.ipv4.hdrChecksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:2048;  }
+# [MethodCall]: packet.emit<ipv4_t>(hdr.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  diffserv:0;  totalLen:0;  identification:0;  flags:0;  fragOffset:0;  ttl:0;  protocol:0;  hdrChecksum:0;  srcAddr:0;  dstAddr:0;  }
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == |MyIngress.ipv4_lpm_MyIngress.set_nhop_arg_port(bit<9>)|; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table MyIngress.ipv4_lpm
+add "MyIngress.ipv4_lpm" 1 "hdr.ipv4.dstAddr":0b00000000111111111111111111111111 "MyIngress.set_nhop"("dstAddr":0x00000000,"port":0x1FF)
+
+# Table MyIngress.forward
+add "MyIngress.forward" "hdr.ipv4.dstAddr":0x00000000 "MyIngress.set_dmac"("dstAddr":0x000000000000)
+
+# Table MyEgress.send_frame
+add "MyEgress.send_frame" "standard_metadata.egress_port":0x1FF "NoAction"()
+
+
+packet 0 00000000000000000000000008000000000000000000000000000000000000FFFFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

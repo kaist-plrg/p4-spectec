@@ -1,0 +1,282 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:45.585
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("packet_parser");
+# [Parser] packet_parser
+# [State] start
+# [AssignmentStatement]: local_metadata.enable_vlan_checks = false;| Computed: local_metadata.enable_vlan_checks = false;
+# [AssignmentStatement]: local_metadata.vlan_id = 0;| Computed: local_metadata.vlan_id = 0;
+# [AssignmentStatement]: local_metadata.admit_to_l3 = false;| Computed: local_metadata.admit_to_l3 = false;
+# [AssignmentStatement]: local_metadata.vrf_id = kDefaultVrf;| Computed: local_metadata.vrf_id = 0;
+# [AssignmentStatement]: local_metadata.enable_decrement_ttl = false;| Computed: local_metadata.enable_decrement_ttl = false;
+# [AssignmentStatement]: local_metadata.enable_src_mac_rewrite = false;| Computed: local_metadata.enable_src_mac_rewrite = false;
+# [AssignmentStatement]: local_metadata.enable_dst_mac_rewrite = false;| Computed: local_metadata.enable_dst_mac_rewrite = false;
+# [AssignmentStatement]: local_metadata.enable_vlan_rewrite = false;| Computed: local_metadata.enable_vlan_rewrite = false;
+# [AssignmentStatement]: local_metadata.packet_rewrites.src_mac = 0;| Computed: local_metadata.packet_rewrites.src_mac = 0;
+# [AssignmentStatement]: local_metadata.packet_rewrites.dst_mac = 0;| Computed: local_metadata.packet_rewrites.dst_mac = 0;
+# [AssignmentStatement]: local_metadata.l4_src_port = 0;| Computed: local_metadata.l4_src_port = 0;
+# [AssignmentStatement]: local_metadata.l4_dst_port = 0;| Computed: local_metadata.l4_dst_port = 0;
+# [AssignmentStatement]: local_metadata.wcmp_selector_input = 0;| Computed: local_metadata.wcmp_selector_input = 0;
+# [AssignmentStatement]: local_metadata.apply_tunnel_decap_at_end_of_pre_ingress = false;| Computed: local_metadata.apply_tunnel_decap_at_end_of_pre_ingress = false;
+# [AssignmentStatement]: local_metadata.apply_tunnel_encap_at_egress = false;| Computed: local_metadata.apply_tunnel_encap_at_egress = false;
+# [AssignmentStatement]: local_metadata.tunnel_encap_src_ipv6 = 0;| Computed: local_metadata.tunnel_encap_src_ipv6 = 0;
+# [AssignmentStatement]: local_metadata.tunnel_encap_dst_ipv6 = 0;| Computed: local_metadata.tunnel_encap_dst_ipv6 = 0;
+# [AssignmentStatement]: local_metadata.marked_to_copy = false;| Computed: local_metadata.marked_to_copy = false;
+# [AssignmentStatement]: local_metadata.marked_to_mirror = false;| Computed: local_metadata.marked_to_mirror = false;
+# [AssignmentStatement]: local_metadata.mirror_session_id = 0;| Computed: local_metadata.mirror_session_id = 0;
+# [AssignmentStatement]: local_metadata.mirror_egress_port = 0;| Computed: local_metadata.mirror_egress_port = 0;
+# [AssignmentStatement]: local_metadata.color = MeterColor_t.GREEN;| Computed: local_metadata.color = 0;
+# [AssignmentStatement]: local_metadata.route_metadata = 0;| Computed: local_metadata.route_metadata = 0;
+# [AssignmentStatement]: local_metadata.bypass_ingress = false;| Computed: local_metadata.bypass_ingress = false;
+# [AssignmentStatement]: local_metadata.wcmp_group_id_valid = false;| Computed: local_metadata.wcmp_group_id_valid = false;
+# [AssignmentStatement]: local_metadata.wcmp_group_id_value = 0;| Computed: local_metadata.wcmp_group_id_value = 0;
+# [AssignmentStatement]: local_metadata.nexthop_id_valid = false;| Computed: local_metadata.nexthop_id_valid = false;
+# [AssignmentStatement]: local_metadata.nexthop_id_value = 0;| Computed: local_metadata.nexthop_id_value = 0;
+# [AssignmentStatement]: local_metadata.ipmc_table_hit = false;| Computed: local_metadata.ipmc_table_hit = false;
+# [AssignmentStatement]: local_metadata.acl_drop = false;| Computed: local_metadata.acl_drop = false;
+# [State] start_false
+# [AssignmentStatement]: local_metadata.ingress_port = (port_id_t)standard_metadata.ingress_port;| Computed: local_metadata.ingress_port = 510;
+# [State] start_join
+# [State] parse_packet_out_header
+# [MethodCall]: packet.extract<packet_out_header_t>(headers.packet_out_header);
+# [ExtractSuccess] headers.packet_out_header@0 | Condition: |*packetLen_bits(bit<32>)| >= 16; | Extract Size: 16 -> headers.packet_out_header.egress_port = 0x000 | headers.packet_out_header.submit_to_ingress = 0x1 | headers.packet_out_header.unused_pad = 0x00
+# [State] parse_ethernet
+# [MethodCall]: packet.extract<ethernet_t>(headers.ethernet);
+# [ExtractSuccess] headers.ethernet@16 | Condition: |*packetLen_bits(bit<32>)| >= 128; | Extract Size: 112 -> headers.ethernet.dst_addr = 0xFEFF_FFFF_FFFF | headers.ethernet.src_addr = 0xFFFF_FFFF_FFFF | headers.ethernet.ether_type = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(headers.ipv4);
+# [ExtractSuccess] headers.ipv4@128 | Condition: |*packetLen_bits(bit<32>)| >= 288; | Extract Size: 160 -> headers.ipv4.version = 0x0 | headers.ipv4.ihl = 0x0 | headers.ipv4.dscp = 0x3F | headers.ipv4.ecn = 0x3 | headers.ipv4.total_len = 0x0000 | headers.ipv4.identification = 0x0000 | headers.ipv4.reserved = 0x0 | headers.ipv4.do_not_fragment = 0x0 | headers.ipv4.more_fragments = 0x0 | headers.ipv4.frag_offset = 0x0000 | headers.ipv4.ttl = 0x80 | headers.ipv4.protocol = 0x04 | headers.ipv4.header_checksum = 0x00FD | headers.ipv4.src_addr = 0xFFFF_FFFF | headers.ipv4.dst_addr = 0xFFFF_FDFF
+# [State] parse_ipv4_in_ip
+# [MethodCall]: packet.extract<ipv4_t>(headers.inner_ipv4);
+# [ExtractSuccess] headers.inner_ipv4@288 | Condition: |*packetLen_bits(bit<32>)| >= 448; | Extract Size: 160 -> headers.inner_ipv4.version = 0x0 | headers.inner_ipv4.ihl = 0x0 | headers.inner_ipv4.dscp = 0x00 | headers.inner_ipv4.ecn = 0x0 | headers.inner_ipv4.total_len = 0x0000 | headers.inner_ipv4.identification = 0x0000 | headers.inner_ipv4.reserved = 0x0 | headers.inner_ipv4.do_not_fragment = 0x0 | headers.inner_ipv4.more_fragments = 0x0 | headers.inner_ipv4.frag_offset = 0x0000 | headers.inner_ipv4.ttl = 0x00 | headers.inner_ipv4.protocol = 0x01 | headers.inner_ipv4.header_checksum = 0x0000 | headers.inner_ipv4.src_addr = 0x0000_0000 | headers.inner_ipv4.dst_addr = 0x0000_0000
+# [State] parse_icmp
+# [MethodCall]: packet.extract<icmp_t>(headers.icmp);
+# [ExtractSuccess] headers.icmp@448 | Condition: |*packetLen_bits(bit<32>)| >= 512; | Extract Size: 64 -> headers.icmp.type = 0xFF | headers.icmp.code = 0x00 | headers.icmp.checksum = 0x0000 | headers.icmp.rest_of_header = 0x0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("packet_parser");
+# [P4Testgen MethodCall]: *.copy_in("verify_ipv4_checksum");
+# [Control verify_ipv4_checksum start]
+# [MethodCall]: verify_checksum<tuple_0, bit<16>>(headers.ipv4.isValid(), {  f0:headers.ipv4.version;  f1:headers.ipv4.ihl;  f2:headers.ipv4.dscp;  f3:headers.ipv4.ecn;  f4:headers.ipv4.total_len;  f5:headers.ipv4.identification;  f6:headers.ipv4.reserved;  f7:headers.ipv4.do_not_fragment;  f8:headers.ipv4.more_fragments;  f9:headers.ipv4.frag_offset;  f10:headers.ipv4.ttl;  f11:headers.ipv4.protocol;  f12:headers.ipv4.src_addr;  f13:headers.ipv4.dst_addr; }, headers.ipv4.header_checksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("verify_ipv4_checksum");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [If Statement]: headers.packet_out_header.isValid() && headers.packet_out_header.submit_to_ingress == 0 Condition: true && |pktvar_1(bit<1>)| == 0; Result: false
+# [MethodCall]: headers.packet_out_header.setInvalid();
+# [If Statement]: false Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [AssignmentStatement]: local_metadata.vlan_id = INTERNAL_VLAN_ID;| Computed: local_metadata.vlan_id = 4095;
+# [AssignmentStatement]: local_metadata.enable_vlan_checks = true;| Computed: local_metadata.enable_vlan_checks = true;
+# [AssignmentStatement]: 1w1: ternary @id(1) @name("dummy_match");| Computed: key_0 = 1;
+# [MethodCall]: vlan_untag_disable_vlan_checks_table/disable_vlan_checks_table.apply();
+# [Table Branch: ingress.vlan_untag.disable_vlan_checks_table | Key(s): 1| Chosen action: ingress.vlan_untag.disable_vlan_checks]
+# [MethodCall]: vlan_untag_disable_vlan_checks_0/disable_vlan_checks();
+# [AssignmentStatement]: local_metadata.enable_vlan_checks = false;| Computed: local_metadata.enable_vlan_checks = false;
+# [AssignmentStatement]: bit<6> dscp = 0;| Computed: acl_pre_ingress_dscp/dscp = 0;
+# [AssignmentStatement]: bit<2> ecn = 0;| Computed: acl_pre_ingress_ecn/ecn = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: dscp = headers.ipv4.dscp;| Computed: acl_pre_ingress_dscp/dscp = 63;
+# [AssignmentStatement]: ecn = headers.ipv4.ecn;| Computed: acl_pre_ingress_ecn/ecn = 3;
+# [AssignmentStatement]: headers.ipv4.isValid() || headers.ipv6.isValid(): optional @id(1) @name("is_ip") @sai_field(SAI_ACL_TABLE_ATTR_FIELD_ACL_IP_TYPE / IP);| Computed: key_1 = true;
+# [MethodCall]: acl_pre_ingress_acl_pre_ingress_table/acl_pre_ingress_table.apply();
+# [Table Branch: ingress.acl_pre_ingress.acl_pre_ingress_table | Key(s): (bit<1>)true;, (bit<1>)true;, (bit<1>)false;, |pktvar_4(bit<48>)|, |pktvar_3(bit<48>)|, |pktvar_20(bit<32>)|, TaintedExpression(bit<128>)[127:64];, |pktvar_8(bit<6>)|, |pktvar_9(bit<2>)|, |bmv2_ingress_port(bit<9>)|| Chosen action: ingress.acl_pre_ingress.set_vrf]
+# [MethodCall]: acl_pre_ingress_set_vrf_0/set_vrf(|ingress.acl_pre_ingress.acl_pre_ingress_table_ingress.acl_pre_ingress.set_vrf_arg_vrf_id_3(bit<10>)|);
+# [AssignmentStatement]: local_metadata.vrf_id = vrf_id;| Computed: local_metadata.vrf_id = 1;
+# [MethodCall]: acl_pre_ingress_acl_pre_ingress_counter/acl_pre_ingress_counter.count();
+# [If Statement]: local_metadata.enable_vlan_checks && !(local_metadata.vlan_id == NO_VLAN_ID || local_metadata.vlan_id == INTERNAL_VLAN_ID) Condition: false && !(4095 == 0 || 4095 == 4095); Result: false
+# [If Statement]: false Condition: false; Result: false
+# [AssignmentStatement]: local_metadata.admit_to_l3 = headers.ethernet.dst_addr == 0x1a11175f80;| Computed: local_metadata.admit_to_l3 = false;
+# [If Statement]: local_metadata.enable_vlan_checks && !(local_metadata.vlan_id == NO_VLAN_ID || local_metadata.vlan_id == INTERNAL_VLAN_ID) Condition: false && !(4095 == 0 || 4095 == 4095); Result: false
+# [MethodCall]: l3_admit_l3_admit_table/l3_admit_table.apply();
+# [Table Branch: ingress.l3_admit.l3_admit_table | Key(s): |pktvar_3(bit<48>)|, |bmv2_ingress_port(bit<9>)|| Chosen action: ingress.l3_admit.admit_to_l3]
+# [MethodCall]: l3_admit_admit_to_l3_0/admit_to_l3();
+# [AssignmentStatement]: local_metadata.admit_to_l3 = true;| Computed: local_metadata.admit_to_l3 = true;
+# [AssignmentStatement]: bit<8> offset = 0;| Computed: hashing_offset/offset = 0;
+# [MethodCall]: hashing_select_ecmp_hash_algorithm_0/select_ecmp_hash_algorithm();
+# [AssignmentStatement]: seed = 0;| Computed: hashing_seed/seed = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: hashing_compute_ecmp_hash_ipv4_0/compute_ecmp_hash_ipv4();
+# [MethodCall]: hash<bit<8>, bit<1>, tuple_1, bit<17>>(local_metadata.wcmp_selector_input, 0, 0, {  f0:hashing_seed/seed;  f1:headers.ipv4.src_addr;  f2:headers.ipv4.dst_addr;  f3:local_metadata.l4_src_port;  f4:local_metadata.l4_dst_port; }, 65536);
+# [AssignmentStatement]: local_metadata.wcmp_selector_input = local_metadata.wcmp_selector_input >> offset | local_metadata.wcmp_selector_input << 8 - offset;| Computed: local_metadata.wcmp_selector_input = 0;
+# [MethodCall]: lag_hashing_config_select_lag_hash_algorithm_0/select_lag_hash_algorithm();
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: lag_hashing_config_compute_lag_hash_ipv4_0/compute_lag_hash_ipv4();
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [MethodCall]: routing_lookup_vrf_table/vrf_table.apply();
+# [Table Branch: ingress.routing_lookup.vrf_table | Key(s): |ingress.acl_pre_ingress.acl_pre_ingress_table_ingress.acl_pre_ingress.set_vrf_arg_vrf_id_3(bit<10>)|| Chosen action: ingress.routing_lookup.no_action]
+# [MethodCall]: routing_lookup_no_action_0/no_action();
+# [If Statement]: true Condition: true; Result: true
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: routing_lookup_ipv4_table/ipv4_table.apply();
+# [Table Branch: ingress.routing_lookup.ipv4_table | Key(s): |ingress.acl_pre_ingress.acl_pre_ingress_table_ingress.acl_pre_ingress.set_vrf_arg_vrf_id_3(bit<10>)|, |pktvar_20(bit<32>)|| Chosen action: ingress.routing_lookup.drop]
+# [MethodCall]: routing_lookup_drop_0/drop();
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [MethodCall]: routing_lookup_ipv4_multicast_table/ipv4_multicast_table.apply();
+# [Table Branch: ingress.routing_lookup.ipv4_multicast_table | Key(s): |ingress.acl_pre_ingress.acl_pre_ingress_table_ingress.acl_pre_ingress.set_vrf_arg_vrf_id_3(bit<10>)|, |pktvar_20(bit<32>)|| Chosen action: ingress.routing_lookup.set_multicast_group_id]
+# [MethodCall]: routing_lookup_set_multicast_group_id_0/set_multicast_group_id(|ingress.routing_lookup.ipv4_multicast_table_ingress.routing_lookup.set_multicast_group_id_arg_multicast_group_id(bit<16>)|);
+# [AssignmentStatement]: standard_metadata.mcast_grp = multicast_group_id;| Computed: standard_metadata.mcast_grp = 0;
+# [AssignmentStatement]: local_metadata.ipmc_table_hit = standard_metadata.mcast_grp != 0;| Computed: local_metadata.ipmc_table_hit = false;
+# [AssignmentStatement]: bit<8> ttl = 0;| Computed: acl_ingress_ttl/ttl = 0;
+# [AssignmentStatement]: bit<6> dscp = 0;| Computed: acl_ingress_dscp/dscp = 0;
+# [AssignmentStatement]: bit<2> ecn = 0;| Computed: acl_ingress_ecn/ecn = 0;
+# [AssignmentStatement]: bit<8> ip_protocol = 0;| Computed: acl_ingress_ip_protocol/ip_protocol = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: ttl = headers.ipv4.ttl;| Computed: acl_ingress_ttl/ttl = 128;
+# [AssignmentStatement]: dscp = headers.ipv4.dscp;| Computed: acl_ingress_dscp/dscp = 63;
+# [AssignmentStatement]: ecn = headers.ipv4.ecn;| Computed: acl_ingress_ecn/ecn = 3;
+# [AssignmentStatement]: ip_protocol = headers.ipv4.protocol;| Computed: acl_ingress_ip_protocol/ip_protocol = 4;
+# [AssignmentStatement]: headers.ipv4.isValid() || headers.ipv6.isValid(): optional @id(1) @name("is_ip") @sai_field(SAI_ACL_TABLE_ATTR_FIELD_ACL_IP_TYPE / IP);| Computed: key_5 = true;
+# [MethodCall]: acl_ingress_acl_ingress_table/acl_ingress_table.apply();
+# [Table Branch: ingress.acl_ingress.acl_ingress_table | Key(s): (bit<1>)true;, (bit<1>)true;, (bit<1>)false;, |pktvar_5(bit<16>)|, |pktvar_3(bit<48>)|, |pktvar_19(bit<32>)|, |pktvar_20(bit<32>)|, TaintedExpression(bit<128>)[127:64];, TaintedExpression(bit<128>)[127:64];, |pktvar_16(bit<8>)|, |pktvar_8(bit<6>)|, |pktvar_9(bit<2>)|, |pktvar_17(bit<8>)|, |pktvar_36(bit<8>)|, |pktvar_36(bit<8>)|, 0, 0, |bmv2_ingress_port(bit<9>)|, 0| Chosen action: ingress.acl_ingress.acl_copy]
+# [MethodCall]: acl_ingress_acl_copy_0/acl_copy(|ingress.acl_ingress.acl_ingress_table_ingress.acl_ingress.acl_copy_arg_qos_queue(bit<8>)|);
+# [MethodCall]: acl_ingress_acl_ingress_counter/acl_ingress_counter.count();
+# [MethodCall]: acl_ingress_acl_ingress_meter/acl_ingress_meter.read(local_metadata.color);
+# [AssignmentStatement]: local_metadata.marked_to_copy = true;| Computed: local_metadata.marked_to_copy = true;
+# [AssignmentStatement]: headers.ipv4.isValid() || headers.ipv6.isValid(): optional @id(1) @name("is_ip") @sai_field(SAI_ACL_TABLE_ATTR_FIELD_ACL_IP_TYPE / IP);| Computed: key_13 = true;
+# [MethodCall]: acl_ingress_acl_ingress_counting_table/acl_ingress_counting_table.apply();
+# [Table Branch: ingress.acl_ingress.acl_ingress_counting_table | Key(s): (bit<1>)true;, (bit<1>)true;, (bit<1>)false;, |pktvar_8(bit<6>)|, 0| Chosen action: ingress.acl_ingress.acl_count]
+# [MethodCall]: acl_ingress_acl_count_0/acl_count();
+# [MethodCall]: acl_ingress_acl_ingress_counting_counter/acl_ingress_counting_counter.count();
+# [AssignmentStatement]: headers.ipv4.isValid() || headers.ipv6.isValid(): optional @id(1) @name("is_ip") @sai_field(SAI_ACL_TABLE_ATTR_FIELD_ACL_IP_TYPE / IP);| Computed: key_10 = true;
+# [MethodCall]: acl_ingress_acl_ingress_qos_table/acl_ingress_qos_table.apply();
+# [Table Branch: ingress.acl_ingress.acl_ingress_qos_table | Key(s): (bit<1>)true;, (bit<1>)true;, (bit<1>)false;, |pktvar_5(bit<16>)|, |pktvar_16(bit<8>)|, |pktvar_17(bit<8>)|, |pktvar_36(bit<8>)|, 0, 0, |pktvar_36(bit<8>)|, 0| Chosen action: ingress.acl_ingress.set_qos_queue_and_cancel_copy_above_rate_limit]
+# [MethodCall]: acl_ingress_set_qos_queue_and_cancel_copy_above_rate_limit_0/set_qos_queue_and_cancel_copy_above_rate_limit(|ingress.acl_ingress.acl_ingress_qos_table_ingress.acl_ingress.set_qos_queue_and_cancel_copy_above_rate_limit_arg_qos_queue_4(bit<8>)|);
+# [MethodCall]: acl_ingress_acl_ingress_qos_meter/acl_ingress_qos_meter.read(local_metadata.color);
+# [AssignmentStatement]: bool tunnel_id_valid = false;| Computed: routing_resolution_tunnel_id_valid/tunnel_id_valid = false;
+# [AssignmentStatement]: bool router_interface_id_valid = false;| Computed: routing_resolution_router_interface_id_valid/router_interface_id_valid = false;
+# [AssignmentStatement]: bool neighbor_id_valid = false;| Computed: routing_resolution_neighbor_id_valid/neighbor_id_valid = false;
+# [If Statement]: true Condition: true; Result: true
+# [If Statement]: false Condition: false; Result: false
+# [If Statement]: false Condition: false; Result: false
+# [AssignmentStatement]: local_metadata.packet_in_target_egress_port = standard_metadata.egress_spec;| Computed: local_metadata.packet_in_target_egress_port = 511;
+# [AssignmentStatement]: local_metadata.packet_in_ingress_port = standard_metadata.ingress_port;| Computed: local_metadata.packet_in_ingress_port = 510;
+# [If Statement]: false Condition: false; Result: false
+# [If Statement]: false Condition: false; Result: false
+# [MethodCall]: ingress_cloning_ingress_clone_table/ingress_clone_table.apply();
+# [Table Branch: ingress.ingress_cloning.ingress_clone_table | Key(s): (bit<1>)true;, (bit<1>)false;, 0| Chosen action: ingress.ingress_cloning.ingress_clone]
+# [MethodCall]: ingress_cloning_ingress_clone_0/ingress_clone(|ingress.ingress_cloning.ingress_clone_table_ingress.ingress_cloning.ingress_clone_arg_clone_session(bit<32>)|);
+# [MethodCall]: clone_preserving_field_list(0, clone_session, 1);
+# [If Statement]: headers.ipv6.isValid() && (headers.ipv6.src_addr & IPV6_MULTICAST_MASK == IPV6_MULTICAST_VALUE || headers.ipv6.dst_addr & IPV6_MULTICAST_MASK == IPV6_MULTICAST_VALUE || headers.ipv6.src_addr & IPV6_LOOPBACK_MASK == IPV6_LOOPBACK_VALUE || headers.ipv6.dst_addr & IPV6_LOOPBACK_MASK == IPV6_LOOPBACK_VALUE) || headers.ipv4.isValid() && (headers.ipv4.src_addr & IPV4_MULTICAST_MASK == IPV4_MULTICAST_VALUE || headers.ipv4.src_addr == IPV4_BROADCAST_VALUE || (headers.ipv4.dst_addr & IPV4_MULTICAST_MASK == IPV4_MULTICAST_VALUE || headers.ipv4.dst_addr == IPV4_BROADCAST_VALUE) || headers.ipv4.src_addr & IPV4_LOOPBACK_MASK == IPV4_LOOPBACK_VALUE || headers.ipv4.dst_addr & IPV4_LOOPBACK_MASK == IPV4_LOOPBACK_VALUE) || headers.ethernet.isValid() && headers.ethernet.dst_addr & MAC_MULTICAST_MASK == MAC_MULTICAST_VALUE Condition: false && (TaintedExpression(bit<128>) & 338953138925153547590470800371487866880 == 338953138925153547590470800371487866880 || TaintedExpression(bit<128>) & 338953138925153547590470800371487866880 == 338953138925153547590470800371487866880 || TaintedExpression(bit<128>) == 1 || TaintedExpression(bit<128>) == 1) || true && (|pktvar_19(bit<32>)| & 4026531840 == 3758096384 || |pktvar_19(bit<32>)| == 4294967295 || (|pktvar_20(bit<32>)| & 4026531840 == 3758096384 || |pktvar_20(bit<32>)| == 4294967295) || |pktvar_19(bit<32>)| & 4278190080 == 2130706432 || |pktvar_20(bit<32>)| & 4278190080 == 2130706432) || true && |pktvar_3(bit<48>)| & 1099511627776 == 1099511627776; Result: true
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 511;
+# [P4Testgen If Statement]: Condition: |ingress.routing_lookup.ipv4_multicast_table_ingress.routing_lookup.set_multicast_group_id_arg_multicast_group_id(bit<16>)| != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [If Statement]: standard_metadata.instance_type == 1 && standard_metadata.egress_rid == 1 Condition: 0 == 1 && 0 == 1; Result: false
+# [If Statement]: standard_metadata.instance_type == 5 Condition: 0 == 5; Result: false
+# [If Statement]: false Condition: false; Result: false
+# [If Statement]: false Condition: false; Result: false
+# [If Statement]: false Condition: false; Result: false
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [If Statement]: headers.ipv4.ttl > 0 && local_metadata.enable_decrement_ttl Condition: |pktvar_16(bit<8>)| > 0 && false; Result: false
+# [If Statement]: headers.ipv4.ttl == 0 Condition: |pktvar_16(bit<8>)| == 0; Result: false
+# [P4Testgen If Statement]: Condition: false; Result: false
+# [If Statement]: false Condition: false; Result: false
+# [If Statement]: standard_metadata.instance_type == 1 && standard_metadata.egress_rid == 2 Condition: 0 == 1 && 0 == 2; Result: false
+# [If Statement]: false Condition: false; Result: false
+# [If Statement]: !(local_metadata.vlan_id == NO_VLAN_ID || local_metadata.vlan_id == INTERNAL_VLAN_ID) && !(standard_metadata.instance_type == 1 && standard_metadata.egress_rid == 2) Condition: !(4095 == 0 || 4095 == 4095) && !(0 == 1 && 0 == 2); Result: false
+# [AssignmentStatement]: bit<6> dscp = 0;| Computed: acl_egress_dscp/dscp = 0;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [AssignmentStatement]: dscp = headers.ipv4.dscp;| Computed: acl_egress_dscp/dscp = 63;
+# [AssignmentStatement]: ip_protocol = headers.ipv4.protocol;| Computed: acl_egress_ip_protocol/ip_protocol = 4;
+# [AssignmentStatement]: headers.ipv4.isValid() || headers.ipv6.isValid(): optional @id(5) @name("is_ip") @sai_field(SAI_ACL_TABLE_ATTR_FIELD_ACL_IP_TYPE / IP);| Computed: key_16 = true;
+# [MethodCall]: acl_egress_acl_egress_table/acl_egress_table.apply();
+# [Table Branch: egress.acl_egress.acl_egress_table | Key(s): |pktvar_5(bit<16>)|, |pktvar_17(bit<8>)|, 0, 511, (bit<1>)true;, (bit<1>)true;, (bit<1>)false;, |pktvar_8(bit<6>)|| Chosen action: acl_drop]
+# [MethodCall]: acl_drop_4/acl_drop();
+# [AssignmentStatement]: @proto_id(1) acl_drop(local_metadata);| Computed: local_metadata.acl_drop = true;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: mark_to_drop(standard_metadata);
+# [mark_to_drop executed.]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("compute_ipv4_checksum");
+# [Control compute_ipv4_checksum start]
+# [MethodCall]: update_checksum<tuple_0, bit<16>>(headers.ipv4.isValid(), {  f0:headers.ipv4.version;  f1:headers.ipv4.ihl;  f2:headers.ipv4.dscp;  f3:headers.ipv4.ecn;  f4:headers.ipv4.total_len;  f5:headers.ipv4.identification;  f6:headers.ipv4.reserved;  f7:headers.ipv4.do_not_fragment;  f8:headers.ipv4.more_fragments;  f9:headers.ipv4.frag_offset;  f10:headers.ipv4.ttl;  f11:headers.ipv4.protocol;  f12:headers.ipv4.src_addr;  f13:headers.ipv4.dst_addr; }, headers.ipv4.header_checksum, 6);
+# [P4Testgen MethodCall]: *.copy_out("compute_ipv4_checksum");
+# [P4Testgen MethodCall]: *.copy_in("packet_deparser");
+# [Control packet_deparser start]
+# [MethodCall]: packet.emit<packet_out_header_t>(headers.packet_out_header);
+# [Invalid emit: { egress_port = TaintedExpression(bit<9>), submit_to_ingress = TaintedExpression(bit<1>), unused_pad = TaintedExpression(bit<6>) }]
+# [MethodCall]: packet.emit<ethernet_t>(headers.mirror_encap_ethernet);
+# [Invalid emit: { dst_addr = TaintedExpression(bit<48>), src_addr = TaintedExpression(bit<48>), ether_type = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<vlan_t>(headers.mirror_encap_vlan);
+# [Invalid emit: { priority_code_point = TaintedExpression(bit<3>), drop_eligible_indicator = TaintedExpression(bit<1>), vlan_id = TaintedExpression(bit<12>), ether_type = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipv6_t>(headers.mirror_encap_ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), dscp = TaintedExpression(bit<6>), ecn = TaintedExpression(bit<2>), flow_label = TaintedExpression(bit<20>), payload_length = TaintedExpression(bit<16>), next_header = TaintedExpression(bit<8>), hop_limit = TaintedExpression(bit<8>), src_addr = TaintedExpression(bit<128>), dst_addr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<udp_t>(headers.mirror_encap_udp);
+# [Invalid emit: { src_port = TaintedExpression(bit<16>), dst_port = TaintedExpression(bit<16>), hdr_length = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipfix_t>(headers.ipfix);
+# [Invalid emit: { version_number = TaintedExpression(bit<16>), length = TaintedExpression(bit<16>), export_time = TaintedExpression(bit<32>), sequence_number = TaintedExpression(bit<32>), observation_domain_id = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<psamp_extended_t>(headers.psamp_extended);
+# [Invalid emit: { template_id = TaintedExpression(bit<16>), length = TaintedExpression(bit<16>), observation_time = TaintedExpression(bit<64>), flowset = TaintedExpression(bit<16>), next_hop_index = TaintedExpression(bit<16>), epoch = TaintedExpression(bit<16>), ingress_port = TaintedExpression(bit<16>), egress_port = TaintedExpression(bit<16>), user_meta_field = TaintedExpression(bit<16>), dlb_id = TaintedExpression(bit<8>), variable_length = TaintedExpression(bit<8>), packet_sampled_length = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ethernet_t>(headers.ethernet);
+# [Emit]: {$headerValid:true;;    dst_addr:280375465082879;  src_addr:281474976710655;  ether_type:2048;  }
+# [MethodCall]: packet.emit<vlan_t>(headers.vlan);
+# [Invalid emit: { priority_code_point = TaintedExpression(bit<3>), drop_eligible_indicator = TaintedExpression(bit<1>), vlan_id = TaintedExpression(bit<12>), ether_type = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipv6_t>(headers.tunnel_encap_ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), dscp = TaintedExpression(bit<6>), ecn = TaintedExpression(bit<2>), flow_label = TaintedExpression(bit<20>), payload_length = TaintedExpression(bit<16>), next_header = TaintedExpression(bit<8>), hop_limit = TaintedExpression(bit<8>), src_addr = TaintedExpression(bit<128>), dst_addr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<gre_t>(headers.tunnel_encap_gre);
+# [Invalid emit: { checksum_present = TaintedExpression(bit<1>), routing_present = TaintedExpression(bit<1>), key_present = TaintedExpression(bit<1>), sequence_present = TaintedExpression(bit<1>), strict_source_route = TaintedExpression(bit<1>), recursion_control = TaintedExpression(bit<3>), acknowledgement_present = TaintedExpression(bit<1>), flags = TaintedExpression(bit<4>), version = TaintedExpression(bit<3>), protocol = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<ipv4_t>(headers.ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  dscp:63;  ecn:3;  total_len:0;  identification:0;  reserved:0;  do_not_fragment:0;  more_fragments:0;  frag_offset:0;  ttl:128;  protocol:4;  header_checksum:0;  src_addr:4294967295;  dst_addr:4294966783;  }
+# [MethodCall]: packet.emit<ipv6_t>(headers.ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), dscp = TaintedExpression(bit<6>), ecn = TaintedExpression(bit<2>), flow_label = TaintedExpression(bit<20>), payload_length = TaintedExpression(bit<16>), next_header = TaintedExpression(bit<8>), hop_limit = TaintedExpression(bit<8>), src_addr = TaintedExpression(bit<128>), dst_addr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<ipv4_t>(headers.inner_ipv4);
+# [Emit]: {$headerValid:true;;    version:0;  ihl:0;  dscp:0;  ecn:0;  total_len:0;  identification:0;  reserved:0;  do_not_fragment:0;  more_fragments:0;  frag_offset:0;  ttl:0;  protocol:1;  header_checksum:0;  src_addr:0;  dst_addr:0;  }
+# [MethodCall]: packet.emit<ipv6_t>(headers.inner_ipv6);
+# [Invalid emit: { version = TaintedExpression(bit<4>), dscp = TaintedExpression(bit<6>), ecn = TaintedExpression(bit<2>), flow_label = TaintedExpression(bit<20>), payload_length = TaintedExpression(bit<16>), next_header = TaintedExpression(bit<8>), hop_limit = TaintedExpression(bit<8>), src_addr = TaintedExpression(bit<128>), dst_addr = TaintedExpression(bit<128>) }]
+# [MethodCall]: packet.emit<arp_t>(headers.arp);
+# [Invalid emit: { hw_type = TaintedExpression(bit<16>), proto_type = TaintedExpression(bit<16>), hw_addr_len = TaintedExpression(bit<8>), proto_addr_len = TaintedExpression(bit<8>), opcode = TaintedExpression(bit<16>), sender_hw_addr = TaintedExpression(bit<48>), sender_proto_addr = TaintedExpression(bit<32>), target_hw_addr = TaintedExpression(bit<48>), target_proto_addr = TaintedExpression(bit<32>) }]
+# [MethodCall]: packet.emit<icmp_t>(headers.icmp);
+# [Emit]: {$headerValid:true;;    type:255;  code:0;  checksum:0;  rest_of_header:0;  }
+# [MethodCall]: packet.emit<tcp_t>(headers.tcp);
+# [Invalid emit: { src_port = TaintedExpression(bit<16>), dst_port = TaintedExpression(bit<16>), seq_no = TaintedExpression(bit<32>), ack_no = TaintedExpression(bit<32>), data_offset = TaintedExpression(bit<4>), res = TaintedExpression(bit<4>), flags = TaintedExpression(bit<8>), window = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>), urgent_ptr = TaintedExpression(bit<16>) }]
+# [MethodCall]: packet.emit<udp_t>(headers.udp);
+# [Invalid emit: { src_port = TaintedExpression(bit<16>), dst_port = TaintedExpression(bit<16>), hdr_length = TaintedExpression(bit<16>), checksum = TaintedExpression(bit<16>) }]
+# [P4Testgen MethodCall]: *.copy_out("packet_deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 511; Result: true
+# [P4Testgen MethodCall]: *.drop_and_exit();
+# [Packet marked dropped]
+
+# Table ingress.vlan_untag.disable_vlan_checks_table
+add "ingress.vlan_untag.disable_vlan_checks_table" 1 "dummy_match":0b* "ingress.vlan_untag.disable_vlan_checks"()
+
+# Table ingress.acl_pre_ingress.acl_pre_ingress_table
+add "ingress.acl_pre_ingress.acl_pre_ingress_table" 1 "dscp":0b****** "dst_ip":0b******************************** "dst_ipv6":0b**************************************************************** "dst_mac":0b************************************************ "ecn":0b** "in_port":0b********* "is_ip":0b* "is_ipv4":0b* "is_ipv6":0b* "src_mac":0b************************************************ "ingress.acl_pre_ingress.set_vrf"("vrf_id":0x001)
+
+# Table ingress.l3_admit.l3_admit_table
+add "ingress.l3_admit.l3_admit_table" 1 "dst_mac":0b************************************************ "in_port":0b********* "ingress.l3_admit.admit_to_l3"()
+
+# Table ingress.routing_lookup.vrf_table
+add "ingress.routing_lookup.vrf_table" "vrf_id":0x001 "ingress.routing_lookup.no_action"()
+
+# Table ingress.routing_lookup.ipv4_table
+add "ingress.routing_lookup.ipv4_table" 1 "ipv4_dst":0b1111111111111111111111011111111* "vrf_id":0x001 "ingress.routing_lookup.drop"()
+
+# Table ingress.routing_lookup.ipv4_multicast_table
+add "ingress.routing_lookup.ipv4_multicast_table" "ipv4_dst":0xFFFFFDFF "vrf_id":0x001 "ingress.routing_lookup.set_multicast_group_id"("multicast_group_id":0x0000)
+
+# Table ingress.acl_ingress.acl_ingress_table
+add "ingress.acl_ingress.acl_ingress_table" 1 "dscp":0b****** "dst_ip":0b******************************** "dst_ipv6":0b**************************************************************** "dst_mac":0b************************************************ "ecn":0b** "ether_type":0b**************** "icmp_type":0b******** "icmpv6_type":0b******** "in_port":0b********* "ip_protocol":0b******** "is_ip":0b* "is_ipv4":0b* "is_ipv6":0b* "l4_dst_port":0b**************** "l4_src_port":0b**************** "route_metadata":0b****** "src_ip":0b******************************** "src_ipv6":0b**************************************************************** "ttl":0b******** "ingress.acl_ingress.acl_copy"("qos_queue":0x00)
+
+# Table ingress.acl_ingress.acl_ingress_counting_table
+add "ingress.acl_ingress.acl_ingress_counting_table" 1 "dscp":0b****** "is_ip":0b* "is_ipv4":0b* "is_ipv6":0b* "route_metadata":0b****** "ingress.acl_ingress.acl_count"()
+
+# Table ingress.acl_ingress.acl_ingress_qos_table
+add "ingress.acl_ingress.acl_ingress_qos_table" 1 "ether_type":0b**************** "icmp_type":0b******** "icmpv6_type":0b******** "ip_protocol":0b******** "is_ip":0b* "is_ipv4":0b* "is_ipv6":0b* "l4_dst_port":0b**************** "l4_src_port":0b**************** "route_metadata":0b****** "ttl":0b******** "ingress.acl_ingress.set_qos_queue_and_cancel_copy_above_rate_limit"("qos_queue":0x00)
+
+# Table ingress.ingress_cloning.ingress_clone_table
+add "ingress.ingress_cloning.ingress_clone_table" 1 "marked_to_copy":0x1 "marked_to_mirror":0x0 "mirror_egress_port":0b********* "ingress.ingress_cloning.ingress_clone"("clone_session":0x00000000)
+
+# Table egress.acl_egress.acl_egress_table
+add "egress.acl_egress.acl_egress_table" 1 "dscp":0b****** "ether_type":0b**************** "ip_protocol":0b******** "is_ip":0b* "is_ipv4":0b* "is_ipv6":0b* "l4_dst_port":0b**************** "out_port":0b********* "acl_drop"()
+
+
+packet 510 0040FEFFFFFFFFFFFFFFFFFFFFFF080000FF000000000000800480FCFFFFFFFFFFFFFDFF0000000000000000000100000000000000000000FF00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+

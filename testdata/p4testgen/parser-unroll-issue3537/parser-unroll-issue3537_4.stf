@@ -1,0 +1,63 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:20.102
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("ParserI");
+# [Parser] ParserI
+# [State] start
+# [MethodCall]: packet.extract<h1_t>(hdr.h1);
+# [ExtractSuccess] hdr.h1@0 | Condition: |*packetLen_bits(bit<32>)| >= 0; | Extract Size: 0 -> 
+# [MethodCall]: packet.extract<h2_t>(hdr.h2);
+# [ExtractSuccess] hdr.h2@0 | Condition: |*packetLen_bits(bit<32>)| >= 16; | Extract Size: 16 -> hdr.h2.f1 = 0x0800
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<h3_t>(hdr.h3);
+# [ExtractSuccess] hdr.h3@16 | Condition: |*packetLen_bits(bit<32>)| >= 40; | Extract Size: 24 -> hdr.h3.pad = 0x0 | hdr.h3.f2 = 0x0000 | hdr.h3.f3 = 0x11
+# [State] parse_udp
+# [MethodCall]: packet.extract<h6_t>(hdr.h6);
+# [ExtractSuccess] hdr.h6@40 | Condition: |*packetLen_bits(bit<32>)| >= 56; | Extract Size: 16 -> hdr.h6.f5 = 0xCAFE
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<h3_t>(hdr.h3);
+# [ExtractSuccess] hdr.h3@56 | Condition: |*packetLen_bits(bit<32>)| >= 80; | Extract Size: 24 -> hdr.h3.pad = 0x0 | hdr.h3.f2 = 0x0000 | hdr.h3.f3 = 0x11
+# [State] parse_udp
+# [MethodCall]: packet.extract<h6_t>(hdr.h6);
+# [ExtractSuccess] hdr.h6@80 | Condition: |*packetLen_bits(bit<32>)| >= 96; | Extract Size: 16 -> hdr.h6.f5 = 0xCAFE
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<h3_t>(hdr.h3);
+# [ExtractSuccess] hdr.h3@96 | Condition: |*packetLen_bits(bit<32>)| >= 120; | Extract Size: 24 -> hdr.h3.pad = 0x0 | hdr.h3.f2 = 0x0000 | hdr.h3.f3 = 0x11
+# [State] parse_udp
+# [MethodCall]: packet.extract<h6_t>(hdr.h6);
+# [ExtractSuccess] hdr.h6@120 | Condition: |*packetLen_bits(bit<32>)| >= 136; | Extract Size: 16 -> hdr.h6.f5 = 0xCAFE
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<h3_t>(hdr.h3);
+# [ExtractSuccess] hdr.h3@136 | Condition: |*packetLen_bits(bit<32>)| >= 160; | Extract Size: 24 -> hdr.h3.pad = 0x0 | hdr.h3.f2 = 0x0000 | hdr.h3.f3 = 0x06
+# [State] parse_tcp
+# [MethodCall]: packet.extract<h5_t>(hdr.h5);
+# [ExtractSuccess] hdr.h5@160 | Condition: |*packetLen_bits(bit<32>)| >= 160; | Extract Size: 0 -> 
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("ParserI");
+# [P4Testgen MethodCall]: *.copy_in("VerifyChecksumI");
+# [Control VerifyChecksumI start]
+# [P4Testgen MethodCall]: *.copy_out("VerifyChecksumI");
+# [P4Testgen MethodCall]: *.copy_in("IngressI");
+# [Control IngressI start]
+# [P4Testgen MethodCall]: *.copy_out("IngressI");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("EgressI");
+# [Control EgressI start]
+# [P4Testgen MethodCall]: *.copy_out("EgressI");
+# [P4Testgen MethodCall]: *.copy_in("ComputeChecksumI");
+# [Control ComputeChecksumI start]
+# [P4Testgen MethodCall]: *.copy_out("ComputeChecksumI");
+# [P4Testgen MethodCall]: *.copy_in("DeparserI");
+# [Control DeparserI start]
+# [P4Testgen MethodCall]: *.copy_out("DeparserI");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0800000011CAFE000011CAFE000011CAFE00000600000000000000000000000000000000000000000000000000000000000000
+expect 0 00000000000000000000000000000000000000000000000000000000000000$
+

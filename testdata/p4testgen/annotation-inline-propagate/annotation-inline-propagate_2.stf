@@ -1,0 +1,48 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:15.928
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("MyParser");
+# [Parser] MyParser.outer_parser
+# [State] start
+# [MethodCall]: hdr.hdr.setInvalid();
+# [State] start
+# [MethodCall]: buffer.extract<hdr_t>(hdr.hdr);
+# [ExtractSuccess] hdr.hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 16; | Extract Size: 16 -> hdr.hdr.field = 0x0000
+# [State] start
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("MyParser");
+# [P4Testgen MethodCall]: *.copy_in("MyVerifyChecksum");
+# [Control MyVerifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyVerifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyIngress");
+# [Control MyIngress start]
+# [MethodCall]: inner_inner_table/table1.apply();
+# [Table Branch: MyIngress.inner.inner_table| Overriding default action: NoAction]
+# [MethodCall]: NoAction_1/NoAction();
+# [P4Testgen If Statement]: Condition: !false; Result: true
+# [AssignmentStatement]: hdr.hdr.field = 0x1;| Computed: hdr.hdr.field = 1;
+# [P4Testgen MethodCall]: *.copy_out("MyIngress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("MyEgress");
+# [Control MyEgress start]
+# [P4Testgen MethodCall]: *.copy_out("MyEgress");
+# [P4Testgen MethodCall]: *.copy_in("MyComputeChecksum");
+# [Control MyComputeChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("MyComputeChecksum");
+# [P4Testgen MethodCall]: *.copy_in("MyDeparser");
+# [Control MyDeparser start]
+# [P4Testgen MethodCall]: *.copy_out("MyDeparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table MyIngress.inner.inner_table
+setdefault "MyIngress.inner.inner_table" "NoAction"()
+
+
+packet 0 00000000000000
+expect 0 0000000000$
+

@@ -1,0 +1,47 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:36.051
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(h.eth_hdr);
+# [ExtractSuccess] h.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> h.eth_hdr.dstAddr = 0x0000_0000_0000 | h.eth_hdr.srcAddr = 0x0000_0000_0000 | h.eth_hdr.etherType = 0x0000
+# [MethodCall]: pkt.extract<H>(h.h);
+# [ExtractSuccess] h.h@112 | Condition: |*packetLen_bits(bit<32>)| >= 128; | Extract Size: 16 -> h.h.a = 0x00 | h.h.b = 0x00
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: h.h.a = 8w1;| Computed: h.h.a = 1;
+# [MethodCall]: h.h.setInvalid();
+# [MethodCall]: h.h.setValid();
+# [AssignmentStatement]: h.h.b = 8w2;| Computed: h.h.b = 2;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:0;  }
+# [MethodCall]: pkt.emit<H>(h.h);
+# [Emit]: {$headerValid:true;;    a:0;  b:2;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000000000000000000000000000000000000
+expect 0 0000000000000000000000000000**02000000000000000000000000$
+

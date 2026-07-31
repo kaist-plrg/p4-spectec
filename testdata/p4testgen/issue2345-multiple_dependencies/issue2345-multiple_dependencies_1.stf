@@ -1,0 +1,62 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:27.407
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr.src_addr = 0x0000_0000_0000 | hdr.eth_hdr.eth_type = 0x0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: h.eth_hdr.src_addr = 48w2;| Computed: h.eth_hdr.src_addr = 2;
+# [AssignmentStatement]: h.eth_hdr.dst_addr = 48w2;| Computed: h.eth_hdr.dst_addr = 2;
+# [AssignmentStatement]: h.eth_hdr.eth_type = 16w2;| Computed: h.eth_hdr.eth_type = 2;
+# [MethodCall]: simple_action();
+# [If Statement]: h.eth_hdr.eth_type == 1 Condition: 2 == 1; Result: false
+# [AssignmentStatement]: h.eth_hdr.src_addr = 48w1;| Computed: h.eth_hdr.src_addr = 1;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: val1_eth_hdr.setValid();
+# [AssignmentStatement]: dummy(h);| Computed: val1_eth_hdr.dst_addr = 2;
+# [AssignmentStatement]: dummy(h);| Computed: val1_eth_hdr.src_addr = 1;
+# [AssignmentStatement]: dummy(h);| Computed: val1_eth_hdr.eth_type = 2;
+# [AssignmentStatement]: dummy1(val1.eth_hdr.dst_addr, val1.eth_hdr.eth_type);| Computed: dst = 2;
+# [AssignmentStatement]: dummy1(val1.eth_hdr.dst_addr, val1.eth_hdr.eth_type);| Computed: type_1 = 2;
+# [AssignmentStatement]: type = type + 16w0;| Computed: type_1 = 2;
+# [AssignmentStatement]: dst = 48w2;| Computed: dst = 2;
+# [AssignmentStatement]: dummy1(val1.eth_hdr.dst_addr, val1.eth_hdr.eth_type);| Computed: val1_eth_hdr.dst_addr = 2;
+# [AssignmentStatement]: dummy1(val1.eth_hdr.dst_addr, val1.eth_hdr.eth_type);| Computed: val1_eth_hdr.eth_type = 2;
+# [AssignmentStatement]: val1.eth_hdr.dst_addr = val1.eth_hdr.dst_addr + 48w3;| Computed: val1_eth_hdr.dst_addr = 5;
+# [P4Testgen If Statement]: Condition: true; Result: true
+# [MethodCall]: h.eth_hdr.setValid();
+# [AssignmentStatement]: dummy(h);| Computed: h.eth_hdr.dst_addr = 5;
+# [AssignmentStatement]: dummy(h);| Computed: h.eth_hdr.src_addr = 1;
+# [AssignmentStatement]: dummy(h);| Computed: h.eth_hdr.eth_type = 2;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:5;  src_addr:1;  eth_type:2;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000000000000000000000000
+expect 0 0000000000050000000000010002000000000000000000$
+

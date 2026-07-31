@@ -1,0 +1,244 @@
+[appendix]
+[#sec-grammar]
+== P4 grammar
+
+// 1270
+This is the grammar of P4~16~ written using the YACC/bison
+language. Absent from this grammar is the precedence of various
+operations.
+
+// 1271
+The grammar is actually ambiguous, so the lexer and the parser must
+collaborate for parsing the language. In particular, the lexer must be
+able to distinguish two kinds of identifiers:
+
+// 1272
+* Type names previously introduced (`TYPE_IDENTIFIER` tokens)
+* Regular identifiers (`IDENTIFIER` token)
+
+// 1273
+The parser has to use a symbol table to indicate to the lexer how to
+parse subsequent appearances of identifiers. For example, given the
+following program fragment:
+
+// 1274
+[source,p4]
+----
+typedef bit<4> t;
+struct s { /* body omitted */}
+t x;
+parser p(bit<8> b) { /* body omitted */ }
+----
+
+// 1275
+The lexer has to return the following terminal kinds:
+
+// 1276
+[source,p4]
+----
+t - TYPE_IDENTIFIER
+s - TYPE_IDENTIFIER
+x - IDENTIFIER
+p - TYPE_IDENTIFIER
+b - IDENTIFIER
+----
+
+// 1277
+This grammar has been heavily influenced by limitations of the Bison
+parser generator tool.
+
+// 1278
+The `STRING_LITERAL` token corresponds to a string literal
+enclosed within double quotes, as described in <<sec-string-literals>>.
+
+// 1279
+All other terminals are uppercase spellings of the corresponding
+keywords. For example, `RETURN` is the terminal returned by the
+lexer when parsing the keyword return.
+
+// 1280 - Modified
+${syntax:
+  trailingCommaOpt
+  booleanLiteral
+  integerLiteral
+  stringLiteral
+  identifier
+  typeIdentifier
+  nonTypeName
+  prefixedNonTypeName
+  typeName
+  prefixedTypeName
+  tableCustomName
+  name
+  nameList
+  member
+  direction
+  baseType
+  specializedType
+  namedType
+  headerStackType
+  listType
+  tupleType
+  type
+  typeOrVoid
+  typeParameter
+  typeParameterList
+  typeParameterListOpt
+  parameter
+  nonEmptyParameterList
+  parameterList
+  constructorParameter
+  constructorParameterList
+  constructorParameterListOpt
+  namedExpression
+  namedExpressionList
+  literalExpression
+  referenceExpression
+  defaultExpression
+  unop
+  unaryExpression
+  binop
+  binaryExpression
+  binaryExpressionNonBrace
+  ternaryExpression
+  ternaryExpressionNonBrace
+  castExpression
+  dataExpression
+  errorAccessExpression
+  memberAccessExpression
+  indexAccessExpression
+  sliceop
+  sliceAccessExpression
+  accessExpression
+  memberAccessExpressionNonBrace
+  indexAccessExpressionNonBrace
+  sliceAccessExpressionNonBrace
+  accessExpressionNonBrace
+  callExpression
+  callExpressionNonBrace
+  parenthesizedExpression
+  expression
+  expressionList
+  memberAccessBase
+  sequenceElementExpression
+  recordElementExpression
+  sequenceOrRecordElementExpression
+  callableTarget
+  constructorTarget
+  callTarget
+  expressionNonBrace
+  memberAccessBaseNonBrace
+  callableTargetNonBrace
+  callTargetNonBrace
+  simpleKeysetExpression
+  simpleKeysetExpressionList
+  tupleKeysetExpression
+  keysetExpression
+  realTypeArgument
+  realTypeArgumentList
+  typeArgument
+  typeArgumentList
+  argument
+  argumentListNonEmpty
+  argumentList
+  lvalue
+  emptyStatement
+  assignmentStatement
+  callStatement
+  directApplicationStatement
+  returnStatement
+  exitStatement
+  blockStatement
+  conditionalStatement
+  forUpdateStatement
+  forUpdateStatementListNonEmpty
+  forUpdateStatementList
+  forInitStatement
+  forInitStatementListNonEmpty
+  forInitStatementList
+  forCollectionExpression
+  forStatement
+  switchLabel
+  switchCase
+  switchCaseList
+  switchStatement
+  breakStatement
+  continueStatement
+  statement
+  initializer
+  constantDeclaration
+  initializerOpt
+  variableDeclaration
+  blockElementStatement
+  blockElementStatementList
+  functionPrototype
+  functionDeclaration
+  actionDeclaration
+  objectInitializer
+  instantiation
+  objectDeclaration
+  objectDeclarationList
+  errorDeclaration
+  matchKindDeclaration
+  enumTypeDeclaration
+  typeField
+  typeFieldList
+  structTypeDeclaration
+  headerTypeDeclaration
+  headerUnionTypeDeclaration
+  derivedTypeDeclaration
+  typedef
+  typedefDeclaration
+  externFunctionDeclaration
+  externConstructorPrototype
+  externMethodPrototype
+  externConstructorOrMethodPrototype
+  externConstructorOrMethodPrototypeList
+  externObjectDeclaration
+  externDeclaration
+  selectCase
+  selectCaseList
+  selectExpression
+  stateExpression
+  transitionStatement
+  valueSetType
+  valueSetDeclaration
+  parserTypeDeclaration
+  parserBlockStatement
+  parserBlockElementStatement
+  parserBlockElementStatementList
+  parserConditionalStatement
+  parserStatement
+  parserState
+  parserStateList
+  parserLocalDeclaration
+  parserLocalDeclarationList
+  parserDeclaration
+  const
+  constOpt
+  tableKey
+  tableKeyList
+  tableActionReference
+  tableAction
+  tableActionList
+  tableEntryPriority
+  tableEntry
+  tableEntryList
+  tableProperty
+  tablePropertyList
+  tableDeclaration
+  controlTypeDeclaration
+  controlBody
+  controlLocalDeclaration
+  controlLocalDeclarationList
+  controlDeclaration
+  packageTypeDeclaration
+  typeDeclaration
+  declaration
+  annotationToken
+  annotationBody
+  structuredAnnotationBody
+  annotation
+  annotationListNonEmpty
+  annotationList
+  p4program}

@@ -1,0 +1,62 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:59.152
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr.src_addr = 0x0000_0000_0000 | hdr.eth_hdr.eth_type = 0x0000
+# [MethodCall]: pkt.extract<h_stack>(hdr.h[0]);
+# [ExtractSuccess] hdr.h[0]@112 | Condition: |*packetLen_bits(bit<32>)| >= 208; | Extract Size: 96 -> hdr.h[0].a = 0x0000_0000 | hdr.h[0].b = 0x8000_0000 | hdr.h[0].c = 0x0000_0000
+# [MethodCall]: pkt.extract<h_stack>(hdr.h[1]);
+# [ExtractSuccess] hdr.h[1]@208 | Condition: |*packetLen_bits(bit<32>)| >= 304; | Extract Size: 96 -> hdr.h[1].a = 0x0000_0000 | hdr.h[1].b = 0x0000_0000 | hdr.h[1].c = 0x0000_0000
+# [MethodCall]: pkt.extract<h_stack>(hdr.h[2]);
+# [ExtractSuccess] hdr.h[2]@304 | Condition: |*packetLen_bits(bit<32>)| >= 400; | Extract Size: 96 -> hdr.h[2].a = 0x0000_0000 | hdr.h[2].b = 0x0000_0000 | hdr.h[2].c = 0x0000_0000
+# [MethodCall]: pkt.extract<h_index>(hdr.i);
+# [ExtractSuccess] hdr.i@400 | Condition: |*packetLen_bits(bit<32>)| >= 496; | Extract Size: 96 -> hdr.i.index1 = 0x0000_0000 | hdr.i.index2 = 0x0000_0000 | hdr.i.index3 = 0x0000_0002
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: if (h.h[h.i.index1].a + h.h[h.i.index2].b + h.h[h.i.index3].c > 20) {| Computed: hsiVar = 0;
+# [AssignmentStatement]: if (h.h[h.i.index1].a + h.h[h.i.index2].b + h.h[h.i.index3].c > 20) {| Computed: hsiVar_0 = 0;
+# [AssignmentStatement]: if (h.h[h.i.index1].a + h.h[h.i.index2].b + h.h[h.i.index3].c > 20) {| Computed: hsiVar_1 = 2;
+# [If Statement]: h.h[h.i.index1].a + h.h[h.i.index2].b + h.h[h.i.index3].c > 20 Condition: |pktvar_14(bit<32>)| == 0 && (|pktvar_13(bit<32>)| == 0 && (|pktvar_12(bit<32>)| == 0 && |pktvar_3(bit<32>)| + |pktvar_4(bit<32>)| + |pktvar_5(bit<32>)| > 20)); Result: false
+# [If Statement]: h.h[h.i.index1].a + h.h[h.i.index2].b + h.h[h.i.index3].c > 20 Condition: |pktvar_14(bit<32>)| == 1 && (|pktvar_13(bit<32>)| == 0 && (|pktvar_12(bit<32>)| == 0 && |pktvar_3(bit<32>)| + |pktvar_4(bit<32>)| + |pktvar_8(bit<32>)| > 20)); Result: false
+# [If Statement]: h.h[h.i.index1].a + h.h[h.i.index2].b + h.h[h.i.index3].c > 20 Condition: |pktvar_14(bit<32>)| == 2 && (|pktvar_13(bit<32>)| == 0 && (|pktvar_12(bit<32>)| == 0 && |pktvar_3(bit<32>)| + |pktvar_4(bit<32>)| + |pktvar_11(bit<32>)| > 20)); Result: true
+# [AssignmentStatement]: h.h[0].a = 0;| Computed: h.h[0].a = 0;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  eth_type:0;  }
+# [MethodCall]: pkt.emit<h_stack>(h.h[0]);
+# [Emit]: {$headerValid:true;;    a:0;  b:2147483648;  c:0;  }
+# [MethodCall]: pkt.emit<h_stack>(h.h[1]);
+# [Emit]: {$headerValid:true;;    a:0;  b:0;  c:0;  }
+# [MethodCall]: pkt.emit<h_stack>(h.h[2]);
+# [Emit]: {$headerValid:true;;    a:0;  b:0;  c:0;  }
+# [MethodCall]: pkt.emit<h_index>(h.i);
+# [Emit]: {$headerValid:true;;    index1:0;  index2:0;  index3:2;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 00000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 00000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

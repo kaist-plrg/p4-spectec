@@ -1,0 +1,66 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:35:41.855
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr.src_addr = 0x0000_0000_0000 | hdr.eth_hdr.eth_type = 0x0000
+# [MethodCall]: pkt.extract<h_stack>(hdr.h[0]);
+# [ExtractSuccess] hdr.h[0]@112 | Condition: |*packetLen_bits(bit<32>)| >= 144; | Extract Size: 32 -> hdr.h[0].a = 0x0000_0000
+# [MethodCall]: pkt.extract<h_stack>(hdr.h[1]);
+# [ExtractSuccess] hdr.h[1]@144 | Condition: |*packetLen_bits(bit<32>)| >= 176; | Extract Size: 32 -> hdr.h[1].a = 0x0000_000A
+# [MethodCall]: pkt.extract<h_stack>(hdr.h[2]);
+# [ExtractSuccess] hdr.h[2]@176 | Condition: |*packetLen_bits(bit<32>)| >= 208; | Extract Size: 32 -> hdr.h[2].a = 0x0000_0000
+# [MethodCall]: pkt.extract<h_index>(hdr.i);
+# [ExtractSuccess] hdr.i@208 | Condition: |*packetLen_bits(bit<32>)| >= 240; | Extract Size: 32 -> hdr.i.index = 0x0000_0001
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [AssignmentStatement]: if (h.h[h.i.index].isValid()) {| Computed: hsiVar = 1;
+# [If Statement]: h.h[h.i.index].isValid() Condition: |pktvar_6(bit<32>)| == 0 && true; Result: false
+# [If Statement]: h.h[h.i.index].isValid() Condition: |pktvar_6(bit<32>)| == 1 && true; Result: true
+# [AssignmentStatement]: h.h[h.h[h.i.index].a].a = 1;| Computed: hsiVar_1 = 10;
+# [If Statement]: h.h[h.h[h.i.index].a] Condition: |pktvar_4(bit<32>)| == 0; Result: false
+# [If Statement]: h.h[h.h[h.i.index].a] Condition: |pktvar_4(bit<32>)| == 1; Result: false
+# [If Statement]: h.h[h.h[h.i.index].a] Condition: |pktvar_4(bit<32>)| == 2; Result: false
+# [AssignmentStatement]: h.h[h.i.index].setInvalid();| Computed: hsiVar = 1;
+# [If Statement]: h.h[h.i.index] Condition: |pktvar_6(bit<32>)| == 0; Result: false
+# [If Statement]: h.h[h.i.index] Condition: |pktvar_6(bit<32>)| == 1; Result: true
+# [MethodCall]: h.h[1].setInvalid();
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: pkt.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  eth_type:0;  }
+# [MethodCall]: pkt.emit<h_stack>(h.h[0]);
+# [Emit]: {$headerValid:true;;    a:0;  }
+# [MethodCall]: pkt.emit<h_stack>(h.h[1]);
+# [Invalid emit: { a = TaintedExpression(bit<32>) }]
+# [MethodCall]: pkt.emit<h_stack>(h.h[2]);
+# [Emit]: {$headerValid:true;;    a:0;  }
+# [MethodCall]: pkt.emit<h_index>(h.i);
+# [Emit]: {$headerValid:true;;    index:1;  }
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 0000000000000000000000000000000000000000000A0000000000000001
+expect 0 0000000000000000000000000000000000000000000000000001$
+

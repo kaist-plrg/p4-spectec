@@ -1,0 +1,55 @@
+# p4testgen seed: none
+# Date generated: 2026-02-19-08:34:28.843
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("parserImpl");
+# [Parser] parserImpl
+# [State] start
+# [State] parse_cpu_hdr
+# [MethodCall]: packet.extract<packet_out_t>(hdr.cpu);
+# [ExtractSuccess] hdr.cpu@0 | Condition: |*packetLen_bits(bit<32>)| >= 65; | Extract Size: 65 -> hdr.cpu.egress_port = 0x000 | hdr.cpu.queue_id = 0x00 | hdr.cpu.not_actually_useful = 0x0000_0000_0000
+# [State] parse_ethernet
+# [MethodCall]: packet.extract<ethernet_t>(hdr.ethernet);
+# [ExtractSuccess] hdr.ethernet@65 | Condition: |*packetLen_bits(bit<32>)| >= 177; | Extract Size: 112 -> hdr.ethernet.dstAddr = 0x0000_0000_0000 | hdr.ethernet.srcAddr = 0x0000_0000_0000 | hdr.ethernet.etherType = 0xD00D
+# [State] parse_andycustom
+# [MethodCall]: packet.extract<andycustom_t>(hdr.andycustom);
+# [ExtractSuccess] hdr.andycustom@177 | Condition: |*packetLen_bits(bit<32>)| >= 305; | Extract Size: 128 -> hdr.andycustom.version = 0x0 | hdr.andycustom.dscp = 0x00 | hdr.andycustom.totalLen = 0x0000 | hdr.andycustom.ttl = 0x00 | hdr.andycustom.protocol = 0x04 | hdr.andycustom.l4Offset = 0x00 | hdr.andycustom.flags = 0x00 | hdr.andycustom.rsvd = 0x00 | hdr.andycustom.srcAddr = 0x0000_0000 | hdr.andycustom.dstAddr = 0x0000_0000
+# [State] parse_ipv4
+# [MethodCall]: packet.extract<ipv4_t>(hdr.ipv4);
+# [ExtractSuccess] hdr.ipv4@305 | Condition: |*packetLen_bits(bit<32>)| >= 465; | Extract Size: 160 -> hdr.ipv4.version = 0x0 | hdr.ipv4.ihl = 0x0 | hdr.ipv4.diffserv = 0x00 | hdr.ipv4.totalLen = 0x0000 | hdr.ipv4.identification = 0x0000 | hdr.ipv4.flags = 0x0 | hdr.ipv4.fragOffset = 0x0000 | hdr.ipv4.ttl = 0x00 | hdr.ipv4.protocol = 0x00 | hdr.ipv4.hdrChecksum = 0x0000 | hdr.ipv4.srcAddr = 0x0000_0000 | hdr.ipv4.dstAddr = 0x0000_0000
+# [State] accept
+# [P4Testgen MethodCall]: *.copy_out("parserImpl");
+# [P4Testgen MethodCall]: *.copy_in("verifyChecksum");
+# [Control verifyChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("verifyChecksum");
+# [P4Testgen MethodCall]: *.copy_in("ingressImpl");
+# [Control ingressImpl start]
+# [MethodCall]: t1_0/t1.apply();
+# [Table Branch: ingressImpl.t1 | Key(s): |pktvar_14(bit<32>)|| Chosen action: NoAction]
+# [MethodCall]: NoAction_1/NoAction();
+# [P4Testgen MethodCall]: *.copy_out("ingressImpl");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egressImpl");
+# [Control egressImpl start]
+# [P4Testgen MethodCall]: *.copy_out("egressImpl");
+# [P4Testgen MethodCall]: *.copy_in("updateChecksum");
+# [Control updateChecksum start]
+# [P4Testgen MethodCall]: *.copy_out("updateChecksum");
+# [P4Testgen MethodCall]: *.copy_in("deparserImpl");
+# [Control deparserImpl start]
+# [MethodCall]: packet.emit<ethernet_t>(hdr.ethernet);
+# [Emit]: {$headerValid:true;;    dstAddr:0;  srcAddr:0;  etherType:53261;  }
+# [P4Testgen MethodCall]: *.copy_out("deparserImpl");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+# Table ingressImpl.t1
+add "ingressImpl.t1" "hdr.andycustom.srcAddr":0x00000000 "NoAction"()
+
+
+packet 111 0000000000000000000000000000000000000000680680000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+expect 0 *00000000000000000000000680680000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000$
+

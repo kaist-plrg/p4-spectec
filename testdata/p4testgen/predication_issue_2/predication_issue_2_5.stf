@@ -1,0 +1,54 @@
+# p4testgen seed: none
+# Date generated: 2026-03-06-08:39:27.065
+# Current node coverage: 0
+# Traces
+# [P4Testgen MethodCall]: *.copy_in("p");
+# [Parser] p
+# [State] start
+# [MethodCall]: pkt.extract<ethernet_t>(hdr.eth_hdr);
+# [ExtractSuccess] hdr.eth_hdr@0 | Condition: |*packetLen_bits(bit<32>)| >= 112; | Extract Size: 112 -> hdr.eth_hdr.dst_addr = 0x0000_0000_0000 | hdr.eth_hdr.src_addr = 0x0000_0000_0000 | hdr.eth_hdr.eth_type = 0x0000
+# [MethodCall]: pkt.extract<IDX>(hdr.idx);
+# [ExtractSuccess] hdr.idx@112 | Condition: |*packetLen_bits(bit<32>)| >= 120; | Extract Size: 8 -> hdr.idx.idx = 0x00
+# [MethodCall]: pkt.extract<H>(hdr.h[0]);
+# [ExtractFailure] hdr.h[32w0]@120 | Condition: !(|*packetLen_bits(bit<32>)| >= 128); | Extract Size: 8
+# [P4Testgen AssignmentStatement]: sm.parser_error = 1;
+# [P4Testgen MethodCall]: *.copy_out("p");
+# [P4Testgen MethodCall]: *.copy_in("vrfy");
+# [Control vrfy start]
+# [P4Testgen MethodCall]: *.copy_out("vrfy");
+# [P4Testgen MethodCall]: *.copy_in("ingress");
+# [Control ingress start]
+# [MethodCall]: simple_action();
+# [If Statement]: val < bound Condition: |pktvar_3(bit<8>)| < 1; Result: true
+# [AssignmentStatement]: return (val < bound ? val : bound);| Computed: tmp/val = 0;
+# [If Statement]: val Condition: |pktvar_3(bit<8>)| == 0; Result: true
+# [AssignmentStatement]: h.h[val].a = 8w1;| Computed: h.h[0].a = 1;
+# [P4Testgen MethodCall]: *.copy_out("ingress");
+# [P4Testgen AssignmentStatement]: *standard_metadata.egress_port = 0;
+# [P4Testgen If Statement]: Condition: 0 != 0; Result: false
+# [P4Testgen MethodCall]: *.copy_in("egress");
+# [Control egress start]
+# [P4Testgen MethodCall]: *.copy_out("egress");
+# [P4Testgen MethodCall]: *.copy_in("update");
+# [Control update start]
+# [P4Testgen MethodCall]: *.copy_out("update");
+# [P4Testgen MethodCall]: *.copy_in("deparser");
+# [Control deparser start]
+# [MethodCall]: b.emit<ethernet_t>(h.eth_hdr);
+# [Emit]: {$headerValid:true;;    dst_addr:0;  src_addr:0;  eth_type:0;  }
+# [MethodCall]: b.emit<IDX>(h.idx);
+# [Emit]: {$headerValid:true;;    idx:0;  }
+# [MethodCall]: b.emit<H>(h.h[0]);
+# [Invalid emit: { a = TaintedExpression(bit<8>) }]
+# [MethodCall]: b.emit<H>(h.h[1]);
+# [Invalid emit: { a = TaintedExpression(bit<8>) }]
+# [P4Testgen MethodCall]: *.copy_out("deparser");
+# [P4Testgen MethodCall]: *.prepend_emit_buffer();
+# [Prepending the emit buffer to the program packet]
+# [P4Testgen If Statement]: Condition: 511 == 0; Result: false
+# [P4Testgen MethodCall]: *.invoke_traffic_manager();
+
+
+packet 0 000000000000000000000000000000
+expect 0 000000000000000000000000000000$
+

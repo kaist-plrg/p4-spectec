@@ -1,0 +1,376 @@
+;; Instruction evaluation rules
+
+;;; If instructions
+
+relation Eval_if_cond:
+  ctx |- exp iterexp*
+  hint(input %0 %1 %2)
+  hint(prose_true "evaluaing condition" %1 "with iteration" %2 "under" %0 "yields true")
+  hint(prose_false "evaluating condition" %1 "with iteration" %2 "under" %0 "yields false")
+
+rulegroup Eval_if_cond {
+
+  rule Eval_if_cond/nil:
+    C |- exp eps
+    -- Eval_exp: C |- exp : OK (BOOL true)
+
+  rule Eval_if_cond/cons-opt:
+    C |- exp (iterexp_h :: iterexp_t*)
+    -- if QUEST vari* = iterexp_h
+    -- if C_sub? = $sub_opt(C, vari*)
+    -- (Eval_if_cond: C_sub |- exp iterexp_t*)?
+
+  rule Eval_if_cond/cons-list:
+    C |- exp (iterexp_h :: iterexp_t*)
+    -- if STAR vari* = iterexp_h
+    -- if C_sub* = $sub_list(C, vari*)
+    -- (Eval_if_cond: C_sub |- exp iterexp_t*)*
+
+}
+
+rulegroup Eval_instr/ifinstr {
+
+  rule Eval_instr/true:
+    C |- IF exp iterexp* block : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_if_cond: C |- exp iterexp_rev*
+    -- Eval_block: C |- block : flow
+
+  rule Eval_instr/false:
+    C |- IF exp iterexp* block : FAIL
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_if_cond:/ C |- exp iterexp_rev*
+
+}
+
+;;; If-hold instructions
+
+relation Eval_ifhold_cond:
+  ctx |- id ':' exp* iterexp*
+  hint(input %0 %1 %2 %3)
+  hint(prose_true "evaluating relation" %1 "with inputs"
+                  %2 "and iteration" %3 "under" %0 "holds")
+  hint(prose_false "evaluating relation" %1 "with inputs"
+                   %2 "and iteration" %3 "under" %0 "does not hold")
+
+rulegroup Eval_ifhold_cond {
+
+  rule Eval_ifhold_cond/nil:
+    C |- id ':' exp* eps
+    -- (Eval_exp: C |- exp : OK val)*
+    -- Call_rel: C |- id val* : OK eps
+
+  rule Eval_ifhold_cond/cons-opt:
+    C |- id ':' exp* (iterexp_h :: iterexp_t*)
+    -- if QUEST vari* = iterexp_h
+    -- if C_sub? = $sub_opt(C, vari*)
+    -- (Eval_ifhold_cond: C_sub |- id ':' exp* iterexp_t*)?
+
+  rule Eval_ifhold_cond/cons-list:
+    C |- id ':' exp* (iterexp_h :: iterexp_t*)
+    -- if STAR vari* = iterexp_h
+    -- if C_sub* = $sub_list(C, vari*)
+    -- (Eval_ifhold_cond: C_sub |- id ':' exp* iterexp_t*)*
+
+}
+
+rulegroup Eval_instr/ifhold {
+
+  rule Eval_instr/both-hold:
+    C |- IFHOLD id ':' exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond: C |- id ':' exp* iterexp_rev*
+    -- if BOTH block_hold block_nothold = holdcase
+    -- Eval_block: C |- block_hold : flow
+
+  rule Eval_instr/both-nothold:
+    C |- IFHOLD id ':' exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond:/ C |- id ':' exp* iterexp_rev*
+    -- if BOTH block_hold block_nothold = holdcase
+    -- Eval_block: C |- block_nothold : flow
+
+  rule Eval_instr/hold:
+    C |- IFHOLD id ':' exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond: C |- id ':' exp* iterexp_rev*
+    -- if HOLD block_hold = holdcase
+    -- Eval_block: C |- block_hold : flow
+
+  rule Eval_instr/nothold:
+    C |- IFHOLD id ':' exp* iterexp* holdcase : flow
+    -- if iterexp_rev* = $rev_<iterexp>(iterexp*)
+    -- Eval_ifhold_cond:/ C |- id ':' exp* iterexp_rev*
+    -- if NOTHOLD block_nothold = holdcase
+    -- Eval_block: C |- block_nothold : flow
+
+}
+
+;;; Case instructions
+
+dec $guard_as_exp(exp, guard) : exp
+  hint(prose_in %1 "as an expression matching against" %0)
+def $guard_as_exp(exp, BOOL true) = exp
+def $guard_as_exp(exp, BOOL false) = UN NOT exp 
+def $guard_as_exp(exp, CMP cmpop exp_r) = CMP cmpop exp exp_r
+def $guard_as_exp(exp, SUB typ) = SUB exp typ
+def $guard_as_exp(exp, MATCH pattern) = MATCH exp pattern
+def $guard_as_exp(exp, MEM exp_s) = MEM exp exp_s
+
+relation Eval_case:
+  ctx |- exp case : res<block>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating case match for" %1 "against" %2 "under" %0)
+  hint(prose_out %3)
+
+rule Eval_case/hit:
+  C |- exp (guard block) : OK block
+  -- if exp_cond = $guard_as_exp(exp, guard)
+  -- Eval_exp: C |- exp_cond : OK (BOOL true)
+
+rule Eval_case/fail:
+  C |- exp (guard block) : FAIL
+  -- otherwise
+
+relation Eval_cases:
+  ctx |- exp case* : res<block>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating case matches for" %1 "against" %2 "under" %0)
+  hint(prose_out %3)
+
+rulegroup Eval_cases {
+
+  rule Eval_cases/nil:
+    C |- exp eps : FAIL
+
+  rule Eval_cases/cons-hit:
+    C |- exp (case_h :: case_t*) : OK block
+    -- Eval_case: C |- exp case_h : OK block
+
+  rule Eval_cases/cons-miss:
+    C |- exp (case_h :: case_t*) : blockres
+    -- Eval_case: C |- exp case_h : FAIL
+    -- Eval_cases: C |- exp case_t* : blockres
+
+}
+
+rule Eval_instr/case:
+  C |- CASE exp case* : flow
+  -- Eval_cases: C |- exp case* : OK block
+  -- Eval_block: C |- block : flow
+
+;;; Group instructions
+
+rule Eval_instr/group:
+  C |- GROUP _ _ ':' _ '->' _ '=' block : flow
+  -- Eval_block: C |- block : flow
+
+;;; Let instructions
+
+relation Eval_let:
+  ctx |- exp '=' exp iterinstr* : ctxres
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "evaluating assignment" %1 '=' %2
+                "with iteration" %3 "under" %0)
+  hint(prose_out %4)
+
+rulegroup Eval_let {
+
+  rule Eval_let/nil:
+    C |- exp_l '=' exp_r eps : OK C'
+    -- Eval_exp: C |- exp_r : OK val_r
+    -- Assign_exp: C |- exp_l := val_r : C'
+
+  rule Eval_let/cons-opt-none:
+    C |- exp_l '=' exp_r (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $sub_opt(C, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_let/cons-opt-some:
+    C |- exp_l '=' exp_r (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if C_sub = $sub_opt(C, vari_bound*)
+    ---- ;; iter body
+    -- Eval_let: C_sub |- exp_l '=' exp_r iterinstr_t* : OK C_sub_res
+    ---- ;; iterate out of
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
+
+  rule Eval_let/cons-list-empty:
+    C |- exp_l '=' exp_r (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $sub_list(C, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_let/cons-list-nonempty:
+    C |- exp_l '=' exp_r (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if C_sub* = $sub_list(C, vari_bound*)
+    -- if C_sub* =/= eps
+    ---- ;; iter body
+    -- (Eval_let: C_sub |- exp_l '=' exp_r iterinstr_t* : OK C_sub_res)*
+    -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
+    ---- ;; iterate out of
+    -- if val_bind** = $transpose_<val>(val_sub_bind**)
+    -- if (val_res_bind = LIST val_bind*)*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_res_bind*)
+
+}
+
+rule Eval_let/fail:
+  C |- exp_l '=' exp_r iterinstr* : FAIL
+  -- otherwise
+
+rule Eval_instr/let:
+  C |- LET exp_l '=' exp_r iterinstr* block : flow
+  -- Eval_let: C |- exp_l '=' exp_r iterinstr* : OK C'
+  -- Eval_block: C' |- block : flow
+
+;;; Relation instructions
+
+relation Eval_rel:
+  ctx |- id ':' exp* '->' exp* iterinstr* : ctxres
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "evaluating relation" %1 "with inputs" %2#
+                ", outputs" %3#", and iteration" %4 "under" %0)
+  hint(prose_out %5)
+
+rulegroup Eval_rel {
+
+  rule Eval_rel/nil:
+    C |- id ':' exp_in* '->' exp_out* eps : OK C'
+    -- (Eval_exp: C |- exp_in : OK val_in)*
+    -- Call_rel: C |- id val_in* : OK val_out*
+    -- Assign_exps: C |- exp_out* := val_out* : C'
+
+  rule Eval_rel/cons-opt-none:
+    C |- id ':' exp_in* '->' exp_out* (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $sub_opt(C, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if val_bind* = $repeat_<val>(OPT eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_rel/cons-opt-some:
+    C |- id ':' exp_in* '->' exp_out* (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if QUEST vari_bound* vari_bind* = iterinstr_h
+    -- if C_sub = $sub_opt(C, vari_bound*)
+    ---- ;; iter body
+    -- Eval_rel: C_sub |- id ':' exp_in* '->' exp_out* iterinstr_t* : OK C_sub_res
+    ---- ;; iterate out of
+    -- if (vari_bind_iter = $iter_vari(vari_bind, QUEST))*
+    -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
+
+  rule Eval_rel/cons-list-empty:
+    C |- id ':' exp_in* '->' exp_out* (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if eps = $sub_list(C, vari_bound*)
+    ---- ;; iter body (no bindings)
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if val_bind* = $repeat_<val>(LIST eps, |vari_bind*|)
+    ---- ;; iterate out of
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_bind*)
+
+  rule Eval_rel/cons-list-nonempty:
+    C |- id ':' exp_in* '->' exp_out* (iterinstr_h :: iterinstr_t*) : OK C_res
+    ---- ;; iterate into
+    -- if STAR vari_bound* vari_bind* = iterinstr_h
+    -- if C_sub* = $sub_list(C, vari_bound*)
+    -- if C_sub* =/= eps
+    ---- ;; iter body
+    -- (Eval_rel: C_sub |- id ':' exp_in* '->' exp_out* iterinstr_t* : OK C_sub_res)*
+    -- if (val_sub_bind* = $find_varis(C_sub_res, vari_bind*))*
+    ---- ;; iterate out of
+    -- if val_bind** = $transpose_<val>(val_sub_bind**)
+    -- if (val_res_bind = LIST val_bind*)*
+    -- if (vari_bind_iter = $iter_vari(vari_bind, STAR))*
+    -- if C_res = $add_varis(C, vari_bind_iter*, val_res_bind*)
+
+}
+
+rule Eval_rel/fail:
+  C |- id ':' exp_in* '->' exp_out* iterinstr* : FAIL
+  -- otherwise
+
+rule Eval_instr/rel:
+  C |- REL id ':' exp_in* '->' exp_out* iterinstr* block : flow
+  -- Eval_rel: C |- id ':' exp_in* '->' exp_out* iterinstr* : OK C'
+  -- Eval_block: C' |- block : flow
+
+;;; Result instructions
+
+rule Eval_instr/result:
+  C |- RESULT _ '->' _ ':' exp* : RES val*
+  -- (Eval_exp: C |- exp : OK val)*
+
+;;; Return instructions
+
+rule Eval_instr/return:
+  C |- RETURN exp : RET val
+  -- Eval_exp: C |- exp : OK val
+
+;;; Debug instructions
+
+rule Eval_instr/dbg:
+  C |- DEBUG exp instr : flow
+  -- Eval_exp: C |- exp : OK val
+  -- debug val
+  -- Eval_instr: C |- instr : flow
+
+rule Eval_instr/fail:
+  C |- instr : FAIL
+  -- otherwise
+
+;; Instruction sequence evaluation rules
+
+rulegroup Eval_instrs {
+
+  rule Eval_instrs/nil:
+    C |- eps : OK
+
+  rule Eval_instrs/cons-res:
+    C |- instr_h :: instr_t* : RES val*
+    -- Eval_instr: C |- instr_h : RES val*
+
+  rule Eval_instrs/cons-ret:
+    C |- instr_h :: instr_t* : RET val
+    -- Eval_instr: C |- instr_h : RET val
+
+  rule Eval_instrs/ok:
+    C |- instr_h :: instr_t* : flow
+    -- Eval_instr: C |- instr_h : OK
+    -- Eval_instrs: C |- instr_t* : flow
+
+  rule Eval_instrs/fail:
+    C |- instr_h :: instr_t* : flow
+    -- Eval_instr: C |- instr_h : FAIL
+    -- Eval_instrs: C |- instr_t* : flow
+
+}
+
+;; Block evaluation rules
+
+rule Eval_block:
+  C |- block : flow
+  -- Eval_instrs: C |- block : flow
