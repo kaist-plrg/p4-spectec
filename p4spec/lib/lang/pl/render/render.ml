@@ -142,6 +142,15 @@ let prose_of_out_itervars (vars : var list) : Adoc.prose =
                ++ text " be the list"))
   |> prose_of_list
 
+(* visible output itervars as bare list vars, without the "be the list" frame *)
+let prose_of_out_itervars_bare (vars : var list) : Adoc.prose =
+  vars
+  |> List.filter_map (fun var ->
+         let id, _, _ = var in
+         if Id.is_underscored id then None
+         else Some Adoc.(code_prose (code_of_var var ^^ code_of_iter List)))
+  |> prose_of_list
+
 (* Types *)
 
 let string_of_typ (typ : typ) : string = Sl.Print.string_of_typ typ
@@ -1048,16 +1057,19 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     Adoc.concat_block
       [
         Adoc.bullet_inline_block (`Ordered level)
-          Adoc.(
-            text "Let "
-            ++ prose_of_out_itervars vars_out_visible
-            ++ text " obtained by repeating:");
+          Adoc.(text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
         Adoc.raw_block "\n+\n--\n";
         body;
-        Adoc.raw_block "\n--\n+\nfor each ";
+        Adoc.raw_block "\n--\n+\n";
         Adoc.inline_block
           Adoc.(
-            prose_of_in_itervars vars_in_all ++ text "." ++ prose_fallthrough);
+            text "Let "
+            ++ prose_of_out_itervars_bare vars_out_visible
+            ++ text
+                 (if List.length vars_out_visible > 1 then
+                    " be the resulting lists."
+                  else " be the resulting list.")
+            ++ prose_fallthrough);
       ]
 
 (* Rule instruction rendering *)
@@ -1116,18 +1128,21 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     Adoc.concat_block
       [
         Adoc.bullet_inline_block (`Ordered level)
-          Adoc.(
-            text "Let "
-            ++ prose_of_out_itervars vars_out_visible
-            ++ text " obtained by repeating:");
+          Adoc.(text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
         Adoc.raw_block "\n+\n--\n";
         Adoc.bullet_block (`Unordered (level + 1));
         Adoc.raw_block rule_body;
         Adoc.raw_block ".";
-        Adoc.raw_block "\n--\n+\nfor each ";
+        Adoc.raw_block "\n--\n+\n";
         Adoc.inline_block
           Adoc.(
-            prose_of_in_itervars vars_in_all ++ text "." ++ prose_fallthrough);
+            text "Let "
+            ++ prose_of_out_itervars_bare vars_out_visible
+            ++ text
+                 (if List.length vars_out_visible > 1 then
+                    " be the resulting lists."
+                  else " be the resulting list.")
+            ++ prose_fallthrough);
       ]
 
 (* Result instruction rendering *)
