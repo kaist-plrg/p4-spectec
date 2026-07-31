@@ -135,19 +135,6 @@ let prose_of_out_itervars (vars : var list) : Adoc.prose =
   |> List.filter_map (fun var ->
          let id, _, _ = var in
          if Id.is_underscored id then None
-         else
-           Some
-             Adoc.(
-               code_prose (code_of_var var ^^ code_of_iter List)
-               ++ text " be the list"))
-  |> prose_of_list
-
-(* visible output itervars as bare list vars, without the "be the list" frame *)
-let prose_of_out_itervars_bare (vars : var list) : Adoc.prose =
-  vars
-  |> List.filter_map (fun var ->
-         let id, _, _ = var in
-         if Id.is_underscored id then None
          else Some Adoc.(code_prose (code_of_var var ^^ code_of_iter List)))
   |> prose_of_list
 
@@ -830,7 +817,6 @@ let rec render_instr ?(level : int = 0)
 and render_instrs ?(level : int = 0) ?(head : Adoc.block option = None)
     ?(backtrack : Backtrack.ctx option = None) (instrs : block) : Adoc.block =
   match instrs with
-  (* a single short return folds onto the guard line: "If ...: return ..." *)
   | [ ({ node = { it = ReturnI e; _ }; _ } : instr) ]
     when Adoc.width_prose (prose_of_exp e) <= adoc_width_short -> (
       let p = Adoc.(text " return " ++ prose_of_exp e ++ text ".") in
@@ -1061,7 +1047,7 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         Adoc.inline_block
           Adoc.(
             text "Let "
-            ++ prose_of_out_itervars_bare vars_out_visible
+            ++ prose_of_out_itervars vars_out_visible
             ++ text
                  (if List.length vars_out_visible > 1 then
                     " be the resulting lists."
@@ -1129,7 +1115,7 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         Adoc.inline_block
           Adoc.(
             text "Let "
-            ++ prose_of_out_itervars_bare vars_out_visible
+            ++ prose_of_out_itervars vars_out_visible
             ++ text
                  (if List.length vars_out_visible > 1 then
                     " be the resulting lists."
