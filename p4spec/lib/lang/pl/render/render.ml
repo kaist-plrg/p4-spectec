@@ -831,7 +831,8 @@ and render_instrs ?(level : int = 0) ?(head : Adoc.block option = None)
       let blocks = List.map (render_instr ~level ~backtrack) instrs in
       match head with
       | Some head -> Adoc.seq_block (head :: blocks)
-      | None -> Adoc.concat_block [ Adoc.raw_block "\n"; Adoc.seq_block blocks ])
+      | None -> Adoc.concat_block [ Adoc.raw_block "\n"; Adoc.seq_block blocks ]
+      )
 
 and render_elseblock (elseblock_opt : elseblock option) : string =
   match elseblock_opt with
@@ -952,8 +953,7 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
                  let block_else =
                    Adoc.bullet_inline_block (`Ordered level) (Adoc.text "Else:")
                  in
-                 (* a binding guard must still show its binding under "Else" *)
-                 (match guard with
+                 match guard with
                  | CheckLetSubG _ | CheckLetMatchG _ ->
                      let prose_bind = prose_of_guard exp_scrut guard in
                      let block_bind =
@@ -968,7 +968,7 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
                             block_then)
                  | _ ->
                      render_instrs ~head:(Some block_else) ~level:(level + 1)
-                       ~backtrack block_then)
+                       ~backtrack block_then
                else
                  let keyword = if idx = 0 then "If" else "Else if" in
                  render_instrs
@@ -1062,7 +1062,8 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     Adoc.concat_block
       [
         Adoc.bullet_inline_block (`Ordered level)
-          Adoc.(text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
+          Adoc.(
+            text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
         Adoc.raw_block "\n+\n--\n";
         block_body;
         Adoc.raw_block "\n--\n+\n";
@@ -1128,7 +1129,8 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     Adoc.concat_block
       [
         Adoc.bullet_inline_block (`Ordered level)
-          Adoc.(text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
+          Adoc.(
+            text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
         Adoc.raw_block "\n+\n--\n";
         Adoc.bullet_block (`Unordered (level + 1));
         Adoc.raw_block rule_body;
@@ -1298,7 +1300,9 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
   in
   let block_title_header =
     Adoc.concat_block
-      [ Adoc.inline_block Adoc.(prose_title ++ text ":"); Adoc.raw_block "\n\n" ]
+      [
+        Adoc.inline_block Adoc.(prose_title ++ text ":"); Adoc.raw_block "\n\n";
+      ]
   in
   match
     (hints.prose_in, hints.prose_out, hints.prose_output_exps, hints.prose_true)
