@@ -1144,11 +1144,12 @@ and render_result_instr ~(level : int) (hints : Annot.hints)
     | Some hint, _ ->
         line
           Adoc.(
-            text "Result in "
+            text "The result is "
             ++ alternate hint (reindent_lines ~level:0) prose_of_exp exps
             ++ text ".")
     | None, [] -> line (Adoc.text "The relation holds.")
-    | None, _ -> line Adoc.(text "Result in " ++ prose_of_exps exps ++ text ".")
+    | None, _ ->
+        line Adoc.(text "The result is " ++ prose_of_exps exps ++ text ".")
 
 (* Return instruction rendering *)
 
@@ -1299,7 +1300,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
           Adoc.raw_block ":\n";
           Adoc.bullet_inline_block (`Unordered 0)
             Adoc.(
-              text "Result in "
+              text "The result is "
               ++ alternate ~caps:false hint_out (reindent_lines ~level:1)
                    prose_of_exp exps_out);
           Adoc.raw_block ".";
