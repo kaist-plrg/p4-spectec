@@ -323,7 +323,7 @@ rulegroup Expr_ok/binaryExpression-shift {
     -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check that the right-hand side is fixed bit type
-    -- if BIT `< _ `> = typeIR_r_reduced
+    -- if BIT `< _ `> = $unroll_typeIR(typeIR_r_reduced)
     ---- ;; check that if the left-hand side is int type,
     ---- ;; the right-hand side is local compile-time known
     -- if (typeIR_l_reduced = INT) => (ctk_r_reduced = LCTK)
@@ -1315,7 +1315,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if ctk_w_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_w_reduced)
     ---- ;; if offset is not local compile-time known, it must be a bit type
     -- if ctk_l_reduced =/= LCTK
-    -- if BIT `< _ `> = typeIR_l_reduced
+    -- if BIT `< _ `> = $unroll_typeIR(typeIR_l_reduced)
     ---- ;; check that the width is local compile-time known
     -- if ctk_w_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w
