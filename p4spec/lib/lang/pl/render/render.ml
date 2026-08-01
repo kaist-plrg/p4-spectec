@@ -114,6 +114,9 @@ let code_of_iter (iter : iter) : Adoc.code =
   | List -> "{asterisk}" |> adoc_superscript |> Adoc.token
   | Opt -> "?" |> adoc_superscript |> Adoc.token
 
+let string_of_iter (iter : iter) : string =
+  match iter with List -> "list" | Opt -> "option"
+
 let code_of_iterexp (iterexp : iterexp) : Adoc.code =
   let iter, _ = iterexp in
   code_of_iter iter
@@ -125,21 +128,21 @@ let code_of_var (var : var) : Adoc.code =
   if Id.is_underscored id then Adoc.token "++_++"
   else Adoc.(code_of_varid id ^^ seq_code (List.map code_of_iter iters))
 
-let prose_of_in_itervars (vars : var list) : Adoc.prose =
-  let render_in_var var =
-    Adoc.(
-      code_prose (code_of_var var)
-      ++ text " in "
-      ++ code_prose (code_of_var var ^^ code_of_iter List))
-  in
-  vars |> List.map render_in_var |> prose_of_list
+let prose_of_in_itervar (iter : iter) (var : var) : Adoc.prose =
+  Adoc.(
+    code_prose (code_of_var var)
+    ++ text " in "
+    ++ code_prose (code_of_var var ^^ code_of_iter iter))
 
-let prose_of_out_itervars (vars : var list) : Adoc.prose =
+let prose_of_in_itervars (iter : iter) (vars : var list) : Adoc.prose =
+  vars |> List.map (prose_of_in_itervar iter) |> prose_of_list
+
+let prose_of_out_itervars (iter : iter) (vars : var list) : Adoc.prose =
   vars
   |> List.filter_map (fun var ->
          let id, _, _ = var in
          if Id.is_underscored id then None
-         else Some Adoc.(code_prose (code_of_var var ^^ code_of_iter List)))
+         else Some Adoc.(code_prose (code_of_var var ^^ code_of_iter iter)))
   |> prose_of_list
 
 (* Types *)
@@ -839,6 +842,15 @@ and render_instrs ?(level : int = 0) ?(head : Adoc.block option = None)
       match head with
       | Some head -> Adoc.concat_block [ head; Adoc.inline_block prose_return ]
       | None -> Adoc.inline_block prose_return)
+  | [ ({ node = { it = ResultI (rel_signature, exps); _ }; hints } : instr) ]
+    when Adoc.width_prose (prose_of_result hints rel_signature exps)
+         <= adoc_width_short -> (
+      let prose_result =
+        Adoc.(text " " ++ prose_of_result hints rel_signature exps)
+      in
+      match head with
+      | Some head -> Adoc.concat_block [ head; Adoc.inline_block prose_result ]
+      | None -> Adoc.inline_block prose_result)
   | _ -> (
       let blocks =
         List.map (render_instr ~level ~backtrack ~dispatcher) instrs
@@ -858,20 +870,73 @@ and render_elseblock (elseblock_opt : elseblock option) : string =
 (* Iterations *)
 
 and prose_of_iterexp_suffix (iterexps : iterexp list) : Adoc.prose =
-  match iterexps with
+  let proses =
+    List.concat_map
+      (fun (iter, vars) -> List.map (prose_of_in_itervar iter) vars)
+      iterexps
+  in
+  match proses with
   | [] -> Adoc.empty_prose
-  | _ ->
-      let vars = List.concat_map (fun (_, vars) -> vars) iterexps in
-      if vars = [] then Adoc.empty_prose
-      else Adoc.(text ", for all " ++ prose_of_in_itervars vars)
+  | _ -> Adoc.(text ", for all " ++ prose_of_list proses)
 
 and prose_of_iterinstr_suffix (iterinstrs : iterinstr list) : Adoc.prose =
-  match iterinstrs with
+  let proses =
+    List.concat_map
+      (fun (iter, vars_in, _) -> List.map (prose_of_in_itervar iter) vars_in)
+      iterinstrs
+  in
+  match proses with
   | [] -> Adoc.empty_prose
-  | _ ->
-      let vars = List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs in
-      if vars = [] then Adoc.empty_prose
-      else Adoc.(text ", for each " ++ prose_of_in_itervars vars)
+  | _ -> Adoc.(text ", for each " ++ prose_of_list proses)
+
+and render_iterinstrs ~(level : int) ~(prose_fallthrough : Adoc.prose)
+    (iterinstrs : iterinstr list) (render_body : int -> Adoc.block) : Adoc.block
+    =
+  let rec render ~(outermost : bool) (level : int) (levels : iterinstr list) :
+      Adoc.block =
+    match levels with
+    | [] -> render_body level
+    | (iter, vars_in, vars_out) :: iterinstrs_t ->
+        let vars_out_visible =
+          List.filter (fun (id, _, _) -> not (Id.is_underscored id)) vars_out
+        in
+        let block_inner = render ~outermost:false (level + 1) iterinstrs_t in
+        let block_head =
+          Adoc.bullet_inline_block (`Ordered level)
+            Adoc.(
+              text "For each " ++ prose_of_in_itervars iter vars_in ++ text ":")
+        in
+        let prose_fallthrough =
+          if outermost then prose_fallthrough else Adoc.empty_prose
+        in
+        if vars_out_visible = [] then
+          Adoc.concat_block
+            [
+              block_head;
+              Adoc.raw_block "\n+\n--\n";
+              block_inner;
+              Adoc.raw_block "\n--\n";
+            ]
+        else
+          let noun = string_of_iter iter in
+          Adoc.concat_block
+            [
+              block_head;
+              Adoc.raw_block "\n+\n--\n";
+              block_inner;
+              Adoc.raw_block "\n--\n+\n";
+              Adoc.inline_block
+                Adoc.(
+                  text "Let "
+                  ++ prose_of_out_itervars iter vars_out_visible
+                  ++ text
+                       (if List.length vars_out_visible > 1 then
+                          Printf.sprintf " be the resulting %ss." noun
+                        else Printf.sprintf " be the resulting %s." noun)
+                  ++ prose_fallthrough);
+            ]
+  in
+  render ~outermost:true level (List.rev iterinstrs)
 
 (* If instruction rendering *)
 
@@ -1067,9 +1132,6 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     |> List.concat_map (fun (_, _, vars_out) -> vars_out)
     |> List.filter (fun (id, _, _) -> not (Id.is_underscored id))
   in
-  let vars_in_all =
-    List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs
-  in
   if vars_out_visible = [] then
     Adoc.bullet_inline_block (`Ordered level)
       Adoc.(
@@ -1079,32 +1141,14 @@ and render_let_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         ++ prose_of_iterinstr_suffix iterinstrs
         ++ text "." ++ prose_fallthrough)
   else
-    let block_body =
-      Adoc.bullet_inline_block
-        (`Unordered (level + 1))
+    let render_body level =
+      Adoc.bullet_inline_block (`Unordered level)
         Adoc.(
           text "Let "
           ++ code_prose (code_of_exp exp_l)
           ++ text " be " ++ prose_of_exp exp_r ++ text ".")
     in
-    Adoc.concat_block
-      [
-        Adoc.bullet_inline_block (`Ordered level)
-          Adoc.(
-            text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
-        Adoc.raw_block "\n+\n--\n";
-        block_body;
-        Adoc.raw_block "\n--\n+\n";
-        Adoc.inline_block
-          Adoc.(
-            text "Let "
-            ++ prose_of_out_itervars vars_out_visible
-            ++ text
-                 (if List.length vars_out_visible > 1 then
-                    " be the resulting lists."
-                  else " be the resulting list.")
-            ++ prose_fallthrough);
-      ]
+    render_iterinstrs ~level ~prose_fallthrough iterinstrs render_body
 
 (* Rule instruction rendering *)
 
@@ -1120,9 +1164,6 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
     iterinstrs
     |> List.concat_map (fun (_, _, vars_out) -> vars_out)
     |> List.filter (fun (id, _, _) -> not (Id.is_underscored id))
-  in
-  let vars_in_all =
-    List.concat_map (fun (_, vars_in, _) -> vars_in) iterinstrs
   in
   let rule_body =
     match (hint_in, hint_out) with
@@ -1154,47 +1195,38 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
             ++ text "." ++ prose_fallthrough);
       ]
   else
-    Adoc.concat_block
-      [
-        Adoc.bullet_inline_block (`Ordered level)
-          Adoc.(
-            text "For each " ++ prose_of_in_itervars vars_in_all ++ text ":");
-        Adoc.raw_block "\n+\n--\n";
-        Adoc.bullet_block (`Unordered (level + 1));
-        Adoc.raw_block rule_body;
-        Adoc.raw_block ".";
-        Adoc.raw_block "\n--\n+\n";
-        Adoc.inline_block
-          Adoc.(
-            text "Let "
-            ++ prose_of_out_itervars vars_out_visible
-            ++ text
-                 (if List.length vars_out_visible > 1 then
-                    " be the resulting lists."
-                  else " be the resulting list.")
-            ++ prose_fallthrough);
-      ]
+    let render_body level =
+      Adoc.concat_block
+        [
+          Adoc.bullet_block (`Unordered level);
+          Adoc.raw_block rule_body;
+          Adoc.raw_block ".";
+        ]
+    in
+    render_iterinstrs ~level ~prose_fallthrough iterinstrs render_body
 
 (* Result instruction rendering *)
 
-and render_result_instr ~(level : int) (hints : Annot.hints)
-    (rel_signature : rel_signature) (exps : exp list) : Adoc.block =
+and prose_of_result (hints : Annot.hints) (rel_signature : rel_signature)
+    (exps : exp list) : Adoc.prose =
   let nottyp, hint_input = rel_signature in
   let typs = Mixfix.args nottyp.it in
   let is_conditional = Hints.Input.is_conditional hint_input typs in
-  let line = Adoc.bullet_inline_block (`Ordered level) in
-  if is_conditional then line (Adoc.text "Then, the relation holds.")
+  if is_conditional then Adoc.text "then, the relation holds."
   else
     match (hints.prose_out, exps) with
     | Some hint, _ ->
-        line
-          Adoc.(
-            text "The result is "
-            ++ alternate hint (reindent_lines ~level:0) prose_of_exp exps
-            ++ text ".")
-    | None, [] -> line (Adoc.text "The relation holds.")
-    | None, _ ->
-        line Adoc.(text "The result is " ++ prose_of_exps exps ++ text ".")
+        Adoc.(
+          text "the result is "
+          ++ alternate hint (reindent_lines ~level:0) prose_of_exp exps
+          ++ text ".")
+    | None, [] -> Adoc.text "the relation holds."
+    | None, _ -> Adoc.(text "the result is " ++ prose_of_exps exps ++ text ".")
+
+and render_result_instr ~(level : int) (hints : Annot.hints)
+    (rel_signature : rel_signature) (exps : exp list) : Adoc.block =
+  Adoc.bullet_inline_block (`Ordered level)
+    (Adoc.capitalize_first (prose_of_result hints rel_signature exps))
 
 (* Return instruction rendering *)
 

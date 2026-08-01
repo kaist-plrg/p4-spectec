@@ -717,95 +717,6 @@ let parse_command =
            Format.printf "Parse error: %s\n" (string_of_error at msg)
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
-let json_ast_command =
-  Core.Command.basic ~summary:"Emit/Parse JSON AST for Structured Language"
-    ~readme:(fun () ->
-      "./p4spectec json-ast -emit spec/*.watsup\n\
-       ./p4spectec json-ast -parse <ast-file.json>")
-    (let%map_open.Command mode =
-       Command.Param.choose_one
-         [
-           flag "emit" no_arg ~doc:"Emit JSON AST from supplied spec files"
-           |> map ~f:(fun b -> Core.Option.some_if b `Emit);
-           flag "parse" no_arg
-             ~doc:
-               "Parse JSON AST from supplied JSON file and produce Structured \
-                Language"
-           |> map ~f:(fun b -> Core.Option.some_if b `Parse);
-         ]
-         ~if_nothing_chosen:(Default_to `Emit)
-     and paths = anon (non_empty_sequence_as_list ("path" %: string)) in
-     fun () ->
-       match mode with
-       | `Emit -> (
-           try
-             let spec_sl = Pass.structure ~final:true paths in
-             let sl_ast_json = Sl.spec_to_yojson spec_sl in
-             Yojson.Safe.pretty_print Format.std_formatter sl_ast_json;
-             ()
-           with
-           | ParseError (at, msg) ->
-               Format.printf "%s\n" (string_of_error at msg)
-           | ElabError (at, msg) ->
-               Format.printf "%s\n" (string_of_error at msg))
-       | `Parse -> (
-           (* only take the first argument *)
-           let path = List.hd paths in
-           let parsed = Yojson.Safe.from_file path |> Sl.spec_of_yojson in
-           match parsed with
-           | Ok spec_sl ->
-               Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)
-           | Error err -> Format.printf "Error while parsing %s: %s" path err))
-
-let p4_program_value_json_command =
-  Core.Command.basic
-    ~summary:"convert a P4 program to a value and output as JSON"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
-     and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
-     and path_p4 = flag "-p" (required string) ~doc:"P4 program" in
-     fun () ->
-       let _, (module Simulator) =
-         Backend_sim.Build.build ~final:true AL_mode paths_spec
-       in
-       try
-         let value_program =
-           match Simulator.Interface.parse_program includes_p4 [ path_p4 ] with
-           | Pass value_program -> value_program
-           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
-         in
-         let json = Sl.value_to_yojson value_program in
-         Yojson.Safe.to_string json |> print_string
-       with ParseError (at, msg) ->
-         Format.printf "ill-formed: %s\n" (string_of_error at msg))
-
-let unparse_json_value_command =
-  Core.Command.basic
-    ~summary:"parse a JSON value and unparse it back to P4 source code"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
-     and path_json =
-       flag "-j" (required string) ~doc:"JSON file containing value"
-     in
-     fun () ->
-       try
-         let _, (module Simulator) =
-           Backend_sim.Build.build ~final:true AL_mode paths_spec
-         in
-         let json = Yojson.Safe.from_file path_json in
-         let value_result = Sl.value_of_yojson json in
-         match value_result with
-         | Ok value ->
-             let p4_source = Simulator.Interface.unparse_program value in
-             print_string p4_source
-         | Error err -> Format.printf "Error parsing JSON value: %s\n" err
-       with
-       | Sys_error msg -> Format.printf "File error: %s\n" msg
-       | Yojson.Json_error msg -> Format.printf "JSON parsing error: %s\n" msg
-       | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
-
 let command =
   Core.Command.group
     ~summary:"p4spectec: a language design framework for the p4_16 language"
@@ -829,10 +740,6 @@ let command =
       ("splice", splice_command);
       (* Interfacing with P4 *)
       ("parse", parse_command);
-      (* Interfacing with external tools via JSON *)
-      ("json-ast", json_ast_command);
-      ("p4-program-value-json", p4_program_value_json_command);
-      ("unparse-json-value", unparse_json_value_command);
     ]
 
 let () = Command_unix.run ~version command
