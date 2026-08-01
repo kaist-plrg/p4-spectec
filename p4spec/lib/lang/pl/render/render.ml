@@ -1416,6 +1416,14 @@ let render_rulegroup (hints : Annot.hints) (_id_rulegroup : id) (id_rel : id)
   in
   title ^ ":\n" ^ Adoc.ser_block (render_instrs block)
 
+let render_defined_rel_def_dispatch
+    ((id_rel, _rel_signature, _exps, block, _elseblock_opt) : rel) : string =
+  let head =
+    Adoc.inline_block Adoc.(text (string_of_relid id_rel) ++ text " dispatch:")
+  in
+  Adoc.ser_block
+    (render_instrs ~head:(Some head) ~level:0 ~dispatcher:true block)
+
 let render_defined_rel_def_block (hints : Annot.hints) (rel : rel) : Adoc.block
     =
   let id_rel, rel_signature, exps, block, elseblock_opt = rel in
@@ -1433,18 +1441,11 @@ let render_defined_rel_def_block (hints : Annot.hints) (rel : rel) : Adoc.block
                | _ -> assert false)
         |> String.concat "\n\n");
       Adoc.raw_block (render_elseblock elseblock_opt);
+      Adoc.raw_block ("\n\n" ^ render_defined_rel_def_dispatch rel);
     ]
 
 let render_defined_rel_def (hints : Annot.hints) (rel : rel) : string =
   Adoc.ser_block (render_defined_rel_def_block hints rel)
-
-let render_defined_rel_def_dispatch
-    ((id_rel, _rel_signature, _exps, block, _elseblock_opt) : rel) : string =
-  let head =
-    Adoc.inline_block Adoc.(text (string_of_relid id_rel) ++ text " dispatch:")
-  in
-  Adoc.ser_block
-    (render_instrs ~head:(Some head) ~level:0 ~dispatcher:true block)
 
 (* Functions *)
 
