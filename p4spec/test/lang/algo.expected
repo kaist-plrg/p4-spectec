@@ -4320,6 +4320,10 @@ def $free_parameterIR(parameterIR) : bound =
 
   clause 0 : (_annotationList _direction typeIR _id _parameterInitializerOptIR) = $free_typeIR(typeIR)
 
+def $free_parameterIRs(parameterIR*) : bound =
+
+  clause 0 : (parameterIR*{parameterIR <- parameterIR*}) = $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*})
+
 def $free_callableTypeIR(callableTypeIR) : bound =
 
   clause 0 : (callableTypeIR) = B_params
@@ -8278,11 +8282,11 @@ def $partition_parameterListIR(parameterIR*, nameIR*, nameIR*) : (parameterIR*, 
   -- if ~nameIR_h <- nameIR_optional*{nameIR_optional <- nameIR_optional*}
 
 syntax callAlign = 
-   | GIVEN parameterIR* DEFAULT parameterIR* (from callAlign) 
+   | GIVEN parameterIR* DEFAULT parameterIR* OPTIONAL parameterIR* (from callAlign) 
 
 def $align_parameterListIR(parameterIR*, argumentIR*, nameIR*, nameIR*) : callAlign =
 
-  clause 0 : (parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}) = GIVEN parameterIR_given_aligned*{parameterIR_given_aligned <- parameterIR_given_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*}
+  clause 0 : (parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}) = GIVEN parameterIR_given_aligned*{parameterIR_given_aligned <- parameterIR_given_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}
   -- let (parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}) = $partition_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*})
   -- (let _annotationList _direction _typeIR nameIR_given _parameterInitializerOptIR = parameterIR_given)*{parameterIR_given <- parameterIR_given*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, nameIR_given -> nameIR_given*}
   -- let parameterIR_given_aligned*{parameterIR_given_aligned <- parameterIR_given_aligned*} = $align_parameterListIR_given(`{ nameIR_given ':' parameterIR_given*{nameIR_given <- nameIR_given*, parameterIR_given <- parameterIR_given*} `}, parameterIR_given*{parameterIR_given <- parameterIR_given*}, argumentIR*{argumentIR <- argumentIR*})
@@ -14079,7 +14083,7 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- if (boolTypeIR = BOOL)
     -- (let _annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR = parameterIR)*{parameterIR <- parameterIR*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, nameIR_param -> nameIR_param*}
     -- let TC_callee_0 = $empty_typingContext
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR'*{parameterIR' <- parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR'*{parameterIR' <- parameterIR'*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- if parameterIR'*{parameterIR' <- parameterIR'*} matches []
     -- (Argument_eval_lctk: p TC |- argumentIR ~> value_argument)*{argumentIR <- argumentIR*, value_argument -> value_argument*}
     -- (let _annotationList' direction_param_aligned typeIR_param_aligned nameIR_param_aligned _parameterInitializerOptIR' = parameterIR_aligned)*{parameterIR_aligned <- parameterIR_aligned*, _annotationList' -> _annotationList'*, _parameterInitializerOptIR' -> _parameterInitializerOptIR'*, direction_param_aligned -> direction_param_aligned*, nameIR_param_aligned -> nameIR_param_aligned*, typeIR_param_aligned -> typeIR_param_aligned*}
@@ -20016,7 +20020,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rulepath actionTypeIR
     -- let _annotationList ACTION _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) = actionTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- if $callable_action(p, TC)
     -- Call_convention_ok: p TC ACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % `< % '#' % `> `( % '#' % '#' % `) : VOID as typeIR `< [] `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
@@ -20034,8 +20038,8 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rulepath definedFunctionTypeIR
     -- let FUNCTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = definedFunctionTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -20059,8 +20063,8 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rulepath externFunctionTypeIR
     -- let EXTERN_FUNCTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externFunctionTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -20085,7 +20089,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rulepath builtinMethodTypeIR
     -- let (parameterIR*{parameterIR <- parameterIR*}, typeIR_ret) = $signature_of_builtinMethodTypeIR(builtinMethodTypeIR)
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % `< % '#' % `> `( % '#' % '#' % `) : typeIR_ret `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
 
@@ -20104,8 +20108,8 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
     -- let externMethodTypeIR' = externMethodTypeIR
     -- if externMethodTypeIR' matches `EXTERN_METHOD % (%) : %`
     -- let EXTERN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeIR'
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -20120,8 +20124,8 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
     -- let externMethodTypeIR' = externMethodTypeIR
     -- if externMethodTypeIR' matches `EXTERN_METHOD ABSTRACT % (%) : %`
     -- let EXTERN_METHOD ABSTRACT nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeIR'
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret)
@@ -20147,7 +20151,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rulepath parserApplyMethodTypeIR
     -- let PARSER_APPLY `( parameterIR*{parameterIR <- parameterIR*} `) = parserApplyMethodTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- if $callable_parserApplyMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % `< % '#' % `> `( % '#' % '#' % `) : VOID as typeIR `< [] `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
@@ -20167,7 +20171,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rulepath controlApplyMethodTypeIR
     -- let CONTROL_APPLY `( parameterIR*{parameterIR <- parameterIR*} `) = controlApplyMethodTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- if $callable_controlApplyMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % |- % `< % '#' % `> `( % '#' % '#' % `) : VOID as typeIR `< [] `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
@@ -20256,8 +20260,8 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR `< typeArgu
 
     rulepath package
     -- let CONSTRUCTOR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_object = constructorTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
@@ -20272,8 +20276,8 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR `< typeArgu
 
     rulepath non-package
     -- let CONSTRUCTOR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_object = constructorTypeIR
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
-    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
     -- (let typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred -> typeArgumentIR_inferred*}
     -- (let parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred -> parameterIR_aligned_inferred*}
     -- let typeIR_object_inferred = $subst_typeIR(inference, typeIR_object)
@@ -22672,6 +22676,16 @@ relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typin
     -- ControlLocalDecls_ok: TC_1 |- controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} : TC_2 controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
     -- output: % |- % : TC_2 controlLocalDeclarationIR_h :: controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
 
+syntax strict = 
+   | STRICT (from strict) 
+   | LAX (from strict) 
+
+syntax strictness = map<typeId, strict>
+
+def $empty_strictness(typeId*) : strictness =
+
+  clause 0 : (typeId*{typeId <- typeId*}) = `{ typeId ':' STRICT*{typeId <- typeId*} `}
+
 syntax infer = 
    | KNOWN AS typeIR (from infer) 
    | UNKNOWN (from infer) 
@@ -22684,29 +22698,35 @@ def $empty_constraint(typeId*) : constraint =
 
 syntax inference = map<typeId, typeIR>
 
-def $infer(typeId*, parameterIR*, argumentIR*) : inference =
+def $infer(typeId*, parameterIR*, parameterIR*, argumentIR*) : inference =
 
-  clause 0 : (typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}) = $empty_map<typeId, typeIR>
+  clause 0 : (typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}) = $empty_map<typeId, typeIR>
   -- if typeId*{typeId <- typeId*} matches []
 
-  clause 1 : (typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}) = inference_resolved
+  clause 1 : (typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}) = inference_resolved
   -- if (typeId_infer*{typeId_infer <- typeId_infer*} =/= [])
+  -- let strictness_init = $empty_strictness(typeId_infer*{typeId_infer <- typeId_infer*})
+  -- let B = $free_parameterIRs(parameterIR*{parameterIR <- parameterIR*})
+  -- let B_optional = $free_parameterIRs(parameterIR_optional*{parameterIR_optional <- parameterIR_optional*})
+  -- let `{ typeId_free*{typeId_free <- typeId_free*} `} = $diff_set<typeId>(B_optional, B)
+  -- let strict*{strict <- strict*} = $repeat_<strict>(LAX, |typeId_free*{typeId_free <- typeId_free*}|)
+  -- let strictness = $adds_map<typeId, strict>(strictness_init, typeId_free*{typeId_free <- typeId_free*}, strict*{strict <- strict*})
   -- let constraint_init = $empty_constraint(typeId_infer*{typeId_infer <- typeId_infer*})
   -- if (|argumentIR*{argumentIR <- argumentIR*}| = |parameterIR*{parameterIR <- parameterIR*}|)
-  -- (let constraint_pair = $infer'(constraint_init, parameterIR, argumentIR))*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
+  -- (let constraint_pair = $infer_pair(constraint_init, parameterIR, argumentIR))*{argumentIR <- argumentIR*, parameterIR <- parameterIR*, constraint_pair -> constraint_pair*}
   -- let constraint_inferred = $merge_constraints(constraint_init, constraint_pair*{constraint_pair <- constraint_pair*})
-  -- let inference = $resolve_constraint(constraint_inferred)
+  -- let inference = $resolve_constraint(strictness, constraint_inferred)
   -- let inference_resolved = $resolve_inference(inference)
 
-def $infer'(constraint, parameterIR, argumentIR) : constraint =
+def $infer_pair(constraint, parameterIR, argumentIR) : constraint =
 
-  clause 0 : (constraint, parameterIR, argumentIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 0 : (constraint, parameterIR, argumentIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if argumentIR <: typedExpressionIR
   -- let typedExpressionIR = argumentIR as typedExpressionIR
   -- let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR
   -- let typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR)
 
-  clause 1 : (constraint, parameterIR, argumentIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 1 : (constraint, parameterIR, argumentIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if argumentIR matches `% = %`
   -- let nameIR '=' typedExpressionIR = argumentIR
   -- let _annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR
@@ -22736,85 +22756,91 @@ def $resolve_inference'(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
-def $gen_constraint(constraint, typeIR, typeIR) : constraint =
+def $gen_constraint(constraint, typeIR*, typeIR*) : constraint =
+
+  clause 0 : (constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
+  -- if (|typeIR_arg*{typeIR_arg <- typeIR_arg*}| = |typeIR_param*{typeIR_param <- typeIR_param*}|)
+  -- (let constraint_pair = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg))*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
+
+def $gen_constraint_pair(constraint, typeIR, typeIR) : constraint =
 
   clause 0 : (constraint, typeIR, typeIR_arg) = $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg)
   -- if typeIR <: nameTypeIR
   -- let _NAME typeId_param = typeIR as nameTypeIR
   -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
 
-  clause 1 : (constraint, typeIR, typeIR_arg) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 1 : (constraint, typeIR, typeIR_arg) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: typedefTypeIR
   -- let TYPEDEF _typeId typeIR_param = typeIR as typedefTypeIR
 
-  clause 2 : (constraint, typeIR_param, typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 2 : (constraint, typeIR_param, typeIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: typedefTypeIR
   -- let TYPEDEF _typeId typeIR_arg = typeIR as typedefTypeIR
   -- if ~typeIR_param <: nameTypeIR
   -- if ~typeIR_param <: typedefTypeIR
 
-  clause 3 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 3 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: newTypeIR
   -- let TYPE typeId typeIR_param = typeIR as newTypeIR
   -- if typeIR' <: newTypeIR
   -- let TYPE typeId' typeIR_arg = typeIR' as newTypeIR
   -- if (typeId = typeId')
 
-  clause 4 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 4 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: listTypeIR
   -- let LIST `< typeIR_param `> = typeIR as listTypeIR
   -- if typeIR' <: listTypeIR
   -- let LIST `< typeIR_arg `> = typeIR' as listTypeIR
 
-  clause 5 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 5 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: tupleTypeIR
   -- let TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> = typeIR as tupleTypeIR
   -- if typeIR' <: tupleTypeIR
   -- let TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> = typeIR' as tupleTypeIR
 
-  clause 6 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 6 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: arrayTypeIR
   -- let ARRAY typeIR_param `[ n_size `] = typeIR as arrayTypeIR
   -- if typeIR' <: arrayTypeIR
   -- let ARRAY typeIR_arg `[ n_size' `] = typeIR' as arrayTypeIR
   -- if (n_size = n_size')
 
-  clause 7 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 7 : (constraint, typeIR, typeIR') = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if typeIR <: headerStackTypeIR
   -- let HEADER_STACK typeIR_param `[ n_size `] = typeIR as headerStackTypeIR
   -- if typeIR' <: headerStackTypeIR
   -- let HEADER_STACK typeIR_arg `[ n_size' `] = typeIR' as headerStackTypeIR
   -- if (n_size = n_size')
 
-  clause 8 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 8 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: structTypeIR
   -- let STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as structTypeIR
   -- if typeIR' <: structTypeIR
   -- let STRUCT typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as structTypeIR
   -- if (typeId = typeId')
 
-  clause 9 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 9 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: headerTypeIR
   -- let HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
   -- if typeIR' <: headerTypeIR
   -- let HEADER typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as headerTypeIR
   -- if (typeId = typeId')
 
-  clause 10 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 10 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: headerUnionTypeIR
   -- let HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerUnionTypeIR
   -- if typeIR' <: headerUnionTypeIR
   -- let HEADER_UNION typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} = typeIR' as headerUnionTypeIR
   -- if (typeId = typeId')
 
-  clause 11 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 11 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
   -- if typeIR <: externObjectTypeIR
   -- let EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} = typeIR as externObjectTypeIR
   -- if typeIR' <: externObjectTypeIR
   -- let EXTERN typeId' `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} `} = typeIR' as externObjectTypeIR
   -- if (typeId = typeId')
 
-  clause 12 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 12 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: parserObjectTypeIR
   -- let PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) = typeIR as parserObjectTypeIR
   -- if typeIR' <: parserObjectTypeIR
@@ -22824,7 +22850,7 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- if (|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)
   -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-  clause 13 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 13 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: controlObjectTypeIR
   -- let CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) = typeIR as controlObjectTypeIR
   -- if typeIR' <: controlObjectTypeIR
@@ -22834,19 +22860,13 @@ def $gen_constraint(constraint, typeIR, typeIR) : constraint =
   -- if (|direction*{direction <- direction*}| = |direction'*{direction' <- direction'*}|)
   -- (if (direction' = direction))*{direction <- direction*, direction' <- direction'*}
 
-  clause 14 : (constraint, typeIR, typeIR') = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 14 : (constraint, typeIR, typeIR') = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- if typeIR <: packageObjectTypeIR
   -- let PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} = typeIR as packageObjectTypeIR
   -- if typeIR' <: packageObjectTypeIR
   -- let PACKAGE _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} = typeIR' as packageObjectTypeIR
 
   clause -1 : (constraint, typeIR_param, typeIR_arg) = constraint
-
-def $gen_constraints(constraint, typeIR*, typeIR*) : constraint =
-
-  clause 0 : (constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
-  -- if (|typeIR_arg*{typeIR_arg <- typeIR_arg*}| = |typeIR_param*{typeIR_param <- typeIR_param*}|)
-  -- (let constraint_pair = $gen_constraint(constraint, typeIR_param, typeIR_arg))*{typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*, constraint_pair -> constraint_pair*}
 
 def $merge_constraint(constraint, constraint) : constraint =
 
@@ -22933,26 +22953,27 @@ def $merge_constraints(constraint, constraint*) : constraint =
   -- let constraint_pre_1 = $merge_constraint(constraint_pre_0, constraint_post_h)
   -- let constraint_pre_2 = $merge_constraints(constraint_pre_1, constraint_post_t*{constraint_post_t <- constraint_post_t*})
 
-def $resolve_constraint(constraint) : inference =
+def $resolve_constraint(strictness, constraint) : inference =
 
-  clause 0 : (set<pair<typeId, infer>>) = `{ [] `}
+  clause 0 : (strictness, set<pair<typeId, infer>>) = `{ [] `}
   -- if (set<pair<typeId, infer>> = `{ [] `})
 
-  clause 1 : (`{ pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} `}) = `{ typeId_h ':' typeIR_h :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
+  clause 1 : (strictness, `{ pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} `}) = `{ typeId_h ':' typeIR_h :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
   -- if pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} matches _ :: _
   -- let typeId_h ':' infer_h :: typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} = pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*}
   -- let infer = infer_h
   -- if infer matches `KNOWN AS %`
   -- let KNOWN AS typeIR_h = infer
-  -- let `{ typeId ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} `} = $resolve_constraint(`{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `})
+  -- let `{ typeId ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} `} = $resolve_constraint(strictness, `{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `})
   -- if (|typeId_t*{typeId_t <- typeId_t*}| = |typeId*{typeId <- typeId*}|)
   -- (if (typeId = typeId_t))*{typeId_t <- typeId_t*, typeId <- typeId*}
 
-  clause 2 : (`{ pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} `}) = `{ typeId_h ':' BOOL as typeIR :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
+  clause 2 : (strictness, `{ pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} `}) = `{ typeId_h ':' BOOL as typeIR :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
   -- if pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*} matches _ :: _
   -- let typeId_h ':' infer_h :: typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} = pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*}
   -- if (UNKNOWN = infer_h)
-  -- let `{ typeId ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} `} = $resolve_constraint(`{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `})
+  -- if ($find_map<typeId, strict>(strictness, typeId_h) = ?(LAX))
+  -- let `{ typeId ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId <- typeId*} `} = $resolve_constraint(strictness, `{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `})
   -- if (|typeId_t*{typeId_t <- typeId_t*}| = |typeId*{typeId <- typeId*}|)
   -- (if (typeId = typeId_t))*{typeId_t <- typeId_t*, typeId <- typeId*}
 
@@ -26110,7 +26131,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let theta = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}
     -- let IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta]
-    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- (let _annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -26150,7 +26171,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let theta_parser = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}
     -- let IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta_parser]
-    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- (let _annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -26179,7 +26200,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let theta_control = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}
     -- let IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta_control]
-    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- (let _annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -26210,7 +26231,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- let IC_callee_0 = $inherit_i(GLOBAL, IC)
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let IC_callee_1 = IC_callee_0[BLOCK.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- (let _annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned)*{constructorParameterIR_aligned <- constructorParameterIR_aligned*, _annotationList -> _annotationList*, _direction -> _direction*, _parameterInitializerOptIR -> _parameterInitializerOptIR*, _typeIR -> _typeIR*, id_aligned -> id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -30336,7 +30357,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     rulepath copyin-exit
     -- let ACTION p_shared '.' nameIR `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = actionCallee
     -- let EC_callee_0 = $inherit_e(p_shared, EC_0)
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 '#' copyInResult
     -- if copyInResult <: exitResult
     -- let exitResult = copyInResult as exitResult
@@ -30346,7 +30367,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     rulepath copyin-cont-ActionBody-exit
     -- let ACTION p_shared '.' nameIR `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = actionCallee
     -- let EC_callee_0 = $inherit_e(p_shared, EC_0)
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
     -- let _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInResult as continueResult<storageReference?*>
@@ -30361,7 +30382,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     rulepath return
     -- let ACTION p_shared '.' nameIR `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = actionCallee
     -- let EC_callee_0 = $inherit_e(p_shared, EC_0)
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
     -- let _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} = copyInResult as continueResult<storageReference?*>
@@ -30387,7 +30408,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: abortResult
@@ -30399,7 +30420,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30425,7 +30446,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: abortResult
@@ -30437,7 +30458,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30454,7 +30475,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30751,7 +30772,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' copyInResult
     -- if copyInResult <: abortResult
@@ -30767,7 +30788,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30785,7 +30806,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' copyInResult
     -- if copyInResult <: abortResult
@@ -30800,7 +30821,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30820,7 +30841,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame]
     -- if (|typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}| = |typeParameterIR*{typeParameterIR <- typeParameterIR*}|)
     -- let EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*})
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30847,7 +30868,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: rejectTransitionResult
@@ -30858,7 +30879,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30874,7 +30895,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30893,7 +30914,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30925,7 +30946,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let `{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: exitResult
@@ -30938,7 +30959,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let `{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30956,7 +30977,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let `{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>
@@ -30978,7 +30999,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- let EC_callee_0 = $inherit_e(GLOBAL, EC_0)
     -- let `{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv
     -- let EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}]
-    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
+    -- let GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, [])
     -- let p_shared = GLOBAL
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult
     -- if copyInResult <: continueResult<storageReference?*>

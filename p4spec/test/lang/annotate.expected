@@ -1533,6 +1533,17 @@ xref:free_parameterIR[Free type identifiers in ``++_++`` ``++_++`` ``typeIR`` ``
 
 . Return xref:free_typeIR[free type identifiers in ``typeIR``].
 
+xref:free_parameterIRs[Free type identifiers in ``parameterIR^{asterisk}^``]
+
+. For each ``parameterIR`` in ``parameterIR^{asterisk}^``:
++
+--
+ ** Let ``bound`` be xref:free_parameterIR[free type identifiers in ``parameterIR``].
+--
++
+Let ``bound^{asterisk}^`` be the resulting list.
+. Return xref:unions_set[the union of the sets ``bound^{asterisk}^``].
+
 xref:free_callableTypeIR[Free type identifiers in ``callableTypeIR``]
 
 . If let ``++_++`` ``+ACTION+`` ``++_++`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``callableTypeIR``:
@@ -4203,7 +4214,7 @@ xref:align_parameterListIR[Aligning ``parameterIR^{asterisk}^`` with ``argumentI
 +
 Let ``nameIR~given~^{asterisk}^`` be the resulting list.
 . Let ``parameterIR~given_aligned~^{asterisk}^`` be ``xref:align_parameterListIR_given[$align_parameterListIR_given(+`{+`` ``(`` ``nameIR~given~`` ``+':'+`` ``parameterIR~given~`` ``)^{asterisk}^`` ``+`}+,`` ``parameterIR~given~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
-. Return ``+GIVEN+`` ``parameterIR~given_aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^``.
+. Return ``+GIVEN+`` ``parameterIR~given_aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^``.
 
 xref:align_parameterListIR_given[$align_parameterListIR_given(+`{+ ( id +':'+ parameterIR )^{asterisk}^ +`}+, parameterIR'^{asterisk}^, argumentIR^{asterisk}^)]
 
@@ -8471,7 +8482,7 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``callableTargetIR'`` ``+`<
 +
 Let ``nameIR~param~^{asterisk}^`` be the resulting list.
  .. Let ``TC~callee_0~`` be xref:empty_typingContext[an empty typing context].
- .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR'^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR'^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
  .. Check that ``parameterIR'^{asterisk}^`` is an empty list.
  .. For each ``argumentIR`` in ``argumentIR^{asterisk}^``:
 +
@@ -12819,7 +12830,7 @@ xref:Call_ok[Call_ok]:
 xref:Call_ok[Typing invocation ``actionTypeIR`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
 . Let ``++_++`` ``+ACTION+`` ``++_++`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``actionTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_action[$callable_action(p,`` ``TC)]``.
 . Let casted ``argumentIR~cast~^{asterisk}^`` be the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under context ``TC`` and action context ``+ACTION+`` at ``p``].
 . The result is return type ``+VOID+`` with inferred ``·`` and casted ``argumentIR~cast~^{asterisk}^``.
@@ -12827,8 +12838,8 @@ xref:Call_ok[Typing invocation ``actionTypeIR`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`
 xref:Call_ok[Typing invocation ``definedFunctionTypeIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
 . Let ``+FUNCTION+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``definedFunctionTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
 . For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -12854,8 +12865,8 @@ Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the resulting list.
 xref:Call_ok[Typing invocation ``externFunctionTypeIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
 . Let ``+EXTERN_FUNCTION+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``externFunctionTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
 . For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -12881,15 +12892,15 @@ Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the resulting list.
 xref:Call_ok[Typing invocation ``builtinMethodTypeIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
 . Let ``(`` ``parameterIR^{asterisk}^,`` ``typeIR~ret~`` ``)`` be ``xref:signature_of_builtinMethodTypeIR[$signature_of_builtinMethodTypeIR(builtinMethodTypeIR)]``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let casted ``argumentIR~cast~^{asterisk}^`` be the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
 . The result is return type ``typeIR~ret~`` with inferred ``typeArgumentIR^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
 
 xref:Call_ok[Typing invocation ``externMethodTypeIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``typeId^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
 . If let ``+EXTERN_METHOD+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``externMethodTypeIR``:
- .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
- .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
  .. For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -12913,8 +12924,8 @@ Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the resulting list.
   ... The result is return type ``typeIR~ret_inferred~`` with inferred ``typeArgumentIR~inferred~^{asterisk}^`` and casted ``argumentIR~cast~^{asterisk}^``.
 . Else:
  .. Let ``+EXTERN_METHOD+`` ``+ABSTRACT+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~ret~`` be ``externMethodTypeIR``.
- .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
- .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``inference`` be ``xref:infer[$infer(typeId^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
  .. For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -12940,7 +12951,7 @@ Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the resulting list.
 xref:Call_ok[Typing invocation ``parserApplyMethodTypeIR`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
 . Let ``+PARSER_APPLY+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``parserApplyMethodTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_parserApplyMethod[$callable_parserApplyMethod(p,`` ``TC)]``.
 . Let casted ``argumentIR~cast~^{asterisk}^`` be the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
 . The result is return type ``+VOID+`` with inferred ``·`` and casted ``argumentIR~cast~^{asterisk}^``.
@@ -12948,7 +12959,7 @@ xref:Call_ok[Typing invocation ``parserApplyMethodTypeIR`` ``+`<+`` ``·`` ``+`>
 xref:Call_ok[Typing invocation ``controlApplyMethodTypeIR`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``·``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^``, under cursor ``p`` and context ``TC``]:
 
 . Let ``+CONTROL_APPLY+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` be ``controlApplyMethodTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Check that ``xref:callable_controlApplyMethod[$callable_controlApplyMethod(p,`` ``TC)]``.
 . Let casted ``argumentIR~cast~^{asterisk}^`` be the result of xref:Call_convention_ok[checking calling convention of ``argumentIR^{asterisk}^`` applied on ``parameterIR~aligned~^{asterisk}^``, under context ``TC`` and action context ``+NOACTION+`` at ``p``].
 . The result is return type ``+VOID+`` with inferred ``·`` and casted ``argumentIR~cast~^{asterisk}^``.
@@ -13029,8 +13040,8 @@ xref:Inst_ok[Inst_ok]:
 xref:Inst_ok[Typing instantiation ``constructorTypeIR`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` with omitted type arguments ``typeId~infer~^{asterisk}^``, defaults ``id~default~^{asterisk}^`` and optionals ``id~optional~^{asterisk}^`` , under cursor ``p``, context ``TC``, and ``instctxt`` instantiation site context]:
 
 . Let ``+CONSTRUCTOR+`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+`)+`` ``+':'+`` ``typeIR~object~`` be ``constructorTypeIR``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
-. Let ``inference`` be ``xref:infer[$infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``++_++^{asterisk}^`` ``+OPTIONAL+`` ``parameterIR~optional~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``inference`` be ``xref:infer[$infer(typeId~infer~^{asterisk}^,`` ``parameterIR~aligned~^{asterisk}^,`` ``parameterIR~optional~^{asterisk}^,`` ``argumentIR^{asterisk}^)]``.
 . For each ``typeArgumentIR`` in ``typeArgumentIR^{asterisk}^``:
 +
 --
@@ -14551,38 +14562,48 @@ xref:ControlLocalDecls_ok[Typing ``controlLocalDeclaration^{asterisk}^``, under 
 ControlLocalDecls_ok dispatch:
 . goto xref:ControlLocalDecls_ok-[]
 
+xref:empty_strictness[$empty_strictness(typeId^{asterisk}^)]
+
+. Return ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``+STRICT+`` ``)^{asterisk}^`` ``+`}+``.
+
 xref:empty_constraint[$empty_constraint(typeId^{asterisk}^)]
 
 . Return ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``+UNKNOWN+`` ``)^{asterisk}^`` ``+`}+``.
 
-xref:infer[$infer(typeId^{asterisk}^, parameterIR^{asterisk}^, argumentIR^{asterisk}^)]
+xref:infer[$infer(typeId^{asterisk}^, parameterIR^{asterisk}^, parameterIR~optional~^{asterisk}^, argumentIR^{asterisk}^)]
 
 . If ``typeId^{asterisk}^`` matches pattern ``[]``: return xref:empty_map[an empty map].
 . Else:
+ .. Let ``strictness~init~`` be ``xref:empty_strictness[$empty_strictness(typeId^{asterisk}^)]``.
+ .. Let ``B`` be xref:free_parameterIRs[free type identifiers in ``parameterIR^{asterisk}^``].
+ .. Let ``B~optional~`` be xref:free_parameterIRs[free type identifiers in ``parameterIR~optional~^{asterisk}^``].
+ .. Let ``+`{+`` ``typeId~free~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``B~optional~`` and ``B``].
+ .. Let ``strict^{asterisk}^`` be xref:repeat_[a list of the length of ``typeId~free~^{asterisk}^`` copies of ``+LAX+``].
+ .. Let ``strictness`` be xref:adds_map[``strictness~init~`` where each of ``typeId~free~^{asterisk}^`` to ``strict^{asterisk}^`` are added].
  .. Let ``constraint~init~`` be ``xref:empty_constraint[$empty_constraint(typeId^{asterisk}^)]``.
  .. Check that the length of ``argumentIR^{asterisk}^`` is equal to the length of ``parameterIR^{asterisk}^``.
  .. For each ``argumentIR`` in ``argumentIR^{asterisk}^`` and ``parameterIR`` in ``parameterIR^{asterisk}^``:
 +
 --
-  *** Let ``constraint~pair~`` be ``xref:infer'[$infer'(constraint~init~,`` ``parameterIR,`` ``argumentIR)]``.
+  *** Let ``constraint~pair~`` be ``xref:infer_pair[$infer_pair(constraint~init~,`` ``parameterIR,`` ``argumentIR)]``.
 --
 +
 Let ``constraint~pair~^{asterisk}^`` be the resulting list.
  .. Let ``constraint~inferred~`` be ``xref:merge_constraints[$merge_constraints(constraint~init~,`` ``constraint~pair~^{asterisk}^)]``.
- .. Let ``inference`` be ``xref:resolve_constraint[$resolve_constraint(constraint~inferred~)]``.
+ .. Let ``inference`` be ``xref:resolve_constraint[$resolve_constraint(strictness,`` ``constraint~inferred~)]``.
  .. Let ``inference~resolved~`` be ``xref:resolve_inference[$resolve_inference(inference)]``.
  .. Return ``inference~resolved~``.
 
-xref:infer'[$infer'(constraint, parameterIR, argumentIR)]
+xref:infer_pair[$infer_pair(constraint, parameterIR, argumentIR)]
 
 . If let ``typedExpressionIR`` be ``argumentIR``:
  .. Let ``typeIR~param~`` be the type of ``parameterIR``.
  .. Let ``typeIR~arg~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
+ .. Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
 . Else if let ``nameIR`` ``+'='+`` ``typedExpressionIR`` be ``argumentIR``:
  .. Let ``typeIR~param~`` be the type of ``parameterIR``.
  .. Let ``typeIR~arg~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
- .. Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
+ .. Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
 . Else if ``argumentIR`` matches pattern ``%`` ``+'='+`` ``+'_'+``: return ``constraint``.
 . Else: return ``constraint``.
 
@@ -14607,110 +14628,110 @@ xref:resolve_inference'[$resolve_inference'(typeIR)]
 
 . Otherwise: return ``typeIR``.
 
-xref:gen_constraint[$gen_constraint(constraint, typeIR, typeIR~arg'~)]
-
-. Try pass:[<strong id="bk-gen_constraint-1" class="bk-label">#1</strong>]:
- .. {empty}+++<span class="bk-arm-anchor" id="bk-gen_constraint-1-a"></span>+++
-  ... If let ``typeId~param~`` be ``typeIR``:
-   .... Check that xref:in_set[``typeId~param~`` is an element of the set the domain of the map ``constraint``].+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return xref:update_map[the map ``constraint`` with the value for ``typeId~param~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~arg'~``].
-  ... Else if let ``+TYPEDEF+`` ``++_++`` ``typeIR~param~`` be ``typeIR``:
-   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg'~)]``.
-  ... Else if let ``+TYPE+`` ``typeId`` ``typeIR~param~`` be ``typeIR``:
-   .... Let!~type~ ``+TYPE+`` ``typeId'`` ``typeIR~arg~`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
-  ... Else if let ``+LIST+`` ``+`<+`` ``typeIR~param~`` ``+`>+`` be ``typeIR``:
-   .... Let!~type~ ``+LIST+`` ``+`<+`` ``typeIR~arg~`` ``+`>+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
-  ... Else if let ``+TUPLE+`` ``+`<+`` ``typeIR~param~^{asterisk}^`` ``+`>+`` be ``typeIR``:
-   .... Let!~type~ ``+TUPLE+`` ``+`<+`` ``typeIR~arg~^{asterisk}^`` ``+`>+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
-  ... Else if let ``+ARRAY+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR``:
-   .... Let!~type~ ``+ARRAY+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``n~size~`` is equal to ``n~size'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
-  ... Else if let ``+HEADER_STACK+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR``:
-   .... Let!~type~ ``+HEADER_STACK+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``n~size~`` is equal to ``n~size'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
-  ... Else if let ``+STRUCT+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
-   .... Let!~type~ ``+STRUCT+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
-  ... Else if let ``+HEADER+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
-   .... Let!~type~ ``+HEADER+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
-  ... Else if let ``+HEADER_UNION+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
-   .... Let!~type~ ``+HEADER_UNION+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
-  ... Else if let ``+EXTERN+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
-   .... Let!~type~ ``+EXTERN+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
-  ... Else if let ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` be ``typeIR``:
-   .... Let!~type~ ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
---
-+
-Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
---
-+
-Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
-  ... Else if let ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` be ``typeIR``:
-   .... Let!~type~ ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
---
-+
-Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
-+
---
-    ***** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
---
-+
-Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Check that ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
-  ... Else:
-   .... Let ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~param~^{asterisk}^`` ``+`}+`` be ``typeIR``.
-   .... Let!~type~ ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~arg~^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1-b">else #1-b</a>]</sub>+++
-   .... Return ``xref:gen_constraints[$gen_constraints(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
- .. {empty}+++<span class="bk-arm-anchor" id="bk-gen_constraint-1-b"></span>+++
-  ... Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~arg~`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1">fail #1</a>]</sub>+++
-  ... Check that ``typeIR`` does not have type ``nameTypeIR``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1">fail #1</a>]</sub>+++
-  ... Check that ``typeIR`` does not have type ``typedefTypeIR``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint-1">fail #1</a>]</sub>+++
-  ... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR,`` ``typeIR~arg~)]``.
-
-. Otherwise: return ``constraint``.
-
-xref:gen_constraints[$gen_constraints(constraint, typeIR~param~^{asterisk}^, typeIR~arg~^{asterisk}^)]
+xref:gen_constraint[$gen_constraint(constraint, typeIR~param~^{asterisk}^, typeIR~arg~^{asterisk}^)]
 
 . Check that the length of ``typeIR~arg~^{asterisk}^`` is equal to the length of ``typeIR~param~^{asterisk}^``.
 . For each ``typeIR~arg~`` in ``typeIR~arg~^{asterisk}^`` and ``typeIR~param~`` in ``typeIR~param~^{asterisk}^``:
 +
 --
- ** Let ``constraint~pair~`` be ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
+ ** Let ``constraint~pair~`` be ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
 --
 +
 Let ``constraint~pair~^{asterisk}^`` be the resulting list.
 . Return ``xref:merge_constraints[$merge_constraints(constraint,`` ``constraint~pair~^{asterisk}^)]``.
+
+xref:gen_constraint_pair[$gen_constraint_pair(constraint, typeIR, typeIR~arg'~)]
+
+. Try pass:[<strong id="bk-gen_constraint_pair-1" class="bk-label">#1</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-gen_constraint_pair-1-a"></span>+++
+  ... If let ``typeId~param~`` be ``typeIR``:
+   .... Check that xref:in_set[``typeId~param~`` is an element of the set the domain of the map ``constraint``].+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return xref:update_map[the map ``constraint`` with the value for ``typeId~param~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~arg'~``].
+  ... Else if let ``+TYPEDEF+`` ``++_++`` ``typeIR~param~`` be ``typeIR``:
+   .... Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg'~)]``.
+  ... Else if let ``+TYPE+`` ``typeId`` ``typeIR~param~`` be ``typeIR``:
+   .... Let!~type~ ``+TYPE+`` ``typeId'`` ``typeIR~arg~`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
+  ... Else if let ``+LIST+`` ``+`<+`` ``typeIR~param~`` ``+`>+`` be ``typeIR``:
+   .... Let!~type~ ``+LIST+`` ``+`<+`` ``typeIR~arg~`` ``+`>+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
+  ... Else if let ``+TUPLE+`` ``+`<+`` ``typeIR~param~^{asterisk}^`` ``+`>+`` be ``typeIR``:
+   .... Let!~type~ ``+TUPLE+`` ``+`<+`` ``typeIR~arg~^{asterisk}^`` ``+`>+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
+  ... Else if let ``+ARRAY+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR``:
+   .... Let!~type~ ``+ARRAY+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``n~size~`` is equal to ``n~size'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
+  ... Else if let ``+HEADER_STACK+`` ``typeIR~param~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR``:
+   .... Let!~type~ ``+HEADER_STACK+`` ``typeIR~arg~`` ``+`[+`` ``n~size'~`` ``+`]+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``n~size~`` is equal to ``n~size'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR~param~,`` ``typeIR~arg~)]``.
+  ... Else if let ``+STRUCT+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
+   .... Let!~type~ ``+STRUCT+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
+  ... Else if let ``+HEADER+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
+   .... Let!~type~ ``+HEADER+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
+  ... Else if let ``+HEADER_UNION+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
+   .... Let!~type~ ``+HEADER_UNION+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
+  ... Else if let ``+EXTERN+`` ``typeId`` ``+`<+`` ``typeIR~arg_a~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``:
+   .... Let!~type~ ``+EXTERN+`` ``typeId'`` ``+`<+`` ``typeIR~arg_b~^{asterisk}^`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``typeId`` is equal to ``typeId'``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~arg_a~^{asterisk}^,`` ``typeIR~arg_b~^{asterisk}^)]``.
+  ... Else if let ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` be ``typeIR``:
+   .... Let!~type~ ``+PARSER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
++
+--
+    ***** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
+--
++
+Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
++
+--
+    ***** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
+--
++
+Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
+  ... Else if let ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~param~^{asterisk}^`` ``+`)+`` be ``typeIR``:
+   .... Let!~type~ ``+CONTROL+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`(+`` ``parameterIR~arg~^{asterisk}^`` ``+`)+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... For each ``parameterIR~param~`` in ``parameterIR~param~^{asterisk}^``:
++
+--
+    ***** Let ``++_++`` ``direction`` ``typeIR~param~`` ``++_++`` ``++_++`` be ``parameterIR~param~``.
+--
++
+Let ``direction^{asterisk}^`` and ``typeIR~param~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... For each ``parameterIR~arg~`` in ``parameterIR~arg~^{asterisk}^``:
++
+--
+    ***** Let ``++_++`` ``direction'`` ``typeIR~arg~`` ``++_++`` ``++_++`` be ``parameterIR~arg~``.
+--
++
+Let ``direction'^{asterisk}^`` and ``typeIR~arg~^{asterisk}^`` be the resulting lists.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that the length of ``direction^{asterisk}^`` is equal to the length of ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Check that ``direction'`` is equal to ``direction``, for all ``direction`` in ``direction^{asterisk}^`` and ``direction'`` in ``direction'^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
+  ... Else:
+   .... Let ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~param~^{asterisk}^`` ``+`}+`` be ``typeIR``.
+   .... Let!~type~ ``+PACKAGE+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``typeIR~arg~^{asterisk}^`` ``+`}+`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1-b">else #1-b</a>]</sub>+++
+   .... Return ``xref:gen_constraint[$gen_constraint(constraint,`` ``typeIR~param~^{asterisk}^,`` ``typeIR~arg~^{asterisk}^)]``.
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-gen_constraint_pair-1-b"></span>+++
+  ... Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~arg~`` be ``typeIR~arg'~``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1">fail #1</a>]</sub>+++
+  ... Check that ``typeIR`` does not have type ``nameTypeIR``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1">fail #1</a>]</sub>+++
+  ... Check that ``typeIR`` does not have type ``typedefTypeIR``.+++<sub class="bk-mark">[<a href="#bk-gen_constraint_pair-1">fail #1</a>]</sub>+++
+  ... Return ``xref:gen_constraint_pair[$gen_constraint_pair(constraint,`` ``typeIR,`` ``typeIR~arg~)]``.
+
+. Otherwise: return ``constraint``.
 
 xref:merge_constraint[$merge_constraint(constraint~pre~, constraint~post~)]
 
@@ -14765,7 +14786,7 @@ xref:merge_constraints[$merge_constraints(constraint~pre~, constraint^{asterisk}
  .. Let ``constraint~pre_2~`` be ``xref:merge_constraints[$merge_constraints(constraint~pre_1~,`` ``constraint~post_t~^{asterisk}^)]``.
  .. Return ``constraint~pre_2~``.
 
-xref:resolve_constraint[$resolve_constraint(set<pair<typeId, infer>>)]
+xref:resolve_constraint[$resolve_constraint(strictness, set<pair<typeId, infer>>)]
 
 . Try pass:[<strong id="bk-resolve_constraint-1" class="bk-label">#1</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-resolve_constraint-1-a"></span>+++
@@ -14775,12 +14796,13 @@ xref:resolve_constraint[$resolve_constraint(set<pair<typeId, infer>>)]
   ... Let ``+`{+`` ``pair<typeId,`` ``infer>^{asterisk}^`` ``+`}+`` be ``set<pair<typeId,`` ``infer>>``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
   ... Let!~type~ ``typeId~h~`` ``+':'+`` ``infer~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+':'+`` ``infer~t~`` ``)^{asterisk}^`` be ``pair<typeId,`` ``infer>^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
   ... If let ``+KNOWN+`` ``+AS+`` ``typeIR~h~`` be ``infer~h~``:
-   .... Let ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+`}+`` be ``xref:resolve_constraint[$resolve_constraint(+`{+`` ``(`` ``typeId~t~`` ``+':'+`` ``infer~t~`` ``)^{asterisk}^`` ``+`}+)]``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Let ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+`}+`` be ``xref:resolve_constraint[$resolve_constraint(strictness,`` ``+`{+`` ``(`` ``typeId~t~`` ``+':'+`` ``infer~t~`` ``)^{asterisk}^`` ``+`}+)]``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
    .... Check that the length of ``typeId~t~^{asterisk}^`` is equal to the length of ``typeId^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
    .... Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId~t~`` in ``typeId~t~^{asterisk}^`` and ``typeId`` in ``typeId^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
    .... Return ``+`{+`` ``typeId~h~`` ``+':'+`` ``typeIR~h~`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+':'+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+`}+``.
   ... Else:
-   .... Let ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+`}+`` be ``xref:resolve_constraint[$resolve_constraint(+`{+`` ``(`` ``typeId~t~`` ``+':'+`` ``infer~t~`` ``)^{asterisk}^`` ``+`}+)]``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Check that xref:find_map[the value of ``typeId~h~`` in map ``strictness``] is equal to ``+LAX+``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
+   .... Let ``+`{+`` ``(`` ``typeId`` ``+':'+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+`}+`` be ``xref:resolve_constraint[$resolve_constraint(strictness,`` ``+`{+`` ``(`` ``typeId~t~`` ``+':'+`` ``infer~t~`` ``)^{asterisk}^`` ``+`}+)]``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
    .... Check that the length of ``typeId~t~^{asterisk}^`` is equal to the length of ``typeId^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
    .... Check that ``typeId`` is equal to ``typeId~t~``, for all ``typeId~t~`` in ``typeId~t~^{asterisk}^`` and ``typeId`` in ``typeId^{asterisk}^``.+++<sub class="bk-mark">[<a href="#bk-resolve_constraint-1">fail #1</a>]</sub>+++
    .... Return ``+`{+`` ``typeId~h~`` ``+':'+`` ``+BOOL+`` ``{two-colons}`` ``(`` ``typeId~t~`` ``+':'+`` ``typeIR~t~`` ``)^{asterisk}^`` ``+`}+``.
@@ -16751,7 +16773,7 @@ xref:Constructor_call[Instantiating ``externObjectConstructorDef`` ``+`<+`` ``ty
 . Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta`` be ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta``.
-. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . For each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``:
 +
 --
@@ -16811,7 +16833,7 @@ xref:Constructor_call[Instantiating ``parserObjectConstructorDef`` ``+`<+`` ``ty
 . Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta~parser~`` be ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta~parser~``.
-. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . For each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``:
 +
 --
@@ -16836,7 +16858,7 @@ xref:Constructor_call[Instantiating ``controlObjectConstructorDef`` ``+`<+`` ``t
 . Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``theta~control~`` be ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``theta~control~``.
-. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . For each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``:
 +
 --
@@ -16868,7 +16890,7 @@ xref:Constructor_call[Instantiating ``packageObjectConstructorDef`` ``+`<+`` ``t
 . Let ``IC~callee_0~`` be xref:inherit_i[an instantiation context same as ``IC`` up to the ``+GLOBAL+`` layer].
 . Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``IC~callee_1~`` be ``IC~callee_0~`` with ``+BLOCK+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
-. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``constructorParameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``constructorParameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``constructorParameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . For each ``constructorParameterIR~aligned~`` in ``constructorParameterIR~aligned~^{asterisk}^``:
 +
 --
@@ -19219,7 +19241,7 @@ xref:Call_eval[Calling ``actionCallee`` ``+`<+`` ``·`` ``+`>+`` ``+`(+`` ``argu
 
 . Let ``+ACTION+`` ``p~shared~`` ``+'.'+`` ``nameIR`` ``+`(+`` ``parameterIR^{asterisk}^`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+`)+`` ``blockStatementIR`` be ``actionCallee``.
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``p~shared~`` layer].
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_1~``,  and copy-in result ``copyInResult`` be the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+LOCAL+`` of ``EC~callee_0~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``exitResult`` be ``copyInResult``:
  .. The result is context ``EC~1~``, state ``ARCH~1~``, and call result ``+EXIT+``.
@@ -19242,7 +19264,7 @@ xref:Call_eval[Calling ``definedFunctionCallee`` ``+`<+`` ``typeArgumentIR^{aste
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
 . Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+LOCAL+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
 . Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+LOCAL+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``abortResult`` be ``copyInResult``:
@@ -19260,7 +19282,7 @@ xref:Call_eval[Calling ``externFunctionCallee`` ``+`<+`` ``typeArgumentIR^{aster
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
 . Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~`` with ``+LOCAL+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
 . Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``abortResult`` be ``copyInResult``:
@@ -19455,7 +19477,7 @@ xref:Call_eval[Calling ``externMethodCallee`` ``+`<+`` ``typeArgumentIR^{asteris
  .. Let ``EC~callee_2~`` be ``EC~callee_1~`` with ``+BLOCK+.+FRAME+`` set to ``frame``.
  .. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
  .. Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``+LOCAL+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
- .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
  .. Let ``p~shared~`` be ``+GLOBAL+``.
  .. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_4~``,  and copy-in result ``copyInResult`` be the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
  .. If let ``abortResult`` be ``copyInResult``:
@@ -19472,7 +19494,7 @@ xref:Call_eval[Calling ``externMethodCallee`` ``+`<+`` ``typeArgumentIR^{asteris
  .. Let ``EC~callee_2~`` be ``EC~callee_1~`` with ``+BLOCK+.+FRAME+`` set to ``frame``.
  .. Check that the length of ``typeArgumentIR^{asterisk}^`` is equal to the length of ``typeParameterIR^{asterisk}^``.
  .. Let ``EC~callee_3~`` be ``EC~callee_2~`` with ``+LOCAL+.+TYPE+`` set to ``+`{+`` ``(`` ``typeParameterIR`` ``+':'+`` ``typeArgumentIR`` ``)^{asterisk}^`` ``+`}+``.
- .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
+ .. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterIR^{asterisk}^`` with ``argumentIR^{asterisk}^`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``id~optional~^{asterisk}^``].
  .. Let ``p~shared~`` be ``+GLOBAL+``.
  .. Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_4~``,  and copy-in result ``copyInResult`` be the result of xref:Copy_in[copy-in from ``argumentIR^{asterisk}^`` at ``+LOCAL+`` of ``EC~callee_3~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
  .. If let ``abortResult`` be ``copyInResult``:
@@ -19500,7 +19522,7 @@ xref:Call_eval[Calling ``parserApplyMethodCallee`` ``+`<+`` ``typeArgumentListIR
 . Let ``+PARSER+`` ``++_++`` ``+'.'+`` ``+APPLY+`` ``+`(+`` ``parameterListIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+`)+`` ``+`{+`` ``theta`` ``+';'+`` ``frame`` ``+';'+`` ``parserLocalDeclarationListIR`` ``+';'+`` ``stateEnv`` ``+`}+`` be ``parserApplyMethodCallee``.
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
 . Let ``EC~callee_1~`` be ``EC~callee_0~[+BLOCK+.+TYPE+`` ``=`` ``theta][+BLOCK+.+FRAME+`` ``=`` ``frame]`` with ``+BLOCK+.+STATE+`` set to ``stateEnv``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterListIR`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterListIR`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
 . Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+BLOCK+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``rejectTransitionResult`` be ``copyInResult``:
@@ -19526,7 +19548,7 @@ xref:Call_eval[Calling ``controlApplyMethodCallee`` ``+`<+`` ``typeArgumentListI
 . Let ``EC~callee_0~`` be xref:inherit_e[copy of ``EC~0~`` from the ``+GLOBAL+`` layer].
 . Let ``+`{+`` ``(`` ``callableId`` ``+':'+`` ``actionDef`` ``)^{asterisk}^`` ``+`}+`` be ``actionDefEnv``.
 . Let ``EC~callee_1~`` be ``EC~callee_0~[+BLOCK+.+TYPE+`` ``=`` ``theta][+BLOCK+.+FRAME+`` ``=`` ``frame]`` with ``+BLOCK+.+CALLABLE+`` set to ``+`{+`` ``(`` ``callableId`` ``+':'+`` ``actionDef`` ``)^{asterisk}^`` ``+`}+``.
-. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterListIR`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
+. Let ``+GIVEN+`` ``parameterIR~aligned~^{asterisk}^`` ``+DEFAULT+`` ``parameterIR~default~^{asterisk}^`` ``+OPTIONAL+`` ``++_++^{asterisk}^`` be xref:align_parameterListIR[aligning ``parameterListIR`` with ``argumentListIR`` where defaults are ``id~default~^{asterisk}^`` and optionals are ``·``].
 . Let ``p~shared~`` be ``+GLOBAL+``.
 . Let state ``ARCH~1~``,  caller's context ``EC~1~``,  callee's context ``EC~callee_2~``,  and copy-in result ``copyInResult`` be the result of xref:Copy_in[copy-in from ``argumentListIR`` at ``+BLOCK+`` of ``EC~callee_1~`` to ``parameterIR~aligned~^{asterisk}^`` in ``p`` at ``EC~0~``, under state ``ARCH~0~`` at shared ``p~shared~``].
 . If let ``exitResult`` be ``copyInResult``:

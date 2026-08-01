@@ -133,10 +133,11 @@ rulegroup Inst_ok {
     ---- ;; unpack constructor type
     -- if CONSTRUCTOR `( parameterIR* `) ':' typeIR_object = constructorTypeIR
     ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned* DEFAULT _
+    -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
-    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if inference
+        = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
     -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred
@@ -166,10 +167,11 @@ rulegroup Inst_ok {
     ---- ;; unpack constructor type
     -- if CONSTRUCTOR `( parameterIR* `) ':' typeIR_object = constructorTypeIR
     ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned* DEFAULT _
+    -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
-    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if inference
+        = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
     -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred

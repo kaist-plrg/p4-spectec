@@ -261,7 +261,7 @@ rule Call_ok/actionTypeIR:
         : VOID `< eps `> `( argumentIR_cast* `)
   -- if _ ACTION _ `( parameterIR* `) = actionTypeIR
   ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _
+  -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL _
       = $align_parameterListIR(
           parameterIR*, argumentIR*, id_default*, id_optional*)
   ---- ;; check call site
@@ -295,10 +295,11 @@ rule Call_ok/definedFunctionTypeIR:
   -- if FUNCTION nameIR `( parameterIR* `) ':' typeIR_ret
       = definedFunctionTypeIR
   ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _
+  -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
   ---- ;; perform type inference
-  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if inference
+      = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
   -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
   ---- ;; substitute inferred types
   -- if (parameterIR_aligned_inferred
@@ -349,10 +350,11 @@ rule Call_ok/externFunctionTypeIR:
   -- if EXTERN_FUNCTION nameIR `( parameterIR* `) ':' typeIR_ret
       = externFunctionTypeIR
   ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _
+  -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
   ---- ;; perform type inference
-  -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+  -- if inference
+      = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
   -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
   ---- ;; substitute inferred types
   -- if (parameterIR_aligned_inferred
@@ -387,7 +389,7 @@ rule Call_ok/builtinMethodTypeIR:
   -- if (parameterIR*, typeIR_ret)
       = $signature_of_builtinMethodTypeIR(builtinMethodTypeIR)
   ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _
+  -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL _
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
   ---- ;; check call convention
   -- Call_convention_ok:
@@ -417,10 +419,11 @@ rulegroup Call_ok/externMethodTypeIR {
     -- if EXTERN_METHOD nameIR `( parameterIR* `) ':' typeIR_ret
         = externMethodTypeIR
     ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned* DEFAULT _
+    -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
-    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if inference
+        = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
     -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred
@@ -446,10 +449,11 @@ rulegroup Call_ok/externMethodTypeIR {
     -- if EXTERN_METHOD ABSTRACT nameIR `( parameterIR* `) ':' typeIR_ret
         = externMethodTypeIR
     ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned* DEFAULT _
+    -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
-    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if inference
+        = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
     -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred
@@ -490,7 +494,7 @@ rule Call_ok/parserApplyMethodTypeIR:
   -- if PARSER_APPLY `( parameterIR* `)
       = parserApplyMethodTypeIR
   ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _
+  -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL _
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
   ---- ;; check call site
   -- if $callable_parserApplyMethod(p, TC)
@@ -518,7 +522,7 @@ rule Call_ok/controlApplyMethodTypeIR:
   -- if CONTROL_APPLY `( parameterIR* `)
       = controlApplyMethodTypeIR
   ---- ;; align parameters with arguments
-  -- if GIVEN parameterIR_aligned* DEFAULT _ 
+  -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL _
       = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
   ---- ;; check call site
   -- if $callable_controlApplyMethod(p, TC)

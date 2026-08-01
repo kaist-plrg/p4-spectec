@@ -3483,6 +3483,10 @@ def $free_parameterIR(parameterIR) : bound =
 
   clause 0 : (_annotationList _direction typeIR _id _parameterInitializerOptIR) = $free_typeIR(typeIR)
 
+def $free_parameterIRs(parameterIR*) : bound =
+
+  clause 0 : (parameterIR*{parameterIR <- parameterIR*}) = $unions_set<typeId>($free_parameterIR(parameterIR)*{parameterIR <- parameterIR*})
+
 def $free_callableTypeIR(callableTypeIR) : bound =
 
   clause 0 : (_annotationList ACTION _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) as callableTypeIR) = B_params
@@ -5595,11 +5599,11 @@ def $partition_parameterListIR(parameterIR*, nameIR*, nameIR*) : (parameterIR*, 
   -- if ~nameIR_h <- nameIR_optional*{nameIR_optional <- nameIR_optional*}
 
 syntax callAlign = 
-   | GIVEN parameterIR* DEFAULT parameterIR* (from callAlign) 
+   | GIVEN parameterIR* DEFAULT parameterIR* OPTIONAL parameterIR* (from callAlign) 
 
 def $align_parameterListIR(parameterIR*, argumentIR*, nameIR*, nameIR*) : callAlign =
 
-  clause 0 : (parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}) = GIVEN parameterIR_given_aligned*{parameterIR_given_aligned <- parameterIR_given_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*}
+  clause 0 : (parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}) = GIVEN parameterIR_given_aligned*{parameterIR_given_aligned <- parameterIR_given_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}
   -- if ((parameterIR_given*{parameterIR_given <- parameterIR_given*}, parameterIR_default*{parameterIR_default <- parameterIR_default*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}) = $partition_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, nameIR_default*{nameIR_default <- nameIR_default*}, nameIR_optional*{nameIR_optional <- nameIR_optional*}))
   -- (if (_annotationList _direction _typeIR nameIR_given _parameterInitializerOptIR = parameterIR_given))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, nameIR_given <- nameIR_given*, parameterIR_given <- parameterIR_given*}
   -- if (parameterIR_given_aligned*{parameterIR_given_aligned <- parameterIR_given_aligned*} = $align_parameterListIR_given(`{ nameIR_given ':' parameterIR_given*{nameIR_given <- nameIR_given*, parameterIR_given <- parameterIR_given*} `}, parameterIR_given*{parameterIR_given <- parameterIR_given*}, argumentIR*{argumentIR <- argumentIR*}))
@@ -9103,7 +9107,7 @@ relation Expr_eval_lctk: cursor typingContext |- typedExpressionIR ~> value
     -- if (EXTERN_FUNCTION "static_assert" `( parameterIR*{parameterIR <- parameterIR*} `) ':' BOOL as typeIR = externFunctionTypeIR)
     -- (if (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR = parameterIR))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, nameIR_param <- nameIR_param*, parameterIR <- parameterIR*}
     -- if (TC_callee_0 = $empty_typingContext)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT [] = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT [] OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (Argument_eval_lctk: p TC |- argumentIR ~> value_argument)*{argumentIR <- argumentIR*, value_argument <- value_argument*}
     -- (if (_annotationList' direction_param_aligned typeIR_param_aligned nameIR_param_aligned _parameterInitializerOptIR' = parameterIR_aligned))*{_annotationList' <- _annotationList'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, direction_param_aligned <- direction_param_aligned*, nameIR_param_aligned <- nameIR_param_aligned*, parameterIR_aligned <- parameterIR_aligned*, typeIR_param_aligned <- typeIR_param_aligned*}
     -- (if (varTypeIR = direction_param_aligned typeIR_param_aligned LCTK ?(value_argument)))*{direction_param_aligned <- direction_param_aligned*, typeIR_param_aligned <- typeIR_param_aligned*, value_argument <- value_argument*, varTypeIR <- varTypeIR*}
@@ -11907,7 +11911,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rule actionTypeIR: p TC |- actionTypeIR as callableTypeIR `< [] '#' [] `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : VOID as typeIR `< [] `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (_annotationList ACTION _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) = actionTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if $callable_action(p, TC)
     -- Call_convention_ok: p TC ACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
@@ -11915,8 +11919,8 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rule definedFunctionTypeIR: p TC |- definedFunctionTypeIR as callableTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_ret_inferred `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (FUNCTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = definedFunctionTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
-    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
     -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred <- typeArgumentIR_inferred*}
     -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred <- parameterIR_aligned_inferred*}
     -- if (typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret))
@@ -11930,8 +11934,8 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rule externFunctionTypeIR: p TC |- externFunctionTypeIR as callableTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_ret_inferred `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (EXTERN_FUNCTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externFunctionTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
-    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
     -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred <- typeArgumentIR_inferred*}
     -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred <- parameterIR_aligned_inferred*}
     -- if (typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret))
@@ -11945,15 +11949,15 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rule builtinMethodTypeIR: p TC |- builtinMethodTypeIR as callableTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' [] `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_ret `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if ((parameterIR*{parameterIR <- parameterIR*}, typeIR_ret) = $signature_of_builtinMethodTypeIR(builtinMethodTypeIR))
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
   rulegroup externMethodTypeIR
 
     rule non-abstract: p TC |- externMethodTypeIR as callableTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_ret_inferred `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (EXTERN_METHOD nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
-    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
     -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred <- typeArgumentIR_inferred*}
     -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred <- parameterIR_aligned_inferred*}
     -- if (typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret))
@@ -11965,8 +11969,8 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rule abstract: p TC |- externMethodTypeIR as callableTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_ret_inferred `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (EXTERN_METHOD ABSTRACT nameIR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_ret = externMethodTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
-    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
     -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred <- typeArgumentIR_inferred*}
     -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred <- parameterIR_aligned_inferred*}
     -- if (typeIR_ret_inferred = $subst_typeIR(inference, typeIR_ret))
@@ -11980,7 +11984,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rule parserApplyMethodTypeIR: p TC |- parserApplyMethodTypeIR as callableTypeIR `< [] '#' [] `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : VOID as typeIR `< [] `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (PARSER_APPLY `( parameterIR*{parameterIR <- parameterIR*} `) = parserApplyMethodTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if $callable_parserApplyMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
@@ -11988,7 +11992,7 @@ relation Call_ok: cursor typingContext |- callableTypeIR `< typeArgumentListIR '
 
     rule controlApplyMethodTypeIR: p TC |- controlApplyMethodTypeIR as callableTypeIR `< [] '#' [] `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : VOID as typeIR `< [] `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (CONTROL_APPLY `( parameterIR*{parameterIR <- parameterIR*} `) = controlApplyMethodTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL _parameterIR'*{_parameterIR' <- _parameterIR'*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if $callable_controlApplyMethod(p, TC)
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
 
@@ -12029,8 +12033,8 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR `< typeArgu
 
     rule package: p TC instctxt |- constructorTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_object_inferred `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (CONSTRUCTOR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_object = constructorTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
-    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
     -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred <- typeArgumentIR_inferred*}
     -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred <- parameterIR_aligned_inferred*}
     -- if (typeIR_object_inferred = $subst_typeIR(inference, typeIR_object))
@@ -12044,8 +12048,8 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR `< typeArgu
 
     rule non-package: p TC instctxt |- constructorTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_object_inferred `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
     -- if (CONSTRUCTOR `( parameterIR*{parameterIR <- parameterIR*} `) ':' typeIR_object = constructorTypeIR)
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
-    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, argumentIR*{argumentIR <- argumentIR*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT _parameterIR*{_parameterIR <- _parameterIR*} OPTIONAL parameterIR_optional*{parameterIR_optional <- parameterIR_optional*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (inference = $infer(typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}))
     -- (if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR)))*{typeArgumentIR <- typeArgumentIR*, typeArgumentIR_inferred <- typeArgumentIR_inferred*}
     -- (if (parameterIR_aligned_inferred = $subst_parameterIR(inference, parameterIR_aligned)))*{parameterIR_aligned <- parameterIR_aligned*, parameterIR_aligned_inferred <- parameterIR_aligned_inferred*}
     -- if (typeIR_object_inferred = $subst_typeIR(inference, typeIR_object))
@@ -13217,6 +13221,16 @@ relation ControlLocalDecls_ok: typingContext |- controlLocalDeclaration* : typin
     -- ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration_h : TC_1 controlLocalDeclarationIR_h
     -- ControlLocalDecls_ok: TC_1 |- controlLocalDeclaration_t*{controlLocalDeclaration_t <- controlLocalDeclaration_t*} : TC_2 controlLocalDeclarationIR_t*{controlLocalDeclarationIR_t <- controlLocalDeclarationIR_t*}
 
+syntax strict = 
+   | STRICT (from strict) 
+   | LAX (from strict) 
+
+syntax strictness = map<typeId, strict>
+
+def $empty_strictness(typeId*) : strictness =
+
+  clause 0 : (typeId*{typeId <- typeId*}) = `{ typeId ':' STRICT*{typeId <- typeId*} `}
+
 syntax infer = 
    | KNOWN AS typeIR (from infer) 
    | UNKNOWN (from infer) 
@@ -13229,25 +13243,31 @@ def $empty_constraint(typeId*) : constraint =
 
 syntax inference = map<typeId, typeIR>
 
-def $infer(typeId*, parameterIR*, argumentIR*) : inference =
+def $infer(typeId*, parameterIR*, parameterIR*, argumentIR*) : inference =
 
-  clause 0 : ([], parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}) = $empty_map<typeId, typeIR>
+  clause 0 : ([], parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}) = $empty_map<typeId, typeIR>
 
-  clause 1 : (typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}) = inference_resolved
+  clause 1 : (typeId_infer*{typeId_infer <- typeId_infer*}, parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*}) = inference_resolved
   -- if (typeId_infer*{typeId_infer <- typeId_infer*} =/= [])
+  -- if (strictness_init = $empty_strictness(typeId_infer*{typeId_infer <- typeId_infer*}))
+  -- if (B = $free_parameterIRs(parameterIR*{parameterIR <- parameterIR*}))
+  -- if (B_optional = $free_parameterIRs(parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}))
+  -- if (`{ typeId_free*{typeId_free <- typeId_free*} `} = $diff_set<typeId>(B_optional, B))
+  -- if (strict*{strict <- strict*} = $repeat_<strict>(LAX, |typeId_free*{typeId_free <- typeId_free*}|))
+  -- if (strictness = $adds_map<typeId, strict>(strictness_init, typeId_free*{typeId_free <- typeId_free*}, strict*{strict <- strict*}))
   -- if (constraint_init = $empty_constraint(typeId_infer*{typeId_infer <- typeId_infer*}))
-  -- (if (constraint_pair = $infer'(constraint_init, parameterIR, argumentIR)))*{argumentIR <- argumentIR*, constraint_pair <- constraint_pair*, parameterIR <- parameterIR*}
+  -- (if (constraint_pair = $infer_pair(constraint_init, parameterIR, argumentIR)))*{argumentIR <- argumentIR*, constraint_pair <- constraint_pair*, parameterIR <- parameterIR*}
   -- if (constraint_inferred = $merge_constraints(constraint_init, constraint_pair*{constraint_pair <- constraint_pair*}))
-  -- if (inference = $resolve_constraint(constraint_inferred))
+  -- if (inference = $resolve_constraint(strictness, constraint_inferred))
   -- if (inference_resolved = $resolve_inference(inference))
 
-def $infer'(constraint, parameterIR, argumentIR) : constraint =
+def $infer_pair(constraint, parameterIR, argumentIR) : constraint =
 
-  clause 0 : (constraint, parameterIR, typedExpressionIR as argumentIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 0 : (constraint, parameterIR, typedExpressionIR as argumentIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if (_annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR)
   -- if (typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR))
 
-  clause 1 : (constraint, parameterIR, nameIR '=' typedExpressionIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 1 : (constraint, parameterIR, nameIR '=' typedExpressionIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if (_annotationList _direction typeIR_param _id _parameterInitializerOptIR = parameterIR)
   -- if (typeIR_arg = $type_of_typedExpressionIR(typedExpressionIR))
 
@@ -13268,51 +13288,51 @@ def $resolve_inference'(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
-def $gen_constraint(constraint, typeIR, typeIR) : constraint =
+def $gen_constraint(constraint, typeIR*, typeIR*) : constraint =
+
+  clause 0 : (constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
+  -- (if (constraint_pair = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)))*{constraint_pair <- constraint_pair*, typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*}
+
+def $gen_constraint_pair(constraint, typeIR, typeIR) : constraint =
 
   clause 0 : (constraint, _NAME typeId_param as typeIR, typeIR_arg) = $update_map<typeId, infer>(constraint, typeId_param, KNOWN AS typeIR_arg)
   -- if $in_set<typeId>(typeId_param, $dom_map<typeId, infer>(constraint))
 
-  clause 1 : (constraint, TYPEDEF _typeId typeIR_param as typeIR, typeIR_arg) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 1 : (constraint, TYPEDEF _typeId typeIR_param as typeIR, typeIR_arg) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
 
-  clause 2 : (constraint, typeIR_param, TYPEDEF _typeId typeIR_arg as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 2 : (constraint, typeIR_param, TYPEDEF _typeId typeIR_arg as typeIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
   -- if ~typeIR_param <: nameTypeIR
   -- if ~typeIR_param <: typedefTypeIR
 
-  clause 3 : (constraint, TYPE typeId typeIR_param as typeIR, TYPE typeId typeIR_arg as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 3 : (constraint, TYPE typeId typeIR_param as typeIR, TYPE typeId typeIR_arg as typeIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
 
-  clause 4 : (constraint, LIST `< typeIR_param `> as typeIR, LIST `< typeIR_arg `> as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 4 : (constraint, LIST `< typeIR_param `> as typeIR, LIST `< typeIR_arg `> as typeIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
 
-  clause 5 : (constraint, TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> as typeIR, TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 5 : (constraint, TUPLE `< typeIR_param*{typeIR_param <- typeIR_param*} `> as typeIR, TUPLE `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> as typeIR) = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
-  clause 6 : (constraint, ARRAY typeIR_param `[ n_size `] as typeIR, ARRAY typeIR_arg `[ n_size `] as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 6 : (constraint, ARRAY typeIR_param `[ n_size `] as typeIR, ARRAY typeIR_arg `[ n_size `] as typeIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
 
-  clause 7 : (constraint, HEADER_STACK typeIR_param `[ n_size `] as typeIR, HEADER_STACK typeIR_arg `[ n_size `] as typeIR) = $gen_constraint(constraint, typeIR_param, typeIR_arg)
+  clause 7 : (constraint, HEADER_STACK typeIR_param `[ n_size `] as typeIR, HEADER_STACK typeIR_arg `[ n_size `] as typeIR) = $gen_constraint_pair(constraint, typeIR_param, typeIR_arg)
 
-  clause 8 : (constraint, STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR, STRUCT typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 8 : (constraint, STRUCT typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR, STRUCT typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR) = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
 
-  clause 9 : (constraint, HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR, HEADER typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 9 : (constraint, HEADER typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR, HEADER typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR) = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
 
-  clause 10 : (constraint, HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR, HEADER_UNION typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 10 : (constraint, HEADER_UNION typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR, HEADER_UNION typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _fieldTypeIR'*{_fieldTypeIR' <- _fieldTypeIR'*} `} as typeIR) = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
 
-  clause 11 : (constraint, EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} as typeIR, EXTERN typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} `} as typeIR) = $gen_constraints(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
+  clause 11 : (constraint, EXTERN typeId `< typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*} `> `{ _pair<callableId, externMethodTypeDefIR>*{_pair<callableId, externMethodTypeDefIR> <- _pair<callableId, externMethodTypeDefIR>*} `} as typeIR, EXTERN typeId `< typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*} `> `{ _pair<callableId, externMethodTypeDefIR>'*{_pair<callableId, externMethodTypeDefIR>' <- _pair<callableId, externMethodTypeDefIR>'*} `} as typeIR) = $gen_constraint(constraint, typeIR_arg_a*{typeIR_arg_a <- typeIR_arg_a*}, typeIR_arg_b*{typeIR_arg_b <- typeIR_arg_b*})
 
-  clause 12 : (constraint, PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR, PARSER _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 12 : (constraint, PARSER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR, PARSER _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR) = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- (if (_annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param))*{_annotationList <- _annotationList*, _id <- _id*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, direction <- direction*, parameterIR_param <- parameterIR_param*, typeIR_param <- typeIR_param*}
   -- (if (_annotationList' direction typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg))*{_annotationList' <- _annotationList'*, _id' <- _id'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, direction <- direction*, parameterIR_arg <- parameterIR_arg*, typeIR_arg <- typeIR_arg*}
 
-  clause 13 : (constraint, CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR, CONTROL _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 13 : (constraint, CONTROL _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `( parameterIR_param*{parameterIR_param <- parameterIR_param*} `) as typeIR, CONTROL _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `( parameterIR_arg*{parameterIR_arg <- parameterIR_arg*} `) as typeIR) = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
   -- (if (_annotationList direction typeIR_param _id _parameterInitializerOptIR = parameterIR_param))*{_annotationList <- _annotationList*, _id <- _id*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, direction <- direction*, parameterIR_param <- parameterIR_param*, typeIR_param <- typeIR_param*}
   -- (if (_annotationList' direction typeIR_arg _id' _parameterInitializerOptIR' = parameterIR_arg))*{_annotationList' <- _annotationList'*, _id' <- _id'*, _parameterInitializerOptIR' <- _parameterInitializerOptIR'*, direction <- direction*, parameterIR_arg <- parameterIR_arg*, typeIR_arg <- typeIR_arg*}
 
-  clause 14 : (constraint, PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} as typeIR, PACKAGE _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} as typeIR) = $gen_constraints(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
+  clause 14 : (constraint, PACKAGE _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ typeIR_param*{typeIR_param <- typeIR_param*} `} as typeIR, PACKAGE _typeId' `< _typeArgumentIR'*{_typeArgumentIR' <- _typeArgumentIR'*} `> `{ typeIR_arg*{typeIR_arg <- typeIR_arg*} `} as typeIR) = $gen_constraint(constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*})
 
   clause -1 : (constraint, typeIR_param, typeIR_arg) = constraint
-
-def $gen_constraints(constraint, typeIR*, typeIR*) : constraint =
-
-  clause 0 : (constraint, typeIR_param*{typeIR_param <- typeIR_param*}, typeIR_arg*{typeIR_arg <- typeIR_arg*}) = $merge_constraints(constraint, constraint_pair*{constraint_pair <- constraint_pair*})
-  -- (if (constraint_pair = $gen_constraint(constraint, typeIR_param, typeIR_arg)))*{constraint_pair <- constraint_pair*, typeIR_arg <- typeIR_arg*, typeIR_param <- typeIR_param*}
 
 def $merge_constraint(constraint, constraint) : constraint =
 
@@ -13361,17 +13381,18 @@ def $merge_constraints(constraint, constraint*) : constraint =
   -- if (constraint_pre_1 = $merge_constraint(constraint_pre_0, constraint_post_h))
   -- if (constraint_pre_2 = $merge_constraints(constraint_pre_1, constraint_post_t*{constraint_post_t <- constraint_post_t*}))
 
-def $resolve_constraint(constraint) : inference =
+def $resolve_constraint(strictness, constraint) : inference =
 
-  clause 0 : (`{ [] `}) = `{ [] `}
+  clause 0 : (strictness, `{ [] `}) = `{ [] `}
 
-  clause 1 : (`{ typeId_h ':' infer_h :: typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}) = `{ typeId_h ':' typeIR_h :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
+  clause 1 : (strictness, `{ typeId_h ':' infer_h :: typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}) = `{ typeId_h ':' typeIR_h :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
   -- if (KNOWN AS typeIR_h = infer_h)
-  -- if (`{ typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `} = $resolve_constraint(`{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}))
+  -- if (`{ typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `} = $resolve_constraint(strictness, `{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}))
 
-  clause 2 : (`{ typeId_h ':' infer_h :: typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}) = `{ typeId_h ':' BOOL as typeIR :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
+  clause 2 : (strictness, `{ typeId_h ':' infer_h :: typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}) = `{ typeId_h ':' BOOL as typeIR :: typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `}
   -- if (UNKNOWN = infer_h)
-  -- if (`{ typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `} = $resolve_constraint(`{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}))
+  -- if ($find_map<typeId, strict>(strictness, typeId_h) = ?(LAX))
+  -- if (`{ typeId_t ':' typeIR_t*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `} = $resolve_constraint(strictness, `{ typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} `}))
 
 def $resolve_type_alias(typeIR) : (nameIR, typeIR*) =
 
@@ -14975,7 +14996,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (IC_callee_0 = $inherit_i(GLOBAL, IC))
     -- if (theta = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `})
     -- if (IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta])
-    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (if (_annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -14998,7 +15019,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (IC_callee_0 = $inherit_i(GLOBAL, IC))
     -- if (theta_parser = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `})
     -- if (IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta_parser])
-    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (if (_annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -15016,7 +15037,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (IC_callee_0 = $inherit_i(GLOBAL, IC))
     -- if (theta_control = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `})
     -- if (IC_callee_1 = IC_callee_0[BLOCK.TYPE = theta_control])
-    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (if (_annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -15034,7 +15055,7 @@ relation Constructor_call: cursor instContext store |- constructorDef `< typeArg
     -- if (p_callee = BLOCK)
     -- if (IC_callee_0 = $inherit_i(GLOBAL, IC))
     -- if (IC_callee_1 = IC_callee_0[BLOCK.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN constructorParameterIR_aligned*{constructorParameterIR_aligned <- constructorParameterIR_aligned*} DEFAULT constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(constructorParameterIR*{constructorParameterIR <- constructorParameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- (if (_annotationList _direction _typeIR id_aligned _parameterInitializerOptIR = constructorParameterIR_aligned))*{_annotationList <- _annotationList*, _direction <- _direction*, _parameterInitializerOptIR <- _parameterInitializerOptIR*, _typeIR <- _typeIR*, constructorParameterIR_aligned <- constructorParameterIR_aligned*, id_aligned <- id_aligned*}
     -- Copy_in_inst: STO_0 p IC argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC_callee_1 id_aligned*{id_aligned <- id_aligned*} ~> STO_1 IC_callee_2
     -- Copy_in_inst_default: STO_1 p IC '@' p_callee IC_callee_2 constructorParameterIR_default*{constructorParameterIR_default <- constructorParameterIR_default*} ~> STO_2 IC_callee_3
@@ -16859,13 +16880,13 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     rule copyin-exit: p EC_0 ARCH_0 |- actionCallee as callee '@' `< [] `> `( argumentListIR `) : EC_1 ARCH_1 EXIT as callResult
     -- if (ACTION p_shared '.' nameIR `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = actionCallee)
     -- if (EC_callee_0 = $inherit_e(p_shared, EC_0))
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 '#' EXIT as copyInResult
 
     rule copyin-cont-ActionBody-exit: p EC_0 ARCH_0 |- actionCallee as callee '@' `< [] `> `( argumentListIR `) : EC_2 ARCH_2 EXIT as callResult
     -- if (ACTION p_shared '.' nameIR `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = actionCallee)
     -- if (EC_callee_0 = $inherit_e(p_shared, EC_0))
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_1 ~> EC_callee_2
     -- ActionBody_eval: EC_callee_2 ARCH_1 |- blockStatementIR : EC_callee_3 ARCH_2 EXIT as actionResult
@@ -16874,7 +16895,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     rule return: p EC_0 ARCH_0 |- actionCallee as callee '@' `< [] `> `( argumentListIR `) : EC_2 ARCH_2 RETURN ?() as callResult
     -- if (ACTION p_shared '.' nameIR `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = actionCallee)
     -- if (EC_callee_0 = $inherit_e(p_shared, EC_0))
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_0 argumentListIR ~> ARCH_1 EC_1 EC_callee_1 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_1 ~> EC_callee_2
     -- ActionBody_eval: EC_callee_2 ARCH_1 |- blockStatementIR : EC_callee_3 ARCH_2 RETURN ?() as actionResult
@@ -16886,7 +16907,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (FUNCTION nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = definedFunctionCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' abortResult as copyInResult
 
@@ -16894,7 +16915,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (FUNCTION nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} `) blockStatementIR = definedFunctionCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_2 ~> EC_callee_3
@@ -16907,7 +16928,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EXTERN_FUNCTION nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) = externFunctionCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 '#' abortResult as copyInResult
 
@@ -16915,7 +16936,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EXTERN_FUNCTION nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) = externFunctionCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_2 ~> EC_callee_3
@@ -16926,7 +16947,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EXTERN_FUNCTION nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) = externFunctionCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_2 ~> EC_callee_3
@@ -17064,7 +17085,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
     -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
     -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' abortResult as copyInResult
 
@@ -17074,7 +17095,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
     -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
     -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_4 ~> EC_callee_5
@@ -17087,7 +17108,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
     -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
     -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' abortResult as copyInResult
 
@@ -17097,7 +17118,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
     -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
     -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_4 ~> EC_callee_5
@@ -17110,7 +17131,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta])
     -- if (EC_callee_2 = EC_callee_1[BLOCK.FRAME = frame])
     -- if (EC_callee_3 = EC_callee_2[LOCAL.TYPE = `{ typeParameterIR ':' typeArgumentIR*{typeArgumentIR <- typeArgumentIR*, typeParameterIR <- typeParameterIR*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR*{argumentIR <- argumentIR*}, id_default*{id_default <- id_default*}, id_optional*{id_optional <- id_optional*}))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' LOCAL EC_callee_4 ~> EC_callee_5
@@ -17125,7 +17146,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' rejectTransitionResult as copyInResult
 
@@ -17133,7 +17154,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' BLOCK EC_callee_2 ~> EC_callee_3
@@ -17144,7 +17165,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' BLOCK EC_callee_2 ~> EC_callee_3
@@ -17156,7 +17177,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (PARSER _objectId '.' APPLY `( parameterListIR '#' id_default*{id_default <- id_default*} `) `{ theta ';' frame ';' parserLocalDeclarationListIR ';' stateEnv `} = parserApplyMethodCallee)
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.STATE = stateEnv])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' BLOCK EC_callee_2 ~> EC_callee_3
@@ -17171,7 +17192,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (`{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv)
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' EXIT as copyInResult
 
@@ -17180,7 +17201,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (`{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv)
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' BLOCK EC_callee_2 ~> EC_callee_3
@@ -17192,7 +17213,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (`{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv)
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' BLOCK EC_callee_2 ~> EC_callee_3
@@ -17205,7 +17226,7 @@ relation Call_eval: cursor evalContext arch |- callee '@' `< typeArgumentListIR 
     -- if (EC_callee_0 = $inherit_e(GLOBAL, EC_0))
     -- if (`{ callableId ':' actionDef*{actionDef <- actionDef*, callableId <- callableId*} `} = actionDefEnv)
     -- if (EC_callee_1 = EC_callee_0[BLOCK.TYPE = theta][BLOCK.FRAME = frame][BLOCK.CALLABLE = `{ callableId ':' actionDef as callableDef*{actionDef <- actionDef*, callableId <- callableId*} `}])
-    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
+    -- if (GIVEN parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} DEFAULT parameterIR_default*{parameterIR_default <- parameterIR_default*} OPTIONAL _parameterIR*{_parameterIR <- _parameterIR*} = $align_parameterListIR(parameterListIR, argumentListIR, id_default*{id_default <- id_default*}, []))
     -- if (p_shared = GLOBAL)
     -- Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' BLOCK EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' _CONT storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} as copyInResult
     -- Copy_in_default: parameterIR_default*{parameterIR_default <- parameterIR_default*} '@' BLOCK EC_callee_2 ~> EC_callee_3

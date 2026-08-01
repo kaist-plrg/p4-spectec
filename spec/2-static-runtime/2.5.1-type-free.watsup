@@ -13,6 +13,8 @@ dec $free_typeDefIR(typeDefIR) : bound
 
 dec $free_parameterIR(parameterIR) : bound
   hint(prose_in "free type identifiers in" %0)
+dec $free_parameterIRs(parameterIR*) : bound
+  hint(prose_in "free type identifiers in" %0)
 dec $free_callableTypeIR(callableTypeIR) : bound
   hint(prose_in "free type identifiers in" %0)
 dec $free_callableTypeDefIR(callableTypeDefIR) : bound
@@ -130,6 +132,9 @@ def $free_typeDefIR(typeDefIR)
 ;;
 
 def $free_parameterIR(_ _ typeIR _ _) = $free_typeIR(typeIR)
+
+def $free_parameterIRs(parameterIR*)
+  = $unions_set<typeId>($free_parameterIR(parameterIR)*)
 
 ;;
 ;;;; Free type variables in callable types
