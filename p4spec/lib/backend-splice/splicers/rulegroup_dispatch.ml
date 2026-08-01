@@ -6,12 +6,12 @@ module Key = struct
   type t = string
 
   let to_string (key : t) : string = key
+  let to_anchor = to_string
   let compare = String.compare
   let parse (source : Source.t) : t list = Parser.parse_ids source
 end
 
-(* Prose splicer -- no source counterpart; source is shown by
-   relation-title + rulegroup. *)
+(* Prose splicer *)
 
 module Prose = struct
   type prose = Pl.rel
@@ -20,7 +20,9 @@ module Prose = struct
     type t = prose
 
     let render (values : t list) : string =
-      values |> List.map Pl.Render.render_dispatch |> String.concat "\n\n"
+      values
+      |> List.map Pl.Render.render_defined_rel_def_dispatch
+      |> String.concat "\n\n"
   end
 
   module Init : INIT with type key = Key.t and type value = Value.t = struct
