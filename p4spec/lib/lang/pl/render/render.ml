@@ -1097,12 +1097,7 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
             (alternate hint_in unindent_lines prose_of_exp exps_in)
         in
         let prose_in = Adoc.ser_prose prose_in_typed in
-        if Adoc.width_prose prose_in_typed <= adoc_width_short then
-          F.asprintf "Let %s be the result of %s" prose_out prose_in
-        else
-          F.asprintf "Let %s be\n%sthe result of %s" prose_out
-            (adoc_unordered_bullet level)
-            prose_in
+        F.asprintf "Let %s be the result of %s" prose_out prose_in
     | _ ->
         F.asprintf "Let %s"
           (Adoc.ser_prose
