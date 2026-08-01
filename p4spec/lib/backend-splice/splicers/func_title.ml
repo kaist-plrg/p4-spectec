@@ -6,6 +6,7 @@ module Key = struct
   type t = string
 
   let to_string (key : t) : string = key
+  let to_anchor = to_string
   let compare = String.compare
   let parse (source : Source.t) : t list = Parser.parse_ids source
 end

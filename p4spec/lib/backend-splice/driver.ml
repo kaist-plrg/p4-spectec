@@ -11,6 +11,7 @@ let splicers =
     (module Rel_title.Prose.Splicer : SPLICER);
     (module Rulegroup.Source.Splicer : SPLICER);
     (module Rulegroup.Prose.Splicer : SPLICER);
+    (module Rulegroup_dispatch.Prose.Splicer : SPLICER);
     (module Func_title.Source.Splicer : SPLICER);
     (module Func_title.Prose.Splicer : SPLICER);
     (module Func.Source.Splicer : SPLICER);

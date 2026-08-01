@@ -8,6 +8,7 @@ module type KEY = sig
   type t
 
   val to_string : t -> string
+  val to_anchor : t -> string
   val parse : Source.t -> t list
   val compare : t -> t -> int
 end
@@ -155,7 +156,7 @@ module Make
       if header then
         (keys
         |> List.filter_map (fun key ->
-               if not (S.used !sto key) then Some ("[[" ^ K.to_string key ^ "]]")
+               if not (S.used !sto key) then Some ("[[" ^ K.to_anchor key ^ "]]")
                else None)
         |> String.concat "\n")
         ^ "\n"
