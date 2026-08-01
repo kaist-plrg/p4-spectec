@@ -821,16 +821,23 @@ let rec render_instr ?(level : int = 0)
 and render_instrs ?(level : int = 0) ?(head : Adoc.block option = None)
     ?(backtrack : Backtrack.ctx option = None) (instrs : block) : Adoc.block =
   match instrs with
-  | [
-   ({ node = { it = ReturnI ({ node = { it = BoolE _; _ }; _ } as e); _ }; _ } :
-     instr);
-  ] -> (
-      let p =
-        Adoc.(text " return " ++ code_prose (code_of_exp e) ++ text ".")
+  | [ ({ node = { it = ReturnI exp; _ }; _ } : instr) ]
+    when Adoc.width_prose (prose_of_exp exp) <= adoc_width_short -> (
+      let prose_return =
+        Adoc.(text " return " ++ prose_of_exp exp ++ text ".")
       in
       match head with
-      | Some head -> Adoc.concat_block [ head; Adoc.inline_block p ]
-      | None -> Adoc.inline_block p)
+      | Some head -> Adoc.concat_block [ head; Adoc.inline_block prose_return ]
+      | None -> Adoc.inline_block prose_return)
+  | [ ({ node = { it = ResultI (rel_signature, exps); _ }; hints } : instr) ]
+    when Adoc.width_prose (prose_of_result hints rel_signature exps)
+         <= adoc_width_short -> (
+      let prose_result =
+        Adoc.(text " " ++ prose_of_result hints rel_signature exps)
+      in
+      match head with
+      | Some head -> Adoc.concat_block [ head; Adoc.inline_block prose_result ]
+      | None -> Adoc.inline_block prose_result)
   | _ -> (
       let children = List.map (render_instr ~level ~backtrack) instrs in
       match head with
