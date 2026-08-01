@@ -1132,23 +1132,26 @@ and render_rule_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
 
 (* Result instruction rendering *)
 
-and render_result_instr ~(level : int) (hints : Annot.hints)
-    (rel_signature : rel_signature) (exps : exp list) : Adoc.block =
+and prose_of_result (hints : Annot.hints) (rel_signature : rel_signature)
+    (exps : exp list) : Adoc.prose =
   let nottyp, hint_input = rel_signature in
   let typs = Mixfix.args nottyp.it in
   let is_conditional = Hints.Input.is_conditional hint_input typs in
-  let line = Adoc.bullet_inline_block (`Ordered level) in
-  if is_conditional then line (Adoc.text "Then, the relation holds.")
+  if is_conditional then Adoc.text "then, the relation holds."
   else
     match (hints.prose_out, exps) with
     | Some hint, _ ->
-        line
-          Adoc.(
-            text "Result in "
-            ++ alternate hint (reindent_lines ~level:0) prose_of_exp exps
-            ++ text ".")
-    | None, [] -> line (Adoc.text "The relation holds.")
-    | None, _ -> line Adoc.(text "Result in " ++ prose_of_exps exps ++ text ".")
+        Adoc.(
+          text "the result is "
+          ++ alternate hint (reindent_lines ~level:0) prose_of_exp exps
+          ++ text ".")
+    | None, [] -> Adoc.text "the relation holds."
+    | None, _ -> Adoc.(text "the result is " ++ prose_of_exps exps ++ text ".")
+
+and render_result_instr ~(level : int) (hints : Annot.hints)
+    (rel_signature : rel_signature) (exps : exp list) : Adoc.block =
+  Adoc.bullet_inline_block (`Ordered level)
+    (Adoc.capitalize_first (prose_of_result hints rel_signature exps))
 
 (* Return instruction rendering *)
 
@@ -1299,7 +1302,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
           Adoc.raw_block ":\n";
           Adoc.bullet_inline_block (`Unordered 0)
             Adoc.(
-              text "Result in "
+              text "The result is "
               ++ alternate ~caps:false hint_out (reindent_lines ~level:1)
                    prose_of_exp exps_out);
           Adoc.raw_block ".";
