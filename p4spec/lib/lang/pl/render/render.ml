@@ -1012,12 +1012,25 @@ and render_case_instr ~(level : int) ~(backtrack : Backtrack.ctx option)
         (cases
         |> List.mapi (fun idx (guard, block_then) ->
                if idx = n - 1 && total then
-                 render_instrs
-                   ~head:
-                     (Some
-                        (Adoc.bullet_inline_block (`Ordered level)
-                           (Adoc.text "Else:")))
-                   ~level:(level + 1) ~backtrack block_then
+                 let block_else =
+                   Adoc.bullet_inline_block (`Ordered level) (Adoc.text "Else:")
+                 in
+                 match guard with
+                 | CheckLetSubG _ | CheckLetMatchG _ ->
+                     let prose_bind = prose_of_guard exp_scrut guard in
+                     let block_bind =
+                       Adoc.bullet_inline_block
+                         (`Ordered (level + 1))
+                         Adoc.(capitalize_first prose_bind ++ text ".")
+                     in
+                     Adoc.seq_block
+                       (block_else :: block_bind
+                       :: List.map
+                            (render_instr ~level:(level + 1) ~backtrack)
+                            block_then)
+                 | _ ->
+                     render_instrs ~head:(Some block_else) ~level:(level + 1)
+                       ~backtrack block_then
                else
                  let keyword = if idx = 0 then "If" else "Else if" in
                  render_instrs
