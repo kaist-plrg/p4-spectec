@@ -141,32 +141,9 @@ rulegroup Call_func_dispatch {
 
 }
 
-;; Meta-function call wrapper with cache
+;; Meta-function call
 
 rule Call_func:
   C |- id typ* val* : valres
-  -- if funccache = $cache_find_func(id, val*)
-  -- Call_func_cache:
-      C |- id typ* val* funccache : valres
-
-rulegroup Call_func_cache {
-
-  rule Call_func_cache/hit:
-    C |- id typ* val* (OK val_cached) : OK val_cached
-
-  rule Call_func_cache/miss:
-    C |- id typ* val* NONE : valres
-    -- if (cursor, funcdef) = $find_func(C, id)
-    -- if cp_before = $cache_checkpoint()
-    -- Call_func_dispatch: C |- funcdef typ* val* : valres
-    -- if cp_after = $cache_checkpoint()
-    -- if b_ext = (funcdef <: externFuncDef)
-    -- if b_seff = $cache_seff(cp_before, cp_after)
-    -- if b_anon = (cursor = LOCAL)
-    -- if b_hoff = $exists_($is_fun(val)*)
-    -- if $cache_add_func_maybe(
-            b_ext \/ b_seff \/ b_anon \/ b_hoff,
-            ;; true,
-            id, val*, valres)
-
-}
+  -- if funcdef = $find_func(C, id)
+  -- Call_func_dispatch: C |- funcdef typ* val* : valres

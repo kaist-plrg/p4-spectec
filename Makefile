@@ -45,10 +45,10 @@ slspec:
 slspec-html:
 	cd docs/sl && make spec-html && cd ../..
 
-ilspec:
-	cd docs/il && make spec && cd ../..
-ilspec-html:
-	cd docs/il && make spec-html && cd ../..
+alspec:
+	cd docs/al && make spec && cd ../..
+alspec-html:
+	cd docs/al && make spec-html && cd ../..
 
 # Format
 
