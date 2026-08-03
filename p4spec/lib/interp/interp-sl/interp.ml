@@ -1220,8 +1220,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | DebugI (exp, instr) -> eval_debug_instr ~tail ctx exp instr
     with Backtrace backtrace ->
       backtrace
-      |> back_nest instr.at
-           (fun () -> F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
+      |> back_nest instr.at (fun () ->
+             F.asprintf "%s failed" (Sl.Print.string_of_instr ~short:true instr))
 
   and eval_block ~(tail : bool) (ctx : Ctx.t) (block : block) : Flow.t =
     if !Ctx.is_det then eval_block_deterministic ~tail ctx block
@@ -1282,7 +1282,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     |> List.fold_left
          (fun flow_pre (tail, instr) ->
            match flow_pre with
-           | Flow.Cont _ -> eval_instr ~tail ctx instr
+           | Flow.Cont traces_pre -> (
+               match eval_instr ~tail ctx instr with
+               | Flow.Cont traces_post ->
+                   (* Retain the deeper trace chain,
+                      to report the branch that progressed furthest *)
+                   let traces =
+                     if List.length traces_post >= List.length traces_pre then
+                       traces_post
+                     else traces_pre
+                   in
+                   Flow.Cont traces
+               | flow_post -> flow_post)
            | _ -> flow_pre)
          (Flow.Cont [])
 
@@ -1375,7 +1386,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
     (* Evaluate the then branch if the condition holds *)
-    if cond then eval_block ~tail ctx block_then else Cont []
+    if cond then eval_block ~tail ctx block_then
+    else
+      let trace =
+        ( exp_cond.at,
+          fun () ->
+            F.asprintf "condition %s was not met"
+              (Sl.Print.string_of_exp exp_cond) )
+      in
+      Cont [ trace ]
 
   (* Hold instruction evaluation *)
 
@@ -1389,7 +1408,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       with
       | Backtrace (Unmatch _) -> false
       | Backtrace backtrace ->
-          back_nest id.at (fun () -> "hold condition evaluation failed") backtrace
+          back_nest id.at
+            (fun () -> "hold condition evaluation failed")
+            backtrace
     in
     let value_res = Value.Make.bool hold in
     Hook.on_value value_res;
@@ -1482,11 +1503,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           eval_block ~tail ctx block_not_hold)
     | HoldH (block_hold, dangle) ->
         if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
-        if cond then eval_block ~tail ctx block_hold else Cont []
+        if cond then eval_block ~tail ctx block_hold
+        else
+          let trace =
+            (id.at, fun () -> F.asprintf "condition hold %s was not met" id.it)
+          in
+          Cont [ trace ]
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
-        if not cond then eval_block ~tail ctx block_not_hold else Cont []
+        if not cond then eval_block ~tail ctx block_not_hold
+        else
+          let trace =
+            ( id.at,
+              fun () -> F.asprintf "condition not-hold %s was not met" id.it )
+          in
+          Cont [ trace ]
 
   (* Case analysis instruction evaluation *)
 
@@ -1536,7 +1568,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (* Evaluate the matching case if any *)
     match block_opt with
     | Some block -> eval_block ~tail ctx block
-    | None -> Cont []
+    | None ->
+        let trace =
+          ( exp.at,
+            fun () ->
+              F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp)
+          )
+        in
+        Cont [ trace ]
 
   (* Group instruction evaluation *)
 
@@ -1847,14 +1886,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | Il.CallE (id, targs, args) when tail ->
           let targs = resolve_targs ctx targs in
           let values_args = eval_args ctx args in
-          Flow.Tailcall_func (id, targs, values_args)
+          let cursor, _ = Ctx.find_func ctx id in
+          let anon = cursor = Ctx.Local in
+          if anon || is_high_order_func values_args then
+            Flow.Ret (invoke_func ctx id targs values_args)
+          else Flow.Tailcall_func (id, targs, values_args)
       | _ -> Flow.Ret (eval_exp ctx exp)
     with Backtrace (Unmatch traces) -> Flow.Cont traces
 
   (* Debug instruction evaluation *)
 
-  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) (instr : instr) :
-      Flow.t =
+  and eval_debug_instr ~(tail : bool) (ctx : Ctx.t) (exp : exp) (instr : instr)
+      : Flow.t =
     try
       let value = eval_exp ctx exp in
       string_of_region exp.at ^ ": " ^ Il.Print.string_of_exp exp
@@ -1924,7 +1967,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             loop id_tail values_tail
       with Backtrace backtrace ->
         Hook.on_rel_exit id;
-        back_nest id.at (fun () -> F.asprintf "relation %s failed" id.it) backtrace
+        back_nest id.at
+          (fun () -> F.asprintf "relation %s failed" id.it)
+          backtrace
     in
     loop id values_input
 
@@ -2031,7 +2076,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             loop id_tail targs_tail values_tail
       with Backtrace backtrace ->
         Hook.on_func_exit id;
-        back_nest id.at (fun () -> F.asprintf "function %s failed" id.it) backtrace
+        back_nest id.at
+          (fun () -> F.asprintf "function %s failed" id.it)
+          backtrace
     in
     loop id targs values_input
 

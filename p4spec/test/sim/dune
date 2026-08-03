@@ -37,7 +37,11 @@
    (ignore-outputs
     (diff sim_psa_p4c_al.expected sim_psa_p4c_al.actual))
    (ignore-outputs
-    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual)))))
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_regression_sl.expected
+     sim_v1model_regression_sl.actual)))))
 
 ;; Fast aliases (no -det)
 
@@ -73,7 +77,11 @@
    (ignore-outputs
     (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl.actual))
    (ignore-outputs
-    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual)))))
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_regression_sl.expected
+     sim_v1model_regression_sl.actual)))))
 
 (rule
  (alias sim-v1model-p4c-al)
@@ -197,7 +205,11 @@
    (ignore-outputs
     (diff sim_ebpf_p4testgen_sl.expected sim_ebpf_p4testgen_sl_det.actual))
    (ignore-outputs
-    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl_det.actual)))))
+    (diff sim_psa_p4c_sl.expected sim_psa_p4c_sl_det.actual))
+   (ignore-outputs
+    (diff
+     sim_v1model_regression_sl.expected
+     sim_v1model_regression_sl_det.actual)))))
 
 (rule
  (alias sim-v1model-p4c-al-det)
@@ -502,6 +514,37 @@
      ../../../testdata/custom
      -stf-dir
      ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+;; Regression corpus (testdata/regression): SL-only, one witness per fixed issue
+
+(rule
+ (target sim_v1model_regression_sl.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_regression_sl.actual
+   (with-stderr-to
+    sim_v1model_regression_sl.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -p4-dir
+     ../../../testdata/regression/sim
+     -stf-dir
+     ../../../testdata/regression/sim
      -p
      ../../../patches/v1model)))))
 
@@ -930,6 +973,38 @@
      ../../../testdata/custom
      -stf-dir
      ../../../testdata/custom
+     -p
+     ../../../patches/v1model)))))
+
+;; Regression corpus (testdata/regression): SL-only, one witness per fixed issue
+
+(rule
+ (target sim_v1model_regression_sl_det.actual)
+ (deps
+  (source_tree ../../../spec)
+  (source_tree ../../../p4c/p4include)
+  (source_tree ../../../patches)
+  (source_tree ../../../testdata))
+ (action
+  (with-stdout-to
+   sim_v1model_regression_sl_det.actual
+   (with-stderr-to
+    sim_v1model_regression_sl_det.err
+    (run
+     ./test.exe
+     sim
+     -sl
+     -det
+     -arch
+     v1model
+     -s
+     ../../../spec
+     -i
+     ../../../p4c/p4include
+     -p4-dir
+     ../../../testdata/regression/sim
+     -stf-dir
+     ../../../testdata/regression/sim
      -p
      ../../../patches/v1model)))))
 

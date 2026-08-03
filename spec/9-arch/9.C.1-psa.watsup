@@ -22,51 +22,51 @@ rule PSA_init:
 
 dec $PSA_setup_normal_meta_argument(arch) : argumentIR
 def $PSA_setup_normal_meta_argument(ARCH) = argumentIR_normal_meta
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_normal_meta = $find_map<typeId, typeIR>(theta, "NM")
   -- if argumentIR_normal_meta
-      = (`. "normal_meta") `# `( typeIR_normal_meta DYN )
+      = ('.' "normal_meta") '#' `( typeIR_normal_meta DYN `)
 
 dec $PSA_setup_clone_i2e_meta_argument(arch) : argumentIR
 def $PSA_setup_clone_i2e_meta_argument(ARCH) = argumentIR_clone_i2e_meta
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_clone_i2e_meta = $find_map<typeId, typeIR>(theta, "CI2EM")
   -- if argumentIR_clone_i2e_meta
-      = (`. "clone_i2e_meta") `# `( typeIR_clone_i2e_meta DYN )
+      = ('.' "clone_i2e_meta") '#' `( typeIR_clone_i2e_meta DYN `)
 
 dec $PSA_setup_clone_e2e_meta_argument(arch) : argumentIR
 def $PSA_setup_clone_e2e_meta_argument(ARCH) = argumentIR_clone_e2e_meta
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_clone_e2e_meta = $find_map<typeId, typeIR>(theta, "CE2EM")
   -- if argumentIR_clone_e2e_meta
-      = (`. "clone_e2e_meta") `# `( typeIR_clone_e2e_meta DYN )
+      = ('.' "clone_e2e_meta") '#' `( typeIR_clone_e2e_meta DYN `)
 
 dec $PSA_setup_resubmit_meta_argument(arch) : argumentIR
 def $PSA_setup_resubmit_meta_argument(ARCH) = argumentIR_resubmit_meta
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_resubmit_meta = $find_map<typeId, typeIR>(theta, "RESUBM")
   -- if argumentIR_resubmit_meta
-      = (`. "resubmit_meta") `# `( typeIR_resubmit_meta DYN )
+      = ('.' "resubmit_meta") '#' `( typeIR_resubmit_meta DYN `)
 
 dec $PSA_setup_recirculate_meta_argument(arch) : argumentIR
 def $PSA_setup_recirculate_meta_argument(ARCH) = argumentIR_recirculate_meta
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_recirculate_meta = $find_map<typeId, typeIR>(theta, "RECIRCM")
   -- if argumentIR_recirculate_meta
-      = (`. "recirculate_meta") `# `( typeIR_recirculate_meta DYN )
+      = ('.' "recirculate_meta") '#' `( typeIR_recirculate_meta DYN `)
 
 dec $PSA_setup_main_callee(evalContext, arch) : typedExpressionIR
 def $PSA_setup_main_callee(EC, ARCH) = typedExpressionIR_main
   ---- ;; get package type definition
   -- if typeDefIR_package
-      = $find_typeDef_e(GLOBAL, EC, `` "PSA_Switch")
+      = $find_typeDef_e(GLOBAL, EC, _BARE "PSA_Switch")
   ---- ;; get package type arguments
-  -- if PACKAGE `< theta > `{ _ }
+  -- if PACKAGE `< theta `> `{ _ `}
       = $find_object_e(ARCH, [ "main" ])
   -- if typeIR_ingress_hdr = $find_map<typeId, typeIR>(theta, "IH")
   -- if typeIR_ingress_user_meta = $find_map<typeId, typeIR>(theta, "IM")
@@ -86,4 +86,4 @@ def $PSA_setup_main_callee(EC, ARCH) = typedExpressionIR_main
           typeIR_recirculate_meta ]
   -- if typeIR_package = $specialize_typeDefIR(typeDefIR_package, typeIR_arg*)
   -- if typedExpressionIR_main
-      = (`` "main") `# `( typeIR_package CTK )
+      = (_BARE "main") '#' `( typeIR_package CTK `)

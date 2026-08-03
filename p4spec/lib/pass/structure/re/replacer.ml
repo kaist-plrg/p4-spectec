@@ -26,6 +26,32 @@ let add (id : Id.t) (exp : Exp.t) (replacer : t) : t =
 let filter (p : Id.t -> 'a -> bool) (replacer : t) : t =
   Replace.filter p replacer
 
+(* Capture avoidance *)
+
+let freshen_binders (replacer : t) (frees : IdSet.t) (block : block) : Renamer.t
+    =
+  let ids_codom =
+    replacer |> Replace.values |> List.map Ol.Free.free_exp
+    |> List.fold_left IdSet.union IdSet.empty
+  in
+  let ids_collide = IdSet.inter frees ids_codom in
+  let ids_avoid =
+    frees
+    |> IdSet.union (Ol.Free.free_block block)
+    |> IdSet.union (dom replacer)
+    |> IdSet.union ids_codom
+  in
+  let fresher, _ =
+    IdSet.fold
+      (fun id (fresher, ids_avoid) ->
+        let id_fresh = Il.Fresh.id ids_avoid id in
+        let fresher = Renamer.add id id_fresh fresher in
+        let ids_avoid = IdSet.add id_fresh ids_avoid in
+        (fresher, ids_avoid))
+      ids_collide (Renamer.empty, ids_avoid)
+  in
+  fresher
+
 (* Replacement *)
 
 (* Expressions *)
@@ -210,6 +236,10 @@ and replace_instr (replacer : t) (instr : instr) : instr =
   | LetI (exp_l, exp_r, iterinstrs, block) ->
       let frees_l = Ol.Free.free_exp exp_l in
       let replacer = filter (fun id _ -> not (IdSet.mem id frees_l)) replacer in
+      let freshen = freshen_binders replacer frees_l block in
+      let exp_l = Renamer.rename_exp freshen exp_l in
+      let iterinstrs = Renamer.rename_iterinstrs_bound freshen iterinstrs in
+      let block = Renamer.rename_block freshen block in
       let exp_r = replace_exp replacer exp_r in
       let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
       let block = replace_block replacer block in
@@ -222,6 +252,10 @@ and replace_instr (replacer : t) (instr : instr) : instr =
       let replacer =
         filter (fun id _ -> not (IdSet.mem id frees_output)) replacer
       in
+      let freshen = freshen_binders replacer frees_output block in
+      let exps_output = Renamer.rename_exps freshen exps_output in
+      let iterinstrs = Renamer.rename_iterinstrs_bound freshen iterinstrs in
+      let block = Renamer.rename_block freshen block in
       let exps = Hints.Input.combine inputs exps_input exps_output in
       let iterinstrs = replace_iterinstrs_bound replacer iterinstrs in
       let block = replace_block replacer block in

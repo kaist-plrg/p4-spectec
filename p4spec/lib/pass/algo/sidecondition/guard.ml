@@ -195,8 +195,7 @@ let gen_iter_guard (iterexp : iterexp) : prem list =
       let exp_b = gen_eq_epsilon_exp iter var_b in
       let exp_if =
         let at = over_region [ exp_a.at; exp_b.at ] in
-        Il.BinE (`EquivOp, `BoolT, exp_a, exp_b)
-        $$ (at, Typ.Make.bool')
+        Il.BinE (`EquivOp, `BoolT, exp_a, exp_b) $$ (at, Typ.Make.bool')
       in
       let _, exp_if =
         List.fold_left
@@ -204,13 +203,11 @@ let gen_iter_guard (iterexp : iterexp) : prem list =
             let exp = gen_eq_epsilon_exp iter var in
             let exp_bin =
               let at = over_region [ exp_prev.at; exp.at ] in
-              Il.BinE (`EquivOp, `BoolT, exp_prev, exp)
-              $$ (at, Typ.Make.bool')
+              Il.BinE (`EquivOp, `BoolT, exp_prev, exp) $$ (at, Typ.Make.bool')
             in
             let exp_if =
               let at = over_region [ exp_if.at; exp_bin.at ] in
-              Il.BinE (`AndOp, `BoolT, exp_if, exp_bin)
-              $$ (at, Typ.Make.bool')
+              Il.BinE (`AndOp, `BoolT, exp_if, exp_bin) $$ (at, Typ.Make.bool')
             in
             (exp, exp_if))
           (exp_b, exp_if) vars
@@ -221,8 +218,7 @@ let gen_iter_guard (iterexp : iterexp) : prem list =
       let exp_b = gen_len_exp iter var_b in
       let exp_if =
         let at = over_region [ exp_a.at; exp_b.at ] in
-        Il.CmpE (`EqOp, `BoolT, exp_a, exp_b)
-        $$ (at, Typ.Make.bool')
+        Il.CmpE (`EqOp, `BoolT, exp_a, exp_b) $$ (at, Typ.Make.bool')
       in
       let _, exp_if =
         List.fold_left
@@ -230,13 +226,11 @@ let gen_iter_guard (iterexp : iterexp) : prem list =
             let exp = gen_len_exp iter var in
             let exp_cmp =
               let at = over_region [ exp_prev.at; exp.at ] in
-              Il.CmpE (`EqOp, `BoolT, exp_prev, exp)
-              $$ (at, Typ.Make.bool')
+              Il.CmpE (`EqOp, `BoolT, exp_prev, exp) $$ (at, Typ.Make.bool')
             in
             let exp_if =
               let at = over_region [ exp_if.at; exp_cmp.at ] in
-              Il.BinE (`AndOp, `BoolT, exp_if, exp_cmp)
-              $$ (at, Typ.Make.bool')
+              Il.BinE (`AndOp, `BoolT, exp_if, exp_cmp) $$ (at, Typ.Make.bool')
             in
             (exp, exp_if))
           (exp_b, exp_if) vars

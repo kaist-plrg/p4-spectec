@@ -8,6 +8,9 @@ module Key = struct
   let to_string ((id_rel, id_rulegroup) : t) : string =
     Format.asprintf "%s/%s" id_rel id_rulegroup
 
+  let to_anchor ((id_rel, id_rulegroup) : t) : string =
+    Pl.Render.string_of_rulegroupid id_rel id_rulegroup
+
   let compare (id_rel_a, id_rulegroup_a) (id_rel_b, id_rulegroup_b) =
     let c = String.compare id_rel_a id_rel_b in
     if c <> 0 then c else String.compare id_rulegroup_a id_rulegroup_b
@@ -70,15 +73,12 @@ module Prose = struct
     let render (values : t list) : string =
       values
       |> List.map (fun (instr : Pl.instr) ->
-             (* collect_groups_instr only emits GroupI -- the splicer's
-                values are guaranteed to be rulegroups. *)
-             let id_rel =
-               match instr.node.it with
-               | GroupI (_, id_rel, _, _, _) -> id_rel
-               | _ -> assert false
-             in
-             Pl.Render.Backtrack.Label.set_namespace id_rel.it;
-             Pl.Render.render_group instr)
+             match instr.node.it with
+             | GroupI (id_rulegroup, id_rel, rel_signature, exps, block) ->
+                 Pl.Render.Backtrack.Label.set_namespace id_rel.it;
+                 Pl.Render.render_rulegroup instr.hints id_rulegroup id_rel
+                   rel_signature exps block
+             | _ -> assert false)
       |> String.concat "\n\n"
   end
 
@@ -127,7 +127,7 @@ module Prose = struct
     let name = "rulegroup-prose"
     let prefix = prefix_prose
     let suffix = suffix_prose
-    let header = false
+    let header = true
   end
 
   module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)

@@ -6,46 +6,46 @@ dec $resolve_type_alias(typeIR) : (nameIR, typeIR*)
   hint(prose_in "type alias in" %0 "resolved to aliased name and type arguments")
 def $resolve_type_alias(TYPEDEF nameIR_alias typeIR_alias)
   = $resolve_type_alias(typeIR_alias)
-def $resolve_type_alias(EXTERN nameIR_alias `< typeIR_arg* > _)
+def $resolve_type_alias(EXTERN nameIR_alias `< typeIR_arg* `> _)
   = (nameIR_alias, typeIR_arg*)
-def $resolve_type_alias(PACKAGE nameIR_alias `< typeIR_arg* > `{ _ })
+def $resolve_type_alias(PACKAGE nameIR_alias `< typeIR_arg* `> `{ _ `})
   = (nameIR_alias, typeIR_arg*)
 
 rulegroup ConstructorType_ok {
 
   rule ConstructorType_ok/non-aliased-none-type:
-    p TC |- (prefixedNameIR `< typeArgumentIR* >) `( argumentIR* )
-          : constructorTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
+    p TC |- (prefixedNameIR `< typeArgumentIR* `>) `( argumentIR* `)
+          : constructorTypeIR `< '#' typeId_impl* `> `( '#' id_default* '#' id_optional* `)
     ---- ;; if not aliased
     -- if eps = $find_typeDef_t(p, TC, prefixedNameIR)
     ---- ;; find and specialize the constructor type definition
-    -- if callableId `: constructorTypeDefIR `# id_default* `# id_optional*
+    -- if callableId ':' constructorTypeDefIR '#' id_default* '#' id_optional*
         = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
     -- if (constructorTypeIR, typeId_impl*)
         = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
 
   rule ConstructorType_ok/non-aliased-some-type:
-    p TC |- (prefixedNameIR `< typeArgumentIR* >) `( argumentIR* )
-          : constructorTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
+    p TC |- (prefixedNameIR `< typeArgumentIR* `>) `( argumentIR* `)
+          : constructorTypeIR `< '#' typeId_impl* `> `( '#' id_default* '#' id_optional* `)
     ---- ;; if not aliased
     -- if typeDefIR = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if ~(typeDefIR <: typedefTypeIR)
     ---- ;; find and specialize the constructor type definition
-    -- if callableId `: constructorTypeDefIR `# id_default* `# id_optional*
+    -- if callableId ':' constructorTypeDefIR '#' id_default* '#' id_optional*
         = $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*)
     -- if (constructorTypeIR, typeId_impl*)
         = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
 
   rule ConstructorType_ok/aliased:
-    p TC |- (prefixedNameIR `< eps >) `( argumentIR* )
-          : constructorTypeIR `< `# typeId_impl* > `( `# id_default* `# id_optional* )
+    p TC |- (prefixedNameIR `< eps `>) `( argumentIR* `)
+          : constructorTypeIR `< '#' typeId_impl* `> `( '#' id_default* '#' id_optional* `)
     ---- ;; if aliased, resolve the alias
     -- if TYPEDEF nameIR_alias typeIR_alias
         = $find_typeDef_t(p, TC, prefixedNameIR)
     -- if (nameIR, typeArgumentIR*) = $resolve_type_alias(typeIR_alias)
     ---- ;; find and specialize the constructor type definition
-    -- if callableId `: constructorTypeDefIR `# id_default* `# id_optional*
-        = $find_constructorDef_overloaded_t(TC, `` nameIR, argumentIR*)
+    -- if callableId ':' constructorTypeDefIR '#' id_default* '#' id_optional*
+        = $find_constructorDef_overloaded_t(TC, _BARE nameIR, argumentIR*)
     -- if (constructorTypeIR, typeId_impl*)
         = $specialize_constructorTypeDefIR(constructorTypeDefIR, typeArgumentIR*)
 
@@ -126,17 +126,18 @@ rulegroup Inst_ok {
 
   rule Inst_ok/package:
     p TC instctxt
-    |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* > 
-        `( argumentIR* `# id_default* `# id_optional* )
-     : typeIR_object_inferred `< typeArgumentIR_inferred* >
-        `( argumentIR_cast* )
+    |- constructorTypeIR `< typeArgumentIR* '#' typeId_infer* `> 
+        `( argumentIR* '#' id_default* '#' id_optional* `)
+     : typeIR_object_inferred `< typeArgumentIR_inferred* `>
+        `( argumentIR_cast* `)
     ---- ;; unpack constructor type
-    -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object = constructorTypeIR
+    -- if CONSTRUCTOR `( parameterIR* `) ':' typeIR_object = constructorTypeIR
     ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned* DEFAULT _
+    -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
-    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if inference
+        = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
     -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred
@@ -145,7 +146,7 @@ rulegroup Inst_ok {
         = $subst_typeIR(inference, typeIR_object)
     ---- ;; check that the substituted constructor is still well-formed
     -- if constructorTypeIR_inferred
-        = CONSTRUCTOR `( parameterIR_aligned_inferred* ) `: typeIR_object_inferred
+        = CONSTRUCTOR `( parameterIR_aligned_inferred* `) ':' typeIR_object_inferred
     -- ConstructorType_wf: $bound(p, TC) |- constructorTypeIR_inferred
     ---- ;; check instantiation site
     -- if $instantiable(p, TC, instctxt, typeIR_object_inferred)
@@ -155,21 +156,22 @@ rulegroup Inst_ok {
     -- if p = GLOBAL
     ---- ;; check call convention
     -- Call_convention_ok:
-        BLOCK TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
+        BLOCK TC NOACTION |- parameterIR_aligned_inferred* '@' argumentIR*
                            : argumentIR_cast*
 
   rule Inst_ok/non-package:
-    p TC instctxt |- constructorTypeIR `< typeArgumentIR* `# typeId_infer* > 
-                                       `( argumentIR* `# id_default* `# id_optional* )
-                   : typeIR_object_inferred `< typeArgumentIR_inferred* >
-                                            `( argumentIR_cast* )
+    p TC instctxt |- constructorTypeIR `< typeArgumentIR* '#' typeId_infer* `> 
+                                       `( argumentIR* '#' id_default* '#' id_optional* `)
+                   : typeIR_object_inferred `< typeArgumentIR_inferred* `>
+                                            `( argumentIR_cast* `)
     ---- ;; unpack constructor type
-    -- if CONSTRUCTOR `( parameterIR* ) `: typeIR_object = constructorTypeIR
+    -- if CONSTRUCTOR `( parameterIR* `) ':' typeIR_object = constructorTypeIR
     ---- ;; align parameters with arguments
-    -- if GIVEN parameterIR_aligned* DEFAULT _
+    -- if GIVEN parameterIR_aligned* DEFAULT _ OPTIONAL parameterIR_optional*
         = $align_parameterListIR(parameterIR*, argumentIR*, id_default*, id_optional*)
     ---- ;; perform type inference
-    -- if inference = $infer(typeId_infer*, parameterIR_aligned*, argumentIR*)
+    -- if inference
+        = $infer(typeId_infer*, parameterIR_aligned*, parameterIR_optional*, argumentIR*)
     -- if (typeArgumentIR_inferred = $subst_typeIR(inference, typeArgumentIR))*
     ---- ;; substitute inferred types
     -- if (parameterIR_aligned_inferred
@@ -178,7 +180,7 @@ rulegroup Inst_ok {
         = $subst_typeIR(inference, typeIR_object)
     ---- ;; check that the substituted constructor is still well-formed
     -- if constructorTypeIR_inferred
-        = CONSTRUCTOR `( parameterIR_aligned_inferred* ) `: typeIR_object_inferred
+        = CONSTRUCTOR `( parameterIR_aligned_inferred* `) ':' typeIR_object_inferred
     -- ConstructorType_wf: $bound(p, TC) |- constructorTypeIR_inferred
     ---- ;; check instantiation site
     -- if $instantiable(p, TC, instctxt, typeIR_object_inferred)
@@ -187,7 +189,7 @@ rulegroup Inst_ok {
     -- if ~(typeIR_object_unroll <: packageObjectTypeIR)
     ---- ;; check call convention
     -- Call_convention_ok:
-        p TC NOACTION |- parameterIR_aligned_inferred* `@ argumentIR*
+        p TC NOACTION |- parameterIR_aligned_inferred* '@' argumentIR*
                        : argumentIR_cast*
 
 }

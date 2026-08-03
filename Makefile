@@ -13,24 +13,21 @@ EXENANO = _build/default/p4spec/bin/nano.exe
 build:
 	rm -f ./$(SPEC)
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build bin/main.exe && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
-	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
 boot:
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build bin/boot.exe && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/boot.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
-	cd p4spec && opam exec -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
 
 release:
 	rm -f ./$(SPEC)
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build --profile=release bin/main.exe && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build --profile=release bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
-	cd p4spec && opam exec -- dune build --profile=release bin/boot.exe && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build --profile=release bin/boot.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
 	cd p4spec && opam exec -- dune build --profile=release bin/nano.exe && echo
 	ln -f $(EXENANO) ./$(NANO)
@@ -62,8 +59,7 @@ ilspec-html:
 .PHONY: fmt
 
 fmt:
-	opam switch 5.1.0
-	cd p4spec && opam exec dune fmt
+	cd p4spec && opam exec --switch=5.1.0 -- dune fmt
 
 # Tests
 
@@ -72,8 +68,7 @@ define dune-alias-test
 .PHONY: test-$(1)
 test-$(1):
 	echo "#### Running (dune build @$(1))"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @$(1) --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @$(1) --profile=release && echo OK || \
 	  (echo "####>" Failure running dune build @$(1). && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 endef
@@ -112,39 +107,34 @@ $(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
 .PHONY: test-micro
 test-micro:
 	echo "#### Running (dune build @speclang @micro @micro-det)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @speclang @micro @micro-det --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @micro @micro-det --profile=release && echo OK || \
 	  (echo "####>" Failure running dune build @speclang @micro @micro-det. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-fast
 test-fast:
 	echo "#### Running fast tests (speclang, p4parse, run-sl, sim-sl)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @speclang @p4parse @run-sl @sim-sl --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @p4parse @run-sl @sim-sl --profile=release && echo OK || \
 	  (echo "####>" Failure running fast tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-all
 test-all:
 	echo "#### Running all tests (without -det)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune runtest test --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune runtest test --profile=release && echo OK || \
 	  (echo "####>" Failure running dune test. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-all-det
 test-all-det:
 	echo "#### Running all tests (with -det)"
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune build @speclang @p4parse @run-det @sim-al-det @sim-sl-det --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @p4parse @run-det @sim-al-det @sim-sl-det --profile=release && echo OK || \
 	  (echo "####>" Failure running det tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: promote
 promote:
-	opam switch 5.1.0
-	cd p4spec && opam exec -- dune promote
+	cd p4spec && opam exec --switch=5.1.0 -- dune promote
 
 # Cleanup
 
@@ -152,4 +142,4 @@ promote:
 
 clean:
 	rm -f ./$(SPEC)
-	cd p4spec && dune clean
+	cd p4spec && opam exec --switch=5.1.0 -- dune clean

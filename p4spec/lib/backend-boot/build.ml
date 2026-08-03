@@ -50,7 +50,7 @@ let build_interm ?(cache = true) ?(det = false) ?(guard = false)
               (Spectec.Make_parametric (Runner_above) (Interface_SpecTec))
               (Interp_al.Interp.Make)
               (Interp_sl.Interp.Make)
-                  (Interp_pl.Interp.Make) : Run.RUNNER)
+              (Interp_pl.Interp.Make) : Run.RUNNER)
   in
   (* Initialize the runner, as an SL spec *)
   let spec =
@@ -77,7 +77,7 @@ let build_boot ?(cache = true) ?(det = false) ?(guard = false)
               (Spectec.Make_parametric (Runner_above) (Interface_SpecTec))
               (Interp_al.Interp.Make)
               (Interp_sl.Interp.Make)
-                  (Interp_pl.Interp.Make) : Run.RUNNER)
+              (Interp_pl.Interp.Make) : Run.RUNNER)
   in
   (* Initialize the booter, as mode *)
   let spec =
@@ -144,7 +144,7 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
               (Spectec.Make_null (Interface_SpecTec))
               (Interp_al.Interp.Make)
               (Interp_sl.Interp.Make)
-                  (Interp_pl.Interp.Make) : Run.RUNNER)
+              (Interp_pl.Interp.Make) : Run.RUNNER)
   in
   let spec =
     match mode with

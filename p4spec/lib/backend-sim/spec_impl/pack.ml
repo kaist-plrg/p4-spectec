@@ -32,7 +32,7 @@ let pack_p4_fixedBit (width : Bigint.t) (i : Bigint.t) : Value.t =
 let pack_p4_enum (type_id : string) (name : string) : Value.t =
   let value_tid = Value.Make.text type_id in
   let value_id = Value.Make.text name in
-  Value.Make.("tid `. id" <| [ value_tid; value_id ] <<| "value")
+  Value.Make.("tid '.' id" <| [ value_tid; value_id ] <<| "value")
 
 (* tid `. id `. value *)
 (* objectReferenceValue = `! oid *)
