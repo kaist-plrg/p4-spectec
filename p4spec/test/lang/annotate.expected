@@ -9634,20 +9634,24 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
 . Let ``ctk~l_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~l_reduced~``].
 . Let ``typeIR~r_reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~r_reduced~``].
 . Let ``ctk~r_reduced~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~r_reduced~``].
-. If ``typeIR~r_reduced~`` has type ``fixedBitTypeIR``:
- .. Check that if ``typeIR~l_reduced~`` is equal to ``+INT+``, then ``ctk~r_reduced~`` is equal to ``+LCTK+``.
- .. Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``].
- .. The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
-. Else:
- .. Check that ``ctk~r_reduced~`` is ``+LCTK+``.
- .. Let ``value`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under context ``TC`` at ``p``].
- .. Let!~type~ ``integerValue~r~`` be ``value``.
- .. Let ``i~r~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~r~``].
- .. Check that ``i~r~`` is greater than or equal to ``0``.
- .. Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].
- .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``].
- .. The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+. Try pass:[<strong id="bk-Expr_ok-6" class="bk-label">#6</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-6-a"></span>+++
+  ... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~r_reduced~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-b">else #6-b</a>]</sub>+++
+  ... Check that ``typeIR`` has type ``fixedBitTypeIR``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-b">else #6-b</a>]</sub>+++
+  ... Check that if ``typeIR~l_reduced~`` is equal to ``+INT+``, then ``ctk~r_reduced~`` is equal to ``+LCTK+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-b">else #6-b</a>]</sub>+++
+  ... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-b">else #6-b</a>]</sub>+++
+  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-b">else #6-b</a>]</sub>+++
+  ... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-6-b"></span>+++
+  ... Check that ``typeIR~r_reduced~`` does not have type ``fixedBitTypeIR``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... Check that ``ctk~r_reduced~`` is ``+LCTK+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... Let ``value`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~r_reduced~``, under context ``TC`` at ``p``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... Let!~type~ ``integerValue~r~`` be ``value``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... Let ``i~r~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~r~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... Check that ``i~r~`` is greater than or equal to ``0``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~l_reduced~`` and compile-time known-ness ``ctk~reduced~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+  ... The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
@@ -9942,60 +9946,60 @@ xref:Expr_ok[Typing ``expression~base~`` ``+'.'+`` ``member``, under context ``T
 
 . Let ``typedExpressionIR~base~`` be the result of xref:Expr_ok[typing ``expression~base~``, under context ``TC`` at ``p``].
 . Let ``typeIR~base~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~base~``].
-. Try pass:[<strong id="bk-Expr_ok-6" class="bk-label">#6</strong>]:
- .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-6-a"></span>+++
-  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-b">else #6-b</a>]</sub>+++
-  ... Let!~type~ ``+HEADER_STACK+`` ``typeIR`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-b">else #6-b</a>]</sub>+++
-  ... Try pass:[<strong id="bk-Expr_ok-7" class="bk-label">#7</strong>]:
-   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-7-A"></span>+++
-    ..... Check that ``"size"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-B">else #7-B</a>]</sub>+++
-    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+`<+`` ``32`` ``+`>+`` and compile-time known-ness ``+LCTK+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-B">else #7-B</a>]</sub>+++
+. Try pass:[<strong id="bk-Expr_ok-7" class="bk-label">#7</strong>]:
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-7-a"></span>+++
+  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-b">else #7-b</a>]</sub>+++
+  ... Let!~type~ ``+HEADER_STACK+`` ``typeIR`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-b">else #7-b</a>]</sub>+++
+  ... Try pass:[<strong id="bk-Expr_ok-8" class="bk-label">#8</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-8-A"></span>+++
+    ..... Check that ``"size"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-B">else #8-B</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+`<+`` ``32`` ``+`>+`` and compile-time known-ness ``+LCTK+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-B">else #8-B</a>]</sub>+++
     ..... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``"size"`` annotated with ``expressionNoteIR``].
-   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-7-B"></span>+++
-    ..... Check that ``"lastIndex"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-C">else #7-C</a>]</sub>+++
-    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-C">else #7-C</a>]</sub>+++
-    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+`<+`` ``32`` ``+`>+`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-C">else #7-C</a>]</sub>+++
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-8-B"></span>+++
+    ..... Check that ``"lastIndex"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-C">else #8-C</a>]</sub>+++
+    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-C">else #8-C</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+`<+`` ``32`` ``+`>+`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-C">else #8-C</a>]</sub>+++
     ..... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``"lastIndex"`` annotated with ``expressionNoteIR``].
-   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-7-C"></span>+++
-    ..... Check that ``"last"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-D">else #7-D</a>]</sub>+++
-    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-D">else #7-D</a>]</sub>+++
-    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-D">else #7-D</a>]</sub>+++
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-8-C"></span>+++
+    ..... Check that ``"last"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-D">else #8-D</a>]</sub>+++
+    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-D">else #8-D</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8-D">else #8-D</a>]</sub>+++
     ..... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``"last"`` annotated with ``expressionNoteIR``].
-   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-7-D"></span>+++
-    ..... Check that ``"next"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
-    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
-    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-8-D"></span>+++
+    ..... Check that ``"next"`` is equal to xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8">fail #8</a>]</sub>+++
+    ..... Check that ``p`` is equal to ``+BLOCK+`` and ``TC.+BLOCK+.+KIND+`` is equal to ``+PARSER+`` or ``p`` is equal to ``+LOCAL+`` and ``TC.+LOCAL+.+KIND+`` is equal to ``+PARSER_STATE+``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8">fail #8</a>]</sub>+++
+    ..... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-8">fail #8</a>]</sub>+++
     ..... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``"next"`` annotated with ``expressionNoteIR``].
- .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-6-b"></span>+++
-  ... Let ``ctk~base~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
-  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-7-b"></span>+++
+  ... Let ``ctk~base~`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
+  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
   ... If let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
-   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
-   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
+   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
    .... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annotated with ``expressionNoteIR``].
   ... Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
-   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
-   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
+   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
    .... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annotated with ``expressionNoteIR``].
   ... Else if let ``+HEADER_UNION+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~f~`` ``nameIR~f~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
-   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
-   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6-c">else #6-c</a>]</sub>+++
+   .... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
+   .... Let ``typeIR`` be xref:option_get[*!*] xref:assoc_[the value associated to ``nameIR`` in ``(`` ``nameIR~f~,`` ``typeIR~f~`` ``)^{asterisk}^``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base~``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7-c">else #7-c</a>]</sub>+++
    .... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annotated with ``expressionNoteIR``].
- .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-6-c"></span>+++
-  ... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
-  ... Let!~type~ ``+TABLE_STRUCT+`` ``++_++`` ``+`{+`` ``+HIT+`` ``boolTypeIR`` ``+';'+`` ``+MISS+`` ``++_++`` ``+';'+`` ``+ACTION_RUN+`` ``++_++`` ``+';'+`` ``+`}+`` be ``typeIR``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
-  ... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+ .. {empty}+++<span class="bk-arm-anchor" id="bk-Expr_ok-7-c"></span>+++
+  ... Let ``typeIR`` be xref:unroll_typeIR[``typeIR~base~`` with typedefs unrolled].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
+  ... Let!~type~ ``+TABLE_STRUCT+`` ``++_++`` ``+`{+`` ``+HIT+`` ``boolTypeIR`` ``+';'+`` ``+MISS+`` ``++_++`` ``+';'+`` ``+ACTION_RUN+`` ``++_++`` ``+';'+`` ``+`}+`` be ``typeIR``.+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
+  ... Let ``nameIR`` be xref:name[the name of ``member``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
   ... If ``nameIR`` is equal to ``"hit"``:
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``boolTypeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``boolTypeIR`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
    .... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annotated with ``expressionNoteIR``].
   ... Else if ``nameIR`` is equal to ``"miss"``:
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
    .... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annotated with ``expressionNoteIR``].
   ... Else if ``nameIR`` is equal to ``"action_run"``:
-   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-6">fail #6</a>]</sub>+++
+   .... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``+DYN+``].+++<sub class="bk-mark">[<a href="#bk-Expr_ok-7">fail #7</a>]</sub>+++
    .... The result is xref:typedExpressionIR[``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annotated with ``expressionNoteIR``].
 
 <<Expr_ok,Typing ``expression~base~`` ``+`[+`` ``expression~index~`` ``+`]+``, under context ``TC`` at ``p``>>:
@@ -10099,7 +10103,8 @@ xref:Expr_ok[Typing ``expression~base~`` ``+'.'+`` ``member``, under context ``T
   ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``].
   ... The result is <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``+'+:'+`` ``typedExpressionIR~w_reduced~`` ``+`]+`` annotated with ``expressionNoteIR``>>.
  .. Else:
-  ... Check that ``typeIR~l_reduced~`` has type ``fixedBitTypeIR``.
+  ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~l_reduced~`` with typedefs unrolled].
+  ... Check that ``typeIR'`` has type ``fixedBitTypeIR``.
   ... Check that ``ctk~w_reduced~`` is ``+LCTK+``.
   ... Let ``value`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~w_reduced~``, under context ``TC`` at ``p``].
   ... Let!~type~ ``integerValue~w~`` be ``value``.
