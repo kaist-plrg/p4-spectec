@@ -1,4 +1,10 @@
+// Exercises out and inout parameter write-back via an action call.
+// The action sets pass = true via an out parameter; the packet should forward.
 #include <nano_model.p4>
+
+action allow(out bool pass) {
+    pass = true;
+}
 
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
@@ -9,13 +15,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bit<8> threshold = 8w128;
-        if (hdr.nanonet.drop) {
-            pass = hdr.nanonet.src > threshold;
-            hdr.nanonet.drop = false;
-        } else {
-            pass = hdr.nanonet.src < threshold;
-        }
+        allow(pass);
     }
 }
 

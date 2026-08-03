@@ -1,7 +1,8 @@
+// Error: no state named 'start', which is required as the parser entry point.
 #include <nano_model.p4>
 
 parser Parser(packet_in pkt, out Header hdr) {
-    state start {
+    state parse_v1 {
         pkt.extract(hdr.nanonet);
         transition accept;
     }
@@ -9,13 +10,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bit<8> threshold = 8w128;
-        if (hdr.nanonet.drop) {
-            pass = hdr.nanonet.src > threshold;
-            hdr.nanonet.drop = false;
-        } else {
-            pass = hdr.nanonet.src < threshold;
-        }
+        pass = true;
     }
 }
 

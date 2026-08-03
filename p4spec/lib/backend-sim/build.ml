@@ -24,8 +24,8 @@ let gen_p4_placeholder () =
             (Interp_sl.Interp.Make)
             (Interp_pl.Interp.Make) : Sim.SIM)
 
-let gen_nano_placeholder () =
-  (module Make.Make (Interface.NanoP4) (Placeholder.Make)
+let gen_nano () =
+  (module Make.Make (Interface.NanoP4) (Nano_switch.Pipe.Make)
             (Interp_al.Interp.Make)
             (Interp_sl.Interp.Make)
             (Interp_pl.Interp.Make) : Sim.SIM)
@@ -67,6 +67,6 @@ let build_nano ?(cache = true) ?(det = false) ?(guard = false) ~(final : bool)
         (PL spec_pl : Sim.spec)
     | Empty_mode -> assert false
   in
-  let (module Simulator) = gen_nano_placeholder () in
+  let (module Simulator) = gen_nano () in
   Simulator.init ~cache ~det ~guard spec_sim;
   (spec_sim, (module Simulator : Sim.SIM))

@@ -9,13 +9,8 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bit<8> threshold = 8w128;
-        if (hdr.nanonet.drop) {
-            pass = hdr.nanonet.src > threshold;
-            hdr.nanonet.drop = false;
-        } else {
-            pass = hdr.nanonet.src < threshold;
-        }
+        bit<8> x = 8w0;
+        x = 8w42;
     }
 }
 

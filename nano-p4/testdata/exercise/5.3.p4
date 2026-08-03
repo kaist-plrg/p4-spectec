@@ -1,3 +1,4 @@
+// Writes to a nested struct and header field via member-access l-values.
 #include <nano_model.p4>
 
 parser Parser(packet_in pkt, out Header hdr) {
@@ -9,13 +10,8 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bit<8> threshold = 8w128;
-        if (hdr.nanonet.drop) {
-            pass = hdr.nanonet.src > threshold;
-            hdr.nanonet.drop = false;
-        } else {
-            pass = hdr.nanonet.src < threshold;
-        }
+        hdr.nanonet.drop = false;
+        pass = !hdr.nanonet.drop;
     }
 }
 

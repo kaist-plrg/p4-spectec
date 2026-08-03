@@ -1,5 +1,10 @@
 #include <nano_model.p4>
 
+// Valid: directional params first, directionless at the end.
+action compute(out bool pass, bit<8> threshold) {
+    pass = threshold < 8w20;
+}
+
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
         pkt.extract(hdr.nanonet);
@@ -9,13 +14,7 @@ parser Parser(packet_in pkt, out Header hdr) {
 
 control Filter(inout Header hdr, out bool pass) {
     apply {
-        bit<8> threshold = 8w128;
-        if (hdr.nanonet.drop) {
-            pass = hdr.nanonet.src > threshold;
-            hdr.nanonet.drop = false;
-        } else {
-            pass = hdr.nanonet.src < threshold;
-        }
+        compute(pass, 8w10);
     }
 }
 

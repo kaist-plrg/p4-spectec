@@ -10,6 +10,7 @@ action reject(out bool pass, bit<8> rej) {
 
 parser Parser(packet_in pkt, out Header hdr) {
     state start {
+        pkt.extract(hdr.nanonet);
         transition accept;
     }
 }

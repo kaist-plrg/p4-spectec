@@ -29,6 +29,12 @@ module Make () = struct
   let psa_init (includes_p4 : string list) (filename_p4 : string) :
       Value.t * Value.t =
     !call "PSA_init" includes_p4 filename_p4
+
+  (* NanoSwitch_init *)
+
+  let nanoswitch_init (includes_p4 : string list) (filename_p4 : string) :
+      Value.t * Value.t =
+    !call "NanoSwitch_init" includes_p4 filename_p4
 end
 
 module type S = module type of Make ()

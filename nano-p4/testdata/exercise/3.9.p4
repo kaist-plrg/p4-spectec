@@ -8,14 +8,13 @@ parser Parser(packet_in pkt, out Header hdr) {
 }
 
 control Filter(inout Header hdr, out bool pass) {
+    table filter_table {
+        key = { hdr.nanonet.packetType : exact; }
+        actions = { set_result(pass); NoAction; }
+    }
     apply {
-        bit<8> threshold = 8w128;
-        if (hdr.nanonet.drop) {
-            pass = hdr.nanonet.src > threshold;
-            hdr.nanonet.drop = false;
-        } else {
-            pass = hdr.nanonet.src < threshold;
-        }
+        pass = false;
+        filter_table.apply();
     }
 }
 
