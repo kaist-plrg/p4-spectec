@@ -1,116 +1,122 @@
+" Vim syntax file for WatSup (P4-SpecTec DSL)
+" Derived from p4spec/lib/frontend/lexer.mll
+
 if exists("b:current_syntax")
   finish
 endif
 
 " Comments
-syn match watsupComment ";;.*$"
+"   ;; line comment
+"   (; ... ;) block comment (nestable)
+syn match  watsupLineComment ";;.*$" contains=@Spell
+syn region watsupBlockComment start="(;" end=";)" contains=watsupBlockComment,@Spell
 
-" Keywords (with nextgroup for function names)
-syn keyword watsupKeyword syntax var if otherwise hint input
-syn keyword watsupKeyword dec nextgroup=watsupFunction skipwhite
-syn keyword watsupKeyword def nextgroup=watsupFunction skipwhite
-syn keyword watsupKeyword rule nextgroup=watsupRuleName skipwhite
-syn keyword watsupKeyword relation nextgroup=watsupFunction skipwhite
+" Keywords
+syn keyword watsupKeyword syntax extern tbl relation if otherwise debug builtin
+syn keyword watsupKeyword var                                nextgroup=watsupName        skipwhite
+syn keyword watsupKeyword dec def                            nextgroup=watsupFunction    skipwhite
+syn keyword watsupKeyword rule rulegroup                     nextgroup=watsupRuleName    skipwhite
 
 " Built-in types
-syn keyword watsupType int nat text bool set map
+syn keyword watsupType bool nat int text
 
-" Constants
-syn keyword watsupConstant eps true false infinity
+" Constants / literals
+syn keyword watsupConstant eps true false
 
-" String literals
-syn region watsupString start='"' end='"'
+" %latex directive
+syn match watsupDirective "%latex\>"
+
+" Hint clause: hint( ... )
+syn match watsupHint "hint\ze("
+
+" Names after declaration keywords (relation/var name — usually UPID)
+syn match watsupName     "[A-Za-z_$][A-Za-z0-9_$']*"  display contained
+
+" Function names after dec/def (may be $-prefixed)
+syn match watsupFunction "\$\?[A-Za-z_][A-Za-z0-9_']*" display contained
+
+" Rule names after rule/rulegroup, with optional /variant suffix
+syn match watsupRuleName "[A-Za-z_][A-Za-z0-9_']*" display contained nextgroup=watsupRuleVariant skipwhite
+syn match watsupRuleVariant "/[A-Za-z0-9_']*" display contained
+
+" Silent tag: _UPID
+syn match watsupTag "\<_[A-Z][A-Za-z0-9_']*"
+
+" Concrete operator literal: '...'
+syn region watsupOperatorLit start="'" skip="\\'" end="'" oneline
+
+" Dot-prefixed field id: .id
+syn match watsupField "\.[A-Za-z_][A-Za-z0-9_']*"
+
+" Strings
+syn region watsupString start='"' skip='\\"' end='"' contains=watsupEscape
+syn match  watsupEscape contained '\\\(u{[0-9A-Fa-f]\+}\|x\?[0-9A-Fa-f]\{2}\|[nrt\\''"]\)'
 
 " Numbers
-syn match watsupNumber '\<\d\+\>'
+syn match watsupNumber '\<0x[0-9A-F]\+\(_[0-9A-F]\+\)*\>'
+syn match watsupNumber '\<\d\+\(_\d\+\)*\>'
+syn match watsupNumber '[+-]\d\+\(_\d\+\)*\>'
 
-" Function/relation names (contained - only after keywords, no slash)
-syn match watsupFunction "[a-zA-Z_$][a-zA-Z0-9_$'-]*" display contained
+" Type arguments in angle brackets: <foo>
+syn match watsupTypeParameter '\v\<\zs[a-z_][a-zA-Z0-9_]*\ze\>'
 
-" Rule names (contained - only after rule keyword, base name part)
-syn match watsupRuleName "[a-zA-Z_$][a-zA-Z0-9_$'-]*" display contained nextgroup=watsupRuleComment skipnl skipwhite
+" Backtick target brackets: `( `) `[ `] `{ `} `< `>
+syn match watsupTickBracket "`[()[\]{}<>]"
 
-" Rule comment part (contained - only after rule name, starts with /)
-syn match watsupRuleComment "/[a-zA-Z0-9_$'-]*" display contained
+" Holes: % %N %% !%
+syn match watsupHole "!\?%\%(%\|\d\+\)\?"
 
-" Type parameters in angle brackets
-syn match watsupTypeParameter '\v\<\zs[a-zA-Z_][a-zA-Z0-9_]*\ze\>'
+" Delimiters
+syn match watsupDelimiter "[(){}[\]]"
 
-" Operators and delimiters (ordered as in lexer.mll)
-" Basic delimiters
-syn match watsupDelimiter '[(){}[\]]'            " LPAREN, RPAREN, LBRACE, RBRACE, LBRACK, RBRACK
-syn match watsupOperator ':'                     " COLON
-syn match watsupOperator '::'                    " COLONCOLON
-syn match watsupOperator ':/'                    " COLONSLASH
-syn match watsupOperator ';'                     " SEMICOLON
-syn match watsupOperator ','                     " COMMA
-syn match watsupOperator '\.'                    " DOT
-syn match watsupOperator '\.\.'                  " DOTDOT
-syn match watsupOperator '\.\.\.'                " DOTDOTDOT
-syn match watsupOperator '|'                     " BAR
-syn match watsupOperator '--'                    " DASH
-syn match watsupOperator '='                     " EQ
-syn match watsupOperator '=/='                   " NE
-syn match watsupOperator '<'                     " LANGLE
-syn match watsupOperator '>'                     " RANGLE
-syn match watsupOperator '>('                    " RANGLE_LPAREN
-syn match watsupOperator '<='                    " LE
-syn match watsupOperator '>='                    " GE
-syn match watsupOperator '\~\~'                  " APPROX
-syn match watsupOperator '<:'                    " SUB
-syn match watsupOperator ':>'                    " SUP
-syn match watsupOperator ':='                    " ASSIGN
-syn match watsupOperator '=='                    " EQUIV
-syn match watsupOperator '\~'                    " NOT
-syn match watsupOperator '/\\'                   " AND
-syn match watsupOperator '\\/'                   " OR
-syn match watsupOperator '(/\\)'                 " BIGAND
-syn match watsupOperator '(\\/)'                 " BIGOR
-syn match watsupOperator '(+)'                   " BIGADD
-syn match watsupOperator '(*)'                   " BIGMUL
-syn match watsupOperator '(++)'                  " BIGCAT
-syn match watsupOperator '?'                     " QUEST
-syn match watsupOperator '+'                     " PLUS
-syn match watsupOperator '-'                     " MINUS
-syn match watsupOperator '*'                     " STAR
-syn match watsupOperator '/'                     " SLASH
-syn match watsupOperator '\\'                    " BACKSLASH
-syn match watsupOperator '\^'                    " UP
-syn match watsupOperator '++'                    " CAT
-syn match watsupOperator '<-'                    " MEM
-syn match watsupOperator '->'                    " ARROW
-syn match watsupOperator '=>'                    " ARROW2
-syn match watsupOperator '->_'                   " ARROWSUB
-syn match watsupOperator '=>_'                   " ARROW2SUB
-syn match watsupOperator '<=>'                   " DARROW2
-syn match watsupOperator '\~>'                   " SQARROW
-syn match watsupOperator '\~>*'                  " SQARROWSTAR
-syn match watsupOperator '<<'                    " PREC
-syn match watsupOperator '>>'                    " SUCC
-syn match watsupOperator '|-'                    " TURNSTILE
-syn match watsupOperator '-|'                    " TILESTURN
-syn match watsupOperator '\$'                    " DOLLAR
-syn match watsupOperator '_|_'                   " BOT
-syn match watsupOperator '\^|\^'                 " TOP
-syn match watsupOperator '%'                     " HOLE
-syn match watsupOperator '%%'                    " MULTIHOLE
-syn match watsupOperator '!%'                    " NOTHING
-syn match watsupOperator '#'                     " FUSE
-syn match watsupOperator '##'                    " FUSEFUSE
-syn match watsupOperator '`'                     " TICK
+" Notational / turnstile operators (multi-char first)
+syn match watsupOperator "==>"
+syn match watsupOperator "<=>"
+syn match watsupOperator "=>_\?"
+syn match watsupOperator "->_\?"
+syn match watsupOperator "\~>\*\?"
+syn match watsupOperator "|-"
+syn match watsupOperator "-|"
 
-" Highlighting
-hi def link watsupComment Comment
-hi def link watsupKeyword Keyword
-hi def link watsupType Type
-hi def link watsupTypeParameter Type
-hi def link watsupConstant Constant
-hi def link watsupString String
-hi def link watsupNumber Number
-hi def link watsupFunction Function
-hi def link watsupRuleName Function
-hi def link watsupRuleComment Identifier
-hi def link watsupOperator Operator
-hi def link watsupDelimiter Delimiter
+" Logical
+syn match watsupOperator "/\\"
+syn match watsupOperator "\\/"
+
+" Comparison / assignment
+syn match watsupOperator "=/="
+syn match watsupOperator "<="
+syn match watsupOperator ">="
+syn match watsupOperator ":="
+syn match watsupOperator "<:"
+syn match watsupOperator "<-"
+syn match watsupOperator ">("
+syn match watsupOperator "\~\~"
+
+" Single / short operators and punctuation
+syn match watsupOperator "[:;,.|=<>~?^$#*/\\+-]"
+
+" Highlighting links
+hi def link watsupLineComment    Comment
+hi def link watsupBlockComment   Comment
+hi def link watsupKeyword        Keyword
+hi def link watsupType           Type
+hi def link watsupTypeParameter  Type
+hi def link watsupConstant       Constant
+hi def link watsupDirective      PreProc
+hi def link watsupHint           PreProc
+hi def link watsupString         String
+hi def link watsupEscape         SpecialChar
+hi def link watsupOperatorLit    String
+hi def link watsupNumber         Number
+hi def link watsupName           Identifier
+hi def link watsupFunction       Function
+hi def link watsupRuleName       Function
+hi def link watsupRuleVariant    Identifier
+hi def link watsupTag            Special
+hi def link watsupField          Identifier
+hi def link watsupTickBracket    Delimiter
+hi def link watsupHole           Special
+hi def link watsupOperator       Operator
+hi def link watsupDelimiter      Delimiter
 
 let b:current_syntax = "watsup"
