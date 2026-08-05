@@ -114,10 +114,10 @@ K must reproduce:
 
 ```sh
 make boot
-./spectec-boot run spec-meta/common/*.watsup spec-meta/al/[1-6]*.watsup \
-  -rel Entry -tec examples/add.watsup -ali     # => INT +119
-./spectec-boot run spec-meta/common/*.watsup spec-meta/al/[1-6]*.watsup \
-  -rel Entry -tec examples/fibo.watsup -ali    # => INT +89
+./spectec-boot run spec-meta/al -rel Entry \
+  -tec examples/add.watsup -ali     # => INT +119
+./spectec-boot run spec-meta/al -rel Entry \
+  -tec examples/fibo.watsup -ali    # => INT +89
 ```
 
 `-ali` runs `Pass.algo` on the target `.watsup`, and
@@ -187,6 +187,45 @@ Order of work: `add` needs script loading, a zero-argument clause, `LetPr` with
 `fibo` adds recursion, multi-clause backtracking on argument patterns, and the
 else-clause. `examples/iter-nontrivial.watsup` and `examples/builtin-map.watsup`
 are the next targets after that.
+
+#### Testing the specification
+
+There is no elaborator from AL concrete syntax to `spec-meta-k` terms yet
+(that is what step 2/3 build), so a script under test is written directly as a
+term of the `Script` sort and fed to `krun` as *program text*. Compile the
+whole chain from the entry module — its `--syntax-module` is `AL-SYNTAX`,
+since that is where the program being run is parsed, not the module that
+defines the entry point:
+
+```sh
+kompile spec-meta-k/al/5-entry.k --main-module AL --syntax-module AL-SYNTAX \
+  -o al-kompiled
+krun --definition al-kompiled spec-meta-k/test/add.script
+```
+
+`krun` prints the whole configuration; the answer is in `<result>`. A run
+should also leave `<saves>` and `<callstack>` as `.List` — either one holding
+a leftover frame means a save/restore path returned without popping, the
+usual symptom of a bug in the backtracking machinery.
+
+Two things about program-text syntax are easy to get backwards, both because
+term construction in *rules* looks different from a term written as *program
+input*:
+
+- An empty list is the empty string, not `.Sort`. `.Sort` is rule syntax; in
+  a `.script` file the corresponding argument position is left blank, e.g.
+  `funcD("main", , , intT(), ...)` has two empty lists (`TParamList`,
+  `ParamList`) written as bare commas.
+- A single-element list is written bare, with no enclosing parens and no
+  trailing comma: `expA(varE("i"))`, not `(expA(varE("i")), )`. Parenthesized
+  comma-lists are for two-or-more-element lists only.
+
+`spec-meta-k/test/` holds the scripts exercised so far, each written by hand
+in this style and checked against the oracle (`add` and `fibo`, matching
+`./spectec-boot run spec-meta/al -rel Entry -tec examples/{add,fibo}.watsup
+-ali`) or by inspection of the expected arithmetic (`rel`, `iter` — a relation
+call and a list-iteration/struct/option case, respectively, neither of which
+`add`/`fibo` exercise).
 
 ### Step 2: dump `Value.t` to KAST
 
