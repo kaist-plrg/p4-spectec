@@ -3309,6 +3309,9 @@ xref:cast_op[``value`` casted to type ``typeIR``]
 . Else if let ``listValue`` be ``value``:
  .. Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
  .. Return xref:cast_list[``listValue`` casted to type ``typeIR~unroll~``].
+. Else if let ``tupleValue`` be ``value``:
+ .. Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
+ .. Return xref:cast_tuple[``tupleValue`` casted to type ``typeIR~unroll~``].
 . Else if let ``arrayValue`` be ``value``:
  .. Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
  .. Return xref:cast_array[``arrayValue`` casted to type ``typeIR~unroll~``].
@@ -3548,6 +3551,19 @@ xref:cast_string[``stringValue`` casted to type ``typeIR``]
 Let ``value'^{asterisk}^`` be the resulting list.
 . Return ``+LIST+`` ``+`[+`` ``value'^{asterisk}^`` ``+`]+``.
 
+xref:cast_tuple[``+TUPLE+`` ``+`(+`` ``value^{asterisk}^`` ``+`)+`` casted to type ``typeIR'``]
+
+. Let!~type~ ``+TUPLE+`` ``+`<+`` ``typeIR^{asterisk}^`` ``+`>+`` be ``typeIR'``.
+. Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+. For each ``typeIR`` in ``typeIR^{asterisk}^`` and ``value`` in ``value^{asterisk}^``:
++
+--
+ ** Let ``value'`` be xref:cast_op[``value`` casted to type ``typeIR``].
+--
++
+Let ``value'^{asterisk}^`` be the resulting list.
+. Return ``+TUPLE+`` ``+`(+`` ``value'^{asterisk}^`` ``+`)+``.
+
 <<cast_array,``+ARRAY+`` ``+`[+`` ``value^{asterisk}^`` ``+`]+`` casted to type ``typeIR``>>
 
 . Check that ``typeIR`` has type ``arrayTypeIR``.
@@ -3634,17 +3650,29 @@ Let ``value~rest~^{asterisk}^`` be the resulting list.
   ... Let ``value~cast~^{asterisk}^`` be ``value~given~^{asterisk}^`` concatenated with ``value~rest~^{asterisk}^``.
   ... Return ``+TUPLE+`` ``+`(+`` ``value~cast~^{asterisk}^`` ``+`)+``.
 . Else if let ``sequenceTypeIR`` be ``typeIR'``:
- .. Let!~type~ ``+SEQ+`` ``+`<+`` ``typeIR^{asterisk}^`` ``+`>+`` be ``sequenceTypeIR``.
- .. Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+`)+`` be ``sequenceValue``.
- .. Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
- .. For each ``typeIR`` in ``typeIR^{asterisk}^`` and ``value`` in ``value^{asterisk}^``:
+ .. If let ``+SEQ+`` ``+`<+`` ``typeIR^{asterisk}^`` ``+`>+`` be ``sequenceTypeIR``:
+  ... Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+`)+`` be ``sequenceValue``.
+  ... Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... For each ``typeIR`` in ``typeIR^{asterisk}^`` and ``value`` in ``value^{asterisk}^``:
 +
 --
-  *** Let ``value'''`` be xref:cast_op[``value`` casted to type ``typeIR``].
+   **** Let ``value'''`` be xref:cast_op[``value`` casted to type ``typeIR``].
 --
 +
 Let ``value'''^{asterisk}^`` be the resulting list.
- .. Return ``+SEQ+`` ``+`(+`` ``value'''^{asterisk}^`` ``+`)+``.
+  ... Return ``+SEQ+`` ``+`(+`` ``value'''^{asterisk}^`` ``+`)+``.
+ .. Else:
+  ... Let ``+SEQ+`` ``+`<+`` ``typeIR^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+`` be ``sequenceTypeIR``.
+  ... Let!~type~ ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`)+`` be ``sequenceValue``.
+  ... Check that the length of ``typeIR^{asterisk}^`` is equal to the length of ``value^{asterisk}^``.
+  ... For each ``typeIR`` in ``typeIR^{asterisk}^`` and ``value`` in ``value^{asterisk}^``:
++
+--
+   **** Let ``value~cast~`` be xref:cast_op[``value`` casted to type ``typeIR``].
+--
++
+Let ``value~cast~^{asterisk}^`` be the resulting list.
+  ... Return ``+SEQ+`` ``+`(+`` ``value~cast~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`)+``.
 . Else if let ``+ARRAY+`` ``typeIR`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
  .. If let ``+SEQ+`` ``+`(+`` ``value^{asterisk}^`` ``+`)+`` be ``sequenceValue``:
   ... For each ``value`` in ``value^{asterisk}^``:
@@ -3834,6 +3862,58 @@ Let ``value~field_cast~^{asterisk}^`` be the resulting list.
 +
 Let ``value~field_cast~^{asterisk}^`` be the resulting list.
   ... Return ``+HEADER+`` ``typeId`` ``+`{+`` ``true`` ``+';'+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+``.
+. Else if let ``recordTypeIR`` be ``typeIR``:
+ .. If let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordTypeIR``:
+  ... Let!~type~ ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordValue``.
+  ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^``:
++
+--
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+`{+`` ``(`` ``nameIR~field~`` ``+':'+`` ``value~field~`` ``)^{asterisk}^`` ``+`}+``].
+--
++
+Let ``value^?^^{asterisk}^`` be the resulting list.
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... For each ``value^?^`` in ``value^?^^{asterisk}^``:
++
+--
+   **** Let ``value~field'~`` be ``value^?^``.
+--
++
+Let ``value~field'~^{asterisk}^`` be the resulting list.
+  ... For each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``:
++
+--
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+--
++
+Let ``value~field_cast~^{asterisk}^`` be the resulting list.
+  ... Return ``+RECORD+`` ``+`{+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+``.
+ .. Else:
+  ... Let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~t_field~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordTypeIR``.
+  ... Let!~type~ ``+RECORD+`` ``+`{+`` ``(`` ``value~field~`` ``nameIR~field~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordValue``.
+  ... For each ``id~t_field~`` in ``id~t_field~^{asterisk}^``:
++
+--
+   **** Let ``value^?^`` be xref:find_map[the value of ``id~t_field~`` in map ``+`{+`` ``(`` ``nameIR~field~`` ``+':'+`` ``value~field~`` ``)^{asterisk}^`` ``+`}+``].
+--
++
+Let ``value^?^^{asterisk}^`` be the resulting list.
+  ... Check that ``value^?^`` is defined, for all ``value^?^`` in ``value^?^^{asterisk}^``.
+  ... For each ``value^?^`` in ``value^?^^{asterisk}^``:
++
+--
+   **** Let ``value~field'~`` be ``value^?^``.
+--
++
+Let ``value~field'~^{asterisk}^`` be the resulting list.
+  ... For each ``typeIR~t_field~`` in ``typeIR~t_field~^{asterisk}^`` and ``value~field'~`` in ``value~field'~^{asterisk}^``:
++
+--
+   **** Let ``value~field_cast~`` be xref:cast_op[``value~field'~`` casted to type ``typeIR~t_field~``].
+--
++
+Let ``value~field_cast~^{asterisk}^`` be the resulting list.
+  ... Return ``+RECORD+`` ``+`{+`` ``(`` ``value~field_cast~`` ``id~t_field~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+``.
 
 xref:cast_record_field[$cast_record_field(typeIR, id, +`{+ ( id~field~ +':'+ value~field~ )^{asterisk}^ +`}+)]
 
@@ -8853,147 +8933,358 @@ TypeArgumentList_ok dispatch:
 
 xref:Cast_expl[Cast_expl]:
 
-* ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``
+* Checking if ``typeIR`` can be explicitly cast to ``typeIR'``:
+* The result is casts ``castResult``.
 
-xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``]:
+xref:Cast_expl[Checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``]:
 
 . Let ``typeIR~a_unroll~`` be xref:unroll_typeIR[``typeIR~a~`` with typedefs unrolled].
 . Let ``typeIR~b_unroll~`` be xref:unroll_typeIR[``typeIR~b~`` with typedefs unrolled].
-. If xref:Type_alpha[``typeIR~a_unroll~`` and ``typeIR~b_unroll~`` are the same type]: then, the relation holds.
+. If xref:Type_alpha[``typeIR~a_unroll~`` and ``typeIR~b_unroll~`` are the same type]:
+ .. The result is casts ``+OK+`` ``typeIR~b~``.
 . Else:
- .. If xref:Cast_expl_neq[``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` (when unequal)]: then, the relation holds.
+ .. Let casts ``castResult`` be the result of xref:Cast_expl_neq[checking if ``typeIR~a_unroll~`` can be explicitly cast to ``typeIR~b_unroll~`` (when unequal)].
+ .. The result is casts ``castResult``.
 
 Cast_expl dispatch:
 . goto xref:Cast_expl-[]
 
 xref:Cast_expl_neq[Cast_expl_neq]:
 
-* ``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)
+* Checking if ``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal):
+* The result is casts ``castResult``.
 
-xref:Cast_expl_neq[``+BOOL+`` can be explicitly cast to ``+BIT+`` ``+`<+`` ``1`` ``+`>+`` (when unequal)]:
- then, the relation holds.
+xref:Cast_expl_neq[Checking if ``+BOOL+`` can be explicitly cast to ``+BIT+`` ``+`<+`` ``1`` ``+`>+`` (when unequal)]:
 
-xref:Cast_expl_neq[``+INT+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+. The result is casts ``+OK+`` ``+BIT+`` ``+`<+`` ``1`` ``+`>+``.
+
+xref:Cast_expl_neq[Checking if ``+INT+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
 . Try pass:[<strong id="bk-Cast_expl_neq-2" class="bk-label">#2</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-2-a"></span>+++
   ... Check that ``typeIR'`` is equal to ``+BOOL+``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-2-b">else #2-b</a>]</sub>+++
-  ... Then, the relation holds.
+  ... The result is casts ``+OK+`` ``+BOOL+``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-2-b"></span>+++
-  ... If ``typeIR'`` has type ``fixedIntTypeIR``: then, the relation holds.
-  ... Else if ``typeIR'`` has type ``fixedBitTypeIR``: then, the relation holds.
+  ... If let ``+INT+`` ``+`<+`` ``w`` ``+`>+`` be ``typeIR'``:
+   .... The result is casts ``+OK+`` ``+INT+`` ``+`<+`` ``w`` ``+`>+``.
+  ... Else:
+   .... Let ``+BIT+`` ``+`<+`` ``w`` ``+`>+`` be ``typeIR'``.
+   .... The result is casts ``+OK+`` ``+BIT+`` ``+`<+`` ``w`` ``+`>+``.
 
-xref:Cast_expl_neq[``+INT+`` ``+`<+`` ``nat`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+INT+`` ``+`<+`` ``nat`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
 . Try pass:[<strong id="bk-Cast_expl_neq-3" class="bk-label">#3</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-3-a"></span>+++
-  ... If ``typeIR'`` is equal to ``+INT+``: then, the relation holds.
-  ... Else if ``typeIR'`` is equal to ``+BIT+`` ``+`<+`` ``nat`` ``+`>+``: then, the relation holds.
+  ... If ``typeIR'`` is equal to ``+INT+``:
+   .... The result is casts ``+OK+`` ``+INT+``.
+  ... Else:
+   .... The result is casts ``+OK+`` ``+BIT+`` ``+`<+`` ``nat`` ``+`>+``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-3-b"></span>+++
-  ... Check that ``typeIR'`` has type ``fixedIntTypeIR``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-3">fail #3</a>]</sub>+++
-  ... Then, the relation holds.
+  ... Let!~type~ ``+INT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-3">fail #3</a>]</sub>+++
+  ... The result is casts ``+OK+`` ``+INT+`` ``+`<+`` ``w~b~`` ``+`>+``.
 
-xref:Cast_expl_neq[``+BIT+`` ``+`<+`` ``nat`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+BIT+`` ``+`<+`` ``nat`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
 . Try pass:[<strong id="bk-Cast_expl_neq-4" class="bk-label">#4</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-4-a"></span>+++
   ... Check that ``nat`` is equal to ``1``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-4-b">else #4-b</a>]</sub>+++
   ... Check that ``typeIR'`` is equal to ``+BOOL+``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-4-b">else #4-b</a>]</sub>+++
-  ... Then, the relation holds.
+  ... The result is casts ``+OK+`` ``+BOOL+``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-4-b"></span>+++
-  ... If ``typeIR'`` is equal to ``+INT+``: then, the relation holds.
-  ... Else if ``typeIR'`` is equal to ``+INT+`` ``+`<+`` ``nat`` ``+`>+``: then, the relation holds.
+  ... If ``typeIR'`` is equal to ``+INT+``:
+   .... The result is casts ``+OK+`` ``+INT+``.
+  ... Else:
+   .... The result is casts ``+OK+`` ``+INT+`` ``+`<+`` ``nat`` ``+`>+``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-4-c"></span>+++
-  ... Check that ``typeIR'`` has type ``fixedBitTypeIR``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-4">fail #4</a>]</sub>+++
-  ... Then, the relation holds.
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-4">fail #4</a>]</sub>+++
+  ... The result is casts ``+OK+`` ``+BIT+`` ``+`<+`` ``w~b~`` ``+`>+``.
 
-xref:Cast_expl_neq[``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
 . Try pass:[<strong id="bk-Cast_expl_neq-5" class="bk-label">#5</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-5-a"></span>+++
   ... Let!~type~ ``+TYPE+`` ``++_++`` ``typeIR~a~`` be ``typeIR``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5-b">else #5-b</a>]</sub>+++
-  ... If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR'``]: then, the relation holds.
+  ... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR'``].+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5-b">else #5-b</a>]</sub>+++
+  ... Let!~type~ ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5-b">else #5-b</a>]</sub>+++
+  ... The result is casts ``+OK+`` ``typeIR~a~`` ``{two-colons}`` ``typeIR~cast~^{asterisk}^``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-5-b"></span>+++
-  ... Let!~type~ ``+TYPE+`` ``++_++`` ``typeIR~b~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5">fail #5</a>]</sub>+++
-  ... If xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~b~``]: then, the relation holds.
+  ... Let!~type~ ``newTypeIR`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5">fail #5</a>]</sub>+++
+  ... Let ``+TYPE+`` ``++_++`` ``typeIR~b~`` be ``newTypeIR``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5">fail #5</a>]</sub>+++
+  ... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~b~``].+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5">fail #5</a>]</sub>+++
+  ... Let!~type~ ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-5">fail #5</a>]</sub>+++
+  ... The result is casts ``+OK+`` ``typeIR~cast~^{asterisk}^`` ``{pp}`` ``newTypeIR``.
 
-xref:Cast_expl_neq[``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
 . Try pass:[<strong id="bk-Cast_expl_neq-6" class="bk-label">#6</strong>]:
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-6-a"></span>+++
   ... Let!~type~ ``+ENUM+`` ``++_++`` ``+`<+`` ``typeIR~a~`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6-b">else #6-b</a>]</sub>+++
-  ... If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR'``]: then, the relation holds.
+  ... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR'``].+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6-b">else #6-b</a>]</sub>+++
+  ... Let!~type~ ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6-b">else #6-b</a>]</sub>+++
+  ... The result is casts ``+OK+`` ``typeIR~a~`` ``{two-colons}`` ``typeIR~cast~^{asterisk}^``.
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-6-b"></span>+++
-  ... Let!~type~ ``+ENUM+`` ``++_++`` ``+`<+`` ``typeIR~b~`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6">fail #6</a>]</sub>+++
-  ... If xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~b~``]: then, the relation holds.
+  ... Let!~type~ ``serializableEnumTypeIR`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6">fail #6</a>]</sub>+++
+  ... Let ``+ENUM+`` ``++_++`` ``+`<+`` ``typeIR~b~`` ``+`>+`` ``+`{+`` ``++_++^{asterisk}^`` ``+`}+`` be ``serializableEnumTypeIR``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6">fail #6</a>]</sub>+++
+  ... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~b~``].+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6">fail #6</a>]</sub>+++
+  ... Let!~type~ ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.+++<sub class="bk-mark">[<a href="#bk-Cast_expl_neq-6">fail #6</a>]</sub>+++
+  ... The result is casts ``+OK+`` ``typeIR~cast~^{asterisk}^`` ``{pp}`` ``serializableEnumTypeIR``.
 
-xref:Cast_expl_neq[``+DEFAULT+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+DEFAULT+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
 . Check that xref:is_defaultable_typeIR[``typeIR'`` can be default-initialized].
-. Then, the relation holds.
+. The result is casts ``+OK+`` ``typeIR'``.
 
-xref:Cast_expl_neq[``+HEADER_INVALID+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+HEADER_INVALID+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
-. If ``typeIR'`` has type ``headerTypeIR``: then, the relation holds.
-. Else if ``typeIR'`` has type ``headerUnionTypeIR``: then, the relation holds.
+. If let ``headerTypeIR`` be ``typeIR'``:
+ .. The result is casts ``+OK+`` ``headerTypeIR``.
+. Else:
+ .. Let ``headerUnionTypeIR`` be ``typeIR'``.
+ .. The result is casts ``+OK+`` ``headerUnionTypeIR``.
 
-xref:Cast_expl_neq[``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+LIST+`` ``+`<+`` ``typeIR~b~`` ``+`>+`` be ``typeIR'``:
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``: then, the relation holds.
-. Else if let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``typeIR'``:
+. If let ``listTypeIR`` be ``typeIR'``:
+ .. Let ``+LIST+`` ``+`<+`` ``typeIR~b~`` ``+`>+`` be ``listTypeIR``.
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``listTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``tupleTypeIR`` be ``typeIR'``:
+ .. Let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``tupleTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``: then, the relation holds.
-. Else if let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``tupleTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``arrayTypeIR`` be ``typeIR'``:
+ .. Let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``arrayTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``: then, the relation holds.
-. Else if let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``arrayTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``headerStackTypeIR`` be ``typeIR'``:
+ .. Let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``headerStackTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``: then, the relation holds.
-. Else if let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerStackTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``: then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``headerTypeIR`` be ``typeIR'``.
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``: then, the relation holds.
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
-xref:Cast_expl_neq[``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``typeIR'``:
+. If let ``tupleTypeIR`` be ``typeIR'``:
+ .. Let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``tupleTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b_non_default~^{asterisk}^``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~b_default~`` can be default-initialized], for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
-  ... Then, the relation holds.
-. Else if let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b_non_default~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~b_default~`` can be default-initialized], for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``tupleTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``arrayTypeIR`` be ``typeIR'``:
+ .. Let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``arrayTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
-  ... Then, the relation holds.
-. Else if let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``arrayTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``headerStackTypeIR`` be ``typeIR'``:
+ .. Let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``headerStackTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
-  ... Then, the relation holds.
-. Else if let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerStackTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``headerTypeIR`` be ``typeIR'``.
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
- .. If xref:Cast_expl[``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~a~`` can be explicitly cast to ``typeIR~field_b_non_default~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
-xref:Cast_expl_neq[``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+`}+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+. If let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that xref:eq_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9026,8 +9317,27 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_expl[``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``: then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR[$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``headerTypeIR`` be ``typeIR'``.
+ .. Let ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that xref:eq_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9060,11 +9370,29 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_expl[``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``: then, the relation holds.
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR[$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
-xref:Cast_expl_neq[``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_expl_neq[Checking if ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` can be explicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+. If let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that xref:sub_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is a subset of ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9097,26 +9425,44 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_expl[``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
-  ... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-  ... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-   **** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+ .. For each ``id~default~`` in ``id~default~^{asterisk}^``:
++
+--
+  *** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-  ... Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
-  ... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+ .. Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
+ .. For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-   **** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+  *** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR_default[$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``headerTypeIR`` be ``typeIR'``.
+ .. Let ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that xref:sub_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is a subset of ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9149,25 +9495,43 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_expl[``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
-  ... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-  ... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-   **** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+  *** Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR~field_a_aligned~`` can be explicitly cast to ``typeIR~field_b_non_default_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+ .. For each ``id~default~`` in ``id~default~^{asterisk}^``:
++
+--
+  *** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-  ... Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
-  ... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+ .. Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
+ .. For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-   **** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+  *** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR_default[$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+
+. Otherwise:
+ .. xref:Cast_expl_neq[Checking if ``typeIR`` can be explicitly cast to ``typeIR'`` (when unequal)]: the result is casts ``+FAIL+``.
 
 Cast_expl_neq dispatch:
 . Try pass:[<strong id="bk-Cast_expl_neq-1" class="bk-label">#1</strong>]:
@@ -9179,7 +9543,8 @@ Cast_expl_neq dispatch:
    .... goto xref:Cast_expl_neq-arbitraryInt[arbitraryInt]
   ... Else if let ``+INT+`` ``+`<+`` ``nat`` ``+`>+`` be ``typeIR``:
    .... goto xref:Cast_expl_neq-fixInt[fixInt]
-  ... Else if let ``+BIT+`` ``+`<+`` ``nat`` ``+`>+`` be ``typeIR``:
+  ... Else:
+   .... Let ``+BIT+`` ``+`<+`` ``nat`` ``+`>+`` be ``typeIR``.
    .... goto xref:Cast_expl_neq-fixBit[fixBit]
  .. {empty}+++<span class="bk-arm-anchor" id="bk-Cast_expl_neq-1-b"></span>+++
   ... goto xref:Cast_expl_neq-newTypeIR[newTypeIR]
@@ -9196,112 +9561,326 @@ Cast_expl_neq dispatch:
    .... Else:
     ..... Let ``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+`` be ``sequenceTypeIR``.
     ..... goto xref:Cast_expl_neq-sequenceTypeIR-default[sequenceTypeIR-default]
-  ... Else if let ``recordTypeIR`` be ``typeIR``:
-   .... If let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordTypeIR``:
+  ... Else:
+   .... Let ``recordTypeIR`` be ``typeIR``.
+   .... If let ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+`}+`` be ``recordTypeIR``:
     ..... goto xref:Cast_expl_neq-recordTypeIR-non-default[recordTypeIR-non-default]
    .... Else:
-    ..... Let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordTypeIR``.
+    ..... Let ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordTypeIR``.
     ..... goto xref:Cast_expl_neq-recordTypeIR-default[recordTypeIR-default]
 
 xref:Cast_impl[Cast_impl]:
 
-* ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``
+* Checking if ``typeIR`` can be implicitly cast to ``typeIR'``:
+* The result is casts ``castResult``.
 
-xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``]:
+xref:Cast_impl[Checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``]:
 
 . Let ``typeIR~a_unroll~`` be xref:unroll_typeIR[``typeIR~a~`` with typedefs unrolled].
 . Let ``typeIR~b_unroll~`` be xref:unroll_typeIR[``typeIR~b~`` with typedefs unrolled].
-. If xref:Type_alpha[``typeIR~a_unroll~`` and ``typeIR~b_unroll~`` are the same type]: then, the relation holds.
+. If xref:Type_alpha[``typeIR~a_unroll~`` and ``typeIR~b_unroll~`` are the same type]: the result is casts ``+OK+`` ``·``.
 . Else:
- .. If xref:Cast_impl_neq[``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` (when unequal)]: then, the relation holds.
+ .. Let casts ``castResult`` be the result of xref:Cast_impl_neq[checking if ``typeIR~a_unroll~`` can be implicitly cast to ``typeIR~b_unroll~`` (when unequal)].
+ .. The result is casts ``castResult``.
 
 Cast_impl dispatch:
 . goto xref:Cast_impl-[]
 
 xref:Cast_impl_neq[Cast_impl_neq]:
 
-* ``typeIR`` can be implicitly cast to ``typeIR'`` (when unequal)
+* Checking if ``typeIR`` can be implicitly cast to ``typeIR'`` (when unequal):
+* The result is casts ``castResult``.
 
-xref:Cast_impl_neq[``+INT+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+INT+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
-. If ``typeIR'`` has type ``fixedIntTypeIR``: then, the relation holds.
-. Else if ``typeIR'`` has type ``fixedBitTypeIR``: then, the relation holds.
+. If let ``+INT+`` ``+`<+`` ``w`` ``+`>+`` be ``typeIR'``:
+ .. The result is casts ``+OK+`` ``+INT+`` ``+`<+`` ``w`` ``+`>+``.
+. Else:
+ .. Let ``+BIT+`` ``+`<+`` ``w`` ``+`>+`` be ``typeIR'``.
+ .. The result is casts ``+OK+`` ``+BIT+`` ``+`<+`` ``w`` ``+`>+``.
 
-xref:Cast_impl_neq[``+ENUM+`` ``typeId`` ``+`<+`` ``typeIR~a~`` ``+`>+`` ``+`{+`` ``valueFieldIR^{asterisk}^`` ``+`}+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+ENUM+`` ``typeId`` ``+`<+`` ``typeIR~a~`` ``+`>+`` ``+`{+`` ``valueFieldIR^{asterisk}^`` ``+`}+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
-. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR'``]: then, the relation holds.
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR'``].
+. Let!~type~ ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+. The result is casts ``+OK+`` ``typeIR~a~`` ``{two-colons}`` ``typeIR~cast~^{asterisk}^``.
 
-xref:Cast_impl_neq[``+DEFAULT+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+DEFAULT+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
 . Check that xref:is_defaultable_typeIR[``typeIR'`` can be default-initialized].
-. Then, the relation holds.
+. The result is casts ``+OK+`` ``typeIR'``.
 
-xref:Cast_impl_neq[``+HEADER_INVALID+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+HEADER_INVALID+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
-. If ``typeIR'`` has type ``headerTypeIR``: then, the relation holds.
-. Else if ``typeIR'`` has type ``headerUnionTypeIR``: then, the relation holds.
+. If let ``headerTypeIR`` be ``typeIR'``:
+ .. The result is casts ``+OK+`` ``headerTypeIR``.
+. Else:
+ .. Let ``headerUnionTypeIR`` be ``typeIR'``.
+ .. The result is casts ``+OK+`` ``headerUnionTypeIR``.
 
-xref:Cast_impl_neq[``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+`>+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+`>+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+LIST+`` ``+`<+`` ``typeIR~b~`` ``+`>+`` be ``typeIR'``:
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``: then, the relation holds.
-. Else if let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``typeIR'``:
+. If let ``listTypeIR`` be ``typeIR'``:
+ .. Let ``+LIST+`` ``+`<+`` ``typeIR~b~`` ``+`>+`` be ``listTypeIR``.
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``listTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``tupleTypeIR`` be ``typeIR'``:
+ .. Let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``tupleTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``: then, the relation holds.
-. Else if let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``tupleTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``arrayTypeIR`` be ``typeIR'``:
+ .. Let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``arrayTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``: then, the relation holds.
-. Else if let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``arrayTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``headerStackTypeIR`` be ``typeIR'``:
+ .. Let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``headerStackTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to ``n~size~``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``: then, the relation holds.
-. Else if let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerStackTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``: then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``headerTypeIR`` be ``typeIR'``:
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b~^{asterisk}^``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``: then, the relation holds.
-. Else if let ``sequenceTypeIR'`` be ``typeIR'``:
- .. Let!~type~ ``+SEQ+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``sequenceTypeIR'``.
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b~`` in ``typeIR~field_b~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``sequenceTypeIR~b~`` be ``typeIR'``.
+ .. Let!~type~ ``+SEQ+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``sequenceTypeIR~b~``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b~^{asterisk}^``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``: then, the relation holds.
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b~`` in ``typeIR~b~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``sequenceTypeIR~b~)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
-xref:Cast_impl_neq[``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``typeIR'``:
+. If let ``tupleTypeIR`` be ``typeIR'``:
+ .. Let ``+TUPLE+`` ``+`<+`` ``typeIR~b~^{asterisk}^`` ``+`>+`` be ``tupleTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~b_non_default~^{asterisk}^,`` ``typeIR~b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~b_non_default~^{asterisk}^``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~b_default~`` can be default-initialized], for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
-  ... Then, the relation holds.
-. Else if let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~b_non_default~`` in ``typeIR~b_non_default~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b_non_default~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~b_default~`` can be default-initialized], for all ``typeIR~b_default~`` in ``typeIR~b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``tupleTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``arrayTypeIR`` be ``typeIR'``:
+ .. Let ``+ARRAY+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``arrayTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
-  ... Then, the relation holds.
-. Else if let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``arrayTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``headerStackTypeIR`` be ``typeIR'``:
+ .. Let ``+HEADER_STACK+`` ``typeIR~b~`` ``+`[+`` ``n~size~`` ``+`]+`` be ``headerStackTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than ``n~size~``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~b~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
-  ... Then, the relation holds.
-. Else if let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~b~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~b~`` can be default-initialized].
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerStackTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else if let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``headerTypeIR`` be ``typeIR'``.
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is less than the length of ``typeIR~field_b~^{asterisk}^``.
  .. Let ``(`` ``typeIR~field_b_non_default~^{asterisk}^,`` ``typeIR~field_b_default~^{asterisk}^`` ``)`` be ``xref:partition_[$partition_<typeIR>(typeIR~field_b~^{asterisk}^,`` ``the`` ``length`` ``of`` ``typeIR~a~^{asterisk}^)]``.
  .. Check that the length of ``typeIR~a~^{asterisk}^`` is equal to the length of ``typeIR~field_b_non_default~^{asterisk}^``.
- .. If xref:Cast_impl[``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``], for all ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
+ .. For each ``typeIR~a~`` in ``typeIR~a~^{asterisk}^`` and ``typeIR~field_b_non_default~`` in ``typeIR~field_b_non_default~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~a~`` can be implicitly cast to ``typeIR~field_b_non_default~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
-xref:Cast_impl_neq[``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+`}+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+. If let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``(`` ``annotationList~a~`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that xref:eq_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9334,8 +9913,27 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_impl[``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``: then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR[$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``headerTypeIR`` be ``typeIR'``.
+ .. Let ``(`` ``annotationList~a~`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that xref:eq_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is equal to ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9368,11 +9966,29 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_impl[``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``: then, the relation holds.
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_aligned~`` in ``typeIR~field_b_aligned~^{asterisk}^``:
++
+--
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR[$chain_casts_recordTypeIR(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
 
-xref:Cast_impl_neq[``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
+xref:Cast_impl_neq[Checking if ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` can be implicitly cast to ``typeIR'`` (when unequal)]:
 
-. If let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+. If let ``structTypeIR`` be ``typeIR'``:
+ .. Let ``(`` ``annotationList~a~`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+STRUCT+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``structTypeIR``.
  .. Check that xref:sub_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is a subset of ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9405,26 +10021,44 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_impl[``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
-  ... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-  ... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-   **** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+ .. For each ``id~default~`` in ``id~default~^{asterisk}^``:
++
+--
+  *** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-  ... Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
-  ... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+ .. Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
+ .. For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-   **** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+  *** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
-. Else if let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR_default[$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``structTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+. Else:
+ .. Let ``headerTypeIR`` be ``typeIR'``.
+ .. Let ``(`` ``annotationList~a~`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` be ``fieldTypeIR~a~^{asterisk}^``.
+ .. Let ``+HEADER+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_b~`` ``id~field_b~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``headerTypeIR``.
  .. Check that xref:sub_set[``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+`` is a subset of ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+``].
  .. Check that the length of ``id~field_a~^{asterisk}^`` is equal to the length of ``typeIR~field_a~^{asterisk}^``, for all ``id~field_a~`` in ``id~field_a~^{asterisk}^``.
  .. For each ``id~field_a~`` in ``id~field_a~^{asterisk}^``:
@@ -9457,25 +10091,43 @@ Let ``typeIR'''^?^^{asterisk}^`` be the resulting list.
 --
 +
 Let ``typeIR~field_b_non_default_aligned~^{asterisk}^`` be the resulting list.
- .. If xref:Cast_impl[``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``], for all ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
-  ... Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
-  ... For each ``id~default~`` in ``id~default~^{asterisk}^``:
+ .. For each ``typeIR~field_a_aligned~`` in ``typeIR~field_a_aligned~^{asterisk}^`` and ``typeIR~field_b_non_default_aligned~`` in ``typeIR~field_b_non_default_aligned~^{asterisk}^``:
 +
 --
-   **** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
+  *** Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~field_a_aligned~`` can be implicitly cast to ``typeIR~field_b_non_default_aligned~``].
+--
++
+Let ``castResult^{asterisk}^`` be the resulting list.
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``, for all ``castResult`` in ``castResult^{asterisk}^``.
+ .. For each ``castResult`` in ``castResult^{asterisk}^``:
++
+--
+  *** Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+--
++
+Let ``typeIR~cast~^{asterisk}^^{asterisk}^`` be the resulting list.
+ .. Let ``+`{+`` ``id~default~^{asterisk}^`` ``+`}+`` be xref:diff_set[the difference of the sets ``+`{+`` ``id~field_b~^{asterisk}^`` ``+`}+`` and ``+`{+`` ``id~field_a~^{asterisk}^`` ``+`}+``].
+ .. For each ``id~default~`` in ``id~default~^{asterisk}^``:
++
+--
+  *** Let ``typeIR''''^?^`` be xref:find_map[the value of ``id~default~`` in map ``+`{+`` ``(`` ``id~field_b~`` ``+':'+`` ``typeIR~field_b~`` ``)^{asterisk}^`` ``+`}+``].
 --
 +
 Let ``typeIR''''^?^^{asterisk}^`` be the resulting list.
-  ... Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
-  ... For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
+ .. Check that ``typeIR''''^?^`` is defined, for all ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``.
+ .. For each ``typeIR''''^?^`` in ``typeIR''''^?^^{asterisk}^``:
 +
 --
-   **** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
+  *** Let ``typeIR~field_b_default~`` be ``typeIR''''^?^``.
 --
 +
 Let ``typeIR~field_b_default~^{asterisk}^`` be the resulting list.
-  ... Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
-  ... Then, the relation holds.
+ .. Check that xref:is_defaultable_typeIR[``typeIR~field_b_default~`` can be default-initialized], for all ``typeIR~field_b_default~`` in ``typeIR~field_b_default~^{asterisk}^``.
+ .. Let ``typeIR~cast_agg~^{asterisk}^`` be ``xref:chain_casts_recordTypeIR_default[$chain_casts_recordTypeIR_default(fieldTypeIR~a~^{asterisk}^,`` ``typeIR~cast~^{asterisk}^^{asterisk}^,`` ``headerTypeIR)]``.
+ .. The result is casts ``+OK+`` ``typeIR~cast_agg~^{asterisk}^``.
+
+. Otherwise:
+ .. xref:Cast_impl_neq[Checking if ``typeIR`` can be implicitly cast to ``typeIR'`` (when unequal)]: the result is casts ``+FAIL+``.
 
 Cast_impl_neq dispatch:
 . If let ``intTypeIR`` be ``typeIR``:
@@ -9492,11 +10144,12 @@ Cast_impl_neq dispatch:
  .. Else:
   ... Let ``+SEQ+`` ``+`<+`` ``typeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+`` be ``sequenceTypeIR``.
   ... goto xref:Cast_impl_neq-sequenceTypeIR-default[sequenceTypeIR-default]
-. Else if let ``recordTypeIR`` be ``typeIR``:
- .. If let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``recordTypeIR``:
+. Else:
+ .. Let ``recordTypeIR`` be ``typeIR``.
+ .. If let ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+`}+`` be ``recordTypeIR``:
   ... goto xref:Cast_impl_neq-recordTypeIR-non-default[recordTypeIR-non-default]
  .. Else:
-  ... Let ``+RECORD+`` ``+`{+`` ``(`` ``++_++`` ``typeIR~field_a~`` ``id~field_a~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordTypeIR``.
+  ... Let ``+RECORD+`` ``+`{+`` ``fieldTypeIR~a~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+`` be ``recordTypeIR``.
   ... goto xref:Cast_impl_neq-recordTypeIR-default[recordTypeIR-default]
 
 xref:Expr_ok[Expr_ok]:
@@ -9750,9 +10403,11 @@ xref:Expr_ok[Typing ``+`(+`` ``type~t~`` ``+`)+`` ``expression``, under context 
  .. Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``p``].
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
  .. Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
- .. If xref:Cast_expl[``typeIR`` can be explicitly cast to ``typeIR~t~``]:
-  ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~t~`` and compile-time known-ness ``ctk``].
-  ... The result is xref:typedExpressionIR[``+`(+`` ``typeIR~t~`` ``+`)+`` ``typedExpressionIR`` annotated with ``expressionNoteIR``].
+ .. Let casts ``castResult`` be the result of xref:Cast_expl[checking if ``typeIR`` can be explicitly cast to ``typeIR~t~``].
+ .. Let!~type~ ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+ .. Let ``expressionIR~cast~`` be the expression of xref:apply_cast[``typedExpressionIR`` cast through ``typeIR~cast~^{asterisk}^``].
+ .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~t~`` and compile-time known-ness ``ctk``].
+ .. The result is xref:typedExpressionIR[``expressionIR~cast~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``+'{#}'+``, under context ``TC`` at ``p``]:
 
@@ -13078,6 +13733,78 @@ Let ``parameterIR~aligned_inferred~^{asterisk}^`` be the resulting list.
 Inst_ok dispatch:
 . goto xref:Inst_ok-[]
 
+xref:chain_casts[$chain_casts(typeIR~cur~^{asterisk}^, typeIR~chain~^{asterisk}^^{asterisk}^)]
+
+. If ``xref:concat_[$concat_<typeIR>(typeIR~chain~^{asterisk}^^{asterisk}^)]`` matches pattern ``[]``: return ``·``.
+. Else:
+ .. Check that the length of ``typeIR~chain~^{asterisk}^^{asterisk}^`` is equal to the length of ``typeIR~cur~^{asterisk}^``.
+ .. For each ``typeIR~chain~^{asterisk}^`` in ``typeIR~chain~^{asterisk}^^{asterisk}^`` and ``typeIR~cur~`` in ``typeIR~cur~^{asterisk}^``:
++
+--
+  *** Let ``(`` ``typeIR~next~,`` ``typeIR~chain_rest~^{asterisk}^`` ``)`` be ``xref:chain_casts'[$chain_casts'(typeIR~cur~,`` ``typeIR~chain~^{asterisk}^)]``.
+--
++
+Let ``typeIR~chain_rest~^{asterisk}^^{asterisk}^`` and ``typeIR~next~^{asterisk}^`` be the resulting lists.
+ .. Let ``typeIR^{asterisk}^^{asterisk}^`` be ``xref:chain_casts[$chain_casts(typeIR~next~^{asterisk}^,`` ``typeIR~chain_rest~^{asterisk}^^{asterisk}^)]``.
+ .. Return ``typeIR~next~^{asterisk}^`` ``{two-colons}`` ``typeIR^{asterisk}^^{asterisk}^``.
+
+xref:chain_casts'[$chain_casts'(typeIR~cur~, typeIR^{asterisk}^)]
+
+. If ``typeIR^{asterisk}^`` matches pattern ``[]``: return ( ``typeIR~cur~``, ``·`` ).
+. Else:
+ .. Let ``typeIR~h~`` ``{two-colons}`` ``typeIR~t~^{asterisk}^`` be ``typeIR^{asterisk}^``.
+ .. Return ( ``typeIR~h~``, ``typeIR~t~^{asterisk}^`` ).
+
+xref:chain_casts_sequenceTypeIR[$chain_casts_sequenceTypeIR(typeIR~a~^{asterisk}^, typeIR~cast_elem~^{asterisk}^^{asterisk}^, typeIR~b~)]
+
+. Let ``typeIR~cast_step~^{asterisk}^^{asterisk}^`` be ``xref:chain_casts[$chain_casts(typeIR~a~^{asterisk}^,`` ``typeIR~cast_elem~^{asterisk}^^{asterisk}^)]``.
+. For each ``typeIR~cast_step~^{asterisk}^`` in ``typeIR~cast_step~^{asterisk}^^{asterisk}^``:
++
+--
+ ** Let ``typeIR~cast_agg~`` be ``+SEQ+`` ``+`<+`` ``typeIR~cast_step~^{asterisk}^`` ``+`>+``.
+--
++
+Let ``typeIR~cast_agg~^{asterisk}^`` be the resulting list.
+. Return ``typeIR~cast_agg~^{asterisk}^`` concatenated with ``typeIR~b~``.
+
+xref:chain_casts_sequenceTypeIR_default[$chain_casts_sequenceTypeIR_default(typeIR~a~^{asterisk}^, typeIR~cast_elem~^{asterisk}^^{asterisk}^, typeIR~b~)]
+
+. Let ``typeIR~cast_step~^{asterisk}^^{asterisk}^`` be ``xref:chain_casts[$chain_casts(typeIR~a~^{asterisk}^,`` ``typeIR~cast_elem~^{asterisk}^^{asterisk}^)]``.
+. For each ``typeIR~cast_step~^{asterisk}^`` in ``typeIR~cast_step~^{asterisk}^^{asterisk}^``:
++
+--
+ ** Let ``typeIR~cast_agg~`` be ``+SEQ+`` ``+`<+`` ``typeIR~cast_step~^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`>+``.
+--
++
+Let ``typeIR~cast_agg~^{asterisk}^`` be the resulting list.
+. Return ``typeIR~cast_agg~^{asterisk}^`` concatenated with ``typeIR~b~``.
+
+xref:chain_casts_recordTypeIR[$chain_casts_recordTypeIR(( annotationList~a~ typeIR~a~ id~a~ +';'+ )^{asterisk}^, typeIR~cast_elem~^{asterisk}^^{asterisk}^, typeIR~b~)]
+
+. Let ``typeIR~cast_step~^{asterisk}^^{asterisk}^`` be ``xref:chain_casts[$chain_casts(typeIR~a~^{asterisk}^,`` ``typeIR~cast_elem~^{asterisk}^^{asterisk}^)]``.
+. Check that the length of ``annotationList~a~^{asterisk}^`` is equal to the length of ``id~a~^{asterisk}^`` and the length of ``id~a~^{asterisk}^`` is equal to the length of ``typeIR~cast_step~^{asterisk}^``, for all ``typeIR~cast_step~^{asterisk}^`` in ``typeIR~cast_step~^{asterisk}^^{asterisk}^``.
+. For each ``typeIR~cast_step~^{asterisk}^`` in ``typeIR~cast_step~^{asterisk}^^{asterisk}^``:
++
+--
+ ** Let ``typeIR~cast_agg~`` be ``+RECORD+`` ``+`{+`` ``(`` ``annotationList~a~`` ``typeIR~cast_step~`` ``id~a~`` ``+';'+`` ``)^{asterisk}^`` ``+`}+``.
+--
++
+Let ``typeIR~cast_agg~^{asterisk}^`` be the resulting list.
+. Return ``typeIR~cast_agg~^{asterisk}^`` concatenated with ``typeIR~b~``.
+
+xref:chain_casts_recordTypeIR_default[$chain_casts_recordTypeIR_default(( annotationList~a~ typeIR~a~ id~a~ +';'+ )^{asterisk}^, typeIR~cast_elem~^{asterisk}^^{asterisk}^, typeIR~b~)]
+
+. Let ``typeIR~cast_step~^{asterisk}^^{asterisk}^`` be ``xref:chain_casts[$chain_casts(typeIR~a~^{asterisk}^,`` ``typeIR~cast_elem~^{asterisk}^^{asterisk}^)]``.
+. Check that the length of ``annotationList~a~^{asterisk}^`` is equal to the length of ``id~a~^{asterisk}^`` and the length of ``id~a~^{asterisk}^`` is equal to the length of ``typeIR~cast_step~^{asterisk}^``, for all ``typeIR~cast_step~^{asterisk}^`` in ``typeIR~cast_step~^{asterisk}^^{asterisk}^``.
+. For each ``typeIR~cast_step~^{asterisk}^`` in ``typeIR~cast_step~^{asterisk}^^{asterisk}^``:
++
+--
+ ** Let ``typeIR~cast_agg~`` be ``+RECORD+`` ``+`{+`` ``(`` ``annotationList~a~`` ``typeIR~cast_step~`` ``id~a~`` ``+';'+`` ``)^{asterisk}^`` ``+','+`` ``+'...'+`` ``+`}+``.
+--
++
+Let ``typeIR~cast_agg~^{asterisk}^`` be the resulting list.
+. Return ``typeIR~cast_agg~^{asterisk}^`` concatenated with ``typeIR~b~``.
+
 xref:reduce_serenum[``typedExpressionIR`` with surrounding serializable enums reduced]
 
 . Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
@@ -13123,42 +13850,49 @@ xref:reduce_serenum_binary[The result of reducing serializable enums in ``typedE
 
 . Otherwise: return ``·``.
 
+xref:apply_cast[``typedExpressionIR`` cast through ``typeIR^{asterisk}^``]
+
+. If ``typeIR^{asterisk}^`` matches pattern ``[]``: return ``typedExpressionIR``.
+. Else:
+ .. Let ``typeIR~h~`` ``{two-colons}`` ``typeIR~t~^{asterisk}^`` be ``typeIR^{asterisk}^``.
+ .. Let xref:expressionNoteIR[a pair of type ``++_++`` and compile-time known-ness ``ctk``] be the note of ``typedExpressionIR``.
+ .. Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~h~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~h~`` and compile-time known-ness ``ctk``].
+ .. Return xref:apply_cast[``typedExpressionIR~cast~`` cast through ``typeIR~t~^{asterisk}^``].
+
 xref:cast_unary[``typedExpressionIR`` implicitly cast to ``typeIR~to~``]
 
-. Let xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``] be the note of ``typedExpressionIR``.
-. If xref:Type_alpha[``typeIR`` and ``typeIR~to~`` are the same type]: return ``typedExpressionIR``.
-. Else:
- .. If xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~to~``]:
-  ... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~to~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~to~`` and compile-time known-ness ``ctk``].
-  ... Return ``typedExpressionIR~cast~``.
+. Let xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR``.
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~to~``].
+. Let!~type~ ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+. Let ``typedExpressionIR~cast~`` be xref:apply_cast[``typedExpressionIR`` cast through ``typeIR~cast~^{asterisk}^``].
+. Return ``typedExpressionIR~cast~``.
 
 . Otherwise: return ``·``.
 
 xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types]
 
-. Let xref:expressionNoteIR[a pair of type ``typeIR~l~`` and compile-time known-ness ``ctk``] be the note of ``typedExpressionIR~l~``.
+. Let xref:expressionNoteIR[a pair of type ``typeIR~l~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~l~``.
 . Let xref:expressionNoteIR[a pair of type ``typeIR~r~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~r~``.
-. If xref:Type_alpha[``typeIR~l~`` and ``typeIR~r~`` are the same type]:
- .. Return ( ``typedExpressionIR~l~``, ``typedExpressionIR~r~`` ).
+. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~l~`` can be implicitly cast to ``typeIR~r~``].
+. If let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``:
+ .. Let ``typedExpressionIR~l_cast~`` be xref:apply_cast[``typedExpressionIR~l~`` cast through ``typeIR~cast~^{asterisk}^``].
+ .. Return ( ``typedExpressionIR~l_cast~``, ``typedExpressionIR~r~`` ).
 . Else:
- .. If xref:Cast_impl[``typeIR~l~`` can be implicitly cast to ``typeIR~r~``]:
-  ... Let ``typedExpressionIR~l_cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~r~`` ``+`)+`` ``typedExpressionIR~l~`` annotated with a pair of type ``typeIR~r~`` and compile-time known-ness ``ctk``].
-  ... Return ( ``typedExpressionIR~l_cast~``, ``typedExpressionIR~r~`` ).
+ .. Let casts ``castResult'`` be the result of xref:Cast_impl[checking if ``typeIR~r~`` can be implicitly cast to ``typeIR~l~``].
+ .. If let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult'``:
+  ... Let ``typedExpressionIR~r_cast~`` be xref:apply_cast[``typedExpressionIR~r~`` cast through ``typeIR~cast~^{asterisk}^``].
+  ... Return ( ``typedExpressionIR~l~``, ``typedExpressionIR~r_cast~`` ).
  .. Else:
-  ... If xref:Cast_impl[``typeIR~r~`` can be implicitly cast to ``typeIR~l~``]:
-   .... Let ``typedExpressionIR~r_cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~l~`` ``+`)+`` ``typedExpressionIR~r~`` annotated with a pair of type ``typeIR~l~`` and compile-time known-ness ``++_++``].
-   .... Return ( ``typedExpressionIR~l~``, ``typedExpressionIR~r_cast~`` ).
-  ... Else:
-   .... Let ``typedExpressionIR~l_cast~`` be xref:reduce_serenum[``typedExpressionIR~l~`` with surrounding serializable enums reduced].
-   .... Try pass:[<strong id="bk-cast_binary-1" class="bk-label">#1</strong>]:
-    ..... {empty}+++<span class="bk-arm-anchor" id="bk-cast_binary-1-I"></span>+++
-     ...... Check that ``typedExpressionIR~l~`` is not equal to ``typedExpressionIR~l_cast~``.+++<sub class="bk-mark">[<a href="#bk-cast_binary-1-II">else #1-II</a>]</sub>+++
-     ...... Return xref:cast_binary[``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
-    ..... {empty}+++<span class="bk-arm-anchor" id="bk-cast_binary-1-II"></span>+++
-     ...... Check that ``typedExpressionIR~l~`` is equal to ``typedExpressionIR~l_cast~``.+++<sub class="bk-mark">[<a href="#bk-cast_binary-1">fail #1</a>]</sub>+++
-     ...... Let ``typedExpressionIR~r_cast~`` be xref:reduce_serenum[``typedExpressionIR~r~`` with surrounding serializable enums reduced].+++<sub class="bk-mark">[<a href="#bk-cast_binary-1">fail #1</a>]</sub>+++
-     ...... Check that ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_cast~``.+++<sub class="bk-mark">[<a href="#bk-cast_binary-1">fail #1</a>]</sub>+++
-     ...... Return xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r_cast~`` implicitly cast to equal types].
+  ... Let ``typedExpressionIR~l_cast~`` be xref:reduce_serenum[``typedExpressionIR~l~`` with surrounding serializable enums reduced].
+  ... Try pass:[<strong id="bk-cast_binary-1" class="bk-label">#1</strong>]:
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-cast_binary-1-A"></span>+++
+    ..... Check that ``typedExpressionIR~l~`` is not equal to ``typedExpressionIR~l_cast~``.+++<sub class="bk-mark">[<a href="#bk-cast_binary-1-B">else #1-B</a>]</sub>+++
+    ..... Return xref:cast_binary[``typedExpressionIR~l_cast~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].
+   .... {empty}+++<span class="bk-arm-anchor" id="bk-cast_binary-1-B"></span>+++
+    ..... Check that ``typedExpressionIR~l~`` is equal to ``typedExpressionIR~l_cast~``.+++<sub class="bk-mark">[<a href="#bk-cast_binary-1">fail #1</a>]</sub>+++
+    ..... Let ``typedExpressionIR~r_cast~`` be xref:reduce_serenum[``typedExpressionIR~r~`` with surrounding serializable enums reduced].+++<sub class="bk-mark">[<a href="#bk-cast_binary-1">fail #1</a>]</sub>+++
+    ..... Check that ``typedExpressionIR~r~`` is not equal to ``typedExpressionIR~r_cast~``.+++<sub class="bk-mark">[<a href="#bk-cast_binary-1">fail #1</a>]</sub>+++
+    ..... Return xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r_cast~`` implicitly cast to equal types].
 
 . Otherwise: return ``·``.
 
@@ -13583,8 +14317,9 @@ xref:ForCollectionExpr_ok[Typing ``expression`` under context ``TC`` with iterat
 . Let ``typeIR~expression~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
 . Let ``typeIR`` be xref:unroll_typeIR[``typeIR~expression~`` with typedefs unrolled].
 . If let ``+LIST+`` ``+`<+`` ``typeIR~e~`` ``+`>+`` be ``typeIR``:
- .. If xref:Cast_impl[``typeIR~e~`` can be implicitly cast to ``typeIR~var~``]:
-  ... The result is ``typedExpressionIR``.
+ .. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``].
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``.
+ .. The result is ``typedExpressionIR``.
 . Else if let ``+ARRAY+`` ``typeIR~e~`` ``+`[+`` ``++_++`` ``+`]+`` be ``typeIR``:
  .. If xref:Type_alpha[``typeIR~e~`` and ``typeIR~var~`` are the same type]:
   ... The result is ``typedExpressionIR``.
@@ -14077,15 +14812,17 @@ xref:SelectCase_keyset_simple_ok[Typing ``expression`` under context ``TC`` with
  .. If xref:Type_alpha[``typeIR~base~`` and ``typeIR~key~`` are the same type]:
   ... The result is ``typedExpressionIR``.
  .. Else:
-  ... If xref:Cast_impl[``typeIR~base~`` can be implicitly cast to ``typeIR~key~``]:
-   .... Let ``typeIR~cast~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
-   .... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~cast~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~cast~`` and compile-time known-ness ``+DYN+``].
-   .... The result is ``typedExpressionIR~cast~``.
-. Else:
- .. If xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``]:
+  ... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~base~`` can be implicitly cast to ``typeIR~key~``].
+  ... Check that ``castResult`` matches pattern ``+OK+`` ``%``.
   ... Let ``typeIR~cast~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
   ... Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~cast~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~cast~`` and compile-time known-ness ``+DYN+``].
   ... The result is ``typedExpressionIR~cast~``.
+. Else:
+ .. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~key~``].
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``.
+ .. Let ``typeIR~cast~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
+ .. Let ``typedExpressionIR~cast~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~cast~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~cast~`` and compile-time known-ness ``+DYN+``].
+ .. The result is ``typedExpressionIR~cast~``.
 
 xref:SelectCase_keyset_simple_ok[Typing ``expression~l~`` ``+'&&&'+`` ``expression~r~`` under context ``TC`` with key type ``typeIR~key~``]:
 
@@ -14367,10 +15104,11 @@ xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+':'+`` ``t`` against 
  .. Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
  .. Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
  .. Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
- .. If xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``]:
-  ... Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
-  ... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
-  ... The result is table entry state ``+LPM+`` ``n`` and ``typedExpressionIR~set~``.
+ .. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~key~``].
+ .. Check that ``castResult`` matches pattern ``+OK+`` ``%``.
+ .. Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
+ .. Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
+ .. The result is table entry state ``+LPM+`` ``n`` and ``typedExpressionIR~set~``.
 . Else:
  .. If xref:is_singleton_list_expression[``expression`` is a singleton list expression]:
   ... Let!~type~ ``+`{+`` ``sequenceOrRecordElementExpression`` ``trailingCommaOpt`` ``+`}+`` be ``expression``.
@@ -14379,18 +15117,20 @@ xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+':'+`` ``t`` against 
   ... Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression~elem~``, under context ``TC`` at ``+LOCAL+``].
   ... Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
   ... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
-  ... If xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``]:
-   .... Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
-   .... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
-   .... The result is table entry state ``+NON_LPM+`` and ``typedExpressionIR~set~``.
+  ... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~key~``].
+  ... Check that ``castResult`` matches pattern ``+OK+`` ``%``.
+  ... Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
+  ... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
+  ... The result is table entry state ``+NON_LPM+`` and ``typedExpressionIR~set~``.
  .. Else:
   ... Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``+LOCAL+``].
   ... Let ``typeIR`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR``].
   ... Let ``ctk`` be xref:ctk_of_typedExpressionIR[the compile-time known-ness of ``typedExpressionIR``].
-  ... If xref:Cast_impl[``typeIR`` can be implicitly cast to ``typeIR~key~``]:
-   .... Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
-   .... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
-   .... The result is table entry state ``+NON_LPM+`` and ``typedExpressionIR~set~``.
+  ... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR`` can be implicitly cast to ``typeIR~key~``].
+  ... Check that ``castResult`` matches pattern ``+OK+`` ``%``.
+  ... Let ``typeIR~set~`` be ``+SET+`` ``+`<+`` ``typeIR~key~`` ``+`>+``.
+  ... Let ``typedExpressionIR~set~`` be xref:typedExpressionIR[``+`(+`` ``typeIR~set~`` ``+`)+`` ``typedExpressionIR`` annotated with a pair of type ``typeIR~set~`` and compile-time known-ness ``ctk``].
+  ... The result is table entry state ``+NON_LPM+`` and ``typedExpressionIR~set~``.
 
 xref:TableEntry_keyset_simple_ok[Typing ``typeIR~key~`` ``+':'+`` ``t`` against ``expression~l~`` ``+'&&&'+`` ``expression~r~`` under context ``TC`` and table context ``TBLC``]:
 
@@ -14774,13 +15514,15 @@ xref:merge_constraint'[$merge_constraint'(constraint~pre~, constraint~post~, typ
     ..... {empty}+++<span class="bk-arm-anchor" id="bk-merge_constraint'-3-II"></span>+++
      ...... Let ``infer''`` be xref:option_get[*!*] xref:find_map[the value of ``typeId~h~`` in map ``constraint~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
      ...... Let!~type~ ``+KNOWN+`` ``+AS+`` ``typeIR~post~`` be ``infer''``.+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
-     ...... If xref:Cast_impl[``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``]:
+     ...... Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~pre~`` can be implicitly cast to ``typeIR~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+     ...... If ``castResult`` matches pattern ``+OK+`` ``%``:
       ....... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~post~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
       ....... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
      ...... Else:
-      ....... If xref:Cast_impl[``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``]:
-       ........ Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
-       ........ Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
+      ....... Let casts ``castResult'`` be the result of xref:Cast_impl[checking if ``typeIR~post~`` can be implicitly cast to ``typeIR~pre~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+      ....... Check that ``castResult'`` matches pattern ``+OK+`` ``%``.+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+      ....... Let ``constraint~updated~`` be xref:update_map[the map ``constraint`` with the value for ``typeId~h~`` is updated to ``+KNOWN+`` ``+AS+`` ``typeIR~pre~``].+++<sub class="bk-mark">[<a href="#bk-merge_constraint'-3">fail #3</a>]</sub>+++
+      ....... Return ``xref:merge_constraint'[$merge_constraint'(constraint~pre~,`` ``constraint~post~,`` ``typeId~t~^{asterisk}^,`` ``constraint~updated~)]``.
 
 xref:merge_constraints[$merge_constraints(constraint~pre~, constraint^{asterisk}^)]
 
