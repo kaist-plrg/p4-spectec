@@ -107,6 +107,10 @@ Notes:
 Goal: run `examples/add.watsup` and `examples/fibo.watsup` under the AL
 specification written in K.
 
+**Status: done.** All four steps are implemented, and `add`, `fibo` and
+`iter-nontrivial` reproduce the oracle end-to-end from the `.watsup` source —
+see step 4 for the results and the one example that does not yet run.
+
 ### Reference oracle
 
 The same runs under the existing OCaml meta-circular interpreter, whose output
@@ -115,9 +119,13 @@ K must reproduce:
 ```sh
 make boot
 ./spectec-boot run spec-meta/al -rel Entry \
-  -tec examples/add.watsup -ali     # => INT +119
+  -tec examples/add.watsup -ali              # => INT +119
 ./spectec-boot run spec-meta/al -rel Entry \
-  -tec examples/fibo.watsup -ali    # => INT +89
+  -tec examples/fibo.watsup -ali             # => INT +89
+./spectec-boot run spec-meta/al -rel Entry \
+  -tec examples/iter-nontrivial.watsup -ali  # => INT -42
+./spectec-boot run spec-meta/al -rel Entry \
+  -tec examples/builtin-map.watsup -ali      # => INT +45
 ```
 
 `-ali` runs `Pass.algo` on the target `.watsup`, and
@@ -135,14 +143,20 @@ passed as a further configuration variable, `-cPROG=... -pPROG=...`.
 Naive, rule-for-rule port of `spec-meta/{common,al}` alongside the existing
 syntax modules, in dependency order:
 
-| watsup | K |
-| --- | --- |
-| `common/0-stdlib.watsup` | list/map/set helpers |
-| `common/2-env.watsup`, `al/2-env.watsup` | `varr`, `venv`, `tdenv`, `theta`, `reldef`, `funcdef` |
-| `al/3-context.watsup` | `layer`/`ctx`, `$empty_ctx`, `$load*` (largest chunk, ~220 lines) |
-| `common/4-relation.watsup` | `res<X>` — K has no generics, so instantiate `ValRes`, `ValsRes`, `CtxRes`, `UnitRes` |
-| `al/5.1`–`5.7` | `Eval_typ`, `Assign_exp`, `Eval_exp`, `Eval_arg`, `Eval_prem`, `Call_func`, `Call_rel` |
-| `al/6-entry.watsup` | `Entry` |
+| watsup | K | as ported |
+| --- | --- | --- |
+| `common/0-stdlib.watsup` | list/map/set helpers | `common/0-stdlib.k` |
+| `common/2-env.watsup`, `al/2-env.watsup` | `varr`, `venv`, `tdenv`, `theta`, `reldef`, `funcdef` | `common/2-env.k`, `al/2-env.k` |
+| `al/3-context.watsup` | `layer`/`ctx`, `$empty_ctx`, `$load*` (largest chunk, ~220 lines) | `al/3-context.k` |
+| `common/4-relation.watsup` | `res<X>` — K has no generics, so instantiate `ValRes`, `ValsRes`, `UnitRes` | `common/3-relation.k` |
+| `common/5.0-eval-typ.watsup`, `common/5.1-eval-ops.watsup` | type and operator helpers | `common/4.0-eval-typ.k`, `common/5.1-eval-ops.k` |
+| `al/5.1`–`5.7` | `Eval_typ`, `Assign_exp`, `Eval_exp`, `Eval_arg`, `Eval_prem`, `Call_func`, `Call_rel` | `al/4.1`–`4.6` (six files, not seven: argument handling is split across `4.2-eval-assign.k`, `4.3-eval-exp.k` and `4.5-eval-call-func.k` rather than getting a file of its own) |
+| `al/6-entry.watsup` | `Entry` | `al/5-entry.k` (module `AL`) |
+
+The K file numbering drifted from the watsup numbering during the port, so the
+third column is the mapping as it actually landed. `CtxRes` is absent: the cell
+design keeps the context in configuration cells rather than threading it as a
+value, so no relation returns one.
 
 Evaluation is driven by K cells, not by pure functions:
 
@@ -169,7 +183,8 @@ rule <k> (_D:Defn, Ds:Script) => Ds ... </k> [owise]
 rule <k> .Script => .K ... </k>
 ```
 
-Two points to settle before porting the evaluation rules:
+Two points to settle before porting the evaluation rules, and how each was
+settled:
 
 - Backtracking. AL reifies failure as `FAIL` in `res<X>`, and K has no built-in
   backtracking — `krun --search` is symbolic-backend only, so it is unavailable
@@ -177,25 +192,39 @@ Two points to settle before porting the evaluation rules:
   frame continuation that restores the saved cell state and tries the next
   clause or rulegroup. Worth prototyping on `fibo` (two clauses plus
   `-- otherwise`) before porting the rest.
+
+  As ported: two separate stacks. `<saves>` holds `<local>` snapshots for
+  intra-relation save/restore (clause backtracking, and iteration where one
+  element's bindings must not leak into the next); `<callstack>` holds full
+  call frames, where the callee replaces `<local>` wholesale rather than
+  layering on top of it. Conflating the two is a real hazard — it produced a
+  bug where a relation call's `ValList` result met a continuation expecting a
+  bare `Val`.
 - `debug` premises. Either append to `<log>`, or use `<out stream="stdout">`
   with `imports K-IO` for output during the run.
+
+  As ported: `<log>`, via a `logDebug(Val)` `<k>` item (`al/0-config.k`).
 
 Order of work: `add` needs script loading, a zero-argument clause, `LetPr` with
 `Assign_exp` on a plain variable, `IfPr`, `binE`/`cmpE`, `debugPr`,
 `callE("main", ...)` and `Entry`. Note that `-- if i = $(42 + 77)` becomes a
 *let* premise after `Pass.algo`, so assignment is required even for `add`.
 `fibo` adds recursion, multi-clause backtracking on argument patterns, and the
-else-clause. `examples/iter-nontrivial.watsup` and `examples/builtin-map.watsup`
-are the next targets after that.
+else-clause. `examples/iter-nontrivial.watsup` exercises `relD`/`relPr`
+dispatch together with iterated premises (`iterPr`/`iterPrem`) and an iterated
+`letPr` binding — checked against
+`./spectec-boot run spec-meta/al -rel Entry -tec examples/iter-nontrivial.watsup
+-ali` (`INT -42`). `examples/builtin-map.watsup` is the next target after that.
 
 #### Testing the specification
 
-There is no elaborator from AL concrete syntax to `spec-meta-k` terms yet
-(that is what step 2/3 build), so a script under test is written directly as a
-term of the `Script` sort and fed to `krun` as *program text*. Compile the
-whole chain from the entry module — its `--syntax-module` is `AL-SYNTAX`,
-since that is where the program being run is parsed, not the module that
-defines the entry point:
+Step 1 predates the emitter, so a script under test is written by hand
+directly as a term of the `Script` sort and fed to `krun` as *program text*.
+This route is still the convenient one for a small hand-built test that no
+`.watsup` file corresponds to; for a real target, steps 2–4 below emit the
+term instead. Compile the whole chain from the entry module — its
+`--syntax-module` is `AL-SYNTAX`, since that is where the program being run is
+parsed, not the module that defines the entry point:
 
 ```sh
 kompile spec-meta-k/al/5-entry.k --main-module AL --syntax-module AL-SYNTAX \
@@ -233,7 +262,9 @@ Add a `spectec-boot` subcommand that boots the target as usual but, instead of
 running `Entry`, prints the `Value.t` as KAST JSON. The mapping is mechanical:
 `CaseV(mixop, vs)` to the constructor label, `ListV` to a cons list, `OptV` to
 `noX`/`someX`, `NumV`/`TextV`/`BoolV` to tokens. Derive the mixop-to-label table
-from `ali/mixops.ml` so the two cannot drift.
+from `p4spec/lib/interface/spectec/ali/mixops.ml` so the two cannot drift.
+
+The source of `spectec-boot` is located in `p4spec/bin/boot.ml`.
 
 The format is version **4**, in which `label` and `sort` are objects (older
 version 3 examples use bare strings and are rejected):
@@ -266,23 +297,116 @@ kast -d al-syntax-kompiled --input json --output pretty add.json
 
 This prints the script back as `typD("nat", .TParamList, aliasDT(natT())), ...`.
 
-### Step 3: wrapper
+#### As implemented
 
-`krun` has no `--input json`, and its `--parser` flag takes a single executable
-rather than a command string, so the JSON is converted by a wrapper script:
+The subcommand is `spectec-boot kast`, taking one target `.watsup` and writing
+to stdout or to `-o FILE`:
 
 ```sh
-cat > kast-json.sh <<'EOF'
-#!/bin/sh
-exec kast --definition "$KDEF" --input json --output kore --sort Script "$1"
-EOF
-chmod +x kast-json.sh
+./spectec-boot kast examples/add.watsup -o add.json
 ```
+
+It boots the target through the same path the `-ali` interface uses
+(`Interface.SpecTec_AL.parse_program`, i.e. `Pass.algo` then
+`Ali.Boot.boot_spec`), so the emitted value is the one `Entry` would have run.
+
+The emitter is `p4spec/lib/interface/spectec/ali/kast.ml`. Its table is keyed
+by the pair *(sort, mixop)*, not by mixop alone: notations are reused across
+sorts, so `BOOL bool` is both `boolV` and `boolE`, and `clause` and `tblrow`
+share a notation entirely. Every `CaseV` that `boot.ml` builds is noted with
+the watsup sort it inhabits (the `<<|!` operator), which supplies the first
+component. The mixops themselves come from `Common.Mixops` and `Ali.Mixops` —
+the same constants `boot.ml` constructs values with — so a renamed mixop stops
+matching and the emitter reports an unknown constructor rather than emitting a
+wrong label.
+
+Three wrinkles in that keying, all consequences of watsup sorts that K has no
+direct counterpart for:
+
+- Watsup aliases are inlined in K, and the booter notes a value with whichever
+  name the position calls for. `boot_targ` re-notes a type as `targ`, and
+  `boot_elsclause_opt` notes its option with `elsclause`; both are unaliased
+  before lookup. Likewise `mixop = atom**` and `script = defn*` are noted with
+  the alias rather than an iterated type, so the list handler maps them to
+  their element sorts by name.
+- A watsup case that K models as a subsort is reachable under either name.
+  `boot_targ` re-notes as `targ` whatever narrower sort `boot_typ` produced, so
+  `optyp` and `numtyp` constructors are registered under `typ` as well.
+- `boot_num_exp` re-notes a `num` value as `exp` without changing its
+  constructor, since `num` is a case of both `val` and `exp`; `Num` is
+  correspondingly a subsort of both `Val` and `Exp` in K, so `natN`/`intN` are
+  registered under all three sorts.
+
+Checked on all four examples: each round-trips through
+`kast --input json --output pretty` against the kompiled `AL-SYNTAX`, and the
+`add` output is byte-identical to the hand-written `spec-meta-k/test/add.script`
+parsed the same way. `fibo` differs from its hand-written script in one
+identifier only — `Pass.algo` names the else-clause wildcard `_i` where the
+script had abbreviated it to `_`.
+
+Run end-to-end against the full semantics, the emitted JSON reproduces the
+oracle on every example the semantics support — see step 4 for the results.
+
+### Step 3: wrapper
+
+`krun` has no `--input json`, so the JSON is converted by a wrapper script,
+`kast-json.sh` in the repo root, passed to `krun --parser`.
+
+The wrapper accepts a `.watsup` as well as a `.json`, doing the boot itself
+when given one, so that running a target takes a single command (see step 4).
+Anything that is not a `.watsup` is assumed to be KAST JSON already:
+
+```sh
+case "$1" in
+  *.watsup)
+    json=$(mktemp)
+    trap 'rm -f "$json"' EXIT
+    "${SPECTEC_BOOT:-./spectec-boot}" kast "$1" -o "$json"
+    ;;
+  *)
+    json="$1"
+    ;;
+esac
+
+exec kast --definition "$KDEF" --input json --output kore --sort Script "$json"
+```
+
+Two constraints shape this:
+
+- `--parser` takes a single executable, not a command string. The `krun --help`
+  text suggests otherwise (`krun --parser cat foo.kore`), but K 7.1.337 execs
+  the flag's whole value as one filename, so `--parser "./x.sh arg"` fails with
+  *No such file or directory*. Anything the wrapper needs beyond the input file
+  has to reach it another way — hence `$KDEF` for the definition, and
+  `$SPECTEC_BOOT` to override the path to `spectec-boot`.
+- `krun` requires `$PGM` to be a *file*; it appends that path to the parser
+  command. There is no stdin route for the program term, which is why the two
+  steps cannot simply be piped together.
+
+`spectec-boot kast` exits non-zero and reports to stderr on failure, so `set -e`
+in the wrapper stops before `kast` is handed a file that was never written.
 
 ### Step 4: run
 
+The entry module is `spec-meta-k/al/5-entry.k`; there is no `main.k`. Compile
+once, then run a target directly:
+
 ```sh
-kompile spec-meta-k/al/main.k --main-module AL --syntax-module AL-SYNTAX -o al-kompiled
+kompile spec-meta-k/al/5-entry.k --main-module AL --syntax-module AL-SYNTAX -o al-kompiled
+KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh examples/add.watsup
+```
+
+The wrapper boots the `.watsup` itself, so no separate `spectec-boot kast` step
+is needed. `KDEF` must be set even though `-d` already names the definition on
+the `krun` line: `krun` passes the wrapper only the input file, so that is the
+one channel it has for the definition.
+
+To keep the intermediate JSON — to inspect it, or to diff two revisions of the
+emitter — emit it explicitly and hand `krun` that instead; the wrapper takes
+either:
+
+```sh
+./spectec-boot kast examples/add.watsup -o add.json
 KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh add.json
 ```
 
@@ -297,5 +421,25 @@ written to:
 </al>
 ```
 
-`intN(119)` and `intN(89)` correspond to the oracle's `INT +119` and `INT +89`.
 Use `--output json` to diff mechanically rather than by eye.
+
+#### Results
+
+Run from the repo root against all four examples:
+
+| example | `<result>` | oracle | |
+| --- | --- | --- | --- |
+| `add` | `intN(119)` | `INT +119` | ✓ |
+| `fibo` | `intN(89)` | `INT +89` | ✓ |
+| `iter-nontrivial` | `intN(-42)` | `INT -42` | ✓ |
+| `builtin-map` | — | `INT +45` | stuck |
+
+The three that match also end with `<saves>` and `<callstack>` empty, and
+`add`'s `<log>` ends `textV("Add")`, `intN(119)` — the `debug` premise the
+oracle prints as `TEXT Add`.
+
+`builtin-map` stops with `<k>` headed by
+`callBuiltinFunc("add_map", ...)`, and a frame left in each stack. Nothing
+consumes that item: `al/3-context.k` loads `builtinFuncD` into the context, but
+the invocation of `$empty_map`/`$find_map`/`$add_map` is not implemented. That
+is the outstanding step-1 item — the term itself emits and parses correctly.

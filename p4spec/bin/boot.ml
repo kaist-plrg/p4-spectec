@@ -272,6 +272,42 @@ let parse_command =
            Format.printf "Parse error: %s\n" (string_of_error at msg)
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
+let kast_command =
+  Core.Command.basic ~summary:"boot a SpecTec program and print it as KAST JSON"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map path_spectec = anon ("path" %: string)
+     and path_out =
+       flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
+     in
+     fun () ->
+       try
+         let value_program =
+           match Interface.SpecTec_AL.parse_program [] [ path_spectec ] with
+           | Pass value_program -> value_program
+           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
+         in
+         let kast = Interface.SpecTec_AL.kast_of_program value_program in
+         match path_out with
+         | Some path_out ->
+             let oc = Out_channel.open_text path_out in
+             Fun.protect
+               ~finally:(fun () -> Out_channel.close oc)
+               (fun () -> Out_channel.output_string oc (kast ^ "\n"))
+         | None -> print_endline kast
+       with
+       (* Errors go to stderr and exit non-zero: this subcommand is meant to
+          be driven from a script (`kast-json.sh` runs it under `krun
+          --parser`), where a failure printed to stdout would be fed onward as
+          if it were the term. *)
+       | Sys_error msg -> Format.printf "File error: %s\n" msg
+       | Interface.SpecTec_AL.Kast_error msg ->
+           Format.printf "KAST error: %s\n" msg
+       | ParseError (at, msg) ->
+           Format.printf "Parse error: %s\n" (string_of_error at msg)
+       | ElabError (at, msg) ->
+           Format.printf "Elaboration error: %s\n" (string_of_error at msg))
+
 (* Command-line interface *)
 
 let command_core =
@@ -290,6 +326,7 @@ let command_core =
       ("boot-n", boot_n_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
+      ("kast", kast_command);
     ]
 
 let () = Command_unix.run ~version command_core
