@@ -1691,34 +1691,6 @@ let render_table_func_def (hints : Annot.hints) (tablefunc : tablefunc) : string
 
 (* Defined functions *)
 
-let rec block_refs_else (block : block) : bool =
-  List.exists instr_refs_else block
-
-and instr_refs_else (instr : instr) : bool =
-  match instr.node.note.fallthrough with
-  | Some FallElse -> true
-  | _ -> (
-      match instr.node.it with
-      | IfI (_, _, block_then, _) -> block_refs_else block_then
-      | CaseI (_, cases, _) ->
-          List.exists (fun (_, block) -> block_refs_else block) cases
-      | HoldI (_, _, _, holdcase) -> holdcase_refs_else holdcase
-      | CheckLetSubI (_, _, _, block_then)
-      | CheckLetMatchI (_, _, _, block_then)
-      | OptionGetI (_, _, block_then) ->
-          block_refs_else block_then
-      | GroupI (_, _, _, _, block) -> block_refs_else block
-      | BlockI arms -> List.exists block_refs_else arms
-      | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ ->
-          false)
-
-and holdcase_refs_else (holdcase : holdcase) : bool =
-  match holdcase with
-  | BothH (block_hold, block_nothold) ->
-      block_refs_else block_hold || block_refs_else block_nothold
-  | HoldH (block_hold, _) | NotHoldH (block_hold, _) ->
-      block_refs_else block_hold
-
 let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
     Adoc.block =
   let id_func, tparams, params, _typ, block, elseblock_opt = func in
@@ -1740,8 +1712,7 @@ let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
         (render_block_instr ~level:0 ~ctx_fallthrough arms, Some anchor)
     | _ ->
         let anchor =
-          if has_elseblock && block_refs_else block then
-            Some (Fallthrough.anchor_of_else id_func.it)
+          if has_elseblock then Some (Fallthrough.anchor_of_else id_func.it)
           else None
         in
         ( Adoc.seq_block

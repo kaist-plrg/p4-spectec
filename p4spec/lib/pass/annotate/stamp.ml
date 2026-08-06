@@ -291,7 +291,7 @@ let collect_dispatch_fallthroughs (fallthrough : Pl.fallthrough)
 let stamp_defined_rel_def (rel : Pl.rel) : Pl.def' =
   let id_rel, rel_signature, exps, block, elseblock_opt = rel in
   let fallthrough =
-    if Option.is_some elseblock_opt then Pl.FallElse else Pl.FallFail
+    match elseblock_opt with Some (_ :: _) -> Pl.FallElse | _ -> Pl.FallFail
   in
   let dispatch_fallthroughs = collect_dispatch_fallthroughs fallthrough block in
   let block_stamped = stamp_block_dispatcher dispatch_fallthroughs block in
@@ -300,7 +300,7 @@ let stamp_defined_rel_def (rel : Pl.rel) : Pl.def' =
 let stamp_defined_func_def (definedfunc : Pl.definedfunc) : Pl.def' =
   let id, tparams, params, typ, block, elseblock_opt = definedfunc in
   let fallthrough =
-    if Option.is_some elseblock_opt then Pl.FallElse else Pl.FallFail
+    match elseblock_opt with Some (_ :: _) -> Pl.FallElse | _ -> Pl.FallFail
   in
   let block_stamped = stamp_block fallthrough block in
   Pl.FuncDecD (id, tparams, params, typ, block_stamped, elseblock_opt)
