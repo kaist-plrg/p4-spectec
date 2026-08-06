@@ -1,10 +1,11 @@
-open Util.Error
 open Util.Source
 
 (* Error *)
 
-let error (at : region) (msg : string) = error_runtime at msg
-let warn (at : region) (msg : string) = warn_runtime at msg
+exception RuntimeError of region * string
+
+let error (at : region) (msg : string) = raise (RuntimeError (at, msg))
+let warn (at : region) (msg : string) = Util.Error.warn at "runtime" msg
 
 (* Checks *)
 

@@ -1,10 +1,11 @@
-open Util.Error
 open Util.Source
 
 (* Error *)
 
-let error (at : region) (msg : string) = error_builtin at msg
-let warn (at : region) (msg : string) = warn_builtin at msg
+exception BuiltinError of region * string
+
+let error (at : region) (msg : string) = raise (BuiltinError (at, msg))
+let warn (at : region) (msg : string) = Util.Error.warn at "builtin" msg
 
 (* Checks *)
 

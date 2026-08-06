@@ -1,5 +1,4 @@
 open Test_common
-open Util.Error
 open Runtime.Sim.Signature
 open Backend_boot.Config
 module Test = Util.Test
@@ -48,7 +47,8 @@ let boot_test (module Booter : RUNNER) neg stat tower excludes_p4 path_p4 =
     | TestRunErr (msg, at, time_start) ->
         let duration = stop time_start in
         Format.asprintf "Error on run: %s" path_p4 |> print_endline;
-        Format.eprintf "Error on run: %s\n%s\n" path_p4 (string_of_error at msg);
+        Format.eprintf "Error on run: %s\n%s\n" path_p4
+          (Util.Error.string_of_error at msg);
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with

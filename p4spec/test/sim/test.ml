@@ -1,5 +1,4 @@
 open Test_common
-open Util.Error
 open Runtime.Sim.Signature
 module Test = Util.Test
 module Filesys = Util.Filesys
@@ -76,7 +75,7 @@ let run_sim_test (module Simulator : SIM) stat includes_p4 excludes
         let duration = stop time_start in
         Format.asprintf "Error on run: %s" path_stf |> print_endline;
         Format.eprintf "Error on run: %s\n%s\n" path_stf
-          (string_of_error at msg);
+          (Util.Error.string_of_error at msg);
         Format.eprintf ">>> took %.6f seconds\n" duration;
         {
           stat with

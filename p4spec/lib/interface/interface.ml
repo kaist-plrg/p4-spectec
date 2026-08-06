@@ -2,7 +2,6 @@ open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
-open Util.Error
 open Util.Source
 
 (* Interfaces *)
@@ -25,13 +24,13 @@ module P4 = struct
           Run.Pass value_program
       | _ ->
           Run.Fail (`Syntax (no_region, "exactly one P4 file must be provided"))
-    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    with P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
   let parse_string (path_p4 : string) (str : string) : Run.parse_result =
     try
       let value_program = P4.Parse.parse_string path_p4 str in
       Run.Pass value_program
-    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    with P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)
 

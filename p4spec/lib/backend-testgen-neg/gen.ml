@@ -226,7 +226,7 @@ let classify_mutation (fuel : int) (iid : iid) (idx_seed : int)
     classify_mutation' fuel iid idx_seed strategy idx_method idx_mutation trials
       config log dirname_gen_tmp path_p4 comment_gen_p4 kind value_source
       value_mutated value_program
-  with Util.Error.UnparseError msg ->
+  with Spectec.Common.Error.UnparseError msg ->
     Logger.warn config.modes.logmode log
       (Format.asprintf "error while printing the mutated program: %s" msg)
 

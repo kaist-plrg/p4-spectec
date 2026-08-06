@@ -7,12 +7,11 @@ module VCache = Runtime.Dynamic.Caches.ValueCache
 open Mixops
 open Stub
 open Caches
-open Util.Error
 open Util.Source
 
 (* Errors *)
 
-let error = error_unparse
+let error = Error.error
 
 (* Forward references for match dispatch tables,
    populated after all sub-match functions are defined *)

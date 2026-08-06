@@ -1,6 +1,5 @@
 open Lang
 open Runtime.Sim.Signature
-open Util.Error
 open Util.Source
 
 let version = "0.1"
@@ -299,8 +298,8 @@ let run_command =
                  Format.printf "runtime error: %s\n" msg
            with
            | CommandError msg -> Format.printf "%s\n" msg
-           | InterpError (at, msg) ->
-               Format.printf "%s\n" (string_of_error at msg)))
+           | Interp_common.Error.InterpError (at, msg) ->
+               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
 
 let sim_command =
   Core.Command.basic
@@ -375,10 +374,11 @@ let sim_command =
                  Format.printf "runtime error: %s\n" msg
            with
            | CommandError msg -> Format.printf "%s\n" msg
-           | InterpError (at, msg) | ExternError (at, msg) ->
-               Format.printf "%s\n" (string_of_error at msg)
-           | StfError msg ->
-               Format.printf "%s\n" (string_of_error no_region msg)))
+           | Interp_common.Error.InterpError (at, msg)
+           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
+               Format.printf "%s\n" (Util.Error.string_of_error at msg)
+           | Stf.Error.StfError msg ->
+               Format.printf "%s\n" (Util.Error.string_of_error no_region msg)))
 
 let cover_run_command =
   Core.Command.basic ~summary:"measure coverage of the spec"
@@ -422,8 +422,9 @@ let cover_run_command =
          | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | InterpError (at, msg) | ExternError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg))
+       | Interp_common.Error.InterpError (at, msg)
+       | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
+           Format.printf "%s\n" (Util.Error.string_of_error at msg))
 
 let cover_sim_command =
   Core.Command.basic
@@ -473,8 +474,9 @@ let cover_sim_command =
          | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | InterpError (at, msg) | ExternError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg))
+       | Interp_common.Error.InterpError (at, msg)
+       | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
+           Format.printf "%s\n" (Util.Error.string_of_error at msg))
 
 let run_testgen_command =
   Core.Command.basic
@@ -545,8 +547,9 @@ let run_testgen_command =
                covermode
            with
            | CommandError msg -> Format.printf "%s\n" msg
-           | InterpError (at, msg) | ExternError (at, msg) ->
-               Format.printf "%s\n" (string_of_error at msg)))
+           | Interp_common.Error.InterpError (at, msg)
+           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
+               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
 
 let run_testgen_debug_command =
   Core.Command.basic
@@ -569,8 +572,9 @@ let run_testgen_debug_command =
                includes_p4 path_p4 debugdir iid
            with
            | CommandError msg -> Format.printf "%s\n" msg
-           | InterpError (at, msg) | ExternError (at, msg) ->
-               Format.printf "%s\n" (string_of_error at msg)))
+           | Interp_common.Error.InterpError (at, msg)
+           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
+               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
 
 let interesting_command =
   Core.Command.basic ~summary:"interestingness test for reducing P4 programs"
@@ -635,8 +639,9 @@ let interesting_command =
                        exit 1)
            with
            | CommandError msg -> Format.printf "%s\n" msg
-           | InterpError (at, msg) | ExternError (at, msg) ->
-               Format.printf "%s\n" (string_of_error at msg)))
+           | Interp_common.Error.InterpError (at, msg)
+           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
+               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
 
 let splice_command =
   Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
@@ -668,9 +673,9 @@ let splice_command =
              Backend_splice.Driver.splice_files spec spec_pl paths
            with
            | CommandError msg -> Format.printf "%s\n" msg
-           | SpliceError (at, msg) ->
-               Format.eprintf "%s\n" (string_of_error at msg);
-               Format.printf "%s\n" (string_of_error at msg)))
+           | Backend_splice.Error.SpliceError (at, msg) ->
+               Format.eprintf "%s\n" (Util.Error.string_of_error at msg);
+               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
@@ -692,7 +697,8 @@ let parse_command =
                Simulator.Interface.parse_program includes_p4 [ path_p4 ]
              with
              | Fail (`Syntax (at, msg)) ->
-                 Format.printf "Parse error: %s\n" (string_of_error at msg)
+                 Format.printf "Parse error: %s\n"
+                   (Util.Error.string_of_error at msg)
              | Pass value_program ->
                  let str_program =
                    Simulator.Interface.unparse_program value_program
@@ -703,7 +709,7 @@ let parse_command =
                    with
                    | Fail (`Syntax (at, msg)) ->
                        Format.printf "Parse error: %s\n"
-                         (string_of_error at msg)
+                         (Util.Error.string_of_error at msg)
                    | Pass value_program_roundtrip ->
                        Il.Eq.eq_value ~dbg:true value_program
                          value_program_roundtrip

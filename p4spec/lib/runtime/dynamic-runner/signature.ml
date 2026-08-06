@@ -8,6 +8,10 @@ open Util.Source
 type mode = AL_mode | SL_mode | PL_mode | Empty_mode
 type spec = AL of Al.spec | SL of Sl.spec | PL of Pl.spec | Empty
 
+(* Raised by an extern implementation, caught by its caller *)
+
+exception ExternError of region * string
+
 (* Result types *)
 
 type rel_result = Pass of Value.t list | Fail of region * string

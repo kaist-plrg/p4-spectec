@@ -1,7 +1,6 @@
 open Lang
 open Runtime.Dynamic_Runner.Signature
 open Backend_boot.Config
-open Util.Error
 
 let version = "0.1"
 
@@ -234,7 +233,8 @@ let parse_command =
            try
              match Runner.Interface.parse_program [] [ path_spectec ] with
              | Fail (`Syntax (at, msg)) ->
-                 Format.printf "Parse error: %s\n" (string_of_error at msg)
+                 Format.printf "Parse error: %s\n"
+                   (Util.Error.string_of_error at msg)
              | Pass value_program ->
                  let str_program =
                    Runner.Interface.unparse_program value_program
@@ -245,7 +245,7 @@ let parse_command =
                    with
                    | Fail (`Syntax (at, msg)) ->
                        Format.printf "Parse error: %s\n"
-                         (string_of_error at msg)
+                         (Util.Error.string_of_error at msg)
                    | Pass value_program_roundtrip ->
                        Il.Eq.eq_value ~dbg:true value_program
                          value_program_roundtrip
