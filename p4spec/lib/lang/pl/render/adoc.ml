@@ -62,29 +62,70 @@ let table_block ~(cols : int) ~(header : prose list) (rows : string list list) :
 
 type cap_step = Done of prose | Skip | Stop
 
-let rec capitalize_first_step (p : prose) : cap_step =
-  match p with
+let rec capitalize_first_prose_step (prose : prose) : cap_step =
+  match prose with
   | TextP "" -> Skip
-  | TextP s -> Done (TextP (String.capitalize_ascii s))
+  | TextP s ->
+      let c = s.[0] in
+      if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') then
+        Done (TextP (String.capitalize_ascii s))
+      else Skip
   | CodeP _ | LinkP _ -> Stop
   | SeqP [] -> Skip
-  | SeqP (p0 :: ps) -> (
-      match capitalize_first_step p0 with
-      | Done p0' -> Done (SeqP (p0' :: ps))
+  | SeqP (prose_h :: proses_t) -> (
+      match capitalize_first_prose_step prose_h with
+      | Done prose_h -> Done (SeqP (prose_h :: proses_t))
       | Stop -> Stop
       | Skip -> (
-          match capitalize_first_step (SeqP ps) with
-          | Done (SeqP ps') -> Done (SeqP (p0 :: ps'))
+          match capitalize_first_prose_step (SeqP proses_t) with
+          | Done (SeqP proses_t) -> Done (SeqP (prose_h :: proses_t))
           | Done _ -> assert false
           | Skip -> Skip
           | Stop -> Stop))
   | EmptyP -> Skip
 
-let capitalize_first (p : prose) : prose =
-  match capitalize_first_step p with Done p' -> p' | Skip | Stop -> p
+let capitalize_first_prose (prose : prose) : prose =
+  match capitalize_first_prose_step prose with
+  | Done prose -> prose
+  | Skip | Stop -> prose
 
-let ( ++ ) (a : prose) (b : prose) : prose = SeqP [ a; b ]
-let ( ^^ ) (a : code) (b : code) : code = SeqC [ a; b ]
+let rec capitalize_first_block_step (block : block) : block option =
+  match block with
+  | EmptyB | RawB _ | BulletB _ -> None
+  | InlineB prose -> (
+      match capitalize_first_prose_step prose with
+      | Done prose -> Some (InlineB prose)
+      | Skip -> None
+      | Stop -> Some block)
+  | ConcatB blocks ->
+      blocks |> capitalize_first_blocks_step
+      |> Option.map (fun blocks -> ConcatB blocks)
+  | SeqB blocks ->
+      blocks |> capitalize_first_blocks_step
+      |> Option.map (fun blocks -> SeqB blocks)
+  | TableB _ -> Some block
+
+and capitalize_first_blocks_step (blocks : block list) : block list option =
+  match blocks with
+  | [] -> None
+  | block_h :: blocks_t -> (
+      match capitalize_first_block_step block_h with
+      | Some block_h -> Some (block_h :: blocks_t)
+      | None ->
+          blocks_t |> capitalize_first_blocks_step
+          |> Option.map (fun blocks_t -> block_h :: blocks_t))
+
+let capitalize_first_block (block : block) : block =
+  match capitalize_first_block_step block with
+  | Some block -> block
+  | None -> block
+
+(* Concatenation operators *)
+
+let ( ++ ) (prose_a : prose) (prose_b : prose) : prose =
+  SeqP [ prose_a; prose_b ]
+
+let ( ^^ ) (code_a : code) (code_b : code) : code = SeqC [ code_a; code_b ]
 
 (* Serialization *)
 

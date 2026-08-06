@@ -149,10 +149,15 @@ and guard =
   | CheckLetSubG of typ * exp
   | CheckLetMatchG of pattern * exp
 
+(* Backtracking *)
+
+and arm = block
+
 (* Instructions *)
 
 and iid = Sl.iid
-and inote = Sl.inote
+and fallthrough = FallGroup of id | FallNext | FallElse | FallFail
+and inote = { iid : iid; fallthrough : fallthrough option }
 
 and instr = ((instr', inote) note_phrase) Annot.t
 and instr' =
@@ -160,7 +165,7 @@ and instr' =
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * dangle
   | GroupI of id * id * rel_signature * exp list * block
-  | TryI of arm list
+  | BlockI of arm list
   | LetI of exp * exp * iterinstr list
   | RuleI of id * notexp * Hints.Input.t * iterinstr list
   | ResultI of rel_signature * exp list
@@ -174,8 +179,6 @@ and instr' =
 
 and block = instr list
 and elseblock = instr list
-
-and arm = block
 
 and iterinstr = Sl.iterinstr
 

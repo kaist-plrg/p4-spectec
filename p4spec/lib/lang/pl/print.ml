@@ -1,5 +1,4 @@
 open Domain
-open Sl
 open Ast
 open Annot
 open Util.Source
@@ -291,8 +290,8 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0) instr =
       else
         Format.asprintf "%s%s\n\n%s" order s_short
           (string_of_block ~level:(level + 1) block)
-  | TryI arms ->
-      let s_short = Format.asprintf "Try (%d arms)" (List.length arms) in
+  | BlockI arms ->
+      let s_short = Format.asprintf "Block (%d arms)" (List.length arms) in
       if short then s_short
       else
         let s_arms =

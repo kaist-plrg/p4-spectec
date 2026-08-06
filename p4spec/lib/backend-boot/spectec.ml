@@ -137,11 +137,8 @@ module Make_parametric
     { interface }
 
   module Cache = struct
-    let cache_on () =
-      Interface_SpecTec.cache_enable cache.interface
-
-    let cache_off () =
-      Interface_SpecTec.cache_disable_reset cache.interface
+    let cache_on () = Interface_SpecTec.cache_enable cache.interface
+    let cache_off () = Interface_SpecTec.cache_disable_reset cache.interface
   end
 
   (* Threading extern calls to the runner *)
@@ -251,6 +248,5 @@ module Make_parametric
   let clear_cache_interface () : unit =
     Interface_SpecTec.cache_clear cache.interface
 
-  let clear () : unit =
-    clear_cache_interface ()
+  let clear () : unit = clear_cache_interface ()
 end

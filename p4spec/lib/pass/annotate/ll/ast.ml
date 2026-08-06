@@ -12,7 +12,7 @@ and instr' =
   | HoldI of id * notexp * iterexp list * holdcase
   | CaseI of exp * case list * dangle
   | GroupI of id * rel_signature * exp list * block
-  | TryI of arm list
+  | BlockI of arm list
   | DebugI of exp
   | LetI of exp * exp * iterinstr list
   | RuleI of id * notexp * Hints.Input.t * iterinstr list

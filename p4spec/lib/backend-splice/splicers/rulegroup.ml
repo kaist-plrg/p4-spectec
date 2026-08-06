@@ -9,7 +9,7 @@ module Key = struct
     Format.asprintf "%s/%s" id_rel id_rulegroup
 
   let to_anchor ((id_rel, id_rulegroup) : t) : string =
-    Pl.Render.string_of_rulegroupid id_rel id_rulegroup
+    Pl.Render.Fallthrough.anchor_of_group id_rel id_rulegroup
 
   let compare (id_rel_a, id_rulegroup_a) (id_rel_b, id_rulegroup_b) =
     let c = String.compare id_rel_a id_rel_b in
@@ -72,10 +72,9 @@ module Prose = struct
 
     let render (values : t list) : string =
       values
-      |> List.map (fun (instr : Pl.instr) ->
+      |> List.map (fun (instr : t) ->
              match instr.node.it with
              | GroupI (id_rulegroup, id_rel, rel_signature, exps, block) ->
-                 Pl.Render.Backtrack.Label.set_namespace id_rel.it;
                  Pl.Render.render_rulegroup instr.hints id_rulegroup id_rel
                    rel_signature exps block
              | _ -> assert false)
@@ -98,7 +97,7 @@ module Prose = struct
       | CaseI (_, cases, _) ->
           cases |> List.concat_map (fun (_, block) -> collect_block block)
       | GroupI _ -> [ instr ]
-      | TryI arms -> arms |> List.concat_map collect_block
+      | BlockI arms -> arms |> List.concat_map collect_block
       | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
       | CheckLetSubI (_, _, _, block_then)
       | CheckLetMatchI (_, _, _, block_then)
