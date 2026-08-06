@@ -107,9 +107,8 @@ Notes:
 Goal: run `examples/add.watsup` and `examples/fibo.watsup` under the AL
 specification written in K.
 
-**Status: done.** All four steps are implemented, and `add`, `fibo` and
-`iter-nontrivial` reproduce the oracle end-to-end from the `.watsup` source —
-see step 4 for the results and the one example that does not yet run.
+**Status: done.** All four steps are implemented, and every example reproduces
+the oracle end-to-end from the `.watsup` source — see step 4 for the results.
 
 ### Reference oracle
 
@@ -425,21 +424,54 @@ Use `--output json` to diff mechanically rather than by eye.
 
 #### Results
 
-Run from the repo root against all four examples:
+Run from the repo root against all five examples:
 
 | example | `<result>` | oracle | |
 | --- | --- | --- | --- |
 | `add` | `intN(119)` | `INT +119` | ✓ |
 | `fibo` | `intN(89)` | `INT +89` | ✓ |
 | `iter-nontrivial` | `intN(-42)` | `INT -42` | ✓ |
-| `builtin-map` | — | `INT +45` | stuck |
+| `builtin-map` | `intN(45)` | `INT +45` | ✓ |
+| `builtin-list` | `intN(19)` | `INT +19` | ✓ |
 
-The three that match also end with `<saves>` and `<callstack>` empty, and
-`add`'s `<log>` ends `textV("Add")`, `intN(119)` — the `debug` premise the
-oracle prints as `TEXT Add`.
+All five end with `<saves>` and `<callstack>` empty, and `add`'s `<log>` ends
+`textV("Add")`, `intN(119)` — the `debug` premise the oracle prints as
+`TEXT Add`.
 
-`builtin-map` stops with `<k>` headed by
-`callBuiltinFunc("add_map", ...)`, and a frame left in each stack. Nothing
-consumes that item: `al/3-context.k` loads `builtinFuncD` into the context, but
-the invocation of `$empty_map`/`$find_map`/`$add_map` is not implemented. That
-is the outstanding step-1 item — the term itself emits and parses correctly.
+### Builtin functions
+
+`builtin-map` originally stopped with `<k>` headed by
+`callBuiltinFunc("add_map", ...)`: `al/3-context.k` loaded `builtinFuncD` into
+the context, but nothing consumed the resulting call. The builtins declared in
+`spec-meta/common/0-stdlib.watsup` are now implemented in
+`al/4.5-eval-call-func.k` — `$rev_`, `$assoc_`, `$transpose_`, `$find_map`,
+`$find_maps`, `$add_map`, `$adds_map`, plus `$update_map`, which the OCaml
+interface registers though the watsup stdlib does not declare it.
+
+These are `extern relation`s in watsup for a reason unlike
+`Call_extern_func`/`Call_extern_rel`, which stay undefined: a builtin's meaning
+lives in the host interpreter (`p4spec/lib/interface/builtin/{lists,maps}.ml`),
+which is the authority the K rules mirror. Type arguments are ignored — the
+OCaml uses them only to build the result value's `note` type, and K values are
+untyped.
+
+Two details of the encoding, both read off the emitted KAST rather than guessed:
+
+- `map<K, V>` is `set<pair<K, V>>`, so a map value is
+  `injV(valCase(<mixop>, listV(pairs)))` where the mixop is
+  `` ["`{"] ; ["`}"] ``, and each pair is
+  `injV(valCase([] ; ["':'"] ; [], (k, v)))`.
+  One atom group per notation position, empty where an argument goes. The
+  `':'` atom carries its quotes inside the string.
+- A map is an association *list*, and `$find_map` reads it front-to-back, so
+  `$add_map` on a key already present must replace that entry in place rather
+  than append. This is what makes the fourth `$add_map` in `builtin-map`
+  overwrite `"three"` with 42. `$adds_map` goes through the same update, once
+  per key.
+
+Keys compare with `==K`, structural equality on `Val`, matching `Value.eq` in
+the OCaml and the `eqOp` case of `cmpopPoly`.
+
+`examples/builtin-list.watsup` was added to cover the list builtins
+`builtin-map` does not reach (`$rev_`, `$transpose_`, `$assoc_`). `$find_maps`,
+`$adds_map` and `$update_map` have no example exercising them.

@@ -177,10 +177,16 @@ module AL-CALL-FUNC
   //     Call_func_dispatch/defined: Call_defined_func
   //   }
   //
-  // `Call_extern_func`/`Call_builtin_func` are `extern relation`s: left
-  // undefined on purpose (see 4.5-eval-call-func.k's sibling 4.6-eval-call-rel.k for the
-  // matching note on `Call_extern_rel`), so a spec that reaches one gets a
-  // stuck term rather than a silently wrong answer.
+  // `Call_extern_func` is an `extern relation`: left undefined on purpose (see
+  // 4.5-eval-call-func.k's sibling 4.6-eval-call-rel.k for the matching note on
+  // `Call_extern_rel`), so a spec that reaches one gets a stuck term rather
+  // than a silently wrong answer.
+  //
+  // `Call_builtin_func` is also an `extern relation` in watsup, but for a
+  // different reason: its meaning lives in the host interpreter
+  // (`p4spec/lib/interface/builtin/`) rather than in the meta-language.  The
+  // stdlib builtins are implemented here in `callBuiltinFunc` below, so that a
+  // spec using them runs under K too.
   // ==========================================================================
 
   syntax KItem ::= callFuncDispatch(FuncDef, TypList, ValList)
@@ -241,5 +247,196 @@ module AL-CALL-FUNC
   rule <k> findFuncGlobal(X:Id, _:TypList, _:ValList) => FAIL ... </k>
        <gfenv> GF:Map </gfenv>
     requires notBool (X in_keys(GF))
+
+  // ==========================================================================
+  // Call_builtin_func
+  //
+  // The builtins declared in spec-meta/common/0-stdlib.watsup:
+  //
+  //   builtin dec $rev_<X>(X*) : X*
+  //   builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
+  //   builtin dec $transpose_<X>(X**) : X**
+  //   builtin dec $find_map<K, V>(map<K, V>, K) : V?
+  //   builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
+  //   builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+  //   builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+  //
+  // These mirror `p4spec/lib/interface/builtin/{lists,maps}.ml`, which is the
+  // authority on their meaning.  Type arguments carry no runtime content here:
+  // the OCaml implementations use them only to build the `note` type of the
+  // result value, and K values are untyped, so `TypList` is ignored throughout.
+  //
+  // Keys are compared with `==K`, structural equality on `Val`, matching
+  // `Value.eq` in the OCaml (and the `eqOp` case of `cmpopPoly`).
+  //
+  // A builtin is total: it yields a `Val`, never FAIL.  `$find_map` reports a
+  // missing key as `optV(noVal())`, which is the `V?` in its signature.
+  // ==========================================================================
+
+  //   `map<K, V>` is `set<pair<K, V>>`, i.e. `` `{ pair* `} ``, and `pair` is
+  //   `K ':' V`.  Both are variant types, so a map value is an `injV` whose
+  //   mixop is the one the type declaration gives.  These two mixops are
+  //   fixed by the stdlib and are built here rather than read off the term.
+  //
+  //   `` `{ `} `` is `["`{"] ; ["`}"]`; `` ':' `` is `[] ; [":"] ; []` — one
+  //   atom group per notation position, empty where an argument goes.
+  syntax MixOp ::= "mixopMap" "(" ")"         [function, total, symbol(mixopMap)]
+                 | "mixopPair" "(" ")"        [function, total, symbol(mixopPair)]
+
+  rule mixopMap() => ("`{", .AtomList) ; ("`}", .AtomList) ; .MixOp
+  rule mixopPair() => .AtomList ; ("':'", .AtomList) ; .AtomList ; .MixOp
+
+  //   The pair list inside a map value.  Partial on purpose: a value that is
+  //   not a map leaves the term stuck rather than silently reading as empty,
+  //   matching the `error "expected a map"` of `map_of_value`.
+  syntax ValList ::= mapPairs(Val)            [function, symbol(mapPairs)]
+  rule mapPairs(injV(valCase(M:MixOp, listV(Ps:ValList), .ValList))) => Ps
+    requires eqMixOp(M, mixopMap())
+
+  syntax Val ::= mkMap(ValList)               [function, total, symbol(mkMap)]
+                | mkPair(Val, Val)            [function, total, symbol(mkPair)]
+  rule mkMap(Ps:ValList) => injV(valCase(mixopMap(), listV(Ps), .ValList))
+  rule mkPair(K:Val, V:Val) => injV(valCase(mixopPair(), (K, V, .ValList)))
+
+  // --------------------------------------------------------------------------
+  //   $find_map<K, V>(map<K, V>, K) : V?
+  //
+  //   `map_find_opt`: the first pair whose key is equal, or `eps`.
+  // --------------------------------------------------------------------------
+
+  syntax ValOpt ::= findPairs(ValList, Val)   [function, total, symbol(findPairs)]
+  rule findPairs(.ValList, _:Val) => noVal()
+  rule findPairs((injV(valCase(M:MixOp, (K':Val, V:Val, .ValList))), Ps:ValList), K:Val)
+    => #if eqMixOp(M, mixopPair()) andBool K' ==K K
+       #then someVal(V)
+       #else findPairs(Ps, K)
+       #fi
+  //   A non-pair element is skipped, as in `map_find_opt`'s `| _ ->` branch.
+  rule findPairs((_:Val, Ps:ValList), K:Val) => findPairs(Ps, K) [owise]
+
+  rule <k> callBuiltinFunc("find_map", _:TypList, (Vmap:Val, K:Val, .ValList))
+        => optV(findPairs(mapPairs(Vmap), K))
+       ...
+       </k>
+
+  // --------------------------------------------------------------------------
+  //   $find_maps<K, V>(map<K, V>*, K) : V?
+  //
+  //   The first map that has the key wins; `eps` if none does.
+  // --------------------------------------------------------------------------
+
+  syntax ValOpt ::= findMaps(ValList, Val)    [function, symbol(findMaps)]
+  rule findMaps(.ValList, _:Val) => noVal()
+  rule findMaps((Vmap:Val, Vmaps:ValList), K:Val)
+    => #if findPairs(mapPairs(Vmap), K) ==K noVal()
+       #then findMaps(Vmaps, K)
+       #else findPairs(mapPairs(Vmap), K)
+       #fi
+
+  rule <k> callBuiltinFunc("find_maps", _:TypList, (listV(Vmaps:ValList), K:Val, .ValList))
+        => optV(findMaps(Vmaps, K))
+       ...
+       </k>
+
+  // --------------------------------------------------------------------------
+  //   $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+  //
+  //   `map_update`: replace the first pair with an equal key *in place*, or
+  //   append at the end when the key is absent.  Position matters — the map is
+  //   a list, and `$find_map` reads it front-to-back — so rebinding an existing
+  //   key must not move it.  This is what makes the fourth `$add_map` in
+  //   examples/builtin-map.watsup overwrite "three" with 42 rather than
+  //   shadowing it with a second entry.
+  // --------------------------------------------------------------------------
+
+  syntax ValList ::= updatePairs(ValList, Val, Val)
+                                            [function, total, symbol(updatePairs)]
+  rule updatePairs(.ValList, K:Val, V:Val) => mkPair(K, V), .ValList
+  rule updatePairs((injV(valCase(M:MixOp, (K':Val, V':Val, .ValList))), Ps:ValList), K:Val, V:Val)
+    => #if eqMixOp(M, mixopPair()) andBool K' ==K K
+       #then mkPair(K, V), Ps
+       #else injV(valCase(M, (K', V', .ValList))), updatePairs(Ps, K, V)
+       #fi
+  rule updatePairs((P:Val, Ps:ValList), K:Val, V:Val) => P, updatePairs(Ps, K, V) [owise]
+
+  rule <k> callBuiltinFunc("add_map", _:TypList, (Vmap:Val, K:Val, V:Val, .ValList))
+        => mkMap(updatePairs(mapPairs(Vmap), K, V))
+       ...
+       </k>
+
+  //   `$update_map` is the same function in the OCaml; watsup's stdlib does not
+  //   declare it, but the interface registers it, so it is accepted here too.
+  rule <k> callBuiltinFunc("update_map", _:TypList, (Vmap:Val, K:Val, V:Val, .ValList))
+        => mkMap(updatePairs(mapPairs(Vmap), K, V))
+       ...
+       </k>
+
+  // --------------------------------------------------------------------------
+  //   $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+  //
+  //   `List.fold_left2` over the two lists — so, as in the OCaml, it is
+  //   undefined when they differ in length, and the term sticks there.
+  // --------------------------------------------------------------------------
+
+  syntax ValList ::= updatePairsAll(ValList, ValList, ValList)
+                                            [function, symbol(updatePairsAll)]
+  rule updatePairsAll(Ps:ValList, .ValList, .ValList) => Ps
+  rule updatePairsAll(Ps:ValList, (K:Val, Ks:ValList), (V:Val, Vs:ValList))
+    => updatePairsAll(updatePairs(Ps, K, V), Ks, Vs)
+
+  rule <k> callBuiltinFunc("adds_map", _:TypList,
+                           (Vmap:Val, listV(Ks:ValList), listV(Vs:ValList), .ValList))
+        => mkMap(updatePairsAll(mapPairs(Vmap), Ks, Vs))
+       ...
+       </k>
+
+  // --------------------------------------------------------------------------
+  //   $rev_<X>(X*) : X*
+  //   $transpose_<X>(X**) : X**
+  //   $assoc_<X, Y>(X, (X, Y)*) : Y?
+  //
+  //   All three already exist as functions in common/0-stdlib.k, instantiated
+  //   at `val`; these rules only route the builtin call to them.
+  // --------------------------------------------------------------------------
+
+  rule <k> callBuiltinFunc("rev_", _:TypList, (listV(Vs:ValList), .ValList))
+        => listV(revVal(Vs))
+       ...
+       </k>
+
+  //   `$transpose_` is `val**`, which arrives as a `listV` of `listV`s;
+  //   `transposeVal` works on `ValListList`, so the two are converted either
+  //   way around it.
+  rule <k> callBuiltinFunc("transpose_", _:TypList, (listV(Vss:ValList), .ValList))
+        => listV(valListsOfMatrix(transposeVal(matrixOfValLists(Vss))))
+       ...
+       </k>
+
+  syntax ValListList ::= matrixOfValLists(ValList)
+                                            [function, symbol(matrixOfValLists)]
+  rule matrixOfValLists(.ValList) => .ValListList
+  rule matrixOfValLists((listV(Vs:ValList), Rest:ValList))
+    => Vs ; matrixOfValLists(Rest)
+
+  syntax ValList ::= valListsOfMatrix(ValListList)
+                                            [function, total, symbol(valListsOfMatrix)]
+  rule valListsOfMatrix(.ValListList) => .ValList
+  rule valListsOfMatrix(Vs:ValList ; Vss:ValListList)
+    => listV(Vs), valListsOfMatrix(Vss)
+
+  //   `$assoc_` takes pairs as *tuples*, not as the `pair` variant that maps
+  //   use — `(X, Y)*` in the signature, `TupleV` in the OCaml.  `assocVal` in
+  //   common/0-stdlib.k is instantiated at `atom` keys over `valfield*`, a
+  //   different shape, so the tuple form is done here.
+  syntax ValOpt ::= assocTup(Val, ValList)    [function, total, symbol(assocTup)]
+  rule assocTup(_:Val, .ValList) => noVal()
+  rule assocTup(K:Val, (tupV((K':Val, V:Val, .ValList)), Ps:ValList))
+    => #if K' ==K K #then someVal(V) #else assocTup(K, Ps) #fi
+  rule assocTup(K:Val, (_:Val, Ps:ValList)) => assocTup(K, Ps) [owise]
+
+  rule <k> callBuiltinFunc("assoc_", _:TypList, (K:Val, listV(Ps:ValList), .ValList))
+        => optV(assocTup(K, Ps))
+       ...
+       </k>
 
 endmodule
