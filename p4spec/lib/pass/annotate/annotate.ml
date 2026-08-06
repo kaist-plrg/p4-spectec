@@ -410,9 +410,9 @@ and annotate_instr (ctx : Ctx.t) (instr : instr) : Pl.instr =
       let exps_in, _ = Hints.Input.split inputs exps in
       validate_annot_alter at hints (List.length exps_in);
       { node; hints }
-  | TryI arms ->
+  | BlockI arms ->
       let arms_pl = List.map (annotate_block ctx) arms in
-      let node = Pl.TryI arms_pl $$ (at, note) in
+      let node = Pl.BlockI arms_pl $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
   | LetI (exp_l, exp_r, iterinstrs) ->

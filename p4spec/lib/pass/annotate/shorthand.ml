@@ -224,9 +224,9 @@ and shorten_recurse (instr : instr) : instr =
       in
       let node = CaseI (exp, cases, dangle) $$ (at, note) in
       { instr with node }
-  | TryI arms ->
+  | BlockI arms ->
       let arms = List.map shorten_block arms in
-      let node = TryI arms $$ (at, note) in
+      let node = BlockI arms $$ (at, note) in
       { instr with node }
   | GroupI (id_rulegroup, id_rel, rel_signature, exps, block) ->
       let block = shorten_block block in

@@ -98,7 +98,7 @@ module Prose = struct
       | CaseI (_, cases, _) ->
           cases |> List.concat_map (fun (_, block) -> collect_block block)
       | GroupI _ -> [ instr ]
-      | TryI arms -> arms |> List.concat_map collect_block
+      | BlockI arms -> arms |> List.concat_map collect_block
       | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
       | CheckLetSubI (_, _, _, block_then)
       | CheckLetMatchI (_, _, _, block_then)

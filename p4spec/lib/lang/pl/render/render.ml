@@ -810,7 +810,7 @@ let rec render_instr ?(level : int = 0)
       else
         render_group_instr ~level ~backtrack hints id_rel rel_signature exps
           block
-  | TryI arms -> render_try_instr ~level ~dispatcher arms
+  | BlockI arms -> render_block_instr ~level ~dispatcher arms
   | LetI (exp_l, exp_r, iterinstrs) ->
       render_let_instr ~level ~backtrack exp_l exp_r iterinstrs
   | RuleI (id_rel, notexp, hint_input, iterinstrs) ->
@@ -1098,7 +1098,7 @@ and render_group_instr_dispatch ~(level : int) (id_rel : id) (id_rulegroup : id)
 
 (* Try instruction rendering *)
 
-and render_try_instr ~(level : int) ?(dispatcher : bool = false)
+and render_block_instr ~(level : int) ?(dispatcher : bool = false)
     (arms : arm list) : Adoc.block =
   let label = Backtrack.Label.fresh () in
   let level_arm = level + 1 in
@@ -1418,7 +1418,7 @@ let collect_groups (block : block) : instr list =
         | NotHoldH (block_nothold, _) -> collect_block block_nothold)
     | CaseI (_, cases, _) ->
         cases |> List.concat_map (fun (_, block) -> collect_block block)
-    | TryI arms -> arms |> List.concat_map collect_block
+    | BlockI arms -> arms |> List.concat_map collect_block
     | GroupI _ -> [ instr ]
     | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
     | CheckLetSubI (_, _, _, block_then)
