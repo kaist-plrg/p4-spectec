@@ -63,23 +63,27 @@ relation TypeArgumentList_ok:
 ;;;; Casting, explicit and implicit
 ;;
 
-relation Cast_expl: typeIR -> typeIR
-  hint(input %0 %1)
-  hint(prose_true %0 "can be explicitly cast to" %1)
-  hint(prose_false %0 "cannot be explicitly cast to" %1)
-relation Cast_expl_neq: typeIR -> typeIR
-  hint(input %0 %1)
-  hint(prose_true %0 "can be explicitly cast to" %1 "(when unequal)")
-  hint(prose_false %0 "cannot be explicitly cast to" %1 "(when unequal)")
+syntax castResult =
+  | OK typeIR*
+  | FAIL
 
-relation Cast_impl: typeIR -> typeIR
+relation Cast_expl: typeIR -> typeIR : castResult
   hint(input %0 %1)
-  hint(prose_true %0 "can be implicitly cast to" %1)
-  hint(prose_false %0 "cannot be implicitly cast to" %1)
-relation Cast_impl_neq: typeIR -> typeIR
+  hint(prose_in "checking if" %0 "can be explicitly cast to" %1)
+  hint(prose_out "casts" %2)
+relation Cast_expl_neq: typeIR -> typeIR : castResult
   hint(input %0 %1)
-  hint(prose_true %0 "can be implicitly cast to" %1 "(when unequal)")
-  hint(prose_false %0 "cannot be implicitly cast to" %1 "(when unequal)")
+  hint(prose_in "checking if" %0 "can be explicitly cast to" %1 "(when unequal)")
+  hint(prose_out "casts" %2)
+
+relation Cast_impl: typeIR -> typeIR : castResult
+  hint(input %0 %1)
+  hint(prose_in "checking if" %0 "can be implicitly cast to" %1)
+  hint(prose_out "casts" %2)
+relation Cast_impl_neq: typeIR -> typeIR : castResult
+  hint(input %0 %1)
+  hint(prose_in "checking if" %0 "can be implicitly cast to" %1 "(when unequal)")
+  hint(prose_out "casts" %2)
 
 ;;
 ;;;; Expression typing

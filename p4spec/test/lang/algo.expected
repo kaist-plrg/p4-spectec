@@ -6589,53 +6589,58 @@ def $cast_op(typeIR, value) : value =
   -- let listValue = value as listValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 5 : (typeIR, value) = $cast_array(typeIR_unroll, arrayValue)
+  clause 5 : (typeIR, value) = $cast_tuple(typeIR_unroll, tupleValue)
+  -- if value <: tupleValue
+  -- let tupleValue = value as tupleValue
+  -- let typeIR_unroll = $unroll_typeIR(typeIR)
+
+  clause 6 : (typeIR, value) = $cast_array(typeIR_unroll, arrayValue)
   -- if value <: arrayValue
   -- let arrayValue = value as arrayValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 6 : (typeIR, value) = $cast_header_stack(typeIR_unroll, headerStackValue)
+  clause 7 : (typeIR, value) = $cast_header_stack(typeIR_unroll, headerStackValue)
   -- if value <: headerStackValue
   -- let headerStackValue = value as headerStackValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 7 : (typeIR, value) = $cast_struct(typeIR_unroll, structValue)
+  clause 8 : (typeIR, value) = $cast_struct(typeIR_unroll, structValue)
   -- if value <: structValue
   -- let structValue = value as structValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 8 : (typeIR, value) = $cast_header(typeIR_unroll, headerValue)
+  clause 9 : (typeIR, value) = $cast_header(typeIR_unroll, headerValue)
   -- if value <: headerValue
   -- let headerValue = value as headerValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 9 : (typeIR, value) = $cast_enum(typeIR_unroll, enumValue)
+  clause 10 : (typeIR, value) = $cast_enum(typeIR_unroll, enumValue)
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 10 : (typeIR, value) = $cast_sequence(typeIR_unroll, sequenceValue)
+  clause 11 : (typeIR, value) = $cast_sequence(typeIR_unroll, sequenceValue)
   -- if value <: sequenceValue
   -- let sequenceValue = value as sequenceValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 11 : (typeIR, value) = $cast_record(typeIR_unroll, recordValue)
+  clause 12 : (typeIR, value) = $cast_record(typeIR_unroll, recordValue)
   -- if value <: recordValue
   -- let recordValue = value as recordValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 12 : (typeIR, value) = $cast_default(typeIR_unroll, DEFAULT)
+  clause 13 : (typeIR, value) = $cast_default(typeIR_unroll, DEFAULT)
   -- if value <: defaultValue
   -- let defaultValue = value as defaultValue
   -- if (defaultValue = DEFAULT)
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 13 : (typeIR, value) = $cast_invalid_header(typeIR_unroll)
+  clause 14 : (typeIR, value) = $cast_invalid_header(typeIR_unroll)
   -- if value <: invalidHeaderValue
   -- let invalidHeaderValue = value as invalidHeaderValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 14 : (typeIR, value) = $cast_set(typeIR_unroll, setValue)
+  clause 15 : (typeIR, value) = $cast_set(typeIR_unroll, setValue)
   -- if value <: setValue
   -- let setValue = value as setValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
@@ -6978,6 +6983,13 @@ def $cast_list(typeIR, listValue) : value =
   -- if typeIR' <: listTypeIR
   -- let LIST `< typeIR `> = typeIR' as listTypeIR
 
+def $cast_tuple(typeIR, tupleValue) : value =
+
+  clause 0 : (typeIR', TUPLE `( value*{value <- value*} `)) = TUPLE `( $cast_op(typeIR, value)*{typeIR <- typeIR*, value <- value*} `) as value
+  -- if typeIR' <: tupleTypeIR
+  -- let TUPLE `< typeIR*{typeIR <- typeIR*} `> = typeIR' as tupleTypeIR
+  -- if (|typeIR*{typeIR <- typeIR*}| = |value*{value <- value*}|)
+
 def $cast_array(typeIR, arrayValue) : value =
 
   clause 0 : (typeIR', ARRAY `[ value*{value <- value*} `]) = ARRAY `[ value*{value <- value*} `] as value
@@ -7084,7 +7096,17 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- if (|typeIR_field*{typeIR_field <- typeIR_field*}| = |value*{value <- value*}|)
   -- (let value_cast = $cast_op(typeIR_field, value))*{typeIR_field <- typeIR_field*, value <- value*, value_cast -> value_cast*}
 
-  clause 7 : (typeIR', sequenceValue) = TUPLE `( value_cast*{value_cast <- value_cast*} `) as value
+  clause 7 : (typeIR', sequenceValue) = SEQ `( value_cast*{value_cast <- value_cast*} ',' '...' `) as value
+  -- if typeIR' <: sequenceTypeIR
+  -- let sequenceTypeIR = typeIR' as sequenceTypeIR
+  -- if sequenceTypeIR matches `SEQ <% , ...>`
+  -- let SEQ `< typeIR*{typeIR <- typeIR*} ',' '...' `> = sequenceTypeIR
+  -- if sequenceValue matches `SEQ (% , ...)`
+  -- let SEQ `( value*{value <- value*} ',' '...' `) = sequenceValue
+  -- if (|typeIR*{typeIR <- typeIR*}| = |value*{value <- value*}|)
+  -- (let value_cast = $cast_op(typeIR, value))*{typeIR <- typeIR*, value <- value*, value_cast -> value_cast*}
+
+  clause 8 : (typeIR', sequenceValue) = TUPLE `( value_cast*{value_cast <- value_cast*} `) as value
   -- if typeIR' <: tupleTypeIR
   -- let TUPLE `< typeIR*{typeIR <- typeIR*} `> = typeIR' as tupleTypeIR
   -- if sequenceValue matches `SEQ (% , ...)`
@@ -7095,7 +7117,7 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- (let value_rest = $default(typeIR_rest))*{typeIR_rest <- typeIR_rest*, value_rest -> value_rest*}
   -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
 
-  clause 8 : (typeIR', sequenceValue) = ARRAY `[ value_cast*{value_cast <- value_cast*} `] as value
+  clause 9 : (typeIR', sequenceValue) = ARRAY `[ value_cast*{value_cast <- value_cast*} `] as value
   -- if typeIR' <: arrayTypeIR
   -- let ARRAY typeIR `[ n_size `] = typeIR' as arrayTypeIR
   -- if sequenceValue matches `SEQ (% , ...)`
@@ -7107,7 +7129,7 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- let value_rest*{value_rest <- value_rest*} = $repeat_<value>($default(typeIR), n_rest)
   -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
 
-  clause 9 : (typeIR', sequenceValue) = HEADER_STACK `[ value_cast*{value_cast <- value_cast*} `( n_idx `) `] as value
+  clause 10 : (typeIR', sequenceValue) = HEADER_STACK `[ value_cast*{value_cast <- value_cast*} `( n_idx `) `] as value
   -- if typeIR' <: headerStackTypeIR
   -- let HEADER_STACK typeIR `[ n_size `] = typeIR' as headerStackTypeIR
   -- if sequenceValue matches `SEQ (% , ...)`
@@ -7120,7 +7142,7 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
   -- let n_idx = |value*{value <- value*}|
 
-  clause 10 : (typeIR, sequenceValue) = STRUCT typeId `{ value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
+  clause 11 : (typeIR, sequenceValue) = STRUCT typeId `{ value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
   -- if typeIR <: structTypeIR
   -- let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} = typeIR as structTypeIR
   -- if sequenceValue matches `SEQ (% , ...)`
@@ -7132,7 +7154,7 @@ def $cast_sequence(typeIR, sequenceValue) : value =
   -- let value_cast*{value_cast <- value_cast*} = value_given*{value_given <- value_given*} ++ value_rest*{value_rest <- value_rest*}
   -- if (|nameIR_field*{nameIR_field <- nameIR_field*}| = |value_cast*{value_cast <- value_cast*}|)
 
-  clause 11 : (typeIR, sequenceValue) = HEADER typeId `{ true ';' value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
+  clause 12 : (typeIR, sequenceValue) = HEADER typeId `{ true ';' value_cast nameIR_field ';'*{nameIR_field <- nameIR_field*, value_cast <- value_cast*} `} as value
   -- if typeIR <: headerTypeIR
   -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} = typeIR as headerTypeIR
   -- if sequenceValue matches `SEQ (% , ...)`
@@ -7166,14 +7188,38 @@ def $cast_record(typeIR, recordValue) : value =
   -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
   -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
 
-  clause 2 : (typeIR, recordValue) = STRUCT typeId `{ value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
+  clause 2 : (typeIR, recordValue) = RECORD `{ value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
+  -- if typeIR <: recordTypeIR
+  -- let recordTypeIR = typeIR as recordTypeIR
+  -- if recordTypeIR matches `RECORD {%}`
+  -- let RECORD `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = recordTypeIR
+  -- if recordValue matches `RECORD {%}`
+  -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} = recordValue
+  -- (let value?{value <- value?} = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
+  -- (if value?{value <- value?} matches (_))*{value? <- value?*}
+  -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
+  -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
+
+  clause 3 : (typeIR, recordValue) = RECORD `{ value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} ',' '...' `} as value
+  -- if typeIR <: recordTypeIR
+  -- let recordTypeIR = typeIR as recordTypeIR
+  -- if recordTypeIR matches `RECORD {% , ...}`
+  -- let RECORD `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} ',' '...' `} = recordTypeIR
+  -- if recordValue matches `RECORD {% , ...}`
+  -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} ',' '...' `} = recordValue
+  -- (let value?{value <- value?} = $find_map<id, value>(`{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}, id_t_field))*{id_t_field <- id_t_field*, value? -> value?*}
+  -- (if value?{value <- value?} matches (_))*{value? <- value?*}
+  -- (let ?(value_field') = value?{value <- value?})*{value? <- value?*, value_field' -> value_field'*}
+  -- (let value_field_cast = $cast_op(typeIR_t_field, value_field'))*{typeIR_t_field <- typeIR_t_field*, value_field' <- value_field'*, value_field_cast -> value_field_cast*}
+
+  clause 4 : (typeIR, recordValue) = STRUCT typeId `{ value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
   -- if typeIR <: structTypeIR
   -- let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = typeIR as structTypeIR
   -- if recordValue matches `RECORD {% , ...}`
   -- let RECORD `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} ',' '...' `} = recordValue
   -- (let value_field_cast = $cast_record_field(typeIR_t_field, id_t_field, `{ nameIR_field ':' value_field*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}))*{id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*, value_field_cast -> value_field_cast*}
 
-  clause 3 : (typeIR, recordValue) = HEADER typeId `{ true ';' value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
+  clause 5 : (typeIR, recordValue) = HEADER typeId `{ true ';' value_field_cast id_t_field ';'*{id_t_field <- id_t_field*, value_field_cast <- value_field_cast*} `} as value
   -- if typeIR <: headerTypeIR
   -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} = typeIR as headerTypeIR
   -- if recordValue matches `RECORD {% , ...}`
@@ -14618,14 +14664,18 @@ relation TypeArgumentList_ok: cursor typingContext |- typeArgumentList : typeArg
     -- TypeArguments_ok: p TC |- typeArgument*{typeArgument <- typeArgument*} : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*}
     -- output: % % |- % : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*}
 
-relation Cast_expl: typeIR -> typeIR
+syntax castResult = 
+   | OK typeIR* (from castResult) 
+   | FAIL (from castResult) 
+
+relation Cast_expl: typeIR -> typeIR : castResult
 
   rulegroup 
 
    match
 
-    (signature) typeIR_a -> typeIR_b
-    typeIR_a -> typeIR_b
+    (signature) typeIR_a -> typeIR_b : %
+    typeIR_a -> typeIR_b : %
 
    paths
 
@@ -14633,23 +14683,23 @@ relation Cast_expl: typeIR -> typeIR
     -- let typeIR_a_unroll = $unroll_typeIR(typeIR_a)
     -- let typeIR_b_unroll = $unroll_typeIR(typeIR_b)
     -- if Type_alpha: typeIR_a_unroll ~~ typeIR_b_unroll holds
-    -- the relation holds
+    -- output: % -> % : OK [typeIR_b]
 
     rulepath not-equals
     -- let typeIR_a_unroll = $unroll_typeIR(typeIR_a)
     -- let typeIR_b_unroll = $unroll_typeIR(typeIR_b)
     -- if Type_alpha: typeIR_a_unroll ~~ typeIR_b_unroll does not hold
-    -- if Cast_expl_neq: typeIR_a_unroll -> typeIR_b_unroll holds
-    -- the relation holds
+    -- Cast_expl_neq: typeIR_a_unroll -> typeIR_b_unroll : castResult
+    -- output: % -> % : castResult
 
-relation Cast_expl_neq: typeIR -> typeIR
+relation Cast_expl_neq: typeIR -> typeIR : castResult
 
   rulegroup boolean-fixBit
 
    match
 
-    (signature) BOOL as typeIR -> BIT `< 1 `> as typeIR
-    typeIR -> typeIR'
+    (signature) BOOL as typeIR -> BIT `< 1 `> as typeIR : %
+    typeIR -> typeIR' : %
     -- if typeIR <: boolTypeIR
     -- let boolTypeIR = typeIR as boolTypeIR
     -- if (boolTypeIR = BOOL)
@@ -14658,14 +14708,14 @@ relation Cast_expl_neq: typeIR -> typeIR
    paths
 
     rulepath boolean-fixBit
-    -- the relation holds
+    -- output: % -> % : OK [BIT `< 1 `> as typeIR]
 
   rulegroup arbitraryInt
 
    match
 
-    (signature) INT as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) INT as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: intTypeIR
     -- let intTypeIR = typeIR' as intTypeIR
     -- if (intTypeIR = INT)
@@ -14674,26 +14724,26 @@ relation Cast_expl_neq: typeIR -> typeIR
 
     rulepath boolean
     -- if (typeIR = BOOL as typeIR)
-    -- the relation holds
+    -- output: % -> % : OK [BOOL as typeIR]
 
     rulepath fixInt
     -- let typeIR'' = typeIR
     -- if typeIR'' <: fixedIntTypeIR
-    -- let INT `< _nat `> = typeIR'' as fixedIntTypeIR
-    -- the relation holds
+    -- let INT `< w `> = typeIR'' as fixedIntTypeIR
+    -- output: % -> % : OK [INT `< w `> as typeIR]
 
     rulepath fixBit
     -- let typeIR'' = typeIR
     -- if typeIR'' <: fixedBitTypeIR
-    -- let BIT `< _nat `> = typeIR'' as fixedBitTypeIR
-    -- the relation holds
+    -- let BIT `< w `> = typeIR'' as fixedBitTypeIR
+    -- output: % -> % : OK [BIT `< w `> as typeIR]
 
   rulegroup fixInt
 
    match
 
-    (signature) INT `< nat `> as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) INT `< nat `> as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: fixedIntTypeIR
     -- let INT `< nat `> = typeIR' as fixedIntTypeIR
 
@@ -14702,26 +14752,26 @@ relation Cast_expl_neq: typeIR -> typeIR
     rulepath arbitraryInt
     -- let _nat = nat
     -- if (typeIR = INT as typeIR)
-    -- the relation holds
+    -- output: % -> % : OK [INT as typeIR]
 
     rulepath fixInt
     -- let w_a = nat
     -- let typeIR'' = typeIR
     -- if typeIR'' <: fixedIntTypeIR
     -- let INT `< w_b `> = typeIR'' as fixedIntTypeIR
-    -- the relation holds
+    -- output: % -> % : OK [INT `< w_b `> as typeIR]
 
     rulepath fixBit
     -- let w = nat
     -- if (typeIR = BIT `< w `> as typeIR)
-    -- the relation holds
+    -- output: % -> % : OK [BIT `< w `> as typeIR]
 
   rulegroup fixBit
 
    match
 
-    (signature) BIT `< nat `> as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) BIT `< nat `> as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: fixedBitTypeIR
     -- let BIT `< nat `> = typeIR' as fixedBitTypeIR
 
@@ -14730,31 +14780,31 @@ relation Cast_expl_neq: typeIR -> typeIR
     rulepath boolean
     -- if (nat = 1)
     -- if (typeIR = BOOL as typeIR)
-    -- the relation holds
+    -- output: % -> % : OK [BOOL as typeIR]
 
     rulepath arbitraryInt
     -- let _nat = nat
     -- if (typeIR = INT as typeIR)
-    -- the relation holds
+    -- output: % -> % : OK [INT as typeIR]
 
     rulepath fixInt
     -- let w = nat
     -- if (typeIR = INT `< w `> as typeIR)
-    -- the relation holds
+    -- output: % -> % : OK [INT `< w `> as typeIR]
 
     rulepath fixBit
     -- let w_a = nat
     -- let typeIR'' = typeIR
     -- if typeIR'' <: fixedBitTypeIR
     -- let BIT `< w_b `> = typeIR'' as fixedBitTypeIR
-    -- the relation holds
+    -- output: % -> % : OK [BIT `< w_b `> as typeIR]
 
   rulegroup newTypeIR
 
    match
 
-    (signature) typeIR -> typeIR'
-    typeIR -> typeIR'
+    (signature) typeIR -> typeIR' : %
+    typeIR -> typeIR' : %
 
    paths
 
@@ -14763,23 +14813,28 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- if typeIR'' <: newTypeIR
     -- let TYPE _typeId typeIR_a = typeIR'' as newTypeIR
     -- let typeIR_b = typeIR'
-    -- if Cast_impl: typeIR_a -> typeIR_b holds
-    -- the relation holds
+    -- Cast_impl: typeIR_a -> typeIR_b : castResult
+    -- if castResult matches `OK %`
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- output: % -> % : OK typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
 
     rulepath right
     -- let typeIR_a = typeIR
     -- let typeIR'' = typeIR'
     -- if typeIR'' <: newTypeIR
-    -- let TYPE _typeId typeIR_b = typeIR'' as newTypeIR
-    -- if Cast_impl: typeIR_a -> typeIR_b holds
-    -- the relation holds
+    -- let newTypeIR = typeIR'' as newTypeIR
+    -- let TYPE _typeId typeIR_b = newTypeIR
+    -- Cast_impl: typeIR_a -> typeIR_b : castResult
+    -- if castResult matches `OK %`
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- output: % -> % : OK typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [newTypeIR] as typeIR*
 
   rulegroup enumTypeIR-serializable
 
    match
 
-    (signature) typeIR -> typeIR'
-    typeIR -> typeIR'
+    (signature) typeIR -> typeIR' : %
+    typeIR -> typeIR' : %
 
    paths
 
@@ -14788,23 +14843,28 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- if typeIR'' <: serializableEnumTypeIR
     -- let ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR'' as serializableEnumTypeIR
     -- let typeIR_b = typeIR'
-    -- if Cast_impl: typeIR_a -> typeIR_b holds
-    -- the relation holds
+    -- Cast_impl: typeIR_a -> typeIR_b : castResult
+    -- if castResult matches `OK %`
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- output: % -> % : OK typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
 
     rulepath right
     -- let typeIR_a = typeIR
     -- let typeIR'' = typeIR'
     -- if typeIR'' <: serializableEnumTypeIR
-    -- let ENUM _typeId `< typeIR_b `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR'' as serializableEnumTypeIR
-    -- if Cast_impl: typeIR_a -> typeIR_b holds
-    -- the relation holds
+    -- let serializableEnumTypeIR = typeIR'' as serializableEnumTypeIR
+    -- let ENUM _typeId `< typeIR_b `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = serializableEnumTypeIR
+    -- Cast_impl: typeIR_a -> typeIR_b : castResult
+    -- if castResult matches `OK %`
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- output: % -> % : OK typeIR_cast*{typeIR_cast <- typeIR_cast*} ++ [serializableEnumTypeIR] as typeIR*
 
   rulegroup defaultTypeIR
 
    match
 
-    (signature) DEFAULT as typeIR -> typeIR_b
-    typeIR -> typeIR_b
+    (signature) DEFAULT as typeIR -> typeIR_b : %
+    typeIR -> typeIR_b : %
     -- if typeIR <: defaultTypeIR
     -- let defaultTypeIR = typeIR as defaultTypeIR
     -- if (defaultTypeIR = DEFAULT)
@@ -14813,14 +14873,14 @@ relation Cast_expl_neq: typeIR -> typeIR
 
     rulepath defaultTypeIR
     -- if $is_defaultable_typeIR(typeIR_b)
-    -- the relation holds
+    -- output: % -> % : OK [typeIR_b]
 
   rulegroup invalidHeaderTypeIR
 
    match
 
-    (signature) HEADER_INVALID as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) HEADER_INVALID as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: invalidHeaderTypeIR
     -- let invalidHeaderTypeIR = typeIR' as invalidHeaderTypeIR
     -- if (invalidHeaderTypeIR = HEADER_INVALID)
@@ -14831,20 +14891,20 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
     -- let headerTypeIR = typeIR'' as headerTypeIR
-    -- the relation holds
+    -- output: % -> % : OK [headerTypeIR] as typeIR*
 
     rulepath headerUnionTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerUnionTypeIR
     -- let headerUnionTypeIR = typeIR'' as headerUnionTypeIR
-    -- the relation holds
+    -- output: % -> % : OK [headerUnionTypeIR] as typeIR*
 
   rulegroup sequenceTypeIR-non-default
 
    match
 
-    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} `> as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} `> as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ <%>`
@@ -14855,56 +14915,80 @@ relation Cast_expl_neq: typeIR -> typeIR
     rulepath listTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: listTypeIR
-    -- let LIST `< typeIR_b `> = typeIR'' as listTypeIR
-    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
-    -- the relation holds
+    -- let listTypeIR = typeIR'' as listTypeIR
+    -- let LIST `< typeIR_b `> = listTypeIR
+    -- (Cast_expl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, listTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath tupleTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: tupleTypeIR
-    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = typeIR'' as tupleTypeIR
+    -- let tupleTypeIR = typeIR'' as tupleTypeIR
+    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = tupleTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_b*{typeIR_b <- typeIR_b*}|)
-    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
-    -- the relation holds
+    -- (Cast_expl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, tupleTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath arrayTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: arrayTypeIR
-    -- let ARRAY typeIR_b `[ n_size `] = typeIR'' as arrayTypeIR
+    -- let arrayTypeIR = typeIR'' as arrayTypeIR
+    -- let ARRAY typeIR_b `[ n_size `] = arrayTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
-    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
-    -- the relation holds
+    -- (Cast_expl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, arrayTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerStackTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerStackTypeIR
-    -- let HEADER_STACK typeIR_b `[ n_size `] = typeIR'' as headerStackTypeIR
+    -- let headerStackTypeIR = typeIR'' as headerStackTypeIR
+    -- let HEADER_STACK typeIR_b `[ n_size `] = headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
-    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
-    -- the relation holds
+    -- (Cast_expl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerStackTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
-    -- (if Cast_expl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
-    -- the relation holds
+    -- (Cast_expl: typeIR_a -> typeIR_field_b : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
-    -- (if Cast_expl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
-    -- the relation holds
+    -- (Cast_expl: typeIR_a -> typeIR_field_b : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
   rulegroup sequenceTypeIR-default
 
    match
 
-    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} ',' '...' `> as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} ',' '...' `> as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ <% , ...>`
@@ -14915,71 +14999,93 @@ relation Cast_expl_neq: typeIR -> typeIR
     rulepath tupleTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: tupleTypeIR
-    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = typeIR'' as tupleTypeIR
+    -- let tupleTypeIR = typeIR'' as tupleTypeIR
+    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = tupleTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)
     -- let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) = $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}|)
-    -- (if Cast_expl: typeIR_a -> typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
+    -- (Cast_expl: typeIR_a -> typeIR_b_non_default : castResult)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- (if $is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, tupleTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath arrayTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: arrayTypeIR
-    -- let ARRAY typeIR_b `[ n_size `] = typeIR'' as arrayTypeIR
+    -- let arrayTypeIR = typeIR'' as arrayTypeIR
+    -- let ARRAY typeIR_b `[ n_size `] = arrayTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
-    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (Cast_expl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- if $is_defaultable_typeIR(typeIR_b)
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, arrayTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerStackTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerStackTypeIR
-    -- let HEADER_STACK typeIR_b `[ n_size `] = typeIR'' as headerStackTypeIR
+    -- let headerStackTypeIR = typeIR'' as headerStackTypeIR
+    -- let HEADER_STACK typeIR_b `[ n_size `] = headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
-    -- (if Cast_expl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (Cast_expl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- if $is_defaultable_typeIR(typeIR_b)
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerStackTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}|)
-    -- (if Cast_expl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (Cast_expl: typeIR_a -> typeIR_field_b_non_default : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}|)
-    -- (if Cast_expl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (Cast_expl: typeIR_a -> typeIR_field_b_non_default : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
   rulegroup recordTypeIR-non-default
 
    match
 
-    (signature) RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `} as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} `} as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD {%}`
-    -- let RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `} = recordTypeIR
+    -- let RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} `} = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if $eq_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -14988,13 +15094,18 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
-    -- the relation holds
+    -- (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if $eq_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -15003,26 +15114,31 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
-    -- the relation holds
+    -- (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
   rulegroup recordTypeIR-default
 
    match
 
-    (signature) RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ',' '...' `} as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} ',' '...' `} as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD {% , ...}`
-    -- let RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ',' '...' `} = recordTypeIR
+    -- let RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} ',' '...' `} = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if $sub_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -15031,18 +15147,23 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR_default(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if $sub_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -15051,22 +15172,39 @@ relation Cast_expl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (Cast_expl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR_default(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
-relation Cast_impl: typeIR -> typeIR
+  elsegroup
+
+  rulegroup fail
+
+   match
+
+    (signature) typeIR_a -> typeIR_b : %
+    typeIR_a -> typeIR_b : %
+
+   paths
+
+    rulepath fail
+    -- output: % -> % : FAIL
+
+relation Cast_impl: typeIR -> typeIR : castResult
 
   rulegroup 
 
    match
 
-    (signature) typeIR_a -> typeIR_b
-    typeIR_a -> typeIR_b
+    (signature) typeIR_a -> typeIR_b : %
+    typeIR_a -> typeIR_b : %
 
    paths
 
@@ -15074,23 +15212,23 @@ relation Cast_impl: typeIR -> typeIR
     -- let typeIR_a_unroll = $unroll_typeIR(typeIR_a)
     -- let typeIR_b_unroll = $unroll_typeIR(typeIR_b)
     -- if Type_alpha: typeIR_a_unroll ~~ typeIR_b_unroll holds
-    -- the relation holds
+    -- output: % -> % : OK []
 
     rulepath not-equals
     -- let typeIR_a_unroll = $unroll_typeIR(typeIR_a)
     -- let typeIR_b_unroll = $unroll_typeIR(typeIR_b)
     -- if Type_alpha: typeIR_a_unroll ~~ typeIR_b_unroll does not hold
-    -- if Cast_impl_neq: typeIR_a_unroll -> typeIR_b_unroll holds
-    -- the relation holds
+    -- Cast_impl_neq: typeIR_a_unroll -> typeIR_b_unroll : castResult
+    -- output: % -> % : castResult
 
-relation Cast_impl_neq: typeIR -> typeIR
+relation Cast_impl_neq: typeIR -> typeIR : castResult
 
   rulegroup arbitraryInt
 
    match
 
-    (signature) INT as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) INT as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: intTypeIR
     -- let intTypeIR = typeIR' as intTypeIR
     -- if (intTypeIR = INT)
@@ -15100,36 +15238,38 @@ relation Cast_impl_neq: typeIR -> typeIR
     rulepath fixInt
     -- let typeIR'' = typeIR
     -- if typeIR'' <: fixedIntTypeIR
-    -- let INT `< _nat `> = typeIR'' as fixedIntTypeIR
-    -- the relation holds
+    -- let INT `< w `> = typeIR'' as fixedIntTypeIR
+    -- output: % -> % : OK [INT `< w `> as typeIR]
 
     rulepath fixBit
     -- let typeIR'' = typeIR
     -- if typeIR'' <: fixedBitTypeIR
-    -- let BIT `< _nat `> = typeIR'' as fixedBitTypeIR
-    -- the relation holds
+    -- let BIT `< w `> = typeIR'' as fixedBitTypeIR
+    -- output: % -> % : OK [BIT `< w `> as typeIR]
 
   rulegroup enumTypeIR-serializable
 
    match
 
-    (signature) ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR -> typeIR_b
-    typeIR -> typeIR_b
+    (signature) ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} as typeIR -> typeIR_b : %
+    typeIR -> typeIR_b : %
     -- if typeIR <: serializableEnumTypeIR
     -- let ENUM _typeId `< typeIR_a `> `{ _valueFieldIR*{_valueFieldIR <- _valueFieldIR*} `} = typeIR as serializableEnumTypeIR
 
    paths
 
     rulepath enumTypeIR-serializable
-    -- if Cast_impl: typeIR_a -> typeIR_b holds
-    -- the relation holds
+    -- Cast_impl: typeIR_a -> typeIR_b : castResult
+    -- if castResult matches `OK %`
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- output: % -> % : OK typeIR_a :: typeIR_cast*{typeIR_cast <- typeIR_cast*}
 
   rulegroup defaultTypeIR
 
    match
 
-    (signature) DEFAULT as typeIR -> typeIR_b
-    typeIR -> typeIR_b
+    (signature) DEFAULT as typeIR -> typeIR_b : %
+    typeIR -> typeIR_b : %
     -- if typeIR <: defaultTypeIR
     -- let defaultTypeIR = typeIR as defaultTypeIR
     -- if (defaultTypeIR = DEFAULT)
@@ -15138,14 +15278,14 @@ relation Cast_impl_neq: typeIR -> typeIR
 
     rulepath defaultTypeIR
     -- if $is_defaultable_typeIR(typeIR_b)
-    -- the relation holds
+    -- output: % -> % : OK [typeIR_b]
 
   rulegroup invalidHeaderTypeIR
 
    match
 
-    (signature) HEADER_INVALID as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) HEADER_INVALID as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: invalidHeaderTypeIR
     -- let invalidHeaderTypeIR = typeIR' as invalidHeaderTypeIR
     -- if (invalidHeaderTypeIR = HEADER_INVALID)
@@ -15156,20 +15296,20 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
     -- let headerTypeIR = typeIR'' as headerTypeIR
-    -- the relation holds
+    -- output: % -> % : OK [headerTypeIR] as typeIR*
 
     rulepath headerUnionTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerUnionTypeIR
     -- let headerUnionTypeIR = typeIR'' as headerUnionTypeIR
-    -- the relation holds
+    -- output: % -> % : OK [headerUnionTypeIR] as typeIR*
 
   rulegroup sequenceTypeIR-non-default
 
    match
 
-    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} `> as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} `> as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ <%>`
@@ -15180,66 +15320,95 @@ relation Cast_impl_neq: typeIR -> typeIR
     rulepath listTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: listTypeIR
-    -- let LIST `< typeIR_b `> = typeIR'' as listTypeIR
-    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
-    -- the relation holds
+    -- let listTypeIR = typeIR'' as listTypeIR
+    -- let LIST `< typeIR_b `> = listTypeIR
+    -- (Cast_impl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, listTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath tupleTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: tupleTypeIR
-    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = typeIR'' as tupleTypeIR
+    -- let tupleTypeIR = typeIR'' as tupleTypeIR
+    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = tupleTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_b*{typeIR_b <- typeIR_b*}|)
-    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, tupleTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath arrayTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: arrayTypeIR
-    -- let ARRAY typeIR_b `[ n_size `] = typeIR'' as arrayTypeIR
+    -- let arrayTypeIR = typeIR'' as arrayTypeIR
+    -- let ARRAY typeIR_b `[ n_size `] = arrayTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
-    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, arrayTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerStackTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerStackTypeIR
-    -- let HEADER_STACK typeIR_b `[ n_size `] = typeIR'' as headerStackTypeIR
+    -- let headerStackTypeIR = typeIR'' as headerStackTypeIR
+    -- let HEADER_STACK typeIR_b `[ n_size `] = headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = n_size)
-    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerStackTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
-    -- (if Cast_impl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_a -> typeIR_field_b : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
-    -- (if Cast_impl: typeIR_a -> typeIR_field_b holds)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_a -> typeIR_field_b : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b <- typeIR_field_b*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath sequenceTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: sequenceTypeIR
-    -- let sequenceTypeIR' = typeIR'' as sequenceTypeIR
+    -- let sequenceTypeIR_b = typeIR'' as sequenceTypeIR
+    -- let sequenceTypeIR_a = SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} `>
+    -- let sequenceTypeIR' = sequenceTypeIR_b
     -- if sequenceTypeIR' matches `SEQ <%>`
     -- let SEQ `< typeIR_b*{typeIR_b <- typeIR_b*} `> = sequenceTypeIR'
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_b*{typeIR_b <- typeIR_b*}|)
-    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, typeIR_b <- typeIR_b*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, sequenceTypeIR_b as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
   rulegroup sequenceTypeIR-default
 
    match
 
-    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} ',' '...' `> as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) SEQ `< typeIR_a*{typeIR_a <- typeIR_a*} ',' '...' `> as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: sequenceTypeIR
     -- let sequenceTypeIR = typeIR' as sequenceTypeIR
     -- if sequenceTypeIR matches `SEQ <% , ...>`
@@ -15250,71 +15419,93 @@ relation Cast_impl_neq: typeIR -> typeIR
     rulepath tupleTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: tupleTypeIR
-    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = typeIR'' as tupleTypeIR
+    -- let tupleTypeIR = typeIR'' as tupleTypeIR
+    -- let TUPLE `< typeIR_b*{typeIR_b <- typeIR_b*} `> = tupleTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_b*{typeIR_b <- typeIR_b*}|)
     -- let (typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}, typeIR_b_default*{typeIR_b_default <- typeIR_b_default*}) = $partition_<typeIR>(typeIR_b*{typeIR_b <- typeIR_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_b_non_default*{typeIR_b_non_default <- typeIR_b_non_default*}|)
-    -- (if Cast_impl: typeIR_a -> typeIR_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*}
+    -- (Cast_impl: typeIR_a -> typeIR_b_non_default : castResult)*{typeIR_a <- typeIR_a*, typeIR_b_non_default <- typeIR_b_non_default*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- (if $is_defaultable_typeIR(typeIR_b_default))*{typeIR_b_default <- typeIR_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, tupleTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath arrayTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: arrayTypeIR
-    -- let ARRAY typeIR_b `[ n_size `] = typeIR'' as arrayTypeIR
+    -- let arrayTypeIR = typeIR'' as arrayTypeIR
+    -- let ARRAY typeIR_b `[ n_size `] = arrayTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
-    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (Cast_impl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- if $is_defaultable_typeIR(typeIR_b)
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, arrayTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerStackTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerStackTypeIR
-    -- let HEADER_STACK typeIR_b `[ n_size `] = typeIR'' as headerStackTypeIR
+    -- let headerStackTypeIR = typeIR'' as headerStackTypeIR
+    -- let HEADER_STACK typeIR_b `[ n_size `] = headerStackTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < n_size)
-    -- (if Cast_impl: typeIR_a -> typeIR_b holds)*{typeIR_a <- typeIR_a*}
+    -- (Cast_impl: typeIR_a -> typeIR_b : castResult)*{typeIR_a <- typeIR_a*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- if $is_defaultable_typeIR(typeIR_b)
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerStackTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}|)
-    -- (if Cast_impl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (Cast_impl: typeIR_a -> typeIR_field_b_non_default : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| < |typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}|)
     -- let (typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}, typeIR_field_b_default*{typeIR_field_b_default <- typeIR_field_b_default*}) = $partition_<typeIR>(typeIR_field_b*{typeIR_field_b <- typeIR_field_b*}, |typeIR_a*{typeIR_a <- typeIR_a*}|)
     -- if (|typeIR_a*{typeIR_a <- typeIR_a*}| = |typeIR_field_b_non_default*{typeIR_field_b_non_default <- typeIR_field_b_non_default*}|)
-    -- (if Cast_impl: typeIR_a -> typeIR_field_b_non_default holds)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*}
+    -- (Cast_impl: typeIR_a -> typeIR_field_b_non_default : castResult)*{typeIR_a <- typeIR_a*, typeIR_field_b_non_default <- typeIR_field_b_non_default*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_sequenceTypeIR_default(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
   rulegroup recordTypeIR-non-default
 
    match
 
-    (signature) RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `} as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} `} as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD {%}`
-    -- let RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `} = recordTypeIR
+    -- let RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} `} = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let annotationList_a typeIR_field_a id_field_a ';'*{annotationList_a <- annotationList_a*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b id_field_b ';'*{_annotationList <- _annotationList*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if $eq_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -15323,13 +15514,18 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let annotationList_a typeIR_field_a id_field_a ';'*{annotationList_a <- annotationList_a*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b id_field_b ';'*{_annotationList <- _annotationList*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if $eq_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -15338,26 +15534,31 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_aligned -> typeIR_field_b_aligned*}
-    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*}
-    -- the relation holds
+    -- (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_aligned <- typeIR_field_b_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
   rulegroup recordTypeIR-default
 
    match
 
-    (signature) RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ',' '...' `} as typeIR -> typeIR
-    typeIR' -> typeIR
+    (signature) RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} ',' '...' `} as typeIR -> typeIR : %
+    typeIR' -> typeIR : %
     -- if typeIR' <: recordTypeIR
     -- let recordTypeIR = typeIR' as recordTypeIR
     -- if recordTypeIR matches `RECORD {% , ...}`
-    -- let RECORD `{ _annotationList typeIR_field_a id_field_a ';'*{_annotationList <- _annotationList*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} ',' '...' `} = recordTypeIR
+    -- let RECORD `{ fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*} ',' '...' `} = recordTypeIR
 
    paths
 
     rulepath structTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: structTypeIR
-    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as structTypeIR
+    -- let structTypeIR = typeIR'' as structTypeIR
+    -- let annotationList_a typeIR_field_a id_field_a ';'*{annotationList_a <- annotationList_a*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let STRUCT _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b id_field_b ';'*{_annotationList <- _annotationList*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = structTypeIR
     -- if $sub_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -15366,18 +15567,23 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR_default(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, structTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
 
     rulepath headerTypeIR
     -- let typeIR'' = typeIR
     -- if typeIR'' <: headerTypeIR
-    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList' typeIR_field_b id_field_b ';'*{_annotationList' <- _annotationList'*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = typeIR'' as headerTypeIR
+    -- let headerTypeIR = typeIR'' as headerTypeIR
+    -- let annotationList_a typeIR_field_a id_field_a ';'*{annotationList_a <- annotationList_a*, id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} = fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}
+    -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field_b id_field_b ';'*{_annotationList <- _annotationList*, id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `} = headerTypeIR
     -- if $sub_set<id>(`{ id_field_a*{id_field_a <- id_field_a*} `}, `{ id_field_b*{id_field_b <- id_field_b*} `})
     -- (if (|id_field_a*{id_field_a <- id_field_a*}| = |typeIR_field_a*{typeIR_field_a <- typeIR_field_a*}|))*{id_field_a <- id_field_a*}
     -- (let typeIR'''?{typeIR''' <- typeIR'''?} = $find_map<id, typeIR>(`{ id_field_a ':' typeIR_field_a*{id_field_a <- id_field_a*, typeIR_field_a <- typeIR_field_a*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR'''? -> typeIR'''?*}
@@ -15386,13 +15592,30 @@ relation Cast_impl_neq: typeIR -> typeIR
     -- (let typeIR''''?{typeIR'''' <- typeIR''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_field_a))*{id_field_a <- id_field_a*, typeIR''''? -> typeIR''''?*}
     -- (if typeIR''''?{typeIR'''' <- typeIR''''?} matches (_))*{typeIR''''? <- typeIR''''?*}
     -- (let ?(typeIR_field_b_non_default_aligned) = typeIR''''?{typeIR'''' <- typeIR''''?})*{typeIR''''? <- typeIR''''?*, typeIR_field_b_non_default_aligned -> typeIR_field_b_non_default_aligned*}
-    -- (if Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned holds)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*}
+    -- (Cast_impl: typeIR_field_a_aligned -> typeIR_field_b_non_default_aligned : castResult)*{typeIR_field_a_aligned <- typeIR_field_a_aligned*, typeIR_field_b_non_default_aligned <- typeIR_field_b_non_default_aligned*, castResult -> castResult*}
+    -- (if castResult matches `OK %`)*{castResult <- castResult*}
+    -- (let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult)*{castResult <- castResult*, typeIR_cast* -> typeIR_cast**}
     -- let `{ id_default*{id_default <- id_default*} `} = $diff_set<id>(`{ id_field_b*{id_field_b <- id_field_b*} `}, `{ id_field_a*{id_field_a <- id_field_a*} `})
     -- (let typeIR'''''?{typeIR''''' <- typeIR'''''?} = $find_map<id, typeIR>(`{ id_field_b ':' typeIR_field_b*{id_field_b <- id_field_b*, typeIR_field_b <- typeIR_field_b*} `}, id_default))*{id_default <- id_default*, typeIR'''''? -> typeIR'''''?*}
     -- (if typeIR'''''?{typeIR''''' <- typeIR'''''?} matches (_))*{typeIR'''''? <- typeIR'''''?*}
     -- (let ?(typeIR_field_b_default) = typeIR'''''?{typeIR''''' <- typeIR'''''?})*{typeIR'''''? <- typeIR'''''?*, typeIR_field_b_default -> typeIR_field_b_default*}
     -- (if $is_defaultable_typeIR(typeIR_field_b_default))*{typeIR_field_b_default <- typeIR_field_b_default*}
-    -- the relation holds
+    -- let typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} = $chain_casts_recordTypeIR_default(fieldTypeIR_a*{fieldTypeIR_a <- fieldTypeIR_a*}, typeIR_cast*{typeIR_cast <- typeIR_cast*}*{typeIR_cast* <- typeIR_cast**}, headerTypeIR as typeIR)
+    -- output: % -> % : OK typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*}
+
+  elsegroup
+
+  rulegroup fail
+
+   match
+
+    (signature) typeIR_a -> typeIR_b : %
+    typeIR_a -> typeIR_b : %
+
+   paths
+
+    rulepath fail
+    -- output: % -> % : FAIL
 
 relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
 
@@ -15904,9 +16127,12 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- Expr_ok: p TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if Cast_expl: typeIR -> typeIR_t holds
+    -- Cast_expl: typeIR -> typeIR_t : castResult
+    -- if castResult matches `OK %`
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- let expressionIR_cast '#' _expressionNoteIR = $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*})
     -- let expressionNoteIR = `( typeIR_t ctk `)
-    -- output: % % |- % : `( typeIR_t `) typedExpressionIR as expressionIR '#' expressionNoteIR
+    -- output: % % |- % : expressionIR_cast '#' expressionNoteIR
 
   rulegroup invalidHeaderExpression
 
@@ -20289,6 +20515,51 @@ relation Inst_ok: cursor typingContext instctxt |- constructorTypeIR `< typeArgu
     -- Call_convention_ok: p TC NOACTION |- parameterIR_aligned_inferred*{parameterIR_aligned_inferred <- parameterIR_aligned_inferred*} '@' argumentIR*{argumentIR <- argumentIR*} : argumentIR_cast*{argumentIR_cast <- argumentIR_cast*}
     -- output: % % % |- % `< % '#' % `> `( % '#' % '#' % `) : typeIR_object_inferred `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `)
 
+def $chain_casts(typeIR*, typeIR**) : typeIR** =
+
+  clause 0 : (typeIR_cur*{typeIR_cur <- typeIR_cur*}, typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**}) = []
+  -- if ([] = $concat_<typeIR>(typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**}))
+
+  clause 1 : (typeIR_cur*{typeIR_cur <- typeIR_cur*}, typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**}) = typeIR_next*{typeIR_next <- typeIR_next*} :: $chain_casts(typeIR_next*{typeIR_next <- typeIR_next*}, typeIR_chain_rest*{typeIR_chain_rest <- typeIR_chain_rest*}*{typeIR_chain_rest* <- typeIR_chain_rest**})
+  -- if ([] =/= $concat_<typeIR>(typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**}))
+  -- if (|typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**}| = |typeIR_cur*{typeIR_cur <- typeIR_cur*}|)
+  -- (let (typeIR_next, typeIR_chain_rest*{typeIR_chain_rest <- typeIR_chain_rest*}) = $chain_casts'(typeIR_cur, typeIR_chain*{typeIR_chain <- typeIR_chain*}))*{typeIR_chain* <- typeIR_chain**, typeIR_cur <- typeIR_cur*, typeIR_chain_rest* -> typeIR_chain_rest**, typeIR_next -> typeIR_next*}
+
+def $chain_casts'(typeIR, typeIR*) : (typeIR, typeIR*) =
+
+  clause 0 : (typeIR_cur, typeIR*{typeIR <- typeIR*}) = (typeIR_cur, [])
+  -- if typeIR*{typeIR <- typeIR*} matches []
+
+  clause 1 : (typeIR_cur, typeIR*{typeIR <- typeIR*}) = (typeIR_h, typeIR_t*{typeIR_t <- typeIR_t*})
+  -- if typeIR*{typeIR <- typeIR*} matches _ :: _
+  -- let typeIR_h :: typeIR_t*{typeIR_t <- typeIR_t*} = typeIR*{typeIR <- typeIR*}
+
+def $chain_casts_sequenceTypeIR(typeIR*, typeIR**, typeIR) : typeIR* =
+
+  clause 0 : (typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**}, typeIR_b) = typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} ++ [typeIR_b]
+  -- let typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*}*{typeIR_cast_step* <- typeIR_cast_step**} = $chain_casts(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**})
+  -- (let typeIR_cast_agg = SEQ `< typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*} `> as typeIR)*{typeIR_cast_step* <- typeIR_cast_step**, typeIR_cast_agg -> typeIR_cast_agg*}
+
+def $chain_casts_sequenceTypeIR_default(typeIR*, typeIR**, typeIR) : typeIR* =
+
+  clause 0 : (typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**}, typeIR_b) = typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} ++ [typeIR_b]
+  -- let typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*}*{typeIR_cast_step* <- typeIR_cast_step**} = $chain_casts(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**})
+  -- (let typeIR_cast_agg = SEQ `< typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*} ',' '...' `> as typeIR)*{typeIR_cast_step* <- typeIR_cast_step**, typeIR_cast_agg -> typeIR_cast_agg*}
+
+def $chain_casts_recordTypeIR(fieldTypeIR*, typeIR**, typeIR) : typeIR* =
+
+  clause 0 : (annotationList_a typeIR_a id_a ';'*{annotationList_a <- annotationList_a*, id_a <- id_a*, typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**}, typeIR_b) = typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} ++ [typeIR_b]
+  -- let typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*}*{typeIR_cast_step* <- typeIR_cast_step**} = $chain_casts(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**})
+  -- (if ((|annotationList_a*{annotationList_a <- annotationList_a*}| = |id_a*{id_a <- id_a*}|) /\ (|id_a*{id_a <- id_a*}| = |typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*}|)))*{typeIR_cast_step* <- typeIR_cast_step**}
+  -- (let typeIR_cast_agg = RECORD `{ annotationList_a typeIR_cast_step id_a ';'*{annotationList_a <- annotationList_a*, id_a <- id_a*, typeIR_cast_step <- typeIR_cast_step*} `} as typeIR)*{typeIR_cast_step* <- typeIR_cast_step**, typeIR_cast_agg -> typeIR_cast_agg*}
+
+def $chain_casts_recordTypeIR_default(fieldTypeIR*, typeIR**, typeIR) : typeIR* =
+
+  clause 0 : (annotationList_a typeIR_a id_a ';'*{annotationList_a <- annotationList_a*, id_a <- id_a*, typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**}, typeIR_b) = typeIR_cast_agg*{typeIR_cast_agg <- typeIR_cast_agg*} ++ [typeIR_b]
+  -- let typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*}*{typeIR_cast_step* <- typeIR_cast_step**} = $chain_casts(typeIR_a*{typeIR_a <- typeIR_a*}, typeIR_cast_elem*{typeIR_cast_elem <- typeIR_cast_elem*}*{typeIR_cast_elem* <- typeIR_cast_elem**})
+  -- (if ((|annotationList_a*{annotationList_a <- annotationList_a*}| = |id_a*{id_a <- id_a*}|) /\ (|id_a*{id_a <- id_a*}| = |typeIR_cast_step*{typeIR_cast_step <- typeIR_cast_step*}|)))*{typeIR_cast_step* <- typeIR_cast_step**}
+  -- (let typeIR_cast_agg = RECORD `{ annotationList_a typeIR_cast_step id_a ';'*{annotationList_a <- annotationList_a*, id_a <- id_a*, typeIR_cast_step <- typeIR_cast_step*} ',' '...' `} as typeIR)*{typeIR_cast_step* <- typeIR_cast_step**, typeIR_cast_agg -> typeIR_cast_agg*}
+
 def $reduce_serenum(typedExpressionIR) : typedExpressionIR =
 
   clause 0 : (typedExpressionIR) = typedExpressionIR_reduced
@@ -20345,57 +20616,65 @@ def $reduce_serenum_binary(typedExpressionIR, typedExpressionIR, $check(typeIR, 
 
   clause -1 : (typedExpressionIR_l, typedExpressionIR_r, $check) = ?()
 
+def $apply_cast(typedExpressionIR, typeIR*) : typedExpressionIR =
+
+  clause 0 : (typedExpressionIR, typeIR*{typeIR <- typeIR*}) = typedExpressionIR
+  -- if typeIR*{typeIR <- typeIR*} matches []
+
+  clause 1 : (typedExpressionIR, typeIR*{typeIR <- typeIR*}) = $apply_cast(typedExpressionIR_cast, typeIR_t*{typeIR_t <- typeIR_t*})
+  -- if typeIR*{typeIR <- typeIR*} matches _ :: _
+  -- let typeIR_h :: typeIR_t*{typeIR_t <- typeIR_t*} = typeIR*{typeIR <- typeIR*}
+  -- let _expressionIR '#' `( _typeIR ctk `) = typedExpressionIR
+  -- let typedExpressionIR_cast = `( typeIR_h `) typedExpressionIR as expressionIR '#' `( typeIR_h ctk `)
+
 def $cast_unary(typedExpressionIR, typeIR) : typedExpressionIR? =
 
-  clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR)
+  clause 0 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
   -- let _expressionIR '#' `( typeIR _ctk `) = typedExpressionIR
-  -- if Type_alpha: typeIR ~~ typeIR_to holds
-
-  clause 1 : (typedExpressionIR, typeIR_to) = ?(typedExpressionIR_cast)
-  -- let _expressionIR '#' `( typeIR ctk `) = typedExpressionIR
-  -- if Type_alpha: typeIR ~~ typeIR_to does not hold
-  -- if Cast_impl: typeIR -> typeIR_to holds
-  -- let typedExpressionIR_cast = `( typeIR_to `) typedExpressionIR as expressionIR '#' `( typeIR_to ctk `)
+  -- Cast_impl: typeIR -> typeIR_to : castResult
+  -- if castResult matches `OK %`
+  -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+  -- let typedExpressionIR_cast = $apply_cast(typedExpressionIR, typeIR_cast*{typeIR_cast <- typeIR_cast*})
 
   clause -1 : (typedExpressionIR, typeIR_to) = ?()
 
 def $cast_binary(typedExpressionIR, typedExpressionIR) : (typedExpressionIR, typedExpressionIR)? =
 
-  clause 0 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r))
+  clause 0 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l_cast, typedExpressionIR_r))
   -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
   -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
-  -- if Type_alpha: typeIR_l ~~ typeIR_r holds
+  -- Cast_impl: typeIR_l -> typeIR_r : castResult
+  -- if castResult matches `OK %`
+  -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+  -- let typedExpressionIR_l_cast = $apply_cast(typedExpressionIR_l, typeIR_cast*{typeIR_cast <- typeIR_cast*})
 
-  clause 1 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l_cast, typedExpressionIR_r))
-  -- let _expressionIR '#' `( typeIR_l ctk_l `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r _ctk `) = typedExpressionIR_r
-  -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Cast_impl: typeIR_l -> typeIR_r holds
-  -- let typedExpressionIR_l_cast = `( typeIR_r `) typedExpressionIR_l as expressionIR '#' `( typeIR_r ctk_l `)
-
-  clause 2 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r_cast))
+  clause 1 : (typedExpressionIR_l, typedExpressionIR_r) = ?((typedExpressionIR_l, typedExpressionIR_r_cast))
   -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r ctk_r `) = typedExpressionIR_r
-  -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Cast_impl: typeIR_l -> typeIR_r does not hold
-  -- if Cast_impl: typeIR_r -> typeIR_l holds
-  -- let typedExpressionIR_r_cast = `( typeIR_l `) typedExpressionIR_r as expressionIR '#' `( typeIR_l ctk_r `)
+  -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
+  -- Cast_impl: typeIR_l -> typeIR_r : castResult
+  -- if castResult matches `FAIL`
+  -- Cast_impl: typeIR_r -> typeIR_l : castResult'
+  -- if castResult' matches `OK %`
+  -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult'
+  -- let typedExpressionIR_r_cast = $apply_cast(typedExpressionIR_r, typeIR_cast*{typeIR_cast <- typeIR_cast*})
 
-  clause 3 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
-  -- let _expressionIR '#' `( typeIR_l ctk_l `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r _ctk `) = typedExpressionIR_r
-  -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Cast_impl: typeIR_l -> typeIR_r does not hold
-  -- if Cast_impl: typeIR_r -> typeIR_l does not hold
+  clause 2 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l_cast, typedExpressionIR_r)
+  -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
+  -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
+  -- Cast_impl: typeIR_l -> typeIR_r : castResult
+  -- if castResult matches `FAIL`
+  -- Cast_impl: typeIR_r -> typeIR_l : castResult'
+  -- if castResult' matches `FAIL`
   -- let typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
   -- if (typedExpressionIR_l =/= typedExpressionIR_l_cast)
 
-  clause 4 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
+  clause 3 : (typedExpressionIR_l, typedExpressionIR_r) = $cast_binary(typedExpressionIR_l, typedExpressionIR_r_cast)
   -- let _expressionIR '#' `( typeIR_l _ctk `) = typedExpressionIR_l
-  -- let _expressionIR' '#' `( typeIR_r ctk_r `) = typedExpressionIR_r
-  -- if Type_alpha: typeIR_l ~~ typeIR_r does not hold
-  -- if Cast_impl: typeIR_l -> typeIR_r does not hold
-  -- if Cast_impl: typeIR_r -> typeIR_l does not hold
+  -- let _expressionIR' '#' `( typeIR_r _ctk' `) = typedExpressionIR_r
+  -- Cast_impl: typeIR_l -> typeIR_r : castResult
+  -- if castResult matches `FAIL`
+  -- Cast_impl: typeIR_r -> typeIR_l : castResult'
+  -- if castResult' matches `FAIL`
   -- let typedExpressionIR_l_cast = $reduce_serenum(typedExpressionIR_l)
   -- if (typedExpressionIR_l = typedExpressionIR_l_cast)
   -- let typedExpressionIR_r_cast = $reduce_serenum(typedExpressionIR_r)
@@ -21206,7 +21485,9 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- let typeIR = $unroll_typeIR(typeIR_expression)
     -- if typeIR <: listTypeIR
     -- let LIST `< typeIR_e `> = typeIR as listTypeIR
-    -- if Cast_impl: typeIR_e -> typeIR_var holds
+    -- Cast_impl: typeIR_e -> typeIR_var : castResult
+    -- if castResult matches `OK %`
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
     -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
 
     rulepath array
@@ -21872,7 +22153,9 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- if typeIR' <: setTypeIR
     -- let SET `< typeIR_base `> = typeIR' as setTypeIR
     -- if Type_alpha: typeIR_base ~~ typeIR_key does not hold
-    -- if Cast_impl: typeIR_base -> typeIR_key holds
+    -- Cast_impl: typeIR_base -> typeIR_key : castResult
+    -- if castResult matches `OK %`
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
     -- let typeIR_cast = SET `< typeIR_key `> as typeIR
     -- let typedExpressionIR_cast = `( typeIR_cast `) typedExpressionIR as expressionIR '#' `( typeIR_cast DYN `)
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
@@ -21882,7 +22165,9 @@ relation SelectCase_keyset_simple_ok: typingContext typeIR |- simpleKeysetExpres
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let typeIR_unroll = $unroll_typeIR(typeIR)
     -- if ~typeIR_unroll <: setTypeIR
-    -- if Cast_impl: typeIR -> typeIR_key holds
+    -- Cast_impl: typeIR -> typeIR_key : castResult
+    -- if castResult matches `OK %`
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
     -- let typeIR_cast = SET `< typeIR_key `> as typeIR
     -- let typedExpressionIR_cast = `( typeIR_cast `) typedExpressionIR as expressionIR '#' `( typeIR_cast DYN `)
     -- output: % % |- % : typedExpressionIR_cast as simpleKeysetExpressionIR
@@ -22381,7 +22666,9 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey '@'
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if Cast_impl: typeIR -> typeIR_key holds
+    -- Cast_impl: typeIR -> typeIR_key : castResult
+    -- if castResult matches `OK %`
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
     -- let typeIR_set = SET `< typeIR_key `> as typeIR
     -- let typedExpressionIR_set = `( typeIR_set `) typedExpressionIR as expressionIR '#' `( typeIR_set ctk `)
     -- output: % % |- % '@' % : LPM n typedExpressionIR_set as simpleKeysetExpressionIR
@@ -22399,7 +22686,9 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey '@'
     -- Expr_ok: LOCAL TC |- expression_elem : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if Cast_impl: typeIR -> typeIR_key holds
+    -- Cast_impl: typeIR -> typeIR_key : castResult
+    -- if castResult matches `OK %`
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
     -- let typeIR_set = SET `< typeIR_key `> as typeIR
     -- let typedExpressionIR_set = `( typeIR_set `) typedExpressionIR as expressionIR '#' `( typeIR_set ctk `)
     -- output: % % |- % '@' % : NON_LPM typedExpressionIR_set as simpleKeysetExpressionIR
@@ -22411,7 +22700,9 @@ relation TableEntry_keyset_simple_ok: typingContext tableContext |- matchKey '@'
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
     -- let ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-    -- if Cast_impl: typeIR -> typeIR_key holds
+    -- Cast_impl: typeIR -> typeIR_key : castResult
+    -- if castResult matches `OK %`
+    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
     -- let typeIR_set = SET `< typeIR_key `> as typeIR
     -- let typedExpressionIR_set = `( typeIR_set `) typedExpressionIR as expressionIR '#' `( typeIR_set ctk `)
     -- output: % % |- % '@' % : NON_LPM typedExpressionIR_set as simpleKeysetExpressionIR
@@ -22922,7 +23213,9 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- let ?(infer'') = infer'''?{infer''' <- infer'''?}
   -- if infer'' matches `KNOWN AS %`
   -- let KNOWN AS typeIR_post = infer''
-  -- if Cast_impl: typeIR_pre -> typeIR_post holds
+  -- Cast_impl: typeIR_pre -> typeIR_post : castResult
+  -- if castResult matches `OK %`
+  -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_post)
 
   clause 5 : (constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint) = $merge_constraint'(constraint_pre, constraint_post, typeId_t*{typeId_t <- typeId_t*}, constraint_updated)
@@ -22938,8 +23231,11 @@ def $merge_constraint'(constraint, constraint, typeId*, constraint) : constraint
   -- let ?(infer'') = infer'''?{infer''' <- infer'''?}
   -- if infer'' matches `KNOWN AS %`
   -- let KNOWN AS typeIR_post = infer''
-  -- if Cast_impl: typeIR_pre -> typeIR_post does not hold
-  -- if Cast_impl: typeIR_post -> typeIR_pre holds
+  -- Cast_impl: typeIR_pre -> typeIR_post : castResult
+  -- if castResult matches `FAIL`
+  -- Cast_impl: typeIR_post -> typeIR_pre : castResult'
+  -- if castResult' matches `OK %`
+  -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult'
   -- let constraint_updated = $update_map<typeId, infer>(constraint, typeId_h, KNOWN AS typeIR_pre)
 
 def $merge_constraints(constraint, constraint*) : constraint =
