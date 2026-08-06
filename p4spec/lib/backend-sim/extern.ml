@@ -35,7 +35,7 @@ module Make (A : IMPL) : Run.EXTERN = struct
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern relation: %s" name))
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
       (values_input : Value.t list) : Run.func_result =
@@ -47,5 +47,5 @@ module Make (A : IMPL) : Run.EXTERN = struct
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern function: %s" name))
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
 end

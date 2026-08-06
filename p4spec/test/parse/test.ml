@@ -1,7 +1,6 @@
 open Lang
 open Test_common
 open Runtime.Sim.Signature
-open Util.Error
 module Test = Util.Test
 module Filesys = Util.Filesys
 
@@ -58,7 +57,7 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4 path_p4 =
         let duration = stop time_start in
         let log =
           Format.asprintf "Error parsing file: %s\n%s" path_p4
-            (string_of_error at msg)
+            (Util.Error.string_of_error at msg)
         in
         log |> print_endline;
         Format.eprintf "%s\n" log;
@@ -72,7 +71,7 @@ let parser_test_ stat (module Simulator : SIM) includes_p4 excludes_p4 path_p4 =
         let duration = stop time_start in
         let log =
           Format.asprintf "Error parsing string: %s\n%s" path_p4
-            (string_of_error at msg)
+            (Util.Error.string_of_error at msg)
         in
         log |> print_endline;
         Format.eprintf "%s\n" log;
