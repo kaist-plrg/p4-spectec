@@ -1,0 +1,71 @@
+;; Builtins over nested and non-trivial data.
+;;
+;; The existing builtin-map/builtin-list examples call each builtin once on a
+;; flat argument.  This one nests them: maps whose values are lists, maps built
+;; by `$adds_map` and then searched across several with `$find_maps`, and
+;; `$transpose_`/`$rev_` composed with each other.
+;;
+;; NOTE: only the builtins that spec-meta/common/0-stdlib.watsup itself
+;; declares are callable from a target — `Call_builtin_func` resolves the name
+;; against the *meta-spec's* functions, not against the whole OCaml registry.
+;; See CROSS.md.
+
+var b : bool
+var i : int
+var n : nat
+var t : text
+
+syntax set<K> = `{ K* `}
+syntax pair<K, V> = K ':' V
+syntax map<K, V> = set<pair<K, V>>
+
+dec $empty_map<K, V> : map<K, V>
+def $empty_map<K, V> = `{ eps `}
+
+builtin dec $rev_<X>(X*) : X*
+builtin dec $transpose_<X>(X**) : X**
+builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
+builtin dec $find_map<K, V>(map<K, V>, K) : V?
+builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
+builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
+builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+
+;; A map whose values are themselves lists.
+syntax lmap = map<text, int*>
+;; A plain map, and a list of them for $find_maps.
+syntax imap = map<text, int>
+
+dec $sum(int*) : int
+def $sum(eps) = 0
+def $sum(i_h :: i_t*) = $(i_h + $sum(i_t*))
+
+dec $main() : int
+def $main() = i
+  ;; --- a map from text to *lists* of int -------------------------------
+  -- if lmap_0 = $empty_map<text, int*>
+  -- if lmap_1 = $add_map<text, int*>(lmap_0, "evens", [2, 4, 6])
+  -- if lmap_2 = $add_map<text, int*>(lmap_1, "odds", [1, 3, 5])
+  ;; look a list up, then reverse it and take its head
+  -- if i_evens* = $find_map<text, int*>(lmap_2, "evens")
+  -- if i_evrev* = $rev_<int>(i_evens*)
+  -- if i_ev_first = i_evrev*[0]                   ;; 6
+  -- if i_ev_sum = $sum(i_evens*)                  ;; 12
+  ;; --- $adds_map, then search across several maps ----------------------
+  -- if imap_0 = $empty_map<text, int>
+  -- if imap_a = $adds_map<text, int>(imap_0, ["a", "b"], [1, 2])
+  -- if imap_b = $adds_map<text, int>(imap_0, ["c", "d"], [3, 4])
+  ;; "d" lives only in the second map, so the first is searched and skipped
+  -- if i_d = $find_maps<text, int>([imap_a, imap_b], "d")     ;; 4
+  ;; "a" lives in the first, which wins
+  -- if i_a = $find_maps<text, int>([imap_a, imap_b], "a")     ;; 1
+  ;; --- transpose composed with rev -------------------------------------
+  -- if i_grid** = [[1, 2, 3], [4, 5, 6]]
+  -- if i_tr** = $transpose_<int>(i_grid**)        ;; [[1,4],[2,5],[3,6]]
+  -- if i_trrev** = $rev_<int*>(i_tr**)            ;; [[3,6],[2,5],[1,4]]
+  -- if i_row* = i_trrev**[0]                      ;; [3, 6]
+  -- if i_row_sum = $sum(i_row*)                   ;; 9
+  -- if n_rows = |i_tr**|                          ;; 3
+  ;; --- assoc over tuples whose second component is a list --------------
+  -- if i_pair* = $assoc_<text, int*>("y", [("x", [1, 2]), ("y", [10, 20])])
+  -- if i_pair_sum = $sum(i_pair*)                 ;; 30
+  -- if i = $(i_ev_first + i_ev_sum + i_d + i_a + i_row_sum + n_rows + i_pair_sum)

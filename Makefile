@@ -132,6 +132,37 @@ test-all-det:
 promote:
 	cd p4spec && opam exec --switch=5.1.0 -- dune promote
 
+# K specification (spec-meta-k)
+#
+# The K port runs a .watsup through the meta-language spec in spec-meta-k/,
+# rather than through the OCaml interpreter.  See CROSS.md.
+#
+#   make k-build                         compile the K definition
+#   make k-run TEC=examples/add.watsup   run one target
+#   make k-clean                         drop al-kompiled/ and .tmp/
+#
+# All must run from the repo root: a spec that calls a builtin shells out to
+# ./spectec-boot at that relative path.
+
+KDEFDIR = al-kompiled
+KENTRY = spec-meta-k/al/5-entry.k
+KTMP = .tmp
+
+.PHONY: k-build
+k-build: $(BOOT)
+	kompile $(KENTRY) --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR)
+
+# `boot` is a prerequisite of every K target: builtin calls shell out to it.
+# Named as a file target so it is not rebuilt when already present.
+$(BOOT):
+	$(MAKE) boot
+
+.PHONY: k-run
+k-run: $(BOOT)
+	@test -n "$(TEC)" || { echo "usage: make k-run TEC=examples/add.watsup"; exit 1; }
+	@mkdir -p $(KTMP)
+	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./kast-json.sh $(TEC)
+
 # Cleanup
 
 .PHONY: clean
@@ -139,3 +170,7 @@ promote:
 clean:
 	rm -f ./$(SPEC)
 	cd p4spec && opam exec --switch=5.1.0 -- dune clean
+
+.PHONY: k-clean
+k-clean:
+	rm -rf $(KDEFDIR) $(KTMP)

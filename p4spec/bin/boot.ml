@@ -308,6 +308,68 @@ let kast_command =
        | ElabError (at, msg) ->
            Format.printf "Elaboration error: %s\n" (string_of_error at msg))
 
+let builtin_command =
+  Core.Command.basic
+    ~summary:"evaluate a single builtin call given as JSON, and print the result"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map path_in =
+       flag "-i" (required string) ~doc:"FILE read the request from FILE"
+     and path_out =
+       flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
+     in
+     fun () ->
+       try
+         (* The request is a file, never argv: a mixop renders its operator
+            atoms with quotes (`':'`), and K's `#system` passes its argument
+            through a shell, which chokes on them.  Nor can it be stdin:
+            `#system` has no way to write to the child's. *)
+         let json_request = Yojson.Safe.from_file path_in in
+         let name, targs, args =
+           Interface.SpecTec_AL.request_of_json json_request
+         in
+         let value =
+           Interface.SpecTec_AL.call_builtin
+             (fun _ -> ())
+             Util.Source.(name $ no_region)
+             targs args
+         in
+         let response =
+           Interface.SpecTec_AL.json_of_response value |> Yojson.Safe.to_string
+         in
+         match path_out with
+         | Some path_out ->
+             let oc = Out_channel.open_text path_out in
+             Fun.protect
+               ~finally:(fun () -> Out_channel.close oc)
+               (fun () -> Out_channel.output_string oc (response ^ "\n"))
+         | None -> print_endline response
+       with
+       (* Errors go to stderr and exit non-zero, and stdout stays empty.  K
+          reads stdout as the response and has no other channel to inspect,
+          so its only way to tell "OCaml said no" from "the wire broke" is
+          the exit code from `#systemResult`.
+
+          NOTE: `kast_command` above claims this discipline in its own
+          comment but does not implement it — it prints to stdout and exits
+          zero.  That is a latent bug there, left alone deliberately: fixing
+          it is not part of this change. *)
+       | Sys_error msg ->
+           Format.eprintf "File error: %s\n" msg;
+           exit 1
+       | Interface.SpecTec_AL.Extern_error msg ->
+           Format.eprintf "Extern error: %s\n" msg;
+           exit 1
+       | Yojson.Json_error msg ->
+           Format.eprintf "JSON error: %s\n" msg;
+           exit 1
+       | Util.Error.BuiltinError (at, msg) | Util.Error.InterpError (at, msg) ->
+           Format.eprintf "Builtin error: %s\n" (string_of_error at msg);
+           exit 1
+       | e ->
+           Format.eprintf "Unknown error: %s\n" (Printexc.to_string e);
+           exit 1)
+
 (* Command-line interface *)
 
 let command_core =
@@ -327,6 +389,7 @@ let command_core =
       (* Interfacing with IL specification *)
       ("parse", parse_command);
       ("kast", kast_command);
+      ("builtin", builtin_command);
     ]
 
 let () = Command_unix.run ~version command_core

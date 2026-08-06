@@ -5,9 +5,11 @@
 // Call_func_dispatch, Call_func.
 
 requires "4.4-eval-prem.k"
+requires "4.4.5-extern-json.k"
 
 module AL-CALL-FUNC
   imports AL-PREM
+  imports AL-EXTERN-JSON
 
   // ==========================================================================
   // Call-frame stack
@@ -184,9 +186,10 @@ module AL-CALL-FUNC
   //
   // `Call_builtin_func` is also an `extern relation` in watsup, but for a
   // different reason: its meaning lives in the host interpreter
-  // (`p4spec/lib/interface/builtin/`) rather than in the meta-language.  The
-  // stdlib builtins are implemented here in `callBuiltinFunc` below, so that a
-  // spec using them runs under K too.
+  // (`p4spec/lib/interface/builtin/`) rather than in the meta-language.  Rather
+  // than reimplement it, `callBuiltinFunc` below calls out to that interpreter
+  // over an external interface, which keeps the OCaml authoritative and makes
+  // every builtin it registers available under K.
   // ==========================================================================
 
   syntax KItem ::= callFuncDispatch(FuncDef, TypList, ValList)
@@ -249,194 +252,111 @@ module AL-CALL-FUNC
     requires notBool (X in_keys(GF))
 
   // ==========================================================================
-  // Call_builtin_func
+  // Call_builtin_func: dispatch to the host interpreter
   //
-  // The builtins declared in spec-meta/common/0-stdlib.watsup:
+  // `Call_builtin_func` is an `extern relation` in watsup because a builtin's
+  // meaning lives in the host interpreter (`p4spec/lib/interface/builtin/`),
+  // not in the meta-language.  K therefore implements none of them: it
+  // serializes the call to JSON, shells out to `spectec-boot builtin`, and
+  // reads the result back.  The OCaml registry is the single authority for
+  // what a builtin computes, and all 44 of its entries are reachable from
+  // here — not just the stdlib handful a target's `builtin dec` names.
   //
-  //   builtin dec $rev_<X>(X*) : X*
-  //   builtin dec $assoc_<X, Y>(X, (X, Y)*) : Y?
-  //   builtin dec $transpose_<X>(X**) : X**
-  //   builtin dec $find_map<K, V>(map<K, V>, K) : V?
-  //   builtin dec $find_maps<K, V>(map<K, V>*, K) : V?
-  //   builtin dec $add_map<K, V>(map<K, V>, K, V) : map<K, V>
-  //   builtin dec $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
+  // The OCaml oracle is the narrower of the two here: `spectec-boot run ...
+  // -ali` resolves `Call_builtin_func` against the meta-spec's own functions,
+  // so it only runs the eight that spec-meta's stdlib declares.  A target
+  // calling, say, `$text_to_int` works under K and fails under the oracle.
   //
-  // These mirror `p4spec/lib/interface/builtin/{lists,maps}.ml`, which is the
-  // authority on their meaning.  Type arguments carry no runtime content here:
-  // the OCaml implementations use them only to build the `note` type of the
-  // result value, and K values are untyped, so `TypList` is ignored throughout.
+  // The codec is in 4.4.5-extern-json.k, which documents the wire format; its
+  // OCaml counterpart is `p4spec/lib/interface/spectec/ali/extern.ml`.
   //
-  // Keys are compared with `==K`, structural equality on `Val`, matching
-  // `Value.eq` in the OCaml (and the `eqOp` case of `cmpopPoly`).
+  // Unlike everywhere else in this port, type arguments are *not* ignored.  A
+  // builtin derives the `note` type of the value it returns from its `targs`
+  // (`lists.ml:14-16`, `maps.ml:29,67,72`), and the host runs a typed value
+  // representation, so `TypList` goes out on the wire faithfully.
   //
-  // A builtin is total: it yields a `Val`, never FAIL.  `$find_map` reports a
-  // missing key as `optV(noVal())`, which is the `V?` in its signature.
+  // RUNTIME DEPENDENCY: `./spectec-boot` must exist and runs must start from
+  // the repo root.  K rules cannot read environment variables, so unlike
+  // `kast-json.sh` there is no `$SPECTEC_BOOT` override available here.  The
+  // request file lives under `./.tmp/` for the same reason — a path relative
+  // to the working directory, kept inside the project rather than in `/tmp`.
   // ==========================================================================
 
-  //   `map<K, V>` is `set<pair<K, V>>`, i.e. `` `{ pair* `} ``, and `pair` is
-  //   `K ':' V`.  Both are variant types, so a map value is an `injV` whose
-  //   mixop is the one the type declaration gives.  These two mixops are
-  //   fixed by the stdlib and are built here rather than read off the term.
+  syntax KItem ::= builtinReq(String)
+                 | builtinFile(IOFile, String)
+                 | builtinWrite(IOInt, String, String)
+                 | builtinRun(String)
+                 | builtinResp(Int, String, String)
+
+  //   The request goes through a *file*, never through argv: operator atoms
+  //   render with quotes (`':'`), and `#system` passes its argument through a
+  //   shell, which fails on those with an unterminated quoted string.  Only
+  //   the `#mkstemp` path — `./.tmp/spectec-k-` plus six alphanumerics — is
+  //   ever interpolated into the command line.
   //
-  //   `` `{ `} `` is `["`{"] ; ["`}"]`; `` ':' `` is `[] ; [":"] ; []` — one
-  //   atom group per notation position, empty where an argument goes.
-  syntax MixOp ::= "mixopMap" "(" ")"         [function, total, symbol(mixopMap)]
-                 | "mixopPair" "(" ")"        [function, total, symbol(mixopPair)]
-
-  rule mixopMap() => ("`{", .AtomList) ; ("`}", .AtomList) ; .MixOp
-  rule mixopPair() => .AtomList ; ("':'", .AtomList) ; .AtomList ; .MixOp
-
-  //   The pair list inside a map value.  Partial on purpose: a value that is
-  //   not a map leaves the term stuck rather than silently reading as empty,
-  //   matching the `error "expected a map"` of `map_of_value`.
-  syntax ValList ::= mapPairs(Val)            [function, symbol(mapPairs)]
-  rule mapPairs(injV(valCase(M:MixOp, listV(Ps:ValList), .ValList))) => Ps
-    requires eqMixOp(M, mixopMap())
-
-  syntax Val ::= mkMap(ValList)               [function, total, symbol(mkMap)]
-                | mkPair(Val, Val)            [function, total, symbol(mkPair)]
-  rule mkMap(Ps:ValList) => injV(valCase(mixopMap(), listV(Ps), .ValList))
-  rule mkPair(K:Val, V:Val) => injV(valCase(mixopPair(), (K, V, .ValList)))
-
-  // --------------------------------------------------------------------------
-  //   $find_map<K, V>(map<K, V>, K) : V?
-  //
-  //   `map_find_opt`: the first pair whose key is equal, or `eps`.
-  // --------------------------------------------------------------------------
-
-  syntax ValOpt ::= findPairs(ValList, Val)   [function, total, symbol(findPairs)]
-  rule findPairs(.ValList, _:Val) => noVal()
-  rule findPairs((injV(valCase(M:MixOp, (K':Val, V:Val, .ValList))), Ps:ValList), K:Val)
-    => #if eqMixOp(M, mixopPair()) andBool K' ==K K
-       #then someVal(V)
-       #else findPairs(Ps, K)
-       #fi
-  //   A non-pair element is skipped, as in `map_find_opt`'s `| _ ->` branch.
-  rule findPairs((_:Val, Ps:ValList), K:Val) => findPairs(Ps, K) [owise]
-
-  rule <k> callBuiltinFunc("find_map", _:TypList, (Vmap:Val, K:Val, .ValList))
-        => optV(findPairs(mapPairs(Vmap), K))
+  //   One file serves the whole run.  `#mkstemp` mints it on the first builtin
+  //   call and `<builtinreq>` remembers the path; every later call reuses it,
+  //   and K removes it when rewriting ends.  Calling `#mkstemp` per call would
+  //   instead leave one file behind per builtin invocation.
+  rule <k> callBuiltinFunc(X:Id, Ts:TypList, Vs:ValList)
+        => builtinReq(JSON2String(jsonOfRequest(X, Ts, Vs)))
        ...
        </k>
 
-  // --------------------------------------------------------------------------
-  //   $find_maps<K, V>(map<K, V>*, K) : V?
-  //
-  //   The first map that has the key wins; `eps` if none does.
-  // --------------------------------------------------------------------------
+  //   First call: no path yet, so make the file and write through the fd
+  //   `#mkstemp` already opened.
+  rule <k> builtinReq(Req:String) => builtinFile(#mkstemp(builtinTemplate()), Req) ... </k>
+       <builtinreq> "" </builtinreq>
 
-  syntax ValOpt ::= findMaps(ValList, Val)    [function, symbol(findMaps)]
-  rule findMaps(.ValList, _:Val) => noVal()
-  rule findMaps((Vmap:Val, Vmaps:ValList), K:Val)
-    => #if findPairs(mapPairs(Vmap), K) ==K noVal()
-       #then findMaps(Vmaps, K)
-       #else findPairs(mapPairs(Vmap), K)
-       #fi
+  rule <k> builtinFile(#tempFile(P:String, FD:Int), Req:String)
+        => builtinWrite(FD, Req, P)
+       ...
+       </k>
+       <builtinreq> _ => P </builtinreq>
 
-  rule <k> callBuiltinFunc("find_maps", _:TypList, (listV(Vmaps:ValList), K:Val, .ValList))
-        => optV(findMaps(Vmaps, K))
+  //   Later calls: reopen the same path in mode `"w"`, which truncates (C
+  //   `fopen` semantics), so a short request can never read back the tail of a
+  //   longer predecessor.
+  rule <k> builtinReq(Req:String) => builtinWrite(#open(P, "w"), Req, P) ... </k>
+       <builtinreq> P:String </builtinreq>
+    requires P =/=String ""
+
+  //   `#write`/`#close` have sort `K`, so they can only be sequenced directly
+  //   in the `<k>` cell — a `strict(1)` wrapper around them does not kompile.
+  rule <k> builtinWrite(FD:Int, Req:String, P:String)
+        => #write(FD, Req) ~> #close(FD) ~> builtinRun(P)
        ...
        </k>
 
-  // --------------------------------------------------------------------------
-  //   $add_map<K, V>(map<K, V>, K, V) : map<K, V>
-  //
-  //   `map_update`: replace the first pair with an equal key *in place*, or
-  //   append at the end when the key is absent.  Position matters — the map is
-  //   a list, and `$find_map` reads it front-to-back — so rebinding an existing
-  //   key must not move it.  This is what makes the fourth `$add_map` in
-  //   examples/builtin-map.watsup overwrite "three" with 42 rather than
-  //   shadowing it with a second entry.
-  // --------------------------------------------------------------------------
-
-  syntax ValList ::= updatePairs(ValList, Val, Val)
-                                            [function, total, symbol(updatePairs)]
-  rule updatePairs(.ValList, K:Val, V:Val) => mkPair(K, V), .ValList
-  rule updatePairs((injV(valCase(M:MixOp, (K':Val, V':Val, .ValList))), Ps:ValList), K:Val, V:Val)
-    => #if eqMixOp(M, mixopPair()) andBool K' ==K K
-       #then mkPair(K, V), Ps
-       #else injV(valCase(M, (K', V', .ValList))), updatePairs(Ps, K, V)
-       #fi
-  rule updatePairs((P:Val, Ps:ValList), K:Val, V:Val) => P, updatePairs(Ps, K, V) [owise]
-
-  rule <k> callBuiltinFunc("add_map", _:TypList, (Vmap:Val, K:Val, V:Val, .ValList))
-        => mkMap(updatePairs(mapPairs(Vmap), K, V))
+  rule <k> builtinRun(P:String)
+        => #system(builtinCmd() +String " builtin -i '" +String P +String "'")
        ...
        </k>
 
-  //   `$update_map` is the same function in the OCaml; watsup's stdlib does not
-  //   declare it, but the interface registers it, so it is accepted here too.
-  rule <k> callBuiltinFunc("update_map", _:TypList, (Vmap:Val, K:Val, V:Val, .ValList))
-        => mkMap(updatePairs(mapPairs(Vmap), K, V))
+  //   `#system` is a *function* hook, so its result lands in the `<k>` cell as
+  //   a `#systemResult` that a continuation has to pick up.
+  rule <k> #systemResult(C:Int, Out:String, Err:String)
+        => builtinResp(C, Out, Err)
        ...
        </k>
 
-  // --------------------------------------------------------------------------
-  //   $adds_map<K, V>(map<K, V>, K*, V*) : map<K, V>
-  //
-  //   `List.fold_left2` over the two lists — so, as in the OCaml, it is
-  //   undefined when they differ in length, and the term sticks there.
-  // --------------------------------------------------------------------------
-
-  syntax ValList ::= updatePairsAll(ValList, ValList, ValList)
-                                            [function, symbol(updatePairsAll)]
-  rule updatePairsAll(Ps:ValList, .ValList, .ValList) => Ps
-  rule updatePairsAll(Ps:ValList, (K:Val, Ks:ValList), (V:Val, Vs:ValList))
-    => updatePairsAll(updatePairs(Ps, K, V), Ks, Vs)
-
-  rule <k> callBuiltinFunc("adds_map", _:TypList,
-                           (Vmap:Val, listV(Ks:ValList), listV(Vs:ValList), .ValList))
-        => mkMap(updatePairsAll(mapPairs(Vmap), Ks, Vs))
+  rule <k> builtinResp(0, Out:String, _:String)
+        => valOfJson(respOk(String2JSON(Out)))
        ...
        </k>
 
-  // --------------------------------------------------------------------------
-  //   $rev_<X>(X*) : X*
-  //   $transpose_<X>(X**) : X**
-  //   $assoc_<X, Y>(X, (X, Y)*) : Y?
-  //
-  //   All three already exist as functions in common/0-stdlib.k, instantiated
-  //   at `val`; these rules only route the builtin call to them.
-  // --------------------------------------------------------------------------
+  //   A non-zero exit deliberately has no rule.  A builtin is total in the
+  //   meta-language — it yields a `Val`, never FAIL — so a failure response
+  //   means a malformed request or a missing implementation, which is a defect
+  //   rather than something the spec can recover from.  The stuck term carries
+  //   the child's stderr, which is what you want to read.
 
-  rule <k> callBuiltinFunc("rev_", _:TypList, (listV(Vs:ValList), .ValList))
-        => listV(revVal(Vs))
-       ...
-       </k>
-
-  //   `$transpose_` is `val**`, which arrives as a `listV` of `listV`s;
-  //   `transposeVal` works on `ValListList`, so the two are converted either
-  //   way around it.
-  rule <k> callBuiltinFunc("transpose_", _:TypList, (listV(Vss:ValList), .ValList))
-        => listV(valListsOfMatrix(transposeVal(matrixOfValLists(Vss))))
-       ...
-       </k>
-
-  syntax ValListList ::= matrixOfValLists(ValList)
-                                            [function, symbol(matrixOfValLists)]
-  rule matrixOfValLists(.ValList) => .ValListList
-  rule matrixOfValLists((listV(Vs:ValList), Rest:ValList))
-    => Vs ; matrixOfValLists(Rest)
-
-  syntax ValList ::= valListsOfMatrix(ValListList)
-                                            [function, total, symbol(valListsOfMatrix)]
-  rule valListsOfMatrix(.ValListList) => .ValList
-  rule valListsOfMatrix(Vs:ValList ; Vss:ValListList)
-    => listV(Vs), valListsOfMatrix(Vss)
-
-  //   `$assoc_` takes pairs as *tuples*, not as the `pair` variant that maps
-  //   use — `(X, Y)*` in the signature, `TupleV` in the OCaml.  `assocVal` in
-  //   common/0-stdlib.k is instantiated at `atom` keys over `valfield*`, a
-  //   different shape, so the tuple form is done here.
-  syntax ValOpt ::= assocTup(Val, ValList)    [function, total, symbol(assocTup)]
-  rule assocTup(_:Val, .ValList) => noVal()
-  rule assocTup(K:Val, (tupV((K':Val, V:Val, .ValList)), Ps:ValList))
-    => #if K' ==K K #then someVal(V) #else assocTup(K, Ps) #fi
-  rule assocTup(K:Val, (_:Val, Ps:ValList)) => assocTup(K, Ps) [owise]
-
-  rule <k> callBuiltinFunc("assoc_", _:TypList, (K:Val, listV(Ps:ValList), .ValList))
-        => optV(assocTup(K, Ps))
-       ...
-       </k>
+  syntax String ::= "builtinCmd" "(" ")"      [function, total, symbol(builtinCmd)]
+                  | "builtinTemplate" "(" ")" [function, total, symbol(builtinTemplate)]
+  rule builtinCmd() => "./spectec-boot"
+  //   `#mkstemp` fills the `XXXXXX` in, so concurrent runs in one working
+  //   directory get distinct request files.  `./.tmp/` must exist — the
+  //   `kast-json.sh` wrapper creates it, since K rules cannot mkdir.
+  rule builtinTemplate() => "./.tmp/spectec-k-XXXXXX"
 
 endmodule

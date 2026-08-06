@@ -132,6 +132,16 @@ module SpecTec_AL = struct
   let kast_of_program (value_script : Value.t) : string =
     Spectec.Ali.Kast.string_of_script value_script
 
+  (* External interface for builtin calls, for the K specification in
+     `spec-meta-k/`.  K has no builtin implementations of its own: it
+     serializes the call and shells out to `spectec-boot builtin`, so this
+     module is the authority for what a builtin computes. *)
+
+  exception Extern_error = Spectec.Ali.Extern.Error
+
+  let request_of_json = Spectec.Ali.Extern.request_of_json
+  let json_of_response = Spectec.Ali.Extern.json_of_response
+
   (* Builtins *)
 
   module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()

@@ -32,6 +32,10 @@ module AL-CONFIG
       <callstack> .List </callstack>
       <log> .List </log>
       <result> .K </result>
+      // Path of the scratch file that builtin calls write their request to
+      // (al/4.5-eval-call-func.k).  Empty until the first such call creates
+      // it; one file then serves the rest of the run.
+      <builtinreq> "" </builtinreq>
     </al>
 
   syntax LocalSave ::= localSave(Map, Map, Map)

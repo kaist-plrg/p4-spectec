@@ -356,11 +356,17 @@ when given one, so that running a target takes a single command (see step 4).
 Anything that is not a `.watsup` is assumed to be KAST JSON already:
 
 ```sh
+mkdir -p ./.tmp
+
 case "$1" in
   *.watsup)
-    json=$(mktemp)
-    trap 'rm -f "$json"' EXIT
+    json=$(mktemp ./.tmp/spectec-k-kast-XXXXXX.json)
     "${SPECTEC_BOOT:-./spectec-boot}" kast "$1" -o "$json"
+    status=0
+    kast --definition "$KDEF" --input json --output kore --sort Script "$json" \
+      || status=$?
+    rm -f "$json"
+    exit $status
     ;;
   *)
     json="$1"
@@ -370,7 +376,7 @@ esac
 exec kast --definition "$KDEF" --input json --output kore --sort Script "$json"
 ```
 
-Two constraints shape this:
+Three constraints shape this:
 
 - `--parser` takes a single executable, not a command string. The `krun --help`
   text suggests otherwise (`krun --parser cat foo.kore`), but K 7.1.337 execs
@@ -381,24 +387,50 @@ Two constraints shape this:
 - `krun` requires `$PGM` to be a *file*; it appends that path to the parser
   command. There is no stdin route for the program term, which is why the two
   steps cannot simply be piped together.
+- The booted JSON cannot be cleaned up by an `EXIT` trap alongside `exec`:
+  `exec` replaces this shell, so the trap never fires and one file accumulates
+  per run. `kast` runs as a child in that branch instead, with the `rm` after
+  it and its status passed on. The `mkdir` at the top is also what creates
+  `.tmp/` for the builtin request file that K itself writes.
 
 `spectec-boot kast` exits non-zero and reports to stderr on failure, so `set -e`
 in the wrapper stops before `kast` is handed a file that was never written.
 
 ### Step 4: run
 
-The entry module is `spec-meta-k/al/5-entry.k`; there is no `main.k`. Compile
-once, then run a target directly:
+Three Makefile targets cover the whole workflow. **Run them from the repo
+root** — a spec that calls a builtin shells out to `./spectec-boot` at that
+relative path (see *Builtin functions* below). Each depends on `spectec-boot`
+and builds it if missing.
+
+```sh
+make k-build                          # compile the K definition -> al-kompiled/
+make k-run TEC=examples/add.watsup    # run one target
+make k-clean                          # drop al-kompiled/ and .tmp/
+```
+
+To check a target against the OCaml, run it both ways and compare `<result>`
+with the oracle's last line:
+
+```sh
+make k-run TEC=examples/add.watsup
+./spectec-boot run spec-meta/al -rel Entry -tec examples/add.watsup -ali
+```
+
+Underneath, the entry module is `spec-meta-k/al/5-entry.k` — there is no
+`main.k` — and the two commands are:
 
 ```sh
 kompile spec-meta-k/al/5-entry.k --main-module AL --syntax-module AL-SYNTAX -o al-kompiled
+mkdir -p .tmp
 KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh examples/add.watsup
 ```
 
 The wrapper boots the `.watsup` itself, so no separate `spectec-boot kast` step
 is needed. `KDEF` must be set even though `-d` already names the definition on
 the `krun` line: `krun` passes the wrapper only the input file, so that is the
-one channel it has for the definition.
+one channel it has for the definition. `.tmp/` must exist before `krun` — the
+wrapper creates it, which is why the bare `krun` form above needs the `mkdir`.
 
 To keep the intermediate JSON — to inspect it, or to diff two revisions of the
 emitter — emit it explicitly and hand `krun` that instead; the wrapper takes
@@ -424,38 +456,149 @@ Use `--output json` to diff mechanically rather than by eye.
 
 #### Results
 
-Run from the repo root against all five examples:
+Run from the repo root against every example:
 
-| example | `<result>` | oracle | |
-| --- | --- | --- | --- |
-| `add` | `intN(119)` | `INT +119` | ✓ |
-| `fibo` | `intN(89)` | `INT +89` | ✓ |
-| `iter-nontrivial` | `intN(-42)` | `INT -42` | ✓ |
-| `builtin-map` | `intN(45)` | `INT +45` | ✓ |
-| `builtin-list` | `intN(19)` | `INT +19` | ✓ |
+| example | `<result>` | oracle | exercises | |
+| --- | --- | --- | --- | --- |
+| `add` | `intN(119)` | `INT +119` | arithmetic, `debug` | ✓ |
+| `fibo` | `intN(89)` | `INT +89` | recursion, `otherwise` | ✓ |
+| `iter-nontrivial` | `intN(-42)` | `INT -42` | iteration premises | ✓ |
+| `builtin-map` | `intN(45)` | `INT +45` | map builtins | ✓ |
+| `builtin-list` | `intN(19)` | `INT +19` | list builtins | ✓ |
+| `variant-tree` | `intN(6)` | `INT +6` | variant types, ADT recursion | ✓ |
+| `relation-typing` | `intN(110)` | `INT +110` | multi-rule relations, FAIL recovery | ✓ |
+| `iter-sequence` | `intN(1085)` | `INT +1085` | sequences, `::`/`++`, comprehensions | ✓ |
+| `builtin-nested` | `intN(65)` | `INT +65` | builtins over nested data | ✓ |
+| `mutual-recursion` | `intN(289)` | `INT +289` | mutual recursion, deep call stacks | ✓ |
+| `builtin-extra` | `intN(277)` | *n/a* | 11 builtins K never implemented | ✓ |
 
-All five end with `<saves>` and `<callstack>` empty, and `add`'s `<log>` ends
+All eleven end with `<saves>` and `<callstack>` empty, and `add`'s `<log>` ends
 `textV("Add")`, `intN(119)` — the `debug` premise the oracle prints as
 `TEXT Add`.
+
+`builtin-extra` has no oracle column on purpose: it uses builtins the oracle
+cannot dispatch (see *Builtin functions* below), so K is the only engine that
+runs it. It is the direct demonstration that the external interface reaches
+past the eight builtins the K rules used to implement.
 
 ### Builtin functions
 
 `builtin-map` originally stopped with `<k>` headed by
 `callBuiltinFunc("add_map", ...)`: `al/3-context.k` loaded `builtinFuncD` into
-the context, but nothing consumed the resulting call. The builtins declared in
-`spec-meta/common/0-stdlib.watsup` are now implemented in
-`al/4.5-eval-call-func.k` — `$rev_`, `$assoc_`, `$transpose_`, `$find_map`,
-`$find_maps`, `$add_map`, `$adds_map`, plus `$update_map`, which the OCaml
-interface registers though the watsup stdlib does not declare it.
+the context, but nothing consumed the resulting call.
 
-These are `extern relation`s in watsup for a reason unlike
+`Call_builtin_func` is an `extern relation` in watsup, for a reason unlike
 `Call_extern_func`/`Call_extern_rel`, which stay undefined: a builtin's meaning
-lives in the host interpreter (`p4spec/lib/interface/builtin/{lists,maps}.ml`),
-which is the authority the K rules mirror. Type arguments are ignored — the
-OCaml uses them only to build the result value's `note` type, and K values are
-untyped.
+lives in the host interpreter (`p4spec/lib/interface/builtin/`), not in the
+meta-language. K therefore implements no builtin of its own. Instead
+`al/4.5-eval-call-func.k` serializes the call to JSON, shells out to
+`spectec-boot builtin`, and reads the result back, which keeps the OCaml the
+single authority for what a builtin computes.
 
-Two details of the encoding, both read off the emitted KAST rather than guessed:
+An earlier revision reimplemented eight builtins natively in K rules. Those
+were mirrors of the OCaml, so they duplicated authority and could drift from
+it; they have been removed.
+
+The external route covers **all 44** entries of the OCaml registry
+(`builtin/call.ml`) rather than the eight. A target only has to declare the
+builtin it wants — `builtin dec $sum_nat(nat*) : nat` — and the call goes out
+over the wire like any other. Confirmed under K for `$sum_nat`, `$max_nat`,
+`$text_to_int`, `$int_to_text`, `$strip_prefix`, `$concat_`, and the
+`Numerics` operations `$pow2`, `$shl`, `$band`, `$bor`, none of which the K
+rules ever implemented.
+
+Worth noting the asymmetry this creates: **the OCaml oracle cannot run these.**
+`spectec-boot run spec-meta/al ... -ali` dispatches `Call_builtin_func` through
+`backend-boot/spectec.ml`, which resolves the name against the *meta-spec's own*
+functions, so it is limited to the eight that
+`spec-meta/common/0-stdlib.watsup` declares. A target using `$text_to_int`
+therefore runs under K but fails under the oracle — the reverse of the usual
+direction, and something to keep in mind when cross-checking.
+
+#### Runtime dependency
+
+**A K run now requires `./spectec-boot` to exist, and must start from the repo
+root.** The path is hardcoded in `builtinCmd()`: K rules cannot read
+environment variables, so unlike `kast-json.sh` there is no `$SPECTEC_BOOT`
+override available on this path. Build it with `make boot` (never `dune build`
+directly, and note that `make clean` leaves a stale `./spectec-boot` behind).
+
+Scratch files go under **`./.tmp/`** (gitignored), not `/tmp`. The directory is
+created by `kast-json.sh`, because K rules cannot `mkdir` and the request file
+is written from inside K. Running `krun` without that wrapper — against a
+pre-booted `.json`, say — means creating `./.tmp/` yourself first, or the
+`#mkstemp` in `callBuiltinFunc` returns an `IOError` and the term sticks there.
+
+**One request file per run, not per call.** `#mkstemp` mints it on the first
+builtin call; `<builtinreq>` remembers the path, and every later call reopens
+that same file in mode `"w"`, which truncates. `finish()` removes it at the end
+of the run. `#mkstemp` is *documented* to delete its files when rewriting ends,
+but K 7.1.337's LLVM backend does not, so the cleanup is explicit.
+
+A run that dies on a stuck term never reaches `finish()` and so leaves its
+request file behind — deliberately useful, since that file is the last request
+sent and the stuck term holds the reply. `kast-json.sh` sweeps stale ones at
+the start of the next run, so they do not accumulate.
+
+#### The wire
+
+The codec is `spec-meta-k/al/4.4.5-extern-json.k` on the K side and
+`p4spec/lib/interface/spectec/ali/extern.ml` on the OCaml side; the format is
+documented in full at the head of each. In brief:
+
+```
+request  ::= {"builtin": <id>, "targs": [typ, ...], "args": [val, ...]}
+response ::= {"ok": val}
+
+val   ::= ["boolV", <bool>] | ["natN", "<decimal>"] | ["intN", "<decimal>"]
+        | ["textV", <string>] | ["strV", [[<atom>, val], ...]]
+        | ["injV", mixop, [val, ...]] | ["tupV", [val, ...]]
+        | ["optV", null] | ["optV", val] | ["listV", [val, ...]]
+        | ["funcV", <id>] | ["extV", <json>]
+mixop ::= [[<atom>, ...], ...]        // an atoms matrix, exactly K's MixOp
+```
+
+It is deliberately neither KAST JSON nor `Value.t`'s derived yojson. KAST JSON
+cannot express it: `kast.ml`'s `sort_of_typ` accepts only a bare
+`VarT(id, [])`, but builtin results are noted with `IterT(VarT("pair",_),List)`
+and `VarT("map",[K;V])`. The derived yojson carries `vid`, and importing vids
+minted by another process would collide with locally allocated ones — and
+`Value.compare` short-circuits on vid equality, so two structurally distinct
+values would compare *equal*. Everything decoded is rebuilt through
+`Value.Make.*`, which mints fresh vids.
+
+Numbers cross as decimal **strings**, not JSON numbers: both sides hold
+arbitrary-precision integers and P4 routinely exceeds 64 bits.
+
+Four mechanics worth recording, each found the hard way:
+
+- The request goes through a **temp file, never argv**. Operator atoms render
+  with quotes (`':'`), and `#system` passes its argument through a shell, which
+  fails on those with *Unterminated quoted string* (exit 2). Only the
+  `#mkstemp` path is interpolated into the command line. It cannot go through
+  stdin either: `#system` has no way to write to the child's.
+- `#open(path, "w")` **truncates**, following C `fopen`, which is what lets one
+  file be reused across calls without a short request reading back the tail of
+  a longer predecessor. There is no `#truncate` in K-IO, so reopening is the
+  only way to get that.
+- `#system` needs no `kompile` flag — `imports K-IO` suffices — but `JSON`
+  needs an explicit `requires "json.md"`; `imports JSON` alone fails with *Could
+  not find module: JSON*.
+- `#write`/`#close`/`#remove` have sort `K`, so they can only be sequenced
+  directly in the `<k>` cell. A `strict(1)` wrapper around them does not
+  kompile (*Cannot heat a nonterminal of sort K*).
+
+Errors never travel in stdout: the subcommand writes to stderr and exits
+non-zero, stdout stays empty. K's only error signal is the exit code from
+`#systemResult`, and it has to be able to tell "OCaml said no" from "the wire
+broke". A non-zero exit has no rule on the K side — a builtin is total in the
+meta-language, so a failure is a defect rather than something the spec can
+recover from, and the stuck term carries the child's stderr.
+
+#### Encoding notes
+
+Two details of the value encoding, read off the emitted KAST rather than
+guessed:
 
 - `map<K, V>` is `set<pair<K, V>>`, so a map value is
   `injV(valCase(<mixop>, listV(pairs)))` where the mixop is
@@ -464,14 +607,35 @@ Two details of the encoding, both read off the emitted KAST rather than guessed:
   One atom group per notation position, empty where an argument goes. The
   `':'` atom carries its quotes inside the string.
 - A map is an association *list*, and `$find_map` reads it front-to-back, so
-  `$add_map` on a key already present must replace that entry in place rather
-  than append. This is what makes the fourth `$add_map` in `builtin-map`
-  overwrite `"three"` with 42. `$adds_map` goes through the same update, once
-  per key.
+  `$add_map` on a key already present replaces that entry in place rather than
+  appending. This is what makes the fourth `$add_map` in `builtin-map`
+  overwrite `"three"` with 42.
 
-Keys compare with `==K`, structural equality on `Val`, matching `Value.eq` in
-the OCaml and the `eqOp` case of `cmpopPoly`.
+Unlike everywhere else in this port, **type arguments are not ignored**. A
+builtin derives the `note` type of its result from its `targs`, and the host
+runs a typed value representation, so `TypList` goes out on the wire
+faithfully. Argument values, by contrast, cross without their `note.typ`:
+`extern.ml` rebuilds a structural placeholder on decode. That is sound because
+no builtin reads an argument's `note.typ` — `Value.compare`, `Value.eq`,
+`Value.Get.*` and `Mixfix.eq_mixop` are all purely structural, and the map
+builtins dispatch on the mixop. `extern.ml` records this as an invariant: if a
+future builtin breaks it, it breaks there.
 
-`examples/builtin-list.watsup` was added to cover the list builtins
-`builtin-map` does not reach (`$rev_`, `$transpose_`, `$assoc_`). `$find_maps`,
-`$adds_map` and `$update_map` have no example exercising them.
+`examples/builtin-list.watsup` covers the list builtins `builtin-map` does not
+reach (`$rev_`, `$transpose_`, `$assoc_`). `$find_maps`, `$adds_map` and
+`$update_map` have no example exercising them.
+
+#### Limitations
+
+- **`fresh_typeId` is wrong under K.** It closes over a `ctr : int ref`
+  (`builtin/call.ml:27,81`) which under `Make (...) ()` is per-process. Each
+  `#system` call is a fresh process, so it returns the same value every time.
+  No example uses it. Fixing it needs either the counter on the wire or a
+  persistent server.
+- **One process spawn per call** (~20-100 ms). `builtin-map` makes ~9 calls, so
+  it is fine at this size; a real P4 program would not be. The schema is a
+  self-contained request/response object precisely so the transport can be
+  swapped for a persistent co-process later without changing the format.
+- Replay is safe: K does not re-execute the `#system` hook on backtracking, and
+  43 of the 44 builtins are pure anyway — `fresh_typeId` is the sole exception,
+  already noted.
