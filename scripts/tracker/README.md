@@ -15,6 +15,7 @@ correct afterward.)
 | `dump_board.py` | Dump a GitHub Projects board via GraphQL into flat `{field: value}` items — the input to both checks (`--from-file` reads a saved response for offline runs). |
 | `tracker_check.py` | The Mismatches drift check: compares `excludes/` against a dumped board **both** directions (an `.exclude` missing from the board; an orphaned board item; a disagreeing `Category`/`State`/`Repo issue`/`Upstream issue`/counts). |
 | `label_check.py` | The Soundness check: verifies every `label:soundness` issue is an item on the project. |
+| `sync_board.py` | Push `excludes/` onto the Mismatches board — set each item's derivable fields (`Name`/`Category`/`State`/`Repo issue`/`Upstream issue`/`#Pos`/`#Neg`) from the `.exclude`, rename a renamed one, add a new one. The writer side of the drift check; hand-authored columns untouched. |
 | `sync_upstream_state.py` | Fill the Mismatches `Upstream state` field from each item's `Upstream issue` URL — the open/closed/merged state of the related p4lang/p4c or p4lang/p4-spec issue/PR. |
 
 `test_*.py` and the `testdata/` fixtures exercise all of the above offline in the `unit` CI job.
@@ -57,17 +58,22 @@ open/closed), annotated with:
 
 ## Maintaining each board
 
-**Mismatches** — when a `.exclude` file is added, renamed, or removed, its
-filename must encode `i<repo>-[c|s]<n>-name` (repo issue number, upstream
-c/s issue number, then a descriptive name — see `tracker_lib.parse_name`).
-The `mismatch-drift` CI job fails the PR if the board doesn't reflect the
-change — in **both** directions: an `.exclude` with no board item, and a
-board item whose `.exclude` was deleted (orphan), exempting the
-patched/future/out-of-scope clarifications that legitimately have no file.
-It also compares each item's `Category`, `State`, `Repo issue`,
-`Upstream issue`, and `#Pos`/`#Neg`. **Counts are always recomputed from the
-`.exclude` file contents** by `tracker_lib.walk_excludes` — never
-hand-edited on the board.
+**Mismatches** — just edit the `.exclude` files; the board follows. When you
+add, rename, move, or remove a `.exclude`, its filename must encode
+`i<repo>-[c|s]<n>-name` (repo issue number, upstream c/s issue number, then a
+descriptive name — see `tracker_lib.parse_name`) and its directory sets
+Category/State. **You do not touch the board by hand**: once the change lands
+on `main`, `sync_board.py` (the `sync board from excludes/` workflow) pushes
+the derivable fields onto the board — sets `Name`/`Category`/`State`/`Repo
+issue`/`Upstream issue`/`#Pos`/`#Neg`, renames a renamed item, adds a new one
+— leaving hand-authored columns alone.
+
+The `drift` job is then the safety net: on every PR it diffs the board
+against `excludes/` (both directions — a missing item, or an orphaned board
+item, exempting patched/future/out-of-scope) and fails if they disagree, so a
+sync that didn't run or a hand-tampered board is caught. The only manual case
+`sync_board.py` won't auto-resolve is a **true orphan** (a board item whose
+`.exclude` was deleted) — it reports it for you to remove.
 
 **Soundness** — file the issue and add the `soundness` label. The project's
 native auto-add pulls it in, and the `soundness-check` CI job verifies every
