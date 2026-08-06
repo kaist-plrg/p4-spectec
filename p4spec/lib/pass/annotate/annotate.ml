@@ -371,7 +371,8 @@ and annotate_cases (ctx : Ctx.t) (cases : case list) : Pl.case list =
 (* Instructions *)
 
 and annotate_instr (ctx : Ctx.t) (instr : instr) : Pl.instr =
-  let at, note = (instr.at, instr.note) in
+  let at = instr.at in
+  let note : Pl.inote = { iid = instr.note.iid; fallthrough = None } in
   match instr.it with
   | IfI (exp_cond, iterexps, block_then, dangle) ->
       let exp_cond_pl = annotate_exp ctx exp_cond in
@@ -552,3 +553,4 @@ let annotate_spec (spec : spec) : Pl.spec =
   let ctx = Ctx.init () in
   let ctx = Ctx.load_spec ctx spec in
   spec |> Expand.expand_spec |> annotate_defs ctx |> Shorthand.shorten_defs
+  |> Stamp.stamp_defs

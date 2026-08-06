@@ -1,5 +1,4 @@
 open Domain
-open Sl
 open Ast
 open Annot
 open Util.Source
