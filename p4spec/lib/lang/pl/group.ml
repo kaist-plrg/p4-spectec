@@ -1,13 +1,19 @@
 open Ast
 module Annot = Annot
 
-(* Flat list of the dispatch block's GroupI leaves, each paired with the hints
-   its wrapping instr carries (needed for that group's own title) *)
+(* A rule group extracted from a dispatch block *)
 
-let collect_groups (block : block_dispatch) :
-    (Annot.hints * instr_dispatch) list =
-  let rec collect_instr (instr : instr_dispatch instr) :
-      (Annot.hints * instr_dispatch) list =
+type t = {
+  hints : Annot.hints;
+  id_rulegroup : id;
+  id_rel : id;
+  rel_signature : rel_signature;
+  exps : exp list;
+  body : block_group;
+}
+
+let collect_groups (block : block_dispatch) : t list =
+  let rec collect_instr (instr : instr_dispatch instr) : t list =
     match instr.node.it with
     | IfI (_, _, block_then, _) -> collect_block block_then
     | HoldI (_, _, _, holdcase) -> (
@@ -23,10 +29,19 @@ let collect_groups (block : block_dispatch) :
     | CheckLetMatchI (_, _, _, block_then)
     | OptionGetI (_, _, block_then) ->
         collect_block block_then
-    | TierI (BlockI arms) -> arms |> List.concat_map collect_block
-    | TierI (GroupI _ as group) -> [ (instr.hints, group) ]
-  and collect_block (block : block_dispatch) :
-      (Annot.hints * instr_dispatch) list =
+    | TierI (RouteI arms) -> arms |> List.concat_map collect_block
+    | TierI (GroupI (id_rulegroup, id_rel, rel_signature, exps, body)) ->
+        [
+          {
+            hints = instr.hints;
+            id_rulegroup;
+            id_rel;
+            rel_signature;
+            exps;
+            body;
+          };
+        ]
+  and collect_block (block : block_dispatch) : t list =
     block |> List.concat_map collect_instr
   in
   collect_block block

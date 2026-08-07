@@ -128,16 +128,16 @@ and arg' =
 
 type dangle = Sl.dangle
 
-(* Holding conditions -- shared control-flow, parametric over the tier's own instruction *)
+(* Holding conditions *)
 
-and 'tier holdcase =
-  | BothH of 'tier block * 'tier block
-  | HoldH of 'tier block * dangle
-  | NotHoldH of 'tier block * dangle
+and 'instr_tier holdcase =
+  | BothH of 'instr_tier block * 'instr_tier block
+  | HoldH of 'instr_tier block * dangle
+  | NotHoldH of 'instr_tier block * dangle
 
 (* Case analysis *)
 
-and 'tier case = guard * 'tier block
+and 'instr_tier case = guard * 'instr_tier block
 
 and guard =
   | BoolG of bool
@@ -151,32 +151,33 @@ and guard =
 
 (* Backtracking *)
 
-and 'tier arm = 'tier block
+and 'instr_tier arm = 'instr_tier block
 
-(* Instructions -- shared control-flow shape common to both tiers. The
-   tier-specific instructions (rule group / result / return / rule, and the
-   backtracking-or-routing [BlockI]) are carried by [TierI]. *)
+(* Instructions
+
+   * shared control-flow shape common to both tiers
+   * tier-specific instructions are carried by [TierI] *)
 
 and iid = Sl.iid
 and fallthrough = FallGroup of id | FallNext | FallElse | FallFail
 and inote = { iid : iid; fallthrough : fallthrough option }
 
-and 'tier instr = (('tier instr', inote) note_phrase) Annot.t
-and 'tier instr' =
-  | IfI of exp * iterexp list * 'tier block * dangle
-  | HoldI of id * notexp * iterexp list * 'tier holdcase
-  | CaseI of exp * 'tier case list * dangle
+and 'instr_tier instr = (('instr_tier instr', inote) note_phrase) Annot.t
+and 'instr_tier instr' =
+  | IfI of exp * iterexp list * 'instr_tier block * dangle
+  | HoldI of id * notexp * iterexp list * 'instr_tier holdcase
+  | CaseI of exp * 'instr_tier case list * dangle
   | LetI of exp * exp * iterinstr list
   | DebugI of exp
   (* Shorthands *)
   | DestructI of (string option * exp) list * exp
-  | CheckLetSubI of typ * exp * exp * 'tier block
-  | CheckLetMatchI of pattern * exp * exp * 'tier block
-  | OptionGetI of exp * exp * 'tier block
+  | CheckLetSubI of typ * exp * exp * 'instr_tier block
+  | CheckLetMatchI of pattern * exp * exp * 'instr_tier block
+  | OptionGetI of exp * exp * 'instr_tier block
   (* Tier-specific instruction *)
-  | TierI of 'tier
+  | TierI of 'instr_tier
 
-and 'tier block = 'tier instr list
+and 'instr_tier block = 'instr_tier instr list
 
 and iterinstr = Sl.iterinstr
 
@@ -184,25 +185,25 @@ and iterinstr = Sl.iterinstr
 
 and rel_signature = Sl.rel_signature
 
-(* Group-body tier: result/return/rule-application, or a backtracking block
-   whose arms are group blocks; no GroupI reachable *)
+(* Group-body tier *)
 
 type instr_group =
   | ResultI of rel_signature * exp list
   | ReturnI of exp
   | RuleI of id * notexp * Hints.Input.t * iterinstr list
-  | BlockI of block_group list
+  | BacktrackI of block_group list
 
 and block_group = instr_group block
 
-(* Dispatch tier: rule groups (a group's body is a group block, so groups
-   never nest), or a routing block whose arms are dispatch blocks *)
+(* Dispatch tier *)
 
 type instr_dispatch =
   | GroupI of id * id * rel_signature * exp list * block_group
-  | BlockI of block_dispatch list
+  | RouteI of block_dispatch list
 
 and block_dispatch = instr_dispatch block
+
+(* Relations *)
 
 type externrel = id * rel_signature * exp list
 

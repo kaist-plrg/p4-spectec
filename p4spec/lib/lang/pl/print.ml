@@ -187,17 +187,17 @@ and string_of_dangle iid = Format.asprintf "Dangling#%d" iid
 
 (* Case analysis *)
 
-and string_of_case string_of_tier ?(level = 0) ?(index = 0) case =
+and string_of_case ?(level = 0) ?(index = 0) string_of_instr_tier case =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   let guard, block = case in
   Format.asprintf "%sCase %s\n\n%s" order (string_of_guard guard)
-    (string_of_block string_of_tier ~level:(level + 1) block)
+    (string_of_block ~level:(level + 1) string_of_instr_tier block)
 
-and string_of_cases string_of_tier ?(level = 0) cases =
+and string_of_cases ?(level = 0) string_of_instr_tier cases =
   cases
   |> List.mapi (fun idx case ->
-         string_of_case string_of_tier ~level ~index:(idx + 1) case)
+         string_of_case ~level ~index:(idx + 1) string_of_instr_tier case)
   |> String.concat "\n\n"
 
 and string_of_guard guard =
@@ -215,12 +215,12 @@ and string_of_guard guard =
       "(let " ^ string_of_exp exp ^ " be %, % matches pattern "
       ^ string_of_pattern pattern ^ ")"
 
-(* Instructions: shared control-flow, parametric over the tier's own instruction *)
+(* Instructions: shared control-flow, parametric over the tier *)
 
-and string_of_instr
-    (string_of_tier :
-      ?short:bool -> ?level:int -> ?index:int -> 'tier -> string)
-    ?(short = false) ?(level = 0) ?(index = 0) (instr : 'tier instr) =
+and string_of_instr ?(short = false) ?(level = 0) ?(index = 0)
+    (string_of_instr_tier :
+      ?short:bool -> ?level:int -> ?index:int -> 'instr_tier -> string)
+    (instr : 'instr_tier instr) =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
   match instr.node.it with
@@ -232,7 +232,7 @@ and string_of_instr
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s%s" order s_short
-          (string_of_block string_of_tier ~level:(level + 1) block)
+          (string_of_block ~level:(level + 1) string_of_instr_tier block)
           (if dangle then
              "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.node.note.iid
            else "")
@@ -247,9 +247,11 @@ and string_of_instr
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s\n\n%sElse,\n\n%s" order s_short
-              (string_of_block string_of_tier ~level:(level + 1) block_hold)
+              (string_of_block ~level:(level + 1) string_of_instr_tier
+                 block_hold)
               order
-              (string_of_block string_of_tier ~level:(level + 1) block_nothold)
+              (string_of_block ~level:(level + 1) string_of_instr_tier
+                 block_nothold)
       | HoldH (block_hold, dangle) ->
           let s_short =
             Format.asprintf "If (%s: %s)%s holds, then" (string_of_relid id)
@@ -259,7 +261,8 @@ and string_of_instr
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s%s" order s_short
-              (string_of_block string_of_tier ~level:(level + 1) block_hold)
+              (string_of_block ~level:(level + 1) string_of_instr_tier
+                 block_hold)
               (if dangle then
                  "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.node.note.iid
                else "")
@@ -272,7 +275,8 @@ and string_of_instr
           if short then s_short
           else
             Format.asprintf "%s%s\n\n%s%s" order s_short
-              (string_of_block string_of_tier ~level:(level + 1) block_nothold)
+              (string_of_block ~level:(level + 1) string_of_instr_tier
+                 block_nothold)
               (if dangle then
                  "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.node.note.iid
                else ""))
@@ -281,7 +285,7 @@ and string_of_instr
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s%s" order s_short
-          (string_of_cases string_of_tier ~level:(level + 1) cases)
+          (string_of_cases ~level:(level + 1) string_of_instr_tier cases)
           (if dangle then
              "\n\n" ^ order ^ "Else " ^ string_of_dangle instr.node.note.iid
            else "")
@@ -311,7 +315,7 @@ and string_of_instr
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_block string_of_tier ~level:(level + 1) block)
+          (string_of_block ~level:(level + 1) string_of_instr_tier block)
   | CheckLetMatchI (pattern, exp_l, exp_r, block) ->
       let s_short =
         Format.asprintf "(Let %s be %s, %s matches pattern %s)"
@@ -321,7 +325,7 @@ and string_of_instr
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_block string_of_tier ~level:(level + 1) block)
+          (string_of_block ~level:(level + 1) string_of_instr_tier block)
   | OptionGetI (exp_l, exp_r, block) ->
       let s_short =
         Format.asprintf "(Let %s be ! %s)" (string_of_exp exp_l)
@@ -330,27 +334,30 @@ and string_of_instr
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_block string_of_tier ~level:(level + 1) block)
-  | TierI tier -> string_of_tier ~short ~level ~index tier
+          (string_of_block ~level:(level + 1) string_of_instr_tier block)
+  | TierI instr_tier -> string_of_instr_tier ~short ~level ~index instr_tier
 
-and string_of_block string_of_tier ?(level = 0) ?(index = 0) block =
+and string_of_block ?(level = 0) ?(index = 0) string_of_instr_tier block =
   block
   |> List.mapi (fun idx instr ->
-         string_of_instr string_of_tier ~level ~index:(index + idx + 1) instr)
+         string_of_instr ~level
+           ~index:(index + idx + 1)
+           string_of_instr_tier instr)
   |> String.concat "\n\n"
 
-and string_of_elseblock string_of_tier ?(level = 0) ?(index = 0) elseblock =
+and string_of_elseblock ?(level = 0) ?(index = 0) string_of_instr_tier elseblock
+    =
   Format.asprintf "%s%d. Otherwise,\n\n%s"
     (String.make (level * 2) ' ')
     (index + 1)
-    (string_of_block string_of_tier ~level:(level + 1) elseblock)
+    (string_of_block ~level:(level + 1) string_of_instr_tier elseblock)
 
-and string_of_elseblock_opt string_of_tier ?(level = 0) ?(index = 0)
+and string_of_elseblock_opt ?(level = 0) ?(index = 0) string_of_instr_tier
     elseblock_opt =
   match elseblock_opt with
   | None -> ""
   | Some elseblock ->
-      "\n\n" ^ string_of_elseblock string_of_tier ~level ~index elseblock
+      "\n\n" ^ string_of_elseblock ~level ~index string_of_instr_tier elseblock
 
 and string_of_iterinstr iterinstr =
   let iter, _, _ = iterinstr in
@@ -393,12 +400,13 @@ and string_of_extern_rel (externrel : externrel) =
   let relid, rel_signature, exps_match = externrel in
   string_of_relid relid ^ ": " ^ string_of_relinput rel_signature exps_match
 
-(* Group-body tier: result/return/rule-application (no GroupI reachable) *)
+(* Group-body tier *)
 
-let rec string_of_group_tier ?(short = false) ?(level = 0) ?(index = 0) tier =
+let rec string_of_instr_group ?(short = false) ?(level = 0) ?(index = 0)
+    instr_group =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
-  match tier with
+  match instr_group with
   | ResultI (_, []) ->
       let s_short = "The relation holds" in
       if short then s_short else Format.asprintf "%s%s" order s_short
@@ -417,7 +425,7 @@ let rec string_of_group_tier ?(short = false) ?(level = 0) ?(index = 0) tier =
           (string_of_iterinstrs iterinstrs)
       in
       if short then s_short else Format.asprintf "%s%s" order s_short
-  | BlockI arms ->
+  | BacktrackI arms ->
       let s_short = Format.asprintf "Block (%d arms)" (List.length arms) in
       if short then s_short
       else
@@ -425,22 +433,21 @@ let rec string_of_group_tier ?(short = false) ?(level = 0) ?(index = 0) tier =
           arms
           |> List.mapi (fun idx arm ->
                  Format.asprintf "%sArm %d:\n\n%s" indent (idx + 1)
-                   (string_of_group_block ~level:(level + 1) arm))
+                   (string_of_block_group ~level:(level + 1) arm))
           |> String.concat "\n\n"
         in
         Format.asprintf "%s%s\n\n%s" order s_short s_arms
 
-and string_of_group_block ?(level = 0) ?(index = 0) block =
-  string_of_block string_of_group_tier ~level ~index block
+and string_of_block_group ?(level = 0) ?(index = 0) block =
+  string_of_block ~level ~index string_of_instr_group block
 
-(* Dispatch tier: rule groups (body is a group block; groups never nest), or a
-   routing block whose arms are dispatch blocks *)
+(* Dispatch tier *)
 
-let rec string_of_dispatch_tier ?(short = false) ?(level = 0) ?(index = 0) tier
-    =
+let rec string_of_instr_dispatch ?(short = false) ?(level = 0) ?(index = 0)
+    instr_dispatch =
   let indent = String.make (level * 2) ' ' in
   let order = Format.asprintf "%s%d. " indent index in
-  match tier with
+  match instr_dispatch with
   | GroupI (id_group, _id_rel, rel_signature, exps_group, block) ->
       let s_short =
         Format.asprintf "Group %s: %s" (string_of_relid id_group)
@@ -449,8 +456,8 @@ let rec string_of_dispatch_tier ?(short = false) ?(level = 0) ?(index = 0) tier
       if short then s_short
       else
         Format.asprintf "%s%s\n\n%s" order s_short
-          (string_of_group_block ~level:(level + 1) block)
-  | BlockI arms ->
+          (string_of_block_group ~level:(level + 1) block)
+  | RouteI arms ->
       let s_short = Format.asprintf "Block (%d arms)" (List.length arms) in
       if short then s_short
       else
@@ -458,21 +465,21 @@ let rec string_of_dispatch_tier ?(short = false) ?(level = 0) ?(index = 0) tier
           arms
           |> List.mapi (fun idx arm ->
                  Format.asprintf "%sArm %d:\n\n%s" indent (idx + 1)
-                   (string_of_dispatch_block ~level:(level + 1) arm))
+                   (string_of_block_dispatch ~level:(level + 1) arm))
           |> String.concat "\n\n"
         in
         Format.asprintf "%s%s\n\n%s" order s_short s_arms
 
-and string_of_dispatch_block ?(level = 0) ?(index = 0) block =
-  string_of_block string_of_dispatch_tier ~level ~index block
+and string_of_block_dispatch ?(level = 0) ?(index = 0) block =
+  string_of_block ~level ~index string_of_instr_dispatch block
 
 let string_of_defined_rel (rel : rel) =
   let relid, rel_signature, exps_match, block, elseblock_opt = rel in
   string_of_relid relid ^ ": "
   ^ string_of_relinput rel_signature exps_match
   ^ "\n\n"
-  ^ string_of_dispatch_block block
-  ^ string_of_elseblock_opt string_of_dispatch_tier ~index:(List.length block)
+  ^ string_of_block_dispatch block
+  ^ string_of_elseblock_opt ~index:(List.length block) string_of_instr_dispatch
       elseblock_opt
 
 (* Functions *)
@@ -490,7 +497,7 @@ let string_of_tablerow (tablerow : tablerow) =
   Format.asprintf "\n  Row : %s -> %s:\n\n%s"
     (string_of_exps ", " exps_match)
     (string_of_exp exp_result)
-    (string_of_group_block ~level:2 instrs)
+    (string_of_block_group ~level:2 instrs)
 
 let string_of_tablerows (tablerows : tablerow list) =
   String.concat "\n" (List.map string_of_tablerow tablerows)
@@ -504,8 +511,8 @@ let string_of_defined_func (func : definedfunc) =
   let defid, tparams, params, _typ, block, elseblock_opt = func in
   string_of_defid defid ^ string_of_tparams tparams ^ string_of_params params
   ^ "\n\n"
-  ^ string_of_group_block block
-  ^ string_of_elseblock_opt string_of_group_tier ~index:(List.length block)
+  ^ string_of_block_group block
+  ^ string_of_elseblock_opt ~index:(List.length block) string_of_instr_group
       elseblock_opt
 
 (* Definitions *)

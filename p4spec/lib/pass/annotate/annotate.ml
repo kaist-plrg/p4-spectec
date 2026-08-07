@@ -330,7 +330,24 @@ let rec annotate_param (ctx : Ctx.t) (param : param) : Pl.param =
 and annotate_params (ctx : Ctx.t) (params : param list) : Pl.param list =
   List.map (annotate_param ctx) params
 
-(* Case analysis guard (tier-tier-independent) *)
+(* Holding conditions *)
+
+let annotate_holdcase_shared (ctx : Ctx.t)
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    (holdcase : holdcase) : 'instr_tier Pl.holdcase =
+  match holdcase with
+  | BothH (block_hold, block_nothold) ->
+      let block_hold_pl = annotate_block ctx block_hold in
+      let block_nothold_pl = annotate_block ctx block_nothold in
+      Pl.BothH (block_hold_pl, block_nothold_pl)
+  | HoldH (block_hold, dangle) ->
+      let block_hold_pl = annotate_block ctx block_hold in
+      Pl.HoldH (block_hold_pl, dangle)
+  | NotHoldH (block_nothold, dangle) ->
+      let block_nothold_pl = annotate_block ctx block_nothold in
+      Pl.NotHoldH (block_nothold_pl, dangle)
+
+(* Case analysis *)
 
 and annotate_guard (ctx : Ctx.t) (guard : guard) : Pl.guard =
   match guard with
@@ -344,42 +361,24 @@ and annotate_guard (ctx : Ctx.t) (guard : guard) : Pl.guard =
       let exp_pl = annotate_exp ctx exp in
       Pl.MemG exp_pl
 
-(* Shared control-flow: parametrized by a tier's block annotator + tier-of. *)
-
-let annotate_holdcase_shared (ctx : Ctx.t)
-    (annotate_block : Ctx.t -> block -> 'tier Pl.block) (holdcase : holdcase) :
-    'tier Pl.holdcase =
-  match holdcase with
-  | BothH (block_hold, block_nothold) ->
-      let block_hold_pl = annotate_block ctx block_hold in
-      let block_nothold_pl = annotate_block ctx block_nothold in
-      Pl.BothH (block_hold_pl, block_nothold_pl)
-  | HoldH (block_hold, dangle) ->
-      let block_hold_pl = annotate_block ctx block_hold in
-      Pl.HoldH (block_hold_pl, dangle)
-  | NotHoldH (block_nothold, dangle) ->
-      let block_nothold_pl = annotate_block ctx block_nothold in
-      Pl.NotHoldH (block_nothold_pl, dangle)
-
 let annotate_case_shared (ctx : Ctx.t)
-    (annotate_block : Ctx.t -> block -> 'tier Pl.block) ((guard, block) : case)
-    : 'tier Pl.case =
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    ((guard, block) : case) : 'instr_tier Pl.case =
   let guard_pl = annotate_guard ctx guard in
   let block_pl = annotate_block ctx block in
   (guard_pl, block_pl)
 
 let annotate_cases_shared (ctx : Ctx.t)
-    (annotate_block : Ctx.t -> block -> 'tier Pl.block) (cases : case list) :
-    'tier Pl.case list =
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    (cases : case list) : 'instr_tier Pl.case list =
   List.map (annotate_case_shared ctx annotate_block) cases
 
-(* Rebuilds shared control-flow, recursing sub-blocks via [annotate_block];
-   the tier-specific [Ll] leaves are delegated to [tier_of]. *)
+(* Instructions *)
 
 let annotate_instr_shared (ctx : Ctx.t)
-    (annotate_block : Ctx.t -> block -> 'tier Pl.block)
-    (tier_of : Ctx.t -> instr -> 'tier Pl.instr) (instr : instr) :
-    'tier Pl.instr =
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    (instr_tier_of : Ctx.t -> instr -> 'instr_tier Pl.instr) (instr : instr) :
+    'instr_tier Pl.instr =
   let at, note = (instr.at, { Pl.iid = instr.note.iid; fallthrough = None }) in
   match instr.it with
   | IfI (exp_cond, iterexps, block_then, dangle) ->
@@ -422,29 +421,30 @@ let annotate_instr_shared (ctx : Ctx.t)
       let node = Pl.DebugI exp_pl $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
-  | GroupI _ | RuleI _ | ResultI _ | ReturnI _ | BlockI _ -> tier_of ctx instr
+  | GroupI _ | RuleI _ | ResultI _ | ReturnI _ | BlockI _ ->
+      instr_tier_of ctx instr
 
-(* Tiered instructions and blocks: dispatch leaves are rule groups (whose body
-   switches to the group tier); group leaves are result/return/rule. *)
+(* Tiered instructions and blocks *)
 
-let rec annotate_dispatch_instr (ctx : Ctx.t) (instr_ll : instr) :
+let rec annotate_instr_dispatch (ctx : Ctx.t) (instr_ll : instr) :
     Pl.instr_dispatch Pl.instr =
-  annotate_instr_shared ctx annotate_dispatch_block dispatch_tier_of_ll instr_ll
+  annotate_instr_shared ctx annotate_block_dispatch instr_dispatch_of_ll
+    instr_ll
 
-and annotate_group_instr (ctx : Ctx.t) (instr_ll : instr) :
+and annotate_instr_group (ctx : Ctx.t) (instr_ll : instr) :
     Pl.instr_group Pl.instr =
-  annotate_instr_shared ctx annotate_group_block group_tier_of_ll instr_ll
+  annotate_instr_shared ctx annotate_block_group instr_group_of_ll instr_ll
 
-and annotate_dispatch_block (ctx : Ctx.t) (block_ll : block) : Pl.block_dispatch
+and annotate_block_dispatch (ctx : Ctx.t) (block_ll : block) : Pl.block_dispatch
     =
-  List.map (annotate_dispatch_instr ctx) block_ll
+  List.map (annotate_instr_dispatch ctx) block_ll
 
-and annotate_group_block (ctx : Ctx.t) (block_ll : block) : Pl.block_group =
-  List.map (annotate_group_instr ctx) block_ll
+and annotate_block_group (ctx : Ctx.t) (block_ll : block) : Pl.block_group =
+  List.map (annotate_instr_group ctx) block_ll
 
-(* Enforcement: dispatch bodies hold only rule groups. *)
+(* Enforcement: dispatch bodies hold only rule groups *)
 
-and dispatch_tier_of_ll (ctx : Ctx.t) (instr_ll : instr) :
+and instr_dispatch_of_ll (ctx : Ctx.t) (instr_ll : instr) :
     Pl.instr_dispatch Pl.instr =
   let at, note =
     (instr_ll.at, { Pl.iid = instr_ll.note.iid; fallthrough = None })
@@ -453,7 +453,7 @@ and dispatch_tier_of_ll (ctx : Ctx.t) (instr_ll : instr) :
   | GroupI (id_rulegroup, rel_signature, exps, block) ->
       let id_rel = Ctx.get_namespace ctx in
       let exps_pl = annotate_exps ctx exps in
-      let block_pl = annotate_group_block ctx block in
+      let block_pl = annotate_block_group ctx block in
       let node =
         Pl.TierI
           (Pl.GroupI (id_rulegroup, id_rel, rel_signature, exps_pl, block_pl))
@@ -465,15 +465,16 @@ and dispatch_tier_of_ll (ctx : Ctx.t) (instr_ll : instr) :
       validate_annot_alter at hints (List.length exps_in);
       { node; hints }
   | BlockI arms ->
-      let arms_pl = List.map (annotate_dispatch_block ctx) arms in
-      let tier : Pl.instr_dispatch = Pl.BlockI arms_pl in
-      let node = Pl.TierI tier $$ (at, note) in
+      let arms_pl = List.map (annotate_block_dispatch ctx) arms in
+      let node = Pl.TierI (Pl.RouteI arms_pl) $$ (at, note) in
       { node; hints = Annot.empty }
-  | _ -> failwith "ResultI/ReturnI/RuleI at dispatch level"
+  | _ ->
+      Error.error instr_ll.at
+        "a result, return, or rule application cannot appear at dispatch level"
 
-(* Enforcement: rule-group bodies never nest another rule group. *)
+(* Enforcement: rule-group bodies never nest another rule group *)
 
-and group_tier_of_ll (ctx : Ctx.t) (instr_ll : instr) : Pl.instr_group Pl.instr
+and instr_group_of_ll (ctx : Ctx.t) (instr_ll : instr) : Pl.instr_group Pl.instr
     =
   let at, note =
     (instr_ll.at, { Pl.iid = instr_ll.note.iid; fallthrough = None })
@@ -503,11 +504,10 @@ and group_tier_of_ll (ctx : Ctx.t) (instr_ll : instr) : Pl.instr_group Pl.instr
       let hints = Annot.empty in
       { node; hints }
   | BlockI arms ->
-      let arms_pl = List.map (annotate_group_block ctx) arms in
-      let tier : Pl.instr_group = Pl.BlockI arms_pl in
-      let node = Pl.TierI tier $$ (at, note) in
+      let arms_pl = List.map (annotate_block_group ctx) arms in
+      let node = Pl.TierI (Pl.BacktrackI arms_pl) $$ (at, note) in
       { node; hints = Annot.empty }
-  | _ -> failwith "GroupI in group body"
+  | _ -> Error.error instr_ll.at "a rule group cannot appear in a group body"
 
 (* Definitions *)
 
@@ -536,12 +536,12 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
       let ctx_rel = Ctx.enter_rel ctx id in
       let exps_pl = annotate_exps ctx_rel exps in
       let block_pl =
-        block |> Linearize.linearize_block |> annotate_dispatch_block ctx_rel
+        block |> Linearize.linearize_block |> annotate_block_dispatch ctx_rel
       in
       let elseblock_pl_opt =
         elseblock_opt
         |> Option.map Linearize.linearize_block
-        |> Option.map (annotate_dispatch_block ctx_rel)
+        |> Option.map (annotate_block_dispatch ctx_rel)
       in
       let node =
         Pl.RelD (id, rel_signature, exps_pl, block_pl, elseblock_pl_opt) $ at
@@ -568,7 +568,7 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
             let exps_pl_in = annotate_exps ctx exps_in in
             let exp_pl_out = annotate_exp ctx exp_out in
             let block_pl =
-              block |> Linearize.linearize_block |> annotate_group_block ctx
+              block |> Linearize.linearize_block |> annotate_block_group ctx
             in
             (exps_pl_in, exp_pl_out, block_pl))
           tablerows
@@ -580,12 +580,12 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
       let ctx_local = Ctx.add_tparams ctx tparams in
       let params_pl = annotate_params ctx_local params in
       let block_pl =
-        block |> Linearize.linearize_block |> annotate_group_block ctx_local
+        block |> Linearize.linearize_block |> annotate_block_group ctx_local
       in
       let elseblock_pl_opt =
         elseblock_opt
         |> Option.map Linearize.linearize_block
-        |> Option.map (annotate_group_block ctx_local)
+        |> Option.map (annotate_block_group ctx_local)
       in
       let node =
         Pl.FuncDecD (id, tparams, params_pl, typ, block_pl, elseblock_pl_opt)

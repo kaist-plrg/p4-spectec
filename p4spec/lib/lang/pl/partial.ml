@@ -50,23 +50,19 @@ and is_partial_guard (guard : guard) : bool =
   | SubG _ | MatchG _ | MemG _ -> false
   | CheckLetSubG (_, exp) | CheckLetMatchG (_, exp) -> is_partial_exp exp
 
-(* Group-body tier: partial when a rule/result/return touches a partial exp *)
-
-let is_partial_group_tier (tier : instr_group) : bool =
-  match tier with
+let is_partial_instr_group (instr_group : instr_group) : bool =
+  match instr_group with
   | RuleI (_, notexp, _, _) ->
       notexp |> Mixfix.args |> List.exists is_partial_exp
   | ResultI (_, exps) -> List.exists is_partial_exp exps
   | ReturnI exp -> is_partial_exp exp
-  | BlockI _ -> false
+  | BacktrackI _ -> false
 
-(* Dispatch tier: neither a rule group nor a routing block is itself partial *)
+let is_partial_instr_dispatch (instr_dispatch : instr_dispatch) : bool =
+  match instr_dispatch with GroupI _ | RouteI _ -> false
 
-let is_partial_dispatch_tier (tier : instr_dispatch) : bool =
-  match tier with GroupI _ | BlockI _ -> false
-
-let is_partial_instr (is_partial_tier : 'tier -> bool) (instr : 'tier instr) :
-    bool =
+let is_partial_instr (is_partial_instr_tier : 'instr_tier -> bool)
+    (instr : 'instr_tier instr) : bool =
   match instr.node.it with
   | IfI (exp_cond, _, _, _) -> is_partial_exp exp_cond
   | HoldI _ -> true
@@ -76,4 +72,4 @@ let is_partial_instr (is_partial_tier : 'tier -> bool) (instr : 'tier instr) :
   | DebugI exp -> is_partial_exp exp
   | DestructI (_, exp) -> is_partial_exp exp
   | CheckLetSubI _ | CheckLetMatchI _ | OptionGetI _ -> true
-  | TierI tier -> is_partial_tier tier
+  | TierI instr_tier -> is_partial_instr_tier instr_tier

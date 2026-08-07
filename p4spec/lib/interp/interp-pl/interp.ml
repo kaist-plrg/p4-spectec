@@ -25,6 +25,22 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   module Ctx = Ctx.Make ()
 
+  (* Tier-handler signatures *)
+
+  type 'instr_tier eval_instr_tier = Ctx.t -> 'instr_tier -> Ctx.t * Flow.t
+
+  type 'instr_tier string_of_instr_tier =
+    ?short:bool -> ?level:int -> ?index:int -> 'instr_tier -> string
+
+  (* The two threaded handlers, then whatever body the block walker consumes *)
+
+  type ('instr_tier, 'body) eval_block_fn =
+    'instr_tier eval_instr_tier ->
+    'instr_tier string_of_instr_tier ->
+    Ctx.t ->
+    'body ->
+    Ctx.t * Flow.t
+
   (* Build caches *)
 
   let func_cache = ref (CCache.create ~size:(256 * 1024))
@@ -1062,60 +1078,54 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Instruction evaluation *)
 
-  and eval_instr (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string)
-      (ctx : Ctx.t) (instr : 'tier instr) : Ctx.t * Flow.t =
-    try eval_instr' eval_tier string_of_tier ctx instr
+  and eval_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (ctx : Ctx.t)
+      (instr : 'instr_tier instr) : Ctx.t * Flow.t =
+    try eval_instr' eval_instr_tier string_of_instr_tier ctx instr
     with Backtrace backtrace ->
       backtrace
       |> back_nest instr.node.at (fun () ->
              F.asprintf "%s failed"
-               (Pl.Print.string_of_instr string_of_tier instr))
+               (Pl.Print.string_of_instr string_of_instr_tier instr))
 
-  and eval_instr' (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string)
-      (ctx : Ctx.t) (instr : 'tier instr) : Ctx.t * Flow.t =
+  and eval_instr' (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (ctx : Ctx.t)
+      (instr : 'instr_tier instr) : Ctx.t * Flow.t =
     let iid = instr.node.note.iid in
     match instr.node.it with
     | IfI (exp_cond, iterexps, block_then, dangle) ->
-        eval_if_instr eval_tier string_of_tier iid ctx exp_cond iterexps
-          block_then dangle
+        eval_if_instr eval_instr_tier string_of_instr_tier iid ctx exp_cond
+          iterexps block_then dangle
     | HoldI (id, notexp, iterexps, holdcase) ->
-        eval_hold_instr eval_tier string_of_tier iid ctx id notexp iterexps
-          holdcase
+        eval_hold_instr eval_instr_tier string_of_instr_tier iid ctx id notexp
+          iterexps holdcase
     | CaseI (exp, cases, dangle) ->
-        eval_case_instr eval_tier string_of_tier iid ctx exp cases dangle
+        eval_case_instr eval_instr_tier string_of_instr_tier iid ctx exp cases
+          dangle
     | LetI (exp_l, exp_r, iterinstrs) ->
         eval_let_instr ctx exp_l exp_r iterinstrs
     | DebugI exp -> eval_debug_instr ctx exp
     | DestructI (fields, exp) -> eval_destruct_instr ctx fields exp
     | CheckLetSubI (typ_target, exp_l, exp_r, instr_then) ->
-        eval_check_let_sub_instr eval_tier string_of_tier ctx typ_target exp_l
-          exp_r instr_then
+        eval_check_let_sub_instr eval_instr_tier string_of_instr_tier ctx
+          typ_target exp_l exp_r instr_then
     | CheckLetMatchI (pattern, exp_l, exp_r, instr_then) ->
-        eval_check_let_match_instr eval_tier string_of_tier ctx pattern exp_l
-          exp_r instr_then
+        eval_check_let_match_instr eval_instr_tier string_of_instr_tier ctx
+          pattern exp_l exp_r instr_then
     | OptionGetI (exp_l, exp_r, block) ->
-        eval_option_get_instr eval_tier string_of_tier ctx exp_l exp_r block
-    | TierI tier -> eval_tier ctx tier
+        eval_option_get_instr eval_instr_tier string_of_instr_tier ctx exp_l
+          exp_r block
+    | TierI instr_tier -> eval_instr_tier ctx instr_tier
 
-  and eval_block :
-        'tier.
-        (Ctx.t -> 'tier -> Ctx.t * Flow.t) ->
-        (?short:bool -> ?level:int -> ?index:int -> 'tier -> string) ->
-        Ctx.t ->
-        'tier block ->
-        Ctx.t * Flow.t =
-   fun eval_tier string_of_tier ctx block ->
+  and eval_block : 'instr_tier. ('instr_tier, 'instr_tier block) eval_block_fn =
+   fun eval_instr_tier string_of_instr_tier ctx block ->
     let _, flow =
       List.fold_left
         (fun (ctx, flow) instr ->
           match flow with
           | Flow.Cont traces_pre -> (
               let ctx_post, flow_post =
-                eval_instr eval_tier string_of_tier ctx instr
+                eval_instr eval_instr_tier string_of_instr_tier ctx instr
               in
               match flow_post with
               (* Retain the deeper trace chain so an exhausted
@@ -1134,22 +1144,12 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (ctx, flow)
 
   and eval_elseblock_opt :
-        'tier.
-        (Ctx.t -> 'tier -> Ctx.t * Flow.t) ->
-        (?short:bool -> ?level:int -> ?index:int -> 'tier -> string) ->
-        Ctx.t ->
-        Flow.t ->
-        'tier block option ->
-        Ctx.t * Flow.t =
-   fun eval_tier string_of_tier ctx flow elseblock_opt ->
-    match flow with
-    | Flow.Cont traces -> (
-        match elseblock_opt with
-        | Some block_else -> eval_block eval_tier string_of_tier ctx block_else
-        | None ->
-            let flow = Flow.Cont traces in
-            (ctx, flow))
-    | _ -> (ctx, flow)
+        'instr_tier. ('instr_tier, 'instr_tier block option) eval_block_fn =
+   fun eval_instr_tier string_of_instr_tier ctx elseblock_opt ->
+    match elseblock_opt with
+    | Some block_else ->
+        eval_block eval_instr_tier string_of_instr_tier ctx block_else
+    | None -> (ctx, Flow.Cont [])
 
   (* If instruction evaluation *)
 
@@ -1224,16 +1224,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let iterexps = List.rev iterexps in
     eval_if_cond_iter' ctx exp_cond iterexps
 
-  and eval_if_instr (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string) (iid : iid)
+  and eval_if_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (iid : iid)
       (ctx : Ctx.t) (exp_cond : exp) (iterexps : iterexp list)
-      (block_then : 'tier block) (dangle : dangle) : Ctx.t * Flow.t =
+      (block_then : 'instr_tier block) (dangle : dangle) : Ctx.t * Flow.t =
     (* Evaluate the if condition and mark dangle *)
     let cond, value_cond = eval_if_cond_iter ctx exp_cond iterexps in
     if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
     (* Evaluate the then branch if the condition holds *)
-    if cond then eval_block eval_tier string_of_tier ctx block_then
+    if cond then eval_block eval_instr_tier string_of_instr_tier ctx block_then
     else
       let trace =
         ( exp_cond.node.at,
@@ -1333,11 +1332,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let iterexps = List.rev iterexps in
     eval_hold_cond_iter' ctx id notexp iterexps
 
-  and eval_hold_instr (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string) (iid : iid)
+  and eval_hold_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (iid : iid)
       (ctx : Ctx.t) (id : id) (notexp : notexp) (iterexps : iterexp list)
-      (holdcase : 'tier holdcase) : Ctx.t * Flow.t =
+      (holdcase : 'instr_tier holdcase) : Ctx.t * Flow.t =
     (* Backup in case of failure *)
     Hook.backup ();
     (* Evaluate the hold condition *)
@@ -1346,13 +1344,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
        if the expected behavior is the relation not holding *)
     match holdcase with
     | BothH (block_hold, block_not_hold) ->
-        if cond then eval_block eval_tier string_of_tier ctx block_hold
+        if cond then
+          eval_block eval_instr_tier string_of_instr_tier ctx block_hold
         else (
           Hook.restore ();
-          eval_block eval_tier string_of_tier ctx block_not_hold)
+          eval_block eval_instr_tier string_of_instr_tier ctx block_not_hold)
     | HoldH (block_hold, dangle) ->
         if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
-        if cond then eval_block eval_tier string_of_tier ctx block_hold
+        if cond then
+          eval_block eval_instr_tier string_of_instr_tier ctx block_hold
         else
           let trace =
             (id.at, fun () -> F.asprintf "condition hold %s was not met" id.it)
@@ -1361,7 +1361,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
-        if not cond then eval_block eval_tier string_of_tier ctx block_not_hold
+        if not cond then
+          eval_block eval_instr_tier string_of_instr_tier ctx block_not_hold
         else
           let trace =
             ( id.at,
@@ -1371,8 +1372,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Case analysis instruction evaluation *)
 
-  and eval_cases (ctx : Ctx.t) (exp : exp) (cases : 'tier case list) :
-      (Ctx.t * 'tier block) option * value =
+  and eval_cases (ctx : Ctx.t) (exp : exp) (cases : 'instr_tier case list) :
+      (Ctx.t * 'instr_tier block) option * value =
     let value_exp = eval_exp ctx exp in
     let id_tmp = "~case" $ no_region in
     let ctx = Ctx.add_value ctx (id_tmp, []) value_exp in
@@ -1423,11 +1424,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     Hook.on_value value_cond;
     (block_match, value_cond)
 
-  and eval_case_instr (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string) (iid : iid)
-      (ctx : Ctx.t) (exp : exp) (cases : 'tier case list) (dangle : dangle) :
-      Ctx.t * Flow.t =
+  and eval_case_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (iid : iid)
+      (ctx : Ctx.t) (exp : exp) (cases : 'instr_tier case list)
+      (dangle : dangle) : Ctx.t * Flow.t =
     (* Evaluate the matching case and mark dangle *)
     let block_opt, value_cond = eval_cases ctx exp cases in
     (if dangle then
@@ -1435,7 +1435,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
        Hook.on_instr_dangling (not matched) iid value_cond);
     (* Evaluate the matching case if any *)
     match block_opt with
-    | Some (ctx, block) -> eval_block eval_tier string_of_tier ctx block
+    | Some (ctx, block) ->
+        eval_block eval_instr_tier string_of_instr_tier ctx block
     | None ->
         let trace =
           ( exp.node.at,
@@ -1448,20 +1449,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Backtracking-block instruction evaluation *)
 
   and eval_block_deterministic :
-        'tier.
-        (Ctx.t -> 'tier -> Ctx.t * Flow.t) ->
-        (?short:bool -> ?level:int -> ?index:int -> 'tier -> string) ->
-        Ctx.t ->
-        'tier arm list ->
-        Ctx.t * Flow.t =
-   fun eval_tier string_of_tier ctx arms ->
+        'instr_tier. ('instr_tier, 'instr_tier arm list) eval_block_fn =
+   fun eval_instr_tier string_of_instr_tier ctx arms ->
     let eval_arm_deterministic (ctx_pre : Ctx.t) (flow_pre : Flow.t)
-        (arm : 'tier arm) : Ctx.t * Flow.t =
+        (arm : 'instr_tier arm) : Ctx.t * Flow.t =
       let at = match arm with instr :: _ -> instr.node.at | [] -> no_region in
       let open Flow in
       try
         let ctx_post, flow_post =
-          eval_block eval_tier string_of_tier ctx_pre arm
+          eval_block eval_instr_tier string_of_instr_tier ctx_pre arm
         in
         match flow_pre with
         | Cont traces_pre -> (
@@ -1503,19 +1499,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     with Nondet at -> back_err at "nondeterministic instruction evaluation"
 
   and eval_block_sequential :
-        'tier.
-        (Ctx.t -> 'tier -> Ctx.t * Flow.t) ->
-        (?short:bool -> ?level:int -> ?index:int -> 'tier -> string) ->
-        Ctx.t ->
-        'tier arm list ->
-        Ctx.t * Flow.t =
-   fun eval_tier string_of_tier ctx arms ->
+        'instr_tier. ('instr_tier, 'instr_tier arm list) eval_block_fn =
+   fun eval_instr_tier string_of_instr_tier ctx arms ->
     let _, flow =
       List.fold_left
         (fun (ctx, flow) arm ->
           match flow with
           | Flow.Cont traces -> (
-              try eval_block eval_tier string_of_tier ctx arm
+              try eval_block eval_instr_tier string_of_instr_tier ctx arm
               with Backtrace (Unmatch traces_post) ->
                 (* Retain the deeper trace chain, to report
                    the arm that progressed furthest *)
@@ -1532,16 +1523,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (ctx, flow)
 
   and eval_block_instr :
-        'tier.
-        (Ctx.t -> 'tier -> Ctx.t * Flow.t) ->
-        (?short:bool -> ?level:int -> ?index:int -> 'tier -> string) ->
-        Ctx.t ->
-        'tier arm list ->
-        Ctx.t * Flow.t =
-   fun eval_tier string_of_tier ctx arms ->
+        'instr_tier. ('instr_tier, 'instr_tier arm list) eval_block_fn =
+   fun eval_instr_tier string_of_instr_tier ctx arms ->
     if !Ctx.is_det then
-      eval_block_deterministic eval_tier string_of_tier ctx arms
-    else eval_block_sequential eval_tier string_of_tier ctx arms
+      eval_block_deterministic eval_instr_tier string_of_instr_tier ctx arms
+    else eval_block_sequential eval_instr_tier string_of_instr_tier ctx arms
 
   (* Let instruction evaluation *)
 
@@ -1860,11 +1846,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Check-let on sub instruction evaluation *)
 
-  and eval_check_let_sub_instr (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string)
-      (ctx : Ctx.t) (typ_target : typ) (exp_l : exp) (exp_r : exp)
-      (block_inner : 'tier block) : Ctx.t * Flow.t =
+  and eval_check_let_sub_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (ctx : Ctx.t)
+      (typ_target : typ) (exp_l : exp) (exp_r : exp)
+      (block_inner : 'instr_tier block) : Ctx.t * Flow.t =
     let value = eval_exp ctx exp_r in
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
@@ -1880,7 +1865,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         with Backtrace (Err _) -> None
       in
       match ctx_opt with
-      | Some ctx -> eval_block eval_tier string_of_tier ctx block_inner
+      | Some ctx ->
+          eval_block eval_instr_tier string_of_instr_tier ctx block_inner
       | None ->
           let trace =
             ( exp_r.node.at,
@@ -1900,11 +1886,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Check-let on match instruction evaluation *)
 
-  and eval_check_let_match_instr (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string)
-      (ctx : Ctx.t) (pattern : pattern) (exp_l : exp) (exp_r : exp)
-      (block_inner : 'tier block) : Ctx.t * Flow.t =
+  and eval_check_let_match_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (ctx : Ctx.t)
+      (pattern : pattern) (exp_l : exp) (exp_r : exp)
+      (block_inner : 'instr_tier block) : Ctx.t * Flow.t =
     let value = eval_exp ctx exp_r in
     let matches =
       match (pattern, value.it) with
@@ -1921,7 +1906,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     in
     if matches then
       let ctx = assign_exp ctx exp_l value in
-      eval_block eval_tier string_of_tier ctx block_inner
+      eval_block eval_instr_tier string_of_instr_tier ctx block_inner
     else
       let trace =
         ( exp_r.node.at,
@@ -1933,16 +1918,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Option-get instruction evaluation *)
 
-  and eval_option_get_instr (eval_tier : Ctx.t -> 'tier -> Ctx.t * Flow.t)
-      (string_of_tier :
-        ?short:bool -> ?level:int -> ?index:int -> 'tier -> string)
-      (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) (block : 'tier block) :
-      Ctx.t * Flow.t =
+  and eval_option_get_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
+      (string_of_instr_tier : 'instr_tier string_of_instr_tier) (ctx : Ctx.t)
+      (exp_l : exp) (exp_r : exp) (block : 'instr_tier block) : Ctx.t * Flow.t =
     let value = eval_exp ctx exp_r in
     match value.it with
     | OptV (Some value_inner) ->
         let ctx = assign_exp ctx exp_l value_inner in
-        eval_block eval_tier string_of_tier ctx block
+        eval_block eval_instr_tier string_of_instr_tier ctx block
     | _ ->
         let trace =
           ( exp_r.node.at,
@@ -1954,30 +1937,32 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Tier-specific instruction evaluation *)
 
-  and eval_dispatch_tier (ctx : Ctx.t) (tier : instr_dispatch) : Ctx.t * Flow.t
-      =
-    match tier with
-    | GroupI (_id_group, _id_rel, _rel_signature, _exps_group, block) ->
-        eval_group_block ctx block
-    | BlockI arms ->
-        eval_block_instr eval_dispatch_tier Pl.Print.string_of_dispatch_tier ctx
-          arms
-
-  and eval_dispatch_block (ctx : Ctx.t) (block : block_dispatch) :
+  and eval_instr_dispatch (ctx : Ctx.t) (instr_dispatch : instr_dispatch) :
       Ctx.t * Flow.t =
-    eval_block eval_dispatch_tier Pl.Print.string_of_dispatch_tier ctx block
+    match instr_dispatch with
+    | GroupI (_id_group, _id_rel, _rel_signature, _exps_group, block) ->
+        eval_block_group ctx block
+    | RouteI arms ->
+        eval_block_instr eval_instr_dispatch Pl.Print.string_of_instr_dispatch
+          ctx arms
 
-  and eval_group_tier (ctx : Ctx.t) (tier : instr_group) : Ctx.t * Flow.t =
-    match tier with
+  and eval_block_dispatch (ctx : Ctx.t) (block : block_dispatch) :
+      Ctx.t * Flow.t =
+    eval_block eval_instr_dispatch Pl.Print.string_of_instr_dispatch ctx block
+
+  and eval_instr_group (ctx : Ctx.t) (instr_group : instr_group) :
+      Ctx.t * Flow.t =
+    match instr_group with
     | ResultI (rel_signature, exps) -> eval_result_instr ctx rel_signature exps
     | ReturnI exp -> eval_return_instr ctx exp
     | RuleI (id, notexp, inputs, iterinstrs) ->
         eval_rule_instr ctx id notexp inputs iterinstrs
-    | BlockI arms ->
-        eval_block_instr eval_group_tier Pl.Print.string_of_group_tier ctx arms
+    | BacktrackI arms ->
+        eval_block_instr eval_instr_group Pl.Print.string_of_instr_group ctx
+          arms
 
-  and eval_group_block (ctx : Ctx.t) (block : block_group) : Ctx.t * Flow.t =
-    eval_block eval_group_tier Pl.Print.string_of_group_tier ctx block
+  and eval_block_group (ctx : Ctx.t) (block : block_group) : Ctx.t * Flow.t =
+    eval_block eval_instr_group Pl.Print.string_of_instr_group ctx block
 
   (* Invoke a relation *)
 
@@ -2052,13 +2037,16 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let ctx_local = assign_exps ctx_local exps_input values_input in
     let flow =
       try
-        let _, flow = eval_dispatch_block ctx_local block in
+        let _, flow = eval_block_dispatch ctx_local block in
         flow
       with Backtrace (Unmatch traces) -> Flow.Cont traces
     in
     let _, flow =
-      eval_elseblock_opt eval_dispatch_tier Pl.Print.string_of_dispatch_tier
-        ctx_local flow elseblock_opt
+      match (flow, elseblock_opt) with
+      | Flow.Cont _, Some _ ->
+          eval_elseblock_opt eval_instr_dispatch
+            Pl.Print.string_of_instr_dispatch ctx_local elseblock_opt
+      | _ -> (ctx_local, flow)
     in
     match flow with
     | Res values_output ->
@@ -2202,7 +2190,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let ctx_local = Ctx.localize_func ctx id values_input TDEnv.empty in
     let ctx_local = assign_params ctx ctx_local params values_input in
     let block = List.concat_map (fun (_, _, block) -> block) tablerows in
-    let _, flow = eval_group_block ctx_local block in
+    let _, flow = eval_block_group ctx_local block in
     match flow with
     | Ret value_output ->
         List.iteri
@@ -2231,13 +2219,16 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let ctx_local = assign_params ctx ctx_local params values_input in
     let flow =
       try
-        let _, flow = eval_group_block ctx_local block in
+        let _, flow = eval_block_group ctx_local block in
         flow
       with Backtrace (Unmatch traces) -> Flow.Cont traces
     in
     let _, flow =
-      eval_elseblock_opt eval_group_tier Pl.Print.string_of_group_tier ctx_local
-        flow elseblock_opt
+      match (flow, elseblock_opt) with
+      | Flow.Cont _, Some _ ->
+          eval_elseblock_opt eval_instr_group Pl.Print.string_of_instr_group
+            ctx_local elseblock_opt
+      | _ -> (ctx_local, flow)
     in
     match flow with
     | Ret value_output ->

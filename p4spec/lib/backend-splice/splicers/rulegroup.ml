@@ -65,19 +65,16 @@ end
 (* Prose splicer *)
 
 module Prose = struct
-  type prose = Pl.Annot.hints * Pl.instr_dispatch
+  type prose = Pl.Group.t
 
   module Value = struct
     type t = prose
 
     let render (values : t list) : string =
       values
-      |> List.map (fun ((hints, group) : t) ->
-             match group with
-             | GroupI (id_rulegroup, id_rel, rel_signature, exps, block) ->
-                 Pl.Render.render_rulegroup hints id_rulegroup id_rel
-                   rel_signature exps block
-             | BlockI _ -> assert false)
+      |> List.map (fun (group : t) ->
+             Pl.Render.render_rulegroup group.hints group.id_rulegroup
+               group.id_rel group.rel_signature group.exps group.body)
       |> String.concat "\n\n"
   end
 
@@ -88,12 +85,9 @@ module Prose = struct
     let init_def (def : Pl.def) : (key * value) list =
       match def.node.it with
       | RelD (id_rel, _, _, block, _) ->
-          block |> Pl.Collect.collect_groups
-          |> List.filter_map (fun ((_, group) as pair : value) ->
-                 match group with
-                 | GroupI (id_rulegroup, _, _, _, _) ->
-                     Some ((id_rel.it, id_rulegroup.it), pair)
-                 | BlockI _ -> None)
+          block |> Pl.Group.collect_groups
+          |> List.map (fun (group : Pl.Group.t) ->
+                 ((id_rel.it, group.id_rulegroup.it), group))
       | _ -> []
 
     let init (_spec_el : El.spec) (spec_pl : Pl.spec) : (key * value) list =
