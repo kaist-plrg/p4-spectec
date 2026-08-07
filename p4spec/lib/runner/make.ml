@@ -115,6 +115,13 @@ module Make_rec
     | Empty -> assert false);
     Extern.init_mode !mode
 
+  let init_extern ?(cache = true) ?(det = false) ?(guard = false)
+      (_spec_extern : spec) : unit =
+    ignore cache;
+    ignore det;
+    ignore guard;
+    ()
+
   (* Cache management *)
 
   let clear () : unit =
@@ -235,6 +242,10 @@ module Make_nonrec
         Interp_PL.init ~cache ~det ~guard spec_pl
     | Empty -> assert false);
     Extern.init_mode !mode
+
+  let init_extern ?(cache = true) ?(det = false) ?(guard = false)
+      (spec_extern : spec) : unit =
+    Extern.init ~cache ~det ~guard spec_extern
 
   (* Cache management *)
 

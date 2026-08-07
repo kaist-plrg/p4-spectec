@@ -72,9 +72,13 @@ module type EXTERN = sig
   val seff : int -> int -> bool
   val clear : unit -> unit
 
-  (* Mode initialization for interp-extern knot *)
+  (* Mode initialization *)
 
   val init_mode : mode -> unit
+
+  (* Initialization for interp-extern knot *)
+
+  val init : cache:bool -> det:bool -> guard:bool -> spec -> unit
 end
 
 (* SpecTec interperter(s) *)
@@ -127,6 +131,7 @@ module type RUNNER = sig
   (* Initialization *)
 
   val init : ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> unit
+  val init_extern : ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> unit
 
   (* Clear the state *)
 

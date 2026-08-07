@@ -72,6 +72,11 @@ module Make
       Spec_.Rel.register call_rel;
       Spec_.Pgm.register call_pgm
 
+    let init ~cache ~det ~guard (_ : spec) : unit =
+      ignore cache;
+      ignore det;
+      ignore guard
+
     let checkpoint () : int = 0
     let seff (before : int) (after : int) : bool = before <> after
     let clear () = ()

@@ -34,9 +34,38 @@ end
 
 module Make_null
     (Interface_SpecTec : INTERFACE_SPECTEC)
-    (Interp_AL : Run.INTERP_AL)
-    (Interp_SL : Run.INTERP_SL)
-    (Interp_PL : Run.INTERP_PL) : Run.EXTERN = struct
+    (MakeInterp_AL : functor
+      (Interface : Run.INTERFACE)
+      (Extern : Run.EXTERN)
+      ()
+      -> Run.INTERP_AL)
+    (MakeInterp_SL : functor
+      (Interface : Run.INTERFACE)
+      (Extern : Run.EXTERN)
+      ()
+      -> Run.INTERP_SL)
+    (MakeInterp_PL : functor
+      (Interface : Run.INTERFACE)
+      (Extern : Run.EXTERN)
+      ()
+      -> Run.INTERP_PL)
+    () : Run.EXTERN = struct
+  (* Recursive instantiations *)
+
+  module rec Extern : Run.EXTERN = Runtime.Dynamic_Runner.Extern_Empty
+
+  and Interp_AL : Run.INTERP_AL = struct
+    include MakeInterp_AL (Interface_SpecTec) (Extern) ()
+  end
+
+  and Interp_SL : Run.INTERP_SL = struct
+    include MakeInterp_SL (Interface_SpecTec) (Extern) ()
+  end
+
+  and Interp_PL : Run.INTERP_PL = struct
+    include MakeInterp_PL (Interface_SpecTec) (Extern) ()
+  end
+
   (* Mode initialization *)
 
   let call_func = ref (fun _ _ _ -> assert false)
@@ -54,6 +83,19 @@ module Make_null
     in
     call_func := call_func_;
     ()
+
+  let init ~cache ~det ~guard (spec_ : Run.spec) : unit =
+    match spec_ with
+    | AL spec_al ->
+        init_mode AL_mode;
+        Interp_AL.init ~cache ~det ~guard spec_al
+    | SL spec_sl ->
+        init_mode SL_mode;
+        Interp_SL.init ~cache ~det ~guard spec_sl
+    | PL spec_pl ->
+        init_mode PL_mode;
+        Interp_PL.init ~cache ~det ~guard spec_pl
+    | Empty -> assert false
 
   (* Threading extern calls to the interpreter *)
 
@@ -126,6 +168,11 @@ module Make_parametric
   (* Mode initialization *)
 
   let init_mode _ = ()
+
+  let init ~cache ~det ~guard (_ : Run.spec) : unit =
+    ignore cache;
+    ignore det;
+    ignore guard
 
   (* Caches
    * an interface cache for storing results of booting and unbooting values, types, and mixops *)
