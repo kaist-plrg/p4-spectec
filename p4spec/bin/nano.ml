@@ -21,6 +21,24 @@ let elab_command =
        | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
        | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
 
+let algo_command =
+  Core.Command.basic ~summary:"check algorithmic property of a nano-P4 spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec =
+       anon (non_empty_sequence_as_list ("path" %: string))
+     in
+     fun () ->
+       try
+         let spec_al = Pass.algo paths_spec in
+         Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
+         ()
+       with
+       | CommandError msg -> Format.printf "%s\n" msg
+       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
+       | AlgoError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+
 let check_command =
   Core.Command.basic ~summary:"typecheck a nano-P4 program against the spec"
     (let open Core.Command.Let_syntax in
@@ -42,7 +60,7 @@ let check_command =
            |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
          ]
          ~if_nothing_chosen:(Default_to None)
-     and mode =
+     and _mode =
        Command.Param.choose_one
          [
            flag "il" no_arg ~doc:"run AL interpreter"
@@ -131,7 +149,7 @@ let eval_command =
            |> map ~f:(fun b -> Core.Option.some_if b (Some Inst.Trace.Full));
          ]
          ~if_nothing_chosen:(Default_to None)
-     and mode =
+     and _mode =
        Command.Param.choose_one
          [
            flag "al" no_arg ~doc:"run AL interpreter"
@@ -308,6 +326,7 @@ let command =
     ~summary:"nano-p4spectec: a language design framework for nano-P4"
     [
       ("elab", elab_command);
+      ("algo", algo_command);
       ("check", check_command);
       ("parse", parse_command);
       ("eval", eval_command);
