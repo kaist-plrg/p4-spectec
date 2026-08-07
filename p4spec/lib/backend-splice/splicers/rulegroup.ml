@@ -65,19 +65,19 @@ end
 (* Prose splicer *)
 
 module Prose = struct
-  type prose = Pl.instr
+  type prose = Pl.Annot.hints * Pl.instr_dispatch
 
   module Value = struct
     type t = prose
 
     let render (values : t list) : string =
       values
-      |> List.map (fun (instr : t) ->
-             match instr.node.it with
+      |> List.map (fun ((hints, group) : t) ->
+             match group with
              | GroupI (id_rulegroup, id_rel, rel_signature, exps, block) ->
-                 Pl.Render.render_rulegroup instr.hints id_rulegroup id_rel
+                 Pl.Render.render_rulegroup hints id_rulegroup id_rel
                    rel_signature exps block
-             | _ -> assert false)
+             | BlockI _ -> assert false)
       |> String.concat "\n\n"
   end
 
@@ -85,37 +85,15 @@ module Prose = struct
     type key = Key.t
     type value = Value.t
 
-    let rec collect_instr (instr : Pl.instr) : Pl.instr list =
-      match instr.node.it with
-      | IfI (_, _, block_then, _) -> collect_block block_then
-      | HoldI (_, _, _, holdcase) -> (
-          match holdcase with
-          | BothH (block_hold, block_nothold) ->
-              collect_block block_hold @ collect_block block_nothold
-          | HoldH (block_hold, _) -> collect_block block_hold
-          | NotHoldH (block_nothold, _) -> collect_block block_nothold)
-      | CaseI (_, cases, _) ->
-          cases |> List.concat_map (fun (_, block) -> collect_block block)
-      | GroupI _ -> [ instr ]
-      | BlockI arms -> arms |> List.concat_map collect_block
-      | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
-      | CheckLetSubI (_, _, _, block_then)
-      | CheckLetMatchI (_, _, _, block_then)
-      | OptionGetI (_, _, block_then) ->
-          collect_block block_then
-
-    and collect_block (block : Pl.block) : Pl.instr list =
-      block |> List.concat_map collect_instr
-
     let init_def (def : Pl.def) : (key * value) list =
       match def.node.it with
       | RelD (id_rel, _, _, block, _) ->
-          block |> collect_block
-          |> List.filter_map (fun (instr : Pl.instr) ->
-                 match instr.node.it with
+          block |> Pl.Collect.collect_groups
+          |> List.filter_map (fun ((_, group) as pair : value) ->
+                 match group with
                  | GroupI (id_rulegroup, _, _, _, _) ->
-                     Some ((id_rel.it, id_rulegroup.it), instr)
-                 | _ -> None)
+                     Some ((id_rel.it, id_rulegroup.it), pair)
+                 | BlockI _ -> None)
       | _ -> []
 
     let init (_spec_el : El.spec) (spec_pl : Pl.spec) : (key * value) list =
