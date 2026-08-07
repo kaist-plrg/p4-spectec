@@ -1,6 +1,6 @@
 ;; Elaboration, structuring, and annotate tests for specification language
 
-(test
+(executable
  (name test)
  (preprocess
   (pps ppx_let))
@@ -12,16 +12,7 @@
   core_kernel
   core_unix
   core_unix.command_unix)
- (action
-  (progn
-   (ignore-outputs
-    (diff elab.expected elab.actual))
-   (ignore-outputs
-    (diff algo.expected algo.actual))
-   (ignore-outputs
-    (diff struct.expected struct.actual))
-   (ignore-outputs
-    (diff annotate.expected annotate.actual)))))
+)
 
 (rule
  (alias speclang)
