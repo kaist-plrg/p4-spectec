@@ -33,7 +33,7 @@ module Source = struct
              let def =
                El.RuleGroupD (id_rel, id_rulegroup, rules) $ no_region
              in
-             El.Print.string_of_def def)
+             El.Render.render_def def)
       |> String.concat "\n\n"
   end
 
