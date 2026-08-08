@@ -3,126 +3,21 @@ open Xl
 open Ast
 open Util.Source
 
-(* Groups choose layouts independently. [fits] includes pending commands on the
-   current line so an earlier group cannot hide later text *)
-module Doc = struct
-  type t =
-    | Empty
-    | Text of string
-    | Break of string
-    | Line
-    | Cat of t * t
-    | Nest of int * t
-    | Group of t
-
-  type mode = Flat | Broken
-  type command = int * mode * t
-
-  let empty = Empty
-  let text s = if s = "" then Empty else Text s
-  let break s = Break s
-  let line = Line
-  let nest indent doc = if indent = 0 then doc else Nest (indent, doc)
-  let group doc = Group doc
-
-  let ( ^^ ) doc_l doc_r =
-    match (doc_l, doc_r) with
-    | Empty, doc | doc, Empty -> doc
-    | _ -> Cat (doc_l, doc_r)
-
-  let concat docs = List.fold_left ( ^^ ) empty docs
-
-  let rec join sep = function
-    | [] -> empty
-    | [ doc ] -> doc
-    | doc_h :: docs_t -> doc_h ^^ sep ^^ join sep docs_t
-
-  let flow = function
-    | [] -> empty
-    | doc_h :: docs_t ->
-        List.fold_left
-          (fun doc_l doc_r -> doc_l ^^ group (break " " ^^ doc_r))
-          doc_h docs_t
-
-  let rec fits width_remaining commands =
-    if width_remaining < 0 then false
-    else
-      match commands with
-      | [] -> true
-      | (indent, mode, doc) :: commands_t -> (
-          match doc with
-          | Empty -> fits width_remaining commands_t
-          | Text s -> fits (width_remaining - String.length s) commands_t
-          | Break s -> (
-              match mode with
-              | Flat -> fits (width_remaining - String.length s) commands_t
-              | Broken -> true)
-          | Line -> true
-          | Cat (doc_l, doc_r) ->
-              fits width_remaining
-                ((indent, mode, doc_l) :: (indent, mode, doc_r) :: commands_t)
-          | Nest (offset, doc) ->
-              fits width_remaining ((indent + offset, mode, doc) :: commands_t)
-          | Group doc -> (
-              match mode with
-              | Flat -> fits width_remaining ((indent, Flat, doc) :: commands_t)
-              | Broken ->
-                  fits width_remaining ((indent, Broken, doc) :: commands_t)))
-
-  let render ~width doc =
-    if width <= 0 then invalid_arg "Doc.render: width must be positive";
-    let buf = Buffer.create 256 in
-    let append_newline indent =
-      Buffer.add_char buf '\n';
-      Buffer.add_string buf (String.make indent ' ')
-    in
-    let rec render_commands column = function
-      | [] -> ()
-      | (indent, mode, doc) :: commands_t -> (
-          match doc with
-          | Empty -> render_commands column commands_t
-          | Text s ->
-              Buffer.add_string buf s;
-              render_commands (column + String.length s) commands_t
-          | Break s -> (
-              match mode with
-              | Flat ->
-                  Buffer.add_string buf s;
-                  render_commands (column + String.length s) commands_t
-              | Broken ->
-                  append_newline indent;
-                  render_commands indent commands_t)
-          | Line ->
-              append_newline indent;
-              render_commands indent commands_t
-          | Cat (doc_l, doc_r) ->
-              render_commands column
-                ((indent, mode, doc_l) :: (indent, mode, doc_r) :: commands_t)
-          | Nest (offset, doc) ->
-              render_commands column ((indent + offset, mode, doc) :: commands_t)
-          | Group doc ->
-              let mode =
-                match mode with
-                | Flat -> Flat
-                | Broken ->
-                    if fits (width - column) ((indent, Flat, doc) :: commands_t)
-                    then Flat
-                    else Broken
-              in
-              render_commands column ((indent, mode, doc) :: commands_t))
-    in
-    render_commands 0 [ (0, Broken, doc) ];
-    Buffer.contents buf
-end
-
-let ( ^^ ) = Doc.( ^^ )
-
 type atom_mode = SourceAtom | DisplayAtom
 
+(* Documents *)
+
+let ( ^^ ) = Doc.( ^^ )
 let width = 80
 let text = Doc.text
 let space = text " "
+
+(* Iterators *)
+
 let doc_of_iter = function Opt -> text "?" | List -> text "*"
+
+(* Identifiers *)
+
 let doc_of_varid id_var = text id_var.it
 let doc_of_typid id_typ = text id_typ.it
 let doc_of_relid id_rel = text id_rel.it
@@ -132,6 +27,8 @@ let doc_of_tparam id_tparam = text id_tparam.it
 let doc_of_rule_suffix id_suffix =
   if id_suffix.it = "" then Doc.empty else text ("/" ^ id_suffix.it)
 
+(* Atoms *)
+
 let doc_of_atom atom_mode atom =
   let s =
     match atom_mode with
@@ -139,6 +36,8 @@ let doc_of_atom atom_mode atom =
     | DisplayAtom -> Atom.render_atom atom.it
   in
   text s
+
+(* Lists *)
 
 let doc_of_comma_list ~indent s_open s_close doc_of_item items =
   match items with
@@ -158,6 +57,8 @@ let doc_of_optional_comma_list ~indent s_open s_close doc_of_item items =
   | [] -> Doc.empty
   | _ -> doc_of_comma_list ~indent s_open s_close doc_of_item items
 
+(* Operators *)
+
 let doc_of_bracket atom_mode doc atom_l atom_r =
   Doc.group
     (doc_of_atom atom_mode atom_l
@@ -167,6 +68,20 @@ let doc_of_bracket atom_mode doc atom_l atom_r =
 
 let doc_of_infix doc_l op doc_r =
   Doc.group (doc_l ^^ Doc.nest 4 (Doc.break " " ^^ text op ^^ space ^^ doc_r))
+
+let doc_of_unop = function
+  | #Bool.unop as op -> text (Bool.string_of_unop op)
+  | #Num.unop as op -> text (Num.string_of_unop op)
+
+let string_of_binop = function
+  | #Bool.binop as op -> Bool.string_of_binop op
+  | #Num.binop as op -> Num.string_of_binop op
+
+let string_of_cmpop = function
+  | #Bool.cmpop as op -> Bool.string_of_cmpop op
+  | #Num.cmpop as op -> Num.string_of_cmpop op
+
+(* Types *)
 
 let rec doc_of_typ atom_mode = function
   | PlainT plaintyp -> doc_of_plaintyp atom_mode plaintyp
@@ -239,17 +154,7 @@ let doc_of_deftyp atom_mode deftyp =
                 typcases_t)
         ^^ Doc.line ^^ text ";")
 
-let doc_of_unop = function
-  | #Bool.unop as op -> text (Bool.string_of_unop op)
-  | #Num.unop as op -> text (Num.string_of_unop op)
-
-let string_of_binop = function
-  | #Bool.binop as op -> Bool.string_of_binop op
-  | #Num.binop as op -> Num.string_of_binop op
-
-let string_of_cmpop = function
-  | #Bool.cmpop as op -> Bool.string_of_cmpop op
-  | #Num.cmpop as op -> Num.string_of_cmpop op
+(* Expressions *)
 
 let rec doc_of_exp atom_mode exp =
   match exp.it with
@@ -371,6 +276,8 @@ let rec doc_of_exp atom_mode exp =
   | UnparenE exp -> text "##" ^^ doc_of_exp atom_mode exp
   | LatexE s -> text ("latex(\"" ^ String.escaped s ^ "\")")
 
+(* Paths *)
+
 and doc_of_path atom_mode path =
   match path.it with
   | RootP -> Doc.empty
@@ -384,6 +291,8 @@ and doc_of_path atom_mode path =
   | DotP (path, atom) ->
       doc_of_path atom_mode path ^^ text "." ^^ doc_of_atom atom_mode atom
 
+(* Arguments *)
+
 and doc_of_arg atom_mode arg =
   match arg.it with
   | ExpA exp -> doc_of_exp atom_mode exp
@@ -391,6 +300,8 @@ and doc_of_arg atom_mode arg =
 
 and doc_of_args atom_mode args =
   doc_of_comma_list ~indent:4 "(" ")" (doc_of_arg atom_mode) args
+
+(* Parameters *)
 
 let rec doc_of_param atom_mode param =
   match param.it with
@@ -405,8 +316,12 @@ let rec doc_of_param atom_mode param =
 and doc_of_params atom_mode params =
   doc_of_optional_comma_list ~indent:4 "(" ")" (doc_of_param atom_mode) params
 
+(* Type parameters *)
+
 and doc_of_tparams tparams =
   doc_of_optional_comma_list ~indent:2 "<" ">" doc_of_tparam tparams
+
+(* Premises *)
 
 let doc_of_rel_prem atom_mode s_marker id_rel exp =
   Doc.group
@@ -432,6 +347,8 @@ let doc_of_prems atom_mode prems =
   |> List.map (fun prem -> Doc.line ^^ text "-- " ^^ doc_of_prem atom_mode prem)
   |> Doc.concat
 
+(* Rules *)
+
 let doc_of_rule atom_mode rule =
   let id_rel, id_rule, exp, prems = rule.it in
   Doc.group
@@ -442,6 +359,8 @@ let doc_of_rule atom_mode rule =
   ^^ Doc.nest 2
        (Doc.line ^^ doc_of_exp atom_mode exp ^^ doc_of_prems atom_mode prems)
 
+(* Tables *)
+
 let doc_of_tablerow atom_mode tablerow =
   let exp_pattern, exp_body = tablerow.it in
   Doc.group
@@ -450,12 +369,16 @@ let doc_of_tablerow atom_mode tablerow =
     ^^ Doc.nest 4 (Doc.break " " ^^ text "=> " ^^ doc_of_exp atom_mode exp_body)
     )
 
+(* Functions *)
+
 let doc_of_func_dec s_prefix id_def tparams params plaintyp =
   Doc.group
     (text s_prefix ^^ doc_of_defid id_def ^^ doc_of_tparams tparams
     ^^ doc_of_params SourceAtom params
     ^^ Doc.nest 2
          (Doc.break " " ^^ text ": " ^^ doc_of_plaintyp SourceAtom plaintyp))
+
+(* Definitions *)
 
 let doc_of_def def =
   match def.it with
@@ -519,5 +442,7 @@ let doc_of_def def =
         )
       ^^ Doc.nest 2 (doc_of_prems SourceAtom prems)
   | SepD -> Doc.line ^^ Doc.line
+
+(* Rendering *)
 
 let render_def def = Doc.render ~width (doc_of_def def)
