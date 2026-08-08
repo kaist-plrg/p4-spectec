@@ -1,6 +1,15 @@
 (* Documents
 
-   [t] describes text together with its possible line breaks and indentation.
+   A [t] is a tree describing possible layouts, not rendered text.
+
+   - [Empty] emits nothing.
+   - [Text text] emits [text] without splitting it.
+   - [Break flat] emits [flat] or starts an indented line.
+   - [Line] always starts an indented line.
+   - [Cat (doc_l, doc_r)] renders [doc_l] followed by [doc_r].
+   - [Nest (indent, doc)] increases the indentation inside [doc].
+   - [Group doc] chooses whether the breaks inside [doc] are flat or broken.
+
    For example,
 
      group
@@ -12,21 +21,14 @@
 
      f(x, y)
 
-   and at width 6 as
+   because the complete flat layout fits. At width 6, it renders as
 
      f(
          x,
          y)
 
-   [mode] determines how [Break] nodes render. [Flat] emits their strings, so
-   the breaks above emit "" and " ". [Broken] emits newlines followed by the
-   current indentation, so both breaks start lines indented by four spaces.
-   [Line] always emits a newline. [Group] selects [Flat] when its contents fit
-   and [Broken] otherwise.
-
-   [command] is pending rendering work represented by an indentation, a mode,
-   and a document. For the broken layout above, [Nest 4] turns the first break
-   into [(4, Broken, Break "")], which emits the newline before [x]. *)
+   because the group must break. [Nest 4] does not emit spaces immediately;
+   it makes lines started by the enclosed breaks begin at indentation four. *)
 
 type t =
   | Empty
@@ -37,7 +39,33 @@ type t =
   | Nest of int * t
   | Group of t
 
+(* Layout modes
+
+   A [mode] controls how [Break] renders:
+
+   - [Flat] emits the string stored in [Break].
+   - [Broken] emits a newline followed by the current indentation.
+
+   Thus [Break " "] emits one space in [Flat] mode, but starts a new indented
+   line in [Broken] mode. A nested group can remain flat when its enclosing
+   group is broken, provided the nested group still fits. *)
+
 type mode = Flat | Broken
+
+(* Rendering commands
+
+   A [command] is one item on the renderer's work stack:
+
+     indentation * mode * document
+
+   For example,
+
+     (4, Broken, Break "")
+
+   means to render [Break ""] in broken mode at indentation four. It emits a
+   newline followed by four spaces. [Cat] adds its two documents to the work
+   stack, while [Nest] changes the indentation of its enclosed command. *)
+
 type command = int * mode * t
 
 (* Constructors *)
