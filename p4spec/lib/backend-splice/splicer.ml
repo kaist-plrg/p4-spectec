@@ -89,7 +89,8 @@ end
 
 let prefix_source =
   "ifdef::backend-html5[]\n"
-  ^ ".Click to view the specification source\n[%collapsible]\n====\n----\n"
+  ^ ".Click to view the specification source\n[%collapsible]\n====\n"
+  ^ "[source,watsup]\n----\n"
 
 let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n" ^ "endif::[]"
 let prefix_prose = "****\n"

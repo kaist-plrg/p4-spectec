@@ -31,7 +31,7 @@ module Source = struct
                | DefinedS (id, nottyp, hints) ->
                    El.RelD (id, nottyp, hints) $ no_region
              in
-             El.Print.string_of_def def)
+             El.Render.render_def def)
       |> String.concat "\n\n"
   end
 

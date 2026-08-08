@@ -1,5 +1,6 @@
 ROUGE_STYLE=github
 ROUGE_CSS=style
+ROUGE_LEXER=./resources/rouge/watsup.rb
 
 SPECTEC=p4spectec
 SPECFILES=../../spec/*/*.watsup
@@ -22,23 +23,27 @@ splice: spectec
 
 ${DRAFT}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -q \
+		-r $(ROUGE_LEXER) \
 		-a rouge-css=$(ROUGE_CSS) \
 		-o $@ $<
 
 ${RELEASE}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -q \
+		-r $(ROUGE_LEXER) \
 		-a release \
 		-a rouge-css=$(ROUGE_CSS) \
 		-o $@ $<
 
 ${DRAFT}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -q \
+		-r $(ROUGE_LEXER) \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) \
 		-o $@ $<
 
 ${RELEASE}.pdf: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor-pdf -q \
+		-r $(ROUGE_LEXER) \
 		-a release \
 		-a pdf-fontsdir=resources/fonts \
 		-a rouge-style=$(ROUGE_STYLE) \

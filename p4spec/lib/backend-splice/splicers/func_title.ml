@@ -40,7 +40,7 @@ module Source = struct
                    El.FuncDecD (id, tparams, params, plaintyp, hints)
                    $ no_region
              in
-             El.Print.string_of_def def)
+             El.Render.render_def def)
       |> String.concat "\n\n"
   end
 
