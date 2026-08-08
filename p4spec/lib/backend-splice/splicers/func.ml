@@ -29,7 +29,7 @@ module Source = struct
                    El.FuncDefD (id, tparams, args, exp, prems) $ no_region)
                  value
              in
-             defs |> List.map El.Print.string_of_def |> String.concat "\n\n")
+             defs |> List.map El.Render.render_def |> String.concat "\n\n")
       |> String.concat "\n\n"
   end
 

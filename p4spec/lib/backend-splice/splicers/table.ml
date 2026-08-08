@@ -24,7 +24,7 @@ module Source = struct
       |> List.map (fun value ->
              let id, tablerows = value in
              let def = El.TableDefD (id, tablerows) $ no_region in
-             El.Print.string_of_def def)
+             El.Render.render_def def)
       |> String.concat "\n\n"
   end
 
