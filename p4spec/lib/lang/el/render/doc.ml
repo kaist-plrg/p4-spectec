@@ -1,4 +1,32 @@
-(* Documents *)
+(* Documents
+
+   [t] describes text together with its possible line breaks and indentation.
+   For example,
+
+     group
+       (text "f("
+       ^^ nest 4 (break "" ^^ text "x," ^^ break " " ^^ text "y")
+       ^^ text ")")
+
+   renders at width 7 as
+
+     f(x, y)
+
+   and at width 6 as
+
+     f(
+         x,
+         y)
+
+   [mode] determines how [Break] nodes render. [Flat] emits their strings, so
+   the breaks above emit "" and " ". [Broken] emits newlines followed by the
+   current indentation, so both breaks start lines indented by four spaces.
+   [Line] always emits a newline. [Group] selects [Flat] when its contents fit
+   and [Broken] otherwise.
+
+   [command] is pending rendering work represented by an indentation, a mode,
+   and a document. For the broken layout above, [Nest 4] turns the first break
+   into [(4, Broken, Break "")], which emits the newline before [x]. *)
 
 type t =
   | Empty
