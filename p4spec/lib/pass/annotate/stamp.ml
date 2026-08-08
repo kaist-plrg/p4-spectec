@@ -1,6 +1,6 @@
 open Lang
 module Annot = Pl.Annot
-module Collect = Pl.Collect
+module Group = Pl.Group
 module Partial = Pl.Partial
 open Util.Source
 
@@ -27,154 +27,157 @@ open Util.Source
 
    - Check that p holds.  becomes FallGroup g',  "[-> g']" *)
 
-(* Holding conditions (non-dispatcher) *)
+(* Holding conditions (group tier) *)
 
-let rec stamp_holdcase (fallthrough : Pl.fallthrough) (holdcase : Pl.holdcase) :
-    Pl.holdcase =
+let rec stamp_group_holdcase (fallthrough : Pl.fallthrough)
+    (holdcase : Pl.instr_group Pl.holdcase) : Pl.instr_group Pl.holdcase =
   match holdcase with
   | BothH (block_hold, block_nothold) ->
-      let block_hold_stamped = stamp_block fallthrough block_hold in
-      let block_nothold_stamped = stamp_block fallthrough block_nothold in
+      let block_hold_stamped = stamp_block_group fallthrough block_hold in
+      let block_nothold_stamped = stamp_block_group fallthrough block_nothold in
       Pl.BothH (block_hold_stamped, block_nothold_stamped)
   | HoldH (block_hold, dangle) ->
-      let block_hold_stamped = stamp_block fallthrough block_hold in
+      let block_hold_stamped = stamp_block_group fallthrough block_hold in
       Pl.HoldH (block_hold_stamped, dangle)
   | NotHoldH (block_nothold, dangle) ->
-      let block_nothold_stamped = stamp_block fallthrough block_nothold in
+      let block_nothold_stamped = stamp_block_group fallthrough block_nothold in
       Pl.NotHoldH (block_nothold_stamped, dangle)
 
-(* Case analysis (non-dispatcher) *)
+(* Case analysis (group tier) *)
 
-and stamp_cases (fallthrough : Pl.fallthrough) (cases : Pl.case list) :
-    Pl.case list =
+and stamp_group_cases (fallthrough : Pl.fallthrough)
+    (cases : Pl.instr_group Pl.case list) : Pl.instr_group Pl.case list =
   List.map
     (fun (guard, block) ->
-      let block_stamped = stamp_block fallthrough block in
+      let block_stamped = stamp_block_group fallthrough block in
       (guard, block_stamped))
     cases
 
-(* Backtracking (non-dispatcher) *)
+(* Backtracking (group tier) *)
 
-and stamp_arms (fallthrough : Pl.fallthrough) (arms : Pl.arm list) : Pl.arm list
-    =
+and stamp_group_arms (fallthrough : Pl.fallthrough)
+    (arms : Pl.instr_group Pl.arm list) : Pl.instr_group Pl.arm list =
   let fallthroughs =
     match arms with
     | [] -> []
     | _ :: arms_next ->
         List.map (fun _ -> Pl.FallNext) arms_next @ [ fallthrough ]
   in
-  List.map2 stamp_block fallthroughs arms
+  List.map2 stamp_block_group fallthroughs arms
 
-(* Instructions (non-dispatcher) *)
+(* Instructions (group tier): result/return/rule leaves take the note *)
 
-and stamp_instr (fallthrough : Pl.fallthrough) (instr : Pl.instr) : Pl.instr =
+and stamp_instr_group (fallthrough : Pl.fallthrough)
+    (instr : Pl.instr_group Pl.instr) : Pl.instr_group Pl.instr =
   let at = instr.node.at in
   let note : Pl.inote =
-    if Partial.is_partial_instr instr then
+    if Partial.is_partial_instr Partial.is_partial_instr_group instr then
       { instr.node.note with fallthrough = Some fallthrough }
     else instr.node.note
   in
   match instr.node.it with
   | IfI (exp, iterexps, block_then, dangle) ->
-      let block_then_stamped = stamp_block fallthrough block_then in
+      let block_then_stamped = stamp_block_group fallthrough block_then in
       let node =
         Pl.IfI (exp, iterexps, block_then_stamped, dangle) $$ (at, note)
       in
       { instr with node }
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
-      let holdcase_stamped = stamp_holdcase fallthrough holdcase in
+      let holdcase_stamped = stamp_group_holdcase fallthrough holdcase in
       let node =
         Pl.HoldI (id_rel, notexp, iterexps, holdcase_stamped) $$ (at, note)
       in
       { instr with node }
   | CaseI (exp_scrut, cases, dangle) ->
-      let cases_stamped = stamp_cases fallthrough cases in
+      let cases_stamped = stamp_group_cases fallthrough cases in
       let node = Pl.CaseI (exp_scrut, cases_stamped, dangle) $$ (at, note) in
       { instr with node }
-  | BlockI arms ->
-      let arms_stamped = stamp_arms fallthrough arms in
-      let node = Pl.BlockI arms_stamped $$ (at, note) in
+  | TierI (BacktrackI arms) ->
+      let arms_stamped = stamp_group_arms fallthrough arms in
+      let node = Pl.TierI (Pl.BacktrackI arms_stamped) $$ (at, note) in
       { instr with node }
   | CheckLetSubI (typ, exp_l, exp_r, block_then) ->
-      let block_then_stamped = stamp_block fallthrough block_then in
+      let block_then_stamped = stamp_block_group fallthrough block_then in
       let node =
         Pl.CheckLetSubI (typ, exp_l, exp_r, block_then_stamped) $$ (at, note)
       in
       { instr with node }
   | CheckLetMatchI (pattern, exp_l, exp_r, block_then) ->
-      let block_then_stamped = stamp_block fallthrough block_then in
+      let block_then_stamped = stamp_block_group fallthrough block_then in
       let node =
         Pl.CheckLetMatchI (pattern, exp_l, exp_r, block_then_stamped)
         $$ (at, note)
       in
       { instr with node }
   | OptionGetI (exp_l, exp_r, block_then) ->
-      let block_then_stamped = stamp_block fallthrough block_then in
+      let block_then_stamped = stamp_block_group fallthrough block_then in
       let node =
         Pl.OptionGetI (exp_l, exp_r, block_then_stamped) $$ (at, note)
       in
       { instr with node }
-  | _ ->
+  | TierI (ResultI _ | ReturnI _ | RuleI _) | LetI _ | DebugI _ | DestructI _ ->
+      (* leaves and non-branching instrs: only the note is stamped *)
       let node = instr.node.it $$ (at, note) in
       { instr with node }
 
-and stamp_block (fallthrough : Pl.fallthrough) (block : Pl.block) : Pl.block =
-  List.map (stamp_instr fallthrough) block
+and stamp_block_group (fallthrough : Pl.fallthrough) (block : Pl.block_group) :
+    Pl.block_group =
+  List.map (stamp_instr_group fallthrough) block
 
-(* Holding conditions (dispatcher) *)
+(* Holding conditions (dispatch tier) *)
 
-let rec stamp_holdcase_dispatcher
+let rec stamp_dispatch_holdcase
     (dispatch_fallthroughs : (string * Pl.fallthrough) list)
-    (holdcase : Pl.holdcase) : Pl.holdcase =
+    (holdcase : Pl.instr_dispatch Pl.holdcase) : Pl.instr_dispatch Pl.holdcase =
   match holdcase with
   | BothH (block_hold, block_nothold) ->
       let block_hold_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_hold
+        stamp_block_dispatch dispatch_fallthroughs block_hold
       in
       let block_nothold_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_nothold
+        stamp_block_dispatch dispatch_fallthroughs block_nothold
       in
       Pl.BothH (block_hold_stamped, block_nothold_stamped)
   | HoldH (block_hold, dangle) ->
       let block_hold_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_hold
+        stamp_block_dispatch dispatch_fallthroughs block_hold
       in
       Pl.HoldH (block_hold_stamped, dangle)
   | NotHoldH (block_nothold, dangle) ->
       let block_nothold_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_nothold
+        stamp_block_dispatch dispatch_fallthroughs block_nothold
       in
       Pl.NotHoldH (block_nothold_stamped, dangle)
 
-(* Case analysis (dispatcher) *)
+(* Case analysis (dispatch tier) *)
 
-and stamp_cases_dispatcher
+and stamp_dispatch_cases
     (dispatch_fallthroughs : (string * Pl.fallthrough) list)
-    (cases : Pl.case list) : Pl.case list =
+    (cases : Pl.instr_dispatch Pl.case list) : Pl.instr_dispatch Pl.case list =
   List.map
     (fun (guard, block) ->
-      let block_stamped = stamp_block_dispatcher dispatch_fallthroughs block in
+      let block_stamped = stamp_block_dispatch dispatch_fallthroughs block in
       (guard, block_stamped))
     cases
 
-(* Backtracking (dispatcher) *)
+(* Backtracking (dispatch tier) *)
 
-and stamp_arms_dispatcher
+and stamp_dispatch_arms (dispatch_fallthroughs : (string * Pl.fallthrough) list)
+    (arms : Pl.instr_dispatch Pl.arm list) : Pl.instr_dispatch Pl.arm list =
+  List.map (stamp_block_dispatch dispatch_fallthroughs) arms
+
+(* Instructions (dispatch tier): a rule group stamps its body with the
+   group's own fallthrough, using the group-tier stamper *)
+
+and stamp_instr_dispatch
     (dispatch_fallthroughs : (string * Pl.fallthrough) list)
-    (arms : Pl.instr list list) : Pl.instr list list =
-  List.map (stamp_block_dispatcher dispatch_fallthroughs) arms
-
-(* Instructions (dispatcher) *)
-
-and stamp_instr_dispatcher
-    (dispatch_fallthroughs : (string * Pl.fallthrough) list) (instr : Pl.instr)
-    : Pl.instr =
+    (instr : Pl.instr_dispatch Pl.instr) : Pl.instr_dispatch Pl.instr =
   let at = instr.node.at in
   let note = instr.node.note in
   match instr.node.it with
   | IfI (exp, iterexps, block_then, dangle) ->
       let block_then_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_then
+        stamp_block_dispatch dispatch_fallthroughs block_then
       in
       let node =
         Pl.IfI (exp, iterexps, block_then_stamped, dangle) $$ (at, note)
@@ -182,23 +185,23 @@ and stamp_instr_dispatcher
       { instr with node }
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
       let holdcase_stamped =
-        stamp_holdcase_dispatcher dispatch_fallthroughs holdcase
+        stamp_dispatch_holdcase dispatch_fallthroughs holdcase
       in
       let node =
         Pl.HoldI (id_rel, notexp, iterexps, holdcase_stamped) $$ (at, note)
       in
       { instr with node }
   | CaseI (exp_scrut, cases, dangle) ->
-      let cases_stamped = stamp_cases_dispatcher dispatch_fallthroughs cases in
+      let cases_stamped = stamp_dispatch_cases dispatch_fallthroughs cases in
       let node = Pl.CaseI (exp_scrut, cases_stamped, dangle) $$ (at, note) in
       { instr with node }
-  | BlockI arms ->
-      let arms_stamped = stamp_arms_dispatcher dispatch_fallthroughs arms in
-      let node = Pl.BlockI arms_stamped $$ (at, note) in
+  | TierI (RouteI arms) ->
+      let arms_stamped = stamp_dispatch_arms dispatch_fallthroughs arms in
+      let node = Pl.TierI (Pl.RouteI arms_stamped) $$ (at, note) in
       { instr with node }
   | CheckLetSubI (typ, exp_l, exp_r, block_then) ->
       let block_then_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_then
+        stamp_block_dispatch dispatch_fallthroughs block_then
       in
       let node =
         Pl.CheckLetSubI (typ, exp_l, exp_r, block_then_stamped) $$ (at, note)
@@ -206,7 +209,7 @@ and stamp_instr_dispatcher
       { instr with node }
   | CheckLetMatchI (pattern, exp_l, exp_r, block_then) ->
       let block_then_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_then
+        stamp_block_dispatch dispatch_fallthroughs block_then
       in
       let node =
         Pl.CheckLetMatchI (pattern, exp_l, exp_r, block_then_stamped)
@@ -215,51 +218,48 @@ and stamp_instr_dispatcher
       { instr with node }
   | OptionGetI (exp_l, exp_r, block_then) ->
       let block_then_stamped =
-        stamp_block_dispatcher dispatch_fallthroughs block_then
+        stamp_block_dispatch dispatch_fallthroughs block_then
       in
       let node =
         Pl.OptionGetI (exp_l, exp_r, block_then_stamped) $$ (at, note)
       in
       { instr with node }
-  | GroupI (id_rulegroup, id_rel, rel_signature, exps, block) ->
+  | TierI (GroupI (id_rulegroup, id_rel, rel_signature, exps, block)) ->
       let fallthrough_group =
         List.assoc id_rulegroup.it dispatch_fallthroughs
       in
-      let block_stamped = stamp_block fallthrough_group block in
+      let block_stamped = stamp_block_group fallthrough_group block in
       let node =
-        Pl.GroupI (id_rulegroup, id_rel, rel_signature, exps, block_stamped)
+        Pl.TierI
+          (Pl.GroupI (id_rulegroup, id_rel, rel_signature, exps, block_stamped))
         $$ (at, note)
       in
       { instr with node }
-  | _ -> instr
+  | LetI _ | DebugI _ | DestructI _ -> instr
 
-and stamp_block_dispatcher
-    (dispatch_fallthroughs : (string * Pl.fallthrough) list) (block : Pl.block)
-    : Pl.block =
-  List.map (stamp_instr_dispatcher dispatch_fallthroughs) block
+and stamp_block_dispatch
+    (dispatch_fallthroughs : (string * Pl.fallthrough) list)
+    (block : Pl.block_dispatch) : Pl.block_dispatch =
+  List.map (stamp_instr_dispatch dispatch_fallthroughs) block
 
 (* Definitions *)
 
 let collect_dispatch_fallthroughs (fallthrough : Pl.fallthrough)
-    (block : Pl.block) : (string * Pl.fallthrough) list =
+    (block : Pl.block_dispatch) : (string * Pl.fallthrough) list =
   (* Collect dispatch arms *)
   let arms_dispatch =
     match block with
-    | [ { node = { it = BlockI arms; _ }; _ } ] -> arms
+    | [ { node = { it = TierI (RouteI arms); _ }; _ } ] -> arms
     | _ -> [ block ]
   in
   (* Collect groups within each dispatch arm, dropping empty arms *)
   let groups_dispatch_arms =
     arms_dispatch
-    |> List.map Collect.collect_groups
+    |> List.map Group.collect_groups
     |> List.filter (function [] -> false | _ -> true)
   in
   (* Pair each group with its fallthrough *)
-  let id_of_group (instr : Pl.instr) =
-    match instr.node.it with
-    | GroupI (id_rulegroup, _, _, _, _) -> id_rulegroup
-    | _ -> assert false
-  in
+  let id_of_group (group : Group.t) = group.id_rulegroup in
   let rec make_dispatch_fallthroughs groups_dispatch_arms =
     match groups_dispatch_arms with
     | [] -> []
@@ -267,8 +267,8 @@ let collect_dispatch_fallthroughs (fallthrough : Pl.fallthrough)
        to the fallthrough of the dispatch *)
     | [ groups_dispatch_arm ] ->
         List.map
-          (fun instr ->
-            let id_rulegroup = id_of_group instr in
+          (fun group ->
+            let id_rulegroup = id_of_group group in
             (id_rulegroup.it, fallthrough))
           groups_dispatch_arm
     (* Groups in each arm fall through to
@@ -294,7 +294,7 @@ let stamp_defined_rel_def (rel : Pl.rel) : Pl.def' =
     match elseblock_opt with Some (_ :: _) -> Pl.FallElse | _ -> Pl.FallFail
   in
   let dispatch_fallthroughs = collect_dispatch_fallthroughs fallthrough block in
-  let block_stamped = stamp_block_dispatcher dispatch_fallthroughs block in
+  let block_stamped = stamp_block_dispatch dispatch_fallthroughs block in
   Pl.RelD (id_rel, rel_signature, exps, block_stamped, elseblock_opt)
 
 let stamp_defined_func_def (definedfunc : Pl.definedfunc) : Pl.def' =
@@ -302,7 +302,7 @@ let stamp_defined_func_def (definedfunc : Pl.definedfunc) : Pl.def' =
   let fallthrough =
     match elseblock_opt with Some (_ :: _) -> Pl.FallElse | _ -> Pl.FallFail
   in
-  let block_stamped = stamp_block fallthrough block in
+  let block_stamped = stamp_block_group fallthrough block in
   Pl.FuncDecD (id, tparams, params, typ, block_stamped, elseblock_opt)
 
 let stamp_def (def : Pl.def) : Pl.def =

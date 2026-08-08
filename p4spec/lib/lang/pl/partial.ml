@@ -39,7 +39,7 @@ and is_partial_path (path : path) : bool =
       is_partial_path path_b || is_partial_exp exp_l || is_partial_exp exp_n
   | DotP (path_b, _) -> is_partial_path path_b
 
-let rec is_partial_case (case : case) : bool =
+let rec is_partial_case (case : _ case) : bool =
   let guard, _ = case in
   is_partial_guard guard
 
@@ -50,18 +50,26 @@ and is_partial_guard (guard : guard) : bool =
   | SubG _ | MatchG _ | MemG _ -> false
   | CheckLetSubG (_, exp) | CheckLetMatchG (_, exp) -> is_partial_exp exp
 
-let is_partial_instr (instr : instr) : bool =
+let is_partial_instr_group (instr_group : instr_group) : bool =
+  match instr_group with
+  | RuleI (_, notexp, _, _) ->
+      notexp |> Mixfix.args |> List.exists is_partial_exp
+  | ResultI (_, exps) -> List.exists is_partial_exp exps
+  | ReturnI exp -> is_partial_exp exp
+  | BacktrackI _ -> false
+
+let is_partial_instr_dispatch (instr_dispatch : instr_dispatch) : bool =
+  match instr_dispatch with GroupI _ | RouteI _ -> false
+
+let is_partial_instr (is_partial_instr_tier : 'instr_tier -> bool)
+    (instr : 'instr_tier instr) : bool =
   match instr.node.it with
   | IfI (exp_cond, _, _, _) -> is_partial_exp exp_cond
   | HoldI _ -> true
   | CaseI (exp, cases, _) ->
       is_partial_exp exp || List.exists is_partial_case cases
-  | GroupI _ | BlockI _ -> false
   | LetI (_, exp_r, _) -> is_partial_exp exp_r
-  | RuleI (_, notexp, _, _) ->
-      notexp |> Mixfix.args |> List.exists is_partial_exp
-  | ResultI (_, exps) -> List.exists is_partial_exp exps
-  | ReturnI exp -> is_partial_exp exp
   | DebugI exp -> is_partial_exp exp
   | DestructI (_, exp) -> is_partial_exp exp
   | CheckLetSubI _ | CheckLetMatchI _ | OptionGetI _ -> true
+  | TierI instr_tier -> is_partial_instr_tier instr_tier

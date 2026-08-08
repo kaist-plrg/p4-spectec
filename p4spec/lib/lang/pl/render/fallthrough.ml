@@ -30,7 +30,7 @@ let prose_of_fallthrough ~(anchor : anchor) ~(text : string) : Adoc.prose =
     (F.asprintf "+++<sub class=\"bk-mark\">[<a href=\"#%s\">→ %s</a>]</sub>+++"
        anchor text)
 
-let prose_of_fallthrough_link ~(ctx_fallthrough : ctx) (instr : instr) :
+let prose_of_fallthrough_link ~(ctx_fallthrough : ctx) (instr : _ instr) :
     Adoc.prose =
   match instr.node.note.fallthrough with
   | None -> Adoc.empty_prose
