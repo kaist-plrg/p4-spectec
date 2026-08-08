@@ -14,22 +14,23 @@ let space = text " "
 
 (* Iterators *)
 
-let doc_of_iter = function Opt -> text "?" | List -> text "*"
+let doc_of_iter (iter : iter) =
+  match iter with Opt -> text "?" | List -> text "*"
 
 (* Identifiers *)
 
-let doc_of_varid id_var = text id_var.it
-let doc_of_typid id_typ = text id_typ.it
-let doc_of_relid id_rel = text id_rel.it
-let doc_of_defid id_def = text ("$" ^ id_def.it)
-let doc_of_tparam id_tparam = text id_tparam.it
+let doc_of_varid (id_var : id) = text id_var.it
+let doc_of_typid (id_typ : id) = text id_typ.it
+let doc_of_relid (id_rel : id) = text id_rel.it
+let doc_of_defid (id_def : id) = text ("$" ^ id_def.it)
+let doc_of_tparam (id_tparam : tparam) = text id_tparam.it
 
-let doc_of_rule_suffix id_suffix =
+let doc_of_rule_suffix (id_suffix : id) =
   if id_suffix.it = "" then Doc.empty else text ("/" ^ id_suffix.it)
 
 (* Atoms *)
 
-let doc_of_atom atom_mode atom =
+let doc_of_atom (atom_mode : atom_mode) (atom : atom) =
   let s =
     match atom_mode with
     | SourceAtom -> Atom.string_of_atom atom.it
@@ -39,7 +40,8 @@ let doc_of_atom atom_mode atom =
 
 (* Lists *)
 
-let doc_of_comma_list ~indent s_open s_close doc_of_item items =
+let doc_of_comma_list ~(indent : int) (s_open : string) (s_close : string)
+    (doc_of_item : 'a -> Doc.t) (items : 'a list) =
   match items with
   | [] -> text (s_open ^ s_close)
   | _ ->
@@ -52,42 +54,48 @@ let doc_of_comma_list ~indent s_open s_close doc_of_item items =
                   (List.map doc_of_item items))
         ^^ text s_close)
 
-let doc_of_optional_comma_list ~indent s_open s_close doc_of_item items =
+let doc_of_optional_comma_list ~(indent : int) (s_open : string)
+    (s_close : string) (doc_of_item : 'a -> Doc.t) (items : 'a list) =
   match items with
   | [] -> Doc.empty
   | _ -> doc_of_comma_list ~indent s_open s_close doc_of_item items
 
 (* Operators *)
 
-let doc_of_bracket atom_mode doc atom_l atom_r =
+let doc_of_bracket (atom_mode : atom_mode) (doc : Doc.t) (atom_l : atom)
+    (atom_r : atom) =
   Doc.group
     (doc_of_atom atom_mode atom_l
     ^^ Doc.nest 2 (Doc.break " " ^^ doc)
     ^^ Doc.break " "
     ^^ doc_of_atom atom_mode atom_r)
 
-let doc_of_infix doc_l op doc_r =
+let doc_of_infix (doc_l : Doc.t) (op : string) (doc_r : Doc.t) =
   Doc.group (doc_l ^^ Doc.nest 4 (Doc.break " " ^^ text op ^^ space ^^ doc_r))
 
-let doc_of_unop = function
+let doc_of_unop (op : unop) =
+  match op with
   | #Bool.unop as op -> text (Bool.string_of_unop op)
   | #Num.unop as op -> text (Num.string_of_unop op)
 
-let string_of_binop = function
+let string_of_binop (op : binop) =
+  match op with
   | #Bool.binop as op -> Bool.string_of_binop op
   | #Num.binop as op -> Num.string_of_binop op
 
-let string_of_cmpop = function
+let string_of_cmpop (op : cmpop) =
+  match op with
   | #Bool.cmpop as op -> Bool.string_of_cmpop op
   | #Num.cmpop as op -> Num.string_of_cmpop op
 
 (* Types *)
 
-let rec doc_of_typ atom_mode = function
+let rec doc_of_typ (atom_mode : atom_mode) (typ : typ) =
+  match typ with
   | PlainT plaintyp -> doc_of_plaintyp atom_mode plaintyp
   | NotationT nottyp -> doc_of_nottyp atom_mode nottyp
 
-and doc_of_plaintyp atom_mode plaintyp =
+and doc_of_plaintyp (atom_mode : atom_mode) (plaintyp : plaintyp) =
   match plaintyp.it with
   | BoolT -> text "bool"
   | NumT numtyp -> text (Num.string_of_typ numtyp)
@@ -102,7 +110,7 @@ and doc_of_plaintyp atom_mode plaintyp =
   | IterT (plaintyp, iter) ->
       doc_of_plaintyp atom_mode plaintyp ^^ doc_of_iter iter
 
-and doc_of_nottyp atom_mode nottyp =
+and doc_of_nottyp (atom_mode : atom_mode) (nottyp : nottyp) =
   match nottyp.it with
   | AtomT atom -> doc_of_atom atom_mode atom
   | SeqT typs -> typs |> List.map (doc_of_typ atom_mode) |> Doc.flow
@@ -116,19 +124,21 @@ and doc_of_nottyp atom_mode nottyp =
   | BrackT (atom_l, typ, atom_r) ->
       doc_of_bracket atom_mode (doc_of_typ atom_mode typ) atom_l atom_r
 
-and doc_of_targ atom_mode targ = doc_of_plaintyp atom_mode targ
+and doc_of_targ (atom_mode : atom_mode) (targ : targ) =
+  doc_of_plaintyp atom_mode targ
 
-and doc_of_targs atom_mode targs =
+and doc_of_targs (atom_mode : atom_mode) (targs : targ list) =
   doc_of_optional_comma_list ~indent:2 "<" ">" (doc_of_targ atom_mode) targs
 
-let doc_of_typfield atom_mode (atom, plaintyp, _hints) =
+let doc_of_typfield (atom_mode : atom_mode)
+    ((atom, plaintyp, _hints) : typfield) =
   Doc.group
     (doc_of_atom atom_mode atom ^^ space ^^ doc_of_plaintyp atom_mode plaintyp)
 
-let doc_of_typcase atom_mode (typ, _hints) =
+let doc_of_typcase (atom_mode : atom_mode) ((typ, _hints) : typcase) =
   Doc.nest 4 (doc_of_typ atom_mode typ)
 
-let doc_of_deftyp atom_mode deftyp =
+let doc_of_deftyp (atom_mode : atom_mode) (deftyp : deftyp) =
   match deftyp.it with
   | PlainTD plaintyp -> text " = " ^^ doc_of_plaintyp atom_mode plaintyp
   | StructTD [] -> text " = {}"
@@ -156,7 +166,7 @@ let doc_of_deftyp atom_mode deftyp =
 
 (* Expressions *)
 
-let rec doc_of_exp atom_mode exp =
+let rec doc_of_exp (atom_mode : atom_mode) (exp : exp) =
   match exp.it with
   | BoolE b -> text (string_of_bool b)
   | NumE (`DecOp, `Nat n) -> text (Bigint.to_string n)
@@ -278,7 +288,7 @@ let rec doc_of_exp atom_mode exp =
 
 (* Paths *)
 
-and doc_of_path atom_mode path =
+and doc_of_path (atom_mode : atom_mode) (path : path) =
   match path.it with
   | RootP -> Doc.empty
   | IdxP (path, exp) ->
@@ -293,17 +303,17 @@ and doc_of_path atom_mode path =
 
 (* Arguments *)
 
-and doc_of_arg atom_mode arg =
+and doc_of_arg (atom_mode : atom_mode) (arg : arg) =
   match arg.it with
   | ExpA exp -> doc_of_exp atom_mode exp
   | DefA id_def -> text "def " ^^ doc_of_defid id_def
 
-and doc_of_args atom_mode args =
+and doc_of_args (atom_mode : atom_mode) (args : arg list) =
   doc_of_comma_list ~indent:4 "(" ")" (doc_of_arg atom_mode) args
 
 (* Parameters *)
 
-let rec doc_of_param atom_mode param =
+let rec doc_of_param (atom_mode : atom_mode) (param : param) =
   match param.it with
   | ExpP plaintyp -> doc_of_plaintyp atom_mode plaintyp
   | DefP (id_def, tparams, params, plaintyp) ->
@@ -313,22 +323,23 @@ let rec doc_of_param atom_mode param =
         ^^ text " : "
         ^^ doc_of_plaintyp atom_mode plaintyp)
 
-and doc_of_params atom_mode params =
+and doc_of_params (atom_mode : atom_mode) (params : param list) =
   doc_of_optional_comma_list ~indent:4 "(" ")" (doc_of_param atom_mode) params
 
 (* Type parameters *)
 
-and doc_of_tparams tparams =
+and doc_of_tparams (tparams : tparam list) =
   doc_of_optional_comma_list ~indent:2 "<" ">" doc_of_tparam tparams
 
 (* Premises *)
 
-let doc_of_rel_prem atom_mode s_marker id_rel exp =
+let doc_of_rel_prem (atom_mode : atom_mode) (s_marker : string) (id_rel : id)
+    (exp : exp) =
   Doc.group
     (doc_of_relid id_rel ^^ text s_marker
     ^^ Doc.nest 4 (Doc.break " " ^^ doc_of_exp atom_mode exp))
 
-let rec doc_of_prem atom_mode prem =
+let rec doc_of_prem (atom_mode : atom_mode) (prem : prem) =
   match prem.it with
   | VarPr (id_var, plaintyp) ->
       doc_of_varid id_var ^^ text " : " ^^ doc_of_plaintyp atom_mode plaintyp
@@ -342,14 +353,14 @@ let rec doc_of_prem atom_mode prem =
       text "(" ^^ doc_of_prem atom_mode prem ^^ text ")" ^^ doc_of_iter iter
   | DebugPr exp -> text "debug " ^^ doc_of_exp atom_mode exp
 
-let doc_of_prems atom_mode prems =
+let doc_of_prems (atom_mode : atom_mode) (prems : prem list) =
   prems
   |> List.map (fun prem -> Doc.line ^^ text "-- " ^^ doc_of_prem atom_mode prem)
   |> Doc.concat
 
 (* Rules *)
 
-let doc_of_rule atom_mode rule =
+let doc_of_rule (atom_mode : atom_mode) (rule : rule) =
   let id_rel, id_rule, exp, prems = rule.it in
   Doc.group
     (text "rule"
@@ -361,7 +372,7 @@ let doc_of_rule atom_mode rule =
 
 (* Tables *)
 
-let doc_of_tablerow atom_mode tablerow =
+let doc_of_tablerow (atom_mode : atom_mode) (tablerow : tablerow) =
   let exp_pattern, exp_body = tablerow.it in
   Doc.group
     (text "| "
@@ -371,7 +382,8 @@ let doc_of_tablerow atom_mode tablerow =
 
 (* Functions *)
 
-let doc_of_func_dec s_prefix id_def tparams params plaintyp =
+let doc_of_func_dec (s_prefix : string) (id_def : id) (tparams : tparam list)
+    (params : param list) (plaintyp : plaintyp) =
   Doc.group
     (text s_prefix ^^ doc_of_defid id_def ^^ doc_of_tparams tparams
     ^^ doc_of_params SourceAtom params
@@ -380,7 +392,7 @@ let doc_of_func_dec s_prefix id_def tparams params plaintyp =
 
 (* Definitions *)
 
-let doc_of_def def =
+let doc_of_def (def : def) =
   match def.it with
   | ExternSynD (id_typ, _hints) -> text "extern syntax " ^^ doc_of_typid id_typ
   | SynD syntaxes ->
@@ -445,4 +457,4 @@ let doc_of_def def =
 
 (* Rendering *)
 
-let render_def def = Doc.render ~width (doc_of_def def)
+let render_def (def : def) = Doc.render ~width (doc_of_def def)
