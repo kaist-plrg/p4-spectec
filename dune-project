@@ -1,1 +1,26 @@
 (lang dune 3.7)
+(using menhir 2.0)
+(using mdx 0.2)
+(name p4spectec)
+
+(generate_opam_files true)
+
+(package
+  (name p4spectec)
+  (version 0.1.2)
+  (synopsis "P4-SpecTec: A mechanization toolchain for the P4 Programming Language")
+  (description "A mechanization toolchain for the P4 programming language")
+  (maintainers "99jaehyunlee@kaist.ac.kr")
+  (authors "KAIST PLRG")
+  (license "Apache-2.0")
+  (homepage "https://github.com/kaist-plrg/p4-spectec")
+  (source (github kaist-plrg/p4-spectec))
+  (bug_reports "https://github.com/kaist-plrg/p4-spectec/issues")
+  (depends
+    (ocaml (>= "5.1.0"))
+    (menhir (>= "20240715"))
+    (bignum (>= "v0.17.0"))
+    (core (>= "v0.17.0"))
+    (core_unix (>= "v0.17.0"))
+    (ppx_let (>= "v0.17.0"))
+    (ppx_deriving_yojson (>= "3.9.1"))))
