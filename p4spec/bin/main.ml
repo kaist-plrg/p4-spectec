@@ -1,21 +1,9 @@
 open Lang
 open Runtime.Sim.Signature
-open Util.Source
+module Error = P4spectec.Error
 
 let version = "0.1"
-
-exception CommandError of string
-
 let ( let* ) = Result.bind
-
-let spec_of_mode (mode : mode) (paths_spec : string list) :
-    (spec, Pass.error) result =
-  match mode with
-  | AL_mode -> Result.map (fun s -> AL s) (Pass.algo paths_spec)
-  | SL_mode ->
-      Result.map (fun s -> SL s) (Pass.structure ~final:true paths_spec)
-  | PL_mode -> Result.map (fun s -> PL s) (Pass.annotate paths_spec)
-  | Empty_mode -> assert false
 
 (* Operations *)
 
@@ -69,12 +57,15 @@ let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 path_p4
 
 let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
     paths_p4 path_cov =
-  let* spec_sim = spec_of_mode mode paths_spec in
-  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
-  let spec_sl =
+  let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+  let* simulator = P4spectec.build_sim ?arch spec_sim in
+  let (module Simulator : SIM) = simulator in
+  let* spec_sl =
     match spec_sim with
-    | SL spec_sl -> spec_sl
-    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+    | SL spec_sl -> Ok spec_sl
+    | _ ->
+        Error
+          (Error.CommandError "instruction coverage is only supported for SL")
   in
   let cover_multi = Coverage.Instr.Multi.init spec_sl in
   let cover_multi =
@@ -91,12 +82,14 @@ let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
 
 let cover_run_dangling ?(arch : string option) mode paths_spec relname
     includes_p4 paths_p4 path_cov =
-  let* spec_sim = spec_of_mode mode paths_spec in
-  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
-  let spec_sl =
+  let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+  let* simulator = P4spectec.build_sim ?arch spec_sim in
+  let (module Simulator : SIM) = simulator in
+  let* spec_sl =
     match spec_sim with
-    | SL spec_sl -> spec_sl
-    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+    | SL spec_sl -> Ok spec_sl
+    | _ ->
+        Error (Error.CommandError "dangling coverage is only supported for SL")
   in
   let cover_multi = Coverage.Dangling.Multi.init spec_sl in
   let cover_multi =
@@ -122,12 +115,15 @@ let cover_run_dangling ?(arch : string option) mode paths_spec relname
 
 let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
     paths_stf path_cov =
-  let* spec_sim = spec_of_mode mode paths_spec in
-  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
-  let spec_sl =
+  let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+  let* simulator = P4spectec.build_sim ?arch spec_sim in
+  let (module Simulator : SIM) = simulator in
+  let* spec_sl =
     match spec_sim with
-    | SL spec_sl -> spec_sl
-    | _ -> raise (CommandError "instruction coverage is only supported for SL")
+    | SL spec_sl -> Ok spec_sl
+    | _ ->
+        Error
+          (Error.CommandError "instruction coverage is only supported for SL")
   in
   let cover_multi = Coverage.Instr.Multi.init spec_sl in
   let cover_multi =
@@ -146,12 +142,14 @@ let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
 
 let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
     paths_p4 paths_stf path_cov =
-  let* spec_sim = spec_of_mode mode paths_spec in
-  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
-  let spec_sl =
+  let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+  let* simulator = P4spectec.build_sim ?arch spec_sim in
+  let (module Simulator : SIM) = simulator in
+  let* spec_sl =
     match spec_sim with
-    | SL spec_sl -> spec_sl
-    | _ -> raise (CommandError "dangling coverage is only supported for SL")
+    | SL spec_sl -> Ok spec_sl
+    | _ ->
+        Error (Error.CommandError "dangling coverage is only supported for SL")
   in
   let cover_multi = Coverage.Dangling.Multi.init spec_sl in
   let cover_multi =
@@ -185,9 +183,9 @@ let elab_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.elab paths_spec with
+       match P4spectec.elab paths_spec with
        | Ok spec_il -> Format.printf "%s\n" (Il.Print.string_of_spec spec_il)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a P4 spec"
@@ -197,9 +195,9 @@ let algo_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.algo paths_spec with
+       match P4spectec.algo paths_spec with
        | Ok spec_al -> Format.printf "%s\n" (Al.Print.string_of_spec spec_al)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
@@ -209,9 +207,9 @@ let struct_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.structure ~final:true paths_spec with
+       match P4spectec.structure ~final:true paths_spec with
        | Ok spec_sl -> Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let prose_command =
   Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
@@ -221,9 +219,9 @@ let prose_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.annotate paths_spec with
+       match P4spectec.annotate paths_spec with
        | Ok spec_pl -> Format.printf "%s\n" (Pl.Render.render_spec spec_pl)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let run_command =
   Core.Command.basic ~summary:"execute the P4 spec against a P4 program"
@@ -261,45 +259,40 @@ let run_command =
      in
      fun () ->
        let cache = not no_cache in
-       match spec_of_mode mode paths_spec with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok spec_sim -> (
-           try
-             let (module Simulator) =
-               Backend_sim.Build.build ~cache ~det ~guard spec_sim
-             in
-             let handlers =
-               if profile then
-                 let (module PH : Inst.Handler.HANDLER) =
-                   Inst.Profile.make ()
+       match
+         let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+         let* simulator = P4spectec.build_sim ~cache ~det ~guard spec_sim in
+         Ok (spec_sim, simulator)
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (spec_sim, simulator) -> (
+           let (module Simulator : SIM) = simulator in
+           let handlers =
+             if profile then
+               let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+               [ (module PH : Inst.Handler.HANDLER) ]
+             else []
+           in
+           let handlers =
+             match trace with
+             | Some level ->
+                 let (module TH : Inst.Handler.HANDLER) =
+                   Inst.Trace.make ~level ()
                  in
-                 [ (module PH : Inst.Handler.HANDLER) ]
-               else []
-             in
-             let handlers =
-               match trace with
-               | Some level ->
-                   let (module TH : Inst.Handler.HANDLER) =
-                     Inst.Trace.make ~level ()
-                   in
-                   handlers @ [ (module TH : Inst.Handler.HANDLER) ]
-               | None -> handlers
-             in
-             Inst.Hook.register handlers;
-             Inst.Hook.init_spec spec_sim;
-             let result =
-               Simulator.Interp.eval_program relname includes_p4 path_p4
-             in
-             Inst.Hook.finish ();
-             match result with
-             | Pass _ -> Format.printf "passed\n"
-             | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-             | Fail (`Runtime (_, msg)) ->
-                 Format.printf "runtime error: %s\n" msg
-           with
-           | CommandError msg -> Format.printf "%s\n" msg
-           | Interp_common.Error.InterpError (at, msg) ->
-               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
+                 handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+             | None -> handlers
+           in
+           Inst.Hook.register handlers;
+           Inst.Hook.init_spec spec_sim;
+           let result =
+             Simulator.Interp.eval_program relname includes_p4 path_p4
+           in
+           Inst.Hook.finish ();
+           match result with
+           | Pass _ -> Format.printf "passed\n"
+           | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
+           | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
+           ))
 
 let sim_command =
   Core.Command.basic
@@ -339,46 +332,40 @@ let sim_command =
      in
      fun () ->
        let cache = not no_cache in
-       match spec_of_mode mode paths_spec with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok spec_sim -> (
-           try
-             let (module Simulator) =
-               Backend_sim.Build.build ~cache ~det ~guard ~arch spec_sim
-             in
-             let handlers =
-               if profile then
-                 let (module PH : Inst.Handler.HANDLER) =
-                   Inst.Profile.make ()
+       match
+         let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+         let* simulator =
+           P4spectec.build_sim ~cache ~det ~guard ~arch spec_sim
+         in
+         Ok (spec_sim, simulator)
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (spec_sim, simulator) -> (
+           let (module Simulator : SIM) = simulator in
+           let handlers =
+             if profile then
+               let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+               [ (module PH : Inst.Handler.HANDLER) ]
+             else []
+           in
+           let handlers =
+             match trace with
+             | Some level ->
+                 let (module TH : Inst.Handler.HANDLER) =
+                   Inst.Trace.make ~level ()
                  in
-                 [ (module PH : Inst.Handler.HANDLER) ]
-               else []
-             in
-             let handlers =
-               match trace with
-               | Some level ->
-                   let (module TH : Inst.Handler.HANDLER) =
-                     Inst.Trace.make ~level ()
-                   in
-                   handlers @ [ (module TH : Inst.Handler.HANDLER) ]
-               | None -> handlers
-             in
-             Inst.Hook.register handlers;
-             Inst.Hook.init_spec spec_sim;
-             let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
-             Inst.Hook.finish ();
-             match result with
-             | Pass -> Format.printf "passed\n"
-             | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-             | Fail (`Runtime (_, msg)) ->
-                 Format.printf "runtime error: %s\n" msg
-           with
-           | CommandError msg -> Format.printf "%s\n" msg
-           | Interp_common.Error.InterpError (at, msg)
-           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
-               Format.printf "%s\n" (Util.Error.string_of_error at msg)
-           | Stf.Error.StfError msg ->
-               Format.printf "%s\n" (Util.Error.string_of_error no_region msg)))
+                 handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+             | None -> handlers
+           in
+           Inst.Hook.register handlers;
+           Inst.Hook.init_spec spec_sim;
+           let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
+           Inst.Hook.finish ();
+           match result with
+           | Pass -> Format.printf "passed\n"
+           | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
+           | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
+           ))
 
 let cover_run_command =
   Core.Command.basic ~summary:"measure coverage of the spec"
@@ -401,30 +388,24 @@ let cover_run_command =
          ~if_nothing_chosen:(Default_to `Instr)
      in
      fun () ->
-       try
-         let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
-         let paths_p4 =
-           testdirs_p4
-           |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
-           |> List.filter (fun path_p4 ->
-                  not (List.exists (String.equal path_p4) excludes_p4))
-         in
-         match
-           match mode with
-           | `Instr ->
-               cover_run_instr SL_mode paths_spec relname includes_p4 paths_p4
-                 path_cov
-           | `Dangling ->
-               cover_run_dangling SL_mode paths_spec relname includes_p4
-                 paths_p4 path_cov
-         with
-         | Ok () -> ()
-         | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
+       let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
+       let paths_p4 =
+         testdirs_p4
+         |> List.concat_map (Util.Filesys.collect_files ~suffix:".p4")
+         |> List.filter (fun path_p4 ->
+                not (List.exists (String.equal path_p4) excludes_p4))
+       in
+       match
+         match mode with
+         | `Instr ->
+             cover_run_instr SL_mode paths_spec relname includes_p4 paths_p4
+               path_cov
+         | `Dangling ->
+             cover_run_dangling SL_mode paths_spec relname includes_p4 paths_p4
+               path_cov
        with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | Interp_common.Error.InterpError (at, msg)
-       | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
-           Format.printf "%s\n" (Util.Error.string_of_error at msg))
+       | Ok () -> ()
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let cover_sim_command =
   Core.Command.basic
@@ -452,31 +433,25 @@ let cover_sim_command =
          ~if_nothing_chosen:(Default_to `Instr)
      in
      fun () ->
-       try
-         let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
-         let paths_p4, paths_stf =
-           Util.Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
-           |> List.map (fun (path_p4, path_stf, _) -> (path_p4, path_stf))
-           |> List.filter (fun (path_p4, _) ->
-                  not (List.exists (String.equal path_p4) excludes_p4))
-           |> List.split
-         in
-         match
-           match mode with
-           | `Instr ->
-               cover_sim_instr ~arch SL_mode paths_spec includes_p4 paths_p4
-                 paths_stf path_cov
-           | `Dangling ->
-               cover_sim_dangling ~arch SL_mode paths_spec includes_p4 paths_p4
-                 paths_stf path_cov
-         with
-         | Ok () -> ()
-         | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
+       let excludes_p4 = Util.Test.collect_excludes excludes_p4 in
+       let paths_p4, paths_stf =
+         Util.Test.collect_test_pairs arch testdirs_p4 testdirs_stf patchdir
+         |> List.map (fun (path_p4, path_stf, _) -> (path_p4, path_stf))
+         |> List.filter (fun (path_p4, _) ->
+                not (List.exists (String.equal path_p4) excludes_p4))
+         |> List.split
+       in
+       match
+         match mode with
+         | `Instr ->
+             cover_sim_instr ~arch SL_mode paths_spec includes_p4 paths_p4
+               paths_stf path_cov
+         | `Dangling ->
+             cover_sim_dangling ~arch SL_mode paths_spec includes_p4 paths_p4
+               paths_stf path_cov
        with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | Interp_common.Error.InterpError (at, msg)
-       | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
-           Format.printf "%s\n" (Util.Error.string_of_error at msg))
+       | Ok () -> ()
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let run_testgen_command =
   Core.Command.basic
@@ -510,46 +485,41 @@ let run_testgen_command =
          ~doc:"cover a new dangling only if it was intended by a mutation"
      in
      fun () ->
-       match Pass.structure ~final:true paths_spec with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok spec_sl -> (
-           try
-             let logmode =
-               if silent then Backend_testgen_neg.Modes.Silent
-               else Backend_testgen_neg.Modes.Verbose
-             in
-             let bootmode =
-               match (bootdir, path_boot) with
-               | Some bootdir, None ->
-                   Backend_testgen_neg.Modes.Cold (excludes_p4, bootdir)
-               | None, Some path_boot ->
-                   Backend_testgen_neg.Modes.Warm path_boot
-               | Some _, Some _ ->
-                   raise
-                     (CommandError
-                        "Error: should specify only one of -boot-dir or \
-                         -boot-file")
-               | None, None ->
-                   raise
-                     (CommandError "Error: should specify either -cold or -warm")
-             in
-             let mutationmode =
-               if random then Backend_testgen_neg.Modes.Random
-               else if hybrid then Backend_testgen_neg.Modes.Hybrid
-               else Backend_testgen_neg.Modes.Derive
-             in
-             let covermode =
-               if strict then Backend_testgen_neg.Modes.Strict
-               else Backend_testgen_neg.Modes.Relaxed
-             in
-             Backend_testgen_neg.Gen.fuzzer fuel spec_sl relname includes_p4
-               gendir name_campaign randseed logmode bootmode mutationmode
-               covermode
-           with
-           | CommandError msg -> Format.printf "%s\n" msg
-           | Interp_common.Error.InterpError (at, msg)
-           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
-               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
+       match
+         let* spec_sl = P4spectec.structure ~final:true paths_spec in
+         let logmode =
+           if silent then Backend_testgen_neg.Modes.Silent
+           else Backend_testgen_neg.Modes.Verbose
+         in
+         let* bootmode =
+           match (bootdir, path_boot) with
+           | Some bootdir, None ->
+               Ok (Backend_testgen_neg.Modes.Cold (excludes_p4, bootdir))
+           | None, Some path_boot ->
+               Ok (Backend_testgen_neg.Modes.Warm path_boot)
+           | Some _, Some _ ->
+               Error
+                 (Error.CommandError
+                    "Error: should specify only one of -boot-dir or -boot-file")
+           | None, None ->
+               Error
+                 (Error.CommandError
+                    "Error: should specify either -cold or -warm")
+         in
+         let mutationmode =
+           if random then Backend_testgen_neg.Modes.Random
+           else if hybrid then Backend_testgen_neg.Modes.Hybrid
+           else Backend_testgen_neg.Modes.Derive
+         in
+         let covermode =
+           if strict then Backend_testgen_neg.Modes.Strict
+           else Backend_testgen_neg.Modes.Relaxed
+         in
+         P4spectec.fuzzer fuel spec_sl relname includes_p4 gendir name_campaign
+           randseed logmode bootmode mutationmode covermode
+       with
+       | Ok () -> ()
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let run_testgen_debug_command =
   Core.Command.basic
@@ -564,17 +534,13 @@ let run_testgen_debug_command =
        flag "-debug" (required string) ~doc:"directory for debug files"
      and iid = flag "-iid" (required int) ~doc:"dangling id to close-miss" in
      fun () ->
-       match Pass.structure ~final:true paths_spec with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok spec_sl -> (
-           try
-             Backend_testgen_neg.Derive.debug_dangling spec_sl relname
-               includes_p4 path_p4 debugdir iid
-           with
-           | CommandError msg -> Format.printf "%s\n" msg
-           | Interp_common.Error.InterpError (at, msg)
-           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
-               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
+       match
+         let* spec_sl = P4spectec.structure ~final:true paths_spec in
+         P4spectec.debug_dangling spec_sl relname includes_p4 path_p4 debugdir
+           iid
+       with
+       | Ok () -> ()
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let interesting_command =
   Core.Command.basic ~summary:"interestingness test for reducing P4 programs"
@@ -591,57 +557,55 @@ let interesting_command =
      and iid = flag "-iid" (required int) ~doc:"dangling id to test"
      and path_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
-       match spec_of_mode SL_mode paths_spec with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok spec_sim -> (
-           try
-             let (module Simulator) = Backend_sim.Build.build spec_sim in
-             let result, cover =
-               run_with_dangling
-                 (module Simulator)
-                 spec_sim relname includes_p4 path_p4
-             in
-             match result with
-             | Pass _ ->
-                 if check_well_typed then (
-                   let branch = Coverage.Dangling.Single.Cover.find iid cover in
-                   match branch.status with
-                   | Hit ->
-                       Printf.printf "WellTyped: Hit\n";
-                       if check_close_miss then exit 3 else exit 0
-                   | Miss (_ :: _) ->
-                       Printf.printf "WellTyped: Close\n";
-                       if check_close_miss then exit 0 else exit 2
-                   | Miss [] ->
-                       Printf.printf "WellTyped: Miss\n";
-                       exit 1)
-                 else (
-                   Printf.printf "WellTyped\n";
-                   exit 11)
-             | Fail (`Syntax _) ->
-                 Printf.printf "IllFormed";
-                 exit 12
-             | Fail (`Runtime _) -> (
-                 if check_well_typed then (
-                   Printf.printf "IllTyped\n";
-                   exit 10)
-                 else
-                   let branch = Coverage.Dangling.Single.Cover.find iid cover in
-                   match branch.status with
-                   | Hit ->
-                       Printf.printf "IllTyped: Hit\n";
-                       if check_close_miss then exit 3 else exit 0
-                   | Miss (_ :: _) ->
-                       Printf.printf "IllTyped: Close\n";
-                       if check_close_miss then exit 0 else exit 2
-                   | Miss [] ->
-                       Printf.printf "IllTyped: Miss\n";
-                       exit 1)
-           with
-           | CommandError msg -> Format.printf "%s\n" msg
-           | Interp_common.Error.InterpError (at, msg)
-           | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
-               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
+       match
+         let* spec_sim = P4spectec.spec_of_mode SL_mode paths_spec in
+         let* simulator = P4spectec.build_sim spec_sim in
+         Ok (spec_sim, simulator)
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (spec_sim, simulator) -> (
+           let (module Simulator : SIM) = simulator in
+           let result, cover =
+             run_with_dangling
+               (module Simulator)
+               spec_sim relname includes_p4 path_p4
+           in
+           match result with
+           | Pass _ ->
+               if check_well_typed then (
+                 let branch = Coverage.Dangling.Single.Cover.find iid cover in
+                 match branch.status with
+                 | Hit ->
+                     Printf.printf "WellTyped: Hit\n";
+                     if check_close_miss then exit 3 else exit 0
+                 | Miss (_ :: _) ->
+                     Printf.printf "WellTyped: Close\n";
+                     if check_close_miss then exit 0 else exit 2
+                 | Miss [] ->
+                     Printf.printf "WellTyped: Miss\n";
+                     exit 1)
+               else (
+                 Printf.printf "WellTyped\n";
+                 exit 11)
+           | Fail (`Syntax _) ->
+               Printf.printf "IllFormed";
+               exit 12
+           | Fail (`Runtime _) -> (
+               if check_well_typed then (
+                 Printf.printf "IllTyped\n";
+                 exit 10)
+               else
+                 let branch = Coverage.Dangling.Single.Cover.find iid cover in
+                 match branch.status with
+                 | Hit ->
+                     Printf.printf "IllTyped: Hit\n";
+                     if check_close_miss then exit 3 else exit 0
+                 | Miss (_ :: _) ->
+                     Printf.printf "IllTyped: Close\n";
+                     if check_close_miss then exit 0 else exit 2
+                 | Miss [] ->
+                     Printf.printf "IllTyped: Miss\n";
+                     exit 1)))
 
 let splice_command =
   Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
@@ -653,29 +617,26 @@ let splice_command =
      and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
      fun () ->
        match
-         let* spec = Pass.parse paths_spec in
-         let* spec_pl = Pass.annotate paths_spec in
-         Ok (spec, spec_pl)
+         let* spec = P4spectec.parse paths_spec in
+         let* spec_pl = P4spectec.annotate paths_spec in
+         let* paths =
+           if
+             (not inplace)
+             && List.length paths_input <> List.length paths_output
+           then
+             Error
+               (Error.CommandError "number of input and output files must match")
+           else if inplace then Ok (List.combine paths_input paths_input)
+           else Ok (List.combine paths_input paths_output)
+         in
+         Ok (spec, spec_pl, paths)
        with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok (spec, spec_pl) -> (
-           try
-             if
-               (not inplace)
-               && List.length paths_input <> List.length paths_output
-             then
-               raise
-                 (CommandError "number of input and output files must match");
-             let paths =
-               if inplace then List.combine paths_input paths_input
-               else List.combine paths_input paths_output
-             in
-             Backend_splice.Driver.splice_files spec spec_pl paths
-           with
-           | CommandError msg -> Format.printf "%s\n" msg
-           | Backend_splice.Error.SpliceError (at, msg) ->
-               Format.eprintf "%s\n" (Util.Error.string_of_error at msg);
-               Format.printf "%s\n" (Util.Error.string_of_error at msg)))
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (spec, spec_pl, paths) -> (
+           try Backend_splice.Driver.splice_files spec spec_pl paths
+           with Backend_splice.Error.SpliceError (at, msg) ->
+             Format.eprintf "%s\n" (Util.Error.string_of_error at msg);
+             Format.printf "%s\n" (Util.Error.string_of_error at msg)))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
@@ -688,11 +649,14 @@ let parse_command =
        flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
      in
      fun () ->
-       match spec_of_mode AL_mode paths_spec with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok spec_sim -> (
+       match
+         let* spec_sim = P4spectec.spec_of_mode AL_mode paths_spec in
+         P4spectec.build_sim spec_sim
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok simulator -> (
+           let (module Simulator : SIM) = simulator in
            try
-             let (module Simulator) = Backend_sim.Build.build spec_sim in
              match
                Simulator.Interface.parse_program includes_p4 [ path_p4 ]
              with

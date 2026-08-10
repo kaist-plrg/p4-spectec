@@ -1602,14 +1602,17 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
     with
     | P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Interp_common.Error.InterpError (at, msg) -> Run.Fail (`Runtime (at, msg))
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
+        Run.Fail (`Runtime (at, msg))
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
     try
       let+ values_output = do_eval_rel relname values_input in
       (Run.Pass values_output : Run.rel_result)
-    with Interp_common.Error.InterpError (at, msg) -> Run.Fail (at, msg)
+    with
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Run.func_result =
@@ -1617,12 +1620,16 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       let+ value_output = do_eval_func funcname targs values_input in
       (Run.Pass value_output : Run.func_result)
-    with Interp_common.Error.InterpError (at, msg) -> Run.Fail (at, msg)
+    with
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) :
+      (unit, Run.error) result =
     if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
-    Ctx.init ~det spec
+    try Ok (Ctx.init ~det spec)
+    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
 end

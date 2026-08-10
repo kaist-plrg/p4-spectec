@@ -1,23 +1,19 @@
 open Runtime.Sim.Signature
+module Error = P4spectec.Error
 module Filesys = Util.Filesys
 open Util.Source
 
 let version = "0.1"
-
-let spec_of_mode (mode : mode) (paths_spec : string list) :
-    (spec, Pass.error) result =
-  match mode with
-  | AL_mode -> Result.map (fun s -> AL s) (Pass.algo paths_spec)
-  | SL_mode ->
-      Result.map (fun s -> SL s) (Pass.structure ~final:true paths_spec)
-  | PL_mode -> Result.map (fun s -> PL s) (Pass.annotate paths_spec)
-  | Empty_mode -> assert false
+let ( let* ) = Result.bind
 
 let build_sim ?cache ?det ?guard ?(arch : string option) mode paths_spec =
-  match spec_of_mode mode paths_spec with
-  | Ok spec_sim ->
-      (spec_sim, Backend_sim.Build.build ?cache ?det ?guard ?arch spec_sim)
-  | Error e -> failwith (Pass.string_of_error e)
+  match
+    let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+    let* simulator = P4spectec.build_sim ?cache ?det ?guard ?arch spec_sim in
+    Ok (spec_sim, simulator)
+  with
+  | Ok (spec_sim, simulator) -> (spec_sim, simulator)
+  | Error e -> failwith (Error.to_string e)
 
 (* Statistics *)
 

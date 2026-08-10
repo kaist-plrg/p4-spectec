@@ -3,6 +3,9 @@ open Lang
 open Sl
 module DCov_single = Coverage.Dangling.Single
 module Sim = Runtime.Sim.Signature
+
+let ( let* ) = Result.bind
+
 module Dep = Runtime.Testgen_neg.Dep
 module F = Format
 
@@ -59,17 +62,20 @@ let derive_dangling (iid : iid) (vdg : Dep.Graph.t) (cover : DCov_single.t) :
 (* Entry point for debugging close-ASTs *)
 
 let debug_dangling (spec : spec) (relname : string) (includes_p4 : string list)
-    (filename_p4 : string) (dirname_debug : string) (iid : iid) : unit =
+    (filename_p4 : string) (dirname_debug : string) (iid : iid) :
+    (unit, Sim.error) result =
+  let spec = Sim.SL spec in
+  let (module Simulator) = Backend_sim.Build.gen_p4_placeholder () in
+  let* () = Simulator.init spec in
   let program_result, cover, vdg =
-    let spec = Sim.SL spec in
-    let (module Simulator) = Backend_sim.Build.gen_p4_placeholder () in
-    Simulator.init spec;
     Runner.run_program_with_dangling_and_vdg ~derive:true
       (module Simulator)
       spec relname includes_p4 filename_p4
   in
   match program_result with
-  | Fail _ -> print_endline "failed"
+  | Fail _ ->
+      print_endline "failed";
+      Ok ()
   | Pass _ ->
       (* Find related values that contributed to the close-miss *)
       let vids_related =
@@ -152,4 +158,5 @@ let debug_dangling (spec : spec) (relname : string) (includes_p4 : string list)
                     (Sl.Print.string_of_value value_source)
                   |> output_string oc_value)
                 derivations_source)
-        vids_related
+        vids_related;
+      Ok ()

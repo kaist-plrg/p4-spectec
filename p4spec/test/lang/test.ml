@@ -4,10 +4,9 @@ open Test_common
 (* Spec elaboration test *)
 
 let elab_test path_spec =
-  match Pass.elab path_spec with
+  match P4spectec.elab path_spec with
   | Ok spec_il -> Il.Print.string_of_spec spec_il |> print_endline
-  | Error e ->
-      Format.printf "Error on elaboration: %s\n" (Pass.string_of_error e)
+  | Error e -> Format.printf "Error on elaboration: %s\n" (Error.to_string e)
 
 let elab_command =
   Core.Command.basic ~summary:"run elaboration test"
@@ -19,9 +18,9 @@ let elab_command =
 (* Algo test *)
 
 let algo_test path_spec =
-  match Pass.algo path_spec with
+  match P4spectec.algo path_spec with
   | Ok spec_al -> Al.Print.string_of_spec spec_al |> print_endline
-  | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
+  | Error e -> Format.printf "%s\n" (Error.to_string e)
 
 let algo_command =
   Core.Command.basic ~summary:"run algo test"
@@ -33,9 +32,9 @@ let algo_command =
 (* Structuring test *)
 
 let structure_test path_spec =
-  match Pass.structure ~final:true path_spec with
+  match P4spectec.structure ~final:true path_spec with
   | Ok spec_sl -> Sl.Print.string_of_spec spec_sl |> print_endline
-  | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
+  | Error e -> Format.printf "%s\n" (Error.to_string e)
 
 let structure_command =
   Core.Command.basic ~summary:"run structuring test"
@@ -47,9 +46,9 @@ let structure_command =
 (* Annotate (prose) test *)
 
 let annotate_test path_spec =
-  match Pass.annotate path_spec with
+  match P4spectec.annotate path_spec with
   | Ok spec_pl -> Pl.Render.render_spec spec_pl |> print_endline
-  | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
+  | Error e -> Format.printf "%s\n" (Error.to_string e)
 
 let annotate_command =
   Core.Command.basic ~summary:"run annotate test"

@@ -2313,7 +2313,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) ~guard:_ (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) ~guard:_ (spec : spec) :
+      (unit, Run.error) result =
     if cache then Cache.cache_on () else Cache.cache_off ();
-    Ctx.init ~det spec
+    try Ok (Ctx.init ~det spec)
+    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
 end

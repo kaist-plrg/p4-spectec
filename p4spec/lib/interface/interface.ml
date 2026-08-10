@@ -74,7 +74,7 @@ module P4 = struct
 
   (* Initialization *)
 
-  let init (spec : Run.spec) : unit =
+  let init (spec : Run.spec) : (unit, Run.error) result =
     let printer (value : Value.t) =
       match spec with
       | AL spec_al ->
@@ -88,7 +88,8 @@ module P4 = struct
           Format.asprintf "%a" (P4.Unparse.pp_value henv) value
       | Empty -> assert false
     in
-    unparser := printer
+    unparser := printer;
+    Ok ()
 end
 
 (* SpecTec IL *)
@@ -135,7 +136,7 @@ module SpecTec_AL = struct
 
   (* Initialization *)
 
-  let init (_spec : Run.spec) : unit = ()
+  let init (_spec : Run.spec) : (unit, Run.error) result = Ok ()
 end
 
 (* SpecTec SL *)
@@ -182,5 +183,5 @@ module SpecTec_SL = struct
 
   (* Initialization *)
 
-  let init (_spec : Run.spec) : unit = ()
+  let init (_spec : Run.spec) : (unit, Run.error) result = Ok ()
 end

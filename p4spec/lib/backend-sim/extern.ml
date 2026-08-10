@@ -13,7 +13,7 @@ module type IMPL = sig
 end
 
 module Make (A : IMPL) : Run.EXTERN = struct
-  let init_mode _ = ()
+  let init_mode _ = Ok ()
   let checkpoint () : int = 0
   let seff (before : int) (after : int) : bool = before <> after
   let clear () = ()

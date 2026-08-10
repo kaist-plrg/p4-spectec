@@ -1,33 +1,47 @@
 module Sim = Runtime.Sim.Signature
-open Error
+open Util.Source
 
-let gen_p4 arch =
+let ( let* ) = Result.bind
+
+let gen_p4 (arch : string) : ((module Sim.SIM), Sim.error) result =
   match arch with
   | "v1model" ->
-      (module Make.Make (Interface.P4) (V1model.Pipe.Make)
-                (Interp_al.Interp.Make)
-                (Interp_sl.Interp.Make)
-                (Interp_pl.Interp.Make) : Sim.SIM)
+      Ok
+        (module Make.Make (Interface.P4) (V1model.Pipe.Make)
+                  (Interp_al.Interp.Make)
+                  (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Sim.SIM)
   | "ebpf" ->
-      (module Make.Make (Interface.P4) (Ebpf.Pipe.Make) (Interp_al.Interp.Make)
-                (Interp_sl.Interp.Make)
-                (Interp_pl.Interp.Make) : Sim.SIM)
+      Ok
+        (module Make.Make (Interface.P4) (Ebpf.Pipe.Make)
+                  (Interp_al.Interp.Make)
+                  (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Sim.SIM)
   | "psa" ->
-      (module Make.Make (Interface.P4) (Psa.Pipe.Make) (Interp_al.Interp.Make)
-                (Interp_sl.Interp.Make)
-                (Interp_pl.Interp.Make) : Sim.SIM)
+      Ok
+        (module Make.Make (Interface.P4) (Psa.Pipe.Make) (Interp_al.Interp.Make)
+                  (Interp_sl.Interp.Make)
+                  (Interp_pl.Interp.Make) : Sim.SIM)
   | _ ->
-      Format.asprintf "architecture %s is not supported" arch |> error_no_region
+      Error
+        {
+          Sim.at = no_region;
+          msg = Format.asprintf "architecture %s is not supported" arch;
+        }
 
-let gen_p4_placeholder () =
+let gen_p4_placeholder () : (module Sim.SIM) =
   (module Make.Make (Interface.P4) (Placeholder.Make) (Interp_al.Interp.Make)
             (Interp_sl.Interp.Make)
             (Interp_pl.Interp.Make) : Sim.SIM)
 
 let build ?(cache = true) ?(det = false) ?(guard = false)
-    ?(arch : string option) (spec_sim : Sim.spec) =
-  let (module Simulator) =
-    match arch with Some arch -> gen_p4 arch | None -> gen_p4_placeholder ()
+    ?(arch : string option) (spec_sim : Sim.spec) :
+    ((module Sim.SIM), Sim.error) result =
+  let* simulator =
+    match arch with
+    | Some arch -> gen_p4 arch
+    | None -> Ok (gen_p4_placeholder ())
   in
-  Simulator.init ~cache ~det ~guard spec_sim;
-  (module Simulator : Sim.SIM)
+  let (module Simulator : Sim.SIM) = simulator in
+  let* () = Simulator.init ~cache ~det ~guard spec_sim in
+  Ok simulator

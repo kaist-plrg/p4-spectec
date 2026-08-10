@@ -53,7 +53,7 @@ module Make_null
       | Fail (at, msg) -> error at msg
     in
     call_func := call_func_;
-    ()
+    Ok ()
 
   (* Threading extern calls to the interpreter *)
 
@@ -125,7 +125,7 @@ module Make_parametric
     () : Run.EXTERN = struct
   (* Mode initialization *)
 
-  let init_mode _ = ()
+  let init_mode _ = Ok ()
 
   (* Caches
    * an interface cache for storing results of booting and unbooting values, types, and mixops *)
