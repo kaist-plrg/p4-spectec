@@ -84,7 +84,9 @@ let boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4 =
   let total = List.length paths_p4 in
   let tower =
     let target = { includes = includes_p4; path = "" } in
-    Backend_boot.Config.tower_of_file path_tower target
+    match P4spectec.tower_of_file path_tower target with
+    | Ok tower -> tower
+    | Error e -> failwith (Error.to_string e)
   in
   let prefix (level : level) =
     {
@@ -104,10 +106,10 @@ let boot_test_driver path_tower det neg includes_p4 excludes_p4 testdirs_p4 =
   let rel_p4 = tower.level_target.layer.rel in
   Format.asprintf "Running boot test (%s/%s) on %d files\n" rel rel_p4 total
   |> print_endline;
-  let _, _, _, (module Booter) =
-    match Backend_boot.Build.build_tower ~det tower with
+  let _, (module Booter) =
+    match P4spectec.build_tower ~det tower with
     | Ok r -> r
-    | Error e -> failwith (Pass.string_of_error e)
+    | Error e -> failwith (Error.to_string e)
   in
   let _, stat =
     List.fold_left

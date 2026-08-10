@@ -70,7 +70,8 @@ module Make
       in
       Spec_.Func.register call_func;
       Spec_.Rel.register call_rel;
-      Spec_.Pgm.register call_pgm
+      Spec_.Pgm.register call_pgm;
+      Ok ()
 
     let checkpoint () : int = 0
     let seff (before : int) (after : int) : bool = before <> after

@@ -14,10 +14,6 @@ let to_region_msg = function
   | StructError e -> Structure.to_region_msg e
   | ProseError e -> Annotate.to_region_msg e
 
-let string_of_error e =
-  let at, msg = to_region_msg e in
-  Util.Error.string_of_error at msg
-
 let ( let* ) = Result.bind
 
 (* Stages *)

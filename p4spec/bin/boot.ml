@@ -1,7 +1,9 @@
 open Lang
 open Runtime.Dynamic_Runner.Signature
+module Error = P4spectec.Error
 open Backend_boot.Config
 
+let ( let* ) = Result.bind
 let version = "0.1"
 
 (* Tune GC for the allocation-heavy meta-circular interpreter *)
@@ -14,8 +16,6 @@ let () =
       Gc.space_overhead = 2000;
     }
 
-exception CommandError of string
-
 (* Commands *)
 
 let elab_command =
@@ -26,9 +26,9 @@ let elab_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.elab paths_spec with
+       match P4spectec.elab paths_spec with
        | Ok spec_il -> Format.printf "%s\n" (Il.Print.string_of_spec spec_il)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a spec"
@@ -38,9 +38,9 @@ let algo_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.algo paths_spec with
+       match P4spectec.algo paths_spec with
        | Ok spec_al -> Format.printf "%s\n" (Al.Print.string_of_spec spec_al)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a spec"
@@ -50,9 +50,9 @@ let struct_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.structure ~final:true paths_spec with
+       match P4spectec.structure ~final:true paths_spec with
        | Ok spec_sl -> Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let prose_command =
   Core.Command.basic ~summary:"generate AsciiDoc prose from a spec"
@@ -62,9 +62,9 @@ let prose_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match Pass.annotate paths_spec with
+       match P4spectec.annotate paths_spec with
        | Ok spec_pl -> Format.printf "%s\n" (Pl.Render.render_spec spec_pl)
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e))
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let run_command =
   Core.Command.basic ~summary:"execute the spec"
@@ -111,39 +111,36 @@ let run_command =
      fun () ->
        let cache = not no_cache in
        match
-         Backend_boot.Build.build_null ~cache ~det ~guard mode interface
-           paths_spec
+         let* spec = P4spectec.spec_of_mode mode paths_spec in
+         let* runner = P4spectec.build_null ~cache ~det ~guard interface spec in
+         Ok (spec, runner)
        with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok (spec, (module Runner)) -> (
-           try
-             let handlers =
-               if profile then
-                 let (module PH : Inst.Handler.HANDLER) =
-                   Inst.Profile.make ()
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (spec, (module Runner : RUNNER)) -> (
+           let handlers =
+             if profile then
+               let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+               [ (module PH : Inst.Handler.HANDLER) ]
+             else []
+           in
+           let handlers =
+             match trace with
+             | Some level ->
+                 let (module TH : Inst.Handler.HANDLER) =
+                   Inst.Trace.make ~level ()
                  in
-                 [ (module PH : Inst.Handler.HANDLER) ]
-               else []
-             in
-             let handlers =
-               match trace with
-               | Some level ->
-                   let (module TH : Inst.Handler.HANDLER) =
-                     Inst.Trace.make ~level ()
-                   in
-                   handlers @ [ (module TH : Inst.Handler.HANDLER) ]
-               | None -> handlers
-             in
-             Inst.Hook.register handlers;
-             Inst.Hook.init_spec spec;
-             let result = Runner.Interp.eval_program relname [] path_spectec in
-             Inst.Hook.finish ();
-             match result with
-             | Pass _ -> Format.printf "passed\n"
-             | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-             | Fail (`Runtime (_, msg)) ->
-                 Format.printf "runtime error: %s\n" msg
-           with CommandError msg -> Format.printf "%s\n" msg))
+                 handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+             | None -> handlers
+           in
+           Inst.Hook.register handlers;
+           Inst.Hook.init_spec spec;
+           let result = Runner.Interp.eval_program relname [] path_spectec in
+           Inst.Hook.finish ();
+           match result with
+           | Pass _ -> Format.printf "passed\n"
+           | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
+           | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
+           ))
 
 let boot_n_command =
   Core.Command.basic ~summary:"run meta-circular interpreter"
@@ -169,45 +166,40 @@ let boot_n_command =
          ~if_nothing_chosen:(Default_to None)
      in
      fun () ->
-       try
-         let target = { includes = includes_target; path = path_target } in
-         let tower =
-           try Backend_boot.Config.tower_of_file path_tower target
-           with Failure msg -> raise (CommandError msg)
+       let target = { includes = includes_target; path = path_target } in
+       match
+         let* tower = P4spectec.tower_of_file path_tower target in
+         let* spec_boot, booter =
+           P4spectec.build_tower ~cache:(not no_cache) ~det ~guard tower
          in
-         match
-           Backend_boot.Build.build_tower ~cache:(not no_cache) ~det ~guard
-             tower
-         with
-         | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-         | Ok (spec, _runner_target, _runners_interm, (module Booter)) -> (
-             let handlers =
-               if profile then
-                 let (module PH : Inst.Handler.HANDLER) =
-                   Inst.Profile.make ()
+         Ok (tower, spec_boot, booter)
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (tower, spec, (module Booter : RUNNER)) -> (
+           let handlers =
+             if profile then
+               let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+               [ (module PH : Inst.Handler.HANDLER) ]
+             else []
+           in
+           let handlers =
+             match trace with
+             | Some level ->
+                 let (module TH : Inst.Handler.HANDLER) =
+                   Inst.Trace.make ~level ()
                  in
-                 [ (module PH : Inst.Handler.HANDLER) ]
-               else []
-             in
-             let handlers =
-               match trace with
-               | Some level ->
-                   let (module TH : Inst.Handler.HANDLER) =
-                     Inst.Trace.make ~level ()
-                   in
-                   handlers @ [ (module TH : Inst.Handler.HANDLER) ]
-               | None -> handlers
-             in
-             Inst.Hook.register handlers;
-             Inst.Hook.init_spec spec;
-             let rel_boot = tower.level_boot.layer.rel in
-             let value = Backend_boot.Patch.apply_tower tower in
-             let result = Booter.Interp.eval_rel rel_boot [ value ] in
-             Inst.Hook.finish ();
-             match result with
-             | Pass _ -> Format.printf "passed\n"
-             | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg)
-       with CommandError msg -> Format.eprintf "error: %s\n" msg)
+                 handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+             | None -> handlers
+           in
+           Inst.Hook.register handlers;
+           Inst.Hook.init_spec spec;
+           let rel_boot = tower.level_boot.layer.rel in
+           let value = Backend_boot.Patch.apply_tower tower in
+           let result = Booter.Interp.eval_rel rel_boot [ value ] in
+           Inst.Hook.finish ();
+           match result with
+           | Pass _ -> Format.printf "passed\n"
+           | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a SpecTec program"
@@ -227,9 +219,12 @@ let parse_command =
          ~if_nothing_chosen:(Default_to SL_interface)
      in
      fun () ->
-       match Backend_boot.Build.build_null SL_mode interface paths_spec with
-       | Error e -> Format.printf "%s\n" (Pass.string_of_error e)
-       | Ok (_, (module Runner)) -> (
+       match
+         let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
+         P4spectec.build_null interface spec
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (module Runner) -> (
            try
              match Runner.Interface.parse_program [] [ path_spectec ] with
              | Fail (`Syntax (at, msg)) ->

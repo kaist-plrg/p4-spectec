@@ -4,7 +4,6 @@ open Util.Source
 
 type error
 
-val string_of_error : error -> string
 val to_region_msg : error -> region * string
 
 (* Stages *)
