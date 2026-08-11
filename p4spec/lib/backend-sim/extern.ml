@@ -14,6 +14,12 @@ end
 
 module Make (A : IMPL) : Run.EXTERN = struct
   let init_mode _ = ()
+
+  let init ~cache ~det ~guard (_ : Run.spec) : unit =
+    ignore cache;
+    ignore det;
+    ignore guard
+
   let checkpoint () : int = 0
   let seff (before : int) (after : int) : bool = before <> after
   let clear () = ()

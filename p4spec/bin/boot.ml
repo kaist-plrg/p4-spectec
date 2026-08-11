@@ -132,7 +132,7 @@ let run_command =
          let cache = not no_cache in
          let spec, (module Runner) =
            Backend_boot.Build.build_null ~cache ~det ~guard mode interface
-             paths_spec
+             paths_spec path_spectec
          in
          let handlers =
            if profile then
@@ -246,6 +246,7 @@ let parse_command =
        try
          let _, (module Runner) =
            Backend_boot.Build.build_null SL_mode interface paths_spec
+             path_spectec
          in
          let value_program =
            match Runner.Interface.parse_program [] [ path_spectec ] with

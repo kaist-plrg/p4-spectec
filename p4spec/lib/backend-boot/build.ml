@@ -9,22 +9,7 @@ let build_target ?(cache = true) ?(det = false) ?(guard = false)
   let (module Runner_target) =
     match level.interface with
     | P4_interface -> (module P4.Make () : Run.RUNNER)
-    | AL_interface ->
-        let module Interface_SpecTec = Interface.SpecTec_AL in
-        (module Runner.Make.Make_rec
-                  (Interface_SpecTec)
-                  (Spectec.Make_null (Interface_SpecTec))
-                  (Interp_al.Interp.Make)
-                  (Interp_sl.Interp.Make)
-                  (Interp_pl.Interp.Make) : Run.RUNNER)
-    | SL_interface ->
-        let module Interface_SpecTec = Interface.SpecTec_SL in
-        (module Runner.Make.Make_rec
-                  (Interface_SpecTec)
-                  (Spectec.Make_null (Interface_SpecTec))
-                  (Interp_al.Interp.Make)
-                  (Interp_sl.Interp.Make)
-                  (Interp_pl.Interp.Make) : Run.RUNNER)
+    | _ -> error_no_region "AL/SL interface not supported in target level"
   in
   (* Initialize the target runner, as an SL spec *)
   let spec =
@@ -130,7 +115,8 @@ let build_tower ?(cache = true) ?(det = false) ?(guard = false)
   (spec_boot, runner_target, runners_interm, booter)
 
 let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
-    (interface : Config.interface) (paths_spec : string list) =
+    (interface : Config.interface) (paths_spec : string list)
+    (path_spectec : string) =
   let (module Interface_SpecTec) =
     match interface with
     | P4_interface ->
@@ -139,9 +125,11 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     | SL_interface -> (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
   in
   let (module Runner) =
-    (module Runner.Make.Make_rec
+    (module Runner.Make.Make_nonrec
               (Interface_SpecTec)
-              (Spectec.Make_null (Interface_SpecTec))
+              (Spectec.Make_null (Interface_SpecTec) (Interp_al.Interp.Make)
+                 (Interp_sl.Interp.Make)
+                 (Interp_pl.Interp.Make))
               (Interp_al.Interp.Make)
               (Interp_sl.Interp.Make)
               (Interp_pl.Interp.Make) : Run.RUNNER)
@@ -160,4 +148,18 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     | Empty_mode -> assert false
   in
   Runner.init ~cache ~det ~guard spec;
+  let spec_target =
+    match mode with
+    | AL_mode ->
+        let spec_al = Pass.algo [ path_spectec ] in
+        (AL spec_al : Run.spec)
+    | SL_mode ->
+        let spec_sl = Pass.structure ~final:true [ path_spectec ] in
+        (SL spec_sl : Run.spec)
+    | PL_mode ->
+        let spec_pl = Pass.annotate [ path_spectec ] in
+        (PL spec_pl : Run.spec)
+    | Empty_mode -> assert false
+  in
+  Runner.init_extern ~cache ~det ~guard spec_target;
   (spec, (module Runner : Run.RUNNER))
