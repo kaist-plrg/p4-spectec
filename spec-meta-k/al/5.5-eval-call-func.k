@@ -4,8 +4,8 @@
 // Eval_tblrow, Eval_tblrows, Call_table_func, Call_defined_func,
 // Call_func_dispatch, Call_func.
 
-requires "4.4-eval-prem.k"
-requires "4.4.5-extern-json.k"
+requires "5.4-eval-prem.k"
+requires "4-extern-json.k"
 
 module AL-CALL-FUNC
   imports AL-PREM
@@ -179,17 +179,17 @@ module AL-CALL-FUNC
   //     Call_func_dispatch/defined: Call_defined_func
   //   }
   //
-  // `Call_extern_func` is an `extern relation`: left undefined on purpose (see
-  // 4.5-eval-call-func.k's sibling 4.6-eval-call-rel.k for the matching note on
-  // `Call_extern_rel`), so a spec that reaches one gets a stuck term rather
-  // than a silently wrong answer.
+  // `Call_extern_func` and `Call_builtin_func` are both `extern relation`s in
+  // watsup: their meaning lives outside the meta-language, so K implements
+  // neither and calls out over the external interface instead (the transport
+  // is in 4-extern-json.k).  They differ only in who answers —
+  // `Call_builtin_func` reaches the OCaml builtin registry
+  // (`p4spec/lib/interface/builtin/`), while `Call_extern_func` reaches the
+  // *lower spec* named by `externArgs()`, mirroring `Make_parametric`.
   //
-  // `Call_builtin_func` is also an `extern relation` in watsup, but for a
-  // different reason: its meaning lives in the host interpreter
-  // (`p4spec/lib/interface/builtin/`) rather than in the meta-language.  Rather
-  // than reimplement it, `callBuiltinFunc` below calls out to that interpreter
-  // over an external interface, which keeps the OCaml authoritative and makes
-  // every builtin it registers available under K.
+  // Both are wired below; see 5.6-eval-call-rel.k for the matching
+  // `Call_extern_rel`.  One semantic difference is worth keeping in view: a
+  // builtin is total and always yields a `Val`, whereas an extern may FAIL.
   // ==========================================================================
 
   syntax KItem ::= callFuncDispatch(FuncDef, TypList, ValList)
@@ -222,7 +222,7 @@ module AL-CALL-FUNC
   //     -- if funcdef = $find_func(C, id)
   //     -- Call_func_dispatch: C |- funcdef typ* val* : valres
   //
-  // `callFunc`'s task shape is declared in 4.3-eval-exp.k (used by
+  // `callFunc`'s task shape is declared in 5.3-eval-exp.k (used by
   // Eval_exp/call, which precedes this module in dependency order); its rules
   // are added here.
   // ==========================================================================
@@ -267,7 +267,7 @@ module AL-CALL-FUNC
   // so it only runs the eight that spec-meta's stdlib declares.  A target
   // calling, say, `$text_to_int` works under K and fails under the oracle.
   //
-  // The codec is in 4.4.5-extern-json.k, which documents the wire format; its
+  // The codec is in 4-extern-json.k, which documents the wire format; its
   // OCaml counterpart is `p4spec/lib/interface/spectec/ali/extern.ml`.
   //
   // Unlike everywhere else in this port, type arguments are *not* ignored.  A
@@ -282,81 +282,34 @@ module AL-CALL-FUNC
   // to the working directory, kept inside the project rather than in `/tmp`.
   // ==========================================================================
 
-  syntax KItem ::= builtinReq(String)
-                 | builtinFile(IOFile, String)
-                 | builtinWrite(IOInt, String, String)
-                 | builtinRun(String)
-                 | builtinResp(Int, String, String)
-
-  //   The request goes through a *file*, never through argv: operator atoms
-  //   render with quotes (`':'`), and `#system` passes its argument through a
-  //   shell, which fails on those with an unterminated quoted string.  Only
-  //   the `#mkstemp` path — `./.tmp/spectec-k-` plus six alphanumerics — is
-  //   ever interpolated into the command line.
-  //
-  //   One file serves the whole run.  `#mkstemp` mints it on the first builtin
-  //   call and `<builtinreq>` remembers the path; every later call reuses it,
-  //   and K removes it when rewriting ends.  Calling `#mkstemp` per call would
-  //   instead leave one file behind per builtin invocation.
+  //   The transport itself — request file, `#system`, reply decoding — lives
+  //   in 4-extern-json.k, next to the codec it serves and shared with the
+  //   two extern kinds.  All that is left here is to say what to send and how
+  //   the reply should be read.
   rule <k> callBuiltinFunc(X:Id, Ts:TypList, Vs:ValList)
-        => builtinReq(JSON2String(jsonOfRequest(X, Ts, Vs)))
+        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), "builtin", builtinK())
        ...
        </k>
 
-  //   First call: no path yet, so make the file and write through the fd
-  //   `#mkstemp` already opened.
-  rule <k> builtinReq(Req:String) => builtinFile(#mkstemp(builtinTemplate()), Req) ... </k>
-       <builtinreq> "" </builtinreq>
+  // ==========================================================================
+  // Call_extern_func: dispatch to the lower spec
+  //
+  // `Call_extern_func` is the hook by which a spec running under K reaches the
+  // externs of the level *below* it.  In OCaml that is `Make_parametric`
+  // (`p4spec/lib/backend-boot/spectec.ml:173-215`), which routes the call into
+  // a lower runner's `eval_func`; here it goes over the same wire as a builtin
+  // to `spectec-boot extern -lower SPEC`, which loads that lower spec and
+  // resolves the extern name against its ordinary `dec`s.
+  //
+  // Unlike a builtin, this can FAIL: the reply is `{"fail": null}` rather than
+  // a value, which `externFuncResult` turns into `FAIL` so it backtracks
+  // through `tryNextClause` exactly like a failed clause.
+  // ==========================================================================
 
-  rule <k> builtinFile(#tempFile(P:String, FD:Int), Req:String)
-        => builtinWrite(FD, Req, P)
+  rule <k> callExternFunc(X:Id, Ts:TypList, Vs:ValList)
+        => externReq(JSON2String(jsonOfExternFuncRequest(X, Ts, Vs)),
+                     externArgs(), externFuncK())
        ...
        </k>
-       <builtinreq> _ => P </builtinreq>
-
-  //   Later calls: reopen the same path in mode `"w"`, which truncates (C
-  //   `fopen` semantics), so a short request can never read back the tail of a
-  //   longer predecessor.
-  rule <k> builtinReq(Req:String) => builtinWrite(#open(P, "w"), Req, P) ... </k>
-       <builtinreq> P:String </builtinreq>
-    requires P =/=String ""
-
-  //   `#write`/`#close` have sort `K`, so they can only be sequenced directly
-  //   in the `<k>` cell — a `strict(1)` wrapper around them does not kompile.
-  rule <k> builtinWrite(FD:Int, Req:String, P:String)
-        => #write(FD, Req) ~> #close(FD) ~> builtinRun(P)
-       ...
-       </k>
-
-  rule <k> builtinRun(P:String)
-        => #system(builtinCmd() +String " builtin -i '" +String P +String "'")
-       ...
-       </k>
-
-  //   `#system` is a *function* hook, so its result lands in the `<k>` cell as
-  //   a `#systemResult` that a continuation has to pick up.
-  rule <k> #systemResult(C:Int, Out:String, Err:String)
-        => builtinResp(C, Out, Err)
-       ...
-       </k>
-
-  rule <k> builtinResp(0, Out:String, _:String)
-        => valOfJson(respOk(String2JSON(Out)))
-       ...
-       </k>
-
-  //   A non-zero exit deliberately has no rule.  A builtin is total in the
-  //   meta-language — it yields a `Val`, never FAIL — so a failure response
-  //   means a malformed request or a missing implementation, which is a defect
-  //   rather than something the spec can recover from.  The stuck term carries
-  //   the child's stderr, which is what you want to read.
-
-  syntax String ::= "builtinCmd" "(" ")"      [function, total, symbol(builtinCmd)]
-                  | "builtinTemplate" "(" ")" [function, total, symbol(builtinTemplate)]
-  rule builtinCmd() => "./spectec-boot"
-  //   `#mkstemp` fills the `XXXXXX` in, so concurrent runs in one working
-  //   directory get distinct request files.  `./.tmp/` must exist — the
-  //   `kast-json.sh` wrapper creates it, since K rules cannot mkdir.
-  rule builtinTemplate() => "./.tmp/spectec-k-XXXXXX"
 
 endmodule

@@ -4,7 +4,7 @@
 // Eval_rulgroup, Eval_rulgroups, Call_defined_rel, Call_rel_dispatch,
 // Call_rel.
 
-requires "4.5-eval-call-func.k"
+requires "5.5-eval-call-func.k"
 
 module AL-CALL-REL
   imports AL-CALL-FUNC
@@ -123,7 +123,7 @@ module AL-CALL-REL
        ...
        </k>
 
-  // Like `tblRowDone()` (4.5-eval-call-func.k), but for a relation call's result
+  // Like `tblRowDone()` (5.5-eval-call-func.k), but for a relation call's result
   // shape: a `ValList` on success (a relation's outputs are `val*`, not a
   // single `val`) rather than a bare `Val`.
   syntax KItem ::= "relCallDone" "(" ")"
@@ -150,8 +150,17 @@ module AL-CALL-REL
   //     Call_rel_dispatch/ext:     Call_extern_rel
   //   }
   //
-  // `Call_extern_rel` is an `extern relation`: left undefined on purpose, so a
-  // spec that calls one gets a stuck term.
+  // `Call_extern_rel` is an `extern relation`, dispatched over the external
+  // interface like its sibling `Call_extern_func` (5.5-eval-call-func.k): the
+  // call is serialized and answered by the *lower spec* named by
+  // `externArgs()`, mirroring `Make_parametric`'s route into a lower runner's
+  // `eval_rel` (`p4spec/lib/backend-boot/spectec.ml:196-215`).
+  //
+  // A relation yields `val*` rather than a single value, so the reply's `ok`
+  // payload is a JSON array and `externRelResult` decodes it to a `ValList` —
+  // exactly the shape `relCallDone()` already expects.  A `{"fail": null}`
+  // reply becomes `FAIL`, which backtracks through `tryNextRul` like any
+  // failed rule, so neither continuation needed changing.
   // ==========================================================================
 
   syntax KItem ::= callRelDispatch(RelDef, ValList)
@@ -163,6 +172,14 @@ module AL-CALL-REL
        </k>
   rule <k> callRelDispatch(extRel(X:Id), Vs:ValList) => callExternRel(X, Vs) ... </k>
 
+  //   An extern relation takes only `id val*` — no `targs`
+  //   (spec-meta/common/4-relation.watsup:26-30).
+  rule <k> callExternRel(X:Id, Vs:ValList)
+        => externReq(JSON2String(jsonOfExternRelRequest(X, Vs)),
+                     externArgs(), externRelK())
+       ...
+       </k>
+
   // ==========================================================================
   // Call_rel: look the relation up (global only — see 3-context.watsup's
   // `$find_rel`, which never checks a local `renv`), then dispatch.
@@ -171,7 +188,7 @@ module AL-CALL-REL
   //     -- if reldef = $find_rel(C, id)
   //     -- Call_rel_dispatch: C |- reldef val* : valsres
   //
-  // `callRel`'s task shape is declared in 4.4-eval-prem.k (used by the relation
+  // `callRel`'s task shape is declared in 5.4-eval-prem.k (used by the relation
   // premise and if-hold/if-not-hold premises, which precede this module in
   // dependency order); its rules are added here.
   // ==========================================================================

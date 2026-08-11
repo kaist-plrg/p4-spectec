@@ -2,7 +2,7 @@
 //
 // Mirrors spec-meta/al/6-entry.watsup.
 
-requires "4.6-eval-call-rel.k"
+requires "5.6-eval-call-rel.k"
 
 module AL
   imports AL-CALL-REL
@@ -25,7 +25,7 @@ module AL
        <result> _ => FAIL </result>
 
   // Remove the scratch file that builtin calls shared over this run
-  // (al/4.5-eval-call-func.k).  `#mkstemp` is documented to delete its files
+  // (al/5.5-eval-call-func.k).  `#mkstemp` is documented to delete its files
   // when rewriting ends, but K 7.1.337's LLVM backend does not, so the run
   // takes it down itself.  `#remove` has sort `K`, hence the sequencing here
   // rather than a function call.

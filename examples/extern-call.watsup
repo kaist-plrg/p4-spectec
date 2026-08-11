@@ -1,0 +1,69 @@
+;; `extern dec` and `extern relation`: reaching the level below.
+;;
+;; Unlike a builtin — whose meaning lives in the OCaml registry — an extern's
+;; meaning lives in a *lower spec*.  `Call_extern_func` and `Call_extern_rel`
+;; are the hooks by which a spec running under K reaches it.  Under K they go
+;; over the same external interface a builtin uses, but to `spectec-boot extern
+;; -lower examples/lower`, which loads `examples/lower/lower.watsup` and
+;; resolves the names declared `extern` here against its ordinary definitions.
+;; That mirrors what `Make_parametric` does in OCaml
+;; (`p4spec/lib/backend-boot/spectec.ml:173-215`).
+;;
+;; NOTE: this example runs under K but *not* under the OCaml oracle.
+;; `spectec-boot run ... -ali` builds its runner with `Make_null`, which errors
+;; on both `Call_extern_func` and `Call_extern_rel` (`spectec.ml:82-101`), so
+;; there is no oracle for this path at all.  The expected `<result>` below is
+;; hand-derived; see CROSS.md.  `examples/builtin-extra.watsup` carries the same
+;; caveat for its own, narrower reason.
+
+var i : int
+var n : nat
+
+;; ---------------------------------------------------------------------------
+;; The externs, matching definitions in examples/lower/lower.watsup.
+;; ---------------------------------------------------------------------------
+
+;; Defined there as `dec $lower_sum(int*) : int`.
+extern dec $lower_sum(int*) : int
+
+syntax sign =
+  | POS int
+  | NEG int
+
+;; Defined there as a relation with one rule, which only matches `POS i` with
+;; a non-negative `i`.  Everything else has no derivation, so it FAILs — and
+;; that FAIL has to cross the wire as `{"fail": null}` and become K's `FAIL`.
+extern relation Lower_classify:
+  |- sign ':' int int
+  hint(input %0)
+
+;; ---------------------------------------------------------------------------
+;; 3. FAIL recovery.  `$classify` returns the doubled output when the extern
+;; relation derives, and -1 when it FAILs.  The `otherwise` clause is what
+;; catches the FAIL, exactly as in `relation-typing.watsup` — which is the
+;; point: a failed extern must backtrack like any failed rule rather than
+;; sticking as an unconsumed term.
+;; ---------------------------------------------------------------------------
+
+dec $classify(sign) : int
+def $classify(sign) = i_double
+  -- Lower_classify: |- sign ':' i_same i_double
+def $classify(sign) = -1
+  -- otherwise
+
+dec $main() : int
+def $main() = i
+  ;; 1. extern *function*, returning a value: 3 + 4 + 5 = 12
+  -- if i_sum = $lower_sum([ 3, 4, 5 ])
+  ;; the empty list hits the lower spec's base clause: 0
+  -- if i_empty = $lower_sum([])
+  ;; 2. extern *relation*, returning outputs: POS 7 derives, doubling to 14
+  -- if i_pos = $classify(POS 7)
+  ;; 3. extern relation that FAILs, recovered by the `otherwise` clause: -1
+  -- if i_neg = $classify(NEG 7)
+  ;; the rule's side condition `i >= 0` also fails, for a POS with a negative
+  ;; payload -- a FAIL from a premise rather than from the head match
+  -- if i_negpos = $classify(POS $(0 - 3))
+  ;; 4. scaled so a wrong sub-result cannot cancel out:
+  ;;    1000*12 + 100*0 + 10*14 + (-1) + (-1) = 12000 + 140 - 2 = 12138
+  -- if i = $(1000 * i_sum + 100 * i_empty + 10 * i_pos + i_neg + i_negpos)

@@ -149,11 +149,11 @@ syntax modules, in dependency order:
 | `al/3-context.watsup` | `layer`/`ctx`, `$empty_ctx`, `$load*` (largest chunk, ~220 lines) | `al/3-context.k` |
 | `common/4-relation.watsup` | `res<X>` — K has no generics, so instantiate `ValRes`, `ValsRes`, `UnitRes` | `common/3-relation.k` |
 | `common/5.0-eval-typ.watsup`, `common/5.1-eval-ops.watsup` | type and operator helpers | `common/4.0-eval-typ.k`, `common/5.1-eval-ops.k` |
-| `al/5.1`–`5.7` | `Eval_typ`, `Assign_exp`, `Eval_exp`, `Eval_arg`, `Eval_prem`, `Call_func`, `Call_rel` | `al/4.1`–`4.6` (six files, not seven: argument handling is split across `4.2-eval-assign.k`, `4.3-eval-exp.k` and `4.5-eval-call-func.k` rather than getting a file of its own) |
-| `al/6-entry.watsup` | `Entry` | `al/5-entry.k` (module `AL`) |
+| `al/5.1`–`5.7` | `Eval_typ`, `Assign_exp`, `Eval_exp`, `Eval_arg`, `Eval_prem`, `Call_func`, `Call_rel` | `al/5.1`–`5.6` (six files, not seven: argument handling is split across `5.2-eval-assign.k`, `5.3-eval-exp.k` and `5.5-eval-call-func.k` rather than getting a file of its own) |
+| `al/6-entry.watsup` | `Entry` | `al/6-entry.k` (module `AL`) |
 
-The K file numbering drifted from the watsup numbering during the port, so the
-third column is the mapping as it actually landed. `CtxRes` is absent: the cell
+The `al/` numbering follows the watsup numbering; `common/` still drifts from
+it, so the third column is the mapping as it actually landed. `CtxRes` is absent: the cell
 design keeps the context in configuration cells rather than threading it as a
 value, so no relation returns one.
 
@@ -226,7 +226,7 @@ term instead. Compile the whole chain from the entry module — its
 parsed, not the module that defines the entry point:
 
 ```sh
-kompile spec-meta-k/al/5-entry.k --main-module AL --syntax-module AL-SYNTAX \
+kompile spec-meta-k/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX \
   -o al-kompiled
 krun --definition al-kompiled spec-meta-k/test/add.script
 ```
@@ -417,11 +417,11 @@ make k-run TEC=examples/add.watsup
 ./spectec-boot run spec-meta/al -rel Entry -tec examples/add.watsup -ali
 ```
 
-Underneath, the entry module is `spec-meta-k/al/5-entry.k` — there is no
+Underneath, the entry module is `spec-meta-k/al/6-entry.k` — there is no
 `main.k` — and the two commands are:
 
 ```sh
-kompile spec-meta-k/al/5-entry.k --main-module AL --syntax-module AL-SYNTAX -o al-kompiled
+kompile spec-meta-k/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX -o al-kompiled
 mkdir -p .tmp
 KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh examples/add.watsup
 ```
@@ -471,15 +471,24 @@ Run from the repo root against every example:
 | `builtin-nested` | `intN(65)` | `INT +65` | builtins over nested data | ✓ |
 | `mutual-recursion` | `intN(289)` | `INT +289` | mutual recursion, deep call stacks | ✓ |
 | `builtin-extra` | `intN(277)` | *n/a* | 11 builtins K never implemented | ✓ |
+| `extern-call` | `intN(12138)` | *n/a* | `extern dec`, `extern relation`, FAIL recovery | ✓ |
 
-All eleven end with `<saves>` and `<callstack>` empty, and `add`'s `<log>` ends
-`textV("Add")`, `intN(119)` — the `debug` premise the oracle prints as
-`TEXT Add`.
+All twelve end with `<k>`, `<saves>` and `<callstack>` empty, and `add`'s
+`<log>` ends `textV("Add")`, `intN(119)` — the `debug` premise the oracle
+prints as `TEXT Add`.
 
-`builtin-extra` has no oracle column on purpose: it uses builtins the oracle
-cannot dispatch (see *Builtin functions* below), so K is the only engine that
-runs it. It is the direct demonstration that the external interface reaches
-past the eight builtins the K rules used to implement.
+Two examples have no oracle column, for different reasons:
+
+- `builtin-extra` uses builtins the oracle cannot dispatch (see *Builtin
+  functions* below), so K is the only engine that runs it. It is the direct
+  demonstration that the external interface reaches past the eight builtins the
+  K rules used to implement.
+- `extern-call` uses `extern dec` / `extern relation`, for which **no oracle
+  exists at all**: `spectec-boot run ... -ali` builds its runner with
+  `Make_null`, which errors on both `Call_extern_func` and `Call_extern_rel`
+  (`backend-boot/spectec.ml:82-101`). Its `<result>` is hand-derived —
+  `1000*12 + 100*0 + 10*14 + (-1) + (-1) = 12138` — and confirmed against the
+  lower spec's definitions rather than against a second engine.
 
 ### Builtin functions
 
@@ -491,7 +500,7 @@ the context, but nothing consumed the resulting call.
 `Call_extern_func`/`Call_extern_rel`, which stay undefined: a builtin's meaning
 lives in the host interpreter (`p4spec/lib/interface/builtin/`), not in the
 meta-language. K therefore implements no builtin of its own. Instead
-`al/4.5-eval-call-func.k` serializes the call to JSON, shells out to
+`al/5.5-eval-call-func.k` serializes the call to JSON, shells out to
 `spectec-boot builtin`, and reads the result back, which keeps the OCaml the
 single authority for what a builtin computes.
 
@@ -542,7 +551,7 @@ the start of the next run, so they do not accumulate.
 
 #### The wire
 
-The codec is `spec-meta-k/al/4.4.5-extern-json.k` on the K side and
+The codec is `spec-meta-k/al/4-extern-json.k` on the K side and
 `p4spec/lib/interface/spectec/ali/extern.ml` on the OCaml side; the format is
 documented in full at the head of each. In brief:
 
@@ -639,3 +648,149 @@ reach (`$rev_`, `$transpose_`, `$assoc_`). `$find_maps`, `$adds_map` and
 - Replay is safe: K does not re-execute the `#system` hook on backtracking, and
   43 of the 44 builtins are pure anyway — `fresh_typeId` is the sole exception,
   already noted.
+
+### Extern functions and relations
+
+`Call_extern_func` and `Call_extern_rel` were the two remaining stuck terms:
+both were produced by dispatch but had no consuming rule, so an AL spec
+declaring an `extern dec` or `extern relation` left a visible stuck term. They
+now go over the same external interface as a builtin.
+
+They are **not just two more builtins**, and the difference is structural. A
+builtin is a static registry lookup needing no state. These are the hooks by
+which a spec running under K reaches the externs of the level *below* it: in
+OCaml that is `Make_parametric` (`backend-boot/spectec.ml:173-215`), which
+routes them into a **lower runner's** `Interp.eval_func` / `eval_rel`. They
+therefore need a *loaded lower spec*, which is why they get their own
+subcommand rather than sharing `builtin`:
+
+```
+spectec-boot extern -lower SPEC_DIR -al -ali -i REQUEST.json [-o RESPONSE.json]
+```
+
+`Backend_boot.Build.build_null` already produces such a runner, and
+`eval_func`/`eval_rel` are on the public `RUNNER` signature
+(`runtime/dynamic-runner/signature.ml:82-95`), so no widening of `RUNNER` was
+needed — the `Extern` module is never reached.
+
+The lower spec K uses is `examples/lower/lower.watsup`, named by `externArgs()`
+in `al/4-extern-json.k`. It is hardcoded for the same reason
+`builtinCmd()` is: K rules cannot read the environment, and the `.watsup` being
+run does not itself say which spec sits below it.
+
+#### The extended wire
+
+The phase-one format is *extended*, not replaced. Every builtin request and
+response is byte-identical to what it was, so that path is untouched:
+
+```
+request  ::= {"builtin":     <id>, "targs": [typ, ...], "args": [val, ...]}
+           | {"extern-func": <id>, "targs": [typ, ...], "args": [val, ...]}
+           | {"extern-rel":  <id>, "args": [val, ...]}
+
+response ::= {"ok": val}         // builtin and extern-func
+           | {"ok": [val, ...]}  // extern-rel: a relation yields val*
+           | {"fail": null}      // recoverable failure; extern only
+```
+
+The kinds are discriminated by **which key is present**, not by a separate
+`"kind"` field, which keeps a phase-one request unambiguously a phase-one
+request. Exactly one of the three must appear: none, or more than one, is an
+error rather than something guessed at. An `extern-rel` request carries no
+`targs` — an extern relation takes only `id val*`
+(`spec-meta/common/4-relation.watsup:26-30`). The `val`, `mixop` and `typ`
+productions are unchanged.
+
+#### `{"fail": null}` and why it is not a non-zero exit
+
+An extern can **FAIL**, and unlike a builtin failure that is *recoverable*.
+`rel_result`/`func_result` are `Pass | Fail of region * string`
+(`signature.ml:12-14`), and a failed extern relation must become K's `FAIL`
+KItem (`common/3-relation.k:27`) so it backtracks through `tryNextRul` exactly
+like a failed rule.
+
+So a spec-level failure travels as `{"fail": null}` **on stdout with exit
+status 0**, and the non-zero exit stays reserved for "the wire broke" —
+preserving the distinction phase one established. On the K side a non-zero exit
+still has no rule, so a genuine wire defect sticks visibly with the child's
+stderr in the term.
+
+`Fail`'s region and message are **lost** crossing the wire: K's `FAIL` is
+nullary and has nowhere to put them. They are logged to the child's stderr,
+where a failing run can still read them, while stdout carries the clean
+response.
+
+Verified end to end in `examples/extern-call.watsup`, whose two FAIL cases fail
+for genuinely different reasons — `NEG 7` finds no matching rule head, `POS -3`
+matches the head but fails the rule's `i >= 0` side condition — and both are
+recovered by a `def ... -- otherwise` clause rather than sticking.
+
+One wrinkle worth knowing: an **unknown extern name** also comes back as
+`{"fail": null}` with exit 0, not as an error, because the interpreter reports
+an undefined relation as a `Fail` rather than by raising. A typo'd extern name
+therefore looks to K like a legitimate spec-level failure and is silently
+recovered by an `otherwise` clause. The child's stderr says
+``relation `X` is undefined``, which is where to look.
+
+#### Placeholder notes, re-examined
+
+Phase one justified dropping argument `note.typ`s on the grounds that builtins
+read their arguments purely structurally. Externs do **not** inherit that
+guarantee — they run arbitrary spec code in the lower interpreter, which does
+type-directed work — so the invariant was re-checked before any K was written.
+It holds, for a different reason: the two places that could read a note do not.
+
+- The type checks `check_func_output` / `check_rel_outputs`
+  (`interp/interp-al/interp.ml:114,69`) go through `Value.Match.sub_`
+  (`runtime/value/match.ml:11-87`), which matches the *declared* `typ.it`
+  against the value's *constructor* `value.it`. It never reads
+  `value.note.typ`.
+- The one place the AL interpreter does read an argument note is `assign_exp`
+  (`interp.ml:152`), which threads it into `assign_cons_exp`
+  (`interp.ml:210-215`) to note the tail of a matched `x :: xs`. A decoded list
+  is already noted structurally, so the tail inherits a structural note — which
+  again only ever reaches `sub_`.
+
+`examples/lower/lower.watsup` exercises exactly this on purpose: `$lower_sum`
+destructures its list argument with `::` rather than an index, so the
+cons-assignment path is on the tested route. Had this not held, the fallback
+was to put the argument `typ` on the wire for extern requests only;
+`json_of_typ`/`typ_of_json` are already faithful enough to carry it.
+
+#### One shared transport
+
+The `#system` pipeline is now shared by all three call kinds and lives in
+`al/4-extern-json.k`, next to the codec it serves, rather than being copied
+per kind. Two things vary and are threaded through the pipeline states: the
+subcommand argument string, and an `ExternKind` (`builtinK()`,
+`externFuncK()`, `externRelK()`) telling the last step which decoder to apply.
+
+The kind rides in a *following* KItem rather than inside `#systemResult`, whose
+shape is fixed by K-IO. Everything else is unchanged from phase one: the
+one-file-per-run `<builtinreq>` protocol, `#write`/`#close` sequenced directly
+in `<k>`, and `dropBuiltinReq()` in `finish()`.
+
+#### Limitations
+
+- **A full spec load per call.** Each extern call spawns a process that parses
+  and elaborates the lower spec from scratch — far worse than phase one's
+  ~20-100 ms builtin spawn. Fine for a small example, unusable for a real P4
+  program. The fix is the same persistent co-process phase one anticipated, and
+  the schema is unchanged by it.
+- **Caching is bypassed.** The lower runner's caches (`spectec.ml:157,170`
+  `push_cache`/`pop_cache`) live in a process that dies after one call, so
+  nothing is memoized across calls. Phase one's `fresh_typeId` limitation is
+  the same defect in smaller form.
+- **`Fail`'s region and message are lost**, as above.
+- **An unknown extern name is indistinguishable from a spec-level failure**, as
+  above.
+- **`targs` are dead in one of the two OCaml routes.** `interp.ml:1451` passes
+  `[]` to `eval_extern_func`, and `backend-sim` names the parameter `_typs`;
+  only `Make_parametric.call_extern_func` unboots and forwards them. K sends
+  them faithfully regardless, since the request should say what was called.
+- **The lower spec is hardcoded** in `externArgs()`. Making it per-target needs
+  a channel K does not currently have.
+- Pre-existing and *not* fixed here, but worth flagging while in the area:
+  `spectec.ml:191` notes `call_extern_func`'s result as `valsres`, where
+  `spec-meta/common/4-relation.watsup:11-12` declares `res<val>` = `valres`.
+  It looks like a copy-paste slip from `call_extern_rel` directly below it.

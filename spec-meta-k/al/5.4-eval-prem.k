@@ -2,7 +2,7 @@
 //
 // Mirrors spec-meta/al/5.5-eval-prem.watsup: Eval_prem, Eval_prems.
 
-requires "4.3-eval-exp.k"
+requires "5.3-eval-exp.k"
 
 module AL-PREM
   imports AL-EVAL-EXP

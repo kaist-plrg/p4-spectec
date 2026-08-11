@@ -13,13 +13,13 @@
 #
 # Scratch files go under ./.tmp/, not /tmp.  This script also creates that
 # directory, because a spec that calls a builtin writes its request there from
-# inside K (al/4.5-eval-call-func.k), and K rules cannot mkdir.
+# inside K (al/5.5-eval-call-func.k), and K rules cannot mkdir.
 set -e
 
 mkdir -p ./.tmp
 
 # Sweep request files left by earlier runs.  K removes its own on the way out
-# (`finish()` in al/5-entry.k), but a run that dies on a stuck term never gets
+# (`finish()` in al/6-entry.k), but a run that dies on a stuck term never gets
 # there, so failed runs would otherwise accumulate one file each.  Anything
 # still here belongs to a finished process, since krun is synchronous.
 rm -f ./.tmp/spectec-k-??????

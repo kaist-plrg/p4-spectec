@@ -145,7 +145,7 @@ promote:
 # ./spectec-boot at that relative path.
 
 KDEFDIR = al-kompiled
-KENTRY = spec-meta-k/al/5-entry.k
+KENTRY = spec-meta-k/al/6-entry.k
 KTMP = .tmp
 
 .PHONY: k-build

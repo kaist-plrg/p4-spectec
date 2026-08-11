@@ -6,15 +6,19 @@ module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 open Util.Source
 
-(* The external interface for builtin calls, for the K specification in
-   `spec-meta-k/`.
+(* The external interface for builtin and extern calls, for the K
+   specification in `spec-meta-k/`.
 
    This is the mirror image of `kast.ml`: where that emits a booted program
-   *into* K once, this bridges values back and forth on every builtin call.
-   K shells out to `spectec-boot builtin`, which decodes a request here,
-   invokes the OCaml builtin, and encodes the result back.  The OCaml
-   registry in `interface/builtin/` is thereby the single authority for what
-   a builtin means; the K side holds no implementation of its own.
+   *into* K once, this bridges values back and forth on every call.
+   K shells out to `spectec-boot builtin` or `spectec-boot extern`, which
+   decodes a request here, invokes the OCaml side, and encodes the result
+   back.  The OCaml registry in `interface/builtin/` is thereby the single
+   authority for what a builtin means; the K side holds no implementation of
+   its own.  For `extern dec` / `extern relation`, the authority is instead a
+   *lower spec*, loaded by `spectec-boot extern -lower`, whose ordinary
+   functions and relations the extern names resolve against — exactly what
+   `Make_parametric` does (`backend-boot/spectec.ml:173-215`).
 
    The wire format is a custom, self-describing JSON, deliberately neither
    KAST JSON nor `Value.t`'s derived yojson:
@@ -52,17 +56,56 @@ open Util.Source
            | ["varT", <id>, [typ, ...]] | ["tupT", [typ, ...]]
            | ["iterT", typ, "?"|"*"] | ["funcT"]
 
-   request  ::= {"builtin": <id>, "targs": [typ, ...], "args": [val, ...]}
-   response ::= {"ok": val}
+   request  ::= {"builtin":     <id>, "targs": [typ, ...], "args": [val, ...]}
+              | {"extern-func": <id>, "targs": [typ, ...], "args": [val, ...]}
+              | {"extern-rel":  <id>, "args": [val, ...]}
 
-   INVARIANT, and the reason decoding is possible at all: builtins read their
-   arguments *structurally* and never inspect an argument's `note.typ`.
-   `Value.compare`, `Value.eq`, `Value.Get.*` and `Mixfix.eq_mixop` are all
-   purely structural, and the maps builtins dispatch on the mixop
-   (`maps.ml:20,39,50`), never on the note.  A builtin computes its *result*
-   type from `targs` (`lists.ml:14-16`, `maps.ml:29,67,72`), which is why
-   `targs` are decoded faithfully while argument notes are only structural
-   placeholders.  If a future builtin breaks this invariant, it breaks here. *)
+   response ::= {"ok": val}         (* builtin and extern-func *)
+              | {"ok": [val, ...]}  (* extern-rel: a relation yields val* *)
+              | {"fail": null}      (* recoverable failure; extern only *)
+
+   The three request kinds are told apart by *which key is present*, rather
+   than by a separate `"kind"` field, so that a phase-one builtin request is
+   unambiguously a builtin request and its handling is byte-identical.
+
+   `{"fail": null}` is how a lower-spec `Fail` crosses: it is a spec-level
+   outcome, not a wire error, so it travels on stdout with exit status 0 and
+   K turns it into the `FAIL` KItem it backtracks on.  A non-zero exit stays
+   reserved for "the wire broke".  `Fail`'s region and message have nowhere
+   to go — K's `FAIL` is nullary — so they are logged to stderr instead.
+
+   An `extern-rel` request carries no `targs`: an extern relation takes only
+   `id val*` (`spec-meta/common/4-relation.watsup:26-30`).
+
+   INVARIANT, and the reason decoding is possible at all: an argument's
+   `note.typ` is never *consulted*, so the wire need not carry it and a
+   structural placeholder suffices on decode.  This holds for all three
+   request kinds, but for two different reasons:
+
+   - Builtins (`"builtin"`) read their arguments purely structurally.
+     `Value.compare`, `Value.eq`, `Value.Get.*` and `Mixfix.eq_mixop` are all
+     structural, and the map builtins dispatch on the mixop
+     (`maps.ml:20,39,50`), never on the note.  A builtin computes its
+     *result* type from `targs` (`lists.ml:14-16`, `maps.ml:29,67,72`), which
+     is why `targs` are decoded faithfully while argument notes are not.
+
+   - Externs (`"extern-func"`, `"extern-rel"`) run arbitrary spec code in the
+     lower interpreter, so the guarantee cannot come from the callee.  It
+     comes from the two places that could read a note and do not.  The
+     type checks — `check_func_output`, `check_rel_outputs`
+     (`interp/interp-al/interp.ml:114,69`) — go through `Value.Match.sub_`
+     (`runtime/value/match.ml:11-87`), which matches the *declared* `typ.it`
+     against the value's *constructor* `value.it` and never reads
+     `value.note.typ`.  The one place the AL interpreter does read an
+     argument note is `assign_exp` (`interp.ml:152`), which threads it into
+     `assign_cons_exp` (`interp.ml:210-215`) to note the tail of a matched
+     `x :: xs`; since a decoded list is already noted structurally, the tail
+     inherits a structural note, which again only ever reaches `sub_`.
+     `Make_parametric`'s `unboot_values` is likewise structural.
+
+   If that stops holding, the fallback is to put the argument `typ` on the
+   wire for extern requests only — `json_of_typ`/`typ_of_json` below are
+   already faithful enough to carry it. *)
 
 exception Error of string
 
@@ -261,8 +304,12 @@ let vals_of_json (json : Yojson.Safe.t) : Value.t list =
 
 (* Requests and responses *)
 
-let request_of_json (json : Yojson.Safe.t) : string * Il.typ list * Value.t list
-    =
+type request =
+  | Builtin of string * Il.typ list * Value.t list
+  | ExternFunc of string * Il.typ list * Value.t list
+  | ExternRel of string * Value.t list
+
+let request_of_json (json : Yojson.Safe.t) : request =
   match json with
   | `Assoc fields ->
       let find (name : string) : Yojson.Safe.t =
@@ -270,15 +317,50 @@ let request_of_json (json : Yojson.Safe.t) : string * Il.typ list * Value.t list
         | Some json -> json
         | None -> error "request is missing the field %s" name
       in
-      let name =
-        match find "builtin" with
+      let name_of (key : string) : string =
+        match find key with
         | `String name -> name
-        | json -> error "expected a builtin name, but got %s" (Yojson.Safe.to_string json)
+        | json ->
+            error "expected a name for %s, but got %s" key
+              (Yojson.Safe.to_string json)
       in
-      let targs = typs_of_json (find "targs") in
-      let args = vals_of_json (find "args") in
-      (name, targs, args)
+      (* Which of the three discriminating keys is present decides the kind.
+         Exactly one must be: none means an unrecognizable request, and more
+         than one means an ambiguous one.  Neither is guessed at. *)
+      let kinds =
+        [ "builtin"; "extern-func"; "extern-rel" ]
+        |> List.filter (fun key -> List.mem_assoc key fields)
+      in
+      let kind =
+        match kinds with
+        | [ kind ] -> kind
+        | [] ->
+            error
+              "request has none of the fields builtin, extern-func, extern-rel"
+        | _ ->
+            error "request has more than one of builtin, extern-func, extern-rel"
+      in
+      if kind = "extern-rel" then ExternRel (name_of kind, vals_of_json (find "args"))
+      else
+        let name = name_of kind in
+        let targs = typs_of_json (find "targs") in
+        let args = vals_of_json (find "args") in
+        if kind = "builtin" then Builtin (name, targs, args)
+        else ExternFunc (name, targs, args)
   | _ -> error "expected a request object, but got %s" (Yojson.Safe.to_string json)
 
 let json_of_response (value : Value.t) : Yojson.Safe.t =
   `Assoc [ ("ok", json_of_val value) ]
+
+(* A relation yields `val*`, so its `ok` payload is a JSON *array* of values
+   rather than a single one.  The two are told apart on the K side by the
+   shape of the payload, which is why `externRelResult` matches `[ Js ]`. *)
+
+let json_of_response_multi (values : Value.t list) : Yojson.Safe.t =
+  `Assoc [ ("ok", `List (List.map json_of_val values)) ]
+
+(* A spec-level failure.  Nullary: `Fail (at, msg)`'s payload is diagnostic
+   only and K's `FAIL` has nowhere to put it, so the caller logs it to stderr
+   and sends this. *)
+
+let json_of_response_fail () : Yojson.Safe.t = `Assoc [ ("fail", `Null) ]

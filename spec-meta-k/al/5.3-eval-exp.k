@@ -6,8 +6,8 @@
 // are mutually recursive with `Eval_exp` and so cannot be split into their own
 // K module.
 
-requires "4.2-eval-assign.k"
-requires "4.1-eval-typ.k"
+requires "5.2-eval-assign.k"
+requires "5.1-eval-typ.k"
 
 module AL-EVAL-EXP
   imports AL-ASSIGN
@@ -499,7 +499,7 @@ module AL-EVAL-EXP
   rule <k> FAIL ~> pathIdxK(_:Val) => FAIL ... </k>
   rule <k> _:Val ~> pathIdxK(_:Val) => FAIL ... </k> [owise]
 
-  // `nthVal` is defined in 4.2-eval-assign.k.
+  // `nthVal` is defined in 5.2-eval-assign.k.
 
   //   rulegroup Eval_path/slice
   syntax KItem ::= pathSliceWaitK(Exp, Exp) | pathSliceK1(Val, Exp) | pathSliceK2(Val, Int)

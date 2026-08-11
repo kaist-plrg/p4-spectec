@@ -15,6 +15,8 @@ requires "2-env.k"
 module COMMON-RELATION
   imports COMMON-ENV
 
+  syntax KItem ::= "FAIL"
+
   //   syntax unitres = OK | FAIL
   syntax UnitRes ::= okU()                  [symbol(okU)]
                    | failU()                [symbol(failU)]

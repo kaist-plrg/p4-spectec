@@ -13,9 +13,11 @@
 //   Assign_args: ctx/ctx |- arg* := val* : ctx -> assignArgs(ArgList, ValList) : Outcome
 
 requires "3-context.k"
+requires "../common/3-relation.k"
 
 module AL-ASSIGN
   imports AL-CONTEXT
+  imports COMMON-RELATION
   imports BOOL
 
   // ==========================================================================
@@ -24,10 +26,11 @@ module AL-ASSIGN
   // watsup relations that "produce a ctx" either hold (in which case `<local>`
   // now reflects the new bindings) or do not hold at all. `assignOK()` and
   // `FAIL` are the two possible results left on `<k>` after a task completes.
+  // `FAIL` itself is declared in common/3-relation.k, since the extern codec
+  // produces it too and must not depend on this file.
   // ==========================================================================
 
   syntax Outcome ::= assignOK()             [symbol(assignOK)]
-  syntax KItem ::= "FAIL"
 
   // ==========================================================================
   // Assign_exp: ctx |- exp := val : ctx

@@ -310,7 +310,8 @@ let kast_command =
 
 let builtin_command =
   Core.Command.basic
-    ~summary:"evaluate a single builtin call given as JSON, and print the result"
+    ~summary:
+      "evaluate a single builtin call given as JSON, and print the result"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map path_in =
@@ -326,7 +327,12 @@ let builtin_command =
             `#system` has no way to write to the child's. *)
          let json_request = Yojson.Safe.from_file path_in in
          let name, targs, args =
-           Interface.SpecTec_AL.request_of_json json_request
+           match Interface.SpecTec_AL.request_of_json json_request with
+           | Builtin (name, targs, args) -> (name, targs, args)
+           | ExternFunc _ | ExternRel _ ->
+               raise
+                 (CommandError
+                    "use the `extern` subcommand for extern func/rel calls")
          in
          let value =
            Interface.SpecTec_AL.call_builtin
@@ -354,6 +360,9 @@ let builtin_command =
           comment but does not implement it — it prints to stdout and exits
           zero.  That is a latent bug there, left alone deliberately: fixing
           it is not part of this change. *)
+       | CommandError msg ->
+           Format.eprintf "error: %s\n" msg;
+           exit 1
        | Sys_error msg ->
            Format.eprintf "File error: %s\n" msg;
            exit 1
@@ -365,6 +374,115 @@ let builtin_command =
            exit 1
        | Util.Error.BuiltinError (at, msg) | Util.Error.InterpError (at, msg) ->
            Format.eprintf "Builtin error: %s\n" (string_of_error at msg);
+           exit 1
+       | e ->
+           Format.eprintf "Unknown error: %s\n" (Printexc.to_string e);
+           exit 1)
+
+let extern_command =
+  Core.Command.basic
+    ~summary:
+      "evaluate a single extern func/rel call given as JSON, against a lower \
+       spec, and print the result"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_lower =
+       flag "-lower"
+         (one_or_more_as_list string)
+         ~doc:"PATH the lower spec the extern names resolve against"
+     and path_in =
+       flag "-i" (required string) ~doc:"FILE read the request from FILE"
+     and path_out =
+       flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
+     and mode =
+       Command.Param.choose_one
+         [
+           flag "al" no_arg ~doc:"run AL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
+           flag "sl" no_arg ~doc:"run SL interpreter"
+           |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
+         ]
+         ~if_nothing_chosen:(Default_to SL_mode)
+     and interface =
+       Command.Param.choose_one
+         [
+           flag "ali" no_arg ~doc:"AL interface"
+           |> map ~f:(fun b -> Core.Option.some_if b AL_interface);
+           flag "sli" no_arg ~doc:"SL interface"
+           |> map ~f:(fun b -> Core.Option.some_if b SL_interface);
+         ]
+         ~if_nothing_chosen:(Default_to SL_interface)
+     in
+     fun () ->
+       try
+         (* Unlike a builtin — a static registry lookup needing no state — an
+            extern call needs a *loaded lower spec*: `Make_parametric` routes
+            `Call_extern_func`/`Call_extern_rel` into a lower runner's
+            `eval_func`/`eval_rel` (`backend-boot/spectec.ml:173-215`), and
+            `build_null` produces exactly such a runner.  This is why the
+            subcommand is separate from `builtin`, and why it is slow: the
+            lower spec is parsed and elaborated on every call.  See CROSS.md. *)
+         let _spec, (module Runner) =
+           Backend_boot.Build.build_null mode interface paths_lower
+         in
+         (* The request is a file, never argv, for the same reason as
+            `builtin_command`: mixop operator atoms render with quotes. *)
+         let json_request = Yojson.Safe.from_file path_in in
+         let response =
+           match Interface.SpecTec_AL.request_of_json json_request with
+           | ExternFunc (name, targs, args) -> (
+               match Runner.Interp.eval_func name targs args with
+               | Pass value -> Interface.SpecTec_AL.json_of_response value
+               | Fail (at, msg) ->
+                   (* A spec-level failure, not a wire error: the message has
+                      nowhere to go on the wire, so it goes to stderr while
+                      stdout carries a clean `{"fail":null}` and the exit
+                      status stays 0. *)
+                   Format.eprintf "extern func %s failed: %s\n" name
+                     (string_of_error at msg);
+                   Interface.SpecTec_AL.json_of_response_fail ())
+           | ExternRel (name, args) -> (
+               match Runner.Interp.eval_rel name args with
+               | Pass values ->
+                   Interface.SpecTec_AL.json_of_response_multi values
+               | Fail (at, msg) ->
+                   Format.eprintf "extern rel %s failed: %s\n" name
+                     (string_of_error at msg);
+                   Interface.SpecTec_AL.json_of_response_fail ())
+           | Builtin _ ->
+               raise
+                 (CommandError "use the `builtin` subcommand for builtin calls")
+         in
+         let response = Yojson.Safe.to_string response in
+         match path_out with
+         | Some path_out ->
+             let oc = Out_channel.open_text path_out in
+             Fun.protect
+               ~finally:(fun () -> Out_channel.close oc)
+               (fun () -> Out_channel.output_string oc (response ^ "\n"))
+         | None -> print_endline response
+       with
+       (* As in `builtin_command`: errors go to stderr and exit non-zero with
+          stdout empty, so K's `#systemResult` exit code distinguishes "the
+          wire broke" from a `{"fail":null}` the spec can recover from. *)
+       | CommandError msg ->
+           Format.eprintf "error: %s\n" msg;
+           exit 1
+       | Sys_error msg ->
+           Format.eprintf "File error: %s\n" msg;
+           exit 1
+       | Interface.SpecTec_AL.Extern_error msg ->
+           Format.eprintf "Extern error: %s\n" msg;
+           exit 1
+       | Yojson.Json_error msg ->
+           Format.eprintf "JSON error: %s\n" msg;
+           exit 1
+       | ParseError (at, msg) ->
+           Format.eprintf "Parse error: %s\n" (string_of_error at msg);
+           exit 1
+       | ElabError (at, msg) ->
+           Format.eprintf "Elaboration error: %s\n" (string_of_error at msg);
            exit 1
        | e ->
            Format.eprintf "Unknown error: %s\n" (Printexc.to_string e);
@@ -390,6 +508,7 @@ let command_core =
       ("parse", parse_command);
       ("kast", kast_command);
       ("builtin", builtin_command);
+      ("extern", extern_command);
     ]
 
 let () = Command_unix.run ~version command_core
