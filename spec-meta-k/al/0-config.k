@@ -15,6 +15,10 @@ module AL-CONFIG
   configuration
     <al>
       <k> logDebug(textV("entry-al")) ~> $PGM:Script ~> afterLoad() </k>
+      // The program the spec in `<k>` is run on, or `noP4()` when the script is
+      // self-contained.  `P4Opt` is declared in 1-syntax.k because krun parses
+      // this cell's value; the two entries it selects are in 6-entry.k.
+      <p4prog> $P4:P4Opt </p4prog>
       <global>
         <gtdenv> .Map </gtdenv>
         <grenv> .Map </grenv>

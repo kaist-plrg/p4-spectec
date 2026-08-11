@@ -1,3 +1,4 @@
+module Atom = Domain.Atom
 module Mixop = Domain.Mixop
 module Mixfix = Domain.Mixfix
 module Il = Lang.Il
@@ -393,3 +394,108 @@ let json_of_script (value_script : Value.t) : Yojson.Safe.t =
 
 let string_of_script (value_script : Value.t) : string =
   value_script |> json_of_script |> Yojson.Safe.pretty_to_string
+
+(* Values of an arbitrary spec, as the K sort `Val`.
+
+   Everything above emits the *meta-language* script syntax: `json_of_value`
+   dispatches on the watsup sort a value is noted with, and looks the
+   constructor up in `table`.  That is exactly what a target-level value cannot
+   go through — a P4 program inhabits sorts (`p4program`, `declarationList`, …)
+   that the table knows nothing about, and `json_of_value` rejects `StructV` and
+   `TupleV` outright since the script syntax has neither.
+
+   K's `Val` (`spec-meta-k/common/1-syntax.k`) is structural, though: `injV`
+   carries its mixop as data rather than being resolved to a named constructor,
+   so any value of any spec can be written down without a table.  This second
+   encoder therefore never consults `value.note.typ` and never touches `table`;
+   it is a plain structural walk.
+
+   That is what lets a P4 program reach the K definition: it is parsed by the
+   OCaml P4 parser (`Interface.P4.parse_program`, which builds a `Value.t`
+   directly), emitted here as a `Val`, and bound to the `<p4prog>` cell. *)
+
+let rec json_of_val (value : Value.t) : Yojson.Safe.t =
+  match value.it with
+  | Il.BoolV b -> json_of_kapply "boolV" [ json_of_bool b ]
+  | Il.NumV (`Nat n) -> json_of_kapply "natN" [ json_of_int n ]
+  | Il.NumV (`Int i) -> json_of_kapply "intN" [ json_of_int i ]
+  | Il.TextV s -> json_of_kapply "textV" [ json_of_string s ]
+  | Il.StructV valuefields ->
+      json_of_kapply "strV" [ json_of_valfields valuefields ]
+  | Il.CaseV valuecase ->
+      let mixop, values = Mixfix.split valuecase in
+      json_of_kapply "injV"
+        [
+          json_of_kapply "valCase"
+            [ json_of_mixop mixop; json_of_vals values ];
+        ]
+  | Il.TupleV values -> json_of_kapply "tupV" [ json_of_vals values ]
+  | Il.OptV None -> json_of_kapply "optV" [ json_of_kapply "noVal" [] ]
+  | Il.OptV (Some value) ->
+      json_of_kapply "optV"
+        [ json_of_kapply "someVal" [ json_of_val value ] ]
+  | Il.ListV values -> json_of_kapply "listV" [ json_of_vals values ]
+  (* Neither is reachable from the P4 parser, which builds only cases and
+     text/number leaves.  `extV` would need K's abstract `Json` sort, which has
+     no K-reachable inhabitants, so an extern value cannot be written down as a
+     term at all. *)
+  | Il.FuncV _ -> error "function value cannot be emitted as a K Val"
+  | Il.ExternV _ -> error "extern value cannot be emitted as a K Val"
+
+and json_of_vals (values : Value.t list) : Yojson.Safe.t =
+  List.fold_right
+    (fun value json_tail ->
+      json_of_kapply "valList" [ json_of_val value; json_tail ])
+    values
+    (json_of_kapply ".valList" [])
+
+and json_of_valfields (valuefields : (Il.atom * Value.t) list) : Yojson.Safe.t =
+  List.fold_right
+    (fun (atom_field, value_field) json_tail ->
+      let json_field =
+        json_of_kapply "valField"
+          [
+            json_of_string (Atom.string_of_atom atom_field.it);
+            json_of_val value_field;
+          ]
+      in
+      json_of_kapply "valFieldList" [ json_field; json_tail ])
+    valuefields
+    (json_of_kapply ".valFieldList" [])
+
+(* A mixop is an atoms matrix: one row of atoms per notation position, exactly
+   as `spec-meta-k/al/4-extern-json.k` puts it on the extern wire.  Operator
+   atoms keep their quotes inside the string (`':'`), matching `boot_atom`. *)
+
+and json_of_mixop (mixop : Mixop.t) : Yojson.Safe.t =
+  List.fold_right
+    (fun atoms json_tail ->
+      json_of_kapply "mixop" [ json_of_atoms atoms; json_tail ])
+    (Mixop.atoms_matrix mixop)
+    (json_of_kapply ".mixop" [])
+
+and json_of_atoms (atoms : Il.atom list) : Yojson.Safe.t =
+  List.fold_right
+    (fun (atom : Il.atom) json_tail ->
+      json_of_kapply "atomList"
+        [ json_of_string (Atom.string_of_atom atom.it); json_tail ])
+    atoms
+    (json_of_kapply ".atomList" [])
+
+(* Wrapped as `someP4(val)`, the inhabited case of the `<p4prog>` cell's sort.
+
+   The wrapper is applied here rather than by the shell that drives this,
+   because splicing one KORE term into another textually is not something
+   `kast` offers: it parses a whole term of one sort.  Emitting the wrapper as
+   part of the JSON means the term arrives at the right sort in one parse. *)
+
+let json_of_p4_term (value : Value.t) : Yojson.Safe.t =
+  `Assoc
+    [
+      ("format", `String "KAST");
+      ("version", `Int version);
+      ("term", json_of_kapply "someP4" [ json_of_val value ]);
+    ]
+
+let string_of_value (value : Value.t) : string =
+  value |> json_of_p4_term |> Yojson.Safe.pretty_to_string

@@ -134,12 +134,16 @@ promote:
 
 # K specification (spec-meta-k)
 #
-# The K port runs a .watsup through the meta-language spec in spec-meta-k/,
+# The K port runs a spec through the meta-language spec in spec-meta-k/,
 # rather than through the OCaml interpreter.  See CROSS.md.
 #
 #   make k-build                         compile the K definition
-#   make k-run TEC=examples/add.watsup   run one target
+#   make k-run TEC=examples/add.watsup   run one self-contained target
+#   make k-typecheck P4=foo.p4           type-check a P4 program against spec/
 #   make k-clean                         drop al-kompiled/ and .tmp/
+#
+# k-run and k-typecheck clean up .tmp/ themselves; k-clean still removes it, for
+# the leftovers a run that died on a stuck term deliberately keeps.
 #
 # All must run from the repo root: a spec that calls a builtin shells out to
 # ./spectec-boot at that relative path.
@@ -147,6 +151,25 @@ promote:
 KDEFDIR = al-kompiled
 KENTRY = spec-meta-k/al/6-entry.k
 KTMP = .tmp
+
+# Drop the scratch directory once rewriting is over.  It cannot go earlier: the
+# parsers run before K starts, and a builtin call mints its request file inside
+# $(KTMP) mid-run (`builtinTemplate()` in al/4-extern-json.k), so the directory
+# has to outlive krun.  Everything that creates a file in there also removes it
+# -- K's request file in `dropBuiltinReq()` (al/6-entry.k), the booted JSON and
+# the spec stub in kast-json.sh -- so by now it is empty.
+#
+# `rmdir`, not `rm -rf`: a run that dies on a stuck term never reaches K's own
+# cleanup, and those leftovers are worth reading.  Failing to remove a non-empty
+# directory is the wanted behaviour, hence `|| true` -- the target's exit status
+# stays krun's.
+KTMPDROP = rmdir $(KTMP) 2>/dev/null || true
+
+# The P4 spec, and the include path its programs are preprocessed with.
+# Program_ok needs 0-aux..5-typing only; 6-9 (instantiation, dynamic, arch) are
+# not reachable from it, so SPEC may be narrowed to cut load time.
+SPEC_K = spec
+P4INCLUDE = p4c/p4include
 
 .PHONY: k-build
 k-build: $(BOOT)
@@ -157,11 +180,36 @@ k-build: $(BOOT)
 $(BOOT):
 	$(MAKE) boot
 
+# `-cP4` supplies the `<p4prog>` cell.  K has no default for a configuration
+# variable, so even the no-program case must name one.  `-cP4=VALUE` writes
+# VALUE to a temp file and hands that file to `-pP4`'s command, so the value
+# passed here is a *P4 program path* and kast-p4.sh reads it back out.
+#
+# The empty value selects `noP4()`, i.e. the `$main()` entry, leaving these runs
+# behaving exactly as before.
 .PHONY: k-run
 k-run: $(BOOT)
 	@test -n "$(TEC)" || { echo "usage: make k-run TEC=examples/add.watsup"; exit 1; }
 	@mkdir -p $(KTMP)
-	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./kast-json.sh $(TEC)
+	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./kast-json.sh $(TEC) \
+	  -cP4= -pP4=./kast-p4.sh; \
+	  status=$$?; $(KTMPDROP); exit $$status
+
+# Type-check a P4 program: the spec is $PGM, the program is $P4, and the entry
+# becomes `Program_ok` rather than `$main()`.
+#
+# krun requires $PGM to be a file, but the spec is a whole directory, so its
+# path is handed over in a one-line stub (`@`-prefixed) that kast-json.sh
+# resolves.  See the note there.
+.PHONY: k-typecheck
+k-typecheck: $(BOOT)
+	@test -n "$(P4)" || { echo "usage: make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4"; exit 1; }
+	@mkdir -p $(KTMP)
+	@printf '@%s\n' "$(SPEC_K)" > $(KTMP)/specdir
+	KDEF=$(KDEFDIR) P4INCLUDE=$(P4INCLUDE) krun -d $(KDEFDIR) \
+	  --parser ./kast-json.sh $(KTMP)/specdir \
+	  -cP4=$(P4) -pP4=./kast-p4.sh; \
+	  status=$$?; $(KTMPDROP); exit $$status
 
 # Cleanup
 

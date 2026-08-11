@@ -145,4 +145,19 @@ module AL-SYNTAX
 
   syntax Script ::= List{Defn, ","}         [symbol(script), terminator-symbol(.script)]
 
+  // ==========================================================================
+  // Target programs
+  //
+  // The input a *language* spec is run on, as opposed to a self-contained
+  // meta-language target that defines its own `$main()`.  Running the P4 spec
+  // binds `someP4(val)` here and the entry becomes `Program_ok` (al/6-entry.k).
+  //
+  // This lives in the syntax module rather than next to the configuration cell
+  // it fills, because it is *parsed*: it is what `krun -pP4` hands back, so it
+  // has to be reachable from the definition's `--syntax-module`.
+  // ==========================================================================
+
+  syntax P4Opt ::= "noP4" "(" ")"           [symbol(noP4)]
+                 | someP4(Val)              [symbol(someP4)]
+
 endmodule

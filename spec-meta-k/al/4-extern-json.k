@@ -363,8 +363,14 @@ module AL-EXTERN-JSON
 
   syntax String ::= "builtinCmd" "(" ")"      [function, total, symbol(builtinCmd)]
                   | "builtinTemplate" "(" ")" [function, total, symbol(builtinTemplate)]
+                  | "builtinArgs" "(" ")"     [function, total, symbol(builtinArgs)]
                   | "externArgs" "(" ")"      [function, total, symbol(externArgs)]
   rule builtinCmd() => "./spectec-boot"
+  //   `-spec` names the spec that `$print_` unparses against.  It is the one
+  //   builtin needing more than a registry lookup, and the OCaml side loads the
+  //   spec only when a request actually names it, so passing this costs nothing
+  //   for the other 46 builtins.  Hardcoded like the paths around it.
+  rule builtinArgs() => "builtin -spec spec"
   //   `#mkstemp` fills the `XXXXXX` in, so concurrent runs in one working
   //   directory get distinct request files.  `./.tmp/` must exist — the
   //   `kast-json.sh` wrapper creates it, since K rules cannot mkdir.

@@ -132,6 +132,14 @@ module SpecTec_AL = struct
   let kast_of_program (value_script : Value.t) : string =
     Spectec.Ali.Kast.string_of_script value_script
 
+  (* A target-level value (e.g. a parsed P4 program) as the K sort `Val`.
+     Unlike `kast_of_program`, this is sort-independent: it emits K's structural
+     `Val` constructors rather than resolving each case against the
+     meta-language constructor table. *)
+
+  let kast_of_value (value : Value.t) : string =
+    Spectec.Ali.Kast.string_of_value value
+
   (* External interface for builtin and extern calls, for the K specification
      in `spec-meta-k/`.  K has no builtin implementations of its own: it
      serializes the call and shells out to `spectec-boot builtin`, so this

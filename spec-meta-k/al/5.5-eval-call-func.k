@@ -287,7 +287,7 @@ module AL-CALL-FUNC
   //   two extern kinds.  All that is left here is to say what to send and how
   //   the reply should be read.
   rule <k> callBuiltinFunc(X:Id, Ts:TypList, Vs:ValList)
-        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), "builtin", builtinK())
+        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), builtinArgs(), builtinK())
        ...
        </k>
 

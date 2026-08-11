@@ -308,6 +308,55 @@ let kast_command =
        | ElabError (at, msg) ->
            Format.printf "Elaboration error: %s\n" (string_of_error at msg))
 
+let kast_p4_command =
+  Core.Command.basic
+    ~summary:"parse a P4 program and print it as a KAST JSON term of sort Val"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map path_p4 = flag "-p" (required string) ~doc:"FILE P4 program"
+     and includes_p4 = flag "-i" (listed string) ~doc:"DIR P4 include paths"
+     and path_out =
+       flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
+     in
+     fun () ->
+       try
+         (* The P4 program is parsed by the ordinary P4 front end, whose menhir
+            grammar builds a `Value.t` directly — there is no separate P4 AST —
+            so this is the very value `Program_ok` is applied to.
+
+            It is emitted as K's structural `Val`, not through the script
+            emitter: a `p4program` inhabits sorts the meta-language constructor
+            table knows nothing about.  The spec is not loaded here; the program
+            is independent of it, and reaches K as a separate configuration
+            variable. *)
+         let value_program =
+           match Interface.P4.parse_program includes_p4 [ path_p4 ] with
+           | Pass value_program -> value_program
+           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
+         in
+         let kast = Interface.SpecTec_AL.kast_of_value value_program in
+         match path_out with
+         | Some path_out ->
+             let oc = Out_channel.open_text path_out in
+             Fun.protect
+               ~finally:(fun () -> Out_channel.close oc)
+               (fun () -> Out_channel.output_string oc (kast ^ "\n"))
+         | None -> print_endline kast
+       with
+       (* Errors go to stderr and exit non-zero, leaving stdout empty.  This is
+          driven from `kast-json.sh` under `krun --parser`, where anything on
+          stdout is fed onward as if it were the term — which is exactly the
+          bug `kast_command` above still has. *)
+       | Sys_error msg ->
+           Format.eprintf "File error: %s\n" msg;
+           exit 1
+       | Interface.SpecTec_AL.Kast_error msg ->
+           Format.eprintf "KAST error: %s\n" msg;
+           exit 1
+       | ParseError (at, msg) ->
+           Format.eprintf "Parse error: %s\n" (string_of_error at msg);
+           exit 1)
+
 let builtin_command =
   Core.Command.basic
     ~summary:
@@ -318,6 +367,9 @@ let builtin_command =
        flag "-i" (required string) ~doc:"FILE read the request from FILE"
      and path_out =
        flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
+     and paths_spec =
+       flag "-spec" (listed string)
+         ~doc:"PATH spec the P4 builtins resolve against (for $print_)"
      in
      fun () ->
        try
@@ -334,8 +386,31 @@ let builtin_command =
                  (CommandError
                     "use the `extern` subcommand for extern func/rel calls")
          in
+         (* `$print_<X>` unparses a value back to P4 source, so unlike every
+            other builtin it needs the spec: the unparser is driven by the
+            spec's hints.  It is registered only on the P4 interface
+            (`Interface.P4.Builtin_P4_Ext`), so a request naming it takes that
+            registry instead of the SpecTec one.
+
+            The spec is loaded only for such a request, never merely because
+            `-spec` was passed.  Loading it costs ~0.85 s against ~13 ms for the
+            whole rest of a call, and a run makes hundreds of calls of which
+            only a few are `$print_`. *)
+         let call_builtin =
+           match (name, paths_spec) with
+           | "print_", [] ->
+               raise
+                 (CommandError
+                    "$print_ needs the spec: pass -spec PATH (it unparses a \
+                     value back to P4 source)")
+           | "print_", paths_spec ->
+               let spec_sl = Pass.structure ~final:true paths_spec in
+               Interface.P4.init (SL spec_sl);
+               Interface.P4.call_builtin
+           | _ -> Interface.SpecTec_AL.call_builtin
+         in
          let value =
-           Interface.SpecTec_AL.call_builtin
+           call_builtin
              (fun _ -> ())
              Util.Source.(name $ no_region)
              targs args
@@ -424,7 +499,8 @@ let extern_command =
             subcommand is separate from `builtin`, and why it is slow: the
             lower spec is parsed and elaborated on every call.  See CROSS.md. *)
          let _spec, (module Runner) =
-           Backend_boot.Build.build_null mode interface paths_lower
+           Backend_boot.Build.build_null ~cache:(not no_cache) mode interface
+             paths_lower
          in
          (* The request is a file, never argv, for the same reason as
             `builtin_command`: mixop operator atoms render with quotes. *)
@@ -507,6 +583,7 @@ let command_core =
       (* Interfacing with IL specification *)
       ("parse", parse_command);
       ("kast", kast_command);
+      ("kast-p4", kast_p4_command);
       ("builtin", builtin_command);
       ("extern", extern_command);
     ]

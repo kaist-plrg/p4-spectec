@@ -24,23 +24,34 @@ mkdir -p ./.tmp
 # still here belongs to a finished process, since krun is synchronous.
 rm -f ./.tmp/spectec-k-??????
 
-case "$1" in
-  *.watsup)
-    json=$(mktemp ./.tmp/spectec-k-kast-XXXXXX.json)
-    "${SPECTEC_BOOT:-./spectec-boot}" kast "$1" -o "$json"
-    # Not `exec` + EXIT trap: exec replaces this shell, so the trap would never
-    # fire and the booted JSON would pile up one file per run.  Run kast as a
-    # child instead, then clean up and pass its status on.  `|| status=$?`
-    # keeps `set -e` from exiting before the rm.
-    status=0
-    kast --definition "$KDEF" --input json --output kore --sort Script "$json" \
-      || status=$?
-    rm -f "$json"
-    exit $status
-    ;;
-  *)
-    json="$1"
-    ;;
+# krun insists $PGM be a file, so a whole spec directory (`spec/`) cannot be
+# named on its command line.  `make k-typecheck` passes a one-line stub file
+# holding the spec's path instead; `@` marks it, and it is resolved back here.
+#
+# The stub has no reader after this point, so it is removed as soon as it is
+# resolved: whoever writes one does not have to come back for it.  `$1` is only
+# ever the stub krun was pointed at, never a spec of the user's own.
+target="$1"
+case $(head -c 1 "$target" 2>/dev/null) in
+  @) target=$(sed -e 's/^@//' -e 1q "$target"); rm -f "$1" ;;
 esac
+
+# A .watsup, or (via the stub above) a directory of them: boot it here so a
+# target runs in one command.  Anything else is assumed to be KAST JSON already.
+if [ -d "$target" ] || [ "${target%.watsup}" != "$target" ]; then
+  json=$(mktemp ./.tmp/spectec-k-kast-XXXXXX.json)
+  "${SPECTEC_BOOT:-./spectec-boot}" kast "$target" -o "$json"
+  # Not `exec` + EXIT trap: exec replaces this shell, so the trap would never
+  # fire and the booted JSON would pile up one file per run.  Run kast as a
+  # child instead, then clean up and pass its status on.  `|| status=$?`
+  # keeps `set -e` from exiting before the rm.
+  status=0
+  kast --definition "$KDEF" --input json --output kore --sort Script "$json" \
+    || status=$?
+  rm -f "$json"
+  exit $status
+fi
+
+json="$target"
 
 exec kast --definition "$KDEF" --input json --output kore --sort Script "$json"
