@@ -81,8 +81,9 @@ let run_test_driver mode det neg path_spec relname includes_p4 excludes_p4
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
-  let _spec_sim, (module Simulator) =
-    Backend_sim.Build.build ~det ~final:true mode [ path_spec ]
+  let (module Simulator) =
+    Backend_sim.Build.build ~det
+      (Backend_boot.Build.spec_of_mode mode [ path_spec ])
   in
   let stat =
     List.fold_left

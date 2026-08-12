@@ -147,9 +147,8 @@ let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 path_p4
 
 let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
     paths_p4 =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -167,9 +166,8 @@ let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
 
 let cover_run_dangling ?(arch : string option) mode paths_spec relname
     includes_p4 paths_p4 =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -196,9 +194,8 @@ let cover_run_dangling ?(arch : string option) mode paths_spec relname
 
 let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
     paths_stf =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -218,9 +215,8 @@ let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
 
 let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
     paths_p4 paths_stf =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in

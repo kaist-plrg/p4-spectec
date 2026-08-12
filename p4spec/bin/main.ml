@@ -59,9 +59,8 @@ let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 path_p4
 
 let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
     paths_p4 path_cov =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -81,9 +80,8 @@ let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
 
 let cover_run_dangling ?(arch : string option) mode paths_spec relname
     includes_p4 paths_p4 path_cov =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -112,9 +110,8 @@ let cover_run_dangling ?(arch : string option) mode paths_spec relname
 
 let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
     paths_stf path_cov =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -136,9 +133,8 @@ let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
 
 let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
     paths_p4 paths_stf path_cov =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+  let (module Simulator) = Backend_sim.Build.build ?arch spec_sim in
   let spec_sl =
     match spec_sim with
     | SL spec_sl -> spec_sl
@@ -275,9 +271,9 @@ let run_command =
      fun () ->
        try
          let cache = not no_cache in
-         let spec_sim, (module Simulator) =
-           Backend_sim.Build.build ~cache ~det ~guard ~final:true mode
-             paths_spec
+         let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+         let (module Simulator) =
+           Backend_sim.Build.build ~cache ~det ~guard spec_sim
          in
          let handlers =
            if profile then
@@ -349,9 +345,9 @@ let sim_command =
      fun () ->
        try
          let cache = not no_cache in
-         let spec_sim, (module Simulator) =
-           Backend_sim.Build.build ~cache ~det ~guard ~arch ~final:true mode
-             paths_spec
+         let spec_sim = Backend_boot.Build.spec_of_mode mode paths_spec in
+         let (module Simulator) =
+           Backend_sim.Build.build ~cache ~det ~guard ~arch spec_sim
          in
          let handlers =
            if profile then
@@ -595,9 +591,8 @@ let interesting_command =
      and path_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        try
-         let spec_sim, (module Simulator) =
-           Backend_sim.Build.build ~final:true SL_mode paths_spec
-         in
+         let spec_sim = Backend_boot.Build.spec_of_mode SL_mode paths_spec in
+         let (module Simulator) = Backend_sim.Build.build spec_sim in
          let result, cover =
            run_with_dangling
              (module Simulator)
@@ -689,8 +684,9 @@ let parse_command =
      in
      fun () ->
        try
-         let _, (module Simulator) =
-           Backend_sim.Build.build ~final:true AL_mode paths_spec
+         let (module Simulator) =
+           Backend_sim.Build.build
+             (Backend_boot.Build.spec_of_mode AL_mode paths_spec)
          in
          let value_program =
            match Simulator.Interface.parse_program includes_p4 [ path_p4 ] with
