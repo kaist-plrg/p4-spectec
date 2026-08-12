@@ -1,23 +1,33 @@
 module Run = Runtime.Dynamic_Runner.Signature
 open Error
 
+let ( let* ) = Result.bind
+
+let rec map_result f = function
+  | [] -> Ok []
+  | x :: xs ->
+      let* y = f x in
+      let* ys = map_result f xs in
+      Ok (y :: ys)
+
 (* Specs *)
 
-let structured_spec (paths_spec : string list) : Run.spec =
-  let spec_sl = Pass.structure ~final:true paths_spec in
-  (SL spec_sl : Run.spec)
+let structured_spec (paths_spec : string list) : (Run.spec, Pass.error) result =
+  let* spec_sl = Pass.structure ~final:true paths_spec in
+  Ok (SL spec_sl : Run.spec)
 
-let spec_of_mode (mode : Run.mode) (paths_spec : string list) : Run.spec =
+let spec_of_mode (mode : Run.mode) (paths_spec : string list) :
+    (Run.spec, Pass.error) result =
   match mode with
   | AL_mode ->
-      let spec_al = Pass.algo paths_spec in
-      (AL spec_al : Run.spec)
+      let* spec_al = Pass.algo paths_spec in
+      Ok (AL spec_al : Run.spec)
   | SL_mode ->
-      let spec_sl = Pass.structure ~final:true paths_spec in
-      (SL spec_sl : Run.spec)
+      let* spec_sl = Pass.structure ~final:true paths_spec in
+      Ok (SL spec_sl : Run.spec)
   | PL_mode ->
-      let spec_pl = Pass.annotate paths_spec in
-      (PL spec_pl : Run.spec)
+      let* spec_pl = Pass.annotate paths_spec in
+      Ok (PL spec_pl : Run.spec)
   | Empty_mode -> assert false
 
 (* Building a tower *)
@@ -95,22 +105,22 @@ let build_boot ?(cache = true) ?(det = false) ?(guard = false)
 let build_tower ?(cache = true) ?(det = false) ?(guard = false)
     (tower : Config.tower) =
   (* Build the target runner *)
-  let spec_target = structured_spec [ tower.level_target.layer.specdir ] in
+  let* spec_target = structured_spec [ tower.level_target.layer.specdir ] in
   let runner_target =
     build_target ~cache ~det ~guard tower.level_target spec_target
   in
   (* Reverse the levels, so that we build levels from the target to boot *)
   let levels = tower.level_boot :: tower.levels_interm |> List.rev in
   let n = List.length levels in
-  let level_specs =
+  let* level_specs =
     levels
     |> List.mapi (fun idx level -> (idx = n - 1, level))
-    |> List.map (fun (is_boot, (level : Config.level)) ->
-           let spec =
+    |> map_result (fun (is_boot, (level : Config.level)) ->
+           let* spec =
              if is_boot then spec_of_mode tower.mode [ level.layer.specdir ]
              else structured_spec [ level.layer.specdir ]
            in
-           (is_boot, level, spec))
+           Ok (is_boot, level, spec))
   in
   let spec_boot = ref None in
   let booter, runners_interm =
@@ -134,7 +144,7 @@ let build_tower ?(cache = true) ?(det = false) ?(guard = false)
   let spec_boot =
     match !spec_boot with Some spec -> spec | None -> assert false
   in
-  (spec_boot, runner_target, runners_interm, booter)
+  Ok (spec_boot, runner_target, runners_interm, booter)
 
 let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
     (interface : Config.interface) (paths_spec : string list) =
@@ -153,6 +163,6 @@ let build_null ?(cache = true) ?(det = false) ?(guard = false) (mode : Run.mode)
               (Interp_sl.Interp.Make)
               (Interp_pl.Interp.Make) : Run.RUNNER)
   in
-  let spec = spec_of_mode mode paths_spec in
+  let* spec = spec_of_mode mode paths_spec in
   Runner.init ~cache ~det ~guard spec;
-  (spec, (module Runner : Run.RUNNER))
+  Ok (spec, (module Runner : Run.RUNNER))

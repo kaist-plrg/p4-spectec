@@ -1,10 +1,17 @@
 module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
 
-let parse_files (mode : Run.mode) (paths_spec : string list) : Value.t =
+let ( let* ) = Result.bind
+
+let parse_files (mode : Run.mode) (paths_spec : string list) :
+    (Value.t, Pass.error) result =
   match mode with
-  | AL_mode -> paths_spec |> Pass.algo |> Ali.Boot.boot_spec
-  | SL_mode -> paths_spec |> Pass.structure ~final:true |> Sli.Boot.boot_spec
+  | AL_mode ->
+      let* spec_al = Pass.algo paths_spec in
+      Ok (Ali.Boot.boot_spec spec_al)
+  | SL_mode ->
+      let* spec_sl = Pass.structure ~final:true paths_spec in
+      Ok (Sli.Boot.boot_spec spec_sl)
   | PL_mode -> assert false
   | Empty_mode -> assert false
 

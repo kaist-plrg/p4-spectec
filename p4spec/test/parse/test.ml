@@ -113,10 +113,7 @@ let parser_test_driver includes_p4 excludes_p4 testdirs_p4 path_spec =
   let paths_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
   in
-  let (module Simulator) =
-    Backend_sim.Build.build
-      (Backend_boot.Build.spec_of_mode SL_mode [ path_spec ])
-  in
+  let _, (module Simulator) = build_sim SL_mode [ path_spec ] in
   let total = List.length paths_p4 in
   let stat = empty_stat in
   Format.asprintf "Running parser tests on %d files\n" total |> print_endline;
