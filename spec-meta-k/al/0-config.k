@@ -39,7 +39,7 @@ module AL-CONFIG
       <builtinreq> "" </builtinreq>
     </al>
 
-  syntax LocalSave ::= localSave(Map, Map, Map)
-                                            [symbol(localSave)]
+  syntax LocalSave ::= localSave(Map, Map, Map) [symbol(localSave)]
+  syntax CallSave ::= callSave(LocalSave, Map) [symbol(callSave)]
 
 endmodule

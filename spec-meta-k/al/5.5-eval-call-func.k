@@ -19,19 +19,35 @@ module AL-CALL-FUNC
                  | "popCallFrame" "(" ")"
 
   //   C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
+  //
+  // `<cfenv>` is saved and restored alongside `<local>`.  In watsup,
+  // `Assign_arg/fun` reads `C_caller`, a context *passed as an argument* to
+  // `Eval_clause` and therefore scoped to exactly one call; K models it with a
+  // cell, which is global unless the frame stack restores it.  Without that,
+  // any call made between binding a `FUN` parameter and using it overwrites the
+  // single slot, so a `def` parameter that is re-passed through recursion --
+  // `$find_overloadeds_unnamed` handing `def $get_parameterListIR` to its own
+  // recursive call -- looks up a name in whatever frame happened to run last
+  // (usually an empty one) and FAILs.
   rule <k> pushCallFrame(T:Map) => .K ... </k>
        <ltdenv> T':Map => T </ltdenv>
        <lfenv> F:Map => .Map </lfenv>
        <lvenv> V:Map => .Map </lvenv>
-       <callstack> .List => ListItem(localSave(T', F, V)) ... </callstack>
+       <cfenv> CF:Map </cfenv>
+       <callstack> .List => ListItem(callSave(localSave(T', F, V), CF)) ... </callstack>
 
   rule <k> popCallFrame() => .K ... </k>
        <ltdenv> _ => T </ltdenv>
        <lfenv> _ => F </lfenv>
        <lvenv> _ => V </lvenv>
-       <callstack> ListItem(localSave(T:Map, F:Map, V:Map)) => .List ... </callstack>
+       <cfenv> _ => CF </cfenv>
+       <callstack> ListItem(callSave(localSave(T:Map, F:Map, V:Map), CF:Map)) => .List ... </callstack>
 
   // Snapshot the *caller's* local fenv into <caller>, for Assign_arg/fun.
+  //
+  // Runs *before* `pushCallFrame`, so `<lfenv>` is still the caller's; the
+  // value it writes is what `pushCallFrame` then saves on the callee's behalf
+  // and `popCallFrame` puts back on return.
   syntax KItem ::= "snapshotCaller" "(" ")"
   rule <k> snapshotCaller() => .K ... </k>
        <lfenv> F:Map </lfenv>
