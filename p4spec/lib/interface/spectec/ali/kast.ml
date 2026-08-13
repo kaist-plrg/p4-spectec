@@ -2,30 +2,31 @@ module Atom = Domain.Atom
 module Mixop = Domain.Mixop
 module Mixfix = Domain.Mixfix
 module Il = Lang.Il
+module Al = Lang.Al
 module Value = Runtime.Value
-open Common.Mixops
-open Mixops
 open Util.Source
 
-(* Emitting a booted `Value.t` as KAST JSON, for the K specification in
+(* Emitting an `Al.spec` as KAST JSON, for the K specification in
    `spec-meta-k/`.
 
    The K definition is an *abstract* syntax: every watsup production is a
-   constructor whose KORE label is pinned with `symbol(_)`.  Emitting a value
-   therefore amounts to naming, for each `CaseV`, the K constructor that
-   corresponds to its mixop, and rebuilding `ListV` / `OptV` as the cons lists
-   and option constructors that `spec-meta-k` declares.
+   constructor whose KORE label is pinned with `symbol(_)`.  Emitting a spec
+   therefore amounts to naming, for each AL node, the K constructor that
+   corresponds to it, and writing lists and options out as the cons lists and
+   option constructors that `spec-meta-k` declares.
 
-   The mixop side of that mapping is taken from `Common.Mixops` and `Mixops`,
-   the very tables `boot.ml` builds values with, so the two cannot drift: a
-   mixop that is renamed there stops matching here and the emitter reports an
-   unknown constructor instead of emitting a wrong label.
+   This walks the `Al.spec` directly.  The alternative -- booting the spec to a
+   `Value.t` first and emitting that -- goes through a representation in which
+   every constructor has already been erased to a mixop, so the emitter has to
+   *recover* which production built each value by looking its (sort, mixop) pair
+   up in a table.  Walking the AST means the constructor is still in hand at the
+   point its symbol is written, so there is nothing to recover and no table to
+   keep in sync.
 
-   Mixops alone do not identify a constructor, since the same notation is
-   reused across sorts (`BOOL bool` is both a value and an expression;
-   `clause` and `tblrow` share a notation entirely).  Every `CaseV` built by
-   `boot.ml` is noted with the watsup sort it inhabits, so the table is keyed
-   by the pair (sort, mixop). *)
+   The K symbols are those of `spec-meta-k/common/1-syntax.k` and
+   `spec-meta-k/al/1-syntax.k`, whose productions mirror the watsup definitions
+   in `spec-meta/`; `Ali.Boot` and `Common.Boot` build the same shape as values,
+   so the two are read together when either changes. *)
 
 (* KAST JSON, format version 4.
 
@@ -78,228 +79,29 @@ let json_of_int (i : Bigint.t) : Yojson.Safe.t =
 let json_of_string (s : string) : Yojson.Safe.t =
   json_of_ktoken "String" ("\"" ^ String.escaped s ^ "\"")
 
-(* Constructor table.
+(* Cons lists.
 
-   Keyed by the watsup sort a value is noted with and the notation of its
-   mixop; the payload is the `symbol(_)` of the corresponding `spec-meta-k`
-   production.  `Mixop.string_of_mixop` is the canonical rendering of a mixop,
-   so keying on it compares notations rather than atom phrases. *)
+   Watsup's `X*` becomes a two-constructor cons list in K, since K's own `List`
+   is not a term sort the abstract syntax can nest.  `symbol` is the cons and
+   `symbol_terminator` the empty list, both named after the element sort. *)
 
-(* Watsup aliases are inlined in K, since K has no sort aliases: `targ = typ`
-   and `elsclause = clause`.  The booter notes a value with whichever of the
-   two names the position calls for (`boot_targ` re-notes a type as `targ`),
-   so the alias is resolved before the constructor is looked up. *)
+let json_of_klist (symbol : string) (symbol_terminator : string)
+    (jsons : Yojson.Safe.t list) : Yojson.Safe.t =
+  List.fold_right
+    (fun json json_tail -> json_of_kapply symbol [ json; json_tail ])
+    jsons
+    (json_of_kapply symbol_terminator [])
 
-let unalias (sort : string) : string =
-  match sort with "targ" -> "typ" | "elsclause" -> "clause" | _ -> sort
-
-let key (sort : string) (mixop : Mixop.t) : string * string =
-  (unalias sort, Mixop.string_of_mixop mixop)
-
-let table : (string * string, string) Hashtbl.t = Hashtbl.create 128
-
-let register (sort : string) (mixop : Mixop.t) (symbol : string) : unit =
-  Hashtbl.replace table (key sort mixop) symbol
-
-let () =
-  (* Iterators: `common/1-syntax.k` *)
-  register "iter" mop_quest "quest";
-  register "iter" mop_star "star";
-  (* Variables *)
-  register "vari" mop_vari "vari";
-  (* Types.  `optyp` and `numtyp` are subsorts of `Typ` in K, exactly as they
-     are cases of `typ` in watsup, so their constructors are reachable under
-     `typ` as well: `boot_targ` re-notes a type as `targ` whatever the
-     narrower sort `boot_typ` gave it, and `targ` unaliases to `typ`. *)
-  register "optyp" mop_bool_typ "boolT";
-  register "optyp" mop_text_typ "textT";
-  register "numtyp" mop_num_typ_nat "natT";
-  register "numtyp" mop_num_typ_int "intT";
-  register "typ" mop_bool_typ "boolT";
-  register "typ" mop_text_typ "textT";
-  register "typ" mop_num_typ_nat "natT";
-  register "typ" mop_num_typ_int "intT";
-  register "typ" mop_var_typ "varT";
-  register "typ" mop_tuple_typ "tupT";
-  register "typ" mop_iter_typ "iterT";
-  register "typ" mop_func_typ "funcT";
-  (* Defined types *)
-  register "deftyp" mop_plain_deftyp "aliasDT";
-  register "deftyp" mop_struct_deftyp "structDT";
-  register "deftyp" mop_variant_deftyp "variantDT";
-  register "typfield" mop_typfield "typField";
-  register "typcase" mop_typcase "typCase";
-  (* Numbers.  `num` is a case of both `val` and `exp` in watsup and a subsort
-     of both `Val` and `Exp` in K, so a number keeps its own constructor
-     whichever of the three sorts the booter noted it with: `boot_num_value`
-     notes `num`, and `boot_num_exp` re-notes the same value as `exp`. *)
-  register "num" mop_num_value_nat "natN";
-  register "num" mop_num_value_int "intN";
-  register "val" mop_num_value_nat "natN";
-  register "val" mop_num_value_int "intN";
-  register "exp" mop_num_value_nat "natN";
-  register "exp" mop_num_value_int "intN";
-  (* Values *)
-  register "val" mop_bool_value "boolV";
-  register "val" mop_text_value "textV";
-  register "val" mop_struct_value "strV";
-  register "val" mop_case_value "injV";
-  register "val" mop_tuple_value "tupV";
-  register "val" mop_opt_value "optV";
-  register "val" mop_list_value "listV";
-  register "val" mop_func_value "funcV";
-  register "val" mop_extern_value "extV";
-  register "valfield" mop_valuefield "valField";
-  register "valcase" mop_valuecase "valCase";
-  (* Unary, binary and comparison operators *)
-  register "boolunop" mop_not_unop "notOp";
-  register "numunop" mop_plus_unop "plusOp";
-  register "numunop" mop_minus_unop "minusOp";
-  register "boolbinop" mop_and_binop "andOp";
-  register "boolbinop" mop_or_binop "orOp";
-  register "boolbinop" mop_impl_binop "implOp";
-  register "boolbinop" mop_equiv_binop "equivOp";
-  register "numbinop" mop_add_binop "addOp";
-  register "numbinop" mop_sub_binop "subOp";
-  register "numbinop" mop_mul_binop "mulOp";
-  register "numbinop" mop_div_binop "divOp";
-  register "numbinop" mop_mod_binop "modOp";
-  register "numbinop" mop_pow_binop "powOp";
-  register "polycmpop" mop_eq_cmpop "eqOp";
-  register "polycmpop" mop_ne_cmpop "neOp";
-  register "numcmpop" mop_lt_cmpop "ltOp";
-  register "numcmpop" mop_le_cmpop "leOp";
-  register "numcmpop" mop_gt_cmpop "gtOp";
-  register "numcmpop" mop_ge_cmpop "geOp";
-  (* Arguments *)
-  register "arg" mop_exp_arg "expA";
-  register "arg" mop_def_arg "funA";
-  (* Expressions *)
-  register "exp" mop_bool_exp "boolE";
-  register "exp" mop_text_exp "textE";
-  register "exp" mop_var_exp "varE";
-  register "exp" mop_un_exp "unE";
-  register "exp" mop_bin_exp "binE";
-  register "exp" mop_cmp_exp "cmpE";
-  register "exp" mop_upcast_exp "upCastE";
-  register "exp" mop_downcast_exp "downCastE";
-  register "exp" mop_sub_exp "subE";
-  register "exp" mop_match_exp "matchE";
-  register "exp" mop_tuple_exp "tupE";
-  register "exp" mop_case_exp "injE";
-  register "exp" mop_struct_exp "strE";
-  register "exp" mop_opt_exp "optE";
-  register "exp" mop_list_exp "listE";
-  register "exp" mop_cons_exp "consE";
-  register "exp" mop_cat_exp "catE";
-  register "exp" mop_mem_exp "memE";
-  register "exp" mop_len_exp "lenE";
-  register "exp" mop_dot_exp "dotE";
-  register "exp" mop_idx_exp "idxE";
-  register "exp" mop_slice_exp "sliceE";
-  register "exp" mop_upd_exp "updE";
-  register "exp" mop_call_exp "callE";
-  register "exp" mop_iter_exp "iterE";
-  register "expcase" mop_expcase "expCase";
-  register "expfield" mop_expfield "expField";
-  register "iterexp" mop_iterexp "iterExp";
-  (* Paths *)
-  register "path" mop_root_path "rootPath";
-  register "path" mop_idx_path "idxPath";
-  register "path" mop_slice_path "slicePath";
-  register "path" mop_dot_path "dotPath";
-  (* Patterns *)
-  register "pattern" mop_case_pattern "injPat";
-  register "listpattern" mop_list_cons_pattern "consPat";
-  register "listpattern" mop_list_fixed_pattern "fixedPat";
-  register "listpattern" mop_list_nil_pattern "nilPat";
-  register "optpattern" mop_opt_some_pattern "somePat";
-  register "optpattern" mop_opt_none_pattern "nonePat";
-  (* Parameters: `al/1-syntax.k` *)
-  register "param" mop_exp_param "expParam";
-  register "param" mop_def_param "funParam";
-  (* Premises *)
-  register "iterprem" mop_iterprem "iterPrem";
-  register "prem" mop_rel_prem "relPr";
-  register "prem" mop_if_prem "ifPr";
-  register "prem" mop_if_hold_prem "ifHoldPr";
-  register "prem" mop_if_nothold_prem "ifNotHoldPr";
-  register "prem" mop_let_prem "letPr";
-  register "prem" mop_iter_prem "iterPr";
-  register "prem" mop_debug_prem "debugPr";
-  (* Rules, clauses and table rows.  `clause` and `tblrow` share a notation,
-     which is why the sort is part of the key. *)
-  register "rulmatch" mop_rulematch "rulMatch";
-  register "rulpath" mop_rulepath "rulPath";
-  register "rulgroup" mop_rulegroup "rulGroup";
-  register "elsgroup" mop_elsegroup "elsGroup";
-  register "clause" mop_clause "clause";
-  register "tblrow" mop_tablerow "tblRow";
-  (* Definitions *)
-  register "defn" mop_extern_typ_def "extTypD";
-  register "defn" mop_typ_def "typD";
-  register "defn" mop_extern_rel_def "extRelD";
-  register "defn" mop_rel_def "relD";
-  register "defn" mop_extern_func_def "extFuncD";
-  register "defn" mop_builtin_func_def "builtinFuncD";
-  register "defn" mop_table_func_def "tableFuncD";
-  register "defn" mop_func_def "funcD"
-
-(* List sorts.
-
-   A `ListV` carries `IterT (typ_elem, List)` as its note, except for the
-   mixop of a case, whose note is the sort `mixop` itself.  Both the cons
-   label and the terminator of the corresponding K list are looked up by the
-   element sort. *)
-
-let lists : (string, string * string) Hashtbl.t = Hashtbl.create 32
-
-let register_list (sort_elem : string) (symbol : string)
-    (symbol_terminator : string) : unit =
-  Hashtbl.replace lists sort_elem (symbol, symbol_terminator)
-
-let () =
-  register_list "atom" "atomList" ".atomList";
-  register_list "atomList" "mixop" ".mixop";
-  register_list "typ" "typList" ".typList";
-  (* `targ` is an alias of `typ`, and `tparam` of `id`; K inlines both. *)
-  register_list "targ" "typList" ".typList";
-  register_list "tparam" "tparamList" ".tparamList";
-  register_list "typfield" "typFieldList" ".typFieldList";
-  register_list "typcase" "typCaseList" ".typCaseList";
-  register_list "iter" "iterList" ".iterList";
-  register_list "vari" "variList" ".variList";
-  register_list "val" "valList" ".valList";
-  register_list "valfield" "valFieldList" ".valFieldList";
-  register_list "exp" "expList" ".expList";
-  register_list "expfield" "expFieldList" ".expFieldList";
-  register_list "arg" "argList" ".argList";
-  register_list "param" "paramList" ".paramList";
-  register_list "prem" "premList" ".premList";
-  register_list "rulpath" "rulPathList" ".rulPathList";
-  register_list "rulgroup" "rulGroupList" ".rulGroupList";
-  register_list "clause" "clauseList" ".clauseList";
-  register_list "tblrow" "tblRowList" ".tblRowList";
-  register_list "defn" "script" ".script"
-
-(* Option sorts.
+(* Options.
 
    Watsup's `X?` becomes a two-constructor sort in K, since K has no generic
-   option.  Keyed, like lists, by the sort of the element. *)
+   option; both constructors are named after the element sort. *)
 
-let opts : (string, string * string) Hashtbl.t = Hashtbl.create 16
-
-let register_opt (sort_elem : string) (symbol_none : string)
-    (symbol_some : string) : unit =
-  Hashtbl.replace opts sort_elem (symbol_none, symbol_some)
-
-let () =
-  register_opt "val" "noVal" "someVal";
-  register_opt "exp" "noExp" "someExp";
-  register_opt "elsgroup" "noElsGroup" "someElsGroup";
-  (* `elsclause` is an alias of `clause`; `boot_elsclause_opt` notes the option
-     with the alias, and K inlines it. *)
-  register_opt "elsclause" "noElsClause" "someElsClause"
+let json_of_kopt (symbol_none : string) (symbol_some : string)
+    (json_opt : Yojson.Safe.t option) : Yojson.Safe.t =
+  match json_opt with
+  | None -> json_of_kapply symbol_none []
+  | Some json -> json_of_kapply symbol_some [ json ]
 
 (* Errors *)
 
@@ -308,193 +110,483 @@ exception Error of string
 let error (fmt : ('a, Format.formatter, unit, 'b) format4) : 'a =
   Format.kasprintf (fun msg -> raise (Error msg)) fmt
 
-(* The sort a value is noted with.
+(* Identifiers.
 
-   Every `CaseV`, list and option built by `boot.ml` is noted with the watsup
-   sort it inhabits; anything else is a booter change this emitter has not
-   been taught about. *)
+   `id` and `atom` are subsorts of `String` in K, so an injection is not written
+   out: `kast` infers `String -> Id` and `String -> Atom`. *)
 
-let sort_of_typ (typ : Il.typ') : string =
-  match typ with
-  | Il.VarT (id, []) -> id.it
-  | _ -> error "not a sort: %s" (Il.Print.string_of_typ (typ $ no_region))
+let json_of_id (id : Il.id) : Yojson.Safe.t = json_of_string id.it
 
-let sort_of_elem (typ : Il.typ') : string =
-  match typ with
-  | Il.IterT (typ, Il.List) -> sort_of_typ typ.it
-  | Il.IterT (typ, Il.Opt) -> sort_of_typ typ.it
-  (* Watsup aliases of an iterated type are noted with the alias, not with the
-     type it abbreviates: `mixop = atom**` and `script = defn*`. *)
-  | Il.VarT (id, []) when id.it = "mixop" -> "atomList"
-  | Il.VarT (id, []) when id.it = "script" -> "defn"
-  | _ ->
-      error "not an iterated sort: %s"
-        (Il.Print.string_of_typ (typ $ no_region))
+(* Atoms.
 
-(* Values *)
+   Operator atoms keep their quotes inside the string (`':'`), matching
+   `Common.Boot.boot_atom`. *)
 
-let rec json_of_value (value : Value.t) : Yojson.Safe.t =
+let json_of_atom (atom : Il.atom) : Yojson.Safe.t =
+  json_of_string (Atom.string_of_atom atom.it)
+
+let json_of_atoms (atoms : Il.atom list) : Yojson.Safe.t =
+  json_of_klist "atomList" ".atomList" (List.map json_of_atom atoms)
+
+(* Mixfix operators.
+
+   A mixop is an atoms matrix: one row of atoms per notation position, exactly
+   as `spec-meta-k/al/4-extern-json.k` puts it on the extern wire. *)
+
+let json_of_mixop (mixop : Il.mixop) : Yojson.Safe.t =
+  json_of_klist "mixop" ".mixop"
+    (List.map json_of_atoms (Mixop.atoms_matrix mixop))
+
+(* Iterators *)
+
+let json_of_iter (iter : Il.iter) : Yojson.Safe.t =
+  match iter with
+  | Opt -> json_of_kapply "quest" []
+  | List -> json_of_kapply "star" []
+
+let json_of_iters (iters : Il.iter list) : Yojson.Safe.t =
+  json_of_klist "iterList" ".iterList" (List.map json_of_iter iters)
+
+(* Types *)
+
+let rec json_of_typ (typ : Il.typ) : Yojson.Safe.t =
+  match typ.it with
+  | BoolT -> json_of_kapply "boolT" []
+  | NumT `NatT -> json_of_kapply "natT" []
+  | NumT `IntT -> json_of_kapply "intT" []
+  | TextT -> json_of_kapply "textT" []
+  | VarT (id, targs) ->
+      json_of_kapply "varT" [ json_of_id id; json_of_typs targs ]
+  | TupleT typs -> json_of_kapply "tupT" [ json_of_typs typs ]
+  | IterT (typ, iter) ->
+      json_of_kapply "iterT" [ json_of_typ typ; json_of_iter iter ]
+  (* A function type carries no payload in the meta-language syntax: `funcT` is
+     nullary, exactly as `boot_func_typ` drops the arrow's components. *)
+  | FuncT (_, _, _) -> json_of_kapply "funcT" []
+
+(* `targ` is an alias of `typ` in watsup, and K inlines it, so type arguments
+   are emitted as a plain type list. *)
+and json_of_typs (typs : Il.typ list) : Yojson.Safe.t =
+  json_of_klist "typList" ".typList" (List.map json_of_typ typs)
+
+(* Type parameters.  `tparam` is an alias of `id`. *)
+
+let json_of_tparams (tparams : Il.tparam list) : Yojson.Safe.t =
+  json_of_klist "tparamList" ".tparamList" (List.map json_of_id tparams)
+
+(* Variables *)
+
+let json_of_vari ((id, typ, iters) : Il.var) : Yojson.Safe.t =
+  json_of_kapply "vari"
+    [ json_of_id id; json_of_typ typ; json_of_iters iters ]
+
+let json_of_varis (vars : Il.var list) : Yojson.Safe.t =
+  json_of_klist "variList" ".variList" (List.map json_of_vari vars)
+
+(* Defined types *)
+
+let json_of_typfield ((atom, typ) : Il.typfield) : Yojson.Safe.t =
+  json_of_kapply "typField" [ json_of_atom atom; json_of_typ typ ]
+
+let json_of_typcase (typcase : Il.typcase) : Yojson.Safe.t =
+  let nottyp, _, _ = typcase in
+  let mixop, typs = Mixfix.split nottyp.it in
+  json_of_kapply "typCase" [ json_of_mixop mixop; json_of_typs typs ]
+
+let json_of_deftyp (deftyp : Il.deftyp) : Yojson.Safe.t =
+  match deftyp.it with
+  | PlainT typ -> json_of_kapply "aliasDT" [ json_of_typ typ ]
+  | StructT typfields ->
+      json_of_kapply "structDT"
+        [
+          json_of_klist "typFieldList" ".typFieldList"
+            (List.map json_of_typfield typfields);
+        ]
+  | VariantT typcases ->
+      json_of_kapply "variantDT"
+        [
+          json_of_klist "typCaseList" ".typCaseList"
+            (List.map json_of_typcase typcases);
+        ]
+
+(* Values.
+
+   `num` is a case of both `val` and `exp` in watsup and a subsort of both `Val`
+   and `Exp` in K, so a number keeps the same constructor wherever it occurs. *)
+
+let json_of_num (num : Il.num) : Yojson.Safe.t =
+  match num with
+  | `Nat n -> json_of_kapply "natN" [ json_of_int n ]
+  | `Int i -> json_of_kapply "intN" [ json_of_int i ]
+
+let rec json_of_value (value : Il.value) : Yojson.Safe.t =
   match value.it with
-  | Il.BoolV b -> json_of_bool b
-  | Il.NumV (`Nat n) -> json_of_int n
-  | Il.NumV (`Int i) -> json_of_int i
-  (* `id` and `atom` are subsorts of `String` in K, so an injection is not
-     written out: `kast` infers `String -> Id` and `String -> Atom`. *)
-  | Il.TextV s -> json_of_string s
-  | Il.CaseV valuecase -> json_of_valuecase value.note.typ valuecase
-  | Il.ListV values -> json_of_list value.note.typ values
-  | Il.OptV value_opt -> json_of_opt value.note.typ value_opt
-  | Il.StructV _ ->
-      error "struct value: the meta-language script syntax has no struct"
-  | Il.TupleV _ ->
-      error "tuple value: the meta-language script syntax has no tuple"
-  | Il.FuncV _ -> error "function value in a booted script"
-  | Il.ExternV _ -> error "extern value in a booted script"
+  | BoolV b -> json_of_kapply "boolV" [ json_of_bool b ]
+  | NumV num -> json_of_num num
+  | TextV t -> json_of_kapply "textV" [ json_of_string t ]
+  | StructV valuefields ->
+      json_of_kapply "strV"
+        [
+          json_of_klist "valFieldList" ".valFieldList"
+            (List.map json_of_valuefield valuefields);
+        ]
+  | CaseV valuecase -> json_of_kapply "injV" [ json_of_valuecase valuecase ]
+  | TupleV values -> json_of_kapply "tupV" [ json_of_values values ]
+  | OptV value_opt ->
+      json_of_kapply "optV"
+        [ json_of_kopt "noVal" "someVal" (Option.map json_of_value value_opt) ]
+  | ListV values -> json_of_kapply "listV" [ json_of_values values ]
+  | FuncV id -> json_of_kapply "funcV" [ json_of_id id ]
+  (* `extV` would need K's abstract `Json` sort, which has no K-reachable
+     inhabitants, so an extern value cannot be written down as a term at all. *)
+  | ExternV _ -> error "extern value cannot be emitted as a K Val"
 
-and json_of_valuecase (typ : Il.typ') (valuecase : Il.valuecase) : Yojson.Safe.t
-    =
-  let sort = sort_of_typ typ in
+and json_of_values (values : Il.value list) : Yojson.Safe.t =
+  json_of_klist "valList" ".valList" (List.map json_of_value values)
+
+and json_of_valuefield ((atom, value) : Il.valuefield) : Yojson.Safe.t =
+  json_of_kapply "valField" [ json_of_atom atom; json_of_value value ]
+
+and json_of_valuecase (valuecase : Il.valuecase) : Yojson.Safe.t =
   let mixop, values = Mixfix.split valuecase in
-  match Hashtbl.find_opt table (key sort mixop) with
-  | Some symbol -> json_of_kapply symbol (List.map json_of_value values)
-  | None ->
-      error "no K constructor for %s of sort %s"
-        (Mixop.string_of_mixop mixop)
-        sort
+  json_of_kapply "valCase" [ json_of_mixop mixop; json_of_values values ]
 
-and json_of_list (typ : Il.typ') (values : Value.t list) : Yojson.Safe.t =
-  let sort_elem = sort_of_elem typ in
-  match Hashtbl.find_opt lists sort_elem with
-  | Some (symbol, symbol_terminator) ->
-      List.fold_right
-        (fun value json_tail ->
-          json_of_kapply symbol [ json_of_value value; json_tail ])
-        values
-        (json_of_kapply symbol_terminator [])
-  | None -> error "no K list for element sort %s" sort_elem
+(* Operators *)
 
-and json_of_opt (typ : Il.typ') (value_opt : Value.t option) : Yojson.Safe.t =
-  let sort_elem = sort_of_elem typ in
-  match Hashtbl.find_opt opts sort_elem with
-  | Some (symbol_none, symbol_some) -> (
-      match value_opt with
-      | None -> json_of_kapply symbol_none []
-      | Some value -> json_of_kapply symbol_some [ json_of_value value ])
-  | None -> error "no K option for element sort %s" sort_elem
+let json_of_unop (unop : Il.unop) : Yojson.Safe.t =
+  match unop with
+  | `NotOp -> json_of_kapply "notOp" []
+  | `PlusOp -> json_of_kapply "plusOp" []
+  | `MinusOp -> json_of_kapply "minusOp" []
 
-(* Scripts *)
+let json_of_binop (binop : Il.binop) : Yojson.Safe.t =
+  match binop with
+  | `AndOp -> json_of_kapply "andOp" []
+  | `OrOp -> json_of_kapply "orOp" []
+  | `ImplOp -> json_of_kapply "implOp" []
+  | `EquivOp -> json_of_kapply "equivOp" []
+  | `AddOp -> json_of_kapply "addOp" []
+  | `SubOp -> json_of_kapply "subOp" []
+  | `MulOp -> json_of_kapply "mulOp" []
+  | `DivOp -> json_of_kapply "divOp" []
+  | `ModOp -> json_of_kapply "modOp" []
+  | `PowOp -> json_of_kapply "powOp" []
 
-let json_of_script (value_script : Value.t) : Yojson.Safe.t =
+let json_of_cmpop (cmpop : Il.cmpop) : Yojson.Safe.t =
+  match cmpop with
+  | `EqOp -> json_of_kapply "eqOp" []
+  | `NeOp -> json_of_kapply "neOp" []
+  | `LtOp -> json_of_kapply "ltOp" []
+  | `LeOp -> json_of_kapply "leOp" []
+  | `GtOp -> json_of_kapply "gtOp" []
+  | `GeOp -> json_of_kapply "geOp" []
+
+(* Patterns *)
+
+let json_of_pattern (pattern : Il.pattern) : Yojson.Safe.t =
+  match pattern with
+  | CaseP mixop -> json_of_kapply "injPat" [ json_of_mixop mixop ]
+  | ListP `Cons -> json_of_kapply "consPat" []
+  | ListP (`Fixed n) ->
+      json_of_kapply "fixedPat" [ json_of_int (Bigint.of_int n) ]
+  | ListP `Nil -> json_of_kapply "nilPat" []
+  | OptP `Some -> json_of_kapply "somePat" []
+  | OptP `None -> json_of_kapply "nonePat" []
+
+(* Expressions *)
+
+let rec json_of_exp (exp : Il.exp) : Yojson.Safe.t =
+  match exp.it with
+  | BoolE b -> json_of_kapply "boolE" [ json_of_bool b ]
+  | NumE num -> json_of_num num
+  | TextE t -> json_of_kapply "textE" [ json_of_string t ]
+  | VarE id -> json_of_kapply "varE" [ json_of_id id ]
+  | UnE (unop, _, e) ->
+      json_of_kapply "unE" [ json_of_unop unop; json_of_exp e ]
+  | BinE (binop, _, el, er) ->
+      json_of_kapply "binE"
+        [ json_of_binop binop; json_of_exp el; json_of_exp er ]
+  | CmpE (cmpop, _, el, er) ->
+      json_of_kapply "cmpE"
+        [ json_of_cmpop cmpop; json_of_exp el; json_of_exp er ]
+  | UpCastE (typ, e) ->
+      json_of_kapply "upCastE" [ json_of_typ typ; json_of_exp e ]
+  | DownCastE (typ, e) ->
+      json_of_kapply "downCastE" [ json_of_typ typ; json_of_exp e ]
+  | SubE (e, typ) -> json_of_kapply "subE" [ json_of_exp e; json_of_typ typ ]
+  | MatchE (e, pattern) ->
+      json_of_kapply "matchE" [ json_of_exp e; json_of_pattern pattern ]
+  | TupleE exps -> json_of_kapply "tupE" [ json_of_exps exps ]
+  | CaseE notexp -> json_of_kapply "injE" [ json_of_expcase notexp ]
+  | StrE expfields ->
+      json_of_kapply "strE"
+        [
+          json_of_klist "expFieldList" ".expFieldList"
+            (List.map json_of_expfield expfields);
+        ]
+  | OptE exp_opt ->
+      json_of_kapply "optE"
+        [ json_of_kopt "noExp" "someExp" (Option.map json_of_exp exp_opt) ]
+  | ListE exps -> json_of_kapply "listE" [ json_of_exps exps ]
+  | ConsE (eh, et) ->
+      json_of_kapply "consE" [ json_of_exp eh; json_of_exp et ]
+  | CatE (el, er) -> json_of_kapply "catE" [ json_of_exp el; json_of_exp er ]
+  | MemE (ee, es) -> json_of_kapply "memE" [ json_of_exp ee; json_of_exp es ]
+  | LenE e -> json_of_kapply "lenE" [ json_of_exp e ]
+  | DotE (e, atom) ->
+      json_of_kapply "dotE" [ json_of_exp e; json_of_atom atom ]
+  | IdxE (eb, ei) -> json_of_kapply "idxE" [ json_of_exp eb; json_of_exp ei ]
+  | SliceE (eb, ei, en) ->
+      json_of_kapply "sliceE"
+        [ json_of_exp eb; json_of_exp ei; json_of_exp en ]
+  | UpdE (eb, path, en) ->
+      json_of_kapply "updE"
+        [ json_of_exp eb; json_of_path path; json_of_exp en ]
+  | CallE (id, targs, args) ->
+      json_of_kapply "callE"
+        [ json_of_id id; json_of_typs targs; json_of_args args ]
+  | IterE (e, iterexp) ->
+      json_of_kapply "iterE" [ json_of_exp e; json_of_iterexp iterexp ]
+
+and json_of_exps (exps : Il.exp list) : Yojson.Safe.t =
+  json_of_klist "expList" ".expList" (List.map json_of_exp exps)
+
+and json_of_expfield ((atom, exp) : Il.atom * Il.exp) : Yojson.Safe.t =
+  json_of_kapply "expField" [ json_of_atom atom; json_of_exp exp ]
+
+and json_of_expcase (notexp : Il.notexp) : Yojson.Safe.t =
+  let mixop, exps = Mixfix.split notexp in
+  json_of_kapply "expCase" [ json_of_mixop mixop; json_of_exps exps ]
+
+and json_of_iterexp ((iter, vars) : Il.iterexp) : Yojson.Safe.t =
+  json_of_kapply "iterExp" [ json_of_iter iter; json_of_varis vars ]
+
+(* Paths *)
+
+and json_of_path (path : Il.path) : Yojson.Safe.t =
+  match path.it with
+  | RootP -> json_of_kapply "rootPath" []
+  | IdxP (path, exp) ->
+      json_of_kapply "idxPath" [ json_of_path path; json_of_exp exp ]
+  | SliceP (path, exp_i, exp_n) ->
+      json_of_kapply "slicePath"
+        [ json_of_path path; json_of_exp exp_i; json_of_exp exp_n ]
+  | DotP (path, atom) ->
+      json_of_kapply "dotPath" [ json_of_path path; json_of_atom atom ]
+
+(* Arguments *)
+
+and json_of_arg (arg : Il.arg) : Yojson.Safe.t =
+  match arg.it with
+  | ExpA e -> json_of_kapply "expA" [ json_of_exp e ]
+  | DefA id -> json_of_kapply "funA" [ json_of_id id ]
+
+and json_of_args (args : Il.arg list) : Yojson.Safe.t =
+  json_of_klist "argList" ".argList" (List.map json_of_arg args)
+
+(* Parameters *)
+
+let rec json_of_param (param : Il.param) : Yojson.Safe.t =
+  match param.it with
+  | ExpP typ -> json_of_kapply "expParam" [ json_of_typ typ ]
+  | DefP (id, tparams, params, typ) ->
+      json_of_kapply "funParam"
+        [
+          json_of_id id;
+          json_of_tparams tparams;
+          json_of_params params;
+          json_of_typ typ;
+        ]
+
+and json_of_params (params : Il.param list) : Yojson.Safe.t =
+  json_of_klist "paramList" ".paramList" (List.map json_of_param params)
+
+(* Premises *)
+
+let rec json_of_prem (prem : Il.prem) : Yojson.Safe.t =
+  match prem.it with
+  | RulePr (id, notexp, input) ->
+      let exps = Mixfix.args notexp in
+      let exps_in, exps_out = Lang.Hints.Input.split input exps in
+      json_of_kapply "relPr"
+        [ json_of_id id; json_of_exps exps_in; json_of_exps exps_out ]
+  | IfPr e -> json_of_kapply "ifPr" [ json_of_exp e ]
+  | IfHoldPr (id, notexp) ->
+      json_of_kapply "ifHoldPr"
+        [ json_of_id id; json_of_exps (Mixfix.args notexp) ]
+  | IfNotHoldPr (id, notexp) ->
+      json_of_kapply "ifNotHoldPr"
+        [ json_of_id id; json_of_exps (Mixfix.args notexp) ]
+  | LetPr (el, er) -> json_of_kapply "letPr" [ json_of_exp el; json_of_exp er ]
+  | IterPr (p, ip) ->
+      json_of_kapply "iterPr" [ json_of_prem p; json_of_iterprem ip ]
+  | DebugPr e -> json_of_kapply "debugPr" [ json_of_exp e ]
+
+and json_of_prems (prems : Il.prem list) : Yojson.Safe.t =
+  json_of_klist "premList" ".premList" (List.map json_of_prem prems)
+
+and json_of_iterprem ((iter, vars_in, vars_out) : Il.iterprem) : Yojson.Safe.t =
+  json_of_kapply "iterPrem"
+    [ json_of_iter iter; json_of_varis vars_in; json_of_varis vars_out ]
+
+(* Rule matching and paths *)
+
+let json_of_rulmatch ((_, exps_input, prems) : Al.rulematch) : Yojson.Safe.t =
+  json_of_kapply "rulMatch" [ json_of_exps exps_input; json_of_prems prems ]
+
+let json_of_rulpath ((id, prems, exps_output) : Al.rulepath) : Yojson.Safe.t =
+  json_of_kapply "rulPath"
+    [ json_of_id id; json_of_exps exps_output; json_of_prems prems ]
+
+let json_of_rulgroup (rulegroup : Al.rulegroup) : Yojson.Safe.t =
+  let id, rulmatch_, rulpaths = rulegroup.it in
+  json_of_kapply "rulGroup"
+    [
+      json_of_id id;
+      json_of_rulmatch rulmatch_;
+      json_of_klist "rulPathList" ".rulPathList"
+        (List.map json_of_rulpath rulpaths);
+    ]
+
+let json_of_elsgroup (elsegroup : Al.elsegroup) : Yojson.Safe.t =
+  let id, rulmatch_, rulpath_ = elsegroup.it in
+  json_of_kapply "elsGroup"
+    [ json_of_id id; json_of_rulmatch rulmatch_; json_of_rulpath rulpath_ ]
+
+(* Clauses and table rows.
+
+   `clause` and `tblrow` share a notation in watsup but are distinct sorts, so
+   they take distinct K constructors.  A table row's guard expressions are
+   dropped, exactly as `boot_tablerow` drops them. *)
+
+let json_of_clause (clause : Il.clause) : Yojson.Safe.t =
+  let args, exp, prems = clause.it in
+  json_of_kapply "clause"
+    [ json_of_args args; json_of_exp exp; json_of_prems prems ]
+
+let json_of_tblrow (tablerow : Al.tablerow) : Yojson.Safe.t =
+  let _exps, args, exp, prems = tablerow.it in
+  json_of_kapply "tblRow"
+    [ json_of_args args; json_of_exp exp; json_of_prems prems ]
+
+(* Definitions.
+
+   `VarD` has no counterpart in the script syntax -- a `var` declaration is
+   elaboration-time only -- so it contributes no definition, as in `boot_def`. *)
+
+let json_of_def (def : Al.def) : Yojson.Safe.t option =
+  match def.it with
+  | ExternTypD (id, _) ->
+      Some (json_of_kapply "extTypD" [ json_of_id id ])
+  | TypD (id, tparams, deftyp, _) ->
+      Some
+        (json_of_kapply "typD"
+           [ json_of_id id; json_of_tparams tparams; json_of_deftyp deftyp ])
+  | VarD _ -> None
+  | ExternRelD (id, nottyp, input, _) ->
+      let typs = Mixfix.args nottyp.it in
+      let typs_in, typs_out = Lang.Hints.Input.split input typs in
+      Some
+        (json_of_kapply "extRelD"
+           [ json_of_id id; json_of_typs typs_in; json_of_typs typs_out ])
+  | RelD (id, nottyp, input, rulgroups, elsegroup_opt, _) ->
+      let typs = Mixfix.args nottyp.it in
+      let typs_in, typs_out = Lang.Hints.Input.split input typs in
+      Some
+        (json_of_kapply "relD"
+           [
+             json_of_id id;
+             json_of_typs typs_in;
+             json_of_typs typs_out;
+             json_of_klist "rulGroupList" ".rulGroupList"
+               (List.map json_of_rulgroup rulgroups);
+             json_of_kopt "noElsGroup" "someElsGroup"
+               (Option.map json_of_elsgroup elsegroup_opt);
+           ])
+  | ExternDecD (id, tparams, params, typ, _) ->
+      Some
+        (json_of_kapply "extFuncD"
+           [
+             json_of_id id;
+             json_of_tparams tparams;
+             json_of_params params;
+             json_of_typ typ;
+           ])
+  | BuiltinDecD (id, tparams, params, typ, _) ->
+      Some
+        (json_of_kapply "builtinFuncD"
+           [
+             json_of_id id;
+             json_of_tparams tparams;
+             json_of_params params;
+             json_of_typ typ;
+           ])
+  | TableDecD (id, params, typ, tablerows, _) ->
+      Some
+        (json_of_kapply "tableFuncD"
+           [
+             json_of_id id;
+             json_of_params params;
+             json_of_typ typ;
+             json_of_klist "tblRowList" ".tblRowList"
+               (List.map json_of_tblrow tablerows);
+           ])
+  | FuncDecD (id, tparams, params, typ, clauses, elseclause_opt, _) ->
+      Some
+        (json_of_kapply "funcD"
+           [
+             json_of_id id;
+             json_of_tparams tparams;
+             json_of_params params;
+             json_of_typ typ;
+             json_of_klist "clauseList" ".clauseList"
+               (List.map json_of_clause clauses);
+             json_of_kopt "noElsClause" "someElsClause"
+               (Option.map json_of_clause elseclause_opt);
+           ])
+
+(* Specification *)
+
+let json_of_spec_al (spec : Al.spec) : Yojson.Safe.t =
   `Assoc
     [
       ("format", `String "KAST");
       ("version", `Int version);
-      ("term", json_of_value value_script);
+      ( "term",
+        json_of_klist "script" ".script"
+          (List.filter_map json_of_def spec) );
     ]
 
-let string_of_script (value_script : Value.t) : string =
-  value_script |> json_of_script |> Yojson.Safe.pretty_to_string
+let string_of_spec_al (spec : Al.spec) : string =
+  spec |> json_of_spec_al |> Yojson.Safe.pretty_to_string
 
 (* Values of an arbitrary spec, as the K sort `Val`.
 
-   Everything above emits the *meta-language* script syntax: `json_of_value`
-   dispatches on the watsup sort a value is noted with, and looks the
-   constructor up in `table`.  That is exactly what a target-level value cannot
-   go through — a P4 program inhabits sorts (`p4program`, `declarationList`, …)
-   that the table knows nothing about, and `json_of_value` rejects `StructV` and
-   `TupleV` outright since the script syntax has neither.
+   Everything above emits the *meta-language* script syntax, whose K sorts are
+   those of `spec-meta-k`.  A target-level value cannot go through it: a P4
+   program inhabits sorts (`p4program`, `declarationList`, ...) that the
+   meta-language syntax knows nothing about.
 
    K's `Val` (`spec-meta-k/common/1-syntax.k`) is structural, though: `injV`
    carries its mixop as data rather than being resolved to a named constructor,
-   so any value of any spec can be written down without a table.  This second
-   encoder therefore never consults `value.note.typ` and never touches `table`;
-   it is a plain structural walk.
+   so any value of any spec can be written down.  `json_of_value` above is
+   exactly that structural walk, and it is what lets a P4 program reach the K
+   definition: it is parsed by the OCaml P4 parser (`Interface.P4.parse_program`,
+   which builds a `Value.t` directly), emitted here, and bound to the `<p4prog>`
+   cell.
 
-   That is what lets a P4 program reach the K definition: it is parsed by the
-   OCaml P4 parser (`Interface.P4.parse_program`, which builds a `Value.t`
-   directly), emitted here as a `Val`, and bound to the `<p4prog>` cell. *)
-
-let rec json_of_val (value : Value.t) : Yojson.Safe.t =
-  match value.it with
-  | Il.BoolV b -> json_of_kapply "boolV" [ json_of_bool b ]
-  | Il.NumV (`Nat n) -> json_of_kapply "natN" [ json_of_int n ]
-  | Il.NumV (`Int i) -> json_of_kapply "intN" [ json_of_int i ]
-  | Il.TextV s -> json_of_kapply "textV" [ json_of_string s ]
-  | Il.StructV valuefields ->
-      json_of_kapply "strV" [ json_of_valfields valuefields ]
-  | Il.CaseV valuecase ->
-      let mixop, values = Mixfix.split valuecase in
-      json_of_kapply "injV"
-        [
-          json_of_kapply "valCase"
-            [ json_of_mixop mixop; json_of_vals values ];
-        ]
-  | Il.TupleV values -> json_of_kapply "tupV" [ json_of_vals values ]
-  | Il.OptV None -> json_of_kapply "optV" [ json_of_kapply "noVal" [] ]
-  | Il.OptV (Some value) ->
-      json_of_kapply "optV"
-        [ json_of_kapply "someVal" [ json_of_val value ] ]
-  | Il.ListV values -> json_of_kapply "listV" [ json_of_vals values ]
-  (* Neither is reachable from the P4 parser, which builds only cases and
-     text/number leaves.  `extV` would need K's abstract `Json` sort, which has
-     no K-reachable inhabitants, so an extern value cannot be written down as a
-     term at all. *)
-  | Il.FuncV _ -> error "function value cannot be emitted as a K Val"
-  | Il.ExternV _ -> error "extern value cannot be emitted as a K Val"
-
-and json_of_vals (values : Value.t list) : Yojson.Safe.t =
-  List.fold_right
-    (fun value json_tail ->
-      json_of_kapply "valList" [ json_of_val value; json_tail ])
-    values
-    (json_of_kapply ".valList" [])
-
-and json_of_valfields (valuefields : (Il.atom * Value.t) list) : Yojson.Safe.t =
-  List.fold_right
-    (fun (atom_field, value_field) json_tail ->
-      let json_field =
-        json_of_kapply "valField"
-          [
-            json_of_string (Atom.string_of_atom atom_field.it);
-            json_of_val value_field;
-          ]
-      in
-      json_of_kapply "valFieldList" [ json_field; json_tail ])
-    valuefields
-    (json_of_kapply ".valFieldList" [])
-
-(* A mixop is an atoms matrix: one row of atoms per notation position, exactly
-   as `spec-meta-k/al/4-extern-json.k` puts it on the extern wire.  Operator
-   atoms keep their quotes inside the string (`':'`), matching `boot_atom`. *)
-
-and json_of_mixop (mixop : Mixop.t) : Yojson.Safe.t =
-  List.fold_right
-    (fun atoms json_tail ->
-      json_of_kapply "mixop" [ json_of_atoms atoms; json_tail ])
-    (Mixop.atoms_matrix mixop)
-    (json_of_kapply ".mixop" [])
-
-and json_of_atoms (atoms : Il.atom list) : Yojson.Safe.t =
-  List.fold_right
-    (fun (atom : Il.atom) json_tail ->
-      json_of_kapply "atomList"
-        [ json_of_string (Atom.string_of_atom atom.it); json_tail ])
-    atoms
-    (json_of_kapply ".atomList" [])
-
-(* Wrapped as `someP4(val)`, the inhabited case of the `<p4prog>` cell's sort.
-
-   The wrapper is applied here rather than by the shell that drives this,
-   because splicing one KORE term into another textually is not something
-   `kast` offers: it parses a whole term of one sort.  Emitting the wrapper as
-   part of the JSON means the term arrives at the right sort in one parse. *)
+   Wrapped as `someP4(val)`, the inhabited case of the `<p4prog>` cell's sort.
+   The wrapper is applied here rather than by the shell that drives this, because
+   splicing one KORE term into another textually is not something `kast` offers:
+   it parses a whole term of one sort.  Emitting the wrapper as part of the JSON
+   means the term arrives at the right sort in one parse. *)
 
 let json_of_p4_term (value : Value.t) : Yojson.Safe.t =
   `Assoc
     [
       ("format", `String "KAST");
       ("version", `Int version);
-      ("term", json_of_kapply "someP4" [ json_of_val value ]);
+      ("term", json_of_kapply "someP4" [ json_of_value value ]);
     ]
 
 let string_of_value (value : Value.t) : string =

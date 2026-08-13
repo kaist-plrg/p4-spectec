@@ -282,12 +282,8 @@ let kast_command =
      in
      fun () ->
        try
-         let value_program =
-           match Interface.SpecTec_AL.parse_program [] [ path_spectec ] with
-           | Pass value_program -> value_program
-           | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
-         in
-         let kast = Interface.SpecTec_AL.kast_of_program value_program in
+         let spec_al = Pass.algo [ path_spectec ] in
+         let kast = Interface.SpecTec_AL.kast_of_spec_al spec_al in
          match path_out with
          | Some path_out ->
              let oc = Out_channel.open_text path_out in
@@ -296,17 +292,21 @@ let kast_command =
                (fun () -> Out_channel.output_string oc (kast ^ "\n"))
          | None -> print_endline kast
        with
-       (* Errors go to stderr and exit non-zero: this subcommand is meant to
-          be driven from a script (`kast-json.sh` runs it under `krun
-          --parser`), where a failure printed to stdout would be fed onward as
-          if it were the term. *)
-       | Sys_error msg -> Format.printf "File error: %s\n" msg
+       | Sys_error msg ->
+           Format.eprintf "File error: %s\n" msg;
+           exit 1
        | Interface.SpecTec_AL.Kast_error msg ->
-           Format.printf "KAST error: %s\n" msg
+           Format.eprintf "KAST error: %s\n" msg;
+           exit 1
        | ParseError (at, msg) ->
-           Format.printf "Parse error: %s\n" (string_of_error at msg)
+           Format.eprintf "Parse error: %s\n" (string_of_error at msg);
+           exit 1
        | ElabError (at, msg) ->
-           Format.printf "Elaboration error: %s\n" (string_of_error at msg))
+           Format.eprintf "Elaboration error: %s\n" (string_of_error at msg);
+           exit 1
+       | AlgoError (at, msg) ->
+           Format.eprintf "Algo error: %s\n" (string_of_error at msg);
+           exit 1)
 
 let kast_p4_command =
   Core.Command.basic
@@ -343,10 +343,6 @@ let kast_p4_command =
                (fun () -> Out_channel.output_string oc (kast ^ "\n"))
          | None -> print_endline kast
        with
-       (* Errors go to stderr and exit non-zero, leaving stdout empty.  This is
-          driven from `kast-json.sh` under `krun --parser`, where anything on
-          stdout is fed onward as if it were the term — which is exactly the
-          bug `kast_command` above still has. *)
        | Sys_error msg ->
            Format.eprintf "File error: %s\n" msg;
            exit 1
@@ -373,10 +369,6 @@ let builtin_command =
      in
      fun () ->
        try
-         (* The request is a file, never argv: a mixop renders its operator
-            atoms with quotes (`':'`), and K's `#system` passes its argument
-            through a shell, which chokes on them.  Nor can it be stdin:
-            `#system` has no way to write to the child's. *)
          let json_request = Yojson.Safe.from_file path_in in
          let name, targs, args =
            match Interface.SpecTec_AL.request_of_json json_request with
@@ -410,10 +402,7 @@ let builtin_command =
            | _ -> Interface.SpecTec_AL.call_builtin
          in
          let value =
-           call_builtin
-             (fun _ -> ())
-             Util.Source.(name $ no_region)
-             targs args
+           call_builtin (fun _ -> ()) Util.Source.(name $ no_region) targs args
          in
          let response =
            Interface.SpecTec_AL.json_of_response value |> Yojson.Safe.to_string
@@ -429,12 +418,7 @@ let builtin_command =
        (* Errors go to stderr and exit non-zero, and stdout stays empty.  K
           reads stdout as the response and has no other channel to inspect,
           so its only way to tell "OCaml said no" from "the wire broke" is
-          the exit code from `#systemResult`.
-
-          NOTE: `kast_command` above claims this discipline in its own
-          comment but does not implement it — it prints to stdout and exits
-          zero.  That is a latent bug there, left alone deliberately: fixing
-          it is not part of this change. *)
+          the exit code from `#systemResult`. *)
        | CommandError msg ->
            Format.eprintf "error: %s\n" msg;
            exit 1
