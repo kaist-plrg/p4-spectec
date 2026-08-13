@@ -53,6 +53,19 @@ let tower_of_file (path_tower : string) (target : Config.target) :
       Error (Error.CommandError msg)
   | Yojson.Basic.Util.Type_error (msg, _) -> Error (Error.CommandError msg)
 
+let build_tower ?(cache = true) ?(det = false) ?(guard = false)
+    (tower : Config.tower) : (Run.spec * (module Run.RUNNER)) result =
+  let* (specs : Boot_build.tower_specs) =
+    Boot_build.specs_of_tower tower
+    |> Result.map_error (fun e -> Error.PassError e)
+  in
+  let* booter =
+    Boot_build.build_tower ~cache ~det ~guard specs
+    |> Result.map_error (fun e -> Error.RunError e)
+  in
+  let _, spec_boot = specs.boot in
+  Ok (spec_boot, booter)
+
 (* Negative test generation *)
 
 let fuzzer (fuel : int) (spec_sl : Lang.Sl.spec) (relname : string)
@@ -72,16 +85,3 @@ let debug_dangling (spec_sl : Lang.Sl.spec) (relname : string)
   Backend_testgen_neg.Derive.debug_dangling spec_sl relname includes_p4 path_p4
     debugdir iid
   |> Result.map_error (fun e -> Error.RunError e)
-
-let build_tower ?(cache = true) ?(det = false) ?(guard = false)
-    (tower : Config.tower) : (Run.spec * (module Run.RUNNER)) result =
-  let* (specs : Boot_build.tower_specs) =
-    Boot_build.specs_of_tower tower
-    |> Result.map_error (fun e -> Error.PassError e)
-  in
-  let* booter =
-    Boot_build.build_tower ~cache ~det ~guard specs
-    |> Result.map_error (fun e -> Error.RunError e)
-  in
-  let _, spec_boot = specs.boot in
-  Ok (spec_boot, booter)

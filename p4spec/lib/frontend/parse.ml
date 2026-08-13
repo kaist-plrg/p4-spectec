@@ -54,7 +54,6 @@ let parse_file file =
   with Sys_error msg ->
     error (Source.region_of_file file) ("i/o error: " ^ msg)
 
-(* A directory expands to its .watsup files. A plain path stands for itself. *)
 let expand_path path =
   if Sys_unix.is_directory_exn path then
     Util.Filesys.collect_files ~suffix:".watsup" path

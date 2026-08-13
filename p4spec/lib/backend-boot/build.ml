@@ -12,10 +12,6 @@ let rec map_result f = function
 
 (* Specs *)
 
-let structured_spec (paths_spec : string list) : (Run.spec, Pass.error) result =
-  let* spec_sl = Pass.structure ~final:true paths_spec in
-  Ok (SL spec_sl : Run.spec)
-
 let spec_of_mode (mode : Run.mode) (paths_spec : string list) :
     (Run.spec, Pass.error) result =
   match mode with
@@ -40,11 +36,13 @@ type tower_specs = {
 }
 
 let specs_of_tower (tower : Config.tower) : (tower_specs, Pass.error) result =
-  let* spec_target = structured_spec [ tower.level_target.layer.specdir ] in
+  let* spec_target =
+    spec_of_mode SL_mode [ tower.level_target.layer.specdir ]
+  in
   let* specs_interm =
     tower.levels_interm |> List.rev
     |> map_result (fun (level : Config.level) ->
-           let* spec = structured_spec [ level.layer.specdir ] in
+           let* spec = spec_of_mode SL_mode [ level.layer.specdir ] in
            Ok (level, spec))
   in
   let* spec_boot = spec_of_mode tower.mode [ tower.level_boot.layer.specdir ] in

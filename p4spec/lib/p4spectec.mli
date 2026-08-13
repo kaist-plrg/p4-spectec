@@ -40,7 +40,6 @@ val build_null :
 val tower_of_file :
   string -> Backend_boot.Config.target -> Backend_boot.Config.tower result
 
-(* Builds every level of the tower, returning the boot spec and its runner *)
 val build_tower :
   ?cache:bool ->
   ?det:bool ->
