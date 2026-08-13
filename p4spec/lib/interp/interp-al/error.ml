@@ -1,10 +1,9 @@
-open Util.Error
 open Util.Source
 
 (* Error *)
 
-let error (at : region) (msg : string) = error_interp at msg
-let warn (at : region) (msg : string) = warn_interp at msg
+let error (at : region) (msg : string) = Interp_common.Error.error at msg
+let warn (at : region) (msg : string) = Interp_common.Error.warn at msg
 
 (* Check *)
 

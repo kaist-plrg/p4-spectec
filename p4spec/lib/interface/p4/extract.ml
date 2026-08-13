@@ -8,11 +8,10 @@
 open Lang
 open Il
 module Value = Runtime.Value
-open Util.Error
 open Util.Source
 module F = Format
 
-let error = error_parse
+let error = Error.error
 
 (* Identifier extraction *)
 

@@ -70,7 +70,8 @@ module Make
       in
       Spec_.Func.register call_func;
       Spec_.Rel.register call_rel;
-      Spec_.Pgm.register call_pgm
+      Spec_.Pgm.register call_pgm;
+      Ok ()
 
     let checkpoint () : int = 0
     let seff (before : int) (after : int) : bool = before <> after
@@ -416,8 +417,9 @@ module Make
       run_stf_stmts value_ctx value_arch stf_stmts;
       Pass
     with
-    | Util.Error.ParseError (at, msg) -> Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    | P4.Error.ParseError (at, msg) -> Fail (`Syntax (at, msg))
+    | Interp_common.Error.InterpError (at, msg)
+    | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
         Fail (`Runtime (at, msg))
-    | Util.Error.StfError msg -> Fail (`Runtime (no_region, msg))
+    | Stf.Error.StfError msg -> Fail (`Runtime (no_region, msg))
 end

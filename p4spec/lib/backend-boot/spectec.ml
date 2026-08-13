@@ -53,7 +53,7 @@ module Make_null
       | Fail (at, msg) -> error at msg
     in
     call_func := call_func_;
-    ()
+    Ok ()
 
   (* Threading extern calls to the interpreter *)
 
@@ -88,7 +88,7 @@ module Make_null
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern relation: %s" name))
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
       (_values_input : Value.t list) : Run.func_result =
@@ -98,7 +98,7 @@ module Make_null
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern function: %s" name))
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
 
   (* State management *)
 
@@ -125,7 +125,7 @@ module Make_parametric
     () : Run.EXTERN = struct
   (* Mode initialization *)
 
-  let init_mode _ = ()
+  let init_mode _ = Ok ()
 
   (* Caches
    * an interface cache for storing results of booting and unbooting values, types, and mixops *)
@@ -224,7 +224,7 @@ module Make_parametric
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern relation: %s" name))
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
       (_values_input : Value.t list) : Run.func_result =
@@ -234,7 +234,7 @@ module Make_parametric
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern function: %s" name))
-    with Util.Error.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
 
   (* State management *)
 

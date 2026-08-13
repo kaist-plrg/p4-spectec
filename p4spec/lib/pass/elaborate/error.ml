@@ -1,10 +1,11 @@
-open Util.Error
 open Util.Source
 
 (* Error *)
 
-let error (at : region) (msg : string) = error_elab at msg
-let warn (at : region) (msg : string) = warn_elab at msg
+exception ElabError of region * string
+
+let error (at : region) (msg : string) = raise (ElabError (at, msg))
+let warn (at : region) (msg : string) = Util.Error.warn at "elab" msg
 
 (* Checks *)
 

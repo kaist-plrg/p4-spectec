@@ -1,8 +1,19 @@
 open Runtime.Sim.Signature
+module Error = P4spectec.Error
 module Filesys = Util.Filesys
 open Util.Source
 
 let version = "0.1"
+let ( let* ) = Result.bind
+
+let build_sim ?cache ?det ?guard ?(arch : string option) mode paths_spec =
+  match
+    let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+    let* simulator = P4spectec.build_sim ?cache ?det ?guard ?arch spec_sim in
+    Ok (spec_sim, simulator)
+  with
+  | Ok (spec_sim, simulator) -> (spec_sim, simulator)
+  | Error e -> failwith (Error.to_string e)
 
 (* Statistics *)
 
@@ -147,9 +158,7 @@ let sim_with_dangling (module Simulator : SIM) spec_sim includes_p4 path_p4
 
 let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
     paths_p4 =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -167,9 +176,7 @@ let cover_run_instr ?(arch : string option) mode paths_spec relname includes_p4
 
 let cover_run_dangling ?(arch : string option) mode paths_spec relname
     includes_p4 paths_p4 =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -196,9 +203,7 @@ let cover_run_dangling ?(arch : string option) mode paths_spec relname
 
 let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
     paths_stf =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in
@@ -218,9 +223,7 @@ let cover_sim_instr ?(arch : string option) mode paths_spec includes_p4 paths_p4
 
 let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
     paths_p4 paths_stf =
-  let spec_sim, (module Simulator) =
-    Backend_sim.Build.build ?arch ~final:true mode paths_spec
-  in
+  let spec_sim, (module Simulator) = build_sim ?arch mode paths_spec in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false
   in

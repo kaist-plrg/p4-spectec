@@ -134,7 +134,7 @@ let warned : (string, unit) Hashtbl.t = Hashtbl.create 64
 let warn (msg : string) : unit =
   if not (Hashtbl.mem warned msg) then (
     Hashtbl.add warned msg ();
-    Util.Error.warn_prose Util.Source.no_region msg)
+    Util.Error.warn Util.Source.no_region "prose" msg)
 
 let warn_nested ~(lint : bool) ~(outer : string) ~(inner : string) : unit =
   if lint then

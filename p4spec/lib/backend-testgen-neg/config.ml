@@ -9,6 +9,8 @@ open Runtime.Testgen_neg
 open Envs
 module Sim = Runtime.Sim.Signature
 
+let ( let* ) = Result.bind
+
 (* Hyperparameters for the fuzzing loop *)
 
 (* Max number of seeds per dangle *)
@@ -136,16 +138,16 @@ let load_spec (tdenv : TDEnv.t) (mixopenv : MixopEnv.t) (spec : spec) :
 (* Constructor *)
 
 let init_specenv (spec : spec) (relname : string) (includes_p4 : string list) :
-    specenv =
+    (specenv, Sim.error) result =
   let (module Simulator : Sim.SIM) = Backend_sim.Build.gen_p4_placeholder () in
-  Simulator.init (Sim.SL spec);
+  let* () = Simulator.init (Sim.SL spec) in
   let simulator = (module Simulator : Sim.SIM) in
   let printer value_program =
     Simulator.Interface.unparse_program value_program
   in
   let tdenv, mixopenv = load_spec TDEnv.empty MixopEnv.empty spec in
   let spec = Sim.SL spec in
-  { simulator; printer; spec; relname; tdenv; mixopenv; includes_p4 }
+  Ok { simulator; printer; spec; relname; tdenv; mixopenv; includes_p4 }
 
 let init_storage (dirname_gen : string) : storage =
   Util.Filesys.mkdir dirname_gen;
