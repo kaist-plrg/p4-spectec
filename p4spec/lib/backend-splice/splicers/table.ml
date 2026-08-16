@@ -19,7 +19,7 @@ module Source = struct
   module Value = struct
     type t = source
 
-    let render (values : t list) : string =
+    let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map (fun value ->
              let id, tablerows = value in
@@ -61,7 +61,7 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (values : t list) : string =
+    let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map (fun (hints, tablefunc) ->
              Pl.Render.render_table_func_def hints tablefunc)

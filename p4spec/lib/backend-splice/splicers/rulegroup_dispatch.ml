@@ -19,7 +19,7 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (values : t list) : string =
+    let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map Pl.Render.render_defined_rel_def_dispatch
       |> String.concat "\n\n"

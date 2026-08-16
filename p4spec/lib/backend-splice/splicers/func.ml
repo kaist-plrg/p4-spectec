@@ -20,7 +20,7 @@ module Source = struct
   module Value = struct
     type t = source
 
-    let render (values : t list) : string =
+    let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map (fun value ->
              let defs =
@@ -76,7 +76,7 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (values : t list) : string =
+    let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map (fun (hints, func) ->
              Pl.Render.render_defined_func_def hints func)

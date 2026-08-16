@@ -20,8 +20,11 @@ let splicers =
     (module Table.Prose.Splicer : SPLICER);
   ]
 
-let init (spec_el : El.spec) (spec_pl : Pl.spec) =
-  List.iter (fun (module S : SPLICER) -> S.init spec_el spec_pl) splicers
+let init ?(context : Ctx.t = Ctx.empty) (spec_el : El.spec) (spec_pl : Pl.spec)
+    : unit =
+  List.iter
+    (fun (module S : SPLICER) -> S.init ~context spec_el spec_pl)
+    splicers
 
 (* Splicing *)
 

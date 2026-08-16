@@ -1,0 +1,21 @@
+(executable
+ (name store_test)
+ (modules store_test)
+ (libraries p4spectec))
+
+(rule
+ (targets store.actual store_err.actual)
+ (action
+  (with-stdout-to
+   store.actual
+   (with-stderr-to
+    store_err.actual
+    (run ./store_test.exe)))))
+
+(rule
+ (aliases splice-latex runtest)
+ (deps store.actual store_err.actual)
+ (action
+  (progn
+   (diff store.expected store.actual)
+   (diff store_err.expected store_err.actual))))

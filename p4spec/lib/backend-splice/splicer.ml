@@ -16,7 +16,7 @@ end
 module type VALUE = sig
   type t
 
-  val render : t list -> string
+  val render : Ctx.t -> t list -> string
 end
 
 module type INIT = sig
@@ -111,7 +111,7 @@ module type SPLICER = sig
   type key
   type value
 
-  val init : El.spec -> Pl.spec -> unit
+  val init : ?context:Ctx.t -> El.spec -> Pl.spec -> unit
   val splice : Source.t -> string
   val warn_unused : unit -> unit
 end
@@ -131,9 +131,12 @@ module Make
   module S = Make_store (K) (V) (I)
 
   let sto = ref S.empty
+  let render_context : Ctx.t ref = ref Ctx.empty
 
-  let init (spec_el : El.spec) (spec_pl : Pl.spec) : unit =
-    sto := S.init spec_el spec_pl
+  let init ?(context : Ctx.t = Ctx.empty) (spec_el : El.spec)
+      (spec_pl : Pl.spec) : unit =
+    sto := S.init spec_el spec_pl;
+    render_context := context
 
   (* Splicer functions *)
 
@@ -164,7 +167,7 @@ module Make
       else ""
     in
     List.iter (S.use !sto) keys;
-    headers ^ prefix ^ V.render values ^ suffix
+    headers ^ prefix ^ V.render !render_context values ^ suffix
 
   let splice (source : Source.t) : string =
     let keys = parse source in
