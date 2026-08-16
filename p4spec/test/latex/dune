@@ -14,3 +14,20 @@
  (aliases latex-tex latex runtest)
  (action
   (diff tex.expected tex.actual)))
+
+(executable
+ (name term_test)
+ (modules term_test)
+ (libraries p4spectec))
+
+(rule
+ (target term.actual)
+ (action
+  (with-stdout-to
+   term.actual
+   (run ./term_test.exe))))
+
+(rule
+ (aliases latex-term latex runtest)
+ (action
+  (diff term.expected term.actual)))
