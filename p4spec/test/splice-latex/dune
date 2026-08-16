@@ -3,6 +3,16 @@
  (modules store_test)
  (libraries p4spectec))
 
+(executable
+ (name anchor_test)
+ (modules anchor_test)
+ (libraries p4spectec))
+
+(executable
+ (name adoc_anchor_test)
+ (modules adoc_anchor_test)
+ (libraries p4spectec))
+
 (rule
  (targets store.actual store_err.actual)
  (action
@@ -19,3 +29,33 @@
   (progn
    (diff store.expected store.actual)
    (diff store_err.expected store_err.actual))))
+
+(rule
+ (targets anchor.actual anchor_err.actual)
+ (action
+  (with-stdout-to
+   anchor.actual
+   (with-stderr-to
+    anchor_err.actual
+    (run ./anchor_test.exe)))))
+
+(rule
+ (aliases splice-latex runtest)
+ (deps anchor.actual anchor_err.actual)
+ (action
+  (progn
+   (diff anchor.expected anchor.actual)
+   (diff anchor_err.expected anchor_err.actual))))
+
+(rule
+ (target adoc_anchor.actual)
+ (action
+  (with-stdout-to
+   adoc_anchor.actual
+   (run ./adoc_anchor_test.exe))))
+
+(rule
+ (aliases splice-latex runtest)
+ (deps adoc_anchor.actual)
+ (action
+  (diff adoc_anchor.expected adoc_anchor.actual)))

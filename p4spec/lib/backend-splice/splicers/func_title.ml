@@ -1,6 +1,5 @@
 open Lang
 open Splicer
-open Util.Source
 
 module Key = struct
   type t = string
@@ -11,68 +10,66 @@ module Key = struct
   let parse (source : Source.t) : t list = Parser.parse_ids source
 end
 
+module Init : INIT with type key = Key.t and type value = El.def = struct
+  type key = Key.t
+  type value = El.def
+
+  let init_def (def : El.def) : (key * value) option =
+    match def.it with
+    | ExternDecD (id_func, _, _, _, _)
+    | BuiltinDecD (id_func, _, _, _, _)
+    | FuncDecD (id_func, _, _, _, _) ->
+        Some (id_func.it, def)
+    | _ -> None
+
+  let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
+    spec_el |> List.filter_map init_def
+end
+
 (* Source splicer *)
 
 module Source = struct
-  type source =
-    | ExternS of
-        El.id * El.tparam list * El.param list * El.plaintyp * El.hint list
-    | BuiltinS of
-        El.id * El.tparam list * El.param list * El.plaintyp * El.hint list
-    | DefinedS of
-        El.id * El.tparam list * El.param list * El.plaintyp * El.hint list
-
   module Value = struct
-    type t = source
+    type t = El.def
 
     let render (_context : Ctx.t) (values : t list) : string =
-      values
-      |> List.map (fun value ->
-             let def =
-               match value with
-               | ExternS (id, tparams, params, plaintyp, hints) ->
-                   El.ExternDecD (id, tparams, params, plaintyp, hints)
-                   $ no_region
-               | BuiltinS (id, tparams, params, plaintyp, hints) ->
-                   El.BuiltinDecD (id, tparams, params, plaintyp, hints)
-                   $ no_region
-               | DefinedS (id, tparams, params, plaintyp, hints) ->
-                   El.FuncDecD (id, tparams, params, plaintyp, hints)
-                   $ no_region
-             in
-             El.Render.render_def def)
-      |> String.concat "\n\n"
+      values |> List.map El.Render.render_def |> String.concat "\n\n"
   end
 
-  module Init : INIT with type key = Key.t and type value = Value.t = struct
-    type key = Key.t
-    type value = Value.t
-
-    let init_def (def : El.def) : (key * value) option =
-      match def.it with
-      | ExternDecD (id_func, tparams, params, plaintyp, hints) ->
-          let value = ExternS (id_func, tparams, params, plaintyp, hints) in
-          Some (id_func.it, value)
-      | BuiltinDecD (id_func, tparams, params, plaintyp, hints) ->
-          let value = BuiltinS (id_func, tparams, params, plaintyp, hints) in
-          Some (id_func.it, value)
-      | FuncDecD (id_func, tparams, params, plaintyp, hints) ->
-          let value = DefinedS (id_func, tparams, params, plaintyp, hints) in
-          Some (id_func.it, value)
-      | _ -> None
-
-    let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
-      spec_el |> List.filter_map init_def
-  end
-
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "func-title-source"
     let prefix = prefix_source
     let suffix = suffix_source
-    let header = false
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
+end
+
+(* LaTeX splicer *)
+
+module Latex = struct
+  module Value = struct
+    type t = El.def
+
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        El.Latex.anchors ~func:context.anchors_latex.func
+          ~rel:context.anchors_latex.rel
+      in
+      El.Latex.render_defs ~anchors values
+  end
+
+  module Config = struct
+    let name = "func-title-latex"
+    let prefix = prefix_latex
+    let suffix = suffix_latex
+
+    let anchor (context : Ctx.t) (name : string) : string option =
+      context.anchors_latex.func name
+  end
+
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end
 
 (* Prose splicer *)
@@ -86,16 +83,21 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (_context : Ctx.t) (values : t list) : string =
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Pl.Render.anchors ~func:context.anchors_prose.func
+          ~rel:context.anchors_prose.rel
+      in
       values
       |> List.map (fun value ->
              match value with
              | ExternP (hints, externfunc) ->
-                 Pl.Render.render_extern_func_def hints externfunc
+                 Pl.Render.render_extern_func_def ~anchors hints externfunc
              | BuiltinP (hints, builtinfunc) ->
-                 Pl.Render.render_builtin_func_def hints builtinfunc
+                 Pl.Render.render_builtin_func_def ~anchors hints builtinfunc
              | DefinedP (hints, (id_func, tparams, params, _, _, _)) ->
-                 Pl.Render.render_func_header hints id_func tparams params)
+                 Pl.Render.render_func_header ~anchors hints id_func tparams
+                   params)
       |> String.concat "\n\n"
   end
 
@@ -120,12 +122,14 @@ module Prose = struct
       spec_pl |> List.filter_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "func-title-prose"
     let prefix = "[.sidebar-title]\n" ^ prefix_prose
     let suffix = suffix_prose
-    let header = true
+
+    let anchor (context : Ctx.t) (name : string) : string option =
+      context.anchors_prose.func name
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end

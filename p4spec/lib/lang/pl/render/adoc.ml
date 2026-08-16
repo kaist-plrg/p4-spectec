@@ -5,15 +5,18 @@ open Utils
 type prose =
   | TextP of string
   | CodeP of code
-  | LinkP of string * prose
+  | LinkP of link * prose
   | SeqP of prose list
   | EmptyP
 
 and code =
   | TokenC of string
-  | LinkC of string * code
+  | LinkC of link * code
   | SeqC of code list
   | EmptyC
+
+and link = Direct of string | Subject of subject
+and subject = Function of string | Relation of string
 
 type block =
   | EmptyB
@@ -28,14 +31,22 @@ type block =
 
 let text (s : string) : prose = TextP s
 let code_prose (c : code) : prose = CodeP c
-let link_prose ~(target : string) (p : prose) : prose = LinkP (target, p)
+let link_prose ~(target : string) (p : prose) : prose = LinkP (Direct target, p)
+
+let link_subject_prose (subject : subject) (p : prose) : prose =
+  LinkP (Subject subject, p)
+
 let seq_prose (ps : prose list) : prose = SeqP ps
 let empty_prose : prose = EmptyP
 
 (* Code constructors *)
 
 let token (s : string) : code = TokenC s
-let link_code ~(target : string) (c : code) : code = LinkC (target, c)
+let link_code ~(target : string) (c : code) : code = LinkC (Direct target, c)
+
+let link_subject_code (subject : subject) (c : code) : code =
+  LinkC (Subject subject, c)
+
 let seq_code (cs : code list) : code = SeqC cs
 let empty_code : code = EmptyC
 
@@ -129,6 +140,14 @@ let ( ^^ ) (code_a : code) (code_b : code) : code = SeqC [ code_a; code_b ]
 
 (* Serialization *)
 
+type anchor = subject -> string option
+
+let anchor ~(func : string -> string option) ~(rel : string -> string option) :
+    anchor = function
+  | Function name -> func name
+  | Relation name -> rel name
+
+let subject_name = function Function name | Relation name -> Some name
 let warned : (string, unit) Hashtbl.t = Hashtbl.create 64
 
 let warn (msg : string) : unit =
@@ -144,64 +163,81 @@ let warn_nested ~(lint : bool) ~(outer : string) ~(inner : string) : unit =
           (asciidoc cannot nest cross-references)"
          inner outer)
 
-let rec ser_prose_ ~(link_ctx : string option) ~(lint : bool) (p : prose) :
-    string =
+let target_of_link anchor = function
+  | Direct target -> Some target
+  | Subject subject -> anchor subject
+
+let rec ser_prose_ ~anchor ~(link_ctx : string option) ~(lint : bool)
+    (p : prose) : string =
   match p with
   | TextP s -> s
   | CodeP c ->
-      let s = ser_code_ ~link_ctx ~lint c in
+      let s = ser_code_ ~anchor ~link_ctx ~lint c in
       if lint && s = "" then warn "code span wraps empty content";
       adoc_mono_chopped s
-  | LinkP (target, p) -> (
-      if lint && target = "" then warn "link with empty target";
-      match link_ctx with
-      | Some outer ->
-          warn_nested ~lint ~outer ~inner:target;
-          ser_prose_ ~link_ctx ~lint p
-      | None ->
-          let s = ser_prose_ ~link_ctx:(Some target) ~lint p in
-          if lint && s = "" then
-            warn (Printf.sprintf "link to %S has empty body" target);
-          adoc_link ~link:target s)
-  | SeqP ps -> String.concat "" (List.map (ser_prose_ ~link_ctx ~lint) ps)
+  | LinkP (link, p) -> (
+      match target_of_link anchor link with
+      | None -> ser_prose_ ~anchor ~link_ctx ~lint p
+      | Some target -> (
+          if lint && target = "" then warn "link with empty target";
+          match link_ctx with
+          | Some outer ->
+              warn_nested ~lint ~outer ~inner:target;
+              ser_prose_ ~anchor ~link_ctx ~lint p
+          | None ->
+              let s = ser_prose_ ~anchor ~link_ctx:(Some target) ~lint p in
+              if lint && s = "" then
+                warn (Printf.sprintf "link to %S has empty body" target);
+              adoc_link ~link:target s))
+  | SeqP ps ->
+      String.concat "" (List.map (ser_prose_ ~anchor ~link_ctx ~lint) ps)
   | EmptyP -> ""
 
-and ser_code_ ~(link_ctx : string option) ~(lint : bool) (c : code) : string =
+and ser_code_ ~anchor ~(link_ctx : string option) ~(lint : bool) (c : code) :
+    string =
   match c with
   | TokenC s -> s
-  | LinkC (target, c) -> (
-      if lint && target = "" then warn "link with empty target";
-      match link_ctx with
-      | Some outer ->
-          warn_nested ~lint ~outer ~inner:target;
-          ser_code_ ~link_ctx ~lint c
-      | None ->
-          let s = ser_code_ ~link_ctx:(Some target) ~lint c in
-          if lint && s = "" then
-            warn (Printf.sprintf "link to %S has empty body" target);
-          adoc_link ~link:target s)
-  | SeqC cs -> String.concat "" (List.map (ser_code_ ~link_ctx ~lint) cs)
+  | LinkC (link, c) -> (
+      match target_of_link anchor link with
+      | None -> ser_code_ ~anchor ~link_ctx ~lint c
+      | Some target -> (
+          if lint && target = "" then warn "link with empty target";
+          match link_ctx with
+          | Some outer ->
+              warn_nested ~lint ~outer ~inner:target;
+              ser_code_ ~anchor ~link_ctx ~lint c
+          | None ->
+              let s = ser_code_ ~anchor ~link_ctx:(Some target) ~lint c in
+              if lint && s = "" then
+                warn (Printf.sprintf "link to %S has empty body" target);
+              adoc_link ~link:target s))
+  | SeqC cs ->
+      String.concat "" (List.map (ser_code_ ~anchor ~link_ctx ~lint) cs)
   | EmptyC -> ""
 
-let ser_prose (p : prose) : string = ser_prose_ ~link_ctx:None ~lint:true p
+let ser_prose ?(anchor = subject_name) (p : prose) : string =
+  ser_prose_ ~anchor ~link_ctx:None ~lint:true p
 
 let ser_prose_in_link (p : prose) : string =
-  ser_prose_ ~link_ctx:(Some "") ~lint:false p
+  ser_prose_ ~anchor:(fun _ -> None) ~link_ctx:(Some "") ~lint:false p
 
-let ser_code (c : code) : string = ser_code_ ~link_ctx:None ~lint:false c
+let ser_code ?(anchor = subject_name) (c : code) : string =
+  ser_code_ ~anchor ~link_ctx:None ~lint:false c
 
-let rec ser_block (b : block) : string =
+let rec ser_block ?(anchor = subject_name) (b : block) : string =
   match b with
   | EmptyB -> ""
   | RawB s -> s
-  | InlineB d -> ser_prose d
-  | ConcatB ts -> String.concat "" (List.map ser_block ts)
-  | SeqB ts -> String.concat "\n" (List.map ser_block ts)
+  | InlineB d -> ser_prose ~anchor d
+  | ConcatB ts -> String.concat "" (List.map (ser_block ~anchor) ts)
+  | SeqB ts -> String.concat "\n" (List.map (ser_block ~anchor) ts)
   | BulletB (`Unordered level) -> adoc_unordered_bullet level
   | BulletB (`Ordered level) -> adoc_ordered_bullet level
   | TableB (cols, header, rows) ->
       let header_line =
-        "| " ^ String.concat " | " (List.map ser_prose header) ^ " \n\n"
+        "| "
+        ^ String.concat " | " (List.map (ser_prose ~anchor) header)
+        ^ " \n\n"
       in
       let row_lines =
         rows

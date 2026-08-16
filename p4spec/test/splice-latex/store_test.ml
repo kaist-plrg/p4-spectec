@@ -38,14 +38,14 @@ module Primary_config = struct
   let name = "primary"
   let prefix = "<primary>"
   let suffix = "</primary>"
-  let header = false
+  let anchor (_context : Ctx.t) (_name : string) : string option = None
 end
 
 module Alternate_config = struct
   let name = "alternate"
   let prefix = "<alternate>"
   let suffix = "</alternate>"
-  let header = false
+  let anchor (_context : Ctx.t) (_name : string) : string option = None
 end
 
 module Primary = Splicer.Make (Key) (Primary_value) (Init) (Primary_config)

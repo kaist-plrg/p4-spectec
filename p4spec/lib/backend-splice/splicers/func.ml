@@ -1,6 +1,5 @@
 open Lang
 open Splicer
-open Util.Source
 
 module Key = struct
   type t = string
@@ -11,61 +10,75 @@ module Key = struct
   let parse (source : Source.t) : t list = Parser.parse_ids source
 end
 
+module Init : INIT with type key = Key.t and type value = El.def list = struct
+  type key = Key.t
+  type value = El.def list
+
+  let init_def (pairs : (key * value) list) (def : El.def) : (key * value) list
+      =
+    match def.it with
+    | FuncDefD (id, _, _, _, _) ->
+        let found, pairs =
+          List.fold_left
+            (fun (found, pairs) (key, value) ->
+              if key = id.it then
+                let pair = (key, value @ [ def ]) in
+                (true, pair :: pairs)
+              else (found, (key, value) :: pairs))
+            (false, []) pairs
+        in
+        (if found then pairs else (id.it, [ def ]) :: pairs) |> List.rev
+    | _ -> pairs
+
+  let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
+    List.fold_left init_def [] spec_el
+end
+
 (* Source splicer *)
 
 module Source = struct
-  type source =
-    (El.id * El.tparam list * El.arg list * El.exp * El.prem list) list
-
   module Value = struct
-    type t = source
+    type t = El.def list
 
     let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map (fun value ->
-             let defs =
-               List.map
-                 (fun (id, tparams, args, exp, prems) ->
-                   El.FuncDefD (id, tparams, args, exp, prems) $ no_region)
-                 value
-             in
-             defs |> List.map El.Render.render_def |> String.concat "\n\n")
+             value |> List.map El.Render.render_def |> String.concat "\n\n")
       |> String.concat "\n\n"
   end
 
-  module Init : INIT with type key = Key.t and type value = Value.t = struct
-    type key = Key.t
-    type value = Value.t
-
-    let init_def (pairs : (key * value) list) (def : El.def) :
-        (key * value) list =
-      match def.it with
-      | FuncDefD (id, tparams, args, exp, prems) ->
-          let func = (id, tparams, args, exp, prems) in
-          let found, pairs =
-            List.fold_left
-              (fun (found, pairs) (key, value) ->
-                if key = id.it then
-                  let pair = (key, value @ [ func ]) in
-                  (true, pair :: pairs)
-                else (found, (key, value) :: pairs))
-              (false, []) pairs
-          in
-          (if found then pairs else (id.it, [ func ]) :: pairs) |> List.rev
-      | _ -> pairs
-
-    let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
-      List.fold_left init_def [] spec_el
-  end
-
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "func-source"
     let prefix = prefix_source
     let suffix = suffix_source
-    let header = false
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
+end
+
+(* LaTeX splicer *)
+
+module Latex = struct
+  module Value = struct
+    type t = El.def list
+
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        El.Latex.anchors ~func:context.anchors_latex.func
+          ~rel:context.anchors_latex.rel
+      in
+      values |> List.concat |> El.Latex.render_defs ~anchors
+  end
+
+  module Config = struct
+    let name = "func-latex"
+    let prefix = prefix_latex
+    let suffix = suffix_latex
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
+  end
+
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end
 
 (* Prose splicer *)
@@ -76,10 +89,14 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (_context : Ctx.t) (values : t list) : string =
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Pl.Render.anchors ~func:context.anchors_prose.func
+          ~rel:context.anchors_prose.rel
+      in
       values
       |> List.map (fun (hints, func) ->
-             Pl.Render.render_defined_func_def hints func)
+             Pl.Render.render_defined_func_def ~anchors hints func)
       |> String.concat "\n\n"
   end
 
@@ -98,12 +115,12 @@ module Prose = struct
       spec_pl |> List.filter_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "func-prose"
     let prefix = prefix_prose
     let suffix = suffix_prose
-    let header = true
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end

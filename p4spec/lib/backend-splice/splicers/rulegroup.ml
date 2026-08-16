@@ -1,6 +1,5 @@
 open Lang
 open Splicer
-open Util.Source
 
 module Key = struct
   type t = string * string
@@ -18,48 +17,62 @@ module Key = struct
   let parse (source : Source.t) : t list = [ Parser.parse_id_with_sub source ]
 end
 
+module Init : INIT with type key = Key.t and type value = El.def = struct
+  type key = Key.t
+  type value = El.def
+
+  let init_def (def : El.def) : (key * value) option =
+    match def.it with
+    | RuleGroupD (id_rel, id_rulegroup, _) ->
+        Some ((id_rel.it, id_rulegroup.it), def)
+    | _ -> None
+
+  let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
+    spec_el |> List.filter_map init_def
+end
+
 (* Source splicer *)
 
 module Source = struct
-  type source = El.id * El.id * El.rule list
-
   module Value = struct
-    type t = source
+    type t = El.def
 
     let render (_context : Ctx.t) (values : t list) : string =
-      values
-      |> List.map (fun value ->
-             let id_rel, id_rulegroup, rules = value in
-             let def =
-               El.RuleGroupD (id_rel, id_rulegroup, rules) $ no_region
-             in
-             El.Render.render_def def)
-      |> String.concat "\n\n"
+      values |> List.map El.Render.render_def |> String.concat "\n\n"
   end
 
-  module Init : INIT with type key = Key.t and type value = Value.t = struct
-    type key = Key.t
-    type value = Value.t
-
-    let init_def (def : El.def) : (key * value) option =
-      match def.it with
-      | RuleGroupD (id_rel, id_rulegroup, rules) ->
-          let value = (id_rel, id_rulegroup, rules) in
-          Some ((id_rel.it, id_rulegroup.it), value)
-      | _ -> None
-
-    let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
-      spec_el |> List.filter_map init_def
-  end
-
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "rulegroup-source"
     let prefix = prefix_source
     let suffix = suffix_source
-    let header = false
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
+end
+
+(* LaTeX splicer *)
+
+module Latex = struct
+  module Value = struct
+    type t = El.def
+
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        El.Latex.anchors ~func:context.anchors_latex.func
+          ~rel:context.anchors_latex.rel
+      in
+      El.Latex.render_defs ~anchors values
+  end
+
+  module Config = struct
+    let name = "rulegroup-latex"
+    let prefix = prefix_latex
+    let suffix = suffix_latex
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
+  end
+
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end
 
 (* Prose splicer *)
@@ -70,10 +83,14 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (_context : Ctx.t) (values : t list) : string =
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Pl.Render.anchors ~func:context.anchors_prose.func
+          ~rel:context.anchors_prose.rel
+      in
       values
       |> List.map (fun (group : t) ->
-             Pl.Render.render_rulegroup group.hints group.id_rulegroup
+             Pl.Render.render_rulegroup ~anchors group.hints group.id_rulegroup
                group.id_rel group.rel_signature group.exps group.body)
       |> String.concat "\n\n"
   end
@@ -94,12 +111,12 @@ module Prose = struct
       spec_pl |> List.concat_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "rulegroup-prose"
     let prefix = prefix_prose
     let suffix = suffix_prose
-    let header = true
+    let anchor (_context : Ctx.t) (name : string) : string option = Some name
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end

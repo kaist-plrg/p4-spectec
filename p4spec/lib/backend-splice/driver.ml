@@ -97,7 +97,17 @@ let splice_file (filename_input : string) (filename_output : string) : unit =
 
 let splice_files (spec_el : El.spec) (spec_pl : Pl.spec)
     (filenames : (string * string) list) : unit =
-  init spec_el spec_pl;
+  let sources =
+    List.map
+      (fun (filename_input, _) ->
+        let content =
+          In_channel.with_open_bin filename_input In_channel.input_all
+        in
+        (filename_input, content))
+      filenames
+  in
+  let context = Anchor.collect spec_el sources in
+  init ~context spec_el spec_pl;
   List.iter
     (fun (filename_input, filename_output) ->
       splice_file filename_input filename_output)

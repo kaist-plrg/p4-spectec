@@ -52,12 +52,12 @@ module Source = struct
       spec_el |> List.filter_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "syntax"
     let prefix = "[source,bison]\n----\n"
     let suffix = "\n----"
-    let header = true
+    let anchor (_context : Ctx.t) (name : string) : string option = Some name
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end

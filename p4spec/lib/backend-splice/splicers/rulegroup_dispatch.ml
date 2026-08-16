@@ -19,9 +19,13 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (_context : Ctx.t) (values : t list) : string =
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Pl.Render.anchors ~func:context.anchors_prose.func
+          ~rel:context.anchors_prose.rel
+      in
       values
-      |> List.map Pl.Render.render_defined_rel_def_dispatch
+      |> List.map (Pl.Render.render_defined_rel_def_dispatch ~anchors)
       |> String.concat "\n\n"
   end
 
@@ -40,12 +44,12 @@ module Prose = struct
       spec_pl |> List.filter_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "rulegroup-dispatch-prose"
     let prefix = prefix_prose
     let suffix = suffix_prose
-    let header = false
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end
