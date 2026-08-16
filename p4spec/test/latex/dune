@@ -31,3 +31,38 @@
  (aliases latex-term latex runtest)
  (action
   (diff term.expected term.actual)))
+
+(executable
+ (name definition_test)
+ (modules definition_test)
+ (libraries p4spectec))
+
+(rule
+ (target definition.actual)
+ (action
+  (with-stdout-to
+   definition.actual
+   (run ./definition_test.exe))))
+
+(rule
+ (aliases latex-definition latex runtest)
+ (action
+  (diff definition.expected definition.actual)))
+
+(executable
+ (name smoke_test)
+ (modules smoke_test)
+ (libraries p4spectec))
+
+(rule
+ (target latex-smoke.tex)
+ (action
+  (with-stdout-to
+   latex-smoke.tex
+   (run ./smoke_test.exe))))
+
+(rule
+ (alias latex-smoke)
+ (deps latex-smoke.tex)
+ (action
+  (run pdflatex -halt-on-error -interaction=nonstopmode latex-smoke.tex)))

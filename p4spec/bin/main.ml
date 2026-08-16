@@ -673,6 +673,7 @@ let splice_command =
        | ElabError (at, msg)
        | StructError (at, msg)
        | ProseError (at, msg)
+       | LatexError (at, msg)
        | SpliceError (at, msg) ->
            Format.eprintf "%s\n" (string_of_error at msg);
            Format.printf "%s\n" (string_of_error at msg))

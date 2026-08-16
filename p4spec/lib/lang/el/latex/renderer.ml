@@ -1087,3 +1087,474 @@ and tex_of_iter_prem ~(anchors : anchors option) (prem : prem) (iter : iter) :
 and tex_of_debug_prem ~(anchors : anchors option) (exp : exp) : Doc.t =
   let tex_exp = tex_of_exp ?anchors exp in
   Doc.concat_spaced [ Doc.styled_mathrm "debug"; tex_exp ]
+
+(* Definition layout *)
+
+let annotate (tex : Doc.t) (annotation : string) : Doc.t =
+  Doc.concat_spaced [ tex; Doc.quad; Doc.styled_text annotation ]
+
+let width_layout = 80
+
+(* Relation signatures
+
+   Eval : p |- e : t
+   -> \mathrm{Eval} : \mathsf{p} \mathrel{\vdash} \mathsf{e} : \mathsf{t} *)
+
+let tex_of_rel_signature (id_rel : id) (nottyp : nottyp)
+    (annotation : string option) : Doc.t =
+  let tex_name = tex_of_defid id_rel in
+  let tex_typ = tex_of_nottyp nottyp in
+  let tex_signature =
+    Doc.concat_spaced [ tex_name; Doc.fixed Colon; tex_typ ]
+  in
+  match annotation with
+  | None -> tex_signature
+  | Some text -> annotate tex_signature text
+
+(* Rules
+
+   premise / conclusion
+   -> {\displaystyle \frac{\mathsf{premise}}{\mathsf{conclusion}}} *)
+
+let tex_of_rule ~(anchors : anchors option) (rule : rule) : Doc.t =
+  let id_rel, id_rule, exp_conclusion, prems = rule.it in
+  let tex_numerator =
+    match texs_of_prems ?anchors prems with
+    | [] -> Doc.empty
+    | [ prem ] -> prem
+    | prems -> Doc.numbered prems
+  in
+  let s_label =
+    if String.equal id_rule.it "" then id_rel.it
+    else id_rel.it ^ "-" ^ id_rule.it
+  in
+  let tex_conclusion = tex_of_exp ?anchors exp_conclusion in
+  let tex_fraction =
+    Doc.fraction tex_numerator tex_conclusion
+    |> Doc.displaystyle
+    |> Layout.resolve ~width:width_layout
+  in
+  Doc.left_stack [ Doc.badge s_label; tex_fraction ]
+
+let tex_of_rulegroup ~(anchors : anchors option) (id_rel : id) (id_group : id)
+    (rules : rule list) : Doc.t =
+  match rules with
+  | [] ->
+      let s_name =
+        if String.equal id_group.it "" then id_rel.it
+        else id_rel.it ^ "-" ^ id_group.it
+      in
+      let tex_name = tex_of_defid (s_name $ id_rel.at) in
+      let tex_rules =
+        Doc.concat_spaced [ tex_name; Doc.fixed Colon; Doc.fixed EmptySet ]
+      in
+      annotate tex_rules "rules"
+  | [ rule ] -> tex_of_rule ~anchors rule
+  | rules ->
+      rules
+      |> List.map (fun rule ->
+             let tex = tex_of_rule ~anchors rule in
+             Doc.line tex)
+      |> tex_of_separated_blocks |> Doc.gathered
+
+(* Function signatures
+
+   subst<T>(x, y) : T
+   -> \mathrm{subst}\left\langle\mathsf{T}\right\rangle
+      \left(\mathsf{x}, \mathsf{y}\right) : \mathsf{T} *)
+
+let tex_of_func_signature_head (id_def : id) (tparams : tparam list)
+    (params : param list) : Doc.t =
+  let tex_name = tex_of_defid id_def in
+  let tex_tparams = tex_of_tparams tparams in
+  let tex_params = tex_of_params params in
+  Doc.concat [ tex_name; tex_tparams; tex_params ]
+
+let tex_of_func_signature (id_def : id) (tparams : tparam list)
+    (params : param list) (plaintyp_result : plaintyp)
+    (annotation : string option) : Doc.t =
+  let tex_head = tex_of_func_signature_head id_def tparams params in
+  let tex_result = tex_of_plaintyp plaintyp_result in
+  let tex_signature =
+    Doc.concat_spaced [ tex_head; Doc.fixed Colon; tex_result ]
+  in
+  match annotation with
+  | None -> tex_signature
+  | Some text -> annotate tex_signature text
+
+(* Function clause layouts
+
+   f(x) = y if c -> OneRow [f(x); =; y if c]
+   long f(x) = y if c -> ConditionBelow ([f(x); =; y], if c) *)
+
+type layout_func = OneRow of Doc.t list | ConditionBelow of Doc.t list * Doc.t
+
+(* Function equations
+
+   f(x) = y -> \mathrm{f}\left(\mathsf{x}\right) & = & \mathsf{y}
+   if c -> \text{if}\,\mathsf{c} *)
+
+let layout_func ~(anchors : anchors option) (id_def : id)
+    (tparams : tparam list) (args : arg list) (exp_body : exp)
+    (prems : prem list) : layout_func =
+  let tex_name = tex_of_defid id_def in
+  let tex_tparams = tex_of_tparams tparams in
+  let tex_args = tex_of_args ?anchors args in
+  let tex_lhs = Doc.concat [ tex_name; tex_tparams; tex_args ] in
+  let tex_body = tex_of_exp ?anchors exp_body in
+  let texs_prem = texs_of_prems ?anchors prems in
+  let tex_condition_inline =
+    match texs_prem with
+    | [] -> Doc.empty
+    | [ prem ] -> Doc.concat_juxtaposed [ Doc.styled_text "if"; prem ]
+    | prems ->
+        Doc.concat_juxtaposed [ Doc.styled_text "if"; Doc.numbered prems ]
+  in
+  let tex_rhs_inline =
+    if Doc.is_empty tex_condition_inline then tex_body
+    else Doc.concat_spaced [ tex_body; Doc.quad; tex_condition_inline ]
+  in
+  let tex_row_inline =
+    Doc.aligned [ [ tex_lhs; Doc.fixed Equal; tex_rhs_inline ] ]
+  in
+  if Width.flat tex_row_inline <= width_layout then
+    OneRow [ tex_lhs; Doc.fixed Equal; tex_rhs_inline ]
+  else
+    let texs_equation =
+      [
+        Layout.resolve ~width:width_layout tex_lhs;
+        Doc.fixed Equal;
+        Layout.resolve ~width:width_layout tex_body;
+      ]
+    in
+    match texs_prem with
+    | [] -> OneRow texs_equation
+    | texs_prem ->
+        let tex_condition_prefix =
+          Doc.concat [ Doc.quad; Doc.styled_text "if"; Doc.thin_space ]
+        in
+        let width_premise = width_layout - Width.flat tex_condition_prefix in
+        let tex_premise =
+          match texs_prem with
+          | [ tex_prem ] -> tex_prem
+          | texs_prem -> Doc.numbered texs_prem
+        in
+        let tex_premise = Layout.resolve ~width:width_premise tex_premise in
+        let tex_condition =
+          Doc.layout_group (Doc.concat [ tex_condition_prefix; tex_premise ])
+        in
+        ConditionBelow (texs_equation, tex_condition)
+
+let rows_of_layout_func (layout_func : layout_func) : Doc.row list =
+  match layout_func with
+  | OneRow texs_equation -> [ Doc.cells texs_equation ]
+  | ConditionBelow (texs_equation, tex_condition) ->
+      [ Doc.cells texs_equation; Doc.spanning tex_condition ]
+
+let tex_of_layout_funcs (layouts_func : layout_func list) : Doc.t =
+  let rows_equation =
+    List.map
+      (function
+        | OneRow texs_equation | ConditionBelow (texs_equation, _) ->
+            texs_equation)
+      layouts_func
+  in
+  let rows_layout =
+    layouts_func
+    |> List.map rows_of_layout_func
+    |> List.mapi (fun index rows ->
+           if index = 0 then rows else Doc.row_gap :: rows)
+    |> List.concat
+  in
+  let tex_layout =
+    match layouts_func with
+    | _ :: _ :: _ -> Doc.grid [ Doc.Left; Doc.Center; Doc.Left ] rows_layout
+    | _ ->
+        if
+          List.for_all
+            (function OneRow _ -> true | ConditionBelow _ -> false)
+            layouts_func
+        then Doc.aligned rows_equation
+        else Doc.grid [ Doc.Right; Doc.Center; Doc.Left ] rows_layout
+  in
+  Layout.resolve ~width:width_layout tex_layout
+
+(* Table definitions
+
+   f(pattern) -> result
+   -> \mathrm{f}\left(\mathsf{pattern}\right) & \mapsto & \mathsf{result} *)
+
+let tex_of_table ~(anchors : anchors option) (id_def : id)
+    (tablerows : tablerow list) : Doc.t =
+  match tablerows with
+  | [] ->
+      let tex_name = tex_of_defid id_def in
+      let tex_table =
+        Doc.concat_spaced [ tex_name; Doc.fixed Colon; Doc.fixed EmptySet ]
+      in
+      annotate tex_table "table"
+  | tablerows ->
+      let rows =
+        List.map
+          (fun tablerow ->
+            let exp_pattern, exp_result = tablerow.it in
+            let tex_name = tex_of_defid id_def in
+            let tex_pattern = tex_of_exp ?anchors exp_pattern in
+            let tex_pattern = Doc.delimited Paren tex_pattern in
+            let tex_lhs = Doc.concat [ tex_name; tex_pattern ] in
+            let tex_result = tex_of_exp ?anchors exp_result in
+            [ tex_lhs; Doc.fixed Mapsto; tex_result ])
+          tablerows
+      in
+      Doc.aligned rows
+
+(* Definitions
+
+   SepD -> ""
+   consecutive SepD -> \\[1ex] *)
+
+let rec tex_of_def_single ?(anchors : anchors option) (def : def) : Doc.t =
+  match def.it with
+  | ExternSynD (id_typ, _hints) -> tex_of_extern_syn_def id_typ
+  | SynD syntaxes -> tex_of_syn_def syntaxes
+  | TypD (id_typ, tparams, deftyp, _hints) ->
+      tex_of_typ_def id_typ tparams deftyp
+  | VarD (id_var, plaintyp, _hints) -> tex_of_var_def id_var plaintyp
+  | ExternRelD (id_rel, nottyp, _hints) -> tex_of_extern_rel_def id_rel nottyp
+  | RelD (id_rel, nottyp, _hints) -> tex_of_rel_def id_rel nottyp
+  | RuleGroupD (id_rel, id_group, rules) ->
+      tex_of_rulegroup_def ~anchors id_rel id_group rules
+  | ExternDecD (id_def, tparams, params, plaintyp_result, _hints) ->
+      tex_of_extern_dec_def id_def tparams params plaintyp_result
+  | BuiltinDecD (id_def, tparams, params, plaintyp_result, _hints) ->
+      tex_of_builtin_dec_def id_def tparams params plaintyp_result
+  | TableDecD (id_def, params, plaintyp_result, _hints) ->
+      tex_of_table_dec_def id_def params plaintyp_result
+  | FuncDecD (id_def, tparams, params, plaintyp_result, _hints) ->
+      tex_of_func_dec_def id_def tparams params plaintyp_result
+  | FuncDefD (id_def, tparams, args, exp_body, prems) ->
+      tex_of_func_def ~anchors id_def tparams args exp_body prems
+  | TableDefD (id_def, tablerows) -> tex_of_table_def ~anchors id_def tablerows
+  | SepD -> tex_of_sep_def ()
+
+and tex_of_def_multi ~(anchors : anchors option) (defs : def list) : Doc.t =
+  defs
+  |> List.map (fun def ->
+         match def.it with
+         | FuncDefD (id_def, tparams, args, exp_body, prems) ->
+             layout_func ~anchors id_def tparams args exp_body prems
+         | _ ->
+             Error.error def.at
+               "non-function definition in a function definition group")
+  |> tex_of_layout_funcs
+
+(* External syntax definitions
+
+   extern syntax t -> \mathsf{t}\quad\text{external syntax} *)
+
+and tex_of_extern_syn_def (id_typ : id) : Doc.t =
+  annotate (tex_of_typid id_typ) "external syntax"
+
+(* Syntax definitions
+
+   syntax t, u -> \mathsf{t}, \mathsf{u}\quad\text{syntax} *)
+
+and tex_of_syn_def (syntaxes : (id * tparam list) list) : Doc.t =
+  match syntaxes with
+  | [] -> annotate (Doc.fixed EmptySet) "syntax"
+  | syntaxes ->
+      let texs =
+        List.map
+          (fun (id_typ, tparams) ->
+            let tex_name = tex_of_typid id_typ in
+            let tex_tparams = tex_of_tparams tparams in
+            Doc.concat [ tex_name; tex_tparams ])
+          syntaxes
+      in
+      let tex_syntaxes = Doc.concat_comma_separated texs in
+      annotate tex_syntaxes "syntax"
+
+(* Type definitions
+
+   - Variant definitions
+
+    t ::= A | B -> two aligned production rows
+
+   - Plain type definitions
+
+    t ::= nat -> \mathsf{t} \mathrel{::=} \mathbb{N} *)
+
+and tex_of_type_lhs (id_typ : id) (tparams : tparam list) : Doc.t =
+  let tex_name = tex_of_typid id_typ in
+  let tex_tparams = tex_of_tparams tparams in
+  Doc.concat [ tex_name; tex_tparams ]
+
+and tex_of_variant_typ_def (tex_lhs : Doc.t) (typcases : typcase list) : Doc.t =
+  let tex_production = Doc.mathrel (Doc.fixed Production) in
+  let tex_alternative = Doc.mathrel (Doc.fixed VerticalBar) in
+  match typcases with
+  | [] -> Doc.concat_spaced [ tex_lhs; tex_production; Doc.fixed EmptySet ]
+  | typcase :: typcases ->
+      let tex_rhs = tex_of_typcase typcase in
+      let row_first = [ tex_lhs; tex_production; tex_rhs ] in
+      let rows =
+        List.map
+          (fun typcase ->
+            let tex_rhs = tex_of_typcase typcase in
+            [ Doc.empty; tex_alternative; tex_rhs ])
+          typcases
+      in
+      Doc.aligned (row_first :: rows)
+
+and tex_of_plain_typ_def (tex_lhs : Doc.t) (deftyp : deftyp) : Doc.t =
+  let tex_production = Doc.mathrel (Doc.fixed Production) in
+  let tex_rhs = tex_of_deftyp deftyp in
+  Doc.concat_spaced [ tex_lhs; tex_production; tex_rhs ]
+
+and tex_of_typ_def (id_typ : id) (tparams : tparam list) (deftyp : deftyp) :
+    Doc.t =
+  let tex_lhs = tex_of_type_lhs id_typ tparams in
+  match deftyp.it with
+  | VariantTD typcases -> tex_of_variant_typ_def tex_lhs typcases
+  | PlainTD _ | StructTD _ -> tex_of_plain_typ_def tex_lhs deftyp
+
+(* Variable definitions
+
+   var x : nat -> \mathsf{x} : \mathbb{N} *)
+
+and tex_of_var_def (id_var : id) (plaintyp : plaintyp) : Doc.t =
+  let tex_var = tex_of_varid id_var in
+  let tex_typ = tex_of_plaintyp plaintyp in
+  Doc.concat_spaced [ tex_var; Doc.fixed Colon; tex_typ ]
+
+(* External relation declarations
+
+   relation R : t -> \mathrm{R} : \mathsf{t}\quad\text{external} *)
+
+and tex_of_extern_rel_def (id_rel : id) (nottyp : nottyp) : Doc.t =
+  tex_of_rel_signature id_rel nottyp (Some "external")
+
+(* Relation declarations
+
+   relation R : t -> \mathrm{R} : \mathsf{t} *)
+
+and tex_of_rel_def (id_rel : id) (nottyp : nottyp) : Doc.t =
+  tex_of_rel_signature id_rel nottyp None
+
+(* Rule groups
+
+   rule R/premise/conclusion -> a labelled inference fraction *)
+
+and tex_of_rulegroup_def ~(anchors : anchors option) (id_rel : id)
+    (id_group : id) (rules : rule list) : Doc.t =
+  tex_of_rulegroup ~anchors id_rel id_group rules
+
+(* External function declarations
+
+   extern f(nat) : nat -> \mathrm{f}(\mathbb{N}) : \mathbb{N}\quad\text{external} *)
+
+and tex_of_extern_dec_def (id_def : id) (tparams : tparam list)
+    (params : param list) (plaintyp_result : plaintyp) : Doc.t =
+  tex_of_func_signature id_def tparams params plaintyp_result (Some "external")
+
+(* Builtin function declarations
+
+   builtin f(nat) : nat -> \mathrm{f}(\mathbb{N}) : \mathbb{N}\quad\text{builtin} *)
+
+and tex_of_builtin_dec_def (id_def : id) (tparams : tparam list)
+    (params : param list) (plaintyp_result : plaintyp) : Doc.t =
+  tex_of_func_signature id_def tparams params plaintyp_result (Some "builtin")
+
+(* Table declarations
+
+   table f(nat) : nat -> \mathrm{f}(\mathbb{N}) : \mathbb{N}\quad\text{table} *)
+
+and tex_of_table_dec_def (id_def : id) (params : param list)
+    (plaintyp_result : plaintyp) : Doc.t =
+  tex_of_func_signature id_def [] params plaintyp_result (Some "table")
+
+(* Function declarations
+
+   f(nat) : nat -> \mathrm{f}(\mathbb{N}) : \mathbb{N} *)
+
+and tex_of_func_dec_def (id_def : id) (tparams : tparam list)
+    (params : param list) (plaintyp_result : plaintyp) : Doc.t =
+  tex_of_func_signature id_def tparams params plaintyp_result None
+
+(* Function definitions
+
+   f(x) = y -> \mathrm{f}(\mathsf{x}) = \mathsf{y} *)
+
+and tex_of_func_def ~(anchors : anchors option) (id_def : id)
+    (tparams : tparam list) (args : arg list) (exp_body : exp)
+    (prems : prem list) : Doc.t =
+  let layout = layout_func ~anchors id_def tparams args exp_body prems in
+  tex_of_layout_funcs [ layout ]
+
+(* Table definitions
+
+   f(x) -> y -> \mathrm{f}(\mathsf{x}) \mapsto \mathsf{y} *)
+
+and tex_of_table_def ~(anchors : anchors option) (id_def : id)
+    (tablerows : tablerow list) : Doc.t =
+  tex_of_table ~anchors id_def tablerows
+
+(* Definition separators
+
+   SepD -> "" *)
+
+and tex_of_sep_def () : Doc.t = Doc.empty
+
+(* Grouping definitions for function clauses *)
+
+type defgroup = Single of def | Multi of def list | Separator
+
+let rec collect_clauses (id_dec : string) (defs_clause : def list)
+    (defs : def list) : def list * def list =
+  match defs with
+  | ({ it = FuncDefD (id_def, _, _, _, _); _ } as def) :: defs
+    when String.equal id_dec id_def.it ->
+      collect_clauses id_dec (def :: defs_clause) defs
+  | defs -> (List.rev defs_clause, defs)
+
+let rec defgroups_of_defs (defs : def list) : defgroup list =
+  match defs with
+  | [] -> []
+  | { it = SepD; _ } :: defs -> Separator :: defgroups_of_defs defs
+  | ({ it = FuncDefD (id_def, _, _, _, _); _ } as def) :: defs ->
+      let defs_clause, defs = collect_clauses id_def.it [ def ] defs in
+      let defgroup =
+        match defs_clause with
+        | [ def_clause ] -> Single def_clause
+        | defs_clause -> Multi defs_clause
+      in
+      defgroup :: defgroups_of_defs defs
+  | def :: defs -> Single def :: defgroups_of_defs defs
+
+(* Definition blocks
+
+   Single d -> Line (tex_of_def_single d)
+   Multi [f(x) = a; f(y) = b] -> one aligned Line
+   Separator -> Gap *)
+
+let tex_of_defgroup ~(anchors : anchors option) (defgroup : defgroup) :
+    Doc.block =
+  match defgroup with
+  | Single def ->
+      let tex = tex_of_def_single ?anchors def in
+      Doc.line tex
+  | Multi defs_func ->
+      let tex = tex_of_def_multi ~anchors defs_func in
+      Doc.line tex
+  | Separator -> Doc.gap
+
+(* Entry point *)
+
+let tex_of_defs ?(anchors : anchors option) (defs : def list) : Doc.t =
+  let defgroups = defgroups_of_defs defs in
+  if
+    List.for_all
+      (function Separator -> true | Single _ | Multi _ -> false)
+      defgroups
+  then Doc.empty
+  else defgroups |> List.map (tex_of_defgroup ~anchors) |> Doc.gathered

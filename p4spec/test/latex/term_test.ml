@@ -70,7 +70,7 @@ let print_prem_at_width ?(anchors : Renderer.anchors option) name width premise
 
 let print_error name exp =
   try print_exp name exp
-  with Util.Error.LatexError (region, message) ->
+  with El.Latex.LatexError (region, message) ->
     print name (Util.Source.string_of_region region ^ ": " ^ message)
 
 let () =
