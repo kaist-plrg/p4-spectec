@@ -12,6 +12,7 @@ exception InterpError of region * string
 exception ExternError of region * string
 exception StfError of string
 exception SpliceError of region * string
+exception LatexError of region * string
 
 let debug_errors = false
 
@@ -72,3 +73,7 @@ let error_stf (msg : string) = raise (StfError msg)
 
 let error_splice (at : region) (msg : string) = raise (SpliceError (at, msg))
 let warn_splice (at : region) (msg : string) = warn at "splice" msg
+
+(* LaTeX renderer errors *)
+
+let error_latex (at : region) (msg : string) = raise (LatexError (at, msg))

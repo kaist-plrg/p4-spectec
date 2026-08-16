@@ -1,0 +1,16 @@
+(executable
+ (name tex_test)
+ (modules tex_test)
+ (libraries p4spectec))
+
+(rule
+ (target tex.actual)
+ (action
+  (with-stdout-to
+   tex.actual
+   (run ./tex_test.exe))))
+
+(rule
+ (aliases latex-tex latex runtest)
+ (action
+  (diff tex.expected tex.actual)))
