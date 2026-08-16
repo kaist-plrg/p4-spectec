@@ -8,15 +8,20 @@ let splicers =
   [
     (module Syntax.Source.Splicer : SPLICER);
     (module Rel_title.Source.Splicer : SPLICER);
+    (module Rel_title.Latex.Splicer : SPLICER);
     (module Rel_title.Prose.Splicer : SPLICER);
     (module Rulegroup.Source.Splicer : SPLICER);
+    (module Rulegroup.Latex.Splicer : SPLICER);
     (module Rulegroup.Prose.Splicer : SPLICER);
     (module Rulegroup_dispatch.Prose.Splicer : SPLICER);
     (module Func_title.Source.Splicer : SPLICER);
+    (module Func_title.Latex.Splicer : SPLICER);
     (module Func_title.Prose.Splicer : SPLICER);
     (module Func.Source.Splicer : SPLICER);
+    (module Func.Latex.Splicer : SPLICER);
     (module Func.Prose.Splicer : SPLICER);
     (module Table.Source.Splicer : SPLICER);
+    (module Table.Latex.Splicer : SPLICER);
     (module Table.Prose.Splicer : SPLICER);
   ]
 

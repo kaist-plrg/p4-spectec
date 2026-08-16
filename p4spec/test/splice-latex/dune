@@ -4,6 +4,11 @@
  (libraries p4spectec))
 
 (executable
+ (name splice_test)
+ (modules splice_test)
+ (libraries p4spectec))
+
+(executable
  (name anchor_test)
  (modules anchor_test)
  (libraries p4spectec))
@@ -29,6 +34,23 @@
   (progn
    (diff store.expected store.actual)
    (diff store_err.expected store_err.actual))))
+
+(rule
+ (targets splice.actual splice_err.actual)
+ (action
+  (with-stdout-to
+   splice.actual
+   (with-stderr-to
+    splice_err.actual
+    (run ./splice_test.exe)))))
+
+(rule
+ (aliases splice-latex runtest)
+ (deps splice.actual splice_err.actual)
+ (action
+  (progn
+   (diff splice.expected splice.actual)
+   (diff splice_err.expected splice_err.actual))))
 
 (rule
  (targets anchor.actual anchor_err.actual)
