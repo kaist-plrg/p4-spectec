@@ -14,13 +14,13 @@
  (libraries p4spectec))
 
 (executable
- (name adoc_anchor_test)
- (modules adoc_anchor_test)
+ (name document_test)
+ (modules document_test)
  (libraries p4spectec))
 
 (executable
- (name document_test)
- (modules document_test)
+ (name adoc_anchor_test)
+ (modules adoc_anchor_test)
  (libraries p4spectec))
 
 (rule
@@ -75,6 +75,17 @@
    (diff anchor_err.expected anchor_err.actual))))
 
 (rule
+ (target document.actual)
+ (deps
+  (source_tree ../../../docs/p4/sections-skeleton)
+  ../../../docs/p4/P4-16-spec-new.adoc
+  ../../../docs/p4/docinfo.html)
+ (action
+  (with-stdout-to
+   document.actual
+   (run ./document_test.exe ../../../docs/p4))))
+
+(rule
  (target adoc_anchor.actual)
  (action
   (with-stdout-to
@@ -86,17 +97,6 @@
  (deps adoc_anchor.actual)
  (action
   (diff adoc_anchor.expected adoc_anchor.actual)))
-
-(rule
- (target document.actual)
- (deps
-  (source_tree ../../../docs/p4/sections-skeleton)
-  ../../../docs/p4/P4-16-spec-new.adoc
-  ../../../docs/p4/docinfo.html)
- (action
-  (with-stdout-to
-   document.actual
-   (run ./document_test.exe ../../../docs/p4))))
 
 (rule
  (aliases splice-latex runtest)

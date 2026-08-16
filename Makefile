@@ -71,6 +71,8 @@ endef
 
 # Fast tests (no -det)
 TEST_ALIASES := \
+  latex \
+  splice-latex \
   speclang \
   run run-al run-sl run-pl \
   sim-al sim-sl sim-pl \
@@ -116,8 +118,8 @@ test-fast:
 
 .PHONY: test-all
 test-all:
-	echo "#### Running all tests (without -det)"
-	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @p4parse @boot @run @sim-al @sim-sl @sim-pl --profile=release && echo OK || \
+	echo "#### Running all tests (without -det, latex smoke excluded)"
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @latex @splice-latex @speclang @p4parse @boot @run @sim-al @sim-sl @sim-pl --profile=release && echo OK || \
 	  (echo "####>" Failure running dune test. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
