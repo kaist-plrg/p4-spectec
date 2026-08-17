@@ -2,29 +2,17 @@ open Domain
 open Lang
 open El
 open Util.Source
-module Renderer = Backend_latex__El_latex__Renderer
-module Doc = Backend_latex__El_latex__Tex__Doc
-module Width = Backend_latex__El_latex__Tex__Width
+open Latex_test_support
 
 let at = no_region
-let phrase it = it $ at
-let id name = phrase name
-let atom value = phrase value
-let plaintyp value = phrase value
-let nottyp value = phrase value
-let deftyp value = phrase value
-let exp value = phrase value
-let param value = phrase value
-let arg value = phrase value
-let prem value = phrase value
-let rule value = phrase value
-let tablerow value = phrase value
-let def value = phrase value
-let var name = exp (VarE (id name))
 
-let print name value =
-  if String.equal value "" then Printf.printf "[%s]\n" name
-  else Printf.printf "[%s]\n%s\n" name value
+module Fixture = Test_common.El_fixture.Make (struct
+  let at = at
+end)
+
+open Fixture
+
+let print = print_nonempty
 
 let print_def name definition =
   print name (Backend_latex.El.render_def definition)
@@ -40,28 +28,16 @@ let variable_definition = def (VarD (id "x_v", nat_type, [ bad_hint ]))
 let function_equation name argument body prems =
   def (FuncDefD (id name, [], [ arg (ExpA (var argument)) ], body, prems))
 
-let render_function_equation_candidate name argument body prems =
-  let lhs =
-    Doc.concat
-      [
-        Doc.styled_mathrm name;
-        Renderer.tex_of_tparams [];
-        Renderer.tex_of_args [ arg (ExpA (var argument)) ];
-      ]
+let assert_function_layout expected name argument body prems =
+  let actual =
+    Renderer.layout_func ~anchors:None (id name) []
+      [ arg (ExpA (var argument)) ]
+      body prems
   in
-  let body = Renderer.tex_of_exp body in
-  let prems = Renderer.texs_of_prems prems in
-  let condition =
-    match prems with
-    | [] -> Doc.empty
-    | [ prem ] -> Doc.concat_juxtaposed [ Doc.styled_text "if"; prem ]
-    | prems -> Doc.concat_juxtaposed [ Doc.styled_text "if"; Doc.stacked prems ]
-  in
-  let rhs =
-    if Doc.is_empty condition then body
-    else Doc.concat_spaced [ body; Doc.quad; condition ]
-  in
-  Doc.aligned [ [ lhs; Doc.fixed Equal; rhs ] ]
+  match (expected, actual) with
+  | `OneRow, Renderer.OneRow _ | `ConditionBelow, Renderer.ConditionBelow _ ->
+      ()
+  | _ -> failwith "unexpected function-clause layout"
 
 let assert_flat_width expected doc =
   let actual = Width.flat doc in
@@ -430,12 +406,10 @@ let () =
                 arg (ExpA (var (String.make 20 'c')));
               ] ))
      in
-     assert_flat_width 80
-       (render_function_equation_candidate "cases_fn" "s" (var "v")
-          [ prem (IfPr (var condition_at_80)) ]);
-     assert_flat_width 81
-       (render_function_equation_candidate "cases_fn" "s" (var "v")
-          [ prem (IfPr (var condition_at_81)) ]);
+     assert_function_layout `OneRow "cases_fn" "s" (var "v")
+       [ prem (IfPr (var condition_at_80)) ];
+     assert_function_layout `ConditionBelow "cases_fn" "s" (var "v")
+       [ prem (IfPr (var condition_at_81)) ];
      assert_flat_width 77 (Renderer.tex_of_exp breakable_condition);
      Backend_latex.El.render_defs ~anchors
        [

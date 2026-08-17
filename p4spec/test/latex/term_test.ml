@@ -2,10 +2,7 @@ open Domain
 open Lang
 open El
 open Util.Source
-module Renderer = Backend_latex__El_latex__Renderer
-module Doc = Backend_latex__El_latex__Tex__Doc
-module Layout = Backend_latex__El_latex__Tex__Layout
-module Serialize = Backend_latex__El_latex__Tex__Serialize
+open Latex_test_support
 
 let at =
   {
@@ -13,21 +10,13 @@ let at =
     right = { file = "fixture.el"; line = 7; column = 5 };
   }
 
-let phrase it = it $ at
-let id name = phrase name
-let atom value = phrase value
-let plaintyp value = phrase value
-let nottyp value = phrase value
-let deftyp value = phrase value
-let exp value = phrase value
-let path value = phrase value
-let arg value = phrase value
-let param value = phrase value
-let prem value = phrase value
-let var name = exp (VarE (id name))
-let named_type name = plaintyp (VarT (id name, []))
+module Fixture = Test_common.El_fixture.Make (struct
+  let at = at
+end)
+
+open Fixture
+
 let silent = exp (AtomE (atom (Atom.Tag "META")))
-let print name value = Printf.printf "[%s]\n%s\n" name value
 
 let print_typ name typ =
   print name (Serialize.to_string (Renderer.tex_of_typ typ))

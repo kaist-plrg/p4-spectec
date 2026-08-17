@@ -3,17 +3,11 @@ open Lang
 open El
 open Util.Source
 
-let phrase it = it $ no_region
-let id name = phrase name
-let atom value = phrase value
-let plaintyp value = phrase value
-let deftyp value = phrase value
-let exp value = phrase value
-let arg value = phrase value
-let prem value = phrase value
-let rule value = phrase value
-let def value = phrase value
-let var name = exp (VarE (id name))
+module Fixture = Test_common.El_fixture.Make (struct
+  let at = no_region
+end)
+
+open Fixture
 
 let anchors =
   Backend_latex.El.anchors

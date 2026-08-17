@@ -6,12 +6,12 @@
 (executable
  (name splice_test)
  (modules splice_test)
- (libraries p4spectec backend_splice backend_latex))
+ (libraries p4spectec backend_splice backend_latex test_common))
 
 (executable
  (name anchor_test)
  (modules anchor_test)
- (libraries p4spectec backend_splice backend_latex))
+ (libraries p4spectec backend_splice backend_latex test_common))
 
 (executable
  (name document_test)
@@ -33,7 +33,7 @@
     (run ./store_test.exe)))))
 
 (rule
- (aliases splice-latex runtest)
+ (alias splice-latex)
  (deps store.actual store_err.actual)
  (action
   (progn
@@ -50,7 +50,7 @@
     (run ./splice_test.exe)))))
 
 (rule
- (aliases splice-latex runtest)
+ (alias splice-latex)
  (deps splice.actual splice_err.actual)
  (action
   (progn
@@ -67,7 +67,7 @@
     (run ./anchor_test.exe)))))
 
 (rule
- (aliases splice-latex runtest)
+ (alias splice-latex)
  (deps anchor.actual anchor_err.actual)
  (action
   (progn
@@ -93,13 +93,13 @@
    (run ./adoc_anchor_test.exe))))
 
 (rule
- (aliases splice-latex runtest)
+ (alias splice-latex)
  (deps adoc_anchor.actual)
  (action
   (diff adoc_anchor.expected adoc_anchor.actual)))
 
 (rule
- (aliases splice-latex runtest)
+ (alias splice-latex)
  (deps document.actual)
  (action
   (diff document.expected document.actual)))

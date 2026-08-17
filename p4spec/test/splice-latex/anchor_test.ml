@@ -3,20 +3,27 @@ open Lang
 open El
 open Util.Source
 
-let phrase it = it $ no_region
-let id value = phrase value
-let atom value = phrase value
-let exp value = phrase value
-let arg value = phrase value
-let prem value = phrase value
-let rule value = phrase value
-let var name = exp (VarE (id name))
-let nottyp value = phrase value
-let plaintyp value = phrase value
-let param value = phrase value
-let def value = phrase value
+module Fixture = Test_common.El_fixture.Make (struct
+  let at = no_region
+end)
+
+open Fixture
+
 let nat = plaintyp (NumT `NatT)
 let relation_type = nottyp (AtomT (atom (Atom.Keyword "RELATION")))
+let bool_pl = phrase Il.BoolT
+
+let def_pl name =
+  Pl.FuncDecD (id name, [], [], bool_pl, [], None)
+  |> phrase |> Pl.Annot.no_hints
+
+let spec_pl =
+  [
+    def_pl "overlap_fn";
+    def_pl "title_only_fn";
+    def_pl "full_only_fn";
+    def_pl "apostrophe_fn'";
+  ]
 
 let spec =
   [
@@ -49,6 +56,37 @@ ${func-latex: documented_fn external_full_fn builtin_full_fn}
 let print_anchor anchor kind name =
   let value = match anchor name with Some anchor -> anchor | None -> "none" in
   Printf.printf "%s -> %s\n" kind value
+
+let count_substring needle text =
+  let needle_length = String.length needle in
+  let text_length = String.length text in
+  let rec count index total =
+    if index + needle_length > text_length then total
+    else if String.equal (String.sub text index needle_length) needle then
+      count (index + needle_length) (total + 1)
+    else count (index + 1) total
+  in
+  count 0 0
+
+let anchor_skeleton =
+  {|${func-title-prose: overlap_fn title_only_fn}
+${func-title-prose: overlap_fn}
+${func-prose: overlap_fn full_only_fn apostrophe_fn'}|}
+
+let print_anchor_counts label rendered =
+  let print_count kind name needle =
+    Printf.printf "%s %s %s: %d\n" label kind name
+      (count_substring needle rendered)
+  in
+  List.iter
+    (fun name ->
+      print_count "anchors" name
+        ("<span id=\"function_prose_" ^ name ^ "\"></span>"))
+    [ "overlap_fn"; "title_only_fn"; "full_only_fn"; "apostrophe_fn'" ];
+  List.iter
+    (fun name ->
+      print_count "presentations" name ("xref:function_prose_" ^ name ^ "["))
+    [ "overlap_fn"; "title_only_fn"; "full_only_fn"; "apostrophe_fn'" ]
 
 let () =
   let open Backend_splice in
@@ -113,4 +151,33 @@ let () =
        ~anchors:
          (Backend_latex.El.anchors ~func:context.anchors_latex.func
             ~rel:context.anchors_latex.rel)
-       [ definition ])
+       [ definition ]);
+  let anchors_prose =
+    Backend_splice.Ctx.
+      {
+        func =
+          (fun name ->
+            if List.mem name [ "overlap_fn"; "title_only_fn" ] then
+              Some ("function_prose_" ^ name)
+            else None);
+        rel = (fun _ -> None);
+      }
+  in
+  let context =
+    Backend_splice.Ctx.
+      { anchors_prose; anchors_latex = Backend_splice.Ctx.empty_anchors }
+  in
+  print_endline "[anchor-ownership]";
+  let splice_anchor () =
+    let source =
+      Backend_splice.Source.
+        { file = "fixture.adoc"; s = anchor_skeleton; i = 0 }
+    in
+    Backend_splice.Driver.splice_string source anchor_skeleton
+  in
+  Backend_splice.Driver.init ~context [] spec_pl;
+  let rendered = splice_anchor () in
+  rendered |> print_anchor_counts "first";
+  Backend_splice.Driver.init ~context [] spec_pl;
+  let rendered = splice_anchor () in
+  rendered |> print_anchor_counts "second"

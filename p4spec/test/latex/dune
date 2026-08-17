@@ -1,24 +1,101 @@
-(executable
- (name tex_test)
- (modules tex_test)
+(library
+ (name latex_test_support)
+ (modules latex_test_support)
  (libraries p4spectec backend_latex))
 
-(rule
- (target tex.actual)
- (action
-  (with-stdout-to
-   tex.actual
-   (run ./tex_test.exe))))
+(executables
+ (names
+  doc_test
+  width_test
+  layout_test
+  link_test
+  serialize_test
+  renderer_test)
+ (modules
+  doc_test
+  width_test
+  layout_test
+  link_test
+  serialize_test
+  renderer_test)
+ (libraries p4spectec backend_latex latex_test_support))
 
 (rule
- (aliases latex-tex latex runtest)
+ (target doc.actual)
  (action
-  (diff tex.expected tex.actual)))
+  (with-stdout-to
+   doc.actual
+   (run ./doc_test.exe))))
+
+(rule
+ (aliases latex-doc latex)
+ (action
+  (diff doc.expected doc.actual)))
+
+(rule
+ (target width.actual)
+ (action
+  (with-stdout-to
+   width.actual
+   (run ./width_test.exe))))
+
+(rule
+ (aliases latex-width latex)
+ (action
+  (diff width.expected width.actual)))
+
+(rule
+ (target layout.actual)
+ (action
+  (with-stdout-to
+   layout.actual
+   (run ./layout_test.exe))))
+
+(rule
+ (aliases latex-layout latex)
+ (action
+  (diff layout.expected layout.actual)))
+
+(rule
+ (target link.actual)
+ (action
+  (with-stdout-to
+   link.actual
+   (run ./link_test.exe))))
+
+(rule
+ (aliases latex-link latex)
+ (action
+  (diff link.expected link.actual)))
+
+(rule
+ (target serialize.actual)
+ (action
+  (with-stdout-to
+   serialize.actual
+   (run ./serialize_test.exe))))
+
+(rule
+ (aliases latex-serialize latex)
+ (action
+  (diff serialize.expected serialize.actual)))
+
+(rule
+ (target renderer.actual)
+ (action
+  (with-stdout-to
+   renderer.actual
+   (run ./renderer_test.exe))))
+
+(rule
+ (aliases latex-renderer latex)
+ (action
+  (diff renderer.expected renderer.actual)))
 
 (executable
  (name term_test)
  (modules term_test)
- (libraries p4spectec backend_latex))
+ (libraries p4spectec backend_latex latex_test_support test_common))
 
 (rule
  (target term.actual)
@@ -28,14 +105,14 @@
    (run ./term_test.exe))))
 
 (rule
- (aliases latex-term latex runtest)
+ (aliases latex-term latex)
  (action
   (diff term.expected term.actual)))
 
 (executable
  (name definition_test)
  (modules definition_test)
- (libraries p4spectec backend_latex))
+ (libraries p4spectec backend_latex latex_test_support test_common))
 
 (rule
  (target definition.actual)
@@ -45,14 +122,14 @@
    (run ./definition_test.exe))))
 
 (rule
- (aliases latex-definition latex runtest)
+ (aliases latex-definition latex)
  (action
   (diff definition.expected definition.actual)))
 
 (executable
  (name smoke_test)
  (modules smoke_test)
- (libraries p4spectec backend_latex))
+ (libraries p4spectec backend_latex test_common))
 
 (rule
  (target latex-smoke.tex)

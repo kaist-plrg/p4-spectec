@@ -1,6 +1,7 @@
 open Runtime.Sim.Signature
 module Error = P4spectec.Error
 module Filesys = Util.Filesys
+module El_fixture = Test_el_fixture
 open Util.Source
 
 let version = "0.1"
