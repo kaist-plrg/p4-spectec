@@ -7,11 +7,47 @@ type t =
   | PassError of Pass.error
   | RunError of Run.error
   | CommandError of string
+  | CommandDiagnostic of Diagnostic.t
+
+type command_code =
+  | Boot_source_conflict
+  | Boot_source_required
+  | Splice_file_count_mismatch
+
+let string_of_command_code = function
+  | Boot_source_conflict -> "boot-source-conflict"
+  | Boot_source_required -> "boot-source-required"
+  | Splice_file_count_mismatch -> "splice-file-count-mismatch"
+
+let command_diagnostic code message =
+  Diagnostic.error
+    ~code:("command/" ^ string_of_command_code code)
+    ~source:"command" no_region message
+
+let boot_source_conflict =
+  CommandDiagnostic
+    (command_diagnostic Boot_source_conflict
+       "options `-boot-dir` and `-boot-file` cannot be used together")
+
+let boot_source_required =
+  CommandDiagnostic
+    (command_diagnostic Boot_source_required
+       "either `-boot-dir` or `-boot-file` is required")
+
+let splice_file_count_mismatch inputs outputs =
+  let plural count = if count = 1 then "" else "s" in
+  CommandDiagnostic
+    (command_diagnostic Splice_file_count_mismatch
+       (Format.asprintf
+          "splice expects equal numbers of input and output files, but got %d \
+           input file%s and %d output file%s"
+          inputs (plural inputs) outputs (plural outputs)))
 
 let to_region_msg = function
   | PassError e -> Pass.to_region_msg e
   | RunError e -> Run.to_region_msg e
   | CommandError msg -> (no_region, msg)
+  | CommandDiagnostic diagnostic -> Diagnostic.region_msg diagnostic
 
 let to_string (e : t) : string =
   let at, msg = to_region_msg e in
@@ -21,7 +57,11 @@ let source_of = function
   | PassError _ -> "pass"
   | RunError _ -> "interp"
   | CommandError _ -> "command"
+  | CommandDiagnostic diagnostic -> diagnostic.source
 
 let to_diagnostics (e : t) : Diagnostic.Report.t =
-  let at, msg = to_region_msg e in
-  Diagnostic.Report.singleton (Diagnostic.error ~source:(source_of e) at msg)
+  match e with
+  | CommandDiagnostic diagnostic -> Diagnostic.Report.singleton diagnostic
+  | _ ->
+      let at, msg = to_region_msg e in
+      Diagnostic.Report.singleton (Diagnostic.error ~source:(source_of e) at msg)
