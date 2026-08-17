@@ -2,7 +2,6 @@ open Lang
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 module Run = Runtime.Dynamic_Runner.Signature
-open Util.Error
 open Util.Source
 
 (* Interfaces *)
@@ -25,13 +24,13 @@ module P4 = struct
           Run.Pass value_program
       | _ ->
           Run.Fail (`Syntax (no_region, "exactly one P4 file must be provided"))
-    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    with P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
   let parse_string (path_p4 : string) (str : string) : Run.parse_result =
     try
       let value_program = P4.Parse.parse_string path_p4 str in
       Run.Pass value_program
-    with ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    with P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)
 
@@ -75,7 +74,7 @@ module P4 = struct
 
   (* Initialization *)
 
-  let init (spec : Run.spec) : unit =
+  let init (spec : Run.spec) : (unit, Run.error) result =
     let printer (value : Value.t) =
       match spec with
       | AL spec_al ->
@@ -89,7 +88,8 @@ module P4 = struct
           Format.asprintf "%a" (P4.Unparse.pp_value henv) value
       | Empty -> assert false
     in
-    unparser := printer
+    unparser := printer;
+    Ok ()
 end
 
 (* SpecTec IL *)
@@ -105,20 +105,18 @@ module SpecTec_AL = struct
 
   let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
-    try
-      let value_spec = Spectec.Parse.parse_files Run.AL_mode paths in
-      Run.Pass value_spec
-    with
-    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    match Spectec.Parse.parse_files Run.AL_mode paths with
+    | Ok value_spec -> Run.Pass value_spec
+    | Error e ->
+        let at, msg = Pass.to_region_msg e in
+        Run.Fail (`Syntax (at, msg))
 
   let parse_string (path : string) (str : string) : Run.parse_result =
-    try
-      let value_spec = Spectec.Parse.parse_string Run.AL_mode path str in
-      Run.Pass value_spec
-    with
-    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    match Spectec.Parse.parse_string Run.AL_mode path str with
+    | Ok value_spec -> Run.Pass value_spec
+    | Error e ->
+        let at, msg = Pass.to_region_msg e in
+        Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)
 
@@ -138,7 +136,7 @@ module SpecTec_AL = struct
 
   (* Initialization *)
 
-  let init (_spec : Run.spec) : unit = ()
+  let init (_spec : Run.spec) : (unit, Run.error) result = Ok ()
 end
 
 (* SpecTec SL *)
@@ -154,20 +152,18 @@ module SpecTec_SL = struct
 
   let parse_program (_includes : string list) (paths : string list) :
       Run.parse_result =
-    try
-      let value_spec = Spectec.Parse.parse_files Run.SL_mode paths in
-      Run.Pass value_spec
-    with
-    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    match Spectec.Parse.parse_files Run.SL_mode paths with
+    | Ok value_spec -> Run.Pass value_spec
+    | Error e ->
+        let at, msg = Pass.to_region_msg e in
+        Run.Fail (`Syntax (at, msg))
 
   let parse_string (path : string) (str : string) : Run.parse_result =
-    try
-      let value_spec = Spectec.Parse.parse_string Run.SL_mode path str in
-      Run.Pass value_spec
-    with
-    | ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | ElabError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    match Spectec.Parse.parse_string Run.SL_mode path str with
+    | Ok value_spec -> Run.Pass value_spec
+    | Error e ->
+        let at, msg = Pass.to_region_msg e in
+        Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)
 
@@ -187,5 +183,5 @@ module SpecTec_SL = struct
 
   (* Initialization *)
 
-  let init (_spec : Run.spec) : unit = ()
+  let init (_spec : Run.spec) : (unit, Run.error) result = Ok ()
 end

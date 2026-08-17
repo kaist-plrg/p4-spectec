@@ -1,4 +1,5 @@
-open Util.Error
 open Util.Source
 
-let error (at : region) (msg : string) = error_prose at msg
+exception ProseError of region * string
+
+let error (at : region) (msg : string) = raise (ProseError (at, msg))

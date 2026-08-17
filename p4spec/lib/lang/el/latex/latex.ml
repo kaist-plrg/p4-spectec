@@ -1,13 +1,8 @@
-(** Canonical wrapper-free LaTeX rendering for EL. *)
+(* Canonical wrapper-free LaTeX rendering for EL. *)
 
 open Tex
 
-(* Errors *)
-
-exception LatexError = Util.Error.LatexError
-
-let error_latex (at : Util.Source.region) (message : string) : 'a =
-  Error.error at message
+(* Anchors *)
 
 type anchors = Renderer.anchors
 

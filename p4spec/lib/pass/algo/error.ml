@@ -1,10 +1,11 @@
-open Util.Error
 open Util.Source
 
 (* Error *)
 
-let error (at : region) (msg : string) = error_algo at msg
-let warn (at : region) (msg : string) = warn_algo at msg
+exception AlgoError of region * string
+
+let error (at : region) (msg : string) = raise (AlgoError (at, msg))
+let warn (at : region) (msg : string) = Util.Error.warn at "algo" msg
 
 (* Checks *)
 

@@ -2,12 +2,11 @@ module Mixfix = Domain.Mixfix
 open Lang
 module Value = Runtime.Value
 open Mixops
-open Util.Error
 open Util.Source
 
 (* Errors *)
 
-let error = error_unparse
+let error = Error.error
 
 (* Stubs for lossy unboot conversions *)
 

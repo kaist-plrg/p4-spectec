@@ -13,14 +13,11 @@
  * under the License.
  *)
 
-open Core
-open Util.Error
-
-let error = error_stf
+let error = Error.error
 
 let lex (filename : string) =
   try
-    let file = In_channel.read_all filename in
+    let file = Core.In_channel.read_all filename in
     Lexing.from_string file
   with Lexer.Error s -> Format.asprintf "lexer error: %s" s |> error
 

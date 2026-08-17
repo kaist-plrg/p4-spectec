@@ -8,6 +8,16 @@ open Util.Source
 type mode = AL_mode | SL_mode | PL_mode | Empty_mode
 type spec = AL of Al.spec | SL of Sl.spec | PL of Pl.spec | Empty
 
+(* Raised by an extern implementation, caught by its caller *)
+
+exception ExternError of region * string
+
+(* Failure reported by the entry points below *)
+
+type error = { at : region; msg : string }
+
+let to_region_msg { at; msg } = (at, msg)
+
 (* Result types *)
 
 type rel_result = Pass of Value.t list | Fail of region * string
@@ -53,7 +63,7 @@ module type INTERFACE = sig
 
   (* Initialization *)
 
-  val init : spec -> unit
+  val init : spec -> (unit, error) result
 end
 
 (* Interface for the interaction between SpecTec and external code *)
@@ -74,7 +84,7 @@ module type EXTERN = sig
 
   (* Mode initialization for interp-extern knot *)
 
-  val init_mode : mode -> unit
+  val init_mode : mode -> (unit, error) result
 end
 
 (* SpecTec interperter(s) *)
@@ -98,7 +108,8 @@ module type INTERP_AL = sig
 
   (* Initialization *)
 
-  val init : cache:bool -> det:bool -> guard:bool -> Al.spec -> unit
+  val init :
+    cache:bool -> det:bool -> guard:bool -> Al.spec -> (unit, error) result
 end
 
 module type INTERP_SL = sig
@@ -106,7 +117,8 @@ module type INTERP_SL = sig
 
   (* Initialization *)
 
-  val init : cache:bool -> det:bool -> guard:bool -> Sl.spec -> unit
+  val init :
+    cache:bool -> det:bool -> guard:bool -> Sl.spec -> (unit, error) result
 end
 
 module type INTERP_PL = sig
@@ -114,7 +126,8 @@ module type INTERP_PL = sig
 
   (* Initialization *)
 
-  val init : cache:bool -> det:bool -> guard:bool -> Pl.spec -> unit
+  val init :
+    cache:bool -> det:bool -> guard:bool -> Pl.spec -> (unit, error) result
 end
 
 (* Runner for SpecTec, which glues together the interface, the extern, and the interpreter *)
@@ -126,7 +139,8 @@ module type RUNNER = sig
 
   (* Initialization *)
 
-  val init : ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> unit
+  val init :
+    ?cache:bool -> ?det:bool -> ?guard:bool -> spec -> (unit, error) result
 
   (* Clear the state *)
 

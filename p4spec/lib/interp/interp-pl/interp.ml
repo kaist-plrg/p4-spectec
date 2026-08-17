@@ -2175,7 +2175,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         Interface.call_builtin
           (fun value -> Hook.on_value value)
           id targs values_input
-      with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
+      with Builtin.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
     List.iteri
@@ -2282,14 +2282,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let value_program =
         match Interface.parse_program includes_p4 [ filename_p4 ] with
         | Pass value_program -> value_program
-        | Fail (`Syntax (at, msg)) -> raise (Util.Error.ParseError (at, msg))
+        | Fail (`Syntax (at, msg)) -> raise (P4.Error.ParseError (at, msg))
       in
       Hook.on_program value_program;
       let values_output = do_eval_rel relname [ value_program ] in
       Run.Pass values_output
     with
-    | Util.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    | P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
         Run.Fail (`Runtime (at, msg))
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
@@ -2298,7 +2298,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let values_output = do_eval_rel relname values_input in
       Run.Pass values_output
     with
-    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
@@ -2308,12 +2308,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let value_output = do_eval_func funcname targs values_input in
       Run.Pass value_output
     with
-    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) ~guard:_ (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) ~guard:_ (spec : spec) :
+      (unit, Run.error) result =
     if cache then Cache.cache_on () else Cache.cache_off ();
-    Ctx.init ~det spec
+    try Ok (Ctx.init ~det spec)
+    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
 end

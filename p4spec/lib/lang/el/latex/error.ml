@@ -1,9 +1,11 @@
 open Util.Source
 
-(* LaTeX renderer errors *)
+(* Error *)
 
-let error (at : region) (msg : string) : 'a = Util.Error.error_latex at msg
-let error_no_region (msg : string) : 'a = error no_region msg
+exception LaTexError of region * string
+
+let error (at : region) (msg : string) = raise (LaTexError (at, msg))
+let error_no_region (msg : string) = error no_region msg
 
 (* Error checks *)
 

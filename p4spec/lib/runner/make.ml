@@ -1,6 +1,8 @@
 module Value = Runtime.Value
 open Runtime.Dynamic_Runner.Signature
 
+let ( let* ) = Result.bind
+
 module Make_rec
     (Interface : INTERFACE)
     (MakeExtern : functor
@@ -99,20 +101,22 @@ module Make_rec
 
   (* Initialization *)
 
-  let init ?(cache = true) ?(det = false) ?(guard = false) (spec_ : spec) : unit
-      =
-    Interface.init spec_;
-    (match spec_ with
-    | AL spec_al ->
-        init_mode AL_mode;
-        Interp_AL.init ~cache ~det ~guard spec_al
-    | SL spec_sl ->
-        init_mode SL_mode;
-        Interp_SL.init ~cache ~det ~guard spec_sl
-    | PL spec_pl ->
-        init_mode PL_mode;
-        Interp_PL.init ~cache ~det ~guard spec_pl
-    | Empty -> assert false);
+  let init ?(cache = true) ?(det = false) ?(guard = false) (spec_ : spec) :
+      (unit, error) result =
+    let* () = Interface.init spec_ in
+    let* () =
+      match spec_ with
+      | AL spec_al ->
+          init_mode AL_mode;
+          Interp_AL.init ~cache ~det ~guard spec_al
+      | SL spec_sl ->
+          init_mode SL_mode;
+          Interp_SL.init ~cache ~det ~guard spec_sl
+      | PL spec_pl ->
+          init_mode PL_mode;
+          Interp_PL.init ~cache ~det ~guard spec_pl
+      | Empty -> assert false
+    in
     Extern.init_mode !mode
 
   (* Cache management *)
@@ -220,20 +224,22 @@ module Make_nonrec
 
   (* Initialization *)
 
-  let init ?(cache = true) ?(det = false) ?(guard = false) (spec_ : spec) : unit
-      =
-    Interface.init spec_;
-    (match spec_ with
-    | AL spec_al ->
-        init_mode AL_mode;
-        Interp_AL.init ~cache ~det ~guard spec_al
-    | SL spec_sl ->
-        init_mode SL_mode;
-        Interp_SL.init ~cache ~det ~guard spec_sl
-    | PL spec_pl ->
-        init_mode PL_mode;
-        Interp_PL.init ~cache ~det ~guard spec_pl
-    | Empty -> assert false);
+  let init ?(cache = true) ?(det = false) ?(guard = false) (spec_ : spec) :
+      (unit, error) result =
+    let* () = Interface.init spec_ in
+    let* () =
+      match spec_ with
+      | AL spec_al ->
+          init_mode AL_mode;
+          Interp_AL.init ~cache ~det ~guard spec_al
+      | SL spec_sl ->
+          init_mode SL_mode;
+          Interp_SL.init ~cache ~det ~guard spec_sl
+      | PL spec_pl ->
+          init_mode PL_mode;
+          Interp_PL.init ~cache ~det ~guard spec_pl
+      | Empty -> assert false
+    in
     Extern.init_mode !mode
 
   (* Cache management *)
