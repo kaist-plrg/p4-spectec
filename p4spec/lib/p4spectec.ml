@@ -1,4 +1,5 @@
 module Error = Error
+module Diagnostic = Diagnostic
 module Run = Runtime.Dynamic_Runner.Signature
 module Sim = Runtime.Sim.Signature
 module Config = Backend_boot.Config
@@ -7,6 +8,16 @@ module Boot_build = Backend_boot.Build
 type 'a result = ('a, Error.t) Stdlib.result
 
 let ( let* ) = Result.bind
+let with_warnings = Diagnostic.collect
+
+let with_diagnostics (f : unit -> 'a result) : 'a result * Diagnostic.Report.t =
+  let result, report = with_warnings f in
+  let report =
+    match result with
+    | Ok _ -> report
+    | Error e -> Diagnostic.Report.merge report (Error.to_diagnostics e)
+  in
+  (result, report)
 
 (* Spec transformations *)
 

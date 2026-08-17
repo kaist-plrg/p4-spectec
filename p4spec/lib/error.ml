@@ -16,3 +16,12 @@ let to_region_msg = function
 let to_string (e : t) : string =
   let at, msg = to_region_msg e in
   Util.Error.string_of_error at msg
+
+let source_of = function
+  | PassError _ -> "pass"
+  | RunError _ -> "interp"
+  | CommandError _ -> "command"
+
+let to_diagnostics (e : t) : Diagnostic.Report.t =
+  let at, msg = to_region_msg e in
+  Diagnostic.Report.singleton (Diagnostic.error ~source:(source_of e) at msg)
