@@ -52,7 +52,11 @@ module Latex = struct
         Backend_latex.El.anchors ~func:context.anchors_latex.func
           ~rel:context.anchors_latex.rel
       in
-      Backend_latex.El.render_defs ~anchors values
+      match Backend_latex.El.render_defs ~anchors values with
+      | Ok rendered -> rendered
+      | Error error ->
+          let at, msg = Backend_latex.to_region_msg error in
+          Error.error at msg
   end
 
   module Config = struct

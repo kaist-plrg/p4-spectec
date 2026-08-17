@@ -8,7 +8,7 @@ let at = no_region
 let print = print_nonempty
 
 let print_def name definition =
-  print name (Backend_latex.El.render_def definition)
+  print name (Backend_latex.El.render_def definition |> Result.get_ok)
 
 let bad_hint =
   { hintid = "latex" $ at; hintexp = LatexE "must not be visited" $ at }
@@ -260,7 +260,7 @@ let () =
   print_def "short-label-rule" short_label_rule;
   assert_flat_width_exceeds 80 (Renderer.tex_of_prem long_operator_premise);
   print "long-label-rule"
-    (Backend_latex.El.render_defs ~anchors [ long_label_rule ]);
+    (Backend_latex.El.render_defs ~anchors [ long_label_rule ] |> Result.get_ok);
   print_def "single-rule"
     (RuleGroupD
        ( "Check_rel" $ at,
@@ -394,7 +394,8 @@ let () =
          SepD $ at;
          relation_definition;
          SepD $ at;
-       ]);
+       ]
+    |> Result.get_ok);
   print "left-aligned-function-clauses"
     (Backend_latex.El.render_defs
        [
@@ -402,7 +403,8 @@ let () =
          function_equation "left_fn" "long_argument"
            (VarE ("second" $ at) $ at)
            [];
-       ]);
+       ]
+    |> Result.get_ok);
   print "aligned-function-equations"
     (let condition_at_80 = String.make 56 'c' in
      let condition_at_81 = String.make 57 'c' in
@@ -455,13 +457,16 @@ let () =
          function_equation "other_fn" "after_var"
            (VarE ("after_var" $ at) $ at)
            [];
-       ]);
-  print "empty-definitions" (Backend_latex.El.render_defs []);
+       ]
+     |> Result.get_ok);
+  print "empty-definitions" (Backend_latex.El.render_defs [] |> Result.get_ok);
   print "only-separators"
-    (Backend_latex.El.render_defs [ SepD $ at; SepD $ at ]);
+    (Backend_latex.El.render_defs [ SepD $ at; SepD $ at ] |> Result.get_ok);
   print "linked-definitions"
-    (Backend_latex.El.render_defs ~anchors linked_definitions);
-  let unlinked_definitions = Backend_latex.El.render_defs linked_definitions in
+    (Backend_latex.El.render_defs ~anchors linked_definitions |> Result.get_ok);
+  let unlinked_definitions =
+    Backend_latex.El.render_defs linked_definitions |> Result.get_ok
+  in
   if contains unlinked_definitions "\\href" then
     failwith "default definition rendering must not emit links";
   print "unlinked-definitions" unlinked_definitions

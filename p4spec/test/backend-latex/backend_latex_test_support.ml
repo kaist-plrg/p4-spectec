@@ -4,6 +4,7 @@ module Link = Backend_latex__El_latex__Tex__Link
 module Width = Backend_latex__El_latex__Tex__Width
 module Layout = Backend_latex__El_latex__Tex__Layout
 module Serialize = Backend_latex__El_latex__Tex__Serialize
+module Latex_error = Backend_latex__El_latex__Error
 
 let print (name : string) (value : string) : unit =
   Printf.printf "[%s]\n%s\n" name value
@@ -25,7 +26,7 @@ let rejected (message : string) (thunk : unit -> unit) : bool =
   try
     thunk ();
     false
-  with Backend_latex.El.LatexError error ->
+  with Latex_error.LatexError error ->
     let at, actual = Backend_latex.to_region_msg error in
     at = Util.Source.no_region && String.equal message actual
 

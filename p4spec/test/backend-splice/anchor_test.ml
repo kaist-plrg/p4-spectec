@@ -148,7 +148,8 @@ let () =
        ~anchors:
          (Backend_latex.El.anchors ~func:context.anchors_latex.func
             ~rel:context.anchors_latex.rel)
-       [ definition ]);
+       [ definition ]
+    |> Result.get_ok);
   let anchors_prose =
     Backend_splice.Ctx.
       {
