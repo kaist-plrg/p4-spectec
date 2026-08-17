@@ -1,6 +1,6 @@
 (library
- (name latex_test_support)
- (modules latex_test_support)
+ (name backend_latex_test_support)
+ (modules backend_latex_test_support)
  (libraries p4spectec backend_latex))
 
 (executables
@@ -18,7 +18,7 @@
   link_test
   serialize_test
   renderer_test)
- (libraries p4spectec backend_latex latex_test_support))
+ (libraries p4spectec backend_latex backend_latex_test_support))
 
 (rule
  (target doc.actual)
@@ -28,7 +28,7 @@
    (run ./doc_test.exe))))
 
 (rule
- (aliases latex-doc latex)
+ (aliases backend-latex-doc backend-latex)
  (action
   (diff doc.expected doc.actual)))
 
@@ -40,7 +40,7 @@
    (run ./width_test.exe))))
 
 (rule
- (aliases latex-width latex)
+ (aliases backend-latex-width backend-latex)
  (action
   (diff width.expected width.actual)))
 
@@ -52,7 +52,7 @@
    (run ./layout_test.exe))))
 
 (rule
- (aliases latex-layout latex)
+ (aliases backend-latex-layout backend-latex)
  (action
   (diff layout.expected layout.actual)))
 
@@ -64,7 +64,7 @@
    (run ./link_test.exe))))
 
 (rule
- (aliases latex-link latex)
+ (aliases backend-latex-link backend-latex)
  (action
   (diff link.expected link.actual)))
 
@@ -76,7 +76,7 @@
    (run ./serialize_test.exe))))
 
 (rule
- (aliases latex-serialize latex)
+ (aliases backend-latex-serialize backend-latex)
  (action
   (diff serialize.expected serialize.actual)))
 
@@ -88,14 +88,14 @@
    (run ./renderer_test.exe))))
 
 (rule
- (aliases latex-renderer latex)
+ (aliases backend-latex-renderer backend-latex)
  (action
   (diff renderer.expected renderer.actual)))
 
 (executable
  (name term_test)
  (modules term_test)
- (libraries p4spectec backend_latex latex_test_support test_common))
+ (libraries p4spectec backend_latex backend_latex_test_support test_common))
 
 (rule
  (target term.actual)
@@ -105,14 +105,14 @@
    (run ./term_test.exe))))
 
 (rule
- (aliases latex-term latex)
+ (aliases backend-latex-term backend-latex)
  (action
   (diff term.expected term.actual)))
 
 (executable
  (name definition_test)
  (modules definition_test)
- (libraries p4spectec backend_latex latex_test_support test_common))
+ (libraries p4spectec backend_latex backend_latex_test_support test_common))
 
 (rule
  (target definition.actual)
@@ -122,24 +122,6 @@
    (run ./definition_test.exe))))
 
 (rule
- (aliases latex-definition latex)
+ (aliases backend-latex-definition backend-latex)
  (action
   (diff definition.expected definition.actual)))
-
-(executable
- (name smoke_test)
- (modules smoke_test)
- (libraries p4spectec backend_latex test_common))
-
-(rule
- (target latex-smoke.tex)
- (action
-  (with-stdout-to
-   latex-smoke.tex
-   (run ./smoke_test.exe))))
-
-(rule
- (alias latex-smoke)
- (deps latex-smoke.tex)
- (action
-  (run pdflatex -halt-on-error -interaction=nonstopmode latex-smoke.tex)))

@@ -1,4 +1,4 @@
-open Latex_test_support
+open Backend_latex_test_support
 open Doc
 
 let () =

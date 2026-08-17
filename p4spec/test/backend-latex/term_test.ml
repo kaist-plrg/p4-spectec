@@ -2,7 +2,7 @@ open Domain
 open Lang
 open El
 open Util.Source
-open Latex_test_support
+open Backend_latex_test_support
 
 let at =
   {

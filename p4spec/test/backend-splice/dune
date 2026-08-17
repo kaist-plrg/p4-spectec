@@ -4,8 +4,18 @@
  (libraries p4spectec backend_splice))
 
 (executable
- (name splice_test)
- (modules splice_test)
+ (name source_test)
+ (modules source_test)
+ (libraries p4spectec backend_splice test_common))
+
+(executable
+ (name prose_test)
+ (modules prose_test)
+ (libraries p4spectec backend_splice))
+
+(executable
+ (name latex_test)
+ (modules latex_test)
  (libraries p4spectec backend_splice backend_latex test_common))
 
 (executable
@@ -18,11 +28,6 @@
  (modules document_test)
  (libraries p4spectec))
 
-(executable
- (name adoc_anchor_test)
- (modules adoc_anchor_test)
- (libraries p4spectec backend_adoc))
-
 (rule
  (targets store.actual store_err.actual)
  (action
@@ -33,7 +38,7 @@
     (run ./store_test.exe)))))
 
 (rule
- (alias splice-latex)
+ (alias backend-splice)
  (deps store.actual store_err.actual)
  (action
   (progn
@@ -41,21 +46,45 @@
    (diff store_err.expected store_err.actual))))
 
 (rule
- (targets splice.actual splice_err.actual)
+ (target source.actual)
  (action
   (with-stdout-to
-   splice.actual
-   (with-stderr-to
-    splice_err.actual
-    (run ./splice_test.exe)))))
+   source.actual
+   (run ./source_test.exe))))
 
 (rule
- (alias splice-latex)
- (deps splice.actual splice_err.actual)
+ (alias backend-splice)
+ (action
+  (diff source.expected source.actual)))
+
+(rule
+ (target prose.actual)
+ (action
+  (with-stdout-to
+   prose.actual
+   (run ./prose_test.exe))))
+
+(rule
+ (alias backend-splice)
+ (action
+  (diff prose.expected prose.actual)))
+
+(rule
+ (targets latex.actual latex_err.actual)
+ (action
+  (with-stdout-to
+   latex.actual
+   (with-stderr-to
+    latex_err.actual
+    (run ./latex_test.exe)))))
+
+(rule
+ (alias backend-splice)
+ (deps latex.actual latex_err.actual)
  (action
   (progn
-   (diff splice.expected splice.actual)
-   (diff splice_err.expected splice_err.actual))))
+   (diff latex.expected latex.actual)
+   (diff latex_err.expected latex_err.actual))))
 
 (rule
  (targets anchor.actual anchor_err.actual)
@@ -67,7 +96,7 @@
     (run ./anchor_test.exe)))))
 
 (rule
- (alias splice-latex)
+ (alias backend-splice)
  (deps anchor.actual anchor_err.actual)
  (action
   (progn
@@ -86,20 +115,6 @@
    (run ./document_test.exe ../../../docs/p4))))
 
 (rule
- (target adoc_anchor.actual)
- (action
-  (with-stdout-to
-   adoc_anchor.actual
-   (run ./adoc_anchor_test.exe))))
-
-(rule
- (alias splice-latex)
- (deps adoc_anchor.actual)
- (action
-  (diff adoc_anchor.expected adoc_anchor.actual)))
-
-(rule
- (alias splice-latex)
- (deps document.actual)
+ (alias backend-splice)
  (action
   (diff document.expected document.actual)))

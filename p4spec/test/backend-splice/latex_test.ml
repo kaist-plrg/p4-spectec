@@ -116,9 +116,7 @@ let spec =
   ]
 
 let skeleton =
-  {|SOURCE
-${relation-title-source: Check}
-RELATIONS
+  {|RELATIONS
 ${relation-title-latex: Check Step}
 RULE
 ${rulegroup-latex: Check/value}
