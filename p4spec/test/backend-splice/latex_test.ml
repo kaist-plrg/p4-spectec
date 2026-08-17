@@ -169,6 +169,7 @@ let () =
   print_endline (splice "${func-latex: absent}");
   Backend_splice.Driver.init invalid_spec [];
   try ignore (splice "${rulegroup-latex: Invalid/value}")
-  with Backend_latex.El.LatexError (at, message) ->
+  with Backend_latex.El.LatexError error ->
+    let at, message = Backend_latex.to_region_msg error in
     print_endline "[latex-error]";
     print_endline (Util.Error.string_of_error at message)

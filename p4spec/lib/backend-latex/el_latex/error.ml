@@ -2,9 +2,12 @@ open Util.Source
 
 (* Error *)
 
-exception LatexError of region * string
+type error = { at : region; msg : string }
 
-let error (at : region) (msg : string) = raise (LatexError (at, msg))
+exception LatexError of error
+
+let to_region_msg (error : error) : region * string = (error.at, error.msg)
+let error (at : region) (msg : string) = raise (LatexError { at; msg })
 let error_no_region (msg : string) = error no_region msg
 
 (* Error checks *)

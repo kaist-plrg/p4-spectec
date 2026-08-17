@@ -25,7 +25,8 @@ let rejected (message : string) (thunk : unit -> unit) : bool =
   try
     thunk ();
     false
-  with Backend_latex.El.LatexError (at, actual) ->
+  with Backend_latex.El.LatexError error ->
+    let at, actual = Backend_latex.to_region_msg error in
     at = Util.Source.no_region && String.equal message actual
 
 let braces_balanced (text : string) : bool =

@@ -32,11 +32,8 @@ let splice (paths_spec : string list) (path_pairs : (string * string) list) :
     unit result =
   let* spec_el = parse paths_spec in
   let* spec_pl = annotate paths_spec in
-  try
-    Backend_splice.Driver.splice_files spec_el spec_pl path_pairs;
-    Ok ()
-  with Backend_splice.Error.SpliceError (at, msg) ->
-    Error (Error.SpliceError (at, msg))
+  Backend_splice.splice_files spec_el spec_pl path_pairs
+  |> Result.map_error (fun error -> Error.SpliceError error)
 
 let spec_of_mode (mode : Run.mode) (paths_spec : string list) : Run.spec result
     =
