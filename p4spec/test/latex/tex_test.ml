@@ -1,12 +1,12 @@
 open Domain
 open Lang
 open El
-module Renderer = Lang__El__Latex__Renderer
-module Doc = Lang__El__Latex__Tex__Doc
-module Link = Lang__El__Latex__Tex__Link
-module Width = Lang__El__Latex__Tex__Width
-module Layout = Lang__El__Latex__Tex__Layout
-module Serialize = Lang__El__Latex__Tex__Serialize
+module Renderer = Backend_latex__El_latex__Renderer
+module Doc = Backend_latex__El_latex__Tex__Doc
+module Link = Backend_latex__El_latex__Tex__Link
+module Width = Backend_latex__El_latex__Tex__Width
+module Layout = Backend_latex__El_latex__Tex__Layout
+module Serialize = Backend_latex__El_latex__Tex__Serialize
 
 let print_doc name doc =
   Printf.printf "[%s]\n%s\n" name (Serialize.to_string doc)
@@ -26,7 +26,7 @@ let rejected message thunk =
   try
     thunk ();
     false
-  with Util.Error.LatexError (at, actual) ->
+  with Backend_latex.El.LatexError (at, actual) ->
     at = Util.Source.no_region && String.equal message actual
 
 let print_atom atom =

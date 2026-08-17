@@ -109,8 +109,8 @@ let () =
            ] ))
   in
   Printf.printf "[prose-call-premise]\n%s\n"
-    (El.Latex.render_defs
+    (Backend_latex.El.render_defs
        ~anchors:
-         (El.Latex.anchors ~func:context.anchors_latex.func
+         (Backend_latex.El.anchors ~func:context.anchors_latex.func
             ~rel:context.anchors_latex.rel)
        [ definition ])

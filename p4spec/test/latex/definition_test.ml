@@ -2,9 +2,9 @@ open Domain
 open Lang
 open El
 open Util.Source
-module Renderer = Lang__El__Latex__Renderer
-module Doc = Lang__El__Latex__Tex__Doc
-module Width = Lang__El__Latex__Tex__Width
+module Renderer = Backend_latex__El_latex__Renderer
+module Doc = Backend_latex__El_latex__Tex__Doc
+module Width = Backend_latex__El_latex__Tex__Width
 
 let at = no_region
 let phrase it = it $ at
@@ -26,7 +26,8 @@ let print name value =
   if String.equal value "" then Printf.printf "[%s]\n" name
   else Printf.printf "[%s]\n%s\n" name value
 
-let print_def name definition = print name (El.Latex.render_def definition)
+let print_def name definition =
+  print name (Backend_latex.El.render_def definition)
 
 let bad_hint =
   { hintid = id "latex"; hintexp = exp (LatexE "must not be visited") }
@@ -85,7 +86,7 @@ let relation_definition =
          [ bad_hint ] ))
 
 let anchors =
-  El.Latex.anchors
+  Backend_latex.El.anchors
     ~func:(function "lookup_fn" -> Some "lookup_fn" | _ -> None)
     ~rel:(function "Eval_rel" -> Some "Eval_rel" | _ -> None)
 
@@ -283,7 +284,8 @@ let () =
             ] )));
   print_def "short-label-rule" short_label_rule;
   assert_flat_width_exceeds 80 (Renderer.tex_of_prem long_operator_premise);
-  print "long-label-rule" (El.Latex.render_defs ~anchors [ long_label_rule ]);
+  print "long-label-rule"
+    (Backend_latex.El.render_defs ~anchors [ long_label_rule ]);
   print_def "single-rule"
     (def
        (RuleGroupD
@@ -399,7 +401,7 @@ let () =
   print_def "empty-table" (def (TableDefD (id "empty_tbl", [])));
   print_def "separator" (def SepD);
   print "definitions"
-    (El.Latex.render_defs
+    (Backend_latex.El.render_defs
        [
          def SepD;
          variable_definition;
@@ -409,7 +411,7 @@ let () =
          def SepD;
        ]);
   print "left-aligned-function-clauses"
-    (El.Latex.render_defs
+    (Backend_latex.El.render_defs
        [
          function_equation "left_fn" "x" (var "first") [];
          function_equation "left_fn" "long_argument" (var "second") [];
@@ -435,7 +437,7 @@ let () =
        (render_function_equation_candidate "cases_fn" "s" (var "v")
           [ prem (IfPr (var condition_at_81)) ]);
      assert_flat_width 77 (Renderer.tex_of_exp breakable_condition);
-     El.Latex.render_defs ~anchors
+     Backend_latex.El.render_defs ~anchors
        [
          function_equation "cases_fn" "x" (var "x") [];
          function_equation "cases_fn" "s" (var "v")
@@ -458,10 +460,11 @@ let () =
          variable_definition;
          function_equation "other_fn" "after_var" (var "after_var") [];
        ]);
-  print "empty-definitions" (El.Latex.render_defs []);
-  print "only-separators" (El.Latex.render_defs [ def SepD; def SepD ]);
-  print "linked-definitions" (El.Latex.render_defs ~anchors linked_definitions);
-  let unlinked_definitions = El.Latex.render_defs linked_definitions in
+  print "empty-definitions" (Backend_latex.El.render_defs []);
+  print "only-separators" (Backend_latex.El.render_defs [ def SepD; def SepD ]);
+  print "linked-definitions"
+    (Backend_latex.El.render_defs ~anchors linked_definitions);
+  let unlinked_definitions = Backend_latex.El.render_defs linked_definitions in
   if contains unlinked_definitions "\\href" then
     failwith "default definition rendering must not emit links";
   print "unlinked-definitions" unlinked_definitions

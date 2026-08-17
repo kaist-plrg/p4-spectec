@@ -67,10 +67,10 @@ module Latex = struct
 
     let render (context : Ctx.t) (values : t list) : string =
       let anchors =
-        El.Latex.anchors ~func:context.anchors_latex.func
+        Backend_latex.El.anchors ~func:context.anchors_latex.func
           ~rel:context.anchors_latex.rel
       in
-      values |> List.concat |> El.Latex.render_defs ~anchors
+      values |> List.concat |> Backend_latex.El.render_defs ~anchors
   end
 
   module Config = struct

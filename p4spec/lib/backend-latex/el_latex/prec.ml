@@ -1,5 +1,6 @@
 open Domain
-open Ast
+open Lang
+open El
 open Atom
 
 (* Expression precedence decides when nested EL expressions need parentheses.

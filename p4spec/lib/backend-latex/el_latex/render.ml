@@ -1,5 +1,7 @@
 (* Canonical wrapper-free LaTeX rendering for EL. *)
 
+open Lang
+open El
 open Tex
 
 (* Anchors *)
@@ -12,8 +14,8 @@ let anchors ~(func : string -> string option) ~(rel : string -> string option) :
 
 (* Public rendering *)
 
-let render_def ?(anchors : anchors option) (def : Ast.def) : string =
+let render_def ?(anchors : anchors option) (def : def) : string =
   Serialize.to_string (Renderer.tex_of_def_single ?anchors def)
 
-let render_defs ?(anchors : anchors option) (defs : Ast.def list) : string =
+let render_defs ?(anchors : anchors option) (defs : def list) : string =
   Serialize.to_string (Renderer.tex_of_defs ?anchors defs)

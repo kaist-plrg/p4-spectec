@@ -238,6 +238,6 @@ let () =
   splice anchor_skeleton |> print_anchor_counts "second";
   Backend_splice.Driver.init invalid_spec [];
   try ignore (splice "${rulegroup-latex: Invalid/value}")
-  with El.Latex.LatexError (at, message) ->
+  with Backend_latex.El.LatexError (at, message) ->
     print_endline "[latex-error]";
     print_endline (Util.Error.string_of_error at message)

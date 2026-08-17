@@ -1,6 +1,7 @@
 open Domain
 open Domain.Lib
-open Ast
+open Lang
+open El
 open Util.Source
 open Tex
 

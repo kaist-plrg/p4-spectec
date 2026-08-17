@@ -16,7 +16,7 @@ let def value = phrase value
 let var name = exp (VarE (id name))
 
 let anchors =
-  El.Latex.anchors
+  Backend_latex.El.anchors
     ~func:(function
       | "check_condition_fn" -> Some "check_condition_fn" | _ -> None)
     ~rel:(fun _ -> None)
@@ -120,6 +120,6 @@ let () =
   print_endline "\\newcommand{\\href}[2]{#2}";
   print_endline "\\begin{document}";
   print_endline "\\[";
-  print_endline (El.Latex.render_defs ~anchors fixture);
+  print_endline (Backend_latex.El.render_defs ~anchors fixture);
   print_endline "\\]";
   print_endline "\\end{document}"

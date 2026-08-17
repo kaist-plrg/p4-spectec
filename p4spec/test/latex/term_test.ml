@@ -2,10 +2,10 @@ open Domain
 open Lang
 open El
 open Util.Source
-module Renderer = Lang__El__Latex__Renderer
-module Doc = Lang__El__Latex__Tex__Doc
-module Layout = Lang__El__Latex__Tex__Layout
-module Serialize = Lang__El__Latex__Tex__Serialize
+module Renderer = Backend_latex__El_latex__Renderer
+module Doc = Backend_latex__El_latex__Tex__Doc
+module Layout = Backend_latex__El_latex__Tex__Layout
+module Serialize = Backend_latex__El_latex__Tex__Serialize
 
 let at =
   {
@@ -70,7 +70,7 @@ let print_prem_at_width ?(anchors : Renderer.anchors option) name width premise
 
 let print_error name exp =
   try print_exp name exp
-  with El.Latex.LatexError (region, message) ->
+  with Backend_latex.El.LatexError (region, message) ->
     print name (Util.Source.string_of_region region ^ ": " ^ message)
 
 let () =
