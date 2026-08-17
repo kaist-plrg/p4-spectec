@@ -63,7 +63,8 @@ let prose_command =
      in
      fun () ->
        match P4spectec.annotate paths_spec with
-       | Ok spec_pl -> Format.printf "%s\n" (Pl.Render.render_spec spec_pl)
+       | Ok spec_pl ->
+           Format.printf "%s\n" (Backend_adoc.Pl.render_spec spec_pl)
        | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let run_command =

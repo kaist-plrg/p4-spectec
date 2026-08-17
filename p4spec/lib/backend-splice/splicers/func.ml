@@ -43,7 +43,9 @@ module Source = struct
     let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map (fun value ->
-             value |> List.map El.Render.render_def |> String.concat "\n\n")
+             value
+             |> List.map Backend_adoc.El.render_def
+             |> String.concat "\n\n")
       |> String.concat "\n\n"
   end
 
@@ -91,12 +93,12 @@ module Prose = struct
 
     let render (context : Ctx.t) (values : t list) : string =
       let anchors =
-        Pl.Render.anchors ~func:context.anchors_prose.func
+        Backend_adoc.Pl.anchors ~func:context.anchors_prose.func
           ~rel:context.anchors_prose.rel
       in
       values
       |> List.map (fun (hints, func) ->
-             Pl.Render.render_defined_func_def ~anchors hints func)
+             Backend_adoc.Pl.render_defined_func_def ~anchors hints func)
       |> String.concat "\n\n"
   end
 

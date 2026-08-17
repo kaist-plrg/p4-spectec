@@ -1,5 +1,5 @@
 open Lang
-module Adoc = Lang__Pl__Render__Adoc
+module Adoc = Backend_adoc__Pl_adoc__Adoc
 
 let semantic_anchor = function
   | Adoc.Function "present_function" -> Some "function_prose_present_function"

@@ -1,6 +1,7 @@
 open Domain
+open Lang
 open Xl
-open Ast
+open El
 open Util.Source
 
 type atom_mode = SourceAtom | DisplayAtom

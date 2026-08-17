@@ -30,7 +30,7 @@ module Source = struct
                | DefinedS (id, tparams, deftyp, hints) ->
                    El.TypD (id, tparams, deftyp, hints) $ no_region
              in
-             El.Render.render_def def)
+             Backend_adoc.El.render_def def)
       |> String.concat "\n\n"
   end
 

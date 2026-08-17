@@ -30,7 +30,7 @@ module Source = struct
     type t = El.def
 
     let render (_context : Ctx.t) (values : t list) : string =
-      values |> List.map El.Render.render_def |> String.concat "\n\n"
+      values |> List.map Backend_adoc.El.render_def |> String.concat "\n\n"
   end
 
   module Config : CONFIG = struct
@@ -81,16 +81,16 @@ module Prose = struct
 
     let render (context : Ctx.t) (values : t list) : string =
       let anchors =
-        Pl.Render.anchors ~func:context.anchors_prose.func
+        Backend_adoc.Pl.anchors ~func:context.anchors_prose.func
           ~rel:context.anchors_prose.rel
       in
       values
       |> List.map (fun value ->
              match value with
              | ExternP (hints, externrel) ->
-                 Pl.Render.render_extern_rel_def ~anchors hints externrel
+                 Backend_adoc.Pl.render_extern_rel_def ~anchors hints externrel
              | DefinedP (hints, (id_rel, rel_signature, exps, _, _)) ->
-                 Pl.Render.render_rel_title_adoc ~anchors hints id_rel
+                 Backend_adoc.Pl.render_rel_title_adoc ~anchors hints id_rel
                    rel_signature exps)
       |> String.concat "\n\n"
   end

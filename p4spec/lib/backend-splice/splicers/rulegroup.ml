@@ -8,7 +8,7 @@ module Key = struct
     Format.asprintf "%s/%s" id_rel id_rulegroup
 
   let to_anchor ((id_rel, id_rulegroup) : t) : string =
-    Pl.Render.Fallthrough.anchor_of_group id_rel id_rulegroup
+    Backend_adoc.Pl.Fallthrough.anchor_of_group id_rel id_rulegroup
 
   let compare (id_rel_a, id_rulegroup_a) (id_rel_b, id_rulegroup_b) =
     let c = String.compare id_rel_a id_rel_b in
@@ -38,7 +38,7 @@ module Source = struct
     type t = El.def
 
     let render (_context : Ctx.t) (values : t list) : string =
-      values |> List.map El.Render.render_def |> String.concat "\n\n"
+      values |> List.map Backend_adoc.El.render_def |> String.concat "\n\n"
   end
 
   module Config : CONFIG = struct
@@ -85,13 +85,14 @@ module Prose = struct
 
     let render (context : Ctx.t) (values : t list) : string =
       let anchors =
-        Pl.Render.anchors ~func:context.anchors_prose.func
+        Backend_adoc.Pl.anchors ~func:context.anchors_prose.func
           ~rel:context.anchors_prose.rel
       in
       values
       |> List.map (fun (group : t) ->
-             Pl.Render.render_rulegroup ~anchors group.hints group.id_rulegroup
-               group.id_rel group.rel_signature group.exps group.body)
+             Backend_adoc.Pl.render_rulegroup ~anchors group.hints
+               group.id_rulegroup group.id_rel group.rel_signature group.exps
+               group.body)
       |> String.concat "\n\n"
   end
 

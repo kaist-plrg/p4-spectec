@@ -21,11 +21,11 @@ module Prose = struct
 
     let render (context : Ctx.t) (values : t list) : string =
       let anchors =
-        Pl.Render.anchors ~func:context.anchors_prose.func
+        Backend_adoc.Pl.anchors ~func:context.anchors_prose.func
           ~rel:context.anchors_prose.rel
       in
       values
-      |> List.map (Pl.Render.render_defined_rel_def_dispatch ~anchors)
+      |> List.map (Backend_adoc.Pl.render_defined_rel_def_dispatch ~anchors)
       |> String.concat "\n\n"
   end
 
