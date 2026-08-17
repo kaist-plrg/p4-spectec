@@ -26,6 +26,18 @@ let structure ~(final : bool) (paths_spec : string list) : Lang.Sl.spec result =
 let annotate (paths_spec : string list) : Lang.Pl.spec result =
   Pass.annotate paths_spec |> Result.map_error (fun e -> Error.PassError e)
 
+(* Document generation *)
+
+let splice (paths_spec : string list) (path_pairs : (string * string) list) :
+    unit result =
+  let* spec_el = parse paths_spec in
+  let* spec_pl = annotate paths_spec in
+  try
+    Backend_splice.Driver.splice_files spec_el spec_pl path_pairs;
+    Ok ()
+  with Backend_splice.Error.SpliceError (at, msg) ->
+    Error (Error.SpliceError (at, msg))
+
 let spec_of_mode (mode : Run.mode) (paths_spec : string list) : Run.spec result
     =
   Boot_build.spec_of_mode mode paths_spec

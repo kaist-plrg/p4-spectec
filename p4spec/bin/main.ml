@@ -618,9 +618,7 @@ let splice_command =
      and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
      fun () ->
        match
-         let* spec = P4spectec.parse paths_spec in
-         let* spec_pl = P4spectec.annotate paths_spec in
-         let* paths =
+         let* path_pairs =
            if
              (not inplace)
              && List.length paths_input <> List.length paths_output
@@ -630,14 +628,14 @@ let splice_command =
            else if inplace then Ok (List.combine paths_input paths_input)
            else Ok (List.combine paths_input paths_output)
          in
-         Ok (spec, spec_pl, paths)
+         P4spectec.splice paths_spec path_pairs
        with
+       | Error (Error.SpliceError _ as error) ->
+           let msg = Error.to_string error in
+           Format.eprintf "%s\n" msg;
+           Format.printf "%s\n" msg
        | Error e -> Format.printf "%s\n" (Error.to_string e)
-       | Ok (spec, spec_pl, paths) -> (
-           try Backend_splice.Driver.splice_files spec spec_pl paths
-           with Backend_splice.Error.SpliceError (at, msg) ->
-             Format.eprintf "%s\n" (Util.Error.string_of_error at msg);
-             Format.printf "%s\n" (Util.Error.string_of_error at msg)))
+       | Ok () -> ())
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
