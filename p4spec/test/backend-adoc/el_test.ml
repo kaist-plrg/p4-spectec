@@ -3,24 +3,19 @@ open Lang
 open El
 open Util.Source
 
-module Fixture = Test_common.El_fixture.Make (struct
-  let at = no_region
-end)
-
-open Fixture
-
-let relation_type : nottyp = nottyp (AtomT (atom (Atom.Keyword "CHECK")))
+let at = no_region
+let relation_type : nottyp = AtomT (Atom.Keyword "CHECK" $ at) $ at
 
 let spec : spec =
   [
-    def (RelD (id "Check", relation_type, []));
-    def
-      (FuncDefD
-         ( id "identity",
-           [],
-           [ arg (ExpA (var "x")) ],
-           var "x",
-           [ prem (IfPr (exp (BoolE true))) ] ));
+    RelD ("Check" $ at, relation_type, []) $ at;
+    FuncDefD
+      ( "identity" $ at,
+        [],
+        [ ExpA (VarE ("x" $ at) $ at) $ at ],
+        VarE ("x" $ at) $ at,
+        [ IfPr (BoolE true $ at) $ at ] )
+    $ at;
   ]
 
 let () =

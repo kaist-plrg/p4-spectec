@@ -9,110 +9,107 @@ let at =
     right = { file = "fixture.watsup"; line = 8; column = 5 };
   }
 
-module Fixture = Test_common.El_fixture.Make (struct
-  let at = at
-end)
-
-open Fixture
-
-let nat = plaintyp (NumT `NatT)
+let nat = NumT `NatT $ at
 
 let spec =
   [
-    def (RelD (id "Check", nottyp (AtomT (atom (Atom.Keyword "CHECK"))), []));
-    def (RelD (id "Step", nottyp (AtomT (atom (Atom.Keyword "STEP"))), []));
-    def
-      (RuleGroupD
-         ( id "Check",
-           id "value",
-           [
-             rule
-               ( id "Check",
-                 id "ok",
-                 var "x",
-                 [
-                   phrase (RulePr (id "Step", var "x"));
-                   phrase (RulePr (id "Missing_rel", var "x"));
-                 ] );
-             rule
-               ( id "Check",
-                 id "rule_name_that_is_deliberately_long_for_splice_layout",
-                 exp
-                   (TupleE
-                      [
-                        exp
-                          (CallE
-                             ( id "identity",
-                               [],
-                               [
-                                 arg
-                                   (ExpA
-                                      (var "conclusionargumentalphawithpadding"));
-                                 arg
-                                   (ExpA
-                                      (var "conclusionargumentbetawithpadding"));
-                               ] ));
-                        var "conclusiontailwithpadding";
-                      ]),
-                 [
-                   phrase
-                     (IfPr
-                        (exp
-                           (InfixE
-                              ( var "premiseleftoperandwithsubstantialpadding",
-                                atom (Atom.Operator "<+>"),
-                                var "premiserightoperandwithsubstantialpadding"
-                              ))));
-                 ] );
-           ] ));
-    def (RuleGroupD (id "Check", id "empty", []));
-    def (FuncDecD (id "identity", [], [ param (ExpP nat) ], nat, []));
-    def
-      (FuncDefD
-         ( id "identity",
-           [],
-           [ arg (ExpA (var "x")) ],
-           exp
-             (TupleE
-                [
-                  exp (CallE (id "identity", [], [ arg (ExpA (var "x")) ]));
-                  exp (CallE (id "missing_fn", [], []));
-                ]),
-           [] ));
-    def
-      (FuncDefD
-         ( id "identity",
-           [],
-           [ arg (ExpA (exp (NumE (`DecOp, `Nat (Bigint.of_string "0"))))) ],
-           exp (NumE (`DecOp, `Nat (Bigint.of_string "0"))),
-           [] ));
-    def
-      (FuncDefD
-         (id "layout_fn", [], [ arg (ExpA (var "short")) ], var "value", []));
-    def
-      (FuncDefD
-         ( id "layout_fn",
-           [],
-           [ arg (ExpA (var "long")) ],
-           var "body",
-           [
-             phrase
-               (IfPr
-                  (exp
-                     (CallE
-                        ( id "identity",
-                          [],
-                          [ arg (ExpA (var (String.make 55 'q'))) ] ))));
-             phrase (IfPr (var "condition_two"));
-           ] ));
-    def
-      (TableDefD
-         ( id "truth",
-           [
-             row
-               ( exp (NumE (`DecOp, `Nat (Bigint.of_string "0"))),
-                 exp (BoolE false) );
-           ] ));
+    RelD ("Check" $ at, AtomT (Atom.Keyword "CHECK" $ at) $ at, []) $ at;
+    RelD ("Step" $ at, AtomT (Atom.Keyword "STEP" $ at) $ at, []) $ at;
+    RuleGroupD
+      ( "Check" $ at,
+        "value" $ at,
+        [
+          ( "Check" $ at,
+            "ok" $ at,
+            VarE ("x" $ at) $ at,
+            [
+              RulePr ("Step" $ at, VarE ("x" $ at) $ at) $ at;
+              RulePr ("Missing_rel" $ at, VarE ("x" $ at) $ at) $ at;
+            ] )
+          $ at;
+          ( "Check" $ at,
+            "rule_name_that_is_deliberately_long_for_splice_layout" $ at,
+            TupleE
+              [
+                CallE
+                  ( "identity" $ at,
+                    [],
+                    [
+                      ExpA
+                        (VarE ("conclusionargumentalphawithpadding" $ at) $ at)
+                      $ at;
+                      ExpA (VarE ("conclusionargumentbetawithpadding" $ at) $ at)
+                      $ at;
+                    ] )
+                $ at;
+                VarE ("conclusiontailwithpadding" $ at) $ at;
+              ]
+            $ at,
+            [
+              IfPr
+                (InfixE
+                   ( VarE ("premiseleftoperandwithsubstantialpadding" $ at) $ at,
+                     Atom.Operator "<+>" $ at,
+                     VarE ("premiserightoperandwithsubstantialpadding" $ at)
+                     $ at )
+                $ at)
+              $ at;
+            ] )
+          $ at;
+        ] )
+    $ at;
+    RuleGroupD ("Check" $ at, "empty" $ at, []) $ at;
+    FuncDecD ("identity" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    FuncDefD
+      ( "identity" $ at,
+        [],
+        [ ExpA (VarE ("x" $ at) $ at) $ at ],
+        TupleE
+          [
+            CallE ("identity" $ at, [], [ ExpA (VarE ("x" $ at) $ at) $ at ])
+            $ at;
+            CallE ("missing_fn" $ at, [], []) $ at;
+          ]
+        $ at,
+        [] )
+    $ at;
+    FuncDefD
+      ( "identity" $ at,
+        [],
+        [ ExpA (NumE (`DecOp, `Nat (Bigint.of_string "0")) $ at) $ at ],
+        NumE (`DecOp, `Nat (Bigint.of_string "0")) $ at,
+        [] )
+    $ at;
+    FuncDefD
+      ( "layout_fn" $ at,
+        [],
+        [ ExpA (VarE ("short" $ at) $ at) $ at ],
+        VarE ("value" $ at) $ at,
+        [] )
+    $ at;
+    FuncDefD
+      ( "layout_fn" $ at,
+        [],
+        [ ExpA (VarE ("long" $ at) $ at) $ at ],
+        VarE ("body" $ at) $ at,
+        [
+          IfPr
+            (CallE
+               ( "identity" $ at,
+                 [],
+                 [ ExpA (VarE (String.make 55 'q' $ at) $ at) $ at ] )
+            $ at)
+          $ at;
+          IfPr (VarE ("condition_two" $ at) $ at) $ at;
+        ] )
+    $ at;
+    TableDefD
+      ( "truth" $ at,
+        [
+          (NumE (`DecOp, `Nat (Bigint.of_string "0")) $ at, BoolE false $ at)
+          $ at;
+        ] )
+    $ at;
   ]
 
 let skeleton =
@@ -139,11 +136,11 @@ let splice content =
 
 let invalid_spec =
   [
-    def
-      (RuleGroupD
-         ( id "Invalid",
-           id "value",
-           [ rule (id "Invalid", id "raw", exp (LatexE "unchecked"), []) ] ));
+    RuleGroupD
+      ( "Invalid" $ at,
+        "value" $ at,
+        [ ("Invalid" $ at, "raw" $ at, LatexE "unchecked" $ at, []) $ at ] )
+    $ at;
   ]
 
 let () =

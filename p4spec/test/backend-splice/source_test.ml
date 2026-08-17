@@ -3,30 +3,32 @@ open Lang
 open El
 open Util.Source
 
-module Fixture = Test_common.El_fixture.Make (struct
-  let at = no_region
-end)
-
-open Fixture
-
-let nat : plaintyp = plaintyp (NumT `NatT)
-let relation_type : nottyp = nottyp (AtomT (atom (Atom.Keyword "CHECK")))
+let at = no_region
+let nat : plaintyp = NumT `NatT $ at
+let relation_type : nottyp = AtomT (Atom.Keyword "CHECK" $ at) $ at
 
 let spec : spec =
   [
-    def (TypD (id "Flag", [], deftyp (PlainTD nat), []));
-    def (RelD (id "Check", relation_type, []));
-    def
-      (RuleGroupD
-         (id "Check", id "value", [ rule (id "Check", id "ok", var "x", []) ]));
-    def (FuncDecD (id "identity", [], [ param (ExpP nat) ], nat, []));
-    def (FuncDefD (id "identity", [], [ arg (ExpA (var "x")) ], var "x", []));
-    def
-      (TableDefD
-         ( id "truth",
-           [
-             row (exp (NumE (`DecOp, `Nat (Bigint.of_int 0))), exp (BoolE false));
-           ] ));
+    TypD ("Flag" $ at, [], PlainTD nat $ at, []) $ at;
+    RelD ("Check" $ at, relation_type, []) $ at;
+    RuleGroupD
+      ( "Check" $ at,
+        "value" $ at,
+        [ ("Check" $ at, "ok" $ at, VarE ("x" $ at) $ at, []) $ at ] )
+    $ at;
+    FuncDecD ("identity" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    FuncDefD
+      ( "identity" $ at,
+        [],
+        [ ExpA (VarE ("x" $ at) $ at) $ at ],
+        VarE ("x" $ at) $ at,
+        [] )
+    $ at;
+    TableDefD
+      ( "truth" $ at,
+        [ (NumE (`DecOp, `Nat (Bigint.of_int 0)) $ at, BoolE false $ at) $ at ]
+      )
+    $ at;
   ]
 
 let skeleton : string =

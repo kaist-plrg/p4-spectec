@@ -212,7 +212,7 @@ let struct_command =
        | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let prose_command =
-  Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
+  Core.Command.basic ~summary:"annotate a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec =
@@ -220,8 +220,7 @@ let prose_command =
      in
      fun () ->
        match P4spectec.annotate paths_spec with
-       | Ok spec_pl ->
-           Format.printf "%s\n" (Backend_adoc.Pl.render_spec spec_pl)
+       | Ok spec_pl -> Format.printf "%s\n" (Pl.Print.string_of_spec spec_pl)
        | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let run_command =

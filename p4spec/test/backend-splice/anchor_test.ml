@@ -3,19 +3,13 @@ open Lang
 open El
 open Util.Source
 
-module Fixture = Test_common.El_fixture.Make (struct
-  let at = no_region
-end)
-
-open Fixture
-
-let nat = plaintyp (NumT `NatT)
-let relation_type = nottyp (AtomT (atom (Atom.Keyword "RELATION")))
-let bool_pl = phrase Il.BoolT
+let at = no_region
+let nat = NumT `NatT $ at
+let relation_type = AtomT (Atom.Keyword "RELATION" $ at) $ at
+let bool_pl = Il.BoolT $ at
 
 let def_pl name =
-  Pl.FuncDecD (id name, [], [], bool_pl, [], None)
-  |> phrase |> Pl.Annot.no_hints
+  Pl.FuncDecD (name $ at, [], [], bool_pl, [], None) $ at |> Pl.Annot.no_hints
 
 let spec_pl =
   [
@@ -27,15 +21,15 @@ let spec_pl =
 
 let spec =
   [
-    def (ExternDecD (id "external_title_fn", [], [ param (ExpP nat) ], nat, []));
-    def (BuiltinDecD (id "builtin_title_fn", [], [ param (ExpP nat) ], nat, []));
-    def (ExternDecD (id "external_full_fn", [], [ param (ExpP nat) ], nat, []));
-    def (BuiltinDecD (id "builtin_full_fn", [], [ param (ExpP nat) ], nat, []));
-    def (FuncDecD (id "documented_fn", [], [ param (ExpP nat) ], nat, []));
-    def (FuncDecD (id "missing_fn", [], [ param (ExpP nat) ], nat, []));
-    def (FuncDecD (id "prose_only_fn", [], [ param (ExpP nat) ], nat, []));
-    def (RelD (id "Documented_rel", relation_type, []));
-    def (RelD (id "Missing_rel", relation_type, []));
+    ExternDecD ("external_title_fn" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    BuiltinDecD ("builtin_title_fn" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    ExternDecD ("external_full_fn" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    BuiltinDecD ("builtin_full_fn" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    FuncDecD ("documented_fn" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    FuncDecD ("missing_fn" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    FuncDecD ("prose_only_fn" $ at, [], [ ExpP nat $ at ], nat, []) $ at;
+    RelD ("Documented_rel" $ at, relation_type, []) $ at;
+    RelD ("Missing_rel" $ at, relation_type, []) $ at;
   ]
 
 let source_a =
@@ -128,23 +122,26 @@ let () =
   print_anchor context.anchors_latex.rel "latex relation Missing_rel"
     "Missing_rel";
   let flatten_call =
-    exp (CallE (id "prose_only_fn", [], [ arg (ExpA (var "p4program")) ]))
+    CallE
+      ("prose_only_fn" $ at, [], [ ExpA (VarE ("p4program" $ at) $ at) $ at ])
+    $ at
   in
   let equation =
-    exp (CmpE (exp (IterE (var "declaration", List)), `EqOp, flatten_call))
+    CmpE (IterE (VarE ("declaration" $ at) $ at, List) $ at, `EqOp, flatten_call)
+    $ at
   in
   let definition =
-    def
-      (RuleGroupD
-         ( id "Documented_rel",
-           id "prose_call",
-           [
-             rule
-               ( id "Documented_rel",
-                 id "prose_call",
-                 var "result",
-                 [ prem (IfPr equation) ] );
-           ] ))
+    RuleGroupD
+      ( "Documented_rel" $ at,
+        "prose_call" $ at,
+        [
+          ( "Documented_rel" $ at,
+            "prose_call" $ at,
+            VarE ("result" $ at) $ at,
+            [ IfPr equation $ at ] )
+          $ at;
+        ] )
+    $ at
   in
   Printf.printf "[prose-call-premise]\n%s\n"
     (Backend_latex.El.render_defs

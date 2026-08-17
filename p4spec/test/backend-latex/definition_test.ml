@@ -5,33 +5,28 @@ open Util.Source
 open Backend_latex_test_support
 
 let at = no_region
-
-module Fixture = Test_common.El_fixture.Make (struct
-  let at = at
-end)
-
-open Fixture
-
 let print = print_nonempty
 
 let print_def name definition =
   print name (Backend_latex.El.render_def definition)
 
 let bad_hint =
-  { hintid = id "latex"; hintexp = exp (LatexE "must not be visited") }
+  { hintid = "latex" $ at; hintexp = LatexE "must not be visited" $ at }
 
-let bool_type = plaintyp BoolT
-let nat_type = plaintyp (NumT `NatT)
-let text_type = plaintyp TextT
-let variable_definition = def (VarD (id "x_v", nat_type, [ bad_hint ]))
+let bool_type = BoolT $ at
+let nat_type = NumT `NatT $ at
+let text_type = TextT $ at
+let variable_definition = VarD ("x_v" $ at, nat_type, [ bad_hint ]) $ at
 
 let function_equation name argument body prems =
-  def (FuncDefD (id name, [], [ arg (ExpA (var argument)) ], body, prems))
+  FuncDefD
+    (name $ at, [], [ ExpA (VarE (argument $ at) $ at) $ at ], body, prems)
+  $ at
 
 let assert_function_layout expected name argument body prems =
   let actual =
-    Renderer.layout_func ~anchors:None (id name) []
-      [ arg (ExpA (var argument)) ]
+    Renderer.layout_func ~anchors:None (name $ at) []
+      [ ExpA (VarE (argument $ at) $ at) $ at ]
       body prems
   in
   match (expected, actual) with
@@ -51,131 +46,134 @@ let assert_flat_width_exceeds limit doc =
       (Printf.sprintf "expected flat width above %d, got %d" limit actual)
 
 let relation_definition =
-  def
-    (RelD
-       ( id "Eval_rel",
-         nottyp
-           (InfixT
-              ( PlainT (plaintyp (VarT (id "lhs_t", []))),
-                atom Atom.Turnstile,
-                PlainT (plaintyp (VarT (id "rhs_t", []))) )),
-         [ bad_hint ] ))
+  RelD
+    ( "Eval_rel" $ at,
+      InfixT
+        ( PlainT (VarT ("lhs_t" $ at, []) $ at),
+          Atom.Turnstile $ at,
+          PlainT (VarT ("rhs_t" $ at, []) $ at) )
+      $ at,
+      [ bad_hint ] )
+  $ at
 
 let anchors =
   Backend_latex.El.anchors
     ~func:(function "lookup_fn" -> Some "lookup_fn" | _ -> None)
     ~rel:(function "Eval_rel" -> Some "Eval_rel" | _ -> None)
 
-let judgment = exp (InfixE (var "p", atom Atom.Turnstile, var "v"))
+let judgment =
+  InfixE (VarE ("p" $ at) $ at, Atom.Turnstile $ at, VarE ("v" $ at) $ at) $ at
 
 let linked_judgment =
-  exp
-    (InfixE
-       ( var "p",
-         atom Atom.Turnstile,
-         exp (CallE (id "lookup_fn", [], [ arg (ExpA (var "x")) ])) ))
+  InfixE
+    ( VarE ("p" $ at) $ at,
+      Atom.Turnstile $ at,
+      CallE ("lookup_fn" $ at, [], [ ExpA (VarE ("x" $ at) $ at) $ at ]) $ at )
+  $ at
 
 let long_operator_premise =
-  prem
-    (IfPr
-       (exp
-          (InfixE
-             ( var "operatorpremiseleftoperandwithsubstantialpadding",
-               atom (Atom.Operator "<+>"),
-               var "operatorpremiserightoperandwithsubstantialpadding" ))))
+  IfPr
+    (InfixE
+       ( VarE ("operatorpremiseleftoperandwithsubstantialpadding" $ at) $ at,
+         Atom.Operator "<+>" $ at,
+         VarE ("operatorpremiserightoperandwithsubstantialpadding" $ at) $ at )
+    $ at)
+  $ at
 
 let long_linked_premise =
-  prem
-    (RulePr
-       ( id "Eval_rel",
-         exp
-           (InfixE
-              ( var "judgmentinputwithsubstantialpadding",
-                atom Atom.Turnstile,
-                exp
-                  (CallE
-                     ( id "lookup_fn",
-                       [],
-                       [
-                         arg (ExpA (var "lookupargumentalphawithpadding"));
-                         arg (ExpA (var "lookupargumentbetawithpadding"));
-                       ] )) )) ))
+  RulePr
+    ( "Eval_rel" $ at,
+      InfixE
+        ( VarE ("judgmentinputwithsubstantialpadding" $ at) $ at,
+          Atom.Turnstile $ at,
+          CallE
+            ( "lookup_fn" $ at,
+              [],
+              [
+                ExpA (VarE ("lookupargumentalphawithpadding" $ at) $ at) $ at;
+                ExpA (VarE ("lookupargumentbetawithpadding" $ at) $ at) $ at;
+              ] )
+          $ at )
+      $ at )
+  $ at
 
 let long_rule_conclusion =
-  exp
-    (TupleE
-       [
-         exp
-           (CallE
-              ( id "lookup_fn",
-                [],
-                [
-                  arg (ExpA (var "conclusionargumentalphawithpadding"));
-                  arg (ExpA (var "conclusionargumentbetawithpadding"));
-                ] ));
-         exp
-           (TupleE
-              [
-                var "nestedtupleleftwithpadding";
-                var "nestedtuplerightwithpadding";
-              ]);
-       ])
+  TupleE
+    [
+      CallE
+        ( "lookup_fn" $ at,
+          [],
+          [
+            ExpA (VarE ("conclusionargumentalphawithpadding" $ at) $ at) $ at;
+            ExpA (VarE ("conclusionargumentbetawithpadding" $ at) $ at) $ at;
+          ] )
+      $ at;
+      TupleE
+        [
+          VarE ("nestedtupleleftwithpadding" $ at) $ at;
+          VarE ("nestedtuplerightwithpadding" $ at) $ at;
+        ]
+      $ at;
+    ]
+  $ at
 
 let short_label_rule =
-  def
-    (RuleGroupD
-       (id "R", id "short_group", [ rule (id "R", id "s", var "v", []) ]))
+  RuleGroupD
+    ( "R" $ at,
+      "short_group" $ at,
+      [ ("R" $ at, "s" $ at, VarE ("v" $ at) $ at, []) $ at ] )
+  $ at
 
 let long_label_rule =
-  def
-    (RuleGroupD
-       ( id "Eval_rel",
-         id "long_group",
-         [
-           rule
-             ( id "Eval_rel",
-               id "rule_name_that_is_deliberately_long_and_still_above",
-               long_rule_conclusion,
-               [ long_operator_premise; long_linked_premise ] );
-         ] ))
+  RuleGroupD
+    ( "Eval_rel" $ at,
+      "long_group" $ at,
+      [
+        ( "Eval_rel" $ at,
+          "rule_name_that_is_deliberately_long_and_still_above" $ at,
+          long_rule_conclusion,
+          [ long_operator_premise; long_linked_premise ] )
+        $ at;
+      ] )
+  $ at
 
 let linked_definitions =
   [
-    def
-      (FuncDefD
-         ( id "caller_fn",
-           [],
-           [],
-           exp
-             (TupleE
-                [
-                  exp
-                    (CallE
-                       ( id "lookup_fn",
-                         [ plaintyp (VarT (id "T", [])) ],
-                         [ arg (ExpA (var "x")) ] ));
-                  exp (CallE (id "missing_fn", [], []));
-                ]),
-           [] ));
-    def
-      (RuleGroupD
-         ( id "Result_rel",
-           id "links",
-           [
-             rule
-               ( id "Result_rel",
-                 id "linked",
-                 var "result",
-                 [
-                   prem (RulePr (id "Eval_rel", judgment));
-                   prem (RuleNotPr (id "Eval_rel", judgment));
-                   prem (RulePr (id "Eval_rel", linked_judgment));
-                   prem (RuleNotPr (id "Eval_rel", linked_judgment));
-                   prem (IterPr (prem (RulePr (id "Eval_rel", judgment)), List));
-                   prem (RulePr (id "Missing_rel", linked_judgment));
-                   prem (RulePr (id "Missing_rel", judgment));
-                 ] );
-           ] ));
+    FuncDefD
+      ( "caller_fn" $ at,
+        [],
+        [],
+        TupleE
+          [
+            CallE
+              ( "lookup_fn" $ at,
+                [ VarT ("T" $ at, []) $ at ],
+                [ ExpA (VarE ("x" $ at) $ at) $ at ] )
+            $ at;
+            CallE ("missing_fn" $ at, [], []) $ at;
+          ]
+        $ at,
+        [] )
+    $ at;
+    RuleGroupD
+      ( "Result_rel" $ at,
+        "links" $ at,
+        [
+          ( "Result_rel" $ at,
+            "linked" $ at,
+            VarE ("result" $ at) $ at,
+            [
+              RulePr ("Eval_rel" $ at, judgment) $ at;
+              RuleNotPr ("Eval_rel" $ at, judgment) $ at;
+              RulePr ("Eval_rel" $ at, linked_judgment) $ at;
+              RuleNotPr ("Eval_rel" $ at, linked_judgment) $ at;
+              IterPr (RulePr ("Eval_rel" $ at, judgment) $ at, List) $ at;
+              RulePr ("Missing_rel" $ at, linked_judgment) $ at;
+              RulePr ("Missing_rel" $ at, judgment) $ at;
+            ] )
+          $ at;
+        ] )
+    $ at;
   ]
 
 let contains text substring =
@@ -190,252 +188,277 @@ let contains text substring =
   at 0
 
 let () =
-  print_def "extern-syntax" (def (ExternSynD (id "Token_t", [ bad_hint ])));
+  print_def "extern-syntax" (ExternSynD ("Token_t" $ at, [ bad_hint ]) $ at);
   print_def "syntax-family"
-    (def (SynD [ (id "Packet_t", [ phrase "T_t" ]); (id "Empty_t", []) ]));
-  print_def "empty-syntax-family" (def (SynD []));
+    (SynD [ ("Packet_t" $ at, [ "T_t" $ at ]); ("Empty_t" $ at, []) ] $ at);
+  print_def "empty-syntax-family" (SynD [] $ at);
   print_def "plain-type-definition"
-    (def (TypD (id "Flag_t", [], deftyp (PlainTD bool_type), [ bad_hint ])));
+    (TypD ("Flag_t" $ at, [], PlainTD bool_type $ at, [ bad_hint ]) $ at);
   print_def "struct-type-definition"
-    (def
-       (TypD
-          ( id "Node_t",
-            [ phrase "T_t" ],
-            deftyp
-              (StructTD
-                 [
-                   (atom (Atom.Keyword "HEAD"), bool_type, [ bad_hint ]);
-                   ( atom (Atom.Keyword "TAIL"),
-                     plaintyp (VarT (id "node_t", [])),
-                     [] );
-                 ]),
-            [] )));
+    (TypD
+       ( "Node_t" $ at,
+         [ "T_t" $ at ],
+         StructTD
+           [
+             (Atom.Keyword "HEAD" $ at, bool_type, [ bad_hint ]);
+             (Atom.Keyword "TAIL" $ at, VarT ("node_t" $ at, []) $ at, []);
+           ]
+         $ at,
+         [] )
+    $ at);
   print_def "variant-type-definition"
-    (def
-       (TypD
-          ( id "Value_t",
-            [],
-            deftyp
-              (VariantTD
-                 [
-                   (PlainT bool_type, [ bad_hint ]);
-                   ( NotationT (nottyp (AtomT (atom (Atom.Keyword "UNKNOWN")))),
-                     [] );
-                 ]),
-            [] )));
+    (TypD
+       ( "Value_t" $ at,
+         [],
+         VariantTD
+           [
+             (PlainT bool_type, [ bad_hint ]);
+             (NotationT (AtomT (Atom.Keyword "UNKNOWN" $ at) $ at), []);
+           ]
+         $ at,
+         [] )
+    $ at);
   print_def "variable" variable_definition;
   print_def "external-relation"
-    (def
-       (ExternRelD
-          ( id "Matches_rel",
-            nottyp
-              (SeqT
-                 [
-                   PlainT (plaintyp (VarT (id "input_t", [])));
-                   NotationT (nottyp (AtomT (atom (Atom.Keyword "MATCHES"))));
-                   PlainT (plaintyp (VarT (id "pattern_t", [])));
-                 ]),
-            [ bad_hint ] )));
+    (ExternRelD
+       ( "Matches_rel" $ at,
+         SeqT
+           [
+             PlainT (VarT ("input_t" $ at, []) $ at);
+             NotationT (AtomT (Atom.Keyword "MATCHES" $ at) $ at);
+             PlainT (VarT ("pattern_t" $ at, []) $ at);
+           ]
+         $ at,
+         [ bad_hint ] )
+    $ at);
   print_def "relation" relation_definition;
   print_def "rules"
-    (def
-       (RuleGroupD
-          ( id "Eval_rel",
-            id "core_group",
-            [
-              rule
-                ( id "Eval_rel",
-                  id "s",
-                  var "result_v",
-                  [
-                    prem (VarPr (id "x_v", nat_type));
-                    prem (IfPr (var "condition_v"));
-                  ] );
-              rule
-                ( id "Eval_rel",
-                  id "rule_name_that_is_deliberately_long_in_a_group",
-                  var "value_v",
-                  [] );
-              rule (id "Eval_rel", id "fallback_rule", var "fallback_v", []);
-            ] )));
+    (RuleGroupD
+       ( "Eval_rel" $ at,
+         "core_group" $ at,
+         [
+           ( "Eval_rel" $ at,
+             "s" $ at,
+             VarE ("result_v" $ at) $ at,
+             [
+               VarPr ("x_v" $ at, nat_type) $ at;
+               IfPr (VarE ("condition_v" $ at) $ at) $ at;
+             ] )
+           $ at;
+           ( "Eval_rel" $ at,
+             "rule_name_that_is_deliberately_long_in_a_group" $ at,
+             VarE ("value_v" $ at) $ at,
+             [] )
+           $ at;
+           ( "Eval_rel" $ at,
+             "fallback_rule" $ at,
+             VarE ("fallback_v" $ at) $ at,
+             [] )
+           $ at;
+         ] )
+    $ at);
   print_def "short-label-rule" short_label_rule;
   assert_flat_width_exceeds 80 (Renderer.tex_of_prem long_operator_premise);
   print "long-label-rule"
     (Backend_latex.El.render_defs ~anchors [ long_label_rule ]);
   print_def "single-rule"
-    (def
-       (RuleGroupD
-          ( id "Check_rel",
-            id "single_group",
-            [
-              rule
-                ( id "Check_rel",
-                  id "only_rule",
-                  var "checked_v",
-                  [ prem (RuleNotPr (id "Bad_rel", var "bad_v")) ] );
-            ] )));
+    (RuleGroupD
+       ( "Check_rel" $ at,
+         "single_group" $ at,
+         [
+           ( "Check_rel" $ at,
+             "only_rule" $ at,
+             VarE ("checked_v" $ at) $ at,
+             [ RuleNotPr ("Bad_rel" $ at, VarE ("bad_v" $ at) $ at) $ at ] )
+           $ at;
+         ] )
+    $ at);
   print_def "negated-judgment"
-    (def
-       (RuleGroupD
-          ( id "Check_rel",
-            id "negated_group",
-            [
-              rule
-                ( id "Check_rel",
-                  id "negated_rule",
-                  var "checked_v",
-                  [
-                    prem
-                      (RuleNotPr
-                         ( id "Bad_rel",
-                           exp (InfixE (var "a", atom Atom.Turnstile, var "b"))
-                         ));
-                  ] );
-            ] )));
+    (RuleGroupD
+       ( "Check_rel" $ at,
+         "negated_group" $ at,
+         [
+           ( "Check_rel" $ at,
+             "negated_rule" $ at,
+             VarE ("checked_v" $ at) $ at,
+             [
+               RuleNotPr
+                 ( "Bad_rel" $ at,
+                   InfixE
+                     ( VarE ("a" $ at) $ at,
+                       Atom.Turnstile $ at,
+                       VarE ("b" $ at) $ at )
+                   $ at )
+               $ at;
+             ] )
+           $ at;
+         ] )
+    $ at);
   print_def "empty-rules"
-    (def (RuleGroupD (id "Empty_rel", id "none_group", [])));
+    (RuleGroupD ("Empty_rel" $ at, "none_group" $ at, []) $ at);
   print_def "external-function"
-    (def
-       (ExternDecD
-          ( id "parse_fn",
-            [ phrase "T_t" ],
-            [ param (ExpP text_type) ],
-            plaintyp (VarT (id "T_t", [])),
-            [ bad_hint ] )));
+    (ExternDecD
+       ( "parse_fn" $ at,
+         [ "T_t" $ at ],
+         [ ExpP text_type $ at ],
+         VarT ("T_t" $ at, []) $ at,
+         [ bad_hint ] )
+    $ at);
   print_def "builtin-function"
-    (def
-       (BuiltinDecD (id "size_fn", [], [ param (ExpP text_type) ], nat_type, [])));
+    (BuiltinDecD ("size_fn" $ at, [], [ ExpP text_type $ at ], nat_type, [])
+    $ at);
   print_def "table-declaration"
-    (def
-       (TableDecD (id "lookup_tbl", [ param (ExpP nat_type) ], bool_type, [])));
+    (TableDecD ("lookup_tbl" $ at, [ ExpP nat_type $ at ], bool_type, []) $ at);
   print_def "function-declaration"
-    (def
-       (FuncDecD
-          ( id "apply_fn",
-            [ phrase "T_t" ],
-            [
-              param
-                (DefP
-                   (id "callback_fn", [], [ param (ExpP bool_type) ], text_type));
-              param (ExpP bool_type);
-            ],
-            text_type,
-            [] )));
+    (FuncDecD
+       ( "apply_fn" $ at,
+         [ "T_t" $ at ],
+         [
+           DefP ("callback_fn" $ at, [], [ ExpP bool_type $ at ], text_type)
+           $ at;
+           ExpP bool_type $ at;
+         ],
+         text_type,
+         [] )
+    $ at);
   print_def "function-equation"
-    (def
-       (FuncDefD
-          ( id "apply_fn",
-            [ phrase "T_t" ],
-            [ arg (ExpA (var "x_v")); arg (DefA (id "callback_fn")) ],
-            var "result_v",
-            [
-              prem (IfPr (var "condition_v")); prem (VarPr (id "n_v", nat_type));
-            ] )));
+    (FuncDefD
+       ( "apply_fn" $ at,
+         [ "T_t" $ at ],
+         [ ExpA (VarE ("x_v" $ at) $ at) $ at; DefA ("callback_fn" $ at) $ at ],
+         VarE ("result_v" $ at) $ at,
+         [
+           IfPr (VarE ("condition_v" $ at) $ at) $ at;
+           VarPr ("n_v" $ at, nat_type) $ at;
+         ] )
+    $ at);
   print_def "function-equation-no-premises"
-    (def
-       (FuncDefD
-          (id "identity_fn", [], [ arg (ExpA (var "x_v")) ], var "x_v", [])));
+    (FuncDefD
+       ( "identity_fn" $ at,
+         [],
+         [ ExpA (VarE ("x_v" $ at) $ at) $ at ],
+         VarE ("x_v" $ at) $ at,
+         [] )
+    $ at);
   print_def "function-equation-one-premise"
-    (def
-       (FuncDefD
-          ( id "one_fn",
-            [],
-            [ arg (ExpA (var "x")) ],
-            var "y",
-            [ prem (IfPr (var "c1")) ] )));
+    (FuncDefD
+       ( "one_fn" $ at,
+         [],
+         [ ExpA (VarE ("x" $ at) $ at) $ at ],
+         VarE ("y" $ at) $ at,
+         [ IfPr (VarE ("c1" $ at) $ at) $ at ] )
+    $ at);
   print_def "function-equation-many-premises"
-    (def
-       (FuncDefD
-          ( id "many_fn",
-            [],
-            [ arg (ExpA (var "x")) ],
-            var "y",
-            [
-              prem (IfPr (var "c1"));
-              prem (IfPr (var "c2"));
-              prem (IfPr (var "c3"));
-            ] )));
+    (FuncDefD
+       ( "many_fn" $ at,
+         [],
+         [ ExpA (VarE ("x" $ at) $ at) $ at ],
+         VarE ("y" $ at) $ at,
+         [
+           IfPr (VarE ("c1" $ at) $ at) $ at;
+           IfPr (VarE ("c2" $ at) $ at) $ at;
+           IfPr (VarE ("c3" $ at) $ at) $ at;
+         ] )
+    $ at);
   print_def "function-equation-silent-premise"
-    (def
-       (FuncDefD
-          ( id "silent_fn",
-            [],
-            [ arg (ExpA (var "x")) ],
-            var "y",
-            [ prem (IfPr (exp (AtomE (atom (Atom.Tag "META"))))) ] )));
+    (FuncDefD
+       ( "silent_fn" $ at,
+         [],
+         [ ExpA (VarE ("x" $ at) $ at) $ at ],
+         VarE ("y" $ at) $ at,
+         [ IfPr (AtomE (Atom.Tag "META" $ at) $ at) $ at ] )
+    $ at);
   print_def "over-budget-condition-premise"
-    (function_equation "condition_fn" "x" (var "y")
-       [ prem (IfPr (var (String.make 80 'p'))); prem (IfPr (var "tail")) ]);
+    (function_equation "condition_fn" "x"
+       (VarE ("y" $ at) $ at)
+       [
+         IfPr (VarE (String.make 80 'p' $ at) $ at) $ at;
+         IfPr (VarE ("tail" $ at) $ at) $ at;
+       ]);
   print_def "table-equations"
-    (def
-       (TableDefD
-          ( id "lookup_tbl",
-            [
-              tablerow (var "zero_v", exp (BoolE false));
-              tablerow (var "other_v", exp (BoolE true));
-            ] )));
-  print_def "empty-table" (def (TableDefD (id "empty_tbl", [])));
-  print_def "separator" (def SepD);
+    (TableDefD
+       ( "lookup_tbl" $ at,
+         [
+           (VarE ("zero_v" $ at) $ at, BoolE false $ at) $ at;
+           (VarE ("other_v" $ at) $ at, BoolE true $ at) $ at;
+         ] )
+    $ at);
+  print_def "empty-table" (TableDefD ("empty_tbl" $ at, []) $ at);
+  print_def "separator" (SepD $ at);
   print "definitions"
     (Backend_latex.El.render_defs
        [
-         def SepD;
+         SepD $ at;
          variable_definition;
-         def SepD;
-         def SepD;
+         SepD $ at;
+         SepD $ at;
          relation_definition;
-         def SepD;
+         SepD $ at;
        ]);
   print "left-aligned-function-clauses"
     (Backend_latex.El.render_defs
        [
-         function_equation "left_fn" "x" (var "first") [];
-         function_equation "left_fn" "long_argument" (var "second") [];
+         function_equation "left_fn" "x" (VarE ("first" $ at) $ at) [];
+         function_equation "left_fn" "long_argument"
+           (VarE ("second" $ at) $ at)
+           [];
        ]);
   print "aligned-function-equations"
     (let condition_at_80 = String.make 56 'c' in
      let condition_at_81 = String.make 57 'c' in
      let breakable_condition =
-       exp
-         (CallE
-            ( id "lookup_fn",
-              [],
-              [
-                arg (ExpA (var (String.make 22 'a')));
-                arg (ExpA (var (String.make 20 'b')));
-                arg (ExpA (var (String.make 20 'c')));
-              ] ))
+       CallE
+         ( "lookup_fn" $ at,
+           [],
+           [
+             ExpA (VarE (String.make 22 'a' $ at) $ at) $ at;
+             ExpA (VarE (String.make 20 'b' $ at) $ at) $ at;
+             ExpA (VarE (String.make 20 'c' $ at) $ at) $ at;
+           ] )
+       $ at
      in
-     assert_function_layout `OneRow "cases_fn" "s" (var "v")
-       [ prem (IfPr (var condition_at_80)) ];
-     assert_function_layout `ConditionBelow "cases_fn" "s" (var "v")
-       [ prem (IfPr (var condition_at_81)) ];
+     assert_function_layout `OneRow "cases_fn" "s"
+       (VarE ("v" $ at) $ at)
+       [ IfPr (VarE (condition_at_80 $ at) $ at) $ at ];
+     assert_function_layout `ConditionBelow "cases_fn" "s"
+       (VarE ("v" $ at) $ at)
+       [ IfPr (VarE (condition_at_81 $ at) $ at) $ at ];
      assert_flat_width 77 (Renderer.tex_of_exp breakable_condition);
      Backend_latex.El.render_defs ~anchors
        [
-         function_equation "cases_fn" "x" (var "x") [];
-         function_equation "cases_fn" "s" (var "v")
-           [ prem (IfPr (var condition_at_80)) ];
-         function_equation "cases_fn" "s" (var "v")
-           [ prem (IfPr (var condition_at_81)) ];
-         function_equation "cases_fn" "m" (var "v")
+         function_equation "cases_fn" "x" (VarE ("x" $ at) $ at) [];
+         function_equation "cases_fn" "s"
+           (VarE ("v" $ at) $ at)
+           [ IfPr (VarE (condition_at_80 $ at) $ at) $ at ];
+         function_equation "cases_fn" "s"
+           (VarE ("v" $ at) $ at)
+           [ IfPr (VarE (condition_at_81 $ at) $ at) $ at ];
+         function_equation "cases_fn" "m"
+           (VarE ("v" $ at) $ at)
            [
-             prem (IfPr (var "c1"));
-             prem (IfPr (var "c2"));
-             prem (IfPr (var "c3"));
+             IfPr (VarE ("c1" $ at) $ at) $ at;
+             IfPr (VarE ("c2" $ at) $ at) $ at;
+             IfPr (VarE ("c3" $ at) $ at) $ at;
            ];
-         function_equation "cases_fn" "l" (var "v")
-           [ prem (IfPr breakable_condition); prem (IfPr (var "c2")) ];
-         function_equation "cases_fn" "silent" (var "v")
-           [ prem (IfPr (exp (AtomE (atom (Atom.Tag "META"))))) ];
-         def SepD;
-         function_equation "cases_fn" "after_sep" (var "after_sep") [];
-         function_equation "other_fn" "other" (var "other") [];
+         function_equation "cases_fn" "l"
+           (VarE ("v" $ at) $ at)
+           [ IfPr breakable_condition $ at; IfPr (VarE ("c2" $ at) $ at) $ at ];
+         function_equation "cases_fn" "silent"
+           (VarE ("v" $ at) $ at)
+           [ IfPr (AtomE (Atom.Tag "META" $ at) $ at) $ at ];
+         SepD $ at;
+         function_equation "cases_fn" "after_sep"
+           (VarE ("after_sep" $ at) $ at)
+           [];
+         function_equation "other_fn" "other" (VarE ("other" $ at) $ at) [];
          variable_definition;
-         function_equation "other_fn" "after_var" (var "after_var") [];
+         function_equation "other_fn" "after_var"
+           (VarE ("after_var" $ at) $ at)
+           [];
        ]);
   print "empty-definitions" (Backend_latex.El.render_defs []);
-  print "only-separators" (Backend_latex.El.render_defs [ def SepD; def SepD ]);
+  print "only-separators"
+    (Backend_latex.El.render_defs [ SepD $ at; SepD $ at ]);
   print "linked-definitions"
     (Backend_latex.El.render_defs ~anchors linked_definitions);
   let unlinked_definitions = Backend_latex.El.render_defs linked_definitions in
