@@ -5,7 +5,7 @@ open Util.Source
 exception ElabError of region * string
 
 let error (at : region) (msg : string) = raise (ElabError (at, msg))
-let warn (at : region) (msg : string) = Util.Error.warn at "elab" msg
+let warn (at : region) (msg : string) = Diagnostic.warn at "elab" msg
 
 (* Checks *)
 
