@@ -1,7 +1,8 @@
 open Domain
 open Lib
+open Lang
 open Xl
-open Ast
+open Pl
 open Util.Source
 module F = Format
 module Block = Block
@@ -9,6 +10,12 @@ module Fallthrough = Fallthrough
 open Utils
 
 (* Render utils *)
+
+type anchors = Adoc.anchor
+
+let anchors ~(func : string -> string option) ~(rel : string -> string option) :
+    anchors =
+  Adoc.anchor ~func ~rel
 
 (* Oxford-comma join over inline docs *)
 
@@ -432,7 +439,7 @@ and code_of_upd_exp (exp_b : exp) (path : path) (exp_f : exp) : Adoc.code =
 
 and code_of_call_exp (id : id) (targs : targ list) (args : arg list) : Adoc.code
     =
-  Adoc.link_code ~target:id.it
+  Adoc.link_subject_code (Adoc.Function id.it)
     Adoc.(
       token (string_of_defid id)
       ^^ token (string_of_targs targs)
@@ -562,7 +569,7 @@ and prose_of_negated_exp_opt (exp : exp) : Adoc.prose option =
       match exp.hints.prose_false with
       | Some hints ->
           Some
-            (Adoc.link_prose ~target:id.it
+            (Adoc.link_subject_prose (Adoc.Function id.it)
                (alternate hints (reindent_lines ~level:0) prose_of_arg args))
       | None ->
           Some
@@ -781,7 +788,7 @@ and prose_of_call_exp (exp : exp) (id : id) (args : arg list) : Adoc.prose =
   let hint_true = exp.hints.prose_true in
   match (hint_in, hint_true) with
   | Some hints, _ | _, Some hints ->
-      Adoc.link_prose ~target:id.it
+      Adoc.link_subject_prose (Adoc.Function id.it)
         (alternate hints (reindent_lines ~level:0) prose_of_arg args)
   | None, None -> Adoc.code_prose (code_of_exp exp)
 
@@ -1184,22 +1191,21 @@ and render_hold_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
   let exps = Mixfix.args notexp in
   let hint_true = hints.prose_true in
   let hint_false = hints.prose_false in
-  let iter_suffix = Adoc.ser_prose (prose_of_iterexp_suffix iterexps) in
-  let string_of_cond ~(hold : bool) : string =
+  let iter_suffix = prose_of_iterexp_suffix iterexps in
+  let prose_of_cond ~(hold : bool) : Adoc.prose =
     let hint_opt = if hold then hint_true else hint_false in
     let fallback_verb = if hold then " holds" else " does not hold" in
     match hint_opt with
     | Some hint ->
-        Adoc.ser_prose
-          (Adoc.link_prose ~target:(string_of_relid id_rel)
-             (alternate hint (reindent_lines ~level:0) prose_of_exp exps))
+        Adoc.link_subject_prose
+          (Adoc.Relation (string_of_relid id_rel))
+          (alternate hint (reindent_lines ~level:0) prose_of_exp exps)
     | None ->
-        let math =
-          Adoc.ser_prose
-            (Adoc.link_prose ~target:(string_of_relid id_rel)
-               (Adoc.code_prose (code_of_notexp notexp)))
-        in
-        math ^ fallback_verb
+        Adoc.(
+          link_subject_prose
+            (Adoc.Relation (string_of_relid id_rel))
+            (code_prose (code_of_notexp notexp))
+          ++ text fallback_verb)
   in
   let prose_fallthrough =
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
@@ -1207,9 +1213,8 @@ and render_hold_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
   let block_head ~(hold : bool) : Adoc.block =
     Adoc.bullet_inline_block (`Ordered level)
       Adoc.(
-        text "If "
-        ++ text (string_of_cond ~hold)
-        ++ text iter_suffix ++ text ":" ++ prose_fallthrough)
+        text "If " ++ prose_of_cond ~hold ++ iter_suffix ++ text ":"
+        ++ prose_fallthrough)
   in
   match holdcase with
   | HoldH (block, _dangle) ->
@@ -1387,22 +1392,25 @@ and render_rule_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
             (alternate hint_out unindent_lines prose_of_exp exps_out)
         in
         let prose_in_typed =
-          Adoc.link_prose ~target:(string_of_relid id_rel)
+          Adoc.link_subject_prose
+            (Adoc.Relation (string_of_relid id_rel))
             (alternate hint_in unindent_lines prose_of_exp exps_in)
         in
-        let prose_in = Adoc.ser_prose prose_in_typed in
-        F.asprintf "Let %s be the result of %s" prose_out prose_in
+        Adoc.(
+          text "Let " ++ text prose_out ++ text " be the result of "
+          ++ prose_in_typed)
     | _ ->
-        F.asprintf "Let %s"
-          (Adoc.ser_prose
-             (Adoc.link_prose ~target:(string_of_relid id_rel)
-                (Adoc.code_prose (code_of_notexp notexp))))
+        Adoc.(
+          text "Let "
+          ++ link_subject_prose
+               (Adoc.Relation (string_of_relid id_rel))
+               (code_prose (code_of_notexp notexp)))
   in
   if vars_out_visible = [] then
     Adoc.concat_block
       [
         Adoc.bullet_block (`Ordered level);
-        Adoc.raw_block rule_body;
+        Adoc.inline_block rule_body;
         Adoc.inline_block
           Adoc.(
             prose_of_iterinstr_suffix iterinstrs
@@ -1413,7 +1421,7 @@ and render_rule_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
       Adoc.concat_block
         [
           Adoc.bullet_block (`Unordered level);
-          Adoc.raw_block rule_body;
+          Adoc.inline_block rule_body;
           Adoc.raw_block ".";
         ]
     in
@@ -1609,7 +1617,8 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
     | None -> exps
   in
   let prose_title =
-    Adoc.link_prose ~target:(string_of_relid id_rel)
+    Adoc.link_subject_prose
+      (Adoc.Relation (string_of_relid id_rel))
       (Adoc.text (Sl.Print.string_of_relid id_rel))
   in
   let block_title_header =
@@ -1657,16 +1666,18 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
         ]
   | _ ->
       Adoc.inline_block
-        (Adoc.link_prose ~target:(string_of_relid id_rel)
+        (Adoc.link_subject_prose
+           (Adoc.Relation (string_of_relid id_rel))
            Adoc.(
              text (Sl.Print.string_of_relid id_rel ^ ": ")
              ++ prose_of_rel_title_math rel_signature exps))
 
 (* Serialized form of [render_rel_title_block]. *)
 
-and render_rel_title_adoc (hints : Annot.hints) (id_rel : id)
-    (rel_signature : rel_signature) (exps : exp list) : string =
-  Adoc.ser_block (render_rel_title_block hints id_rel rel_signature exps)
+and render_rel_title_adoc ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (id_rel : id) (rel_signature : rel_signature) (exps : exp list) : string =
+  Adoc.ser_block ~anchor:anchors
+    (render_rel_title_block hints id_rel rel_signature exps)
 
 (* Extern relations *)
 
@@ -1679,9 +1690,9 @@ let render_extern_rel_def_block (hints : Annot.hints) (externrel : externrel) :
 
 (* Serialized form of [render_extern_rel_def_block]. *)
 
-let render_extern_rel_def (hints : Annot.hints) (externrel : externrel) : string
-    =
-  Adoc.ser_block (render_extern_rel_def_block hints externrel)
+let render_extern_rel_def ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (externrel : externrel) : string =
+  Adoc.ser_block ~anchor:anchors (render_extern_rel_def_block hints externrel)
 
 (* Tier renderers -- each only decides the [rendered] shape; joining it to the
    enclosing head is [compose]'s job. *)
@@ -1814,11 +1825,13 @@ let render_instr_dispatch_inline ~(level : int)
       let prose_title =
         match (hint_in, hint_true) with
         | Some hint, _ | _, Some hint ->
-            Adoc.link_prose ~target:(string_of_relid id_rel)
+            Adoc.link_subject_prose
+              (Adoc.Relation (string_of_relid id_rel))
               (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_exp
                  exps)
         | None, None ->
-            Adoc.link_prose ~target:(string_of_relid id_rel)
+            Adoc.link_subject_prose
+              (Adoc.Relation (string_of_relid id_rel))
               (prose_of_rel_title_math rel_signature exps)
       in
       let block_head_title =
@@ -1839,28 +1852,30 @@ let render_instr_dispatch_inline ~(level : int)
      x reduces to v:
        <arms> *)
 
-let render_rulegroup (hints : Annot.hints) (_id_rulegroup : id) (id_rel : id)
-    (rel_signature : rel_signature) (exps : exp list) (block : block_group) :
-    string =
+let render_rulegroup ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (_id_rulegroup : id) (id_rel : id) (rel_signature : rel_signature)
+    (exps : exp list) (block : block_group) : string =
   let hint_in = hints.prose_in in
   let hint_true = hints.prose_true in
   let title =
     match (hint_in, hint_true) with
     | Some hint, _ | _, Some hint ->
-        Adoc.ser_prose
-          (Adoc.link_prose ~target:(string_of_relid id_rel)
+        Adoc.ser_prose ~anchor:anchors
+          (Adoc.link_subject_prose
+             (Adoc.Relation (string_of_relid id_rel))
              (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_exp
                 exps))
     | None, None ->
-        Adoc.ser_prose
-          (Adoc.link_prose ~target:(string_of_relid id_rel)
+        Adoc.ser_prose ~anchor:anchors
+          (Adoc.link_subject_prose
+             (Adoc.Relation (string_of_relid id_rel))
              (prose_of_rel_title_math rel_signature exps))
   in
   let ctx_fallthrough =
     Fallthrough.{ namespace = string_of_relid id_rel; next = None }
   in
   let body = render_instrs ~ctx_fallthrough render_instr_group block in
-  title ^ ":\n" ^ Adoc.ser_block body
+  title ^ ":\n" ^ Adoc.ser_block ~anchor:anchors body
 
 (* Dispatch tree of a defined relation: block rendered as goto edges between
    groups
@@ -1868,13 +1883,13 @@ let render_rulegroup (hints : Annot.hints) (_id_rulegroup : id) (id_rel : id)
      Type dispatch:
        <goto tree> *)
 
-let render_defined_rel_def_dispatch
+let render_defined_rel_def_dispatch ?(anchors = Adoc.subject_name)
     ((id_rel, _rel_signature, _exps, block, _elseblock_opt) : rel) : string =
   let ctx_fallthrough =
     Fallthrough.{ namespace = string_of_relid id_rel; next = None }
   in
   string_of_relid id_rel ^ " dispatch:\n"
-  ^ Adoc.ser_block
+  ^ Adoc.ser_block ~anchor:anchors
       (render_instrs ~level:0 ~ctx_fallthrough render_instr_dispatch block)
 
 (* Full defined relation: title, rule groups in order, "Otherwise" fallback
@@ -1931,8 +1946,7 @@ let render_defined_rel_def (hints : Annot.hints) (rel : rel) : string =
 let render_func_title_block (hints : Annot.hints) (id_func : id)
     (tparams : tparam list) (params : param list) : Adoc.block =
   let prose_title =
-    Adoc.link_prose
-      ~target:(string_of_defid ~link:true id_func)
+    Adoc.link_subject_prose (Adoc.Function id_func.it)
       (Adoc.text (string_of_defid id_func))
   in
   match (hints.prose_in, hints.prose_true) with
@@ -1955,9 +1969,10 @@ let render_func_title_block (hints : Annot.hints) (id_func : id)
 
 (* Serialized form of [render_func_title_block]. *)
 
-let render_func_title (hints : Annot.hints) (id_func : id)
-    (tparams : tparam list) (params : param list) : string =
-  Adoc.ser_block (render_func_title_block hints id_func tparams params)
+let render_func_title ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (id_func : id) (tparams : tparam list) (params : param list) : string =
+  Adoc.ser_block ~anchor:anchors
+    (render_func_title_block hints id_func tparams params)
 
 (* Function header: the function inline as one linked phrase (hinted phrase or
    signature); lead-in before a body or table
@@ -1969,16 +1984,14 @@ let render_func_header_block (hints : Annot.hints) (id_func : id)
   match (hints.prose_in, hints.prose_true) with
   | Some hint, _ | _, Some hint ->
       Adoc.inline_block
-        (Adoc.link_prose
-           ~target:(string_of_defid ~link:true id_func)
+        (Adoc.link_subject_prose (Adoc.Function id_func.it)
            (Adoc.text
               (Adoc.ser_prose
                  (alternate ~caps:true hint (reindent_lines ~level:0)
                     prose_of_param params))))
   | None, None ->
       Adoc.inline_block
-        (Adoc.link_prose
-           ~target:(string_of_defid ~link:true id_func)
+        (Adoc.link_subject_prose (Adoc.Function id_func.it)
            (Adoc.text
               (string_of_defid id_func
               ^ Sl.Print.string_of_tparams tparams
@@ -1986,27 +1999,28 @@ let render_func_header_block (hints : Annot.hints) (id_func : id)
 
 (* Serialized form of [render_func_header_block]. *)
 
-let render_func_header (hints : Annot.hints) (id_func : id)
-    (tparams : tparam list) (params : param list) : string =
-  Adoc.ser_block (render_func_header_block hints id_func tparams params)
+let render_func_header ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (id_func : id) (tparams : tparam list) (params : param list) : string =
+  Adoc.ser_block ~anchor:anchors
+    (render_func_header_block hints id_func tparams params)
 
 (* Extern functions *)
 
 (* Extern function: header only (body defined outside the spec) *)
 
-let render_extern_func_def (hints : Annot.hints) (externfunc : externfunc) :
-    string =
+let render_extern_func_def ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (externfunc : externfunc) : string =
   let id_func, tparams, params, _ = externfunc in
-  render_func_header hints id_func tparams params
+  render_func_header ~anchors hints id_func tparams params
 
 (* Builtin functions *)
 
 (* Builtin function: header only (implemented by the interpreter) *)
 
-let render_builtin_func_def (hints : Annot.hints) (builtinfunc : builtinfunc) :
-    string =
+let render_builtin_func_def ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (builtinfunc : builtinfunc) : string =
   let id_func, tparams, params, _ = builtinfunc in
-  render_func_header hints id_func tparams params
+  render_func_header ~anchors hints id_func tparams params
 
 (* Table functions *)
 
@@ -2040,9 +2054,9 @@ let render_table_func_def_block (hints : Annot.hints) (tablefunc : tablefunc) :
 
 (* Serialized form of [render_table_func_def_block]. *)
 
-let render_table_func_def (hints : Annot.hints) (tablefunc : tablefunc) : string
-    =
-  Adoc.ser_block (render_table_func_def_block hints tablefunc)
+let render_table_func_def ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (tablefunc : tablefunc) : string =
+  Adoc.ser_block ~anchor:anchors (render_table_func_def_block hints tablefunc)
 
 (* Defined functions *)
 
@@ -2101,9 +2115,9 @@ let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
 
 (* Serialized form of [render_defined_func_def_block]. *)
 
-let render_defined_func_def (hints : Annot.hints) (func : definedfunc) : string
-    =
-  Adoc.ser_block (render_defined_func_def_block hints func)
+let render_defined_func_def ?(anchors = Adoc.subject_name) (hints : Annot.hints)
+    (func : definedfunc) : string =
+  Adoc.ser_block ~anchor:anchors (render_defined_func_def_block hints func)
 
 (* Definitions *)
 

@@ -16,7 +16,7 @@ end
 module type VALUE = sig
   type t
 
-  val render : t list -> string
+  val render : Ctx.t -> t list -> string
 end
 
 module type INIT = sig
@@ -37,7 +37,6 @@ module type STORE = sig
   val add : key -> value -> t -> t
   val find_opt : t -> key -> value option
   val use : t -> key -> unit
-  val used : t -> key -> bool
   val unused : t -> key list
   val empty : t
   val init : El.spec -> Pl.spec -> t
@@ -67,10 +66,6 @@ module Make_store
     let entry = M.find key sto in
     entry.used <- true
 
-  let used (sto : t) (key : K.t) : bool =
-    let entry = M.find key sto in
-    entry.used
-
   let unused (sto : t) : K.t list =
     M.fold
       (fun key entry keys_unused ->
@@ -85,7 +80,7 @@ module Make_store
     |> List.fold_left (fun sto (key, data) -> add key data sto) empty
 end
 
-(* Splice anchor *)
+(* Splice configuration *)
 
 let prefix_source =
   "ifdef::backend-html5[]\n"
@@ -93,49 +88,53 @@ let prefix_source =
   ^ "[source,watsup]\n----\n"
 
 let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n" ^ "endif::[]"
+let prefix_latex = "ifdef::backend-html5[]\n[latexmath]\n++++\n"
+let suffix_latex = "\n++++\nendif::[]"
 let prefix_prose = "****\n"
 let suffix_prose = "\n****"
 
-module type ANCHOR = sig
+(* Splice name, output wrapper, and optional link target *)
+
+module type CONFIG = sig
   val name : string
   val prefix : string
   val suffix : string
-  val header : bool
+  val anchor : Ctx.t -> string -> string option
 end
 
 (* Splicer *)
 
 module type SPLICER = sig
-  include ANCHOR
+  include CONFIG
 
   type key
   type value
 
-  val init : El.spec -> Pl.spec -> unit
+  val init : ?context:Ctx.t -> El.spec -> Pl.spec -> unit
   val splice : Source.t -> string
   val warn_unused : unit -> unit
 end
+
+(* Each splice kind owns its store and usage accounting *)
 
 module Make
     (K : KEY)
     (V : VALUE)
     (I : INIT with type key = K.t and type value = V.t)
-    (A : ANCHOR) : SPLICER with type key = K.t and type value = V.t = struct
-  include A
+    (C : CONFIG) : SPLICER with type key = K.t and type value = V.t = struct
+  include C
+  module S = Make_store (K) (V) (I)
 
   type key = K.t
   type value = V.t
 
-  (* Store *)
+  let sto : S.t ref = ref S.empty
+  let render_context : Ctx.t ref = ref Ctx.empty
 
-  module S = Make_store (K) (V) (I)
-
-  let sto = ref S.empty
-
-  let init (spec_el : El.spec) (spec_pl : Pl.spec) : unit =
-    sto := S.init spec_el spec_pl
-
-  (* Splicer functions *)
+  let init ?(context : Ctx.t = Ctx.empty) (spec_el : El.spec)
+      (spec_pl : Pl.spec) : unit =
+    sto := S.init spec_el spec_pl;
+    render_context := context
 
   let parse (source : Source.t) : K.t list = K.parse source
 
@@ -143,8 +142,7 @@ module Make
     let keys, values =
       keys
       |> List.filter_map (fun key ->
-             let value_opt = S.find_opt !sto key in
-             match value_opt with
+             match S.find_opt !sto key with
              | Some value -> Some (key, value)
              | None ->
                  warn no_region
@@ -154,21 +152,24 @@ module Make
       |> List.split
     in
     let headers =
-      if header then
-        (keys
+      let anchors =
+        keys
         |> List.filter_map (fun key ->
-               if not (S.used !sto key) then Some ("[[" ^ K.to_anchor key ^ "]]")
-               else None)
-        |> String.concat "\n")
-        ^ "\n"
-      else ""
+               C.anchor !render_context (K.to_anchor key))
+      in
+      match anchors with
+      | [] -> ""
+      | _ ->
+          "++++\n"
+          ^ (anchors
+            |> List.map (fun anchor -> "<span id=\"" ^ anchor ^ "\"></span>")
+            |> String.concat "\n")
+          ^ "\n++++\n"
     in
     List.iter (S.use !sto) keys;
-    headers ^ prefix ^ V.render values ^ suffix
+    headers ^ prefix ^ V.render !render_context values ^ suffix
 
-  let splice (source : Source.t) : string =
-    let keys = parse source in
-    render keys
+  let splice (source : Source.t) : string = render (parse source)
 
   let warn_unused () : unit =
     let keys_unused = S.unused !sto in

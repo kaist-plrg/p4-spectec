@@ -2,9 +2,12 @@ open Util.Source
 
 (* Error *)
 
-exception SpliceError of region * string
+type error = { at : region; msg : string }
 
-let error (at : region) (msg : string) = raise (SpliceError (at, msg))
+exception SpliceError of error
+
+let to_region_msg (error : error) : region * string = (error.at, error.msg)
+let error (at : region) (msg : string) = raise (SpliceError { at; msg })
 let warn (at : region) (msg : string) = Util.Error.warn at "splice" msg
 
 (* Check *)

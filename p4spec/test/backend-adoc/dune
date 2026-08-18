@@ -1,0 +1,54 @@
+(executable
+ (name el_test)
+ (modules el_test)
+ (libraries p4spectec backend_adoc))
+
+(executable
+ (name pl_test)
+ (modules pl_test)
+ (libraries p4spectec backend_adoc test_common))
+
+(executable
+ (name anchor_test)
+ (modules anchor_test)
+ (libraries p4spectec backend_adoc))
+
+(rule
+ (target el.actual)
+ (action
+  (with-stdout-to
+   el.actual
+   (run ./el_test.exe))))
+
+(rule
+ (alias backend-adoc)
+ (action
+  (diff el.expected el.actual)))
+
+(rule
+ (target pl.actual)
+ (deps
+  (source_tree ../../../spec))
+ (action
+  (with-stdout-to
+   pl.actual
+   (with-stderr-to
+    pl.err
+    (run ./pl_test.exe ../../../spec)))))
+
+(rule
+ (alias backend-adoc)
+ (action
+  (diff pl.expected pl.actual)))
+
+(rule
+ (target anchor.actual)
+ (action
+  (with-stdout-to
+   anchor.actual
+   (run ./anchor_test.exe))))
+
+(rule
+ (alias backend-adoc)
+ (action
+  (diff anchor.expected anchor.actual)))
