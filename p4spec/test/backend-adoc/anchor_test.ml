@@ -24,4 +24,17 @@ let () =
   |> print "missing-relation";
   link_prose ~target:"direct-arm" (text "direct arm")
   |> ser_prose ~anchor:semantic_anchor
-  |> print "direct"
+  |> print "direct";
+  seq_block
+    [
+      item_ordered_block ~level:0 ~anchor:"arm-one"
+        ~block_body:
+          (item_ordered_block ~level:1
+             (fallthrough_prose ~anchor:"arm-two" ~label:Derived))
+        (text "Try:");
+      item_ordered_block ~level:0 ~anchor:"arm-two"
+        ~block_body:(item_ordered_block ~level:1 (text "Return."))
+        (text "Then, try:");
+    ]
+  |> ser_block ~anchor:semantic_anchor
+  |> print "ordered-items"

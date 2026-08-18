@@ -5,7 +5,6 @@ open Xl
 open Pl
 open Util.Source
 module F = Format
-module Block = Block
 module Fallthrough = Fallthrough
 open Utils
 
@@ -1114,40 +1113,36 @@ and render_iterinstrs ~(level : int) ~(prose_fallthrough : Adoc.prose)
           List.filter (fun (id, _, _) -> not (Id.is_underscored id)) vars_out
         in
         let block_inner = render ~outermost:false (level + 1) iterinstrs_t in
-        let block_head =
-          Adoc.bullet_inline_block (`Ordered level)
-            Adoc.(
-              text "For each " ++ prose_of_in_itervars iter vars_in ++ text ":")
+        let prose_head =
+          Adoc.(
+            text "For each " ++ prose_of_in_itervars iter vars_in ++ text ":")
         in
         let prose_fallthrough =
           if outermost then prose_fallthrough else Adoc.empty_prose
         in
-        if vars_out_visible = [] then
-          Adoc.concat_block
-            [
-              block_head;
-              Adoc.raw_block "\n+\n--\n";
-              block_inner;
-              Adoc.raw_block "\n--\n";
-            ]
-        else
-          let noun = string_of_iter iter in
-          Adoc.concat_block
-            [
-              block_head;
-              Adoc.raw_block "\n+\n--\n";
-              block_inner;
-              Adoc.raw_block "\n--\n+\n";
-              Adoc.inline_block
-                Adoc.(
-                  text "Let "
-                  ++ prose_of_out_itervars iter vars_out_visible
-                  ++ text
-                       (if List.length vars_out_visible > 1 then
-                          Printf.sprintf " be the resulting %ss." noun
-                        else Printf.sprintf " be the resulting %s." noun)
-                  ++ prose_fallthrough);
-            ]
+        let block_body =
+          if vars_out_visible = [] then
+            Adoc.concat_block
+              [ Adoc.raw_block "+\n--\n"; block_inner; Adoc.raw_block "\n--\n" ]
+          else
+            let noun = string_of_iter iter in
+            Adoc.concat_block
+              [
+                Adoc.raw_block "+\n--\n";
+                block_inner;
+                Adoc.raw_block "\n--\n+\n";
+                Adoc.inline_block
+                  Adoc.(
+                    text "Let "
+                    ++ prose_of_out_itervars iter vars_out_visible
+                    ++ text
+                         (if List.length vars_out_visible > 1 then
+                            Printf.sprintf " be the resulting %ss." noun
+                          else Printf.sprintf " be the resulting %s." noun)
+                    ++ prose_fallthrough);
+              ]
+        in
+        Adoc.item_ordered_block ~level ~block_body prose_head
   in
   render ~outermost:true level (List.rev iterinstrs)
 
@@ -1163,7 +1158,7 @@ and render_if_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
   let block_head =
-    Adoc.bullet_inline_block (`Ordered level)
+    Adoc.item_ordered_block ~level
       Adoc.(
         text "Check that " ++ prose_of_exp cond
         ++ prose_of_iterexp_suffix iterexps
@@ -1211,7 +1206,7 @@ and render_hold_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
   let block_head ~(hold : bool) : Adoc.block =
-    Adoc.bullet_inline_block (`Ordered level)
+    Adoc.item_ordered_block ~level
       Adoc.(
         text "If " ++ prose_of_cond ~hold ++ iter_suffix ++ text ":"
         ++ prose_fallthrough)
@@ -1227,9 +1222,7 @@ and render_hold_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
         render_instr_tier block
   | BothH (block_hold, block_nothold) ->
       let head_hold = block_head ~hold:true in
-      let head_else =
-        Adoc.bullet_inline_block (`Ordered level) (Adoc.text "Else:")
-      in
+      let head_else = Adoc.item_ordered_block ~level (Adoc.text "Else:") in
       Adoc.seq_block
         [
           render_instrs ~block_head:(Some head_hold) ~level:(level + 1)
@@ -1256,7 +1249,7 @@ and render_case_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
   match cases with
   | [ (guard, block_then) ] ->
       let block_head =
-        Adoc.bullet_inline_block (`Ordered level)
+        Adoc.item_ordered_block ~level
           Adoc.(
             text "Check that "
             ++ prose_of_guard exp_scrut guard
@@ -1275,14 +1268,13 @@ and render_case_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
         |> List.mapi (fun idx (guard, block_then) ->
                if idx = n - 1 && total then
                  let block_else =
-                   Adoc.bullet_inline_block (`Ordered level) (Adoc.text "Else:")
+                   Adoc.item_ordered_block ~level (Adoc.text "Else:")
                  in
                  match guard with
                  | CheckLetSubG _ | CheckLetMatchG _ ->
                      let prose_bind = prose_of_guard exp_scrut guard in
                      let block_bind =
-                       Adoc.bullet_inline_block
-                         (`Ordered (level + 1))
+                       Adoc.item_ordered_block ~level:(level + 1)
                          Adoc.(capitalize_first_prose prose_bind ++ text ".")
                      in
                      Adoc.seq_block
@@ -1305,7 +1297,7 @@ and render_case_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
                    else Adoc.empty_prose
                  in
                  let block_head =
-                   Adoc.bullet_inline_block (`Ordered level)
+                   Adoc.item_ordered_block ~level
                      Adoc.(
                        text (keyword ^ " ")
                        ++ prose_of_guard exp_scrut guard
@@ -1329,7 +1321,7 @@ and prose_of_group_dispatch (id_rel : id) (id_rulegroup : id) : Adoc.prose =
 
 and render_group_instr_dispatch ~(level : int) (id_rel : id) (id_rulegroup : id)
     : Adoc.block =
-  Adoc.bullet_inline_block (`Ordered level)
+  Adoc.item_ordered_block ~level
     (Adoc.capitalize_first_prose (prose_of_group_dispatch id_rel id_rulegroup))
 
 (* Let binding; label present when the bound expression can backtrack
@@ -1348,7 +1340,7 @@ and render_let_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     |> List.filter (fun (id, _, _) -> not (Id.is_underscored id))
   in
   if vars_out_visible = [] then
-    Adoc.bullet_inline_block (`Ordered level)
+    Adoc.item_ordered_block ~level
       Adoc.(
         text "Let "
         ++ code_prose (code_of_exp exp_l)
@@ -1357,7 +1349,7 @@ and render_let_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
         ++ text "." ++ prose_fallthrough)
   else
     let render_body level =
-      Adoc.bullet_inline_block (`Unordered level)
+      Adoc.item_unordered_block ~level
         Adoc.(
           text "Let "
           ++ code_prose (code_of_exp exp_l)
@@ -1407,23 +1399,14 @@ and render_rule_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
                (code_prose (code_of_notexp notexp)))
   in
   if vars_out_visible = [] then
-    Adoc.concat_block
-      [
-        Adoc.bullet_block (`Ordered level);
-        Adoc.inline_block rule_body;
-        Adoc.inline_block
-          Adoc.(
-            prose_of_iterinstr_suffix iterinstrs
-            ++ text "." ++ prose_fallthrough);
-      ]
+    Adoc.item_ordered_block ~level
+      Adoc.(
+        rule_body
+        ++ prose_of_iterinstr_suffix iterinstrs
+        ++ text "." ++ prose_fallthrough)
   else
     let render_body level =
-      Adoc.concat_block
-        [
-          Adoc.bullet_block (`Unordered level);
-          Adoc.inline_block rule_body;
-          Adoc.raw_block ".";
-        ]
+      Adoc.item_unordered_block ~level Adoc.(rule_body ++ text ".")
     in
     render_iterinstrs ~level ~prose_fallthrough iterinstrs render_body
 
@@ -1459,7 +1442,7 @@ and render_result_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
   let prose_fallthrough =
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
-  Adoc.bullet_inline_block (`Ordered level)
+  Adoc.item_ordered_block ~level
     Adoc.(
       capitalize_first_prose (prose_of_result hints rel_signature exps)
       ++ prose_fallthrough)
@@ -1473,7 +1456,7 @@ and render_return_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
   let prose_fallthrough =
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
-  Adoc.bullet_inline_block (`Ordered level)
+  Adoc.item_ordered_block ~level
     Adoc.(text "Return " ++ prose_of_exp exp ++ text "." ++ prose_fallthrough)
 
 (* Debug instruction
@@ -1485,7 +1468,7 @@ and render_debug_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
   let prose_fallthrough =
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
-  Adoc.bullet_inline_block (`Ordered level)
+  Adoc.item_ordered_block ~level
     Adoc.(text "(debug: " ++ prose_of_exp exp ++ text ")" ++ prose_fallthrough)
 
 (* Destruct instruction: named projections of a source value
@@ -1505,17 +1488,17 @@ and render_destruct_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
   let prose_fallthrough =
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
-  let line = Adoc.bullet_inline_block (`Ordered level) in
+  let block_line = Adoc.item_ordered_block ~level in
   match projections with
   | [ (name, exp_target) ] ->
-      line
+      block_line
         Adoc.(
           text "Let " ++ prose_of_exp exp_target
           ++ text (F.asprintf " be the %s of " name)
           ++ prose_of_exp exp_source ++ text "." ++ prose_fallthrough)
   | _ ->
       let names, exps_target = List.split projections in
-      line
+      block_line
         Adoc.(
           text "Let " ++ prose_of_exps exps_target ++ text " be "
           ++ prose_of_list (List.map (fun s -> text ("the " ^ s)) names)
@@ -1533,7 +1516,7 @@ and render_check_let_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
   let block_head =
-    Adoc.bullet_inline_block (`Ordered level)
+    Adoc.item_ordered_block ~level
       Adoc.(
         text "Let!~type~ "
         ++ code_prose (code_of_exp exp_l)
@@ -1558,7 +1541,7 @@ and render_option_get_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
   let block_head =
-    Adoc.bullet_inline_block (`Ordered level)
+    Adoc.item_ordered_block ~level
       Adoc.(
         text "Let "
         ++ code_prose (code_of_exp exp_l)
@@ -1636,11 +1619,11 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           block_title_header;
-          Adoc.bullet_inline_block (`Unordered 0)
+          Adoc.item_unordered_block ~level:0
             (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
                exps_in_title);
           Adoc.raw_block ":\n";
-          Adoc.bullet_inline_block (`Unordered 0)
+          Adoc.item_unordered_block ~level:0
             Adoc.(
               text "The result is "
               ++ alternate ~caps:false hint_out (reindent_lines ~level:1)
@@ -1651,7 +1634,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           block_title_header;
-          Adoc.bullet_inline_block (`Unordered 0)
+          Adoc.item_unordered_block ~level:0
             (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
                exps_in_title);
           Adoc.raw_block ".";
@@ -1660,7 +1643,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
       Adoc.concat_block
         [
           block_title_header;
-          Adoc.bullet_inline_block (`Unordered 0)
+          Adoc.item_unordered_block ~level:0
             (alternate ~caps:true hint_true (reindent_lines ~level:0)
                prose_of_exp exps);
         ]
@@ -1697,37 +1680,30 @@ let render_extern_rel_def ?(anchors = Adoc.subject_name) (hints : Annot.hints)
 (* Tier renderers -- each only decides the [rendered] shape; joining it to the
    enclosing head is [compose]'s job. *)
 
-(* Shared "Block:" scaffolding: the head, each arm's anchor and fallthrough
+(* Shared backtracking scaffolding: each arm's head, anchor, and fallthrough
    (next arm, last inheriting the ambient one). How an arm body renders is left
-   to [render_body] -- a backtracking box (group tier) or inline routing
-   (dispatch tier). Used by [BacktrackI] and [RouteI]. *)
+   to [render_arm_body]. Used by [BacktrackI] and [RouteI]. *)
 
 let render_block_arms ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
-    (render_body :
-      ctx_fallthrough:Fallthrough.ctx -> head:Adoc.block -> 'arm -> Adoc.block)
+    (render_arm_body : ctx_fallthrough:Fallthrough.ctx -> 'arm -> Adoc.block)
     (arms : 'arm list) : Adoc.block =
-  let label = Block.fresh_label ctx_fallthrough.namespace in
-  let level_arm = level + 1 in
-  let total = List.length arms in
-  let render_arm idx arm =
-    let next_arm =
-      if idx + 1 < total then
-        let letter = Block.arm_letter level_arm (idx + 1) in
-        Some (F.asprintf "%s-%s" label letter, letter)
+  let anchor_block = Fallthrough.fresh_block_anchor ctx_fallthrough.namespace in
+  let count_arm = List.length arms in
+  let render_arm idx_arm arm =
+    let anchor_next_opt =
+      if idx_arm + 1 < count_arm then
+        Some (Fallthrough.anchor_of_arm anchor_block (idx_arm + 1))
       else ctx_fallthrough.next
     in
-    let ctx_fallthrough = { ctx_fallthrough with next = next_arm } in
-    let prose_anchor = Block.prose_of_arm_anchor ~label ~level:level_arm idx in
-    let head =
-      Adoc.bullet_inline_block (`Ordered level_arm)
-        Adoc.(text "{empty}" ++ prose_anchor)
+    let ctx_fallthrough = { ctx_fallthrough with next = anchor_next_opt } in
+    let anchor_arm = Fallthrough.anchor_of_arm anchor_block idx_arm in
+    let prose_head =
+      if idx_arm = 0 then Adoc.text "Try:" else Adoc.text "Then, try:"
     in
-    render_body ~ctx_fallthrough ~head arm
+    let block_body = render_arm_body ~ctx_fallthrough arm in
+    Adoc.item_ordered_block ~level ~anchor:anchor_arm ~block_body prose_head
   in
-  let block_head =
-    Adoc.bullet_inline_block (`Ordered level) (Adoc.text "Block:")
-  in
-  Adoc.seq_block (block_head :: List.mapi render_arm arms)
+  Adoc.seq_block (List.mapi render_arm arms)
 
 (* Group-body tier: result/return/rule, or a backtracking [.bk-arm] block. A
    short return/result in a singleton block folds inline onto the head. *)
@@ -1766,26 +1742,15 @@ let rec render_instr_group ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
         (render_rule_instr ~level ~ctx_fallthrough instr hints id_rel notexp
            hint_input iterinstrs)
   | BacktrackI arms ->
-      let level_body = level + 2 in
+      let level_body = level + 1 in
       Nested
         (render_block_arms ~level ~ctx_fallthrough
-           (fun ~ctx_fallthrough ~head arm ->
-             let body =
-               Adoc.seq_block
-                 (List.map
-                    (render_instr ~level:level_body ~ctx_fallthrough
-                       render_instr_group)
-                    arm)
-             in
+           (fun ~ctx_fallthrough arm ->
              Adoc.seq_block
-               [
-                 head;
-                 Adoc.raw_block "+";
-                 Adoc.raw_block "[.bk-arm]";
-                 Adoc.raw_block "--";
-                 body;
-                 Adoc.raw_block "--";
-               ])
+               (List.map
+                  (render_instr ~level:level_body ~ctx_fallthrough
+                     render_instr_group)
+                  arm))
            arms)
 
 (* Dispatch tier: a rule group as a goto-xref link, or a routing block whose
@@ -1802,12 +1767,15 @@ let rec render_instr_dispatch ~(level : int)
           Adoc.(text " " ++ prose_of_group_dispatch id_rel id_rulegroup)
       else Nested (render_group_instr_dispatch ~level id_rel id_rulegroup)
   | RouteI arms ->
-      let level_body = level + 2 in
+      let level_body = level + 1 in
       Nested
         (render_block_arms ~level ~ctx_fallthrough
-           (fun ~ctx_fallthrough ~head arm ->
-             render_instrs ~block_head:(Some head) ~level:level_body
-               ~ctx_fallthrough render_instr_dispatch arm)
+           (fun ~ctx_fallthrough arm ->
+             Adoc.seq_block
+               (List.map
+                  (render_instr ~level:level_body ~ctx_fallthrough
+                     render_instr_dispatch)
+                  arm))
            arms)
 
 (* Dispatch tier, inline mode: a group's own title + body, used for the rel
@@ -1835,7 +1803,7 @@ let render_instr_dispatch_inline ~(level : int)
               (prose_of_rel_title_math rel_signature exps)
       in
       let block_head_title =
-        Adoc.bullet_inline_block (`Ordered level) Adoc.(prose_title ++ text ":")
+        Adoc.item_ordered_block ~level Adoc.(prose_title ++ text ":")
       in
       Nested
         (render_instrs ~block_head:(Some block_head_title) ~level:(level + 1)
@@ -1955,7 +1923,7 @@ let render_func_title_block (hints : Annot.hints) (id_func : id)
         [
           Adoc.inline_block Adoc.(prose_title ++ text ":");
           Adoc.raw_block "\n\n";
-          Adoc.bullet_inline_block (`Unordered 0)
+          Adoc.item_unordered_block ~level:0
             (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_param
                params);
         ]
