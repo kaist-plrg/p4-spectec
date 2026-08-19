@@ -273,7 +273,7 @@ module AL-CALL-FUNC
   // `Call_builtin_func` is an `extern relation` in watsup because a builtin's
   // meaning lives in the host interpreter (`p4spec/lib/interface/builtin/`),
   // not in the meta-language.  K therefore implements none of them: it
-  // serializes the call to JSON, shells out to `spectec-boot builtin`, and
+  // serializes the call to JSON, shells out to `spectec-boot extern`, and
   // reads the result back.  The OCaml registry is the single authority for
   // what a builtin computes, and all 44 of its entries are reachable from
   // here — not just the stdlib handful a target's `builtin dec` names.
@@ -313,19 +313,22 @@ module AL-CALL-FUNC
   // `Call_extern_func` is the hook by which a spec running under K reaches the
   // externs of the level *below* it.  In OCaml that is `Make_parametric`
   // (`p4spec/lib/backend-boot/spectec.ml:173-215`), which routes the call into
-  // a lower runner's `eval_func`; here it goes over the same wire as a builtin
-  // to `spectec-boot extern -lower SPEC`, which loads that lower spec and
-  // resolves the extern name against its ordinary `dec`s.
+  // a lower runner's `eval_func`; here it goes over the same wire, and to the
+  // same subcommand, as a builtin — `spectec-boot extern -spec SPEC`, which
+  // loads SPEC and resolves the extern name against its ordinary `dec`s.
   //
   // Unlike a builtin, this can FAIL: the reply is `{"fail": null}` rather than
   // a value, which `externFuncResult` turns into `FAIL` so it backtracks
   // through `tryNextClause` exactly like a failed clause.
   // ==========================================================================
 
+  //   `externArgs` reads `<p4prog>` because the two entries of 6-entry.k have
+  //   different externs behind them; see the rules for it in 4-extern-json.k.
   rule <k> callExternFunc(X:Id, Ts:TypList, Vs:ValList)
         => externReq(JSON2String(jsonOfExternFuncRequest(X, Ts, Vs)),
-                     externArgs(), externFuncK())
+                     externArgs(P4), externFuncK())
        ...
        </k>
+       <p4prog> P4:P4Opt </p4prog>
 
 endmodule

@@ -11,12 +11,12 @@ open Util.Source
 
    This is the mirror image of `kast.ml`: where that emits a booted program
    *into* K once, this bridges values back and forth on every call.
-   K shells out to `spectec-boot builtin` or `spectec-boot extern`, which
-   decodes a request here, invokes the OCaml side, and encodes the result
-   back.  The OCaml registry in `interface/builtin/` is thereby the single
+   K shells out to `spectec-boot extern` — one subcommand for all three
+   request kinds — which decodes a request here, invokes the OCaml side, and
+   encodes the result back.  The OCaml registry in `interface/builtin/` is thereby the single
    authority for what a builtin means; the K side holds no implementation of
    its own.  For `extern dec` / `extern relation`, the authority is instead a
-   *lower spec*, loaded by `spectec-boot extern -lower`, whose ordinary
+   *lower spec*, loaded by `spectec-boot extern -spec`, whose ordinary
    functions and relations the extern names resolve against — exactly what
    `Make_parametric` does (`backend-boot/spectec.ml:173-215`).
 

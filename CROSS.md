@@ -252,14 +252,13 @@ rather than sticking, since neither has a matching watsup clause.
 All in `p4spec/`, and all in service of K; nothing in the existing interpreter's
 behaviour changed.
 
-**Four new `spectec-boot` subcommands** ([p4spec/bin/boot.ml](p4spec/bin/boot.ml)):
+**Three new `spectec-boot` subcommands** ([p4spec/bin/boot.ml](p4spec/bin/boot.ml)):
 
 | subcommand | purpose |
 | --- | --- |
 | `kast TARGET -o F` | boot a `.watsup` (or a spec directory) and emit it as KAST JSON of sort `Script` |
 | `kast-p4 -p PROG -i INC -o F` | parse a P4 program and emit it as KAST JSON of sort `Val`, already wrapped as `someP4(...)` |
-| `builtin -spec SPEC -i REQ -o F` | evaluate one builtin call given as JSON |
-| `extern -lower SPEC -al -ali -i REQ -o F` | evaluate one `extern dec`/`extern relation` call against a **lower spec** |
+| `extern -spec SPEC -i REQ -o F` | evaluate one builtin, `extern dec` or `extern relation` call given as JSON, against SPEC, on the **P4 interface** |
 
 **Two new library modules**, exposed through `Interface.SpecTec_AL`
 ([p4spec/lib/interface/interface.ml](p4spec/lib/interface/interface.ml)):
@@ -281,10 +280,59 @@ their meaning lives *outside* the meta-language. A builtin's lives in the host
 registry (`p4spec/lib/interface/builtin/`); an extern's lives in the spec one
 level *below* the one being run — in OCaml that is `Make_parametric`
 (`backend-boot/spectec.ml`), routing into a lower runner's
-`eval_func`/`eval_rel`, which is why `extern` takes a `-lower` spec and
-`builtin` does not. K implements **none** of them, and calls out instead, so the
-OCaml stays the single authority. (An earlier revision reimplemented eight
+`eval_func`/`eval_rel`. K implements **none** of them, and calls out instead, so
+the OCaml stays the single authority. (An earlier revision reimplemented eight
 builtins natively in K; those duplicated authority and were removed.)
+
+**Two kinds of extern, and they are not the same mechanism.** The paragraph
+above describes the *meta-language* extern, where a lower spec's ordinary
+`dec`/`relation` definitions supply the meaning. The **P4 spec's own** externs —
+`ExternFunctionCall_eval_lctk`, `ExternFunctionCall_eval`, `ExternMethodCall_eval`
+— are the other kind: their meaning is the architecture model in
+`p4spec/lib/backend-sim/`, reached through the P4 interface
+(`P4.Make ()`/`Placeholder`, `backend-boot/p4.ml`), which is how `build_target`
+wires the target level of a tower. There is no lower spec involved; `-spec` is
+the P4 spec itself.
+
+`extern` therefore builds its runner with **`build_target`** on
+`P4_interface` — reusing the tower's target-level wiring rather than
+duplicating it. That one runner serves both kinds, because the interface
+governs only how *extern* names resolve: a spec declaring none of its own, like
+`examples/lower`, resolves its `dec`s and `relation`s the same either way. Hence
+the subcommand takes neither an interface nor a mode flag. (`build_null` cannot
+serve the P4 kind at all: it wires `Spectec.Make_null`, whose `eval_extern_rel`
+knows only `Call_builtin_func`.) `level.rel` is passed empty, since nothing on
+this path runs a program, and `build_target`'s SL mode is unobservable, since an
+`extern relation` dispatches to `Placeholder` from `invoke_rel` without any rule
+running under an interpreter.
+
+The two entries of §3 need one each, so `externArgs()` dispatches on `<p4prog>`
+— the same cell that already tells those entries apart. `static_assert` is the
+one such extern the type checker reaches (`Expr_eval_lctk`, in
+[spec/5-typing/5.06.2-typing-expression-eval.watsup](spec/5-typing/5.06.2-typing-expression-eval.watsup)),
+so before this dispatch existed, any program calling it type-checked as `FAIL`
+under K while passing under the OCaml — silently, for the reason in §8.
+
+**Builtins take that same subcommand.** There is no separate `builtin` command:
+`extern` handles all three request kinds, told apart by the request's own key
+(§7), so `builtinArgs()` is `extern -spec spec`. What kept them separate was
+cost, not routing — a builtin is a static registry lookup, so **only the two
+extern branches build a runner**, and the spec load rides along with it. That
+matters because a type-check run is overwhelmingly builtins — 303 builtin calls
+against 4 extern ones for `issue5231-const-int-concat.p4` — and building a
+runner per call would take each from ~13 ms to ~1.2 s, roughly 90x on the
+dominant path. The registry taken is the P4 one, a superset of the SpecTec one,
+which is what lets one command serve both.
+
+**`$print_` is the exception, and it is a quiet one.** It unparses a value back
+to P4 source driven by the spec's hints, so it does need the spec — but only the
+*unparser*, which `Interface.P4.init` installs from a parsed spec, far less than
+a runner. Skip that and nothing errors: `unparser` keeps its initial
+`fun _ -> ""` (`interface.ml:15`) and every `$print_` returns the empty string,
+which the spec then builds names out of (`$name`; a table's default action name
+in `5.14.1-typing-control-table.watsup:51`). The same program makes 90 `$print_`
+calls, and without the init its type-check goes from passing to `FAIL` with no
+diagnostic pointing anywhere near the cause.
 
 This makes K the *broader* engine on builtins: the external route reaches all 44
 entries of the OCaml registry, whereas the oracle `spectec-boot run spec-meta/al
@@ -384,9 +432,11 @@ typ   ::= ["natT"] | ["intT"] | ["boolT"] | ["textT"]
 
 The three request kinds are told apart by **which key is present**, not by a
 `"kind"` field, so a builtin request is byte-identical to what it was before
-externs existed. One shared transport in `4-extern-json.k` serves all three,
-parameterized by the subcommand string (`builtinArgs()` / `externArgs()`) and an
-`ExternKind` telling the last step which decoder to apply.
+externs existed — and that is also what lets one *subcommand* serve all three
+(§5). One shared transport in `4-extern-json.k` serves them too, parameterized
+by the args string (`builtinArgs()` / `externArgs()`, which now differ only in
+the spec they name) and an `ExternKind` telling the last step which decoder to
+apply.
 
 Format decisions worth knowing:
 
@@ -420,9 +470,13 @@ Transport mechanics:
   `"w"`, which truncates (there is no `#truncate` in K-IO). `dropBuiltinReq()`
   removes it at the end — `#mkstemp` is documented to clean up after itself, but
   K 7.1.337's LLVM backend does not.
-- The lower spec (`examples/lower`) and `./spectec-boot` are **hardcoded** in
-  `externArgs()`/`builtinCmd()`, for the same reason `entryRel()` is: K rules
-  cannot read environment variables.
+- The spec an extern resolves against, and `./spectec-boot`, are **hardcoded**
+  in `externArgs()`/`builtinCmd()`, for the same reason `entryRel()` is: K rules
+  cannot read environment variables. `externArgs()` has two rules rather than
+  one, keyed on `<p4prog>`: `noP4()` gives `-spec examples/lower` (the
+  meta-language extern), `someP4(_)` gives `-spec spec` (the P4 spec's own).
+  Only the path differs — the interface is always P4 — and that cell is the only
+  channel that varies, so a third spec still has nowhere to come from.
 
 ## 8. Known problems
 
@@ -449,6 +503,10 @@ Transport mechanics:
 - **An unknown extern name is indistinguishable from a spec-level failure.** The
   interpreter reports an undefined relation as a `Fail`, so a typo comes back as
   `{"fail": null}` with exit 0 and is silently recovered by an `otherwise`
-  clause. The child's stderr says ``relation `X` is undefined``.
-- **The lower spec is hardcoded**, so it cannot vary per target.
+  clause. The child's stderr says ``relation `X` is undefined``. This is not
+  hypothetical: it is what hid the missing P4-interface route (§5) — every
+  `static_assert` came back as a recoverable failure, so the program merely
+  failed to type-check rather than reporting a broken wire.
+- **The spec an extern resolves against is hardcoded** per entry (§7), so it
+  cannot vary per target beyond the two `<p4prog>` selects.
 

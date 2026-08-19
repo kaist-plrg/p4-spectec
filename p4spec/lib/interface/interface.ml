@@ -142,10 +142,10 @@ module SpecTec_AL = struct
 
   (* External interface for builtin and extern calls, for the K specification
      in `spec-meta-k/`.  K has no builtin implementations of its own: it
-     serializes the call and shells out to `spectec-boot builtin`, so this
+     serializes the call and shells out to `spectec-boot extern`, so this
      module is the authority for what a builtin computes.  `extern dec` /
-     `extern relation` calls go the same way, to `spectec-boot extern`, whose
-     authority is the lower spec it is given. *)
+     `extern relation` calls go to that same subcommand, whose authority is
+     the spec it is given. *)
 
   exception Extern_error = Spectec.Ali.Extern.Error
 

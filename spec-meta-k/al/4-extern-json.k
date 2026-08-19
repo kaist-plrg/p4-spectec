@@ -7,15 +7,20 @@
 // porting — such a call is serialized here, handed to `spectec-boot`, and its
 // result read back.  The OCaml stays the single authority.
 //
-// The three differ only in *who* answers:
+// All three go to `spectec-boot extern -spec SPEC` — one subcommand, which
+// tells the kinds apart by the request's own key — and differ only in *who*
+// answers:
 //
-//   - `Call_builtin_func` -> `spectec-boot builtin`, answered by the OCaml
-//     builtin registry (`p4spec/lib/interface/builtin/`).
-//   - `Call_extern_func` / `Call_extern_rel` -> `spectec-boot extern -lower
-//     SPEC`, answered by a *lower spec* whose ordinary `dec`/`relation`
-//     definitions the extern names resolve against.  This mirrors
-//     `Make_parametric` (`p4spec/lib/backend-boot/spectec.ml:173-215`), which
-//     routes the same two into a lower runner's `eval_func`/`eval_rel`.
+//   - `Call_builtin_func` -> the OCaml builtin registry
+//     (`p4spec/lib/interface/builtin/`), a static lookup that does not load
+//     SPEC at all (except for `$print_`, which unparses against it).
+//   - `Call_extern_func` / `Call_extern_rel` -> answered against SPEC on the
+//     P4 interface.  Two things can supply
+//     the meaning there, and `externArgs()` (bottom of this file) says which
+//     SPEC to load for each: a *lower spec*'s ordinary `dec`/`relation`
+//     definitions, mirroring `Make_parametric`
+//     (`p4spec/lib/backend-boot/spectec.ml:173-215`); or, for the P4 spec's own
+//     externs, the architecture model in `p4spec/lib/backend-sim/`.
 //
 // Because that is the only difference, one transport serves all three: the
 // pipeline below is parameterized by the subcommand string to run and an
@@ -364,21 +369,46 @@ module AL-EXTERN-JSON
   syntax String ::= "builtinCmd" "(" ")"      [function, total, symbol(builtinCmd)]
                   | "builtinTemplate" "(" ")" [function, total, symbol(builtinTemplate)]
                   | "builtinArgs" "(" ")"     [function, total, symbol(builtinArgs)]
-                  | "externArgs" "(" ")"      [function, total, symbol(externArgs)]
+                  | externArgs(P4Opt)         [function, total, symbol(externArgs)]
   rule builtinCmd() => "./spectec-boot"
-  //   `-spec` names the spec that `$print_` unparses against.  It is the one
+  //   Builtins go to the same `extern` subcommand as externs — one command
+  //   serves all three request kinds, told apart by the request's own key.
+  //   `-spec` names the spec that `$print_` unparses against: it is the one
   //   builtin needing more than a registry lookup, and the OCaml side loads the
-  //   spec only when a request actually names it, so passing this costs nothing
+  //   spec only when a request actually needs it, so naming it costs nothing
   //   for the other 46 builtins.  Hardcoded like the paths around it.
-  rule builtinArgs() => "builtin -spec spec"
+  rule builtinArgs() => "extern -spec spec"
   //   `#mkstemp` fills the `XXXXXX` in, so concurrent runs in one working
   //   directory get distinct request files.  `./.tmp/` must exist — the
   //   `kast-json.sh` wrapper creates it, since K rules cannot mkdir.
   rule builtinTemplate() => "./.tmp/spectec-k-XXXXXX"
-  //   The lower spec an extern call resolves against.  Hardcoded for the same
-  //   reason `builtinCmd()` is: K rules cannot read the environment, and the
-  //   `.watsup` being run does not say which spec sits below it.  See CROSS.md
-  //   — making this per-target needs a channel K does not currently have.
-  rule externArgs() => "extern -lower examples/lower -al -ali"
+  //   The spec an extern call resolves against.  Only the *path* varies, and
+  //   `<p4prog>` — the cell that already tells the two entries of 6-entry.k
+  //   apart — is what selects it:
+  //
+  //   - `noP4()`: a self-contained script (`examples/extern-call.watsup`),
+  //     whose externs mean `examples/lower`'s ordinary `dec`/`relation`
+  //     definitions.  That is `Make_parametric`'s route into a lower runner
+  //     (`p4spec/lib/backend-boot/spectec.ml:173-215`).
+  //
+  //   - `someP4(_)`: the P4 spec type-checking a program.  Its own externs
+  //     (`ExternFunctionCall_eval_lctk`, `ExternMethodCall_eval`, ...) mean the
+  //     architecture model in `p4spec/lib/backend-sim/`, so the spec to load is
+  //     `spec` itself.
+  //
+  //   `spectec-boot extern` always builds its runner on the P4 interface, which
+  //   is what resolves the second kind; the first is unaffected, since the
+  //   interface changes only how *extern* names are resolved and
+  //   `examples/lower` declares none of its own.  So neither an interface nor a
+  //   mode flag appears here.  Getting this wrong is quiet rather than loud: an
+  //   extern name the runner cannot resolve comes back as `{"fail": null}`,
+  //   indistinguishable from a spec-level failure (CROSS.md §8).
+  //
+  //   Both paths are hardcoded for the same reason `builtinCmd()` is: K rules
+  //   cannot read the environment.  `<p4prog>` is the one channel that does
+  //   vary, so a spec that is neither of these two still has nowhere to come
+  //   from.
+  rule externArgs(noP4())    => "extern -spec examples/lower"
+  rule externArgs(someP4(_)) => "extern -spec spec"
 
 endmodule

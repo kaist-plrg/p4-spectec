@@ -353,156 +353,55 @@ let kast_p4_command =
            Format.eprintf "Parse error: %s\n" (string_of_error at msg);
            exit 1)
 
-let builtin_command =
-  Core.Command.basic
-    ~summary:
-      "evaluate a single builtin call given as JSON, and print the result"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map path_in =
-       flag "-i" (required string) ~doc:"FILE read the request from FILE"
-     and path_out =
-       flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
-     and paths_spec =
-       flag "-spec" (listed string)
-         ~doc:"PATH spec the P4 builtins resolve against (for $print_)"
-     in
-     fun () ->
-       try
-         let json_request = Yojson.Safe.from_file path_in in
-         let name, targs, args =
-           match Interface.SpecTec_AL.request_of_json json_request with
-           | Builtin (name, targs, args) -> (name, targs, args)
-           | ExternFunc _ | ExternRel _ ->
-               raise
-                 (CommandError
-                    "use the `extern` subcommand for extern func/rel calls")
-         in
-         (* `$print_<X>` unparses a value back to P4 source, so unlike every
-            other builtin it needs the spec: the unparser is driven by the
-            spec's hints.  It is registered only on the P4 interface
-            (`Interface.P4.Builtin_P4_Ext`), so a request naming it takes that
-            registry instead of the SpecTec one.
-
-            The spec is loaded only for such a request, never merely because
-            `-spec` was passed.  Loading it costs ~0.85 s against ~13 ms for the
-            whole rest of a call, and a run makes hundreds of calls of which
-            only a few are `$print_`. *)
-         let call_builtin =
-           match (name, paths_spec) with
-           | "print_", [] ->
-               raise
-                 (CommandError
-                    "$print_ needs the spec: pass -spec PATH (it unparses a \
-                     value back to P4 source)")
-           | "print_", paths_spec ->
-               let spec_sl = Pass.structure ~final:true paths_spec in
-               Interface.P4.init (SL spec_sl);
-               Interface.P4.call_builtin
-           | _ -> Interface.SpecTec_AL.call_builtin
-         in
-         let value =
-           call_builtin (fun _ -> ()) Util.Source.(name $ no_region) targs args
-         in
-         let response =
-           Interface.SpecTec_AL.json_of_response value |> Yojson.Safe.to_string
-         in
-         match path_out with
-         | Some path_out ->
-             let oc = Out_channel.open_text path_out in
-             Fun.protect
-               ~finally:(fun () -> Out_channel.close oc)
-               (fun () -> Out_channel.output_string oc (response ^ "\n"))
-         | None -> print_endline response
-       with
-       (* Errors go to stderr and exit non-zero, and stdout stays empty.  K
-          reads stdout as the response and has no other channel to inspect,
-          so its only way to tell "OCaml said no" from "the wire broke" is
-          the exit code from `#systemResult`. *)
-       | CommandError msg ->
-           Format.eprintf "error: %s\n" msg;
-           exit 1
-       | Sys_error msg ->
-           Format.eprintf "File error: %s\n" msg;
-           exit 1
-       | Interface.SpecTec_AL.Extern_error msg ->
-           Format.eprintf "Extern error: %s\n" msg;
-           exit 1
-       | Yojson.Json_error msg ->
-           Format.eprintf "JSON error: %s\n" msg;
-           exit 1
-       | Util.Error.BuiltinError (at, msg) | Util.Error.InterpError (at, msg) ->
-           Format.eprintf "Builtin error: %s\n" (string_of_error at msg);
-           exit 1
-       | e ->
-           Format.eprintf "Unknown error: %s\n" (Printexc.to_string e);
-           exit 1)
-
 let extern_command =
   Core.Command.basic
     ~summary:
-      "evaluate a single extern func/rel call given as JSON, against a lower \
-       spec, and print the result"
+      "evaluate a single builtin or extern func/rel call given as JSON, on the \
+       P4 interface, and print the result"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
-     let%map paths_lower =
-       flag "-lower"
-         (one_or_more_as_list string)
-         ~doc:"PATH the lower spec the extern names resolve against"
+     let%map path_spec =
+       flag "-spec" (required string)
+         ~doc:"PATH the spec the builtin/extern names resolve against"
      and path_in =
        flag "-i" (required string) ~doc:"FILE read the request from FILE"
      and path_out =
        flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
-     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
-     and mode =
-       Command.Param.choose_one
-         [
-           flag "al" no_arg ~doc:"run AL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b AL_mode);
-           flag "sl" no_arg ~doc:"run SL interpreter"
-           |> map ~f:(fun b -> Core.Option.some_if b SL_mode);
-         ]
-         ~if_nothing_chosen:(Default_to SL_mode)
-     and interface =
-       Command.Param.choose_one
-         [
-           flag "ali" no_arg ~doc:"AL interface"
-           |> map ~f:(fun b -> Core.Option.some_if b AL_interface);
-           flag "sli" no_arg ~doc:"SL interface"
-           |> map ~f:(fun b -> Core.Option.some_if b SL_interface);
-         ]
-         ~if_nothing_chosen:(Default_to SL_interface)
-     in
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching" in
      fun () ->
        try
-         (* Unlike a builtin — a static registry lookup needing no state — an
-            extern call needs a *loaded lower spec*: `Make_parametric` routes
-            `Call_extern_func`/`Call_extern_rel` into a lower runner's
-            `eval_func`/`eval_rel` (`backend-boot/spectec.ml:173-215`), and
-            `build_null` produces exactly such a runner.  This is why the
-            subcommand is separate from `builtin`, and why it is slow: the
-            lower spec is parsed and elaborated on every call.  See CROSS.md. *)
-         let _spec, (module Runner) =
-           Backend_boot.Build.build_null ~cache:(not no_cache) mode interface
-             paths_lower
-         in
-         (* The request is a file, never argv, for the same reason as
-            `builtin_command`: mixop operator atoms render with quotes. *)
          let json_request = Yojson.Safe.from_file path_in in
+         let request = Interface.SpecTec_AL.request_of_json json_request in
+         let build_runner () =
+           Backend_boot.Build.build_target ~cache:(not no_cache)
+             {
+               layer = { specdir = path_spec; rel = "" };
+               interface = P4_interface;
+             }
+         in
          let response =
-           match Interface.SpecTec_AL.request_of_json json_request with
+           match request with
+           | Builtin (name, targs, args) ->
+               if name = "print_" then
+                 Interface.P4.init
+                   (SL (Pass.structure ~final:true [ path_spec ]));
+               let value =
+                 Interface.P4.call_builtin
+                   (fun _ -> ())
+                   Util.Source.(name $ no_region)
+                   targs args
+               in
+               Interface.SpecTec_AL.json_of_response value
            | ExternFunc (name, targs, args) -> (
+               let (module Runner) = build_runner () in
                match Runner.Interp.eval_func name targs args with
                | Pass value -> Interface.SpecTec_AL.json_of_response value
                | Fail (at, msg) ->
-                   (* A spec-level failure, not a wire error: the message has
-                      nowhere to go on the wire, so it goes to stderr while
-                      stdout carries a clean `{"fail":null}` and the exit
-                      status stays 0. *)
                    Format.eprintf "extern func %s failed: %s\n" name
                      (string_of_error at msg);
                    Interface.SpecTec_AL.json_of_response_fail ())
            | ExternRel (name, args) -> (
+               let (module Runner) = build_runner () in
                match Runner.Interp.eval_rel name args with
                | Pass values ->
                    Interface.SpecTec_AL.json_of_response_multi values
@@ -510,9 +409,6 @@ let extern_command =
                    Format.eprintf "extern rel %s failed: %s\n" name
                      (string_of_error at msg);
                    Interface.SpecTec_AL.json_of_response_fail ())
-           | Builtin _ ->
-               raise
-                 (CommandError "use the `builtin` subcommand for builtin calls")
          in
          let response = Yojson.Safe.to_string response in
          match path_out with
@@ -523,9 +419,6 @@ let extern_command =
                (fun () -> Out_channel.output_string oc (response ^ "\n"))
          | None -> print_endline response
        with
-       (* As in `builtin_command`: errors go to stderr and exit non-zero with
-          stdout empty, so K's `#systemResult` exit code distinguishes "the
-          wire broke" from a `{"fail":null}` the spec can recover from. *)
        | CommandError msg ->
            Format.eprintf "error: %s\n" msg;
            exit 1
@@ -537,6 +430,9 @@ let extern_command =
            exit 1
        | Yojson.Json_error msg ->
            Format.eprintf "JSON error: %s\n" msg;
+           exit 1
+       | BuiltinError (at, msg) | InterpError (at, msg) ->
+           Format.eprintf "Builtin error: %s\n" (string_of_error at msg);
            exit 1
        | ParseError (at, msg) ->
            Format.eprintf "Parse error: %s\n" (string_of_error at msg);
@@ -568,7 +464,6 @@ let command_core =
       ("parse", parse_command);
       ("kast", kast_command);
       ("kast-p4", kast_p4_command);
-      ("builtin", builtin_command);
       ("extern", extern_command);
     ]
 
