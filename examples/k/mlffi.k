@@ -4,7 +4,8 @@ module MLFFI-SYNTAX
   imports INT-SYNTAX
   imports STRING-SYNTAX
 
-  syntax Cmd ::= "add" Int Int
+  syntax Cmd ::= "init"
+               | "add" Int Int
                | "fib" Int
                | "upper" String
                | "describe" String
@@ -24,6 +25,20 @@ module MLFFI
 
   rule <k> C:Cmd ; Cs:Cmds => C ~> Cs ... </k>
   rule <k> .Cmds => .K ... </k>
+
+  //--------------------------------------------------------------------
+  // Initialization. Must run before any other OCaml call: it starts the
+  // OCaml runtime and resolves every callback in the shim. The shim aborts
+  // with a diagnostic if another entry point is reached first.
+  //--------------------------------------------------------------------
+  rule <k> init => .K ... </k>
+       <out> ... .List => ListItem(#callInit()) </out>
+
+  syntax Int ::= "#callInit" "(" ")" [function]
+  rule #callInit()
+    => Bytes2Int(#ffiCall(#functionAddress("ml_init_c"),
+                          .List, .List, #sint64),
+                 LE, Signed)
 
   //--------------------------------------------------------------------
   // Scalar OCaml calls. Identical in shape to plain-C FFI: the shim

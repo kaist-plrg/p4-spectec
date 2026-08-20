@@ -53,9 +53,7 @@ kompile mlffi.k --backend llvm -I "$K_INC" \
 
 Four traps, each of which produces a confusing failure:
 
-1. **`-ccopt` takes one dash, not two.** `--ccopt` is parsed as a second
-   positional argument and rejected with *"Only one main parameter allowed"*.
-   It is a hidden flag: see `kompile --help-hidden`, not `--help`.
+1. `-ccopt` is a hidden flag: see `kompile --help-hidden`, not `--help`.
 
 2. **`-rdynamic` is mandatory.** Without it the run segfaults immediately.
    `#functionAddress` is implemented with `dlsym`, which searches only the
@@ -72,8 +70,7 @@ Four traps, each of which produces a confusing failure:
 
 4. **`-lzstd` is required on OCaml 5.1.** Its runtime uses zstd for
    marshalling; omitting it gives
-   *"undefined reference to `ZSTD_createCCtx`"*. This is new in OCaml 5 — a
-   4.14 build does not need it.
+   *"undefined reference to `ZSTD_createCCtx`"*.
 
 ## Running
 
@@ -81,8 +78,12 @@ The program syntax is a `;`-separated command list. Note there is **no
 trailing separator** — `List{Cmd,";"}` is a separator-style list, and a
 trailing `;` is a parse error.
 
+**`init` must be the first command.** It starts the OCaml runtime and
+resolves every callback; the other commands assume that has happened. It
+returns `1`, which is why `1` heads the output below.
+
 ```sh
-echo -n 'add 17 25' > demo.mlffi
+echo -n 'init ; add 17 25' > demo.mlffi
 krun demo.mlffi
 ```
 
@@ -92,15 +93,16 @@ krun demo.mlffi
     .K
   </k>
   <out>
+    ListItem ( 1 )
     ListItem ( 42 )
   </out>
 </generatedTop>
 ```
 
-All four commands together:
+All commands together:
 
 ```sh
-echo -n 'add 1 2 ; fib 40 ; upper "hello, ocaml" ; describe "p4" ; add 100 -142' > demo.mlffi
+echo -n 'init ; add 1 2 ; fib 40 ; upper "hello, ocaml" ; describe "p4" ; add 100 -142' > demo.mlffi
 krun demo.mlffi
 ```
 
@@ -110,6 +112,7 @@ krun demo.mlffi
     .K
   </k>
   <out>
+    ListItem ( 1 )
     ListItem ( 3 )
     ListItem ( 102334155 )
     ListItem ( "HELLO, OCAML" )
@@ -121,6 +124,22 @@ krun demo.mlffi
 
 Use `echo -n` (or `printf`): a trailing newline is fine, but a trailing `;`
 is not.
+
+### Forgetting `init`
+
+The shim does **not** check that initialization happened. Reaching any other
+entry point first dereferences a NULL closure pointer and segfaults, with no
+indication of the real cause:
+
+```
+$ echo -n 'add 1 2' > noinit.mlffi && krun noinit.mlffi
+...  Segmentation fault
+[Error] krun: ./mlffi-kompiled/interpreter ...
+```
+
+If you hit that, check that `init` is the first command. Calling `init` more
+than once is harmless — `caml_startup` is idempotent and re-resolving the
+closures is a no-op.
 
 ## How it works
 
@@ -138,27 +157,65 @@ they cannot be called by K directly. Registration sidesteps both problems.
 
 ### C side — the shim
 
+All initialization is collected into one entry point. `ml_init_c` starts the
+runtime and resolves every callback into a file-scope global:
+
 ```c
-int64_t ml_add_c(int64_t a, int64_t b) {
-    ensure_ocaml();
-    static const value *f = NULL;
-    if (f == NULL) f = caml_named_value("ml_add");
-    return (int64_t) Int_val(caml_callback2(*f, Val_long(a), Val_long(b)));
+static const value *ml_add = NULL;
+/* ... one per callback ... */
+
+int64_t ml_init_c(void) {
+    static char *argv[] = { "k_interpreter", NULL };
+    caml_startup(argv);
+    ml_add = caml_named_value("ml_add");
+    /* ... */
+    return 1;
 }
 ```
 
-Two details matter:
+Each call site is then just the call:
 
-- **Lazy runtime startup.** The shim is linked *into* the K interpreter,
-  which owns `main()`, so `caml_startup` never runs on its own. It is called
-  on first use. The interpreter is a single long-lived process — one `pid`
-  for the whole `krun` — so `static` state persists across FFI calls and the
-  runtime starts exactly once.
+```c
+int64_t ml_add_c(int64_t a, int64_t b) {
+    return (int64_t) Int_val(caml_callback2(*ml_add, Val_long(a), Val_long(b)));
+}
+```
+
+Details that matter:
+
+- **Caching the closure pointers is safe.** `caml_named_value` returns a
+  pointer into OCaml's registered-roots table. The GC moves the closure it
+  points at, but the table slot itself is stable for the life of the process,
+  so resolving once and keeping the pointer is correct.
+- **Global state persists.** The shim is linked *into* the K interpreter,
+  which owns `main()` and is a single long-lived process — one `pid` for the
+  whole `krun`. That is what makes one-time initialization possible at all.
+- **No safety checks.** Entry points assume `init` already ran and that
+  every `caml_named_value` succeeded. Both assumptions fail as a NULL
+  dereference rather than a diagnostic — a deliberate trade for a minimal
+  per-call path. Add an initialized flag and NULL checks if you want the
+  failure mode to be legible.
 - **Never return an OCaml pointer.** The OCaml GC moves the heap, so results
   are `memcpy`'d into `malloc`'d memory, with `CAMLparam0`/`CAMLlocal2`
   registering intermediates as GC roots. K frees the buffer via `ml_free_c`.
 
+The tradeoff is the one you would expect: the K semantics is now responsible
+for calling `init` first, and nothing enforces it. In exchange, adding a
+callback means adding one `caml_named_value` line rather than another
+lazy-cache block, and every call site is one line of actual work. It is **not** a performance change — measured over
+500k calls the two versions are indistinguishable (~0.13s either way), since
+the per-call branch it removes was perfectly predicted.
+
 ### K side — `#ffiCall`
+
+`init` is a zero-argument call, so both list arguments are `.List`:
+
+```k
+rule #callInit()
+  => Bytes2Int(#ffiCall(#functionAddress("ml_init_c"),
+                        .List, .List, #sint64),
+               LE, Signed)
+```
 
 Scalars marshal in with `Int2Bytes` and out with `Bytes2Int`:
 
@@ -207,11 +264,11 @@ rather than written as one expression.
   take ASTs rather than scalars. The practical shape is a single
   `ml_eval_c(const char *) -> char *` that takes a serialized request and
   returns a serialized reply, with dispatch happening in OCaml.
-- **Threading.** The shim assumes FFI hooks are called from one thread, which
-  holds for the LLVM backend as used here. This was not tested under
-  `--enable-search` or any concurrent configuration; a multi-threaded caller
-  would need `pthread_once` around startup and `caml_c_thread_register` for
-  non-main threads.
+- **Threading.** With explicit `init` the startup race largely goes away: if
+  K calls `init` once before any other command, the globals are written
+  before any concurrent reader exists. This was still not tested under
+  `--enable-search` or any concurrent configuration, and a multi-threaded
+  caller would need `caml_c_thread_register` for non-main threads.
 - **Linking a dune-built library** (rather than a standalone `.ml`) is not
   covered here. Getting `-output-complete-obj` to work across existing dune
   targets and their transitive dependencies is the untested step.
@@ -219,5 +276,5 @@ rather than written as one expression.
 ## Cleaning
 
 ```sh
-rm -rf mlffi-kompiled mlcode.o shim.o mymod.cmi mymod.cmx mymod.o demo.mlffi
+rm -rf mlffi-kompiled mlcode.o shim.o mymod.cmi mymod.cmx mymod.o *.mlffi
 ```
