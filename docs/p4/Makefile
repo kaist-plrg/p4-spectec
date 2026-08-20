@@ -26,6 +26,7 @@ splice: spectec
 ${DRAFT}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -q \
 		-r $(ROUGE_LEXER) \
+		-a pdf-file=${DRAFT}.pdf \
 		-a rouge-css=$(ROUGE_CSS) \
 		-o $@ $<
 
@@ -33,6 +34,7 @@ ${RELEASE}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc
 	time asciidoctor -q \
 		-r $(ROUGE_LEXER) \
 		-a release \
+		-a pdf-file=${RELEASE}.pdf \
 		-a rouge-css=$(ROUGE_CSS) \
 		-o $@ $<
 
