@@ -103,13 +103,11 @@ let pow2 (add : value -> unit) (at : region) (targs : targ list)
 (* dec $bitstr_to_int(int, bitstr) : int *)
 
 let rec bitstr_to_int' (w : Bigint.t) (n : Bigint.t) : Bigint.t =
-  if Bigint.(w <= zero) then Bigint.zero
-  else
-    let two = Bigint.(one + one) in
-    let w' = pow2' w in
-    if Bigint.(n >= w' / two) then bitstr_to_int' w Bigint.(n - w')
-    else if Bigint.(n < -(w' / two)) then bitstr_to_int' w Bigint.(n + w')
-    else n
+  let two = Bigint.(one + one) in
+  let w' = pow2' w in
+  if Bigint.(n >= w' / two) then bitstr_to_int' w Bigint.(n - w')
+  else if Bigint.(n < -(w' / two)) then bitstr_to_int' w Bigint.(n + w')
+  else n
 
 let bitstr_to_int (add : value -> unit) (at : region) (targs : targ list)
     (values_input : value list) : value =
