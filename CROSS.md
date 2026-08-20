@@ -27,7 +27,7 @@ Each K file mirrors one watsup file and says so in its header comment.
 | `al/3-context.watsup` | `al/3-context.k` |
 | `al/5.1`–`5.7` | `al/5.1`–`5.6` (six files; argument handling is split across `5.2`, `5.3` and `5.5` instead of getting its own file) |
 | `al/6-entry.watsup` | `al/6-entry.k` (module `AL`, the entry module) |
-| — | `al/0-config.k` (configuration), `al/4-extern-json.k` (external interface) |
+| — | `al/0-config.k` (configuration), `al/4-extern-json.k` (external interface: codec), `al/4-extern-ffi.k` (external interface: transport) |
 
 Three structural differences from the watsup source:
 
@@ -49,7 +49,7 @@ From [al/0-config.k](spec-meta-k/al/0-config.k):
 ```k
 configuration
   <al>
-    <k> logDebug(textV("entry-al")) ~> $PGM:Script ~> afterLoad() </k>
+    <k> initFFI() ~> logDebug(textV("entry-al")) ~> $PGM:Script ~> afterLoad() </k>
     <p4prog> $P4:P4Opt </p4prog>
     <global>  <gtdenv> .Map </gtdenv> <grenv> .Map </grenv> <gfenv> .Map </gfenv> </global>
     <local>   <ltdenv> .Map </ltdenv> <lfenv> .Map </lfenv> <lvenv> .Map </lvenv> </local>
@@ -58,10 +58,13 @@ configuration
     <callstack> .List </callstack>
     <log>       .List </log>
     <result>    .K    </result>
-    <builtinreq> ""   </builtinreq>
+    <ffiinit>   0     </ffiinit>
   </al>
 ```
 
+- **`initFFI()`** — at the very *head* of `<k>`, ahead of `$PGM`, so the OCaml
+  runtime behind the external interface is started before any rule that could
+  reach a builtin (§7). Ordering is guaranteed by `<k>` sequencing, not a flag.
 - **`<k>`** — the AL script arrives as `$PGM` and is *consumed* by loading:
   [al/3-context.k](spec-meta-k/al/3-context.k) peels definitions off its head
   into the global cells (this is `$load` / `$load_typdef` / `$load_reldef` /
@@ -79,7 +82,9 @@ configuration
 - **`<log>`** — where `debug` premises accumulate, via a `logDebug(Val)` item.
 - **`<result>`** — the final answer; `krun` prints the whole configuration, so
   this is the cell to read.
-- **`<builtinreq>`** — the path of the scratch file shared by external calls (§7).
+- **`<ffiinit>`** — `ml_init_c`'s return value: `1` once `initFFI()` has
+  reduced, so the final configuration carries proof that the OCaml runtime came
+  up. A `0` means it never did (§7).
 
 ## 3. Running
 
@@ -92,17 +97,30 @@ make k-clean                                # drop al-kompiled/ and .tmp/
 
 ### Runtime dependency
 
-**A K run requires `./spectec-boot` to exist, and must start from the repo
-root.** The path is hardcoded in `builtinCmd()`, because K rules cannot read
-environment variables — so unlike `kast-json.sh` there is no `$SPECTEC_BOOT`
-override on this path. Build it with `make boot` (never `dune build` directly;
+**A K run must start from the repo root**, because the spec paths an external
+call resolves against (`builtinSpec()`/`externSpec()`) are relative and
+hardcoded — K rules cannot read environment variables, so unlike `kast-json.sh`
+there is no override on this path.
+
+**`./spectec-boot` must still exist**, though no longer for external calls: the
+two parser wrappers (§6) invoke it to boot `$PGM` and parse `$P4`, entirely
+outside the interpreter. Build it with `make boot` (never `dune build` directly;
 note that `make clean` leaves a stale `./spectec-boot` behind).
 
-Scratch files go under **`./.tmp/`** (gitignored). The directory is
-created by `kast-json.sh`, because K rules cannot `mkdir` yet the request file is
-written from inside K. Running `krun` without that wrapper — against a pre-booted
-`.json`, say — means creating `./.tmp/` yourself first, or the `#mkstemp` in
-`callBuiltinFunc` returns an `IOError` and the term sticks there.
+**`al-kompiled/interpreter` embeds a snapshot of the OCaml implementation.**
+`kffi.exe.o` — the whole of `p4spec/` as one object, OCaml runtime included — is
+linked into it at kompile time (§7). So after editing `p4spec/`, `make boot`
+alone leaves a **stale interpreter** that silently keeps using the old builtins.
+The workflow is:
+
+```sh
+make boot && make k-build
+```
+
+Scratch files go under **`./.tmp/`** (gitignored), created by `kast-json.sh`.
+Nothing writes there from inside K any more — external calls cross by FFI rather
+than through a request file — but both parser wrappers `mktemp` there before K
+starts, so running `krun` without them means creating it yourself.
 
 ### A simple AL program with a `main`
 
@@ -260,6 +278,18 @@ behaviour changed.
 | `kast-p4 -p PROG -i INC -o F` | parse a P4 program and emit it as KAST JSON of sort `Val`, already wrapped as `someP4(...)` |
 | `extern -spec SPEC -i REQ -o F` | evaluate one builtin, `extern dec` or `extern relation` call given as JSON, against SPEC, on the **P4 interface** |
 
+The first two are what the parser wrappers (§6) invoke. The third is **no longer
+on the K path** — external calls cross by FFI now (§7) — but it is kept: it is
+the same dispatch, reachable from a shell, so a single request can be replayed
+by hand against a `.json` file when debugging the wire.
+
+**A fourth binary target**, [p4spec/bin/kffi.ml](p4spec/bin/kffi.ml), built by
+dune as an *object* rather than an executable (`(modes object)`, which bundles
+the OCaml runtime in). It is the in-process equivalent of `extern`: same wire,
+same dispatch, but registered under the name `ml_eval` for the C shim to reach
+via `caml_callback2`, and memoizing its runners since the process now outlives
+the call (§7).
+
 **Two new library modules**, exposed through `Interface.SpecTec_AL`
 ([p4spec/lib/interface/interface.ml](p4spec/lib/interface/interface.ml)):
 
@@ -408,7 +438,9 @@ runs as a child instead, with the `rm` after it and its status passed on.
 
 The codec is [al/4-extern-json.k](spec-meta-k/al/4-extern-json.k) on the K side
 and [extern.ml](p4spec/lib/interface/spectec/ali/extern.ml) on the OCaml side;
-both document the format in full at their head.
+both document the format in full at their head. The *transport* — how a request
+actually crosses — is [al/4-extern-ffi.k](spec-meta-k/al/4-extern-ffi.k),
+[ffi/shim.c](spec-meta-k/ffi/shim.c) and [kffi.ml](p4spec/bin/kffi.ml).
 
 ```
 request  ::= {"builtin":     <id>, "targs": [typ, ...], "args": [val, ...]}
@@ -432,11 +464,10 @@ typ   ::= ["natT"] | ["intT"] | ["boolT"] | ["textT"]
 
 The three request kinds are told apart by **which key is present**, not by a
 `"kind"` field, so a builtin request is byte-identical to what it was before
-externs existed — and that is also what lets one *subcommand* serve all three
-(§5). One shared transport in `4-extern-json.k` serves them too, parameterized
-by the args string (`builtinArgs()` / `externArgs()`, which now differ only in
-the spec they name) and an `ExternKind` telling the last step which decoder to
-apply.
+externs existed — and that is also what lets one *entry point* serve all three
+(§5). One shared transport in `4-extern-ffi.k` serves them too, parameterized by
+the spec path (`builtinSpec()` / `externSpec()`, which differ only in what they
+name) and an `ExternKind` telling the last step which decoder to apply.
 
 Format decisions worth knowing:
 
@@ -453,57 +484,122 @@ Format decisions worth knowing:
   builtin derives its result's `note` type from them. Argument values, by
   contrast, cross *without* their `note.typ`; `extern.ml` rebuilds a structural
   placeholder and records the invariant that no builtin or extern reads one.
-- **`{"fail": null}` is a spec-level failure**, arriving on stdout with exit
-  status 0, and becomes K's `FAIL` so it backtracks through `tryNextRul` like any
-  failed rule. A **non-zero exit is reserved for "the wire broke"** and has no K
-  rule at all, so a genuine defect sticks visibly with the child's stderr in the
-  term. `Fail`'s region and message are lost crossing the wire (K's `FAIL` is
-  nullary) and go to the child's stderr.
+- **`{"fail": null}` is a spec-level failure** and becomes K's `FAIL`, so it
+  backtracks through `tryNextRul` like any failed rule. **"The wire broke" is a
+  third reply shape**, `{"error": <diagnostic>}`, which has no K rule at all, so
+  a genuine defect sticks visibly in `<k>` carrying the diagnostic — and, unlike
+  the old non-zero-exit convention, that diagnostic is now in the configuration
+  dump rather than on a lost child's stderr. `kffi.ml` also echoes it to stderr
+  as it happens, since a K run can be minutes long. `Fail`'s region and message
+  are still lost crossing the wire (K's `FAIL` is nullary) and go to stderr.
 
 Transport mechanics:
 
-- The request goes through a **temp file, never argv**: operator atoms render
-  with quotes (`':'`) and `#system` passes its argument through a shell, which
-  fails on those.
-- **One request file per run, not per call.** `#mkstemp` mints it on the first
-  call, `<builtinreq>` remembers the path, and later calls reopen it in mode
-  `"w"`, which truncates (there is no `#truncate` in K-IO). `dropBuiltinReq()`
-  removes it at the end — `#mkstemp` is documented to clean up after itself, but
-  K 7.1.337's LLVM backend does not.
-- The spec an extern resolves against, and `./spectec-boot`, are **hardcoded**
-  in `externArgs()`/`builtinCmd()`, for the same reason `entryRel()` is: K rules
-  cannot read environment variables. `externArgs()` has two rules rather than
-  one, keyed on `<p4prog>`: `noP4()` gives `-spec examples/lower` (the
-  meta-language extern), `someP4(_)` gives `-spec spec` (the P4 spec's own).
-  Only the path differs — the interface is always P4 — and that cell is the only
-  channel that varies, so a third spec still has nowhere to come from.
+The crossing is K's **FFI** (libffi), which can call any plain C ABI function.
+OCaml cannot expose one directly, so a thin C shim sits between:
+
+```
+K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback2-->  p4spec/bin/kffi.ml
+```
+
+This replaced a `#system("./spectec-boot extern ...")` shell-out that forked a
+fresh process per call. The shape is the one [examples/k/](examples/k/) proves
+out and its README recommends for real use: **one** `ml_eval_c(spec, req) ->
+char *` carrying a serialized request, with dispatch in OCaml.
+
+- **The OCaml runtime lives inside the interpreter.** `kffi.exe.o` is built by
+  dune with `(modes object)`, which bundles the whole runtime into one object,
+  and `kompile -ccopt` links it and `shim.o` into `al-kompiled/interpreter`.
+  `krun` is then a single long-lived process, which is what makes everything
+  below possible — and what couples the interpreter to `p4spec/` (§3).
+- **Initialization is explicit.** The shim assumes `ml_init_c` has run
+  (`caml_startup` plus resolving the `ml_eval` closure) and, following the
+  example, other entry points do not check. K guarantees it by *sequencing*:
+  `initFFI()` sits at the head of `<k>`, so nothing can be touched until it
+  reduces. Its result lands in `<ffiinit>` rather than being dropped — required,
+  since `#ffiCall` is a `[function]` and an unconsumed pure term can simply be
+  discarded, and useful, since `<ffiinit> 1 </ffiinit>` is then proof in the
+  final configuration that the runtime came up. Every run pays this, including
+  ones making no external call at all; `caml_startup` builds no spec, so it is
+  small.
+- **The transport is a chain of pure `[function]`s**, not `<k>`-cell rules. The
+  old chain had to be cell rules — `#write`/`#close` have sort `K`, and
+  `#system` returns a `#systemResult` needing a continuation — and neither
+  constraint survives, since `#ffiCall` is a `[function]`. So an external call
+  is one atomic rewrite step rather than six, and five intermediate `KItem`
+  sorts, the `<builtinreq>` cell, its first-call/later-call split and
+  `dropBuiltinReq()` are all gone.
+- **Effect order is forced by threading**, the `#seqString`/`#seqBytes` trick
+  from the example: `#nativeWrite`, `#nativeRead` and `#free` return `K` and are
+  pure to K, so each is threaded through an argument position that must be
+  evaluated before the result escapes. This is why the chain is several small
+  helpers rather than one expression.
+- **Buffers.** The spec path and the request are `#alloc`'d under *distinct*
+  key constructors (`allocKeySpec`/`allocKeyReq`) so a request equal to its spec
+  path cannot collide on one buffer; only addresses and keys travel down the
+  chain, never the `Bytes` terms, since freeing a buffer a live `Bytes` still
+  references is UB. All three buffers — the shim's `malloc`'d reply and the two
+  inputs — are released before the decoded string escapes. Safety relies on
+  there never being two crossings in flight, which holds because a `[function]`
+  application reduces within one rewrite step and the LLVM backend is
+  single-threaded: **`--enable-search` is unsupported.**
+- **`-rdynamic` is mandatory** at kompile time. `#functionAddress` is `dlsym`,
+  which searches only the *dynamic* symbol table, and nothing in the interpreter
+  references these symbols, so without it the linker drops them and the run
+  segfaults immediately. `make k-build` asserts `nm -D … | grep ml_eval_c` after
+  kompiling for exactly this reason.
+- **`ml_eval` is total.** An OCaml exception escaping through `caml_callback`
+  has no handler in C and aborts the interpreter with no configuration dump, so
+  `kffi.ml` mirrors every one of `boot.ml`'s handlers but returns the
+  `{"error": …}` value described above instead of `exit 1`. The shim adds
+  `caml_callback2_exn` + `Is_exception_result` as defence in depth.
+- **Runners are memoized** per spec path in `kffi.ml`, so an extern call
+  elaborates the lower spec once rather than per call. Building a runner also
+  installs the `$print_` unparser (`Runner_target.init` → `Interface.init`), so
+  no separate printer-init table is needed. Caveat: `Interface.P4.unparser` is a
+  process-global ref, so if one run built runners for *two* paths the last would
+  win; `kffi.ml` warns on stderr when that happens.
+- The spec an extern resolves against is still **hardcoded**, for the same
+  reason `entryRel()` is: K rules cannot read environment variables.
+  `externSpec()` has two rules keyed on `<p4prog>`: `noP4()` gives
+  `examples/lower` (the meta-language extern), `someP4(_)` gives `spec` (the P4
+  spec's own). `builtinSpec()` is always `spec`. Only the path differs — the
+  interface is always P4 — and that cell is the only channel that varies, so a
+  third spec still has nowhere to come from.
 
 ## 8. Known problems
 
-- **`#system` leaks a file descriptor per call** (K 7.1.337, LLVM backend).
-  After ~1024 external calls the interpreter aborts with `*** bit out of range 0 FD_SETSIZE on fd_set ***` and `krun` then fails to parse an empty
-  `result.kore`. Confirmed by a synthetic probe independent of the P4 spec:
-  a `.watsup` with one builtin call per recursive step passes at N=300 and aborts
-  at N=1200, with `/proc/<interp>/fd` climbing monotonically 4 → 1022.
-  **This, not correctness, is the current ceiling on program size under K**:
-  `action-bind.p4` type-checks, but `forloop1.p4` (which `#include`s `core.p4`,
-  hence far more builtin calls) dies here rather than on a spec error. The cause
-  is in the K runtime, so it cannot be fixed in this repo; memoizing pure builtin
-  replies in a K cell would cut the call count enough, but that has been
-  deliberately declined.
-- **`$fresh_typeId` is wrong under K.** It closes over a per-process `int ref`
-  (`builtin/call.ml`), and every `#system` call is a fresh process, so it returns
-  the same value every time. Fixing it means carrying the counter across the wire
-  or moving to a persistent co-process.
-- **One process spawn per call** (~13 ms measured). Type-checking makes 62–234
-  builtin calls for the programs measured, so this costs only ~1–3 s — not the
-  blocker it was expected to be. An **extern** call is far worse: it parses and
-  elaborates the whole lower spec from scratch, and the lower runner's caches die
-  with the process.
+The first three problems here were properties of the old `#system` transport and
+are **resolved** by the FFI crossing (§7). They are recorded, struck through,
+because each shaped decisions elsewhere in the port.
+
+- ~~**`#system` leaks a file descriptor per call**~~ (K 7.1.337, LLVM backend).
+  After ~1024 external calls the interpreter aborted with `*** bit out of range 0 FD_SETSIZE on fd_set ***`, and `krun` then failed to parse an empty
+  `result.kore`. **This, not correctness, was the ceiling on program size under
+  K**: `action-bind.p4` type-checked, but `forloop1.p4` (which `#include`s
+  `core.p4`, hence far more builtin calls) died here rather than on a spec
+  error. The cause was in the K runtime and could not be fixed in this repo;
+  memoizing pure builtin replies in a K cell would have cut the call count
+  enough, but that was deliberately declined. **Resolved:** an FFI call consumes
+  no file descriptor, so `/proc/<interp>/fd` stays flat rather than climbing
+  4 → 1022.
+- ~~**`$fresh_typeId` is wrong under K**~~. It closes over a per-process
+  `int ref` (`builtin/call.ml`), and every `#system` call was a fresh process,
+  so it returned the same value every time. **Resolved:** the OCaml runtime now
+  lives for the whole run, so the counter advances. This is the cleanest
+  observable proof that state persists across calls.
+- ~~**One process spawn per call**~~ (~13 ms measured), with an **extern** call
+  far worse — it parsed and elaborated the whole lower spec from scratch, and
+  the lower runner's caches died with the process. **Resolved:** no `fork`/`exec`
+  at all, and `kffi.ml` memoizes the runner per spec path, so the lower spec is
+  elaborated once.
+
+Standing problems:
+
 - **An unknown extern name is indistinguishable from a spec-level failure.** The
   interpreter reports an undefined relation as a `Fail`, so a typo comes back as
-  `{"fail": null}` with exit 0 and is silently recovered by an `otherwise`
-  clause. The child's stderr says ``relation `X` is undefined``. This is not
+  `{"fail": null}` and is silently recovered by an `otherwise` clause; stderr
+  says ``relation `X` is undefined``. This is not
   hypothetical: it is what hid the missing P4-interface route (§5) — every
   `static_assert` came back as a recoverable failure, so the program merely
   failed to type-check rather than reporting a broken wire.

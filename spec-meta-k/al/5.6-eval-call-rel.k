@@ -153,7 +153,7 @@ module AL-CALL-REL
   // `Call_extern_rel` is an `extern relation`, dispatched over the external
   // interface like its sibling `Call_extern_func` (5.5-eval-call-func.k): the
   // call is serialized and answered by the *lower spec* named by
-  // `externArgs()`, mirroring `Make_parametric`'s route into a lower runner's
+  // `externSpec()`, mirroring `Make_parametric`'s route into a lower runner's
   // `eval_rel` (`p4spec/lib/backend-boot/spectec.ml:196-215`).
   //
   // A relation yields `val*` rather than a single value, so the reply's `ok`
@@ -176,7 +176,7 @@ module AL-CALL-REL
   //   (spec-meta/common/4-relation.watsup:26-30).
   rule <k> callExternRel(X:Id, Vs:ValList)
         => externReq(JSON2String(jsonOfExternRelRequest(X, Vs)),
-                     externArgs(P4), externRelK())
+                     externSpec(P4), externRelK())
        ...
        </k>
        <p4prog> P4:P4Opt </p4prog>

@@ -11,18 +11,13 @@
 # file, leaving no way to hand it a -d of its own.  $SPECTEC_BOOT overrides the
 # path to spectec-boot when it is not ./spectec-boot.
 #
-# Scratch files go under ./.tmp/, not /tmp.  This script also creates that
-# directory, because a spec that calls a builtin writes its request there from
-# inside K (al/5.5-eval-call-func.k), and K rules cannot mkdir.
+# Scratch files go under ./.tmp/, not /tmp.  This script creates that directory
+# and mktemps the booted JSON in it; kast-p4.sh does the same for $P4.  Nothing
+# writes there from inside K any more -- external calls cross by FFI rather
+# than through a request file (al/4-extern-ffi.k).
 set -e
 
 mkdir -p ./.tmp
-
-# Sweep request files left by earlier runs.  K removes its own on the way out
-# (`finish()` in al/6-entry.k), but a run that dies on a stuck term never gets
-# there, so failed runs would otherwise accumulate one file each.  Anything
-# still here belongs to a finished process, since krun is synchronous.
-rm -f ./.tmp/spectec-k-??????
 
 # krun insists $PGM be a file, so a whole spec directory (`spec/`) cannot be
 # named on its command line.  `make k-typecheck` passes a one-line stub file

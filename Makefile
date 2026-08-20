@@ -145,19 +145,37 @@ promote:
 # k-run and k-typecheck clean up .tmp/ themselves; k-clean still removes it, for
 # the leftovers a run that died on a stuck term deliberately keeps.
 #
-# All must run from the repo root: a spec that calls a builtin shells out to
-# ./spectec-boot at that relative path.
+# All must run from the repo root: the spec paths a builtin or extern call
+# resolves against (`builtinSpec()`/`externSpec()` in al/4-extern-ffi.k) are
+# relative to it.
+#
+# `al-kompiled/interpreter` embeds a *snapshot* of the OCaml implementation --
+# kffi.exe.o is linked into it -- so after editing p4spec/ the workflow is
+# `make boot && make k-build`.  `make boot` alone leaves a stale interpreter
+# that silently keeps using the old builtins.
 
 KDEFDIR = al-kompiled
 KENTRY = spec-meta-k/al/6-entry.k
 KTMP = .tmp
 
-# Drop the scratch directory once rewriting is over.  It cannot go earlier: the
-# parsers run before K starts, and a builtin call mints its request file inside
-# $(KTMP) mid-run (`builtinTemplate()` in al/4-extern-json.k), so the directory
-# has to outlive krun.  Everything that creates a file in there also removes it
-# -- K's request file in `dropBuiltinReq()` (al/6-entry.k), the booted JSON and
-# the spec stub in kast-json.sh -- so by now it is empty.
+# The FFI boundary, linked into the interpreter (CROSS.md §7).
+#
+#   kffi.exe.o  the whole OCaml implementation as one object, runtime included
+#               (`(modes object)` in p4spec/bin/dune -- there is no .exe)
+#   shim.o      the C ABI outside / caml_callback inside
+#
+# Recursive `=`, so `opam exec` and `readlink` only run when a K target
+# actually expands them.
+KFFI_OBJ = _build/default/p4spec/bin/kffi.exe.o
+KSHIM_SRC = spec-meta-k/ffi/shim.c
+KSHIM_OBJ = spec-meta-k/ffi/shim.o
+OCAMLWHERE = $(shell opam exec --switch=5.1.0 -- ocamlopt -where)
+K_INC = $(shell dirname $$(dirname $$(readlink -f $$(which kompile))))/include/kframework/builtin
+
+# Drop the scratch directory once rewriting is over.  Nothing mints a file in
+# there mid-run any more -- external calls cross by FFI, not through a request
+# file -- but the two parser scripts still mktemp there before K starts, and
+# both remove what they create, so by now it is empty.
 #
 # `rmdir`, not `rm -rf`: a run that dies on a stuck term never reaches K's own
 # cleanup, and those leftovers are worth reading.  Failing to remove a non-empty
@@ -171,12 +189,44 @@ KTMPDROP = rmdir $(KTMP) 2>/dev/null || true
 SPEC_K = spec
 P4INCLUDE = p4c/p4include
 
+# Link the OCaml implementation and the C shim into the interpreter.
+#
+# Gotchas, each of which otherwise produces a confusing failure
+# (examples/k/README.md):
+#
+#   - `-rdynamic` is MANDATORY.  `#functionAddress` is `dlsym`, which searches
+#     only the *dynamic* symbol table, and nothing in the interpreter
+#     references these symbols, so without it the linker drops them and the run
+#     segfaults immediately.  Hence the `nm -D` assertion below.
+#   - `-ccopt` is a hidden kompile flag: `kompile --help-hidden`, not `--help`.
+#   - `-lzstd` is required on OCaml 5.1 (its marshaller uses zstd); `-lgmp` for
+#     zarith.
+#   - `--backend llvm` is explicit: the FFI hooks are not implemented in the
+#     Haskell backend.
 .PHONY: k-build
-k-build: $(BOOT)
-	kompile $(KENTRY) --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR)
+k-build: $(BOOT) $(KFFI_OBJ) $(KSHIM_OBJ)
+	kompile $(KENTRY) --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR) \
+	  --backend llvm -I "$(K_INC)" \
+	  -ccopt $(KSHIM_OBJ) -ccopt $(KFFI_OBJ) \
+	  -ccopt -L"$(OCAMLWHERE)" \
+	  -ccopt -lasmrun -ccopt -lzstd -ccopt -lgmp \
+	  -ccopt -lm -ccopt -ldl -ccopt -lpthread \
+	  -ccopt -rdynamic
+	@nm -D $(KDEFDIR)/interpreter | grep -q ml_eval_c \
+	  || { echo "####> ml_eval_c not in dynamic symbol table -- -rdynamic missing?"; false; }
 
-# `boot` is a prerequisite of every K target: builtin calls shell out to it.
-# Named as a file target so it is not rebuilt when already present.
+# Always delegated to dune, which decides whether anything actually changed.
+.PHONY: $(KFFI_OBJ)
+$(KFFI_OBJ):
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/kffi.exe.o && echo
+
+$(KSHIM_OBJ): $(KSHIM_SRC)
+	gcc -c -fPIC -O2 -I "$(OCAMLWHERE)" -o $@ $<
+
+# `boot` is a prerequisite of every K target: kast-json.sh and kast-p4.sh still
+# invoke ./spectec-boot to boot $PGM and parse $P4, entirely outside the
+# interpreter.  Named as a file target so it is not rebuilt when already
+# present.
 $(BOOT):
 	$(MAKE) boot
 
@@ -221,4 +271,4 @@ clean:
 
 .PHONY: k-clean
 k-clean:
-	rm -rf $(KDEFDIR) $(KTMP)
+	rm -rf $(KDEFDIR) $(KTMP) $(KSHIM_OBJ)

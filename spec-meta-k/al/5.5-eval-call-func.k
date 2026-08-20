@@ -5,11 +5,11 @@
 // Call_func_dispatch, Call_func.
 
 requires "5.4-eval-prem.k"
-requires "4-extern-json.k"
+requires "4.2-extern-ffi.k"
 
 module AL-CALL-FUNC
   imports AL-PREM
-  imports AL-EXTERN-JSON
+  imports AL-EXTERN-FFI
 
   // ==========================================================================
   // Call-frame stack
@@ -198,10 +198,10 @@ module AL-CALL-FUNC
   // `Call_extern_func` and `Call_builtin_func` are both `extern relation`s in
   // watsup: their meaning lives outside the meta-language, so K implements
   // neither and calls out over the external interface instead (the transport
-  // is in 4-extern-json.k).  They differ only in who answers —
+  // is in 4.1-extern-json.k).  They differ only in who answers —
   // `Call_builtin_func` reaches the OCaml builtin registry
   // (`p4spec/lib/interface/builtin/`), while `Call_extern_func` reaches the
-  // *lower spec* named by `externArgs()`, mirroring `Make_parametric`.
+  // *lower spec* named by `externSpec()`, mirroring `Make_parametric`.
   //
   // Both are wired below; see 5.6-eval-call-rel.k for the matching
   // `Call_extern_rel`.  One semantic difference is worth keeping in view: a
@@ -283,7 +283,7 @@ module AL-CALL-FUNC
   // so it only runs the eight that spec-meta's stdlib declares.  A target
   // calling, say, `$text_to_int` works under K and fails under the oracle.
   //
-  // The codec is in 4-extern-json.k, which documents the wire format; its
+  // The codec is in 4.1-extern-json.k, which documents the wire format; its
   // OCaml counterpart is `p4spec/lib/interface/spectec/ali/extern.ml`.
   //
   // Unlike everywhere else in this port, type arguments are *not* ignored.  A
@@ -291,19 +291,19 @@ module AL-CALL-FUNC
   // (`lists.ml:14-16`, `maps.ml:29,67,72`), and the host runs a typed value
   // representation, so `TypList` goes out on the wire faithfully.
   //
-  // RUNTIME DEPENDENCY: `./spectec-boot` must exist and runs must start from
+  // RUNTIME DEPENDENCY: the OCaml implementation must be linked into
+  // `al-kompiled/interpreter` (`make k-build`), and the spec paths named by
+  // `builtinSpec()`/`externSpec()` are relative, so runs must still start from
   // the repo root.  K rules cannot read environment variables, so unlike
-  // `kast-json.sh` there is no `$SPECTEC_BOOT` override available here.  The
-  // request file lives under `./.tmp/` for the same reason — a path relative
-  // to the working directory, kept inside the project rather than in `/tmp`.
+  // `kast-json.sh` there is no override available here.
   // ==========================================================================
 
-  //   The transport itself — request file, `#system`, reply decoding — lives
-  //   in 4-extern-json.k, next to the codec it serves and shared with the
-  //   two extern kinds.  All that is left here is to say what to send and how
-  //   the reply should be read.
+  //   The transport itself — the FFI crossing and reply decoding — lives in
+  //   4.2-extern-ffi.k, next to the codec it serves and shared with the two
+  //   extern kinds.  All that is left here is to say what to send and how the
+  //   reply should be read.
   rule <k> callBuiltinFunc(X:Id, Ts:TypList, Vs:ValList)
-        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), builtinArgs(), builtinK())
+        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), builtinSpec(), builtinK())
        ...
        </k>
 
@@ -314,19 +314,19 @@ module AL-CALL-FUNC
   // externs of the level *below* it.  In OCaml that is `Make_parametric`
   // (`p4spec/lib/backend-boot/spectec.ml:173-215`), which routes the call into
   // a lower runner's `eval_func`; here it goes over the same wire, and to the
-  // same subcommand, as a builtin — `spectec-boot extern -spec SPEC`, which
-  // loads SPEC and resolves the extern name against its ordinary `dec`s.
+  // same `ml_eval`, as a builtin — which loads SPEC and resolves the extern
+  // name against its ordinary `dec`s.
   //
   // Unlike a builtin, this can FAIL: the reply is `{"fail": null}` rather than
   // a value, which `externFuncResult` turns into `FAIL` so it backtracks
   // through `tryNextClause` exactly like a failed clause.
   // ==========================================================================
 
-  //   `externArgs` reads `<p4prog>` because the two entries of 6-entry.k have
-  //   different externs behind them; see the rules for it in 4-extern-json.k.
+  //   `externSpec` reads `<p4prog>` because the two entries of 6-entry.k have
+  //   different externs behind them; see the rules for it in 4.2-extern-ffi.k.
   rule <k> callExternFunc(X:Id, Ts:TypList, Vs:ValList)
         => externReq(JSON2String(jsonOfExternFuncRequest(X, Ts, Vs)),
-                     externArgs(P4), externFuncK())
+                     externSpec(P4), externFuncK())
        ...
        </k>
        <p4prog> P4:P4Opt </p4prog>
