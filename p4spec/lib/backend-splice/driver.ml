@@ -28,6 +28,7 @@ let splicers =
 
 let init ?(context : Ctx.t = Ctx.empty) (spec_el : El.spec) (spec_pl : Pl.spec)
     : unit =
+  Ctx.reset_anchors context;
   List.iter
     (fun (module S : SPLICER) -> S.init ~context spec_el spec_pl)
     splicers

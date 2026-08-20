@@ -156,6 +156,7 @@ module Make
         keys
         |> List.filter_map (fun key ->
                C.anchor !render_context (K.to_anchor key))
+        |> List.filter (Ctx.claim_anchor !render_context)
       in
       match anchors with
       | [] -> ""

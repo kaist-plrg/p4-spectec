@@ -157,11 +157,8 @@ let () =
       }
   in
   let context =
-    Backend_splice.Ctx.
-      {
-        anchors_prose = Backend_splice.Ctx.empty_anchors;
-        anchors_latex = latex;
-      }
+    Backend_splice.Ctx.make ~anchors_prose:Backend_splice.Ctx.empty_anchors
+      ~anchors_latex:latex
   in
   Backend_splice.Driver.init ~context spec [];
   print_endline (splice skeleton);

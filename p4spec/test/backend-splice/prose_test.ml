@@ -48,8 +48,8 @@ let () =
       }
   in
   let context =
-    Backend_splice.Ctx.
-      { anchors_prose; anchors_latex = Backend_splice.Ctx.empty_anchors }
+    Backend_splice.Ctx.make ~anchors_prose
+      ~anchors_latex:Backend_splice.Ctx.empty_anchors
   in
   let source =
     Backend_splice.Source.{ file = "fixture.adoc"; s = skeleton; i = 0 }

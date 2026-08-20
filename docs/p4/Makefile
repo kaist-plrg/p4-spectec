@@ -17,7 +17,9 @@ spectec:
 splice: spectec
 	rm -r sections || true
 	cp -r sections-skeleton sections
-	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "-splice {}" | tr '\n' ' '); \
+	SPLICEFILES=$$(ruby -rasciidoctor -e \
+		'Asciidoctor.load_file(ARGV[0], safe: :unsafe, parse: true).references[:includes].each_key { |path| puts "-splice #{path}.adoc" }' \
+		${SPEC}.adoc | tr '\n' ' '); \
 	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
 	python3 text_missing.py > text.missing
 
