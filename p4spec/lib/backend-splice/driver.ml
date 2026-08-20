@@ -10,6 +10,7 @@ let splicers =
     (module Rel_title.Source.Splicer : SPLICER);
     (module Rel_title.Latex.Splicer : SPLICER);
     (module Rel_title.Prose.Splicer : SPLICER);
+    (module Rulegroup_else.Prose.Splicer : SPLICER);
     (module Rulegroup.Source.Splicer : SPLICER);
     (module Rulegroup.Latex.Splicer : SPLICER);
     (module Rulegroup.Prose.Splicer : SPLICER);

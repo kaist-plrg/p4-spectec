@@ -1048,19 +1048,20 @@ and render_instrs ?(level : int = 0) ?(block_head : Adoc.block option = None)
 
      . Otherwise: return false. *)
 
-and render_elseblock ?(anchor : string option = None)
+and render_elseblock ?(anchor_else : string option = None)
+    ?(anchors : anchors = Adoc.subject_name)
     ~(ctx_fallthrough : Fallthrough.ctx) render_instr_tier
     (elseblock_opt : 'instr_tier block option) : string =
   match elseblock_opt with
   | None | Some [] -> ""
   | Some block ->
       let anchor_prose =
-        match anchor with
+        match anchor_else with
         | Some a -> F.asprintf "+++<span id=\"%s\"></span>+++" a
         | None -> ""
       in
       "\n\n" ^ adoc_ordered_bullet 0 ^ anchor_prose ^ "Otherwise:"
-      ^ Adoc.ser_block
+      ^ Adoc.ser_block ~anchor:anchors
           (render_instrs ~level:1 ~ctx_fallthrough render_instr_tier block)
 
 (* Iterations *)
@@ -1845,6 +1846,16 @@ let render_rulegroup ?(anchors = Adoc.subject_name) (hints : Annot.hints)
   let body = render_instrs ~ctx_fallthrough render_instr_group block in
   title ^ ":\n" ^ Adoc.ser_block ~anchor:anchors body
 
+let render_rulegroup_else ?(anchors : anchors = Adoc.subject_name) (id_rel : id)
+    (elseblock : block_dispatch) : string =
+  render_elseblock
+    ~anchor_else:(Some (Fallthrough.anchor_of_else (string_of_relid id_rel)))
+    ~anchors
+    ~ctx_fallthrough:
+      Fallthrough.{ namespace = string_of_relid id_rel; next = None }
+    render_instr_dispatch_inline (Some elseblock)
+  |> String.trim
+
 (* Dispatch tree of a defined relation: block rendered as goto edges between
    groups
 
@@ -1891,7 +1902,7 @@ let render_defined_rel_def_block (hints : Annot.hints) (rel : rel) : Adoc.block
                  group.rel_signature group.exps group.body)
         |> String.concat "\n\n");
       Adoc.raw_block
-        (render_elseblock ~anchor:anchor_else
+        (render_elseblock ~anchor_else
            ~ctx_fallthrough:
              Fallthrough.{ namespace = string_of_relid id_rel; next = None }
            render_instr_dispatch_inline elseblock_opt);
@@ -2043,7 +2054,7 @@ let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
     match elseblock_opt with Some (_ :: _) -> true | _ -> false
   in
   let ctx_fallthrough = Fallthrough.{ namespace = id_func.it; next = None } in
-  let block_body, anchor =
+  let block_body, anchor_else =
     match block with
     | [
      {
@@ -2057,11 +2068,11 @@ let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
           None )
     | [ ({ node = { it = TierI (BacktrackI _); _ }; _ } as instr) ]
       when has_elseblock ->
-        let anchor = Fallthrough.anchor_of_else id_func.it in
+        let anchor_else = Fallthrough.anchor_of_else id_func.it in
         ( render_instr ~level:0 ~ctx_fallthrough render_instr_group instr,
-          Some anchor )
+          Some anchor_else )
     | _ ->
-        let anchor =
+        let anchor_else =
           if has_elseblock then Some (Fallthrough.anchor_of_else id_func.it)
           else None
         in
@@ -2069,7 +2080,7 @@ let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
             (List.map
                (render_instr ~level:0 ~ctx_fallthrough render_instr_group)
                block),
-          anchor )
+          anchor_else )
   in
   Adoc.concat_block
     [
@@ -2077,7 +2088,7 @@ let render_defined_func_def_block (hints : Annot.hints) (func : definedfunc) :
       Adoc.raw_block "\n\n";
       block_body;
       Adoc.raw_block
-        (render_elseblock ~anchor ~ctx_fallthrough render_instr_group
+        (render_elseblock ~anchor_else ~ctx_fallthrough render_instr_group
            elseblock_opt);
     ]
 

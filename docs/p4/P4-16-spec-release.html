@@ -2341,9 +2341,10 @@ span.bk-arm-anchor {
 <li><a href="#_type_checking_126">19.6.4.1. Type checking</a></li>
 <li><a href="#_runtime_evaluation_57">19.6.4.2. Runtime evaluation</a>
 <ul class="sectlevel5">
-<li><a href="#_push_front_and_pop_front_on_header_stacks_2">19.6.4.2.1. <code>push_front</code> and <code>pop_front</code> on header stacks</a></li>
-<li><a href="#_isvalid_setvalid_and_setinvalid_on_headers">19.6.4.2.2. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers</a></li>
-<li><a href="#_isvalid_on_header_unions">19.6.4.2.3. <code>isValid</code> on header unions</a></li>
+<li><a href="#_minsizeinbits_maxsizeinbits_minsizeinbytes_and_maxsizeinbytes_2">19.6.4.2.1. <code>minSizeInBits</code>, <code>maxSizeInBits</code>, <code>minSizeInBytes</code>, and <code>maxSizeInBytes</code></a></li>
+<li><a href="#_push_front_and_pop_front_on_header_stacks_2">19.6.4.2.2. <code>push_front</code> and <code>pop_front</code> on header stacks</a></li>
+<li><a href="#_isvalid_setvalid_and_setinvalid_on_headers">19.6.4.2.3. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers</a></li>
+<li><a href="#_isvalid_on_header_unions">19.6.4.2.4. <code>isValid</code> on header unions</a></li>
 </ul>
 </li>
 </ul>
@@ -11350,7 +11351,7 @@ object types are represented as:</p>
 <h5 id="_type_checking_20">8.5.1.1. Type checking</h5>
 <div class="paragraph">
 <p>Extern object types are introduced by <code>extern</code> declarations. Its typing rule is
-explained in <a href="#sem-extern-object-declaration">[sem-extern-object-declaration]</a>. Extern object types are then
+explained in <a href="#sec-extern-object-declaration">Section 11.10</a>. Extern object types are then
 used by referencing their names. Thus extern object types can be obtained from
 named types, as illustrated in <a href="#sec-named-type">Section 8.3</a>.</p>
 </div>
@@ -65422,6 +65423,24 @@ If so, no cast is needed.</p>
 \end{gathered}\]
 </div>
 </div>
+<div class="sidebarblock">
+<div class="content">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><span id="Cast_expl_neq-else"></span>Otherwise:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p><a href="#relation_prose_Cast_expl_neq">Checking if <code>typeIR</code> can be explicitly cast to <code>typeIR'</code> (when unequal)</a>: the result is casts <code>FAIL</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="sec-implicit-cast">18.3. Implicit casts</h3>
@@ -67533,6 +67552,24 @@ If so, no cast is needed.</p>
 {\displaystyle \frac{\mathrm{otherwise}}{{\mathsf{typeIR}}_{\mathsf{a}} \to {\mathsf{typeIR}}_{\mathsf{b}} : \mathsf{FAIL}}}
 \end{array}
 \end{gathered}\]
+</div>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><span id="Cast_impl_neq-else"></span>Otherwise:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p><a href="#relation_prose_Cast_impl_neq">Checking if <code>typeIR</code> can be implicitly cast to <code>typeIR'</code> (when unequal)</a>: the result is casts <code>FAIL</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
 </div>
 </div>
 </div>
@@ -75053,6 +75090,57 @@ externFunctionCallee
 </div>
 </div>
 </div>
+<div class="paragraph">
+<p>During runtime evaluation,</p>
+</div>
+<div class="stemblock">
+<div class="content">
+\[\begin{gathered}
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Callee\_eval-cont}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} &amp; \mathsf{nameIR} \\
+ &amp; \quad\quad\in \left[\begin{array}{l}
+\texttt{"minSizeInBits"}, \\
+\quad\quad\texttt{"minSizeInBytes"}, \\
+\quad\quad\texttt{"maxSizeInBits"}, \\
+\quad\quad\texttt{"maxSizeInBytes"}
+\end{array}\right] \\
+{\scriptstyle\mathtt{(2)}} &amp; \mathsf{\_}\,\mathbin{\mathtt{\#}}\,\left({\mathsf{typeIR}}_{\mathsf{base}}\,\mathsf{\_}\right) = {\mathsf{typedExpressionIR}}_{\mathsf{base}} \\
+{\scriptstyle\mathtt{(3)}} &amp; \mathsf{builtinSizeMethodCallee} = \mathsf{BUILTIN\_SIZE\_OF}\,\mathsf{nameIR}\,{\mathsf{typeIR}}_{\mathsf{base}}
+\end{array}}{\begin{array}{l}
+\mathsf{p}\,\mathsf{EC}\,\mathsf{ARCH} \\
+\quad\quad\mathrel{\vdash} \left({\mathsf{typedExpressionIR}}_{\mathsf{base}}\,\mathbin{\mathtt{.}}\,\mathsf{nameIR}\right)\,\left\langle\mathbin{\mathtt{\_}}\right\rangle\,\left(\epsilon\right) \\
+\quad\quad\quad\quad: \mathsf{EC}\,\mathsf{ARCH}\,\left(\mathsf{builtinSizeMethodCallee}\right)
+\end{array}}}
+\end{array}
+\end{gathered}\]
+</div>
+</div>
+<span id="Callee_eval-builtinSizeMethodCallee"></span>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#relation_prose_Callee_eval">Finding callee <code>typedExpressionIR<sub>base</sub></code> <code>'.'</code> <code>nameIR</code> <code>`(</code> <code>·</code> <code>`)</code>, under context <code>EC</code> and state <code>ARCH</code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Check that <code>nameIR</code> is in <code>[</code> <code>"minSizeInBits",</code> <code>"minSizeInBytes",</code> <code>"maxSizeInBits",</code> <code>"maxSizeInBytes"</code> <code>]</code>.</p>
+</li>
+<li>
+<p>Let <a href="#expressionNoteIR">a pair of type <code>typeIR<sub>base</sub></code> and compile-time known-ness <code>_</code></a> be the note of <code>typedExpressionIR<sub>base</sub></code>.</p>
+</li>
+<li>
+<p>Let <code>builtinSizeMethodCallee</code> be <code>BUILTIN_SIZE_OF</code> <code>nameIR</code> <code>typeIR<sub>base</sub></code>.</p>
+</li>
+<li>
+<p>The result is context <code>EC</code>, state <code>ARCH</code>, and callee <code>builtinSizeMethodCallee</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect5">
 <h6 id="_push_front_and_pop_front_on_header_stacks">19.3.2.3.2. <code>push_front</code> and <code>pop_front</code> on header stacks</h6>
@@ -81001,7 +81089,47 @@ calls for different types of callees.</p>
 <p>A built-in method call is evaluated as follows:</p>
 </div>
 <div class="sect5">
-<h6 id="_push_front_and_pop_front_on_header_stacks_2">19.6.4.2.1. <code>push_front</code> and <code>pop_front</code> on header stacks</h6>
+<h6 id="_minsizeinbits_maxsizeinbits_minsizeinbytes_and_maxsizeinbytes_2">19.6.4.2.1. <code>minSizeInBits</code>, <code>maxSizeInBits</code>, <code>minSizeInBytes</code>, and <code>maxSizeInBytes</code></h6>
+<div class="stemblock">
+<div class="content">
+\[\begin{gathered}
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Call\_eval-builtinSizeMethodCallee}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} &amp; \mathsf{BUILTIN\_SIZE\_OF}\,\mathsf{nameIR}\,{\mathsf{typeIR}}_{\mathsf{base}} = \mathsf{builtinSizeMethodCallee} \\
+{\scriptstyle\mathtt{(2)}} &amp; \mathsf{returnResult} = \mathsf{RETURN}\,\mathrm{sizeof}\left({\mathsf{typeIR}}_{\mathsf{base}}, \mathsf{nameIR}\right)
+\end{array}}{\mathsf{p}\,\mathsf{EC}\,\mathsf{ARCH} \mathrel{\vdash} \mathsf{builtinSizeMethodCallee}\,\mathbin{\mathtt{@}}\,\left\langle\epsilon\right\rangle\,\left(\epsilon\right) : \mathsf{EC}\,\mathsf{ARCH}\,\mathsf{returnResult}}}
+\end{array}
+\end{gathered}\]
+</div>
+</div>
+<span id="Call_eval-builtinSizeMethodCallee"></span>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#relation_prose_Call_eval">Calling <code>builtinSizeMethodCallee</code> <code>`&lt;</code> <code>·</code> <code>`&gt;</code> <code>`(</code> <code>·</code> <code>`)</code>, under context <code>EC<sub>0</sub></code> and state <code>ARCH<sub>0</sub></code> at <code>p</code></a>:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>BUILTIN_SIZE_OF</code> <code>nameIR</code> <code>typeIR<sub>base</sub></code> be <code>builtinSizeMethodCallee</code>.</p>
+</li>
+<li>
+<p>Let <code>value''</code> be <code>$sizeof(typeIR<sub>base</sub>,</code> <code>nameIR)</code>.<sub class="bk-mark">[<a href="#Call_eval-parserApplyMethodCallee">→ parserApplyMethodCallee</a>]</sub></p>
+</li>
+<li>
+<p>Let <code>returnResult</code> be <code>RETURN</code> <code>value''</code>.</p>
+</li>
+<li>
+<p>The result is context <code>EC<sub>0</sub></code>, state <code>ARCH<sub>0</sub></code>, and call result <code>returnResult</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_push_front_and_pop_front_on_header_stacks_2">19.6.4.2.2. <code>push_front</code> and <code>pop_front</code> on header stacks</h6>
 <div class="stemblock">
 <div class="content">
 \[\begin{gathered}
@@ -81438,7 +81566,7 @@ calls for different types of callees.</p>
 </div>
 </div>
 <div class="sect5">
-<h6 id="_isvalid_setvalid_and_setinvalid_on_headers">19.6.4.2.2. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers</h6>
+<h6 id="_isvalid_setvalid_and_setinvalid_on_headers">19.6.4.2.3. <code>isValid</code>, <code>setValid</code>, and <code>setInvalid</code> on headers</h6>
 <div class="stemblock">
 <div class="content">
 \[\begin{gathered}
@@ -81592,7 +81720,7 @@ calls for different types of callees.</p>
 </div>
 </div>
 <div class="sect5">
-<h6 id="_isvalid_on_header_unions">19.6.4.2.3. <code>isValid</code> on header unions</h6>
+<h6 id="_isvalid_on_header_unions">19.6.4.2.4. <code>isValid</code> on header unions</h6>
 <div class="stemblock">
 <div class="content">
 \[\begin{gathered}
