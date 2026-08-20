@@ -1,5 +1,7 @@
 open Lang
+open Util.Source
 module Adoc = Backend_adoc__Pl_adoc__Adoc
+module Render = Backend_adoc__Pl_adoc__Render
 
 let semantic_anchor = function
   | Adoc.Function "present_function" -> Some "function_prose_present_function"
@@ -7,6 +9,13 @@ let semantic_anchor = function
   | _ -> None
 
 let print label value = Printf.printf "[%s]\n%s\n" label value
+
+let num_exp (num : int) : Pl.exp =
+  Pl.NumE (`Nat (Bigint.of_int num))
+  $$ (no_region, Il.NumT `NatT) |> Pl.Annot.no_hints
+
+let var_exp (name : string) : Pl.exp =
+  Pl.VarE (name $ no_region) $$ (no_region, Il.NumT `NatT) |> Pl.Annot.no_hints
 
 let () =
   let open Adoc in
@@ -37,4 +46,15 @@ let () =
         (text "Then, try:");
     ]
   |> ser_block ~anchor:semantic_anchor
-  |> print "ordered-items"
+  |> print "ordered-items";
+  [
+    ("plus-operator", Domain.Atom.Operator "+");
+    ("offset-operator", Domain.Atom.Operator "+:");
+    ("left-paren", Domain.Atom.LParen);
+    ("backslash", Domain.Atom.Backslash);
+  ]
+  |> List.iter (fun (label, atom) ->
+         Render.string_of_atom (atom $ no_region) |> print label);
+  Pl.BinE (`AddOp, `NatT, var_exp "n_idx", num_exp 1)
+  $$ (no_region, Il.NumT `NatT) |> Pl.Annot.no_hints |> Render.code_of_exp
+  |> Adoc.code_prose |> Adoc.ser_prose |> print "addition"

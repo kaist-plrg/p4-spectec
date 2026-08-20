@@ -51,7 +51,7 @@ xref:replace_text'[$replace_text'(n~len~, n~len'~, t, t~old~, t~new~)]
  .. Check that ``n~len~`` is less than ``n~len'~``.
  .. Check that ``n~len~`` is less than the length of ``t``.
  .. Let ``t~replaced~`` be <<ite,``t`` with ``[n~len~]`` set to ``t~new~`` if ``t[n~len~]`` is equal to ``t~old~`` otherwise ``t``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Return ``xref:replace_text'[$replace_text'(n~len~`` ``+`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)]``.+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Return ``xref:replace_text'[$replace_text'(n~len~`` ``{plus}`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)]``.+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:replace_text_except[The text ``t`` with all occurrences of ``t~old~`` not replaced by ``t~new~``]
 
@@ -66,7 +66,7 @@ xref:replace_text_except'[$replace_text_except'(n~len~, n~len'~, t, t~old~, t~ne
  .. Check that ``n~len~`` is less than ``n~len'~``.
  .. Check that ``n~len~`` is less than the length of ``t``.
  .. Let ``t~replaced~`` be <<ite,``t`` if ``t[n~len~]`` is equal to ``t~old~`` otherwise ``t`` with ``[n~len~]`` set to ``t~new~``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Return ``xref:replace_text_except'[$replace_text_except'(n~len~`` ``+`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)]``.+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Return ``xref:replace_text_except'[$replace_text_except'(n~len~`` ``{plus}`` ``1,`` ``n~len'~,`` ``t~replaced~,`` ``t~old~,`` ``t~new~)]``.+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:strip_prefix[The text ``t`` with the prefix ``t'`` removed]
 
@@ -120,7 +120,7 @@ xref:contains'[$contains'(n~len~, n~len'~, t, t~c~)]
  .. Check that ``n~len~`` is less than the length of ``t``.
  .. If ``t[n~len~]`` is equal to ``t~c~``: return ``true``.
  .. Else:
-  ... Return ``xref:contains'[$contains'(n~len~`` ``+`` ``1,`` ``n~len'~,`` ``t,`` ``t~c~)]``.+++<sub class="bk-mark">[FAIL]</sub>+++
+  ... Return ``xref:contains'[$contains'(n~len~`` ``{plus}`` ``1,`` ``n~len'~,`` ``t,`` ``t~c~)]``.+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:is_some_[$is_some_<X>(X^?^)]
 
@@ -343,7 +343,7 @@ xref:expressionNonBrace_as_expression[The expression corresponding to ``expressi
   ... Return ``expression~base~`` ``+`[+`` ``expression~hi~`` ``+':'+`` ``expression~lo~`` ``+`]+``.
  .. Else:
   ... Let ``expression~base~`` be xref:expressionNonBrace_as_expression[the expression corresponding to ``expressionNonBrace~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Return ``expression~base~`` ``+`[+`` ``expression~hi~`` ``+'+:'+`` ``expression~lo~`` ``+`]+``.
+  ... Return ``expression~base~`` ``+`[+`` ``expression~hi~`` ``'{plus}:'`` ``expression~lo~`` ``+`]+``.
 . Else if let ``callExpressionNonBrace`` be ``expressionNonBrace'``:
  .. If let ``callTargetNonBrace`` ``+`(+`` ``argumentList`` ``+`)+`` be ``callExpressionNonBrace``:
   ... If let ``expressionNonBrace`` be ``callTargetNonBrace``:
@@ -451,7 +451,7 @@ xref:lvalue_as_expression[The expression corresponding to ``lvalue'``]
   ... Return ``expression~base~`` ``+`[+`` ``expression~hi~`` ``+':'+`` ``expression~lo~`` ``+`]+``.
  .. Else:
   ... Let ``expression~base~`` be xref:lvalue_as_expression[the expression corresponding to ``lvalue~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Return ``expression~base~`` ``+`[+`` ``expression~hi~`` ``+'+:'+`` ``expression~lo~`` ``+`]+``.
+  ... Return ``expression~base~`` ``+`[+`` ``expression~hi~`` ``'{plus}:'`` ``expression~lo~`` ``+`]+``.
 . Else:
  .. Let ``+`(+`` ``lvalue`` ``+`)+`` be ``lvalue'``.
  .. Let ``expression`` be xref:lvalue_as_expression[the expression corresponding to ``lvalue``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -473,16 +473,16 @@ xref:expression_as_lvalue[The l-value corresponding to ``expression'``]
   ... Return ``lvalue~base~`` ``+`[+`` ``expression~hi~`` ``+':'+`` ``expression~lo~`` ``+`]+``.
  .. Else:
   ... Let ``lvalue~base~`` be xref:option_get[*!*] xref:expression_as_lvalue[the l-value corresponding to ``expression~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Return ``lvalue~base~`` ``+`[+`` ``expression~hi~`` ``+'+:'+`` ``expression~lo~`` ``+`]+``.
+  ... Return ``lvalue~base~`` ``+`[+`` ``expression~hi~`` ``'{plus}:'`` ``expression~lo~`` ``+`]+``.
 . Else if let ``+`(+`` ``expression`` ``+`)+`` be ``expression'``:
  .. Let ``lvalue`` be xref:option_get[*!*] xref:expression_as_lvalue[the l-value corresponding to ``expression``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``+`(+`` ``lvalue`` ``+`)+``.
 
 xref:assignop_as_binop[The binary operator corresponding to ``assignop``]
 
-. If ``assignop`` matches pattern ``+'+='+``: return ``+'+'+``.
+. If ``assignop`` matches pattern ``'{plus}='``: return ``'{plus}'``.
 . Else if ``assignop`` matches pattern ``+'-='+``: return ``+'-'+``.
-. Else if ``assignop`` matches pattern ``+'|+|='+``: return ``+'|+|'+``.
+. Else if ``assignop`` matches pattern ``'|{plus}|='``: return ``'|{plus}|'``.
 . Else if ``assignop`` matches pattern ``+'|-|='+``: return ``+'|-|'+``.
 . Else if ``assignop`` matches pattern ``+'*='+``: return ``+'*'+``.
 . Else if ``assignop`` matches pattern ``+'/='+``: return ``+'/'+``.
@@ -2512,7 +2512,7 @@ xref:un_op[``unop`` ``value``]
 
 . If ``unop`` matches pattern ``+'~'+``: return xref:un_bnot[``+'~'+`` ``value``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if ``unop`` matches pattern ``+'!'+``: return xref:un_lnot[``+'!'+`` ``value``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Else if ``unop`` matches pattern ``+'+'+``: return xref:un_plus[``+'+'+`` ``value``].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Else if ``unop`` matches pattern ``'{plus}'``: return xref:un_plus[``'{plus}'`` ``value``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else: return xref:un_minus[``+'-'+`` ``value``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:un_bnot[``+'~'+`` ``value``]
@@ -2521,12 +2521,12 @@ xref:un_bnot[``+'~'+`` ``value``]
 . If let ``w`` ``+W+`` ``i`` be ``integerLiteral``:
  .. Let ``i'`` be xref:bneg[the two's complement negation of ``i``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``int`` be xref:pow2[2 to the power of ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i''`` be xref:ite[``i'`` if ``i'`` is greater than or equal to ``0`` otherwise ``int`` ``+`` ``i'``].+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Let ``i''`` be xref:ite[``i'`` if ``i'`` is greater than or equal to ``0`` otherwise ``int`` ``{plus}`` ``i'``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``w`` ``+W+`` ``i''``.
 . Else if let ``w`` ``+S+`` ``i`` be ``integerLiteral``:
  .. Let ``i'`` be xref:bneg[the two's complement negation of ``i``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``int'`` be xref:pow2[2 to the power of ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i''`` be xref:ite[``i'`` if ``i'`` is greater than or equal to ``0`` otherwise ``int'`` ``+`` ``i'``].+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Let ``i''`` be xref:ite[``i'`` if ``i'`` is greater than or equal to ``0`` otherwise ``int'`` ``{plus}`` ``i'``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``w`` ``+S+`` ``i''``.
 
 xref:un_lnot[``+'!'+`` ``value``]
@@ -2534,7 +2534,7 @@ xref:un_lnot[``+'!'+`` ``value``]
 . Let!~type~ ``b`` be ``value``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . Return ``~b``.
 
-xref:un_plus[``+'+'+`` ``value``]
+xref:un_plus[``'{plus}'`` ``value``]
 
 . Let!~type~ ``integerLiteral`` be ``value``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . If let ``+D+`` ``i`` be ``integerLiteral``: return ``+D+`` ``i``.
@@ -2559,8 +2559,8 @@ xref:un_minus[``+'-'+`` ``value``]
 
 xref:bin_op[``value~l~`` ``binop`` ``value~r~``]
 
-. If ``binop`` matches pattern ``+'+'+``: return xref:bin_plus[``value~l~`` ``+'+'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Else if ``binop`` matches pattern ``+'|+|'+``: return xref:bin_satplus[``value~l~`` ``+'|+|'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
+. If ``binop`` matches pattern ``'{plus}'``: return xref:bin_plus[``value~l~`` ``'{plus}'`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Else if ``binop`` matches pattern ``'|{plus}|'``: return xref:bin_satplus[``value~l~`` ``'|{plus}|'`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if ``binop`` matches pattern ``+'-'+``: return xref:bin_minus[``value~l~`` ``+'-'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if ``binop`` matches pattern ``+'|-|'+``: return xref:bin_satminus[``value~l~`` ``+'|-|'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if ``binop`` matches pattern ``+'*'+``: return xref:bin_mul[``value~l~`` ``+'*'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -2589,22 +2589,23 @@ xref:bin_op[``value~l~`` ``binop`` ``value~r~``]
 . Else if ``binop`` matches pattern ``+'&'+``: return xref:bin_band[``value~l~`` ``+'&'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if ``binop`` matches pattern ``+'^'+``: return xref:bin_bxor[``value~l~`` ``+'^'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if ``binop`` matches pattern ``+'|'+``: return xref:bin_bor[``value~l~`` ``+'|'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Else if ``binop`` matches pattern ``+'++'+``: return xref:bin_concat[``value~l~`` ``+'++'+`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Else if ``binop`` matches pattern ``'{plus}{plus}'``:
+ .. Return xref:bin_concat[``value~l~`` ``'{plus}{plus}'`` ``value~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
-xref:bin_plus[``value`` ``+'+'+`` ``value'``]
+xref:bin_plus[``value`` ``'{plus}'`` ``value'``]
 
 . Let!~type~ ``integerLiteral`` be ``value``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . If let ``+D+`` ``i~l~`` be ``integerLiteral``:
  .. Let!~type~ ``integerLiteral'`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let!~type~ ``+D+`` ``i~r~`` be ``integerLiteral'``.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Return ``+D+`` ``i~l~`` ``+`` ``i~r~``.
+ .. Return ``+D+`` ``i~l~`` ``{plus}`` ``i~r~``.
 . Else if let ``w`` ``+W+`` ``i~l~`` be ``integerLiteral``:
  .. Let!~type~ ``integerLiteral'`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let!~type~ ``w'`` ``+W+`` ``i~r~`` be ``integerLiteral'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Check that ``w`` is equal to ``w'``.
  .. Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``i~r'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~r~`` of width ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``+`` ``i~r'~``].+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``{plus}`` ``i~r'~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``w`` ``+W+`` ``i``.
 . Else:
  .. Let ``w`` ``+S+`` ``i~l~`` be ``integerLiteral``.
@@ -2613,17 +2614,17 @@ xref:bin_plus[``value`` ``+'+'+`` ``value'``]
  .. Check that ``w`` is equal to ``w'``.
  .. Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``i~r'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~r~`` of width ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``+`` ``i~r'~``].+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'~`` ``{plus}`` ``i~r'~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``w`` ``+S+`` ``i``.
 
-xref:bin_satplus[``value`` ``+'|+|'+`` ``value'``]
+xref:bin_satplus[``value`` ``'|{plus}|'`` ``value'``]
 
 . Let!~type~ ``integerLiteral`` be ``value``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . If let ``w`` ``+W+`` ``i~l~`` be ``integerLiteral``:
  .. Let!~type~ ``integerLiteral'`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let!~type~ ``w'`` ``+W+`` ``i~r~`` be ``integerLiteral'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Check that ``w`` is equal to ``w'``.
- .. Let ``i`` be ``i~l~`` ``+`` ``i~r~``.
+ .. Let ``i`` be ``i~l~`` ``{plus}`` ``i~r~``.
  .. Let ``i~max~`` be xref:pow2[2 to the power of ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``i'`` be xref:ite[``i`` if ``i`` is less than ``i~max~`` otherwise ``i~max~`` ``-`` ``1``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``w`` ``+W+`` ``i'``.
@@ -2633,7 +2634,7 @@ xref:bin_satplus[``value`` ``+'|+|'+`` ``value'``]
  .. Check that ``w`` is equal to ``w''``.
  .. Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``i~r'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~r~`` of width ``w``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i'`` be ``i~l'~`` ``+`` ``i~r'~``.
+ .. Let ``i'`` be ``i~l'~`` ``{plus}`` ``i~r'~``.
  .. +++<span class="bk-arm-anchor" id="bk-bin_satplus-1-arm-1"></span>+++Try:
   ... Check that ``i'`` is greater than ``0``.
   ... Let ``i`` be ``w`` ``-`` ``1``.
@@ -3232,7 +3233,7 @@ xref:bin_bor[``value`` ``+'|'+`` ``value'``]
  .. Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``int'``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``w`` ``+S+`` ``i``.
 
-xref:bin_concat[``value`` ``+'++'+`` ``value'``]
+xref:bin_concat[``value`` ``'{plus}{plus}'`` ``value'``]
 
 . If let ``+'"'+`` ``t~l~`` ``+'"'+`` be ``value``:
  .. Let!~type~ ``+'"'+`` ``t~r~`` ``+'"'+`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -3242,14 +3243,14 @@ xref:bin_concat[``value`` ``+'++'+`` ``value'``]
   ... Let!~type~ ``integerLiteral'`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... If let ``w~r~`` ``+W+`` ``i~r~`` be ``integerLiteral'``:
    .... Let ``i~l'~`` be xref:shl[the left shift of ``i~l~`` by ``w~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-   .... Let ``i~l''~`` be ``i~l'~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+   .... Let ``i~l''~`` be ``i~l'~`` ``{plus}`` ``i~r~``.
+   .... Let ``w`` be ``w~l~`` ``{plus}`` ``w~r~``.
    .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l''~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return ``w`` ``+W+`` ``i``.
   ... Else if let ``w~r~`` ``+S+`` ``i~r~`` be ``integerLiteral'``:
    .... Let ``i~l'~`` be xref:shl[the left shift of ``i~l~`` by ``w~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-   .... Let ``i~l''~`` be ``i~l'~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+   .... Let ``i~l''~`` be ``i~l'~`` ``{plus}`` ``i~r~``.
+   .... Let ``w`` be ``w~l~`` ``{plus}`` ``w~r~``.
    .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l''~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return ``w`` ``+W+`` ``i``.
  .. Else if let ``w~l~`` ``+S+`` ``i~l~`` be ``integerLiteral``:
@@ -3257,15 +3258,15 @@ xref:bin_concat[``value`` ``+'++'+`` ``value'``]
   ... If let ``w~r~`` ``+W+`` ``i~r~`` be ``integerLiteral'``:
    .... Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Let ``i~l''~`` be xref:shl[the left shift of ``i~l'~`` by ``w~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-   .... Let ``i~l'''~`` be ``i~l''~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+   .... Let ``i~l'''~`` be ``i~l''~`` ``{plus}`` ``i~r~``.
+   .... Let ``w`` be ``w~l~`` ``{plus}`` ``w~r~``.
    .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'''~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return ``w`` ``+S+`` ``i``.
   ... Else if let ``w~r~`` ``+S+`` ``i~r~`` be ``integerLiteral'``:
    .... Let ``i~l'~`` be xref:bitstr_to_int[the two's complement representation of bitstring ``i~l~`` of width ``w~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Let ``i~l''~`` be xref:shl[the left shift of ``i~l'~`` by ``w~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-   .... Let ``i~l'''~`` be ``i~l''~`` ``+`` ``i~r~``.
-   .... Let ``w`` be ``w~l~`` ``+`` ``w~r~``.
+   .... Let ``i~l'''~`` be ``i~l''~`` ``{plus}`` ``i~r~``.
+   .... Let ``w`` be ``w~l~`` ``{plus}`` ``w~r~``.
    .... Let ``i`` be xref:int_to_bitstr[the bitstring of width ``w`` representing the integer ``i~l'''~``].+++<sub class="bk-mark">[FAIL]</sub>+++
    .... Return ``w`` ``+S+`` ``i``.
 
@@ -3931,12 +3932,12 @@ xref:cast_set[``setValue`` casted to type ``typeIR'``]
 . Let ``i~b~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~b~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``i~h~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~h~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``i~l~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Let ``i'`` be ``i~h~`` ``+`` ``1`` ``-`` ``i~l~``.
+. Let ``i'`` be ``i~h~`` ``{plus}`` ``1`` ``-`` ``i~l~``.
 . Let!~type~ ``w`` be ``i'``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``i`` be xref:bitacc[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Return ``w`` ``+W+`` ``i``.
 
-<<bitacc_offset_op,``value`` ``+`[+`` ``value'`` ``+'+:'+`` ``value''`` ``+`]+``>>
+<<bitacc_offset_op,``value`` ``+`[+`` ``value'`` ``'{plus}:'`` ``value''`` ``+`]+``>>
 
 . Let!~type~ ``integerValue~b~`` be ``value``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let!~type~ ``integerValue~l~`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -3944,7 +3945,7 @@ xref:cast_set[``setValue`` casted to type ``typeIR'``]
 . Let ``i~b~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~b~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``i~l~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``w`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Let ``i~h~`` be ``i~l~`` ``+`` ``w`` ``-`` ``1``.
+. Let ``i~h~`` be ``i~l~`` ``{plus}`` ``w`` ``-`` ``1``.
 . Let ``i`` be xref:bitacc[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Return ``w`` ``+W+`` ``i``.
 
@@ -3970,7 +3971,7 @@ xref:cast_set[``setValue`` casted to type ``typeIR'``]
  .. Let ``i`` be xref:bitacc_replace[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~`` replaced with ``i~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return ``w`` ``+S+`` ``i``.
 
-<<bitacc_offset_replace_op,``value`` ``+`[+`` ``value'`` ``+'+:'+`` ``value''`` ``+`]+`` replaced with ``value'''``>>
+<<bitacc_offset_replace_op,``value`` ``+`[+`` ``value'`` ``'{plus}:'`` ``value''`` ``+`]+`` replaced with ``value'''``>>
 
 . Let!~type~ ``integerValue~b~`` be ``value``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let!~type~ ``integerValue~l~`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -3980,7 +3981,7 @@ xref:cast_set[``setValue`` casted to type ``typeIR'``]
 . If let ``w`` ``+W+`` ``i~b~`` be ``integerLiteral``:
  .. Let ``i~l~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i~h~`` be ``i~l~`` ``+`` ``n~w~`` ``-`` ``1``.
+ .. Let ``i~h~`` be ``i~l~`` ``{plus}`` ``n~w~`` ``-`` ``1``.
  .. Let!~type~ ``integerLiteral'`` be ``integerValue~r~``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let!~type~ ``++_++`` ``+W+`` ``i~r~`` be ``integerLiteral'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``i`` be xref:bitacc_replace[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~`` replaced with ``i~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -3988,7 +3989,7 @@ xref:cast_set[``setValue`` casted to type ``typeIR'``]
 . Else if let ``w`` ``+S+`` ``i~b~`` be ``integerLiteral``:
  .. Let ``i~l~`` be xref:int_of_integerValue[the integer representation of  ``integerValue~l~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i~h~`` be ``i~l~`` ``+`` ``n~w~`` ``-`` ``1``.
+ .. Let ``i~h~`` be ``i~l~`` ``{plus}`` ``n~w~`` ``-`` ``1``.
  .. Let!~type~ ``integerLiteral'`` be ``integerValue~r~``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let!~type~ ``++_++`` ``+W+`` ``i~r~`` be ``integerLiteral'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``i`` be xref:bitacc_replace[the bitslice of ``i~b~`` from ``i~h~`` to ``i~l~`` replaced with ``i~r~``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -4190,7 +4191,7 @@ xref:type_of_typedLvalueIR[The type of lvalue ``typedLvalueIR``]
   ... Return <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+':'+`` ``typedExpressionIR~lo~`` ``+`]+`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``>>.
  .. Else:
   ... Let ``typedExpressionIR~base~`` be xref:option_get[*!*] xref:typedLvalueIR_as_typedExpressionIR[the expression form of ``typedLvalueIR~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Return <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+'+:'+`` ``typedExpressionIR~lo~`` ``+`]+`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``>>.
+  ... Return <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``'{plus}:'`` ``typedExpressionIR~lo~`` ``+`]+`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``+DYN+``>>.
 
 <<typedExpressionIR_as_typedLvalueIR,The l-value form of xref:typedExpressionIR[``expressionIR`` annotated with a pair of type ``typeIR`` and compile-time known-ness ``++_++``]>>
 
@@ -4209,7 +4210,7 @@ xref:type_of_typedLvalueIR[The type of lvalue ``typedLvalueIR``]
   ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+':'+`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
  .. Else:
   ... Let ``typedLvalueIR~base~`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR~base~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``+'+:'+`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+  ... Return <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi~`` ``'{plus}:'`` ``typedExpressionIR~lo~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
 . Else if let ``+`(+`` ``typedExpressionIR`` ``+`)+`` be ``expressionIR``:
  .. Let ``typedLvalueIR`` be xref:option_get[*!*] xref:typedExpressionIR_as_typedLvalueIR[the l-value form of ``typedExpressionIR``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return xref:typedLvalueIR[``+`(+`` ``typedLvalueIR`` ``+`)+`` with note ``+`(+`` ``typeIR`` ``+`)+``].
@@ -7242,7 +7243,7 @@ Let ``tableEntryIR~updated~^{asterisk}^`` be the resulting list.+++<sub class="b
    .... Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.
    .... Let ``n~size~`` be ``TBLC.+ENTRIES+.+SIZE+``.
    .... Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.
-   .... Let ``i`` be xref:ite[``n~size~`` ``-`` ``1`` ``*`` ``n~delta~`` ``+`` ``1`` if ``b~lw~`` otherwise ``1``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-2-arm-2">→ iv</a>]</sub>+++
+   .... Let ``i`` be xref:ite[``n~size~`` ``-`` ``1`` ``*`` ``n~delta~`` ``{plus}`` ``1`` if ``b~lw~`` otherwise ``1``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-2-arm-2">→ iv</a>]</sub>+++
    .... Let!~type~ ``n`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-2-arm-2">→ iv</a>]</sub>+++
    .... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-2-arm-2">→ iv</a>]</sub>+++
    .... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR-2-arm-2">→ iv</a>]</sub>+++
@@ -7264,7 +7265,7 @@ xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TB
   ... Check that xref:tableEntryPriorityOptIR_of_tableEntryIR[the priority of ``tableEntryIR~h~``] is none.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-arm-2">→ c</a>]</sub>+++
   ... Let ``b~lw~`` be ``TBLC.+PRIORITIES+.+LARGEST_WINS+``.
   ... Let ``n~delta~`` be ``TBLC.+PRIORITIES+.+DELTA+``.
-  ... Let ``i`` be xref:ite[``n~last~`` ``-`` ``n~delta~`` if ``b~lw~`` otherwise ``n~last~`` ``+`` ``n~delta~``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-arm-2">→ c</a>]</sub>+++
+  ... Let ``i`` be xref:ite[``n~last~`` ``-`` ``n~delta~`` if ``b~lw~`` otherwise ``n~last~`` ``{plus}`` ``n~delta~``].+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-arm-2">→ c</a>]</sub>+++
   ... Let!~type~ ``n`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-arm-2">→ c</a>]</sub>+++
   ... Let ``tableEntryIR~h_updated~`` be ``xref:set_priority_of_tableEntryIR[$set_priority_of_tableEntryIR(tableEntryIR~h~,`` ``n)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-arm-2">→ c</a>]</sub>+++
   ... Let ``tableEntryIR~t_updated~^{asterisk}^`` be ``xref:set_priorities_of_tableEntryListIR'[$set_priorities_of_tableEntryListIR'(TBLC,`` ``n,`` ``tableEntryIR~t~^{asterisk}^)]``.+++<sub class="bk-mark">[<a href="#bk-set_priorities_of_tableEntryListIR'-1-arm-2">→ c</a>]</sub>+++
@@ -7314,7 +7315,7 @@ xref:tableEntry_lpm_prefix'[$tableEntry_lpm_prefix'(value, n~prefix~)]
   ... Let ``i'`` be ``n`` ``-`` ``1`` ``/`` ``2``.
   ... Let!~type~ ``n'`` be ``i'``.+++<sub class="bk-mark">[<a href="#bk-tableEntry_lpm_prefix'-2-arm-2">→ c</a>]</sub>+++
   ... Let ``value'`` be ``w`` ``+W+`` ``n'``.
-  ... Return ``xref:tableEntry_lpm_prefix'[$tableEntry_lpm_prefix'(value',`` ``n~prefix~`` ``+`` ``1)]``.+++<sub class="bk-mark">[<a href="#bk-tableEntry_lpm_prefix'-2-arm-2">→ c</a>]</sub>+++
+  ... Return ``xref:tableEntry_lpm_prefix'[$tableEntry_lpm_prefix'(value',`` ``n~prefix~`` ``{plus}`` ``1)]``.+++<sub class="bk-mark">[<a href="#bk-tableEntry_lpm_prefix'-2-arm-2">→ c</a>]</sub>+++
  .. +++<span class="bk-arm-anchor" id="bk-tableEntry_lpm_prefix'-2-arm-2"></span>+++Then, try:
   ... Check that ``n~prefix~`` is equal to ``0``.
   ... Check that ``nat`` is greater than ``0``.
@@ -8440,7 +8441,7 @@ xref:Expr_eval_lctk[Local compile-time evaluation of ``typedExpressionIR~base~``
  .. Let ``value~base~`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~base~``, under context ``TC`` at ``p``].
  .. Let ``value~l~`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR``, under context ``TC`` at ``p``].
  .. Let ``value~w~`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR'``, under context ``TC`` at ``p``].
- .. The result is <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~l~`` ``+'+:'+`` ``value~w~`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. The result is <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~l~`` ``'{plus}:'`` ``value~w~`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:Expr_eval_lctk[Local compile-time evaluation of ``callableTargetIR'`` ``+`<+`` ``typeArgumentIR^{asterisk}^`` ``+`>+`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` annotated with ``expressionNoteIR``, under context ``TC`` at ``p``]:
 
@@ -10072,7 +10073,7 @@ xref:Expr_ok[Typing ``+'~'+`` ``expression``, under context ``TC`` at ``p``]:
 
 xref:Expr_ok[Typing ``unop`` ``expression``, under context ``TC`` at ``p``]:
 
-. Check that ``unop`` is equal to ``+'+'+`` or ``unop`` is equal to ``+'-'+``.
+. Check that ``unop`` is equal to ``'{plus}'`` or ``unop`` is equal to ``+'-'+``.
 . Let ``typedExpressionIR`` be the result of xref:Expr_ok[typing ``expression``, under context ``TC`` at ``p``].
 . Let ``typedExpressionIR~reduced~`` be xref:option_get[*!*] xref:reduce_serenum_unary[the result of reducing serializable enums in ``typedExpressionIR`` until ``$compat_uplusminus`` is satisfied].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``typeIR~reduced~`` be xref:type_of_typedExpressionIR[the type of ``typedExpressionIR~reduced~``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -10082,7 +10083,7 @@ xref:Expr_ok[Typing ``unop`` ``expression``, under context ``TC`` at ``p``]:
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
-. Check that ``binop`` is in ``+[+`` ``+'+'+,`` ``+'-'+,`` ``+'*'+`` ``+]+``.
+. Check that ``binop`` is in ``+[+`` ``'{plus}',`` ``+'-'+,`` ``+'*'+`` ``+]+``.
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
 . Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be xref:option_get[*!*] xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -10096,7 +10097,7 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
-. Check that ``binop`` is in ``+[+`` ``+'|+|'+,`` ``+'|-|'+`` ``+]+``.
+. Check that ``binop`` is in ``+[+`` ``'|{plus}|',`` ``+'|-|'+`` ``+]+``.
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
 . Let ``(`` ``typedExpressionIR~l_cast~,`` ``typedExpressionIR~r_cast~`` ``)`` be xref:option_get[*!*] xref:cast_binary[``typedExpressionIR~l~`` and ``typedExpressionIR~r~`` implicitly cast to equal types].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -10201,7 +10202,7 @@ xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context
 . Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
 . The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``binop`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
-xref:Expr_ok[Typing ``expression~l~`` ``+'++'+`` ``expression~r~``, under context ``TC`` at ``p``]:
+xref:Expr_ok[Typing ``expression~l~`` ``'{plus}{plus}'`` ``expression~r~``, under context ``TC`` at ``p``]:
 
 . Let ``typedExpressionIR~l~`` be the result of xref:Expr_ok[typing ``expression~l~``, under context ``TC`` at ``p``].
 . Let ``typedExpressionIR~r~`` be the result of xref:Expr_ok[typing ``expression~r~``, under context ``TC`` at ``p``].
@@ -10214,7 +10215,7 @@ xref:Expr_ok[Typing ``expression~l~`` ``+'++'+`` ``expression~r~``, under contex
 . Let ``typeIR~reduced~`` be ``xref:result_concat[$result_concat(typeIR~l_reduced~,`` ``typeIR~r_reduced~)]``.+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``ctk~reduced~`` be xref:join_ctk[the join of ``ctk~l_reduced~`` and ``ctk~r_reduced~``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR~reduced~`` and compile-time known-ness ``ctk~reduced~``].
-. The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``+'++'+`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
+. The result is xref:typedExpressionIR[``typedExpressionIR~l_reduced~`` ``'{plus}{plus}'`` ``typedExpressionIR~r_reduced~`` annotated with ``expressionNoteIR``].
 
 xref:Expr_ok[Typing ``expression~l~`` ``binop`` ``expression~r~``, under context ``TC`` at ``p``]:
 
@@ -10576,7 +10577,7 @@ xref:Expr_ok[Typing ``expression~base~`` ``+'.'+`` ``member``, under context ``T
  .. Let!~type~ ``integerValue~lo~`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``n~lo~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~lo~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Check that <<is_valid_bitslice,``typeIR~base_reduced~`` ``+`[+`` ``n~lo~`` ``+':'+`` ``n~hi~`` ``+`]+`` is a valid bitslice>>.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``{plus}`` ``1``.
  .. Let!~type~ ``n~slice~`` be ``i``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``typeIR`` be ``+BIT+`` ``+`<+`` ``n~slice~`` ``+`>+``.
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``].
@@ -10602,12 +10603,12 @@ xref:Expr_ok[Typing ``expression~base~`` ``+'.'+`` ``member``, under context ``T
   ... Let ``value'`` be the result of xref:Expr_eval_lctk[local compile-time evaluation of ``typedExpressionIR~w_reduced~``, under context ``TC`` at ``p``].
   ... Let!~type~ ``integerValue~w~`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Let ``i`` be ``n~w~`` ``+`` ``n~l~`` ``-`` ``1``.
+  ... Let ``i`` be ``n~w~`` ``{plus}`` ``n~l~`` ``-`` ``1``.
   ... Let!~type~ ``n~h~`` be ``i``.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Check that <<is_valid_bitslice,``typeIR~base_reduced~`` ``+`[+`` ``n~l~`` ``+':'+`` ``n~h~`` ``+`]+`` is a valid bitslice>>.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Let ``typeIR`` be ``+BIT+`` ``+`<+`` ``n~w~`` ``+`>+``.
   ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk~base_reduced~``].
-  ... The result is <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``+'+:'+`` ``typedExpressionIR~w_reduced~`` ``+`]+`` annotated with ``expressionNoteIR``>>.
+  ... The result is <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``'{plus}:'`` ``typedExpressionIR~w_reduced~`` ``+`]+`` annotated with ``expressionNoteIR``>>.
  .. Else:
   ... Let ``typeIR'`` be xref:unroll_typeIR[``typeIR~l_reduced~`` with typedefs unrolled].+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Check that ``typeIR'`` has type ``fixedBitTypeIR``.
@@ -10618,7 +10619,7 @@ xref:Expr_ok[Typing ``expression~base~`` ``+'.'+`` ``member``, under context ``T
   ... Let ``typeIR`` be ``+BIT+`` ``+`<+`` ``n~w~`` ``+`>+``.
   ... Let ``ctk`` be <<joins_ctk,the join of ``+[+`` ``ctk~base_reduced~,`` ``ctk~l_reduced~,`` ``ctk~w_reduced~`` ``+]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``].
-  ... The result is <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``+'+:'+`` ``typedExpressionIR~w_reduced~`` ``+`]+`` annotated with ``expressionNoteIR``>>.
+  ... The result is <<typedExpressionIR,``typedExpressionIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``'{plus}:'`` ``typedExpressionIR~w_reduced~`` ``+`]+`` annotated with ``expressionNoteIR``>>.
 
 xref:Expr_ok[Typing ``callExpression``, under context ``TC`` at ``p``]:
 
@@ -10723,7 +10724,7 @@ Expr_ok dispatch:
   ... +++<span class="bk-arm-anchor" id="bk-Expr_ok-3-arm-7"></span>+++Then, try:
    .... Goto xref:Expr_ok-binaryExpression-bitwise[binaryExpression-bitwise]
   ... +++<span class="bk-arm-anchor" id="bk-Expr_ok-3-arm-8"></span>+++Then, try:
-   .... Check that ``binop`` is ``+'++'+``.
+   .... Check that ``binop`` is ``'{plus}{plus}'``.
    .... Goto xref:Expr_ok-binaryExpression-concat[binaryExpression-concat]
   ... +++<span class="bk-arm-anchor" id="bk-Expr_ok-3-arm-9"></span>+++Then, try:
    .... Goto xref:Expr_ok-binaryExpression-logical[binaryExpression-logical]
@@ -10889,7 +10890,7 @@ xref:Lvalue_ok[Typing ``lvalue~base~`` ``+'.'+`` ``member``, under context ``TC`
  .. Let!~type~ ``integerValue~lo~`` be ``value'``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``n~lo~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~lo~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Check that <<is_valid_bitslice,``typeIR~base~`` ``+`[+`` ``n~lo~`` ``+':'+`` ``n~hi~`` ``+`]+`` is a valid bitslice>>.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``{plus}`` ``1``.
  .. Let!~type~ ``n~slice~`` be ``i``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``typeIR`` be ``+BIT+`` ``+`<+`` ``n~slice~`` ``+`>+``.
  .. Let ``typedLvalueIR`` be <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~hi_reduced~`` ``+':'+`` ``typedExpressionIR~lo_reduced~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
@@ -10908,7 +10909,7 @@ xref:Lvalue_ok[Typing ``lvalue~base~`` ``+'.'+`` ``member``, under context ``TC`
  .. Let!~type~ ``integerValue~w~`` be ``value``.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``n~w~`` be xref:option_get[*!*] xref:nat_of_integerValue[the natural number representation of  ``integerValue~w~``].+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let ``typeIR`` be ``+BIT+`` ``+`<+`` ``n~w~`` ``+`>+``.
- .. Let ``typedLvalueIR`` be <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``+'+:'+`` ``typedExpressionIR~w_reduced~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
+ .. Let ``typedLvalueIR`` be <<typedLvalueIR,``typedLvalueIR~base~`` ``+`[+`` ``typedExpressionIR~l_reduced~`` ``'{plus}:'`` ``typedExpressionIR~w_reduced~`` ``+`]+`` with note ``+`(+`` ``typeIR`` ``+`)+``>>.
  .. The result is ``typedLvalueIR``.
 
 xref:Lvalue_ok[Typing ``+`(+`` ``lvalue~base~`` ``+`)+``, under context ``TC`` at ``p``]:
@@ -13816,11 +13817,15 @@ xref:result_concat[$result_concat(typeIR, typeIR')]
   ... Let!~type~ ``stringTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-result_concat-1-arm-2">→ 2</a>]</sub>+++
   ... Return ``+STRING+``.
  .. Else if let ``+INT+`` ``+`<+`` ``w~a~`` ``+`>+`` be ``typeIR``:
-  ... If let ``+INT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``: return ``+INT+`` ``+`<+`` ``w~a~`` ``+`` ``w~b~`` ``+`>+``.
-  ... Else if let ``+BIT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``: return ``+INT+`` ``+`<+`` ``w~a~`` ``+`` ``w~b~`` ``+`>+``.
+  ... If let ``+INT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``:
+   .... Return ``+INT+`` ``+`<+`` ``w~a~`` ``{plus}`` ``w~b~`` ``+`>+``.
+  ... Else if let ``+BIT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``:
+   .... Return ``+INT+`` ``+`<+`` ``w~a~`` ``{plus}`` ``w~b~`` ``+`>+``.
  .. Else if let ``+BIT+`` ``+`<+`` ``w~a~`` ``+`>+`` be ``typeIR``:
-  ... If let ``+INT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``: return ``+BIT+`` ``+`<+`` ``w~a~`` ``+`` ``w~b~`` ``+`>+``.
-  ... Else if let ``+BIT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``: return ``+BIT+`` ``+`<+`` ``w~a~`` ``+`` ``w~b~`` ``+`>+``.
+  ... If let ``+INT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``:
+   .... Return ``+BIT+`` ``+`<+`` ``w~a~`` ``{plus}`` ``w~b~`` ``+`>+``.
+  ... Else if let ``+BIT+`` ``+`<+`` ``w~b~`` ``+`>+`` be ``typeIR'``:
+   .... Return ``+BIT+`` ``+`<+`` ``w~a~`` ``{plus}`` ``w~b~`` ``+`>+``.
  .. Else if let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``:
   ... Return ``xref:result_concat[$result_concat(typeIR~l~,`` ``typeIR')]``.+++<sub class="bk-mark">[<a href="#bk-result_concat-1-arm-2">→ 2</a>]</sub>+++
 . +++<span class="bk-arm-anchor" id="bk-result_concat-1-arm-2"></span>+++Then, try:
@@ -13910,11 +13915,11 @@ xref:compat_bitslice_offset_width[``typeIR''`` can be used as an bitslice width]
 . If let ``intTypeIR`` be ``typeIR'``:
  .. Return ``n~lo~`` is less than or equal to ``n~hi~``.
 . Else if let ``+INT+`` ``+`<+`` ``w`` ``+`>+`` be ``typeIR'``:
- .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``{plus}`` ``1``.
  .. Let!~type~ ``w~slice~`` be ``i``.+++<sub class="bk-mark">[<a href="#is_valid_bitslice-else">→ ⋅</a>]</sub>+++
  .. Return ``n~lo~`` is less than or equal to ``n~hi~`` and ``n~hi~`` is less than or equal to ``w`` and ``w~slice~`` is less than or equal to ``w``.
 . Else if let ``+BIT+`` ``+`<+`` ``w`` ``+`>+`` be ``typeIR'``:
- .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``+`` ``1``.
+ .. Let ``i`` be ``n~hi~`` ``-`` ``n~lo~`` ``{plus}`` ``1``.
  .. Let!~type~ ``w~slice~`` be ``i``.+++<sub class="bk-mark">[<a href="#is_valid_bitslice-else">→ ⋅</a>]</sub>+++
  .. Return ``n~lo~`` is less than or equal to ``n~hi~`` and ``n~hi~`` is less than or equal to ``w`` and ``w~slice~`` is less than or equal to ``w``.
 . Else:
@@ -15941,7 +15946,7 @@ xref:Expr_inst[Compile-time evaluation of ``typedExpressionIR~base~`` ``+'.'+`` 
  .. Let store ``STO~1~`` and ``value~base~`` be the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR~base~``, under context ``IC`` and store ``STO`` at ``p``].
  .. Let store ``STO~2~`` and ``value~l~`` be the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR``, under context ``IC`` and store ``STO~1~`` at ``p``].
  .. Let store ``STO~3~`` and ``value~w~`` be the result of xref:Expr_inst[compile-time evaluation of ``typedExpressionIR'``, under context ``IC`` and store ``STO~2~`` at ``p``].
- .. The result is store ``STO~3~`` and <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~l~`` ``+'+:'+`` ``value~w~`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. The result is store ``STO~3~`` and <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~l~`` ``'{plus}:'`` ``value~w~`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:Expr_inst[Compile-time evaluation of ``prefixedNameIR`` ``+`<+`` ``typeArgumentListIR`` ``+`>+`` ``+`(+`` ``argumentListIR`` ``+`)+`` annotated with ``expressionNoteIR``, under context ``IC`` and store ``STO`` at ``p``]:
 
@@ -18069,7 +18074,7 @@ xref:Expr_eval[Evaluating ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` annot
   ... Let context ``EC~1~``, state ``ARCH~1~`` and ``expressionListResult`` be the result of <<Exprs_eval,evaluating ``+[+`` ``typedExpressionIR~base~,`` ``typedExpressionIR,`` ``typedExpressionIR'`` ``+]+``, under context ``EC`` and state ``ARCH`` at ``p``>>.
   ... Let!~type~ ``value^{asterisk}^`` be ``expressionListResult``.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Let!~type~ ``+[+`` ``value~base~,`` ``value~l~,`` ``value~w~`` ``+]+`` be ``value^{asterisk}^``.+++<sub class="bk-mark">[FAIL]</sub>+++
-  ... Let ``value''''''`` be <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~l~`` ``+'+:'+`` ``value~w~`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
+  ... Let ``value''''''`` be <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value~l~`` ``'{plus}:'`` ``value~w~`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
   ... Let ``expressionResult`` be ``value''''''``.
   ... The result is context ``EC~1~``, state ``ARCH~1~`` and ``expressionResult``.
 
@@ -18383,7 +18388,7 @@ xref:Lvalue_read[Reading from ``storageReference`` ``+'.'+`` ``nameIR``, under c
  .. The result is value ``value``.
 . Else:
  .. Let value ``value~base~`` be the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC`` and state ``ARCH`` at ``p``].
- .. Let ``value`` be <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value'`` ``+'+:'+`` ``value''`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Let ``value`` be <<bitacc_offset_op,``value~base~`` ``+`[+`` ``value'`` ``'{plus}:'`` ``value''`` ``+`]+``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. The result is value ``value``.
 
 Lvalue_read dispatch:
@@ -18414,7 +18419,7 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+'.'+`` ``nameIR``
  .. Let ``+HEADER_STACK+`` ``+`[+`` ``value~element~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`)+`` ``+`]+`` be ``headerStackValue~base~``.
  .. If ``nameIR`` is equal to ``"next"``:
   ... Let ``value~element_update~^{asterisk}^`` be ``value~element~^{asterisk}^`` with ``[n~idx~]`` set to ``value``.
-  ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``+`` ``1`` ``+`)+`` ``+`]+``.
+  ... Let ``headerStackValue~base_update~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_update~^{asterisk}^`` ``+`(+`` ``n~idx~`` ``{plus}`` ``1`` ``+`)+`` ``+`]+``.
   ... Let context ``EC~1~`` be the result of xref:Lvalue_write[writing ``headerStackValue~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
   ... The result is context ``EC~1~``.
  .. Else if ``nameIR`` is equal to ``"last"``:
@@ -18491,7 +18496,7 @@ xref:Lvalue_write[Writing ``value`` to ``storageReference`` ``+'.'+`` ``nameIR``
  .. The result is context ``EC~1~``.
 . Else:
  .. Let value ``value~base~`` be the result of xref:Lvalue_read[reading from ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
- .. Let ``value~base_update~`` be <<bitacc_offset_replace_op,``value~base~`` ``+`[+`` ``value'`` ``+'+:'+`` ``value''`` ``+`]+`` replaced with ``value``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
+ .. Let ``value~base_update~`` be <<bitacc_offset_replace_op,``value~base~`` ``+`[+`` ``value'`` ``'{plus}:'`` ``value''`` ``+`]+`` replaced with ``value``>>.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Let context ``EC~1~`` be the result of xref:Lvalue_write[writing ``value~base_update~`` to ``storageReference``, under context ``EC~0~`` and state ``ARCH`` at ``p``].
  .. The result is context ``EC~1~``.
 
@@ -19690,7 +19695,7 @@ Let ``value~front_invalidated~^{asterisk}^`` be the resulting list.+++<sub class
   ... Let!~type~ ``n~back~`` be ``i``.+++<sub class="bk-mark">[<a href="#bk-Call_eval-6-arm-2">→ g</a>]</sub>+++
   ... Let ``value~back~^{asterisk}^`` be ``value~element~^{asterisk}^[0`` ``:`` ``n~back~]``.
   ... Let ``value~element_updated~^{asterisk}^`` be ``value~front_invalidated~^{asterisk}^`` concatenated with ``value~back~^{asterisk}^``.
-  ... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-6-arm-2">→ g</a>]</sub>+++
+  ... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``{plus}`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#bk-Call_eval-6-arm-2">→ g</a>]</sub>+++
   ... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~idx_updated~`` ``+`)+`` ``+`]+``.
   ... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
   ... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
@@ -19703,7 +19708,7 @@ Let ``value~front_invalidated~^{asterisk}^`` be the resulting list.+++<sub class
 --
 +
 Let ``value~element_updated~^{asterisk}^`` be the resulting list.+++<sub class="bk-mark">[<a href="#Call_eval-parserApplyMethodCallee">→ parserApplyMethodCallee</a>]</sub>+++
-  ... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``+`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#Call_eval-parserApplyMethodCallee">→ parserApplyMethodCallee</a>]</sub>+++
+  ... Let ``n~idx_updated~`` be <<min_nat,min``+`(+`` ``+[+`` ``n~size~,`` ``n~idx~`` ``{plus}`` ``n~count~`` ``+]+`` ``+`)+``>>.+++<sub class="bk-mark">[<a href="#Call_eval-parserApplyMethodCallee">→ parserApplyMethodCallee</a>]</sub>+++
   ... Let ``headerStackValue~updated~`` be ``+HEADER_STACK+`` ``+`[+`` ``value~element_updated~^{asterisk}^`` ``+`(+`` ``n~idx_updated~`` ``+`)+`` ``+`]+``.
   ... Let context ``EC~2~`` be the result of xref:Lvalue_write[writing ``headerStackValue~updated~`` to ``storageReference``, under context ``EC~1~`` and state ``ARCH~1~`` at ``p``].
   ... The result is context ``EC~2~``, state ``ARCH~1~``, and call result ``+RETURN+`` ``·``.
@@ -20341,7 +20346,7 @@ xref:values_of_setValue[The values in ``setValue`` of type ``+SET+`` ``+`<+`` ``
 . +++<span class="bk-arm-anchor" id="bk-values_of_setValue-1-arm-1"></span>+++Try:
  .. Check that xref:bin_lt[``value~l~`` ``+'<'+`` ``value~r~``].+++<sub class="bk-mark">[<a href="#bk-values_of_setValue-1-arm-2">→ 3</a>]</sub>+++
  .. Let ``value~one~`` be xref:cast_op[``+D+`` ``1`` casted to type ``typeIR``].+++<sub class="bk-mark">[<a href="#bk-values_of_setValue-1-arm-2">→ 3</a>]</sub>+++
- .. Let ``value~l_inc~`` be xref:bin_plus[``value~l~`` ``+'+'+`` ``value~one~``].+++<sub class="bk-mark">[<a href="#bk-values_of_setValue-1-arm-2">→ 3</a>]</sub>+++
+ .. Let ``value~l_inc~`` be xref:bin_plus[``value~l~`` ``'{plus}'`` ``value~one~``].+++<sub class="bk-mark">[<a href="#bk-values_of_setValue-1-arm-2">→ 3</a>]</sub>+++
  .. Let ``value^{asterisk}^`` be xref:values_of_setValue[the values in ``+SET+`` ``+`{+`` ``value~l_inc~`` ``+'..'+`` ``value~r~`` ``+`}+`` of type ``+SET+`` ``+`<+`` ``typeIR`` ``+`>+``].+++<sub class="bk-mark">[<a href="#bk-values_of_setValue-1-arm-2">→ 3</a>]</sub>+++
  .. Return ``value~l~`` ``{two-colons}`` ``value^{asterisk}^``.
 . +++<span class="bk-arm-anchor" id="bk-values_of_setValue-1-arm-2"></span>+++Then, try:

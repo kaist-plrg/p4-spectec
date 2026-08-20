@@ -33,6 +33,16 @@ let prose_of_list (items : Adoc.prose list) : Adoc.prose =
           (List.mapi (fun i x -> if i = 0 then x else text ", " ++ x) items)
         ++ text ", and " ++ item_last)
 
+let escape_plus (text : string) : string =
+  text |> String.split_on_char '+' |> String.concat "{plus}"
+
+let string_of_atom (atom : atom) : string =
+  match atom.it with
+  | Atom.Tag _ -> ""
+  | atom ->
+      let text = Atom.string_of_atom atom in
+      if String.contains text '+' then escape_plus text else "+" ^ text ^ "+"
+
 (* Alternation *)
 
 let alternate ?(caps = false) (hint : Hints.Alter.t)
@@ -43,7 +53,7 @@ let alternate ?(caps = false) (hint : Hints.Alter.t)
       ~text:(fun s ->
         match s with "" -> None | s -> Some (Adoc.text (base_text s)))
       ~atom:(fun (atom : atom) ->
-        Adoc.code_prose (Adoc.token ("+" ^ Atom.string_of_atom atom.it ^ "+")))
+        Adoc.code_prose (Adoc.token (string_of_atom atom)))
       ~join:(fun (docs : Adoc.prose list) ->
         Adoc.seq_prose
           (List.mapi
@@ -93,11 +103,6 @@ let code_of_varid (id_var : id) : Adoc.code =
           (var_type ^ (var_subscripts |> String.concat "_" |> adoc_subscript))
 
 (* Atoms *)
-
-let string_of_atom (atom : atom) : string =
-  match atom.it with
-  | Atom.Tag _ -> ""
-  | _ -> "+" ^ Atom.string_of_atom atom.it ^ "+"
 
 let code_of_atom (atom : atom) : Adoc.code =
   atom |> string_of_atom |> Adoc.token
@@ -269,7 +274,7 @@ and code_of_un_exp (unop : unop) (exp : exp) : Adoc.code =
 and code_of_bin_exp (binop : binop) (exp_l : exp) (exp_r : exp) : Adoc.code =
   Adoc.(
     code_of_exp exp_l
-    ^^ token (" " ^ Sl.Print.string_of_binop binop ^ " ")
+    ^^ token (" " ^ escape_plus (Sl.Print.string_of_binop binop) ^ " ")
     ^^ code_of_exp exp_r)
 
 (* Comparison, as code
