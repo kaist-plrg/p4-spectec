@@ -123,3 +123,23 @@ let sub cache_sub_var find_typdef_opt find_func typ value =
 
 let subs find_typdef_opt find_func typs values =
   subs_ (cache_find_typdef_opt find_typdef_opt) find_func typs values
+
+let rec check cache_sub_var find_typdef_opt find_func subcheck value =
+  match (subcheck, value.it) with
+  | AcceptSC, _ -> true
+  | CaseSC mixops, CaseV valuecase ->
+      List.exists (fun mixop -> Mixfix.eq_mixop mixop valuecase) mixops
+  | TupleSC subchecks, TupleV values ->
+      List.length subchecks = List.length values
+      && List.for_all2
+           (check cache_sub_var find_typdef_opt find_func)
+           subchecks values
+  | IterSC (Opt, _), OptV None -> true
+  | IterSC (Opt, subcheck), OptV (Some value) ->
+      check cache_sub_var find_typdef_opt find_func subcheck value
+  | IterSC (List, subcheck), ListV values ->
+      List.for_all
+        (check cache_sub_var find_typdef_opt find_func subcheck)
+        values
+  | GenericSC typ, _ -> sub cache_sub_var find_typdef_opt find_func typ value
+  | _ -> false

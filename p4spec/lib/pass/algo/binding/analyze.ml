@@ -56,7 +56,8 @@ let rec is_pure_exp (exp : exp) : bool =
   | UnE (_, _, exp) -> is_pure_exp exp
   | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
       is_pure_exp exp_l && is_pure_exp exp_r
-  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
+  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _, _) | MatchE (exp, _)
+    ->
       is_pure_exp exp
   | TupleE exps -> List.for_all is_pure_exp exps
   | CaseE notexp -> List.for_all is_pure_exp (Mixfix.args notexp)

@@ -39,8 +39,8 @@ let strip_leading_rename (exp_scrut : exp) (block : 'instr_tier block) :
 let shorten_case_let_guard (exp_scrut : exp) ((guard, block) : 'instr_tier case)
     : 'instr_tier case =
   match (strip_leading_rename exp_scrut block, guard) with
-  | Some (exp_target, block_rest), SubG typ ->
-      (CheckLetSubG (typ, exp_target), block_rest)
+  | Some (exp_target, block_rest), SubG (typ, subcheck) ->
+      (CheckLetSubG (typ, subcheck, exp_target), block_rest)
   | Some (exp_target, block_rest), MatchG pattern ->
       (CheckLetMatchG (pattern, exp_target), block_rest)
   | _ -> (guard, block)
@@ -78,8 +78,8 @@ let shorten_check_let (instr : 'instr_tier instr) : 'instr_tier instr option =
     |> Option.map (fun (exp_target, block_rest) ->
            mk_instr instr (mk exp_target exp_scrut block_rest))
   in
-  let mk_sub typ exp_target exp_scrut rest =
-    CheckLetSubI (typ, exp_target, exp_scrut, rest)
+  let mk_sub typ subcheck exp_target exp_scrut rest =
+    CheckLetSubI (typ, subcheck, exp_target, exp_scrut, rest)
   in
   let mk_match patt exp_target exp_scrut rest =
     CheckLetMatchI (patt, exp_target, exp_scrut, rest)
@@ -87,12 +87,13 @@ let shorten_check_let (instr : 'instr_tier instr) : 'instr_tier instr option =
   match instr.node.it with
   | IfI (exp_cond, [], block, _) -> (
       match exp_cond.node.it with
-      | SubE (exp_scrut, typ) -> try_lift (mk_sub typ) exp_scrut block
+      | SubE (exp_scrut, typ, subcheck) ->
+          try_lift (mk_sub typ subcheck) exp_scrut block
       | MatchE (exp_scrut, pattern) ->
           try_lift (mk_match pattern) exp_scrut block
       | _ -> None)
-  | CaseI (exp_scrut, [ (SubG typ, block) ], _dangle) ->
-      try_lift (mk_sub typ) exp_scrut block
+  | CaseI (exp_scrut, [ (SubG (typ, subcheck), block) ], _dangle) ->
+      try_lift (mk_sub typ subcheck) exp_scrut block
   | CaseI (exp_scrut, [ (MatchG pattern, block) ], _dangle) ->
       try_lift (mk_match pattern) exp_scrut block
   | _ -> None
@@ -238,9 +239,11 @@ let shorten_recurse_shared
       let node = TierI (shorten_instr_tier instr_tier) $$ (at, note) in
       { instr with node }
   | LetI _ | DebugI _ | DestructI _ -> instr
-  | CheckLetSubI (typ, exp_l, exp_r, block_then) ->
+  | CheckLetSubI (typ, subcheck, exp_l, exp_r, block_then) ->
       let block_then = shorten_block block_then in
-      let node = CheckLetSubI (typ, exp_l, exp_r, block_then) $$ (at, note) in
+      let node =
+        CheckLetSubI (typ, subcheck, exp_l, exp_r, block_then) $$ (at, note)
+      in
       { instr with node }
   | CheckLetMatchI (pattern, exp_l, exp_r, block_then) ->
       let block_then = shorten_block block_then in

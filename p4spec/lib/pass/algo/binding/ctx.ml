@@ -57,6 +57,9 @@ let add_bounds (ctx : t) (venv : VEnv.t) : t =
 
 let find_typdef (ctx : t) (tid : TId.t) : Typdef.t = TDEnv.find tid ctx.tdenv
 
+let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
+  TDEnv.find_opt tid ctx.tdenv
+
 (* Load type definitions *)
 
 let load_def (ctx : t) (def : def) : t =

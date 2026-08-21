@@ -370,7 +370,7 @@ and boot_exp (exp : Il.exp) : Value.t =
   | CmpE (cmpop, _, el, er) -> boot_cmp_exp at cmpop el er
   | UpCastE (typ, e) -> boot_upcast_exp at typ e
   | DownCastE (typ, e) -> boot_downcast_exp at typ e
-  | SubE (e, typ) -> boot_sub_exp at e typ
+  | SubE (e, typ, _) -> boot_sub_exp at e typ
   | MatchE (e, pattern) -> boot_match_exp at e pattern
   | TupleE exps -> boot_tuple_exp at exps
   | CaseE notexp -> boot_case_exp at notexp

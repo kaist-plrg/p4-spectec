@@ -1,4 +1,5 @@
 open Domain.Lib
+module Mixfix = Domain.Mixfix
 open Lang
 open Xl
 open Il
@@ -53,3 +54,39 @@ and sub_typ' (find_typdef_opt : TId.t -> Typdef.t option) (typ_a : typ)
   | _, IterT (typ_b, Opt) -> sub_typ find_typdef_opt typ_a typ_b
   | _, IterT (typ_b, List) -> sub_typ find_typdef_opt typ_a typ_b
   | _ -> false
+
+(* Compilation of subtype checks *)
+
+let rec compile (find_typdef_opt : TId.t -> Typdef.t option) ~(typ_source : typ)
+    ~(typ_target : typ) : subcheck =
+  if sub_typ find_typdef_opt typ_source typ_target then AcceptSC
+  else
+    let typ_source_expanded = Expand.expand_typ find_typdef_opt typ_source in
+    let typ_target_expanded = Expand.expand_typ find_typdef_opt typ_target in
+    match (typ_source_expanded.it, typ_target_expanded.it) with
+    | TupleT typs_source, TupleT typs_target
+      when List.length typs_source = List.length typs_target ->
+        TupleSC
+          (List.map2
+             (fun typ_source typ_target ->
+               compile find_typdef_opt ~typ_source ~typ_target)
+             typs_source typs_target)
+    | IterT (typ_source, iter_source), IterT (typ_target, iter_target)
+      when iter_source = iter_target ->
+        IterSC (iter_source, compile find_typdef_opt ~typ_source ~typ_target)
+    | VarT (tid_source, _), VarT (tid_target, _)
+      when sub_typ find_typdef_opt typ_target typ_source -> (
+        match (find_typdef_opt tid_source, find_typdef_opt tid_target) with
+        | Some (Defined (_, deftyp_source)), Some (Defined (_, deftyp_target))
+          -> (
+            match (deftyp_source.it, deftyp_target.it) with
+            | VariantT _, VariantT typcases_target ->
+                let mixops_target =
+                  List.map
+                    (fun (nottyp, _, _) -> Mixfix.to_mixop nottyp.it)
+                    typcases_target
+                in
+                CaseSC mixops_target
+            | _ -> GenericSC typ_target)
+        | _ -> GenericSC typ_target)
+    | _ -> GenericSC typ_target

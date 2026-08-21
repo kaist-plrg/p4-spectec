@@ -92,7 +92,7 @@ let rec string_of_exp exp =
       "(" ^ string_of_exp exp ^ " as " ^ string_of_typ typ ^ ")"
   | Il.DownCastE (typ, exp) ->
       "(" ^ string_of_exp exp ^ " as " ^ string_of_typ typ ^ ")"
-  | Il.SubE (exp, typ) ->
+  | Il.SubE (exp, typ, _) ->
       "(" ^ string_of_exp exp ^ " has type " ^ string_of_typ typ ^ ")"
   | Il.MatchE (exp, pattern) ->
       "(" ^ string_of_exp exp ^ " matches pattern " ^ string_of_pattern pattern
@@ -208,7 +208,7 @@ and string_of_guard guard =
   | BoolG b -> string_of_bool b
   | CmpG (cmpop, _, exp) ->
       "(% " ^ string_of_cmpop cmpop ^ " " ^ string_of_exp exp ^ ")"
-  | SubG typ -> "(% has type " ^ string_of_typ typ ^ ")"
+  | SubG (typ, _) -> "(% has type " ^ string_of_typ typ ^ ")"
   | MatchG patten -> "(% matches pattern " ^ string_of_pattern patten ^ ")"
   | MemG exp -> "(% is in " ^ string_of_exp exp ^ ")"
 
