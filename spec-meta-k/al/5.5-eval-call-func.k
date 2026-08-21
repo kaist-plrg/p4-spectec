@@ -201,7 +201,7 @@ module AL-CALL-FUNC
   // is in 4.1-extern-json.k).  They differ only in who answers —
   // `Call_builtin_func` reaches the OCaml builtin registry
   // (`p4spec/lib/interface/builtin/`), while `Call_extern_func` is answered
-  // against the target spec named by `externSpec()`, on the P4 interface.
+  // against the target spec in `<specdir>`, on the P4 interface.
   //
   // Both are wired below; see 5.6-eval-call-rel.k for the matching
   // `Call_extern_rel`.  One semantic difference is worth keeping in view: a
@@ -292,10 +292,8 @@ module AL-CALL-FUNC
   // representation, so `TypList` goes out on the wire faithfully.
   //
   // RUNTIME DEPENDENCY: the OCaml implementation must be linked into
-  // `al-kompiled/interpreter` (`make k-build`), and the spec paths named by
-  // `builtinSpec()`/`externSpec()` are relative, so runs must still start from
-  // the repo root.  K rules cannot read environment variables, so unlike
-  // `scripts/kast-json.sh` there is no override available here.
+  // `al-kompiled/interpreter` (`make k-build`), and the target spec path in
+  // `<specdir>` is relative, so runs must still start from the repo root.
   // ==========================================================================
 
   //   The transport itself — the FFI crossing and reply decoding — lives in
@@ -303,9 +301,10 @@ module AL-CALL-FUNC
   //   extern kinds.  All that is left here is to say what to send and how the
   //   reply should be read.
   rule <k> callBuiltinFunc(X:Id, Ts:TypList, Vs:ValList)
-        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), builtinSpec(), builtinK())
+        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), Spec, builtinK())
        ...
        </k>
+       <specdir> Spec:String </specdir>
 
   // ==========================================================================
   // Call_extern_func: dispatch over the external interface
@@ -313,7 +312,7 @@ module AL-CALL-FUNC
   // `Call_extern_func` is the hook by which a spec running under K reaches an
   // extern's meaning, which lives outside the meta-language.  It goes over the
   // same wire, and to the same `ml_eval`, as a builtin: kffi.ml builds a runner
-  // for the spec named by `externSpec()` on the P4 interface, and for the P4
+  // for the spec in `<specdir>` on the P4 interface, and for the P4
   // spec's own externs that resolves them against the architecture model in
   // `p4spec/lib/backend-sim/`.  (OCaml has a second route for this hook,
   // `Make_parametric` (`backend-boot/spectec.ml:173-215`), which instead sends
@@ -324,13 +323,13 @@ module AL-CALL-FUNC
   // through `tryNextClause` exactly like a failed clause.
   // ==========================================================================
 
-  //   `externSpec` reads `<p4prog>` because the two entries of 6-entry.k have
-  //   different externs behind them; see the rules for it in 4.2-extern-ffi.k.
+  //   `<specdir>` is the target spec, supplied by the invocation; see the note
+  //   on it in 4.2-extern-ffi.k.
   rule <k> callExternFunc(X:Id, Ts:TypList, Vs:ValList)
         => externReq(JSON2String(jsonOfExternFuncRequest(X, Ts, Vs)),
-                     externSpec(P4), externFuncK())
+                     Spec, externFuncK())
        ...
        </k>
-       <p4prog> P4:P4Opt </p4prog>
+       <specdir> Spec:String </specdir>
 
 endmodule

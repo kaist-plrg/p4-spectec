@@ -237,41 +237,39 @@ module AL-EXTERN-FFI
   // ==========================================================================
   // Which spec a call resolves against
   //
-  // This used to be a whole command line (`"extern -spec spec"`); it is now
-  // just the path, since there is no subcommand to name any more.  Everything
-  // else about the dispatch is unchanged, including that it is hardcoded: K
-  // rules cannot read environment variables, so a name the run depends on has
-  // exactly one place to be changed -- the same reason `entryRel()` is
-  // isolated in 6-entry.k.
+  // The **target spec**: the SpecTec program this run is executing.  It reaches
+  // K as the `$SPEC` configuration variable, landing in `<specdir>`
+  // (al/0-config.k), and both call sites -- `callBuiltinFunc`
+  // (5.5-eval-call-func.k) and `callExternFunc`/`callExternRel` -- read that
+  // cell directly.  There is no function here any more, and nothing hardcoded:
+  // the target is a property of the *invocation*, and the invocation is now
+  // what supplies it.
   //
-  // Both of these name the **target spec**: the spec the run is executing.
-  // They are not a lower spec, and not a per-call choice.
+  // It was previously a `builtinSpec()`/`externSpec(P4Opt)` pair of rules
+  // fixed to `"spec"`.  That was a wart -- running against any other target
+  // meant editing this file and re-`kompile`ing -- and the `<p4prog>` dispatch
+  // in `externSpec` was vestigial besides, since both cases answered alike.
   //
-  // A builtin is a static registry lookup and does not need a spec at all,
-  // except for `$print_`, which unparses against one.  Naming `"spec"` costs
-  // nothing for the other 46: kffi.ml loads it only when a request needs it.
+  // One value serves both kinds, because both are answered against the same
+  // spec:
   //
-  // An extern's meaning is reached through the P4 interface, which kffi.ml
-  // always builds its runner on: for the P4 spec's own externs
-  // (`ExternFunctionCall_eval_lctk`, `ExternMethodCall_eval`, ...) that is the
-  // architecture model in `p4spec/lib/backend-sim/`.  Getting the path wrong is
-  // quiet rather than loud: an extern name the runner cannot resolve comes back
-  // as `{"fail": null}`, indistinguishable from a spec-level failure
-  // (CROSS.md §8).
+  //   - A builtin is a static registry lookup and does not need a spec at all,
+  //     except for `$print_`, which unparses against one.  Naming the target
+  //     costs nothing for the other 46: kffi.ml loads it only when a request
+  //     needs it.
   //
-  // `externSpec` still takes the `<p4prog>` cell, though both cases currently
-  // answer `"spec"`.  It is kept because the target spec is a property of the
-  // *invocation* -- `make k-run` and `make k-typecheck` know it, K only
-  // hardcodes it -- and the cell is the shape a real fix plugs into: a
-  // configuration variable carrying the target path, the way `$P4` already
-  // carries the program.  Until then this is one place to edit for a run
-  // against some other target.
+  //   - An extern is answered on the P4 interface, which kffi.ml always builds
+  //     its runner on; for the P4 spec's own externs
+  //     (`ExternFunctionCall_eval_lctk`, `ExternMethodCall_eval`, ...) that
+  //     resolves them against the architecture model in
+  //     `p4spec/lib/backend-sim/`.
+  //
+  // Getting the path wrong is quiet rather than loud: an extern name the runner
+  // cannot resolve comes back as `{"fail": null}`, indistinguishable from a
+  // spec-level failure (CROSS.md §8).  So a mistyped `-cSPEC=` surfaces as a
+  // type error in the program under test, not as a diagnostic -- which is the
+  // one cost of making this configurable, and the reason `make` fills it in
+  // rather than leaving it to be typed.
   // ==========================================================================
-
-  syntax String ::= "builtinSpec" "(" ")"     [function, total, symbol(builtinSpec)]
-                  | externSpec(P4Opt)         [function, total, symbol(externSpec)]
-  rule builtinSpec()         => "spec"
-  rule externSpec(noP4())    => "spec"
-  rule externSpec(someP4(_)) => "spec"
 
 endmodule

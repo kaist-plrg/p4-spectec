@@ -45,7 +45,7 @@ kompile mlffi.k --backend llvm -I "$K_INC" \
   -ccopt shim.o -ccopt mlcode.o \
   -ccopt -L"$(ocamlopt -where)" \
   -ccopt -lasmrun -ccopt -lzstd \
-  -ccopt -lm -ccopt -ldl -ccopt -lpthread \
+  -ccopt -lm -ccopt -ldl \
   -ccopt -rdynamic
 ```
 

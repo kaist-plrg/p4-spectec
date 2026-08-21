@@ -19,7 +19,7 @@
 //     (`p4spec/lib/interface/builtin/`), a static lookup that does not load
 //     SPEC at all (except for `$print_`, which unparses against it).
 //   - `Call_extern_func` / `Call_extern_rel` -> answered against SPEC on the
-//     P4 interface, where `externSpec()` (in 4.2-extern-ffi.k) names the target
+//     P4 interface, where the `<specdir>` cell (al/0-config.k) names the target
 //     SPEC to load.  For the P4 spec's own externs the meaning is the
 //     architecture model in `p4spec/lib/backend-sim/`.
 //

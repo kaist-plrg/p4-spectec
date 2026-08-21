@@ -152,8 +152,8 @@ module AL-CALL-REL
   //
   // `Call_extern_rel` is an `extern relation`, dispatched over the external
   // interface like its sibling `Call_extern_func` (5.5-eval-call-func.k): the
-  // call is serialized and answered against the target spec named by
-  // `externSpec()`, on the P4 interface.
+  // call is serialized and answered against the target spec in `<specdir>`, on
+  // the P4 interface.
   //
   // A relation yields `val*` rather than a single value, so the reply's `ok`
   // payload is a JSON array and `externRelResult` decodes it to a `ValList` —
@@ -175,10 +175,10 @@ module AL-CALL-REL
   //   (spec-meta/common/4-relation.watsup:26-30).
   rule <k> callExternRel(X:Id, Vs:ValList)
         => externReq(JSON2String(jsonOfExternRelRequest(X, Vs)),
-                     externSpec(P4), externRelK())
+                     Spec, externRelK())
        ...
        </k>
-       <p4prog> P4:P4Opt </p4prog>
+       <specdir> Spec:String </specdir>
 
   // ==========================================================================
   // Call_rel: look the relation up (global only — see 3-context.watsup's

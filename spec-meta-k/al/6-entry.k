@@ -35,9 +35,11 @@ module AL
        </k>
        <p4prog> someP4(V:Val) </p4prog>
 
-  // Isolated here rather than written inline, like `builtinSpec()` and
-  // `externSpec()` in al/4.2-extern-ffi.k: K rules cannot read the environment,
-  // so a name the run depends on has exactly one place to be changed.
+  // Isolated here rather than written inline, so a name the run depends on has
+  // exactly one place to be changed.  Unlike the target spec path -- which used
+  // to be hardcoded the same way and is now the `$SPEC` configuration variable
+  // (al/4.2-extern-ffi.k) -- this one stays put: it is a property of the P4
+  // spec, which names this relation, not of the invocation.
   syntax Id ::= "entryRel" "(" ")"          [function, total, symbol(entryRel)]
   rule entryRel() => "Program_ok"
 

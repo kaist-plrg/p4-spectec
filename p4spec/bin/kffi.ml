@@ -55,11 +55,11 @@ let () =
 let runners : (string, (module RUNNER)) Hashtbl.t = Hashtbl.create 4
 
 (* `Interface.P4.unparser` is a process-global ref, so the *last* spec built
-   wins on `$print_`.  Every current run names one target spec for both builtins
-   and externs (`builtinSpec`/`externSpec` in al/4.2-extern-ffi.k), so this is
-   unreachable today -- but it is what a second path would silently corrupt, and
-   the target spec is exactly the thing meant to become configurable.  Warn
-   rather than let a wrong `$print_` be silent. *)
+   wins on `$print_`.  A run names one target spec for both builtins and externs
+   -- the `$SPEC` configuration variable, in K's `<specdir>` cell -- so this is
+   unreachable through the current entry points.  It is kept because `$SPEC` is
+   set per invocation: nothing stops a future caller from varying it mid-run,
+   and this warns rather than letting a wrong `$print_` be silent. *)
 
 let path_spec_inited : string option ref = ref None
 

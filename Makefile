@@ -146,9 +146,8 @@ promote:
 # wrappers, which remove what they create; a run that dies on a stuck term
 # deliberately leaves its own behind, since those are worth reading.
 #
-# All must run from the repo root: the spec paths a builtin or extern call
-# resolves against (`builtinSpec()`/`externSpec()` in al/4-extern-ffi.k) are
-# relative to it.
+# All must run from the repo root: the target spec path a builtin or extern call
+# resolves against (`-cSPEC`, below) is relative to it.
 #
 # `al-kompiled/interpreter` embeds a *snapshot* of the OCaml implementation --
 # kffi.exe.o is linked into it -- so after editing p4spec/ the workflow is
@@ -203,7 +202,7 @@ k-build: $(BOOT) $(KFFI_OBJ) $(KSHIM_OBJ)
 	  -ccopt $(KSHIM_OBJ) -ccopt $(KFFI_OBJ) \
 	  -ccopt -L"$(OCAMLWHERE)" \
 	  -ccopt -lasmrun -ccopt -lzstd -ccopt -lgmp \
-	  -ccopt -lm -ccopt -ldl -ccopt -lpthread \
+	  -ccopt -lm -ccopt -ldl \
 	  -ccopt -rdynamic
 	@nm -D $(KDEFDIR)/interpreter | grep -q ml_eval_c \
 	  || { echo "####> ml_eval_c not in dynamic symbol table -- -rdynamic missing?"; false; }
@@ -231,11 +230,19 @@ $(BOOT):
 #
 # The empty value selects `noP4()`, i.e. the `$main()` entry, leaving these runs
 # behaving exactly as before.
+#
+# `-cSPEC` supplies `<specdir>`, the target spec a builtin or extern call is
+# answered against (al/4.2-extern-ffi.k).  Here that is the script itself: a
+# self-contained target is its own spec, and `$print_` unparses against it.
+# Unlike `-cP4` it needs no `-p` wrapper -- krun parses a bare `String`, so the
+# inner quotes are part of the value and the `'...'` keeps the shell off them.
+# It has no default either, so a hand-written krun line must pass it too.
 .PHONY: k-run
 k-run: $(BOOT)
 	@test -n "$(TEC)" || { echo "usage: make k-run TEC=examples/add.watsup"; exit 1; }
 	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./$(KSCRIPTS)/kast-json.sh $(TEC) \
-	  -cP4= -pP4=./$(KSCRIPTS)/kast-p4.sh
+	  -cP4= -pP4=./$(KSCRIPTS)/kast-p4.sh \
+	  -cSPEC='"$(TEC)"'
 
 # Type-check a P4 program: the spec is $PGM, the program is $P4, and the entry
 # becomes `Program_ok` rather than `$main()`.
@@ -243,14 +250,16 @@ k-run: $(BOOT)
 # krun requires $PGM to be a file, but the spec is a whole directory, so its
 # path is handed over in a one-line stub (`@`-prefixed) that kast-json.sh
 # resolves -- and deletes, so nothing here has to clean it up.  See the note
-# there.
+# there.  `-cSPEC` names that same directory, this time as an ordinary value:
+# it is the target spec, so it needs no stub.
 .PHONY: k-typecheck
 k-typecheck: $(BOOT)
 	@test -n "$(P4)" || { echo "usage: make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4"; exit 1; }
 	@printf '@%s\n' "$(SPEC_K)" > $(KSCRATCH)/specdir
 	KDEF=$(KDEFDIR) P4INCLUDE=$(P4INCLUDE) krun -d $(KDEFDIR) \
 	  --parser ./$(KSCRIPTS)/kast-json.sh $(KSCRATCH)/specdir \
-	  -cP4=$(P4) -pP4=./$(KSCRIPTS)/kast-p4.sh
+	  -cP4=$(P4) -pP4=./$(KSCRIPTS)/kast-p4.sh \
+	  -cSPEC='"$(SPEC_K)"'
 
 # Cleanup
 

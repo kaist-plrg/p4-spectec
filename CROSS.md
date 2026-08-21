@@ -97,11 +97,8 @@ make k-clean                                # drop al-kompiled/ and scratch file
 
 ### Runtime dependency
 
-**A K run must start from the repo root**, because the spec paths an external
-call resolves against (`builtinSpec()`/`externSpec()`) are relative and
-hardcoded — K rules cannot read environment variables, so unlike
-`scripts/kast-json.sh`
-there is no override on this path.
+**A K run must start from the repo root**, because the target spec path an
+external call resolves against (`<specdir>`, from `-cSPEC`) is relative to it.
 
 **`./spectec-boot` must still exist**, though no longer for external calls: the
 two parser wrappers (§6) invoke it to boot `$PGM` and parse `$P4`, entirely
@@ -130,7 +127,8 @@ FFI rather than through a request file.
 ```sh
 KDEF=al-kompiled krun -d al-kompiled \
   --parser ./spec-meta-k/scripts/kast-json.sh examples/add.watsup \
-  -cP4= -pP4=./spec-meta-k/scripts/kast-p4.sh
+  -cP4= -pP4=./spec-meta-k/scripts/kast-p4.sh \
+  -cSPEC='"examples/add.watsup"'
 ```
 
 The `.watsup` is booted to a term by the parser wrapper; `-cP4=` is empty, so
@@ -407,8 +405,10 @@ which prints the script back as `typD("nat", .TParamList, aliasDT(natT())), ...`
 
 ## 6. The two shell wrappers
 
-`krun` has no `--input json`, so both configuration variables need a `--parser`,
-and each parser is a shell script. Three constraints shape both:
+`krun` has no `--input json`, so the two *term-valued* configuration variables
+need a `--parser`, and each parser is a shell script. (`$SPEC`, the third, is a
+plain `String`: `krun` parses `-cSPEC='"spec"'` directly, so it has no wrapper.)
+Three constraints shape both:
 
 - `--parser` takes **a single executable**, not a command string — K execs the
   flag's whole value as one filename, so `--parser "./x.sh arg"` fails.
@@ -463,9 +463,9 @@ typ   ::= ["natT"] | ["intT"] | ["boolT"] | ["textT"]
 The three request kinds are told apart by **which key is present**, not by a
 `"kind"` field, so a builtin request is byte-identical to what it was before
 externs existed — and that is also what lets one *entry point* serve all three
-(§5). One shared transport in `4-extern-ffi.k` serves them too, parameterized by
-the spec path (`builtinSpec()` / `externSpec()`, which differ only in what they
-name) and an `ExternKind` telling the last step which decoder to apply.
+(§5). One shared transport in `4.2-extern-ffi.k` serves them too, parameterized
+by the target spec path (`<specdir>`, the same for all three) and an
+`ExternKind` telling the last step which decoder to apply.
 
 Format decisions worth knowing:
 
@@ -557,15 +557,15 @@ char *` carrying a serialized request, with dispatch in OCaml.
   no separate printer-init table is needed. Caveat: `Interface.P4.unparser` is a
   process-global ref, so if one run built runners for *two* paths the last would
   win; `kffi.ml` warns on stderr when that happens.
-- The spec a builtin or extern resolves against is still **hardcoded**, for the
-  same reason `entryRel()` is: K rules cannot read environment variables. Both
-  `builtinSpec()` and `externSpec()` name the **target spec** — the spec the run
-  is executing — and both answer `spec`. Only the path could differ; the
-  interface is always P4. This is a known wart rather than a design: the target
-  spec is a property of the *invocation*, which `make k-run` and `make
-  k-typecheck` both already know, so the fix is to carry it in a configuration
-  variable the way `$P4` carries the program. `externSpec` keeps its `<p4prog>`
-  argument as the seam that plugs into.
+- The spec a builtin or extern resolves against is the **target spec** — the
+  spec the run is executing — and it is supplied by the *invocation*, as the
+  `$SPEC` configuration variable landing in `<specdir>`. It used to be
+  hardcoded in a `builtinSpec()`/`externSpec()` pair of rules fixed to `spec`,
+  which meant running against any other target required editing the K source
+  and re-`kompile`ing; `externSpec`'s `<p4prog>` dispatch was vestigial besides,
+  since both cases answered alike. One value now serves all three request kinds
+  — the interface is always P4. Being a plain `String`, it needs no `--parser`
+  (§6); like `$P4` it has no default, so every `krun` line must pass it.
 
 ## 8. Known problems
 
@@ -603,6 +603,10 @@ Standing problems:
   hypothetical: it is what hid the missing P4-interface route (§5) — every
   `static_assert` came back as a recoverable failure, so the program merely
   failed to type-check rather than reporting a broken wire.
-- **The spec an extern resolves against is hardcoded** per entry (§7), so it
-  cannot vary per target beyond the two `<p4prog>` selects.
+- ~~**The spec an extern resolves against is hardcoded**~~ per entry, so it
+  could not vary per target beyond the two `<p4prog>` selects. **Resolved:** it
+  is the `$SPEC` configuration variable, set per invocation (§7). The residual
+  hazard is that a wrong path stays *quiet* — it surfaces through the bullet
+  above, as a failure to type-check rather than a diagnostic — which is why
+  `make` fills it in rather than leaving it to be typed.
 
