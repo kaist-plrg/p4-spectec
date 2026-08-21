@@ -18,26 +18,27 @@
 # the input file, leaving no way to hand it a -d of its own.  $P4INCLUDE gives
 # the P4 preprocessor its include path, and $SPECTEC_BOOT overrides the path to
 # spectec-boot when it is not ./spectec-boot.
+#
+# Scratch files are mktemp'd straight into ./spec-meta-k/, as in kast-json.sh.
 set -e
 
-mkdir -p ./.tmp
+KSCRATCH=./spec-meta-k
 
 p4=$(cat "$1")
 
 # No program: the term is the constant `noP4()`, which needs no parsing beyond
 # kast's own.  `--sort P4Opt` because that is the sort of the `<p4prog>` cell.
 if [ -z "$p4" ]; then
-  printf 'noP4()' > ./.tmp/spectec-k-nop4.$$
-  kast --definition "$KDEF" --output kore --sort P4Opt ./.tmp/spectec-k-nop4.$$ \
-    > ./.tmp/spectec-k-nop4.$$.kore
-  status=$?
-  cat ./.tmp/spectec-k-nop4.$$.kore
-  rm -f ./.tmp/spectec-k-nop4.$$ ./.tmp/spectec-k-nop4.$$.kore
+  nop4=$(mktemp $KSCRATCH/spectec-k-nop4-XXXXXX)
+  printf 'noP4()' > "$nop4"
+  status=0
+  kast --definition "$KDEF" --output kore --sort P4Opt "$nop4" || status=$?
+  rm -f "$nop4"
   exit $status
 fi
 
 # A program: boot it to a KAST JSON term, already wrapped as `someP4(...)`.
-json=$(mktemp ./.tmp/spectec-k-p4-XXXXXX.json)
+json=$(mktemp $KSCRATCH/spectec-k-p4-XXXXXX.json)
 
 includes=""
 if [ -n "$P4INCLUDE" ]; then

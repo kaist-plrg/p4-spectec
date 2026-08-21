@@ -140,10 +140,11 @@ promote:
 #   make k-build                         compile the K definition
 #   make k-run TEC=examples/add.watsup   run one self-contained target
 #   make k-typecheck P4=foo.p4           type-check a P4 program against spec/
-#   make k-clean                         drop al-kompiled/ and .tmp/
+#   make k-clean                         drop al-kompiled/
 #
-# k-run and k-typecheck clean up .tmp/ themselves; k-clean still removes it, for
-# the leftovers a run that died on a stuck term deliberately keeps.
+# Scratch files are mktemp'd directly into spec-meta-k/ by the two parser
+# wrappers, which remove what they create; a run that dies on a stuck term
+# deliberately leaves its own behind, since those are worth reading.
 #
 # All must run from the repo root: the spec paths a builtin or extern call
 # resolves against (`builtinSpec()`/`externSpec()` in al/4-extern-ffi.k) are
@@ -156,7 +157,10 @@ promote:
 
 KDEFDIR = al-kompiled
 KENTRY = spec-meta-k/al/6-entry.k
-KTMP = .tmp
+KSCRIPTS = spec-meta-k/scripts
+# Scratch files (the k-typecheck spec stub, and whatever the wrappers mktemp)
+# live here rather than in a scratch directory of their own.
+KSCRATCH = spec-meta-k
 
 # The FFI boundary, linked into the interpreter (CROSS.md §7).
 #
@@ -171,17 +175,6 @@ KSHIM_SRC = spec-meta-k/ffi/shim.c
 KSHIM_OBJ = spec-meta-k/ffi/shim.o
 OCAMLWHERE = $(shell opam exec --switch=5.1.0 -- ocamlopt -where)
 K_INC = $(shell dirname $$(dirname $$(readlink -f $$(which kompile))))/include/kframework/builtin
-
-# Drop the scratch directory once rewriting is over.  Nothing mints a file in
-# there mid-run any more -- external calls cross by FFI, not through a request
-# file -- but the two parser scripts still mktemp there before K starts, and
-# both remove what they create, so by now it is empty.
-#
-# `rmdir`, not `rm -rf`: a run that dies on a stuck term never reaches K's own
-# cleanup, and those leftovers are worth reading.  Failing to remove a non-empty
-# directory is the wanted behaviour, hence `|| true` -- the target's exit status
-# stays krun's.
-KTMPDROP = rmdir $(KTMP) 2>/dev/null || true
 
 # The P4 spec, and the include path its programs are preprocessed with.
 # Program_ok needs 0-aux..5-typing only; 6-9 (instantiation, dynamic, arch) are
@@ -223,7 +216,8 @@ $(KFFI_OBJ):
 $(KSHIM_OBJ): $(KSHIM_SRC)
 	gcc -c -fPIC -O2 -I "$(OCAMLWHERE)" -o $@ $<
 
-# `boot` is a prerequisite of every K target: kast-json.sh and kast-p4.sh still
+# `boot` is a prerequisite of every K target: $(KSCRIPTS)/kast-json.sh and
+# $(KSCRIPTS)/kast-p4.sh still
 # invoke ./spectec-boot to boot $PGM and parse $P4, entirely outside the
 # interpreter.  Named as a file target so it is not rebuilt when already
 # present.
@@ -240,26 +234,23 @@ $(BOOT):
 .PHONY: k-run
 k-run: $(BOOT)
 	@test -n "$(TEC)" || { echo "usage: make k-run TEC=examples/add.watsup"; exit 1; }
-	@mkdir -p $(KTMP)
-	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./kast-json.sh $(TEC) \
-	  -cP4= -pP4=./kast-p4.sh; \
-	  status=$$?; $(KTMPDROP); exit $$status
+	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./$(KSCRIPTS)/kast-json.sh $(TEC) \
+	  -cP4= -pP4=./$(KSCRIPTS)/kast-p4.sh
 
 # Type-check a P4 program: the spec is $PGM, the program is $P4, and the entry
 # becomes `Program_ok` rather than `$main()`.
 #
 # krun requires $PGM to be a file, but the spec is a whole directory, so its
 # path is handed over in a one-line stub (`@`-prefixed) that kast-json.sh
-# resolves.  See the note there.
+# resolves -- and deletes, so nothing here has to clean it up.  See the note
+# there.
 .PHONY: k-typecheck
 k-typecheck: $(BOOT)
 	@test -n "$(P4)" || { echo "usage: make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4"; exit 1; }
-	@mkdir -p $(KTMP)
-	@printf '@%s\n' "$(SPEC_K)" > $(KTMP)/specdir
+	@printf '@%s\n' "$(SPEC_K)" > $(KSCRATCH)/specdir
 	KDEF=$(KDEFDIR) P4INCLUDE=$(P4INCLUDE) krun -d $(KDEFDIR) \
-	  --parser ./kast-json.sh $(KTMP)/specdir \
-	  -cP4=$(P4) -pP4=./kast-p4.sh; \
-	  status=$$?; $(KTMPDROP); exit $$status
+	  --parser ./$(KSCRIPTS)/kast-json.sh $(KSCRATCH)/specdir \
+	  -cP4=$(P4) -pP4=./$(KSCRIPTS)/kast-p4.sh
 
 # Cleanup
 
@@ -271,4 +262,5 @@ clean:
 
 .PHONY: k-clean
 k-clean:
-	rm -rf $(KDEFDIR) $(KTMP) $(KSHIM_OBJ)
+	rm -rf $(KDEFDIR) $(KSHIM_OBJ)
+	rm -f $(KSCRATCH)/specdir $(KSCRATCH)/spectec-k-*

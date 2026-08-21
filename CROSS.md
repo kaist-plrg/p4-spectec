@@ -92,14 +92,15 @@ configuration
 make k-build                                # kompile -> al-kompiled/
 make k-run TEC=examples/add.watsup          # a self-contained script
 make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4
-make k-clean                                # drop al-kompiled/ and .tmp/
+make k-clean                                # drop al-kompiled/ and scratch files
 ```
 
 ### Runtime dependency
 
 **A K run must start from the repo root**, because the spec paths an external
 call resolves against (`builtinSpec()`/`externSpec()`) are relative and
-hardcoded — K rules cannot read environment variables, so unlike `kast-json.sh`
+hardcoded — K rules cannot read environment variables, so unlike
+`scripts/kast-json.sh`
 there is no override on this path.
 
 **`./spectec-boot` must still exist**, though no longer for external calls: the
@@ -117,18 +118,19 @@ The workflow is:
 make boot && make k-build
 ```
 
-Scratch files go under **`./.tmp/`** (gitignored), created by `kast-json.sh`.
-Nothing writes there from inside K any more — external calls cross by FFI rather
-than through a request file — but both parser wrappers `mktemp` there before K
-starts, so running `krun` without them means creating it yourself.
+Scratch files are `mktemp`'d straight into **`./spec-meta-k/`** (gitignored),
+by the two parser wrappers, before K starts; there is no scratch directory to
+create. Nothing writes there from inside K any more — external calls cross by
+FFI rather than through a request file.
 
 ### A simple AL program with a `main`
 
 `make k-run TEC=examples/add.watsup` expands to
 
 ```sh
-KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh examples/add.watsup \
-  -cP4= -pP4=./kast-p4.sh
+KDEF=al-kompiled krun -d al-kompiled \
+  --parser ./spec-meta-k/scripts/kast-json.sh examples/add.watsup \
+  -cP4= -pP4=./spec-meta-k/scripts/kast-p4.sh
 ```
 
 The `.watsup` is booted to a term by the parser wrapper; `-cP4=` is empty, so
@@ -155,14 +157,13 @@ Underneath the Makefile there is no `main.k`: the entry module is
 
 ```sh
 kompile spec-meta-k/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX -o al-kompiled
-mkdir -p .tmp
-KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh examples/add.watsup
+KDEF=al-kompiled krun -d al-kompiled \
+  --parser ./spec-meta-k/scripts/kast-json.sh examples/add.watsup
 ```
 
 `KDEF` must be set even though `-d` already names the definition on the `krun`
 line — `krun` passes the wrapper only the input file, so that is the one channel
-it has (§6). `.tmp/` must exist before `krun`; the wrapper creates it, which is
-why the bare form above needs the `mkdir`.
+it has (§6).
 
 To keep the intermediate JSON — to inspect it, or to diff two revisions of the
 emitter — emit it explicitly and hand `krun` that instead; the wrapper takes
@@ -170,7 +171,7 @@ either:
 
 ```sh
 ./spectec-boot kast examples/add.watsup -o add.json
-KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh add.json
+KDEF=al-kompiled krun -d al-kompiled --parser ./spec-meta-k/scripts/kast-json.sh add.json
 ```
 
 Use `krun --output json` to diff results mechanically rather than by eye.
@@ -416,16 +417,13 @@ and each parser is a shell script. Three constraints shape both:
   preprocessor path, `$SPECTEC_BOOT` to override `./spectec-boot`.
 - `krun` insists the input be a **file**.
 
-**[kast-json.sh](kast-json.sh)** (`$PGM`, sort `Script`). Given a `.watsup` or a
+**[scripts/kast-json.sh](spec-meta-k/scripts/kast-json.sh)** (`$PGM`, sort `Script`). Given a `.watsup` or a
 spec directory it runs `spectec-boot kast` itself, so a target runs in one
 command; anything else is assumed to be KAST JSON already. Because a whole spec
 *directory* cannot be named as `$PGM`, `make k-typecheck` writes a one-line stub
-file holding the path, `@`-prefixed, which the wrapper resolves and deletes. It
-also creates `./.tmp/` — K rules cannot `mkdir`, but a builtin call writes its
-request file there from inside K — and sweeps request files left by runs that
-died on a stuck term.
+file holding the path, `@`-prefixed, which the wrapper resolves and deletes.
 
-**[kast-p4.sh](kast-p4.sh)** (`$P4`, sort `P4Opt`). `krun -cP4=VALUE` writes
+**[scripts/kast-p4.sh](spec-meta-k/scripts/kast-p4.sh)** (`$P4`, sort `P4Opt`). `krun -cP4=VALUE` writes
 VALUE to a temp file and passes *that file* to the parser, so its argument is a
 file containing a P4 program *path*. Empty means `noP4()`; a path is booted with
 `spectec-boot kast-p4`.

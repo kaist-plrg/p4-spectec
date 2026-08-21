@@ -5,19 +5,20 @@
 # Accepting a .watsup as well means the boot step happens inside the parser,
 # and a target runs in one command rather than two:
 #
-#   KDEF=al-kompiled krun -d al-kompiled --parser ./kast-json.sh examples/add.watsup
+#   KDEF=al-kompiled krun -d al-kompiled \
+#     --parser ./spec-meta-k/scripts/kast-json.sh examples/add.watsup
 #
 # $KDEF supplies the definition because krun passes this script only the input
 # file, leaving no way to hand it a -d of its own.  $SPECTEC_BOOT overrides the
 # path to spectec-boot when it is not ./spectec-boot.
 #
-# Scratch files go under ./.tmp/, not /tmp.  This script creates that directory
-# and mktemps the booted JSON in it; kast-p4.sh does the same for $P4.  Nothing
+# Scratch files are mktemp'd straight into ./spec-meta-k/, not /tmp and not a
+# scratch directory of their own; kast-p4.sh does the same for $P4.  Nothing
 # writes there from inside K any more -- external calls cross by FFI rather
 # than through a request file (al/4-extern-ffi.k).
 set -e
 
-mkdir -p ./.tmp
+KSCRATCH=./spec-meta-k
 
 # krun insists $PGM be a file, so a whole spec directory (`spec/`) cannot be
 # named on its command line.  `make k-typecheck` passes a one-line stub file
@@ -34,7 +35,7 @@ esac
 # A .watsup, or (via the stub above) a directory of them: boot it here so a
 # target runs in one command.  Anything else is assumed to be KAST JSON already.
 if [ -d "$target" ] || [ "${target%.watsup}" != "$target" ]; then
-  json=$(mktemp ./.tmp/spectec-k-kast-XXXXXX.json)
+  json=$(mktemp $KSCRATCH/spectec-k-kast-XXXXXX.json)
   "${SPECTEC_BOOT:-./spectec-boot}" kast "$target" -o "$json"
   # Not `exec` + EXIT trap: exec replaces this shell, so the trap would never
   # fire and the booted JSON would pile up one file per run.  Run kast as a

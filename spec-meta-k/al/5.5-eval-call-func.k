@@ -295,7 +295,7 @@ module AL-CALL-FUNC
   // `al-kompiled/interpreter` (`make k-build`), and the spec paths named by
   // `builtinSpec()`/`externSpec()` are relative, so runs must still start from
   // the repo root.  K rules cannot read environment variables, so unlike
-  // `kast-json.sh` there is no override available here.
+  // `scripts/kast-json.sh` there is no override available here.
   // ==========================================================================
 
   //   The transport itself — the FFI crossing and reply decoding — lives in
