@@ -244,35 +244,34 @@ module AL-EXTERN-FFI
   // exactly one place to be changed -- the same reason `entryRel()` is
   // isolated in 6-entry.k.
   //
+  // Both of these name the **target spec**: the spec the run is executing.
+  // They are not a lower spec, and not a per-call choice.
+  //
   // A builtin is a static registry lookup and does not need a spec at all,
   // except for `$print_`, which unparses against one.  Naming `"spec"` costs
   // nothing for the other 46: kffi.ml loads it only when a request needs it.
   //
-  // For an extern, `<p4prog>` -- the cell that already tells the two entries of
-  // 6-entry.k apart -- selects the path:
+  // An extern's meaning is reached through the P4 interface, which kffi.ml
+  // always builds its runner on: for the P4 spec's own externs
+  // (`ExternFunctionCall_eval_lctk`, `ExternMethodCall_eval`, ...) that is the
+  // architecture model in `p4spec/lib/backend-sim/`.  Getting the path wrong is
+  // quiet rather than loud: an extern name the runner cannot resolve comes back
+  // as `{"fail": null}`, indistinguishable from a spec-level failure
+  // (CROSS.md §8).
   //
-  //   - `noP4()`: a self-contained script (`examples/extern-call.watsup`),
-  //     whose externs mean `examples/lower`'s ordinary `dec`/`relation`
-  //     definitions.  That is `Make_parametric`'s route into a lower runner
-  //     (`p4spec/lib/backend-boot/spectec.ml:173-215`).
-  //
-  //   - `someP4(_)`: the P4 spec type-checking a program.  Its own externs
-  //     (`ExternFunctionCall_eval_lctk`, `ExternMethodCall_eval`, ...) mean the
-  //     architecture model in `p4spec/lib/backend-sim/`, so the spec to load is
-  //     `spec` itself.
-  //
-  // kffi.ml always builds its runner on the P4 interface, which is what
-  // resolves the second kind; the first is unaffected, since the interface
-  // changes only how *extern* names are resolved and `examples/lower` declares
-  // none of its own.  Getting this wrong is quiet rather than loud: an extern
-  // name the runner cannot resolve comes back as `{"fail": null}`,
-  // indistinguishable from a spec-level failure (CROSS.md §8).
+  // `externSpec` still takes the `<p4prog>` cell, though both cases currently
+  // answer `"spec"`.  It is kept because the target spec is a property of the
+  // *invocation* -- `make k-run` and `make k-typecheck` know it, K only
+  // hardcodes it -- and the cell is the shape a real fix plugs into: a
+  // configuration variable carrying the target path, the way `$P4` already
+  // carries the program.  Until then this is one place to edit for a run
+  // against some other target.
   // ==========================================================================
 
   syntax String ::= "builtinSpec" "(" ")"     [function, total, symbol(builtinSpec)]
                   | externSpec(P4Opt)         [function, total, symbol(externSpec)]
   rule builtinSpec()         => "spec"
-  rule externSpec(noP4())    => "examples/lower"
+  rule externSpec(noP4())    => "spec"
   rule externSpec(someP4(_)) => "spec"
 
 endmodule

@@ -152,9 +152,8 @@ module AL-CALL-REL
   //
   // `Call_extern_rel` is an `extern relation`, dispatched over the external
   // interface like its sibling `Call_extern_func` (5.5-eval-call-func.k): the
-  // call is serialized and answered by the *lower spec* named by
-  // `externSpec()`, mirroring `Make_parametric`'s route into a lower runner's
-  // `eval_rel` (`p4spec/lib/backend-boot/spectec.ml:196-215`).
+  // call is serialized and answered against the target spec named by
+  // `externSpec()`, on the P4 interface.
   //
   // A relation yields `val*` rather than a single value, so the reply's `ok`
   // payload is a JSON array and `externRelResult` decodes it to a `ValList` —

@@ -19,12 +19,9 @@
 //     (`p4spec/lib/interface/builtin/`), a static lookup that does not load
 //     SPEC at all (except for `$print_`, which unparses against it).
 //   - `Call_extern_func` / `Call_extern_rel` -> answered against SPEC on the
-//     P4 interface.  Two things can supply the meaning there, and
-//     `externSpec()` (in 4.2-extern-ffi.k) says which SPEC to load for each: a
-//     *lower spec*'s ordinary `dec`/`relation` definitions, mirroring
-//     `Make_parametric` (`p4spec/lib/backend-boot/spectec.ml:173-215`); or, for
-//     the P4 spec's own externs, the architecture model in
-//     `p4spec/lib/backend-sim/`.
+//     P4 interface, where `externSpec()` (in 4.2-extern-ffi.k) names the target
+//     SPEC to load.  For the P4 spec's own externs the meaning is the
+//     architecture model in `p4spec/lib/backend-sim/`.
 //
 // Because that is the only difference, one transport serves all three: it is
 // parameterized by the spec path to resolve against and an `ExternKind` saying

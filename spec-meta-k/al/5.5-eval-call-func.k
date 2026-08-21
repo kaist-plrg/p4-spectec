@@ -200,8 +200,8 @@ module AL-CALL-FUNC
   // neither and calls out over the external interface instead (the transport
   // is in 4.1-extern-json.k).  They differ only in who answers —
   // `Call_builtin_func` reaches the OCaml builtin registry
-  // (`p4spec/lib/interface/builtin/`), while `Call_extern_func` reaches the
-  // *lower spec* named by `externSpec()`, mirroring `Make_parametric`.
+  // (`p4spec/lib/interface/builtin/`), while `Call_extern_func` is answered
+  // against the target spec named by `externSpec()`, on the P4 interface.
   //
   // Both are wired below; see 5.6-eval-call-rel.k for the matching
   // `Call_extern_rel`.  One semantic difference is worth keeping in view: a
@@ -308,14 +308,16 @@ module AL-CALL-FUNC
        </k>
 
   // ==========================================================================
-  // Call_extern_func: dispatch to the lower spec
+  // Call_extern_func: dispatch over the external interface
   //
-  // `Call_extern_func` is the hook by which a spec running under K reaches the
-  // externs of the level *below* it.  In OCaml that is `Make_parametric`
-  // (`p4spec/lib/backend-boot/spectec.ml:173-215`), which routes the call into
-  // a lower runner's `eval_func`; here it goes over the same wire, and to the
-  // same `ml_eval`, as a builtin — which loads SPEC and resolves the extern
-  // name against its ordinary `dec`s.
+  // `Call_extern_func` is the hook by which a spec running under K reaches an
+  // extern's meaning, which lives outside the meta-language.  It goes over the
+  // same wire, and to the same `ml_eval`, as a builtin: kffi.ml builds a runner
+  // for the spec named by `externSpec()` on the P4 interface, and for the P4
+  // spec's own externs that resolves them against the architecture model in
+  // `p4spec/lib/backend-sim/`.  (OCaml has a second route for this hook,
+  // `Make_parametric` (`backend-boot/spectec.ml:173-215`), which instead sends
+  // the call to a *lower* runner's `eval_func`; K does not use it.)
   //
   // Unlike a builtin, this can FAIL: the reply is `{"fail": null}` rather than
   // a value, which `externFuncResult` turns into `FAIL` so it backtracks

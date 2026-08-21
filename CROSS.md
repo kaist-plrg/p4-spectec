@@ -328,8 +328,8 @@ the P4 spec itself.
 `extern` therefore builds its runner with **`build_target`** on
 `P4_interface` — reusing the tower's target-level wiring rather than
 duplicating it. That one runner serves both kinds, because the interface
-governs only how *extern* names resolve: a spec declaring none of its own, like
-`examples/lower`, resolves its `dec`s and `relation`s the same either way. Hence
+governs only how *extern* names resolve: a spec declaring none of its own
+resolves its `dec`s and `relation`s the same either way. Hence
 the subcommand takes neither an interface nor a mode flag. (`build_null` cannot
 serve the P4 kind at all: it wires `Spectec.Make_null`, whose `eval_extern_rel`
 knows only `Call_builtin_func`.) `level.rel` is passed empty, since nothing on
@@ -557,13 +557,15 @@ char *` carrying a serialized request, with dispatch in OCaml.
   no separate printer-init table is needed. Caveat: `Interface.P4.unparser` is a
   process-global ref, so if one run built runners for *two* paths the last would
   win; `kffi.ml` warns on stderr when that happens.
-- The spec an extern resolves against is still **hardcoded**, for the same
-  reason `entryRel()` is: K rules cannot read environment variables.
-  `externSpec()` has two rules keyed on `<p4prog>`: `noP4()` gives
-  `examples/lower` (the meta-language extern), `someP4(_)` gives `spec` (the P4
-  spec's own). `builtinSpec()` is always `spec`. Only the path differs — the
-  interface is always P4 — and that cell is the only channel that varies, so a
-  third spec still has nowhere to come from.
+- The spec a builtin or extern resolves against is still **hardcoded**, for the
+  same reason `entryRel()` is: K rules cannot read environment variables. Both
+  `builtinSpec()` and `externSpec()` name the **target spec** — the spec the run
+  is executing — and both answer `spec`. Only the path could differ; the
+  interface is always P4. This is a known wart rather than a design: the target
+  spec is a property of the *invocation*, which `make k-run` and `make
+  k-typecheck` both already know, so the fix is to carry it in a configuration
+  variable the way `$P4` carries the program. `externSpec` keeps its `<p4prog>`
+  argument as the seam that plugs into.
 
 ## 8. Known problems
 
