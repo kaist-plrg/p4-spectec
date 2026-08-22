@@ -126,8 +126,8 @@ let subs find_typdef_opt find_func typs values =
 
 let rec check cache_sub_var find_typdef_opt find_func subcheck value =
   match (subcheck, value.it) with
-  | AcceptSC, _ -> true
-  | CaseSC mixops, CaseV valuecase ->
+  | SkipSC, _ -> true
+  | MixopSC mixops, CaseV valuecase ->
       List.exists (fun mixop -> Mixfix.eq_mixop mixop valuecase) mixops
   | TupleSC subchecks, TupleV values ->
       List.length subchecks = List.length values
@@ -141,5 +141,5 @@ let rec check cache_sub_var find_typdef_opt find_func subcheck value =
       List.for_all
         (check cache_sub_var find_typdef_opt find_func subcheck)
         values
-  | GenericSC typ, _ -> sub cache_sub_var find_typdef_opt find_func typ value
+  | RecurseSC typ, _ -> sub cache_sub_var find_typdef_opt find_func typ value
   | _ -> false

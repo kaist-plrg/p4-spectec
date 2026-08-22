@@ -41,7 +41,7 @@ let () =
     Runtime.Type.Sub.compile find_typdef_opt ~typ_source ~typ_target
   in
   (match subcheck with
-  | TupleSC [ CaseSC [ mixop_tuple ]; IterSC (List, CaseSC [ mixop_list ]) ]
+  | TupleSC [ MixopSC [ mixop_tuple ]; IterSC (List, MixopSC [ mixop_list ]) ]
     when Mixfix.eq_mixop mixop_foo mixop_tuple
          && Mixfix.eq_mixop mixop_foo mixop_list ->
       ()

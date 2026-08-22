@@ -682,9 +682,9 @@ and infer_sub_exp (ctx : Ctx.t) (exp : exp) (plaintyp : plaintyp) :
     Sub.sub_typ (Ctx.find_typdef_opt ctx) typ_il_exp typ_il
     || Sub.sub_typ (Ctx.find_typdef_opt ctx) typ_il typ_il_exp
   then
+    let find_typdef_opt = Ctx.find_typdef_opt ctx in
     let subcheck_il =
-      Sub.compile (Ctx.find_typdef_opt ctx) ~typ_source:typ_il_exp
-        ~typ_target:typ_il
+      Sub.compile find_typdef_opt ~typ_source:typ_il_exp ~typ_target:typ_il
     in
     let exp_il = Il.SubE (exp_il, typ_il, subcheck_il) in
     let typ_il = Il.BoolT in

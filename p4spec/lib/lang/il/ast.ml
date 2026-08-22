@@ -108,11 +108,11 @@ and optyp = [ Bool.typ | Num.typ ]
 (* Subtype checks *)
 
 and subcheck =
-  | AcceptSC
-  | CaseSC of mixop list
+  | SkipSC
+  | MixopSC of mixop list
   | TupleSC of subcheck list
   | IterSC of iter * subcheck
-  | GenericSC of typ
+  | RecurseSC of typ
 [@@deriving yojson]
 
 (* Expressions *)

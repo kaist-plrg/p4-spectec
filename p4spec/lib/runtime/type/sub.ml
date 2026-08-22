@@ -59,7 +59,7 @@ and sub_typ' (find_typdef_opt : TId.t -> Typdef.t option) (typ_a : typ)
 
 let rec compile (find_typdef_opt : TId.t -> Typdef.t option) ~(typ_source : typ)
     ~(typ_target : typ) : subcheck =
-  if sub_typ find_typdef_opt typ_source typ_target then AcceptSC
+  if sub_typ find_typdef_opt typ_source typ_target then SkipSC
   else
     let typ_source_expanded = Expand.expand_typ find_typdef_opt typ_source in
     let typ_target_expanded = Expand.expand_typ find_typdef_opt typ_target in
@@ -86,7 +86,7 @@ let rec compile (find_typdef_opt : TId.t -> Typdef.t option) ~(typ_source : typ)
                     (fun (nottyp, _, _) -> Mixfix.to_mixop nottyp.it)
                     typcases_target
                 in
-                CaseSC mixops_target
-            | _ -> GenericSC typ_target)
-        | _ -> GenericSC typ_target)
-    | _ -> GenericSC typ_target
+                MixopSC mixops_target
+            | _ -> RecurseSC typ_target)
+        | _ -> RecurseSC typ_target)
+    | _ -> RecurseSC typ_target
