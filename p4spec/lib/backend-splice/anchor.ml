@@ -164,8 +164,5 @@ let collect (spec_el : El.spec) (sources : (string * string) list) : Ctx.t =
         collect_targets decls targets source)
       empty sources
   in
-  Ctx.
-    {
-      anchors_prose = anchors_of Prose targets;
-      anchors_latex = anchors_of Latex targets;
-    }
+  Ctx.make ~anchors_prose:(anchors_of Prose targets)
+    ~anchors_latex:(anchors_of Latex targets)

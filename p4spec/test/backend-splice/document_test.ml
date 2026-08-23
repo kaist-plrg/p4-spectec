@@ -42,6 +42,7 @@ let () =
       "syntax";
       "relation-title-source";
       "relation-title-latex";
+      "rulegroup-prose-else";
       "rulegroup-source";
       "rulegroup-latex";
       "func-title-source";

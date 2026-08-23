@@ -16,8 +16,20 @@ let adoc_subscript (s : string) = "~" ^ s ^ "~"
 let adoc_superscript (s : string) = "^" ^ s ^ "^"
 let adoc_mono (s : string) = "``" ^ s ^ "``"
 
+let adoc_escape_quotes (text : string) =
+  text |> String.split_on_char '"' |> String.concat "{quot}"
+
+let adoc_escape_ambiguous_quotes (text : string) =
+  let quote_count =
+    text |> String.to_seq
+    |> Seq.fold_left (fun count c -> if c = '"' then count + 1 else count) 0
+  in
+  if quote_count > 2 then adoc_escape_quotes text else text
+
 let adoc_mono_chopped (s : string) =
-  s |> String.split_on_char ' ' |> List.map adoc_mono |> String.concat " "
+  s |> adoc_escape_ambiguous_quotes |> String.split_on_char ' '
+  |> List.map (function "" -> "" | text -> adoc_mono text)
+  |> String.concat " "
 
 let adoc_ordered_bullet (level : int) =
   Format.asprintf "%s%s " (String.make level ' ') (String.make (level + 1) '.')

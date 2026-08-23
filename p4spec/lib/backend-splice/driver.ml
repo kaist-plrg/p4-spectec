@@ -10,6 +10,7 @@ let splicers =
     (module Rel_title.Source.Splicer : SPLICER);
     (module Rel_title.Latex.Splicer : SPLICER);
     (module Rel_title.Prose.Splicer : SPLICER);
+    (module Rulegroup_else.Prose.Splicer : SPLICER);
     (module Rulegroup.Source.Splicer : SPLICER);
     (module Rulegroup.Latex.Splicer : SPLICER);
     (module Rulegroup.Prose.Splicer : SPLICER);
@@ -27,6 +28,7 @@ let splicers =
 
 let init ?(context : Ctx.t = Ctx.empty) (spec_el : El.spec) (spec_pl : Pl.spec)
     : unit =
+  Ctx.reset_anchors context;
   List.iter
     (fun (module S : SPLICER) -> S.init ~context spec_el spec_pl)
     splicers

@@ -62,8 +62,21 @@ let count_substring needle text =
   in
   count 0 0
 
+let index_substring needle text =
+  let needle_length = String.length needle in
+  let text_length = String.length text in
+  let rec find index =
+    if index + needle_length > text_length then None
+    else if String.equal (String.sub text index needle_length) needle then
+      Some index
+    else find (index + 1)
+  in
+  find 0
+
 let anchor_skeleton =
-  {|${func-title-prose: overlap_fn title_only_fn}
+  {|first occurrence
+${func-title-prose: overlap_fn title_only_fn}
+second occurrence
 ${func-title-prose: overlap_fn}
 ${func-prose: overlap_fn full_only_fn apostrophe_fn'}|}
 
@@ -81,6 +94,18 @@ let print_anchor_counts label rendered =
     (fun name ->
       print_count "presentations" name ("xref:function_prose_" ^ name ^ "["))
     [ "overlap_fn"; "title_only_fn"; "full_only_fn"; "apostrophe_fn'" ]
+
+let print_first_anchor_position rendered =
+  let index_anchor =
+    index_substring {|id="function_prose_overlap_fn"|} rendered
+  in
+  let index_second = index_substring "second occurrence" rendered in
+  let before_second =
+    match (index_anchor, index_second) with
+    | Some index_anchor, Some index_second -> index_anchor < index_second
+    | None, _ | _, None -> false
+  in
+  Printf.printf "first anchor precedes second occurrence: %b\n" before_second
 
 let () =
   let open Backend_splice in
@@ -162,8 +187,8 @@ let () =
       }
   in
   let context =
-    Backend_splice.Ctx.
-      { anchors_prose; anchors_latex = Backend_splice.Ctx.empty_anchors }
+    Backend_splice.Ctx.make ~anchors_prose
+      ~anchors_latex:Backend_splice.Ctx.empty_anchors
   in
   print_endline "[anchor-ownership]";
   let splice_anchor () =
@@ -176,6 +201,7 @@ let () =
   Backend_splice.Driver.init ~context [] spec_pl;
   let rendered = splice_anchor () in
   rendered |> print_anchor_counts "first";
+  rendered |> print_first_anchor_position;
   Backend_splice.Driver.init ~context [] spec_pl;
   let rendered = splice_anchor () in
   rendered |> print_anchor_counts "second"
