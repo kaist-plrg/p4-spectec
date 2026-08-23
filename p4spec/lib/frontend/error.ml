@@ -1,5 +1,6 @@
 open Util.Source
 
-exception ParseError of region * string
+exception ParseError of Diagnostic.t
 
-let error (at : region) (msg : string) = raise (ParseError (at, msg))
+let error (at : region) (msg : string) =
+  raise (ParseError (Diagnostic.error ~source:"parse" at msg))

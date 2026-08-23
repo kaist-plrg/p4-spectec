@@ -94,6 +94,8 @@ let of_failtraces ~source ~fallback (failtraces : Util.Attempt.failtrace list) :
   in
   error ~source ~trace at message
 
+let region_msg (d : t) : region * string = (d.region, d.message)
+
 module Report = struct
   type diagnostic = t
   type t = diagnostic list

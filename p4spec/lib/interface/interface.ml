@@ -108,14 +108,14 @@ module SpecTec_AL = struct
     match Spectec.Parse.parse_files Run.AL_mode paths with
     | Ok value_spec -> Run.Pass value_spec
     | Error e ->
-        let at, msg = Pass.to_region_msg e in
+        let at, msg = Diagnostic.region_msg e in
         Run.Fail (`Syntax (at, msg))
 
   let parse_string (path : string) (str : string) : Run.parse_result =
     match Spectec.Parse.parse_string Run.AL_mode path str with
     | Ok value_spec -> Run.Pass value_spec
     | Error e ->
-        let at, msg = Pass.to_region_msg e in
+        let at, msg = Diagnostic.region_msg e in
         Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)
@@ -155,14 +155,14 @@ module SpecTec_SL = struct
     match Spectec.Parse.parse_files Run.SL_mode paths with
     | Ok value_spec -> Run.Pass value_spec
     | Error e ->
-        let at, msg = Pass.to_region_msg e in
+        let at, msg = Diagnostic.region_msg e in
         Run.Fail (`Syntax (at, msg))
 
   let parse_string (path : string) (str : string) : Run.parse_result =
     match Spectec.Parse.parse_string Run.SL_mode path str with
     | Ok value_spec -> Run.Pass value_spec
     | Error e ->
-        let at, msg = Pass.to_region_msg e in
+        let at, msg = Diagnostic.region_msg e in
         Run.Fail (`Syntax (at, msg))
 
   (* Program unparsing *)

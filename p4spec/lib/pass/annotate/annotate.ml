@@ -597,11 +597,7 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
 let annotate_defs (ctx : Ctx.t) (spec : spec) : Pl.spec =
   List.map (annotate_def ctx) spec
 
-(* Errors *)
-
-type error = { at : region; msg : string }
-
-let to_region_msg { at; msg } = (at, msg)
+type error = Diagnostic.t
 
 (* Entry point *)
 
@@ -612,4 +608,4 @@ let annotate_spec (spec : spec) : (Pl.spec, error) result =
     Ok
       (spec |> Expand.expand_spec |> annotate_defs ctx |> Shorthand.shorten_defs
      |> Stamp.stamp_defs)
-  with Error.ProseError (at, msg) -> Error { at; msg }
+  with Error.ProseError d -> Error d

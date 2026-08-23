@@ -43,25 +43,17 @@ let splice_file_count_mismatch inputs outputs =
            input file%s and %d output file%s"
           inputs (plural inputs) outputs (plural outputs)))
 
-let to_region_msg = function
-  | PassError e -> Pass.to_region_msg e
-  | RunError e -> Run.to_region_msg e
-  | CommandError msg -> (no_region, msg)
-  | CommandDiagnostic diagnostic -> Diagnostic.region_msg diagnostic
-
-let to_string (e : t) : string =
-  let at, msg = to_region_msg e in
-  Util.Error.string_of_error at msg
-
-let source_of = function
-  | PassError _ -> "pass"
-  | RunError _ -> "interp"
-  | CommandError _ -> "command"
-  | CommandDiagnostic diagnostic -> diagnostic.source
+let to_diagnostic = function
+  | PassError e -> e
+  | RunError e ->
+      let at, msg = Run.to_region_msg e in
+      Diagnostic.error ~source:"interp" at msg
+  | CommandError msg -> Diagnostic.error ~source:"command" no_region msg
+  | CommandDiagnostic diagnostic -> diagnostic
 
 let to_diagnostics (e : t) : Diagnostic.Report.t =
-  match e with
-  | CommandDiagnostic diagnostic -> Diagnostic.Report.singleton diagnostic
-  | _ ->
-      let at, msg = to_region_msg e in
-      Diagnostic.Report.singleton (Diagnostic.error ~source:(source_of e) at msg)
+  Diagnostic.Report.singleton (to_diagnostic e)
+
+let to_string (e : t) : string =
+  let at, msg = Diagnostic.region_msg (to_diagnostic e) in
+  Util.Error.string_of_error at msg

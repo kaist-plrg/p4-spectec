@@ -2,9 +2,11 @@ open Util.Source
 
 (* Error *)
 
-exception ElabError of region * string
+exception ElabError of Diagnostic.t
 
-let error (at : region) (msg : string) = raise (ElabError (at, msg))
+let error (at : region) (msg : string) =
+  raise (ElabError (Diagnostic.error ~source:"elab" at msg))
+
 let warn (at : region) (msg : string) = Diagnostic.warn at "elab" msg
 
 (* Checks *)

@@ -4,11 +4,7 @@ open Error
 module Source = Util.Source
 open Source
 
-(* Errors *)
-
-type error = { at : region; msg : string }
-
-let to_region_msg { at; msg } = (at, msg)
+type error = Diagnostic.t
 
 let with_lexbuf name lexbuf start =
   let open Lexing in
@@ -63,13 +59,15 @@ let parse_files paths =
   try
     Ok (paths |> List.concat_map expand_path |> List.concat_map parse_file)
   with
-  | ParseError (at, msg) -> Error { at; msg }
-  | Sys_error msg -> Error { at = no_region; msg }
+  | ParseError d -> Error d
+  | Sys_error msg -> Error (Diagnostic.error ~source:"parse" no_region msg)
 
 let parse_string str =
   let lexbuf = Lexing.from_string str in
   try Ok (Parser.spec Lexer.token lexbuf) with
   | Parser.Error ->
       let at = Lexer.region lexbuf in
-      Error { at; msg = Format.asprintf "syntax error in spec string: %s" str }
-  | ParseError (at, msg) -> Error { at; msg }
+      Error
+        (Diagnostic.error ~source:"parse" at
+           (Format.asprintf "syntax error in spec string: %s" str))
+  | ParseError d -> Error d

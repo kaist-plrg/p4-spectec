@@ -41,6 +41,8 @@ val error :
 val of_failtraces :
   source:string -> fallback:string -> Util.Attempt.failtrace list -> t
 
+val region_msg : t -> region * string
+
 module Report : sig
   type diagnostic = t
   type t

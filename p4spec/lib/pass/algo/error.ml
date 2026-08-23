@@ -2,9 +2,11 @@ open Util.Source
 
 (* Error *)
 
-exception AlgoError of region * string
+exception AlgoError of Diagnostic.t
 
-let error (at : region) (msg : string) = raise (AlgoError (at, msg))
+let error (at : region) (msg : string) =
+  raise (AlgoError (Diagnostic.error ~source:"algo" at msg))
+
 let warn (at : region) (msg : string) = Util.Error.warn at "algo" msg
 
 (* Checks *)
