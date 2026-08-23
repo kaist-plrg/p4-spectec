@@ -8,14 +8,6 @@ open Runtime.Prose.Envs
 open Error
 open Util.Source
 
-(* Error *)
-
-let error_undef (at : region) (kind : string) (id : string) =
-  error at (Format.asprintf "%s `%s` is undefined" kind id)
-
-let error_dup (at : region) (kind : string) (id : string) =
-  error at (Format.asprintf "%s `%s` was already defined" kind id)
-
 (* Context *)
 
 type namespace = Rel of Id.t | Func of Id.t | Empty
@@ -82,11 +74,6 @@ let set_free (ctx : t) (frees : IdSet.t) : t = { ctx with frees }
 let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
   TDEnv.find_opt tid ctx.tdenv
 
-let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
-  match find_typdef_opt ctx tid with
-  | Some td -> td
-  | None -> error_undef tid.at "type" tid.it
-
 let bound_typdef (ctx : t) (tid : TId.t) : bool =
   find_typdef_opt ctx tid |> Option.is_some
 
@@ -95,40 +82,47 @@ let bound_typdef (ctx : t) (tid : TId.t) : bool =
 let find_metavar_opt (ctx : t) (tid : TId.t) : Typ.t option =
   MEnv.find_opt tid ctx.menv
 
-let find_metavar (ctx : t) (tid : TId.t) : Typ.t =
-  match find_metavar_opt ctx tid with
-  | Some typ -> typ
-  | None -> error_undef tid.at "meta-variable" tid.it
-
 let bound_metavar (ctx : t) (tid : TId.t) : bool =
   find_metavar_opt ctx tid |> Option.is_some
 
 (* Finders for hints *)
 
+let hint_value (hint : 'a HEnv.located_hint option) =
+  Option.map HEnv.hint_value hint
+
+let map_hint f (hint : 'a HEnv.located_hint option) =
+  Option.map (HEnv.map_hint f) hint
+
 let find_hint_alter (ctx : t) (hid : string) (key : HEnv.key) :
-    Hints.Alter.t option =
+    Hints.Alter.t HEnv.located_hint option =
   HEnv.find_alter ctx.henv (hid $ no_region) key
 
 let find_hint_fields (ctx : t) (hid : string) (key : HEnv.key) :
-    Hints.Fields.t option =
+    Hints.Fields.t HEnv.located_hint option =
   HEnv.find_fields ctx.henv (hid $ no_region) key
 
-let find_hint_prose (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+let find_hint_prose (ctx : t) (key : HEnv.key) :
+    Hints.Alter.t HEnv.located_hint option =
   find_hint_alter ctx "prose" key
 
-let find_hint_prose_in (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+let find_hint_prose_in (ctx : t) (key : HEnv.key) :
+    Hints.Alter.t HEnv.located_hint option =
   find_hint_alter ctx "prose_in" key
 
-let find_hint_prose_out (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+let find_hint_prose_out (ctx : t) (key : HEnv.key) :
+    Hints.Alter.t HEnv.located_hint option =
   find_hint_alter ctx "prose_out" key
 
-let find_hint_prose_true (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+let find_hint_prose_true (ctx : t) (key : HEnv.key) :
+    Hints.Alter.t HEnv.located_hint option =
   find_hint_alter ctx "prose_true" key
 
-let find_hint_prose_false (ctx : t) (key : HEnv.key) : Hints.Alter.t option =
+let find_hint_prose_false (ctx : t) (key : HEnv.key) :
+    Hints.Alter.t HEnv.located_hint option =
   find_hint_alter ctx "prose_false" key
 
-let find_hint_prose_fields (ctx : t) (key : HEnv.key) : Hints.Fields.t option =
+let find_hint_prose_fields (ctx : t) (key : HEnv.key) :
+    Hints.Fields.t HEnv.located_hint option =
   find_hint_fields ctx "prose_fields" key
 
 (* Adders *)
@@ -136,20 +130,23 @@ let find_hint_prose_fields (ctx : t) (key : HEnv.key) : Hints.Fields.t option =
 (* Adders for meta-variables *)
 
 let add_metavar (ctx : t) (tid : TId.t) (typ : Typ.t) : t =
-  if bound_metavar ctx tid then error_dup tid.at "meta-variable" tid.it;
+  (* Elaboration rejects duplicate meta-variable definitions. *)
+  assert (not (bound_metavar ctx tid));
   let menv = MEnv.add tid typ ctx.menv in
   { ctx with menv }
 
 (* Adders for type definitions *)
 
 let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
-  if bound_typdef ctx tid then error_dup tid.at "type" tid.it;
+  (* Elaboration rejects duplicate global type definitions. *)
+  assert (not (bound_typdef ctx tid));
   let tdenv = TDEnv.add tid td ctx.tdenv in
   { ctx with tdenv }
 
 let add_tparam (ctx : t) (tid : TId.t) : t =
-  let td = Typdef.Param in
-  add_typdef ctx tid td
+  (* Type parameters shadow global types within their declaration. *)
+  let tdenv = TDEnv.add tid Typdef.Param ctx.tdenv in
+  { ctx with tdenv }
 
 let add_tparams (ctx : t) (tids : TId.t list) : t =
   List.fold_left add_tparam ctx tids
@@ -168,17 +165,41 @@ let add_hint_fields (ctx : t) (hid : HId.t) (key : HEnv.key)
 
 (* Validation *)
 
-let validate_hint_alter (at : region) (hint_alter : Hints.Alter.t)
-    (items : 'a list) : unit =
-  match Hints.Alter.validate hint_alter items with
-  | Ok () -> ()
-  | Error msg -> error at msg
-
-let validate_hint_fields (at : region) (hint_fields : Hints.Fields.t)
+let validate_hint_alter (declaration : HId.t) (hint_alter : Hints.Alter.t)
     (arity : int) : unit =
+  match Hints.Alter.validate hint_alter arity with
+  | Ok () -> ()
+  | Error { at; placeholder; index; arity } ->
+      let noun = if arity = 1 then "value" else "values" in
+      let verb = if arity = 1 then "is" else "are" in
+      error ~code:Hint_placeholder_out_of_bounds at
+        (Format.asprintf
+           "hint `%s` placeholder `%s` selects index %d, but only %d %s %s \
+            available"
+           declaration.it placeholder index arity noun verb)
+
+let validate_hint_fields ?(fields_at = []) (at_hint : region)
+    (declaration : HId.t) (hint_fields : Hints.Fields.t) (arity : int) : unit =
   match Hints.Fields.validate hint_fields arity with
   | Ok () -> ()
-  | Error msg -> error at msg
+  | Error { expected; actual } ->
+      let at =
+        let rec find_extra index = function
+          | [] -> at_hint
+          | at :: _ when index = 0 -> at
+          | _ :: rest -> find_extra (index - 1) rest
+        in
+        if actual > expected then find_extra expected fields_at
+        else
+          match List.rev fields_at with
+          | at :: _ -> after_region at
+          | [] -> at_hint
+      in
+      let name_noun = if actual = 1 then "field name" else "field names" in
+      let field_noun = if expected = 1 then "field" else "fields" in
+      error ~code:Hint_fields_arity_mismatch at
+        (Format.asprintf "hint `%s` has %d %s, but the syntax case has %d %s"
+           declaration.it actual name_noun expected field_noun)
 
 (* Unrolling types *)
 
@@ -188,28 +209,30 @@ let unroll_typ (ctx : t) (typ : Sl.typ) : Sl.typ = TDEnv.unroll ctx.tdenv typ
 
 let load_hints (ctx : t) (key : HEnv.key) (hints : El.hint list) : t =
   List.fold_left
-    (fun ctx El.{ hintid; hintexp } ->
+    (fun ctx El.{ hintid; hintexp; at } ->
       match hintid.it with
       (* Alter hints *)
-      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" -> (
-          let hint_alter_opt = Hints.Alter.init hintexp in
-          match hint_alter_opt with
-          | Some hint_alter -> add_hint_alter ctx hintid key hint_alter
-          | None ->
-              error hintexp.at
-                (Format.asprintf "invalid hint expression %s for hint %s"
-                   (El.Print.string_of_exp hintexp)
-                   hintid.it))
+      | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" ->
+          Hints.Alter.init hintexp |> add_hint_alter ctx hintid key
       (* Field hints *)
       | "prose_fields" -> (
-          let hint_fields_opt = Hints.Fields.init hintexp in
+          let hint_fields_opt = Hints.Fields.init_located hintexp in
           match hint_fields_opt with
-          | Some hint_fields -> add_hint_fields ctx hintid key hint_fields
+          | Some hint_fields_located ->
+              let hint_fields = Hints.Fields.unlocate hint_fields_located in
+              let fields_at = Hints.Fields.locations hint_fields_located in
+              (match key with
+              | `Typ (_, mixop) ->
+                  validate_hint_fields ~fields_at at hintid hint_fields
+                    (Mixfix.arity mixop)
+              | `Func _ | `Rel _ -> ());
+              add_hint_fields ctx hintid key hint_fields
           | None ->
-              error hintexp.at
-                (Format.asprintf "invalid hint expression %s for hint %s"
-                   (El.Print.string_of_exp hintexp)
-                   hintid.it))
+              error ~code:Hint_fields_text_expected hintexp.at
+                (Format.asprintf
+                   "hint `prose_fields` field names must be text literals, but \
+                    got %s"
+                   (Diagnostic.quote (El.Print.string_of_exp hintexp))))
       | _ -> ctx)
     ctx hints
 

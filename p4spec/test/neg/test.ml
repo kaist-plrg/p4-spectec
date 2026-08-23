@@ -3,6 +3,7 @@ let run (pass : string) (file : string) : unit P4spectec.result =
   | "parse" -> P4spectec.parse [ file ] |> Result.map ignore
   | "elab" -> P4spectec.elab [ file ] |> Result.map ignore
   | "algo" -> P4spectec.algo [ file ] |> Result.map ignore
+  | "annotate" -> P4spectec.annotate [ file ] |> Result.map ignore
   | _ -> failwith ("unknown pass: " ^ pass)
 
 let render_case name f =

@@ -14,7 +14,9 @@
    (ignore-outputs
     (diff elab.expected elab.actual))
    (ignore-outputs
-    (diff algo.expected algo.actual)))))
+    (diff algo.expected algo.actual))
+   (ignore-outputs
+    (diff annotate.expected annotate.actual)))))
 
 (rule
  (target parse.actual)
@@ -51,3 +53,15 @@
    (with-stderr-to
     algo.err
     (run ./test.exe algo cases/algo)))))
+
+(rule
+ (target annotate.actual)
+ (deps
+  test.exe
+  (source_tree cases/annotate))
+ (action
+  (with-stdout-to
+   annotate.actual
+   (with-stderr-to
+    annotate.err
+    (run ./test.exe annotate cases/annotate)))))

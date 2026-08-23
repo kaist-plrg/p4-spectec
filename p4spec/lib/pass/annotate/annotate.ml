@@ -3,65 +3,103 @@ module Mixfix = Domain.Mixfix
 open Lang
 open Ll.Ast
 module Annot = Pl.Annot
+module HEnv = Runtime.Prose.Envs.HEnv
 open Util.Source
 
 (* Hint lookup *)
 
+type located_hints = {
+  prose : Hints.Alter.t HEnv.located_hint option;
+  prose_in : Hints.Alter.t HEnv.located_hint option;
+  prose_out : Hints.Alter.t HEnv.located_hint option;
+  prose_true : Hints.Alter.t HEnv.located_hint option;
+  prose_false : Hints.Alter.t HEnv.located_hint option;
+  prose_fields : Hints.Fields.t HEnv.located_hint option;
+  prose_input_exps : Sl.exp list option;
+  prose_output_exps : Sl.exp list option;
+}
+
+let empty_located_hints : located_hints =
+  {
+    prose = None;
+    prose_in = None;
+    prose_out = None;
+    prose_true = None;
+    prose_false = None;
+    prose_fields = None;
+    prose_input_exps = None;
+    prose_output_exps = None;
+  }
+
+let hint_values (hints : located_hints) : Annot.hints =
+  {
+    prose = Ctx.hint_value hints.prose;
+    prose_in = Ctx.hint_value hints.prose_in;
+    prose_out = Ctx.hint_value hints.prose_out;
+    prose_true = Ctx.hint_value hints.prose_true;
+    prose_false = Ctx.hint_value hints.prose_false;
+    prose_fields = Ctx.hint_value hints.prose_fields;
+    prose_input_exps = hints.prose_input_exps;
+    prose_output_exps = hints.prose_output_exps;
+  }
+
 let hints_of_case_exp (ctx : Ctx.t) (note : Sl.typ') (mixop : mixop) :
-    Annot.hints =
+    located_hints =
   match note with
   | Il.VarT (tid, _) ->
       let cid = (tid, mixop) in
-      let prose = Ctx.find_hint_prose ctx (`Typ cid) in
-      let prose_fields = Ctx.find_hint_prose_fields ctx (`Typ cid) in
-      { Annot.empty with prose; prose_fields }
-  | _ -> Annot.empty
+      {
+        empty_located_hints with
+        prose = Ctx.find_hint_prose ctx (`Typ cid);
+        prose_fields = Ctx.find_hint_prose_fields ctx (`Typ cid);
+      }
+  | _ -> empty_located_hints
 
-let hints_of_call_exp (ctx : Ctx.t) (id : id) : Annot.hints =
-  let prose_in = Ctx.find_hint_prose_in ctx (`Func id) in
-  let prose_true = Ctx.find_hint_prose_true ctx (`Func id) in
-  let prose_false = Ctx.find_hint_prose_false ctx (`Func id) in
-  { Annot.empty with prose_in; prose_true; prose_false }
+let hints_of_call_exp (ctx : Ctx.t) (id : id) : located_hints =
+  {
+    empty_located_hints with
+    prose_in = Ctx.find_hint_prose_in ctx (`Func id);
+    prose_true = Ctx.find_hint_prose_true ctx (`Func id);
+    prose_false = Ctx.find_hint_prose_false ctx (`Func id);
+  }
 
-let hints_of_hold_instr (ctx : Ctx.t) (id_rel : id) : Annot.hints =
-  let prose_true = Ctx.find_hint_prose_true ctx (`Rel id_rel) in
-  let prose_false = Ctx.find_hint_prose_false ctx (`Rel id_rel) in
-  { Annot.empty with prose_true; prose_false }
+let hints_of_hold_instr (ctx : Ctx.t) (id_rel : id) : located_hints =
+  {
+    empty_located_hints with
+    prose_true = Ctx.find_hint_prose_true ctx (`Rel id_rel);
+    prose_false = Ctx.find_hint_prose_false ctx (`Rel id_rel);
+  }
 
-let hints_of_rule_instr (ctx : Ctx.t) (id_rel : id) (inputs : Hints.Input.t) :
-    Annot.hints =
-  let prose_in = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
-  let prose_out =
-    Ctx.find_hint_prose_out ctx (`Rel id_rel)
-    |> Option.map (fun a -> Hints.Alter.realign a inputs)
-  in
-  { Annot.empty with prose_in; prose_out }
+let hints_of_rule_instr (ctx : Ctx.t) (id_rel : id) : located_hints =
+  {
+    empty_located_hints with
+    prose_in = Ctx.find_hint_prose_in ctx (`Rel id_rel);
+    prose_out = Ctx.find_hint_prose_out ctx (`Rel id_rel);
+  }
 
-let hints_of_result_instr (ctx : Ctx.t) (inputs : Hints.Input.t) : Annot.hints =
+let hints_of_result_instr (ctx : Ctx.t) : located_hints =
   let id_rel = Ctx.get_namespace ctx in
-  let prose_out =
-    Ctx.find_hint_prose_out ctx (`Rel id_rel)
-    |> Option.map (fun a -> Hints.Alter.realign a inputs)
-  in
-  { Annot.empty with prose_out }
+  {
+    empty_located_hints with
+    prose_out = Ctx.find_hint_prose_out ctx (`Rel id_rel);
+  }
 
-let hints_of_group_instr (ctx : Ctx.t) : Annot.hints =
+let hints_of_group_instr (ctx : Ctx.t) : located_hints =
   let id_rel = Ctx.get_namespace ctx in
-  let prose_in = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
-  let prose_true = Ctx.find_hint_prose_true ctx (`Rel id_rel) in
-  { Annot.empty with prose_in; prose_true }
+  {
+    empty_located_hints with
+    prose_in = Ctx.find_hint_prose_in ctx (`Rel id_rel);
+    prose_true = Ctx.find_hint_prose_true ctx (`Rel id_rel);
+  }
 
 let hints_of_rel_def (ctx : Ctx.t) (id_rel : id) (rel_signature : rel_signature)
-    : Annot.hints =
+    : located_hints =
   let nottyp, inputs = rel_signature in
-  let prose = Ctx.find_hint_prose ctx (`Rel id_rel) in
-  let prose_in = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
-  let prose_out =
-    Ctx.find_hint_prose_out ctx (`Rel id_rel)
-    |> Option.map (fun a -> Hints.Alter.realign a inputs)
-  in
-  let prose_true = Ctx.find_hint_prose_true ctx (`Rel id_rel) in
-  let prose_false = Ctx.find_hint_prose_false ctx (`Rel id_rel) in
+  let prose_hint = Ctx.find_hint_prose ctx (`Rel id_rel) in
+  let prose_in_hint = Ctx.find_hint_prose_in ctx (`Rel id_rel) in
+  let prose_out_hint = Ctx.find_hint_prose_out ctx (`Rel id_rel) in
+  let prose_true_hint = Ctx.find_hint_prose_true ctx (`Rel id_rel) in
+  let prose_false_hint = Ctx.find_hint_prose_false ctx (`Rel id_rel) in
   let fresh_exps_from_typs typs =
     let _, exps =
       List.fold_left_map
@@ -71,7 +109,7 @@ let hints_of_rel_def (ctx : Ctx.t) (id_rel : id) (rel_signature : rel_signature)
     exps
   in
   let prose_input_exps, prose_output_exps =
-    match (prose_in, prose_out) with
+    match (prose_in_hint, prose_out_hint) with
     | Some _, Some _ ->
         let typs = Mixfix.args nottyp.it in
         let typs_input, typs_output = Hints.Input.split inputs typs in
@@ -84,46 +122,73 @@ let hints_of_rel_def (ctx : Ctx.t) (id_rel : id) (rel_signature : rel_signature)
     | _ -> (None, None)
   in
   {
-    Annot.empty with
-    prose;
-    prose_in;
-    prose_out;
-    prose_true;
-    prose_false;
+    empty_located_hints with
+    prose = prose_hint;
+    prose_in = prose_in_hint;
+    prose_out = prose_out_hint;
+    prose_true = prose_true_hint;
+    prose_false = prose_false_hint;
     prose_input_exps;
     prose_output_exps;
   }
 
-let hints_of_func_def (ctx : Ctx.t) (id_func : id) : Annot.hints =
-  let prose_in = Ctx.find_hint_prose_in ctx (`Func id_func) in
-  let prose_true = Ctx.find_hint_prose_true ctx (`Func id_func) in
-  let prose_false = Ctx.find_hint_prose_false ctx (`Func id_func) in
-  { Annot.empty with prose_in; prose_true; prose_false }
+let hints_of_func_def (ctx : Ctx.t) (id_func : id) : located_hints =
+  {
+    empty_located_hints with
+    prose_in = Ctx.find_hint_prose_in ctx (`Func id_func);
+    prose_true = Ctx.find_hint_prose_true ctx (`Func id_func);
+    prose_false = Ctx.find_hint_prose_false ctx (`Func id_func);
+  }
 
 (* Hint validation *)
 
-let validate_hint_at (at : region) (n : int) : Hints.Alter.t option -> unit =
-  let slots = List.init n (fun _ -> ()) in
-  function None -> () | Some h -> Ctx.validate_hint_alter at h slots
-
-let validate_annot_alter (at : region) (annot : Annot.hints) (n : int) : unit =
-  let validate = validate_hint_at at n in
-  validate annot.prose;
-  validate annot.prose_in;
-  validate annot.prose_out;
-  validate annot.prose_true;
-  validate annot.prose_false
-
-let validate_annot_split (at : region) (annot : Annot.hints) ~(n_in : int)
-    ~(n_out : int) : unit =
-  validate_hint_at at n_in annot.prose_in;
-  validate_hint_at at n_out annot.prose_out
-
-let validate_annot_fields (at : region) (annot : Annot.hints) (arity : int) :
+let validate_hint (n : int) (hint : Hints.Alter.t HEnv.located_hint option) :
     unit =
-  match annot.prose_fields with
+  match hint with
   | None -> ()
-  | Some h -> Ctx.validate_hint_fields at h arity
+  | Some hint ->
+      Ctx.validate_hint_alter (HEnv.hint_declaration hint)
+        (HEnv.hint_value hint) n
+
+let validate_hints_alter (hints : located_hints) (n : int) : unit =
+  let validate = validate_hint n in
+  validate hints.prose;
+  validate hints.prose_in;
+  validate hints.prose_out;
+  validate hints.prose_true;
+  validate hints.prose_false
+
+let validate_hints_split (hints : located_hints) ~(n_in : int) ~(n_out : int) :
+    unit =
+  validate_hint n_in hints.prose_in;
+  validate_hint n_out hints.prose_out
+
+let validate_hints_fields (at : region) (hints : located_hints) (arity : int) :
+    unit =
+  match hints.prose_fields with
+  | None -> ()
+  | Some hint ->
+      Ctx.validate_hint_fields at
+        (HEnv.hint_declaration hint)
+        (HEnv.hint_value hint) arity
+
+let realign_prose_out (inputs : Hints.Input.t) (hints : located_hints) :
+    located_hints =
+  {
+    hints with
+    prose_out =
+      Ctx.map_hint (fun hint -> Hints.Alter.realign hint inputs) hints.prose_out;
+  }
+
+let validate_relation_hints ((nottyp, inputs) : rel_signature)
+    (hints : located_hints) : unit =
+  let args = Mixfix.args nottyp.it in
+  let args_in, args_out = Hints.Input.split inputs args in
+  validate_hint (List.length args) hints.prose;
+  validate_hint (List.length args_in) hints.prose_in;
+  validate_hint (List.length args_out) hints.prose_out;
+  validate_hint (List.length args_in) hints.prose_true;
+  validate_hint (List.length args_in) hints.prose_false
 
 (* Expressions *)
 
@@ -192,9 +257,10 @@ let rec annotate_exp (ctx : Ctx.t) (exp : exp) : Pl.exp =
       let mixop, exps = Mixfix.split notexp in
       let notexp_pl = annotate_notexp ctx notexp in
       let node = Pl.CaseE notexp_pl $$ (at, note) in
-      let hints = hints_of_case_exp ctx note mixop in
-      validate_annot_alter at hints (List.length exps);
-      validate_annot_fields at hints (List.length exps);
+      let located_hints = hints_of_case_exp ctx note mixop in
+      validate_hints_alter located_hints (List.length exps);
+      validate_hints_fields at located_hints (List.length exps);
+      let hints = hint_values located_hints in
       { node; hints }
   | StrE expfields ->
       let expfields_pl =
@@ -268,8 +334,9 @@ let rec annotate_exp (ctx : Ctx.t) (exp : exp) : Pl.exp =
   | CallE (id, targs, args) ->
       let args_pl = annotate_args ctx args in
       let node = Pl.CallE (id, targs, args_pl) $$ (at, note) in
-      let hints = hints_of_call_exp ctx id in
-      validate_annot_alter at hints (List.length args_pl);
+      let located_hints = hints_of_call_exp ctx id in
+      validate_hints_alter located_hints (List.length args_pl);
+      let hints = hint_values located_hints in
       { node; hints }
   | IterE (exp, iterexp) ->
       let exp_pl = annotate_exp ctx exp in
@@ -395,9 +462,10 @@ let annotate_instr_shared (ctx : Ctx.t)
       let node =
         Pl.HoldI (id_rel, notexp_pl, iterexps, holdcase_pl) $$ (at, note)
       in
-      let hints = hints_of_hold_instr ctx id_rel in
+      let located_hints = hints_of_hold_instr ctx id_rel in
       let exps = Mixfix.args notexp in
-      validate_annot_alter at hints (List.length exps);
+      validate_hints_alter located_hints (List.length exps);
+      let hints = hint_values located_hints in
       { node; hints }
   | CaseI (exp, cases, dangle) ->
       let exp_pl = annotate_exp ctx exp in
@@ -459,18 +527,19 @@ and instr_dispatch_of_ll (ctx : Ctx.t) (instr_ll : instr) :
           (Pl.GroupI (id_rulegroup, id_rel, rel_signature, exps_pl, block_pl))
         $$ (at, note)
       in
-      let hints = hints_of_group_instr ctx in
+      let located_hints = hints_of_group_instr ctx in
       let _, inputs = rel_signature in
       let exps_in, _ = Hints.Input.split inputs exps in
-      validate_annot_alter at hints (List.length exps_in);
+      validate_hints_alter located_hints (List.length exps_in);
+      let hints = hint_values located_hints in
       { node; hints }
   | BlockI arms ->
       let arms_pl = List.map (annotate_block_dispatch ctx) arms in
       let node = Pl.TierI (Pl.RouteI arms_pl) $$ (at, note) in
       { node; hints = Annot.empty }
   | _ ->
-      Error.error instr_ll.at
-        "a result, return, or rule application cannot appear at dispatch level"
+      (* Dispatch blocks cannot contain [RuleI], [ResultI], or [ReturnI]. *)
+      assert false
 
 (* Enforcement: rule-group bodies never nest another rule group *)
 
@@ -485,18 +554,22 @@ and instr_group_of_ll (ctx : Ctx.t) (instr_ll : instr) : Pl.instr_group Pl.instr
       let node =
         Pl.TierI (Pl.RuleI (id_rel, notexp_pl, inputs, iterinstrs)) $$ (at, note)
       in
-      let hints = hints_of_rule_instr ctx id_rel inputs in
+      let located_hints = hints_of_rule_instr ctx id_rel in
       let exps = Mixfix.args notexp in
       let exps_in, exps_out = Hints.Input.split inputs exps in
-      validate_annot_split at hints ~n_in:(List.length exps_in)
+      let located_hints = realign_prose_out inputs located_hints in
+      validate_hints_split located_hints ~n_in:(List.length exps_in)
         ~n_out:(List.length exps_out);
+      let hints = hint_values located_hints in
       { node; hints }
   | ResultI (rel_signature, exps) ->
       let exps_pl = annotate_exps ctx exps in
       let node = Pl.TierI (Pl.ResultI (rel_signature, exps_pl)) $$ (at, note) in
       let _, inputs = rel_signature in
-      let hints = hints_of_result_instr ctx inputs in
-      validate_annot_alter at hints (List.length exps_pl);
+      let located_hints = hints_of_result_instr ctx in
+      let located_hints = realign_prose_out inputs located_hints in
+      validate_hints_alter located_hints (List.length exps_pl);
+      let hints = hint_values located_hints in
       { node; hints }
   | ReturnI exp ->
       let exp_pl = annotate_exp ctx exp in
@@ -507,7 +580,9 @@ and instr_group_of_ll (ctx : Ctx.t) (instr_ll : instr) : Pl.instr_group Pl.instr
       let arms_pl = List.map (annotate_block_group ctx) arms in
       let node = Pl.TierI (Pl.BacktrackI arms_pl) $$ (at, note) in
       { node; hints = Annot.empty }
-  | _ -> Error.error instr_ll.at "a rule group cannot appear in a group body"
+  | _ ->
+      (* Rule-group blocks cannot contain [GroupI]. *)
+      assert false
 
 (* Definitions *)
 
@@ -530,7 +605,12 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
       let ctx_rel = Ctx.enter_rel ctx id in
       let exps_pl = annotate_exps ctx_rel exps in
       let node = Pl.ExternRelD (id, rel_signature, exps_pl) $ at in
-      let hints = hints_of_rel_def ctx_rel id rel_signature in
+      let _, inputs = rel_signature in
+      let located_hints =
+        hints_of_rel_def ctx_rel id rel_signature |> realign_prose_out inputs
+      in
+      validate_relation_hints rel_signature located_hints;
+      let hints = hint_values located_hints in
       { node; hints }
   | RelD (id, rel_signature, exps, block, elseblock_opt, _) ->
       let ctx_rel = Ctx.enter_rel ctx id in
@@ -546,19 +626,28 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
       let node =
         Pl.RelD (id, rel_signature, exps_pl, block_pl, elseblock_pl_opt) $ at
       in
-      let hints = hints_of_rel_def ctx_rel id rel_signature in
+      let _, inputs = rel_signature in
+      let located_hints =
+        hints_of_rel_def ctx_rel id rel_signature |> realign_prose_out inputs
+      in
+      validate_relation_hints rel_signature located_hints;
+      let hints = hint_values located_hints in
       { node; hints }
   | ExternDecD (id, tparams, params, typ, _) ->
       let ctx_local = Ctx.add_tparams ctx tparams in
       let params_pl = annotate_params ctx_local params in
       let node = Pl.ExternDecD (id, tparams, params_pl, typ) $ at in
-      let hints = hints_of_func_def ctx id in
+      let located_hints = hints_of_func_def ctx id in
+      validate_hints_alter located_hints (List.length params);
+      let hints = hint_values located_hints in
       { node; hints }
   | BuiltinDecD (id, tparams, params, typ, _) ->
       let ctx_local = Ctx.add_tparams ctx tparams in
       let params_pl = annotate_params ctx_local params in
       let node = Pl.BuiltinDecD (id, tparams, params_pl, typ) $ at in
-      let hints = hints_of_func_def ctx id in
+      let located_hints = hints_of_func_def ctx id in
+      validate_hints_alter located_hints (List.length params);
+      let hints = hint_values located_hints in
       { node; hints }
   | TableDecD (id, params, typ, tablerows, _) ->
       let params_pl = annotate_params ctx params in
@@ -574,7 +663,9 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
           tablerows
       in
       let node = Pl.TableDecD (id, params_pl, typ, tablerows_pl) $ at in
-      let hints = hints_of_func_def ctx id in
+      let located_hints = hints_of_func_def ctx id in
+      validate_hints_alter located_hints (List.length params);
+      let hints = hint_values located_hints in
       { node; hints }
   | FuncDecD (id, tparams, params, typ, block, elseblock_opt, _) ->
       let ctx_local = Ctx.add_tparams ctx tparams in
@@ -591,7 +682,9 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
         Pl.FuncDecD (id, tparams, params_pl, typ, block_pl, elseblock_pl_opt)
         $ at
       in
-      let hints = hints_of_func_def ctx id in
+      let located_hints = hints_of_func_def ctx id in
+      validate_hints_alter located_hints (List.length params);
+      let hints = hint_values located_hints in
       { node; hints }
 
 let annotate_defs (ctx : Ctx.t) (spec : spec) : Pl.spec =

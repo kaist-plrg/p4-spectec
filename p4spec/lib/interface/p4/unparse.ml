@@ -22,7 +22,7 @@ let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Il.typcase) :
     List.find_opt (fun hint -> El.(hint.hintid.it = hintid)) hints
     |> Option.map (fun hint -> El.(hint.hintexp))
   in
-  let hint_alter_opt = Option.bind hint_opt Hints.Alter.init in
+  let hint_alter_opt = Option.map Hints.Alter.init hint_opt in
   match hint_alter_opt with
   | Some hint_alter ->
       let mixop, _ = Mixfix.split nottyp.it in
