@@ -91,15 +91,16 @@ let tex_of_number (numop : numop) (num : num) : Doc.t =
 
 (* Atoms
 
-   Tag -> ""
+   Tag META -> {\,}_{\mathsf{META}}
    ArrowSub n -> {\to}_{\mathsf{n}} *)
 
-type atom_interm = EmptyAtom | PlainAtom of Doc.t | SubscriptedAtom of Doc.t
+type atom_interm = PlainAtom of Doc.t | SubscriptedAtom of Doc.t
 
 let render_atom (atom : Atom.t) : atom_interm =
   match atom with
   | Atom.Keyword s_keyword -> PlainAtom (Doc.styled_mathsf s_keyword)
-  | Atom.Tag _ -> EmptyAtom
+  | Atom.Tag s_tag ->
+      PlainAtom (Doc.subscript Doc.thin_space (Doc.styled_mathsf s_tag))
   | Atom.Operator op -> PlainAtom (Doc.mathbin (Doc.styled_mathtt op))
   | Atom.Sub ->
       PlainAtom (Doc.mathrel (Doc.concat [ Doc.fixed Less; Doc.fixed Colon ]))
@@ -135,9 +136,7 @@ let render_atom (atom : Atom.t) : atom_interm =
 
 let tex_of_atom (atom : atom) : Doc.t =
   let atom_interm = render_atom atom.it in
-  match atom_interm with
-  | EmptyAtom -> Doc.empty
-  | PlainAtom tex | SubscriptedAtom tex -> tex
+  match atom_interm with PlainAtom tex | SubscriptedAtom tex -> tex
 
 (* Brackets *)
 
@@ -286,9 +285,7 @@ and tex_of_infix_typ (typ_l : typ) (atom : atom) (typ_r : typ) : Doc.t =
       Doc.concat_spaced [ tex_l; tex_op ]
   | atom_interm, _ ->
       let tex_op =
-        match atom_interm with
-        | EmptyAtom -> Doc.empty
-        | PlainAtom tex | SubscriptedAtom tex -> tex
+        match atom_interm with PlainAtom tex | SubscriptedAtom tex -> tex
       in
       let tex_r = tex_of_typ typ_r in
       Doc.concat_spaced [ tex_l; tex_op; tex_r ]
@@ -852,9 +849,7 @@ and render_infix_exp ~(anchors : anchors option) (exp_l : exp) (atom : atom)
         (exp_r_interm, tex_op)
     | atom_interm, _ ->
         let tex_op =
-          match atom_interm with
-          | EmptyAtom -> Doc.empty
-          | PlainAtom tex | SubscriptedAtom tex -> tex
+          match atom_interm with PlainAtom tex | SubscriptedAtom tex -> tex
         in
         let exp_r_interm = render_exp ?anchors exp_r in
         (exp_r_interm, tex_op)

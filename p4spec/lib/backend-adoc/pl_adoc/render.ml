@@ -41,7 +41,7 @@ let escape_apostrophe (text : string) : string =
 
 let string_of_atom (atom : atom) : string =
   match atom.it with
-  | Atom.Tag _ -> ""
+  | Atom.Tag s_tag -> "{nbsp}" ^ adoc_subscript s_tag
   | atom ->
       let text = Atom.string_of_atom atom in
       if String.contains text '+' then text |> escape_plus |> escape_apostrophe

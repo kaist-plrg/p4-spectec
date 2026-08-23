@@ -5,7 +5,6 @@ open Backend_latex_test_support
 
 let string_of_atom atom =
   match Renderer.render_atom atom with
-  | Renderer.EmptyAtom -> "<empty>"
   | Renderer.PlainAtom doc -> Serialize.to_string doc
   | Renderer.SubscriptedAtom doc -> "<sub>" ^ Serialize.to_string doc
 

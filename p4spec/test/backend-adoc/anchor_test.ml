@@ -73,6 +73,12 @@ let () =
   ]
   |> List.iter (fun (label, atom) ->
          Render.string_of_atom (atom $ no_region) |> print label);
+  [
+    ("silent-atom", Domain.Atom.Tag "B"); ("empty-atom", Domain.Atom.Tag "EMPTY");
+  ]
+  |> List.iter (fun (label, atom) ->
+         Render.code_of_atom (atom $ no_region)
+         |> Adoc.code_prose |> Adoc.ser_prose |> print label);
   Pl.BinE (`AddOp, `NatT, var_exp "n_idx", num_exp 1)
   $$ (no_region, Il.NumT `NatT) |> Pl.Annot.no_hints |> Render.code_of_exp
   |> Adoc.code_prose |> Adoc.ser_prose |> print "addition"
