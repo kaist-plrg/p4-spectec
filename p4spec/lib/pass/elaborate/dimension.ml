@@ -62,7 +62,7 @@ let rec infer_exp (dctx : Dimctx.t) (exp : exp) (iters : iter list) : Dimctx.t =
   | UnE (_, _, exp)
   | UpCastE (_, exp)
   | DownCastE (_, exp)
-  | SubE (exp, _)
+  | SubE (exp, _, _)
   | MatchE (exp, _)
   | LenE exp
   | DotE (exp, _) ->
@@ -240,9 +240,9 @@ let rec annotate_exp (bounds : VEnv.t) (exp : exp) : VEnv.t * exp =
       let occurs, exp = annotate_exp bounds exp in
       let exp = MatchE (exp, pattern) $$ (at, note) in
       (occurs, exp)
-  | SubE (exp, typ) ->
+  | SubE (exp, typ, subcheck) ->
       let occurs, exp = annotate_exp bounds exp in
-      let exp = SubE (exp, typ) $$ (at, note) in
+      let exp = SubE (exp, typ, subcheck) $$ (at, note) in
       (occurs, exp)
   | TupleE exps ->
       let occurs, exps = annotate_exps bounds exps in

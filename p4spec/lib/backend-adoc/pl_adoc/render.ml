@@ -194,7 +194,7 @@ let rec code_of_exp (exp : exp) : Adoc.code =
   | CmpE (cmpop, _, exp_l, exp_r) -> code_of_cmp_exp cmpop exp_l exp_r
   | UpCastE (_, exp) -> code_of_upcast_exp exp
   | DownCastE (_, exp) -> code_of_downcast_exp exp
-  | SubE (exp, typ) -> code_of_sub_exp exp typ
+  | SubE (exp, typ, _) -> code_of_sub_exp exp typ
   | MatchE (exp, pattern) -> code_of_match_exp exp pattern
   | TupleE exps -> code_of_tuple_exp exps
   | CaseE notexp -> code_of_case_exp notexp
@@ -478,7 +478,7 @@ and prose_of_exp (exp : exp) : Adoc.prose =
   | CmpE (cmpop, _, exp_l, exp_r) -> prose_of_cmp_exp cmpop exp_l exp_r
   | UpCastE (_, exp) -> prose_of_upcast_exp exp
   | DownCastE (_, exp) -> prose_of_downcast_exp exp
-  | SubE (exp, typ) -> prose_of_sub_exp exp typ
+  | SubE (exp, typ, _) -> prose_of_sub_exp exp typ
   | MatchE (exp, pattern) -> prose_of_match_exp exp pattern
   | TupleE exps -> prose_of_tuple_exp exps
   | CaseE notexp -> prose_of_case_exp exp notexp
@@ -553,7 +553,7 @@ and prose_of_negated_exp_opt (exp : exp) : Adoc.prose option =
           prose_of_exp exp_e
           ++ text " does not match pattern "
           ++ code_prose (code_of_pattern pattern))
-  | SubE (exp_e, typ) ->
+  | SubE (exp_e, typ, _) ->
       Some
         Adoc.(
           code_prose (code_of_exp exp_e)
@@ -928,7 +928,7 @@ let prose_of_guard (exp_scrut : exp) (guard : guard) : Adoc.prose =
         prose_of_exp exp_scrut
         ++ text (" " ^ string_of_cmpop cmpop ^ " ")
         ++ prose_of_exp exp)
-  | SubG typ ->
+  | SubG (typ, _) ->
       Adoc.(
         code_prose (code_of_exp exp_scrut)
         ++ text " has type "
@@ -939,7 +939,7 @@ let prose_of_guard (exp_scrut : exp) (guard : guard) : Adoc.prose =
         ++ code_prose (code_of_pattern pattern))
   | MemG exp ->
       Adoc.(prose_of_exp exp_scrut ++ text " is in " ++ prose_of_exp exp)
-  | CheckLetSubG (_, target) | CheckLetMatchG (_, target) ->
+  | CheckLetSubG (_, _, target) | CheckLetMatchG (_, target) ->
       Adoc.(
         text "let "
         ++ code_prose (code_of_exp target)
@@ -1008,7 +1008,7 @@ let rec render_instr ?(level : int = 0) ~(ctx_fallthrough : Fallthrough.ctx)
   | DebugI exp -> render_debug_instr ~level ~ctx_fallthrough instr exp
   | DestructI (fields, exp_source) ->
       render_destruct_instr ~level ~ctx_fallthrough instr fields exp_source
-  | CheckLetSubI (_, exp_l, exp_r, block_inner)
+  | CheckLetSubI (_, _, exp_l, exp_r, block_inner)
   | CheckLetMatchI (_, exp_l, exp_r, block_inner) ->
       render_check_let_instr ~level ~ctx_fallthrough render_instr_tier instr
         exp_l exp_r block_inner

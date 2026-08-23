@@ -10,7 +10,7 @@ type case = guard * block
 and guard =
   | BoolG of bool
   | CmpG of cmpop * optyp * exp
-  | SubG of typ
+  | SubG of typ * subcheck
   | MatchG of pattern
   | MemG of exp
 

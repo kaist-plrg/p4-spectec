@@ -173,9 +173,9 @@ let rec annotate_exp (ctx : Ctx.t) (exp : exp) : Pl.exp =
       let node = Pl.DownCastE (typ, exp_pl) $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
-  | SubE (exp, typ) ->
+  | SubE (exp, typ, subcheck) ->
       let exp_pl = annotate_exp ctx exp in
-      let node = Pl.SubE (exp_pl, typ) $$ (at, note) in
+      let node = Pl.SubE (exp_pl, typ, subcheck) $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
   | MatchE (exp, pattern) ->
@@ -355,7 +355,7 @@ and annotate_guard (ctx : Ctx.t) (guard : guard) : Pl.guard =
   | CmpG (cmpop, optyp, exp) ->
       let exp_pl = annotate_exp ctx exp in
       Pl.CmpG (cmpop, optyp, exp_pl)
-  | SubG typ -> Pl.SubG typ
+  | SubG (typ, subcheck) -> Pl.SubG (typ, subcheck)
   | MatchG pattern -> Pl.MatchG pattern
   | MemG exp ->
       let exp_pl = annotate_exp ctx exp in

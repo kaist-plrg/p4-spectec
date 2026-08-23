@@ -118,7 +118,7 @@ and boot_guard (guard : Sl.guard) : Value.t =
       let value_cmpop = boot_cmpop cmpop in
       let value_exp = boot_exp exp in
       Value.Make.(mop_cmp_guard <|! [ value_cmpop; value_exp ] <<|! typ_guard)
-  | SubG typ ->
+  | SubG (typ, _) ->
       let value_typ = boot_typ typ in
       Value.Make.(mop_sub_guard <|! [ value_typ ] <<|! typ_guard)
   | MatchG pattern ->

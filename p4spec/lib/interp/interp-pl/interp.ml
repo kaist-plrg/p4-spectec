@@ -314,7 +314,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         eval_cmp_exp typ_note ctx cmpop optyp exp_l exp_r
     | UpCastE (typ, exp) -> eval_upcast_exp typ_note ctx typ exp
     | DownCastE (typ, exp) -> eval_downcast_exp typ_note ctx typ exp
-    | SubE (exp, typ) -> eval_sub_exp typ_note ctx exp typ
+    | SubE (exp, typ, subcheck) -> eval_sub_exp typ_note ctx exp typ subcheck
     | MatchE (exp, pattern) -> eval_match_exp typ_note ctx exp pattern
     | TupleE exps -> eval_tuple_exp typ_note ctx exps
     | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
@@ -547,13 +547,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Subtype check expression evaluation *)
 
-  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (typ : typ) :
-      value =
+  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (typ : typ)
+      (subcheck : subcheck) : value =
     let value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
+      Value.Match.check sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
-        typ value
+        subcheck value
     in
     let value_res = Value.Make.bool sub in
     Hook.on_value value_res;
@@ -1106,9 +1106,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         eval_let_instr ctx exp_l exp_r iterinstrs
     | DebugI exp -> eval_debug_instr ctx exp
     | DestructI (fields, exp) -> eval_destruct_instr ctx fields exp
-    | CheckLetSubI (typ_target, exp_l, exp_r, instr_then) ->
+    | CheckLetSubI (typ_target, subcheck, exp_l, exp_r, instr_then) ->
         eval_check_let_sub_instr eval_instr_tier string_of_instr_tier ctx
-          typ_target exp_l exp_r instr_then
+          typ_target subcheck exp_l exp_r instr_then
     | CheckLetMatchI (pattern, exp_l, exp_r, instr_then) ->
         eval_check_let_match_instr eval_instr_tier string_of_instr_tier ctx
           pattern exp_l exp_r instr_then
@@ -1382,7 +1382,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     in
     let bind_target (ctx : Ctx.t) (guard : guard) : Ctx.t =
       match guard with
-      | CheckLetSubG (_, target) ->
+      | CheckLetSubG (_, _, target) ->
           let typ_target = target.node.note $ target.node.at in
           let value' = downcast ctx typ_target value_exp in
           assign_exp ctx target value'
@@ -1401,7 +1401,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                 | BoolG false -> Pl.UnE (`NotOp, `BoolT, exp)
                 | CmpG (cmpop, optyp, exp_r) ->
                     Pl.CmpE (cmpop, optyp, exp, exp_r)
-                | SubG typ | CheckLetSubG (typ, _) -> Pl.SubE (exp, typ)
+                | SubG (typ, subcheck) | CheckLetSubG (typ, subcheck, _) ->
+                    Pl.SubE (exp, typ, subcheck)
                 | MatchG pattern | CheckLetMatchG (pattern, _) ->
                     Pl.MatchE (exp, pattern)
                 | MemG exp_s -> Pl.MemE (exp, exp_s)
@@ -1848,13 +1849,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   and eval_check_let_sub_instr (eval_instr_tier : 'instr_tier eval_instr_tier)
       (string_of_instr_tier : 'instr_tier string_of_instr_tier) (ctx : Ctx.t)
-      (typ_target : typ) (exp_l : exp) (exp_r : exp)
+      (typ_target : typ) (subcheck : subcheck) (exp_l : exp) (exp_r : exp)
       (block_inner : 'instr_tier block) : Ctx.t * Flow.t =
     let value = eval_exp ctx exp_r in
     let sub =
-      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
+      Value.Match.check sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
-        typ_target value
+        subcheck value
     in
     if sub then
       let value = downcast ctx typ_target value in

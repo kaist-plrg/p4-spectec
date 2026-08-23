@@ -96,10 +96,11 @@ and stamp_instr_group (fallthrough : Pl.fallthrough)
       let arms_stamped = stamp_group_arms fallthrough arms in
       let node = Pl.TierI (Pl.BacktrackI arms_stamped) $$ (at, note) in
       { instr with node }
-  | CheckLetSubI (typ, exp_l, exp_r, block_then) ->
+  | CheckLetSubI (typ, subcheck, exp_l, exp_r, block_then) ->
       let block_then_stamped = stamp_block_group fallthrough block_then in
       let node =
-        Pl.CheckLetSubI (typ, exp_l, exp_r, block_then_stamped) $$ (at, note)
+        Pl.CheckLetSubI (typ, subcheck, exp_l, exp_r, block_then_stamped)
+        $$ (at, note)
       in
       { instr with node }
   | CheckLetMatchI (pattern, exp_l, exp_r, block_then) ->
@@ -199,12 +200,13 @@ and stamp_instr_dispatch
       let arms_stamped = stamp_dispatch_arms dispatch_fallthroughs arms in
       let node = Pl.TierI (Pl.RouteI arms_stamped) $$ (at, note) in
       { instr with node }
-  | CheckLetSubI (typ, exp_l, exp_r, block_then) ->
+  | CheckLetSubI (typ, subcheck, exp_l, exp_r, block_then) ->
       let block_then_stamped =
         stamp_block_dispatch dispatch_fallthroughs block_then
       in
       let node =
-        Pl.CheckLetSubI (typ, exp_l, exp_r, block_then_stamped) $$ (at, note)
+        Pl.CheckLetSubI (typ, subcheck, exp_l, exp_r, block_then_stamped)
+        $$ (at, note)
       in
       { instr with node }
   | CheckLetMatchI (pattern, exp_l, exp_r, block_then) ->
