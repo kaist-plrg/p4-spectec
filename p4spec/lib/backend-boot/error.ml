@@ -12,8 +12,6 @@ let error (at : region) (msg : string) =
   raise (ExternError (diagnostic_failure ~source:"boot" at msg))
 
 let error_no_region (msg : string) = error no_region msg
-let warn (at : region) (msg : string) = Util.Error.warn at "extern" msg
-let warn_no_region (msg : string) = warn no_region msg
 
 (* Check *)
 

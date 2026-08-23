@@ -5,7 +5,7 @@ open Util.Source
 exception SpliceError of region * string
 
 let error (at : region) (msg : string) = raise (SpliceError (at, msg))
-let warn (at : region) (msg : string) = Util.Error.warn at "splice" msg
+let warn (at : region) (msg : string) = Diagnostic.warn ~source:"splice" at msg
 
 (* Check *)
 
