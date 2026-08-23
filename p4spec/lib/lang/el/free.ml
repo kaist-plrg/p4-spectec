@@ -71,8 +71,9 @@ let rec free_id_exp (exp : exp) : IdSet.t =
       free_id_exp exp_l |> IdSet.union (free_id_exp exp_r)
   | BrackE (_, exp, _) -> free_id_exp exp
   | HoleE _ -> IdSet.empty
-  | FuseE (exp_l, exp_r) -> free_id_exp exp_l |> IdSet.union (free_id_exp exp_r)
-  | UnparenE exp -> free_id_exp exp
+  | FuseE (exp_l, _, exp_r) ->
+      free_id_exp exp_l |> IdSet.union (free_id_exp exp_r)
+  | UnparenE (_, exp) -> free_id_exp exp
   | LatexE _ -> IdSet.empty
 
 and free_id_exps (exps : exp list) : IdSet.t =

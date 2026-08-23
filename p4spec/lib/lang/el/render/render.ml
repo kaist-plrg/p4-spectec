@@ -281,9 +281,9 @@ let rec doc_of_exp (atom_mode : atom_mode) (exp : exp) =
   | HoleE `Next -> text "%"
   | HoleE `Rest -> text "%%"
   | HoleE `None -> text "!%"
-  | FuseE (exp_l, exp_r) ->
+  | FuseE (exp_l, _, exp_r) ->
       doc_of_exp atom_mode exp_l ^^ text "#" ^^ doc_of_exp atom_mode exp_r
-  | UnparenE exp -> text "##" ^^ doc_of_exp atom_mode exp
+  | UnparenE (_, exp) -> text "##" ^^ doc_of_exp atom_mode exp
   | LatexE s -> text ("latex(\"" ^ String.escaped s ^ "\")")
 
 (* Paths *)

@@ -1,0 +1,24 @@
+;; Negative diagnostic tests grouped by pass
+
+(executable
+ (name test)
+ (modules test)
+ (libraries p4spectec unix))
+
+(rule
+ (alias speclang)
+ (action
+  (ignore-outputs
+   (diff parse.expected parse.actual))))
+
+(rule
+ (target parse.actual)
+ (deps
+  test.exe
+  (source_tree cases/parse))
+ (action
+  (with-stdout-to
+   parse.actual
+   (with-stderr-to
+    parse.err
+    (run ./test.exe parse cases/parse)))))

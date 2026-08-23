@@ -1,0 +1,134 @@
+=== parse-hint-on-plain-bar-multi.watsup ===
+error[parse/hint-on-plain-bar-multi]: hints are not allowed on a plain type definition
+  --> parse-hint-on-plain-bar-multi.watsup:4:20
+  |
+4 | syntax foo = | nat hint(blah) | int
+  |                    ^^^^^^^^^^
+  |
+  | note: A plain type definition aliases an existing type, as in
+  |       `syntax x = nat`. It inherits the aliased type's hints and cannot
+  |       declare its own.
+=== parse-hint-on-plain-bar-single.watsup ===
+error[parse/hint-on-plain-bar-single]: hints are not allowed on a plain type definition
+  --> parse-hint-on-plain-bar-single.watsup:4:20
+  |
+4 | syntax foo = | nat hint(blah)
+  |                    ^^^^^^^^^^
+  |
+  | note: A plain type definition aliases an existing type, as in
+  |       `syntax x = nat`. It inherits the aliased type's hints and cannot
+  |       declare its own.
+=== parse-hint-on-plain-no-bar-multi.watsup ===
+error[parse/hint-on-plain-no-bar-multi]: hints are not allowed on a plain type definition
+  --> parse-hint-on-plain-no-bar-multi.watsup:4:18
+  |
+4 | syntax foo = nat hint(blah) | int
+  |                  ^^^^^^^^^^
+  |
+  | note: A plain type definition aliases an existing type, as in
+  |       `syntax x = nat`. It inherits the aliased type's hints and cannot
+  |       declare its own.
+=== parse-hint-on-plain-no-bar-single.watsup ===
+error[parse/hint-on-plain-no-bar-single]: hints are not allowed on a plain type definition
+  --> parse-hint-on-plain-no-bar-single.watsup:4:18
+  |
+4 | syntax foo = nat hint(blah)
+  |                  ^^^^^^^^^^
+  |
+  | note: A plain type definition aliases an existing type, as in
+  |       `syntax x = nat`. It inherits the aliased type's hints and cannot
+  |       declare its own.
+=== parse-hole-index-out-of-range.watsup ===
+error[parse/hole-index-out-of-range]: hole index `%99999999999999999999` is out of range
+  --> parse-hole-index-out-of-range.watsup:6:14
+  |
+6 |   hint(input %99999999999999999999)
+  |              ^^^^^^^^^^^^^^^^^^^^^
+  |
+  | note: Use a smaller nonnegative decimal hole index.
+=== parse-illegal-escape.watsup ===
+error[parse/illegal-escape]: escape `\q` is not allowed in a text literal
+  --> parse-illegal-escape.watsup:3:5
+  |
+3 | "abc\qdef"
+  |     ^^
+=== parse-relation-body-must-be-notation.watsup ===
+error[parse/notation-type-expected]: relation body must be a notation type, but got plain type `nat`
+  --> parse-relation-body-must-be-notation.watsup:3:13
+  |
+3 | relation R: nat
+  |             ^^^
+  |
+  | note: A notation type includes literal tokens like `|-` or `:` that rules
+  |       pattern-match against. A bare type like `nat` names a set of values
+  |       without any tokens, so it cannot serve as a relation body.
+=== parse-stray-non-ascii-char.watsup ===
+error[parse/misplaced-unicode-char]: Unicode character `α` is not allowed here
+  --> parse-stray-non-ascii-char.watsup:3:1
+  |
+3 | α
+  | ^
+=== parse-stray-printable.watsup ===
+error[parse/unexpected-character]: unexpected character `@`
+  --> parse-stray-printable.watsup:3:1
+  |
+3 | @
+  | ^
+=== parse-stray-rbrace.watsup ===
+error[parse/unexpected-token]: unexpected token `}`
+  --> parse-stray-rbrace.watsup:3:1
+  |
+3 | }
+  | ^
+=== parse-struct-no-fields.watsup ===
+error[parse/struct-no-fields]: empty struct type
+  --> parse-struct-no-fields.watsup:3:14
+  |
+3 | syntax foo = {}
+  |              ^^
+=== parse-syntax-empty-body.watsup ===
+error[parse/syntax-empty-body]: syntax definition has no body
+  --> parse-syntax-empty-body.watsup:3:13
+  |
+3 | syntax foo =
+  |             ^
+=== parse-syntax-no-ids.watsup ===
+error[parse/syntax-no-ids]: empty syntax declaration
+  --> parse-syntax-no-ids.watsup:3:1
+  |
+3 | syntax
+  | ^^^^^^
+=== parse-unclosed-block-comment.watsup ===
+error[parse/unclosed-block-comment]: unclosed comment
+  --> parse-unclosed-block-comment.watsup:4:1
+=== parse-unclosed-text-literal.watsup ===
+error[parse/unclosed-text-literal]: unclosed text literal
+  --> parse-unclosed-text-literal.watsup:3:5
+  |
+3 | "abc
+  |     ^
+=== parse-variant-bar-no-cases.watsup ===
+error[parse/variant-no-cases]: empty variant type
+  --> parse-variant-bar-no-cases.watsup:3:14
+  |
+3 | syntax foo = |
+  |              ^
+=== parse-io-error ===
+error[parse/file-io-error]: I/O error: `missing-input.watsup: No such file or directory`
+  --> missing-input.watsup
+=== parse-illegal-control-in-text-literal ===
+error[parse/illegal-control-in-text-literal]: control character `U+000B` is not allowed in a text literal
+  --> <string>:1:2
+=== parse-malformed-mixop ===
+error[parse/malformed-mixop]: mixfix operator must not be empty
+=== parse-malformed-utf8 ===
+error[parse/malformed-utf8]: malformed UTF-8 encoding
+  --> <string>:1:1
+=== parse-malformed-utf8-in-comment ===
+error[parse/malformed-utf8-in-comment]: malformed UTF-8 encoding
+  --> <string>:1:3
+=== parse-misplaced-control-char ===
+error[parse/misplaced-control-char]: control character `U+000B` is not allowed here
+  --> <string>:1:1
+=== parse-directory-io-error ===
+error[parse/input-path-io-error]: I/O error: `unreadable-dir: Permission denied`

@@ -6,12 +6,21 @@ open Source
 
 type error = Diagnostic.t
 
-let with_lexbuf name lexbuf start =
+let label_lexbuf name lexbuf =
   let open Lexing in
-  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = name };
+  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = name }
+
+let unexpected_token_message lexbuf =
+  match Lexing.lexeme lexbuf with
+  | "" -> "unexpected end of input"
+  | token -> Format.asprintf "unexpected token %s" (Diagnostic.quote token)
+
+let with_lexbuf name lexbuf start =
+  label_lexbuf name lexbuf;
   try start Lexer.token lexbuf
   with Parser.Error ->
-    error (Lexer.region lexbuf) "syntax error: unexpected token"
+    error ~code:Unexpected_token (Lexer.region lexbuf)
+      (unexpected_token_message lexbuf)
 
 let parse_mixop str =
   let rec mixop_of_nottyp (nottyp : El.nottyp) =
@@ -33,11 +42,15 @@ let parse_mixop str =
     | NotationT nottyp -> mixop_of_nottyp nottyp
   in
   let lexbuf = Lexing.from_string str in
+  label_lexbuf "<mixfix>" lexbuf;
   let typ =
     try Parser.check_typ Lexer.token lexbuf
     with Parser.Error ->
-      error (Lexer.region lexbuf)
-        (Format.asprintf "syntax error in mixop string: %s" str)
+      error ~code:Malformed_mixop no_region
+        (if str = "" then "mixfix operator must not be empty"
+         else
+           Format.asprintf "mixfix operator %s is malformed"
+             (Diagnostic.quote str))
   in
   mixop_of_typ typ
 
@@ -48,7 +61,9 @@ let parse_file file =
       (fun () -> with_lexbuf file (Lexing.from_channel ic) Parser.spec)
       ~finally:(fun () -> close_in ic)
   with Sys_error msg ->
-    error (Source.region_of_file file) ("i/o error: " ^ msg)
+    error ~code:File_io_error
+      (Source.region_of_file file)
+      ("I/O error: " ^ Diagnostic.quote msg)
 
 let expand_path path =
   if Sys_unix.is_directory_exn path then
@@ -60,14 +75,14 @@ let parse_files paths =
     Ok (paths |> List.concat_map expand_path |> List.concat_map parse_file)
   with
   | ParseError d -> Error d
-  | Sys_error msg -> Error (Diagnostic.error ~source:"parse" no_region msg)
+  | Sys_error msg ->
+      Error
+        (Diagnostic.error
+           ~code:(render_code Input_path_io_error)
+           ~source:"parse" no_region
+           ("I/O error: " ^ Diagnostic.quote msg))
 
 let parse_string str =
   let lexbuf = Lexing.from_string str in
-  try Ok (Parser.spec Lexer.token lexbuf) with
-  | Parser.Error ->
-      let at = Lexer.region lexbuf in
-      Error
-        (Diagnostic.error ~source:"parse" at
-           (Format.asprintf "syntax error in spec string: %s" str))
-  | ParseError d -> Error d
+  try Ok (with_lexbuf "<string>" lexbuf Parser.spec)
+  with ParseError d -> Error d
