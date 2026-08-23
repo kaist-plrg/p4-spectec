@@ -105,7 +105,7 @@ let cache_find_typdef_opt find_typdef_opt =
         Hashtbl.add cache tid.it td_opt;
         td_opt
 
-(* Entry point *)
+(* Sub-check with caching of type variables *)
 
 let sub cache_sub_var find_typdef_opt find_func typ value =
   match typ.it with
@@ -123,6 +123,8 @@ let sub cache_sub_var find_typdef_opt find_func typ value =
 
 let subs find_typdef_opt find_func typs values =
   subs_ (cache_find_typdef_opt find_typdef_opt) find_func typs values
+
+(* Entry point *)
 
 let rec check cache_sub_var find_typdef_opt find_func subcheck value =
   match (subcheck, value.it) with

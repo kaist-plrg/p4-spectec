@@ -55,10 +55,24 @@ and sub_typ' (find_typdef_opt : TId.t -> Typdef.t option) (typ_a : typ)
   | _, IterT (typ_b, List) -> sub_typ find_typdef_opt typ_a typ_b
   | _ -> false
 
-(* Compilation of subtype checks *)
+(* Optimization of subtype checks :
 
-let rec compile (find_typdef_opt : TId.t -> Typdef.t option) ~(typ_source : typ)
-    ~(typ_target : typ) : subcheck =
+    syntax value = NUM nat | TEXT text
+    syntax number = NUM nat
+
+    (value * value list) <: (number * number list)
+
+    becomes
+
+    TupleSC [ MixopSC [NUM]; IterSC (List, MixopSC [NUM]) ]
+
+   Assumptions:
+
+    - A SubE operand evaluates to a value of its static source type
+      - Thus, every NUM payload above is already a nat *)
+
+let rec optimize (find_typdef_opt : TId.t -> Typdef.t option)
+    ~(typ_source : typ) ~(typ_target : typ) : subcheck =
   if sub_typ find_typdef_opt typ_source typ_target then SkipSC
   else
     let typ_source_expanded = Expand.expand_typ find_typdef_opt typ_source in
@@ -66,14 +80,17 @@ let rec compile (find_typdef_opt : TId.t -> Typdef.t option) ~(typ_source : typ)
     match (typ_source_expanded.it, typ_target_expanded.it) with
     | TupleT typs_source, TupleT typs_target
       when List.length typs_source = List.length typs_target ->
-        TupleSC
-          (List.map2
-             (fun typ_source typ_target ->
-               compile find_typdef_opt ~typ_source ~typ_target)
-             typs_source typs_target)
+        let subchecks =
+          List.map2
+            (fun typ_source typ_target ->
+              optimize find_typdef_opt ~typ_source ~typ_target)
+            typs_source typs_target
+        in
+        TupleSC subchecks
     | IterT (typ_source, iter_source), IterT (typ_target, iter_target)
       when iter_source = iter_target ->
-        IterSC (iter_source, compile find_typdef_opt ~typ_source ~typ_target)
+        let subcheck = optimize find_typdef_opt ~typ_source ~typ_target in
+        IterSC (iter_source, subcheck)
     | VarT (tid_source, _), VarT (tid_target, _)
       when sub_typ find_typdef_opt typ_target typ_source -> (
         match (find_typdef_opt tid_source, find_typdef_opt tid_target) with

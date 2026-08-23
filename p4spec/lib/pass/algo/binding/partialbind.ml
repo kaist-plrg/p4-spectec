@@ -118,9 +118,9 @@ let gen_prem_bind_sub (ctx : Ctx.t) (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
   let exp_to = To.as_exp to_ in
   let sidecondition_guard_sub =
     let typ_source = exp_to.note $ exp_to.at in
-    let find_typdef_opt = Ctx.find_typdef_opt ctx in
     let subcheck =
-      Type.Sub.compile find_typdef_opt ~typ_source ~typ_target:typ_sub
+      Type.Sub.optimize (Ctx.find_typdef_opt ctx) ~typ_source
+        ~typ_target:typ_sub
     in
     let exp_guard_sub =
       SubE (exp_to, typ_sub, subcheck) $$ (exp_from.at, BoolT)
