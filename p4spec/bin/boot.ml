@@ -137,8 +137,11 @@ let run_command =
            Inst.Hook.finish ();
            match result with
            | Pass _ -> Format.printf "passed\n"
-           | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-           | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg)
+           | Fail (`Syntax diagnostic) ->
+               diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
+           | Fail (`Runtime failure) ->
+               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               |> render_diagnostics)
          (fun () ->
            let* spec = P4spectec.spec_of_mode mode paths_spec in
            let* runner =
@@ -196,7 +199,9 @@ let boot_n_command =
            Inst.Hook.finish ();
            match result with
            | Pass _ -> Format.printf "passed\n"
-           | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg)
+           | Fail failure ->
+               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               |> render_diagnostics)
          (fun () ->
            let* tower = P4spectec.tower_of_file path_tower target in
            let* spec_boot, booter =
@@ -226,9 +231,8 @@ let parse_command =
          ~on_success:(fun (module Runner : RUNNER) ->
            try
              match Runner.Interface.parse_program [] [ path_spectec ] with
-             | Fail (`Syntax (at, msg)) ->
-                 Format.printf "Parse error: %s\n"
-                   (Util.Error.string_of_error at msg)
+             | Fail diagnostic ->
+                 diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
              | Pass value_program ->
                  let str_program =
                    Runner.Interface.unparse_program value_program
@@ -237,9 +241,9 @@ let parse_command =
                    match
                      Runner.Interface.parse_string path_spectec str_program
                    with
-                   | Fail (`Syntax (at, msg)) ->
-                       Format.printf "Parse error: %s\n"
-                         (Util.Error.string_of_error at msg)
+                   | Fail diagnostic ->
+                       diagnostic |> Diagnostic.Report.singleton
+                       |> render_diagnostics
                    | Pass value_program_roundtrip ->
                        Il.Eq.eq_value ~dbg:true value_program
                          value_program_roundtrip

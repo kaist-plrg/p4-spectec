@@ -1,4 +1,3 @@
-open Error
 open Util.Attempt
 open Util.Source
 
@@ -57,4 +56,4 @@ let ( let+ ) (backtrack : 'a backtrack) (f : 'a -> 'b) : 'b =
   match backtrack with
   | Ok a -> f a
   | Err failtraces | Unmatch failtraces ->
-      error no_region (string_of_failtraces_short failtraces)
+      Interp_common.Error.error_with_failtraces failtraces

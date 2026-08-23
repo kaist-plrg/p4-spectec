@@ -11,7 +11,11 @@ let run (module Simulator : SIM) neg relname includes_p4 path_p4 =
     Simulator.Interp.clear ();
     (match Simulator.Interp.eval_program relname includes_p4 path_p4 with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
-    | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
+    | Fail (`Syntax diagnostic) ->
+        let at, msg = Diagnostic.region_msg diagnostic in
+        raise (TestRunErr (msg, at, time_start))
+    | Fail (`Runtime failure) ->
+        let at, msg = failure_region_msg failure in
         raise (TestRunErr (msg, at, time_start)));
     time_start
   with

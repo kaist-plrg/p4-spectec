@@ -3,7 +3,14 @@
 (executable
  (name test)
  (modules test)
- (libraries p4spectec unix))
+ (libraries
+  p4spectec
+  unix
+  interp_al
+  interp_sl
+  interp_pl
+  interface
+  backend_sim))
 
 (rule
  (alias speclang)
@@ -16,7 +23,11 @@
    (ignore-outputs
     (diff algo.expected algo.actual))
    (ignore-outputs
-    (diff annotate.expected annotate.actual)))))
+    (diff annotate.expected annotate.actual))
+   (ignore-outputs
+    (diff interp.expected interp.actual))
+   (ignore-outputs
+    (diff boundary.expected boundary.actual)))))
 
 (rule
  (target parse.actual)
@@ -65,3 +76,25 @@
    (with-stderr-to
     annotate.err
     (run ./test.exe annotate cases/annotate)))))
+
+(rule
+ (target boundary.actual)
+ (deps test.exe)
+ (action
+  (with-stdout-to
+   boundary.actual
+   (with-stderr-to
+    boundary.err
+    (run ./test.exe boundary .)))))
+
+(rule
+ (target interp.actual)
+ (deps
+  test.exe
+  (source_tree cases/interp))
+ (action
+  (with-stdout-to
+   interp.actual
+   (with-stderr-to
+    interp.err
+    (run ./test.exe interp cases/interp)))))

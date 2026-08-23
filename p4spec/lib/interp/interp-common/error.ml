@@ -3,9 +3,11 @@ open Util.Source
 (* Error *)
 
 exception InterpError of region * string
+exception BacktrackError of Util.Attempt.failtrace list
 
 let error (at : region) (msg : string) = raise (InterpError (at, msg))
-let warn (at : region) (msg : string) = Util.Error.warn at "interp" msg
+let error_with_failtraces failtraces = raise (BacktrackError failtraces)
+let warn (at : region) (msg : string) = Diagnostic.warn ~source:"interp" at msg
 
 (* Check *)
 

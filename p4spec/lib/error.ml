@@ -45,9 +45,7 @@ let splice_file_count_mismatch inputs outputs =
 
 let to_diagnostic = function
   | PassError e -> e
-  | RunError e ->
-      let at, msg = Run.to_region_msg e in
-      Diagnostic.error ~source:"interp" at msg
+  | RunError e -> e
   | CommandError msg -> Diagnostic.error ~source:"command" no_region msg
   | CommandDiagnostic diagnostic -> diagnostic
 

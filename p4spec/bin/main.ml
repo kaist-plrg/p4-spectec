@@ -268,8 +268,11 @@ let run_command =
            Inst.Hook.finish ();
            match result with
            | Pass _ -> Format.printf "passed\n"
-           | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-           | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg)
+           | Fail (`Syntax diagnostic) ->
+               diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
+           | Fail (`Runtime failure) ->
+               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               |> render_diagnostics)
          (fun () ->
            let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
            let* simulator = P4spectec.build_sim ~cache ~det ~guard spec_sim in
@@ -337,8 +340,11 @@ let sim_command =
            Inst.Hook.finish ();
            match result with
            | Pass -> Format.printf "passed\n"
-           | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-           | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg)
+           | Fail (`Syntax diagnostic) ->
+               diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
+           | Fail (`Runtime failure) ->
+               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               |> render_diagnostics)
          (fun () ->
            let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
            let* simulator =
@@ -615,9 +621,8 @@ let parse_command =
              match
                Simulator.Interface.parse_program includes_p4 [ path_p4 ]
              with
-             | Fail (`Syntax (at, msg)) ->
-                 Format.printf "Parse error: %s\n"
-                   (Util.Error.string_of_error at msg)
+             | Fail diagnostic ->
+                 diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
              | Pass value_program ->
                  let str_program =
                    Simulator.Interface.unparse_program value_program
@@ -626,9 +631,9 @@ let parse_command =
                    match
                      Simulator.Interface.parse_string path_p4 str_program
                    with
-                   | Fail (`Syntax (at, msg)) ->
-                       Format.printf "Parse error: %s\n"
-                         (Util.Error.string_of_error at msg)
+                   | Fail diagnostic ->
+                       diagnostic |> Diagnostic.Report.singleton
+                       |> render_diagnostics
                    | Pass value_program_roundtrip ->
                        Il.Eq.eq_value ~dbg:true value_program
                          value_program_roundtrip

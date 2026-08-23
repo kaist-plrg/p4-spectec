@@ -1,36 +1,51 @@
 open Domain.Lib
 open Lang
 module Typ = Type.Typ
-open Util.Source
 
 (* Module signatures for interpreter-extern interaction *)
 
 type mode = AL_mode | SL_mode | PL_mode | Empty_mode
 type spec = AL of Al.spec | SL of Sl.spec | PL of Pl.spec | Empty
 
-(* Raised by an extern implementation, caught by its caller *)
-
-exception ExternError of region * string
-
 (* Failure reported by the entry points below *)
 
-type error = { at : region; msg : string }
+type failure =
+  | Diagnostic of Diagnostic.t
+  | Failtraces of Util.Attempt.failtrace list
 
-let to_region_msg { at; msg } = (at, msg)
+(* Failtraces are rendered only by [failure_to_diagnostic]. *)
+
+let diagnostic_failure ~source at msg =
+  Diagnostic (Diagnostic.error ~source at msg)
+
+let failure_to_diagnostic = function
+  | Diagnostic diagnostic -> diagnostic
+  | Failtraces failtraces ->
+      Diagnostic.of_failtraces ~source:"interp" ~fallback:"evaluation failed"
+        failtraces
+
+let failure_region_msg failure =
+  Diagnostic.region_msg (failure_to_diagnostic failure)
+
+(* Raised by an extern implementation, caught by its caller *)
+
+exception ExternError of failure
+
+type error = Diagnostic.t
 
 (* Result types *)
 
-type rel_result = Pass of Value.t list | Fail of region * string
-type func_result = Pass of Value.t | Fail of region * string
-type parse_result = Pass of Value.t | Fail of [ `Syntax of region * string ]
+type rel_result = Pass of Value.t list | Fail of failure
+type func_result = Pass of Value.t | Fail of failure
+type parse_result = Pass of Value.t | Fail of Diagnostic.t
 
 type program_result =
   | Pass of Value.t list
-  | Fail of [ `Syntax of region * string | `Runtime of region * string ]
+  | Fail of [ `Syntax of Diagnostic.t | `Runtime of failure ]
 
 type stf_result =
   | Pass
-  | Fail of [ `Syntax of region * string | `Runtime of region * string ]
+  | Fail of [ `Syntax of Diagnostic.t | `Runtime of failure ]
 
 (* Cache management *)
 

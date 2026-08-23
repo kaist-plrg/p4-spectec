@@ -35,6 +35,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let rel_cache = ref (CCache.create ~size:(256 * 1024))
   let sub_cache = Hashtbl.create 4096
 
+  let back_unmatch_of_failure (failure : Run.failure) : 'a =
+    match failure with
+    | Run.Diagnostic _ -> raise (Run.ExternError failure)
+    | Run.Failtraces failtraces -> back_unmatch_failtraces failtraces
+
   (* Cache toggle *)
 
   let cache_enabled = ref false
@@ -1285,10 +1290,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
            | Flow.Cont traces_pre -> (
                match eval_instr ~tail ctx instr with
                | Flow.Cont traces_post ->
-                   (* Retain the deeper trace chain,
+                   (* Retain the deeper trace,
                       to report the branch that progressed furthest *)
                    let traces =
-                     if List.length traces_post >= List.length traces_pre then
+                     if trace_depth traces_post >= trace_depth traces_pre then
                        traces_post
                      else traces_pre
                    in
@@ -1389,10 +1394,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     if cond then eval_block ~tail ctx block_then
     else
       let trace =
-        ( exp_cond.at,
-          fun () ->
+        trace_frame exp_cond.at (fun () ->
             F.asprintf "condition %s was not met"
-              (Sl.Print.string_of_exp exp_cond) )
+              (Sl.Print.string_of_exp exp_cond))
       in
       Cont [ trace ]
 
@@ -1506,7 +1510,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         if cond then eval_block ~tail ctx block_hold
         else
           let trace =
-            (id.at, fun () -> F.asprintf "condition hold %s was not met" id.it)
+            trace_frame id.at (fun () ->
+                F.asprintf "condition hold %s was not met" id.it)
           in
           Cont [ trace ]
     | NotHoldH (block_not_hold, dangle) ->
@@ -1515,8 +1520,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         if not cond then eval_block ~tail ctx block_not_hold
         else
           let trace =
-            ( id.at,
-              fun () -> F.asprintf "condition not-hold %s was not met" id.it )
+            trace_frame id.at (fun () ->
+                F.asprintf "condition not-hold %s was not met" id.it)
           in
           Cont [ trace ]
 
@@ -1570,10 +1575,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | Some block -> eval_block ~tail ctx block
     | None ->
         let trace =
-          ( exp.at,
-            fun () ->
-              F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp)
-          )
+          trace_frame exp.at (fun () ->
+              F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp))
         in
         Cont [ trace ]
 
@@ -1978,7 +1981,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let values_output =
       match Extern.eval_extern_rel id.it values_input with
       | Pass values -> values
-      | Fail (at, msg) -> back_unmatch at msg
+      | Fail failure -> back_unmatch_of_failure failure
     in
     check_rel_outputs ctx id nottyp inputs values_output;
     List.iteri
@@ -2110,7 +2113,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let value_output =
       match Extern.eval_extern_func id.it [] values_input with
       | Pass value -> value
-      | Fail (at, msg) -> back_unmatch at msg
+      | Fail failure -> back_unmatch_of_failure failure
     in
     check_func_output ctx id tparams typ_output targs value_output;
     List.iteri
@@ -2198,8 +2201,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       invoke_rel ~internal:false ctx (relname $ no_region) values_input
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
-      let msg = Util.Attempt.string_of_failtraces_short failtraces in
-      error no_region msg
+      error_with_failtraces failtraces
 
   let do_eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : value =
@@ -2208,8 +2210,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       invoke_func ~internal:false ctx (funcname $ no_region) targs values_input
     with Backtrace backtrace ->
       let failtraces = back_failtraces backtrace in
-      let msg = Util.Attempt.string_of_failtraces_short failtraces in
-      error no_region msg
+      error_with_failtraces failtraces
 
   let eval_program (relname : string) (includes_p4 : string list)
       (path_p4 : string) : Run.program_result =
@@ -2221,11 +2222,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           Hook.on_program value_program;
           let values_output = do_eval_rel relname [ value_program ] in
           Run.Pass values_output
-      | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
+      | Fail diagnostic -> Run.Fail (`Syntax diagnostic)
     with
-    | P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-        Run.Fail (`Runtime (at, msg))
+    | P4.Error.ParseError (at, msg) ->
+        Run.Fail (`Syntax (Diagnostic.error ~source:"p4" at msg))
+    | Interp_common.Error.InterpError (at, msg) ->
+        Run.Fail (`Runtime (Run.diagnostic_failure ~source:"interp" at msg))
+    | Interp_common.Error.BacktrackError failtraces ->
+        Run.Fail (`Runtime (Run.Failtraces failtraces))
+    | Run.ExternError failure -> Run.Fail (`Runtime failure)
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
@@ -2233,8 +2238,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let values_output = do_eval_rel relname values_input in
       Run.Pass values_output
     with
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-      Run.Fail (at, msg)
+    | Interp_common.Error.InterpError (at, msg) ->
+        Run.Fail (Run.diagnostic_failure ~source:"interp" at msg)
+    | Interp_common.Error.BacktrackError failtraces ->
+        Run.Fail (Run.Failtraces failtraces)
+    | Run.ExternError failure -> Run.Fail failure
 
   let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Run.func_result =
@@ -2243,8 +2251,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let value_output = do_eval_func funcname targs values_input in
       Run.Pass value_output
     with
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-      Run.Fail (at, msg)
+    | Interp_common.Error.InterpError (at, msg) ->
+        Run.Fail (Run.diagnostic_failure ~source:"interp" at msg)
+    | Interp_common.Error.BacktrackError failtraces ->
+        Run.Fail (Run.Failtraces failtraces)
+    | Run.ExternError failure -> Run.Fail failure
 
   (* Initialization *)
 
@@ -2253,5 +2264,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
     try Ok (Ctx.init ~det spec)
-    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
+    with Interp_common.Error.InterpError (at, msg) ->
+      Error (Diagnostic.error ~source:"interp" at msg)
 end

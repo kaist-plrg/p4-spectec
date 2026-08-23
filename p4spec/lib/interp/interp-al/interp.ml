@@ -33,6 +33,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let rel_cache = ref (CCache.create ~size:(256 * 1024))
   let sub_cache = Hashtbl.create 4096
 
+  let back_err_of_failure (failure : Run.failure) : 'a backtrack =
+    match failure with
+    | Run.Diagnostic _ -> raise (Run.ExternError failure)
+    | Run.Failtraces failtraces -> Err failtraces
+
   (* Cache toggle *)
 
   let cache_enabled = ref false
@@ -1303,7 +1308,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* values_output =
       match Extern.eval_extern_rel id.it values_input with
       | Pass values -> Ok values
-      | Fail (at, msg) -> back_err at msg
+      | Fail failure -> back_err_of_failure failure
     in
     check_rel_outputs ctx id nottyp inputs values_output;
     Ok values_output
@@ -1450,7 +1455,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* value_output =
       match Extern.eval_extern_func id.it [] values_input with
       | Pass value -> Ok value
-      | Fail (at, msg) -> back_err at msg
+      | Fail failure -> back_err_of_failure failure
     in
     check_func_output ctx id tparams typ_output targs value_output;
     Ok value_output
@@ -1599,11 +1604,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           Hook.on_program value_program;
           let+ values_output = do_eval_rel relname [ value_program ] in
           (Run.Pass values_output : Run.program_result)
-      | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
+      | Fail diagnostic -> Run.Fail (`Syntax diagnostic)
     with
-    | P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-        Run.Fail (`Runtime (at, msg))
+    | P4.Error.ParseError (at, msg) ->
+        Run.Fail (`Syntax (Diagnostic.error ~source:"p4" at msg))
+    | Interp_common.Error.InterpError (at, msg) ->
+        Run.Fail (`Runtime (Run.diagnostic_failure ~source:"interp" at msg))
+    | Interp_common.Error.BacktrackError failtraces ->
+        Run.Fail (`Runtime (Run.Failtraces failtraces))
+    | Run.ExternError failure -> Run.Fail (`Runtime failure)
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
@@ -1611,8 +1620,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let+ values_output = do_eval_rel relname values_input in
       (Run.Pass values_output : Run.rel_result)
     with
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-      Run.Fail (at, msg)
+    | Interp_common.Error.InterpError (at, msg) ->
+        Run.Fail (Run.diagnostic_failure ~source:"interp" at msg)
+    | Interp_common.Error.BacktrackError failtraces ->
+        Run.Fail (Run.Failtraces failtraces)
+    | Run.ExternError failure -> Run.Fail failure
 
   let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Run.func_result =
@@ -1621,8 +1633,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let+ value_output = do_eval_func funcname targs values_input in
       (Run.Pass value_output : Run.func_result)
     with
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-      Run.Fail (at, msg)
+    | Interp_common.Error.InterpError (at, msg) ->
+        Run.Fail (Run.diagnostic_failure ~source:"interp" at msg)
+    | Interp_common.Error.BacktrackError failtraces ->
+        Run.Fail (Run.Failtraces failtraces)
+    | Run.ExternError failure -> Run.Fail failure
 
   (* Initialization *)
 
@@ -1631,5 +1646,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
     try Ok (Ctx.init ~det spec)
-    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
+    with Interp_common.Error.InterpError (at, msg) ->
+      Error (Diagnostic.error ~source:"interp" at msg)
 end

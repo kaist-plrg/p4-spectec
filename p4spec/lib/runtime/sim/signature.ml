@@ -1,5 +1,4 @@
 module IO = Io
-open Util.Source
 
 (* Module signatures for interpreter-architecture simulation *)
 
@@ -7,7 +6,7 @@ include Dynamic_runner.Signature
 
 type stf_result =
   | Pass
-  | Fail of [ `Syntax of region * string | `Runtime of region * string ]
+  | Fail of [ `Syntax of Diagnostic.t | `Runtime of failure ]
 
 module type ARCH = sig
   (* STF AST transformation *)
