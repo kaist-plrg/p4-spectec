@@ -7,6 +7,9 @@ let fail name expected actual =
 let expect name expected actual =
   if not (String.equal expected actual) then fail name expected actual
 
+let expect_true name condition =
+  if not condition then failwith (name ^ ": condition is false")
+
 let contains text substring =
   let text_length = String.length text in
   let substring_length = String.length substring in
@@ -30,7 +33,7 @@ let region file line column_left column_right : region =
 
 let render file line column_left column_right =
   let diagnostic =
-    Diagnostic.error ~code:"test" ~source:"test"
+    Diagnostic.error ~code:"test/region" ~source:"test"
       (region file line column_left column_right)
       "failure"
   in
@@ -175,8 +178,8 @@ let check_trace_location file =
     { region = region file 1 2 3; message = "trace node"; children = [] }
   in
   let diagnostic =
-    Diagnostic.error ~code:"test" ~trace:[ trace ] ~source:"test" no_region
-      "failure"
+    Diagnostic.error ~code:"test/trace" ~trace:[ trace ] ~source:"test"
+      no_region "failure"
   in
   let output =
     Diagnostic.Report.singleton diagnostic
@@ -184,13 +187,174 @@ let check_trace_location file =
   in
   expect_contains "trace location" (Printf.sprintf "%s:1.2-1.3" file) output
 
+let failtrace region message children =
+  Util.Attempt.Failtrace (region, (fun () -> message), children)
+
+let check_empty_failtrace_fallback () =
+  let diagnostic =
+    Diagnostic.of_failtraces ~source:"test" ~fallback:"fallback" []
+  in
+  expect "empty failtrace message" "fallback" diagnostic.message;
+  expect "empty failtrace source" "test" diagnostic.source;
+  expect_true "empty failtrace region" (diagnostic.region = no_region);
+  expect_true "empty failtrace trace" (diagnostic.trace = [])
+
+let check_coded_diagnostic_source () =
+  let diagnostic =
+    Diagnostic.error ~code:"test/example" ~source:"test" no_region "failure"
+  in
+  expect "coded diagnostic source" "test" diagnostic.source;
+  expect_true "coded diagnostic code" (diagnostic.code = Some "test/example")
+
+let check_quoting () =
+  expect "safe diagnostic quote" "`name`" (Diagnostic.quote "name");
+  expect "escaped diagnostic quote" "\"a\\x60b\\n\"" (Diagnostic.quote "a`b\n")
+
+let check_warning_fields file =
+  let related : Diagnostic.related =
+    { region = region file 1 0 1; message = "related" }
+  in
+  let _, report =
+    Diagnostic.collect (fun () ->
+        Diagnostic.warn ~code:"test/warning" ~detail:"Additional detail."
+          ~related:[ related ] ~source:"test" no_region "warning")
+  in
+  match Diagnostic.Report.to_sorted_list report with
+  | [ diagnostic ] ->
+      expect_true "warning severity" (diagnostic.severity = Diagnostic.Warning);
+      expect "warning source" "test" diagnostic.source;
+      expect_true "warning code" (diagnostic.code = Some "test/warning");
+      expect_true "warning detail"
+        (diagnostic.detail = Some "Additional detail.");
+      expect_true "warning related" (diagnostic.related = [ related ])
+  | _ -> failwith "warning fields: expected one diagnostic"
+
+let check_warning_action name source message action =
+  let _, report = Diagnostic.collect action in
+  match Diagnostic.Report.to_sorted_list report with
+  | [ diagnostic ] ->
+      expect (name ^ " warning message") message diagnostic.message;
+      expect (name ^ " warning source") source diagnostic.source;
+      expect_true (name ^ " warning code") (diagnostic.code = None);
+      expect_true (name ^ " warning detail") (diagnostic.detail = None);
+      expect_true (name ^ " warning related") (diagnostic.related = []);
+      expect_true (name ^ " warning trace") (diagnostic.trace = [])
+  | _ -> failwith (name ^ " warning: expected one diagnostic")
+
+let check_warning_adapter name source emit =
+  let message = name ^ " warning" in
+  check_warning_action name source message (fun () -> emit message)
+
+let check_prose_warning_adapter () =
+  let empty_id = "" $ no_region in
+  check_warning_action "prose" "prose" "link with empty target" (fun () ->
+      Lang.Pl.Render.render_func_title Lang.Pl.Annot.empty empty_id [] []
+      |> ignore)
+
+let check_single_failtrace_promotion file =
+  let root_region = region file 1 0 1 in
+  let child_region = region file 1 2 3 in
+  let child = failtrace child_region "child failure" [] in
+  let root = failtrace root_region "root failure" [ child ] in
+  let diagnostic =
+    Diagnostic.of_failtraces ~source:"test" ~fallback:"fallback" [ root ]
+  in
+  expect "single failtrace message" "root failure" diagnostic.message;
+  expect_true "single failtrace region" (diagnostic.region = root_region);
+  match diagnostic.trace with
+  | [ trace ] ->
+      expect "single failtrace child message" "child failure" trace.message;
+      expect_true "single failtrace child region" (trace.region = child_region);
+      expect_true "single failtrace child leaves" (trace.children = [])
+  | _ -> failwith "single failtrace: expected one promoted child"
+
+let check_regionless_single_failtrace file =
+  let child_region = region file 1 2 3 in
+  let child = failtrace child_region "child failure" [] in
+  let root = failtrace no_region "root failure" [ child ] in
+  let diagnostic =
+    Diagnostic.of_failtraces ~source:"test" ~fallback:"fallback" [ root ]
+  in
+  expect_true "regionless single failtrace region"
+    (diagnostic.region = no_region);
+  match diagnostic.trace with
+  | [ trace ] ->
+      expect_true "regionless single failtrace child region"
+        (trace.region = child_region)
+  | _ -> failwith "regionless single failtrace: expected one promoted child"
+
+let check_multiple_failtrace_fallback file =
+  let second_region = region file 2 0 1 in
+  let child_region = region file 3 0 1 in
+  let child = failtrace child_region "child failure" [] in
+  let first = failtrace no_region "first failure" [ child ] in
+  let second = failtrace second_region "second failure" [] in
+  let diagnostic =
+    Diagnostic.of_failtraces ~source:"test" ~fallback:"fallback"
+      [ first; second ]
+  in
+  expect "multiple failtrace message" "fallback" diagnostic.message;
+  expect_true "multiple failtrace region" (diagnostic.region = second_region);
+  match diagnostic.trace with
+  | [ first_trace; second_trace ] ->
+      expect "first failtrace message" "first failure" first_trace.message;
+      expect_true "first failtrace region" (first_trace.region = no_region);
+      (match first_trace.children with
+      | [ child_trace ] ->
+          expect "multiple failtrace child message" "child failure"
+            child_trace.message;
+          expect_true "multiple failtrace child region"
+            (child_trace.region = child_region);
+          expect_true "multiple failtrace child leaves"
+            (child_trace.children = [])
+      | _ -> failwith "multiple failtrace: expected one child");
+      expect "second failtrace message" "second failure" second_trace.message;
+      expect_true "second failtrace region" (second_trace.region = second_region);
+      expect_true "second failtrace children" (second_trace.children = [])
+  | _ -> failwith "multiple failtrace: expected two root traces"
+
+let check_elaboration_attempt_boundary () =
+  let file = Filename.temp_file "p4spectec-failtrace-" ".watsup" in
+  Fun.protect
+    ~finally:(fun () -> Sys.remove file)
+    (fun () ->
+      let channel = open_out file in
+      output_string channel "dec $f : bool\ndef $f = 0\n";
+      close_out channel;
+      let result, report =
+        P4spectec.with_diagnostics (fun () -> P4spectec.elab [ file ])
+      in
+      expect_true "elaboration attempt result"
+        (match result with Error _ -> true | Ok _ -> false);
+      let output =
+        Diagnostic.Render.render_report ~ansi:Diagnostic.Ansi.plain report
+      in
+      expect_contains "elaboration attempt message"
+        "error: elaboration of expression 0 as type bool failed" output;
+      expect_contains "elaboration attempt source" "  | source: elab" output;
+      expect_contains "elaboration attempt trace header" "  | trace:" output;
+      expect_contains "elaboration attempt rendered child"
+        "  | cannot cast nat to bool" output)
+
 let run file =
   List.iteri
     (fun line case ->
       check_region file ~name:case.name ~line:(line + 1) ~left:case.left
         ~right:case.right ~location:case.location ~underline:case.underline)
     cases;
-  check_trace_location file
+  check_trace_location file;
+  check_empty_failtrace_fallback ();
+  check_single_failtrace_promotion file;
+  check_regionless_single_failtrace file;
+  check_multiple_failtrace_fallback file;
+  check_coded_diagnostic_source ();
+  check_quoting ();
+  check_warning_fields file;
+  check_warning_adapter "splice" "splice" (Backend_splice.Error.warn no_region);
+  check_warning_adapter "interp" "interp" (Interp_common.Error.warn no_region);
+  check_warning_adapter "runtime" "runtime" (Error.warn no_region);
+  check_prose_warning_adapter ();
+  check_elaboration_attempt_boundary ()
 
 let () =
   let file = Filename.temp_file "p4spectec-diagnostic-" ".txt" in

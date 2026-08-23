@@ -80,17 +80,24 @@ let rec trace_of_failtrace (failtrace : Util.Attempt.failtrace) : trace_node =
   }
 
 let traces_of_failtraces = List.map trace_of_failtrace
+let root_region (Util.Attempt.Failtrace (region, _, _)) = region
+
+let rec first_root_region = function
+  | [] -> no_region
+  | failtrace :: failtraces ->
+      let region = root_region failtrace in
+      if region = no_region then first_root_region failtraces else region
 
 let of_failtraces ~source ~fallback (failtraces : Util.Attempt.failtrace list) :
     t =
-  let at = Util.Attempt.region_of_failtraces failtraces in
-  let message, trace =
+  let at, message, trace =
     match failtraces with
-    | [] -> (fallback, [])
+    | [] -> (no_region, fallback, [])
     | [ failtrace ] ->
-        let { message; children; _ } = trace_of_failtrace failtrace in
-        (message, children)
-    | _ -> (fallback, traces_of_failtraces failtraces)
+        let { region; message; children } = trace_of_failtrace failtrace in
+        (region, message, children)
+    | _ ->
+        (first_root_region failtraces, fallback, traces_of_failtraces failtraces)
   in
   error ~source ~trace at message
 

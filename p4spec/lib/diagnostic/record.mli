@@ -37,7 +37,8 @@ val error :
   string ->
   t
 
-(** [of_failtraces] uses [fallback] unless the failtrace list has one root. *)
+(** [of_failtraces] promotes the message and region of one root. For multiple
+    roots, it uses [fallback] and the first root region that is available. *)
 val of_failtraces :
   source:string -> fallback:string -> Util.Attempt.failtrace list -> t
 
