@@ -25,6 +25,24 @@ let () =
   link_subject_code (Function "missing_function") (token "missing_function")
   |> ser_code ~anchor:semantic_anchor
   |> print "missing-function";
+  link_subject_code (Function "present_function") (token "present function")
+  |> code_prose
+  |> ser_prose ~anchor:semantic_anchor
+  |> print "present-function-prose";
+  token " left  right " |> code_prose
+  |> ser_prose ~anchor:semantic_anchor
+  |> print "code-spacing";
+  seq_code [ token "value"; token "^{asterisk}^" ]
+  |> code_prose
+  |> ser_prose ~anchor:semantic_anchor
+  |> print "adjacent-code";
+  seq_code [ token "\"left\""; token " "; token "\"right\"" ]
+  |> code_prose
+  |> ser_prose ~anchor:semantic_anchor
+  |> print "quoted-code";
+  empty_code |> code_prose
+  |> ser_prose ~anchor:semantic_anchor
+  |> print "empty-code";
   link_subject_prose (Relation "Present_relation") (text "present relation")
   |> ser_prose ~anchor:semantic_anchor
   |> print "present-relation";

@@ -36,12 +36,16 @@ let prose_of_list (items : Adoc.prose list) : Adoc.prose =
 let escape_plus (text : string) : string =
   text |> String.split_on_char '+' |> String.concat "{plus}"
 
+let escape_apostrophe (text : string) : string =
+  text |> String.split_on_char '\'' |> String.concat "{apos}"
+
 let string_of_atom (atom : atom) : string =
   match atom.it with
   | Atom.Tag _ -> ""
   | atom ->
       let text = Atom.string_of_atom atom in
-      if String.contains text '+' then escape_plus text else "+" ^ text ^ "+"
+      if String.contains text '+' then text |> escape_plus |> escape_apostrophe
+      else "+" ^ text ^ "+"
 
 (* Alternation *)
 

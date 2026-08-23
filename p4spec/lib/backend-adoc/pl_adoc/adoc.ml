@@ -221,7 +221,7 @@ let anchor_markers_of_block (b : block) : (string, string) Hashtbl.t =
   visit_block b;
   markers
 
-(* Serialization *)
+(* Anchor resolution *)
 
 type anchor = subject -> string option
 
@@ -231,6 +231,13 @@ let anchor ~(func : string -> string option) ~(rel : string -> string option) :
   | Relation name -> rel name
 
 let subject_name = function Function name | Relation name -> Some name
+
+let target_of_link anchor = function
+  | Direct target -> Some target
+  | Subject subject -> anchor subject
+
+(* Serialization *)
+
 let warned : (string, unit) Hashtbl.t = Hashtbl.create 64
 
 let warn (msg : string) : unit =
@@ -246,18 +253,68 @@ let warn_nested ~(lint : bool) ~(outer : string) ~(inner : string) : unit =
           (asciidoc cannot nest cross-references)"
          inner outer)
 
-let target_of_link anchor = function
-  | Direct target -> Some target
-  | Subject subject -> anchor subject
+type code_segment = { target : string option; text : string }
+
+let rec is_empty_code = function
+  | TokenC "" | EmptyC -> true
+  | LinkC (_, code_inner) -> is_empty_code code_inner
+  | SeqC codes -> List.for_all is_empty_code codes
+  | TokenC _ -> false
+
+let code_segments_of_code ~anchor ~(link_ctx : string option) ~(lint : bool)
+    (code : code) : code_segment list =
+  let add_code_segment target text code_segments_rev =
+    if text = "" then code_segments_rev
+    else
+      match code_segments_rev with
+      | code_segment_last :: code_segments_rev'
+        when target = code_segment_last.target ->
+          { target; text = code_segment_last.text ^ text } :: code_segments_rev'
+      | _ -> { target; text } :: code_segments_rev
+  in
+  let rec collect_code_segments ~target ~link_ctx code_segments_rev = function
+    | TokenC text -> add_code_segment target text code_segments_rev
+    | LinkC (link, code_inner) -> (
+        match target_of_link anchor link with
+        | None ->
+            collect_code_segments ~target ~link_ctx code_segments_rev code_inner
+        | Some target_inner -> (
+            if lint && target_inner = "" then warn "link with empty target";
+            match link_ctx with
+            | Some target_outer ->
+                warn_nested ~lint ~outer:target_outer ~inner:target_inner;
+                collect_code_segments ~target ~link_ctx code_segments_rev
+                  code_inner
+            | None ->
+                if lint && is_empty_code code_inner then
+                  warn (Printf.sprintf "link to %S has empty body" target_inner);
+                collect_code_segments ~target:(Some target_inner)
+                  ~link_ctx:(Some target_inner) code_segments_rev code_inner))
+    | SeqC codes ->
+        List.fold_left
+          (collect_code_segments ~target ~link_ctx)
+          code_segments_rev codes
+    | EmptyC -> code_segments_rev
+  in
+  collect_code_segments ~target:None ~link_ctx [] code |> List.rev
+
+let ser_code_ ~anchor ~link_ctx ~lint ~(ser_text : string -> string)
+    (code : code) =
+  code
+  |> code_segments_of_code ~anchor ~link_ctx ~lint
+  |> List.map (fun { target; text } ->
+         let text = ser_text text in
+         match target with
+         | None -> text
+         | Some target -> adoc_link ~link:target text)
+  |> String.concat ""
 
 let rec ser_prose_ ~anchor ~(anchor_markers : (string, string) Hashtbl.t)
     ~(link_ctx : string option) ~(lint : bool) (p : prose) : string =
   match p with
   | TextP s -> s
-  | CodeP c ->
-      let s = ser_code_ ~anchor ~link_ctx ~lint c in
-      if lint && s = "" then warn "code span wraps empty content";
-      adoc_mono_chopped s
+  | CodeP code ->
+      ser_code_ ~anchor ~link_ctx ~lint ~ser_text:adoc_mono_chopped code
   | LinkP (link, p) -> (
       match target_of_link anchor link with
       | None -> ser_prose_ ~anchor ~anchor_markers ~link_ctx ~lint p
@@ -294,28 +351,6 @@ let rec ser_prose_ ~anchor ~(anchor_markers : (string, string) Hashtbl.t)
         (List.map (ser_prose_ ~anchor ~anchor_markers ~link_ctx ~lint) ps)
   | EmptyP -> ""
 
-and ser_code_ ~anchor ~(link_ctx : string option) ~(lint : bool) (c : code) :
-    string =
-  match c with
-  | TokenC s -> s
-  | LinkC (link, c) -> (
-      match target_of_link anchor link with
-      | None -> ser_code_ ~anchor ~link_ctx ~lint c
-      | Some target -> (
-          if lint && target = "" then warn "link with empty target";
-          match link_ctx with
-          | Some outer ->
-              warn_nested ~lint ~outer ~inner:target;
-              ser_code_ ~anchor ~link_ctx ~lint c
-          | None ->
-              let s = ser_code_ ~anchor ~link_ctx:(Some target) ~lint c in
-              if lint && s = "" then
-                warn (Printf.sprintf "link to %S has empty body" target);
-              adoc_link ~link:target s))
-  | SeqC cs ->
-      String.concat "" (List.map (ser_code_ ~anchor ~link_ctx ~lint) cs)
-  | EmptyC -> ""
-
 let ser_prose ?(anchor = subject_name) (p : prose) : string =
   ser_prose_ ~anchor ~anchor_markers:(Hashtbl.create 0) ~link_ctx:None
     ~lint:true p
@@ -325,8 +360,8 @@ let ser_prose_in_link (p : prose) : string =
     ~anchor:(fun _ -> None)
     ~anchor_markers:(Hashtbl.create 0) ~link_ctx:(Some "") ~lint:false p
 
-let ser_code ?(anchor = subject_name) (c : code) : string =
-  ser_code_ ~anchor ~link_ctx:None ~lint:false c
+let ser_code ?(anchor = subject_name) (code : code) : string =
+  ser_code_ ~anchor ~link_ctx:None ~lint:false ~ser_text:Fun.id code
 
 let ser_block ?(anchor = subject_name) (b : block) : string =
   let anchor_markers = anchor_markers_of_block b in
