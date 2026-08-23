@@ -3452,35 +3452,31 @@ Arm 2:
 
     1. (Let (n_max '.' _nat V i) be integerValue, integerValue matches pattern `% . % V %`)
 
-      1. Block (2 arms)
+      1. Case analysis on n_var
 
-      Arm 1:
-
-        1. If ((n_var = 0)), then
+        1. Case (% = 0)
 
           1. Return (((n_max '.' 0 V i) as value), (b)*{b <- b*})
 
-        1. Else Dangling#541
+        2. Case (% =/= 0)
 
-      Arm 2:
+          1. If ((|(b)*{b <- b*}| >= n_var)), then
 
-        1. If ((|(b)*{b <- b*}| >= n_var)), then
+            1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : n_var])
 
-          1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : n_var])
+            2. (Let i' be (|(b)*{b <- b*}| - n_var))
 
-          2. (Let i' be (|(b)*{b <- b*}| - n_var))
+            3. (Let n_t be i', i' has type nat)
 
-          3. (Let n_t be i', i' has type nat)
+              1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[n_var : n_t])
 
-            1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[n_var : n_t])
+              2. (Let int'' be $bits_to_int_signed((b_h)*{b_h <- b_h*}))
 
-            2. (Let int'' be $bits_to_int_signed((b_h)*{b_h <- b_h*}))
+              3. (Let i' be $int_to_bitstr((n_var as int), int''))
 
-            3. (Let i' be $int_to_bitstr((n_var as int), int''))
+              4. Return (((n_max '.' n_var V i') as value), (b_t)*{b_t <- b_t*})
 
-            4. Return (((n_max '.' n_var V i') as value), (b_t)*{b_t <- b_t*})
-
-        1. Else Dangling#543
+          1. Else Dangling#543
 
 def $write_values_from_bits'((value)*{value <- value*}, n_var, (b)*{b <- b*})
 
@@ -6482,7 +6478,7 @@ def $un_minus(value)
 
       1. (Let int be $pow2(w))
 
-      2. (Let i' be (int - i))
+      2. (Let i' be $int_to_bitstr((w as int), (int - i)))
 
       3. Return ((w W i') as value)
 
