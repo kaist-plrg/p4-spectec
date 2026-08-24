@@ -4074,6 +4074,38 @@ name
     ;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>The following helper is used to get a text representation of a <code>name</code>:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="watsup"><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$name</span><span style="color: #0550ae">(</span><span style="color: #0550ae">name</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$print_</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">name</span><span style="color: #0550ae">&gt;(</span><span style="color: #0550ae">name</span><span style="color: #0550ae">)</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="name" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#name">The name of <code>name</code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Return <a href="#print_"><code>name</code> as text</a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
 </div>
 <div class="sect3">
 <h4 id="sec-literals">6.2.2. Literal constants</h4>
@@ -4393,6 +4425,124 @@ ambiguities.)</p>
 <div class="paragraph">
 <p>See <a href="#sec-reference-expression">Section 14.3</a> for how variable references are resolved with
 respect to scopes.</p>
+</div>
+<div class="paragraph">
+<p>The following helpers are used to convert the <code>name</code> within a prefixed name to
+a text:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="watsup"><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$prefixedNonTypeName</span><span style="color: #0550ae">(</span><span style="color: #0550ae">nonTypeName</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #116329">_BARE</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$name</span><span style="color: #0550ae">(</span><span style="color: #0550ae">nonTypeName</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$prefixedNonTypeName</span><span style="color: #0550ae">(</span><span style="color: #116329">_ID</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">nonTypeName</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$name</span><span style="color: #0550ae">(</span><span style="color: #0550ae">nonTypeName</span><span style="color: #0550ae">)</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="prefixedNonTypeName" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#prefixedNonTypeName">The prefixed name of  <code>prefixedNonTypeName</code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>nonTypeName</code> be <code>prefixedNonTypeName</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>nameIR</code> be <a href="#name">the name of <code>nonTypeName</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>nameIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>'.'</code> <code>nonTypeName</code> be <code>prefixedNonTypeName</code>.</p>
+</li>
+<li>
+<p>Let <code>nameIR'</code> be <a href="#name">the name of <code>nonTypeName</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>'.'</code> <code>nameIR'</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="watsup"><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$prefixedTypeName</span><span style="color: #0550ae">(</span><span style="color: #0550ae">typeName</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #116329">_BARE</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$name</span><span style="color: #0550ae">(</span><span style="color: #0550ae">typeName</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$prefixedTypeName</span><span style="color: #0550ae">(</span><span style="color: #116329">_TID</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">typeName</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$name</span><span style="color: #0550ae">(</span><span style="color: #0550ae">typeName</span><span style="color: #0550ae">)</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="prefixedTypeName" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#prefixedTypeName">The prefixed name of  <code>prefixedTypeName</code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>typeName</code> be <code>prefixedTypeName</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>nameIR</code> be <a href="#name">the name of <code>typeName</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>nameIR</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>'.'</code> <code>typeName</code> be <code>prefixedTypeName</code>.</p>
+</li>
+<li>
+<p>Let <code>nameIR'</code> be <a href="#name">the name of <code>typeName</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>'.'</code> <code>nameIR'</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
 </div>
 </div>
 <div class="sect3">
@@ -21966,6 +22116,101 @@ with:</p>
 </div>
 </div>
 <div class="paragraph">
+<p>An extern object body mixes constructor and method prototypes; they are
+separated with:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="watsup"><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$split_externConstructorOrMethodPrototypeList</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">externConstructorOrMethodPrototypeList</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">(</span><span style="color: #0550ae">externConstructorPrototype</span><span style="color: #0550ae">*,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">externMethodPrototype</span><span style="color: #0550ae">*)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">externConstructorOrMethodPrototype</span><span style="color: #0550ae">*</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$flatten_externConstructorOrMethodPrototypeList</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+          </span><span style="color: #0550ae">externConstructorOrMethodPrototypeList</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">externConstructorPrototype</span><span style="color: #0550ae">*</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$filter_</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">externConstructorOrMethodPrototype</span><span style="color: #0550ae">&gt;(</span><span style="color: #24292f;background-color: #f6f8fa">
+          </span><span style="color: #0550ae">externConstructorOrMethodPrototype</span><span style="color: #0550ae">*,</span><span style="color: #24292f;background-color: #f6f8fa">
+          </span><span style="color: #8250df">$is_externConstructorPrototype</span><span style="color: #0550ae">(</span><span style="color: #0550ae">externConstructorOrMethodPrototype</span><span style="color: #0550ae">)*)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">externMethodPrototype</span><span style="color: #0550ae">*</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$filter_</span><span style="color: #0550ae">&lt;</span><span style="color: #0550ae">externConstructorOrMethodPrototype</span><span style="color: #0550ae">&gt;(</span><span style="color: #24292f;background-color: #f6f8fa">
+          </span><span style="color: #0550ae">externConstructorOrMethodPrototype</span><span style="color: #0550ae">*,</span><span style="color: #24292f;background-color: #f6f8fa">
+          </span><span style="color: #8250df">$is_externMethodPrototype</span><span style="color: #0550ae">(</span><span style="color: #0550ae">externConstructorOrMethodPrototype</span><span style="color: #0550ae">)*)</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="split_externConstructorOrMethodPrototypeList" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#split_externConstructorOrMethodPrototypeList"><code>externConstructorOrMethodPrototypeList</code> split into constructors and methods</a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Let <code>externConstructorOrMethodPrototype<sup>*</sup></code> be <a href="#flatten_externConstructorOrMethodPrototypeList"><code>externConstructorOrMethodPrototypeList</code> flattened</a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>For each <code>externConstructorOrMethodPrototype</code> in <code>externConstructorOrMethodPrototype<sup>*</sup></code>:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>bool'</code> be <code><a href="#is_externConstructorPrototype">$is_externConstructorPrototype(externConstructorOrMethodPrototype)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Let <code>bool'<sup>*</sup></code> be the resulting list.<sub class="bk-mark">[FAIL]</sub></p>
+</div>
+</li>
+<li>
+<p>Let <code>externConstructorOrMethodPrototype'<sup>*</sup></code> be <a href="#filter_"><code>externConstructorOrMethodPrototype<sup>*</sup></code> filtered by <code>bool'<sup>*</sup></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Let!<sub>type</sub> <code>externConstructorPrototype<sup>*</sup></code> be <code>externConstructorOrMethodPrototype'<sup>*</sup></code>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>For each <code>externConstructorOrMethodPrototype</code> in <code>externConstructorOrMethodPrototype<sup>*</sup></code>:</p>
+<div class="openblock">
+<div class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Let <code>bool</code> be <code><a href="#is_externMethodPrototype">$is_externMethodPrototype(externConstructorOrMethodPrototype)</a></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Let <code>bool<sup>*</sup></code> be the resulting list.<sub class="bk-mark">[FAIL]</sub></p>
+</div>
+</li>
+<li>
+<p>Let <code>externConstructorOrMethodPrototype''<sup>*</sup></code> be <a href="#filter_"><code>externConstructorOrMethodPrototype<sup>*</sup></code> filtered by <code>bool<sup>*</sup></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Let!<sub>type</sub> <code>externMethodPrototype<sup>*</sup></code> be <code>externConstructorOrMethodPrototype''<sup>*</sup></code>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return ( <code>externConstructorPrototype<sup>*</sup></code>, <code>externMethodPrototype<sup>*</sup></code> ).</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
 <p>See <a href="#sec-extern-method">Section 9.5.1</a> for details on how extern methods are represented
 internally.</p>
 </div>
@@ -37298,6 +37543,511 @@ switchLabel
 <p>The <code>expressionNonBrace</code> is the same as <code>expression</code> as defined in
 <a href="#sec-expression">Chapter 14</a>, except it does not include any cases that can begin with a
 left brace <code>{</code> character, to avoid syntactic ambiguity with a block statement.</p>
+</div>
+<div class="paragraph">
+<p><code>expressionNonBrace</code> and <code>expression</code> can be converted to each other by:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="watsup"><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">literalExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">literalExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">referenceExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">referenceExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">unaryExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">unaryExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">binop</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_r</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">binop</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_r</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_l</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expressionNonBrace_cond</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'?'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_true</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_false</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_cond</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'?'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_true</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_false</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_cond</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_cond</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">castExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">castExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">errorAccessExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">errorAccessExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">prefixedTypeName</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">prefixedTypeName</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_index</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_index</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_hi</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_lo</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_hi</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_lo</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'+:'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_w</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'+:'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_w</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">constructorTarget</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">constructorTarget</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">realTypeArgumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">realTypeArgumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expressionNonBrace_as_expression</span><span style="color: #0550ae">(</span><span style="color: #0550ae">parenthesizedExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">parenthesizedExpression</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="expressionNonBrace_as_expression" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#expressionNonBrace_as_expression">The expression corresponding to <code>expressionNonBrace'</code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>literalExpression</code> be <code>expressionNonBrace'</code>: return <code>literalExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>referenceExpression</code> be <code>expressionNonBrace'</code>: return <code>referenceExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>unaryExpression</code> be <code>expressionNonBrace'</code>: return <code>unaryExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>expressionNonBrace<sub>l</sub></code> <code>binop</code> <code>expression<sub>r</sub></code> be <code>expressionNonBrace'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expression<sub>l</sub></code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace<sub>l</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression<sub>l</sub></code> <code>binop</code> <code>expression<sub>r</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>expressionNonBrace<sub>cond</sub></code> <code>'?'</code> <code>expression<sub>true</sub></code> <code>':'</code> <code>expression<sub>false</sub></code> be <code>expressionNonBrace'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expression<sub>cond</sub></code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace<sub>cond</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression<sub>cond</sub></code> <code>'?'</code> <code>expression<sub>true</sub></code> <code>':'</code> <code>expression<sub>false</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>castExpression</code> be <code>expressionNonBrace'</code>: return <code>castExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>errorAccessExpression</code> be <code>expressionNonBrace'</code>: return <code>errorAccessExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>memberAccessBaseNonBrace</code> <code>'.'</code> <code>member</code> be <code>expressionNonBrace'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If let <code>prefixedTypeName</code> be <code>memberAccessBaseNonBrace</code>: return <code>prefixedTypeName</code> <code>'.'</code> <code>member</code>.</p>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>expressionNonBrace<sub>base</sub></code> be <code>memberAccessBaseNonBrace</code>.</p>
+</li>
+<li>
+<p>Let <code>expression<sub>base</sub></code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace<sub>base</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression<sub>base</sub></code> <code>'.'</code> <code>member</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>expressionNonBrace<sub>base</sub></code> <code>`[</code> <code>expression<sub>index</sub></code> <code>`]</code> be <code>expressionNonBrace'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expression<sub>base</sub></code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace<sub>base</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression<sub>base</sub></code> <code>`[</code> <code>expression<sub>index</sub></code> <code>`]</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>expressionNonBrace<sub>base</sub></code> <code>`[</code> <code>expression<sub>hi</sub></code> <code>sliceop</code> <code>expression<sub>lo</sub></code> <code>`]</code> be <code>expressionNonBrace'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If <code>sliceop</code> matches pattern <code>':'</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>expression<sub>base</sub></code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace<sub>base</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression<sub>base</sub></code> <code>`[</code> <code>expression<sub>hi</sub></code> <code>':'</code> <code>expression<sub>lo</sub></code> <code>`]</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>expression<sub>base</sub></code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace<sub>base</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression<sub>base</sub></code> <code>`[</code> <code>expression<sub>hi</sub></code> <code>':'`` ``expression~lo~`` ```]+</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>callExpressionNonBrace</code> be <code>expressionNonBrace'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If let <code>callTargetNonBrace</code> <code>`(</code> <code>argumentList</code> <code>`)</code> be <code>callExpressionNonBrace</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>If let <code>expressionNonBrace</code> be <code>callTargetNonBrace</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>expression</code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression</code> <code>`(</code> <code>argumentList</code> <code>`)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>constructorTarget</code> be <code>callTargetNonBrace</code>.</p>
+</li>
+<li>
+<p>Return <code>constructorTarget</code> <code>`(</code> <code>argumentList</code> <code>`)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>expressionNonBrace</code> <code>`&lt;</code> <code>realTypeArgumentList</code> <code>`&gt;</code> <code>`(</code> <code>argumentList</code> <code>`)</code> be <code>callExpressionNonBrace</code>.</p>
+</li>
+<li>
+<p>Let <code>expression</code> be <a href="#expressionNonBrace_as_expression">the expression corresponding to <code>expressionNonBrace</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expression</code> <code>`&lt;</code> <code>realTypeArgumentList</code> <code>`&gt;</code> <code>`(</code> <code>argumentList</code> <code>`)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>parenthesizedExpression</code> be <code>expressionNonBrace'</code>.</p>
+</li>
+<li>
+<p>Return <code>parenthesizedExpression</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="watsup"><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">literalExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">literalExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">referenceExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">referenceExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">unaryExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">unaryExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">binop</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_r</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">binop</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_r</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_l</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expression_cond</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'?'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_true</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_false</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_cond</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'?'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_true</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_false</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_cond</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_cond</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">castExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">castExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">errorAccessExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">errorAccessExpression</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">prefixedTypeName</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">prefixedTypeName</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">'.'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">member</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_base</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_index</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_index</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_base</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expression_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_hi</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_lo</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`[</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_hi</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0a3069">':'</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expression_lo</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`]</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace_base</span><span style="color: #24292f;background-color: #f6f8fa">
+      </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression_base</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">constructorTarget</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">constructorTarget</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #24292f;background-color: #f6f8fa">
+    </span><span style="color: #0550ae">expression</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">realTypeArgumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">realTypeArgumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`(</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">argumentList</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">expressionNonBrace</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">expression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$expression_as_expressionNonBrace</span><span style="color: #0550ae">(</span><span style="color: #0550ae">parenthesizedExpression</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">parenthesizedExpression</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="expression_as_expressionNonBrace" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#expression_as_expressionNonBrace">The non-brace expression corresponding to <code>expression'</code></a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If let <code>literalExpression</code> be <code>expression'</code>: return <code>literalExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>referenceExpression</code> be <code>expression'</code>: return <code>referenceExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>unaryExpression</code> be <code>expression'</code>: return <code>unaryExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>expression<sub>l</sub></code> <code>binop</code> <code>expression<sub>r</sub></code> be <code>expression'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNonBrace<sub>l</sub></code> be <a href="#expression_as_expressionNonBrace">the non-brace expression corresponding to <code>expression<sub>l</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expressionNonBrace<sub>l</sub></code> <code>binop</code> <code>expression<sub>r</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>expression<sub>cond</sub></code> <code>'?'</code> <code>expression<sub>true</sub></code> <code>':'</code> <code>expression<sub>false</sub></code> be <code>expression'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNonBrace<sub>cond</sub></code> be <a href="#expression_as_expressionNonBrace">the non-brace expression corresponding to <code>expression<sub>cond</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expressionNonBrace<sub>cond</sub></code> <code>'?'</code> <code>expression<sub>true</sub></code> <code>':'</code> <code>expression<sub>false</sub></code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>castExpression</code> be <code>expression'</code>: return <code>castExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>errorAccessExpression</code> be <code>expression'</code>: return <code>errorAccessExpression</code>.</p>
+</li>
+<li>
+<p>Else if let <code>memberAccessBase</code> <code>'.'</code> <code>member</code> be <code>expression'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If let <code>prefixedTypeName</code> be <code>memberAccessBase</code>: return <code>prefixedTypeName</code> <code>'.'</code> <code>member</code>.</p>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>expression<sub>base</sub></code> be <code>memberAccessBase</code>.</p>
+</li>
+<li>
+<p>Let <code>expressionNonBrace<sub>base</sub></code> be <a href="#expression_as_expressionNonBrace">the non-brace expression corresponding to <code>expression<sub>base</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expressionNonBrace<sub>base</sub></code> <code>'.'</code> <code>member</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>expression<sub>base</sub></code> <code>`[</code> <code>expression<sub>index</sub></code> <code>`]</code> be <code>expression'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Let <code>expressionNonBrace<sub>base</sub></code> be <a href="#expression_as_expressionNonBrace">the non-brace expression corresponding to <code>expression<sub>base</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expressionNonBrace<sub>base</sub></code> <code>`[</code> <code>expression<sub>index</sub></code> <code>`]</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>expression<sub>base</sub></code> <code>`[</code> <code>expression<sub>hi</sub></code> <code>sliceop</code> <code>expression<sub>lo</sub></code> <code>`]</code> be <code>expression'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Check that <code>sliceop</code> is <code>':'</code>.</p>
+</li>
+<li>
+<p>Let <code>expressionNonBrace<sub>base</sub></code> be <a href="#expression_as_expressionNonBrace">the non-brace expression corresponding to <code>expression<sub>base</sub></code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expressionNonBrace<sub>base</sub></code> <code>`[</code> <code>expression<sub>hi</sub></code> <code>':'</code> <code>expression<sub>lo</sub></code> <code>`]</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>callExpression</code> be <code>expression'</code>:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If let <code>callTarget</code> <code>`(</code> <code>argumentList</code> <code>`)</code> be <code>callExpression</code>:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>If let <code>expression</code> be <code>callTarget</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>expressionNonBrace</code> be <a href="#expression_as_expressionNonBrace">the non-brace expression corresponding to <code>expression</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expressionNonBrace</code> <code>`(</code> <code>argumentList</code> <code>`)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let <code>constructorTarget</code> be <code>callTarget</code>.</p>
+</li>
+<li>
+<p>Return <code>constructorTarget</code> <code>`(</code> <code>argumentList</code> <code>`)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let <code>expression</code> <code>`&lt;</code> <code>realTypeArgumentList</code> <code>`&gt;</code> <code>`(</code> <code>argumentList</code> <code>`)</code> be <code>callExpression</code>.</p>
+</li>
+<li>
+<p>Let <code>expressionNonBrace</code> be <a href="#expression_as_expressionNonBrace">the non-brace expression corresponding to <code>expression</code></a>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Return <code>expressionNonBrace</code> <code>`&lt;</code> <code>realTypeArgumentList</code> <code>`&gt;</code> <code>`(</code> <code>argumentList</code> <code>`)</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>parenthesizedExpression</code> be <code>expression'</code>: return <code>parenthesizedExpression</code>.</p>
+</li>
+</ol>
+</div>
+</div>
 </div>
 <div class="paragraph">
 <p>There are two kinds of <code>switch</code> expressions allowed, described separately in
@@ -96463,6 +97213,138 @@ Let <code>bool''''''''''''''''<sup>*</sup></code> be the resulting list.<sub cla
 </div>
 </li>
 </ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>The type of a concatenation is determined from the operand types, summing their
+widths, with:</p>
+</div>
+<details>
+<summary class="title">Click to view the specification source</summary>
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight" style="color: #24292f;background-color: #f6f8fa"><code data-lang="watsup"><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #953800">STRING</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">STRING</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">STRING</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #953800">INT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">INT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">INT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">+</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #953800">INT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">BIT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">INT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">+</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #953800">BIT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">INT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">BIT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">+</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #953800">BIT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">BIT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">BIT</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&lt;</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_a</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">+</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">w_b</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #24292f;background-color: #f6f8fa">`&gt;</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #953800">TYPEDEF</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">_</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">typeIR_l</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">typeIR_r</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #0550ae">typeIR_l</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">typeIR_r</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+
+</span><span style="color: #cf222e">def</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #0550ae">typeIR_l</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #953800">TYPEDEF</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">_</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">typeIR_r</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #0550ae">=</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #8250df">$result_concat</span><span style="color: #0550ae">(</span><span style="color: #0550ae">typeIR_l</span><span style="color: #0550ae">,</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">typeIR_r</span><span style="color: #0550ae">)</span><span style="color: #24292f;background-color: #f6f8fa">
+  </span><span style="color: #cf222e">--</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #cf222e">if</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">~(</span><span style="color: #0550ae">typeIR_l</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">&lt;:</span><span style="color: #24292f;background-color: #f6f8fa"> </span><span style="color: #0550ae">typedefTypeIR</span><span style="color: #0550ae">)</span></code></pre>
+</div>
+</div>
+</div>
+</details>
+<div class="openblock empty">
+<div class="content">
+
+</div>
+</div>
+<div id="result_concat" class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><a href="#result_concat">$result_concat(typeIR, typeIR')</a></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Block:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p><span class="bk-arm-anchor" id="bk-result_concat-1-a"></span></p>
+<div class="openblock bk-arm">
+<div class="content">
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>If let <code>stringTypeIR</code> be <code>typeIR</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Let!<sub>type</sub> <code>stringTypeIR'</code> be <code>typeIR'</code>.<sub class="bk-mark">[<a href="#bk-result_concat-1-b">→ b</a>]</sub></p>
+</li>
+<li>
+<p>Return <code>STRING</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>INT</code> <code>`&lt;</code> <code>w<sub>a</sub></code> <code>`&gt;</code> be <code>typeIR</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>If let <code>INT</code> <code>`&lt;</code> <code>w<sub>b</sub></code> <code>`&gt;</code> be <code>typeIR'</code>: return <code>INT</code> <code>`&lt;</code> <code>w<sub>a</sub></code> <code>`` ``w~b~`` ```&gt;+</code>.</p>
+</li>
+<li>
+<p>Else if let <code>BIT</code> <code>`&lt;</code> <code>w<sub>b</sub></code> <code>`&gt;</code> be <code>typeIR'</code>: return <code>INT</code> <code>`&lt;</code> <code>w<sub>a</sub></code> <code>`` ``w~b~`` ```&gt;+</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>BIT</code> <code>`&lt;</code> <code>w<sub>a</sub></code> <code>`&gt;</code> be <code>typeIR</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>If let <code>INT</code> <code>`&lt;</code> <code>w<sub>b</sub></code> <code>`&gt;</code> be <code>typeIR'</code>: return <code>BIT</code> <code>`&lt;</code> <code>w<sub>a</sub></code> <code>`` ``w~b~`` ```&gt;+</code>.</p>
+</li>
+<li>
+<p>Else if let <code>BIT</code> <code>`&lt;</code> <code>w<sub>b</sub></code> <code>`&gt;</code> be <code>typeIR'</code>: return <code>BIT</code> <code>`&lt;</code> <code>w<sub>a</sub></code> <code>`` ``w~b~`` ```&gt;+</code>.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Else if let <code>TYPEDEF</code> <code>_</code> <code>typeIR<sub>l</sub></code> be <code>typeIR</code>:</p>
+<div class="olist upperalpha">
+<ol class="upperalpha" type="A">
+<li>
+<p>Return <code><a href="#result_concat">$result_concat(typeIR<sub>l</sub>,</code> <code>typeIR')</a></code>.<sub class="bk-mark">[<a href="#bk-result_concat-1-b">→ b</a>]</sub></p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</li>
+<li>
+<p><span class="bk-arm-anchor" id="bk-result_concat-1-b"></span></p>
+<div class="openblock bk-arm">
+<div class="content">
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Let!<sub>type</sub> <code>TYPEDEF</code> <code>_</code> <code>typeIR<sub>r</sub></code> be <code>typeIR'</code>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+<li>
+<p>Check that <code>typeIR</code> does not have type <code>typedefTypeIR</code>.</p>
+</li>
+<li>
+<p>Return <code><a href="#result_concat">$result_concat(typeIR,</code> <code>typeIR<sub>r</sub>)</a></code>.<sub class="bk-mark">[FAIL]</sub></p>
+</li>
+</ol>
+</div>
+</div>
 </div>
 </li>
 </ol>
