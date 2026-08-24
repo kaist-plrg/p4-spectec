@@ -20,15 +20,10 @@ module AL-CALL-FUNC
 
   //   C_callee = C[ .LOCAL = $empty_layer[ .TYP = tdenv ] ]
   //
-  // `<cfenv>` is saved and restored alongside `<local>`.  In watsup,
-  // `Assign_arg/fun` reads `C_caller`, a context *passed as an argument* to
-  // `Eval_clause` and therefore scoped to exactly one call; K models it with a
-  // cell, which is global unless the frame stack restores it.  Without that,
-  // any call made between binding a `FUN` parameter and using it overwrites the
-  // single slot, so a `def` parameter that is re-passed through recursion --
-  // `$find_overloadeds_unnamed` handing `def $get_parameterListIR` to its own
-  // recursive call -- looks up a name in whatever frame happened to run last
-  // (usually an empty one) and FAILs.
+  // `<cfenv>` is saved and restored alongside `<local>`. In watsup,
+  // `Assign_arg/fun` reads `C_caller`, a context passed as an argument and so
+  // scoped to one call; K models it with a cell, which is global unless the
+  // frame stack restores it.
   rule <k> pushCallFrame(T:Map) => .K ... </k>
        <ltdenv> T':Map => T </ltdenv>
        <lfenv> F:Map => .Map </lfenv>
@@ -43,11 +38,9 @@ module AL-CALL-FUNC
        <cfenv> _ => CF </cfenv>
        <callstack> ListItem(callSave(localSave(T:Map, F:Map, V:Map), CF:Map)) => .List ... </callstack>
 
-  // Snapshot the *caller's* local fenv into <caller>, for Assign_arg/fun.
-  //
-  // Runs *before* `pushCallFrame`, so `<lfenv>` is still the caller's; the
-  // value it writes is what `pushCallFrame` then saves on the callee's behalf
-  // and `popCallFrame` puts back on return.
+  // Snapshot the caller's local fenv into <caller>, for Assign_arg/fun.
+  // Runs before `pushCallFrame`, so `<lfenv>` is still the caller's; what it
+  // writes is what `pushCallFrame` saves and `popCallFrame` restores.
   syntax KItem ::= "snapshotCaller" "(" ")"
   rule <k> snapshotCaller() => .K ... </k>
        <lfenv> F:Map </lfenv>
@@ -59,14 +52,13 @@ module AL-CALL-FUNC
   //   relation Eval_clause: ctx '/' ctx |- clause '@' `( val* `) : res<val>
   //   relation Eval_clauses: ctx '/' ctx |- clause* '@' `( val* `) : res<val>
   //
-  // `Eval_clause`'s two contexts are already `<local>` (the callee, being
-  // built) and `<caller>` (the caller, read-only) by the time this runs — the
-  // caller of `Eval_clause(s)` is responsible for `snapshotCaller()` and
-  // `pushCallFrame(...)` beforehand (`Call_defined_func`/`Eval_tblrow` do
-  // this). A clause that FAILs must not leave its argument bindings behind
-  // for the next clause, so each attempt is wrapped in `<saves>` push/restore
-  // — the clause list shares one callee call-frame throughout, only its
-  // *bindings* within that frame are rolled back between attempts.
+  // The two contexts are already `<local>` (the callee) and `<caller>` (the
+  // caller, read-only) by the time this runs: the caller of `Eval_clause(s)`
+  // does `snapshotCaller()` and `pushCallFrame(...)` beforehand
+  // (`Call_defined_func`/`Eval_tblrow`).  A clause that FAILs must not leave
+  // its bindings behind for the next, so each attempt is wrapped in `<saves>`
+  // push/restore -- the clause list shares one callee call-frame throughout,
+  // only its bindings are rolled back between attempts.
   // ==========================================================================
 
   syntax KItem ::= evalClause(Clause, ValList)
@@ -196,16 +188,8 @@ module AL-CALL-FUNC
   //   }
   //
   // `Call_extern_func` and `Call_builtin_func` are both `extern relation`s in
-  // watsup: their meaning lives outside the meta-language, so K implements
-  // neither and calls out over the external interface instead (the transport
-  // is in 4.1-extern-json.k).  They differ only in who answers —
-  // `Call_builtin_func` reaches the OCaml builtin registry
-  // (`p4spec/lib/interface/builtin/`), while `Call_extern_func` is answered
-  // against the target spec in `<specdir>`, on the P4 interface.
-  //
-  // Both are wired below; see 5.6-eval-call-rel.k for the matching
-  // `Call_extern_rel`.  One semantic difference is worth keeping in view: a
-  // builtin is total and always yields a `Val`, whereas an extern may FAIL.
+  // watsup, so K implements neither and calls out over the external interface
+  // (codec in 4.1-extern-json.k, transport in 4.2-extern-ffi.k).
   // ==========================================================================
 
   syntax KItem ::= callFuncDispatch(FuncDef, TypList, ValList)
@@ -259,10 +243,6 @@ module AL-CALL-FUNC
   rule <k> findFuncGlobal(X:Id, Ts:TypList, Vs:ValList) => callFuncDispatch({GF[X]}:>FuncDef, Ts, Vs) ... </k>
        <gfenv> GF:Map </gfenv>
     requires X in_keys(GF)
-  //   Call_func's `$find_func` returns `eps` if the id is bound in neither
-  //   local nor global fenv; there is no watsup clause for a missing funcdef,
-  //   which downstream leaves the call stuck. To keep the port total and let
-  //   FAIL propagate visibly instead, an unresolved call is treated as FAIL.
   rule <k> findFuncGlobal(X:Id, _:TypList, _:ValList) => FAIL ... </k>
        <gfenv> GF:Map </gfenv>
     requires notBool (X in_keys(GF))
@@ -270,36 +250,12 @@ module AL-CALL-FUNC
   // ==========================================================================
   // Call_builtin_func: dispatch to the host interpreter
   //
-  // `Call_builtin_func` is an `extern relation` in watsup because a builtin's
-  // meaning lives in the host interpreter (`p4spec/lib/interface/builtin/`),
-  // not in the meta-language.  K therefore implements none of them: it
-  // serializes the call to JSON, shells out to `spectec-boot extern`, and
-  // reads the result back.  The OCaml registry is the single authority for
-  // what a builtin computes, and all 44 of its entries are reachable from
-  // here — not just the stdlib handful a target's `builtin dec` names.
-  //
-  // The OCaml oracle is the narrower of the two here: `spectec-boot run ...
-  // -ali` resolves `Call_builtin_func` against the meta-spec's own functions,
-  // so it only runs the eight that spec-meta's stdlib declares.  A target
-  // calling, say, `$text_to_int` works under K and fails under the oracle.
-  //
-  // The codec is in 4.1-extern-json.k, which documents the wire format; its
-  // OCaml counterpart is `p4spec/lib/interface/spectec/ali/extern.ml`.
-  //
-  // Unlike everywhere else in this port, type arguments are *not* ignored.  A
-  // builtin derives the `note` type of the value it returns from its `targs`
-  // (`lists.ml:14-16`, `maps.ml:29,67,72`), and the host runs a typed value
-  // representation, so `TypList` goes out on the wire faithfully.
-  //
-  // RUNTIME DEPENDENCY: the OCaml implementation must be linked into
-  // `al-kompiled/interpreter` (`make k-build`), and the target spec path in
-  // `<specdir>` is relative, so runs must still start from the repo root.
+  // A builtin's meaning lives in the host interpreter
+  // (`p4spec/lib/interface/builtin/`), not in the meta-language, so K
+  // implements none of them: the call is serialized to JSON and crosses to
+  // OCaml.
   // ==========================================================================
 
-  //   The transport itself — the FFI crossing and reply decoding — lives in
-  //   4.2-extern-ffi.k, next to the codec it serves and shared with the two
-  //   extern kinds.  All that is left here is to say what to send and how the
-  //   reply should be read.
   rule <k> callBuiltinFunc(X:Id, Ts:TypList, Vs:ValList)
         => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), builtinK())
        ...
@@ -308,18 +264,13 @@ module AL-CALL-FUNC
   // ==========================================================================
   // Call_extern_func: dispatch over the external interface
   //
-  // `Call_extern_func` is the hook by which a spec running under K reaches an
-  // extern's meaning, which lives outside the meta-language.  It goes over the
-  // same wire, and to the same `ml_eval`, as a builtin: kffi.ml builds a runner
-  // for the spec in `<specdir>` on the P4 interface, and for the P4
-  // spec's own externs that resolves them against the architecture model in
-  // `p4spec/lib/backend-sim/`.  (OCaml has a second route for this hook,
-  // `Make_parametric` (`backend-boot/spectec.ml:173-215`), which instead sends
-  // the call to a *lower* runner's `eval_func`; K does not use it.)
+  // The hook by which a spec running under K reaches an extern's meaning.  It
+  // goes over the same wire, to the same `ml_eval`, as a builtin: kffi.ml
+  // builds a runner for the spec in `<specdir>` on the P4 interface.
   //
-  // Unlike a builtin, this can FAIL: the reply is `{"fail": null}` rather than
-  // a value, which `externFuncResult` turns into `FAIL` so it backtracks
-  // through `tryNextClause` exactly like a failed clause.
+  // Unlike a builtin, this can FAIL: a `{"fail": null}` reply becomes `FAIL`
+  // via `externFuncResult` and backtracks through `tryNextClause` like a failed
+  // clause.
   // ==========================================================================
 
   //   The target spec does not travel with the call: `initFFI()` gave it to

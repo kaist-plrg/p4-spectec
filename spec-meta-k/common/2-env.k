@@ -26,11 +26,6 @@ module COMMON-ENV
   // Type definition environment
   //
   //   syntax typdef = | PARAM | EXT | DEF tparam* '->' deftyp
-  //
-  // (`TypDef` itself is declared in al/2-env.k, alongside `RelDef`/`FuncDef`,
-  // since all four are the payload sorts `$load` stores in the environment
-  // cells. `$theta_of_tdenv` and `$extend_tdenv` live there too, for the same
-  // reason: they need `TypDef` in scope.)
   // ==========================================================================
 
   // ==========================================================================

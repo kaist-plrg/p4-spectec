@@ -38,8 +38,6 @@ module AL-TYP
     => A ==String B andBool eqAtoms(As, Bs)
   rule eqAtoms(_:AtomList, _:AtomList) => false [owise]
 
-  // `$assoc_<mixop, typ*>` over a `typcase*`: the type arguments of the case
-  // whose mixop matches, if any.
   syntax TypListOpt ::= noTypList()         [symbol(noTypList)]
                       | someTypList(TypList)
                                             [symbol(someTypList)]
@@ -203,8 +201,6 @@ module AL-TYP
   rule Ts2Repeat(_:Typ, .ValList) => .TypList
   rule Ts2Repeat(T:Typ, (_:Val, Vs:ValList)) => T, Ts2Repeat(T, Vs)
 
-  // `theta` built by zipping `tparam*` against `targ*` (``{ (tparam ':' targ)*
-  // `}``), now a `Map` from `Id` to `Typ`.
   syntax Map ::= zipThetaMap(TParamList, TypList)
                                             [function, symbol(zipThetaMap)]
 

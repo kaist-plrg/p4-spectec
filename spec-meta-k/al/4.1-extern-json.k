@@ -1,32 +1,5 @@
 // JSON codec for the external interface to the host interpreter.
 //
-// The *transport* -- how a request actually crosses to OCaml -- is in
-// 4.2-extern-ffi.k, which imports this module.  Only the format lives here.
-//
-// `Call_builtin_func`, `Call_extern_func` and `Call_extern_rel` are all
-// `extern relation`s in watsup: their meaning lives outside the
-// meta-language.  Rather than mirror those implementations in K — which
-// duplicates authority, and covers only the handful someone got round to
-// porting — such a call is serialized here, handed to the OCaml implementation
-// over K's FFI (4.2-extern-ffi.k), and its result read back.  The OCaml stays the
-// single authority.
-//
-// All three cross by the same route -- one `ml_eval` in `p4spec/bin/kffi.ml`,
-// which tells the kinds apart by the request's own key -- and differ only in
-// *who* answers:
-//
-//   - `Call_builtin_func` -> the OCaml builtin registry
-//     (`p4spec/lib/interface/builtin/`), a static lookup that does not load
-//     SPEC at all (except for `$print_`, which unparses against it).
-//   - `Call_extern_func` / `Call_extern_rel` -> answered against SPEC on the
-//     P4 interface, where the `<specdir>` cell (al/0-config.k) names the target
-//     SPEC to load.  For the P4 spec's own externs the meaning is the
-//     architecture model in `p4spec/lib/backend-sim/`.
-//
-// Because that is the only difference, one transport serves all three: it is
-// parameterized by the spec path to resolve against and an `ExternKind` saying
-// how to decode the reply.
-//
 // The OCaml half of this codec is `p4spec/lib/interface/spectec/ali/extern.ml`,
 // which documents the wire format in full.  In brief:
 //
@@ -54,30 +27,6 @@
 //   response ::= {"ok": val}         // builtin and extern-func
 //              | {"ok": [val, ...]}  // extern-rel: a relation yields val*
 //              | {"fail": null}      // recoverable failure; extern only
-//
-// The request kinds are told apart by *which key is present*, so a builtin
-// request is byte-identical to what it was before externs existed.
-//
-// `{"fail": null}` becomes K's `FAIL`, which backtracks through `tryNextRul`
-// / `tryNextClause` exactly like a failed rule.  It is a spec-level outcome,
-// and therefore recoverable; "the wire broke" is a *third* reply shape,
-// `{"error": <diagnostic>}`, which deliberately has no rule at all and sticks
-// visibly in `<k>`.  An extern relation takes no `targs`
-// (`spec-meta/common/4-relation.watsup:26-30`).
-//
-// Numbers cross as decimal *strings*, not JSON numbers: `natN`/`intN` hold
-// arbitrary-precision integers on both sides (K's `Int`, OCaml's `Bigint.t`)
-// and P4 routinely exceeds 64 bits.
-//
-// A `JSON` *term* is built and stringified once with `JSON2String`, rather
-// than concatenating strings by hand: atoms are rendered with quotes (`':'`)
-// and identifiers may contain characters that need escaping, and `JSON2String`
-// already escapes correctly.
-//
-// None of these functions is `total`, deliberately.  A malformed response
-// leaves a visible non-`Val` stuck in the `<k>` cell — which is what you want
-// to read — rather than quietly rewriting to a wrong answer.  This matches the
-// convention used for the partial helpers in 5.5-eval-call-func.k.
 
 requires "json.md"
 requires "0-config.k"
@@ -94,9 +43,8 @@ module AL-EXTERN-JSON
   // ==========================================================================
   // Outbound: K terms -> JSON
   //
-  // `Id` and `Atom` are subsorts of `String` (common/1-syntax.k:34-35), and
-  // `String` is a `JSON`, so they drop straight into a JSON string position
-  // with no coercion.
+  // `Id` and `Atom` are subsorts of `String`, and `String` is a `JSON`, so they
+  // drop straight into a JSON string position with no coercion.
   // ==========================================================================
 
   syntax JSON ::= jsonOfVal(Val)              [function, symbol(jsonOfVal)]
@@ -109,9 +57,6 @@ module AL-EXTERN-JSON
   syntax JSON ::= jsonOfTyp(Typ)              [function, symbol(jsonOfTyp)]
   syntax JSONs ::= jsonOfTyps(TypList)        [function, symbol(jsonOfTyps)]
 
-  //   `[ Js ]` cannot be written with a `JSONs`-valued call directly inside
-  //   it: the parser cannot tell that from a one-element list whose element is
-  //   that call.  This wrapper pins the `JSONs` position.
   syntax JSON ::= jsonList(JSONs)             [function, total, symbol(jsonList)]
   rule jsonList(Js:JSONs) => [ Js ]
 
@@ -129,9 +74,9 @@ module AL-EXTERN-JSON
   rule jsonOfVal(listV(Vs:ValList)) => [ "listV", jsonList(jsonOfVals(Vs)), .JSONs ]
   rule jsonOfVal(funcV(X:Id))       => [ "funcV", X, .JSONs ]
 
-  // `extV(Json)` gets no rule on purpose: `Json` is declared abstract
-  // (common/1-syntax.k:159) and has no K-reachable inhabitants, so a value
-  // that somehow reaches here should stick visibly rather than be invented.
+  // `extV(Json)` gets no rule on purpose: `Json` is abstract and has no
+  // K-reachable inhabitants, so such a value should stick visibly rather than
+  // be invented.
 
   rule jsonOfVals(.ValList) => .JSONs
   rule jsonOfVals(V:Val, Vs:ValList) => jsonOfVal(V), jsonOfVals(Vs)
@@ -175,12 +120,6 @@ module AL-EXTERN-JSON
          "args" : jsonList(jsonOfVals(Vs)),
          .JSONs }
 
-  //   An extern *function* request carries `targs`, like a builtin's.  They
-  //   are forwarded faithfully even though only one of the two OCaml routes
-  //   reads them: `Make_parametric.call_extern_func` unboots and passes them
-  //   to `eval_func`, while `interp.ml:1451` passes `[]` to
-  //   `eval_extern_func`.  Sending them costs nothing and keeps the request
-  //   honest about what was called.
   syntax JSON ::= jsonOfExternFuncRequest(Id, TypList, ValList)
                                     [function, symbol(jsonOfExternFuncRequest)]
   rule jsonOfExternFuncRequest(X:Id, Ts:TypList, Vs:ValList)
@@ -220,8 +159,6 @@ module AL-EXTERN-JSON
     => injV(valCase(mixOpOfJson(Jm), valsOfJsons(Js)))
   rule valOfJson([ "tupV", [ Js:JSONs ], .JSONs ]) => tupV(valsOfJsons(Js))
   rule valOfJson([ "optV", null, .JSONs ]) => optV(noVal())
-  //   `null` is itself a `JSON`, so the two `optV` shapes overlap; an explicit
-  //   side condition says which is which, rather than leaving it to `[owise]`.
   rule valOfJson([ "optV", J:JSON, .JSONs ]) => optV(someVal(valOfJson(J)))
     requires J =/=K null
   rule valOfJson([ "listV", [ Js:JSONs ], .JSONs ]) => listV(valsOfJsons(Js))
@@ -251,9 +188,8 @@ module AL-EXTERN-JSON
   rule respOk({ "ok" : J:JSON, .JSONs }) => J
 
   //   An extern reply resolves to *either* a payload or `FAIL`, so unlike
-  //   `respOk` these decode all the way to a `KItem` that can land in `<k>`
-  //   directly.  `FAIL` is an ordinary KItem here (common/3-relation.k), which
-  //   is exactly what makes a failed extern backtrack like a failed rule.
+  //   `respOk` these decode all the way to a `KItem` that lands in `<k>`
+  //   directly.
   syntax KItem ::= externFuncResult(JSON)     [function, symbol(externFuncResult)]
                  | externRelResult(JSON)      [function, symbol(externRelResult)]
 
@@ -268,30 +204,14 @@ module AL-EXTERN-JSON
   // ==========================================================================
   // The debug log
   //
-  // `logDebug` is declared in 0-config.k but discharged here, because the
-  // renderer it needs -- `jsonOfVal` -- is defined above and is not visible
-  // from the `AL-CONFIG`..`AL-PREM` chain.  Rules are collected across the
-  // whole definition, so the two `logDebug` producers (the configuration's
-  // `entry-al` marker and `dbgPrK()` in 5.4-eval-prem.k) reach this rule even
-  // though neither module imports this one.
-  //
-  // Payload rendering reuses `jsonOfVal` + `JSON2String` rather than a printer
-  // of its own: it already covers every `Val` shape, and the wire format is
-  // the one representation of a value this port already agrees on.  The one
-  // shape it has no rule for is `extV`, which is deliberate and unreachable
-  // (see the note by `jsonOfVal`); a value that somehow got there would stick
-  // visibly here instead of being logged as something invented.
-  //
-  // `#write` is a `[function]` returning `K`, exactly like `#nativeWrite` and
-  // `#free` in 4.2-extern-ffi.k, so it carries the same hazard: K may drop a
-  // pure term whose result is unused, taking the effect with it.  `#seqK`
-  // threads it through an argument position that must be evaluated before the
-  // `.K` escapes.  This is the same trick, and the same reason, as `initFFI()`
-  // there.
+  // `#write` is a `[function]` returning `K`, so K may drop it as a pure term
+  // whose result is unused, taking the effect with it. `#seqK` threads it
+  // through an argument position that must be evaluated before the `.K`
+  // escapes.
   rule <k> logDebug(V:Val) => #seqK(#write(1, JSON2String(jsonOfVal(V)) +String "\n"), .K) ... </k>
 
-  //   Used by `initFFI()` in 4.2-extern-ffi.k as well; it lives here because
-  //   `logDebug` above needs it and this module is imported by that one.
+  //   Used by `initFFI()` in 4.2-extern-ffi.k too; it lives here because
+  //   `logDebug` above needs it and that module imports this one.
   syntax K ::= "#seqK" "(" K "," K ")"        [function, symbol(seqK)]
   rule #seqK(_, X) => X
 

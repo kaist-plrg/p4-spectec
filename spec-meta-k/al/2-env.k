@@ -1,8 +1,6 @@
 // AL environments: type, relation, and function definitions.
 //
-// Mirrors spec-meta/al/2-env.watsup (`reldef`, `funcdef`) together with the
-// parts of spec-meta/common/2-env.watsup that need those sorts in scope
-// (`typdef`, `$theta_of_tdenv`, `$extend_tdenv`).
+// Mirrors spec-meta/al/2-env.watsup.
 
 requires "0-config.k"
 requires "../common/2-env.k"
@@ -54,10 +52,9 @@ module AL-ENV
   //   dec $theta_of_tdenv(tdenv) : theta
   //   dec $extend_tdenv(tdenv, tdenv) : tdenv
   //
-  // `theta = map<id, typ>` is a `Map` too (`Id |-> Typ`), built by folding a
-  // `tdenv : Map` (`Id |-> TypDef`). Only `DEF eps '->' (ALIAS typ)` bindings
-  // contribute; `PARAM`, `EXT`, and any `DEF` with type parameters or a
-  // non-alias body are skipped, exactly as the watsup clauses (and their
+  // `theta = map<id, typ>` is a `Map` too (`Id |-> Typ`), folded from a
+  // `tdenv : Map` (`Id |-> TypDef`).  Only `DEF eps '->' (ALIAS typ)` bindings
+  // contribute; everything else is skipped, as the watsup clauses (and their
   // absence) prescribe.
   // ==========================================================================
 

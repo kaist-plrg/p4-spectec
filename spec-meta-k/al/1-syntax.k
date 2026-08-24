@@ -1,12 +1,9 @@
 // Syntax of AL, the algorithmic layer of the P4-SpecTec meta-language.
 //
-// Mirrors spec-meta/al/1-syntax.watsup; the sorts it builds on (types,
-// expressions, values, arguments, ...) come from spec-meta-k/common/1-syntax.k,
-// just as spec-meta/al/0-common symlinks spec-meta/common.
+// Mirrors spec-meta/al/1-syntax.watsup.
 //
-// As in the common module this is an *abstract* syntax: productions are
-// constructor applications only.  Watsup's quoted delimiters (':', '->', '=',
-// '-') are pure notation and carry no information, so they are dropped; the
+// As in the common module this is an *abstract* syntax.  Watsup's quoted
+// delimiters (':', '->', '=', '-') are pure notation and are dropped; the
 // remaining fields become constructor arguments in the same order.
 
 requires "../common/1-syntax.k"
@@ -147,14 +144,6 @@ module AL-SYNTAX
 
   // ==========================================================================
   // Target programs
-  //
-  // The input a *language* spec is run on, as opposed to a self-contained
-  // meta-language target that defines its own `$main()`.  Running the P4 spec
-  // binds `someP4(val)` here and the entry becomes `Program_ok` (al/6-entry.k).
-  //
-  // This lives in the syntax module rather than next to the configuration cell
-  // it fills, because it is *parsed*: it is what `krun -pP4` hands back, so it
-  // has to be reachable from the definition's `--syntax-module`.
   // ==========================================================================
 
   syntax P4Opt ::= "noP4" "(" ")"           [symbol(noP4)]

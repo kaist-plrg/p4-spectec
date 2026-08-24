@@ -2,9 +2,8 @@
 //
 // Mirrors spec-meta/common/0-stdlib.watsup.
 //
-// Watsup's generic functions (`$ite<X>`, `$repeat_<X>`, `$find_map<K, V>`, ...)
-// are parametric.  K has no generics, so each is instantiated at the sorts it
-// is actually used at.
+// Watsup's generic functions (`$ite<X>`, `$repeat_<X>`, ...) are parametric.
+// K has no generics, so each is instantiated at the sorts it is used at.
 
 requires "1-syntax.k"
 
@@ -74,10 +73,6 @@ module COMMON-STDLIB
   rule appendVal(.ValList, Vs:ValList) => Vs
   rule appendVal((V:Val, Vs:ValList), Ws:ValList) => V, appendVal(Vs, Ws)
 
-  // `$transpose_<val>`: the transpose of a list of equal-length lists.  An
-  // empty outer list transposes to the empty list; the watsup builtin is
-  // undefined on ragged input, and so is this: `transposeVal` is partial, and
-  // a ragged argument leaves the term stuck rather than yielding a wrong shape.
   syntax ValListList ::= transposeVal(ValListList)
                                             [function, symbol(transposeVal)]
 

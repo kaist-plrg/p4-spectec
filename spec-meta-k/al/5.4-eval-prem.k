@@ -9,7 +9,6 @@ module AL-PREM
 
   syntax KItem ::= premOK()                 [symbol(premOK)]
 
-  // Forward declaration; rules added in 6-call.k.
   syntax KItem ::= callRel(Id, ValList)
 
   // ==========================================================================
@@ -83,10 +82,9 @@ module AL-PREM
   //     -- debug val
   syntax KItem ::= "dbgPrK" "(" ")"
   rule <k> evalPrem(debugPr(E:Exp)) => evalExp(E) ~> dbgPrK() ... </k>
-  //   `logDebug` prints to stdout rather than appending to a `<log>` cell; the
-  //   rule discharging it is in 4.1-extern-json.k, next to the renderer it
-  //   needs.  Sequenced ahead of `premOK()` so the line is written before the
-  //   premise reports success.
+  //   `logDebug` prints to stdout; the rule discharging it is in
+  //   4.1-extern-json.k, next to the renderer it needs.  Sequenced ahead of
+  //   `premOK()` so the line is written before the premise reports success.
   rule <k> V:Val ~> dbgPrK() => logDebug(V) ~> premOK() ... </k>
   rule <k> FAIL ~> dbgPrK() => FAIL ... </k>
 
@@ -127,11 +125,10 @@ module AL-PREM
        ...
        </k>
 
-  // `findVarisM(Bind, M)` is computed here, while `<lvenv>` still holds the
-  // sub-context result (`C_sub_res`); the extracted `ValList` is then carried
-  // as a plain value past `popSaveRestore()`, which switches `<lvenv>` back to
-  // the base — matching watsup's `$add_varis(C, ...)`, added to the
-  // *original* `C`, not to `C_sub_res`.
+  // `findVarisM(Bind, M)` is computed while `<lvenv>` still holds the
+  // sub-context result (`C_sub_res`); the extracted `ValList` then travels as a
+  // plain value past `popSaveRestore()` — matching watsup's `$add_varis(C,
+  // ...)`, which adds to the *original* `C`, not to `C_sub_res`.
   syntax KItem ::= collectIterPrOpt(VariList)
   rule <k> premOK() ~> collectIterPrOpt(Bind:VariList)
         => popSaveRestore() ~> bindOptResults(Bind, findVarisM(Bind, M))
@@ -177,11 +174,10 @@ module AL-PREM
        </k>
     requires Rows =/=K .ValListList
 
-  // Runs `P` once per row (as Eval_exp/list does, restoring to the pushed
-  // base before each row, never clearing it — `$sub_list` adds onto `C`).
-  // Accumulates each row's `vari_bind*` values (a `ValList`, one per bound
-  // variable) into `Acc`, in row order, so they can be transposed once every
-  // row is done.
+  // Runs `P` once per row (as Eval_exp/list does, restoring to the pushed base
+  // before each row, never clearing it — `$sub_list` adds onto `C`), collecting
+  // each row's `vari_bind*` values into `Acc` in row order for transposing once
+  // every row is done.
   syntax KItem ::= evalPremEachRow(VariList, VariList, Prem, ValListList, List)
   rule <k> evalPremEachRow(_:VariList, Bind:VariList, _:Prem, .ValListList, Acc:List)
         => popSaveRestore() ~> finishIterPrList(Bind, Acc)
@@ -227,10 +223,9 @@ module AL-PREM
   rule columnAtP(_:Int, .List) => .ValList
   rule columnAtP(I:Int, ListItem(Vs:ValList) Rest:List) => nthVal(Vs, I), columnAtP(I, Rest)
 
-  //   rule Eval_prem/fail: no rule above matched -- otherwise FAIL. The
-  //   catch-all below fires only for a `Prem` shape none of the specific
-  //   rules matched (there is none among AL's constructors; kept for parity
-  //   with watsup's explicit `-- otherwise` rule).
+  //   rule Eval_prem/fail: the catch-all fires only for a `Prem` shape no
+  //   specific rule matched (there is none among AL's constructors; kept for
+  //   parity with watsup's explicit `-- otherwise` rule).
   rule <k> evalPrem(_:Prem) => FAIL ... </k> [owise]
 
   // ==========================================================================

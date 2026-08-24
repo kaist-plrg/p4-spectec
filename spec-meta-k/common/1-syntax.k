@@ -2,21 +2,9 @@
 //
 // Mirrors spec-meta/common/1-syntax.watsup.
 //
-// This is an *abstract* syntax definition: every production is a constructor
-// application (`ctor(Arg, ...)`), never a concrete-syntax pattern.  AL terms
-// are produced by the elaborator, not parsed from text, so no grammar,
-// precedence or disambiguation concerns arise here.  Each production carries an
-// explicit `symbol(_)` so the KORE label of a constructor is stable and
-// predictable for tools that emit AL terms directly.
-//
-// Watsup base types map to K builtins as follows:
-//   bool -> Bool, nat -> Int, int -> Int, text -> String
-// (`nat` is not given a separate sort; non-negativity is a side condition.)
-//
-// K has no sort aliases, only subsorts.  Watsup aliases that would otherwise
-// force injections into every term (`targ = typ`, `tparam = id`) are therefore
-// inlined, and noted where they occur.  `id` and `atom` are kept as separate
-// subsorts of String, since collapsing them would erase a real distinction.
+// An abstract syntax definition. Each production carries an explicit
+// `symbol(_)` so a constructor's KORE label is stable for tools that emit AL
+// terms directly.
 
 module COMMON-SYNTAX
   imports BOOL-SYNTAX
@@ -154,8 +142,8 @@ module COMMON-SYNTAX
   //   syntax valcase = mixop val*
   // ==========================================================================
 
-  // `extern syntax json`: an opaque sort, left undefined on purpose.  Its
-  // inhabitants come from outside the meta-language.
+  // `extern syntax json`: opaque by design -- its inhabitants come from
+  // outside the meta-language.
   syntax Json
 
   syntax Val ::= boolV(Bool)                [symbol(boolV)]

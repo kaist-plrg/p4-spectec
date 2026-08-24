@@ -106,12 +106,6 @@ module AL-CALL-REL
   //     -- if rulgroup_all* = rulgroup* ++ $opt_as_seq_<rulgroup>(rulgroup_els?)
   //     -- if C_local = C[ .LOCAL = $empty_layer ]
   //     -- Eval_rulgroups: C_local |- rulgroup_all* '@' `( val* `) : valsres
-  //
-  // Unlike a function call, a relation call's fresh local layer has no type
-  // parameters to seed (relations have no `tparam*`), and there is no caller
-  // context to snapshot (no `FUN` arguments in a relation's `exp*` match), so
-  // this only needs `pushCallFrame(.Map)`/`popCallFrame()`, not
-  // `snapshotCaller()`.
   // ==========================================================================
 
   syntax KItem ::= callDefinedRel(RulGroupList, ElsGroupOpt, ValList)
@@ -123,9 +117,6 @@ module AL-CALL-REL
        ...
        </k>
 
-  // Like `tblRowDone()` (5.5-eval-call-func.k), but for a relation call's result
-  // shape: a `ValList` on success (a relation's outputs are `val*`, not a
-  // single `val`) rather than a bare `Val`.
   syntax KItem ::= "relCallDone" "(" ")"
   rule <k> Vs:ValList ~> relCallDone() => popCallFrame() ~> Vs ... </k>
   rule <k> FAIL ~> relCallDone() => popCallFrame() ~> FAIL ... </k>
@@ -151,15 +142,7 @@ module AL-CALL-REL
   //   }
   //
   // `Call_extern_rel` is an `extern relation`, dispatched over the external
-  // interface like its sibling `Call_extern_func` (5.5-eval-call-func.k): the
-  // call is serialized and answered against the target spec in `<specdir>`, on
-  // the P4 interface.
-  //
-  // A relation yields `val*` rather than a single value, so the reply's `ok`
-  // payload is a JSON array and `externRelResult` decodes it to a `ValList` —
-  // exactly the shape `relCallDone()` already expects.  A `{"fail": null}`
-  // reply becomes `FAIL`, which backtracks through `tryNextRul` like any
-  // failed rule, so neither continuation needed changing.
+  // interface like its sibling `Call_extern_func` (5.5-eval-call-func.k).
   // ==========================================================================
 
   syntax KItem ::= callRelDispatch(RelDef, ValList)
@@ -171,8 +154,6 @@ module AL-CALL-REL
        </k>
   rule <k> callRelDispatch(extRel(X:Id), Vs:ValList) => callExternRel(X, Vs) ... </k>
 
-  //   An extern relation takes only `id val*` — no `targs`
-  //   (spec-meta/common/4-relation.watsup:26-30).
   rule <k> callExternRel(X:Id, Vs:ValList)
         => externReq(JSON2String(jsonOfExternRelRequest(X, Vs)),
                      externRelK())
@@ -180,24 +161,16 @@ module AL-CALL-REL
        </k>
 
   // ==========================================================================
-  // Call_rel: look the relation up (global only — see 3-context.watsup's
-  // `$find_rel`, which never checks a local `renv`), then dispatch.
+  // Call_rel: look the relation up, then dispatch.
   //
   //   rule Call_rel: C |- id val* : valsres
   //     -- if reldef = $find_rel(C, id)
   //     -- Call_rel_dispatch: C |- reldef val* : valsres
-  //
-  // `callRel`'s task shape is declared in 5.4-eval-prem.k (used by the relation
-  // premise and if-hold/if-not-hold premises, which precede this module in
-  // dependency order); its rules are added here.
   // ==========================================================================
 
   rule <k> callRel(X:Id, Vs:ValList) => callRelDispatch({GR[X]}:>RelDef, Vs) ... </k>
        <grenv> GR:Map </grenv>
     requires X in_keys(GR)
-  //   `$find_rel` has no fallback: a relation id absent from `GLOBAL.REL`
-  //   matches no watsup clause. As with an unresolved function call, this is
-  //   treated as FAIL to keep the port total.
   rule <k> callRel(X:Id, _:ValList) => FAIL ... </k>
        <grenv> GR:Map </grenv>
     requires notBool (X in_keys(GR))

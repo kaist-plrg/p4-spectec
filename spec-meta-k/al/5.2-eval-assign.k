@@ -1,8 +1,6 @@
 // Assignment (pattern matching a value against an expression).
 //
-// Mirrors spec-meta/al/5.2-eval-assign.watsup.  `Assign_exp`, `Assign_exps`,
-// `Assign_arg`, `Assign_args` are `relation`s in watsup, so they
-// are ported as K-cell rewrite rules rather than functions.
+// Mirrors spec-meta/al/5.2-eval-assign.watsup.
 //
 // watsup's `ctx` result becomes an *implicit* `<local>` mutation plus an
 // explicit outcome marker:
@@ -22,12 +20,6 @@ module AL-ASSIGN
 
   // ==========================================================================
   // Outcome marker
-  //
-  // watsup relations that "produce a ctx" either hold (in which case `<local>`
-  // now reflects the new bindings) or do not hold at all. `assignOK()` and
-  // `FAIL` are the two possible results left on `<k>` after a task completes.
-  // `FAIL` itself is declared in common/3-relation.k, since the extern codec
-  // produces it too and must not depend on this file.
   // ==========================================================================
 
   syntax Outcome ::= assignOK()             [symbol(assignOK)]
@@ -203,8 +195,6 @@ module AL-ASSIGN
   //
   // `<local>` holds `ctx_callee`; `<caller>`'s `cfenv` holds `ctx_caller`'s
   // local function environment (all `Assign_arg/fun` needs — see 0-config.k).
-  // The caller cell must be populated by whoever starts an `assignArgs` task
-  // (Call_defined_func / Eval_tblrow, in 4-call-func.k) and is read-only here.
   // ==========================================================================
 
   syntax KItem ::= assignArg(Arg, Val)
@@ -246,9 +236,9 @@ module AL-ASSIGN
   // ==========================================================================
   // Value-level helpers
   //
-  // These are ordinary functions (not judgments), matching stdlib/env
-  // functions such as `$adds_map`, `$repeat_<val>`, `$iter_vari`,
-  // `$find_vari`, `$finds_vari` instantiated on the cell-based `Map`.
+  // Ordinary functions (not judgments): `$adds_map`, `$repeat_<val>`,
+  // `$iter_vari`, `$find_vari`, `$finds_vari` instantiated on the cell-based
+  // `Map`.
   // ==========================================================================
 
   // `$adds_map<varr, val>`: add each key/value pair, in order. Partial on
@@ -273,26 +263,22 @@ module AL-ASSIGN
   rule lengthVaris(.VariList) => 0
   rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
 
-  // `$find_vari`/`$finds_vari` against an explicit `Map` (rather than
-  // `<local>`), used where the environment being searched is a scratch value
-  // already extracted from a cell (e.g. after popping a save). Defined only
-  // when every lookup succeeds, matching watsup's total-or-nothing `val*?`.
+  // `$find_vari`/`$finds_vari` against an explicit `Map` rather than `<local>`,
+  // for a scratch environment already extracted from a cell (e.g. after popping
+  // a save).
   syntax ValList ::= findVaris(VariList, Map)
                                             [function, symbol(findVaris)]
   rule findVaris(.VariList, _:Map) => .ValList
   rule findVaris((V:Vari, Vs:VariList), M:Map) => {M[varrOfVari(V)]}:>Val, findVaris(Vs, M)
     requires varrOfVari(V) in_keys(M)
 
-  // `(OPT val_sub)*`: wrap every element as `optV(someVal(_))`.
   syntax ValList ::= someVals(ValList)      [function, total, symbol(someVals)]
   rule someVals(.ValList) => .ValList
   rule someVals(V:Val, Vs:ValList) => optV(someVal(V)), someVals(Vs)
 
-  // Transpose the per-element binding columns in `Acc` (a `List` of
-  // `ValList`s, one per element, each in the same order as `vari*`) into one
-  // `ValList` of `LIST val_sub*`, one per `vari`, in the same order as `Vs`.
-  // `transposeToLists` walks `Vs` while `transposeToLists0` walks the position
-  // within each row, so the two stay in lock-step by construction.
+  // Transpose the per-element binding columns in `Acc` (a `List` of `ValList`s,
+  // one per element, each ordered as `vari*`) into one `ValList` of `LIST
+  // val_sub*`, one per `vari`.
   syntax ValList ::= transposeToLists(VariList, List)
                                             [function, symbol(transposeToLists)]
   rule transposeToLists(Vs:VariList, Acc:List) => transposeToLists0(Vs, 0, Acc)

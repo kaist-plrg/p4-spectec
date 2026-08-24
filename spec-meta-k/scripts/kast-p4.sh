@@ -1,25 +1,13 @@
 #!/bin/sh
 # krun -pP4: convert $P4 to a KORE term of sort P4Opt on stdout.
 #
-# `krun -cP4=VALUE` writes VALUE to a temporary file and passes *that file* to
+# `krun -cP4=VALUE` writes VALUE to a temporary file and passes that file to
 # this command, so the argument here is a file whose contents are a P4 program
-# path -- not the program itself.  Two cases:
-#
-#   empty     -> noP4(),  selecting the `$main()` entry (al/6-entry.k).
-#                Every examples/*.watsup run takes this path, so `make k-run`
-#                behaves exactly as it did before `<p4prog>` existed.
-#   a path    -> someP4(<program>), selecting the `Program_ok` entry.
+# path -- not the program itself.
 #
 # The program is parsed by the OCaml P4 front end and emitted already wrapped as
 # `someP4(<val>)` by `spectec-boot kast-p4`, so both cases arrive at sort P4Opt
 # in a single `kast` parse.
-#
-# $KDEF supplies the definition, as in kast-json.sh -- krun passes a parser only
-# the input file, leaving no way to hand it a -d of its own.  $P4INCLUDE gives
-# the P4 preprocessor its include path, and $SPECTEC_BOOT overrides the path to
-# spectec-boot when it is not ./spectec-boot.
-#
-# Scratch files are mktemp'd straight into ./spec-meta-k/, as in kast-json.sh.
 set -e
 
 KSCRATCH=./spec-meta-k

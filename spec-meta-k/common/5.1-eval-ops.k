@@ -69,8 +69,6 @@ module COMMON-EVAL-OPS
   syntax Bool ::= cmpopPoly(PolyCmpOp, Val, Val)
                                             [function, total, symbol(cmpopPoly)]
 
-  // Structural equality on values.  `==K` compares the underlying terms, which
-  // for constructor applications over builtins is exactly watsup's `=`.
   rule cmpopPoly(eqOp(), L:Val, R:Val) => L ==K R
   rule cmpopPoly(neOp(), L:Val, R:Val) => L =/=K R
 

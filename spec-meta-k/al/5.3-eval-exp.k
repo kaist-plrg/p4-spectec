@@ -1,10 +1,7 @@
 // Expression, path, and argument evaluation.
 //
 // Mirrors spec-meta/al/5.3-eval-exp.watsup (Eval_exp, Eval_path,
-// Eval_path_upd) and spec-meta/al/5.4-eval-arg.watsup (Eval_arg, Eval_targs) —
-// there is no separate 5.4-eval-arg.k, because `Eval_arg` is two rules that
-// are mutually recursive with `Eval_exp` and so cannot be split into their own
-// K module.
+// Eval_path_upd) and spec-meta/al/5.4-eval-arg.watsup (Eval_arg, Eval_targs).
 
 requires "5.2-eval-assign.k"
 requires "5.1-eval-typ.k"
@@ -269,18 +266,6 @@ module AL-EVAL-EXP
   //
   //   dec $sub_opt(ctx, vari*) : ctx?
   //   dec $sub_list(ctx, vari*) : ctx*
-  //
-  // `$sub_opt` looks each `vari` up at one more `QUEST` in <lvenv>, expecting
-  // an `OPT`; if every one is `OPT val`, the (single) sub-context binds each
-  // `vari` to its `val`, and if every one is `OPT eps` there is no
-  // sub-context. `$sub_list` looks each `vari` up at one more `STAR`,
-  // expecting a `LIST`, and transposes the lists into one row of bindings per
-  // element — there are as many sub-contexts as the (common) list length.
-  //
-  // Neither builds a `ctx` value: a cell design instead computes the *rows* to
-  // bind (a `ValList` for the single `$sub_opt` case, or `ValListList` — one
-  // row per element — for `$sub_list`), and the caller drives the iteration by
-  // installing one row at a time into a save/cleared `<local>`.
   // ==========================================================================
 
   // `$sub_opt`: `noRowOpt()` if `$sub_opt` is `eps` (skip the body);
@@ -293,12 +278,6 @@ module AL-EVAL-EXP
   rule <k> subOptRow(Vs:VariList) => classifySubOpt(findOptsOrFail(iterVaris(Vs, quest()), M)) ... </k>
        <lvenv> M:Map </lvenv>
 
-  // Look each `varr` up; FAIL (stuck) is impossible here since `$sub_opt`'s
-  // precondition requires the lookup to exist under normal use, but to stay
-  // total this yields `noValList()` when any lookup is missing, and the
-  // classifier below treats that the same as "no rule applies" would in
-  // watsup: it gets stuck, matching no clause. In practice every `vari_iter`
-  // used by AL programs is always bound (the elaborator guarantees it).
   syntax ValListOpt ::= noValListOpt()      [symbol(noValListOpt)]
                       | someValListOpt(ValList)
                                             [symbol(someValListOpt)]
@@ -417,12 +396,11 @@ module AL-EVAL-EXP
   rule <k> FAIL ~> popSaveRestoreList() => popSaveRestore() ~> FAIL ... </k>
 
   // Evaluate `E` once per row of `Rows`.  Each element's sub-context is the
-  // *base* `<local>` (the one at the top of `<saves>`, unmodified since it was
-  // pushed) plus that row's bindings — watsup's `$sub_list` adds onto `C`, it
-  // does not clear it (unlike `Assign_exp/list`, which does). `peekRestore()`
-  // resets `<local>` to the saved base without popping it, so each row starts
-  // fresh from the same point; the save is popped only once, after every row
-  // has run.
+  // *base* `<local>` (top of `<saves>`, unmodified since it was pushed) plus
+  // that row's bindings — `$sub_list` adds onto `C`, it does not clear it
+  // (unlike `Assign_exp/list`).  `peekRestore()` resets `<local>` to the saved
+  // base without popping, so each row starts from the same point; the save is
+  // popped once, after every row has run.
   syntax KItem ::= evalEachRow(VariList, Exp, ValListList)
   rule <k> evalEachRow(_:VariList, _:Exp, .ValListList) => .ValList ... </k>
   rule <k> evalEachRow(Vs:VariList, E:Exp, (Row:ValList ; Rows:ValListList))
@@ -671,12 +649,6 @@ module AL-EVAL-EXP
 
   // ==========================================================================
   // Call_func forward declaration.
-  //
-  // `Eval_exp/call` needs `Call_func`, defined by cell rules in 5-call.k
-  // together with the rest of function/relation invocation (they are
-  // mutually recursive with clause and premise evaluation, which is why they
-  // live in one file). Only the task shape is declared here so this module
-  // compiles standalone; 5-call.k adds the rules that resolve it.
   // ==========================================================================
 
   syntax KItem ::= callFunc(Id, TypList, ValList)
