@@ -146,6 +146,11 @@ promote:
 # wrappers, which remove what they create; a run that dies on a stuck term
 # deliberately leaves its own behind, since those are worth reading.
 #
+# kast-json.sh additionally caches the booted+parsed $PGM under
+# spec-meta-k/.kore-cache/, keyed on a hash of the .watsup sources, the
+# compiled definition and spectec-boot, since re-deriving it costs ~8s per run
+# and `spec/` almost never changes.  `make k-clean` drops it.
+#
 # All must run from the repo root: the target spec path a builtin or extern call
 # resolves against (`-cSPEC`, below) is relative to it.
 #
@@ -273,3 +278,4 @@ clean:
 k-clean:
 	rm -rf $(KDEFDIR) $(KSHIM_OBJ)
 	rm -f $(KSCRATCH)/specdir $(KSCRATCH)/spectec-k-*
+	rm -rf $(KSCRATCH)/.kore-cache

@@ -558,7 +558,7 @@ let json_of_spec_al (spec : Al.spec) : Yojson.Safe.t =
     ]
 
 let string_of_spec_al (spec : Al.spec) : string =
-  spec |> json_of_spec_al |> Yojson.Safe.pretty_to_string
+  spec |> json_of_spec_al |> Yojson.Safe.to_string
 
 (* Values of an arbitrary spec, as the K sort `Val`.
 
@@ -590,4 +590,4 @@ let json_of_p4_term (value : Value.t) : Yojson.Safe.t =
     ]
 
 let string_of_value (value : Value.t) : string =
-  value |> json_of_p4_term |> Yojson.Safe.pretty_to_string
+  value |> json_of_p4_term |> Yojson.Safe.to_string
