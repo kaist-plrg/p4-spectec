@@ -242,7 +242,7 @@ k-run: $(BOOT)
 	@test -n "$(TEC)" || { echo "usage: make k-run TEC=examples/add.watsup"; exit 1; }
 	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./$(KSCRIPTS)/kast-json.sh $(TEC) \
 	  -cP4= -pP4=./$(KSCRIPTS)/kast-p4.sh \
-	  -cSPEC='"$(TEC)"'
+	  -cSPEC='"$(TEC)"' --output none
 
 # Type-check a P4 program: the spec is $PGM, the program is $P4, and the entry
 # becomes `Program_ok` rather than `$main()`.
@@ -259,7 +259,7 @@ k-typecheck: $(BOOT)
 	KDEF=$(KDEFDIR) P4INCLUDE=$(P4INCLUDE) krun -d $(KDEFDIR) \
 	  --parser ./$(KSCRIPTS)/kast-json.sh $(KSCRATCH)/specdir \
 	  -cP4=$(P4) -pP4=./$(KSCRIPTS)/kast-p4.sh \
-	  -cSPEC='"$(SPEC_K)"'
+	  -cSPEC='"$(SPEC_K)"' --output none
 
 # Cleanup
 

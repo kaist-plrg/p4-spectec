@@ -89,6 +89,7 @@ module AL-EXTERN-JSON
   imports JSON
   imports STRING
   imports INT
+  imports K-IO
 
   // ==========================================================================
   // Outbound: K terms -> JSON
@@ -263,5 +264,35 @@ module AL-EXTERN-JSON
   //   `valsOfJsons` yields the `ValList` that `relCallDone()` expects.
   rule externRelResult({ "ok" : [ Js:JSONs ], .JSONs }) => valsOfJsons(Js)
   rule externRelResult({ "fail" : null, .JSONs }) => FAIL
+
+  // ==========================================================================
+  // The debug log
+  //
+  // `logDebug` is declared in 0-config.k but discharged here, because the
+  // renderer it needs -- `jsonOfVal` -- is defined above and is not visible
+  // from the `AL-CONFIG`..`AL-PREM` chain.  Rules are collected across the
+  // whole definition, so the two `logDebug` producers (the configuration's
+  // `entry-al` marker and `dbgPrK()` in 5.4-eval-prem.k) reach this rule even
+  // though neither module imports this one.
+  //
+  // Payload rendering reuses `jsonOfVal` + `JSON2String` rather than a printer
+  // of its own: it already covers every `Val` shape, and the wire format is
+  // the one representation of a value this port already agrees on.  The one
+  // shape it has no rule for is `extV`, which is deliberate and unreachable
+  // (see the note by `jsonOfVal`); a value that somehow got there would stick
+  // visibly here instead of being logged as something invented.
+  //
+  // `#write` is a `[function]` returning `K`, exactly like `#nativeWrite` and
+  // `#free` in 4.2-extern-ffi.k, so it carries the same hazard: K may drop a
+  // pure term whose result is unused, taking the effect with it.  `#seqK`
+  // threads it through an argument position that must be evaluated before the
+  // `.K` escapes.  This is the same trick, and the same reason, as `initFFI()`
+  // there.
+  rule <k> logDebug(V:Val) => #seqK(#write(1, JSON2String(jsonOfVal(V)) +String "\n"), .K) ... </k>
+
+  //   Used by `initFFI()` in 4.2-extern-ffi.k as well; it lives here because
+  //   `logDebug` above needs it and this module is imported by that one.
+  syntax K ::= "#seqK" "(" K "," K ")"        [function, symbol(seqK)]
+  rule #seqK(_, X) => X
 
 endmodule

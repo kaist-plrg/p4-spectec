@@ -10,12 +10,6 @@ module AL-CONFIG
   imports LIST
 
   syntax KItem ::= logDebug(Val)
-                 // Starts the OCaml runtime behind the external interface and
-                 // builds the runner for the target spec in `<specdir>`.
-                 // Seeded at the *head* of `<k>` below, ahead of `$PGM`, so
-                 // that it necessarily runs before any rule that could reach a
-                 // builtin; the C shim assumes this has happened and does not
-                 // check.  Consumed by one rule in al/4.2-extern-ffi.k.
                  | "initFFI" "(" ")"
                  | "afterLoad" "(" ")"
 
@@ -54,8 +48,6 @@ module AL-CONFIG
       </caller>
       <saves> .List </saves>
       <callstack> .List </callstack>
-      <log> .List </log>
-      <result> .K </result>
     </al>
 
   syntax LocalSave ::= localSave(Map, Map, Map) [symbol(localSave)]

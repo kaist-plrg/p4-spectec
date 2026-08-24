@@ -68,8 +68,9 @@ module AL-EXTERN-FFI
   rule <k> initFFI() => #seqK(callInitFFI(Spec), .K) ... </k>
        <specdir> Spec:String </specdir>
 
-  syntax K ::= "#seqK" "(" K "," K ")"          [function, symbol(seqK)]
-  rule #seqK(_, X) => X
+  // `#seqK` itself now lives in 4.1-extern-json.k, which this module imports:
+  // `logDebug` needs the same forcing trick and sits there, below this file in
+  // the import order.
 
   //   Same `#alloc`/`#nativeWrite`/`#free` dance as the transport, for the one
   //   string argument.  See the two invariants stated there; both apply.

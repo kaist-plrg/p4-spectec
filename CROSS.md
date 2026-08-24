@@ -56,8 +56,6 @@ configuration
     <caller>  <cfenv> .Map </cfenv> </caller>
     <saves>     .List </saves>
     <callstack> .List </callstack>
-    <log>       .List </log>
-    <result>    .K    </result>
   </al>
 ```
 
@@ -79,9 +77,17 @@ configuration
   argument* to `Eval_clause`; K needs a cell for it, and that cell must be
   stacked per call frame (§4, and see §6 for the bug this caused).
 - **`<saves>` / `<callstack>`** — the two backtracking stacks (§4).
-- **`<log>`** — where `debug` premises accumulate, via a `logDebug(Val)` item.
-- **`<result>`** — the final answer; `krun` prints the whole configuration, so
-  this is the cell to read.
+- **No `<log>` or `<result>` cell.** Both were read only by a human looking at
+  the configuration dump, and that dump is dominated by `<global>` — for
+  `k-typecheck` it ran to ~4.7 MB, of which the two cells were eight lines. So
+  the runs pass `--output none` and print instead: a `debug` premise emits its
+  value through `logDebug(Val)` (rules in
+  [al/4.1-extern-json.k](spec-meta-k/al/4.1-extern-json.k), next to the
+  `jsonOfVal` renderer it uses), and `finish()` prints the verdict `passed` or
+  `fail`. Both go to fd 1 via `#write`, forced with the same `#seqK` trick the
+  FFI uses (§7) — `#write` is a pure `[function]` and K would otherwise be free
+  to drop it. A side benefit: the log now *streams*, so a 25 s run shows
+  progress rather than only a post-mortem.
 
 ## 3. Running
 
@@ -136,10 +142,26 @@ rule <k> afterLoad() => ... ~> callFunc("main", .TypList, .ValList) ~> finish() 
      <p4prog> noP4() </p4prog>
 ```
 
-This is exactly `spec-meta/al/6-entry.watsup`'s `Entry`. The answer appears in
-`<result>` (`intN(119)` for `add`), and the run should end with `<k>`, `<saves>`
-and `<callstack>` all empty — a leftover frame in either stack means a
-save/restore path returned without popping.
+This is exactly `spec-meta/al/6-entry.watsup`'s `Entry`. Output is the printed
+log followed by the verdict:
+
+```
+["textV","entry-al"]
+["textV","load complete"]
+["textV","into call"]
+["textV","Add"]          <- the `-- debug "Add"` premise in add.watsup
+passed
+```
+
+Note the verdict says only whether the entry *succeeded*; `add`'s actual answer
+(`intN(119)`) is no longer printed, since the `<result>` cell is gone. A script
+that wants its answer on stdout logs it with a `debug` premise.
+
+To inspect the final configuration — to check that `<k>`, `<saves>` and
+`<callstack>` all end empty, since a leftover frame in either stack means a
+save/restore path returned without popping — drop `--output none` from the
+`make` line and read the dump. Expect megabytes: `<global>` holds the whole
+loaded spec.
 
 Cross-check against the OCaml:
 
@@ -169,7 +191,8 @@ either:
 KDEF=al-kompiled krun -d al-kompiled --parser ./spec-meta-k/scripts/kast-json.sh add.json
 ```
 
-Use `krun --output json` to diff results mechanically rather than by eye.
+Use `krun --output json` (again, in place of `--output none`) to diff whole
+configurations mechanically rather than by eye.
 
 ### Type-checking a P4 program
 
@@ -187,8 +210,15 @@ rule <k> afterLoad() => ... ~> callRel(entryRel(), (V, .ValList)) ~> finish() ..
 `finish()` has a separate `ValList` rule alongside the `Val` one.
 
 ```sh
-make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4
+make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4   # -> passed
+make k-typecheck P4=p4c/testdata/p4_16_errors/action-bind.p4    # -> fail
 ```
+
+`passed` means `Program_ok` held; `fail` means it did not, i.e. a type error in
+the program under test. The verdict is the last line of stdout, after the log,
+so a batch runner can read it with `tail -1`. Note that `fail` does not say
+*why*: a diagnostic needs the OCaml implementation, or `debug` premises in the
+spec.
 
 The program is parsed by the ordinary P4 front end — whose menhir grammar builds
 a `Value.t` directly, so there is no separate P4 AST — and emitted as K's

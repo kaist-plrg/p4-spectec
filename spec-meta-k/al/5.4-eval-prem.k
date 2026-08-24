@@ -83,8 +83,11 @@ module AL-PREM
   //     -- debug val
   syntax KItem ::= "dbgPrK" "(" ")"
   rule <k> evalPrem(debugPr(E:Exp)) => evalExp(E) ~> dbgPrK() ... </k>
-  rule <k> V:Val ~> dbgPrK() => premOK() ... </k>
-       <log> L:List => L ListItem(V) </log>
+  //   `logDebug` prints to stdout rather than appending to a `<log>` cell; the
+  //   rule discharging it is in 4.1-extern-json.k, next to the renderer it
+  //   needs.  Sequenced ahead of `premOK()` so the line is written before the
+  //   premise reports success.
+  rule <k> V:Val ~> dbgPrK() => logDebug(V) ~> premOK() ... </k>
   rule <k> FAIL ~> dbgPrK() => FAIL ... </k>
 
   // ==========================================================================
