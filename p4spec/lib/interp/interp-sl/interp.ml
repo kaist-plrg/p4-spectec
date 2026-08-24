@@ -378,7 +378,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           eval_cmp_exp ctx cmpop optyp exp_l exp_r
       | UpCastE (typ, exp) -> eval_upcast_exp ctx typ exp
       | DownCastE (typ, exp) -> eval_downcast_exp ctx typ exp
-      | SubE (exp, typ) -> eval_sub_exp ctx exp typ
+      | SubE (exp, typ, subcheck) -> eval_sub_exp ctx exp typ subcheck
       | MatchE (exp, pattern) -> eval_match_exp ctx exp pattern
       | TupleE exps -> eval_tuple_exp typ_note ctx exps
       | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
@@ -645,12 +645,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Subtype check expression evaluation *)
 
-  and eval_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
+  and eval_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) (subcheck : subcheck) :
+      value =
     let value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
+      Value.Match.check sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
-        typ value
+        subcheck value
     in
     let value_res = Value.Make.bool sub in
     Hook.on_value value_res;
@@ -1540,7 +1541,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                 | BoolG false -> Il.UnE (`NotOp, `BoolT, exp)
                 | CmpG (cmpop, optyp, exp_r) ->
                     Il.CmpE (cmpop, optyp, exp, exp_r)
-                | SubG typ -> Il.SubE (exp, typ)
+                | SubG (typ, subcheck) -> Il.SubE (exp, typ, subcheck)
                 | MatchG pattern -> Il.MatchE (exp, pattern)
                 | MemG exp_s -> Il.MemE (exp, exp_s)
               in

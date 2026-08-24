@@ -2964,6 +2964,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let integerValue = value as integerValue
   -- if integerValue matches `% . % V %`
   -- let n_max '.' _nat V _i = integerValue
+  -- if (n_var =/= 0)
   -- if (|b*{b <- b*}| >= n_var)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : n_var]
   -- let i' = (|b*{b <- b*}| - n_var)
@@ -5495,7 +5496,7 @@ def $un_minus(value) : value =
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `% W %`
   -- let w W i = integerLiteral
-  -- let i' = ($pow2(w) - i)
+  -- let i' = $int_to_bitstr(w as int, ($pow2(w) - i))
 
   clause 2 : (value) = w S i' as value
   -- if value <: integerLiteral

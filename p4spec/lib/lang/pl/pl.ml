@@ -3,4 +3,3 @@ include Ast
 module Print = Print
 module Group = Group
 module Partial = Partial
-module Render = Render

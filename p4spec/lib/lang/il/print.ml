@@ -169,7 +169,7 @@ and string_of_exp exp =
       ^ string_of_exp exp_r ^ ")"
   | UpCastE (typ, exp) -> string_of_exp exp ^ " as " ^ string_of_typ typ
   | DownCastE (typ, exp) -> string_of_exp exp ^ " as " ^ string_of_typ typ
-  | SubE (exp, typ) -> string_of_exp exp ^ " <: " ^ string_of_typ typ
+  | SubE (exp, typ, _) -> string_of_exp exp ^ " <: " ^ string_of_typ typ
   | MatchE (exp, pattern) ->
       string_of_exp exp ^ " matches " ^ string_of_pattern pattern
   | TupleE es -> "(" ^ string_of_exps ", " es ^ ")"

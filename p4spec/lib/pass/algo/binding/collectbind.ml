@@ -43,7 +43,7 @@ let rec collect_exp (ctx : Ctx.t) (exp : exp) : Bind.BEnv.t =
       let binds = collect_exp ctx exp in
       collect_noninvertible exp.at "downcast operator" binds;
       Bind.BEnv.empty
-  | SubE (exp, _) ->
+  | SubE (exp, _, _) ->
       let binds = collect_exp ctx exp in
       collect_noninvertible exp.at "subtype check operator" binds;
       Bind.BEnv.empty

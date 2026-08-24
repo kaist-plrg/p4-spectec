@@ -25,7 +25,7 @@ let collect_groups (block : block_dispatch) : t list =
     | CaseI (_, cases, _) ->
         cases |> List.concat_map (fun (_, block) -> collect_block block)
     | LetI _ | DebugI _ | DestructI _ -> []
-    | CheckLetSubI (_, _, _, block_then)
+    | CheckLetSubI (_, _, _, _, block_then)
     | CheckLetMatchI (_, _, _, block_then)
     | OptionGetI (_, _, block_then) ->
         collect_block block_then

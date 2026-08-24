@@ -2568,6 +2568,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   clause 3 : (n_max '.' _nat V i as value, 0, b*{b <- b*}) = (n_max '.' 0 V i as value, b*{b <- b*})
 
   clause 4 : (n_max '.' _nat V _i as value, n_var, b*{b <- b*}) = (n_max '.' n_var V i as value, b_t*{b_t <- b_t*})
+  -- if (n_var =/= 0)
   -- if (|b*{b <- b*}| >= n_var)
   -- if (b_h*{b_h <- b_h*} = b*{b <- b*}[0 : n_var])
   -- if (n_t as int = (|b*{b <- b*}| - n_var))
@@ -4057,7 +4058,7 @@ def $un_minus(value) : value =
   clause 0 : (D i as value) = D -i as value
 
   clause 1 : (w W i as value) = w W i' as value
-  -- if (i' = ($pow2(w) - i))
+  -- if (i' = $int_to_bitstr(w as int, ($pow2(w) - i)))
 
   clause 2 : (w S i as value) = w S i' as value
   -- if (i' = $int_to_bitstr(w as int, $bitstr_to_int(w as int, -i)))

@@ -47,7 +47,7 @@ let structure_command =
 
 let annotate_test path_spec =
   match P4spectec.annotate path_spec with
-  | Ok spec_pl -> Pl.Render.render_spec spec_pl |> print_endline
+  | Ok spec_pl -> Pl.Print.string_of_spec spec_pl |> print_endline
   | Error e -> Format.printf "%s\n" (Error.to_string e)
 
 let annotate_command =

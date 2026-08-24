@@ -1,0 +1,258 @@
+[extern-syntax]
+\mathsf{Token\_t} \quad \text{external syntax}
+[syntax-family]
+\mathsf{Packet\_t}\left\langle\mathsf{T\_t}\right\rangle, \mathsf{Empty\_t} \quad \text{syntax}
+[empty-syntax-family]
+\varnothing \quad \text{syntax}
+[plain-type-definition]
+\mathsf{Flag\_t} \mathrel{::=} \mathbb{B}
+[struct-type-definition]
+\mathsf{Node\_t}\left\langle\mathsf{T\_t}\right\rangle \mathrel{::=} \left\{\mathsf{HEAD} \mathbb{B}, \mathsf{TAIL} \mathsf{node\_t}\right\}
+[variant-type-definition]
+\begin{aligned}
+\mathsf{Value\_t} & \mathrel{::=} & \mathbb{B} \\
+ & \mathrel{|} & \mathsf{UNKNOWN}
+\end{aligned}
+[variable]
+{\mathsf{x}}_{\mathsf{v}} : \mathbb{N}
+[external-relation]
+\mathrm{Matches\_rel} : \mathsf{input\_t}\,\mathsf{MATCHES}\,\mathsf{pattern\_t} \quad \text{external}
+[relation]
+\mathrm{Eval\_rel} : \mathsf{lhs\_t} \mathrel{\vdash} \mathsf{rhs\_t}
+[rules]
+\begin{gathered}
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Eval\_rel-s}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & {\mathsf{x}}_{\mathsf{v}} : \mathbb{N} \\
+{\scriptstyle\mathtt{(2)}} & {\mathsf{condition}}_{\mathsf{v}}
+\end{array}}{{\mathsf{result}}_{\mathsf{v}}}}
+\end{array} \\[1ex]
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Eval\_rel-rule\_name\_that\_is\_deliberately\_long\_in\_a\_group}}} \\
+{\displaystyle \frac{}{{\mathsf{value}}_{\mathsf{v}}}}
+\end{array} \\[1ex]
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Eval\_rel-fallback\_rule}}} \\
+{\displaystyle \frac{}{{\mathsf{fallback}}_{\mathsf{v}}}}
+\end{array}
+\end{gathered}
+[short-label-rule]
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{R-s}}} \\
+{\displaystyle \frac{}{\mathsf{v}}}
+\end{array}
+[long-label-rule]
+\begin{gathered}
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Eval\_rel-rule\_name\_that\_is\_deliberately\_long\_and\_still\_above}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{operatorpremiseleftoperandwithsubstantialpadding} \\
+ & \quad\quad\mathbin{\mathtt{<+>}} \mathsf{operatorpremiserightoperandwithsubstantialpadding} \\
+{\scriptstyle\mathtt{(2)}} & \href{#Eval_rel}{\mathsf{judgmentinputwithsubstantialpadding}} \\
+ & \href{#Eval_rel}{\quad\quad\mathrel{\vdash} }\href{#lookup_fn}{\mathrm{lookup\_fn}}\href{#Eval_rel}{\left(\begin{array}{l}
+\mathsf{lookupargumentalphawithpadding}, \\
+\quad\quad\mathsf{lookupargumentbetawithpadding}
+\end{array}\right)}
+\end{array}}{\left(\begin{array}{l}
+\href{#lookup_fn}{\mathrm{lookup\_fn}}\left(\begin{array}{l}
+\mathsf{conclusionargumentalphawithpadding}, \\
+\mathsf{conclusionargumentbetawithpadding}
+\end{array}\right), \\
+\left(\mathsf{nestedtupleleftwithpadding}, \mathsf{nestedtuplerightwithpadding}\right)
+\end{array}\right)}}
+\end{array}
+\end{gathered}
+[single-rule]
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Check\_rel-only\_rule}}} \\
+{\displaystyle \frac{\neg {\mathsf{bad}}_{\mathsf{v}}}{{\mathsf{checked}}_{\mathsf{v}}}}
+\end{array}
+[negated-judgment]
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Check\_rel-negated\_rule}}} \\
+{\displaystyle \frac{\neg \left(\mathsf{a} \mathrel{\vdash} \mathsf{b}\right)}{{\mathsf{checked}}_{\mathsf{v}}}}
+\end{array}
+[empty-rules]
+\mathrm{Empty\_rel-none\_group} : \varnothing \quad \text{rules}
+[external-function]
+\mathrm{parse\_fn}\left\langle\mathsf{T\_t}\right\rangle\left(\mathbb{T}\right) : \mathsf{T\_t} \quad \text{external}
+[builtin-function]
+\mathrm{size\_fn}\left(\mathbb{T}\right) : \mathbb{N} \quad \text{builtin}
+[table-declaration]
+\mathrm{lookup\_tbl}\left(\mathbb{N}\right) : \mathbb{B} \quad \text{table}
+[function-declaration]
+\mathrm{apply\_fn}\left\langle\mathsf{T\_t}\right\rangle\left(\mathrm{callback\_fn}\left(\mathbb{B}\right) : \mathbb{T}, \mathbb{B}\right) : \mathbb{T}
+[function-equation]
+\begin{aligned}
+\mathrm{apply\_fn}\left\langle\mathsf{T\_t}\right\rangle\left({\mathsf{x}}_{\mathsf{v}}, \mathrm{callback\_fn}\right) & = & {\mathsf{result}}_{\mathsf{v}} \quad \text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & {\mathsf{condition}}_{\mathsf{v}} \\
+{\scriptstyle\mathtt{(2)}} & {\mathsf{n}}_{\mathsf{v}} : \mathbb{N}
+\end{array}
+\end{aligned}
+[function-equation-no-premises]
+\begin{aligned}
+\mathrm{identity\_fn}\left({\mathsf{x}}_{\mathsf{v}}\right) & = & {\mathsf{x}}_{\mathsf{v}}
+\end{aligned}
+[function-equation-one-premise]
+\begin{aligned}
+\mathrm{one\_fn}\left(\mathsf{x}\right) & = & \mathsf{y} \quad \text{if}\,\mathsf{c1}
+\end{aligned}
+[function-equation-many-premises]
+\begin{aligned}
+\mathrm{many\_fn}\left(\mathsf{x}\right) & = & \mathsf{y} \quad \text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{c1} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{c2} \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{c3}
+\end{array}
+\end{aligned}
+[function-equation-silent-premise]
+\begin{aligned}
+\mathrm{silent\_fn}\left(\mathsf{x}\right) & = & \mathsf{y} \quad \text{if}\,{\,}_{\mathsf{META}}
+\end{aligned}
+[over-budget-condition-premise]
+\mathrlap{\displaystyle \begin{array}{rcl}
+\mathrm{condition\_fn}\left(\mathsf{x}\right) & = & \mathsf{y} \\
+\mathrlap{\displaystyle \quad\text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{tail}
+\end{array}}\smash{\hphantom{\begin{array}{r}
+\mathrm{condition\_fn}\left(\mathsf{x}\right)
+\end{array}}} &  &
+\end{array}}\smash{\hphantom{\begin{array}{l}
+\begin{array}{rcl}
+\mathrm{condition\_fn}\left(\mathsf{x}\right) & = & \mathsf{y}
+\end{array} \\
+\quad\text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{tail}
+\end{array}
+\end{array}}}
+[table-equations]
+\begin{aligned}
+\mathrm{lookup\_tbl}\left({\mathsf{zero}}_{\mathsf{v}}\right) & \mapsto & \mathsf{false} \\
+\mathrm{lookup\_tbl}\left({\mathsf{other}}_{\mathsf{v}}\right) & \mapsto & \mathsf{true}
+\end{aligned}
+[empty-table]
+\mathrm{empty\_tbl} : \varnothing \quad \text{table}
+[separator]
+[definitions]
+\begin{gathered}
+{\mathsf{x}}_{\mathsf{v}} : \mathbb{N} \\[1ex]
+\mathrm{Eval\_rel} : \mathsf{lhs\_t} \mathrel{\vdash} \mathsf{rhs\_t}
+\end{gathered}
+[left-aligned-function-clauses]
+\begin{gathered}
+\begin{array}{lcl}
+\mathrm{left\_fn}\left(\mathsf{x}\right) & = & \mathsf{first} \\[1ex]
+\mathrm{left\_fn}\left({\mathsf{long}}_{\mathsf{argument}}\right) & = & \mathsf{second}
+\end{array}
+\end{gathered}
+[aligned-function-equations]
+\begin{gathered}
+\mathrlap{\displaystyle \begin{array}{lcl}
+\mathrm{cases\_fn}\left(\mathsf{x}\right) & = & \mathsf{x} \\[1ex]
+\mathrm{cases\_fn}\left(\mathsf{s}\right) & = & \mathsf{v} \quad \text{if}\,\mathsf{cccccccccccccccccccccccccccccccccccccccccccccccccccccccc} \\[1ex]
+\mathrm{cases\_fn}\left(\mathsf{s}\right) & = & \mathsf{v} \\
+\mathrlap{\displaystyle \quad\text{if}\,\mathsf{ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}}\smash{\hphantom{\begin{array}{r}
+\mathrm{cases\_fn}\left(\mathsf{x}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{s}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{s}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{m}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{l}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{silent}\right)
+\end{array}}} &  & \\[1ex]
+\mathrm{cases\_fn}\left(\mathsf{m}\right) & = & \mathsf{v} \quad \text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{c1} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{c2} \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{c3}
+\end{array} \\[1ex]
+\mathrm{cases\_fn}\left(\mathsf{l}\right) & = & \mathsf{v} \\
+\mathrlap{\displaystyle \quad\text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \href{#lookup_fn}{\mathrm{lookup\_fn}}\left(\begin{array}{l}
+\mathsf{aaaaaaaaaaaaaaaaaaaaaa}, \\
+\mathsf{bbbbbbbbbbbbbbbbbbbb}, \\
+\mathsf{cccccccccccccccccccc}
+\end{array}\right) \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{c2}
+\end{array}}\smash{\hphantom{\begin{array}{r}
+\mathrm{cases\_fn}\left(\mathsf{x}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{s}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{s}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{m}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{l}\right) \\
+\mathrm{cases\_fn}\left(\mathsf{silent}\right)
+\end{array}}} &  & \\[1ex]
+\mathrm{cases\_fn}\left(\mathsf{silent}\right) & = & \mathsf{v} \quad \text{if}\,{\,}_{\mathsf{META}}
+\end{array}}\smash{\hphantom{\begin{array}{l}
+\begin{array}{lcl}
+\mathrm{cases\_fn}\left(\mathsf{x}\right) & = & \mathsf{x} \\
+\mathrm{cases\_fn}\left(\mathsf{s}\right) & = & \mathsf{v} \quad \text{if}\,\mathsf{cccccccccccccccccccccccccccccccccccccccccccccccccccccccc} \\
+\mathrm{cases\_fn}\left(\mathsf{s}\right) & = & \mathsf{v} \\
+\mathrm{cases\_fn}\left(\mathsf{m}\right) & = & \mathsf{v} \quad \text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{c1} \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{c2} \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{c3}
+\end{array} \\
+\mathrm{cases\_fn}\left(\mathsf{l}\right) & = & \mathsf{v} \\
+\mathrm{cases\_fn}\left(\mathsf{silent}\right) & = & \mathsf{v} \quad \text{if}\,{\,}_{\mathsf{META}}
+\end{array} \\
+\quad\text{if}\,\mathsf{ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc} \\
+\quad\text{if}\,\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathrm{lookup\_fn}\left(\begin{array}{l}
+\mathsf{aaaaaaaaaaaaaaaaaaaaaa}, \\
+\mathsf{bbbbbbbbbbbbbbbbbbbb}, \\
+\mathsf{cccccccccccccccccccc}
+\end{array}\right) \\
+{\scriptstyle\mathtt{(2)}} & \mathsf{c2}
+\end{array}
+\end{array}}} \\[1ex]
+\begin{aligned}
+\mathrm{cases\_fn}\left({\mathsf{after}}_{\mathsf{sep}}\right) & = & {\mathsf{after}}_{\mathsf{sep}}
+\end{aligned} \\
+\begin{aligned}
+\mathrm{other\_fn}\left(\mathsf{other}\right) & = & \mathsf{other}
+\end{aligned} \\
+{\mathsf{x}}_{\mathsf{v}} : \mathbb{N} \\
+\begin{aligned}
+\mathrm{other\_fn}\left({\mathsf{after}}_{\mathsf{var}}\right) & = & {\mathsf{after}}_{\mathsf{var}}
+\end{aligned}
+\end{gathered}
+[empty-definitions]
+[only-separators]
+[linked-definitions]
+\begin{gathered}
+\begin{aligned}
+\mathrm{caller\_fn}\left(\right) & = & \left(\href{#lookup_fn}{\mathrm{lookup\_fn}}\left\langle\mathsf{T}\right\rangle\left(\mathsf{x}\right), \mathrm{missing\_fn}\left(\right)\right)
+\end{aligned} \\
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Result\_rel-linked}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \href{#Eval_rel}{\mathsf{p} \mathrel{\vdash} \mathsf{v}} \\
+{\scriptstyle\mathtt{(2)}} & \neg \href{#Eval_rel}{\left(\mathsf{p} \mathrel{\vdash} \mathsf{v}\right)} \\
+{\scriptstyle\mathtt{(3)}} & \href{#Eval_rel}{\mathsf{p}}\href{#Eval_rel}{ \mathrel{\vdash} }\href{#lookup_fn}{\mathrm{lookup\_fn}}\href{#Eval_rel}{\left(\mathsf{x}\right)} \\
+{\scriptstyle\mathtt{(4)}} & \neg \left(\href{#Eval_rel}{\mathsf{p}}\href{#Eval_rel}{ \mathrel{\vdash} }\href{#lookup_fn}{\mathrm{lookup\_fn}}\href{#Eval_rel}{\left(\mathsf{x}\right)}\right) \\
+{\scriptstyle\mathtt{(5)}} & {\left(\href{#Eval_rel}{\mathsf{p} \mathrel{\vdash} \mathsf{v}}\right)}^{\ast} \\
+{\scriptstyle\mathtt{(6)}} & \mathsf{p} \mathrel{\vdash} \href{#lookup_fn}{\mathrm{lookup\_fn}}\left(\mathsf{x}\right) \\
+{\scriptstyle\mathtt{(7)}} & \mathsf{p} \mathrel{\vdash} \mathsf{v}
+\end{array}}{\mathsf{result}}}
+\end{array}
+\end{gathered}
+[unlinked-definitions]
+\begin{gathered}
+\begin{aligned}
+\mathrm{caller\_fn}\left(\right) & = & \left(\mathrm{lookup\_fn}\left\langle\mathsf{T}\right\rangle\left(\mathsf{x}\right), \mathrm{missing\_fn}\left(\right)\right)
+\end{aligned} \\
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Result\_rel-linked}}} \\
+{\displaystyle \frac{\begin{array}{r@{\quad}l}
+{\scriptstyle\mathtt{(1)}} & \mathsf{p} \mathrel{\vdash} \mathsf{v} \\
+{\scriptstyle\mathtt{(2)}} & \neg \left(\mathsf{p} \mathrel{\vdash} \mathsf{v}\right) \\
+{\scriptstyle\mathtt{(3)}} & \mathsf{p} \mathrel{\vdash} \mathrm{lookup\_fn}\left(\mathsf{x}\right) \\
+{\scriptstyle\mathtt{(4)}} & \neg \left(\mathsf{p} \mathrel{\vdash} \mathrm{lookup\_fn}\left(\mathsf{x}\right)\right) \\
+{\scriptstyle\mathtt{(5)}} & {\left(\mathsf{p} \mathrel{\vdash} \mathsf{v}\right)}^{\ast} \\
+{\scriptstyle\mathtt{(6)}} & \mathsf{p} \mathrel{\vdash} \mathrm{lookup\_fn}\left(\mathsf{x}\right) \\
+{\scriptstyle\mathtt{(7)}} & \mathsf{p} \mathrel{\vdash} \mathsf{v}
+\end{array}}{\mathsf{result}}}
+\end{array}
+\end{gathered}

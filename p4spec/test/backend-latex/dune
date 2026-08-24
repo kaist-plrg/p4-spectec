@@ -1,0 +1,127 @@
+(library
+ (name backend_latex_test_support)
+ (modules backend_latex_test_support)
+ (libraries p4spectec backend_latex))
+
+(executables
+ (names
+  doc_test
+  width_test
+  layout_test
+  link_test
+  serialize_test
+  renderer_test)
+ (modules
+  doc_test
+  width_test
+  layout_test
+  link_test
+  serialize_test
+  renderer_test)
+ (libraries p4spectec backend_latex backend_latex_test_support))
+
+(rule
+ (target doc.actual)
+ (action
+  (with-stdout-to
+   doc.actual
+   (run ./doc_test.exe))))
+
+(rule
+ (aliases backend-latex-doc backend-latex)
+ (action
+  (diff doc.expected doc.actual)))
+
+(rule
+ (target width.actual)
+ (action
+  (with-stdout-to
+   width.actual
+   (run ./width_test.exe))))
+
+(rule
+ (aliases backend-latex-width backend-latex)
+ (action
+  (diff width.expected width.actual)))
+
+(rule
+ (target layout.actual)
+ (action
+  (with-stdout-to
+   layout.actual
+   (run ./layout_test.exe))))
+
+(rule
+ (aliases backend-latex-layout backend-latex)
+ (action
+  (diff layout.expected layout.actual)))
+
+(rule
+ (target link.actual)
+ (action
+  (with-stdout-to
+   link.actual
+   (run ./link_test.exe))))
+
+(rule
+ (aliases backend-latex-link backend-latex)
+ (action
+  (diff link.expected link.actual)))
+
+(rule
+ (target serialize.actual)
+ (action
+  (with-stdout-to
+   serialize.actual
+   (run ./serialize_test.exe))))
+
+(rule
+ (aliases backend-latex-serialize backend-latex)
+ (action
+  (diff serialize.expected serialize.actual)))
+
+(rule
+ (target renderer.actual)
+ (action
+  (with-stdout-to
+   renderer.actual
+   (run ./renderer_test.exe))))
+
+(rule
+ (aliases backend-latex-renderer backend-latex)
+ (action
+  (diff renderer.expected renderer.actual)))
+
+(executable
+ (name term_test)
+ (modules term_test)
+ (libraries p4spectec backend_latex backend_latex_test_support))
+
+(rule
+ (target term.actual)
+ (action
+  (with-stdout-to
+   term.actual
+   (run ./term_test.exe))))
+
+(rule
+ (aliases backend-latex-term backend-latex)
+ (action
+  (diff term.expected term.actual)))
+
+(executable
+ (name definition_test)
+ (modules definition_test)
+ (libraries p4spectec backend_latex backend_latex_test_support))
+
+(rule
+ (target definition.actual)
+ (action
+  (with-stdout-to
+   definition.actual
+   (run ./definition_test.exe))))
+
+(rule
+ (aliases backend-latex-definition backend-latex)
+ (action
+  (diff definition.expected definition.actual)))

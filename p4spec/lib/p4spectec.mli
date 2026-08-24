@@ -12,6 +12,10 @@ val algo : string list -> Lang.Al.spec result
 val structure : final:bool -> string list -> Lang.Sl.spec result
 val annotate : string list -> Lang.Pl.spec result
 
+(* Document generation *)
+
+val splice : string list -> (string * string) list -> unit result
+
 val spec_of_mode :
   Runtime.Dynamic_Runner.Signature.mode ->
   string list ->

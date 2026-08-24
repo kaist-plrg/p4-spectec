@@ -323,7 +323,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         eval_cmp_exp typ_note ctx cmpop optyp exp_l exp_r
     | UpCastE (typ, exp) -> eval_upcast_exp typ_note ctx typ exp
     | DownCastE (typ, exp) -> eval_downcast_exp typ_note ctx typ exp
-    | SubE (exp, typ) -> eval_sub_exp typ_note ctx exp typ
+    | SubE (exp, typ, subcheck) -> eval_sub_exp typ_note ctx exp typ subcheck
     | MatchE (exp, pattern) -> eval_match_exp typ_note ctx exp pattern
     | TupleE exps -> eval_tuple_exp typ_note ctx exps
     | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
@@ -548,13 +548,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Subtype check expression evaluation *)
 
-  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (typ : typ) :
-      value backtrack =
+  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (_typ : typ)
+      (subcheck : subcheck) : value backtrack =
     let* value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
+      Value.Match.check sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
-        typ value
+        subcheck value
     in
     let value_res = Value.Make.bool sub in
     Ok value_res
