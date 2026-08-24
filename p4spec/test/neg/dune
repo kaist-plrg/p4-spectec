@@ -12,7 +12,9 @@
    (ignore-outputs
     (diff parse.expected parse.actual))
    (ignore-outputs
-    (diff elab.expected elab.actual)))))
+    (diff elab.expected elab.actual))
+   (ignore-outputs
+    (diff algo.expected algo.actual)))))
 
 (rule
  (target parse.actual)
@@ -37,3 +39,15 @@
    (with-stderr-to
     elab.err
     (run ./test.exe elab cases/elab)))))
+
+(rule
+ (target algo.actual)
+ (deps
+  test.exe
+  (source_tree cases/algo))
+ (action
+  (with-stdout-to
+   algo.actual
+   (with-stderr-to
+    algo.err
+    (run ./test.exe algo cases/algo)))))

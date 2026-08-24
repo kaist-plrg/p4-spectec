@@ -1,0 +1,158 @@
+=== dataflow-bind-both-sides-of-equality.watsup ===
+error[algo/bind-both-sides-of-equality]: both sides of an equality bind new variables: left side binds variable `x`, right side binds variable `y`
+  --> dataflow-bind-both-sides-of-equality.watsup:14:9
+   |
+14 |   -- if x = y
+   |         ^^^^^
+   |
+   | note: An `=` premise reads as a comparison when both sides are already
+   |       bound, or as a binder when one side is. With new variables on both
+   |       sides it fits neither.
+=== dataflow-bind-in-non-invertible.watsup ===
+error[algo/non-invertible-binding]: non-invertible unary operator contains newly bound variable `x`
+  --> dataflow-bind-in-non-invertible.watsup:13:10
+   |
+13 |   -- if -x = 5
+   |          ^
+   |
+   | note: Each variable in a binding expression must correspond directly to a
+   |       tuple element, variant case argument, struct field, or list element.
+   |       Operators are not inverted, even when their inverse would be unique.
+=== dataflow-free-variable-in-output.watsup ===
+error[algo/free-variable-in-expression]: expression uses unbound variable `u`
+  --> dataflow-free-variable-in-output.watsup:14:8
+   |
+14 |   v |- u
+   |        ^
+   |
+   | note: Every variable here must already be bound by an earlier part of the
+   |       rule, such as the conclusion's input position or a preceding premise.
+=== dataflow-iter-binding-only.watsup ===
+error[algo/iteration-missing-loop-variable]: iteration has no loop variable because `x` is newly bound
+  --> dataflow-iter-binding-only.watsup:13:7
+   |
+13 |   -- (if x = 0)*
+   |       ^^^^^^^^
+   |
+   | note: An iteration needs a variable bound outside it whose values it can
+   |       iterate over.
+=== dataflow-parallel-binding-dimension-mismatch.watsup ===
+error[algo/parallel-binding-dimension-mismatch]: parallel bindings for `x` have incompatible dimensions: `foo` and `foo*`
+  --> dataflow-parallel-binding-dimension-mismatch.watsup:10:8
+   |
+10 |   (x, (x, y)*) |- true
+   |        ^
+   |
+   | note: A variable can have only one type and iteration dimension within a
+   |       binder pattern. These two positions give the variable different
+   |       dimensions.
+   |
+   | related: first bound here
+   |   --> dataflow-parallel-binding-dimension-mismatch.watsup:10:4
+   |    |
+   | 10 |   (x, (x, y)*) |- true
+   |    |    ^
+=== function-otherwise-condition.watsup ===
+error[algo/condition-in-otherwise]: an `otherwise` body cannot test a condition
+  --> function-otherwise-condition.watsup:5:6
+  |
+5 |   -- if true
+  |      ^^^^^^^
+=== function-otherwise-function-call.watsup ===
+error[algo/function-call-in-otherwise]: an `otherwise` body cannot call a function
+  --> function-otherwise-function-call.watsup:11:18
+   |
+11 |   -- debug $(1 + $identity(0))
+   |                  ^^^^^^^^^^^^
+=== function-otherwise-relation-call.watsup ===
+error[algo/relation-call-in-otherwise]: an `otherwise` body cannot call a relation
+  --> function-otherwise-relation-call.watsup:13:6
+   |
+13 |   -- R: 0 |- 0
+   |      ^^^^^^^^^
+=== table-non-shallow-binding.watsup ===
+error[algo/table-row-binding-shape]: table row pattern must be a variable or variant case, but got `0`
+  --> table-non-shallow-binding.watsup:4:5
+  |
+4 |   | 0 => true
+  |     ^
+  |
+  | note: Either form may be upcast. Variant cases may contain only variables.
+=== table-pattern-expected-named-variant.watsup ===
+error[algo/pattern-named-variant-expected]: table row patterns require a type with declared cases, but got `nat`
+  --> table-pattern-expected-named-variant.watsup:1:17
+  |
+1 | tbl dec $lookup(nat) : bool
+  |                 ^^^
+  |
+  | note: The declared cases determine which patterns the table rows must cover.
+=== table-pattern-extern.watsup ===
+error[algo/pattern-extern-type]: table row patterns require a type with declared cases, but got `opaque`
+  --> table-pattern-extern.watsup:3:17
+  |
+3 | tbl dec $lookup(opaque) : bool
+  |                 ^^^^^^
+  |
+  | note: The declared cases determine which patterns the table rows must cover.
+  |
+  | related: type declared here
+  |   --> table-pattern-extern.watsup:1:15
+  |   |
+  | 1 | extern syntax opaque
+  |   |               ^^^^^^
+=== table-pattern-incomplete.watsup ===
+error[algo/pattern-incomplete]: table rows do not cover every declared case
+  --> table-pattern-incomplete.watsup:8:14
+  |
+8 |   | A => true
+  |              ^
+  |
+  | note: Uncovered patterns: `B`.
+  |
+  | related: case in uncovered pattern
+  |   --> table-pattern-incomplete.watsup:3:5
+  |   |
+  | 3 |   | B
+  |   |     ^
+=== table-pattern-non-variant.watsup ===
+error[algo/pattern-non-variant-type]: table row patterns require a type with declared cases, but got `scalar`
+  --> table-pattern-non-variant.watsup:3:17
+  |
+3 | tbl dec $lookup(scalar) : bool
+  |                 ^^^^^^
+  |
+  | note: The declared cases determine which patterns the table rows must cover.
+  |
+  | related: type declared here
+  |   --> table-pattern-non-variant.watsup:1:8
+  |   |
+  | 1 | syntax scalar = nat
+  |   |        ^^^^^^
+=== table-pattern-overlap.watsup ===
+error[algo/pattern-overlap]: table row pattern overlaps an earlier row
+  --> table-pattern-overlap.watsup:9:5
+  |
+9 |   | A => false
+  |     ^
+  |
+  | related: earlier overlapping pattern
+  |   --> table-pattern-overlap.watsup:8:5
+  |   |
+  | 8 |   | A => true
+  |   |     ^
+=== table-repeated-binding.watsup ===
+error[algo/repeated-table-binding]: table row pattern binds `y` more than once
+  --> table-repeated-binding.watsup:11:12
+   |
+11 |   | (x, y, y, x) => true
+   |            ^
+   |
+   | note: Each table parameter contributes one independent match pattern.
+   |       Reusing a variable would add an equality condition between positions,
+   |       which table rows do not support.
+   |
+   | related: first bound here
+   |   --> table-repeated-binding.watsup:11:9
+   |    |
+   | 11 |   | (x, y, y, x) => true
+   |    |         ^

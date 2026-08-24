@@ -70,12 +70,25 @@ let filter_bound (f : var -> bool) (iterctx : t) : t =
 let validate (at : region) (iterctx : t) : unit =
   List.iter
     (fun (_, vars_bound, vars_bind) ->
+      (* Dimension analysis rejects iterations without any variables. *)
+      assert ((not (List.is_empty vars_bound)) || not (List.is_empty vars_bind));
       if List.is_empty vars_bound then
-        if List.is_empty vars_bind then error at "empty iteration"
-        else
-          error at
-            ("cannot determine dimension of binding identifier(s) only: "
-            ^ String.concat ", " (List.map Print.string_of_var vars_bind))
+        let variables =
+          List.map
+            (fun var -> Format.asprintf "`%s`" (Print.string_of_var var))
+            vars_bind
+        in
+        let cause =
+          match variables with
+          | [ variable ] -> variable ^ " is newly bound"
+          | _ ->
+              "variables " ^ String.concat ", " variables ^ " are newly bound"
+        in
+        error ~code:Iteration_missing_loop_variable at
+          ("iteration has no loop variable because " ^ cause)
+          ~detail:
+            "An iteration needs a variable bound outside it whose values it \
+             can iterate over."
       else ())
     iterctx
 

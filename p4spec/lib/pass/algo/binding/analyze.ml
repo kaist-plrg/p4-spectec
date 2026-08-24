@@ -50,41 +50,45 @@ let update_venv_partial (venv : VEnv.t) (renv_partial : Partialbind.REnv.t) :
 
 (* Expression binding analysis *)
 
-let rec is_pure_exp (exp : exp) : bool =
-  match exp.it with
-  | BoolE _ | NumE _ | TextE _ | VarE _ -> true
-  | UnE (_, _, exp) -> is_pure_exp exp
-  | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
-      is_pure_exp exp_l && is_pure_exp exp_r
-  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
-      is_pure_exp exp
-  | TupleE exps -> List.for_all is_pure_exp exps
-  | CaseE notexp -> List.for_all is_pure_exp (Mixfix.args notexp)
-  | StrE expfields ->
-      let exps = List.map snd expfields in
-      List.for_all is_pure_exp exps
-  | OptE (Some exp) -> is_pure_exp exp
-  | OptE None -> true
-  | ListE exps -> List.for_all is_pure_exp exps
-  | ConsE (exp_h, exp_t) -> is_pure_exp exp_h && is_pure_exp exp_t
-  | CatE (exp_l, exp_r) -> is_pure_exp exp_l && is_pure_exp exp_r
-  | MemE (exp_e, exp_s) -> is_pure_exp exp_e && is_pure_exp exp_s
-  | LenE exp | DotE (exp, _) -> is_pure_exp exp
-  | IdxE (exp_b, exp_i) -> is_pure_exp exp_b && is_pure_exp exp_i
-  | SliceE (exp_b, exp_i, exp_n) ->
-      is_pure_exp exp_b && is_pure_exp exp_i && is_pure_exp exp_n
-  | UpdE (exp_b, path, exp_f) ->
-      is_pure_exp exp_b && is_pure_path path && is_pure_exp exp_f
-  | CallE _ -> false
-  | IterE (exp, _) -> is_pure_exp exp
+let first_some option_l option_r =
+  match option_l with Some _ -> option_l | None -> option_r ()
 
-and is_pure_path (path : path) : bool =
+let rec call_at_in_exp (exp : exp) : region option =
+  match exp.it with
+  | BoolE _ | NumE _ | TextE _ | VarE _ -> None
+  | UnE (_, _, exp) -> call_at_in_exp exp
+  | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
+      first_some (call_at_in_exp exp_l) (fun () -> call_at_in_exp exp_r)
+  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
+      call_at_in_exp exp
+  | TupleE exps | ListE exps -> List.find_map call_at_in_exp exps
+  | CaseE notexp -> List.find_map call_at_in_exp (Mixfix.args notexp)
+  | StrE expfields ->
+      List.find_map (fun (_, exp) -> call_at_in_exp exp) expfields
+  | OptE (Some exp) -> call_at_in_exp exp
+  | OptE None -> None
+  | ConsE (exp_l, exp_r) | CatE (exp_l, exp_r) | MemE (exp_l, exp_r) ->
+      first_some (call_at_in_exp exp_l) (fun () -> call_at_in_exp exp_r)
+  | LenE exp | DotE (exp, _) -> call_at_in_exp exp
+  | IdxE (exp_b, exp_i) ->
+      first_some (call_at_in_exp exp_b) (fun () -> call_at_in_exp exp_i)
+  | SliceE (exp_b, exp_i, exp_n) ->
+      List.find_map call_at_in_exp [ exp_b; exp_i; exp_n ]
+  | UpdE (exp_b, path, exp_f) ->
+      first_some (call_at_in_exp exp_b) (fun () ->
+          first_some (call_at_in_path path) (fun () -> call_at_in_exp exp_f))
+  | CallE _ -> Some exp.at
+  | IterE (exp, _) -> call_at_in_exp exp
+
+and call_at_in_path (path : path) : region option =
   match path.it with
-  | RootP -> true
-  | IdxP (path, exp) -> is_pure_path path && is_pure_exp exp
+  | RootP -> None
+  | IdxP (path, exp) ->
+      first_some (call_at_in_path path) (fun () -> call_at_in_exp exp)
   | SliceP (path, exp_i, exp_n) ->
-      is_pure_path path && is_pure_exp exp_i && is_pure_exp exp_n
-  | DotP (path, _) -> is_pure_path path
+      first_some (call_at_in_path path) (fun () ->
+          first_some (call_at_in_exp exp_i) (fun () -> call_at_in_exp exp_n))
+  | DotP (path, _) -> call_at_in_path path
 
 let analyze_exps_as_bind (ctx : Ctx.t) (iterctx : Iterctx.t) (exps : exp list) :
     Ctx.t * VEnv.t * exp list * prem list =
@@ -110,9 +114,12 @@ let analyze_exps_as_bind (ctx : Ctx.t) (iterctx : Iterctx.t) (exps : exp list) :
 let analyze_exp_as_bound (ctx : Ctx.t) (exp : exp) : unit =
   let binds = Collectbind.collect_exp ctx exp in
   if not (BEnv.is_empty binds) then
-    error exp.at
-      (Format.asprintf "expression has free variable(s): %s"
-         (BEnv.to_string binds))
+    error ~code:Free_variable_in_expression exp.at
+      (Format.asprintf "expression uses unbound %s"
+         (BEnv.describe_variables binds))
+      ~detail:
+        "Every variable here must already be bound by an earlier part of the \
+         rule, such as the conclusion's input position or a preceding premise."
 
 let analyze_exps_as_bound (ctx : Ctx.t) (exps : exp list) : unit =
   List.iter (analyze_exp_as_bound ctx) exps
@@ -142,11 +149,47 @@ let analyze_args_as_bind (ctx : Ctx.t) (args : arg list) :
 
 let analyze_args_as_bind_shallow (ctx : Ctx.t) (args : arg list) :
     Ctx.t * VEnv.t * arg list * prem list =
-  check
-    (Shallowbind.check_shallow_args args)
-    (List.hd args).at
-    (Format.asprintf "bindings are not shallow: %s"
-       (Il.Print.string_of_args args));
+  let invalid_arg =
+    List.find_opt (fun arg -> not (Shallowbind.check_shallow_arg arg)) args
+  in
+  (match invalid_arg with
+  | Some arg ->
+      error ~code:Table_row_binding_shape arg.at
+        (Format.asprintf
+           "table row pattern must be a variable or variant case, but got %s"
+           (Diagnostic.quote (Il.Print.string_of_arg arg)))
+        ~detail:
+          "Either form may be upcast. Variant cases may contain only variables."
+  | None -> ());
+  let rec check_repeated seen exp =
+    match exp.it with
+    | VarE id when VEnv.mem id ctx.venv -> seen
+    | VarE id -> (
+        match IdMap.find_opt id seen with
+        | Some first_at ->
+            error ~code:Repeated_table_binding id.at
+              (Format.asprintf "table row pattern binds `%s` more than once"
+                 id.it)
+              ~related:[ (first_at, "first bound here") ]
+              ~detail:
+                "Each table parameter contributes one independent match \
+                 pattern. Reusing a variable would add an equality condition \
+                 between positions, which table rows do not support."
+        | None -> IdMap.add id id.at seen)
+    | UpCastE (_, exp) | IterE (exp, _) -> check_repeated seen exp
+    | CaseE notexp -> List.fold_left check_repeated seen (Mixfix.args notexp)
+    | _ ->
+        (* [check_shallow_arg] rejects every other expression constructor. *)
+        assert false
+  in
+  let check_repeated_arg seen arg =
+    match arg.it with
+    | ExpA exp -> check_repeated seen exp
+    | DefA _ ->
+        (* [check_shallow_arg] rejects [DefA] arguments. *)
+        assert false
+  in
+  List.fold_left check_repeated_arg IdMap.empty args |> ignore;
   let binds = Collectbind.collect_args ctx args in
   let venv = BEnv.flatten binds in
   let ctx, renv_multi, args =
@@ -157,13 +200,8 @@ let analyze_args_as_bind_shallow (ctx : Ctx.t) (args : arg list) :
   let sideconditions_multi =
     Multibind.gen_sideconditions binds Iterctx.empty renv_multi
   in
-  check
-    (List.is_empty sideconditions_multi)
-    (List.hd args).at
-    (Format.asprintf
-       "shallow binding should not generate sideconditions, but got: %s"
-       (List.map Il.Print.string_of_prem sideconditions_multi
-       |> String.concat ", "));
+  (* A row binds each variable once, so no equality premise is needed. *)
+  assert (List.is_empty sideconditions_multi);
   let ctx, renv_partial, _, args =
     Partialbind.rename_args ctx (VEnv.dom venv) Partialbind.REnv.empty
       Iterctx.empty args
@@ -174,33 +212,42 @@ let analyze_args_as_bind_shallow (ctx : Ctx.t) (args : arg list) :
   (ctx, venv, args, prems)
 
 let analyze_arg_as_bound_shallow (ctx : Ctx.t) (arg : arg) : unit =
-  check
-    (Shallowbind.check_shallow_arg arg)
-    arg.at
-    (Format.asprintf "bindings are not shallow: %s"
-       (Il.Print.string_of_arg arg));
+  (* [analyze_args_as_bind_shallow] has validated [arg]. *)
+  assert (Shallowbind.check_shallow_arg arg);
   let binds = Collectbind.collect_arg ctx arg in
-  if not (BEnv.is_empty binds) then
-    error arg.at
-      (Format.asprintf "argument has free variable(s): %s"
-         (BEnv.to_string binds))
+  (* Every variable bound by the row has already been added to [ctx]. *)
+  assert (BEnv.is_empty binds)
 
 let analyze_args_as_bound_shallow (ctx : Ctx.t) (args : arg list) : unit =
   List.iter (analyze_arg_as_bound_shallow ctx) args
 
 (* Premise binding analysis *)
 
-let rec is_pure_prem (prem : prem) : bool =
-  match prem.it with
-  | RulePr _ | IfPr _ | IfHoldPr _ | IfNotHoldPr _ -> false
-  | LetPr (_, exp_r) -> is_pure_exp exp_r
-  | IterPr (prem, _) -> is_pure_prem prem
-  | DebugPr exp -> is_pure_exp exp
+type otherwise_failure =
+  | Relation_call of region
+  | Function_call of region
+  | Condition of region
 
-let check_prems_in_else (at : region) (prems : prem list) : unit =
-  check
-    (List.for_all is_pure_prem prems)
-    at "cannot have non-pure premises alongside an otherwise premise"
+let rec otherwise_failure (prem : prem) : otherwise_failure option =
+  match prem.it with
+  | RulePr _ | IfHoldPr _ | IfNotHoldPr _ -> Some (Relation_call prem.at)
+  | IfPr _ -> Some (Condition prem.at)
+  | LetPr (_, exp) | DebugPr exp ->
+      Option.map (fun at -> Function_call at) (call_at_in_exp exp)
+  | IterPr (prem, _) -> otherwise_failure prem
+
+let check_prems_in_otherwise (prems : prem list) : unit =
+  match List.find_map otherwise_failure prems with
+  | Some (Relation_call at) ->
+      error ~code:Relation_call_in_otherwise at
+        "an `otherwise` body cannot call a relation"
+  | Some (Function_call at) ->
+      error ~code:Function_call_in_otherwise at
+        "an `otherwise` body cannot call a function"
+  | Some (Condition at) ->
+      error ~code:Condition_in_otherwise at
+        "an `otherwise` body cannot test a condition"
+  | None -> ()
 
 let rec analyze_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (prem : prem) :
     Ctx.t * VEnv.t * prem * prem list =
@@ -212,12 +259,13 @@ let rec analyze_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (prem : prem) :
   | IfNotHoldPr (id, notexp) ->
       analyze_if_not_hold_prem ctx iterctx prem.at id notexp
   | LetPr _ ->
-      error prem.at "let premise should appear only after bind analysis"
+      (* [LetPr] is created later in binding analysis. *)
+      assert false
   | IterPr (prem, (iter, vars_bound, [])) ->
       analyze_iter_prem ctx iterctx prem iter vars_bound
   | IterPr _ ->
-      error prem.at
-        "iterated premise vars_bind should be empty before binding analysis"
+      (* The iteration binding list is initially empty. *)
+      assert false
   | DebugPr exp -> analyze_debug_prem ctx iterctx prem.at exp
 
 and analyze_rule_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at : region)
@@ -262,10 +310,16 @@ and analyze_if_eq_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at_prem : region)
   | false, true -> analyze_let_prem ctx at_prem iterctx exp_l binds_l exp_r
   | true, false -> analyze_let_prem ctx at_prem iterctx exp_r binds_r exp_l
   | false, false ->
-      error at
+      error ~code:Bind_both_sides_of_equality at
         (Format.asprintf
-           "cannot bind on both sides of an equality: (left) %s, (right) %s"
-           (BEnv.to_string binds_l) (BEnv.to_string binds_r))
+           "both sides of an equality bind new variables: left side binds %s, \
+            right side binds %s"
+           (BEnv.describe_variables binds_l)
+           (BEnv.describe_variables binds_r))
+        ~detail:
+          "An `=` premise reads as a comparison when both sides are already \
+           bound, or as a binder when one side is. With new variables on both \
+           sides it fits neither."
 
 and analyze_if_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at : region)
     (exp : exp) : Ctx.t * VEnv.t * prem * prem list =
@@ -397,7 +451,7 @@ let analyze_rulepath ?(is_else : bool = false) (ctx_local : Ctx.t)
     (exps_output : exp list) : Al.rulepath =
   let ctx_local, prems = analyze_prems ctx_local prems in
   let prems = prems_unified @ prems in
-  if is_else then check_prems_in_else id_rule.at prems;
+  if is_else then check_prems_in_otherwise prems;
   analyze_exps_as_bound ctx_local exps_output;
   (id_rule, prems, exps_output)
 
@@ -475,7 +529,7 @@ let analyze_clause ?(is_else : bool = false) (ctx : Ctx.t) (clause : clause) :
   let ctx, prems = analyze_prems ctx prems in
   analyze_exp_as_bound ctx exp;
   let prems = sideconditions @ prems in
-  if is_else then check_prems_in_else clause.at prems;
+  if is_else then check_prems_in_otherwise prems;
   (args, exp, prems) $ clause.at
 
 let analyze_elseclause (ctx : Ctx.t) (elseclause : elseclause) : elseclause =
@@ -483,11 +537,19 @@ let analyze_elseclause (ctx : Ctx.t) (elseclause : elseclause) : elseclause =
 
 (* Table row binding analysis *)
 
+let error_pattern_type_without_cases code ?(related = []) (typ : typ) : 'a =
+  error ~code ~related typ.at
+    (Format.asprintf
+       "table row patterns require a type with declared cases, but got %s"
+       (Diagnostic.quote (Print.string_of_typ typ)))
+    ~detail:
+      "The declared cases determine which patterns the table rows must cover."
+
 let pattern_set_covered_by_typ (ctx : Ctx.t) (typ : typ) : Pattern.PatternSet.t
     =
   match typ.it with
   | VarT (tid, _) -> (
-      let td = Ctx.find_typdef ctx tid in
+      let typdef_at, td = Ctx.find_typdef_with_at ctx tid in
       match td with
       | Defined (_, deftyp) -> (
           match deftyp.it with
@@ -496,29 +558,34 @@ let pattern_set_covered_by_typ (ctx : Ctx.t) (typ : typ) : Pattern.PatternSet.t
               |> List.map (fun (nottyp, _, _) -> nottyp)
               |> Pattern.PatternSet.of_list
           | _ ->
-              error typ.at
-                ("non-variant type not supported in patterns: "
-               ^ Print.string_of_typ typ))
-      | _ ->
-          error typ.at
-            ("non-variant type not supported in patterns: "
-           ^ Print.string_of_typ typ))
-  | _ -> error typ.at "expected variable type"
+              error_pattern_type_without_cases Pattern_non_variant_type typ
+                ~related:[ (typdef_at, "type declared here") ])
+      | Extern ->
+          error_pattern_type_without_cases Pattern_extern_type typ
+            ~related:[ (typdef_at, "type declared here") ]
+      | Param | Defining _ ->
+          (* [Ctx.load_spec] adds only [Defined] and [Extern] entries. *)
+          assert false)
+  | _ -> error_pattern_type_without_cases Pattern_named_variant_expected typ
 
 let pattern_set_covered_by_exp (ctx : Ctx.t) (exp : exp) : Pattern.PatternSet.t
     =
-  match exp.it with
-  | VarE _ -> pattern_set_covered_by_typ ctx (exp.note $ exp.at)
-  | UpCastE (_, { it = VarE _; note; at }) ->
-      pattern_set_covered_by_typ ctx (note $ at)
-  | UpCastE (_, { it = CaseE notexp; at; _ }) ->
-      let mixop, exps = Mixfix.split notexp in
-      [ Mixfix.fill mixop (List.map (fun exp -> exp.note $ exp.at) exps) $ at ]
-      |> Pattern.PatternSet.of_list
-  | _ -> assert false
+  match Shallowbind.classify_exp exp with
+  | Some (Shallowbind.Variable typ) -> pattern_set_covered_by_typ ctx typ
+  | Some (Shallowbind.Case nottyp) -> Pattern.PatternSet.singleton nottyp
+  | None ->
+      (* [analyze_tablerow] rejects unclassified row expressions. *)
+      assert false
 
 let check_valid_match_tablerows (ctx : Ctx.t) (at : region)
-    (typs_match : typ list) (tablerows : Al.tablerow list) : unit =
+    (pattern_sets_total : Pattern.PatternSets.t) (tablerows : Al.tablerow list)
+    : unit =
+  let pattern_region tablerow =
+    let exps_signature, _, _, _ = tablerow.it in
+    match exps_signature with
+    | [] -> tablerow.at
+    | _ -> over_region (List.map (fun exp -> exp.at) exps_signature)
+  in
   (* Split the last wildcard row (a "closer") if it exists *)
   let split_last_wildcard_tablerows tablerows =
     let rec split_last_wildcard_tablerows' tablerows_rev = function
@@ -547,33 +614,61 @@ let check_valid_match_tablerows (ctx : Ctx.t) (at : region)
     List.map
       (fun tablerow ->
         let exps_signature, _, _, _ = tablerow.it in
-        List.map (pattern_set_covered_by_exp ctx) exps_signature)
+        let pattern_sets =
+          List.map (pattern_set_covered_by_exp ctx) exps_signature
+        in
+        (tablerow, pattern_sets))
       tablerows
   in
-  let pattern_set_overlap_opt = Pattern.find_overlap pattern_sets_tablerows in
-  check
-    (Option.is_none pattern_set_overlap_opt)
-    at
-    (Format.asprintf "table rows have overlapping patterns: %s"
-       (match pattern_set_overlap_opt with
-       | Some (pattern_sets_l, pattern_sets_r) ->
-           Pattern.PatternSets.to_string pattern_sets_l
-           ^ " and "
-           ^ Pattern.PatternSets.to_string pattern_sets_r
-       | None -> ""));
-  (* Check that table rows are exhaustive *)
-  let pattern_sets_total =
-    List.map (pattern_set_covered_by_typ ctx) typs_match
+  let rec find_overlap = function
+    | [] -> None
+    | (tablerow, pattern_sets) :: rest -> (
+        match
+          List.find_opt
+            (fun (_, pattern_sets_other) ->
+              Pattern.has_overlap pattern_sets pattern_sets_other)
+            rest
+        with
+        | Some (tablerow_other, pattern_sets_other) ->
+            Some (tablerow, pattern_sets, tablerow_other, pattern_sets_other)
+        | None -> find_overlap rest)
   in
+  (match find_overlap pattern_sets_tablerows with
+  | Some (tablerow_earlier, _, tablerow_later, _) ->
+      error ~code:Pattern_overlap
+        (pattern_region tablerow_later)
+        "table row pattern overlaps an earlier row"
+        ~related:
+          [ (pattern_region tablerow_earlier, "earlier overlapping pattern") ]
+  | None -> ());
+  (* Check that table rows are exhaustive *)
+  let pattern_sets_tablerows = List.map snd pattern_sets_tablerows in
   let pattern_sets_group_missing =
     Pattern.find_missing pattern_sets_total pattern_sets_tablerows
   in
-  check
-    (Option.is_some closer_opt || pattern_sets_group_missing = [])
-    at
-    (Format.asprintf "table rows are missing patterns: %s"
-       (String.concat ", "
-          (List.map Pattern.PatternSets.to_string pattern_sets_group_missing)))
+  if Option.is_none closer_opt && pattern_sets_group_missing <> [] then
+    let missing =
+      List.map Pattern.PatternSets.to_source_string pattern_sets_group_missing
+    in
+    let detail =
+      "Uncovered patterns: "
+      ^ (missing |> List.map Diagnostic.quote |> String.concat ", ")
+      ^ "."
+    in
+    let primary =
+      match List.rev tablerows with
+      | tablerow :: _ -> after_region tablerow.at
+      | [] -> at
+    in
+    let related =
+      pattern_sets_group_missing
+      |> List.concat_map (List.concat_map Pattern.PatternSet.elements)
+      |> List.sort_uniq (fun nottyp_l nottyp_r ->
+             Stdlib.compare nottyp_l.at nottyp_r.at)
+      |> List.map (fun nottyp -> (nottyp.at, "case in uncovered pattern"))
+    in
+    error ~code:Pattern_incomplete ~detail ~related primary
+      "table rows do not cover every declared case"
 
 let analyze_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Al.tablerow =
   let args, exp = tablerow.it in
@@ -602,7 +697,10 @@ let analyze_tablerows (ctx : Ctx.t) (at : region) (params : param list)
     |> List.map (fun param ->
            match param.it with ExpP typ_il -> typ_il | _ -> assert false)
   in
-  check_valid_match_tablerows ctx at typs_match tablerows;
+  let pattern_sets_total =
+    List.map (pattern_set_covered_by_typ ctx) typs_match
+  in
+  check_valid_match_tablerows ctx at pattern_sets_total tablerows;
   tablerows
 
 (* Definition binding analysis *)

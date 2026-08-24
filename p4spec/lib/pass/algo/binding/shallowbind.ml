@@ -12,18 +12,31 @@ open Util.Source
 
 (* Expressions *)
 
-let check_shallow_exp (exp : exp) : bool =
-  let rec is_iterated_var exp =
-    match exp.it with
-    | VarE _ -> true
-    | IterE (exp, _) -> is_iterated_var exp
-    | _ -> false
-  in
+type pattern = Variable of typ | Case of nottyp
+
+let rec is_iterated_var exp =
   match exp.it with
   | VarE _ -> true
-  | UpCastE (_, { it = VarE _; _ }) | UpCastE (_, { it = CaseE _; _ }) -> true
-  | CaseE notexp -> notexp |> Mixfix.args |> List.for_all is_iterated_var
+  | IterE (exp, _) -> is_iterated_var exp
   | _ -> false
+
+let case_pattern (at : region) (notexp : notexp) : pattern =
+  let mixop, exps = Mixfix.split notexp in
+  let nottyp =
+    Mixfix.fill mixop (List.map (fun exp -> exp.note $ exp.at) exps) $ at
+  in
+  Case nottyp
+
+let classify_exp (exp : exp) : pattern option =
+  match exp.it with
+  | VarE _ -> Some (Variable (exp.note $ exp.at))
+  | UpCastE (_, { it = VarE _; note; at }) -> Some (Variable (note $ at))
+  | UpCastE (_, { it = CaseE notexp; _ }) -> Some (case_pattern exp.at notexp)
+  | CaseE notexp when notexp |> Mixfix.args |> List.for_all is_iterated_var ->
+      Some (case_pattern exp.at notexp)
+  | _ -> None
+
+let check_shallow_exp (exp : exp) : bool = classify_exp exp |> Option.is_some
 
 let check_shallow_exps (exps : exp list) : bool =
   List.for_all check_shallow_exp exps

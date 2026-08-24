@@ -1,6 +1,4 @@
 include Util.Attempt
-open Error
-open Util.Source
 
 (* Monadic interface *)
 
@@ -10,4 +8,6 @@ let ( let* ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
 let ( let+ ) (attempt : 'a attempt) (f : 'a -> 'b) : 'b =
   match attempt with
   | Ok a -> f a
-  | Fail failtraces -> error no_region (string_of_failtraces_short failtraces)
+  | Fail _ ->
+      (* Corresponding inputs in a relation's rules have equivalent types. *)
+      assert false
