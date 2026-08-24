@@ -58,13 +58,13 @@ configuration
     <callstack> .List </callstack>
     <log>       .List </log>
     <result>    .K    </result>
-    <ffiinit>   0     </ffiinit>
   </al>
 ```
 
 - **`initFFI()`** — at the very *head* of `<k>`, ahead of `$PGM`, so the OCaml
-  runtime behind the external interface is started before any rule that could
-  reach a builtin (§7). Ordering is guaranteed by `<k>` sequencing, not a flag.
+  runtime behind the external interface is started, and its runner built for the
+  target spec, before any rule that could reach a builtin (§7). Ordering is
+  guaranteed by `<k>` sequencing, not a flag.
 - **`<k>`** — the AL script arrives as `$PGM` and is *consumed* by loading:
   [al/3-context.k](spec-meta-k/al/3-context.k) peels definitions off its head
   into the global cells (this is `$load` / `$load_typdef` / `$load_reldef` /
@@ -82,9 +82,6 @@ configuration
 - **`<log>`** — where `debug` premises accumulate, via a `logDebug(Val)` item.
 - **`<result>`** — the final answer; `krun` prints the whole configuration, so
   this is the cell to read.
-- **`<ffiinit>`** — `ml_init_c`'s return value: `1` once `initFFI()` has
-  reduced, so the final configuration carries proof that the OCaml runtime came
-  up. A `0` means it never did (§7).
 
 ## 3. Running
 
@@ -285,9 +282,9 @@ by hand against a `.json` file when debugging the wire.
 **A fourth binary target**, [p4spec/bin/kffi.ml](p4spec/bin/kffi.ml), built by
 dune as an *object* rather than an executable (`(modes object)`, which bundles
 the OCaml runtime in). It is the in-process equivalent of `extern`: same wire,
-same dispatch, but registered under the name `ml_eval` for the C shim to reach
-via `caml_callback2`, and memoizing its runners since the process now outlives
-the call (§7).
+same dispatch, but registered under the names `ml_init`/`ml_eval` for the C
+shim to reach via `caml_callback`, and holding its runner across calls since the
+process now outlives them (§7).
 
 **Two new library modules**, exposed through `Interface.SpecTec_AL`
 ([p4spec/lib/interface/interface.ml](p4spec/lib/interface/interface.ml)):
@@ -497,29 +494,31 @@ The crossing is K's **FFI** (libffi), which can call any plain C ABI function.
 OCaml cannot expose one directly, so a thin C shim sits between:
 
 ```
-K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback2-->  p4spec/bin/kffi.ml
+K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->  p4spec/bin/kffi.ml
 ```
 
 This replaced a `#system("./spectec-boot extern ...")` shell-out that forked a
 fresh process per call. The shape is the one [examples/k/](examples/k/) proves
-out and its README recommends for real use: **one** `ml_eval_c(spec, req) ->
-char *` carrying a serialized request, with dispatch in OCaml.
+out and its README recommends for real use: **one** `ml_eval_c(req) -> char *`
+carrying a serialized request, with dispatch in OCaml — preceded by a single
+`ml_init_c(spec)` that names the target spec once and for all.
 
 - **The OCaml runtime lives inside the interpreter.** `kffi.exe.o` is built by
   dune with `(modes object)`, which bundles the whole runtime into one object,
   and `kompile -ccopt` links it and `shim.o` into `al-kompiled/interpreter`.
   `krun` is then a single long-lived process, which is what makes everything
   below possible — and what couples the interpreter to `p4spec/` (§3).
-- **Initialization is explicit.** The shim assumes `ml_init_c` has run
-  (`caml_startup` plus resolving the `ml_eval` closure) and, following the
-  example, other entry points do not check. K guarantees it by *sequencing*:
-  `initFFI()` sits at the head of `<k>`, so nothing can be touched until it
-  reduces. Its result lands in `<ffiinit>` rather than being dropped — required,
-  since `#ffiCall` is a `[function]` and an unconsumed pure term can simply be
-  discarded, and useful, since `<ffiinit> 1 </ffiinit>` is then proof in the
-  final configuration that the runtime came up. Every run pays this, including
-  ones making no external call at all; `caml_startup` builds no spec, so it is
-  small.
+- **Initialization is explicit, and eager.** The shim assumes `ml_init_c(spec)`
+  has run — `caml_startup`, resolving the `ml_init`/`ml_eval` closures, and
+  building the runner for the target spec — and, following the example, other
+  entry points do not check. K guarantees it by *sequencing*: `initFFI()` sits at
+  the head of `<k>`, reads the target spec out of `<specdir>`, and nothing can be
+  touched until it reduces. Its `Int` result is discarded, but only after being
+  forced through `#seqK` — required, since `#ffiCall` is a `[function]` and an
+  unconsumed pure term can simply be discarded. Every run pays the runner build,
+  including ones making no external call at all (`examples/add.watsup`); that is
+  the cost of eager init, and it buys a wire on which no individual call carries
+  a spec path.
 - **The transport is a chain of pure `[function]`s**, not `<k>`-cell rules. The
   old chain had to be cell rules — `#write`/`#close` have sort `K`, and
   `#system` returns a `#systemResult` needing a continuation — and neither
@@ -532,12 +531,12 @@ char *` carrying a serialized request, with dispatch in OCaml.
   pure to K, so each is threaded through an argument position that must be
   evaluated before the result escapes. This is why the chain is several small
   helpers rather than one expression.
-- **Buffers.** The spec path and the request are `#alloc`'d under *distinct*
-  key constructors (`allocKeySpec`/`allocKeyReq`) so a request equal to its spec
-  path cannot collide on one buffer; only addresses and keys travel down the
-  chain, never the `Bytes` terms, since freeing a buffer a live `Bytes` still
-  references is UB. All three buffers — the shim's `malloc`'d reply and the two
-  inputs — are released before the decoded string escapes. Safety relies on
+- **Buffers.** The spec path (once, at init) and each request are `#alloc`'d
+  under *distinct* key constructors (`allocKeySpec`/`allocKeyReq`) so the two can
+  never collide on one buffer; only addresses and keys travel down the chain,
+  never the `Bytes` terms, since freeing a buffer a live `Bytes` still
+  references is UB. Both of a crossing's buffers — the shim's `malloc`'d reply
+  and the request — are released before the decoded string escapes. Safety relies on
   there never being two crossings in flight, which holds because a `[function]`
   application reduces within one rewrite step and the LLVM backend is
   single-threaded: **`--enable-search` is unsupported.**
@@ -550,13 +549,15 @@ char *` carrying a serialized request, with dispatch in OCaml.
   has no handler in C and aborts the interpreter with no configuration dump, so
   `kffi.ml` mirrors every one of `boot.ml`'s handlers but returns the
   `{"error": …}` value described above instead of `exit 1`. The shim adds
-  `caml_callback2_exn` + `Is_exception_result` as defence in depth.
-- **Runners are memoized** per spec path in `kffi.ml`, so an extern call
-  elaborates the lower spec once rather than per call. Building a runner also
-  installs the `$print_` unparser (`Runner_target.init` → `Interface.init`), so
-  no separate printer-init table is needed. Caveat: `Interface.P4.unparser` is a
-  process-global ref, so if one run built runners for *two* paths the last would
-  win; `kffi.ml` warns on stderr when that happens.
+  `caml_callback_exn` + `Is_exception_result` as defence in depth. `ml_init` is
+  deliberately *not* total: it runs before any spec-level work, so a bad spec
+  path is a defect in the invocation with no configuration yet worth dumping.
+- **One runner, built once** at init in `kffi.ml` and held in a `ref`, so an
+  extern call elaborates the lower spec never rather than per call. Building it
+  also installs the `$print_` unparser (`Runner_target.init` → `Interface.init`),
+  so no separate printer-init step is needed. One runner suffices because a run
+  names exactly one target spec — which is also what `Interface.P4.unparser`,
+  a process-global ref, requires.
 - The spec a builtin or extern resolves against is the **target spec** — the
   spec the run is executing — and it is supplied by the *invocation*, as the
   `$SPEC` configuration variable landing in `<specdir>`. It used to be
@@ -591,7 +592,7 @@ because each shaped decisions elsewhere in the port.
 - ~~**One process spawn per call**~~ (~13 ms measured), with an **extern** call
   far worse — it parsed and elaborated the whole lower spec from scratch, and
   the lower runner's caches died with the process. **Resolved:** no `fork`/`exec`
-  at all, and `kffi.ml` memoizes the runner per spec path, so the lower spec is
+  at all, and `kffi.ml` builds the runner once at init, so the lower spec is
   elaborated once.
 
 Standing problems:

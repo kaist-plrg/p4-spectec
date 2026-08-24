@@ -10,7 +10,8 @@ module AL-CONFIG
   imports LIST
 
   syntax KItem ::= logDebug(Val)
-                 // Starts the OCaml runtime behind the external interface.
+                 // Starts the OCaml runtime behind the external interface and
+                 // builds the runner for the target spec in `<specdir>`.
                  // Seeded at the *head* of `<k>` below, ahead of `$PGM`, so
                  // that it necessarily runs before any rule that could reach a
                  // builtin; the C shim assumes this has happened and does not
@@ -55,11 +56,6 @@ module AL-CONFIG
       <callstack> .List </callstack>
       <log> .List </log>
       <result> .K </result>
-      // `ml_init_c`'s return value, and hence a witness that the OCaml
-      // runtime came up: `1` once `initFFI()` has reduced, `0` if it never
-      // did.  Landing it here is also what stops K discarding the call as an
-      // unused pure term -- see al/4.2-extern-ffi.k.
-      <ffiinit> 0 </ffiinit>
     </al>
 
   syntax LocalSave ::= localSave(Map, Map, Map) [symbol(localSave)]

@@ -4,7 +4,7 @@
 // 4.1-extern-json.k, which this module re-exports.  Only the crossing itself
 // lives here.  The wire format is unchanged.
 //
-//   K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback2-->
+//   K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->
 //   p4spec/bin/kffi.ml
 //
 // This replaces an earlier `#system("./spectec-boot extern ...")` shell-out,
@@ -18,7 +18,7 @@
 //   - `$fresh_typeId` works.  It closes over a per-process counter, which a
 //     fresh process per call reset every time.
 //   - An extern call no longer re-elaborates the lower spec (~1.2 s); kffi.ml
-//     memoizes the runner per spec path.
+//     builds the runner once, at init, for the run's one target spec.
 //
 // RUNTIME DEPENDENCY: the C shim and the OCaml object must be linked into
 // `al-kompiled/interpreter` -- `make k-build` does this, and asserts the
@@ -42,35 +42,60 @@ module AL-EXTERN-FFI
   // ==========================================================================
   // Initialization
   //
-  // The shim assumes `ml_init_c` has run: it starts the OCaml runtime and
-  // resolves the `ml_eval` closure, and no other entry point checks that this
-  // happened (the trade examples/k/shim.c documents).  So K must guarantee it,
-  // which it does by sequencing: `initFFI()` sits at the very head of `<k>` in
-  // the configuration (al/0-config.k), ahead of `$PGM`, and nothing can be
-  // touched until it rewrites to `.K`.  No flag is involved.
+  // The shim assumes `ml_init_c` has run: it starts the OCaml runtime,
+  // resolves the `ml_init`/`ml_eval` closures and builds the runner for the
+  // target spec, and no other entry point checks that this happened (the trade
+  // examples/k/shim.c documents).  So K must guarantee it, which it does by
+  // sequencing: `initFFI()` sits at the very head of `<k>` in the
+  // configuration (al/0-config.k), ahead of `$PGM`, and nothing can be touched
+  // until it rewrites to `.K`.  No flag is involved.
   //
-  // Consequence worth stating: *every* run now starts the OCaml runtime, even
-  // one making no external call at all (`examples/add.watsup`).  That is the
-  // cost of explicit init.  `caml_startup` builds no spec, so it is small.
+  // Consequence worth stating: *every* run now builds the runner for its
+  // target spec up front, even one making no external call at all
+  // (`examples/add.watsup`).  That is the cost of eager init, and it buys a
+  // simpler wire: `ml_eval_c` then takes only the request, since the host
+  // already knows which spec to answer against.
   // ==========================================================================
 
-  //   The result -- always 1 -- is landed in `<ffiinit>` rather than dropped,
-  //   for two reasons.  It is *required*: `#ffiCall` is a `[function]`, so a
-  //   rule rewriting `initFFI() => .K` without consuming the result would let
-  //   K discard the whole call as an unused pure term, exactly the hazard
-  //   `#seqString` exists to prevent below.  And it makes the run
-  //   self-documenting: `<ffiinit> 1 </ffiinit>` in the final configuration is
-  //   proof the OCaml runtime came up, while `0` means `initFFI()` never
-  //   reduced -- check it is still at the head of `<k>`.  If it is removed
-  //   altogether the failure mode is a segfault with no diagnostic, and this
-  //   cell is what makes that diagnosable after the fact.
-  rule <k> initFFI() => .K ... </k>
-       <ffiinit> _ => callInitFFI() </ffiinit>
+  //   `initFFI()` reads the target spec out of `<specdir>` and hands it to
+  //   `ml_init_c`, which is the only point the path crosses the wire.
+  //
+  //   The `Int` result -- always 1 -- is *discarded*, but only after being
+  //   forced: `#ffiCall` is a `[function]`, so `initFFI() => .K` on its own
+  //   would let K drop the whole call as an unused pure term.  `#seqK` threads
+  //   it through an argument position that must be evaluated before the `.K`
+  //   escapes, exactly as `#seqString` does for the transport below.
+  rule <k> initFFI() => #seqK(callInitFFI(Spec), .K) ... </k>
+       <specdir> Spec:String </specdir>
 
-  syntax Int ::= "callInitFFI" "(" ")"  [function, symbol(callInitFFI)]
-  rule callInitFFI()
-    => Bytes2Int(#ffiCall(#functionAddress("ml_init_c"), .List, .List, #sint64),
-                 LE, Signed)
+  syntax K ::= "#seqK" "(" K "," K ")"          [function, symbol(seqK)]
+  rule #seqK(_, X) => X
+
+  //   Same `#alloc`/`#nativeWrite`/`#free` dance as the transport, for the one
+  //   string argument.  See the two invariants stated there; both apply.
+  syntax Int ::= callInitFFI(String)            [function, symbol(callInitFFI)]
+  rule callInitFFI(Spec:String)
+    => initAlloc(Spec, #alloc(allocKeySpec(Spec), lengthString(Spec) +Int 1, 1))
+
+  syntax Int ::= initAlloc(String, Bytes)       [function, symbol(initAlloc)]
+  rule initAlloc(Spec:String, Buf:Bytes)
+    => initCall(Spec, #address(Buf),
+                #nativeWrite(#address(Buf), String2Bytes(Spec +String "\x00")))
+
+  syntax Int ::= initCall(String, Int, K)       [function, symbol(initCall)]
+  rule initCall(Spec:String, Addr:Int, _)
+    => initFree(Spec,
+         Bytes2Int(#ffiCall(#functionAddress("ml_init_c"),
+                            ListItem(Int2Bytes(8, Addr, LE)),
+                            ListItem(#pointer),
+                            #sint64),
+                   LE, Signed))
+
+  syntax Int ::= initFree(String, Int)          [function, symbol(initFree)]
+  rule initFree(Spec:String, R:Int) => #seqInt(#free(allocKeySpec(Spec)), R)
+
+  syntax Int ::= "#seqInt" "(" K "," Int ")"    [function, symbol(seqInt)]
+  rule #seqInt(_, X) => X
 
   // ==========================================================================
   // The transport
@@ -85,24 +110,25 @@ module AL-EXTERN-FFI
   // rather than six, and the intermediate `KItem` sorts, the `<builtinreq>`
   // cell and its first-call/later-call split are all gone.
   //
-  // The chain mirrors `#callStr` in examples/k/mlffi.k, but with *two* input
-  // buffers -- the spec path and the request:
+  // The chain mirrors `#callStr` in examples/k/mlffi.k, over one input buffer
+  // -- the request.  The spec path is not sent: `initFFI()` above already gave
+  // it to `ml_init_c`, which built the runner the host answers against.
   //
-  //   1. `#alloc` + `#nativeWrite` both, NUL-terminated
-  //   2. `#ffiCall(ml_eval_c, specPtr, reqPtr)` -> a `#pointer`
+  //   1. `#alloc` + `#nativeWrite` the request, NUL-terminated
+  //   2. `#ffiCall(ml_eval_c, reqPtr)` -> a `#pointer`
   //   3. `ml_cstrlen_c` to size the reply
   //   4. `#nativeRead` that many bytes back
-  //   5. `ml_free_c` the shim's buffer, `#free` both of ours
+  //   5. `ml_free_c` the shim's buffer, `#free` ours
   //
   // Two invariants held deliberately:
   //
   //   - **`#alloc` keys must not alias.**  `#alloc`'s first argument is a key
-  //     identifying the buffer, so the spec path and the request are wrapped
-  //     (`allocKeySpec`/`allocKeyReq`) rather than used bare: otherwise a
-  //     request that happened to equal its spec path would collide on one
-  //     buffer.  Safety further relies on there never being two `externEval`s
-  //     in flight, which holds because a `[function]` application reduces
-  //     within a single rewrite step and the LLVM backend is single-threaded.
+  //     identifying the buffer, so the request is wrapped (`allocKeyReq`)
+  //     rather than used bare: it must not collide with the `allocKeySpec`
+  //     buffer of `initFFI()`, nor with any other live allocation.  Safety
+  //     further relies on there never being two `externEval`s in flight, which
+  //     holds because a `[function]` application reduces within a single
+  //     rewrite step and the LLVM backend is single-threaded.
   //     **`--enable-search` is unsupported.**
   //
   //   - **Never carry the `Bytes` term forward, only its `#address` and its
@@ -112,59 +138,47 @@ module AL-EXTERN-FFI
   //     on it is safe.
   // ==========================================================================
 
-  syntax String ::= externEval(String, String)      [function, symbol(externEval)]
+  syntax String ::= externEval(String)              [function, symbol(externEval)]
 
   //   `#alloc` keys.  `#alloc` is keyed by a `KItem`, and `#free` takes that
-  //   same key back rather than the buffer, so the keys -- not the `Bytes` --
-  //   are what travel down the chain.  Two distinct constructors, so the two
-  //   buffers of one call can never collide on one key even if a request
-  //   happened to equal its spec path.
+  //   same key back rather than the buffer, so the key -- not the `Bytes` --
+  //   is what travels down the chain.
   syntax KItem ::= allocKeySpec(String)             [symbol(allocKeySpec)]
                  | allocKeyReq(String)              [symbol(allocKeyReq)]
 
-  rule externEval(Spec:String, Req:String)
-    => evSpecAlloc(Spec, Req,
-                   #alloc(allocKeySpec(Spec), lengthString(Spec) +Int 1, 1))
+  rule externEval(Req:String)
+    => evReqAlloc(Req, #alloc(allocKeyReq(Req), lengthString(Req) +Int 1, 1))
 
-  syntax String ::= evSpecAlloc(String, String, Bytes) [function, symbol(evSpecAlloc)]
-  rule evSpecAlloc(Spec:String, Req:String, BufSpec:Bytes)
-    => evReqAlloc(Spec, Req, #address(BufSpec),
-                  #nativeWrite(#address(BufSpec), String2Bytes(Spec +String "\x00")),
-                  #alloc(allocKeyReq(Req), lengthString(Req) +Int 1, 1))
-
-  //   From here on the buffers travel as an *address* plus the key needed to
-  //   free them; the `Bytes` terms are dropped.  See the second invariant
-  //   above: freeing a buffer some live `Bytes` still references is UB.
-  syntax String ::= evReqAlloc(String, String, Int, K, Bytes)
-                                                    [function, symbol(evReqAlloc)]
-  rule evReqAlloc(Spec:String, Req:String, AddrSpec:Int, _, BufReq:Bytes)
-    => evCall(Spec, Req, AddrSpec, #address(BufReq),
+  //   From here on the buffer travels as an *address* plus the key needed to
+  //   free it; the `Bytes` term is dropped.  See the second invariant above:
+  //   freeing a buffer some live `Bytes` still references is UB.
+  syntax String ::= evReqAlloc(String, Bytes)       [function, symbol(evReqAlloc)]
+  rule evReqAlloc(Req:String, BufReq:Bytes)
+    => evCall(Req, #address(BufReq),
               #nativeWrite(#address(BufReq), String2Bytes(Req +String "\x00")))
 
-  syntax String ::= evCall(String, String, Int, Int, K)
-                                                    [function, symbol(evCall)]
-  rule evCall(Spec:String, Req:String, AddrSpec:Int, AddrReq:Int, _)
-    => evResult(Spec, Req,
+  syntax String ::= evCall(String, Int, K)          [function, symbol(evCall)]
+  rule evCall(Req:String, AddrReq:Int, _)
+    => evResult(Req,
          Bytes2Int(#ffiCall(#functionAddress("ml_eval_c"),
-                            ListItem(Int2Bytes(8, AddrSpec, LE))
-                              ListItem(Int2Bytes(8, AddrReq, LE)),
-                            ListItem(#pointer) ListItem(#pointer),
+                            ListItem(Int2Bytes(8, AddrReq, LE)),
+                            ListItem(#pointer),
                             #pointer),
                    LE, Unsigned))
 
   //   Ask the shim how long the reply is, so the read-back buffer can be sized.
-  syntax String ::= evResult(String, String, Int)   [function, symbol(evResult)]
-  rule evResult(Spec:String, Req:String, AddrOut:Int)
-    => evRead(Spec, Req, AddrOut,
+  syntax String ::= evResult(String, Int)           [function, symbol(evResult)]
+  rule evResult(Req:String, AddrOut:Int)
+    => evRead(Req, AddrOut,
          Bytes2Int(#ffiCall(#functionAddress("ml_cstrlen_c"),
                             ListItem(Int2Bytes(8, AddrOut, LE)),
                             ListItem(#pointer),
                             #sint64),
                    LE, Signed))
 
-  syntax String ::= evRead(String, String, Int, Int) [function, symbol(evRead)]
-  rule evRead(Spec:String, Req:String, AddrOut:Int, Len:Int)
-    => evFinish(Spec, Req, AddrOut, ffiReadN(AddrOut, Len))
+  syntax String ::= evRead(String, Int, Int)        [function, symbol(evRead)]
+  rule evRead(Req:String, AddrOut:Int, Len:Int)
+    => evFinish(Req, AddrOut, ffiReadN(AddrOut, Len))
 
   syntax Bytes ::= ffiReadN(Int, Int)               [function, symbol(ffiReadN)]
   rule ffiReadN(Addr:Int, N:Int) => ffiReadAux(padRightBytes(.Bytes, N, 0), Addr)
@@ -172,19 +186,17 @@ module AL-EXTERN-FFI
   syntax Bytes ::= ffiReadAux(Bytes, Int)           [function, symbol(ffiReadAux)]
   rule ffiReadAux(Mem:Bytes, Addr:Int) => #seqBytes(#nativeRead(Addr, Mem), Mem)
 
-  //   Free all three buffers -- the shim's `malloc`'d reply, then our two
-  //   `#alloc`'d inputs -- and only then let the decoded string escape.  `Out`
-  //   is a plain `padRightBytes`, not `#alloc`'d, so reading it here is safe.
-  syntax String ::= evFinish(String, String, Int, Bytes)
-                                                    [function, symbol(evFinish)]
-  rule evFinish(Spec:String, Req:String, AddrOut:Int, Out:Bytes)
-    => #seqString(#free(allocKeySpec(Spec)),
-         #seqString(#free(allocKeyReq(Req)),
-           #seqString(#ffiCall(#functionAddress("ml_free_c"),
-                               ListItem(Int2Bytes(8, AddrOut, LE)),
-                               ListItem(#pointer),
-                               #void),
-                      Bytes2String(Out))))
+  //   Free both buffers -- the shim's `malloc`'d reply, then our `#alloc`'d
+  //   input -- and only then let the decoded string escape.  `Out` is a plain
+  //   `padRightBytes`, not `#alloc`'d, so reading it here is safe.
+  syntax String ::= evFinish(String, Int, Bytes)    [function, symbol(evFinish)]
+  rule evFinish(Req:String, AddrOut:Int, Out:Bytes)
+    => #seqString(#free(allocKeyReq(Req)),
+         #seqString(#ffiCall(#functionAddress("ml_free_c"),
+                             ListItem(Int2Bytes(8, AddrOut, LE)),
+                             ListItem(#pointer),
+                             #void),
+                    Bytes2String(Out)))
 
   //   `#nativeWrite`, `#nativeRead`, `#free` and a `#void` `#ffiCall` are all
   //   `function`s returning `K`, hence pure to K with no guaranteed evaluation
@@ -215,18 +227,18 @@ module AL-EXTERN-FFI
   // lost child's stderr (kffi.ml also echoes it to stderr as it happens).
   // ==========================================================================
 
-  syntax KItem ::= externReq(String, String, ExternKind)  [symbol(externReq)]
+  syntax KItem ::= externReq(String, ExternKind)          [symbol(externReq)]
 
-  rule <k> externReq(Req:String, Spec:String, builtinK())
-        => valOfJson(respOk(String2JSON(externEval(Spec, Req))))
+  rule <k> externReq(Req:String, builtinK())
+        => valOfJson(respOk(String2JSON(externEval(Req))))
        ...
        </k>
-  rule <k> externReq(Req:String, Spec:String, externFuncK())
-        => externFuncResult(String2JSON(externEval(Spec, Req)))
+  rule <k> externReq(Req:String, externFuncK())
+        => externFuncResult(String2JSON(externEval(Req)))
        ...
        </k>
-  rule <k> externReq(Req:String, Spec:String, externRelK())
-        => externRelResult(String2JSON(externEval(Spec, Req)))
+  rule <k> externReq(Req:String, externRelK())
+        => externRelResult(String2JSON(externEval(Req)))
        ...
        </k>
 
@@ -239,11 +251,13 @@ module AL-EXTERN-FFI
   //
   // The **target spec**: the SpecTec program this run is executing.  It reaches
   // K as the `$SPEC` configuration variable, landing in `<specdir>`
-  // (al/0-config.k), and both call sites -- `callBuiltinFunc`
-  // (5.5-eval-call-func.k) and `callExternFunc`/`callExternRel` -- read that
-  // cell directly.  There is no function here any more, and nothing hardcoded:
-  // the target is a property of the *invocation*, and the invocation is now
-  // what supplies it.
+  // (al/0-config.k), and crosses the wire exactly once -- in `initFFI()` at the
+  // top of this file, which hands it to `ml_init_c`.  From then on the host
+  // holds the runner built for it, so no individual call carries a path and
+  // neither `callBuiltinFunc` (5.5-eval-call-func.k) nor
+  // `callExternFunc`/`callExternRel` (5.6-eval-call-rel.k) needs to read the
+  // cell.  Nothing is hardcoded: the target is a property of the *invocation*,
+  // and the invocation is what supplies it.
   //
   // It was previously a `builtinSpec()`/`externSpec(P4Opt)` pair of rules
   // fixed to `"spec"`.  That was a wart -- running against any other target
@@ -255,8 +269,7 @@ module AL-EXTERN-FFI
   //
   //   - A builtin is a static registry lookup and does not need a spec at all,
   //     except for `$print_`, which unparses against one.  Naming the target
-  //     costs nothing for the other 46: kffi.ml loads it only when a request
-  //     needs it.
+  //     costs nothing for the other 46.
   //
   //   - An extern is answered on the P4 interface, which kffi.ml always builds
   //     its runner on; for the P4 spec's own externs

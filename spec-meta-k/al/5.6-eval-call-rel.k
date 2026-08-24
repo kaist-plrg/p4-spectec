@@ -175,10 +175,9 @@ module AL-CALL-REL
   //   (spec-meta/common/4-relation.watsup:26-30).
   rule <k> callExternRel(X:Id, Vs:ValList)
         => externReq(JSON2String(jsonOfExternRelRequest(X, Vs)),
-                     Spec, externRelK())
+                     externRelK())
        ...
        </k>
-       <specdir> Spec:String </specdir>
 
   // ==========================================================================
   // Call_rel: look the relation up (global only — see 3-context.watsup's

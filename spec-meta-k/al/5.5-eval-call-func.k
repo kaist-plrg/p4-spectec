@@ -301,10 +301,9 @@ module AL-CALL-FUNC
   //   extern kinds.  All that is left here is to say what to send and how the
   //   reply should be read.
   rule <k> callBuiltinFunc(X:Id, Ts:TypList, Vs:ValList)
-        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), Spec, builtinK())
+        => externReq(JSON2String(jsonOfRequest(X, Ts, Vs)), builtinK())
        ...
        </k>
-       <specdir> Spec:String </specdir>
 
   // ==========================================================================
   // Call_extern_func: dispatch over the external interface
@@ -323,13 +322,12 @@ module AL-CALL-FUNC
   // through `tryNextClause` exactly like a failed clause.
   // ==========================================================================
 
-  //   `<specdir>` is the target spec, supplied by the invocation; see the note
-  //   on it in 4.2-extern-ffi.k.
+  //   The target spec does not travel with the call: `initFFI()` gave it to
+  //   the host once, at startup.  See the note on it in 4.2-extern-ffi.k.
   rule <k> callExternFunc(X:Id, Ts:TypList, Vs:ValList)
         => externReq(JSON2String(jsonOfExternFuncRequest(X, Ts, Vs)),
-                     Spec, externFuncK())
+                     externFuncK())
        ...
        </k>
-       <specdir> Spec:String </specdir>
 
 endmodule
