@@ -88,8 +88,12 @@ let prefix_source =
   ^ "[source,watsup]\n----\n"
 
 let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n" ^ "endif::[]"
-let prefix_latex = "ifdef::backend-html5[]\n[latexmath]\n++++\n"
-let suffix_latex = "\n++++\nendif::[]"
+let prefix_latex =
+  "ifdef::backend-html5[]\n"
+  ^ ".Click to view the mathematical definition\n[%collapsible]\n====\n"
+  ^ "[latexmath]\n++++\n"
+
+let suffix_latex = "\n++++\n====\n\n[.empty]\n--\n\n\n--\n\n" ^ "endif::[]"
 let prefix_prose = "****\n"
 let suffix_prose = "\n****"
 
