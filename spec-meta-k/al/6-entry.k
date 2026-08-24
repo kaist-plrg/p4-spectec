@@ -14,7 +14,7 @@ module AL
         => logDebug(textV("load complete"))
            ~> logDebug(textV("into call"))
            ~> callFunc("main", .TypList, .ValList)
-           ~> finish()
+           ~> finishMain()
        ...
        </k>
        <p4prog> noP4() </p4prog>
@@ -35,13 +35,20 @@ module AL
   syntax Id ::= "entryRel" "(" ")"          [function, total, symbol(entryRel)]
   rule entryRel() => "Program_ok"
 
+  // `finish()` ends the relation entry: only success or failure is meaningful.
+  // `finishMain()` ends the function entry, where the returned value is the
+  // answer, so it is printed in place of the verdict.
   syntax KItem ::= "finish" "(" ")"
+                 | "finishMain" "(" ")"
   syntax KItem ::= verdict(String)          [symbol(verdict)]
 
-  rule <k> verdict(S:String) => #seqK(#write(1, S +String "\n"), .K) ... </k>
+  rule <k> verdict(S:String) => #write(1, S +String "\n") ... </k>
 
   rule <k> _:Val ~> finish() => verdict("passed") ... </k>
   rule <k> _:ValList ~> finish() => verdict("passed") ... </k>
   rule <k> FAIL ~> finish() => verdict("fail") ... </k>
+
+  rule <k> V:Val ~> finishMain() => verdict(JSON2String(jsonOfVal(V))) ... </k>
+  rule <k> FAIL ~> finishMain() => verdict("fail") ... </k>
 
 endmodule

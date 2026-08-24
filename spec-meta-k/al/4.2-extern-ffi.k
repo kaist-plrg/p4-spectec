@@ -30,23 +30,19 @@ module AL-EXTERN-FFI
   // until it rewrites to `.K`.
   // ==========================================================================
 
-  //   The `Int` result (always 1) is discarded, but only after being forced:
-  //   `#ffiCall` is a `[function]`, so `initFFI() => .K` alone would let K drop
-  //   the call as an unused pure term.  `#seqK` forces it, as `#seqString` does
-  //   for the transport below.
-  rule <k> initFFI() => #seqK(callInitFFI(Spec), .K) ... </k>
+  rule <k> initFFI() => callInitFFI(Spec) ... </k>
        <specdir> Spec:String </specdir>
 
-  syntax Int ::= callInitFFI(String)            [function, symbol(callInitFFI)]
+  syntax K ::= callInitFFI(String)              [function, symbol(callInitFFI)]
   rule callInitFFI(Spec:String)
     => initAlloc(Spec, #alloc(allocKeySpec(Spec), lengthString(Spec) +Int 1, 1))
 
-  syntax Int ::= initAlloc(String, Bytes)       [function, symbol(initAlloc)]
+  syntax K ::= initAlloc(String, Bytes)         [function, symbol(initAlloc)]
   rule initAlloc(Spec:String, Buf:Bytes)
     => initCall(Spec, #address(Buf),
                 #nativeWrite(#address(Buf), String2Bytes(Spec +String "\x00")))
 
-  syntax Int ::= initCall(String, Int, K)       [function, symbol(initCall)]
+  syntax K ::= initCall(String, Int, K)         [function, symbol(initCall)]
   rule initCall(Spec:String, Addr:Int, _)
     => initFree(Spec,
          Bytes2Int(#ffiCall(#functionAddress("ml_init_c"),
@@ -55,11 +51,8 @@ module AL-EXTERN-FFI
                             #sint64),
                    LE, Signed))
 
-  syntax Int ::= initFree(String, Int)          [function, symbol(initFree)]
-  rule initFree(Spec:String, R:Int) => #seqInt(#free(allocKeySpec(Spec)), R)
-
-  syntax Int ::= "#seqInt" "(" K "," Int ")"    [function, symbol(seqInt)]
-  rule #seqInt(_, X) => X
+  syntax K ::= initFree(String, Int)            [function, symbol(initFree)]
+  rule initFree(Spec:String, _:Int) => #free(allocKeySpec(Spec))
 
   // ==========================================================================
   // The transport
@@ -126,12 +119,6 @@ module AL-EXTERN-FFI
                              #void),
                     Bytes2String(Out)))
 
-  //   `#nativeWrite`, `#nativeRead`, `#free` and a `#void` `#ffiCall` are all
-  //   `function`s returning `K`, hence pure to K with no guaranteed evaluation
-  //   order.  Threading each through an argument position that must be
-  //   evaluated before the result escapes is what forces the effect, and is why
-  //   the chain above is split into small helpers rather than written as one
-  //   expression.
   syntax String ::= "#seqString" "(" K "," String ")" [function, symbol(seqString)]
   syntax Bytes  ::= "#seqBytes"  "(" K "," Bytes  ")" [function, symbol(seqBytes)]
   rule #seqString(_, X) => X

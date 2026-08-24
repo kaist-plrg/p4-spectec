@@ -27,7 +27,7 @@ Each K file mirrors one watsup file and says so in its header comment.
 | `al/3-context.watsup` | `al/3-context.k` |
 | `al/5.1`–`5.7` | `al/5.1`–`5.6` (six files; argument handling is split across `5.2`, `5.3` and `5.5` instead of getting its own file) |
 | `al/6-entry.watsup` | `al/6-entry.k` (module `AL`, the entry module) |
-| — | `al/0-config.k` (configuration), `al/4-extern-json.k` (external interface: codec), `al/4-extern-ffi.k` (external interface: transport) |
+| — | `al/0-config.k` (configuration), `al/4.1-extern-json.k` (external interface: codec), `al/4.2-extern-ffi.k` (external interface: transport) |
 
 Three structural differences from the watsup source:
 
@@ -51,6 +51,7 @@ configuration
   <al>
     <k> initFFI() ~> logDebug(textV("entry-al")) ~> $PGM:Script ~> afterLoad() </k>
     <p4prog> $P4:P4Opt </p4prog>
+    <specdir> $SPEC:String </specdir>
     <global>  <gtdenv> .Map </gtdenv> <grenv> .Map </grenv> <gfenv> .Map </gfenv> </global>
     <local>   <ltdenv> .Map </ltdenv> <lfenv> .Map </lfenv> <lvenv> .Map </lvenv> </local>
     <caller>  <cfenv> .Map </cfenv> </caller>
@@ -69,25 +70,15 @@ configuration
   `$load_funcdef`), leaving `.K` and then `afterLoad()`.
 - **`<p4prog>`** — the second krun input, `noP4()` or `someP4(val)`. It selects
   the entry (§3).
+- **`<specdir>`** — the target spec path, from `-cSPEC` (§7).
 - **`<global>` / `<local>`** — the two layers of the watsup `ctx`: type
   definitions, relations (global only, matching `$find_rel`), functions and
   value bindings. `$find_func` checks `<lfenv>` then `<gfenv>`.
 - **`<caller>`/`<cfenv>`** — the caller's function environment, for
   `Assign_arg/fun`. In watsup this is `C_caller`, a *second context passed as an
   argument* to `Eval_clause`; K needs a cell for it, and that cell must be
-  stacked per call frame (§4, and see §6 for the bug this caused).
+  stacked per call frame (§4).
 - **`<saves>` / `<callstack>`** — the two backtracking stacks (§4).
-- **No `<log>` or `<result>` cell.** Both were read only by a human looking at
-  the configuration dump, and that dump is dominated by `<global>` — for
-  `k-typecheck` it ran to ~4.7 MB, of which the two cells were eight lines. So
-  the runs pass `--output none` and print instead: a `debug` premise emits its
-  value through `logDebug(Val)` (rules in
-  [al/4.1-extern-json.k](spec-meta-k/al/4.1-extern-json.k), next to the
-  `jsonOfVal` renderer it uses), and `finish()` prints the verdict `passed` or
-  `fail`. Both go to fd 1 via `#write`, forced with the same `#seqK` trick the
-  FFI uses (§7) — `#write` is a pure `[function]` and K would otherwise be free
-  to drop it. A side benefit: the log now *streams*, so a 25 s run shows
-  progress rather than only a post-mortem.
 
 ## 3. Running
 
@@ -103,10 +94,10 @@ make k-clean                                # drop al-kompiled/ and scratch file
 **A K run must start from the repo root**, because the target spec path an
 external call resolves against (`<specdir>`, from `-cSPEC`) is relative to it.
 
-**`./spectec-boot` must still exist**, though no longer for external calls: the
-two parser wrappers (§6) invoke it to boot `$PGM` and parse `$P4`, entirely
-outside the interpreter. Build it with `make boot` (never `dune build` directly;
-note that `make clean` leaves a stale `./spectec-boot` behind).
+**`./spectec-boot` must exist**, not for external calls but because the two
+parser wrappers (§6) invoke it to boot `$PGM` and parse `$P4`, entirely outside
+the interpreter. Build it with `make boot` (never `dune build` directly; note
+that `make clean` leaves a stale `./spectec-boot` behind).
 
 **`al-kompiled/interpreter` embeds a snapshot of the OCaml implementation.**
 `kffi.exe.o` — the whole of `p4spec/` as one object, OCaml runtime included — is
@@ -118,10 +109,9 @@ The workflow is:
 make boot && make k-build
 ```
 
-Scratch files are `mktemp`'d straight into **`./spec-meta-k/`** (gitignored),
-by the two parser wrappers, before K starts; there is no scratch directory to
-create. Nothing writes there from inside K any more — external calls cross by
-FFI rather than through a request file.
+Scratch files are `mktemp`'d straight into **`./spec-meta-k/`** (gitignored), by
+the two parser wrappers, before K starts; there is no scratch directory to
+create, and nothing writes there from inside K.
 
 ### A simple AL program with a `main`
 
@@ -138,24 +128,23 @@ The `.watsup` is booted to a term by the parser wrapper; `-cP4=` is empty, so
 `<p4prog>` is `noP4()` and `afterLoad()` fires the first entry rule:
 
 ```k
-rule <k> afterLoad() => ... ~> callFunc("main", .TypList, .ValList) ~> finish() ... </k>
+rule <k> afterLoad() => ... ~> callFunc("main", .TypList, .ValList) ~> finishMain() ... </k>
      <p4prog> noP4() </p4prog>
 ```
 
 This is exactly `spec-meta/al/6-entry.watsup`'s `Entry`. Output is the printed
-log followed by the verdict:
+log followed by `$main()`'s return value, rendered by the same `jsonOfVal` the
+log uses:
 
 ```
 ["textV","entry-al"]
 ["textV","load complete"]
 ["textV","into call"]
 ["textV","Add"]          <- the `-- debug "Add"` premise in add.watsup
-passed
+["intN","119"]           <- what `$main()` returned
 ```
 
-Note the verdict says only whether the entry *succeeded*; `add`'s actual answer
-(`intN(119)`) is no longer printed, since the `<result>` cell is gone. A script
-that wants its answer on stdout logs it with a `debug` premise.
+A failing run prints `fail` in place of the value.
 
 To inspect the final configuration — to check that `<k>`, `<saves>` and
 `<callstack>` all end empty, since a leftover frame in either stack means a
@@ -191,7 +180,7 @@ either:
 KDEF=al-kompiled krun -d al-kompiled --parser ./spec-meta-k/scripts/kast-json.sh add.json
 ```
 
-Use `krun --output json` (again, in place of `--output none`) to diff whole
+Use `krun --output json` (in place of `--output none`) to diff whole
 configurations mechanically rather than by eye.
 
 ### Type-checking a P4 program
@@ -262,9 +251,9 @@ clause. `evalTblRows`/`tryNextTblRow` likewise for table functions.
 
 ### The two stacks
 
-The essential point is that **`<saves>` and `<callstack>` are separate, and
-conflating them is a real hazard** — doing so once produced a bug where a
-relation call's `ValList` met a continuation expecting a bare `Val`.
+**`<saves>` and `<callstack>` are separate, and conflating them is a real
+hazard** — doing so once produced a bug where a relation call's `ValList` met a
+continuation expecting a bare `Val`.
 
 - **`<saves>`** holds `localSave(tdenv, fenv, venv)` snapshots for backtracking
   *within* one frame. `pushSave()`/`popSaveRestore()` bracket each clause or
@@ -304,17 +293,16 @@ behaviour changed.
 | `kast-p4 -p PROG -i INC -o F` | parse a P4 program and emit it as KAST JSON of sort `Val`, already wrapped as `someP4(...)` |
 | `extern -spec SPEC -i REQ -o F` | evaluate one builtin, `extern dec` or `extern relation` call given as JSON, against SPEC, on the **P4 interface** |
 
-The first two are what the parser wrappers (§6) invoke. The third is **no longer
-on the K path** — external calls cross by FFI now (§7) — but it is kept: it is
-the same dispatch, reachable from a shell, so a single request can be replayed
-by hand against a `.json` file when debugging the wire.
+The first two are what the parser wrappers (§6) invoke. The third is **not on
+the K path** — external calls cross by FFI (§7) — but it is kept: it is the same
+dispatch, reachable from a shell, so a single request can be replayed by hand
+against a `.json` file when debugging the wire.
 
 **A fourth binary target**, [p4spec/bin/kffi.ml](p4spec/bin/kffi.ml), built by
 dune as an *object* rather than an executable (`(modes object)`, which bundles
 the OCaml runtime in). It is the in-process equivalent of `extern`: same wire,
 same dispatch, but registered under the names `ml_init`/`ml_eval` for the C
-shim to reach via `caml_callback`, and holding its runner across calls since the
-process now outlives them (§7).
+shim to reach via `caml_callback`, and holding its runner across calls (§7).
 
 **Two new library modules**, exposed through `Interface.SpecTec_AL`
 ([p4spec/lib/interface/interface.ml](p4spec/lib/interface/interface.ml)):
@@ -337,8 +325,7 @@ registry (`p4spec/lib/interface/builtin/`); an extern's lives in the spec one
 level *below* the one being run — in OCaml that is `Make_parametric`
 (`backend-boot/spectec.ml`), routing into a lower runner's
 `eval_func`/`eval_rel`. K implements **none** of them, and calls out instead, so
-the OCaml stays the single authority. (An earlier revision reimplemented eight
-builtins natively in K; those duplicated authority and were removed.)
+the OCaml stays the single authority.
 
 **Two kinds of extern, and they are not the same mechanism.** The paragraph
 above describes the *meta-language* extern, where a lower spec's ordinary
@@ -350,52 +337,17 @@ above describes the *meta-language* extern, where a lower spec's ordinary
 wires the target level of a tower. There is no lower spec involved; `-spec` is
 the P4 spec itself.
 
-`extern` therefore builds its runner with **`build_target`** on
-`P4_interface` — reusing the tower's target-level wiring rather than
-duplicating it. That one runner serves both kinds, because the interface
-governs only how *extern* names resolve: a spec declaring none of its own
-resolves its `dec`s and `relation`s the same either way. Hence
-the subcommand takes neither an interface nor a mode flag. (`build_null` cannot
-serve the P4 kind at all: it wires `Spectec.Make_null`, whose `eval_extern_rel`
-knows only `Call_builtin_func`.) `level.rel` is passed empty, since nothing on
-this path runs a program, and `build_target`'s SL mode is unobservable, since an
-`extern relation` dispatches to `Placeholder` from `invoke_rel` without any rule
-running under an interpreter.
-
-The two entries of §3 need one each, so `externArgs()` dispatches on `<p4prog>`
-— the same cell that already tells those entries apart. `static_assert` is the
-one such extern the type checker reaches (`Expr_eval_lctk`, in
-[spec/5-typing/5.06.2-typing-expression-eval.watsup](spec/5-typing/5.06.2-typing-expression-eval.watsup)),
-so before this dispatch existed, any program calling it type-checked as `FAIL`
-under K while passing under the OCaml — silently, for the reason in §8.
-
-**Builtins take that same subcommand.** There is no separate `builtin` command:
-`extern` handles all three request kinds, told apart by the request's own key
-(§7), so `builtinArgs()` is `extern -spec spec`. What kept them separate was
-cost, not routing — a builtin is a static registry lookup, so **only the two
-extern branches build a runner**, and the spec load rides along with it. That
-matters because a type-check run is overwhelmingly builtins — 303 builtin calls
-against 4 extern ones for `issue5231-const-int-concat.p4` — and building a
-runner per call would take each from ~13 ms to ~1.2 s, roughly 90x on the
-dominant path. The registry taken is the P4 one, a superset of the SpecTec one,
-which is what lets one command serve both.
-
-**`$print_` is the exception, and it is a quiet one.** It unparses a value back
-to P4 source driven by the spec's hints, so it does need the spec — but only the
-*unparser*, which `Interface.P4.init` installs from a parsed spec, far less than
-a runner. Skip that and nothing errors: `unparser` keeps its initial
-`fun _ -> ""` (`interface.ml:15`) and every `$print_` returns the empty string,
-which the spec then builds names out of (`$name`; a table's default action name
-in `5.14.1-typing-control-table.watsup:51`). The same program makes 90 `$print_`
-calls, and without the init its type-check goes from passing to `FAIL` with no
-diagnostic pointing anywhere near the cause.
-
-This makes K the *broader* engine on builtins: the external route reaches all 44
-entries of the OCaml registry, whereas the oracle `spectec-boot run spec-meta/al
-... -ali` resolves builtins against the meta-spec's own functions and so only
-runs the eight `spec-meta/common/0-stdlib.watsup` declares. A target calling
-`$text_to_int` runs under K and fails under the oracle.
-
+`extern` therefore builds its runner with **`build_target`** on `P4_interface` —
+reusing the tower's target-level wiring rather than duplicating it. That one
+runner serves both kinds, because the interface governs only how *extern* names
+resolve: a spec declaring none of its own resolves its `dec`s and `relation`s
+the same either way. Hence the subcommand takes neither an interface nor a mode
+flag. (`build_null` cannot serve the P4 kind at all: it wires
+`Spectec.Make_null`, whose `eval_extern_rel` knows only `Call_builtin_func`.)
+`level.rel` is passed empty, since nothing on this path runs a program, and
+`build_target`'s SL mode is unobservable, since an `extern relation` dispatches
+to `Placeholder` from `invoke_rel` without any rule running under an
+interpreter.
 ### The KAST JSON format
 
 This is the `$PGM` wire — what `kast.ml` emits and `kast --input json` consumes.
@@ -461,10 +413,11 @@ runs as a child instead, with the `rm` after it and its status passed on.
 
 ## 7. The K↔OCaml wire
 
-The codec is [al/4-extern-json.k](spec-meta-k/al/4-extern-json.k) on the K side
-and [extern.ml](p4spec/lib/interface/spectec/ali/extern.ml) on the OCaml side;
-both document the format in full at their head. The *transport* — how a request
-actually crosses — is [al/4-extern-ffi.k](spec-meta-k/al/4-extern-ffi.k),
+The codec is [al/4.1-extern-json.k](spec-meta-k/al/4.1-extern-json.k) on the K
+side and [extern.ml](p4spec/lib/interface/spectec/ali/extern.ml) on the OCaml
+side; both document the format in full at their head. The *transport* — how a
+request actually crosses — is
+[al/4.2-extern-ffi.k](spec-meta-k/al/4.2-extern-ffi.k),
 [ffi/shim.c](spec-meta-k/ffi/shim.c) and [kffi.ml](p4spec/bin/kffi.ml).
 
 ```
@@ -487,13 +440,6 @@ typ   ::= ["natT"] | ["intT"] | ["boolT"] | ["textT"]
         | ["iterT", typ, "?"|"*"] | ["funcT"]
 ```
 
-The three request kinds are told apart by **which key is present**, not by a
-`"kind"` field, so a builtin request is byte-identical to what it was before
-externs existed — and that is also what lets one *entry point* serve all three
-(§5). One shared transport in `4.2-extern-ffi.k` serves them too, parameterized
-by the target spec path (`<specdir>`, the same for all three) and an
-`ExternKind` telling the last step which decoder to apply.
-
 Format decisions worth knowing:
 
 - **It is neither KAST JSON nor `Value.t`'s derived yojson.** KAST JSON cannot
@@ -512,11 +458,10 @@ Format decisions worth knowing:
 - **`{"fail": null}` is a spec-level failure** and becomes K's `FAIL`, so it
   backtracks through `tryNextRul` like any failed rule. **"The wire broke" is a
   third reply shape**, `{"error": <diagnostic>}`, which has no K rule at all, so
-  a genuine defect sticks visibly in `<k>` carrying the diagnostic — and, unlike
-  the old non-zero-exit convention, that diagnostic is now in the configuration
-  dump rather than on a lost child's stderr. `kffi.ml` also echoes it to stderr
-  as it happens, since a K run can be minutes long. `Fail`'s region and message
-  are still lost crossing the wire (K's `FAIL` is nullary) and go to stderr.
+  a genuine defect sticks visibly in `<k>` carrying the diagnostic. `kffi.ml`
+  also echoes it to stderr as it happens, since a K run can be minutes long.
+  `Fail`'s region and message are lost crossing the wire (K's `FAIL` is nullary)
+  and go to stderr.
 
 Transport mechanics:
 
@@ -527,10 +472,9 @@ OCaml cannot expose one directly, so a thin C shim sits between:
 K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->  p4spec/bin/kffi.ml
 ```
 
-This replaced a `#system("./spectec-boot extern ...")` shell-out that forked a
-fresh process per call. The shape is the one [examples/k/](examples/k/) proves
-out and its README recommends for real use: **one** `ml_eval_c(req) -> char *`
-carrying a serialized request, with dispatch in OCaml — preceded by a single
+The shape is the one [examples/k/](examples/k/) proves out and its README
+recommends for real use: **one** `ml_eval_c(req) -> char *` carrying a
+serialized request, with dispatch in OCaml — preceded by a single
 `ml_init_c(spec)` that names the target spec once and for all.
 
 - **The OCaml runtime lives inside the interpreter.** `kffi.exe.o` is built by
@@ -543,101 +487,9 @@ carrying a serialized request, with dispatch in OCaml — preceded by a single
   building the runner for the target spec — and, following the example, other
   entry points do not check. K guarantees it by *sequencing*: `initFFI()` sits at
   the head of `<k>`, reads the target spec out of `<specdir>`, and nothing can be
-  touched until it reduces. Its `Int` result is discarded, but only after being
-  forced through `#seqK` — required, since `#ffiCall` is a `[function]` and an
-  unconsumed pure term can simply be discarded. Every run pays the runner build,
-  including ones making no external call at all (`examples/add.watsup`); that is
-  the cost of eager init, and it buys a wire on which no individual call carries
-  a spec path.
-- **The transport is a chain of pure `[function]`s**, not `<k>`-cell rules. The
-  old chain had to be cell rules — `#write`/`#close` have sort `K`, and
-  `#system` returns a `#systemResult` needing a continuation — and neither
-  constraint survives, since `#ffiCall` is a `[function]`. So an external call
-  is one atomic rewrite step rather than six, and five intermediate `KItem`
-  sorts, the `<builtinreq>` cell, its first-call/later-call split and
-  `dropBuiltinReq()` are all gone.
-- **Effect order is forced by threading**, the `#seqString`/`#seqBytes` trick
-  from the example: `#nativeWrite`, `#nativeRead` and `#free` return `K` and are
-  pure to K, so each is threaded through an argument position that must be
-  evaluated before the result escapes. This is why the chain is several small
-  helpers rather than one expression.
-- **Buffers.** The spec path (once, at init) and each request are `#alloc`'d
-  under *distinct* key constructors (`allocKeySpec`/`allocKeyReq`) so the two can
-  never collide on one buffer; only addresses and keys travel down the chain,
-  never the `Bytes` terms, since freeing a buffer a live `Bytes` still
-  references is UB. Both of a crossing's buffers — the shim's `malloc`'d reply
-  and the request — are released before the decoded string escapes. Safety relies on
-  there never being two crossings in flight, which holds because a `[function]`
-  application reduces within one rewrite step and the LLVM backend is
-  single-threaded: **`--enable-search` is unsupported.**
-- **`-rdynamic` is mandatory** at kompile time. `#functionAddress` is `dlsym`,
-  which searches only the *dynamic* symbol table, and nothing in the interpreter
-  references these symbols, so without it the linker drops them and the run
-  segfaults immediately. `make k-build` asserts `nm -D … | grep ml_eval_c` after
-  kompiling for exactly this reason.
-- **`ml_eval` is total.** An OCaml exception escaping through `caml_callback`
-  has no handler in C and aborts the interpreter with no configuration dump, so
-  `kffi.ml` mirrors every one of `boot.ml`'s handlers but returns the
-  `{"error": …}` value described above instead of `exit 1`. The shim adds
-  `caml_callback_exn` + `Is_exception_result` as defence in depth. `ml_init` is
-  deliberately *not* total: it runs before any spec-level work, so a bad spec
-  path is a defect in the invocation with no configuration yet worth dumping.
-- **One runner, built once** at init in `kffi.ml` and held in a `ref`, so an
-  extern call elaborates the lower spec never rather than per call. Building it
-  also installs the `$print_` unparser (`Runner_target.init` → `Interface.init`),
-  so no separate printer-init step is needed. One runner suffices because a run
-  names exactly one target spec — which is also what `Interface.P4.unparser`,
-  a process-global ref, requires.
-- The spec a builtin or extern resolves against is the **target spec** — the
-  spec the run is executing — and it is supplied by the *invocation*, as the
-  `$SPEC` configuration variable landing in `<specdir>`. It used to be
-  hardcoded in a `builtinSpec()`/`externSpec()` pair of rules fixed to `spec`,
-  which meant running against any other target required editing the K source
-  and re-`kompile`ing; `externSpec`'s `<p4prog>` dispatch was vestigial besides,
-  since both cases answered alike. One value now serves all three request kinds
-  — the interface is always P4. Being a plain `String`, it needs no `--parser`
-  (§6); like `$P4` it has no default, so every `krun` line must pass it.
-
-## 8. Known problems
-
-The first three problems here were properties of the old `#system` transport and
-are **resolved** by the FFI crossing (§7). They are recorded, struck through,
-because each shaped decisions elsewhere in the port.
-
-- ~~**`#system` leaks a file descriptor per call**~~ (K 7.1.337, LLVM backend).
-  After ~1024 external calls the interpreter aborted with `*** bit out of range 0 FD_SETSIZE on fd_set ***`, and `krun` then failed to parse an empty
-  `result.kore`. **This, not correctness, was the ceiling on program size under
-  K**: `action-bind.p4` type-checked, but `forloop1.p4` (which `#include`s
-  `core.p4`, hence far more builtin calls) died here rather than on a spec
-  error. The cause was in the K runtime and could not be fixed in this repo;
-  memoizing pure builtin replies in a K cell would have cut the call count
-  enough, but that was deliberately declined. **Resolved:** an FFI call consumes
-  no file descriptor, so `/proc/<interp>/fd` stays flat rather than climbing
-  4 → 1022.
-- ~~**`$fresh_typeId` is wrong under K**~~. It closes over a per-process
-  `int ref` (`builtin/call.ml`), and every `#system` call was a fresh process,
-  so it returned the same value every time. **Resolved:** the OCaml runtime now
-  lives for the whole run, so the counter advances. This is the cleanest
-  observable proof that state persists across calls.
-- ~~**One process spawn per call**~~ (~13 ms measured), with an **extern** call
-  far worse — it parsed and elaborated the whole lower spec from scratch, and
-  the lower runner's caches died with the process. **Resolved:** no `fork`/`exec`
-  at all, and `kffi.ml` builds the runner once at init, so the lower spec is
-  elaborated once.
-
-Standing problems:
-
-- **An unknown extern name is indistinguishable from a spec-level failure.** The
-  interpreter reports an undefined relation as a `Fail`, so a typo comes back as
-  `{"fail": null}` and is silently recovered by an `otherwise` clause; stderr
-  says ``relation `X` is undefined``. This is not
-  hypothetical: it is what hid the missing P4-interface route (§5) — every
-  `static_assert` came back as a recoverable failure, so the program merely
-  failed to type-check rather than reporting a broken wire.
-- ~~**The spec an extern resolves against is hardcoded**~~ per entry, so it
-  could not vary per target beyond the two `<p4prog>` selects. **Resolved:** it
-  is the `$SPEC` configuration variable, set per invocation (§7). The residual
-  hazard is that a wrong path stays *quiet* — it surfaces through the bullet
-  above, as a failure to type-check rather than a diagnostic — which is why
-  `make` fills it in rather than leaving it to be typed.
-
+  touched until it reduces. The `Int` the shim returns is discarded mid-chain;
+  since K evaluates a function's arguments before applying its rule, discarding
+  a result never discards the effect that produced it. Every run pays the
+  runner build, including ones making no external call at all
+  (`examples/add.watsup`); that is the cost of eager init, and it buys a wire on
+  which no individual call carries a spec path.

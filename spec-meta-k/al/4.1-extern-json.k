@@ -203,16 +203,7 @@ module AL-EXTERN-JSON
 
   // ==========================================================================
   // The debug log
-  //
-  // `#write` is a `[function]` returning `K`, so K may drop it as a pure term
-  // whose result is unused, taking the effect with it. `#seqK` threads it
-  // through an argument position that must be evaluated before the `.K`
-  // escapes.
-  rule <k> logDebug(V:Val) => #seqK(#write(1, JSON2String(jsonOfVal(V)) +String "\n"), .K) ... </k>
-
-  //   Used by `initFFI()` in 4.2-extern-ffi.k too; it lives here because
-  //   `logDebug` above needs it and that module imports this one.
-  syntax K ::= "#seqK" "(" K "," K ")"        [function, symbol(seqK)]
-  rule #seqK(_, X) => X
+  // ==========================================================================
+  rule <k> logDebug(V:Val) => #write(1, JSON2String(jsonOfVal(V)) +String "\n") ... </k>
 
 endmodule
