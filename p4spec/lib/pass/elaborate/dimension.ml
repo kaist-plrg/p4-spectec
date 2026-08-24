@@ -7,6 +7,12 @@ open Error
 open Envs
 open Util.Source
 
+let empty_iteration_detail =
+  "Each iteration consumes one `*` (or `?`) from a variable inside it. Here, \
+   no variable has an iteration left to consume: either the body has no \
+   variables, or every variable's `*`s have already been consumed by \
+   surrounding iterations."
+
 (* Dimension analysis :
 
    For each rule or clause, collect the dimension of all occurrences of
@@ -41,12 +47,31 @@ module Dimctx = struct
         let typs_sorted = List.sort Typdim.compare typs in
         let typ_min = List.hd typs_sorted in
         List.iter
-          (fun typ ->
-            check (Typdim.sub typ_min typ) id.at
+          (fun ((typ, _) as typdim) ->
+            let first, second =
+              let at_min = (fst typ_min).at in
+              let at_current = typ.at in
+              let position region =
+                (region.left.file, region.left.line, region.left.column)
+              in
+              if Stdlib.compare (position at_min) (position at_current) <= 0
+              then (typ_min, typdim)
+              else (typdim, typ_min)
+            in
+            check ~code:Iteration_dimension_mismatch
+              (Typdim.sub typ_min typdim)
+              (fst second).at
               (Format.sprintf
-                 "mismatched iteration dimensions for identifier `%s`: %s vs %s"
-                 (Id.to_string id) (Typdim.to_string typ_min)
-                 (Typdim.to_string typ)))
+                 "identifier `%s` has incompatible iteration dimensions: `%s` \
+                  and `%s`"
+                 (Id.to_string id) (Typdim.to_string first)
+                 (Typdim.to_string second))
+              ~related:
+                [
+                  ( (fst first).at,
+                    Format.sprintf "other occurrence has dimension `%s`"
+                      (Typdim.to_string first) );
+                ])
           (List.tl typs_sorted);
         typ_min)
       dctx
@@ -135,13 +160,12 @@ let rec infer_prem (dctx : Dimctx.t) (prem : prem) (iters : iter list) :
   | IfHoldPr (_, notexp) -> infer_notexp dctx notexp iters
   | IfNotHoldPr (_, notexp) -> infer_notexp dctx notexp iters
   | LetPr _ ->
-      error prem.at "let premise should appear only after the algo pass"
-  | IterPr (_, ((_, vars_bound, vars_bind) as iterprem))
+      (* Premise elaboration never emits [LetPr]. *)
+      assert false
+  | IterPr (_, (_, vars_bound, vars_bind))
     when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
-      error prem.at
-        (Format.asprintf
-           "iterated premise should initially have no annotations, but got %s"
-           (Il.Print.string_of_iterprem iterprem))
+      (* Premise elaboration emits empty iteration annotations. *)
+      assert false
   | IterPr (prem, (iter, _, _)) -> infer_prem dctx prem (iter :: iters)
   | DebugPr exp -> infer_exp dctx exp iters
 
@@ -177,14 +201,9 @@ let singleton id typ = VEnv.add id (typ, []) empty
 
 let union (occurs_a : VEnv.t) (occurs_b : VEnv.t) : VEnv.t =
   VEnv.union
-    (fun id (typ_a, iters_a) (typ_b, iters_b) ->
-      if not (Eq.eq_typ typ_a typ_b) then
-        error id.at
-          (Format.asprintf
-             "type mismatch for identifier `%s` in union: %s vs %s"
-             (Id.to_string id)
-             (Print.string_of_typ typ_a)
-             (Print.string_of_typ typ_b));
+    (fun _ (typ_a, iters_a) (typ_b, iters_b) ->
+      (* Elaboration gives every use of an identifier the same type. *)
+      assert (Eq.eq_typ typ_a typ_b);
       if List.length iters_a < List.length iters_b then Some (typ_a, iters_a)
       else Some (typ_b, iters_b))
     occurs_a occurs_b
@@ -318,17 +337,17 @@ let rec annotate_exp (bounds : VEnv.t) (exp : exp) : VEnv.t * exp =
       let occurs, args = annotate_args bounds args in
       let exp = CallE (id, targs, args) $$ (at, note) in
       (occurs, exp)
-  | IterE (_, ((_, _ :: _) as iterexp)) ->
-      error at
-        (Format.asprintf
-           "iterated expression should initially have no annotations, but got \
-            %s"
-           (Print.string_of_iterexp iterexp))
+  | IterE (_, (_, _ :: _)) ->
+      (* Expression elaboration emits empty iteration annotations. *)
+      assert false
   | IterE (exp, (iter, [])) -> (
       let occurs, exp = annotate_exp bounds exp in
       let itervars = collect_itervars bounds occurs iter in
       match itervars with
-      | [] -> error at "empty iteration"
+      | [] ->
+          error ~code:Empty_iteration_expression at
+            "iteration has no variable to iterate over"
+            ~detail:empty_iteration_detail
       | _ ->
           let exp = IterE (exp, (iter, itervars)) $$ (at, note) in
           let occurs =
@@ -428,15 +447,20 @@ let rec annotate_prem (bounds : VEnv.t) (prem : prem) : VEnv.t * prem =
       let prem = IfNotHoldPr (id, notexp) $ at in
       (occurs, prem)
   | LetPr _ ->
-      error prem.at "let premise should appear only after the algo pass"
+      (* Premise elaboration never emits [LetPr]. *)
+      assert false
   | IterPr (_, (_, vars_bound, vars_bind))
     when (not (List.is_empty vars_bound)) || not (List.is_empty vars_bind) ->
-      error at "iterated premise should initially have no annotations"
+      (* Premise elaboration emits empty iteration annotations. *)
+      assert false
   | IterPr (prem, (iter, _, _)) -> (
       let occurs, prem = annotate_prem bounds prem in
       let itervars = collect_itervars bounds occurs iter in
       match itervars with
-      | [] -> error at "empty iteration"
+      | [] ->
+          error ~code:Empty_iteration_premise at
+            "iteration has no variable to iterate over"
+            ~detail:empty_iteration_detail
       | _ ->
           let occurs = iterate occurs itervars iter in
           let prem = IterPr (prem, (iter, itervars, [])) $ at in

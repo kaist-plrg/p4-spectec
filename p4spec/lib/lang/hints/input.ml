@@ -1,5 +1,4 @@
 open El
-open Util.Checks
 open Util.Source
 
 (* Input hints for relations *)
@@ -17,7 +16,9 @@ let eq (hint_a : t) (hint_b : t) : bool =
 
 (* Creating hints *)
 
-let init (hintexp : Hint.t) : t option =
+type indexed_hole = int * Hint.t
+
+let init (hintexp : Hint.t) : indexed_hole list option =
   match hintexp.it with
   | SeqE hintexps ->
       List.fold_left
@@ -25,22 +26,41 @@ let init (hintexp : Hint.t) : t option =
           match hint with
           | Some hint -> (
               match hintexp.it with
-              | HoleE (`Num idx) -> Some (hint @ [ idx ])
+              | HoleE (`Num idx) -> Some ((idx, hintexp) :: hint)
               | _ -> None)
           | None -> None)
         (Some []) hintexps
-  | HoleE (`Num idx) -> Some [ idx ]
+      |> Option.map List.rev
+  | HoleE (`Num idx) -> Some [ (idx, hintexp) ]
   | _ -> None
 
 (* Validating hints *)
 
-let validate (hint : t) (arity : int) : (unit, string) result =
-  if hint = [] then Error "input hint is empty"
-  else if not (distinct ( = ) hint) then
-    Error "input hint contains duplicate indices"
-  else if List.exists (fun idx -> idx < 0 || idx >= arity) hint then
-    Error "input hint contains out-of-bounds indices"
-  else Ok ()
+type invalid =
+  | Empty
+  | Duplicate_index of int * Hint.t * Hint.t
+  | Out_of_bounds of int * Hint.t
+
+let validate (hint : indexed_hole list) (arity : int) : (t, invalid) result =
+  let rec find_duplicate seen = function
+    | [] -> None
+    | ((idx, hintexp) as indexed_hole) :: rest -> (
+        match List.find_opt (fun (idx_seen, _) -> idx_seen = idx) seen with
+        | Some (_, hintexp_first) -> Some (idx, hintexp_first, hintexp)
+        | None -> find_duplicate (indexed_hole :: seen) rest)
+  in
+  match hint with
+  | [] -> Error Empty
+  | _ -> (
+      match find_duplicate [] hint with
+      | Some (idx, hintexp_first, hintexp_duplicate) ->
+          Error (Duplicate_index (idx, hintexp_first, hintexp_duplicate))
+      | None -> (
+          match
+            List.find_opt (fun (idx, _) -> idx < 0 || idx >= arity) hint
+          with
+          | Some (idx, hintexp) -> Error (Out_of_bounds (idx, hintexp))
+          | None -> Ok (List.map fst hint)))
 
 (* Splitting and combining expressions based on input hints *)
 

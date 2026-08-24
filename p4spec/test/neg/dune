@@ -8,8 +8,11 @@
 (rule
  (alias speclang)
  (action
-  (ignore-outputs
-   (diff parse.expected parse.actual))))
+  (progn
+   (ignore-outputs
+    (diff parse.expected parse.actual))
+   (ignore-outputs
+    (diff elab.expected elab.actual)))))
 
 (rule
  (target parse.actual)
@@ -22,3 +25,15 @@
    (with-stderr-to
     parse.err
     (run ./test.exe parse cases/parse)))))
+
+(rule
+ (target elab.actual)
+ (deps
+  test.exe
+  (source_tree cases/elab))
+ (action
+  (with-stdout-to
+   elab.actual
+   (with-stderr-to
+    elab.err
+    (run ./test.exe elab cases/elab)))))

@@ -16,6 +16,55 @@ module F = Format
 
 let valid_tid (id : id) = id.it = (Xl.Var.strip_var_suffix id).it
 
+let region_of_tparams = function
+  | [] -> None
+  | tparams -> Some (over_region (List.map (fun tparam -> tparam.at) tparams))
+
+let related_tparams tparams fallback =
+  match region_of_tparams tparams with
+  | Some at -> [ (at, "expected type parameters declared here") ]
+  | None -> (
+      match fallback with
+      | Some at -> [ (at, "declaration with no type parameters here") ]
+      | None -> [])
+
+let describe_tparams = function
+  | [] -> "no type parameters"
+  | tparams ->
+      F.asprintf "type parameters `%s`" (El.Print.string_of_tparams tparams)
+
+let quote_mixop mixop =
+  let rendered = Mixop.string_of_mixop mixop in
+  let length = String.length rendered in
+  (* [Mixop.string_of_mixop] wraps every rendered operator in backticks. *)
+  assert (length >= 2 && rendered.[0] = '`' && rendered.[length - 1] = '`');
+  Diagnostic.quote (String.sub rendered 1 (length - 2))
+
+let region_of_first_extra expected regions fallback =
+  let rec nth index = function
+    | [] -> fallback
+    | region :: _ when index = 0 -> region
+    | _ :: regions -> nth (index - 1) regions
+  in
+  if List.length regions > expected then nth expected regions else fallback
+
+let check_tparams_distinct code (tparams : tparam list) =
+  let rec find_first_duplicate seen = function
+    | [] -> None
+    | tparam :: rest -> (
+        match
+          List.find_opt (fun (first : tparam) -> first.it = tparam.it) seen
+        with
+        | Some first_occurrence -> Some (first_occurrence, tparam)
+        | None -> find_first_duplicate (tparam :: seen) rest)
+  in
+  match find_first_duplicate [] tparams with
+  | None -> ()
+  | Some (first_occurrence, duplicate_occurrence) ->
+      error ~code duplicate_occurrence.at
+        (F.asprintf "type parameter `%s` is duplicated" duplicate_occurrence.it)
+        ~related:[ (first_occurrence.at, "first declared here") ]
+
 (* Iteration elaboration *)
 
 let elab_iter (iter : iter) : Il.iter =
@@ -76,9 +125,21 @@ and elab_plaintyp' (ctx : Ctx.t) (plaintyp : plaintyp') : Il.typ' =
   | VarT (tid, targs) ->
       let td = Ctx.find_typdef ctx tid in
       let tparams = Typdef.get_tparams td in
-      check
-        (List.length tparams = List.length targs)
-        tid.at "type arguments do not match";
+      let tparams_expected = List.length tparams in
+      let targs_actual = List.length targs in
+      check ~code:Vart_targ_arity_mismatch
+        (targs_actual = tparams_expected)
+        (region_of_first_extra tparams_expected
+           (List.map (fun targ -> targ.at) targs)
+           tid.at)
+        (F.asprintf "type `%s` expects %d type argument%s, but got %d" tid.it
+           tparams_expected
+           (if tparams_expected = 1 then "" else "s")
+           targs_actual)
+        ~related:
+          (match Ctx.typdef_prior_at ctx tid with
+          | Some at -> [ (at, "type declared here") ]
+          | None -> []);
       let targs_il = List.map (elab_plaintyp ctx) targs in
       Il.VarT (tid, targs_il)
   | ParenT plaintyp -> elab_plaintyp' ctx plaintyp.it
@@ -160,15 +221,65 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
   | VarT (tid, targs_il) -> (
       let td = Ctx.find_typdef ctx tid in
       match td with
-      | Defining _ -> error typ_il.at "cannot extend an incomplete type"
+      | Defining _ ->
+          error ~code:Extend_incomplete typ_il.at
+            (F.asprintf "incomplete type %s does not allow extension"
+               (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
+            ~related:
+              (match Ctx.typdef_prior_at ctx tid with
+              | Some at -> [ (at, "originally declared here") ]
+              | None -> [])
+            ~detail:
+              "A case-line `| T` extends the surrounding variant with the \
+               cases of `T`. The type named here was declared with `syntax T` \
+               but has no body yet, so there are no cases to contribute."
       | Defined (tparams, deftyp) -> (
           match deftyp.it with
           | VariantT typcases_il ->
               let theta = TIdMap.of_lists tparams targs_il in
               List.map (Subst.subst_typcase theta) typcases_il
-          | _ -> error typ_il.at "cannot extend a non-variant type")
-      | _ -> error typ_il.at "cannot extend a non-variant type")
-  | _ -> error typ_il.at "cannot extend a non-variant type"
+          | _ ->
+              error ~code:Extend_non_variant_struct typ_il.at
+                (F.asprintf "struct type %s does not allow extension"
+                   (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
+                ~related:
+                  (match Ctx.typdef_prior_at ctx tid with
+                  | Some at -> [ (at, "originally defined here") ]
+                  | None -> [])
+                ~detail:
+                  "A case-line `| T` extends the surrounding variant with the \
+                   cases of `T`. The type named here has a body that is not a \
+                   variant, so it has no cases to contribute.")
+      | Param ->
+          error ~code:Extend_non_variant_tparam typ_il.at
+            (F.asprintf "type parameter %s does not allow extension"
+               (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
+            ~related:
+              (match Ctx.typdef_prior_at ctx tid with
+              | Some at -> [ (at, "type parameter declared here") ]
+              | None -> [])
+            ~detail:
+              "`| T` extends a variant with `T`'s cases, but type parameters \
+               have no known cases."
+      | Extern ->
+          error ~code:Extend_non_variant_extern typ_il.at
+            (F.asprintf "extern type %s does not allow extension"
+               (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
+            ~related:
+              (match Ctx.typdef_prior_at ctx tid with
+              | Some at -> [ (at, "extern type declared here") ]
+              | None -> [])
+            ~detail:
+              "`| T` extends a variant with `T`'s cases, but extern types have \
+               no cases.")
+  | _ ->
+      error ~code:Extend_non_variant_primitive typ_il.at
+        (F.asprintf "primitive type %s does not allow extension"
+           (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
+        ~detail:
+          "A case-line `| T` extends the surrounding variant with the cases of \
+           `T`. The expression here is a primitive type, not a named variant, \
+           so there are no cases to contribute."
 
 and elab_typcase (ctx : Ctx.t) (typorigin_il : Il.typorigin) (typcase : typcase)
     : Il.typcase list =
@@ -191,22 +302,29 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
     (id, targs_il) $ id.at
   in
   let typcases_il = List.concat_map (elab_typcase ctx typorigin_il) typcases in
-  let mixops =
+  let mixops_with_at =
     typcases_il
-    |> List.map (fun (nottyp_il, _, _) -> Mixfix.to_mixop nottyp_il.it)
+    |> List.map (fun (nottyp_il, _, _) ->
+           (Mixfix.to_mixop nottyp_il.it, nottyp_il.at))
   in
-  let mixop_groups = groupby Mixop.eq mixops in
-  let mixop_duplicates =
-    List.filter (fun mixop_group -> List.length mixop_group > 1) mixop_groups
+  let mixop_groups =
+    groupby (fun (m1, _) (m2, _) -> Mixop.eq m1 m2) mixops_with_at
   in
-  check
-    (List.length mixop_duplicates = 0)
-    at
-    ("variant cases are ambiguous: "
-    ^ String.concat ", "
-        (List.map
-           (fun mixop_group -> Mixop.string_of_mixop (List.hd mixop_group))
-           mixop_duplicates));
+  let collision_opt =
+    List.find_map
+      (function first :: second :: _ -> Some (first, second) | _ -> None)
+      mixop_groups
+  in
+  (match collision_opt with
+  | Some ((mixop, first_at), (_, duplicate_at)) ->
+      error ~code:Variant_mixop_collision duplicate_at
+        (F.asprintf "variant case shape %s conflicts with an earlier case"
+           (quote_mixop mixop))
+        ~related:[ (first_at, "earlier case with this shape") ]
+        ~detail:
+          "Variant cases must differ in their literal tokens or argument \
+           positions. Differences in argument types do not distinguish cases."
+  | None -> ());
   let deftyp_il = Il.VariantT typcases_il $ at in
   let td = Typdef.Defined (tparams, deftyp_il) in
   (td, deftyp_il)
@@ -256,10 +374,33 @@ and infer_exp' (ctx : Ctx.t) (at : region) (exp : exp') :
   | SeqE _ -> fail_infer at "sequence expression"
   | InfixE _ -> fail_infer at "infix expression"
   | BrackE _ -> fail_infer at "bracket expression"
-  | HoleE _ -> error at "misplaced hole"
-  | FuseE _ -> error at "misplaced token concatenation"
-  | UnparenE _ -> error at "misplaced unparenthesize"
-  | LatexE _ -> error at "misplaced LaTeX literal"
+  | HoleE _ ->
+      error ~code:Hole_outside_hint at "hole is not allowed outside a hint"
+        ~detail:
+          "A `%`, `%N`, `%%`, or `!%` marks an argument slot inside a \
+           `hint(...)` expression, like `hint(input %0 %1)`. Outside a hint, \
+           it has no meaning."
+  | FuseE (_, at_operator, _) ->
+      error ~code:Fuse_outside_hint at_operator
+        "token concatenation `#` is not allowed outside a hint"
+        ~detail:
+          "The `#` operator joins two fragments without a space inside a \
+           `hint(...)` expression's rendered output, like `hint(prose \
+           %0#suffix)`. Outside a hint, it has no meaning."
+  | UnparenE (at_operator, _) ->
+      error ~code:Unparen_outside_hint at_operator
+        "unparenthesizing operator `##` is not allowed outside a hint"
+        ~detail:
+          "The `##` operator strips enclosing parentheses from its operand \
+           when a `hint(...)` expression is rendered, giving finer control \
+           over the rendered form. Outside a hint, it has no meaning."
+  | LatexE _ ->
+      error ~code:Latex_outside_hint at
+        "LaTeX literals are not allowed outside a hint"
+        ~detail:
+          "A `%latex(\"...\")` literal embeds raw LaTeX source inside a \
+           `hint(...)` expression's rendered form. Outside a hint, it has no \
+           meaning."
 
 and infer_exps (ctx : Ctx.t) (exps : exp list) :
     (Ctx.t * Il.exp list * Il.typ list) attempt =
@@ -651,14 +792,31 @@ and infer_tuple_exp (ctx : Ctx.t) (exps : exp list) :
 and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
     (args : arg list) : (Ctx.t * Il.exp' * Il.typ') attempt =
   let tparams_il, params_il, typ_il = Ctx.find_func_signature ctx id in
-  check
-    (List.length targs = List.length tparams_il)
-    id.at "type arguments do not match";
+  let tparams_expected = List.length tparams_il in
+  let tparams_actual = List.length targs in
+  check ~code:Call_targ_arity_mismatch
+    (tparams_actual = tparams_expected)
+    (region_of_first_extra tparams_expected
+       (List.map (fun targ -> targ.at) targs)
+       id.at)
+    (F.asprintf "function `%s` expects %d type argument%s, but got %d" id.it
+       tparams_expected
+       (if tparams_expected = 1 then "" else "s")
+       tparams_actual)
+    ~related:
+      (match Ctx.dec_prior_at ctx id with
+      | Some at -> [ (at, "declared here") ]
+      | None -> []);
   let targs_il = List.map (elab_plaintyp ctx) targs in
   let theta = TIdMap.of_lists tparams_il targs_il in
   let params_il = Subst.subst_params theta params_il in
   let typ_il = Subst.subst_typ theta typ_il in
-  let ctx, args_il = elab_args at ctx params_il args in
+  let related =
+    match Ctx.dec_prior_at ctx id with
+    | Some at -> [ (at, "function declared here") ]
+    | None -> []
+  in
+  let ctx, args_il = elab_args ~callee:id ~related at ctx params_il args in
   let exp_il = Il.CallE (id, targs_il, args_il) in
   Ok (ctx, exp_il, typ_il.it)
 
@@ -1180,9 +1338,7 @@ and elab_param (ctx : Ctx.t) (param : param) : Il.param =
       let typ_il = elab_plaintyp ctx plaintyp in
       Il.ExpP typ_il $ param.at
   | DefP (id, tparams, params, plaintyp) ->
-      check
-        (List.map it tparams |> distinct ( = ))
-        id.at "type parameters are not distinct";
+      check_tparams_distinct Funparam_tparam_not_distinct tparams;
       let ctx_local = ctx in
       let ctx_local = Ctx.add_tparams ctx_local tparams in
       let params_il = List.map (elab_param ctx_local) params in
@@ -1205,10 +1361,16 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
       let arg_il = Il.ExpA exp_il $ arg.at in
       (ctx, arg_il)
   | DefP (id_p, tparams_il_p, params_il_p, typ_il_p), DefA id_a when as_def ->
-      check (id_p.it = id_a.it) arg.at
+      check ~code:Funarg_name_mismatch (id_p.it = id_a.it) id_a.at
         (F.asprintf
-           "function argument does not match the declared function parameter %s"
-           (Id.to_string id_p));
+           "function argument `%s` must have the same name as declared \
+            function parameter `%s`"
+           (Id.to_string id_a) (Id.to_string id_p))
+        ~related:[ (id_p.at, "function parameter declared here") ]
+        ~detail:
+          "A function argument in a `def` clause must bind to the same name as \
+           the declared function parameter in the `dec`. The clause body uses \
+           that name to call the function.";
       let ctx =
         Ctx.add_defined_func_dec ctx id_p tparams_il_p params_il_p typ_il_p
       in
@@ -1220,25 +1382,85 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
       in
       let typs_params_il_p = Typ.Make.of_params_il params_il_p in
       let typs_params_il_a = Typ.Make.of_params_il params_il_a in
-      check
-        (Equiv.equiv_functyp (Ctx.find_typdef_opt ctx) arg.at tparams_il_p
+      let related =
+        match Ctx.dec_prior_at ctx id_a with
+        | Some at ->
+            [
+              (id_p.at, "function parameter declared here");
+              (at, "passed function declared here");
+            ]
+        | None -> [ (id_p.at, "function parameter declared here") ]
+      in
+      let tparams_expected = List.length tparams_il_p in
+      let tparams_actual = List.length tparams_il_a in
+      check ~code:Functyp_tparam_arity_mismatch
+        (tparams_actual = tparams_expected)
+        arg.at
+        (F.asprintf
+           "function parameter `%s` has %d type parameter%s, but passed \
+            function `%s` has %d"
+           (Id.to_string id_p) tparams_expected
+           (if tparams_expected = 1 then "" else "s")
+           (Id.to_string id_a) tparams_actual)
+        ~related;
+      let params_expected = List.length params_il_p in
+      let params_actual = List.length params_il_a in
+      check ~code:Functyp_param_arity_mismatch
+        (params_actual = params_expected)
+        arg.at
+        (F.asprintf
+           "function parameter `%s` has %d parameter%s, but passed function \
+            `%s` has %d"
+           (Id.to_string id_p) params_expected
+           (if params_expected = 1 then "" else "s")
+           (Id.to_string id_a) params_actual)
+        ~related;
+      check ~code:Funarg_signature_mismatch
+        (Equiv.equiv_functyp (Ctx.find_typdef_opt ctx) tparams_il_p
            typs_params_il_p typ_il_p tparams_il_a typs_params_il_a typ_il_a)
         arg.at
         (F.asprintf
-           "function argument does not match the declared function parameter %s"
-           (Id.to_string id_p));
+           "passed function `%s` must have the same signature as function \
+            parameter `%s`"
+           (Id.to_string id_a) (Id.to_string id_p))
+        ~related
+        ~detail:
+          "A function argument at a call site must have the same signature \
+           (type parameters, parameter types, and return type) as the declared \
+           function parameter. The function passed here was declared with a \
+           different signature.";
       let arg_il = Il.DefA id_a $ arg.at in
       (ctx, arg_il)
   | ExpP _, DefA _ ->
-      error arg.at
+      error ~code:Funarg_expected_exp_got_fun arg.at
         "expected an expression argument, but got a function argument"
+        ~related:[ (param_il.at, "parameter declared here") ]
   | DefP _, ExpA _ ->
-      error arg.at
+      error ~code:Funarg_expected_fun_got_exp arg.at
         "expected a function argument, but got an expression argument"
+        ~related:[ (param_il.at, "parameter declared here") ]
 
-and elab_args ?(as_def = false) (at : region) (ctx : Ctx.t)
-    (params_il : Il.param list) (args : arg list) : Ctx.t * Il.arg list =
-  check (List.length args = List.length params_il) at "arguments do not match";
+and elab_args ?(as_def = false) ?callee ?(related = []) (at : region)
+    (ctx : Ctx.t) (params_il : Il.param list) (args : arg list) :
+    Ctx.t * Il.arg list =
+  let args_expected = List.length params_il in
+  let args_actual = List.length args in
+  let message =
+    match callee with
+    | Some id ->
+        F.asprintf "function `%s` expects %d argument%s, but got %d" id.it
+          args_expected
+          (if args_expected = 1 then "" else "s")
+          args_actual
+    | None ->
+        F.asprintf "expected %d argument%s, but got %d" args_expected
+          (if args_expected = 1 then "" else "s")
+          args_actual
+  in
+  check ~code:Call_arg_arity_mismatch
+    (args_actual = args_expected)
+    (region_of_first_extra args_expected (List.map (fun arg -> arg.at) args) at)
+    message ~related;
   List.fold_left2
     (fun (ctx, args_il) param_il arg ->
       let ctx, arg_il = elab_arg ~as_def ctx param_il arg in
@@ -1261,11 +1483,14 @@ let externalize_prem (prem_internal : prem_internal) : Il.prem option =
 let is_else_prem_internal (prem_internal : prem_internal) : bool =
   match prem_internal.it with ElsePr -> true | _ -> false
 
-let check_prems_internal (at : region) (prems_internal : prem_internal list) :
-    unit =
+let check_prems_internal (prems_internal : prem_internal list) : unit =
   let prems_else_internal = List.filter is_else_prem_internal prems_internal in
-  if List.length prems_else_internal <= 1 then ()
-  else error at "cannot use multiple otherwise premises"
+  match prems_else_internal with
+  | first :: second :: _ ->
+      error ~code:Prem_multiple_otherwise second.at
+        "cannot use more than one `otherwise` premise"
+        ~related:[ (first.at, "first `otherwise` premise here") ]
+  | _ -> ()
 
 let rec elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * prem_internal =
   let ctx, prem_internal = elab_prem' ctx prem.it in
@@ -1291,8 +1516,14 @@ and elab_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t * prem_internal list =
 (* Elaboration of variable premises *)
 
 and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
-  check (valid_tid id) id.at "invalid meta-variable identifier";
-  check (not (Ctx.bound_typdef ctx id)) id.at "type already defined";
+  check ~code:Var_prem_invalid_metavar (valid_tid id) id.at
+    (F.asprintf "meta-variable identifier `%s` must not have a numeric suffix"
+       id.it);
+  check ~code:Var_prem_type_redefined
+    (not (Ctx.bound_typdef ctx id))
+    id.at
+    (F.asprintf "meta-variable name `%s` is already used by a type" id.it)
+    ~related:(Ctx.related_of_prior (Ctx.typdef_prior_at ctx id));
   let typ_il = elab_plaintyp ctx plaintyp in
   Ctx.add_metavar ctx id typ_il
 
@@ -1315,9 +1546,20 @@ and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
   let nottyp_il, inputs = Ctx.find_rel_signature ctx id in
   let+ ctx, notexp_il = elab_exp_not ctx nottyp_il exp in
   let exps_il = Mixfix.args notexp_il in
-  check
-    (Hints.Input.is_conditional inputs exps_il)
-    exp.at "negated rule premises do not take inputs";
+  let _, exps_output = Hints.Input.split inputs exps_il in
+  (match exps_output with
+  | exp_output :: _ ->
+      error ~code:Negated_premise_has_outputs exp_output.at
+        (F.asprintf
+           "negated rule premise for relation `%s` cannot use output positions"
+           id.it)
+        ~related:
+          [ (nottyp_il.at, "relation signature with output positions here") ]
+        ~detail:
+          "A negated rule premise asserts that a relation does not hold for \
+           given inputs. Output positions have no value to produce when the \
+           relation fails."
+  | [] -> ());
   let prem_il = Il.IfNotHoldPr (id, notexp_il) in
   (ctx, prem_il)
 
@@ -1337,8 +1579,17 @@ and elab_iter_prem (ctx : Ctx.t) (prem : prem) (iter : iter) : Ctx.t * Il.prem'
   let prem_il =
     match prem_internal.it with
     | SomePr prem_il -> prem_il $ prem_internal.at
-    | VarPr -> error prem.at "cannot iterate a var premise"
-    | ElsePr -> error prem.at "cannot iterate an otherwise premise"
+    | VarPr ->
+        error ~code:Iter_var_premise prem.at "cannot iterate a `var` premise"
+          ~detail:
+            "A variable premise declares its variable once for the rule, not \
+             once per iteration."
+    | ElsePr ->
+        error ~code:Iter_otherwise_premise prem.at
+          "cannot iterate an `otherwise` premise"
+          ~detail:
+            "`otherwise` selects one fallback path for the rule, so it cannot \
+             be repeated by an iteration."
   in
   let prem_il = Il.IterPr (prem_il, (iter_il, [], [])) in
   (ctx, prem_il)
@@ -1355,14 +1606,11 @@ and elab_debug_prem (ctx : Ctx.t) (exp : exp) : Ctx.t * Il.prem' =
 type rule_internal = SomeRule of Il.rule | ElseRule of Il.rule
 type rulegroup_internal = Group of Il.rulegroup | ElseGroup of Il.elsegroup
 
-let is_else_rule_internal (rule_internal : rule_internal) : bool =
-  match rule_internal with ElseRule _ -> true | SomeRule _ -> false
-
 let elab_rule (ctx : Ctx.t) (at : region) (id_rule : id) (nottyp_il : Il.nottyp)
     (exp : exp) (prems : prem list) : rule_internal =
   let+ ctx, notexp_il = elab_exp_not ctx nottyp_il exp in
   let _ctx, prems_internal = elab_prems ctx prems in
-  check_prems_internal id_rule.at prems_internal;
+  check_prems_internal prems_internal;
   let is_else_path = List.exists is_else_prem_internal prems_internal in
   let prems_il = List.filter_map externalize_prem prems_internal in
   let rule_il = (id_rule, notexp_il, prems_il) $ at in
@@ -1382,13 +1630,27 @@ let elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
     List.map2
       (fun ctx_local rule ->
         let id_rel_rule, id_rule, exp, prems = rule.it in
-        check (Id.eq id_rel id_rel_rule) id_rule.at
-          "rule group identifier does not match relation identifier";
+        check ~code:Rule_relation_mismatch (Id.eq id_rel id_rel_rule)
+          ~related:
+            [
+              ( id_rel.at,
+                F.asprintf "enclosing rule group names relation `%s`" id_rel.it
+              );
+            ]
+          id_rel_rule.at
+          (F.asprintf
+             "rule belongs to relation `%s`, but its enclosing rule group \
+              belongs to relation `%s`"
+             id_rel_rule.it id_rel.it);
         elab_rule ctx_local rule.at id_rule nottyp_il exp prems)
       ctxs_local rules
   in
-  let rules_else_internal = List.filter is_else_rule_internal rules_internal in
-  match rules_else_internal with
+  let rules_else_il =
+    List.filter_map
+      (function ElseRule rule_il -> Some rule_il | SomeRule _ -> None)
+      rules_internal
+  in
+  match rules_else_il with
   | [] ->
       let rules_il =
         List.map
@@ -1396,12 +1658,26 @@ let elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
           rules_internal
       in
       Group ((id_rulegroup, rules_il) $ at)
-  | [ ElseRule rule_il_else ] ->
-      check
-        (List.length rules_internal = 1)
-        at "cannot have other rules alongside an otherwise rule";
-      ElseGroup ((id_rulegroup, rule_il_else) $ at)
-  | _ -> error at "cannot use multiple otherwise rules in a rule group"
+  | [ rule_il_else ] -> (
+      match
+        List.find_map
+          (function SomeRule rule_il -> Some rule_il | ElseRule _ -> None)
+          rules_internal
+      with
+      | Some rule_il ->
+          let primary_at, related =
+            if Stdlib.compare rule_il_else.at.left rule_il.at.left < 0 then
+              (rule_il.at, (rule_il_else.at, "`otherwise` rule here"))
+            else (rule_il_else.at, (rule_il.at, "other rule here"))
+          in
+          error ~code:Rule_otherwise_with_other_rule primary_at
+            "an `otherwise` rule must be the only rule in its rule group"
+            ~related:[ related ]
+      | None -> ElseGroup ((id_rulegroup, rule_il_else) $ at))
+  | rule_il_first :: rule_il_second :: _ ->
+      error ~code:Rule_multiple_otherwise rule_il_second.at
+        "cannot use more than one `otherwise` rule in a rule group"
+        ~related:[ (rule_il_first.at, "first `otherwise` rule here") ]
 
 (* Elaboration of clauses *)
 
@@ -1412,12 +1688,34 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let tparams_il_expected, params_il, typ_il, _, _ =
     Ctx.find_defined_func ctx id
   in
-  check
+  let at_tparams = Option.value ~default:id.at (region_of_tparams tparams) in
+  check ~code:Clause_tparam_mismatch
     (List.length tparams = List.length tparams_il_expected
     && List.for_all2 ( = ) (List.map it tparams)
          (List.map it tparams_il_expected))
-    id.at "type arguments do not match";
-  check (List.length params_il = List.length args) at "arguments do not match";
+    at_tparams
+    (F.asprintf "function `%s` was declared with %s, but this clause has %s"
+       id.it
+       (describe_tparams tparams_il_expected)
+       (describe_tparams tparams))
+    ~related:(related_tparams tparams_il_expected (Ctx.dec_prior_at ctx id))
+    ~detail:
+      "A `def $f<...> = ...` clause must repeat the type parameters from its \
+       `dec` declaration with the same count and the same names in the same \
+       order.";
+  let args_expected = List.length params_il in
+  let args_actual = List.length args in
+  check ~code:Clause_arg_arity_mismatch
+    (args_expected = args_actual)
+    (region_of_first_extra args_expected (List.map (fun arg -> arg.at) args) at)
+    (F.asprintf "function `%s` expects %d argument%s, but this clause has %d"
+       id.it args_expected
+       (if args_expected = 1 then "" else "s")
+       args_actual)
+    ~related:
+      (match Ctx.dec_prior_at ctx id with
+      | Some at -> [ (at, "declared here") ]
+      | None -> []);
   let ctx_local = { ctx with frees = IdSet.empty } in
   let ctx_local =
     let def = FuncDefD (id, tparams, args, exp, prems) $ at in
@@ -1426,7 +1724,7 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let ctx_local, args_il = elab_args ~as_def:true at ctx_local params_il args in
   let ctx_local, prems_internal = elab_prems ctx_local prems in
-  check_prems_internal at prems_internal;
+  check_prems_internal prems_internal;
   let is_else_clause = List.exists is_else_prem_internal prems_internal in
   let prems_il = List.filter_map externalize_prem prems_internal in
   let+ _ctx_local, exp_il = elab_exp ctx_local typ_il exp in
@@ -1478,7 +1776,8 @@ and elab_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Il.def list =
 
 and elab_extern_syn_def (ctx : Ctx.t) (at : region) (id : id)
     (hints : hint list) : Ctx.t * Il.def =
-  check (valid_tid id) id.at "invalid type identifier";
+  check ~code:Extern_syn_invalid_id (valid_tid id) id.at
+    (F.asprintf "type identifier `%s` must not have a numeric suffix" id.it);
   let td = Typdef.Extern in
   let ctx = Ctx.add_typdef ctx id td in
   let typ_il = Il.VarT (id, []) $ id.at in
@@ -1489,10 +1788,9 @@ and elab_extern_syn_def (ctx : Ctx.t) (at : region) (id : id)
 and elab_syn_def (ctx : Ctx.t) (syns : (id * tparam list) list) : Ctx.t =
   List.fold_left
     (fun ctx (id, tparams) ->
-      check
-        (List.map it tparams |> distinct ( = ))
-        id.at "type parameters are not distinct";
-      check (valid_tid id) id.at "invalid type identifier";
+      check_tparams_distinct Syn_tparam_not_distinct tparams;
+      check ~code:Syn_invalid_id (valid_tid id) id.at
+        (F.asprintf "type identifier `%s` must not have a numeric suffix" id.it);
       let td = Typdef.Defining tparams in
       let ctx = Ctx.add_typdef ctx id td in
       if tparams = [] then
@@ -1509,24 +1807,61 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
   let ctx =
     match td_opt with
     | Some (Typdef.Defining tparams_defining) ->
-        let tparams = List.map it tparams in
-        let tparams_defining = List.map it tparams_defining in
-        check
+        let at_tparams =
+          Option.value ~default:id.at (region_of_tparams tparams)
+        in
+        check ~code:Typ_tparam_mismatch
           (List.length tparams = List.length tparams_defining
-          && List.for_all2 ( = ) tparams tparams_defining)
-          id.at "type parameters do not match";
+          && List.for_all2 ( = ) (List.map it tparams)
+               (List.map it tparams_defining))
+          at_tparams
+          (F.asprintf
+             "type `%s` was forward-declared with %s, but its definition has %s"
+             id.it
+             (describe_tparams tparams_defining)
+             (describe_tparams tparams))
+          ~related:
+            (related_tparams tparams_defining (Ctx.typdef_prior_at ctx id))
+          ~detail:
+            "A `syntax T<...> = ...` body must repeat the type parameters from \
+             its forward declaration with the same count and the same names in \
+             the same order.";
         ctx
     | None ->
-        check (valid_tid id) id.at "invalid type identifier";
+        check ~code:Typ_invalid_id (valid_tid id) id.at
+          (F.asprintf "type identifier `%s` must not have a numeric suffix"
+             id.it);
         let td = Typdef.Defining tparams in
         let ctx = Ctx.add_typdef ctx id td in
         if tparams = [] then
           let typ_il = Il.VarT (id, []) $ id.at in
           Ctx.add_metavar ctx id typ_il
         else ctx
-    | _ -> error id.at "type was already defined"
+    | Some (Typdef.Defined _) ->
+        error ~code:Typ_fully_redefined id.at
+          (F.asprintf "type `%s` was already fully defined" id.it)
+          ~related:(Ctx.related_of_prior (Ctx.typdef_prior_at ctx id))
+    | Some Typdef.Extern ->
+        let prior_at =
+          match Ctx.typdef_prior_at ctx id with
+          | Some at -> at
+          | None ->
+              (* [Some Typdef.Extern] means [id] is present in [ctx.tdenv]. *)
+              assert false
+        in
+        error ~code:Typ_define_extern id.at
+          (F.asprintf "extern type `%s` does not allow a definition" id.it)
+          ~related:[ (prior_at, "extern type declared here") ]
+    | Some Typdef.Param ->
+        (* [elab_defs] starts each definition without local type parameters. *)
+        assert false
   in
-  check (List.for_all valid_tid tparams) id.at "invalid type parameter";
+  (match List.find_opt (fun tparam -> not (valid_tid tparam)) tparams with
+  | Some tparam ->
+      error ~code:Typ_invalid_tparam tparam.at
+        (F.asprintf "type parameter `%s` must not have a numeric suffix"
+           tparam.it)
+  | None -> ());
   let ctx_local = Ctx.add_tparams ctx tparams in
   let td, deftyp_il = elab_deftyp ctx_local id tparams deftyp in
   let def_il = Il.TypD (id, tparams, deftyp_il, hints) $ deftyp.at in
@@ -1537,8 +1872,14 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
 
 and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp)
     (hints : hint list) : Ctx.t * Il.def =
-  check (valid_tid id) id.at "invalid meta-variable identifier";
-  check (not (Ctx.bound_typdef ctx id)) id.at "type already defined";
+  check ~code:Var_def_invalid_metavar (valid_tid id) id.at
+    (F.asprintf "meta-variable identifier `%s` must not have a numeric suffix"
+       id.it);
+  check ~code:Var_def_type_redefined
+    (not (Ctx.bound_typdef ctx id))
+    id.at
+    (F.asprintf "meta-variable name `%s` is already used by a type" id.it)
+    ~related:(Ctx.related_of_prior (Ctx.typdef_prior_at ctx id));
   let typ_il = elab_plaintyp ctx plaintyp in
   let ctx = Ctx.add_metavar ctx id typ_il in
   let def_il = Il.VarD (id, typ_il, hints) $ id.at in
@@ -1546,7 +1887,7 @@ and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp)
 
 (* Elaboration of relations *)
 
-and fetch_rel_input_hint (at : region) (nottyp_il : Il.nottyp)
+and fetch_rel_input_hint (at : region) (id : id) (nottyp_il : Il.nottyp)
     (hints : hint list) : int list =
   let len = Mixfix.arity nottyp_il.it in
   let hint_input_default = List.init len Fun.id in
@@ -1561,23 +1902,52 @@ and fetch_rel_input_hint (at : region) (nottyp_il : Il.nottyp)
       match inputs_opt with
       | Some inputs -> (
           match Hints.Input.validate inputs len with
-          | Ok () -> inputs
-          | Error msg -> error at (F.asprintf "invalid input hint: %s" msg))
+          | Ok inputs -> inputs
+          | Error Hints.Input.Empty ->
+              error ~code:Relation_input_hint_empty hintexp.at
+                "input hint must contain at least one index such as `%0`"
+          | Error
+              (Hints.Input.Duplicate_index
+                (idx, hintexp_first, hintexp_duplicate)) ->
+              error ~code:Relation_input_hint_duplicate_index
+                hintexp_duplicate.at
+                (F.asprintf "input hint repeats index `%%%d`" idx)
+                ~related:[ (hintexp_first.at, "first occurrence here") ]
+          | Error (Hints.Input.Out_of_bounds (idx, hintexp_invalid)) ->
+              let nottyp_at =
+                over_region
+                  (List.map
+                     (fun (typ : Il.typ) -> typ.at)
+                     (Mixfix.args nottyp_il.it)
+                  @ List.map
+                      (fun (atom : Mixfix.atom) -> atom.at)
+                      (Mixfix.atoms nottyp_il.it))
+              in
+              let positions = if len = 1 then "position" else "positions" in
+              error ~code:Relation_input_hint_out_of_bounds hintexp_invalid.at
+                (F.asprintf
+                   "input hint index `%%%d` is out of bounds for a relation \
+                    with %d %s"
+                   idx len positions)
+                ~related:
+                  [ (nottyp_at, F.asprintf "relation has %d %s" len positions) ]
+          )
       | None ->
-          error at
+          error ~code:Relation_input_hint_non_hole hintexp.at
             (F.asprintf
-               "malformed input hint: should be a sequence of indexed holes \
-                %%N (N < %d)"
-               len))
+               "input hint must be a sequence of indexed holes such as `%%0`, \
+                but got %s"
+               (Diagnostic.quote (El.Print.string_of_exp hintexp))))
   (* If no hint is provided, assume all fields are inputs *)
   | None ->
-      warn at "no input hint provided";
+      warn ~code:Relation_no_input_hint at
+        (F.asprintf "relation `%s` has no input hint" id.it);
       hint_input_default
 
 and elab_extern_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
     (hints : hint list) : Ctx.t * Il.def =
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
-  let inputs = fetch_rel_input_hint at nottyp_il hints in
+  let inputs = fetch_rel_input_hint at id nottyp_il hints in
   let ctx = Ctx.add_extern_rel ctx id nottyp_il inputs in
   let def_il = Il.ExternRelD (id, nottyp_il, inputs, hints) $ at in
   (ctx, def_il)
@@ -1585,7 +1955,7 @@ and elab_extern_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
 and elab_rel_def (ctx : Ctx.t) (at : region) (id : id) (nottyp : nottyp)
     (hints : hint list) : Ctx.t * Il.def =
   let nottyp_il = elab_nottyp ctx (NotationT nottyp) in
-  let inputs = fetch_rel_input_hint at nottyp_il hints in
+  let inputs = fetch_rel_input_hint at id nottyp_il hints in
   let ctx = Ctx.add_defined_rel ctx id nottyp_il inputs in
   let def_il = Il.RelD (id, nottyp_il, inputs, [], None, hints) $ at in
   (ctx, def_il)
@@ -1604,9 +1974,7 @@ and elab_rulegroup_def (ctx : Ctx.t) (at : region) (id_rel : id)
 and elab_extern_dec_def (ctx : Ctx.t) (at : region) (id : id)
     (tparams : tparam list) (params : param list) (plaintyp : plaintyp)
     (hints : hint list) : Ctx.t * Il.def =
-  check
-    (List.map it tparams |> distinct ( = ))
-    id.at "type parameters are not distinct";
+  check_tparams_distinct Extern_dec_tparam_not_distinct tparams;
   let ctx_local = ctx in
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
@@ -1618,9 +1986,7 @@ and elab_extern_dec_def (ctx : Ctx.t) (at : region) (id : id)
 and elab_builtin_dec_def (ctx : Ctx.t) (at : region) (id : id)
     (tparams : tparam list) (params : param list) (plaintyp : plaintyp)
     (hints : hint list) : Ctx.t * Il.def =
-  check
-    (List.map it tparams |> distinct ( = ))
-    id.at "type parameters are not distinct";
+  check_tparams_distinct Builtin_dec_tparam_not_distinct tparams;
   let ctx_local = ctx in
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
@@ -1633,14 +1999,23 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
     (params : param list) (plaintyp : plaintyp) (hints : hint list) :
     Ctx.t * Il.def =
   let params_il = List.map (elab_param ctx) params in
-  check
-    (List.for_all
-       (fun (param_il : Il.param) ->
-         match param_il.it with ExpP _ -> true | DefP _ -> false)
-       params_il)
-    at "table cannot have function parameters";
+  List.iter
+    (fun (param_il : Il.param) ->
+      match param_il.it with
+      | ExpP _ -> ()
+      | DefP (id, _, _, _) ->
+          error ~code:Table_function_parameter param_il.at
+            (F.asprintf
+               "table parameter `%s` must be a value parameter, but it is a \
+                function parameter"
+               id.it))
+    params_il;
   let typ_il = elab_plaintyp ctx plaintyp in
-  check (typ_il.it = Il.BoolT) typ_il.at "table must return a boolean type";
+  check ~code:Table_non_bool_return
+    (Equiv.equiv_typ (Ctx.find_typdef_opt ctx) typ_il (Il.BoolT $ typ_il.at))
+    typ_il.at
+    (F.asprintf "table `%s` must return `bool`, but its return type is %s" id.it
+       (Diagnostic.quote (Il.Print.string_of_typ typ_il)));
   let ctx = Ctx.add_table_func_dec ctx id params_il typ_il in
   let def_il = Il.TableDecD (id, params_il, typ_il, [], hints) $ at in
   (ctx, def_il)
@@ -1648,9 +2023,7 @@ and elab_table_dec_def (ctx : Ctx.t) (at : region) (id : id)
 and elab_func_dec_def (ctx : Ctx.t) (at : region) (id : id)
     (tparams : tparam list) (params : param list) (plaintyp : plaintyp)
     (hints : hint list) : Ctx.t * Il.def =
-  check
-    (List.map it tparams |> distinct ( = ))
-    id.at "type parameters are not distinct";
+  check_tparams_distinct Dec_tparam_not_distinct tparams;
   let ctx_local = ctx in
   let ctx_local = Ctx.add_tparams ctx_local tparams in
   let params_il = List.map (elab_param ctx_local) params in
@@ -1710,8 +2083,8 @@ let populate_typs (ctx : Ctx.t) : unit =
     (fun tid td ->
       match td with
       | Typdef.Defining tparams ->
-          warn tid.at
-            (F.asprintf "type %s%s was declared but not defined"
+          warn ~code:Typ_missing_definition tid.at
+            (F.asprintf "type `%s%s` was declared but not defined"
                (Il.Print.string_of_typid tid)
                (Il.Print.string_of_tparams tparams))
       | _ -> ())
@@ -1722,10 +2095,14 @@ let populate_typs (ctx : Ctx.t) : unit =
 let populate_rule (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   match def_il.it with
   | Il.RelD (id, nottyp_il, inputs, [], None, hints) ->
+      (* [elab_rel_def] adds [id] to the returned context. *)
+      assert (Ctx.bound_defined_rel ctx id);
       let _, _, rulegroups_il, elsegroup_il_opt = Ctx.find_defined_rel ctx id in
       Il.RelD (id, nottyp_il, inputs, rulegroups_il, elsegroup_il_opt, hints)
       $ def_il.at
-  | Il.RelD _ -> error def_il.at "relation was already populated"
+  | Il.RelD _ ->
+      (* [elab_rel_def] returns empty rule fields. *)
+      assert false
   | _ -> def_il
 
 let populate_rules (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
@@ -1734,9 +2111,8 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
     (fun def_il ->
       match def_il.it with
       | Il.RelD (id, _, _, [], None, _) ->
-          warn def_il.at
-            (F.asprintf "relation %s has no rule groups defined"
-               (Id.to_string id))
+          warn ~code:Relation_missing_rules def_il.at
+            (F.asprintf "relation `%s` has no rules defined" (Id.to_string id))
       | _ -> ())
     spec_il;
   spec_il
@@ -1746,17 +2122,25 @@ let populate_rules (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
 let populate_clause (ctx : Ctx.t) (def_il : Il.def) : Il.def =
   match def_il.it with
   | Il.TableDecD (id, params_il, typ_il, [], hints) ->
+      (* [elab_table_dec_def] adds [id] to the returned context. *)
+      assert (Ctx.find_table_func_opt ctx id |> Option.is_some);
       let _, _, tablerows_il = Ctx.find_table_func ctx id in
       Il.TableDecD (id, params_il, typ_il, tablerows_il, hints) $ def_il.at
   | Il.FuncDecD (id, tparams_il, params_il, typ_il, [], None, hints) ->
+      (* [elab_func_dec_def] adds [id] to the returned context. *)
+      assert (Ctx.find_defined_func_opt ctx id |> Option.is_some);
       let _, _, _, clauses_il, elseclause_il_opt =
         Ctx.find_defined_func ctx id
       in
       Il.FuncDecD
         (id, tparams_il, params_il, typ_il, clauses_il, elseclause_il_opt, hints)
       $ def_il.at
-  | Il.TableDecD _ -> error def_il.at "table was already populated"
-  | Il.FuncDecD _ -> error def_il.at "function was already populated"
+  | Il.TableDecD _ ->
+      (* [elab_table_dec_def] returns an empty row list. *)
+      assert false
+  | Il.FuncDecD _ ->
+      (* [elab_func_dec_def] returns empty clause fields. *)
+      assert false
   | _ -> def_il
 
 let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
@@ -1765,11 +2149,11 @@ let populate_clauses (ctx : Ctx.t) (spec_il : Il.spec) : Il.spec =
     (fun def_il ->
       match def_il.it with
       | Il.TableDecD (id, _, _, [], _) ->
-          warn def_il.at
-            (F.asprintf "table %s has no rows defined" (Id.to_string id))
+          warn ~code:Table_missing_rows def_il.at
+            (F.asprintf "table `%s` has no rows defined" (Id.to_string id))
       | Il.FuncDecD (id, _, _, _, [], None, _) ->
-          warn def_il.at
-            (F.asprintf "function %s has no clauses defined" (Id.to_string id))
+          warn ~code:Dec_missing_clauses def_il.at
+            (F.asprintf "function `%s` has no clauses defined" (Id.to_string id))
       | _ -> ())
     spec_il;
   spec_il
