@@ -1,0 +1,180 @@
+[appendix]
+[#sec-calling-restrictions]
+== Restrictions on compile time and run time calls
+
+// 1248 - Modified
+This appendix summarizes restrictions on compile time and run time calls that
+can be made.
+
+// 1250
+Some guiding principles:
+
+// 1251
+- Controls are not allowed to call parsers, and vice versa, so there is no use
+  in passing one type to the other in constructor parameters or run-time
+  parameters.
+- At run time, after a control is called, and before that call is complete,
+  there can be no recursive calls between controls, nor from a control to
+  itself. Similarly for parsers. There can be loops among states within a
+  single parser.
+- Externs are not allowed to call parsers or controls, so there is no use in
+  passing objects of those types to them.
+- Tables are always instantiated directly in their enclosing control, and
+  cannot be instantiated at the top level. There is no syntax for specifying
+  parameters that are tables. Tables are only intended to be used from within
+  the control where they are defined.
+- Value-sets can be instantiated in an enclosing parser or at the top level.
+  There is no syntax for specifying parameters that are value-sets. Value-sets
+  can be shared between the parsers as long as they are in the scope.
+
+// 1252
+A note on recursion: It is expected that some architectures will define
+capabilities for recirculating a packet to be processed again as if it were a
+newly arriving packet, or to make "clones" of packets that are then processed
+by parsers and/or control blocks that the original packet has already
+completed. This does not change the notes above on recursion that apply while a
+parser or control is executing.
+
+=== Restrictions on run time calls
+
+// 1262 - Modified
+This section lists restrictions on what kinds of calls can be made from which
+places in a P4 program. Calling a parser, control, or table means invoking its
+`apply()` method.
+
+// 1263
+One way that an extern can be called from the top level of a parser or control
+is in an initializer expression for a declared variable, e.g. `bit<32> x =
+rand.get();`. Here, the top level of a parser or control means either within a
+parser declaration, but outside of any of its parser state declarations, or
+within a control declaration, but outside its `apply { ... }` block.
+
+// 1265
+There may not be any recursion in calls, neither by a thing calling itself
+directly, nor mutual recursion.
+
+// 1266
+An extern can never cause any other type of P4 program object to be
+called. See <<sec-call-convention>>.
+
+// 1268 - Modified
+Note that particular externs may have additional restrictions
+not listed in this table. Any such restrictions should be documented
+in the description for each extern, as part of the documentation for
+the architecture that defines the extern.
+
+// 1269
+In many cases, the restriction will be "from a parser state only" or
+"from a control apply block or action only", but it may be even more
+restrictive, e.g. only from a particular kind of control block
+instantiated in a particular role in an architecture.
+
+// 1267 - Modified
+Actions may be called directly from a control `apply` block. An action is
+callable only in the following contexts:
+
+// Added
+${func-source: callable_action}
+${func-prose: callable_action}
+
+// Added
+A function is callable only in the following contexts:
+
+// Added
+${func-source: callable_definedFunction}
+${func-prose: callable_definedFunction}
+
+// Added
+An extern function is callable only in the following contexts:
+
+// Added
+${func-source: callable_externFunction}
+${func-prose: callable_externFunction}
+
+// Added
+An extern method is callable only in the following contexts:
+
+// Added
+${func-source: callable_externMethod}
+${func-prose: callable_externMethod}
+
+// Added
+A parser apply method is callable only in the following contexts:
+
+// Added
+${func-source: callable_parserApplyMethod}
+${func-prose: callable_parserApplyMethod}
+
+// Added
+A control apply method is callable only in the following contexts:
+
+// Added
+${func-source: callable_controlApplyMethod}
+${func-prose: callable_controlApplyMethod}
+
+// Added
+A table apply method is callable only in the following contexts:
+
+// Added
+${func-source: callable_tableApplyMethod}
+${func-prose: callable_tableApplyMethod}
+
+=== Restrictions on instantiations
+
+// 1255 - Modified
+This section lists restrictions on where one may perform instantiations (see
+<<sec-instantiation>>) of different types.
+
+// 1257
+You may declare variables and constants of any of the value types within a
+parser, control, or function (see <<sec-variable-declaration>> for more details).
+Declaring a variable or constant is not the same as instantiation. Variables
+may not be declared at the top level of your program, but constants may.
+
+// Added
+Instantiation of a type dispatches to the rule for its object kind:
+
+// Added
+${func-source: instantiable}
+${func-prose: instantiable}
+
+// 1256 - Modified
+For externs, one can only specify their interface in P4~16~, not their
+implementation. Thus there is no place to instantiate objects within an extern.
+An extern object is instantiable only in the following contexts:
+
+// Added
+${func-source: instantiable_extern}
+${func-prose: instantiable_extern}
+
+// Added
+A parser object is instantiable only in the following contexts:
+
+// Added
+${func-source: instantiable_parser}
+${func-prose: instantiable_parser}
+
+// Added
+A control object is instantiable only in the following contexts:
+
+// Added
+${func-source: instantiable_control}
+${func-prose: instantiable_control}
+
+// 1255 - Modified
+The answer for `package` is always "no" because there is no "inside a package"
+where instantiations can be written in P4~16~. One can definitely make
+constructor calls and use instances of stateful types as parameters when
+instantiating a package. A package object is instantiable only in the following
+contexts:
+
+// Added
+${func-source: instantiable_package}
+${func-prose: instantiable_package}
+
+// Added
+A table object is instantiable only in the following contexts:
+
+// Added
+${func-source: instantiable_table}
+${func-prose: instantiable_table}
