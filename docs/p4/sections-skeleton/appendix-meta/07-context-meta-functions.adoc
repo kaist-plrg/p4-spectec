@@ -1,0 +1,452 @@
+[appendix]
+[#sec-context-meta-functions]
+== Context and environment operations
+
+// Added
+This appendix collects the operations on the three contexts threaded through the
+specification -- the typing, instantiation, and execution contexts -- and on the
+environments they contain. Each context provides an empty value, operations to
+add and look up bindings for the various kinds of entity it tracks, and
+operations to enter and exit scopes.
+
+=== Typing context
+
+// Added
+The typing context is threaded through type checking. It holds a stack of
+scopes binding variables to their types, environments of type, callable-type,
+and constructor-type definitions, and the type frame used for type-argument
+inference. Its operations are suffixed with `_t`.
+
+[discrete]
+==== Empty environments
+
+// Added
+${func-source: empty_callableTypeDefEnv}
+${func-prose: empty_callableTypeDefEnv}
+
+// Added
+${func-source: empty_constructorTypeDefEnv}
+${func-prose: empty_constructorTypeDefEnv}
+
+// Added
+${func-source: empty_frame}
+${func-prose: empty_frame}
+
+// Added
+${func-source: empty_typeDefEnv}
+${func-prose: empty_typeDefEnv}
+
+// Added
+${func-source: empty_typeFrame}
+${func-prose: empty_typeFrame}
+
+// Added
+${func-source: empty_typingContext}
+${func-prose: empty_typingContext}
+
+[discrete]
+==== Variables
+
+// Added
+${func-source: add_var_t}
+${func-prose: add_var_t}
+
+// Added
+${func-source: add_vars_t}
+${func-prose: add_vars_t}
+
+// Added
+${func-source: find_var_value_t}
+${func-prose: find_var_value_t}
+
+[discrete]
+==== Types
+
+// Added
+${func-source: add_typeParameters_t}
+${func-prose: add_typeParameters_t}
+
+[discrete]
+==== Type definitions
+
+// Added
+${func-source: add_typeDef_t}
+${func-prose: add_typeDef_t}
+
+// Added
+${func-source: add_typeDefs_t}
+${func-prose: add_typeDefs_t}
+
+// Added
+${func-source: find_typeDef_t}
+${func-prose: find_typeDef_t}
+
+[discrete]
+==== Callable definitions
+
+// Added
+${func-source: add_callableDef_non_overload_t}
+${func-prose: add_callableDef_non_overload_t}
+
+// Added
+${func-source: add_callableDef_overload_t}
+${func-prose: add_callableDef_overload_t}
+
+// Added
+${func-source: find_callableDef_non_overloaded_t}
+${func-prose: find_callableDef_non_overloaded_t}
+
+// Added
+${func-source: find_callableDef_overloaded_t}
+${func-prose: find_callableDef_overloaded_t}
+
+[discrete]
+==== Constructor definitions
+
+// Added
+${func-source: add_constructorDef_non_overload_t}
+${func-prose: add_constructorDef_non_overload_t}
+
+// Added
+${func-source: add_constructorDef_t}
+${func-prose: add_constructorDef_t}
+
+// Added
+${func-source: add_constructorDefs_t}
+${func-prose: add_constructorDefs_t}
+
+// Added
+${func-source: find_constructorDef_overloaded_t}
+${func-prose: find_constructorDef_overloaded_t}
+
+[discrete]
+==== Constructor parameters
+
+// Added
+${func-source: add_constructorParameter_t}
+${func-prose: add_constructorParameter_t}
+
+// Added
+${func-source: add_constructorParameters_t}
+${func-prose: add_constructorParameters_t}
+
+[discrete]
+==== Parameters
+
+// Added
+${func-source: add_parameter_t}
+${func-prose: add_parameter_t}
+
+// Added
+${func-source: add_parameters_t}
+${func-prose: add_parameters_t}
+
+[discrete]
+==== Return types
+
+// Added
+${func-source: find_local_return_type_t}
+${func-prose: find_local_return_type_t}
+
+[discrete]
+==== Scope entry and exit
+
+// Added
+${func-source: enter_t}
+${func-prose: enter_t}
+
+// Added
+${func-source: exit_t}
+${func-prose: exit_t}
+
+[discrete]
+==== Copying and merging
+
+// Added
+${func-source: merge_externMethodDefEnvs}
+${func-prose: merge_externMethodDefEnvs}
+
+// Added
+${func-source: merge_frames}
+${func-prose: merge_frames}
+
+=== Instantiation context
+
+// Added
+The instantiation context is threaded through compile-time evaluation, when
+constructor calls allocate objects. It binds the variables, types, and
+definitions available at instantiation time. Its operations are suffixed with
+`_i`.
+
+[discrete]
+==== Empty environments
+
+// Added
+${func-source: empty_instContext}
+${func-prose: empty_instContext}
+
+[discrete]
+==== Variables
+
+// Added
+${func-source: add_var_i}
+${func-prose: add_var_i}
+
+// Added
+${func-source: add_vars_i}
+${func-prose: add_vars_i}
+
+[discrete]
+==== Types
+
+// Added
+${func-source: add_type_i}
+${func-prose: add_type_i}
+
+// Added
+${func-source: add_types_i}
+${func-prose: add_types_i}
+
+[discrete]
+==== Type definitions
+
+// Added
+${func-source: add_typeDef_i}
+${func-prose: add_typeDef_i}
+
+// Added
+${func-source: find_typeDef_i}
+${func-prose: find_typeDef_i}
+
+[discrete]
+==== Callable definitions
+
+// Added
+${func-source: add_callableDef_non_overload_i}
+${func-prose: add_callableDef_non_overload_i}
+
+// Added
+${func-source: add_callableDef_overload_i}
+${func-prose: add_callableDef_overload_i}
+
+// Added
+${func-source: find_callableDef_non_overload_i}
+${func-prose: find_callableDef_non_overload_i}
+
+[discrete]
+==== Constructor definitions
+
+// Added
+${func-source: add_constructorDef_i}
+${func-prose: add_constructorDef_i}
+
+// Added
+${func-source: add_constructorDefs_i}
+${func-prose: add_constructorDefs_i}
+
+// Added
+${func-source: find_constructorDef_i}
+${func-prose: find_constructorDef_i}
+
+[discrete]
+==== Parser states
+
+// Added
+${func-source: add_parserState_i}
+${func-prose: add_parserState_i}
+
+[discrete]
+==== Scope entry and exit
+
+// Added
+${func-source: enter_i}
+${func-prose: enter_i}
+
+// Added
+${func-source: enter_path_i}
+${func-prose: enter_path_i}
+
+// Added
+${func-source: exit_i}
+${func-prose: exit_i}
+
+// Added
+${func-source: inherit_i}
+${func-prose: inherit_i}
+
+=== Execution context
+
+// Added
+The execution context holds the runtime information: the value environment, or
+store, mapping variables to values, the object and architecture state, the
+parser state, and the callable and constructor definition environments. Its
+operations are suffixed with `_e`.
+
+[discrete]
+==== Empty environments
+
+// Added
+${func-source: empty_callableDefEnv}
+${func-prose: empty_callableDefEnv}
+
+// Added
+${func-source: empty_constructorDefEnv}
+${func-prose: empty_constructorDefEnv}
+
+// Added
+${func-source: empty_stateEnv}
+${func-prose: empty_stateEnv}
+
+// Added
+${func-source: empty_store}
+${func-prose: empty_store}
+
+[discrete]
+==== Variables
+
+// Added
+${func-source: add_var_e}
+${func-prose: add_var_e}
+
+// Added
+${func-source: add_vars_e}
+${func-prose: add_vars_e}
+
+// Added
+${func-source: update_var_e}
+${func-prose: update_var_e}
+
+[discrete]
+==== Types
+
+// Added
+${func-source: find_type_e}
+${func-prose: find_type_e}
+
+[discrete]
+==== Type definitions
+
+// Added
+${func-source: find_typeDef_e}
+${func-prose: find_typeDef_e}
+
+[discrete]
+==== Callable definitions
+
+// Added
+${func-source: find_callableDef_overloaded_e}
+${func-prose: find_callableDef_overloaded_e}
+
+[discrete]
+==== Constructor definitions
+
+// Added
+${func-source: find_constructorDef_e}
+${func-prose: find_constructorDef_e}
+
+[discrete]
+==== Objects
+
+// Added
+${func-source: add_object_e}
+${func-prose: add_object_e}
+
+// Added
+${func-source: find_object_e}
+${func-prose: find_object_e}
+
+// Added
+${func-source: find_object_qualified_e}
+${func-prose: find_object_qualified_e}
+
+// Added
+${func-source: find_object_unqualified_e}
+${func-prose: find_object_unqualified_e}
+
+// Added
+${func-source: update_object_qualified_e}
+${func-prose: update_object_qualified_e}
+
+// Added
+${func-source: update_object_unqualified_e}
+${func-prose: update_object_unqualified_e}
+
+[discrete]
+==== Object state
+
+// Added
+${func-source: find_objectState_e}
+${func-prose: find_objectState_e}
+
+// Added
+${func-source: update_objectState_e}
+${func-prose: update_objectState_e}
+
+[discrete]
+==== Store
+
+// Added
+${func-source: add_store}
+${func-prose: add_store}
+
+// Added
+${func-source: find_store}
+${func-prose: find_store}
+
+[discrete]
+==== Parser states
+
+// Added
+${func-source: find_parserState_e}
+${func-prose: find_parserState_e}
+
+[discrete]
+==== Actions
+
+// Added
+${func-source: find_action}
+${func-prose: find_action}
+
+// Added
+${func-source: find_action'}
+${func-prose: find_action'}
+
+[discrete]
+==== Architecture state
+
+// Added
+${func-source: find_archState_e}
+${func-prose: find_archState_e}
+
+// Added
+${func-source: update_archState_e}
+${func-prose: update_archState_e}
+
+[discrete]
+==== Annotations
+
+// Added
+${func-source: add_annotationList}
+${func-prose: add_annotationList}
+
+[discrete]
+==== Scope entry and exit
+
+// Added
+${func-source: enter_e}
+${func-prose: enter_e}
+
+// Added
+${func-source: exit_e}
+${func-prose: exit_e}
+
+// Added
+${func-source: inherit_e}
+${func-prose: inherit_e}
+
+[discrete]
+==== Copying and merging
+
+// Added
+${func-source: copy_e}
+${func-prose: copy_e}

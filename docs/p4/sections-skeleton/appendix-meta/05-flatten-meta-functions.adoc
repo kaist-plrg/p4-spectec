@@ -1,0 +1,460 @@
+[appendix]
+[#sec-flatten-meta-functions]
+== Flattening and unflattening
+
+// Added
+The surface grammar and P4~IR~ represent list-shaped constructs with recursive
+productions. A right-recursive list associates to the right, so its head is the
+first element and its tail is the remaining list; a left-recursive list
+associates to the left, accumulating elements as it grows. To manipulate lists
+uniformly, each recursive list is flattened into a sequence and later
+reconstructed into its original left- or right-recursive shape by an
+unflattening function. Unflattening a left-recursive list uses a primed helper
+that carries an accumulator, and some constructs distinguish an empty from a
+non-empty list.
+
+[discrete]
+==== Names
+
+// Added
+${func-source: flatten_nameList}
+${func-prose: flatten_nameList}
+
+// Added
+${func-source: unflatten_nameList}
+${func-prose: unflatten_nameList}
+
+// Added
+${func-source: unflatten_nameList'}
+${func-prose: unflatten_nameList'}
+
+[discrete]
+==== Prefixed names
+
+// Added
+${func-source: flatten_prefixedNameIR}
+${func-prose: flatten_prefixedNameIR}
+
+[discrete]
+==== Type fields
+
+// Added
+${func-source: flatten_typeFieldList}
+${func-prose: flatten_typeFieldList}
+
+// Added
+${func-source: unflatten_typeFieldList}
+${func-prose: unflatten_typeFieldList}
+
+// Added
+${func-source: unflatten_typeFieldList'}
+${func-prose: unflatten_typeFieldList'}
+
+[discrete]
+==== Type parameters
+
+// Added
+${func-source: flatten_typeParameterList}
+${func-prose: flatten_typeParameterList}
+
+// Added
+${func-source: unflatten_typeParameterList}
+${func-prose: unflatten_typeParameterList}
+
+// Added
+${func-source: unflatten_typeParameterList'}
+${func-prose: unflatten_typeParameterList'}
+
+[discrete]
+==== Optional type parameters
+
+// Added
+${func-source: flatten_typeParameterListOpt}
+${func-prose: flatten_typeParameterListOpt}
+
+// Added
+${func-source: unflatten_typeParameterListOpt}
+${func-prose: unflatten_typeParameterListOpt}
+
+[discrete]
+==== Parameters
+
+// Added
+${func-source: flatten_parameterList}
+${func-prose: flatten_parameterList}
+
+// Added
+${func-source: unflatten_nonEmptyParameterList}
+${func-prose: unflatten_nonEmptyParameterList}
+
+// Added
+${func-source: unflatten_nonEmptyParameterList'}
+${func-prose: unflatten_nonEmptyParameterList'}
+
+// Added
+${func-source: unflatten_parameterList}
+${func-prose: unflatten_parameterList}
+
+[discrete]
+==== Constructor parameters
+
+// Added
+${func-source: flatten_constructorParameterListOpt}
+${func-prose: flatten_constructorParameterListOpt}
+
+// Added
+${func-source: unflatten_constructorParameterList}
+${func-prose: unflatten_constructorParameterList}
+
+[discrete]
+==== Named expressions
+
+// Added
+${func-source: flatten_namedExpressionList}
+${func-prose: flatten_namedExpressionList}
+
+// Added
+${func-source: unflatten_namedExpressionList}
+${func-prose: unflatten_namedExpressionList}
+
+// Added
+${func-source: unflatten_namedExpressionList'}
+${func-prose: unflatten_namedExpressionList'}
+
+[discrete]
+==== Expressions
+
+// Added
+${func-source: flatten_expressionList}
+${func-prose: flatten_expressionList}
+
+// Added
+${func-source: unflatten_expressionList}
+${func-prose: unflatten_expressionList}
+
+// Added
+${func-source: unflatten_expressionList'}
+${func-prose: unflatten_expressionList'}
+
+[discrete]
+==== Record element expressions
+
+// Added
+${func-source: unflatten_recordElementExpression}
+${func-prose: unflatten_recordElementExpression}
+
+// Added
+${func-source: unflatten_recordElementExpression_with_default}
+${func-prose: unflatten_recordElementExpression_with_default}
+
+[discrete]
+==== Simple keyset expressions
+
+// Added
+${func-source: flatten_simpleKeysetExpressionList}
+${func-prose: flatten_simpleKeysetExpressionList}
+
+// Added
+${func-source: unflatten_simpleKeysetExpressionList}
+${func-prose: unflatten_simpleKeysetExpressionList}
+
+// Added
+${func-source: unflatten_simpleKeysetExpressionList'}
+${func-prose: unflatten_simpleKeysetExpressionList'}
+
+[discrete]
+==== Keyset expressions
+
+// Added
+${func-source: flatten_keysetExpressionIR}
+${func-prose: flatten_keysetExpressionIR}
+
+[discrete]
+==== Real type arguments
+
+// Added
+${func-source: flatten_realTypeArgumentList}
+${func-prose: flatten_realTypeArgumentList}
+
+// Added
+${func-source: unflatten_realTypeArgumentList}
+${func-prose: unflatten_realTypeArgumentList}
+
+// Added
+${func-source: unflatten_realTypeArgumentList'}
+${func-prose: unflatten_realTypeArgumentList'}
+
+[discrete]
+==== Type arguments
+
+// Added
+${func-source: flatten_typeArgumentList}
+${func-prose: flatten_typeArgumentList}
+
+// Added
+${func-source: unflatten_typeArgumentList}
+${func-prose: unflatten_typeArgumentList}
+
+// Added
+${func-source: unflatten_typeArgumentList'}
+${func-prose: unflatten_typeArgumentList'}
+
+[discrete]
+==== Arguments
+
+// Added
+${func-source: flatten_argumentList}
+${func-prose: flatten_argumentList}
+
+// Added
+${func-source: unflatten_argumentList}
+${func-prose: unflatten_argumentList}
+
+// Added
+${func-source: unflatten_argumentListNonEmpty}
+${func-prose: unflatten_argumentListNonEmpty}
+
+// Added
+${func-source: unflatten_argumentListNonEmpty'}
+${func-prose: unflatten_argumentListNonEmpty'}
+
+[discrete]
+==== For-update statements
+
+// Added
+${func-source: flatten_forUpdateStatementList}
+${func-prose: flatten_forUpdateStatementList}
+
+[discrete]
+==== For-init statements
+
+// Added
+${func-source: flatten_forInitStatementList}
+${func-prose: flatten_forInitStatementList}
+
+[discrete]
+==== Switch cases
+
+// Added
+${func-source: flatten_switchCaseList}
+${func-prose: flatten_switchCaseList}
+
+// Added
+${func-source: unflatten_switchCaseList}
+${func-prose: unflatten_switchCaseList}
+
+// Added
+${func-source: unflatten_switchCaseList'}
+${func-prose: unflatten_switchCaseList'}
+
+[discrete]
+==== Block element statements
+
+// Added
+${func-source: flatten_blockElementStatementList}
+${func-prose: flatten_blockElementStatementList}
+
+// Added
+${func-source: unflatten_blockElementStatementList}
+${func-prose: unflatten_blockElementStatementList}
+
+// Added
+${func-source: unflatten_blockElementStatementList'}
+${func-prose: unflatten_blockElementStatementList'}
+
+[discrete]
+==== Object declarations
+
+// Added
+${func-source: flatten_objectDeclarationList}
+${func-prose: flatten_objectDeclarationList}
+
+// Added
+${func-source: unflatten_objectDeclarationList}
+${func-prose: unflatten_objectDeclarationList}
+
+// Added
+${func-source: unflatten_objectDeclarationList'}
+${func-prose: unflatten_objectDeclarationList'}
+
+[discrete]
+==== Optional object initializer
+
+// Added
+${func-source: flatten_objectInitializerOptIR}
+${func-prose: flatten_objectInitializerOptIR}
+
+[discrete]
+==== Extern constructor and method prototypes
+
+// Added
+${func-source: flatten_externConstructorOrMethodPrototypeList}
+${func-prose: flatten_externConstructorOrMethodPrototypeList}
+
+// Added
+${func-source: unflatten_externConstructorOrMethodPrototypeList}
+${func-prose: unflatten_externConstructorOrMethodPrototypeList}
+
+// Added
+${func-source: unflatten_externConstructorOrMethodPrototypeList'}
+${func-prose: unflatten_externConstructorOrMethodPrototypeList'}
+
+[discrete]
+==== Select cases
+
+// Added
+${func-source: flatten_selectCaseList}
+${func-prose: flatten_selectCaseList}
+
+// Added
+${func-source: unflatten_selectCaseList}
+${func-prose: unflatten_selectCaseList}
+
+// Added
+${func-source: unflatten_selectCaseList'}
+${func-prose: unflatten_selectCaseList'}
+
+[discrete]
+==== Parser block element statements
+
+// Added
+${func-source: flatten_parserBlockElementStatementList}
+${func-prose: flatten_parserBlockElementStatementList}
+
+// Added
+${func-source: unflatten_parserBlockElementStatementList}
+${func-prose: unflatten_parserBlockElementStatementList}
+
+// Added
+${func-source: unflatten_parserBlockElementStatementList'}
+${func-prose: unflatten_parserBlockElementStatementList'}
+
+[discrete]
+==== Parser states
+
+// Added
+${func-source: flatten_parserStateList}
+${func-prose: flatten_parserStateList}
+
+// Added
+${func-source: unflatten_parserStateList}
+${func-prose: unflatten_parserStateList}
+
+// Added
+${func-source: unflatten_parserStateList'}
+${func-prose: unflatten_parserStateList'}
+
+[discrete]
+==== Parser local declarations
+
+// Added
+${func-source: flatten_parserLocalDeclarationList}
+${func-prose: flatten_parserLocalDeclarationList}
+
+// Added
+${func-source: unflatten_parserLocalDeclarationList}
+${func-prose: unflatten_parserLocalDeclarationList}
+
+// Added
+${func-source: unflatten_parserLocalDeclarationList'}
+${func-prose: unflatten_parserLocalDeclarationList'}
+
+[discrete]
+==== Optional constant
+
+// Added
+${func-source: flatten_constOpt}
+${func-prose: flatten_constOpt}
+
+[discrete]
+==== Table keys
+
+// Added
+${func-source: flatten_tableKeyList}
+${func-prose: flatten_tableKeyList}
+
+// Added
+${func-source: unflatten_tableKeyList}
+${func-prose: unflatten_tableKeyList}
+
+// Added
+${func-source: unflatten_tableKeyList'}
+${func-prose: unflatten_tableKeyList'}
+
+[discrete]
+==== Table actions
+
+// Added
+${func-source: flatten_tableActionList}
+${func-prose: flatten_tableActionList}
+
+// Added
+${func-source: unflatten_tableActionList}
+${func-prose: unflatten_tableActionList}
+
+// Added
+${func-source: unflatten_tableActionList'}
+${func-prose: unflatten_tableActionList'}
+
+[discrete]
+==== Table entries
+
+// Added
+${func-source: flatten_tableEntryList}
+${func-prose: flatten_tableEntryList}
+
+// Added
+${func-source: unflatten_tableEntryList}
+${func-prose: unflatten_tableEntryList}
+
+// Added
+${func-source: unflatten_tableEntryList'}
+${func-prose: unflatten_tableEntryList'}
+
+[discrete]
+==== Table properties
+
+// Added
+${func-source: flatten_tablePropertyList}
+${func-prose: flatten_tablePropertyList}
+
+// Added
+${func-source: unflatten_tablePropertyList}
+${func-prose: unflatten_tablePropertyList}
+
+// Added
+${func-source: unflatten_tablePropertyList'}
+${func-prose: unflatten_tablePropertyList'}
+
+[discrete]
+==== Control local declarations
+
+// Added
+${func-source: flatten_controlLocalDeclarationList}
+${func-prose: flatten_controlLocalDeclarationList}
+
+// Added
+${func-source: unflatten_controlLocalDeclarationList}
+${func-prose: unflatten_controlLocalDeclarationList}
+
+// Added
+${func-source: unflatten_controlLocalDeclarationList'}
+${func-prose: unflatten_controlLocalDeclarationList'}
+
+[discrete]
+==== Annotations
+
+// Added
+${func-source: flatten_annotationList}
+${func-prose: flatten_annotationList}
+
+[discrete]
+==== P4 programs
+
+// Added
+${func-source: unflatten_p4program}
+${func-prose: unflatten_p4program}
+
+// Added
+${func-source: unflatten_p4program'}
+${func-prose: unflatten_p4program'}
