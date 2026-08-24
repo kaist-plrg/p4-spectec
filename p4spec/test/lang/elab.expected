@@ -2906,11 +2906,11 @@ def $unroll_typeIR(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
-def $unroll_aliasType(typeIR) : typeIR =
+def $unroll_aliasTypeIR(typeIR) : typeIR =
 
-  clause 0 : (TYPE _typeId typeIR as typeIR) = $unroll_aliasType(typeIR)
+  clause 0 : (TYPE _typeId typeIR as typeIR) = $unroll_aliasTypeIR(typeIR)
 
-  clause 1 : (TYPEDEF _typeId typeIR as typeIR) = $unroll_aliasType(typeIR)
+  clause 1 : (TYPEDEF _typeId typeIR as typeIR) = $unroll_aliasTypeIR(typeIR)
 
   clause -1 : (typeIR) = typeIR
 
@@ -8012,7 +8012,7 @@ def $update_mode_tbl(tableContext, tableKeyIR*) : tableContext =
   -- if ([tableKeyIR_lpm] = $filter_<tableKeyIR>(tableKeyIR*{tableKeyIR <- tableKeyIR*}, b_lpm*{b_lpm <- b_lpm*}))
   -- if (typedExpressionIR '#' _nameIR ':' "lpm" _annotationList ';' = tableKeyIR_lpm)
   -- if (typeIR = $type_of_typedExpressionIR(typedExpressionIR))
-  -- if (integerTypeIR as typeIR = $unroll_aliasType(typeIR))
+  -- if (integerTypeIR as typeIR = $unroll_aliasTypeIR(typeIR))
   -- if (?(n) = $width_of_integerTypeIR(integerTypeIR))
 
   clause 2 : (TBLC, tableKeyIR*{tableKeyIR <- tableKeyIR*}) = TBLC[MODE = NONE]

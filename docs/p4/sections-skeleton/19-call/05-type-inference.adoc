@@ -1,0 +1,84 @@
+[#sec-type-argument-inference]
+=== Type argument inference
+
+// Added
+When a call omits some type arguments, they are inferred from the types of the
+supplied arguments. The result of inference is an assignment of a type to each
+type variable to be inferred:
+
+// Added
+${syntax: infer constraint inference}
+
+// Added
+Type variables that are only used in `@optional` parameters are not strictly
+inferred, while other type variables are strictly inferred, meaning they must
+be determined by the arguments. The strictness of each type variable is
+represented by:
+
+// Added
+${syntax: strict strictness}
+
+// Added
+Inference generates constraints from each parameter and argument pair, merges
+them, and resolves the merged constraint:
+
+// Added
+${func-source: infer}
+${func-prose: infer}
+
+// Added
+${func-source: infer_pair}
+${func-prose: infer_pair}
+
+==== Constraint generation
+
+// Added
+Each parameter type is matched structurally against the argument type,
+recording a known type whenever a type variable is reached:
+
+// Added
+${func-source: gen_constraint_pair}
+${func-prose: gen_constraint_pair}
+
+// Added
+${func-source: gen_constraint}
+${func-prose: gen_constraint}
+
+==== Constraint merging
+
+// Added
+Constraints generated from different pairs are merged, requiring that a type
+variable constrained more than once be constrained consistently:
+
+// Added
+${func-source: merge_constraints}
+${func-prose: merge_constraints}
+
+// Added
+${func-source: merge_constraint}
+${func-prose: merge_constraint}
+
+// Added
+${func-source: merge_constraint'}
+${func-prose: merge_constraint'}
+
+==== Constraint resolution
+
+// Added
+The merged constraint is resolved into an inference, checking that every
+strictly-inferred type variable is determined:
+
+// Added
+${func-source: resolve_constraint}
+${func-prose: resolve_constraint}
+
+// Added
+Finally, any synthesized sequence type is resolved to a tuple type:
+
+// Added
+${func-source: resolve_inference}
+${func-prose: resolve_inference}
+
+// Added
+${func-source: resolve_inference'}
+${func-prose: resolve_inference'}

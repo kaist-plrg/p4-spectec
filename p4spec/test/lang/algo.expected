@@ -3356,13 +3356,13 @@ def $unroll_typeIR(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
-def $unroll_aliasType(typeIR) : typeIR =
+def $unroll_aliasTypeIR(typeIR) : typeIR =
 
-  clause 0 : (typeIR') = $unroll_aliasType(typeIR)
+  clause 0 : (typeIR') = $unroll_aliasTypeIR(typeIR)
   -- if typeIR' <: newTypeIR
   -- let TYPE _typeId typeIR = typeIR' as newTypeIR
 
-  clause 1 : (typeIR') = $unroll_aliasType(typeIR)
+  clause 1 : (typeIR') = $unroll_aliasTypeIR(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
 
@@ -11598,7 +11598,7 @@ def $update_mode_tbl(tableContext, tableKeyIR*) : tableContext =
   -- let typedExpressionIR '#' _nameIR ':' t _annotationList ';' = tableKeyIR_lpm
   -- if (t = "lpm")
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  -- let typeIR' = $unroll_aliasType(typeIR)
+  -- let typeIR' = $unroll_aliasTypeIR(typeIR)
   -- if typeIR' <: integerTypeIR
   -- let integerTypeIR = typeIR' as integerTypeIR
   -- let nat?{nat <- nat?} = $width_of_integerTypeIR(integerTypeIR)
