@@ -16,6 +16,19 @@ The `expressionNonBrace` is the same as `expression` as defined in
 <<sec-expression>>, except it does not include any cases that can begin with a
 left brace `{` character, to avoid syntactic ambiguity with a block statement.
 
+// Added
+`expressionNonBrace` and `expression` can be converted to each other by:
+
+// Added
+${func-source: expressionNonBrace_as_expression}
+${func-latex: expressionNonBrace_as_expression}
+${func-prose: expressionNonBrace_as_expression}
+
+// Added
+${func-source: expression_as_expressionNonBrace}
+${func-latex: expression_as_expressionNonBrace}
+${func-prose: expression_as_expressionNonBrace}
+
 // 730
 There are two kinds of `switch` expressions allowed, described separately in
 the following two subsections.
@@ -29,6 +42,14 @@ switch expression. It is optional to have a `switch` case with the `default`
 label, but if one is present, it must be the last one in the `switch`
 statement.
 
+// Added
+The requirement that any `default` label appear last is checked with:
+
+// Added
+${func-source: check_switchLabelIR_default}
+${func-latex: check_switchLabelIR_default}
+${func-prose: check_switchLabelIR_default}
+
 // 739
 If a switch label is not followed by a block statement, it falls through to the
 next label. However, if a block statement is present, it does not fall through.
@@ -36,6 +57,20 @@ Note that this is different from C-style `switch` statements, where a `break`
 is needed to prevent fall-through. If the last switch label is not followed by
 a block statement, the behavior is the same as if the last switch label were
 followed by an empty block statement `{ }`.
+
+// Added
+The label of a switch case, and whether a case is non-fall-through (that is, has
+a block statement), are obtained with:
+
+// Added
+${func-source: switchLabelIR_of_switchCaseIR}
+${func-latex: switchLabelIR_of_switchCaseIR}
+${func-prose: switchLabelIR_of_switchCaseIR}
+
+// Added
+${func-source: is_non_fallthrough_switchCaseIR}
+${func-latex: is_non_fallthrough_switchCaseIR}
+${func-prose: is_non_fallthrough_switchCaseIR}
 
 // 740
 When a `switch` statement is executed, first the switch expression is
@@ -89,10 +124,12 @@ kind of action executed, no matter whether there was a table hit or miss. The
 ===== Type checking
 
 // Added
+${relation-title-source: Switch_table_ok}
 ${relation-title-latex: Switch_table_ok}
 ${relation-title-prose: Switch_table_ok}
 
 // Added
+${rulegroup-source: Switch_table_ok}
 ${rulegroup-latex: Switch_table_ok}
 ${rulegroup-prose: Switch_table_ok}
 
@@ -100,18 +137,22 @@ ${rulegroup-prose: Switch_table_ok}
 Switch cases are type checked with the relation:
 
 // Added
+${relation-title-source: SwitchCaseList_table_ok}
 ${relation-title-latex: SwitchCaseList_table_ok}
 ${relation-title-prose: SwitchCaseList_table_ok}
 
 // Added
+${rulegroup-source: SwitchCaseList_table_ok}
 ${rulegroup-latex: SwitchCaseList_table_ok}
 ${rulegroup-prose: SwitchCaseList_table_ok}
 
 // Added
+${relation-title-source: SwitchCases_table_ok}
 ${relation-title-latex: SwitchCases_table_ok}
 ${relation-title-prose: SwitchCases_table_ok}
 
 // Added
+${rulegroup-source: SwitchCases_table_ok}
 ${rulegroup-latex: SwitchCases_table_ok}
 ${rulegroup-prose: SwitchCases_table_ok}
 
@@ -119,10 +160,12 @@ ${rulegroup-prose: SwitchCases_table_ok}
 A switch case is type checked with:
 
 // Added
+${relation-title-source: SwitchCase_table_ok}
 ${relation-title-latex: SwitchCase_table_ok}
 ${relation-title-prose: SwitchCase_table_ok}
 
 // Added
+${rulegroup-source: SwitchCase_table_ok}
 ${rulegroup-latex: SwitchCase_table_ok}
 ${rulegroup-prose: SwitchCase_table_ok}
 
@@ -130,20 +173,24 @@ ${rulegroup-prose: SwitchCase_table_ok}
 A switch label is type checked with:
 
 // Added
+${relation-title-source: SwitchLabel_table_ok}
 ${relation-title-latex: SwitchLabel_table_ok}
 ${relation-title-prose: SwitchLabel_table_ok}
 
 // Added
+${rulegroup-source: SwitchLabel_table_ok}
 ${rulegroup-latex: SwitchLabel_table_ok}
 ${rulegroup-prose: SwitchLabel_table_ok}
 
 ===== Runtime evaluation
 
 // Added
+${relation-title-source: Switch_table_eval}
 ${relation-title-latex: Switch_table_eval}
 ${relation-title-prose: Switch_table_eval}
 
 // Added
+${rulegroup-source: Switch_table_eval}
 ${rulegroup-latex: Switch_table_eval}
 ${rulegroup-prose: Switch_table_eval}
 
@@ -151,12 +198,22 @@ ${rulegroup-prose: Switch_table_eval}
 Switch cases are runtime evaluated with the relation:
 
 // Added
+${relation-title-source: SwitchCases_table_eval}
 ${relation-title-latex: SwitchCases_table_eval}
 ${relation-title-prose: SwitchCases_table_eval}
 
 // Added
+${rulegroup-source: SwitchCases_table_eval}
 ${rulegroup-latex: SwitchCases_table_eval}
 ${rulegroup-prose: SwitchCases_table_eval}
+
+// Added
+A table switch label is matched against the executed action with:
+
+// Added
+${func-source: match_switchLabelIR_table}
+${func-latex: match_switchLabelIR_table}
+${func-prose: match_switchLabelIR_table}
 
 [#sec-switch-statement-general]
 ==== Switch statement on numeric or enumerated type
@@ -193,10 +250,12 @@ switch (hdr.ethernet.etherType) {
 ===== Type checking
 
 // Added
+${relation-title-source: Switch_general_ok}
 ${relation-title-latex: Switch_general_ok}
 ${relation-title-prose: Switch_general_ok}
 
 // Added
+${rulegroup-source: Switch_general_ok}
 ${rulegroup-latex: Switch_general_ok}
 ${rulegroup-prose: Switch_general_ok}
 
@@ -204,18 +263,22 @@ ${rulegroup-prose: Switch_general_ok}
 Switch cases are type checked with the relation:
 
 // Added
+${relation-title-source: SwitchCaseList_general_ok}
 ${relation-title-latex: SwitchCaseList_general_ok}
 ${relation-title-prose: SwitchCaseList_general_ok}
 
 // Added
+${rulegroup-source: SwitchCaseList_general_ok}
 ${rulegroup-latex: SwitchCaseList_general_ok}
 ${rulegroup-prose: SwitchCaseList_general_ok}
 
 // Added
+${relation-title-source: SwitchCases_general_ok}
 ${relation-title-latex: SwitchCases_general_ok}
 ${relation-title-prose: SwitchCases_general_ok}
 
 // Added
+${rulegroup-source: SwitchCases_general_ok}
 ${rulegroup-latex: SwitchCases_general_ok}
 ${rulegroup-prose: SwitchCases_general_ok}
 
@@ -223,10 +286,12 @@ ${rulegroup-prose: SwitchCases_general_ok}
 A switch case is type checked with:
 
 // Added
+${relation-title-source: SwitchCase_general_ok}
 ${relation-title-latex: SwitchCase_general_ok}
 ${relation-title-prose: SwitchCase_general_ok}
 
 // Added
+${rulegroup-source: SwitchCase_general_ok}
 ${rulegroup-latex: SwitchCase_general_ok}
 ${rulegroup-prose: SwitchCase_general_ok}
 
@@ -234,20 +299,24 @@ ${rulegroup-prose: SwitchCase_general_ok}
 A switch label is type checked with:
 
 // Added
+${relation-title-source: SwitchLabel_general_ok}
 ${relation-title-latex: SwitchLabel_general_ok}
 ${relation-title-prose: SwitchLabel_general_ok}
 
 // Added
+${rulegroup-source: SwitchLabel_general_ok}
 ${rulegroup-latex: SwitchLabel_general_ok}
 ${rulegroup-prose: SwitchLabel_general_ok}
 
 ===== Runtime evaluation
 
 // Added
+${relation-title-source: Switch_general_eval}
 ${relation-title-latex: Switch_general_eval}
 ${relation-title-prose: Switch_general_eval}
 
 // Added
+${rulegroup-source: Switch_general_eval}
 ${rulegroup-latex: Switch_general_eval}
 ${rulegroup-prose: Switch_general_eval}
 
@@ -255,10 +324,12 @@ ${rulegroup-prose: Switch_general_eval}
 Switch cases are runtime evaluated with the relation:
 
 // Added
+${relation-title-source: SwitchCases_general_eval}
 ${relation-title-latex: SwitchCases_general_eval}
 ${relation-title-prose: SwitchCases_general_eval}
 
 // Added
+${rulegroup-source: SwitchCases_general_eval}
 ${rulegroup-latex: SwitchCases_general_eval}
 ${rulegroup-prose: SwitchCases_general_eval}
 
@@ -266,22 +337,34 @@ ${rulegroup-prose: SwitchCases_general_eval}
 A switch label is runtime evaluated with:
 
 // Added
+${relation-title-source: SwitchLabel_general_eval}
 ${relation-title-latex: SwitchLabel_general_eval}
 ${relation-title-prose: SwitchLabel_general_eval}
 
 // Added
+${rulegroup-source: SwitchLabel_general_eval}
 ${rulegroup-latex: SwitchLabel_general_eval}
 ${rulegroup-prose: SwitchLabel_general_eval}
+
+// Added
+A general switch label is matched against the switch value with:
+
+// Added
+${func-source: match_switchLabelIR_general}
+${func-latex: match_switchLabelIR_general}
+${func-prose: match_switchLabelIR_general}
 
 ==== Type checking
 
 // Added
+${rulegroup-source: Stmt_ok/switchStatement}
 ${rulegroup-latex: Stmt_ok/switchStatement}
 ${rulegroup-prose: Stmt_ok/switchStatement}
 
 ==== Compile-time evaluation
 
 // Added
+${rulegroup-source: Stmt_inst/switchStatementIR}
 ${rulegroup-latex: Stmt_inst/switchStatementIR}
 ${rulegroup-prose: Stmt_inst/switchStatementIR}
 
@@ -289,10 +372,12 @@ ${rulegroup-prose: Stmt_inst/switchStatementIR}
 The compile-time evaluation of switch cases is defined with the relation:
 
 // Added
+${relation-title-source: SwitchCases_inst}
 ${relation-title-latex: SwitchCases_inst}
 ${relation-title-prose: SwitchCases_inst}
 
 // Added
+${rulegroup-source: SwitchCases_inst}
 ${rulegroup-latex: SwitchCases_inst}
 ${rulegroup-prose: SwitchCases_inst}
 
@@ -300,15 +385,18 @@ ${rulegroup-prose: SwitchCases_inst}
 A switch case is compile-time evaluated with:
 
 // Added
+${relation-title-source: SwitchCase_inst}
 ${relation-title-latex: SwitchCase_inst}
 ${relation-title-prose: SwitchCase_inst}
 
 // Added
+${rulegroup-source: SwitchCase_inst}
 ${rulegroup-latex: SwitchCase_inst}
 ${rulegroup-prose: SwitchCase_inst}
 
 ==== Runtime evaluation
 
 // Added
+${rulegroup-source: Stmt_eval/switchStatementIR}
 ${rulegroup-latex: Stmt_eval/switchStatementIR}
 ${rulegroup-prose: Stmt_eval/switchStatementIR}
