@@ -6,40 +6,15 @@ module Al = Lang.Al
 module Value = Runtime.Value
 open Util.Source
 
-(* Emitting an `Al.spec` as KAST JSON, for the K specification in
-   `spec-meta-k/`.
+(* Emitting an `Al.spec` as KAST JSON. *)
 
-   The K definition is an *abstract* syntax: every watsup production is a
-   constructor whose KORE label is pinned with `symbol(_)`.  Emitting a spec
-   therefore amounts to naming, for each AL node, the K constructor that
-   corresponds to it, and writing lists and options out as the cons lists and
-   option constructors that `spec-meta-k` declares.
-
-   This walks the `Al.spec` directly.  The alternative -- booting the spec to a
-   `Value.t` first and emitting that -- goes through a representation in which
-   every constructor has already been erased to a mixop, so the emitter has to
-   *recover* which production built each value by looking its (sort, mixop) pair
-   up in a table.  Walking the AST means the constructor is still in hand at the
-   point its symbol is written, so there is nothing to recover and no table to
-   keep in sync.
-
-   The K symbols are those of `spec-meta-k/common/1-syntax.k` and
-   `spec-meta-k/al/1-syntax.k`, whose productions mirror the watsup definitions
-   in `spec-meta/`; `Ali.Boot` and `Common.Boot` build the same shape as values,
-   so the two are read together when either changes. *)
-
-(* KAST JSON, format version 4.
-
-   `label` and `sort` are objects in version 4; version 3, where they are bare
-   strings, is rejected by `kast`. *)
+(* KAST JSON, format version 4. *)
 
 let version = 4
 
 let json_of_klabel (name : string) : Yojson.Safe.t =
   `Assoc
-    [
-      ("node", `String "KLabel"); ("name", `String name); ("params", `List []);
-    ]
+    [ ("node", `String "KLabel"); ("name", `String name); ("params", `List []) ]
 
 let json_of_kapply (name : string) (args : Yojson.Safe.t list) : Yojson.Safe.t =
   `Assoc
@@ -64,11 +39,7 @@ let json_of_ktoken (sort : string) (token : string) : Yojson.Safe.t =
       ("token", `String token);
     ]
 
-(* Tokens.
-
-   K's `String` literals carry their quotes inside the token, and escape with
-   the same conventions as OCaml's `String.escaped` for the characters that
-   occur in identifiers and atoms. *)
+(* Tokens *)
 
 let json_of_bool (b : bool) : Yojson.Safe.t =
   json_of_ktoken "Bool" (if b then "true" else "false")
@@ -79,11 +50,7 @@ let json_of_int (i : Bigint.t) : Yojson.Safe.t =
 let json_of_string (s : string) : Yojson.Safe.t =
   json_of_ktoken "String" ("\"" ^ String.escaped s ^ "\"")
 
-(* Cons lists.
-
-   Watsup's `X*` becomes a two-constructor cons list in K, since K's own `List`
-   is not a term sort the abstract syntax can nest.  `symbol` is the cons and
-   `symbol_terminator` the empty list, both named after the element sort. *)
+(* Cons lists *)
 
 let json_of_klist (symbol : string) (symbol_terminator : string)
     (jsons : Yojson.Safe.t list) : Yojson.Safe.t =
@@ -92,10 +59,7 @@ let json_of_klist (symbol : string) (symbol_terminator : string)
     jsons
     (json_of_kapply symbol_terminator [])
 
-(* Options.
-
-   Watsup's `X?` becomes a two-constructor sort in K, since K has no generic
-   option; both constructors are named after the element sort. *)
+(* Options *)
 
 let json_of_kopt (symbol_none : string) (symbol_some : string)
     (json_opt : Yojson.Safe.t option) : Yojson.Safe.t =
@@ -107,20 +71,13 @@ let json_of_kopt (symbol_none : string) (symbol_some : string)
 
 exception Error of string
 
-let error (fmt : ('a, Format.formatter, unit, 'b) format4) : 'a =
-  Format.kasprintf (fun msg -> raise (Error msg)) fmt
+let error fmt = Format.kasprintf (fun msg -> raise (Error msg)) fmt
 
-(* Identifiers.
-
-   `id` and `atom` are subsorts of `String` in K, so an injection is not written
-   out: `kast` infers `String -> Id` and `String -> Atom`. *)
+(* Identifiers *)
 
 let json_of_id (id : Il.id) : Yojson.Safe.t = json_of_string id.it
 
-(* Atoms.
-
-   Operator atoms keep their quotes inside the string (`':'`), matching
-   `Common.Boot.boot_atom`. *)
+(* Atoms *)
 
 let json_of_atom (atom : Il.atom) : Yojson.Safe.t =
   json_of_string (Atom.string_of_atom atom.it)
@@ -128,10 +85,7 @@ let json_of_atom (atom : Il.atom) : Yojson.Safe.t =
 let json_of_atoms (atoms : Il.atom list) : Yojson.Safe.t =
   json_of_klist "atomList" ".atomList" (List.map json_of_atom atoms)
 
-(* Mixfix operators.
-
-   A mixop is an atoms matrix: one row of atoms per notation position, exactly
-   as `spec-meta-k/al/4-extern-json.k` puts it on the extern wire. *)
+(* Mixfix operators *)
 
 let json_of_mixop (mixop : Il.mixop) : Yojson.Safe.t =
   json_of_klist "mixop" ".mixop"
@@ -160,16 +114,12 @@ let rec json_of_typ (typ : Il.typ) : Yojson.Safe.t =
   | TupleT typs -> json_of_kapply "tupT" [ json_of_typs typs ]
   | IterT (typ, iter) ->
       json_of_kapply "iterT" [ json_of_typ typ; json_of_iter iter ]
-  (* A function type carries no payload in the meta-language syntax: `funcT` is
-     nullary, exactly as `boot_func_typ` drops the arrow's components. *)
   | FuncT (_, _, _) -> json_of_kapply "funcT" []
 
-(* `targ` is an alias of `typ` in watsup, and K inlines it, so type arguments
-   are emitted as a plain type list. *)
 and json_of_typs (typs : Il.typ list) : Yojson.Safe.t =
   json_of_klist "typList" ".typList" (List.map json_of_typ typs)
 
-(* Type parameters.  `tparam` is an alias of `id`. *)
+(* Type parameters *)
 
 let json_of_tparams (tparams : Il.tparam list) : Yojson.Safe.t =
   json_of_klist "tparamList" ".tparamList" (List.map json_of_id tparams)
@@ -177,8 +127,7 @@ let json_of_tparams (tparams : Il.tparam list) : Yojson.Safe.t =
 (* Variables *)
 
 let json_of_vari ((id, typ, iters) : Il.var) : Yojson.Safe.t =
-  json_of_kapply "vari"
-    [ json_of_id id; json_of_typ typ; json_of_iters iters ]
+  json_of_kapply "vari" [ json_of_id id; json_of_typ typ; json_of_iters iters ]
 
 let json_of_varis (vars : Il.var list) : Yojson.Safe.t =
   json_of_klist "variList" ".variList" (List.map json_of_vari vars)
@@ -209,10 +158,7 @@ let json_of_deftyp (deftyp : Il.deftyp) : Yojson.Safe.t =
             (List.map json_of_typcase typcases);
         ]
 
-(* Values.
-
-   `num` is a case of both `val` and `exp` in watsup and a subsort of both `Val`
-   and `Exp` in K, so a number keeps the same constructor wherever it occurs. *)
+(* Values *)
 
 let json_of_num (num : Il.num) : Yojson.Safe.t =
   match num with
@@ -237,8 +183,6 @@ let rec json_of_value (value : Il.value) : Yojson.Safe.t =
         [ json_of_kopt "noVal" "someVal" (Option.map json_of_value value_opt) ]
   | ListV values -> json_of_kapply "listV" [ json_of_values values ]
   | FuncV id -> json_of_kapply "funcV" [ json_of_id id ]
-  (* `extV` would need K's abstract `Json` sort, which has no K-reachable
-     inhabitants, so an extern value cannot be written down as a term at all. *)
   | ExternV _ -> error "extern value cannot be emitted as a K Val"
 
 and json_of_values (values : Il.value list) : Yojson.Safe.t =
@@ -328,17 +272,14 @@ let rec json_of_exp (exp : Il.exp) : Yojson.Safe.t =
       json_of_kapply "optE"
         [ json_of_kopt "noExp" "someExp" (Option.map json_of_exp exp_opt) ]
   | ListE exps -> json_of_kapply "listE" [ json_of_exps exps ]
-  | ConsE (eh, et) ->
-      json_of_kapply "consE" [ json_of_exp eh; json_of_exp et ]
+  | ConsE (eh, et) -> json_of_kapply "consE" [ json_of_exp eh; json_of_exp et ]
   | CatE (el, er) -> json_of_kapply "catE" [ json_of_exp el; json_of_exp er ]
   | MemE (ee, es) -> json_of_kapply "memE" [ json_of_exp ee; json_of_exp es ]
   | LenE e -> json_of_kapply "lenE" [ json_of_exp e ]
-  | DotE (e, atom) ->
-      json_of_kapply "dotE" [ json_of_exp e; json_of_atom atom ]
+  | DotE (e, atom) -> json_of_kapply "dotE" [ json_of_exp e; json_of_atom atom ]
   | IdxE (eb, ei) -> json_of_kapply "idxE" [ json_of_exp eb; json_of_exp ei ]
   | SliceE (eb, ei, en) ->
-      json_of_kapply "sliceE"
-        [ json_of_exp eb; json_of_exp ei; json_of_exp en ]
+      json_of_kapply "sliceE" [ json_of_exp eb; json_of_exp ei; json_of_exp en ]
   | UpdE (eb, path, en) ->
       json_of_kapply "updE"
         [ json_of_exp eb; json_of_path path; json_of_exp en ]
@@ -453,11 +394,7 @@ let json_of_elsgroup (elsegroup : Al.elsegroup) : Yojson.Safe.t =
   json_of_kapply "elsGroup"
     [ json_of_id id; json_of_rulmatch rulmatch_; json_of_rulpath rulpath_ ]
 
-(* Clauses and table rows.
-
-   `clause` and `tblrow` share a notation in watsup but are distinct sorts, so
-   they take distinct K constructors.  A table row's guard expressions are
-   dropped, exactly as `boot_tablerow` drops them. *)
+(* Clauses and table rows *)
 
 let json_of_clause (clause : Il.clause) : Yojson.Safe.t =
   let args, exp, prems = clause.it in
@@ -469,15 +406,11 @@ let json_of_tblrow (tablerow : Al.tablerow) : Yojson.Safe.t =
   json_of_kapply "tblRow"
     [ json_of_args args; json_of_exp exp; json_of_prems prems ]
 
-(* Definitions.
-
-   `VarD` has no counterpart in the script syntax -- a `var` declaration is
-   elaboration-time only -- so it contributes no definition, as in `boot_def`. *)
+(* Definitions *)
 
 let json_of_def (def : Al.def) : Yojson.Safe.t option =
   match def.it with
-  | ExternTypD (id, _) ->
-      Some (json_of_kapply "extTypD" [ json_of_id id ])
+  | ExternTypD (id, _) -> Some (json_of_kapply "extTypD" [ json_of_id id ])
   | TypD (id, tparams, deftyp, _) ->
       Some
         (json_of_kapply "typD"
@@ -553,34 +486,13 @@ let json_of_spec_al (spec : Al.spec) : Yojson.Safe.t =
       ("format", `String "KAST");
       ("version", `Int version);
       ( "term",
-        json_of_klist "script" ".script"
-          (List.filter_map json_of_def spec) );
+        json_of_klist "script" ".script" (List.filter_map json_of_def spec) );
     ]
 
 let string_of_spec_al (spec : Al.spec) : string =
   spec |> json_of_spec_al |> Yojson.Safe.to_string
 
-(* Values of an arbitrary spec, as the K sort `Val`.
-
-   Everything above emits the *meta-language* script syntax, whose K sorts are
-   those of `spec-meta-k`.  A target-level value cannot go through it: a P4
-   program inhabits sorts (`p4program`, `declarationList`, ...) that the
-   meta-language syntax knows nothing about.
-
-   K's `Val` (`spec-meta-k/common/1-syntax.k`) is structural, though: `injV`
-   carries its mixop as data rather than being resolved to a named constructor,
-   so any value of any spec can be written down.  `json_of_value` above is
-   exactly that structural walk, and it is what lets a P4 program reach the K
-   definition: it is parsed by the OCaml P4 parser (`Interface.P4.parse_program`,
-   which builds a `Value.t` directly), emitted here, and bound to the `<p4prog>`
-   cell.
-
-   Wrapped as `someP4(val)`, the inhabited case of the `<p4prog>` cell's sort.
-   The wrapper is applied here rather than by the shell that drives this, because
-   splicing one KORE term into another textually is not something `kast` offers:
-   it parses a whole term of one sort.  Emitting the wrapper as part of the JSON
-   means the term arrives at the right sort in one parse. *)
-
+(* Value of a P4 program, wrapped as `someP4(val)` *)
 let json_of_p4_term (value : Value.t) : Yojson.Safe.t =
   `Assoc
     [
