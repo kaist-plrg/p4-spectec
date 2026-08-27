@@ -53,3 +53,14 @@ module Report : sig
 
   val is_empty : t -> bool
 end
+
+val collect : (unit -> 'a) -> 'a * Report.t
+
+val warn :
+  ?code:string ->
+  ?detail:string ->
+  ?related:related list ->
+  source:string ->
+  region ->
+  string ->
+  unit

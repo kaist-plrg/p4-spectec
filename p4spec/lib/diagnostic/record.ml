@@ -59,14 +59,14 @@ let quote value =
 let error ?code ?detail ?(related = []) ?(trace = []) ~source region message =
   { severity = Error; region; code; message; detail; related; trace; source }
 
-let warning ?code ?detail ~source region message =
+let warning ?code ?detail ?(related = []) ~source region message =
   {
     severity = Warning;
     region;
     code;
     message;
     detail;
-    related = [];
+    related;
     trace = [];
     source;
   }
@@ -112,3 +112,35 @@ module Report = struct
 
   let is_empty = function [] -> true | _ -> false
 end
+
+module Collector = struct
+  type diagnostic = t
+  type t = { mutable diagnostics : diagnostic list }
+
+  let create () = { diagnostics = [] }
+
+  let emit collector diag =
+    collector.diagnostics <- diag :: collector.diagnostics
+
+  let drain collector =
+    let ds = collector.diagnostics in
+    collector.diagnostics <- [];
+    ds
+end
+
+let global_collector = ref (Collector.create ())
+
+let collect f =
+  let outer = !global_collector in
+  let current = Collector.create () in
+  global_collector := current;
+  Fun.protect
+    ~finally:(fun () -> global_collector := outer)
+    (fun () ->
+      let result = f () in
+      (result, Collector.drain current))
+
+let warn ?code ?detail ?(related = []) ~(source : string) (at : region)
+    (msg : string) =
+  Collector.emit !global_collector
+    (warning ?code ?detail ~related ~source at msg)
