@@ -254,17 +254,25 @@ k-run: $(BOOT)
 #
 # krun requires $PGM to be a file, but the spec is a whole directory, so its
 # path is handed over in a one-line stub (`@`-prefixed) that kast-json.sh
-# resolves -- and deletes, so nothing here has to clean it up.  See the note
-# there.  `-cSPEC` names that same directory, this time as an ordinary value:
-# it is the target spec, so it needs no stub.
+# resolves.  The creating shell removes the stub on exit in case another
+# configuration parser fails before kast-json.sh runs.  `-cSPEC` names that
+# same directory, this time as an ordinary value, so it needs no stub.
 .PHONY: k-typecheck
 k-typecheck: $(BOOT)
 	@test -n "$(P4)" || { echo "usage: make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4"; exit 1; }
-	@printf '@%s\n' "$(SPEC_K)" > $(KSCRATCH)/specdir
+	@trap 'rm -f $(KSCRATCH)/specdir' 0; \
+	printf '@%s\n' "$(SPEC_K)" > $(KSCRATCH)/specdir; \
 	KDEF=$(KDEFDIR) P4INCLUDE=$(P4INCLUDE) krun -d $(KDEFDIR) \
 	  --parser ./$(KSCRIPTS)/kast-json.sh $(KSCRATCH)/specdir \
 	  -cP4=$(P4) -pP4=./$(KSCRIPTS)/kast-p4.sh \
 	  -cSPEC='"$(SPEC_K)"' --output none
+
+.PHONY: k-test
+k-test:
+	@status=0; \
+	python3 $(KSCRIPTS)/run-k-typecheck.py || status=1; \
+	python3 $(KSCRIPTS)/run-k-typecheck.py --neg || status=1; \
+	exit $$status
 
 # Cleanup
 

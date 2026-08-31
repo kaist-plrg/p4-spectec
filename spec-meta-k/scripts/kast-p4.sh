@@ -27,6 +27,7 @@ fi
 
 # A program: boot it to a KAST JSON term, already wrapped as `someP4(...)`.
 json=$(mktemp $KSCRATCH/spectec-k-p4-XXXXXX.json)
+trap 'rm -f "$json"' 0
 
 includes=""
 if [ -n "$P4INCLUDE" ]; then
@@ -39,5 +40,4 @@ fi
 status=0
 kast --definition "$KDEF" --input json --output kore --sort P4Opt "$json" \
   || status=$?
-rm -f "$json"
 exit $status
