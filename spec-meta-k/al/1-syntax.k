@@ -1,10 +1,6 @@
 // Syntax of AL, the algorithmic layer of the P4-SpecTec meta-language.
 //
 // Mirrors spec-meta/al/1-syntax.watsup.
-//
-// As in the common module this is an *abstract* syntax.  Watsup's quoted
-// delimiters (':', '->', '=', '-') are pure notation and are dropped; the
-// remaining fields become constructor arguments in the same order.
 
 requires "../common/1-syntax.k"
 

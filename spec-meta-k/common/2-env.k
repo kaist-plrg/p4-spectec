@@ -28,6 +28,25 @@ module COMMON-ENV
   //   syntax typdef = | PARAM | EXT | DEF tparam* '->' deftyp
   // ==========================================================================
 
+  syntax TypDef ::= paramTD()               [symbol(paramTD)]
+                  | extTD()                 [symbol(extTD)]
+                  | defTD(TParamList, DefTyp)
+                                            [symbol(defTD)]
+
+  // ==========================================================================
+  // Type substitution environment
+  //
+  //   dec $theta_of_tdenv(tdenv) : theta
+  // ==========================================================================
+
+  syntax Map ::= thetaOfTdenv(Map)          [function, symbol(thetaOfTdenv)]
+
+  rule thetaOfTdenv(.Map) => .Map
+  rule thetaOfTdenv(X:Id |-> defTD(.TParamList, aliasDT(T:Typ)) M:Map)
+    => (X |-> T) thetaOfTdenv(M)
+  rule thetaOfTdenv(_:Id |-> paramTD() M:Map) => thetaOfTdenv(M)
+  rule thetaOfTdenv(_:Id |-> extTD() M:Map) => thetaOfTdenv(M)
+
   // ==========================================================================
   // Iteration helpers
   //

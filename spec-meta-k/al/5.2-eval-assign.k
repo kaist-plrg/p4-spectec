@@ -2,7 +2,7 @@
 //
 // Mirrors spec-meta/al/5.2-eval-assign.watsup.
 //
-// watsup's `ctx` result becomes an *implicit* `<local>` mutation plus an
+// watsup's `ctx` result becomes an implicit `<local>` mutation plus an
 // explicit outcome marker:
 //
 //   Assign_exp:  ctx |- exp := val : ctx      -->  assignExp(Exp, Val) : Outcome, mutates <local>
@@ -98,41 +98,22 @@ module AL-ASSIGN
 
   //   rule Assign_exp/opt-some
   rule <k> assignIter(noVarr(), E:Exp, iterExp(quest(), Vs:VariList), optV(someVal(V:Val)))
-        => assignExp(E, V) ~> assignThen(bindQuestFromLocal(Vs))
+        => assignExp(E, V) ~> assignThen(assignIterVaris(Vs))
        ...
        </k>
 
-  syntax KItem ::= bindQuestFromLocal(VariList)
-  rule <k> bindQuestFromLocal(Vs:VariList) => assignOK() ... </k>
+  syntax KItem ::= assignIterVaris(VariList)
+  rule <k> assignIterVaris(Vs:VariList) => assignOK() ... </k>
        <lvenv> M:Map
             => addsMap(M, iterVaris(Vs, quest()), someVals(findVaris(Vs, M)))
        </lvenv>
 
   //   rule Assign_exp/list
-  //
-  // Each element is assigned in a scratch environment (the caller's <lvenv>
-  // cleared), one at a time; the per-element bindings for `vari*` are
-  // collected into `LIST`s and added to the *original* <lvenv>, restored via
-  // <saves> before the collected lists are bound.
   rule <k> assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
-        => pushSave() ~> clearLocalVal()
+        => pushLocalSave() ~> clearLocalVenv()
            ~> assignEach(E, Ws, Vs, .List)
        ...
        </k>
-
-  // `pushSave()` snapshots <local> onto <saves>; `clearLocalVal()` empties
-  // <lvenv> only (tdenv/fenv are untouched by `.LOCAL.VAL = ...`).
-  syntax KItem ::= "pushSave" "(" ")"
-                 | "clearLocalVal" "(" ")"
-
-  rule <k> pushSave() => .K ... </k>
-       <ltdenv> T:Map </ltdenv>
-       <lfenv> F:Map </lfenv>
-       <lvenv> V:Map </lvenv>
-       <saves> .List => ListItem(localSave(T, F, V)) ... </saves>
-
-  rule <k> clearLocalVal() => .K ... </k>
-       <lvenv> _ => .Map </lvenv>
 
   // Assign `exp` against every element of `val*` in turn, in the cleared
   // scratch environment, collecting each element's bindings for `vari*` (as a
@@ -141,30 +122,27 @@ module AL-ASSIGN
   syntax KItem ::= assignEach(Exp, ValList, VariList, List)
 
   rule <k> assignEach(_:Exp, .ValList, Vs:VariList, Acc:List)
-        => popSaveMergeLists(Vs, Acc)
+        => popLocalSave() ~> assignListResults(Vs, Acc)
        ...
        </k>
 
   rule <k> assignEach(E:Exp, (V:Val, Rest:ValList), Vs:VariList, Acc:List)
-        => assignExp(E, V) ~> assignThen(collectThenContinue(E, Rest, Vs, Acc))
+        => assignExp(E, V) ~> assignThen(collectAssignRow(E, Rest, Vs, Acc))
        ...
        </k>
 
-  syntax KItem ::= collectThenContinue(Exp, ValList, VariList, List)
-  rule <k> collectThenContinue(E:Exp, Rest:ValList, Vs:VariList, Acc:List)
-        => clearLocalVal() ~> assignEach(E, Rest, Vs, Acc ListItem(findVaris(Vs, M)))
+  syntax KItem ::= collectAssignRow(Exp, ValList, VariList, List)
+  rule <k> collectAssignRow(E:Exp, Rest:ValList, Vs:VariList, Acc:List)
+        => clearLocalVenv() ~> assignEach(E, Rest, Vs, Acc ListItem(findVaris(Vs, M)))
        ...
        </k>
        <lvenv> M:Map </lvenv>
 
-  // Restore <local> from <saves>, then bind each `vari` in `Vs` to the `LIST`
-  // formed from its column across `Acc` (one entry per element assigned).
-  syntax KItem ::= popSaveMergeLists(VariList, List)
-  rule <k> popSaveMergeLists(Vs:VariList, Acc:List) => assignOK() ... </k>
-       <ltdenv> _ => T </ltdenv>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => addsMap(V, iterVaris(Vs, star()), transposeToLists(Vs, Acc)) </lvenv>
-       <saves> ListItem(localSave(T:Map, F:Map, V:Map)) => .List ... </saves>
+  // Bind each `vari` in `Vs` to the `LIST` formed from its column across
+  // `Acc` (one entry per element assigned).
+  syntax KItem ::= assignListResults(VariList, List)
+  rule <k> assignListResults(Vs:VariList, Acc:List) => assignOK() ... </k>
+       <lvenv> V:Map => addsMap(V, iterVaris(Vs, star()), transposeToLists(Vs, Acc)) </lvenv>
 
   // ==========================================================================
   // Assign_exps: ctx |- exp* := val* : ctx
@@ -205,25 +183,17 @@ module AL-ASSIGN
 
   //   rule Assign_arg/fun: looks up id_caller in the caller's fenv (local then
   //   global; global is shared and read directly from <gfenv>)
-  syntax KItem ::= findFuncCaller(Id, Id)   // (callee id to bind, caller id to look up)
-
-  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => findFuncCaller(X, Y) ... </k>
-
-  rule <k> assignArg(_:Arg, _:Val) => FAIL ... </k> [owise]
-
-  rule <k> findFuncCaller(X:Id, Y:Id) => assignOK() ... </k>
+  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => assignOK() ... </k>
        <cfenv> CF:Map </cfenv>
        <lfenv> M:Map => M[X <- {CF[Y]}:>FuncDef] </lfenv>
     requires Y in_keys(CF)
-  rule <k> findFuncCaller(X:Id, Y:Id) => assignOK() ... </k>
+  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => assignOK() ... </k>
        <cfenv> CF:Map </cfenv>
        <gfenv> GF:Map </gfenv>
        <lfenv> M:Map => M[X <- {GF[Y]}:>FuncDef] </lfenv>
     requires notBool (Y in_keys(CF)) andBool (Y in_keys(GF))
-  rule <k> findFuncCaller(_:Id, Y:Id) => FAIL ... </k>
-       <cfenv> CF:Map </cfenv>
-       <gfenv> GF:Map </gfenv>
-    requires notBool (Y in_keys(CF)) andBool notBool (Y in_keys(GF))
+
+  rule <k> assignArg(_:Arg, _:Val) => FAIL ... </k> [owise]
 
   //   rulegroup Assign_args
   rule <k> assignArgs(.ArgList, .ValList) => assignOK() ... </k>
@@ -281,16 +251,14 @@ module AL-ASSIGN
   // val_sub*`, one per `vari`.
   syntax ValList ::= transposeToLists(VariList, List)
                                             [function, symbol(transposeToLists)]
-  rule transposeToLists(Vs:VariList, Acc:List) => transposeToLists0(Vs, 0, Acc)
+  rule transposeToLists(Vs:VariList, Acc:List) => transposeToListsAcc(Vs, 0, Acc)
 
-  syntax ValList ::= transposeToLists0(VariList, Int, List)
-                                            [function, total, symbol(transposeToLists0)]
-  rule transposeToLists0(.VariList, _:Int, _:List) => .ValList
-  rule transposeToLists0((_:Vari, Vs:VariList), I:Int, Acc:List)
-    => listV(columnAt(I, Acc)), transposeToLists0(Vs, I +Int 1, Acc)
+  syntax ValList ::= transposeToListsAcc(VariList, Int, List)
+                                            [function, total, symbol(transposeToListsAcc)]
+  rule transposeToListsAcc(.VariList, _:Int, _:List) => .ValList
+  rule transposeToListsAcc((_:Vari, Vs:VariList), I:Int, Acc:List)
+    => listV(columnAt(I, Acc)), transposeToListsAcc(Vs, I +Int 1, Acc)
 
-  // `columnAt(i, Acc)`: the `i`-th element of every `ValList` in `Acc`, in
-  // order.
   syntax ValList ::= columnAt(Int, List)    [function, symbol(columnAt)]
   rule columnAt(_:Int, .List) => .ValList
   rule columnAt(I:Int, ListItem(Vs:ValList) Rest:List)

@@ -95,7 +95,7 @@ module AL-PREM
   //   rulegroup Eval_prem/iterpr-list
   //
   // Uses the same row machinery as Eval_exp/opt and /list
-  // (subOptRow/subListRows, pushSave/peekRestore/popSaveRestore), since
+  // (subOptRow/subListRows, pushLocalSave/peekRestore/popSaveRestore), since
   // `$sub_opt`/`$sub_list` are the same helpers there.
   // ==========================================================================
 
@@ -120,7 +120,7 @@ module AL-PREM
   //     -- if (val_bind = $find_vari(C_sub_res, vari_bind))*
   //     -- if C_res = $add_varis(C, vari_bind_iter*, (OPT val_bind)*)
   rule <k> someRowOpt(Row:ValList) ~> evalIterPrOpt(Bound:VariList, Bind:VariList, P:Prem)
-        => pushSave() ~> bindRow(Bound, Row) ~> evalPrem(P)
+        => pushLocalSave() ~> bindRow(Bound, Row) ~> evalPrem(P)
            ~> collectIterPrOpt(Bind)
        ...
        </k>
@@ -169,7 +169,7 @@ module AL-PREM
   //     -- if (val_res_bind = LIST val_bind*)*
   //     -- if C_res = $add_varis(C, vari_bind_iter*, val_res_bind*)
   rule <k> Rows:ValListList ~> evalIterPrList(Bound:VariList, Bind:VariList, P:Prem)
-        => pushSave() ~> evalPremEachRow(Bound, Bind, P, Rows, .List)
+        => pushLocalSave() ~> evalPremEachRow(Bound, Bind, P, Rows, .List)
        ...
        </k>
     requires Rows =/=K .ValListList
@@ -207,21 +207,7 @@ module AL-PREM
   // restored) base <lvenv>.
   syntax KItem ::= finishIterPrList(VariList, List)
   rule <k> finishIterPrList(Bind:VariList, Acc:List) => premOK() ... </k>
-       <lvenv> M:Map => addsMap(M, iterVaris(Bind, star()), transposeToListsP(Bind, Acc)) </lvenv>
-
-  syntax ValList ::= transposeToListsP(VariList, List)
-                                            [function, symbol(transposeToListsP)]
-  rule transposeToListsP(Vs:VariList, Acc:List) => transposeToListsP0(Vs, 0, Acc)
-
-  syntax ValList ::= transposeToListsP0(VariList, Int, List)
-                                            [function, total, symbol(transposeToListsP0)]
-  rule transposeToListsP0(.VariList, _:Int, _:List) => .ValList
-  rule transposeToListsP0((_:Vari, Vs:VariList), I:Int, Acc:List)
-    => listV(columnAtP(I, Acc)), transposeToListsP0(Vs, I +Int 1, Acc)
-
-  syntax ValList ::= columnAtP(Int, List)   [function, symbol(columnAtP)]
-  rule columnAtP(_:Int, .List) => .ValList
-  rule columnAtP(I:Int, ListItem(Vs:ValList) Rest:List) => nthVal(Vs, I), columnAtP(I, Rest)
+       <lvenv> M:Map => addsMap(M, iterVaris(Bind, star()), transposeToLists(Bind, Acc)) </lvenv>
 
   //   rule Eval_prem/fail: the catch-all fires only for a `Prem` shape no
   //   specific rule matched (there is none among AL's constructors; kept for

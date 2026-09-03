@@ -1,8 +1,5 @@
 // Transport for the external interface: K -> C shim -> OCaml, over K's FFI.
 //
-// The codec is in 4.1-extern-json.k, which this module re-exports.
-// Only the crossing itself lives here. The wire format is unchanged.
-//
 //   K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->
 //   p4spec/bin/kffi.ml
 //
@@ -23,11 +20,7 @@ module AL-EXTERN-FFI
   // ==========================================================================
   // Initialization
   //
-  // The shim assumes `ml_init_c` has run -- it starts the OCaml runtime,
-  // resolves the closures and builds the runner -- and no other entry point
-  // checks that it did.  K guarantees it by sequencing: `initFFI()` sits at the
-  // very head of `<k>` (al/0-config.k), ahead of `$PGM`, and nothing else runs
-  // until it rewrites to `.K`.
+  // `ml_init_c` must precede other FFI calls.
   // ==========================================================================
 
   rule <k> initFFI() => callInitFFI(Spec) ... </k>
@@ -56,11 +49,6 @@ module AL-EXTERN-FFI
 
   // ==========================================================================
   // The transport
-  //
-  // A chain of pure `[function]`s rather than `<k>`-cell rules: `#ffiCall` is a
-  // `[function]` returning `Bytes`, and the effectful hooks are ordered by the
-  // `#seqString`/`#seqBytes` trick, so an external call is one atomic rewrite
-  // step.
   //
   //   1. `#alloc` + `#nativeWrite` the request, NUL-terminated
   //   2. `#ffiCall(ml_eval_c, reqPtr)` -> a `#pointer`
@@ -108,21 +96,17 @@ module AL-EXTERN-FFI
   rule ffiReadN(Addr:Int, N:Int) => ffiReadAux(padRightBytes(.Bytes, N, 0), Addr)
 
   syntax Bytes ::= ffiReadAux(Bytes, Int)           [function, symbol(ffiReadAux)]
-  rule ffiReadAux(Mem:Bytes, Addr:Int) => #seqBytes(#nativeRead(Addr, Mem), Mem)
+  rule ffiReadAux(Mem:Bytes, Addr:Int)
+    => #let _ = #nativeRead(Addr, Mem) #in Mem
 
   syntax String ::= evFinish(String, Int, Bytes)    [function, symbol(evFinish)]
   rule evFinish(Req:String, AddrOut:Int, Out:Bytes)
-    => #seqString(#free(allocKeyReq(Req)),
-         #seqString(#ffiCall(#functionAddress("ml_free_c"),
-                             ListItem(Int2Bytes(8, AddrOut, LE)),
-                             ListItem(#pointer),
-                             #void),
-                    Bytes2String(Out)))
-
-  syntax String ::= "#seqString" "(" K "," String ")" [function, symbol(seqString)]
-  syntax Bytes  ::= "#seqBytes"  "(" K "," Bytes  ")" [function, symbol(seqBytes)]
-  rule #seqString(_, X) => X
-  rule #seqBytes(_, X)  => X
+    => #let _ = #free(allocKeyReq(Req)) #in
+       #let _ = #ffiCall(#functionAddress("ml_free_c"),
+                          ListItem(Int2Bytes(8, AddrOut, LE)),
+                          ListItem(#pointer),
+                          #void) #in
+       Bytes2String(Out)
 
   // ==========================================================================
   // Entry: one rule per `ExternKind`

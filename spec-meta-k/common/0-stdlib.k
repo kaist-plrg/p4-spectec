@@ -33,17 +33,6 @@ module COMMON-STDLIB
   rule forall(B:Bool, Bs:BoolList) => B andBool forall(Bs)
 
   // ==========================================================================
-  // General bool functions, instantiated
-  //
-  //   dec $ite<X>(bool, X, X) : X   at X = val
-  // ==========================================================================
-
-  syntax Val ::= iteVal(Bool, Val, Val)     [function, total, symbol(iteVal)]
-
-  rule iteVal(true,  V:Val, _:Val) => V
-  rule iteVal(false, _:Val, V:Val) => V
-
-  // ==========================================================================
   // General sequence functions, instantiated at `val`
   //
   //   dec $repeat_<X>(X, nat) : X*

@@ -53,7 +53,7 @@ module AL-CALL-REL
   //   rulegroup Eval_ruls
   rule <k> evalRuls(_:RulMatch, .RulPathList, _:ValList) => FAIL ... </k>
   rule <k> evalRuls(M:RulMatch, (P:RulPath, Ps:RulPathList), Vs:ValList)
-        => pushSave() ~> evalRul(M, P, Vs) ~> tryNextRul(M, Ps, Vs)
+        => pushLocalSave() ~> evalRul(M, P, Vs) ~> tryNextRul(M, Ps, Vs)
        ...
        </k>
 

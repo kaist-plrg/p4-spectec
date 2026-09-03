@@ -50,25 +50,6 @@ module AL-TYP
     => #if eqMixOp(M, M') #then someTypList(Ts) #else assocTypCase(M, Cs) #fi
 
   // ==========================================================================
-  // $find_typ: local, then global
-  // ==========================================================================
-
-  syntax TypDefOpt ::= noTypDefOpt()        [symbol(noTypDefOpt)]
-                     | someTypDefOpt(TypDef)
-                                            [symbol(someTypDefOpt)]
-
-  syntax TypDefOpt ::= findTypIn(Map, Map, Id)
-                                            [function, total, symbol(findTypIn)]
-                                            // (ltdenv, gtdenv, id)
-
-  rule findTypIn(L:Map, _:Map, X:Id) => someTypDefOpt({L[X]}:>TypDef)
-    requires X in_keys(L)
-  rule findTypIn(L:Map, G:Map, X:Id) => someTypDefOpt({G[X]}:>TypDef)
-    requires notBool (X in_keys(L)) andBool (X in_keys(G))
-  rule findTypIn(L:Map, G:Map, X:Id) => noTypDefOpt()
-    requires notBool (X in_keys(L)) andBool notBool (X in_keys(G))
-
-  // ==========================================================================
   // Upcasts
   //
   //   def $upcast(C, INT, INT i) = OK (INT i)
@@ -103,7 +84,7 @@ module AL-TYP
   rule upcast(L:Map, G:Map, iterT(T:Typ, quest()), optV(someVal(V:Val)))
     => resOpt(upcast(L, G, T, V))
   rule upcast(L:Map, G:Map, iterT(T:Typ, star()), listV(Vs:ValList))
-    => resList(upcasts(L, G, Ts2Repeat(T, Vs), Vs))
+    => resList(upcasts(L, G, Typs2Repeat(T, Vs), Vs))
 
   rule upcast(_:Map, _:Map, _:Typ, V:Val) => okV(V) [owise]
 
@@ -130,7 +111,6 @@ module AL-TYP
                                             [function, symbol(downcast)]
 
   rule downcast(_:Map, _:Map, natT(), natN(N:Int)) => okV(natN(N))
-  // `-- if n = i` forces the `int` to be a valid `nat`, i.e. non-negative.
   rule downcast(_:Map, _:Map, natT(), intN(I:Int)) => okV(natN(I))
     requires I >=Int 0
   rule downcast(_:Map, _:Map, natT(), V:Val) => failV()
@@ -148,7 +128,7 @@ module AL-TYP
   rule downcast(L:Map, G:Map, iterT(T:Typ, quest()), optV(someVal(V:Val)))
     => resOpt(downcast(L, G, T, V))
   rule downcast(L:Map, G:Map, iterT(T:Typ, star()), listV(Vs:ValList))
-    => resList(downcasts(L, G, Ts2Repeat(T, Vs), Vs))
+    => resList(downcasts(L, G, Typs2Repeat(T, Vs), Vs))
 
   rule downcast(_:Map, _:Map, _:Typ, V:Val) => okV(V) [owise]
 
@@ -195,11 +175,11 @@ module AL-TYP
   rule resOpt(failV()) => failV()
 
   // `ITER typ STAR` casts every element at the same `typ`.
-  syntax TypList ::= Ts2Repeat(Typ, ValList)
-                                            [function, total, symbol(Ts2Repeat)]
+  syntax TypList ::= Typs2Repeat(Typ, ValList)
+                                            [function, total, symbol(Typs2Repeat)]
 
-  rule Ts2Repeat(_:Typ, .ValList) => .TypList
-  rule Ts2Repeat(T:Typ, (_:Val, Vs:ValList)) => T, Ts2Repeat(T, Vs)
+  rule Typs2Repeat(_:Typ, .ValList) => .TypList
+  rule Typs2Repeat(T:Typ, (_:Val, Vs:ValList)) => T, Typs2Repeat(T, Vs)
 
   syntax Map ::= zipThetaMap(TParamList, TypList)
                                             [function, symbol(zipThetaMap)]
@@ -213,10 +193,6 @@ module AL-TYP
   //
   //   dec $subtyp(tdenv, typ, val) : bool
   //   dec $subtyps(tdenv, typ*, val*) : bool
-  //
-  // `$subtyp` takes a single `tdenv`, already `$extend_tdenv`-merged by the
-  // caller (`Eval_exp/subtype` computes `$extend_tdenv(C.GLOBAL.TYP,
-  // C.LOCAL.TYP)` before calling), so this stays a one-`Map` function.
   // ==========================================================================
 
   syntax Bool ::= subtyp(Map, Typ, Val)     [function, total, symbol(subtyp)]
@@ -238,7 +214,7 @@ module AL-TYP
   rule subtyp(E:Map, iterT(T:Typ, quest()), optV(someVal(V:Val)))
     => subtyp(E, T, V)
   rule subtyp(E:Map, iterT(T:Typ, star()), listV(Vs:ValList))
-    => subtyps(E, Ts2Repeat(T, Vs), Vs)
+    => subtyps(E, Typs2Repeat(T, Vs), Vs)
 
   rule subtyp(_:Map, _:Typ, _:Val) => false [owise]
 
@@ -252,6 +228,10 @@ module AL-TYP
   // arguments, a struct checks the fields.
   syntax Bool ::= subtypVar(TypDefOpt, Map, TypList, Val)
                                             [function, total, symbol(subtypVar)]
+                | subtypCase(TypListOpt, Map, Map, ValList)
+                                            [function, total, symbol(subtypCase)]
+                | subtypFields(Map, Map, TypFieldList, ValFieldList)
+                                            [function, total, symbol(subtypFields)]
 
   rule subtypVar(someTypDefOpt(extTD()), _:Map, _:TypList, extV(_:Json)) => true
 
@@ -269,17 +249,9 @@ module AL-TYP
 
   rule subtypVar(_:TypDefOpt, _:Map, _:TypList, _:Val) => false [owise]
 
-  syntax Bool ::= subtypCase(TypListOpt, Map, Map, ValList)
-                                            [function, total, symbol(subtypCase)]
-                                            // (typcase lookup, tdenv, theta, vals)
-
   rule subtypCase(someTypList(Ts:TypList), E:Map, Th:Map, Vs:ValList)
     => subtyps(E, substTypsMap(Th, Ts), Vs)
   rule subtypCase(noTypList(), _:Map, _:Map, _:ValList) => false
-
-  // Struct fields are matched positionally with their atoms compared.
-  syntax Bool ::= subtypFields(Map, Map, TypFieldList, ValFieldList)
-                                            [function, total, symbol(subtypFields)]
 
   rule subtypFields(_:Map, _:Map, .TypFieldList, .ValFieldList) => true
   rule subtypFields(E:Map, Th:Map,

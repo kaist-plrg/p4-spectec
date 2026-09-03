@@ -84,7 +84,7 @@ module AL-CALL-FUNC
   //   rulegroup Eval_clauses
   rule <k> evalClauses(.ClauseList, _:ValList) => FAIL ... </k>
   rule <k> evalClauses((Cl:Clause, Cls:ClauseList), Vs:ValList)
-        => pushSave() ~> evalClause(Cl, Vs) ~> tryNextClause(Cls, Vs)
+        => pushLocalSave() ~> evalClause(Cl, Vs) ~> tryNextClause(Cls, Vs)
        ...
        </k>
 

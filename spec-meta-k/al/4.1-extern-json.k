@@ -42,9 +42,6 @@ module AL-EXTERN-JSON
 
   // ==========================================================================
   // Outbound: K terms -> JSON
-  //
-  // `Id` and `Atom` are subsorts of `String`, and `String` is a `JSON`, so they
-  // drop straight into a JSON string position with no coercion.
   // ==========================================================================
 
   syntax JSON ::= jsonOfVal(Val)              [function, symbol(jsonOfVal)]
@@ -187,17 +184,12 @@ module AL-EXTERN-JSON
   syntax JSON ::= respOk(JSON)                [function, symbol(respOk)]
   rule respOk({ "ok" : J:JSON, .JSONs }) => J
 
-  //   An extern reply resolves to *either* a payload or `FAIL`, so unlike
-  //   `respOk` these decode all the way to a `KItem` that lands in `<k>`
-  //   directly.
   syntax KItem ::= externFuncResult(JSON)     [function, symbol(externFuncResult)]
                  | externRelResult(JSON)      [function, symbol(externRelResult)]
 
   rule externFuncResult({ "ok" : J:JSON, .JSONs }) => valOfJson(J)
   rule externFuncResult({ "fail" : null, .JSONs }) => FAIL
 
-  //   A relation's outputs are `val*`, so its `ok` payload is a JSON array;
-  //   `valsOfJsons` yields the `ValList` that `relCallDone()` expects.
   rule externRelResult({ "ok" : [ Js:JSONs ], .JSONs }) => valsOfJsons(Js)
   rule externRelResult({ "fail" : null, .JSONs }) => FAIL
 

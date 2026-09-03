@@ -78,7 +78,7 @@ module AL-EVAL-EXP
   rule <k> FAIL ~> downCastK(_:Typ) => FAIL ... </k>
 
   rule <k> evalExp(subE(E:Exp, T:Typ)) => evalExp(E) ~> subK(T) ... </k>
-  rule <k> V:Val ~> subK(T:Typ) => boolV(subtyp(extendTdenv(G, L), T, V)) ... </k>
+  rule <k> V:Val ~> subK(T:Typ) => boolV(subtyp(updateMap(G, L), T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
        <gtdenv> G:Map </gtdenv>
   rule <k> FAIL ~> subK(_:Typ) => FAIL ... </k>
@@ -349,7 +349,7 @@ module AL-EVAL-EXP
   syntax KItem ::= evalOptSub(VariList, Exp)
   rule <k> noRowOpt() ~> evalOptSub(_:VariList, _:Exp) => optV(noVal()) ... </k>
   rule <k> someRowOpt(Row:ValList) ~> evalOptSub(Vs:VariList, E:Exp)
-        => pushSave() ~> bindRow(Vs, Row) ~> evalExp(E) ~> popSaveThen(someK())
+        => pushLocalSave() ~> bindRow(Vs, Row) ~> evalExp(E) ~> popSaveThen(someK())
        ...
        </k>
 
@@ -383,7 +383,7 @@ module AL-EVAL-EXP
   syntax KItem ::= evalListSub(VariList, Exp)
   rule <k> .ValListList ~> evalListSub(_:VariList, _:Exp) => listV(.ValList) ... </k>
   rule <k> Rows:ValListList ~> evalListSub(Vs:VariList, E:Exp)
-        => pushSave() ~> evalEachRow(Vs, E, Rows) ~> popSaveRestoreList()
+        => pushLocalSave() ~> evalEachRow(Vs, E, Rows) ~> popSaveRestoreList()
        ...
        </k>
     requires Rows =/=K .ValListList
@@ -620,12 +620,12 @@ module AL-EVAL-EXP
   rule <k> FAIL ~> updDotWaitK(_:Val, _:Path, _:Atom, _:Val) => FAIL ... </k>
   rule <k> _:Val ~> updDotWaitK(_:Val, _:Path, _:Atom, _:Val) => FAIL ... </k> [owise]
 
-  // `$ite<val>(atom = atom_field, val_n, val_field)` over every field.
+  // Update every field selected by its atom.
   syntax ValFieldList ::= updateField(ValFieldList, Atom, Val)
                                             [function, total, symbol(updateField)]
   rule updateField(.ValFieldList, _:Atom, _:Val) => .ValFieldList
   rule updateField((valField(A':Atom, V:Val), Fs:ValFieldList), A:Atom, Vn:Val)
-    => valField(A', iteVal(A ==String A', Vn, V)), updateField(Fs, A, Vn)
+    => valField(A', #if A ==String A' #then Vn #else V #fi), updateField(Fs, A, Vn)
 
   // ==========================================================================
   // Eval_arg / Eval_targs
