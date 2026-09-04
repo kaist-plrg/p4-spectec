@@ -83,9 +83,9 @@ configuration
 ## 3. Running
 
 ```sh
-make k-build                                # kompile -> al-kompiled/
-make k-run TEC=examples/add.watsup          # a self-contained script
-make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4
+make k-spec                                 # kompile -> al-kompiled/
+./spec-meta-k/scripts/k-run.sh examples/add.watsup
+./spec-meta-k/scripts/k-run-p4.sh p4c/testdata/p4_16_samples/action-bind.p4
 make k-clean                                # drop al-kompiled/ and scratch files
 ```
 
@@ -106,7 +106,7 @@ alone leaves a **stale interpreter** that silently keeps using the old builtins.
 The workflow is:
 
 ```sh
-make boot && make k-build
+make boot && make k-spec
 ```
 
 Scratch files are `mktemp`'d straight into **`./spec-meta-k/`** (gitignored), by
@@ -115,11 +115,11 @@ create, and nothing writes there from inside K.
 
 ### A simple AL program with a `main`
 
-`make k-run TEC=examples/add.watsup` expands to
+`./spec-meta-k/scripts/k-run.sh examples/add.watsup` runs
 
 ```sh
 KDEF=al-kompiled krun -d al-kompiled \
-  --parser ./spec-meta-k/scripts/kast-json.sh examples/add.watsup \
+  --parser ./spec-meta-k/scripts/kast-spec.sh examples/add.watsup \
   -cP4= -pP4=./spec-meta-k/scripts/kast-p4.sh \
   -cSPEC='"examples/add.watsup"'
 ```
@@ -164,7 +164,7 @@ Underneath the Makefile there is no `main.k`: the entry module is
 ```sh
 kompile spec-meta-k/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX -o al-kompiled
 KDEF=al-kompiled krun -d al-kompiled \
-  --parser ./spec-meta-k/scripts/kast-json.sh examples/add.watsup
+  --parser ./spec-meta-k/scripts/kast-spec.sh examples/add.watsup
 ```
 
 `KDEF` must be set even though `-d` already names the definition on the `krun`
@@ -177,7 +177,7 @@ either:
 
 ```sh
 ./spectec-boot kast examples/add.watsup -o add.json
-KDEF=al-kompiled krun -d al-kompiled --parser ./spec-meta-k/scripts/kast-json.sh add.json
+KDEF=al-kompiled krun -d al-kompiled --parser ./spec-meta-k/scripts/kast-spec.sh add.json
 ```
 
 Use `krun --output json` (in place of `--output none`) to diff whole
@@ -199,8 +199,8 @@ rule <k> afterLoad() => ... ~> callRel(entryRel(), (V, .ValList)) ~> finish() ..
 `finish()` has a separate `ValList` rule alongside the `Val` one.
 
 ```sh
-make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4   # -> passed
-make k-typecheck P4=p4c/testdata/p4_16_errors/action-bind.p4    # -> fail
+./spec-meta-k/scripts/k-run-p4.sh p4c/testdata/p4_16_samples/action-bind.p4  # -> passed
+./spec-meta-k/scripts/k-run-p4.sh p4c/testdata/p4_16_errors/action-bind.p4   # -> fail
 ```
 
 `passed` means `Program_ok` held; `fail` means it did not, i.e. a type error in
@@ -396,10 +396,10 @@ Three constraints shape both:
   preprocessor path, `$SPECTEC_BOOT` to override `./spectec-boot`.
 - `krun` insists the input be a **file**.
 
-**[scripts/kast-json.sh](spec-meta-k/scripts/kast-json.sh)** (`$PGM`, sort `Script`). Given a `.watsup` or a
+**[scripts/kast-spec.sh](spec-meta-k/scripts/kast-spec.sh)** (`$PGM`, sort `Script`). Given a `.watsup` or a
 spec directory it runs `spectec-boot kast` itself, so a target runs in one
 command; anything else is assumed to be KAST JSON already. Because a whole spec
-*directory* cannot be named as `$PGM`, `make k-typecheck` writes a one-line stub
+*directory* cannot be named as `$PGM`, `k-run-p4.sh` writes a one-line stub
 file holding the path, `@`-prefixed, which the wrapper resolves and deletes.
 
 **[scripts/kast-p4.sh](spec-meta-k/scripts/kast-p4.sh)** (`$P4`, sort `P4Opt`). `krun -cP4=VALUE` writes

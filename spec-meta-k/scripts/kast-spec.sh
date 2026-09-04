@@ -14,7 +14,7 @@ KSCRATCH=./spec-meta-k
 KCACHE=$KSCRATCH/.kore-cache
 
 # krun insists $PGM be a file, so a whole spec directory (`spec/`) cannot be
-# named on its command line. `make k-typecheck` passes a one-line stub file
+# named on its command line. `k-run-p4.sh` passes a one-line stub file
 # holding the spec's path instead; `@` marks it, and it is resolved back here.
 # The stub has no reader afterwards, so it is removed once resolved -- `$1` is
 # only ever the stub krun was pointed at, never a spec of the user's own.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run `make k-typecheck` over selected positive or negative P4 programs.
+"""Run `k-run-p4.sh` over selected positive or negative P4 programs.
 
 Programs listed in any excludes/static/**/*.exclude file are skipped, as are
 files under an include/ directory (#include fragments, not programs).  Progress
@@ -23,6 +23,7 @@ NEGATIVE_DIR = ROOT / "p4c" / "testdata" / "p4_16_errors"
 EXCLUDES_DIR = ROOT / "excludes" / "static"
 POSITIVE_RESULT = ROOT / "spec-meta-k" / "run-k-typecheck-pos.result"
 NEGATIVE_RESULT = ROOT / "spec-meta-k" / "run-k-typecheck-neg.result"
+K_RUN_P4 = ROOT / "spec-meta-k" / "scripts" / "k-run-p4.sh"
 
 PASS, FAIL, TIMEOUT = "pass", "fail", "timeout"
 
@@ -57,11 +58,11 @@ def collect_programs(programs_dir: Path) -> list[str]:
 
 
 def typecheck(program: str, timeout: Optional[int]) -> dict:
-    """Run one program through `make k-typecheck` and classify the outcome."""
+    """Run one program through `k-run-p4.sh` and classify the outcome."""
     started = time.monotonic()
     try:
         proc = subprocess.run(
-            ["make", "--no-print-directory", "k-typecheck", f"P4={program}"],
+            [str(K_RUN_P4), program],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -116,9 +117,6 @@ def main() -> int:
         if total == 0:
             print("nothing to do", file=output)
             return 0
-
-        # `make k-typecheck` depends on ./spectec-boot; build it once up front.
-        subprocess.run(["make", "boot"], cwd=ROOT, check=True)
 
         counts = {PASS: 0, FAIL: 0, TIMEOUT: 0}
         unexpected = []

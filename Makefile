@@ -135,22 +135,16 @@ promote:
 # K specification
 
 KDEFDIR = al-kompiled
-KENTRY = spec-meta-k/al/6-entry.k
-KSCRIPTS = spec-meta-k/scripts
-KSCRATCH = spec-meta-k
+KSPECDIR = spec-meta-k
 
 KFFI_OBJ = _build/default/p4spec/bin/kffi.exe.o
-KSHIM_SRC = spec-meta-k/ffi/shim.c
-KSHIM_OBJ = spec-meta-k/ffi/shim.o
+KSHIM_SRC = $(KSPECDIR)/ffi/shim.c
+KSHIM_OBJ = $(KSPECDIR)/ffi/shim.o
 OCAMLWHERE = $(shell opam exec --switch=5.1.0 -- ocamlopt -where)
-K_INC = $(shell dirname $$(dirname $$(readlink -f $$(which kompile))))/include/kframework/builtin
-
-SPEC_K = spec
-P4INCLUDE = p4c/p4include
 
 .PHONY: k-spec
 k-spec: boot $(KFFI_OBJ) $(KSHIM_OBJ)
-	kompile $(KENTRY) --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR) \
+	kompile $(KSPECDIR)/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR) \
 	  -ccopt $(KSHIM_OBJ) -ccopt $(KFFI_OBJ) \
 	  -ccopt -L"$(OCAMLWHERE)" \
 	  -ccopt -lasmrun -ccopt -lzstd -ccopt -lgmp \
@@ -164,28 +158,11 @@ $(KFFI_OBJ):
 $(KSHIM_OBJ): $(KSHIM_SRC)
 	gcc -c -fPIC -O2 -I "$(OCAMLWHERE)" -o $@ $<
 
-.PHONY: k-run
-k-run: boot
-	@test -n "$(TEC)" || { echo "usage: make k-run TEC=examples/add.watsup"; exit 1; }
-	KDEF=$(KDEFDIR) krun -d $(KDEFDIR) --parser ./$(KSCRIPTS)/kast-spec.sh $(TEC) \
-	  -cP4= -pP4=./$(KSCRIPTS)/kast-p4.sh \
-	  -cSPEC='"$(TEC)"' --output none
-
-.PHONY: k-typecheck
-k-typecheck: boot
-	@test -n "$(P4)" || { echo "usage: make k-typecheck P4=p4c/testdata/p4_16_samples/action-bind.p4"; exit 1; }
-	@trap 'rm -f $(KSCRATCH)/specdir' 0; \
-	printf '@%s\n' "$(SPEC_K)" > $(KSCRATCH)/specdir; \
-	KDEF=$(KDEFDIR) P4INCLUDE=$(P4INCLUDE) krun -d $(KDEFDIR) \
-	  --parser ./$(KSCRIPTS)/kast-spec.sh $(KSCRATCH)/specdir \
-	  -cP4=$(P4) -pP4=./$(KSCRIPTS)/kast-p4.sh \
-	  -cSPEC='"$(SPEC_K)"' --output none
-
 .PHONY: k-test
 k-test:
 	@status=0; \
-	python3 $(KSCRIPTS)/run-k-typecheck.py || status=1; \
-	python3 $(KSCRIPTS)/run-k-typecheck.py --neg || status=1; \
+	python3 $(KSPECDIR)/scripts/run-k-typecheck.py || status=1; \
+	python3 $(KSPECDIR)/scripts/run-k-typecheck.py --neg || status=1; \
 	exit $$status
 
 # Cleanup
