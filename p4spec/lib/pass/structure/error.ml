@@ -1,4 +1,5 @@
-open Util.Error
 open Util.Source
 
-let error (at : region) (msg : string) = error_struct at msg
+exception StructError of region * string
+
+let error (at : region) (msg : string) = raise (StructError (at, msg))

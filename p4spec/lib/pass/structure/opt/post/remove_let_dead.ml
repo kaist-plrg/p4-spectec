@@ -40,7 +40,8 @@ let rec removable_let (exp_r : exp) : bool =
   | UnE (_, _, exp) -> removable_let exp
   | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
       removable_let exp_l && removable_let exp_r
-  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
+  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _, _) | MatchE (exp, _)
+    ->
       removable_let exp
   | TupleE exps -> List.for_all removable_let exps
   | CaseE notexp -> List.for_all removable_let (Mixfix.args notexp)

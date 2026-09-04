@@ -55,6 +55,10 @@ type binop = Sl.binop
 type cmpop = Sl.cmpop
 type optyp = Sl.optyp
 
+(* Subtype checks *)
+
+type subcheck = Sl.subcheck
+
 (* Expressions *)
 
 type exp = ((exp', typ') note_phrase) Annot.t
@@ -68,7 +72,7 @@ and exp' =
   | CmpE of cmpop * optyp * exp * exp
   | UpCastE of typ * exp
   | DownCastE of typ * exp
-  | SubE of exp * typ
+  | SubE of exp * typ * subcheck
   | MatchE of exp * pattern
   | TupleE of exp list
   | CaseE of notexp
@@ -130,52 +134,54 @@ type dangle = Sl.dangle
 
 (* Holding conditions *)
 
-and holdcase =
-  | BothH of block * block
-  | HoldH of block * dangle
-  | NotHoldH of block * dangle
+and 'instr_tier holdcase =
+  | BothH of 'instr_tier block * 'instr_tier block
+  | HoldH of 'instr_tier block * dangle
+  | NotHoldH of 'instr_tier block * dangle
 
 (* Case analysis *)
 
-and case = guard * block
+and 'instr_tier case = guard * 'instr_tier block
 
 and guard =
   | BoolG of bool
   | CmpG of cmpop * optyp * exp
-  | SubG of typ
+  | SubG of typ * subcheck
   | MatchG of pattern
   | MemG of exp
   (* Shorthands *)
-  | CheckLetSubG of typ * exp
+  | CheckLetSubG of typ * subcheck * exp
   | CheckLetMatchG of pattern * exp
 
-(* Instructions *)
+(* Backtracking *)
+
+and 'instr_tier arm = 'instr_tier block
+
+(* Instructions
+
+   * shared control-flow shape common to both tiers
+   * tier-specific instructions are carried by [TierI] *)
 
 and iid = Sl.iid
-and inote = Sl.inote
+and fallthrough = FallGroup of id | FallNext | FallElse | FallFail
+and inote = { iid : iid; fallthrough : fallthrough option }
 
-and instr = ((instr', inote) note_phrase) Annot.t
-and instr' =
-  | IfI of exp * iterexp list * block * dangle
-  | HoldI of id * notexp * iterexp list * holdcase
-  | CaseI of exp * case list * dangle
-  | GroupI of id * id * rel_signature * exp list * block
-  | TryI of arm list
+and 'instr_tier instr = (('instr_tier instr', inote) note_phrase) Annot.t
+and 'instr_tier instr' =
+  | IfI of exp * iterexp list * 'instr_tier block * dangle
+  | HoldI of id * notexp * iterexp list * 'instr_tier holdcase
+  | CaseI of exp * 'instr_tier case list * dangle
   | LetI of exp * exp * iterinstr list
-  | RuleI of id * notexp * Hints.Input.t * iterinstr list
-  | ResultI of rel_signature * exp list
-  | ReturnI of exp
   | DebugI of exp
   (* Shorthands *)
   | DestructI of (string option * exp) list * exp
-  | CheckLetSubI of typ * exp * exp * block
-  | CheckLetMatchI of pattern * exp * exp * block
-  | OptionGetI of exp * exp * block
+  | CheckLetSubI of typ * subcheck * exp * exp * 'instr_tier block
+  | CheckLetMatchI of pattern * exp * exp * 'instr_tier block
+  | OptionGetI of exp * exp * 'instr_tier block
+  (* Tier-specific instruction *)
+  | TierI of 'instr_tier
 
-and block = instr list
-and elseblock = instr list
-
-and arm = block
+and 'instr_tier block = 'instr_tier instr list
 
 and iterinstr = Sl.iterinstr
 
@@ -183,9 +189,29 @@ and iterinstr = Sl.iterinstr
 
 and rel_signature = Sl.rel_signature
 
+(* Group-body tier *)
+
+type instr_group =
+  | ResultI of rel_signature * exp list
+  | ReturnI of exp
+  | RuleI of id * notexp * Hints.Input.t * iterinstr list
+  | BacktrackI of block_group list
+
+and block_group = instr_group block
+
+(* Dispatch tier *)
+
+type instr_dispatch =
+  | GroupI of id * id * rel_signature * exp list * block_group
+  | RouteI of block_dispatch list
+
+and block_dispatch = instr_dispatch block
+
+(* Relations *)
+
 type externrel = id * rel_signature * exp list
 
-type rel = id * rel_signature * exp list * block * elseblock option
+type rel = id * rel_signature * exp list * block_dispatch * block_dispatch option
 
 (* Functions *)
 
@@ -193,12 +219,12 @@ type externfunc = id * tparam list * param list * typ
 
 type builtinfunc = id * tparam list * param list * typ
 
-type tablerow = exp list * exp * block
+type tablerow = exp list * exp * block_group
 
 type tablefunc = id * param list * typ * tablerow list
 
 type definedfunc =
-  id * tparam list * param list * typ * block * elseblock option
+  id * tparam list * param list * typ * block_group * block_group option
 
 (* Definitions *)
 

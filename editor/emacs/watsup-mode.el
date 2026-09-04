@@ -1,74 +1,106 @@
 ;;; watsup-mode.el --- Major mode for Watsup specification language -*- lexical-binding: t; -*-
+;;; Commentary:
+;; Derived from p4spec/lib/frontend/lexer.mll
 ;;; Code:
 
 (defvar watsup-mode-syntax-table
   (let ((st (make-syntax-table)))
-    ;; Comments start with ;;
+    ;; Line comments ;; ... newline (comment style a)
     (modify-syntax-entry ?\; ". 12" st)
     (modify-syntax-entry ?\n ">" st)
     ;; Strings
     (modify-syntax-entry ?\" "\"" st)
-    ;; Operators
+    ;; Identifier constituents
     (modify-syntax-entry ?_ "w" st)
     (modify-syntax-entry ?' "w" st)
     (modify-syntax-entry ?$ "w" st)
     st)
-  "Syntax table for `watsup-mode'.")
+  "Syntax table for `watsup-mode'.
+Nested block comments (; ... ;) are applied by `watsup-syntax-propertize'.")
+
+;; Nested block comments (; ... ;) as comment style b (so newline, which ends
+;; the style-a ;; line comment, does not terminate them).  The `n' flag makes
+;; them nest; delimiter chars are tagged only when they form (; or ;), so the
+;; ;; line comment above is left untouched.
+(defconst watsup-syntax-propertize
+  (syntax-propertize-rules
+   ("\\((\\)\\(;\\)" (1 ". 1nb") (2 ". 2nb"))
+   ("\\(;\\)\\()\\)" (1 ". 3nb") (2 ". 4nb")))
+  "Assign nestable style-b comment syntax to (; and ;) delimiters.")
 
 (defconst watsup-keywords
-  '("syntax" "var" "if" "otherwise" "hint" "input" "dec" "def" "rule" "relation")
+  '("syntax" "extern" "tbl" "relation" "rulegroup" "rule" "var"
+    "builtin" "dec" "def" "if" "otherwise" "debug")
   "Watsup keywords.")
 
 (defconst watsup-types
-  '("int" "nat" "text" "bool" "set" "map")
+  '("bool" "nat" "int" "text")
   "Watsup built-in types.")
 
 (defconst watsup-constants
-  '("eps" "true" "false" "infinity")
+  '("eps" "true" "false")
   "Watsup constants.")
 
 (defconst watsup-font-lock-keywords
   (list
-   ;; Comments (handled by syntax table, but we can add emphasis)
-   '(";;.*$" . font-lock-comment-face)
+   ;; Comments (;; and nested (; ;)) are fontified from syntax, not here.
 
-   ;; Keywords
+   ;; %latex directive
+   '("%latex\\_>" . font-lock-preprocessor-face)
+
+   ;; hint( ... )
+   '("\\_<hint\\ze(" . font-lock-preprocessor-face)
+
+   ;; Keywords / types / constants
    `(,(regexp-opt watsup-keywords 'symbols) . font-lock-keyword-face)
-
-   ;; Types
    `(,(regexp-opt watsup-types 'symbols) . font-lock-type-face)
-
-   ;; Constants
    `(,(regexp-opt watsup-constants 'symbols) . font-lock-constant-face)
 
-   ;; Function/relation names after dec/def/relation keywords
-   '("\\<\\(dec\\|def\\|relation\\)\\s-+\\(\\$?[a-zA-Z_][a-zA-Z0-9_$']*\\(?:_<[^>]+>\\)?\\)"
-     (2 font-lock-function-name-face))
+   ;; Function names after dec/def (may be $-prefixed)
+   '("\\_<\\(?:dec\\|def\\)\\s-+\\(\\$?[a-zA-Z_][a-zA-Z0-9_']*\\)"
+     (1 font-lock-function-name-face))
 
-   ;; Rule names (base part and comment part)
-   '("\\<rule\\s-+\\([a-zA-Z_$][a-zA-Z0-9_$']*\\)\\(/[a-zA-Z0-9_$'-]*\\)?"
+   ;; Relation / var names after their keyword
+   '("\\_<\\(?:relation\\|var\\)\\s-+\\([a-zA-Z_$][a-zA-Z0-9_$']*\\)"
+     (1 font-lock-function-name-face))
+
+   ;; Rule names (base part and /variant part)
+   '("\\_<rule\\(?:group\\)?\\s-+\\([a-zA-Z_$][a-zA-Z0-9_$']*\\)\\(/[a-zA-Z0-9_$']*\\)?"
      (1 font-lock-function-name-face)
      (2 font-lock-variable-name-face nil t))
 
-   ;; Type parameters in angle brackets
-   '("<\\([a-zA-Z_][a-zA-Z0-9_]*\\)>" (1 font-lock-type-face))
+   ;; Silent tag: _UPID
+   '("\\_<_[A-Z][a-zA-Z0-9_']*" . font-lock-constant-face)
+
+   ;; Concrete operator literal '...'
+   '("'[^'\n]*'" . font-lock-string-face)
 
    ;; Function calls with $ prefix
-   '("\\$[a-zA-Z_][a-zA-Z0-9_$']*\\(?:_<[^>]+>\\)?" . font-lock-function-name-face)
+   '("\\$[a-zA-Z_][a-zA-Z0-9_']*" . font-lock-function-name-face)
 
-   ;; Backtick expressions
-   '("`{[^}]*}" . font-lock-preprocessor-face)
-   '("`" . font-lock-preprocessor-face)
+   ;; Dot-prefixed field id: .id
+   '("\\.[a-zA-Z_][a-zA-Z0-9_']*" . font-lock-variable-name-face)
+
+   ;; Type arguments in angle brackets: <foo>
+   '("<\\([a-zA-Z_][a-zA-Z0-9_]*\\)>" (1 font-lock-type-face))
+
+   ;; Backtick target brackets: `( `) `[ `] `{ `} `< `>
+   '("`[]()[{}<>]" . font-lock-preprocessor-face)
 
    ;; String literals
    '("\"[^\"]*\"" . font-lock-string-face)
 
-   ;; Numbers
-   '("\\<[0-9]+\\>" . font-lock-constant-face)
+   ;; Numbers: hex, nat, signed
+   '("\\_<0x[0-9A-F]+\\(?:_[0-9A-F]+\\)*\\_>" . font-lock-constant-face)
+   '("\\_<[0-9]+\\(?:_[0-9]+\\)*\\_>" . font-lock-constant-face)
 
-   ;; Operators (multi-character operators need to come before single-character)
-   '("\\(<==>\\|\\~>\\*\\|\\~>\\|=>_\\|->_\\|=>\\|->\\|<=\\|>=\\|=/=\\|==\\|:=\\|::?\\|/\\\\\\|\\\\/\\|<:\\|:>\\|<<\\|>>\\|\\^|\\^\\|_|_\\|##\\|%%\\|!%\\|##?\\|\\+\\+\\|\\.\\.\\.\\|\\.\\.\\|--\\||-\\|-|\\|>(?\\)"
-     . font-lock-builtin-face))
+   ;; Holes: !% %% %N %
+   '("!?%\\(?:%\\|[0-9]+\\)?" . font-lock-builtin-face)
+
+   ;; Operators (multi-character first)
+   '("==>\\|<=>\\|~>\\*\\|~>\\|=>_\\|->_\\|=>\\|->\\|=/=\\|<=\\|>=\\|:=\\|::\\|:/\\|<:\\|<-\\|>(\\|~~\\|/\\\\\\|\\\\/\\|\\+\\+\\|--\\|\\.\\.\\.\\|\\.\\.\\||-\\|-|\\|##"
+     . font-lock-builtin-face)
+   '("[:;,.|=<>~?^$#*/\\\\+-]" . font-lock-builtin-face))
   "Keyword highlighting for Watsup mode.")
 
 ;;;###autoload
@@ -77,6 +109,9 @@
   :syntax-table watsup-mode-syntax-table
   (setq-local comment-start ";; ")
   (setq-local comment-end "")
+  (setq-local comment-start-skip ";;+[ \t]*\\|(;[ \t]*")
+  (setq-local parse-sexp-lookup-properties t)
+  (setq-local syntax-propertize-function watsup-syntax-propertize)
   (setq-local font-lock-defaults '(watsup-font-lock-keywords))
   (setq-local indent-line-function 'indent-relative))
 

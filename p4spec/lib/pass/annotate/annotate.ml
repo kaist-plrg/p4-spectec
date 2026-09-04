@@ -173,9 +173,9 @@ let rec annotate_exp (ctx : Ctx.t) (exp : exp) : Pl.exp =
       let node = Pl.DownCastE (typ, exp_pl) $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
-  | SubE (exp, typ) ->
+  | SubE (exp, typ, subcheck) ->
       let exp_pl = annotate_exp ctx exp in
-      let node = Pl.SubE (exp_pl, typ) $$ (at, note) in
+      let node = Pl.SubE (exp_pl, typ, subcheck) $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
   | MatchE (exp, pattern) ->
@@ -332,7 +332,9 @@ and annotate_params (ctx : Ctx.t) (params : param list) : Pl.param list =
 
 (* Holding conditions *)
 
-and annotate_holdcase (ctx : Ctx.t) (holdcase : holdcase) : Pl.holdcase =
+let annotate_holdcase_shared (ctx : Ctx.t)
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    (holdcase : holdcase) : 'instr_tier Pl.holdcase =
   match holdcase with
   | BothH (block_hold, block_nothold) ->
       let block_hold_pl = annotate_block ctx block_hold in
@@ -353,25 +355,31 @@ and annotate_guard (ctx : Ctx.t) (guard : guard) : Pl.guard =
   | CmpG (cmpop, optyp, exp) ->
       let exp_pl = annotate_exp ctx exp in
       Pl.CmpG (cmpop, optyp, exp_pl)
-  | SubG typ -> Pl.SubG typ
+  | SubG (typ, subcheck) -> Pl.SubG (typ, subcheck)
   | MatchG pattern -> Pl.MatchG pattern
   | MemG exp ->
       let exp_pl = annotate_exp ctx exp in
       Pl.MemG exp_pl
 
-and annotate_case (ctx : Ctx.t) (case : case) : Pl.case =
-  let guard, block = case in
+let annotate_case_shared (ctx : Ctx.t)
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    ((guard, block) : case) : 'instr_tier Pl.case =
   let guard_pl = annotate_guard ctx guard in
   let block_pl = annotate_block ctx block in
   (guard_pl, block_pl)
 
-and annotate_cases (ctx : Ctx.t) (cases : case list) : Pl.case list =
-  List.map (annotate_case ctx) cases
+let annotate_cases_shared (ctx : Ctx.t)
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    (cases : case list) : 'instr_tier Pl.case list =
+  List.map (annotate_case_shared ctx annotate_block) cases
 
 (* Instructions *)
 
-and annotate_instr (ctx : Ctx.t) (instr : instr) : Pl.instr =
-  let at, note = (instr.at, instr.note) in
+let annotate_instr_shared (ctx : Ctx.t)
+    (annotate_block : Ctx.t -> block -> 'instr_tier Pl.block)
+    (instr_tier_of : Ctx.t -> instr -> 'instr_tier Pl.instr) (instr : instr) :
+    'instr_tier Pl.instr =
+  let at, note = (instr.at, { Pl.iid = instr.note.iid; fallthrough = None }) in
   match instr.it with
   | IfI (exp_cond, iterexps, block_then, dangle) ->
       let exp_cond_pl = annotate_exp ctx exp_cond in
@@ -383,7 +391,7 @@ and annotate_instr (ctx : Ctx.t) (instr : instr) : Pl.instr =
       { node; hints }
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
       let notexp_pl = annotate_notexp ctx notexp in
-      let holdcase_pl = annotate_holdcase ctx holdcase in
+      let holdcase_pl = annotate_holdcase_shared ctx annotate_block holdcase in
       let node =
         Pl.HoldI (id_rel, notexp_pl, iterexps, holdcase_pl) $$ (at, note)
       in
@@ -393,26 +401,8 @@ and annotate_instr (ctx : Ctx.t) (instr : instr) : Pl.instr =
       { node; hints }
   | CaseI (exp, cases, dangle) ->
       let exp_pl = annotate_exp ctx exp in
-      let cases = annotate_cases ctx cases in
-      let node = Pl.CaseI (exp_pl, cases, dangle) $$ (at, note) in
-      let hints = Annot.empty in
-      { node; hints }
-  | GroupI (id_rulegroup, rel_signature, exps, block) ->
-      let id_rel = Ctx.get_namespace ctx in
-      let exps_pl = annotate_exps ctx exps in
-      let block_pl = annotate_block ctx block in
-      let node =
-        Pl.GroupI (id_rulegroup, id_rel, rel_signature, exps_pl, block_pl)
-        $$ (at, note)
-      in
-      let hints = hints_of_group_instr ctx in
-      let _, inputs = rel_signature in
-      let exps_in, _ = Hints.Input.split inputs exps in
-      validate_annot_alter at hints (List.length exps_in);
-      { node; hints }
-  | TryI arms ->
-      let arms_pl = List.map (annotate_block ctx) arms in
-      let node = Pl.TryI arms_pl $$ (at, note) in
+      let cases_pl = annotate_cases_shared ctx annotate_block cases in
+      let node = Pl.CaseI (exp_pl, cases_pl, dangle) $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
   | LetI (exp_l, exp_r, iterinstrs) ->
@@ -426,10 +416,74 @@ and annotate_instr (ctx : Ctx.t) (instr : instr) : Pl.instr =
         | _ -> Annot.empty
       in
       { node; hints }
+  | DebugI exp ->
+      let exp_pl = annotate_exp ctx exp in
+      let node = Pl.DebugI exp_pl $$ (at, note) in
+      let hints = Annot.empty in
+      { node; hints }
+  | GroupI _ | RuleI _ | ResultI _ | ReturnI _ | BlockI _ ->
+      instr_tier_of ctx instr
+
+(* Tiered instructions and blocks *)
+
+let rec annotate_instr_dispatch (ctx : Ctx.t) (instr_ll : instr) :
+    Pl.instr_dispatch Pl.instr =
+  annotate_instr_shared ctx annotate_block_dispatch instr_dispatch_of_ll
+    instr_ll
+
+and annotate_instr_group (ctx : Ctx.t) (instr_ll : instr) :
+    Pl.instr_group Pl.instr =
+  annotate_instr_shared ctx annotate_block_group instr_group_of_ll instr_ll
+
+and annotate_block_dispatch (ctx : Ctx.t) (block_ll : block) : Pl.block_dispatch
+    =
+  List.map (annotate_instr_dispatch ctx) block_ll
+
+and annotate_block_group (ctx : Ctx.t) (block_ll : block) : Pl.block_group =
+  List.map (annotate_instr_group ctx) block_ll
+
+(* Enforcement: dispatch bodies hold only rule groups *)
+
+and instr_dispatch_of_ll (ctx : Ctx.t) (instr_ll : instr) :
+    Pl.instr_dispatch Pl.instr =
+  let at, note =
+    (instr_ll.at, { Pl.iid = instr_ll.note.iid; fallthrough = None })
+  in
+  match instr_ll.it with
+  | GroupI (id_rulegroup, rel_signature, exps, block) ->
+      let id_rel = Ctx.get_namespace ctx in
+      let exps_pl = annotate_exps ctx exps in
+      let block_pl = annotate_block_group ctx block in
+      let node =
+        Pl.TierI
+          (Pl.GroupI (id_rulegroup, id_rel, rel_signature, exps_pl, block_pl))
+        $$ (at, note)
+      in
+      let hints = hints_of_group_instr ctx in
+      let _, inputs = rel_signature in
+      let exps_in, _ = Hints.Input.split inputs exps in
+      validate_annot_alter at hints (List.length exps_in);
+      { node; hints }
+  | BlockI arms ->
+      let arms_pl = List.map (annotate_block_dispatch ctx) arms in
+      let node = Pl.TierI (Pl.RouteI arms_pl) $$ (at, note) in
+      { node; hints = Annot.empty }
+  | _ ->
+      Error.error instr_ll.at
+        "a result, return, or rule application cannot appear at dispatch level"
+
+(* Enforcement: rule-group bodies never nest another rule group *)
+
+and instr_group_of_ll (ctx : Ctx.t) (instr_ll : instr) : Pl.instr_group Pl.instr
+    =
+  let at, note =
+    (instr_ll.at, { Pl.iid = instr_ll.note.iid; fallthrough = None })
+  in
+  match instr_ll.it with
   | RuleI (id_rel, notexp, inputs, iterinstrs) ->
       let notexp_pl = annotate_notexp ctx notexp in
       let node =
-        Pl.RuleI (id_rel, notexp_pl, inputs, iterinstrs) $$ (at, note)
+        Pl.TierI (Pl.RuleI (id_rel, notexp_pl, inputs, iterinstrs)) $$ (at, note)
       in
       let hints = hints_of_rule_instr ctx id_rel inputs in
       let exps = Mixfix.args notexp in
@@ -439,24 +493,21 @@ and annotate_instr (ctx : Ctx.t) (instr : instr) : Pl.instr =
       { node; hints }
   | ResultI (rel_signature, exps) ->
       let exps_pl = annotate_exps ctx exps in
-      let node = Pl.ResultI (rel_signature, exps_pl) $$ (at, note) in
+      let node = Pl.TierI (Pl.ResultI (rel_signature, exps_pl)) $$ (at, note) in
       let _, inputs = rel_signature in
       let hints = hints_of_result_instr ctx inputs in
       validate_annot_alter at hints (List.length exps_pl);
       { node; hints }
   | ReturnI exp ->
-      let exp = annotate_exp ctx exp in
-      let node = Pl.ReturnI exp $$ (at, note) in
+      let exp_pl = annotate_exp ctx exp in
+      let node = Pl.TierI (Pl.ReturnI exp_pl) $$ (at, note) in
       let hints = Annot.empty in
       { node; hints }
-  | DebugI exp ->
-      let exp = annotate_exp ctx exp in
-      let node = Pl.DebugI exp $$ (at, note) in
-      let hints = Annot.empty in
-      { node; hints }
-
-and annotate_block (ctx : Ctx.t) (block : block) : Pl.block =
-  List.map (annotate_instr ctx) block
+  | BlockI arms ->
+      let arms_pl = List.map (annotate_block_group ctx) arms in
+      let node = Pl.TierI (Pl.BacktrackI arms_pl) $$ (at, note) in
+      { node; hints = Annot.empty }
+  | _ -> Error.error instr_ll.at "a rule group cannot appear in a group body"
 
 (* Definitions *)
 
@@ -485,12 +536,12 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
       let ctx_rel = Ctx.enter_rel ctx id in
       let exps_pl = annotate_exps ctx_rel exps in
       let block_pl =
-        block |> Linearize.linearize_block |> annotate_block ctx_rel
+        block |> Linearize.linearize_block |> annotate_block_dispatch ctx_rel
       in
       let elseblock_pl_opt =
         elseblock_opt
         |> Option.map Linearize.linearize_block
-        |> Option.map (annotate_block ctx_rel)
+        |> Option.map (annotate_block_dispatch ctx_rel)
       in
       let node =
         Pl.RelD (id, rel_signature, exps_pl, block_pl, elseblock_pl_opt) $ at
@@ -517,7 +568,7 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
             let exps_pl_in = annotate_exps ctx exps_in in
             let exp_pl_out = annotate_exp ctx exp_out in
             let block_pl =
-              block |> Linearize.linearize_block |> annotate_block ctx
+              block |> Linearize.linearize_block |> annotate_block_group ctx
             in
             (exps_pl_in, exp_pl_out, block_pl))
           tablerows
@@ -529,12 +580,12 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
       let ctx_local = Ctx.add_tparams ctx tparams in
       let params_pl = annotate_params ctx_local params in
       let block_pl =
-        block |> Linearize.linearize_block |> annotate_block ctx_local
+        block |> Linearize.linearize_block |> annotate_block_group ctx_local
       in
       let elseblock_pl_opt =
         elseblock_opt
         |> Option.map Linearize.linearize_block
-        |> Option.map (annotate_block ctx_local)
+        |> Option.map (annotate_block_group ctx_local)
       in
       let node =
         Pl.FuncDecD (id, tparams, params_pl, typ, block_pl, elseblock_pl_opt)
@@ -546,9 +597,19 @@ let annotate_def (ctx : Ctx.t) (def : def) : Pl.def =
 let annotate_defs (ctx : Ctx.t) (spec : spec) : Pl.spec =
   List.map (annotate_def ctx) spec
 
+(* Errors *)
+
+type error = { at : region; msg : string }
+
+let to_region_msg { at; msg } = (at, msg)
+
 (* Entry point *)
 
-let annotate_spec (spec : spec) : Pl.spec =
-  let ctx = Ctx.init () in
-  let ctx = Ctx.load_spec ctx spec in
-  spec |> Expand.expand_spec |> annotate_defs ctx |> Shorthand.shorten_defs
+let annotate_spec (spec : spec) : (Pl.spec, error) result =
+  try
+    let ctx = Ctx.init () in
+    let ctx = Ctx.load_spec ctx spec in
+    Ok
+      (spec |> Expand.expand_spec |> annotate_defs ctx |> Shorthand.shorten_defs
+     |> Stamp.stamp_defs)
+  with Error.ProseError (at, msg) -> Error { at; msg }

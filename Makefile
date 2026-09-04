@@ -49,10 +49,10 @@ slspec:
 slspec-html:
 	cd docs/sl && make spec-html && cd ../..
 
-ilspec:
-	cd docs/il && make spec && cd ../..
-ilspec-html:
-	cd docs/il && make spec-html && cd ../..
+alspec:
+	cd docs/al && make spec && cd ../..
+alspec-html:
+	cd docs/al && make spec-html && cd ../..
 
 # Format
 
@@ -75,6 +75,9 @@ endef
 
 # Fast tests (no -det)
 TEST_ALIASES := \
+  backend-adoc \
+  backend-latex \
+  backend-splice \
   speclang \
   run run-al run-sl run-pl \
   sim-al sim-sl sim-pl \
@@ -121,7 +124,7 @@ test-fast:
 .PHONY: test-all
 test-all:
 	echo "#### Running all tests (without -det)"
-	cd p4spec && opam exec --switch=5.1.0 -- dune runtest test --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @backend-adoc @backend-latex @backend-splice @speclang @p4parse @boot @run @sim-al @sim-sl @sim-pl --profile=release && echo OK || \
 	  (echo "####>" Failure running dune test. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 

@@ -6,32 +6,6 @@ syntax res<X> = OK X | FAIL
 syntax valres = res<val>
 syntax valsres = res<val*>
 
-;; Interface to an external cache
-
-extern syntax cachepoint
-syntax funccache = OK val | NONE
-syntax relcache = OK val* | NONE
-
-var cp : cachepoint
-
-extern dec $cache_find_func(id, val*) : funccache
-  hint(prose_in "meta-cache entry for function" %0 "with inputs" %1)
-extern dec $cache_add_func_maybe(bool, id, val*, valres) : bool
-  hint(prose_in "adding meta-cache entry for function" %1
-                "with inputs" %2#", result" %3#", and side-effects" %0)
-
-extern dec $cache_find_rel(id, val*) : relcache
-  hint(prose_in "meta-cache entry for relation" %0 "with inputs" %1)
-extern dec $cache_add_rel_maybe(bool, id, val*, valsres) : bool
-  hint(prose_in "adding meta-cache entry for relation" %1
-                "with inputs" %2#", result" %3#", and side-effects" %0)
-
-extern dec $cache_checkpoint() : cachepoint
-  hint(prose_in "cache checkpoint")
-extern dec $cache_seff(cachepoint, cachepoint) : bool
-  hint(prose_true "side-effect occurred between checkpoints" %0 "and" %1)
-  hint(prose_false "no side-effect occurred between checkpoints" %0 "and" %1)
-
 ;;; Extern meta-function invocation
 
 extern relation Call_extern_func:

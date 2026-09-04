@@ -36,29 +36,9 @@ rulegroup Call_rel_dispatch {
 
 }
 
-;; Relation call wrapper with cache
+;; Relation call
 
 rule Call_rel:
   C |- id val* : valsres
-  -- if relcache = $cache_find_rel(id, val*)
-  -- Call_rel_cache: C |- id val* relcache : valsres
-
-rulegroup Call_rel_cache {
-
-  rule Call_rel_cache/hit:
-    C |- id val_input* (OK val_cached*) : OK val_cached*
-
-  rule Call_rel_cache/miss:
-    C |- id val_input* NONE : valsres
-    -- if reldef = $find_rel(C, id)
-    -- if cp_before = $cache_checkpoint()
-    -- Call_rel_dispatch: C |- reldef val_input* : valsres
-    -- if cp_after = $cache_checkpoint()
-    -- if b_ext = (reldef <: externRelDef)
-    -- if b_seff = $cache_seff(cp_before, cp_after)
-    -- if $cache_add_rel_maybe(
-            b_ext \/ b_seff,
-            ;; true,
-            id, val_input*, valsres)
-
-}
+  -- if reldef = $find_rel(C, id)
+  -- Call_rel_dispatch: C |- reldef val* : valsres

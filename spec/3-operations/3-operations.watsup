@@ -80,7 +80,7 @@ dec $un_minus(value) : value
 
 def $un_minus(D i) = D $(-i)
 def $un_minus(w W i) = w W i'
-  -- if i' = $($pow2(w) - i)
+  -- if i' = $int_to_bitstr(w, $($pow2(w) - i))
 def $un_minus(w S i) = w S i'
   -- if i' = $int_to_bitstr(w, $bitstr_to_int(w, $(-i)))
 
@@ -676,6 +676,18 @@ def $cast_list(LIST `< typeIR `>, LIST `[ value* `])
 def $cast_op(typeIR, listValue) = $cast_list(typeIR_unroll, listValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
+;;; Cast from tuple
+
+dec $cast_tuple(typeIR, tupleValue) : value
+  hint(prose_in %1 "casted to type" %0)
+  hint(testgen_ignore)
+
+def $cast_tuple(TUPLE `< typeIR* `>, TUPLE `( value* `))
+  = TUPLE `( $cast_op(typeIR, value)* `)
+
+def $cast_op(typeIR, tupleValue) = $cast_tuple(typeIR_unroll, tupleValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+
 ;;; Cast from array
 
 dec $cast_array(typeIR, arrayValue) : value
@@ -779,6 +791,9 @@ def $cast_sequence(
 
 ;; Cast from sequence, default-filling the trailing fields left unlisted by `...`
 
+def $cast_sequence(SEQ `< typeIR* ',' '...' `>, SEQ `( value* ',' '...' `))
+  = SEQ `( value_cast* ',' '...' `)
+  -- if (value_cast = $cast_op(typeIR, value))*
 def $cast_sequence(TUPLE `< typeIR* `>, SEQ `( value* ',' '...' `))
   = TUPLE `( value_cast* `)
   -- if (typeIR_given*, typeIR_rest*) = $partition_<typeIR>(typeIR*, |value*|)
@@ -838,6 +853,22 @@ def $cast_record(
     HEADER typeId `< _ `> `{ (_ typeIR_t_field id_t_field ';')* `},
     RECORD `{ (value_field nameIR_field ';')* `})
   = HEADER typeId `{ true ';' (value_field_cast id_t_field ';')* `}
+  -- if (value_field'
+      = $find_map<id, value>(`{ (nameIR_field ':' value_field)* `}, id_t_field))*
+  -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
+
+def $cast_record(
+    RECORD `{ (_ typeIR_t_field id_t_field ';')* `},
+    RECORD `{ (value_field nameIR_field ';')* `})
+  = RECORD `{ (value_field_cast id_t_field ';')* `}
+  -- if (value_field'
+      = $find_map<id, value>(`{ (nameIR_field ':' value_field)* `}, id_t_field))*
+  -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*
+
+def $cast_record(
+    RECORD `{ (_ typeIR_t_field id_t_field ';')* ',' '...' `},
+    RECORD `{ (value_field nameIR_field ';')* ',' '...' `})
+  = RECORD `{ (value_field_cast id_t_field ';')* ',' '...' `}
   -- if (value_field'
       = $find_map<id, value>(`{ (nameIR_field ':' value_field)* `}, id_t_field))*
   -- if (value_field_cast = $cast_op(typeIR_t_field, value_field'))*

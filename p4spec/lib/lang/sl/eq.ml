@@ -105,7 +105,7 @@ and eq_guard (guard_a : guard) (guard_b : guard) : bool =
   | BoolG b_a, BoolG b_b -> b_a = b_b
   | CmpG (cmpop_a, optyp_a, exp_a), CmpG (cmpop_b, optyp_b, exp_b) ->
       cmpop_a = cmpop_b && optyp_a = optyp_b && eq_exp exp_a exp_b
-  | SubG typ_a, SubG typ_b -> eq_typ typ_a typ_b
+  | SubG (typ_a, _), SubG (typ_b, _) -> eq_typ typ_a typ_b
   | MatchG pattern_a, MatchG pattern_b -> eq_pattern pattern_a pattern_b
   | MemG exp_a, MemG exp_b -> eq_exp exp_a exp_b
   | _ -> false

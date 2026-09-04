@@ -7,12 +7,11 @@ module VCache = Runtime.Dynamic.Caches.ValueCache
 open Mixops
 open Stub
 open Caches
-open Util.Error
 open Util.Source
 
 (* Errors *)
 
-let error = error_unparse
+let error = Error.error
 
 (* Forward references for match dispatch tables,
    populated after all sub-match functions are defined *)
@@ -516,7 +515,7 @@ and unboot_sub_exp (at : region) (values : Value.t list) : Il.exp =
   | [ value_exp; value_typ ] ->
       let exp = unboot_exp value_exp in
       let typ = unboot_typ value_typ in
-      Il.SubE (exp, typ) $$ (at, stub_exp_note)
+      Il.SubE (exp, typ, Il.RecurseSC typ) $$ (at, stub_exp_note)
   | _ -> error "@unboot_sub_exp"
 
 and unboot_match_exp (at : region) (values : Value.t list) : Il.exp =

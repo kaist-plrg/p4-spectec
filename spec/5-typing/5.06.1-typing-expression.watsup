@@ -323,7 +323,7 @@ rulegroup Expr_ok/binaryExpression-shift {
     -- if typeIR_r_reduced = $type_of_typedExpressionIR(typedExpressionIR_r_reduced)
     -- if ctk_r_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced)
     ---- ;; check that the right-hand side is fixed bit type
-    -- if BIT `< _ `> = typeIR_r_reduced
+    -- if BIT `< _ `> = $unroll_typeIR(typeIR_r_reduced)
     ---- ;; check that if the left-hand side is int type,
     ---- ;; the right-hand side is local compile-time known
     -- if (typeIR_l_reduced = INT) => (ctk_r_reduced = LCTK)
@@ -586,7 +586,7 @@ rule Expr_ok/ternaryExpression:
 
 rule Expr_ok/castExpression:
   p TC |- `( type_t `) expression
-        : (`( typeIR_t `) typedExpressionIR) '#' expressionNoteIR
+        : expressionIR_cast '#' expressionNoteIR
   ---- ;; check target type
   -- Type_ok: p TC |- type_t : typeIR_t '#' eps
   -- Type_wf: $bound(p, TC) |- typeIR_t
@@ -595,8 +595,11 @@ rule Expr_ok/castExpression:
   ---- ;; fetch annotation
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
   -- if ctk = $ctk_of_typedExpressionIR(typedExpressionIR)
-  ---- ;; check that explicit cast is defined
-  -- Cast_expl: typeIR -> typeIR_t
+  ---- ;; check that explicit cast is defined,
+  ---- ;; and insert one cast per step of the chain
+  -- Cast_expl: typeIR -> typeIR_t : OK typeIR_cast*
+  -- if expressionIR_cast '#' _
+      = $apply_cast(typedExpressionIR, typeIR_cast*)
   ---- ;; create typed expression
   -- if expressionNoteIR = `( typeIR_t ctk `)
 
@@ -1274,7 +1277,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if ctk_w_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w
     -- if n_w = $nat_of_integerValue(integerValue_w)
-    -- if n_h = $(n_w + n_l - 1)
+    -- if n_h = $ite<int>(n_w = 0, n_l, $(n_w + n_l - 1))
     -- if $is_valid_bitslice(typeIR_base_reduced, n_l, n_h)
     ---- ;; create typed expression
     -- if typeIR = BIT `< n_w `>
@@ -1315,7 +1318,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if ctk_w_reduced = $ctk_of_typedExpressionIR(typedExpressionIR_w_reduced)
     ---- ;; if offset is not local compile-time known, it must be a bit type
     -- if ctk_l_reduced =/= LCTK
-    -- if BIT `< _ `> = typeIR_l_reduced
+    -- if BIT `< _ `> = $unroll_typeIR(typeIR_l_reduced)
     ---- ;; check that the width is local compile-time known
     -- if ctk_w_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w

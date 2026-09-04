@@ -1,10 +1,14 @@
-open Util.Error
 open Util.Source
 
 (* Error *)
 
-let error (at : region) (msg : string) = error_splice at msg
-let warn (at : region) (msg : string) = warn_splice at msg
+type error = { at : region; msg : string }
+
+exception SpliceError of error
+
+let to_region_msg (error : error) : region * string = (error.at, error.msg)
+let error (at : region) (msg : string) = raise (SpliceError { at; msg })
+let warn (at : region) (msg : string) = Util.Error.warn at "splice" msg
 
 (* Check *)
 

@@ -1,6 +1,5 @@
 open Lang
 open Splicer
-open Util.Source
 
 module Key = struct
   type t = string * string
@@ -9,7 +8,7 @@ module Key = struct
     Format.asprintf "%s/%s" id_rel id_rulegroup
 
   let to_anchor ((id_rel, id_rulegroup) : t) : string =
-    Pl.Render.string_of_rulegroupid id_rel id_rulegroup
+    Backend_adoc.Pl.Fallthrough.anchor_of_group id_rel id_rulegroup
 
   let compare (id_rel_a, id_rulegroup_a) (id_rel_b, id_rulegroup_b) =
     let c = String.compare id_rel_a id_rel_b in
@@ -18,67 +17,86 @@ module Key = struct
   let parse (source : Source.t) : t list = [ Parser.parse_id_with_sub source ]
 end
 
+module Init : INIT with type key = Key.t and type value = El.def = struct
+  type key = Key.t
+  type value = El.def
+
+  let init_def (def : El.def) : (key * value) option =
+    match def.it with
+    | RuleGroupD (id_rel, id_rulegroup, _) ->
+        Some ((id_rel.it, id_rulegroup.it), def)
+    | _ -> None
+
+  let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
+    spec_el |> List.filter_map init_def
+end
+
 (* Source splicer *)
 
 module Source = struct
-  type source = El.id * El.id * El.rule list
-
   module Value = struct
-    type t = source
+    type t = El.def
 
-    let render (values : t list) : string =
-      values
-      |> List.map (fun value ->
-             let id_rel, id_rulegroup, rules = value in
-             let def =
-               El.RuleGroupD (id_rel, id_rulegroup, rules) $ no_region
-             in
-             El.Print.string_of_def def)
-      |> String.concat "\n\n"
+    let render (_context : Ctx.t) (values : t list) : string =
+      values |> List.map Backend_adoc.El.render_def |> String.concat "\n\n"
   end
 
-  module Init : INIT with type key = Key.t and type value = Value.t = struct
-    type key = Key.t
-    type value = Value.t
-
-    let init_def (def : El.def) : (key * value) option =
-      match def.it with
-      | RuleGroupD (id_rel, id_rulegroup, rules) ->
-          let value = (id_rel, id_rulegroup, rules) in
-          Some ((id_rel.it, id_rulegroup.it), value)
-      | _ -> None
-
-    let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
-      spec_el |> List.filter_map init_def
-  end
-
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "rulegroup-source"
     let prefix = prefix_source
     let suffix = suffix_source
-    let header = false
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
+end
+
+(* LaTeX splicer *)
+
+module Latex = struct
+  module Value = struct
+    type t = El.def
+
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Backend_latex.El.anchors ~func:context.anchors_latex.func
+          ~rel:context.anchors_latex.rel
+      in
+      match Backend_latex.El.render_defs ~anchors values with
+      | Ok rendered -> rendered
+      | Error error ->
+          let at, msg = Backend_latex.to_region_msg error in
+          Error.error at msg
+  end
+
+  module Config = struct
+    let name = "rulegroup-latex"
+    let prefix = prefix_latex
+    let suffix = suffix_latex
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
+  end
+
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end
 
 (* Prose splicer *)
 
 module Prose = struct
-  type prose = Pl.instr
+  type prose = Pl.Group.t
 
   module Value = struct
     type t = prose
 
-    let render (values : t list) : string =
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Backend_adoc.Pl.anchors ~func:context.anchors_prose.func
+          ~rel:context.anchors_prose.rel
+      in
       values
-      |> List.map (fun (instr : Pl.instr) ->
-             match instr.node.it with
-             | GroupI (id_rulegroup, id_rel, rel_signature, exps, block) ->
-                 Pl.Render.Backtrack.Label.set_namespace id_rel.it;
-                 Pl.Render.render_rulegroup instr.hints id_rulegroup id_rel
-                   rel_signature exps block
-             | _ -> assert false)
+      |> List.map (fun (group : t) ->
+             Backend_adoc.Pl.render_rulegroup ~anchors group.hints
+               group.id_rulegroup group.id_rel group.rel_signature group.exps
+               group.body)
       |> String.concat "\n\n"
   end
 
@@ -86,49 +104,24 @@ module Prose = struct
     type key = Key.t
     type value = Value.t
 
-    let rec collect_instr (instr : Pl.instr) : Pl.instr list =
-      match instr.node.it with
-      | IfI (_, _, block_then, _) -> collect_block block_then
-      | HoldI (_, _, _, holdcase) -> (
-          match holdcase with
-          | BothH (block_hold, block_nothold) ->
-              collect_block block_hold @ collect_block block_nothold
-          | HoldH (block_hold, _) -> collect_block block_hold
-          | NotHoldH (block_nothold, _) -> collect_block block_nothold)
-      | CaseI (_, cases, _) ->
-          cases |> List.concat_map (fun (_, block) -> collect_block block)
-      | GroupI _ -> [ instr ]
-      | TryI arms -> arms |> List.concat_map collect_block
-      | LetI _ | RuleI _ | ResultI _ | ReturnI _ | DebugI _ | DestructI _ -> []
-      | CheckLetSubI (_, _, _, block_then)
-      | CheckLetMatchI (_, _, _, block_then)
-      | OptionGetI (_, _, block_then) ->
-          collect_block block_then
-
-    and collect_block (block : Pl.block) : Pl.instr list =
-      block |> List.concat_map collect_instr
-
     let init_def (def : Pl.def) : (key * value) list =
       match def.node.it with
       | RelD (id_rel, _, _, block, _) ->
-          block |> collect_block
-          |> List.filter_map (fun (instr : Pl.instr) ->
-                 match instr.node.it with
-                 | GroupI (id_rulegroup, _, _, _, _) ->
-                     Some ((id_rel.it, id_rulegroup.it), instr)
-                 | _ -> None)
+          block |> Pl.Group.collect_groups
+          |> List.map (fun (group : Pl.Group.t) ->
+                 ((id_rel.it, group.id_rulegroup.it), group))
       | _ -> []
 
     let init (_spec_el : El.spec) (spec_pl : Pl.spec) : (key * value) list =
       spec_pl |> List.concat_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "rulegroup-prose"
     let prefix = prefix_prose
     let suffix = suffix_prose
-    let header = true
+    let anchor (_context : Ctx.t) (name : string) : string option = Some name
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end

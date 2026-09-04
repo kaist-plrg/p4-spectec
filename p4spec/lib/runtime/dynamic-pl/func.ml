@@ -7,7 +7,7 @@ type t =
   | Extern of tparam list * param list * typ
   | Builtin of tparam list * param list * typ
   | Table of param list * typ * tablerow list
-  | Defined of tparam list * param list * typ * block * elseblock option
+  | Defined of tparam list * param list * typ * block_group * block_group option
 
 let to_string = function
   | Extern _ -> "extern function"

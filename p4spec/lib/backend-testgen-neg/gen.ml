@@ -5,6 +5,9 @@ module DCov_single = Coverage.Dangling.Single
 module DCov_multi = Coverage.Dangling.Multi
 module Dep = Runtime.Testgen_neg.Dep
 module Sim = Runtime.Sim.Signature
+
+let ( let* ) = Result.bind
+
 module F = Format
 open Util.Source
 
@@ -226,7 +229,7 @@ let classify_mutation (fuel : int) (iid : iid) (idx_seed : int)
     classify_mutation' fuel iid idx_seed strategy idx_method idx_mutation trials
       config log dirname_gen_tmp path_p4 comment_gen_p4 kind value_source
       value_mutated value_program
-  with Util.Error.UnparseError msg ->
+  with Spectec.Common.Error.UnparseError msg ->
     Logger.warn config.modes.logmode log
       (Format.asprintf "error while printing the mutated program: %s" msg)
 
@@ -557,7 +560,7 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
     (dirname_gen : string) (name_campaign : string option)
     (randseed : int option) (logmode : Modes.logmode)
     (bootmode : Modes.bootmode) (mutationmode : Modes.mutationmode)
-    (covermode : Modes.covermode) : Config.t =
+    (covermode : Modes.covermode) : (Config.t, Sim.error) result =
   (* Name the campaign *)
   let name_campaign =
     match name_campaign with
@@ -594,7 +597,7 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
   (* Create a spec environment *)
   "Loading type definitions from the spec file"
   |> Logger.log modes.logmode log_init;
-  let specenv = Config.init_specenv spec relname includes_p4 in
+  let* specenv = Config.init_specenv spec relname includes_p4 in
   (* Create a seed *)
   "Booting initial coverage" |> Logger.log modes.logmode log_init;
   let cover_seed =
@@ -627,15 +630,16 @@ let fuzzer_init (spec : spec) (relname : string) (includes_p4 : string list)
   Logger.close log_init;
   (* Create a configuration *)
   let config = Config.init randseed modes specenv storage seed in
-  config
+  Ok config
 
 let fuzzer (fuel : int) (spec : spec) (relname : string)
     (includes_p4 : string list) (dirname_gen : string)
     (name_campaign : string option) (randseed : int option)
     (logmode : Modes.logmode) (bootmode : Modes.bootmode)
-    (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) : unit =
+    (mutationmode : Modes.mutationmode) (covermode : Modes.covermode) :
+    (unit, Sim.error) result =
   (* Initialize the fuzzing configuration *)
-  let config =
+  let* config =
     fuzzer_init spec relname includes_p4 dirname_gen name_campaign randseed
       logmode bootmode mutationmode covermode
   in
@@ -643,4 +647,5 @@ let fuzzer (fuel : int) (spec : spec) (relname : string)
   let config = fuzz_loop fuel config in
   (* Log the final coverage *)
   let path_cov = config.storage.dirname_gen ^ "/final.coverage" in
-  DCov_multi.log ~path_cov_opt:(Some path_cov) config.seed.cover
+  DCov_multi.log ~path_cov_opt:(Some path_cov) config.seed.cover;
+  Ok ()

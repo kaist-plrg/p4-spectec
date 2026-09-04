@@ -5,7 +5,7 @@ open Pl
 
 type t =
   | Extern of rel_signature
-  | Defined of rel_signature * exp list * block * elseblock option
+  | Defined of rel_signature * exp list * block_dispatch * block_dispatch option
 
 let to_string = function
   | Extern _ -> "extern relation"

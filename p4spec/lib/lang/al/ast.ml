@@ -65,6 +65,10 @@ type binop = Il.binop [@@deriving yojson]
 type cmpop = Il.cmpop [@@deriving yojson]
 type optyp = Il.optyp [@@deriving yojson]
 
+(* Subtype checks *)
+
+type subcheck = Il.subcheck [@@deriving yojson]
+
 (* Expressions *)
 
 type exp = Il.exp [@@deriving yojson]

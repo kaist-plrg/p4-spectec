@@ -15,7 +15,7 @@ type ('a_exp, 'a_arg, 'a_path) folder = {
   f_CmpE : typ' -> region -> cmpop -> optyp -> 'a_exp -> 'a_exp -> 'a_exp;
   f_UpCastE : typ' -> region -> typ -> 'a_exp -> 'a_exp;
   f_DownCastE : typ' -> region -> typ -> 'a_exp -> 'a_exp;
-  f_SubE : typ' -> region -> 'a_exp -> typ -> 'a_exp;
+  f_SubE : typ' -> region -> 'a_exp -> typ -> subcheck -> 'a_exp;
   f_MatchE : typ' -> region -> 'a_exp -> pattern -> 'a_exp;
   f_TupleE : typ' -> region -> 'a_exp list -> 'a_exp;
   f_CaseE : typ' -> region -> mixop -> 'a_exp list -> 'a_exp;
@@ -59,7 +59,9 @@ let identity : (exp, arg, path) folder =
     f_UpCastE = (fun note at typ exp -> { it = UpCastE (typ, exp); at; note });
     f_DownCastE =
       (fun note at typ exp -> { it = DownCastE (typ, exp); at; note });
-    f_SubE = (fun note at exp typ -> { it = SubE (exp, typ); at; note });
+    f_SubE =
+      (fun note at exp typ subcheck ->
+        { it = SubE (exp, typ, subcheck); at; note });
     f_MatchE =
       (fun note at exp pattern -> { it = MatchE (exp, pattern); at; note });
     f_TupleE = (fun note at exps -> { it = TupleE exps; at; note });
@@ -121,9 +123,9 @@ let rec fold_exp (alg : ('a_exp, 'a_arg, 'a_path) folder) (e : exp) : 'a_exp =
   | DownCastE (typ, exp) ->
       let acc = fold_exp alg exp in
       alg.f_DownCastE note at typ acc
-  | SubE (exp, typ) ->
+  | SubE (exp, typ, subcheck) ->
       let acc = fold_exp alg exp in
-      alg.f_SubE note at acc typ
+      alg.f_SubE note at acc typ subcheck
   | MatchE (exp, pattern) ->
       let acc = fold_exp alg exp in
       alg.f_MatchE note at acc pattern

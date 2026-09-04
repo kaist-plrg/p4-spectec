@@ -184,25 +184,18 @@ def $find_typ(C, id) = $find_map<id, typdef>(C.GLOBAL.TYP, id)
 
 ;;; Function finders
 
-dec $find_func(ctx, id) : (cursor, funcdef)?
+dec $find_func(ctx, id) : funcdef?
   hint(prose_in "the function definition of" %1 "in" %0)
 
-def $find_func(C, id) = (LOCAL, funcdef)
+def $find_func(C, id) = funcdef
   -- if funcdef = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
-def $find_func(C, id) = (GLOBAL, funcdef)
+def $find_func(C, id) = funcdef
   -- if eps = $find_map<id, funcdef>(C.LOCAL.FUNC, id)
   -- if funcdef = $find_map<id, funcdef>(C.GLOBAL.FUNC, id)
 def $find_func(C, id) = eps
   -- otherwise
 
 ;;; Relation finders
-
-dec $find_typ2(tdenv, tdenv, id) : typdef?
-  hint(prose_in "the type definition of" %2 "in type environments" %0 "and" %1)
-def $find_typ2(tdenv_l, tdenv_g, id) = typdef
-  -- if typdef = $find_map<id, typdef>(tdenv_l, id)
-def $find_typ2(tdenv_l, tdenv_g, id) = $find_map<id, typdef>(tdenv_g, id)
-  -- if eps = $find_map<id, typdef>(tdenv_l, id)
 
 dec $find_rel(ctx, id) : reldef?
   hint(prose_in "the relation definition of" %1 "in" %0)
@@ -223,14 +216,8 @@ def $sub_opt(C, vari*) = eps
   -- if (vari_iter = $iter_vari(vari, QUEST))*
   -- if (OPT eps = $find_vari(C, vari_iter))*
 
-dec $sub_list'(ctx, vari*, val*) : ctx
-def $sub_list'(C, eps, eps) = C
-def $sub_list'(C, vari_h :: vari_t*, val_h :: val_t*)
-  = $sub_list'(C', vari_t*, val_t*)
-  -- if C' = $add_vari(C, vari_h, val_h)
-
 def $sub_list(C, vari*) = C'*
   -- if (vari_iter = $iter_vari(vari, STAR))*
   -- if (LIST val* = $find_vari(C, vari_iter))*
   -- if val_trans** = $transpose_<val>(val**)
-  -- if (C' = $sub_list'(C, vari*, val_trans*))*
+  -- if (C' = $add_varis(C, vari*, val_trans*))*

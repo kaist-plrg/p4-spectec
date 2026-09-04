@@ -1,10 +1,9 @@
 open Lang
 open Il
 module Value = Runtime.Value
-open Util.Error
 open Util.Source
 
-let error = error_parse
+let error = Error.error
 
 let id_of_name (value : value) : string =
   Value.Get.mtch value

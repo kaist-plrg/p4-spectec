@@ -79,9 +79,9 @@ let rec replace_exp (replacer : t) (exp : exp) : exp =
   | DownCastE (typ, exp) ->
       let exp = replace_exp replacer exp in
       Il.DownCastE (typ, exp) $$ (at, note)
-  | SubE (exp, typ) ->
+  | SubE (exp, typ, subcheck) ->
       let exp = replace_exp replacer exp in
-      Il.SubE (exp, typ) $$ (at, note)
+      Il.SubE (exp, typ, subcheck) $$ (at, note)
   | MatchE (exp, pattern) ->
       let exp = replace_exp replacer exp in
       Il.MatchE (exp, pattern) $$ (at, note)

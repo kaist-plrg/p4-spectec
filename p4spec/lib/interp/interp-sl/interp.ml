@@ -378,7 +378,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           eval_cmp_exp ctx cmpop optyp exp_l exp_r
       | UpCastE (typ, exp) -> eval_upcast_exp ctx typ exp
       | DownCastE (typ, exp) -> eval_downcast_exp ctx typ exp
-      | SubE (exp, typ) -> eval_sub_exp ctx exp typ
+      | SubE (exp, typ, subcheck) -> eval_sub_exp ctx exp typ subcheck
       | MatchE (exp, pattern) -> eval_match_exp ctx exp pattern
       | TupleE exps -> eval_tuple_exp typ_note ctx exps
       | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
@@ -645,12 +645,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Subtype check expression evaluation *)
 
-  and eval_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) : value =
+  and eval_sub_exp (ctx : Ctx.t) (exp : exp) (typ : typ) (subcheck : subcheck) :
+      value =
     let value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
+      Value.Match.check sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
-        typ value
+        subcheck value
     in
     let value_res = Value.Make.bool sub in
     Hook.on_value value_res;
@@ -1540,7 +1541,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                 | BoolG false -> Il.UnE (`NotOp, `BoolT, exp)
                 | CmpG (cmpop, optyp, exp_r) ->
                     Il.CmpE (cmpop, optyp, exp, exp_r)
-                | SubG typ -> Il.SubE (exp, typ)
+                | SubG (typ, subcheck) -> Il.SubE (exp, typ, subcheck)
                 | MatchG pattern -> Il.MatchE (exp, pattern)
                 | MemG exp_s -> Il.MemE (exp, exp_s)
               in
@@ -2125,7 +2126,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       =
     let value_output =
       try Interface.call_builtin Hook.on_value id targs values_input
-      with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
+      with Builtin.Error.BuiltinError (at, msg) -> back_unmatch at msg
     in
     check_func_output ctx id tparams typ_output targs value_output;
     List.iteri
@@ -2223,8 +2224,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           Run.Pass values_output
       | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
     with
-    | Util.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    | P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
         Run.Fail (`Runtime (at, msg))
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
@@ -2233,7 +2234,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let values_output = do_eval_rel relname values_input in
       Run.Pass values_output
     with
-    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
@@ -2243,13 +2244,15 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let value_output = do_eval_func funcname targs values_input in
       Run.Pass value_output
     with
-    | Util.Error.InterpError (at, msg) | Util.Error.ExternError (at, msg) ->
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
       Run.Fail (at, msg)
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) :
+      (unit, Run.error) result =
     if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
-    Ctx.init ~det spec
+    try Ok (Ctx.init ~det spec)
+    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
 end

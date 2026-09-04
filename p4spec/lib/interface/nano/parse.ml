@@ -1,8 +1,7 @@
 module Value = Runtime.Value
-open Util.Error
 
-let error = error_parse
-let error_no_region = error_parse_no_region
+let error = Error.error
+let error_no_region = Error.error_no_region
 
 let preprocess (includes : string list) (path : string) =
   try Preprocessor.preprocess includes path

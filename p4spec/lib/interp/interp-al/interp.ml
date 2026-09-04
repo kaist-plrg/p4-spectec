@@ -323,7 +323,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         eval_cmp_exp typ_note ctx cmpop optyp exp_l exp_r
     | UpCastE (typ, exp) -> eval_upcast_exp typ_note ctx typ exp
     | DownCastE (typ, exp) -> eval_downcast_exp typ_note ctx typ exp
-    | SubE (exp, typ) -> eval_sub_exp typ_note ctx exp typ
+    | SubE (exp, typ, subcheck) -> eval_sub_exp typ_note ctx exp typ subcheck
     | MatchE (exp, pattern) -> eval_match_exp typ_note ctx exp pattern
     | TupleE exps -> eval_tuple_exp typ_note ctx exps
     | CaseE typ_notexp -> eval_case_exp typ_note ctx typ_notexp
@@ -548,13 +548,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Subtype check expression evaluation *)
 
-  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (typ : typ) :
-      value backtrack =
+  and eval_sub_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) (_typ : typ)
+      (subcheck : subcheck) : value backtrack =
     let* value = eval_exp ctx exp in
     let sub =
-      Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
+      Value.Match.check sub_cache (Ctx.find_typdef_opt ctx)
         (Ctx.find_func_signature ctx)
-        typ value
+        subcheck value
     in
     let value_res = Value.Make.bool sub in
     Ok value_res
@@ -1464,7 +1464,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       in
       check_func_output ctx id tparams typ_output targs value_output;
       Ok value_output
-    with Util.Error.BuiltinError (at, msg) -> back_unmatch at msg
+    with Builtin.Error.BuiltinError (at, msg) -> back_unmatch at msg
 
   and match_tablerow (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (tablerow : tablerow) (values_input : value list) :
@@ -1601,15 +1601,18 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           (Run.Pass values_output : Run.program_result)
       | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
     with
-    | Util.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Util.Error.InterpError (at, msg) -> Run.Fail (`Runtime (at, msg))
+    | P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
+        Run.Fail (`Runtime (at, msg))
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
     try
       let+ values_output = do_eval_rel relname values_input in
       (Run.Pass values_output : Run.rel_result)
-    with Util.Error.InterpError (at, msg) -> Run.Fail (at, msg)
+    with
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Run.func_result =
@@ -1617,12 +1620,16 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       let+ value_output = do_eval_func funcname targs values_input in
       (Run.Pass value_output : Run.func_result)
-    with Util.Error.InterpError (at, msg) -> Run.Fail (at, msg)
+    with
+    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
+      Run.Fail (at, msg)
 
   (* Initialization *)
 
-  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) : unit =
+  let init ~(cache : bool) ~(det : bool) ~(guard : bool) (spec : spec) :
+      (unit, Run.error) result =
     if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
-    Ctx.init ~det spec
+    try Ok (Ctx.init ~det spec)
+    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
 end

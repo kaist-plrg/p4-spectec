@@ -1,6 +1,9 @@
 open Lang
 open Runtime.Sim.Signature
-open Util.Error
+module Error = P4spectec.Error
+
+let string_of_error = Util.Error.string_of_error
+let ( let* ) = Result.bind
 
 exception CommandError of string
 
@@ -12,14 +15,9 @@ let elab_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       try
-         let spec_il = Pass.elab paths_spec in
-         Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
-         ()
-       with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       match P4spectec.elab paths_spec with
+       | Ok spec_il -> Format.printf "%s\n" (Il.Print.string_of_spec spec_il)
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a nano-P4 spec"
@@ -29,15 +27,9 @@ let algo_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       try
-         let spec_al = Pass.algo paths_spec in
-         Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
-         ()
-       with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | ElabError (at, msg) -> Format.printf "%s\n" (string_of_error at msg)
-       | AlgoError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       match P4spectec.algo paths_spec with
+       | Ok spec_al -> Format.printf "%s\n" (Al.Print.string_of_spec spec_al)
+       | Error e -> Format.printf "%s\n" (Error.to_string e))
 
 let check_command =
   Core.Command.basic ~summary:"typecheck a nano-P4 program against the spec"
@@ -104,9 +96,9 @@ let check_command =
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg)
-       | InterpError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | Nano.Error.ParseError (at, msg)
+       | Interp_common.Error.InterpError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a nano-P4 program"
@@ -122,7 +114,7 @@ let parse_command =
          else Format.printf "%s\n" (Lang.Il.Print.string_of_value value_program)
        with
        | Sys_error msg -> Format.printf "File error: %s\n" msg
-       | ParseError (at, msg) ->
+       | Nano.Error.ParseError (at, msg) ->
            Format.printf "Parse error: %s\n" (string_of_error at msg)
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
@@ -191,9 +183,9 @@ let eval_command =
          | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
        with
        | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg) | ElabError (at, msg) | StructError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg)
-       | InterpError (at, msg) -> Format.printf "%s\n" (string_of_error at msg))
+       | Nano.Error.ParseError (at, msg)
+       | Interp_common.Error.InterpError (at, msg) ->
+           Format.printf "%s\n" (string_of_error at msg))
 
 let test_check_command =
   Core.Command.basic
@@ -302,24 +294,25 @@ let splice_command =
      and paths_output = flag "-out" (listed string) ~doc:"output files"
      and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
      fun () ->
-       try
-         if (not inplace) && List.length paths_input <> List.length paths_output
-         then raise (CommandError "number of input and output files must match");
-         let paths =
-           if inplace then List.combine paths_input paths_input
-           else List.combine paths_input paths_output
+       match
+         let* path_pairs =
+           if
+             (not inplace)
+             && List.length paths_input <> List.length paths_output
+           then
+             Error
+               (Error.CommandError "number of input and output files must match")
+           else if inplace then Ok (List.combine paths_input paths_input)
+           else Ok (List.combine paths_input paths_output)
          in
-         let spec = Pass.parse paths_spec in
-         let spec_pl = Pass.annotate paths_spec in
-         Backend_splice.Driver.splice_files spec spec_pl paths
+         P4spectec.splice paths_spec path_pairs
        with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | ParseError (at, msg)
-       | ElabError (at, msg)
-       | StructError (at, msg)
-       | ProseError (at, msg)
-       | SpliceError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg))
+       | Error (Error.SpliceError _ as error) ->
+           let msg = Error.to_string error in
+           Format.eprintf "%s\n" msg;
+           Format.printf "%s\n" msg
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok () -> ())
 
 let command =
   Core.Command.group

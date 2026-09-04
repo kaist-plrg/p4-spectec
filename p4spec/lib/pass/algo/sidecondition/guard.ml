@@ -247,7 +247,7 @@ let collector : Result.t Walk.Collect.collector =
         let prems_insert = gen_index_guard exp exp_b exp_i in
         let result_b = c.collect_exp c exp_b in
         let result_i = c.collect_exp c exp_i in
-        Result.compose ([], prems_insert) (Result.compose result_b result_i)
+        Result.compose result_b (Result.compose result_i ([], prems_insert))
     | IterE (exp_inner, iterexp) ->
         let iter, vars = iterexp in
         let result = c.collect_exp c exp_inner in
