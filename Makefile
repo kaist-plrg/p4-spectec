@@ -159,7 +159,7 @@ $(KSHIM_OBJ): $(KSHIM_SRC)
 	gcc -c -fPIC -O2 -I "$(OCAMLWHERE)" -o $@ $<
 
 .PHONY: k-test
-k-test:
+k-test: k-spec
 	@status=0; \
 	python3 $(KSPECDIR)/scripts/run-k-typecheck.py || status=1; \
 	python3 $(KSPECDIR)/scripts/run-k-typecheck.py --neg || status=1; \
