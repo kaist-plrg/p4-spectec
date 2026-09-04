@@ -13,6 +13,21 @@
   core_unix
   core_unix.command_unix))
 
+;; Nano-P4 simulation tests
+
+(executable
+ (name nano_test)
+ (preprocess
+  (pps ppx_let))
+ (modules nano_test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix))
+
 ;; Fast aliases (no -det)
 
 (rule
@@ -1743,3 +1758,34 @@
      ../../../p4c/testdata/p4_16_samples
      -stf-dir
      ../../../p4c/testdata/p4_16_samples)))))
+
+;; Nano-P4 simulation tests
+
+(rule
+ (alias sim-nano)
+ (action
+  (progn
+   (ignore-outputs
+    (diff sim_nano_sl.expected sim_nano_sl.actual)))))
+
+(rule
+ (target sim_nano_sl.actual)
+ (deps
+  (source_tree ../../../nano-p4/spec)
+  (source_tree ../../../nano-p4/include)
+  (source_tree ../../../nano-p4/testdata))
+ (action
+  (with-stdout-to
+   sim_nano_sl.actual
+   (with-stderr-to
+    sim_nano_sl.err
+    (run
+     ./nano_test.exe
+     sim
+     -sl
+     -s
+     ../../../nano-p4/spec
+     -i
+     ../../../nano-p4/include
+     -p4-dir
+     ../../../nano-p4/testdata/positive)))))

@@ -13,6 +13,21 @@
   core_unix
   core_unix.command_unix))
 
+;; Nano-P4 static semantics tests
+
+(executable
+ (name nano_test)
+ (preprocess
+  (pps ppx_let))
+ (modules nano_test)
+ (libraries
+  test_common
+  p4spectec
+  core
+  core_kernel
+  core_unix
+  core_unix.command_unix))
+
 (rule
  (alias run)
  (action
@@ -583,4 +598,64 @@
      ../../../excludes/static
      -p4-dir
      ../../../p4c/testdata/p4_16_errors
+     -neg)))))
+
+;; Nano-P4 semantics tests
+
+(rule
+ (alias run-nano)
+ (action
+  (progn
+   (ignore-outputs
+    (diff run_pos_nano.expected run_pos_nano.actual))
+   (ignore-outputs
+    (diff run_neg_nano.expected run_neg_nano.actual)))))
+
+(rule
+ (target run_pos_nano.actual)
+ (deps
+  (source_tree ../../../nano-p4/spec)
+  (source_tree ../../../nano-p4/include)
+  (source_tree ../../../nano-p4/testdata))
+ (action
+  (with-stdout-to
+   run_pos_nano.actual
+   (with-stderr-to
+    run_pos_nano.err
+    (run
+     ./nano_test.exe
+     run
+     -sl
+     -s
+     ../../../nano-p4/spec
+     -rel
+     Program_ok
+     -i
+     ../../../nano-p4/include
+     -p4-dir
+     ../../../nano-p4/testdata/positive)))))
+
+(rule
+ (target run_neg_nano.actual)
+ (deps
+  (source_tree ../../../nano-p4/spec)
+  (source_tree ../../../nano-p4/include)
+  (source_tree ../../../nano-p4/testdata))
+ (action
+  (with-stdout-to
+   run_neg_nano.actual
+   (with-stderr-to
+    run_neg_nano.err
+    (run
+     ./nano_test.exe
+     run
+     -sl
+     -s
+     ../../../nano-p4/spec
+     -rel
+     Program_ok
+     -i
+     ../../../nano-p4/include
+     -p4-dir
+     ../../../nano-p4/testdata/negative
      -neg)))))
