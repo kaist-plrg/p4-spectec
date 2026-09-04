@@ -116,19 +116,21 @@ dec $strip_prefix_rec(text, text) : text
   hint(prose_in "the text" %0 "with the prefix" %1 "removed many times as possible")
 def $strip_prefix_rec(t, t_prefix)
   = $strip_prefix_rec(t_stripped, t_prefix)
+  -- if $(|t_prefix| > 0)
   -- if $starts_with(t, t_prefix)
   -- if t_stripped = $strip_prefix(t, t_prefix)
 def $strip_prefix_rec(t, t_prefix) = t
-  -- if ~$starts_with(t, t_prefix)
+  -- otherwise
 
 dec $strip_suffix_rec(text, text) : text
   hint(prose_in "the text" %0 "with the suffix" %1 "removed many times as possible")
 def $strip_suffix_rec(t, t_suffix)
   = $strip_suffix_rec(t_stripped, t_suffix)
+  -- if $(|t_suffix| > 0)
   -- if $ends_with(t, t_suffix)
   -- if t_stripped = $strip_suffix(t, t_suffix)
 def $strip_suffix_rec(t, t_suffix) = t
-  -- if ~$ends_with(t, t_suffix)
+  -- otherwise
 
 dec $contains(text, text) : bool
   hint(prose_in "the text" %0 "contains" %1)
