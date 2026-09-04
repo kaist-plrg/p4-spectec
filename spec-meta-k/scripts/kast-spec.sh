@@ -6,7 +6,7 @@
 # a target runs in one command rather than two:
 #
 #   KDEF=al-kompiled krun -d al-kompiled \
-#     --parser ./spec-meta-k/scripts/kast-json.sh examples/add.watsup
+#     --parser ./spec-meta-k/scripts/kast-spec.sh examples/add.watsup
 #
 set -e
 
