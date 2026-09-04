@@ -25,25 +25,21 @@
 (**************************** TOKENS ******************************)
 %token END
 %token TYPENAME IDENTIFIER
-%token<Lang.Il.value> NAME STRING_LITERAL
+%token<Lang.Il.value> NAME
 %token<Lang.Il.value * string> NUMBER_INT NUMBER
 %token LE GE SHL SHR AND OR NE EQ
 %token PLUS MINUS MUL DIV MOD
 %token BIT_OR BIT_AND BIT_XOR COMPLEMENT
 %token L_BRACE R_BRACE L_ANGLE R_ANGLE L_PAREN R_PAREN
-%token ASSIGN COLON COMMA QUESTION DOT NOT SEMICOLON
+%token ASSIGN COLON COMMA DOT NOT SEMICOLON
 %token PLUSPLUS
-%token DONTCARE
 %token TRUE FALSE
 %token ACTION ACTIONS APPLY BOOL BIT CONST CONTROL
 %token ELSE ENTRIES EXTERN HEADER IF IN INOUT
-%token INT KEY SELECT MATCH_KIND OUT PACKAGE PARSER STATE STRING STRUCT
+%token INT KEY SELECT MATCH_KIND OUT PACKAGE PARSER STATE STRUCT
 %token TABLE TRANSITION VOID
 
 (**************************** PRIORITY AND ASSOCIATIVITY ******************************)
-%right THEN ELSE
-%nonassoc QUESTION
-%nonassoc COLON
 %left OR
 %left AND
 %left EQ NE
@@ -66,7 +62,7 @@
   integerLiteral
   identifier typeIdentifier nonTypeName typeName name nameList member
   direction
-  baseType namedType type_ typeOrVoid
+  baseType namedType type_
   parameter nonEmptyParameterList parameterList
   literalExpression referenceExpression
   unop unaryExpression binop binaryExpression
@@ -210,15 +206,6 @@ type_:
   | t = baseType
   | t = namedType
     { t }
-;
-
-typeOrVoid:
-  | t = type_
-    { t }
-  | VOID
-    { "VOID" <| [] <<| "typeOrVoid" <<<| (at $sloc) }
-  | id = identifier
-    { id }
 ;
 
 (* Parameters *)

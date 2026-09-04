@@ -85,13 +85,6 @@ rule tokenize = parse
       { singleline_comment lexbuf; tokenize lexbuf }
   | '\n'
       { Lexing.new_line lexbuf; tokenize lexbuf }
-  | '"'
-      { let start_region = at lexbuf in
-        let str, end_region = (string lexbuf) in
-        let token_region = over_region [ start_region; end_region ] in
-        let value = Value.Make.text ~at:token_region str in
-        STRING_LITERAL value
-      }
   | whitespace
       { tokenize lexbuf }
   | '#'
@@ -164,8 +157,6 @@ rule tokenize = parse
       { SELECT }
   | "state"
       { STATE }
-  | "string"
-      { STRING }
   | "struct"
       { STRUCT }
   | "table"
@@ -174,8 +165,6 @@ rule tokenize = parse
       { TRANSITION }
   | "void"
       { VOID }
-  | "_"
-      { DONTCARE }
   | name
       { let text = Lexing.lexeme lexbuf in
         let value = Value.Make.text ~at:(at lexbuf) text in
@@ -235,8 +224,6 @@ rule tokenize = parse
       { COLON }
   | ","
       { COMMA }
-  | "?"
-      { QUESTION }
   | "."
       { DOT }
   | "="
@@ -284,26 +271,6 @@ and preprocessor_rest = parse
     { () }
   | _
     { preprocessor_rest lexbuf }
-
-and string = parse
-  | eof
-      { raise (Error "File ended while reading a string literal") }
-  | "\\\""
-      { let rest, end_region = (string lexbuf) in
-        ("\"" ^ rest, end_region) }
-  | '\\' 'n'
-      { let rest, end_region = (string lexbuf) in
-        ("\n" ^ rest, end_region) }
-  | '\\' '\\'
-      { let rest, end_region = (string lexbuf) in
-        ("\\" ^ rest, end_region) }
-  | '\\' _ as c
-      { raise (Error ("Escape sequences not yet supported: \\" ^ c)) }
-  | '"'
-      { ("", at lexbuf) }
-  | _ as chr
-      { let rest, end_region = (string lexbuf) in
-        ((String.make 1 chr) ^ rest, end_region) }
 
 and multiline_comment = parse
   | "*/"   { () }
