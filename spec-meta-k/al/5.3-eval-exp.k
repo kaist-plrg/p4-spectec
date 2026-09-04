@@ -3,8 +3,8 @@
 // Mirrors spec-meta/al/5.3-eval-exp.watsup (Eval_exp, Eval_path,
 // Eval_path_upd) and spec-meta/al/5.4-eval-arg.watsup (Eval_arg, Eval_targs).
 
-requires "5.2-eval-assign.k"
 requires "5.1-eval-typ.k"
+requires "5.2-eval-assign.k"
 
 module AL-EVAL-EXP
   imports AL-ASSIGN
@@ -30,108 +30,109 @@ module AL-EVAL-EXP
     requires notBool (varr(X, .IterList) in_keys(M))
 
   //   rulegroup Eval_exp/unary
-  syntax KItem ::= unaryK(UnOp)
-  rule <k> evalExp(unE(O:UnOp, E:Exp)) => evalExp(E) ~> unaryK(O) ... </k>
+  syntax KItem ::= unaryAwaitOperandK(UnOp)
+  rule <k> evalExp(unE(O:UnOp, E:Exp)) => evalExp(E) ~> unaryAwaitOperandK(O) ... </k>
 
-  rule <k> boolV(B:Bool) ~> unaryK(notOp()) => boolV(notBool B) ... </k>
-  rule <k> N:Num ~> unaryK(O:NumUnOp) => unopNumber(O, N) ... </k>
-  rule <k> FAIL ~> unaryK(_:UnOp) => FAIL ... </k>
-  rule <k> _V:Val ~> unaryK(_:UnOp) => FAIL ... </k> [owise]
+  rule <k> boolV(B:Bool) ~> unaryAwaitOperandK(notOp()) => boolV(notBool B) ... </k>
+  rule <k> N:Num ~> unaryAwaitOperandK(O:NumUnOp) => unopNumber(O, N) ... </k>
+  rule <k> FAIL ~> unaryAwaitOperandK(_:UnOp) => FAIL ... </k>
+  rule <k> _V:Val ~> unaryAwaitOperandK(_:UnOp) => FAIL ... </k> [owise]
 
   //   rulegroup Eval_exp/binary and /compare
-  syntax KItem ::= binaryK1(BinOp, Exp) | binaryK2(BinOp, Val)
-                 | cmpK1(CmpOp, Exp) | cmpK2(CmpOp, Val)
+  syntax KItem ::= binaryAwaitLeftK(BinOp, Exp) | binaryAwaitRightK(BinOp, Val)
+                 | cmpAwaitLeftK(CmpOp, Exp) | cmpAwaitRightK(CmpOp, Val)
 
-  rule <k> evalExp(binE(O:BinOp, L:Exp, R:Exp)) => evalExp(L) ~> binaryK1(O, R) ... </k>
-  rule <k> V:Val ~> binaryK1(O:BinOp, R:Exp) => evalExp(R) ~> binaryK2(O, V) ... </k>
-  rule <k> FAIL ~> binaryK1(_:BinOp, _:Exp) => FAIL ... </k>
+  rule <k> evalExp(binE(O:BinOp, L:Exp, R:Exp)) => evalExp(L) ~> binaryAwaitLeftK(O, R) ... </k>
+  rule <k> V:Val ~> binaryAwaitLeftK(O:BinOp, R:Exp) => evalExp(R) ~> binaryAwaitRightK(O, V) ... </k>
+  rule <k> FAIL ~> binaryAwaitLeftK(_:BinOp, _:Exp) => FAIL ... </k>
 
-  rule <k> boolV(Br:Bool) ~> binaryK2(O:BoolBinOp, boolV(Bl:Bool))
+  rule <k> boolV(Br:Bool) ~> binaryAwaitRightK(O:BoolBinOp, boolV(Bl:Bool))
         => boolV(binopBool(O, Bl, Br))
        ...
        </k>
-  rule <k> Nr:Num ~> binaryK2(O:NumBinOp, Nl:Num) => binopNumber(O, Nl, Nr) ... </k>
-  rule <k> FAIL ~> binaryK2(_:BinOp, _:Val) => FAIL ... </k>
-  rule <k> _:Val ~> binaryK2(_:BinOp, _:Val) => FAIL ... </k> [owise]
+  rule <k> Nr:Num ~> binaryAwaitRightK(O:NumBinOp, Nl:Num) => binopNumber(O, Nl, Nr) ... </k>
+  rule <k> FAIL ~> binaryAwaitRightK(_:BinOp, _:Val) => FAIL ... </k>
+  rule <k> _:Val ~> binaryAwaitRightK(_:BinOp, _:Val) => FAIL ... </k> [owise]
 
-  rule <k> evalExp(cmpE(O:CmpOp, L:Exp, R:Exp)) => evalExp(L) ~> cmpK1(O, R) ... </k>
-  rule <k> V:Val ~> cmpK1(O:CmpOp, R:Exp) => evalExp(R) ~> cmpK2(O, V) ... </k>
-  rule <k> FAIL ~> cmpK1(_:CmpOp, _:Exp) => FAIL ... </k>
+  rule <k> evalExp(cmpE(O:CmpOp, L:Exp, R:Exp)) => evalExp(L) ~> cmpAwaitLeftK(O, R) ... </k>
+  rule <k> V:Val ~> cmpAwaitLeftK(O:CmpOp, R:Exp) => evalExp(R) ~> cmpAwaitRightK(O, V) ... </k>
+  rule <k> FAIL ~> cmpAwaitLeftK(_:CmpOp, _:Exp) => FAIL ... </k>
 
-  rule <k> Vr:Val ~> cmpK2(O:PolyCmpOp, Vl:Val) => boolV(cmpopPoly(O, Vl, Vr)) ... </k>
-  rule <k> Nr:Num ~> cmpK2(O:NumCmpOp, Nl:Num) => boolV(cmpopNumber(O, Nl, Nr)) ... </k>
-  rule <k> FAIL ~> cmpK2(_:CmpOp, _:Val) => FAIL ... </k>
+  rule <k> Vr:Val ~> cmpAwaitRightK(O:PolyCmpOp, Vl:Val) => boolV(cmpopPoly(O, Vl, Vr)) ... </k>
+  rule <k> Nr:Num ~> cmpAwaitRightK(O:NumCmpOp, Nl:Num) => boolV(cmpopNumber(O, Nl, Nr)) ... </k>
+  rule <k> FAIL ~> cmpAwaitRightK(_:CmpOp, _:Val) => FAIL ... </k>
 
   //   rule Eval_exp/upcast, /downcast, /subtype
-  syntax KItem ::= upCastK(Typ) | downCastK(Typ) | subK(Typ)
+  syntax KItem ::= upCastAwaitOperandK(Typ) | downCastAwaitOperandK(Typ)
+                 | subAwaitOperandK(Typ)
 
-  rule <k> evalExp(upCastE(T:Typ, E:Exp)) => evalExp(E) ~> upCastK(T) ... </k>
-  rule <k> V:Val ~> upCastK(T:Typ) => valOfRes(upcast(L, G, T, V)) ... </k>
+  rule <k> evalExp(upCastE(T:Typ, E:Exp)) => evalExp(E) ~> upCastAwaitOperandK(T) ... </k>
+  rule <k> V:Val ~> upCastAwaitOperandK(T:Typ) => valOfRes(upcast(L, G, T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
        <gtdenv> G:Map </gtdenv>
-  rule <k> FAIL ~> upCastK(_:Typ) => FAIL ... </k>
+  rule <k> FAIL ~> upCastAwaitOperandK(_:Typ) => FAIL ... </k>
 
-  rule <k> evalExp(downCastE(T:Typ, E:Exp)) => evalExp(E) ~> downCastK(T) ... </k>
-  rule <k> V:Val ~> downCastK(T:Typ) => valOfRes(downcast(L, G, T, V)) ... </k>
+  rule <k> evalExp(downCastE(T:Typ, E:Exp)) => evalExp(E) ~> downCastAwaitOperandK(T) ... </k>
+  rule <k> V:Val ~> downCastAwaitOperandK(T:Typ) => valOfRes(downcast(L, G, T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
        <gtdenv> G:Map </gtdenv>
-  rule <k> FAIL ~> downCastK(_:Typ) => FAIL ... </k>
+  rule <k> FAIL ~> downCastAwaitOperandK(_:Typ) => FAIL ... </k>
 
-  rule <k> evalExp(subE(E:Exp, T:Typ)) => evalExp(E) ~> subK(T) ... </k>
-  rule <k> V:Val ~> subK(T:Typ) => boolV(subtyp(updateMap(G, L), T, V)) ... </k>
+  rule <k> evalExp(subE(E:Exp, T:Typ)) => evalExp(E) ~> subAwaitOperandK(T) ... </k>
+  rule <k> V:Val ~> subAwaitOperandK(T:Typ) => boolV(subtyp(updateMap(G, L), T, V)) ... </k>
        <ltdenv> L:Map </ltdenv>
        <gtdenv> G:Map </gtdenv>
-  rule <k> FAIL ~> subK(_:Typ) => FAIL ... </k>
+  rule <k> FAIL ~> subAwaitOperandK(_:Typ) => FAIL ... </k>
 
   syntax KItem ::= valOfRes(ValRes)
   rule <k> valOfRes(okV(V:Val)) => V ... </k>
   rule <k> valOfRes(failV()) => FAIL ... </k>
 
   //   rulegroup Eval_exp/match
-  syntax KItem ::= matchK(Pattern)
-  rule <k> evalExp(matchE(E:Exp, P:Pattern)) => evalExp(E) ~> matchK(P) ... </k>
-  rule <k> FAIL ~> matchK(_:Pattern) => FAIL ... </k>
+  syntax KItem ::= matchAwaitValueK(Pattern)
+  rule <k> evalExp(matchE(E:Exp, P:Pattern)) => evalExp(E) ~> matchAwaitValueK(P) ... </k>
+  rule <k> FAIL ~> matchAwaitValueK(_:Pattern) => FAIL ... </k>
 
-  rule <k> injV(valCase(M':MixOp, _:ValList)) ~> matchK(injPat(M:MixOp))
+  rule <k> injV(valCase(M':MixOp, _:ValList)) ~> matchAwaitValueK(injPat(M:MixOp))
         => boolV(eqMixOp(M, M'))
        ...
        </k>
-  rule <k> listV(Vs:ValList) ~> matchK(consPat()) => boolV(lengthVals(Vs) >Int 0) ... </k>
-  rule <k> listV(Vs:ValList) ~> matchK(fixedPat(N:Int))
+  rule <k> listV(Vs:ValList) ~> matchAwaitValueK(consPat()) => boolV(lengthVals(Vs) >Int 0) ... </k>
+  rule <k> listV(Vs:ValList) ~> matchAwaitValueK(fixedPat(N:Int))
         => boolV(lengthVals(Vs) ==Int N)
        ...
        </k>
-  rule <k> listV(Vs:ValList) ~> matchK(nilPat()) => boolV(lengthVals(Vs) ==Int 0) ... </k>
-  rule <k> optV(someVal(_:Val)) ~> matchK(somePat()) => boolV(true) ... </k>
-  rule <k> optV(noVal()) ~> matchK(somePat()) => boolV(false) ... </k>
-  rule <k> optV(someVal(_:Val)) ~> matchK(nonePat()) => boolV(false) ... </k>
-  rule <k> optV(noVal()) ~> matchK(nonePat()) => boolV(true) ... </k>
-  rule <k> _:Val ~> matchK(_:Pattern) => FAIL ... </k> [owise]
+  rule <k> listV(Vs:ValList) ~> matchAwaitValueK(nilPat()) => boolV(lengthVals(Vs) ==Int 0) ... </k>
+  rule <k> optV(someVal(_:Val)) ~> matchAwaitValueK(somePat()) => boolV(true) ... </k>
+  rule <k> optV(noVal()) ~> matchAwaitValueK(somePat()) => boolV(false) ... </k>
+  rule <k> optV(someVal(_:Val)) ~> matchAwaitValueK(nonePat()) => boolV(false) ... </k>
+  rule <k> optV(noVal()) ~> matchAwaitValueK(nonePat()) => boolV(true) ... </k>
+  rule <k> _:Val ~> matchAwaitValueK(_:Pattern) => FAIL ... </k> [owise]
 
   syntax Int ::= lengthVals(ValList)        [function, total, symbol(lengthVals)]
   rule lengthVals(.ValList) => 0
   rule lengthVals(_:Val, Vs:ValList) => 1 +Int lengthVals(Vs)
 
   //   rule Eval_exp/tuple
-  rule <k> evalExp(tupE(Es:ExpList)) => evalExps(Es) ~> tupK() ... </k>
-  syntax KItem ::= "tupK" "(" ")"
-  rule <k> Vs:ValList ~> tupK() => tupV(Vs) ... </k>
-  rule <k> FAIL ~> tupK() => FAIL ... </k>
+  rule <k> evalExp(tupE(Es:ExpList)) => evalExps(Es) ~> tupAwaitElementsK() ... </k>
+  syntax KItem ::= "tupAwaitElementsK" "(" ")"
+  rule <k> Vs:ValList ~> tupAwaitElementsK() => tupV(Vs) ... </k>
+  rule <k> FAIL ~> tupAwaitElementsK() => FAIL ... </k>
 
   //   rule Eval_exp/case
-  syntax KItem ::= caseK(MixOp)
-  rule <k> evalExp(injE(expCase(M:MixOp, Es:ExpList))) => evalExps(Es) ~> caseK(M) ... </k>
-  rule <k> Vs:ValList ~> caseK(M:MixOp) => injV(valCase(M, Vs)) ... </k>
-  rule <k> FAIL ~> caseK(_:MixOp) => FAIL ... </k>
+  syntax KItem ::= caseAwaitArgsK(MixOp)
+  rule <k> evalExp(injE(expCase(M:MixOp, Es:ExpList))) => evalExps(Es) ~> caseAwaitArgsK(M) ... </k>
+  rule <k> Vs:ValList ~> caseAwaitArgsK(M:MixOp) => injV(valCase(M, Vs)) ... </k>
+  rule <k> FAIL ~> caseAwaitArgsK(_:MixOp) => FAIL ... </k>
 
   //   rule Eval_exp/struct
-  syntax KItem ::= strFieldK(AtomList)
+  syntax KItem ::= strAwaitFieldsK(AtomList)
   rule <k> evalExp(strE(Fs:ExpFieldList))
-        => evalExps(expsOfFields(Fs)) ~> strFieldK(atomsOfFields(Fs))
+        => evalExps(expsOfFields(Fs)) ~> strAwaitFieldsK(atomsOfFields(Fs))
        ...
        </k>
-  rule <k> Vs:ValList ~> strFieldK(As:AtomList) => strV(zipFields(As, Vs)) ... </k>
-  rule <k> FAIL ~> strFieldK(_:AtomList) => FAIL ... </k>
+  rule <k> Vs:ValList ~> strAwaitFieldsK(As:AtomList) => strV(zipFields(As, Vs)) ... </k>
+  rule <k> FAIL ~> strAwaitFieldsK(_:AtomList) => FAIL ... </k>
 
   syntax AtomList ::= atomsOfFields(ExpFieldList)
                                             [function, total, symbol(atomsOfFields)]
@@ -150,104 +151,101 @@ module AL-EVAL-EXP
     => valField(A, V), zipFields(As, Vs)
 
   //   rulegroup Eval_exp/opt
-  rule <k> evalExp(optE(someExp(E:Exp))) => evalExp(E) ~> someK() ... </k>
-  syntax KItem ::= "someK" "(" ")"
-  rule <k> V:Val ~> someK() => optV(someVal(V)) ... </k>
-  rule <k> FAIL ~> someK() => FAIL ... </k>
+  rule <k> evalExp(optE(someExp(E:Exp))) => evalExp(E) ~> optAwaitValueK() ... </k>
+  syntax KItem ::= "optAwaitValueK" "(" ")"
+  rule <k> V:Val ~> optAwaitValueK() => optV(someVal(V)) ... </k>
+  rule <k> FAIL ~> optAwaitValueK() => FAIL ... </k>
   rule <k> evalExp(optE(noExp())) => optV(noVal()) ... </k>
 
   //   rule Eval_exp/list
-  rule <k> evalExp(listE(Es:ExpList)) => evalExps(Es) ~> listK() ... </k>
-  syntax KItem ::= "listK" "(" ")"
-  rule <k> Vs:ValList ~> listK() => listV(Vs) ... </k>
-  rule <k> FAIL ~> listK() => FAIL ... </k>
+  rule <k> evalExp(listE(Es:ExpList)) => evalExps(Es) ~> listAwaitElementsK() ... </k>
+  syntax KItem ::= "listAwaitElementsK" "(" ")"
+  rule <k> Vs:ValList ~> listAwaitElementsK() => listV(Vs) ... </k>
+  rule <k> FAIL ~> listAwaitElementsK() => FAIL ... </k>
 
   //   rule Eval_exp/cons
-  syntax KItem ::= consK1(Exp) | consK2(Val)
-  rule <k> evalExp(consE(Eh:Exp, Et:Exp)) => evalExp(Eh) ~> consK1(Et) ... </k>
-  rule <k> V:Val ~> consK1(Et:Exp) => evalExp(Et) ~> consK2(V) ... </k>
-  rule <k> FAIL ~> consK1(_:Exp) => FAIL ... </k>
-  rule <k> listV(Vs:ValList) ~> consK2(V:Val) => listV(V, Vs) ... </k>
-  rule <k> FAIL ~> consK2(_:Val) => FAIL ... </k>
-  rule <k> _:Val ~> consK2(_:Val) => FAIL ... </k> [owise]
+  syntax KItem ::= consAwaitHeadK(Exp) | consAwaitTailK(Val)
+  rule <k> evalExp(consE(Eh:Exp, Et:Exp)) => evalExp(Eh) ~> consAwaitHeadK(Et) ... </k>
+  rule <k> V:Val ~> consAwaitHeadK(Et:Exp) => evalExp(Et) ~> consAwaitTailK(V) ... </k>
+  rule <k> FAIL ~> consAwaitHeadK(_:Exp) => FAIL ... </k>
+  rule <k> listV(Vs:ValList) ~> consAwaitTailK(V:Val) => listV(V, Vs) ... </k>
+  rule <k> FAIL ~> consAwaitTailK(_:Val) => FAIL ... </k>
+  rule <k> _:Val ~> consAwaitTailK(_:Val) => FAIL ... </k> [owise]
 
   //   rulegroup Eval_exp/concat
-  syntax KItem ::= catK1(Exp) | catK2(Val)
-  rule <k> evalExp(catE(L:Exp, R:Exp)) => evalExp(L) ~> catK1(R) ... </k>
-  rule <k> V:Val ~> catK1(R:Exp) => evalExp(R) ~> catK2(V) ... </k>
-  rule <k> FAIL ~> catK1(_:Exp) => FAIL ... </k>
-  rule <k> textV(Sr:String) ~> catK2(textV(Sl:String)) => textV(Sl +String Sr) ... </k>
-  rule <k> listV(Vr:ValList) ~> catK2(listV(Vl:ValList)) => listV(appendVal(Vl, Vr)) ... </k>
-  rule <k> FAIL ~> catK2(_:Val) => FAIL ... </k>
-  rule <k> _:Val ~> catK2(_:Val) => FAIL ... </k> [owise]
+  syntax KItem ::= catAwaitLeftK(Exp) | catAwaitRightK(Val)
+  rule <k> evalExp(catE(L:Exp, R:Exp)) => evalExp(L) ~> catAwaitLeftK(R) ... </k>
+  rule <k> V:Val ~> catAwaitLeftK(R:Exp) => evalExp(R) ~> catAwaitRightK(V) ... </k>
+  rule <k> FAIL ~> catAwaitLeftK(_:Exp) => FAIL ... </k>
+  rule <k> textV(Sr:String) ~> catAwaitRightK(textV(Sl:String)) => textV(Sl +String Sr) ... </k>
+  rule <k> listV(Vr:ValList) ~> catAwaitRightK(listV(Vl:ValList)) => listV(appendVal(Vl, Vr)) ... </k>
+  rule <k> FAIL ~> catAwaitRightK(_:Val) => FAIL ... </k>
+  rule <k> _:Val ~> catAwaitRightK(_:Val) => FAIL ... </k> [owise]
 
   //   rule Eval_exp/mem
-  syntax KItem ::= memK1(Exp) | memK2(Val)
-  rule <k> evalExp(memE(Ee:Exp, Es:Exp)) => evalExp(Ee) ~> memK1(Es) ... </k>
-  rule <k> V:Val ~> memK1(Es:Exp) => evalExp(Es) ~> memK2(V) ... </k>
-  rule <k> FAIL ~> memK1(_:Exp) => FAIL ... </k>
-  rule <k> listV(Vs:ValList) ~> memK2(V:Val) => boolV(memVal(V, Vs)) ... </k>
-  rule <k> FAIL ~> memK2(_:Val) => FAIL ... </k>
-  rule <k> _:Val ~> memK2(_:Val) => FAIL ... </k> [owise]
+  syntax KItem ::= memAwaitElementK(Exp) | memAwaitCollectionK(Val)
+  rule <k> evalExp(memE(Ee:Exp, Es:Exp)) => evalExp(Ee) ~> memAwaitElementK(Es) ... </k>
+  rule <k> V:Val ~> memAwaitElementK(Es:Exp) => evalExp(Es) ~> memAwaitCollectionK(V) ... </k>
+  rule <k> FAIL ~> memAwaitElementK(_:Exp) => FAIL ... </k>
+  rule <k> listV(Vs:ValList) ~> memAwaitCollectionK(V:Val) => boolV(memVal(V, Vs)) ... </k>
+  rule <k> FAIL ~> memAwaitCollectionK(_:Val) => FAIL ... </k>
+  rule <k> _:Val ~> memAwaitCollectionK(_:Val) => FAIL ... </k> [owise]
 
   syntax Bool ::= memVal(Val, ValList)      [function, total, symbol(memVal)]
   rule memVal(_:Val, .ValList) => false
   rule memVal(V:Val, (W:Val, Vs:ValList)) => V ==K W orBool memVal(V, Vs)
 
   //   rulegroup Eval_exp/len
-  syntax KItem ::= "lenK" "(" ")"
-  rule <k> evalExp(lenE(E:Exp)) => evalExp(E) ~> lenK() ... </k>
-  rule <k> textV(S:String) ~> lenK() => natN(lengthString(S)) ... </k>
-  rule <k> listV(Vs:ValList) ~> lenK() => natN(lengthVals(Vs)) ... </k>
-  rule <k> FAIL ~> lenK() => FAIL ... </k>
-  rule <k> _:Val ~> lenK() => FAIL ... </k> [owise]
+  syntax KItem ::= "lenAwaitOperandK" "(" ")"
+  rule <k> evalExp(lenE(E:Exp)) => evalExp(E) ~> lenAwaitOperandK() ... </k>
+  rule <k> textV(S:String) ~> lenAwaitOperandK() => natN(lengthString(S)) ... </k>
+  rule <k> listV(Vs:ValList) ~> lenAwaitOperandK() => natN(lengthVals(Vs)) ... </k>
+  rule <k> FAIL ~> lenAwaitOperandK() => FAIL ... </k>
+  rule <k> _:Val ~> lenAwaitOperandK() => FAIL ... </k> [owise]
 
   //   rule Eval_exp/dot, /idx, /slice — all go through Eval_path
-  syntax KItem ::= dotBaseK(Atom) | idxBaseK(Exp) | sliceBaseK(Exp, Exp)
+  syntax KItem ::= dotAwaitBaseK(Atom) | idxAwaitBaseK(Exp) | sliceAwaitBaseK(Exp, Exp)
 
-  rule <k> evalExp(dotE(E:Exp, A:Atom)) => evalExp(E) ~> dotBaseK(A) ... </k>
-  rule <k> V:Val ~> dotBaseK(A:Atom) => evalPath(V, dotPath(rootPath(), A)) ... </k>
-  rule <k> FAIL ~> dotBaseK(_:Atom) => FAIL ... </k>
+  rule <k> evalExp(dotE(E:Exp, A:Atom)) => evalExp(E) ~> dotAwaitBaseK(A) ... </k>
+  rule <k> V:Val ~> dotAwaitBaseK(A:Atom) => evalPath(V, dotPath(rootPath(), A)) ... </k>
+  rule <k> FAIL ~> dotAwaitBaseK(_:Atom) => FAIL ... </k>
 
-  rule <k> evalExp(idxE(Eb:Exp, Ei:Exp)) => evalExp(Eb) ~> idxBaseK(Ei) ... </k>
-  rule <k> V:Val ~> idxBaseK(Ei:Exp) => evalPath(V, idxPath(rootPath(), Ei)) ... </k>
-  rule <k> FAIL ~> idxBaseK(_:Exp) => FAIL ... </k>
+  rule <k> evalExp(idxE(Eb:Exp, Ei:Exp)) => evalExp(Eb) ~> idxAwaitBaseK(Ei) ... </k>
+  rule <k> V:Val ~> idxAwaitBaseK(Ei:Exp) => evalPath(V, idxPath(rootPath(), Ei)) ... </k>
+  rule <k> FAIL ~> idxAwaitBaseK(_:Exp) => FAIL ... </k>
 
   rule <k> evalExp(sliceE(Eb:Exp, Ei:Exp, En:Exp))
-        => evalExp(Eb) ~> sliceBaseK(Ei, En)
+        => evalExp(Eb) ~> sliceAwaitBaseK(Ei, En)
        ...
        </k>
-  rule <k> V:Val ~> sliceBaseK(Ei:Exp, En:Exp)
+  rule <k> V:Val ~> sliceAwaitBaseK(Ei:Exp, En:Exp)
         => evalPath(V, slicePath(rootPath(), Ei, En))
        ...
        </k>
-  rule <k> FAIL ~> sliceBaseK(_:Exp, _:Exp) => FAIL ... </k>
+  rule <k> FAIL ~> sliceAwaitBaseK(_:Exp, _:Exp) => FAIL ... </k>
 
   //   rule Eval_exp/upd
-  syntax KItem ::= updBaseK(Path, Exp) | updFieldK(Path, Val)
-  rule <k> evalExp(updE(Eb:Exp, P:Path, Ef:Exp)) => evalExp(Eb) ~> updBaseK(P, Ef) ... </k>
-  rule <k> V:Val ~> updBaseK(P:Path, Ef:Exp) => evalExp(Ef) ~> updFieldK(P, V) ... </k>
-  rule <k> FAIL ~> updBaseK(_:Path, _:Exp) => FAIL ... </k>
-  rule <k> Vf:Val ~> updFieldK(P:Path, Vb:Val) => evalPathUpd(Vb, P, Vf) ... </k>
-  rule <k> FAIL ~> updFieldK(_:Path, _:Val) => FAIL ... </k>
+  syntax KItem ::= updAwaitBaseK(Path, Exp) | updAwaitFieldK(Path, Val)
+  rule <k> evalExp(updE(Eb:Exp, P:Path, Ef:Exp)) => evalExp(Eb) ~> updAwaitBaseK(P, Ef) ... </k>
+  rule <k> V:Val ~> updAwaitBaseK(P:Path, Ef:Exp) => evalExp(Ef) ~> updAwaitFieldK(P, V) ... </k>
+  rule <k> FAIL ~> updAwaitBaseK(_:Path, _:Exp) => FAIL ... </k>
+  rule <k> Vf:Val ~> updAwaitFieldK(P:Path, Vb:Val) => evalPathUpd(Vb, P, Vf) ... </k>
+  rule <k> FAIL ~> updAwaitFieldK(_:Path, _:Val) => FAIL ... </k>
 
   //   rule Eval_exp/call
   //
   //   rule Eval_targs: C |- targ* : targ_subst*
   //     -- if theta = $theta_of_tdenv(C.LOCAL.TYP)
   //     -- if (targ_subst = $subst_typ(theta, targ))*
-  //
-  // `Eval_targs` never fails, so it is evaluated eagerly (reading <ltdenv>)
-  // rather than heated as its own task.
-  syntax KItem ::= callArgsK(Id, TypList)
+  syntax KItem ::= callAwaitArgsK(Id, TypList)
   rule <k> evalExp(callE(X:Id, Ts:TypList, As:ArgList))
-        => evalArgs(As) ~> callArgsK(X, substTypsMap(thetaOfTdenv(L), Ts))
+        => evalArgs(As) ~> callAwaitArgsK(X, substTypsMap(thetaOfTdenv(L), Ts))
        ...
        </k>
        <ltdenv> L:Map </ltdenv>
 
-  rule <k> Vs:ValList ~> callArgsK(X:Id, Ts:TypList) => callFunc(X, Ts, Vs) ... </k>
-  rule <k> FAIL ~> callArgsK(_:Id, _:TypList) => FAIL ... </k>
+  rule <k> Vs:ValList ~> callAwaitArgsK(X:Id, Ts:TypList) => callFunc(X, Ts, Vs) ... </k>
+  rule <k> FAIL ~> callAwaitArgsK(_:Id, _:TypList) => FAIL ... </k>
 
   //   rulegroup Eval_exp/iter
   syntax KItem ::= evalIter(VarrOpt, Exp, IterExp)
@@ -261,85 +259,6 @@ module AL-EVAL-EXP
        <lvenv> M:Map </lvenv>
     requires notBool (R in_keys(M))
 
-  // ==========================================================================
-  // Sub-contexts for iteration
-  //
-  //   dec $sub_opt(ctx, vari*) : ctx?
-  //   dec $sub_list(ctx, vari*) : ctx*
-  // ==========================================================================
-
-  // `$sub_opt`: `noRowOpt()` if `$sub_opt` is `eps` (skip the body);
-  // `someRowOpt(vals)` if it applies, with `vals` the value to bind each
-  // `vari` in `Vs` to, in order.
-  syntax SubOptRow ::= noRowOpt()           [symbol(noRowOpt)]
-                     | someRowOpt(ValList)  [symbol(someRowOpt)]
-
-  syntax KItem ::= subOptRow(VariList)
-  rule <k> subOptRow(Vs:VariList) => classifySubOpt(findOptsOrFail(iterVaris(Vs, quest()), M)) ... </k>
-       <lvenv> M:Map </lvenv>
-
-  syntax ValListOpt ::= noValListOpt()      [symbol(noValListOpt)]
-                      | someValListOpt(ValList)
-                                            [symbol(someValListOpt)]
-
-  syntax ValListOpt ::= findOptsOrFail(VarrList, Map)
-                                            [function, total, symbol(findOptsOrFail)]
-  rule findOptsOrFail(.VarrList, _:Map) => someValListOpt(.ValList)
-  rule findOptsOrFail((R:Varr, Rs:VarrList), M:Map)
-    => consOptRow({M[R]}:>Val, findOptsOrFail(Rs, M))
-    requires R in_keys(M)
-  rule findOptsOrFail((R:Varr, _:VarrList), M:Map) => noValListOpt()
-    requires notBool (R in_keys(M))
-
-  syntax ValListOpt ::= consOptRow(Val, ValListOpt)
-                                            [function, total, symbol(consOptRow)]
-  rule consOptRow(V:Val, someValListOpt(Vs:ValList)) => someValListOpt(V, Vs)
-  rule consOptRow(_:Val, noValListOpt()) => noValListOpt()
-
-  syntax SubOptRow ::= classifySubOpt(ValListOpt)
-                                            [function, symbol(classifySubOpt)]
-  // every lookup was `OPT val`
-  rule classifySubOpt(someValListOpt(Vs:ValList)) => someRowOpt(unwrapSomeOpts(Vs))
-    requires allSomeOpts(Vs)
-  // every lookup was `OPT eps`
-  rule classifySubOpt(someValListOpt(Vs:ValList)) => noRowOpt()
-    requires allNoneOpts(Vs)
-
-  syntax Bool ::= allSomeOpts(ValList)      [function, total, symbol(allSomeOpts)]
-                | allNoneOpts(ValList)      [function, total, symbol(allNoneOpts)]
-  rule allSomeOpts(.ValList) => true
-  rule allSomeOpts(optV(someVal(_:Val)), Vs:ValList) => allSomeOpts(Vs)
-  rule allSomeOpts(_:Val, _:ValList) => false [owise]
-  rule allNoneOpts(.ValList) => true
-  rule allNoneOpts(optV(noVal()), Vs:ValList) => allNoneOpts(Vs)
-  rule allNoneOpts(_:Val, _:ValList) => false [owise]
-
-  syntax ValList ::= unwrapSomeOpts(ValList)
-                                            [function, symbol(unwrapSomeOpts)]
-  rule unwrapSomeOpts(.ValList) => .ValList
-  rule unwrapSomeOpts(optV(someVal(V:Val)), Vs:ValList) => V, unwrapSomeOpts(Vs)
-
-  // `$sub_list`: the rows to bind, one per element, or `.ValListList` if no
-  // rows apply (`$sub_list(C, vari*) = eps`, e.g. an empty `LIST`).
-  syntax KItem ::= subListRows(VariList)
-  rule <k> subListRows(Vs:VariList) => transposeVal(unwrapLists(findLists(iterVaris(Vs, star()), M))) ... </k>
-       <lvenv> M:Map </lvenv>
-
-  syntax ValList ::= findLists(VarrList, Map)
-                                            [function, symbol(findLists)]
-  rule findLists(.VarrList, _:Map) => .ValList
-  rule findLists((R:Varr, Rs:VarrList), M:Map) => {M[R]}:>Val, findLists(Rs, M)
-    requires R in_keys(M)
-
-  syntax ValListList ::= unwrapLists(ValList)
-                                            [function, symbol(unwrapLists)]
-  rule unwrapLists(.ValList) => .ValListList
-  rule unwrapLists(listV(Vs:ValList), Ws:ValList) => Vs ; unwrapLists(Ws)
-
-  // ==========================================================================
-  // Eval_exp/opt and /list, using the rows above
-  // ==========================================================================
-
   //   rule Eval_exp/opt
   rule <k> evalIter(noVarr(), E:Exp, iterExp(quest(), Vs:VariList))
         => subOptRow(Vs) ~> evalOptSub(Vs, E)
@@ -349,7 +268,7 @@ module AL-EVAL-EXP
   syntax KItem ::= evalOptSub(VariList, Exp)
   rule <k> noRowOpt() ~> evalOptSub(_:VariList, _:Exp) => optV(noVal()) ... </k>
   rule <k> someRowOpt(Row:ValList) ~> evalOptSub(Vs:VariList, E:Exp)
-        => pushLocalSave() ~> bindRow(Vs, Row) ~> evalExp(E) ~> popSaveThen(someK())
+        => pushLocalSave() ~> bindRow(Vs, Row) ~> evalExp(E) ~> popLocalSaveThen(optAwaitValueK())
        ...
        </k>
 
@@ -361,19 +280,6 @@ module AL-EVAL-EXP
   rule <k> bindRow((V:Vari, Vs:VariList), (Val:Val, Vals:ValList)) => bindRow(Vs, Vals) ... </k>
        <lvenv> M:Map => M[varrOfVari(V) <- Val] </lvenv>
 
-  // Pop <saves> and continue with `Next` (a wrapper like `someK()`/`listK()`
-  // that turns the value or FAIL left on `<k>` into the final shape).
-  syntax KItem ::= popSaveThen(KItem)
-  rule <k> V:Val ~> popSaveThen(Next:KItem) => popSaveRestore() ~> V ~> Next ... </k>
-  rule <k> FAIL ~> popSaveThen(_:KItem) => popSaveRestore() ~> FAIL ... </k>
-
-  syntax KItem ::= "popSaveRestore" "(" ")"
-  rule <k> popSaveRestore() => .K ... </k>
-       <ltdenv> _ => T </ltdenv>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-       <saves> ListItem(localSave(T:Map, F:Map, V:Map)) => .List ... </saves>
-
   //   rule Eval_exp/list
   rule <k> evalIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList))
         => subListRows(Vs) ~> evalListSub(Vs, E)
@@ -383,38 +289,18 @@ module AL-EVAL-EXP
   syntax KItem ::= evalListSub(VariList, Exp)
   rule <k> .ValListList ~> evalListSub(_:VariList, _:Exp) => listV(.ValList) ... </k>
   rule <k> Rows:ValListList ~> evalListSub(Vs:VariList, E:Exp)
-        => pushLocalSave() ~> evalEachRow(Vs, E, Rows) ~> popSaveRestoreList()
+        => pushLocalSave() ~> evalEachRow(Vs, E, Rows) ~> popLocalSaveList()
        ...
        </k>
     requires Rows =/=K .ValListList
 
-  // `evalEachRow` leaves a `ValList` (the per-element results, or `FAIL`) on
-  // `<k>`, not a bare `Val` — `popSaveThen` is for the single-value case
-  // (Eval_exp/opt), so list iteration needs its own pop-and-wrap.
-  syntax KItem ::= "popSaveRestoreList" "(" ")"
-  rule <k> Vs:ValList ~> popSaveRestoreList() => popSaveRestore() ~> listV(Vs) ... </k>
-  rule <k> FAIL ~> popSaveRestoreList() => popSaveRestore() ~> FAIL ... </k>
-
-  // Evaluate `E` once per row of `Rows`.  Each element's sub-context is the
-  // *base* `<local>` (top of `<saves>`, unmodified since it was pushed) plus
-  // that row's bindings — `$sub_list` adds onto `C`, it does not clear it
-  // (unlike `Assign_exp/list`).  `peekRestore()` resets `<local>` to the saved
-  // base without popping, so each row starts from the same point; the save is
-  // popped once, after every row has run.
   syntax KItem ::= evalEachRow(VariList, Exp, ValListList)
   rule <k> evalEachRow(_:VariList, _:Exp, .ValListList) => .ValList ... </k>
   rule <k> evalEachRow(Vs:VariList, E:Exp, (Row:ValList ; Rows:ValListList))
-        => peekRestore() ~> bindRow(Vs, Row) ~> evalExp(E)
+        => peekLocalSave() ~> bindRow(Vs, Row) ~> evalExp(E)
            ~> collectRow(Vs, E, Rows)
        ...
        </k>
-
-  syntax KItem ::= "peekRestore" "(" ")"
-  rule <k> peekRestore() => .K ... </k>
-       <ltdenv> _ => T </ltdenv>
-       <lfenv> _ => F </lfenv>
-       <lvenv> _ => V </lvenv>
-       <saves> ListItem(localSave(T:Map, F:Map, V:Map)) ... </saves>
 
   syntax KItem ::= collectRow(VariList, Exp, ValListList)
                  | prependVal(Val)
@@ -449,59 +335,58 @@ module AL-EVAL-EXP
   rule <k> evalPath(V:Val, rootPath()) => V ... </k>
 
   //   rule Eval_path/dot
-  syntax KItem ::= pathDotK(Atom)
-  rule <k> evalPath(V:Val, dotPath(P:Path, A:Atom)) => evalPath(V, P) ~> pathDotK(A) ... </k>
-  rule <k> strV(Fs:ValFieldList) ~> pathDotK(A:Atom) => valOptToKItem(assocVal(A, Fs)) ... </k>
-  rule <k> FAIL ~> pathDotK(_:Atom) => FAIL ... </k>
-  rule <k> _:Val ~> pathDotK(_:Atom) => FAIL ... </k> [owise]
+  syntax KItem ::= pathDotAwaitBaseK(Atom)
+  rule <k> evalPath(V:Val, dotPath(P:Path, A:Atom)) => evalPath(V, P) ~> pathDotAwaitBaseK(A) ... </k>
+  rule <k> strV(Fs:ValFieldList) ~> pathDotAwaitBaseK(A:Atom) => valOptToKItem(assocVal(A, Fs)) ... </k>
+  rule <k> FAIL ~> pathDotAwaitBaseK(_:Atom) => FAIL ... </k>
+  rule <k> _:Val ~> pathDotAwaitBaseK(_:Atom) => FAIL ... </k> [owise]
 
   syntax KItem ::= valOptToKItem(ValOpt)
   rule <k> valOptToKItem(someVal(V:Val)) => V ... </k>
   rule <k> valOptToKItem(noVal()) => FAIL ... </k>
 
   //   rulegroup Eval_path/idx
-  syntax KItem ::= pathIdxBaseK(Path, Exp) | pathIdxK(Val)
+  syntax KItem ::= pathIdxBaseK(Path, Exp) | pathIdxAwaitIndexK(Val)
   rule <k> evalPath(V:Val, idxPath(P:Path, Ei:Exp))
-        => evalPath(V, P) ~> pathIdxWaitK(Ei)
+        => evalPath(V, P) ~> pathIdxAwaitBaseK(Ei)
        ...
        </k>
 
-  syntax KItem ::= pathIdxWaitK(Exp)
-  rule <k> Vb:Val ~> pathIdxWaitK(Ei:Exp) => evalExp(Ei) ~> pathIdxK(Vb) ... </k>
-  rule <k> FAIL ~> pathIdxWaitK(_:Exp) => FAIL ... </k>
+  syntax KItem ::= pathIdxAwaitBaseK(Exp)
+  rule <k> Vb:Val ~> pathIdxAwaitBaseK(Ei:Exp) => evalExp(Ei) ~> pathIdxAwaitIndexK(Vb) ... </k>
+  rule <k> FAIL ~> pathIdxAwaitBaseK(_:Exp) => FAIL ... </k>
 
-  rule <k> natN(N:Int) ~> pathIdxK(textV(S:String)) => textV(substrString(S, N, N +Int 1)) ... </k>
+  rule <k> natN(N:Int) ~> pathIdxAwaitIndexK(textV(S:String)) => textV(substrString(S, N, N +Int 1)) ... </k>
     requires N >=Int 0 andBool N <Int lengthString(S)
-  rule <k> natN(N:Int) ~> pathIdxK(listV(Vs:ValList)) => nthVal(Vs, N) ... </k>
+  rule <k> natN(N:Int) ~> pathIdxAwaitIndexK(listV(Vs:ValList)) => nthVal(Vs, N) ... </k>
     requires N >=Int 0 andBool N <Int lengthVals(Vs)
-  rule <k> FAIL ~> pathIdxK(_:Val) => FAIL ... </k>
-  rule <k> _:Val ~> pathIdxK(_:Val) => FAIL ... </k> [owise]
-
-  // `nthVal` is defined in 5.2-eval-assign.k.
+  rule <k> FAIL ~> pathIdxAwaitIndexK(_:Val) => FAIL ... </k>
+  rule <k> _:Val ~> pathIdxAwaitIndexK(_:Val) => FAIL ... </k> [owise]
 
   //   rulegroup Eval_path/slice
-  syntax KItem ::= pathSliceWaitK(Exp, Exp) | pathSliceK1(Val, Exp) | pathSliceK2(Val, Int)
+  syntax KItem ::= pathSliceAwaitBaseK(Exp, Exp) | pathSliceAwaitIndexK(Val, Exp)
+                 | pathSliceAwaitLengthK(Val, Int)
   rule <k> evalPath(V:Val, slicePath(P:Path, Ei:Exp, En:Exp))
-        => evalPath(V, P) ~> pathSliceWaitK(Ei, En)
+        => evalPath(V, P) ~> pathSliceAwaitBaseK(Ei, En)
        ...
        </k>
-  rule <k> Vb:Val ~> pathSliceWaitK(Ei:Exp, En:Exp) => evalExp(Ei) ~> pathSliceK1(Vb, En) ... </k>
-  rule <k> FAIL ~> pathSliceWaitK(_:Exp, _:Exp) => FAIL ... </k>
-  rule <k> natN(I:Int) ~> pathSliceK1(Vb:Val, En:Exp) => evalExp(En) ~> pathSliceK2(Vb, I) ... </k>
-  rule <k> FAIL ~> pathSliceK1(_:Val, _:Exp) => FAIL ... </k>
+  rule <k> Vb:Val ~> pathSliceAwaitBaseK(Ei:Exp, En:Exp) => evalExp(Ei) ~> pathSliceAwaitIndexK(Vb, En) ... </k>
+  rule <k> FAIL ~> pathSliceAwaitBaseK(_:Exp, _:Exp) => FAIL ... </k>
+  rule <k> natN(I:Int) ~> pathSliceAwaitIndexK(Vb:Val, En:Exp) => evalExp(En) ~> pathSliceAwaitLengthK(Vb, I) ... </k>
+  rule <k> FAIL ~> pathSliceAwaitIndexK(_:Val, _:Exp) => FAIL ... </k>
 
-  rule <k> natN(N:Int) ~> pathSliceK2(textV(S:String), I:Int)
+  rule <k> natN(N:Int) ~> pathSliceAwaitLengthK(textV(S:String), I:Int)
         => textV(substrString(S, I, I +Int N))
        ...
        </k>
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthString(S)
-  rule <k> natN(N:Int) ~> pathSliceK2(listV(Vs:ValList), I:Int)
+  rule <k> natN(N:Int) ~> pathSliceAwaitLengthK(listV(Vs:ValList), I:Int)
         => listV(sliceVal(Vs, I, N))
        ...
        </k>
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthVals(Vs)
-  rule <k> FAIL ~> pathSliceK2(_:Val, _:Int) => FAIL ... </k>
-  rule <k> _:Val ~> pathSliceK2(_:Val, _:Int) => FAIL ... </k> [owise]
+  rule <k> FAIL ~> pathSliceAwaitLengthK(_:Val, _:Int) => FAIL ... </k>
+  rule <k> _:Val ~> pathSliceAwaitLengthK(_:Val, _:Int) => FAIL ... </k> [owise]
 
   syntax ValList ::= sliceVal(ValList, Int, Int)
                                             [function, symbol(sliceVal)]
@@ -511,16 +396,8 @@ module AL-EVAL-EXP
   rule sliceVal((_:Val, Vs:ValList), I:Int, N:Int) => sliceVal(Vs, I -Int 1, N)
     requires I >Int 0
 
-  //   rule Eval_path/fail: no rule above matched, so evalPath is stuck only if
-  //   none of the shape-specific rules applied; the FAIL threading above
-  //   already covers every case Eval_path itself distinguishes.
-
   // ==========================================================================
   // Eval_path_upd: ctx |- val path := val : res<val>
-  //
-  // Rebuilds the value bottom-up: the sub-value at `path` is fetched with
-  // `Eval_path`, updated at its last step, and written back by recursing on
-  // the prefix.
   // ==========================================================================
 
   syntax KItem ::= evalPathUpd(Val, Path, Val)
@@ -529,31 +406,31 @@ module AL-EVAL-EXP
   rule <k> evalPathUpd(_:Val, rootPath(), Vn:Val) => Vn ... </k>
 
   //   rulegroup Eval_path_upd/idx
-  syntax KItem ::= updIdxWaitK(Val, Path, Exp, Val) | updIdxK(Val, Path, Val)
+  syntax KItem ::= updIdxAwaitCurrentK(Val, Path, Exp, Val) | updIdxK(Val, Path, Val)
   rule <k> evalPathUpd(Vb:Val, idxPath(P:Path, Ei:Exp), Vn:Val)
-        => evalPath(Vb, P) ~> updIdxWaitK(Vb, P, Ei, Vn)
+        => evalPath(Vb, P) ~> updIdxAwaitCurrentK(Vb, P, Ei, Vn)
        ...
        </k>
-  rule <k> Vcur:Val ~> updIdxWaitK(Vb:Val, P:Path, Ei:Exp, Vn:Val)
-        => evalExp(Ei) ~> updIdxK2(Vb, P, Vcur, Vn)
+  rule <k> Vcur:Val ~> updIdxAwaitCurrentK(Vb:Val, P:Path, Ei:Exp, Vn:Val)
+        => evalExp(Ei) ~> updIdxAwaitIndexK(Vb, P, Vcur, Vn)
        ...
        </k>
-  rule <k> FAIL ~> updIdxWaitK(_:Val, _:Path, _:Exp, _:Val) => FAIL ... </k>
+  rule <k> FAIL ~> updIdxAwaitCurrentK(_:Val, _:Path, _:Exp, _:Val) => FAIL ... </k>
 
-  syntax KItem ::= updIdxK2(Val, Path, Val, Val)
+  syntax KItem ::= updIdxAwaitIndexK(Val, Path, Val, Val)
   // Text index update replaces one character (`-- if |t_n| = 1`).
-  rule <k> natN(N:Int) ~> updIdxK2(Vb:Val, P:Path, textV(S:String), textV(Sn:String))
+  rule <k> natN(N:Int) ~> updIdxAwaitIndexK(Vb:Val, P:Path, textV(S:String), textV(Sn:String))
         => evalPathUpd(Vb, P, textV(replaceAtString(S, N, Sn)))
        ...
        </k>
     requires lengthString(Sn) ==Int 1 andBool N >=Int 0 andBool N <Int lengthString(S)
-  rule <k> natN(N:Int) ~> updIdxK2(Vb:Val, P:Path, listV(Vs:ValList), Vn:Val)
+  rule <k> natN(N:Int) ~> updIdxAwaitIndexK(Vb:Val, P:Path, listV(Vs:ValList), Vn:Val)
         => evalPathUpd(Vb, P, listV(updateNthVal(Vs, N, Vn)))
        ...
        </k>
     requires N >=Int 0 andBool N <Int lengthVals(Vs)
-  rule <k> FAIL ~> updIdxK2(_:Val, _:Path, _:Val, _:Val) => FAIL ... </k>
-  rule <k> _:Val ~> updIdxK2(_:Val, _:Path, _:Val, _:Val) => FAIL ... </k> [owise]
+  rule <k> FAIL ~> updIdxAwaitIndexK(_:Val, _:Path, _:Val, _:Val) => FAIL ... </k>
+  rule <k> _:Val ~> updIdxAwaitIndexK(_:Val, _:Path, _:Val, _:Val) => FAIL ... </k> [owise]
 
   syntax ValList ::= updateNthVal(ValList, Int, Val)
                                             [function, symbol(updateNthVal)]
@@ -568,24 +445,25 @@ module AL-EVAL-EXP
     => substrString(S, 0, N) +String Sn +String substrString(S, N +Int 1, lengthString(S))
 
   //   rulegroup Eval_path_upd/slice
-  syntax KItem ::= updSliceWaitK(Val, Path, Exp, Exp, Val) | updSliceK1(Val, Path, Val, Exp, Val)
-                 | updSliceK2(Val, Path, Val, Int, Val)
+  syntax KItem ::= updSliceAwaitCurrentK(Val, Path, Exp, Exp, Val)
+                 | updSliceAwaitIndexK(Val, Path, Val, Exp, Val)
+                 | updSliceAwaitLengthK(Val, Path, Val, Int, Val)
   rule <k> evalPathUpd(Vb:Val, slicePath(P:Path, Ei:Exp, En:Exp), Vn:Val)
-        => evalPath(Vb, P) ~> updSliceWaitK(Vb, P, Ei, En, Vn)
+        => evalPath(Vb, P) ~> updSliceAwaitCurrentK(Vb, P, Ei, En, Vn)
        ...
        </k>
-  rule <k> Vcur:Val ~> updSliceWaitK(Vb:Val, P:Path, Ei:Exp, En:Exp, Vn:Val)
-        => evalExp(Ei) ~> updSliceK1(Vb, P, Vcur, En, Vn)
+  rule <k> Vcur:Val ~> updSliceAwaitCurrentK(Vb:Val, P:Path, Ei:Exp, En:Exp, Vn:Val)
+        => evalExp(Ei) ~> updSliceAwaitIndexK(Vb, P, Vcur, En, Vn)
        ...
        </k>
-  rule <k> FAIL ~> updSliceWaitK(_:Val, _:Path, _:Exp, _:Exp, _:Val) => FAIL ... </k>
-  rule <k> natN(I:Int) ~> updSliceK1(Vb:Val, P:Path, Vcur:Val, En:Exp, Vn:Val)
-        => evalExp(En) ~> updSliceK2(Vb, P, Vcur, I, Vn)
+  rule <k> FAIL ~> updSliceAwaitCurrentK(_:Val, _:Path, _:Exp, _:Exp, _:Val) => FAIL ... </k>
+  rule <k> natN(I:Int) ~> updSliceAwaitIndexK(Vb:Val, P:Path, Vcur:Val, En:Exp, Vn:Val)
+        => evalExp(En) ~> updSliceAwaitLengthK(Vb, P, Vcur, I, Vn)
        ...
        </k>
-  rule <k> FAIL ~> updSliceK1(_:Val, _:Path, _:Val, _:Exp, _:Val) => FAIL ... </k>
+  rule <k> FAIL ~> updSliceAwaitIndexK(_:Val, _:Path, _:Val, _:Exp, _:Val) => FAIL ... </k>
 
-  rule <k> natN(N:Int) ~> updSliceK2(Vb:Val, P:Path, textV(S:String), I:Int, textV(Sn:String))
+  rule <k> natN(N:Int) ~> updSliceAwaitLengthK(Vb:Val, P:Path, textV(S:String), I:Int, textV(Sn:String))
         => evalPathUpd(Vb, P,
              textV(substrString(S, 0, I) +String Sn
                    +String substrString(S, I +Int N, lengthString(S))))
@@ -593,13 +471,13 @@ module AL-EVAL-EXP
        </k>
     requires lengthString(Sn) ==Int N andBool I >=Int 0 andBool N >=Int 0
        andBool I +Int N <=Int lengthString(S)
-  rule <k> natN(N:Int) ~> updSliceK2(Vb:Val, P:Path, listV(Vs:ValList), I:Int, listV(Ws:ValList))
+  rule <k> natN(N:Int) ~> updSliceAwaitLengthK(Vb:Val, P:Path, listV(Vs:ValList), I:Int, listV(Ws:ValList))
         => evalPathUpd(Vb, P, listV(replaceSliceVal(Vs, I, N, Ws)))
        ...
        </k>
     requires I >=Int 0 andBool N >=Int 0 andBool I +Int N <=Int lengthVals(Vs)
-  rule <k> FAIL ~> updSliceK2(_:Val, _:Path, _:Val, _:Int, _:Val) => FAIL ... </k>
-  rule <k> _:Val ~> updSliceK2(_:Val, _:Path, _:Val, _:Int, _:Val) => FAIL ... </k> [owise]
+  rule <k> FAIL ~> updSliceAwaitLengthK(_:Val, _:Path, _:Val, _:Int, _:Val) => FAIL ... </k>
+  rule <k> _:Val ~> updSliceAwaitLengthK(_:Val, _:Path, _:Val, _:Int, _:Val) => FAIL ... </k> [owise]
 
   syntax ValList ::= replaceSliceVal(ValList, Int, Int, ValList)
                                             [function, symbol(replaceSliceVal)]
@@ -608,17 +486,17 @@ module AL-EVAL-EXP
                  appendVal(Ws, sliceVal(Vs, I +Int N, lengthVals(Vs) -Int (I +Int N))))
 
   //   rule Eval_path_upd/dot
-  syntax KItem ::= updDotWaitK(Val, Path, Atom, Val)
+  syntax KItem ::= updDotAwaitCurrentK(Val, Path, Atom, Val)
   rule <k> evalPathUpd(Vb:Val, dotPath(P:Path, A:Atom), Vn:Val)
-        => evalPath(Vb, P) ~> updDotWaitK(Vb, P, A, Vn)
+        => evalPath(Vb, P) ~> updDotAwaitCurrentK(Vb, P, A, Vn)
        ...
        </k>
-  rule <k> strV(Fs:ValFieldList) ~> updDotWaitK(Vb:Val, P:Path, A:Atom, Vn:Val)
+  rule <k> strV(Fs:ValFieldList) ~> updDotAwaitCurrentK(Vb:Val, P:Path, A:Atom, Vn:Val)
         => evalPathUpd(Vb, P, strV(updateField(Fs, A, Vn)))
        ...
        </k>
-  rule <k> FAIL ~> updDotWaitK(_:Val, _:Path, _:Atom, _:Val) => FAIL ... </k>
-  rule <k> _:Val ~> updDotWaitK(_:Val, _:Path, _:Atom, _:Val) => FAIL ... </k> [owise]
+  rule <k> FAIL ~> updDotAwaitCurrentK(_:Val, _:Path, _:Atom, _:Val) => FAIL ... </k>
+  rule <k> _:Val ~> updDotAwaitCurrentK(_:Val, _:Path, _:Atom, _:Val) => FAIL ... </k> [owise]
 
   // Update every field selected by its atom.
   syntax ValFieldList ::= updateField(ValFieldList, Atom, Val)

@@ -1,8 +1,6 @@
 // Relation invocation: rule paths, rule groups, dispatch, and Call_rel.
 //
-// Mirrors spec-meta/al/5.7-eval-call-rel.watsup: Eval_rul, Eval_ruls,
-// Eval_rulgroup, Eval_rulgroups, Call_defined_rel, Call_rel_dispatch,
-// Call_rel.
+// Mirrors spec-meta/al/5.7-eval-call-rel.watsup.
 
 requires "5.5-eval-call-func.k"
 
@@ -17,7 +15,7 @@ module AL-CALL-REL
   // ==========================================================================
 
   syntax KItem ::= evalRul(RulMatch, RulPath, ValList)
-  syntax KItem ::= evalRuls(RulMatch, RulPathList, ValList)
+                 | evalRuls(RulMatch, RulPathList, ValList)
 
   //   rule Eval_rul/succ:
   //     -- if id '=' exp_out* '-' prem_path* = rulpath
@@ -30,7 +28,7 @@ module AL-CALL-REL
   rule <k> evalRul(rulMatch(Es:ExpList, PsMatch:PremList),
                    rulPath(_:Id, Eouts:ExpList, PsPath:PremList),
                    Vs:ValList)
-        => assignExps(Es, Vs) ~> rulAssignedK(appendPrems(PsMatch, PsPath), Eouts)
+        => assignExps(Es, Vs) ~> rulAwaitAssignmentK(appendPrems(PsMatch, PsPath), Eouts)
        ...
        </k>
 
@@ -39,31 +37,31 @@ module AL-CALL-REL
   rule appendPrems(.PremList, Ps:PremList) => Ps
   rule appendPrems((P:Prem, Ps:PremList), Qs:PremList) => P, appendPrems(Ps, Qs)
 
-  syntax KItem ::= rulAssignedK(PremList, ExpList)
-  rule <k> assignOK() ~> rulAssignedK(Ps:PremList, Eouts:ExpList)
-        => evalPrems(Ps) ~> rulBodyK(Eouts)
+  syntax KItem ::= rulAwaitAssignmentK(PremList, ExpList)
+  rule <k> assignOK() ~> rulAwaitAssignmentK(Ps:PremList, Eouts:ExpList)
+        => evalPrems(Ps) ~> rulAwaitPremisesK(Eouts)
        ...
        </k>
-  rule <k> FAIL ~> rulAssignedK(_:PremList, _:ExpList) => FAIL ... </k>
+  rule <k> FAIL ~> rulAwaitAssignmentK(_:PremList, _:ExpList) => FAIL ... </k>
 
-  syntax KItem ::= rulBodyK(ExpList)
-  rule <k> premOK() ~> rulBodyK(Eouts:ExpList) => evalExps(Eouts) ... </k>
-  rule <k> FAIL ~> rulBodyK(_:ExpList) => FAIL ... </k>
+  syntax KItem ::= rulAwaitPremisesK(ExpList)
+  rule <k> premOK() ~> rulAwaitPremisesK(Eouts:ExpList) => evalExps(Eouts) ... </k>
+  rule <k> FAIL ~> rulAwaitPremisesK(_:ExpList) => FAIL ... </k>
 
   //   rulegroup Eval_ruls
   rule <k> evalRuls(_:RulMatch, .RulPathList, _:ValList) => FAIL ... </k>
   rule <k> evalRuls(M:RulMatch, (P:RulPath, Ps:RulPathList), Vs:ValList)
-        => pushLocalSave() ~> evalRul(M, P, Vs) ~> tryNextRul(M, Ps, Vs)
+        => pushLocalSave() ~> evalRul(M, P, Vs) ~> rulPathsAwaitResultK(M, Ps, Vs)
        ...
        </k>
 
-  syntax KItem ::= tryNextRul(RulMatch, RulPathList, ValList)
-  rule <k> Vs:ValList ~> tryNextRul(_:RulMatch, _:RulPathList, _:ValList)
-        => popSaveRestore() ~> Vs
+  syntax KItem ::= rulPathsAwaitResultK(RulMatch, RulPathList, ValList)
+  rule <k> Vs:ValList ~> rulPathsAwaitResultK(_:RulMatch, _:RulPathList, _:ValList)
+        => popLocalSave() ~> Vs
        ...
        </k>
-  rule <k> FAIL ~> tryNextRul(M:RulMatch, Ps:RulPathList, Vs:ValList)
-        => popSaveRestore() ~> evalRuls(M, Ps, Vs)
+  rule <k> FAIL ~> rulPathsAwaitResultK(M:RulMatch, Ps:RulPathList, Vs:ValList)
+        => popLocalSave() ~> evalRuls(M, Ps, Vs)
        ...
        </k>
 
@@ -88,13 +86,13 @@ module AL-CALL-REL
   //   rulegroup Eval_rulgroups
   rule <k> evalRulGroups(.RulGroupList, _:ValList) => FAIL ... </k>
   rule <k> evalRulGroups((G:RulGroup, Gs:RulGroupList), Vs:ValList)
-        => evalRulGroup(G, Vs) ~> tryNextRulGroup(Gs, Vs)
+        => evalRulGroup(G, Vs) ~> rulGroupsAwaitResultK(Gs, Vs)
        ...
        </k>
 
-  syntax KItem ::= tryNextRulGroup(RulGroupList, ValList)
-  rule <k> Vs:ValList ~> tryNextRulGroup(_:RulGroupList, _:ValList) => Vs ... </k>
-  rule <k> FAIL ~> tryNextRulGroup(Gs:RulGroupList, Vs:ValList) => evalRulGroups(Gs, Vs) ... </k>
+  syntax KItem ::= rulGroupsAwaitResultK(RulGroupList, ValList)
+  rule <k> Vs:ValList ~> rulGroupsAwaitResultK(_:RulGroupList, _:ValList) => Vs ... </k>
+  rule <k> FAIL ~> rulGroupsAwaitResultK(Gs:RulGroupList, Vs:ValList) => evalRulGroups(Gs, Vs) ... </k>
 
   // ==========================================================================
   // Call_defined_rel
@@ -113,15 +111,14 @@ module AL-CALL-REL
   rule <k> callDefinedRel(Gs:RulGroupList, EG:ElsGroupOpt, Vs:ValList)
         => pushCallFrame(.Map)
            ~> evalRulGroups(appendRulGroups(Gs, optAsSeqRulGroup(EG)), Vs)
-           ~> relCallDone()
+           ~> relCallAwaitResultK()
        ...
        </k>
 
-  syntax KItem ::= "relCallDone" "(" ")"
-  rule <k> Vs:ValList ~> relCallDone() => popCallFrame() ~> Vs ... </k>
-  rule <k> FAIL ~> relCallDone() => popCallFrame() ~> FAIL ... </k>
+  syntax KItem ::= "relCallAwaitResultK" "(" ")"
+  rule <k> Vs:ValList ~> relCallAwaitResultK() => popCallFrame() ~> Vs ... </k>
+  rule <k> FAIL ~> relCallAwaitResultK() => popCallFrame() ~> FAIL ... </k>
 
-  //   dec $elsgroup_as_rulgroup(elsgroup) : rulgroup
   syntax RulGroupList ::= optAsSeqRulGroup(ElsGroupOpt)
                                             [function, total, symbol(optAsSeqRulGroup)]
                         | appendRulGroups(RulGroupList, RulGroupList)
@@ -140,9 +137,6 @@ module AL-CALL-REL
   //     Call_rel_dispatch/defined: Call_defined_rel
   //     Call_rel_dispatch/ext:     Call_extern_rel
   //   }
-  //
-  // `Call_extern_rel` is an `extern relation`, dispatched over the external
-  // interface like its sibling `Call_extern_func` (5.5-eval-call-func.k).
   // ==========================================================================
 
   syntax KItem ::= callRelDispatch(RelDef, ValList)
@@ -168,10 +162,24 @@ module AL-CALL-REL
   //     -- Call_rel_dispatch: C |- reldef val* : valsres
   // ==========================================================================
 
-  rule <k> callRel(X:Id, Vs:ValList) => callRelDispatch({GR[X]}:>RelDef, Vs) ... </k>
+  syntax KItem ::= findRel(Id)
+                 | callRelAwaitRelK(ValList)
+
+  rule <k> callRel(X:Id, Vs:ValList)
+        => findRel(X) ~> callRelAwaitRelK(Vs)
+       ...
+       </k>
+
+  rule <k> R:RelDef ~> callRelAwaitRelK(Vs:ValList)
+        => callRelDispatch(R, Vs)
+       ...
+       </k>
+  rule <k> FAIL ~> callRelAwaitRelK(_:ValList) => FAIL ... </k>
+
+  rule <k> findRel(X:Id) => {GR[X]}:>RelDef ... </k>
        <grenv> GR:Map </grenv>
     requires X in_keys(GR)
-  rule <k> callRel(X:Id, _:ValList) => FAIL ... </k>
+  rule <k> findRel(X:Id) => FAIL ... </k>
        <grenv> GR:Map </grenv>
     requires notBool (X in_keys(GR))
 

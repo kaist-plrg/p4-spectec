@@ -222,13 +222,7 @@ module AL-ASSIGN
 
   // `$repeat_<val>(val, n)` is `repeatVal` from common/0-stdlib.k.
 
-  // `vari*` at one more `iter`, and its length.
-  syntax VarrList ::= iterVaris(VariList, Iter)
-                                            [function, total, symbol(iterVaris)]
-  rule iterVaris(.VariList, _:Iter) => .VarrList
-  rule iterVaris((V:Vari, Vs:VariList), I:Iter)
-    => varrOfVari(iterVari(V, I)), iterVaris(Vs, I)
-
+  // `vari*` length.
   syntax Int ::= lengthVaris(VariList)      [function, total, symbol(lengthVaris)]
   rule lengthVaris(.VariList) => 0
   rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
