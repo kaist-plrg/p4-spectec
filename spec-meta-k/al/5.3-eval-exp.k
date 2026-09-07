@@ -237,13 +237,17 @@ module AL-EVAL-EXP
   //     -- if theta = $theta_of_tdenv(C.LOCAL.TYP)
   //     -- if (targ_subst = $subst_typ(theta, targ))*
   syntax KItem ::= callAwaitArgsK(Id, TypList)
-  rule <k> evalExp(callE(X:Id, Ts:TypList, As:ArgList))
-        => evalArgs(As) ~> callAwaitArgsK(X, substTypsMap(thetaOfTdenv(L), Ts))
+  rule <k> evalExp(callE(X:Id, Ts:TArgList, As:ArgList))
+        => evalArgs(As)
+           ~> callAwaitArgsK(X, typsOfTargs(substTargsMap(thetaOfTdenv(L), Ts)))
        ...
        </k>
        <ltdenv> L:Map </ltdenv>
 
-  rule <k> Vs:ValList ~> callAwaitArgsK(X:Id, Ts:TypList) => callFunc(X, Ts, Vs) ... </k>
+  rule <k> Vs:ValList ~> callAwaitArgsK(X:Id, Ts:TypList)
+        => callFunc(X, targsOfTyps(Ts), Vs)
+       ...
+       </k>
   rule <k> FAIL ~> callAwaitArgsK(_:Id, _:TypList) => FAIL ... </k>
 
   //   rulegroup Eval_exp/iter
@@ -525,6 +529,6 @@ module AL-EVAL-EXP
   // Call_func forward declaration.
   // ==========================================================================
 
-  syntax KItem ::= callFunc(Id, TypList, ValList)
+  syntax KItem ::= callFunc(Id, TArgList, ValList)
 
 endmodule

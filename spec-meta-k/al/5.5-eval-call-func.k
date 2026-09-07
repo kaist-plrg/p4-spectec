@@ -110,8 +110,8 @@ module AL-CALL-FUNC
   syntax Map ::= tdenvOfTargs(TParamList, TypList)
                                             [function, symbol(tdenvOfTargs)]
   rule tdenvOfTargs(.TParamList, .TypList) => .Map
-  rule tdenvOfTargs((X:Id, Xs:TParamList), (T:Typ, Ts:TypList))
-    => tdenvOfTargs(Xs, Ts) [X <- defTD(.TParamList, aliasDT(T))]
+  rule tdenvOfTargs((X:TParam, Xs:TParamList), (T:Typ, Ts:TypList))
+    => tdenvOfTargs(Xs, Ts) [{X}:>Id <- defTD(.TParamList, aliasDT(T))]
 
   syntax ClauseList ::= optAsSeqClause(ElsClauseOpt)
                                             [function, total, symbol(optAsSeqClause)]
@@ -133,49 +133,49 @@ module AL-CALL-FUNC
   //   }
   // ==========================================================================
 
-  syntax KItem ::= callFuncDispatch(FuncDef, TypList, ValList)
+  syntax KItem ::= callFuncDispatch(FuncDef, TArgList, ValList)
                  | callExternFunc(Id, TypList, ValList)
                  | callBuiltinFunc(Id, TypList, ValList)
 
-  rule <k> callFuncDispatch(extFunc(X:Id), Ts:TypList, Vs:ValList)
-        => callExternFunc(X, Ts, Vs)
+  rule <k> callFuncDispatch(extFunc(X:Id), Ts:TArgList, Vs:ValList)
+        => callExternFunc(X, typsOfTargs(Ts), Vs)
        ...
        </k>
-  rule <k> callFuncDispatch(builtinFunc(X:Id, _:TParamList, _:ParamList), Ts:TypList, Vs:ValList)
-        => callBuiltinFunc(X, Ts, Vs)
+  rule <k> callFuncDispatch(builtinFunc(X:Id, _:TParamList, _:ParamList), Ts:TArgList, Vs:ValList)
+        => callBuiltinFunc(X, typsOfTargs(Ts), Vs)
        ...
        </k>
-  rule <k> callFuncDispatch(tableFunc(_:ParamList, Rs:TblRowList), .TypList, Vs:ValList)
+  rule <k> callFuncDispatch(tableFunc(_:ParamList, Rs:TblRowList), .TArgList, Vs:ValList)
         => evalTblRows(Rs, Vs)
        ...
        </k>
   rule <k> callFuncDispatch(defFunc(Ps:TParamList, Cls:ClauseList, EC:ElsClauseOpt),
-                            Ts:TypList, Vs:ValList)
-        => callDefinedFunc(Ps, Cls, EC, Ts, Vs)
+                            Ts:TArgList, Vs:ValList)
+        => callDefinedFunc(Ps, Cls, EC, typsOfTargs(Ts), Vs)
        ...
        </k>
 
   // ==========================================================================
   // Call_func: look the function up, then dispatch
   //
-  //   rule Call_func: C |- id typ* val* : valres
+  //   rule Call_func: C |- id targ* val* : valres
   //     -- if funcdef = $find_func(C, id)
-  //     -- Call_func_dispatch: C |- funcdef typ* val* : valres
+  //     -- Call_func_dispatch: C |- funcdef targ* val* : valres
   // ==========================================================================
 
   syntax KItem ::= findFunc(Id)
-                 | callFuncAwaitFuncK(TypList, ValList)
+                 | callFuncAwaitFuncK(TArgList, ValList)
 
-  rule <k> callFunc(X:Id, Ts:TypList, Vs:ValList)
+  rule <k> callFunc(X:Id, Ts:TArgList, Vs:ValList)
         => findFunc(X) ~> callFuncAwaitFuncK(Ts, Vs)
        ...
        </k>
 
-  rule <k> F:FuncDef ~> callFuncAwaitFuncK(Ts:TypList, Vs:ValList)
+  rule <k> F:FuncDef ~> callFuncAwaitFuncK(Ts:TArgList, Vs:ValList)
         => callFuncDispatch(F, Ts, Vs)
        ...
        </k>
-  rule <k> FAIL ~> callFuncAwaitFuncK(_:TypList, _:ValList) => FAIL ... </k>
+  rule <k> FAIL ~> callFuncAwaitFuncK(_:TArgList, _:ValList) => FAIL ... </k>
 
   rule <k> findFunc(X:Id) => {LF[X]}:>FuncDef ... </k>
        <lfenv> LF:Map </lfenv>

@@ -50,6 +50,7 @@ module AL-EXTERN-JSON
   syntax JSONs ::= jsonOfAtoms(AtomList)      [function, symbol(jsonOfAtoms)]
   syntax JSON ::= jsonOfTyp(Typ)              [function, symbol(jsonOfTyp)]
   syntax JSONs ::= jsonOfTyps(TypList)        [function, symbol(jsonOfTyps)]
+  syntax JSONs ::= jsonOfTargs(TArgList)      [function, symbol(jsonOfTargs)]
 
   syntax JSON ::= jsonList(JSONs)             [function, total, symbol(jsonList)]
   rule jsonList(Js:JSONs) => [ Js ]
@@ -89,8 +90,8 @@ module AL-EXTERN-JSON
   rule jsonOfTyp(natT())  => [ "natT", .JSONs ]
   rule jsonOfTyp(intT())  => [ "intT", .JSONs ]
   rule jsonOfTyp(textT()) => [ "textT", .JSONs ]
-  rule jsonOfTyp(varT(X:Id, Ts:TypList))
-    => [ "varT", X, jsonList(jsonOfTyps(Ts)), .JSONs ]
+  rule jsonOfTyp(varT(X:Id, Ts:TArgList))
+    => [ "varT", X, jsonList(jsonOfTargs(Ts)), .JSONs ]
   rule jsonOfTyp(tupT(Ts:TypList)) => [ "tupT", jsonList(jsonOfTyps(Ts)), .JSONs ]
   rule jsonOfTyp(iterT(T:Typ, quest())) => [ "iterT", jsonOfTyp(T), "?", .JSONs ]
   rule jsonOfTyp(iterT(T:Typ, star()))  => [ "iterT", jsonOfTyp(T), "*", .JSONs ]
@@ -98,6 +99,9 @@ module AL-EXTERN-JSON
 
   rule jsonOfTyps(.TypList) => .JSONs
   rule jsonOfTyps(T:Typ, Ts:TypList) => jsonOfTyp(T), jsonOfTyps(Ts)
+
+  rule jsonOfTargs(.TArgList) => .JSONs
+  rule jsonOfTargs(T:TArg, Ts:TArgList) => jsonOfTyp({T}:>Typ), jsonOfTargs(Ts)
 
   // ==========================================================================
   // Requests
@@ -119,7 +123,6 @@ module AL-EXTERN-JSON
          "args" : jsonList(jsonOfVals(Vs)),
          .JSONs }
 
-  //   An extern *relation* takes only `id val*`, so no `targs` field.
   syntax JSON ::= jsonOfExternRelRequest(Id, ValList)
                                      [function, symbol(jsonOfExternRelRequest)]
   rule jsonOfExternRelRequest(X:Id, Vs:ValList)

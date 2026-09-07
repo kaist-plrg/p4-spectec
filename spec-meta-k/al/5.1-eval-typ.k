@@ -70,7 +70,7 @@ module AL-TYP
   rule upcast(_:Map, _:Map, intT(), V:Val) => failV()
     requires notBool isNumV(V)
 
-  rule upcast(L:Map, G:Map, varT(X:Id, Ts:TypList), V:Val)
+  rule upcast(L:Map, G:Map, varT(X:Id, Ts:TArgList), V:Val)
     => upcastVar(findTypIn(L, G, X), L, G, Ts, V)
 
   rule upcast(L:Map, G:Map, tupT(Ts:TypList), tupV(Vs:ValList))
@@ -86,13 +86,13 @@ module AL-TYP
 
   rule upcast(_:Map, _:Map, _:Typ, V:Val) => okV(V) [owise]
 
-  syntax ValRes ::= upcastVar(TypDefOpt, Map, Map, TypList, Val)
+  syntax ValRes ::= upcastVar(TypDefOpt, Map, Map, TArgList, Val)
                                             [function, symbol(upcastVar)]
 
   rule upcastVar(someTypDefOpt(defTD(Ps:TParamList, aliasDT(T:Typ))),
-                 L:Map, G:Map, Ts:TypList, V:Val)
+                 L:Map, G:Map, Ts:TArgList, V:Val)
     => upcast(L, G, substTyp(zipThetaMap(Ps, Ts), T), V)
-  rule upcastVar(_:TypDefOpt, _:Map, _:Map, _:TypList, V:Val) => okV(V) [owise]
+  rule upcastVar(_:TypDefOpt, _:Map, _:Map, _:TArgList, V:Val) => okV(V) [owise]
 
   // ==========================================================================
   // Downcasts
@@ -112,7 +112,7 @@ module AL-TYP
   rule downcast(_:Map, _:Map, natT(), V:Val) => failV()
     requires notBool isNumV(V)
 
-  rule downcast(L:Map, G:Map, varT(X:Id, Ts:TypList), V:Val)
+  rule downcast(L:Map, G:Map, varT(X:Id, Ts:TArgList), V:Val)
     => downcastVar(findTypIn(L, G, X), L, G, Ts, V)
 
   rule downcast(L:Map, G:Map, tupT(Ts:TypList), tupV(Vs:ValList))
@@ -128,13 +128,13 @@ module AL-TYP
 
   rule downcast(_:Map, _:Map, _:Typ, V:Val) => okV(V) [owise]
 
-  syntax ValRes ::= downcastVar(TypDefOpt, Map, Map, TypList, Val)
+  syntax ValRes ::= downcastVar(TypDefOpt, Map, Map, TArgList, Val)
                                             [function, symbol(downcastVar)]
 
   rule downcastVar(someTypDefOpt(defTD(Ps:TParamList, aliasDT(T:Typ))),
-                   L:Map, G:Map, Ts:TypList, V:Val)
+                   L:Map, G:Map, Ts:TArgList, V:Val)
     => downcast(L, G, substTyp(zipThetaMap(Ps, Ts), T), V)
-  rule downcastVar(_:TypDefOpt, _:Map, _:Map, _:TypList, V:Val) => okV(V) [owise]
+  rule downcastVar(_:TypDefOpt, _:Map, _:Map, _:TArgList, V:Val) => okV(V) [owise]
 
   // ==========================================================================
   // Cast helpers
@@ -176,12 +176,12 @@ module AL-TYP
   rule Typs2Repeat(_:Typ, .ValList) => .TypList
   rule Typs2Repeat(T:Typ, (_:Val, Vs:ValList)) => T, Typs2Repeat(T, Vs)
 
-  syntax Map ::= zipThetaMap(TParamList, TypList)
+  syntax Map ::= zipThetaMap(TParamList, TArgList)
                                             [function, symbol(zipThetaMap)]
 
-  rule zipThetaMap(.TParamList, .TypList) => .Map
-  rule zipThetaMap((X:Id, Xs:TParamList), (T:Typ, Ts:TypList))
-    => zipThetaMap(Xs, Ts) [X <- T]
+  rule zipThetaMap(.TParamList, .TArgList) => .Map
+  rule zipThetaMap((X:TParam, Xs:TParamList), (T:TArg, Ts:TArgList))
+    => zipThetaMap(Xs, Ts) [{X}:>Id <- {T}:>Typ]
 
   // ==========================================================================
   // Value-type matching
@@ -200,7 +200,7 @@ module AL-TYP
   rule subtyp(_:Map, intT(), _:Num) => true
   rule subtyp(_:Map, textT(), textV(_:String)) => true
 
-  rule subtyp(E:Map, varT(X:Id, Ts:TypList), V:Val)
+  rule subtyp(E:Map, varT(X:Id, Ts:TArgList), V:Val)
     => subtypVar(findTypInSingle(E, X), E, Ts, V)
 
   rule subtyp(E:Map, tupT(Ts:TypList), tupV(Vs:ValList)) => subtyps(E, Ts, Vs)
@@ -218,28 +218,28 @@ module AL-TYP
   rule findTypInSingle(E:Map, X:Id) => someTypDefOpt({E[X]}:>TypDef) requires X in_keys(E)
   rule findTypInSingle(E:Map, X:Id) => noTypDefOpt() requires notBool (X in_keys(E))
 
-  syntax Bool ::= subtypVar(TypDefOpt, Map, TypList, Val)
+  syntax Bool ::= subtypVar(TypDefOpt, Map, TArgList, Val)
                                             [function, total, symbol(subtypVar)]
                 | subtypCase(TypListOpt, Map, Map, ValList)
                                             [function, total, symbol(subtypCase)]
                 | subtypFields(Map, Map, TypFieldList, ValFieldList)
                                             [function, total, symbol(subtypFields)]
 
-  rule subtypVar(someTypDefOpt(extTD()), _:Map, _:TypList, extV(_:JSON)) => true
+  rule subtypVar(someTypDefOpt(extTD()), _:Map, _:TArgList, extV(_:JSON)) => true
 
   rule subtypVar(someTypDefOpt(defTD(Ps:TParamList, aliasDT(T:Typ))),
-                 E:Map, Ts:TypList, V:Val)
+                 E:Map, Ts:TArgList, V:Val)
     => subtyp(E, substTyp(zipThetaMap(Ps, Ts), T), V)
 
   rule subtypVar(someTypDefOpt(defTD(Ps:TParamList, variantDT(Cs:TypCaseList))),
-                 E:Map, Ts:TypList, injV(valCase(M:MixOp, Vs:ValList)))
+                 E:Map, Ts:TArgList, injV(valCase(M:MixOp, Vs:ValList)))
     => subtypCase(assocTypCase(M, Cs), E, zipThetaMap(Ps, Ts), Vs)
 
   rule subtypVar(someTypDefOpt(defTD(Ps:TParamList, structDT(Fs:TypFieldList))),
-                 E:Map, Ts:TypList, strV(Gs:ValFieldList))
+                 E:Map, Ts:TArgList, strV(Gs:ValFieldList))
     => subtypFields(E, zipThetaMap(Ps, Ts), Fs, Gs)
 
-  rule subtypVar(_:TypDefOpt, _:Map, _:TypList, _:Val) => false [owise]
+  rule subtypVar(_:TypDefOpt, _:Map, _:TArgList, _:Val) => false [owise]
 
   rule subtypCase(someTypList(Ts:TypList), E:Map, Th:Map, Vs:ValList)
     => subtyps(E, substTypsMap(Th, Ts), Vs)

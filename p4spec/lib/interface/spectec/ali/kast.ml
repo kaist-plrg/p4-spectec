@@ -128,7 +128,7 @@ let rec json_of_typ (typ : Il.typ) : Yojson.Safe.t =
   | NumT `IntT -> json_of_kapply "intT" []
   | TextT -> json_of_kapply "textT" []
   | VarT (id, targs) ->
-      json_of_kapply "varT" [ json_of_id id; json_of_typs targs ]
+      json_of_kapply "varT" [ json_of_id id; json_of_targs targs ]
   | TupleT typs -> json_of_kapply "tupT" [ json_of_typs typs ]
   | IterT (typ, iter) ->
       json_of_kapply "iterT" [ json_of_typ typ; json_of_iter iter ]
@@ -136,6 +136,9 @@ let rec json_of_typ (typ : Il.typ) : Yojson.Safe.t =
 
 and json_of_typs (typs : Il.typ list) : Yojson.Safe.t =
   json_of_klist "typList" ".typList" (List.map json_of_typ typs)
+
+and json_of_targs (targs : Il.typ list) : Yojson.Safe.t =
+  json_of_klist "targList" ".targList" (List.map json_of_typ targs)
 
 (* Type parameters *)
 
@@ -303,7 +306,7 @@ let rec json_of_exp (exp : Il.exp) : Yojson.Safe.t =
         [ json_of_exp eb; json_of_path path; json_of_exp en ]
   | CallE (id, targs, args) ->
       json_of_kapply "callE"
-        [ json_of_id id; json_of_typs targs; json_of_args args ]
+        [ json_of_id id; json_of_targs targs; json_of_args args ]
   | IterE (e, iterexp) ->
       json_of_kapply "iterE" [ json_of_exp e; json_of_iterexp iterexp ]
 

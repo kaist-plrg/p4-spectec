@@ -40,12 +40,15 @@ module COMMON-SYNTAX
                  | textT()                  [symbol(textT)]
 
   syntax Typ ::= OpTyp
-               | varT(Id, TypList)          [symbol(varT)]   // targ* = typ*
+               | varT(Id, TArgList)         [symbol(varT)]
                | tupT(TypList)              [symbol(tupT)]
                | iterT(Typ, Iter)           [symbol(iterT)]
                | funcT()                    [symbol(funcT)]
 
   syntax TypList ::= List{Typ, ","}         [symbol(typList), terminator-symbol(.typList)]
+
+  syntax TArg ::= Typ
+  syntax TArgList ::= List{TArg, ","}       [symbol(targList), terminator-symbol(.targList)]
 
   //   syntax deftyp = | ALIAS typ | STRUCT typfield* | VARIANT typcase*
   //   syntax typfield = atom typ
@@ -197,7 +200,7 @@ module COMMON-SYNTAX
                | idxE(Exp, Exp)             [symbol(idxE)]
                | sliceE(Exp, Exp, Exp)      [symbol(sliceE)]
                | updE(Exp, Path, Exp)       [symbol(updE)]
-               | callE(Id, TypList, ArgList)  // targ* = typ*
+               | callE(Id, TArgList, ArgList)
                                             [symbol(callE)]
                | iterE(Exp, IterExp)        [symbol(iterE)]
 
@@ -250,8 +253,6 @@ module COMMON-SYNTAX
   //
   //   syntax targ = typ
   //   syntax arg = | EXP exp | FUN id
-  //
-  // `targ` is an alias of `typ`, so `targ*` is written `TypList` throughout.
   // ==========================================================================
 
   syntax Arg ::= expA(Exp)                  [symbol(expA)]
@@ -263,10 +264,9 @@ module COMMON-SYNTAX
   // Type parameters
   //
   //   syntax tparam = id
-  //
-  // `tparam` is an alias of `id`, so `tparam*` is a list of `Id`.
   // ==========================================================================
 
-  syntax TParamList ::= List{Id, ","}       [symbol(tparamList), terminator-symbol(.tparamList)]
+  syntax TParam ::= Id
+  syntax TParamList ::= List{TParam, ","}   [symbol(tparamList), terminator-symbol(.tparamList)]
 
 endmodule
