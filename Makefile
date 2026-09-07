@@ -173,5 +173,5 @@ clean:
 	rm -f ./$(SPEC)
 	cd p4spec && opam exec --switch=5.1.0 -- dune clean
 	rm -rf $(KDEFDIR) $(KSHIM_OBJ)
-	rm -f $(KSCRATCH)/specdir $(KSCRATCH)/spectec-k-*
-	rm -rf $(KSCRATCH)/.kore-cache
+	rm -f $(KSPECDIR)/specdir $(KSPECDIR)/spectec-k-*
+	rm -rf $(KSPECDIR)/.kore-cache
