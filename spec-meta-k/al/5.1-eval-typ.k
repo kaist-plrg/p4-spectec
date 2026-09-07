@@ -233,7 +233,7 @@ module AL-TYP
                 | subtypFields(Map, Map, TypFieldList, ValFieldList)
                                             [function, total, symbol(subtypFields)]
 
-  rule subtypVar(someTypDefOpt(extTD()), _:Map, _:TypList, extV(_:Json)) => true
+  rule subtypVar(someTypDefOpt(extTD()), _:Map, _:TypList, extV(_:JSON)) => true
 
   rule subtypVar(someTypDefOpt(defTD(Ps:TParamList, aliasDT(T:Typ))),
                  E:Map, Ts:TypList, V:Val)

@@ -1,11 +1,7 @@
 (* The K side of the K <-> OCaml wire, reached through the C FFI.
  *
  *   K rules  --#ffiCall-->  spec-meta-k/ffi/shim.c  --caml_callback-->
- *   ml_init / ml_eval
- *
- * The wire format is documented in full at the head of
- * `p4spec/lib/interface/spectec/ali/extern.ml` and
- * `spec-meta-k/al/4.1-extern-json.k`. *)
+ *   ml_init / ml_eval *)
 
 open Runtime.Dynamic_Runner.Signature
 open Backend_boot.Config
@@ -29,9 +25,8 @@ let get_runner () : (module RUNNER) =
   match !runner with
   | Some runner -> runner
   | None ->
-      raise
-        (Interface.SpecTec_AL.Extern_error
-           "runner not initialized: ml_init_c was never called")
+      error_extern Util.Source.no_region
+        "runner not initialized: ml_init_c was never called"
 
 (* One-time initialization, called by the shim's `ml_init_c`. *)
 
@@ -79,8 +74,8 @@ let ml_eval (str_request : string) : string =
   in
   try Yojson.Safe.to_string (eval str_request) with
   | Sys_error msg -> fail (Format.sprintf "File error: %s" msg)
-  | Interface.SpecTec_AL.Extern_error msg ->
-      fail (Format.sprintf "Extern error: %s" msg)
+  | ExternError (at, msg) ->
+      fail (Format.sprintf "Extern error: %s" (string_of_error at msg))
   | Yojson.Json_error msg -> fail (Format.sprintf "JSON error: %s" msg)
   | BuiltinError (at, msg) | InterpError (at, msg) ->
       fail (Format.sprintf "Builtin error: %s" (string_of_error at msg))

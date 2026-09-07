@@ -295,9 +295,6 @@ let kast_command =
        | Sys_error msg ->
            Format.eprintf "File error: %s\n" msg;
            exit 1
-       | Interface.SpecTec_AL.Kast_error msg ->
-           Format.eprintf "KAST error: %s\n" msg;
-           exit 1
        | ParseError (at, msg) ->
            Format.eprintf "Parse error: %s\n" (string_of_error at msg);
            exit 1
@@ -336,9 +333,6 @@ let kast_p4_command =
        with
        | Sys_error msg ->
            Format.eprintf "File error: %s\n" msg;
-           exit 1
-       | Interface.SpecTec_AL.Kast_error msg ->
-           Format.eprintf "KAST error: %s\n" msg;
            exit 1
        | ParseError (at, msg) ->
            Format.eprintf "Parse error: %s\n" (string_of_error at msg);

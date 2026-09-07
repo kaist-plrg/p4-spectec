@@ -70,10 +70,7 @@ module AL-EXTERN-JSON
   rule jsonOfVal(optV(someVal(V:Val))) => [ "optV", jsonOfVal(V), .JSONs ]
   rule jsonOfVal(listV(Vs:ValList)) => [ "listV", jsonList(jsonOfVals(Vs)), .JSONs ]
   rule jsonOfVal(funcV(X:Id))       => [ "funcV", X, .JSONs ]
-
-  // `extV(Json)` gets no rule on purpose: `Json` is abstract and has no
-  // K-reachable inhabitants, so such a value should stick visibly rather than
-  // be invented.
+  rule jsonOfVal(extV(J:JSON))       => [ "extV", J, .JSONs ]
 
   rule jsonOfVals(.ValList) => .JSONs
   rule jsonOfVals(V:Val, Vs:ValList) => jsonOfVal(V), jsonOfVals(Vs)
@@ -160,6 +157,7 @@ module AL-EXTERN-JSON
     requires J =/=K null
   rule valOfJson([ "listV", [ Js:JSONs ], .JSONs ]) => listV(valsOfJsons(Js))
   rule valOfJson([ "funcV", X:String, .JSONs ]) => funcV(X)
+  rule valOfJson([ "extV", J:JSON, .JSONs ]) => extV(J)
 
   rule valsOfJsons(.JSONs) => .ValList
   rule valsOfJsons(J:JSON, Js:JSONs) => valOfJson(J), valsOfJsons(Js)

@@ -5,6 +5,7 @@ module Il = Lang.Il
 module Typ = Runtime.Type.Typ
 module Value = Runtime.Value
 open Util.Source
+open Util.Error
 
 (* The external interface for builtin and extern calls, for the K
    specification.
@@ -34,9 +35,7 @@ open Util.Source
               | {"ok": [val, ...]}
               | {"fail": null} *)
 
-exception Error of string
-
-let error fmt = Format.kasprintf (fun msg -> raise (Error msg)) fmt
+let error = error_extern
 
 (* Atoms *)
 
@@ -47,7 +46,9 @@ let atom_of_json (json : Yojson.Safe.t) : Atom.t =
   match json with
   | `String s -> Atom.atom_of_string s
   | _ ->
-      error "expected an atom string, but got %s" (Yojson.Safe.to_string json)
+      error no_region
+        (Format.sprintf "expected an atom string, but got %s"
+           (Yojson.Safe.to_string json))
 
 (* Mixops *)
 
@@ -65,11 +66,14 @@ let mixop_of_json (json : Yojson.Safe.t) : Mixop.t =
              match json_atoms with
              | `List jsons_atom -> List.map atom_of_json jsons_atom
              | _ ->
-                 error "expected a row of atoms, but got %s"
-                   (Yojson.Safe.to_string json_atoms))
+                 error no_region
+                   (Format.sprintf "expected a row of atoms, but got %s"
+                      (Yojson.Safe.to_string json_atoms)))
       |> Value.Mixops.of_atoms_matrix
   | _ ->
-      error "expected an atoms matrix, but got %s" (Yojson.Safe.to_string json)
+      error no_region
+        (Format.sprintf "expected an atoms matrix, but got %s"
+           (Yojson.Safe.to_string json))
 
 (* Types *)
 
@@ -103,14 +107,19 @@ let rec typ_of_json (json : Yojson.Safe.t) : Typ.t =
   | `List [ `String "iterT"; json_typ; `String "*" ] ->
       Typ.Make.list (typ_of_json json_typ)
   | `List [ `String "funcT" ] ->
-      error "a function type cannot cross the external interface"
-  | _ -> error "expected a type, but got %s" (Yojson.Safe.to_string json)
+      error no_region "a function type cannot cross the external interface"
+  | _ ->
+      error no_region
+        (Format.sprintf "expected a type, but got %s"
+           (Yojson.Safe.to_string json))
 
 let typs_of_json (json : Yojson.Safe.t) : Typ.t list =
   match json with
   | `List jsons_typ -> List.map typ_of_json jsons_typ
   | _ ->
-      error "expected a list of types, but got %s" (Yojson.Safe.to_string json)
+      error no_region
+        (Format.sprintf "expected a list of types, but got %s"
+           (Yojson.Safe.to_string json))
 
 (* Values *)
 
@@ -164,8 +173,9 @@ let rec val_of_json (json : Yojson.Safe.t) : Value.t =
                 let atom = atom_of_json json_atom $ no_region in
                 (atom, val_of_json json_value)
             | _ ->
-                error "expected a struct field, but got %s"
-                  (Yojson.Safe.to_string json_field))
+                error no_region
+                  (Format.sprintf "expected a struct field, but got %s"
+                     (Yojson.Safe.to_string json_field)))
           jsons_field
       in
       Value.Make.str typ_placeholder valuefields
@@ -197,13 +207,18 @@ let rec val_of_json (json : Yojson.Safe.t) : Value.t =
         |> with_region no_region |> with_typ typ_placeholder)
   | `List [ `String "extV"; json_ext ] ->
       Value.Make.extern typ_placeholder json_ext
-  | _ -> error "expected a value, but got %s" (Yojson.Safe.to_string json)
+  | _ ->
+      error no_region
+        (Format.sprintf "expected a value, but got %s"
+           (Yojson.Safe.to_string json))
 
 let vals_of_json (json : Yojson.Safe.t) : Value.t list =
   match json with
   | `List jsons_value -> List.map val_of_json jsons_value
   | _ ->
-      error "expected a list of values, but got %s" (Yojson.Safe.to_string json)
+      error no_region
+        (Format.sprintf "expected a list of values, but got %s"
+           (Yojson.Safe.to_string json))
 
 (* Requests and responses *)
 
@@ -218,14 +233,17 @@ let request_of_json (json : Yojson.Safe.t) : request =
       let find (name : string) : Yojson.Safe.t =
         match List.assoc_opt name fields with
         | Some json -> json
-        | None -> error "request is missing the field %s" name
+        | None ->
+            error no_region
+              (Format.sprintf "request is missing the field %s" name)
       in
       let name_of (key : string) : string =
         match find key with
         | `String name -> name
         | json ->
-            error "expected a name for %s, but got %s" key
-              (Yojson.Safe.to_string json)
+            error no_region
+              (Format.sprintf "expected a name for %s, but got %s" key
+                 (Yojson.Safe.to_string json))
       in
       let kinds =
         [ "builtin"; "extern-func"; "extern-rel" ]
@@ -235,10 +253,10 @@ let request_of_json (json : Yojson.Safe.t) : request =
         match kinds with
         | [ kind ] -> kind
         | [] ->
-            error
+            error no_region
               "request has none of the fields builtin, extern-func, extern-rel"
         | _ ->
-            error
+            error no_region
               "request has more than one of builtin, extern-func, extern-rel"
       in
       if kind = "extern-rel" then
@@ -250,7 +268,9 @@ let request_of_json (json : Yojson.Safe.t) : request =
         if kind = "builtin" then Builtin (name, targs, args)
         else ExternFunc (name, targs, args)
   | _ ->
-      error "expected a request object, but got %s" (Yojson.Safe.to_string json)
+      error no_region
+        (Format.sprintf "expected a request object, but got %s"
+           (Yojson.Safe.to_string json))
 
 let json_of_response (value : Value.t) : Yojson.Safe.t =
   `Assoc [ ("ok", json_of_val value) ]

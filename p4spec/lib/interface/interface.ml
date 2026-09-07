@@ -127,15 +127,11 @@ module SpecTec_AL = struct
 
   (* Program rendering as KAST *)
 
-  exception Kast_error = Spectec.Ali.Kast.Error
-
   let kast_of_spec_al (spec_al : Al.spec) : string =
     Spectec.Ali.Kast.string_of_spec_al spec_al
 
   let kast_of_value (value : Value.t) : string =
     Spectec.Ali.Kast.string_of_value value
-
-  exception Extern_error = Spectec.Ali.Extern_json.Error
 
   type extern_request = Spectec.Ali.Extern_json.request
 

@@ -59,6 +59,30 @@ let json_of_klist (symbol : string) (symbol_terminator : string)
     jsons
     (json_of_kapply symbol_terminator [])
 
+(* JSON *)
+
+let rec json_of_yojson (json : Yojson.Safe.t) : Yojson.Safe.t =
+  match json with
+  | `Null -> json_of_kapply "JSONnull" []
+  | `Bool b -> json_of_bool b
+  | `Int i -> json_of_ktoken "Int" (Int.to_string i)
+  | `Intlit i -> json_of_ktoken "Int" i
+  | `Float f ->
+      json_of_ktoken "Float" (Yojson.Safe.to_string (`Float f))
+  | `String s -> json_of_string s
+  | `Assoc fields ->
+      fields
+      |> List.map (fun (key, value) ->
+             json_of_kapply "JSONEntry"
+               [ json_of_string key; json_of_yojson value ])
+      |> json_of_yojsons |> fun fields -> json_of_kapply "JSONObject" [ fields ]
+  | `List values ->
+      values |> List.map json_of_yojson |> json_of_yojsons |> fun values ->
+      json_of_kapply "JSONList" [ values ]
+
+and json_of_yojsons (jsons : Yojson.Safe.t list) : Yojson.Safe.t =
+  json_of_klist "JSONs" ".JSONs" jsons
+
 (* Options *)
 
 let json_of_kopt (symbol_none : string) (symbol_some : string)
@@ -66,12 +90,6 @@ let json_of_kopt (symbol_none : string) (symbol_some : string)
   match json_opt with
   | None -> json_of_kapply symbol_none []
   | Some json -> json_of_kapply symbol_some [ json ]
-
-(* Errors *)
-
-exception Error of string
-
-let error fmt = Format.kasprintf (fun msg -> raise (Error msg)) fmt
 
 (* Identifiers *)
 
@@ -183,7 +201,7 @@ let rec json_of_value (value : Il.value) : Yojson.Safe.t =
         [ json_of_kopt "noVal" "someVal" (Option.map json_of_value value_opt) ]
   | ListV values -> json_of_kapply "listV" [ json_of_values values ]
   | FuncV id -> json_of_kapply "funcV" [ json_of_id id ]
-  | ExternV _ -> error "extern value cannot be emitted as a K Val"
+  | ExternV json -> json_of_kapply "extV" [ json_of_yojson json ]
 
 and json_of_values (values : Il.value list) : Yojson.Safe.t =
   json_of_klist "valList" ".valList" (List.map json_of_value values)

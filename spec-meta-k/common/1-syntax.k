@@ -6,9 +6,12 @@
 // `symbol(_)` so a constructor's KORE label is stable for tools that emit AL
 // terms directly.
 
+requires "json.md"
+
 module COMMON-SYNTAX
   imports BOOL-SYNTAX
   imports INT-SYNTAX
+  imports JSON-SYNTAX
   imports STRING-SYNTAX
 
   // ==========================================================================
@@ -142,10 +145,6 @@ module COMMON-SYNTAX
   //   syntax valcase = mixop val*
   // ==========================================================================
 
-  // `extern syntax json`: opaque by design -- its inhabitants come from
-  // outside the meta-language.
-  syntax Json
-
   syntax Val ::= boolV(Bool)                [symbol(boolV)]
                | Num
                | textV(String)              [symbol(textV)]
@@ -155,7 +154,7 @@ module COMMON-SYNTAX
                | optV(ValOpt)               [symbol(optV)]
                | listV(ValList)             [symbol(listV)]
                | funcV(Id)                  [symbol(funcV)]
-               | extV(Json)                 [symbol(extV)]
+               | extV(JSON)                 [symbol(extV)]
 
   syntax ValField ::= valField(Atom, Val)   [symbol(valField)]
   syntax ValCase ::= valCase(MixOp, ValList)
