@@ -1,10 +1,6 @@
 // Common syntax of the P4-SpecTec meta-language.
 //
 // Mirrors spec-meta/common/1-syntax.watsup.
-//
-// An abstract syntax definition. Each production carries an explicit
-// `symbol(_)` so a constructor's KORE label is stable for tools that emit AL
-// terms directly.
 
 requires "json.md"
 

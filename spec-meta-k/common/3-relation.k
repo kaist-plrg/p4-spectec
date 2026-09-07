@@ -4,7 +4,7 @@
 //
 //   syntax res<X> = OK X | FAIL
 //
-// K has no generics, so `res<X>` is instantiated once per `X` used by AL:
+// `res<X>` is instantiated once per `X` used by AL:
 //
 //   res<val>  -> ValRes    ($upcast, $downcast)
 //   res<val*> -> ValsRes   ($upcast/$downcast on a list of operands)

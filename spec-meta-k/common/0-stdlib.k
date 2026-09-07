@@ -1,9 +1,6 @@
 // Standard library of the P4-SpecTec meta-language.
 //
 // Mirrors spec-meta/common/0-stdlib.watsup.
-//
-// Watsup's generic functions (`$ite<X>`, `$repeat_<X>`, ...) are parametric.
-// K has no generics, so each is instantiated at the sorts it is used at.
 
 requires "1-syntax.k"
 
@@ -91,8 +88,6 @@ module COMMON-STDLIB
   rule tailsOf(.ValListList) => .ValListList
   rule tailsOf((_:Val, Vs:ValList) ; Vss:ValListList) => Vs ; tailsOf(Vss)
 
-  // `$assoc_<atom, val>`: lookup in an association list of `atom`-keyed pairs.
-  // The pair list is exactly `valfield*`, so it is taken as a `ValFieldList`.
   syntax ValOpt ::= assocVal(Atom, ValFieldList)
                                             [function, total, symbol(assocVal)]
 

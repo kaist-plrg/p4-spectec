@@ -1,7 +1,6 @@
 // Expression, path, and argument evaluation.
 //
-// Mirrors spec-meta/al/5.3-eval-exp.watsup (Eval_exp, Eval_path,
-// Eval_path_upd) and spec-meta/al/5.4-eval-arg.watsup (Eval_arg, Eval_targs).
+// Mirrors spec-meta/al/5.3-eval-exp.watsup.
 
 requires "5.1-eval-typ.k"
 requires "5.2-eval-assign.k"
@@ -272,9 +271,6 @@ module AL-EVAL-EXP
        ...
        </k>
 
-  // Bind each `vari` in `Vs` (unmarked, i.e. plain `varr`s) to the
-  // corresponding element of `Row` in the (already-cleared-if-needed) local
-  // value environment.
   syntax KItem ::= bindRow(VariList, ValList)
   rule <k> bindRow(.VariList, .ValList) => .K ... </k>
   rule <k> bindRow((V:Vari, Vs:VariList), (Val:Val, Vals:ValList)) => bindRow(Vs, Vals) ... </k>

@@ -1,8 +1,5 @@
 // JSON codec for the external interface to the host interpreter.
 //
-// The OCaml half of this codec is `p4spec/lib/interface/spectec/ali/extern.ml`,
-// which documents the wire format in full.  In brief:
-//
 //   val   ::= ["boolV", <bool>]
 //           | ["natN", "<decimal>"] | ["intN", "<decimal>"]
 //           | ["textV", <string>]
@@ -132,8 +129,6 @@ module AL-EXTERN-JSON
 
   // ==========================================================================
   // Inbound: JSON -> K terms
-  //
-  // Only the `val` half is needed: a response never carries a type.
   // ==========================================================================
 
   syntax Val ::= valOfJson(JSON)              [function, symbol(valOfJson)]

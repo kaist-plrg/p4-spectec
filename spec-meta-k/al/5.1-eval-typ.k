@@ -20,8 +20,6 @@ module AL-TYP
 
   // ==========================================================================
   // Mixop equality and association
-  //
-  // Needed by `$subtyp` on variants, where a `mixop` selects a type case.
   // ==========================================================================
 
   syntax Bool ::= eqMixOp(MixOp, MixOp)     [function, total, symbol(eqMixOp)]
@@ -88,8 +86,6 @@ module AL-TYP
 
   rule upcast(_:Map, _:Map, _:Typ, V:Val) => okV(V) [owise]
 
-  // A `VAR id targ*` upcast unfolds the alias it names; a non-alias or missing
-  // type definition matches no watsup clause, so it falls through to `OK val`.
   syntax ValRes ::= upcastVar(TypDefOpt, Map, Map, TypList, Val)
                                             [function, symbol(upcastVar)]
 
@@ -174,7 +170,6 @@ module AL-TYP
   rule resOpt(okV(V:Val)) => okV(optV(someVal(V)))
   rule resOpt(failV()) => failV()
 
-  // `ITER typ STAR` casts every element at the same `typ`.
   syntax TypList ::= Typs2Repeat(Typ, ValList)
                                             [function, total, symbol(Typs2Repeat)]
 
@@ -223,9 +218,6 @@ module AL-TYP
   rule findTypInSingle(E:Map, X:Id) => someTypDefOpt({E[X]}:>TypDef) requires X in_keys(E)
   rule findTypInSingle(E:Map, X:Id) => noTypDefOpt() requires notBool (X in_keys(E))
 
-  // A `VAR id targ*` matches according to the type definition it names:
-  // `EXT` accepts any `EXT json`, an alias unfolds, a variant checks the case
-  // arguments, a struct checks the fields.
   syntax Bool ::= subtypVar(TypDefOpt, Map, TypList, Val)
                                             [function, total, symbol(subtypVar)]
                 | subtypCase(TypListOpt, Map, Map, ValList)

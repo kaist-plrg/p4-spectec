@@ -131,9 +131,6 @@ module AL-SYNTAX
   // Scripts
   //
   //   syntax script = defn*
-  //
-  // `script` is an alias of `defn*`, so `Script` *is* the list sort: a script
-  // is matched directly as `.Script` or `D:Defn, Ds:Script`.
   // ==========================================================================
 
   syntax Script ::= List{Defn, ","}         [symbol(script), terminator-symbol(.script)]

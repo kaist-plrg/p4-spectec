@@ -171,8 +171,6 @@ module AL-PREM
        ...
        </k>
 
-  // Once every row succeeded, transpose the accumulated per-row bindings into
-  // one `LIST`-valued binding per `vari` in `Bind`, added onto the base <lvenv>.
   syntax KItem ::= finishIterPrList(VariList, List)
   rule <k> finishIterPrList(Bind:VariList, Acc:List) => premOK() ... </k>
        <lvenv> M:Map => addsMap(M, iterVaris(Bind, star()), transposeToLists(Bind, Acc)) </lvenv>

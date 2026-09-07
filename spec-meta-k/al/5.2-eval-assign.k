@@ -2,13 +2,10 @@
 //
 // Mirrors spec-meta/al/5.2-eval-assign.watsup.
 //
-// watsup's `ctx` result becomes an implicit `<local>` mutation plus an
-// explicit outcome marker:
-//
-//   Assign_exp:  ctx |- exp := val : ctx      -->  assignExp(Exp, Val) : Outcome, mutates <local>
-//   Assign_exps: ctx |- exp* := val* : ctx    -->  assignExps(ExpList, ValList) : Outcome
-//   Assign_arg:  ctx/ctx |- arg := val : ctx  -->  assignArg(Arg, Val) : Outcome, reads <caller>
-//   Assign_args: ctx/ctx |- arg* := val* : ctx -> assignArgs(ArgList, ValList) : Outcome
+//   Assign_exp:  ctx |- exp := val : ctx       --> assignExp(Exp, Val) : Outcome, mutates <local>
+//   Assign_exps: ctx |- exp* := val* : ctx     --> assignExps(ExpList, ValList) : Outcome
+//   Assign_arg:  ctx/ctx |- arg := val : ctx   --> assignArg(Arg, Val) : Outcome, reads <caller>
+//   Assign_args: ctx/ctx |- arg* := val* : ctx --> assignArgs(ArgList, ValList) : Outcome
 
 requires "3-context.k"
 requires "../common/3-relation.k"
@@ -115,10 +112,6 @@ module AL-ASSIGN
        ...
        </k>
 
-  // Assign `exp` against every element of `val*` in turn, in the cleared
-  // scratch environment, collecting each element's bindings for `vari*` (as a
-  // `List` of `ValList`s, one per element, in order) before restoring <local>
-  // and merging the collected columns in as `LIST`-valued bindings.
   syntax KItem ::= assignEach(Exp, ValList, VariList, List)
 
   rule <k> assignEach(_:Exp, .ValList, Vs:VariList, Acc:List)
@@ -138,8 +131,6 @@ module AL-ASSIGN
        </k>
        <lvenv> M:Map </lvenv>
 
-  // Bind each `vari` in `Vs` to the `LIST` formed from its column across
-  // `Acc` (one entry per element assigned).
   syntax KItem ::= assignListResults(VariList, List)
   rule <k> assignListResults(Vs:VariList, Acc:List) => assignOK() ... </k>
        <lvenv> V:Map => addsMap(V, iterVaris(Vs, star()), transposeToLists(Vs, Acc)) </lvenv>
@@ -181,8 +172,7 @@ module AL-ASSIGN
   //   rule Assign_arg/exp
   rule <k> assignArg(expA(E:Exp), V:Val) => assignExp(E, V) ... </k>
 
-  //   rule Assign_arg/fun: looks up id_caller in the caller's fenv (local then
-  //   global; global is shared and read directly from <gfenv>)
+  //   rule Assign_arg/fun
   rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => assignOK() ... </k>
        <cfenv> CF:Map </cfenv>
        <lfenv> M:Map => M[X <- {CF[Y]}:>FuncDef] </lfenv>
@@ -205,14 +195,9 @@ module AL-ASSIGN
 
   // ==========================================================================
   // Value-level helpers
-  //
-  // Ordinary functions (not judgments): `$adds_map`, `$repeat_<val>`,
-  // `$iter_vari`, `$find_vari`, `$finds_vari` instantiated on the cell-based
-  // `Map`.
   // ==========================================================================
 
-  // `$adds_map<varr, val>`: add each key/value pair, in order. Partial on
-  // mismatched lengths, as `$adds_map` is.
+  // `$adds_map<varr, val>`: add each key/value pair, in order.
   syntax Map ::= addsMap(Map, VarrList, ValList)
                                             [function, symbol(addsMap)]
 
@@ -220,16 +205,11 @@ module AL-ASSIGN
   rule addsMap(M:Map, (R:Varr, Rs:VarrList), (V:Val, Vs:ValList))
     => addsMap(M[R <- V], Rs, Vs)
 
-  // `$repeat_<val>(val, n)` is `repeatVal` from common/0-stdlib.k.
-
-  // `vari*` length.
   syntax Int ::= lengthVaris(VariList)      [function, total, symbol(lengthVaris)]
   rule lengthVaris(.VariList) => 0
   rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
 
-  // `$find_vari`/`$finds_vari` against an explicit `Map` rather than `<local>`,
-  // for a scratch environment already extracted from a cell (e.g. after popping
-  // a save).
+  // `$find_vari`/`$finds_vari` against an explicit `Map`.
   syntax ValList ::= findVaris(VariList, Map)
                                             [function, symbol(findVaris)]
   rule findVaris(.VariList, _:Map) => .ValList
@@ -240,9 +220,6 @@ module AL-ASSIGN
   rule someVals(.ValList) => .ValList
   rule someVals(V:Val, Vs:ValList) => optV(someVal(V)), someVals(Vs)
 
-  // Transpose the per-element binding columns in `Acc` (a `List` of `ValList`s,
-  // one per element, each ordered as `vari*`) into one `ValList` of `LIST
-  // val_sub*`, one per `vari`.
   syntax ValList ::= transposeToLists(VariList, List)
                                             [function, symbol(transposeToLists)]
   rule transposeToLists(Vs:VariList, Acc:List) => transposeToListsAcc(Vs, 0, Acc)

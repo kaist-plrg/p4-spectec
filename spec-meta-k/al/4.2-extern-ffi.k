@@ -4,7 +4,7 @@
 //   p4spec/bin/kffi.ml
 //
 // The OCaml runtime lives in the interpreter process.
-// kffi.ml builds the runner once, at init, for the run's one target spec.
+// The runner is built once on init.
 
 requires "4.1-extern-json.k"
 requires "ffi.md"

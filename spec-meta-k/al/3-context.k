@@ -1,7 +1,6 @@
 // Loading context from a script.
 //
-// Mirrors `$load`, `$load_typdef`, `$load_reldef`, `$load_funcdef` from
-// spec-meta/al/3-context.watsup.
+// Mirrors spec-meta/al/3-context.watsup.
 
 requires "2-env.k"
 requires "../common/3-relation.k"
@@ -139,9 +138,6 @@ module AL-CONTEXT
   //   dec $sub_list(ctx, vari*) : ctx*
   // ==========================================================================
 
-  // `$sub_opt`: `noRowOpt()` if `$sub_opt` is `eps` (skip the body);
-  // `someRowOpt(vals)` if it applies, with `vals` the value to bind each
-  // `vari` in `Vs` to, in order.
   syntax SubOptRow ::= noRowOpt()           [symbol(noRowOpt)]
                      | someRowOpt(ValList)  [symbol(someRowOpt)]
 
