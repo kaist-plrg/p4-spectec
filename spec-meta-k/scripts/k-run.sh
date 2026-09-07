@@ -22,7 +22,6 @@ if [ "$#" -ne 1 ]; then
 fi
 
 spec=$1
-make --no-print-directory boot
 
 KDEF=al-kompiled krun -d al-kompiled \
   --parser ./spec-meta-k/scripts/kast-spec.sh "$spec" \
