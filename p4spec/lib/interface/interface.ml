@@ -125,39 +125,24 @@ module SpecTec_AL = struct
   let unparse_program (value_script : Value.t) : string =
     value_script |> unboot_script |> Al.Print.string_of_spec
 
-  (* Program rendering as KAST, for the K specification in `spec-meta-k/` *)
+  (* Program rendering as KAST *)
 
   exception Kast_error = Spectec.Ali.Kast.Error
 
   let kast_of_spec_al (spec_al : Al.spec) : string =
     Spectec.Ali.Kast.string_of_spec_al spec_al
 
-  (* A target-level value (e.g. a parsed P4 program) as the K sort `Val`.
-     Unlike `kast_of_spec_al`, this is sort-independent: it emits K's structural
-     `Val` constructors, which any spec's values inhabit, rather than the
-     meta-language script syntax. *)
-
   let kast_of_value (value : Value.t) : string =
     Spectec.Ali.Kast.string_of_value value
 
-  (* External interface for builtin and extern calls, for the K specification
-     in `spec-meta-k/`.  K has no builtin implementations of its own: it
-     serializes the call and shells out to `spectec-boot extern`, so this
-     module is the authority for what a builtin computes.  `extern dec` /
-     `extern relation` calls go to that same subcommand, whose authority is
-     the spec it is given. *)
+  exception Extern_error = Spectec.Ali.Extern_json.Error
 
-  exception Extern_error = Spectec.Ali.Extern.Error
+  type extern_request = Spectec.Ali.Extern_json.request
 
-  type extern_request = Spectec.Ali.Extern.request =
-    | Builtin of string * Typ.t list * Value.t list
-    | ExternFunc of string * Typ.t list * Value.t list
-    | ExternRel of string * Value.t list
-
-  let request_of_json = Spectec.Ali.Extern.request_of_json
-  let json_of_response = Spectec.Ali.Extern.json_of_response
-  let json_of_response_multi = Spectec.Ali.Extern.json_of_response_multi
-  let json_of_response_fail = Spectec.Ali.Extern.json_of_response_fail
+  let request_of_json = Spectec.Ali.Extern_json.request_of_json
+  let json_of_response = Spectec.Ali.Extern_json.json_of_response
+  let json_of_response_multi = Spectec.Ali.Extern_json.json_of_response_multi
+  let json_of_response_fail = Spectec.Ali.Extern_json.json_of_response_fail
 
   (* Builtins *)
 

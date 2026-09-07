@@ -320,15 +320,6 @@ let kast_p4_command =
      in
      fun () ->
        try
-         (* The P4 program is parsed by the ordinary P4 front end, whose menhir
-            grammar builds a `Value.t` directly — there is no separate P4 AST —
-            so this is the very value `Program_ok` is applied to.
-
-            It is emitted as K's structural `Val`, not through the script
-            emitter: a `p4program` inhabits sorts the meta-language constructor
-            table knows nothing about.  The spec is not loaded here; the program
-            is independent of it, and reaches K as a separate configuration
-            variable. *)
          let value_program =
            match Interface.P4.parse_program includes_p4 [ path_p4 ] with
            | Pass value_program -> value_program
@@ -353,97 +344,6 @@ let kast_p4_command =
            Format.eprintf "Parse error: %s\n" (string_of_error at msg);
            exit 1)
 
-let extern_command =
-  Core.Command.basic
-    ~summary:
-      "evaluate a single builtin or extern func/rel call given as JSON, on the \
-       P4 interface, and print the result"
-    (let open Core.Command.Let_syntax in
-     let open Core.Command.Param in
-     let%map path_spec =
-       flag "-spec" (required string)
-         ~doc:"PATH the spec the builtin/extern names resolve against"
-     and path_in =
-       flag "-i" (required string) ~doc:"FILE read the request from FILE"
-     and path_out =
-       flag "-o" (optional string) ~doc:"FILE write to FILE instead of stdout"
-     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching" in
-     fun () ->
-       try
-         let json_request = Yojson.Safe.from_file path_in in
-         let request = Interface.SpecTec_AL.request_of_json json_request in
-         let build_runner () =
-           Backend_boot.Build.build_target ~cache:(not no_cache)
-             {
-               layer = { specdir = path_spec; rel = "" };
-               interface = P4_interface;
-             }
-         in
-         let response =
-           match request with
-           | Builtin (name, targs, args) ->
-               if name = "print_" then
-                 Interface.P4.init
-                   (SL (Pass.structure ~final:true [ path_spec ]));
-               let value =
-                 Interface.P4.call_builtin
-                   (fun _ -> ())
-                   Util.Source.(name $ no_region)
-                   targs args
-               in
-               Interface.SpecTec_AL.json_of_response value
-           | ExternFunc (name, targs, args) -> (
-               let (module Runner) = build_runner () in
-               match Runner.Interp.eval_func name targs args with
-               | Pass value -> Interface.SpecTec_AL.json_of_response value
-               | Fail (at, msg) ->
-                   Format.eprintf "extern func %s failed: %s\n" name
-                     (string_of_error at msg);
-                   Interface.SpecTec_AL.json_of_response_fail ())
-           | ExternRel (name, args) -> (
-               let (module Runner) = build_runner () in
-               match Runner.Interp.eval_rel name args with
-               | Pass values ->
-                   Interface.SpecTec_AL.json_of_response_multi values
-               | Fail (at, msg) ->
-                   Format.eprintf "extern rel %s failed: %s\n" name
-                     (string_of_error at msg);
-                   Interface.SpecTec_AL.json_of_response_fail ())
-         in
-         let response = Yojson.Safe.to_string response in
-         match path_out with
-         | Some path_out ->
-             let oc = Out_channel.open_text path_out in
-             Fun.protect
-               ~finally:(fun () -> Out_channel.close oc)
-               (fun () -> Out_channel.output_string oc (response ^ "\n"))
-         | None -> print_endline response
-       with
-       | CommandError msg ->
-           Format.eprintf "error: %s\n" msg;
-           exit 1
-       | Sys_error msg ->
-           Format.eprintf "File error: %s\n" msg;
-           exit 1
-       | Interface.SpecTec_AL.Extern_error msg ->
-           Format.eprintf "Extern error: %s\n" msg;
-           exit 1
-       | Yojson.Json_error msg ->
-           Format.eprintf "JSON error: %s\n" msg;
-           exit 1
-       | BuiltinError (at, msg) | InterpError (at, msg) ->
-           Format.eprintf "Builtin error: %s\n" (string_of_error at msg);
-           exit 1
-       | ParseError (at, msg) ->
-           Format.eprintf "Parse error: %s\n" (string_of_error at msg);
-           exit 1
-       | ElabError (at, msg) ->
-           Format.eprintf "Elaboration error: %s\n" (string_of_error at msg);
-           exit 1
-       | e ->
-           Format.eprintf "Unknown error: %s\n" (Printexc.to_string e);
-           exit 1)
-
 (* Command-line interface *)
 
 let command_core =
@@ -462,9 +362,9 @@ let command_core =
       ("boot-n", boot_n_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
+      (* KAST conversion *)
       ("kast", kast_command);
       ("kast-p4", kast_p4_command);
-      ("extern", extern_command);
     ]
 
 let () = Command_unix.run ~version command_core
