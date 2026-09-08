@@ -82,7 +82,6 @@ module COMMON-ENV
   rule appendIter(.IterList, I:Iter) => I, .IterList
   rule appendIter((J:Iter, Is:IterList), I:Iter) => J, appendIter(Is, I)
 
-  // `varr` of a `vari`, dropping the type: `id _ iter*` |-> `id iter*`.
   syntax Varr ::= varrOfVari(Vari)          [function, total, symbol(varrOfVari)]
   rule varrOfVari(vari(X:Id, _:Typ, Is:IterList)) => varr(X, Is)
 

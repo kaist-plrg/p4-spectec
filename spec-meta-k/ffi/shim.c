@@ -1,9 +1,5 @@
 /* Thin C shim between K's FFI and the OCaml implementation.
  *
- * K's FFI is a libffi wrapper, so it can call any plain C ABI function. OCaml
- * cannot expose one on its own, so this sits in between -- a normal C signature
- * outwards, `caml_callback` inwards:
- *
  *   K rules  --#ffiCall-->  shim.c  --caml_callback-->  p4spec/bin/kffi.ml
  *
  * The shim is a one long-lived process for the whole `krun`. */

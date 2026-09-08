@@ -8,7 +8,6 @@
 //
 //   res<val>  -> ValRes    ($upcast, $downcast)
 //   res<val*> -> ValsRes   ($upcast/$downcast on a list of operands)
-//   unitres   -> UnitRes   (declared for completeness; AL uses no unit result)
 
 requires "2-env.k"
 
@@ -16,10 +15,6 @@ module COMMON-RELATION
   imports COMMON-ENV
 
   syntax KItem ::= "FAIL"
-
-  //   syntax unitres = OK | FAIL
-  syntax UnitRes ::= okU()                  [symbol(okU)]
-                   | failU()                [symbol(failU)]
 
   //   syntax valres = res<val>
   syntax ValRes ::= okV(Val)                [symbol(okV)]
