@@ -3,7 +3,7 @@
 set -e
 
 usage() {
-  echo "usage: $0 P4_PROGRAM" >&2
+  echo "usage: $0 SPEC P4_PROGRAM" >&2
 }
 
 case ${1-} in
@@ -16,13 +16,13 @@ case ${1-} in
     ;;
 esac
 
-if [ "$#" -ne 1 ]; then
+if [ "$#" -ne 2 ]; then
   usage
   exit 2
 fi
 
-p4=$1
-spec=spec
+spec=$1
+p4=$2
 specdir=$(mktemp ./spec-meta-k/spectec-k-specdir-XXXXXX)
 trap 'rm -f "$specdir"' 0
 printf '@%s\n' "$spec" > "$specdir"

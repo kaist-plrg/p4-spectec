@@ -24,6 +24,7 @@ EXCLUDES_DIR = ROOT / "excludes" / "static"
 POSITIVE_RESULT = ROOT / "spec-meta-k" / "run-k-typecheck-pos.result"
 NEGATIVE_RESULT = ROOT / "spec-meta-k" / "run-k-typecheck-neg.result"
 K_RUN_P4 = ROOT / "spec-meta-k" / "scripts" / "k-run-p4.sh"
+SPEC = "spec"
 
 PASS, FAIL, TIMEOUT = "pass", "fail", "timeout"
 
@@ -62,7 +63,7 @@ def typecheck(program: str, timeout: Optional[int]) -> dict:
     started = time.monotonic()
     try:
         proc = subprocess.run(
-            [str(K_RUN_P4), program],
+            [str(K_RUN_P4), SPEC, program],
             cwd=ROOT,
             capture_output=True,
             text=True,
