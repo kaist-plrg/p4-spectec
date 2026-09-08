@@ -24337,19 +24337,23 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
    paths
 
     rulepath enum
-    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(p, IC, prefixedNameIR)
-    -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
-    -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: simpleEnumTypeIR
-    -- let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} = typeDefIR as simpleEnumTypeIR
+    -- let typeDefIR?{typeDefIR <- typeDefIR?} = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeDefIR?{typeDefIR <- typeDefIR?} matches (_)
+    -- let ?(typeDefIR_base) = typeDefIR?{typeDefIR <- typeDefIR?}
+    -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: simpleEnumTypeIR
+    -- let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} = typeIR as simpleEnumTypeIR
     -- output: % % % |- % : STO typeId '.' nameIR as value
 
     rulepath serenum
-    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_i(p, IC, prefixedNameIR)
-    -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
-    -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: serializableEnumTypeIR
-    -- let ENUM typeId `< _typeIR `> `{ id_member '=' value_member ';'*{id_member <- id_member*, value_member <- value_member*} `} = typeDefIR as serializableEnumTypeIR
+    -- let typeDefIR?{typeDefIR <- typeDefIR?} = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeDefIR?{typeDefIR <- typeDefIR?} matches (_)
+    -- let ?(typeDefIR_base) = typeDefIR?{typeDefIR <- typeDefIR?}
+    -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: serializableEnumTypeIR
+    -- let ENUM typeId `< _typeIR `> `{ id_member '=' value_member ';'*{id_member <- id_member*, value_member <- value_member*} `} = typeIR as serializableEnumTypeIR
     -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*{id_member <- id_member*, value_member <- value_member*})
     -- if value'?{value' <- value'?} matches (_)
     -- let ?(value) = value'?{value' <- value'?}
@@ -27507,20 +27511,24 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
    paths
 
     rulepath enum
-    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_e(p, EC, prefixedNameIR)
-    -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
-    -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: simpleEnumTypeIR
-    -- let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} = typeDefIR as simpleEnumTypeIR
+    -- let typeDefIR?{typeDefIR <- typeDefIR?} = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeDefIR?{typeDefIR <- typeDefIR?} matches (_)
+    -- let ?(typeDefIR_base) = typeDefIR?{typeDefIR <- typeDefIR?}
+    -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: simpleEnumTypeIR
+    -- let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} = typeIR as simpleEnumTypeIR
     -- let expressionResult = _CONT typeId '.' nameIR as value as expressionResult
     -- output: % % % |- % : EC ARCH expressionResult
 
     rulepath serenum
-    -- let typeDefIR'?{typeDefIR' <- typeDefIR'?} = $find_typeDef_e(p, EC, prefixedNameIR)
-    -- if typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)
-    -- let ?(typeDefIR) = typeDefIR'?{typeDefIR' <- typeDefIR'?}
-    -- if typeDefIR <: serializableEnumTypeIR
-    -- let ENUM typeId `< _typeIR `> `{ nameIR_member '=' value_member ';'*{nameIR_member <- nameIR_member*, value_member <- value_member*} `} = typeDefIR as serializableEnumTypeIR
+    -- let typeDefIR?{typeDefIR <- typeDefIR?} = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeDefIR?{typeDefIR <- typeDefIR?} matches (_)
+    -- let ?(typeDefIR_base) = typeDefIR?{typeDefIR <- typeDefIR?}
+    -- let typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- let typeIR = $unroll_typeIR(typeIR_base)
+    -- if typeIR <: serializableEnumTypeIR
+    -- let ENUM typeId `< _typeIR `> `{ nameIR_member '=' value_member ';'*{nameIR_member <- nameIR_member*, value_member <- value_member*} `} = typeIR as serializableEnumTypeIR
     -- let value'?{value' <- value'?} = $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*{nameIR_member <- nameIR_member*, value_member <- value_member*})
     -- if value'?{value' <- value'?} matches (_)
     -- let ?(value) = value'?{value' <- value'?}
