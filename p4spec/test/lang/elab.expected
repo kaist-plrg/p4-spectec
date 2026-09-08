@@ -14269,10 +14269,14 @@ relation Expr_inst: cursor instContext store |- typedExpressionIR : store value
   rulegroup memberAccessExpressionIR-type
 
     rule enum: p IC STO |- TYPE prefixedNameIR '.' nameIR as expressionIR '#' _expressionNoteIR : STO typeId '.' nameIR as value
-    -- if (?(ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} as typeDefIR) = $find_typeDef_i(p, IC, prefixedNameIR))
+    -- if (?(typeDefIR_base) = $find_typeDef_i(p, IC, prefixedNameIR))
+    -- if (typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base))
+    -- if (ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
 
     rule serenum: p IC STO |- TYPE prefixedNameIR '.' nameIR as expressionIR '#' _expressionNoteIR : STO typeId '.' nameIR '.' value as value
-    -- if (?(ENUM typeId `< _typeIR `> `{ id_member '=' value_member ';'*{id_member <- id_member*, value_member <- value_member*} `} as typeDefIR) = $find_typeDef_i(p, IC, prefixedNameIR))
+    -- if (?(typeDefIR_base) = $find_typeDef_i(p, IC, prefixedNameIR))
+    -- if (typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base))
+    -- if (ENUM typeId `< _typeIR `> `{ id_member '=' value_member ';'*{id_member <- id_member*, value_member <- value_member*} `} as typeIR = $unroll_typeIR(typeIR_base))
     -- if (?(value) = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*{id_member <- id_member*, value_member <- value_member*}))
 
   rulegroup memberAccessExpressionIR-typedExpressionIR
@@ -15719,11 +15723,15 @@ relation Expr_eval: cursor evalContext arch |- typedExpressionIR : evalContext a
   rulegroup memberAccessExpressionIR-type
 
     rule enum: p EC ARCH |- TYPE prefixedNameIR '.' nameIR as expressionIR '#' _expressionNoteIR : EC ARCH expressionResult
-    -- if (?(ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} as typeDefIR) = $find_typeDef_e(p, EC, prefixedNameIR))
+    -- if (?(typeDefIR_base) = $find_typeDef_e(p, EC, prefixedNameIR))
+    -- if (typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base))
+    -- if (ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
     -- if (expressionResult = _CONT typeId '.' nameIR as value as expressionResult)
 
     rule serenum: p EC ARCH |- TYPE prefixedNameIR '.' nameIR as expressionIR '#' _expressionNoteIR : EC ARCH expressionResult
-    -- if (?(ENUM typeId `< _typeIR `> `{ nameIR_member '=' value_member ';'*{nameIR_member <- nameIR_member*, value_member <- value_member*} `} as typeDefIR) = $find_typeDef_e(p, EC, prefixedNameIR))
+    -- if (?(typeDefIR_base) = $find_typeDef_e(p, EC, prefixedNameIR))
+    -- if (typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base))
+    -- if (ENUM typeId `< _typeIR `> `{ nameIR_member '=' value_member ';'*{nameIR_member <- nameIR_member*, value_member <- value_member*} `} as typeIR = $unroll_typeIR(typeIR_base))
     -- if (?(value) = $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*{nameIR_member <- nameIR_member*, value_member <- value_member*}))
     -- if (expressionResult = _CONT typeId '.' nameIR '.' value as value as expressionResult)
 
