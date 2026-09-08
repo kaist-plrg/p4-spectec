@@ -1,0 +1,51 @@
+# Mismatches board — drift check.
+#
+# `unit` runs the tracker scripts' own pytest suite (offline, no secrets) on
+# every PR touching them; it's the primary safety net and also covers
+# dump_board.py's GraphQL extraction against a fixture.
+#
+# `drift` dumps the Mismatches Projects board and diffs it against excludes/
+# in both directions (an .exclude with no board item; a board item whose
+# .exclude was deleted; a field that disagrees). It no-ops
+# ("... not configured; skipping") until TRACKER_PAT and
+# TRACKER_MISMATCH_PROJECT_NUMBER are set, so it never fails fork PRs.
+name: "Bug/test tracker: Mismatches drift check"
+
+on:
+  pull_request:
+    paths:
+      - "excludes/**"
+      - "scripts/tracker/**"
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: python3 -m pip install --quiet pytest
+      - name: Run tracker unit tests
+        run: python3 -m pytest scripts/tracker/ -q
+
+  drift:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.TRACKER_PAT }}
+      PROJECT_NUMBER: ${{ vars.TRACKER_MISMATCH_PROJECT_NUMBER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dump Mismatches board and diff against excludes/
+        run: |
+          if [ -z "$GH_TOKEN" ] || [ -z "$PROJECT_NUMBER" ]; then
+            echo "Mismatches board not configured; skipping"
+            exit 0
+          fi
+          python3 scripts/tracker/dump_board.py "$PROJECT_NUMBER" --owner kaist-plrg --out board.json
+          python3 scripts/tracker/tracker_check.py --board board.json

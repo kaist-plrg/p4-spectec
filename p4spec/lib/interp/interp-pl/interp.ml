@@ -1079,7 +1079,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | CaseI (exp, cases, dangle) -> eval_case_instr iid ctx exp cases dangle
     | GroupI (id_group, _id_rel, rel_signature, exps_group, block) ->
         eval_group_instr ctx id_group rel_signature exps_group block
-    | TryI arms -> eval_try_instr ctx arms
+    | BlockI arms -> eval_block_instr ctx arms
     | LetI (exp_l, exp_r, iterinstrs) ->
         eval_let_instr ctx exp_l exp_r iterinstrs
     | RuleI (id, notexp, inputs, iterinstrs) ->
@@ -1424,7 +1424,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Try instruction evaluation *)
 
-  and eval_try_deterministic (ctx : Ctx.t) (arms : arm list) : Ctx.t * Flow.t =
+  and eval_block_deterministic (ctx : Ctx.t) (arms : arm list) : Ctx.t * Flow.t
+      =
     let eval_arm_deterministic (ctx_pre : Ctx.t) (flow_pre : Flow.t) (arm : arm)
         : Ctx.t * Flow.t =
       let at = match arm with instr :: _ -> instr.node.at | [] -> no_region in
@@ -1470,7 +1471,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (ctx, flow)
     with Nondet at -> back_err at "nondeterministic instruction evaluation"
 
-  and eval_try_sequential (ctx : Ctx.t) (arms : arm list) : Ctx.t * Flow.t =
+  and eval_block_sequential (ctx : Ctx.t) (arms : arm list) : Ctx.t * Flow.t =
     let _, flow =
       List.fold_left
         (fun (ctx, flow) arm ->
@@ -1492,9 +1493,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     in
     (ctx, flow)
 
-  and eval_try_instr (ctx : Ctx.t) (arms : arm list) : Ctx.t * Flow.t =
-    if !Ctx.is_det then eval_try_deterministic ctx arms
-    else eval_try_sequential ctx arms
+  and eval_block_instr (ctx : Ctx.t) (arms : arm list) : Ctx.t * Flow.t =
+    if !Ctx.is_det then eval_block_deterministic ctx arms
+    else eval_block_sequential ctx arms
 
   (* Let instruction evaluation *)
 

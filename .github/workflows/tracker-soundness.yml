@@ -1,0 +1,32 @@
+# Soundness board — label-membership check.
+#
+# Verifies every issue carrying the `soundness` label is actually an item on
+# the Soundness native Project (catches the built-in auto-add workflow
+# silently not firing). No-ops until TRACKER_PAT and
+# TRACKER_SOUNDNESS_PROJECT_NUMBER are set.
+name: "Bug/test tracker: Soundness membership check"
+
+on:
+  pull_request:
+    paths:
+      - "scripts/tracker/**"
+  workflow_dispatch:
+
+jobs:
+  membership:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.TRACKER_PAT }}
+      PROJECT_NUMBER: ${{ vars.TRACKER_SOUNDNESS_PROJECT_NUMBER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check every label:soundness issue is on the Soundness board
+        run: |
+          if [ -z "$GH_TOKEN" ] || [ -z "$PROJECT_NUMBER" ]; then
+            echo "Soundness project not configured; skipping"
+            exit 0
+          fi
+          python3 scripts/tracker/label_check.py --label soundness --project "$PROJECT_NUMBER" --owner kaist-plrg

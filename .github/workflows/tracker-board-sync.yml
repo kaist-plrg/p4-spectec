@@ -1,0 +1,43 @@
+# Mismatches board — push excludes/ onto the board (the writer side of the
+# drift check).
+#
+# excludes/ is authoritative for a mismatch's derivable fields; this job
+# mirrors them onto the board (Name, Category, State, Repo issue, Upstream
+# issue, #Pos, #Neg), renames items whose .exclude was renamed, and adds an
+# item for a new .exclude. Hand-authored columns are never touched. So once
+# a change to excludes/ lands on main, the board self-updates and the drift
+# check stays green -- no manual board editing.
+#
+# It WRITES to the board, so it uses the write-scoped TRACKER_WRITE_PAT
+# (Projects read+write on kaist-plrg). No-ops until it and the project
+# number are set.
+name: "Bug/test tracker: Mismatches — sync board from excludes/"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "excludes/**"
+      - "scripts/tracker/**"
+  schedule:
+    - cron: "37 6 * * *"   # daily, 06:37 UTC (after the upstream-state sync)
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.TRACKER_WRITE_PAT }}
+      PROJECT_NUMBER: ${{ vars.TRACKER_MISMATCH_PROJECT_NUMBER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Push excludes/ onto the Mismatches board
+        run: |
+          if [ -z "$GH_TOKEN" ] || [ -z "$PROJECT_NUMBER" ]; then
+            echo "Mismatches board not configured; skipping"
+            exit 0
+          fi
+          python3 scripts/tracker/sync_board.py --project "$PROJECT_NUMBER" --owner kaist-plrg

@@ -1,0 +1,39 @@
+# Mismatches board — sync the upstream (p4lang/p4c or p4lang/p4-spec) issue
+# state onto each item.
+#
+# "Upstream" here means the compiler/spec repo where the actual bug lives:
+# each Mismatches item links (in its `Upstream issue` field) to a p4lang/p4c
+# or p4lang/p4-spec issue/PR. This job reads that link, looks up whether it
+# is open / closed / merged, and writes it to the item's `Upstream state`
+# field -- so you can see, per mismatch, whether it's been fixed upstream.
+# The kaist-plrg P4-SpecTec issue stays the item's authoritative content.
+#
+# Unlike the read-only checks, this WRITES to the board, so it uses a
+# separate write-scoped token TRACKER_WRITE_PAT (Projects read+write on
+# kaist-plrg + public-repo read). No-ops until it and the project number
+# are set.
+name: "Bug/test tracker: Mismatches — sync p4c/p4-spec issue state"
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # daily, 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.TRACKER_WRITE_PAT }}
+      PROJECT_NUMBER: ${{ vars.TRACKER_MISMATCH_PROJECT_NUMBER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Sync p4c/p4-spec issue state into 'Upstream state'
+        run: |
+          if [ -z "$GH_TOKEN" ] || [ -z "$PROJECT_NUMBER" ]; then
+            echo "upstream-state sync not configured; skipping"
+            exit 0
+          fi
+          python3 scripts/tracker/sync_upstream_state.py --project "$PROJECT_NUMBER" --owner kaist-plrg
