@@ -48,47 +48,55 @@ let update_venv_partial (venv : VEnv.t) (renv_partial : Partialbind.REnv.t) :
       VEnv.add id_to (typ_to, iters) venv)
     venv renv_partial
 
-(* Expression binding analysis *)
+(* Helper for finding the first region of a nested call expression *)
 
 let first_some option_l option_r =
   match option_l with Some _ -> option_l | None -> option_r ()
 
-let rec call_at_in_exp (exp : exp) : region option =
+let rec region_of_nested_call_exp (exp : exp) : region option =
   match exp.it with
   | BoolE _ | NumE _ | TextE _ | VarE _ -> None
-  | UnE (_, _, exp) -> call_at_in_exp exp
+  | UnE (_, _, exp) -> region_of_nested_call_exp exp
   | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
-      first_some (call_at_in_exp exp_l) (fun () -> call_at_in_exp exp_r)
+      first_some (region_of_nested_call_exp exp_l) (fun () ->
+          region_of_nested_call_exp exp_r)
   | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
-      call_at_in_exp exp
-  | TupleE exps | ListE exps -> List.find_map call_at_in_exp exps
-  | CaseE notexp -> List.find_map call_at_in_exp (Mixfix.args notexp)
+      region_of_nested_call_exp exp
+  | TupleE exps | ListE exps -> List.find_map region_of_nested_call_exp exps
+  | CaseE notexp -> List.find_map region_of_nested_call_exp (Mixfix.args notexp)
   | StrE expfields ->
-      List.find_map (fun (_, exp) -> call_at_in_exp exp) expfields
-  | OptE (Some exp) -> call_at_in_exp exp
+      List.find_map (fun (_, exp) -> region_of_nested_call_exp exp) expfields
+  | OptE (Some exp) -> region_of_nested_call_exp exp
   | OptE None -> None
   | ConsE (exp_l, exp_r) | CatE (exp_l, exp_r) | MemE (exp_l, exp_r) ->
-      first_some (call_at_in_exp exp_l) (fun () -> call_at_in_exp exp_r)
-  | LenE exp | DotE (exp, _) -> call_at_in_exp exp
+      first_some (region_of_nested_call_exp exp_l) (fun () ->
+          region_of_nested_call_exp exp_r)
+  | LenE exp | DotE (exp, _) -> region_of_nested_call_exp exp
   | IdxE (exp_b, exp_i) ->
-      first_some (call_at_in_exp exp_b) (fun () -> call_at_in_exp exp_i)
+      first_some (region_of_nested_call_exp exp_b) (fun () ->
+          region_of_nested_call_exp exp_i)
   | SliceE (exp_b, exp_i, exp_n) ->
-      List.find_map call_at_in_exp [ exp_b; exp_i; exp_n ]
+      List.find_map region_of_nested_call_exp [ exp_b; exp_i; exp_n ]
   | UpdE (exp_b, path, exp_f) ->
-      first_some (call_at_in_exp exp_b) (fun () ->
-          first_some (call_at_in_path path) (fun () -> call_at_in_exp exp_f))
+      first_some (region_of_nested_call_exp exp_b) (fun () ->
+          first_some (region_of_nested_call_path path) (fun () ->
+              region_of_nested_call_exp exp_f))
   | CallE _ -> Some exp.at
-  | IterE (exp, _) -> call_at_in_exp exp
+  | IterE (exp, _) -> region_of_nested_call_exp exp
 
-and call_at_in_path (path : path) : region option =
+and region_of_nested_call_path (path : path) : region option =
   match path.it with
   | RootP -> None
   | IdxP (path, exp) ->
-      first_some (call_at_in_path path) (fun () -> call_at_in_exp exp)
+      first_some (region_of_nested_call_path path) (fun () ->
+          region_of_nested_call_exp exp)
   | SliceP (path, exp_i, exp_n) ->
-      first_some (call_at_in_path path) (fun () ->
-          first_some (call_at_in_exp exp_i) (fun () -> call_at_in_exp exp_n))
-  | DotP (path, _) -> call_at_in_path path
+      first_some (region_of_nested_call_path path) (fun () ->
+          first_some (region_of_nested_call_exp exp_i) (fun () ->
+              region_of_nested_call_exp exp_n))
+  | DotP (path, _) -> region_of_nested_call_path path
+
+(* Expression binding analysis *)
 
 let analyze_exps_as_bind (ctx : Ctx.t) (iterctx : Iterctx.t) (exps : exp list) :
     Ctx.t * VEnv.t * exp list * prem list =
@@ -115,8 +123,7 @@ let analyze_exp_as_bound (ctx : Ctx.t) (exp : exp) : unit =
   let binds = Collectbind.collect_exp ctx exp in
   if not (BEnv.is_empty binds) then
     error ~code:Free_variable_in_expression exp.at
-      (Format.asprintf "expression uses unbound %s"
-         (BEnv.describe_variables binds))
+      (Format.asprintf "expression uses unbound %s" (BEnv.describe_binds binds))
       ~detail:
         "Every variable here must already be bound by an earlier part of the \
          rule, such as the conclusion's input position or a preceding premise."
@@ -149,10 +156,10 @@ let analyze_args_as_bind (ctx : Ctx.t) (args : arg list) :
 
 let analyze_args_as_bind_shallow (ctx : Ctx.t) (args : arg list) :
     Ctx.t * VEnv.t * arg list * prem list =
-  let invalid_arg =
+  let arg_invalid_opt =
     List.find_opt (fun arg -> not (Shallowbind.check_shallow_arg arg)) args
   in
-  (match invalid_arg with
+  (match arg_invalid_opt with
   | Some arg ->
       error ~code:Table_row_binding_shape arg.at
         (Format.asprintf
@@ -166,11 +173,11 @@ let analyze_args_as_bind_shallow (ctx : Ctx.t) (args : arg list) :
     | VarE id when VEnv.mem id ctx.venv -> seen
     | VarE id -> (
         match IdMap.find_opt id seen with
-        | Some first_at ->
+        | Some at_first ->
             error ~code:Repeated_table_binding id.at
               (Format.asprintf "table row pattern binds `%s` more than once"
                  id.it)
-              ~related:[ (first_at, "first bound here") ]
+              ~related:[ (at_first, "first bound here") ]
               ~detail:
                 "Each table parameter contributes one independent match \
                  pattern. Reusing a variable would add an equality condition \
@@ -233,7 +240,7 @@ let rec otherwise_failure (prem : prem) : otherwise_failure option =
   | RulePr _ | IfHoldPr _ | IfNotHoldPr _ -> Some (Relation_call prem.at)
   | IfPr _ -> Some (Condition prem.at)
   | LetPr (_, exp) | DebugPr exp ->
-      Option.map (fun at -> Function_call at) (call_at_in_exp exp)
+      Option.map (fun at -> Function_call at) (region_of_nested_call_exp exp)
   | IterPr (prem, _) -> otherwise_failure prem
 
 let check_prems_in_otherwise (prems : prem list) : unit =
@@ -314,8 +321,8 @@ and analyze_if_eq_prem (ctx : Ctx.t) (iterctx : Iterctx.t) (at_prem : region)
         (Format.asprintf
            "both sides of an equality bind new variables: left side binds %s, \
             right side binds %s"
-           (BEnv.describe_variables binds_l)
-           (BEnv.describe_variables binds_r))
+           (BEnv.describe_binds binds_l)
+           (BEnv.describe_binds binds_r))
         ~detail:
           "An `=` premise reads as a comparison when both sides are already \
            bound, or as a binder when one side is. With new variables on both \
@@ -647,15 +654,15 @@ let check_valid_match_tablerows (ctx : Ctx.t) (at : region)
     Pattern.find_missing pattern_sets_total pattern_sets_tablerows
   in
   if Option.is_none closer_opt && pattern_sets_group_missing <> [] then
-    let missing =
-      List.map Pattern.PatternSets.to_source_string pattern_sets_group_missing
-    in
     let detail =
+      let missing =
+        List.map Pattern.PatternSets.to_source_string pattern_sets_group_missing
+      in
       "Uncovered patterns: "
       ^ (missing |> List.map Diagnostic.quote |> String.concat ", ")
       ^ "."
     in
-    let primary =
+    let at_primary =
       match List.rev tablerows with
       | tablerow :: _ -> region_after tablerow.at
       | [] -> at
@@ -667,7 +674,7 @@ let check_valid_match_tablerows (ctx : Ctx.t) (at : region)
              Stdlib.compare nottyp_l.at nottyp_r.at)
       |> List.map (fun nottyp -> (nottyp.at, "case in uncovered pattern"))
     in
-    error ~code:Pattern_incomplete ~detail ~related primary
+    error ~code:Pattern_incomplete ~detail ~related at_primary
       "table rows do not cover every declared case"
 
 let analyze_tablerow (ctx : Ctx.t) (tablerow : tablerow) : Al.tablerow =

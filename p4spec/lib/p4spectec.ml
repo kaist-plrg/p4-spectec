@@ -7,7 +7,6 @@ module Boot_build = Backend_boot.Build
 
 type 'a result = ('a, Error.t) Stdlib.result
 
-let ( let* ) = Result.bind
 let with_warnings = Diagnostic.collect
 
 let with_diagnostics (f : unit -> 'a result) : 'a result * Diagnostic.Report.t =
@@ -66,6 +65,7 @@ let tower_of_file (path_tower : string) (target : Config.target) :
 
 let build_tower ?(cache = true) ?(det = false) ?(guard = false)
     (tower : Config.tower) : (Run.spec * (module Run.RUNNER)) result =
+  let ( let* ) = Result.bind in
   let* (specs : Boot_build.tower_specs) =
     Boot_build.specs_of_tower tower
     |> Result.map_error (fun e -> Error.PassError e)

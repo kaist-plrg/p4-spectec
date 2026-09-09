@@ -26,7 +26,7 @@ module BEnv = struct
   let singleton id typ = add id (Occ.Single (typ, [])) empty
   let flatten (benv : t) : VEnv.t = map Occ.strip benv
 
-  let describe_variables (benv : t) : string =
+  let describe_binds (benv : t) : string =
     let ids =
       dom benv |> IdSet.elements
       |> List.map (fun (id : Id.t) -> Format.asprintf "`%s`" id.it)
@@ -44,22 +44,22 @@ module BEnv = struct
         let bind_b = find_opt id benv_b in
         match (bind_a, bind_b) with
         | Some bind_a, Some bind_b ->
-            let typ_a = Occ.strip bind_a in
-            let typ_b = Occ.strip bind_b in
-            (if not (Typdim.equiv typ_a typ_b) then
-               let typ_a_base, _ = typ_a in
-               let typ_b_base, _ = typ_b in
-               error ~code:Parallel_binding_dimension_mismatch typ_b_base.at
+            let typdim_a = Occ.strip bind_a in
+            let typdim_b = Occ.strip bind_b in
+            (if not (Typdim.equiv typdim_a typdim_b) then
+               let typ_a, _ = typdim_a in
+               let typ_b, _ = typdim_b in
+               error ~code:Parallel_binding_dimension_mismatch typ_b.at
                  (Format.asprintf
                     "parallel bindings for `%s` have incompatible dimensions: \
                      `%s` and `%s`"
                     id.it (Occ.to_string bind_a) (Occ.to_string bind_b))
-                 ~related:[ (typ_a_base.at, "first bound here") ]
+                 ~related:[ (typ_a.at, "first bound here") ]
                  ~detail:
                    "A variable can have only one type and iteration dimension \
                     within a binder pattern. These two positions give the \
                     variable different dimensions.");
-            add id (Occ.Multi typ_a) benv
+            add id (Occ.Multi typdim_a) benv
         | Some bind, None | None, Some bind -> add id bind benv
         | None, None ->
             (* [id] comes from the union of both environment domains. *)

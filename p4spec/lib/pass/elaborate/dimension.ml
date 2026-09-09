@@ -43,37 +43,38 @@ module Dimctx = struct
 
   let infer (dctx : t) : VEnv.t =
     mapi
-      (fun id typs ->
-        let typs_sorted = List.sort Typdim.compare typs in
-        let typ_min = List.hd typs_sorted in
+      (fun id typdims ->
+        let typdims_sorted = List.sort Typdim.compare typdims in
+        let typdim_min = List.hd typdims_sorted in
         List.iter
           (fun ((typ, _) as typdim) ->
-            let first, second =
-              let at_min = (fst typ_min).at in
+            let typdim_first, typdim_second =
+              let at_min = (fst typdim_min).at in
               let at_current = typ.at in
               let position region =
                 (region.left.file, region.left.line, region.left.column)
               in
               if Stdlib.compare (position at_min) (position at_current) <= 0
-              then (typ_min, typdim)
-              else (typdim, typ_min)
+              then (typdim_min, typdim)
+              else (typdim, typdim_min)
             in
             check ~code:Iteration_dimension_mismatch
-              (Typdim.sub typ_min typdim)
-              (fst second).at
+              (Typdim.sub typdim_min typdim)
+              (fst typdim_second).at
               (Format.sprintf
                  "identifier `%s` has incompatible iteration dimensions: `%s` \
                   and `%s`"
-                 (Id.to_string id) (Typdim.to_string first)
-                 (Typdim.to_string second))
+                 (Id.to_string id)
+                 (Typdim.to_string typdim_first)
+                 (Typdim.to_string typdim_second))
               ~related:
                 [
-                  ( (fst first).at,
+                  ( (fst typdim_first).at,
                     Format.sprintf "other occurrence has dimension `%s`"
-                      (Typdim.to_string first) );
+                      (Typdim.to_string typdim_first) );
                 ])
-          (List.tl typs_sorted);
-        typ_min)
+          (List.tl typdims_sorted);
+        typdim_min)
       dctx
 end
 
