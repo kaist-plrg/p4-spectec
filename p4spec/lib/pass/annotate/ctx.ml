@@ -193,7 +193,7 @@ let validate_hint_fields (at_hint : region) (declaration : HId.t)
         if actual > expected then find_extra expected ats_fields
         else
           match List.rev ats_fields with
-          | at :: _ -> after_region at
+          | at :: _ -> region_after at
           | [] -> at_hint
       in
       let name_noun = if actual = 1 then "field name" else "field names" in

@@ -657,7 +657,7 @@ let check_valid_match_tablerows (ctx : Ctx.t) (at : region)
     in
     let primary =
       match List.rev tablerows with
-      | tablerow :: _ -> after_region tablerow.at
+      | tablerow :: _ -> region_after tablerow.at
       | [] -> at
     in
     let related =
