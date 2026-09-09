@@ -10,18 +10,28 @@ open Util.Checks
 module Mixfix = Domain.Mixfix
 module F = Format
 
-(* Checks *)
+(* Checks and Helpers *)
+
+let region_of_ids = function
+  | [] -> None
+  | tparams -> Some (tparams |> List.map at |> over_region)
+
+let region_of_first_extra expected regions fallback =
+  let rec nth index = function
+    | [] -> fallback
+    | region :: _ when index = 0 -> region
+    | _ :: regions -> nth (index - 1) regions
+  in
+  if List.length regions > expected then nth expected regions else fallback
 
 (* Identifiers *)
 
 let valid_tid (id : id) = id.it = (Xl.Var.strip_var_suffix id).it
 
-let region_of_tparams = function
-  | [] -> None
-  | tparams -> Some (over_region (List.map (fun tparam -> tparam.at) tparams))
+(* Type parameters *)
 
 let related_tparams tparams fallback =
-  match region_of_tparams tparams with
+  match region_of_ids tparams with
   | Some at -> [ (at, "expected type parameters declared here") ]
   | None -> (
       match fallback with
@@ -33,37 +43,24 @@ let describe_tparams = function
   | tparams ->
       F.asprintf "type parameters `%s`" (El.Print.string_of_tparams tparams)
 
-let quote_mixop mixop =
-  let rendered = Mixop.string_of_mixop mixop in
-  let length = String.length rendered in
-  (* [Mixop.string_of_mixop] wraps every rendered operator in backticks. *)
-  assert (length >= 2 && rendered.[0] = '`' && rendered.[length - 1] = '`');
-  Diagnostic.quote (String.sub rendered 1 (length - 2))
-
-let region_of_first_extra expected regions fallback =
-  let rec nth index = function
-    | [] -> fallback
-    | region :: _ when index = 0 -> region
-    | _ :: regions -> nth (index - 1) regions
-  in
-  if List.length regions > expected then nth expected regions else fallback
-
 let check_tparams_distinct code (tparams : tparam list) =
-  let rec find_first_duplicate seen = function
+  let rec find_first_duplicate tparams_seen = function
     | [] -> None
-    | tparam :: rest -> (
+    | tparam_h :: tparams_t -> (
         match
-          List.find_opt (fun (first : tparam) -> first.it = tparam.it) seen
+          List.find_opt
+            (fun (tparam : tparam) -> tparam.it = tparam_h.it)
+            tparams_seen
         with
-        | Some first_occurrence -> Some (first_occurrence, tparam)
-        | None -> find_first_duplicate (tparam :: seen) rest)
+        | Some tparam_first -> Some (tparam_first, tparam_h)
+        | None -> find_first_duplicate (tparam_h :: tparams_seen) tparams_t)
   in
   match find_first_duplicate [] tparams with
   | None -> ()
-  | Some (first_occurrence, duplicate_occurrence) ->
-      error ~code duplicate_occurrence.at
-        (F.asprintf "type parameter `%s` is duplicated" duplicate_occurrence.it)
-        ~related:[ (first_occurrence.at, "first declared here") ]
+  | Some (tparam_first, tparam_duplicate) ->
+      error ~code tparam_duplicate.at
+        (F.asprintf "type parameter `%s` is duplicated" tparam_duplicate.it)
+        ~related:[ (tparam_first.at, "first declared here") ]
 
 (* Iteration elaboration *)
 
@@ -137,7 +134,7 @@ and elab_plaintyp' (ctx : Ctx.t) (plaintyp : plaintyp') : Il.typ' =
            (if tparams_expected = 1 then "" else "s")
            targs_actual)
         ~related:
-          (match Ctx.typdef_prior_at ctx tid with
+          (match Ctx.region_of_duplicate_typdef ctx tid with
           | Some at -> [ (at, "type declared here") ]
           | None -> []);
       let targs_il = List.map (elab_plaintyp ctx) targs in
@@ -215,6 +212,13 @@ and elab_deftyp_struct (ctx : Ctx.t) (at : region) (tparams : tparam list)
 
 (* Elaboration of variant type definitions *)
 
+and quote_mixop mixop =
+  let rendered = Mixop.string_of_mixop mixop in
+  let length = String.length rendered in
+  (* [Mixop.string_of_mixop] wraps every rendered operator in backticks. *)
+  assert (length >= 2 && rendered.[0] = '`' && rendered.[length - 1] = '`');
+  Diagnostic.quote (String.sub rendered 1 (length - 2))
+
 and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
   let typ_il = Expand.expand_typ (Ctx.find_typdef_opt ctx) typ_il in
   match typ_il.it with
@@ -226,7 +230,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
             (F.asprintf "incomplete type %s does not allow extension"
                (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
             ~related:
-              (match Ctx.typdef_prior_at ctx tid with
+              (match Ctx.region_of_duplicate_typdef ctx tid with
               | Some at -> [ (at, "originally declared here") ]
               | None -> [])
             ~detail:
@@ -243,7 +247,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
                 (F.asprintf "struct type %s does not allow extension"
                    (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
                 ~related:
-                  (match Ctx.typdef_prior_at ctx tid with
+                  (match Ctx.region_of_duplicate_typdef ctx tid with
                   | Some at -> [ (at, "originally defined here") ]
                   | None -> [])
                 ~detail:
@@ -255,7 +259,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
             (F.asprintf "type parameter %s does not allow extension"
                (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
             ~related:
-              (match Ctx.typdef_prior_at ctx tid with
+              (match Ctx.region_of_duplicate_typdef ctx tid with
               | Some at -> [ (at, "type parameter declared here") ]
               | None -> [])
             ~detail:
@@ -266,7 +270,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
             (F.asprintf "extern type %s does not allow extension"
                (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
             ~related:
-              (match Ctx.typdef_prior_at ctx tid with
+              (match Ctx.region_of_duplicate_typdef ctx tid with
               | Some at -> [ (at, "extern type declared here") ]
               | None -> [])
             ~detail:
@@ -308,19 +312,23 @@ and elab_deftyp_variant (ctx : Ctx.t) (at : region) (id : id)
            (Mixfix.to_mixop nottyp_il.it, nottyp_il.at))
   in
   let mixop_groups =
-    groupby (fun (m1, _) (m2, _) -> Mixop.eq m1 m2) mixops_with_at
+    groupby
+      (fun (mixop_a, _) (mixop_b, _) -> Mixop.eq mixop_a mixop_b)
+      mixops_with_at
   in
   let collision_opt =
     List.find_map
-      (function first :: second :: _ -> Some (first, second) | _ -> None)
+      (function
+        | group_first :: group_second :: _ -> Some (group_first, group_second)
+        | _ -> None)
       mixop_groups
   in
   (match collision_opt with
-  | Some ((mixop, first_at), (_, duplicate_at)) ->
-      error ~code:Variant_mixop_collision duplicate_at
+  | Some ((mixop, at_first), (_, at_duplicate)) ->
+      error ~code:Variant_mixop_collision at_duplicate
         (F.asprintf "variant case shape %s conflicts with an earlier case"
            (quote_mixop mixop))
-        ~related:[ (first_at, "earlier case with this shape") ]
+        ~related:[ (at_first, "earlier case with this shape") ]
         ~detail:
           "Variant cases must differ in their literal tokens or argument \
            positions. Differences in argument types do not distinguish cases."
@@ -804,7 +812,7 @@ and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
        (if tparams_expected = 1 then "" else "s")
        tparams_actual)
     ~related:
-      (match Ctx.dec_prior_at ctx id with
+      (match Ctx.region_of_duplicate_dec ctx id with
       | Some at -> [ (at, "declared here") ]
       | None -> []);
   let targs_il = List.map (elab_plaintyp ctx) targs in
@@ -812,7 +820,7 @@ and infer_call_exp (ctx : Ctx.t) (at : region) (id : id) (targs : targ list)
   let params_il = Subst.subst_params theta params_il in
   let typ_il = Subst.subst_typ theta typ_il in
   let related =
-    match Ctx.dec_prior_at ctx id with
+    match Ctx.region_of_duplicate_dec ctx id with
     | Some at -> [ (at, "function declared here") ]
     | None -> []
   in
@@ -1383,7 +1391,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
       let typs_params_il_p = Typ.Make.of_params_il params_il_p in
       let typs_params_il_a = Typ.Make.of_params_il params_il_a in
       let related =
-        match Ctx.dec_prior_at ctx id_a with
+        match Ctx.region_of_duplicate_dec ctx id_a with
         | Some at ->
             [
               (id_p.at, "function parameter declared here");
@@ -1486,10 +1494,10 @@ let is_else_prem_internal (prem_internal : prem_internal) : bool =
 let check_prems_internal (prems_internal : prem_internal list) : unit =
   let prems_else_internal = List.filter is_else_prem_internal prems_internal in
   match prems_else_internal with
-  | first :: second :: _ ->
-      error ~code:Prem_multiple_otherwise second.at
+  | prem_internal_first :: prem_internal_second :: _ ->
+      error ~code:Prem_multiple_otherwise prem_internal_second.at
         "cannot use more than one `otherwise` premise"
-        ~related:[ (first.at, "first `otherwise` premise here") ]
+        ~related:[ (prem_internal_first.at, "first `otherwise` premise here") ]
   | _ -> ()
 
 let rec elab_prem (ctx : Ctx.t) (prem : prem) : Ctx.t * prem_internal =
@@ -1523,7 +1531,7 @@ and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
     (not (Ctx.bound_typdef ctx id))
     id.at
     (F.asprintf "meta-variable name `%s` is already used by a type" id.it)
-    ~related:(Ctx.related_of_prior (Ctx.typdef_prior_at ctx id));
+    ~related:(Ctx.related_of_duplicate (Ctx.region_of_duplicate_typdef ctx id));
   let typ_il = elab_plaintyp ctx plaintyp in
   Ctx.add_metavar ctx id typ_il
 
@@ -1665,14 +1673,14 @@ let elab_rulegroup (ctx : Ctx.t) (at : region) (id_rel : id) (id_rulegroup : id)
           rules_internal
       with
       | Some rule_il ->
-          let primary_at, related =
+          let at_primary, related =
             if Stdlib.compare rule_il_else.at.left rule_il.at.left < 0 then
-              (rule_il.at, (rule_il_else.at, "`otherwise` rule here"))
-            else (rule_il_else.at, (rule_il.at, "other rule here"))
+              (rule_il.at, [ (rule_il_else.at, "`otherwise` rule here") ])
+            else (rule_il_else.at, [ (rule_il.at, "other rule here") ])
           in
-          error ~code:Rule_otherwise_with_other_rule primary_at
+          error ~code:Rule_otherwise_with_other_rule at_primary
             "an `otherwise` rule must be the only rule in its rule group"
-            ~related:[ related ]
+            ~related
       | None -> ElseGroup ((id_rulegroup, rule_il_else) $ at))
   | rule_il_first :: rule_il_second :: _ ->
       error ~code:Rule_multiple_otherwise rule_il_second.at
@@ -1688,7 +1696,7 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   let tparams_il_expected, params_il, typ_il, _, _ =
     Ctx.find_defined_func ctx id
   in
-  let at_tparams = Option.value ~default:id.at (region_of_tparams tparams) in
+  let at_tparams = Option.value ~default:id.at (region_of_ids tparams) in
   check ~code:Clause_tparam_mismatch
     (List.length tparams = List.length tparams_il_expected
     && List.for_all2 ( = ) (List.map it tparams)
@@ -1698,7 +1706,8 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
        id.it
        (describe_tparams tparams_il_expected)
        (describe_tparams tparams))
-    ~related:(related_tparams tparams_il_expected (Ctx.dec_prior_at ctx id))
+    ~related:
+      (related_tparams tparams_il_expected (Ctx.region_of_duplicate_dec ctx id))
     ~detail:
       "A `def $f<...> = ...` clause must repeat the type parameters from its \
        `dec` declaration with the same count and the same names in the same \
@@ -1713,7 +1722,7 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
        (if args_expected = 1 then "" else "s")
        args_actual)
     ~related:
-      (match Ctx.dec_prior_at ctx id with
+      (match Ctx.region_of_duplicate_dec ctx id with
       | Some at -> [ (at, "declared here") ]
       | None -> []);
   let ctx_local = { ctx with frees = IdSet.empty } in
@@ -1807,9 +1816,7 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
   let ctx =
     match td_opt with
     | Some (Typdef.Defining tparams_defining) ->
-        let at_tparams =
-          Option.value ~default:id.at (region_of_tparams tparams)
-        in
+        let at_tparams = Option.value ~default:id.at (region_of_ids tparams) in
         check ~code:Typ_tparam_mismatch
           (List.length tparams = List.length tparams_defining
           && List.for_all2 ( = ) (List.map it tparams)
@@ -1821,7 +1828,8 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
              (describe_tparams tparams_defining)
              (describe_tparams tparams))
           ~related:
-            (related_tparams tparams_defining (Ctx.typdef_prior_at ctx id))
+            (related_tparams tparams_defining
+               (Ctx.region_of_duplicate_typdef ctx id))
           ~detail:
             "A `syntax T<...> = ...` body must repeat the type parameters from \
              its forward declaration with the same count and the same names in \
@@ -1840,10 +1848,11 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
     | Some (Typdef.Defined _) ->
         error ~code:Typ_fully_redefined id.at
           (F.asprintf "type `%s` was already fully defined" id.it)
-          ~related:(Ctx.related_of_prior (Ctx.typdef_prior_at ctx id))
+          ~related:
+            (Ctx.related_of_duplicate (Ctx.region_of_duplicate_typdef ctx id))
     | Some Typdef.Extern ->
         let prior_at =
-          match Ctx.typdef_prior_at ctx id with
+          match Ctx.region_of_duplicate_typdef ctx id with
           | Some at -> at
           | None ->
               (* [Some Typdef.Extern] means [id] is present in [ctx.tdenv]. *)
@@ -1879,7 +1888,7 @@ and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp)
     (not (Ctx.bound_typdef ctx id))
     id.at
     (F.asprintf "meta-variable name `%s` is already used by a type" id.it)
-    ~related:(Ctx.related_of_prior (Ctx.typdef_prior_at ctx id));
+    ~related:(Ctx.related_of_duplicate (Ctx.region_of_duplicate_typdef ctx id));
   let typ_il = elab_plaintyp ctx plaintyp in
   let ctx = Ctx.add_metavar ctx id typ_il in
   let def_il = Il.VarD (id, typ_il, hints) $ id.at in

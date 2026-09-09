@@ -68,31 +68,34 @@ let init () : t =
 
 (* Finders *)
 
-let prior_at (env : 'a IdMap.t) (id : Id.t) : region option =
+let region_of_duplicate (env : 'a IdMap.t) (id : Id.t) : region option =
   match IdMap.find_first_opt (fun k -> Id.compare k id >= 0) env with
   | Some (k, _) when Id.compare k id = 0 -> Some k.at
   | _ -> None
 
-let replace_existing (env : 'a IdMap.t) (id : Id.t) (value : 'a) : 'a IdMap.t =
+let region_of_duplicate_metavar (ctx : t) (tid : TId.t) : region option =
+  region_of_duplicate ctx.menv tid
+
+let region_of_duplicate_typdef (ctx : t) (tid : TId.t) : region option =
+  region_of_duplicate ctx.tdenv tid
+
+let region_of_duplicate_rel (ctx : t) (rid : RId.t) : region option =
+  region_of_duplicate ctx.renv rid
+
+let region_of_duplicate_dec (ctx : t) (fid : FId.t) : region option =
+  region_of_duplicate ctx.fenv fid
+
+let related_of_duplicate (at_opt : region option) : (region * string) list =
+  match at_opt with
+  | Some at -> [ (at, "originally defined here") ]
+  | None -> []
+
+let renew_region (env : 'a IdMap.t) (id : Id.t) (value : 'a) : 'a IdMap.t =
   match IdMap.find_first_opt (fun key -> Id.compare key id >= 0) env with
   | Some (key, _) when Id.compare key id = 0 -> IdMap.add key value env
   | _ ->
       (* Every call site has already found [id] in [env]. *)
       assert false
-
-let metavar_prior_at (ctx : t) (tid : TId.t) : region option =
-  prior_at ctx.menv tid
-
-let typdef_prior_at (ctx : t) (tid : TId.t) : region option =
-  prior_at ctx.tdenv tid
-
-let rel_prior_at (ctx : t) (rid : RId.t) : region option = prior_at ctx.renv rid
-let dec_prior_at (ctx : t) (fid : FId.t) : region option = prior_at ctx.fenv fid
-
-let related_of_prior (at_opt : region option) : (region * string) list =
-  match at_opt with
-  | Some at -> [ (at, "originally defined here") ]
-  | None -> []
 
 (* Finders for type definitions *)
 
@@ -131,8 +134,8 @@ let find_defined_rel (ctx : t) (rid : RId.t) :
   | Some (Rel.Defined (nottyp_il, inputs, rulegroups, elsegroup_opt)) ->
       (nottyp_il, inputs, rulegroups, elsegroup_opt)
   | Some (Rel.Extern _) ->
-      let prior_at =
-        match rel_prior_at ctx rid with
+      let region_of_duplicate =
+        match region_of_duplicate_rel ctx rid with
         | Some at -> at
         | None ->
             (* The preceding match found [rid] in the same [REnv]. *)
@@ -140,7 +143,7 @@ let find_defined_rel (ctx : t) (rid : RId.t) :
       in
       error ~code:Extern_relation_rules rid.at
         (Format.asprintf "extern relation `%s` does not allow rules" rid.it)
-        ~related:[ (prior_at, "extern relation declared here") ]
+        ~related:[ (region_of_duplicate, "extern relation declared here") ]
   | None -> error_undef ~code:Rule_relation_undefined rid.at "relation" rid.it
 
 let bound_defined_rel (ctx : t) (rid : RId.t) : bool =
@@ -161,7 +164,7 @@ let find_rel_signature (ctx : t) (rid : RId.t) : Il.nottyp * int list =
 let bound_rel (ctx : t) (rid : RId.t) : bool =
   find_rel_signature_opt ctx rid |> Option.is_some
 
-let rulegroup_prior_at (ctx : t) (rid : RId.t) (rulegroupid : Id.t) :
+let rulegroup_region_of_duplicate (ctx : t) (rid : RId.t) (rulegroupid : Id.t) :
     region option =
   match find_defined_rel_opt ctx rid with
   | Some (_, _, rulegroups, elsegroup_opt) -> (
@@ -181,11 +184,11 @@ let rulegroup_prior_at (ctx : t) (rid : RId.t) (rulegroupid : Id.t) :
   | None -> None
 
 let check_rulegroup_fresh (ctx : t) (rid : RId.t) (rulegroupid : Id.t) : unit =
-  match rulegroup_prior_at ctx rid rulegroupid with
-  | Some prior_at ->
+  match rulegroup_region_of_duplicate ctx rid rulegroupid with
+  | Some region_of_duplicate ->
       error_dup ~code:Rule_group_redefined rulegroupid.at "rule group"
         rulegroupid.it
-        ~related:[ (prior_at, "originally defined here") ]
+        ~related:[ (region_of_duplicate, "originally defined here") ]
   | None -> ()
 
 (* Finders for definitions *)
@@ -208,7 +211,7 @@ let find_table_func (ctx : t) (fid : FId.t) :
         (Format.asprintf "non-table function `%s` does not allow table rows"
            fid.it)
         ~related:
-          (match dec_prior_at ctx fid with
+          (match region_of_duplicate_dec ctx fid with
           | Some at -> [ (at, "function declared here") ]
           | None -> [])
   | None ->
@@ -276,7 +279,7 @@ let add_frees (ctx : t) (ids : IdSet.t) : t =
 let add_metavar (ctx : t) (tid : TId.t) (typ : Typ.t) : t =
   if bound_metavar ctx tid then
     error_dup ~code:Meta_variable_redefined
-      ~related:(related_of_prior (metavar_prior_at ctx tid))
+      ~related:(related_of_duplicate (region_of_duplicate_metavar ctx tid))
       tid.at "meta-variable" tid.it;
   let menv = MEnv.add tid typ ctx.menv in
   { ctx with menv }
@@ -287,7 +290,7 @@ let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
   if bound_typdef ctx tid then
     error ~code:Type_redeclared
       ~related:
-        (match typdef_prior_at ctx tid with
+        (match region_of_duplicate_typdef ctx tid with
         | Some at -> [ (at, "first declared here") ]
         | None -> [])
       tid.at
@@ -308,7 +311,7 @@ let add_extern_rel (ctx : t) (rid : RId.t) (nottyp_il : Il.nottyp)
     (inputs : int list) : t =
   if bound_rel ctx rid then
     error_dup ~code:Extern_relation_redefined
-      ~related:(related_of_prior (rel_prior_at ctx rid))
+      ~related:(related_of_duplicate (region_of_duplicate_rel ctx rid))
       rid.at "relation" rid.it;
   let rel = Rel.Extern (nottyp_il, inputs) in
   let renv = REnv.add rid rel ctx.renv in
@@ -318,7 +321,7 @@ let add_defined_rel (ctx : t) (rid : RId.t) (nottyp_il : Il.nottyp)
     (inputs : int list) : t =
   if bound_rel ctx rid then
     error_dup ~code:Relation_redefined
-      ~related:(related_of_prior (rel_prior_at ctx rid))
+      ~related:(related_of_duplicate (region_of_duplicate_rel ctx rid))
       rid.at "relation" rid.it;
   let rel = Rel.Defined (nottyp_il, inputs, [], None) in
   let renv = REnv.add rid rel ctx.renv in
@@ -335,7 +338,7 @@ let add_defined_rulegroup (ctx : t) (rid : RId.t) (rulegroup_il : Il.rulegroup)
   in
   let rulegroups_il = rulegroups_il @ [ rulegroup_il ] in
   let rel = Rel.Defined (nottyp_il, inputs, rulegroups_il, elsegroup_il_opt) in
-  let renv = replace_existing ctx.renv rid rel in
+  let renv = renew_region ctx.renv rid rel in
   { ctx with renv }
 
 let add_defined_elsegroup (ctx : t) (rid : RId.t) (elsegroup_il : Il.elsegroup)
@@ -359,7 +362,7 @@ let add_defined_elsegroup (ctx : t) (rid : RId.t) (elsegroup_il : Il.elsegroup)
       let rel =
         Rel.Defined (nottyp_il, inputs, rulegroups_il, elsegroup_il_opt)
       in
-      let renv = replace_existing ctx.renv rid rel in
+      let renv = renew_region ctx.renv rid rel in
       { ctx with renv }
 
 (* Adders for definitions *)
@@ -368,7 +371,7 @@ let add_extern_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params_il : Il.param list) (typ_il : Il.typ) : t =
   if bound_func ctx fid then
     error_dup ~code:Extern_function_redefined
-      ~related:(related_of_prior (dec_prior_at ctx fid))
+      ~related:(related_of_duplicate (region_of_duplicate_dec ctx fid))
       fid.at "extern function" fid.it;
   let func = Func.Extern (tparams, params_il, typ_il) in
   let fenv = FEnv.add fid func ctx.fenv in
@@ -378,7 +381,7 @@ let add_builtin_func_dec (ctx : t) (fid : FId.t) (tparams : tparam list)
     (params_il : Il.param list) (typ_il : Il.typ) : t =
   if bound_func ctx fid then
     error_dup ~code:Builtin_function_redefined
-      ~related:(related_of_prior (dec_prior_at ctx fid))
+      ~related:(related_of_duplicate (region_of_duplicate_dec ctx fid))
       fid.at "builtin function" fid.it;
   let func = Func.Builtin (tparams, params_il, typ_il) in
   let fenv = FEnv.add fid func ctx.fenv in
@@ -388,7 +391,7 @@ let add_table_func_dec (ctx : t) (fid : FId.t) (params_il : Il.param list)
     (typ_il : Il.typ) : t =
   if bound_func ctx fid then
     error_dup ~code:Table_function_redefined
-      ~related:(related_of_prior (dec_prior_at ctx fid))
+      ~related:(related_of_duplicate (region_of_duplicate_dec ctx fid))
       fid.at "table function" fid.it;
   let func = Func.Table (params_il, typ_il, []) in
   let fenv = FEnv.add fid func ctx.fenv in
@@ -398,7 +401,7 @@ let add_defined_func_dec (ctx : t) (fid : FId.t) (tparams_il : Il.tparam list)
     (params_il : Il.param list) (typ_il : Il.typ) : t =
   if bound_func ctx fid then
     error_dup ~code:Function_redefined
-      ~related:(related_of_prior (dec_prior_at ctx fid))
+      ~related:(related_of_duplicate (region_of_duplicate_dec ctx fid))
       fid.at "function" fid.it;
   let func = Func.Defined (tparams_il, params_il, typ_il, [], None) in
   let fenv = FEnv.add fid func ctx.fenv in
@@ -416,7 +419,7 @@ let add_table_func_tablerows (ctx : t) (fid : FId.t)
       (Format.asprintf "table rows for function `%s` were already defined"
          fid.it);
   let func = Func.Table (params, plaintyp, tablerows) in
-  let fenv = replace_existing ctx.fenv fid func in
+  let fenv = renew_region ctx.fenv fid func in
   { ctx with fenv }
 
 let add_defined_func_clause (ctx : t) (fid : FId.t) (clause : Il.clause) : t =
@@ -429,7 +432,7 @@ let add_defined_func_clause (ctx : t) (fid : FId.t) (clause : Il.clause) : t =
     Func.Defined
       (tparams, params, plaintyp, clauses @ [ clause ], elseclause_opt)
   in
-  let fenv = replace_existing ctx.fenv fid func in
+  let fenv = renew_region ctx.fenv fid func in
   { ctx with fenv }
 
 let add_defined_func_elseclause (ctx : t) (fid : FId.t)
@@ -450,7 +453,7 @@ let add_defined_func_elseclause (ctx : t) (fid : FId.t)
       let func =
         Func.Defined (tparams, params, plaintyp, clauses, elseclause_opt)
       in
-      let fenv = replace_existing ctx.fenv fid func in
+      let fenv = renew_region ctx.fenv fid func in
       { ctx with fenv }
 
 (* Updaters *)
