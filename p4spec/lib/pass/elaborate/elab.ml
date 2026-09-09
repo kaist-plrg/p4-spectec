@@ -1906,14 +1906,11 @@ and fetch_rel_input_hint (at : region) (id : id) (nottyp_il : Il.nottyp)
           | Error Hints.Input.Empty ->
               error ~code:Relation_input_hint_empty hintexp.at
                 "input hint must contain at least one index such as `%0`"
-          | Error
-              (Hints.Input.Duplicate_index
-                (idx, hintexp_first, hintexp_duplicate)) ->
-              error ~code:Relation_input_hint_duplicate_index
-                hintexp_duplicate.at
+          | Error (Hints.Input.Duplicate_index (idx, at_first, at_duplicate)) ->
+              error ~code:Relation_input_hint_duplicate_index at_duplicate
                 (F.asprintf "input hint repeats index `%%%d`" idx)
-                ~related:[ (hintexp_first.at, "first occurrence here") ]
-          | Error (Hints.Input.Out_of_bounds (idx, hintexp_invalid)) ->
+                ~related:[ (at_first, "first occurrence here") ]
+          | Error (Hints.Input.Out_of_bounds (idx, at_invalid)) ->
               let nottyp_at =
                 over_region
                   (List.map
@@ -1924,7 +1921,7 @@ and fetch_rel_input_hint (at : region) (id : id) (nottyp_il : Il.nottyp)
                       (Mixfix.atoms nottyp_il.it))
               in
               let positions = if len = 1 then "position" else "positions" in
-              error ~code:Relation_input_hint_out_of_bounds hintexp_invalid.at
+              error ~code:Relation_input_hint_out_of_bounds at_invalid
                 (F.asprintf
                    "input hint index `%%%d` is out of bounds for a relation \
                     with %d %s"

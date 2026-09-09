@@ -178,8 +178,8 @@ let validate_hint_alter (declaration : HId.t) (hint_alter : Hints.Alter.t)
             available"
            declaration.it placeholder index arity noun verb)
 
-let validate_hint_fields ?(fields_at = []) (at_hint : region)
-    (declaration : HId.t) (hint_fields : Hints.Fields.t) (arity : int) : unit =
+let validate_hint_fields (at_hint : region) (declaration : HId.t)
+    (hint_fields : Hints.Fields.t) (arity : int) : unit =
   match Hints.Fields.validate hint_fields arity with
   | Ok () -> ()
   | Error { expected; actual } ->
@@ -189,9 +189,10 @@ let validate_hint_fields ?(fields_at = []) (at_hint : region)
           | at :: _ when index = 0 -> at
           | _ :: rest -> find_extra (index - 1) rest
         in
-        if actual > expected then find_extra expected fields_at
+        let ats_fields = List.map at hint_fields in
+        if actual > expected then find_extra expected ats_fields
         else
-          match List.rev fields_at with
+          match List.rev ats_fields with
           | at :: _ -> after_region at
           | [] -> at_hint
       in
@@ -216,14 +217,12 @@ let load_hints (ctx : t) (key : HEnv.key) (hints : El.hint list) : t =
           Hints.Alter.init hintexp |> add_hint_alter ctx hintid key
       (* Field hints *)
       | "prose_fields" -> (
-          let hint_fields_opt = Hints.Fields.init_located hintexp in
+          let hint_fields_opt = Hints.Fields.init hintexp in
           match hint_fields_opt with
-          | Some hint_fields_located ->
-              let hint_fields = Hints.Fields.unlocate hint_fields_located in
-              let fields_at = Hints.Fields.locations hint_fields_located in
+          | Some hint_fields ->
               (match key with
               | `Typ (_, mixop) ->
-                  validate_hint_fields ~fields_at at hintid hint_fields
+                  validate_hint_fields at hintid hint_fields
                     (Mixfix.arity mixop)
               | `Func _ | `Rel _ -> ());
               add_hint_fields ctx hintid key hint_fields

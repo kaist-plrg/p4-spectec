@@ -46,18 +46,18 @@ let rec init (hintexp : Hint.t) : t =
 
 (* Validating hints *)
 
-type out_of_bounds = {
+type invalid_oob = {
   at : region;
   placeholder : string;
   index : int;
   arity : int;
 }
 
-let rec validate (hint : t) (arity : int) : (unit, out_of_bounds) result =
+let rec validate (hint : t) (arity : int) : (unit, invalid_oob) result =
   match validate' 0 hint arity with Ok _ -> Ok () | Error err -> Error err
 
 and validate' (cursor : int) (hint : t) (arity : int) :
-    (int, out_of_bounds) result =
+    (int, invalid_oob) result =
   let ( let* ) = Result.bind in
   match hint with
   | TextH _ -> Ok cursor

@@ -4,6 +4,7 @@ open Util.Source
 (* Input hints for relations *)
 
 type t = int list [@@deriving yojson]
+type t_phrase = int phrase list
 
 let to_string t =
   Format.asprintf "hint(input %s)"
@@ -16,9 +17,7 @@ let eq (hint_a : t) (hint_b : t) : bool =
 
 (* Creating hints *)
 
-type indexed_hole = int * Hint.t
-
-let init (hintexp : Hint.t) : indexed_hole list option =
+let init (hintexp : Hint.t) : t_phrase option =
   match hintexp.it with
   | SeqE hintexps ->
       List.fold_left
@@ -26,41 +25,41 @@ let init (hintexp : Hint.t) : indexed_hole list option =
           match hint with
           | Some hint -> (
               match hintexp.it with
-              | HoleE (`Num idx) -> Some ((idx, hintexp) :: hint)
+              | HoleE (`Num idx) -> Some ((idx $ hintexp.at) :: hint)
               | _ -> None)
           | None -> None)
         (Some []) hintexps
       |> Option.map List.rev
-  | HoleE (`Num idx) -> Some [ (idx, hintexp) ]
+  | HoleE (`Num idx) -> Some [ idx $ hintexp.at ]
   | _ -> None
 
 (* Validating hints *)
 
 type invalid =
   | Empty
-  | Duplicate_index of int * Hint.t * Hint.t
-  | Out_of_bounds of int * Hint.t
+  | Duplicate_index of int * region * region
+  | Out_of_bounds of int * region
 
-let validate (hint : indexed_hole list) (arity : int) : (t, invalid) result =
+let validate (hint : t_phrase) (arity : int) : (t, invalid) result =
   let rec find_duplicate seen = function
     | [] -> None
-    | ((idx, hintexp) as indexed_hole) :: rest -> (
-        match List.find_opt (fun (idx_seen, _) -> idx_seen = idx) seen with
-        | Some (_, hintexp_first) -> Some (idx, hintexp_first, hintexp)
-        | None -> find_duplicate (indexed_hole :: seen) rest)
+    | idx :: idxs -> (
+        match List.find_opt (fun idx_seen -> idx_seen.it = idx.it) seen with
+        | Some idx_first -> Some (idx.it, idx_first.at, idx.at)
+        | None -> find_duplicate (idx :: seen) idxs)
   in
   match hint with
   | [] -> Error Empty
   | _ -> (
       match find_duplicate [] hint with
-      | Some (idx, hintexp_first, hintexp_duplicate) ->
-          Error (Duplicate_index (idx, hintexp_first, hintexp_duplicate))
+      | Some (idx, at_first, at_duplicate) ->
+          Error (Duplicate_index (idx, at_first, at_duplicate))
       | None -> (
           match
-            List.find_opt (fun (idx, _) -> idx < 0 || idx >= arity) hint
+            List.find_opt (fun idx -> idx.it < 0 || idx.it >= arity) hint
           with
-          | Some (idx, hintexp) -> Error (Out_of_bounds (idx, hintexp))
-          | None -> Ok (List.map fst hint)))
+          | Some idx -> Error (Out_of_bounds (idx.it, idx.at))
+          | None -> Ok (List.map it hint)))
 
 (* Splitting and combining expressions based on input hints *)
 

@@ -120,8 +120,8 @@ let shorten_destruct (instr : 'instr_tier instr) : 'instr_tier instr option =
           let exps_l = Mixfix.args notexp_l in
           let destruct_fields =
             List.combine exps_l fields
-            |> List.map (fun ((exp, name) : exp * string) ->
-                   if is_visible exp then (Some name, exp) else (None, exp))
+            |> List.map (fun ((exp, field) : exp * id) ->
+                   if is_visible exp then (Some field.it, exp) else (None, exp))
           in
           if List.for_all (fun (name, _) -> name = None) destruct_fields then
             None

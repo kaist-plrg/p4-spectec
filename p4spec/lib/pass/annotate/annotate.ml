@@ -147,7 +147,8 @@ let validate_hint (n : int) (hint : Hints.Alter.t HEnv.located_hint option) :
   match hint with
   | None -> ()
   | Some hint ->
-      Ctx.validate_hint_alter (HEnv.hint_declaration hint)
+      Ctx.validate_hint_alter
+        (HEnv.hint_declaration hint)
         (HEnv.hint_value hint) n
 
 let validate_hints_alter (hints : located_hints) (n : int) : unit =
