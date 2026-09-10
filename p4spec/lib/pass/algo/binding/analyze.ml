@@ -544,8 +544,8 @@ let analyze_elseclause (ctx : Ctx.t) (elseclause : elseclause) : elseclause =
 
 (* Table row binding analysis *)
 
-let error_pattern_type_without_cases code ?(related = []) (typ : typ) : 'a =
-  error ~code ~related typ.at
+let error_pattern_type_without_cases ?(related = []) (typ : typ) : 'a =
+  error ~code:Pattern_non_variant_type ~related typ.at
     (Format.asprintf
        "table row patterns require a type with declared cases, but got %s"
        (Diagnostic.quote (Print.string_of_typ typ)))
@@ -565,15 +565,15 @@ let pattern_set_covered_by_typ (ctx : Ctx.t) (typ : typ) : Pattern.PatternSet.t
               |> List.map (fun (nottyp, _, _) -> nottyp)
               |> Pattern.PatternSet.of_list
           | _ ->
-              error_pattern_type_without_cases Pattern_non_variant_type typ
+              error_pattern_type_without_cases typ
                 ~related:[ (typdef_at, "type declared here") ])
       | Extern ->
-          error_pattern_type_without_cases Pattern_extern_type typ
+          error_pattern_type_without_cases typ
             ~related:[ (typdef_at, "type declared here") ]
       | Param | Defining _ ->
           (* [Ctx.load_spec] adds only [Defined] and [Extern] entries. *)
           assert false)
-  | _ -> error_pattern_type_without_cases Pattern_named_variant_expected typ
+  | _ -> error_pattern_type_without_cases typ
 
 let pattern_set_covered_by_exp (ctx : Ctx.t) (exp : exp) : Pattern.PatternSet.t
     =

@@ -24,8 +24,8 @@ let positions_to_region position_left position_right =
 let at (position_left, position_right) = positions_to_region position_left position_right
 let (@@@) it pos = it $ at pos
 
-let error_hint_on_plain_type code (hint : El.hint) =
-  error ~code ~detail:"A plain type definition aliases an existing type, as in `syntax x = nat`. It inherits the aliased type's hints and cannot declare its own." hint.at "hints are not allowed on a plain type definition"
+let error_hint_on_plain_type (hint : El.hint) =
+  error ~code:Hint_on_plain_type ~detail:"A plain type definition aliases an existing type, as in `syntax x = nat`. It inherits the aliased type's hints and cannot declare its own." hint.at "hints are not allowed on a plain type definition"
 
 (* Identifiers *)
 
@@ -329,7 +329,7 @@ deftyp_ :
       | [] -> error ~code:Variant_no_cases (at $sloc) "empty variant type"
       | [ (PlainT plaintyp, hints) ] ->
           (match hints with
-          | hint :: _ -> error_hint_on_plain_type Hint_on_plain_bar_single hint
+          | hint :: _ -> error_hint_on_plain_type hint
           | [] -> ());
           PlainTD plaintyp
       | _ ->
@@ -337,7 +337,7 @@ deftyp_ :
             (fun (typ, hints) ->
               match typ, hints with
               | PlainT _, hint :: _ ->
-                  error_hint_on_plain_type Hint_on_plain_bar_multi hint
+                  error_hint_on_plain_type hint
               | _ -> ())
             $2;
           VariantTD $2
@@ -350,8 +350,7 @@ deftyp_ :
             "syntax definition has no body"
       | [ (PlainT plaintyp, hints) ] ->
           (match hints with
-          | hint :: _ ->
-              error_hint_on_plain_type Hint_on_plain_no_bar_single hint
+          | hint :: _ -> error_hint_on_plain_type hint
           | [] -> ());
           PlainTD plaintyp
       | _ ->
@@ -359,7 +358,7 @@ deftyp_ :
             (fun (typ, hints) ->
               match typ, hints with
               | PlainT _, hint :: _ ->
-                  error_hint_on_plain_type Hint_on_plain_no_bar_multi hint
+                  error_hint_on_plain_type hint
               | _ -> ())
             $1;
           VariantTD $1

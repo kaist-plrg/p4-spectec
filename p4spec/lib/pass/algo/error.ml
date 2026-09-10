@@ -12,8 +12,6 @@ type code =
   | Bind_both_sides_of_equality
   | Non_invertible_binding
   | Parallel_binding_dimension_mismatch
-  | Pattern_named_variant_expected
-  | Pattern_extern_type
   | Pattern_non_variant_type
   | Pattern_overlap
   | Pattern_incomplete
@@ -29,8 +27,6 @@ let string_of_code = function
   | Bind_both_sides_of_equality -> "bind-both-sides-of-equality"
   | Non_invertible_binding -> "non-invertible-binding"
   | Parallel_binding_dimension_mismatch -> "parallel-binding-dimension-mismatch"
-  | Pattern_named_variant_expected -> "pattern-named-variant-expected"
-  | Pattern_extern_type -> "pattern-extern-type"
   | Pattern_non_variant_type -> "pattern-non-variant-type"
   | Pattern_overlap -> "pattern-overlap"
   | Pattern_incomplete -> "pattern-incomplete"

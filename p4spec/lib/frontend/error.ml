@@ -18,10 +18,7 @@ type code =
   | Variant_no_cases
   | Syntax_empty_body
   | Syntax_no_ids
-  | Hint_on_plain_bar_single
-  | Hint_on_plain_bar_multi
-  | Hint_on_plain_no_bar_single
-  | Hint_on_plain_no_bar_multi
+  | Hint_on_plain_type
   | Unexpected_token
   | Malformed_mixop
   | File_io_error
@@ -43,10 +40,7 @@ let string_of_code = function
   | Variant_no_cases -> "variant-no-cases"
   | Syntax_empty_body -> "syntax-empty-body"
   | Syntax_no_ids -> "syntax-no-ids"
-  | Hint_on_plain_bar_single -> "hint-on-plain-bar-single"
-  | Hint_on_plain_bar_multi -> "hint-on-plain-bar-multi"
-  | Hint_on_plain_no_bar_single -> "hint-on-plain-no-bar-single"
-  | Hint_on_plain_no_bar_multi -> "hint-on-plain-no-bar-multi"
+  | Hint_on_plain_type -> "hint-on-plain-type"
   | Unexpected_token -> "unexpected-token"
   | Malformed_mixop -> "malformed-mixop"
   | File_io_error -> "file-io-error"
