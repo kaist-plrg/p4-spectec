@@ -475,8 +475,8 @@ let run_testgen_command =
                  Ok (Backend_testgen_neg.Modes.Cold (excludes_p4, bootdir))
              | None, Some path_boot ->
                  Ok (Backend_testgen_neg.Modes.Warm path_boot)
-             | Some _, Some _ -> Error Error.boot_source_conflict
-             | None, None -> Error Error.boot_source_required
+             | Some _, Some _ -> Error Error.error_boot_source_conflict
+             | None, None -> Error Error.error_boot_source_required
            in
            let mutationmode =
              if random then Backend_testgen_neg.Modes.Random
@@ -596,8 +596,8 @@ let splice_command =
                && List.length paths_input <> List.length paths_output
              then
                Error
-                 (Error.splice_file_count_mismatch (List.length paths_input)
-                    (List.length paths_output))
+                 (Error.error_splice_file_count_mismatch
+                    (List.length paths_input) (List.length paths_output))
              else if inplace then Ok (List.combine paths_input paths_input)
              else Ok (List.combine paths_input paths_output)
            in

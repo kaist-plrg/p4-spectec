@@ -67,16 +67,13 @@ let render_case name f =
      Printf.printf "uncaught exception: %s\n" (Printexc.to_string exn));
   print_newline ()
 
-let as_pass_result result =
-  result |> Result.map ignore
-  |> Result.map_error (fun diagnostic -> P4spectec.Error.PassError diagnostic)
+let as_pass_result result = Result.map ignore result
 
 let capture_parse_error f =
   try
     f ();
     Ok ()
-  with Frontend.Error.ParseError diagnostic ->
-    Error (P4spectec.Error.PassError diagnostic)
+  with Frontend.Error.ParseError diagnostic -> Error diagnostic
 
 let render_parse_boundary_cases () =
   render_case "parse-illegal-control-in-text-literal" (fun () ->
@@ -121,13 +118,13 @@ let duplicate_pl_spec () : Run.spec =
 
 let render_boundary_cases () =
   render_case "command-error" (fun () ->
-      Error (P4spectec.Error.CommandError "command failed"));
+      Error (P4spectec.Error.error "command failed"));
   render_case "command-boot-source-conflict" (fun () ->
-      Error P4spectec.Error.boot_source_conflict);
+      Error P4spectec.Error.error_boot_source_conflict);
   render_case "command-boot-source-required" (fun () ->
-      Error P4spectec.Error.boot_source_required);
+      Error P4spectec.Error.error_boot_source_required);
   render_case "command-splice-file-count-mismatch" (fun () ->
-      Error (P4spectec.Error.splice_file_count_mismatch 2 1));
+      Error (P4spectec.Error.error_splice_file_count_mismatch 2 1));
   render_case "boot-unsupported-interface" (fun () ->
       P4spectec.build_null Backend_boot.Config.P4_interface Run.Empty
       |> Result.map ignore);
@@ -178,14 +175,11 @@ let eval_failure ?extern_failure (module Interpreter : Run.INTERP) relation :
           if actual <> expected then
             failwith "extern diagnostic fields were not preserved";
           Ok ()
-      | _ -> Error (P4spectec.Error.RunError actual))
+      | _ -> Error actual)
   | Run.Fail (Run.Unmatch traces) -> (
       match extern_failure with
       | Some (Run.Abort _) -> failwith "extern diagnostic became failtraces"
-      | _ ->
-          Error
-            (P4spectec.Error.RunError
-               (Run.diagnostic_of_failure (Run.Unmatch traces))))
+      | _ -> Error (Run.diagnostic_of_failure (Run.Unmatch traces)))
 
 let eval_syntax_failure (module Interpreter : Run.INTERP) :
     unit P4spectec.result =
@@ -196,11 +190,6 @@ let eval_syntax_failure (module Interpreter : Run.INTERP) :
       Ok ()
   | Run.Fail (`Runtime _) -> failwith "syntax error became a runtime error"
   | Run.Pass _ -> failwith "invalid input was accepted"
-
-let init_result result =
-  Result.map_error
-    (fun diagnostic -> P4spectec.Error.RunError diagnostic)
-    result
 
 let extern_failtraces =
   let open Util.Attempt in
@@ -236,10 +225,7 @@ let render_al_case ?extern_failure title path relation =
       let module Interpreter = Interp_al.Interp.Make (Interface.P4) (Extern) ()
       in
       let* spec = P4spectec.algo [ path ] in
-      let* () =
-        Interpreter.init ~cache:false ~det:false ~guard:false spec
-        |> init_result
-      in
+      let* () = Interpreter.init ~cache:false ~det:false ~guard:false spec in
       eval_failure ?extern_failure (module Interpreter) relation)
 
 let render_sl_case ?extern_failure title path relation =
@@ -247,10 +233,7 @@ let render_sl_case ?extern_failure title path relation =
       let module Interpreter = Interp_sl.Interp.Make (Interface.P4) (Extern) ()
       in
       let* spec = P4spectec.structure ~final:true [ path ] in
-      let* () =
-        Interpreter.init ~cache:false ~det:false ~guard:false spec
-        |> init_result
-      in
+      let* () = Interpreter.init ~cache:false ~det:false ~guard:false spec in
       eval_failure ?extern_failure (module Interpreter) relation)
 
 let render_pl_case ?extern_failure title path relation =
@@ -258,10 +241,7 @@ let render_pl_case ?extern_failure title path relation =
       let module Interpreter = Interp_pl.Interp.Make (Interface.P4) (Extern) ()
       in
       let* spec = P4spectec.annotate [ path ] in
-      let* () =
-        Interpreter.init ~cache:false ~det:false ~guard:false spec
-        |> init_result
-      in
+      let* () = Interpreter.init ~cache:false ~det:false ~guard:false spec in
       eval_failure ?extern_failure (module Interpreter) relation)
 
 let render_interp_cases dir =
