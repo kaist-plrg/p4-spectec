@@ -1565,7 +1565,7 @@ and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
           [ (nottyp_il.at, "relation signature with output positions here") ]
         ~detail:
           "Rule premise negation is supported only for relations without \
-           outputs."
+           outputs. This constraint may be relaxed in future versions."
   | [] -> ());
   let prem_il = Il.IfNotHoldPr (id, notexp_il) in
   (ctx, prem_il)
