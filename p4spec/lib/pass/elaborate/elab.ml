@@ -227,7 +227,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
       match td with
       | Defining _ ->
           error ~code:Extend_incomplete typ_il.at
-            (F.asprintf "incomplete type %s does not allow extension"
+            (F.asprintf "extension is not allowed for incomplete type %s"
                (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
             ~related:
               (match Ctx.region_of_duplicate_typdef ctx tid with
@@ -244,7 +244,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
               List.map (Subst.subst_typcase theta) typcases_il
           | _ ->
               error ~code:Extend_non_variant_struct typ_il.at
-                (F.asprintf "struct type %s does not allow extension"
+                (F.asprintf "extension is not allowed for struct type %s"
                    (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
                 ~related:
                   (match Ctx.region_of_duplicate_typdef ctx tid with
@@ -256,7 +256,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
                    variant, so it has no cases to contribute.")
       | Param ->
           error ~code:Extend_non_variant_tparam typ_il.at
-            (F.asprintf "type parameter %s does not allow extension"
+            (F.asprintf "extension is not allowed for type parameter %s"
                (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
             ~related:
               (match Ctx.region_of_duplicate_typdef ctx tid with
@@ -267,7 +267,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
                have no known cases."
       | Extern ->
           error ~code:Extend_non_variant_extern typ_il.at
-            (F.asprintf "extern type %s does not allow extension"
+            (F.asprintf "extension is not allowed for extern type %s"
                (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
             ~related:
               (match Ctx.region_of_duplicate_typdef ctx tid with
@@ -278,7 +278,7 @@ and elab_typcase_plain (ctx : Ctx.t) (typ_il : Il.typ) : Il.typcase list =
                no cases.")
   | _ ->
       error ~code:Extend_non_variant_primitive typ_il.at
-        (F.asprintf "primitive type %s does not allow extension"
+        (F.asprintf "extension is not allowed for primitive type %s"
            (Diagnostic.quote (Il.Print.string_of_typ typ_il)))
         ~detail:
           "A case-line `| T` extends the surrounding variant with the cases of \
@@ -1399,6 +1399,12 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
             ]
         | None -> [ (id_p.at, "function parameter declared here") ]
       in
+      let detail =
+        "A function argument at a call site must have the same signature (type \
+         parameters, parameter types, and return type) as the declared \
+         function parameter. The function passed here was declared with a \
+         different signature."
+      in
       let tparams_expected = List.length tparams_il_p in
       let tparams_actual = List.length tparams_il_a in
       check ~code:Functyp_tparam_arity_mismatch
@@ -1410,7 +1416,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
            (Id.to_string id_p) tparams_expected
            (if tparams_expected = 1 then "" else "s")
            (Id.to_string id_a) tparams_actual)
-        ~related;
+        ~related ~detail;
       let params_expected = List.length params_il_p in
       let params_actual = List.length params_il_a in
       check ~code:Functyp_param_arity_mismatch
@@ -1422,7 +1428,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
            (Id.to_string id_p) params_expected
            (if params_expected = 1 then "" else "s")
            (Id.to_string id_a) params_actual)
-        ~related;
+        ~related ~detail;
       check ~code:Funarg_signature_mismatch
         (Equiv.equiv_functyp (Ctx.find_typdef_opt ctx) tparams_il_p
            typs_params_il_p typ_il_p tparams_il_a typs_params_il_a typ_il_a)
@@ -1431,12 +1437,7 @@ and elab_arg ?(as_def = false) (ctx : Ctx.t) (param_il : Il.param) (arg : arg) :
            "passed function `%s` must have the same signature as function \
             parameter `%s`"
            (Id.to_string id_a) (Id.to_string id_p))
-        ~related
-        ~detail:
-          "A function argument at a call site must have the same signature \
-           (type parameters, parameter types, and return type) as the declared \
-           function parameter. The function passed here was declared with a \
-           different signature.";
+        ~related ~detail;
       let arg_il = Il.DefA id_a $ arg.at in
       (ctx, arg_il)
   | ExpP _, DefA _ ->
@@ -1525,8 +1526,7 @@ and elab_prems (ctx : Ctx.t) (prems : prem list) : Ctx.t * prem_internal list =
 
 and elab_var_prem (ctx : Ctx.t) (id : id) (plaintyp : plaintyp) : Ctx.t =
   check ~code:Var_prem_invalid_metavar (valid_tid id) id.at
-    (F.asprintf "meta-variable identifier `%s` must not have a numeric suffix"
-       id.it);
+    (F.asprintf "meta-variable identifier `%s` must not have a suffix" id.it);
   check ~code:Var_prem_type_redefined
     (not (Ctx.bound_typdef ctx id))
     id.at
@@ -1564,9 +1564,8 @@ and elab_rule_not_prem (ctx : Ctx.t) (id : id) (exp : exp) : Ctx.t * Il.prem' =
         ~related:
           [ (nottyp_il.at, "relation signature with output positions here") ]
         ~detail:
-          "A negated rule premise asserts that a relation does not hold for \
-           given inputs. Output positions have no value to produce when the \
-           relation fails."
+          "Rule premise negation is supported only for relations without \
+           outputs."
   | [] -> ());
   let prem_il = Il.IfNotHoldPr (id, notexp_il) in
   (ctx, prem_il)
@@ -1717,7 +1716,8 @@ let elab_clause (ctx : Ctx.t) (at : region) (id : id) (tparams : tparam list)
   check ~code:Clause_arg_arity_mismatch
     (args_expected = args_actual)
     (region_of_first_extra args_expected (List.map (fun arg -> arg.at) args) at)
-    (F.asprintf "function `%s` expects %d argument%s, but this clause has %d"
+    (F.asprintf
+       "function `%s` was declared with %d parameter%s, but this clause has %d"
        id.it args_expected
        (if args_expected = 1 then "" else "s")
        args_actual)
@@ -1786,7 +1786,7 @@ and elab_defs (ctx : Ctx.t) (defs : def list) : Ctx.t * Il.def list =
 and elab_extern_syn_def (ctx : Ctx.t) (at : region) (id : id)
     (hints : hint list) : Ctx.t * Il.def =
   check ~code:Extern_syn_invalid_id (valid_tid id) id.at
-    (F.asprintf "type identifier `%s` must not have a numeric suffix" id.it);
+    (F.asprintf "type identifier `%s` must not have a suffix" id.it);
   let td = Typdef.Extern in
   let ctx = Ctx.add_typdef ctx id td in
   let typ_il = Il.VarT (id, []) $ id.at in
@@ -1799,7 +1799,7 @@ and elab_syn_def (ctx : Ctx.t) (syns : (id * tparam list) list) : Ctx.t =
     (fun ctx (id, tparams) ->
       check_tparams_distinct Syn_tparam_not_distinct tparams;
       check ~code:Syn_invalid_id (valid_tid id) id.at
-        (F.asprintf "type identifier `%s` must not have a numeric suffix" id.it);
+        (F.asprintf "type identifier `%s` must not have a suffix" id.it);
       let td = Typdef.Defining tparams in
       let ctx = Ctx.add_typdef ctx id td in
       if tparams = [] then
@@ -1837,8 +1837,7 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
         ctx
     | None ->
         check ~code:Typ_invalid_id (valid_tid id) id.at
-          (F.asprintf "type identifier `%s` must not have a numeric suffix"
-             id.it);
+          (F.asprintf "type identifier `%s` must not have a suffix" id.it);
         let td = Typdef.Defining tparams in
         let ctx = Ctx.add_typdef ctx id td in
         if tparams = [] then
@@ -1868,8 +1867,7 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
   (match List.find_opt (fun tparam -> not (valid_tid tparam)) tparams with
   | Some tparam ->
       error ~code:Typ_invalid_tparam tparam.at
-        (F.asprintf "type parameter `%s` must not have a numeric suffix"
-           tparam.it)
+        (F.asprintf "type parameter `%s` must not have a suffix" tparam.it)
   | None -> ());
   let ctx_local = Ctx.add_tparams ctx tparams in
   let td, deftyp_il = elab_deftyp ctx_local id tparams deftyp in
@@ -1882,8 +1880,7 @@ and elab_typ_def (ctx : Ctx.t) (id : id) (tparams : tparam list)
 and elab_var_def (ctx : Ctx.t) (id : id) (plaintyp : plaintyp)
     (hints : hint list) : Ctx.t * Il.def =
   check ~code:Var_def_invalid_metavar (valid_tid id) id.at
-    (F.asprintf "meta-variable identifier `%s` must not have a numeric suffix"
-       id.it);
+    (F.asprintf "meta-variable identifier `%s` must not have a suffix" id.it);
   check ~code:Var_def_type_redefined
     (not (Ctx.bound_typdef ctx id))
     id.at

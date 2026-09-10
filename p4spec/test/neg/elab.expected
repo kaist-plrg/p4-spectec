@@ -135,13 +135,13 @@ error[elab/funparam-tparam-not-distinct]: type parameter `U` is duplicated
   | 4 | dec $f(def $g<T, U, U, T> : nat) : nat
   |   |                  ^
 === ctx-invalid-metavar-in-prem.watsup ===
-error[elab/var-prem-invalid-metavar]: meta-variable identifier `x_1` must not have a numeric suffix
+error[elab/var-prem-invalid-metavar]: meta-variable identifier `x_1` must not have a suffix
   --> ctx-invalid-metavar-in-prem.watsup:11:10
    |
 11 |   -- var x_1 : foo
    |          ^^^
 === ctx-metavar-id-has-suffix.watsup ===
-error[elab/var-def-invalid-metavar]: meta-variable identifier `x_1` must not have a numeric suffix
+error[elab/var-def-invalid-metavar]: meta-variable identifier `x_1` must not have a suffix
   --> ctx-metavar-id-has-suffix.watsup:4:5
   |
 4 | var x_1 : nat
@@ -245,13 +245,13 @@ error[elab/table-function-required]: non-table function `lookup` does not allow 
   | 1 | dec $lookup(nat) : bool
   |   |      ^^^^^^^
 === ctx-table-rows-redefined.watsup ===
-error[elab/table-rows-redefined]: table rows for function `lookup` were already defined
+error[elab/table-rows-redefined]: table `lookup` was already defined
   --> ctx-table-rows-redefined.watsup:6:10
   |
 6 | tbl def $lookup =
   |          ^^^^^^
   |
-  | related: first row definition here
+  | related: first table definition here
   |   --> ctx-table-rows-redefined.watsup:4:5
   |   |
   | 4 |   | _ => true
@@ -315,7 +315,7 @@ error[elab/empty-iteration-premise]: iteration has no variable to iterate over
    |       has no variables, or every variable's `*`s have already been consumed
    |       by surrounding iterations.
 === extern-type-syn-invalid-id.watsup ===
-error[elab/extern-syn-invalid-id]: type identifier `x_1` must not have a numeric suffix
+error[elab/extern-syn-invalid-id]: type identifier `x_1` must not have a suffix
   --> extern-type-syn-invalid-id.watsup:1:15
   |
 1 | extern syntax x_1
@@ -413,9 +413,8 @@ error[elab/negated-premise-has-outputs]: negated rule premise for relation `R` c
 16 |   -- R:/ 0 |- 0
    |               ^
    |
-   | note: A negated rule premise asserts that a relation does not hold for
-   |       given inputs. Output positions have no value to produce when the
-   |       relation fails.
+   | note: Rule premise negation is supported only for relations without
+   |       outputs.
    |
    | related: relation signature with output positions here
    |   --> relation-negated-premise-on-output-relation.watsup:5:17
@@ -521,7 +520,7 @@ error[elab/call-targ-arity-mismatch]: function `f` expects 1 type argument, but 
   | 3 | dec $f<T>(T) : T
   |   |      ^^
 === type-clause-arg-arity-mismatch.watsup ===
-error[elab/clause-arg-arity-mismatch]: function `f` expects 1 argument, but this clause has 2
+error[elab/clause-arg-arity-mismatch]: function `f` was declared with 1 parameter, but this clause has 2
   --> type-clause-arg-arity-mismatch.watsup:4:11
   |
 4 | def $f(x, y) = x
@@ -567,7 +566,7 @@ error[elab/typ-define-extern]: extern type `opaque` does not allow a definition
   | 1 | extern syntax opaque
   |   |               ^^^^^^
 === type-extend-extern.watsup ===
-error[elab/extend-non-variant-extern]: extern type `opaque` does not allow extension
+error[elab/extend-non-variant-extern]: extension is not allowed for extern type `opaque`
   --> type-extend-extern.watsup:4:5
   |
 4 |   | opaque
@@ -582,7 +581,7 @@ error[elab/extend-non-variant-extern]: extern type `opaque` does not allow exten
   | 1 | extern syntax opaque
   |   |               ^^^^^^
 === type-extend-forward-decl.watsup ===
-error[elab/extend-incomplete]: incomplete type `incomplete` does not allow extension
+error[elab/extend-incomplete]: extension is not allowed for incomplete type `incomplete`
   --> type-extend-forward-decl.watsup:7:5
   |
 7 |   | incomplete
@@ -598,7 +597,7 @@ error[elab/extend-incomplete]: incomplete type `incomplete` does not allow exten
   | 4 | syntax incomplete
   |   |        ^^^^^^^^^^
 === type-extend-param.watsup ===
-error[elab/extend-non-variant-tparam]: type parameter `T` does not allow extension
+error[elab/extend-non-variant-tparam]: extension is not allowed for type parameter `T`
   --> type-extend-param.watsup:2:5
   |
 2 |   | T
@@ -613,7 +612,7 @@ error[elab/extend-non-variant-tparam]: type parameter `T` does not allow extensi
   | 1 | syntax wrapper<T> =
   |   |                ^
 === type-extend-primitive.watsup ===
-error[elab/extend-non-variant-primitive]: primitive type `bool` does not allow extension
+error[elab/extend-non-variant-primitive]: extension is not allowed for primitive type `bool`
   --> type-extend-primitive.watsup:2:5
   |
 2 |   | bool
@@ -623,7 +622,7 @@ error[elab/extend-non-variant-primitive]: primitive type `bool` does not allow e
   |       `T`. The expression here is a primitive type, not a named variant, so
   |       there are no cases to contribute.
 === type-extend-struct.watsup ===
-error[elab/extend-non-variant-struct]: struct type `myStruct` does not allow extension
+error[elab/extend-non-variant-struct]: extension is not allowed for struct type `myStruct`
   --> type-extend-struct.watsup:7:5
   |
 7 |   | myStruct
@@ -724,6 +723,11 @@ error[elab/functyp-param-arity-mismatch]: function parameter `h` has 2 parameter
 8 | def $bad = $caller(def $g)
   |                    ^^^^^^
   |
+  | note: A function argument at a call site must have the same signature (type
+  |       parameters, parameter types, and return type) as the declared function
+  |       parameter. The function passed here was declared with a different
+  |       signature.
+  |
   | related: function parameter declared here
   |   --> type-functyp-param-arity-mismatch.watsup:5:18
   |   |
@@ -741,6 +745,11 @@ error[elab/functyp-tparam-arity-mismatch]: function parameter `h` has 2 type par
   |
 8 | def $bad = $caller(def $g)
   |                    ^^^^^^
+  |
+  | note: A function argument at a call site must have the same signature (type
+  |       parameters, parameter types, and return type) as the declared function
+  |       parameter. The function passed here was declared with a different
+  |       signature.
   |
   | related: function parameter declared here
   |   --> type-functyp-tparam-arity-mismatch.watsup:5:18
@@ -801,7 +810,7 @@ error[elab/type-redeclared]: type `foo` was already declared
   | 1 | syntax foo
   |   |        ^^^
 === type-syn-invalid-id.watsup ===
-error[elab/syn-invalid-id]: type identifier `x_1` must not have a numeric suffix
+error[elab/syn-invalid-id]: type identifier `x_1` must not have a suffix
   --> type-syn-invalid-id.watsup:4:8
   |
 4 | syntax x_1
@@ -819,13 +828,13 @@ error[elab/syn-tparam-not-distinct]: type parameter `U` is duplicated
   | 1 | syntax foo<T, U, U, T>
   |   |               ^
 === type-typ-invalid-id.watsup ===
-error[elab/typ-invalid-id]: type identifier `x_1` must not have a numeric suffix
+error[elab/typ-invalid-id]: type identifier `x_1` must not have a suffix
   --> type-typ-invalid-id.watsup:4:8
   |
 4 | syntax x_1 = nat
   |        ^^^
 === type-typ-invalid-tparam.watsup ===
-error[elab/typ-invalid-tparam]: type parameter `T_1` must not have a numeric suffix
+error[elab/typ-invalid-tparam]: type parameter `T_1` must not have a suffix
   --> type-typ-invalid-tparam.watsup:4:12
   |
 4 | syntax foo<T_1> = nat

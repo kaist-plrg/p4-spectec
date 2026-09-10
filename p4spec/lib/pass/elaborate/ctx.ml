@@ -414,10 +414,9 @@ let add_table_func_tablerows (ctx : t) (fid : FId.t)
   let params, plaintyp, tablerows_found = find_table_func ctx fid in
   if List.length tablerows_found > 0 then
     error ~code:Table_rows_redefined
-      ~related:[ ((List.hd tablerows_found).at, "first row definition here") ]
+      ~related:[ ((List.hd tablerows_found).at, "first table definition here") ]
       fid.at
-      (Format.asprintf "table rows for function `%s` were already defined"
-         fid.it);
+      (Format.asprintf "table `%s` was already defined" fid.it);
   let func = Func.Table (params, plaintyp, tablerows) in
   let fenv = renew_region ctx.fenv fid func in
   { ctx with fenv }

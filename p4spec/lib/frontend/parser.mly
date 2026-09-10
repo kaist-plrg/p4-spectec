@@ -229,8 +229,8 @@ nottyp :
       match $1 with
       | NotationT nottyp -> nottyp
       | PlainT plaintyp ->
-          error ~code:Notation_type_expected ~detail:"A notation type includes literal tokens like `|-` or `:` that rules pattern-match against. A bare type like `nat` names a set of values without any tokens, so it cannot serve as a relation body." (at $sloc)
-            (Format.asprintf "relation body must be a notation type, but got plain type %s" (Diagnostic.quote (El.Print.string_of_plaintyp plaintyp)))
+          error ~code:Notation_type_expected ~detail:"A notation type includes literal tokens like `|-` or `:` that rules pattern-match against. A bare type like `nat` names a set of values without any tokens, so it cannot serve as a relation signature." (at $sloc)
+            (Format.asprintf "relation signature must be a notation type, but got plain type %s" (Diagnostic.quote (El.Print.string_of_plaintyp plaintyp)))
     }
 
 typ_prim : typ_prim_ { $1 }

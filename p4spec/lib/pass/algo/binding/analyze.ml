@@ -126,7 +126,7 @@ let analyze_exp_as_bound (ctx : Ctx.t) (exp : exp) : unit =
       (Format.asprintf "expression uses unbound %s" (BEnv.describe_binds binds))
       ~detail:
         "Every variable here must already be bound by an earlier part of the \
-         rule, such as the conclusion's input position or a preceding premise."
+         rule, such as the relation's input or a preceding premise."
 
 let analyze_exps_as_bound (ctx : Ctx.t) (exps : exp list) : unit =
   List.iter (analyze_exp_as_bound ctx) exps
@@ -546,8 +546,7 @@ let analyze_elseclause (ctx : Ctx.t) (elseclause : elseclause) : elseclause =
 
 let error_pattern_type_without_cases ?(related = []) (typ : typ) : 'a =
   error ~code:Pattern_non_variant_type ~related typ.at
-    (Format.asprintf
-       "table row patterns require a type with declared cases, but got %s"
+    (Format.asprintf "table row patterns require a variant type, but got %s"
        (Diagnostic.quote (Print.string_of_typ typ)))
     ~detail:
       "The declared cases determine which patterns the table rows must cover."

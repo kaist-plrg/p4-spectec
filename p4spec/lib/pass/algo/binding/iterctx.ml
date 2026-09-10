@@ -85,7 +85,7 @@ let validate (at : region) (iterctx : t) : unit =
               "variables " ^ String.concat ", " variables ^ " are newly bound"
         in
         error ~code:Iteration_missing_loop_variable at
-          ("iteration has no loop variable because " ^ cause)
+          ("iteration has no iter variable because " ^ cause)
           ~detail:
             "An iteration needs a variable bound outside it whose values it \
              can iterate over."
