@@ -1,9 +1,9 @@
 open Lang
 open Il
 
-type error = Diagnostic.t
-
 (* Entry point *)
+
+type error = Diagnostic.t
 
 let algo_spec (spec : spec) : (Al.spec, error) result =
   try

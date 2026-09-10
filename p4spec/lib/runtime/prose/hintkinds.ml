@@ -1,15 +1,14 @@
 open Lang
+open Pl
 open Domain
 open Lib
 
 (* Hint kinds *)
 
-type 'a located_hint = { declaration : HId.t; value : 'a }
-
 module Kind = struct
   type t =
-    | Alter of Hints.Alter.t located_hint
-    | Fields of Hints.Fields.t located_hint
+    | Alter of Hints.Alter.t Annot.hint
+    | Fields of Hints.Fields.t Annot.hint
 
   let to_string = function
     | Alter hint -> Hints.Alter.to_string hint.value

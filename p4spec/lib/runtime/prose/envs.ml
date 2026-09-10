@@ -1,4 +1,5 @@
 open Lang
+open Pl
 open Domain
 open Lib
 
@@ -24,17 +25,6 @@ module IHEnv = MakeHIdEnv (Hints.Input)
 module HEnv = struct
   type t = Hintkinds.t HIdMap.t
 
-  type 'a located_hint = 'a Hintkinds.located_hint = {
-    declaration : HId.t;
-    value : 'a;
-  }
-
-  let hint_declaration (hint : 'a located_hint) = hint.Hintkinds.declaration
-  let hint_value (hint : 'a located_hint) = hint.Hintkinds.value
-
-  let map_hint f (hint : 'a located_hint) : 'b located_hint =
-    { hint with Hintkinds.value = f hint.Hintkinds.value }
-
   let empty = HIdMap.empty
 
   (* Key for hints *)
@@ -57,13 +47,11 @@ module HEnv = struct
 
   let add_alter (henv : t) (hid : HId.t) (key : key)
       (hint_alter : Hints.Alter.t) : t =
-    add henv hid key
-      (Hintkinds.Kind.Alter { declaration = hid; value = hint_alter })
+    add henv hid key (Hintkinds.Kind.Alter { id = hid; value = hint_alter })
 
   let add_fields (henv : t) (hid : HId.t) (key : key)
       (hint_fields : Hints.Fields.t) : t =
-    add henv hid key
-      (Hintkinds.Kind.Fields { declaration = hid; value = hint_fields })
+    add henv hid key (Hintkinds.Kind.Fields { id = hid; value = hint_fields })
 
   let find_kind (henv : t) (hid : HId.t) (key : key) : Hintkinds.Kind.t option =
     match HIdMap.find_opt hid henv with
@@ -75,13 +63,13 @@ module HEnv = struct
     | None -> None
 
   let find_alter (henv : t) (hid : HId.t) (key : key) :
-      Hints.Alter.t located_hint option =
+      Hints.Alter.t Annot.hint option =
     match find_kind henv hid key with
     | Some (Hintkinds.Kind.Alter hint) -> Some hint
     | _ -> None
 
   let find_fields (henv : t) (hid : HId.t) (key : key) :
-      Hints.Fields.t located_hint option =
+      Hints.Fields.t Annot.hint option =
     match find_kind henv hid key with
     | Some (Hintkinds.Kind.Fields hint) -> Some hint
     | _ -> None

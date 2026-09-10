@@ -2,6 +2,7 @@ open Domain.Lib
 module Mixfix = Domain.Mixfix
 open Lang
 open Sl
+module Annot = Pl.Annot
 module Typ = Runtime.Type.Typ
 module Typdef = Runtime.Type.Typdef
 open Runtime.Prose.Envs
@@ -87,42 +88,36 @@ let bound_metavar (ctx : t) (tid : TId.t) : bool =
 
 (* Finders for hints *)
 
-let hint_value (hint : 'a HEnv.located_hint option) =
-  Option.map HEnv.hint_value hint
-
-let map_hint f (hint : 'a HEnv.located_hint option) =
-  Option.map (HEnv.map_hint f) hint
-
 let find_hint_alter (ctx : t) (hid : string) (key : HEnv.key) :
-    Hints.Alter.t HEnv.located_hint option =
+    Hints.Alter.t Annot.hint option =
   HEnv.find_alter ctx.henv (hid $ no_region) key
 
 let find_hint_fields (ctx : t) (hid : string) (key : HEnv.key) :
-    Hints.Fields.t HEnv.located_hint option =
+    Hints.Fields.t Annot.hint option =
   HEnv.find_fields ctx.henv (hid $ no_region) key
 
-let find_hint_prose (ctx : t) (key : HEnv.key) :
-    Hints.Alter.t HEnv.located_hint option =
+let find_hint_prose (ctx : t) (key : HEnv.key) : Hints.Alter.t Annot.hint option
+    =
   find_hint_alter ctx "prose" key
 
 let find_hint_prose_in (ctx : t) (key : HEnv.key) :
-    Hints.Alter.t HEnv.located_hint option =
+    Hints.Alter.t Annot.hint option =
   find_hint_alter ctx "prose_in" key
 
 let find_hint_prose_out (ctx : t) (key : HEnv.key) :
-    Hints.Alter.t HEnv.located_hint option =
+    Hints.Alter.t Annot.hint option =
   find_hint_alter ctx "prose_out" key
 
 let find_hint_prose_true (ctx : t) (key : HEnv.key) :
-    Hints.Alter.t HEnv.located_hint option =
+    Hints.Alter.t Annot.hint option =
   find_hint_alter ctx "prose_true" key
 
 let find_hint_prose_false (ctx : t) (key : HEnv.key) :
-    Hints.Alter.t HEnv.located_hint option =
+    Hints.Alter.t Annot.hint option =
   find_hint_alter ctx "prose_false" key
 
 let find_hint_prose_fields (ctx : t) (key : HEnv.key) :
-    Hints.Fields.t HEnv.located_hint option =
+    Hints.Fields.t Annot.hint option =
   find_hint_fields ctx "prose_fields" key
 
 (* Adders *)
@@ -165,9 +160,9 @@ let add_hint_fields (ctx : t) (hid : HId.t) (key : HEnv.key)
 
 (* Validation *)
 
-let validate_hint_alter (declaration : HId.t) (hint_alter : Hints.Alter.t)
-    (arity : int) : unit =
-  match Hints.Alter.validate hint_alter arity with
+let validate_hint_alter (hint_alter : Hints.Alter.t Annot.hint) (arity : int) :
+    unit =
+  match Hints.Alter.validate hint_alter.value arity with
   | Ok () -> ()
   | Error { at; placeholder; index; arity } ->
       let noun = if arity = 1 then "value" else "values" in
@@ -176,11 +171,11 @@ let validate_hint_alter (declaration : HId.t) (hint_alter : Hints.Alter.t)
         (Format.asprintf
            "hint `%s` placeholder `%s` selects index %d, but only %d %s %s \
             available"
-           declaration.it placeholder index arity noun verb)
+           hint_alter.id.it placeholder index arity noun verb)
 
-let validate_hint_fields (at_hint : region) (declaration : HId.t)
-    (hint_fields : Hints.Fields.t) (arity : int) : unit =
-  match Hints.Fields.validate hint_fields arity with
+let validate_hint_fields (at_hint : region)
+    (hint_fields : Hints.Fields.t Annot.hint) (arity : int) : unit =
+  match Hints.Fields.validate hint_fields.value arity with
   | Ok () -> ()
   | Error { expected; actual } ->
       let at =
@@ -189,7 +184,7 @@ let validate_hint_fields (at_hint : region) (declaration : HId.t)
           | at :: _ when index = 0 -> at
           | _ :: rest -> find_extra (index - 1) rest
         in
-        let ats_fields = List.map at hint_fields in
+        let ats_fields = List.map at hint_fields.value in
         if actual > expected then find_extra expected ats_fields
         else
           match List.rev ats_fields with
@@ -200,7 +195,7 @@ let validate_hint_fields (at_hint : region) (declaration : HId.t)
       let field_noun = if expected = 1 then "field" else "fields" in
       error ~code:Hint_fields_arity_mismatch at
         (Format.asprintf "hint `%s` has %d %s, but the syntax case has %d %s"
-           declaration.it actual name_noun expected field_noun)
+           hint_fields.id.it actual name_noun expected field_noun)
 
 (* Unrolling types *)
 
@@ -222,8 +217,10 @@ let load_hints (ctx : t) (key : HEnv.key) (hints : El.hint list) : t =
           | Some hint_fields ->
               (match key with
               | `Typ (_, mixop) ->
-                  validate_hint_fields at hintid hint_fields
-                    (Mixfix.arity mixop)
+                  let hint_fields =
+                    Annot.{ id = hintid; value = hint_fields }
+                  in
+                  validate_hint_fields at hint_fields (Mixfix.arity mixop)
               | `Func _ | `Rel _ -> ());
               add_hint_fields ctx hintid key hint_fields
           | None ->
