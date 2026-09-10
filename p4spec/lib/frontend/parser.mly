@@ -672,10 +672,10 @@ tablerow :
 
 hint :
   | HINT_LPAREN hintid exp RPAREN
-    { ({ hintid = $2 @@@ $loc($2); hintexp = $3; at = at $loc } : hint) }
+    { ({ hintid = $2 @@@ $loc($2); hintexp = $3 } @@@ $loc : hint) }
   | HINT_LPAREN hintid RPAREN
     { let empty_at = ($startpos($3), $startpos($3)) in
-      ({ hintid = $2 @@@ $loc($2); hintexp = SeqE [] @@@ empty_at; at = at $loc } : hint) }
+      ({ hintid = $2 @@@ $loc($2); hintexp = SeqE [] @@@ empty_at } @@@ $loc : hint) }
 
 (* Rules *)
 

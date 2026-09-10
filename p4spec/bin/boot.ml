@@ -27,9 +27,9 @@ let elab_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.elab paths_spec)
          ~on_success:(fun spec_il ->
-           Format.printf "%s\n" (Il.Print.string_of_spec spec_il))
-         (fun () -> P4spectec.elab paths_spec))
+           Format.printf "%s\n" (Il.Print.string_of_spec spec_il)))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a spec"
@@ -40,9 +40,9 @@ let algo_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.algo paths_spec)
          ~on_success:(fun spec_al ->
-           Format.printf "%s\n" (Al.Print.string_of_spec spec_al))
-         (fun () -> P4spectec.algo paths_spec))
+           Format.printf "%s\n" (Al.Print.string_of_spec spec_al)))
 
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a spec"
@@ -53,9 +53,9 @@ let struct_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.structure ~final:true paths_spec)
          ~on_success:(fun spec_sl ->
-           Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl))
-         (fun () -> P4spectec.structure ~final:true paths_spec))
+           Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)))
 
 let prose_command =
   Core.Command.basic ~summary:"generate AsciiDoc prose from a spec"
@@ -66,9 +66,9 @@ let prose_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.annotate paths_spec)
          ~on_success:(fun spec_pl ->
-           Format.printf "%s\n" (Pl.Render.render_spec spec_pl))
-         (fun () -> P4spectec.annotate paths_spec))
+           Format.printf "%s\n" (Pl.Render.render_spec spec_pl)))
 
 let run_command =
   Core.Command.basic ~summary:"execute the spec"
@@ -115,6 +115,12 @@ let run_command =
      fun () ->
        let cache = not no_cache in
        run_with_diagnostics
+         ~action:(fun () ->
+           let* spec = P4spectec.spec_of_mode mode paths_spec in
+           let* runner =
+             P4spectec.build_null ~cache ~det ~guard interface spec
+           in
+           Ok (spec, runner))
          ~on_success:(fun (spec, (module Runner : RUNNER)) ->
            let handlers =
              if profile then
@@ -141,13 +147,7 @@ let run_command =
                diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
            | Fail (`Runtime failure) ->
                failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
-               |> render_diagnostics)
-         (fun () ->
-           let* spec = P4spectec.spec_of_mode mode paths_spec in
-           let* runner =
-             P4spectec.build_null ~cache ~det ~guard interface spec
-           in
-           Ok (spec, runner)))
+               |> render_diagnostics))
 
 let boot_n_command =
   Core.Command.basic ~summary:"run meta-circular interpreter"
@@ -175,6 +175,12 @@ let boot_n_command =
      fun () ->
        let target = { includes = includes_target; path = path_target } in
        run_with_diagnostics
+         ~action:(fun () ->
+           let* tower = P4spectec.tower_of_file path_tower target in
+           let* spec_boot, booter =
+             P4spectec.build_tower ~cache:(not no_cache) ~det ~guard tower
+           in
+           Ok (tower, spec_boot, booter))
          ~on_success:(fun (tower, spec, (module Booter : RUNNER)) ->
            let handlers =
              if profile then
@@ -201,13 +207,7 @@ let boot_n_command =
            | Pass _ -> Format.printf "passed\n"
            | Fail failure ->
                failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
-               |> render_diagnostics)
-         (fun () ->
-           let* tower = P4spectec.tower_of_file path_tower target in
-           let* spec_boot, booter =
-             P4spectec.build_tower ~cache:(not no_cache) ~det ~guard tower
-           in
-           Ok (tower, spec_boot, booter)))
+               |> render_diagnostics))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a SpecTec program"
@@ -228,6 +228,9 @@ let parse_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () ->
+           let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
+           P4spectec.build_null interface spec)
          ~on_success:(fun (module Runner : RUNNER) ->
            try
              match Runner.Interface.parse_program [] [ path_spectec ] with
@@ -254,10 +257,7 @@ let parse_command =
                  else str_program |> print_endline
            with
            | Sys_error msg -> Format.printf "File error: %s\n" msg
-           | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
-         (fun () ->
-           let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
-           P4spectec.build_null interface spec))
+           | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e)))
 
 (* Command-line interface *)
 

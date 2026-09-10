@@ -205,7 +205,7 @@ let unroll_typ (ctx : t) (typ : Sl.typ) : Sl.typ = TDEnv.unroll ctx.tdenv typ
 
 let load_hints (ctx : t) (key : HEnv.key) (hints : El.hint list) : t =
   List.fold_left
-    (fun ctx El.{ hintid; hintexp; at } ->
+    (fun ctx { it = El.{ hintid; hintexp }; at; _ } ->
       match hintid.it with
       (* Alter hints *)
       | "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" ->

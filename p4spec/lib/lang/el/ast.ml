@@ -160,7 +160,8 @@ and prem' =
 
 (* Hints *)
 
-and hint = { hintid : id; hintexp : exp; at : region }
+and hint = hint' phrase
+and hint' = { hintid : id; hintexp : exp }
 
 (* Rules *)
 

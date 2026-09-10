@@ -1902,7 +1902,8 @@ and fetch_rel_input_hint (at : region) (id : id) (nottyp_il : Il.nottyp)
   let hint_input_default = List.init len Fun.id in
   let hintexp_input_opt =
     List.find_map
-      (fun hint -> if hint.hintid.it = "input" then Some hint.hintexp else None)
+      (fun hint ->
+        if hint.it.hintid.it = "input" then Some hint.it.hintexp else None)
       hints
   in
   match hintexp_input_opt with

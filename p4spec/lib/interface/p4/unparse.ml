@@ -19,8 +19,8 @@ let hints_of_typcase (henv : HEnv.t) (tid : TId.t) (typcase : Il.typcase) :
     HEnv.t =
   let nottyp, _, hints = typcase in
   let hint_opt =
-    List.find_opt (fun hint -> El.(hint.hintid.it = hintid)) hints
-    |> Option.map (fun hint -> El.(hint.hintexp))
+    List.find_opt (fun hint -> El.(hint.it.hintid.it = hintid)) hints
+    |> Option.map (fun hint -> El.(hint.it.hintexp))
   in
   let hint_alter_opt = Option.map Hints.Alter.init hint_opt in
   match hint_alter_opt with

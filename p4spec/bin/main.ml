@@ -163,9 +163,9 @@ let elab_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.elab paths_spec)
          ~on_success:(fun spec_il ->
-           Format.printf "%s\n" (Il.Print.string_of_spec spec_il))
-         (fun () -> P4spectec.elab paths_spec))
+           Format.printf "%s\n" (Il.Print.string_of_spec spec_il)))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a P4 spec"
@@ -176,9 +176,9 @@ let algo_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.algo paths_spec)
          ~on_success:(fun spec_al ->
-           Format.printf "%s\n" (Al.Print.string_of_spec spec_al))
-         (fun () -> P4spectec.algo paths_spec))
+           Format.printf "%s\n" (Al.Print.string_of_spec spec_al)))
 
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
@@ -189,9 +189,9 @@ let struct_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.structure ~final:true paths_spec)
          ~on_success:(fun spec_sl ->
-           Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl))
-         (fun () -> P4spectec.structure ~final:true paths_spec))
+           Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)))
 
 let prose_command =
   Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
@@ -202,9 +202,9 @@ let prose_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () -> P4spectec.annotate paths_spec)
          ~on_success:(fun spec_pl ->
-           Format.printf "%s\n" (Pl.Render.render_spec spec_pl))
-         (fun () -> P4spectec.annotate paths_spec))
+           Format.printf "%s\n" (Pl.Render.render_spec spec_pl)))
 
 let run_command =
   Core.Command.basic ~summary:"execute the P4 spec against a P4 program"
@@ -243,6 +243,10 @@ let run_command =
      fun () ->
        let cache = not no_cache in
        run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+           let* simulator = P4spectec.build_sim ~cache ~det ~guard spec_sim in
+           Ok (spec_sim, simulator))
          ~on_success:(fun (spec_sim, simulator) ->
            let (module Simulator : SIM) = simulator in
            let handlers =
@@ -272,11 +276,7 @@ let run_command =
                diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
            | Fail (`Runtime failure) ->
                failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
-               |> render_diagnostics)
-         (fun () ->
-           let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
-           let* simulator = P4spectec.build_sim ~cache ~det ~guard spec_sim in
-           Ok (spec_sim, simulator)))
+               |> render_diagnostics))
 
 let sim_command =
   Core.Command.basic
@@ -317,6 +317,12 @@ let sim_command =
      fun () ->
        let cache = not no_cache in
        run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+           let* simulator =
+             P4spectec.build_sim ~cache ~det ~guard ~arch spec_sim
+           in
+           Ok (spec_sim, simulator))
          ~on_success:(fun (spec_sim, simulator) ->
            let (module Simulator : SIM) = simulator in
            let handlers =
@@ -344,13 +350,7 @@ let sim_command =
                diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
            | Fail (`Runtime failure) ->
                failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
-               |> render_diagnostics)
-         (fun () ->
-           let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
-           let* simulator =
-             P4spectec.build_sim ~cache ~det ~guard ~arch spec_sim
-           in
-           Ok (spec_sim, simulator)))
+               |> render_diagnostics))
 
 let cover_run_command =
   Core.Command.basic ~summary:"measure coverage of the spec"
@@ -380,13 +380,15 @@ let cover_run_command =
          |> List.filter (fun path_p4 ->
                 not (List.exists (String.equal path_p4) excludes_p4))
        in
-       run_with_diagnostics ~on_success:ignore (fun () ->
+       run_with_diagnostics
+         ~action:(fun () ->
            match mode with
            | `Instr ->
                cover_run_instr paths_spec relname includes_p4 paths_p4 path_cov
            | `Dangling ->
                cover_run_dangling paths_spec relname includes_p4 paths_p4
-                 path_cov))
+                 path_cov)
+         ~on_success:ignore)
 
 let cover_sim_command =
   Core.Command.basic
@@ -422,14 +424,16 @@ let cover_sim_command =
                 not (List.exists (String.equal path_p4) excludes_p4))
          |> List.split
        in
-       run_with_diagnostics ~on_success:ignore (fun () ->
+       run_with_diagnostics
+         ~action:(fun () ->
            match mode with
            | `Instr ->
                cover_sim_instr ~arch paths_spec includes_p4 paths_p4 paths_stf
                  path_cov
            | `Dangling ->
                cover_sim_dangling ~arch paths_spec includes_p4 paths_p4
-                 paths_stf path_cov))
+                 paths_stf path_cov)
+         ~on_success:ignore)
 
 let run_testgen_command =
   Core.Command.basic
@@ -463,7 +467,8 @@ let run_testgen_command =
          ~doc:"cover a new dangling only if it was intended by a mutation"
      in
      fun () ->
-       run_with_diagnostics ~on_success:ignore (fun () ->
+       run_with_diagnostics
+         ~action:(fun () ->
            let* spec_sl = P4spectec.structure ~final:true paths_spec in
            let logmode =
              if silent then Backend_testgen_neg.Modes.Silent
@@ -488,7 +493,8 @@ let run_testgen_command =
              else Backend_testgen_neg.Modes.Relaxed
            in
            P4spectec.fuzzer fuel spec_sl relname includes_p4 gendir
-             name_campaign randseed logmode bootmode mutationmode covermode))
+             name_campaign randseed logmode bootmode mutationmode covermode)
+         ~on_success:ignore)
 
 let run_testgen_debug_command =
   Core.Command.basic
@@ -503,10 +509,12 @@ let run_testgen_debug_command =
        flag "-debug" (required string) ~doc:"directory for debug files"
      and iid = flag "-iid" (required int) ~doc:"dangling id to close-miss" in
      fun () ->
-       run_with_diagnostics ~on_success:ignore (fun () ->
+       run_with_diagnostics
+         ~action:(fun () ->
            let* spec_sl = P4spectec.structure ~final:true paths_spec in
            P4spectec.debug_dangling spec_sl relname includes_p4 path_p4 debugdir
-             iid))
+             iid)
+         ~on_success:ignore)
 
 let interesting_command =
   Core.Command.basic ~summary:"interestingness test for reducing P4 programs"
@@ -524,6 +532,10 @@ let interesting_command =
      and path_p4 = flag "-p" (required string) ~doc:"P4 program" in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode SL_mode paths_spec in
+           let* simulator = P4spectec.build_sim spec_sim in
+           Ok (spec_sim, simulator))
          ~on_success:(fun (spec_sim, simulator) ->
            let (module Simulator : SIM) = simulator in
            let result, cover =
@@ -566,11 +578,7 @@ let interesting_command =
                      if check_close_miss then exit 0 else exit 2
                  | Miss [] ->
                      Printf.printf "IllTyped: Miss\n";
-                     exit 1))
-         (fun () ->
-           let* spec_sim = P4spectec.spec_of_mode SL_mode paths_spec in
-           let* simulator = P4spectec.build_sim spec_sim in
-           Ok (spec_sim, simulator)))
+                     exit 1)))
 
 let splice_command =
   Core.Command.basic ~summary:"splice a skeleton p4_16 specification document"
@@ -582,12 +590,7 @@ let splice_command =
      and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
      fun () ->
        run_with_diagnostics
-         ~on_success:(fun (spec, spec_pl, paths) ->
-           try Backend_splice.Driver.splice_files spec spec_pl paths
-           with Backend_splice.Error.SpliceError (at, msg) ->
-             Format.eprintf "%s\n" (Util.Error.string_of_error at msg);
-             Format.printf "%s\n" (Util.Error.string_of_error at msg))
-         (fun () ->
+         ~action:(fun () ->
            let* spec = P4spectec.parse paths_spec in
            let* spec_pl = P4spectec.annotate paths_spec in
            let* paths =
@@ -601,7 +604,12 @@ let splice_command =
              else if inplace then Ok (List.combine paths_input paths_input)
              else Ok (List.combine paths_input paths_output)
            in
-           Ok (spec, spec_pl, paths)))
+           Ok (spec, spec_pl, paths))
+         ~on_success:(fun (spec, spec_pl, paths) ->
+           try Backend_splice.Driver.splice_files spec spec_pl paths
+           with Backend_splice.Error.SpliceError (at, msg) ->
+             Format.eprintf "%s\n" (Util.Error.string_of_error at msg);
+             Format.printf "%s\n" (Util.Error.string_of_error at msg)))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
@@ -615,6 +623,9 @@ let parse_command =
      in
      fun () ->
        run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode AL_mode paths_spec in
+           P4spectec.build_sim spec_sim)
          ~on_success:(fun simulator ->
            let (module Simulator : SIM) = simulator in
            try
@@ -644,10 +655,7 @@ let parse_command =
                  else str_program |> print_endline
            with
            | Sys_error msg -> Format.printf "File error: %s\n" msg
-           | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
-         (fun () ->
-           let* spec_sim = P4spectec.spec_of_mode AL_mode paths_spec in
-           P4spectec.build_sim spec_sim))
+           | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e)))
 
 let command =
   Core.Command.group
