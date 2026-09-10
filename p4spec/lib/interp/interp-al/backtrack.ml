@@ -21,8 +21,8 @@ let back_unmatch (at : region) (msg : string) : 'a backtrack =
 
 let back_unmatch_of_failure (failure : Run.failure) : 'a backtrack =
   match failure with
-  | Run.Diagnostic _ -> raise (Run.ExternError failure)
-  | Run.Failtraces failtraces -> Unmatch failtraces
+  | Run.Abort _ -> raise (Run.ExternError failure)
+  | Run.Unmatch failtraces -> Unmatch failtraces
 
 let back_nest (at : region) (msg : unit -> string) (backtrack : 'a backtrack) :
     'a backtrack =

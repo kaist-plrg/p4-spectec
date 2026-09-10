@@ -140,7 +140,7 @@ let run_command =
            | Fail (`Syntax diagnostic) ->
                diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
            | Fail (`Runtime failure) ->
-               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
                |> render_diagnostics)
          (fun () ->
            let* spec = P4spectec.spec_of_mode mode paths_spec in
@@ -200,7 +200,7 @@ let boot_n_command =
            match result with
            | Pass _ -> Format.printf "passed\n"
            | Fail failure ->
-               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
                |> render_diagnostics)
          (fun () ->
            let* tower = P4spectec.tower_of_file path_tower target in

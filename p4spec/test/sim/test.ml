@@ -10,12 +10,12 @@ let run_sim (module Simulator : SIM) includes_p4 path_p4 path_stf =
   try
     Simulator.clear ();
     (match Simulator.run_stf_test includes_p4 path_p4 path_stf with
-    | Pass -> ()
+    | Pass () -> ()
     | Fail (`Syntax diagnostic) ->
         let at, msg = Diagnostic.region_msg diagnostic in
         raise (TestRunErr (msg, at, time_start))
     | Fail (`Runtime failure) ->
-        let at, msg = failure_region_msg failure in
+        let at, msg = Diagnostic.region_msg (diagnostic_of_failure failure) in
         raise (TestRunErr (msg, at, time_start)));
     time_start
   with

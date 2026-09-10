@@ -4,7 +4,7 @@ open Util.Source
 let ( let* ) = Result.bind
 
 module ExternImpl = struct
-  let failure = ref (Run.Failtraces [])
+  let failure = ref (Run.Unmatch [])
   let raise_failure () = raise (Run.ExternError !failure)
   let eval_extern_init _ = raise_failure ()
   let eval_extern_func_lctk_call _ = raise_failure ()
@@ -172,21 +172,20 @@ let eval_failure ?extern_failure (module Interpreter : Run.INTERP) relation :
   let input = Runtime.Value.Make.nat (Bigint.of_int 1) in
   match Interpreter.eval_rel relation [ input ] with
   | Run.Pass _ -> failwith "relation unexpectedly matched"
-  | Run.Fail (Run.Diagnostic actual) -> (
+  | Run.Fail (Run.Abort actual) -> (
       match extern_failure with
-      | Some (Run.Diagnostic expected) ->
+      | Some (Run.Abort expected) ->
           if actual <> expected then
             failwith "extern diagnostic fields were not preserved";
           Ok ()
       | _ -> Error (P4spectec.Error.RunError actual))
-  | Run.Fail (Run.Failtraces traces) -> (
+  | Run.Fail (Run.Unmatch traces) -> (
       match extern_failure with
-      | Some (Run.Diagnostic _) ->
-          failwith "extern diagnostic became failtraces"
+      | Some (Run.Abort _) -> failwith "extern diagnostic became failtraces"
       | _ ->
           Error
             (P4spectec.Error.RunError
-               (Run.failure_to_diagnostic (Run.Failtraces traces))))
+               (Run.diagnostic_of_failure (Run.Unmatch traces))))
 
 let eval_syntax_failure (module Interpreter : Run.INTERP) :
     unit P4spectec.result =
@@ -205,7 +204,7 @@ let init_result result =
 
 let extern_failtraces =
   let open Util.Attempt in
-  Run.Failtraces
+  Run.Unmatch
     [
       Failtrace
         ( no_region,
@@ -227,7 +226,7 @@ let extern_diagnostic =
         ];
     }
   in
-  Run.Diagnostic
+  Run.Abort
     (P4spectec.Diagnostic.error ~code:"sim/test" ~detail:"external detail"
        ~related:[ related ] ~trace:[ trace ] ~source:"sim" no_region
        "external diagnostic")

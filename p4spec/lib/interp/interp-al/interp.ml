@@ -1656,7 +1656,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           match do_eval_rel relname [ value_program ] with
           | Ok values_output -> Run.Pass values_output
           | Err failtraces | Unmatch failtraces ->
-              Run.Fail (`Runtime (Run.Failtraces failtraces)))
+              Run.Fail (`Runtime (Run.Unmatch failtraces)))
       | Fail diagnostic -> Run.Fail (`Syntax diagnostic)
     with
     | P4.Error.ParseError (at, msg) ->
@@ -1668,8 +1668,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       match do_eval_rel relname values_input with
       | Ok values_output -> Run.Pass values_output
-      | Err failtraces | Unmatch failtraces ->
-          Run.Fail (Run.Failtraces failtraces)
+      | Err failtraces | Unmatch failtraces -> Run.Fail (Run.Unmatch failtraces)
     with Run.ExternError failure -> Run.Fail failure
 
   let eval_func (funcname : string) (targs : targ list)
@@ -1678,8 +1677,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       match do_eval_func funcname targs values_input with
       | Ok value_output -> Run.Pass value_output
-      | Err failtraces | Unmatch failtraces ->
-          Run.Fail (Run.Failtraces failtraces)
+      | Err failtraces | Unmatch failtraces -> Run.Fail (Run.Unmatch failtraces)
     with Run.ExternError failure -> Run.Fail failure
 
   (* Initialization *)

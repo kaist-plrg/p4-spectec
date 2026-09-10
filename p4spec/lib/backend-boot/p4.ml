@@ -40,8 +40,7 @@ module Make () : RUNNER = struct
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
         | Pass _ -> error no_region "unexpected number of return values"
-        | Fail (`Syntax diagnostic) ->
-            raise (ExternError (Diagnostic diagnostic))
+        | Fail (`Syntax diagnostic) -> raise (ExternError (Abort diagnostic))
         | Fail (`Runtime failure) -> raise (ExternError failure)
       in
       Spec_.Func.register call_func;

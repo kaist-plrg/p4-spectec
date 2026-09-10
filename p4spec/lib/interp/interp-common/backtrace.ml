@@ -64,9 +64,8 @@ let back_unmatch (at : region) (msg : string) =
 
 let back_unmatch_of_failure (failure : Run.failure) : 'a =
   match failure with
-  | Run.Diagnostic _ -> raise (Run.ExternError failure)
-  | Run.Failtraces failtraces ->
-      raise (Backtrace (Unmatch [ Nested failtraces ]))
+  | Run.Abort _ -> raise (Run.ExternError failure)
+  | Run.Unmatch failtraces -> raise (Backtrace (Unmatch [ Nested failtraces ]))
 
 let back_nest (at : region) (msg : unit -> string) (backtrace : backtrace) =
   let trace = Frame (at, msg) in

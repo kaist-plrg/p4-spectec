@@ -7,46 +7,39 @@ module Typ = Type.Typ
 type mode = AL_mode | SL_mode | PL_mode | Empty_mode
 type spec = AL of Al.spec | SL of Sl.spec | PL of Pl.spec | Empty
 
-(* Failure reported by the entry points below: a diagnostic raised by an
-   extern, or the failtraces of an evaluation that produced no value *)
+(* Error *)
 
-type failure =
-  | Diagnostic of Diagnostic.t
-  | Failtraces of Util.Attempt.failtrace list
+type error = Diagnostic.t
 
-(* Failtraces are rendered only by [failure_to_diagnostic]. *)
+(* Failure reported by the entry points below: an abort that propagates as
+   is, or an unmatch that re-enters the caller's backtracking *)
 
-let diagnostic_failure ~source at msg =
-  Diagnostic (Diagnostic.error ~source at msg)
+type failure = Abort of error | Unmatch of Util.Attempt.failtrace list
 
-let failure_to_diagnostic = function
-  | Diagnostic diagnostic -> diagnostic
-  | Failtraces failtraces ->
+(* Constructor for failure *)
+
+let abort ~source at msg = Abort (Diagnostic.error ~source at msg)
+
+(* Unmatch failtraces are rendered only by [diagnostic_of_failure]. *)
+
+let diagnostic_of_failure = function
+  | Abort diagnostic -> diagnostic
+  | Unmatch failtraces ->
       Diagnostic.of_failtraces ~source:"interp" ~fallback:"evaluation failed"
         failtraces
-
-let failure_region_msg failure =
-  Diagnostic.region_msg (failure_to_diagnostic failure)
 
 (* Raised by an extern implementation, caught by its caller *)
 
 exception ExternError of failure
 
-type error = Diagnostic.t
-
 (* Result types *)
 
-type rel_result = Pass of Value.t list | Fail of failure
-type func_result = Pass of Value.t | Fail of failure
-type parse_result = Pass of Value.t | Fail of Diagnostic.t
-
-type program_result =
-  | Pass of Value.t list
-  | Fail of [ `Syntax of Diagnostic.t | `Runtime of failure ]
-
-type stf_result =
-  | Pass
-  | Fail of [ `Syntax of Diagnostic.t | `Runtime of failure ]
+type ('value, 'failure) outcome = Pass of 'value | Fail of 'failure
+type rel_result = (Value.t list, failure) outcome
+type func_result = (Value.t, failure) outcome
+type parse_result = (Value.t, error) outcome
+type program_failure = [ `Syntax of error | `Runtime of failure ]
+type program_result = (Value.t list, program_failure) outcome
 
 (* Cache management *)
 

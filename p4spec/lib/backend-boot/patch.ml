@@ -54,7 +54,7 @@ let parse_spec (layer_spec : Config.layer) (interface_spec : Config.interface) :
   in
   match parse_spec [ layer_spec.specdir ] with
   | Run.Pass value_spec -> value_spec
-  | Run.Fail diagnostic -> raise (Run.ExternError (Run.Diagnostic diagnostic))
+  | Run.Fail diagnostic -> raise (Run.ExternError (Run.Abort diagnostic))
 
 let parse_target (target : Config.target) (level_target : Config.level) :
     Value.t =
@@ -65,7 +65,7 @@ let parse_target (target : Config.target) (level_target : Config.level) :
   in
   match parse_target target.includes [ target.path ] with
   | Run.Pass value_target -> value_target
-  | Run.Fail diagnostic -> raise (Run.ExternError (Run.Diagnostic diagnostic))
+  | Run.Fail diagnostic -> raise (Run.ExternError (Run.Abort diagnostic))
 
 (* Patch *)
 

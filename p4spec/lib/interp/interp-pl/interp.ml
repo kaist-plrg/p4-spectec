@@ -2282,7 +2282,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | P4.Error.ParseError (at, msg) ->
         Run.Fail (`Syntax (Diagnostic.error ~source:"p4" at msg))
     | Backtrace backtrace ->
-        Run.Fail (`Runtime (Run.Failtraces (back_failtraces backtrace)))
+        Run.Fail (`Runtime (Run.Unmatch (back_failtraces backtrace)))
     | Run.ExternError failure -> Run.Fail (`Runtime failure)
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
@@ -2291,8 +2291,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let values_output = do_eval_rel relname values_input in
       Run.Pass values_output
     with
-    | Backtrace backtrace ->
-        Run.Fail (Run.Failtraces (back_failtraces backtrace))
+    | Backtrace backtrace -> Run.Fail (Run.Unmatch (back_failtraces backtrace))
     | Run.ExternError failure -> Run.Fail failure
 
   let eval_func (funcname : string) (targs : targ list)
@@ -2302,8 +2301,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let value_output = do_eval_func funcname targs values_input in
       Run.Pass value_output
     with
-    | Backtrace backtrace ->
-        Run.Fail (Run.Failtraces (back_failtraces backtrace))
+    | Backtrace backtrace -> Run.Fail (Run.Unmatch (back_failtraces backtrace))
     | Run.ExternError failure -> Run.Fail failure
 
   (* Initialization *)

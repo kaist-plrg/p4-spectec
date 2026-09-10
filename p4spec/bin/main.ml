@@ -141,7 +141,7 @@ let cover_sim_dangling ?(arch : string option) paths_spec includes_p4 paths_p4
         in
         let wellformed, welltyped =
           match program_result with
-          | Pass -> (true, true)
+          | Pass () -> (true, true)
           | Fail (`Syntax _) -> (true, false)
           | Fail (`Runtime _) -> (false, false)
         in
@@ -271,7 +271,7 @@ let run_command =
            | Fail (`Syntax diagnostic) ->
                diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
            | Fail (`Runtime failure) ->
-               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
                |> render_diagnostics)
          (fun () ->
            let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
@@ -339,11 +339,11 @@ let sim_command =
            let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
            Inst.Hook.finish ();
            match result with
-           | Pass -> Format.printf "passed\n"
+           | Pass () -> Format.printf "passed\n"
            | Fail (`Syntax diagnostic) ->
                diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
            | Fail (`Runtime failure) ->
-               failure |> failure_to_diagnostic |> Diagnostic.Report.singleton
+               failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
                |> render_diagnostics)
          (fun () ->
            let* spec_sim = P4spectec.spec_of_mode mode paths_spec in

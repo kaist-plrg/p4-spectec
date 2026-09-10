@@ -78,8 +78,7 @@ module Make () = struct
 
   (* Adders for globals *)
 
-  let add_typdef_global (tid : TId.t) (td : Typdef.t) :
-      (unit, error) result =
+  let add_typdef_global (tid : TId.t) (td : Typdef.t) : (unit, error) result =
     if TDTbl.find_opt tid global.tdtbl |> Option.is_some then
       Error (error_dup tid.at "type" tid.it)
     else Ok (TDTbl.add tid td global.tdtbl)
@@ -89,8 +88,7 @@ module Make () = struct
       Error (error_dup rid.at "relation" rid.it)
     else Ok (RTbl.add rid rel global.rtbl)
 
-  let add_func_global (fid : FId.t) (func : Func.t) :
-      (unit, error) result =
+  let add_func_global (fid : FId.t) (func : Func.t) : (unit, error) result =
     if FTbl.find_opt fid global.ftbl |> Option.is_some then
       Error (error_dup fid.at "function" fid.it)
     else Ok (FTbl.add fid func global.ftbl)

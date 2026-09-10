@@ -9,7 +9,7 @@ let render_code = function
 
 let error (at : region) (msg : string) =
   let open Runtime.Dynamic_Runner.Signature in
-  raise (ExternError (diagnostic_failure ~source:"boot" at msg))
+  raise (ExternError (abort ~source:"boot" at msg))
 
 let error_no_region (msg : string) = error no_region msg
 
