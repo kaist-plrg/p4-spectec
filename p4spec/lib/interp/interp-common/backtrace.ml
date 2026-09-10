@@ -61,9 +61,6 @@ let back_unmatch (at : region) (msg : string) =
 let back_err_failtraces failtraces =
   raise (Backtrace (Err [ Nested failtraces ]))
 
-let back_unmatch_failtraces failtraces =
-  raise (Backtrace (Unmatch [ Nested failtraces ]))
-
 let back_nest (at : region) (msg : unit -> string) (backtrace : backtrace) =
   let trace = Frame (at, msg) in
   match backtrace with

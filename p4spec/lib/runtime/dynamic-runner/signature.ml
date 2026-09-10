@@ -7,7 +7,8 @@ module Typ = Type.Typ
 type mode = AL_mode | SL_mode | PL_mode | Empty_mode
 type spec = AL of Al.spec | SL of Sl.spec | PL of Pl.spec | Empty
 
-(* Failure reported by the entry points below *)
+(* Failure reported by the entry points below: a diagnostic raised by an
+   extern, or the failtraces of an evaluation that produced no value *)
 
 type failure =
   | Diagnostic of Diagnostic.t

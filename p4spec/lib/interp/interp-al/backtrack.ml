@@ -51,9 +51,3 @@ let ( let* ) (backtrack : 'a backtrack) (f : 'a -> 'b) : 'b =
   | Ok a -> f a
   | Err _ as backtrack -> backtrack
   | Unmatch _ as backtrack -> backtrack
-
-let ( let+ ) (backtrack : 'a backtrack) (f : 'a -> 'b) : 'b =
-  match backtrack with
-  | Ok a -> f a
-  | Err failtraces | Unmatch failtraces ->
-      Interp_common.Error.error_with_failtraces failtraces

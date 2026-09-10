@@ -421,10 +421,6 @@ module Make
     with
     | P4.Error.ParseError (at, msg) ->
         Fail (`Syntax (Diagnostic.error ~source:"p4" at msg))
-    | Interp_common.Error.InterpError (at, msg) ->
-        Fail (`Runtime (diagnostic_failure ~source:"interp" at msg))
-    | Interp_common.Error.BacktrackError failtraces ->
-        Fail (`Runtime (Failtraces failtraces))
     | Runtime.Dynamic_Runner.Signature.ExternError failure ->
         Fail (`Runtime failure)
     | Stf.Error.StfError msg ->

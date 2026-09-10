@@ -4,23 +4,20 @@ open Sl
 module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Sl
 open Envs
-open Interp_common.Error
 open Interp_common.Backtrace
 open Util.Source
 
-(* Error *)
-
-let error_undef (at : region) (kind : string) (id : string) =
-  error at (Format.asprintf "%s `%s` is undefined" kind id)
+(* Backtracing *)
 
 let back_undef (at : region) (kind : string) (id : string) =
   back_err at (Format.asprintf "%s `%s` is undefined" kind id)
 
-let error_dup (at : region) (kind : string) (id : string) =
-  error at (Format.asprintf "%s `%s` was already defined" kind id)
-
 let back_dup (at : region) (kind : string) (id : string) =
   back_err at (Format.asprintf "%s `%s` was already defined" kind id)
+
+let error_dup (at : region) (kind : string) (id : string) : Diagnostic.t =
+  Interp_common.Error.error at
+    (Format.asprintf "%s `%s` was already defined" kind id)
 
 module Make () = struct
   (* Cursor *)
@@ -81,24 +78,26 @@ module Make () = struct
 
   (* Adders for globals *)
 
-  let add_typdef_global (tid : TId.t) (td : Typdef.t) : unit =
+  let add_typdef_global (tid : TId.t) (td : Typdef.t) :
+      (unit, Diagnostic.t) result =
     if TDTbl.find_opt tid global.tdtbl |> Option.is_some then
-      error_dup tid.at "type" tid.it;
-    TDTbl.add tid td global.tdtbl
+      Error (error_dup tid.at "type" tid.it)
+    else Ok (TDTbl.add tid td global.tdtbl)
 
-  let add_rel_global (rid : RId.t) (rel : Rel.t) : unit =
+  let add_rel_global (rid : RId.t) (rel : Rel.t) : (unit, Diagnostic.t) result =
     if RTbl.find_opt rid global.rtbl |> Option.is_some then
-      error_dup rid.at "relation" rid.it;
-    RTbl.add rid rel global.rtbl
+      Error (error_dup rid.at "relation" rid.it)
+    else Ok (RTbl.add rid rel global.rtbl)
 
-  let add_func_global (fid : FId.t) (func : Func.t) : unit =
+  let add_func_global (fid : FId.t) (func : Func.t) :
+      (unit, Diagnostic.t) result =
     if FTbl.find_opt fid global.ftbl |> Option.is_some then
-      error_dup fid.at "function" fid.it;
-    FTbl.add fid func global.ftbl
+      Error (error_dup fid.at "function" fid.it)
+    else Ok (FTbl.add fid func global.ftbl)
 
   (* Global initializer *)
 
-  let load_def (def : def) : unit =
+  let load_def (def : def) : (unit, Diagnostic.t) result =
     match def.it with
     | ExternTypD (id, _) ->
         let td = Typdef.Extern in
@@ -106,7 +105,7 @@ module Make () = struct
     | TypD (id, tparams, deftyp, _) ->
         let td = Typdef.Defined (tparams, deftyp) in
         add_typdef_global id td
-    | VarD _ -> ()
+    | VarD _ -> Ok ()
     | ExternRelD (id, rel_signature, _, _) ->
         let rel = Rel.Extern rel_signature in
         add_rel_global id rel
@@ -128,9 +127,17 @@ module Make () = struct
         let func = Func.Defined (tparams, params, typ, block, elseblock_opt) in
         add_func_global id func
 
-  let init ~(det : bool) (spec : spec) : unit =
+  let rec load_defs (defs : def list) : (unit, Diagnostic.t) result =
+    match defs with
+    | [] -> Ok ()
+    | def_h :: defs_t -> (
+        match load_def def_h with
+        | Ok () -> load_defs defs_t
+        | Error _ as error -> error)
+
+  let init ~(det : bool) (spec : spec) : (unit, Diagnostic.t) result =
     is_det := det;
-    List.iter load_def spec
+    load_defs spec
 
   (* Constructor *)
 

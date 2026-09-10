@@ -9,7 +9,7 @@ open Util.Source
 (* Whether a value belongs to a type (including subtyping) *)
 
 let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
-    (find_func : FId.t -> tparam list * typ list * typ) (typ : typ)
+    (find_func_opt : FId.t -> (tparam list * typ list * typ) option) (typ : typ)
     (value : value) : bool =
   match typ.it with
   | BoolT -> ( match value.it with BoolV _ -> true | _ -> false)
@@ -30,7 +30,7 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
           | PlainT typ, _ ->
               let theta = TIdMap.of_lists tparams targs in
               let typ = Type.Subst.subst_typ theta typ in
-              sub_ find_typdef_opt find_func typ value
+              sub_ find_typdef_opt find_func_opt typ value
           | StructT typfields, StructV valuefields
             when List.length typfields = List.length valuefields ->
               let theta = TIdMap.of_lists tparams targs in
@@ -39,7 +39,7 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
                   Atom.eq atom_t.it atom_v.it
                   &&
                   let typ = Type.Subst.subst_typ theta typ in
-                  sub_ find_typdef_opt find_func typ value)
+                  sub_ find_typdef_opt find_func_opt typ value)
                 typfields valuefields
           | VariantT typcases, CaseV valuecase ->
               let theta = TIdMap.of_lists tparams targs in
@@ -50,41 +50,43 @@ let rec sub_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
                   &&
                   let nottyp = Type.Subst.subst_nottyp theta nottyp in
                   let typs = Mixfix.args nottyp.it in
-                  subs_ find_typdef_opt find_func typs values)
+                  subs_ find_typdef_opt find_func_opt typs values)
                 typcases
           | _ -> false))
   | TupleT typs -> (
       match value.it with
       | TupleV values ->
           List.length typs = List.length values
-          && List.for_all2 (sub_ find_typdef_opt find_func) typs values
+          && List.for_all2 (sub_ find_typdef_opt find_func_opt) typs values
       | _ -> false)
   | IterT (typ_inner, Opt) -> (
       match value.it with
       | OptV value_opt -> (
           match value_opt with
           | Some value_inner ->
-              sub_ find_typdef_opt find_func typ_inner value_inner
+              sub_ find_typdef_opt find_func_opt typ_inner value_inner
           | None -> true)
       | _ -> true)
   | IterT (typ_inner, List) -> (
       match value.it with
       | ListV values ->
-          List.for_all (sub_ find_typdef_opt find_func typ_inner) values
+          List.for_all (sub_ find_typdef_opt find_func_opt typ_inner) values
       | _ -> false)
   | FuncT (tparams_t, typs_params_t, typ_ret_t) -> (
       match value.it with
-      | FuncV fid ->
-          let tparams_v, typs_params_v, typ_ret_v = find_func fid in
-          Type.Equiv.equiv_functyp find_typdef_opt tparams_t typs_params_t
-            typ_ret_t tparams_v typs_params_v typ_ret_v
+      | FuncV fid -> (
+          match find_func_opt fid with
+          | Some (tparams_v, typs_params_v, typ_ret_v) ->
+              Type.Equiv.equiv_functyp find_typdef_opt tparams_t typs_params_t
+                typ_ret_t tparams_v typs_params_v typ_ret_v
+          | None -> false)
       | _ -> false)
 
 and subs_ (find_typdef_opt : TId.t -> Type.Typdef.t option)
-    (find_func : FId.t -> tparam list * typ list * typ) (typs : typ list)
-    (values : value list) : bool =
+    (find_func_opt : FId.t -> (tparam list * typ list * typ) option)
+    (typs : typ list) (values : value list) : bool =
   List.length typs = List.length values
-  && List.for_all2 (sub_ find_typdef_opt find_func) typs values
+  && List.for_all2 (sub_ find_typdef_opt find_func_opt) typs values
 
 (* Caches *)
 
@@ -107,7 +109,7 @@ let cache_find_typdef_opt find_typdef_opt =
 
 (* Entry point *)
 
-let sub cache_sub_var find_typdef_opt find_func typ value =
+let sub cache_sub_var find_typdef_opt find_func_opt typ value =
   match typ.it with
   | VarT (tid, []) -> (
       let key = (tid.it, value.note.vid) in
@@ -115,11 +117,11 @@ let sub cache_sub_var find_typdef_opt find_func typ value =
       | Some res -> res
       | None ->
           let res =
-            sub_ (cache_find_typdef_opt find_typdef_opt) find_func typ value
+            sub_ (cache_find_typdef_opt find_typdef_opt) find_func_opt typ value
           in
           Hashtbl.add cache_sub_var key res;
           res)
-  | _ -> sub_ (cache_find_typdef_opt find_typdef_opt) find_func typ value
+  | _ -> sub_ (cache_find_typdef_opt find_typdef_opt) find_func_opt typ value
 
-let subs find_typdef_opt find_func typs values =
-  subs_ (cache_find_typdef_opt find_typdef_opt) find_func typs values
+let subs find_typdef_opt find_func_opt typs values =
+  subs_ (cache_find_typdef_opt find_typdef_opt) find_func_opt typs values

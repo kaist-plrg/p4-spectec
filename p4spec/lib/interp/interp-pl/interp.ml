@@ -12,7 +12,6 @@ open Envs
 module Run = Runtime.Dynamic_Runner.Signature
 module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
-open Interp_common.Error
 open Interp_common.Backtrace
 open Interp_common.Nondet
 module Flow = Interp_common.Flow
@@ -73,9 +72,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
     let typs = Mixfix.args nottyp.it in
     let typs = List.map (fun i -> List.nth typs i) inputs in
-    check
+    check_back_err
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
+         (Ctx.find_func_signature_opt ctx)
          typs values_input)
       id_rel.at
       (F.sprintf "relation input of %s does not match the expected type"
@@ -90,9 +89,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
              if List.mem idx inputs then None else Some typ)
       |> List.filter_map Fun.id
     in
-    check
+    check_back_err
       (Value.Match.subs (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
+         (Ctx.find_func_signature_opt ctx)
          typs values_output)
       id_rel.at
       (F.sprintf "relation output of %s does not match the expected type"
@@ -101,7 +100,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let check_func_inputs (ctx : Ctx.t) (id_func : id) (targs : targ list)
       (values_input : value list) : unit =
     let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
-    check
+    check_back_err
       (List.length targs = List.length tparams)
       id_func.at
       (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
@@ -113,10 +112,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         TDEnv.empty tparams targs
     in
     let ctx_local = Ctx.localize_func ctx id_func values_input tdenv_local in
-    check
+    check_back_err
       (Value.Match.subs
          (Ctx.find_typdef_opt ctx_local)
-         (Ctx.find_func_signature ctx_local)
+         (Ctx.find_func_signature_opt ctx_local)
          typs_params values_input)
       id_func.at
       (F.sprintf "function argument of %s does not match the parameter type"
@@ -126,9 +125,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (typ_output : typ) (targs : targ list) (value_output : value) : unit =
     let theta = TIdMap.of_lists tparams targs in
     let typ_output = Type.Subst.subst_typ theta typ_output in
-    check
+    check_back_err
       (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
-         (Ctx.find_func_signature ctx)
+         (Ctx.find_func_signature_opt ctx)
          typ_output value_output)
       id_func.at
       (F.sprintf "return value of function %s does not match the expected type"
@@ -557,7 +556,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let value = eval_exp ctx exp in
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
-        (Ctx.find_func_signature ctx)
+        (Ctx.find_func_signature_opt ctx)
         typ value
     in
     let value_res = Value.Make.bool sub in
@@ -1856,7 +1855,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let value = eval_exp ctx exp_r in
     let sub =
       Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
-        (Ctx.find_func_signature ctx)
+        (Ctx.find_func_signature_opt ctx)
         typ_target value
     in
     if sub then
@@ -2205,7 +2204,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (elseblock_opt : block_group option) (targs : targ list)
       (values_input : value list) : value =
     let tdenv_local =
-      check
+      check_back_err
         (List.length targs = List.length tparams)
         id.at "arity mismatch in type arguments";
       List.fold_left2
@@ -2249,28 +2248,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     Hashtbl.clear sub_cache
 
   let do_eval_rel (relname : string) (values_input : value list) : value list =
-    try
-      let ctx = Ctx.empty () in
-      let values_ouput =
-        invoke_rel ~internal:false ctx (relname $ no_region) values_input
-      in
-      values_ouput
-    with Backtrace backtrace ->
-      let failtraces = back_failtraces backtrace in
-      error_with_failtraces failtraces
+    let ctx = Ctx.empty () in
+    invoke_rel ~internal:false ctx (relname $ no_region) values_input
 
   let do_eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : value =
-    try
-      let ctx = Ctx.empty () in
-      let value_output =
-        invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
-          values_input
-      in
-      value_output
-    with Backtrace backtrace ->
-      let failtraces = back_failtraces backtrace in
-      error_with_failtraces failtraces
+    let ctx = Ctx.empty () in
+    invoke_func_with_values ~internal:false ctx (funcname $ no_region) targs
+      values_input
 
   let eval_program (relname : string) (includes_p4 : string list)
       (filename_p4 : string) : Run.program_result =
@@ -2285,10 +2270,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     with
     | P4.Error.ParseError (at, msg) ->
         Run.Fail (`Syntax (Diagnostic.error ~source:"p4" at msg))
-    | Interp_common.Error.InterpError (at, msg) ->
-        Run.Fail (`Runtime (Run.diagnostic_failure ~source:"interp" at msg))
-    | Interp_common.Error.BacktrackError failtraces ->
-        Run.Fail (`Runtime (Run.Failtraces failtraces))
+    | Backtrace backtrace ->
+        Run.Fail (`Runtime (Run.Failtraces (back_failtraces backtrace)))
     | Run.ExternError failure -> Run.Fail (`Runtime failure)
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
@@ -2297,10 +2280,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let values_output = do_eval_rel relname values_input in
       Run.Pass values_output
     with
-    | Interp_common.Error.InterpError (at, msg) ->
-        Run.Fail (Run.diagnostic_failure ~source:"interp" at msg)
-    | Interp_common.Error.BacktrackError failtraces ->
-        Run.Fail (Run.Failtraces failtraces)
+    | Backtrace backtrace ->
+        Run.Fail (Run.Failtraces (back_failtraces backtrace))
     | Run.ExternError failure -> Run.Fail failure
 
   let eval_func (funcname : string) (targs : targ list)
@@ -2310,10 +2291,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let value_output = do_eval_func funcname targs values_input in
       Run.Pass value_output
     with
-    | Interp_common.Error.InterpError (at, msg) ->
-        Run.Fail (Run.diagnostic_failure ~source:"interp" at msg)
-    | Interp_common.Error.BacktrackError failtraces ->
-        Run.Fail (Run.Failtraces failtraces)
+    | Backtrace backtrace ->
+        Run.Fail (Run.Failtraces (back_failtraces backtrace))
     | Run.ExternError failure -> Run.Fail failure
 
   (* Initialization *)
@@ -2321,7 +2300,5 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let init ~(cache : bool) ~(det : bool) ~guard:_ (spec : spec) :
       (unit, Run.error) result =
     if cache then Cache.cache_on () else Cache.cache_off ();
-    try Ok (Ctx.init ~det spec)
-    with Interp_common.Error.InterpError (at, msg) ->
-      Error (Diagnostic.error ~source:"interp" at msg)
+    Ctx.init ~det spec
 end
