@@ -1,3 +1,4 @@
+module Run = Runtime.Dynamic_Runner.Signature
 open Util.Attempt
 open Util.Source
 
@@ -17,6 +18,11 @@ let back_unmatch_silent : 'a backtrack = Unmatch []
 
 let back_unmatch (at : region) (msg : string) : 'a backtrack =
   Unmatch [ Failtrace (at, (fun () -> msg), []) ]
+
+let back_unmatch_of_failure (failure : Run.failure) : 'a backtrack =
+  match failure with
+  | Run.Diagnostic _ -> raise (Run.ExternError failure)
+  | Run.Failtraces failtraces -> Unmatch failtraces
 
 let back_nest (at : region) (msg : unit -> string) (backtrack : 'a backtrack) :
     'a backtrack =

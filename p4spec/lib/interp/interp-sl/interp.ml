@@ -34,11 +34,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let rel_cache = ref (CCache.create ~size:(256 * 1024))
   let sub_cache = Hashtbl.create 4096
 
-  let back_unmatch_of_failure (failure : Run.failure) : 'a =
-    match failure with
-    | Run.Diagnostic _ -> raise (Run.ExternError failure)
-    | Run.Failtraces failtraces -> back_err_failtraces failtraces
-
   (* Cache toggle *)
 
   let cache_enabled = ref false
@@ -1292,7 +1287,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                    (* Retain the deeper trace,
                       to report the branch that progressed furthest *)
                    let traces =
-                     if trace_depth traces_post >= trace_depth traces_pre then
+                     if depth_traces traces_post >= depth_traces traces_pre then
                        traces_post
                      else traces_pre
                    in
@@ -1392,12 +1387,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (* Evaluate the then branch if the condition holds *)
     if cond then eval_block ~tail ctx block_then
     else
-      let trace =
-        trace_frame exp_cond.at (fun () ->
-            F.asprintf "condition %s was not met"
-              (Sl.Print.string_of_exp exp_cond))
+      let frame =
+        Frame
+          ( exp_cond.at,
+            fun () ->
+              F.asprintf "condition %s was not met"
+                (Sl.Print.string_of_exp exp_cond) )
       in
-      Cont [ trace ]
+      Cont [ frame ]
 
   (* Hold instruction evaluation *)
 
@@ -1508,21 +1505,23 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         if dangle then Hook.on_instr_dangling (not cond) iid value_cond;
         if cond then eval_block ~tail ctx block_hold
         else
-          let trace =
-            trace_frame id.at (fun () ->
-                F.asprintf "condition hold %s was not met" id.it)
+          let frame =
+            Frame
+              (id.at, fun () -> F.asprintf "condition hold %s was not met" id.it)
           in
-          Cont [ trace ]
+          Cont [ frame ]
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
         if not cond then eval_block ~tail ctx block_not_hold
         else
-          let trace =
-            trace_frame id.at (fun () ->
-                F.asprintf "condition not-hold %s was not met" id.it)
+          let frame =
+            Frame
+              ( id.at,
+                fun () -> F.asprintf "condition not-hold %s was not met" id.it
+              )
           in
-          Cont [ trace ]
+          Cont [ frame ]
 
   (* Case analysis instruction evaluation *)
 
@@ -1573,11 +1572,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match block_opt with
     | Some block -> eval_block ~tail ctx block
     | None ->
-        let trace =
-          trace_frame exp.at (fun () ->
-              F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp))
+        let frame =
+          Frame
+            ( exp.at,
+              fun () ->
+                F.asprintf "no case matched for %s" (Sl.Print.string_of_exp exp)
+            )
         in
-        Cont [ trace ]
+        Cont [ frame ]
 
   (* Group instruction evaluation *)
 

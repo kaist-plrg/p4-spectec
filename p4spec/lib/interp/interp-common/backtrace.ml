@@ -1,3 +1,4 @@
+module Run = Runtime.Dynamic_Runner.Signature
 open Util.Attempt
 open Util.Source
 
@@ -10,16 +11,17 @@ exception Backtrace of backtrace
 
 (* As failtraces *)
 
-let rec append_failtraces failtraces suffix =
+let rec append_failtraces failtraces failtraces_suffix =
   match failtraces with
-  | [] -> suffix
+  | [] -> failtraces_suffix
   | failtraces ->
       List.map
-        (fun (Failtrace (at, msg, children)) ->
-          let children =
-            if children = [] then suffix else append_failtraces children suffix
+        (fun (Failtrace (at, msg, failtraces_children)) ->
+          let failtraces_children =
+            if failtraces_children = [] then failtraces_suffix
+            else append_failtraces failtraces_children failtraces_suffix
           in
-          Failtrace (at, msg, children))
+          Failtrace (at, msg, failtraces_children))
         failtraces
 
 let back_failtraces (backtrace : backtrace) : failtrace list =
@@ -34,16 +36,18 @@ let back_failtraces (backtrace : backtrace) : failtrace list =
   in
   match backtrace with Err traces | Unmatch traces -> of_traces traces
 
-let failtraces_depth failtraces =
+(* Depth *)
+
+let depth_failtraces failtraces =
   List.fold_left
     (fun depth failtrace -> max depth (depth_of failtrace))
     0 failtraces
 
-let trace_depth traces =
+let depth_traces traces =
   List.fold_left
     (fun depth -> function
       | Frame _ -> depth + 1
-      | Nested failtraces -> depth + failtraces_depth failtraces)
+      | Nested failtraces -> depth + depth_failtraces failtraces)
     0 traces
 
 (* Backtracing *)
@@ -58,16 +62,17 @@ let back_unmatch (at : region) (msg : string) =
   let traces = [ Frame (at, fun () -> msg) ] in
   raise (Backtrace (Unmatch traces))
 
-let back_err_failtraces failtraces =
-  raise (Backtrace (Err [ Nested failtraces ]))
+let back_unmatch_of_failure (failure : Run.failure) : 'a =
+  match failure with
+  | Run.Diagnostic _ -> raise (Run.ExternError failure)
+  | Run.Failtraces failtraces ->
+      raise (Backtrace (Unmatch [ Nested failtraces ]))
 
 let back_nest (at : region) (msg : unit -> string) (backtrace : backtrace) =
   let trace = Frame (at, msg) in
   match backtrace with
   | Err traces -> raise (Backtrace (Err (trace :: traces)))
   | Unmatch traces -> raise (Backtrace (Unmatch (trace :: traces)))
-
-let trace_frame at msg = Frame (at, msg)
 
 (* Check *)
 

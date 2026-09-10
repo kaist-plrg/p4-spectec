@@ -2,7 +2,9 @@ open Util.Source
 
 (* Diagnostics *)
 
-let error (at : region) (msg : string) : Diagnostic.t =
+type error = Diagnostic.t
+
+let error (at : region) (msg : string) : error =
   Diagnostic.error ~source:"interp" at msg
 
 let warn (at : region) (msg : string) = Diagnostic.warn ~source:"interp" at msg

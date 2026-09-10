@@ -24,11 +24,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   module Ctx = Ctx.Make ()
 
-  let back_err_of_failure (failure : Run.failure) : 'a =
-    match failure with
-    | Run.Diagnostic _ -> raise (Run.ExternError failure)
-    | Run.Failtraces failtraces -> back_err_failtraces failtraces
-
   (* Tier-handler signatures *)
 
   type 'instr_tier eval_instr_tier = Ctx.t -> 'instr_tier -> Ctx.t * Flow.t
@@ -1136,7 +1131,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                  block reports the branch that progressed furthest *)
               | Flow.Cont traces_post ->
                   let traces =
-                    if trace_depth traces_post >= trace_depth traces_pre then
+                    if depth_traces traces_post >= depth_traces traces_pre then
                       traces_post
                     else traces_pre
                   in
@@ -1238,12 +1233,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (* Evaluate the then branch if the condition holds *)
     if cond then eval_block eval_instr_tier string_of_instr_tier ctx block_then
     else
-      let trace =
-        trace_frame exp_cond.node.at (fun () ->
-            F.asprintf "condition %s was not met"
-              (Pl.Print.string_of_exp exp_cond))
+      let frame =
+        Frame
+          ( exp_cond.node.at,
+            fun () ->
+              F.asprintf "condition %s was not met"
+                (Pl.Print.string_of_exp exp_cond) )
       in
-      (ctx, Flow.Cont [ trace ])
+      (ctx, Flow.Cont [ frame ])
 
   (* Hold instruction evaluation *)
 
@@ -1357,22 +1354,24 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         if cond then
           eval_block eval_instr_tier string_of_instr_tier ctx block_hold
         else
-          let trace =
-            trace_frame id.at (fun () ->
-                F.asprintf "condition hold %s was not met" id.it)
+          let frame =
+            Frame
+              (id.at, fun () -> F.asprintf "condition hold %s was not met" id.it)
           in
-          (ctx, Flow.Cont [ trace ])
+          (ctx, Flow.Cont [ frame ])
     | NotHoldH (block_not_hold, dangle) ->
         Hook.restore ();
         if dangle then Hook.on_instr_dangling cond iid value_cond;
         if not cond then
           eval_block eval_instr_tier string_of_instr_tier ctx block_not_hold
         else
-          let trace =
-            trace_frame id.at (fun () ->
-                F.asprintf "condition not-hold %s was not met" id.it)
+          let frame =
+            Frame
+              ( id.at,
+                fun () -> F.asprintf "condition not-hold %s was not met" id.it
+              )
           in
-          (ctx, Flow.Cont [ trace ])
+          (ctx, Flow.Cont [ frame ])
 
   (* Case analysis instruction evaluation *)
 
@@ -1442,11 +1441,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | Some (ctx, block) ->
         eval_block eval_instr_tier string_of_instr_tier ctx block
     | None ->
-        let trace =
-          trace_frame exp.node.at (fun () ->
-              F.asprintf "no case matched for %s" (Pl.Print.string_of_exp exp))
+        let frame =
+          Frame
+            ( exp.node.at,
+              fun () ->
+                F.asprintf "no case matched for %s" (Pl.Print.string_of_exp exp)
+            )
         in
-        (ctx, Flow.Cont [ trace ])
+        (ctx, Flow.Cont [ frame ])
 
   (* Backtracking-block instruction evaluation *)
 
@@ -1468,7 +1470,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                 (* Retain the deeper trace, to report
                    the arm that progressed furthest *)
                 let traces =
-                  if trace_depth traces_post >= trace_depth traces_pre then
+                  if depth_traces traces_post >= depth_traces traces_pre then
                     traces_post
                   else traces_pre
                 in
@@ -1513,7 +1515,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                 (* Retain the deeper trace, to report
                    the arm that progressed furthest *)
                 let traces =
-                  if trace_depth traces_post >= trace_depth traces then
+                  if depth_traces traces_post >= depth_traces traces then
                     traces_post
                   else traces
                 in
@@ -1870,19 +1872,24 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       | Some ctx ->
           eval_block eval_instr_tier string_of_instr_tier ctx block_inner
       | None ->
-          let trace =
-            trace_frame exp_r.node.at (fun () ->
-                F.asprintf "binding %s failed" (Pl.Print.string_of_exp exp_l))
+          let frame =
+            Frame
+              ( exp_r.node.at,
+                fun () ->
+                  F.asprintf "binding %s failed" (Pl.Print.string_of_exp exp_l)
+              )
           in
-          (ctx, Flow.Cont [ trace ])
+          (ctx, Flow.Cont [ frame ])
     else
-      let trace =
-        trace_frame exp_r.node.at (fun () ->
-            F.asprintf "%s is not a subtype of %s"
-              (Pl.Print.string_of_exp exp_r)
-              (Sl.Print.string_of_typ typ_target))
+      let frame =
+        Frame
+          ( exp_r.node.at,
+            fun () ->
+              F.asprintf "%s is not a subtype of %s"
+                (Pl.Print.string_of_exp exp_r)
+                (Sl.Print.string_of_typ typ_target) )
       in
-      (ctx, Flow.Cont [ trace ])
+      (ctx, Flow.Cont [ frame ])
 
   (* Check-let on match instruction evaluation *)
 
@@ -1908,12 +1915,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let ctx = assign_exp ctx exp_l value in
       eval_block eval_instr_tier string_of_instr_tier ctx block_inner
     else
-      let trace =
-        trace_frame exp_r.node.at (fun () ->
-            F.asprintf "%s does not match the expected pattern"
-              (Pl.Print.string_of_exp exp_r))
+      let frame =
+        Frame
+          ( exp_r.node.at,
+            fun () ->
+              F.asprintf "%s does not match the expected pattern"
+                (Pl.Print.string_of_exp exp_r) )
       in
-      (ctx, Flow.Cont [ trace ])
+      (ctx, Flow.Cont [ frame ])
 
   (* Option-get instruction evaluation *)
 
@@ -1926,12 +1935,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         let ctx = assign_exp ctx exp_l value_inner in
         eval_block eval_instr_tier string_of_instr_tier ctx block
     | _ ->
-        let trace =
-          trace_frame exp_r.node.at (fun () ->
-              F.asprintf "%s evaluated to an empty option"
-                (Pl.Print.string_of_exp exp_r))
+        let frame =
+          Frame
+            ( exp_r.node.at,
+              fun () ->
+                F.asprintf "%s evaluated to an empty option"
+                  (Pl.Print.string_of_exp exp_r) )
         in
-        (ctx, Flow.Cont [ trace ])
+        (ctx, Flow.Cont [ frame ])
 
   (* Tier-specific instruction evaluation *)
 
@@ -2015,7 +2026,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let values_output =
       match Extern.eval_extern_rel id.it values_input with
       | Pass values_output -> values_output
-      | Fail failure -> back_err_of_failure failure
+      | Fail failure -> back_unmatch_of_failure failure
     in
     check_rel_outputs ctx id nottyp inputs values_output;
     List.iteri
@@ -2155,7 +2166,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let value_output =
       match Extern.eval_extern_func id.it [] values_input with
       | Pass value_output -> value_output
-      | Fail failure -> back_err_of_failure failure
+      | Fail failure -> back_unmatch_of_failure failure
     in
     check_func_output ctx id tparams typ_output targs value_output;
     List.iteri

@@ -32,11 +32,6 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let rel_cache = ref (CCache.create ~size:(256 * 1024))
   let sub_cache = Hashtbl.create 4096
 
-  let back_err_of_failure (failure : Run.failure) : 'a backtrack =
-    match failure with
-    | Run.Diagnostic _ -> raise (Run.ExternError failure)
-    | Run.Failtraces failtraces -> Err failtraces
-
   (* Cache toggle *)
 
   let cache_enabled = ref false
@@ -1351,7 +1346,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* values_output =
       match Extern.eval_extern_rel id.it values_input with
       | Pass values -> Ok values
-      | Fail failure -> back_err_of_failure failure
+      | Fail failure -> back_unmatch_of_failure failure
     in
     let* () = check_rel_outputs ctx id nottyp inputs values_output in
     Ok values_output
@@ -1501,7 +1496,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* value_output =
       match Extern.eval_extern_func id.it [] values_input with
       | Pass value -> Ok value
-      | Fail failure -> back_err_of_failure failure
+      | Fail failure -> back_unmatch_of_failure failure
     in
     let* () = check_func_output ctx id tparams typ_output targs value_output in
     Ok value_output

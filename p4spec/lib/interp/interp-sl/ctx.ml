@@ -4,6 +4,7 @@ open Sl
 module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Sl
 open Envs
+open Interp_common.Error
 open Interp_common.Backtrace
 open Util.Source
 
@@ -15,9 +16,8 @@ let back_undef (at : region) (kind : string) (id : string) =
 let back_dup (at : region) (kind : string) (id : string) =
   back_err at (Format.asprintf "%s `%s` was already defined" kind id)
 
-let error_dup (at : region) (kind : string) (id : string) : Diagnostic.t =
-  Interp_common.Error.error at
-    (Format.asprintf "%s `%s` was already defined" kind id)
+let error_dup (at : region) (kind : string) (id : string) : error =
+  error at (Format.asprintf "%s `%s` was already defined" kind id)
 
 module Make () = struct
   (* Cursor *)
@@ -79,25 +79,25 @@ module Make () = struct
   (* Adders for globals *)
 
   let add_typdef_global (tid : TId.t) (td : Typdef.t) :
-      (unit, Diagnostic.t) result =
+      (unit, error) result =
     if TDTbl.find_opt tid global.tdtbl |> Option.is_some then
       Error (error_dup tid.at "type" tid.it)
     else Ok (TDTbl.add tid td global.tdtbl)
 
-  let add_rel_global (rid : RId.t) (rel : Rel.t) : (unit, Diagnostic.t) result =
+  let add_rel_global (rid : RId.t) (rel : Rel.t) : (unit, error) result =
     if RTbl.find_opt rid global.rtbl |> Option.is_some then
       Error (error_dup rid.at "relation" rid.it)
     else Ok (RTbl.add rid rel global.rtbl)
 
   let add_func_global (fid : FId.t) (func : Func.t) :
-      (unit, Diagnostic.t) result =
+      (unit, error) result =
     if FTbl.find_opt fid global.ftbl |> Option.is_some then
       Error (error_dup fid.at "function" fid.it)
     else Ok (FTbl.add fid func global.ftbl)
 
   (* Global initializer *)
 
-  let load_def (def : def) : (unit, Diagnostic.t) result =
+  let load_def (def : def) : (unit, error) result =
     match def.it with
     | ExternTypD (id, _) ->
         let td = Typdef.Extern in
@@ -127,7 +127,7 @@ module Make () = struct
         let func = Func.Defined (tparams, params, typ, block, elseblock_opt) in
         add_func_global id func
 
-  let rec load_defs (defs : def list) : (unit, Diagnostic.t) result =
+  let rec load_defs (defs : def list) : (unit, error) result =
     match defs with
     | [] -> Ok ()
     | def_h :: defs_t -> (
@@ -135,7 +135,7 @@ module Make () = struct
         | Ok () -> load_defs defs_t
         | Error _ as error -> error)
 
-  let init ~(det : bool) (spec : spec) : (unit, Diagnostic.t) result =
+  let init ~(det : bool) (spec : spec) : (unit, error) result =
     is_det := det;
     load_defs spec
 
