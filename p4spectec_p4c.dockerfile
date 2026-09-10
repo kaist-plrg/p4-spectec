@@ -39,7 +39,7 @@ RUN apt-get update && \
 RUN opam init --disable-sandboxing --auto-setup && \
     opam switch create 5.1.0 && \
     eval $(opam env) && \
-    opam install dune 'menhir=20240715' 'menhirLib=20240715' bignum core core_unix bisect_ppx -y
+    opam install dune 'menhir=20240715' 'menhirLib=20240715' bignum core core_unix bisect_ppx uucp uuseg uutf -y
 
 # Set opam environment permanently
 ENV OPAM_SWITCH_PREFIX=/root/.opam/5.1.0
