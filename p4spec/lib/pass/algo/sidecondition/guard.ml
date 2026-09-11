@@ -172,7 +172,7 @@ end
 let gen_index_guard (exp : exp) (exp_b : exp) (exp_i : exp) : prem list =
   let exp_l = Il.LenE exp_b $$ (exp.at, Typ.Make.nat') in
   let exp_if =
-    Il.CmpE (`LtOp, `BoolT, exp_i, exp_l) $$ (exp.at, Typ.Make.bool')
+    Il.CmpE (`LtOp, `NatT, exp_i, exp_l) $$ (exp.at, Typ.Make.bool')
   in
   [ Il.IfPr exp_if $ exp.at ]
 
