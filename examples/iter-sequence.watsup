@@ -1,0 +1,66 @@
+;; Sequence iteration, comprehension premises, and list recursion.
+;;
+;; Exercises the `(...)* ` iteration premise binding several variables at once,
+;; list indexing and slicing, `::` head/tail recursion, `++` concatenation,
+;; length `|...|`, and the stdlib's `$exists_`/`$forall_`/`$repeat_`, which are
+;; ordinary defined functions rather than builtins.
+
+var b : bool
+var i : int
+var n : nat
+
+dec $ite<X>(bool, X, X) : X
+def $ite<X>(true, X_t, X_f) = X_t
+def $ite<X>(false, X_t, X_f) = X_f
+
+dec $exists_(bool*) : bool
+def $exists_(eps) = false
+def $exists_(b_h :: b_t*) = b_h \/ $exists_(b_t*)
+
+dec $forall_(bool*) : bool
+def $forall_(eps) = true
+def $forall_(b_h :: b_t*) = b_h /\ $forall_(b_t*)
+
+dec $repeat_<X>(X, nat) : X*
+def $repeat_<X>(X, 0) = eps
+def $repeat_<X>(X, n) = X ++ $repeat_<X>(X, n')
+  -- if n =/= 0
+  -- if n' = $(n - 1)
+
+;; Sum a list by head/tail recursion.
+dec $sum(int*) : int
+def $sum(eps) = 0
+def $sum(i_h :: i_t*) = $(i_h + $sum(i_t*))
+
+;; Keep only the elements above a threshold, again by recursion.  The two
+;; recursive clauses are guarded by complementary side conditions rather than
+;; by `otherwise`: a clause carrying `otherwise` may not also carry a
+;; non-pure premise, and the recursive call is non-pure.
+dec $above(int, int*) : int*
+def $above(i_lim, eps) = eps
+def $above(i_lim, i_h :: i_t*) = i_h ++ $above(i_lim, i_t*)
+  -- if $(i_h > i_lim)
+def $above(i_lim, i_h :: i_t*) = $above(i_lim, i_t*)
+  -- if $(i_h <= i_lim)
+
+dec $main() : int
+def $main() = i
+  -- if i_xs* = [ 1, 2, 3, 4, 5 ]
+  ;; iteration premise: bind i_sq* elementwise from i_xs*
+  -- (if i_sq = $(i_xs * i_xs))*
+  -- if i_sumsq = $sum(i_sq*)                  ;; 1+4+9+16+25 = 55
+  ;; comprehension over two lists at once, then a length
+  -- if i_big* = $above(2, i_xs*)              ;; [3, 4, 5]
+  -- if n_big = |i_big*|                       ;; 3
+  ;; indexing and the stdlib sequence functions
+  -- if i_first = i_xs*[0]
+  -- if i_last = i_xs*[4]
+  -- if (b_pos = $(i_xs > 0))*
+  -- if b_all = $forall_(b_pos*)               ;; true
+  -- if (b_gt4 = $(i_xs > 4))*
+  -- if b_any = $exists_(b_gt4*)               ;; true
+  -- if i_rep* = $repeat_<int>(7, 3)           ;; [7, 7, 7]
+  -- if i_repsum = $sum(i_rep*)                ;; 21
+  ;; fold everything together; the booleans gate the last term
+  -- if i_flag = $ite<int>(b_all /\ b_any, 1000, 0)
+  -- if i = $(i_sumsq + n_big + i_first + i_last + i_repsum + i_flag)

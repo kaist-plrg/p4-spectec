@@ -135,6 +135,39 @@ test-all-det:
 promote:
 	cd p4spec && opam exec --switch=5.1.0 -- dune promote
 
+# K specification
+
+KDEFDIR = al-kompiled
+KSPECDIR = spec-meta-k
+
+KFFI_OBJ = _build/default/p4spec/bin/kffi.exe.o
+KSHIM_SRC = $(KSPECDIR)/ffi/shim.c
+KSHIM_OBJ = $(KSPECDIR)/ffi/shim.o
+OCAMLWHERE = $(shell opam exec --switch=5.1.0 -- ocamlopt -where)
+
+.PHONY: k-spec
+k-spec: boot $(KFFI_OBJ) $(KSHIM_OBJ)
+	kompile $(KSPECDIR)/al/6-entry.k --main-module AL --syntax-module AL-SYNTAX -o $(KDEFDIR) \
+	  -ccopt $(KSHIM_OBJ) -ccopt $(KFFI_OBJ) \
+	  -ccopt -L"$(OCAMLWHERE)" \
+	  -ccopt -lasmrun -ccopt -lzstd -ccopt -lgmp \
+	  -ccopt -lm -ccopt -ldl \
+	  -ccopt -rdynamic
+
+.PHONY: $(KFFI_OBJ)
+$(KFFI_OBJ):
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/kffi.exe.o && echo
+
+$(KSHIM_OBJ): $(KSHIM_SRC)
+	gcc -c -fPIC -O2 -I "$(OCAMLWHERE)" -o $@ $<
+
+.PHONY: k-test
+k-test: k-spec
+	@status=0; \
+	python3 $(KSPECDIR)/scripts/run-k-typecheck.py || status=1; \
+	python3 $(KSPECDIR)/scripts/run-k-typecheck.py --neg || status=1; \
+	exit $$status
+
 # Cleanup
 
 .PHONY: clean
@@ -142,3 +175,6 @@ promote:
 clean:
 	rm -f ./$(SPEC)
 	cd p4spec && opam exec --switch=5.1.0 -- dune clean
+	rm -rf $(KDEFDIR) $(KSHIM_OBJ)
+	rm -f $(KSPECDIR)/specdir $(KSPECDIR)/spectec-k-* $(KSPECDIR)/run-k-typecheck-*.result
+	rm -rf $(KSPECDIR)/.kore-cache

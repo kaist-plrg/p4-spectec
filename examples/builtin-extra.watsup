@@ -1,0 +1,70 @@
+;; Builtins that the K port never implemented natively.
+;;
+;; Before the external interface, K had rules for eight builtins only, and this
+;; file would have stuck on the first call.  Every builtin used here comes from
+;; a different family of the OCaml registry (`p4spec/lib/interface/builtin/`):
+;; nats, texts, lists and numerics.
+;;
+;; NOTE: this example runs under K but *not* under the OCaml oracle.
+;; `spectec-boot run spec-meta/al ... -ali` resolves builtin calls against the
+;; meta-spec's own functions, so it only reaches the eight that
+;; spec-meta/common/0-stdlib.watsup declares.  See CROSS.md.
+
+var i : int
+var n : nat
+var t : text
+
+;; Nats
+builtin dec $sum_nat(nat*) : nat
+builtin dec $max_nat(nat*) : nat
+builtin dec $min_nat(nat*) : nat
+
+;; Texts
+builtin dec $text_to_int(text) : int
+builtin dec $int_to_text(int) : text
+builtin dec $strip_prefix(text, text) : text
+
+;; Lists
+builtin dec $concat_<X>(X**) : X*
+
+;; Numerics.  Declared `: int`, not `: nat`: the OCaml implementations build
+;; their result with `Value.Make.int` whatever the declaration says, and K's
+;; `binopNumber` does not mix an `intN` with a `natN`.
+builtin dec $pow2(nat) : int
+builtin dec $shl(nat, nat) : int
+builtin dec $band(nat, nat) : int
+builtin dec $bor(nat, nat) : int
+
+;; The three nat-returning builtins, summed on the nat side.
+dec $totalNat() : nat
+def $totalNat() = n
+  -- if n_sum = $sum_nat([ 1, 2, 3, 4 ])          ;; 10
+  -- if n_max = $max_nat([ 3, 9, 4 ])             ;; 9
+  -- if n_min = $min_nat([ 3, 9, 4 ])             ;; 3
+  -- if n = $(n_sum + n_max + n_min)              ;; 22
+
+;; The numerics, which are already int-valued.
+dec $totalNum() : int
+def $totalNum() = i
+  -- if i_pow = $pow2(5)                          ;; 32
+  -- if i_shl = $shl(3, 2)                        ;; 12
+  -- if i_and = $band(12, 10)                     ;; 8
+  -- if i_or = $bor(12, 10)                       ;; 14
+  -- if i = $(i_pow + i_shl + i_and + i_or)       ;; 66
+
+dec $main() : int
+def $main() = i
+  ;; text round trip: int -> text -> int
+  -- if t_shown = $int_to_text(45)                ;; "45"
+  -- if i_back = $text_to_int(t_shown)            ;; 45
+  ;; parse a literal, and a version suffix after stripping its prefix
+  -- if i_parsed = $text_to_int("123")            ;; 123
+  -- if t_stripped = $strip_prefix("p4_16", "p4_") ;; "16"
+  -- if i_ver = $text_to_int(t_stripped)          ;; 16
+  ;; flatten a list of lists, then count it
+  -- if i_cat* = $concat_<int>([[1, 2], [3], [4, 5]])  ;; [1,2,3,4,5]
+  -- if i_len = $text_to_int($int_to_text(|i_cat*|))   ;; 5, via text to stay int
+  ;; the nat-side total, brought across as an int via the text round trip
+  -- if i_nats = $text_to_int($int_to_text($totalNat()))  ;; 22
+  -- if i_nums = $totalNum()                              ;; 66
+  -- if i = $(i_back + i_parsed + i_ver + i_len + i_nats + i_nums)

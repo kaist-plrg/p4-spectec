@@ -123,6 +123,21 @@ module SpecTec_AL = struct
   let unparse_program (value_script : Value.t) : string =
     value_script |> unboot_script |> Al.Print.string_of_spec
 
+  (* Program rendering as KAST *)
+
+  let kast_of_spec_al (spec_al : Al.spec) : string =
+    Spectec.Ali.Kast.string_of_spec_al spec_al
+
+  let kast_of_value (value : Value.t) : string =
+    Spectec.Ali.Kast.string_of_value value
+
+  type extern_request = Spectec.Ali.Extern_json.request
+
+  let request_of_json = Spectec.Ali.Extern_json.request_of_json
+  let json_of_response = Spectec.Ali.Extern_json.json_of_response
+  let json_of_response_multi = Spectec.Ali.Extern_json.json_of_response_multi
+  let json_of_response_fail = Spectec.Ali.Extern_json.json_of_response_fail
+
   (* Builtins *)
 
   module Builtin_SpecTec = Builtin.Call.Make (Builtin.Call.No_ext) ()

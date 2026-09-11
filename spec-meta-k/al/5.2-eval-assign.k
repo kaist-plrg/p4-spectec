@@ -1,0 +1,242 @@
+// Assignment (pattern matching a value against an expression).
+//
+// Mirrors spec-meta/al/5.2-eval-assign.watsup.
+//
+//   Assign_exp:  ctx |- exp := val : ctx       --> assignExp(Exp, Val) : Outcome, mutates <local>
+//   Assign_exps: ctx |- exp* := val* : ctx     --> assignExps(ExpList, ValList) : Outcome
+//   Assign_arg:  ctx/ctx |- arg := val : ctx   --> assignArg(Arg, Val) : Outcome, reads <caller>
+//   Assign_args: ctx/ctx |- arg* := val* : ctx --> assignArgs(ArgList, ValList) : Outcome
+
+requires "3-context.k"
+requires "../common/3-relation.k"
+
+module AL-ASSIGN
+  imports AL-CONTEXT
+  imports COMMON-RELATION
+  imports BOOL
+
+  // ==========================================================================
+  // Outcome marker
+  // ==========================================================================
+
+  syntax Outcome ::= assignOK()             [symbol(assignOK)]
+
+  // ==========================================================================
+  // Assign_exp: ctx |- exp := val : ctx
+  // ==========================================================================
+
+  syntax KItem ::= assignExp(Exp, Val)
+
+  //   rule Assign_exp/variable: C |- VAR id := val : C'
+  rule <k> assignExp(varE(X:Id), V:Val) => assignOK() ... </k>
+       <lvenv> M:Map => M[varr(X, .IterList) <- V] </lvenv>
+
+  //   rule Assign_exp/tup: C |- TUP exp* := TUP val* : C'
+  rule <k> assignExp(tupE(Es:ExpList), tupV(Vs:ValList)) => assignExps(Es, Vs) ... </k>
+
+  //   rule Assign_exp/inj: C |- INJ (mixop exp*) := INJ (mixop val*) : C'
+  rule <k> assignExp(injE(expCase(M:MixOp, Es:ExpList)),
+                     injV(valCase(M:MixOp, Vs:ValList)))
+        => assignExps(Es, Vs)
+       ...
+       </k>
+
+  //   rule Assign_exp/str: C |- STR expfield* := STR valfield* : C'
+  rule <k> assignExp(strE(Fs:ExpFieldList), strV(Gs:ValFieldList))
+        => assignFields(Fs, Gs)
+       ...
+       </k>
+
+  //   rulegroup Assign_exp/opt
+  rule <k> assignExp(optE(someExp(E:Exp)), optV(someVal(V:Val))) => assignExp(E, V) ... </k>
+  rule <k> assignExp(optE(noExp()), optV(noVal())) => assignOK() ... </k>
+
+  //   rule Assign_exp/list: C |- LIST exp* := LIST val* : C'
+  rule <k> assignExp(listE(Es:ExpList), listV(Vs:ValList)) => assignExps(Es, Vs) ... </k>
+
+  //   rule Assign_exp/cons: C |- CONS exp_h exp_t := LIST (val_h :: val_t*) : C''
+  rule <k> assignExp(consE(Eh:Exp, Et:Exp), listV(Vh:Val, Vt:ValList))
+        => assignExp(Eh, Vh) ~> assignThen(assignExp(Et, listV(Vt)))
+       ...
+       </k>
+
+  //   rulegroup Assign_exp/iter
+  rule <k> assignExp(iterE(E:Exp, IE:IterExp), V:Val)
+        => assignIter(isIterOnVar(iterE(E, IE)), E, IE, V)
+       ...
+       </k>
+
+  rule <k> assignExp(_:Exp, _:Val) => FAIL ... </k> [owise]
+
+  // Sequencing helper: run the second task only if the first succeeded.
+  syntax KItem ::= assignThen(KItem)
+  rule <k> assignOK() ~> assignThen(Next:KItem) => Next ... </k>
+  rule <k> FAIL ~> assignThen(_:KItem) => FAIL ... </k>
+
+  // ==========================================================================
+  // Assigning to an iterated expression
+  // ==========================================================================
+
+  syntax KItem ::= assignIter(VarrOpt, Exp, IterExp, Val)
+
+  //   rule Assign_exp/simple
+  rule <k> assignIter(someVarr(R:Varr), _:Exp, _:IterExp, V:Val) => assignOK() ... </k>
+       <lvenv> M:Map => M[R <- V] </lvenv>
+
+  //   rule Assign_exp/opt-none
+  rule <k> assignIter(noVarr(), _:Exp, iterExp(quest(), Vs:VariList), optV(noVal()))
+        => assignOK()
+       ...
+       </k>
+       <lvenv> M:Map
+            => addsMap(M, iterVaris(Vs, quest()),
+                       repeatVal(optV(noVal()), lengthVaris(Vs)))
+       </lvenv>
+
+  //   rule Assign_exp/opt-some
+  rule <k> assignIter(noVarr(), E:Exp, iterExp(quest(), Vs:VariList), optV(someVal(V:Val)))
+        => assignExp(E, V) ~> assignThen(assignIterVaris(Vs))
+       ...
+       </k>
+
+  syntax KItem ::= assignIterVaris(VariList)
+  rule <k> assignIterVaris(Vs:VariList) => assignOK() ... </k>
+       <lvenv> M:Map
+            => addsMap(M, iterVaris(Vs, quest()), someVals(findVaris(Vs, M)))
+       </lvenv>
+
+  //   rule Assign_exp/list
+  rule <k> assignIter(noVarr(), E:Exp, iterExp(star(), Vs:VariList), listV(Ws:ValList))
+        => pushLocalSave() ~> clearLocalVenv()
+           ~> assignEach(E, Ws, Vs, .List)
+       ...
+       </k>
+
+  syntax KItem ::= assignEach(Exp, ValList, VariList, List)
+
+  rule <k> assignEach(_:Exp, .ValList, Vs:VariList, Acc:List)
+        => popLocalSave() ~> assignListResults(Vs, Acc)
+       ...
+       </k>
+
+  rule <k> assignEach(E:Exp, (V:Val, Rest:ValList), Vs:VariList, Acc:List)
+        => assignExp(E, V) ~> assignThen(collectAssignRow(E, Rest, Vs, Acc))
+       ...
+       </k>
+
+  syntax KItem ::= collectAssignRow(Exp, ValList, VariList, List)
+  rule <k> collectAssignRow(E:Exp, Rest:ValList, Vs:VariList, Acc:List)
+        => clearLocalVenv() ~> assignEach(E, Rest, Vs, Acc ListItem(findVaris(Vs, M)))
+       ...
+       </k>
+       <lvenv> M:Map </lvenv>
+
+  syntax KItem ::= assignListResults(VariList, List)
+  rule <k> assignListResults(Vs:VariList, Acc:List) => assignOK() ... </k>
+       <lvenv> V:Map => addsMap(V, iterVaris(Vs, star()), transposeToLists(Vs, Acc)) </lvenv>
+
+  // ==========================================================================
+  // Assign_exps: ctx |- exp* := val* : ctx
+  // ==========================================================================
+
+  syntax KItem ::= assignExps(ExpList, ValList)
+
+  rule <k> assignExps(.ExpList, .ValList) => assignOK() ... </k>
+  rule <k> assignExps((E:Exp, Es:ExpList), (V:Val, Vs:ValList))
+        => assignExp(E, V) ~> assignThen(assignExps(Es, Vs))
+       ...
+       </k>
+  rule <k> assignExps(_:ExpList, _:ValList) => FAIL ... </k> [owise]
+
+  // Struct fields, matched positionally with their atoms compared.
+  syntax KItem ::= assignFields(ExpFieldList, ValFieldList)
+
+  rule <k> assignFields(.ExpFieldList, .ValFieldList) => assignOK() ... </k>
+  rule <k> assignFields((expField(A:Atom, E:Exp), Fs:ExpFieldList),
+                        (valField(A:Atom, V:Val), Gs:ValFieldList))
+        => assignExp(E, V) ~> assignThen(assignFields(Fs, Gs))
+       ...
+       </k>
+  rule <k> assignFields(_:ExpFieldList, _:ValFieldList) => FAIL ... </k> [owise]
+
+  // ==========================================================================
+  // Assign_arg / Assign_args: ctx_callee '/' ctx_caller |- arg(*) := val(*)
+  //
+  // `<local>` holds `ctx_callee`; `<caller>`'s `cfenv` holds `ctx_caller`'s
+  // local function environment (all `Assign_arg/fun` needs — see 0-config.k).
+  // ==========================================================================
+
+  syntax KItem ::= assignArg(Arg, Val)
+                 | assignArgs(ArgList, ValList)
+
+  //   rule Assign_arg/exp
+  rule <k> assignArg(expA(E:Exp), V:Val) => assignExp(E, V) ... </k>
+
+  //   rule Assign_arg/fun
+  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => assignOK() ... </k>
+       <cfenv> CF:Map </cfenv>
+       <lfenv> M:Map => M[X <- {CF[Y]}:>FuncDef] </lfenv>
+    requires Y in_keys(CF)
+  rule <k> assignArg(funA(X:Id), funcV(Y:Id)) => assignOK() ... </k>
+       <cfenv> CF:Map </cfenv>
+       <gfenv> GF:Map </gfenv>
+       <lfenv> M:Map => M[X <- {GF[Y]}:>FuncDef] </lfenv>
+    requires notBool (Y in_keys(CF)) andBool (Y in_keys(GF))
+
+  rule <k> assignArg(_:Arg, _:Val) => FAIL ... </k> [owise]
+
+  //   rulegroup Assign_args
+  rule <k> assignArgs(.ArgList, .ValList) => assignOK() ... </k>
+  rule <k> assignArgs((A:Arg, As:ArgList), (V:Val, Vs:ValList))
+        => assignArg(A, V) ~> assignThen(assignArgs(As, Vs))
+       ...
+       </k>
+  rule <k> assignArgs(_:ArgList, _:ValList) => FAIL ... </k> [owise]
+
+  // ==========================================================================
+  // Value-level helpers
+  // ==========================================================================
+
+  // `$adds_map<varr, val>`: add each key/value pair, in order.
+  syntax Map ::= addsMap(Map, VarrList, ValList)
+                                            [function, symbol(addsMap)]
+
+  rule addsMap(M:Map, .VarrList, .ValList) => M
+  rule addsMap(M:Map, (R:Varr, Rs:VarrList), (V:Val, Vs:ValList))
+    => addsMap(M[R <- V], Rs, Vs)
+
+  syntax Int ::= lengthVaris(VariList)      [function, total, symbol(lengthVaris)]
+  rule lengthVaris(.VariList) => 0
+  rule lengthVaris(_:Vari, Vs:VariList) => 1 +Int lengthVaris(Vs)
+
+  // `$find_vari`/`$finds_vari` against an explicit `Map`.
+  syntax ValList ::= findVaris(VariList, Map)
+                                            [function, symbol(findVaris)]
+  rule findVaris(.VariList, _:Map) => .ValList
+  rule findVaris((V:Vari, Vs:VariList), M:Map) => {M[varrOfVari(V)]}:>Val, findVaris(Vs, M)
+    requires varrOfVari(V) in_keys(M)
+
+  syntax ValList ::= someVals(ValList)      [function, total, symbol(someVals)]
+  rule someVals(.ValList) => .ValList
+  rule someVals(V:Val, Vs:ValList) => optV(someVal(V)), someVals(Vs)
+
+  syntax ValList ::= transposeToLists(VariList, List)
+                                            [function, symbol(transposeToLists)]
+  rule transposeToLists(Vs:VariList, Acc:List) => transposeToListsAcc(Vs, 0, Acc)
+
+  syntax ValList ::= transposeToListsAcc(VariList, Int, List)
+                                            [function, total, symbol(transposeToListsAcc)]
+  rule transposeToListsAcc(.VariList, _:Int, _:List) => .ValList
+  rule transposeToListsAcc((_:Vari, Vs:VariList), I:Int, Acc:List)
+    => listV(columnAt(I, Acc)), transposeToListsAcc(Vs, I +Int 1, Acc)
+
+  syntax ValList ::= columnAt(Int, List)    [function, symbol(columnAt)]
+  rule columnAt(_:Int, .List) => .ValList
+  rule columnAt(I:Int, ListItem(Vs:ValList) Rest:List)
+    => nthVal(Vs, I), columnAt(I, Rest)
+
+  syntax Val ::= nthVal(ValList, Int)       [function, symbol(nthVal)]
+  rule nthVal((V:Val, _:ValList), 0) => V
+  rule nthVal((_:Val, Vs:ValList), N:Int) => nthVal(Vs, N -Int 1) requires N >Int 0
+
+endmodule
