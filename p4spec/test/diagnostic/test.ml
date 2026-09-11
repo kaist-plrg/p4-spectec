@@ -248,7 +248,7 @@ let check_warning_adapter name source emit =
 let check_prose_warning_adapter () =
   let empty_id = "" $ no_region in
   check_warning_action "prose" "prose" "link with empty target" (fun () ->
-      Lang.Pl.Render.render_func_title Lang.Pl.Annot.empty empty_id [] []
+      Backend_adoc.Pl.render_func_title Lang.Pl.Annot.empty empty_id [] []
       |> ignore)
 
 let check_single_failtrace_promotion file =

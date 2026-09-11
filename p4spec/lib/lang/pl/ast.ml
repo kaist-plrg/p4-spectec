@@ -55,6 +55,10 @@ type binop = Sl.binop
 type cmpop = Sl.cmpop
 type optyp = Sl.optyp
 
+(* Subtype checks *)
+
+type subcheck = Sl.subcheck
+
 (* Expressions *)
 
 type exp = ((exp', typ') note_phrase) Annot.t
@@ -68,7 +72,7 @@ and exp' =
   | CmpE of cmpop * optyp * exp * exp
   | UpCastE of typ * exp
   | DownCastE of typ * exp
-  | SubE of exp * typ
+  | SubE of exp * typ * subcheck
   | MatchE of exp * pattern
   | TupleE of exp list
   | CaseE of notexp
@@ -142,11 +146,11 @@ and 'instr_tier case = guard * 'instr_tier block
 and guard =
   | BoolG of bool
   | CmpG of cmpop * optyp * exp
-  | SubG of typ
+  | SubG of typ * subcheck
   | MatchG of pattern
   | MemG of exp
   (* Shorthands *)
-  | CheckLetSubG of typ * exp
+  | CheckLetSubG of typ * subcheck * exp
   | CheckLetMatchG of pattern * exp
 
 (* Backtracking *)
@@ -171,7 +175,7 @@ and 'instr_tier instr' =
   | DebugI of exp
   (* Shorthands *)
   | DestructI of (string option * exp) list * exp
-  | CheckLetSubI of typ * exp * exp * 'instr_tier block
+  | CheckLetSubI of typ * subcheck * exp * exp * 'instr_tier block
   | CheckLetMatchI of pattern * exp * exp * 'instr_tier block
   | OptionGetI of exp * exp * 'instr_tier block
   (* Tier-specific instruction *)

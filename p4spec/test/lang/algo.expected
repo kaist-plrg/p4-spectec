@@ -2964,6 +2964,7 @@ def $write_value_from_bits'(value, nat, bool*) : (value, bool*) =
   -- let integerValue = value as integerValue
   -- if integerValue matches `% . % V %`
   -- let n_max '.' _nat V _i = integerValue
+  -- if (n_var =/= 0)
   -- if (|b*{b <- b*}| >= n_var)
   -- let b_h*{b_h <- b_h*} = b*{b <- b*}[0 : n_var]
   -- let i' = (|b*{b <- b*}| - n_var)
@@ -3356,13 +3357,13 @@ def $unroll_typeIR(typeIR) : typeIR =
 
   clause -1 : (typeIR) = typeIR
 
-def $unroll_aliasType(typeIR) : typeIR =
+def $unroll_aliasTypeIR(typeIR) : typeIR =
 
-  clause 0 : (typeIR') = $unroll_aliasType(typeIR)
+  clause 0 : (typeIR') = $unroll_aliasTypeIR(typeIR)
   -- if typeIR' <: newTypeIR
   -- let TYPE _typeId typeIR = typeIR' as newTypeIR
 
-  clause 1 : (typeIR') = $unroll_aliasType(typeIR)
+  clause 1 : (typeIR') = $unroll_aliasTypeIR(typeIR)
   -- if typeIR' <: typedefTypeIR
   -- let TYPEDEF _typeId typeIR = typeIR' as typedefTypeIR
 
@@ -5495,7 +5496,7 @@ def $un_minus(value) : value =
   -- let integerLiteral = value as integerLiteral
   -- if integerLiteral matches `% W %`
   -- let w W i = integerLiteral
-  -- let i' = ($pow2(w) - i)
+  -- let i' = $int_to_bitstr(w as int, ($pow2(w) - i))
 
   clause 2 : (value) = w S i' as value
   -- if value <: integerLiteral
@@ -11598,7 +11599,7 @@ def $update_mode_tbl(tableContext, tableKeyIR*) : tableContext =
   -- let typedExpressionIR '#' _nameIR ':' t _annotationList ';' = tableKeyIR_lpm
   -- if (t = "lpm")
   -- let typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  -- let typeIR' = $unroll_aliasType(typeIR)
+  -- let typeIR' = $unroll_aliasTypeIR(typeIR)
   -- if typeIR' <: integerTypeIR
   -- let integerTypeIR = typeIR' as integerTypeIR
   -- let nat?{nat <- nat?} = $width_of_integerTypeIR(integerTypeIR)
@@ -16669,7 +16670,7 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let nat'?{nat' <- nat'?} = $nat_of_integerValue(integerValue_w)
     -- if nat'?{nat' <- nat'?} matches (_)
     -- let ?(n_w) = nat'?{nat' <- nat'?}
-    -- let i = ((n_w + n_l) - 1)
+    -- let i = $ite<int>((n_w = 0), n_l as int, ((n_w + n_l) - 1))
     -- if i <: nat
     -- let n_h = i as nat
     -- if $is_valid_bitslice(typeIR_base_reduced, n_l, n_h)

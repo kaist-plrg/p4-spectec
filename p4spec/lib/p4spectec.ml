@@ -7,6 +7,7 @@ module Boot_build = Backend_boot.Build
 
 type 'a result = ('a, Error.t) Stdlib.result
 
+let ( let* ) = Result.bind
 let with_warnings = Diagnostic.collect
 
 let with_diagnostics (f : unit -> 'a result) : 'a result * Diagnostic.Report.t =
@@ -31,6 +32,14 @@ let structure ~(final : bool) (paths_spec : string list) : Lang.Sl.spec result =
 
 let annotate (paths_spec : string list) : Lang.Pl.spec result =
   Pass.annotate paths_spec
+
+(* Document generation *)
+
+let splice (paths_spec : string list) (path_pairs : (string * string) list) :
+    unit result =
+  let* spec_el = parse paths_spec in
+  let* spec_pl = annotate paths_spec in
+  Backend_splice.splice_files spec_el spec_pl path_pairs
 
 let spec_of_mode (mode : Run.mode) (paths_spec : string list) : Run.spec result
     =
@@ -58,7 +67,6 @@ let tower_of_file (path_tower : string) (target : Config.target) :
 
 let build_tower ?(cache = true) ?(det = false) ?(guard = false)
     (tower : Config.tower) : (Run.spec * (module Run.RUNNER)) result =
-  let ( let* ) = Result.bind in
   let* (specs : Boot_build.tower_specs) = Boot_build.specs_of_tower tower in
   let* booter = Boot_build.build_tower ~cache ~det ~guard specs in
   let _, spec_boot = specs.boot in

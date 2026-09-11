@@ -25,7 +25,7 @@ let rec infer_exp' (exp : exp) (iters : iter list) (venv : VEnv.t) : VEnv.t =
   | UnE (_, _, exp)
   | UpCastE (_, exp)
   | DownCastE (_, exp)
-  | SubE (exp, _)
+  | SubE (exp, _, _)
   | MatchE (exp, _)
   | LenE exp
   | DotE (exp, _) ->

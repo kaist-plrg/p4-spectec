@@ -515,7 +515,7 @@ and unboot_sub_exp (at : region) (values : Value.t list) : Il.exp =
   | [ value_exp; value_typ ] ->
       let exp = unboot_exp value_exp in
       let typ = unboot_typ value_typ in
-      Il.SubE (exp, typ) $$ (at, stub_exp_note)
+      Il.SubE (exp, typ, Il.RecurseSC typ) $$ (at, stub_exp_note)
   | _ -> error "@unboot_sub_exp"
 
 and unboot_match_exp (at : region) (values : Value.t list) : Il.exp =

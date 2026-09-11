@@ -21,7 +21,7 @@ module Source = struct
   module Value = struct
     type t = source
 
-    let render (values : t list) : string =
+    let render (_context : Ctx.t) (values : t list) : string =
       values
       |> List.map (fun value ->
              let def =
@@ -30,7 +30,7 @@ module Source = struct
                | DefinedS (id, tparams, deftyp, hints) ->
                    El.TypD (id, tparams, deftyp, hints) $ no_region
              in
-             El.Render.render_def def)
+             Backend_adoc.El.render_def def)
       |> String.concat "\n\n"
   end
 
@@ -52,12 +52,12 @@ module Source = struct
       spec_el |> List.filter_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "syntax"
     let prefix = "[source,bison]\n----\n"
     let suffix = "\n----"
-    let header = true
+    let anchor (_context : Ctx.t) (name : string) : string option = Some name
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end

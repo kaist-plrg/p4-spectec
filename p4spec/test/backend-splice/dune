@@ -1,0 +1,120 @@
+(executable
+ (name store_test)
+ (modules store_test)
+ (libraries p4spectec backend_splice))
+
+(executable
+ (name source_test)
+ (modules source_test)
+ (libraries p4spectec backend_splice))
+
+(executable
+ (name prose_test)
+ (modules prose_test)
+ (libraries p4spectec backend_splice))
+
+(executable
+ (name latex_test)
+ (modules latex_test)
+ (libraries p4spectec backend_splice backend_latex))
+
+(executable
+ (name anchor_test)
+ (modules anchor_test)
+ (libraries p4spectec backend_splice backend_latex))
+
+(executable
+ (name document_test)
+ (modules document_test)
+ (libraries p4spectec))
+
+(rule
+ (targets store.actual store_err.actual)
+ (action
+  (with-stdout-to
+   store.actual
+   (with-stderr-to
+    store_err.actual
+    (run ./store_test.exe)))))
+
+(rule
+ (alias backend-splice)
+ (deps store.actual store_err.actual)
+ (action
+  (progn
+   (diff store.expected store.actual)
+   (diff store_err.expected store_err.actual))))
+
+(rule
+ (target source.actual)
+ (action
+  (with-stdout-to
+   source.actual
+   (run ./source_test.exe))))
+
+(rule
+ (alias backend-splice)
+ (action
+  (diff source.expected source.actual)))
+
+(rule
+ (target prose.actual)
+ (action
+  (with-stdout-to
+   prose.actual
+   (run ./prose_test.exe))))
+
+(rule
+ (alias backend-splice)
+ (action
+  (diff prose.expected prose.actual)))
+
+(rule
+ (targets latex.actual latex_err.actual)
+ (action
+  (with-stdout-to
+   latex.actual
+   (with-stderr-to
+    latex_err.actual
+    (run ./latex_test.exe)))))
+
+(rule
+ (alias backend-splice)
+ (deps latex.actual latex_err.actual)
+ (action
+  (progn
+   (diff latex.expected latex.actual)
+   (diff latex_err.expected latex_err.actual))))
+
+(rule
+ (targets anchor.actual anchor_err.actual)
+ (action
+  (with-stdout-to
+   anchor.actual
+   (with-stderr-to
+    anchor_err.actual
+    (run ./anchor_test.exe)))))
+
+(rule
+ (alias backend-splice)
+ (deps anchor.actual anchor_err.actual)
+ (action
+  (progn
+   (diff anchor.expected anchor.actual)
+   (diff anchor_err.expected anchor_err.actual))))
+
+(rule
+ (target document.actual)
+ (deps
+  (source_tree ../../../docs/p4/sections-skeleton)
+  ../../../docs/p4/P4-16-spec-new.adoc
+  ../../../docs/p4/docinfo.html)
+ (action
+  (with-stdout-to
+   document.actual
+   (run ./document_test.exe ../../../docs/p4))))
+
+(rule
+ (alias backend-splice)
+ (action
+  (diff document.expected document.actual)))

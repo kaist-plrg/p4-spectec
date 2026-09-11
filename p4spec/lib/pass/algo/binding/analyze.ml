@@ -60,7 +60,8 @@ let rec region_of_nested_call_exp (exp : exp) : region option =
   | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
       first_some (region_of_nested_call_exp exp_l) (fun () ->
           region_of_nested_call_exp exp_r)
-  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
+  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _, _) | MatchE (exp, _)
+    ->
       region_of_nested_call_exp exp
   | TupleE exps | ListE exps -> List.find_map region_of_nested_call_exp exps
   | CaseE notexp -> List.find_map region_of_nested_call_exp (Mixfix.args notexp)
@@ -555,7 +556,7 @@ let pattern_set_covered_by_typ (ctx : Ctx.t) (typ : typ) : Pattern.PatternSet.t
     =
   match typ.it with
   | VarT (tid, _) -> (
-      let typdef_at, td = Ctx.find_typdef_with_at ctx tid in
+      let at_typdef, td = Ctx.find_typdef_with_region ctx tid in
       match td with
       | Defined (_, deftyp) -> (
           match deftyp.it with
@@ -565,10 +566,10 @@ let pattern_set_covered_by_typ (ctx : Ctx.t) (typ : typ) : Pattern.PatternSet.t
               |> Pattern.PatternSet.of_list
           | _ ->
               error_pattern_type_without_cases typ
-                ~related:[ (typdef_at, "type declared here") ])
+                ~related:[ (at_typdef, "type declared here") ])
       | Extern ->
           error_pattern_type_without_cases typ
-            ~related:[ (typdef_at, "type declared here") ]
+            ~related:[ (at_typdef, "type declared here") ]
       | Param | Defining _ ->
           (* [Ctx.load_spec] adds only [Defined] and [Extern] entries. *)
           assert false)

@@ -1,6 +1,5 @@
 open Lang
 open Splicer
-open Util.Source
 
 module Key = struct
   type t = string
@@ -11,46 +10,63 @@ module Key = struct
   let parse (source : Source.t) : t list = Parser.parse_ids source
 end
 
+module Init : INIT with type key = Key.t and type value = El.def = struct
+  type key = Key.t
+  type value = El.def
+
+  let init_def (def : El.def) : (key * value) option =
+    match def.it with TableDefD (id, _) -> Some (id.it, def) | _ -> None
+
+  let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
+    spec_el |> List.filter_map init_def
+end
+
 (* Source splicer *)
 
 module Source = struct
-  type source = El.id * El.tablerow list
-
   module Value = struct
-    type t = source
+    type t = El.def
 
-    let render (values : t list) : string =
-      values
-      |> List.map (fun value ->
-             let id, tablerows = value in
-             let def = El.TableDefD (id, tablerows) $ no_region in
-             El.Render.render_def def)
-      |> String.concat "\n\n"
+    let render (_context : Ctx.t) (values : t list) : string =
+      values |> List.map Backend_adoc.El.render_def |> String.concat "\n\n"
   end
 
-  module Init : INIT with type key = Key.t and type value = Value.t = struct
-    type key = Key.t
-    type value = Value.t
-
-    let init_def (def : El.def) : (key * value) option =
-      match def.it with
-      | TableDefD (id, tablerows) ->
-          let value = (id, tablerows) in
-          Some (id.it, value)
-      | _ -> None
-
-    let init (spec_el : El.spec) (_spec_pl : Pl.spec) : (key * value) list =
-      spec_el |> List.filter_map init_def
-  end
-
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "table-source"
     let prefix = ""
     let suffix = "\n"
-    let header = false
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
+end
+
+(* LaTeX splicer *)
+
+module Latex = struct
+  module Value = struct
+    type t = El.def
+
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Backend_latex.El.anchors ~func:context.anchors_latex.func
+          ~rel:context.anchors_latex.rel
+      in
+      match Backend_latex.El.render_defs ~anchors values with
+      | Ok rendered -> rendered
+      | Error error ->
+          let at, msg = Backend_latex.to_region_msg error in
+          Error.error at msg
+  end
+
+  module Config = struct
+    let name = "table-latex"
+    let prefix = prefix_latex
+    let suffix = suffix_latex
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
+  end
+
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end
 
 (* Prose splicer *)
@@ -61,10 +77,14 @@ module Prose = struct
   module Value = struct
     type t = prose
 
-    let render (values : t list) : string =
+    let render (context : Ctx.t) (values : t list) : string =
+      let anchors =
+        Backend_adoc.Pl.anchors ~func:context.anchors_prose.func
+          ~rel:context.anchors_prose.rel
+      in
       values
       |> List.map (fun (hints, tablefunc) ->
-             Pl.Render.render_table_func_def hints tablefunc)
+             Backend_adoc.Pl.render_table_func_def ~anchors hints tablefunc)
       |> String.concat "\n\n"
   end
 
@@ -83,12 +103,12 @@ module Prose = struct
       spec_pl |> List.filter_map init_def
   end
 
-  module Anchor : ANCHOR = struct
+  module Config : CONFIG = struct
     let name = "table-prose"
     let prefix = ""
     let suffix = "\n"
-    let header = false
+    let anchor (_context : Ctx.t) (_name : string) : string option = None
   end
 
-  module Splicer : SPLICER = Make (Key) (Value) (Init) (Anchor)
+  module Splicer : SPLICER = Make (Key) (Value) (Init) (Config)
 end

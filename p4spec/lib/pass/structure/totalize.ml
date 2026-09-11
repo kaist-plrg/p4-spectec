@@ -13,7 +13,7 @@ let find_variant_case_analysis (tdenv : TDEnv.t) (cases : case list) :
       match mixops_opt with
       | Some mixops -> (
           match guard with
-          | SubG typ ->
+          | SubG (typ, _) ->
               Some
                 (mixops
                 @ (typ |> Opt.Overlap.typ_as_variant tdenv |> Option.get))

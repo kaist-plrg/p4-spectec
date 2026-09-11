@@ -3652,31 +3652,33 @@ def $write_value_from_bits'(value', n_var, (b)*{b <- b*})
 
       1. (Let (n_max '.' _nat V i) be integerValue)
 
-        1. If ((n_var = 0)), then
+        1. Case analysis on n_var
 
-          1. Return (((n_max '.' 0 V i) as value), (b)*{b <- b*})
+          1. Case (% = 0)
 
-        1. Else Dangling#541
+            1. Return (((n_max '.' 0 V i) as value), (b)*{b <- b*})
 
-        2. If ((|(b)*{b <- b*}| >= n_var)), then
+          2. Case (% =/= 0)
 
-          1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : n_var])
+            1. If ((|(b)*{b <- b*}| >= n_var)), then
 
-            1. (Let i' be (|(b)*{b <- b*}| - n_var))
+              1. (Let (b_h)*{b_h <- b_h*} be (b)*{b <- b*}[0 : n_var])
 
-              1. If ((i' has type nat)), then
+                1. (Let i' be (|(b)*{b <- b*}| - n_var))
 
-                1. (Let n_t be (i' as nat))
+                  1. If ((i' has type nat)), then
 
-                  1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[n_var : n_t])
+                    1. (Let n_t be (i' as nat))
 
-                    1. (Let i' be $int_to_bitstr((n_var as int), $bits_to_int_signed((b_h)*{b_h <- b_h*})))
+                      1. (Let (b_t)*{b_t <- b_t*} be (b)*{b <- b*}[n_var : n_t])
 
-                      1. Return (((n_max '.' n_var V i') as value), (b_t)*{b_t <- b_t*})
+                        1. (Let i' be $int_to_bitstr((n_var as int), $bits_to_int_signed((b_h)*{b_h <- b_h*})))
 
-              1. Else Dangling#546
+                          1. Return (((n_max '.' n_var V i') as value), (b_t)*{b_t <- b_t*})
 
-        2. Else Dangling#543
+                  1. Else Dangling#546
+
+            1. Else Dangling#543
 
     1. Else Dangling#539
 
@@ -4102,7 +4104,7 @@ def $unroll_typeIR(typeIR')
 
   1. Return typeIR'
 
-def $unroll_aliasType(typeIR')
+def $unroll_aliasTypeIR(typeIR')
 
 1. Case analysis on typeIR'
 
@@ -4110,13 +4112,13 @@ def $unroll_aliasType(typeIR')
 
     1. (Let (TYPE _typeId typeIR) be (typeIR' as newTypeIR))
 
-      1. Return $unroll_aliasType(typeIR)
+      1. Return $unroll_aliasTypeIR(typeIR)
 
   2. Case (% has type typedefTypeIR)
 
     1. (Let (TYPEDEF _typeId typeIR) be (typeIR' as typedefTypeIR))
 
-      1. Return $unroll_aliasType(typeIR)
+      1. Return $unroll_aliasTypeIR(typeIR)
 
 2. Otherwise,
 
@@ -7082,7 +7084,7 @@ def $un_minus(value)
 
         1. (Let (w W i) be integerLiteral)
 
-          1. (Let i' be ($pow2(w) - i))
+          1. (Let i' be $int_to_bitstr((w as int), ($pow2(w) - i)))
 
             1. Return ((w W i') as value)
 
@@ -16572,7 +16574,7 @@ def $update_mode_tbl(TBLC, (tableKeyIR)*{tableKeyIR <- tableKeyIR*})
 
                   1. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
 
-                    1. (Let typeIR' be $unroll_aliasType(typeIR))
+                    1. (Let typeIR' be $unroll_aliasTypeIR(typeIR))
 
                       1. If ((typeIR' has type integerTypeIR)), then
 
@@ -22585,7 +22587,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                                                                           1. (Let ?(n_w) be (nat')?{nat' <- nat'?})
 
-                                                                            1. (Let i be ((n_w + n_l) - 1))
+                                                                            1. (Let i be $ite<int>((n_w = 0), (n_l as int), ((n_w + n_l) - 1)))
 
                                                                               1. If ((i has type nat)), then
 

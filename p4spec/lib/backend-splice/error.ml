@@ -2,9 +2,11 @@ open Util.Source
 
 (* Error *)
 
-exception SpliceError of region * string
+exception SpliceError of Diagnostic.t
 
-let error (at : region) (msg : string) = raise (SpliceError (at, msg))
+let error (at : region) (msg : string) =
+  raise (SpliceError (Diagnostic.error ~source:"splice" at msg))
+
 let warn (at : region) (msg : string) = Diagnostic.warn ~source:"splice" at msg
 
 (* Check *)

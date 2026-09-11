@@ -10,7 +10,8 @@ let rec is_partial_exp (exp : exp) : bool =
   | UnE (_, _, exp) -> is_partial_exp exp
   | BinE (_, _, exp_l, exp_r) | CmpE (_, _, exp_l, exp_r) ->
       is_partial_exp exp_l || is_partial_exp exp_r
-  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _) | MatchE (exp, _) ->
+  | UpCastE (_, exp) | DownCastE (_, exp) | SubE (exp, _, _) | MatchE (exp, _)
+    ->
       is_partial_exp exp
   | TupleE exps -> List.exists is_partial_exp exps
   | CaseE notexp -> notexp |> Mixfix.args |> List.exists is_partial_exp
@@ -48,7 +49,7 @@ and is_partial_guard (guard : guard) : bool =
   | BoolG _ -> false
   | CmpG (_, _, exp) -> is_partial_exp exp
   | SubG _ | MatchG _ | MemG _ -> false
-  | CheckLetSubG (_, exp) | CheckLetMatchG (_, exp) -> is_partial_exp exp
+  | CheckLetSubG (_, _, exp) | CheckLetMatchG (_, exp) -> is_partial_exp exp
 
 let is_partial_instr_group (instr_group : instr_group) : bool =
   match instr_group with

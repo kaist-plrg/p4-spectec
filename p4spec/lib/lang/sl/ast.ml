@@ -65,6 +65,10 @@ type binop = Il.binop [@@deriving yojson]
 type cmpop = Il.cmpop [@@deriving yojson]
 type optyp = Il.optyp [@@deriving yojson]
 
+(* Subtype checks *)
+
+type subcheck = Il.subcheck [@@deriving yojson]
+
 (* Expressions *)
 
 type exp = Il.exp [@@deriving yojson]
@@ -126,7 +130,7 @@ and case = guard * block
 and guard =
   | BoolG of bool
   | CmpG of cmpop * optyp * exp
-  | SubG of typ
+  | SubG of typ * subcheck
   | MatchG of pattern
   | MemG of exp
 [@@deriving yojson]

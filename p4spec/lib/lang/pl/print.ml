@@ -91,7 +91,7 @@ let rec string_of_exp exp =
       "(" ^ string_of_exp exp ^ " as " ^ string_of_typ typ ^ ")"
   | DownCastE (typ, exp) ->
       "(" ^ string_of_exp exp ^ " as " ^ string_of_typ typ ^ ")"
-  | SubE (exp, typ) ->
+  | SubE (exp, typ, _) ->
       "(" ^ string_of_exp exp ^ " has type " ^ string_of_typ typ ^ ")"
   | MatchE (exp, pattern) ->
       "(" ^ string_of_exp exp ^ " matches pattern " ^ string_of_pattern pattern
@@ -205,10 +205,10 @@ and string_of_guard guard =
   | BoolG b -> string_of_bool b
   | CmpG (cmpop, _, exp) ->
       "(% " ^ string_of_cmpop cmpop ^ " " ^ string_of_exp exp ^ ")"
-  | SubG typ -> "(% has type " ^ string_of_typ typ ^ ")"
+  | SubG (typ, _) -> "(% has type " ^ string_of_typ typ ^ ")"
   | MatchG pattern -> "(% matches pattern " ^ string_of_pattern pattern ^ ")"
   | MemG exp -> "(% is in " ^ string_of_exp exp ^ ")"
-  | CheckLetSubG (typ, exp) ->
+  | CheckLetSubG (typ, _, exp) ->
       "(let " ^ string_of_exp exp ^ " be %, % has type " ^ string_of_typ typ
       ^ ")"
   | CheckLetMatchG (pattern, exp) ->
@@ -307,7 +307,7 @@ and string_of_instr ?(short = false) ?(level = 0) ?(index = 0)
         Format.asprintf "(Destruct (%s) = %s)" targets (string_of_exp exp_r)
       in
       if short then s_short else Format.asprintf "%s%s" order s_short
-  | CheckLetSubI (typ, exp_l, exp_r, block) ->
+  | CheckLetSubI (typ, _, exp_l, exp_r, block) ->
       let s_short =
         Format.asprintf "(Let %s be %s, %s has type %s)" (string_of_exp exp_l)
           (string_of_exp exp_r) (string_of_exp exp_r) (string_of_typ typ)

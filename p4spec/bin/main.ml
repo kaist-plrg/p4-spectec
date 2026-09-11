@@ -194,7 +194,7 @@ let struct_command =
            Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)))
 
 let prose_command =
-  Core.Command.basic ~summary:"generate AsciiDoc prose from a P4 spec"
+  Core.Command.basic ~summary:"annotate a P4 spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec =
@@ -204,7 +204,7 @@ let prose_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.annotate paths_spec)
          ~on_success:(fun spec_pl ->
-           Format.printf "%s\n" (Pl.Render.render_spec spec_pl)))
+           Format.printf "%s\n" (Pl.Print.string_of_spec spec_pl)))
 
 let run_command =
   Core.Command.basic ~summary:"execute the P4 spec against a P4 program"
@@ -591,9 +591,7 @@ let splice_command =
      fun () ->
        run_with_diagnostics
          ~action:(fun () ->
-           let* spec = P4spectec.parse paths_spec in
-           let* spec_pl = P4spectec.annotate paths_spec in
-           let* paths =
+           let* path_pairs =
              if
                (not inplace)
                && List.length paths_input <> List.length paths_output
@@ -604,12 +602,8 @@ let splice_command =
              else if inplace then Ok (List.combine paths_input paths_input)
              else Ok (List.combine paths_input paths_output)
            in
-           Ok (spec, spec_pl, paths))
-         ~on_success:(fun (spec, spec_pl, paths) ->
-           try Backend_splice.Driver.splice_files spec spec_pl paths
-           with Backend_splice.Error.SpliceError (at, msg) ->
-             Format.eprintf "%s\n" (Util.Error.string_of_error at msg);
-             Format.printf "%s\n" (Util.Error.string_of_error at msg)))
+           P4spectec.splice paths_spec path_pairs)
+         ~on_success:(fun () -> ()))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"

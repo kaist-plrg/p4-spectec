@@ -26,7 +26,7 @@ and string_of_guard (guard : guard) : string =
   | BoolG b -> string_of_bool b
   | CmpG (cmpop, _, exp) ->
       "(% " ^ string_of_cmpop cmpop ^ " " ^ string_of_exp exp ^ ")"
-  | SubG typ -> "(% has type " ^ string_of_typ typ ^ ")"
+  | SubG (typ, _) -> "(% has type " ^ string_of_typ typ ^ ")"
   | MatchG patten -> "(% matches pattern " ^ string_of_pattern patten ^ ")"
   | MemG exp -> "(% in " ^ string_of_exp exp ^ ")"
 

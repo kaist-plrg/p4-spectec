@@ -105,6 +105,16 @@ and binop = [ Bool.binop | Num.binop ]
 and cmpop = [ Bool.cmpop | Num.cmpop ]
 and optyp = [ Bool.typ | Num.typ ]
 
+(* Subtype checks *)
+
+and subcheck =
+  | SkipSC
+  | MixopSC of mixop list
+  | TupleSC of subcheck list
+  | IterSC of iter * subcheck
+  | RecurseSC of typ
+[@@deriving yojson]
+
 (* Expressions *)
 
 and exp = (exp', typ') note_phrase
@@ -118,7 +128,7 @@ and exp' =
   | CmpE of cmpop * optyp * exp * exp     (* exp cmpop exp *)
   | UpCastE of typ * exp                  (* exp as typ *)
   | DownCastE of typ * exp                (* exp as typ *)
-  | SubE of exp * typ                     (* exp `<:` typ *)
+  | SubE of exp * typ * subcheck          (* exp `<:` typ *)
   | MatchE of exp * pattern               (* exp `matches` pattern *)
   | TupleE of exp list                    (* `(` exp* `)` *)
   | CaseE of notexp                       (* notexp *)

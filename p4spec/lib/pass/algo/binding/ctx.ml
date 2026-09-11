@@ -55,17 +55,20 @@ let add_bounds (ctx : t) (venv : VEnv.t) : t =
 
 (* Finders *)
 
-let find_typdef_with_at (ctx : t) (tid : TId.t) : region * Typdef.t =
+let find_typdef_with_region (ctx : t) (tid : TId.t) : region * Typdef.t =
   match
-    TDEnv.find_first_opt (fun key -> TId.compare key tid >= 0) ctx.tdenv
+    TDEnv.find_first_opt (fun tid_key -> TId.compare tid_key tid >= 0) ctx.tdenv
   with
-  | Some (key, typdef) when TId.compare key tid = 0 -> (key.at, typdef)
+  | Some (tid_key, typdef) when TId.compare tid_key tid = 0 ->
+      (tid_key.at, typdef)
   | _ ->
       (* Callers pass only identifiers present in [ctx.tdenv]. *)
       assert false
 
-let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
-  find_typdef_with_at ctx tid |> snd
+let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
+  TDEnv.find_opt tid ctx.tdenv
+
+let find_typdef (ctx : t) (tid : TId.t) : Typdef.t = TDEnv.find tid ctx.tdenv
 
 (* Load type definitions *)
 

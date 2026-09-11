@@ -70,7 +70,7 @@ let default_collect_exp (c : 'a collector) (exp : exp) : 'a =
       collect_exp c exp_l $@ collect_exp c exp_r
   | UpCastE (typ, exp) | DownCastE (typ, exp) ->
       collect_typ c typ $@ collect_exp c exp
-  | SubE (exp, typ) -> collect_exp c exp $@ collect_typ c typ
+  | SubE (exp, typ, _) -> collect_exp c exp $@ collect_typ c typ
   | MatchE (exp, _) -> collect_exp c exp
   | TupleE exps -> collect_exps c exps
   | CaseE notexp -> collect_exps c (Mixfix.args notexp)

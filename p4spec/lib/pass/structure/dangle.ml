@@ -80,7 +80,7 @@ and insert_dangle'' (instr : instr) : Sl.instr' =
             (function
               | BoolG b -> Sl.BoolG b
               | CmpG (cmpop, optyp, exp) -> Sl.CmpG (cmpop, optyp, exp)
-              | SubG typ -> Sl.SubG typ
+              | SubG (typ, subcheck) -> Sl.SubG (typ, subcheck)
               | MatchG pattern -> Sl.MatchG pattern
               | MemG exp -> Sl.MemG exp)
             guards
@@ -135,7 +135,7 @@ and insert_nothing'' (instr : instr) : Sl.instr' =
             (function
               | BoolG b -> Sl.BoolG b
               | CmpG (cmpop, optyp, exp) -> Sl.CmpG (cmpop, optyp, exp)
-              | SubG typ -> Sl.SubG typ
+              | SubG (typ, subcheck) -> Sl.SubG (typ, subcheck)
               | MatchG pattern -> Sl.MatchG pattern
               | MemG exp -> Sl.MemG exp)
             guards

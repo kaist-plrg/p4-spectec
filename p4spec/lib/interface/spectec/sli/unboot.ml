@@ -146,7 +146,7 @@ and unboot_sub_guard (_at : region) (values : Value.t list) : Sl.guard =
   match values with
   | [ value_typ ] ->
       let typ = unboot_typ value_typ in
-      Sl.SubG typ
+      Sl.SubG (typ, Il.RecurseSC typ)
   | _ -> error "@unboot_sub_guard"
 
 and unboot_match_guard (_at : region) (values : Value.t list) : Sl.guard =

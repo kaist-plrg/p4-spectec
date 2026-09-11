@@ -24,7 +24,7 @@ let rec free_exp (exp : exp) : t =
   | CmpE (_, _, exp_l, exp_r) -> free_exp exp_l + free_exp exp_r
   | UpCastE (_, exp) -> free_exp exp
   | DownCastE (_, exp) -> free_exp exp
-  | SubE (exp, _) -> free_exp exp
+  | SubE (exp, _, _) -> free_exp exp
   | MatchE (exp, _) -> free_exp exp
   | TupleE exps -> free_exps exps
   | CaseE notexp -> free_exps (Mixfix.args notexp)

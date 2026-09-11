@@ -77,9 +77,9 @@ let rec rename_exp (renamer : t) (exp : exp) : exp =
   | DownCastE (typ, exp) ->
       let exp = rename_exp renamer exp in
       Il.DownCastE (typ, exp) $$ (at, note)
-  | SubE (exp, typ) ->
+  | SubE (exp, typ, subcheck) ->
       let exp = rename_exp renamer exp in
-      Il.SubE (exp, typ) $$ (at, note)
+      Il.SubE (exp, typ, subcheck) $$ (at, note)
   | MatchE (exp, pattern) ->
       let exp = rename_exp renamer exp in
       Il.MatchE (exp, pattern) $$ (at, note)

@@ -8,20 +8,30 @@ let splicers =
   [
     (module Syntax.Source.Splicer : SPLICER);
     (module Rel_title.Source.Splicer : SPLICER);
+    (module Rel_title.Latex.Splicer : SPLICER);
     (module Rel_title.Prose.Splicer : SPLICER);
+    (module Rulegroup_else.Prose.Splicer : SPLICER);
     (module Rulegroup.Source.Splicer : SPLICER);
+    (module Rulegroup.Latex.Splicer : SPLICER);
     (module Rulegroup.Prose.Splicer : SPLICER);
     (module Rulegroup_dispatch.Prose.Splicer : SPLICER);
     (module Func_title.Source.Splicer : SPLICER);
+    (module Func_title.Latex.Splicer : SPLICER);
     (module Func_title.Prose.Splicer : SPLICER);
     (module Func.Source.Splicer : SPLICER);
+    (module Func.Latex.Splicer : SPLICER);
     (module Func.Prose.Splicer : SPLICER);
     (module Table.Source.Splicer : SPLICER);
+    (module Table.Latex.Splicer : SPLICER);
     (module Table.Prose.Splicer : SPLICER);
   ]
 
-let init (spec_el : El.spec) (spec_pl : Pl.spec) =
-  List.iter (fun (module S : SPLICER) -> S.init spec_el spec_pl) splicers
+let init ?(context : Ctx.t = Ctx.empty) (spec_el : El.spec) (spec_pl : Pl.spec)
+    : unit =
+  Ctx.reset_anchors context;
+  List.iter
+    (fun (module S : SPLICER) -> S.init ~context spec_el spec_pl)
+    splicers
 
 (* Splicing *)
 
@@ -94,7 +104,17 @@ let splice_file (filename_input : string) (filename_output : string) : unit =
 
 let splice_files (spec_el : El.spec) (spec_pl : Pl.spec)
     (filenames : (string * string) list) : unit =
-  init spec_el spec_pl;
+  let sources =
+    List.map
+      (fun (filename_input, _) ->
+        let content =
+          In_channel.with_open_bin filename_input In_channel.input_all
+        in
+        (filename_input, content))
+      filenames
+  in
+  let context = Anchor.collect spec_el sources in
+  init ~context spec_el spec_pl;
   List.iter
     (fun (filename_input, filename_output) ->
       splice_file filename_input filename_output)

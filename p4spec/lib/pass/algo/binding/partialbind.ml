@@ -112,12 +112,19 @@ let gen_prem_bind_match (to_ : To.t) (pattern : pattern) (exp_from : exp)
   in
   [ sidecondition_guard_match; prem_bind ]
 
-let gen_prem_bind_sub (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
+let gen_prem_bind_sub (ctx : Ctx.t) (to_ : To.t) (typ_sub : typ) (exp_sub : exp)
     (exp_from : exp) (iterctx : Iterctx.t) : prem list =
   let id, typ, iters = to_ in
   let exp_to = To.as_exp to_ in
   let sidecondition_guard_sub =
-    let exp_guard_sub = SubE (exp_to, typ_sub) $$ (exp_from.at, BoolT) in
+    let typ_source = exp_to.note $ exp_to.at in
+    let subcheck =
+      Type.Sub.optimize (Ctx.find_typdef_opt ctx) ~typ_source
+        ~typ_target:typ_sub
+    in
+    let exp_guard_sub =
+      SubE (exp_to, typ_sub, subcheck) $$ (exp_from.at, BoolT)
+    in
     let sidecondition_guard_sub = IfPr exp_guard_sub $ exp_from.at in
     let iterctx =
       iterctx
@@ -149,7 +156,7 @@ let gen_prem (ctx : Ctx.t) (to_ : To.t) (from : From.t) (iterctx : Iterctx.t) :
   | Bindmatch { pattern; exp_from } ->
       gen_prem_bind_match to_ pattern exp_from iterctx
   | Bindsub { typ_sub; exp_sub; exp_from } ->
-      gen_prem_bind_sub to_ typ_sub exp_sub exp_from iterctx
+      gen_prem_bind_sub ctx to_ typ_sub exp_sub exp_from iterctx
 
 let gen_prems (ctx : Ctx.t) (iterctx_prem : Iterctx.t) (renv : REnv.t) :
     prem list =

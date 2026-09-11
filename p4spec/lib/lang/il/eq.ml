@@ -136,7 +136,7 @@ and eq_exp' (exp_a' : exp') (exp_b' : exp') : bool =
       && eq_exp exp_r_a exp_r_b
   | UpCastE (typ_a, exp_a), UpCastE (typ_b, exp_b)
   | DownCastE (typ_a, exp_a), DownCastE (typ_b, exp_b)
-  | SubE (exp_a, typ_a), SubE (exp_b, typ_b) ->
+  | SubE (exp_a, typ_a, _), SubE (exp_b, typ_b, _) ->
       eq_exp exp_a exp_b && eq_typ typ_a typ_b
   | MatchE (exp_a, pattern_a), MatchE (exp_b, pattern_b) ->
       eq_exp exp_a exp_b && eq_pattern pattern_a pattern_b

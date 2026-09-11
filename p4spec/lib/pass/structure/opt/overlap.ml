@@ -28,7 +28,8 @@ let exp_as_guard (exp_target : exp) (exp_cond : exp) : guard option =
       Some (CmpG (`NeOp, optyp, exp_r))
   | CmpE (`NeOp, optyp, exp_l, exp_r) when eq_exp exp_target exp_r ->
       Some (CmpG (`NeOp, optyp, exp_l))
-  | SubE (exp, typ) when eq_exp exp_target exp -> Some (SubG typ)
+  | SubE (exp, typ, subcheck) when eq_exp exp_target exp ->
+      Some (SubG (typ, subcheck))
   | MatchE (exp, pattern) when eq_exp exp_target exp -> Some (MatchG pattern)
   | MemE (exp_e, exp_s) when eq_exp exp_target exp_e -> Some (MemG exp_s)
   | _ -> None
@@ -40,7 +41,8 @@ let guard_as_exp (exp_target : exp) (guard : guard) : exp =
       Il.UnE (`NotOp, `BoolT, exp_target) $$ (exp_target.at, Il.BoolT)
   | CmpG (cmpop, optyp, exp) ->
       Il.CmpE (cmpop, optyp, exp_target, exp) $$ (exp_target.at, Il.BoolT)
-  | SubG typ -> Il.SubE (exp_target, typ) $$ (exp_target.at, Il.BoolT)
+  | SubG (typ, subcheck) ->
+      Il.SubE (exp_target, typ, subcheck) $$ (exp_target.at, Il.BoolT)
   | MatchG pattern ->
       Il.MatchE (exp_target, pattern) $$ (exp_target.at, Il.BoolT)
   | MemG exp -> Il.MemE (exp_target, exp) $$ (exp_target.at, Il.BoolT)
@@ -98,15 +100,15 @@ let rec disjoint_exp_literal (exp_a : exp) (exp_b : exp) : bool =
   | ListE _, ListE _ -> true
   | _ -> false
 
-let overlap_typ (tdenv : TDEnv.t) (exp : exp) (typ_a : typ) (typ_b : typ) :
-    overlap =
+let overlap_typ (tdenv : TDEnv.t) (exp : exp) (typ_a : typ)
+    (subcheck_a : subcheck) (typ_b : typ) (subcheck_b : subcheck) : overlap =
   match (typ_as_variant tdenv typ_a, typ_as_variant tdenv typ_b) with
   | Some mixops_a, Some mixops_b ->
       let mixops_a = MixIdSet.of_list mixops_a in
       let mixops_b = MixIdSet.of_list mixops_b in
       if MixIdSet.eq mixops_a mixops_b then Identical
       else if MixIdSet.inter mixops_a mixops_b |> MixIdSet.is_empty then
-        Disjoint (exp, SubG typ_a, SubG typ_b)
+        Disjoint (exp, SubG (typ_a, subcheck_a), SubG (typ_b, subcheck_b))
       else Fuzzy
   | _ -> Fuzzy
 
@@ -133,26 +135,26 @@ let rec overlap_pattern (exp : exp) (pattern_a : pattern) (pattern_b : pattern)
   else overlap_pattern_unequal ()
 
 and overlap_typ_and_pattern (tdenv : TDEnv.t) (exp : exp) (typ : typ)
-    (pattern : pattern) : overlap =
+    (subcheck : subcheck) (pattern : pattern) : overlap =
   match pattern with
   | CaseP mixop -> (
       match typ_as_variant tdenv typ with
       | Some mixops ->
           let mixops = MixIdSet.of_list mixops in
           if MixIdSet.mem mixop mixops then Fuzzy
-          else Disjoint (exp, SubG typ, MatchG pattern)
+          else Disjoint (exp, SubG (typ, subcheck), MatchG pattern)
       | None -> Fuzzy)
   | _ -> Fuzzy
 
 and overlap_pattern_and_typ (tdenv : TDEnv.t) (exp : exp) (pattern : pattern)
-    (typ : typ) : overlap =
+    (typ : typ) (subcheck : subcheck) : overlap =
   match pattern with
   | CaseP mixop -> (
       match typ_as_variant tdenv typ with
       | Some mixops ->
           let mixops = MixIdSet.of_list mixops in
           if MixIdSet.mem mixop mixops then Fuzzy
-          else Disjoint (exp, MatchG pattern, SubG typ)
+          else Disjoint (exp, MatchG pattern, SubG (typ, subcheck))
       | None -> Fuzzy)
   | _ -> Fuzzy
 
@@ -215,17 +217,20 @@ and overlap_exp (tdenv : TDEnv.t) (exp_a : exp) (exp_b : exp) : overlap =
             CmpG (`EqOp, optyp_a, exp_a_r),
             CmpG (`NeOp, optyp_b, exp_b_l) )
     (* Subtyping *)
-    | SubE (exp_a, typ_a), SubE (exp_b, typ_b) when eq_exp exp_a exp_b ->
-        overlap_typ tdenv exp_a typ_a typ_b
+    | SubE (exp_a, typ_a, subcheck_a), SubE (exp_b, typ_b, subcheck_b)
+      when eq_exp exp_a exp_b ->
+        overlap_typ tdenv exp_a typ_a subcheck_a typ_b subcheck_b
     (* Match on patterns *)
     | MatchE (exp_a, pattern_a), MatchE (exp_b, pattern_b)
       when eq_exp exp_a exp_b ->
         overlap_pattern exp_a pattern_a pattern_b
     (* Subtyping and match on patterns *)
-    | SubE (exp_a, typ_a), MatchE (exp_b, pattern_b) when eq_exp exp_a exp_b ->
-        overlap_typ_and_pattern tdenv exp_a typ_a pattern_b
-    | MatchE (exp_a, pattern_a), SubE (exp_b, typ_b) when eq_exp exp_a exp_b ->
-        overlap_pattern_and_typ tdenv exp_a pattern_a typ_b
+    | SubE (exp_a, typ_a, subcheck_a), MatchE (exp_b, pattern_b)
+      when eq_exp exp_a exp_b ->
+        overlap_typ_and_pattern tdenv exp_a typ_a subcheck_a pattern_b
+    | MatchE (exp_a, pattern_a), SubE (exp_b, typ_b, subcheck_b)
+      when eq_exp exp_a exp_b ->
+        overlap_pattern_and_typ tdenv exp_a pattern_a typ_b subcheck_b
     (* Membership on literals *)
     | ( MemE (exp_e_a, ({ it = ListE exps_s_a; _ } as exp_s_a)),
         MemE (exp_e_b, ({ it = ListE exps_s_b; _ } as exp_s_b)) )

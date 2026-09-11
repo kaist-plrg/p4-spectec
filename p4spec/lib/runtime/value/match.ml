@@ -107,7 +107,7 @@ let cache_find_typdef_opt find_typdef_opt =
         Hashtbl.add cache tid.it td_opt;
         td_opt
 
-(* Entry point *)
+(* Sub-check with caching of type variables *)
 
 let sub cache_sub_var find_typdef_opt find_func_opt typ value =
   match typ.it with
@@ -125,3 +125,26 @@ let sub cache_sub_var find_typdef_opt find_func_opt typ value =
 
 let subs find_typdef_opt find_func_opt typs values =
   subs_ (cache_find_typdef_opt find_typdef_opt) find_func_opt typs values
+
+(* Entry point *)
+
+let rec check cache_sub_var find_typdef_opt find_func_opt subcheck value =
+  match (subcheck, value.it) with
+  | SkipSC, _ -> true
+  | MixopSC mixops, CaseV valuecase ->
+      List.exists (fun mixop -> Mixfix.eq_mixop mixop valuecase) mixops
+  | TupleSC subchecks, TupleV values ->
+      List.length subchecks = List.length values
+      && List.for_all2
+           (check cache_sub_var find_typdef_opt find_func_opt)
+           subchecks values
+  | IterSC (Opt, _), OptV None -> true
+  | IterSC (Opt, subcheck), OptV (Some value) ->
+      check cache_sub_var find_typdef_opt find_func_opt subcheck value
+  | IterSC (List, subcheck), ListV values ->
+      List.for_all
+        (check cache_sub_var find_typdef_opt find_func_opt subcheck)
+        values
+  | RecurseSC typ, _ ->
+      sub cache_sub_var find_typdef_opt find_func_opt typ value
+  | _ -> false

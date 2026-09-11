@@ -113,9 +113,9 @@ let transform_first_with_iters
       | DownCastE (typ, exp_inner) ->
           let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (DownCastE (typ, exp_inner') $$ (at, note), iter_state)
-      | SubE (exp_inner, typ) ->
+      | SubE (exp_inner, typ, subcheck) ->
           let* exp_inner', iter_state = transform_exp acc exp_inner in
-          Some (SubE (exp_inner', typ) $$ (at, note), iter_state)
+          Some (SubE (exp_inner', typ, subcheck) $$ (at, note), iter_state)
       | MatchE (exp_inner, pattern) ->
           let* exp_inner', iter_state = transform_exp acc exp_inner in
           Some (MatchE (exp_inner', pattern) $$ (at, note), iter_state)

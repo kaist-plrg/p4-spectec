@@ -73,6 +73,6 @@ ENV P4SPECTEC_PATH=/home/p4-spectec
 # Stage 6: Asciidoc dependencies
 # --------------------------------------
 RUN apt-get update
-RUN docs/install-asciidoctor-linux.sh
+RUN docs/p4/install-asciidoctor-linux.sh
 
 RUN echo 'source /usr/local/rvm/scripts/rvm' >> ~/.bashrc

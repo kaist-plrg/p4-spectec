@@ -58,7 +58,7 @@ let struct_command =
            Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)))
 
 let prose_command =
-  Core.Command.basic ~summary:"generate AsciiDoc prose from a spec"
+  Core.Command.basic ~summary:"annotate a spec"
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map paths_spec =
@@ -68,7 +68,7 @@ let prose_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.annotate paths_spec)
          ~on_success:(fun spec_pl ->
-           Format.printf "%s\n" (Pl.Render.render_spec spec_pl)))
+           Format.printf "%s\n" (Pl.Print.string_of_spec spec_pl)))
 
 let run_command =
   Core.Command.basic ~summary:"execute the spec"
