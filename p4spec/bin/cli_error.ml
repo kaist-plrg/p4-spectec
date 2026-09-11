@@ -13,4 +13,4 @@ let run_with_diagnostics ~(action : unit -> 'a P4spectec.result)
   | Ok value ->
       let (), report = P4spectec.with_warnings (fun () -> on_success value) in
       render_diagnostics report
-  | Error _ -> ()
+  | Error _ -> exit 1
