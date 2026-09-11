@@ -73,6 +73,24 @@ let gen_directory (filename : string) : unit =
   let dirname = Filename.dirname filename in
   if dirname <> "" && not (Sys.file_exists dirname) then gen_directory' dirname
 
+let error_io (filename : string) (msg : string) =
+  Error.error ~code:File_io_error
+    (Util.Source.region_of_file filename)
+    ("I/O error: " ^ Diagnostic.quote msg)
+
+let read_file (filename : string) : string =
+  try In_channel.with_open_bin filename In_channel.input_all
+  with Sys_error msg -> error_io filename msg
+
+let write_file (filename : string) (content : string) : unit =
+  try
+    gen_directory filename;
+    Out_channel.with_open_bin filename (fun oc ->
+        Out_channel.output_string oc content)
+  with
+  | Sys_error msg -> error_io filename msg
+  | Unix.Unix_error (err, _, _) -> error_io filename (Unix.error_message err)
+
 (* Entry points *)
 
 let rec splice (source : Source.t) (buffer : Buffer.t) : unit =
@@ -88,29 +106,15 @@ let splice_string (source : Source.t) (content : string) : string =
   Buffer.contents buffer
 
 let splice_file (filename_input : string) (filename_output : string) : unit =
-  let ic = open_in filename_input in
-  let content =
-    Fun.protect
-      (fun () -> In_channel.input_all ic)
-      ~finally:(fun () -> In_channel.close ic)
-  in
+  let content = read_file filename_input in
   let source = Source.{ file = filename_input; s = content; i = 0 } in
-  let content_spliced = splice_string source content in
-  gen_directory filename_output;
-  let oc = open_out filename_output in
-  Fun.protect
-    (fun () -> Out_channel.output_string oc content_spliced)
-    ~finally:(fun () -> Out_channel.close oc)
+  write_file filename_output (splice_string source content)
 
 let splice_files (spec_el : El.spec) (spec_pl : Pl.spec)
     (filenames : (string * string) list) : unit =
   let sources =
     List.map
-      (fun (filename_input, _) ->
-        let content =
-          In_channel.with_open_bin filename_input In_channel.input_all
-        in
-        (filename_input, content))
+      (fun (filename_input, _) -> (filename_input, read_file filename_input))
       filenames
   in
   let context = Anchor.collect spec_el sources in
