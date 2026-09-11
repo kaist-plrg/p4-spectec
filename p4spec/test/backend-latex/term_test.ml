@@ -513,6 +513,6 @@ let () =
   print_doc_at_width "direct-render-params-constrained" 18 params;
   print_error "hole-error" (HoleE `Next $ at);
   print_error "fuse-error"
-    (FuseE (VarE ("x" $ at) $ at, VarE ("y" $ at) $ at) $ at);
-  print_error "unparen-error" (UnparenE (VarE ("x" $ at) $ at) $ at);
+    (FuseE (VarE ("x" $ at) $ at, at, VarE ("y" $ at) $ at) $ at);
+  print_error "unparen-error" (UnparenE (at, VarE ("x" $ at) $ at) $ at);
   print_error "latex-error" (LatexE "x_1" $ at)

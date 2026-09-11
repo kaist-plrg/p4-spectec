@@ -19,7 +19,7 @@ module Make () : RUNNER = struct
         | Empty_mode -> assert false)
         |> function
         | Pass value -> value
-        | Fail (at, msg) -> error at msg
+        | Fail failure -> raise (ExternError failure)
       in
       let call_rel name values =
         (match mode_ with
@@ -29,7 +29,7 @@ module Make () : RUNNER = struct
         | Empty_mode -> assert false)
         |> function
         | Pass values -> values
-        | Fail (at, msg) -> error at msg
+        | Fail failure -> raise (ExternError failure)
       in
       let call_pgm relname includes filename =
         (match mode_ with
@@ -40,7 +40,8 @@ module Make () : RUNNER = struct
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
         | Pass _ -> error no_region "unexpected number of return values"
-        | Fail (`Syntax (at, msg) | `Runtime (at, msg)) -> error at msg
+        | Fail (`Syntax diagnostic) -> raise (ExternError (Abort diagnostic))
+        | Fail (`Runtime failure) -> raise (ExternError failure)
       in
       Spec_.Func.register call_func;
       Spec_.Rel.register call_rel;

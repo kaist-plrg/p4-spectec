@@ -1,15 +1,13 @@
 module Anchor = Anchor
 module Ctx = Ctx
 module Driver = Driver
+module Error = Error
 module Parser = Parser
 module Source = Source
 module Splicer = Splicer
 module Splicers = Splicers
 
-type error = Error.error
-
-let to_region_msg (error : error) : Util.Source.region * string =
-  Error.to_region_msg error
+type error = Diagnostic.t
 
 let splice_files (spec_el : Lang.El.spec) (spec_pl : Lang.Pl.spec)
     (path_pairs : (string * string) list) : (unit, error) result =

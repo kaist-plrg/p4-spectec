@@ -1,13 +1,17 @@
+module Run = Runtime.Dynamic_Runner.Signature
 open Util.Source
+
+type code = Unsupported_interface
+
+let render_code = function
+  | Unsupported_interface -> "boot/unsupported-interface"
 
 (* Error *)
 
 let error (at : region) (msg : string) =
-  raise (Runtime.Dynamic_Runner.Signature.ExternError (at, msg))
+  raise (Run.ExternError (Run.abort ~source:"boot" at msg))
 
 let error_no_region (msg : string) = error no_region msg
-let warn (at : region) (msg : string) = Util.Error.warn at "extern" msg
-let warn_no_region (msg : string) = warn no_region msg
 
 (* Check *)
 

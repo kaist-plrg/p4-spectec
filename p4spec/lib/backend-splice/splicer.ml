@@ -88,6 +88,7 @@ let prefix_source =
   ^ "[source,watsup]\n----\n"
 
 let suffix_source = "\n----\n====\n\n[.empty]\n--\n\n\n--\n\n" ^ "endif::[]"
+
 let prefix_latex =
   "ifdef::backend-html5[]\n"
   ^ ".Click to view the mathematical definition\n[%collapsible]\n====\n"
@@ -180,27 +181,12 @@ module Make
     let keys_unused = S.unused !sto in
     let count_unused = List.length keys_unused in
     let total = S.cardinal !sto in
-    let percentage =
-      if total = 0 then 0.0
-      else float_of_int count_unused /. float_of_int total *. 100.0
-    in
-    Format.asprintf "unused %d %s splices out of %d (%.2f%%)" count_unused name
-      total percentage
-    |> warn no_region;
-    let s =
-      keys_unused
-      |> List.mapi (fun idx key -> (idx, key))
-      |> List.fold_left
-           (fun s (idx, key) ->
-             let s =
-               if idx mod 5 = 0 && idx > 0 then (
-                 warn no_region ("\t" ^ s);
-                 "")
-               else s
-             in
-             let s = s ^ K.to_string key in
-             s ^ if idx mod 5 < 4 && idx < count_unused - 1 then ", " else "")
-           ""
-    in
-    warn no_region ("\t" ^ s)
+    if count_unused > 0 then
+      let percentage =
+        float_of_int count_unused /. float_of_int total *. 100.0
+      in
+      let detail = keys_unused |> List.map K.to_string |> String.concat ", " in
+      Format.asprintf "unused %d %s splices out of %d (%.2f%%)" count_unused
+        name total percentage
+      |> warn ~detail no_region
 end

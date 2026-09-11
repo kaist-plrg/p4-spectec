@@ -1,4 +1,3 @@
-open Lang
 open Test_common
 
 let () =

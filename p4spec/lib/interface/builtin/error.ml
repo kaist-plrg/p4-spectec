@@ -5,7 +5,6 @@ open Util.Source
 exception BuiltinError of region * string
 
 let error (at : region) (msg : string) = raise (BuiltinError (at, msg))
-let warn (at : region) (msg : string) = Util.Error.warn at "builtin" msg
 
 (* Checks *)
 

@@ -1,15 +1,18 @@
 open Lang
+open Pl
 open Domain
 open Lib
 
 (* Hint kinds *)
 
 module Kind = struct
-  type t = Alter of Hints.Alter.t | Fields of Hints.Fields.t
+  type t =
+    | Alter of Hints.Alter.t Annot.hint
+    | Fields of Hints.Fields.t Annot.hint
 
   let to_string = function
-    | Alter hint_alter -> Hints.Alter.to_string hint_alter
-    | Fields hint_fields -> Hints.Fields.to_string hint_fields
+    | Alter hint -> Hints.Alter.to_string hint.value
+    | Fields hint -> Hints.Fields.to_string hint.value
 end
 
 (* Hints associated with type cases *)

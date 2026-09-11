@@ -1,6 +1,4 @@
 open Domain
-open Lang
-open El
 open Backend_latex_test_support
 
 let string_of_atom atom =

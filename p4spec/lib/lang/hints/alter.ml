@@ -8,7 +8,7 @@ type t =
   | AtomH of atom
   | SeqH of t list
   | BrackH of atom * t * atom
-  | HoleH of [ `Next | `Num of int ]
+  | HoleH of [ `Next | `Num of int ] phrase
   | FuseH of t * t
   | OtherH of exp
 
@@ -25,42 +25,39 @@ and to_string' (hint : t) =
         (Print.string_of_atom atom_l)
         (to_string' hintexp)
         (Print.string_of_atom atom_r)
-  | HoleH `Next -> "%"
-  | HoleH (`Num idx) -> Format.asprintf "%%%d" idx
+  | HoleH { it = `Next; _ } -> "%"
+  | HoleH { it = `Num idx; _ } -> Format.asprintf "%%%d" idx
   | FuseH (hintexp_l, hintexp_r) ->
       Format.asprintf "%s#%s" (to_string' hintexp_l) (to_string' hintexp_r)
   | OtherH exp -> Print.string_of_exp exp
 
 (* Creating hints *)
 
-let rec init (hintexp : Hint.t) : t option =
-  let ( let* ) = Option.bind in
+let rec init (hintexp : Hint.t) : t =
   match hintexp.it with
-  | TextE text -> Some (TextH text)
-  | AtomE atom -> Some (AtomH atom)
-  | SeqE hintexps ->
-      let hintexps_opt = List.map init hintexps in
-      if List.for_all Option.is_some hintexps_opt then
-        Some (SeqH (List.map Option.get hintexps_opt))
-      else None
-  | BrackE (atom_l, hintexp, atom_r) ->
-      let* hintexp = init hintexp in
-      Some (BrackH (atom_l, hintexp, atom_r))
-  | HoleE `Next -> Some (HoleH `Next)
-  | HoleE (`Num idx) -> Some (HoleH (`Num idx))
-  | FuseE (hintexp_l, hintexp_r) ->
-      let* hintexp_l = init hintexp_l in
-      let* hintexp_r = init hintexp_r in
-      Some (FuseH (hintexp_l, hintexp_r))
-  | _ -> Some (OtherH hintexp)
+  | TextE text -> TextH text
+  | AtomE atom -> AtomH atom
+  | SeqE hintexps -> SeqH (List.map init hintexps)
+  | BrackE (atom_l, hintexp, atom_r) -> BrackH (atom_l, init hintexp, atom_r)
+  | HoleE `Next -> HoleH (`Next $ hintexp.at)
+  | HoleE (`Num idx) -> HoleH (`Num idx $ hintexp.at)
+  | FuseE (hintexp_l, _, hintexp_r) -> FuseH (init hintexp_l, init hintexp_r)
+  | _ -> OtherH hintexp
 
 (* Validating hints *)
 
-let rec validate (hint : t) (items : 'a list) : (unit, string) result =
-  match validate' 0 hint items with Ok _ -> Ok () | Error msg -> Error msg
+type invalid_oob = {
+  at : region;
+  placeholder : string;
+  index : int;
+  arity : int;
+}
 
-and validate' (cursor : int) (hint : t) (items : 'a list) : (int, string) result
-    =
+let rec validate (hint : t) (arity : int) : (unit, invalid_oob) result =
+  match validate' 0 hint arity with Ok _ -> Ok () | Error err -> Error err
+
+and validate' (cursor : int) (hint : t) (arity : int) :
+    (int, invalid_oob) result =
   let ( let* ) = Result.bind in
   match hint with
   | TextH _ -> Ok cursor
@@ -68,15 +65,18 @@ and validate' (cursor : int) (hint : t) (items : 'a list) : (int, string) result
       List.fold_left
         (fun cursor_result hint ->
           let* cursor = cursor_result in
-          validate' cursor hint items)
+          validate' cursor hint arity)
         (Ok cursor) hints
-  | BrackH (_, hint, _) -> validate' cursor hint items
-  | HoleH `Next -> Ok (cursor + 1)
-  | HoleH (`Num idx) when idx < List.length items -> Ok cursor
-  | HoleH (`Num idx) -> Error (Format.asprintf "index %d out of bounds" idx)
+  | BrackH (_, hint, _) -> validate' cursor hint arity
+  | HoleH { it = `Next; _ } when cursor < arity -> Ok (cursor + 1)
+  | HoleH { it = `Next; at; _ } ->
+      Error { at; placeholder = "%"; index = cursor; arity }
+  | HoleH { it = `Num idx; _ } when idx >= 0 && idx < arity -> Ok cursor
+  | HoleH { it = `Num idx; at; _ } ->
+      Error { at; placeholder = Format.asprintf "%%%d" idx; index = idx; arity }
   | FuseH (hint_l, hint_r) ->
-      let* cursor_l = validate' cursor hint_l items in
-      let* cursor_r = validate' cursor_l hint_r items in
+      let* cursor_l = validate' cursor hint_l arity in
+      let* cursor_r = validate' cursor_l hint_r arity in
       Ok cursor_r
   | _ -> Ok cursor
 
@@ -89,8 +89,8 @@ and collect' (idxs : int list) (hintexp : t) : int list =
   | TextH _ -> idxs
   | SeqH hints -> List.fold_left collect' idxs hints
   | BrackH (_, hint, _) -> collect' idxs hint
-  | HoleH (`Num i) -> i :: idxs
-  | HoleH `Next -> idxs
+  | HoleH { it = `Num i; _ } -> i :: idxs
+  | HoleH { it = `Next; _ } -> idxs
   | FuseH (hint_l, hint_r) ->
       let idxs = collect' idxs hint_l in
       collect' idxs hint_r
@@ -118,9 +118,9 @@ and realign' (realign : (int * int) list) (hint : t) : t =
   | BrackH (atom_l, hint, atom_r) ->
       let hint = realign' realign hint in
       BrackH (atom_l, hint, atom_r)
-  | HoleH (`Num idx) ->
+  | HoleH ({ it = `Num idx; _ } as hole) ->
       let idx_realigned = List.assoc idx realign in
-      HoleH (`Num idx_realigned)
+      HoleH { hole with it = `Num idx_realigned }
   | FuseH (hint_l, hint_r) ->
       let hint_l = realign' realign hint_l in
       let hint_r = realign' realign hint_r in
@@ -151,8 +151,9 @@ let alternate ~(empty : 'd) ~(text : string -> 'd option) ~(atom : atom -> 'd)
           List.filter_map Fun.id [ Some (atom atom_l); d; Some (atom atom_r) ]
         in
         (cursor, match ds with [] -> None | _ -> Some (join ds)))
-    | HoleH `Next -> (cursor + 1, Some (render (List.nth items cursor)))
-    | HoleH (`Num idx) -> (cursor, Some (render (List.nth items idx)))
+    | HoleH { it = `Next; _ } ->
+        (cursor + 1, Some (render (List.nth items cursor)))
+    | HoleH { it = `Num idx; _ } -> (cursor, Some (render (List.nth items idx)))
     | FuseH (hint_l, hint_r) ->
         let cursor, d_l = go hint_l cursor in
         let cursor, d_r = go hint_r cursor in

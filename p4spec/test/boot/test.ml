@@ -18,7 +18,9 @@ let boot (module Booter : RUNNER) neg tower =
     let rel = tower.level_boot.layer.rel in
     (match Booter.Interp.eval_rel rel [ value_spectec ] with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
-    | Fail (at, msg) -> raise (TestRunErr (msg, at, time_start)));
+    | Fail failure ->
+        let at, msg = Diagnostic.region_msg (diagnostic_of_failure failure) in
+        raise (TestRunErr (msg, at, time_start)));
     time_start
   with
   | TestRunErr _ as err -> raise err

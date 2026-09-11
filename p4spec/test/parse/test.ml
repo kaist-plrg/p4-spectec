@@ -9,12 +9,16 @@ module Filesys = Util.Filesys
 let parse_file time_start (module Simulator : SIM) includes path =
   match Simulator.Interface.parse_program includes [ path ] with
   | Pass value -> value
-  | Fail (`Syntax (at, msg)) -> raise (TestParseFileErr (msg, at, time_start))
+  | Fail diagnostic ->
+      let at, msg = Diagnostic.region_msg diagnostic in
+      raise (TestParseFileErr (msg, at, time_start))
 
 let parse_string time_start (module Simulator : SIM) path program_dump =
   match Simulator.Interface.parse_string path program_dump with
   | Pass value -> value
-  | Fail (`Syntax (at, msg)) -> raise (TestParseStringErr (msg, at, time_start))
+  | Fail diagnostic ->
+      let at, msg = Diagnostic.region_msg diagnostic in
+      raise (TestParseStringErr (msg, at, time_start))
 
 let parse_roundtrip time_start (module Simulator : SIM) includes path =
   let program = parse_file time_start (module Simulator) includes path in

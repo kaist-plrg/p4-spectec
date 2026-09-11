@@ -57,10 +57,16 @@ let splice (module S : Splicer.SPLICER) content =
   let source = Source.{ file = "fixture.adoc"; s = content; i = 0 } in
   print_endline (S.splice source)
 
-let () =
+let run () =
   Primary.init [] [];
   Alternate.init [] [];
   splice (module Primary) " alpha}";
   splice (module Alternate) " beta}";
   Primary.warn_unused ();
   Alternate.warn_unused ()
+
+let () =
+  let (), report = Diagnostic.collect run in
+  if not (Diagnostic.Report.is_empty report) then
+    Printf.eprintf "%s\n"
+      (Diagnostic.Render.render_report ~ansi:Diagnostic.Ansi.plain report)

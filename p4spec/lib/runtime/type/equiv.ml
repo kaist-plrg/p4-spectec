@@ -4,7 +4,6 @@ open Lib
 open Lang
 open Xl
 open Il
-open Error
 open Util.Source
 
 (* Type equivalence and subtyping *)
@@ -32,12 +31,12 @@ and equiv_nottyp (find_typdef_opt : TId.t -> Typdef.t option)
     (nottyp_a : nottyp) (nottyp_b : nottyp) : bool =
   Mixfix.eq ~eq_arg:(equiv_typ find_typdef_opt) nottyp_a.it nottyp_b.it
 
-and equiv_functyp (find_typdef_opt : TId.t -> Typdef.t option) (at : region)
+and equiv_functyp (find_typdef_opt : TId.t -> Typdef.t option)
     (tparams_a : tparam list) (typs_params_a : typ list) (typ_a : typ)
     (tparams_b : tparam list) (typs_params_b : typ list) (typ_b : typ) : bool =
-  check
-    (List.length tparams_a = List.length tparams_b)
-    at "type parameters do not match";
+  List.length tparams_a = List.length tparams_b
+  && List.length typs_params_a = List.length typs_params_b
+  &&
   let tids_fresh, theta_a, theta_b =
     List.fold_left2
       (fun (tids_fresh, theta_a, theta_b) tparam_a tparam_b ->
@@ -55,9 +54,6 @@ and equiv_functyp (find_typdef_opt : TId.t -> Typdef.t option) (at : region)
   let find_typdef_opt tid =
     if TIdSet.mem tid tids_fresh then Some Typdef.Param else find_typdef_opt tid
   in
-  check
-    (List.length typs_params_a = List.length typs_params_b)
-    at "parameters do not match";
   let typs_params_a = Subst.subst_typs theta_a typs_params_a in
   let typs_params_b = Subst.subst_typs theta_b typs_params_b in
   let typ_a = Subst.subst_typ theta_a typ_a in

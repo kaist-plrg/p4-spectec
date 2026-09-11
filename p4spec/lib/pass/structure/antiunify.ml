@@ -2,7 +2,6 @@ open Domain.Lib
 module Mixfix = Domain.Mixfix
 open Lang
 open Al
-open Error
 open Util.Source
 
 (* Unification environment: a map from original id to its unified id *)
@@ -47,10 +46,8 @@ let rec populate_exp_template (uenv : UEnv.t) (exp_template : exp) (exp : exp) :
         let prem = Il.IterPr (prem, iterprem) $ at in
         [ prem ]
     | _ ->
-        Format.asprintf "cannot populate anti-unified expressions %s and %s"
-          (Il.Print.string_of_exp exp_template)
-          (Il.Print.string_of_exp exp)
-        |> failwith
+        (* [exp_template] was built by anti-unifying [exp]. *)
+        assert false
   in
   if Il.Eq.eq_exp exp_template exp then [] else populate_exp_template_unequal ()
 
@@ -66,10 +63,8 @@ and populate_exps_templates (uenv : UEnv.t) (exps_template : exp list)
 let rec antiunify_exp (frees : IdSet.t) (uenv : UEnv.t) (exp_template : exp)
     (exp : exp) : IdSet.t * UEnv.t * exp =
   let fail () =
-    error exp.at
-      (Format.asprintf "cannot anti-unify expressions %s and %s"
-         (Il.Print.string_of_exp exp_template)
-         (Il.Print.string_of_exp exp))
+    (* Binding analysis replaces incompatible pattern shapes with variables. *)
+    assert false
   in
   let antiunify_exp_unequal () =
     let at, note = (exp_template.at, exp_template.note) in
@@ -194,10 +189,8 @@ let rec populate_arg_template (uenv : UEnv.t) (arg_template : arg) (arg : arg) :
   | ExpA exp_template, ExpA exp -> populate_exp_template uenv exp_template exp
   | DefA id_template, DefA id when Il.Eq.eq_id id_template id -> []
   | _ ->
-      Format.asprintf "cannot populate anti-unified arguments %s and %s"
-        (Il.Print.string_of_arg arg_template)
-        (Il.Print.string_of_arg arg)
-      |> failwith
+      (* [arg_template] was built by anti-unifying [arg]. *)
+      assert false
 
 and populate_args_templates (uenv : UEnv.t) (args_template : arg list)
     (args : arg list) : prem list =
@@ -219,7 +212,9 @@ let antiunify_arg (frees : IdSet.t) (uenv : UEnv.t) (arg_template : arg)
       (frees, uenv, arg_template)
   | DefA id_template, DefA id when Il.Eq.eq_id id_template id ->
       (frees, uenv, arg_template)
-  | _ -> assert false
+  | _ ->
+      (* Arguments match their parameters in kind and [DefA] name. *)
+      assert false
 
 let antiunify_arg_group (frees : IdSet.t) (args : arg list) :
     IdSet.t * UEnv.t * arg =

@@ -2,7 +2,6 @@ open Domain.Lib
 open Lang
 open Al
 module Typ = Runtime.Type.Typ
-open Error
 open Util.Source
 
 (* Insert explicit guard side conditions for:
@@ -144,10 +143,12 @@ module Result = struct
         && not (List.exists (Eq.eq_prem prem) must))
       insert
 
-  let lift (at : region) ((must, inserts) : t) : prem list =
+  let lift ((must, inserts) : t) : prem list =
     match must with
     | [] -> inserts
-    | _ -> error at "should not produce must-premises"
+    | _ ->
+        (* Expression and argument collectors add only to [inserts]. *)
+        assert false
 
   let iterate_prem (iterexp : iterexp) (prem : prem) : prem option =
     let iter, vars = iterexp in
@@ -269,8 +270,8 @@ let collector : Result.t Walk.Collect.collector =
   let collect_prem (c : Result.t collector) (prem : prem) : Result.t =
     match prem.it with
     | LetPr (exp_l, exp_r) ->
-        let prems_must_l = exp_l |> c.collect_exp c |> Result.lift exp_l.at in
-        let prems_insert_r = exp_r |> c.collect_exp c |> Result.lift exp_r.at in
+        let prems_must_l = exp_l |> c.collect_exp c |> Result.lift in
+        let prems_insert_r = exp_r |> c.collect_exp c |> Result.lift in
         (prems_must_l, prems_insert_r)
     | IterPr (prem_inner, iterprem) ->
         let iter, vars_in, vars_out = iterprem in
@@ -286,13 +287,13 @@ let collector : Result.t Walk.Collect.collector =
 (* Entry point *)
 
 let must_exp_input (exp : exp) : Result.must =
-  Result.lift exp.at (Walk.Collect.collect_exp collector exp)
+  Result.lift (Walk.Collect.collect_exp collector exp)
 
 let must_exps_input (exps : exp list) : Result.must =
   List.fold_left (fun prems_must exp -> prems_must @ must_exp_input exp) [] exps
 
 let insert_exp_output (prems_must : prem list) (exp : exp) : Result.insert =
-  Result.lift exp.at (Walk.Collect.collect_exp collector exp)
+  Result.lift (Walk.Collect.collect_exp collector exp)
   |> Result.filter prems_must
 
 let insert_exps_output (prems_must : prem list) (exps : exp list) :
@@ -300,7 +301,7 @@ let insert_exps_output (prems_must : prem list) (exps : exp list) :
   exps |> List.map (insert_exp_output prems_must) |> List.flatten
 
 let must_arg_input (arg : arg) : Result.must =
-  Result.lift arg.at (Walk.Collect.collect_arg collector arg)
+  Result.lift (Walk.Collect.collect_arg collector arg)
 
 let must_args_input (args : arg list) : Result.must =
   List.fold_left (fun prems_must arg -> prems_must @ must_arg_input arg) [] args
