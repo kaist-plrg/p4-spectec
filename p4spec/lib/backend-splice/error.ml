@@ -7,7 +7,8 @@ exception SpliceError of Diagnostic.t
 let error (at : region) (msg : string) =
   raise (SpliceError (Diagnostic.error ~source:"splice" at msg))
 
-let warn (at : region) (msg : string) = Diagnostic.warn ~source:"splice" at msg
+let warn ?(detail : string option) (at : region) (msg : string) =
+  Diagnostic.warn ?detail ~source:"splice" at msg
 
 (* Check *)
 
