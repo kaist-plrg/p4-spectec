@@ -27,6 +27,7 @@ the specification parser and the high-level architecture of the tool.
   - [Running the specification against packet inputs](#running-the-specification-against-packet-inputs)
   - [To initiate a fuzz loop generating (intentionally) ill-typed P4 programs](#to-initiate-a-fuzz-loop-generating-intentionally-ill-typed-p4-programs)
 - [Experimental: Meta-circular specification](#experimental-meta-circular-specification)
+- [Editor support](#editor-support)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -82,13 +83,14 @@ the specification parser and the high-level architecture of the tool.
 
 #### OCaml compiler and packages
 
-* Create OCaml switch for version 5.1.0
-  Install `dune` version 3.16.1, `bignum` version v0.17.0, `menhir` version 20240715, `core` version v0.17.1, `core_unix` version v0.17.0, and `bisect_ppx` version 2.8.3 via `opam`.
-  ```shell
-  $ opam switch create 5.1.0
-  $ eval $(opam env)
-  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson uucp uuseg uutf linol-eio eio_main
-  ```
+Create the `5.1.0` opam switch and install the packages needed by the compiler and language server:
+
+```shell
+$ opam switch create 5.1.0
+$ opam install --switch=5.1.0 dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson uucp uuseg uutf 'linol-eio>=0.10' eio_main
+```
+
+For an existing `5.1.0` switch, skip creation and rerun the installation command. The language server requires `linol-eio` 0.10 or later and `eio_main`. Opam installs their dependencies and selects a compatible `yojson` version.
 
 #### Compiling the Project
 
@@ -246,6 +248,10 @@ $ ./p4spectec testgen spec -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel
 Read [this document](BOOT.md) for how to apply meta-circular interpretation
 to the P4-SpecTec framework, intuitively, running the
 specification-of-specification on P4-SpecTec.
+
+## Editor support
+
+The `p4spectec-lsp` language server provides live parse and elaboration diagnostics for `.watsup` specifications. See [editor setup](editor/README.md) for Neovim and Emacs/Eglot configuration and whole-spec discovery.
 
 ## Contributing
 
