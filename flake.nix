@@ -31,6 +31,11 @@
             ocamlPkgs.bisect_ppx
             ocamlPkgs.yojson
             ocamlPkgs.ppx_deriving_yojson
+            ocamlPkgs.uucp
+            ocamlPkgs.uuseg
+            ocamlPkgs.uutf
+            ocamlPkgs.linol-eio
+            ocamlPkgs.eio_main
             ocamlPkgs.ocamlformat
 
             # Tooling

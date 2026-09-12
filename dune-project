@@ -24,6 +24,8 @@
     (core_unix (>= "v0.17.0"))
     (ppx_let (>= "v0.17.0"))
     (ppx_deriving_yojson (>= "3.9.1"))
+    (linol-eio (>= "0.10"))
+    eio_main
     uucp
     uuseg
     uutf))

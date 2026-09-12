@@ -87,7 +87,7 @@ the specification parser and the high-level architecture of the tool.
   ```shell
   $ opam switch create 5.1.0
   $ eval $(opam env)
-  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson uucp uuseg uutf
+  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson uucp uuseg uutf linol-eio eio_main
   ```
 
 #### Compiling the Project
@@ -96,7 +96,7 @@ the specification parser and the high-level architecture of the tool.
 $ make build
 ```
 
-This creates an executable `p4spectec` in the project root.
+This creates `p4spectec` and `p4spectec-lsp` executables in the project root. The Makefile uses the `5.1.0` opam switch.
 
 #### Additional Notes
 
