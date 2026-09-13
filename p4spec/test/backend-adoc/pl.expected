@@ -94,17 +94,21 @@ xref:ends_with[The text ``t`` ends with ``t~suffix~``]
 
 xref:strip_prefix_rec[The text ``t`` with the prefix ``t~prefix~`` removed many times as possible]
 
-. If xref:starts_with[the text ``t`` starts with ``t~prefix~``]:+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``t~stripped~`` be xref:strip_prefix[the text ``t`` with the prefix ``t~prefix~`` removed].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Return xref:strip_prefix_rec[the text ``t~stripped~`` with the prefix ``t~prefix~`` removed many times as possible].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Else: return ``t``.
+. Check that the length of ``t~prefix~`` is greater than ``0``.
+. Check that xref:starts_with[the text ``t`` starts with ``t~prefix~``].+++<sub class="bk-mark">[<a href="#strip_prefix_rec-else">→ ⋅</a>]</sub>+++
+. Let ``t~stripped~`` be xref:strip_prefix[the text ``t`` with the prefix ``t~prefix~`` removed].+++<sub class="bk-mark">[<a href="#strip_prefix_rec-else">→ ⋅</a>]</sub>+++
+. Return xref:strip_prefix_rec[the text ``t~stripped~`` with the prefix ``t~prefix~`` removed many times as possible].+++<sub class="bk-mark">[<a href="#strip_prefix_rec-else">→ ⋅</a>]</sub>+++
+
+. +++<span id="strip_prefix_rec-else"></span>+++Otherwise: return ``t``.
 
 xref:strip_suffix_rec[The text ``t`` with the suffix ``t~suffix~`` removed many times as possible]
 
-. If xref:ends_with[the text ``t`` ends with ``t~suffix~``]:+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Let ``t~stripped~`` be xref:strip_suffix[the text ``t`` with the suffix ``t~suffix~`` removed].+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Return xref:strip_suffix_rec[the text ``t~stripped~`` with the suffix ``t~suffix~`` removed many times as possible].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Else: return ``t``.
+. Check that the length of ``t~suffix~`` is greater than ``0``.
+. Check that xref:ends_with[the text ``t`` ends with ``t~suffix~``].+++<sub class="bk-mark">[<a href="#strip_suffix_rec-else">→ ⋅</a>]</sub>+++
+. Let ``t~stripped~`` be xref:strip_suffix[the text ``t`` with the suffix ``t~suffix~`` removed].+++<sub class="bk-mark">[<a href="#strip_suffix_rec-else">→ ⋅</a>]</sub>+++
+. Return xref:strip_suffix_rec[the text ``t~stripped~`` with the suffix ``t~suffix~`` removed many times as possible].+++<sub class="bk-mark">[<a href="#strip_suffix_rec-else">→ ⋅</a>]</sub>+++
+
+. +++<span id="strip_suffix_rec-else"></span>+++Otherwise: return ``t``.
 
 xref:contains[The text ``t`` contains ``t~c~``]
 
