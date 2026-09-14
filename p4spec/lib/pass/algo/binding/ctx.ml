@@ -6,6 +6,12 @@ open Runtime.Static
 open Envs
 open Util.Source
 
+module TDEnv = MakeTIdEnv (struct
+  type t = Typdef.t phrase
+
+  let to_string td = Typdef.to_string td.it
+end)
+
 (* Context for binding analysis *)
 
 type t = {
@@ -56,29 +62,29 @@ let add_bounds (ctx : t) (venv : VEnv.t) : t =
 (* Finders *)
 
 let find_typdef_with_region (ctx : t) (tid : TId.t) : region * Typdef.t =
-  match
-    TDEnv.find_first_opt (fun tid_key -> TId.compare tid_key tid >= 0) ctx.tdenv
-  with
-  | Some (tid_key, typdef) when TId.compare tid_key tid = 0 ->
-      (tid_key.at, typdef)
-  | _ ->
+  match TDEnv.find_opt tid ctx.tdenv with
+  | Some td -> (td.at, td.it)
+  | None ->
       (* Callers pass only identifiers present in [ctx.tdenv]. *)
       assert false
 
 let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
-  TDEnv.find_opt tid ctx.tdenv
+  TDEnv.find_opt tid ctx.tdenv |> Option.map (fun td -> td.it)
 
-let find_typdef (ctx : t) (tid : TId.t) : Typdef.t = TDEnv.find tid ctx.tdenv
+let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
+  (TDEnv.find tid ctx.tdenv).it
 
 (* Load type definitions *)
 
 let load_def (ctx : t) (def : def) : t =
   match def.it with
   | ExternTypD (id, _) ->
-      let tdenv = TDEnv.add id Typdef.Extern ctx.tdenv in
+      let tdenv = TDEnv.add id (Typdef.Extern $ id.at) ctx.tdenv in
       { ctx with tdenv }
   | TypD (id, tparams, deftyp, _) ->
-      let tdenv = TDEnv.add id (Typdef.Defined (tparams, deftyp)) ctx.tdenv in
+      let tdenv =
+        TDEnv.add id (Typdef.Defined (tparams, deftyp) $ id.at) ctx.tdenv
+      in
       { ctx with tdenv }
   | VarD (id, typ, _) ->
       let menv = MEnv.add id typ ctx.menv in
