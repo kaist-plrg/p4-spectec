@@ -262,7 +262,7 @@ rule Call_func_dispatch/builtin:
   -- Call_builtin_func:
       |- id `@ `< typ* > `( val* ) : valres
 
-;; spec-meta/common/4-relation.watsup
+;; spec-meta/sl/0-common/4-relation.watsup
 extern relation Call_builtin_func:
   |- id `@ `< typ* > `( val* ) : res<val>
   hint(input %0 %1 %2)
@@ -280,7 +280,7 @@ rule Call_rel_dispatch/ext:
   -- Call_extern_rel:
       |- id val* : valsres
 
-;; spec-meta/common/4-relation.watsup
+;; spec-meta/al/0-common/4-relation.watsup
 extern relation Call_extern_rel:
   |- id val* : res<val*>
   hint(input %0 %1)
