@@ -4,7 +4,6 @@ open Lang
 open Al
 module Typ = Runtime.Type.Typ
 module Typdef = Runtime.Type.Typdef
-open Error
 open Util.Source
 
 (* Structuring parameters *)
@@ -73,7 +72,9 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
             List.map
               (function
                 | iter, vars_bound, [] -> (iter, vars_bound)
-                | _ -> error at "an if premise should not have bindings")
+                | _ ->
+                    (* Conditional premises cannot bind variables. *)
+                    assert false)
               iterprems_h
           in
           let instr_t = struct_prems' prems_internalized_t instr_ret in
@@ -83,7 +84,9 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
             List.map
               (function
                 | iter, vars_bound, [] -> (iter, vars_bound)
-                | _ -> error at "an if holds premise should not have bindings")
+                | _ ->
+                    (* Conditional premises cannot bind variables. *)
+                    assert false)
               iterprems_h
           in
           let instr_t = struct_prems' prems_internalized_t instr_ret in
@@ -94,7 +97,8 @@ and struct_prems' (prems_internalized : (prem * iterprem list) list)
               (function
                 | iter, vars_bound, [] -> (iter, vars_bound)
                 | _ ->
-                    error at "an if not holds premise should not have bindings")
+                    (* Conditional premises cannot bind variables. *)
+                    assert false)
               iterprems_h
           in
           let instr_t = struct_prems' prems_internalized_t instr_ret in

@@ -1,8 +1,15 @@
 (* Entry points for the p4spectec tool, reporting every failure as Error.t *)
 
 module Error = Error
+module Diagnostic = Diagnostic
 
 type 'a result = ('a, Error.t) Stdlib.result
+
+(** [with_warnings f] returns [f ()] and every warning emitted during the call. *)
+val with_warnings : (unit -> 'a) -> 'a * Diagnostic.Report.t
+
+(** [with_diagnostics f] also adds a failed result's error to the report. *)
+val with_diagnostics : (unit -> 'a result) -> 'a result * Diagnostic.Report.t
 
 (* Spec transformations *)
 

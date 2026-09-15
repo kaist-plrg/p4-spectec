@@ -20,7 +20,8 @@ splice: spectec
 	SPLICEFILES=$$(ruby -rasciidoctor -e \
 		'Asciidoctor.load_file(ARGV[0], safe: :unsafe, parse: true).references[:includes].each_key { |path| puts "-splice #{path}.adoc" }' \
 		${SPEC}.adoc | tr '\n' ' '); \
-	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
+	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing \
+	  || { cat splice.missing; exit 1; }
 	python3 text_missing.py > text.missing
 
 ${DRAFT}.html: ${SPEC}.adoc splice grammar.adoc grammar.trimmed.adoc

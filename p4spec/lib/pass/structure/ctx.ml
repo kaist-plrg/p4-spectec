@@ -4,16 +4,7 @@ open Al
 open Runtime.Type
 open Runtime.Static
 open Envs
-open Error
 open Util.Source
-
-(* Error *)
-
-let error_undef (at : region) (kind : string) (id : string) =
-  error at (Format.asprintf "%s `%s` is undefined" kind id)
-
-let error_dup (at : region) (kind : string) (id : string) =
-  error at (Format.asprintf "%s `%s` was already defined" kind id)
 
 (* Context *)
 
@@ -43,11 +34,6 @@ let init () : t =
 let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
   TDEnv.find_opt tid ctx.tdenv
 
-let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
-  match find_typdef_opt ctx tid with
-  | Some td -> td
-  | None -> error_undef tid.at "type" tid.it
-
 let bound_typdef (ctx : t) (tid : TId.t) : bool =
   find_typdef_opt ctx tid |> Option.is_some
 
@@ -55,11 +41,6 @@ let bound_typdef (ctx : t) (tid : TId.t) : bool =
 
 let find_metavar_opt (ctx : t) (tid : TId.t) : Typ.t option =
   MEnv.find_opt tid ctx.menv
-
-let find_metavar (ctx : t) (tid : TId.t) : Typ.t =
-  match find_metavar_opt ctx tid with
-  | Some typ -> typ
-  | None -> error_undef tid.at "meta-variable" tid.it
 
 let bound_metavar (ctx : t) (tid : TId.t) : bool =
   find_metavar_opt ctx tid |> Option.is_some
@@ -69,14 +50,16 @@ let bound_metavar (ctx : t) (tid : TId.t) : bool =
 (* Adders for meta-variables *)
 
 let add_metavar (ctx : t) (tid : TId.t) (typ : Typ.t) : t =
-  if bound_metavar ctx tid then error_dup tid.at "meta-variable" tid.it;
+  (* Elaboration rejects duplicate meta-variable definitions. *)
+  assert (not (bound_metavar ctx tid));
   let menv = MEnv.add tid typ ctx.menv in
   { ctx with menv }
 
 (* Adders for type definitions *)
 
 let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
-  if bound_typdef ctx tid then error_dup tid.at "type" tid.it;
+  (* Elaboration rejects duplicate global type definitions. *)
+  assert (not (bound_typdef ctx tid));
   let tdenv = TDEnv.add tid td ctx.tdenv in
   { ctx with tdenv }
 

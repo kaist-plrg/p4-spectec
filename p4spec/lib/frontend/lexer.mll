@@ -19,17 +19,47 @@ let region lexbuf =
   let right = convert_pos (Lexing.lexeme_end_p lexbuf) in
   Source.{ left; right }
 
-let error lexbuf msg = error (region lexbuf) msg
-let error_nest start lexbuf msg =
+let error ?code ?detail lexbuf msg = error ?code ?detail (region lexbuf) msg
+let error_nest ?code start lexbuf msg =
   lexbuf.Lexing.lex_start_p <- start;
-  error lexbuf msg
+  error ?code lexbuf msg
 
 (* Numbers *)
 
 let nat _lexbuf s = Bigint.of_string s
 let hex _lexbuf s = Bigint.of_string s
-let int lexbuf s =
-  try int_of_string s with Failure _ -> error lexbuf "hex literal out of range"
+let parse_hole_index lexbuf lexeme =
+  try int_of_string lexeme with Failure _ ->
+    error ~code:Hole_index_out_of_range
+      ~detail:"Use a smaller nonnegative decimal hole index."
+      lexbuf (Printf.sprintf "hole index `%%%s` is out of range" lexeme)
+
+let control_character lexbuf =
+  let lexeme = Lexing.lexeme lexbuf in
+  Printf.sprintf "U+%04X" (Char.code lexeme.[String.length lexeme - 1])
+
+let illegal_escape lexbuf =
+  let lexeme = Lexing.lexeme lexbuf in
+  String.sub lexeme (String.length lexeme - 2) 2
+
+let illegal_escape_start lexbuf =
+  let position = Lexing.lexeme_end_p lexbuf in
+  { position with pos_cnum = position.pos_cnum - 2 }
+
+let point_region position =
+  let position = convert_pos position in
+  Source.{ left = position; right = position }
+
+let unclosed_text_position lexbuf =
+  let position = Lexing.lexeme_end_p lexbuf in
+  let lexeme = Lexing.lexeme lexbuf in
+  if String.length lexeme > 0 && lexeme.[String.length lexeme - 1] = '\n' then
+    { position with pos_cnum = position.pos_cnum - 1 }
+  else position
+
+let final_byte_position lexbuf =
+  let position = Lexing.lexeme_end_p lexbuf in
+  { position with pos_cnum = position.pos_cnum - 1 }
 
 (* Texts *)
 
@@ -212,7 +242,7 @@ and token = parse
   | "/" { SLASH }
   | "\\" { BACKSLASH }
   | "%" { HOLE }
-  | "%"(nat as s) { HOLE_NUM (int lexbuf s) }
+  | "%"(nat as lexeme) { HOLE_NUM (parse_hole_index lexbuf lexeme) }
   | "%%" { HOLE_MULTI }
   | "!%" { HOLE_NIL }
   | "=" { EQ }
@@ -246,11 +276,24 @@ and token = parse
   | nat as s { NATLIT (nat lexbuf s) }
   | ("0x" hex) as s { HEXLIT (hex lexbuf s) }
   | text as s { TEXTLIT (text lexbuf s) }
-  | '"'character*('\n'|eof) { error lexbuf "unclosed text literal" }
+  | '"'character*('\n'|eof)
+    {
+      Error.error ~code:Unclosed_text_literal
+        (point_region (unclosed_text_position lexbuf)) "unclosed text literal"
+    }
   | '"'character*['\x00'-'\x09''\x0b'-'\x1f''\x7f']
-    { error lexbuf "illegal control character in text literal" }
+    {
+      Error.error ~code:Illegal_control_in_text_literal
+        (point_region (final_byte_position lexbuf))
+        (Printf.sprintf "control character `%s` is not allowed in a text literal"
+           (control_character lexbuf))
+    }
   | '"'character*'\\'_
-    { error_nest (Lexing.lexeme_end_p lexbuf) lexbuf "illegal escape" }
+    {
+      error_nest ~code:Illegal_escape (illegal_escape_start lexbuf) lexbuf
+        (Printf.sprintf "escape %s is not allowed in a text literal"
+           (Diagnostic.quote (illegal_escape lexbuf)))
+    }
   | upid as s { if is_var s then LOID s else UPID s }
   | loid as s { LOID s }
   | (upid as s) "(" { if is_var s then LOID_LPAREN s else UPID_LPAREN s }
@@ -266,15 +309,30 @@ and token = parse
   | "\n" { Lexing.new_line lexbuf; token lexbuf }
   | "\\\n" { Lexing.new_line lexbuf; token lexbuf }
   | eof { EOF }
-  | printable { error lexbuf "malformed token" }
-  | control { error lexbuf "misplaced control character" }
-  | utf8enc { error lexbuf "misplaced unicode character" }
-  | _ { error lexbuf "malformed UTF-8 encoding" }
+  | printable {
+      let character = Lexing.lexeme lexbuf in
+      error ~code:Unexpected_character lexbuf
+        (Printf.sprintf "unexpected character %s" (Diagnostic.quote character))
+    }
+  | control {
+      error ~code:Misplaced_control_char lexbuf
+        (Printf.sprintf "control character `%s` is not allowed here"
+           (control_character lexbuf))
+    }
+  | utf8enc {
+      error ~code:Misplaced_unicode_char lexbuf
+        (Printf.sprintf "Unicode character `%s` is not allowed here"
+           (Lexing.lexeme lexbuf))
+    }
+  | _ { error ~code:Malformed_utf8 lexbuf "malformed UTF-8 encoding" }
 
 and comment start = parse
   | ";)" { () }
   | "(;" { comment (Lexing.lexeme_start_p lexbuf) lexbuf; comment start lexbuf }
   | "\n" { Lexing.new_line lexbuf; comment start lexbuf }
   | utf8_no_nl { comment start lexbuf }
-  | eof { error_nest start lexbuf "unclosed comment" }
-  | _ { error lexbuf "malformed UTF-8 encoding" }
+  | eof {
+      Error.error ~code:Unclosed_block_comment
+        (point_region (Lexing.lexeme_end_p lexbuf)) "unclosed comment"
+    }
+  | _ { error ~code:Malformed_utf8_in_comment lexbuf "malformed UTF-8 encoding" }

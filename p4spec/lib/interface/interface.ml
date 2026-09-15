@@ -9,6 +9,9 @@ open Util.Source
 (* P4 *)
 
 module P4 = struct
+  let parse_error (at : region) (msg : string) : Diagnostic.t =
+    Diagnostic.error ~source:"p4" at msg
+
   (* Program unparser *)
 
   let unparser = ref (fun (_ : Value.t) -> "")
@@ -23,14 +26,15 @@ module P4 = struct
           let value_program = P4.Parse.parse_file includes_p4 path_p4 in
           Run.Pass value_program
       | _ ->
-          Run.Fail (`Syntax (no_region, "exactly one P4 file must be provided"))
-    with P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+          Run.Fail
+            (parse_error no_region "exactly one P4 file must be provided")
+    with P4.Error.ParseError (at, msg) -> Run.Fail (parse_error at msg)
 
   let parse_string (path_p4 : string) (str : string) : Run.parse_result =
     try
       let value_program = P4.Parse.parse_string path_p4 str in
       Run.Pass value_program
-    with P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
+    with P4.Error.ParseError (at, msg) -> Run.Fail (parse_error at msg)
 
   (* Program unparsing *)
 
@@ -107,16 +111,12 @@ module SpecTec_AL = struct
       Run.parse_result =
     match Spectec.Parse.parse_files Run.AL_mode paths with
     | Ok value_spec -> Run.Pass value_spec
-    | Error e ->
-        let at, msg = Pass.to_region_msg e in
-        Run.Fail (`Syntax (at, msg))
+    | Error diagnostic -> Run.Fail diagnostic
 
   let parse_string (path : string) (str : string) : Run.parse_result =
     match Spectec.Parse.parse_string Run.AL_mode path str with
     | Ok value_spec -> Run.Pass value_spec
-    | Error e ->
-        let at, msg = Pass.to_region_msg e in
-        Run.Fail (`Syntax (at, msg))
+    | Error diagnostic -> Run.Fail diagnostic
 
   (* Program unparsing *)
 
@@ -154,16 +154,12 @@ module SpecTec_SL = struct
       Run.parse_result =
     match Spectec.Parse.parse_files Run.SL_mode paths with
     | Ok value_spec -> Run.Pass value_spec
-    | Error e ->
-        let at, msg = Pass.to_region_msg e in
-        Run.Fail (`Syntax (at, msg))
+    | Error diagnostic -> Run.Fail diagnostic
 
   let parse_string (path : string) (str : string) : Run.parse_result =
     match Spectec.Parse.parse_string Run.SL_mode path str with
     | Ok value_spec -> Run.Pass value_spec
-    | Error e ->
-        let at, msg = Pass.to_region_msg e in
-        Run.Fail (`Syntax (at, msg))
+    | Error diagnostic -> Run.Fail diagnostic
 
   (* Program unparsing *)
 

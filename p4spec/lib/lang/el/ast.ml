@@ -106,8 +106,8 @@ and exp' =
   | BrackE of atom * exp * atom         (* ``[({` exp `})]` *)
   (* Hint expressions *)
   | HoleE of [ `Num of int | `Next | `Rest | `None ]  (* `%N` or `%` or `%%` or `!%` *)
-  | FuseE of exp * exp                                (* exp `#` exp *)
-  | UnparenE of exp                                   (* `##` exp *)
+  | FuseE of exp * region * exp                       (* exp `#` exp *)
+  | UnparenE of region * exp                          (* `##` exp *)
   | LatexE of string                                  (* `latex` `(` `"..."`* `)` *)
 [@@deriving yojson]
 
@@ -160,7 +160,8 @@ and prem' =
 
 (* Hints *)
 
-and hint = { hintid : id; hintexp : exp }
+and hint = hint' phrase
+and hint' = { hintid : id; hintexp : exp }
 
 (* Rules *)
 

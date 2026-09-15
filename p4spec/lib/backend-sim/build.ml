@@ -24,10 +24,11 @@ let gen_p4 (arch : string) : ((module Sim.SIM), Sim.error) result =
                   (Interp_pl.Interp.Make) : Sim.SIM)
   | _ ->
       Error
-        {
-          Sim.at = no_region;
-          msg = Format.asprintf "architecture %s is not supported" arch;
-        }
+        (Diagnostic.error
+           ~code:(Error.render_code Error.Unsupported_architecture)
+           ~source:"sim" no_region
+           (Format.asprintf "architecture %s is not supported"
+              (Diagnostic.quote arch)))
 
 let gen_p4_placeholder () : (module Sim.SIM) =
   (module Make.Make (Interface.P4) (Placeholder.Make) (Interp_al.Interp.Make)
