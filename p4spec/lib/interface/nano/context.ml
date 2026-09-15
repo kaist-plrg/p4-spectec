@@ -3,7 +3,6 @@ module SMap = Map.Make (String)
 type t = bool SMap.t list
 
 let context : t ref = ref [ SMap.empty ]
-
 let reset () = context := [ SMap.empty ]
 
 let declare (id : string) (is_type : bool) : unit =

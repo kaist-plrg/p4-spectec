@@ -12,9 +12,13 @@ open Util.Source
 let collect_noninvertible (at : region) (construct : string)
     (benv : Bind.BEnv.t) : unit =
   if not (Bind.BEnv.is_empty benv) then
-    error at
-      (Format.asprintf "invalid binding position(s) for %s in non-invertible %s"
-         (Bind.BEnv.to_string benv) construct)
+    error ~code:Non_invertible_binding at
+      (Format.asprintf "non-invertible %s contains newly bound %s" construct
+         (Bind.BEnv.describe_binds benv))
+      ~detail:
+        "Each variable in a binding expression must correspond directly to a \
+         tuple element, variant case argument, struct field, or list element. \
+         Operators are not inverted, even when their inverse would be unique."
 
 let rec collect_exp (ctx : Ctx.t) (exp : exp) : Bind.BEnv.t =
   match exp.it with

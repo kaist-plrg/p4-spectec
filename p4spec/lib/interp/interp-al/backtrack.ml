@@ -1,4 +1,4 @@
-open Error
+module Run = Runtime.Dynamic_Runner.Signature
 open Util.Attempt
 open Util.Source
 
@@ -18,6 +18,11 @@ let back_unmatch_silent : 'a backtrack = Unmatch []
 
 let back_unmatch (at : region) (msg : string) : 'a backtrack =
   Unmatch [ Failtrace (at, (fun () -> msg), []) ]
+
+let back_unmatch_of_failure (failure : Run.failure) : 'a backtrack =
+  match failure with
+  | Run.Abort _ -> raise (Run.ExternError failure)
+  | Run.Unmatch failtraces -> Unmatch failtraces
 
 let back_nest (at : region) (msg : unit -> string) (backtrack : 'a backtrack) :
     'a backtrack =
@@ -52,9 +57,3 @@ let ( let* ) (backtrack : 'a backtrack) (f : 'a -> 'b) : 'b =
   | Ok a -> f a
   | Err _ as backtrack -> backtrack
   | Unmatch _ as backtrack -> backtrack
-
-let ( let+ ) (backtrack : 'a backtrack) (f : 'a -> 'b) : 'b =
-  match backtrack with
-  | Ok a -> f a
-  | Err failtraces | Unmatch failtraces ->
-      error no_region (string_of_failtraces_short failtraces)

@@ -8,7 +8,11 @@ let run (module Simulator : SIM) neg relname includes_p4 path_p4 =
     Simulator.Interp.clear ();
     (match Simulator.Interp.eval_program relname includes_p4 path_p4 with
     | Pass _ -> if neg then raise (TestRunNegErr time_start)
-    | Fail (`Syntax (at, msg)) | Fail (`Runtime (at, msg)) ->
+    | Fail (`Syntax diagnostic) ->
+        let at, msg = Diagnostic.region_msg diagnostic in
+        raise (TestRunErr (msg, at, time_start))
+    | Fail (`Runtime failure) ->
+        let at, msg = Diagnostic.region_msg (diagnostic_of_failure failure) in
         raise (TestRunErr (msg, at, time_start)));
     time_start
   with
@@ -28,9 +32,9 @@ let run_test (module Simulator : SIM) neg stat relname includes_p4 path_p4 =
   with
   | TestRunErr (msg, at, time_start) ->
       let duration = stop time_start in
-      let open Util.Error in
       Format.asprintf "Error on run: %s" path_p4 |> print_endline;
-      Format.eprintf "Error on run: %s\n%s\n" path_p4 (string_of_error at msg);
+      Format.eprintf "Error on run: %s\n%s\n" path_p4
+        (Util.Error.string_of_error at msg);
       Format.eprintf ">>> took %.6f seconds\n" duration;
       {
         stat with
@@ -63,9 +67,7 @@ let run_nano_test_driver mode det neg path_spec relname includes_p4 testdirs_p4
   let stat = empty_stat in
   Format.asprintf "Running interpreter test (%s) on %d files\n" relname total
   |> print_endline;
-  let _spec_sim, (module Simulator) =
-    Backend_sim.Build.build_nano ~det ~final:true mode [ path_spec ]
-  in
+  let _spec_sim, (module Simulator) = build_nano_sim ~det mode [ path_spec ] in
   let stat =
     List.fold_left
       (fun stat path_p4 ->
@@ -84,7 +86,7 @@ let cover_run_nano_instr path_spec relname includes_p4 testdirs_p4 =
     testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
   in
   let spec_sim, (module Simulator) =
-    Backend_sim.Build.build_nano ~det:false ~final:true SL_mode [ path_spec ]
+    build_nano_sim ~det:false SL_mode [ path_spec ]
   in
   let spec_sl =
     match spec_sim with SL spec_sl -> spec_sl | _ -> assert false

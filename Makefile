@@ -88,6 +88,7 @@ TEST_ALIASES := \
   sim-ebpf-p4testgen-al sim-ebpf-p4testgen-sl sim-ebpf-p4testgen-pl \
   sim-psa-p4c-al sim-psa-p4c-sl sim-psa-p4c-pl \
   p4parse \
+  run-nano sim-nano \
 	boot
 
 $(foreach a,$(TEST_ALIASES),$(eval $(call dune-alias-test,$(a))))

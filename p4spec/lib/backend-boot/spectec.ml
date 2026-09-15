@@ -50,7 +50,7 @@ module Make_null
       | Run.Empty_mode -> assert false)
       |> function
       | Pass value -> value
-      | Fail (at, msg) -> error at msg
+      | Fail failure -> raise (Run.ExternError failure)
     in
     call_func := call_func_;
     Ok ()
@@ -88,7 +88,7 @@ module Make_null
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern relation: %s" name))
-    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError failure -> Run.Fail failure
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
       (_values_input : Value.t list) : Run.func_result =
@@ -98,7 +98,7 @@ module Make_null
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern function: %s" name))
-    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError failure -> Run.Fail failure
 
   (* State management *)
 
@@ -158,7 +158,7 @@ module Make_parametric
     let value_output =
       match Runner.Interp.eval_func id.it typs values with
       | Pass value_output -> value_output
-      | Fail (at, msg) -> error at msg
+      | Fail failure -> raise (Run.ExternError failure)
     in
     let value_value_output = Interface_SpecTec.boot_value value_output in
     let value_value_output_res =
@@ -181,7 +181,7 @@ module Make_parametric
     let value_output =
       match Runner.Interp.eval_func id.it typs values with
       | Pass value_output -> value_output
-      | Fail (at, msg) -> error at msg
+      | Fail failure -> raise (Run.ExternError failure)
     in
     let value_value_output = Interface_SpecTec.boot_value value_output in
     let value_value_output_res =
@@ -202,7 +202,7 @@ module Make_parametric
     let values_output =
       match Runner.Interp.eval_rel id.it values with
       | Pass values_output -> values_output
-      | Fail (at, msg) -> error at msg
+      | Fail failure -> raise (Run.ExternError failure)
     in
     let value_values_output = Interface_SpecTec.boot_values values_output in
     let value_values_output_res =
@@ -224,7 +224,7 @@ module Make_parametric
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern relation: %s" name))
-    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError failure -> Run.Fail failure
 
   let eval_extern_func (name : string) (_typs : Typ.t list)
       (_values_input : Value.t list) : Run.func_result =
@@ -234,7 +234,7 @@ module Make_parametric
         | _ ->
             error no_region
               (Format.asprintf "unimplemented extern function: %s" name))
-    with Run.ExternError (at, msg) -> Run.Fail (at, msg)
+    with Run.ExternError failure -> Run.Fail failure
 
   (* State management *)
 

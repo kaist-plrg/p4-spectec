@@ -103,6 +103,7 @@ let overlap_exp_group (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
   let exp_template, exps = (List.hd exps, List.tl exps) in
   List.fold_left
     (fun (frees, unifiers, exp_template) exp ->
+      (* Elaboration gives corresponding relation inputs equivalent types. *)
       let+ frees, unifiers, exp_template =
         overlap_exp tdenv menv frees unifiers exp_template exp
       in

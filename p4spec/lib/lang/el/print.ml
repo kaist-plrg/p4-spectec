@@ -153,8 +153,8 @@ and string_of_exp exp =
   | HoleE `Next -> "%"
   | HoleE `Rest -> "%%"
   | HoleE `None -> "!%"
-  | FuseE (exp_l, exp_r) -> string_of_exp exp_l ^ "#" ^ string_of_exp exp_r
-  | UnparenE exp -> "##" ^ string_of_exp exp
+  | FuseE (exp_l, _, exp_r) -> string_of_exp exp_l ^ "#" ^ string_of_exp exp_r
+  | UnparenE (_, exp) -> "##" ^ string_of_exp exp
   | LatexE s -> "latex(" ^ String.escaped s ^ ")"
 
 and string_of_exps sep es = String.concat sep (List.map string_of_exp es)

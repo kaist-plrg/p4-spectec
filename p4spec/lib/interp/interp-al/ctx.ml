@@ -5,16 +5,19 @@ open Al
 module Typdef = Runtime.Type.Typdef
 open Runtime.Dynamic_Al
 open Envs
-open Error
+open Interp_common.Error
 open Backtrack
 open Util.Source
 
-(* Error *)
+(* Backtracing *)
 
-let error_undef (at : region) (kind : string) (id : string) =
-  error at (Format.asprintf "%s `%s` is undefined" kind id)
+let back_undef (at : region) (kind : string) (id : string) =
+  back_err at (Format.asprintf "%s `%s` is undefined" kind id)
 
-let error_dup (at : region) (kind : string) (id : string) =
+let back_dup (at : region) (kind : string) (id : string) =
+  back_err at (Format.asprintf "%s `%s` was already defined" kind id)
+
+let error_dup (at : region) (kind : string) (id : string) : error =
   error at (Format.asprintf "%s `%s` was already defined" kind id)
 
 module Make () = struct
@@ -66,24 +69,24 @@ module Make () = struct
 
   (* Adders for globals *)
 
-  let add_typdef_global (tid : TId.t) (td : Typdef.t) : unit =
+  let add_typdef_global (tid : TId.t) (td : Typdef.t) : (unit, error) result =
     if TDTbl.find_opt tid global.tdtbl |> Option.is_some then
-      error_dup tid.at "type" tid.it;
-    TDTbl.add tid td global.tdtbl
+      Error (error_dup tid.at "type" tid.it)
+    else Ok (TDTbl.add tid td global.tdtbl)
 
-  let add_rel_global (rid : RId.t) (rel : Rel.t) : unit =
+  let add_rel_global (rid : RId.t) (rel : Rel.t) : (unit, error) result =
     if RTbl.find_opt rid global.rtbl |> Option.is_some then
-      error_dup rid.at "relation" rid.it;
-    RTbl.add rid rel global.rtbl
+      Error (error_dup rid.at "relation" rid.it)
+    else Ok (RTbl.add rid rel global.rtbl)
 
-  let add_func_global (fid : FId.t) (func : Func.t) : unit =
+  let add_func_global (fid : FId.t) (func : Func.t) : (unit, error) result =
     if FTbl.find_opt fid global.ftbl |> Option.is_some then
-      error_dup fid.at "function" fid.it;
-    FTbl.add fid func global.ftbl
+      Error (error_dup fid.at "function" fid.it)
+    else Ok (FTbl.add fid func global.ftbl)
 
   (* Global initializer *)
 
-  let load_def (def : def) : unit =
+  let load_def (def : def) : (unit, error) result =
     match def.it with
     | ExternTypD (id, _) ->
         let td = Typdef.Extern in
@@ -91,7 +94,7 @@ module Make () = struct
     | TypD (id, tparams, deftyp, _) ->
         let td = Typdef.Defined (tparams, deftyp) in
         add_typdef_global id td
-    | VarD _ -> ()
+    | VarD _ -> Ok ()
     | ExternRelD (id, nottyp, inputs, _) ->
         let rel = Rel.Extern (nottyp, inputs) in
         add_rel_global id rel
@@ -113,9 +116,17 @@ module Make () = struct
         in
         add_func_global id func
 
-  let init ~(det : bool) (spec : spec) : unit =
+  let rec load_defs (defs : def list) : (unit, error) result =
+    match defs with
+    | [] -> Ok ()
+    | def_h :: defs_t -> (
+        match load_def def_h with
+        | Ok () -> load_defs defs_t
+        | Error _ as error -> error)
+
+  let init ~(det : bool) (spec : spec) : (unit, error) result =
     is_det := det;
-    List.iter load_def spec
+    load_defs spec
 
   (* Constructor *)
 
@@ -131,12 +142,20 @@ module Make () = struct
   let find_value_opt (ctx : t) (var : Var.t) : Value.t option =
     VEnv.find_opt var ctx.local.venv
 
-  let find_value (ctx : t) (var : Var.t) : Value.t =
+  let find_value (ctx : t) (var : Var.t) : Value.t backtrack =
     match find_value_opt ctx var with
-    | Some value -> value
+    | Some value -> Ok value
     | None ->
         let id, _ = var in
-        error_undef id.at "value" (Var.to_string var)
+        back_undef id.at "value" (Var.to_string var)
+
+  let rec find_values (ctx : t) (vars : Var.t list) : Value.t list backtrack =
+    match vars with
+    | [] -> Ok []
+    | var_h :: vars_t ->
+        let* value_h = find_value ctx var_h in
+        let* values_t = find_values ctx vars_t in
+        Ok (value_h :: values_t)
 
   let bound_value (ctx : t) (var : Var.t) : bool =
     find_value_opt ctx var |> Option.is_some
@@ -148,15 +167,17 @@ module Make () = struct
     | Some td -> Some td
     | None -> TDTbl.find_opt tid ctx.global.tdtbl
 
-  let find_typdef (ctx : t) (tid : TId.t) : Typdef.t =
+  let find_typdef (ctx : t) (tid : TId.t) : Typdef.t backtrack =
     match find_typdef_opt ctx tid with
-    | Some td -> td
-    | None -> error_undef tid.at "type" tid.it
+    | Some td -> Ok td
+    | None -> back_undef tid.at "type" tid.it
 
-  let find_defined_typdef (ctx : t) (tid : TId.t) : tparam list * deftyp =
-    match find_typdef ctx tid with
-    | Param | Extern | Defining _ -> error_undef tid.at "defined type" tid.it
-    | Defined (tparams, deftyp) -> (tparams, deftyp)
+  let find_defined_typdef (ctx : t) (tid : TId.t) :
+      (tparam list * deftyp) backtrack =
+    let* td = find_typdef ctx tid in
+    match td with
+    | Param | Extern | Defining _ -> back_undef tid.at "defined type" tid.it
+    | Defined (tparams, deftyp) -> Ok (tparams, deftyp)
 
   let bound_typdef (ctx : t) (tid : TId.t) : bool =
     find_typdef_opt ctx tid |> Option.is_some
@@ -166,19 +187,20 @@ module Make () = struct
   let find_rel_opt (ctx : t) (rid : RId.t) : Rel.t option =
     RTbl.find_opt rid ctx.global.rtbl
 
-  let find_rel (ctx : t) (rid : RId.t) : Rel.t =
+  let find_rel (ctx : t) (rid : RId.t) : Rel.t backtrack =
     match find_rel_opt ctx rid with
-    | Some rel -> rel
-    | None -> error_undef rid.at "relation" rid.it
+    | Some rel -> Ok rel
+    | None -> back_undef rid.at "relation" rid.it
 
   let find_rel_signature_opt (ctx : t) (rid : RId.t) :
       (nottyp * Hints.Input.t) option =
     find_rel_opt ctx rid |> Option.map Rel.get_signature
 
-  let find_rel_signature (ctx : t) (rid : RId.t) : nottyp * Hints.Input.t =
+  let find_rel_signature (ctx : t) (rid : RId.t) :
+      (nottyp * Hints.Input.t) backtrack =
     match find_rel_signature_opt ctx rid with
-    | Some (nottyp, inputs) -> (nottyp, inputs)
-    | None -> error_undef rid.at "relation" rid.it
+    | Some (nottyp, inputs) -> Ok (nottyp, inputs)
+    | None -> back_undef rid.at "relation" rid.it
 
   let bound_rel (ctx : t) (rid : RId.t) : bool =
     find_rel_opt ctx rid |> Option.is_some
@@ -192,21 +214,21 @@ module Make () = struct
         FTbl.find_opt fid ctx.global.ftbl
         |> Option.map (fun func -> (Global, func))
 
-  let find_func (ctx : t) (fid : FId.t) : cursor * Func.t =
+  let find_func (ctx : t) (fid : FId.t) : (cursor * Func.t) backtrack =
     match find_func_opt ctx fid with
-    | Some (cursor, func) -> (cursor, func)
-    | None -> error_undef fid.at "function" fid.it
+    | Some (cursor, func) -> Ok (cursor, func)
+    | None -> back_undef fid.at "function" fid.it
 
   let find_func_signature_opt (ctx : t) (fid : FId.t) :
       (tparam list * typ list * typ) option =
     find_func_opt ctx fid
     |> Option.map (fun (_, func) -> Func.get_signature func)
 
-  let find_func_signature (ctx : t) (fid : FId.t) : tparam list * typ list * typ
-      =
+  let find_func_signature (ctx : t) (fid : FId.t) :
+      (tparam list * typ list * typ) backtrack =
     match find_func_signature_opt ctx fid with
-    | Some (tparams, typs, typ) -> (tparams, typs, typ)
-    | None -> error_undef fid.at "function" fid.it
+    | Some (tparams, typs, typ) -> Ok (tparams, typs, typ)
+    | None -> back_undef fid.at "function" fid.it
 
   let bound_func (ctx : t) (fid : FId.t) : bool =
     find_func_opt ctx fid |> Option.is_some
@@ -221,17 +243,19 @@ module Make () = struct
 
   (* Adders for type definitions *)
 
-  let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t =
-    if bound_typdef ctx tid then error_dup tid.at "type" tid.it;
-    let tdenv = TDEnv.add tid td ctx.local.tdenv in
-    { ctx with local = { ctx.local with tdenv } }
+  let add_typdef (ctx : t) (tid : TId.t) (td : Typdef.t) : t backtrack =
+    if bound_typdef ctx tid then back_dup tid.at "type" tid.it
+    else
+      let tdenv = TDEnv.add tid td ctx.local.tdenv in
+      Ok { ctx with local = { ctx.local with tdenv } }
 
   (* Adders for functions *)
 
-  let add_func (ctx : t) (fid : FId.t) (func : Func.t) : t =
-    if bound_func ctx fid then error_dup fid.at "function" fid.it;
-    let fenv = FEnv.add fid func ctx.local.fenv in
-    { ctx with local = { ctx.local with fenv } }
+  let add_func (ctx : t) (fid : FId.t) (func : Func.t) : t backtrack =
+    if bound_func ctx fid then back_dup fid.at "function" fid.it
+    else
+      let fenv = FEnv.add fid func ctx.local.fenv in
+      Ok { ctx with local = { ctx.local with fenv } }
 
   (* Constructors *)
 
@@ -265,12 +289,11 @@ module Make () = struct
 
   let sub_opt (ctx : t) (vars : var list) : t option backtrack =
     (* First collect the values that are to be iterated over *)
-    let values =
-      List.map
-        (fun (id, _typ, iters) ->
-          find_value ctx (id, iters @ [ Opt ]) |> Value.Get.opt)
-        vars
+    let* values =
+      find_values ctx
+        (List.map (fun (id, _typ, iters) -> (id, iters @ [ Opt ])) vars)
     in
+    let values = List.map Value.Get.opt values in
     (* Iteration is valid when all variables agree on their optionality *)
     if List.for_all Option.is_some values then
       let values = List.map Option.get values in
@@ -287,13 +310,11 @@ module Make () = struct
   let sub_list (ctx : t) (vars : var list) : t list backtrack =
     (* First break the values that are to be iterated over,
        into a batch of values *)
-    let* values_batch =
-      List.map
-        (fun (id, _typ, iters) ->
-          find_value ctx (id, iters @ [ List ]) |> Value.Get.list)
-        vars
-      |> transpose
+    let* values =
+      find_values ctx
+        (List.map (fun (id, _typ, iters) -> (id, iters @ [ List ])) vars)
     in
+    let* values_batch = values |> List.map Value.Get.list |> transpose in
     (* For each batch of values, create a sub-context *)
     let ctxs_sub =
       List.fold_left

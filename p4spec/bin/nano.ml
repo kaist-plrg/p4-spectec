@@ -1,11 +1,34 @@
 open Lang
 open Runtime.Sim.Signature
+open Cli_error
 module Error = P4spectec.Error
 
-let string_of_error = Util.Error.string_of_error
 let ( let* ) = Result.bind
 
-exception CommandError of string
+(* Operations *)
+
+let render_failure (diagnostic : Diagnostic.t) : unit =
+  diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
+
+let install_handlers ~(profile : bool) ~(trace : Inst.Trace.level option)
+    (spec_sim : spec) : unit =
+  let handlers =
+    if profile then
+      let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+      [ (module PH : Inst.Handler.HANDLER) ]
+    else []
+  in
+  let handlers =
+    match trace with
+    | Some level ->
+        let (module TH : Inst.Handler.HANDLER) = Inst.Trace.make ~level () in
+        handlers @ [ (module TH : Inst.Handler.HANDLER) ]
+    | None -> handlers
+  in
+  Inst.Hook.register handlers;
+  Inst.Hook.init_spec spec_sim
+
+(* Commands *)
 
 let elab_command =
   Core.Command.basic ~summary:"parse and elaborate a nano-P4 spec"
@@ -15,9 +38,10 @@ let elab_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match P4spectec.elab paths_spec with
-       | Ok spec_il -> Format.printf "%s\n" (Il.Print.string_of_spec spec_il)
-       | Error e -> Format.printf "%s\n" (Error.to_string e))
+       run_with_diagnostics
+         ~action:(fun () -> P4spectec.elab paths_spec)
+         ~on_success:(fun spec_il ->
+           Format.printf "%s\n" (Il.Print.string_of_spec spec_il)))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a nano-P4 spec"
@@ -27,9 +51,10 @@ let algo_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match P4spectec.algo paths_spec with
-       | Ok spec_al -> Format.printf "%s\n" (Al.Print.string_of_spec spec_al)
-       | Error e -> Format.printf "%s\n" (Error.to_string e))
+       run_with_diagnostics
+         ~action:(fun () -> P4spectec.algo paths_spec)
+         ~on_success:(fun spec_al ->
+           Format.printf "%s\n" (Al.Print.string_of_spec spec_al)))
 
 let check_command =
   Core.Command.basic ~summary:"typecheck a nano-P4 program against the spec"
@@ -63,42 +88,26 @@ let check_command =
          ~if_nothing_chosen:(Default_to SL_mode)
      in
      fun () ->
-       try
-         let cache = not no_cache in
-         let spec_sim, (module Simulator) =
-           Backend_sim.Build.build_nano ~cache ~det ~guard ~final:true SL_mode
-             paths_spec
-         in
-         let handlers =
-           if profile then
-             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
-             [ (module PH : Inst.Handler.HANDLER) ]
-           else []
-         in
-         let handlers =
-           match trace with
-           | Some level ->
-               let (module TH : Inst.Handler.HANDLER) =
-                 Inst.Trace.make ~level ()
-               in
-               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
-           | None -> handlers
-         in
-         Inst.Hook.register handlers;
-         Inst.Hook.init_spec spec_sim;
-         let result =
-           Simulator.Interp.eval_program "Program_ok" includes_p4 path_p4
-         in
-         Inst.Hook.finish ();
-         match result with
-         | Pass _ -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
-       with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | Nano.Error.ParseError (at, msg)
-       | Interp_common.Error.InterpError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg))
+       let cache = not no_cache in
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode SL_mode paths_spec in
+           let* simulator =
+             P4spectec.build_nano_sim ~cache ~det ~guard spec_sim
+           in
+           Ok (spec_sim, simulator))
+         ~on_success:(fun (spec_sim, simulator) ->
+           let (module Simulator : SIM) = simulator in
+           install_handlers ~profile ~trace spec_sim;
+           let result =
+             Simulator.Interp.eval_program "Program_ok" includes_p4 path_p4
+           in
+           Inst.Hook.finish ();
+           match result with
+           | Pass _ -> Format.printf "passed\n"
+           | Fail (`Syntax diagnostic) -> render_failure diagnostic
+           | Fail (`Runtime failure) ->
+               failure |> diagnostic_of_failure |> render_failure))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a nano-P4 program"
@@ -108,15 +117,13 @@ let parse_command =
      and tree = flag "-t" no_arg ~doc:"print as tree"
      and includes_p4 = flag "-i" (listed string) ~doc:"Nano-P4 include paths" in
      fun () ->
-       try
-         let value_program = Nano.Parse.parse_file includes_p4 path_p4 in
-         if tree then Nano.Print.print_tree value_program
-         else Format.printf "%s\n" (Lang.Il.Print.string_of_value value_program)
-       with
-       | Sys_error msg -> Format.printf "File error: %s\n" msg
-       | Nano.Error.ParseError (at, msg) ->
-           Format.printf "Parse error: %s\n" (string_of_error at msg)
-       | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
+       match Interface.NanoP4.parse_program includes_p4 [ path_p4 ] with
+       | Pass value_program ->
+           if tree then Nano.Print.print_tree value_program
+           else Format.printf "%s\n" (Il.Print.string_of_value value_program)
+       | Fail diagnostic ->
+           render_failure diagnostic;
+           exit 1)
 
 let eval_command =
   Core.Command.basic
@@ -152,40 +159,24 @@ let eval_command =
          ~if_nothing_chosen:(Default_to SL_mode)
      in
      fun () ->
-       try
-         let cache = not no_cache in
-         let spec_sim, (module Simulator) =
-           Backend_sim.Build.build_nano ~cache ~det ~guard ~final:true SL_mode
-             paths_spec
-         in
-         let handlers =
-           if profile then
-             let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
-             [ (module PH : Inst.Handler.HANDLER) ]
-           else []
-         in
-         let handlers =
-           match trace with
-           | Some level ->
-               let (module TH : Inst.Handler.HANDLER) =
-                 Inst.Trace.make ~level ()
-               in
-               handlers @ [ (module TH : Inst.Handler.HANDLER) ]
-           | None -> handlers
-         in
-         Inst.Hook.register handlers;
-         Inst.Hook.init_spec spec_sim;
-         let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
-         Inst.Hook.finish ();
-         match result with
-         | Pass -> Format.printf "passed\n"
-         | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-         | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
-       with
-       | CommandError msg -> Format.printf "%s\n" msg
-       | Nano.Error.ParseError (at, msg)
-       | Interp_common.Error.InterpError (at, msg) ->
-           Format.printf "%s\n" (string_of_error at msg))
+       let cache = not no_cache in
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode SL_mode paths_spec in
+           let* simulator =
+             P4spectec.build_nano_sim ~cache ~det ~guard spec_sim
+           in
+           Ok (spec_sim, simulator))
+         ~on_success:(fun (spec_sim, simulator) ->
+           let (module Simulator : SIM) = simulator in
+           install_handlers ~profile ~trace spec_sim;
+           let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
+           Inst.Hook.finish ();
+           match result with
+           | Pass () -> Format.printf "passed\n"
+           | Fail (`Syntax diagnostic) -> render_failure diagnostic
+           | Fail (`Runtime failure) ->
+               failure |> diagnostic_of_failure |> render_failure))
 
 let test_check_command =
   Core.Command.basic
@@ -199,41 +190,48 @@ let test_check_command =
      and neg = flag "-neg" no_arg ~doc:"negative testing (expect failure)"
      and det = flag "-det" no_arg ~doc:"deterministic mode" in
      fun () ->
-       let module Filesys = Util.Filesys in
-       let paths_p4 =
-         testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
-       in
-       let total = List.length paths_p4 in
-       Format.printf "Running %d typecheck tests\n%!" total;
-       let _spec_sim, (module Simulator : SIM) =
-         Backend_sim.Build.build_nano ~det ~final:true SL_mode paths_spec
-       in
-       let fails =
-         List.fold_left
-           (fun fails path_p4 ->
-             let result =
-               try
-                 Simulator.Interp.eval_program "Program_ok" includes_p4 path_p4
-               with _ ->
-                 Fail (`Runtime (Util.Source.no_region, "unexpected exception"))
-             in
-             let passed =
-               match result with Pass _ -> not neg | Fail _ -> neg
-             in
-             (if passed then Format.printf "PASS %s\n%!" path_p4
-              else
-                match result with
-                | Pass _ ->
-                    Format.printf "FAIL %s (expected failure)\n%!" path_p4
-                | Fail (`Syntax (_, msg)) ->
-                    Format.printf "FAIL %s (syntax: %s)\n%!" path_p4 msg
-                | Fail (`Runtime (_, msg)) ->
-                    Format.printf "FAIL %s (runtime: %s)\n%!" path_p4 msg);
-             if passed then fails else fails + 1)
-           0 paths_p4
-       in
-       Format.printf "\n[PASS] %d/%d  [FAIL] %d/%d\n" (total - fails) total
-         fails total)
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode SL_mode paths_spec in
+           let* simulator = P4spectec.build_nano_sim ~det spec_sim in
+           Ok simulator)
+         ~on_success:(fun simulator ->
+           let (module Simulator : SIM) = simulator in
+           let module Filesys = Util.Filesys in
+           let paths_p4 =
+             testdirs_p4
+             |> List.concat_map (Filesys.collect_files ~suffix:".p4")
+           in
+           let total = List.length paths_p4 in
+           Format.printf "Running %d typecheck tests\n%!" total;
+           let fails =
+             List.fold_left
+               (fun fails path_p4 ->
+                 let result =
+                   Simulator.Interp.eval_program "Program_ok" includes_p4
+                     path_p4
+                 in
+                 let passed =
+                   match result with Pass _ -> not neg | Fail _ -> neg
+                 in
+                 (if passed then Format.printf "PASS %s\n%!" path_p4
+                  else
+                    match result with
+                    | Pass _ ->
+                        Format.printf "FAIL %s (expected failure)\n%!" path_p4
+                    | Fail failure ->
+                        Format.printf "FAIL %s\n%!" path_p4;
+                        let diagnostic =
+                          match failure with
+                          | `Syntax diagnostic -> diagnostic
+                          | `Runtime failure -> diagnostic_of_failure failure
+                        in
+                        render_failure diagnostic);
+                 if passed then fails else fails + 1)
+               0 paths_p4
+           in
+           Format.printf "\n[PASS] %d/%d  [FAIL] %d/%d\n" (total - fails) total
+             fails total))
 
 let test_eval_command =
   Core.Command.basic
@@ -247,43 +245,50 @@ let test_eval_command =
        flag "-p4-dir" (listed string) ~doc:"directories of .p4/.stf test pairs"
      and det = flag "-det" no_arg ~doc:"deterministic mode" in
      fun () ->
-       let module Filesys = Util.Filesys in
-       let paths_p4 =
-         testdirs_p4 |> List.concat_map (Filesys.collect_files ~suffix:".p4")
-       in
-       let pairs =
-         paths_p4
-         |> List.filter_map (fun path_p4 ->
-                let path_stf =
-                  String.sub path_p4 0 (String.length path_p4 - 3) ^ ".stf"
-                in
-                if Sys.file_exists path_stf then Some (path_p4, path_stf)
-                else None)
-       in
-       let total = List.length pairs in
-       Format.printf "Running %d evaluation tests\n%!" total;
-       let _spec_sim, (module Simulator : SIM) =
-         Backend_sim.Build.build_nano ~det ~final:true SL_mode paths_spec
-       in
-       let fails =
-         List.fold_left
-           (fun fails (path_p4, path_stf) ->
-             let result =
-               try Simulator.run_stf_test includes_p4 path_p4 path_stf
-               with _ ->
-                 Fail (`Runtime (Util.Source.no_region, "unexpected exception"))
-             in
-             (match result with
-             | Pass -> Format.printf "PASS %s\n%!" path_stf
-             | Fail (`Syntax (_, msg)) ->
-                 Format.printf "FAIL %s (syntax: %s)\n%!" path_stf msg
-             | Fail (`Runtime (_, msg)) ->
-                 Format.printf "FAIL %s (runtime: %s)\n%!" path_stf msg);
-             match result with Pass -> fails | Fail _ -> fails + 1)
-           0 pairs
-       in
-       Format.printf "\n[PASS] %d/%d  [FAIL] %d/%d\n" (total - fails) total
-         fails total)
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* spec_sim = P4spectec.spec_of_mode SL_mode paths_spec in
+           let* simulator = P4spectec.build_nano_sim ~det spec_sim in
+           Ok simulator)
+         ~on_success:(fun simulator ->
+           let (module Simulator : SIM) = simulator in
+           let module Filesys = Util.Filesys in
+           let paths_p4 =
+             testdirs_p4
+             |> List.concat_map (Filesys.collect_files ~suffix:".p4")
+           in
+           let pairs =
+             paths_p4
+             |> List.filter_map (fun path_p4 ->
+                    let path_stf =
+                      String.sub path_p4 0 (String.length path_p4 - 3) ^ ".stf"
+                    in
+                    if Sys.file_exists path_stf then Some (path_p4, path_stf)
+                    else None)
+           in
+           let total = List.length pairs in
+           Format.printf "Running %d evaluation tests\n%!" total;
+           let fails =
+             List.fold_left
+               (fun fails (path_p4, path_stf) ->
+                 let result =
+                   Simulator.run_stf_test includes_p4 path_p4 path_stf
+                 in
+                 (match result with
+                 | Pass () -> Format.printf "PASS %s\n%!" path_stf
+                 | Fail failure ->
+                     Format.printf "FAIL %s\n%!" path_stf;
+                     let diagnostic =
+                       match failure with
+                       | `Syntax diagnostic -> diagnostic
+                       | `Runtime failure -> diagnostic_of_failure failure
+                     in
+                     render_failure diagnostic);
+                 match result with Pass () -> fails | Fail _ -> fails + 1)
+               0 pairs
+           in
+           Format.printf "\n[PASS] %d/%d  [FAIL] %d/%d\n" (total - fails) total
+             fails total))
 
 let splice_command =
   Core.Command.basic ~summary:"splice a skeleton nano-P4 specification document"
@@ -294,25 +299,21 @@ let splice_command =
      and paths_output = flag "-out" (listed string) ~doc:"output files"
      and inplace = flag "-inplace" no_arg ~doc:"splice in place" in
      fun () ->
-       match
-         let* path_pairs =
-           if
-             (not inplace)
-             && List.length paths_input <> List.length paths_output
-           then
-             Error
-               (Error.CommandError "number of input and output files must match")
-           else if inplace then Ok (List.combine paths_input paths_input)
-           else Ok (List.combine paths_input paths_output)
-         in
-         P4spectec.splice paths_spec path_pairs
-       with
-       | Error (Error.SpliceError _ as error) ->
-           let msg = Error.to_string error in
-           Format.eprintf "%s\n" msg;
-           Format.printf "%s\n" msg
-       | Error e -> Format.printf "%s\n" (Error.to_string e)
-       | Ok () -> ())
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* path_pairs =
+             if
+               (not inplace)
+               && List.length paths_input <> List.length paths_output
+             then
+               Error
+                 (Error.error_splice_file_count_mismatch
+                    (List.length paths_input) (List.length paths_output))
+             else if inplace then Ok (List.combine paths_input paths_input)
+             else Ok (List.combine paths_input paths_output)
+           in
+           P4spectec.splice paths_spec path_pairs)
+         ~on_success:(fun () -> ()))
 
 let command =
   Core.Command.group

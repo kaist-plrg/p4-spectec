@@ -24,6 +24,9 @@ let positions_to_region position_left position_right =
 let at (position_left, position_right) = positions_to_region position_left position_right
 let (@@@) it pos = it $ at pos
 
+let error_hint_on_plain_type (hint : El.hint) =
+  error ~code:Hint_on_plain_type ~detail:"A plain type definition aliases an existing type, as in `syntax x = nat`. It inherits the aliased type's hints and cannot declare its own." hint.at "hints are not allowed on a plain type definition"
+
 (* Identifiers *)
 
 module Ids = Set.Make (String)
@@ -225,7 +228,9 @@ nottyp :
     {
       match $1 with
       | NotationT nottyp -> nottyp
-      | _ -> error (at $sloc) "expected notation type"
+      | PlainT plaintyp ->
+          error ~code:Notation_type_expected ~detail:"A notation type includes literal tokens like `|-` or `:` that rules pattern-match against. A bare type like `nat` names a set of values without any tokens, so it cannot serve as a relation signature." (at $sloc)
+            (Format.asprintf "relation signature must be a notation type, but got plain type %s" (Diagnostic.quote (El.Print.string_of_plaintyp plaintyp)))
     }
 
 typ_prim : typ_prim_ { $1 }
@@ -315,22 +320,24 @@ deftyp_ :
   | LBRACE comma_list(fieldtyp) RBRACE
     { 
       match $2 with
-      | [] -> error (at $sloc) "empty struct type"
+      | [] -> error ~code:Struct_no_fields (at $sloc) "empty struct type"
       | _ -> StructTD $2
     }
   | bar bar_list(casetyp)
     {
       match $2 with
-      | [] -> error (at $sloc) "empty variant type"
+      | [] -> error ~code:Variant_no_cases (at $sloc) "empty variant type"
       | [ (PlainT plaintyp, hints) ] ->
-          if hints <> [] then
-            error (at $sloc) "hints not allowed in plain type definition";
+          (match hints with
+          | hint :: _ -> error_hint_on_plain_type hint
+          | [] -> ());
           PlainTD plaintyp
       | _ ->
           List.iter
             (fun (typ, hints) ->
-              match typ with
-              | PlainT _ when hints <> [] -> error (at $sloc) "hints not allowed in plain type definition"
+              match typ, hints with
+              | PlainT _, hint :: _ ->
+                  error_hint_on_plain_type hint
               | _ -> ())
             $2;
           VariantTD $2
@@ -338,16 +345,20 @@ deftyp_ :
   | bar_list(casetyp)
     {
       match $1 with
-      | [] -> error (at $sloc) "empty type"
+      | [] ->
+          error ~code:Syntax_empty_body (at $sloc)
+            "syntax definition has no body"
       | [ (PlainT plaintyp, hints) ] ->
-          if hints <> [] then
-            error (at $sloc) "hints not allowed in plain type definition";
+          (match hints with
+          | hint :: _ -> error_hint_on_plain_type hint
+          | [] -> ());
           PlainTD plaintyp
       | _ ->
           List.iter
             (fun (typ, hints) ->
-              match typ with
-              | PlainT _ when hints <> [] -> error (at $sloc) "hints not allowed in plain type definition"
+              match typ, hints with
+              | PlainT _, hint :: _ ->
+                  error_hint_on_plain_type hint
               | _ -> ())
             $1;
           VariantTD $1
@@ -508,7 +519,7 @@ exp_prim_ :
   | TICK_LBRACE exp TICK_RBRACE
     { BrackE (Atom.LBrace @@@ $loc($1), $2, Atom.RBrace @@@ $loc($3)) }
   | DOLLAR LPAREN arith RPAREN { $3.it }
-  | HASH2 exp_prim { UnparenE $2 }
+  | HASH2 exp_prim { UnparenE (at $loc($1), $2) }
 
 exp_post : exp_post_ { $1 @@@ $sloc }
 exp_post_ :
@@ -547,7 +558,7 @@ exp_seq_ :
       in
       SeqE (exps @ [ $2 ])
     }
-  | exp_seq HASH exp_atom { FuseE ($1, $3) }
+  | exp_seq HASH exp_atom { FuseE ($1, at $loc($2), $3) }
 
 exp_un : exp_un_ { $1 @@@ $sloc }
 exp_un_ :
@@ -660,9 +671,10 @@ tablerow :
 
 hint :
   | HINT_LPAREN hintid exp RPAREN
-    { { hintid = $2 @@@ $loc($2); hintexp = $3 } }
+    { ({ hintid = $2 @@@ $loc($2); hintexp = $3 } @@@ $loc : hint) }
   | HINT_LPAREN hintid RPAREN
-    { { hintid = $2 @@@ $loc($2); hintexp = SeqE [] @@@ $loc($2) } }
+    { let empty_at = ($startpos($3), $startpos($3)) in
+      ({ hintid = $2 @@@ $loc($2); hintexp = SeqE [] @@@ empty_at } @@@ $loc : hint) }
 
 (* Rules *)
 
@@ -691,7 +703,7 @@ def_ :
   | SYNTAX comma_list(synid)
     {
       match $2 with
-      | [] -> error (at $sloc) "empty syntax declaration"
+      | [] -> error ~code:Syntax_no_ids (at $sloc) "empty syntax declaration"
       | _ -> SynD $2
     }
   | SYNTAX varid_bind hint* EQ deftyp

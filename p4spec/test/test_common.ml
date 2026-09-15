@@ -15,6 +15,15 @@ let build_sim ?cache ?det ?guard ?(arch : string option) mode paths_spec =
   | Ok (spec_sim, simulator) -> (spec_sim, simulator)
   | Error e -> failwith (Error.to_string e)
 
+let build_nano_sim ?cache ?det ?guard mode paths_spec =
+  match
+    let* spec_sim = P4spectec.spec_of_mode mode paths_spec in
+    let* simulator = P4spectec.build_nano_sim ?cache ?det ?guard spec_sim in
+    Ok (spec_sim, simulator)
+  with
+  | Ok (spec_sim, simulator) -> (spec_sim, simulator)
+  | Error e -> failwith (Error.to_string e)
+
 (* Statistics *)
 
 type stat = {
@@ -238,7 +247,7 @@ let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
         in
         let wellformed, welltyped =
           match program_result with
-          | Pass -> (true, true)
+          | Pass () -> (true, true)
           | Fail (`Syntax _) -> (true, false)
           | Fail (`Runtime _) -> (false, false)
         in

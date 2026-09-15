@@ -13,7 +13,6 @@ open Envs
 module Run = Runtime.Dynamic_Runner.Signature
 module Dep = Runtime.Testgen_neg.Dep
 module Hook = Inst.Hook
-open Error
 open Backtrack
 open Nondet
 module F = Format
@@ -52,23 +51,23 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   let check_guard = ref true
 
   let check_rel_inputs (ctx : Ctx.t) (id_rel : id) (values_input : value list) :
-      unit =
-    if not !check_guard then ()
+      unit backtrack =
+    if not !check_guard then Ok ()
     else
-      let nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
+      let* nottyp, inputs = Ctx.find_rel_signature ctx id_rel in
       let typs = Mixfix.args nottyp.it in
       let typs = List.map (fun i -> List.nth typs i) inputs in
-      check
+      check_back_err
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
-           (Ctx.find_func_signature ctx)
+           (Ctx.find_func_signature_opt ctx)
            typs values_input)
         id_rel.at
         (F.sprintf "relation input of %s does not match the expected type"
            id_rel.it)
 
   let check_rel_outputs (ctx : Ctx.t) (id_rel : id) (nottyp : nottyp)
-      (inputs : Hints.Input.t) (values_output : value list) : unit =
-    if not !check_guard then ()
+      (inputs : Hints.Input.t) (values_output : value list) : unit backtrack =
+    if not !check_guard then Ok ()
     else
       let typs = Mixfix.args nottyp.it in
       let typs =
@@ -77,49 +76,53 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                if List.mem idx inputs then None else Some typ)
         |> List.filter_map Fun.id
       in
-      check
+      check_back_err
         (Value.Match.subs (Ctx.find_typdef_opt ctx)
-           (Ctx.find_func_signature ctx)
+           (Ctx.find_func_signature_opt ctx)
            typs values_output)
         id_rel.at
         (F.sprintf "relation output of %s does not match the expected type"
            id_rel.it)
 
   let check_func_inputs (ctx : Ctx.t) (id_func : id) (targs : targ list)
-      (values_input : value list) : unit =
-    if not !check_guard then ()
+      (values_input : value list) : unit backtrack =
+    if not !check_guard then Ok ()
     else
-      let tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
+      let* tparams, typs_params, _ = Ctx.find_func_signature ctx id_func in
       let ctx_local = Ctx.localize ctx in
-      check
-        (List.length targs = List.length tparams)
-        id_func.at
-        (F.sprintf "arity mismatch in type arguments of %s" id_func.it);
-      let ctx_local =
+      let* () =
+        check_back_err
+          (List.length targs = List.length tparams)
+          id_func.at
+          (F.sprintf "arity mismatch in type arguments of %s" id_func.it)
+      in
+      let* ctx_local =
         List.fold_left2
           (fun ctx_local tparam targ ->
+            let* ctx_local = ctx_local in
             let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
             Ctx.add_typdef ctx_local tparam td)
-          ctx_local tparams targs
+          (Ok ctx_local) tparams targs
       in
-      check
+      check_back_err
         (Value.Match.subs
            (Ctx.find_typdef_opt ctx_local)
-           (Ctx.find_func_signature ctx_local)
+           (Ctx.find_func_signature_opt ctx_local)
            typs_params values_input)
         id_func.at
         (F.sprintf "function argument of %s does not match the parameter type"
            id_func.it)
 
   let check_func_output (ctx : Ctx.t) (id_func : id) (tparams : tparam list)
-      (typ_output : typ) (targs : targ list) (value_output : value) : unit =
-    if not !check_guard then ()
+      (typ_output : typ) (targs : targ list) (value_output : value) :
+      unit backtrack =
+    if not !check_guard then Ok ()
     else
       let theta = TIdMap.of_lists tparams targs in
       let typ_output = Type.Subst.subst_typ theta typ_output in
-      check
+      check_back_err
         (Value.Match.sub sub_cache (Ctx.find_typdef_opt ctx)
-           (Ctx.find_func_signature ctx)
+           (Ctx.find_func_signature_opt ctx)
            typ_output value_output)
         id_func.at
         (F.sprintf
@@ -148,7 +151,8 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Assigning a value to an expression *)
 
-  let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
+  let rec assign_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t backtrack
+      =
     let typ_value = value.note.typ $ exp.at in
     match (exp.it, value.it) with
     | VarE id, _ -> assign_var_exp ctx id value
@@ -163,98 +167,127 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     | IterE (exp_inner, iterexp), _ ->
         assign_iter_exp (exp.note $ exp.at) ctx exp_inner iterexp value
     | _ ->
-        error exp.at
+        back_err exp.at
           (F.asprintf "match failed %s <- %s"
              (Il.Print.string_of_exp exp)
              (Il.Print.string_of_value ~short:true value))
 
-  and assign_exps (ctx : Ctx.t) (exps : exp list) (values : value list) : Ctx.t
-      =
-    check
-      (List.length exps = List.length values)
-      (over_region (List.map at exps))
-      (F.asprintf
-         "mismatch in number of expressions and values while assigning, \
-          expected %d value(s) but got %d"
-         (List.length exps) (List.length values));
-    List.fold_left2 assign_exp ctx exps values
+  and assign_exps (ctx : Ctx.t) (exps : exp list) (values : value list) :
+      Ctx.t backtrack =
+    let* () =
+      check_back_err
+        (List.length exps = List.length values)
+        (over_region (List.map at exps))
+        (F.asprintf
+           "mismatch in number of expressions and values while assigning, \
+            expected %d value(s) but got %d"
+           (List.length exps) (List.length values))
+    in
+    List.fold_left2
+      (fun ctx exp value ->
+        let* ctx = ctx in
+        assign_exp ctx exp value)
+      (Ok ctx) exps values
 
-  and assign_var_exp (ctx : Ctx.t) (id : id) (value : value) : Ctx.t =
-    Ctx.add_value ctx (id, []) value
+  and assign_var_exp (ctx : Ctx.t) (id : id) (value : value) : Ctx.t backtrack =
+    Ok (Ctx.add_value ctx (id, []) value)
 
   and assign_tuple_exp (ctx : Ctx.t) (exps : exp list) (values : value list) :
-      Ctx.t =
+      Ctx.t backtrack =
     assign_exps ctx exps values
 
   and assign_case_exp (ctx : Ctx.t) (notexp : notexp) (valuecase : valuecase) :
-      Ctx.t =
+      Ctx.t backtrack =
     assign_exps ctx (Mixfix.args notexp) (Mixfix.args valuecase)
 
   and assign_str_exp (ctx : Ctx.t) (expfields : (atom * exp) list)
-      (valuefields : (atom * value) list) : Ctx.t =
+      (valuefields : (atom * value) list) : Ctx.t backtrack =
     let exps = List.map snd expfields in
     let values = List.map snd valuefields in
     assign_exps ctx exps values
 
   and assign_opt_exp (ctx : Ctx.t) (exp_opt : exp option)
-      (value_opt : value option) : Ctx.t =
+      (value_opt : value option) : Ctx.t backtrack =
     match (exp_opt, value_opt) with
     | Some exp, Some value -> assign_exp ctx exp value
-    | None, None -> ctx
+    | None, None -> Ok ctx
     | _ -> assert false
 
   and assign_list_exp (ctx : Ctx.t) (exps : exp list) (values : value list) :
-      Ctx.t =
+      Ctx.t backtrack =
     assign_exps ctx exps values
 
   and assign_cons_exp (typ_value : typ) (ctx : Ctx.t) (exp_h : exp)
-      (exp_t : exp) (values : value list) : Ctx.t =
+      (exp_t : exp) (values : value list) : Ctx.t backtrack =
     let value_h = List.hd values in
     let value_t = Value.Make.list typ_value (List.tl values) in
-    let ctx = assign_exp ctx exp_h value_h in
+    let* ctx = assign_exp ctx exp_h value_h in
     assign_exp ctx exp_t value_t
 
   and assign_iter_exp_opt (ctx : Ctx.t) (exp : exp) (vars : var list)
-      (value : value) : Ctx.t =
+      (value : value) : Ctx.t backtrack =
     match Value.Get.opt value with
     | Some inner_value ->
-        let ctx = assign_exp ctx exp inner_value in
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
-            let inner_value = Ctx.find_value ctx (id, iters) in
-            let value_sub = Value.Make.opt typ (Some inner_value) in
-            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
-          ctx vars
+        let* ctx = assign_exp ctx exp inner_value in
+        let* inner_values =
+          Ctx.find_values ctx
+            (List.map (fun (id, _, iters) -> (id, iters)) vars)
+        in
+        let ctx =
+          List.fold_left2
+            (fun ctx (id, typ, iters) inner_value ->
+              let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
+              let value_sub = Value.Make.opt typ (Some inner_value) in
+              Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
+            ctx vars inner_values
+        in
+        Ok ctx
     | None ->
-        List.fold_left
-          (fun ctx (id, typ, iters) ->
-            let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
-            let value_sub = Value.Make.opt typ None in
-            Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
-          ctx vars
+        let ctx =
+          List.fold_left
+            (fun ctx (id, typ, iters) ->
+              let typ = Typ.Make.iterate typ (iters @ [ Opt ]) in
+              let value_sub = Value.Make.opt typ None in
+              Ctx.add_value ctx (id, iters @ [ Opt ]) value_sub)
+            ctx vars
+        in
+        Ok ctx
 
   and assign_iter_exp_list (ctx : Ctx.t) (exp : exp) (vars : var list)
-      (value : value) : Ctx.t =
+      (value : value) : Ctx.t backtrack =
     let values = Value.Get.list value in
     let ctx_sub = { ctx with local = { ctx.local with venv = VEnv.empty } } in
-    let ctxs = List.map (assign_exp ctx_sub exp) values in
+    let* ctxs =
+      List.fold_left
+        (fun ctxs value ->
+          let* ctxs = ctxs in
+          let* ctx = assign_exp ctx_sub exp value in
+          Ok (ctxs @ [ ctx ]))
+        (Ok []) values
+    in
     List.fold_left
       (fun ctx (id, typ, iters) ->
+        let* ctx = ctx in
         let typ = Typ.Make.iterate typ (iters @ [ List ]) in
-        let values =
-          List.map (fun ctx -> Ctx.find_value ctx (id, iters)) ctxs
+        let* values =
+          List.fold_left
+            (fun values ctx ->
+              let* values = values in
+              let* value = Ctx.find_value ctx (id, iters) in
+              Ok (values @ [ value ]))
+            (Ok []) ctxs
         in
         let value_sub = Value.Make.list typ values in
-        Ctx.add_value ctx (id, iters @ [ List ]) value_sub)
-      ctx vars
+        Ok (Ctx.add_value ctx (id, iters @ [ List ]) value_sub))
+      (Ok ctx) vars
 
   and assign_iter_exp (typ_exp : typ) (ctx : Ctx.t) (exp : exp)
-      (iterexp : iterexp) (value : value) : Ctx.t =
+      (iterexp : iterexp) (value : value) : Ctx.t backtrack =
     match
       is_iter_var_exp (IterE (exp, iterexp) $$ (typ_exp.at, typ_exp.it))
     with
-    | Some (id_var, iters_var) -> Ctx.add_value ctx (id_var, iters_var) value
+    | Some (id_var, iters_var) ->
+        Ok (Ctx.add_value ctx (id_var, iters_var) value)
     | None -> (
         let iter, vars = iterexp in
         match iter with
@@ -264,33 +297,40 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Assigning a value to an argument *)
 
   and assign_arg (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (arg : arg)
-      (value : value) : Ctx.t =
+      (value : value) : Ctx.t backtrack =
     match arg.it with
     | ExpA exp -> assign_arg_exp ctx_callee exp value
     | DefA id -> assign_arg_def ctx_caller ctx_callee id value
 
   and assign_args (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (args : arg list)
-      (values : value list) : Ctx.t =
-    check
-      (List.length args = List.length values)
-      (over_region (List.map at args))
-      (F.asprintf
-         "mismatch in number of arguments and values while assigning, expected \
-          %d value(s) but got %d"
-         (List.length args) (List.length values));
-    List.fold_left2 (assign_arg ctx_caller) ctx_callee args values
+      (values : value list) : Ctx.t backtrack =
+    let* () =
+      check_back_err
+        (List.length args = List.length values)
+        (over_region (List.map at args))
+        (F.asprintf
+           "mismatch in number of arguments and values while assigning, \
+            expected %d value(s) but got %d"
+           (List.length args) (List.length values))
+    in
+    List.fold_left2
+      (fun ctx_callee arg value ->
+        let* ctx_callee = ctx_callee in
+        assign_arg ctx_caller ctx_callee arg value)
+      (Ok ctx_callee) args values
 
-  and assign_arg_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t =
+  and assign_arg_exp (ctx : Ctx.t) (exp : exp) (value : value) : Ctx.t backtrack
+      =
     assign_exp ctx exp value
 
   and assign_arg_def (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (id : id)
-      (value : value) : Ctx.t =
+      (value : value) : Ctx.t backtrack =
     match value.it with
     | FuncV id_f ->
-        let _, func = Ctx.find_func ctx_caller id_f in
+        let* _, func = Ctx.find_func ctx_caller id_f in
         Ctx.add_func ctx_callee id func
     | _ ->
-        error id.at
+        back_err id.at
           (F.asprintf "cannot assign a value %s to a definition %s"
              (Il.Print.string_of_value ~short:true value)
              id.it)
@@ -371,8 +411,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   (* Variable expression evaluation *)
 
   and eval_var_exp (_typ_note : typ) (ctx : Ctx.t) (id : id) : value backtrack =
-    let value_res = Ctx.find_value ctx (id, []) in
-    Ok value_res
+    Ctx.find_value ctx (id, [])
 
   (* Unary expression evaluation *)
 
@@ -450,101 +489,117 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
 
   (* Upcast expression evaluation *)
 
-  and upcast (ctx : Ctx.t) (typ : typ) (value : value) : value =
+  and upcast (ctx : Ctx.t) (typ : typ) (value : value) : value backtrack =
     match typ.it with
     | NumT `IntT -> (
         match value.it with
-        | NumV (`Nat n) -> Value.Make.int n
-        | NumV (`Int _) -> value
+        | NumV (`Nat n) -> Ok (Value.Make.int n)
+        | NumV (`Int _) -> Ok value
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
+        let* tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = TIdMap.of_lists tparams targs in
         match deftyp.it with
         | PlainT typ ->
             let typ = Type.Subst.subst_typ theta typ in
             upcast ctx typ value
-        | _ -> value)
+        | _ -> Ok value)
     | TupleT typs -> (
         match value.it with
         | TupleV values ->
-            let values =
+            let* values =
               List.fold_left2
                 (fun values typ value ->
-                  let value = upcast ctx typ value in
-                  values @ [ value ])
-                [] typs values
+                  let* values = values in
+                  let* value = upcast ctx typ value in
+                  Ok (values @ [ value ]))
+                (Ok []) typs values
             in
-            Value.Make.tuple typ values
+            Ok (Value.Make.tuple typ values)
         | _ -> assert false)
     | IterT (typ, Opt) -> (
         match value.it with
-        | OptV value_opt ->
-            let value_opt = Option.map (upcast ctx typ) value_opt in
-            Value.Make.opt typ value_opt
+        | OptV None -> Ok (Value.Make.opt typ None)
+        | OptV (Some value) ->
+            let* value = upcast ctx typ value in
+            Ok (Value.Make.opt typ (Some value))
         | _ -> assert false)
     | IterT (typ, List) -> (
         match value.it with
         | ListV values ->
-            let values = List.map (upcast ctx typ) values in
-            Value.Make.list typ values
+            let* values =
+              List.fold_left
+                (fun values value ->
+                  let* values = values in
+                  let* value = upcast ctx typ value in
+                  Ok (values @ [ value ]))
+                (Ok []) values
+            in
+            Ok (Value.Make.list typ values)
         | _ -> assert false)
-    | _ -> value
+    | _ -> Ok value
 
   and eval_upcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp) :
       value backtrack =
     let* value = eval_exp ctx exp in
-    let value_res = upcast ctx typ value in
-    Ok value_res
+    upcast ctx typ value
 
   (* Downcast expression evaluation *)
 
-  and downcast (ctx : Ctx.t) (typ : typ) (value : value) : value =
+  and downcast (ctx : Ctx.t) (typ : typ) (value : value) : value backtrack =
     match typ.it with
     | NumT `NatT -> (
         match value.it with
-        | NumV (`Nat _) -> value
-        | NumV (`Int i) when Bigint.(i >= zero) -> Value.Make.nat i
+        | NumV (`Nat _) -> Ok value
+        | NumV (`Int i) when Bigint.(i >= zero) -> Ok (Value.Make.nat i)
         | _ -> assert false)
     | VarT (tid, targs) -> (
-        let tparams, deftyp = Ctx.find_defined_typdef ctx tid in
+        let* tparams, deftyp = Ctx.find_defined_typdef ctx tid in
         let theta = TIdMap.of_lists tparams targs in
         match deftyp.it with
         | PlainT typ ->
             let typ = Type.Subst.subst_typ theta typ in
             downcast ctx typ value
-        | _ -> value)
+        | _ -> Ok value)
     | TupleT typs -> (
         match value.it with
         | TupleV values ->
-            let values =
+            let* values =
               List.fold_left2
                 (fun values typ value ->
-                  let value = downcast ctx typ value in
-                  values @ [ value ])
-                [] typs values
+                  let* values = values in
+                  let* value = downcast ctx typ value in
+                  Ok (values @ [ value ]))
+                (Ok []) typs values
             in
-            Value.Make.tuple typ values
+            Ok (Value.Make.tuple typ values)
         | _ -> assert false)
     | IterT (typ, Opt) -> (
         match value.it with
-        | OptV value_opt ->
-            let value_opt = Option.map (downcast ctx typ) value_opt in
-            Value.Make.opt typ value_opt
+        | OptV None -> Ok (Value.Make.opt typ None)
+        | OptV (Some value) ->
+            let* value = downcast ctx typ value in
+            Ok (Value.Make.opt typ (Some value))
         | _ -> assert false)
     | IterT (typ, List) -> (
         match value.it with
         | ListV values ->
-            let values = List.map (downcast ctx typ) values in
-            Value.Make.list typ values
+            let* values =
+              List.fold_left
+                (fun values value ->
+                  let* values = values in
+                  let* value = downcast ctx typ value in
+                  Ok (values @ [ value ]))
+                (Ok []) values
+            in
+            Ok (Value.Make.list typ values)
         | _ -> assert false)
-    | _ -> value
+    | _ -> Ok value
 
   and eval_downcast_exp (_typ_note : typ) (ctx : Ctx.t) (typ : typ) (exp : exp)
       : value backtrack =
     let* value = eval_exp ctx exp in
-    let value_res = downcast ctx typ value in
-    Ok value_res
+    downcast ctx typ value
 
   (* Subtype check expression evaluation *)
 
@@ -553,7 +608,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* value = eval_exp ctx exp in
     let sub =
       Value.Match.check sub_cache (Ctx.find_typdef_opt ctx)
-        (Ctx.find_func_signature ctx)
+        (Ctx.find_func_signature_opt ctx)
         subcheck value
     in
     let value_res = Value.Make.bool sub in
@@ -645,17 +700,14 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       value backtrack =
     let* value_l = eval_exp ctx exp_l in
     let* value_r = eval_exp ctx exp_r in
-    let value_res =
-      match (value_l.it, value_r.it) with
-      | TextV s_l, TextV s_r -> Value.Make.text (s_l ^ s_r)
-      | ListV values_l, ListV values_r ->
-          Value.Make.list typ_note (values_l @ values_r)
-      | _ ->
-          error
-            (over_region [ exp_l.at; exp_r.at ])
-            "concatenation expects either two texts or two lists"
-    in
-    Ok value_res
+    match (value_l.it, value_r.it) with
+    | TextV s_l, TextV s_r -> Ok (Value.Make.text (s_l ^ s_r))
+    | ListV values_l, ListV values_r ->
+        Ok (Value.Make.list typ_note (values_l @ values_r))
+    | _ ->
+        back_err
+          (over_region [ exp_l.at; exp_r.at ])
+          "concatenation expects either two texts or two lists"
 
   (* Membership expression evaluation *)
 
@@ -673,12 +725,12 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and eval_len_exp (_typ_note : typ) (ctx : Ctx.t) (exp : exp) : value backtrack
       =
     let* value = eval_exp ctx exp in
-    let len =
+    let* len =
       match value.it with
-      | TextV s -> s |> String.length |> Bigint.of_int
-      | ListV values -> values |> List.length |> Bigint.of_int
+      | TextV s -> Ok (s |> String.length |> Bigint.of_int)
+      | ListV values -> Ok (values |> List.length |> Bigint.of_int)
       | _ ->
-          error exp.at
+          back_err exp.at
             (F.asprintf
                "length operation expects either a text or a list, but got %s"
                (Il.Print.string_of_value ~short:true value))
@@ -706,25 +758,21 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* value_b = eval_exp ctx exp_b in
     let* value_i = eval_exp ctx exp_i in
     let idx = value_i |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
-    let value_res =
-      match value_b.it with
-      | TextV s when idx < 0 || idx >= String.length s ->
-          error exp_i.at
-            (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
-      | TextV s ->
-          let s = String.get s idx |> String.make 1 in
-          Value.Make.text s
-      | ListV values when idx < 0 || idx >= List.length values ->
-          error exp_i.at
-            (F.asprintf "index %d out of bounds [0, %d)" idx
-               (List.length values))
-      | ListV values -> List.nth values idx
-      | _ ->
-          error exp_b.at
-            (F.asprintf "indexing expects either a text or a list, but got %s"
-               (Il.Print.string_of_value ~short:true value_b))
-    in
-    Ok value_res
+    match value_b.it with
+    | TextV s when idx < 0 || idx >= String.length s ->
+        back_err exp_i.at
+          (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
+    | TextV s ->
+        let s = String.get s idx |> String.make 1 in
+        Ok (Value.Make.text s)
+    | ListV values when idx < 0 || idx >= List.length values ->
+        back_err exp_i.at
+          (F.asprintf "index %d out of bounds [0, %d)" idx (List.length values))
+    | ListV values -> Ok (List.nth values idx)
+    | _ ->
+        back_err exp_b.at
+          (F.asprintf "indexing expects either a text or a list, but got %s"
+             (Il.Print.string_of_value ~short:true value_b))
 
   (* Slice expression evaluation *)
 
@@ -736,34 +784,31 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* value_n = eval_exp ctx exp_n in
     let idx_n = value_n |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
     let idx_h = idx_l + idx_n in
-    let value_res =
-      match value_b.it with
-      | TextV s when idx_l < 0 || idx_h > String.length s ->
-          error exp_i.at
-            (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
-               (String.length s))
-      | TextV s ->
-          let s_slice = String.sub s idx_l (idx_h - idx_l) in
-          Value.Make.text s_slice
-      | ListV values when idx_l < 0 || idx_h > List.length values ->
-          error exp_n.at
-            (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
-               (List.length values))
-      | ListV values ->
-          let values_slice =
-            List.mapi
-              (fun idx value ->
-                if idx_l <= idx && idx < idx_h then Some value else None)
-              values
-            |> List.filter_map Fun.id
-          in
-          Value.Make.list typ_note values_slice
-      | _ ->
-          error exp_b.at
-            (F.asprintf "slicing expects either a text or a list, but got %s"
-               (Il.Print.string_of_value ~short:true value_b))
-    in
-    Ok value_res
+    match value_b.it with
+    | TextV s when idx_l < 0 || idx_h > String.length s ->
+        back_err exp_i.at
+          (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+             (String.length s))
+    | TextV s ->
+        let s_slice = String.sub s idx_l (idx_h - idx_l) in
+        Ok (Value.Make.text s_slice)
+    | ListV values when idx_l < 0 || idx_h > List.length values ->
+        back_err exp_n.at
+          (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+             (List.length values))
+    | ListV values ->
+        let values_slice =
+          List.mapi
+            (fun idx value ->
+              if idx_l <= idx && idx < idx_h then Some value else None)
+            values
+          |> List.filter_map Fun.id
+        in
+        Ok (Value.Make.list typ_note values_slice)
+    | _ ->
+        back_err exp_b.at
+          (F.asprintf "slicing expects either a text or a list, but got %s"
+             (Il.Print.string_of_value ~short:true value_b))
 
   (* Update expression evaluation *)
 
@@ -771,32 +816,27 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       value backtrack =
     match path.it with
     | RootP -> Ok value_b
-    | IdxP (path, exp_i) ->
+    | IdxP (path, exp_i) -> (
         let* value = eval_access_path ctx value_b path in
         let* value_i = eval_exp ctx exp_i in
         let idx = value_i |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn in
-        let value_res =
-          match value.it with
-          | TextV s when idx < 0 || idx >= String.length s ->
-              error exp_i.at
-                (F.asprintf "index %d out of bounds [0, %d)" idx
-                   (String.length s))
-          | TextV s ->
-              let s = String.get s idx |> String.make 1 in
-              Value.Make.text s
-          | ListV values when idx < 0 || idx >= List.length values ->
-              error exp_i.at
-                (F.asprintf "index %d out of bounds [0, %d)" idx
-                   (List.length values))
-          | ListV values -> List.nth values idx
-          | _ ->
-              error path.at
-                (F.asprintf
-                   "indexing expects either a text or a list, but got %s"
-                   (Il.Print.string_of_value ~short:true value))
-        in
-        Ok value_res
-    | SliceP (path, exp_i, exp_n) ->
+        match value.it with
+        | TextV s when idx < 0 || idx >= String.length s ->
+            back_err exp_i.at
+              (F.asprintf "index %d out of bounds [0, %d)" idx (String.length s))
+        | TextV s ->
+            let s = String.get s idx |> String.make 1 in
+            Ok (Value.Make.text s)
+        | ListV values when idx < 0 || idx >= List.length values ->
+            back_err exp_i.at
+              (F.asprintf "index %d out of bounds [0, %d)" idx
+                 (List.length values))
+        | ListV values -> Ok (List.nth values idx)
+        | _ ->
+            back_err path.at
+              (F.asprintf "indexing expects either a text or a list, but got %s"
+                 (Il.Print.string_of_value ~short:true value)))
+    | SliceP (path, exp_i, exp_n) -> (
         let typ = path.note $ path.at in
         let* value = eval_access_path ctx value_b path in
         let* value_i = eval_exp ctx exp_i in
@@ -808,35 +848,31 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
           value_n |> Value.Get.num |> Num.to_int |> Bigint.to_int_exn
         in
         let idx_h = idx_l + idx_n in
-        let value_res =
-          match value.it with
-          | TextV s when idx_l < 0 || idx_h > String.length s ->
-              error exp_n.at
-                (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
-                   (String.length s))
-          | TextV s ->
-              let s_slice = String.sub s idx_l (idx_h - idx_l) in
-              Value.Make.text s_slice
-          | ListV values when idx_l < 0 || idx_h > List.length values ->
-              error exp_n.at
-                (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
-                   (List.length values))
-          | ListV values ->
-              let values_slice =
-                List.mapi
-                  (fun idx value ->
-                    if idx_l <= idx && idx < idx_h then Some value else None)
-                  values
-                |> List.filter_map Fun.id
-              in
-              Value.Make.list typ values_slice
-          | _ ->
-              error path.at
-                (F.asprintf
-                   "slicing expects either a text or a list, but got %s"
-                   (Il.Print.string_of_value ~short:true value))
-        in
-        Ok value_res
+        match value.it with
+        | TextV s when idx_l < 0 || idx_h > String.length s ->
+            back_err exp_n.at
+              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                 (String.length s))
+        | TextV s ->
+            let s_slice = String.sub s idx_l (idx_h - idx_l) in
+            Ok (Value.Make.text s_slice)
+        | ListV values when idx_l < 0 || idx_h > List.length values ->
+            back_err exp_n.at
+              (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
+                 (List.length values))
+        | ListV values ->
+            let values_slice =
+              List.mapi
+                (fun idx value ->
+                  if idx_l <= idx && idx < idx_h then Some value else None)
+                values
+              |> List.filter_map Fun.id
+            in
+            Ok (Value.Make.list typ values_slice)
+        | _ ->
+            back_err path.at
+              (F.asprintf "slicing expects either a text or a list, but got %s"
+                 (Il.Print.string_of_value ~short:true value)))
     | DotP (path, atom) ->
         let* value = eval_access_path ctx value_b path in
         let valuefields = value |> Value.Get.str in
@@ -860,13 +896,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         in
         match value.it with
         | TextV s when idx_target < 0 || idx_target >= String.length s ->
-            error exp_i.at
+            back_err exp_i.at
               (F.asprintf "index %d out of bounds [0, %d)" idx_target
                  (String.length s))
         | TextV s ->
             let s_n = Value.Get.text value_upd in
             if String.length s_n <> 1 then
-              error exp_i.at
+              back_err exp_i.at
                 (F.asprintf
                    "updating a character requires a single-character text, but \
                     got %s"
@@ -881,7 +917,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
               eval_update_path ctx value_b path value
         | ListV values when idx_target < 0 || idx_target >= List.length values
           ->
-            error exp_i.at
+            back_err exp_i.at
               (F.asprintf "index %d out of bounds [0, %d)" idx_target
                  (List.length values))
         | ListV values ->
@@ -893,7 +929,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
             let value = Value.Make.list typ values_updated in
             eval_update_path ctx value_b path value
         | _ ->
-            error path.at
+            back_err path.at
               (F.asprintf "indexing expects either a text or a list, but got %s"
                  (Sl.Print.string_of_value ~short:true value)))
     | SliceP (path, exp_i, exp_n) -> (
@@ -910,13 +946,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
         let idx_h = idx_l + idx_n in
         match value.it with
         | TextV s when idx_l < 0 || idx_h > String.length s ->
-            error exp_n.at
+            back_err exp_n.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (String.length s))
         | TextV s ->
             let s_upd = Value.Get.text value_upd in
             if String.length s_upd <> idx_n then
-              error exp_n.at
+              back_err exp_n.at
                 (F.asprintf
                    "updating a slice of length %d requires a text of length \
                     %d, but got %s"
@@ -930,13 +966,13 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
               let value = Value.Make.text s_upd in
               eval_update_path ctx value_b path value
         | ListV values when idx_l < 0 || idx_h > List.length values ->
-            error exp_n.at
+            back_err exp_n.at
               (F.asprintf "slice [%d, %d) out of bounds [0, %d)" idx_l idx_h
                  (List.length values))
         | ListV values ->
             let values_upd = Value.Get.list value_upd in
             if List.length values_upd <> idx_n then
-              error exp_n.at
+              back_err exp_n.at
                 (F.asprintf
                    "updating a slice of length %d requires a list of length \
                     %d, but got %s"
@@ -954,7 +990,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
               let value = Value.Make.list typ values_upd in
               eval_update_path ctx value_b path value
         | _ ->
-            error path.at
+            back_err path.at
               (F.asprintf "slicing expects either a text or a list, but got %s"
                  (Il.Print.string_of_value ~short:true value)))
     | DotP (path, atom) ->
@@ -1033,7 +1069,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match
       is_iter_var_exp (IterE (exp, iterexp) $$ (typ_note.at, typ_note.it))
     with
-    | Some var -> Ok (Ctx.find_value ctx var)
+    | Some var -> Ctx.find_value ctx var
     | None -> (
         let iter, vars = iterexp in
         match iter with
@@ -1046,7 +1082,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match arg.it with
     | ExpA exp -> eval_exp ctx exp
     | DefA id ->
-        let tparams, typs, typ = Ctx.find_func_signature ctx id in
+        let* tparams, typs, typ = Ctx.find_func_signature ctx id in
         let value_res = Value.Make.func id tparams typs typ in
         Ok value_res
 
@@ -1088,8 +1124,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let exps_input, exps_output = Hints.Input.split inputs exps in
     let* values_input = eval_exps ctx exps_input in
     let* values_output = invoke_rel ctx id values_input in
-    let ctx = assign_exps ctx exps_output values_output in
-    Ok ctx
+    assign_exps ctx exps_output values_output
 
   (* If premise evaluation *)
 
@@ -1134,8 +1169,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and eval_let_prem (ctx : Ctx.t) (exp_l : exp) (exp_r : exp) : Ctx.t backtrack
       =
     let* value = eval_exp ctx exp_r in
-    let ctx = assign_exp ctx exp_l value in
-    Ok ctx
+    assign_exp ctx exp_l value
 
   (* Iterated premise evaluation *)
 
@@ -1163,20 +1197,24 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     (* Otherwise, evaluate the premise for the bound values *)
     | Some ctx_sub ->
         let* ctx_sub = eval_prem ctx_sub prem in
+        let* values_binding =
+          Ctx.find_values ctx_sub
+            (List.map
+               (fun (id_binding, _typ_binding, iters_binding) ->
+                 (id_binding, iters_binding))
+               vars_bind)
+        in
         let ctx =
-          List.fold_left
-            (fun ctx (id_binding, typ_binding, iters_binding) ->
+          List.fold_left2
+            (fun ctx (id_binding, typ_binding, iters_binding) value_binding ->
               let typ =
                 Typ.Make.iterate typ_binding (iters_binding @ [ Opt ])
-              in
-              let value_binding =
-                Ctx.find_value ctx_sub (id_binding, iters_binding)
               in
               let value_binding = Value.Make.opt typ (Some value_binding) in
               Ctx.add_value ctx
                 (id_binding, iters_binding @ [ Opt ])
                 value_binding)
-            ctx vars_bind
+            ctx vars_bind values_binding
         in
         Ok ctx
 
@@ -1201,11 +1239,12 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
               (fun ctx_values_binding_batch ctx_sub ->
                 let* ctx, values_binding_batch = ctx_values_binding_batch in
                 let* ctx_sub = eval_prem ctx_sub prem in
-                let value_binding_batch =
-                  List.map
-                    (fun (id_binding, _typ_binding, iters_binding) ->
-                      Ctx.find_value ctx_sub (id_binding, iters_binding))
-                    vars_bind
+                let* value_binding_batch =
+                  Ctx.find_values ctx_sub
+                    (List.map
+                       (fun (id_binding, _typ_binding, iters_binding) ->
+                         (id_binding, iters_binding))
+                       vars_bind)
                 in
                 let values_binding_batch =
                   values_binding_batch @ [ value_binding_batch ]
@@ -1251,19 +1290,21 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     match rel with Rel.Extern _ -> true | Rel.Defined _ -> false
 
   and match_rule (ctx : Ctx.t) (at : region) (rulematch : rulematch)
-      (values_input : value list) : Ctx.t * prem list =
+      (values_input : value list) : (Ctx.t * prem list) backtrack =
     let _, exps_input, prems_input = rulematch in
-    check
-      (List.length exps_input = List.length values_input)
-      at "arity mismatch in rule";
-    let ctx = assign_exps ctx exps_input values_input in
-    (ctx, prems_input)
+    let* () =
+      check_back_err
+        (List.length exps_input = List.length values_input)
+        at "arity mismatch in rule"
+    in
+    let* ctx = assign_exps ctx exps_input values_input in
+    Ok (ctx, prems_input)
 
   and invoke_rel ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (values_input : value list) : value list backtrack =
     Hook.on_rel_enter id values_input;
     let result =
-      let rel = Ctx.find_rel ctx id in
+      let* rel = Ctx.find_rel ctx id in
       let dispatch () =
         match rel with
         | Rel.Extern (nottyp, inputs) ->
@@ -1288,9 +1329,11 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                    (Extern.seff extern_checkpoint_before extern_checkpoint_after)
             then CCache.add !rel_cache (id.it, values_input) values_output;
             Ok values_output)
-      else (
-        if not internal then check_rel_inputs ctx id values_input;
-        dispatch ())
+      else
+        let* () =
+          if internal then Ok () else check_rel_inputs ctx id values_input
+        in
+        dispatch ()
     in
     Hook.on_rel_exit id;
     result
@@ -1303,9 +1346,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* values_output =
       match Extern.eval_extern_rel id.it values_input with
       | Pass values -> Ok values
-      | Fail (at, msg) -> back_err at msg
+      | Fail failure -> back_unmatch_of_failure failure
     in
-    check_rel_outputs ctx id nottyp inputs values_output;
+    let* () = check_rel_outputs ctx id nottyp inputs values_output in
     Ok values_output
 
   and invoke_defined_rel (ctx : Ctx.t) (id : id) (rulegroups : rulegroup list)
@@ -1319,7 +1362,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (* Create a subtrace for the rule path *)
       let ctx_local = Ctx.localize ctx in
       (* Try matching the rule *)
-      let ctx_local, prems_input =
+      let* ctx_local, prems_input =
         match_rule ctx_local id_rulepath.at rulematch values_input
       in
       (* Evaluate the premises *)
@@ -1393,10 +1436,10 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
   and invoke_func ?(internal : bool = true) (ctx : Ctx.t) (id : id)
       (targs : targ list) (values_input : value list) : value backtrack =
     Hook.on_func_enter id values_input;
-    (* Find the function *)
-    let cursor, func = Ctx.find_func ctx id in
-    let anon = cursor = Ctx.Local in
     let result =
+      (* Find the function *)
+      let* cursor, func = Ctx.find_func ctx id in
+      let anon = cursor = Ctx.Local in
       if
         !cache_enabled && (not anon)
         && (not (is_extern_func func))
@@ -1420,9 +1463,12 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
                    (Extern.seff extern_checkpoint_before extern_checkpoint_after)
             then CCache.add !func_cache (id.it, values_input) value_output;
             Ok value_output)
-      else (
-        if not internal then check_func_inputs ctx id targs values_input;
-        invoke_func_body ctx id func targs values_input)
+      else
+        let* () =
+          if internal then Ok ()
+          else check_func_inputs ctx id targs values_input
+        in
+        invoke_func_body ctx id func targs values_input
     in
     Hook.on_func_exit id;
     result
@@ -1450,9 +1496,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let* value_output =
       match Extern.eval_extern_func id.it [] values_input with
       | Pass value -> Ok value
-      | Fail (at, msg) -> back_err at msg
+      | Fail failure -> back_unmatch_of_failure failure
     in
-    check_func_output ctx id tparams typ_output targs value_output;
+    let* () = check_func_output ctx id tparams typ_output targs value_output in
     Ok value_output
 
   and invoke_builtin_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
@@ -1462,19 +1508,23 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       let value_output =
         Interface.call_builtin (fun _ -> ()) id targs values_input
       in
-      check_func_output ctx id tparams typ_output targs value_output;
+      let* () =
+        check_func_output ctx id tparams typ_output targs value_output
+      in
       Ok value_output
     with Builtin.Error.BuiltinError (at, msg) -> back_unmatch at msg
 
   and match_tablerow (ctx_caller : Ctx.t) (ctx_callee : Ctx.t)
       (tablerow : tablerow) (values_input : value list) :
-      Ctx.t * arg list * prem list * exp =
+      (Ctx.t * arg list * prem list * exp) backtrack =
     let _, args_input, exp_output, prems = tablerow.it in
-    check
-      (List.length args_input = List.length values_input)
-      tablerow.at "arity mismatch while matching table row";
-    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
-    (ctx, args_input, prems, exp_output)
+    let* () =
+      check_back_err
+        (List.length args_input = List.length values_input)
+        tablerow.at "arity mismatch while matching table row"
+    in
+    let* ctx = assign_args ctx_caller ctx_callee args_input values_input in
+    Ok (ctx, args_input, prems, exp_output)
 
   and invoke_table_func (ctx : Ctx.t) (id : id) (tablerows : tablerow list)
       (values_input : value list) : value backtrack =
@@ -1490,7 +1540,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
              (* Create a subtrace for the table row *)
              let ctx_local = Ctx.localize ctx in
              (* Try to match the table row *)
-             let ctx_local, args_input, prems, exp_output =
+             let* ctx_local, args_input, prems, exp_output =
                match_tablerow ctx ctx_local tablerow values_input
              in
              (* Try evaluating the row *)
@@ -1503,13 +1553,16 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     |> choose_sequential
 
   and match_clause (ctx_caller : Ctx.t) (ctx_callee : Ctx.t) (clause : clause)
-      (values_input : value list) : Ctx.t * arg list * prem list * exp =
+      (values_input : value list) :
+      (Ctx.t * arg list * prem list * exp) backtrack =
     let args_input, exp_output, prems = clause.it in
-    check
-      (List.length args_input = List.length values_input)
-      clause.at "arity mismatch while matching clause";
-    let ctx = assign_args ctx_caller ctx_callee args_input values_input in
-    (ctx, args_input, prems, exp_output)
+    let* () =
+      check_back_err
+        (List.length args_input = List.length values_input)
+        clause.at "arity mismatch while matching clause"
+    in
+    let* ctx = assign_args ctx_caller ctx_callee args_input values_input in
+    Ok (ctx, args_input, prems, exp_output)
 
   and invoke_defined_func (ctx : Ctx.t) (id : id) (tparams : tparam list)
       (clauses : clause list) (elseclause_opt : elseclause option)
@@ -1521,18 +1574,21 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (* Create a subtrace for the clause *)
       let ctx_local = Ctx.localize ctx in
       (* Add type arguments to the context *)
-      check
-        (List.length targs = List.length tparams)
-        id.at "arity mismatch in type arguments";
-      let ctx_local =
+      let* () =
+        check_back_err
+          (List.length targs = List.length tparams)
+          id.at "arity mismatch in type arguments"
+      in
+      let* ctx_local =
         List.fold_left2
           (fun ctx_local tparam targ ->
+            let* ctx_local = ctx_local in
             let td = Type.Typdef.Defined ([], PlainT targ $ targ.at) in
             Ctx.add_typdef ctx_local tparam td)
-          ctx_local tparams targs
+          (Ok ctx_local) tparams targs
       in
       (* Try matching the clause *)
-      let ctx_local, _args_input, prems, exp_output =
+      let* ctx_local, _args_input, prems, exp_output =
         match_clause ctx ctx_local clause values_input
       in
       (* Try evaluating the clause *)
@@ -1595,34 +1651,34 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     try
       let parse_result = Interface.parse_program includes_p4 [ path_p4 ] in
       match parse_result with
-      | Pass value_program ->
+      | Pass value_program -> (
           Hook.on_program value_program;
-          let+ values_output = do_eval_rel relname [ value_program ] in
-          (Run.Pass values_output : Run.program_result)
-      | Fail (`Syntax (at, msg)) -> Run.Fail (`Syntax (at, msg))
+          match do_eval_rel relname [ value_program ] with
+          | Ok values_output -> Run.Pass values_output
+          | Err failtraces | Unmatch failtraces ->
+              Run.Fail (`Runtime (Run.Unmatch failtraces)))
+      | Fail diagnostic -> Run.Fail (`Syntax diagnostic)
     with
-    | P4.Error.ParseError (at, msg) -> Run.Fail (`Syntax (at, msg))
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-        Run.Fail (`Runtime (at, msg))
+    | P4.Error.ParseError (at, msg) ->
+        Run.Fail (`Syntax (Diagnostic.error ~source:"p4" at msg))
+    | Run.ExternError failure -> Run.Fail (`Runtime failure)
 
   let eval_rel (relname : string) (values_input : value list) : Run.rel_result =
     clear ();
     try
-      let+ values_output = do_eval_rel relname values_input in
-      (Run.Pass values_output : Run.rel_result)
-    with
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-      Run.Fail (at, msg)
+      match do_eval_rel relname values_input with
+      | Ok values_output -> Run.Pass values_output
+      | Err failtraces | Unmatch failtraces -> Run.Fail (Run.Unmatch failtraces)
+    with Run.ExternError failure -> Run.Fail failure
 
   let eval_func (funcname : string) (targs : targ list)
       (values_input : value list) : Run.func_result =
     clear ();
     try
-      let+ value_output = do_eval_func funcname targs values_input in
-      (Run.Pass value_output : Run.func_result)
-    with
-    | Interp_common.Error.InterpError (at, msg) | Run.ExternError (at, msg) ->
-      Run.Fail (at, msg)
+      match do_eval_func funcname targs values_input with
+      | Ok value_output -> Run.Pass value_output
+      | Err failtraces | Unmatch failtraces -> Run.Fail (Run.Unmatch failtraces)
+    with Run.ExternError failure -> Run.Fail failure
 
   (* Initialization *)
 
@@ -1630,6 +1686,5 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (unit, Run.error) result =
     if cache then Cache.cache_on () else Cache.cache_off ();
     check_guard := guard;
-    try Ok (Ctx.init ~det spec)
-    with Interp_common.Error.InterpError (at, msg) -> Error { Run.at; msg }
+    Ctx.init ~det spec
 end
