@@ -91,8 +91,8 @@ let parse_width_int at s n =
   let w = Bigint.of_string width in
   match sign with
   | "s" ->
-    if (int_of_string width < 2)
-    then raise (Error "signed integers must have width at least 2")
+    if (int_of_string width < 1)
+    then raise (Error "signed integers must have width at least 1")
     else 
       let value_width = Value.Make.nat ~at w in
       let value_int = Value.Make.int ~at i in
