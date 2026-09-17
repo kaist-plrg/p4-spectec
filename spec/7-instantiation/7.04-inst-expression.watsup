@@ -183,14 +183,17 @@ rulegroup Expr_inst/memberAccessExpressionIR-type {
   rule Expr_inst/enum:
     p IC STO |- ((TYPE prefixedNameIR) '.' nameIR) '#' _
             : STO (typeId '.' nameIR)
-    -- if ENUM typeId `{ _ `}
-        = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeDefIR_base = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if ENUM typeId `{ _ `} = $unroll_typeIR(typeIR_base)
 
   rule Expr_inst/serenum:
     p IC STO |- ((TYPE prefixedNameIR) '.' nameIR) '#' _
             : STO (typeId '.' nameIR '.' value)
+    -- if typeDefIR_base = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if ENUM typeId `< _ `> `{ (id_member '=' value_member ';')* `}
-        = $find_typeDef_i(p, IC, prefixedNameIR)
+        = $unroll_typeIR(typeIR_base)
     -- if value = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*)
 
 }

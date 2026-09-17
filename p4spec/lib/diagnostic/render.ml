@@ -314,40 +314,83 @@ let render_node_label ~ansi ~cache ~prefix ~body_prefix region message =
       body_prefix ^ msg;
     ]
 
-let rec render_trace_node ~ansi ~cache ~indent ~is_last
+(* A chain deeper than [fold_depth] below its anchor restarts at the base. *)
+let fold_depth = 4
+
+(* [layout] places a node: [anchor] is the depth whose children sit at [base];
+   [foldable] means no sibling bar is pending below [anchor]. *)
+type layout = {
+  base : string;
+  indent : string;
+  level : int;
+  anchor : int;
+  foldable : bool;
+}
+
+let fold_cue ~ansi (layout : layout) : string =
+  layout.base
+  ^ Ansi.style ansi [ Dim ]
+      (Printf.sprintf "⋮ (depth %d, continued)" layout.level)
+
+let rec render_trace_node ~ansi ~cache (layout : layout) ~is_last
     (node : Record.trace_node) : string =
   let { Record.region; message; children } = node in
   let connector =
     Ansi.style ansi [ Dim ] (if is_last then "└── " else "├── ")
   in
   let child_indent =
-    indent ^ if is_last then "    " else Ansi.style ansi [ Dim ] "│   "
+    layout.indent ^ if is_last then "    " else Ansi.style ansi [ Dim ] "│   "
   in
   let label =
-    render_node_label ~ansi ~cache ~prefix:(indent ^ connector)
+    render_node_label ~ansi ~cache
+      ~prefix:(layout.indent ^ connector)
       ~body_prefix:child_indent region message
   in
+  let layout_children =
+    {
+      layout with
+      indent = child_indent;
+      level = layout.level + 1;
+      foldable = layout.foldable && is_last;
+    }
+  in
   String.concat "\n"
-    (label @ render_children ~ansi ~cache ~indent:child_indent children)
+    (label @ render_children ~ansi ~cache layout_children children)
 
-and render_children ~ansi ~cache ~indent children =
+(* [render_children] takes the layout of the children themselves. *)
+and render_children ~ansi ~cache (layout : layout) children =
+  let fold =
+    children <> [] && layout.foldable
+    && layout.level - layout.anchor > fold_depth
+  in
+  let cue, layout =
+    if fold then
+      ( [ fold_cue ~ansi layout ],
+        { layout with indent = layout.base; anchor = layout.level - 1 } )
+    else ([], layout)
+  in
   let n = List.length children in
-  List.mapi
-    (fun i c -> render_trace_node ~ansi ~cache ~indent ~is_last:(i = n - 1) c)
-    children
+  cue
+  @ List.mapi
+      (fun i c -> render_trace_node ~ansi ~cache layout ~is_last:(i = n - 1) c)
+      children
 
 let render_trace ~ansi ~cache (d : Record.t) : string option =
   if d.trace = [] then None
   else
     let header = border_prefix d ^ Ansi.style ansi [ Bold; Blue ] "trace:" in
-    let indent = border_prefix d in
+    let base = border_prefix d in
+    let layout_children =
+      { base; indent = base; level = 1; anchor = 0; foldable = true }
+    in
     let render_root (node : Record.trace_node) =
       let { Record.region; message; children } = node in
       let label =
-        render_node_label ~ansi ~cache ~prefix:indent ~body_prefix:indent region
+        render_node_label ~ansi ~cache ~prefix:base ~body_prefix:base region
           message
       in
-      String.concat "\n" (label @ render_children ~ansi ~cache ~indent children)
+      String.concat "\n"
+        (label @ render_children ~ansi ~cache layout_children children)
     in
     Some (String.concat "\n" (header :: List.map render_root d.trace))
 

@@ -41,7 +41,8 @@ let elab_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.elab paths_spec)
          ~on_success:(fun spec_il ->
-           Format.printf "%s\n" (Il.Print.string_of_spec spec_il)))
+           Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
+           Ok ()))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a nano-P4 spec"
@@ -54,7 +55,8 @@ let algo_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.algo paths_spec)
          ~on_success:(fun spec_al ->
-           Format.printf "%s\n" (Al.Print.string_of_spec spec_al)))
+           Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
+           Ok ()))
 
 let check_command =
   Core.Command.basic ~summary:"typecheck a nano-P4 program against the spec"
@@ -104,10 +106,11 @@ let check_command =
            in
            Inst.Hook.finish ();
            match result with
-           | Pass _ -> Format.printf "passed\n"
-           | Fail (`Syntax diagnostic) -> render_failure diagnostic
-           | Fail (`Runtime failure) ->
-               failure |> diagnostic_of_failure |> render_failure))
+           | Pass _ ->
+               Format.printf "passed\n";
+               Ok ()
+           | Fail (`Syntax diagnostic) -> Error diagnostic
+           | Fail (`Runtime failure) -> Error (diagnostic_of_failure failure)))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a nano-P4 program"
@@ -173,10 +176,11 @@ let eval_command =
            let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
            Inst.Hook.finish ();
            match result with
-           | Pass () -> Format.printf "passed\n"
-           | Fail (`Syntax diagnostic) -> render_failure diagnostic
-           | Fail (`Runtime failure) ->
-               failure |> diagnostic_of_failure |> render_failure))
+           | Pass () ->
+               Format.printf "passed\n";
+               Ok ()
+           | Fail (`Syntax diagnostic) -> Error diagnostic
+           | Fail (`Runtime failure) -> Error (diagnostic_of_failure failure)))
 
 let test_check_command =
   Core.Command.basic
@@ -231,7 +235,12 @@ let test_check_command =
                0 paths_p4
            in
            Format.printf "\n[PASS] %d/%d  [FAIL] %d/%d\n" (total - fails) total
-             fails total))
+             fails total;
+           if fails = 0 then Ok ()
+           else
+             Error
+               (Diagnostic.error ~source:"nano" Util.Source.no_region
+                  (Format.asprintf "%d of %d tests failed" fails total))))
 
 let test_eval_command =
   Core.Command.basic
@@ -288,7 +297,12 @@ let test_eval_command =
                0 pairs
            in
            Format.printf "\n[PASS] %d/%d  [FAIL] %d/%d\n" (total - fails) total
-             fails total))
+             fails total;
+           if fails = 0 then Ok ()
+           else
+             Error
+               (Diagnostic.error ~source:"nano" Util.Source.no_region
+                  (Format.asprintf "%d of %d tests failed" fails total))))
 
 let splice_command =
   Core.Command.basic ~summary:"splice a skeleton nano-P4 specification document"
@@ -313,7 +327,7 @@ let splice_command =
              else Ok (List.combine paths_input paths_output)
            in
            P4spectec.splice paths_spec path_pairs)
-         ~on_success:(fun () -> ()))
+         ~on_success:(fun () -> Ok ()))
 
 let command =
   Core.Command.group
