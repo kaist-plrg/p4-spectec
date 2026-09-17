@@ -21,6 +21,16 @@ let with_diagnostics (f : unit -> 'a result) : 'a result * Diagnostic.Report.t =
 
 (* Spec transformations *)
 
+type spec_source = Frontend.Parse.spec_source = {
+  filename : string;
+  contents : string;
+}
+
+let collect_spec_files = Util.Spec_files.collect
+let spec_root_of_file = Util.Spec_files.root_of_file
+let parse_sources = Pass.parse_sources
+let elab_spec = Pass.elab_spec
+
 let parse (paths_spec : string list) : Lang.El.spec result =
   Pass.parse paths_spec
 

@@ -3,6 +3,10 @@ type error = Diagnostic.t
 (* Stages *)
 
 val parse_string : string -> (Lang.El.spec, error) result
+
+val parse_sources :
+  Frontend.Parse.spec_source list -> (Lang.El.spec, error) result
+
 val elab_spec : Lang.El.spec -> (Lang.Il.spec, error) result
 val algo_spec : Lang.Il.spec -> (Lang.Al.spec, error) result
 val struct_spec : final:bool -> Lang.Al.spec -> (Lang.Sl.spec, error) result

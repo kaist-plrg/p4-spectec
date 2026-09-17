@@ -1,19 +1,25 @@
 SPEC = p4spectec
 BOOT = spectec-boot
+LSP = p4spectec-lsp
 
 # Compile
 
-.PHONY: build stat perf spec-test
+.PHONY: build boot release lsp stat perf spec-test
 
 EXESPEC = _build/default/p4spec/bin/main.exe
 EXEBOOT = _build/default/p4spec/bin/boot.exe
+EXELSP = _build/default/p4spec/bin/lsp_main.exe
 
-build:
+build: lsp
 	rm -f ./$(SPEC)
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
 	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
 	cd p4spec && opam exec --switch=5.1.0 -- dune build test/lang/test.exe test/run/test.exe test/sim/test.exe test/parse/test.exe test/boot/test.exe && echo
+
+lsp:
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/lsp_main.exe
+	ln -f $(EXELSP) ./$(LSP)
 
 boot:
 	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/boot.exe && echo
@@ -25,8 +31,9 @@ release:
 	rm -f ./p4spec/lib/parsing/parser.ml ./p4spec/lib/parsing/parser.mli
 	cd p4spec && opam exec --switch=5.1.0 -- dune build --profile=release bin/main.exe && echo
 	ln -f $(EXESPEC) ./$(SPEC)
-	cd p4spec && opam exec --switch=5.1.0 -- dune build --profile=release bin/boot.exe && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build --profile=release bin/boot.exe bin/lsp_main.exe && echo
 	ln -f $(EXEBOOT) ./$(BOOT)
+	ln -f $(EXELSP) ./$(LSP)
 
 # Spec
 
@@ -74,7 +81,7 @@ TEST_ALIASES := \
   backend-adoc \
   backend-latex \
   backend-splice \
-  speclang \
+  speclang lsp \
   run run-al run-sl run-pl \
   sim-al sim-sl sim-pl \
   sim-v1model-p4c-al sim-v1model-p4c-sl sim-v1model-p4c-pl \
@@ -105,29 +112,29 @@ $(foreach a,$(DET_ALIASES),$(eval $(call dune-alias-test,$(a))))
 # Micro tier: fast shallow coverage of every test category.
 .PHONY: test-micro
 test-micro:
-	echo "#### Running (dune build @speclang @micro @micro-det)"
-	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @micro @micro-det --profile=release && echo OK || \
-	  (echo "####>" Failure running dune build @speclang @micro @micro-det. && \
+	echo "#### Running (dune build @speclang @lsp @micro @micro-det)"
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @lsp @micro @micro-det --profile=release && echo OK || \
+	  (echo "####>" Failure running dune build @speclang @lsp @micro @micro-det. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-fast
 test-fast:
-	echo "#### Running fast tests (speclang, p4parse, run-sl, sim-sl)"
-	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @p4parse @run-sl @sim-sl --profile=release && echo OK || \
+	echo "#### Running fast tests (speclang, lsp, p4parse, run-sl, sim-sl)"
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @lsp @p4parse @run-sl @sim-sl --profile=release && echo OK || \
 	  (echo "####>" Failure running fast tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-all
 test-all:
 	echo "#### Running all tests (without -det)"
-	cd p4spec && opam exec --switch=5.1.0 -- dune build @backend-adoc @backend-latex @backend-splice @speclang @p4parse @boot @run @sim-al @sim-sl @sim-pl --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @backend-adoc @backend-latex @backend-splice @speclang @lsp @p4parse @boot @run @sim-al @sim-sl @sim-pl --profile=release && echo OK || \
 	  (echo "####>" Failure running dune test. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
 .PHONY: test-all-det
 test-all-det:
 	echo "#### Running all tests (with -det)"
-	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @p4parse @run-det @sim-al-det @sim-sl-det --profile=release && echo OK || \
+	cd p4spec && opam exec --switch=5.1.0 -- dune build @speclang @lsp @p4parse @run-det @sim-al-det @sim-sl-det --profile=release && echo OK || \
 	  (echo "####>" Failure running det tests. && \
 	   echo "####>" Run \`make promote\` to accept changes in test expectations. && false)
 
@@ -140,5 +147,5 @@ promote:
 .PHONY: clean
 
 clean:
-	rm -f ./$(SPEC)
+	rm -f ./$(SPEC) ./$(LSP)
 	cd p4spec && opam exec --switch=5.1.0 -- dune clean
