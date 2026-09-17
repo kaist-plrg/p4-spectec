@@ -165,7 +165,8 @@ let elab_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.elab paths_spec)
          ~on_success:(fun spec_il ->
-           Format.printf "%s\n" (Il.Print.string_of_spec spec_il)))
+           Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
+           Ok ()))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a P4 spec"
@@ -178,7 +179,8 @@ let algo_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.algo paths_spec)
          ~on_success:(fun spec_al ->
-           Format.printf "%s\n" (Al.Print.string_of_spec spec_al)))
+           Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
+           Ok ()))
 
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a P4 spec"
@@ -191,7 +193,8 @@ let struct_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.structure ~final:true paths_spec)
          ~on_success:(fun spec_sl ->
-           Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)))
+           Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
+           Ok ()))
 
 let prose_command =
   Core.Command.basic ~summary:"annotate a P4 spec"
@@ -204,7 +207,8 @@ let prose_command =
        run_with_diagnostics
          ~action:(fun () -> P4spectec.annotate paths_spec)
          ~on_success:(fun spec_pl ->
-           Format.printf "%s\n" (Pl.Print.string_of_spec spec_pl)))
+           Format.printf "%s\n" (Pl.Print.string_of_spec spec_pl);
+           Ok ()))
 
 let run_command =
   Core.Command.basic ~summary:"execute the P4 spec against a P4 program"
@@ -271,12 +275,11 @@ let run_command =
            in
            Inst.Hook.finish ();
            match result with
-           | Pass _ -> Format.printf "passed\n"
-           | Fail (`Syntax diagnostic) ->
-               diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
-           | Fail (`Runtime failure) ->
-               failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
-               |> render_diagnostics))
+           | Pass _ ->
+               Format.printf "passed\n";
+               Ok ()
+           | Fail (`Syntax diagnostic) -> Error diagnostic
+           | Fail (`Runtime failure) -> Error (diagnostic_of_failure failure)))
 
 let sim_command =
   Core.Command.basic
@@ -345,12 +348,11 @@ let sim_command =
            let result = Simulator.run_stf_test includes_p4 path_p4 path_stf in
            Inst.Hook.finish ();
            match result with
-           | Pass () -> Format.printf "passed\n"
-           | Fail (`Syntax diagnostic) ->
-               diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
-           | Fail (`Runtime failure) ->
-               failure |> diagnostic_of_failure |> Diagnostic.Report.singleton
-               |> render_diagnostics))
+           | Pass () ->
+               Format.printf "passed\n";
+               Ok ()
+           | Fail (`Syntax diagnostic) -> Error diagnostic
+           | Fail (`Runtime failure) -> Error (diagnostic_of_failure failure)))
 
 let cover_run_command =
   Core.Command.basic ~summary:"measure coverage of the spec"
@@ -388,7 +390,7 @@ let cover_run_command =
            | `Dangling ->
                cover_run_dangling paths_spec relname includes_p4 paths_p4
                  path_cov)
-         ~on_success:ignore)
+         ~on_success:(fun () -> Ok ()))
 
 let cover_sim_command =
   Core.Command.basic
@@ -433,7 +435,7 @@ let cover_sim_command =
            | `Dangling ->
                cover_sim_dangling ~arch paths_spec includes_p4 paths_p4
                  paths_stf path_cov)
-         ~on_success:ignore)
+         ~on_success:(fun () -> Ok ()))
 
 let run_testgen_command =
   Core.Command.basic
@@ -494,7 +496,7 @@ let run_testgen_command =
            in
            P4spectec.fuzzer fuel spec_sl relname includes_p4 gendir
              name_campaign randseed logmode bootmode mutationmode covermode)
-         ~on_success:ignore)
+         ~on_success:(fun () -> Ok ()))
 
 let run_testgen_debug_command =
   Core.Command.basic
@@ -514,7 +516,7 @@ let run_testgen_debug_command =
            let* spec_sl = P4spectec.structure ~final:true paths_spec in
            P4spectec.debug_dangling spec_sl relname includes_p4 path_p4 debugdir
              iid)
-         ~on_success:ignore)
+         ~on_success:(fun () -> Ok ()))
 
 let interesting_command =
   Core.Command.basic ~summary:"interestingness test for reducing P4 programs"
@@ -603,7 +605,7 @@ let splice_command =
              else Ok (List.combine paths_input paths_output)
            in
            P4spectec.splice paths_spec path_pairs)
-         ~on_success:(fun () -> ()))
+         ~on_success:(fun () -> Ok ()))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a P4 program"
@@ -622,34 +624,37 @@ let parse_command =
            P4spectec.build_sim spec_sim)
          ~on_success:(fun simulator ->
            let (module Simulator : SIM) = simulator in
+           let file_error msg =
+             Error (Diagnostic.error ~source:"p4" Util.Source.no_region msg)
+           in
            try
              match
                Simulator.Interface.parse_program includes_p4 [ path_p4 ]
              with
-             | Fail diagnostic ->
-                 diagnostic |> Diagnostic.Report.singleton |> render_diagnostics
+             | Fail diagnostic -> Error diagnostic
              | Pass value_program ->
                  let str_program =
                    Simulator.Interface.unparse_program value_program
                  in
-                 if roundtrip then
+                 if roundtrip then (
                    match
                      Simulator.Interface.parse_string path_p4 str_program
                    with
-                   | Fail diagnostic ->
-                       diagnostic |> Diagnostic.Report.singleton
-                       |> render_diagnostics
+                   | Fail diagnostic -> Error diagnostic
                    | Pass value_program_roundtrip ->
                        Il.Eq.eq_value ~dbg:true value_program
                          value_program_roundtrip
                        |> (fun b ->
                             if b then "Roundtrip successful"
                             else "Roundtrip failed")
-                       |> print_endline
-                 else str_program |> print_endline
+                       |> print_endline;
+                       Ok ())
+                 else (
+                   str_program |> print_endline;
+                   Ok ())
            with
-           | Sys_error msg -> Format.printf "File error: %s\n" msg
-           | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e)))
+           | Sys_error msg -> file_error ("file error: " ^ msg)
+           | e -> file_error ("unknown error: " ^ Printexc.to_string e)))
 
 let command =
   Core.Command.group
