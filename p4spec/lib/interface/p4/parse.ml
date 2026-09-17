@@ -4,8 +4,11 @@ let error = Error.error
 let error_no_region = Error.error_no_region
 
 let preprocess (includes : string list) (path : string) =
-  try Preprocessor.preprocess includes path
-  with _ -> "preprocessor error" |> error_no_region
+  let at = Util.Source.region_of_file path in
+  match Preprocessor.preprocess includes path with
+  | Ok program -> program
+  | Error msg -> error at ("preprocessing failed: " ^ msg)
+  | exception e -> error at ("preprocessing failed: " ^ Printexc.to_string e)
 
 let lex (path : string) (file : string) =
   try
