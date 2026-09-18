@@ -1,4 +1,4 @@
-type style = Bold | Dim | Red | Yellow | Blue | Cyan
+type style = Bold | Dim | Red | Yellow | Blue | Magenta | Cyan
 
 (** [t] records whether ANSI styling is enabled. *)
 type t

@@ -1,5 +1,6 @@
 open Domain
 module Mixfix = Domain.Mixfix
+module Ansi = Diagnostic.Ansi
 open Xl
 open Ast
 open Util.Print
@@ -444,3 +445,46 @@ and string_of_defs defs = String.concat "\n\n" (List.map string_of_def defs)
 (* Spec *)
 
 let string_of_spec spec = string_of_defs spec
+
+(* Values as an indented tree *)
+
+let string_of_value_tree ?(ansi = Ansi.plain) value =
+  let buf = Buffer.create 1024 in
+  let style styles s = Ansi.style ansi styles s in
+  let unquote s =
+    let len = String.length s in
+    if len >= 2 && s.[0] = '`' && s.[len - 1] = '`' then String.sub s 1 (len - 2)
+    else s
+  in
+  let rec add_node prefix child_prefix value =
+    match value.it with
+    | CaseV valuecase ->
+        let mixop_str = unquote (string_of_mixop (Mixfix.to_mixop valuecase)) in
+        let typ_name =
+          match value.note.typ with VarT (id, _) -> id.it | _ -> mixop_str
+        in
+        let label =
+          if mixop_str = "" then style [ Ansi.Cyan ] typ_name
+          else
+            style [ Ansi.Cyan ] typ_name
+            ^ " "
+            ^ style [ Ansi.Magenta ] mixop_str
+        in
+        Buffer.add_string buf (prefix ^ label ^ "\n");
+        let args = Mixfix.args valuecase in
+        let arity = List.length args in
+        List.iteri
+          (fun idx arg ->
+            let is_last = idx = arity - 1 in
+            let connector = if is_last then "└─" else "├─" in
+            let continuation = if is_last then "  " else "│ " in
+            add_node (child_prefix ^ connector)
+              (child_prefix ^ continuation)
+              arg)
+          args
+    | _ ->
+        Buffer.add_string buf
+          (prefix ^ style [ Ansi.Yellow ] (string_of_value value) ^ "\n")
+  in
+  add_node "" "" value;
+  Buffer.contents buf
