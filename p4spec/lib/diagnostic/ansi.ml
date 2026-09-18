@@ -1,4 +1,4 @@
-type style = Bold | Dim | Red | Yellow | Blue | Cyan
+type style = Bold | Dim | Red | Yellow | Blue | Magenta | Cyan
 type t = { enabled : bool }
 
 let plain = { enabled = false }
@@ -11,6 +11,7 @@ let code = function
   | Red -> "\027[31m"
   | Yellow -> "\027[33m"
   | Blue -> "\027[34m"
+  | Magenta -> "\027[35m"
   | Cyan -> "\027[36m"
 
 let reset = "\027[0m"
