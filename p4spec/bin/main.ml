@@ -614,9 +614,8 @@ let parse_command =
      let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
      and includes_p4 = flag "-i" (listed string) ~doc:"P4 include paths"
      and path_p4 = flag "-p" (required string) ~doc:"P4 program"
-     and roundtrip =
-       flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
-     in
+     and roundtrip = flag "-r" no_arg ~doc:"perform a round-trip parse/unparse"
+     and tree = flag "-t" no_arg ~doc:"print the parsed program as a tree" in
      fun () ->
        run_with_diagnostics
          ~action:(fun () ->
@@ -632,6 +631,13 @@ let parse_command =
                Simulator.Interface.parse_program includes_p4 [ path_p4 ]
              with
              | Fail diagnostic -> Error diagnostic
+             | Pass value_program when tree && not roundtrip ->
+                 let ansi =
+                   Diagnostic.Ansi.auto ~tty:(Unix.isatty Unix.stdout)
+                 in
+                 Il.Print.string_of_value_tree ~ansi value_program
+                 |> print_string;
+                 Ok ()
              | Pass value_program ->
                  let str_program =
                    Simulator.Interface.unparse_program value_program
