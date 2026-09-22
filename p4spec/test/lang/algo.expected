@@ -6620,33 +6620,38 @@ def $cast_op(typeIR, value) : value =
   -- let headerValue = value as headerValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 11 : (typeIR, value) = $cast_enum(typeIR_unroll, enumValue)
+  clause 11 : (typeIR, value) = $cast_header_union(typeIR_unroll, headerUnionValue)
+  -- if value <: headerUnionValue
+  -- let headerUnionValue = value as headerUnionValue
+  -- let typeIR_unroll = $unroll_typeIR(typeIR)
+
+  clause 12 : (typeIR, value) = $cast_enum(typeIR_unroll, enumValue)
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 12 : (typeIR, value) = $cast_sequence(typeIR_unroll, sequenceValue)
+  clause 13 : (typeIR, value) = $cast_sequence(typeIR_unroll, sequenceValue)
   -- if value <: sequenceValue
   -- let sequenceValue = value as sequenceValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 13 : (typeIR, value) = $cast_record(typeIR_unroll, recordValue)
+  clause 14 : (typeIR, value) = $cast_record(typeIR_unroll, recordValue)
   -- if value <: recordValue
   -- let recordValue = value as recordValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 14 : (typeIR, value) = $cast_default(typeIR_unroll, DEFAULT)
+  clause 15 : (typeIR, value) = $cast_default(typeIR_unroll, DEFAULT)
   -- if value <: defaultValue
   -- let defaultValue = value as defaultValue
   -- if (defaultValue = DEFAULT)
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 15 : (typeIR, value) = $cast_invalid_header(typeIR_unroll)
+  clause 16 : (typeIR, value) = $cast_invalid_header(typeIR_unroll)
   -- if value <: invalidHeaderValue
   -- let invalidHeaderValue = value as invalidHeaderValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
 
-  clause 16 : (typeIR, value) = $cast_set(typeIR_unroll, setValue)
+  clause 17 : (typeIR, value) = $cast_set(typeIR_unroll, setValue)
   -- if value <: setValue
   -- let setValue = value as setValue
   -- let typeIR_unroll = $unroll_typeIR(typeIR)
@@ -7020,6 +7025,13 @@ def $cast_header(typeIR, headerValue) : value =
   clause 0 : (typeIR, HEADER typeId' `{ b ';' value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}) = HEADER typeId `{ b ';' value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} as value
   -- if typeIR <: headerTypeIR
   -- let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerTypeIR
+  -- if (typeId = typeId')
+
+def $cast_header_union(typeIR, headerUnionValue) : value =
+
+  clause 0 : (typeIR, HEADER_UNION typeId' `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `}) = HEADER_UNION typeId `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} as value
+  -- if typeIR <: headerUnionTypeIR
+  -- let HEADER_UNION typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} = typeIR as headerUnionTypeIR
   -- if (typeId = typeId')
 
 def $cast_enum(typeIR, enumValue) : value =

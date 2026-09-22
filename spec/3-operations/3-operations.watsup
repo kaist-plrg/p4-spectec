@@ -749,6 +749,21 @@ def $cast_header(
 def $cast_op(typeIR, headerValue) = $cast_header(typeIR_unroll, headerValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
+;; Cast from header union
+
+dec $cast_header_union(typeIR, headerUnionValue) : value
+  hint(prose_in %1 "casted to type" %0)
+  hint(testgen_ignore)
+
+def $cast_header_union(
+    HEADER_UNION typeId `< _ `> `{ _ `},
+    HEADER_UNION typeId `{ (value_field nameIR_field ';')* `})
+  = HEADER_UNION typeId `{ (value_field nameIR_field ';')* `}
+
+def $cast_op(typeIR, headerUnionValue)
+  = $cast_header_union(typeIR_unroll, headerUnionValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+
 ;; Cast from enum field
 
 dec $cast_enum(typeIR, enumValue) : value
