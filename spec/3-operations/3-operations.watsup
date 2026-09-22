@@ -689,6 +689,8 @@ dec $cast_tuple(typeIR, tupleValue) : value
 
 def $cast_tuple(TUPLE `< typeIR* `>, TUPLE `( value* `))
   = TUPLE `( $cast_op(typeIR, value)* `)
+def $cast_tuple(SET `< typeIR `>, tupleValue)
+  = SET `{ $cast_op(typeIR, tupleValue) `}
 
 def $cast_op(typeIR, tupleValue) = $cast_tuple(typeIR_unroll, tupleValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
@@ -785,6 +787,8 @@ dec $cast_sequence(typeIR, sequenceValue) : value
   hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
+def $cast_sequence(SET `< typeIR `>, sequenceValue)
+  = SET `{ $cast_op(typeIR, sequenceValue) `}
 def $cast_sequence(LIST `< typeIR `>, SEQ `( value* `))
   = LIST `[ $cast_op(typeIR, value)* `]
 def $cast_sequence(TUPLE `< typeIR* `>, SEQ `( value* `))
