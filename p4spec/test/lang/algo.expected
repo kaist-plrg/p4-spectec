@@ -6338,20 +6338,31 @@ def $bin_eq(value, value) : bool =
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
   clause 10 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  -- if value <: sequenceValue
+  -- let sequenceValue = value as sequenceValue
+  -- if sequenceValue matches `SEQ (%)`
+  -- let SEQ `( value_a*{value_a <- value_a*} `) = sequenceValue
+  -- if value' <: sequenceValue
+  -- let sequenceValue' = value' as sequenceValue
+  -- if sequenceValue' matches `SEQ (%)`
+  -- let SEQ `( value_b*{value_b <- value_b*} `) = sequenceValue'
+  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
+
+  clause 11 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
   -- if value <: arrayValue
   -- let ARRAY `[ value_a*{value_a <- value_a*} `] = value as arrayValue
   -- if value' <: arrayValue
   -- let ARRAY `[ value_b*{value_b <- value_b*} `] = value' as arrayValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 11 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 12 : (value, value') = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
   -- if value <: headerStackValue
   -- let HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] = value as headerStackValue
   -- if value' <: headerStackValue
   -- let HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] = value' as headerStackValue
   -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 12 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 13 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: structValue
   -- let STRUCT typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} = value as structValue
   -- if value' <: structValue
@@ -6361,7 +6372,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 13 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 14 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerValue
   -- let HEADER typeId_a `{ _b ';' fieldValue_a*{fieldValue_a <- fieldValue_a*} `} = value as headerValue
   -- if value' <: headerValue
@@ -6371,7 +6382,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 14 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 15 : (value, value') = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- if value <: headerUnionValue
   -- let HEADER_UNION typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} = value as headerUnionValue
   -- if value' <: headerUnionValue
@@ -6381,7 +6392,7 @@ def $bin_eq(value, value) : bool =
   -- if (|value_field_a*{value_field_a <- value_field_a*}| = |value_field_b*{value_field_b <- value_field_b*}|)
   -- if (|nameIR_field_a*{nameIR_field_a <- nameIR_field_a*}| = |nameIR_field_b*{nameIR_field_b <- nameIR_field_b*}|)
 
-  clause 15 : (value, value') = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
+  clause 16 : (value, value') = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- if enumValue matches `% . %`
@@ -6391,7 +6402,7 @@ def $bin_eq(value, value) : bool =
   -- if enumValue' matches `% . %`
   -- let typeId_b '.' nameIR_field_b = enumValue'
 
-  clause 16 : (value, value') = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
+  clause 17 : (value, value') = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
   -- if value <: enumValue
   -- let enumValue = value as enumValue
   -- if enumValue matches `% . % . %`
@@ -6401,7 +6412,7 @@ def $bin_eq(value, value) : bool =
   -- if enumValue' matches `% . % . %`
   -- let typeId_b '.' _nameIR' '.' value_field_b = enumValue'
 
-  clause 17 : (value, value') = true
+  clause 18 : (value, value') = true
   -- if value <: invalidHeaderValue
   -- let invalidHeaderValue = value as invalidHeaderValue
   -- if (invalidHeaderValue = '{#}')
