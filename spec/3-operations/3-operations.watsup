@@ -412,6 +412,9 @@ def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `])
 def $bin_eq(TUPLE `( value_a* `), TUPLE `( value_b* `))
   = |value_a*| = |value_b*|
     /\ $forall_($bin_eq(value_a, value_b)*)
+def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `))
+  = |value_a*| = |value_b*|
+    /\ $forall_($bin_eq(value_a, value_b)*)
 def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `])
   = |value_a*| = |value_b*|
     /\ $forall_($bin_eq(value_a, value_b)*)
@@ -589,8 +592,8 @@ dec $cast_bool(typeIR, boolValue) : value
 def $cast_bool(BOOL, _B b) = _B b
 def $cast_bool(BIT `< w `>, _B true) = w W 1
 def $cast_bool(BIT `< w `>, _B false) = w W 0
-def $cast_bool(TYPE _ typeIR, boolValue) = $cast_bool(typeIR, boolValue)
-def $cast_bool(SET `< typeIR `>, boolValue) = SET `{ $cast_bool(typeIR, boolValue) `}
+def $cast_bool(TYPE _ typeIR, boolValue) = $cast_op(typeIR, boolValue)
+def $cast_bool(SET `< typeIR `>, boolValue) = SET `{ $cast_op(typeIR, boolValue) `}
 
 def $cast_op(typeIR, boolValue) = $cast_bool(typeIR_unroll, boolValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
@@ -653,6 +656,11 @@ def $cast_error(SET `< typeIR `>, errorValue) = SET `{ $cast_op(typeIR, errorVal
 def $cast_op(typeIR, errorValue) = $cast_error(typeIR_unroll, errorValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
+;;; Cast from match kind
+
+def $cast_op(typeIR, MATCH_KIND '.' nameIR) = MATCH_KIND '.' nameIR
+  -- if MATCH_KIND = $unroll_typeIR(typeIR)
+
 ;;; Cast from string
 
 dec $cast_string(typeIR, stringValue) : value
@@ -684,6 +692,8 @@ dec $cast_tuple(typeIR, tupleValue) : value
 
 def $cast_tuple(TUPLE `< typeIR* `>, TUPLE `( value* `))
   = TUPLE `( $cast_op(typeIR, value)* `)
+def $cast_tuple(SET `< typeIR `>, tupleValue)
+  = SET `{ $cast_op(typeIR, tupleValue) `}
 
 def $cast_op(typeIR, tupleValue) = $cast_tuple(typeIR_unroll, tupleValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
@@ -744,6 +754,21 @@ def $cast_header(
 def $cast_op(typeIR, headerValue) = $cast_header(typeIR_unroll, headerValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
 
+;; Cast from header union
+
+dec $cast_header_union(typeIR, headerUnionValue) : value
+  hint(prose_in %1 "casted to type" %0)
+  hint(testgen_ignore)
+
+def $cast_header_union(
+    HEADER_UNION typeId `< _ `> `{ _ `},
+    HEADER_UNION typeId `{ (value_field nameIR_field ';')* `})
+  = HEADER_UNION typeId `{ (value_field nameIR_field ';')* `}
+
+def $cast_op(typeIR, headerUnionValue)
+  = $cast_header_union(typeIR_unroll, headerUnionValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+
 ;; Cast from enum field
 
 dec $cast_enum(typeIR, enumValue) : value
@@ -765,6 +790,8 @@ dec $cast_sequence(typeIR, sequenceValue) : value
   hint(prose_in %1 "casted to type" %0)
   hint(testgen_ignore)
 
+def $cast_sequence(SET `< typeIR `>, sequenceValue)
+  = SET `{ $cast_op(typeIR, sequenceValue) `}
 def $cast_sequence(LIST `< typeIR `>, SEQ `( value* `))
   = LIST `[ $cast_op(typeIR, value)* `]
 def $cast_sequence(TUPLE `< typeIR* `>, SEQ `( value* `))
