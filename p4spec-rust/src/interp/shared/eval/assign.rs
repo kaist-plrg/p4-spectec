@@ -84,7 +84,8 @@ pub fn assign_exp<Ctx: WriteContext>(
         }
         // Case: the arguments
         (ast::ExpKind::Case(not_exp), ValueKind::Case(value_case)) => {
-            let values = value_case.args().into_iter().copied().collect::<Vec<_>>();
+            let mut values = Vec::new();
+            value_case.iter(|value| values.push(*value));
             assign_case_exp(arena, ctx, not_exp, &values)
         }
         // Struct: the fields in order

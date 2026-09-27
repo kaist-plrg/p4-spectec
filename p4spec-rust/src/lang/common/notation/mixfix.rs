@@ -332,6 +332,41 @@ impl<T> Mixfix<T> {
         }
     }
 
+    /// Maps arguments in order, stopping at the first error and retaining atoms.
+    pub fn try_map<U, E>(
+        &self,
+        mut map_arg: impl FnMut(&T) -> Result<U, E>,
+    ) -> Result<Mixfix<U>, E> {
+        self.try_map_inner(&mut map_arg)
+    }
+
+    /// Maps this subtree with the same callback and early error propagation.
+    fn try_map_inner<U, E>(
+        &self,
+        map_arg: &mut impl FnMut(&T) -> Result<U, E>,
+    ) -> Result<Mixfix<U>, E> {
+        Ok(match self {
+            Self::Arg(arg) => Mixfix::Arg(map_arg(arg)?),
+            Self::Atom(atom) => Mixfix::Atom(atom.clone()),
+            Self::Brack(atom_l, mixfix, atom_r) => Mixfix::Brack(
+                atom_l.clone(),
+                Box::new(mixfix.try_map_inner(map_arg)?),
+                atom_r.clone(),
+            ),
+            Self::Infix(mixfix_l, atom, mixfix_r) => Mixfix::Infix(
+                Box::new(mixfix_l.try_map_inner(map_arg)?),
+                atom.clone(),
+                Box::new(mixfix_r.try_map_inner(map_arg)?),
+            ),
+            Self::Seq(mixfixes) => Mixfix::Seq(
+                mixfixes
+                    .iter()
+                    .map(|mixfix| mixfix.try_map_inner(map_arg))
+                    .collect::<Result<_, _>>()?,
+            ),
+        })
+    }
+
     /// Visits arguments from left to right.
     pub fn iter(&self, mut visit_arg: impl FnMut(&T)) {
         self.fold((), |(), arg| visit_arg(arg));

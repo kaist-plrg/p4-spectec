@@ -30,7 +30,7 @@ use crate::{
 
 use super::{arg::eval_args, iter, ops, path::eval_update_path};
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
     error::{EntityKind, Error, ErrorKind},
     util::{find_slot, find_var},
 };
@@ -270,13 +270,15 @@ fn eval_case_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     typ: &Rc<ast::TypKind>,
     not_exp: &ast::NotExp,
 ) -> Backtrack<Value> {
-    let mut values = Vec::new();
-    for exp in not_exp.args() {
-        values.push(unwrap!(eval_exp(runner_ctx, ctx, exp)));
-    }
-    // Refill the notation with the values in argument order
-    let mut values = values.into_iter();
-    let case = not_exp.map(|_| values.next().expect("each argument has an evaluated value"));
+    // Evaluate and rebuild in one traversal, preserving early failure and order
+    let case = match not_exp.try_map(|exp| match eval_exp(runner_ctx, ctx, exp) {
+        ok!(value) => Ok(value),
+        err!(errors) => Err(err!(errors)),
+        unmatch!(errors) => Err(unmatch!(errors)),
+    }) {
+        Ok(case) => case,
+        Err(result) => return result,
+    };
     let value = unwrap_from_result!(
         make::case(runner_ctx.arena_mut(), typ.clone(), case, Span::default()),
         span

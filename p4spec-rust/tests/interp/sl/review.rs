@@ -353,3 +353,38 @@ fn else_does_not_catch_an_unmatch_escaping_the_body() {
     let error = evaluate(vec![def_entry, func("miss", vec![fail()])], false);
     assert!(has_invocation(&error, "$miss"), "{error}");
 }
+
+#[test]
+fn case_arguments_stop_at_recoverable_failure_before_later_calls() {
+    let exp_call = |name| {
+        note_phrase!(
+            node: ast::ExpKind::Call(id(name), vec![], vec![]),
+            note: typ::make::nat().node, span: Span::default(),
+        )
+    };
+    let exp_case = note_phrase!(
+        node: ast::ExpKind::Case(Box::new(Mixfix::Seq(vec![
+            Mixfix::Arg(exp_call("mismatch")),
+            Mixfix::Arg(exp_call("must_not_be_called")),
+        ]))), note: typ::make::nat().node, span: Span::default(),
+    );
+    let exp_fallback = note_phrase!(
+        node: ast::ExpKind::Num(p4spec_rust::lang::common::prim::num::Number::Nat(7u64.into())),
+        note: typ::make::nat().node, span: Span::default(),
+    );
+    let instr = |exp| phrase!(node: ast::InstrKind::Return(ast::ReturnInstr { exp }), span: Span::default());
+    let spec = vec![
+        func("mismatch", vec![fail()]),
+        func("entry", vec![instr(exp_case), instr(exp_fallback)]),
+    ];
+    for det in [false, true] {
+        let mut runner = Runner::new(
+            Global::load(spec.clone()).unwrap(),
+            SlInterp::new(Config::new(false, det, false)),
+            p4spec_rust::interface::p4(&p4spec_rust::runner::Spec::Sl(vec![])),
+            NullExtern,
+        );
+        let value = runner.context().call_func("entry", &[], &[]).unwrap();
+        assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), "7");
+    }
+}
