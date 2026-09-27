@@ -8,7 +8,10 @@
 
 use std::fmt::{self, Write};
 
-use crate::lang::traits::print::{Print, Printer};
+use crate::{
+    lang::traits::print::{Print, Printer},
+    util::text::escape_text,
+};
 
 use super::ast::*;
 
@@ -21,7 +24,7 @@ impl<I: Print, V: Print> Print for Exp<I, V> {
         match &self.node.node {
             ExpKind::Bool(value) => write!(printer, "{value}"),
             ExpKind::Num(value) => value.print(printer),
-            ExpKind::Text(text) => write!(printer, "\"{}\"", escaped(text)),
+            ExpKind::Text(text) => write!(printer, "\"{}\"", escape_text(text)),
             ExpKind::Id(id) => id.print(printer),
             ExpKind::Un(op, _, exp) => {
                 op.print(printer)?;
@@ -974,23 +977,4 @@ impl<E: Print, V: Print> Print for Spec<E, V> {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         self.as_slice().print(printer)
     }
-}
-
-// == Helpers
-
-/// Escapes a text literal: quotes, backslashes, control bytes, and non-ASCII.
-fn escaped(text: &str) -> String {
-    text.bytes()
-        .map(|byte| match byte {
-            b'"' => "\\\"".into(),
-            b'\\' => "\\\\".into(),
-            8 => "\\b".into(),
-            9 => "\\t".into(),
-            10 => "\\n".into(),
-            13 => "\\r".into(),
-            // Printable ASCII passes through, other bytes as octal escapes
-            32..=126 => char::from(byte).to_string(),
-            _ => format!("\\{byte:03}"),
-        })
-        .collect()
 }

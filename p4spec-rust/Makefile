@@ -38,6 +38,10 @@ test-prose-unit:
 	$(CARGO) test --locked --test lang pl::
 	$(CARGO) test --locked --test pass prosify::
 
+.PHONY: test-adoc-unit test-adoc
+test-adoc-unit:
+	$(CARGO) test --locked --test backend-doc
+
 test-lang:
 	$(CARGO) test --test lang
 
@@ -85,6 +89,10 @@ test-diagnostics:
 test-diagnostics-promote:
 	UPDATE_EXPECT=1 $(DRIVER) diagnostics
 
+# Export fragments with $(DRIVER) adoc --output DIR for Asciidoctor validation
+test-adoc:
+	env -u UPDATE_EXPECT $(DRIVER) adoc
+
 test-run-al:
 	env -u UPDATE_EXPECT $(DRIVER) run-al
 
@@ -96,14 +104,15 @@ test-run-pl:
 	env -u UPDATE_EXPECT $(DRIVER) run-pl
 	env -u UPDATE_EXPECT $(DRIVER) run-pl --det
 
-test-expected: test-p4parse test-elab test-algo test-structure test-prose test-run-al test-run-sl test-run-pl test-diagnostics
+test-expected: test-p4parse test-elab test-algo test-structure test-prose test-adoc test-run-al test-run-sl test-run-pl test-diagnostics
 
-# Rerun elab/algo/prose and update snapshots; does not approve a previous run
+# Rerun elab/algo/prose/adoc and update snapshots; does not approve a previous run
 # P4 parser/structure/AL expected and excludes are never promoted
 test-promote:
 	UPDATE_EXPECT=1 $(DRIVER) elab
 	UPDATE_EXPECT=1 $(DRIVER) algo
 	UPDATE_EXPECT=1 $(DRIVER) prose
+	UPDATE_EXPECT=1 $(DRIVER) adoc
 
 # Native simulation uses source-derived expectations in both cached modes
 .PHONY: test-sim-al test-sim-sl test-sim-pl

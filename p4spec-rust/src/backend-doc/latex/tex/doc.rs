@@ -11,7 +11,7 @@
 //! Doc::gathered([Gap, Line(x), Gap, Gap, Line(y)])     -> Gathered([Line(x), Gap, Line(y)])
 //! ```
 
-use crate::backend::latex::error::{Error, Result};
+use crate::backend_doc::latex::error::{Error, Result};
 use num_bigint::BigInt;
 
 // == Document model
@@ -170,7 +170,7 @@ pub(crate) enum Symbol {
     RightBrace,
 }
 
-/// Identifies a local HTML anchor validated by `target_of_string`.
+/// Identifies a local HTML anchor validated by `Target::of_string`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct Target(pub(super) String);
 

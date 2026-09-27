@@ -16,7 +16,7 @@
 //! `Aligned` and `Grid` columns iterate until their widths stop changing.
 
 use super::{doc::*, link, width as measure};
-use crate::backend::latex::error::{Error, Result};
+use crate::backend_doc::latex::error::{Error, Result};
 
 // == Resolution state
 //
@@ -58,33 +58,36 @@ impl Place {
 
 // - Resolved lines
 //
-//   doc_of_lines([x, y])           -> LeftStack([x, y])
-//   concat_lines([a, b], [c, d])   -> [a, Concat([b, c]), d]
-//   doc_of_indent(5)               -> Concat([Quad, Quad, Space])
+//   Doc::of_lines([x, y])            -> LeftStack([x, y])
+//   LeftStack([x, y]).into_lines()   -> [x, y]
+//   concat_lines([a, b], [c, d])     -> [a, Concat([b, c]), d]
+//   Doc::of_indent(5)                -> Concat([Quad, Quad, Space])
 
-/// Builds continuation indentation from quads and an optional space.
-fn doc_of_indent(column_next: usize) -> Doc {
-    let mut docs = vec![Doc::Quad; column_next / 2];
-    if !column_next.is_multiple_of(2) {
-        docs.push(Doc::Space);
+impl Doc {
+    /// Builds continuation indentation from quads and an optional space.
+    fn of_indent(column_next: usize) -> Doc {
+        let mut docs = vec![Doc::Quad; column_next / 2];
+        if !column_next.is_multiple_of(2) {
+            docs.push(Doc::Space);
+        }
+        Doc::concat(docs)
     }
-    Doc::concat(docs)
-}
 
-/// Exposes concrete left-stack rows while retaining other wrappers.
-fn lines_of_doc(doc: Doc) -> Vec<Doc> {
-    match doc {
-        Doc::LeftStack(docs) => docs,
-        doc => vec![doc],
+    /// Exposes concrete left-stack rows while retaining other wrappers.
+    fn into_lines(self) -> Vec<Doc> {
+        match self {
+            Doc::LeftStack(docs) => docs,
+            doc => vec![doc],
+        }
     }
-}
 
-/// Collapses zero or one resolved lines without filtering empty rows.
-fn doc_of_lines(mut docs: Vec<Doc>) -> Doc {
-    match docs.len() {
-        0 => Doc::Empty,
-        1 => docs.pop().unwrap(),
-        _ => Doc::LeftStack(docs),
+    /// Collapses zero or one resolved lines without filtering empty rows.
+    fn of_lines(mut docs: Vec<Doc>) -> Doc {
+        match docs.len() {
+            0 => Doc::Empty,
+            1 => docs.pop().unwrap(),
+            _ => Doc::LeftStack(docs),
+        }
     }
 }
 
@@ -312,10 +315,10 @@ fn resolve_atom(doc: &Doc) -> Doc {
 fn resolve_concat(place: Place, docs: &[Doc]) -> Doc {
     let resolve = |place: Place, doc: &Doc| {
         let doc = resolve_doc(place, doc);
-        lines_of_doc(doc)
+        doc.into_lines()
     };
     let lines = resolve_concat_lines(Mode::Flat, place, docs, resolve);
-    doc_of_lines(lines)
+    Doc::of_lines(lines)
 }
 
 // - Groups
@@ -439,7 +442,7 @@ fn resolve_layout_group(place: Place, doc: &Doc) -> Doc {
     let width_flat = place.column + measure::flat(doc) + place.width_suffix;
     let mode = if width_flat <= place.width { Mode::Flat } else { Mode::Broken };
     let lines = resolve_in_mode(mode, place, doc);
-    doc_of_lines(lines)
+    Doc::of_lines(lines)
 }
 
 // - Nested documents
@@ -471,7 +474,7 @@ fn resolve_fill(place: Place, indent: usize, separator: &Doc, docs: &[Doc]) -> D
     let width_suffix_head = if docs.is_empty() { place.width_suffix } else { 0 };
     let place_head = Place { width_suffix: width_suffix_head, ..place };
     let doc_head = resolve_doc(place_head, doc_head);
-    let mut lines = lines_of_doc(doc_head);
+    let mut lines = doc_head.into_lines();
     let width_separator = measure::flat(separator);
     // Overflow starts a fresh indented line and drops the separator
     for (idx, doc) in docs.iter().enumerate() {
@@ -485,22 +488,22 @@ fn resolve_fill(place: Place, indent: usize, separator: &Doc, docs: &[Doc]) -> D
             let place_doc = Place { column: column_doc, width_suffix, ..place };
             let doc = resolve_doc(place_doc, doc);
             let doc = Doc::concat(vec![separator.clone(), doc]);
-            let lines_doc = lines_of_doc(doc);
+            let lines_doc = doc.into_lines();
             lines = concat_lines(lines, lines_doc);
             continue;
         }
         // Start a new line at the continuation column
         let place_doc = Place { column: place.column_next, width_suffix, ..place };
         let doc = resolve_doc(place_doc, doc);
-        let mut lines_doc = lines_of_doc(doc);
+        let mut lines_doc = doc.into_lines();
         if let Some(line_head) = lines_doc.first_mut() {
-            let doc_indent = doc_of_indent(place.column_next);
+            let doc_indent = Doc::of_indent(place.column_next);
             let doc_head = std::mem::replace(line_head, Doc::Empty);
             *line_head = Doc::concat(vec![doc_indent, doc_head]);
         }
         lines.extend(lines_doc);
     }
-    doc_of_lines(lines)
+    Doc::of_lines(lines)
 }
 // - Aligned documents
 //
@@ -709,7 +712,7 @@ fn resolve_in_mode(mode: Mode, place: Place, doc: &Doc) -> Vec<Doc> {
 /// Resolves a document in one mode and collapses its lines into one document.
 fn resolve_single_in_mode(mode: Mode, place: Place, doc: &Doc) -> Doc {
     let lines = resolve_in_mode(mode, place, doc);
-    doc_of_lines(lines)
+    Doc::of_lines(lines)
 }
 
 // - Concatenated documents
@@ -846,7 +849,7 @@ fn resolve_soft_break_in_mode(mode: Mode, place: Place, soft: Soft) -> Vec<Doc> 
         (Mode::Flat, Soft::SoftCut) => vec![Doc::Empty],
         (Mode::Flat, Soft::SoftSpace) => vec![Doc::Space],
         (Mode::Broken, _) => {
-            let doc_indent = doc_of_indent(place.column_next);
+            let doc_indent = Doc::of_indent(place.column_next);
             vec![Doc::Empty, doc_indent]
         }
     }
@@ -858,7 +861,7 @@ fn resolve_soft_break_in_mode(mode: Mode, place: Place, soft: Soft) -> Vec<Doc> 
 
 fn resolve_layout_group_in_mode(place: Place, doc: &Doc) -> Vec<Doc> {
     let doc = resolve_layout_group(place, doc);
-    lines_of_doc(doc)
+    doc.into_lines()
 }
 
 // - Nested documents

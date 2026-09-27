@@ -1,7 +1,7 @@
 //! Semantic TeX documents and their interpretation
 //!
 //! ```text
-//! renderer::tex_of_def   EL def -> Doc      soft breaks still undecided
+//! Doc::of_def            EL def -> Doc      soft breaks still undecided
 //! layout::resolve        Doc    -> Doc      breaks fixed at a line width
 //! serialize::to_string   Doc    -> String   TeX text
 //! ```

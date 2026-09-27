@@ -847,3 +847,22 @@ fn test_table_row_keeps_group_alternatives_separate() {
         }) if blocks.len() == 2
     ));
 }
+
+#[test]
+fn test_membership_guard_with_call_can_fail() {
+    let span_case = span("case", 1);
+    let exp_set = exp_call("a", exp_bool(true, span_case.clone()), span_case.clone());
+    let instr = p4spec_rust::phrase! {
+        node: sl::InstrKind::Case(sl::CaseInstr {
+            exp: exp_var("x", span_case.clone()),
+            cases: vec![sl::Case {
+                guard: sl::Guard::Mem(exp_set),
+                block: vec![return_instr(true, span_case.clone())],
+            }],
+            dangle: true,
+        }),
+        span: span_case,
+    };
+    let def_func_pl = converted_func(vec![instr]);
+    assert_eq!(def_func_pl.block[0].node.note, Some(pl::Fallthrough::Fail));
+}

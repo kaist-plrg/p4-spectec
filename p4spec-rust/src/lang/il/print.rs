@@ -8,9 +8,12 @@
 
 use std::fmt::{self, Write};
 
-use crate::lang::{
-    common::prim::num,
-    traits::print::{Print, Printer},
+use crate::{
+    lang::{
+        common::prim::num,
+        traits::print::{Print, Printer},
+    },
+    util::text::escape_text,
 };
 
 use super::ast::*;
@@ -153,7 +156,7 @@ fn write_value_with(
     match arena.kind(value) {
         ValueKind::Bool(value) => write!(output, "{value}"),
         ValueKind::Num(value) => value.print(output),
-        ValueKind::Text(text) => output.write_str(&escaped(text)),
+        ValueKind::Text(text) => output.write_str(&escape_text(text)),
         // Empty structs stay on one line
         ValueKind::Struct(fields) if fields.is_empty() => output.write_str("{}"),
         // Short form: field count only
@@ -238,7 +241,7 @@ impl<I: Print, V: Print> Print for Exp<I, V> {
         match &self.node {
             ExpKind::Bool(value) => write!(printer, "{value}"),
             ExpKind::Num(value) => value.print(printer),
-            ExpKind::Text(text) => write!(printer, "\"{}\"", escaped(text)),
+            ExpKind::Text(text) => write!(printer, "\"{}\"", escape_text(text)),
             ExpKind::Id(id) => id.print(printer),
             ExpKind::Un(op, _, exp) => {
                 op.print(printer)?;
@@ -900,21 +903,4 @@ impl Print for Spec {
 /// Two spaces per level.
 fn indent(level: usize) -> String {
     "  ".repeat(level)
-}
-
-/// Escapes a text literal: quotes, backslashes, control bytes, and non-ASCII.
-fn escaped(text: &str) -> String {
-    text.bytes()
-        .map(|byte| match byte {
-            b'"' => "\\\"".into(),
-            b'\\' => "\\\\".into(),
-            8 => "\\b".into(),
-            9 => "\\t".into(),
-            10 => "\\n".into(),
-            13 => "\\r".into(),
-            // Printable ASCII passes through, other bytes as octal escapes
-            32..=126 => char::from(byte).to_string(),
-            _ => format!("\\{byte:03}"),
-        })
-        .collect()
 }

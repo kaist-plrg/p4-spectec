@@ -13,3 +13,4 @@ pub mod eq;
 pub mod free;
 pub mod has_call;
 pub mod print;
+pub mod rule_group;

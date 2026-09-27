@@ -1,11 +1,11 @@
 //! Calls contained in prose-language syntax
 //!
-//! Expressions and paths collect located calls in preorder,
+//! Expressions, paths, and case guards collect located calls in preorder,
 //! including calls nested in arguments and update paths.
 
 use crate::lang::traits::has_call::HasCall;
 
-use super::ast::{ArgKind, Exp, ExpKind, Path, PathKind};
+use super::ast::{ArgKind, Exp, ExpKind, Guard, Path, PathKind};
 
 // == Expressions
 
@@ -85,6 +85,22 @@ impl HasCall for Path {
                 .chain(exp_len.nested_call())
                 .collect(),
             PathKind::Dot(path, _) => path.nested_call(),
+        }
+    }
+}
+
+// == Guards
+
+impl HasCall for Guard {
+    type Exp = Exp;
+
+    fn nested_call(&self) -> Vec<&Self::Exp> {
+        match self {
+            Guard::Bool(_) | Guard::Sub(..) | Guard::Match(_) => vec![],
+            Guard::Cmp(_, _, exp)
+            | Guard::Mem(exp)
+            | Guard::CheckLetSub(_, _, exp)
+            | Guard::CheckLetMatch(_, exp) => exp.nested_call(),
         }
     }
 }

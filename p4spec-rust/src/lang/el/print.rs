@@ -6,9 +6,12 @@
 
 use std::fmt::{self, Write};
 
-use crate::lang::{
-    common::prim::num,
-    traits::print::{Print, Printer},
+use crate::{
+    lang::{
+        common::prim::num,
+        traits::print::{Print, Printer},
+    },
+    util::text::escape_text,
 };
 
 use super::ast::*;
@@ -183,7 +186,7 @@ impl Print for Exp {
                 write!(printer, "0x{}", num.as_bigint().to_str_radix(16).to_uppercase())
             }
             ExpKind::Num(_, num) => num.print(printer),
-            ExpKind::Text(text) => write!(printer, "\"{}\"", escaped(text)),
+            ExpKind::Text(text) => write!(printer, "\"{}\"", escape_text(text)),
             ExpKind::Id(id) => printer.write_str(&id.node),
             ExpKind::Un(op, exp) => {
                 op.print(printer)?;
@@ -331,7 +334,7 @@ impl Print for Exp {
                 printer.write_str("##")?;
                 exp.print(printer)
             }
-            ExpKind::Latex(text) => write!(printer, "latex({})", escaped(text)),
+            ExpKind::Latex(text) => write!(printer, "latex({})", escape_text(text)),
         }
     }
 }
@@ -703,23 +706,4 @@ impl Print for Spec {
         }
         Ok(())
     }
-}
-
-// == Helpers
-
-/// Escapes a text literal: quotes, backslashes, control bytes, and non-ASCII.
-fn escaped(text: &str) -> String {
-    text.bytes()
-        .map(|byte| match byte {
-            b'"' => "\\\"".into(),
-            b'\\' => "\\\\".into(),
-            8 => "\\b".into(),
-            9 => "\\t".into(),
-            10 => "\\n".into(),
-            13 => "\\r".into(),
-            // Printable ASCII passes through, other bytes as octal escapes
-            32..=126 => char::from(byte).to_string(),
-            _ => format!("\\{byte:03}"),
-        })
-        .collect()
 }

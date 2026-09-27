@@ -12,7 +12,10 @@
 
 use std::collections::HashMap;
 
-use crate::lang::{pl::ast as pl, traits::has_call::HasCall};
+use crate::lang::{
+    pl::{ast as pl, rule_group},
+    traits::has_call::HasCall,
+};
 
 /// Failure destination by rule-group name.
 type Fallthroughs = HashMap<String, pl::Fallthrough>;
@@ -26,7 +29,7 @@ fn can_fail_instr(instr: &pl::Instr<pl::GroupInstr>) -> bool {
         // Holds and checked lets always may fail
         pl::InstrKind::Hold(..) => true,
         pl::InstrKind::Case(pl::CaseInstr { exp, cases, .. }) => {
-            exp.has_call() || cases.iter().any(can_fail_case)
+            exp.has_call() || cases.iter().any(|case| case.guard.has_call())
         }
         pl::InstrKind::Let(pl::LetInstr { exp_r, .. }) => exp_r.has_call(),
         pl::InstrKind::Debug(pl::DebugInstr { exp })
@@ -49,21 +52,6 @@ fn can_fail_group_instr(instr: &pl::GroupInstr) -> bool {
         }
         pl::GroupInstr::Return(pl::ReturnInstr { exp }) => exp.has_call(),
         pl::GroupInstr::Backtrack(_) => false,
-    }
-}
-
-/// Whether an arm's guard can fail.
-fn can_fail_case(case: &pl::Case<pl::GroupInstr>) -> bool {
-    can_fail_guard(&case.guard)
-}
-
-/// Whether a guard can fail: only when it evaluates an expression with a call.
-fn can_fail_guard(guard: &pl::Guard) -> bool {
-    match guard {
-        pl::Guard::Bool(_) | pl::Guard::Sub(..) | pl::Guard::Match(_) | pl::Guard::Mem(_) => false,
-        pl::Guard::Cmp(_, _, exp)
-        | pl::Guard::CheckLetSub(_, _, exp)
-        | pl::Guard::CheckLetMatch(_, exp) => exp.has_call(),
     }
 }
 
@@ -354,48 +342,6 @@ fn stamp_defined_rel_def(mut def_rel: pl::DefinedRel) -> pl::DefinedRel {
     def_rel
 }
 
-/// Collects nested rule-group identifiers in depth-first source order.
-fn collect_ids_group<'a>(block: &'a pl::DispatchBlock, ids_group: &mut Vec<&'a pl::Id>) {
-    for instr in block {
-        match &instr.node.node {
-            pl::InstrKind::If(pl::IfInstr { block, .. }) => {
-                collect_ids_group(block, ids_group);
-            }
-            pl::InstrKind::Hold(pl::HoldInstr { hold_case, .. }) => match hold_case {
-                pl::HoldCase::Both(block_hold, block_not_hold) => {
-                    collect_ids_group(block_hold, ids_group);
-                    collect_ids_group(block_not_hold, ids_group);
-                }
-                pl::HoldCase::Hold(block, _) | pl::HoldCase::NotHold(block, _) => {
-                    collect_ids_group(block, ids_group);
-                }
-            },
-            pl::InstrKind::Case(pl::CaseInstr { cases, .. }) => {
-                for case in cases {
-                    collect_ids_group(&case.block, ids_group);
-                }
-            }
-            pl::InstrKind::CheckLetSub(pl::CheckLetSubInstr { block, .. })
-            | pl::InstrKind::CheckLetMatch(pl::CheckLetMatchInstr { block, .. })
-            | pl::InstrKind::OptionGet(pl::OptionGetInstr { block, .. }) => {
-                collect_ids_group(block, ids_group);
-            }
-            pl::InstrKind::Tier(pl::TierInstr {
-                tier: pl::DispatchInstr::Route(pl::RouteInstr { blocks }),
-            }) => {
-                for block in blocks {
-                    collect_ids_group(block, ids_group);
-                }
-            }
-            // A rule group is a destination; everything else only nests
-            pl::InstrKind::Tier(pl::TierInstr {
-                tier: pl::DispatchInstr::Group(pl::RuleGroupInstr { id_group, .. }),
-            }) => ids_group.push(id_group),
-            pl::InstrKind::Let(_) | pl::InstrKind::Debug(_) | pl::InstrKind::Destruct(_) => {}
-        }
-    }
-}
-
 /// Maps each rule group to the group tried after it fails.
 ///
 /// Groups are gathered per route arm; an arm falls through to the first group
@@ -418,8 +364,11 @@ fn collect_fallthroughs(
     let mut fallthrough = fallthrough_final;
     let mut ids_group_by_block = Vec::new();
     for block in blocks {
-        let mut ids_group = Vec::new();
-        collect_ids_group(block, &mut ids_group);
+        let rule_groups = rule_group::collect_rule_groups(block);
+        let ids_group: Vec<&pl::Id> = rule_groups
+            .iter()
+            .map(|rule_group| rule_group.id_group)
+            .collect();
         if !ids_group.is_empty() {
             ids_group_by_block.push(ids_group);
         }
