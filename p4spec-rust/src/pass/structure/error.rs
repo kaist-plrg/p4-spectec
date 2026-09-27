@@ -1,69 +1,65 @@
-//! Typed failures produced during algorithm structuring
+//! Reports for source-reachable structuring limitations
 //!
-//! A `StructureError` pairs a stable `StructureErrorKind` with a source span.
-//! Kinds cover premise shapes the pass rejects, anti-unification of inputs,
-//! totalization of case analyses, and duplicate definitions while loading.
-
-use thiserror::Error;
+//! Validated AL establishes the internal shape and binding invariants.
+//! Cross-clause unifier collisions, template population, type operations,
+//! and extending total cases can still fail on validated source inputs.
 
 use crate::{
-    lang::common::source::Span,
-    runtime::ops::typ::{TypeError, TypeErrorKind},
+    diagnostic::{Diagnostic, Label, Report, Severity},
+    lang::common::{Id, source::Span},
+    runtime::ops::typ::TypeError,
 };
 
-/// Stable semantic category of a structuring failure.
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
-pub enum StructureErrorKind {
-    #[error("parameter and input argument do not match")]
-    IncompatibleParameterArgument,
-    #[error("an if premise should not have bindings")]
-    UnexpectedIfBindings,
-    #[error("an if holds premise should not have bindings")]
-    UnexpectedIfHoldBindings,
-    #[error("an if not holds premise should not have bindings")]
-    UnexpectedIfNotHoldBindings,
-    #[error("cannot totalize a non-variant type")]
-    NonVariantTotalization,
-    #[error("hold has no branches")]
-    EmptyHold,
-    #[error("total case analysis has no remaining branches")]
-    EmptyTotalCase,
-    #[error("cannot anti-unify expressions")]
-    Antiunification,
-    #[error("cannot populate anti-unified expressions")]
-    TemplatePopulation,
-    #[error("arity mismatch: expected {expected}, got {actual}")]
-    ArityMismatch { expected: usize, actual: usize },
-    #[error("incompatible anti-unification arguments")]
-    IncompatibleArguments,
-    #[error("identifier is unified in more than one input position")]
-    ConflictingUnification,
-    #[error("input hint operation failed: {0}")]
-    Input(crate::lang::hints::input::InputError),
-    #[error("type was already defined")]
-    DuplicateType,
-    #[error("meta-variable was already defined")]
-    DuplicateMetavariable,
-    #[error("type operation failed: {0}")]
-    Type(TypeErrorKind),
+/// Names a structuring report without adding a wrapper.
+pub type StructureError = Box<Report>;
+
+/// Creates a structuring diagnostic at the operation's source location.
+fn cause(code: &str, message: impl Into<String>, span: &Span) -> StructureError {
+    Box::new(
+        Diagnostic::new(
+            "structure",
+            Severity::Error,
+            Some(code.to_owned()),
+            message,
+            vec![Label::primary(span, "")],
+            vec![],
+        )
+        .into(),
+    )
 }
 
-/// A structuring failure paired with its source span.
-#[derive(Clone, Debug, Error, PartialEq, Eq)]
-#[error("{kind} at {span}")]
-pub struct StructureError {
-    pub kind: StructureErrorKind,
-    pub span: Span,
+const INPUT_UNIFICATION_CONFLICTING: &str = "structure/input-unification-conflicting";
+
+/// Reports an identifier generalized in more than one input position.
+pub(super) fn input_unification_conflicting(id: &Id) -> StructureError {
+    cause(
+        INPUT_UNIFICATION_CONFLICTING,
+        format!("cannot unify identifier `{}` in more than one input position", id.node),
+        &id.span,
+    )
 }
 
-impl StructureError {
-    pub(crate) fn new(kind: StructureErrorKind, span: Span) -> Self {
-        Self { kind, span }
-    }
+const INPUT_TEMPLATE_UNSUPPORTED: &str = "structure/input-template-unsupported";
+
+/// Reports an input whose generated template cannot recover its bindings.
+pub(super) fn input_template_unsupported(span: &Span) -> StructureError {
+    cause(INPUT_TEMPLATE_UNSUPPORTED, "cannot populate the shared input template", span)
 }
 
-impl From<TypeError> for StructureError {
-    fn from(error: TypeError) -> Self {
-        Self::new(StructureErrorKind::Type(error.kind), error.span)
-    }
+const TYPE_OPERATION_INVALID: &str = "structure/type-operation-invalid";
+
+/// Promotes a type operation failure without losing its original location.
+pub(super) fn type_operation_invalid(error: TypeError) -> StructureError {
+    cause(TYPE_OPERATION_INVALID, format!("type operation failed: {}", error.kind), &error.span)
+}
+
+const CASE_EXTENSION_UNSUPPORTED: &str = "structure/case-extension-unsupported";
+
+/// Reports a guard that cannot be added to an already total case analysis.
+pub(super) fn case_extension_unsupported(span: &Span) -> StructureError {
+    cause(
+        CASE_EXTENSION_UNSUPPORTED,
+        "cannot extend a total case analysis with another branch",
+        span,
+    )
 }

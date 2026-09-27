@@ -20,7 +20,7 @@ pub(super) fn optimize(
     block: Block,
     without_rule_groups: bool,
 ) -> Result<Block, StructureError> {
-    let block = pre::optimize(block, without_rule_groups)?;
+    let block = pre::optimize(block, without_rule_groups);
     let block = r#loop::optimize(tdenv, block)?;
     post::optimize(tdenv, block)
 }

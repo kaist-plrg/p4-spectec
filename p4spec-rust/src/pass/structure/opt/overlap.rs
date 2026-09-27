@@ -11,12 +11,9 @@
 //! disjoint conditions may leave cases uncovered.
 //! Fuzzy means the analysis cannot decide whether the conditions overlap.
 
-use crate::pass::structure::error::{StructureError, StructureErrorKind};
+use crate::pass::structure::error::{self, StructureError};
 use crate::{
-    lang::{
-        common::prim::bool as boolop, common::source::Span, il::ast::*, sl::ast::Guard,
-        traits::eq::SyntaxEq,
-    },
+    lang::{common::prim::bool as boolop, il::ast::*, sl::ast::Guard, traits::eq::SyntaxEq},
     runtime::{envs::algo::TDEnv, ops::typ::expand_typ, typdef::TypeDef},
 };
 
@@ -176,7 +173,7 @@ pub(crate) fn overlap_exp(
             ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b
             && exp_a_l.syntax_eq(exp_b_l)
-            && disjoint_exp_literal(exp_a_r, exp_b_r)? =>
+            && disjoint_exp_literal(exp_a_r, exp_b_r) =>
         {
             Ok(Overlap::Disjoint {
                 exp: exp_a_l.as_ref().clone(),
@@ -190,7 +187,7 @@ pub(crate) fn overlap_exp(
             ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b
             && exp_a_l.syntax_eq(exp_b_r)
-            && disjoint_exp_literal(exp_a_r, exp_b_l)? =>
+            && disjoint_exp_literal(exp_a_r, exp_b_l) =>
         {
             Ok(Overlap::Disjoint {
                 exp: exp_a_l.as_ref().clone(),
@@ -257,7 +254,7 @@ pub(crate) fn overlap_exp(
             for exp_a in exps_a {
                 for exp_b in exps_b {
                     // x in [1, 2] vs x in [2, 3] -> Fuzzy
-                    if !disjoint_exp_literal(exp_a, exp_b)? {
+                    if !disjoint_exp_literal(exp_a, exp_b) {
                         return Ok(Overlap::Fuzzy);
                     }
                 }
@@ -281,7 +278,7 @@ pub(crate) fn typ_as_variant(
     typ: &Typ,
 ) -> Result<Option<Vec<Mixop>>, StructureError> {
     // Only a defined variant type has constructors
-    let typ_unrolled = expand_typ(tdenv, typ)?;
+    let typ_unrolled = expand_typ(tdenv, typ).map_err(error::type_operation_invalid)?;
     let TypKind::Var(id, _) = &typ_unrolled.node else {
         return Ok(None);
     };
@@ -454,14 +451,14 @@ fn partition_exp_literal(exp_a: &Exp, exp_b: &Exp) -> bool {
 // - Disjointness
 
 /// Checks whether two literal expressions can never be equal.
-fn disjoint_exp_literal(exp_a: &Exp, exp_b: &Exp) -> Result<bool, StructureError> {
+fn disjoint_exp_literal(exp_a: &Exp, exp_b: &Exp) -> bool {
     match (&exp_a.node, &exp_b.node) {
         // true vs false -> disjoint
-        (ExpKind::Bool(bool_a), ExpKind::Bool(bool_b)) => Ok(bool_a != bool_b),
+        (ExpKind::Bool(bool_a), ExpKind::Bool(bool_b)) => bool_a != bool_b,
         // 1 vs 2 -> disjoint
-        (ExpKind::Num(num_a), ExpKind::Num(num_b)) => Ok(num_a != num_b),
+        (ExpKind::Num(num_a), ExpKind::Num(num_b)) => num_a != num_b,
         // "a" vs "b" -> disjoint
-        (ExpKind::Text(text_a), ExpKind::Text(text_b)) => Ok(text_a != text_b),
+        (ExpKind::Text(text_a), ExpKind::Text(text_b)) => text_a != text_b,
         // UpCast(T, 1) vs UpCast(T, 2) -> compare 1 and 2
         (ExpKind::UpCast(typ_a, exp_a), ExpKind::UpCast(typ_b, exp_b))
             if typ_a.syntax_eq(typ_b) =>
@@ -472,47 +469,38 @@ fn disjoint_exp_literal(exp_a: &Exp, exp_b: &Exp) -> Result<bool, StructureError
         (ExpKind::Tuple(exps_a), ExpKind::Tuple(exps_b)) => disjoint_exps_literal(
             &exps_a.iter().collect::<Vec<_>>(),
             &exps_b.iter().collect::<Vec<_>>(),
-            &exp_a.span,
         ),
         // A(1) vs B(1) -> disjoint; A(1) vs A(2) -> compare arguments
         (ExpKind::Case(notexp_a), ExpKind::Case(notexp_b)) => {
             if !notexp_a.eq_shape(notexp_b) {
-                return Ok(true);
+                return true;
             }
             let exps_a = notexp_a.args();
             let exps_b = notexp_b.args();
-            disjoint_exps_literal(&exps_a, &exps_b, &exp_a.span)
+            disjoint_exps_literal(&exps_a, &exps_b)
         }
         // [] vs [1] -> disjoint by length; [1] vs [2] -> compare elements
         (ExpKind::List(exps_a), ExpKind::List(exps_b)) => {
             if exps_a.len() != exps_b.len() {
-                return Ok(true);
+                return true;
             }
             let exps_a = exps_a.iter().collect::<Vec<_>>();
             let exps_b = exps_b.iter().collect::<Vec<_>>();
-            disjoint_exps_literal(&exps_a, &exps_b, &exp_a.span)
+            disjoint_exps_literal(&exps_a, &exps_b)
         }
         // x vs y -> unknown, so not proven disjoint
-        _ => Ok(false),
+        _ => false,
     }
 }
 
 /// Checks literal lists pairwise; one disjoint position suffices.
-fn disjoint_exps_literal(
-    exps_a: &[&Exp],
-    exps_b: &[&Exp],
-    span: &Span,
-) -> Result<bool, StructureError> {
-    if exps_a.len() != exps_b.len() {
-        return Err(StructureError::new(
-            StructureErrorKind::ArityMismatch { expected: exps_a.len(), actual: exps_b.len() },
-            span.clone(),
-        ));
-    }
+fn disjoint_exps_literal(exps_a: &[&Exp], exps_b: &[&Exp]) -> bool {
+    // Typed tuples, matching mixfix shapes, and checked list lengths agree
+    assert_eq!(exps_a.len(), exps_b.len(), "validated literal arity");
     for (exp_a, exp_b) in exps_a.iter().zip(exps_b) {
-        if disjoint_exp_literal(exp_a, exp_b)? {
-            return Ok(true);
+        if disjoint_exp_literal(exp_a, exp_b) {
+            return true;
         }
     }
-    Ok(false)
+    false
 }

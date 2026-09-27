@@ -837,3 +837,21 @@ fn test_transformation_commands_keep_warnings_before_algorithmic_failure() {
     }
     std::fs::remove_file(path).unwrap();
 }
+
+#[test]
+fn test_structuring_failures_render_source_locations() {
+    for command in ["struct", "prose"] {
+        let output = binary()
+            .arg(command)
+            .arg(fixture("structure/crossed-inputs.watsup"))
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stdout.is_empty());
+        let text = String::from_utf8(output.stderr).unwrap();
+        assert!(text.contains("error[structure/input-unification-conflicting]"), "{text}");
+        assert!(text.contains("crossed-inputs.watsup:5:16"), "{text}");
+        assert!(text.contains("def $f((x, y), pair) = x"), "{text}");
+        assert!(text.contains("^^^^"), "{text}");
+    }
+}

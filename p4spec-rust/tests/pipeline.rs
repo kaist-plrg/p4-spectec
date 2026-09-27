@@ -180,3 +180,22 @@ fn transformations_return_no_warnings_on_frontend_failure() {
         assert!(warnings.is_empty());
     }
 }
+
+#[test]
+fn transformations_preserve_structuring_reports_and_prior_warnings() {
+    let paths =
+        [fixture("structure/definitions.watsup"), fixture("structure/crossed-inputs.watsup")];
+    for (result, warnings) in [
+        print_spec(p4spec_rust::structure_with_warnings(&paths, true)),
+        print_spec(p4spec_rust::structure_with_warnings(&paths, false)),
+        print_spec(p4spec_rust::prosify_with_warnings(&paths)),
+    ] {
+        assert_eq!(warnings.len(), 2);
+        let Error::Structure(report) = result.unwrap_err() else { panic!("structuring failure") };
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("diagnostic cause") };
+        assert_eq!(diagnostic.code.as_deref(), Some("structure/input-unification-conflicting"));
+        assert_eq!(diagnostic.source, "structure");
+        assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), paths[1].to_str().unwrap());
+        assert_eq!(diagnostic.labels[0].span.left.line, 5);
+    }
+}

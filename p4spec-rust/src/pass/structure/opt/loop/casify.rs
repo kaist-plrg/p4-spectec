@@ -24,7 +24,7 @@ use std::collections::VecDeque;
 use crate::{
     lang::{common::source::Span, traits::eq::SyntaxEq},
     pass::structure::{
-        StructureError, StructureErrorKind,
+        StructureError, error,
         ol::ast::*,
         opt::{
             merge::merge_block,
@@ -291,7 +291,7 @@ fn casify_if_then_case(
     }
     // A total Case cannot take a new branch
     if *total {
-        return Err(StructureError::new(StructureErrorKind::EmptyTotalCase, span_case.clone()));
+        return Err(error::case_extension_unsupported(span_case));
     }
     let mut cases = std::mem::take(cases);
     let block = std::mem::take(block_target);
@@ -421,7 +421,7 @@ fn find_case_merge<'a>(
     }
     // A total Case cannot take a new branch
     if total_target {
-        return Err(StructureError::new(StructureErrorKind::EmptyTotalCase, span_target.clone()));
+        return Err(error::case_extension_unsupported(span_target));
     }
     Ok(Some(guards_len))
 }
