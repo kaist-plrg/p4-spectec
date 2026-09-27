@@ -3,7 +3,7 @@
 //! Layouts resolve names and iterator paths during preparation.
 //! Execution uses slots;
 //! a reserved slot stays unbound until an assignment writes its value.
-//! Frames share their value vector until one is written.
+//! Frames share their fixed-size value slice until one is written.
 
 use std::{collections::HashMap, rc::Rc};
 
@@ -106,8 +106,8 @@ fn iter_index(iter: Iter) -> usize {
 pub struct Frame {
     /// Layout the slots follow.
     layout: Rc<FrameLayout>,
-    /// Slot values, shared until written.
-    values: Rc<Vec<Option<Value>>>,
+    /// Slot values in one allocation, shared until written.
+    values: Rc<[Option<Value>]>,
 }
 
 impl Frame {
@@ -115,7 +115,7 @@ impl Frame {
 
     /// An all-unbound frame for the layout.
     pub fn new(layout: Rc<FrameLayout>) -> Self {
-        let values = Rc::new(vec![None; layout.len()]);
+        let values = std::iter::repeat_n(None, layout.len()).collect();
         Self { layout, values }
     }
 

@@ -679,3 +679,34 @@ fn slot_recognition_distinguishes_identity_iterations_from_computed_bodies() {
     assert_eq!(find_slot(&ctx, &exp), Some(var.slot));
     assert_eq!(find_slot(&ctx, &exp_other), None);
 }
+
+#[test]
+fn frame_snapshots_isolate_writes_and_wipe_all_bindings() {
+    use p4spec_rust::lang::data::value::{ValueArena, make};
+    let mut layout = FrameLayout::default();
+    let vars: Vec<_> = (0..64)
+        .map(|idx| layout.resolve_var(variable(&format!("x{idx}"), vec![])))
+        .collect();
+    let mut frame = Frame::new(Rc::new(layout));
+    let mut arena = ValueArena::new();
+    let value_a = make::bool(&mut arena, false, Span::default()).unwrap();
+    let value_b = make::bool(&mut arena, true, Span::default()).unwrap();
+    for var in &vars {
+        frame.set(var.slot, value_a);
+    }
+    let mut frame_branch = frame.clone();
+    for var in &vars {
+        frame_branch.set(var.slot, value_b);
+    }
+    let frame_empty = frame_branch.wipe();
+    for var in &vars {
+        assert_eq!(frame.get(var.slot), Some(&value_a));
+        assert_eq!(frame_branch.get(var.slot), Some(&value_b));
+        assert_eq!(frame_empty.get(var.slot), None);
+    }
+    assert!(
+        Frame::new(Rc::new(FrameLayout::default()))
+            .layout()
+            .is_empty()
+    );
+}
