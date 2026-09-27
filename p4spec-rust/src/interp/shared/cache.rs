@@ -4,7 +4,9 @@
 //! Public entries clear the memo tables;
 //! active effect frames survive reentry and propagate taint back to callers.
 
-use std::collections::HashMap;
+use std::collections::hash_map::RandomState;
+use hashbrown::{Equivalent, HashMap};
+use std::hash::{Hash, Hasher};
 
 use crate::lang::data::value::{CanonId, Value, ValueArena, ValueKind};
 
@@ -27,20 +29,70 @@ impl CallKey {
     }
 }
 
+/// A borrowed call lookup that canonicalizes arguments without allocating.
+struct CallQuery<'a> {
+    arena: &'a ValueArena,
+    name: &'a str,
+    values: &'a [Value],
+}
+
+impl Hash for CallQuery<'_> {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        // Match CallKey's derived hash, including the argument slice length
+        self.name.hash(hasher);
+        self.values.len().hash(hasher);
+        for value in self.values {
+            self.arena.canon_id(value).hash(hasher);
+        }
+    }
+}
+
+impl Equivalent<CallKey> for CallQuery<'_> {
+    fn equivalent(&self, key: &CallKey) -> bool {
+        self.name == key.name
+            && self.values.len() == key.values.len()
+            && self
+                .values
+                .iter()
+                .zip(&key.values)
+                .all(|(value, id)| self.arena.canon_id(value) == *id)
+    }
+}
+
 // = Call cache
 
 /// Memoized call results and the stack of active invocation effect frames.
 #[derive(Default)]
 pub struct Cache {
     /// Function results by call.
-    pub(crate) funcs: HashMap<CallKey, Value>,
+    pub(crate) funcs: HashMap<CallKey, Value, RandomState>,
     /// Relation outputs by call.
-    pub(crate) rels: HashMap<CallKey, Vec<Value>>,
+    pub(crate) rels: HashMap<CallKey, Vec<Value>, RandomState>,
     /// One flag per active invocation: whether it had a side effect so far.
     effects: Vec<bool>,
 }
 
 impl Cache {
+    /// Looks up a function without allocating an owned call key.
+    pub(crate) fn find_func(
+        &self,
+        arena: &ValueArena,
+        name: &str,
+        values: &[Value],
+    ) -> Option<&Value> {
+        self.funcs.get(&CallQuery { arena, name, values })
+    }
+
+    /// Looks up a relation without allocating an owned call key.
+    pub(crate) fn find_rel(
+        &self,
+        arena: &ValueArena,
+        name: &str,
+        values: &[Value],
+    ) -> Option<&Vec<Value>> {
+        self.rels.get(&CallQuery { arena, name, values })
+    }
+
     // - Lifecycle
 
     /// Drops memoized results; effect frames survive.
@@ -69,5 +121,37 @@ impl Cache {
         let side_effected = self.effects.pop().expect("active invocation frame");
         self.mark_effect(side_effected);
         !side_effected
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lang::{
+        common::source::{Position, Span},
+        data::value::make,
+    };
+
+    #[test]
+    fn borrowed_calls_match_canonical_arguments_and_preserve_name_and_order() {
+        let mut arena = ValueArena::new();
+        let value_a = make::bool(&mut arena, true, Span::default()).unwrap();
+        let value_b = make::bool(&mut arena, false, Span::default()).unwrap();
+        let span = Span::new(Position::new("other", 2, 0), Position::new("other", 2, 1));
+        let value_annotated = make::bool(&mut arena, true, span).unwrap();
+        let mut cache = Cache::default();
+        cache
+            .funcs
+            .insert(CallKey::new(&arena, "f", &[value_a, value_b]), value_b);
+        assert_eq!(cache.find_func(&arena, "f", &[value_annotated, value_b]), Some(&value_b));
+        assert_eq!(cache.find_func(&arena, "g", &[value_a, value_b]), None);
+        assert_eq!(cache.find_func(&arena, "f", &[value_b, value_a]), None);
+        assert_eq!(cache.find_func(&arena, "f", &[value_a]), None);
+        cache
+            .funcs
+            .insert(CallKey::new(&arena, "zero", &[]), value_a);
+        assert_eq!(cache.find_func(&arena, "zero", &[]), Some(&value_a));
+        cache.clear();
+        assert_eq!(cache.find_func(&arena, "zero", &[]), None);
     }
 }

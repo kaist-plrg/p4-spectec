@@ -194,14 +194,17 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     let mut traces_pending: Vec<(Span, TraceErrorKind)> = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let key = cache_rel(runner_ctx, ctx, &id)
-            .then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
-        if let Some(values) = key
-            .as_ref()
-            .and_then(|key| runner_ctx.interp().cache.rels.get(key))
+        let cache = cache_rel(runner_ctx, ctx, &id);
+        if cache
+            && let Some(values) =
+                runner_ctx
+                    .interp()
+                    .cache
+                    .find_rel(runner_ctx.arena(), &id.node, &values)
         {
             return ok!(values.clone());
         }
+        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
         // Track effects for memoization; grow the stack for deep recursion
         runner_ctx.interp_mut().cache.begin();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
@@ -362,14 +365,17 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     let mut traces_pending: Vec<(Span, TraceErrorKind)> = Vec::new();
     loop {
         // Serve from the cache when eligible
-        let key = cache_func(runner_ctx, ctx, &id, &values)
-            .then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
-        if let Some(value) = key
-            .as_ref()
-            .and_then(|key| runner_ctx.interp().cache.funcs.get(key))
+        let cache = cache_func(runner_ctx, ctx, &id, &values);
+        if cache
+            && let Some(value) =
+                runner_ctx
+                    .interp()
+                    .cache
+                    .find_func(runner_ctx.arena(), &id.node, &values)
         {
             return ok!(*value);
         }
+        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
         // Track effects for memoization; grow the stack for deep recursion
         runner_ctx.interp_mut().cache.begin();
         let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
