@@ -10,7 +10,7 @@
 //! Renderer, layout, and serializer call these in that order.
 
 use super::doc::*;
-use crate::backend_doc::latex::error::{Error, Result};
+use crate::backend_specdoc::latex::error::{Error, Result};
 
 // == Targets
 //

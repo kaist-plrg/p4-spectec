@@ -1,5 +1,5 @@
 use p4spec_rust::{
-    backend_doc::adoc::el::render_def,
+    backend_specdoc::adoc::el::render_def,
     lang::{
         common::source::Span,
         el::ast::{self, DefKind, ExpKind},

@@ -40,7 +40,7 @@ test-prose-unit:
 
 .PHONY: test-adoc-unit test-adoc
 test-adoc-unit:
-	$(CARGO) test --locked --test backend-doc
+	$(CARGO) test --locked --test backend-specdoc
 
 test-lang:
 	$(CARGO) test --test lang

@@ -11,7 +11,7 @@
 //! Doc::gathered([Gap, Line(x), Gap, Gap, Line(y)])     -> Gathered([Line(x), Gap, Line(y)])
 //! ```
 
-use crate::backend_doc::latex::error::{Error, Result};
+use crate::backend_specdoc::latex::error::{Error, Result};
 use num_bigint::BigInt;
 
 // == Document model

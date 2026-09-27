@@ -16,7 +16,7 @@
 //! `Aligned` and `Grid` columns iterate until their widths stop changing.
 
 use super::{doc::*, link, width as measure};
-use crate::backend_doc::latex::error::{Error, Result};
+use crate::backend_specdoc::latex::error::{Error, Result};
 
 // == Resolution state
 //
