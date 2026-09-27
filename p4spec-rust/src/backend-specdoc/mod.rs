@@ -2,3 +2,4 @@
 
 pub mod adoc;
 pub mod latex;
+pub mod splicer;
