@@ -22,6 +22,8 @@ use crate::lang::{
 pub struct FrameLayout {
     /// Slot of each name under its iteration path.
     slots: HashMap<(String, Vec<Iter>), SlotIdx>,
+    /// Optional and list transitions indexed by the inner slot.
+    slots_iter: Vec<[Option<SlotIdx>; 2]>,
 }
 
 impl FrameLayout {
@@ -39,8 +41,28 @@ impl FrameLayout {
 
     /// The slot for a key, allocating the next one when the key is new.
     fn reserve(&mut self, key: (String, Vec<Iter>)) -> SlotIdx {
-        let slot_next = SlotIdx(self.slots.len());
-        *self.slots.entry(key).or_insert(slot_next)
+        // Reuse slots without changing their iteration transitions
+        if let Some(slot) = self.slots.get(&key) {
+            return *slot;
+        }
+        let slot = SlotIdx(self.slots.len());
+        // Link children that were registered before their parent
+        let mut slots_iter = [None; 2];
+        for (idx, iter) in [Iter::Opt, Iter::List].into_iter().enumerate() {
+            let mut key_outer = key.clone();
+            key_outer.1.push(iter);
+            slots_iter[idx] = self.slots.get(&key_outer).copied();
+        }
+        self.slots_iter.push(slots_iter);
+        // Link a parent that was registered before this child
+        let mut key_inner = key.clone();
+        if let Some(iter) = key_inner.1.pop()
+            && let Some(slot_inner) = self.slots.get(&key_inner)
+        {
+            self.slots_iter[slot_inner.0][iter_index(iter)] = Some(slot);
+        }
+        self.slots.insert(key, slot);
+        slot
     }
 
     /// Resolves a plain identifier to its slot.
@@ -55,15 +77,25 @@ impl FrameLayout {
         VarSlot { slot, var }
     }
 
+    /// Resolves one prepared iteration transition without hashing names.
+    pub fn find_iter_slot(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
+        self.slots_iter[slot.0][iter_index(iter)]
+            .expect("iterated binding is resolved during preparation")
+    }
+
     /// The slot of `var` one iteration deeper, resolved during preparation.
     pub fn find_iter_var(&self, var: &VarSlot, iter: Iter) -> VarSlot {
-        let mut var = var.var.clone();
+        let var_inner = var;
+        let mut var = var_inner.var.clone();
         var.iters.push(iter);
-        let slot = *self
-            .slots
-            .get(&(var.id.node.clone(), var.iters.clone()))
-            .expect("iterated binding is resolved during preparation");
-        VarSlot { slot, var }
+        VarSlot { slot: self.find_iter_slot(var_inner.slot, iter), var }
+    }
+}
+
+fn iter_index(iter: Iter) -> usize {
+    match iter {
+        Iter::Opt => 0,
+        Iter::List => 1,
     }
 }
 

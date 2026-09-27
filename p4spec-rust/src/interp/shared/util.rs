@@ -4,7 +4,7 @@
 //! variable; `iterate_vars` computes the slots one iteration outward.
 
 use super::{context::ReadContext, prepare::ast};
-use crate::lang::data::var::VarSlot;
+use crate::lang::data::var::{SlotIdx, VarSlot};
 
 /// Finds the slot-backed variable represented by a simple iterated expression.
 pub fn find_var(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<VarSlot> {
@@ -39,4 +39,22 @@ pub fn iterate_vars(ctx: &impl ReadContext, vars: &[ast::Var], iter: ast::Iter) 
     vars.iter()
         .map(|var| ctx.find_iter_var(var, iter))
         .collect()
+}
+
+/// Recognizes identity iterations using prepared slots without cloning syntax.
+pub fn find_slot(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<SlotIdx> {
+    match &exp.node {
+        // A plain variable already has its slot
+        ast::ExpKind::Id(id) => Some(id.slot),
+        // Matching slots imply the same name and the same iteration path
+        ast::ExpKind::Iter(exp_inner, ast::ExpIter { iter, vars }) => {
+            let [var] = vars.as_slice() else {
+                return None;
+            };
+            let slot = find_slot(ctx, exp_inner)?;
+            (slot == var.slot).then(|| ctx.find_iter_slot(var, *iter))
+        }
+        // Computed expressions require normal iteration evaluation
+        _ => None,
+    }
 }

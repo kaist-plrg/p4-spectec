@@ -52,6 +52,11 @@ pub trait ReadContext {
     /// Finds the slot of `var` under one more iteration `iter`.
     fn find_iter_var(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
 
+    /// Finds the prepared slot under one more iteration.
+    fn find_iter_slot(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
+        self.find_iter_var(var, iter).slot
+    }
+
     // == Types
 
     /// Finds a type definition by id, if any.
@@ -338,6 +343,10 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
 
     fn find_value(&self, slot: SlotIdx) -> Option<&Value> {
         self.local.frame.get(slot)
+    }
+
+    fn find_iter_slot(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
+        self.local.frame.layout().find_iter_slot(var.slot, iter)
     }
 
     fn find_iter_var(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {

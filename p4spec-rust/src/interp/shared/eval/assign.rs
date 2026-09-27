@@ -33,7 +33,7 @@ use crate::{
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result},
     error::{CallErrorKind, EntityKind, Error, ErrorKind},
-    util::find_var,
+    util::find_slot,
 };
 
 // = Type parameter assignment
@@ -273,8 +273,8 @@ fn assign_iter_exp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<Ctx> {
     // A bare iterated variable binds as a whole
-    if let Some(var) = find_var(&ctx, exp) {
-        ctx.add_value(var.slot, value);
+    if let Some(slot) = find_slot(&ctx, exp) {
+        ctx.add_value(slot, value);
         return ok!(ctx);
     }
     // Otherwise assign each element in a sub-context and gather per variable

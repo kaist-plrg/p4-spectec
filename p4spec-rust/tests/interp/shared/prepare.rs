@@ -313,7 +313,7 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
 fn iterated_variable_lookup_requires_matching_single_binders() {
     use p4spec_rust::interp::{
         al::context::{Context, Global},
-        shared::util::find_var,
+        shared::util::{find_slot, find_var},
     };
     let global = Global::load(vec![]).unwrap();
     for vars in [
@@ -327,6 +327,7 @@ fn iterated_variable_lookup_requires_matching_single_binders() {
         let exp_prepared = exp_source.clone().prepare(&mut layout);
         let ctx = Context::new(&global).localize_with_layout(&layout.into());
         assert!(find_var(&ctx, &exp_prepared).is_none());
+        assert!(find_slot(&ctx, &exp_prepared).is_none());
     }
     let exp_source = note_phrase!(
         node: il_source::ExpKind::Bool(true),
@@ -339,6 +340,7 @@ fn iterated_variable_lookup_requires_matching_single_binders() {
     let exp_prepared = exp_source.prepare(&mut layout);
     let ctx = Context::new(&global).localize_with_layout(&layout.into());
     assert!(find_var(&ctx, &exp_prepared).is_none());
+    assert!(find_slot(&ctx, &exp_prepared).is_none());
 }
 
 #[test]
@@ -628,4 +630,52 @@ fn binding_list_equality_preserves_paths_and_duplicate_counts() {
         let vars_r = vars_r.prepare(&mut layout_r);
         assert_eq!(vars_l.syntax_eq(&vars_r), equal);
     }
+}
+
+#[test]
+fn iteration_slots_resolve_in_either_registration_order() {
+    use p4spec_rust::lang::common::Iter::{List, Opt};
+    for reverse in [false, true] {
+        let mut layout = FrameLayout::default();
+        let mut iters = vec![vec![], vec![List], vec![Opt], vec![List, Opt]];
+        if reverse {
+            iters.reverse();
+        }
+        for iters in iters {
+            layout.resolve_var(variable("x", iters));
+        }
+        let var = layout.resolve_var(variable("x", vec![]));
+        let var_list = layout.resolve_var(variable("x", vec![List]));
+        let var_opt = layout.resolve_var(variable("x", vec![Opt]));
+        let var_list_opt = layout.resolve_var(variable("x", vec![List, Opt]));
+        assert_eq!(layout.find_iter_slot(var.slot, List), var_list.slot);
+        assert_eq!(layout.find_iter_slot(var.slot, Opt), var_opt.slot);
+        assert_eq!(layout.find_iter_slot(var_list.slot, Opt), var_list_opt.slot);
+        assert_eq!(layout.len(), 4);
+    }
+}
+
+#[test]
+fn slot_recognition_distinguishes_identity_iterations_from_computed_bodies() {
+    use p4spec_rust::interp::{al::context, shared::util::find_slot};
+    let exp = iter_expression(
+        iter_expression(expression("x", 7), il_source::Iter::Opt, vec![variable("x", vec![])], 8),
+        il_source::Iter::List,
+        vec![variable("x", vec![il_source::Iter::Opt])],
+        9,
+    );
+    let mut layout = FrameLayout::default();
+    let exp = exp.prepare(&mut layout);
+    let var = layout.resolve_var(variable("x", vec![il_source::Iter::Opt, il_source::Iter::List]));
+    let exp_other = iter_expression(
+        expression("y", 10),
+        il_source::Iter::List,
+        vec![variable("x", vec![])],
+        11,
+    )
+    .prepare(&mut layout);
+    let global = context::Global::load(vec![]).unwrap();
+    let ctx = context::Context::new(&global).localize_with_layout(&Rc::new(layout));
+    assert_eq!(find_slot(&ctx, &exp), Some(var.slot));
+    assert_eq!(find_slot(&ctx, &exp_other), None);
 }
