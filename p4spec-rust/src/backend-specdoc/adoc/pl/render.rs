@@ -3068,6 +3068,32 @@ impl<'a> Renderer<'a> {
     //   syntax rec = {LEFT nat, RIGHT nat}   -> None
     //   extern relation Oracle: nat ~> nat   -> Some("xref:Oracle[Oracle: ``nat`` ``+~>+`` ``%``]")
 
+    /// Renders a function or relation title without its defined body.
+    pub fn render_title(&mut self, def: &pl::Def) -> Option<String> {
+        let block = match &def.node.node {
+            pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
+                Self::render_extern_rel_def(&def.hints, rel)
+            }
+            pl::DefKind::Rel(pl::RelDef::Defined(rel)) => Self::render_rel_title_block(
+                &def.hints,
+                &rel.id,
+                &rel.rel_signature,
+                &rel.exps_input,
+            ),
+            pl::DefKind::MetaFunc(pl::MetaFuncDef::Extern(func)) => {
+                Self::render_extern_func_def(&def.hints, func)
+            }
+            pl::DefKind::MetaFunc(pl::MetaFuncDef::Builtin(func)) => {
+                Self::render_builtin_func_def(&def.hints, func)
+            }
+            pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => {
+                Self::render_func_header_block(&def.hints, &func.id, &func.tparams, &func.params)
+            }
+            _ => return None,
+        };
+        Some(serialize::ser_block(self.anchor, &block))
+    }
+
     /// Renders a definition with counters shared by other document fragments.
     pub fn render_def(&mut self, def: &pl::Def) -> Option<String> {
         let block = match &def.node.node {

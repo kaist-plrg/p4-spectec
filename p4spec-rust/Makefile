@@ -38,9 +38,12 @@ test-prose-unit:
 	$(CARGO) test --locked --test lang pl::
 	$(CARGO) test --locked --test pass prosify::
 
-.PHONY: test-adoc-unit test-adoc
+.PHONY: test-adoc-unit test-adoc test-splice-unit
 test-adoc-unit:
-	$(CARGO) test --locked --test backend-specdoc
+	$(CARGO) test --locked --test backend-specdoc adoc::
+
+test-splice-unit:
+	$(CARGO) test --locked --test backend-specdoc splicer::
 
 test-lang:
 	$(CARGO) test --test lang

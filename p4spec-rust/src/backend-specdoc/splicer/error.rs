@@ -5,8 +5,11 @@
 
 use std::path::PathBuf;
 
-use crate::{diagnostic::{Diagnostic, Label, Report, Severity}, lang::common::source::Span};
 use super::super::latex;
+use crate::{
+    diagnostic::{Diagnostic, Label, Report, Severity},
+    lang::common::source::Span,
+};
 
 // == Error
 
@@ -34,6 +37,9 @@ impl Error {
 
 /// Collects a splice warning without choosing an output stream.
 pub(super) fn warn(warnings: &mut Vec<Report>, span: &Span, message: String) {
-    let labels = if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, "splice marker")] };
-    warnings.push(Diagnostic::new("splice", Severity::Warning, None, message, labels, Vec::new()).into());
+    let labels =
+        if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, "splice marker")] };
+    warnings.push(
+        Diagnostic::new("splice", Severity::Warning, None, message, labels, Vec::new()).into(),
+    );
 }

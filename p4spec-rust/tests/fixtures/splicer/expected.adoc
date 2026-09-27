@@ -1,0 +1,220 @@
+= Splicer fixture
+
+한글 remains unchanged.
+${unknown: retained}
+
+++++
+<span id="opaque"></span>
+<span id="flag"></span>
+++++
+[source,bison]
+----
+extern syntax opaque
+
+flag
+    : off | on
+    ;
+----
+ifdef::backend-html5[]
+.Click to view the specification source
+[%collapsible]
+====
+[source,watsup]
+----
+extern relation External:
+  flag ~> flag
+
+relation Check:
+  flag ~> flag
+----
+====
+
+[.empty]
+--
+
+
+--
+
+endif::[]
+++++
+<span id="relation_latex_External"></span>
+<span id="relation_latex_Check"></span>
+++++
+ifdef::backend-html5[]
+[latexmath]
+++++
+\begin{gathered}
+\mathrm{External} : \mathsf{flag} \hookrightarrow \mathsf{flag} \quad \text{external} \\
+\mathrm{Check} : \mathsf{flag} \hookrightarrow \mathsf{flag}
+\end{gathered}
+++++
+endif::[]
+++++
+<span id="relation_prose_External"></span>
+<span id="relation_prose_Check"></span>
+++++
+[.sidebar-title]
+****
+xref:relation_prose_External[External: ``f`` ``+~>+`` ``%``]
+
+xref:relation_prose_Check[Check: ``f`` ``+~>+`` ``%``]
+****
+****
+. +++<span id="Check-else"></span>+++Otherwise:
+ .. xref:relation_prose_Check[``f`` ``+~>+`` ``%``]: the result is ``f``.
+****
+ifdef::backend-html5[]
+.Click to view the specification source
+[%collapsible]
+====
+[source,watsup]
+----
+rule Check/on:
+  ON ~> ON
+----
+====
+
+[.empty]
+--
+
+
+--
+
+endif::[]
+ifdef::backend-html5[]
+[latexmath]
+++++
+\begin{gathered}
+\begin{array}{l}
+{\definecolor{ellatexrulelabelbg}{rgb}{0.94,0.94,0.92}\fcolorbox{black}{ellatexrulelabelbg}{\scriptsize \texttt{Check-on}}} \\
+{\displaystyle \frac{}{\mathsf{ON} \hookrightarrow \mathsf{ON}}}
+\end{array}
+\end{gathered}
+++++
+endif::[]
+++++
+<span id="Check-value"></span>
+++++
+****
+xref:relation_prose_Check[``+ON+`` ``+~>+`` ``%``]:
+ the result is ``+ON+``.
+****
+****
+Check dispatch:
+
+. Let!~type~ ``on`` be ``f``.
+. Goto xref:Check-value[value]
+****
+ifdef::backend-html5[]
+.Click to view the specification source
+[%collapsible]
+====
+[source,watsup]
+----
+extern dec $external(flag) : flag
+
+builtin dec $text_to_int(text) : nat
+
+dec $identity(flag) : flag
+----
+====
+
+[.empty]
+--
+
+
+--
+
+endif::[]
+++++
+<span id="function_latex_external"></span>
+<span id="function_latex_text_to_int"></span>
+<span id="function_latex_identity"></span>
+++++
+ifdef::backend-html5[]
+[latexmath]
+++++
+\begin{gathered}
+\mathrm{external}\left(\mathsf{flag}\right) : \mathsf{flag} \quad \text{external} \\
+\mathrm{text\_to\_int}\left(\mathbb{T}\right) : \mathbb{N} \quad \text{builtin} \\
+\mathrm{identity}\left(\mathsf{flag}\right) : \mathsf{flag}
+\end{gathered}
+++++
+endif::[]
+++++
+<span id="function_prose_external"></span>
+<span id="function_prose_text_to_int"></span>
+<span id="function_prose_identity"></span>
+++++
+[.sidebar-title]
+****
+xref:function_prose_external[$external(f)]
+
+xref:function_prose_text_to_int[$text_to_int(text)]
+
+xref:function_prose_identity[$identity(f)]
+****
+ifdef::backend-html5[]
+.Click to view the specification source
+[%collapsible]
+====
+[source,watsup]
+----
+def $identity(ON) = ON
+
+def $identity(f) = f
+  -- otherwise
+----
+====
+
+[.empty]
+--
+
+
+--
+
+endif::[]
+ifdef::backend-html5[]
+[latexmath]
+++++
+\begin{gathered}
+\begin{array}{lcl}
+\mathrm{identity}\left(\mathsf{ON}\right) & = & \mathsf{ON} \\[1ex]
+\mathrm{identity}\left(\mathsf{f}\right) & = & \mathsf{f} \quad \text{if}\,\mathrm{otherwise}
+\end{array}
+\end{gathered}
+++++
+endif::[]
+****
+xref:function_prose_identity[$identity(f)]
+
+. Let!~type~ ``on`` be ``f``.+++<sub class="bk-mark">[<a href="#identity-else">→ ⋅</a>]</sub>+++
+. Return ``+ON+``.
+
+. +++<span id="identity-else"></span>+++Otherwise: return ``f``.
+****
+tbl def $is_on =
+  | ON => true
+  | OFF => false
+
+ifdef::backend-html5[]
+[latexmath]
+++++
+\begin{gathered}
+\begin{aligned}
+\mathrm{is\_on}\left(\mathsf{ON}\right) & \mapsto & \mathsf{true} \\
+\mathrm{is\_on}\left(\mathsf{OFF}\right) & \mapsto & \mathsf{false}
+\end{aligned}
+\end{gathered}
+++++
+endif::[]
+$is_on(f):
+[cols="2", options="header"]
+|===
+| (``f``) | Result 
+
+| +ON+ | true
+| +OFF+ | false
+
+|===
+

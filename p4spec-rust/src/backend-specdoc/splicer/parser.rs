@@ -10,14 +10,21 @@ use super::{error::Error, source::Source};
 
 /// Consumes an exact prefix and leaves mismatches untouched.
 pub fn parse_string(source: &mut Source<'_>, text: &str) -> bool {
-    if source.remaining().starts_with(text) { source.advn(text.len()); true } else { false }
+    if source.remaining().starts_with(text) {
+        source.advn(text.len());
+        true
+    } else {
+        false
+    }
 }
 
 // == Whitespace parsing
 
 /// Consumes spaces, tabs, and newlines accepted by the marker grammar.
 pub fn parse_space(source: &mut Source<'_>) {
-    while matches!(source.get(), Some(b' ' | b'\t' | b'\n')) { source.advn(1); }
+    while matches!(source.get(), Some(b' ' | b'\t' | b'\n')) {
+        source.advn(1);
+    }
 }
 
 // == Splice anchor parsing
@@ -34,7 +41,9 @@ fn parse_id(source: &mut Source<'_>) -> Result<String, Error> {
     let text = source.remaining();
     let len = text.bytes().take_while(|ch| matches!(ch, b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'_' | b'\'' | b'`' | b'-' | b'*' | b'.')).count();
     // Empty identifiers fail at the first unexpected byte
-    if len == 0 { return Err(Error::Identifier(source.span())); }
+    if len == 0 {
+        return Err(Error::Identifier(source.span()));
+    }
     source.advn(len);
     Ok(text[..len].to_owned())
 }
@@ -47,7 +56,9 @@ pub fn parse_ids(source: &mut Source<'_>) -> Result<Vec<String>, Error> {
     // Preserve identifier order and repetitions
     loop {
         parse_space(source);
-        if parse_string(source, "}") { return Ok(ids); }
+        if parse_string(source, "}") {
+            return Ok(ids);
+        }
         ids.push(parse_id(source)?);
     }
 }
