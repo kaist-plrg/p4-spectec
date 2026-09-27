@@ -5,13 +5,15 @@ use crate::{
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 use p4spec_rust::{
-    interface::p4::{error::P4ErrorKind, parse::parse_file},
+    interface::p4::{error::P4ErrorKind, parse::parse_string, preprocessor::preprocess},
     runner::{self, BuiltinInterface, Config, Interpreter, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::{
     fs,
     path::{Path, PathBuf},
+    sync::mpsc,
+    thread,
     time::Instant,
 };
 
@@ -112,48 +114,81 @@ where
     let mut runner = build_runner()?;
     let includes = vec![PathBuf::from("p4c/p4include")];
     fs::read_dir(&includes[0])?;
+    // Preprocess upcoming files while the runner parses and evaluates in order
+    let paths_preprocess: Vec<_> = suites
+        .iter()
+        .flat_map(|suite| {
+            suite.paths.iter().filter(|path| {
+                !suite.use_excludes || !path.to_str().is_some_and(|path| excludes.contains(path))
+            })
+        })
+        .cloned()
+        .collect();
     let progress = ProgressBar::new(collected as u64).with_style(
         ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
             .map_err(|error| Error::Invalid(error.to_string()))?,
     );
     let mut executed = 0;
     let mut passed = 0;
-    for suite in &mut suites {
-        for path in &suite.paths {
-            progress.set_message(path.display().to_string());
-            let excluded =
-                suite.use_excludes && path.to_str().is_some_and(|path| excludes.contains(path));
-            let outcome = if excluded {
-                Outcome::Exclude
-            } else {
-                // Reset before parsing: no value may cross this program boundary
-                runner.reset();
-                fs::File::open(path)?;
-                let outcome = match parse_file(runner.arena_mut(), &includes, path) {
-                    Ok(program) => match runner.eval_program(suite.id_relation, program) {
-                        Ok(_) => Outcome::Pass,
-                        Err(_) => Outcome::Fail,
-                    },
-                    Err(error) => match error.kind {
-                        P4ErrorKind::Lex(_) | P4ErrorKind::Syntax => Outcome::Fail,
-                        _ => {
-                            return Err(Error::Invalid(format!(
+    thread::scope(|scope| -> Result<()> {
+        let (sender, receiver) = mpsc::sync_channel(2);
+        scope.spawn(move || {
+            for path in paths_preprocess {
+                let source = preprocess(&includes, &path).map_err(|error| error.to_string());
+                if sender.send(source).is_err() {
+                    break;
+                }
+            }
+        });
+        for suite in &mut suites {
+            for path in &suite.paths {
+                progress.set_message(path.display().to_string());
+                let excluded =
+                    suite.use_excludes && path.to_str().is_some_and(|path| excludes.contains(path));
+                let outcome = if excluded {
+                    Outcome::Exclude
+                } else {
+                    // Reset before parsing: no value may cross this program boundary
+                    runner.reset();
+                    fs::File::open(path)?;
+                    let source = receiver
+                        .recv()
+                        .map_err(|error| {
+                            Error::Invalid(format!("preprocessor worker stopped: {error}"))
+                        })?
+                        .map_err(|error| {
+                            Error::Invalid(format!(
                                 "{}: test execution error: {error}",
                                 path.display()
-                            )));
-                        }
-                    },
+                            ))
+                        })?;
+                    let outcome = match parse_string(runner.arena_mut(), path, &source) {
+                        Ok(program) => match runner.eval_program(suite.id_relation, program) {
+                            Ok(_) => Outcome::Pass,
+                            Err(_) => Outcome::Fail,
+                        },
+                        Err(error) => match error.kind {
+                            P4ErrorKind::Lex(_) | P4ErrorKind::Syntax => Outcome::Fail,
+                            _ => {
+                                return Err(Error::Invalid(format!(
+                                    "{}: test execution error: {error}",
+                                    path.display()
+                                )));
+                            }
+                        },
+                    };
+                    executed += 1;
+                    if outcome == Outcome::Pass {
+                        passed += 1;
+                    }
+                    outcome
                 };
-                executed += 1;
-                if outcome == Outcome::Pass {
-                    passed += 1;
-                }
-                outcome
-            };
-            suite.results.record(path, outcome)?;
-            progress.inc(1);
+                suite.results.record(path, outcome)?;
+                progress.inc(1);
+            }
         }
-    }
+        Ok(())
+    })?;
     progress.finish_with_message("complete");
     eprintln!(
         "{text_mode}: collected={collected} excluded={excluded} executed={executed} pass={passed} fail={} elapsed={:.3}s",
