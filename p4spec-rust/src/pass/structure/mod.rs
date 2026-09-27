@@ -25,13 +25,9 @@ use crate::lang::{al::ast as al, sl::ast as sl};
 
 // == Entry point
 
-/// Converts validated algorithmic definitions, removing rule groups if requested.
+/// Converts AL definitions into SL, removing rule groups if requested.
 ///
-/// The input must come from elaboration followed by algorithmic conversion.
-/// Those passes establish declaration uniqueness, argument shapes, input hints,
-/// and premise bindings; violating that contract may panic.
-/// Reports describe input unification and optimization limitations that remain
-/// reachable after validation. Executable IR admission belongs to the runner.
+/// Requires input from elaboration followed by algorithmic conversion.
 pub fn convert(spec_al: al::Spec, without_rule_groups: bool) -> Result<sl::Spec, StructureError> {
     transform::struct_spec(spec_al, without_rule_groups)
 }
