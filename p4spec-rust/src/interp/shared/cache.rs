@@ -4,7 +4,7 @@
 //! Public entries clear the memo tables;
 //! active effect frames survive reentry and propagate taint back to callers.
 
-use std::collections::hash_map::RandomState;
+use foldhash::fast::RandomState;
 use hashbrown::{Equivalent, HashMap};
 use std::hash::{Hash, Hasher};
 

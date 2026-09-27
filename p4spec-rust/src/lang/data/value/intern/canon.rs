@@ -6,12 +6,12 @@
 //! but share a canonical ID when that comparison ignores spans.
 
 use std::{
-    collections::hash_map::RandomState,
     fmt,
     hash::{BuildHasher, Hash, Hasher},
     num::TryFromIntError,
 };
 
+use foldhash::fast::RandomState;
 use hashbrown::HashTable;
 
 use super::{idx::Interned, simple::Interner};
@@ -102,7 +102,7 @@ impl<T> Default for CanonInterner<T> {
             storage: Interner::new(),
             canon: Vec::new(),
             canon_table: HashTable::new(),
-            canon_hasher: RandomState::new(),
+            canon_hasher: RandomState::default(),
         }
     }
 }

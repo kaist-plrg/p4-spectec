@@ -5,12 +5,12 @@
 //! Entries remain available until the interner drops.
 
 use std::{
-    collections::hash_map::RandomState,
     hash::{BuildHasher, Hash},
     marker::PhantomData,
     num::TryFromIntError,
 };
 
+use foldhash::fast::RandomState;
 use hashbrown::HashTable;
 
 use super::idx::Interned;
@@ -44,7 +44,7 @@ impl<T> Default for Interner<T> {
         Self {
             items: Vec::new(),
             table: HashTable::new(),
-            hasher: RandomState::new(),
+            hasher: RandomState::default(),
             id_default: None,
         }
     }

@@ -13,6 +13,7 @@ use std::{
 };
 
 use super::idx::Interned;
+use foldhash::fast::RandomState;
 
 // = Interning storage
 
@@ -22,14 +23,14 @@ pub struct RcInterner<T> {
     /// Allocations by handle index.
     items: Vec<Rc<T>>,
     /// Handle of each allocation address.
-    table: HashMap<*const T, Interned<T>>,
+    table: HashMap<*const T, Interned<T>, RandomState>,
 }
 
 // - Construction
 
 impl<T> Default for RcInterner<T> {
     fn default() -> Self {
-        Self { items: Vec::new(), table: HashMap::new() }
+        Self { items: Vec::new(), table: HashMap::default() }
     }
 }
 
