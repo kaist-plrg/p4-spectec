@@ -3942,7 +3942,8 @@ xref:cast_default[``defaultValue`` casted to type ``typeIR``]
 
 xref:cast_invalid_header[``+'{#}'+`` casted to type ``typeIR``]
 
-. If let ``headerTypeIR`` be ``typeIR``:
+. If let ``invalidHeaderTypeIR`` be ``typeIR``: return ``+'{#}'+``.
+. Else if let ``headerTypeIR`` be ``typeIR``:
  .. Return xref:default[the default value for type ``headerTypeIR``].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Else if let ``headerUnionTypeIR`` be ``typeIR``:
  .. Return xref:default[the default value for type ``headerUnionTypeIR``].+++<sub class="bk-mark">[FAIL]</sub>+++
@@ -4087,15 +4088,22 @@ Let ``nat'''^{asterisk}^`` be the resulting list.+++<sub class="bk-mark">[FAIL]<
 +
 Let ``nat''''^{asterisk}^`` be the resulting list.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return xref:sum_nat[sum``+`(+`` ``nat''''^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Else if let ``+HEADER_UNION+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
- .. For each ``typeIR`` in ``typeIR^{asterisk}^``:
+. Else if ``typeIR'`` has type ``headerUnionTypeIR``:
+ .. +++<span class="bk-arm-anchor" id="bk-sizeof_minSizeInBits'-1-arm-1"></span>+++Try:
+  ... Let ``+HEADER_UNION+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` be ``typeIR'``.
+  ... Check that ``fieldTypeIR^{asterisk}^`` is an empty list.
+  ... Return ``0``.
+ .. +++<span class="bk-arm-anchor" id="bk-sizeof_minSizeInBits'-1-arm-2"></span>+++Then, try:
+  ... Let ``+HEADER_UNION+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``.
+  ... Check that ``typeIR^{asterisk}^`` is a non-empty list.
+  ... For each ``typeIR`` in ``typeIR^{asterisk}^``:
 +
 --
-  *** Let ``nat'''''`` be xref:sizeof_minSizeInBits'[``$sizeof_minSizeInBits'(typeIR)``].
+   **** Let ``nat'''''`` be xref:sizeof_minSizeInBits'[``$sizeof_minSizeInBits'(typeIR)``].
 --
 +
 Let ``nat'''''^{asterisk}^`` be the resulting list.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Return xref:min_nat[min``+`(+`` ``nat'''''^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
+  ... Return xref:min_nat[min``+`(+`` ``nat'''''^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:sizeof_minSizeInBytes[$sizeof_minSizeInBytes(typeIR)]
 
@@ -4149,15 +4157,22 @@ Let ``nat'''^{asterisk}^`` be the resulting list.+++<sub class="bk-mark">[FAIL]<
 +
 Let ``nat''''^{asterisk}^`` be the resulting list.+++<sub class="bk-mark">[FAIL]</sub>+++
  .. Return xref:sum_nat[sum``+`(+`` ``nat''''^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
-. Else if let ``+HEADER_UNION+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``:
- .. For each ``typeIR`` in ``typeIR^{asterisk}^``:
+. Else if ``typeIR'`` has type ``headerUnionTypeIR``:
+ .. +++<span class="bk-arm-anchor" id="bk-sizeof_maxSizeInBits'-1-arm-1"></span>+++Try:
+  ... Let ``+HEADER_UNION+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``fieldTypeIR^{asterisk}^`` ``+`}+`` be ``typeIR'``.
+  ... Check that ``fieldTypeIR^{asterisk}^`` is an empty list.
+  ... Return ``0``.
+ .. +++<span class="bk-arm-anchor" id="bk-sizeof_maxSizeInBits'-1-arm-2"></span>+++Then, try:
+  ... Let ``+HEADER_UNION+`` ``++_++`` ``+`<+`` ``++_++^{asterisk}^`` ``+`>+`` ``+`{+`` ``(`` ``++_++`` ``typeIR`` ``++_++`` ``+';'+`` ``)^{asterisk}^`` ``+`}+`` be ``typeIR'``.
+  ... Check that ``typeIR^{asterisk}^`` is a non-empty list.
+  ... For each ``typeIR`` in ``typeIR^{asterisk}^``:
 +
 --
-  *** Let ``nat'''''`` be xref:sizeof_maxSizeInBits'[``$sizeof_maxSizeInBits'(typeIR)``].
+   **** Let ``nat'''''`` be xref:sizeof_maxSizeInBits'[``$sizeof_maxSizeInBits'(typeIR)``].
 --
 +
 Let ``nat'''''^{asterisk}^`` be the resulting list.+++<sub class="bk-mark">[FAIL]</sub>+++
- .. Return xref:max_nat[max``+`(+`` ``nat'''''^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
+  ... Return xref:max_nat[max``+`(+`` ``nat'''''^{asterisk}^`` ``+`)+``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
 xref:sizeof_maxSizeInBytes[$sizeof_maxSizeInBytes(typeIR)]
 
@@ -10061,13 +10076,15 @@ xref:Expr_ok[Typing ``expression''``, under context ``TC`` at ``p``]:
   ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+INT+`` and compile-time known-ness ``+LCTK+``].
   ... The result is xref:typedExpressionIR[``+D+`` ``i`` annotated with ``expressionNoteIR``].
  .. Else if let ``n`` ``+S+`` ``i`` be ``integerLiteral``:
+  ... Let ``i~norm~`` be xref:int_to_bitstr[the bitstring of width ``n`` representing the integer ``i``].+++<sub class="bk-mark">[<a href="#Expr_ok-referenceExpression">→ referenceExpression</a>]</sub>+++
   ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+INT+`` ``+`<+`` ``n`` ``+`>+`` and compile-time known-ness ``+LCTK+``].
   ... Check that ``n`` is greater than ``0``.
-  ... The result is xref:typedExpressionIR[``n`` ``+S+`` ``i`` annotated with ``expressionNoteIR``].
+  ... The result is xref:typedExpressionIR[``n`` ``+S+`` ``i~norm~`` annotated with ``expressionNoteIR``].
  .. Else:
   ... Let ``n`` ``+W+`` ``i`` be ``integerLiteral``.
+  ... Let ``i~norm~`` be xref:int_to_bitstr[the bitstring of width ``n`` representing the integer ``i``].+++<sub class="bk-mark">[<a href="#Expr_ok-referenceExpression">→ referenceExpression</a>]</sub>+++
   ... Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+BIT+`` ``+`<+`` ``n`` ``+`>+`` and compile-time known-ness ``+LCTK+``].
-  ... The result is xref:typedExpressionIR[``n`` ``+W+`` ``i`` annotated with ``expressionNoteIR``].
+  ... The result is xref:typedExpressionIR[``n`` ``+W+`` ``i~norm~`` annotated with ``expressionNoteIR``].
 . Else if let ``stringLiteral`` be ``expression''``:
  .. Let ``expressionNoteIR`` be xref:expressionNoteIR[a pair of type ``+STRING+`` and compile-time known-ness ``+LCTK+``].
  .. The result is xref:typedExpressionIR[``stringLiteral`` annotated with ``expressionNoteIR``].
@@ -11514,7 +11531,7 @@ xref:ParserStmt_ok[Typing ``parserBlockStatement``, under context ``TC``]:
 . Let ``TC~1~`` be xref:enter_t[``TC`` with a new local frame].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let context ``TC~2~`` and ``parserBlockStatementIR`` be the result of xref:ParserBlock_ok[typing ``parserBlockStatement`` under context ``TC~1~``].
 . Let ``TC~3~`` be xref:exit_t[``TC~2~`` with the innermost frame removed].+++<sub class="bk-mark">[FAIL]</sub>+++
-. The result is context ``TC~1~`` and typed parser statement ``parserBlockStatementIR``.
+. The result is context ``TC~3~`` and typed parser statement ``parserBlockStatementIR``.
 
 xref:ParserStmt_ok[Typing ``parserConditionalStatement``, under context ``TC``]:
 
@@ -16426,10 +16443,12 @@ xref:ParserState_inst[ParserState_inst]:
 xref:ParserState_inst[Compile-time evaluation of ``parserStateIR``, under context ``IC~0~`` and store ``STO~0~``]:
 
 . Let ``annotationList`` ``+STATE+`` ``nameIR`` ``+`{+`` ``parserBlockElementStatementListIR`` ``transitionStatementIR`` ``+`}+`` be ``parserStateIR``.
-. Let context ``IC~1~``, store ``STO~1~``, and ``parserBlockElementStatementListIR~inst~`` be the result of xref:ParserBlockElementStmtList_inst[compile-time evaluation of ``parserBlockElementStatementListIR``, under context ``IC~0~``, and store ``STO~0~``].
+. Let ``IC~1~`` be xref:enter_i[``IC~0~`` with a new local frame].+++<sub class="bk-mark">[FAIL]</sub>+++
+. Let context ``IC~2~``, store ``STO~1~``, and ``parserBlockElementStatementListIR~inst~`` be the result of xref:ParserBlockElementStmtList_inst[compile-time evaluation of ``parserBlockElementStatementListIR``, under context ``IC~1~``, and store ``STO~0~``].
+. Let ``IC~3~`` be xref:exit_i[``IC~2~`` with the innermost frame removed].+++<sub class="bk-mark">[FAIL]</sub>+++
 . Let ``parserStateIR~inst~`` be ``annotationList`` ``+STATE+`` ``nameIR`` ``+`{+`` ``parserBlockElementStatementListIR~inst~`` ``transitionStatementIR`` ``+`}+``.
-. Let ``IC~2~`` be xref:add_parserState_i[``IC~1~`` where ``nameIR`` to ``parserStateIR~inst~`` is added].+++<sub class="bk-mark">[FAIL]</sub>+++
-. The result is context ``IC~2~`` and store ``STO~1~``.
+. Let ``IC~4~`` be xref:add_parserState_i[``IC~3~`` where ``nameIR`` to ``parserStateIR~inst~`` is added].+++<sub class="bk-mark">[FAIL]</sub>+++
+. The result is context ``IC~4~`` and store ``STO~1~``.
 
 ParserState_inst dispatch:
  Goto xref:ParserState_inst-[]
