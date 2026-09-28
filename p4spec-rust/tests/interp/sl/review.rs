@@ -89,7 +89,7 @@ fn optional_destructuring_preserves_outer_scalars() {
     let exp = exp.prepare(&mut layout);
     let slot = layout.resolve_var(ast::Var { id: id("n"), typ: typ::make::nat(), iters: vec![] });
     let mut ctx = Context::new(&global).localize_with_layout(&std::rc::Rc::new(layout.clone()));
-    ctx.add_value(slot.slot, value_outer);
+    ctx.add_value_at_slot(slot.slot, value_outer);
     let values: Vec<_> = [7u64, 9]
         .into_iter()
         .map(|num| make::nat(&mut arena, num.into(), Span::default()).unwrap())
@@ -103,7 +103,7 @@ fn optional_destructuring_preserves_outer_scalars() {
         .finish()
         .unwrap();
     assert_eq!(
-        *ctx.find_value(
+        *ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("n"),
@@ -116,7 +116,7 @@ fn optional_destructuring_preserves_outer_scalars() {
         value_outer
     );
     assert!(
-        ctx.find_value(
+        ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("m"),
@@ -129,7 +129,7 @@ fn optional_destructuring_preserves_outer_scalars() {
     );
     for (name, value) in ["n", "m"].into_iter().zip(values) {
         let value_opt = ctx
-            .find_value(
+            .find_value_at_slot(
                 layout
                     .resolve_var(p4spec_rust::lang::il::ast::Var {
                         id: id(name),
@@ -146,7 +146,7 @@ fn optional_destructuring_preserves_outer_scalars() {
         .finish()
         .unwrap();
     assert_eq!(
-        *ctx.find_value(
+        *ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("n"),
@@ -159,7 +159,7 @@ fn optional_destructuring_preserves_outer_scalars() {
         value_outer
     );
     assert!(
-        ctx.find_value(
+        ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("m"),

@@ -86,7 +86,7 @@ fn test_localize_with_layout_discards_locals_and_retains_global_lookup() {
     ctx.add_func(id("local", 2), func_local.clone().into())
         .unwrap();
     ctx.add_typdef(id("T", 3), TypeDef::Extern).unwrap();
-    ctx.add_value(slot.slot, make::bool(&mut arena, true, Span::default()).unwrap());
+    ctx.add_value_at_slot(slot.slot, make::bool(&mut arena, true, Span::default()).unwrap());
     assert_eq!(
         ctx.find_func_with_scope(&id("local", 8))
             .map(|(scope, func)| (scope, func.as_ref()))
@@ -96,7 +96,7 @@ fn test_localize_with_layout_discards_locals_and_retains_global_lookup() {
     let ctx_local = ctx.localize_with_layout(&layout);
     assert!(ctx_local.find_func_opt(&id("local", 8)).is_none());
     assert!(ctx_local.find_typdef_opt(&id("T", 8)).is_none());
-    assert!(ctx_local.find_value(slot.slot).is_none());
+    assert!(ctx_local.find_value_at_slot(slot.slot).is_none());
     assert_eq!(
         ctx_local
             .find_func_with_scope(&id("global", 8))
@@ -104,7 +104,7 @@ fn test_localize_with_layout_discards_locals_and_retains_global_lookup() {
             .unwrap(),
         (Scope::Global, &Callable::prepare(func_global))
     );
-    assert!(ctx.find_value(slot.slot).is_some());
+    assert!(ctx.find_value_at_slot(slot.slot).is_some());
 }
 
 #[test]
@@ -157,14 +157,14 @@ fn test_sibling_contexts_isolate_rebinding_and_iterator_paths() {
         iters: vec![ast::Iter::List],
     });
     let mut ctx = Context::new(&global).localize_with_layout(&layout.into());
-    ctx.add_value(slot.slot, make::bool(&mut arena, false, Span::default()).unwrap());
+    ctx.add_value_at_slot(slot.slot, make::bool(&mut arena, false, Span::default()).unwrap());
     let mut ctx_a = ctx.clone();
     let ctx_b = ctx.clone();
-    ctx_a.add_value(slot.slot, make::bool(&mut arena, true, Span::default()).unwrap());
-    ctx_a.add_value(slot_list.slot, make::bool(&mut arena, true, Span::default()).unwrap());
-    assert!(get::bool(&arena, ctx_a.find_value(slot.slot).unwrap()).unwrap());
-    assert!(!get::bool(&arena, ctx_b.find_value(slot.slot).unwrap()).unwrap());
-    assert!(ctx.find_value(slot_list.slot).is_none());
+    ctx_a.add_value_at_slot(slot.slot, make::bool(&mut arena, true, Span::default()).unwrap());
+    ctx_a.add_value_at_slot(slot_list.slot, make::bool(&mut arena, true, Span::default()).unwrap());
+    assert!(get::bool(&arena, ctx_a.find_value_at_slot(slot.slot).unwrap()).unwrap());
+    assert!(!get::bool(&arena, ctx_b.find_value_at_slot(slot.slot).unwrap()).unwrap());
+    assert!(ctx.find_value_at_slot(slot_list.slot).is_none());
 }
 
 #[test]
@@ -253,7 +253,7 @@ fn test_loaded_native_spec_preserves_definition_bodies_and_locations() {
             }
             ast::DefKind::Var(var) => {
                 assert!(
-                    ctx.find_value(
+                    ctx.find_value_at_slot(
                         layout
                             .resolve_var(p4spec_rust::lang::il::ast::Var {
                                 id: var.id.clone(),

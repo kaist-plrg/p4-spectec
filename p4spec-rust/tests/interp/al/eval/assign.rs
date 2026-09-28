@@ -56,7 +56,7 @@ fn binding(
     name: &str,
     iters: Vec<ast::Iter>,
 ) -> Value {
-    *ctx.find_value(
+    *ctx.find_value_at_slot(
         layout
             .resolve_var(p4spec_rust::lang::il::ast::Var {
                 id: id(name),
@@ -101,7 +101,7 @@ fn test_iterated_variable_fast_path_preserves_identity_and_path() {
     let ctx = ok(assign_exp(&mut arena, ctx, &exp, value));
     assert!((value == binding(&ctx, &mut layout, "x", vec![ast::Iter::Opt, ast::Iter::List])));
     assert!(
-        ctx.find_value(
+        ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("x"),
@@ -127,7 +127,7 @@ fn test_list_assignment_collects_rows_without_leaking_scalar_bindings() {
         vec![var("x", vec![]), var("y", vec![])],
     );
     let (exp, mut ctx, mut layout) = prepare_exp(&global, exp);
-    ctx.add_value(layout.resolve_var(var("x", vec![])).slot, value(&mut arena, false));
+    ctx.add_value_at_slot(layout.resolve_var(var("x", vec![])).slot, value(&mut arena, false));
 
     let ctx_result = ok({
         let value = {
@@ -168,7 +168,7 @@ fn test_list_assignment_collects_rows_without_leaking_scalar_bindings() {
     assert!(!get::bool(&arena, &binding(&ctx_result, &mut layout, "x", vec![])).unwrap());
     assert!(
         ctx_result
-            .find_value(
+            .find_value_at_slot(
                 layout
                     .resolve_var(p4spec_rust::lang::il::ast::Var {
                         id: id("y"),
@@ -180,7 +180,7 @@ fn test_list_assignment_collects_rows_without_leaking_scalar_bindings() {
             .is_none()
     );
     assert!(
-        ctx.find_value(
+        ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("x"),
@@ -203,7 +203,7 @@ fn test_list_rows_cannot_collect_unassigned_outer_values() {
         vec![var("missing", vec![])],
     );
     let (exp, mut ctx, mut layout) = prepare_exp(&global, exp);
-    ctx.add_value(layout.resolve_var(var("missing", vec![])).slot, value(&mut arena, true));
+    ctx.add_value_at_slot(layout.resolve_var(var("missing", vec![])).slot, value(&mut arena, true));
 
     let Backtrack::Err(traces) = ({
         let value = {
@@ -241,7 +241,7 @@ fn test_optional_assignment_exports_only_iterated_bindings() {
         assign_exp(&mut arena, ctx, &exp, value)
     });
     assert!(
-        ctx.find_value(
+        ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("x"),
@@ -283,7 +283,7 @@ fn test_optional_assignment_exports_only_iterated_bindings() {
             .is_none()
     );
     assert!(
-        ctx.find_value(
+        ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("x"),
@@ -382,7 +382,7 @@ fn test_function_argument_shares_caller_definition_without_caller_values() {
         let mut caller =
             Context::new(&global_caller).localize_with_layout(&Rc::new(layout.clone()));
         caller.add_func(id("f"), func.clone()).unwrap();
-        caller.add_value(slot_secret.slot, value(&mut arena, true));
+        caller.add_value_at_slot(slot_secret.slot, value(&mut arena, true));
         let arg = phrase!(node: ast::ArgKind::Def(id("alias")), span: span(4));
         let arg = arg.prepare(&mut FrameLayout::default());
         let func_value =
@@ -403,7 +403,7 @@ fn test_function_argument_shares_caller_definition_without_caller_values() {
     };
     assert!(Rc::ptr_eq(&func, callee.find_func_with_scope(&id("alias")).unwrap().1));
     assert_eq!(callee.find_func_with_scope(&id("alias")).unwrap(), (Scope::Local, &func));
-    assert!(callee.find_value(slot_secret.slot).is_none());
+    assert!(callee.find_value_at_slot(slot_secret.slot).is_none());
 }
 
 #[test]
@@ -478,7 +478,7 @@ fn test_optional_destructuring_preserves_outer_scalars() {
         vec![var("x", vec![]), var("y", vec![])],
     );
     let (exp, mut ctx, mut layout) = prepare_exp(&global, exp);
-    ctx.add_value(layout.resolve_var(var("x", vec![])).slot, value(&mut arena, false));
+    ctx.add_value_at_slot(layout.resolve_var(var("x", vec![])).slot, value(&mut arena, false));
 
     let value_inner = value(&mut arena, true);
     let value_tuple = tuple(&mut arena, vec![value_inner, value_inner]);
@@ -492,7 +492,7 @@ fn test_optional_destructuring_preserves_outer_scalars() {
     let ctx = ok(assign_exp(&mut arena, ctx, &exp, value_opt));
     assert!(!get::bool(&arena, &binding(&ctx, &mut layout, "x", vec![])).unwrap());
     assert!(
-        ctx.find_value(
+        ctx.find_value_at_slot(
             layout
                 .resolve_var(p4spec_rust::lang::il::ast::Var {
                     id: id("y"),

@@ -27,7 +27,7 @@ pub fn find_var(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<VarSlot> {
             if var_inner.var.id.node != var.var.id.node || var_inner.var.iters != var.var.iters {
                 return None;
             }
-            Some(ctx.find_var_slot_iterated(&var_inner, *iter))
+            Some(ctx.find_var_iterated(&var_inner, *iter))
         }
         // Anything else is a computed expression
         _ => None,
@@ -37,7 +37,7 @@ pub fn find_var(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<VarSlot> {
 /// Advances prepared variables through one iterator dimension.
 pub fn iterate_vars(ctx: &impl ReadContext, vars: &[ast::Var], iter: ast::Iter) -> Vec<ast::Var> {
     vars.iter()
-        .map(|var| ctx.find_var_slot_iterated(var, iter))
+        .map(|var| ctx.find_var_iterated(var, iter))
         .collect()
 }
 
@@ -52,7 +52,7 @@ pub fn find_slot(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<SlotIdx> {
                 return None;
             };
             let slot = find_slot(ctx, exp_inner)?;
-            (slot == var.slot).then(|| ctx.find_iter_slot(var, *iter))
+            (slot == var.slot).then(|| ctx.find_slot_iterated(var, *iter))
         }
         // Computed expressions require normal iteration evaluation
         _ => None,

@@ -132,7 +132,7 @@ pub(crate) fn eval_exps<
 /// Reads the value bound to the variable's slot.
 fn eval_id_exp(ctx: &impl ReadContext, span: &Span, id: &IdSlot) -> Backtrack<Value> {
     let value = *unwrap_from_result!(
-        ctx.find_value(id.slot).ok_or_else(|| {
+        ctx.find_value_at_slot(id.slot).ok_or_else(|| {
             Error::undefined(EntityKind::Value, id.id.node.clone(), id.id.span.clone())
         }),
         span
@@ -573,7 +573,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     // `x*` as an expression is just the bound value
     if let Some(slot) = find_slot(ctx, exp) {
         return ok!(*unwrap_from_result!(
-            ctx.find_value(slot).ok_or_else(|| {
+            ctx.find_value_at_slot(slot).ok_or_else(|| {
                 let var = find_var(ctx, exp).expect("identity iteration has a variable");
                 Error::undefined(
                     EntityKind::Value,

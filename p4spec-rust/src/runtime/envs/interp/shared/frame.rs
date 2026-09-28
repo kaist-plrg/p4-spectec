@@ -92,7 +92,7 @@ impl FrameLayout {
     }
 
     /// Resolves one prepared iteration transition without hashing names.
-    pub fn find_iter_slot(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
+    pub fn find_slot_iterated(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
         let slots_iter = &self.slots_iter[slot.0];
         match iter {
             Iter::Opt => slots_iter.slot_opt,
@@ -102,11 +102,11 @@ impl FrameLayout {
     }
 
     /// The slot of `var` one iteration deeper, resolved during preparation.
-    pub fn find_var_slot_iterated(&self, var: &VarSlot, iter: Iter) -> VarSlot {
+    pub fn find_var_iterated(&self, var: &VarSlot, iter: Iter) -> VarSlot {
         let var_inner = var;
         let mut var = var_inner.var.clone();
         var.iters.push(iter);
-        VarSlot { slot: self.find_iter_slot(var_inner.slot, iter), var }
+        VarSlot { slot: self.find_slot_iterated(var_inner.slot, iter), var }
     }
 }
 

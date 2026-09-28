@@ -663,7 +663,7 @@ fn eval_cond_iter<Iface: Interface, Ext: Extern>(
             // Bind the inner variables for the nested check
             let mut ctx_sub = ctx.clone();
             for (var, value) in vars.iter().zip(values) {
-                ctx_sub.add_value(var.slot, value);
+                ctx_sub.add_value_at_slot(var.slot, value);
             }
             eval_cond_iter(runner_ctx, &ctx_sub, iters_tail, eval)
         }
@@ -679,7 +679,7 @@ fn eval_cond_iter<Iface: Interface, Ext: Extern>(
             let mut ctx_sub = ctx.clone();
             for idx in 0..len {
                 for (var, values) in vars.iter().zip(&values_by_var) {
-                    ctx_sub.add_value(var.slot, values[idx]);
+                    ctx_sub.add_value_at_slot(var.slot, values[idx]);
                 }
                 // Every element must satisfy the condition
                 if !unwrap!(eval_cond_iter(runner_ctx, &ctx_sub, iters_tail, eval)) {

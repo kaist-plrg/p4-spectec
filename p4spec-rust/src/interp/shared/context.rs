@@ -48,13 +48,13 @@ pub trait ReadContext {
     // == Values
 
     /// Finds the value bound at `slot`, if any.
-    fn find_value(&self, slot: SlotIdx) -> Option<&Value>;
+    fn find_value_at_slot(&self, slot: SlotIdx) -> Option<&Value>;
     /// Finds the slot of `var` under one more iteration `iter`.
-    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
+    fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
 
     /// Finds the prepared slot under one more iteration.
-    fn find_iter_slot(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.find_var_slot_iterated(var, iter).slot
+    fn find_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
+        self.find_var_iterated(var, iter).slot
     }
 
     // == Types
@@ -87,7 +87,7 @@ pub trait WriteContext: ReadContext + Clone {
     // == Values
 
     /// Binds a value to a slot.
-    fn add_value(&mut self, slot: SlotIdx, value: Value);
+    fn add_value_at_slot(&mut self, slot: SlotIdx, value: Value);
     /// Drops every value binding.
     fn clear_value_bindings(&mut self);
 
@@ -341,16 +341,16 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
 
     // - Values
 
-    fn find_value(&self, slot: SlotIdx) -> Option<&Value> {
+    fn find_value_at_slot(&self, slot: SlotIdx) -> Option<&Value> {
         self.local.frame.get(slot)
     }
 
-    fn find_iter_slot(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.local.frame.layout().find_iter_slot(var.slot, iter)
+    fn find_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
+        self.local.frame.layout().find_slot_iterated(var.slot, iter)
     }
 
-    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {
-        self.local.frame.layout().find_var_slot_iterated(var, iter)
+    fn find_var_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {
+        self.local.frame.layout().find_var_iterated(var, iter)
     }
 
     // - Types
@@ -404,7 +404,7 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     // - Values
 
-    fn add_value(&mut self, slot: SlotIdx, value: Value) {
+    fn add_value_at_slot(&mut self, slot: SlotIdx, value: Value) {
         self.local.frame.set(slot, value);
     }
 
@@ -441,7 +441,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let mut values_by_var = Vec::with_capacity(vars.len());
         for var in vars {
             // Every variable must be bound
-            let value = self.find_value(var.slot).ok_or_else(|| {
+            let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
                 Error::undefined(
                     EntityKind::Value,
                     Print::to_string(&var.var),
@@ -481,7 +481,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let mut values = Vec::with_capacity(vars.len());
         for var in vars {
             // Every variable must be bound
-            let value = self.find_value(var.slot).ok_or_else(|| {
+            let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
                 Error::undefined(
                     EntityKind::Value,
                     Print::to_string(&var.var),
@@ -518,7 +518,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         // Append this row's value of each variable
         for (var, values) in vars.iter().zip(values_by_var) {
             values.push(*unwrap_from_result!(
-                self.find_value(var.slot).ok_or_else(|| {
+                self.find_value_at_slot(var.slot).ok_or_else(|| {
                     Error::undefined(
                         EntityKind::Value,
                         Print::to_string(&var.var),
@@ -546,7 +546,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
             // Each variable becomes a list one iteration outward
             let value = make::list(arena, typ.node.into(), values, Span::default());
             let value = unwrap_from_result!(value, &Span::default());
-            self.add_value(var.slot, value);
+            self.add_value_at_slot(var.slot, value);
         }
         ok!(())
     }
@@ -563,7 +563,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
             let value =
                 make::opt(arena, typ.node.into(), values.into_iter().next(), Span::default());
             let value = unwrap_from_result!(value, &Span::default());
-            self.add_value(var.slot, value);
+            self.add_value_at_slot(var.slot, value);
         }
         ok!(())
     }
