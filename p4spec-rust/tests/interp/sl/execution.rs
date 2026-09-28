@@ -1181,48 +1181,6 @@ def $fallback() = $f([0, 2])
 }
 
 #[test]
-fn test_total_case_grouping_failure_stops_later_merges() {
-    let source = r#"
-dec $f(nat*, bool) : nat
-def $f(nat*, bool_b) = 10
-  -- if true = bool_b
-  -- if [nat_a, nat_b] = nat*
-def $f(nat*, bool_b) = 20
-  -- if bool_b = true
-  -- if [] = nat*
-def $f(nat*, bool_b) = 30
-  -- if bool_b = true
-  -- if nat_h :: nat_t* = nat*
-def $f(nat*, bool_b) = 50
-  -- if bool_b = true
-  -- if [nat_a, nat_b, nat_c] = nat*
-def $f(nat*, bool_b) = 40
-  -- if bool_b = false
-dec $fixed() : nat
-def $fixed() = $f([1, 2], true)
-dec $empty() : nat
-def $empty() = $f([], true)
-dec $nonempty() : nat
-def $nonempty() = $f([1], true)
-dec $later() : nat
-def $later() = $f([1, 2, 3], true)
-dec $other() : nat
-def $other() = $f([1, 2], false)
-"#;
-    let spec_al = spec_al(source);
-    for without_rule_groups in [false, true] {
-        let spec_sl = structure::convert(spec_al.clone(), without_rule_groups).unwrap();
-        let mut runner = make_runner(spec_sl, false);
-        for (name, expected) in
-            [("fixed", "10"), ("empty", "20"), ("nonempty", "30"), ("later", "30"), ("other", "40")]
-        {
-            let value = runner.context().call_func(name, &[], &[]).unwrap();
-            assert_eq!(number(runner.arena(), &value), expected, "{name}");
-        }
-    }
-}
-
-#[test]
 fn test_total_case_grouping_failure_preserves_matching_branch_bodies() {
     let source = r#"
 dec $f(nat*, bool) : nat
