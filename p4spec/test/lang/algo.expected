@@ -7279,11 +7279,16 @@ def $cast_default(typeIR, defaultValue) : value =
 
 def $cast_invalid_header(typeIR) : value =
 
-  clause 0 : (typeIR) = $default(headerTypeIR as typeIR)
+  clause 0 : (typeIR) = '{#}' as value
+  -- if typeIR <: invalidHeaderTypeIR
+  -- let invalidHeaderTypeIR = typeIR as invalidHeaderTypeIR
+  -- if (invalidHeaderTypeIR = HEADER_INVALID)
+
+  clause 1 : (typeIR) = $default(headerTypeIR as typeIR)
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  clause 1 : (typeIR) = $default(headerUnionTypeIR as typeIR)
+  clause 2 : (typeIR) = $default(headerUnionTypeIR as typeIR)
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
 
