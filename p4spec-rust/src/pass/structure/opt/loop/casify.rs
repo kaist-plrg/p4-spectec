@@ -17,14 +17,15 @@
 //! Equal guards merge their bodies while preserving other branches:
 //! `if x = 2 { A }; case x { 1 => B; 2 => C; 3 => D }`
 //! becomes `case x { 1 => B; 2 => A; C; 3 => D }`.
-//! Iterated Ifs and instructions other than If or Case stop the search.
+//! Iterated Ifs, instructions other than If or Case, and refused total-case
+//! extensions stop the search.
 
 use std::collections::VecDeque;
 
 use crate::{
-    lang::{common::source::Span, traits::eq::SyntaxEq},
+    lang::traits::eq::SyntaxEq,
     pass::structure::{
-        StructureError, error,
+        StructureError,
         ol::ast::*,
         opt::{
             merge::merge_block,
@@ -41,8 +42,7 @@ fn casify_block(tdenv: &TDEnv, changed: &mut bool, block: Block) -> Result<Block
     let mut block_output = Vec::with_capacity(block.len());
     let mut instrs_tail = VecDeque::from(block);
     while let Some(instr) = instrs_tail.pop_front() {
-        let instr_kind =
-            casify_instr_kind(tdenv, changed, &instr.span, &mut instrs_tail, instr.node)?;
+        let instr_kind = casify_instr_kind(tdenv, changed, &mut instrs_tail, instr.node)?;
         let instr = crate::phrase!(node: instr_kind, span: instr.span);
         block_output.push(instr);
     }
@@ -52,14 +52,13 @@ fn casify_block(tdenv: &TDEnv, changed: &mut bool, block: Block) -> Result<Block
 fn casify_instr_kind(
     tdenv: &TDEnv,
     changed: &mut bool,
-    span: &Span,
     instrs_tail: &mut VecDeque<Instr>,
     instr_kind: InstrKind,
 ) -> Result<InstrKind, StructureError> {
     match instr_kind {
-        InstrKind::If(instr) => casify_if_instr(tdenv, changed, span, instrs_tail, instr),
+        InstrKind::If(instr) => casify_if_instr(tdenv, changed, instrs_tail, instr),
         InstrKind::Hold(instr) => casify_hold_instr(tdenv, changed, instr),
-        InstrKind::Case(instr) => casify_case_instr(tdenv, changed, span, instrs_tail, instr),
+        InstrKind::Case(instr) => casify_case_instr(tdenv, changed, instrs_tail, instr),
         InstrKind::Group(instr) => casify_group_instr(tdenv, changed, instr),
         InstrKind::Let(instr) => casify_let_instr(tdenv, changed, instr),
         InstrKind::Rule(instr) => casify_rule_instr(tdenv, changed, instr),
@@ -73,14 +72,13 @@ fn casify_instr_kind(
 fn casify_if_instr(
     tdenv: &TDEnv,
     changed: &mut bool,
-    span: &Span,
     instrs_tail: &mut VecDeque<Instr>,
     mut instr_if: IfInstr,
 ) -> Result<InstrKind, StructureError> {
     if let Some((idx, instr_case)) = casify_from_if(tdenv, &mut instr_if, instrs_tail)? {
         *changed = true;
         instrs_tail.remove(idx);
-        return casify_case_instr(tdenv, changed, span, instrs_tail, instr_case);
+        return casify_case_instr(tdenv, changed, instrs_tail, instr_case);
     }
     let IfInstr { exp, iter_exps, block } = instr_if;
     let block = casify_block(tdenv, changed, block)?;
@@ -108,13 +106,12 @@ fn casify_hold_instr(
 fn casify_case_instr(
     tdenv: &TDEnv,
     changed: &mut bool,
-    span: &Span,
     instrs_tail: &mut VecDeque<Instr>,
     mut instr_case: CaseInstr,
 ) -> Result<InstrKind, StructureError> {
     // Keep absorbing while a later sibling combines
     while let Some((idx, instr_case_merged)) =
-        casify_from_case(tdenv, &mut instr_case, span, instrs_tail)?
+        casify_from_case(tdenv, &mut instr_case, instrs_tail)?
     {
         *changed = true;
         instrs_tail.remove(idx);
@@ -192,14 +189,14 @@ fn casify_from_if(
             InstrKind::If(instr_if) if instr_if.iter_exps.is_empty() => {
                 casify_if_then_if(tdenv, instr_target, instr_if)?
             }
-            InstrKind::Case(instr_case) => {
-                casify_if_then_case(tdenv, instr_target, instr_case, &instr.span)?
-            }
+            InstrKind::Case(instr_case) => casify_if_then_case(tdenv, instr_target, instr_case)?,
             // Anything but an If or Case stops the search
             _ => break,
         };
-        if let Some(instr_case) = instr_case {
-            return Ok(Some((idx, instr_case)));
+        match instr_case {
+            Merge::Merged(instr_case) => return Ok(Some((idx, instr_case))),
+            Merge::Skip => {}
+            Merge::Stop => break,
         }
     }
     Ok(None)
@@ -209,28 +206,34 @@ fn casify_from_if(
 fn casify_from_case(
     tdenv: &TDEnv,
     instr_target: &mut CaseInstr,
-    span_target: &Span,
     instrs_tail: &mut VecDeque<Instr>,
 ) -> Result<Option<(usize, CaseInstr)>, StructureError> {
     for (idx, instr) in instrs_tail.iter_mut().enumerate() {
         let instr_case = match &mut instr.node {
             InstrKind::If(instr_if) if instr_if.iter_exps.is_empty() => {
-                casify_case_then_if(tdenv, instr_target, instr_if, span_target)?
+                casify_case_then_if(tdenv, instr_target, instr_if)?
             }
-            InstrKind::Case(instr_case) => {
-                casify_case_then_case(tdenv, instr_target, instr_case, span_target)?
-            }
+            InstrKind::Case(instr_case) => casify_case_then_case(tdenv, instr_target, instr_case)?,
             // Anything but an If or Case stops the search
             _ => break,
         };
-        if let Some(instr_case) = instr_case {
-            return Ok(Some((idx, instr_case)));
+        match instr_case {
+            Merge::Merged(instr_case) => return Ok(Some((idx, instr_case))),
+            Merge::Skip => {}
+            Merge::Stop => break,
         }
     }
     Ok(None)
 }
 
 // == Combining conditions
+
+/// A refused total-case extension stops the search to preserve branch order.
+enum Merge<T> {
+    Merged(T),
+    Skip,
+    Stop,
+}
 
 // - If and If
 
@@ -239,14 +242,14 @@ fn casify_if_then_if(
     tdenv: &TDEnv,
     instr_target: &mut IfInstr,
     instr_if: &mut IfInstr,
-) -> Result<Option<CaseInstr>, StructureError> {
+) -> Result<Merge<CaseInstr>, StructureError> {
     let overlap = overlap_exp(tdenv, &instr_target.exp, &instr_if.exp)?;
     let (exp, guard_a, guard_b, total) = match overlap {
         // x = 1 and x = 2 leave other integer values uncovered
         Overlap::Disjoint { exp, guard_a, guard_b } => (exp, guard_a, guard_b, false),
         // x = true and x = false cover both boolean values
         Overlap::Partition { exp, guard_a, guard_b } => (exp, guard_a, guard_b, true),
-        Overlap::Identical | Overlap::Fuzzy => return Ok(None),
+        Overlap::Identical | Overlap::Fuzzy => return Ok(Merge::Skip),
     };
     let block_a = std::mem::take(&mut instr_target.block);
     let case_a = Case { guard: guard_a, block: block_a };
@@ -254,7 +257,7 @@ fn casify_if_then_if(
     let case_b = Case { guard: guard_b, block: block_b };
     let cases = vec![case_a, case_b];
     let instr = CaseInstr { exp, cases, total };
-    Ok(Some(instr))
+    Ok(Merge::Merged(instr))
 }
 
 // - If and Case
@@ -264,12 +267,11 @@ fn casify_if_then_case(
     tdenv: &TDEnv,
     instr_target: &mut IfInstr,
     instr_case: &mut CaseInstr,
-    span_case: &Span,
-) -> Result<Option<CaseInstr>, StructureError> {
+) -> Result<Merge<CaseInstr>, StructureError> {
     let IfInstr { exp: exp_cond_target, block: block_target, .. } = instr_target;
     let CaseInstr { exp, cases, total } = instr_case;
     let Some(guard_target) = exp_as_guard(exp, exp_cond_target) else {
-        return Ok(None);
+        return Ok(Merge::Skip);
     };
     for (idx, case) in cases.iter_mut().enumerate() {
         let Case { guard, block } = case;
@@ -283,22 +285,22 @@ fn casify_if_then_case(
                 let mut cases = std::mem::take(cases);
                 cases[idx].block = block;
                 let instr = CaseInstr { exp: exp.clone(), cases, total: *total };
-                return Ok(Some(instr));
+                return Ok(Merge::Merged(instr));
             }
             Overlap::Disjoint { .. } | Overlap::Partition { .. } => {}
-            Overlap::Fuzzy => return Ok(None),
+            Overlap::Fuzzy => return Ok(Merge::Skip),
         }
     }
-    // A total Case cannot take a new branch
+    // Refuse the grouping before either input body is moved
     if *total {
-        return Err(error::case_extension_unsupported(span_case));
+        return Ok(Merge::Stop);
     }
     let mut cases = std::mem::take(cases);
     let block = std::mem::take(block_target);
     let case = Case { guard: guard_target, block };
     cases.push(case);
     let instr = CaseInstr { exp: exp.clone(), cases, total: *total };
-    Ok(Some(instr))
+    Ok(Merge::Merged(instr))
 }
 
 // - Case and If
@@ -308,20 +310,20 @@ fn casify_case_then_if(
     tdenv: &TDEnv,
     instr_target: &mut CaseInstr,
     instr_if: &mut IfInstr,
-    span_target: &Span,
-) -> Result<Option<CaseInstr>, StructureError> {
+) -> Result<Merge<CaseInstr>, StructureError> {
     let CaseInstr { exp, cases, total } = instr_target;
     let IfInstr { exp: exp_cond, block, .. } = instr_if;
     let Some(guard) = exp_as_guard(exp, exp_cond) else {
-        return Ok(None);
+        return Ok(Merge::Skip);
     };
-    let Some(cases) = merge_case_and_if(tdenv, span_target, exp, *total, cases, guard, block)?
-    else {
-        return Ok(None);
+    let cases = match merge_case_and_if(tdenv, exp, *total, cases, guard, block)? {
+        Merge::Merged(cases) => cases,
+        Merge::Skip => return Ok(Merge::Skip),
+        Merge::Stop => return Ok(Merge::Stop),
     };
     // Case followed by If becomes partial, even when the Case was total
     let instr = CaseInstr { exp: exp.clone(), cases, total: false };
-    Ok(Some(instr))
+    Ok(Merge::Merged(instr))
 }
 
 // - Case and Case
@@ -331,28 +333,27 @@ fn casify_case_then_case(
     tdenv: &TDEnv,
     instr_target: &mut CaseInstr,
     instr_case: &mut CaseInstr,
-    span_target: &Span,
-) -> Result<Option<CaseInstr>, StructureError> {
+) -> Result<Merge<CaseInstr>, StructureError> {
     let CaseInstr { exp: exp_target, cases: cases_target, total: total_target } = instr_target;
     let CaseInstr { exp, cases, .. } = instr_case;
     if !exp_target.syntax_eq(exp) {
-        return Ok(None);
+        return Ok(Merge::Skip);
     }
-    // A later fuzzy guard must leave both input bodies untouched
+    // A later unmergeable guard must leave both input bodies untouched
     // Place every later branch before moving anything
     let mut guards: Vec<_> = cases_target.iter().map(|case| &case.guard).collect();
     let mut idxs = Vec::with_capacity(cases.len());
     for case in cases.iter() {
-        let Some(idx) = find_case_merge(
+        let idx = match find_case_merge(
             tdenv,
             exp_target,
             guards.iter().copied(),
             *total_target,
             &case.guard,
-            span_target,
-        )?
-        else {
-            return Ok(None);
+        )? {
+            Merge::Merged(idx) => idx,
+            Merge::Skip => return Ok(Merge::Skip),
+            Merge::Stop => return Ok(Merge::Stop),
         };
         // A new guard extends the targets for the following branches
         if idx == guards.len() {
@@ -367,7 +368,7 @@ fn casify_case_then_case(
         apply_case_merge(idx, case, &mut cases_target);
     }
     let instr = CaseInstr { exp: exp_target.clone(), cases: cases_target, total: *total_target };
-    Ok(Some(instr))
+    Ok(Merge::Merged(instr))
 }
 
 // - Guard analysis and owned body merging
@@ -375,29 +376,28 @@ fn casify_case_then_case(
 /// Places a guarded block among the cases: into an equal guard, or appended.
 fn merge_case_and_if(
     tdenv: &TDEnv,
-    span_target: &Span,
     exp_target: &Exp,
     total_target: bool,
     cases_target: &mut Vec<Case>,
     guard: Guard,
     block: &mut Block,
-) -> Result<Option<Vec<Case>>, StructureError> {
-    let Some(idx) = find_case_merge(
+) -> Result<Merge<Vec<Case>>, StructureError> {
+    let idx = match find_case_merge(
         tdenv,
         exp_target,
         cases_target.iter().map(|case| &case.guard),
         total_target,
         &guard,
-        span_target,
-    )?
-    else {
-        return Ok(None);
+    )? {
+        Merge::Merged(idx) => idx,
+        Merge::Skip => return Ok(Merge::Skip),
+        Merge::Stop => return Ok(Merge::Stop),
     };
     let mut cases = std::mem::take(cases_target);
     let block = std::mem::take(block);
     let case = Case { guard, block };
     apply_case_merge(idx, case, &mut cases);
-    Ok(Some(cases))
+    Ok(Merge::Merged(cases))
 }
 
 /// Finds the branch with an equal guard, or the end position for appending.
@@ -409,21 +409,20 @@ fn find_case_merge<'a>(
     guards_target: impl ExactSizeIterator<Item = &'a Guard>,
     total_target: bool,
     guard: &Guard,
-    span_target: &Span,
-) -> Result<Option<usize>, StructureError> {
+) -> Result<Merge<usize>, StructureError> {
     let guards_len = guards_target.len();
     for (idx, guard_target) in guards_target.enumerate() {
         match overlap_guard(tdenv, exp_target, guard_target, guard)? {
-            Overlap::Identical => return Ok(Some(idx)),
+            Overlap::Identical => return Ok(Merge::Merged(idx)),
             Overlap::Disjoint { .. } | Overlap::Partition { .. } => {}
-            Overlap::Fuzzy => return Ok(None),
+            Overlap::Fuzzy => return Ok(Merge::Skip),
         }
     }
-    // A total Case cannot take a new branch
+    // Refuse the grouping before either input body is moved
     if total_target {
-        return Err(error::case_extension_unsupported(span_target));
+        return Ok(Merge::Stop);
     }
-    Ok(Some(guards_len))
+    Ok(Merge::Merged(guards_len))
 }
 
 /// Merges the case into the branch at `idx`, or appends it.

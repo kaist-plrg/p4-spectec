@@ -374,35 +374,29 @@ fn test_debug_continuation_preserves_binding_rule_and_hold_payloads() {
 }
 
 #[test]
-fn test_source_reachable_structuring_failures_remain_reports() {
+fn test_structuring_type_failures_remain_reports() {
     use p4spec_rust::{
         frontend::parse::parse_files,
         pass::{algo, elaborate},
     };
-    let path_root =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/structure");
-    for (name, code, line) in [
-        ("generic-subtype", "structure/type-operation-invalid", 4),
-        ("total-list", "structure/case-extension-unsupported", 2),
-    ] {
-        let path = path_root.join(format!("{name}.watsup"));
-        let spec_el = parse_files([&path]).unwrap();
-        let spec_il = elaborate::convert(spec_el).unwrap();
-        let spec_al = algo::convert(spec_il).unwrap();
-        for without_rule_groups in [false, true] {
-            let error = convert(spec_al.clone(), without_rule_groups).unwrap_err();
-            let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
-                panic!("structuring diagnostic")
-            };
-            assert_eq!(diagnostic.source, "structure");
-            assert_eq!(diagnostic.code.as_deref(), Some(code), "{name}");
-            assert_eq!(diagnostic.severity, p4spec_rust::diagnostic::Severity::Error);
-            assert_eq!(diagnostic.labels.len(), 1);
-            assert_eq!(diagnostic.labels[0].style, p4spec_rust::diagnostic::LabelStyle::Primary);
-            assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
-            assert_eq!(diagnostic.labels[0].span.left.line, line, "{name}");
-            assert!(error.children.is_empty());
-        }
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/structure/generic-subtype.watsup");
+    let spec_el = parse_files([&path]).unwrap();
+    let spec_il = elaborate::convert(spec_el).unwrap();
+    let spec_al = algo::convert(spec_il).unwrap();
+    for without_rule_groups in [false, true] {
+        let error = convert(spec_al.clone(), without_rule_groups).unwrap_err();
+        let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+            panic!("structuring diagnostic")
+        };
+        assert_eq!(diagnostic.source, "structure");
+        assert_eq!(diagnostic.code.as_deref(), Some("structure/type-operation-invalid"));
+        assert_eq!(diagnostic.severity, p4spec_rust::diagnostic::Severity::Error);
+        assert_eq!(diagnostic.labels.len(), 1);
+        assert_eq!(diagnostic.labels[0].style, p4spec_rust::diagnostic::LabelStyle::Primary);
+        assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
+        assert_eq!(diagnostic.labels[0].span.left.line, 4);
+        assert!(error.children.is_empty());
     }
 }
 
@@ -439,4 +433,9 @@ fn test_crossed_nested_inputs_structure_successfully() {
     for name in ["crossed-nested-inputs", "crossed-nested-inputs-otherwise"] {
         structure_fixture(name);
     }
+}
+
+#[test]
+fn test_total_case_extension_keeps_original_branches() {
+    structure_fixture("total-list");
 }

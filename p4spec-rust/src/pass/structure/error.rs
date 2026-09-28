@@ -1,7 +1,7 @@
 //! Reports for source-reachable structuring limitations
 //!
 //! Validated AL establishes the internal shape and binding invariants.
-//! Type operations and extending total cases can still fail on validated inputs.
+//! Type operations can still fail on validated inputs.
 
 use crate::{
     diagnostic::{Diagnostic, Label, Report, Severity},
@@ -32,15 +32,4 @@ const TYPE_OPERATION_INVALID: &str = "structure/type-operation-invalid";
 /// Promotes a type operation failure without losing its original location.
 pub(super) fn type_operation_invalid(error: TypeError) -> StructureError {
     cause(TYPE_OPERATION_INVALID, format!("type operation failed: {}", error.kind), &error.span)
-}
-
-const CASE_EXTENSION_UNSUPPORTED: &str = "structure/case-extension-unsupported";
-
-/// Reports a guard that cannot be added to an already total case analysis.
-pub(super) fn case_extension_unsupported(span: &Span) -> StructureError {
-    cause(
-        CASE_EXTENSION_UNSUPPORTED,
-        "cannot extend a total case analysis with another branch",
-        span,
-    )
 }
