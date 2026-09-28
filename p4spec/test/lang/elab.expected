@@ -4892,7 +4892,10 @@ def $sizeof_minSizeInBits'(typeIR) : nat =
 
   clause 11 : (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) = $sum_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-  clause 12 : (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 12 : (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ [] `} as typeIR) = 0
+
+  clause 13 : (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  -- if (typeIR*{typeIR <- typeIR*} =/= [])
 
 def $sizeof_minSizeInBytes(typeIR) : value =
 
@@ -4929,7 +4932,10 @@ def $sizeof_maxSizeInBits'(typeIR) : nat =
 
   clause 11 : (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) = $sum_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
 
-  clause 12 : (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 12 : (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ [] `} as typeIR) = 0
+
+  clause 13 : (HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} as typeIR) = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  -- if (typeIR*{typeIR <- typeIR*} =/= [])
 
 def $sizeof_maxSizeInBytes(typeIR) : value =
 

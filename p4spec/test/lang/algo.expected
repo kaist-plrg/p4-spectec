@@ -7521,9 +7521,15 @@ def $sizeof_minSizeInBits'(typeIR) : nat =
   -- if typeIR' <: headerTypeIR
   -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerTypeIR
 
-  clause 12 : (typeIR') = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 12 : (typeIR) = 0
+  -- if typeIR <: headerUnionTypeIR
+  -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} = typeIR as headerUnionTypeIR
+  -- if fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []
+
+  clause 13 : (typeIR') = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
   -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerUnionTypeIR
+  -- if (typeIR*{typeIR <- typeIR*} =/= [])
 
 def $sizeof_minSizeInBytes(typeIR) : value =
 
@@ -7585,9 +7591,15 @@ def $sizeof_maxSizeInBits'(typeIR) : nat =
   -- if typeIR' <: headerTypeIR
   -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerTypeIR
 
-  clause 12 : (typeIR') = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 12 : (typeIR) = 0
+  -- if typeIR <: headerUnionTypeIR
+  -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} = typeIR as headerUnionTypeIR
+  -- if fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []
+
+  clause 13 : (typeIR') = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
   -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerUnionTypeIR
+  -- if (typeIR*{typeIR <- typeIR*} =/= [])
 
 def $sizeof_maxSizeInBytes(typeIR) : value =
 
