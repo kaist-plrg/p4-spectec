@@ -997,3 +997,155 @@ fn test_case_scrutinee_is_evaluated_once_across_guard_attempts() {
         assert_eq!(calls.get(), 1);
     }
 }
+
+#[test]
+fn test_crossed_unifiers_preserve_clause_bindings_and_fallthrough() {
+    let source = r#"
+var x : nat
+var y : nat
+var pair : (nat, nat)
+dec $flat((nat, nat), (nat, nat)) : nat
+def $flat((x, y), pair) = x
+  -- if $(x > 0)
+def $flat(pair, pair_1) = 9
+  -- if false
+def $flat(pair, (x, y)) = y
+  -- otherwise
+dec $nested(((nat, nat), (nat, nat))) : nat
+def $nested(((x, y), pair)) = x
+  -- if $(x > 0)
+def $nested((pair, pair_1)) = 9
+  -- if false
+def $nested((pair, (x, y))) = y
+  -- otherwise
+relation R: (nat, nat) |- (nat, nat) : nat
+  hint(input %0 %1)
+rule R/left: (x, y) |- pair : x
+  -- if $(x > 0)
+rule R/right: pair |- (x, y) : y
+  -- otherwise
+dec $rel_first() : nat
+def $rel_first() = x
+  -- R: (4, 5) |- (6, 7) : x
+dec $rel_else() : nat
+def $rel_else() = x
+  -- R: (0, 1) |- (2, 3) : x
+dec $flat_first() : nat
+def $flat_first() = $flat((4, 5), (6, 7))
+dec $flat_else() : nat
+def $flat_else() = $flat((0, 1), (2, 3))
+dec $nested_first() : nat
+def $nested_first() = $nested(((4, 5), (6, 7)))
+dec $nested_else() : nat
+def $nested_else() = $nested(((0, 1), (2, 3)))
+"#;
+    let spec_al = spec_al(source);
+    for without_rule_groups in [false, true] {
+        let spec_sl = structure::convert(spec_al.clone(), without_rule_groups).unwrap();
+        let mut runner = make_runner(spec_sl, true);
+        for (name, expected) in
+            [("flat_first", "4"), ("flat_else", "3"), ("nested_first", "4"), ("nested_else", "3")]
+        {
+            let value = runner.context().call_func(name, &[], &[]).unwrap();
+            assert_eq!(number(runner.arena(), &value), expected, "{name}");
+        }
+    }
+}
+
+#[test]
+fn test_crossed_unifiers_preserve_iteration_bindings() {
+    let source = r#"
+var x : nat
+var y : nat
+var pair : (nat, nat)
+dec $f(((nat, nat), (nat, nat))*) : nat*
+def $f(((x, y), pair)*) = x*
+  -- if false
+def $f((pair, (x, y))*) = y*
+  -- otherwise
+dec $entry() : nat*
+def $entry() = $f([((1, 2), (3, 4)), ((5, 6), (7, 8))])
+dec $empty() : nat*
+def $empty() = $f([])
+"#;
+    let spec_al = spec_al(source);
+    for without_rule_groups in [false, true] {
+        let spec_sl = structure::convert(spec_al.clone(), without_rule_groups).unwrap();
+        let mut runner = make_runner(spec_sl, true);
+        for (name, expected) in [("entry", vec!["4", "8"]), ("empty", vec![])] {
+            let value = runner.context().call_func(name, &[], &[]).unwrap();
+            let values = get::list(runner.arena(), &value).unwrap();
+            assert_eq!(
+                values
+                    .iter()
+                    .map(|value| number(runner.arena(), value))
+                    .collect::<Vec<_>>(),
+                expected,
+                "{name}"
+            );
+        }
+    }
+}
+
+#[test]
+fn test_unified_iterations_keep_unchanged_variables() {
+    let source = r#"
+var x : nat
+var y : nat
+dec $f((nat, nat)*) : nat*
+def $f((x, y)*) = y*
+  -- if false
+def $f((x, nat)*) = x*
+  -- otherwise
+dec $entry() : nat*
+def $entry() = $f([(1, 2), (3, 4)])
+"#;
+    let spec_al = spec_al(source);
+    for without_rule_groups in [false, true] {
+        let spec_sl = structure::convert(spec_al.clone(), without_rule_groups).unwrap();
+        let mut runner = make_runner(spec_sl, true);
+        let value = runner.context().call_func("entry", &[], &[]).unwrap();
+        let values = get::list(runner.arena(), &value).unwrap();
+        assert_eq!(
+            values
+                .iter()
+                .map(|value| number(runner.arena(), value))
+                .collect::<Vec<_>>(),
+            vec!["1", "3"]
+        );
+    }
+}
+
+#[test]
+fn test_crossed_unifiers_keep_nested_iteration_dimensions() {
+    let source = r#"
+var x : nat
+var y : nat
+var pair : (nat, nat)
+dec $f(((nat, nat), (nat, nat)*)*) : nat**
+def $f((pair, (x, y)*)*) = x**
+  -- if false
+def $f(((x, y), pair*)*) = [y*]
+  -- otherwise
+dec $entry() : nat**
+def $entry() = $f([((1, 2), [(3, 4)]), ((5, 6), [])])
+"#;
+    let spec_al = spec_al(source);
+    for without_rule_groups in [false, true] {
+        let spec_sl = structure::convert(spec_al.clone(), without_rule_groups).unwrap();
+        let mut runner = make_runner(spec_sl, true);
+        let value = runner.context().call_func("entry", &[], &[]).unwrap();
+        let values = get::list(runner.arena(), &value).unwrap();
+        let nums = values
+            .iter()
+            .map(|value| {
+                get::list(runner.arena(), value)
+                    .unwrap()
+                    .iter()
+                    .map(|value| number(runner.arena(), value))
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(nums, vec![vec!["2", "6"]]);
+    }
+}

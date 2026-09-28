@@ -529,7 +529,7 @@ fn struct_defined_rel_def(
             let exps_input = struct_rel_exps_input(ctx, &not_typ, &input_hint);
             (exps_input, vec![], None)
         } else {
-            antiunify::antiunify_rule_matches(frees, &exps_match_by_rule_group, exps_match_else)?
+            antiunify::antiunify_rule_matches(frees, &exps_match_by_rule_group, exps_match_else)
         };
     // Merge the rule group blocks; the otherwise group stays separate
     let rel_signature = sl::RelSignature { not_typ, input_hint };
@@ -622,7 +622,7 @@ fn struct_table_dec_def(
         .into_iter()
         .map(struct_table_row_clause)
         .unzip();
-    let (args_template, paths, _) = antiunify::antiunify_clauses(clauses, None)?;
+    let (args_template, paths, _) = antiunify::antiunify_clauses(clauses, None);
     let params_sl = struct_params_from_args(ctx, params_al, args_template);
     let exps_output = paths.iter().map(|(_, exp)| exp.clone()).collect::<Vec<_>>();
     let blocks_ol = paths
@@ -665,7 +665,7 @@ fn struct_func_dec_def(
     let al::DefinedFunc { id, tparams, params: params_al, typ, clauses, else_clause, hints } =
         def_func_al;
     // Anti-unify the clause arguments into one parameter template
-    let (args_template, paths, path_else) = antiunify::antiunify_clauses(clauses, else_clause)?;
+    let (args_template, paths, path_else) = antiunify::antiunify_clauses(clauses, else_clause);
     // A function without clauses keeps its declared parameters
     if paths.is_empty() && path_else.is_none() {
         let params_sl = struct_params(ctx, params_al);

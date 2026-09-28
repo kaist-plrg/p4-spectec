@@ -1,12 +1,11 @@
 //! Reports for source-reachable structuring limitations
 //!
 //! Validated AL establishes the internal shape and binding invariants.
-//! Cross-clause unifier collisions, template population, type operations,
-//! and extending total cases can still fail on validated source inputs.
+//! Type operations and extending total cases can still fail on validated inputs.
 
 use crate::{
     diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::common::{Id, source::Span},
+    lang::common::source::Span,
     runtime::ops::typ::TypeError,
 };
 
@@ -26,24 +25,6 @@ fn cause(code: &str, message: impl Into<String>, span: &Span) -> StructureError 
         )
         .into(),
     )
-}
-
-const INPUT_UNIFICATION_CONFLICTING: &str = "structure/input-unification-conflicting";
-
-/// Reports an identifier generalized in more than one input position.
-pub(super) fn input_unification_conflicting(id: &Id) -> StructureError {
-    cause(
-        INPUT_UNIFICATION_CONFLICTING,
-        format!("cannot unify identifier `{}` in more than one input position", id.node),
-        &id.span,
-    )
-}
-
-const INPUT_TEMPLATE_UNSUPPORTED: &str = "structure/input-template-unsupported";
-
-/// Reports an input whose generated template cannot recover its bindings.
-pub(super) fn input_template_unsupported(span: &Span) -> StructureError {
-    cause(INPUT_TEMPLATE_UNSUPPORTED, "cannot populate the shared input template", span)
 }
 
 const TYPE_OPERATION_INVALID: &str = "structure/type-operation-invalid";

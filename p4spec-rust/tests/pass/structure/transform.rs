@@ -382,12 +382,6 @@ fn test_source_reachable_structuring_failures_remain_reports() {
     let path_root =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/structure");
     for (name, code, line) in [
-        ("crossed-inputs", "structure/input-unification-conflicting", 5),
-        ("crossed-inputs-otherwise", "structure/input-unification-conflicting", 5),
-        ("crossed-relation-inputs", "structure/input-unification-conflicting", 6),
-        ("crossed-relation-inputs-otherwise", "structure/input-unification-conflicting", 6),
-        ("crossed-nested-inputs", "structure/input-template-unsupported", 5),
-        ("crossed-nested-inputs-otherwise", "structure/input-template-unsupported", 5),
         ("generic-subtype", "structure/type-operation-invalid", 4),
         ("total-list", "structure/case-extension-unsupported", 2),
     ] {
@@ -409,5 +403,40 @@ fn test_source_reachable_structuring_failures_remain_reports() {
             assert_eq!(diagnostic.labels[0].span.left.line, line, "{name}");
             assert!(error.children.is_empty());
         }
+    }
+}
+
+fn structure_fixture(name: &str) {
+    use p4spec_rust::{
+        frontend::parse::parse_files,
+        pass::{algo, elaborate},
+    };
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/structure")
+        .join(format!("{name}.watsup"));
+    let spec_el = parse_files([&path]).unwrap();
+    let spec_il = elaborate::convert(spec_el).unwrap();
+    let spec_al = algo::convert(spec_il).unwrap();
+    for without_rule_groups in [false, true] {
+        convert(spec_al.clone(), without_rule_groups).unwrap();
+    }
+}
+
+#[test]
+fn test_crossed_input_positions_structure_successfully() {
+    for name in [
+        "crossed-inputs",
+        "crossed-inputs-otherwise",
+        "crossed-relation-inputs",
+        "crossed-relation-inputs-otherwise",
+    ] {
+        structure_fixture(name);
+    }
+}
+
+#[test]
+fn test_crossed_nested_inputs_structure_successfully() {
+    for name in ["crossed-nested-inputs", "crossed-nested-inputs-otherwise"] {
+        structure_fixture(name);
     }
 }

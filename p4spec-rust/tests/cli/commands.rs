@@ -843,15 +843,15 @@ fn test_structuring_failures_render_source_locations() {
     for command in ["struct", "prose"] {
         let output = binary()
             .arg(command)
-            .arg(fixture("structure/crossed-inputs.watsup"))
+            .arg(fixture("structure/generic-subtype.watsup"))
             .output()
             .unwrap();
         assert_eq!(output.status.code(), Some(1));
         assert!(output.stdout.is_empty());
         let text = String::from_utf8(output.stderr).unwrap();
-        assert!(text.contains("error[structure/input-unification-conflicting]"), "{text}");
-        assert!(text.contains("crossed-inputs.watsup:5:16"), "{text}");
-        assert!(text.contains("def $f((x, y), pair) = x"), "{text}");
-        assert!(text.contains("^^^^"), "{text}");
+        assert!(text.contains("error[structure/type-operation-invalid]"), "{text}");
+        assert!(text.contains("generic-subtype.watsup:4:14"), "{text}");
+        assert!(text.contains("-- if T <: T"), "{text}");
+        assert!(text.contains("^"), "{text}");
     }
 }

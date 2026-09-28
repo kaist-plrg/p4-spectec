@@ -9,14 +9,16 @@ use crate::lang::{
     al::ast::*,
     common::ds::{map::IdMap, set::IdSet},
     il,
-    traits::{at::At, eq::SyntaxEq, free::FreeIds},
+    traits::{
+        at::At,
+        eq::SyntaxEq,
+        free::{FreeIds, FreeVars},
+    },
 };
-
-use super::{StructureError, error};
 
 // == Unification environment
 
-/// Maps original identifiers to their unified identifiers.
+/// Maps each fresh unified identifier to the original used to name it.
 #[derive(Default)]
 struct UEnv {
     ids: IdMap<Id>,
@@ -25,20 +27,16 @@ struct UEnv {
 impl UEnv {
     /// Checks whether `id` is a unified identifier from anti-unification.
     fn unified(&self, id: &Id) -> bool {
-        self.ids
-            .iter()
-            .any(|(_, id_unified)| id_unified.syntax_eq(id))
+        self.ids.contains_key(id)
     }
 
-    /// Merges another position's map; each identifier unifies in one position.
-    fn extend(&mut self, uenv: Self) -> Result<(), StructureError> {
-        for (id, id_unified) in uenv.ids.iter() {
-            if self.ids.contains_key(id) {
-                return Err(error::input_unification_conflicting(id));
-            }
-            self.ids.insert(id.clone(), id_unified.clone());
-        }
-        Ok(())
+    /// Collects position-specific unifiers, whose fresh names are distinct.
+    fn extend(&mut self, uenv: Self) {
+        self.ids.extend(
+            uenv.ids
+                .iter()
+                .map(|(id_unified, id)| (id_unified.clone(), id.clone())),
+        );
     }
 }
 
@@ -54,19 +52,15 @@ fn check_arity(expected: usize, actual: usize) {
 // - Expression template
 
 /// Emits the let premises binding one input to the shared template.
-fn populate_exp_template(
-    uenv: &UEnv,
-    exp_template: &Exp,
-    exp: &Exp,
-) -> Result<Vec<Prem>, StructureError> {
+fn populate_exp_template(uenv: &UEnv, exp_template: &Exp, exp: &Exp) -> Vec<Prem> {
     if exp_template.syntax_eq(exp) {
-        return Ok(vec![]);
+        return vec![];
     }
     match (&exp_template.node, &exp.node) {
         // A unified identifier binds the whole input at this position
         (ExpKind::Id(id_template), _) if uenv.unified(id_template) => {
             let prem = populate_id_exp_template(exp_template, exp);
-            Ok(vec![prem])
+            vec![prem]
         }
         (ExpKind::Tuple(exps_template), ExpKind::Tuple(exps)) => {
             populate_exps_templates(uenv, exps_template.iter(), exps.iter())
@@ -94,9 +88,10 @@ fn populate_exp_template(
                 exp_body,
                 exp_iter,
             );
-            Ok(vec![prem])
+            vec![prem]
         }
-        _ => Err(error::input_template_unsupported(&exp.span)),
+        // Anti-unification preserves matching shapes and records every fresh leaf
+        _ => unreachable!("input matches its anti-unified template"),
     }
 }
 
@@ -104,14 +99,14 @@ fn populate_exps_templates<'a>(
     uenv: &UEnv,
     exps_template: impl ExactSizeIterator<Item = &'a Exp>,
     exps: impl ExactSizeIterator<Item = &'a Exp>,
-) -> Result<Vec<Prem>, StructureError> {
+) -> Vec<Prem> {
     check_arity(exps_template.len(), exps.len());
     let mut prems = vec![];
     for (exp_template, exp) in exps_template.zip(exps) {
-        let prems_exp = populate_exp_template(uenv, exp_template, exp)?;
+        let prems_exp = populate_exp_template(uenv, exp_template, exp);
         prems.extend(prems_exp);
     }
-    Ok(prems)
+    prems
 }
 
 // - Identifier expression
@@ -214,7 +209,6 @@ fn antiunify_exps(
 /// Keeps an already unified template identifier, otherwise freshens it.
 fn antiunify_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id_template: &Id) -> ExpKind {
     if uenv.unified(id_template) {
-        uenv.ids.insert(id_template.clone(), id_template.clone());
         ExpKind::Id(id_template.clone())
     } else {
         antiunify_fresh_id_exp(frees, uenv, id_template)
@@ -223,11 +217,11 @@ fn antiunify_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id_template: &Id) -> Exp
 
 // - Fresh identifier expression
 
-/// Introduces a fresh identifier and records `id` as unified into it.
+/// Introduces a fresh identifier and records its original name.
 fn antiunify_fresh_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id: &Id) -> ExpKind {
     let id_fresh = il::fresh::id(frees, id);
     frees.insert(id_fresh.clone());
-    uenv.ids.insert(id.clone(), id_fresh.clone());
+    uenv.ids.insert(id_fresh.clone(), id.clone());
     ExpKind::Id(id_fresh)
 }
 
@@ -296,16 +290,23 @@ fn antiunify_iter_exp(
     let ExpIter { iter, vars: vars_template } = exp_iter_template;
     let ExpIter { vars, .. } = exp_iter;
     let exp_template = antiunify_exp(frees, uenv, exp_template, exp);
-    // Map both sides' variables to their unified names, dropping duplicates
+    // Match both identifier and iteration depth in the resulting body
+    let vars_free = exp_template.free_vars();
     let mut vars_unified = vec![];
     for var in vars_template.iter().chain(vars) {
         let Var { id, typ, iters } = var;
-        if let Some(id_unified) = uenv.ids.get(id) {
+        let ids_unified =
+            std::iter::once(id).chain(uenv.ids.iter().filter_map(|(id_unified, id_original)| {
+                id_original.syntax_eq(id).then_some(id_unified)
+            }));
+        // One original name can produce multiple unifiers within a tuple
+        for id_unified in ids_unified {
             let var_unified =
                 Var { id: id_unified.clone(), typ: typ.clone(), iters: iters.clone() };
-            if !vars_unified
-                .iter()
-                .any(|var: &Var| var.syntax_eq(&var_unified))
+            if vars_free.iter().any(|var| var.syntax_eq(&var_unified))
+                && !vars_unified
+                    .iter()
+                    .any(|var: &Var| var.syntax_eq(&var_unified))
             {
                 vars_unified.push(var_unified);
             }
@@ -319,12 +320,9 @@ fn antiunify_iter_exp(
 // - Expressions across matches
 
 /// Builds one template per input position across all rule matches.
-fn antiunify_exps_across_matches(
-    mut frees: IdSet,
-    exps_by_match: &[&[Exp]],
-) -> Result<(UEnv, Vec<Exp>), StructureError> {
+fn antiunify_exps_across_matches(mut frees: IdSet, exps_by_match: &[&[Exp]]) -> (UEnv, Vec<Exp>) {
     let Some((exps_head, exps_tail)) = exps_by_match.split_first() else {
-        return Ok((UEnv::default(), vec![]));
+        return (UEnv::default(), vec![]);
     };
     for exps in exps_tail {
         check_arity(exps_head.len(), exps.len());
@@ -338,10 +336,10 @@ fn antiunify_exps_across_matches(
         for exps in exps_tail {
             exp_template = antiunify_exp(&mut frees, &mut uenv, &exp_template, &exps[num_idx]);
         }
-        uenv_acc.extend(uenv)?;
+        uenv_acc.extend(uenv);
         exps_template.push(exp_template);
     }
-    Ok((uenv_acc, exps_template))
+    (uenv_acc, exps_template)
 }
 
 // == Populating argument templates
@@ -349,16 +347,12 @@ fn antiunify_exps_across_matches(
 // - Argument template
 
 /// Emits the let premises binding an argument to its template.
-fn populate_arg_template(
-    uenv: &UEnv,
-    arg_template: &Arg,
-    arg: &Arg,
-) -> Result<Vec<Prem>, StructureError> {
+fn populate_arg_template(uenv: &UEnv, arg_template: &Arg, arg: &Arg) -> Vec<Prem> {
     match (&arg_template.node, &arg.node) {
         (ArgKind::Exp(exp_template), ArgKind::Exp(exp)) => {
             populate_exp_template(uenv, exp_template, exp)
         }
-        (ArgKind::Def(id_template), ArgKind::Def(id)) if id_template.syntax_eq(id) => Ok(vec![]),
+        (ArgKind::Def(id_template), ArgKind::Def(id)) if id_template.syntax_eq(id) => vec![],
         _ => {
             // Elaboration checks argument kinds and defining function names
             unreachable!("validated argument kinds and function names")
@@ -366,18 +360,14 @@ fn populate_arg_template(
     }
 }
 
-fn populate_args_templates(
-    uenv: &UEnv,
-    args_template: &[Arg],
-    args: &[Arg],
-) -> Result<Vec<Prem>, StructureError> {
+fn populate_args_templates(uenv: &UEnv, args_template: &[Arg], args: &[Arg]) -> Vec<Prem> {
     check_arity(args_template.len(), args.len());
     let mut prems = vec![];
     for (arg_template, arg) in args_template.iter().zip(args) {
-        let prems_arg = populate_arg_template(uenv, arg_template, arg)?;
+        let prems_arg = populate_arg_template(uenv, arg_template, arg);
         prems.extend(prems_arg);
     }
-    Ok(prems)
+    prems
 }
 
 // == Anti-unification of arguments
@@ -407,12 +397,9 @@ fn antiunify_arg(frees: &mut IdSet, uenv: &mut UEnv, arg_template: &Arg, arg: &A
 // - Arguments across clauses
 
 /// Builds one argument template per position across all clauses.
-fn antiunify_args_across_clauses(
-    mut frees: IdSet,
-    clauses: &[&Clause],
-) -> Result<(UEnv, Vec<Arg>), StructureError> {
+fn antiunify_args_across_clauses(mut frees: IdSet, clauses: &[&Clause]) -> (UEnv, Vec<Arg>) {
     let Some((clause_head, clauses_tail)) = clauses.split_first() else {
-        return Ok((UEnv::default(), vec![]));
+        return (UEnv::default(), vec![]);
     };
     let args_head = &clause_head.node.args;
     for clause in clauses_tail {
@@ -428,55 +415,46 @@ fn antiunify_args_across_clauses(
             arg_template =
                 antiunify_arg(&mut frees, &mut uenv, &arg_template, &clause.node.args[num_idx]);
         }
-        uenv_acc.extend(uenv)?;
+        uenv_acc.extend(uenv);
         args_template.push(arg_template);
     }
-    Ok((uenv_acc, args_template))
+    (uenv_acc, args_template)
 }
 
 // == Anti-unification of rule matches
 
 /// Anti-unifies rule inputs into a template with per-group bindings.
-#[expect(
-    clippy::type_complexity,
-    reason = "Destructured once per call site; a named result type would add no meaning"
-)]
 pub(super) fn antiunify_rule_matches(
     frees: IdSet,
     exps_by_rule_group: &[Vec<Exp>],
     exps_else: Option<&[Exp]>,
-) -> Result<(Vec<Exp>, Vec<Vec<Prem>>, Option<Vec<Prem>>), StructureError> {
+) -> (Vec<Exp>, Vec<Vec<Prem>>, Option<Vec<Prem>>) {
     // The otherwise group joins the matches for the template
     let exps_by_match = exps_by_rule_group
         .iter()
         .map(Vec::as_slice)
         .chain(exps_else)
         .collect::<Vec<_>>();
-    let (uenv, exps_template) = antiunify_exps_across_matches(frees, &exps_by_match)?;
+    let (uenv, exps_template) = antiunify_exps_across_matches(frees, &exps_by_match);
     // Each group binds its inputs to the template
     let prems_by_rule_group = exps_by_rule_group
         .iter()
         .map(|exps| populate_exps_templates(&uenv, exps_template.iter(), exps.iter()))
-        .collect::<Result<_, _>>()?;
-    let prems_else = exps_else
-        .map(|exps| populate_exps_templates(&uenv, exps_template.iter(), exps.iter()))
-        .transpose()?;
-    Ok((exps_template, prems_by_rule_group, prems_else))
+        .collect();
+    let prems_else =
+        exps_else.map(|exps| populate_exps_templates(&uenv, exps_template.iter(), exps.iter()));
+    (exps_template, prems_by_rule_group, prems_else)
 }
 
 // == Anti-unification of clauses
 
 /// Prepends a clause's template bindings to its own premises.
-fn populate_clause(
-    uenv: &UEnv,
-    args_template: &[Arg],
-    clause: Clause,
-) -> Result<(Vec<Prem>, Exp), StructureError> {
+fn populate_clause(uenv: &UEnv, args_template: &[Arg], clause: Clause) -> (Vec<Prem>, Exp) {
     let clause_kind = clause.node;
     let ClauseKind { args, exp, prems } = clause_kind;
-    let mut prems_template = populate_args_templates(uenv, args_template, &args)?;
+    let mut prems_template = populate_args_templates(uenv, args_template, &args);
     prems_template.extend(prems);
-    Ok((prems_template, exp))
+    (prems_template, exp)
 }
 
 /// Anti-unifies clause arguments into a template with per-clause bindings.
@@ -487,19 +465,17 @@ fn populate_clause(
 pub(super) fn antiunify_clauses(
     clauses: Vec<Clause>,
     clause_else: Option<Clause>,
-) -> Result<(Vec<Arg>, Vec<(Vec<Prem>, Exp)>, Option<(Vec<Prem>, Exp)>), StructureError> {
+) -> (Vec<Arg>, Vec<(Vec<Prem>, Exp)>, Option<(Vec<Prem>, Exp)>) {
     let clauses_all = clauses.iter().chain(clause_else.iter()).collect::<Vec<_>>();
     let mut frees = IdSet::new();
     for clause in &clauses_all {
         clause.free_ids_into(&mut frees);
     }
-    let (uenv, args_template) = antiunify_args_across_clauses(frees, &clauses_all)?;
+    let (uenv, args_template) = antiunify_args_across_clauses(frees, &clauses_all);
     let paths = clauses
         .into_iter()
         .map(|clause| populate_clause(&uenv, &args_template, clause))
-        .collect::<Result<_, _>>()?;
-    let path_else = clause_else
-        .map(|clause| populate_clause(&uenv, &args_template, clause))
-        .transpose()?;
-    Ok((args_template, paths, path_else))
+        .collect();
+    let path_else = clause_else.map(|clause| populate_clause(&uenv, &args_template, clause));
+    (args_template, paths, path_else)
 }
