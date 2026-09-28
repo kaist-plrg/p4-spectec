@@ -10938,7 +10938,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
 
   rulegroup parserBlockStatement
 
-    rule parserBlockStatement: TC_0 |- parserBlockStatement as parserStatement : TC_1 parserBlockStatementIR as parserStatementIR
+    rule parserBlockStatement: TC_0 |- parserBlockStatement as parserStatement : TC_3 parserBlockStatementIR as parserStatementIR
     -- if (TC_1 = $enter_t(TC_0))
     -- ParserBlock_ok: TC_1 |- parserBlockStatement : TC_2 parserBlockStatementIR
     -- if (TC_3 = $exit_t(TC_2))
@@ -14631,11 +14631,13 @@ relation ParserState_inst: instContext store |- parserStateIR : instContext stor
 
   rulegroup 
 
-    rule : IC_0 STO_0 |- parserStateIR : IC_2 STO_1
+    rule : IC_0 STO_0 |- parserStateIR : IC_4 STO_1
     -- if (annotationList STATE nameIR `{ parserBlockElementStatementListIR transitionStatementIR `} = parserStateIR)
-    -- ParserBlockElementStmtList_inst: IC_0 STO_0 |- parserBlockElementStatementListIR : IC_1 STO_1 parserBlockElementStatementListIR_inst
+    -- if (IC_1 = $enter_i(IC_0))
+    -- ParserBlockElementStmtList_inst: IC_1 STO_0 |- parserBlockElementStatementListIR : IC_2 STO_1 parserBlockElementStatementListIR_inst
+    -- if (IC_3 = $exit_i(IC_2))
     -- if (parserStateIR_inst = annotationList STATE nameIR `{ parserBlockElementStatementListIR_inst transitionStatementIR `})
-    -- if (IC_2 = $add_parserState_i(IC_1, nameIR, parserStateIR_inst))
+    -- if (IC_4 = $add_parserState_i(IC_3, nameIR, parserStateIR_inst))
 
 relation ParserStates_inst: instContext store |- parserStateIR* : instContext store
 
