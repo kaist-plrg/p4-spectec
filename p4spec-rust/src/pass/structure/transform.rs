@@ -126,7 +126,6 @@ fn struct_def_param_from_arg(
 ) -> sl::ParamKind {
     // Elaboration requires defining function arguments to name their parameters
     assert!(id.syntax_eq(&id_arg), "validated function parameter identity");
-
     struct_def_param(ctx, id, tparams, params_al, typ)
 }
 

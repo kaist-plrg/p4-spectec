@@ -413,7 +413,6 @@ fn upstream_case_instr(changed: &mut bool, instr: CaseInstr) -> InstrKind {
         .map(|case| {
             let Case { guard, block } = case;
             let block = upstream_block(changed, block);
-
             Case { guard, block }
         })
         .collect();

@@ -61,7 +61,6 @@ fn test_nullary_relation_defaults_survive_structuring() {
         frontend::parse::parse_text,
         pass::{algo, elaborate},
     };
-
     let spec_el = parse_text(
         "nullary.watsup".into(),
         "extern relation External: _EXTERNAL\nrelation Empty: _EMPTY\nrelation Ready: _READY\nrule Ready: _READY\n",

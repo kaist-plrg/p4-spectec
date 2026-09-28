@@ -122,7 +122,6 @@ fn upstream_case_instr(changed: &mut bool, frees: &IdSet, instr_ol: CaseInstr) -
             let Case { guard, block } = case;
             let frees = guard.free_ids().union(frees.clone());
             let block = upstream_block(changed, &frees, block);
-
             Case { guard, block }
         })
         .collect();

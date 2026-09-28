@@ -216,7 +216,6 @@ fn upstream_case_instr(instr_ol: CaseInstr, span: Span) -> Block {
         .map(|case| {
             let Case { guard, block } = case;
             let block = upstream_block(block);
-
             Case { guard, block }
         })
         .collect();

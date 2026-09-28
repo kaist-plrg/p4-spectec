@@ -181,7 +181,6 @@ fn downstream_case_instr(
             ids_revive.append(renamer.dom().intersection(&ids_used));
             let guard = renamer.rename_guard(changed, guard);
             let block = downstream_block(renamer, changed, ids_revive, block);
-
             Case { guard, block }
         })
         .collect();
@@ -355,7 +354,6 @@ fn upstream_case_instr(changed: &mut bool, frees: &IdSet, instr_ol: CaseInstr) -
         .map(|case| {
             let Case { guard, block } = case;
             let block = upstream_block(changed, frees, block);
-
             Case { guard, block }
         })
         .collect();

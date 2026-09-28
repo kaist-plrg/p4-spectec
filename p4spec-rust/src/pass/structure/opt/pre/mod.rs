@@ -14,6 +14,5 @@ use crate::pass::structure::ol::ast::Block;
 pub(super) fn optimize(block: Block, without_rule_groups: bool) -> Block {
     let block = if without_rule_groups { remove_group::apply(block) } else { block };
     let block = remove_let_alias::apply(block);
-
     matchify_if_eq_terminal::apply(block)
 }
