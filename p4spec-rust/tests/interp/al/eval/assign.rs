@@ -1,6 +1,6 @@
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
-use p4spec_rust::interp::shared::{backtrack::Backtrack, util::find_var};
+use p4spec_rust::interp::shared::{backtrack::Backtrack, util::find_var_of_exp};
 use p4spec_rust::runtime::envs::interp::al::ast_prepared as prepared;
 use p4spec_rust::runtime::envs::interp::shared::{callable::Callable, frame::FrameLayout};
 use std::rc::Rc;
@@ -96,7 +96,10 @@ fn test_iterated_variable_fast_path_preserves_identity_and_path() {
     let exp = iter(exp_inner.clone(), ast::Iter::List, vec![var("x", vec![ast::Iter::Opt])]);
     let (exp, ctx, mut layout) = prepare_exp(&global, exp);
 
-    assert_eq!(find_var(&ctx, &exp).unwrap().var.iters, vec![ast::Iter::Opt, ast::Iter::List]);
+    assert_eq!(
+        find_var_of_exp(&ctx, &exp).unwrap().var.iters,
+        vec![ast::Iter::Opt, ast::Iter::List]
+    );
     let value = list(&mut arena, vec![]);
     let ctx = ok(assign_exp(&mut arena, ctx, &exp, value));
     assert!((value == binding(&ctx, &mut layout, "x", vec![ast::Iter::Opt, ast::Iter::List])));
@@ -114,7 +117,7 @@ fn test_iterated_variable_fast_path_preserves_identity_and_path() {
     );
     let (exp_mismatch, ctx_mismatch, _) =
         prepare_exp(&global, iter(exp_inner, ast::Iter::List, vec![var("x", vec![])]));
-    assert!(find_var(&ctx_mismatch, &exp_mismatch).is_none());
+    assert!(find_var_of_exp(&ctx_mismatch, &exp_mismatch).is_none());
 }
 
 #[test]

@@ -32,7 +32,7 @@ use super::{arg::eval_args, iter, ops, path::eval_update_path};
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
     error::{EntityKind, Error, ErrorKind},
-    util::{find_slot, find_var},
+    util::{find_slot_of_exp, find_var_of_exp},
 };
 
 // = Expression evaluation
@@ -571,10 +571,10 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     let span = &exp.span;
     let typ = &exp.note;
     // `x*` as an expression is just the bound value
-    if let Some(slot) = find_slot(ctx, exp) {
+    if let Some(slot) = find_slot_of_exp(ctx, exp) {
         return ok!(*unwrap_from_result!(
             ctx.find_value_at_slot(slot).ok_or_else(|| {
-                let var = find_var(ctx, exp).expect("identity iteration has a variable");
+                let var = find_var_of_exp(ctx, exp).expect("identity iteration has a variable");
                 Error::undefined(
                     EntityKind::Value,
                     Print::to_string(&var.var),
