@@ -271,11 +271,12 @@ fn eval_case_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     not_exp: &ast::NotExp,
 ) -> Backtrack<Value> {
     // Evaluate and rebuild in one traversal, preserving early failure and order
-    let case = match not_exp.try_map(|exp| match eval_exp(runner_ctx, ctx, exp) {
+    let eval_exp_arg = |exp: &ast::Exp| match eval_exp(runner_ctx, ctx, exp) {
         ok!(value) => Ok(value),
         err!(errors) => Err(err!(errors)),
         unmatch!(errors) => Err(unmatch!(errors)),
-    }) {
+    };
+    let case = match not_exp.try_map(eval_exp_arg) {
         Ok(case) => case,
         Err(result) => return result,
     };
