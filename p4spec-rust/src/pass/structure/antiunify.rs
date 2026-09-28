@@ -18,25 +18,37 @@ use crate::lang::{
 
 // == Unification environment
 
-/// Maps each fresh unified identifier to the original used to name it.
+/// Maps original identifiers to sets of fresh unified identifiers.
 #[derive(Default)]
 struct UEnv {
-    ids: IdMap<Id>,
+    ids: IdMap<IdSet>,
 }
 
 impl UEnv {
     /// Checks whether `id` is a unified identifier from anti-unification.
     fn unified(&self, id: &Id) -> bool {
-        self.ids.contains_key(id)
+        self.ids
+            .iter()
+            .any(|(_, ids_unified)| ids_unified.contains(id))
     }
 
-    /// Collects position-specific unifiers, whose fresh names are distinct.
+    fn insert(&mut self, id: Id, id_unified: Id) {
+        if let Some(ids_unified) = self.ids.get_mut(&id) {
+            ids_unified.insert(id_unified);
+        } else {
+            self.ids.insert(id, IdSet::from([id_unified]));
+        }
+    }
+
+    /// Unions the unified identifiers collected at each input position.
     fn extend(&mut self, uenv: Self) {
-        self.ids.extend(
-            uenv.ids
-                .iter()
-                .map(|(id_unified, id)| (id_unified.clone(), id.clone())),
-        );
+        for (id, ids_unified) in uenv.ids.iter() {
+            if let Some(ids) = self.ids.get_mut(id) {
+                ids.append(ids_unified.clone());
+            } else {
+                self.ids.insert(id.clone(), ids_unified.clone());
+            }
+        }
     }
 }
 
@@ -217,11 +229,11 @@ fn antiunify_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id_template: &Id) -> Exp
 
 // - Fresh identifier expression
 
-/// Introduces a fresh identifier and records its original name.
+/// Introduces a fresh identifier and registers it under the original name.
 fn antiunify_fresh_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id: &Id) -> ExpKind {
     let id_fresh = il::fresh::id(frees, id);
     frees.insert(id_fresh.clone());
-    uenv.ids.insert(id_fresh.clone(), id.clone());
+    uenv.insert(id.clone(), id_fresh.clone());
     ExpKind::Id(id_fresh)
 }
 
@@ -295,12 +307,13 @@ fn antiunify_iter_exp(
     let mut vars_unified = vec![];
     for var in vars_template.iter().chain(vars) {
         let Var { id, typ, iters } = var;
-        let ids_unified =
-            std::iter::once(id).chain(uenv.ids.iter().filter_map(|(id_unified, id_original)| {
-                id_original.syntax_eq(id).then_some(id_unified)
-            }));
+        let mut ids_unified = uenv.ids.get(id).cloned().unwrap_or_default();
+        // Linear input bindings cannot retain an original and its fresh replacement
+        if ids_unified.is_empty() {
+            ids_unified.insert(id.clone());
+        }
         // One original name can produce multiple unifiers within a tuple
-        for id_unified in ids_unified {
+        for id_unified in ids_unified.iter() {
             let var_unified =
                 Var { id: id_unified.clone(), typ: typ.clone(), iters: iters.clone() };
             if vars_free.iter().any(|var| var.syntax_eq(&var_unified))
