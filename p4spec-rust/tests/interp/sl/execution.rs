@@ -654,6 +654,32 @@ impl p4spec_rust::runner::Extern for CacheHost {
 }
 
 #[test]
+fn test_cache_memoizes_zero_argument_calls_and_clears_on_entry() {
+    let source = r#"
+builtin dec $pure() : nat
+dec $pair() : (nat, nat)
+def $pair() = ($pure(), $pure())
+"#;
+    // Compare memoized calls with the uncached interpreter
+    for cache in [false, true] {
+        let host = CacheHost::default();
+        let mut runner = Runner::<SlInterp, _, _>::new(
+            Global::load(spec(source)).unwrap(),
+            SlInterp::new(Config::new(cache, false, false)),
+            host.clone(),
+            NullExtern,
+        );
+        let value_expect = nat(runner.arena_mut(), 7);
+        // Reuse the zero-argument result only within each public entry
+        for num_calls in [1, 2] {
+            let value = runner.context().call_func("pair", &[], &[]).unwrap();
+            assert_eq!(get::tuple(runner.arena(), &value).unwrap(), &[value_expect, value_expect]);
+            assert_eq!(host.count("pure"), if cache { num_calls } else { 2 * num_calls });
+        }
+    }
+}
+
+#[test]
 fn test_cache_reuses_canonical_arguments_and_original_annotations() {
     let source = r#"
 var ns : nat*

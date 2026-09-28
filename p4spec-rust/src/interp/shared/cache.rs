@@ -123,35 +123,3 @@ impl Cache {
         !side_effected
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::lang::{
-        common::source::{Position, Span},
-        data::value::make,
-    };
-
-    #[test]
-    fn borrowed_calls_match_canonical_arguments_and_preserve_name_and_order() {
-        let mut arena = ValueArena::new();
-        let value_a = make::bool(&mut arena, true, Span::default()).unwrap();
-        let value_b = make::bool(&mut arena, false, Span::default()).unwrap();
-        let span = Span::new(Position::new("other", 2, 0), Position::new("other", 2, 1));
-        let value_annotated = make::bool(&mut arena, true, span).unwrap();
-        let mut cache = Cache::default();
-        cache
-            .funcs
-            .insert(CallKey::new(&arena, "f", &[value_a, value_b]), value_b);
-        assert_eq!(cache.find_func(&arena, "f", &[value_annotated, value_b]), Some(&value_b));
-        assert_eq!(cache.find_func(&arena, "g", &[value_a, value_b]), None);
-        assert_eq!(cache.find_func(&arena, "f", &[value_b, value_a]), None);
-        assert_eq!(cache.find_func(&arena, "f", &[value_a]), None);
-        cache
-            .funcs
-            .insert(CallKey::new(&arena, "zero", &[]), value_a);
-        assert_eq!(cache.find_func(&arena, "zero", &[]), Some(&value_a));
-        cache.clear();
-        assert_eq!(cache.find_func(&arena, "zero", &[]), None);
-    }
-}
