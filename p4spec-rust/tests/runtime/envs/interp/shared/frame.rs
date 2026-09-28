@@ -117,7 +117,7 @@ fn slots_share_identity_without_replacing_occurrence_types() {
     let mut var_outer_a = var_a;
     var_outer_a.iters.push(Iter::Opt);
     let slot_outer_a = layout.resolve_var(var_outer_a);
-    let slot_outer_b = layout.find_iter_var(&slot_b, Iter::Opt);
+    let slot_outer_b = layout.find_var_slot_iterated(&slot_b, Iter::Opt);
     let mut var_outer_b = var_b;
     var_outer_b.iters.push(Iter::Opt);
     assert_eq!(layout.len(), 2);

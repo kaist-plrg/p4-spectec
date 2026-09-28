@@ -59,7 +59,7 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
     let value = make::bool(runner.arena_mut(), true, Span::default()).unwrap();
     for var in &exp_iter.vars {
         ctx.add_value(
-            ctx.find_iter_var(var, ast::Iter::Opt).slot,
+            ctx.find_var_slot_iterated(var, ast::Iter::Opt).slot,
             make::opt(runner.arena_mut(), typ.node.clone().into(), Some(value), Span::default())
                 .unwrap(),
         );
@@ -79,7 +79,8 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
         assert!(ctx.find_value(var.slot).is_none());
     }
     ctx.add_value(
-        ctx.find_iter_var(&exp_iter.vars[1], ast::Iter::Opt).slot,
+        ctx.find_var_slot_iterated(&exp_iter.vars[1], ast::Iter::Opt)
+            .slot,
         make::opt(runner.arena_mut(), typ.node.clone().into(), None, Span::default()).unwrap(),
     );
     let Backtrack::Err(errors) =
@@ -90,7 +91,8 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
     assert_eq!(*errors[0].kind, ErrorKind::Context(ContextErrorKind::OptionalityMismatch));
     assert_eq!(errors[0].span, span);
     ctx.add_value(
-        ctx.find_iter_var(&exp_iter.vars[0], ast::Iter::Opt).slot,
+        ctx.find_var_slot_iterated(&exp_iter.vars[0], ast::Iter::Opt)
+            .slot,
         make::opt(runner.arena_mut(), typ.node.clone().into(), None, Span::default()).unwrap(),
     );
     let value_none =
@@ -134,7 +136,7 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
             .map(|b| make::bool(runner.arena_mut(), b, Span::default()).unwrap())
             .collect();
         ctx.add_value(
-            ctx.find_iter_var(var, ast::Iter::List).slot,
+            ctx.find_var_slot_iterated(var, ast::Iter::List).slot,
             make::list(runner.arena_mut(), typ::make::bool().node.into(), values, Span::default())
                 .unwrap(),
         );
@@ -174,7 +176,8 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
     assert!(matches!(result, Backtrack::Unmatch(_)));
     assert_eq!(count, 1);
     ctx.add_value(
-        ctx.find_iter_var(&exp_iter.vars[1], ast::Iter::List).slot,
+        ctx.find_var_slot_iterated(&exp_iter.vars[1], ast::Iter::List)
+            .slot,
         make::list(runner.arena_mut(), typ::make::bool().node.into(), vec![], Span::default())
             .unwrap(),
     );
@@ -219,7 +222,8 @@ fn test_iteration_rejects_wrong_value_kind_at_variable_span() {
         .into();
     let mut ctx = Context::new(runner.spec()).localize_with_layout(&layout.into());
     ctx.add_value(
-        ctx.find_iter_var(&exp_iter.vars[0], ast::Iter::Opt).slot,
+        ctx.find_var_slot_iterated(&exp_iter.vars[0], ast::Iter::Opt)
+            .slot,
         make::bool(runner.arena_mut(), true, Span::default()).unwrap(),
     );
     let Backtrack::Err(errors) =
@@ -232,7 +236,10 @@ fn test_iteration_rejects_wrong_value_kind_at_variable_span() {
     assert_eq!(errors[0].span, var.id.span);
     assert!(matches!(*errors[0].kind, ErrorKind::Runtime(RuntimeErrorKind::Value(_))));
     let value = ctx
-        .find_value(ctx.find_iter_var(&exp_iter.vars[0], exp_iter.iter).slot)
+        .find_value(
+            ctx.find_var_slot_iterated(&exp_iter.vars[0], exp_iter.iter)
+                .slot,
+        )
         .unwrap();
     assert!(get::bool(runner.arena(), value).unwrap());
 }

@@ -485,7 +485,7 @@ fn nested_iteration_edges_share_only_the_required_binding_slots() {
     let mut exp_inner = &exp_prepared;
     while let ast::ExpKind::Iter(exp_next, exp_iter) = &exp_inner.node {
         let var = &exp_iter.vars[0];
-        let slot_outer = layout.find_iter_var(&exp_iter.vars[0], exp_iter.iter);
+        let slot_outer = layout.find_var_slot_iterated(&exp_iter.vars[0], exp_iter.iter);
         let mut iters_outer = var.var.iters.clone();
         iters_outer.push(exp_iter.iter);
         assert_eq!(slot_outer.var.iters, iters_outer);
@@ -509,15 +509,15 @@ fn premise_iteration_reuses_identical_bound_and_output_bindings() {
     assert_eq!(prem_iter_prepared.vars_bound[0].slot, prem_iter_prepared.vars_bind[0].slot);
     assert_eq!(
         layout
-            .find_iter_var(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
+            .find_var_slot_iterated(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
             .slot,
         layout
-            .find_iter_var(&prem_iter_prepared.vars_bind[0], prem_iter_prepared.iter)
+            .find_var_slot_iterated(&prem_iter_prepared.vars_bind[0], prem_iter_prepared.iter)
             .slot
     );
     assert_eq!(
         layout
-            .find_iter_var(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
+            .find_var_slot_iterated(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
             .var
             .iters,
         vec![il_source::Iter::List, il_source::Iter::List, il_source::Iter::Opt]

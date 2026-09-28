@@ -102,7 +102,7 @@ impl FrameLayout {
     }
 
     /// The slot of `var` one iteration deeper, resolved during preparation.
-    pub fn find_iter_var(&self, var: &VarSlot, iter: Iter) -> VarSlot {
+    pub fn find_var_slot_iterated(&self, var: &VarSlot, iter: Iter) -> VarSlot {
         let var_inner = var;
         let mut var = var_inner.var.clone();
         var.iters.push(iter);

@@ -50,11 +50,11 @@ pub trait ReadContext {
     /// Finds the value bound at `slot`, if any.
     fn find_value(&self, slot: SlotIdx) -> Option<&Value>;
     /// Finds the slot of `var` under one more iteration `iter`.
-    fn find_iter_var(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
+    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot;
 
     /// Finds the prepared slot under one more iteration.
     fn find_iter_slot(&self, var: &VarSlot, iter: ast::Iter) -> SlotIdx {
-        self.find_iter_var(var, iter).slot
+        self.find_var_slot_iterated(var, iter).slot
     }
 
     // == Types
@@ -349,8 +349,8 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
         self.local.frame.layout().find_iter_slot(var.slot, iter)
     }
 
-    fn find_iter_var(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {
-        self.local.frame.layout().find_iter_var(var, iter)
+    fn find_var_slot_iterated(&self, var: &VarSlot, iter: ast::Iter) -> VarSlot {
+        self.local.frame.layout().find_var_slot_iterated(var, iter)
     }
 
     // - Types

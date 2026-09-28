@@ -368,10 +368,10 @@ fn test_iterated_premise_rows_read_parent_bindings_independently() {
     let mut runner = runner.context();
     let slot_n = layout.resolve_var(var("n"));
     let slot_result = layout.resolve_var(var("n_result"));
-    let slot_n_list = layout.find_iter_var(&slot_n, ast::Iter::List);
-    let slot_result_list = layout.find_iter_var(&slot_result, ast::Iter::List);
-    let slot_n_nested = layout.find_iter_var(&slot_n_list, ast::Iter::List);
-    let slot_result_nested = layout.find_iter_var(&slot_result_list, ast::Iter::List);
+    let slot_n_list = layout.find_var_slot_iterated(&slot_n, ast::Iter::List);
+    let slot_result_list = layout.find_var_slot_iterated(&slot_result, ast::Iter::List);
+    let slot_n_nested = layout.find_var_slot_iterated(&slot_n_list, ast::Iter::List);
+    let slot_result_nested = layout.find_var_slot_iterated(&slot_result_list, ast::Iter::List);
     let mut ctx = Context::new(runner.spec()).localize_with_layout(&Rc::new(layout.clone()));
     let value_parent = nat(runner.arena_mut(), 100);
     ctx.add_value(slot_result.slot, value_parent);
