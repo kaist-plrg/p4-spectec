@@ -17,13 +17,20 @@ use crate::lang::{
 
 // == Frame layouts
 
+/// Prepared optional and list transitions from one inner slot.
+#[derive(Clone, Debug, Default, PartialEq)]
+struct IterSlots {
+    slot_opt: Option<SlotIdx>,
+    slot_iter: Option<SlotIdx>,
+}
+
 /// Slot assignment for one callable, keyed by name and iteration path.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FrameLayout {
     /// Slot of each name under its iteration path.
     slots: HashMap<(String, Vec<Iter>), SlotIdx>,
     /// Optional and list transitions indexed by the inner slot.
-    slots_iter: Vec<[Option<SlotIdx>; 2]>,
+    slots_iter: Vec<IterSlots>,
 }
 
 impl FrameLayout {
@@ -47,19 +54,26 @@ impl FrameLayout {
         }
         let slot = SlotIdx(self.slots.len());
         // Link children that were registered before their parent
-        let mut slots_iter = [None; 2];
-        for (idx, iter) in [Iter::Opt, Iter::List].into_iter().enumerate() {
+        let find_outer_slot = |iter| {
             let mut key_outer = key.clone();
             key_outer.1.push(iter);
-            slots_iter[idx] = self.slots.get(&key_outer).copied();
-        }
+            self.slots.get(&key_outer).copied()
+        };
+        let slots_iter = IterSlots {
+            slot_opt: find_outer_slot(Iter::Opt),
+            slot_iter: find_outer_slot(Iter::List),
+        };
         self.slots_iter.push(slots_iter);
         // Link a parent that was registered before this child
         let mut key_inner = key.clone();
         if let Some(iter) = key_inner.1.pop()
             && let Some(slot_inner) = self.slots.get(&key_inner)
         {
-            self.slots_iter[slot_inner.0][iter_index(iter)] = Some(slot);
+            let slots_iter = &mut self.slots_iter[slot_inner.0];
+            match iter {
+                Iter::Opt => slots_iter.slot_opt = Some(slot),
+                Iter::List => slots_iter.slot_iter = Some(slot),
+            }
         }
         self.slots.insert(key, slot);
         slot
@@ -79,8 +93,12 @@ impl FrameLayout {
 
     /// Resolves one prepared iteration transition without hashing names.
     pub fn find_iter_slot(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
-        self.slots_iter[slot.0][iter_index(iter)]
-            .expect("iterated binding is resolved during preparation")
+        let slots_iter = &self.slots_iter[slot.0];
+        match iter {
+            Iter::Opt => slots_iter.slot_opt,
+            Iter::List => slots_iter.slot_iter,
+        }
+        .expect("iterated binding is resolved during preparation")
     }
 
     /// The slot of `var` one iteration deeper, resolved during preparation.
@@ -89,13 +107,6 @@ impl FrameLayout {
         let mut var = var_inner.var.clone();
         var.iters.push(iter);
         VarSlot { slot: self.find_iter_slot(var_inner.slot, iter), var }
-    }
-}
-
-fn iter_index(iter: Iter) -> usize {
-    match iter {
-        Iter::Opt => 0,
-        Iter::List => 1,
     }
 }
 
