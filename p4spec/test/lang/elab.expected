@@ -9749,7 +9749,8 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- if (expressionNoteIR = `( INT `< n `> as typeIR LCTK `))
     -- if (n > 0)
 
-    rule integerLiteral-fixbit: p TC |- n W i as expression : n W i as expressionIR '#' expressionNoteIR
+    rule integerLiteral-fixbit: p TC |- n W i as expression : n W i_norm as expressionIR '#' expressionNoteIR
+    -- if (i_norm = $int_to_bitstr(n as int, i))
     -- if (expressionNoteIR = `( BIT `< n `> as typeIR LCTK `))
 
     rule stringLiteral: p TC |- stringLiteral as expression : stringLiteral as expressionIR '#' expressionNoteIR
