@@ -21,7 +21,7 @@ use crate::lang::{
 #[derive(Clone, Debug, Default, PartialEq)]
 struct IterSlots {
     slot_opt: Option<SlotIdx>,
-    slot_iter: Option<SlotIdx>,
+    slot_list: Option<SlotIdx>,
 }
 
 /// Slot assignment for one callable, keyed by name and iteration path.
@@ -61,7 +61,7 @@ impl FrameLayout {
         };
         let slots_iter = IterSlots {
             slot_opt: find_outer_slot(Iter::Opt),
-            slot_iter: find_outer_slot(Iter::List),
+            slot_list: find_outer_slot(Iter::List),
         };
         self.slots_iter.push(slots_iter);
         // Link a parent that was registered before this child
@@ -72,7 +72,7 @@ impl FrameLayout {
             let slots_iter = &mut self.slots_iter[slot_inner.0];
             match iter {
                 Iter::Opt => slots_iter.slot_opt = Some(slot),
-                Iter::List => slots_iter.slot_iter = Some(slot),
+                Iter::List => slots_iter.slot_list = Some(slot),
             }
         }
         self.slots.insert(key, slot);
@@ -96,7 +96,7 @@ impl FrameLayout {
         let slots_iter = &self.slots_iter[slot.0];
         match iter {
             Iter::Opt => slots_iter.slot_opt,
-            Iter::List => slots_iter.slot_iter,
+            Iter::List => slots_iter.slot_list,
         }
         .expect("iterated binding is resolved during preparation")
     }
