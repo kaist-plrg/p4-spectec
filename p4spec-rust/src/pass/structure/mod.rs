@@ -19,13 +19,15 @@ mod re;
 mod totalize;
 mod transform;
 
-pub use error::{StructureError, StructureErrorKind};
+pub use error::StructureError;
 
 use crate::lang::{al::ast as al, sl::ast as sl};
 
 // == Entry point
 
-/// Converts algorithmic definitions, removing rule groups when requested.
+/// Converts AL definitions into SL, removing rule groups if requested.
+///
+/// Requires input from elaboration followed by algorithmic conversion.
 pub fn convert(spec_al: al::Spec, without_rule_groups: bool) -> Result<sl::Spec, StructureError> {
     transform::struct_spec(spec_al, without_rule_groups)
 }

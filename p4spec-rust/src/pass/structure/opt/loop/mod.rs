@@ -19,7 +19,7 @@ use crate::{
 pub(super) fn optimize(tdenv: &TDEnv, mut block: Block) -> Result<Block, StructureError> {
     loop {
         let mut changed = false;
-        block = merge_binding::apply(&mut changed, block)?;
+        block = merge_binding::apply(&mut changed, block);
         block = merge_if::apply(tdenv, &mut changed, block)?;
         block = merge_hold::apply(&mut changed, block);
         block = casify::apply(tdenv, &mut changed, block)?;

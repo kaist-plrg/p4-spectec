@@ -324,7 +324,8 @@ fn main() -> ExitCode {
         Err(CliError::Spec(
             p4spec_rust::Error::Frontend(report)
             | p4spec_rust::Error::Elab(report)
-            | p4spec_rust::Error::Algo(report),
+            | p4spec_rust::Error::Algo(report)
+            | p4spec_rust::Error::Structure(report),
         )) => {
             render_report(&report);
             ExitCode::FAILURE

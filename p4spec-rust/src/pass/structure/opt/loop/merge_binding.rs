@@ -23,14 +23,11 @@
 use std::collections::VecDeque;
 
 use crate::lang::{
-    common::source::Span,
     hints::input,
     il::ast::{ExpField, ExpKind},
     traits::{eq::SyntaxEq, free::FreeIds},
 };
-use crate::pass::structure::{
-    StructureError, StructureErrorKind, ol::ast::*, opt::merge::merge_block, re::renamer::Renamer,
-};
+use crate::pass::structure::{ol::ast::*, opt::merge::merge_block, re::renamer::Renamer};
 
 // == Bindings
 
@@ -96,11 +93,12 @@ impl<'a> Bind<'a> {
     }
 
     /// Views a rule call, splitting its arguments by the input hint.
-    fn from_rule(instr_rule: &'a RuleInstr, span: &Span) -> Result<Self, StructureError> {
+    fn from_rule(instr_rule: &'a RuleInstr) -> Self {
         let RuleInstr { id, not_exp, input_hint, iter_instrs, .. } = instr_rule;
         let exps = not_exp.args();
-        let (exps_input, exps_output) = input::split(input_hint, exps)
-            .map_err(|error| StructureError::new(StructureErrorKind::Input(error), span.clone()))?;
+        // Elaboration validates hints; OL rewrites preserve notation arity
+        let (exps_input, exps_output) =
+            input::split(input_hint, exps).expect("validated relation hints and argument counts");
         let (iter_exps_bound, iter_exps_bind): (Vec<_>, Vec<_>) = iter_instrs
             .iter()
             .map(|iter_instr| {
@@ -120,8 +118,7 @@ impl<'a> Bind<'a> {
             .into_iter()
             .map(|exp| ExpUnit::new(exp, &iter_exps_bind))
             .collect();
-        let bind = Self::Rule(id, expunits_input, expunits_output);
-        Ok(bind)
+        Self::Rule(id, expunits_input, expunits_output)
     }
 }
 
@@ -320,57 +317,41 @@ fn collapse_iter_exp(
 ///
 /// Upstream merges the returned body into the current binding's body.
 /// A sibling that cannot merge stays in place and `None` is returned.
-fn downstream_block(
-    bind: &Bind<'_>,
-    instrs_tail: &mut VecDeque<Instr>,
-) -> Result<Option<Block>, StructureError> {
-    let Some(instr_head) = instrs_tail.front_mut() else {
-        return Ok(None);
-    };
+fn downstream_block(bind: &Bind<'_>, instrs_tail: &mut VecDeque<Instr>) -> Option<Block> {
+    let instr_head = instrs_tail.front_mut()?;
     let block_merge = match &mut instr_head.node {
-        InstrKind::Let(instr_let) => downstream_let_instr(bind, instr_let)?,
-        InstrKind::Rule(instr_rule) => downstream_rule_instr(bind, instr_rule, &instr_head.span)?,
+        InstrKind::Let(instr_let) => downstream_let_instr(bind, instr_let),
+        InstrKind::Rule(instr_rule) => downstream_rule_instr(bind, instr_rule),
         _ => None,
     };
     if block_merge.is_some() {
         instrs_tail.pop_front();
     }
-    Ok(block_merge)
+    block_merge
 }
 
 // - Let instruction
 
 /// Takes a let's body, renamed to this binding's names, if it collapses.
-fn downstream_let_instr(
-    bind: &Bind<'_>,
-    instr_let: &mut LetInstr,
-) -> Result<Option<Block>, StructureError> {
+fn downstream_let_instr(bind: &Bind<'_>, instr_let: &mut LetInstr) -> Option<Block> {
     let bind_target = Bind::from_let(instr_let);
-    let Some(renamer) = collapse_bind(bind, &bind_target) else {
-        return Ok(None);
-    };
+    let renamer = collapse_bind(bind, &bind_target)?;
     let LetInstr { block, .. } = instr_let;
     let block = std::mem::take(block);
-    let block = renamer.rename_block(&mut false, block)?;
-    Ok(Some(block))
+    let block = renamer.rename_block(&mut false, block);
+    Some(block)
 }
 
 // - Rule instruction
 
 /// Takes a rule call's body, renamed to this binding's names, if it collapses.
-fn downstream_rule_instr(
-    bind: &Bind<'_>,
-    instr_rule: &mut RuleInstr,
-    span: &Span,
-) -> Result<Option<Block>, StructureError> {
-    let bind_target = Bind::from_rule(instr_rule, span)?;
-    let Some(renamer) = collapse_bind(bind, &bind_target) else {
-        return Ok(None);
-    };
+fn downstream_rule_instr(bind: &Bind<'_>, instr_rule: &mut RuleInstr) -> Option<Block> {
+    let bind_target = Bind::from_rule(instr_rule);
+    let renamer = collapse_bind(bind, &bind_target)?;
     let RuleInstr { block, .. } = instr_rule;
     let block = std::mem::take(block);
-    let block = renamer.rename_block(&mut false, block)?;
-    Ok(Some(block))
+    let block = renamer.rename_block(&mut false, block);
+    Some(block)
 }
 
 // == Upstream rewriting
@@ -378,79 +359,74 @@ fn downstream_rule_instr(
 /// Merges matching siblings into a binding, then rewrites its body.
 fn upstream_instr_kind(
     changed: &mut bool,
-    span: &Span,
     instrs_tail: &mut VecDeque<Instr>,
     instr_kind: InstrKind,
-) -> Result<InstrKind, StructureError> {
+) -> InstrKind {
     match instr_kind {
         InstrKind::If(instr) => upstream_if_instr(changed, instr),
         InstrKind::Hold(instr) => upstream_hold_instr(changed, instr),
         InstrKind::Case(instr) => upstream_case_instr(changed, instr),
         InstrKind::Group(instr) => upstream_group_instr(changed, instr),
         InstrKind::Let(instr) => upstream_let_instr(changed, instrs_tail, instr),
-        InstrKind::Rule(instr) => upstream_rule_instr(changed, span, instrs_tail, instr),
-        instr_kind => Ok(instr_kind),
+        InstrKind::Rule(instr) => upstream_rule_instr(changed, instrs_tail, instr),
+        instr_kind => instr_kind,
     }
 }
 
 /// Rewrites a block, letting each binding consume its following siblings.
-fn upstream_block(changed: &mut bool, block: Block) -> Result<Block, StructureError> {
+fn upstream_block(changed: &mut bool, block: Block) -> Block {
     let mut instrs_tail: VecDeque<_> = block.into();
     let mut block = Vec::with_capacity(instrs_tail.len());
     while let Some(instr) = instrs_tail.pop_front() {
-        let instr_kind = upstream_instr_kind(changed, &instr.span, &mut instrs_tail, instr.node)?;
+        let instr_kind = upstream_instr_kind(changed, &mut instrs_tail, instr.node);
         let instr = crate::phrase!(node: instr_kind, span: instr.span);
         block.push(instr);
     }
-    Ok(block)
+    block
 }
 
 // - If instruction
 
-fn upstream_if_instr(changed: &mut bool, instr: IfInstr) -> Result<InstrKind, StructureError> {
+fn upstream_if_instr(changed: &mut bool, instr: IfInstr) -> InstrKind {
     let IfInstr { exp, iter_exps, block } = instr;
-    let block = upstream_block(changed, block)?;
+    let block = upstream_block(changed, block);
     let instr = IfInstr { exp, iter_exps, block };
-    Ok(InstrKind::If(instr))
+    InstrKind::If(instr)
 }
 
 // - Hold instruction
 
-fn upstream_hold_instr(changed: &mut bool, instr: HoldInstr) -> Result<InstrKind, StructureError> {
+fn upstream_hold_instr(changed: &mut bool, instr: HoldInstr) -> InstrKind {
     let HoldInstr { id, not_exp, iter_exps, block_hold, block_not_hold } = instr;
-    let block_hold = upstream_block(changed, block_hold)?;
-    let block_not_hold = upstream_block(changed, block_not_hold)?;
+    let block_hold = upstream_block(changed, block_hold);
+    let block_not_hold = upstream_block(changed, block_not_hold);
     let instr = HoldInstr { id, not_exp, iter_exps, block_hold, block_not_hold };
-    Ok(InstrKind::Hold(instr))
+    InstrKind::Hold(instr)
 }
 
 // - Case instruction
 
-fn upstream_case_instr(changed: &mut bool, instr: CaseInstr) -> Result<InstrKind, StructureError> {
+fn upstream_case_instr(changed: &mut bool, instr: CaseInstr) -> InstrKind {
     let CaseInstr { exp, cases, total } = instr;
     let cases = cases
         .into_iter()
         .map(|case| {
             let Case { guard, block } = case;
-            let block = upstream_block(changed, block)?;
-            let case = Case { guard, block };
-            Ok(case)
+            let block = upstream_block(changed, block);
+            Case { guard, block }
         })
-        .collect::<Result<_, StructureError>>()?;
+        .collect();
     let instr = CaseInstr { exp, cases, total };
-    Ok(InstrKind::Case(instr))
+    InstrKind::Case(instr)
 }
 
 // - Group instruction
 
-fn upstream_group_instr(
-    changed: &mut bool,
-    instr: GroupInstr,
-) -> Result<InstrKind, StructureError> {
+fn upstream_group_instr(changed: &mut bool, instr: GroupInstr) -> InstrKind {
     let GroupInstr { id, rel_signature, exps, block } = instr;
-    let block = upstream_block(changed, block)?;
+    let block = upstream_block(changed, block);
     let instr = GroupInstr { id, rel_signature, exps, block };
-    Ok(InstrKind::Group(instr))
+    InstrKind::Group(instr)
 }
 
 // - Let instruction
@@ -460,20 +436,20 @@ fn upstream_let_instr(
     changed: &mut bool,
     instrs_tail: &mut VecDeque<Instr>,
     mut instr: LetInstr,
-) -> Result<InstrKind, StructureError> {
+) -> InstrKind {
     // Keep absorbing while the next sibling collapses
     loop {
         let bind = Bind::from_let(&instr);
-        let Some(block_merge) = downstream_block(&bind, instrs_tail)? else {
+        let Some(block_merge) = downstream_block(&bind, instrs_tail) else {
             break;
         };
         *changed = true;
         instr.block = merge_block(instr.block, block_merge);
     }
     let LetInstr { exp_l, exp_r, iter_instrs, block } = instr;
-    let block = upstream_block(changed, block)?;
+    let block = upstream_block(changed, block);
     let instr = LetInstr { exp_l, exp_r, iter_instrs, block };
-    Ok(InstrKind::Let(instr))
+    InstrKind::Let(instr)
 }
 
 // - Rule instruction
@@ -481,28 +457,27 @@ fn upstream_let_instr(
 /// Absorbs following calls with the same inputs, then rewrites the merged body.
 fn upstream_rule_instr(
     changed: &mut bool,
-    span: &Span,
     instrs_tail: &mut VecDeque<Instr>,
     mut instr: RuleInstr,
-) -> Result<InstrKind, StructureError> {
+) -> InstrKind {
     // Keep absorbing while the next sibling collapses
     loop {
-        let bind = Bind::from_rule(&instr, span)?;
-        let Some(block_merge) = downstream_block(&bind, instrs_tail)? else {
+        let bind = Bind::from_rule(&instr);
+        let Some(block_merge) = downstream_block(&bind, instrs_tail) else {
             break;
         };
         *changed = true;
         instr.block = merge_block(instr.block, block_merge);
     }
     let RuleInstr { id, not_exp, input_hint, iter_instrs, block } = instr;
-    let block = upstream_block(changed, block)?;
+    let block = upstream_block(changed, block);
     let instr = RuleInstr { id, not_exp, input_hint, iter_instrs, block };
-    Ok(InstrKind::Rule(instr))
+    InstrKind::Rule(instr)
 }
 
 // == Entry point
 
 /// Merges bindings throughout the block, flagging `changed` on any merge.
-pub(crate) fn apply(changed: &mut bool, block: Block) -> Result<Block, StructureError> {
+pub(crate) fn apply(changed: &mut bool, block: Block) -> Block {
     upstream_block(changed, block)
 }

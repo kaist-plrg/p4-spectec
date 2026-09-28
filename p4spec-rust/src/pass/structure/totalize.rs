@@ -2,11 +2,7 @@
 //!
 //! For a type `A | B`, branches matching `A` and `B` set `total=true`.
 
-use super::{
-    error::{StructureError, StructureErrorKind},
-    ol::ast::*,
-    opt::overlap::typ_as_variant,
-};
+use super::{error::StructureError, ol::ast::*, opt::overlap::typ_as_variant};
 use crate::{
     lang::il::ast::{Mixop, Pattern},
     runtime::envs::algo::TDEnv,
@@ -25,12 +21,9 @@ fn find_variant_case_analysis(
         match &case.guard {
             // A subtype guard covers every constructor of the subtype
             Guard::Sub(typ, _) => {
-                let mixops_sub = typ_as_variant(tdenv, typ)?.ok_or_else(|| {
-                    StructureError::new(
-                        StructureErrorKind::NonVariantTotalization,
-                        typ.span.clone(),
-                    )
-                })?;
+                // Casify admits subtype guards only after proving variant overlap
+                let mixops_sub =
+                    typ_as_variant(tdenv, typ)?.expect("case subtype guard has a variant type");
                 mixops.extend(mixops_sub);
             }
             Guard::Match(Pattern::Case(mixop)) => mixops.push(mixop.as_ref().clone()),
@@ -94,9 +87,9 @@ fn totalize_case_instr(tdenv: &TDEnv, instr: CaseInstr) -> Result<InstrKind, Str
         .collect::<Result<Vec<_>, _>>()?;
     let total = if let Some(mixops_case) = find_variant_case_analysis(tdenv, &cases)? {
         let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone());
-        let mixops_total = typ_as_variant(tdenv, &typ)?.ok_or_else(|| {
-            StructureError::new(StructureErrorKind::NonVariantTotalization, typ.span.clone())
-        })?;
+        // Typed constructor guards and variant subtyping determine the target type
+        let mixops_total =
+            typ_as_variant(tdenv, &typ)?.expect("variant case analysis has a variant target");
         // Compare the matched constructors with the type's constructors as sets
         let mixops_total: BTreeSet<_> = mixops_total.into_iter().collect();
         let mixops_case: BTreeSet<_> = mixops_case.into_iter().collect();
