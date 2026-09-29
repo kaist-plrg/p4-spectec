@@ -38,20 +38,42 @@ fn validate_alter_hint(
         .map_err(|error| error::alteration_hint_index_out_of_bounds(span_decl, name_hint, error))
 }
 
-/// Checks every selected alteration hint against the items it describes.
-fn validate_alter_hints(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
-    // Keep the hint name beside the selected template for diagnostics
-    for (name_hint, hint) in [
-        ("prose", &hints.node.prose),
-        ("prose_in", &hints.node.prose_in),
-        ("prose_out", &hints.node.prose_out),
-        ("prose_true", &hints.node.prose_true),
-        ("prose_false", &hints.node.prose_false),
-    ] {
-        // Absent templates leave the default rendering in place
-        if let Some(hint) = hint {
-            validate_alter_hint(&hints.span, name_hint, hint, num_items)?;
-        }
+/// Checks the `prose` template against the items it describes.
+fn validate_prose(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
+    if let Some(hint) = &hints.node.prose {
+        validate_alter_hint(&hints.span, "prose", hint, num_items)?;
+    }
+    Ok(())
+}
+
+/// Checks the `prose_in` template against the items it describes.
+fn validate_prose_in(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
+    if let Some(hint) = &hints.node.prose_in {
+        validate_alter_hint(&hints.span, "prose_in", hint, num_items)?;
+    }
+    Ok(())
+}
+
+/// Checks the `prose_out` template against the items it describes.
+fn validate_prose_out(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
+    if let Some(hint) = &hints.node.prose_out {
+        validate_alter_hint(&hints.span, "prose_out", hint, num_items)?;
+    }
+    Ok(())
+}
+
+/// Checks the `prose_true` template against the items it describes.
+fn validate_prose_true(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
+    if let Some(hint) = &hints.node.prose_true {
+        validate_alter_hint(&hints.span, "prose_true", hint, num_items)?;
+    }
+    Ok(())
+}
+
+/// Checks the `prose_false` template against the items it describes.
+fn validate_prose_false(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
+    if let Some(hint) = &hints.node.prose_false {
+        validate_alter_hint(&hints.span, "prose_false", hint, num_items)?;
     }
     Ok(())
 }
@@ -64,21 +86,6 @@ fn validate_hint_fields(hints: &annot::Hints, num_fields: usize) -> Result<(), P
                 error::field_hint_arity_mismatch(&hints.span, hint, expected, actual)
             },
         )?;
-    }
-    Ok(())
-}
-
-/// Checks the input and output hints against their own item counts.
-fn validate_hint_split(
-    hints: &annot::Hints,
-    num_inputs: usize,
-    num_outputs: usize,
-) -> Result<(), ProseError> {
-    if let Some(hint) = &hints.node.prose_in {
-        validate_alter_hint(&hints.span, "prose_in", hint, num_inputs)?;
-    }
-    if let Some(hint) = &hints.node.prose_out {
-        validate_alter_hint(&hints.span, "prose_out", hint, num_outputs)?;
     }
     Ok(())
 }
@@ -326,7 +333,7 @@ fn prosify_case_exp(
         hints.node.prose_fields = hints_case.node.prose_fields.clone();
         // Holes and field names count the notation's arguments
         let num_args = not_exp_sl.args().len();
-        validate_alter_hints(&hints, num_args)?;
+        validate_prose(&hints, num_args)?;
         validate_hint_fields(&hints, num_args)?;
     }
     let exp_kind_pl = pl::ExpKind::Case(Box::new(not_exp_pl));
@@ -883,7 +890,9 @@ fn prosify_dispatch_hold_instr(
         hints.node.prose_true = hints_rel.node.prose_true.clone();
         hints.node.prose_false = hints_rel.node.prose_false.clone();
         // Holes count the notation's arguments
-        validate_alter_hints(&hints, instr_sl.not_exp.args().len())?;
+        let num_args = instr_sl.not_exp.args().len();
+        validate_prose_true(&hints, num_args)?;
+        validate_prose_false(&hints, num_args)?;
     }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_dispatch_hold_case(ctx, instr_sl.hold_case)?;
@@ -1034,7 +1043,9 @@ fn prosify_dispatch_rulegroup_instr(
         hints.node.prose_in = hints_rel.node.prose_in.clone();
         hints.node.prose_true = hints_rel.node.prose_true.clone();
         // Group headings describe the relation inputs
-        validate_alter_hints(&hints, instr_sl.rel_signature.input_hint.indices().len())?;
+        let num_inputs = instr_sl.rel_signature.input_hint.indices().len();
+        validate_prose_in(&hints, num_inputs)?;
+        validate_prose_true(&hints, num_inputs)?;
     }
     let exps_input_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let block_pl = prosify_group_block(ctx, instr_sl.block)?;
@@ -1154,7 +1165,9 @@ fn prosify_group_hold_instr(
         hints.node.prose_true = hints_rel.node.prose_true.clone();
         hints.node.prose_false = hints_rel.node.prose_false.clone();
         // Holes count the notation's arguments
-        validate_alter_hints(&hints, instr_sl.not_exp.args().len())?;
+        let num_args = instr_sl.not_exp.args().len();
+        validate_prose_true(&hints, num_args)?;
+        validate_prose_false(&hints, num_args)?;
     }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_group_hold_case(ctx, instr_sl.hold_case)?;
@@ -1312,7 +1325,9 @@ fn prosify_group_rule_instr(
         // Elaboration validates indices; structure and expansion preserve arity
         let num_args = instr_sl.not_exp.args().len();
         let num_inputs = instr_sl.input_hint.indices().len();
-        validate_hint_split(&hints, num_inputs, num_args - num_inputs)?;
+        let num_outputs = num_args - num_inputs;
+        validate_prose_in(&hints, num_inputs)?;
+        validate_prose_out(&hints, num_outputs)?;
     }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let instr_pl = pl::RuleInstr {
@@ -1354,7 +1369,7 @@ fn prosify_group_result_instr(
             .prose_out
             .as_ref()
             .map(|hint| alter::realign(hint, &instr_sl.rel_signature.input_hint));
-        validate_alter_hints(&hints, instr_sl.exps.len())?;
+        validate_prose_out(&hints, instr_sl.exps.len())?;
     }
     let exps_output_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let instr_pl =
@@ -1568,17 +1583,12 @@ fn build_rel_hints(
     // Definition titles use full notation, input, and realigned output domains
     let num_args = rel_signature.not_typ.node.args().len();
     let num_inputs = rel_signature.input_hint.indices().len();
-    for (name_hint, hint, num_items) in [
-        ("prose", &hints.node.prose, num_args),
-        ("prose_in", &hints.node.prose_in, num_inputs),
-        ("prose_out", &hints.node.prose_out, num_args - num_inputs),
-        ("prose_true", &hints.node.prose_true, num_inputs),
-        ("prose_false", &hints.node.prose_false, num_inputs),
-    ] {
-        if let Some(hint) = hint {
-            validate_alter_hint(&hints.span, name_hint, hint, num_items)?;
-        }
-    }
+    let num_outputs = num_args - num_inputs;
+    validate_prose(&hints, num_args)?;
+    validate_prose_in(&hints, num_inputs)?;
+    validate_prose_out(&hints, num_outputs)?;
+    validate_prose_true(&hints, num_inputs)?;
+    validate_prose_false(&hints, num_inputs)?;
     Ok(hints)
 }
 
@@ -1681,7 +1691,9 @@ fn build_func_hints(
         span: hints_func.span.clone(),
     };
     // Calls and definitions supply the argument count for their own use
-    validate_alter_hints(&hints, num_args)?;
+    validate_prose_in(&hints, num_args)?;
+    validate_prose_true(&hints, num_args)?;
+    validate_prose_false(&hints, num_args)?;
     Ok(hints)
 }
 
