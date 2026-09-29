@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket/base)
-         "../common/0-prelude.rkt"
+         "../common/0.0-prelude.rkt"
          "../common/1-syntax.rkt"
          "../al/1-syntax.rkt")
 

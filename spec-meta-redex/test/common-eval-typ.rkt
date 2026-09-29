@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../common/0-prelude.rkt"
+(require "../common/0.0-prelude.rkt"
          "../common/5.0-eval-typ.rkt")
 
 (define-term theta-X (("X" INT)))

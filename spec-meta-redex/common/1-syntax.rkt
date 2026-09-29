@@ -2,8 +2,8 @@
 ;; spec-meta/common/1-syntax.watsup.
 
 (require json
-         "0-prelude.rkt"
-         "0-stdlib.rkt")
+         "0.0-prelude.rkt"
+         "0.1-stdlib.rkt")
 (provide Common)
 
 (define-extended-language Common Stdlib

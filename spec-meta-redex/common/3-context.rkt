@@ -1,7 +1,7 @@
 #lang racket/base
 ;; spec-meta/common/3-context.watsup.
 
-(require "0-prelude.rkt"
+(require "0.0-prelude.rkt"
          "2-env.rkt")
 (provide Common-context)
 

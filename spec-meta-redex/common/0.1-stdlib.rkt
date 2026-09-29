@@ -3,7 +3,7 @@
 ;;
 ;; Type parameters are dropped: `any` stands for them in contracts.
 
-(require "0-prelude.rkt")
+(require "0.0-prelude.rkt")
 (provide Stdlib
          ite
          opt_as_seq_

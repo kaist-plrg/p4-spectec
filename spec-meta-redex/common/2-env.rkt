@@ -1,8 +1,8 @@
 #lang racket/base
 ;; spec-meta/common/2-env.watsup.
 
-(require "0-prelude.rkt"
-         "0-stdlib.rkt"
+(require "0.0-prelude.rkt"
+         "0.1-stdlib.rkt"
          "1-syntax.rkt")
 (provide Common-env
          extend_tdenv

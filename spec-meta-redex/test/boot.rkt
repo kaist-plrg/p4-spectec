@@ -4,7 +4,7 @@
          racket/path
          racket/runtime-path
          rackunit
-         "../common/0-prelude.rkt"
+         "../common/0.0-prelude.rkt"
          "../al/1-syntax.rkt"
          "../al/0-boot.rkt")
 

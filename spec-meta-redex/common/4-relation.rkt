@@ -1,7 +1,7 @@
 #lang racket/base
 ;; spec-meta/common/4-relation.watsup.
 
-(require "0-prelude.rkt"
+(require "0.0-prelude.rkt"
          "3-context.rkt")
 (provide Common-relation
          Call_extern_func

@@ -1,8 +1,8 @@
 #lang racket/base
 ;; spec-meta/common/5.0-eval-typ.watsup.
 
-(require "0-prelude.rkt"
-         "0-stdlib.rkt"
+(require "0.0-prelude.rkt"
+         "0.1-stdlib.rkt"
          "4-relation.rkt")
 (provide subst_typ
          subst_type_inner)
