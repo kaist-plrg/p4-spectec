@@ -79,19 +79,6 @@ pub enum Subject {
     Type(String),
 }
 
-impl Link {
-    /// Describes the source-level reference without exposing generated anchors.
-    pub(crate) fn description(&self) -> String {
-        match self {
-            Link::Direct(target) => format!("destination {target:?}"),
-            Link::Subject(Subject::Function(id)) => format!("function `${id}`"),
-            Link::Subject(Subject::Relation(id)) => format!("relation `{id}`"),
-            Link::Subject(Subject::Type(id)) => format!("type `{id}`"),
-            Link::Hinted { link, .. } => link.description(),
-        }
-    }
-}
-
 // - Fallthrough labels
 //
 //   Fallthrough("t", Explicit("else"))

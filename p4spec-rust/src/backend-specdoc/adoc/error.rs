@@ -3,11 +3,22 @@
 //! Link warnings identify the source subject and the template supplying its text.
 //! Serialization collects warnings for its caller and preserves fallback text.
 
-use super::pl::doc::doc::Link;
+use super::pl::doc::doc::{Link, Subject};
 use crate::{
     diagnostic::{Diagnostic, Label, Severity},
     lang::common::source::Span,
 };
+
+/// Describes the source-level reference without exposing generated anchors.
+fn describe_link(link: &Link) -> String {
+    match link {
+        Link::Direct(target) => format!("destination {target:?}"),
+        Link::Subject(Subject::Function(id)) => format!("function `${id}`"),
+        Link::Subject(Subject::Relation(id)) => format!("relation `{id}`"),
+        Link::Subject(Subject::Type(id)) => format!("type `{id}`"),
+        Link::Hinted { link, .. } => describe_link(link),
+    }
+}
 
 /// Locates a link problem at its template, falling back to the rendered fragment.
 fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
@@ -25,7 +36,7 @@ fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -
         Link::Hinted { hint, .. } => vec![format!(
             "The `{}` hint supplies the displayed text for links to {}.",
             hint.node,
-            link.description(),
+            describe_link(link),
         )],
         _ => Vec::new(),
     };
@@ -59,8 +70,8 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
         LINK_NESTED,
         format!(
             "link to {} is nested inside the display text of a link to {}",
-            link_inner.description(),
-            link_outer.description(),
+            describe_link(link_inner),
+            describe_link(link_outer),
         ),
         "this inner link is suppressed",
     );
@@ -73,7 +84,7 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
             format!(
                 "`{}` includes this text in the outer link to {}",
                 hint.node,
-                link_outer.description()
+                describe_link(link_outer)
             ),
         ));
     }
@@ -95,7 +106,7 @@ pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
         span,
         link,
         LINK_BODY_EMPTY,
-        format!("empty display text for the link to {}", link.description()),
+        format!("empty display text for the link to {}", describe_link(link)),
         "this produces no link text",
     );
     // Suggest an edit only when a user-supplied template produced the empty text
@@ -117,7 +128,7 @@ pub(super) fn link_text_invalid(span: &Span, link: &Link, text: &str) -> Diagnos
         span,
         link,
         LINK_TEXT_INVALID,
-        format!("cannot represent the link text for {} in AsciiDoc", link.description()),
+        format!("cannot represent the link text for {} in AsciiDoc", describe_link(link)),
         "this produces link text with conflicting delimiters",
     );
     diagnostic
