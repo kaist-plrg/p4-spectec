@@ -7,7 +7,7 @@
 pub const REVISION: &str = "960e2922b55288722c413732002e33ac06664e6f";
 
 /// Lists the splice command reference followed by admission regressions.
-pub const BOUNDARY: &[&str] = &[
+pub const COMMAND: &[&str] = &[
     "command-splice-file-count-mismatch",
     "command-splice-output-conflict",
     "command-splice-input-required",

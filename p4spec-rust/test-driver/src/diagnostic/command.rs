@@ -19,7 +19,7 @@ struct Directory(PathBuf);
 impl Directory {
     /// Creates an isolated directory for a registered command case.
     fn new(name: &str) -> Result<Self> {
-        let path = env::temp_dir().join(format!("p4spec-boundary-{}-{name}", std::process::id()));
+        let path = env::temp_dir().join(format!("p4spec-command-{}-{name}", std::process::id()));
         fs::create_dir(&path)?;
         Ok(Self(path))
     }
@@ -43,7 +43,7 @@ pub fn run(path_cli: &Path, name: &str) -> Result<String> {
             "command/splice-output-conflict",
         ),
         "command-splice-input-required" => (vec![], "command/splice-input-required"),
-        _ => return Err(failure(name, "unknown command boundary case")),
+        _ => return Err(failure(name, "unknown command case")),
     };
     // Run the supplied product binary before any specification is available
     let directory = Directory::new(name)?;

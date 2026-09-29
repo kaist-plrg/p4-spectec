@@ -5,8 +5,8 @@
 //! Comparisons preserve whitespace, and successful cases have empty expectations.
 
 mod algo;
-mod boundary;
 mod cases;
+mod command;
 mod elab;
 mod parse;
 mod prose;
@@ -39,7 +39,7 @@ pub enum Suite {
     Prose,
     Splice,
     Specdoc,
-    Boundary,
+    Command,
 }
 
 // = Acceptance runner
@@ -92,8 +92,8 @@ fn run_output_suite(
 /// Executes selected diagnostic inputs and compares their rendered output.
 pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
     // Require an explicit binary whenever subprocess acceptance is selected
-    if matches!(suite, None | Some(Suite::Boundary)) && path_cli.is_none() {
-        return Err(failure("boundary", "--cli is required for command diagnostic acceptance"));
+    if matches!(suite, None | Some(Suite::Command)) && path_cli.is_none() {
+        return Err(failure("command", "--cli is required for command diagnostic acceptance"));
     }
     // Keep source identities independent of the checkout location
     std::env::set_current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("expected/diagnostic"))?;
@@ -107,7 +107,7 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
         Some(Suite::Prose) => run_suite("prose", cases::PROSE, prose::run),
         Some(Suite::Splice) => run_suite("splice", cases::SPLICE, splice::run),
         Some(Suite::Specdoc) => run_suite("specdoc", cases::SPECDOC, specdoc::run),
-        Some(Suite::Boundary) => run_boundary(path_cli),
+        Some(Suite::Command) => run_command(path_cli),
         None => {
             run_parse()?;
             run_suite("elab", cases::ELAB, elab::run)?;
@@ -115,15 +115,15 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
             run_suite("prose", cases::PROSE, prose::run)?;
             run_suite("splice", cases::SPLICE, splice::run)?;
             run_suite("specdoc", cases::SPECDOC, specdoc::run)?;
-            run_boundary(path_cli)
+            run_command(path_cli)
         }
     }
 }
 
 /// Executes command cases after the binary-path admission check.
-fn run_boundary(path_cli: Option<&Path>) -> Result<()> {
-    let path_cli = path_cli.expect("boundary admission requires a CLI path");
-    run_output_suite("boundary", cases::BOUNDARY, |name| boundary::run(path_cli, name))
+fn run_command(path_cli: Option<&Path>) -> Result<()> {
+    let path_cli = path_cli.expect("command admission requires a CLI path");
+    run_output_suite("command", cases::COMMAND, |name| command::run(path_cli, name))
 }
 
 /// Adapts parser failures to the shared diagnostic sequence.

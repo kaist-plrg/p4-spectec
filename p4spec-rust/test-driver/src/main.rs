@@ -35,7 +35,7 @@ enum Command {
     Diagnostics {
         #[arg(long, value_enum)]
         suite: Option<diagnostic::Suite>,
-        /// Product executable used by the boundary suite and the full run
+        /// Product executable used by the command suite and the full run
         #[arg(long = "cli", value_name = "PATH")]
         path_cli: Option<PathBuf>,
     },
