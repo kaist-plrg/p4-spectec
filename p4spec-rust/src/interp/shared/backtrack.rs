@@ -33,7 +33,7 @@ impl Failure {
     pub fn into_report(self) -> Error {
         match self {
             Self::Fatal(report) => report,
-            Self::Mismatch(reports) => error::trace::execution(reports),
+            Self::Mismatch(reports) => error::trace::frame_execution_failure(reports),
         }
     }
 
@@ -48,13 +48,13 @@ impl Failure {
     }
 
     /// Adds a source label to causes that have none, leaving frames unchanged.
-    pub fn at_if_missing(self, span: &Span) -> Self {
+    pub fn with_span(self, span: &Span) -> Self {
         match self {
             Self::Fatal(report) => Self::Fatal(error::locate(report, span)),
             Self::Mismatch(reports) => Self::Mismatch(
                 reports
                     .into_iter()
-                    .map(|report| *error::locate(Box::new(report), span))
+                    .map(|report| report.with_span(span))
                     .collect(),
             ),
         }

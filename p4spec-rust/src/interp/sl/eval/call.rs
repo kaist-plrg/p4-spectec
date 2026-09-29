@@ -225,11 +225,11 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         // Nest failures under this call and then under the tail-calling callers
         let pure = runner_ctx.interp_mut().cache.end();
         let mut result =
-            result.with_frame(id.span.clone(), || format!("while invoking {}", id.node));
+            result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(&id));
         if result.is_err() {
             for id in ids_pending.iter().rev() {
                 result =
-                    result.with_frame(id.span.clone(), || format!("while invoking {}", id.node));
+                    result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(id));
             }
         }
         // Fatal errors and mismatches leave the loop here
@@ -384,10 +384,13 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         });
         // Nest failures under this call and then under the tail-calling callers
         let pure = runner_ctx.interp_mut().cache.end();
-        let mut result = result.with_frame(id.span.clone(), || error::trace::function(&id, &targs));
+        let mut result = result
+            .with_frame(id.span.clone(), || error::trace::message_func_invocation(&id, &targs));
         if result.is_err() {
             for (id, targs) in calls_pending.iter().rev() {
-                result = result.with_frame(id.span.clone(), || error::trace::function(id, targs));
+                result = result.with_frame(id.span.clone(), || {
+                    error::trace::message_func_invocation(id, targs)
+                });
             }
         }
         // Fatal errors and mismatches leave the loop here
@@ -479,7 +482,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures let the caller try another candidate
-        Err(failure) => Err(failure.at_if_missing(&id.span)),
+        Err(failure) => Err(failure.with_span(&id.span)),
     }
 }
 

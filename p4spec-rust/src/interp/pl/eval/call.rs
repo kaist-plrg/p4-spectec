@@ -216,7 +216,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result = result.with_frame(id.span.clone(), || format!("while invoking {}", id.node));
+    let result = result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(id));
     let values = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -358,7 +358,8 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result = result.with_frame(id.span.clone(), || error::trace::function(id, targs));
+    let result =
+        result.with_frame(id.span.clone(), || error::trace::message_func_invocation(id, targs));
     let value = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -435,7 +436,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures allow another candidate; other errors are fatal
-        Err(failure) => Err(failure.at_if_missing(&id.span)),
+        Err(failure) => Err(failure.with_span(&id.span)),
     }
 }
 

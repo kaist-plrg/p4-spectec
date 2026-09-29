@@ -292,7 +292,7 @@ where
     };
     // Attach the statement's span to failures that have none
     let tx = result.map_err(|error| match error {
-        Error::Runtime(error) => Error::Runtime(error.at_if_missing(&stmt.span)),
+        Error::Runtime(error) => Error::Runtime(error.with_span(&stmt.span)),
         Error::Stf { failure, .. } => Error::Stf { failure, span: stmt.span.clone() },
         error => error,
     })?;

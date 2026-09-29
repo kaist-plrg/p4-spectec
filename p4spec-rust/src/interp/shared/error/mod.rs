@@ -5,7 +5,7 @@
 //! The renderer reads source files when displaying the reports.
 
 use crate::{
-    diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
+    diagnostic::{Diagnostic, Label, Report, Severity},
     lang::{
         common::{
             ds::map::ArityMismatch, notation::mixop::ArityMismatch as MixopArityMismatch,
@@ -66,11 +66,7 @@ pub fn at(mut diagnostic: Diagnostic, span: Span) -> Error {
 
 /// Adds a source label to a cause that has none, leaving frames unchanged.
 pub fn locate(mut report: Error, span: &Span) -> Error {
-    if let ReportKind::Cause(diagnostic) = &mut report.kind
-        && diagnostic.labels.is_empty()
-    {
-        diagnostic.labels.push(Label::primary(span, ""));
-    }
+    *report = report.with_span(span);
     report
 }
 

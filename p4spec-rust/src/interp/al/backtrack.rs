@@ -8,19 +8,15 @@
 use crate::diagnostic::Report;
 use crate::interp::shared::{
     backtrack::{Backtrack, fatal, ok, unmatch},
-    error::{self, Error},
+    error::Error,
 };
 
 // = Sequential choice
 
 /// Keeps the most deeply nested failure set, preferring the later one on ties.
 fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
-    if errors_post
-        .iter()
-        .map(error::trace::depth)
-        .max()
-        .unwrap_or(0)
-        >= errors.iter().map(error::trace::depth).max().unwrap_or(0)
+    if errors_post.iter().map(Report::depth_max).max().unwrap_or(0)
+        >= errors.iter().map(Report::depth_max).max().unwrap_or(0)
     {
         *errors = errors_post;
     }

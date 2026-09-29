@@ -1,7 +1,7 @@
 use super::{report as report_cause, span};
 use codespan_reporting::term::DisplayStyle;
 use p4spec_rust::{
-    diagnostic::{Diagnostic, RenderConfig, Renderer, Report, ReportKind, Severity},
+    diagnostic::{Diagnostic, Label, RenderConfig, Renderer, Report, ReportKind, Severity},
     lang::common::source::Span,
 };
 
@@ -31,6 +31,48 @@ fn chain(depth: usize, mut report: Report) -> Report {
         report = frame(&format!("level {level}"), vec![report]);
     }
     report
+}
+
+#[test]
+fn source_locations_fill_only_unlocated_causes() {
+    let span_call = span("input", 2, 0, 2, 3);
+    let span_other = span("input", 3, 0, 3, 3);
+    let report = failure("failure", vec![]).with_span(&span_call);
+    assert_eq!(super::cause(&report).labels, [Label::primary(&span_call, "")]);
+    let report = report.with_span(&span_other);
+    assert_eq!(super::cause(&report).labels, [Label::primary(&span_call, "")]);
+    let mut report = failure("related", vec![]);
+    super::cause_mut(&mut report)
+        .labels
+        .push(Label::secondary(&span_other, "origin"));
+    let report = report.with_span(&span_call);
+    assert_eq!(super::cause(&report).labels, [Label::secondary(&span_other, "origin")]);
+    let report = Report::frame(span_other.clone(), "call", vec![failure("child", vec![])])
+        .with_span(&span_call);
+    assert!(matches!(&report.kind, ReportKind::Frame { span, .. } if span == &span_other));
+    assert!(super::cause(&report.children[0]).labels.is_empty());
+}
+
+#[test]
+fn appended_children_preserve_existing_reports_and_order() {
+    let report = failure("parent", vec![failure("first", vec![])])
+        .with_children(vec![frame("second", vec![failure("nested", vec![])])])
+        .with_children(vec![failure("third", vec![])]);
+    let text = Renderer::new(RenderConfig::default())
+        .render_to_string(&report)
+        .unwrap();
+    assert!(text.find("first").unwrap() < text.find("second").unwrap(), "{text}");
+    assert!(text.find("nested").unwrap() < text.find("third").unwrap(), "{text}");
+    assert_eq!(report.children.len(), 3);
+    assert_eq!(report.children[1].children.len(), 1);
+}
+
+#[test]
+fn maximum_depth_counts_causes_and_frames_on_the_deepest_branch() {
+    let report = failure("leaf", vec![]);
+    assert_eq!(report.depth_max(), 1);
+    let report = frame("root", vec![chain(3, report), failure("shallow", vec![])]);
+    assert_eq!(report.depth_max(), 5);
 }
 
 #[test]
@@ -244,6 +286,7 @@ fn deep_mixed_traces_render_and_drop_on_a_small_stack() {
             }
             let mut report = report_cause(Span::default());
             report.children.push(trace);
+            assert_eq!(report.depth_max(), 20_002);
             let mut renderer =
                 Renderer::new(RenderConfig { trace_limit: 20_001, ..Default::default() });
             let text = renderer.render_to_string(&report).unwrap();

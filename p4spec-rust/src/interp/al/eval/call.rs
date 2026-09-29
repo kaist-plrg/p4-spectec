@@ -213,7 +213,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             .insert(key, values.clone());
     }
     // Nest failures under the invocation trace
-    result.with_frame(id.span.clone(), || format!("while invoking {}", id.node))
+    result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(id))
 }
 
 // - Extern relation
@@ -391,7 +391,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         runner_ctx.interp_mut().cache.funcs.insert(key, *value);
     }
     // Nest failures under the invocation trace
-    result.with_frame(id.span.clone(), || error::trace::function(id, targs))
+    result.with_frame(id.span.clone(), || error::trace::message_func_invocation(id, targs))
 }
 
 // - Extern function
@@ -462,7 +462,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures let the caller try another candidate
-        Err(failure) => Err(failure.at_if_missing(&id.span)),
+        Err(failure) => Err(failure.with_span(&id.span)),
     }
 }
 
