@@ -23,9 +23,7 @@ use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use crate::{
     interp::shared::{
-        backtrack::{
-            self, Backtrack, BacktrackExt, fatal, ok, unmatch, unwrap, unwrap_from_result,
-        },
+        backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
         cache::CallKey,
     },
     lang::data::value::{Value, ValueArena, ValueKind},
@@ -226,10 +224,12 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         });
         // Nest failures under this call and then under the tail-calling callers
         let pure = runner_ctx.interp_mut().cache.end();
-        let mut result = result.nest(id.span.clone(), || format!("while invoking {}", id.node));
+        let mut result =
+            result.with_frame(id.span.clone(), || format!("while invoking {}", id.node));
         if result.is_err() {
             for id in ids_pending.iter().rev() {
-                result = result.nest(id.span.clone(), || format!("while invoking {}", id.node));
+                result =
+                    result.with_frame(id.span.clone(), || format!("while invoking {}", id.node));
             }
         }
         // Fatal errors and mismatches leave the loop here
@@ -384,10 +384,10 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         });
         // Nest failures under this call and then under the tail-calling callers
         let pure = runner_ctx.interp_mut().cache.end();
-        let mut result = result.nest(id.span.clone(), || error::trace::function(&id, &targs));
+        let mut result = result.with_frame(id.span.clone(), || error::trace::function(&id, &targs));
         if result.is_err() {
             for (id, targs) in calls_pending.iter().rev() {
-                result = result.nest(id.span.clone(), || error::trace::function(id, targs));
+                result = result.with_frame(id.span.clone(), || error::trace::function(id, targs));
             }
         }
         // Fatal errors and mismatches leave the loop here

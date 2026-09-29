@@ -7,7 +7,7 @@
 
 use super::super::context::ReadContext;
 use super::Invoker;
-use crate::interp::shared::backtrack::BacktrackExt;
+use crate::interp::shared::backtrack::WithFrame;
 use crate::interp::shared::prepare::ast;
 use crate::lang::data::var::IdSlot;
 
@@ -99,8 +99,9 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
             eval_iter_exp(runner_ctx, ctx, exp, exp_inner, exp_iter)
         }
     })();
-    result
-        .nest(exp.span.clone(), || format!("while evaluating expression {}", Print::to_string(exp)))
+    result.with_frame(exp.span.clone(), || {
+        format!("while evaluating expression {}", Print::to_string(exp))
+    })
 }
 
 pub(crate) fn eval_exps<

@@ -26,7 +26,7 @@ use crate::{
         },
         shared::{
             backtrack::{
-                self, Backtrack, BacktrackExt, fatal, ok, unmatch, unwrap, unwrap_from_result,
+                self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result,
             },
             cache::CallKey,
             context::ReadContext,
@@ -216,7 +216,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result = result.nest(id.span.clone(), || format!("while invoking {}", id.node));
+    let result = result.with_frame(id.span.clone(), || format!("while invoking {}", id.node));
     let values = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -358,7 +358,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result = result.nest(id.span.clone(), || error::trace::function(id, targs));
+    let result = result.with_frame(id.span.clone(), || error::trace::function(id, targs));
     let value = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {

@@ -121,13 +121,13 @@ pub fn check(
 }
 
 /// Adds frames lazily to evaluation results.
-pub trait BacktrackExt<T> {
+pub trait WithFrame<T> {
     /// Wraps failures without formatting messages on the successful path.
-    fn nest(self, span: Span, message: impl FnOnce() -> String) -> Self;
+    fn with_frame(self, span: Span, message: impl FnOnce() -> String) -> Self;
 }
 
-impl<T> BacktrackExt<T> for Backtrack<T> {
-    fn nest(self, span: Span, message: impl FnOnce() -> String) -> Self {
+impl<T> WithFrame<T> for Backtrack<T> {
+    fn with_frame(self, span: Span, message: impl FnOnce() -> String) -> Self {
         self.map_err(|failure| failure.with_frame(span, message()))
     }
 }

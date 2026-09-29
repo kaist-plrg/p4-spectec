@@ -1,7 +1,7 @@
 use crate::interp::report::ReportExt;
 use p4spec_rust::{
     diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
-    interp::shared::backtrack::{self, Backtrack, BacktrackExt, Failure},
+    interp::shared::backtrack::{self, Backtrack, Failure, WithFrame},
     lang::common::source::{Position, Span},
 };
 
@@ -32,7 +32,9 @@ fn nesting_keeps_failure_class_and_complete_incoming_report() {
         let text = report.render();
         let result: Backtrack<()> =
             Err(if fatal { Failure::Fatal(report) } else { Failure::Mismatch(vec![*report]) });
-        let failure = result.nest(span(1), || "invocation".into()).unwrap_err();
+        let failure = result
+            .with_frame(span(1), || "invocation".into())
+            .unwrap_err();
         assert_eq!(matches!(&failure, Failure::Fatal(_)), fatal);
         let report = failure.into_report();
         let frame = if fatal { &*report } else { &report.children[0] };
@@ -54,7 +56,7 @@ fn nesting_keeps_failure_class_and_complete_incoming_report() {
     let result: Backtrack<_> = Ok(7);
     assert_eq!(
         result
-            .nest(span(1), || panic!("success formatted a failure"))
+            .with_frame(span(1), || panic!("success formatted a failure"))
             .unwrap(),
         7
     );

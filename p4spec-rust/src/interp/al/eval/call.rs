@@ -24,7 +24,7 @@ use super::super::{
 };
 use super::{assign, expr, prem::eval_prems};
 use crate::interp::shared::{
-    backtrack::{self, Backtrack, BacktrackExt, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
     cache::CallKey,
 };
 use crate::lang::data::value::{ValueArena, ValueKind};
@@ -213,7 +213,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             .insert(key, values.clone());
     }
     // Nest failures under the invocation trace
-    result.nest(id.span.clone(), || format!("while invoking {}", id.node))
+    result.with_frame(id.span.clone(), || format!("while invoking {}", id.node))
 }
 
 // - Extern relation
@@ -391,7 +391,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         runner_ctx.interp_mut().cache.funcs.insert(key, *value);
     }
     // Nest failures under the invocation trace
-    result.nest(id.span.clone(), || error::trace::function(id, targs))
+    result.with_frame(id.span.clone(), || error::trace::function(id, targs))
 }
 
 // - Extern function
