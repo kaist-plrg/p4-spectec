@@ -5,7 +5,6 @@
 //! The CLI renders reports and selects exit codes at its output boundary.
 
 use p4spec_rust::{
-    backend_specdoc::splicer,
     diagnostic::{Diagnostic, Report, Severity},
     interface::p4::error::P4Error,
     interp::shared::error::Error as InterpError,
@@ -17,15 +16,9 @@ use p4spec_rust::{
 /// A command failure with its user-facing diagnostic category.
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum CliError {
-    /// Command admission failed before processing inputs.
+    /// A command or specification operation produced a structured diagnostic.
     #[error(transparent)]
-    Command(Box<Report>),
-    /// Document splicing failed.
-    #[error(transparent)]
-    Splice(#[from] splicer::Error),
-    /// Specification processing failed.
-    #[error(transparent)]
-    Spec(#[from] p4spec_rust::Error),
+    Diagnostic(#[from] Box<Report>),
     /// Interpreter construction failed.
     #[error(transparent)]
     Runner(#[from] runner::BuildError),
@@ -44,8 +37,8 @@ pub(crate) enum CliError {
 }
 
 /// Constructs a command diagnostic without a specification source location.
-fn command(code: &str, message: impl Into<String>) -> CliError {
-    CliError::Command(Box::new(
+fn command(code: &str, message: impl Into<String>) -> Box<Report> {
+    Box::new(
         Diagnostic::new(
             "command",
             Severity::Error,
@@ -55,7 +48,7 @@ fn command(code: &str, message: impl Into<String>) -> CliError {
             Vec::new(),
         )
         .into(),
-    ))
+    )
 }
 
 // == Splice admission
@@ -63,21 +56,21 @@ fn command(code: &str, message: impl Into<String>) -> CliError {
 const SPLICE_OUTPUT_CONFLICT: &str = "command/splice-output-conflict";
 
 /// Reports conflicting in-place and explicit output destinations.
-pub(crate) fn splice_output_conflict() -> CliError {
+pub(crate) fn splice_output_conflict() -> Box<Report> {
     command(SPLICE_OUTPUT_CONFLICT, "options `--inplace` and `--out` cannot be used together")
 }
 
 const SPLICE_INPUT_REQUIRED: &str = "command/splice-input-required";
 
 /// Reports an empty skeleton input list in either output mode.
-pub(crate) fn splice_input_required() -> CliError {
+pub(crate) fn splice_input_required() -> Box<Report> {
     command(SPLICE_INPUT_REQUIRED, "splice requires at least one input file")
 }
 
 const SPLICE_FILE_COUNT_MISMATCH: &str = "command/splice-file-count-mismatch";
 
 /// Reports both counts when explicit output paths cannot pair with inputs.
-pub(crate) fn splice_file_count_mismatch(num_input: usize, num_output: usize) -> CliError {
+pub(crate) fn splice_file_count_mismatch(num_input: usize, num_output: usize) -> Box<Report> {
     // Match each count's singular or plural noun
     let text_input = if num_input == 1 { "file" } else { "files" };
     let text_output = if num_output == 1 { "file" } else { "files" };

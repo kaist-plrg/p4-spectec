@@ -38,14 +38,11 @@ fn render_report(report: &Report) {
 /// Renders accumulated warnings before returning the command result or error.
 fn report_warnings<Value, Error>(
     (result, warnings): (Result<Value, Error>, Vec<Report>),
-) -> Result<Value, CliError>
-where
-    CliError: From<Error>,
-{
+) -> Result<Value, Error> {
     for report in warnings {
         render_report(&report);
     }
-    result.map_err(CliError::from)
+    result
 }
 
 // = Elab command
@@ -139,18 +136,19 @@ struct SpliceArgs {
 fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
     // Reject ambiguous destinations before checking input availability
     if args.inplace && !args.paths_output.is_empty() {
-        return Err(error::splice_output_conflict());
+        return Err(error::splice_output_conflict().into());
     }
     // Require at least one skeleton in either output mode
     if args.paths_input.is_empty() {
-        return Err(error::splice_input_required());
+        return Err(error::splice_input_required().into());
     }
     // Reject mismatched lists before zip can omit unpaired paths
     if !args.inplace && args.paths_input.len() != args.paths_output.len() {
         return Err(error::splice_file_count_mismatch(
             args.paths_input.len(),
             args.paths_output.len(),
-        ));
+        )
+        .into());
     }
     // Resolve output paths before loading specifications or touching documents
     let path_pairs: Vec<_> = if args.inplace {
@@ -168,7 +166,8 @@ fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
     let spec_el = p4spec_rust::parse(&args.paths)?;
     let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
     // Render accumulated splice warnings before propagating the file result
-    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
+    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))?;
+    Ok(())
 }
 
 // = Run command
@@ -189,7 +188,10 @@ struct InterpreterArgs {
 }
 
 /// Converts the specifications up to the selected interpreter's language.
-fn interp_spec(paths: &[PathBuf], interpreter: &InterpreterArgs) -> Result<runner::Spec, CliError> {
+fn interp_spec(
+    paths: &[PathBuf],
+    interpreter: &InterpreterArgs,
+) -> Result<runner::Spec, Box<Report>> {
     // Each pipeline stops at the language selected by the command
     if interpreter.al {
         report_warnings(p4spec_rust::algo_with_warnings(paths)).map(runner::Spec::Al)
@@ -366,15 +368,7 @@ fn main() -> ExitCode {
         // Successful commands have already written their output
         Ok(()) => ExitCode::SUCCESS,
         // Preserve source diagnostics across the completed transformation stages
-        Err(CliError::Spec(
-            p4spec_rust::Error::Frontend(report)
-            | p4spec_rust::Error::Elab(report)
-            | p4spec_rust::Error::Algo(report)
-            | p4spec_rust::Error::Structure(report)
-            | p4spec_rust::Error::Prose(report),
-        ))
-        | Err(CliError::Splice(report))
-        | Err(CliError::Command(report)) => {
+        Err(CliError::Diagnostic(report)) => {
             render_report(&report);
             ExitCode::FAILURE
         }
