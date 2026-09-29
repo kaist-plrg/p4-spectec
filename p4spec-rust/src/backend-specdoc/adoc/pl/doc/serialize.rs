@@ -654,7 +654,7 @@ pub fn ser_prose(
 /// Serializes a link label without creating nested cross-references.
 pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
-    let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
+    let anchor_ctx = AnchorContext::default();
     Serializer::new(&anchor_ctx, &Span::default(), &mut Vec::new(), BTreeMap::new()).ser_prose(
         prose,
         Some(&Link::Direct(String::new())),

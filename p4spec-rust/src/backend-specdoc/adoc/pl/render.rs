@@ -734,7 +734,7 @@ impl Code {
         // Parenthesize compound bodies whose code contains spaces
         let needs_parens = !matches!(exp_inner.node.node, ExpKind::Id(_) | ExpKind::Tuple(_))
             && serialize::ser_code(
-                &AnchorContext::new(&|_, _| None, &|_, _| None),
+                &AnchorContext::default(),
                 &Span::default(),
                 &mut Vec::new(),
                 &code_inner,

@@ -48,8 +48,7 @@ fn latex_failures_preserve_expression_locations_and_warning_order() {
         // Construct renderer inputs that elaboration would reject before splicing
         def.exp.node = exp_kind;
         let el::DefKind::FuncDef(def) = &spec_el[1].node else { panic!("function definition") };
-        let anchor_ctx =
-            p4spec_rust::backend_specdoc::anchor::AnchorContext::new(&|_, _| None, &|_, _| None);
+        let anchor_ctx = p4spec_rust::backend_specdoc::anchor::AnchorContext::default();
         let report_direct =
             p4spec_rust::backend_specdoc::latex::render_def(&anchor_ctx, &spec_el[1]).unwrap_err();
         let sources = [

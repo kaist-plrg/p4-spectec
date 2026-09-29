@@ -32,12 +32,7 @@ fn unresolved_subject_keeps_body_without_cross_reference() {
         Box::new(Prose::Text("call".into())),
     );
     assert_eq!(
-        serialize::ser_prose(
-            &AnchorContext::new(&|_, _| None, &|_, _| None),
-            &Span::default(),
-            &mut Vec::new(),
-            &prose
-        ),
+        serialize::ser_prose(&AnchorContext::default(), &Span::default(), &mut Vec::new(), &prose),
         "call"
     );
 }
@@ -160,7 +155,7 @@ fn link_warnings_preserve_order_location_notes_and_deduplication() {
         Prose::link(Link::Direct("body".into()), Prose::Empty),
         Prose::link(Link::Direct("label".into()), Prose::text("[a]<b>")),
     ]);
-    let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
+    let anchor_ctx = AnchorContext::default();
     let mut warnings = Vec::new();
     let text = serialize::ser_prose(&anchor_ctx, span, &mut warnings, &prose);
     assert_eq!(text, "xref:[empty]xref:[again]xref:outer[nested]xref:body[][a]<b>");
@@ -194,7 +189,7 @@ fn code_warnings_and_table_lint_policy_remain_distinct() {
         Link::Direct("outer".into()),
         Box::new(Code::Link(Link::Direct("inner".into()), Box::new(Code::Token("x".into())))),
     );
-    let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
+    let anchor_ctx = AnchorContext::default();
     let mut warnings = Vec::new();
     let span = Span::default();
     serialize::ser_prose(&anchor_ctx, &span, &mut warnings, &Prose::Code(code.clone()));
