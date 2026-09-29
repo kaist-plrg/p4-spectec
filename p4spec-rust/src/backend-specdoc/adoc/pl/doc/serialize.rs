@@ -230,10 +230,10 @@ impl CodeStyle {
 /// Per-serialization anchor labels and warnings.
 struct Serializer<'ctx, 'a> {
     anchor_ctx: &'ctx AnchorContext<'a>,
+    span: &'ctx Span,
+    warnings: &'ctx mut Vec<Report>,
     markers: BTreeMap<String, String>,
     warned: BTreeSet<String>,
-    warnings: &'ctx mut Vec<Report>,
-    span: &'ctx Span,
 }
 
 impl<'ctx, 'a> Serializer<'ctx, 'a> {
@@ -243,7 +243,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         warnings: &'ctx mut Vec<Report>,
         markers: BTreeMap<String, String>,
     ) -> Self {
-        Serializer { anchor_ctx, markers, warned: BTreeSet::new(), warnings, span }
+        Serializer { anchor_ctx, span, warnings, markers, warned: BTreeSet::new() }
     }
 
     // - Cross-references
