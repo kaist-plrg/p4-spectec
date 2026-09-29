@@ -1,3 +1,4 @@
+use crate::interp::report::ReportExt;
 use p4spec_rust::{
     interp::pl::{Config, PlInterp, context::Global},
     lang::{
@@ -111,9 +112,7 @@ def $fallback(n) = 7
     assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), "7");
 }
 
-#[test]
-fn check_let_sub_binding_mismatch_falls_through() {
-    let source = r#"
+const CHECKED_LIST_SOURCE: &str = r#"
 var ns : nat*
 var x : nat
 var y : nat
@@ -124,7 +123,28 @@ def $fallback(ns) = x
 def $fallback(ns) = 7
   -- otherwise
 "#;
-    let mut spec_pl = spec(source);
+
+#[test]
+fn checked_list_binding_mismatch_reaches_otherwise() {
+    let mut runner = runner(CHECKED_LIST_SOURCE);
+    for (len, expected) in [(1, "7"), (2, "1")] {
+        let value = make::nat(runner.arena_mut(), 1.into(), Span::default()).unwrap();
+        let typ = typ::make::iter(typ::make::nat(), p4spec_rust::lang::common::Iter::List);
+        let value =
+            make::list(runner.arena_mut(), typ.node.into(), vec![value; len], Span::default())
+                .unwrap();
+        let value = runner
+            .context()
+            .call_func("fallback", &[], &[value])
+            .unwrap();
+        assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), expected);
+    }
+}
+
+#[test]
+#[should_panic(expected = "assignment arity mismatch")]
+fn checked_subtype_binding_requires_its_pattern_shape_guard() {
+    let mut spec_pl = spec(CHECKED_LIST_SOURCE);
     let func = spec_pl
         .iter_mut()
         .find_map(|def| match &mut def.node.node {
@@ -152,6 +172,7 @@ def $fallback(ns) = 7
         },
         _ => panic!("expected a subtype condition"),
     };
+    // A subtype guard cannot replace the list length guard from CheckLetMatch
     func.block[0].node.node = ast::InstrKind::CheckLetSub(instr_check);
 
     let mut runner = runner_spec(spec_pl);
@@ -221,7 +242,8 @@ def $subtype(n) = 1
         .context()
         .call_func("subtype", &[], &[value])
         .unwrap_err()
-        .to_string();
+        .into_report()
+        .render();
     assert!(error.contains("n is not a subtype of nat"), "{error}");
 
     let mut runner_match = runner(
@@ -248,7 +270,8 @@ def $matched(ns) = x
         .context()
         .call_func("matched", &[], &[value])
         .unwrap_err()
-        .to_string();
+        .into_report()
+        .render();
     assert!(error.contains("ns does not match the expected pattern"), "{error}");
 
     let mut spec_option = spec(
@@ -300,7 +323,8 @@ def $option(o) = 0
         .context()
         .call_func("option", &[], &[value])
         .unwrap_err()
-        .to_string();
+        .into_report()
+        .render();
     assert!(error.contains("o evaluated to an empty option"), "{error}");
 }
 

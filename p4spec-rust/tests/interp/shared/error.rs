@@ -1,46 +1,38 @@
+use crate::interp::report::ReportExt;
 use p4spec_rust::{
-    interp::shared::error::{ContextErrorKind, EntityKind, Error, ErrorKind},
+    diagnostic::Report,
+    interp::shared::backtrack::Failure,
     lang::common::source::{Position, Span},
 };
 
-fn trace(message: &str, children: Vec<Error>) -> Error {
-    Error {
-        span: Span::default(),
-        kind: Box::new(ErrorKind::Context(ContextErrorKind::Undefined {
-            kind: EntityKind::Value,
-            name: message.into(),
-        })),
-        children,
-    }
-}
-
 #[test]
-fn test_failure_rendering_retains_branch_order_and_locations() {
+fn rendering_preserves_branch_order_and_locations() {
     let span = Span::new(Position::new("spec", 3, 4), Position::new("spec", 3, 5));
-    let mut error_first = trace("first mismatch", vec![]);
-    error_first.span = span.clone();
-    let error = Error::execution(vec![trace(
-        "call failed",
-        vec![error_first, trace("second mismatch", vec![])],
-    )]);
-    assert_eq!(
-        error.to_string(),
-        format!(
-            "value `call failed` is undefined\n├── {span}\n    1. value `first mismatch` is undefined\n└── 2. value `second mismatch` is undefined\n"
-        )
-    );
+    let report = Failure::Mismatch(vec![
+        Report::frame(span, "first mismatch", vec![]),
+        Report::frame(Span::default(), "second mismatch", vec![]),
+    ])
+    .into_report();
+    let text = report.render();
+    assert!(text.find("first mismatch").unwrap() < text.find("second mismatch").unwrap());
+    assert!(text.contains("spec:3:5"), "{text}");
 }
 
 #[test]
-fn test_failure_rendering_bounds_deep_traces_and_keeps_root_and_leaf() {
-    let mut nested = trace("leaf", vec![]);
-    for idx in (0..15).rev() {
-        nested = trace(&format!("frame {idx}"), vec![nested]);
-    }
-    let message = Error::execution(vec![nested]).to_string();
-    assert!(message.starts_with(
-        "value `frame 0` is undefined\n│ ··· omitting 5 traces ···\nvalue `frame 6` is undefined\n"
-    ));
-    assert!(message.contains("value `leaf` is undefined\n"));
-    assert!(!message.contains("value `frame 1` is undefined\n"));
+fn deep_frames_render_and_drop_on_a_small_stack() {
+    std::thread::Builder::new()
+        .stack_size(128 * 1024)
+        .spawn(|| {
+            let mut report = Report::frame(Span::default(), "leaf", vec![]);
+            for idx in (0..20_000).rev() {
+                report = Report::frame(Span::default(), format!("frame {idx}"), vec![report]);
+            }
+            let text = report.render();
+            assert!(text.contains("frame 0"));
+            assert!(text.contains("further reports omitted"));
+            drop(report);
+        })
+        .unwrap()
+        .join()
+        .unwrap();
 }

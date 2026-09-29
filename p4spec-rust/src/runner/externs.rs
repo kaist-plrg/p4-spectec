@@ -9,7 +9,10 @@
 
 use thiserror::Error;
 
-use crate::{lang::data::value::Value, lang::il::ast::Typ};
+use crate::{
+    lang::data::value::{Value, ValueError},
+    lang::il::ast::Typ,
+};
 
 use super::{Interface, Interpreter, RunnerContext};
 
@@ -23,7 +26,7 @@ pub enum ExternError {
     NotConfigured,
     /// A value operation failed.
     #[error(transparent)]
-    Value(#[from] crate::lang::data::value::ValueError),
+    Value(#[from] ValueError),
     /// An architecture-specific failure, described by the extern.
     #[error("{0}")]
     Failure(String),

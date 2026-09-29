@@ -33,6 +33,8 @@ pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncD
 
 impl Global {
     /// Loads a specification and prepares its callables for slot execution.
+    ///
+    /// Panics if a global definition is repeated.
     pub fn load(spec: source::Spec) -> Result<Self, Error> {
         let mut loaded = Self::new();
         // Prepare definitions before inserting them into their namespaces
@@ -47,7 +49,7 @@ impl Global {
                             (id, TypeDef::Defined(tparams, Box::new(def_typ)))
                         }
                     };
-                    loaded.insert_typdef(id, typdef)?;
+                    loaded.insert_typdef(id, typdef);
                 }
                 // Meta-variables carry no runtime state
                 source::DefKind::Var(_) => {}
@@ -58,7 +60,7 @@ impl Global {
                         ast::RelDef::Extern(rel) => &rel.id,
                         ast::RelDef::Defined(rel) => &rel.id,
                     };
-                    loaded.insert_rel(id.clone(), rel)?;
+                    loaded.insert_rel(id.clone(), rel);
                 }
                 source::DefKind::MetaFunc(func) => {
                     // Prepare functions before sharing them with local bindings
@@ -69,7 +71,7 @@ impl Global {
                         ast::MetaFuncDef::Table(func) => &func.id,
                         ast::MetaFuncDef::Defined(func) => &func.id,
                     };
-                    loaded.insert_func(id.clone(), func)?;
+                    loaded.insert_func(id.clone(), func);
                 }
             }
         }

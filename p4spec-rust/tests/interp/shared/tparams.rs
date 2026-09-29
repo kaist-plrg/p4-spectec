@@ -2,15 +2,16 @@
 //!
 //! Type parameters shadow global definitions in both input checks and bodies.
 
+use crate::interp::report::ReportExt;
+use p4spec_rust::interp::shared::backtrack::Failure;
 use p4spec_rust::{
     interp::{
         al::context as ctx_al,
         pl::context as ctx_pl,
         shared::{
-            backtrack::Backtrack,
             context::WriteContext,
-            error::{CallErrorKind, ContextErrorKind, EntityKind, Error, ErrorKind},
-            eval::assign::assign_tparams,
+            error::EntityKind,
+            eval::assign::{assign_args, assign_def, assign_tparams},
         },
         sl::context as ctx_sl,
     },
@@ -19,7 +20,7 @@ use p4spec_rust::{
         common::source::{Position, Span},
         data::{
             typ,
-            value::{get, make},
+            value::{ValueArena, get, make},
         },
         pl, sl,
         traits::print::Print,
@@ -31,7 +32,7 @@ use p4spec_rust::{
 
 fn check_shadowing<Interp>(mut runner: Runner<Interp, BuiltinInterface, NullExtern>)
 where
-    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Error>,
+    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
 {
     let value = make::bool(runner.arena_mut(), true, Span::default()).unwrap();
     let value = runner
@@ -68,55 +69,85 @@ fn type_arguments_shadow_globals_with_and_without_guards_in_all_interpreters() {
     }
 }
 
-/// Checks arity locations and duplicate local bindings without global definitions.
+/// Checks internal arity preconditions and duplicate local type bindings.
 fn check_binding_errors<Ctx: WriteContext>(ctx: Ctx) {
     let span_call = Span::new(Position::new("call", 1, 1), Position::new("call", 1, 8));
     let span_param = Span::new(Position::new("decl", 2, 3), Position::new("decl", 2, 4));
     let tparam = phrase!(node: "X".to_owned(), span: span_param.clone());
-    // Arity errors retain the call location for missing and excess arguments
+    // Internal type binding only receives calls with validated arity
     for targs in [vec![], vec![typ::make::bool(), typ::make::bool()]] {
-        let Backtrack::Err(errors) =
-            assign_tparams(ctx.clone(), std::slice::from_ref(&tparam), &targs, &span_call)
-        else {
-            panic!("expected a type argument arity error")
-        };
-        assert_eq!(errors.len(), 1);
-        assert_eq!(errors[0].span, span_call);
-        assert_eq!(
-            *errors[0].kind,
-            ErrorKind::Call(CallErrorKind::TypeArgumentArityMismatch {
-                expected: 1,
-                actual: targs.len(),
-            })
+        assert!(
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                assign_tparams(ctx.clone(), std::slice::from_ref(&tparam), &targs, &span_call)
+            }))
+            .is_err(),
+            "internal type argument arity is validated before binding"
         );
     }
     // Binding the same parameter twice remains a local duplicate
-    let Backtrack::Ok(ctx) =
+    let Ok(ctx) =
         assign_tparams(ctx, std::slice::from_ref(&tparam), &[typ::make::bool()], &span_call)
     else {
         panic!("expected a successful type parameter binding")
     };
-    let Backtrack::Err(errors) = assign_tparams(ctx, &[tparam], &[typ::make::bool()], &span_call)
+    let Err(Failure::Fatal(errors)) =
+        assign_tparams(ctx, &[tparam], &[typ::make::bool()], &span_call)
     else {
         panic!("expected a duplicate type parameter error")
     };
-    assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].span, span_param);
+    assert!(errors.children.is_empty());
+    assert_eq!(errors.span(), span_param);
     assert_eq!(
-        *errors[0].kind,
-        ErrorKind::Context(ContextErrorKind::Duplicate {
-            kind: EntityKind::Type,
-            name: "X".to_owned(),
-        })
+        errors.diagnostic().message,
+        p4spec_rust::interp::shared::error::context::binding_repeated(
+            EntityKind::Type,
+            "X".to_owned()
+        )
+        .message
     );
 }
 
 #[test]
-fn type_argument_errors_preserve_arity_and_local_duplicate_checks_in_all_interpreters() {
+fn internal_type_argument_arity_is_an_invariant_in_all_interpreters() {
     let global_al = ctx_al::Global::load(vec![]).unwrap();
     let global_sl = ctx_sl::Global::load(vec![]).unwrap();
     let global_pl = ctx_pl::Global::load(vec![]).unwrap();
     check_binding_errors(ctx_al::Context::new(&global_al));
     check_binding_errors(ctx_sl::Context::new(&global_sl));
     check_binding_errors(ctx_pl::Context::new(&global_pl));
+}
+
+/// Checks malformed bindings and unresolved raw references at assignment.
+fn check_argument_invariants<Ctx: WriteContext>(ctx: Ctx) {
+    let mut arena = ValueArena::default();
+    let value = make::bool(&mut arena, true, Span::default()).unwrap();
+    let id = phrase!(node: "f".to_owned(), span: Span::default());
+    // Malformed IR violates the assignment precondition
+    let panic_args = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        assign_args(&mut arena, &ctx, ctx.clone(), &[], &[value])
+    }))
+    .is_err();
+    let panic_def = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        assign_def(&arena, &ctx, ctx.clone(), &id, value)
+    }))
+    .is_err();
+    assert_eq!((panic_args, panic_def), (true, true));
+    // Raw function references still report unknown names as diagnostics
+    let value =
+        make::func(&mut arena, id.clone(), vec![], vec![], typ::make::bool(), Span::default())
+            .unwrap();
+    let Err(Failure::Fatal(report)) = assign_def(&arena, &ctx, ctx.clone(), &id, value) else {
+        panic!("unknown raw function reference must remain a diagnostic")
+    };
+    assert!(report.find_code("runtime/binding-undefined").is_some());
+}
+
+#[test]
+fn internal_argument_bindings_require_validated_ir_in_all_interpreters() {
+    let global_al = ctx_al::Global::load(vec![]).unwrap();
+    let global_sl = ctx_sl::Global::load(vec![]).unwrap();
+    let global_pl = ctx_pl::Global::load(vec![]).unwrap();
+    check_argument_invariants(ctx_al::Context::new(&global_al));
+    check_argument_invariants(ctx_sl::Context::new(&global_sl));
+    check_argument_invariants(ctx_pl::Context::new(&global_pl));
 }

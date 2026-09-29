@@ -8,10 +8,14 @@
 //! With `guard` on, inputs and outputs are type-checked at the boundary.
 
 use super::super::backtrack::{choose_deterministic, choose_sequential};
+use crate::diagnostic::{Diagnostic, Label, Report};
 use crate::interp::shared::context::ReadContext;
+use crate::interp::shared::error;
 use crate::interp::shared::eval::assign::assign_tparams;
+use crate::lang::hints::input;
 use crate::runtime::envs::interp::al::ast_prepared as ast;
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
+use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use std::rc::Rc;
 
 use super::super::{
@@ -19,26 +23,25 @@ use super::super::{
     context::{Context, Scope},
 };
 use super::{assign, expr, prem::eval_prems};
-use crate::interp::shared::error::{CallErrorKind, GuardErrorKind, HostErrorKind, TraceErrorKind};
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
     cache::CallKey,
-    error::{Error, ErrorKind},
 };
 use crate::lang::data::value::{ValueArena, ValueKind};
 use crate::{
-    lang::{data::value::Value, traits::print::Print},
-    runner::{Extern, Interface, InterfaceError, RunnerContext},
+    lang::data::value::Value,
+    runner::{Extern, Interface, RunnerContext},
 };
 
 // = Input and output checks
 
-/// Type-checks relation inputs at the positions the input hint selects.
+/// Checks the input count and, with `guard`, the input types.
 pub(in crate::interp::al) fn check_rel_inputs(
     arena: &ValueArena,
     ctx: &Context<'_>,
     id: &ast::Id,
     values: &[Value],
+    guard: bool,
 ) -> Backtrack<()> {
     let rel = unwrap_from_result!(ctx.find_rel(id), &id.span);
     // Extern and defined relations share the signature shape
@@ -46,45 +49,51 @@ pub(in crate::interp::al) fn check_rel_inputs(
         ast::RelDef::Extern(rel) => (&rel.not_typ, &rel.input_hint),
         ast::RelDef::Defined(rel) => (&rel.not_typ, &rel.input_hint),
     };
-    let typs = not_typ.node.args();
-    // The hint must fit the notation arity
-    unwrap_from_result!(crate::lang::hints::input::validate(inputs, typs.len()), &id.span);
+    // Always check the input count, even without type guards
+    unwrap!(backtrack::check(inputs.indices().len() == values.len(), id.span.clone(), || {
+        error::guard::relation_input_arity_mismatch(inputs.indices().len(), values.len())
+    }));
+    if !guard {
+        return ok!(());
+    }
     // Input types are the notation arguments the hint selects
+    let typs = not_typ.node.args();
     let typs = inputs
         .indices()
         .iter()
         .map(|idx| typs[idx.node].clone())
         .collect::<Vec<_>>();
-    check_values(
-        arena,
-        ctx,
-        id,
-        &typs,
-        values,
-        GuardErrorKind::RelationInputMismatch { relation: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &typs, values, || {
+        error::guard::relation_input_type_mismatch(id.node.clone())
+    })
 }
 
-/// Type-checks function arguments with the type parameters bound to `targs`.
+/// Checks argument counts and, with `guard`, the argument types.
 pub(in crate::interp::al) fn check_func_inputs(
     arena: &ValueArena,
     ctx: &Context<'_>,
     id: &ast::Id,
     targs: &[ast::Typ],
     values: &[Value],
+    guard: bool,
 ) -> Backtrack<()> {
     let typ = unwrap_from_result!(ctx.find_func_typ(id), &id.span);
+    // Check type and value argument counts before binding them
+    unwrap!(backtrack::check(typ.tparams.len() == targs.len(), id.span.clone(), || {
+        error::call::type_argument_arity_mismatch(typ.tparams.len(), targs.len())
+    }));
+    unwrap!(backtrack::check(typ.typs_params.len() == values.len(), id.span.clone(), || {
+        error::guard::function_input_arity_mismatch(typ.typs_params.len(), values.len())
+    }));
+    if !guard {
+        return ok!(());
+    }
     // Bind type arguments before checking parameter types
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the bound type parameters
-    check_values(
-        arena,
-        &ctx_local,
-        id,
-        &typ.typs_params,
-        values,
-        GuardErrorKind::FunctionInputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, &ctx_local, id, &typ.typs_params, values, || {
+        error::guard::function_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Checks each value against its type, failing with `error`.
@@ -94,7 +103,7 @@ fn check_values(
     id: &ast::Id,
     typs: &[ast::Typ],
     values: &[Value],
-    error: GuardErrorKind,
+    diagnostic: impl FnOnce() -> Diagnostic,
 ) -> Backtrack<()> {
     // Subtyping resolves type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
@@ -104,10 +113,10 @@ fn check_values(
     };
     // Check all values against their types at once
     let matches = unwrap_from_result!(
-        crate::runtime::ops::value::subs(arena, &find_typdef_opt, &find_func, typs, values),
+        value_ops::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    Backtrack::check(matches, id.span.clone(), ErrorKind::Guard(error))
+    backtrack::check(matches, id.span.clone(), diagnostic)
 }
 
 /// Type-checks a function result with the type parameters substituted.
@@ -121,21 +130,12 @@ fn check_func_output(
     value: &Value,
 ) -> Backtrack<()> {
     // Substitute the type arguments into the declared result type
-    let theta =
-        unwrap_from_result!(crate::runtime::ops::typ::Theta::from_lists(tparams, targs), &id.span);
-    let typ = unwrap_from_result!(
-        crate::runtime::ops::typ::subst_typ(&|id| theta.get(id), typ),
-        &id.span
-    );
+    let theta = unwrap_from_result!(typ_ops::Theta::from_lists(tparams, targs), &id.span);
+    let typ = unwrap_from_result!(typ_ops::subst_typ(&|id| theta.get(id), typ), &id.span);
     // Check the single result
-    check_values(
-        arena,
-        ctx,
-        id,
-        &[typ],
-        std::slice::from_ref(value),
-        GuardErrorKind::FunctionOutputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
+        error::guard::function_output_type_mismatch(id.node.clone())
+    })
 }
 
 // = Cache eligibility
@@ -211,9 +211,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             .insert(key, values.clone());
     }
     // Nest failures under the invocation trace
-    result.nest(id.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Invocation { text: id.node.clone() })
-    })
+    result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(id))
 }
 
 // - Extern relation
@@ -232,21 +230,20 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (values, _) = unwrap_from_result!(result, &id.span);
+    // Return extern failures without turning mismatches into fatal errors
+    let (values, _) = unwrap!(result);
+    // Check the number of extern outputs before assigning them
+    let len = rel.not_typ.node.args().len() - rel.input_hint.indices().len();
+    unwrap!(backtrack::check(len == values.len(), id.span.clone(), || {
+        error::guard::relation_output_arity_mismatch(len, values.len())
+    }));
     if runner_ctx.interp().config.guard {
         // Output types are the notation arguments the hint leaves
         let typs = rel.not_typ.node.args().into_iter().cloned().collect();
-        let (_, typs) =
-            unwrap_from_result!(crate::lang::hints::input::split(&rel.input_hint, typs), &id.span);
-        unwrap!(check_values(
-            runner_ctx.arena(),
-            ctx,
-            id,
-            &typs,
-            &values,
-            GuardErrorKind::RelationOutputMismatch { relation: id.node.clone() }
-        ));
+        let (_, typs) = input::split(&rel.input_hint, typs).expect("input hint must fit relation");
+        unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
+            error::guard::relation_output_type_mismatch(id.node.clone())
+        }));
     }
     ok!(values)
 }
@@ -263,14 +260,7 @@ fn eval_rule_path<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
     // Input count must match the rule's input patterns
-    unwrap!(Backtrack::check(
-        rule_match.exps_input.len() == values.len(),
-        path.id.span.clone(),
-        ErrorKind::Call(CallErrorKind::RuleArityMismatch {
-            expected: rule_match.exps_input.len(),
-            actual: values.len()
-        })
-    ));
+    assert_eq!(rule_match.exps_input.len(), values.len(), "validated rule input arity");
     // Inputs bind into a fresh frame for the rule
     let ctx = unwrap!(assign::assign_exps(
         runner_ctx.arena_mut(),
@@ -307,30 +297,22 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
                 .map(move |path| (&group.node, path))
         })
         .collect();
-    // Each candidate nests its failures under relation/group/path
+    // Evaluate each candidate without adding a rule-path frame
     let mut evaluate = |&(group, path): &(&ast::RuleGroupKind, &ast::RulePath)| {
-        eval_rule_path(runner_ctx, ctx, layout, &group.rule_match, path, values).nest(
-            id.span.clone(),
-            || {
-                ErrorKind::Trace(TraceErrorKind::Evaluation {
-                    text: format!("{}/{}/{}", id.node, group.id.node, path.id.node),
-                })
-            },
-        )
+        eval_rule_path(runner_ctx, ctx, layout, &group.rule_match, path, values)
     };
     // Deterministic mode rejects two matching paths
     let result = if det {
         choose_deterministic(paths, &mut evaluate, |(group_a, path_a), (group_b, path_b)| {
-            Error::new(
-                ErrorKind::Call(CallErrorKind::RelationNondeterminism {
-                    relation: id.node.clone(),
-                    group_a: group_a.id.node.clone(),
-                    path_a: path_a.id.node.clone(),
-                    group_b: group_b.id.node.clone(),
-                    path_b: path_b.id.node.clone(),
-                }),
-                id.span.clone(),
+            let diagnostic = error::call::relation_nondeterministic(
+                id.node.clone(),
+                group_a.id.node.clone(),
+                path_a.id.node.clone(),
+                group_b.id.node.clone(),
+                path_b.id.node.clone(),
             )
+            .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
         })
     // Sequential mode takes the first matching path
     } else {
@@ -340,10 +322,10 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         // A match is the answer
         ok!(values) => ok!(values),
         // A fatal error aborts
-        err!(errors) => err!(errors),
+        fatal!(errors) => fatal!(errors),
         // No path matched: the otherwise group is the fallback
         unmatch!(errors) => match &rel.else_group {
-            // The otherwise group runs like any path, traced under its own name
+            // The otherwise group runs like any path
             Some(group) => eval_rule_path(
                 runner_ctx,
                 ctx,
@@ -351,16 +333,8 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
                 &group.node.rule_match,
                 &group.node.rule_path,
                 values,
-            )
-            .nest(id.span.clone(), || {
-                ErrorKind::Trace(TraceErrorKind::Evaluation {
-                    text: format!(
-                        "{}/{}/{}",
-                        id.node, group.node.id.node, group.node.rule_path.id.node
-                    ),
-                })
-            }),
-            // No fallback: report every candidate's mismatches
+            ),
+            // No fallback: propagate the selected mismatches
             None => unmatch!(errors),
         },
     }
@@ -414,7 +388,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         runner_ctx.interp_mut().cache.funcs.insert(key, *value);
     }
     // Nest failures under the invocation trace
-    result.nest(id.span.clone(), || ErrorKind::Trace(TraceErrorKind::function(id, targs)))
+    result.with_frame(id.span.clone(), || error::trace::message_func_invocation(id, targs))
 }
 
 // - Extern function
@@ -434,8 +408,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (value, _) = unwrap_from_result!(result, &id.span);
+    // Return extern failures without turning mismatches into fatal errors
+    let (value, _) = unwrap!(result);
     // Guard the result against the declared type
     if runner_ctx.interp().config.guard {
         unwrap!(check_func_output(
@@ -485,14 +459,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures let the caller try another candidate
-        Err(error) => {
-            let recoverable = matches!(
-                error.kind.as_ref(),
-                ErrorKind::Host(HostErrorKind::Interface(InterfaceError::Builtin(_)))
-            );
-            let error = error.at_if_missing(&id.span);
-            if recoverable { unmatch!(vec![error]) } else { err!(vec![error]) }
-        }
+        Err(failure) => Err(failure.with_span(&id.span)),
     }
 }
 
@@ -506,32 +473,19 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     table_row: &ast::TableRow,
     values: &[Value],
 ) -> Backtrack<Value> {
-    let result = (|| {
-        // Argument count must match the row
-        unwrap!(Backtrack::check(
-            table_row.node.args.len() == values.len(),
-            table_row.span.clone(),
-            ErrorKind::Call(CallErrorKind::TableRowArityMismatch {
-                expected: table_row.node.args.len(),
-                actual: values.len()
-            })
-        ));
-        // Arguments bind into a fresh frame for the row
-        let ctx = unwrap!(assign::assign_args(
-            runner_ctx.arena_mut(),
-            ctx,
-            ctx.localize_with_layout(layout),
-            &table_row.node.args,
-            values
-        ));
-        // Premises, then the row body
-        let ctx = unwrap!(eval_prems(runner_ctx, ctx, &table_row.node.prems));
-        expr::eval_exp(runner_ctx, &ctx, &table_row.node.exp)
-    })();
-    // Trace the row on failure
-    result.nest(table_row.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(table_row) })
-    })
+    // Argument count must match the row
+    assert_eq!(table_row.node.args.len(), values.len(), "validated table row argument arity");
+    // Arguments bind into a fresh frame for the row
+    let ctx = unwrap!(assign::assign_args(
+        runner_ctx.arena_mut(),
+        ctx,
+        ctx.localize_with_layout(layout),
+        &table_row.node.args,
+        values
+    ));
+    // Premises, then the row body
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &table_row.node.prems));
+    expr::eval_exp(runner_ctx, &ctx, &table_row.node.exp)
 }
 
 /// Tries the table rows in order; the first matching row decides.
@@ -557,32 +511,19 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
     clause: &ast::Clause,
     values: &[Value],
 ) -> Backtrack<Value> {
-    let result = (|| {
-        // Argument count must match the clause
-        unwrap!(Backtrack::check(
-            clause.node.args.len() == values.len(),
-            clause.span.clone(),
-            ErrorKind::Call(CallErrorKind::ClauseArityMismatch {
-                expected: clause.node.args.len(),
-                actual: values.len()
-            })
-        ));
-        // Arguments bind into the callee scope, evaluated in the caller's
-        let ctx = unwrap!(assign::assign_args(
-            runner_ctx.arena_mut(),
-            ctx_caller,
-            ctx_callee.clone(),
-            &clause.node.args,
-            values
-        ));
-        // Premises, then the clause body
-        let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause.node.prems));
-        expr::eval_exp(runner_ctx, &ctx, &clause.node.exp)
-    })();
-    // Trace the clause on failure
-    result.nest(clause.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(clause) })
-    })
+    // Argument count must match the clause
+    assert_eq!(clause.node.args.len(), values.len(), "validated clause argument arity");
+    // Arguments bind into the callee scope, evaluated in the caller's
+    let ctx = unwrap!(assign::assign_args(
+        runner_ctx.arena_mut(),
+        ctx_caller,
+        ctx_callee.clone(),
+        &clause.node.args,
+        values
+    ));
+    // Premises, then the clause body
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause.node.prems));
+    expr::eval_exp(runner_ctx, &ctx, &clause.node.exp)
 }
 
 /// Binds the type parameters, tries the clauses, then the otherwise clause.
@@ -608,14 +549,10 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     // Deterministic mode rejects two matching clauses
     let result = if det {
         choose_deterministic(0..defined_func.clauses.len(), &mut evaluate, |idx_a, idx_b| {
-            Error::new(
-                ErrorKind::Call(CallErrorKind::FunctionNondeterminism {
-                    func: defined_func.id.node.clone(),
-                    first: idx_a,
-                    second: idx_b,
-                }),
-                defined_func.id.span.clone(),
-            )
+            let diagnostic =
+                error::call::function_nondeterministic(defined_func.id.node.clone(), idx_a, idx_b)
+                    .with_label(Label::primary(&defined_func.id.span, ""));
+            Box::new(Report::from(diagnostic))
         })
     // Sequential mode takes the first matching clause
     } else {
@@ -625,12 +562,12 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         // A match is the answer
         ok!(value) => ok!(value),
         // A fatal error aborts
-        err!(errors) => err!(errors),
+        fatal!(errors) => fatal!(errors),
         // No clause matched: the otherwise clause is the fallback
         unmatch!(errors) => match &defined_func.else_clause {
             // The otherwise clause runs like any clause
             Some(clause) => eval_clause(runner_ctx, ctx, &ctx_local, clause, values),
-            // No fallback: report every candidate's mismatches
+            // No fallback: propagate the selected mismatches
             None => unmatch!(errors),
         },
     }

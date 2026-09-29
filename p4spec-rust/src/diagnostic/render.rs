@@ -3,8 +3,8 @@
 //! A renderer caches successful and unavailable source loads for its lifetime.
 //! Explicit text overrides replace cached disk contents.
 //! Reports keep their original spans even when source text is unavailable.
-//! Child snippets follow tree connections; distant ancestor levels are folded
-//! to keep indentation bounded without hiding their reports.
+//! Child snippets follow tree connections; deep chains restart at the trace base
+//! only when no pending sibling connection would be lost.
 //! Rendering prepares output before writing stderr so invalid spans cannot
 //! leave a partially printed diagnostic.
 
@@ -26,7 +26,8 @@ use codespan_reporting::{
 use crate::lang::common::source::{Position, Span};
 
 use super::{
-    ColorChoice, Diagnostic, Label, LabelStyle, Report, ReportKind, Severity, SnippetConfig,
+    ColorChoice, Diagnostic, DisplayStyle, Label, LabelStyle, Report, ReportKind, Severity,
+    SnippetConfig,
 };
 
 // = Helpers
@@ -46,12 +47,21 @@ fn span_location(span: &Span) -> String {
 
 // = Tree presentation
 
-/// Builds ancestor connections while folding distant levels of deep trees.
+const TRACE_FOLD_DEPTH: usize = 4;
+
+/// Retains a sibling group's indentation anchor while deeper branches render.
+#[derive(Clone, Copy)]
+struct TraceLayout {
+    // Depth whose children restart at the trace base
+    anchor: usize,
+    // No ancestor below the anchor has a pending sibling
+    foldable: bool,
+}
+
+/// Builds the ancestor connections below the current indentation anchor.
 fn trace_prefix(ancestors: &[bool], vertical: &str) -> String {
-    // Bound indentation so deep reports do not produce quadratic output
-    let start = ancestors.len().saturating_sub(8);
-    let mut prefix = if start == 0 { String::new() } else { format!("[{start} ancestors] ") };
-    for has_next in &ancestors[start..] {
+    let mut prefix = String::new();
+    for has_next in ancestors {
         prefix.push_str(if *has_next { vertical } else { "   " });
     }
     prefix
@@ -116,6 +126,8 @@ impl WriteColor for TraceWriter<'_> {
 pub struct RenderConfig {
     /// Delegates source layout policy to codespan.
     pub snippet: SnippetConfig,
+    /// Overrides frame presentation, inheriting the snippet style when absent.
+    pub frame_style: Option<DisplayStyle>,
     /// Selects color behavior for stderr output.
     pub color: ColorChoice,
     /// Limits visible trace nodes without modifying the report.
@@ -124,7 +136,12 @@ pub struct RenderConfig {
 
 impl Default for RenderConfig {
     fn default() -> Self {
-        Self { snippet: SnippetConfig::default(), color: ColorChoice::Auto, trace_limit: 64 }
+        Self {
+            snippet: SnippetConfig::default(),
+            frame_style: None,
+            color: ColorChoice::Auto,
+            trace_limit: 64,
+        }
     }
 }
 
@@ -339,10 +356,11 @@ impl Renderer {
         Ok(rendered)
     }
 
-    /// Gives root and child nodes the same source-aware presentation.
+    /// Includes the frame's source location in Short and Medium headers.
     fn convert_report_kind(
         &mut self,
         kind: &ReportKind,
+        style: &DisplayStyle,
     ) -> Result<CodeDiagnostic<usize>, RenderError> {
         match kind {
             // Render context as a note with its own source location
@@ -351,7 +369,11 @@ impl Renderer {
                 if *span != Span::default() {
                     self.append_label(
                         &Label {
-                            style: LabelStyle::Secondary,
+                            style: if matches!(style, DisplayStyle::Rich) {
+                                LabelStyle::Secondary
+                            } else {
+                                LabelStyle::Primary
+                            },
                             span: span.clone(),
                             message: String::new(),
                         },
@@ -381,32 +403,72 @@ impl Renderer {
 
     // - render_to_*: output destinations
 
+    /// Renders a node, preserving locations when snippets are unavailable.
+    fn render_kind(
+        &mut self,
+        writer: &mut impl WriteColor,
+        kind: &ReportKind,
+    ) -> Result<(), RenderError> {
+        let mut config = self.config.snippet.clone();
+        // Override only frames, including roots and frames without children
+        if matches!(kind, ReportKind::Frame { .. })
+            && let Some(style) = &self.config.frame_style
+        {
+            config.display_style = style.clone();
+        }
+        let diagnostic = self.convert_report_kind(kind, &config.display_style)?;
+        // Unavailable and generated sources store their frame location as a note
+        if matches!(kind, ReportKind::Frame { .. })
+            && matches!(config.display_style, DisplayStyle::Short)
+            && !diagnostic.notes.is_empty()
+        {
+            config.display_style = DisplayStyle::Medium;
+        }
+        term::emit_to_write_style(writer, &config, &self.files, &diagnostic)?;
+        Ok(())
+    }
+
     /// Emits the root and traverses visible causes in depth-first branch order.
     fn render_to_buffer(
         &mut self,
         buffer: &mut Buffer,
         report: &Report,
     ) -> Result<(), RenderError> {
-        let diagnostic = self.convert_report_kind(&report.kind)?;
-        term::emit_to_write_style(buffer, &self.config.snippet, &self.files, &diagnostic)?;
+        self.render_kind(buffer, &report.kind)?;
 
         // Match the snippet character set for terminals using ASCII borders
-        let (branch, last, vertical) = if self.config.snippet.chars.source_border_left.is_ascii() {
-            ("|- ", "`- ", "|  ")
-        } else {
-            ("├─ ", "└─ ", "│  ")
-        };
+        let (branch, last, vertical, continuation) =
+            if self.config.snippet.chars.source_border_left.is_ascii() {
+                ("|- ", "`- ", "|  ", "...")
+            } else {
+                ("├─ ", "└─ ", "│  ", "⋮")
+            };
         // Store cursors and ancestor continuations without recursive rendering
-        let mut pending = vec![report.children.iter()];
+        let mut pending = vec![(report.children.iter(), TraceLayout { anchor: 0, foldable: true })];
         let mut ancestors = Vec::new();
         let mut count = 0;
-        while let Some(children) = pending.last_mut() {
+        while let Some((children, layout)) = pending.last_mut() {
+            // Restore the parent's layout when this sibling group is exhausted
             let Some(child) = children.next() else {
                 pending.pop();
                 ancestors.pop();
                 continue;
             };
-            let prefix = trace_prefix(&ancestors, vertical);
+            // Restart deep chains without cutting a pending sibling connection
+            let level = ancestors.len() + 1;
+            if count < self.config.trace_limit
+                && layout.foldable
+                && level - layout.anchor > TRACE_FOLD_DEPTH
+            {
+                buffer
+                    .set_color(ColorSpec::new().set_dimmed(true))
+                    .map_err(files::Error::from)?;
+                writeln!(buffer, "{continuation} (depth {level}, continued)")
+                    .map_err(files::Error::from)?;
+                buffer.reset().map_err(files::Error::from)?;
+                layout.anchor = level - 1;
+            }
+            let prefix = trace_prefix(&ancestors[layout.anchor..], vertical);
             // Close each remaining branch at the limit without changing reports
             if count == self.config.trace_limit {
                 writeln!(
@@ -419,7 +481,6 @@ impl Renderer {
             }
             count += 1;
             let has_next = !children.as_slice().is_empty();
-            let diagnostic = self.convert_report_kind(&child.kind)?;
             // Keep snippets and multiline notes connected to the same branch
             let mut writer = TraceWriter {
                 buffer,
@@ -429,9 +490,12 @@ impl Renderer {
                 line_start: true,
                 color: ColorSpec::new(),
             };
-            term::emit_to_write_style(&mut writer, &self.config.snippet, &self.files, &diagnostic)?;
+            self.render_kind(&mut writer, &child.kind)?;
+            // Any unvisited sibling prevents folding until its branch is closed
+            let layout_children =
+                TraceLayout { anchor: layout.anchor, foldable: layout.foldable && !has_next };
             ancestors.push(has_next);
-            pending.push(child.children.iter());
+            pending.push((child.children.iter(), layout_children));
         }
         Ok(())
     }

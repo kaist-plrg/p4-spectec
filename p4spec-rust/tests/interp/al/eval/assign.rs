@@ -1,6 +1,9 @@
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
-use p4spec_rust::interp::shared::{backtrack::Backtrack, util::find_var_of_exp};
+use p4spec_rust::interp::shared::{
+    backtrack::{Backtrack, Failure},
+    util::find_var_of_exp,
+};
 use p4spec_rust::runtime::envs::interp::al::ast_prepared as prepared;
 use p4spec_rust::runtime::envs::interp::shared::{callable::Callable, frame::FrameLayout};
 use std::rc::Rc;
@@ -46,7 +49,7 @@ fn value(arena: &mut ValueArena, value: bool) -> Value {
 }
 fn ok<T: std::fmt::Debug>(result: Backtrack<T>) -> T {
     match result {
-        Backtrack::Ok(value) => value,
+        Ok(value) => value,
         other => panic!("{other:?}"),
     }
 }
@@ -197,6 +200,7 @@ fn test_list_assignment_collects_rows_without_leaking_scalar_bindings() {
 }
 
 #[test]
+#[should_panic(expected = "value must be bound")]
 fn test_list_rows_cannot_collect_unassigned_outer_values() {
     let mut arena = ValueArena::new();
     let global = Global::load(vec![]).unwrap();
@@ -208,7 +212,7 @@ fn test_list_rows_cannot_collect_unassigned_outer_values() {
     let (exp, mut ctx, mut layout) = prepare_exp(&global, exp);
     ctx.add_value_at_slot(layout.resolve_var(var("missing", vec![])).slot, value(&mut arena, true));
 
-    let Backtrack::Err(traces) = ({
+    let _ = {
         let value = {
             let values = vec![{
                 let values = vec![value(&mut arena, false)];
@@ -217,10 +221,7 @@ fn test_list_rows_cannot_collect_unassigned_outer_values() {
             list(&mut arena, values)
         };
         assign_exp(&mut arena, ctx, &exp, value)
-    }) else {
-        panic!("expected missing row binding")
     };
-    assert_eq!(traces[0].span, span(3));
 }
 
 #[test]
@@ -316,17 +317,22 @@ fn test_cons_tail_preserves_value_type_with_default_span() {
     assert_eq!(arena.span(&tail).clone(), Span::default());
     assert!((binding(&ctx, &mut layout, "h", vec![]) == get::list(&arena, &value).unwrap()[0]));
     assert!(!get::bool(&arena, &get::list(&arena, &tail).unwrap()[0]).unwrap());
-    assert!(matches!(
-        {
-            let value = list(&mut arena, vec![]);
-            assign_exp(&mut arena, ctx, &exp, value)
-        },
-        Backtrack::Err(_)
-    ));
 }
 
 #[test]
-fn test_assignment_errors_are_fatal_and_located() {
+#[should_panic(expected = "cons pattern must match a non-empty list")]
+fn test_cons_assignment_requires_a_matching_list() {
+    let mut arena = ValueArena::new();
+    let global = Global::load(vec![]).unwrap();
+    let exp = exp(ast::ExpKind::Cons(Box::new(id_exp("h")), Box::new(id_exp("t"))));
+    let (exp, ctx, _) = prepare_exp(&global, exp);
+    let value = list(&mut arena, vec![]);
+    let _ = assign_exp(&mut arena, ctx, &exp, value);
+}
+
+#[test]
+#[should_panic(expected = "assignment arity mismatch")]
+fn test_assignment_requires_equal_counts() {
     let mut arena = ValueArena::new();
     let global = Global::load(vec![]).unwrap();
     let exps = vec![
@@ -339,28 +345,35 @@ fn test_assignment_errors_are_fatal_and_located() {
         .map(|exp_source| exp_source.prepare(&mut layout))
         .collect::<Vec<_>>();
     let ctx = Context::new(&global).localize_with_layout(&layout.into());
-    let Backtrack::Err(traces) = assign_exps(&mut arena, ctx, &exps, &[]) else {
-        panic!("expected arity error")
-    };
-    assert_eq!(traces[0].span, Span::over(&[span(4), span(9)]));
+    let _ = assign_exps(&mut arena, ctx, &exps, &[]);
+}
+
+#[test]
+#[should_panic(expected = "option pattern must match the value")]
+fn test_option_assignment_requires_a_matching_option() {
+    let mut arena = ValueArena::new();
+    let global = Global::load(vec![]).unwrap();
     let exp = exp(ast::ExpKind::Opt(None));
     let (exp, ctx, _) = prepare_exp(&global, exp);
-    let Backtrack::Err(traces) = ({
-        let value = {
-            let value = Some(value(&mut arena, true));
-            make::opt(
-                &mut arena,
-                (typ::make::opt(typ::make::bool())).node.clone().into(),
-                value,
-                span(8),
-            )
-        }
-        .unwrap();
-        assign_exp(&mut arena, ctx, &exp, value)
-    }) else {
-        panic!("expected optionality error")
-    };
-    assert_eq!(traces[0].span, exp.span);
+    let value_inner = value(&mut arena, true);
+    let value_opt = make::opt(
+        &mut arena,
+        typ::make::opt(typ::make::bool()).node.into(),
+        Some(value_inner),
+        span(8),
+    )
+    .unwrap();
+    let _ = assign_exp(&mut arena, ctx, &exp, value_opt);
+}
+
+#[test]
+#[should_panic(expected = "assignment pattern must match the value")]
+fn test_assignment_requires_a_matching_value_kind() {
+    let mut arena = ValueArena::new();
+    let global = Global::load(vec![]).unwrap();
+    let (exp, ctx, _) = prepare_exp(&global, exp(ast::ExpKind::Tuple(vec![])));
+    let value_bool = value(&mut arena, true);
+    let _ = assign_exp(&mut arena, ctx, &exp, value_bool);
 }
 
 #[test]
@@ -469,6 +482,27 @@ fn test_empty_iteration_creates_empty_collections_for_every_binding() {
                 .is_empty()
         );
     }
+}
+
+fn assign_wrong_iteration_kind(iter_kind: ast::Iter) -> Result<(), Failure> {
+    let mut arena = ValueArena::new();
+    let global = Global::load(vec![]).unwrap();
+    let exp = iter(exp(ast::ExpKind::Tuple(vec![id_exp("x")])), iter_kind, vec![var("x", vec![])]);
+    let (exp, ctx, _) = prepare_exp(&global, exp);
+    let value = value(&mut arena, true);
+    assign_exp(&mut arena, ctx, &exp, value).map(|_| ())
+}
+
+#[test]
+#[should_panic(expected = "iteration assignment value must be an option")]
+fn test_option_assignment_typed_kind_precondition() {
+    let _ = assign_wrong_iteration_kind(ast::Iter::Opt);
+}
+
+#[test]
+#[should_panic(expected = "iteration assignment value must be a list")]
+fn test_list_assignment_typed_kind_precondition() {
+    let _ = assign_wrong_iteration_kind(ast::Iter::List);
 }
 
 #[test]

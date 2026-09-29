@@ -8,6 +8,7 @@ mod algo;
 mod cases;
 mod command;
 mod elab;
+mod interp;
 mod parse;
 mod prose;
 mod specdoc;
@@ -18,7 +19,7 @@ use std::path::Path;
 use clap::ValueEnum;
 use expect_test::expect_file;
 use indicatif::ProgressBar;
-use p4spec_rust::diagnostic::{RenderConfig, Renderer, Report};
+use p4spec_rust::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
 use crate::{Error, Result};
 
@@ -37,6 +38,7 @@ pub enum Suite {
     Elab,
     Algo,
     Prose,
+    Interp,
     Splice,
     Specdoc,
     Command,
@@ -46,16 +48,28 @@ pub enum Suite {
 
 /// Executes one diagnostic suite and compares each case with its expectation.
 fn run_suite(
-    name_suite: &str,
+    suite: Suite,
     cases: &[&str],
     run_case: fn(&str) -> Result<Vec<Report>>,
 ) -> Result<()> {
+    // Match CLI presentation only for interpreter execution failures
+    let (name_suite, frame_style) = match suite {
+        Suite::Parse => ("parse", None),
+        Suite::Elab => ("elab", None),
+        Suite::Algo => ("algo", None),
+        Suite::Prose => ("prose", None),
+        Suite::Interp => ("interp", Some(DisplayStyle::Short)),
+        Suite::Splice => ("splice", None),
+        Suite::Specdoc => ("specdoc", None),
+        Suite::Command => unreachable!("command diagnostics use subprocess output"),
+    };
+    let config = RenderConfig { frame_style, ..Default::default() };
     run_output_suite(name_suite, cases, |name| {
         let reports = run_case(name)?;
         let mut text = String::new();
         // Retain complete report output in emission order
         for report in reports {
-            let rendered = Renderer::new(RenderConfig::default())
+            let rendered = Renderer::new(config.clone())
                 .render_to_string(&report)
                 .map_err(|error| failure(name, error))?;
             text.push_str(&rendered);
@@ -102,19 +116,21 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
     // Absence selects every active suite in stage order
     match suite {
         Some(Suite::Parse) => run_parse(),
-        Some(Suite::Elab) => run_suite("elab", cases::ELAB, elab::run),
-        Some(Suite::Algo) => run_suite("algo", cases::ALGO, algo::run),
-        Some(Suite::Prose) => run_suite("prose", cases::PROSE, prose::run),
-        Some(Suite::Splice) => run_suite("splice", cases::SPLICE, splice::run),
-        Some(Suite::Specdoc) => run_suite("specdoc", cases::SPECDOC, specdoc::run),
+        Some(Suite::Elab) => run_suite(Suite::Elab, cases::ELAB, elab::run),
+        Some(Suite::Algo) => run_suite(Suite::Algo, cases::ALGO, algo::run),
+        Some(Suite::Prose) => run_suite(Suite::Prose, cases::PROSE, prose::run),
+        Some(Suite::Interp) => run_suite(Suite::Interp, cases::INTERP, interp::run),
+        Some(Suite::Splice) => run_suite(Suite::Splice, cases::SPLICE, splice::run),
+        Some(Suite::Specdoc) => run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run),
         Some(Suite::Command) => run_command(path_cli),
         None => {
             run_parse()?;
-            run_suite("elab", cases::ELAB, elab::run)?;
-            run_suite("algo", cases::ALGO, algo::run)?;
-            run_suite("prose", cases::PROSE, prose::run)?;
-            run_suite("splice", cases::SPLICE, splice::run)?;
-            run_suite("specdoc", cases::SPECDOC, specdoc::run)?;
+            run_suite(Suite::Elab, cases::ELAB, elab::run)?;
+            run_suite(Suite::Algo, cases::ALGO, algo::run)?;
+            run_suite(Suite::Prose, cases::PROSE, prose::run)?;
+            run_suite(Suite::Interp, cases::INTERP, interp::run)?;
+            run_suite(Suite::Splice, cases::SPLICE, splice::run)?;
+            run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run)?;
             run_command(path_cli)
         }
     }
@@ -128,5 +144,5 @@ fn run_command(path_cli: Option<&Path>) -> Result<()> {
 
 /// Adapts parser failures to the shared diagnostic sequence.
 fn run_parse() -> Result<()> {
-    run_suite("parse", cases::PARSE, |name| parse::run(name).map(|report| vec![*report]))
+    run_suite(Suite::Parse, cases::PARSE, |name| parse::run(name).map(|report| vec![*report]))
 }

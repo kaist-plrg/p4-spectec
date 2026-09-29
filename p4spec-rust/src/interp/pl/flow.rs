@@ -5,31 +5,34 @@
 //! `choose_deterministic` combines outcomes and rejects multiple conclusions.
 //! Evaluators supply candidates and manage their local bindings.
 
+use crate::diagnostic::{Diagnostic, Label, Report};
+use crate::interp::shared::error;
 use crate::{
-    interp::shared::{
-        backtrack::{Backtrack, err, ok, unmatch, unwrap},
-        error::{CallErrorKind, Error, ErrorKind, PremErrorKind},
+    interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
+    lang::{
+        common::source::{Phrase, Span},
+        data::value::Value,
     },
-    lang::{common::source::Span, data::value::Value},
 };
 
 /// Records whether an instruction continues or concludes its callable.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Flow {
     /// Fell through, with the failures met so far.
-    Cont(Vec<Error>),
+    Cont(Vec<Report>),
     /// A function body returned a value.
-    Return(Value),
+    Return(Phrase<Value>),
     /// A relation body produced its outputs.
-    Result(Vec<Value>),
+    Result(Phrase<Vec<Value>>),
 }
 
 impl Flow {
     // = Continuation
 
     /// Creates a recoverable continuation with its premise diagnostic.
-    pub(crate) fn cont(span: Span, error: PremErrorKind) -> Self {
-        Self::Cont(vec![Error::new(ErrorKind::Prem(error), span)])
+    pub(crate) fn cont(span: Span, error: Diagnostic) -> Self {
+        let diagnostic = error.with_label(Label::primary(&span, ""));
+        Self::Cont(vec![Report::from(diagnostic)])
     }
 
     /// Turns a mismatch into a continuation; errors and flows pass through.
@@ -46,9 +49,9 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the most deeply nested failure, preferring the later one on ties.
-pub(super) fn retain_deepest_errors(errors: &mut Vec<Error>, errors_post: Vec<Error>) {
-    if errors_post.iter().map(Error::depth).max().unwrap_or(0)
-        >= errors.iter().map(Error::depth).max().unwrap_or(0)
+pub(super) fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
+    if errors_post.iter().map(Report::depth_max).max().unwrap_or(0)
+        >= errors.iter().map(Report::depth_max).max().unwrap_or(0)
     {
         *errors = errors_post;
     }
@@ -76,7 +79,7 @@ pub(crate) fn choose_sequential<C>(
 // = Deterministic choice
 
 /// Merges alternative outcomes and rejects multiple conclusions.
-fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<Flow> {
+fn combine_deterministic(flow: Flow, flow_post: Flow) -> Backtrack<Flow> {
     let flow = match (flow, flow_post) {
         // Both continue: merge the failures
         (Flow::Cont(mut errors), Flow::Cont(errors_post)) => {
@@ -86,18 +89,18 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
         // One concluded: keep it
         (Flow::Cont(_), flow) | (flow, Flow::Cont(_)) => flow,
         // Two of the same kind: nondeterminism
-        (Flow::Return(_), Flow::Return(_)) | (Flow::Result(_), Flow::Result(_)) => {
-            return err!(span.clone(), ErrorKind::Call(CallErrorKind::InstructionNondeterminism));
+        (Flow::Return(value), Flow::Return(value_post)) => {
+            return fatal!(value_post.span, error::call::instruction_nondeterministic(&value.span));
         }
-        // Different conclusion kinds cannot belong to the same callable
-        _ => {
-            return err!(
-                span.clone(),
-                ErrorKind::Call(CallErrorKind::InvalidFlow {
-                    message: "incompatible PL conclusions"
-                })
+        // Empty output lists still carry the instruction that concluded
+        (Flow::Result(values), Flow::Result(values_post)) => {
+            return fatal!(
+                values_post.span,
+                error::call::instruction_nondeterministic(&values.span)
             );
         }
+        // Different conclusion kinds cannot belong to the same callable
+        _ => unreachable!("function and relation conclusions cannot mix"),
     };
     ok!(flow)
 }
@@ -106,13 +109,11 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
 pub(crate) fn choose_deterministic<C>(
     candidates: impl IntoIterator<Item = C>,
     mut evaluate: impl FnMut(C) -> Backtrack<Flow>,
-    mut span_of: impl FnMut(&C) -> Span,
 ) -> Backtrack<Flow> {
     // Start from an empty continuation
     let mut flow = Flow::Cont(vec![]);
     // Every candidate must be checked for a second conclusion
     for candidate in candidates {
-        let span = span_of(&candidate);
         let flow_post = match evaluate(candidate) {
             // A mismatching candidate contributes nothing
             unmatch!(_) => continue,
@@ -120,7 +121,7 @@ pub(crate) fn choose_deterministic<C>(
             result => unwrap!(result),
         };
         // Reject multiple conclusions at the conflicting candidate
-        flow = unwrap!(combine_deterministic(flow, flow_post, &span));
+        flow = unwrap!(combine_deterministic(flow, flow_post));
     }
     ok!(flow)
 }

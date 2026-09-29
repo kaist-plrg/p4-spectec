@@ -190,14 +190,9 @@ fn structured_parameters_and_case_guards_share_the_callable_layout() {
 }
 
 #[test]
-fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
+fn missing_iterated_values_violate_the_ir_precondition_without_losing_metadata() {
     use p4spec_rust::interp::{
-        al::context as al_context,
-        shared::{
-            error::{ContextErrorKind, EntityKind, ErrorKind},
-            util::find_var_of_exp,
-        },
-        sl::context as sl_context,
+        al::context as al_context, shared::util::find_var_of_exp, sl::context as sl_context,
     };
 
     use p4spec_rust::{
@@ -217,9 +212,9 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
     let global_al = al_context::Global::load(vec![]).unwrap();
     let global_sl = sl_context::Global::load(vec![]).unwrap();
     for (exp_source, iters, name) in [
-        (expression("x", 7), vec![], "x"),
         (exp_opt, vec![il_source::Iter::Opt], "x?"),
         (exp_list, vec![il_source::Iter::Opt, il_source::Iter::List], "x?*"),
+        (expression("x", 7), vec![], "x"),
     ] {
         let mut layout = FrameLayout::default();
         let exp_prepared = exp_source.clone().prepare(&mut layout);
@@ -229,6 +224,7 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
         let slot_lookup = find_var_of_exp(&ctx_al, &exp_prepared).unwrap();
         assert_eq!(slot_lookup.var.id.span, span(7));
         assert_eq!(slot_lookup.var.iters, iters);
+        assert_eq!(Print::to_string(&slot_lookup.var), name);
         let id = phrase!(node: "test".to_owned(), span: span(1));
         let typ = phrase!(node: exp_source.note.as_ref().clone(), span: span(1));
         let func_al = al_source::DefinedFunc {
@@ -271,39 +267,33 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
             NullInterface,
             NullExtern,
         );
-        for error in [
-            runner_al.context().call_func("test", &[], &[]).unwrap_err(),
-            runner_sl.context().call_func("test", &[], &[]).unwrap_err(),
-            ctx_al
-                .find_list_values_by_var(
+        for panic in [
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _ = runner_al.context().call_func("test", &[], &[]);
+            })),
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _ = runner_sl.context().call_func("test", &[], &[]);
+            })),
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _ = ctx_al.find_list_values_by_var(
                     &p4spec_rust::lang::data::value::ValueArena::new(),
                     std::slice::from_ref(&slot_lookup),
-                )
-                .unwrap_err(),
-            ctx_sl
-                .find_list_values_by_var(
+                );
+            })),
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _ = ctx_sl.find_list_values_by_var(
                     &p4spec_rust::lang::data::value::ValueArena::new(),
                     std::slice::from_ref(&slot_lookup),
-                )
-                .unwrap_err(),
+                );
+            })),
         ] {
-            let mut errors = vec![&error];
-            let mut errors_undefined = Vec::new();
-            while let Some(error) = errors.pop() {
-                if matches!(*error.kind, ErrorKind::Context(ContextErrorKind::Undefined { .. })) {
-                    errors_undefined.push(error);
-                }
-                errors.extend(&error.children);
-            }
-            assert_eq!(errors_undefined.len(), 1, "{error}");
-            assert_eq!(errors_undefined[0].span, span(7));
-            assert_eq!(
-                *errors_undefined[0].kind,
-                ErrorKind::Context(ContextErrorKind::Undefined {
-                    kind: EntityKind::Value,
-                    name: name.to_owned(),
-                })
-            );
+            let panic = panic.expect_err("missing values must violate the IR precondition");
+            let message = panic
+                .downcast_ref::<String>()
+                .map(String::as_str)
+                .or_else(|| panic.downcast_ref::<&str>().copied())
+                .unwrap();
+            assert!(message.contains("value must be bound"), "{message}");
         }
         assert_eq!(Print::to_string(&exp_prepared), Print::to_string(&exp_source));
     }

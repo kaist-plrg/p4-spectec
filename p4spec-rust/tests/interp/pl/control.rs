@@ -1,9 +1,16 @@
 use super::*;
+use crate::interp::report::ReportExt;
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::lang::hints::alter::AlterHintKind;
 use p4spec_rust::{annotated_note_phrase, lang::common::prim::num::Number};
 
 fn nat(num: u64) -> ast::Exp {
     annotated_note_phrase!(node: ast::ExpKind::Num(Number::Nat(num.into())), note: typ::make::nat().node, span: Span::default())
+}
+
+fn division_by_zero() -> ast::Exp {
+    use p4spec_rust::lang::common::prim::num::BinOp;
+    annotated_note_phrase!(node: ast::ExpKind::Bin(ast::BinOp::Num(BinOp::Div), ast::OpTyp::Nat, Box::new(nat(1)), Box::new(nat(0))), note: typ::make::nat().node, span: Span::default())
 }
 
 fn variable(name: &str) -> ast::Exp {
@@ -62,6 +69,205 @@ fn configured(spec_pl: ast::Spec, det: bool) -> Runner<PlInterp, BuiltinInterfac
 }
 
 #[test]
+fn nondeterminism_labels_both_nested_terminal_instructions() {
+    use p4spec_rust::{diagnostic::LabelStyle, lang::common::source::Position};
+
+    let spans = [10, 30].map(|line| {
+        Span::new(Position::new("conclusions", line, 0), Position::new("conclusions", line, 8))
+    });
+    let mut blocks: Vec<_> = spans
+        .iter()
+        .map(|span| {
+            let mut instr_return = returning(nat(1));
+            instr_return.node.span = span.clone();
+            vec![condition(true, vec![instr_return])]
+        })
+        .collect();
+    blocks.insert(1, vec![condition(false, vec![])]);
+    let mut runner = configured(function(vec![backtrack(blocks)]), true);
+    let report = runner
+        .context()
+        .call_func("entry", &[], &[])
+        .unwrap_err()
+        .into_report();
+    let diagnostic = report
+        .find_code("runtime/instruction-nondeterministic")
+        .unwrap()
+        .diagnostic();
+    assert_eq!(diagnostic.labels.len(), 2);
+    assert!(
+        diagnostic
+            .labels
+            .iter()
+            .any(|label| label.style == LabelStyle::Secondary && label.span == spans[0])
+    );
+    assert!(
+        diagnostic
+            .labels
+            .iter()
+            .any(|label| label.style == LabelStyle::Primary && label.span == spans[1])
+    );
+}
+
+#[test]
+fn empty_relation_outputs_retain_both_terminal_locations() {
+    use p4spec_rust::{diagnostic::LabelStyle, lang::common::source::Position};
+
+    let spans = [10, 30].map(|line| {
+        Span::new(Position::new("conclusions", line, 0), Position::new("conclusions", line, 8))
+    });
+    let mut spec_pl = spec("var n : nat\nrelation R: CHECK nat\n hint(input %0)\nrule R: CHECK n");
+    let rel = spec_pl
+        .iter_mut()
+        .find_map(|def| match &mut def.node.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    let blocks = spans
+        .iter()
+        .map(|span| {
+            let mut instr_result = instr(ast::InstrKind::Tier(ast::TierInstr {
+                tier: ast::GroupInstr::Result(ast::ResultInstr {
+                    rel_signature: rel.rel_signature.clone(),
+                    exps_output: vec![],
+                }),
+            }));
+            instr_result.node.span = span.clone();
+            vec![condition(true, vec![instr_result])]
+        })
+        .collect();
+    rel.block = vec![instr(ast::InstrKind::Tier(ast::TierInstr {
+        tier: ast::DispatchInstr::Group(ast::RuleGroupInstr {
+            id_rel: rel.id.clone(),
+            id_group: rel.id.clone(),
+            rel_signature: rel.rel_signature.clone(),
+            exps_input: vec![],
+            block: vec![backtrack(blocks)],
+        }),
+    }))];
+    for det in [false, true] {
+        let mut runner = configured(spec_pl.clone(), det);
+        let value = make::nat(runner.arena_mut(), 1u64.into(), Span::default()).unwrap();
+        let result = runner.context().call_rel("R", &[value]);
+        if !det {
+            assert!(result.unwrap().is_empty());
+            continue;
+        }
+        let report = result.unwrap_err().into_report();
+        let diagnostic = report
+            .find_code("runtime/instruction-nondeterministic")
+            .unwrap()
+            .diagnostic();
+        assert_eq!(diagnostic.labels.len(), 2);
+        assert!(
+            diagnostic
+                .labels
+                .iter()
+                .any(|label| label.style == LabelStyle::Secondary && label.span == spans[0])
+        );
+        assert!(
+            diagnostic
+                .labels
+                .iter()
+                .any(|label| label.style == LabelStyle::Primary && label.span == spans[1])
+        );
+    }
+}
+
+#[test]
+#[should_panic(expected = "condition must be a boolean")]
+fn condition_typed_kind_precondition() {
+    let block = vec![instr(ast::InstrKind::If(ast::IfInstr {
+        exp: nat(1),
+        iter_exps: vec![],
+        block: vec![],
+        dangle: false,
+    }))];
+    let mut runner = configured(function(block), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "boolean guard value must be a boolean")]
+fn boolean_guard_typed_kind_precondition() {
+    let block = vec![instr(ast::InstrKind::Case(ast::CaseInstr {
+        exp: nat(1),
+        cases: vec![ast::Case { guard: ast::Guard::Bool(true), block: vec![] }],
+        dangle: false,
+    }))];
+    let mut runner = configured(function(block), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "destructuring value must be a case")]
+fn destructuring_typed_kind_precondition() {
+    let block =
+        vec![instr(ast::InstrKind::Destruct(ast::DestructInstr { exp: nat(1), bindings: vec![] }))];
+    let mut runner = configured(function(block), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "option binding value must be an option")]
+fn option_extraction_requires_an_option_value() {
+    let block = vec![instr(ast::InstrKind::OptionGet(ast::OptionGetInstr {
+        exp_l: variable("n"),
+        exp_r: nat(1),
+        block: vec![],
+    }))];
+    let mut runner = configured(function(block), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "relation flow in function body")]
+fn function_body_rejects_relation_flow() {
+    let spec_pl = spec("var n : nat\nrelation R: nat |- nat\n hint(input %0)\nrule R: n |- n");
+    let rel = spec_pl
+        .iter()
+        .find_map(|def| match &def.node.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    let instr_result = instr(ast::InstrKind::Tier(ast::TierInstr {
+        tier: ast::GroupInstr::Result(ast::ResultInstr {
+            rel_signature: rel.rel_signature.clone(),
+            exps_output: vec![nat(1)],
+        }),
+    }));
+    let mut runner = configured(function(vec![instr_result]), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "function flow in relation body")]
+fn relation_body_rejects_function_flow() {
+    let mut spec_pl = spec("var n : nat\nrelation R: nat |- nat\n hint(input %0)\nrule R: n |- n");
+    let rel = spec_pl
+        .iter_mut()
+        .find_map(|def| match &mut def.node.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    rel.block = vec![instr(ast::InstrKind::Tier(ast::TierInstr {
+        tier: ast::DispatchInstr::Group(ast::RuleGroupInstr {
+            id_rel: rel.id.clone(),
+            id_group: rel.id.clone(),
+            rel_signature: rel.rel_signature.clone(),
+            exps_input: vec![variable("n")],
+            block: vec![returning(nat(1))],
+        }),
+    }))];
+    let mut runner = configured(spec_pl, false);
+    let value = make::nat(runner.arena_mut(), 1u64.into(), Span::default()).unwrap();
+    let _ = runner.context().call_rel("R", &[value]);
+}
+
+#[test]
 fn nested_blocks_keep_their_bindings_local() {
     for det in [false, true] {
         let mut runner = configured(
@@ -103,10 +309,14 @@ fn alternatives_choose_the_first_conclusion_or_report_nondeterminism() {
     assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), "1");
 
     let mut runner = configured(spec_pl, true);
-    let error = runner.context().call_func("entry", &[], &[]).unwrap_err();
+    let error = runner
+        .context()
+        .call_func("entry", &[], &[])
+        .unwrap_err()
+        .into_report();
     assert!(
         error
-            .to_string()
+            .render()
             .contains("nondeterministic instruction evaluation"),
         "{error}"
     );
@@ -139,13 +349,69 @@ fn fatal_errors_abort_alternative_selection() {
     for det in [false, true] {
         let mut runner = configured(
             function(vec![backtrack(vec![
-                vec![returning(variable("missing"))],
+                vec![returning(division_by_zero())],
                 vec![returning(nat(7))],
             ])]),
             det,
         );
-        let error = runner.context().call_func("entry", &[], &[]).unwrap_err();
-        assert!(error.to_string().contains("value `missing` is undefined"), "det={det}: {error}");
+        let error = runner
+            .context()
+            .call_func("entry", &[], &[])
+            .unwrap_err()
+            .into_report();
+        assert!(error.find_code("runtime/numeric-invalid").is_some(), "det={det}: {error}");
+    }
+}
+
+#[test]
+fn fatal_instruction_failures_keep_calls_and_causes_without_instruction_frames() {
+    for det in [false, true] {
+        let mut runner = configured(
+            function(vec![condition(
+                true,
+                vec![returning(division_by_zero()), returning(nat(123456789))],
+            )]),
+            det,
+        );
+        let report = runner
+            .context()
+            .call_func("entry", &[], &[])
+            .unwrap_err()
+            .into_report();
+        let text = report.render();
+        assert!(text.contains("error[runtime/numeric-invalid]"), "{text}");
+        assert!(!text.contains("instruction"), "{text}");
+        assert!(text.contains("note: while invoking $entry"), "{text}");
+        assert!(text.contains("note: while evaluating expression (1 / 0)"), "{text}");
+        assert!(!text.contains("123456789"), "an unevaluated PL block leaked: {text}");
+        assert!(!text.contains("Else Dangling"), "{text}");
+    }
+}
+
+#[test]
+fn mismatching_instructions_keep_call_frames_without_instruction_frames() {
+    use p4spec_rust::interp::shared::backtrack::Failure;
+
+    let mut spec_pl =
+        spec("builtin dec $max_nat(nat*) : nat\ndec $entry() : nat\ndef $entry() = $max_nat([])");
+    let func = spec_pl
+        .iter_mut()
+        .find_map(|def| match &mut def.node.node {
+            ast::DefKind::MetaFunc(ast::MetaFuncDef::Defined(func)) => Some(func),
+            _ => None,
+        })
+        .unwrap();
+    let block = std::mem::take(&mut func.block);
+    func.block = vec![condition(true, block)];
+    for det in [false, true] {
+        let mut runner = configured(spec_pl.clone(), det);
+        let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
+        assert!(matches!(failure, Failure::Mismatch(_)), "{failure}");
+        let text = failure.into_report().render();
+        assert!(text.contains("while invoking $entry"), "{text}");
+        assert!(text.contains("while invoking $max_nat"), "{text}");
+        assert!(text.contains("error[runtime/"), "{text}");
+        assert!(!text.contains("instruction"), "{text}");
     }
 }
 
@@ -195,18 +461,14 @@ fn dispatch_alternatives_keep_their_bindings_local() {
 }
 
 #[test]
-fn nested_instruction_traces_are_attached_once_in_both_tiers() {
-    use p4spec_rust::{
-        interp::shared::error::{Error, ErrorKind, TraceErrorKind},
-        lang::common::source::Position,
-    };
+fn nested_instructions_preserve_the_cause_span_without_frames_in_both_tiers() {
+    use p4spec_rust::lang::common::source::Position;
 
     // Collect instruction locations separately from expression and call traces
-    fn instruction_spans(error: &Error, spans: &mut Vec<Span>) {
-        if matches!(&*error.kind, ErrorKind::Trace(TraceErrorKind::Evaluation { .. }))
-            && error.span.left.file.as_ref() == "instruction_trace"
+    fn instruction_spans(error: &p4spec_rust::diagnostic::Report, spans: &mut Vec<Span>) {
+        if matches!(&error.kind, ReportKind::Frame { span, .. } if span.left.file.as_ref() == "instruction_trace")
         {
-            spans.push(error.span.clone());
+            spans.push(error.span().clone());
         }
         for error in &error.children {
             instruction_spans(error, spans);
@@ -230,11 +492,16 @@ fn nested_instruction_traces_are_attached_once_in_both_tiers() {
             _ => None,
         })
         .unwrap();
+    // Give the failing expression its own location, distinct from the instructions
+    let span_exp =
+        Span::new(Position::new("expression_trace", 1, 0), Position::new("expression_trace", 1, 7));
+    let mut exp_failure = division_by_zero();
+    exp_failure.node.span = span_exp.clone();
     // A dispatch condition enters a group whose condition reaches a fatal result
     let mut instr_result = instr(ast::InstrKind::Tier(ast::TierInstr {
         tier: ast::GroupInstr::Result(ast::ResultInstr {
             rel_signature: rel.rel_signature.clone(),
-            exps_output: vec![variable("missing")],
+            exps_output: vec![exp_failure],
         }),
     }));
     instr_result.node.span = spans[3].clone();
@@ -253,15 +520,22 @@ fn nested_instruction_traces_are_attached_once_in_both_tiers() {
     let mut instr_dispatch = condition(true, vec![instr_group]);
     instr_dispatch.node.span = spans[0].clone();
     rel.block = vec![instr_dispatch];
-    // Each instruction contributes one trace in enclosing-to-enclosed order
+    // Both tiers retain the responsible expression, not their instruction frames
     for det in [false, true] {
         let mut runner = configured(spec_pl.clone(), det);
         let value = make::nat(runner.arena_mut(), 0u64.into(), Span::default()).unwrap();
-        let error = runner.context().call_rel("Entry", &[value]).unwrap_err();
-        assert!(error.to_string().contains("value `missing` is undefined"), "{error}");
+        let error = runner
+            .context()
+            .call_rel("Entry", &[value])
+            .unwrap_err()
+            .into_report();
+        assert!(error.find_code("runtime/numeric-invalid").is_some(), "{error}");
+        assert!(error.render().contains("while invoking Entry"), "{error}");
+        let cause = error.find_code("runtime/numeric-invalid").unwrap();
+        assert_eq!(cause.span(), span_exp);
         let mut spans_actual = vec![];
         instruction_spans(&error, &mut spans_actual);
-        assert_eq!(spans_actual, spans, "det={det}");
+        assert!(spans_actual.is_empty(), "det={det}: {spans_actual:?}");
     }
 }
 

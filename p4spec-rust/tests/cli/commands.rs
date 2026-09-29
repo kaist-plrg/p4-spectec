@@ -312,11 +312,64 @@ fn test_run_sl_and_pl_native_success_and_multiple_spec_paths() {
 }
 
 #[test]
+fn test_run_interpreters_use_compact_context_and_rich_causes() {
+    for stage in ["--al", "--sl", "--pl"] {
+        let output = run_command_with(stage, "Reject", "cli/run/empty.p4")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stdout.is_empty());
+        let text = String::from_utf8(output.stderr).unwrap();
+        assert!(
+            text.starts_with("note: execution failed\n└─ note: while invoking Reject\n"),
+            "{stage}: {text}"
+        );
+        assert_eq!(text.matches("┌─").count(), 1, "only the cause has a snippet: {text}");
+        assert!(text.contains("error[runtime/condition-unmet]"), "{text}");
+        assert!(text.contains("-- if false"), "{text}");
+        assert!(text.contains("^^^^^"), "{text}");
+        if stage == "--al" {
+            assert!(!text.contains("while evaluating"), "{text}");
+            assert!(text.contains("relations.watsup:7:9"), "{text}");
+        }
+    }
+}
+
+#[test]
+fn test_execution_commands_keep_elaboration_frames_rich() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("test-driver/expected/diagnostic/elab/type-shape-index-path.watsup");
+    let output = binary().arg("elab").arg(&path).output().unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    let text = std::str::from_utf8(&output.stderr).unwrap();
+    let (context, _) = text.split_once("├─ error[").unwrap();
+    assert!(context.contains("note: expression elaboration failed\n  ┌─"), "{text}");
+    assert!(context.contains("def $f(nat) = nat[[0] = 1]"), "{text}");
+    for stage in ["--al", "--sl", "--pl"] {
+        for command in ["run", "sim"] {
+            let mut process = binary();
+            process
+                .args([command, stage])
+                .arg(&path)
+                .args(["-p", "unused.p4"]);
+            if command == "run" {
+                process.args(["--rel", "Unused"]);
+            } else {
+                process.args(["--arch", "ebpf", "--stf", "unused.stf"]);
+            }
+            let output_execution = process.output().unwrap();
+            assert_eq!(output_execution.status.code(), Some(1));
+            assert_eq!(output_execution.stderr, output.stderr, "{command} {stage}");
+        }
+    }
+}
+
+#[test]
 fn test_run_sl_and_pl_distinguish_syntax_and_runtime_failures() {
     for stage in ["--sl", "--pl"] {
         for (relation, program, category) in [
             ("Pass", "cli/run/invalid.p4", "syntax error:"),
-            ("Reject", "cli/run/empty.p4", "runtime error:"),
+            ("Reject", "cli/run/empty.p4", "note: execution failed"),
         ] {
             let output = run_command_with(stage, relation, program).output().unwrap();
             assert_eq!(output.status.code(), Some(1), "{stage}");
@@ -345,7 +398,7 @@ fn test_run_sl_and_pl_honor_cache_det_and_guard_controls() {
                 .output()
                 .unwrap();
             assert_eq!(output.status.code(), Some(1), "{stage}");
-            assert!(String::from_utf8_lossy(&output.stderr).starts_with("runtime error:"));
+            assert!(String::from_utf8_lossy(&output.stderr).contains("error[runtime/"));
         }
     }
 }
@@ -380,7 +433,7 @@ fn test_run_al_initializes_dummy_extern_objects() {
 fn test_run_al_distinguishes_syntax_and_runtime_failures() {
     for (relation, program, category) in [
         ("Pass", "cli/run/invalid.p4", "syntax error:"),
-        ("Reject", "cli/run/empty.p4", "runtime error:"),
+        ("Reject", "cli/run/empty.p4", "note: execution failed"),
     ] {
         let output = run_command(relation, program).output().unwrap();
         assert_eq!(output.status.code(), Some(1));
@@ -419,7 +472,7 @@ fn test_run_al_det_and_guard_controls_change_execution() {
             .output()
             .unwrap();
         assert_eq!(output.status.code(), Some(1));
-        assert!(String::from_utf8_lossy(&output.stderr).starts_with("runtime error:"));
+        assert!(String::from_utf8_lossy(&output.stderr).contains("error[runtime/"));
     }
     let output = run_command("Pass", "cli/run/empty.p4")
         .args(["--det", "--guard"])
@@ -481,7 +534,7 @@ fn test_run_help_lists_only_implemented_controls() {
 }
 
 #[test]
-fn test_run_interpreters_cache_flag_controls_public_input_guards() {
+fn test_run_interpreters_input_guards_do_not_depend_on_cache() {
     for stage in ["--al", "--sl", "--pl"] {
         for cache in [false, true] {
             let mut command = run_command_with(stage, "Unchecked", "cli/run/empty.p4");
@@ -490,16 +543,14 @@ fn test_run_interpreters_cache_flag_controls_public_input_guards() {
                 command.arg("--no-cache");
             }
             let output = command.output().unwrap();
-            assert_eq!(output.status.success(), cache, "{stage}");
-            if cache {
-                assert_eq!(output.stdout, b"passed\n");
-            } else {
-                assert!(
-                    String::from_utf8_lossy(&output.stderr).contains("relation input"),
-                    "{stage}: {}",
-                    String::from_utf8_lossy(&output.stderr)
-                );
-            }
+            assert_eq!(output.status.code(), Some(1), "{stage}");
+            assert!(output.stdout.is_empty());
+            assert!(
+                String::from_utf8_lossy(&output.stderr)
+                    .contains("error[runtime/relation-input-type-mismatch]"),
+                "{stage}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
     }
 }
@@ -706,9 +757,13 @@ fn test_sim_al_runs_all_native_architectures() {
 #[test]
 fn test_sim_interpreters_distinguish_p4_syntax_and_runtime_failures() {
     for stage in ["--al", "--sl", "--pl"] {
-        for (program, category) in
-            [("cli/run/invalid.p4", "syntax error:"), ("cli/run/empty.p4", "runtime error:")]
-        {
+        for (program, category) in [
+            ("cli/run/invalid.p4", "syntax error:"),
+            (
+                "cli/run/empty.p4",
+                "error[runtime/binding-undefined]: relation `EBPF_init` is undefined",
+            ),
+        ] {
             let output = binary()
                 .args(["sim", stage])
                 .arg(fixture("cli/run/types.watsup"))

@@ -1,5 +1,7 @@
 //! Iterated evaluation preserves input scopes and diagnostic spans
 
+use crate::interp::report::ReportExt;
+use p4spec_rust::interp::shared::backtrack::Failure;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::runtime::envs::interp::shared::frame::FrameLayout;
@@ -10,10 +12,6 @@ use p4spec_rust::{
             context::{Context, Global},
         },
         shared::eval::iter::map,
-        shared::{
-            backtrack::Backtrack,
-            error::{ContextErrorKind, ErrorKind, RuntimeErrorKind},
-        },
     },
     lang::{
         al::ast,
@@ -70,9 +68,9 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
                 get::bool(runner.arena(), ctx_sub.find_value_at_slot(var.slot).unwrap()).unwrap()
             );
         }
-        Backtrack::Ok(value)
+        Ok(value)
     })
-    .finish()
+    .map_err(Failure::into_report)
     .unwrap();
     assert_eq!(get::opt(runner.arena(), &value_opt).unwrap(), Some(value));
     assert_eq!(runner.arena().typ(&value_opt), &typ_result);
@@ -85,13 +83,16 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
             .slot,
         make::opt(runner.arena_mut(), typ.node.clone().into(), None, Span::default()).unwrap(),
     );
-    let Backtrack::Err(errors) =
+    let Err(Failure::Fatal(errors)) =
         map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| panic!("mixed optionality"))
     else {
         panic!("expected optionality mismatch");
     };
-    assert_eq!(*errors[0].kind, ErrorKind::Context(ContextErrorKind::OptionalityMismatch));
-    assert_eq!(errors[0].span, span);
+    assert_eq!(
+        errors.diagnostic().message,
+        p4spec_rust::interp::shared::error::context::iteration_optionality_mismatch().message
+    );
+    assert_eq!(errors.span(), span);
     ctx.add_value_at_slot(
         ctx.find_var_iterated(&exp_iter.vars[0], ast::Iter::Opt)
             .slot,
@@ -99,7 +100,7 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
     );
     let value_none =
         map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| panic!("absent inputs"))
-            .finish()
+            .map_err(Failure::into_report)
             .unwrap();
     assert!(get::opt(runner.arena(), &value_none).unwrap().is_none());
     let value_empty = map(
@@ -108,9 +109,9 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
         &span,
         &typ_result,
         &ast::ExpIter { iter: ast::Iter::Opt, vars: vec![] }.prepare(&mut FrameLayout::default()),
-        |_, _| Backtrack::Ok(value),
+        |_, _| Ok(value),
     )
-    .finish()
+    .map_err(Failure::into_report)
     .unwrap();
     assert_eq!(get::opt(runner.arena(), &value_empty).unwrap(), Some(value));
 }
@@ -155,9 +156,9 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
                 })
                 .collect::<Vec<_>>(),
         );
-        Backtrack::Ok(*ctx_sub.find_value_at_slot(exp_iter.vars[0].slot).unwrap())
+        Ok(*ctx_sub.find_value_at_slot(exp_iter.vars[0].slot).unwrap())
     })
-    .finish()
+    .map_err(Failure::into_report)
     .unwrap();
     assert_eq!(runner.arena().typ(&value_list), &typ_result);
     assert_eq!(*runner.arena().span(&value_list), Span::default());
@@ -174,9 +175,9 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
     let mut count = 0;
     let result = map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| {
         count += 1;
-        Backtrack::Unmatch(vec![])
+        Err(Failure::Mismatch(vec![]))
     });
-    assert!(matches!(result, Backtrack::Unmatch(_)));
+    assert!(matches!(result, Err(Failure::Mismatch(_))));
     assert_eq!(count, 1);
     ctx.add_value_at_slot(
         ctx.find_var_iterated(&exp_iter.vars[1], ast::Iter::List)
@@ -184,16 +185,13 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
         make::list(runner.arena_mut(), typ::make::bool().node.into(), vec![], Span::default())
             .unwrap(),
     );
-    let Backtrack::Err(errors) =
+    let Err(Failure::Fatal(errors)) =
         map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| panic!("unequal lengths"))
     else {
         panic!("expected iteration length mismatch");
     };
-    assert!(matches!(
-        *errors[0].kind,
-        ErrorKind::Context(ContextErrorKind::IterationLengthMismatch { expected: 2, actual: 0 })
-    ));
-    assert_eq!(errors[0].span, span);
+    assert!(errors.code() == Some("runtime/iteration-length-mismatch"));
+    assert_eq!(errors.span(), span);
     let value_empty = map(
         &mut runner,
         &ctx,
@@ -202,13 +200,12 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
         &ast::ExpIter { iter: ast::Iter::List, vars: vec![] }.prepare(&mut FrameLayout::default()),
         |_, _| panic!("no inputs"),
     )
-    .finish()
+    .map_err(Failure::into_report)
     .unwrap();
     assert!(get::list(runner.arena(), &value_empty).unwrap().is_empty());
 }
 
-#[test]
-fn test_iteration_rejects_wrong_value_kind_at_variable_span() {
+fn iterate_wrong_value_kind(iter: ast::Iter) -> Result<(), Failure> {
     let mut runner = Runner::<AlInterp, _, _>::new(
         Global::load(vec![]).unwrap(),
         AlInterp::new(Config::new(false, false, false)),
@@ -218,28 +215,29 @@ fn test_iteration_rejects_wrong_value_kind_at_variable_span() {
     let mut runner = runner.context();
     let var = var("x", vec![]);
     let mut layout = FrameLayout::default();
-    let exp_iter =
-        ast::ExpIter { iter: ast::Iter::Opt, vars: vec![var.clone()] }.prepare(&mut layout);
+    let exp_iter = ast::ExpIter { iter, vars: vec![var.clone()] }.prepare(&mut layout);
     let typ_result = typ::make::iter(typ::make::bool(), exp_iter.iter)
         .node
         .into();
     let mut ctx = Context::new(runner.spec()).localize_with_layout(&layout.into());
     ctx.add_value_at_slot(
-        ctx.find_var_iterated(&exp_iter.vars[0], ast::Iter::Opt)
-            .slot,
+        ctx.find_var_iterated(&exp_iter.vars[0], iter).slot,
         make::bool(runner.arena_mut(), true, Span::default()).unwrap(),
     );
-    let Backtrack::Err(errors) =
-        map(&mut runner, &ctx, &id("iteration", 9).span, &typ_result, &exp_iter, |_, _| {
-            panic!("wrong input kind")
-        })
-    else {
-        panic!("expected value kind error");
-    };
-    assert_eq!(errors[0].span, var.id.span);
-    assert!(matches!(*errors[0].kind, ErrorKind::Runtime(RuntimeErrorKind::Value(_))));
-    let value = ctx
-        .find_value_at_slot(ctx.find_var_iterated(&exp_iter.vars[0], exp_iter.iter).slot)
-        .unwrap();
-    assert!(get::bool(runner.arena(), value).unwrap());
+    map(&mut runner, &ctx, &id("iteration", 9).span, &typ_result, &exp_iter, |_, _| {
+        panic!("wrong input kind")
+    })
+    .map(|_| ())
+}
+
+#[test]
+#[should_panic(expected = "iteration input must be an option")]
+fn test_option_iteration_typed_kind_precondition() {
+    let _ = iterate_wrong_value_kind(ast::Iter::Opt);
+}
+
+#[test]
+#[should_panic(expected = "iteration input must be a list")]
+fn test_list_iteration_typed_kind_precondition() {
+    let _ = iterate_wrong_value_kind(ast::Iter::List);
 }

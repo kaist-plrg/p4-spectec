@@ -6,7 +6,11 @@
 //! Only pure results are memoized; failures retain their invocation trace.
 //! With `guard` enabled, host outputs and public inputs are type-checked.
 
+use crate::diagnostic::Diagnostic;
+use crate::interp::shared::error;
 use crate::interp::shared::eval::assign::assign_tparams;
+use crate::lang::hints::input;
+use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use std::rc::Rc;
 
 use super::{
@@ -21,25 +25,27 @@ use crate::{
             flow::Flow,
         },
         shared::{
-            backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+            backtrack::{
+                self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result,
+            },
             cache::CallKey,
             context::ReadContext,
-            error::{CallErrorKind, ErrorKind, GuardErrorKind, HostErrorKind, TraceErrorKind},
         },
     },
     lang::data::value::{Value, ValueArena, ValueKind},
-    runner::{Extern, Interface, InterfaceError, RunnerContext},
+    runner::{Extern, Interface, RunnerContext},
     runtime::envs::interp::{pl::ast_prepared as ast, shared::frame::FrameLayout},
 };
 
 // = Input and output checks
 
-/// Type-checks relation inputs at the positions selected by the input hint.
+/// Checks the input count and, with `guard`, the input types.
 pub(crate) fn check_rel_inputs(
     arena: &ValueArena,
     ctx: &Context<'_>,
     id: &ast::Id,
     values: &[Value],
+    guard: bool,
 ) -> Backtrack<()> {
     // Extern and defined relations share the signature shape
     let rel = unwrap_from_result!(ctx.find_rel(id), &id.span);
@@ -47,49 +53,59 @@ pub(crate) fn check_rel_inputs(
         ast::RelDef::Extern(rel) => &rel.rel_signature,
         ast::RelDef::Defined(rel) => &rel.rel_signature,
     };
-    let typs = signature.not_typ.node.args();
-    // The hint must fit the notation arity
-    unwrap_from_result!(
-        crate::lang::hints::input::validate(&signature.input_hint, typs.len()),
-        &id.span
-    );
+    // Always check the input count, even without type guards
+    unwrap!(backtrack::check(
+        signature.input_hint.indices().len() == values.len(),
+        id.span.clone(),
+        || {
+            error::guard::relation_input_arity_mismatch(
+                signature.input_hint.indices().len(),
+                values.len(),
+            )
+        }
+    ));
+    if !guard {
+        return ok!(());
+    }
     // Select input types at the positions named by the hint
+    let typs = signature.not_typ.node.args();
     let typs = signature
         .input_hint
         .indices()
         .iter()
         .map(|idx| typs[idx.node].clone())
         .collect::<Vec<_>>();
-    check_values(
-        arena,
-        ctx,
-        id,
-        &typs,
-        values,
-        GuardErrorKind::RelationInputMismatch { relation: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &typs, values, || {
+        error::guard::relation_input_type_mismatch(id.node.clone())
+    })
 }
 
-/// Type-checks function arguments with local type parameters bound.
+/// Checks argument counts and, with `guard`, the argument types.
 pub(crate) fn check_func_inputs(
     arena: &ValueArena,
     ctx: &Context<'_>,
     id: &ast::Id,
     targs: &[ast::Typ],
     values: &[Value],
+    guard: bool,
 ) -> Backtrack<()> {
     let typ = unwrap_from_result!(ctx.find_func_typ(id), &id.span);
+    // Check type and value argument counts before binding them
+    unwrap!(backtrack::check(typ.tparams.len() == targs.len(), id.span.clone(), || {
+        error::call::type_argument_arity_mismatch(typ.tparams.len(), targs.len())
+    }));
+    unwrap!(backtrack::check(typ.typs_params.len() == values.len(), id.span.clone(), || {
+        error::guard::function_input_arity_mismatch(typ.typs_params.len(), values.len())
+    }));
+    if !guard {
+        return ok!(());
+    }
     // Bind type arguments before checking parameter types
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the local type bindings
-    check_values(
-        arena,
-        &ctx_local,
-        id,
-        &typ.typs_params,
-        values,
-        GuardErrorKind::FunctionInputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, &ctx_local, id, &typ.typs_params, values, || {
+        error::guard::function_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Checks each value against its type, failing with the supplied guard error.
@@ -99,7 +115,7 @@ fn check_values(
     id: &ast::Id,
     typs: &[ast::Typ],
     values: &[Value],
-    error: GuardErrorKind,
+    diagnostic: impl FnOnce() -> Diagnostic,
 ) -> Backtrack<()> {
     // Resolve type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
@@ -109,10 +125,10 @@ fn check_values(
     };
     // Check all values against their declared types
     let matches = unwrap_from_result!(
-        crate::runtime::ops::value::subs(arena, &find_typdef_opt, &find_func, typs, values),
+        value_ops::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    Backtrack::check(matches, id.span.clone(), ErrorKind::Guard(error))
+    backtrack::check(matches, id.span.clone(), diagnostic)
 }
 
 /// Type-checks a function result with its type arguments substituted.
@@ -126,21 +142,12 @@ fn check_func_output(
     value: &Value,
 ) -> Backtrack<()> {
     // Substitute type arguments into the declared result type
-    let theta =
-        unwrap_from_result!(crate::runtime::ops::typ::Theta::from_lists(tparams, targs), &id.span);
-    let typ = unwrap_from_result!(
-        crate::runtime::ops::typ::subst_typ(&|id| theta.get(id), typ),
-        &id.span
-    );
+    let theta = unwrap_from_result!(typ_ops::Theta::from_lists(tparams, targs), &id.span);
+    let typ = unwrap_from_result!(typ_ops::subst_typ(&|id| theta.get(id), typ), &id.span);
     // Check the single result
-    check_values(
-        arena,
-        ctx,
-        id,
-        &[typ],
-        std::slice::from_ref(value),
-        GuardErrorKind::FunctionOutputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
+        error::guard::function_output_type_mismatch(id.node.clone())
+    })
 }
 
 // = Cache eligibility
@@ -201,15 +208,13 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
         match &callable.def {
             ast::RelDef::Extern(rel) => invoke_extern_rel(runner_ctx, ctx, id, rel, values),
             ast::RelDef::Defined(rel) => {
-                invoke_defined_rel(runner_ctx, ctx, &callable.layout, id, rel, values)
+                invoke_defined_rel(runner_ctx, ctx, &callable.layout, rel, values)
             }
         }
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result = result.nest(id.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Invocation { text: id.node.clone() })
-    });
+    let result = result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(id));
     let values = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -238,8 +243,14 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (values, _) = unwrap_from_result!(result, &id.span);
+    // Return extern failures without turning mismatches into fatal errors
+    let (values, _) = unwrap!(result);
+    // Check the number of extern outputs before assigning them
+    let len =
+        rel.rel_signature.not_typ.node.args().len() - rel.rel_signature.input_hint.indices().len();
+    unwrap!(backtrack::check(len == values.len(), id.span.clone(), || {
+        error::guard::relation_output_arity_mismatch(len, values.len())
+    }));
     // Guard the outputs against their declared types
     if runner_ctx.interp().config.guard {
         let typs = rel
@@ -251,18 +262,11 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
             .cloned()
             .collect::<Vec<_>>();
         // Output types occupy the positions the input hint leaves
-        let (_, typs) = unwrap_from_result!(
-            crate::lang::hints::input::split(&rel.rel_signature.input_hint, typs),
-            &id.span
-        );
-        unwrap!(check_values(
-            runner_ctx.arena(),
-            ctx,
-            id,
-            &typs,
-            &values,
-            GuardErrorKind::RelationOutputMismatch { relation: id.node.clone() },
-        ));
+        let (_, typs) = input::split(&rel.rel_signature.input_hint, typs)
+            .expect("input hint must fit relation");
+        unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
+            error::guard::relation_output_type_mismatch(id.node.clone())
+        },));
     }
     ok!(values)
 }
@@ -274,7 +278,6 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     layout: &Rc<FrameLayout>,
-    id: &ast::Id,
     rel: &ast::DefinedRel,
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
@@ -292,7 +295,7 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         // A recoverable mismatch permits the otherwise block
         unmatch!(errors) => Flow::Cont(errors),
         // A fatal error aborts the call
-        err!(errors) => return err!(errors),
+        fatal!(errors) => return fatal!(errors),
     };
     // Try the otherwise block from the original input bindings
     if matches!(flow, Flow::Cont(_))
@@ -302,16 +305,11 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     }
     match flow {
         // Results finish the relation
-        Flow::Result(values) => ok!(values),
+        Flow::Result(values) => ok!(values.node),
         // Falling through the entire body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // A relation cannot return a function result
-        Flow::Return(_) => err!(
-            id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "relation cannot return a value",
-            })
-        ),
+        Flow::Return(_) => unreachable!("function flow in relation body"),
     }
 }
 
@@ -349,7 +347,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
                 invoke_builtin_func(runner_ctx, ctx, id, func, targs, values)
             }
             ast::MetaFuncDef::Table(func_def) => {
-                invoke_table_func(runner_ctx, ctx, &func.layout, id, func_def, values)
+                invoke_table_func(runner_ctx, ctx, &func.layout, func_def, values)
             }
             ast::MetaFuncDef::Defined(func_def) => {
                 invoke_defined_func(runner_ctx, ctx, &func.layout, id, func_def, targs, values)
@@ -359,7 +357,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
     let result =
-        result.nest(id.span.clone(), || ErrorKind::Trace(TraceErrorKind::function(id, targs)));
+        result.with_frame(id.span.clone(), || error::trace::message_func_invocation(id, targs));
     let value = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -385,8 +383,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (value, _) = unwrap_from_result!(result, &id.span);
+    // Return extern failures without turning mismatches into fatal errors
+    let (value, _) = unwrap!(result);
     // Guard the outputs against their declared types
     if runner_ctx.interp().config.guard {
         unwrap!(check_func_output(
@@ -436,14 +434,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures allow another candidate; other errors are fatal
-        Err(error) => {
-            let recoverable = matches!(
-                error.kind.as_ref(),
-                ErrorKind::Host(HostErrorKind::Interface(InterfaceError::Builtin(_)))
-            );
-            let error = error.at_if_missing(&id.span);
-            if recoverable { unmatch!(vec![error]) } else { err!(vec![error]) }
-        }
+        Err(failure) => Err(failure.with_span(&id.span)),
     }
 }
 
@@ -454,7 +445,6 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     layout: &Rc<FrameLayout>,
-    id: &ast::Id,
     func: &ast::TableFunc,
     values: &[Value],
 ) -> Backtrack<Value> {
@@ -471,12 +461,11 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     let (_, flow) = unwrap!(eval_block(runner_ctx, ctx_local, instrs, eval_group_instr));
     match flow {
         // The first return is the table result
-        Flow::Return(value) => ok!(value),
-        // Falling through or producing relation outputs is invalid
-        _ => err!(
-            id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow { message: "table did not return a value" })
-        ),
+        Flow::Return(value) => ok!(value.node),
+        // Exhausting the rows preserves their recoverable failures
+        Flow::Cont(errors) => unmatch!(errors),
+        // Relation flows cannot appear in a function table
+        Flow::Result(_) => unreachable!("relation flow in table body"),
     }
 }
 
@@ -505,7 +494,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         // A recoverable mismatch permits the otherwise block
         unmatch!(errors) => Flow::Cont(errors),
         // A fatal error aborts the call
-        err!(errors) => return err!(errors),
+        fatal!(errors) => return fatal!(errors),
     };
     // Try the otherwise block from the original input bindings
     if matches!(flow, Flow::Cont(_))
@@ -515,15 +504,10 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     }
     match flow {
         // Returns finish the function
-        Flow::Return(value) => ok!(value),
+        Flow::Return(value) => ok!(value.node),
         // Falling through the entire body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // A function cannot produce relation outputs
-        Flow::Result(_) => err!(
-            id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "function cannot produce a relation result",
-            })
-        ),
+        Flow::Result(_) => unreachable!("relation flow in function body"),
     }
 }

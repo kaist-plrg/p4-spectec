@@ -12,7 +12,10 @@ pub mod iter;
 pub(crate) mod ops;
 pub(crate) mod path;
 
-use super::{backtrack::Backtrack, context::IterContext, error::Error};
+use super::{
+    backtrack::{Backtrack, Failure},
+    context::IterContext,
+};
 use crate::{
     lang::data::value::Value,
     runner::{Extern, Interface, Interpreter, RunnerContext},
@@ -21,7 +24,7 @@ use crate::{
 // = Invocation
 
 /// AL/SL-specific function and relation invocation.
-pub(crate) trait Invoker<Iface, Ext>: Interpreter<Iface, Ext, Error = Error>
+pub(crate) trait Invoker<Iface, Ext>: Interpreter<Iface, Ext, Error = Failure>
 where
     Iface: Interface,
     Ext: Extern,

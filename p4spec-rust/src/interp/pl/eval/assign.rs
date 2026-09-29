@@ -12,14 +12,10 @@ use crate::{
         pl::context::Context,
         shared::{
             backtrack::{Backtrack, ok, unwrap},
-            error::{AssignErrorKind, ErrorKind},
             eval::assign as shared,
         },
     },
-    lang::{
-        common::source::Span,
-        data::value::{Value, ValueArena},
-    },
+    lang::data::value::{Value, ValueArena},
     runtime::envs::interp::pl::ast_prepared as ast,
 };
 
@@ -63,14 +59,7 @@ pub(super) fn assign_params<'g>(
     values: &[Value],
 ) -> Backtrack<Context<'g>> {
     // Argument count must match the parameters
-    unwrap!(Backtrack::check(
-        params.len() == values.len(),
-        Span::default(),
-        ErrorKind::Assign(AssignErrorKind::ArgumentArityMismatch {
-            expected: params.len(),
-            actual: values.len()
-        })
-    ));
+    assert_eq!(params.len(), values.len(), "validated parameter argument arity");
     // Bind pairwise, threading the callee context
     for (param, value) in params.iter().zip(values) {
         let result = match &param.node {

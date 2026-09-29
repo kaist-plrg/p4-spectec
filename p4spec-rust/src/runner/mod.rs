@@ -34,7 +34,7 @@ pub use interpreter::Interpreter;
 
 // == Runner construction
 
-/// A specification in either executable language.
+/// An AL, SL, or PL specification.
 pub enum Spec {
     /// An AL specification.
     Al(al::ast::Spec),
@@ -44,7 +44,7 @@ pub enum Spec {
     Pl(pl::ast::Spec),
 }
 
-/// Interpreter options, the same for both languages.
+/// Interpreter options shared by AL, SL, and PL.
 #[derive(Clone, Copy)]
 pub struct Config {
     /// Memoize pure calls.
@@ -70,6 +70,8 @@ pub enum BuildError {
 }
 
 /// Builds an AL runner from a specification, with the P4 builtins.
+///
+/// Takes a spec after lowering. Panics if a global definition is repeated.
 pub fn build_al<Ext: Extern>(
     spec: al::ast::Spec,
     config: Config,
@@ -86,6 +88,8 @@ pub fn build_al<Ext: Extern>(
 }
 
 /// Builds an SL runner from a specification, with the P4 builtins.
+///
+/// Takes a spec after lowering. Panics if a global definition is repeated.
 pub fn build_sl<Ext: Extern>(
     spec: sl::ast::Spec,
     config: Config,
@@ -102,6 +106,8 @@ pub fn build_sl<Ext: Extern>(
 }
 
 /// Builds a PL runner from a specification, with the P4 builtins.
+///
+/// Takes a spec after lowering. Panics if a global definition is repeated.
 pub fn build_pl<Ext: Extern>(
     spec: pl::ast::Spec,
     config: Config,

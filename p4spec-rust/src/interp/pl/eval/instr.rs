@@ -4,13 +4,17 @@
 //! `eval_dispatch_block` selects relation groups through routing instructions.
 //! `eval_block` isolates bindings; `eval_alternatives` selects conclusions.
 //! Blocks run sequentially; alternatives delegate selection to `pl::flow`.
-//! `eval_instr` dispatches instructions and attaches their evaluation traces.
+//! `eval_instr` propagates failures to the enclosing block or invocation.
 //! Expression and assignment adapters remove hints before shared evaluation.
 
 use super::{
     assign,
     expr::{eval_exp, eval_exps},
 };
+use crate::diagnostic::Report;
+use crate::interp::shared::error;
+use crate::lang::hints::input;
+use crate::phrase;
 use crate::{
     interp::{
         pl::{
@@ -19,9 +23,8 @@ use crate::{
             flow::{self, Flow},
         },
         shared::{
-            backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+            backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
             context::{IterContext, WriteContext},
-            error::{ErrorKind, PremErrorKind, TraceErrorKind},
             eval::{Invoker, iter, ops},
             util::iterate_vars,
         },
@@ -107,11 +110,7 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
     };
     let flow = if det {
         // Deterministic choice checks alternatives for conflicting conclusions
-        unwrap!(flow::choose_deterministic(blocks, eval, |block| {
-            block
-                .first()
-                .map_or_else(Span::default, |instr| instr.node.span.clone())
-        }))
+        unwrap!(flow::choose_deterministic(blocks, eval))
     } else {
         // A mismatch ends this alternative, but permits trying the next one
         unwrap!(flow::choose_sequential(blocks, |block| { Flow::cont_from_unmatch(eval(block)) }))
@@ -122,7 +121,7 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
 
 // = Instruction evaluation
 
-/// Evaluates one instruction, nesting failures under an evaluation trace.
+/// Evaluates one instruction, returning any failure unchanged.
 fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
@@ -137,59 +136,58 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
-) -> Backtrack<(Context<'global>, Flow)>
-where
-    ast::Instr<Tier>: Print,
-{
+) -> Backtrack<(Context<'global>, Flow)> {
     // Grow the stack for deep blocks
-    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        let result = match &instr.node.node {
-            ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, evaluate_block),
-            ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, evaluate_block),
-            ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, evaluate_block),
-            ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr),
-            ast::InstrKind::Debug(instr) => eval_debug_instr(runner_ctx, ctx, instr),
-            ast::InstrKind::Destruct(instr) => eval_destruct_instr(runner_ctx, ctx, instr),
-            ast::InstrKind::CheckLetSub(instr) => {
-                eval_check_let_sub_instr(runner_ctx, ctx, instr, evaluate_block)
-            }
-            ast::InstrKind::CheckLetMatch(instr) => {
-                eval_check_let_match_instr(runner_ctx, ctx, instr, evaluate_block)
-            }
-            ast::InstrKind::OptionGet(instr) => {
-                eval_option_get_instr(runner_ctx, ctx, instr, evaluate_block)
-            }
-            ast::InstrKind::Tier(instr) => eval_tier(runner_ctx, ctx, &instr.tier),
-        };
-        result.nest(instr.node.span.clone(), || {
-            ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(instr) })
-        })
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || match &instr.node.node {
+        ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr),
+        ast::InstrKind::Debug(instr) => eval_debug_instr(runner_ctx, ctx, instr),
+        ast::InstrKind::Destruct(instr) => eval_destruct_instr(runner_ctx, ctx, instr),
+        ast::InstrKind::CheckLetSub(instr) => {
+            eval_check_let_sub_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
+        ast::InstrKind::CheckLetMatch(instr) => {
+            eval_check_let_match_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
+        ast::InstrKind::OptionGet(instr) => {
+            eval_option_get_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
+        ast::InstrKind::Tier(instr) => eval_tier(runner_ctx, ctx, &instr.tier),
     })
 }
 
-/// Evaluates one group instruction with its evaluation trace.
+/// Evaluates one group instruction.
 pub(super) fn eval_group_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
     instr: &ast::Instr<ast::GroupInstr>,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_instr(runner_ctx, ctx, instr, &mut eval_group_tier, &mut eval_group_block)
+    eval_instr(
+        runner_ctx,
+        ctx,
+        instr,
+        &mut |runner_ctx, ctx, tier| eval_group_tier(runner_ctx, ctx, &instr.node.span, tier),
+        &mut eval_group_block,
+    )
 }
 
 fn eval_group_tier<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
+    span: &Span,
     tier: &ast::GroupInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     match tier {
-        ast::GroupInstr::Result(instr) => eval_result_instr(runner_ctx, ctx, instr),
-        ast::GroupInstr::Return(instr) => eval_return_instr(runner_ctx, ctx, instr),
+        ast::GroupInstr::Result(instr) => eval_result_instr(runner_ctx, ctx, span, instr),
+        ast::GroupInstr::Return(instr) => eval_return_instr(runner_ctx, ctx, span, instr),
         ast::GroupInstr::Rule(instr) => eval_rule_instr(runner_ctx, ctx, instr),
         ast::GroupInstr::Backtrack(instr) => eval_backtrack_instr(runner_ctx, ctx, instr),
     }
 }
 
-/// Evaluates one dispatch instruction with its evaluation trace.
+/// Evaluates one dispatch instruction.
 fn eval_dispatch_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
@@ -226,7 +224,7 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     let cond =
         unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
             let value = unwrap!(eval_exp(runner_ctx, ctx, &instr.exp));
-            Backtrack::from_result(get::bool(runner_ctx.arena(), &value), &instr.exp.node.span)
+            ok!(get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
         }));
     // Run the block, or fall through recording the failed condition
     if cond {
@@ -236,7 +234,7 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             ctx,
             Flow::cont(
                 instr.exp.node.span.clone(),
-                PremErrorKind::ConditionNotMet { exp: Print::to_string(&instr.exp) }
+                error::prem::condition_unmet(Print::to_string(&instr.exp))
             )
         ))
     }
@@ -255,17 +253,21 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    // Treat a relation mismatch as false, retaining fatal errors
+    // Keep the first failed relation call under the condition
+    let mut errors = Vec::new();
     let cond =
         unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
             let values = unwrap!(eval_exps(runner_ctx, ctx, &instr.not_exp.args()));
             match PlInterp::invoke_rel(runner_ctx, ctx, &instr.id, &values) {
                 // A match means it holds
                 ok!(_) => ok!(true),
-                // A mismatch means it does not
-                unmatch!(_) => ok!(false),
+                // Keep the reason if this hold condition fails
+                unmatch!(reports) => {
+                    errors = reports;
+                    ok!(false)
+                }
                 // Fatal errors propagate
-                err!(errors) => err!(errors),
+                fatal!(errors) => fatal!(errors),
             }
         }));
     match &instr.hold_case {
@@ -277,12 +279,20 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         ast::HoldCase::Hold(block, _) if cond => evaluate_block(runner_ctx, ctx, block),
         // Likewise for the not-hold branch
         ast::HoldCase::NotHold(block, _) if !cond => evaluate_block(runner_ctx, ctx, block),
-        // Only the other branch present: fall through
-        _ => ok!((
+        // A failed hold condition retains its relation failure
+        ast::HoldCase::Hold(..) => {
+            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.clone());
+            let report = Report::from(diagnostic)
+                .with_span(&instr.id.span)
+                .with_children(errors);
+            ok!((ctx, Flow::Cont(vec![report])))
+        }
+        // A failed not-hold condition has no inner failure
+        ast::HoldCase::NotHold(..) => ok!((
             ctx,
             Flow::cont(
                 instr.id.span.clone(),
-                PremErrorKind::ConditionNotMet { exp: instr.id.node.clone() }
+                error::prem::not_hold_condition_unmet(instr.id.node.clone()),
             )
         )),
     }
@@ -316,7 +326,7 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         ctx,
         Flow::cont(
             instr.exp.node.span.clone(),
-            PremErrorKind::ConditionNotMet { exp: Print::to_string(&instr.exp) }
+            error::prem::condition_unmet(Print::to_string(&instr.exp))
         )
     ))
 }
@@ -331,10 +341,9 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
     // Test the scrutinee before introducing checked bindings
     let matched = match guard {
         // Compare the scrutinee with the expected boolean
-        ast::Guard::Bool(expected) => Backtrack::from_result(
-            get::bool(runner_ctx.arena(), &value).map(|actual| actual == *expected),
-            &Span::default(),
-        ),
+        ast::Guard::Bool(expected) => ok!(get::bool(runner_ctx.arena(), &value)
+            .expect("boolean guard value must be a boolean")
+            == *expected),
         // Compare against the evaluated right side
         ast::Guard::Cmp(op, _, exp_r) => {
             let value_r = unwrap!(eval_exp(runner_ctx, &ctx, exp_r));
@@ -402,10 +411,8 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
     instr: &ast::RuleInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // The input hint separates arguments from output patterns
-    let (exps_input, exps_output) = unwrap_from_result!(
-        crate::lang::hints::input::split(&instr.input_hint, instr.not_exp.args()),
-        &instr.id.span
-    );
+    let (exps_input, exps_output) = input::split(&instr.input_hint, instr.not_exp.args())
+        .expect("input hint must fit relation");
     // Invoke the relation at each enclosing iteration
     let ctx =
         unwrap!(eval_instr_iter(runner_ctx, ctx, &instr.iter_instrs, &mut |runner_ctx, ctx| {
@@ -423,10 +430,11 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
 fn eval_result_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
+    span: &Span,
     instr: &ast::ResultInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     let values = unwrap!(eval_exps(runner_ctx, &ctx, &instr.exps_output));
-    ok!((ctx, Flow::Result(values)))
+    ok!((ctx, Flow::Result(phrase!(node: values, span: span.clone()))))
 }
 
 // - Return instruction
@@ -435,10 +443,11 @@ fn eval_result_instr<'global, Iface: Interface, Ext: Extern>(
 fn eval_return_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
+    span: &Span,
     instr: &ast::ReturnInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    ok!((ctx, Flow::Return(value)))
+    ok!((ctx, Flow::Return(phrase!(node: value, span: span.clone()))))
 }
 
 // - Debug instruction
@@ -465,7 +474,8 @@ fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Extract fields before mutating the arena during assignment
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    let values = unwrap_from_result!(get::case(runner_ctx.arena(), &value), &instr.exp.node.span)
+    let values = get::case(runner_ctx.arena(), &value)
+        .expect("destructuring value must be a case")
         .args()
         .into_iter()
         .copied()
@@ -500,27 +510,21 @@ fn eval_check_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Cast only after the subtype check succeeds
     if matches {
         let value = unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, &instr.typ, value));
-        match assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value) {
-            // A successful binding is visible only in the nested block
-            ok!(ctx_bound) => {
-                let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_bound, &instr.block));
-                ok!((ctx, flow))
-            }
-            // A failed binding lets the enclosing block continue
-            err!(errors) | unmatch!(errors) => ok!((ctx, Flow::Cont(errors))),
-        }
+        // Propagate binding failures before entering the nested block
+        let ctx_bound =
+            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
+        let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_bound, &instr.block));
+        ok!((ctx, flow))
     } else {
         ok!((
             ctx,
             Flow::cont(
                 instr.exp_r.node.span.clone(),
-                PremErrorKind::ConditionNotMet {
-                    exp: format!(
-                        "{} is not a subtype of {}",
-                        Print::to_string(&instr.exp_r),
-                        Print::to_string(&instr.typ)
-                    )
-                }
+                error::prem::condition_unmet(format!(
+                    "{} is not a subtype of {}",
+                    Print::to_string(&instr.exp_r),
+                    Print::to_string(&instr.typ)
+                ))
             )
         ))
     }
@@ -552,12 +556,10 @@ fn eval_check_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             ctx,
             Flow::cont(
                 instr.exp_r.node.span.clone(),
-                PremErrorKind::ConditionNotMet {
-                    exp: format!(
-                        "{} does not match the expected pattern",
-                        Print::to_string(&instr.exp_r)
-                    )
-                }
+                error::prem::condition_unmet(format!(
+                    "{} does not match the expected pattern",
+                    Print::to_string(&instr.exp_r)
+                ))
             )
         ))
     }
@@ -579,7 +581,7 @@ fn eval_option_get_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Only a present option enters the nested block
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
     if let Some(value) =
-        unwrap_from_result!(get::opt(runner_ctx.arena(), &value), &instr.exp_r.node.span)
+        get::opt(runner_ctx.arena(), &value).expect("option binding value must be an option")
     {
         // The shorthand binding belongs to the nested block
         let ctx_bound =
@@ -591,9 +593,10 @@ fn eval_option_get_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             ctx,
             Flow::cont(
                 instr.exp_r.node.span.clone(),
-                PremErrorKind::ConditionNotMet {
-                    exp: format!("{} evaluated to an empty option", Print::to_string(&instr.exp_r))
-                }
+                error::prem::condition_unmet(format!(
+                    "{} evaluated to an empty option",
+                    Print::to_string(&instr.exp_r)
+                ))
             )
         ))
     }

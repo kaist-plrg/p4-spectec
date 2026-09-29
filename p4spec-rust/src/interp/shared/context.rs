@@ -6,12 +6,14 @@
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
 //! `FuncSignature` reads function types from each stage's prepared syntax.
 
+use crate::interp::shared::error;
 use std::rc::Rc;
 
 use crate::{
+    diagnostic::{Label, Report},
     interp::shared::{
         backtrack::{Backtrack, ok, unwrap_from_result},
-        error::{ContextErrorKind, EntityKind, Error, ErrorKind},
+        error::{EntityKind, Error},
         prepare::ast,
     },
     lang::{
@@ -21,7 +23,6 @@ use crate::{
             value::{Value, ValueArena, get, make},
             var::{SlotIdx, VarSlot},
         },
-        traits::print::Print,
     },
     runtime::{
         envs::interp::shared::{
@@ -174,39 +175,44 @@ impl<R, F> Global<R, F> {
 
     // - Types
 
-    /// Inserts a type, rejecting duplicates without replacing the definition.
-    pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
-        if self.tdenv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Type, id.node, id.span));
-        }
+    /// Inserts a global type, panicking if its name is already defined.
+    pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) {
+        // Elaboration already rejects duplicate type names
+        assert!(
+            !self.tdenv.contains_key(&id),
+            "global type definitions must be unique: {}",
+            id.node
+        );
         self.tdenv.insert(id, typdef);
-        Ok(())
     }
 
     // - Relations
 
-    /// Inserts a prepared relation, rejecting duplicates in its namespace.
-    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: Callable<R>) -> Result<(), Error>
+    /// Inserts a prepared relation, panicking if its name is already defined.
+    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: Callable<R>)
     where
         R: Clone,
     {
-        // Check before the persistent map can replace the existing callable
-        if self.renv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Relation, id.node, id.span));
-        }
+        // Elaboration already rejects duplicate relation names
+        assert!(
+            !self.renv.contains_key(&id),
+            "global relation definitions must be unique: {}",
+            id.node
+        );
         self.renv.insert(id, rel);
-        Ok(())
     }
 
     // - Functions
 
-    /// Inserts a prepared function, sharing it with future function arguments.
-    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) -> Result<(), Error> {
-        if self.fenv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Function, id.node, id.span));
-        }
+    /// Inserts a prepared function, panicking if its name is already defined.
+    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) {
+        // Elaboration already rejects duplicate function names
+        assert!(
+            !self.fenv.contains_key(&id),
+            "global function definitions must be unique: {}",
+            id.node
+        );
         self.fenv.insert(id, Rc::new(func));
-        Ok(())
     }
 }
 
@@ -281,8 +287,11 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 
     /// Finds a type in either scope or reports the lookup location.
     pub fn find_typdef<'a>(&'a self, id: &ast::Id) -> Result<&'a TypeDef, Error> {
-        self.find_typdef_opt(id)
-            .ok_or_else(|| Error::undefined(EntityKind::Type, id.node.clone(), id.span.clone()))
+        self.find_typdef_opt(id).ok_or_else(|| {
+            let diagnostic = error::context::binding_undefined(EntityKind::Type, id.node.clone())
+                .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
+        })
     }
 
     // - Relations
@@ -294,8 +303,12 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 
     /// Finds a global relation or reports the lookup location.
     pub fn find_rel(&self, id: &ast::Id) -> Result<&'global Callable<R>, Error> {
-        self.find_rel_opt(id)
-            .ok_or_else(|| Error::undefined(EntityKind::Relation, id.node.clone(), id.span.clone()))
+        self.find_rel_opt(id).ok_or_else(|| {
+            let diagnostic =
+                error::context::binding_undefined(EntityKind::Relation, id.node.clone())
+                    .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
+        })
     }
 
     // - Functions
@@ -314,8 +327,12 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         &'a self,
         id: &ast::Id,
     ) -> Result<(Scope, &'a Rc<Callable<F>>), Error> {
-        self.find_func_opt(id)
-            .ok_or_else(|| Error::undefined(EntityKind::Function, id.node.clone(), id.span.clone()))
+        self.find_func_opt(id).ok_or_else(|| {
+            let diagnostic =
+                error::context::binding_undefined(EntityKind::Function, id.node.clone())
+                    .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
+        })
     }
 
     // == Adders
@@ -325,7 +342,9 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     /// Binds a type locally; the id must be new in both scopes.
     pub fn add_typdef(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         if self.find_typdef_opt(&id).is_some() {
-            return Err(Error::duplicate(EntityKind::Type, id.node, id.span));
+            let diagnostic = error::context::binding_repeated(EntityKind::Type, id.node)
+                .with_label(Label::primary(&id.span, ""));
+            return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.tdenv.insert(id, typdef);
         Ok(())
@@ -371,7 +390,12 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     ) -> Result<(&'a [ast::TParam], &'a ast::DefTyp), Error> {
         match self.find_typdef(id)? {
             TypeDef::Defined(tparams, def_typ) => Ok((tparams, def_typ)),
-            _ => Err(Error::undefined(EntityKind::DefinedType, id.node.clone(), id.span.clone())),
+            _ => {
+                let diagnostic =
+                    error::context::binding_undefined(EntityKind::DefinedType, id.node.clone())
+                        .with_label(Label::primary(&id.span, ""));
+                Err(Box::new(Report::from(diagnostic)))
+            }
         }
     }
 
@@ -396,7 +420,9 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
     fn add_typdef_local(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         // A type parameter may shadow a global definition
         if self.local.tdenv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Type, id.node, id.span));
+            let diagnostic = error::context::binding_repeated(EntityKind::Type, id.node)
+                .with_label(Label::primary(&id.span, ""));
+            return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.tdenv.insert(id, typdef);
         Ok(())
@@ -412,7 +438,9 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     fn add_func(&mut self, id: ast::Id, func: Rc<Callable<F>>) -> Result<(), Error> {
         if self.find_func_opt(&id).is_some() {
-            return Err(Error::duplicate(EntityKind::Function, id.node, id.span));
+            let diagnostic = error::context::binding_repeated(EntityKind::Function, id.node)
+                .with_label(Label::primary(&id.span, ""));
+            return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.fenv.insert(id, func);
         Ok(())
@@ -441,16 +469,11 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let mut values_by_var = Vec::with_capacity(vars.len());
         for var in vars {
             // Every variable must be bound
-            let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
-                Error::undefined(
-                    EntityKind::Value,
-                    Print::to_string(&var.var),
-                    var.var.id.span.clone(),
-                )
-            })?;
+            let value = self
+                .find_value_at_slot(var.slot)
+                .expect("value must be bound");
             // Each variable must hold a list
-            let values = get::list(arena, value)
-                .map_err(|error| Error::from(error).at_if_missing(&var.var.id.span))?;
+            let values = get::list(arena, value).expect("iteration input must be a list");
             values_by_var.push(values);
         }
         // No variables: nothing to iterate
@@ -461,12 +484,8 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let len = values.len();
         for values in &values_by_var {
             if values.len() != len {
-                return Err(Error::new(
-                    ErrorKind::Context(ContextErrorKind::IterationLengthMismatch {
-                        expected: len,
-                        actual: values.len(),
-                    }),
-                    Span::default(),
+                return Err(Box::new(
+                    error::context::iteration_length_mismatch(len, values.len()).into(),
                 ));
             }
         }
@@ -481,16 +500,11 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let mut values = Vec::with_capacity(vars.len());
         for var in vars {
             // Every variable must be bound
-            let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
-                Error::undefined(
-                    EntityKind::Value,
-                    Print::to_string(&var.var),
-                    var.var.id.span.clone(),
-                )
-            })?;
+            let value = self
+                .find_value_at_slot(var.slot)
+                .expect("value must be bound");
             // Each variable must hold an option
-            let value = get::opt(arena, value)
-                .map_err(|error| Error::from(error).at_if_missing(&var.var.id.span))?;
+            let value = get::opt(arena, value).expect("iteration input must be an option");
             values.push(value);
         }
         // All present, all absent, or a mismatch
@@ -499,10 +513,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         } else if values.iter().all(|value| value.is_none()) {
             Ok(None)
         } else {
-            Err(Error::new(
-                ErrorKind::Context(ContextErrorKind::OptionalityMismatch),
-                Span::default(),
-            ))
+            Err(Box::new(error::context::iteration_optionality_mismatch().into()))
         }
     }
 
@@ -517,16 +528,11 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
     ) -> Backtrack<()> {
         // Append this row's value of each variable
         for (var, values) in vars.iter().zip(values_by_var) {
-            values.push(*unwrap_from_result!(
-                self.find_value_at_slot(var.slot).ok_or_else(|| {
-                    Error::undefined(
-                        EntityKind::Value,
-                        Print::to_string(&var.var),
-                        var.var.id.span.clone(),
-                    )
-                }),
-                &var.var.id.span
-            ));
+            values.push(
+                *self
+                    .find_value_at_slot(var.slot)
+                    .expect("value must be bound"),
+            );
         }
         ok!(())
     }

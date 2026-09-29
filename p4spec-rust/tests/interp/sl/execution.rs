@@ -1,6 +1,7 @@
 use super::*;
+use crate::interp::report::ReportExt;
+use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use p4spec_rust::{
-    interp::shared::error::{ErrorKind, TraceErrorKind},
     lang::data::{typ, value::ValueArena},
     phrase,
 };
@@ -196,9 +197,9 @@ def $not_hold(n) = false
                         runner.context().call_func(name, targs, values)
                     };
                     if external {
-                        let error = result.unwrap_err();
-                        assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
-                        assert!(error.to_string().contains("Check"), "{error}");
+                        let error = result.unwrap_err().into_report();
+                        assert!(matches!(error.kind, ReportKind::Frame { .. }));
+                        assert!(error.render().contains("Check"), "{error}");
                     } else {
                         assert_eq!(get::bool(runner.arena(), &result.unwrap()).unwrap(), expected);
                     }
@@ -285,8 +286,9 @@ fn test_public_guard_rejects_malformed_function_input() {
             ("ignore", &[], &[make::bool(runner.arena_mut(), true, Span::default()).unwrap()]);
         runner.context().call_func(name, targs, values)
     }
-    .unwrap_err();
-    assert!(error.to_string().contains("function argument of ignore"), "{error}");
+    .unwrap_err()
+    .into_report();
+    assert!(error.render().contains("function argument of ignore"), "{error}");
 }
 struct Host {
     calls: Rc<std::cell::Cell<u64>>,
@@ -384,7 +386,8 @@ fn test_guards_toggle_input_checks_and_substitute_type_arguments() {
                 assert!(
                     result
                         .unwrap_err()
-                        .to_string()
+                        .into_report()
+                        .render()
                         .contains("function argument of ignore")
                 );
                 assert!(
@@ -393,7 +396,8 @@ fn test_guards_toggle_input_checks_and_substitute_type_arguments() {
                         runner.context().call_func(name, targs, values)
                     }
                     .unwrap_err()
-                    .to_string()
+                    .into_report()
+                    .render()
                     .contains("arity mismatch in type arguments")
                 );
                 assert!(
@@ -401,8 +405,9 @@ fn test_guards_toggle_input_checks_and_substitute_type_arguments() {
                         .context()
                         .call_func("ignore", &[typ::make::nat()], &[])
                         .unwrap_err()
-                        .to_string()
-                        .contains("function argument of ignore")
+                        .into_report()
+                        .find_code("runtime/function-input-arity-mismatch")
+                        .is_some()
                 );
             } else {
                 assert_eq!(number(runner.arena(), &result.unwrap()), "1");
@@ -446,8 +451,8 @@ def $pick<X>() = $external<X>()
             for name in ["builtin", "external", "pick"] {
                 let result = runner.context().call_func(name, &[typ::make::nat()], &[]);
                 if guard {
-                    let error = result.unwrap_err();
-                    assert!(error.to_string().contains("return value of function"), "{error}");
+                    let error = result.unwrap_err().into_report();
+                    assert!(error.render().contains("return value of function"), "{error}");
                 } else {
                     assert!(get::bool(runner.arena(), &result.unwrap()).is_ok());
                 }
@@ -533,7 +538,8 @@ def $ambiguous() = 2
                 runner.context().call_func(name, targs, values)
             }
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("function argument of outer")
         );
         assert!(
@@ -541,7 +547,8 @@ def $ambiguous() = 2
                 .context()
                 .call_func("ambiguous", &[], &[])
                 .unwrap_err()
-                .to_string()
+                .into_report()
+                .render()
                 .contains("nondeterministic")
         );
         runner.reset();
@@ -569,7 +576,8 @@ fn test_extern_reentry_uses_public_input_guards() {
             assert!(
                 result
                     .unwrap_err()
-                    .to_string()
+                    .into_report()
+                    .render()
                     .contains("function argument of inner")
             );
         } else {
@@ -876,7 +884,7 @@ def $pair() = ($pure<nat>(7), $pure<bool>(7))
         let mut ctx_runner = runner.context();
         let ctx = p4spec_rust::interp::sl::context::Context::new(ctx_runner.spec());
         p4spec_rust::interp::sl::eval::call::invoke_func(&mut ctx_runner, &ctx, &id, &[], &[])
-            .finish()
+            .map_err(Failure::into_report)
             .unwrap()
     };
     assert_eq!(host.count("pure"), 1);
@@ -886,7 +894,7 @@ def $pair() = ($pure<nat>(7), $pure<bool>(7))
         let mut ctx_runner = runner.context();
         let ctx = p4spec_rust::interp::sl::context::Context::new(ctx_runner.spec());
         p4spec_rust::interp::sl::eval::call::invoke_func(&mut ctx_runner, &ctx, &id, &[], &[])
-            .finish()
+            .map_err(Failure::into_report)
             .unwrap()
     };
     assert_eq!(get::tuple(runner.arena(), &value_new).unwrap().len(), 2);
@@ -917,7 +925,7 @@ fn test_program_reset_isolates_cached_values_between_arenas() {
                 &[],
                 &[value],
             )
-            .finish()
+            .map_err(Failure::into_report)
             .unwrap()
         };
         assert_eq!(get::tuple(runner.arena(), &value_pair).unwrap(), &[value, value]);
@@ -977,7 +985,7 @@ fn clear_discards_memos_and_retains_the_live_arena() {
             &[],
             &[value],
         )
-        .finish()
+        .map_err(Failure::into_report)
         .unwrap();
         assert_eq!(get::tuple(ctx_runner.arena(), &value_pair).unwrap(), &[value, value]);
         assert_eq!(host.count("pure"), if clear { 2 } else { 1 });

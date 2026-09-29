@@ -16,15 +16,16 @@ use super::{
     assign,
     expr::{self, eval_exp, eval_exps},
 };
+use crate::diagnostic::Report;
 use crate::interp::shared::context::{IterContext, WriteContext};
+use crate::interp::shared::error;
 use crate::interp::shared::eval::{Invoker, iter, ops};
 use crate::interp::shared::util::iterate_vars;
+use crate::lang::hints::input;
+use crate::phrase;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
-    interp::shared::{
-        backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
-        error::{ErrorKind, PremErrorKind, TraceErrorKind},
-    },
+    interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
     lang::{
         common::source::Span,
         data::value::{Value, ValueKind, get},
@@ -77,11 +78,9 @@ fn eval_block_deterministic<Iface: Interface, Ext: Extern>(
     block: &[ast::Instr],
     tail: bool,
 ) -> Backtrack<Flow> {
-    flow::choose_deterministic(
-        block,
-        |instr| eval_instr(runner_ctx, Cow::Borrowed(ctx), instr, tail),
-        |instr| instr.span.clone(),
-    )
+    flow::choose_deterministic(block, |instr| {
+        eval_instr(runner_ctx, Cow::Borrowed(ctx), instr, tail)
+    })
 }
 
 /// Runs instructions in order; the last one gets the context and the tail flag.
@@ -120,16 +119,17 @@ pub(crate) fn eval_block_sequential<'instr, Iface: Interface, Ext: Extern>(
 
 // = Instruction evaluation
 
-/// Evaluates one instruction, nesting failures under an evaluation trace.
+/// Evaluates one instruction.
 pub fn eval_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
     instr: &ast::Instr,
     tail: bool,
 ) -> Backtrack<Flow> {
+    let span = &instr.span;
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        let result = match &instr.node {
+        match &instr.node {
             ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, tail),
             ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, tail),
             ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, tail),
@@ -139,21 +139,18 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
                 Flow::cont_from_unmatch(eval_let_instr(runner_ctx, ctx, instr, tail))
             }
             ast::InstrKind::Rule(instr) => {
-                Flow::cont_from_unmatch(eval_rule_instr(runner_ctx, ctx, instr, tail))
+                Flow::cont_from_unmatch(eval_rule_instr(runner_ctx, ctx, span, instr, tail))
             }
             ast::InstrKind::Result(instr) => {
-                Flow::cont_from_unmatch(eval_result_instr(runner_ctx, ctx, instr))
+                Flow::cont_from_unmatch(eval_result_instr(runner_ctx, ctx, span, instr))
             }
             ast::InstrKind::Return(instr) => {
-                Flow::cont_from_unmatch(eval_return_instr(runner_ctx, ctx, instr, tail))
+                Flow::cont_from_unmatch(eval_return_instr(runner_ctx, ctx, span, instr, tail))
             }
             ast::InstrKind::Debug(instr) => {
                 Flow::cont_from_unmatch(eval_debug_instr(runner_ctx, ctx, instr, tail))
             }
-        };
-        result.nest(instr.span.clone(), || {
-            ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(instr) })
-        })
+        }
     })
 }
 
@@ -173,7 +170,7 @@ fn eval_if_instr<Iface: Interface, Ext: Extern>(
         &instr.iter_exps,
         &mut |runner_ctx, ctx| {
             let value = unwrap!(eval_exp(runner_ctx, ctx, &instr.exp));
-            Backtrack::from_result(get::bool(runner_ctx.arena(), &value), &instr.exp.span)
+            ok!(get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
         }
     ));
     // Run the block, or fall through recording the failed condition
@@ -182,7 +179,7 @@ fn eval_if_instr<Iface: Interface, Ext: Extern>(
     } else {
         ok!(Flow::cont(
             instr.exp.span.clone(),
-            PremErrorKind::ConditionNotMet { exp: Print::to_string(&instr.exp) },
+            error::prem::condition_unmet(Print::to_string(&instr.exp)),
         ))
     }
 }
@@ -197,6 +194,7 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     // Whether the relation applies to the arguments, for every element
+    let mut errors = Vec::new();
     let cond = unwrap!(eval_cond_iter(
         runner_ctx,
         ctx.as_ref(),
@@ -206,10 +204,13 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
             match SlInterp::invoke_rel(runner_ctx, ctx, &instr.id, &values) {
                 // A match means it holds
                 ok!(_) => ok!(true),
-                // A mismatch means it does not
-                unmatch!(_) => ok!(false),
+                // Keep the reason if this hold condition fails
+                unmatch!(reports) => {
+                    errors = reports;
+                    ok!(false)
+                }
                 // Fatal errors propagate
-                err!(errors) => err!(errors),
+                fatal!(errors) => fatal!(errors),
             }
         }
     ));
@@ -223,14 +224,17 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
         // Likewise for the not-hold branch
         ast::HoldCase::NotHold(block, _) if !cond => eval_block(runner_ctx, ctx, block, tail),
         // Only the other branch present: fall through
-        ast::HoldCase::Hold(..) => ok!(Flow::cont(
-            instr.id.span.clone(),
-            PremErrorKind::HoldConditionNotMet { relation: instr.id.node.clone() },
-        )),
+        ast::HoldCase::Hold(..) => {
+            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.clone());
+            let report = Report::from(diagnostic)
+                .with_span(&instr.id.span)
+                .with_children(errors);
+            ok!(Flow::Cont(vec![report]))
+        }
         // Likewise, recording the failed not-hold condition
         ast::HoldCase::NotHold(..) => ok!(Flow::cont(
             instr.id.span.clone(),
-            PremErrorKind::NotHoldConditionNotMet { relation: instr.id.node.clone() },
+            error::prem::not_hold_condition_unmet(instr.id.node.clone()),
         )),
     }
 }
@@ -255,7 +259,7 @@ fn eval_case_instr<Iface: Interface, Ext: Extern>(
     // No guard accepted: fall through
     ok!(Flow::cont(
         instr.exp.span.clone(),
-        PremErrorKind::ConditionNotMet { exp: format!("case {}", Print::to_string(&instr.exp)) },
+        error::prem::condition_unmet(format!("case {}", Print::to_string(&instr.exp))),
     ))
 }
 
@@ -269,12 +273,15 @@ fn eval_guard<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<bool> {
     // The trivial guard reads the boolean itself
     if matches!(guard, ast::Guard::Bool(true)) {
-        return Backtrack::from_result(get::bool(runner_ctx.arena(), &value), span);
+        return ok!(
+            get::bool(runner_ctx.arena(), &value).expect("boolean guard value must be a boolean")
+        );
     }
     (|| match guard {
         // Negation
         ast::Guard::Bool(_) => {
-            ok!(!unwrap_from_result!(get::bool(runner_ctx.arena(), &value), span))
+            ok!(!get::bool(runner_ctx.arena(), &value)
+                .expect("boolean guard value must be a boolean"))
         }
         // Comparison against the evaluated right side
         ast::Guard::Cmp(op, _, exp_r) => {
@@ -336,14 +343,13 @@ fn eval_let_instr<Iface: Interface, Ext: Extern>(
 fn eval_rule_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
+    span: &Span,
     instr: &ast::RuleInstr,
     tail: bool,
 ) -> Backtrack<Flow> {
     // Split the notation arguments by the input hint
-    let (exps_input, exps_output) = unwrap_from_result!(
-        crate::lang::hints::input::split(&instr.input_hint, instr.not_exp.args()),
-        &instr.id.span
-    );
+    let (exps_input, exps_output) = input::split(&instr.input_hint, instr.not_exp.args())
+        .expect("input hint must fit relation");
     // A tail-position call whose block just returns its outputs is a tail call
     if tail
         && instr.iter_instrs.is_empty()
@@ -355,10 +361,11 @@ fn eval_rule_instr<Iface: Interface, Ext: Extern>(
             .zip(&instr_result.exps)
             .all(|(exp_l, exp_r)| exp_l.syntax_eq(exp_r))
     {
-        return ok!(Flow::TailRel(
-            instr.id.clone(),
-            unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &exps_input)),
-        ));
+        let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &exps_input));
+        return ok!(Flow::TailRel(phrase!(
+            node: (instr.id.clone(), values),
+            span: span.clone(),
+        )));
     }
     // Otherwise call, bind the outputs under the iterators, and run the block
     let ctx = unwrap!(eval_instr_iter(
@@ -381,9 +388,11 @@ fn eval_rule_instr<Iface: Interface, Ext: Extern>(
 fn eval_result_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
+    span: &Span,
     instr: &ast::ResultInstr,
 ) -> Backtrack<Flow> {
-    ok!(Flow::Result(unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &instr.exps))))
+    let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &instr.exps));
+    ok!(Flow::Result(phrase!(node: values, span: span.clone())))
 }
 
 // - Return instruction
@@ -392,6 +401,7 @@ fn eval_result_instr<Iface: Interface, Ext: Extern>(
 fn eval_return_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
+    span: &Span,
     instr: &ast::ReturnInstr,
     tail: bool,
 ) -> Backtrack<Flow> {
@@ -407,20 +417,17 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
                 .iter()
                 .any(|value| matches!(runner_ctx.arena().kind(value), ValueKind::Func(_)))
         {
-            ok!(Flow::Return(unwrap!(SlInterp::invoke_func(
-                runner_ctx,
-                ctx.as_ref(),
-                id,
-                &targs,
-                &values
-            ))))
+            let value =
+                unwrap!(SlInterp::invoke_func(runner_ctx, ctx.as_ref(), id, &targs, &values));
+            ok!(Flow::Return(phrase!(node: value, span: span.clone())))
         // Global calls become tail calls for the invoker loop
         } else {
-            ok!(Flow::TailFunc(id.clone(), targs, values))
+            ok!(Flow::TailFunc(phrase!(node: (id.clone(), targs, values), span: span.clone())))
         }
     // Any other expression is evaluated and returned
     } else {
-        ok!(Flow::Return(unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp))))
+        let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp));
+        ok!(Flow::Return(phrase!(node: value, span: span.clone())))
     }
 }
 

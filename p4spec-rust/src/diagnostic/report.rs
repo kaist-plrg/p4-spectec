@@ -67,6 +67,12 @@ impl Diagnostic {
     ) -> Self {
         Self { severity, code, message: message.into(), labels, notes, source }
     }
+
+    /// Appends a source label.
+    pub fn with_label(mut self, label: Label) -> Self {
+        self.labels.push(label);
+        self
+    }
 }
 
 impl fmt::Display for Diagnostic {
@@ -117,6 +123,39 @@ impl Report {
     /// Groups ordered child reports under an uncoded source context.
     pub fn frame(span: Span, message: impl Into<String>, children: Vec<Report>) -> Self {
         Self { kind: ReportKind::Frame { span, message: message.into() }, children }
+    }
+
+    /// Adds a source location if missing, leaving frames unchanged.
+    pub fn with_span(mut self, span: &Span) -> Self {
+        if let ReportKind::Cause(diagnostic) = &mut self.kind
+            && diagnostic.labels.is_empty()
+        {
+            diagnostic.labels.push(Label::primary(span, ""));
+        }
+        self
+    }
+
+    /// Appends child reports.
+    pub fn with_children(mut self, children: Vec<Report>) -> Self {
+        self.children.extend(children);
+        self
+    }
+
+    /// Returns the maximum report depth without recursion.
+    pub fn depth_max(&self) -> usize {
+        let mut depth = 0;
+        let mut pending = vec![(self, 1)];
+        // Walk every branch without growing the call stack
+        while let Some((report, depth_report)) = pending.pop() {
+            depth = depth.max(depth_report);
+            pending.extend(
+                report
+                    .children
+                    .iter()
+                    .map(|report| (report, depth_report + 1)),
+            );
+        }
+        depth
     }
 }
 

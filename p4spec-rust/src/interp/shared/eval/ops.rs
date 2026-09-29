@@ -4,6 +4,8 @@
 //! every failure is located at the span the caller passes in.
 
 use super::super::context::ReadContext;
+use crate::interp::shared::error;
+use crate::runtime::ops::value as value_ops;
 
 use num_bigint::BigInt;
 
@@ -20,10 +22,7 @@ use crate::{
     runtime::ops::typ::{Theta, subst_typ},
 };
 
-use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result},
-    error::{ErrorKind, ExprErrorKind},
-};
+use crate::interp::shared::backtrack::{self, Backtrack, fatal, ok, unwrap, unwrap_from_result};
 
 // = Operators
 
@@ -39,12 +38,12 @@ pub(crate) fn unop(
     let value = match op {
         // Boolean negation
         ast::UnOp::Bool(boolean::UnOp::Not) => {
-            let bool = !unwrap_from_result!(get::bool(arena, &value), span);
+            let bool = !get::bool(arena, &value).expect("operand must be a boolean");
             unwrap_from_result!(make::bool(arena, bool, Span::default()), span)
         }
         // Numeric unary operator
         ast::UnOp::Num(op) => {
-            let num = unwrap_from_result!(get::num(arena, &value), span);
+            let num = get::num(arena, &value).expect("operand must be a number");
             let num = num::un(*op, num);
             unwrap_from_result!(make::num(arena, num, Span::default()), span)
         }
@@ -65,8 +64,8 @@ pub(crate) fn binop(
     let value = match op {
         // Boolean connectives
         ast::BinOp::Bool(op) => {
-            let bool_l = unwrap_from_result!(get::bool(arena, &value_l), span);
-            let bool_r = unwrap_from_result!(get::bool(arena, &value_r), span);
+            let bool_l = get::bool(arena, &value_l).expect("operand must be a boolean");
+            let bool_r = get::bool(arena, &value_r).expect("operand must be a boolean");
             let result = match op {
                 boolean::BinOp::And => bool_l && bool_r,
                 boolean::BinOp::Or => bool_l || bool_r,
@@ -77,8 +76,8 @@ pub(crate) fn binop(
         }
         // Arithmetic
         ast::BinOp::Num(op) => {
-            let num_l = unwrap_from_result!(get::num(arena, &value_l), span);
-            let num_r = unwrap_from_result!(get::num(arena, &value_r), span);
+            let num_l = get::num(arena, &value_l).expect("operand must be a number");
+            let num_r = get::num(arena, &value_r).expect("operand must be a number");
             let num = unwrap_from_result!(num::bin(*op, num_l, num_r), span);
             unwrap_from_result!(make::num(arena, num, Span::default()), span)
         }
@@ -105,8 +104,8 @@ pub(crate) fn cmpop(
         }
         // Ordering compares numbers
         ast::CmpOp::Num(op) => {
-            let num_l = unwrap_from_result!(get::num(arena, &value_l), span);
-            let num_r = unwrap_from_result!(get::num(arena, &value_r), span);
+            let num_l = get::num(arena, &value_l).expect("operand must be a number");
+            let num_r = get::num(arena, &value_r).expect("operand must be a number");
             unwrap_from_result!(num::cmp(*op, num_l, num_r), span)
         }
     })
@@ -129,8 +128,8 @@ pub(crate) fn sub(
         let id = crate::phrase!(node: name.to_owned(), span: span.clone());
         ctx.find_func_typ(&id).ok()
     };
-    Backtrack::from_result(
-        crate::runtime::ops::value::check(arena, &find_typdef_opt, &find_func, subcheck, &value),
+    backtrack::from_result(
+        value_ops::check(arena, &find_typdef_opt, &find_func, subcheck, &value),
         span,
     )
 }
@@ -161,11 +160,11 @@ pub(crate) fn r#match(arena: &ValueArena, pattern: &ast::Pattern, value: Value) 
 /// Tests list membership by syntactic equality.
 pub(crate) fn mem(
     arena: &ValueArena,
-    span: &Span,
+    _span: &Span,
     value_elem: Value,
     value_list: Value,
 ) -> Backtrack<bool> {
-    let values = unwrap_from_result!(get::list(arena, &value_list), span);
+    let values = get::list(arena, &value_list).expect("operand must be a list");
     ok!(values
         .iter()
         .any(|value| arena.view(*value).syntax_eq(&arena.view(value_elem))),)
@@ -186,7 +185,7 @@ pub(crate) fn cast_up(
     let result = match &typ.node {
         // Natural to integer
         ast::TypKind::Num(num::Typ::Int) => {
-            let num = unwrap_from_result!(get::num(arena, &value), span);
+            let num = get::num(arena, &value).expect("operand must be a number");
             match num {
                 num::Number::Nat(num) => {
                     let num = num.as_bigint().clone();
@@ -209,16 +208,10 @@ pub(crate) fn cast_up(
         }
         // Tuple: componentwise
         ast::TypKind::Tuple(typs) => {
-            let values = unwrap_from_result!(get::tuple(arena, &value), span).to_vec();
-            if typs.len() != values.len() {
-                return err!(
-                    span.clone(),
-                    ErrorKind::Expr(ExprErrorKind::TupleCastArityMismatch {
-                        expected: typs.len(),
-                        actual: values.len(),
-                    }),
-                );
-            }
+            let values = get::tuple(arena, &value)
+                .expect("operand must be a tuple")
+                .to_vec();
+            assert_eq!(typs.len(), values.len(), "tuple cast arity mismatch");
             let mut values_cast = Vec::with_capacity(values.len());
             for (typ, value) in typs.iter().zip(values) {
                 values_cast.push(unwrap!(cast_up(arena, ctx, typ, value)));
@@ -230,7 +223,7 @@ pub(crate) fn cast_up(
         }
         // Option: the payload
         ast::TypKind::Iter(typ_inner, ast::Iter::Opt) => {
-            let value = unwrap_from_result!(get::opt(arena, &value), span);
+            let value = get::opt(arena, &value).expect("operand must be an option");
             let value = match value {
                 Some(value) => Some(unwrap!(cast_up(arena, ctx, typ_inner, value))),
                 None => None,
@@ -242,7 +235,9 @@ pub(crate) fn cast_up(
         }
         // List: every element
         ast::TypKind::Iter(typ_inner, ast::Iter::List) => {
-            let values = unwrap_from_result!(get::list(arena, &value), span).to_vec();
+            let values = get::list(arena, &value)
+                .expect("operand must be a list")
+                .to_vec();
             let mut values_cast = Vec::with_capacity(values.len());
             for value in values {
                 values_cast.push(unwrap!(cast_up(arena, ctx, typ_inner, value)));
@@ -271,7 +266,7 @@ pub(crate) fn cast_down(
     let result = match &typ.node {
         // Integer to natural, failing on negatives
         ast::TypKind::Num(num::Typ::Nat) => {
-            let num = unwrap_from_result!(get::num(arena, &value), span);
+            let num = get::num(arena, &value).expect("operand must be a number");
             match num {
                 num::Number::Nat(_) => value,
                 num::Number::Int(num) => {
@@ -294,16 +289,10 @@ pub(crate) fn cast_down(
         }
         // Tuple: componentwise
         ast::TypKind::Tuple(typs) => {
-            let values = unwrap_from_result!(get::tuple(arena, &value), span).to_vec();
-            if typs.len() != values.len() {
-                return err!(
-                    span.clone(),
-                    ErrorKind::Expr(ExprErrorKind::TupleCastArityMismatch {
-                        expected: typs.len(),
-                        actual: values.len(),
-                    }),
-                );
-            }
+            let values = get::tuple(arena, &value)
+                .expect("operand must be a tuple")
+                .to_vec();
+            assert_eq!(typs.len(), values.len(), "tuple cast arity mismatch");
             let mut values_cast = Vec::with_capacity(values.len());
             for (typ, value) in typs.iter().zip(values) {
                 values_cast.push(unwrap!(cast_down(arena, ctx, typ, value)));
@@ -315,7 +304,7 @@ pub(crate) fn cast_down(
         }
         // Option: the payload
         ast::TypKind::Iter(typ_inner, ast::Iter::Opt) => {
-            let value = unwrap_from_result!(get::opt(arena, &value), span);
+            let value = get::opt(arena, &value).expect("operand must be an option");
             let value = match value {
                 Some(value) => Some(unwrap!(cast_down(arena, ctx, typ_inner, value))),
                 None => None,
@@ -327,7 +316,9 @@ pub(crate) fn cast_down(
         }
         // List: every element
         ast::TypKind::Iter(typ_inner, ast::Iter::List) => {
-            let values = unwrap_from_result!(get::list(arena, &value), span).to_vec();
+            let values = get::list(arena, &value)
+                .expect("operand must be a list")
+                .to_vec();
             let mut values_cast = Vec::with_capacity(values.len());
             for value in values {
                 values_cast.push(unwrap!(cast_down(arena, ctx, typ_inner, value)));
@@ -352,21 +343,21 @@ pub(crate) fn access_dot(
     arena: &ValueArena,
     value: &Value,
     atom: &ast::Atom,
-    span: &Span,
+    _span: &Span,
 ) -> Backtrack<Value> {
-    let value_fields = unwrap_from_result!(get::structure(arena, value), span);
+    let value_fields = get::structure(arena, value).expect("operand must be a structure");
     match value_fields
         .iter()
         .find(|(field, _)| field.node == atom.node)
     {
         Some((_, value)) => ok!(*value),
-        None => err!(atom.span.clone(), ErrorKind::Expr(ExprErrorKind::UndefinedField)),
+        None => unreachable!("structure must contain the field"),
     }
 }
 
 /// Reads a number as an integer.
-fn get_int(arena: &ValueArena, value: &Value, span: &Span) -> Backtrack<BigInt> {
-    let num = unwrap_from_result!(get::num(arena, value), span);
+fn get_int(arena: &ValueArena, value: &Value, _span: &Span) -> Backtrack<BigInt> {
+    let num = get::num(arena, value).expect("operand must be a number");
     ok!(num::to_int(num).clone())
 }
 
@@ -385,15 +376,10 @@ pub(crate) fn access_index(
     let len = match arena.kind(value_base) {
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
-        _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::IndexOperandMismatch),);
-        }
+        _ => unreachable!("index operand must be a text or list"),
     };
     let Some(idx) = usize::try_from(&int_idx).ok().filter(|idx| *idx < len) else {
-        return err!(
-            span_idx.clone(),
-            ErrorKind::Expr(ExprErrorKind::IndexOutOfBounds { idx: int_idx, len }),
-        );
+        return fatal!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
     };
     match arena.kind(value_base) {
         // Text: a one-character slice
@@ -423,7 +409,7 @@ pub(crate) fn access_slice(
     value_len: &Value,
     typ: &Rc<ast::TypKind>,
     span_typ: &Span,
-    span_base: &Span,
+    _span_base: &Span,
     span_idx: &Span,
     span_len: &Span,
     span_bounds: &Span,
@@ -434,9 +420,7 @@ pub(crate) fn access_slice(
     let size = match arena.kind(value_base) {
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
-        _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::SliceOperandMismatch),);
-        }
+        _ => unreachable!("slice operand must be a text or list"),
     };
     let Some((idx, idx_end)) = usize::try_from(&int_idx)
         .ok()
@@ -445,9 +429,9 @@ pub(crate) fn access_slice(
         .filter(|(_, idx_end)| *idx_end <= size)
     else {
         let int_end = &int_idx + &int_len;
-        return err!(
+        return fatal!(
             span_bounds.clone(),
-            ErrorKind::Expr(ExprErrorKind::SliceOutOfBounds { idx: int_idx, end: int_end, size }),
+            error::expr::slice_out_of_bounds(int_idx, int_end, size),
         );
     };
     match arena.kind(value_base) {
@@ -455,10 +439,10 @@ pub(crate) fn access_slice(
         ValueKind::Text(text) => match text.get(idx..idx_end) {
             Some(text) => {
                 let text = text.to_owned();
-                Backtrack::from_result(make::text(arena, text, Span::default()), span_typ)
+                backtrack::from_result(make::text(arena, text, Span::default()), span_typ)
             }
             None => {
-                err!(span_bounds.clone(), ErrorKind::Expr(ExprErrorKind::TextSliceBoundaryMismatch),)
+                fatal!(span_bounds.clone(), error::expr::text_slice_boundary_mismatch(),)
             }
         },
         // List: copy the range
@@ -492,26 +476,18 @@ pub(crate) fn update_index(
     let len = match arena.kind(value_base) {
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
-        _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::IndexOperandMismatch),);
-        }
+        _ => unreachable!("index operand must be a text or list"),
     };
     let Some(idx) = usize::try_from(&int_idx).ok().filter(|idx| *idx < len) else {
-        return err!(
-            span_idx.clone(),
-            ErrorKind::Expr(ExprErrorKind::IndexOutOfBounds { idx: int_idx, len }),
-        );
+        return fatal!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
     };
     let value = match arena.kind(value_base) {
         // Text: the replacement must be a single character
         ValueKind::Text(text) => {
             let size = text.len();
-            let text_upd = unwrap_from_result!(get::text(arena, &value_upd), span_idx);
+            let text_upd = get::text(arena, &value_upd).expect("operand must be a text");
             if text_upd.len() != 1 {
-                return err!(
-                    span_idx.clone(),
-                    ErrorKind::Expr(ExprErrorKind::CharacterUpdateLengthMismatch),
-                );
+                return fatal!(span_idx.clone(), error::expr::character_update_length_mismatch(),);
             }
             // Rebuild as prefix, replacement, suffix
             let text_upd = text_upd.to_owned();
@@ -549,8 +525,8 @@ pub(crate) fn update_index(
                 span_idx,
                 span_idx
             ));
-            let text_l = unwrap_from_result!(get::text(arena, &value_l), span_idx);
-            let text_r = unwrap_from_result!(get::text(arena, &value_r), span_idx);
+            let text_l = get::text(arena, &value_l).expect("operand must be a text");
+            let text_r = get::text(arena, &value_r).expect("operand must be a text");
             {
                 let text = format!("{text_l}{text_upd}{text_r}");
                 unwrap_from_result!(make::text(arena, text, Span::default()), &typ.span)
@@ -591,9 +567,7 @@ pub(crate) fn update_slice(
     let size = match arena.kind(value_base) {
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
-        _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::SliceOperandMismatch),);
-        }
+        _ => unreachable!("slice operand must be a text or list"),
     };
     let Some((idx, idx_end)) = usize::try_from(&int_idx)
         .ok()
@@ -602,23 +576,17 @@ pub(crate) fn update_slice(
         .filter(|(_, idx_end)| *idx_end <= size)
     else {
         let int_end = &int_idx + &int_len;
-        return err!(
-            span_len.clone(),
-            ErrorKind::Expr(ExprErrorKind::SliceOutOfBounds { idx: int_idx, end: int_end, size }),
-        );
+        return fatal!(span_len.clone(), error::expr::slice_out_of_bounds(int_idx, int_end, size),);
     };
     let value = match arena.kind(value_base) {
         // Text: the replacement must have the range's length
         ValueKind::Text(text) => {
             let size = text.len();
-            let text_upd = unwrap_from_result!(get::text(arena, &value_upd), span_len);
+            let text_upd = get::text(arena, &value_upd).expect("operand must be a text");
             if text_upd.len() != idx_end - idx {
-                return err!(
+                return fatal!(
                     span_len.clone(),
-                    ErrorKind::Expr(ExprErrorKind::TextSliceUpdateLengthMismatch {
-                        len: idx_end - idx,
-                        actual: text_upd.len(),
-                    }),
+                    error::expr::text_slice_update_length_mismatch(idx_end - idx, text_upd.len()),
                 );
             }
             // Rebuild as prefix, replacement, suffix
@@ -657,8 +625,8 @@ pub(crate) fn update_slice(
                 span_len,
                 span_len
             ));
-            let text_l = unwrap_from_result!(get::text(arena, &value_l), span_len);
-            let text_r = unwrap_from_result!(get::text(arena, &value_r), span_len);
+            let text_l = get::text(arena, &value_l).expect("operand must be a text");
+            let text_r = get::text(arena, &value_r).expect("operand must be a text");
             {
                 let text = format!("{text_l}{text_upd}{text_r}");
                 unwrap_from_result!(make::text(arena, text, Span::default()), &typ.span)
@@ -666,14 +634,11 @@ pub(crate) fn update_slice(
         }
         // List: the replacement must have the range's length
         ValueKind::List(values) => {
-            let values_upd = unwrap_from_result!(get::list(arena, &value_upd), span_len);
+            let values_upd = get::list(arena, &value_upd).expect("operand must be a list");
             if values_upd.len() != idx_end - idx {
-                return err!(
+                return fatal!(
                     span_len.clone(),
-                    ErrorKind::Expr(ExprErrorKind::ListSliceUpdateLengthMismatch {
-                        len: idx_end - idx,
-                        actual: values_upd.len(),
-                    }),
+                    error::expr::list_slice_update_length_mismatch(idx_end - idx, values_upd.len()),
                 );
             }
             let mut values = values.clone();

@@ -7,13 +7,11 @@
 
 use super::super::context::ReadContext;
 use super::Invoker;
+use crate::interp::shared::backtrack::WithFrame;
 use crate::interp::shared::prepare::ast;
 use crate::lang::data::var::IdSlot;
-use crate::lang::traits::at::At;
 
 use std::{borrow::Borrow, rc::Rc};
-
-use crate::interp::shared::error::ExprErrorKind;
 
 use crate::{
     lang::{
@@ -30,9 +28,8 @@ use crate::{
 
 use super::{arg::eval_args, iter, ops, path::eval_update_path};
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
-    error::{EntityKind, Error, ErrorKind},
-    util::{find_slot_of_exp, find_var_of_exp},
+    backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    util::find_slot_of_exp,
 };
 
 // = Expression evaluation
@@ -58,7 +55,7 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
             make::text(runner_ctx.arena_mut(), value.clone(), Span::default()),
             span
         )),
-        ast::ExpKind::Id(id) => eval_id_exp(ctx, span, id),
+        ast::ExpKind::Id(id) => eval_id_exp(ctx, id),
         ast::ExpKind::Un(op, _, exp_inner) => eval_un_exp(runner_ctx, ctx, span, op, exp_inner),
         ast::ExpKind::Bin(op, _, exp_l, exp_r) => {
             eval_bin_exp(runner_ctx, ctx, span, op, exp_l, exp_r)
@@ -102,10 +99,8 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
             eval_iter_exp(runner_ctx, ctx, exp, exp_inner, exp_iter)
         }
     })();
-    result.nest(exp.span.clone(), || {
-        ErrorKind::Trace(crate::interp::shared::error::TraceErrorKind::Evaluation {
-            text: Print::to_string(exp),
-        })
+    result.with_frame(exp.span.clone(), || {
+        format!("while evaluating expression {}", Print::to_string(exp))
     })
 }
 
@@ -130,13 +125,10 @@ pub(crate) fn eval_exps<
 // - Identifier expression
 
 /// Reads the value bound to the variable's slot.
-fn eval_id_exp(ctx: &impl ReadContext, span: &Span, id: &IdSlot) -> Backtrack<Value> {
-    let value = *unwrap_from_result!(
-        ctx.find_value_at_slot(id.slot).ok_or_else(|| {
-            Error::undefined(EntityKind::Value, id.id.node.clone(), id.id.span.clone())
-        }),
-        span
-    );
+fn eval_id_exp(ctx: &impl ReadContext, id: &IdSlot) -> Backtrack<Value> {
+    let value = *ctx
+        .find_value_at_slot(id.slot)
+        .expect("value must be bound");
     ok!(value)
 }
 
@@ -273,7 +265,7 @@ fn eval_case_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     // Evaluate and rebuild in one traversal, preserving early failure and order
     let eval_exp_arg = |exp: &ast::Exp| match eval_exp(runner_ctx, ctx, exp) {
         ok!(value) => Ok(value),
-        err!(errors) => Err(err!(errors)),
+        fatal!(errors) => Err(fatal!(errors)),
         unmatch!(errors) => Err(unmatch!(errors)),
     };
     let case = match not_exp.try_map(eval_exp_arg) {
@@ -396,13 +388,8 @@ fn eval_cat_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
                 span
             )
         }
-        // Mixed operands are an error
-        _ => {
-            return err!(
-                [&exp_l, &exp_r].at(),
-                ErrorKind::Expr(ExprErrorKind::ConcatenationOperandMismatch),
-            );
-        }
+        // Elaboration admits only matching text or list operands
+        _ => unreachable!("concatenation operands must have matching kinds"),
     };
     ok!(value)
 }
@@ -438,10 +425,7 @@ fn eval_len_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
         _ => {
-            return err!(
-                exp_inner.span.clone(),
-                ErrorKind::Expr(ExprErrorKind::LengthOperandMismatch),
-            );
+            unreachable!("length operand must be a text or list")
         }
     };
     let value = unwrap_from_result!(
@@ -573,17 +557,7 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     let typ = &exp.note;
     // `x*` as an expression is just the bound value
     if let Some(slot) = find_slot_of_exp(ctx, exp) {
-        return ok!(*unwrap_from_result!(
-            ctx.find_value_at_slot(slot).ok_or_else(|| {
-                let var = find_var_of_exp(ctx, exp).expect("identity iteration has a variable");
-                Error::undefined(
-                    EntityKind::Value,
-                    Print::to_string(&var.var),
-                    var.var.id.span.clone(),
-                )
-            }),
-            span
-        ));
+        return ok!(*ctx.find_value_at_slot(slot).expect("value must be bound"));
     }
     // Otherwise map the body over the iterated variables
     iter::map(runner_ctx, ctx, span, typ, exp_iter, |runner_ctx, ctx_sub| {

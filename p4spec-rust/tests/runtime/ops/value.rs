@@ -45,6 +45,44 @@ fn test_numeric_membership_preserves_nat_subtyping() {
 }
 
 #[test]
+fn optional_membership_requires_an_option_and_checks_present_values() {
+    let mut arena = ValueArena::new();
+    let typ_opt = typ::make::opt(typ::make::nat());
+    let value_nat = make::nat(&mut arena, 3u64.into(), Span::default()).unwrap();
+    let value_bool = make::bool(&mut arena, false, Span::default()).unwrap();
+    let value_none =
+        make::opt(&mut arena, typ_opt.node.clone().into(), None, Span::default()).unwrap();
+    let value_some =
+        make::opt(&mut arena, typ_opt.node.clone().into(), Some(value_nat), Span::default())
+            .unwrap();
+    let value_wrong =
+        make::opt(&mut arena, typ_opt.node.clone().into(), Some(value_bool), Span::default())
+            .unwrap();
+    let value_list = make::list(
+        &mut arena,
+        typ::make::list(typ::make::nat()).node.into(),
+        vec![],
+        Span::default(),
+    )
+    .unwrap();
+    let tdenv = TDEnv::new();
+    let find_typdef_opt = |id: &Id| tdenv.get(id);
+    let find_func = |_: &str| None::<FuncTyp>;
+    for (value, expected) in [
+        (value_none, true),
+        (value_some, true),
+        (value_wrong, false),
+        (value_nat, false),
+        (value_bool, false),
+        (value_list, false),
+    ] {
+        assert_eq!(sub(&arena, &find_typdef_opt, &find_func, &typ_opt, &value), Ok(expected));
+        let subcheck = Subcheck::Iter(Iter::Opt, Box::new(Subcheck::Recurse(typ::make::nat())));
+        assert_eq!(check(&arena, &find_typdef_opt, &find_func, &subcheck, &value), Ok(expected));
+    }
+}
+
+#[test]
 fn test_extern_type_membership_uses_shared_type_environment() {
     let mut arena = ValueArena::new();
     let mut tdenv = TDEnv::new();

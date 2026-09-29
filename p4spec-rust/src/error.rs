@@ -7,7 +7,7 @@
 use p4spec_rust::{
     diagnostic::{Diagnostic, Report, Severity},
     interface::p4::error::P4Error,
-    interp::shared::error::Error as InterpError,
+    interp::shared::backtrack::Failure as InterpError,
     runner, sim_plugin,
 };
 

@@ -11,7 +11,7 @@ pub mod context;
 
 pub mod eval;
 
-use crate::interp::shared::{cache::Cache, error::Error, eval::Invoker};
+use crate::interp::shared::{backtrack::Failure, cache::Cache, eval::Invoker};
 use crate::{
     lang::{al::ast, common::source::Span, data::value::Value},
     runner::{Extern, Interface, Interpreter, RunnerContext},
@@ -48,7 +48,7 @@ impl AlInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
     type Spec = Global;
-    type Error = Error;
+    type Error = Failure;
 
     fn clear(&mut self) {
         self.cache.clear();
@@ -62,7 +62,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Error> {
+    ) -> Result<Vec<Value>, Failure> {
         runner_ctx.call_rel(name, &[program])
     }
 
@@ -70,16 +70,20 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, Error> {
+    ) -> Result<Vec<Value>, Failure> {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.to_owned(), span: Span::default());
         let ctx = Context::new(runner_ctx.spec());
-        // Guard the inputs unless the call would be served from the cache
-        if runner_ctx.interp().config.guard && !eval::call::cache_rel(runner_ctx, &ctx, &id) {
-            eval::call::check_rel_inputs(runner_ctx.arena(), &ctx, &id, values).finish()?;
-        }
-        Self::invoke_rel(runner_ctx, &ctx, &id, values).finish()
+        // Check the caller's inputs before running the definition
+        eval::call::check_rel_inputs(
+            runner_ctx.arena(),
+            &ctx,
+            &id,
+            values,
+            runner_ctx.interp().config.guard,
+        )?;
+        Self::invoke_rel(runner_ctx, &ctx, &id, values)
     }
 
     fn eval_func(
@@ -87,17 +91,20 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
         name: &str,
         targs: &[ast::Typ],
         values: &[Value],
-    ) -> Result<Value, Error> {
+    ) -> Result<Value, Failure> {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.to_owned(), span: Span::default());
         let ctx = Context::new(runner_ctx.spec());
-        // Guard the inputs unless the call would be served from the cache
-        if runner_ctx.interp().config.guard
-            && !eval::call::cache_func(runner_ctx, &ctx, &id, values)
-        {
-            eval::call::check_func_inputs(runner_ctx.arena(), &ctx, &id, targs, values).finish()?;
-        }
-        Self::invoke_func(runner_ctx, &ctx, &id, targs, values).finish()
+        // Check the caller's inputs before running the definition
+        eval::call::check_func_inputs(
+            runner_ctx.arena(),
+            &ctx,
+            &id,
+            targs,
+            values,
+            runner_ctx.interp().config.guard,
+        )?;
+        Self::invoke_func(runner_ctx, &ctx, &id, targs, values)
     }
 }

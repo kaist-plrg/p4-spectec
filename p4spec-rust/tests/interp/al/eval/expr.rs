@@ -1,4 +1,5 @@
-use p4spec_rust::interp::shared::error::{HostErrorKind, TraceErrorKind};
+use crate::interp::report::{IntoReport, ReportExt};
+use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use std::{cell::RefCell, rc::Rc};
 
 use p4spec_rust::{
@@ -59,8 +60,109 @@ fn eval(
         NullInterface,
         NullExtern,
     );
-    let value = runner.context().call_func("test", &[], &[])?;
+    let value = runner
+        .context()
+        .call_func("test", &[], &[])
+        .map_err(Failure::into_report)?;
     Ok((std::mem::take(runner.arena_mut()), value))
+}
+
+#[test]
+#[should_panic(expected = "value must be bound")]
+fn test_reading_an_unbound_slot_violates_the_ir_precondition() {
+    let _ = eval(exp(ast::ExpKind::Id(id("missing")), typ::make::int()));
+}
+
+#[test]
+#[should_panic(expected = "concatenation operands must have matching kinds")]
+fn test_concatenation_requires_valid_operand_kinds() {
+    let _ = eval(exp(ast::ExpKind::Cat(Box::new(text("x")), Box::new(int(1))), typ::make::text()));
+}
+
+#[test]
+#[should_panic(expected = "length operand must be a text or list")]
+fn test_length_requires_a_valid_operand_kind() {
+    let _ = eval(exp(ast::ExpKind::Len(Box::new(int(1))), typ::make::nat()));
+}
+
+#[test]
+fn test_optional_casts_require_option_values() {
+    let typ = typ::make::opt(typ::make::int());
+    let exp_inner = exp(ast::ExpKind::Bool(false), typ::make::bool());
+    for kind in [
+        ast::ExpKind::UpCast(Box::new(typ.clone()), Box::new(exp_inner.clone())),
+        ast::ExpKind::DownCast(Box::new(typ.clone()), Box::new(exp_inner)),
+    ] {
+        let panic =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| eval(exp(kind, typ.clone()))))
+                .expect_err("optional casts require option operands");
+        let message = panic
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| panic.downcast_ref::<&str>().copied())
+            .unwrap();
+        assert!(message.contains("operand must be an option"), "{message}");
+    }
+}
+
+#[test]
+fn test_operand_shapes_are_ir_invariants() {
+    let cases = [
+        (
+            "boolean",
+            exp(
+                ast::ExpKind::Un(
+                    ast::UnOp::Bool(boolean::UnOp::Not),
+                    ast::OpTyp::Bool,
+                    Box::new(int(1)),
+                ),
+                typ::make::bool(),
+            ),
+        ),
+        (
+            "number",
+            exp(
+                ast::ExpKind::Bin(
+                    ast::BinOp::Num(num::BinOp::Add),
+                    ast::OpTyp::Int,
+                    Box::new(text("x")),
+                    Box::new(int(1)),
+                ),
+                typ::make::int(),
+            ),
+        ),
+        (
+            "membership",
+            exp(ast::ExpKind::Mem(Box::new(int(1)), Box::new(int(2))), typ::make::bool()),
+        ),
+        ("index", exp(ast::ExpKind::Idx(Box::new(int(1)), Box::new(int(0))), typ::make::int())),
+        (
+            "slice",
+            exp(
+                ast::ExpKind::Slice(Box::new(int(1)), Box::new(int(0)), Box::new(int(1))),
+                typ::make::list(typ::make::int()),
+            ),
+        ),
+        (
+            "tuple cast",
+            exp(
+                ast::ExpKind::UpCast(
+                    Box::new(typ::make::tuple(vec![typ::make::int()])),
+                    Box::new(exp(ast::ExpKind::Tuple(vec![]), typ::make::tuple(vec![]))),
+                ),
+                typ::make::tuple(vec![typ::make::int()]),
+            ),
+        ),
+    ];
+    let failures = cases
+        .into_iter()
+        .filter_map(|(name, expression)| {
+            let result =
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| eval(expression)));
+            result.is_ok().then_some(name)
+        })
+        .collect::<Vec<_>>();
+    assert!(failures.is_empty(), "expected invariant panics: {failures:?}");
 }
 
 fn numbers(arena: &ValueArena, value: &Value) -> Vec<String> {
@@ -91,6 +193,64 @@ fn test_repeated_evaluation_reuses_the_expression_type_allocation_without_call_c
 
 fn path(kind: ast::PathKind, typ: ast::Typ) -> ast::Path {
     p4spec_rust::note_phrase!(node: kind, note: Rc::new(typ.node), span: typ.span)
+}
+
+#[test]
+#[should_panic(expected = "condition must be a boolean")]
+fn test_condition_typed_kind_precondition() {
+    let mut def = function("test", int(1));
+    let ast::DefKind::MetaFunc(ast::MetaFuncDef::Defined(func)) = &mut def.node else {
+        panic!("expected a defined function")
+    };
+    func.clauses[0].node.prems.push(p4spec_rust::phrase! {
+        node: ast::PremKind::If(ast::IfPrem { exp: int(1) }),
+        span: Span::default(),
+    });
+    let mut runner = Runner::new(
+        Global::load(vec![def]).unwrap(),
+        AlInterp::new(Config::new(false, false, false)),
+        NullInterface,
+        NullExtern,
+    );
+    let _ = runner.context().call_func("test", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "field update base must be a struct")]
+fn test_field_update_typed_kind_precondition() {
+    let atom = p4spec_rust::phrase!(node: Atom::Keyword("field".into()), span: Span::default());
+    let path_root = path(ast::PathKind::Root, typ::make::int());
+    let path_field = path(ast::PathKind::Dot(Box::new(path_root), atom), typ::make::int());
+    let _ = eval(exp(
+        ast::ExpKind::Upd(Box::new(int(1)), Box::new(path_field), Box::new(int(2))),
+        typ::make::int(),
+    ));
+}
+
+#[test]
+fn test_optional_cons_tail_remains_a_runtime_error() {
+    use p4spec_rust::pass::{algo, elaborate};
+
+    let spec_el = crate::spec_fixture::parse(
+        "syntax foo = | A\nvar x : foo\ndec $cons(foo?) : foo?\ndef $cons(x?) = A :: x?",
+    )
+    .unwrap();
+    let spec_il = elaborate::convert(spec_el).unwrap();
+    let spec_al = algo::convert(spec_il).unwrap();
+    let mut runner = Runner::new(
+        Global::load(spec_al).unwrap(),
+        AlInterp::new(Config::new(false, false, true)),
+        NullInterface,
+        NullExtern,
+    );
+    let typ = typ::make::opt(typ::make::var(id("foo"), vec![]));
+    let value = make::opt(runner.arena_mut(), typ.node.into(), None, Span::default()).unwrap();
+    let report = runner
+        .context()
+        .call_func("cons", &[], &[value])
+        .unwrap_err()
+        .into_report();
+    assert!(report.find_code("runtime/value-invalid").is_some());
 }
 
 #[test]
@@ -143,7 +303,8 @@ fn test_slice_updates_require_equal_lengths_and_support_text() {
     assert!(
         eval(update("X"))
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("slice of length 2")
     );
 }
@@ -157,7 +318,7 @@ fn test_negative_slice_lengths_are_out_of_bounds() {
         slice(list(vec![int(1), int(2), int(3)]), typ::make::list(typ::make::int())),
         slice(text("abc"), typ::make::text()),
     ] {
-        let error = eval(exp_slice).unwrap_err().to_string();
+        let error = eval(exp_slice).unwrap_err().into_report().render();
         assert!(error.contains("slice [2, -1) out of bounds [0, 3)"), "{error}");
     }
 }
@@ -177,7 +338,8 @@ fn test_text_operations_use_byte_lengths_and_reject_split_utf8() {
     assert!(
         eval(index)
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("UTF-8 boundaries")
     );
 }
@@ -348,7 +510,8 @@ fn test_numeric_errors_are_fatal_before_else_fallback() {
             .context()
             .call_func("test", &[], &[])
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("zero divisor")
     );
 }
@@ -610,16 +773,14 @@ fn test_call_arguments_substitute_local_types_and_pass_function_values() {
 
 #[test]
 fn test_index_failures_retain_the_index_expression_span() {
-    use p4spec_rust::interp::shared::error::{Error, ErrorKind};
-
-    fn contains_span(traces: &[Error], span: &Span) -> bool {
+    fn contains_span(traces: &[p4spec_rust::diagnostic::Report], span: &Span) -> bool {
         traces
             .iter()
-            .any(|trace| &trace.span == span || contains_span(&trace.children, span))
+            .any(|trace| &trace.span() == span || contains_span(&trace.children, span))
     }
-    fn contains_evaluation(traces: &[Error]) -> bool {
+    fn contains_evaluation(traces: &[p4spec_rust::diagnostic::Report]) -> bool {
         traces.iter().any(|trace| {
-            matches!(*trace.kind, ErrorKind::Trace(TraceErrorKind::Evaluation { .. }))
+            matches!(&trace.kind, ReportKind::Frame { message, .. } if message.starts_with("while evaluating "))
                 || contains_evaluation(&trace.children)
         })
     }
@@ -629,8 +790,8 @@ fn test_index_failures_retain_the_index_expression_span() {
     let span = index.span.clone();
     let expression =
         exp(ast::ExpKind::Idx(Box::new(list(vec![int(1)])), Box::new(index)), typ::make::int());
-    let error = eval(expression).unwrap_err();
-    let ErrorKind::Trace(TraceErrorKind::Execution) = *error.kind else {
+    let error = eval(expression).unwrap_err().into_report();
+    let ReportKind::Frame { .. } = error.kind else {
         panic!("expected execution traces");
     };
     assert!(contains_span(&error.children, &span));
@@ -725,19 +886,6 @@ def $first(ns) = ns[0]
 
 #[test]
 fn test_builtin_failure_remains_typed_in_public_error_tree() {
-    use p4spec_rust::{
-        interface::builtin::error::BuiltinErrorKind,
-        interp::shared::error::{Error, ErrorKind},
-    };
-
-    fn find_builtin(error: &Error) -> Option<&BuiltinErrorKind> {
-        if let ErrorKind::Host(HostErrorKind::Interface(InterfaceError::Builtin(error))) =
-            error.kind.as_ref()
-        {
-            return Some(&error.kind);
-        }
-        error.children.iter().find_map(find_builtin)
-    }
     let builtin = p4spec_rust::phrase!(node: ast::DefKind::MetaFunc(ast::MetaFuncDef::Builtin(ast::BuiltinFunc {
         id: id("missing_builtin"), tparams: vec![], params: vec![],
         typ: typ::make::int(), hints: vec![],
@@ -749,9 +897,14 @@ fn test_builtin_failure_remains_typed_in_public_error_tree() {
         p4spec_rust::interface::p4(&p4spec_rust::runner::Spec::Al(Vec::new())),
         NullExtern,
     );
-    let error = runner.context().call_func("test", &[], &[]).unwrap_err();
-    assert_eq!(
-        find_builtin(&error),
-        Some(&BuiltinErrorKind::MissingImplementation("missing_builtin".into()))
-    );
+    let error = runner
+        .context()
+        .call_func("test", &[], &[])
+        .unwrap_err()
+        .into_report();
+    let diagnostic = error
+        .find_code("runtime/builtin-failed")
+        .expect("builtin cause")
+        .diagnostic();
+    assert!(diagnostic.message.contains("missing_builtin"));
 }

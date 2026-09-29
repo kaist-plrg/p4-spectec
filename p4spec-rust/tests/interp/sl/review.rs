@@ -1,12 +1,11 @@
 use super::*;
+use crate::interp::report::ReportExt;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
+use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use p4spec_rust::{
     interp::{
-        shared::{
-            error::{Error, ErrorKind, TraceErrorKind},
-            eval::assign::assign_exp,
-        },
+        shared::{error::Error, eval::assign::assign_exp},
         sl::context::Context,
     },
     lang::{
@@ -56,16 +55,24 @@ fn evaluate(spec_sl: ast::Spec, relation: bool) -> Error {
     );
     if relation {
         let value = make::nat(runner.arena_mut(), 5u64.into(), Span::default()).unwrap();
-        runner.context().call_rel("entry", &[value]).unwrap_err()
+        runner
+            .context()
+            .call_rel("entry", &[value])
+            .unwrap_err()
+            .into_report()
     } else {
-        runner.context().call_func("entry", &[], &[]).unwrap_err()
+        runner
+            .context()
+            .call_func("entry", &[], &[])
+            .unwrap_err()
+            .into_report()
     }
 }
 
-fn has_invocation(error: &Error, text: &str) -> bool {
+fn has_invocation(error: &p4spec_rust::diagnostic::Report, text: &str) -> bool {
     matches!(
-        error.kind.as_ref(),
-        ErrorKind::Trace(TraceErrorKind::Invocation { text: text_actual }) if text_actual == text
+        &error.kind,
+        ReportKind::Frame { message, .. } if message == &format!("while invoking {text}")
     ) || error
         .children
         .iter()
@@ -100,7 +107,7 @@ fn optional_destructuring_preserves_outer_scalars() {
         make::opt(&mut arena, typ_opt.node.clone().into(), Some(value_tuple), Span::default())
             .unwrap();
     let ctx = assign_exp(&mut arena, ctx, &exp, value_opt)
-        .finish()
+        .map_err(Failure::into_report)
         .unwrap();
     assert_eq!(
         *ctx.find_value_at_slot(
@@ -143,7 +150,7 @@ fn optional_destructuring_preserves_outer_scalars() {
     }
     let value_none = make::opt(&mut arena, typ_opt.node.into(), None, Span::default()).unwrap();
     let ctx = assign_exp(&mut arena, ctx, &exp, value_none)
-        .finish()
+        .map_err(Failure::into_report)
         .unwrap();
     assert_eq!(
         *ctx.find_value_at_slot(
@@ -227,14 +234,14 @@ fn sequential_fallback_prefers_the_later_failure_at_equal_depth() {
         instr_if.exp.span = span;
     }
     let error = evaluate(vec![func("entry", vec![instr_l, instr_r])], false);
-    let mut errors = vec![&error];
+    let mut errors = vec![error.as_ref()];
     let mut spans = Vec::new();
     while let Some(error) = errors.pop() {
-        spans.push(&error.span);
+        spans.push(error.span());
         errors.extend(&error.children);
     }
-    assert!(spans.contains(&&span_r));
-    assert!(!spans.contains(&&span_l));
+    assert!(spans.contains(&span_r));
+    assert!(!spans.contains(&span_l));
 }
 
 #[test]
@@ -255,14 +262,20 @@ fn long_tail_failures_render_and_drop_on_a_small_stack() {
                     spec_sl.push(if relation { rel(&name, block) } else { func(&name, block) });
                 }
                 let error = evaluate(spec_sl, relation);
-                let mut errors = vec![&error];
+                let mut errors = vec![error.as_ref()];
                 let mut count = 0;
                 while let Some(error) = errors.pop() {
                     count += 1;
                     errors.extend(&error.children);
                 }
                 assert!(count >= 20_000, "tail frames were lost: {count}");
-                let message = error.to_string();
+                let config = p4spec_rust::diagnostic::RenderConfig {
+                    trace_limit: usize::MAX,
+                    ..Default::default()
+                };
+                let message = p4spec_rust::diagnostic::Renderer::new(config)
+                    .render_to_string(&error)
+                    .unwrap();
                 assert!(message.contains("entry"));
                 assert!(message.contains("step19999"));
                 drop(error);
@@ -337,7 +350,7 @@ fn conditional_unmatch_escapes_sequential_blocks_but_not_deterministic_blocks() 
                 "9"
             );
         } else {
-            let error = result.unwrap_err();
+            let error = result.unwrap_err().into_report();
             assert!(has_invocation(&error, "$miss"), "{error}");
         }
     }
