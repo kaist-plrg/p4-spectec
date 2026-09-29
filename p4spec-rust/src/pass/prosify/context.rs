@@ -99,52 +99,54 @@ impl Context {
 
     // - Hint loading
 
-    /// Reads the `prose*` hints of one definition; other hints are ignored.
-    fn load_hints(
+    /// Reads alteration hints while retaining their source declarations.
+    fn load_alter_hints(span_decl: &Span, hints_sl: &[sl::Hint]) -> Hints {
+        let mut hints = Hints::default();
+        for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
+            let hint = match id_hint.node.as_str() {
+                "prose" => &mut hints.prose,
+                "prose_in" => &mut hints.prose_in,
+                "prose_out" => &mut hints.prose_out,
+                "prose_true" => &mut hints.prose_true,
+                "prose_false" => &mut hints.prose_false,
+                _ => continue,
+            };
+            *hint = Some(Hint {
+                id: id_hint.clone(),
+                value: alter::init(exp_hint),
+                span_decl: span_decl.clone(),
+            });
+        }
+        hints
+    }
+
+    /// Reads field names and checks their count when a syntax case supplies it.
+    fn load_field_hints(
         span_decl: &Span,
         hints_sl: &[sl::Hint],
         num_fields: Option<usize>,
-    ) -> Result<Hints, ProseError> {
-        let mut hints = Hints::default();
+    ) -> Result<Option<Hint<fields::FieldHint>>, ProseError> {
+        let mut hint_fields = None;
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
-            let text_hint = id_hint.node.as_str();
-            match text_hint {
-                // Alteration hints share one parser
-                "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" => {
-                    let hint = Hint {
-                        id: id_hint.clone(),
-                        value: alter::init(exp_hint),
-                        span_decl: span_decl.clone(),
-                    };
-                    match text_hint {
-                        "prose" => hints.prose = Some(hint),
-                        "prose_in" => hints.prose_in = Some(hint),
-                        "prose_out" => hints.prose_out = Some(hint),
-                        "prose_true" => hints.prose_true = Some(hint),
-                        "prose_false" => hints.prose_false = Some(hint),
-                        _ => unreachable!(),
-                    }
-                }
-                // Field hints list strings
-                "prose_fields" => {
-                    let value = fields::init(exp_hint).map_err(|exp| {
-                        error::field_hint_element_invalid(id_hint, exp, span_decl)
-                    })?;
-                    let hint = Hint { id: id_hint.clone(), value, span_decl: span_decl.clone() };
-                    // Validate each field hint before a later hint can replace it
-                    if let Some(num_fields) = num_fields {
-                        fields::validate(&hint.value, num_fields).map_err(
-                            |fields::FieldError::ArityMismatch { expected, actual }| {
-                                error::field_hint_arity_mismatch(&hint, expected, actual)
-                            },
-                        )?;
-                    }
-                    hints.prose_fields = Some(hint);
-                }
-                _ => {}
+            // Other hints belong to their own loaders
+            if id_hint.node != "prose_fields" {
+                continue;
             }
+            // Field hints require text names on every declaration kind
+            let value = fields::init(exp_hint)
+                .map_err(|exp| error::field_hint_element_invalid(id_hint, exp, span_decl))?;
+            let hint = Hint { id: id_hint.clone(), value, span_decl: span_decl.clone() };
+            // Validate each case hint before a later hint can replace it
+            if let Some(num_fields) = num_fields {
+                fields::validate(&hint.value, num_fields).map_err(
+                    |fields::FieldError::ArityMismatch { expected, actual }| {
+                        error::field_hint_arity_mismatch(&hint, expected, actual)
+                    },
+                )?;
+            }
+            hint_fields = Some(hint);
         }
-        Ok(hints)
+        Ok(hint_fields)
     }
 
     // - Definition loading
@@ -197,7 +199,14 @@ impl Context {
             return Ok(());
         };
         for il::ast::TypCase { not_typ, hints: hints_sl, .. } in cases {
-            let hints = Self::load_hints(&not_typ.span, hints_sl, Some(not_typ.node.args().len()))?;
+            let hints = Hints {
+                prose_fields: Self::load_field_hints(
+                    &not_typ.span,
+                    hints_sl,
+                    Some(not_typ.node.args().len()),
+                )?,
+                ..Self::load_alter_hints(&not_typ.span, hints_sl)
+            };
             self.henv
                 .insert_case(&def_typ_sl.id, &not_typ.node.to_mixop(), hints);
         }
@@ -215,7 +224,10 @@ impl Context {
             sl::RelDef::Extern(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
             sl::RelDef::Defined(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
         };
-        let hints = Self::load_hints(&id_rel.span, hints_sl, None)?;
+        let hints = Hints {
+            prose_fields: Self::load_field_hints(&id_rel.span, hints_sl, None)?,
+            ..Self::load_alter_hints(&id_rel.span, hints_sl)
+        };
         self.henv.insert_rel(id_rel, hints);
         Ok(())
     }
@@ -228,7 +240,10 @@ impl Context {
             sl::MetaFuncDef::Table(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
             sl::MetaFuncDef::Defined(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
         };
-        let hints = Self::load_hints(&id_func.span, hints_sl, None)?;
+        let hints = Hints {
+            prose_fields: Self::load_field_hints(&id_func.span, hints_sl, None)?,
+            ..Self::load_alter_hints(&id_func.span, hints_sl)
+        };
         self.henv.insert_func(id_func, hints);
         Ok(())
     }
