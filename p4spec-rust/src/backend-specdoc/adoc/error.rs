@@ -23,13 +23,10 @@ fn describe_link(link: &Link) -> String {
 fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
     // A propagated hint retains the template's declaration even at a call site
     let (span, label) = match &link.origin {
-        Some(origin) => {
-            let span = if origin.span.left.line == 0 { span } else { &origin.span };
-            (span, format!("`{}`: {label}", origin.node))
-        }
+        Some(origin) => (&origin.span, format!("`{}`: {label}", origin.node)),
         None => (span, label.to_owned()),
     };
-    let labels = if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, label)] };
+    let labels = vec![Label::primary(span, label)];
     // Explain how the source template becomes the displayed reference text
     let notes = match &link.origin {
         Some(origin) => vec![format!(
@@ -75,9 +72,7 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
         "this inner link is suppressed",
     );
     // Relate the enclosing template when its original location is available
-    if let Some(origin) = &link_outer.origin
-        && origin.span.left.line != 0
-    {
+    if let Some(origin) = &link_outer.origin {
         diagnostic.labels.push(Label::secondary(
             &origin.span,
             format!(

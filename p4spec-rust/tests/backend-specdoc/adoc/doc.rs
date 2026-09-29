@@ -202,6 +202,55 @@ fn link_warnings_preserve_order_location_notes_and_deduplication() {
 }
 
 #[test]
+fn link_warnings_preserve_origins_without_line_coordinates() {
+    use p4spec_rust::{
+        diagnostic::{LabelStyle, RenderConfig, Renderer, ReportKind},
+        lang::common::source::Position,
+    };
+
+    let span =
+        Span::new(Position::new("fragment.watsup", 1, 0), Position::new("fragment.watsup", 1, 1));
+    let span_outer =
+        Span::new(Position::new("template.watsup", 0, 0), Position::new("template.watsup", 0, 0));
+    let span_inner = Span::default();
+    let prose = Prose::link(
+        Link {
+            kind: LinkKind::Direct("outer".into()),
+            origin: Some(p4spec_rust::phrase! {
+                node: "prose_in".to_owned(), span: span_outer.clone(),
+            }),
+        },
+        Prose::link(
+            Link {
+                kind: LinkKind::Direct("inner".into()),
+                origin: Some(p4spec_rust::phrase! {
+                    node: "prose".to_owned(), span: span_inner.clone(),
+                }),
+            },
+            Prose::text("body"),
+        ),
+    );
+    let mut warnings = Vec::new();
+    let text = serialize::ser_prose(&AnchorContext::default(), &span, &mut warnings, &prose);
+    assert_eq!(text, "xref:outer[body]");
+    assert_eq!(warnings.len(), 1);
+    let ReportKind::Cause(diagnostic) = &warnings[0].kind else { panic!("warning cause") };
+    assert_eq!(diagnostic.code.as_deref(), Some("adoc/link-nested"));
+    assert_eq!(diagnostic.labels.len(), 2);
+    assert_eq!(diagnostic.labels[0].style, LabelStyle::Primary);
+    assert_eq!(diagnostic.labels[0].span, span_inner);
+    assert_eq!(diagnostic.labels[1].style, LabelStyle::Secondary);
+    assert_eq!(diagnostic.labels[1].span, span_outer);
+
+    let rendered = Renderer::new(RenderConfig::default())
+        .render_to_string(&warnings[0])
+        .unwrap();
+    assert!(rendered.contains("at generated source: `prose`: this inner link is suppressed"));
+    assert!(rendered.contains("related location at template.watsup: `prose_in`"));
+    assert!(!rendered.contains("fragment.watsup"));
+}
+
+#[test]
 fn code_warnings_and_table_lint_policy_remain_distinct() {
     let code = Code::Link(
         Link { kind: LinkKind::Direct("outer".into()), origin: None },
@@ -215,6 +264,11 @@ fn code_warnings_and_table_lint_policy_remain_distinct() {
     let span = Span::default();
     serialize::ser_prose(&anchor_ctx, &span, &mut warnings, &Prose::Code(code.clone()));
     assert_eq!(warnings.len(), 1);
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &warnings[0].kind else {
+        panic!("warning cause")
+    };
+    assert_eq!(diagnostic.labels.len(), 1);
+    assert_eq!(diagnostic.labels[0].span, span);
     warnings.clear();
     serialize::ser_block(
         &anchor_ctx,
