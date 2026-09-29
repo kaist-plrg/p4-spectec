@@ -2,7 +2,7 @@
 //!
 //! `PhraseMap` is a persistent ordered map over `ByKey`;
 //! cloning shares structure, so environments can be forked cheaply.
-//! `IdMap` keys by identifier and looks up by bare name.
+//! Lookups borrow syntax keys and retain the stored source annotations.
 
 use imbl::{GenericOrdMap, shared_ptr::RcK};
 use thiserror::Error;
@@ -94,47 +94,50 @@ impl<K: SyntaxCmp, V> PhraseMap<K, V> {
     }
 }
 
-impl<V> PhraseMap<Id, V> {
+impl<K: SyntaxCmp, V> PhraseMap<K, V> {
     /// Returns the value for an equivalent key.
-    pub fn get(&self, key: &Id) -> Option<&V> {
-        self.entries.get(&key.node)
+    pub fn get(&self, key: &K) -> Option<&V> {
+        self.entries.get(&ByKey(key))
     }
 
-    /// Returns the stored identifier and value without replacing its source span.
-    pub fn get_key_value(&self, key: &Id) -> Option<(&Id, &V)> {
+    /// Returns the stored key and value without replacing its source span.
+    pub fn get_key_value(&self, key: &K) -> Option<(&K, &V)> {
         self.entries
-            .get_key_value(&key.node)
+            .get_key_value(&ByKey(key))
             .map(|(key, value)| (&key.0, value))
     }
 
     /// Returns the mutable value for an equivalent key.
-    pub fn get_mut(&mut self, key: &Id) -> Option<&mut V>
+    pub fn get_mut(&mut self, key: &K) -> Option<&mut V>
     where
+        K: Clone,
         V: Clone,
     {
-        self.entries.get_mut(&key.node)
+        self.entries.get_mut(&ByKey(key))
     }
 
     /// Returns whether an equivalent key is present.
-    pub fn contains_key(&self, key: &Id) -> bool {
-        self.entries.contains_key(&key.node)
+    pub fn contains_key(&self, key: &K) -> bool {
+        self.entries.contains_key(&ByKey(key))
     }
 
     /// Removes and returns the value for an equivalent key.
-    pub fn remove(&mut self, key: &Id) -> Option<V>
+    pub fn remove(&mut self, key: &K) -> Option<V>
     where
+        K: Clone,
         V: Clone,
     {
-        self.entries.remove(&key.node)
+        self.entries.remove(&ByKey(key))
     }
 
     /// Removes and returns the stored key and value for an equivalent key.
-    pub fn remove_entry(&mut self, key: &Id) -> Option<(Id, V)>
+    pub fn remove_entry(&mut self, key: &K) -> Option<(K, V)>
     where
+        K: Clone,
         V: Clone,
     {
         self.entries
-            .remove_with_key(&key.node)
+            .remove_with_key(&ByKey(key))
             .map(|(key, value)| (key.0, value))
     }
 }
