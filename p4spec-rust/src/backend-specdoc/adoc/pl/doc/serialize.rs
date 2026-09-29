@@ -11,6 +11,8 @@
 //! -> . +++<span class="bk-arm-anchor" id="arm"></span>+++Done
 //! ```
 
+use crate::backend_specdoc::anchor::{AnchorContext, Presentation};
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, Prose, Subject, Table};
@@ -209,10 +211,11 @@ pub fn subject_name(subject: &Subject) -> Option<String> {
 }
 
 impl Link {
-    fn target(&self, anchor: &dyn Fn(&Subject) -> Option<String>) -> Option<String> {
+    fn target(&self, anchor_ctx: &AnchorContext<'_>) -> Option<String> {
         match self {
             Link::Direct(target) => Some(target.clone()),
-            Link::Subject(subject) => anchor(subject),
+            Link::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, id),
+            Link::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, id),
         }
     }
 }
@@ -235,18 +238,15 @@ enum CodeStyle {
 }
 
 /// Per-serialization anchor labels and warnings.
-struct Serializer<'a> {
-    anchor: &'a dyn Fn(&Subject) -> Option<String>,
+struct Serializer<'ctx, 'a> {
+    anchor_ctx: &'ctx AnchorContext<'a>,
     markers: BTreeMap<String, String>,
     warned: BTreeSet<String>,
 }
 
-impl<'a> Serializer<'a> {
-    fn new(
-        anchor: &'a dyn Fn(&Subject) -> Option<String>,
-        markers: BTreeMap<String, String>,
-    ) -> Self {
-        Serializer { anchor, markers, warned: BTreeSet::new() }
+impl<'ctx, 'a> Serializer<'ctx, 'a> {
+    fn new(anchor_ctx: &'ctx AnchorContext<'a>, markers: BTreeMap<String, String>) -> Self {
+        Serializer { anchor_ctx, markers, warned: BTreeSet::new() }
     }
 
     // - Warnings
@@ -333,7 +333,7 @@ impl<'a> Serializer<'a> {
         segments: &mut Vec<CodeSegment>,
     ) {
         // Unresolved subjects retain the surrounding link context
-        let Some(target_inner) = link.target(self.anchor) else {
+        let Some(target_inner) = link.target(self.anchor_ctx) else {
             self.collect_code(code_inner, target, link_ctx, lint, segments);
             return;
         };
@@ -429,7 +429,7 @@ impl<'a> Serializer<'a> {
         lint: bool,
     ) -> String {
         // Preserve the body when the enclosing document has no target
-        let Some(target) = link.target(self.anchor) else {
+        let Some(target) = link.target(self.anchor_ctx) else {
             return self.ser_prose(prose_inner, link_ctx, lint);
         };
         self.warn_empty_target(lint, &target);
@@ -625,26 +625,27 @@ impl<'a> Serializer<'a> {
 //   -> a xref:f[b]
 
 /// Serializes prose using the enclosing document's anchor resolver.
-pub fn ser_prose(anchor: &dyn Fn(&Subject) -> Option<String>, prose: &Prose) -> String {
-    let mut serializer = Serializer::new(anchor, BTreeMap::new());
+pub fn ser_prose(anchor_ctx: &AnchorContext<'_>, prose: &Prose) -> String {
+    let mut serializer = Serializer::new(anchor_ctx, BTreeMap::new());
     serializer.ser_prose(prose, None, true)
 }
 
 /// Serializes a link label without creating nested cross-references.
 pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
-    Serializer::new(&|_| None, BTreeMap::new()).ser_prose(prose, Some(""), false)
+    let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
+    Serializer::new(&anchor_ctx, BTreeMap::new()).ser_prose(prose, Some(""), false)
 }
 
 /// Serializes code without monospace markup using the given anchor resolver.
-pub fn ser_code(anchor: &dyn Fn(&Subject) -> Option<String>, code: &Code) -> String {
-    let mut serializer = Serializer::new(anchor, BTreeMap::new());
+pub fn ser_code(anchor_ctx: &AnchorContext<'_>, code: &Code) -> String {
+    let mut serializer = Serializer::new(anchor_ctx, BTreeMap::new());
     serializer.ser_code(CodeStyle::Plain, code, None, false)
 }
 
 /// Resolves arm labels before serializing a fragment with the given anchor resolver.
-pub fn ser_block(anchor: &dyn Fn(&Subject) -> Option<String>, block: &Block) -> String {
+pub fn ser_block(anchor_ctx: &AnchorContext<'_>, block: &Block) -> String {
     let markers = block.anchor_markers();
-    let mut serializer = Serializer::new(anchor, markers);
+    let mut serializer = Serializer::new(anchor_ctx, markers);
     serializer.ser_block(block)
 }

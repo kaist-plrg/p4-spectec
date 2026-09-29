@@ -1,8 +1,9 @@
+use p4spec_rust::backend_specdoc::anchor::AnchorContext;
 use p4spec_rust::{
     backend_specdoc::adoc::pl::{
         self as adoc,
         doc::{doc::Subject, serialize::subject_name},
-        render_def, render_spec,
+        render_spec,
     },
     lang::{
         common::{
@@ -21,6 +22,13 @@ use p4spec_rust::{
         pl::{annot::Hints, ast as pl},
     },
 };
+
+fn render_def(resolve: &dyn Fn(&Subject) -> Option<String>, def: &pl::Def) -> Option<String> {
+    let func = |_, name: &str| resolve(&Subject::Function(name.to_owned()));
+    let rel = |_, name: &str| resolve(&Subject::Relation(name.to_owned()));
+    let mut anchor_ctx = AnchorContext::new(&func, &rel);
+    adoc::render_def(&mut anchor_ctx, "fragment", def)
+}
 
 fn id(name: &str) -> pl::Id {
     p4spec_rust::phrase! { node: name.to_owned(), span: Span::default() }
@@ -227,10 +235,10 @@ fn test_nested_backtracking_uses_local_arm_labels_and_fresh_block_counters() {
     let def = defined_func("choice", vec![outer]);
     let rendered = render_def(&subject_name, &def).unwrap();
 
-    assert!(rendered.contains("id=\"bk-choice-1-arm-1\""));
-    assert!(rendered.contains("id=\"bk-choice-2-arm-1\""));
-    assert!(rendered.contains("href=\"#bk-choice-2-arm-2\">→ b</a>"), "{rendered}",);
-    assert!(rendered.contains("href=\"#bk-choice-1-arm-2\">→ 2</a>"), "{rendered}",);
+    assert!(rendered.contains("id=\"bk-fragment-1-arm-1\""));
+    assert!(rendered.contains("id=\"bk-fragment-2-arm-1\""));
+    assert!(rendered.contains("href=\"#bk-fragment-2-arm-2\">→ b</a>"), "{rendered}",);
+    assert!(rendered.contains("href=\"#bk-fragment-1-arm-2\">→ 2</a>"), "{rendered}",);
 }
 
 #[test]
@@ -259,8 +267,8 @@ fn test_full_render_is_deterministic_and_fragments_reset_counters() {
     let rendered_b = render_spec(&spec);
 
     assert_eq!(rendered_a, rendered_b);
-    assert!(rendered_a.contains("id=\"bk-choice-1-arm-1\""));
-    assert!(rendered_a.contains("id=\"bk-choice-2-arm-1\""));
+    assert!(rendered_a.contains("id=\"bk-spec:choice:0-1-arm-1\""));
+    assert!(rendered_a.contains("id=\"bk-spec:choice:1-1-arm-1\""));
 }
 
 #[test]
@@ -295,7 +303,7 @@ fn test_otherwise_anchor_follows_the_ordered_list_marker_space() {
     assert!(
         render_def(&subject_name, &def)
             .unwrap()
-            .contains("\n\n. +++<span id=\"fallback-else\"></span>+++Otherwise:")
+            .contains("\n\n. +++<span id=\"fragment-else\"></span>+++Otherwise:")
     );
 }
 
@@ -346,8 +354,8 @@ fn test_relation_dispatch_allocates_block_anchor_before_group_bodies() {
     };
     let rendered = render_def(&subject_name, &def).unwrap();
 
-    assert!(rendered.contains("id=\"bk-Rel-2-arm-1\""), "{rendered}");
-    assert!(rendered.contains("id=\"bk-Rel-1-arm-1\""), "{rendered}");
+    assert!(rendered.contains("id=\"bk-fragment-2-arm-1\""), "{rendered}");
+    assert!(rendered.contains("id=\"bk-fragment-1-arm-1\""), "{rendered}");
 }
 
 fn table_func() -> pl::TableFunc {
@@ -452,25 +460,27 @@ fn test_rulegroup_fragments_keep_distinct_arm_anchors() {
         vec![return_exp_instr(exp_bool(false), Some(pl::Fallthrough::Next))],
         vec![return_instr(true)],
     ])];
-    let mut renderer = adoc::Renderer::new(&subject_name);
-    let text_a = renderer.render_rulegroup(
+    let resolve = |_, name: &str| Some(name.to_owned());
+    let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
+    let text_a = adoc::Renderer::new(&mut anchor_ctx, "Rel:0").render_rulegroup(
         &Hints::default(),
         &id("Rel"),
         &signature,
         &[exp_bool(true)],
         &block,
     );
-    let text_b = renderer.render_rulegroup(
+    let text_b = adoc::Renderer::new(&mut anchor_ctx, "Rel:1").render_rulegroup(
         &Hints::default(),
         &id("Rel"),
         &signature,
         &[exp_bool(true)],
         &block,
     );
-    assert!(text_a.contains("id=\"bk-Rel-1-arm-1\""), "{text_a}");
-    assert!(text_b.contains("id=\"bk-Rel-2-arm-1\""), "{text_b}");
-    assert!(text_b.contains("href=\"#bk-Rel-2-arm-2\">→ 2</a>"), "{text_b}");
-    let text_fresh = adoc::Renderer::new(&subject_name).render_rulegroup(
+    assert!(text_a.contains("id=\"bk-Rel:0-1-arm-1\""), "{text_a}");
+    assert!(text_b.contains("id=\"bk-Rel:1-1-arm-1\""), "{text_b}");
+    assert!(text_b.contains("href=\"#bk-Rel:1-1-arm-2\">→ 2</a>"), "{text_b}");
+    let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
+    let text_fresh = adoc::Renderer::new(&mut anchor_ctx, "Rel:0").render_rulegroup(
         &Hints::default(),
         &id("Rel"),
         &signature,

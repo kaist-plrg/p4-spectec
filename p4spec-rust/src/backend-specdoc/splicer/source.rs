@@ -17,29 +17,27 @@ impl<'a> Source<'a> {
     pub fn new(file: &'a str, text: &'a str) -> Self {
         Self { file, text, pos: 0 }
     }
+
     /// Reports whether the entire skeleton has been consumed.
     pub fn eos(&self) -> bool {
         self.pos == self.text.len()
     }
+
     /// Returns the next byte, if present.
     pub fn get(&self) -> Option<u8> {
         self.text.as_bytes().get(self.pos).copied()
     }
+
     /// Returns the unconsumed source text.
     pub fn remaining(&self) -> &'a str {
         &self.text[self.pos..]
     }
-    /// Advances by a byte count ending on a UTF-8 boundary.
-    pub fn advn(&mut self, len: usize) {
-        assert!(self.text.is_char_boundary(self.pos + len));
-        self.pos += len;
+
+    /// Returns the current byte offset.
+    pub fn offset(&self) -> usize {
+        self.pos
     }
-    /// Advances over one complete character.
-    pub fn adv(&mut self) {
-        if let Some(ch) = self.remaining().chars().next() {
-            self.advn(ch.len_utf8());
-        }
-    }
+
     /// Returns the current source position.
     pub fn position(&self) -> Position {
         // Count source lines before the cursor
@@ -51,9 +49,23 @@ impl<'a> Source<'a> {
             .map_or(text.len(), |pos| text.len() - pos - 1);
         Position::new(self.file, line, column)
     }
+
     /// Locates the cursor without consuming input.
     pub fn span(&self) -> Span {
         let pos = self.position();
         Span::new(pos.clone(), pos)
+    }
+
+    /// Advances by a byte count ending on a UTF-8 boundary.
+    pub fn advn_bytes(&mut self, len: usize) {
+        assert!(self.text.is_char_boundary(self.pos + len));
+        self.pos += len;
+    }
+
+    /// Advances over one complete character.
+    pub fn advn_char(&mut self) {
+        if let Some(ch) = self.remaining().chars().next() {
+            self.advn_bytes(ch.len_utf8());
+        }
     }
 }

@@ -2,6 +2,7 @@ use p4spec_rust::backend_specdoc::adoc::pl::doc::{
     doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, Prose, Subject, Table},
     serialize,
 };
+use p4spec_rust::backend_specdoc::anchor::AnchorContext;
 
 #[test]
 fn code_links_merge_adjacent_tokens_and_drop_nested_targets() {
@@ -13,7 +14,10 @@ fn code_links_merge_adjacent_tokens_and_drop_nested_targets() {
         ])),
     );
     assert_eq!(
-        serialize::ser_prose(&serialize::subject_name, &Prose::Code(code)),
+        serialize::ser_prose(
+            &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
+            &Prose::Code(code)
+        ),
         "xref:outer[``a`` ``b``]"
     );
 }
@@ -24,7 +28,10 @@ fn unresolved_subject_keeps_body_without_cross_reference() {
         Link::Subject(Subject::Function("f".into())),
         Box::new(Prose::Text("call".into())),
     );
-    assert_eq!(serialize::ser_prose(&|_| None, &prose), "call");
+    assert_eq!(
+        serialize::ser_prose(&AnchorContext::new(&|_, _| None, &|_, _| None), &prose),
+        "call"
+    );
 }
 
 #[test]
@@ -48,7 +55,10 @@ fn fallthrough_labels_follow_nested_ordered_list_markers() {
             }),
         ])),
     })]);
-    let text = serialize::ser_block(&serialize::subject_name, &block);
+    let text = serialize::ser_block(
+        &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
+        &block,
+    );
     assert!(text.contains("[<a href=\"#two\">→ b</a>]"), "{text}");
     assert!(
         text.contains(" .. +++<span class=\"bk-arm-anchor\" id=\"two\"></span>+++Done"),
@@ -59,11 +69,20 @@ fn fallthrough_labels_follow_nested_ordered_list_markers() {
 #[test]
 fn capitalization_stops_at_code_and_reaches_text_after_empty_nodes() {
     let prose = Prose::Seq(vec![Prose::Empty, Prose::Text("hello".into())]);
-    assert_eq!(serialize::ser_prose(&serialize::subject_name, &prose.capitalize_first()), "Hello");
+    assert_eq!(
+        serialize::ser_prose(
+            &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
+            &prose.capitalize_first()
+        ),
+        "Hello"
+    );
     let prose =
         Prose::Seq(vec![Prose::Code(Code::Token("x".into())), Prose::Text(" stays".into())]);
     assert_eq!(
-        serialize::ser_prose(&serialize::subject_name, &prose.capitalize_first()),
+        serialize::ser_prose(
+            &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
+            &prose.capitalize_first()
+        ),
         "``x`` stays"
     );
 }
@@ -71,10 +90,19 @@ fn capitalization_stops_at_code_and_reaches_text_after_empty_nodes() {
 #[test]
 fn link_delimiters_and_quoted_code_preserve_literal_content() {
     let prose = Prose::Link(Link::Direct("target".into()), Box::new(Prose::Text("a[b]".into())));
-    assert_eq!(serialize::ser_prose(&serialize::subject_name, &prose), "<<target,a[b]>>");
+    assert_eq!(
+        serialize::ser_prose(
+            &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
+            &prose
+        ),
+        "<<target,a[b]>>"
+    );
     let prose = Prose::Code(Code::Token("\"a\" \"b\"".into()));
     assert_eq!(
-        serialize::ser_prose(&serialize::subject_name, &prose),
+        serialize::ser_prose(
+            &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
+            &prose
+        ),
         "``{quot}a{quot}`` ``{quot}b{quot}``"
     );
 }
@@ -86,7 +114,10 @@ fn table_serialization_keeps_header_and_cell_boundaries() {
         rows: vec![vec![Code::Token("a".into()), Code::Token("b".into())]],
     });
     assert_eq!(
-        serialize::ser_block(&serialize::subject_name, &block),
+        serialize::ser_block(
+            &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
+            &block
+        ),
         "[cols=\"2\", options=\"header\"]\n|===\n| Input | Output \n\n| a | b\n\n|==="
     );
 }

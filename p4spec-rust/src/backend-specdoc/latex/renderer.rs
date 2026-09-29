@@ -24,9 +24,9 @@ use crate::lang::{
 };
 
 use super::{
+    super::anchor::{AnchorContext, Presentation},
     error::{Error, Result},
     precedence::{self, Category, Prec, Side},
-    render::Anchors,
     tex::{
         doc::{Alignment, Block, Delimiter, Doc, GridRow, Soft, Style, Symbol, Target},
         layout, link, width,
@@ -66,16 +66,20 @@ impl Doc {
     //   [i : n]   -> \left[\mathsf{i} : \mathsf{n}\right]
 
     /// Renders an index suffix, `[i]`.
-    fn of_idx_suffix(exp_idx: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        let tex_idx = Doc::of_exp(exp_idx, anchors)?;
+    fn of_idx_suffix(anchor_ctx: &AnchorContext<'_>, exp_idx: &Exp) -> Result<Doc> {
+        let tex_idx = Doc::of_exp(anchor_ctx, exp_idx)?;
         let tex_suffix = Doc::delimited(Delimiter::Bracket, tex_idx);
         Ok(tex_suffix)
     }
 
     /// Renders a slice suffix, `[i : n]`.
-    fn of_slice_suffix(exp_idx: &Exp, exp_len: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        let tex_idx = Doc::of_exp(exp_idx, anchors)?;
-        let tex_len = Doc::of_exp(exp_len, anchors)?;
+    fn of_slice_suffix(
+        anchor_ctx: &AnchorContext<'_>,
+        exp_idx: &Exp,
+        exp_len: &Exp,
+    ) -> Result<Doc> {
+        let tex_idx = Doc::of_exp(anchor_ctx, exp_idx)?;
+        let tex_len = Doc::of_exp(anchor_ctx, exp_len)?;
         let tex_body = Doc::concat_spaced(vec![tex_idx, Doc::Fixed(Symbol::Colon), tex_len]);
         let tex_suffix = Doc::delimited(Delimiter::Bracket, tex_body);
         Ok(tex_suffix)
@@ -87,15 +91,13 @@ impl Doc {
 //   $g(x), with anchor g   -> \href{#g}{\mathrm{g}}\left(\mathsf{x}\right)
 
 /// Resolves the anchor of a function reference.
-fn anchor_of_func(anchors: Option<&Anchors<'_>>, id: &Id) -> Option<String> {
-    let anchors = anchors?;
-    (anchors.func)(&id.node)
+fn anchor_of_func(anchor_ctx: &AnchorContext<'_>, id: &Id) -> Option<String> {
+    anchor_ctx.func(Presentation::Latex, &id.node)
 }
 
 /// Resolves the anchor of a relation reference.
-fn anchor_of_rel(anchors: Option<&Anchors<'_>>, id: &Id) -> Option<String> {
-    let anchors = anchors?;
-    (anchors.rel)(&id.node)
+fn anchor_of_rel(anchor_ctx: &AnchorContext<'_>, id: &Id) -> Option<String> {
+    anchor_ctx.rel(Presentation::Latex, &id.node)
 }
 
 impl Doc {
@@ -575,13 +577,15 @@ impl Doc {
     //   Doc::of_nested_exp(of_binop(Mul), Left, ExpTerm { tex: x + y, category: Additive })
     //   -> \left(x + y\right)
 
-    fn of_exp(exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        let term = ExpTerm::of_exp(exp, anchors)?;
+    fn of_exp(anchor_ctx: &AnchorContext<'_>, exp: &Exp) -> Result<Doc> {
+        let term = ExpTerm::of_exp(anchor_ctx, exp)?;
         Ok(term.tex)
     }
 
-    fn of_exps(exps: &[Exp], anchors: Option<&Anchors<'_>>) -> Result<Vec<Doc>> {
-        exps.iter().map(|exp| Doc::of_exp(exp, anchors)).collect()
+    fn of_exps(anchor_ctx: &AnchorContext<'_>, exps: &[Exp]) -> Result<Vec<Doc>> {
+        exps.iter()
+            .map(|exp| Doc::of_exp(anchor_ctx, exp))
+            .collect()
     }
 
     /// Parenthesizes a weaker operand or an equal-precedence associativity conflict.
@@ -596,43 +600,43 @@ impl Doc {
 
 impl ExpTerm {
     /// Renders an expression while retaining the category of its outermost operator.
-    fn of_exp(exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_exp(anchor_ctx: &AnchorContext<'_>, exp: &Exp) -> Result<ExpTerm> {
         match &exp.node {
             ExpKind::Bool(value) => Ok(ExpTerm::of_bool_exp(*value)),
             ExpKind::Num(op, num) => Ok(ExpTerm::of_num_exp(*op, num)),
             ExpKind::Text(text) => Ok(ExpTerm::of_text_exp(text)),
             ExpKind::Id(id) => Ok(ExpTerm::of_var_exp(id)),
-            ExpKind::Un(op, exp) => ExpTerm::of_un_exp(*op, exp, anchors),
-            ExpKind::Bin(exp_l, op, exp_r) => ExpTerm::of_bin_exp(exp_l, *op, exp_r, anchors),
-            ExpKind::Cmp(exp_l, op, exp_r) => ExpTerm::of_cmp_exp(exp_l, *op, exp_r, anchors),
-            ExpKind::Arith(exp) => ExpTerm::of_exp(exp, anchors),
+            ExpKind::Un(op, exp) => ExpTerm::of_un_exp(anchor_ctx, *op, exp),
+            ExpKind::Bin(exp_l, op, exp_r) => ExpTerm::of_bin_exp(anchor_ctx, exp_l, *op, exp_r),
+            ExpKind::Cmp(exp_l, op, exp_r) => ExpTerm::of_cmp_exp(anchor_ctx, exp_l, *op, exp_r),
+            ExpKind::Arith(exp) => ExpTerm::of_exp(anchor_ctx, exp),
             ExpKind::Eps => Ok(ExpTerm::of_eps_exp()),
-            ExpKind::List(exps) => ExpTerm::of_list_exp(exps, anchors),
-            ExpKind::Cons(exp_l, exp_r) => ExpTerm::of_cons_exp(exp_l, exp_r, anchors),
-            ExpKind::Cat(exp_l, exp_r) => ExpTerm::of_cat_exp(exp_l, exp_r, anchors),
-            ExpKind::Idx(exp_base, exp_idx) => ExpTerm::of_idx_exp(exp_base, exp_idx, anchors),
+            ExpKind::List(exps) => ExpTerm::of_list_exp(anchor_ctx, exps),
+            ExpKind::Cons(exp_l, exp_r) => ExpTerm::of_cons_exp(anchor_ctx, exp_l, exp_r),
+            ExpKind::Cat(exp_l, exp_r) => ExpTerm::of_cat_exp(anchor_ctx, exp_l, exp_r),
+            ExpKind::Idx(exp_base, exp_idx) => ExpTerm::of_idx_exp(anchor_ctx, exp_base, exp_idx),
             ExpKind::Slice(exp_base, exp_idx, exp_len) => {
-                ExpTerm::of_slice_exp(exp_base, exp_idx, exp_len, anchors)
+                ExpTerm::of_slice_exp(anchor_ctx, exp_base, exp_idx, exp_len)
             }
-            ExpKind::Len(exp) => ExpTerm::of_len_exp(exp, anchors),
-            ExpKind::Mem(exp_l, exp_r) => ExpTerm::of_mem_exp(exp_l, exp_r, anchors),
-            ExpKind::Str(exp_fields) => ExpTerm::of_str_exp(exp_fields, anchors),
-            ExpKind::Dot(exp_base, atom) => ExpTerm::of_dot_exp(exp_base, atom, anchors),
+            ExpKind::Len(exp) => ExpTerm::of_len_exp(anchor_ctx, exp),
+            ExpKind::Mem(exp_l, exp_r) => ExpTerm::of_mem_exp(anchor_ctx, exp_l, exp_r),
+            ExpKind::Str(exp_fields) => ExpTerm::of_str_exp(anchor_ctx, exp_fields),
+            ExpKind::Dot(exp_base, atom) => ExpTerm::of_dot_exp(anchor_ctx, exp_base, atom),
             ExpKind::Upd(exp_base, path, exp_field) => {
-                ExpTerm::of_upd_exp(exp_base, path, exp_field, anchors)
+                ExpTerm::of_upd_exp(anchor_ctx, exp_base, path, exp_field)
             }
-            ExpKind::Paren(exp) => ExpTerm::of_paren_exp(exp, anchors),
-            ExpKind::Tuple(exps) => ExpTerm::of_tuple_exp(exps, anchors),
-            ExpKind::Call(id, targs, args) => ExpTerm::of_call_exp(id, targs, args, anchors),
-            ExpKind::Iter(exp, iter) => ExpTerm::of_iter_exp(exp, *iter, anchors),
-            ExpKind::Sub(exp, plain_typ) => ExpTerm::of_sub_exp(exp, plain_typ, anchors),
+            ExpKind::Paren(exp) => ExpTerm::of_paren_exp(anchor_ctx, exp),
+            ExpKind::Tuple(exps) => ExpTerm::of_tuple_exp(anchor_ctx, exps),
+            ExpKind::Call(id, targs, args) => ExpTerm::of_call_exp(anchor_ctx, id, targs, args),
+            ExpKind::Iter(exp, iter) => ExpTerm::of_iter_exp(anchor_ctx, exp, *iter),
+            ExpKind::Sub(exp, plain_typ) => ExpTerm::of_sub_exp(anchor_ctx, exp, plain_typ),
             ExpKind::Atom(atom) => Ok(ExpTerm::of_atom_exp(atom)),
-            ExpKind::Seq(exps) => ExpTerm::of_seq_exp(exps, anchors),
+            ExpKind::Seq(exps) => ExpTerm::of_seq_exp(anchor_ctx, exps),
             ExpKind::Infix(exp_l, atom, exp_r) => {
-                ExpTerm::of_infix_exp(exp_l, atom, exp_r, anchors)
+                ExpTerm::of_infix_exp(anchor_ctx, exp_l, atom, exp_r)
             }
             ExpKind::Brack(atom_l, exp, atom_r) => {
-                ExpTerm::of_brack_exp(atom_l, exp, atom_r, anchors)
+                ExpTerm::of_brack_exp(anchor_ctx, atom_l, exp, atom_r)
             }
             ExpKind::Hole(_) => Err(Error::Hole(exp.span.clone())),
             ExpKind::Fuse(..) => Err(Error::Fuse(exp.span.clone())),
@@ -647,14 +651,14 @@ impl ExpTerm {
 
     /// Preserves operand grouping and adds a break before the infix operator.
     fn of_binary_exp(
+        anchor_ctx: &AnchorContext<'_>,
         prec: Prec,
         tex_op: Doc,
         exp_l: &Exp,
         exp_r: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
-        let term_l = ExpTerm::of_exp(exp_l, anchors)?;
-        let term_r = ExpTerm::of_exp(exp_r, anchors)?;
+        let term_l = ExpTerm::of_exp(anchor_ctx, exp_l)?;
+        let term_r = ExpTerm::of_exp(anchor_ctx, exp_r)?;
         let tex_l = Doc::of_nested_exp(prec, Side::Left, term_l);
         let tex_r = Doc::of_nested_exp(prec, Side::Right, term_r);
         let tex = Doc::of_breakable_infix(tex_l, tex_op, tex_r);
@@ -667,11 +671,11 @@ impl ExpTerm {
 
     /// Parenthesizes a postfix base before attaching its rendered suffix.
     fn of_postfix_exp(
+        anchor_ctx: &AnchorContext<'_>,
         exp_base: &Exp,
         tex_suffix: Doc,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
-        let term_base = ExpTerm::of_exp(exp_base, anchors)?;
+        let term_base = ExpTerm::of_exp(anchor_ctx, exp_base)?;
         let tex_base = Doc::of_nested_exp(precedence::POSTFIX, Side::Left, term_base);
         let tex = Doc::concat(vec![tex_base, tex_suffix]);
         Ok(ExpTerm::new(tex, Category::Postfix))
@@ -717,8 +721,8 @@ impl ExpTerm {
     //
     //   ~b   -> \neg \mathsf{b}
 
-    fn of_un_exp(op: UnOp, exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
-        let term = ExpTerm::of_exp(exp, anchors)?;
+    fn of_un_exp(anchor_ctx: &AnchorContext<'_>, op: UnOp, exp: &Exp) -> Result<ExpTerm> {
+        let term = ExpTerm::of_exp(anchor_ctx, exp)?;
         let tex_op = Doc::of_unop(op);
         let tex_exp = Doc::of_nested_exp(precedence::UNARY, Side::Right, term);
         let tex = Doc::concat_spaced(vec![tex_op, tex_exp]);
@@ -731,30 +735,30 @@ impl ExpTerm {
     //   $(x ^ y)   -> {\mathsf{x}}^{\mathsf{y}}
 
     fn of_bin_exp(
+        anchor_ctx: &AnchorContext<'_>,
         exp_l: &Exp,
         op: BinOp,
         exp_r: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
         match BinopTerm::of_binop(op) {
             BinopTerm::Infix(tex_op) => {
                 let prec = precedence::of_binop(op);
-                ExpTerm::of_binary_exp(prec, tex_op, exp_l, exp_r, anchors)
+                ExpTerm::of_binary_exp(anchor_ctx, prec, tex_op, exp_l, exp_r)
             }
-            BinopTerm::Exponent => ExpTerm::of_pow_exp(op, exp_l, exp_r, anchors),
+            BinopTerm::Exponent => ExpTerm::of_pow_exp(anchor_ctx, op, exp_l, exp_r),
         }
     }
 
     /// Renders exponentiation as a superscript on the base.
     fn of_pow_exp(
+        anchor_ctx: &AnchorContext<'_>,
         op: BinOp,
         exp_l: &Exp,
         exp_r: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
         let prec = precedence::of_binop(op);
-        let term_l = ExpTerm::of_exp(exp_l, anchors)?;
-        let term_r = ExpTerm::of_exp(exp_r, anchors)?;
+        let term_l = ExpTerm::of_exp(anchor_ctx, exp_l)?;
+        let term_r = ExpTerm::of_exp(anchor_ctx, exp_r)?;
         let tex_l = Doc::of_nested_exp(prec, Side::Left, term_l);
         let tex_r = Doc::of_nested_exp(prec, Side::Right, term_r);
         let tex = Doc::sup(tex_l, tex_r);
@@ -766,14 +770,14 @@ impl ExpTerm {
     //   $(x <= y)   -> \mathsf{x} \le \mathsf{y}
 
     fn of_cmp_exp(
+        anchor_ctx: &AnchorContext<'_>,
         exp_l: &Exp,
         op: CmpOp,
         exp_r: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
         let prec = precedence::of_cmpop(op);
         let tex_op = Doc::of_cmpop(op);
-        ExpTerm::of_binary_exp(prec, tex_op, exp_l, exp_r, anchors)
+        ExpTerm::of_binary_exp(anchor_ctx, prec, tex_op, exp_l, exp_r)
     }
 
     // - Empty-sequence expressions
@@ -789,8 +793,8 @@ impl ExpTerm {
     //
     //   [x, y]   -> \left[\mathsf{x}, \mathsf{y}\right]
 
-    fn of_list_exp(exps: &[Exp], anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
-        let texs = Doc::of_exps(exps, anchors)?;
+    fn of_list_exp(anchor_ctx: &AnchorContext<'_>, exps: &[Exp]) -> Result<ExpTerm> {
+        let texs = Doc::of_exps(anchor_ctx, exps)?;
         let tex_elems = Doc::layout_group_soft_comma_separated(texs);
         let tex = Doc::delimited(Delimiter::Bracket, tex_elems);
         Ok(ExpTerm::atomic(tex))
@@ -800,27 +804,31 @@ impl ExpTerm {
     //
     //   x :: xs   -> \mathsf{x} \mathbin{::} \mathsf{xs}
 
-    fn of_cons_exp(exp_l: &Exp, exp_r: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_cons_exp(anchor_ctx: &AnchorContext<'_>, exp_l: &Exp, exp_r: &Exp) -> Result<ExpTerm> {
         let tex_op = Doc::mathbin(Doc::Fixed(Symbol::DoubleColon));
-        ExpTerm::of_binary_exp(precedence::CONS, tex_op, exp_l, exp_r, anchors)
+        ExpTerm::of_binary_exp(anchor_ctx, precedence::CONS, tex_op, exp_l, exp_r)
     }
 
     // - Concatenation expressions
     //
     //   xs ++ ys   -> \mathsf{xs} \mathbin{+\!\!+} \mathsf{ys}
 
-    fn of_cat_exp(exp_l: &Exp, exp_r: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_cat_exp(anchor_ctx: &AnchorContext<'_>, exp_l: &Exp, exp_r: &Exp) -> Result<ExpTerm> {
         let tex_op = Doc::mathbin(Doc::Fixed(Symbol::Cat));
-        ExpTerm::of_binary_exp(precedence::CAT, tex_op, exp_l, exp_r, anchors)
+        ExpTerm::of_binary_exp(anchor_ctx, precedence::CAT, tex_op, exp_l, exp_r)
     }
 
     // - Index expressions
     //
     //   xs[i]   -> \mathsf{xs}\left[\mathsf{i}\right]
 
-    fn of_idx_exp(exp_base: &Exp, exp_idx: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
-        let tex_suffix = Doc::of_idx_suffix(exp_idx, anchors)?;
-        ExpTerm::of_postfix_exp(exp_base, tex_suffix, anchors)
+    fn of_idx_exp(
+        anchor_ctx: &AnchorContext<'_>,
+        exp_base: &Exp,
+        exp_idx: &Exp,
+    ) -> Result<ExpTerm> {
+        let tex_suffix = Doc::of_idx_suffix(anchor_ctx, exp_idx)?;
+        ExpTerm::of_postfix_exp(anchor_ctx, exp_base, tex_suffix)
     }
 
     // - Slice expressions
@@ -828,21 +836,21 @@ impl ExpTerm {
     //   xs[i : n]   -> \mathsf{xs}\left[\mathsf{i} : \mathsf{n}\right]
 
     fn of_slice_exp(
+        anchor_ctx: &AnchorContext<'_>,
         exp_base: &Exp,
         exp_idx: &Exp,
         exp_len: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
-        let tex_suffix = Doc::of_slice_suffix(exp_idx, exp_len, anchors)?;
-        ExpTerm::of_postfix_exp(exp_base, tex_suffix, anchors)
+        let tex_suffix = Doc::of_slice_suffix(anchor_ctx, exp_idx, exp_len)?;
+        ExpTerm::of_postfix_exp(anchor_ctx, exp_base, tex_suffix)
     }
 
     // - Length expressions
     //
     //   |xs|   -> \left|\mathsf{xs}\right|
 
-    fn of_len_exp(exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
-        let tex_exp = Doc::of_exp(exp, anchors)?;
+    fn of_len_exp(anchor_ctx: &AnchorContext<'_>, exp: &Exp) -> Result<ExpTerm> {
+        let tex_exp = Doc::of_exp(anchor_ctx, exp)?;
         let tex = Doc::delimited(Delimiter::Bar, tex_exp);
         Ok(ExpTerm::new(tex, Category::Unary))
     }
@@ -851,9 +859,9 @@ impl ExpTerm {
     //
     //   x <- xs   -> \mathsf{x} \in \mathsf{xs}
 
-    fn of_mem_exp(exp_l: &Exp, exp_r: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_mem_exp(anchor_ctx: &AnchorContext<'_>, exp_l: &Exp, exp_r: &Exp) -> Result<ExpTerm> {
         let tex_op = Doc::Fixed(Symbol::In);
-        ExpTerm::of_binary_exp(precedence::COMPARISON, tex_op, exp_l, exp_r, anchors)
+        ExpTerm::of_binary_exp(anchor_ctx, precedence::COMPARISON, tex_op, exp_l, exp_r)
     }
 }
 
@@ -862,19 +870,19 @@ impl Doc {
     //
     //   {A x, B y}   -> \left\{\mathsf{A} \mathsf{x}, \mathsf{B} \mathsf{y}\right\}
 
-    fn of_exp_field(atom: &Atom, exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_exp_field(anchor_ctx: &AnchorContext<'_>, atom: &Atom, exp: &Exp) -> Result<Doc> {
         let tex_atom = Doc::of_atom(atom);
-        let tex_exp = Doc::of_exp(exp, anchors)?;
+        let tex_exp = Doc::of_exp(anchor_ctx, exp)?;
         let tex_field = Doc::concat_spaced(vec![tex_atom, tex_exp]);
         Ok(tex_field)
     }
 }
 
 impl ExpTerm {
-    fn of_str_exp(exp_fields: &[(Atom, Exp)], anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_str_exp(anchor_ctx: &AnchorContext<'_>, exp_fields: &[(Atom, Exp)]) -> Result<ExpTerm> {
         let texs = exp_fields
             .iter()
-            .map(|(atom, exp)| Doc::of_exp_field(atom, exp, anchors))
+            .map(|(atom, exp)| Doc::of_exp_field(anchor_ctx, atom, exp))
             .collect::<Result<Vec<_>>>()?;
         let tex_fields = Doc::layout_group_soft_comma_separated(texs);
         let tex = Doc::delimited(Delimiter::Brace, tex_fields);
@@ -886,13 +894,13 @@ impl ExpTerm {
     //   x.A   -> {\mathsf{x}}_{\mathsf{A}}
 
     /// Attaches a visible field as a subscript of its base.
-    fn of_dot_exp(exp_base: &Exp, atom: &Atom, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_dot_exp(anchor_ctx: &AnchorContext<'_>, exp_base: &Exp, atom: &Atom) -> Result<ExpTerm> {
         let tex_field = Doc::of_atom(atom);
         // An invisible field preserves the preceding path without a dot
         if tex_field.is_empty() {
-            return ExpTerm::of_exp(exp_base, anchors);
+            return ExpTerm::of_exp(anchor_ctx, exp_base);
         }
-        let term_base = ExpTerm::of_exp(exp_base, anchors)?;
+        let term_base = ExpTerm::of_exp(anchor_ctx, exp_base)?;
         let tex_base = Doc::of_nested_exp(precedence::POSTFIX, Side::Left, term_base);
         let tex = Doc::sub(tex_base, tex_field);
         Ok(ExpTerm::new(tex, Category::Postfix))
@@ -903,24 +911,24 @@ impl ExpTerm {
     //   x[.A = y]   -> \mathsf{x}\left[\mathsf{A} = \mathsf{y}\right]
 
     fn of_upd_exp(
+        anchor_ctx: &AnchorContext<'_>,
         exp_base: &Exp,
         path: &Path,
         exp_field: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
-        let tex_path = Doc::of_path(path, anchors)?;
-        let tex_field = Doc::of_exp(exp_field, anchors)?;
+        let tex_path = Doc::of_path(anchor_ctx, path)?;
+        let tex_field = Doc::of_exp(anchor_ctx, exp_field)?;
         let tex_body = Doc::concat_spaced(vec![tex_path, Doc::Fixed(Symbol::Equal), tex_field]);
         let tex_suffix = Doc::delimited(Delimiter::Bracket, tex_body);
-        ExpTerm::of_postfix_exp(exp_base, tex_suffix, anchors)
+        ExpTerm::of_postfix_exp(anchor_ctx, exp_base, tex_suffix)
     }
 
     // - Parenthesized expressions
     //
     //   (x)   -> \left(\mathsf{x}\right)
 
-    fn of_paren_exp(exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
-        let tex_exp = Doc::of_exp(exp, anchors)?;
+    fn of_paren_exp(anchor_ctx: &AnchorContext<'_>, exp: &Exp) -> Result<ExpTerm> {
+        let tex_exp = Doc::of_exp(anchor_ctx, exp)?;
         let tex = Doc::parenthesized(tex_exp);
         Ok(ExpTerm::atomic(tex))
     }
@@ -929,8 +937,8 @@ impl ExpTerm {
     //
     //   (x, y)   -> \left(\mathsf{x}, \mathsf{y}\right)
 
-    fn of_tuple_exp(exps: &[Exp], anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
-        let texs = Doc::of_exps(exps, anchors)?;
+    fn of_tuple_exp(anchor_ctx: &AnchorContext<'_>, exps: &[Exp]) -> Result<ExpTerm> {
+        let texs = Doc::of_exps(anchor_ctx, exps)?;
         let tex_elems = Doc::layout_group_soft_comma_separated(texs);
         let tex = Doc::parenthesized(tex_elems);
         Ok(ExpTerm::atomic(tex))
@@ -942,16 +950,16 @@ impl ExpTerm {
 
     /// Links the function name when its anchor resolves.
     fn of_call_exp(
+        anchor_ctx: &AnchorContext<'_>,
         id: &Id,
         targs: &[Targ],
         args: &[Arg],
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
-        let anchor = anchor_of_func(anchors, id);
+        let anchor = anchor_of_func(anchor_ctx, id);
         let tex_name = Doc::of_defid(id);
         let tex_name = Doc::of_link(anchor.as_deref(), tex_name)?;
         let tex_targs = Doc::of_targs(targs);
-        let tex_args = Doc::of_args(args, anchors)?;
+        let tex_args = Doc::of_args(anchor_ctx, args)?;
         let tex = Doc::concat(vec![tex_name, tex_targs, tex_args]);
         Ok(ExpTerm::atomic(tex))
     }
@@ -961,8 +969,8 @@ impl ExpTerm {
     //   x*   -> {\mathsf{x}}^{\ast}
     //   x?   -> {\mathsf{x}}^{?}
 
-    fn of_iter_exp(exp: &Exp, iter: Iter, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
-        let term = ExpTerm::of_exp(exp, anchors)?;
+    fn of_iter_exp(anchor_ctx: &AnchorContext<'_>, exp: &Exp, iter: Iter) -> Result<ExpTerm> {
+        let term = ExpTerm::of_exp(anchor_ctx, exp)?;
         let tex_base = Doc::of_nested_exp(precedence::POSTFIX, Side::Left, term);
         let tex_iter = Doc::of_iter(iter);
         let tex = Doc::sup(tex_base, tex_iter);
@@ -974,11 +982,11 @@ impl ExpTerm {
     //   x <: nat   -> \mathsf{x} \mathrel{<:} \mathbb{N}
 
     fn of_sub_exp(
+        anchor_ctx: &AnchorContext<'_>,
         exp: &Exp,
         plain_typ: &PlainTyp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
-        let term = ExpTerm::of_exp(exp, anchors)?;
+        let term = ExpTerm::of_exp(anchor_ctx, exp)?;
         let tex_l = Doc::of_nested_exp(precedence::SUBTYPE, Side::Left, term);
         let tex_op = Doc::of_rel_symbols(Symbol::Less, Symbol::Colon);
         let tex_r = Doc::of_plaintyp(plain_typ);
@@ -1000,11 +1008,11 @@ impl ExpTerm {
     //   A x   -> \mathsf{A}\,\mathsf{x}
 
     /// Packs notation terms with thin spaces and right-operand parenthesization.
-    fn of_seq_exp(exps: &[Exp], anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_seq_exp(anchor_ctx: &AnchorContext<'_>, exps: &[Exp]) -> Result<ExpTerm> {
         let texs = exps
             .iter()
             .map(|exp| {
-                let term = ExpTerm::of_exp(exp, anchors)?;
+                let term = ExpTerm::of_exp(anchor_ctx, exp)?;
                 let tex = Doc::of_nested_exp(precedence::SEQUENCE, Side::Right, term);
                 Ok(tex)
             })
@@ -1021,11 +1029,11 @@ impl ExpTerm {
 
 impl ExpTerm {
     /// Keeps the right operand that a subscripted arrow leaves after its subscript.
-    fn of_arrow_operand(exp_r: &Exp, anchors: Option<&Anchors<'_>>) -> Result<ExpTerm> {
+    fn of_arrow_operand(anchor_ctx: &AnchorContext<'_>, exp_r: &Exp) -> Result<ExpTerm> {
         match &exp_r.node {
             // Preserve the sequence category even when its tail is empty
             ExpKind::Seq(exps) => match exps.split_first() {
-                Some((_, exps_tail)) => ExpTerm::of_seq_exp(exps_tail, anchors),
+                Some((_, exps_tail)) => ExpTerm::of_seq_exp(anchor_ctx, exps_tail),
                 None => Ok(ExpTerm::atomic(Doc::Empty)),
             },
             // A singleton right operand becomes only a subscript
@@ -1036,7 +1044,7 @@ impl ExpTerm {
 
 impl Doc {
     /// Moves the first right-hand term of a subscripted arrow into its subscript.
-    fn of_arrow_subscript(tex_op: Doc, exp_r: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_arrow_subscript(anchor_ctx: &AnchorContext<'_>, tex_op: Doc, exp_r: &Exp) -> Result<Doc> {
         let exp_sub = match &exp_r.node {
             ExpKind::Seq(exps) => {
                 // An empty sequence leaves the arrow without a subscript
@@ -1047,7 +1055,7 @@ impl Doc {
             }
             _ => exp_r,
         };
-        let tex_sub = Doc::of_exp(exp_sub, anchors)?;
+        let tex_sub = Doc::of_exp(anchor_ctx, exp_sub)?;
         Ok(Doc::sub(tex_op, tex_sub))
     }
 }
@@ -1055,23 +1063,23 @@ impl Doc {
 impl ExpTerm {
     /// Renders notation infix, with arrow subscripts split from the right operand.
     fn of_infix_exp(
+        anchor_ctx: &AnchorContext<'_>,
         exp_l: &Exp,
         atom: &Atom,
         exp_r: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
         let prec = precedence::of_infix(&atom.node);
-        let term_l = ExpTerm::of_exp(exp_l, anchors)?;
+        let term_l = ExpTerm::of_exp(anchor_ctx, exp_l)?;
         let tex_atom = Doc::of_atom(atom);
         let is_subscripted = matches!(atom.node, AtomKind::ArrowSub | AtomKind::DoubleArrowSub);
         // Subscripted arrows consume the first right-hand term
         let term_r = if is_subscripted {
-            ExpTerm::of_arrow_operand(exp_r, anchors)?
+            ExpTerm::of_arrow_operand(anchor_ctx, exp_r)?
         } else {
-            ExpTerm::of_exp(exp_r, anchors)?
+            ExpTerm::of_exp(anchor_ctx, exp_r)?
         };
         let tex_op = if is_subscripted {
-            Doc::of_arrow_subscript(tex_atom, exp_r, anchors)?
+            Doc::of_arrow_subscript(anchor_ctx, tex_atom, exp_r)?
         } else {
             tex_atom
         };
@@ -1087,12 +1095,12 @@ impl ExpTerm {
     //   `[ x `]   -> \left[\mathsf{x}\right]
 
     fn of_brack_exp(
+        anchor_ctx: &AnchorContext<'_>,
         atom_l: &Atom,
         exp: &Exp,
         atom_r: &Atom,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<ExpTerm> {
-        let tex_body = Doc::of_exp(exp, anchors)?;
+        let tex_body = Doc::of_exp(anchor_ctx, exp)?;
         let tex = Doc::of_bracket(atom_l, tex_body, atom_r);
         Ok(ExpTerm::atomic(tex))
     }
@@ -1106,14 +1114,14 @@ impl Doc {
     //   x[.A[i] = y]   -> \mathsf{x}\left[\mathsf{A}\left[\mathsf{i}\right] = \mathsf{y}\right]
 
     /// Renders update paths, omitting the dot before a root field.
-    fn of_path(path: &Path, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_path(anchor_ctx: &AnchorContext<'_>, path: &Path) -> Result<Doc> {
         match &path.node {
             PathKind::Root => Ok(Doc::of_root_path()),
-            PathKind::Idx(path, exp_idx) => Doc::of_idx_path(path, exp_idx, anchors),
+            PathKind::Idx(path, exp_idx) => Doc::of_idx_path(anchor_ctx, path, exp_idx),
             PathKind::Slice(path, exp_idx, exp_len) => {
-                Doc::of_slice_path(path, exp_idx, exp_len, anchors)
+                Doc::of_slice_path(anchor_ctx, path, exp_idx, exp_len)
             }
-            PathKind::Dot(path, atom) => Doc::of_dot_path(path, atom, anchors),
+            PathKind::Dot(path, atom) => Doc::of_dot_path(anchor_ctx, path, atom),
         }
     }
 
@@ -1129,9 +1137,9 @@ impl Doc {
     //
     //   .A[i]   -> \mathsf{A}\left[\mathsf{i}\right]
 
-    fn of_idx_path(path: &Path, exp_idx: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        let tex_path = Doc::of_path(path, anchors)?;
-        let tex_suffix = Doc::of_idx_suffix(exp_idx, anchors)?;
+    fn of_idx_path(anchor_ctx: &AnchorContext<'_>, path: &Path, exp_idx: &Exp) -> Result<Doc> {
+        let tex_path = Doc::of_path(anchor_ctx, path)?;
+        let tex_suffix = Doc::of_idx_suffix(anchor_ctx, exp_idx)?;
         let tex = Doc::concat(vec![tex_path, tex_suffix]);
         Ok(tex)
     }
@@ -1141,13 +1149,13 @@ impl Doc {
     //   .A[i : n]   -> \mathsf{A}\left[\mathsf{i} : \mathsf{n}\right]
 
     fn of_slice_path(
+        anchor_ctx: &AnchorContext<'_>,
         path: &Path,
         exp_idx: &Exp,
         exp_len: &Exp,
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<Doc> {
-        let tex_path = Doc::of_path(path, anchors)?;
-        let tex_suffix = Doc::of_slice_suffix(exp_idx, exp_len, anchors)?;
+        let tex_path = Doc::of_path(anchor_ctx, path)?;
+        let tex_suffix = Doc::of_slice_suffix(anchor_ctx, exp_idx, exp_len)?;
         let tex = Doc::concat(vec![tex_path, tex_suffix]);
         Ok(tex)
     }
@@ -1157,13 +1165,13 @@ impl Doc {
     //   .A     -> \mathsf{A}
     //   .A.B   -> \mathsf{A}.\mathsf{B}
 
-    fn of_dot_path(path: &Path, atom: &Atom, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_dot_path(anchor_ctx: &AnchorContext<'_>, path: &Path, atom: &Atom) -> Result<Doc> {
         let tex_field = Doc::of_atom(atom);
         // A root field has no preceding path to separate
         if matches!(path.node, PathKind::Root) {
             return Ok(tex_field);
         }
-        let tex_path = Doc::of_path(path, anchors)?;
+        let tex_path = Doc::of_path(anchor_ctx, path)?;
         // An invisible field preserves the preceding path without a dot
         if tex_field.is_empty() {
             return Ok(tex_path);
@@ -1193,17 +1201,17 @@ impl Doc {
     //
     //   (x, y)   -> \left(\mathsf{x}, \mathsf{y}\right)
 
-    fn of_arg(arg: &Arg, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_arg(anchor_ctx: &AnchorContext<'_>, arg: &Arg) -> Result<Doc> {
         match &arg.node {
-            ArgKind::Exp(exp) => Doc::of_exp(exp, anchors),
+            ArgKind::Exp(exp) => Doc::of_exp(anchor_ctx, exp),
             ArgKind::Def(id) => Ok(Doc::of_defid(id)),
         }
     }
 
-    fn of_args(args: &[Arg], anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_args(anchor_ctx: &AnchorContext<'_>, args: &[Arg]) -> Result<Doc> {
         let texs = args
             .iter()
-            .map(|arg| Doc::of_arg(arg, anchors))
+            .map(|arg| Doc::of_arg(anchor_ctx, arg))
             .collect::<Result<Vec<_>>>()?;
         let tex_args = Doc::layout_group_soft_comma_separated(texs);
         let tex = Doc::parenthesized(tex_args);
@@ -1240,23 +1248,25 @@ impl Doc {
     //   -- otherwise     -> \mathrm{otherwise}
 
     /// Renders one premise; relation references link to their anchors.
-    fn of_prem(prem: &Prem, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_prem(anchor_ctx: &AnchorContext<'_>, prem: &Prem) -> Result<Doc> {
         match &prem.node {
             PremKind::Var(VarPrem { id, plain_typ }) => Ok(Doc::of_var_prem(id, plain_typ)),
-            PremKind::Rule(RulePrem { id, exp }) => Doc::of_rule_prem(id, exp, anchors),
-            PremKind::RuleNot(RuleNotPrem { id, exp }) => Doc::of_rule_not_prem(id, exp, anchors),
-            PremKind::If(IfPrem { exp }) => Doc::of_exp(exp, anchors),
+            PremKind::Rule(RulePrem { id, exp }) => Doc::of_rule_prem(anchor_ctx, id, exp),
+            PremKind::RuleNot(RuleNotPrem { id, exp }) => {
+                Doc::of_rule_not_prem(anchor_ctx, id, exp)
+            }
+            PremKind::If(IfPrem { exp }) => Doc::of_exp(anchor_ctx, exp),
             PremKind::Else => Ok(Doc::of_else_prem()),
-            PremKind::Iter(IterPrem { prem, iter }) => Doc::of_iter_prem(prem, *iter, anchors),
-            PremKind::Debug(DebugPrem { exp }) => Doc::of_debug_prem(exp, anchors),
+            PremKind::Iter(IterPrem { prem, iter }) => Doc::of_iter_prem(anchor_ctx, prem, *iter),
+            PremKind::Debug(DebugPrem { exp }) => Doc::of_debug_prem(anchor_ctx, exp),
         }
     }
 
     /// Renders premises, dropping those with no visible content.
-    fn of_prems(prems: &[Prem], anchors: Option<&Anchors<'_>>) -> Result<Vec<Doc>> {
+    fn of_prems(anchor_ctx: &AnchorContext<'_>, prems: &[Prem]) -> Result<Vec<Doc>> {
         let texs = prems
             .iter()
-            .map(|prem| Doc::of_prem(prem, anchors))
+            .map(|prem| Doc::of_prem(anchor_ctx, prem))
             .collect::<Result<Vec<_>>>()?;
         let texs = texs.into_iter().filter(|tex| !tex.is_empty()).collect();
         Ok(texs)
@@ -1276,9 +1286,9 @@ impl Doc {
     //
     //   -- Sub: x <: y, with anchor Sub   -> \href{#Sub}{\mathsf{x} \mathrel{<:} \mathsf{y}}
 
-    fn of_rule_prem(id: &Id, exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        let anchor = anchor_of_rel(anchors, id);
-        let tex_exp = Doc::of_exp(exp, anchors)?;
+    fn of_rule_prem(anchor_ctx: &AnchorContext<'_>, id: &Id, exp: &Exp) -> Result<Doc> {
+        let anchor = anchor_of_rel(anchor_ctx, id);
+        let tex_exp = Doc::of_exp(anchor_ctx, exp)?;
         Doc::of_link(anchor.as_deref(), tex_exp)
     }
 
@@ -1287,9 +1297,9 @@ impl Doc {
     //   -- Eval:/ p |- e : t, with anchor Eval
     //   -> \neg \href{#Eval}{\left(\mathsf{p} \mathrel{\vdash} \mathsf{e} : \mathsf{t}\right)}
 
-    fn of_rule_not_prem(id: &Id, exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        let anchor = anchor_of_rel(anchors, id);
-        let term = ExpTerm::of_exp(exp, anchors)?;
+    fn of_rule_not_prem(anchor_ctx: &AnchorContext<'_>, id: &Id, exp: &Exp) -> Result<Doc> {
+        let anchor = anchor_of_rel(anchor_ctx, id);
+        let term = ExpTerm::of_exp(anchor_ctx, exp)?;
         let tex_exp = Doc::of_nested_exp(precedence::UNARY, Side::Right, term);
         let tex_exp = Doc::of_link(anchor.as_deref(), tex_exp)?;
         let tex = Doc::concat_spaced(vec![Doc::Fixed(Symbol::Neg), tex_exp]);
@@ -1309,8 +1319,8 @@ impl Doc {
     //   -- (if x)*   -> {\left(\mathsf{x}\right)}^{\ast}
 
     /// Parenthesizes a premise before its iteration unless it is already iterated.
-    fn of_iter_prem(prem: &Prem, iter: Iter, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        let tex_prem = Doc::of_prem(prem, anchors)?;
+    fn of_iter_prem(anchor_ctx: &AnchorContext<'_>, prem: &Prem, iter: Iter) -> Result<Doc> {
+        let tex_prem = Doc::of_prem(anchor_ctx, prem)?;
         let tex_base = if matches!(prem.node, PremKind::Iter(_)) {
             tex_prem
         } else {
@@ -1325,9 +1335,9 @@ impl Doc {
     //
     //   -- debug x   -> \mathrm{debug} \mathsf{x}
 
-    fn of_debug_prem(exp: &Exp, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_debug_prem(anchor_ctx: &AnchorContext<'_>, exp: &Exp) -> Result<Doc> {
         let tex_debug = Doc::Styled(Style::Mathrm, "debug".to_owned());
-        let tex_exp = Doc::of_exp(exp, anchors)?;
+        let tex_exp = Doc::of_exp(anchor_ctx, exp)?;
         let tex = Doc::concat_spaced(vec![tex_debug, tex_exp]);
         Ok(tex)
     }
@@ -1480,16 +1490,16 @@ fn text_of_rule_id(id_rel: &Id, id_rule: &Id) -> String {
 
 impl Doc {
     /// Places a rule label above its inference fraction and numbers multiple premises.
-    fn of_rule(rule: &Rule, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_rule(anchor_ctx: &AnchorContext<'_>, rule: &Rule) -> Result<Doc> {
         let RuleKind { id_rel, id_rule, exp, prems } = &rule.node;
 
         // A single premise needs no numbered gutter
-        let mut texs_prem = Doc::of_prems(prems, anchors)?;
+        let mut texs_prem = Doc::of_prems(anchor_ctx, prems)?;
         let tex_numerator =
             if texs_prem.len() == 1 { texs_prem.remove(0) } else { Doc::numbered(texs_prem) };
 
         // Resolve the inference fraction at the layout width
-        let tex_conclusion = Doc::of_exp(exp, anchors)?;
+        let tex_conclusion = Doc::of_exp(anchor_ctx, exp)?;
         let tex_fraction = Doc::fraction(tex_numerator, tex_conclusion);
         let tex_fraction = Doc::displaystyle(tex_fraction);
         let tex_fraction = layout::resolve(WIDTH_LAYOUT, &tex_fraction)?;
@@ -1509,10 +1519,10 @@ impl Doc {
 
     /// Separates multiple inference rules while retaining empty-group annotations.
     fn of_rulegroup(
+        anchor_ctx: &AnchorContext<'_>,
         id_rel: &Id,
         id_group: &Id,
         rules: &[Rule],
-        anchors: Option<&Anchors<'_>>,
     ) -> Result<Doc> {
         match rules {
             // An empty rule group remains visible as a named empty set
@@ -1527,7 +1537,7 @@ impl Doc {
                 Ok(Doc::of_annotated(tex_empty, "rules"))
             }
             // A single rule has no surrounding gathered document
-            [rule] => Doc::of_rule(rule, anchors),
+            [rule] => Doc::of_rule(anchor_ctx, rule),
             // Multiple rules receive one gap between their blocks
             rules => {
                 let mut blocks = Vec::new();
@@ -1535,7 +1545,7 @@ impl Doc {
                     if !blocks.is_empty() {
                         blocks.push(Block::Gap);
                     }
-                    let tex_rule = Doc::of_rule(rule, anchors)?;
+                    let tex_rule = Doc::of_rule(anchor_ctx, rule)?;
                     blocks.push(Block::Line(tex_rule));
                 }
                 Ok(Doc::gathered(blocks))
@@ -1623,17 +1633,17 @@ impl Doc {
     //      \end{aligned}
 
     /// Renders one table row as a parenthesized pattern mapped to its result.
-    fn of_table_row(id: &Id, row: &TableRow, anchors: Option<&Anchors<'_>>) -> Result<Vec<Doc>> {
-        let tex_pattern = Doc::of_exp(&row.node.exp_pattern, anchors)?;
+    fn of_table_row(anchor_ctx: &AnchorContext<'_>, id: &Id, row: &TableRow) -> Result<Vec<Doc>> {
+        let tex_pattern = Doc::of_exp(anchor_ctx, &row.node.exp_pattern)?;
         let tex_pattern = Doc::parenthesized(tex_pattern);
         let tex_name = Doc::of_defid(id);
         let tex_l = Doc::concat(vec![tex_name, tex_pattern]);
-        let tex_r = Doc::of_exp(&row.node.exp_body, anchors)?;
+        let tex_r = Doc::of_exp(anchor_ctx, &row.node.exp_body)?;
         Ok(vec![tex_l, Doc::Fixed(Symbol::Mapsto), tex_r])
     }
 
     /// Renders table rows in aligned mapsto rows.
-    fn of_table(id: &Id, rows: &[TableRow], anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_table(anchor_ctx: &AnchorContext<'_>, id: &Id, rows: &[TableRow]) -> Result<Doc> {
         // Empty tables retain their name and declaration category
         if rows.is_empty() {
             let tex_name = Doc::of_defid(id);
@@ -1646,7 +1656,7 @@ impl Doc {
         }
         let rows_aligned = rows
             .iter()
-            .map(|row| Doc::of_table_row(id, row, anchors))
+            .map(|row| Doc::of_table_row(anchor_ctx, id, row))
             .collect::<Result<Vec<_>>>()?;
         Ok(Doc::Aligned(rows_aligned))
     }
@@ -1669,13 +1679,13 @@ enum LayoutFunc {
 
 impl LayoutFunc {
     /// Moves a condition below its equation only when the inline form exceeds width 80.
-    fn of_func_def(def: &FuncDef, anchors: Option<&Anchors<'_>>) -> Result<LayoutFunc> {
+    fn of_func_def(anchor_ctx: &AnchorContext<'_>, def: &FuncDef) -> Result<LayoutFunc> {
         let tex_name = Doc::of_defid(&def.id);
         let tex_tparams = Doc::of_tparams(&def.tparams);
-        let tex_args = Doc::of_args(&def.args, anchors)?;
+        let tex_args = Doc::of_args(anchor_ctx, &def.args)?;
         let tex_l = Doc::concat(vec![tex_name, tex_tparams, tex_args]);
-        let tex_body = Doc::of_exp(&def.exp, anchors)?;
-        let texs_prem = Doc::of_prems(&def.prems, anchors)?;
+        let tex_body = Doc::of_exp(anchor_ctx, &def.exp)?;
+        let texs_prem = Doc::of_prems(anchor_ctx, &def.prems)?;
 
         // Measure the full inline equation before choosing a continuation layout
         let tex_prem = match texs_prem.as_slice() {
@@ -1728,10 +1738,10 @@ impl GridRow {
 
 impl Doc {
     /// Aligns clauses together, with wide conditions spanning beneath each clause.
-    fn of_layout_funcs(defs_func: &[&FuncDef], anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    fn of_layout_funcs(anchor_ctx: &AnchorContext<'_>, defs_func: &[&FuncDef]) -> Result<Doc> {
         let layouts_func = defs_func
             .iter()
-            .map(|def_func| LayoutFunc::of_func_def(def_func, anchors))
+            .map(|def_func| LayoutFunc::of_func_def(anchor_ctx, def_func))
             .collect::<Result<Vec<_>>>()?;
         let has_condition_below = layouts_func
             .iter()
@@ -1768,8 +1778,8 @@ impl Doc {
     }
 
     /// Renders one defined function clause as its own aligned layout.
-    fn of_func_def(def_func: &FuncDef, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
-        Doc::of_layout_funcs(&[def_func], anchors)
+    fn of_func_def(anchor_ctx: &AnchorContext<'_>, def_func: &FuncDef) -> Result<Doc> {
+        Doc::of_layout_funcs(anchor_ctx, &[def_func])
     }
 }
 
@@ -1782,7 +1792,7 @@ impl Doc {
     //   Sep           -> Empty
 
     /// Renders one definition, ignoring presentation hints in canonical output.
-    pub(super) fn of_def(def: &Def, anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    pub(super) fn of_def(anchor_ctx: &AnchorContext<'_>, def: &Def) -> Result<Doc> {
         match &def.node {
             DefKind::ExternSyntax(ExternSyntaxDef { id, .. }) => Ok(Doc::of_extern_syntax_def(id)),
             DefKind::Syntax(SyntaxDef { entries }) => Ok(Doc::of_syntax_def(entries)),
@@ -1795,7 +1805,7 @@ impl Doc {
             }
             DefKind::Rel(RelDef { id, not_typ, .. }) => Ok(Doc::of_rel_def(id, not_typ)),
             DefKind::RuleGroup(RuleGroupDef { relid, groupid, rules }) => {
-                Doc::of_rulegroup(relid, groupid, rules, anchors)
+                Doc::of_rulegroup(anchor_ctx, relid, groupid, rules)
             }
             DefKind::ExternDec(ExternDecDef { id, tparams, params, plain_typ, .. }) => {
                 Ok(Doc::of_extern_dec_def(id, tparams, params, plain_typ))
@@ -1809,8 +1819,8 @@ impl Doc {
             DefKind::FuncDec(FuncDecDef { id, tparams, params, plain_typ, .. }) => {
                 Ok(Doc::of_func_dec_def(id, tparams, params, plain_typ))
             }
-            DefKind::TableDef(TableDef { id, rows }) => Doc::of_table(id, rows, anchors),
-            DefKind::FuncDef(def_func) => Doc::of_func_def(def_func, anchors),
+            DefKind::TableDef(TableDef { id, rows }) => Doc::of_table(anchor_ctx, id, rows),
+            DefKind::FuncDef(def_func) => Doc::of_func_def(anchor_ctx, def_func),
             DefKind::Sep => Ok(Doc::of_sep_def()),
         }
     }
@@ -1837,8 +1847,8 @@ impl Doc {
 
 impl Block {
     /// Renders one group of adjacent definitions as a gathered block.
-    fn of_defgroup(defs_group: &[Def], anchors: Option<&Anchors<'_>>) -> Result<Block> {
-        let def_head = &defs_group[0];
+    fn of_defgroup(anchor_ctx: &AnchorContext<'_>, defs_group: &[&Def]) -> Result<Block> {
+        let def_head = defs_group[0];
         match &def_head.node {
             // Separators interrupt clause grouping even if they render no text
             DefKind::Sep => Ok(Block::Gap),
@@ -1851,12 +1861,12 @@ impl Block {
                         _ => None,
                     })
                     .collect();
-                let tex_funcs = Doc::of_layout_funcs(&defs_func, anchors)?;
+                let tex_funcs = Doc::of_layout_funcs(anchor_ctx, &defs_func)?;
                 Ok(Block::Line(tex_funcs))
             }
             // Every other definition keeps its source position in the document
             _ => {
-                let tex_def = Doc::of_def(def_head, anchors)?;
+                let tex_def = Doc::of_def(anchor_ctx, def_head)?;
                 Ok(Block::Line(tex_def))
             }
         }
@@ -1865,7 +1875,7 @@ impl Block {
 
 impl Doc {
     /// Groups only adjacent clauses of the same function, preserving separators.
-    pub(super) fn of_defs(defs: &[Def], anchors: Option<&Anchors<'_>>) -> Result<Doc> {
+    pub(super) fn of_defs(anchor_ctx: &AnchorContext<'_>, defs: &[&Def]) -> Result<Doc> {
         // Clauses of the same function stay in one group
         let blocks = defs
             .chunk_by(|def_a, def_b| match (&def_a.node, &def_b.node) {
@@ -1874,7 +1884,7 @@ impl Doc {
                 }
                 _ => false,
             })
-            .map(|defs_group| Block::of_defgroup(defs_group, anchors))
+            .map(|defs_group| Block::of_defgroup(anchor_ctx, defs_group))
             .collect::<Result<Vec<_>>>()?;
         // Empty and separator-only specifications produce no gathered wrapper
         if blocks.iter().all(|block| matches!(block, Block::Gap)) {

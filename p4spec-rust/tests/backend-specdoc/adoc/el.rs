@@ -69,7 +69,7 @@ fn test_arithmetic_escapes_keep_their_delimiters() {
 }
 
 #[test]
-fn test_text_literals_use_ocaml_compatible_escaping() {
+fn test_text_literals_escape_quotes_and_control_characters() {
     let def = p4spec_rust::phrase! {
         node: DefKind::FuncDef(ast::FuncDef {
             id: p4spec_rust::phrase! {

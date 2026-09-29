@@ -14,50 +14,29 @@
 //! -> +++<sub class="bk-mark">[FAIL]</sub>+++
 //! ```
 
-use std::collections::BTreeMap;
-
 use crate::lang::pl::ast::{Fallthrough, Instr};
 
 use super::doc::doc::{FallthroughLabel, Prose};
 
 // == Context
 //
-//   Context::new("Rel")   -> Context { namespace: "Rel", next: None }
+//   Context::new("Rel")   -> Context { namespace_target: "Rel", next: None }
 
 /// The fallthrough destination visible while rendering one instruction.
 #[derive(Clone, Debug)]
 pub struct Context {
-    pub namespace: String,
+    pub namespace_target: String,
     pub next: Option<String>,
 }
 
 impl Context {
     /// Starts a definition's context, where no enclosing arm follows.
     pub fn new(namespace: &str) -> Self {
-        Context { namespace: namespace.to_owned(), next: None }
+        Context { namespace_target: namespace.to_owned(), next: None }
     }
 }
 
 // == Anchors
-
-// - Block anchors
-//
-//   fresh_block("f"), fresh_block("f"), fresh_block("g")   -> bk-f-1, bk-f-2, bk-g-1
-
-/// Per-document counters for backtracking blocks.
-#[derive(Default)]
-pub struct Anchors {
-    block_counters: BTreeMap<String, usize>,
-}
-
-impl Anchors {
-    /// Allocates the next block anchor in a namespace.
-    pub fn fresh_block(&mut self, namespace: &str) -> String {
-        let num_blocks = self.block_counters.entry(namespace.to_owned()).or_default();
-        *num_blocks += 1;
-        format!("bk-{namespace}-{num_blocks}")
-    }
-}
 
 // - Target anchors
 //
@@ -120,7 +99,7 @@ impl Prose {
     //   group g, in namespace Rel   -> +++<sub class="bk-mark">[<a href="#Rel-g">→ g</a>]</sub>+++
 
     fn of_group_link(ctx: &Context, id_group: &str) -> Prose {
-        let anchor = anchor_of_group(&ctx.namespace, id_group);
+        let anchor = anchor_of_group(&ctx.namespace_target, id_group);
         Prose::fallthrough(anchor, FallthroughLabel::Explicit(id_group.to_owned()))
     }
 
@@ -129,7 +108,7 @@ impl Prose {
     //   namespace f   -> +++<sub class="bk-mark">[<a href="#f-else">→ ⋅</a>]</sub>+++
 
     fn of_else_link(ctx: &Context) -> Prose {
-        let anchor = anchor_of_else(&ctx.namespace);
+        let anchor = anchor_of_else(&ctx.namespace_target);
         Prose::fallthrough(anchor, FallthroughLabel::Explicit("⋅".to_owned()))
     }
 

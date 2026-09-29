@@ -3,23 +3,48 @@
 //! Initialization selects definitions in source order.
 //! The generic splicer owns wrappers, anchors, and usage accounting.
 
+use super::super::super::anchor::{AnchorContext, Presentation};
+use super::super::super::{adoc, latex};
+use std::collections::BTreeMap;
+
 use super::super::{
-    context::Context,
+    anchor::{Decls, Targets},
+    config::{PREFIX_LATEX, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE},
     error::Error,
-    splicer::{Kind, PREFIX_LATEX, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE},
+    splicer::{Kind, Selection},
 };
+use crate::lang::common::source::Phrase;
 use crate::lang::{el::ast as el, pl::ast as pl};
 
 // == Splice initialization
 
 /// Selects the EL definitions indexed by this marker.
-fn init(spec_el: &el::Spec) -> Vec<(String, &el::Def)> {
+fn init_from_el(spec_el: &el::Spec) -> BTreeMap<String, &el::Def> {
     spec_el
         .iter()
         .filter_map(|def_el| match &def_el.node {
             el::DefKind::ExternDec(def) => Some((def.id.node.clone(), def_el)),
             el::DefKind::BuiltinDec(def) => Some((def.id.node.clone(), def_el)),
             el::DefKind::FuncDec(def) => Some((def.id.node.clone(), def_el)),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Selects the annotated PL definitions indexed by this marker.
+fn init_from_pl(spec_pl: &pl::Spec) -> BTreeMap<String, &pl::Def> {
+    spec_pl
+        .iter()
+        .filter_map(|def_pl| match &def_pl.node.node {
+            pl::DefKind::MetaFunc(pl::MetaFuncDef::Extern(func)) => {
+                Some((func.id.node.clone(), def_pl))
+            }
+            pl::DefKind::MetaFunc(pl::MetaFuncDef::Builtin(func)) => {
+                Some((func.id.node.clone(), def_pl))
+            }
+            pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => {
+                Some((func.id.node.clone(), def_pl))
+            }
             _ => None,
         })
         .collect()
@@ -37,12 +62,23 @@ impl<'spec> Kind<'spec> for Source {
     const PREFIX: &'static str = PREFIX_SOURCE;
     const SUFFIX: &'static str = SUFFIX_SOURCE;
 
-    fn init(spec_el: &'spec el::Spec, _spec_pl: &'spec pl::Spec) -> Vec<(Self::Key, Self::Value)> {
-        init(spec_el)
+    fn init(
+        spec_el: &'spec el::Spec,
+        _spec_pl: &'spec pl::Spec,
+    ) -> BTreeMap<Self::Key, Self::Value> {
+        init_from_el(spec_el)
     }
 
-    fn render(_ctx: &mut Context<'_>, values: &[&Self::Value]) -> Result<String, Error> {
-        Ok(super::render_source(values.iter().copied().copied()))
+    fn render(
+        _anchor_ctx: &mut AnchorContext<'_>,
+        _idx_request: usize,
+        values: &[Selection<'_, Self::Key, Self::Value>],
+    ) -> Result<String, Error> {
+        Ok(values
+            .iter()
+            .map(|selection| adoc::el::render_def(selection.data))
+            .collect::<Vec<_>>()
+            .join("\n\n"))
     }
 }
 
@@ -58,17 +94,27 @@ impl<'spec> Kind<'spec> for Latex {
     const PREFIX: &'static str = PREFIX_LATEX;
     const SUFFIX: &'static str = SUFFIX_LATEX;
 
-    fn init(spec_el: &'spec el::Spec, _spec_pl: &'spec pl::Spec) -> Vec<(Self::Key, Self::Value)> {
-        init(spec_el)
+    fn init(
+        spec_el: &'spec el::Spec,
+        _spec_pl: &'spec pl::Spec,
+    ) -> BTreeMap<Self::Key, Self::Value> {
+        init_from_el(spec_el)
     }
 
-    fn render(ctx: &mut Context<'_>, values: &[&Self::Value]) -> Result<String, Error> {
-        super::render_latex(ctx, values.iter().copied().copied())
+    fn render(
+        anchor_ctx: &mut AnchorContext<'_>,
+        _idx_request: usize,
+        values: &[Selection<'_, Self::Key, Self::Value>],
+    ) -> Result<String, Error> {
+        Ok(latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))?)
     }
 
-    fn anchor(ctx: &Context<'_>, name: &str) -> Option<String> {
-        ctx.targets
-            .func(super::super::anchor::Presentation::Latex, name)
+    fn anchor(anchor_ctx: &AnchorContext<'_>, name: &str) -> Option<String> {
+        anchor_ctx.func(Presentation::Latex, name)
+    }
+
+    fn collect_link_targets(keys: &[Phrase<Self::Key>], decls: &Decls, targets: &mut Targets) {
+        targets.add_funcs(Presentation::Latex, Self::NAME, decls, keys);
     }
 }
 
@@ -84,31 +130,30 @@ impl<'spec> Kind<'spec> for Prose {
     const PREFIX: &'static str = "[.sidebar-title]\n****\n";
     const SUFFIX: &'static str = SUFFIX_PROSE;
 
-    /// Selects the corresponding annotated PL definitions.
-    fn init(_spec_el: &'spec el::Spec, spec_pl: &'spec pl::Spec) -> Vec<(Self::Key, Self::Value)> {
-        spec_pl
+    fn init(
+        _spec_el: &'spec el::Spec,
+        spec_pl: &'spec pl::Spec,
+    ) -> BTreeMap<Self::Key, Self::Value> {
+        init_from_pl(spec_pl)
+    }
+
+    fn render(
+        anchor_ctx: &mut AnchorContext<'_>,
+        _idx_request: usize,
+        values: &[Selection<'_, Self::Key, Self::Value>],
+    ) -> Result<String, Error> {
+        Ok(values
             .iter()
-            .filter_map(|def_pl| match &def_pl.node.node {
-                pl::DefKind::MetaFunc(pl::MetaFuncDef::Extern(func)) => {
-                    Some((func.id.node.clone(), def_pl))
-                }
-                pl::DefKind::MetaFunc(pl::MetaFuncDef::Builtin(func)) => {
-                    Some((func.id.node.clone(), def_pl))
-                }
-                pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => {
-                    Some((func.id.node.clone(), def_pl))
-                }
-                _ => None,
-            })
-            .collect()
+            .filter_map(|selection| adoc::pl::render_def_title(anchor_ctx, selection.data))
+            .collect::<Vec<_>>()
+            .join("\n\n"))
     }
 
-    fn render(ctx: &mut Context<'_>, values: &[&Self::Value]) -> Result<String, Error> {
-        Ok(super::render_titles(ctx, values.iter().copied().copied()))
+    fn anchor(anchor_ctx: &AnchorContext<'_>, name: &str) -> Option<String> {
+        anchor_ctx.func(Presentation::Prose, name)
     }
 
-    fn anchor(ctx: &Context<'_>, name: &str) -> Option<String> {
-        ctx.targets
-            .func(super::super::anchor::Presentation::Prose, name)
+    fn collect_link_targets(keys: &[Phrase<Self::Key>], decls: &Decls, targets: &mut Targets) {
+        targets.add_funcs(Presentation::Prose, Self::NAME, decls, keys);
     }
 }

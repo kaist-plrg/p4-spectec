@@ -1,13 +1,13 @@
-//! Located splice failures and collected warnings
+//! Located splice failures and immediate warnings
 //!
 //! Parser failures retain skeleton positions; rendering failures retain EL spans.
-//! Callers receive warnings separately from the result, including on failure.
+//! Warnings are rendered to stderr when they occur.
 
 use std::path::PathBuf;
 
 use super::super::latex;
 use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
+    diagnostic::{Diagnostic, Label, RenderConfig, Renderer, Report, Severity},
     lang::common::source::Span,
 };
 
@@ -35,11 +35,14 @@ impl Error {
     }
 }
 
-/// Collects a splice warning without choosing an output stream.
-pub(super) fn warn(warnings: &mut Vec<Report>, span: &Span, message: String) {
+/// Renders a splice warning immediately to stderr.
+pub(super) fn warn(span: &Span, message: String) {
     let labels =
         if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, "splice marker")] };
-    warnings.push(
-        Diagnostic::new("splice", Severity::Warning, None, message, labels, Vec::new()).into(),
-    );
+    let report: Report =
+        Diagnostic::new("splice", Severity::Warning, None, message, labels, Vec::new()).into();
+    let mut renderer = Renderer::new(RenderConfig::default());
+    if let Err(error) = renderer.render_to_stderr(&report) {
+        eprintln!("{report}\n{error}");
+    }
 }

@@ -12,6 +12,8 @@
 //! -> xref:Oracle[Oracle: ``nat`` ``+~>+`` ``%``]
 //! ```
 
+use crate::backend_specdoc::anchor::AnchorContext;
+
 use crate::{
     lang::{
         common::{
@@ -41,7 +43,7 @@ use super::{
         doc::{Block, Code, ItemKind, Link, Prose, Subject, Table},
         serialize,
     },
-    fallthrough::{self, Anchors, Context},
+    fallthrough::{self, Context},
 };
 
 // == Render utils
@@ -720,7 +722,8 @@ impl Code {
         let code_iter = Code::of_iter(iter_exp.iter);
         // Parenthesize compound bodies whose code contains spaces
         let needs_parens = !matches!(exp_inner.node.node, ExpKind::Id(_) | ExpKind::Tuple(_))
-            && serialize::ser_code(&|_| None, &code_inner).contains(' ');
+            && serialize::ser_code(&AnchorContext::new(&|_, _| None, &|_, _| None), &code_inner)
+                .contains(' ');
         if needs_parens {
             Code::seq([Code::token("( "), code_inner, Code::token(" )"), code_iter])
         } else {
@@ -1437,16 +1440,17 @@ impl Prose {
 
 // == Rendering context
 //
-//   two render_rulegroup calls on one Renderer   -> arm anchors bk-Rel-1-arm-1, then bk-Rel-2-arm-1
-//   one call on a fresh Renderer                 -> arm anchor bk-Rel-1-arm-1
+//   anchor_prefix "rulegroup-prose:Rel/g:0:0" -> bk-rulegroup-prose:Rel/g:0:0-1-arm-1
+//   anchor_prefix "rulegroup-prose:Rel/g:1:0" -> bk-rulegroup-prose:Rel/g:1:0-1-arm-1
 
-/// Renders a document's definitions and fragments with shared arm counters.
+/// Renders one body with local block numbers and shared document anchors.
 ///
-/// Reuse one renderer when composing rule groups, dispatch, and otherwise
-/// fragments into a document. Create a new renderer for each new document.
-pub struct Renderer<'a> {
-    anchors: Anchors,
-    anchor: &'a dyn Fn(&Subject) -> Option<String>,
+/// Create a new renderer with a distinct anchor prefix for each body occurrence.
+/// Nested blocks within that body share its block counter.
+pub struct Renderer<'ctx, 'a> {
+    anchor_ctx: &'ctx mut AnchorContext<'a>,
+    anchor_prefix: String,
+    num_blocks: usize,
 }
 
 /// A tier instruction ready to fold inline or nest below its enclosing head.
@@ -1460,19 +1464,28 @@ enum Rendered {
 }
 
 /// Renders one tier payload while preserving the shared renderer state.
-type RenderTier<'a, Tier> =
-    fn(&mut Renderer<'a>, usize, &Context, bool, &pl::Instr<Tier>, &Tier) -> Rendered;
+type RenderTier<'ctx, 'a, Tier> =
+    fn(&mut Renderer<'ctx, 'a>, usize, &Context, bool, &pl::Instr<Tier>, &Tier) -> Rendered;
 
-impl<'a> Renderer<'a> {
-    /// Starts a document with fresh arm counters and a subject resolver.
-    pub fn new(anchor: &'a dyn Fn(&Subject) -> Option<String>) -> Self {
-        Self { anchors: Anchors::default(), anchor }
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
+    /// Starts one body with a unique caller-supplied anchor prefix and local counters.
+    ///
+    /// Use a distinct anchor prefix for every body composed into the same document.
+    /// Keep the anchor context shared to resolve titles and declare destinations once.
+    pub fn new(anchor_ctx: &'ctx mut AnchorContext<'a>, anchor_prefix: &str) -> Self {
+        Self { anchor_ctx, anchor_prefix: anchor_prefix.to_owned(), num_blocks: 0 }
+    }
+
+    /// Allocates a block destination within this body's anchor prefix.
+    fn fresh_block(&mut self) -> String {
+        self.num_blocks += 1;
+        format!("bk-{}-{}", self.anchor_prefix, self.num_blocks)
     }
 }
 
 // == Instructions
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Tier results
     //
     //   Inline under ". If ``b`` is equal to ``true``:"
@@ -1521,7 +1534,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
     ) -> Block {
         match &instr.node.node {
@@ -1566,7 +1579,7 @@ impl<'a> Renderer<'a> {
         level: usize,
         block_head: Option<Block>,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instrs: &[pl::Instr<Tier>],
     ) -> Block {
         // Fold a lone tier instruction into the enclosing heading
@@ -1594,7 +1607,7 @@ impl<'a> Renderer<'a> {
         level: usize,
         block_head: Block,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instrs: &[pl::Instr<Tier>],
     ) -> Block {
         // Empty continuations leave the heading alone
@@ -1619,7 +1632,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         anchor_else: Option<&str>,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         block_opt: Option<&[pl::Instr<Tier>]>,
     ) -> String {
         // Omit absent and empty otherwise blocks
@@ -1628,10 +1641,11 @@ impl<'a> Renderer<'a> {
         };
         // Prefix the visible heading with its optional destination anchor
         let text_anchor = anchor_else
+            .filter(|anchor| self.anchor_ctx.claim_anchor(anchor))
             .map(|anchor| format!("+++<span id=\"{anchor}\"></span>+++"))
             .unwrap_or_default();
         let block_body = self.render_instrs(1, None, ctx, render_tier, block);
-        let text_body = serialize::ser_block(self.anchor, &block_body);
+        let text_body = serialize::ser_block(self.anchor_ctx, &block_body);
         let text_bullet = serialize::adoc_ordered_bullet(0);
         format!("\n\n{text_bullet}{text_anchor}Otherwise:{text_body}")
     }
@@ -1686,7 +1700,7 @@ impl Prose {
     }
 }
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Iteration blocks
     //
     //   -- (if m = $(n + 1))*   -> . For each ``n`` in ``n^{asterisk}^``:
@@ -1768,7 +1782,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
         if_instr: &pl::IfInstr<Tier>,
     ) -> Block {
@@ -1841,7 +1855,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
         hold_instr: &pl::HoldInstr<Tier>,
     ) -> Block {
@@ -1889,7 +1903,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
         case_instr: &pl::CaseInstr<Tier>,
     ) -> Block {
@@ -1963,7 +1977,7 @@ impl Prose {
     }
 }
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Group dispatch instructions
     //
     //   lone Even/nil under a check   -> ... goto xref:Even-nil[nil]
@@ -2132,7 +2146,7 @@ impl Prose {
     }
 }
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Result instructions
     //
     //   rule Even/nil: |- eps
@@ -2279,7 +2293,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
         check_instr: &pl::CheckLetSubInstr<Tier>,
     ) -> Block {
@@ -2305,7 +2319,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
         check_instr: &pl::CheckLetMatchInstr<Tier>,
     ) -> Block {
@@ -2336,7 +2350,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
         option_instr: &pl::OptionGetInstr<Tier>,
     ) -> Block {
@@ -2368,7 +2382,7 @@ impl<'a> Renderer<'a> {
         &mut self,
         level: usize,
         ctx: &Context,
-        render_tier: RenderTier<'a, Tier>,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
         instr: &pl::Instr<Tier>,
         tier_instr: &pl::TierInstr<Tier>,
     ) -> Block {
@@ -2379,7 +2393,7 @@ impl<'a> Renderer<'a> {
 
 // == Relations
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Synthesized outputs
     //
     //   SL Iter(Id(m), *)   -> PL Iter(Id(m), *) with the same note and span
@@ -2422,7 +2436,7 @@ impl Prose {
     }
 }
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Relation titles
     //
     //   relation Even: |- nat*, hinted prose_true
@@ -2434,7 +2448,7 @@ impl<'a> Renderer<'a> {
     //   -> xref:Double[Double: ``nat^{asterisk}^`` ``+~>+`` ``%``]
 
     /// Builds a relation title from input, output, truth, or notation prose.
-    fn render_rel_title_block(
+    fn render_rel_title(
         hints: &Hints,
         id_rel: &pl::Id,
         signature: &pl::RelSignature,
@@ -2524,19 +2538,19 @@ impl<'a> Renderer<'a> {
 
 // == External relations
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - External relation definition
     //
     //   extern relation Oracle: nat ~> nat   -> xref:Oracle[Oracle: ``nat`` ``+~>+`` ``%``]
 
     fn render_extern_rel_def(hints: &Hints, rel: &pl::ExternRel) -> Block {
-        Self::render_rel_title_block(hints, &rel.id, &rel.rel_signature, &rel.exps_input)
+        Self::render_rel_title(hints, &rel.id, &rel.rel_signature, &rel.exps_input)
     }
 }
 
 // == Tier renderers
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Backtracking arms
     //
     //   def $modulo(n_a, n_b) = $(n_a \ n_b)
@@ -2556,10 +2570,10 @@ impl<'a> Renderer<'a> {
         level: usize,
         ctx: &Context,
         arms: &[Arm],
-        render_arm: &dyn Fn(&mut Renderer<'a>, &Context, &Arm) -> Block,
+        render_arm: &dyn Fn(&mut Renderer<'ctx, 'a>, &Context, &Arm) -> Block,
     ) -> Block {
-        // Allocate one shared namespace for every arm target
-        let anchor_block = self.anchors.fresh_block(&ctx.namespace);
+        // Allocate one shared anchor prefix for every arm target
+        let anchor_block = self.fresh_block();
         let num_arms = arms.len();
         let mut blocks_arm = Vec::with_capacity(num_arms);
         for (idx, arm) in arms.iter().enumerate() {
@@ -2569,7 +2583,8 @@ impl<'a> Renderer<'a> {
             } else {
                 ctx.next.clone()
             };
-            let ctx_arm = Context { namespace: ctx.namespace.clone(), next: anchor_next_opt };
+            let ctx_arm =
+                Context { namespace_target: ctx.namespace_target.clone(), next: anchor_next_opt };
             // Anchor the arm before rendering its body with the derived context
             let anchor_arm = fallthrough::anchor_of_arm(&anchor_block, idx);
             let text_head = if idx == 0 { "Try:" } else { "Then, try:" };
@@ -2765,7 +2780,7 @@ impl<'a> Renderer<'a> {
 
 // == Defined relations
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Rule group fragments
     //
     //   rule Even/nil: |- eps   -> xref:Even[``·`` has even length]:
@@ -2794,12 +2809,12 @@ impl<'a> Renderer<'a> {
         };
         let link = Link::Subject(Subject::Relation(id_rel.node.clone()));
         let prose_title = Prose::link(link, prose_body);
-        // Render the body with counters shared by the enclosing document
+        // Render local arms while keeping relation fragment targets fixed
         let ctx = Context::new(&id_rel.node);
         let block_body = self.render_instrs(0, None, &ctx, Self::render_instr_group, block);
         // Serialize the linked title and body as one fragment
-        let text_title = serialize::ser_prose(self.anchor, &prose_title);
-        let text_body = serialize::ser_block(self.anchor, &block_body);
+        let text_title = serialize::ser_prose(self.anchor_ctx, &prose_title);
+        let text_body = serialize::ser_block(self.anchor_ctx, &block_body);
         format!("{text_title}:\n{text_body}")
     }
 
@@ -2809,7 +2824,7 @@ impl<'a> Renderer<'a> {
     //   -> . +++<span id="Sign-else"></span>+++Otherwise:
     //       .. xref:Sign[``i`` ``+~>+`` ``%``]: the result is ``"nonzero"``.
 
-    /// Renders an otherwise fragment with counters shared by other fragments.
+    /// Renders a relation otherwise fragment with its shared destination.
     pub fn render_rulegroup_else(&mut self, id_rel: &pl::Id, block: &pl::DispatchBlock) -> String {
         let ctx = Context::new(&id_rel.node);
         let anchor_else = fallthrough::anchor_of_else(&id_rel.node);
@@ -2829,12 +2844,12 @@ impl<'a> Renderer<'a> {
     //                      . Check that ``i`` is equal to ``0``.
     //                      . Goto xref:Sign-zero[zero]
 
-    /// Renders relation dispatch with counters shared by other fragments.
+    /// Renders relation dispatch with local arms and shared group destinations.
     pub fn render_defined_rel_def_dispatch(&mut self, rel: &pl::DefinedRel) -> String {
         let ctx = Context::new(&rel.id.node);
         let block_dispatch =
             self.render_instrs(0, None, &ctx, Self::render_instr_dispatch, &rel.block);
-        let text_dispatch = serialize::ser_block(self.anchor, &block_dispatch);
+        let text_dispatch = serialize::ser_block(self.anchor_ctx, &block_dispatch);
         format!("{} dispatch:\n{text_dispatch}", rel.id.node)
     }
 
@@ -2857,7 +2872,7 @@ impl<'a> Renderer<'a> {
     //      . Check that ``i`` is equal to ``0``.
     //      . Goto xref:Sign-zero[zero]
 
-    /// Builds a complete relation block with source-compatible counter order.
+    /// Builds a relation body with dispatch arms numbered before group arms.
     fn render_defined_rel_def(&mut self, hints: &Hints, rel: &pl::DefinedRel) -> Block {
         // Reserve an otherwise anchor only for a visible block
         let has_else = rel
@@ -2865,7 +2880,7 @@ impl<'a> Renderer<'a> {
             .as_ref()
             .is_some_and(|block| !block.is_empty());
         let anchor_else = has_else.then(|| fallthrough::anchor_of_else(&rel.id.node));
-        // Allocate counter-bearing fragments in OCaml right-to-left evaluation order
+        // Allocate dispatch arms, then otherwise arms, before rendering rule groups
         let text_dispatch = self.render_defined_rel_def_dispatch(rel);
         let ctx = Context::new(&rel.id.node);
         let text_else = self.render_elseblock(
@@ -2890,7 +2905,7 @@ impl<'a> Renderer<'a> {
         let text_groups = texts_group.join("\n\n");
         // Assemble fragments in their displayed order
         let block_title =
-            Self::render_rel_title_block(hints, &rel.id, &rel.rel_signature, &rel.exps_input);
+            Self::render_rel_title(hints, &rel.id, &rel.rel_signature, &rel.exps_input);
         Block::concat([
             block_title,
             Block::raw("\n\n"),
@@ -2903,14 +2918,14 @@ impl<'a> Renderer<'a> {
 
 // == Function definitions
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Function headers
     //
     //   dec $modulo(nat, nat) : nat?, hinted %0 "mod" %1   -> xref:modulo[``n~a~`` mod ``n~b~``]
     //   dec $i_if(nat, nat) : nat, unhinted                -> xref:i_if[$i_if(n, m)]
 
     /// Builds the linked inline header used before a body or table.
-    fn render_func_header_block(
+    fn render_func_title(
         hints: &Hints,
         id_func: &pl::Id,
         tparams: &[pl::TParam],
@@ -2951,7 +2966,7 @@ impl<'a> Renderer<'a> {
     //   extern $check(x), hinted "checking" %0   -> xref:check[Checking value ``x``]
 
     fn render_extern_func_def(hints: &Hints, func: &pl::ExternFunc) -> Block {
-        Self::render_func_header_block(hints, &func.id, &func.tparams, &func.params)
+        Self::render_func_title(hints, &func.id, &func.tparams, &func.params)
     }
 
     // - Builtin function definition
@@ -2959,7 +2974,7 @@ impl<'a> Renderer<'a> {
     //   builtin dec $sum_nat(nat*) : nat   -> xref:sum_nat[Sum``+`(+`` ``nat^{asterisk}^`` ``+`)+``]
 
     fn render_builtin_func_def(hints: &Hints, func: &pl::BuiltinFunc) -> Block {
-        Self::render_func_header_block(hints, &func.id, &func.tparams, &func.params)
+        Self::render_func_title(hints, &func.id, &func.tparams, &func.params)
     }
 
     // - Table function definition
@@ -2985,7 +3000,7 @@ impl<'a> Renderer<'a> {
             .map(|row| vec![Code::of_exps(&row.exps_input, ", "), Code::of_exp(&row.exp)])
             .collect();
         // Assemble the linked header and table with one result column
-        let block_header = Self::render_func_header_block(hints, &func.id, &[], &func.params);
+        let block_header = Self::render_func_title(hints, &func.id, &[], &func.params);
         let prose_params = Prose::of_params(&func.params);
         let block_table = Block::Table(Table {
             header: vec![prose_params, Prose::text("Result")],
@@ -3019,7 +3034,7 @@ impl<'a> Renderer<'a> {
             .block_else_opt
             .as_ref()
             .is_some_and(|block| !block.is_empty());
-        let ctx = Context::new(&func.id.node);
+        let ctx = Context::new(&self.anchor_prefix);
         // Choose the compact boolean or general body form
         let block_body;
         let anchor_else;
@@ -3044,12 +3059,11 @@ impl<'a> Renderer<'a> {
                     .map(|instr| self.render_instr(0, &ctx, Self::render_instr_group, instr))
                     .collect();
                 block_body = Block::seq(blocks_rendered);
-                anchor_else = has_else.then(|| fallthrough::anchor_of_else(&func.id.node));
+                anchor_else = has_else.then(|| fallthrough::anchor_of_else(&self.anchor_prefix));
             }
         }
         // Append the otherwise clause after the selected body form
-        let block_header =
-            Self::render_func_header_block(hints, &func.id, &func.tparams, &func.params);
+        let block_header = Self::render_func_title(hints, &func.id, &func.tparams, &func.params);
         let text_else = self.render_elseblock(
             anchor_else.as_deref(),
             &ctx,
@@ -3062,39 +3076,13 @@ impl<'a> Renderer<'a> {
 
 // == Definitions
 
-impl<'a> Renderer<'a> {
+impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Definition
     //
     //   syntax rec = {LEFT nat, RIGHT nat}   -> None
     //   extern relation Oracle: nat ~> nat   -> Some("xref:Oracle[Oracle: ``nat`` ``+~>+`` ``%``]")
 
-    /// Renders a function or relation title without its defined body.
-    pub fn render_title(&mut self, def: &pl::Def) -> Option<String> {
-        let block = match &def.node.node {
-            pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
-                Self::render_extern_rel_def(&def.hints, rel)
-            }
-            pl::DefKind::Rel(pl::RelDef::Defined(rel)) => Self::render_rel_title_block(
-                &def.hints,
-                &rel.id,
-                &rel.rel_signature,
-                &rel.exps_input,
-            ),
-            pl::DefKind::MetaFunc(pl::MetaFuncDef::Extern(func)) => {
-                Self::render_extern_func_def(&def.hints, func)
-            }
-            pl::DefKind::MetaFunc(pl::MetaFuncDef::Builtin(func)) => {
-                Self::render_builtin_func_def(&def.hints, func)
-            }
-            pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => {
-                Self::render_func_header_block(&def.hints, &func.id, &func.tparams, &func.params)
-            }
-            _ => return None,
-        };
-        Some(serialize::ser_block(self.anchor, &block))
-    }
-
-    /// Renders a definition with counters shared by other document fragments.
+    /// Renders a definition within this body's anchor prefix.
     pub fn render_def(&mut self, def: &pl::Def) -> Option<String> {
         let block = match &def.node.node {
             pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
@@ -3117,13 +3105,7 @@ impl<'a> Renderer<'a> {
                 self.render_defined_func_def(&def.hints, func)
             }
         };
-        Some(serialize::ser_block(self.anchor, &block))
-    }
-
-    /// Renders definitions in order with this document's anchors and counters.
-    pub fn render_defs(&mut self, defs: &[pl::Def]) -> String {
-        let texts_def: Vec<String> = defs.iter().filter_map(|def| self.render_def(def)).collect();
-        texts_def.join("\n\n")
+        Some(serialize::ser_block(self.anchor_ctx, &block))
     }
 }
 
@@ -3131,12 +3113,60 @@ impl<'a> Renderer<'a> {
 //
 //   render_spec([Oracle, Sign])   -> the two definitions joined by a blank line
 
+/// Renders a function or relation title without its defined body.
+pub fn render_def_title(anchor_ctx: &mut AnchorContext<'_>, def: &pl::Def) -> Option<String> {
+    let block = match &def.node.node {
+        pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
+            Renderer::render_extern_rel_def(&def.hints, rel)
+        }
+        pl::DefKind::Rel(pl::RelDef::Defined(rel)) => {
+            Renderer::render_rel_title(&def.hints, &rel.id, &rel.rel_signature, &rel.exps_input)
+        }
+        pl::DefKind::MetaFunc(pl::MetaFuncDef::Extern(func)) => {
+            Renderer::render_extern_func_def(&def.hints, func)
+        }
+        pl::DefKind::MetaFunc(pl::MetaFuncDef::Builtin(func)) => {
+            Renderer::render_builtin_func_def(&def.hints, func)
+        }
+        pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => {
+            Renderer::render_func_title(&def.hints, &func.id, &func.tparams, &func.params)
+        }
+        _ => return None,
+    };
+    Some(serialize::ser_block(anchor_ctx, &block))
+}
+
 /// Renders one definition, omitting type and variable declarations.
-pub fn render_def(anchor: &dyn Fn(&Subject) -> Option<String>, def: &pl::Def) -> Option<String> {
-    Renderer::new(anchor).render_def(def)
+///
+/// Share the anchor context and use a distinct anchor prefix for each output body.
+pub fn render_def(
+    anchor_ctx: &mut AnchorContext<'_>,
+    anchor_prefix: &str,
+    def: &pl::Def,
+) -> Option<String> {
+    Renderer::new(anchor_ctx, anchor_prefix).render_def(def)
 }
 
 /// Renders a complete prose specification with definition-name anchors.
 pub fn render_spec(spec: &pl::Spec) -> String {
-    Renderer::new(&serialize::subject_name).render_defs(spec)
+    let resolve = |_, id: &str| Some(id.to_owned());
+    let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
+    spec.iter()
+        .enumerate()
+        .filter_map(|(idx_def, def)| {
+            // Keep the definition name visible and its original position unique
+            let id = match &def.node.node {
+                pl::DefKind::Rel(pl::RelDef::Extern(rel)) => &rel.id,
+                pl::DefKind::Rel(pl::RelDef::Defined(rel)) => &rel.id,
+                pl::DefKind::MetaFunc(pl::MetaFuncDef::Extern(func)) => &func.id,
+                pl::DefKind::MetaFunc(pl::MetaFuncDef::Builtin(func)) => &func.id,
+                pl::DefKind::MetaFunc(pl::MetaFuncDef::Table(func)) => &func.id,
+                pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => &func.id,
+                pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
+            };
+            let anchor_prefix = format!("spec:{}:{idx_def}", id.node);
+            render_def(&mut anchor_ctx, &anchor_prefix, def)
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n")
 }
