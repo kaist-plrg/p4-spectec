@@ -1,7 +1,8 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
 Status: Steps 1 (syntax), 2 (s-expression bridge), 3 (common metafunctions),
-and 4 (AL environments and context) are done. Steps 5–11 are planned.
+4 (AL environments and context), and 5 (type casts and subtyping) are done.
+Steps 6–11 are planned.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language. It transcribes the AL specification in
@@ -106,8 +107,11 @@ Two more kinds of case need explicit handling:
   such as `$subtyp(tdenv, typ, val)*` over `typ*` and `val*`, only applies
   when the lengths are equal. In Redex, a template over lists of different
   lengths raises an error instead of failing to match *(checked)*. Such
-  clauses need an explicit length side-condition, and their complement needs
-  its negation.
+  clauses need an explicit length constraint, and their complement needs its
+  negation. The constraint is a named ellipsis where the sequences are bound
+  (`(TUP (typ ..._n)) (TUP (val ..._n))`), or else a side-condition. A named
+  ellipsis bound in a clause's pattern also constrains its `where` patterns
+  *(checked)*.
 - **Partial `def`s.** Some `def`s have no clause for some inputs;
   `$find_vari` has none for an unbound variable. In P4-SpecTec, such a call is
   a failing premise, not an error. A Redex metafunction raises an error when
@@ -276,12 +280,18 @@ rule.
 | `-- R: C \|- e : OK v` | `(R C e (OK v))`, or `(R C e valres)` plus dispatch when failure matters |
 | `-- (R: C \|- e : OK v)*` | `(R C e (OK v)) ...`, or a sequence judgment when failure matters |
 | `-- if p = e` (binding) | `(where p e)` |
-| `-- (if p = e)*` | `(where (p ...) (e ...))`; add a length side-condition when `e` iterates over several sequences |
+| `-- (if p = e)*` | `(where (p ...) (e ...))`; constrain the lengths when `e` iterates over several sequences |
 | `-- if e` (boolean) | `(where #t e)` |
+| `-- if ~e` (boolean) | `(where #f e)` |
 | `-- if ~(val <: num)` | `(side-condition ,(not (redex-match? AL num (term val))))` |
 | `-- otherwise` | the complement of the other clauses; see [Disjoint clauses](#disjoint-clauses) |
 | `-- debug e` | `(where _ ,(debug (term e)))`, printing to stderr |
 | `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes, collected as helpers in `common/0.1-stdlib.rkt` |
+
+A `where` pattern that reuses a variable bound earlier in the clause is an
+equality constraint, not a new binding *(checked)*, just as a repeated
+variable within one pattern is. A binding premise therefore needs a fresh name,
+unless watsup repeats the metavariable on purpose.
 
 ### Layout and languages
 
@@ -474,6 +484,21 @@ open(p, "w").write(s)
 EOF
 (cd "$REV" && raco test spec-meta-redex/test)
 ```
+
+To list the clauses a test file never reaches, here for `$upcast` and
+`$subtyp`, run the following. Only the generated `⊥` clause, which Redex
+locates at the `define-dec` head, should be listed:
+
+```sh
+racket -e '(require redex/reduction-semantics racket/port (file "spec-meta-redex/al/5.1-eval-typ.rkt"))
+           (define cs (list (make-coverage upcast) (make-coverage subtyp)))
+           (parameterize ([relation-coverage cs] [current-output-port (open-output-nowhere)])
+             (dynamic-require (quote (file "spec-meta-redex/test/al-eval-typ.rkt")) #f))
+           (for* ([c cs] [p (covered-cases c)] #:when (zero? (cdr p))) (displayln (car p)))'
+```
+
+A module's unexported helpers, such as `upcast/var`, need a copy of the
+module that provides them.
 
 ### Exploring in a REPL
 
@@ -687,6 +712,35 @@ aren't found, component casts that fail, and tuples of the wrong length. The
   `$assoc_` to look up the case's types. The `VAR` clauses are disjoint by the
   kind of `typdef` found (`EXT`, `ALIAS`, `VARIANT`, or `STRUCT`).
 - Tests: one per clause, and one per complement case.
+- Outcome:
+  - A clause whose premise results decide between it and `otherwise` computes
+    them once and passes them to a helper named after it: `upcast/var`,
+    `upcast/tup`, `upcast/opt`, and `upcast/list`, the same four for
+    `$downcast`, and `subtyp/var`. The helpers branch on the `typdef` that
+    `$find_typ` or `$find_map` found, or on the component casts. The
+    complements in `subtyp/var` recompute the pure premises (`$subst_typ`,
+    `$assoc_`, and the membership check), but never `$subtyp`, which appears
+    only in results.
+  - `$upcast` and `$downcast` give `FAIL` only where `INT` (for `$downcast`,
+    `NAT`) meets a non-number, or `TUP` meets a non-tuple, possibly through
+    aliases. Every other miss is `OK val`, with the value unchanged. That
+    includes a failing component cast, so a component's `FAIL` never reaches
+    the caller: `$upcast(C, TUP INT, TUP (BOOL true))` is
+    `OK (TUP (BOOL true))`. It also includes `$downcast(C, NAT, INT -1)`, which
+    is `OK (INT -1)`, and a `VAR` that is not found, is not an `ALIAS`, gets
+    the wrong number of type arguments, or fails to substitute.
+  - The K port differs: its `resTup`, `resOpt`, and `resList` turn a failing
+    component into `FAIL`, and its `zipThetaMap` has no rule for the wrong
+    number of type arguments.
+  - `$subtyp` has no `FUNC` clause, so no value matches type `FUNC`.
+  - `al/5.1-eval-typ.rkt` is written on `AL-context`. Nothing it uses is in
+    `al/4-relation`, so that module and the `AL` language wait for Step 7.
+  - Every clause except `⊥` is reached by the tests (checked with
+    `make-coverage`; see [Tests](#tests)). One test counts calls in Redex's
+    trace output: an upcast of tuples nested 8 deep, each with a failing
+    sibling, makes 17 calls. A scratch variant that recomputed the components
+    in its complement made 1,021.
+  - With every metafunction's clauses reversed, the whole suite still passes.
 
 ### Step 6: Assignment
 
