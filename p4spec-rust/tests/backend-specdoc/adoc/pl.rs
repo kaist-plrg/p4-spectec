@@ -146,7 +146,7 @@ fn test_function_hints_substitute_parameters_and_negative_calls() {
         note: pl::TypKind::Bool,
         span: Span::default(),
     };
-    exp_call.hints.prose_false = Some(prose_hint("", 0, "is disabled"));
+    exp_call.hints.node.prose_false = Some(prose_hint("", 0, "is disabled"));
     let exp_not = p4spec_rust::annotated_note_phrase! {
         node: pl::ExpKind::Un(pl::UnOp::Bool(BoolUnOp::Not), pl::OpTyp::Bool, Box::new(exp_call)),
         note: pl::TypKind::Bool,
@@ -157,7 +157,7 @@ fn test_function_hints_substitute_parameters_and_negative_calls() {
         vec![param],
         vec![return_exp_instr(exp_not, Some(pl::Fallthrough::Fail))],
     );
-    def.hints.prose_in = Some(prose_hint("checking whether", 0, ""));
+    def.hints.node.prose_in = Some(prose_hint("checking whether", 0, ""));
 
     assert_eq!(
         render_def(&subject_name, &def).unwrap(),
@@ -431,12 +431,17 @@ fn test_function_header_suppresses_nested_pattern_links() {
         note: pl::TypKind::Var(id("Value"), vec![]),
         span: Span::default(),
     };
-    exp.hints.prose = Some(prose_hint("value", 0, ""));
+    exp.hints.node.prose = Some(prose_hint("value", 0, ""));
     let param = p4spec_rust::phrase! {
         node: pl::ParamKind::Exp(typ::make::bool(), Box::new(exp)),
         span: Span::default(),
     };
-    let hints = Hints { prose_in: Some(prose_hint("checking", 0, "")), ..Hints::default() };
+    let hints = p4spec_rust::phrase! {
+        node: p4spec_rust::lang::pl::annot::HintsKind {
+            prose_in: Some(prose_hint("checking", 0, "")), ..Default::default()
+        },
+        span: Default::default(),
+    };
     let func = pl::ExternFunc {
         id: id("check"),
         tparams: vec![],

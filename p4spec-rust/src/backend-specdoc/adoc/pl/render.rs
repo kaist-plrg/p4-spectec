@@ -848,7 +848,7 @@ impl Prose {
             }
             ExpKind::Call(id, _, args) => {
                 // Unhinted calls fall back to negated code
-                let Some(hint) = &exp.hints.prose_false else {
+                let Some(hint) = &exp.hints.node.prose_false else {
                     let code_exp = Code::of_exp(exp);
                     return Some(Prose::code(Code::seq([Code::token("~"), code_exp])));
                 };
@@ -992,7 +992,7 @@ impl Prose {
 
     fn of_case_exp(exp: &pl::Exp, not_exp: &pl::NotExp) -> Prose {
         // Hinted variant values link their prose to the type definition
-        if let (Some(hint), pl::TypKind::Var(id_typ, _)) = (&exp.hints.prose, &exp.node.note) {
+        if let (Some(hint), pl::TypKind::Var(id_typ, _)) = (&exp.hints.node.prose, &exp.node.note) {
             let exps = not_exp.args();
             let prose_case = alternate(
                 hint,
@@ -1128,9 +1128,10 @@ impl Prose {
         // Unhinted calls keep their code form
         let Some(hint) = exp
             .hints
+            .node
             .prose_in
             .as_ref()
-            .or(exp.hints.prose_true.as_ref())
+            .or(exp.hints.node.prose_true.as_ref())
         else {
             return Prose::code(Code::of_call_exp(id, targs, args));
         };
@@ -1815,7 +1816,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         hold_instr: &pl::HoldInstr<Tier>,
         hold: bool,
     ) -> Block {
-        let hint_opt = if hold { &instr.hints.prose_true } else { &instr.hints.prose_false };
+        let hint_opt =
+            if hold { &instr.hints.node.prose_true } else { &instr.hints.node.prose_false };
         let link = Link::Subject(Subject::Relation(hold_instr.id.node.clone()));
         let prose_cond = match hint_opt {
             // Hinted relations describe the branch condition in prose
@@ -2073,7 +2075,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Apply paired relation hints when both sides are available
         let link = Link::Subject(Subject::Relation(rule_instr.id.node.clone()));
         let prose_rule = if let (Some(hint_input), Some(hint_output)) =
-            (&instr.hints.prose_in, &instr.hints.prose_out)
+            (&instr.hints.node.prose_in, &instr.hints.node.prose_out)
         {
             let prose_output = alternate(
                 hint_output,
@@ -2128,7 +2130,7 @@ impl Prose {
             .expect("validated relation input hint");
         if is_conditional {
             Prose::text("then, the relation holds.")
-        } else if let Some(hint) = &hints.prose_out {
+        } else if let Some(hint) = &hints.node.prose_out {
             let prose_output = alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
@@ -2455,7 +2457,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         exps: &[pl::Exp],
     ) -> Block {
         // Prefer synthesized inputs when prosification changed title bindings
-        let exps_synthesized = hints.prose_input_exps.as_ref().map(|exps| {
+        let exps_synthesized = hints.node.prose_input_exps.as_ref().map(|exps| {
             exps.iter()
                 .map(Self::lift_synthesized_exp)
                 .collect::<Vec<_>>()
@@ -2467,7 +2469,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let prose_header = Prose::seq([prose_name, Prose::text(":")]);
         let block_header = Block::concat([Block::inline(prose_header), Block::raw("\n\n")]);
         // Select paired, input-only, truth, or notation prose
-        match (&hints.prose_in, &hints.prose_out, &hints.prose_output_exps, &hints.prose_true) {
+        match (
+            &hints.node.prose_in,
+            &hints.node.prose_out,
+            &hints.node.prose_output_exps,
+            &hints.node.prose_true,
+        ) {
             // Reject incomplete paired output hints
             (Some(_), Some(_), None, _) => panic!("prose_out title requires synthesized outputs"),
             (Some(hint_input), Some(hint_output), Some(exps_output_sl), _) => {
@@ -2750,9 +2757,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Select hinted prose or filled relation notation for the title
         let hint_opt = instr
             .hints
+            .node
             .prose_in
             .as_ref()
-            .or(instr.hints.prose_true.as_ref());
+            .or(instr.hints.node.prose_true.as_ref());
         let prose_body = match hint_opt {
             Some(hint) => alternate(
                 hint,
@@ -2796,7 +2804,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         block: &pl::GroupBlock,
     ) -> String {
         // Select hinted prose or filled relation notation for the title
-        let hint_opt = hints.prose_in.as_ref().or(hints.prose_true.as_ref());
+        let hint_opt = hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(hints.node.prose_true.as_ref());
         let prose_body = match hint_opt {
             Some(hint) => alternate(
                 hint,
@@ -2931,7 +2943,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         tparams: &[pl::TParam],
         params: &[pl::Param],
     ) -> Block {
-        let hint_opt = hints.prose_in.as_ref().or(hints.prose_true.as_ref());
+        let hint_opt = hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(hints.node.prose_true.as_ref());
         // Keep nested links visible to the final serializer
         let prose_body = match hint_opt {
             Some(hint) => alternate(

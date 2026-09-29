@@ -291,8 +291,9 @@ fn test_call_uses_hints_loaded_from_the_original_spec() {
     else {
         panic!("expected return instruction");
     };
+    assert_eq!(exp_pl.hints.span, span("g", 0));
     assert_eq!(
-        exp_pl.hints.prose_in.as_ref().unwrap(),
+        exp_pl.hints.node.prose_in.as_ref().unwrap(),
         &p4spec_rust::phrase! { node: AlterHintKind::Hole(Hole::Next), span: span("hint", 0) }
     );
 }
@@ -982,4 +983,32 @@ fn test_each_field_hint_is_validated_before_a_later_hint_replaces_it() {
     };
     assert_eq!(diagnostic.code.as_deref(), Some("prose/field-hint-arity-mismatch"));
     assert_eq!(diagnostic.labels[0].span.left.line, 2);
+}
+
+#[test]
+fn test_relation_hints_preserve_declaration_and_realigned_hole_locations() {
+    let spec_pl = prosify_source("extern relation R : nat ~> nat\n  hint(input %0)\n  hint(prose_in %)\n  hint(prose_out %1)\n").unwrap();
+    let hints = &spec_pl[0].hints;
+    assert_eq!(hints.span.left.line, 1);
+    let hint = hints.node.prose_out.as_ref().unwrap();
+    assert_eq!(hint.span.left.line, 4);
+    assert_eq!(hint.node, AlterHintKind::Hole(Hole::Num(0)));
+}
+
+#[test]
+fn test_destructuring_hints_keep_the_case_declaration_location() {
+    let spec_pl = prosify_source("syntax record = RECORD nat\n  hint(prose_fields \"field\")\nvar value : nat\nvar rec : record\ndec $field(record) : nat\ndef $field(rec) = value\n  -- if RECORD value = rec\n").unwrap();
+    let def_func = spec_pl
+        .iter()
+        .find_map(|def| match &def.node.node {
+            pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(def_func)) => Some(def_func),
+            _ => None,
+        })
+        .unwrap();
+    let instr = &def_func.block[0];
+    assert!(matches!(instr.node.node, pl::InstrKind::Destruct(_)), "{instr:?}");
+    assert_eq!(instr.hints.span.left.line, 1);
+    let hint = instr.hints.node.prose_fields.as_ref().unwrap();
+    assert_eq!(hint.span.left.line, 2);
+    assert_eq!(hint.node[0].node, "field");
 }

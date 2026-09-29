@@ -5,7 +5,7 @@
 //! Equality, free identifiers, and call detection see through the wrapper.
 
 use crate::lang::{
-    common::ds::set::IdSet,
+    common::{ds::set::IdSet, source::Phrase},
     hints::{alter, fields},
     sl,
     traits::{eq::SyntaxEq, free::FreeIds},
@@ -13,9 +13,12 @@ use crate::lang::{
 
 // Hints
 
+/// Prose metadata with the location of its owning declaration.
+pub type Hints = Phrase<HintsKind>;
+
 /// Optional prose metadata for a PL node.
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct Hints {
+pub struct HintsKind {
     /// Replaces the node's prose.
     pub prose: Option<alter::AlterHint>,
     /// Replaces the prose of the node's inputs.
@@ -32,6 +35,12 @@ pub struct Hints {
     pub prose_input_exps: Option<Vec<sl::ast::Exp>>,
     /// Output expressions to show in place of the node's own.
     pub prose_output_exps: Option<Vec<sl::ast::Exp>>,
+}
+
+impl Default for Hints {
+    fn default() -> Self {
+        crate::phrase! { node: HintsKind::default(), span: Default::default() }
+    }
 }
 
 /// A PL node paired with prose metadata

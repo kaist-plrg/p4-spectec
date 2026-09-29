@@ -155,6 +155,7 @@ fn visible(exp: &pl::Exp) -> bool {
 fn shorten_destruct<Tier>(instr: &mut pl::Instr<Tier>) {
     let Some(field_names) = instr
         .hints
+        .node
         .prose_fields
         .as_ref()
         .map(|hint| hint.node.as_slice())
