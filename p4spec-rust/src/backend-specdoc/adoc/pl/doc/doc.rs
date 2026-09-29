@@ -5,7 +5,7 @@
 //! Block::item_ordered(0, prose)   -> Item(Item { 0, Ordered(None), prose, Empty })
 //! ```
 
-use crate::lang::common::source::{Phrase, Span};
+use crate::lang::common::source::Phrase;
 
 // == Documents
 
@@ -80,22 +80,6 @@ pub enum Subject {
 }
 
 impl Link {
-    /// Attaches the original template expression and its hint name.
-    pub(crate) fn with_hint(self, span: &Span, name: &'static str) -> Self {
-        Link::Hinted {
-            link: Box::new(self),
-            hint: crate::phrase! { node: name, span: span.clone() },
-        }
-    }
-
-    /// Returns the source template used for this link's displayed text.
-    pub(crate) fn hint(&self) -> Option<&Phrase<&'static str>> {
-        match self {
-            Link::Hinted { hint, .. } => Some(hint),
-            _ => None,
-        }
-    }
-
     /// Describes the source-level reference without exposing generated anchors.
     pub(crate) fn description(&self) -> String {
         match self {

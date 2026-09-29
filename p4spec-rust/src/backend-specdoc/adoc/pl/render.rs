@@ -875,8 +875,10 @@ impl Prose {
                     args,
                     false,
                 );
-                let link = Link::Subject(Subject::Function(id.node.clone()))
-                    .with_hint(&hint.span, "prose_false");
+                let link = Link::Hinted {
+                    link: Box::new(Link::Subject(Subject::Function(id.node.clone()))),
+                    hint: crate::phrase! { node: "prose_false", span: hint.span.clone() },
+                };
                 Some(Prose::link(link, prose_call))
             }
             _ => None,
@@ -1018,8 +1020,10 @@ impl Prose {
                 &exps,
                 false,
             );
-            let link =
-                Link::Subject(Subject::Type(id_typ.node.clone())).with_hint(&hint.span, "prose");
+            let link = Link::Hinted {
+                link: Box::new(Link::Subject(Subject::Type(id_typ.node.clone()))),
+                hint: crate::phrase! { node: "prose", span: hint.span.clone() },
+            };
             return Prose::link(link, prose_case);
         }
 
@@ -1150,8 +1154,10 @@ impl Prose {
         };
         let prose_call =
             alternate(hint, &|text_body| reindent_lines(0, text_body), &Prose::of_arg, args, false);
-        let link =
-            Link::Subject(Subject::Function(id.node.clone())).with_hint(&hint.span, name_hint);
+        let link = Link::Hinted {
+            link: Box::new(Link::Subject(Subject::Function(id.node.clone()))),
+            hint: crate::phrase! { node: name_hint, span: hint.span.clone() },
+        };
         Prose::link(link, prose_call)
     }
 
@@ -1860,10 +1866,14 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                     &exps,
                     false,
                 );
-                Prose::link(
-                    link.with_hint(&hint.span, if hold { "prose_true" } else { "prose_false" }),
-                    prose_hint,
-                )
+                let link = Link::Hinted {
+                    link: Box::new(link),
+                    hint: crate::phrase! {
+                        node: if hold { "prose_true" } else { "prose_false" },
+                        span: hint.span.clone(),
+                    },
+                };
+                Prose::link(link, prose_hint)
             }
             // Unhinted relations show their notation followed by the verdict
             None => {
@@ -2125,11 +2135,15 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 &exps_input,
                 false,
             );
+            let link = Link::Hinted {
+                link: Box::new(link),
+                hint: crate::phrase! { node: "prose_in", span: hint_input.span.clone() },
+            };
             Prose::seq([
                 Prose::text("Let "),
                 Prose::text(text_output),
                 Prose::text(" be the result of "),
-                Prose::link(link.with_hint(&hint_input.span, "prose_in"), prose_input),
+                Prose::link(link, prose_input),
             ])
         } else {
             let code_not = Code::of_mixfix(&rule_instr.not_exp, &Code::of_exp);
@@ -2801,7 +2815,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         };
         let link = Link::Subject(Subject::Relation(group_instr.id_rel.node.clone()));
         let link = match hint_opt {
-            Some((name_hint, hint)) => link.with_hint(&hint.span, name_hint),
+            Some((name_hint, hint)) => Link::Hinted {
+                link: Box::new(link),
+                hint: crate::phrase! { node: name_hint, span: hint.span.clone() },
+            },
             None => link,
         };
         let prose_title = Prose::link(link, prose_body);
@@ -2850,7 +2867,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         };
         let link = Link::Subject(Subject::Relation(id_rel.node.clone()));
         let link = match hint_opt {
-            Some((name_hint, hint)) => link.with_hint(&hint.span, name_hint),
+            Some((name_hint, hint)) => Link::Hinted {
+                link: Box::new(link),
+                hint: crate::phrase! { node: name_hint, span: hint.span.clone() },
+            },
             None => link,
         };
         let prose_title = Prose::link(link, prose_body);
@@ -3009,7 +3029,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         };
         let link = Link::Subject(Subject::Function(id_func.node.clone()));
         let link = match hint_opt {
-            Some((name_hint, hint)) => link.with_hint(&hint.span, name_hint),
+            Some((name_hint, hint)) => Link::Hinted {
+                link: Box::new(link),
+                hint: crate::phrase! { node: name_hint, span: hint.span.clone() },
+            },
             None => link,
         };
         Block::inline(Prose::link(link, prose_body))

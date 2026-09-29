@@ -12,22 +12,23 @@ use crate::{
 /// Locates a link problem at its template, falling back to the rendered fragment.
 fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
     // A propagated hint retains the template's declaration even at a call site
-    let (span, label) = match link.hint() {
-        Some(hint) => {
+    let (span, label) = match link {
+        Link::Hinted { hint, .. } => {
             let span = if hint.span.left.line == 0 { span } else { &hint.span };
             (span, format!("`{}`: {label}", hint.node))
         }
-        None => (span, label.to_owned()),
+        _ => (span, label.to_owned()),
     };
     let labels = if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, label)] };
     // Explain how the source template becomes the displayed reference text
-    let notes = link.hint().map_or_else(Vec::new, |hint| {
-        vec![format!(
+    let notes = match link {
+        Link::Hinted { hint, .. } => vec![format!(
             "The `{}` hint supplies the displayed text for links to {}.",
             hint.node,
             link.description(),
-        )]
-    });
+        )],
+        _ => Vec::new(),
+    };
     Diagnostic::new("adoc", Severity::Warning, Some(code.to_owned()), message, labels, notes)
 }
 
@@ -64,7 +65,7 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
         "this inner link is suppressed",
     );
     // Relate the enclosing template when its original location is available
-    if let Some(hint) = link_outer.hint()
+    if let Link::Hinted { hint, .. } = link_outer
         && hint.span.left.line != 0
     {
         diagnostic.labels.push(Label::secondary(
@@ -98,11 +99,13 @@ pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
         "this produces no link text",
     );
     // Suggest an edit only when a user-supplied template produced the empty text
-    diagnostic.notes.push(if let Some(hint) = link.hint() {
-        format!("Make `{}` produce nonempty text, or omit the custom prose hint.", hint.node)
-    } else {
-        "Supply nonempty display text for the link.".into()
-    });
+    diagnostic
+        .notes
+        .push(if let Link::Hinted { hint, .. } = link {
+            format!("Make `{}` produce nonempty text, or omit the custom prose hint.", hint.node)
+        } else {
+            "Supply nonempty display text for the link.".into()
+        });
     diagnostic
 }
 
