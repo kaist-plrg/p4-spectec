@@ -79,10 +79,10 @@ pub(super) trait Kind<'spec> {
     }
 
     fn collect_link_targets(
-        _keys: &[Phrase<Self::Key>],
-        _decls: &Decls,
         _targets: &mut Targets,
         _warnings: &mut Vec<Report>,
+        _decls: &Decls,
+        _keys: &[Phrase<Self::Key>],
     ) {
     }
 }
@@ -132,16 +132,16 @@ pub(super) trait Splice {
     fn render(
         &mut self,
         anchor_ctx: &mut AnchorContext<'_>,
-        idx_request: usize,
         warnings: &mut Vec<Report>,
+        idx_request: usize,
     ) -> Result<String, Error>;
 
     fn collect_link_targets(
         &self,
-        idx_request: usize,
-        decls: &Decls,
         targets: &mut Targets,
         warnings: &mut Vec<Report>,
+        decls: &Decls,
+        idx_request: usize,
     );
 
     fn warn_unused(&self, warnings: &mut Vec<Report>);
@@ -183,8 +183,8 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
     fn render(
         &mut self,
         anchor_ctx: &mut AnchorContext<'_>,
-        idx_request: usize,
         warnings: &mut Vec<Report>,
+        idx_request: usize,
     ) -> Result<String, Error> {
         let keys = &self.requests[idx_request].keys;
         // Finish mutable usage updates before selections borrow definition data
@@ -225,16 +225,16 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
 
     fn collect_link_targets(
         &self,
-        idx_request: usize,
-        decls: &Decls,
         targets: &mut Targets,
         warnings: &mut Vec<Report>,
+        decls: &Decls,
+        idx_request: usize,
     ) {
         SpliceKind::collect_link_targets(
-            &self.requests[idx_request].keys,
-            decls,
             targets,
             warnings,
+            decls,
+            &self.requests[idx_request].keys,
         );
     }
 

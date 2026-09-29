@@ -69,11 +69,11 @@ impl Decls {
 impl Targets {
     /// Adds declared targets and warns about duplicate title occurrences.
     fn add_ids(
+        ids_target: &mut BTreeSet<String>,
+        warnings: &mut Vec<Report>,
         name: &str,
         ids_declared: &BTreeSet<String>,
         ids: &[Phrase<String>],
-        ids_target: &mut BTreeSet<String>,
-        warnings: &mut Vec<Report>,
     ) {
         // Ignore undeclared identifiers, retaining duplicate-target diagnostics
         for id in ids {
@@ -100,25 +100,25 @@ impl Targets {
     /// Registers declared function titles and reports repeated destinations.
     pub(super) fn add_funcs(
         &mut self,
+        warnings: &mut Vec<Report>,
         presentation: Presentation,
         name: &str,
         decls: &Decls,
         keys: &[Phrase<String>],
-        warnings: &mut Vec<Report>,
     ) {
-        Self::add_ids(name, &decls.funcs, keys, &mut self.decls_mut(presentation).funcs, warnings);
+        Self::add_ids(&mut self.decls_mut(presentation).funcs, warnings, name, &decls.funcs, keys);
     }
 
     /// Registers declared relation titles and reports repeated destinations.
     pub(super) fn add_rels(
         &mut self,
+        warnings: &mut Vec<Report>,
         presentation: Presentation,
         name: &str,
         decls: &Decls,
         keys: &[Phrase<String>],
-        warnings: &mut Vec<Report>,
     ) {
-        Self::add_ids(name, &decls.rels, keys, &mut self.decls_mut(presentation).rels, warnings);
+        Self::add_ids(&mut self.decls_mut(presentation).rels, warnings, name, &decls.rels, keys);
     }
 
     /// Resolves a declared function title in one presentation.

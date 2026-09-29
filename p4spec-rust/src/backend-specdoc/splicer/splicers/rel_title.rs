@@ -108,12 +108,12 @@ impl<'spec> Kind<'spec> for Latex {
     }
 
     fn collect_link_targets(
-        keys: &[Phrase<Self::Key>],
-        decls: &Decls,
         targets: &mut Targets,
         warnings: &mut Vec<Report>,
+        decls: &Decls,
+        keys: &[Phrase<Self::Key>],
     ) {
-        targets.add_rels(Presentation::Latex, Self::NAME, decls, keys, warnings);
+        targets.add_rels(warnings, Presentation::Latex, Self::NAME, decls, keys);
     }
 }
 
@@ -153,11 +153,11 @@ impl<'spec> Kind<'spec> for Prose {
     }
 
     fn collect_link_targets(
-        keys: &[Phrase<Self::Key>],
-        decls: &Decls,
         targets: &mut Targets,
         warnings: &mut Vec<Report>,
+        decls: &Decls,
+        keys: &[Phrase<Self::Key>],
     ) {
-        targets.add_rels(Presentation::Prose, Self::NAME, decls, keys, warnings);
+        targets.add_rels(warnings, Presentation::Prose, Self::NAME, decls, keys);
     }
 }

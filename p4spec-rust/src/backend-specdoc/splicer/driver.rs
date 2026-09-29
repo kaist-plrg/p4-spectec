@@ -108,9 +108,9 @@ fn parse_skeleton<'src>(
 /// Renders stored requests without rescanning generated text.
 fn render_skeleton(
     anchor_ctx: &mut AnchorContext<'_>,
+    warnings: &mut Vec<Report>,
     splicers: &mut [Box<dyn Splice + '_>],
     skeleton: &Skeleton<'_>,
-    warnings: &mut Vec<Report>,
 ) -> Result<String, Error> {
     let mut text = String::new();
     for segment in skeleton {
@@ -118,8 +118,8 @@ fn render_skeleton(
             Segment::Text(literal) => text.push_str(literal),
             Segment::Marker(marker) => text.push_str(&splicers[marker.idx_splicer].render(
                 anchor_ctx,
-                marker.idx_request,
                 warnings,
+                marker.idx_request,
             )?),
         }
     }
@@ -128,10 +128,10 @@ fn render_skeleton(
 
 /// Renders skeletons with batch-wide anchors.
 fn splice_strings_impl(
+    warnings: &mut Vec<Report>,
     spec_el: &el::Spec,
     spec_pl: &pl::Spec,
     sources: &[(&str, &str)],
-    warnings: &mut Vec<Report>,
 ) -> Result<Vec<String>, Error> {
     // Parse every request before collecting its link targets
     let mut splicers = init(spec_el, spec_pl);
@@ -145,10 +145,10 @@ fn splice_strings_impl(
         for segment in skeleton {
             if let Segment::Marker(marker) = segment {
                 splicers[marker.idx_splicer].collect_link_targets(
-                    marker.idx_request,
-                    &decls,
                     &mut targets,
                     warnings,
+                    &decls,
+                    marker.idx_request,
                 );
             }
         }
@@ -159,7 +159,7 @@ fn splice_strings_impl(
     let mut texts = Vec::with_capacity(sources.len());
     // Share usage flags and counters through every input
     for skeleton in &skeletons {
-        texts.push(render_skeleton(&mut anchor_ctx, &mut splicers, skeleton, warnings)?);
+        texts.push(render_skeleton(&mut anchor_ctx, warnings, &mut splicers, skeleton)?);
     }
     // Report unused keys only after all sources rendered successfully
     for splicer in &splicers {
@@ -174,10 +174,10 @@ fn splice_strings_impl(
 /// Replacements are atomic per file; an I/O failure during the final rename
 /// sequence can leave earlier files committed.
 fn splice_files_impl(
+    warnings: &mut Vec<Report>,
     spec_el: &el::Spec,
     spec_pl: &pl::Spec,
     path_pairs: &[(PathBuf, PathBuf)],
-    warnings: &mut Vec<Report>,
 ) -> Result<(), Error> {
     // Read all inputs before any path can be replaced by another output
     let mut sources = Vec::with_capacity(path_pairs.len());
@@ -191,7 +191,7 @@ fn splice_files_impl(
         .iter()
         .map(|(file, text)| (file.as_str(), text.as_str()))
         .collect();
-    let texts = splice_strings_impl(spec_el, spec_pl, &sources, warnings)?;
+    let texts = splice_strings_impl(warnings, spec_el, spec_pl, &sources)?;
     // Stage every output before starting the per-file commit sequence
     let mut pending = Vec::with_capacity(path_pairs.len());
     for ((_, path_output), text) in path_pairs.iter().zip(texts) {
@@ -222,7 +222,7 @@ pub fn splice_strings_with_warnings(
     sources: &[(&str, &str)],
 ) -> (Result<Vec<String>, Error>, Vec<Report>) {
     let mut warnings = Vec::new();
-    let result = splice_strings_impl(spec_el, spec_pl, sources, &mut warnings);
+    let result = splice_strings_impl(&mut warnings, spec_el, spec_pl, sources);
     (result, warnings)
 }
 
@@ -248,6 +248,6 @@ pub fn splice_files_with_warnings(
     path_pairs: &[(PathBuf, PathBuf)],
 ) -> (Result<(), Error>, Vec<Report>) {
     let mut warnings = Vec::new();
-    let result = splice_files_impl(spec_el, spec_pl, path_pairs, &mut warnings);
+    let result = splice_files_impl(&mut warnings, spec_el, spec_pl, path_pairs);
     (result, warnings)
 }
