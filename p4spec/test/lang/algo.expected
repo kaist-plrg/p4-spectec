@@ -7279,11 +7279,16 @@ def $cast_default(typeIR, defaultValue) : value =
 
 def $cast_invalid_header(typeIR) : value =
 
-  clause 0 : (typeIR) = $default(headerTypeIR as typeIR)
+  clause 0 : (typeIR) = '{#}' as value
+  -- if typeIR <: invalidHeaderTypeIR
+  -- let invalidHeaderTypeIR = typeIR as invalidHeaderTypeIR
+  -- if (invalidHeaderTypeIR = HEADER_INVALID)
+
+  clause 1 : (typeIR) = $default(headerTypeIR as typeIR)
   -- if typeIR <: headerTypeIR
   -- let headerTypeIR = typeIR as headerTypeIR
 
-  clause 1 : (typeIR) = $default(headerUnionTypeIR as typeIR)
+  clause 2 : (typeIR) = $default(headerUnionTypeIR as typeIR)
   -- if typeIR <: headerUnionTypeIR
   -- let headerUnionTypeIR = typeIR as headerUnionTypeIR
 
@@ -7516,9 +7521,15 @@ def $sizeof_minSizeInBits'(typeIR) : nat =
   -- if typeIR' <: headerTypeIR
   -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerTypeIR
 
-  clause 12 : (typeIR') = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 12 : (typeIR) = 0
+  -- if typeIR <: headerUnionTypeIR
+  -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} = typeIR as headerUnionTypeIR
+  -- if fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []
+
+  clause 13 : (typeIR') = $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
   -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerUnionTypeIR
+  -- if (typeIR*{typeIR <- typeIR*} =/= [])
 
 def $sizeof_minSizeInBytes(typeIR) : value =
 
@@ -7580,9 +7591,15 @@ def $sizeof_maxSizeInBits'(typeIR) : nat =
   -- if typeIR' <: headerTypeIR
   -- let HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerTypeIR
 
-  clause 12 : (typeIR') = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+  clause 12 : (typeIR) = 0
+  -- if typeIR <: headerUnionTypeIR
+  -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} = typeIR as headerUnionTypeIR
+  -- if fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []
+
+  clause 13 : (typeIR') = $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
   -- if typeIR' <: headerUnionTypeIR
   -- let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} = typeIR' as headerUnionTypeIR
+  -- if (typeIR*{typeIR <- typeIR*} =/= [])
 
 def $sizeof_maxSizeInBytes(typeIR) : value =
 
@@ -15687,9 +15704,10 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let integerLiteral = expression' as integerLiteral
     -- if integerLiteral matches `% S %`
     -- let n S i = integerLiteral
+    -- let i_norm = $int_to_bitstr(n as int, i)
     -- let expressionNoteIR = `( INT `< n `> as typeIR LCTK `)
     -- if (n > 0)
-    -- output: % % |- % : n S i as expressionIR '#' expressionNoteIR
+    -- output: % % |- % : n S i_norm as expressionIR '#' expressionNoteIR
 
     rulepath integerLiteral-fixbit
     -- let expression' = expression
@@ -15697,8 +15715,9 @@ relation Expr_ok: cursor typingContext |- expression : typedExpressionIR
     -- let integerLiteral = expression' as integerLiteral
     -- if integerLiteral matches `% W %`
     -- let n W i = integerLiteral
+    -- let i_norm = $int_to_bitstr(n as int, i)
     -- let expressionNoteIR = `( BIT `< n `> as typeIR LCTK `)
-    -- output: % % |- % : n W i as expressionIR '#' expressionNoteIR
+    -- output: % % |- % : n W i_norm as expressionIR '#' expressionNoteIR
 
     rulepath stringLiteral
     -- let expression' = expression
@@ -17992,7 +18011,7 @@ relation ParserStmt_ok: typingContext |- parserStatement : typingContext parserS
     -- let TC_1 = $enter_t(TC_0)
     -- ParserBlock_ok: TC_1 |- parserBlockStatement : TC_2 parserBlockStatementIR
     -- let TC_3 = $exit_t(TC_2)
-    -- output: % |- % : TC_1 parserBlockStatementIR as parserStatementIR
+    -- output: % |- % : TC_3 parserBlockStatementIR as parserStatementIR
 
   rulegroup parserConditionalStatement
 
@@ -25276,10 +25295,12 @@ relation ParserState_inst: instContext store |- parserStateIR : instContext stor
 
     rulepath 
     -- let annotationList STATE nameIR `{ parserBlockElementStatementListIR transitionStatementIR `} = parserStateIR
-    -- ParserBlockElementStmtList_inst: IC_0 STO_0 |- parserBlockElementStatementListIR : IC_1 STO_1 parserBlockElementStatementListIR_inst
+    -- let IC_1 = $enter_i(IC_0)
+    -- ParserBlockElementStmtList_inst: IC_1 STO_0 |- parserBlockElementStatementListIR : IC_2 STO_1 parserBlockElementStatementListIR_inst
+    -- let IC_3 = $exit_i(IC_2)
     -- let parserStateIR_inst = annotationList STATE nameIR `{ parserBlockElementStatementListIR_inst transitionStatementIR `}
-    -- let IC_2 = $add_parserState_i(IC_1, nameIR, parserStateIR_inst)
-    -- output: % % |- % : IC_2 STO_1
+    -- let IC_4 = $add_parserState_i(IC_3, nameIR, parserStateIR_inst)
+    -- output: % % |- % : IC_4 STO_1
 
 relation ParserStates_inst: instContext store |- parserStateIR* : instContext store
 

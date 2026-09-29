@@ -948,6 +948,7 @@ dec $cast_invalid_header(typeIR) : value
   hint(prose_in '{#}' "casted to type" %0)
   hint(testgen_ignore)
 
+def $cast_invalid_header(HEADER_INVALID) = '{#}'
 def $cast_invalid_header(headerTypeIR) = $default(headerTypeIR)
 def $cast_invalid_header(headerUnionTypeIR) = $default(headerUnionTypeIR)
 
@@ -1148,8 +1149,10 @@ def $sizeof_minSizeInBits'(STRUCT _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
 def $sizeof_minSizeInBits'(HEADER _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
+def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ `> `{ eps `}) = 0
 def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $min_nat($sizeof_minSizeInBits'(typeIR)*)
+  -- if typeIR* =/= eps
 
 def $sizeof(typeIR, "minSizeInBits") = $sizeof_minSizeInBits(typeIR)
 
@@ -1184,8 +1187,10 @@ def $sizeof_maxSizeInBits'(STRUCT _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
 def $sizeof_maxSizeInBits'(HEADER _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
+def $sizeof_maxSizeInBits'(HEADER_UNION _ `< _ `> `{ eps `}) = 0
 def $sizeof_maxSizeInBits'(HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $max_nat($sizeof_maxSizeInBits'(typeIR)*)
+  -- if typeIR* =/= eps
 
 def $sizeof(typeIR, "maxSizeInBits") = $sizeof_maxSizeInBits(typeIR)
 
