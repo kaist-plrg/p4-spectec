@@ -100,8 +100,7 @@ impl Context {
     // - Hint loading
 
     /// Reads alteration hints while retaining their source declarations.
-    fn load_alter_hints(span_decl: &Span, hints_sl: &[sl::Hint]) -> Hints {
-        let mut hints = Hints::default();
+    fn load_alter_hints(hints: &mut Hints, span_decl: &Span, hints_sl: &[sl::Hint]) {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
             let hint = match id_hint.node.as_str() {
                 "prose" => &mut hints.prose,
@@ -117,16 +116,15 @@ impl Context {
                 span_decl: span_decl.clone(),
             });
         }
-        hints
     }
 
     /// Reads field names and checks their count when a syntax case supplies it.
     fn load_field_hints(
+        hints: &mut Hints,
         span_decl: &Span,
         hints_sl: &[sl::Hint],
         num_fields: Option<usize>,
-    ) -> Result<Option<Hint<fields::FieldHint>>, ProseError> {
-        let mut hint_fields = None;
+    ) -> Result<(), ProseError> {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
             // Other hints belong to their own loaders
             if id_hint.node != "prose_fields" {
@@ -144,9 +142,9 @@ impl Context {
                     },
                 )?;
             }
-            hint_fields = Some(hint);
+            hints.prose_fields = Some(hint);
         }
-        Ok(hint_fields)
+        Ok(())
     }
 
     // - Definition loading
@@ -199,14 +197,14 @@ impl Context {
             return Ok(());
         };
         for il::ast::TypCase { not_typ, hints: hints_sl, .. } in cases {
-            let hints = Hints {
-                prose_fields: Self::load_field_hints(
-                    &not_typ.span,
-                    hints_sl,
-                    Some(not_typ.node.args().len()),
-                )?,
-                ..Self::load_alter_hints(&not_typ.span, hints_sl)
-            };
+            let mut hints = Hints::default();
+            Self::load_alter_hints(&mut hints, &not_typ.span, hints_sl);
+            Self::load_field_hints(
+                &mut hints,
+                &not_typ.span,
+                hints_sl,
+                Some(not_typ.node.args().len()),
+            )?;
             self.henv
                 .insert_case(&def_typ_sl.id, &not_typ.node.to_mixop(), hints);
         }
@@ -224,10 +222,9 @@ impl Context {
             sl::RelDef::Extern(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
             sl::RelDef::Defined(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
         };
-        let hints = Hints {
-            prose_fields: Self::load_field_hints(&id_rel.span, hints_sl, None)?,
-            ..Self::load_alter_hints(&id_rel.span, hints_sl)
-        };
+        let mut hints = Hints::default();
+        Self::load_alter_hints(&mut hints, &id_rel.span, hints_sl);
+        Self::load_field_hints(&mut hints, &id_rel.span, hints_sl, None)?;
         self.henv.insert_rel(id_rel, hints);
         Ok(())
     }
@@ -240,10 +237,9 @@ impl Context {
             sl::MetaFuncDef::Table(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
             sl::MetaFuncDef::Defined(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
         };
-        let hints = Hints {
-            prose_fields: Self::load_field_hints(&id_func.span, hints_sl, None)?,
-            ..Self::load_alter_hints(&id_func.span, hints_sl)
-        };
+        let mut hints = Hints::default();
+        Self::load_alter_hints(&mut hints, &id_func.span, hints_sl);
+        Self::load_field_hints(&mut hints, &id_func.span, hints_sl, None)?;
         self.henv.insert_func(id_func, hints);
         Ok(())
     }
