@@ -1,7 +1,7 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: Steps 1 (syntax), 2 (s-expression bridge), and 3 (common
-metafunctions) are done. Steps 4–11 are planned.
+Status: Steps 1 (syntax), 2 (s-expression bridge), 3 (common metafunctions),
+and 4 (AL environments and context) are done. Steps 5–11 are planned.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language. It transcribes the AL specification in
@@ -209,10 +209,10 @@ This is how pure `spec-meta/{common,al}` is:
 
 The policy that follows:
 
-- **Caching is off.** `caching-enabled?` is set to `#f` in `common/0-prelude.rkt`,
+- **Caching is off.** `caching-enabled?` is set to `#f` in `common/0.0-prelude.rkt`,
   which every module requires. The two previous sections ensure that nothing
-  is evaluated twice, so the cache isn't needed. Turning it off also disables Redex's internal
-  pattern-matching caches; Step 10 measures that cost.
+  is evaluated twice, so the cache isn't needed. Turning it off also disables Redex's memo of
+  nonterminal matches, which Step 4 measured as most of `$load`'s cost.
 - **If Step 10 needs caching back,** it follows the OCaml policy instead of
   Redex's:
   - Memoize `Call_func` and `Call_rel` in Racket, with keys as in OCaml.
@@ -281,7 +281,7 @@ rule.
 | `-- if ~(val <: num)` | `(side-condition ,(not (redex-match? AL num (term val))))` |
 | `-- otherwise` | the complement of the other clauses; see [Disjoint clauses](#disjoint-clauses) |
 | `-- debug e` | `(where _ ,(debug (term e)))`, printing to stderr |
-| `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes, collected as helpers in `common/0-stdlib.rkt` |
+| `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes, collected as helpers in `common/0.1-stdlib.rkt` |
 
 ### Layout and languages
 
@@ -299,10 +299,10 @@ codec and wire live in `common/`: the extern relations in
 ```text
 spec-meta-redex/
   common/
-    0-prelude.rkt         Redex re-exports; caching off; definition macros
+    0.0-prelude.rkt       Redex re-exports; caching off; definition macros
     0-extern-json.rkt     codec for the extern JSON wire
     0-extern-wire.rkt     transport to the OCaml host
-    0-stdlib.rkt          language Stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins
+    0.1-stdlib.rkt        language Stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins
     1-syntax.rkt          language Common
     2-env.rkt             language Common-env; $extend_tdenv, $theta_of_tdenv, ...
     3-context.rkt         language Common-context (cursor)
@@ -312,8 +312,8 @@ spec-meta-redex/
   al/
     0-boot.rkt            boot-script, boot-p4: run spectec-boot sexp(-p4), read
     1-syntax.rkt          language AL-syntax
-    2-env.rkt             reldef, funcdef
-    3-context.rkt         layer, ctx; $load, $add_*, $find_*, $sub_opt, $sub_list
+    2-env.rkt             languages AL-base (the union) and AL-env (reldef, funcdef)
+    3-context.rkt         language AL-context (layer, ctx); $load, $add_*, $find_*, ...
     4-relation.rkt        ctxres
     5.1-eval-typ.rkt      $upcast, $downcast, $subtyp
     5.2-eval-assign.rkt   Assign_exp(s), Assign_arg(s)
@@ -328,21 +328,22 @@ spec-meta-redex/
   test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, ...
 ```
 
-The definition macros in `common/0-prelude.rkt` are `define-dec`, which wraps
+The definition macros in `common/0.0-prelude.rkt` are `define-dec`, which wraps
 `define-metafunction`, and `define-relation`, which wraps
 `define-judgment-form`. `define-dec` appends the `⊥` clause (see
 [Disjoint clauses](#disjoint-clauses)). `SPECTEC_REDEX_CONTRACTS=0`, read when
 a module is compiled, drops the contracts of both (see
 [Verification](#verification)).
 
-Each file in `common/` from `0-stdlib` to `4-relation` extends the previous
+Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
 file's language with its own syntax: `Stdlib` (the `var`s, sets and maps),
 `Common`, `Common-env`, `Common-context`, and `Common-relation`.
 `AL-syntax` extends `Common` with `al/1-syntax`.
 
-`AL` is the `define-union-language` of `Common-relation` and `AL-syntax`,
-extended with `al/2-env`, `al/3-context`, and `al/4-relation`. Shared
-nonterminals merge without duplicate matches *(checked)*. Metafunctions
+`AL-base` (in `al/2-env.rkt`) is the `define-union-language` of
+`Common-relation` and `AL-syntax`. `AL-env`, `AL-context`, and then `AL` extend
+it with `al/2-env`, `al/3-context`, and `al/4-relation`. Shared nonterminals
+merge without duplicate matches *(checked)*. Metafunctions
 defined on a `common/` language work on `AL` terms, so common helpers stay in
 `common/`.
 
@@ -392,7 +393,7 @@ can instead be loaded as a shared object through Racket's `ffi/unsafe`
 As in the K port, the hot object-level map builtins (`find_map`, `find_maps`,
 `add_map`, `adds_map`, `update_map`, `assoc_`) are native Racket that works on
 AL map values (`INJ` with the `` `{ `} `` mixop). They are separate from the
-meta-level `find_map` in `common/0-stdlib.rkt`, which works on Redex's own
+meta-level `find_map` in `common/0.1-stdlib.rkt`, which works on Redex's own
 environments.
 
 ## Verification
@@ -413,13 +414,101 @@ environments.
   results. It cannot detect overlapping clauses that agree on the overlap,
   such as `$subst_typ` on an empty `theta`.
 - **No caching.** A test asserts that `caching-enabled?` is `#f` once
-  `common/0-prelude.rkt` is loaded. The `$fresh_typeId` test in Step 9 catches a cache
+  `common/0.0-prelude.rkt` is loaded. The `$fresh_typeId` test in Step 9 catches a cache
   that comes back by some other route.
 - **Contracts.** Every judgment form and metafunction gets a contract built
   from its watsup declaration, which catches transcription slips early.
   Contract checks cost time linear in the size of the terms they check, and
   `C` contains the whole loaded spec. That is why the definition macros have a
   switch to turn contracts off for P4 runs.
+
+## Checking it yourself
+
+Run these from the repository root.
+
+### Booting
+
+```sh
+make boot                                        # rebuild spectec-boot after editing sexp.ml
+./spectec-boot sexp examples/add.watsup          # a script as a Redex term
+./spectec-boot sexp spec -o /tmp/spec.sexp       # a directory, to a file
+./spectec-boot sexp-p4 -p p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include
+```
+
+To print the elaborated AL of one definition (here `$find_vari`), to compare
+it with its transcription:
+
+```sh
+racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
+           (for ([d (boot-script "spec-meta/al")] #:when (equal? (cadr d) "find_vari"))
+             (pretty-write d))'
+```
+
+### Tests
+
+```sh
+raco test spec-meta-redex/test                   # everything, about a minute
+raco test spec-meta-redex/test/al-context.rkt    # one file
+SPECTEC_REDEX_CONTRACTS=0 raco test spec-meta-redex/test
+```
+
+The contract switch is read at compile time, so it only takes effect while
+`spec-meta-redex/` has no `compiled/` directories. `test/prelude.rkt` fails if
+the loaded code was compiled with the other setting.
+
+To spot-check disjointness, run the suite on a copy whose `define-dec`
+reverses every metafunction's clauses. All tests should still pass:
+
+```sh
+REV=/tmp/redex-rev
+rm -rf "$REV" && mkdir -p "$REV" && cp -r spec-meta-redex "$REV"/
+for d in examples spec spec-meta p4c spectec-boot; do ln -s "$PWD/$d" "$REV/$d"; done
+python3 - "$REV" <<'EOF'
+import sys
+p = sys.argv[1] + "/spec-meta-redex/common/0.0-prelude.rkt"
+s = open(p).read()
+s = s.replace("(with-syntax ([(contract ...)",
+              "(with-syntax ([(clause ...) (reverse (syntax->list #'(clause ...)))]\n"
+              "                   [(contract ...)", 1)
+open(p, "w").write(s)
+EOF
+(cd "$REV" && raco test spec-meta-redex/test)
+```
+
+### Exploring in a REPL
+
+```sh
+racket -i -e '(require (file "spec-meta-redex/common/0.0-prelude.rkt")
+                       (file "spec-meta-redex/al/0-boot.rkt")
+                       (file "spec-meta-redex/al/3-context.rkt"))'
+```
+
+Then, for example:
+
+```racket
+(term (load (empty_ctx) ,(boot-script "examples/add.watsup")))   ; a loaded context
+(redex-match? AL-context ctx (term (empty_ctx)))                 ; grammar membership
+(current-traced-metafunctions '(find_vari sub_list))             ; print calls and results
+(current-traced-metafunctions '())
+```
+
+Keep `$load` to the examples and `spec-meta/al`: on `spec/` it takes about 27
+minutes, even with contracts off (see Step 4). To see a language as a grammar figure (only the
+nonterminals it adds to the language it extends):
+
+```sh
+racket -e '(require racket/class pict redex/pict (file "spec-meta-redex/al/3-context.rkt"))
+           (send (pict->bitmap (language->pict AL-context)) save-file "/tmp/al-context.png" (quote png))'
+```
+
+### Oracles
+
+What a script should evaluate to, for the comparisons from Step 8 on:
+
+```sh
+./spectec-boot run spec-meta/al -rel Entry -tec examples/add.watsup -ali   # OCaml, meta-circular
+make k-spec && ./spec-meta-k/scripts/k-run.sh examples/add.watsup          # K, JSON output
+```
 
 ## Steps
 
@@ -429,7 +518,7 @@ Transcribe `common/1-syntax.watsup` and `al/1-syntax.watsup` into Redex
 languages. This step fixes the term encoding that every later step and the
 Step 2 emitter depend on.
 
-- `common/0-prelude.rkt`: re-exports `redex/reduction-semantics` and sets
+- `common/0.0-prelude.rkt`: re-exports `redex/reduction-semantics` and sets
   `caching-enabled?` to `#f`. Every module requires it instead of Redex
   itself, so the caching policy holds from the start. The definition macros
   come in Step 3.
@@ -448,7 +537,7 @@ Step 2 emitter depend on.
   The `var` declarations in `common/0-stdlib.watsup` become nonterminal
   aliases: `(bool b ::= boolean)`, `(int i ::= integer)`,
   `(nat n ::= natural)`, and `(text t ::= string)`. Step 3 moved them to
-  `Stdlib` in `common/0-stdlib.rkt`, which `Common` extends. `extern syntax
+  `Stdlib` in `common/0.1-stdlib.rkt`, which `Common` extends. `extern syntax
   json` becomes a `json` that matches what `jsexpr?` accepts.
 - `al/1-syntax.rkt`: `(define-extended-language AL-syntax Common ...)` adding
   `param`, `iterprem`, `prem`, `rulmatch`, `rulpath`, `rulgroup`, `elsgroup`,
@@ -501,7 +590,7 @@ Done when all of them match.
 Transcribe `common/0-stdlib`, `2-env`, `4-relation`, `5.0-eval-typ`, and
 `5.1-eval-ops`: every `dec`/`def` as a metafunction, plus `res<X>`.
 
-- Add the definition macros to `common/0-prelude.rkt`: the `⊥` clause, and the contract
+- Add the definition macros to `common/0.0-prelude.rkt`: the `⊥` clause, and the contract
   switch.
 - Write every `otherwise` as an explicit complement. The ones in this step are
   small: `$extend_tdenv`, `$is_iter_on_var`, `$subst_typ`, `$is_tup`, and
@@ -554,6 +643,27 @@ metafunctions.
 - Tests: run `$load` on the scripts booted in Step 2 and check which ids end up
   in `GLOBAL`'s `FUNC`, `REL`, and `TYP`. Test `$sub_list` with no iterated
   variables and with empty lists.
+- Outcome:
+  - `$find_vari` has no clause for an unbound variable, so it gives `⊥`, never
+    `eps`. The complements of `$find_varis`, `$find_varrs`, and
+    `$finds_vari` repeat their pure lookups in a side-condition, and those of
+    `$find_typ` and `$find_func` dispatch on the same lookups.
+  - `$sub_opt`'s two clauses overlap on an empty `vari*`, which watsup
+    resolves by order: the first applies, giving `C`. The second clause
+    requires a non-empty `vari*`.
+  - Performance: a nonterminal in a pattern is a deep membership check.
+    Redex's matcher memoizes these checks, but only while `caching-enabled?`
+    is on, and that parameter also turns on the result cache that AL cannot
+    use (see [Caching](#caching)). With caching on, `$load` on `spec-meta/al`
+    takes 0.69 s with contracts off and 1.5 s with them on. Every
+    recursive `$load` call rechecks `C`, the remaining `defn_t ...`, and the
+    loaded maps, so `$load` is quadratic in the script. On `spec-meta/al`
+    (159 definitions) it takes 8.8 s with contracts off and 20.5 s with them
+    on. On `spec/` (1,672 definitions) it takes 27 minutes (1,625 s) with
+    contracts off, so the tests load only the examples and `spec-meta/al`.
+    Patterns stay precise until Step 10 (see there for the measured fix).
+  - With every metafunction's clauses reversed by hand in a scratch copy, the
+    whole suite still passes.
 
 ### Step 5: Type casts and subtyping
 
@@ -652,13 +762,18 @@ moving on:
   the large program. Profile first (Racket's `profile` library). Then try
   these, roughly in order of expected payoff:
   1. turn contracts off for P4 runs;
-  2. add OCaml-style caching for `Call_func` and `Call_rel`, and memos for hot
+  2. match large structures shallowly in rule patterns: a shallow `C ::=
+     {GLOBAL any LOCAL any}` apart from the precise `ctx` of contracts, and
+     `any` for layer maps and recursive tails. This took `$load` on
+     `spec-meta/al` from 8.8 s to 0.13 s, and on `spec/` to 8.5 s, with
+     contracts off (Step 4);
+  3. add OCaml-style caching for `Call_func` and `Call_rel`, and memos for hot
      pure metafunctions (see [Caching](#caching)). This needs a side-effect
      flag in the responses. Only `extern-serve` adds it, so the K wire is
      unchanged;
-  3. store the global maps as Racket immutable hashes behind the same builtin
+  4. store the global maps as Racket immutable hashes behind the same builtin
      metafunctions;
-  4. move the wire to `ffi/unsafe`, if extern calls show up in the profile.
+  5. move the wire to `ffi/unsafe`, if extern calls show up in the profile.
 
   After each change, rerun the `$fresh_typeId` test and the negative program.
 - Done when the small program passes and medium and large results are recorded
