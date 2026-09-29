@@ -15,8 +15,9 @@ use p4spec_rust::{
 
 // = Expectations
 
+/// Distinguishes fatal failures from recoverable mismatches.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum FailureKind {
+pub(super) enum FailureKind {
     Fatal,
     Mismatch,
 }
@@ -41,7 +42,7 @@ fn codes(report: &Report) -> Vec<&str> {
 // = Execution
 
 /// Checks that R fails with the expected kind and code.
-fn reject<Interp>(
+pub(super) fn reject<Interp>(
     name: &str,
     mut runner: Runner<Interp, BuiltinInterface, NullExtern>,
     kind_expect: FailureKind,
@@ -145,71 +146,5 @@ pub fn run(name: &str) -> Result<Vec<Report>> {
             reject(name, runner, kind, code)
         }
         _ => Err(failure(name, "unknown interpreter stage")),
-    }
-}
-
-// = Tests
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::path::Path;
-
-    fn check(case: &str, kind: FailureKind, code: &str) -> Result<Vec<Report>> {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("expected/diagnostic/interp")
-            .join(case)
-            .with_extension("watsup");
-        let spec_al = p4spec_rust::algo([path]).unwrap();
-        let runner =
-            runner::build_al(spec_al, Config::new(true, false, false), NullExtern).unwrap();
-        reject(case, runner, kind, code)
-    }
-
-    #[test]
-    fn fatal_execution_errors_can_be_snapshotted() {
-        let reports = check("extern-failed", FailureKind::Fatal, "runtime/extern-failed").unwrap();
-        assert_eq!(reports.len(), 1);
-    }
-
-    #[test]
-    fn mismatches_can_be_snapshotted() {
-        let reports = check("backtrack", FailureKind::Mismatch, "runtime/condition-unmet").unwrap();
-        assert_eq!(reports.len(), 1);
-    }
-
-    #[test]
-    fn fatal_execution_errors_cannot_pass_as_mismatches() {
-        let error =
-            check("extern-failed", FailureKind::Mismatch, "runtime/extern-failed").unwrap_err();
-        assert!(error.to_string().contains("expected Mismatch, got Fatal"), "{error}");
-    }
-
-    #[test]
-    fn mismatches_cannot_pass_as_fatal_execution_errors() {
-        let error = check("backtrack", FailureKind::Fatal, "runtime/condition-unmet").unwrap_err();
-        assert!(error.to_string().contains("expected Fatal, got Mismatch"), "{error}");
-    }
-
-    #[test]
-    fn unrelated_errors_cannot_be_snapshotted() {
-        let error = check("backtrack", FailureKind::Mismatch, "runtime/extern-failed").unwrap_err();
-        assert!(
-            error
-                .to_string()
-                .contains("missing expected diagnostic runtime/extern-failed"),
-            "{error}"
-        );
-    }
-
-    #[test]
-    fn successful_execution_cannot_be_snapshotted() {
-        let error = check(
-            "relation-nondeterministic",
-            FailureKind::Fatal,
-            "runtime/relation-nondeterministic",
-        )
-        .unwrap_err();
-        assert!(error.to_string().contains("relation unexpectedly matched"), "{error}");
     }
 }
