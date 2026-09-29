@@ -200,7 +200,6 @@ fn optional_and_list_conditions_preserve_empty_iteration_semantics() {
 #[test]
 fn loading_rejects_duplicate_execution_definitions() {
     for source in [
-        "extern syntax opaque",
         "dec $entry() : nat\ndef $entry() = 1",
         "var n : nat\nrelation Step: nat ~> nat\n  hint(input %0)\nrule Step/step: n ~> n",
     ] {

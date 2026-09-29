@@ -33,6 +33,10 @@ pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncD
 
 impl Global {
     /// Loads type definitions and prepares each callable for slot execution.
+    ///
+    /// Requires executable IR satisfying the preceding passes' invariants,
+    /// including unique global type definitions.
+    /// Direct IR constructors must uphold the same precondition.
     pub fn load(spec: source::Spec) -> Result<Self, Error> {
         let mut loaded = Self::new();
         // Move source definitions into the execution environments
@@ -47,7 +51,7 @@ impl Global {
                             (id, TypeDef::Defined(tparams, Box::new(def_typ)))
                         }
                     };
-                    loaded.insert_typdef(id, typdef)?;
+                    loaded.insert_typdef(id, typdef);
                 }
                 // Meta-variables carry no runtime state
                 source::DefKind::Var(_) => {}

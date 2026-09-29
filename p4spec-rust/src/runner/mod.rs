@@ -70,6 +70,8 @@ pub enum BuildError {
 }
 
 /// Builds an AL runner from a specification, with the P4 builtins.
+///
+/// Requires validated executable IR, including unique global type definitions.
 pub fn build_al<Ext: Extern>(
     spec: al::ast::Spec,
     config: Config,
@@ -86,6 +88,8 @@ pub fn build_al<Ext: Extern>(
 }
 
 /// Builds an SL runner from a specification, with the P4 builtins.
+///
+/// Requires validated executable IR, including unique global type definitions.
 pub fn build_sl<Ext: Extern>(
     spec: sl::ast::Spec,
     config: Config,
@@ -102,6 +106,8 @@ pub fn build_sl<Ext: Extern>(
 }
 
 /// Builds a PL runner from a specification, with the P4 builtins.
+///
+/// Requires validated executable IR, including unique global type definitions.
 pub fn build_pl<Ext: Extern>(
     spec: pl::ast::Spec,
     config: Config,

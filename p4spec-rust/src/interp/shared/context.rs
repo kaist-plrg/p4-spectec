@@ -175,16 +175,15 @@ impl<R, F> Global<R, F> {
 
     // - Types
 
-    /// Inserts a type, rejecting duplicates without replacing the definition.
-    pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
-        if self.tdenv.contains_key(&id) {
-            return Err(error::at(
-                error::context::binding_repeated(EntityKind::Type, id.node),
-                id.span,
-            ));
-        }
+    /// Inserts a globally unique type from validated executable IR.
+    pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) {
+        // Elaboration ensures uniqueness; AL/SL/PL preserve type IDs one-to-one
+        assert!(
+            !self.tdenv.contains_key(&id),
+            "global type definitions must be unique: {}",
+            id.node
+        );
         self.tdenv.insert(id, typdef);
-        Ok(())
     }
 
     // - Relations

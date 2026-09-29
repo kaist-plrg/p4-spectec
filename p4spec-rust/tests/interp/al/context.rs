@@ -46,33 +46,14 @@ fn var(name: &str, iters: Vec<ast::Iter>) -> ast::Var {
 
 #[test]
 fn test_duplicate_global_definition_uses_second_identifier_span() {
-    for (kind, def_a, def_b) in [
-        (
-            EntityKind::Type,
-            ast::DefKind::Typ(ast::TypDef::Extern(ast::ExternTyp {
-                id: id("x", 1),
-                hints: vec![],
-            })),
-            ast::DefKind::Typ(ast::TypDef::Extern(ast::ExternTyp {
-                id: id("x", 9),
-                hints: vec![],
-            })),
-        ),
-        (
-            EntityKind::Function,
-            ast::DefKind::MetaFunc(func("x", 1)),
-            ast::DefKind::MetaFunc(func("x", 9)),
-        ),
-    ] {
-        let error = Global::load(vec![def(def_a), def(def_b)])
-            .unwrap_err()
-            .into_report();
-        assert_eq!(error.span(), id("x", 9).span);
-        assert_eq!(
-            error.diagnostic().message,
-            p4spec_rust::interp::shared::error::context::binding_repeated(kind, "x".into()).message
-        );
-    }
+    let error = Global::load(vec![
+        def(ast::DefKind::MetaFunc(func("x", 1))),
+        def(ast::DefKind::MetaFunc(func("x", 9))),
+    ])
+    .unwrap_err();
+    assert_eq!(error.span(), id("x", 9).span);
+    assert_eq!(error.code(), Some("runtime/binding-repeated"));
+    assert_eq!(error.diagnostic().message, "function `x` was already defined");
 }
 
 #[test]
