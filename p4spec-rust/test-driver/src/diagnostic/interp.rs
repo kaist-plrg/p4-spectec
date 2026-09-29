@@ -85,9 +85,8 @@ where
 /// Runs a local negative case through its selected interpreter.
 pub fn run(name: &str) -> Result<Vec<Report>> {
     // Split the stage from the shared source case
-    let (stage, case) = name
-        .strip_prefix("interp-")
-        .and_then(|name| name.split_once('-'))
+    let (case, stage) = name
+        .rsplit_once("-interp-")
         .ok_or_else(|| failure(name, "invalid interpreter diagnostic case"))?;
     let (kind, code) = match case {
         "backtrack" | "deepest-failure" | "later-tie" => {
