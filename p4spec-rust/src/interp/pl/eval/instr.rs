@@ -510,17 +510,11 @@ fn eval_check_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Cast only after the subtype check succeeds
     if matches {
         let value = unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, &instr.typ, value));
-        match assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value) {
-            // A successful binding is visible only in the nested block
-            ok!(ctx_bound) => {
-                let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_bound, &instr.block));
-                ok!((ctx, flow))
-            }
-            // A failed binding lets the enclosing block continue
-            fatal!(report) => ok!((ctx, Flow::Cont(vec![*report]))),
-            // Mismatching bindings also fall through
-            unmatch!(reports) => ok!((ctx, Flow::Cont(reports))),
-        }
+        // Propagate binding failures before entering the nested block
+        let ctx_bound =
+            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
+        let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_bound, &instr.block));
+        ok!((ctx, flow))
     } else {
         ok!((
             ctx,
