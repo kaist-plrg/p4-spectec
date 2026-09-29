@@ -5,7 +5,7 @@
 //! Block::item_ordered(0, prose)   -> Item(Item { 0, Ordered(None), prose, Empty })
 //! ```
 
-use crate::lang::common::source::Phrase;
+use crate::lang::common::Id;
 
 // == Documents
 
@@ -53,19 +53,26 @@ pub enum Code {
 
 // - Links
 //
-//   Link(Direct("t"), Text("x"))              -> xref:t[x]
-//   Link(Subject(Function("f")), Text("x"))   -> xref:f[x]
-//   ... with an unresolving anchor            -> x
+//   kind: Direct("t"), body: Text("x")              -> xref:t[x]
+//   kind: Subject(Function("f")), body: Text("x")   -> xref:f[x]
+//   ... with an unresolving anchor                  -> x
+
+/// A link target and the source of its displayed text.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Link {
+    /// Selects a concrete target or a definition to resolve.
+    pub kind: LinkKind,
+    /// Records the hint name and original template expression span, when present.
+    pub origin: Option<Id>,
+}
 
 /// A concrete target or a reference resolved by the enclosing document.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Link {
+pub enum LinkKind {
     /// Uses the target verbatim, bypassing the subject resolver.
     Direct(String),
     /// Resolves the subject, preserving only the body if unresolved.
     Subject(Subject),
-    /// Retains the source template that supplies this link's displayed text.
-    Hinted { link: Box<Link>, hint: Phrase<&'static str> },
 }
 
 /// A definition referenced by prose.

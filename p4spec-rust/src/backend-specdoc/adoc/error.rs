@@ -3,7 +3,7 @@
 //! Link warnings identify the source subject and the template supplying its text.
 //! Serialization collects warnings for its caller and preserves fallback text.
 
-use super::pl::doc::doc::{Link, Subject};
+use super::pl::doc::doc::{Link, LinkKind, Subject};
 use crate::{
     diagnostic::{Diagnostic, Label, Severity},
     lang::common::source::Span,
@@ -11,34 +11,33 @@ use crate::{
 
 /// Describes the source-level reference without exposing generated anchors.
 fn describe_link(link: &Link) -> String {
-    match link {
-        Link::Direct(target) => format!("destination {target:?}"),
-        Link::Subject(Subject::Function(id)) => format!("function `${id}`"),
-        Link::Subject(Subject::Relation(id)) => format!("relation `{id}`"),
-        Link::Subject(Subject::Type(id)) => format!("type `{id}`"),
-        Link::Hinted { link, .. } => describe_link(link),
+    match &link.kind {
+        LinkKind::Direct(target) => format!("destination {target:?}"),
+        LinkKind::Subject(Subject::Function(id)) => format!("function `${id}`"),
+        LinkKind::Subject(Subject::Relation(id)) => format!("relation `{id}`"),
+        LinkKind::Subject(Subject::Type(id)) => format!("type `{id}`"),
     }
 }
 
 /// Locates a link problem at its template, falling back to the rendered fragment.
 fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
     // A propagated hint retains the template's declaration even at a call site
-    let (span, label) = match link {
-        Link::Hinted { hint, .. } => {
-            let span = if hint.span.left.line == 0 { span } else { &hint.span };
-            (span, format!("`{}`: {label}", hint.node))
+    let (span, label) = match &link.origin {
+        Some(origin) => {
+            let span = if origin.span.left.line == 0 { span } else { &origin.span };
+            (span, format!("`{}`: {label}", origin.node))
         }
-        _ => (span, label.to_owned()),
+        None => (span, label.to_owned()),
     };
     let labels = if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, label)] };
     // Explain how the source template becomes the displayed reference text
-    let notes = match link {
-        Link::Hinted { hint, .. } => vec![format!(
+    let notes = match &link.origin {
+        Some(origin) => vec![format!(
             "The `{}` hint supplies the displayed text for links to {}.",
-            hint.node,
+            origin.node,
             describe_link(link),
         )],
-        _ => Vec::new(),
+        None => Vec::new(),
     };
     Diagnostic::new("adoc", Severity::Warning, Some(code.to_owned()), message, labels, notes)
 }
@@ -76,14 +75,14 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
         "this inner link is suppressed",
     );
     // Relate the enclosing template when its original location is available
-    if let Link::Hinted { hint, .. } = link_outer
-        && hint.span.left.line != 0
+    if let Some(origin) = &link_outer.origin
+        && origin.span.left.line != 0
     {
         diagnostic.labels.push(Label::secondary(
-            &hint.span,
+            &origin.span,
             format!(
                 "`{}` includes this text in the outer link to {}",
-                hint.node,
+                origin.node,
                 describe_link(link_outer)
             ),
         ));
@@ -110,13 +109,11 @@ pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
         "this produces no link text",
     );
     // Suggest an edit only when a user-supplied template produced the empty text
-    diagnostic
-        .notes
-        .push(if let Link::Hinted { hint, .. } = link {
-            format!("Make `{}` produce nonempty text, or omit the custom prose hint.", hint.node)
-        } else {
-            "Supply nonempty display text for the link.".into()
-        });
+    diagnostic.notes.push(if let Some(origin) = &link.origin {
+        format!("Make `{}` produce nonempty text, or omit the custom prose hint.", origin.node)
+    } else {
+        "Supply nonempty display text for the link.".into()
+    });
     diagnostic
 }
 
