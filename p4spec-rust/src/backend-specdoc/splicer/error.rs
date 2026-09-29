@@ -1,15 +1,15 @@
-//! Located splice failures and immediate warnings
+//! Structured diagnostics authored by document splicing
 //!
 //! `${func-prose: @}` returns a `splice/identifier-invalid` report at `@`.
 //! LaTeX failures preserve their EL spans; file failures name their paths.
-//! Errors are returned to the caller as reports, while warnings are rendered
-//! immediately to stderr without accumulating in the splice context.
+//! Errors and warnings retain diagnostic data without loading source files
+//! or choosing how the caller renders them.
 
 use std::path::Path;
 
 use super::super::latex;
 use crate::{
-    diagnostic::{Diagnostic, Label, RenderConfig, Renderer, Report, Severity},
+    diagnostic::{Diagnostic, Label, Report, Severity},
     lang::common::source::Span,
 };
 
@@ -18,19 +18,30 @@ use crate::{
 /// Names a structured splice failure without adding a wrapper.
 pub type Error = Box<Report>;
 
-/// Creates an error report authored by the splicer.
+/// Creates a splice diagnostic without reading source files.
+fn diagnostic(
+    severity: Severity,
+    code: &str,
+    message: impl Into<String>,
+    labels: Vec<Label>,
+    notes: Vec<String>,
+) -> Diagnostic {
+    Diagnostic::new("splice", severity, Some(code.to_owned()), message, labels, notes)
+}
+
+/// Creates a boxed error report.
 fn cause(code: &str, message: impl Into<String>, labels: Vec<Label>) -> Error {
-    Box::new(
-        Diagnostic::new(
-            "splice",
-            Severity::Error,
-            Some(code.to_owned()),
-            message,
-            labels,
-            Vec::new(),
-        )
-        .into(),
-    )
+    Box::new(diagnostic(Severity::Error, code, message, labels, Vec::new()).into())
+}
+
+/// Creates a warning report.
+fn warning(
+    code: &str,
+    message: impl Into<String>,
+    labels: Vec<Label>,
+    notes: Vec<String>,
+) -> Report {
+    diagnostic(Severity::Warning, code, message, labels, notes).into()
 }
 
 const IDENTIFIER_INVALID: &str = "splice/identifier-invalid";
@@ -73,14 +84,41 @@ pub(super) fn latex(error: latex::Error) -> Error {
 
 // == Warnings
 
-/// Renders a splice warning immediately to stderr.
-pub(super) fn warn(span: &Span, message: String) {
-    let labels =
-        if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, "splice marker")] };
-    let report: Report =
-        Diagnostic::new("splice", Severity::Warning, None, message, labels, Vec::new()).into();
-    let mut renderer = Renderer::new(RenderConfig::default());
-    if let Err(error) = renderer.render_to_stderr(&report) {
-        eprintln!("{report}\n{error}");
-    }
+const KEY_NOT_FOUND: &str = "splice/key-not-found";
+
+/// Reports a requested key that has no definition for its marker kind.
+pub(super) fn key_not_found(name: &str, key: &str, span: &Span) -> Report {
+    warning(
+        KEY_NOT_FOUND,
+        format!("{name} splice key not found: {key}"),
+        vec![Label::primary(span, "splice marker")],
+        Vec::new(),
+    )
+}
+
+const TARGET_DUPLICATE: &str = "splice/target-duplicate";
+
+/// Reports a title occurrence whose destination is already registered.
+pub(super) fn target_duplicate(name: &str, id: &str, span: &Span) -> Report {
+    warning(
+        TARGET_DUPLICATE,
+        format!("duplicate {name} target: {id}"),
+        vec![Label::primary(span, "splice marker")],
+        Vec::new(),
+    )
+}
+
+const KEYS_UNUSED: &str = "splice/keys-unused";
+
+/// Reports unused totals with key lists grouped into notes of five keys.
+pub(super) fn keys_unused(name: &str, total: usize, keys: &[String]) -> Report {
+    let num_unused = keys.len();
+    let percentage = if total == 0 { 0.0 } else { num_unused as f64 / total as f64 * 100.0 };
+    let notes = keys.chunks(5).map(|keys| keys.join(", ")).collect();
+    warning(
+        KEYS_UNUSED,
+        format!("unused {num_unused} {name} splices out of {total} ({percentage:.2}%)"),
+        Vec::new(),
+        notes,
+    )
 }

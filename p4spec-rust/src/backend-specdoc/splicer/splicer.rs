@@ -9,14 +9,13 @@
 use super::super::anchor::AnchorContext;
 use super::{
     anchor::{Decls, Targets},
-    error::{Error, warn},
+    error::{self, Error},
     parser,
     source::Source,
 };
-use crate::lang::{
-    common::source::{Phrase, Span},
-    el::ast as el,
-    pl::ast as pl,
+use crate::{
+    diagnostic::Report,
+    lang::{common::source::Phrase, el::ast as el, pl::ast as pl},
 };
 use std::collections::BTreeMap;
 
@@ -79,7 +78,13 @@ pub(super) trait Kind<'spec> {
         None
     }
 
-    fn collect_link_targets(_keys: &[Phrase<Self::Key>], _decls: &Decls, _targets: &mut Targets) {}
+    fn collect_link_targets(
+        _keys: &[Phrase<Self::Key>],
+        _decls: &Decls,
+        _targets: &mut Targets,
+        _warnings: &mut Vec<Report>,
+    ) {
+    }
 }
 
 // == Splice lookups
@@ -128,11 +133,18 @@ pub(super) trait Splice {
         &mut self,
         anchor_ctx: &mut AnchorContext<'_>,
         idx_request: usize,
+        warnings: &mut Vec<Report>,
     ) -> Result<String, Error>;
 
-    fn collect_link_targets(&self, idx_request: usize, decls: &Decls, targets: &mut Targets);
+    fn collect_link_targets(
+        &self,
+        idx_request: usize,
+        decls: &Decls,
+        targets: &mut Targets,
+        warnings: &mut Vec<Report>,
+    );
 
-    fn warn_unused(&self);
+    fn warn_unused(&self, warnings: &mut Vec<Report>);
 }
 
 /// Retains the parsed keys for one marker occurrence.
@@ -172,6 +184,7 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
         &mut self,
         anchor_ctx: &mut AnchorContext<'_>,
         idx_request: usize,
+        warnings: &mut Vec<Report>,
     ) -> Result<String, Error> {
         let keys = &self.requests[idx_request].keys;
         // Finish mutable usage updates before selections borrow definition data
@@ -179,10 +192,11 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
             if let Some(entry) = self.store.entries.get_mut(&key.node) {
                 entry.used = true;
             } else {
-                warn(
+                warnings.push(error::key_not_found(
+                    SpliceKind::NAME,
+                    &key.node.to_string(),
                     &key.span,
-                    format!("{} splice key not found: {}", SpliceKind::NAME, key.node.to_string()),
-                );
+                ));
             }
         }
         let mut headers = String::new();
@@ -209,39 +223,29 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
         Ok(format!("{headers}{}{text}{}", SpliceKind::PREFIX, SpliceKind::SUFFIX))
     }
 
-    fn collect_link_targets(&self, idx_request: usize, decls: &Decls, targets: &mut Targets) {
-        SpliceKind::collect_link_targets(&self.requests[idx_request].keys, decls, targets);
+    fn collect_link_targets(
+        &self,
+        idx_request: usize,
+        decls: &Decls,
+        targets: &mut Targets,
+        warnings: &mut Vec<Report>,
+    ) {
+        SpliceKind::collect_link_targets(
+            &self.requests[idx_request].keys,
+            decls,
+            targets,
+            warnings,
+        );
     }
 
-    /// Reports sorted unused keys in groups of five, including empty stores.
-    fn warn_unused(&self) {
-        // Report unused totals even when the store is empty
-        let keys = self.store.unused();
-        let num_unused = keys.len();
-        let total = self.store.cardinal();
-        let percentage = if total == 0 { 0.0 } else { num_unused as f64 / total as f64 * 100.0 };
-        warn(
-            &Span::default(),
-            format!(
-                "unused {num_unused} {} splices out of {total} ({percentage:.2}%)",
-                SpliceKind::NAME
-            ),
-        );
-        // List sorted keys in groups of five
-        if keys.is_empty() {
-            warn(&Span::default(), "\t".to_owned());
-        }
-        for keys in keys.chunks(5) {
-            warn(
-                &Span::default(),
-                format!(
-                    "\t{}",
-                    keys.iter()
-                        .map(|key| key.to_string())
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                ),
-            );
-        }
+    /// Collects unused totals and sorted key notes, including empty stores.
+    fn warn_unused(&self, warnings: &mut Vec<Report>) {
+        let keys = self
+            .store
+            .unused()
+            .iter()
+            .map(|key| key.to_string())
+            .collect::<Vec<_>>();
+        warnings.push(error::keys_unused(SpliceKind::NAME, self.store.cardinal(), &keys));
     }
 }

@@ -5,6 +5,7 @@
 
 use super::super::super::anchor::{AnchorContext, Presentation};
 use super::super::super::{adoc, latex};
+use crate::diagnostic::Report;
 use std::collections::BTreeMap;
 
 use super::super::{
@@ -106,8 +107,13 @@ impl<'spec> Kind<'spec> for Latex {
         anchor_ctx.rel(Presentation::Latex, name)
     }
 
-    fn collect_link_targets(keys: &[Phrase<Self::Key>], decls: &Decls, targets: &mut Targets) {
-        targets.add_rels(Presentation::Latex, Self::NAME, decls, keys);
+    fn collect_link_targets(
+        keys: &[Phrase<Self::Key>],
+        decls: &Decls,
+        targets: &mut Targets,
+        warnings: &mut Vec<Report>,
+    ) {
+        targets.add_rels(Presentation::Latex, Self::NAME, decls, keys, warnings);
     }
 }
 
@@ -146,7 +152,12 @@ impl<'spec> Kind<'spec> for Prose {
         anchor_ctx.rel(Presentation::Prose, name)
     }
 
-    fn collect_link_targets(keys: &[Phrase<Self::Key>], decls: &Decls, targets: &mut Targets) {
-        targets.add_rels(Presentation::Prose, Self::NAME, decls, keys);
+    fn collect_link_targets(
+        keys: &[Phrase<Self::Key>],
+        decls: &Decls,
+        targets: &mut Targets,
+        warnings: &mut Vec<Report>,
+    ) {
+        targets.add_rels(Presentation::Prose, Self::NAME, decls, keys, warnings);
     }
 }

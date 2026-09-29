@@ -3,8 +3,11 @@
 //! Target collection precedes rendering across every input file.
 //! Only title markers for declared EL identifiers create reference destinations.
 
-use super::error::warn;
-use crate::lang::{common::source::Phrase, el::ast as el};
+use super::error;
+use crate::{
+    diagnostic::Report,
+    lang::{common::source::Phrase, el::ast as el},
+};
 use std::collections::BTreeSet;
 
 // == Anchor targets
@@ -70,11 +73,12 @@ impl Targets {
         ids_declared: &BTreeSet<String>,
         ids: &[Phrase<String>],
         ids_target: &mut BTreeSet<String>,
+        warnings: &mut Vec<Report>,
     ) {
         // Ignore undeclared identifiers, retaining duplicate-target diagnostics
         for id in ids {
             if ids_declared.contains(&id.node) && !ids_target.insert(id.node.clone()) {
-                warn(&id.span, format!("duplicate {name} target: {}", id.node));
+                warnings.push(error::target_duplicate(name, &id.node, &id.span));
             }
         }
     }
@@ -100,8 +104,9 @@ impl Targets {
         name: &str,
         decls: &Decls,
         keys: &[Phrase<String>],
+        warnings: &mut Vec<Report>,
     ) {
-        Self::add_ids(name, &decls.funcs, keys, &mut self.decls_mut(presentation).funcs);
+        Self::add_ids(name, &decls.funcs, keys, &mut self.decls_mut(presentation).funcs, warnings);
     }
 
     /// Registers declared relation titles and reports repeated destinations.
@@ -111,8 +116,9 @@ impl Targets {
         name: &str,
         decls: &Decls,
         keys: &[Phrase<String>],
+        warnings: &mut Vec<Report>,
     ) {
-        Self::add_ids(name, &decls.rels, keys, &mut self.decls_mut(presentation).rels);
+        Self::add_ids(name, &decls.rels, keys, &mut self.decls_mut(presentation).rels, warnings);
     }
 
     /// Resolves a declared function title in one presentation.
