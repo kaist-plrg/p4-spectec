@@ -272,8 +272,19 @@ let parse_command =
            Format.printf "Parse error: %s\n" (string_of_error at msg)
        | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e))
 
-let kast_command =
-  Core.Command.basic ~summary:"boot a SpecTec program and print it as KAST JSON"
+(* Rendering a spec or a P4 program for another evaluator *)
+
+let write_output (path_out : string option) (str : string) : unit =
+  match path_out with
+  | Some path_out ->
+      let oc = Out_channel.open_text path_out in
+      Fun.protect
+        ~finally:(fun () -> Out_channel.close oc)
+        (fun () -> Out_channel.output_string oc (str ^ "\n"))
+  | None -> print_endline str
+
+let render_spec_command ~(summary : string) (render : Al.spec -> string) =
+  Core.Command.basic ~summary
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map path_spectec = anon ("path" %: string)
@@ -283,14 +294,7 @@ let kast_command =
      fun () ->
        try
          let spec_al = Pass.algo [ path_spectec ] in
-         let kast = Interface.SpecTec_AL.kast_of_spec_al spec_al in
-         match path_out with
-         | Some path_out ->
-             let oc = Out_channel.open_text path_out in
-             Fun.protect
-               ~finally:(fun () -> Out_channel.close oc)
-               (fun () -> Out_channel.output_string oc (kast ^ "\n"))
-         | None -> print_endline kast
+         write_output path_out (render spec_al)
        with
        | Sys_error msg ->
            Format.eprintf "File error: %s\n" msg;
@@ -305,9 +309,8 @@ let kast_command =
            Format.eprintf "Algo error: %s\n" (string_of_error at msg);
            exit 1)
 
-let kast_p4_command =
-  Core.Command.basic
-    ~summary:"parse a P4 program and print it as a KAST JSON term of sort Val"
+let render_p4_command ~(summary : string) (render : Il.value -> string) =
+  Core.Command.basic ~summary
     (let open Core.Command.Let_syntax in
      let open Core.Command.Param in
      let%map path_p4 = flag "-p" (required string) ~doc:"FILE P4 program"
@@ -322,14 +325,7 @@ let kast_p4_command =
            | Pass value_program -> value_program
            | Fail (`Syntax (at, msg)) -> raise (ParseError (at, msg))
          in
-         let kast = Interface.SpecTec_AL.kast_of_value value_program in
-         match path_out with
-         | Some path_out ->
-             let oc = Out_channel.open_text path_out in
-             Fun.protect
-               ~finally:(fun () -> Out_channel.close oc)
-               (fun () -> Out_channel.output_string oc (kast ^ "\n"))
-         | None -> print_endline kast
+         write_output path_out (render value_program)
        with
        | Sys_error msg ->
            Format.eprintf "File error: %s\n" msg;
@@ -337,6 +333,26 @@ let kast_p4_command =
        | ParseError (at, msg) ->
            Format.eprintf "Parse error: %s\n" (string_of_error at msg);
            exit 1)
+
+let kast_command =
+  render_spec_command
+    ~summary:"boot a SpecTec program and print it as KAST JSON"
+    Interface.SpecTec_AL.kast_of_spec_al
+
+let kast_p4_command =
+  render_p4_command
+    ~summary:"parse a P4 program and print it as a KAST JSON term of sort Val"
+    Interface.SpecTec_AL.kast_of_value
+
+let sexp_command =
+  render_spec_command
+    ~summary:"boot a SpecTec program and print it as a Redex s-expression"
+    Interface.SpecTec_AL.sexp_of_spec_al
+
+let sexp_p4_command =
+  render_p4_command
+    ~summary:"parse a P4 program and print it as a Redex s-expression val"
+    Interface.SpecTec_AL.sexp_of_value
 
 (* Command-line interface *)
 
@@ -359,6 +375,9 @@ let command_core =
       (* KAST conversion *)
       ("kast", kast_command);
       ("kast-p4", kast_p4_command);
+      (* Redex s-expression conversion *)
+      ("sexp", sexp_command);
+      ("sexp-p4", sexp_p4_command);
     ]
 
 let () = Command_unix.run ~version command_core

@@ -133,6 +133,14 @@ module SpecTec_AL = struct
   let kast_of_value (value : Value.t) : string =
     Spectec.Ali.Kast.string_of_value value
 
+  (* Program rendering as a Racket s-expression *)
+
+  let sexp_of_spec_al (spec_al : Al.spec) : string =
+    Spectec.Ali.Sexp.string_of_spec_al spec_al
+
+  let sexp_of_value (value : Value.t) : string =
+    Spectec.Ali.Sexp.string_of_value value
+
   type extern_request = Spectec.Ali.Extern_json.request
 
   let request_of_json = Spectec.Ali.Extern_json.request_of_json

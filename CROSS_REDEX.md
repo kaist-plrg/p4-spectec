@@ -1,6 +1,7 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: Step 1 (syntax) is done. Steps 2–11 are planned.
+Status: Steps 1 (syntax) and 2 (s-expression bridge) are done. Steps 3–11
+are planned.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language. It transcribes the AL specification in
@@ -237,6 +238,7 @@ Terms mirror the watsup constructors:
 | `id`, `atom`, `text` | Racket string |
 | `nat`, `int` | exact integer |
 | `bool` | `#t` / `#f` |
+| `json` (in `EXT json`) | a jsexpr from Racket's `json` library; `json` matches what `jsexpr?` accepts |
 | `mixop = atom**` | `((atom ...) ...)` |
 | `eps` | `()` |
 | struct `{F1 x, F2 y}` | `{F1 x F2 y}`; Racket reads `{}` as parentheses |
@@ -290,10 +292,16 @@ fragments that are `include`d into one module *(checked)*. Within that module,
 judgment forms can refer to ones defined later *(checked)*. Every other watsup
 file becomes one module.
 
+Modules in `common/` never require modules in `al/`. That is why the extern
+codec and wire live in `common/`: the extern relations in
+`common/4-relation.rkt` call them.
+
 ```text
 spec-meta-redex/
   common/
     0-prelude.rkt         Redex re-exports; caching off; definition macros
+    0-extern-json.rkt     codec for the extern JSON wire
+    0-extern-wire.rkt     transport to the OCaml host
     0-stdlib.rkt          $ite, $opt_as_seq_, $exists_, ...; builtins
     1-syntax.rkt          language Common
     2-env.rkt             varr, venv, typdef, tdenv, theta; env helpers
@@ -301,6 +309,7 @@ spec-meta-redex/
     5.0-eval-typ.rkt      $subst_typ
     5.1-eval-ops.rkt      $unop_number, $binop_*, $cmpop_*, $is_tup, $is_fun
   al/
+    0-boot.rkt            boot-script, boot-p4: run spectec-boot sexp(-p4), read
     1-syntax.rkt          language AL-syntax
     2-env.rkt             reldef, funcdef
     3-context.rkt         layer, ctx; $load, $add_*, $find_*, $sub_opt, $sub_list
@@ -314,11 +323,8 @@ spec-meta-redex/
     5.6-eval-call-func.rktl
     5.7-eval-call-rel.rktl
     6-entry.rkt           Entry
-  extern/
-    json.rkt              codec for the extern JSON wire
-    wire.rkt              transport to the OCaml host
   main.rkt                command-line driver
-  test/
+  test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, ...
 ```
 
 The definition macros in `common/0-prelude.rkt` wrap `define-metafunction` and
@@ -349,8 +355,15 @@ subcommands:
   a `val`.
 
 Racket's `read` parses this output directly, so Redex needs no parser. The
-emitter is a new `p4spec/lib/interface/spectec/ali/sexp.ml`, which follows the
-traversal in [`kast.ml`](p4spec/lib/interface/spectec/ali/kast.ml).
+emitter is [`sexp.ml`](p4spec/lib/interface/spectec/ali/sexp.ml), which
+follows the traversal in [`kast.ml`](p4spec/lib/interface/spectec/ali/kast.ml).
+`al/0-boot.rkt` runs these subcommands and `read`s their output, with
+`SPECTEC_BOOT` overriding the binary as in the K scripts. `spec/` boots to
+2.8 MB in 0.5 s; its KAST JSON is 50 MB.
+
+`sexp-p4` writes the JSON of `EXT json` as a string of JSON text, and
+`boot-p4` decodes it with `string->jsexpr`. A value arriving over the extern
+wire in Step 9 is decoded by the same library, so both have one encoding.
 
 ### Builtins and externs
 
@@ -361,7 +374,7 @@ OCaml implementation over the existing JSON wire
 three evaluators share host behavior:
 
 ```text
-Redex rule -> extern/json.rkt -> extern/wire.rkt -> spectec-boot extern-serve -> SpecTec runner
+Redex rule -> common/0-extern-json.rkt -> common/0-extern-wire.rkt -> spectec-boot extern-serve -> SpecTec runner
 ```
 
 The transport is a single long-lived `spectec-boot extern-serve SPECDIR`
@@ -452,7 +465,7 @@ The `exp` nonterminal shows the encoding:
 (expfield ::= (atom exp))
 ```
 
-Tests in `test/1-syntax.rkt`:
+Tests in `test/syntax.rkt`:
 
 - `test-match` for every production, and `test-no-match` for near misses
   such as `(OPT ((NAT 1) (NAT 2)))`, an `ITER` with a bad iterator, and bare
@@ -462,7 +475,7 @@ Tests in `test/1-syntax.rkt`:
 - Optional: `render-language` on both languages, to compare against the
   watsup grammar by eye.
 
-Done when `raco test spec-meta-redex/test/1-syntax.rkt` passes.
+Done when `raco test spec-meta-redex/test/syntax.rkt` passes.
 
 ### Step 2: The s-expression bridge
 
@@ -593,10 +606,10 @@ moving on:
 
 ### Step 9: Builtins and externs
 
-- `extern/json.rkt`: a Racket codec for the wire format documented in
+- `common/0-extern-json.rkt`: a Racket codec for the wire format documented in
   `extern_json.ml` (`val`, `typ`, `mixop`, request, and response), built on
   Racket's `json` library.
-- Add `spectec-boot extern-serve`. `extern/wire.rkt` starts it on the first
+- Add `spectec-boot extern-serve`. `common/0-extern-wire.rkt` starts it on the first
   extern call and shuts it down at exit.
 - Replace the Step 3 stubs for `Call_builtin_func`, `Call_extern_func`, and
   `Call_extern_rel`, and add the native map builtins.

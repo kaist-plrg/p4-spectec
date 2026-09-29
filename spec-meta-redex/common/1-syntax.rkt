@@ -1,7 +1,8 @@
 #lang racket/base
 ;; spec-meta/common/1-syntax.watsup, plus the `var`s of common/0-stdlib.
 
-(require "0-prelude.rkt")
+(require json
+         "0-prelude.rkt")
 (provide Common)
 
 (define-language Common
@@ -51,7 +52,7 @@
   (cmpop ::= polycmpop numcmpop)
 
   ;; Values
-  (json ::= any)
+  (json ::= (side-condition any_json (jsexpr? (term any_json))))
   (val ::=
        (BOOL bool)
        num

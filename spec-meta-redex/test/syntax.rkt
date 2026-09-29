@@ -138,7 +138,18 @@
 ;; Common: values
 ;;
 
-(matches Common json 1 "x" (1 "x") #t)
+(matches Common json
+         1 -2 2.5 "x" #t #f null
+         ()
+         (1 "x" (null))
+         #hasheq()
+         #hasheq((a . 1) (|b c| . (#hasheq((d . null))))))
+(no-matches Common json
+            x
+            (1 x)
+            +nan.0
+            1/2
+            #hasheq(("a" . 1)))
 
 (matches Common val
          (BOOL #t)
@@ -156,7 +167,8 @@
          (LIST ())
          (LIST ((NAT 1) (NAT 2)))
          (FUNC "f")
-         (EXT (1 "x")))
+         (EXT (1 "x"))
+         (EXT #hasheq((a . 1))))
 (no-matches Common val
             3
             (OPT ((NAT 1) (NAT 2)))
@@ -166,6 +178,7 @@
             (TEXT x)
             (FUNC)
             (EXT)
+            (EXT (1 x))
             (VAR "x"))
 
 (matches Common valfield ("x" (NAT 1)))
