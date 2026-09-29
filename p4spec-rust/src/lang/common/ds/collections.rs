@@ -6,8 +6,6 @@
 
 use std::{borrow::Borrow, cmp::Ordering};
 
-use equivalent::{Comparable, Equivalent};
-
 use crate::lang::{common::Id, traits::cmp::SyntaxCmp};
 
 /// A collection key compared by syntax.
@@ -37,18 +35,6 @@ impl<K: SyntaxCmp + ?Sized> PartialOrd for ByKey<K> {
 
 impl<K: SyntaxCmp + ?Sized> Ord for ByKey<K> {
     fn cmp(&self, key_other: &Self) -> Ordering {
-        self.0.syntax_cmp(&key_other.0)
-    }
-}
-
-impl<K: SyntaxCmp> Equivalent<ByKey<K>> for ByKey<&K> {
-    fn equivalent(&self, key_other: &ByKey<K>) -> bool {
-        self.0.syntax_eq(&key_other.0)
-    }
-}
-
-impl<K: SyntaxCmp> Comparable<ByKey<K>> for ByKey<&K> {
-    fn compare(&self, key_other: &ByKey<K>) -> Ordering {
         self.0.syntax_cmp(&key_other.0)
     }
 }
