@@ -9,11 +9,11 @@ parser prs(packet_in pkt, out headers_t hdr, inout meta_t meta, inout standard_m
 control vfy(inout headers_t hdr, inout meta_t meta) { apply { } }
 control ingress(inout headers_t hdr, inout meta_t meta, inout standard_metadata_t std) {
     apply {
-        bit<16> n = 0;
-        for (bit<8> i in 8w0 .. 8w256) { n = n + 1; }
+        bit<8> n = 0;
+        for (int<8> i in 8s0 .. 8s256) { n = n + 1; }
         hdr.eth.ty = 16w0;
-        if (n == 1 && 8w256 == 8w0) { hdr.eth.ty[7:0] = 8w0xA1; }
-        if (8w257 == 8w1 && 1w10 == 1w0 && 8w255 > 8w256) { hdr.eth.ty[15:8] = 8w0xB2; }
+        if (n == 1 && 8s256 == 8s0) { hdr.eth.ty[7:0] = 8w0xA1; }
+        if (8s255 == -8s1 && -8s1 < 8s0 && 8s128 < 8s0 && 2s3 == -2s1) { hdr.eth.ty[15:8] = 8w0xB2; }
         std.egress_spec = 1;
     }
 }
