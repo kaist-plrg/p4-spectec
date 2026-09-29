@@ -57,18 +57,6 @@ fn diagnostic(code: &str, message: impl Into<String>, notes: Vec<String>) -> Dia
     Diagnostic::new("runtime", Severity::Error, Some(code.to_owned()), message, Vec::new(), notes)
 }
 
-/// Adds a primary source label to the diagnostic.
-pub fn at(mut diagnostic: Diagnostic, span: Span) -> Error {
-    diagnostic.labels.push(Label::primary(&span, ""));
-    Box::new(diagnostic.into())
-}
-
-/// Adds a source label to a cause that has none, leaving frames unchanged.
-pub fn locate(mut report: Error, span: &Span) -> Error {
-    *report = report.with_span(span);
-    report
-}
-
 // = Local operation conversions
 
 const VALUE_INVALID: &str = "runtime/value-invalid";
@@ -79,8 +67,11 @@ const TYPE_INVALID: &str = "runtime/type-invalid";
 const MATCH_FAILED: &str = "runtime/match-failed";
 
 /// Adds a source label unless the span is unknown.
-fn local(diagnostic: Diagnostic, span: Span) -> Error {
-    if span == Span::default() { Box::new(diagnostic.into()) } else { at(diagnostic, span) }
+fn local(mut diagnostic: Diagnostic, span: Span) -> Error {
+    if span != Span::default() {
+        diagnostic = diagnostic.with_label(Label::primary(&span, ""));
+    }
+    Box::new(Report::from(diagnostic))
 }
 
 /// Converts an error to a runtime diagnostic without source labels.

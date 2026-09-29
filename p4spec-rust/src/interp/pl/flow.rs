@@ -5,7 +5,7 @@
 //! `choose_deterministic` combines outcomes and rejects multiple conclusions.
 //! Evaluators supply candidates and manage their local bindings.
 
-use crate::diagnostic::{Diagnostic, Report};
+use crate::diagnostic::{Diagnostic, Label, Report};
 use crate::interp::shared::error;
 use crate::{
     interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
@@ -31,7 +31,8 @@ impl Flow {
 
     /// Creates a recoverable continuation with its premise diagnostic.
     pub(crate) fn cont(span: Span, error: Diagnostic) -> Self {
-        Self::Cont(vec![*error::at(error, span)])
+        let diagnostic = error.with_label(Label::primary(&span, ""));
+        Self::Cont(vec![Report::from(diagnostic)])
     }
 
     /// Turns a mismatch into a continuation; errors and flows pass through.

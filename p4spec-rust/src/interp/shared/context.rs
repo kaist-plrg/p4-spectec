@@ -10,6 +10,7 @@ use crate::interp::shared::error;
 use std::rc::Rc;
 
 use crate::{
+    diagnostic::{Label, Report},
     interp::shared::{
         backtrack::{Backtrack, ok, unwrap_from_result},
         error::{EntityKind, Error},
@@ -287,10 +288,9 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     /// Finds a type in either scope or reports the lookup location.
     pub fn find_typdef<'a>(&'a self, id: &ast::Id) -> Result<&'a TypeDef, Error> {
         self.find_typdef_opt(id).ok_or_else(|| {
-            error::at(
-                error::context::binding_undefined(EntityKind::Type, id.node.clone()),
-                id.span.clone(),
-            )
+            let diagnostic = error::context::binding_undefined(EntityKind::Type, id.node.clone())
+                .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
         })
     }
 
@@ -304,10 +304,10 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     /// Finds a global relation or reports the lookup location.
     pub fn find_rel(&self, id: &ast::Id) -> Result<&'global Callable<R>, Error> {
         self.find_rel_opt(id).ok_or_else(|| {
-            error::at(
-                error::context::binding_undefined(EntityKind::Relation, id.node.clone()),
-                id.span.clone(),
-            )
+            let diagnostic =
+                error::context::binding_undefined(EntityKind::Relation, id.node.clone())
+                    .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
         })
     }
 
@@ -328,10 +328,10 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         id: &ast::Id,
     ) -> Result<(Scope, &'a Rc<Callable<F>>), Error> {
         self.find_func_opt(id).ok_or_else(|| {
-            error::at(
-                error::context::binding_undefined(EntityKind::Function, id.node.clone()),
-                id.span.clone(),
-            )
+            let diagnostic =
+                error::context::binding_undefined(EntityKind::Function, id.node.clone())
+                    .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
         })
     }
 
@@ -342,10 +342,9 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     /// Binds a type locally; the id must be new in both scopes.
     pub fn add_typdef(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         if self.find_typdef_opt(&id).is_some() {
-            return Err(error::at(
-                error::context::binding_repeated(EntityKind::Type, id.node),
-                id.span,
-            ));
+            let diagnostic = error::context::binding_repeated(EntityKind::Type, id.node)
+                .with_label(Label::primary(&id.span, ""));
+            return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.tdenv.insert(id, typdef);
         Ok(())
@@ -391,10 +390,12 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     ) -> Result<(&'a [ast::TParam], &'a ast::DefTyp), Error> {
         match self.find_typdef(id)? {
             TypeDef::Defined(tparams, def_typ) => Ok((tparams, def_typ)),
-            _ => Err(error::at(
-                error::context::binding_undefined(EntityKind::DefinedType, id.node.clone()),
-                id.span.clone(),
-            )),
+            _ => {
+                let diagnostic =
+                    error::context::binding_undefined(EntityKind::DefinedType, id.node.clone())
+                        .with_label(Label::primary(&id.span, ""));
+                Err(Box::new(Report::from(diagnostic)))
+            }
         }
     }
 
@@ -419,10 +420,9 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
     fn add_typdef_local(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         // A type parameter may shadow a global definition
         if self.local.tdenv.contains_key(&id) {
-            return Err(error::at(
-                error::context::binding_repeated(EntityKind::Type, id.node),
-                id.span,
-            ));
+            let diagnostic = error::context::binding_repeated(EntityKind::Type, id.node)
+                .with_label(Label::primary(&id.span, ""));
+            return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.tdenv.insert(id, typdef);
         Ok(())
@@ -438,10 +438,9 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     fn add_func(&mut self, id: ast::Id, func: Rc<Callable<F>>) -> Result<(), Error> {
         if self.find_func_opt(&id).is_some() {
-            return Err(error::at(
-                error::context::binding_repeated(EntityKind::Function, id.node),
-                id.span,
-            ));
+            let diagnostic = error::context::binding_repeated(EntityKind::Function, id.node)
+                .with_label(Label::primary(&id.span, ""));
+            return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.fenv.insert(id, func);
         Ok(())

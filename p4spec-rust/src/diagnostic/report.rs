@@ -67,6 +67,12 @@ impl Diagnostic {
     ) -> Self {
         Self { severity, code, message: message.into(), labels, notes, source }
     }
+
+    /// Appends a source label.
+    pub fn with_label(mut self, label: Label) -> Self {
+        self.labels.push(label);
+        self
+    }
 }
 
 impl fmt::Display for Diagnostic {

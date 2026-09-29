@@ -6,7 +6,7 @@
 
 use super::error::{self, Error};
 use crate::{
-    diagnostic::{Diagnostic, Report},
+    diagnostic::{Diagnostic, Label, Report},
     lang::{
         common::{prim::num::NumericError, source::Span},
         data::value::ValueError,
@@ -50,7 +50,10 @@ impl Failure {
     /// Adds a source label to causes that have none, leaving frames unchanged.
     pub fn with_span(self, span: &Span) -> Self {
         match self {
-            Self::Fatal(report) => Self::Fatal(error::locate(report, span)),
+            Self::Fatal(mut report) => {
+                *report = report.with_span(span);
+                Self::Fatal(report)
+            }
             Self::Mismatch(reports) => Self::Mismatch(
                 reports
                     .into_iter()
@@ -108,7 +111,7 @@ impl std::error::Error for Failure {}
 
 /// Converts an error to Fatal, adding a source label if missing.
 pub fn from_result<T>(result: Result<T, impl Into<Error>>, span: &Span) -> Backtrack<T> {
-    result.map_err(|error| Failure::Fatal(error::locate(error.into(), span)))
+    result.map_err(|error| Failure::Fatal(error.into()).with_span(span))
 }
 
 /// Returns Fatal at the given span if the condition is false.
@@ -117,7 +120,12 @@ pub fn check(
     span: Span,
     diagnostic: impl FnOnce() -> Diagnostic,
 ) -> Backtrack<()> {
-    if condition { Ok(()) } else { Err(Failure::Fatal(error::at(diagnostic(), span))) }
+    if condition {
+        Ok(())
+    } else {
+        let diagnostic = diagnostic().with_label(Label::primary(&span, ""));
+        Err(Failure::Fatal(Box::new(Report::from(diagnostic))))
+    }
 }
 
 /// Adds frames lazily to evaluation results.
@@ -142,10 +150,12 @@ pub(crate) use ok;
 
 /// Constructs or matches a fatal report.
 macro_rules! fatal {
-    ($span:expr, $diagnostic:expr $(,)?) => {
-        Err($crate::interp::shared::backtrack::Failure::Fatal(
-            $crate::interp::shared::error::at($diagnostic, $span)))
-    };
+    ($span:expr, $diagnostic:expr $(,)?) => {{
+        use $crate::diagnostic::{Label, Report};
+        use $crate::interp::shared::backtrack::Failure;
+        let diagnostic = ($diagnostic).with_label(Label::primary(&$span, ""));
+        Err(Failure::Fatal(Box::new(Report::from(diagnostic))))
+    }};
     ($($report:tt)*) => {
         Err($crate::interp::shared::backtrack::Failure::Fatal($($report)*))
     };
@@ -154,10 +164,12 @@ pub(crate) use fatal;
 
 /// Constructs or matches recoverable alternatives.
 macro_rules! unmatch {
-    ($span:expr, $diagnostic:expr $(,)?) => {
-        Err($crate::interp::shared::backtrack::Failure::Mismatch(vec![
-            *$crate::interp::shared::error::at($diagnostic, $span)]))
-    };
+    ($span:expr, $diagnostic:expr $(,)?) => {{
+        use $crate::diagnostic::{Label, Report};
+        use $crate::interp::shared::backtrack::Failure;
+        let diagnostic = ($diagnostic).with_label(Label::primary(&$span, ""));
+        Err(Failure::Mismatch(vec![Report::from(diagnostic)]))
+    }};
     ($($reports:tt)*) => {
         Err($crate::interp::shared::backtrack::Failure::Mismatch($($reports)*))
     };

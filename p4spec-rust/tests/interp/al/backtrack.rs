@@ -1,6 +1,6 @@
 use crate::interp::report::ReportExt;
 use p4spec_rust::{
-    diagnostic::Report,
+    diagnostic::{Label, Report},
     interp::{
         al::backtrack::{choose_deterministic, choose_sequential},
         shared::{
@@ -12,10 +12,11 @@ use p4spec_rust::{
 };
 
 fn report(name: &str, line: usize) -> Error {
-    error::at(
-        error::context::binding_undefined(EntityKind::Value, name.into()),
-        Span::new(Position::new("choice.watsup", line, 0), Position::new("choice.watsup", line, 1)),
-    )
+    let span =
+        Span::new(Position::new("choice.watsup", line, 0), Position::new("choice.watsup", line, 1));
+    let diagnostic = error::context::binding_undefined(EntityKind::Value, name.into())
+        .with_label(Label::primary(&span, ""));
+    Box::new(Report::from(diagnostic))
 }
 
 fn mismatch<T>(name: &str, line: usize) -> Backtrack<T> {

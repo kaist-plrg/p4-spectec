@@ -8,7 +8,7 @@
 //! With `guard` on, inputs and outputs are type-checked at the boundary.
 
 use super::super::backtrack::{choose_deterministic, choose_sequential};
-use crate::diagnostic::Diagnostic;
+use crate::diagnostic::{Diagnostic, Label, Report};
 use crate::interp::shared::context::ReadContext;
 use crate::interp::shared::error;
 use crate::interp::shared::eval::assign::assign_tparams;
@@ -304,16 +304,15 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     // Deterministic mode rejects two matching paths
     let result = if det {
         choose_deterministic(paths, &mut evaluate, |(group_a, path_a), (group_b, path_b)| {
-            error::at(
-                error::call::relation_nondeterministic(
-                    id.node.clone(),
-                    group_a.id.node.clone(),
-                    path_a.id.node.clone(),
-                    group_b.id.node.clone(),
-                    path_b.id.node.clone(),
-                ),
-                id.span.clone(),
+            let diagnostic = error::call::relation_nondeterministic(
+                id.node.clone(),
+                group_a.id.node.clone(),
+                path_a.id.node.clone(),
+                group_b.id.node.clone(),
+                path_b.id.node.clone(),
             )
+            .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
         })
     // Sequential mode takes the first matching path
     } else {
@@ -550,10 +549,10 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     // Deterministic mode rejects two matching clauses
     let result = if det {
         choose_deterministic(0..defined_func.clauses.len(), &mut evaluate, |idx_a, idx_b| {
-            error::at(
-                error::call::function_nondeterministic(defined_func.id.node.clone(), idx_a, idx_b),
-                defined_func.id.span.clone(),
-            )
+            let diagnostic =
+                error::call::function_nondeterministic(defined_func.id.node.clone(), idx_a, idx_b)
+                    .with_label(Label::primary(&defined_func.id.span, ""));
+            Box::new(Report::from(diagnostic))
         })
     // Sequential mode takes the first matching clause
     } else {

@@ -7,7 +7,7 @@
 //! `choose_sequential` takes the first non-continuing instruction;
 //! `choose_deterministic` runs all and rejects two that terminate.
 
-use crate::diagnostic::{Diagnostic, Report};
+use crate::diagnostic::{Diagnostic, Label, Report};
 use crate::interp::shared::error;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
@@ -49,7 +49,8 @@ impl Flow {
 
     /// A continuation carrying one premise failure.
     pub(crate) fn cont(span: Span, error: Diagnostic) -> Self {
-        Self::Cont(vec![*error::at(error, span)])
+        let diagnostic = error.with_label(Label::primary(&span, ""));
+        Self::Cont(vec![Report::from(diagnostic)])
     }
 
     /// Turns a mismatch into a continuation; errors and flows pass through.
