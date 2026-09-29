@@ -16,7 +16,6 @@ use super::{
     assign,
     expr::{self, eval_exp, eval_exps},
 };
-use crate::interp::shared::backtrack::BacktrackExt;
 use crate::interp::shared::context::{IterContext, WriteContext};
 use crate::interp::shared::error;
 use crate::interp::shared::eval::{Invoker, iter, ops};
@@ -33,27 +32,6 @@ use crate::{
     runner::{Extern, Interface, RunnerContext},
 };
 use std::borrow::Cow;
-
-// = Trace descriptions
-
-/// Describes an instruction without printing its expressions or nested blocks.
-fn trace_instr(instr: &ast::Instr) -> String {
-    match &instr.node {
-        ast::InstrKind::If(_) => "while evaluating an if instruction".to_owned(),
-        ast::InstrKind::Hold(instr) => {
-            format!("while evaluating a hold instruction for {}", instr.id.node)
-        }
-        ast::InstrKind::Case(_) => "while evaluating a case instruction".to_owned(),
-        ast::InstrKind::Group(instr) => format!("while evaluating rule group {}", instr.id.node),
-        ast::InstrKind::Let(_) => "while evaluating a let binding".to_owned(),
-        ast::InstrKind::Rule(instr) => {
-            format!("while evaluating a rule instruction for {}", instr.id.node)
-        }
-        ast::InstrKind::Result(_) => "while evaluating a result instruction".to_owned(),
-        ast::InstrKind::Return(_) => "while evaluating a return instruction".to_owned(),
-        ast::InstrKind::Debug(_) => "while evaluating a debug instruction".to_owned(),
-    }
-}
 
 // = Block evaluation
 
@@ -141,7 +119,7 @@ pub(crate) fn eval_block_sequential<'instr, Iface: Interface, Ext: Extern>(
 
 // = Instruction evaluation
 
-/// Evaluates one instruction, nesting failures under an evaluation trace.
+/// Evaluates one instruction.
 pub fn eval_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
@@ -150,7 +128,7 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Flow> {
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        let result = match &instr.node {
+        match &instr.node {
             ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, tail),
             ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, tail),
             ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, tail),
@@ -171,8 +149,7 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
             ast::InstrKind::Debug(instr) => {
                 Flow::cont_from_unmatch(eval_debug_instr(runner_ctx, ctx, instr, tail))
             }
-        };
-        result.nest(instr.span.clone(), || trace_instr(instr))
+        }
     })
 }
 
