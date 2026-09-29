@@ -190,7 +190,7 @@ impl Block {
 /// Resolves a subject to its unqualified definition name.
 pub fn subject_name(subject: &Subject) -> Option<String> {
     match subject {
-        Subject::Function(id) | Subject::Relation(id) => Some(id.clone()),
+        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => Some(id.clone()),
     }
 }
 
@@ -198,6 +198,8 @@ impl Link {
     fn target(&self, anchor_ctx: &AnchorContext<'_>) -> Option<String> {
         match self {
             Link::Direct(target) => Some(target.clone()),
+            Link::Subject(Subject::Type(id)) => Some(id.clone()),
+            Link::Hinted { link, .. } => link.target(anchor_ctx),
             Link::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, id),
             Link::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, id),
         }
@@ -208,7 +210,7 @@ impl Link {
 
 /// A run of code tokens sharing one link target.
 struct CodeSegment {
-    target: Option<String>,
+    target: Option<(String, Link)>,
     text: String,
 }
 
@@ -242,12 +244,12 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 
     // - Cross-references
     //
-    //   adoc_link("t", "x")      -> xref:t[x]
-    //   adoc_link("t", "a[b]")   -> <<t,a[b]>>
-    //   adoc_link("t", "a<b>")   -> xref:t[a<b>]
+    //   adoc_link(link, "t", "x")      -> xref:t[x]
+    //   adoc_link(link, "t", "a[b]")   -> <<t,a[b]>>
+    //   adoc_link(link, "t", "a<b>")   -> xref:t[a<b>]
 
     /// Chooses cross-reference delimiters that do not collide with the label.
-    fn adoc_link(&mut self, target: &str, text: &str) -> String {
+    fn adoc_link(&mut self, link: &Link, target: &str, text: &str) -> String {
         // Brackets require the alternate cross-reference syntax
         if !text.contains(['[', ']']) {
             format!("xref:{target}[{text}]")
@@ -256,7 +258,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         } else {
             // Neither delimiter can represent this label
             self.warnings
-                .push(error::link_text_invalid(self.span, text).into());
+                .push(error::link_text_invalid(self.span, link, text).into());
             text.to_owned()
         }
     }
@@ -275,15 +277,15 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         }
     }
 
-    fn warn_empty_target(&mut self, lint: bool, target: &str) {
+    fn warn_empty_target(&mut self, lint: bool, link: &Link, target: &str) {
         if lint && target.is_empty() {
-            self.warn(error::link_target_empty(self.span));
+            self.warn(error::link_target_empty(self.span, link));
         }
     }
 
-    fn warn_nested(&mut self, lint: bool, target_outer: &str, target_inner: &str) {
+    fn warn_nested(&mut self, lint: bool, link_outer: &Link, link_inner: &Link) {
         if lint {
-            self.warn(error::link_nested(self.span, target_outer, target_inner));
+            self.warn(error::link_nested(self.span, link_outer, link_inner));
         }
     }
 
@@ -296,8 +298,8 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     fn collect_code(
         &mut self,
         code: &Code,
-        target: Option<&str>,
-        link_ctx: Option<&str>,
+        target: Option<(&str, &Link)>,
+        link_ctx: Option<&Link>,
         lint: bool,
         segments: &mut Vec<CodeSegment>,
     ) {
@@ -316,18 +318,23 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         }
     }
 
-    fn collect_token_code(text: &str, target: Option<&str>, segments: &mut Vec<CodeSegment>) {
+    fn collect_token_code(
+        text: &str,
+        target: Option<(&str, &Link)>,
+        segments: &mut Vec<CodeSegment>,
+    ) {
         // Empty tokens cannot split an existing span
         if text.is_empty() {
             return;
         }
-        let segment_last = segments
-            .last_mut()
-            .filter(|segment| segment.target.as_deref() == target);
+        let segment_last = segments.last_mut().filter(|segment| {
+            segment.target.as_ref().map(|(target, _)| target.as_str())
+                == target.map(|(target, _)| target)
+        });
         if let Some(segment) = segment_last {
             segment.text.push_str(text);
         } else {
-            let target = target.map(str::to_owned);
+            let target = target.map(|(target, link)| (target.to_owned(), link.clone()));
             segments.push(CodeSegment { target, text: text.to_owned() });
         }
     }
@@ -336,8 +343,8 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         &mut self,
         link: &Link,
         code_inner: &Code,
-        target: Option<&str>,
-        link_ctx: Option<&str>,
+        target: Option<(&str, &Link)>,
+        link_ctx: Option<&Link>,
         lint: bool,
         segments: &mut Vec<CodeSegment>,
     ) {
@@ -346,20 +353,20 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
             self.collect_code(code_inner, target, link_ctx, lint, segments);
             return;
         };
-        self.warn_empty_target(lint, &target_inner);
-        if let Some(target_outer) = link_ctx {
+        self.warn_empty_target(lint, link, &target_inner);
+        if let Some(link_outer) = link_ctx {
             // Cross-references cannot nest in AsciiDoc
-            self.warn_nested(lint, target_outer, &target_inner);
+            self.warn_nested(lint, link_outer, link);
             self.collect_code(code_inner, target, link_ctx, lint, segments);
             return;
         }
 
         // The outermost resolved link owns its entire code span
         if lint && code_inner.is_empty() {
-            self.warn(error::link_body_empty(self.span, &target_inner));
+            self.warn(error::link_body_empty(self.span, link));
         }
-        let target_inner = Some(target_inner.as_str());
-        self.collect_code(code_inner, target_inner, target_inner, lint, segments);
+        let target_inner = Some((target_inner.as_str(), link));
+        self.collect_code(code_inner, target_inner, Some(link), lint, segments);
     }
 
     // - Code
@@ -375,7 +382,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         &mut self,
         style: CodeStyle,
         code: &Code,
-        link_ctx: Option<&str>,
+        link_ctx: Option<&Link>,
         lint: bool,
     ) -> String {
         let mut segments = Vec::new();
@@ -389,7 +396,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
                     CodeStyle::Plain => segment.text,
                 };
                 match segment.target {
-                    Some(target) => self.adoc_link(&target, &text),
+                    Some((target, link)) => self.adoc_link(&link, &target, &text),
                     None => text,
                 }
             })
@@ -402,7 +409,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //   PlainCode(Token("x y"))                 -> x y
 
     /// Serializes inline prose with the enclosing cross-reference context.
-    fn ser_prose(&mut self, prose: &Prose, link_ctx: Option<&str>, lint: bool) -> String {
+    fn ser_prose(&mut self, prose: &Prose, link_ctx: Option<&Link>, lint: bool) -> String {
         match prose {
             Prose::Text(text) => Serializer::ser_text_prose(text),
             Prose::Code(code) => self.ser_code(CodeStyle::Mono, code, link_ctx, lint),
@@ -434,26 +441,26 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         &mut self,
         link: &Link,
         prose_inner: &Prose,
-        link_ctx: Option<&str>,
+        link_ctx: Option<&Link>,
         lint: bool,
     ) -> String {
         // Preserve the body when the enclosing document has no target
         let Some(target) = link.target(self.anchor_ctx) else {
             return self.ser_prose(prose_inner, link_ctx, lint);
         };
-        self.warn_empty_target(lint, &target);
-        if let Some(target_outer) = link_ctx {
+        self.warn_empty_target(lint, link, &target);
+        if let Some(link_outer) = link_ctx {
             // An outer link takes precedence over nested links
-            self.warn_nested(lint, target_outer, &target);
+            self.warn_nested(lint, link_outer, link);
             return self.ser_prose(prose_inner, link_ctx, lint);
         }
 
         // Format the complete body before choosing link delimiters
-        let text = self.ser_prose(prose_inner, Some(&target), lint);
+        let text = self.ser_prose(prose_inner, Some(link), lint);
         if lint && text.is_empty() {
-            self.warn(error::link_body_empty(self.span, &target));
+            self.warn(error::link_body_empty(self.span, link));
         }
-        self.adoc_link(&target, &text)
+        self.adoc_link(link, &target, &text)
     }
 
     // - Fallthrough prose
@@ -480,7 +487,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //
     //   Seq([Text("a"), Text("b")])   -> ab
 
-    fn ser_seq_prose(&mut self, proses: &[Prose], link_ctx: Option<&str>, lint: bool) -> String {
+    fn ser_seq_prose(&mut self, proses: &[Prose], link_ctx: Option<&Link>, lint: bool) -> String {
         proses
             .iter()
             .map(|prose| self.ser_prose(prose, link_ctx, lint))
@@ -650,7 +657,7 @@ pub fn ser_prose_in_link(prose: &Prose) -> String {
     let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
     Serializer::new(&anchor_ctx, &Span::default(), &mut Vec::new(), BTreeMap::new()).ser_prose(
         prose,
-        Some(""),
+        Some(&Link::Direct(String::new())),
         false,
     )
 }

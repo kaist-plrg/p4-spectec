@@ -50,6 +50,15 @@ use super::{
 
 // == Render utils
 
+/// Selects input or truth prose and retains the selected hint's name.
+fn prose_input_hint(hints: &Hints) -> Option<(&'static str, &alter::AlterHint)> {
+    match (&hints.node.prose_in, &hints.node.prose_true) {
+        (Some(hint), _) => Some(("prose_in", hint)),
+        (_, Some(hint)) => Some(("prose_true", hint)),
+        _ => None,
+    }
+}
+
 /// The largest visible width kept inline by the prose renderer.
 const ADOC_WIDTH_SHORT: usize = 30;
 
@@ -866,7 +875,8 @@ impl Prose {
                     args,
                     false,
                 );
-                let link = Link::Subject(Subject::Function(id.node.clone()));
+                let link = Link::Subject(Subject::Function(id.node.clone()))
+                    .with_hint(&hint.span, "prose_false");
                 Some(Prose::link(link, prose_call))
             }
             _ => None,
@@ -1008,7 +1018,9 @@ impl Prose {
                 &exps,
                 false,
             );
-            return Prose::link(Link::Direct(id_typ.node.clone()), prose_case);
+            let link =
+                Link::Subject(Subject::Type(id_typ.node.clone())).with_hint(&hint.span, "prose");
+            return Prose::link(link, prose_case);
         }
 
         Prose::code(Code::of_case_exp(not_exp))
@@ -1133,18 +1145,13 @@ impl Prose {
 
     fn of_call_exp(exp: &pl::Exp, id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Prose {
         // Unhinted calls keep their code form
-        let Some(hint) = exp
-            .hints
-            .node
-            .prose_in
-            .as_ref()
-            .or(exp.hints.node.prose_true.as_ref())
-        else {
+        let Some((name_hint, hint)) = prose_input_hint(&exp.hints) else {
             return Prose::code(Code::of_call_exp(id, targs, args));
         };
         let prose_call =
             alternate(hint, &|text_body| reindent_lines(0, text_body), &Prose::of_arg, args, false);
-        let link = Link::Subject(Subject::Function(id.node.clone()));
+        let link =
+            Link::Subject(Subject::Function(id.node.clone())).with_hint(&hint.span, name_hint);
         Prose::link(link, prose_call)
     }
 
@@ -1853,7 +1860,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                     &exps,
                     false,
                 );
-                Prose::link(link, prose_hint)
+                Prose::link(
+                    link.with_hint(&hint.span, if hold { "prose_true" } else { "prose_false" }),
+                    prose_hint,
+                )
             }
             // Unhinted relations show their notation followed by the verdict
             None => {
@@ -2119,7 +2129,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 Prose::text("Let "),
                 Prose::text(text_output),
                 Prose::text(" be the result of "),
-                Prose::link(link, prose_input),
+                Prose::link(link.with_hint(&hint_input.span, "prose_in"), prose_input),
             ])
         } else {
             let code_not = Code::of_mixfix(&rule_instr.not_exp, &Code::of_exp);
@@ -2778,14 +2788,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         group_instr: &pl::RuleGroupInstr,
     ) -> Rendered {
         // Select hinted prose or filled relation notation for the title
-        let hint_opt = instr
-            .hints
-            .node
-            .prose_in
-            .as_ref()
-            .or(instr.hints.node.prose_true.as_ref());
+        let hint_opt = prose_input_hint(&instr.hints);
         let prose_body = match hint_opt {
-            Some(hint) => alternate(
+            Some((_, hint)) => alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
                 &Prose::of_exp,
@@ -2795,6 +2800,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             None => Prose::of_rel_title_math(&group_instr.rel_signature, &group_instr.exps_input),
         };
         let link = Link::Subject(Subject::Relation(group_instr.id_rel.node.clone()));
+        let link = match hint_opt {
+            Some((name_hint, hint)) => link.with_hint(&hint.span, name_hint),
+            None => link,
+        };
         let prose_title = Prose::link(link, prose_body);
         // Render the group body below its linked title
         let block_head = Block::item_ordered(level, Prose::seq([prose_title, Prose::text(":")]));
@@ -2828,13 +2837,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> String {
         self.span = hints.span.clone();
         // Select hinted prose or filled relation notation for the title
-        let hint_opt = hints
-            .node
-            .prose_in
-            .as_ref()
-            .or(hints.node.prose_true.as_ref());
+        let hint_opt = prose_input_hint(hints);
         let prose_body = match hint_opt {
-            Some(hint) => alternate(
+            Some((_, hint)) => alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
                 &Prose::of_exp,
@@ -2844,6 +2849,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             None => Prose::of_rel_title_math(signature, exps),
         };
         let link = Link::Subject(Subject::Relation(id_rel.node.clone()));
+        let link = match hint_opt {
+            Some((name_hint, hint)) => link.with_hint(&hint.span, name_hint),
+            None => link,
+        };
         let prose_title = Prose::link(link, prose_body);
         // Render local arms while keeping relation fragment targets fixed
         let ctx = Context::new(&id_rel.node);
@@ -2972,14 +2981,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         tparams: &[pl::TParam],
         params: &[pl::Param],
     ) -> Block {
-        let hint_opt = hints
-            .node
-            .prose_in
-            .as_ref()
-            .or(hints.node.prose_true.as_ref());
+        let hint_opt = prose_input_hint(hints);
         // Keep nested links visible to the final serializer
         let prose_body = match hint_opt {
-            Some(hint) => alternate(
+            Some((_, hint)) => alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
                 &Prose::of_param,
@@ -3003,6 +3008,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             }
         };
         let link = Link::Subject(Subject::Function(id_func.node.clone()));
+        let link = match hint_opt {
+            Some((name_hint, hint)) => link.with_hint(&hint.span, name_hint),
+            None => link,
+        };
         Block::inline(Prose::link(link, prose_body))
     }
 

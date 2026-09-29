@@ -1,7 +1,13 @@
-warning[adoc/link-nested]: nested link: cross-reference to "boxed" is dropped inside the link to "unbox" (asciidoc cannot nest cross-references)
-  ┌─ specdoc/adoc-nested-link.watsup:5:1
-  │  
-5 │ ╭ dec $unbox(boxed) : nat
-6 │ │   hint(prose_in "the contents of" %0)
-  │ ╰─────────────────────────────────────^ while rendering this fragment
+warning[adoc/link-nested]: link to type `boxed` is nested inside the display text of a link to function `$unbox`
+  ┌─ specdoc/adoc-nested-link.watsup:3:14
+  │
+3 │   hint(prose "boxed" %0)
+  │              ^^^^^^^^^^ `prose`: this inner link is suppressed
+  ·
+6 │   hint(prose_in "the contents of" %0)
+  │                 -------------------- `prose_in` includes this text in the outer link to function `$unbox`
+  │
+  = The `prose` hint supplies the displayed text for links to type `boxed`.
+  = AsciiDoc cannot nest cross-references. The outer link is kept; the inner text is included without its own link.
+  = To retain both links, render the references separately instead of including one linked description in another link's text.
 

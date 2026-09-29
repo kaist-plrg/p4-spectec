@@ -46,7 +46,12 @@ pub fn run(name: &str) -> Result<Vec<Report>> {
         if diagnostic.code.as_deref() != Some(code) || diagnostic.severity != Severity::Warning {
             return Err(failure(name, "unexpected backend diagnostic"));
         }
-        if diagnostic.labels.len() != 1 || diagnostic.labels[0].span.left.file.as_ref() != path {
+        if diagnostic.labels.is_empty()
+            || diagnostic
+                .labels
+                .iter()
+                .any(|label| label.span.left.file.as_ref() != path)
+        {
             return Err(failure(name, "backend diagnostic lost its input source location"));
         }
     }

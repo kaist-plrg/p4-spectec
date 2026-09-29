@@ -248,6 +248,7 @@ fn test_custom_function_anchor_is_used_by_fragment_api() {
     let anchor = |subject: &Subject| match subject {
         Subject::Function(id) => Some(format!("function-{id}")),
         Subject::Relation(id) => Some(format!("relation-{id}")),
+        Subject::Type(id) => Some(id.clone()),
     };
 
     assert!(
@@ -414,7 +415,9 @@ fn test_table_cells_use_the_enclosing_anchor_resolver() {
         span: Span::default(),
     };
     let anchor = |subject: &Subject| match subject {
-        Subject::Function(id) | Subject::Relation(id) => Some(format!("custom-{id}")),
+        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => {
+            Some(format!("custom-{id}"))
+        }
     };
     let def = meta_func_def(Hints::default(), pl::MetaFuncDef::Table(func));
     let text = render_def(&anchor, &def).unwrap();

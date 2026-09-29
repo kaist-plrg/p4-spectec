@@ -1,58 +1,130 @@
 //! Diagnostics owned by AsciiDoc serialization
 //!
-//! Link warnings retain the definition or fragment that produced the markup.
+//! Link warnings identify the source subject and the template supplying its text.
 //! Serialization collects warnings for its caller and preserves fallback text.
 
+use super::pl::doc::doc::Link;
 use crate::{
     diagnostic::{Diagnostic, Label, Severity},
     lang::common::source::Span,
 };
 
-fn warning(span: &Span, code: &str, message: impl Into<String>) -> Diagnostic {
-    let labels = if span.left.line == 0 {
-        Vec::new()
-    } else {
-        vec![Label::primary(span, "while rendering this fragment")]
+/// Locates a link problem at its template, falling back to the rendered fragment.
+fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
+    // A propagated hint retains the template's declaration even at a call site
+    let (span, label) = match link.hint() {
+        Some(hint) => {
+            let span = if hint.span.left.line == 0 { span } else { &hint.span };
+            (span, format!("`{}`: {label}", hint.node))
+        }
+        None => (span, label.to_owned()),
     };
-    Diagnostic::new("adoc", Severity::Warning, Some(code.to_owned()), message, labels, Vec::new())
+    let labels = if span.left.line == 0 { Vec::new() } else { vec![Label::primary(span, label)] };
+    // Explain how the source template becomes the displayed reference text
+    let notes = link.hint().map_or_else(Vec::new, |hint| {
+        vec![format!(
+            "The `{}` hint supplies the displayed text for links to {}.",
+            hint.node,
+            link.description(),
+        )]
+    });
+    Diagnostic::new("adoc", Severity::Warning, Some(code.to_owned()), message, labels, notes)
 }
 
 const LINK_TARGET_EMPTY: &str = "adoc/link-target-empty";
 
 /// Reports a cross-reference without a destination.
-pub(super) fn link_target_empty(span: &Span) -> Diagnostic {
-    warning(span, LINK_TARGET_EMPTY, "link with empty target")
+pub(super) fn link_target_empty(span: &Span, link: &Link) -> Diagnostic {
+    let mut diagnostic = warning(
+        span,
+        link,
+        LINK_TARGET_EMPTY,
+        "cross-reference has no destination anchor".into(),
+        "this link has an empty destination",
+    );
+    diagnostic
+        .notes
+        .push("Supply a nonempty destination when constructing the link.".into());
+    diagnostic
 }
 
 const LINK_NESTED: &str = "adoc/link-nested";
 
-/// Reports the inner target dropped by AsciiDoc's single-link representation.
-pub(super) fn link_nested(span: &Span, target_outer: &str, target_inner: &str) -> Diagnostic {
-    warning(
+/// Reports the inner link's source and the enclosing link that suppresses it.
+pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> Diagnostic {
+    let mut diagnostic = warning(
         span,
+        link_inner,
         LINK_NESTED,
         format!(
-            "nested link: cross-reference to {target_inner:?} is dropped inside the link to {target_outer:?} (asciidoc cannot nest cross-references)"
+            "link to {} is nested inside the display text of a link to {}",
+            link_inner.description(),
+            link_outer.description(),
         ),
-    )
+        "this inner link is suppressed",
+    );
+    // Relate the enclosing template when its original location is available
+    if let Some(hint) = link_outer.hint()
+        && hint.span.left.line != 0
+    {
+        diagnostic.labels.push(Label::secondary(
+            &hint.span,
+            format!(
+                "`{}` includes this text in the outer link to {}",
+                hint.node,
+                link_outer.description()
+            ),
+        ));
+    }
+    // Explain both the emitted markup and how to avoid the lost reference
+    diagnostic.notes.push(
+        "AsciiDoc cannot nest cross-references. The outer link is kept; the inner text is included without its own link.".into(),
+    );
+    diagnostic.notes.push(
+        "To retain both links, render the references separately instead of including one linked description in another link's text.".into(),
+    );
+    diagnostic
 }
 
 const LINK_BODY_EMPTY: &str = "adoc/link-body-empty";
 
-/// Reports a resolved cross-reference with no visible body.
-pub(super) fn link_body_empty(span: &Span, target: &str) -> Diagnostic {
-    warning(span, LINK_BODY_EMPTY, format!("link to {target:?} has empty body"))
+/// Reports a template that leaves a resolved reference without display text.
+pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
+    let mut diagnostic = warning(
+        span,
+        link,
+        LINK_BODY_EMPTY,
+        format!("empty display text for the link to {}", link.description()),
+        "this produces no link text",
+    );
+    // Suggest an edit only when a user-supplied template produced the empty text
+    diagnostic.notes.push(if let Some(hint) = link.hint() {
+        format!("Make `{}` produce nonempty text, or omit the custom prose hint.", hint.node)
+    } else {
+        "Supply nonempty display text for the link.".into()
+    });
+    diagnostic
 }
 
 const LINK_TEXT_INVALID: &str = "adoc/link-text-invalid";
 
 /// Reports a label that cannot use either AsciiDoc cross-reference delimiter.
-pub(super) fn link_text_invalid(span: &Span, text: &str) -> Diagnostic {
+pub(super) fn link_text_invalid(span: &Span, link: &Link, text: &str) -> Diagnostic {
     let mut diagnostic = warning(
         span,
+        link,
         LINK_TEXT_INVALID,
-        "AsciiDoc link text contains both brackets and angle brackets; emitting the label without a link",
+        format!("cannot represent the link text for {} in AsciiDoc", link.description()),
+        "this produces link text with conflicting delimiters",
     );
-    diagnostic.notes.push(text.to_owned());
+    diagnostic
+        .notes
+        .push(format!("Generated link text: {text:?}"));
+    diagnostic.notes.push(
+        "The renderer uses `xref:target[text]` only without `[` or `]` in the text, and `<<target,text>>` only without `<` or `>`. Neither form can represent this text.".into(),
+    );
+    diagnostic.notes.push(
+        "The text is emitted without a link. Reword the displayed text to avoid combining square and angle brackets.".into(),
+    );
     diagnostic
 }

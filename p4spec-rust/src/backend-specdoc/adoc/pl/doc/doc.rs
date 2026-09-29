@@ -5,6 +5,8 @@
 //! Block::item_ordered(0, prose)   -> Item(Item { 0, Ordered(None), prose, Empty })
 //! ```
 
+use crate::lang::common::source::{Phrase, Span};
+
 // == Documents
 
 // - Prose
@@ -62,6 +64,8 @@ pub enum Link {
     Direct(String),
     /// Resolves the subject, preserving only the body if unresolved.
     Subject(Subject),
+    /// Retains the source template that supplies this link's displayed text.
+    Hinted { link: Box<Link>, hint: Phrase<&'static str> },
 }
 
 /// A definition referenced by prose.
@@ -71,6 +75,37 @@ pub enum Subject {
     Function(String),
     /// Identifies a relation by its source name.
     Relation(String),
+    /// Identifies a type whose variant hint supplies linked prose.
+    Type(String),
+}
+
+impl Link {
+    /// Attaches the original template expression and its hint name.
+    pub(crate) fn with_hint(self, span: &Span, name: &'static str) -> Self {
+        Link::Hinted {
+            link: Box::new(self),
+            hint: crate::phrase! { node: name, span: span.clone() },
+        }
+    }
+
+    /// Returns the source template used for this link's displayed text.
+    pub(crate) fn hint(&self) -> Option<&Phrase<&'static str>> {
+        match self {
+            Link::Hinted { hint, .. } => Some(hint),
+            _ => None,
+        }
+    }
+
+    /// Describes the source-level reference without exposing generated anchors.
+    pub(crate) fn description(&self) -> String {
+        match self {
+            Link::Direct(target) => format!("destination {target:?}"),
+            Link::Subject(Subject::Function(id)) => format!("function `${id}`"),
+            Link::Subject(Subject::Relation(id)) => format!("relation `{id}`"),
+            Link::Subject(Subject::Type(id)) => format!("type `{id}`"),
+            Link::Hinted { link, .. } => link.description(),
+        }
+    }
 }
 
 // - Fallthrough labels
