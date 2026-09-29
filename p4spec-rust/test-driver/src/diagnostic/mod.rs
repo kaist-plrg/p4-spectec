@@ -10,6 +10,7 @@ mod cases;
 mod elab;
 mod parse;
 mod prose;
+mod specdoc;
 mod splice;
 
 use std::path::Path;
@@ -37,6 +38,7 @@ pub enum Suite {
     Algo,
     Prose,
     Splice,
+    Specdoc,
     Boundary,
 }
 
@@ -104,6 +106,7 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
         Some(Suite::Algo) => run_suite("algo", cases::ALGO, algo::run),
         Some(Suite::Prose) => run_suite("prose", cases::PROSE, prose::run),
         Some(Suite::Splice) => run_suite("splice", cases::SPLICE, splice::run),
+        Some(Suite::Specdoc) => run_suite("specdoc", cases::SPECDOC, specdoc::run),
         Some(Suite::Boundary) => run_boundary(path_cli),
         None => {
             run_parse()?;
@@ -111,6 +114,7 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
             run_suite("algo", cases::ALGO, algo::run)?;
             run_suite("prose", cases::PROSE, prose::run)?;
             run_suite("splice", cases::SPLICE, splice::run)?;
+            run_suite("specdoc", cases::SPECDOC, specdoc::run)?;
             run_boundary(path_cli)
         }
     }

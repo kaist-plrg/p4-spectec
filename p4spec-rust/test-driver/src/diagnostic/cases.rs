@@ -262,3 +262,16 @@ pub const PROSE: &[&str] = &[
     "hint-prose-fields-shape.watsup",
     "hint-prose-index-out-of-range.watsup",
 ];
+
+/// Lists backend rendering failures and markup warning regressions.
+pub const SPECDOC: &[&str] = &[
+    "latex-hole",
+    "latex-fuse",
+    "latex-unparen",
+    "latex-raw",
+    "latex-link-target",
+    "adoc-empty-target",
+    "adoc-nested-link",
+    "adoc-empty-body",
+    "adoc-invalid-text",
+];
