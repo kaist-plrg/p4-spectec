@@ -29,6 +29,107 @@ fn code_links_merge_adjacent_tokens_and_drop_nested_targets() {
 }
 
 #[test]
+fn adjacent_code_links_keep_their_own_delimiters() {
+    let code = Code::Seq(vec![
+        Code::link(
+            Link { kind: LinkKind::Direct("same".into()), origin: None },
+            Code::Seq(vec![Code::Token("a[".into()), Code::Token("b]".into())]),
+        ),
+        Code::Seq(vec![Code::link(
+            Link { kind: LinkKind::Direct("same".into()), origin: None },
+            Code::Token("<c>".into()),
+        )]),
+    ]);
+    let anchor_ctx = AnchorContext::default();
+    let span = Span::default();
+    let mut warnings = Vec::new();
+    assert_eq!(
+        serialize::ser_code(&anchor_ctx, &span, &mut warnings, &code),
+        "<<same,a[b]>>xref:same[<c>]"
+    );
+    assert_eq!(
+        serialize::ser_prose(&anchor_ctx, &span, &mut warnings, &Prose::Code(code)),
+        "<<same,``a[b]``>>xref:same[``<c>``]"
+    );
+    assert!(warnings.is_empty());
+}
+
+#[test]
+fn adjacent_code_link_failures_keep_each_origin() {
+    use p4spec_rust::{diagnostic::ReportKind, lang::common::source::Position};
+    let span_a = Span::new(Position::new("a.watsup", 1, 0), Position::new("a.watsup", 1, 1));
+    let span_b = Span::new(Position::new("b.watsup", 2, 0), Position::new("b.watsup", 2, 1));
+    let code = Code::Seq(vec![
+        Code::link(
+            Link {
+                kind: LinkKind::Direct("same".into()),
+                origin: Some(p4spec_rust::phrase! {
+                    node: "prose_in".to_owned(), span: span_a.clone(),
+                }),
+            },
+            Code::Token("[a]<b>".into()),
+        ),
+        Code::link(
+            Link {
+                kind: LinkKind::Direct("same".into()),
+                origin: Some(p4spec_rust::phrase! {
+                    node: "prose_false".to_owned(), span: span_b.clone(),
+                }),
+            },
+            Code::Token("[c]<d>".into()),
+        ),
+    ]);
+    let mut warnings = Vec::new();
+    let text =
+        serialize::ser_code(&AnchorContext::default(), &Span::default(), &mut warnings, &code);
+    assert_eq!(text, "[a]<b>[c]<d>");
+    assert_eq!(warnings.len(), 2);
+    for (report, (span, text)) in warnings
+        .iter()
+        .zip([(&span_a, "[a]<b>"), (&span_b, "[c]<d>")])
+    {
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("warning cause") };
+        assert_eq!(diagnostic.code.as_deref(), Some("adoc/link-text-invalid"));
+        assert_eq!(&diagnostic.labels[0].span, span);
+        assert!(
+            diagnostic
+                .notes
+                .contains(&format!("Generated link text: {text:?}"))
+        );
+    }
+}
+
+#[test]
+fn code_tokens_join_across_unresolved_and_empty_links() {
+    let code = Code::Seq(vec![
+        Code::Token("a".into()),
+        Code::Seq(vec![
+            Code::Empty,
+            Code::link(
+                Link { kind: LinkKind::Subject(Subject::Function("missing".into())), origin: None },
+                Code::Token("b".into()),
+            ),
+            Code::link(Link { kind: LinkKind::Direct("empty".into()), origin: None }, Code::Empty),
+        ]),
+        Code::Token("c".into()),
+    ]);
+    let mut warnings = Vec::new();
+    let text = serialize::ser_prose(
+        &AnchorContext::default(),
+        &Span::default(),
+        &mut warnings,
+        &Prose::Code(code),
+    );
+    assert_eq!(text, "``abc``");
+    assert_eq!(warnings.len(), 1);
+    assert!(
+        warnings[0]
+            .to_string()
+            .starts_with("warning[adoc/link-body-empty]")
+    );
+}
+
+#[test]
 fn unresolved_subject_keeps_body_without_cross_reference() {
     let prose = Prose::Link(
         Link { kind: LinkKind::Subject(Subject::Function("f".into())), origin: None },

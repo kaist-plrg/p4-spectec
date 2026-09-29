@@ -209,12 +209,6 @@ impl Link {
 
 // == Serialization
 
-/// A run of code tokens sharing one link target.
-struct CodeSegment {
-    target: Option<(String, Link)>,
-    text: String,
-}
-
 /// Selects whether serialized code receives monospace markup.
 #[derive(Clone, Copy)]
 enum CodeStyle {
@@ -222,6 +216,15 @@ enum CodeStyle {
     Mono,
     /// Emits code text as is, as in link labels and table cells.
     Plain,
+}
+
+impl CodeStyle {
+    fn render(self, text: &str) -> String {
+        match self {
+            Self::Mono => adoc_mono_chopped(text),
+            Self::Plain => text.to_owned(),
+        }
+    }
 }
 
 /// Per-serialization anchor labels and warnings.
@@ -290,95 +293,104 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         }
     }
 
-    // - Code segments
+    // - Code
     //
-    //   Seq([Token("a "), Link(Direct("f"), Token("b")), Token(" c")])
-    //   -> [(None, "a "), (Some("f"), "b"), (None, " c")]
+    //   Seq([Token("a "), Link(Direct("f"), Token("b")), Token(" c")]) in Mono
+    //   -> ``a`` xref:f[``b``] ``c``
+    //
+    //   Seq([Link(Direct("f"), Token("a")), Link(Direct("f"), Token("b"))])
+    //   -> xref:f[``a``]xref:f[``b``]
 
-    /// Flattens code spans and coalesces adjacent tokens with the same target.
+    /// Collects adjacent tokens while serializing each resolved link separately.
     fn collect_code(
         &mut self,
-        code: &Code,
-        target: Option<(&str, &Link)>,
         link_ctx: Option<&Link>,
         lint: bool,
-        segments: &mut Vec<CodeSegment>,
+        style: CodeStyle,
+        code: &Code,
+        text_pending: &mut String,
+        text: &mut String,
     ) {
         match code {
-            Code::Token(text) => Serializer::collect_token_code(text, target, segments),
+            Code::Token(text_token) => text_pending.push_str(text_token),
             Code::Link(link, code_inner) => {
-                self.collect_link_code(link, code_inner, target, link_ctx, lint, segments)
+                // Unresolved and suppressed links leave the token run intact
+                let Some(text_link) = self.ser_link_code(link_ctx, lint, style, link, code_inner)
+                else {
+                    self.collect_code(link_ctx, lint, style, code_inner, text_pending, text);
+                    return;
+                };
+                // Empty links emit no markup and cannot split adjacent tokens
+                if !text_link.is_empty() {
+                    text.push_str(&style.render(text_pending));
+                    text_pending.clear();
+                    text.push_str(&text_link);
+                }
             }
             Code::Seq(codes) => {
-                // Adjacent sequences participate in the same span coalescing
+                // Sequence boundaries do not split adjacent tokens
                 for code in codes {
-                    self.collect_code(code, target, link_ctx, lint, segments);
+                    self.collect_code(link_ctx, lint, style, code, text_pending, text);
                 }
             }
             Code::Empty => {}
         }
     }
 
-    fn collect_token_code(
-        text: &str,
-        target: Option<(&str, &Link)>,
-        segments: &mut Vec<CodeSegment>,
-    ) {
-        // Empty tokens cannot split an existing span
-        if text.is_empty() {
-            return;
-        }
-        let segment_last = segments.last_mut().filter(|segment| {
-            segment.target.as_ref().map(|(target, _)| target.as_str())
-                == target.map(|(target, _)| target)
-        });
-        if let Some(segment) = segment_last {
-            segment.text.push_str(text);
-        } else {
-            let target = target.map(|(target, link)| (target.to_owned(), link.clone()));
-            segments.push(CodeSegment { target, text: text.to_owned() });
+    /// Collects a link's body as text, diagnosing resolved nested references.
+    fn collect_code_text(&mut self, link_outer: &Link, lint: bool, code: &Code, text: &mut String) {
+        match code {
+            Code::Token(text_token) => text.push_str(text_token),
+            Code::Link(link, code_inner) => {
+                // Only resolved references conflict with the enclosing link
+                if let Some(target) = link.target(self.anchor_ctx) {
+                    self.warn_empty_target(lint, link, &target);
+                    self.warn_nested(lint, link_outer, link);
+                }
+                self.collect_code_text(link_outer, lint, code_inner, text);
+            }
+            Code::Seq(codes) => {
+                // Format only after the full link body has been collected
+                for code in codes {
+                    self.collect_code_text(link_outer, lint, code, text);
+                }
+            }
+            Code::Empty => {}
         }
     }
 
-    fn collect_link_code(
+    /// Serializes one resolved link, or leaves its body in the enclosing token run.
+    fn ser_link_code(
         &mut self,
-        link: &Link,
-        code_inner: &Code,
-        target: Option<(&str, &Link)>,
         link_ctx: Option<&Link>,
         lint: bool,
-        segments: &mut Vec<CodeSegment>,
-    ) {
-        // Unresolved subjects retain the surrounding link context
-        let Some(target_inner) = link.target(self.anchor_ctx) else {
-            self.collect_code(code_inner, target, link_ctx, lint, segments);
-            return;
-        };
-        self.warn_empty_target(lint, link, &target_inner);
+        style: CodeStyle,
+        link: &Link,
+        code_inner: &Code,
+    ) -> Option<String> {
+        // Unresolved subjects keep their bodies without creating a boundary
+        let target = link.target(self.anchor_ctx)?;
+        self.warn_empty_target(lint, link, &target);
+        // An outer link suppresses this reference while retaining its body
         if let Some(link_outer) = link_ctx {
-            // Cross-references cannot nest in AsciiDoc
             self.warn_nested(lint, link_outer, link);
-            self.collect_code(code_inner, target, link_ctx, lint, segments);
-            return;
+            return None;
         }
-
-        // The outermost resolved link owns its entire code span
+        // Preserve the empty-body warning even when no tokens will be emitted
         if lint && code_inner.is_empty() {
             self.warn(error::link_body_empty(self.span, link));
         }
-        let target_inner = Some((target_inner.as_str(), link));
-        self.collect_code(code_inner, target_inner, Some(link), lint, segments);
+        let mut text = String::new();
+        self.collect_code_text(link, lint, code_inner, &mut text);
+        if text.is_empty() {
+            return Some(text);
+        }
+        // Choose delimiters with the original link and its complete display text
+        let text = style.render(&text);
+        Some(self.adoc_link(link, &target, &text))
     }
 
-    // - Code
-    //
-    //   Seq([Token("a "), Link(Direct("f"), Token("b")), Token(" c")]) in Mono
-    //   -> ``a`` xref:f[``b``] ``c``
-    //
-    //   Seq([Token("a "), Link(Direct("f"), Token("b")), Token(" c")]) in Plain
-    //   -> a xref:f[b] c
-
-    /// Serializes coalesced code, applying monospace only for inline prose.
+    /// Serializes token runs and individual links with the selected code style.
     fn ser_code(
         &mut self,
         style: CodeStyle,
@@ -386,22 +398,11 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         link_ctx: Option<&Link>,
         lint: bool,
     ) -> String {
-        let mut segments = Vec::new();
-        self.collect_code(code, None, link_ctx, lint, &mut segments);
-        // Formatting after coalescing keeps adjacent tokens in one code span
-        segments
-            .into_iter()
-            .map(|segment| {
-                let text = match style {
-                    CodeStyle::Mono => adoc_mono_chopped(&segment.text),
-                    CodeStyle::Plain => segment.text,
-                };
-                match segment.target {
-                    Some((target, link)) => self.adoc_link(&link, &target, &text),
-                    None => text,
-                }
-            })
-            .collect()
+        let mut text = String::new();
+        let mut text_pending = String::new();
+        self.collect_code(link_ctx, lint, style, code, &mut text_pending, &mut text);
+        text.push_str(&style.render(&text_pending));
+        text
     }
 
     // - Prose
