@@ -3,9 +3,9 @@
 
 (require "../common/0.0-prelude.rkt"
          "../common/1-syntax.rkt")
-(provide AL-syntax)
+(provide al-syntax)
 
-(define-extended-language AL-syntax Common
+(define-extended-language al-syntax common
   ;; Parameters
   (param ::=
          (EXP typ)

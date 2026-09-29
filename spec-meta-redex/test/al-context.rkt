@@ -44,40 +44,40 @@
 ;; Language
 ;;
 
-(test-match AL-context layer (term {TYP () REL () FUNC () VAL ()}))
-(test-no-match AL-context layer (term {TYP () REL () FUNC ()}))
-(test-no-match AL-context layer (term {TYP () REL () VAL () FUNC ()}))
-(test-match AL-context ctx (term C-vals))
-(test-match AL-context C (term C-vals))
-(test-no-match AL-context ctx (term {LOCAL {TYP () REL () FUNC () VAL ()}
+(test-match al-context layer (term {TYP () REL () FUNC () VAL ()}))
+(test-no-match al-context layer (term {TYP () REL () FUNC ()}))
+(test-no-match al-context layer (term {TYP () REL () VAL () FUNC ()}))
+(test-match al-context ctx (term C-vals))
+(test-match al-context C (term C-vals))
+(test-no-match al-context ctx (term {LOCAL {TYP () REL () FUNC () VAL ()}
                                      GLOBAL {TYP () REL () FUNC () VAL ()}}))
-(test-no-match AL-context ctx (term {GLOBAL {TYP () REL () FUNC () VAL ((("x" ()) 1))}
+(test-no-match al-context ctx (term {GLOBAL {TYP () REL () FUNC () VAL ((("x" ()) 1))}
                                      LOCAL {TYP () REL () FUNC () VAL ()}}))
 
 ;; ctx-shallow checks the record shape only.
-(test-match AL-context ctx-shallow (term C-vals))
-(test-match AL-context ctx-shallow (term {GLOBAL {TYP () REL () FUNC () VAL ((("x" ()) 1))}
+(test-match al-context ctx-shallow (term C-vals))
+(test-match al-context ctx-shallow (term {GLOBAL {TYP () REL () FUNC () VAL ((("x" ()) 1))}
                                           LOCAL {TYP () REL () FUNC () VAL ()}}))
-(test-no-match AL-context ctx-shallow (term {GLOBAL {TYP () REL () FUNC ()}
+(test-no-match al-context ctx-shallow (term {GLOBAL {TYP () REL () FUNC ()}
                                              LOCAL {TYP () REL () FUNC () VAL ()}}))
-(test-no-match AL-context ctx-shallow (term {LOCAL {TYP () REL () FUNC () VAL ()}
+(test-no-match al-context ctx-shallow (term {LOCAL {TYP () REL () FUNC () VAL ()}
                                              GLOBAL {TYP () REL () FUNC () VAL ()}}))
 
-(test-equal (term (empty_layer)) '(TYP () REL () FUNC () VAL ()))
-(test-equal (term (empty_ctx))
+(test-equal (term (empty-layer)) '(TYP () REL () FUNC () VAL ()))
+(test-equal (term (empty-ctx))
             '(GLOBAL (TYP () REL () FUNC () VAL ()) LOCAL (TYP () REL () FUNC () VAL ())))
 
 ;;
 ;; Loading
 ;;
 
-(define-term C-empty (empty_ctx))
+(define-term C-empty (empty-ctx))
 
-(test-equal (term (load_typdef C-empty "t" EXT))
+(test-equal (term (load-typdef C-empty "t" EXT))
             (ctx-of '((("t" EXT)) () () ()) '(() () () ())))
-(test-equal (term (load_reldef C-empty "R" (EXT "R")))
+(test-equal (term (load-reldef C-empty "R" (EXT "R")))
             (ctx-of '(() (("R" (EXT "R"))) () ()) '(() () () ())))
-(test-equal (term (load_funcdef C-empty "f" (EXT "f")))
+(test-equal (term (load-funcdef C-empty "f" (EXT "f")))
             (ctx-of '(() () (("f" (EXT "f"))) ()) '(() () () ())))
 
 (define-term clause-ex (((EXP (VAR "n"))) (VAR "n") ()))
@@ -128,14 +128,14 @@
 (define (test-load path)
   (define script (boot-script path))
   (define C (term (load C-empty ,script)))
-  (test-match AL-context ctx C)
+  (test-match al-context ctx C)
   (define global (list-ref C 1))
   (test-equal (map car (list-ref global 1)) (ids-of script '(EXTTYP TYP)))
   (test-equal (map car (list-ref global 3)) (ids-of script '(EXTREL REL)))
   (test-equal (map car (list-ref global 5))
               (ids-of script '(EXTFUNC BUILTINFUNC TABLEFUNC FUNC)))
   (test-equal (list-ref global 7) '())
-  (test-equal (list-ref C 3) (term (empty_layer))))
+  (test-equal (list-ref C 3) (term (empty-layer))))
 
 (for ([file (in-list (directory-list (repo-path "examples") #:build? #t))]
       #:when (path-has-extension? file #".watsup"))
@@ -148,59 +148,59 @@
 ;; Adders
 ;;
 
-(test-equal (term (add_vari C-empty ("x" NAT (STAR)) (NAT 1)))
+(test-equal (term (add-vari C-empty ("x" NAT (STAR)) (NAT 1)))
             (ctx-of '(() () () ()) '(() () () ((("x" (STAR)) (NAT 1))))))
-(test-equal (term (add_varr C-empty ("x" (STAR)) (NAT 1)))
+(test-equal (term (add-varr C-empty ("x" (STAR)) (NAT 1)))
             (ctx-of '(() () () ()) '(() () () ((("x" (STAR)) (NAT 1))))))
-(test-equal (term (add_vari C-vals ("x" INT ()) (NAT 9)))
+(test-equal (term (add-vari C-vals ("x" INT ()) (NAT 9)))
             (ctx-of '(() () () ())
                     `(() () () ,(cons '(("x" ()) (NAT 9)) (cdr (local-vals (term C-vals)))))))
 
-(test-equal (term (add_varis C-empty (("x" NAT ()) ("y" BOOL (QUEST))) ((NAT 1) (BOOL #t))))
+(test-equal (term (add-varis C-empty (("x" NAT ()) ("y" BOOL (QUEST))) ((NAT 1) (BOOL #t))))
             (ctx-of '(() () () ())
                     '(() () () ((("x" ()) (NAT 1)) (("y" (QUEST)) (BOOL #t))))))
-(test-equal (term (add_varis C-empty () ())) (term C-empty))
-(check-exn #rx"adds_map" (λ () (term (add_varis C-empty (("x" NAT ())) ()))))
-(test-equal (term (add_varrs C-empty (("x" ()) ("x" ())) ((NAT 1) (NAT 2))))
+(test-equal (term (add-varis C-empty () ())) (term C-empty))
+(check-exn #rx"adds-map" (λ () (term (add-varis C-empty (("x" NAT ())) ()))))
+(test-equal (term (add-varrs C-empty (("x" ()) ("x" ())) ((NAT 1) (NAT 2))))
             (ctx-of '(() () () ()) '(() () () ((("x" ()) (NAT 2))))))
 
-(test-equal (term (add_typ C-empty "X" PARAM))
+(test-equal (term (add-typ C-empty "X" PARAM))
             (ctx-of '(() () () ()) '((("X" PARAM)) () () ())))
-(test-equal (term (add_func C-empty "f" (EXT "f")))
+(test-equal (term (add-func C-empty "f" (EXT "f")))
             (ctx-of '(() () () ()) '(() () (("f" (EXT "f"))) ())))
 
 ;;
 ;; Value finders
 ;;
 
-(test-equal (term (find_vari C-vals ("x" INT ()))) '((NAT 1)))
-(test-equal (term (find_vari C-vals ("xs" NAT (STAR)))) '((LIST ((NAT 2) (NAT 3)))))
+(test-equal (term (find-vari C-vals ("x" INT ()))) '((NAT 1)))
+(test-equal (term (find-vari C-vals ("xs" NAT (STAR)))) '((LIST ((NAT 2) (NAT 3)))))
 ;; No clause for an unbound variable: ⊥
-(test-equal (term (find_vari C-vals ("x" NAT (STAR)))) '⊥)
-(test-equal (term (find_vari C-empty ("x" NAT ()))) '⊥)
+(test-equal (term (find-vari C-vals ("x" NAT (STAR)))) '⊥)
+(test-equal (term (find-vari C-empty ("x" NAT ()))) '⊥)
 
-(test-equal (term (find_varr C-vals ("x" ()))) '((NAT 1)))
-(test-equal (term (find_varr C-vals ("y" ()))) '())
+(test-equal (term (find-varr C-vals ("x" ()))) '((NAT 1)))
+(test-equal (term (find-varr C-vals ("y" ()))) '())
 
-(test-equal (term (find_varis C-vals (("x" NAT ()) ("n" NAT (QUEST)))))
+(test-equal (term (find-varis C-vals (("x" NAT ()) ("n" NAT (QUEST)))))
             '(((NAT 1) (OPT ()))))
-(test-equal (term (find_varis C-vals ())) '(()))
+(test-equal (term (find-varis C-vals ())) '(()))
 ;; otherwise: some lookup fails
-(test-equal (term (find_varis C-vals (("x" NAT ()) ("y" NAT ())))) '())
-(test-equal (term (find_varis C-empty (("x" NAT ())))) '())
+(test-equal (term (find-varis C-vals (("x" NAT ()) ("y" NAT ())))) '())
+(test-equal (term (find-varis C-empty (("x" NAT ())))) '())
 
-(test-equal (term (find_varrs C-vals (("x" ()) ("o" (QUEST))))) '(((NAT 1) (OPT ((NAT 7))))))
-(test-equal (term (find_varrs C-vals ())) '(()))
+(test-equal (term (find-varrs C-vals (("x" ()) ("o" (QUEST))))) '(((NAT 1) (OPT ((NAT 7))))))
+(test-equal (term (find-varrs C-vals ())) '(()))
 ;; otherwise: some lookup fails
-(test-equal (term (find_varrs C-vals (("y" ()) ("x" ())))) '())
+(test-equal (term (find-varrs C-vals (("y" ()) ("x" ())))) '())
 
 (define-term C-x9 ,(vals-added (term C-empty) '((("x" ()) (NAT 9)))))
 
-(test-equal (term (finds_vari (C-vals C-x9) ("x" NAT ()))) '(((NAT 1) (NAT 9))))
-(test-equal (term (finds_vari () ("x" NAT ()))) '(()))
+(test-equal (term (finds-vari (C-vals C-x9) ("x" NAT ()))) '(((NAT 1) (NAT 9))))
+(test-equal (term (finds-vari () ("x" NAT ()))) '(()))
 ;; otherwise: some lookup fails
-(test-equal (term (finds_vari (C-vals C-empty) ("x" NAT ()))) '())
-(test-equal (term (finds_vari (C-vals) ("y" NAT ()))) '())
+(test-equal (term (finds-vari (C-vals C-empty) ("x" NAT ()))) '())
+(test-equal (term (finds-vari (C-vals) ("y" NAT ()))) '())
 
 ;;
 ;; Typedef, function, and relation finders
@@ -216,48 +216,48 @@
              (("f" (BUILTIN "f" () ())))
              ())))
 
-(test-equal (term (find_typ C-defs "t")) '(PARAM))
-(test-equal (term (find_typ C-defs "u")) '(PARAM))
-(test-equal (term (find_typ C-defs "v")) '())
+(test-equal (term (find-typ C-defs "t")) '(PARAM))
+(test-equal (term (find-typ C-defs "u")) '(PARAM))
+(test-equal (term (find-typ C-defs "v")) '())
 
-(test-equal (term (find_func C-defs "f")) '((BUILTIN "f" () ())))
-(test-equal (term (find_func C-defs "g")) '((EXT "g")))
+(test-equal (term (find-func C-defs "f")) '((BUILTIN "f" () ())))
+(test-equal (term (find-func C-defs "g")) '((EXT "g")))
 ;; otherwise: found in neither layer
-(test-equal (term (find_func C-defs "h")) '())
+(test-equal (term (find-func C-defs "h")) '())
 
 ;; Only the global layer holds relations.
-(test-equal (term (find_rel C-defs "R")) '((EXT "R")))
-(test-equal (term (find_rel C-defs "S")) '())
+(test-equal (term (find-rel C-defs "R")) '((EXT "R")))
+(test-equal (term (find-rel C-defs "S")) '())
 
 ;;
 ;; Sub-contexts
 ;;
 
 ;; $sub_opt: every lookup is OPT val, or every lookup is OPT eps
-(test-equal (term (sub_opt C-vals (("o" NAT ()) ("p" NAT ()))))
+(test-equal (term (sub-opt C-vals (("o" NAT ()) ("p" NAT ()))))
             (list (vals-added (term C-vals) '((("o" ()) (NAT 7)) (("p" ()) (NAT 8))))))
-(test-equal (term (sub_opt C-vals (("n" NAT ())))) '())
+(test-equal (term (sub-opt C-vals (("n" NAT ())))) '())
 ;; An empty vari* takes the first clause.
-(test-equal (term (sub_opt C-vals ())) (list (term C-vals)))
+(test-equal (term (sub-opt C-vals ())) (list (term C-vals)))
 ;; A mix, an unbound variable, or a non-option: ⊥
-(test-equal (term (sub_opt C-vals (("o" NAT ()) ("n" NAT ())))) '⊥)
-(test-equal (term (sub_opt C-vals (("q" NAT ())))) '⊥)
-(test-equal (term (sub_opt C-vals (("w" NAT ())))) '⊥)
+(test-equal (term (sub-opt C-vals (("o" NAT ()) ("n" NAT ())))) '⊥)
+(test-equal (term (sub-opt C-vals (("q" NAT ())))) '⊥)
+(test-equal (term (sub-opt C-vals (("w" NAT ())))) '⊥)
 
 ;; $sub_list: one context per element, with the lists transposed
-(test-equal (term (sub_list C-vals (("xs" NAT ()) ("ys" NAT ()))))
+(test-equal (term (sub-list C-vals (("xs" NAT ()) ("ys" NAT ()))))
             (list (vals-added (term C-vals) '((("xs" ()) (NAT 2)) (("ys" ()) (NAT 4))))
                   (vals-added (term C-vals) '((("xs" ()) (NAT 3)) (("ys" ()) (NAT 5))))))
-(test-equal (term (sub_list C-vals (("zs" NAT ()))))
+(test-equal (term (sub-list C-vals (("zs" NAT ()))))
             (list (vals-added (term C-vals) '((("zs" ()) (NAT 6))))))
 ;; No iterated variables, or empty lists: no contexts
-(test-equal (term (sub_list C-vals ())) '())
-(test-equal (term (sub_list C-vals (("es" NAT ())))) '())
+(test-equal (term (sub-list C-vals ())) '())
+(test-equal (term (sub-list C-vals (("es" NAT ())))) '())
 ;; An unbound variable or a non-list: ⊥
-(test-equal (term (sub_list C-vals (("q" NAT ())))) '⊥)
-(test-equal (term (sub_list C-vals (("v" NAT ())))) '⊥)
+(test-equal (term (sub-list C-vals (("q" NAT ())))) '⊥)
+(test-equal (term (sub-list C-vals (("v" NAT ())))) '⊥)
 ;; Lists of different lengths
 (check-exn #rx"cannot transpose"
-           (λ () (term (sub_list C-vals (("xs" NAT ()) ("zs" NAT ()))))))
+           (λ () (term (sub-list C-vals (("xs" NAT ()) ("zs" NAT ()))))))
 
 (test-results)

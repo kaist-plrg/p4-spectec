@@ -51,12 +51,19 @@ must stay distinguishable:
 | `builtin dec $f` | metafunction whose body escapes to Racket |
 | `extern relation R` | judgment form with one rule that calls Racket |
 
-Names stay as in watsup. `Eval_exp`, `Call_func`, `find_map` and `subst_typ`
-are all legal Redex names *(checked)*. The one exception is `'`, which is a
-Racket reader delimiter: `$subst_typ'` becomes `subst_type_inner`, and primed
-metavariables `C'` and `C''` become `C_1` and `C_2`. watsup subscripts
-(`exp_l`, `val_h`) are already Redex subscripts. Repeated metavariables are
-equality constraints in both languages.
+Languages, judgment forms, and metafunctions are named in Racket's
+kebab-case: a watsup name is lowercased, and every `_` becomes `-`.
+`Eval_exp` becomes `eval-exp` and `$find_map` becomes `find-map`. A trailing
+`_` stays as `-`, so `$exists_` becomes `exists-`: `define-metafunction`
+binds its name in the module, and `assoc` would shadow Racket's `assoc`
+*(checked)*. `'` is a Racket reader delimiter, so `$subst_typ'` becomes
+`subst-type-inner`. Nonterminals and metavariables keep their watsup names,
+except that primed metavariables `C'` and `C''` become `C_1` and `C_2`.
+watsup subscripts (`exp_l`, `val_h`) are already Redex subscripts. Repeated
+metavariables are equality constraints in both languages.
+
+In this file, `$f` and `Eval_exp` name watsup definitions, and kebab-case
+names their Redex transcriptions.
 
 Rule names combine the rulegroup and the rule, because watsup reuses rule
 names across groups. For example, `Eval_exp/boolean` appears in both `literal`
@@ -82,9 +89,9 @@ no earlier clause applies. Each `otherwise` becomes an explicit complement:
   ```racket
   ;; def $is_tup(TUP val*) = true
   ;; def $is_tup(val) = false  -- otherwise
-  [(is_tup (TUP (val ...))) #t]
-  [(is_tup val) #f
-   (side-condition (not (redex-match? AL (TUP (val ...)) (term val))))]
+  [(is-tup (TUP (val ...))) #t]
+  [(is-tup val) #f
+   (side-condition (not (redex-match? al (TUP (val ...)) (term val))))]
   ```
 
   The complement must also cover an earlier clause whose pattern matched but
@@ -153,20 +160,20 @@ result. An auxiliary judgment then dispatches on that result, and its rules
 are disjoint by input:
 
 ```racket
-[(Eval_exp C exp valres)
- (Eval_prem/ifpr C valres ctxres)
+[(eval-exp C exp valres)
+ (eval-prem/ifpr C valres ctxres)
  ------------------------------- "ifpr"
- (Eval_prem C (IF exp) ctxres)]
+ (eval-prem C (IF exp) ctxres)]
 
-(define-judgment-form AL
-  #:mode (Eval_prem/ifpr I I O)
+(define-judgment-form al
+  #:mode (eval-prem/ifpr I I O)
   [---------------------------------------- "true"
-   (Eval_prem/ifpr C (OK (BOOL #t)) (OK C))]
+   (eval-prem/ifpr C (OK (BOOL #t)) (OK C))]
   [---------------------------------------- "false"
-   (Eval_prem/ifpr C (OK (BOOL #f)) FAIL)]
-  [(side-condition ,(not (redex-match? AL (OK (BOOL boolean)) (term valres))))
+   (eval-prem/ifpr C (OK (BOOL #f)) FAIL)]
+  [(side-condition ,(not (redex-match? al (OK (BOOL boolean)) (term valres))))
    ---------------------------------------- "fail"
-   (Eval_prem/ifpr C valres FAIL)])
+   (eval-prem/ifpr C valres FAIL)])
 ```
 
 Each auxiliary judgment is named after the watsup rulegroup it implements, and
@@ -178,12 +185,12 @@ The same technique has three variants:
 
 - **Iterated premises.** An iterated premise whose failure matters, such as
   `(Eval_exp: C |- exp : OK val)*`, goes through a sequence judgment
-  (`Eval_exps`) that stops at the first `FAIL`. Later elements are then not
+  (`eval-exps`) that stops at the first `FAIL`. Later elements are then not
   evaluated, and their side effects do not happen.
-- **Relations with no `FAIL` output.** `Assign_exp(s)` and `Assign_arg(s)`
+- **Relations with no `FAIL` output.** `assign-exp(s)` and `assign-arg(s)`
   simply have no derivation when they don't apply. A caller captures this in
   one evaluation, with
-  `(where (C_1 ...) ,(judgment-holds (Assign_exp C exp val C_out) C_out))`,
+  `(where (C_1 ...) ,(judgment-holds (assign-exp C exp val C_out) C_out))`,
   and then dispatches on the empty or one-element list *(checked)*.
 - **Repeated calls.** A pure metafunction call may appear in several
   complementary rules, because repeating it costs only time. A judgment
@@ -219,7 +226,7 @@ The policy that follows:
   nonterminal matches, which Step 4 measured as most of `$load`'s cost.
 - **If Step 10 needs caching back,** it follows the OCaml policy instead of
   Redex's:
-  - Memoize `Call_func` and `Call_rel` in Racket, with keys as in OCaml.
+  - Memoize `call-func` and `call-rel` in Racket, with keys as in OCaml.
   - Skip extern calls, calls to functions passed as arguments, and
     higher-order calls.
   - Keep a result only if no side effect happened during the call. The host
@@ -269,7 +276,7 @@ watsup's `?`-iteration then becomes Redex's `...`, the same as `*`-iteration:
 
 Meta-level maps (`venv`, `tdenv`, `fenv`, `renv`, `theta`) are association
 lists `((key value) ...)`. They are only accessed through the builtin
-metafunctions (`find_map`, `add_map`, and the rest), which are implemented in
+metafunctions (`find-map`, `add-map`, and the rest), which are implemented in
 Racket. Step 10 can therefore change their representation without touching a
 rule.
 
@@ -283,7 +290,7 @@ rule.
 | `-- (if p = e)*` | `(where (p ...) (e ...))`; constrain the lengths when `e` iterates over several sequences |
 | `-- if e` (boolean) | `(where #t e)` |
 | `-- if ~e` (boolean) | `(where #f e)` |
-| `-- if ~(val <: num)` | `(side-condition ,(not (redex-match? AL num (term val))))` |
+| `-- if ~(val <: num)` | `(side-condition ,(not (redex-match? al num (term val))))` |
 | `-- otherwise` | the complement of the other clauses; see [Disjoint clauses](#disjoint-clauses) |
 | `-- debug e` | `(where _ ,(debug (term e)))`, printing to stderr |
 | `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes, collected as helpers in `common/0.1-stdlib.rkt` |
@@ -312,18 +319,18 @@ spec-meta-redex/
     0.0-prelude.rkt       Redex re-exports; caching off; definition macros
     0-extern-json.rkt     codec for the extern JSON wire
     0-extern-wire.rkt     transport to the OCaml host
-    0.1-stdlib.rkt        language Stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins
-    1-syntax.rkt          language Common
-    2-env.rkt             language Common-env; $extend_tdenv, $theta_of_tdenv, ...
-    3-context.rkt         language Common-context (cursor)
-    4-relation.rkt        language Common-relation (res<X>); the three extern relations
+    0.1-stdlib.rkt        language stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins
+    1-syntax.rkt          language common
+    2-env.rkt             language common-env; $extend_tdenv, $theta_of_tdenv, ...
+    3-context.rkt         language common-context (cursor)
+    4-relation.rkt        language common-relation (res<X>); the three extern relations
     5.0-eval-typ.rkt      $subst_typ
     5.1-eval-ops.rkt      $unop_number, $binop_*, $cmpop_*, $is_tup, $is_fun
   al/
     0-boot.rkt            boot-script, boot-p4: run spectec-boot sexp(-p4), read
-    1-syntax.rkt          language AL-syntax
-    2-env.rkt             languages AL-base (the union) and AL-env (reldef, funcdef)
-    3-context.rkt         language AL-context (layer, ctx, ctx-shallow); $load, $add_*, ...
+    1-syntax.rkt          language al-syntax
+    2-env.rkt             languages al-base (the union) and al-env (reldef, funcdef)
+    3-context.rkt         language al-context (layer, ctx, ctx-shallow); $load, $add_*, ...
     4-relation.rkt        ctxres
     5.1-eval-typ.rkt      $upcast, $downcast, $subtyp
     5.2-eval-assign.rkt   Assign_exp(s), Assign_arg(s)
@@ -347,15 +354,15 @@ a module is compiled, drops the contracts of both (see
 [Verification](#verification)).
 
 Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
-file's language with its own syntax: `Stdlib` (the `var`s, sets and maps),
-`Common`, `Common-env`, `Common-context`, and `Common-relation`.
-`AL-syntax` extends `Common` with `al/1-syntax`.
+file's language with its own syntax: `stdlib` (the `var`s, sets and maps),
+`common`, `common-env`, `common-context`, and `common-relation`.
+`al-syntax` extends `common` with `al/1-syntax`.
 
-`AL-base` (in `al/2-env.rkt`) is the `define-union-language` of
-`Common-relation` and `AL-syntax`. `AL-env`, `AL-context`, and then `AL` extend
+`al-base` (in `al/2-env.rkt`) is the `define-union-language` of
+`common-relation` and `al-syntax`. `al-env`, `al-context`, and then `al` extend
 it with `al/2-env`, `al/3-context`, and `al/4-relation`. Shared nonterminals
 merge without duplicate matches *(checked)*. Metafunctions
-defined on a `common/` language work on `AL` terms, so common helpers stay in
+defined on a `common/` language work on `al` terms, so common helpers stay in
 `common/`.
 
 ### Getting scripts into Redex
@@ -404,7 +411,7 @@ can instead be loaded as a shared object through Racket's `ffi/unsafe`
 As in the K port, the hot object-level map builtins (`find_map`, `find_maps`,
 `add_map`, `adds_map`, `update_map`, `assoc_`) are native Racket that works on
 AL map values (`INJ` with the `` `{ `} `` mixop). They are separate from the
-meta-level `find_map` in `common/0.1-stdlib.rkt`, which works on Redex's own
+meta-level `find-map` in `common/0.1-stdlib.rkt`, which works on Redex's own
 environments.
 
 ## Verification
@@ -517,9 +524,9 @@ racket -i -e '(require (file "spec-meta-redex/common/0.0-prelude.rkt")
 Then, for example:
 
 ```racket
-(term (load (empty_ctx) ,(boot-script "examples/add.watsup")))   ; a loaded context
-(redex-match? AL-context ctx (term (empty_ctx)))                 ; grammar membership
-(current-traced-metafunctions '(find_vari sub_list))             ; print calls and results
+(term (load (empty-ctx) ,(boot-script "examples/add.watsup")))   ; a loaded context
+(redex-match? al-context ctx (term (empty-ctx)))                 ; grammar membership
+(current-traced-metafunctions '(find-vari sub-list))             ; print calls and results
 (current-traced-metafunctions '())
 ```
 
@@ -528,7 +535,7 @@ language it extends):
 
 ```sh
 racket -e '(require racket/class pict redex/pict (file "spec-meta-redex/al/3-context.rkt"))
-           (send (pict->bitmap (language->pict AL-context)) save-file "/tmp/al-context.png" (quote png))'
+           (send (pict->bitmap (language->pict al-context)) save-file "/tmp/al-context.png" (quote png))'
 ```
 
 ### Oracles
@@ -552,7 +559,7 @@ Step 2 emitter depend on.
   `caching-enabled?` to `#f`. Every module requires it instead of Redex
   itself, so the caching policy holds from the start. The definition macros
   come in Step 3.
-- `common/1-syntax.rkt`: `(define-language Common ...)` with one nonterminal
+- `common/1-syntax.rkt`: `(define-language common ...)` with one nonterminal
   per watsup syntax:
   - identifiers: `id`, `atom`, `mixop`
   - types: `numtyp`, `optyp`, `typ`, `deftyp`, `typfield`, `typcase`, `iter`,
@@ -567,9 +574,9 @@ Step 2 emitter depend on.
   The `var` declarations in `common/0-stdlib.watsup` become nonterminal
   aliases: `(bool b ::= boolean)`, `(int i ::= integer)`,
   `(nat n ::= natural)`, and `(text t ::= string)`. Step 3 moved them to
-  `Stdlib` in `common/0.1-stdlib.rkt`, which `Common` extends. `extern syntax
+  `stdlib` in `common/0.1-stdlib.rkt`, which `common` extends. `extern syntax
   json` becomes a `json` that matches what `jsexpr?` accepts.
-- `al/1-syntax.rkt`: `(define-extended-language AL-syntax Common ...)` adding
+- `al/1-syntax.rkt`: `(define-extended-language al-syntax common ...)` adding
   `param`, `iterprem`, `prem`, `rulmatch`, `rulpath`, `rulgroup`, `elsgroup`,
   `clause`, `elsclause`, `tblrow`, `defn`, and `script`.
 - Replace `a.rkt`.
@@ -609,7 +616,7 @@ Done when `raco test spec-meta-redex/test/syntax.rkt` passes.
   `read`s the result, so that tests and `main.rkt` accept `.watsup` paths
   directly.
 - Test: every `examples/*.watsup` file, and the whole of `spec/`, boots to a
-  term matching `script` in `AL-syntax` (`redex-match?`). This is the first
+  term matching `script` in `al-syntax` (`redex-match?`). This is the first
   time Step 1's grammar meets real input, so a mismatch is a bug in either the
   grammar or the emitter.
 
@@ -644,16 +651,16 @@ Transcribe `common/0-stdlib`, `2-env`, `4-relation`, `5.0-eval-typ`, and
 - Outcome:
   - `common/3-context` (`cursor`) got its own module and language.
   - Partial `def`s found here, which give `⊥`: `$theta_of_tdenv` on a `DEF`
-    with type parameters or a non-`ALIAS` body, `$subst_type_inner` on a bound
+    with type parameters or a non-`ALIAS` body, `$subst_typ'` on a bound
     `VAR` with type arguments, and `$binop_number` and `$cmpop_number` on
     mixed `NAT` and `INT`.
   - `$is_iter_on_var`'s `ITER` clause also requires `iterexp` to have exactly
     one variable, with the same id and inner iterators. (The K port does not
     check this.) Its premise result goes through a helper,
-    `is_iter_on_var/iter`, so it is computed once.
+    `is-iter-on-var/iter`, so it is computed once.
   - `num.ml` has no `POW` and asserts false on division by zero. Here both
     division by zero and a negative exponent raise an error.
-  - `cmpop_poly` compares with `equal?`. For `EXT` values this compares
+  - `cmpop-poly` compares with `equal?`. For `EXT` values this compares
     jsexprs, so the key order of a JSON object does not matter, whereas
     OCaml's `Stdlib.compare` on Yojson does distinguish it.
 
@@ -693,8 +700,8 @@ metafunctions.
     contracts off.
   - So `$load` is the one place with shallow patterns. Its clauses run as
     `load/shallow` on a `ctx-shallow`, which checks the record shape but not
-    the maps, with the remaining script matched as `any`. `load_typdef`,
-    `load_reldef`, and `load_funcdef`, which only `$load` calls, take a
+    the maps, with the remaining script matched as `any`. `load-typdef`,
+    `load-reldef`, and `load-funcdef`, which only `$load` calls, take a
     `ctx-shallow` too. `$load` itself keeps watsup's signature and checks its
     input and result against `ctx` once. On `spec-meta/al` it takes 0.19 s
     with contracts off and 0.33 s with them on. A scratch variant built the
@@ -739,8 +746,8 @@ aren't found, component casts that fail, and tuples of the wrong length. The
     component into `FAIL`, and its `zipThetaMap` has no rule for the wrong
     number of type arguments.
   - `$subtyp` has no `FUNC` clause, so no value matches type `FUNC`.
-  - `al/5.1-eval-typ.rkt` is written on `AL-context`. Nothing it uses is in
-    `al/4-relation`, so that module and the `AL` language wait for Step 7.
+  - `al/5.1-eval-typ.rkt` is written on `al-context`. Nothing it uses is in
+    `al/4-relation`, so that module and the `al` language wait for Step 7.
   - Every clause except `⊥` is reached by the tests (checked with
     `make-coverage`; see [Tests](#tests)). One test counts calls in Redex's
     trace output: an upcast of tuples nested 8 deep, each with a failing
@@ -751,8 +758,9 @@ aren't found, component casts that fail, and tuples of the wrong length. The
 ### Step 6: Assignment
 
 Transcribe `al/5.2-eval-assign`: `Assign_exp`, `Assign_exps`, `Assign_arg`,
-and `Assign_args` as judgment forms. These relations have no `otherwise` and
-no `FAIL` output. An assignment that does not apply simply has no derivation.
+and `Assign_args` as the judgment forms `assign-exp`, `assign-exps`,
+`assign-arg`, and `assign-args`. These relations have no `otherwise` and no
+`FAIL` output. An assignment that does not apply simply has no derivation.
 Callers capture that with `judgment-holds` (see
 [Evaluating each premise once](#evaluating-each-premise-once)).
 
@@ -765,7 +773,7 @@ Callers capture that with `judgment-holds` (see
     order. Rules inside a rulegroup are named with it, as in `"opt/opt-some"`
     and `"iter/list"`. No two rules evaluate a relation premise on the same
     input: the `iter` rules check the pure `$is_iter_on_var` and the value's
-    shape before their `Assign_exp` premises.
+    shape before their `assign-exp` premises.
   - `iter/opt-some` deviates from its source, by the user's decision. The
     source's last premise, `$add_varis(C', vari_iter*, OPT val_sub)*`,
     elaborates to a call per `val_sub`, each with the one value
@@ -796,7 +804,7 @@ Callers capture that with `judgment-holds` (see
 ### Step 7: Expressions, premises, and calls
 
 Build `al/5-eval.rkt` and its five fragments. The auxiliary dispatch
-judgments, the `"fail"` rules, and the `Eval_exps` sequence judgment first
+judgments, the `"fail"` rules, and the `eval-exps` sequence judgment first
 appear here. Work through the relations in this order, with tests before
 moving on:
 
@@ -821,10 +829,10 @@ moving on:
 
 ### Step 8: Entry and driver
 
-- `al/6-entry.rkt`: `Entry` as `#:mode (Entry I O)`. It `$load`s the script
+- `al/6-entry.rkt`: `Entry` as `#:mode (entry I O)`. It `$load`s the script
   into the empty context, then evaluates `(CALL "main" () ())`.
 - `main.rkt`: `racket spec-meta-redex/main.rkt FILE.watsup` boots the file,
-  derives `Entry`, checks that there is exactly one result, and prints it in
+  derives `entry`, checks that there is exactly one result, and prints it in
   `k-run.sh`'s JSON format, or prints `fail`.
 - Compile with `raco make spec-meta-redex/main.rkt`, and add the `compiled/`
   directories to `.gitignore`.
@@ -839,8 +847,8 @@ moving on:
   Racket's `json` library.
 - Add `spectec-boot extern-serve`. `common/0-extern-wire.rkt` starts it on the first
   extern call and shuts it down at exit.
-- Replace the Step 3 stubs for `Call_builtin_func`, `Call_extern_func`, and
-  `Call_extern_rel`, and add the native map builtins.
+- Replace the Step 3 stubs for `call-builtin-func`, `call-extern-func`, and
+  `call-extern-rel`, and add the native map builtins.
 - Tests:
   - The `builtin-*.watsup` examples match `k-run.sh`.
   - Values from `sexp-p4` survive a round trip through the codec.
@@ -865,7 +873,7 @@ moving on:
      does with `ctx-shallow` (Step 4). Every evaluation rule has `C` in its
      conclusion, so with precise patterns each step checks the whole loaded
      spec;
-  3. add OCaml-style caching for `Call_func` and `Call_rel`, and memos for hot
+  3. add OCaml-style caching for `call-func` and `call-rel`, and memos for hot
      pure metafunctions (see [Caching](#caching)). This needs a side-effect
      flag in the responses. Only `extern-serve` adds it, so the K wire is
      unchanged;

@@ -22,46 +22,46 @@
               (quasisyntax/loc t (test-no-match lang pat (term #,t)))))]))
 
 ;;
-;; Common: metavariables and identifiers
+;; common: metavariables and identifiers
 ;;
 
-(matches Common bool #t #f)
-(no-matches Common bool 1 true "true")
+(matches common bool #t #f)
+(no-matches common bool 1 true "true")
 
-(matches Common int 0 42 -3)
-(no-matches Common int 1.0 1/2 "1")
+(matches common int 0 42 -3)
+(no-matches common int 1.0 1/2 "1")
 
-(matches Common nat 0 42)
-(no-matches Common nat -1 1.0)
+(matches common nat 0 42)
+(no-matches common nat -1 1.0)
 
-(matches Common text "" "x")
-(no-matches Common text x #\x)
+(matches common text "" "x")
+(no-matches common text x #\x)
 
-(matches Common id "x")
-(matches Common atom "Some")
-(no-matches Common id x)
+(matches common id "x")
+(matches common atom "Some")
+(no-matches common id x)
 
-(matches Common mixop
+(matches common mixop
          ()
          (())
          (("Some") ())
          (("") ("->") ("")))
-(no-matches Common mixop
+(no-matches common mixop
             ("Some")
             (("Some" x))
             (("Some") "x"))
 
 ;;
-;; Common: types
+;; common: types
 ;;
 
-(matches Common numtyp NAT INT)
-(no-matches Common numtyp BOOL (NAT))
+(matches common numtyp NAT INT)
+(no-matches common numtyp BOOL (NAT))
 
-(matches Common optyp BOOL NAT INT TEXT)
-(no-matches Common optyp FUNC (VAR "t" ()))
+(matches common optyp BOOL NAT INT TEXT)
+(no-matches common optyp FUNC (VAR "t" ()))
 
-(matches Common typ
+(matches common typ
          BOOL NAT INT TEXT
          (VAR "t" ())
          (VAR "map" (TEXT (VAR "t" ())))
@@ -70,7 +70,7 @@
          (ITER NAT QUEST)
          (ITER (ITER NAT STAR) STAR)
          FUNC)
-(no-matches Common typ
+(no-matches common typ
             (VAR "t")
             (VAR t ())
             (TUP NAT)
@@ -79,79 +79,79 @@
             (FUNC)
             (NAT 1))
 
-(matches Common deftyp
+(matches common deftyp
          (ALIAS NAT)
          (STRUCT ())
          (STRUCT (("x" NAT) ("y" BOOL)))
          (VARIANT ())
          (VARIANT (((("Some") ()) (NAT)) ((("None")) ()))))
-(no-matches Common deftyp
+(no-matches common deftyp
             (ALIAS)
             (ALIAS NAT BOOL)
             (STRUCT ("x" NAT))
             (VARIANT ((("Some") ()) (NAT))))
 
-(matches Common typfield ("x" NAT))
-(no-matches Common typfield (x NAT) ("x" NAT BOOL))
+(matches common typfield ("x" NAT))
+(no-matches common typfield (x NAT) ("x" NAT BOOL))
 
-(matches Common typcase ((("Some") ()) (NAT)) (() ()))
-(no-matches Common typcase ((("Some") ()) NAT))
+(matches common typcase ((("Some") ()) (NAT)) (() ()))
+(no-matches common typcase ((("Some") ()) NAT))
 
 ;;
-;; Common: iterators and variables
+;; common: iterators and variables
 ;;
 
-(matches Common iter QUEST STAR)
-(no-matches Common iter PLUS (STAR))
+(matches common iter QUEST STAR)
+(no-matches common iter PLUS (STAR))
 
-(matches Common vari
+(matches common vari
          ("x" NAT ())
          ("xs" NAT (STAR))
          ("x" (VAR "t" ()) (QUEST STAR)))
-(no-matches Common vari
+(no-matches common vari
             ("x" NAT STAR)
             ("x" NAT (PLUS))
             ("x" NAT))
 
 ;;
-;; Common: numbers and operators
+;; common: numbers and operators
 ;;
 
-(matches Common num (NAT 0) (INT -1) (INT 3))
-(no-matches Common num 3 (NAT -1) (NAT 1.0) (INT 1/2) (NAT))
+(matches common num (NAT 0) (INT -1) (INT 3))
+(no-matches common num 3 (NAT -1) (NAT 1.0) (INT 1/2) (NAT))
 
-(matches Common boolunop NOT)
-(matches Common boolbinop AND OR IMPL EQUIV)
-(matches Common numunop PLUS MINUS)
-(matches Common numbinop ADD SUB MUL DIV MOD POW)
-(matches Common numcmpop LT GT LE GE)
-(matches Common polycmpop EQ NE)
+(matches common boolunop NOT)
+(matches common boolbinop AND OR IMPL EQUIV)
+(matches common numunop PLUS MINUS)
+(matches common numbinop ADD SUB MUL DIV MOD POW)
+(matches common numcmpop LT GT LE GE)
+(matches common polycmpop EQ NE)
 
-(matches Common unop NOT PLUS MINUS)
-(no-matches Common unop ADD EQ)
-(matches Common binop AND OR IMPL EQUIV ADD SUB MUL DIV MOD POW)
-(no-matches Common binop NOT LT EQ)
-(matches Common cmpop EQ NE LT GT LE GE)
-(no-matches Common cmpop ADD NOT)
+(matches common unop NOT PLUS MINUS)
+(no-matches common unop ADD EQ)
+(matches common binop AND OR IMPL EQUIV ADD SUB MUL DIV MOD POW)
+(no-matches common binop NOT LT EQ)
+(matches common cmpop EQ NE LT GT LE GE)
+(no-matches common cmpop ADD NOT)
 
 ;;
-;; Common: values
+;; common: values
 ;;
 
-(matches Common json
+(matches common json
          1 -2 2.5 "x" #t #f null
          ()
          (1 "x" (null))
          #hasheq()
          #hasheq((a . 1) (|b c| . (#hasheq((d . null))))))
-(no-matches Common json
+(no-matches common json
             x
             (1 x)
             +nan.0
             1/2
             #hasheq(("a" . 1)))
 
-(matches Common val
+(matches common val
          (BOOL #t)
          (NAT 3)
          (INT -3)
@@ -169,7 +169,7 @@
          (FUNC "f")
          (EXT (1 "x"))
          (EXT #hasheq((a . 1))))
-(no-matches Common val
+(no-matches common val
             3
             (OPT ((NAT 1) (NAT 2)))
             (OPT (NAT 1))
@@ -181,17 +181,17 @@
             (EXT (1 x))
             (VAR "x"))
 
-(matches Common valfield ("x" (NAT 1)))
-(no-matches Common valfield ("x" 1))
+(matches common valfield ("x" (NAT 1)))
+(no-matches common valfield ("x" 1))
 
-(matches Common valcase ((("Some") ()) ((NAT 3))))
-(no-matches Common valcase ((("Some") ()) (NAT 3)))
+(matches common valcase ((("Some") ()) ((NAT 3))))
+(no-matches common valcase ((("Some") ()) (NAT 3)))
 
 ;;
-;; Common: expressions
+;; common: expressions
 ;;
 
-(matches Common exp
+(matches common exp
          (BOOL #f)
          (NAT 3)
          (INT -3)
@@ -229,7 +229,7 @@
          (CALL "f" (NAT (VAR "t" ())) ((EXP (VAR "x")) (FUN "g")))
          (ITER (VAR "x") (STAR (("x" NAT ()))))
          (ITER (VAR "x") (QUEST ())))
-(no-matches Common exp
+(no-matches common exp
             3
             (VAR x)
             (VAR "x" ())
@@ -249,77 +249,77 @@
             (ITER (VAR "x") (STAR ("x" NAT ())))
             (FUNC "f"))
 
-(matches Common expcase ((("Some") ()) ((VAR "x"))))
-(matches Common expfield ("x" (VAR "x")))
-(matches Common iterexp
+(matches common expcase ((("Some") ()) ((VAR "x"))))
+(matches common expfield ("x" (VAR "x")))
+(matches common iterexp
          (STAR ())
          (QUEST (("x" NAT ()) ("ys" INT (STAR)))))
-(no-matches Common iterexp (STAR) (PLUS ()))
+(no-matches common iterexp (STAR) (PLUS ()))
 
 ;;
-;; Common: patterns and paths
+;; common: patterns and paths
 ;;
 
-(matches Common listpattern CONS (FIXED 0) (FIXED 2) NIL)
-(no-matches Common listpattern FIXED (FIXED -1) (CONS))
+(matches common listpattern CONS (FIXED 0) (FIXED 2) NIL)
+(no-matches common listpattern FIXED (FIXED -1) (CONS))
 
-(matches Common optpattern SOME NONE)
-(no-matches Common optpattern (SOME))
+(matches common optpattern SOME NONE)
+(no-matches common optpattern (SOME))
 
-(matches Common pattern
+(matches common pattern
          (INJ (("Some") ()))
          (INJ ())
          CONS (FIXED 1) NIL
          SOME NONE)
-(no-matches Common pattern INJ (INJ "Some") (INJ (("Some") ()) ()))
+(no-matches common pattern INJ (INJ "Some") (INJ (("Some") ()) ()))
 
-(matches Common path
+(matches common path
          ROOT
          (IDX ROOT (NAT 0))
          (SLICE ROOT (NAT 0) (NAT 1))
          (DOT ROOT "x")
          (DOT (IDX ROOT (VAR "i")) "x"))
-(no-matches Common path
+(no-matches common path
             (ROOT)
             (VAR "x")
             (DOT ROOT x)
             (IDX (VAR "xs") (NAT 0)))
 
 ;;
-;; Common: arguments and type parameters
+;; common: arguments and type parameters
 ;;
 
-(matches Common targ NAT (VAR "t" ()))
-(no-matches Common targ (VAR "t"))
+(matches common targ NAT (VAR "t" ()))
+(no-matches common targ (VAR "t"))
 
-(matches Common arg (EXP (VAR "x")) (FUN "f"))
-(no-matches Common arg (EXP NAT) (FUN f) (FUN "f" () () NAT) (VAR "x"))
+(matches common arg (EXP (VAR "x")) (FUN "f"))
+(no-matches common arg (EXP NAT) (FUN f) (FUN "f" () () NAT) (VAR "x"))
 
-(matches Common tparam "X")
-(no-matches Common tparam X)
+(matches common tparam "X")
+(no-matches common tparam X)
 
 ;;
-;; AL-syntax: parameters and premises
+;; al-syntax: parameters and premises
 ;;
 
-(matches AL-syntax param
+(matches al-syntax param
          (EXP NAT)
          (EXP (VAR "t" ()))
          (FUN "f" () () NAT)
          (FUN "f" ("X") ((EXP (VAR "X" ())) (FUN "g" () () BOOL)) BOOL))
-(no-matches AL-syntax param
+(no-matches al-syntax param
             (EXP (VAR "x"))
             (FUN "f")
             (FUN "f" () NAT))
 
-(matches AL-syntax iterprem
+(matches al-syntax iterprem
          (QUEST () ())
          (STAR (("x" NAT ())) (("xs" NAT (STAR)))))
-(no-matches AL-syntax iterprem
+(no-matches al-syntax iterprem
             (STAR (("x" NAT ())))
             (PLUS () ()))
 
-(matches AL-syntax prem
+(matches al-syntax prem
          (REL "Sub" ((VAR "t1") (VAR "t2")) ())
          (REL "Eval" ((VAR "e")) ((VAR "v")))
          (IF (BOOL #t))
@@ -329,7 +329,7 @@
          (ITER (IF (VAR "b")) (STAR (("b" BOOL ())) ()))
          (ITER (ITER (IF (VAR "b")) (STAR () ())) (QUEST () ()))
          (DEBUG (TEXT "msg")))
-(no-matches AL-syntax prem
+(no-matches al-syntax prem
             (REL "R" (VAR "x") ())
             (REL "R" ((VAR "x")))
             (IF (VAR "x") (VAR "y"))
@@ -340,44 +340,44 @@
             (DEBUG))
 
 ;;
-;; AL-syntax: definitions
+;; al-syntax: definitions
 ;;
 
-(matches AL-syntax rulmatch
+(matches al-syntax rulmatch
          (() ())
          (((VAR "x")) ((IF (VAR "b")))))
-(no-matches AL-syntax rulmatch ((VAR "x") ()))
+(no-matches al-syntax rulmatch ((VAR "x") ()))
 
-(matches AL-syntax rulpath ("base" ((NAT 0)) ()))
-(no-matches AL-syntax rulpath ("base" (NAT 0) ()) (((NAT 0)) ()))
+(matches al-syntax rulpath ("base" ((NAT 0)) ()))
+(no-matches al-syntax rulpath ("base" (NAT 0) ()) (((NAT 0)) ()))
 
-(matches AL-syntax rulgroup
+(matches al-syntax rulgroup
          ("g" (((VAR "x")) ()) ())
          ("g" (((VAR "x")) ())
               (("r1" ((NAT 0)) ())
                ("r2" ((NAT 1)) ((IF (VAR "b")))))))
-(no-matches AL-syntax rulgroup ("g" (((VAR "x")) ()) ("r" ((NAT 0)) ())))
+(no-matches al-syntax rulgroup ("g" (((VAR "x")) ()) ("r" ((NAT 0)) ())))
 
-(matches AL-syntax elsgroup ("g" (((VAR "x")) ()) ("r" ((NAT 0)) ())))
-(no-matches AL-syntax elsgroup
+(matches al-syntax elsgroup ("g" (((VAR "x")) ()) ("r" ((NAT 0)) ())))
+(no-matches al-syntax elsgroup
             ("g" (((VAR "x")) ()) ())
             ("g" (((VAR "x")) ()) (("r" ((NAT 0)) ()))))
 
-(matches AL-syntax clause
+(matches al-syntax clause
          (() (NAT 0) ())
          (((EXP (VAR "n")) (FUN "f")) (VAR "n") ((IF (VAR "b")))))
-(no-matches AL-syntax clause ((EXP (VAR "n")) (VAR "n") ()) (() (NAT 0)))
+(no-matches al-syntax clause ((EXP (VAR "n")) (VAR "n") ()) (() (NAT 0)))
 
-(matches AL-syntax elsclause (() (NAT 0) ()))
+(matches al-syntax elsclause (() (NAT 0) ()))
 
-(matches AL-syntax tblrow (((EXP (NAT 0))) (NAT 1) ()))
-(no-matches AL-syntax tblrow ((EXP (NAT 0)) (NAT 1) ()))
+(matches al-syntax tblrow (((EXP (NAT 0))) (NAT 1) ()))
+(no-matches al-syntax tblrow ((EXP (NAT 0)) (NAT 1) ()))
 
 (define-term rulgroup-ex ("g" (((VAR "x")) ()) (("r" ((NAT 0)) ()))))
 (define-term elsgroup-ex ("g" (((VAR "x")) ()) ("r" ((NAT 0)) ())))
 (define-term clause-ex (((EXP (VAR "n"))) (VAR "n") ()))
 
-(matches AL-syntax defn
+(matches al-syntax defn
          (EXTTYP "json")
          (TYP "t" () (ALIAS NAT))
          (TYP "list" ("X") (VARIANT (((("Nil")) ()))))
@@ -393,7 +393,7 @@
          (FUNC "f" () ((EXP NAT)) NAT () ())
          (FUNC "f" () ((EXP NAT)) NAT (clause-ex clause-ex) ())
          (FUNC "f" () ((EXP NAT)) NAT (clause-ex) (clause-ex)))
-(no-matches AL-syntax defn
+(no-matches al-syntax defn
             (EXTTYP json)
             (TYP "t" () NAT)
             (REL "R" (NAT) (NAT) (rulgroup-ex))
@@ -406,11 +406,11 @@
             (FUNC "f" () () NAT () clause-ex))
 
 ;;
-;; AL-syntax: scripts
+;; al-syntax: scripts
 ;;
 
-(matches AL-syntax script ())
-(no-matches AL-syntax script (EXTTYP "json"))
+(matches al-syntax script ())
+(no-matches al-syntax script (EXTTYP "json"))
 
 ;; examples/add.watsup, as `spectec-boot kast` boots it
 (define-term add-script
@@ -420,6 +420,6 @@
                (LET (VAR "i") (UPCAST INT (BIN ADD (NAT 42) (NAT 77)))))))
          ())))
 
-(matches AL-syntax script add-script)
+(matches al-syntax script add-script)
 
 (test-results)

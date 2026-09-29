@@ -11,7 +11,7 @@
 (check-equal? contracts? (not (equal? (getenv "SPECTEC_REDEX_CONTRACTS") "0")))
 
 ;; ⊥ when no clause applies.
-(define-dec Stdlib
+(define-dec stdlib
   partial : nat -> nat
   [(partial 0) 1]
   [(partial 1) 2])

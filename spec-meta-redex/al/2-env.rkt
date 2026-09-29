@@ -4,13 +4,13 @@
 (require "../common/0.0-prelude.rkt"
          "../common/4-relation.rkt"
          "1-syntax.rkt")
-(provide AL-base
-         AL-env)
+(provide al-base
+         al-env)
 
 ;; The common languages and the AL syntax
-(define-union-language AL-base Common-relation AL-syntax)
+(define-union-language al-base common-relation al-syntax)
 
-(define-extended-language AL-env AL-base
+(define-extended-language al-env al-base
   ;; Relation environment
   (externRelDef ::= (EXT id))
   (definedRelDef ::=

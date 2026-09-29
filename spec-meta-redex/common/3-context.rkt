@@ -3,8 +3,8 @@
 
 (require "0.0-prelude.rkt"
          "2-env.rkt")
-(provide Common-context)
+(provide common-context)
 
-(define-extended-language Common-context Common-env
+(define-extended-language common-context common-env
   ;; Cursor
   (cursor ::= GLOBAL LOCAL))

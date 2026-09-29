@@ -3,13 +3,13 @@
 
 (require "0.0-prelude.rkt"
          "3-context.rkt")
-(provide Common-relation
-         Call_extern_func
-         Call_builtin_func
-         Call_extern_rel)
+(provide common-relation
+         call-extern-func
+         call-builtin-func
+         call-extern-rel)
 
 ;; Redex has no parametric nonterminals, so each res<X> is written out.
-(define-extended-language Common-relation Common-context
+(define-extended-language common-relation common-context
   ;; Result to represent backtracking in evaluation
   (unitres ::= OK FAIL)
   (valres ::= (OK val) FAIL)
@@ -22,29 +22,29 @@
 ;;; Extern meta-function invocation
 
 ;; |- id `< typ* `> `( val* `) : res<val>
-(define-relation Common-relation
-  #:mode (Call_extern_func I I I O)
-  #:contract (Call_extern_func id (typ ...) (val ...) valres)
-  [(where valres ,(unreachable 'Call_extern_func))
+(define-relation common-relation
+  #:mode (call-extern-func I I I O)
+  #:contract (call-extern-func id (typ ...) (val ...) valres)
+  [(where valres ,(unreachable 'call-extern-func))
    ------------------------------------------------ "stub"
-   (Call_extern_func id (typ ...) (val ...) valres)])
+   (call-extern-func id (typ ...) (val ...) valres)])
 
 ;;; Builtin meta-function invocation
 
 ;; |- id '@' `< typ* `> `( val* `) : res<val>
-(define-relation Common-relation
-  #:mode (Call_builtin_func I I I O)
-  #:contract (Call_builtin_func id (typ ...) (val ...) valres)
-  [(where valres ,(unreachable 'Call_builtin_func))
+(define-relation common-relation
+  #:mode (call-builtin-func I I I O)
+  #:contract (call-builtin-func id (typ ...) (val ...) valres)
+  [(where valres ,(unreachable 'call-builtin-func))
    ------------------------------------------------- "stub"
-   (Call_builtin_func id (typ ...) (val ...) valres)])
+   (call-builtin-func id (typ ...) (val ...) valres)])
 
 ;;; Extern relations
 
 ;; |- id val* : res<val*>
-(define-relation Common-relation
-  #:mode (Call_extern_rel I I O)
-  #:contract (Call_extern_rel id (val ...) valsres)
-  [(where valsres ,(unreachable 'Call_extern_rel))
+(define-relation common-relation
+  #:mode (call-extern-rel I I O)
+  #:contract (call-extern-rel id (val ...) valsres)
+  [(where valsres ,(unreachable 'call-extern-rel))
    ----------------------------------------------- "stub"
-   (Call_extern_rel id (val ...) valsres)])
+   (call-extern-rel id (val ...) valsres)])

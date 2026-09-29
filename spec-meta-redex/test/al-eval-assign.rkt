@@ -15,16 +15,16 @@
 (define (local-funcs C) (list-ref (list-ref C 3) 5))
 (define (local-vals C) (list-ref (list-ref C 3) 7))
 
-(define C-empty (term (empty_ctx)))
+(define C-empty (term (empty-ctx)))
 (define C-xy (ctx-of '(() () () ()) '(() () () ((("x" ()) (NAT 0)) (("y" ()) (NAT 1))))))
 (define C-z (ctx-of '(() () () ()) '(() () () ((("z" ()) (NAT 9))))))
 
 ;; The LOCAL VAL maps of the contexts derived by assigning val to exp under C
 (define (assign exp val [C C-empty])
-  (map local-vals (outputs (Assign_exp ,C ,exp ,val any))))
+  (map local-vals (outputs (assign-exp ,C ,exp ,val any))))
 
 ;;
-;; Assign_exp
+;; assign-exp
 ;;
 
 ;; variable: any value, replacing an earlier binding where it stands
@@ -170,22 +170,22 @@
 (test-equal (assign ab* '(TUP ())) '())
 
 ;;
-;; Assign_exps
+;; assign-exps
 ;;
 
-(define (assign-exps exps vals)
-  (map local-vals (outputs (Assign_exps ,C-empty ,exps ,vals any))))
+(define (run-assign-exps exps vals)
+  (map local-vals (outputs (assign-exps ,C-empty ,exps ,vals any))))
 
-(test-equal (assign-exps '() '()) '(()))
-(test-equal (assign-exps '((VAR "x") (VAR "y")) '((NAT 1) (NAT 2)))
+(test-equal (run-assign-exps '() '()) '(()))
+(test-equal (run-assign-exps '((VAR "x") (VAR "y")) '((NAT 1) (NAT 2)))
             '(((("x" ()) (NAT 1)) (("y" ()) (NAT 2)))))
 ;; No rule: other lengths, or an element that does not assign
-(test-equal (assign-exps '((VAR "x")) '()) '())
-(test-equal (assign-exps '() '((NAT 1))) '())
-(test-equal (assign-exps '((VAR "x") (TUP ())) '((NAT 1) (NAT 2))) '())
+(test-equal (run-assign-exps '((VAR "x")) '()) '())
+(test-equal (run-assign-exps '() '((NAT 1))) '())
+(test-equal (run-assign-exps '((VAR "x") (TUP ())) '((NAT 1) (NAT 2))) '())
 
 ;;
-;; Assign_arg and Assign_args
+;; assign-arg and assign-args
 ;;
 
 ;; f is in the caller's local layer, g in its global one.
@@ -193,34 +193,34 @@
   (ctx-of '(() () (("g" (EXT "g"))) ())
           '(() () (("f" (DEF () () ()))) ())))
 
-(define (assign-arg arg val)
-  (outputs (Assign_arg ,C-empty ,C-caller ,arg ,val any)))
+(define (run-assign-arg arg val)
+  (outputs (assign-arg ,C-empty ,C-caller ,arg ,val any)))
 
-(test-equal (map local-vals (assign-arg '(EXP (VAR "x")) '(NAT 1))) '(((("x" ()) (NAT 1)))))
-(test-equal (map local-vals (assign-arg '(EXP (VAR "x")) '(FUNC "f"))) '(((("x" ()) (FUNC "f")))))
-(test-equal (map local-funcs (assign-arg '(FUN "h") '(FUNC "f"))) '((("h" (DEF () () ())))))
-(test-equal (map local-funcs (assign-arg '(FUN "h") '(FUNC "g"))) '((("h" (EXT "g")))))
+(test-equal (map local-vals (run-assign-arg '(EXP (VAR "x")) '(NAT 1))) '(((("x" ()) (NAT 1)))))
+(test-equal (map local-vals (run-assign-arg '(EXP (VAR "x")) '(FUNC "f"))) '(((("x" ()) (FUNC "f")))))
+(test-equal (map local-funcs (run-assign-arg '(FUN "h") '(FUNC "f"))) '((("h" (DEF () () ())))))
+(test-equal (map local-funcs (run-assign-arg '(FUN "h") '(FUNC "g"))) '((("h" (EXT "g")))))
 ;; No rule: an unknown function, a value that is not a function, or an
 ;; expression that does not assign
-(test-equal (assign-arg '(FUN "h") '(FUNC "none")) '())
-(test-equal (assign-arg '(FUN "h") '(NAT 1)) '())
-(test-equal (assign-arg '(EXP (NAT 1)) '(NAT 1)) '())
+(test-equal (run-assign-arg '(FUN "h") '(FUNC "none")) '())
+(test-equal (run-assign-arg '(FUN "h") '(NAT 1)) '())
+(test-equal (run-assign-arg '(EXP (NAT 1)) '(NAT 1)) '())
 
-(define (assign-args args vals)
-  (outputs (Assign_args ,C-empty ,C-caller ,args ,vals any)))
+(define (run-assign-args args vals)
+  (outputs (assign-args ,C-empty ,C-caller ,args ,vals any)))
 
-(test-equal (assign-args '() '()) (list C-empty))
-(test-equal (assign-args '((EXP (VAR "x")) (FUN "h")) '((NAT 1) (FUNC "f")))
+(test-equal (run-assign-args '() '()) (list C-empty))
+(test-equal (run-assign-args '((EXP (VAR "x")) (FUN "h")) '((NAT 1) (FUNC "f")))
             (list (ctx-of '(() () () ()) '(() () (("h" (DEF () () ()))) ((("x" ()) (NAT 1)))))))
 ;; No rule: other lengths, or an argument that does not assign
-(test-equal (assign-args '((EXP (VAR "x"))) '()) '())
-(test-equal (assign-args '() '((NAT 1))) '())
-(test-equal (assign-args '((EXP (VAR "x")) (FUN "h")) '((NAT 1) (NAT 2))) '())
+(test-equal (run-assign-args '((EXP (VAR "x"))) '()) '())
+(test-equal (run-assign-args '() '((NAT 1))) '())
+(test-equal (run-assign-args '((EXP (VAR "x")) (FUN "h")) '((NAT 1) (NAT 2))) '())
 
 ;; Every rule appears in some derivation above.
-(check-rules-used Assign_exp)
-(check-rules-used Assign_exps)
-(check-rules-used Assign_arg)
-(check-rules-used Assign_args)
+(check-rules-used assign-exp)
+(check-rules-used assign-exps)
+(check-rules-used assign-arg)
+(check-rules-used assign-args)
 
 (test-results)

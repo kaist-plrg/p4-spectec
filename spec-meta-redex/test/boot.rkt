@@ -17,8 +17,8 @@
   (define script (boot-script path))
   (test-equal (list? script) #t)
   (for ([defn (in-list script)])
-    (test-match AL-syntax defn defn))
-  (test-match AL-syntax script script))
+    (test-match al-syntax defn defn))
+  (test-match al-syntax script script))
 
 ;;
 ;; Scripts
@@ -56,7 +56,7 @@
                           ("p4_16_samples" "dash" "dash-pipeline-v1model-bmv2.p4")
                           ("p4_16_errors" "action-bind.p4")))])
   (define path (apply repo-path "p4c" "testdata" program))
-  (test-match AL-syntax val (boot-p4 path #:includes (list p4include))))
+  (test-match al-syntax val (boot-p4 path #:includes (list p4include))))
 
 ;; `sexp-p4` prints `(EXT json)` with its JSON as text, as sexp.ml writes it.
 ;; The parser never produces EXT, so this checks the decoding on its own.
@@ -66,7 +66,7 @@
 (test-equal ext-val
             `(INJ ((("Ext")) ((EXT ,(hasheq 'a '(1 2.5 null "q\"")
                                             (string->symbol "b|c") #t))))))
-(test-match AL-syntax val ext-val)
+(test-match al-syntax val ext-val)
 (test-equal (decode-ext '(LIST ((NAT 1) (TEXT "EXT")))) '(LIST ((NAT 1) (TEXT "EXT"))))
 
 ;;

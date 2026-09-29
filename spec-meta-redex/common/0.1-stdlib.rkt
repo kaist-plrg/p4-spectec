@@ -4,23 +4,23 @@
 ;; Type parameters are dropped: `any` stands for them in contracts.
 
 (require "0.0-prelude.rkt")
-(provide Stdlib
+(provide stdlib
          ite
-         opt_as_seq_
-         exists_
-         forall_
-         repeat_
-         rev_
-         assoc_
-         transpose_
-         empty_set
-         empty_map
-         find_map
-         find_maps
-         add_map
-         adds_map)
+         opt-as-seq-
+         exists-
+         forall-
+         repeat-
+         rev-
+         assoc-
+         transpose-
+         empty-set
+         empty-map
+         find-map
+         find-maps
+         add-map
+         adds-map)
 
-(define-language Stdlib
+(define-language stdlib
   ;; Metavariables for int, nat, bool, and text
   (bool b ::= boolean)
   (int i ::= integer)
@@ -36,7 +36,7 @@
 ;; General bool functions
 ;;
 
-(define-dec Stdlib
+(define-dec stdlib
   ite : bool any any -> any
   [(ite #t any_t any_f) any_t]
   [(ite #f any_t any_f) any_f])
@@ -45,78 +45,78 @@
 ;; General option functions
 ;;
 
-(define-dec Stdlib
-  opt_as_seq_ : (any ...) -> (any ...)
-  [(opt_as_seq_ ()) ()]
-  [(opt_as_seq_ (any)) (any)])
+(define-dec stdlib
+  opt-as-seq- : (any ...) -> (any ...)
+  [(opt-as-seq- ()) ()]
+  [(opt-as-seq- (any)) (any)])
 
 ;;
 ;; General sequence functions
 ;;
 
-(define-dec Stdlib
-  exists_ : (bool ...) -> bool
-  [(exists_ ()) #f]
-  [(exists_ (b_h b_t ...)) ,(or (term b_h) (term b_r))
-   (where b_r (exists_ (b_t ...)))])
+(define-dec stdlib
+  exists- : (bool ...) -> bool
+  [(exists- ()) #f]
+  [(exists- (b_h b_t ...)) ,(or (term b_h) (term b_r))
+   (where b_r (exists- (b_t ...)))])
 
-(define-dec Stdlib
-  forall_ : (bool ...) -> bool
-  [(forall_ ()) #t]
-  [(forall_ (b_h b_t ...)) ,(and (term b_h) (term b_r))
-   (where b_r (forall_ (b_t ...)))])
+(define-dec stdlib
+  forall- : (bool ...) -> bool
+  [(forall- ()) #t]
+  [(forall- (b_h b_t ...)) ,(and (term b_h) (term b_r))
+   (where b_r (forall- (b_t ...)))])
 
-(define-dec Stdlib
-  repeat_ : any nat -> (any ...)
-  [(repeat_ any 0) ()]
-  [(repeat_ any n) (any any_r ...)
+(define-dec stdlib
+  repeat- : any nat -> (any ...)
+  [(repeat- any 0) ()]
+  [(repeat- any n) (any any_r ...)
    (side-condition (not (= (term n) 0)))
    (where n_1 ,(- (term n) 1))
-   (where (any_r ...) (repeat_ any n_1))])
+   (where (any_r ...) (repeat- any n_1))])
 
-(define-dec Stdlib
-  rev_ : (any ...) -> (any ...)
-  [(rev_ (any ...)) ,(reverse (term (any ...)))])
+(define-dec stdlib
+  rev- : (any ...) -> (any ...)
+  [(rev- (any ...)) ,(reverse (term (any ...)))])
 
-(define-dec Stdlib
-  assoc_ : any (pair ...) -> (any ...)
-  [(assoc_ any_k (pair ...)) ,(lookup (term (pair ...)) (term any_k))])
+(define-dec stdlib
+  assoc- : any (pair ...) -> (any ...)
+  [(assoc- any_k (pair ...)) ,(lookup (term (pair ...)) (term any_k))])
 
-(define-dec Stdlib
-  transpose_ : ((any ...) ...) -> ((any ...) ...)
-  [(transpose_ ((any ...) ...)) ,(transpose (term ((any ...) ...)))])
+(define-dec stdlib
+  transpose- : ((any ...) ...) -> ((any ...) ...)
+  [(transpose- ((any ...) ...)) ,(transpose (term ((any ...) ...)))])
 
 ;;
 ;; General set functions
 ;;
 
-(define-dec Stdlib
-  empty_set : -> set
-  [(empty_set) ()])
+(define-dec stdlib
+  empty-set : -> set
+  [(empty-set) ()])
 
 ;;
 ;; General map functions
 ;;
 
-(define-dec Stdlib
-  empty_map : -> map
-  [(empty_map) ()])
+(define-dec stdlib
+  empty-map : -> map
+  [(empty-map) ()])
 
-(define-dec Stdlib
-  find_map : map any -> (any ...)
-  [(find_map map any_k) ,(lookup (term map) (term any_k))])
+(define-dec stdlib
+  find-map : map any -> (any ...)
+  [(find-map map any_k) ,(lookup (term map) (term any_k))])
 
-(define-dec Stdlib
-  find_maps : (map ...) any -> (any ...)
-  [(find_maps (map ...) any_k) ,(lookups (term (map ...)) (term any_k))])
+(define-dec stdlib
+  find-maps : (map ...) any -> (any ...)
+  [(find-maps (map ...) any_k) ,(lookups (term (map ...)) (term any_k))])
 
-(define-dec Stdlib
-  add_map : map any any -> map
-  [(add_map map any_k any_v) ,(update (term map) (term any_k) (term any_v))])
+(define-dec stdlib
+  add-map : map any any -> map
+  [(add-map map any_k any_v) ,(update (term map) (term any_k) (term any_v))])
 
-(define-dec Stdlib
-  adds_map : map (any ...) (any ...) -> map
-  [(adds_map map (any_k ...) (any_v ...))
+(define-dec stdlib
+  adds-map : map (any ...) (any ...) -> map
+  [(adds-map map (any_k ...) (any_v ...))
    ,(updates (term map) (term (any_k ...)) (term (any_v ...)))])
 
 ;;
@@ -146,7 +146,7 @@
 
 (define (updates pairs ks vs)
   (unless (= (length ks) (length vs))
-    (error 'adds_map "~a keys but ~a values" (length ks) (length vs)))
+    (error 'adds-map "~a keys but ~a values" (length ks) (length vs)))
   (for/fold ([pairs pairs]) ([k (in-list ks)] [v (in-list vs)])
     (update pairs k v)))
 
@@ -157,5 +157,5 @@
      (define width (length (car rows)))
      (for ([row (in-list rows)])
        (unless (= (length row) width)
-         (error 'transpose_ "cannot transpose a matrix of values")))
+         (error 'transpose- "cannot transpose a matrix of values")))
      (apply map list rows)]))

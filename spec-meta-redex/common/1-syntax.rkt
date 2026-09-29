@@ -4,9 +4,9 @@
 (require json
          "0.0-prelude.rkt"
          "0.1-stdlib.rkt")
-(provide Common)
+(provide common)
 
-(define-extended-language Common Stdlib
+(define-extended-language common stdlib
   ;; Identifiers
   (id ::= text)
   (atom ::= text)

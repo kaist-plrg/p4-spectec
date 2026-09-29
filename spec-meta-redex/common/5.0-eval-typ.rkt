@@ -4,31 +4,31 @@
 (require "0.0-prelude.rkt"
          "0.1-stdlib.rkt"
          "4-relation.rkt")
-(provide subst_typ
-         subst_type_inner)
+(provide subst-typ
+         subst-type-inner)
 
 ;; Type substitution
 
-(define-dec Common-relation
-  subst_typ : theta typ -> typ
-  [(subst_typ () typ) typ]
-  [(subst_typ theta typ) (subst_type_inner theta typ)
+(define-dec common-relation
+  subst-typ : theta typ -> typ
+  [(subst-typ () typ) typ]
+  [(subst-typ theta typ) (subst-type-inner theta typ)
    ;; otherwise
    (side-condition (not (null? (term theta))))])
 
-(define-dec Common-relation
-  subst_type_inner : theta typ -> typ
-  [(subst_type_inner theta NAT) NAT]
-  [(subst_type_inner theta INT) INT]
-  [(subst_type_inner theta TEXT) TEXT]
-  [(subst_type_inner theta BOOL) BOOL]
-  [(subst_type_inner theta (VAR id ())) typ
-   (where (typ) (find_map theta id))]
-  [(subst_type_inner theta (VAR id (targ ...))) (VAR id (typ_subst ...))
-   (where () (find_map theta id))
-   (where (typ_subst ...) ((subst_type_inner theta targ) ...))]
-  [(subst_type_inner theta (TUP (typ ...))) (TUP (typ_subst ...))
-   (where (typ_subst ...) ((subst_type_inner theta typ) ...))]
-  [(subst_type_inner theta (ITER typ iter)) (ITER typ_subst iter)
-   (where typ_subst (subst_type_inner theta typ))]
-  [(subst_type_inner theta FUNC) FUNC])
+(define-dec common-relation
+  subst-type-inner : theta typ -> typ
+  [(subst-type-inner theta NAT) NAT]
+  [(subst-type-inner theta INT) INT]
+  [(subst-type-inner theta TEXT) TEXT]
+  [(subst-type-inner theta BOOL) BOOL]
+  [(subst-type-inner theta (VAR id ())) typ
+   (where (typ) (find-map theta id))]
+  [(subst-type-inner theta (VAR id (targ ...))) (VAR id (typ_subst ...))
+   (where () (find-map theta id))
+   (where (typ_subst ...) ((subst-type-inner theta targ) ...))]
+  [(subst-type-inner theta (TUP (typ ...))) (TUP (typ_subst ...))
+   (where (typ_subst ...) ((subst-type-inner theta typ) ...))]
+  [(subst-type-inner theta (ITER typ iter)) (ITER typ_subst iter)
+   (where typ_subst (subst-type-inner theta typ))]
+  [(subst-type-inner theta FUNC) FUNC])
