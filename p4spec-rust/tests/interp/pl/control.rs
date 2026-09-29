@@ -1,4 +1,6 @@
 use super::*;
+use crate::interp::report::ReportExt;
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::{annotated_note_phrase, lang::common::prim::num::Number};
 
 fn nat(num: u64) -> ast::Exp {
@@ -102,10 +104,14 @@ fn alternatives_choose_the_first_conclusion_or_report_nondeterminism() {
     assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), "1");
 
     let mut runner = configured(spec_pl, true);
-    let error = runner.context().call_func("entry", &[], &[]).unwrap_err();
+    let error = runner
+        .context()
+        .call_func("entry", &[], &[])
+        .unwrap_err()
+        .into_report();
     assert!(
         error
-            .to_string()
+            .render()
             .contains("nondeterministic instruction evaluation"),
         "{error}"
     );
@@ -143,8 +149,12 @@ fn fatal_errors_abort_alternative_selection() {
             ])]),
             det,
         );
-        let error = runner.context().call_func("entry", &[], &[]).unwrap_err();
-        assert!(error.to_string().contains("value `missing` is undefined"), "det={det}: {error}");
+        let error = runner
+            .context()
+            .call_func("entry", &[], &[])
+            .unwrap_err()
+            .into_report();
+        assert!(error.render().contains("value `missing` is undefined"), "det={det}: {error}");
     }
 }
 
@@ -195,17 +205,14 @@ fn dispatch_alternatives_keep_their_bindings_local() {
 
 #[test]
 fn nested_instruction_traces_are_attached_once_in_both_tiers() {
-    use p4spec_rust::{
-        interp::shared::error::{Error, ErrorKind, TraceErrorKind},
-        lang::common::source::Position,
-    };
+    use p4spec_rust::lang::common::source::Position;
 
     // Collect instruction locations separately from expression and call traces
-    fn instruction_spans(error: &Error, spans: &mut Vec<Span>) {
-        if matches!(&*error.kind, ErrorKind::Trace(TraceErrorKind::Evaluation { .. }))
-            && error.span.left.file.as_ref() == "instruction_trace"
+    fn instruction_spans(error: &p4spec_rust::diagnostic::Report, spans: &mut Vec<Span>) {
+        if matches!(&error.kind, ReportKind::Frame { message, .. } if message.starts_with("evaluation of "))
+            && error.span().left.file.as_ref() == "instruction_trace"
         {
-            spans.push(error.span.clone());
+            spans.push(error.span().clone());
         }
         for error in &error.children {
             instruction_spans(error, spans);
@@ -256,8 +263,12 @@ fn nested_instruction_traces_are_attached_once_in_both_tiers() {
     for det in [false, true] {
         let mut runner = configured(spec_pl.clone(), det);
         let value = make::nat(runner.arena_mut(), 0u64.into(), Span::default()).unwrap();
-        let error = runner.context().call_rel("Entry", &[value]).unwrap_err();
-        assert!(error.to_string().contains("value `missing` is undefined"), "{error}");
+        let error = runner
+            .context()
+            .call_rel("Entry", &[value])
+            .unwrap_err()
+            .into_report();
+        assert!(error.render().contains("value `missing` is undefined"), "{error}");
         let mut spans_actual = vec![];
         instruction_spans(&error, &mut spans_actual);
         assert_eq!(spans_actual, spans, "det={det}");

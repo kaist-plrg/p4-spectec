@@ -12,7 +12,7 @@ use p4spec_rust::{
     backend_specdoc::splicer,
     diagnostic::{RenderConfig, Renderer, Report},
     interface::p4::{error::P4Error, parse::parse_file},
-    interp::shared::error::Error as InterpError,
+    interp::shared::backtrack::Failure as InterpError,
     lang::{data::value::external::Encoding, traits::print::Print},
     runner::{self, BuiltinInterface, Interpreter, Runner},
     sim_plugin::{self, dummy::Dummy},
@@ -385,6 +385,17 @@ fn main() -> ExitCode {
             | p4spec_rust::Error::Structure(report),
         ))
         | Err(CliError::Splice(report)) => {
+            render_report(&report);
+            ExitCode::FAILURE
+        }
+        // Preserve runtime failure reports until execution has ended
+        Err(CliError::Runtime(failure))
+        | Err(CliError::Simulation(sim_plugin::runner::Error::Runtime(failure))) => {
+            render_report(&failure.into_report());
+            ExitCode::FAILURE
+        }
+        // Loading failures have no recoverable control state
+        Err(CliError::Runner(runner::BuildError::Interp(report))) => {
             render_report(&report);
             ExitCode::FAILURE
         }

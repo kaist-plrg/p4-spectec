@@ -9,3 +9,5 @@ mod sl;
 
 #[path = "shared/mod.rs"]
 mod shared;
+
+pub(crate) mod report;

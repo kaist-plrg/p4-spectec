@@ -9,7 +9,7 @@
 
 use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, runner::Error, v1model::V1Model};
 use crate::{
-    interp::shared::error::Error as InterpError,
+    interp::shared::backtrack::Failure as InterpError,
     lang::data::value::external::Encoding,
     runner::{self as host, BuiltinInterface, Interpreter, Runner},
 };

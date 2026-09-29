@@ -1,3 +1,4 @@
+use crate::interp::report::ReportExt;
 use p4spec_rust::{
     lang::{
         common::source::Span,
@@ -90,7 +91,7 @@ fn test_dropped_packet_retains_expectation() {
 }
 
 use p4spec_rust::{
-    interp::shared::error::Error as InterpError,
+    interp::shared::backtrack::Failure as InterpError,
     lang::{
         common::prim::num,
         data::{
@@ -390,9 +391,12 @@ fn test_integer_failure_is_located_and_precedes_pipeline_dispatch() {
         "register_write r 0 0x****************",
     ] {
         let stmts = stf::parse::parse_str("overflow.stf", source).unwrap();
-        assert!(
-            matches!(runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]), Err(Error::Runtime(error)) if error.span == stmts[0].span)
-        );
+        let Err(Error::Runtime(failure)) =
+            runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0])
+        else {
+            panic!("expected integer failure");
+        };
+        assert_eq!(failure.into_report().span(), stmts[0].span);
     }
     assert!(runner.context().interp().calls.is_empty());
 }

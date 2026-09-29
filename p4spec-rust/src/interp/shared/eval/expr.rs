@@ -7,13 +7,13 @@
 
 use super::super::context::ReadContext;
 use super::Invoker;
+use crate::interp::shared::backtrack::BacktrackExt;
+use crate::interp::shared::error;
 use crate::interp::shared::prepare::ast;
 use crate::lang::data::var::IdSlot;
 use crate::lang::traits::at::At;
 
 use std::{borrow::Borrow, rc::Rc};
-
-use crate::interp::shared::error::ExprErrorKind;
 
 use crate::{
     lang::{
@@ -31,7 +31,7 @@ use crate::{
 use super::{arg::eval_args, iter, ops, path::eval_update_path};
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
-    error::{EntityKind, Error, ErrorKind},
+    error::EntityKind,
     util::{find_slot_of_exp, find_var_of_exp},
 };
 
@@ -102,11 +102,7 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
             eval_iter_exp(runner_ctx, ctx, exp, exp_inner, exp_iter)
         }
     })();
-    result.nest(exp.span.clone(), || {
-        ErrorKind::Trace(crate::interp::shared::error::TraceErrorKind::Evaluation {
-            text: Print::to_string(exp),
-        })
-    })
+    result.nest(exp.span.clone(), || format!("evaluation of {} failed", Print::to_string(exp)))
 }
 
 pub(crate) fn eval_exps<
@@ -133,7 +129,10 @@ pub(crate) fn eval_exps<
 fn eval_id_exp(ctx: &impl ReadContext, span: &Span, id: &IdSlot) -> Backtrack<Value> {
     let value = *unwrap_from_result!(
         ctx.find_value_at_slot(id.slot).ok_or_else(|| {
-            Error::undefined(EntityKind::Value, id.id.node.clone(), id.id.span.clone())
+            error::at(
+                error::context::binding_undefined(EntityKind::Value, id.id.node.clone()),
+                id.id.span.clone(),
+            )
         }),
         span
     );
@@ -398,10 +397,7 @@ fn eval_cat_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
         }
         // Mixed operands are an error
         _ => {
-            return err!(
-                [&exp_l, &exp_r].at(),
-                ErrorKind::Expr(ExprErrorKind::ConcatenationOperandMismatch),
-            );
+            return err!([&exp_l, &exp_r].at(), error::expr::concatenation_operand_mismatch(),);
         }
     };
     ok!(value)
@@ -438,10 +434,7 @@ fn eval_len_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
         _ => {
-            return err!(
-                exp_inner.span.clone(),
-                ErrorKind::Expr(ExprErrorKind::LengthOperandMismatch),
-            );
+            return err!(exp_inner.span.clone(), error::expr::length_operand_mismatch(),);
         }
     };
     let value = unwrap_from_result!(
@@ -576,9 +569,11 @@ fn eval_iter_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
         return ok!(*unwrap_from_result!(
             ctx.find_value_at_slot(slot).ok_or_else(|| {
                 let var = find_var_of_exp(ctx, exp).expect("identity iteration has a variable");
-                Error::undefined(
-                    EntityKind::Value,
-                    Print::to_string(&var.var),
+                error::at(
+                    error::context::binding_undefined(
+                        EntityKind::Value,
+                        Print::to_string(&var.var),
+                    ),
                     var.var.id.span.clone(),
                 )
             }),

@@ -7,20 +7,18 @@
 //! `choose_sequential` takes the first non-continuing instruction;
 //! `choose_deterministic` runs all and rejects two that terminate.
 
+use crate::interp::shared::error;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
-    interp::shared::{
-        backtrack::{Backtrack, err, ok, unmatch, unwrap},
-        error::{CallErrorKind, Error, ErrorKind, PremErrorKind},
-    },
+    interp::shared::backtrack::{Backtrack, err, ok, unmatch, unwrap},
     lang::{common::source::Span, data::value::Value},
 };
 
 /// The outcome of evaluating an instruction or block.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Flow {
     /// Fell through, with the failures met so far.
-    Cont(Vec<Error>),
+    Cont(Vec<crate::diagnostic::Report>),
     /// A function body returned a value.
     Return(Value),
     /// A relation body produced its outputs.
@@ -35,8 +33,8 @@ impl Flow {
     // = Continuation
 
     /// A continuation carrying one premise failure.
-    pub(crate) fn cont(span: Span, error: PremErrorKind) -> Self {
-        Self::Cont(vec![Error::new(ErrorKind::Prem(error), span)])
+    pub(crate) fn cont(span: Span, error: crate::diagnostic::Diagnostic) -> Self {
+        Self::Cont(vec![*error::at(error, span)])
     }
 
     /// Turns a mismatch into a continuation; errors and flows pass through.
@@ -51,9 +49,16 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the failure set that got furthest, so the report is the most specific.
-fn retain_deepest_errors(errors: &mut Vec<Error>, errors_post: Vec<Error>) {
-    if errors_post.iter().map(Error::depth).max().unwrap_or(0)
-        >= errors.iter().map(Error::depth).max().unwrap_or(0)
+fn retain_deepest_errors(
+    errors: &mut Vec<crate::diagnostic::Report>,
+    errors_post: Vec<crate::diagnostic::Report>,
+) {
+    if errors_post
+        .iter()
+        .map(error::trace::depth)
+        .max()
+        .unwrap_or(0)
+        >= errors.iter().map(error::trace::depth).max().unwrap_or(0)
     {
         *errors = errors_post;
     }
@@ -102,7 +107,7 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
         (Flow::Return(_), Flow::Return(_))
         | (Flow::Result(_), Flow::Result(_))
         | (Flow::TailFunc(..) | Flow::TailRel(..), Flow::TailFunc(..) | Flow::TailRel(..)) => {
-            return err!(span.clone(), ErrorKind::Call(CallErrorKind::InstructionNondeterminism),);
+            return err!(span.clone(), error::call::instruction_nondeterministic(),);
         }
         // Two of different kinds: an invalid body
         (flow_pre, flow_post) => {
@@ -117,7 +122,7 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
                 (Flow::TailRel(..), _) => "cannot have both rel tail call and return",
                 (Flow::Cont(_), _) => unreachable!("continuations were combined above"),
             };
-            return err!(span.clone(), ErrorKind::Call(CallErrorKind::InvalidFlow { message }),);
+            return err!(span.clone(), error::call::flow_invalid(message),);
         }
     };
     ok!(flow)

@@ -1,3 +1,4 @@
+use crate::interp::report::{IntoReport, ReportExt};
 use p4spec_rust::interp::shared::context::IterContext;
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::lang::data::var::{IdSlot, VarSlot};
@@ -193,10 +194,7 @@ fn structured_parameters_and_case_guards_share_the_callable_layout() {
 fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
     use p4spec_rust::interp::{
         al::context as al_context,
-        shared::{
-            error::{ContextErrorKind, EntityKind, ErrorKind},
-            util::find_var_of_exp,
-        },
+        shared::{error::EntityKind, util::find_var_of_exp},
         sl::context as sl_context,
     };
 
@@ -272,37 +270,48 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
             NullExtern,
         );
         for error in [
-            runner_al.context().call_func("test", &[], &[]).unwrap_err(),
-            runner_sl.context().call_func("test", &[], &[]).unwrap_err(),
+            runner_al
+                .context()
+                .call_func("test", &[], &[])
+                .unwrap_err()
+                .into_report(),
+            runner_sl
+                .context()
+                .call_func("test", &[], &[])
+                .unwrap_err()
+                .into_report(),
             ctx_al
                 .find_list_values_by_var(
                     &p4spec_rust::lang::data::value::ValueArena::new(),
                     std::slice::from_ref(&slot_lookup),
                 )
-                .unwrap_err(),
+                .unwrap_err()
+                .into_report(),
             ctx_sl
                 .find_list_values_by_var(
                     &p4spec_rust::lang::data::value::ValueArena::new(),
                     std::slice::from_ref(&slot_lookup),
                 )
-                .unwrap_err(),
+                .unwrap_err()
+                .into_report(),
         ] {
-            let mut errors = vec![&error];
+            let mut errors = vec![error.as_ref()];
             let mut errors_undefined = Vec::new();
             while let Some(error) = errors.pop() {
-                if matches!(*error.kind, ErrorKind::Context(ContextErrorKind::Undefined { .. })) {
+                if error.code() == Some("runtime/binding-undefined") {
                     errors_undefined.push(error);
                 }
                 errors.extend(&error.children);
             }
             assert_eq!(errors_undefined.len(), 1, "{error}");
-            assert_eq!(errors_undefined[0].span, span(7));
+            assert_eq!(errors_undefined[0].span(), span(7));
             assert_eq!(
-                *errors_undefined[0].kind,
-                ErrorKind::Context(ContextErrorKind::Undefined {
-                    kind: EntityKind::Value,
-                    name: name.to_owned(),
-                })
+                errors_undefined[0].diagnostic().message,
+                p4spec_rust::interp::shared::error::context::binding_undefined(
+                    EntityKind::Value,
+                    name.to_owned()
+                )
+                .message
             );
         }
         assert_eq!(Print::to_string(&exp_prepared), Print::to_string(&exp_source));

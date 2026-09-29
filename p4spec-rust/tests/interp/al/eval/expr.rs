@@ -1,4 +1,5 @@
-use p4spec_rust::interp::shared::error::{HostErrorKind, TraceErrorKind};
+use crate::interp::report::{IntoReport, ReportExt};
+use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use std::{cell::RefCell, rc::Rc};
 
 use p4spec_rust::{
@@ -59,7 +60,10 @@ fn eval(
         NullInterface,
         NullExtern,
     );
-    let value = runner.context().call_func("test", &[], &[])?;
+    let value = runner
+        .context()
+        .call_func("test", &[], &[])
+        .map_err(Failure::into_report)?;
     Ok((std::mem::take(runner.arena_mut()), value))
 }
 
@@ -143,7 +147,8 @@ fn test_slice_updates_require_equal_lengths_and_support_text() {
     assert!(
         eval(update("X"))
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("slice of length 2")
     );
 }
@@ -157,7 +162,7 @@ fn test_negative_slice_lengths_are_out_of_bounds() {
         slice(list(vec![int(1), int(2), int(3)]), typ::make::list(typ::make::int())),
         slice(text("abc"), typ::make::text()),
     ] {
-        let error = eval(exp_slice).unwrap_err().to_string();
+        let error = eval(exp_slice).unwrap_err().into_report().render();
         assert!(error.contains("slice [2, -1) out of bounds [0, 3)"), "{error}");
     }
 }
@@ -177,7 +182,8 @@ fn test_text_operations_use_byte_lengths_and_reject_split_utf8() {
     assert!(
         eval(index)
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("UTF-8 boundaries")
     );
 }
@@ -348,7 +354,8 @@ fn test_numeric_errors_are_fatal_before_else_fallback() {
             .context()
             .call_func("test", &[], &[])
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("zero divisor")
     );
 }
@@ -610,16 +617,14 @@ fn test_call_arguments_substitute_local_types_and_pass_function_values() {
 
 #[test]
 fn test_index_failures_retain_the_index_expression_span() {
-    use p4spec_rust::interp::shared::error::{Error, ErrorKind};
-
-    fn contains_span(traces: &[Error], span: &Span) -> bool {
+    fn contains_span(traces: &[p4spec_rust::diagnostic::Report], span: &Span) -> bool {
         traces
             .iter()
-            .any(|trace| &trace.span == span || contains_span(&trace.children, span))
+            .any(|trace| &trace.span() == span || contains_span(&trace.children, span))
     }
-    fn contains_evaluation(traces: &[Error]) -> bool {
+    fn contains_evaluation(traces: &[p4spec_rust::diagnostic::Report]) -> bool {
         traces.iter().any(|trace| {
-            matches!(*trace.kind, ErrorKind::Trace(TraceErrorKind::Evaluation { .. }))
+            matches!(&trace.kind, ReportKind::Frame { message, .. } if message.starts_with("evaluation of "))
                 || contains_evaluation(&trace.children)
         })
     }
@@ -629,8 +634,8 @@ fn test_index_failures_retain_the_index_expression_span() {
     let span = index.span.clone();
     let expression =
         exp(ast::ExpKind::Idx(Box::new(list(vec![int(1)])), Box::new(index)), typ::make::int());
-    let error = eval(expression).unwrap_err();
-    let ErrorKind::Trace(TraceErrorKind::Execution) = *error.kind else {
+    let error = eval(expression).unwrap_err().into_report();
+    let ReportKind::Frame { .. } = error.kind else {
         panic!("expected execution traces");
     };
     assert!(contains_span(&error.children, &span));
@@ -725,19 +730,6 @@ def $first(ns) = ns[0]
 
 #[test]
 fn test_builtin_failure_remains_typed_in_public_error_tree() {
-    use p4spec_rust::{
-        interface::builtin::error::BuiltinErrorKind,
-        interp::shared::error::{Error, ErrorKind},
-    };
-
-    fn find_builtin(error: &Error) -> Option<&BuiltinErrorKind> {
-        if let ErrorKind::Host(HostErrorKind::Interface(InterfaceError::Builtin(error))) =
-            error.kind.as_ref()
-        {
-            return Some(&error.kind);
-        }
-        error.children.iter().find_map(find_builtin)
-    }
     let builtin = p4spec_rust::phrase!(node: ast::DefKind::MetaFunc(ast::MetaFuncDef::Builtin(ast::BuiltinFunc {
         id: id("missing_builtin"), tparams: vec![], params: vec![],
         typ: typ::make::int(), hints: vec![],
@@ -749,9 +741,14 @@ fn test_builtin_failure_remains_typed_in_public_error_tree() {
         p4spec_rust::interface::p4(&p4spec_rust::runner::Spec::Al(Vec::new())),
         NullExtern,
     );
-    let error = runner.context().call_func("test", &[], &[]).unwrap_err();
-    assert_eq!(
-        find_builtin(&error),
-        Some(&BuiltinErrorKind::MissingImplementation("missing_builtin".into()))
-    );
+    let error = runner
+        .context()
+        .call_func("test", &[], &[])
+        .unwrap_err()
+        .into_report();
+    let diagnostic = error
+        .find_code("runtime/builtin-failed")
+        .expect("builtin cause")
+        .diagnostic();
+    assert!(diagnostic.message.contains("missing_builtin"));
 }

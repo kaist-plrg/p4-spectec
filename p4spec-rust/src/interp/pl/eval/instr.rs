@@ -11,6 +11,8 @@ use super::{
     assign,
     expr::{eval_exp, eval_exps},
 };
+use crate::interp::shared::backtrack::BacktrackExt;
+use crate::interp::shared::error;
 use crate::{
     interp::{
         pl::{
@@ -21,7 +23,6 @@ use crate::{
         shared::{
             backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
             context::{IterContext, WriteContext},
-            error::{ErrorKind, PremErrorKind, TraceErrorKind},
             eval::{Invoker, iter, ops},
             util::iterate_vars,
         },
@@ -162,7 +163,7 @@ where
             ast::InstrKind::Tier(instr) => eval_tier(runner_ctx, ctx, &instr.tier),
         };
         result.nest(instr.node.span.clone(), || {
-            ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(instr) })
+            format!("evaluation of {} failed", Print::to_string(instr))
         })
     })
 }
@@ -226,7 +227,10 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     let cond =
         unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
             let value = unwrap!(eval_exp(runner_ctx, ctx, &instr.exp));
-            Backtrack::from_result(get::bool(runner_ctx.arena(), &value), &instr.exp.node.span)
+            crate::interp::shared::backtrack::from_result(
+                get::bool(runner_ctx.arena(), &value),
+                &instr.exp.node.span,
+            )
         }));
     // Run the block, or fall through recording the failed condition
     if cond {
@@ -236,7 +240,7 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             ctx,
             Flow::cont(
                 instr.exp.node.span.clone(),
-                PremErrorKind::ConditionNotMet { exp: Print::to_string(&instr.exp) }
+                error::prem::condition_unmet(Print::to_string(&instr.exp))
             )
         ))
     }
@@ -280,10 +284,7 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         // Only the other branch present: fall through
         _ => ok!((
             ctx,
-            Flow::cont(
-                instr.id.span.clone(),
-                PremErrorKind::ConditionNotMet { exp: instr.id.node.clone() }
-            )
+            Flow::cont(instr.id.span.clone(), error::prem::condition_unmet(instr.id.node.clone()))
         )),
     }
 }
@@ -316,7 +317,7 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         ctx,
         Flow::cont(
             instr.exp.node.span.clone(),
-            PremErrorKind::ConditionNotMet { exp: Print::to_string(&instr.exp) }
+            error::prem::condition_unmet(Print::to_string(&instr.exp))
         )
     ))
 }
@@ -331,7 +332,7 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
     // Test the scrutinee before introducing checked bindings
     let matched = match guard {
         // Compare the scrutinee with the expected boolean
-        ast::Guard::Bool(expected) => Backtrack::from_result(
+        ast::Guard::Bool(expected) => crate::interp::shared::backtrack::from_result(
             get::bool(runner_ctx.arena(), &value).map(|actual| actual == *expected),
             &Span::default(),
         ),
@@ -507,20 +508,20 @@ fn eval_check_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 ok!((ctx, flow))
             }
             // A failed binding lets the enclosing block continue
-            err!(errors) | unmatch!(errors) => ok!((ctx, Flow::Cont(errors))),
+            err!(report) => ok!((ctx, Flow::Cont(vec![*report]))),
+            // Mismatching bindings also fall through
+            unmatch!(reports) => ok!((ctx, Flow::Cont(reports))),
         }
     } else {
         ok!((
             ctx,
             Flow::cont(
                 instr.exp_r.node.span.clone(),
-                PremErrorKind::ConditionNotMet {
-                    exp: format!(
-                        "{} is not a subtype of {}",
-                        Print::to_string(&instr.exp_r),
-                        Print::to_string(&instr.typ)
-                    )
-                }
+                error::prem::condition_unmet(format!(
+                    "{} is not a subtype of {}",
+                    Print::to_string(&instr.exp_r),
+                    Print::to_string(&instr.typ)
+                ))
             )
         ))
     }
@@ -552,12 +553,10 @@ fn eval_check_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             ctx,
             Flow::cont(
                 instr.exp_r.node.span.clone(),
-                PremErrorKind::ConditionNotMet {
-                    exp: format!(
-                        "{} does not match the expected pattern",
-                        Print::to_string(&instr.exp_r)
-                    )
-                }
+                error::prem::condition_unmet(format!(
+                    "{} does not match the expected pattern",
+                    Print::to_string(&instr.exp_r)
+                ))
             )
         ))
     }
@@ -591,9 +590,10 @@ fn eval_option_get_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             ctx,
             Flow::cont(
                 instr.exp_r.node.span.clone(),
-                PremErrorKind::ConditionNotMet {
-                    exp: format!("{} evaluated to an empty option", Print::to_string(&instr.exp_r))
-                }
+                error::prem::condition_unmet(format!(
+                    "{} evaluated to an empty option",
+                    Print::to_string(&instr.exp_r)
+                ))
             )
         ))
     }

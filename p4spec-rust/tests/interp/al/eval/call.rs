@@ -1,8 +1,8 @@
+use crate::interp::report::ReportExt;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
-use p4spec_rust::interp::shared::error::TraceErrorKind;
 use p4spec_rust::interp::shared::prepare::Prepare;
-use p4spec_rust::interp::shared::{backtrack::Backtrack, error::ErrorKind};
 use p4spec_rust::lang::data::value::ValueArena;
+use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use std::rc::Rc;
 
 use p4spec_rust::lang::traits::print::Print;
@@ -60,9 +60,13 @@ fn test_function_choice_preserves_order_and_counts_equal_successes() {
             "1"
         );
         let mut runner = make_runner(spec_al, true);
-        let error = runner.context().call_func("pick", &[], &[]).unwrap_err();
-        assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
-        assert!(error.to_string().contains("non-deterministic"), "{error}");
+        let error = runner
+            .context()
+            .call_func("pick", &[], &[])
+            .unwrap_err()
+            .into_report();
+        assert!(matches!(error.kind, ReportKind::Frame { .. }));
+        assert!(error.render().contains("non-deterministic"), "{error}");
     }
 }
 
@@ -119,9 +123,13 @@ def $fatal() = +9
             },
             "+7"
         );
-        let error = runner.context().call_func("fatal", &[], &[]).unwrap_err();
-        assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
-        let message = error.to_string();
+        let error = runner
+            .context()
+            .call_func("fatal", &[], &[])
+            .unwrap_err()
+            .into_report();
+        assert!(matches!(error.kind, ReportKind::Frame { .. }));
+        let message = error.render();
         assert!(message.contains("unavailable"), "{message}");
         assert!(message.contains("fatal"), "{message}");
         assert!(!message.contains("recover"), "{message}");
@@ -225,9 +233,10 @@ fn test_relation_outputs_follow_notation_order_and_equal_paths_are_ambiguous() {
         let (name, values) = ("Step", &[nat(runner.arena_mut(), 5)]);
         runner.context().call_rel(name, values)
     }
-    .unwrap_err();
-    assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
-    assert!(error.to_string().contains("non-deterministic"), "{error}");
+    .unwrap_err()
+    .into_report();
+    assert!(matches!(error.kind, ReportKind::Frame { .. }));
+    assert!(error.render().contains("non-deterministic"), "{error}");
 }
 
 #[test]
@@ -249,9 +258,10 @@ rule Recover/fallback: n ~> 9
             let (name, values) = ("Recover", &[nat(runner.arena_mut(), 1)]);
             runner.context().call_rel(name, values)
         }
-        .unwrap_err();
-        assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
-        let message = error.to_string();
+        .unwrap_err()
+        .into_report();
+        assert!(matches!(error.kind, ReportKind::Frame { .. }));
+        let message = error.render();
         assert!(message.contains("Broken"), "{message}");
         assert!(message.contains("Recover"), "{message}");
     }
@@ -384,7 +394,7 @@ fn test_iterated_premise_rows_read_parent_bindings_independently() {
     )
     .unwrap();
     ctx.add_value_at_slot(slot_n_list.slot, value);
-    let Backtrack::Ok(ctx_post) = eval_prem(&mut runner, ctx.clone(), &prem) else {
+    let Ok(ctx_post) = eval_prem(&mut runner, ctx.clone(), &prem) else {
         panic!("iterated premise failed");
     };
     let value = ctx_post.find_value_at_slot(slot_result_list.slot).unwrap();
@@ -424,7 +434,7 @@ fn test_iterated_premise_rows_read_parent_bindings_independently() {
     )
     .unwrap();
     ctx.add_value_at_slot(slot_n_nested.slot, value);
-    let Backtrack::Ok(ctx_post) = eval_prem(&mut runner, ctx.clone(), &prem_nested) else {
+    let Ok(ctx_post) = eval_prem(&mut runner, ctx.clone(), &prem_nested) else {
         panic!("nested iterated premise failed");
     };
     let value = ctx_post
@@ -528,9 +538,9 @@ def $not_hold(n) = false
                         runner.context().call_func(name, targs, values)
                     };
                     if external {
-                        let error = result.unwrap_err();
-                        assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
-                        assert!(error.to_string().contains("Check"), "{error}");
+                        let error = result.unwrap_err().into_report();
+                        assert!(matches!(error.kind, ReportKind::Frame { .. }));
+                        assert!(error.render().contains("Check"), "{error}");
                     } else {
                         assert_eq!(get::bool(runner.arena(), &result.unwrap()).unwrap(), expected);
                     }
@@ -620,9 +630,13 @@ def $none() = $select(C)
             }
             .unwrap()
         );
-        let error = runner.context().call_func("none", &[], &[]).unwrap_err();
-        assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
-        let message = error.to_string();
+        let error = runner
+            .context()
+            .call_func("none", &[], &[])
+            .unwrap_err()
+            .into_report();
+        assert!(matches!(error.kind, ReportKind::Frame { .. }));
+        let message = error.render();
         assert!(message.contains("select"), "{message}");
         assert!(message.contains("reject"), "{message}");
     }
@@ -655,8 +669,8 @@ rule Choose/else: n ~> 9
             runner.context().call_rel(name, values)
         };
         if det {
-            assert!(func.unwrap_err().to_string().contains("fail"));
-            assert!(rel.unwrap_err().to_string().contains("fail"));
+            assert!(func.unwrap_err().into_report().render().contains("fail"));
+            assert!(rel.unwrap_err().into_report().render().contains("fail"));
         } else {
             assert_eq!(number(runner.arena(), &func.unwrap()), "1");
             assert_eq!(number(runner.arena(), &rel.unwrap()[0]), "1");
@@ -703,8 +717,9 @@ fn test_public_guard_rejects_malformed_function_input() {
             ("ignore", &[], &[make::bool(runner.arena_mut(), true, Span::default()).unwrap()]);
         runner.context().call_func(name, targs, values)
     }
-    .unwrap_err();
-    assert!(error.to_string().contains("function argument of ignore"), "{error}");
+    .unwrap_err()
+    .into_report();
+    assert!(error.render().contains("function argument of ignore"), "{error}");
 }
 
 struct Host {
@@ -803,7 +818,8 @@ fn test_guards_toggle_input_checks_and_substitute_type_arguments() {
                 assert!(
                     result
                         .unwrap_err()
-                        .to_string()
+                        .into_report()
+                        .render()
                         .contains("function argument of ignore")
                 );
                 assert!(
@@ -812,7 +828,8 @@ fn test_guards_toggle_input_checks_and_substitute_type_arguments() {
                         runner.context().call_func(name, targs, values)
                     }
                     .unwrap_err()
-                    .to_string()
+                    .into_report()
+                    .render()
                     .contains("arity mismatch in type arguments")
                 );
                 assert!(
@@ -820,7 +837,8 @@ fn test_guards_toggle_input_checks_and_substitute_type_arguments() {
                         .context()
                         .call_func("ignore", &[typ::make::nat()], &[])
                         .unwrap_err()
-                        .to_string()
+                        .into_report()
+                        .render()
                         .contains("function argument of ignore")
                 );
             } else {
@@ -873,8 +891,9 @@ fn test_relation_input_guards_use_hint_order() {
         let (name, values) = ("Pick", &[nat(runner.arena_mut(), 1), boolean]);
         runner.context().call_rel(name, values)
     }
-    .unwrap_err();
-    assert!(error.to_string().contains("relation input of Pick"));
+    .unwrap_err()
+    .into_report();
+    assert!(error.render().contains("relation input of Pick"));
 }
 
 #[test]
@@ -902,8 +921,8 @@ def $pick<X>() = $external<X>()
             for name in ["builtin", "external", "pick"] {
                 let result = runner.context().call_func(name, &[typ::make::nat()], &[]);
                 if guard {
-                    let error = result.unwrap_err();
-                    assert!(error.to_string().contains("return value of function"), "{error}");
+                    let error = result.unwrap_err().into_report();
+                    assert!(error.render().contains("return value of function"), "{error}");
                 } else {
                     assert!(get::bool(runner.arena(), &result.unwrap()).is_ok());
                 }
@@ -940,14 +959,9 @@ fn test_extern_relation_output_guards_preserve_call_span() {
     let span = prem.id.span.clone();
 
     fn find_output(
-        error: &p4spec_rust::interp::shared::error::Error,
-    ) -> Option<&p4spec_rust::interp::shared::error::Error> {
-        if matches!(
-            *error.kind,
-            ErrorKind::Guard(
-                p4spec_rust::interp::shared::error::GuardErrorKind::RelationOutputMismatch { .. }
-            )
-        ) {
+        error: &p4spec_rust::diagnostic::Report,
+    ) -> Option<&p4spec_rust::diagnostic::Report> {
+        if error.code() == Some("runtime/relation-output-type-mismatch") {
             Some(error)
         } else {
             error.children.iter().find_map(find_output)
@@ -965,9 +979,9 @@ fn test_extern_relation_output_guards_preserve_call_span() {
             runner.context().call_rel(name, values)
         };
         if guard {
-            let error = result.unwrap_err();
-            assert_eq!(find_output(&error).expect("output guard error").span, span);
-            assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
+            let error = result.unwrap_err().into_report();
+            assert_eq!(find_output(&error).expect("output guard error").span(), span);
+            assert!(matches!(error.kind, ReportKind::Frame { .. }));
         } else {
             assert_eq!(number(runner.arena(), &result.unwrap()[0]), "4");
         }
@@ -1040,7 +1054,8 @@ def $ambiguous() = 2
                 runner.context().call_func(name, targs, values)
             }
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("function argument of outer")
         );
         assert!(
@@ -1048,7 +1063,8 @@ def $ambiguous() = 2
                 .context()
                 .call_func("ambiguous", &[], &[])
                 .unwrap_err()
-                .to_string()
+                .into_report()
+                .render()
                 .contains("non-deterministic")
         );
         runner.reset();
@@ -1076,7 +1092,8 @@ fn test_extern_reentry_uses_public_input_guards() {
             assert!(
                 result
                     .unwrap_err()
-                    .to_string()
+                    .into_report()
+                    .render()
                     .contains("function argument of inner")
             );
         } else {
@@ -1100,7 +1117,8 @@ fn test_output_guard_after_success_is_fatal_only_in_deterministic_choice() {
             assert!(
                 result
                     .unwrap_err()
-                    .to_string()
+                    .into_report()
+                    .render()
                     .contains("return value of function bad")
             );
         } else {
@@ -1142,7 +1160,8 @@ fn test_uncached_input_guards_are_limited_to_public_entries() {
             runner.context().call_func(name, targs, values)
         }
         .unwrap_err()
-        .to_string()
+        .into_report()
+        .render()
         .contains("function argument of ignore")
     );
 }
@@ -1150,9 +1169,17 @@ fn test_uncached_input_guards_are_limited_to_public_entries() {
 #[test]
 fn test_guard_failure_keeps_its_source_span_through_extern_reentry() {
     fn find_guard(
-        error: &p4spec_rust::interp::shared::error::Error,
-    ) -> Option<&p4spec_rust::interp::shared::error::Error> {
-        if matches!(*error.kind, ErrorKind::Guard(_)) {
+        error: &p4spec_rust::diagnostic::Report,
+    ) -> Option<&p4spec_rust::diagnostic::Report> {
+        if error.code().is_some_and(|code| {
+            matches!(
+                code,
+                "runtime/relation-input-type-mismatch"
+                    | "runtime/relation-output-type-mismatch"
+                    | "runtime/function-input-type-mismatch"
+                    | "runtime/function-output-type-mismatch"
+            )
+        }) {
             Some(error)
         } else {
             error.children.iter().find_map(find_guard)
@@ -1180,9 +1207,10 @@ fn test_guard_failure_keeps_its_source_span_through_extern_reentry() {
         let (name, targs, values) = ("bridge", &[], &[nat(runner.arena_mut(), 1)]);
         runner.context().call_func(name, targs, values)
     }
-    .unwrap_err();
-    assert_eq!(find_guard(&error).expect("guard error").span, span);
-    assert!(matches!(*error.kind, ErrorKind::Trace(TraceErrorKind::Execution)));
+    .unwrap_err()
+    .into_report();
+    assert_eq!(find_guard(&error).expect("guard error").span(), span);
+    assert!(matches!(error.kind, ReportKind::Frame { .. }));
     assert!(!error.children.is_empty());
 }
 
@@ -1199,9 +1227,10 @@ fn test_reentrant_public_guard_keeps_no_source_span() {
         let (name, targs, values) = ("outer", &[], &[nat(runner.arena_mut(), 1)]);
         runner.context().call_func(name, targs, values)
     }
-    .unwrap_err();
-    assert!(error.to_string().contains("function argument of inner"));
-    assert_eq!(error.span, Span::default());
+    .unwrap_err()
+    .into_report();
+    assert!(error.render().contains("function argument of inner"));
+    assert_eq!(error.span(), Span::default());
 }
 
 // = Call caching
@@ -1478,7 +1507,7 @@ def $pair() = ($pure<nat>(7), $pure<bool>(7))
         let mut ctx_runner = runner.context();
         let ctx = p4spec_rust::interp::al::context::Context::new(ctx_runner.spec());
         p4spec_rust::interp::al::eval::call::invoke_func(&mut ctx_runner, &ctx, &id, &[], &[])
-            .finish()
+            .map_err(Failure::into_report)
             .unwrap()
     };
     assert_eq!(host.count("pure"), 1);
@@ -1488,7 +1517,7 @@ def $pair() = ($pure<nat>(7), $pure<bool>(7))
         let mut ctx_runner = runner.context();
         let ctx = p4spec_rust::interp::al::context::Context::new(ctx_runner.spec());
         p4spec_rust::interp::al::eval::call::invoke_func(&mut ctx_runner, &ctx, &id, &[], &[])
-            .finish()
+            .map_err(Failure::into_report)
             .unwrap()
     };
     assert_eq!(get::tuple(runner.arena(), &value_new).unwrap().len(), 2);
@@ -1519,7 +1548,7 @@ fn test_program_reset_isolates_cached_values_between_arenas() {
                 &[],
                 &[value],
             )
-            .finish()
+            .map_err(Failure::into_report)
             .unwrap()
         };
         assert_eq!(get::tuple(runner.arena(), &value_pair).unwrap(), &[value, value]);

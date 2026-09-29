@@ -8,7 +8,9 @@
 //! With `guard` on, inputs and outputs are type-checked at the boundary.
 
 use super::super::backtrack::{choose_deterministic, choose_sequential};
+use crate::interp::shared::backtrack::BacktrackExt;
 use crate::interp::shared::context::ReadContext;
+use crate::interp::shared::error;
 use crate::interp::shared::eval::assign::assign_tparams;
 use crate::runtime::envs::interp::al::ast_prepared as ast;
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
@@ -19,16 +21,14 @@ use super::super::{
     context::{Context, Scope},
 };
 use super::{assign, expr, prem::eval_prems};
-use crate::interp::shared::error::{CallErrorKind, GuardErrorKind, HostErrorKind, TraceErrorKind};
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
     cache::CallKey,
-    error::{Error, ErrorKind},
 };
 use crate::lang::data::value::{ValueArena, ValueKind};
 use crate::{
     lang::{data::value::Value, traits::print::Print},
-    runner::{Extern, Interface, InterfaceError, RunnerContext},
+    runner::{Extern, Interface, RunnerContext},
 };
 
 // = Input and output checks
@@ -55,14 +55,9 @@ pub(in crate::interp::al) fn check_rel_inputs(
         .iter()
         .map(|idx| typs[idx.node].clone())
         .collect::<Vec<_>>();
-    check_values(
-        arena,
-        ctx,
-        id,
-        &typs,
-        values,
-        GuardErrorKind::RelationInputMismatch { relation: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &typs, values, || {
+        error::guard::relation_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Type-checks function arguments with the type parameters bound to `targs`.
@@ -77,14 +72,9 @@ pub(in crate::interp::al) fn check_func_inputs(
     // Bind type arguments before checking parameter types
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the bound type parameters
-    check_values(
-        arena,
-        &ctx_local,
-        id,
-        &typ.typs_params,
-        values,
-        GuardErrorKind::FunctionInputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, &ctx_local, id, &typ.typs_params, values, || {
+        error::guard::function_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Checks each value against its type, failing with `error`.
@@ -94,7 +84,7 @@ fn check_values(
     id: &ast::Id,
     typs: &[ast::Typ],
     values: &[Value],
-    error: GuardErrorKind,
+    diagnostic: impl FnOnce() -> crate::diagnostic::Diagnostic,
 ) -> Backtrack<()> {
     // Subtyping resolves type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
@@ -107,7 +97,7 @@ fn check_values(
         crate::runtime::ops::value::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    Backtrack::check(matches, id.span.clone(), ErrorKind::Guard(error))
+    crate::interp::shared::backtrack::check(matches, id.span.clone(), diagnostic)
 }
 
 /// Type-checks a function result with the type parameters substituted.
@@ -128,14 +118,9 @@ fn check_func_output(
         &id.span
     );
     // Check the single result
-    check_values(
-        arena,
-        ctx,
-        id,
-        &[typ],
-        std::slice::from_ref(value),
-        GuardErrorKind::FunctionOutputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
+        error::guard::function_output_type_mismatch(id.node.clone())
+    })
 }
 
 // = Cache eligibility
@@ -211,9 +196,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             .insert(key, values.clone());
     }
     // Nest failures under the invocation trace
-    result.nest(id.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Invocation { text: id.node.clone() })
-    })
+    result.nest(id.span.clone(), || format!("invocation of {} failed", id.node.clone()))
 }
 
 // - Extern relation
@@ -232,21 +215,16 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (values, _) = unwrap_from_result!(result, &id.span);
+    // Preserve the failure classification across extern reentry
+    let (values, _) = unwrap!(result);
     if runner_ctx.interp().config.guard {
         // Output types are the notation arguments the hint leaves
         let typs = rel.not_typ.node.args().into_iter().cloned().collect();
         let (_, typs) =
             unwrap_from_result!(crate::lang::hints::input::split(&rel.input_hint, typs), &id.span);
-        unwrap!(check_values(
-            runner_ctx.arena(),
-            ctx,
-            id,
-            &typs,
-            &values,
-            GuardErrorKind::RelationOutputMismatch { relation: id.node.clone() }
-        ));
+        unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
+            error::guard::relation_output_type_mismatch(id.node.clone())
+        }));
     }
     ok!(values)
 }
@@ -263,13 +241,10 @@ fn eval_rule_path<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
     // Input count must match the rule's input patterns
-    unwrap!(Backtrack::check(
+    unwrap!(crate::interp::shared::backtrack::check(
         rule_match.exps_input.len() == values.len(),
         path.id.span.clone(),
-        ErrorKind::Call(CallErrorKind::RuleArityMismatch {
-            expected: rule_match.exps_input.len(),
-            actual: values.len()
-        })
+        || error::call::rule_arity_mismatch(rule_match.exps_input.len(), values.len())
     ));
     // Inputs bind into a fresh frame for the rule
     let ctx = unwrap!(assign::assign_exps(
@@ -309,26 +284,22 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         .collect();
     // Each candidate nests its failures under relation/group/path
     let mut evaluate = |&(group, path): &(&ast::RuleGroupKind, &ast::RulePath)| {
-        eval_rule_path(runner_ctx, ctx, layout, &group.rule_match, path, values).nest(
-            id.span.clone(),
-            || {
-                ErrorKind::Trace(TraceErrorKind::Evaluation {
-                    text: format!("{}/{}/{}", id.node, group.id.node, path.id.node),
-                })
-            },
-        )
+        eval_rule_path(runner_ctx, ctx, layout, &group.rule_match, path, values)
+            .nest(id.span.clone(), || {
+                format!("evaluation of {}/{}/{} failed", id.node, group.id.node, path.id.node)
+            })
     };
     // Deterministic mode rejects two matching paths
     let result = if det {
         choose_deterministic(paths, &mut evaluate, |(group_a, path_a), (group_b, path_b)| {
-            Error::new(
-                ErrorKind::Call(CallErrorKind::RelationNondeterminism {
-                    relation: id.node.clone(),
-                    group_a: group_a.id.node.clone(),
-                    path_a: path_a.id.node.clone(),
-                    group_b: group_b.id.node.clone(),
-                    path_b: path_b.id.node.clone(),
-                }),
+            error::at(
+                error::call::relation_nondeterministic(
+                    id.node.clone(),
+                    group_a.id.node.clone(),
+                    path_a.id.node.clone(),
+                    group_b.id.node.clone(),
+                    path_b.id.node.clone(),
+                ),
                 id.span.clone(),
             )
         })
@@ -353,12 +324,10 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
                 values,
             )
             .nest(id.span.clone(), || {
-                ErrorKind::Trace(TraceErrorKind::Evaluation {
-                    text: format!(
-                        "{}/{}/{}",
-                        id.node, group.node.id.node, group.node.rule_path.id.node
-                    ),
-                })
+                format!(
+                    "evaluation of {}/{}/{} failed",
+                    id.node, group.node.id.node, group.node.rule_path.id.node
+                )
             }),
             // No fallback: report every candidate's mismatches
             None => unmatch!(errors),
@@ -414,7 +383,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         runner_ctx.interp_mut().cache.funcs.insert(key, *value);
     }
     // Nest failures under the invocation trace
-    result.nest(id.span.clone(), || ErrorKind::Trace(TraceErrorKind::function(id, targs)))
+    result.nest(id.span.clone(), || error::trace::function(id, targs))
 }
 
 // - Extern function
@@ -434,8 +403,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (value, _) = unwrap_from_result!(result, &id.span);
+    // Preserve the failure classification across extern reentry
+    let (value, _) = unwrap!(result);
     // Guard the result against the declared type
     if runner_ctx.interp().config.guard {
         unwrap!(check_func_output(
@@ -485,14 +454,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures let the caller try another candidate
-        Err(error) => {
-            let recoverable = matches!(
-                error.kind.as_ref(),
-                ErrorKind::Host(HostErrorKind::Interface(InterfaceError::Builtin(_)))
-            );
-            let error = error.at_if_missing(&id.span);
-            if recoverable { unmatch!(vec![error]) } else { err!(vec![error]) }
-        }
+        Err(failure) => Err(failure.at_if_missing(&id.span)),
     }
 }
 
@@ -508,13 +470,10 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Value> {
     let result = (|| {
         // Argument count must match the row
-        unwrap!(Backtrack::check(
+        unwrap!(crate::interp::shared::backtrack::check(
             table_row.node.args.len() == values.len(),
             table_row.span.clone(),
-            ErrorKind::Call(CallErrorKind::TableRowArityMismatch {
-                expected: table_row.node.args.len(),
-                actual: values.len()
-            })
+            || error::call::table_row_arity_mismatch(table_row.node.args.len(), values.len())
         ));
         // Arguments bind into a fresh frame for the row
         let ctx = unwrap!(assign::assign_args(
@@ -530,7 +489,7 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     })();
     // Trace the row on failure
     result.nest(table_row.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(table_row) })
+        format!("evaluation of {} failed", Print::to_string(table_row))
     })
 }
 
@@ -559,13 +518,10 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Value> {
     let result = (|| {
         // Argument count must match the clause
-        unwrap!(Backtrack::check(
+        unwrap!(crate::interp::shared::backtrack::check(
             clause.node.args.len() == values.len(),
             clause.span.clone(),
-            ErrorKind::Call(CallErrorKind::ClauseArityMismatch {
-                expected: clause.node.args.len(),
-                actual: values.len()
-            })
+            || error::call::clause_arity_mismatch(clause.node.args.len(), values.len())
         ));
         // Arguments bind into the callee scope, evaluated in the caller's
         let ctx = unwrap!(assign::assign_args(
@@ -580,9 +536,8 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
         expr::eval_exp(runner_ctx, &ctx, &clause.node.exp)
     })();
     // Trace the clause on failure
-    result.nest(clause.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(clause) })
-    })
+    result
+        .nest(clause.span.clone(), || format!("evaluation of {} failed", Print::to_string(clause)))
 }
 
 /// Binds the type parameters, tries the clauses, then the otherwise clause.
@@ -608,12 +563,8 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     // Deterministic mode rejects two matching clauses
     let result = if det {
         choose_deterministic(0..defined_func.clauses.len(), &mut evaluate, |idx_a, idx_b| {
-            Error::new(
-                ErrorKind::Call(CallErrorKind::FunctionNondeterminism {
-                    func: defined_func.id.node.clone(),
-                    first: idx_a,
-                    second: idx_b,
-                }),
+            error::at(
+                error::call::function_nondeterministic(defined_func.id.node.clone(), idx_a, idx_b),
                 defined_func.id.span.clone(),
             )
         })

@@ -8,6 +8,7 @@
 //! and gathers the rows into `x*` and `y*`.
 
 use super::super::context::{ReadContext, WriteContext};
+use crate::interp::shared::error;
 use crate::interp::shared::prepare::ast;
 use crate::interp::shared::util::iterate_vars;
 use crate::lang::data::var::IdSlot;
@@ -15,8 +16,6 @@ use crate::lang::traits::at::At;
 use crate::runtime::typdef::TypeDef;
 
 use std::{borrow::Borrow, rc::Rc};
-
-use crate::interp::shared::error::AssignErrorKind;
 
 use crate::{
     lang::{
@@ -32,7 +31,7 @@ use crate::{
 
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result},
-    error::{CallErrorKind, EntityKind, Error, ErrorKind},
+    error::EntityKind,
     util::find_slot_of_exp,
 };
 
@@ -46,13 +45,10 @@ pub fn assign_tparams<Ctx: WriteContext>(
     span: &Span,
 ) -> Backtrack<Ctx> {
     // Check arity before binding any type parameter
-    unwrap!(Backtrack::check(
+    unwrap!(crate::interp::shared::backtrack::check(
         tparams.len() == targs.len(),
         span.clone(),
-        ErrorKind::Call(CallErrorKind::TypeArgumentArityMismatch {
-            expected: tparams.len(),
-            actual: targs.len(),
-        })
+        || error::call::type_argument_arity_mismatch(tparams.len(), targs.len())
     ));
     // Type arguments shadow global definitions in the callee scope
     for (tparam, targ) in tparams.iter().zip(targs) {
@@ -118,10 +114,7 @@ pub fn assign_exp<Ctx: WriteContext>(
         // Pattern and value shapes disagree
         _ => err!(
             exp.span.clone(),
-            ErrorKind::Assign(AssignErrorKind::Mismatch {
-                exp: Print::to_string(exp),
-                value: arena.to_string(&value),
-            }),
+            error::assign::assignment_mismatch(Print::to_string(exp), arena.to_string(&value)),
         ),
     }
 }
@@ -137,10 +130,7 @@ pub fn assign_exps<Ctx: WriteContext, T: Borrow<ast::Exp> + At>(
     if exps.len() != values.len() {
         return err!(
             exps.at(),
-            ErrorKind::Assign(AssignErrorKind::ExpressionArityMismatch {
-                expected: exps.len(),
-                actual: values.len(),
-            }),
+            error::assign::assignment_expression_arity_mismatch(exps.len(), values.len()),
         );
     }
     for (exp, value) in exps.iter().zip(values) {
@@ -218,10 +208,7 @@ fn assign_opt_exp<Ctx: WriteContext>(
         // One side present: mismatch
         _ => err!(
             exp.span.clone(),
-            ErrorKind::Assign(AssignErrorKind::Mismatch {
-                exp: Print::to_string(exp),
-                value: arena.to_string(value),
-            }),
+            error::assign::assignment_mismatch(Print::to_string(exp), arena.to_string(value)),
         ),
     }
 }
@@ -250,7 +237,7 @@ fn assign_cons_exp<Ctx: WriteContext>(
     values: &[Value],
 ) -> Backtrack<Ctx> {
     let Some((value_head, values_tail)) = values.split_first() else {
-        return err!(exp.span.clone(), ErrorKind::Assign(AssignErrorKind::EmptyCons));
+        return err!(exp.span.clone(), error::assign::assignment_cons_empty());
     };
     // Rebuild the tail as a list value of the same type
     let typ = phrase!(node: arena.typ(value).clone(), span: exp.span.clone());
@@ -294,9 +281,11 @@ fn assign_iter_exp<Ctx: WriteContext>(
                 let value_opt = match &ctx_sub {
                     Some(ctx_sub) => Some(*unwrap_from_result!(
                         ctx_sub.find_value_at_slot(var.slot).ok_or_else(|| {
-                            Error::undefined(
-                                EntityKind::Value,
-                                Print::to_string(&var.var),
+                            error::at(
+                                error::context::binding_undefined(
+                                    EntityKind::Value,
+                                    Print::to_string(&var.var),
+                                ),
                                 var.var.id.span.clone(),
                             )
                         }),
@@ -328,9 +317,11 @@ fn assign_iter_exp<Ctx: WriteContext>(
                 for ctx_sub in &ctxs {
                     let value = unwrap_from_result!(
                         ctx_sub.find_value_at_slot(var.slot).ok_or_else(|| {
-                            Error::undefined(
-                                EntityKind::Value,
-                                Print::to_string(&var.var),
+                            error::at(
+                                error::context::binding_undefined(
+                                    EntityKind::Value,
+                                    Print::to_string(&var.var),
+                                ),
                                 var.var.id.span.clone(),
                             )
                         }),
@@ -377,10 +368,7 @@ pub fn assign_args<Ctx: WriteContext>(
     if args.len() != values.len() {
         return err!(
             args.at(),
-            ErrorKind::Assign(AssignErrorKind::ArgumentArityMismatch {
-                expected: args.len(),
-                actual: values.len(),
-            }),
+            error::assign::assignment_argument_arity_mismatch(args.len(), values.len()),
         );
     }
     let mut ctx = ctx_callee;
@@ -415,10 +403,7 @@ pub fn assign_def<Ctx: WriteContext>(
     let ValueKind::Func(id_func) = arena.kind(&value) else {
         return err!(
             id.span.clone(),
-            ErrorKind::Assign(AssignErrorKind::DefinitionMismatch {
-                value: arena.to_string(&value),
-                def: id.node.clone(),
-            }),
+            error::assign::assignment_definition_mismatch(arena.to_string(&value), id.node.clone()),
         );
     };
     // Look the definition up in the caller, bind it in the callee

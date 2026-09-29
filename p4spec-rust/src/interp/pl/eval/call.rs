@@ -6,6 +6,8 @@
 //! Only pure results are memoized; failures retain their invocation trace.
 //! With `guard` enabled, host outputs and public inputs are type-checked.
 
+use crate::interp::shared::backtrack::BacktrackExt;
+use crate::interp::shared::error;
 use crate::interp::shared::eval::assign::assign_tparams;
 use std::rc::Rc;
 
@@ -24,11 +26,10 @@ use crate::{
             backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
             cache::CallKey,
             context::ReadContext,
-            error::{CallErrorKind, ErrorKind, GuardErrorKind, HostErrorKind, TraceErrorKind},
         },
     },
     lang::data::value::{Value, ValueArena, ValueKind},
-    runner::{Extern, Interface, InterfaceError, RunnerContext},
+    runner::{Extern, Interface, RunnerContext},
     runtime::envs::interp::{pl::ast_prepared as ast, shared::frame::FrameLayout},
 };
 
@@ -60,14 +61,9 @@ pub(crate) fn check_rel_inputs(
         .iter()
         .map(|idx| typs[idx.node].clone())
         .collect::<Vec<_>>();
-    check_values(
-        arena,
-        ctx,
-        id,
-        &typs,
-        values,
-        GuardErrorKind::RelationInputMismatch { relation: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &typs, values, || {
+        error::guard::relation_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Type-checks function arguments with local type parameters bound.
@@ -82,14 +78,9 @@ pub(crate) fn check_func_inputs(
     // Bind type arguments before checking parameter types
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the local type bindings
-    check_values(
-        arena,
-        &ctx_local,
-        id,
-        &typ.typs_params,
-        values,
-        GuardErrorKind::FunctionInputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, &ctx_local, id, &typ.typs_params, values, || {
+        error::guard::function_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Checks each value against its type, failing with the supplied guard error.
@@ -99,7 +90,7 @@ fn check_values(
     id: &ast::Id,
     typs: &[ast::Typ],
     values: &[Value],
-    error: GuardErrorKind,
+    diagnostic: impl FnOnce() -> crate::diagnostic::Diagnostic,
 ) -> Backtrack<()> {
     // Resolve type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
@@ -112,7 +103,7 @@ fn check_values(
         crate::runtime::ops::value::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    Backtrack::check(matches, id.span.clone(), ErrorKind::Guard(error))
+    crate::interp::shared::backtrack::check(matches, id.span.clone(), diagnostic)
 }
 
 /// Type-checks a function result with its type arguments substituted.
@@ -133,14 +124,9 @@ fn check_func_output(
         &id.span
     );
     // Check the single result
-    check_values(
-        arena,
-        ctx,
-        id,
-        &[typ],
-        std::slice::from_ref(value),
-        GuardErrorKind::FunctionOutputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
+        error::guard::function_output_type_mismatch(id.node.clone())
+    })
 }
 
 // = Cache eligibility
@@ -207,9 +193,8 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result = result.nest(id.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Invocation { text: id.node.clone() })
-    });
+    let result =
+        result.nest(id.span.clone(), || format!("invocation of {} failed", id.node.clone()));
     let values = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -238,8 +223,8 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (values, _) = unwrap_from_result!(result, &id.span);
+    // Preserve the failure classification across extern reentry
+    let (values, _) = unwrap!(result);
     // Guard the outputs against their declared types
     if runner_ctx.interp().config.guard {
         let typs = rel
@@ -255,14 +240,9 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
             crate::lang::hints::input::split(&rel.rel_signature.input_hint, typs),
             &id.span
         );
-        unwrap!(check_values(
-            runner_ctx.arena(),
-            ctx,
-            id,
-            &typs,
-            &values,
-            GuardErrorKind::RelationOutputMismatch { relation: id.node.clone() },
-        ));
+        unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
+            error::guard::relation_output_type_mismatch(id.node.clone())
+        },));
     }
     ok!(values)
 }
@@ -306,12 +286,9 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         // Falling through the entire body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // A relation cannot return a function result
-        Flow::Return(_) => err!(
-            id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "relation cannot return a value",
-            })
-        ),
+        Flow::Return(_) => {
+            err!(id.span.clone(), error::call::flow_invalid("relation cannot return a value"))
+        }
     }
 }
 
@@ -358,8 +335,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result =
-        result.nest(id.span.clone(), || ErrorKind::Trace(TraceErrorKind::function(id, targs)));
+    let result = result.nest(id.span.clone(), || error::trace::function(id, targs));
     let value = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -385,8 +361,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (value, _) = unwrap_from_result!(result, &id.span);
+    // Preserve the failure classification across extern reentry
+    let (value, _) = unwrap!(result);
     // Guard the outputs against their declared types
     if runner_ctx.interp().config.guard {
         unwrap!(check_func_output(
@@ -436,14 +412,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures allow another candidate; other errors are fatal
-        Err(error) => {
-            let recoverable = matches!(
-                error.kind.as_ref(),
-                ErrorKind::Host(HostErrorKind::Interface(InterfaceError::Builtin(_)))
-            );
-            let error = error.at_if_missing(&id.span);
-            if recoverable { unmatch!(vec![error]) } else { err!(vec![error]) }
-        }
+        Err(failure) => Err(failure.at_if_missing(&id.span)),
     }
 }
 
@@ -473,10 +442,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         // The first return is the table result
         Flow::Return(value) => ok!(value),
         // Falling through or producing relation outputs is invalid
-        _ => err!(
-            id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow { message: "table did not return a value" })
-        ),
+        _ => err!(id.span.clone(), error::call::flow_invalid("table did not return a value")),
     }
 }
 
@@ -521,9 +487,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         // A function cannot produce relation outputs
         Flow::Result(_) => err!(
             id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "function cannot produce a relation result",
-            })
+            error::call::flow_invalid("function cannot produce a relation result")
         ),
     }
 }

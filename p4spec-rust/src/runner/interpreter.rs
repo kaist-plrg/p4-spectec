@@ -21,7 +21,10 @@ where
 {
     /// Loaded global definitions.
     type Spec;
-    /// An evaluation failure, absorbing host failures.
+    /// Preserves fatal and recoverable failures through host reentry.
+    ///
+    /// Native interpreters use `interp::shared::backtrack::Failure`;
+    /// only final output consumers convert exhausted mismatch into a report.
     type Error: From<InterfaceError> + From<ExternError>;
 
     /// Clears cached results without invalidating arena values.

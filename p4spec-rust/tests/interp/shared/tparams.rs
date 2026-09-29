@@ -2,16 +2,13 @@
 //!
 //! Type parameters shadow global definitions in both input checks and bodies.
 
+use crate::interp::report::ReportExt;
+use p4spec_rust::interp::shared::backtrack::Failure;
 use p4spec_rust::{
     interp::{
         al::context as ctx_al,
         pl::context as ctx_pl,
-        shared::{
-            backtrack::Backtrack,
-            context::WriteContext,
-            error::{CallErrorKind, ContextErrorKind, EntityKind, Error, ErrorKind},
-            eval::assign::assign_tparams,
-        },
+        shared::{context::WriteContext, error::EntityKind, eval::assign::assign_tparams},
         sl::context as ctx_sl,
     },
     lang::{
@@ -31,7 +28,7 @@ use p4spec_rust::{
 
 fn check_shadowing<Interp>(mut runner: Runner<Interp, BuiltinInterface, NullExtern>)
 where
-    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Error>,
+    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
 {
     let value = make::bool(runner.arena_mut(), true, Span::default()).unwrap();
     let value = runner
@@ -75,39 +72,39 @@ fn check_binding_errors<Ctx: WriteContext>(ctx: Ctx) {
     let tparam = phrase!(node: "X".to_owned(), span: span_param.clone());
     // Arity errors retain the call location for missing and excess arguments
     for targs in [vec![], vec![typ::make::bool(), typ::make::bool()]] {
-        let Backtrack::Err(errors) =
+        let Err(Failure::Fatal(errors)) =
             assign_tparams(ctx.clone(), std::slice::from_ref(&tparam), &targs, &span_call)
         else {
             panic!("expected a type argument arity error")
         };
-        assert_eq!(errors.len(), 1);
-        assert_eq!(errors[0].span, span_call);
+        assert!(errors.children.is_empty());
+        assert_eq!(errors.span(), span_call);
         assert_eq!(
-            *errors[0].kind,
-            ErrorKind::Call(CallErrorKind::TypeArgumentArityMismatch {
-                expected: 1,
-                actual: targs.len(),
-            })
+            errors.diagnostic().message,
+            p4spec_rust::interp::shared::error::call::type_argument_arity_mismatch(1, targs.len())
+                .message
         );
     }
     // Binding the same parameter twice remains a local duplicate
-    let Backtrack::Ok(ctx) =
+    let Ok(ctx) =
         assign_tparams(ctx, std::slice::from_ref(&tparam), &[typ::make::bool()], &span_call)
     else {
         panic!("expected a successful type parameter binding")
     };
-    let Backtrack::Err(errors) = assign_tparams(ctx, &[tparam], &[typ::make::bool()], &span_call)
+    let Err(Failure::Fatal(errors)) =
+        assign_tparams(ctx, &[tparam], &[typ::make::bool()], &span_call)
     else {
         panic!("expected a duplicate type parameter error")
     };
-    assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].span, span_param);
+    assert!(errors.children.is_empty());
+    assert_eq!(errors.span(), span_param);
     assert_eq!(
-        *errors[0].kind,
-        ErrorKind::Context(ContextErrorKind::Duplicate {
-            kind: EntityKind::Type,
-            name: "X".to_owned(),
-        })
+        errors.diagnostic().message,
+        p4spec_rust::interp::shared::error::context::binding_repeated(
+            EntityKind::Type,
+            "X".to_owned()
+        )
+        .message
     );
 }
 

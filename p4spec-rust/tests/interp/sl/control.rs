@@ -1,8 +1,9 @@
 use super::*;
+use crate::interp::report::{IntoReport, ReportExt};
+use p4spec_rust::interp::shared::backtrack::Failure;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::{
-    interp::shared::error::{CallErrorKind, ErrorKind},
     lang::{common::prim::num::Number, data::typ},
     note_phrase, phrase,
 };
@@ -29,9 +30,8 @@ fn with_block(block: ast::Block, det: bool) -> Runner<SlInterp, BuiltinInterface
         NullExtern,
     )
 }
-fn message_has(error: &p4spec_rust::interp::shared::error::Error, kind: &CallErrorKind) -> bool {
-    *error.kind == ErrorKind::Call(kind.clone())
-        || error.children.iter().any(|error| message_has(error, kind))
+fn message_has(error: &p4spec_rust::diagnostic::Report, code: &str) -> bool {
+    error.find_code(code).is_some()
 }
 
 #[test]
@@ -41,8 +41,12 @@ fn raw_blocks_preserve_order_and_reject_two_identical_successes() {
     let value = runner.context().call_func("entry", &[], &[]).unwrap();
     assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), "1");
     let mut runner = with_block(block, true);
-    let error = runner.context().call_func("entry", &[], &[]).unwrap_err();
-    assert!(message_has(&error, &CallErrorKind::InstructionNondeterminism));
+    let error = runner
+        .context()
+        .call_func("entry", &[], &[])
+        .unwrap_err()
+        .into_report();
+    assert!(message_has(&error, "runtime/instruction-nondeterministic"));
 }
 
 #[test]
@@ -169,7 +173,8 @@ fn empty_body_and_wrong_terminal_flow_are_reported() {
             .context()
             .call_func("entry", &[], &[])
             .unwrap_err()
-            .to_string()
+            .into_report()
+            .render()
             .contains("function cannot produce a relation")
     );
 }
@@ -202,12 +207,10 @@ fn loading_rejects_duplicate_execution_definitions() {
         let mut spec_sl = spec(source);
         let def = spec_sl.last().unwrap().clone();
         spec_sl.push(def);
-        assert!(matches!(
-            *Global::load(spec_sl).unwrap_err().kind,
-            ErrorKind::Context(
-                p4spec_rust::interp::shared::error::ContextErrorKind::Duplicate { .. }
-            )
-        ));
+        assert!(
+            Global::load(spec_sl).unwrap_err().into_report().code()
+                == Some("runtime/binding-repeated")
+        );
     }
 }
 
@@ -339,7 +342,7 @@ fn optional_condition_preserves_remaining_iterator_order_and_outer_bindings() {
                     &block,
                     false,
                 )
-                .finish()
+                .map_err(Failure::into_report)
                 .unwrap();
                 match flow {
                     Flow::Return(value) => {

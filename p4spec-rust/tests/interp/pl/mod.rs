@@ -1,3 +1,4 @@
+use crate::interp::report::ReportExt;
 use p4spec_rust::{
     interp::pl::{Config, PlInterp, context::Global},
     lang::{
@@ -221,7 +222,8 @@ def $subtype(n) = 1
         .context()
         .call_func("subtype", &[], &[value])
         .unwrap_err()
-        .to_string();
+        .into_report()
+        .render();
     assert!(error.contains("n is not a subtype of nat"), "{error}");
 
     let mut runner_match = runner(
@@ -248,7 +250,8 @@ def $matched(ns) = x
         .context()
         .call_func("matched", &[], &[value])
         .unwrap_err()
-        .to_string();
+        .into_report()
+        .render();
     assert!(error.contains("ns does not match the expected pattern"), "{error}");
 
     let mut spec_option = spec(
@@ -300,7 +303,8 @@ def $option(o) = 0
         .context()
         .call_func("option", &[], &[value])
         .unwrap_err()
-        .to_string();
+        .into_report()
+        .render();
     assert!(error.contains("o evaluated to an empty option"), "{error}");
 }
 

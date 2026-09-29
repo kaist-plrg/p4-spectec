@@ -1,3 +1,5 @@
+use crate::interp::report::ReportExt;
+use p4spec_rust::interp::shared::backtrack::Failure;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::interp::shared::{backtrack::Backtrack, util::find_var_of_exp};
@@ -46,7 +48,7 @@ fn value(arena: &mut ValueArena, value: bool) -> Value {
 }
 fn ok<T: std::fmt::Debug>(result: Backtrack<T>) -> T {
     match result {
-        Backtrack::Ok(value) => value,
+        Ok(value) => value,
         other => panic!("{other:?}"),
     }
 }
@@ -208,7 +210,7 @@ fn test_list_rows_cannot_collect_unassigned_outer_values() {
     let (exp, mut ctx, mut layout) = prepare_exp(&global, exp);
     ctx.add_value_at_slot(layout.resolve_var(var("missing", vec![])).slot, value(&mut arena, true));
 
-    let Backtrack::Err(traces) = ({
+    let Err(Failure::Fatal(traces)) = ({
         let value = {
             let values = vec![{
                 let values = vec![value(&mut arena, false)];
@@ -220,7 +222,7 @@ fn test_list_rows_cannot_collect_unassigned_outer_values() {
     }) else {
         panic!("expected missing row binding")
     };
-    assert_eq!(traces[0].span, span(3));
+    assert_eq!(traces.span(), span(3));
 }
 
 #[test]
@@ -321,7 +323,7 @@ fn test_cons_tail_preserves_value_type_with_default_span() {
             let value = list(&mut arena, vec![]);
             assign_exp(&mut arena, ctx, &exp, value)
         },
-        Backtrack::Err(_)
+        Err(Failure::Fatal(_))
     ));
 }
 
@@ -339,13 +341,13 @@ fn test_assignment_errors_are_fatal_and_located() {
         .map(|exp_source| exp_source.prepare(&mut layout))
         .collect::<Vec<_>>();
     let ctx = Context::new(&global).localize_with_layout(&layout.into());
-    let Backtrack::Err(traces) = assign_exps(&mut arena, ctx, &exps, &[]) else {
+    let Err(Failure::Fatal(traces)) = assign_exps(&mut arena, ctx, &exps, &[]) else {
         panic!("expected arity error")
     };
-    assert_eq!(traces[0].span, Span::over(&[span(4), span(9)]));
+    assert_eq!(traces.span(), Span::over(&[span(4), span(9)]));
     let exp = exp(ast::ExpKind::Opt(None));
     let (exp, ctx, _) = prepare_exp(&global, exp);
-    let Backtrack::Err(traces) = ({
+    let Err(Failure::Fatal(traces)) = ({
         let value = {
             let value = Some(value(&mut arena, true));
             make::opt(
@@ -360,7 +362,7 @@ fn test_assignment_errors_are_fatal_and_located() {
     }) else {
         panic!("expected optionality error")
     };
-    assert_eq!(traces[0].span, exp.span);
+    assert_eq!(traces.span(), exp.span);
 }
 
 #[test]

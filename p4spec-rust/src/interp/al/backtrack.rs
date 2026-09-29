@@ -47,7 +47,7 @@ pub fn choose_deterministic<C, T>(
             ok!(value) => {
                 // A second match is nondeterminism
                 if let Some((first, _)) = success {
-                    return err!(vec![nondet(first, candidate)]);
+                    return err!(nondet(first, candidate));
                 }
                 success = Some((candidate, value));
                 errors.clear();

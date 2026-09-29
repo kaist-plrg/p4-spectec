@@ -5,6 +5,7 @@
 
 use super::super::context::ReadContext;
 use super::Invoker;
+use crate::interp::shared::backtrack::BacktrackExt;
 use crate::interp::shared::prepare::ast;
 
 use crate::{
@@ -17,10 +18,7 @@ use crate::{
 };
 
 use super::expr::eval_exp;
-use crate::interp::shared::{
-    backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
-    error::{ErrorKind, TraceErrorKind},
-};
+use crate::interp::shared::backtrack::{Backtrack, ok, unwrap, unwrap_from_result};
 
 /// Evaluates one argument, nesting failures under an evaluation trace.
 fn eval_arg<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(
@@ -32,9 +30,7 @@ fn eval_arg<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>
         ast::ArgKind::Exp(exp) => eval_exp(runner_ctx, ctx, exp),
         ast::ArgKind::Def(id) => eval_def_arg(runner_ctx.arena_mut(), ctx, id, &arg.span),
     };
-    result.nest(arg.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(arg) })
-    })
+    result.nest(arg.span.clone(), || format!("evaluation of {} failed", Print::to_string(arg)))
 }
 
 /// Evaluates arguments left to right.

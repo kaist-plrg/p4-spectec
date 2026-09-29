@@ -13,19 +13,19 @@ use super::super::{
     flow::Flow,
 };
 use super::{assign, instr};
+use crate::interp::shared::backtrack::BacktrackExt;
 use crate::interp::shared::context::ReadContext;
+use crate::interp::shared::error;
 use crate::interp::shared::eval::assign::assign_tparams;
-use crate::lang::common::source::Span;
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
     interp::shared::{
         backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
         cache::CallKey,
-        error::{CallErrorKind, ErrorKind, GuardErrorKind, HostErrorKind, TraceErrorKind},
     },
     lang::data::value::{Value, ValueArena, ValueKind},
-    runner::{Extern, Interface, InterfaceError, RunnerContext},
+    runner::{Extern, Interface, RunnerContext},
 };
 use std::{borrow::Cow, rc::Rc};
 
@@ -67,14 +67,9 @@ pub(in crate::interp::sl) fn check_rel_inputs(
         .iter()
         .map(|idx| typs[idx.node].clone())
         .collect::<Vec<_>>();
-    check_values(
-        arena,
-        ctx,
-        id,
-        &typs,
-        values,
-        GuardErrorKind::RelationInputMismatch { relation: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &typs, values, || {
+        error::guard::relation_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Type-checks function arguments with the type parameters bound to `targs`.
@@ -89,14 +84,9 @@ pub(in crate::interp::sl) fn check_func_inputs(
     // Bind type arguments before checking parameter types
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the bound type parameters
-    check_values(
-        arena,
-        &ctx_local,
-        id,
-        &typ.typs_params,
-        values,
-        GuardErrorKind::FunctionInputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, &ctx_local, id, &typ.typs_params, values, || {
+        error::guard::function_input_type_mismatch(id.node.clone())
+    })
 }
 
 /// Checks each value against its type, failing with `error`.
@@ -106,7 +96,7 @@ fn check_values(
     id: &ast::Id,
     typs: &[ast::Typ],
     values: &[Value],
-    error: GuardErrorKind,
+    diagnostic: impl FnOnce() -> crate::diagnostic::Diagnostic,
 ) -> Backtrack<()> {
     // Subtyping resolves type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
@@ -119,7 +109,7 @@ fn check_values(
         crate::runtime::ops::value::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    Backtrack::check(matches, id.span.clone(), ErrorKind::Guard(error))
+    crate::interp::shared::backtrack::check(matches, id.span.clone(), diagnostic)
 }
 
 /// Type-checks a function result with the type parameters substituted.
@@ -140,14 +130,9 @@ fn check_func_output(
         &id.span
     );
     // Check the single result
-    check_values(
-        arena,
-        ctx,
-        id,
-        &[typ],
-        std::slice::from_ref(value),
-        GuardErrorKind::FunctionOutputMismatch { func: id.node.clone() },
-    )
+    check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
+        error::guard::function_output_type_mismatch(id.node.clone())
+    })
 }
 
 // = Cache eligibility
@@ -191,7 +176,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Vec<Value>> {
     let mut id = Cow::Borrowed(id);
     let mut values = Cow::Borrowed(values);
-    let mut traces_pending: Vec<(Span, TraceErrorKind)> = Vec::new();
+    let mut ids_pending: Vec<ast::Id> = Vec::new();
     loop {
         // Serve from the cache when eligible
         let cache = cache_rel(runner_ctx, ctx, &id);
@@ -222,12 +207,12 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         });
         // Nest failures under this call and then under the tail-calling callers
         let pure = runner_ctx.interp_mut().cache.end();
-        let mut result = result.nest(id.span.clone(), || {
-            ErrorKind::Trace(TraceErrorKind::Invocation { text: id.node.clone() })
-        });
-        if !matches!(result, ok!(_)) {
-            for (span, trace) in traces_pending.iter().rev() {
-                result = result.nest(span.clone(), || ErrorKind::Trace(trace.clone()));
+        let mut result =
+            result.nest(id.span.clone(), || format!("invocation of {} failed", id.node.clone()));
+        if result.is_err() {
+            for id in ids_pending.iter().rev() {
+                result =
+                    result.nest(id.span.clone(), || format!("invocation of {} failed", id.node));
             }
         }
         // Fatal errors and mismatches leave the loop here
@@ -246,9 +231,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             }
             // Tail call: remember this callee for the trace and loop
             RelResult::TailCall(id_tail, values_tail) => {
-                let id_caller = id.into_owned();
-                traces_pending
-                    .push((id_caller.span, TraceErrorKind::Invocation { text: id_caller.node }));
+                ids_pending.push(id.into_owned());
                 id = Cow::Owned(id_tail);
                 values = Cow::Owned(values_tail);
             }
@@ -272,8 +255,8 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (values, _) = unwrap_from_result!(result, &id.span);
+    // Preserve the failure classification across extern reentry
+    let (values, _) = unwrap!(result);
     if runner_ctx.interp().config.guard {
         // Output types are the notation arguments the hint leaves
         let typs = rel
@@ -288,14 +271,9 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
             crate::lang::hints::input::split(&rel.rel_signature.input_hint, typs),
             &id.span
         );
-        unwrap!(check_values(
-            runner_ctx.arena(),
-            ctx,
-            id,
-            &typs,
-            &values,
-            GuardErrorKind::RelationOutputMismatch { relation: id.node.clone() }
-        ));
+        unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
+            error::guard::relation_output_type_mismatch(id.node.clone())
+        }));
     }
     ok!(values)
 }
@@ -333,18 +311,13 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         // Falling through the whole body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // Function flows cannot appear in a relation
-        Flow::Return(_) => err!(
-            id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "relation cannot return a value",
-            }),
-        ),
+        Flow::Return(_) => {
+            err!(id.span.clone(), error::call::flow_invalid("relation cannot return a value"),)
+        }
         // Nor function tail calls
         Flow::TailFunc(..) => err!(
             id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "unexpected function tailcall in relation body",
-            }),
+            error::call::flow_invalid("unexpected function tailcall in relation body"),
         ),
     }
 }
@@ -362,7 +335,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     let mut id = Cow::Borrowed(id);
     let mut targs = Cow::Borrowed(targs);
     let mut values = Cow::Borrowed(values);
-    let mut traces_pending: Vec<(Span, TraceErrorKind)> = Vec::new();
+    let mut calls_pending: Vec<(ast::Id, Vec<ast::Typ>)> = Vec::new();
     loop {
         // Serve from the cache when eligible
         let cache = cache_func(runner_ctx, ctx, &id, &values);
@@ -398,11 +371,10 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         });
         // Nest failures under this call and then under the tail-calling callers
         let pure = runner_ctx.interp_mut().cache.end();
-        let mut result = result
-            .nest(id.span.clone(), || ErrorKind::Trace(TraceErrorKind::function(&id, &targs)));
-        if !matches!(result, ok!(_)) {
-            for (span, trace) in traces_pending.iter().rev() {
-                result = result.nest(span.clone(), || ErrorKind::Trace(trace.clone()));
+        let mut result = result.nest(id.span.clone(), || error::trace::function(&id, &targs));
+        if result.is_err() {
+            for (id, targs) in calls_pending.iter().rev() {
+                result = result.nest(id.span.clone(), || error::trace::function(id, targs));
             }
         }
         // Fatal errors and mismatches leave the loop here
@@ -417,8 +389,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
             }
             // Tail call: remember this callee for the trace and loop
             FuncResult::TailCall(id_tail, targs_tail, values_tail) => {
-                let trace = TraceErrorKind::function(&id, &targs);
-                traces_pending.push((id.into_owned().span, trace));
+                calls_pending.push((id.into_owned(), targs.into_owned()));
                 id = Cow::Owned(id_tail);
                 targs = Cow::Owned(targs_tail);
                 values = Cow::Owned(values_tail);
@@ -444,8 +415,8 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // A host error is fatal
-    let (value, _) = unwrap_from_result!(result, &id.span);
+    // Preserve the failure classification across extern reentry
+    let (value, _) = unwrap!(result);
     // Guard the result against the declared type
     if runner_ctx.interp().config.guard {
         unwrap!(check_func_output(
@@ -495,14 +466,7 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
             ok!(value)
         }
         // Builtin failures let the caller try another candidate
-        Err(error) => {
-            let recoverable = matches!(
-                error.kind.as_ref(),
-                ErrorKind::Host(HostErrorKind::Interface(InterfaceError::Builtin(_)))
-            );
-            let error = error.at_if_missing(&id.span);
-            if recoverable { unmatch!(vec![error]) } else { err!(vec![error]) }
-        }
+        Err(failure) => Err(failure.at_if_missing(&id.span)),
     }
 }
 
@@ -533,10 +497,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         // A return is the table result
         Flow::Return(value) => ok!(FuncResult::Return(value)),
         // Falling through or any other flow is an invalid table
-        _ => err!(
-            id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow { message: "table did not return a value" }),
-        ),
+        _ => err!(id.span.clone(), error::call::flow_invalid("table did not return a value"),),
     }
 }
 
@@ -580,16 +541,12 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         // Relation flows cannot appear in a function
         Flow::Result(_) => err!(
             id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "function cannot produce a relation result",
-            }),
+            error::call::flow_invalid("function cannot produce a relation result"),
         ),
         // Nor relation tail calls
         Flow::TailRel(..) => err!(
             id.span.clone(),
-            ErrorKind::Call(CallErrorKind::InvalidFlow {
-                message: "function cannot produce a relation tail call",
-            }),
+            error::call::flow_invalid("function cannot produce a relation tail call"),
         ),
     }
 }

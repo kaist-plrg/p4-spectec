@@ -1,3 +1,4 @@
+use crate::interp::report::ReportExt;
 use std::collections::VecDeque;
 
 use p4spec_rust::{
@@ -489,7 +490,7 @@ fn test_native_table_entries_append_priorities_and_default_changes_are_isolated(
             &[value_ctx, value_other_original, value_action_b],
         )
         .unwrap_err();
-    assert_eq!(error, error_expected);
+    assert_eq!(error.into_report().render(), error_expected.into_report().render());
     assert_eq!(
         table::find_table(&mut runner.context(), value_arch_updated, value_other).unwrap(),
         value_other_original

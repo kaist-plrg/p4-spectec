@@ -316,7 +316,7 @@ fn test_run_sl_and_pl_distinguish_syntax_and_runtime_failures() {
     for stage in ["--sl", "--pl"] {
         for (relation, program, category) in [
             ("Pass", "cli/run/invalid.p4", "syntax error:"),
-            ("Reject", "cli/run/empty.p4", "runtime error:"),
+            ("Reject", "cli/run/empty.p4", "note: execution failed"),
         ] {
             let output = run_command_with(stage, relation, program).output().unwrap();
             assert_eq!(output.status.code(), Some(1), "{stage}");
@@ -345,7 +345,7 @@ fn test_run_sl_and_pl_honor_cache_det_and_guard_controls() {
                 .output()
                 .unwrap();
             assert_eq!(output.status.code(), Some(1), "{stage}");
-            assert!(String::from_utf8_lossy(&output.stderr).starts_with("runtime error:"));
+            assert!(String::from_utf8_lossy(&output.stderr).contains("error[runtime/"));
         }
     }
 }
@@ -380,7 +380,7 @@ fn test_run_al_initializes_dummy_extern_objects() {
 fn test_run_al_distinguishes_syntax_and_runtime_failures() {
     for (relation, program, category) in [
         ("Pass", "cli/run/invalid.p4", "syntax error:"),
-        ("Reject", "cli/run/empty.p4", "runtime error:"),
+        ("Reject", "cli/run/empty.p4", "note: execution failed"),
     ] {
         let output = run_command(relation, program).output().unwrap();
         assert_eq!(output.status.code(), Some(1));
@@ -419,7 +419,7 @@ fn test_run_al_det_and_guard_controls_change_execution() {
             .output()
             .unwrap();
         assert_eq!(output.status.code(), Some(1));
-        assert!(String::from_utf8_lossy(&output.stderr).starts_with("runtime error:"));
+        assert!(String::from_utf8_lossy(&output.stderr).contains("error[runtime/"));
     }
     let output = run_command("Pass", "cli/run/empty.p4")
         .args(["--det", "--guard"])
@@ -706,9 +706,10 @@ fn test_sim_al_runs_all_native_architectures() {
 #[test]
 fn test_sim_interpreters_distinguish_p4_syntax_and_runtime_failures() {
     for stage in ["--al", "--sl", "--pl"] {
-        for (program, category) in
-            [("cli/run/invalid.p4", "syntax error:"), ("cli/run/empty.p4", "runtime error:")]
-        {
+        for (program, category) in [
+            ("cli/run/invalid.p4", "syntax error:"),
+            ("cli/run/empty.p4", "note: invocation of EBPF_init failed"),
+        ] {
             let output = binary()
                 .args(["sim", stage])
                 .arg(fixture("cli/run/types.watsup"))

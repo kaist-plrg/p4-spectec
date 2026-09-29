@@ -1,5 +1,5 @@
-use p4spec_rust::interp::shared::error::{Error, ErrorKind, HostErrorKind};
 use p4spec_rust::lang::data::value::ValueArena;
+use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use std::path::Path;
 
 use p4spec_rust::{
@@ -8,7 +8,7 @@ use p4spec_rust::{
     interp::al::{AlInterp, Config, context::Global},
     lang::data::value::Value,
     pass::{algo, elaborate},
-    runner::{BuiltinInterface, Extern, ExternError, Runner, Spec},
+    runner::{BuiltinInterface, Extern, Runner, Spec},
 };
 
 #[path = "core/mod.rs"]
@@ -44,15 +44,19 @@ fn runner_from_spec<Ext: Extern>(
     )
 }
 
-fn has_extern_failure(error: &Error, expected: &str) -> bool {
-    matches!(
-        error.kind.as_ref(),
-        ErrorKind::Host(HostErrorKind::Extern(ExternError::Failure(message)))
-            if message == expected
-    ) || error
-        .children
-        .iter()
-        .any(|error| has_extern_failure(error, expected))
+fn has_extern_failure(failure: &Failure, expected: &str) -> bool {
+    let Failure::Fatal(report) = failure else { return false };
+    let mut pending = vec![report.as_ref()];
+    while let Some(report) = pending.pop() {
+        if let ReportKind::Cause(diagnostic) = &report.kind
+            && diagnostic.code.as_deref() == Some("runtime/extern-failed")
+            && diagnostic.message == expected
+        {
+            return true;
+        }
+        pending.extend(&report.children);
+    }
+    false
 }
 
 fn parse_program(arena: &mut ValueArena, path: &Path) -> Value {

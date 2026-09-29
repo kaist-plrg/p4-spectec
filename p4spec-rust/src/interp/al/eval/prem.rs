@@ -8,10 +8,10 @@
 
 use super::super::{AlInterp, context::Context};
 use super::{assign, expr};
-use crate::interp::shared::error::{PremErrorKind, TraceErrorKind};
+use crate::interp::shared::backtrack::BacktrackExt;
+use crate::interp::shared::error;
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
-    error::ErrorKind,
     eval::{Invoker, iter},
 };
 use crate::runtime::envs::interp::al::ast_prepared as ast;
@@ -38,9 +38,7 @@ pub fn eval_prem<'global, Iface: Interface, Ext: Extern>(
         ast::PremKind::Debug(prem) => eval_debug_prem(runner_ctx, ctx, prem),
     };
     // Trace the premise on failure
-    result.nest(prem.span.clone(), || {
-        ErrorKind::Trace(TraceErrorKind::Evaluation { text: Print::to_string(prem) })
-    })
+    result.nest(prem.span.clone(), || format!("evaluation of {} failed", Print::to_string(prem)))
 }
 
 /// Evaluates premises in order, threading the context.
@@ -84,10 +82,7 @@ fn eval_if_prem<'global, Iface: Interface, Ext: Extern>(
     if unwrap_from_result!(get::bool(runner_ctx.arena(), &value), &prem.exp.span) {
         ok!(ctx)
     } else {
-        unmatch!(
-            prem.exp.span.clone(),
-            ErrorKind::Prem(PremErrorKind::ConditionNotMet { exp: Print::to_string(&prem.exp) }),
-        )
+        unmatch!(prem.exp.span.clone(), error::prem::condition_unmet(Print::to_string(&prem.exp)),)
     }
 }
 
@@ -107,9 +102,14 @@ fn eval_if_hold_prem<'global, Iface: Interface, Ext: Extern>(
         // Fatal errors propagate
         err!(errors) => err!(errors),
         // It did not apply: the premise fails, naming the relation
-        unmatch!(errors) => unmatch!(errors).nest(prem.id.span.clone(), || {
-            ErrorKind::Prem(PremErrorKind::HoldConditionNotMet { relation: prem.id.node.clone() })
-        }),
+        unmatch!(errors) => {
+            let mut report = error::at(
+                error::prem::hold_condition_unmet(prem.id.node.clone()),
+                prem.id.span.clone(),
+            );
+            report.children = errors;
+            unmatch!(vec![*report])
+        }
     }
 }
 
@@ -127,9 +127,7 @@ fn eval_if_not_hold_prem<'global, Iface: Interface, Ext: Extern>(
         // The relation applied: the premise fails
         ok!(_) => unmatch!(
             prem.id.span.clone(),
-            ErrorKind::Prem(PremErrorKind::NotHoldConditionNotMet {
-                relation: prem.id.node.clone(),
-            }),
+            error::prem::not_hold_condition_unmet(prem.id.node.clone()),
         ),
         // Fatal errors propagate
         err!(errors) => err!(errors),

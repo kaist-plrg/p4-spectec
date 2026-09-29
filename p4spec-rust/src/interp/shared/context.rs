@@ -6,12 +6,13 @@
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
 //! `FuncSignature` reads function types from each stage's prepared syntax.
 
+use crate::interp::shared::error;
 use std::rc::Rc;
 
 use crate::{
     interp::shared::{
         backtrack::{Backtrack, ok, unwrap_from_result},
-        error::{ContextErrorKind, EntityKind, Error, ErrorKind},
+        error::{EntityKind, Error},
         prepare::ast,
     },
     lang::{
@@ -177,7 +178,10 @@ impl<R, F> Global<R, F> {
     /// Inserts a type, rejecting duplicates without replacing the definition.
     pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         if self.tdenv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Type, id.node, id.span));
+            return Err(error::at(
+                error::context::binding_repeated(EntityKind::Type, id.node),
+                id.span,
+            ));
         }
         self.tdenv.insert(id, typdef);
         Ok(())
@@ -192,7 +196,10 @@ impl<R, F> Global<R, F> {
     {
         // Check before the persistent map can replace the existing callable
         if self.renv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Relation, id.node, id.span));
+            return Err(error::at(
+                error::context::binding_repeated(EntityKind::Relation, id.node),
+                id.span,
+            ));
         }
         self.renv.insert(id, rel);
         Ok(())
@@ -203,7 +210,10 @@ impl<R, F> Global<R, F> {
     /// Inserts a prepared function, sharing it with future function arguments.
     pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) -> Result<(), Error> {
         if self.fenv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Function, id.node, id.span));
+            return Err(error::at(
+                error::context::binding_repeated(EntityKind::Function, id.node),
+                id.span,
+            ));
         }
         self.fenv.insert(id, Rc::new(func));
         Ok(())
@@ -281,8 +291,12 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 
     /// Finds a type in either scope or reports the lookup location.
     pub fn find_typdef<'a>(&'a self, id: &ast::Id) -> Result<&'a TypeDef, Error> {
-        self.find_typdef_opt(id)
-            .ok_or_else(|| Error::undefined(EntityKind::Type, id.node.clone(), id.span.clone()))
+        self.find_typdef_opt(id).ok_or_else(|| {
+            error::at(
+                error::context::binding_undefined(EntityKind::Type, id.node.clone()),
+                id.span.clone(),
+            )
+        })
     }
 
     // - Relations
@@ -294,8 +308,12 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 
     /// Finds a global relation or reports the lookup location.
     pub fn find_rel(&self, id: &ast::Id) -> Result<&'global Callable<R>, Error> {
-        self.find_rel_opt(id)
-            .ok_or_else(|| Error::undefined(EntityKind::Relation, id.node.clone(), id.span.clone()))
+        self.find_rel_opt(id).ok_or_else(|| {
+            error::at(
+                error::context::binding_undefined(EntityKind::Relation, id.node.clone()),
+                id.span.clone(),
+            )
+        })
     }
 
     // - Functions
@@ -314,8 +332,12 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         &'a self,
         id: &ast::Id,
     ) -> Result<(Scope, &'a Rc<Callable<F>>), Error> {
-        self.find_func_opt(id)
-            .ok_or_else(|| Error::undefined(EntityKind::Function, id.node.clone(), id.span.clone()))
+        self.find_func_opt(id).ok_or_else(|| {
+            error::at(
+                error::context::binding_undefined(EntityKind::Function, id.node.clone()),
+                id.span.clone(),
+            )
+        })
     }
 
     // == Adders
@@ -325,7 +347,10 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     /// Binds a type locally; the id must be new in both scopes.
     pub fn add_typdef(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         if self.find_typdef_opt(&id).is_some() {
-            return Err(Error::duplicate(EntityKind::Type, id.node, id.span));
+            return Err(error::at(
+                error::context::binding_repeated(EntityKind::Type, id.node),
+                id.span,
+            ));
         }
         self.local.tdenv.insert(id, typdef);
         Ok(())
@@ -371,7 +396,10 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     ) -> Result<(&'a [ast::TParam], &'a ast::DefTyp), Error> {
         match self.find_typdef(id)? {
             TypeDef::Defined(tparams, def_typ) => Ok((tparams, def_typ)),
-            _ => Err(Error::undefined(EntityKind::DefinedType, id.node.clone(), id.span.clone())),
+            _ => Err(error::at(
+                error::context::binding_undefined(EntityKind::DefinedType, id.node.clone()),
+                id.span.clone(),
+            )),
         }
     }
 
@@ -396,7 +424,10 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
     fn add_typdef_local(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         // A type parameter may shadow a global definition
         if self.local.tdenv.contains_key(&id) {
-            return Err(Error::duplicate(EntityKind::Type, id.node, id.span));
+            return Err(error::at(
+                error::context::binding_repeated(EntityKind::Type, id.node),
+                id.span,
+            ));
         }
         self.local.tdenv.insert(id, typdef);
         Ok(())
@@ -412,7 +443,10 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     fn add_func(&mut self, id: ast::Id, func: Rc<Callable<F>>) -> Result<(), Error> {
         if self.find_func_opt(&id).is_some() {
-            return Err(Error::duplicate(EntityKind::Function, id.node, id.span));
+            return Err(error::at(
+                error::context::binding_repeated(EntityKind::Function, id.node),
+                id.span,
+            ));
         }
         self.local.fenv.insert(id, func);
         Ok(())
@@ -442,15 +476,17 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         for var in vars {
             // Every variable must be bound
             let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
-                Error::undefined(
-                    EntityKind::Value,
-                    Print::to_string(&var.var),
+                error::at(
+                    error::context::binding_undefined(
+                        EntityKind::Value,
+                        Print::to_string(&var.var),
+                    ),
                     var.var.id.span.clone(),
                 )
             })?;
             // Each variable must hold a list
             let values = get::list(arena, value)
-                .map_err(|error| Error::from(error).at_if_missing(&var.var.id.span))?;
+                .map_err(|error| error::locate(error.into(), &var.var.id.span))?;
             values_by_var.push(values);
         }
         // No variables: nothing to iterate
@@ -461,12 +497,8 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let len = values.len();
         for values in &values_by_var {
             if values.len() != len {
-                return Err(Error::new(
-                    ErrorKind::Context(ContextErrorKind::IterationLengthMismatch {
-                        expected: len,
-                        actual: values.len(),
-                    }),
-                    Span::default(),
+                return Err(Box::new(
+                    error::context::iteration_length_mismatch(len, values.len()).into(),
                 ));
             }
         }
@@ -482,15 +514,17 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         for var in vars {
             // Every variable must be bound
             let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
-                Error::undefined(
-                    EntityKind::Value,
-                    Print::to_string(&var.var),
+                error::at(
+                    error::context::binding_undefined(
+                        EntityKind::Value,
+                        Print::to_string(&var.var),
+                    ),
                     var.var.id.span.clone(),
                 )
             })?;
             // Each variable must hold an option
             let value = get::opt(arena, value)
-                .map_err(|error| Error::from(error).at_if_missing(&var.var.id.span))?;
+                .map_err(|error| error::locate(error.into(), &var.var.id.span))?;
             values.push(value);
         }
         // All present, all absent, or a mismatch
@@ -499,10 +533,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         } else if values.iter().all(|value| value.is_none()) {
             Ok(None)
         } else {
-            Err(Error::new(
-                ErrorKind::Context(ContextErrorKind::OptionalityMismatch),
-                Span::default(),
-            ))
+            Err(Box::new(error::context::iteration_optionality_mismatch().into()))
         }
     }
 
@@ -519,9 +550,11 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         for (var, values) in vars.iter().zip(values_by_var) {
             values.push(*unwrap_from_result!(
                 self.find_value_at_slot(var.slot).ok_or_else(|| {
-                    Error::undefined(
-                        EntityKind::Value,
-                        Print::to_string(&var.var),
+                    error::at(
+                        error::context::binding_undefined(
+                            EntityKind::Value,
+                            Print::to_string(&var.var),
+                        ),
                         var.var.id.span.clone(),
                     )
                 }),

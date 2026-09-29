@@ -5,19 +5,17 @@
 //! `choose_deterministic` combines outcomes and rejects multiple conclusions.
 //! Evaluators supply candidates and manage their local bindings.
 
+use crate::interp::shared::error;
 use crate::{
-    interp::shared::{
-        backtrack::{Backtrack, err, ok, unmatch, unwrap},
-        error::{CallErrorKind, Error, ErrorKind, PremErrorKind},
-    },
+    interp::shared::backtrack::{Backtrack, err, ok, unmatch, unwrap},
     lang::{common::source::Span, data::value::Value},
 };
 
 /// Records whether an instruction continues or concludes its callable.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Flow {
     /// Fell through, with the failures met so far.
-    Cont(Vec<Error>),
+    Cont(Vec<crate::diagnostic::Report>),
     /// A function body returned a value.
     Return(Value),
     /// A relation body produced its outputs.
@@ -28,8 +26,8 @@ impl Flow {
     // = Continuation
 
     /// Creates a recoverable continuation with its premise diagnostic.
-    pub(crate) fn cont(span: Span, error: PremErrorKind) -> Self {
-        Self::Cont(vec![Error::new(ErrorKind::Prem(error), span)])
+    pub(crate) fn cont(span: Span, error: crate::diagnostic::Diagnostic) -> Self {
+        Self::Cont(vec![*error::at(error, span)])
     }
 
     /// Turns a mismatch into a continuation; errors and flows pass through.
@@ -46,9 +44,16 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the most deeply nested failure, preferring the later one on ties.
-pub(super) fn retain_deepest_errors(errors: &mut Vec<Error>, errors_post: Vec<Error>) {
-    if errors_post.iter().map(Error::depth).max().unwrap_or(0)
-        >= errors.iter().map(Error::depth).max().unwrap_or(0)
+pub(super) fn retain_deepest_errors(
+    errors: &mut Vec<crate::diagnostic::Report>,
+    errors_post: Vec<crate::diagnostic::Report>,
+) {
+    if errors_post
+        .iter()
+        .map(error::trace::depth)
+        .max()
+        .unwrap_or(0)
+        >= errors.iter().map(error::trace::depth).max().unwrap_or(0)
     {
         *errors = errors_post;
     }
@@ -87,16 +92,11 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
         (Flow::Cont(_), flow) | (flow, Flow::Cont(_)) => flow,
         // Two of the same kind: nondeterminism
         (Flow::Return(_), Flow::Return(_)) | (Flow::Result(_), Flow::Result(_)) => {
-            return err!(span.clone(), ErrorKind::Call(CallErrorKind::InstructionNondeterminism));
+            return err!(span.clone(), error::call::instruction_nondeterministic());
         }
         // Different conclusion kinds cannot belong to the same callable
         _ => {
-            return err!(
-                span.clone(),
-                ErrorKind::Call(CallErrorKind::InvalidFlow {
-                    message: "incompatible PL conclusions"
-                })
-            );
+            return err!(span.clone(), error::call::flow_invalid("incompatible PL conclusions"));
         }
     };
     ok!(flow)

@@ -1,6 +1,6 @@
+use crate::interp::report::{IntoReport, ReportExt};
 use p4spec_rust::interp::shared::context::{IterContext, ReadContext, WriteContext};
-use p4spec_rust::interp::shared::error::ContextErrorKind;
-use p4spec_rust::interp::shared::error::{EntityKind, ErrorKind};
+use p4spec_rust::interp::shared::error::EntityKind;
 use p4spec_rust::lang::data::value::ValueArena;
 use p4spec_rust::runtime::envs::interp::shared::{callable::Callable, frame::FrameLayout};
 use std::rc::Rc;
@@ -64,11 +64,13 @@ fn test_duplicate_global_definition_uses_second_identifier_span() {
             ast::DefKind::MetaFunc(func("x", 9)),
         ),
     ] {
-        let error = Global::load(vec![def(def_a), def(def_b)]).unwrap_err();
-        assert_eq!(error.span, id("x", 9).span);
+        let error = Global::load(vec![def(def_a), def(def_b)])
+            .unwrap_err()
+            .into_report();
+        assert_eq!(error.span(), id("x", 9).span);
         assert_eq!(
-            *error.kind,
-            ErrorKind::Context(ContextErrorKind::Duplicate { kind, name: "x".into() })
+            error.diagnostic().message,
+            p4spec_rust::interp::shared::error::context::binding_repeated(kind, "x".into()).message
         );
     }
 }
@@ -118,16 +120,18 @@ fn test_local_definition_duplicates_do_not_replace_bindings() {
     ])
     .unwrap();
     let mut ctx = Context::new(&global);
-    assert!(matches!(
-        *ctx.add_func(id("f", 7), Callable::prepare(func("f", 7)).into())
+    assert!(
+        ctx.add_func(id("f", 7), Callable::prepare(func("f", 7)).into())
             .unwrap_err()
-            .kind,
-        ErrorKind::Context(ContextErrorKind::Duplicate { kind: EntityKind::Function, .. })
-    ));
+            .into_report()
+            .code()
+            == Some("runtime/binding-repeated")
+    );
     assert_eq!(
         ctx.add_typdef(id("T", 7), TypeDef::Parameter)
             .unwrap_err()
-            .span,
+            .into_report()
+            .span(),
         id("T", 7).span
     );
     ctx.add_typdef(id("U", 2), TypeDef::Extern).unwrap();
@@ -179,14 +183,16 @@ fn test_missing_value_reports_iterator_path_and_lookup_span() {
     let error = Context::new(&global)
         .localize_with_layout(&layout.into())
         .find_opt_values_by_var(&ValueArena::new(), &[slot])
-        .unwrap_err();
-    assert_eq!(error.span, id("x", 9).span);
+        .unwrap_err()
+        .into_report();
+    assert_eq!(error.span(), id("x", 9).span);
     assert_eq!(
-        *error.kind,
-        ErrorKind::Context(ContextErrorKind::Undefined {
-            kind: EntityKind::Value,
-            name: "x*?".into()
-        })
+        error.diagnostic().message,
+        p4spec_rust::interp::shared::error::context::binding_undefined(
+            EntityKind::Value,
+            "x*?".into()
+        )
+        .message
     );
 }
 
@@ -289,14 +295,16 @@ fn test_duplicate_relations_share_namespace_and_report_second_span() {
     }));
     let error =
         Global::load(vec![def(ast::DefKind::Rel(rel)), def(ast::DefKind::Rel(rel_duplicate))])
-            .unwrap_err();
-    assert_eq!(error.span, id("r", 9).span);
+            .unwrap_err()
+            .into_report();
+    assert_eq!(error.span(), id("r", 9).span);
     assert_eq!(
-        *error.kind,
-        ErrorKind::Context(ContextErrorKind::Duplicate {
-            kind: EntityKind::Relation,
-            name: "r".into()
-        })
+        error.diagnostic().message,
+        p4spec_rust::interp::shared::error::context::binding_repeated(
+            EntityKind::Relation,
+            "r".into()
+        )
+        .message
     );
 }
 
@@ -306,14 +314,15 @@ fn test_definition_lookup_errors_and_local_type_isolation() {
     let ctx = Context::new(&global);
     let id = id("missing", 8);
     for (kind, error) in [
-        (EntityKind::Type, ctx.find_typdef(&id).unwrap_err()),
-        (EntityKind::Relation, ctx.find_rel(&id).unwrap_err()),
-        (EntityKind::Function, ctx.find_func_with_scope(&id).unwrap_err()),
+        (EntityKind::Type, ctx.find_typdef(&id).unwrap_err().into_report()),
+        (EntityKind::Relation, ctx.find_rel(&id).unwrap_err().into_report()),
+        (EntityKind::Function, ctx.find_func_with_scope(&id).unwrap_err().into_report()),
     ] {
-        assert_eq!(error.span, id.span);
+        assert_eq!(error.span(), id.span);
         assert_eq!(
-            *error.kind,
-            ErrorKind::Context(ContextErrorKind::Undefined { kind, name: id.node.clone() })
+            error.diagnostic().message,
+            p4spec_rust::interp::shared::error::context::binding_undefined(kind, id.node.clone())
+                .message
         );
     }
     let mut ctx_child = ctx.clone();
@@ -324,10 +333,16 @@ fn test_definition_lookup_errors_and_local_type_isolation() {
     assert!(ctx.find_typdef_opt(&id).is_none());
     assert!(ctx.find_func_opt(&id).is_none());
     assert_eq!(
-        *ctx_child.find_defined_typdef(&id).unwrap_err().kind,
-        ErrorKind::Context(ContextErrorKind::Undefined {
-            kind: EntityKind::DefinedType,
-            name: id.node
-        })
+        ctx_child
+            .find_defined_typdef(&id)
+            .unwrap_err()
+            .into_report()
+            .diagnostic()
+            .message,
+        p4spec_rust::interp::shared::error::context::binding_undefined(
+            EntityKind::DefinedType,
+            id.node
+        )
+        .message
     );
 }

@@ -1,139 +1,178 @@
-//! Recoverable mismatches and fatal errors from interpreter operations
+//! Recoverable mismatches and fatal interpreter failures
 //!
-//! `Err` is fatal; `Unmatch` is a mismatch the caller may recover from
-//! by trying another alternative.
-//! Stage-specific control stays in AL candidate selection
-//! and SL flow evaluation;
-//! this result only propagates values and failures.
+//! Failure classification survives runner and extern reentry.
+//! Ordinary Result propagation preserves both variants;
+//! only the final output boundary promotes exhausted alternatives to a report.
 
-use super::error::{Error, ErrorKind};
-use crate::lang::common::source::Span;
+use super::error::{self, Error};
+use crate::{
+    diagnostic::{Diagnostic, Report},
+    lang::common::source::Span,
+    runner::{ExternError, InterfaceError},
+};
 
-/// A value, a fatal error, or a recoverable mismatch.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Backtrack<T> {
-    /// The operation produced a value.
-    Ok(T),
-    /// A fatal failure with its trace.
-    Err(Vec<Error>),
-    /// A mismatch the caller may recover from by trying another alternative.
-    Unmatch(Vec<Error>),
+/// Separates aborting execution from trying another candidate.
+#[derive(Debug)]
+pub enum Failure {
+    /// Aborts execution without retrying another candidate.
+    Fatal(Error),
+    /// Retains the ordered reports of candidates that did not match.
+    Mismatch(Vec<Report>),
 }
 
-// = Constructors
+/// Carries a result without erasing recoverability.
+pub type Backtrack<T> = Result<T, Failure>;
 
-impl<T> Backtrack<T> {
-    /// Lifts a plain result, locating an unlocated error at `span`.
-    pub fn from_result(result: Result<T, impl Into<Error>>, span: &Span) -> Self {
-        match result {
-            Ok(value) => Self::Ok(value),
-            Err(error) => Self::Err(vec![error.into().at_if_missing(span)]),
+// = Failure transport
+
+impl Failure {
+    /// Converts exhausted mismatch at the final output boundary.
+    pub fn into_report(self) -> Error {
+        match self {
+            Self::Fatal(report) => report,
+            Self::Mismatch(reports) => error::trace::execution(reports),
         }
     }
 
-    /// A single fatal error at `span`.
-    pub fn err(span: Span, kind: ErrorKind) -> Self {
-        Self::Err(vec![Error::new(kind, span)])
+    /// Adds context without changing classification or replacing incoming labels.
+    pub fn with_frame(self, span: Span, message: impl Into<String>) -> Self {
+        match self {
+            Self::Fatal(report) => {
+                Self::Fatal(Box::new(Report::frame(span, message, vec![*report])))
+            }
+            Self::Mismatch(reports) => Self::Mismatch(vec![Report::frame(span, message, reports)]),
+        }
     }
 
-    /// A single mismatch at `span`.
-    pub fn unmatch(span: Span, kind: ErrorKind) -> Self {
-        Self::Unmatch(vec![Error::new(kind, span)])
+    /// Locates local causes without rewriting existing report context.
+    pub fn at_if_missing(self, span: &Span) -> Self {
+        match self {
+            Self::Fatal(report) => Self::Fatal(error::locate(report, span)),
+            Self::Mismatch(reports) => Self::Mismatch(
+                reports
+                    .into_iter()
+                    .map(|report| *error::locate(Box::new(report), span))
+                    .collect(),
+            ),
+        }
     }
 }
 
-/// Builds `Backtrack::Ok`.
+impl From<Error> for Failure {
+    fn from(report: Error) -> Self {
+        Self::Fatal(report)
+    }
+}
+
+impl From<InterfaceError> for Failure {
+    fn from(error: InterfaceError) -> Self {
+        // Classify builtin rejection before converting its diagnostic payload
+        let recoverable = matches!(&error, InterfaceError::Builtin(_));
+        let report: Error = error.into();
+        if recoverable { Self::Mismatch(vec![*report]) } else { Self::Fatal(report) }
+    }
+}
+
+impl From<ExternError> for Failure {
+    fn from(error: ExternError) -> Self {
+        Self::Fatal(error.into())
+    }
+}
+
+impl From<crate::lang::data::value::ValueError> for Failure {
+    fn from(error: crate::lang::data::value::ValueError) -> Self {
+        Self::Fatal(error.into())
+    }
+}
+
+impl From<crate::lang::common::prim::num::NumericError> for Failure {
+    fn from(error: crate::lang::common::prim::num::NumericError) -> Self {
+        Self::Fatal(error.into())
+    }
+}
+
+impl std::fmt::Display for Failure {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Fatal(report) => std::fmt::Display::fmt(report, fmt),
+            Self::Mismatch(_) => fmt.write_str("execution did not match"),
+        }
+    }
+}
+impl std::error::Error for Failure {}
+
+// = Local operation lifting
+
+/// Lifts a local operation failure at its owning source location.
+pub fn from_result<T>(result: Result<T, impl Into<Error>>, span: &Span) -> Backtrack<T> {
+    result.map_err(|error| Failure::Fatal(error::locate(error.into(), span)))
+}
+
+/// Rejects a violated runtime check at the owning operation.
+pub fn check(
+    condition: bool,
+    span: Span,
+    diagnostic: impl FnOnce() -> Diagnostic,
+) -> Backtrack<()> {
+    if condition { Ok(()) } else { Err(Failure::Fatal(error::at(diagnostic(), span))) }
+}
+
+/// Adds frames lazily to evaluation results.
+pub trait BacktrackExt<T> {
+    /// Wraps failures without formatting messages on the successful path.
+    fn nest(self, span: Span, message: impl FnOnce() -> String) -> Self;
+}
+
+impl<T> BacktrackExt<T> for Backtrack<T> {
+    fn nest(self, span: Span, message: impl FnOnce() -> String) -> Self {
+        self.map_err(|failure| failure.with_frame(span, message()))
+    }
+}
+
+// = Control syntax
+
+/// Constructs or matches a successful result.
 macro_rules! ok {
-    ($($value:tt)*) => {
-        $crate::interp::shared::backtrack::Backtrack::Ok($($value)*)
-    };
+    ($($value:tt)*) => { Ok($($value)*) };
 }
 pub(crate) use ok;
 
-/// Builds `Backtrack::Err` from a span and kind, or from a trace list.
+/// Constructs or matches a fatal report.
 macro_rules! err {
-    ($span:expr, $kind:expr $(,)?) => {
-        $crate::interp::shared::backtrack::Backtrack::err($span, $kind)
+    ($span:expr, $diagnostic:expr $(,)?) => {
+        Err($crate::interp::shared::backtrack::Failure::Fatal(
+            $crate::interp::shared::error::at($diagnostic, $span)))
     };
-    ($($errors:tt)*) => {
-        $crate::interp::shared::backtrack::Backtrack::Err($($errors)*)
+    ($($report:tt)*) => {
+        Err($crate::interp::shared::backtrack::Failure::Fatal($($report)*))
     };
 }
 pub(crate) use err;
 
-/// Builds `Backtrack::Unmatch` from a span and kind, or from a trace list.
+/// Constructs or matches recoverable alternatives.
 macro_rules! unmatch {
-    ($span:expr, $kind:expr $(,)?) => {
-        $crate::interp::shared::backtrack::Backtrack::unmatch($span, $kind)
+    ($span:expr, $diagnostic:expr $(,)?) => {
+        Err($crate::interp::shared::backtrack::Failure::Mismatch(vec![
+            *$crate::interp::shared::error::at($diagnostic, $span)]))
     };
-    ($($errors:tt)*) => {
-        $crate::interp::shared::backtrack::Backtrack::Unmatch($($errors)*)
+    ($($reports:tt)*) => {
+        Err($crate::interp::shared::backtrack::Failure::Mismatch($($reports)*))
     };
 }
 pub(crate) use unmatch;
 
-// = Finishing
-
-impl<T> Backtrack<T> {
-    /// Finishes a backtrack; both failure kinds become execution errors.
-    pub fn finish(self) -> Result<T, Error> {
-        match self {
-            ok!(value) => Ok(value),
-            err!(traces) | unmatch!(traces) => Err(Error::execution(traces)),
-        }
-    }
-}
-
-// = Propagation
-
-/// Returns early from the enclosing function on `Err` or `Unmatch`, like `?`.
+/// Propagates the complete typed failure, like the question-mark operator.
 macro_rules! unwrap {
     ($result:expr) => {
-        match $result {
-            $crate::interp::shared::backtrack::ok!(value) => value,
-            $crate::interp::shared::backtrack::err!(traces) => {
-                return $crate::interp::shared::backtrack::err!(traces)
-            }
-            $crate::interp::shared::backtrack::unmatch!(traces) => {
-                return $crate::interp::shared::backtrack::unmatch!(traces)
-            }
-        }
+        $result?
     };
 }
 pub(crate) use unwrap;
 
-/// Lifts a plain result at `span`, then unwraps it.
+/// Lifts a local operation at its source location before propagation.
 macro_rules! unwrap_from_result {
     ($result:expr, $span:expr $(,)?) => {
-        $crate::interp::shared::backtrack::unwrap!(
-            $crate::interp::shared::backtrack::Backtrack::from_result($result, $span)
-        )
+        $crate::interp::shared::backtrack::from_result($result, $span)?
     };
 }
 pub(crate) use unwrap_from_result;
-
-// = Nesting
-
-impl<T> Backtrack<T> {
-    /// Wraps the failure traces under a new parent error at `span`.
-    pub fn nest(self, span: Span, kind: impl FnOnce() -> ErrorKind) -> Self {
-        match self {
-            Self::Ok(value) => Self::Ok(value),
-            Self::Err(children) => {
-                Self::Err(vec![Error { kind: Box::new(kind()), span, children }])
-            }
-            Self::Unmatch(children) => {
-                Self::Unmatch(vec![Error { kind: Box::new(kind()), span, children }])
-            }
-        }
-    }
-}
-
-// = Checks
-
-impl Backtrack<()> {
-    /// Fails with `kind` at `span` unless `condition` holds.
-    pub fn check(condition: bool, span: Span, kind: ErrorKind) -> Self {
-        if condition { Self::Ok(()) } else { Self::err(span, kind) }
-    }
-}

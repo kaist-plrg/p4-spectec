@@ -14,7 +14,7 @@ use super::{
 };
 use crate::{
     interface::p4::{error::P4Error, parse},
-    interp::shared::error::Error as InterpError,
+    interp::shared::backtrack::Failure as InterpError,
     lang::{
         common::source::{Phrase, Span},
         data::{

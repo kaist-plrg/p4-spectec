@@ -4,7 +4,7 @@
 //! whose patterns live in the parameter, not in a separate argument list.
 
 use super::super::context::Context;
-use crate::interp::shared::error::{AssignErrorKind, ErrorKind};
+use crate::interp::shared::error;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
     interp::shared::backtrack::{Backtrack, ok, unwrap},
@@ -38,13 +38,10 @@ pub(in crate::interp::sl) fn assign_params<'global>(
     values: &[Value],
 ) -> Backtrack<Context<'global>> {
     // Argument count must match the parameters
-    unwrap!(Backtrack::check(
+    unwrap!(crate::interp::shared::backtrack::check(
         params.len() == values.len(),
         crate::lang::common::source::Span::default(),
-        ErrorKind::Assign(AssignErrorKind::ArgumentArityMismatch {
-            expected: params.len(),
-            actual: values.len()
-        })
+        || error::assign::assignment_argument_arity_mismatch(params.len(), values.len())
     ));
     // Bind pairwise, threading the context
     for (param, value) in params.iter().zip(values) {

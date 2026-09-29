@@ -4,6 +4,7 @@
 //! every failure is located at the span the caller passes in.
 
 use super::super::context::ReadContext;
+use crate::interp::shared::error;
 
 use num_bigint::BigInt;
 
@@ -20,10 +21,7 @@ use crate::{
     runtime::ops::typ::{Theta, subst_typ},
 };
 
-use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result},
-    error::{ErrorKind, ExprErrorKind},
-};
+use crate::interp::shared::backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result};
 
 // = Operators
 
@@ -129,7 +127,7 @@ pub(crate) fn sub(
         let id = crate::phrase!(node: name.to_owned(), span: span.clone());
         ctx.find_func_typ(&id).ok()
     };
-    Backtrack::from_result(
+    crate::interp::shared::backtrack::from_result(
         crate::runtime::ops::value::check(arena, &find_typdef_opt, &find_func, subcheck, &value),
         span,
     )
@@ -213,10 +211,7 @@ pub(crate) fn cast_up(
             if typs.len() != values.len() {
                 return err!(
                     span.clone(),
-                    ErrorKind::Expr(ExprErrorKind::TupleCastArityMismatch {
-                        expected: typs.len(),
-                        actual: values.len(),
-                    }),
+                    error::expr::tuple_cast_arity_mismatch(typs.len(), values.len()),
                 );
             }
             let mut values_cast = Vec::with_capacity(values.len());
@@ -298,10 +293,7 @@ pub(crate) fn cast_down(
             if typs.len() != values.len() {
                 return err!(
                     span.clone(),
-                    ErrorKind::Expr(ExprErrorKind::TupleCastArityMismatch {
-                        expected: typs.len(),
-                        actual: values.len(),
-                    }),
+                    error::expr::tuple_cast_arity_mismatch(typs.len(), values.len()),
                 );
             }
             let mut values_cast = Vec::with_capacity(values.len());
@@ -360,7 +352,7 @@ pub(crate) fn access_dot(
         .find(|(field, _)| field.node == atom.node)
     {
         Some((_, value)) => ok!(*value),
-        None => err!(atom.span.clone(), ErrorKind::Expr(ExprErrorKind::UndefinedField)),
+        None => err!(atom.span.clone(), error::expr::field_undefined()),
     }
 }
 
@@ -386,14 +378,11 @@ pub(crate) fn access_index(
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
         _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::IndexOperandMismatch),);
+            return err!(span_base.clone(), error::expr::index_operand_mismatch(),);
         }
     };
     let Some(idx) = usize::try_from(&int_idx).ok().filter(|idx| *idx < len) else {
-        return err!(
-            span_idx.clone(),
-            ErrorKind::Expr(ExprErrorKind::IndexOutOfBounds { idx: int_idx, len }),
-        );
+        return err!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
     };
     match arena.kind(value_base) {
         // Text: a one-character slice
@@ -435,7 +424,7 @@ pub(crate) fn access_slice(
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
         _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::SliceOperandMismatch),);
+            return err!(span_base.clone(), error::expr::slice_operand_mismatch(),);
         }
     };
     let Some((idx, idx_end)) = usize::try_from(&int_idx)
@@ -445,20 +434,20 @@ pub(crate) fn access_slice(
         .filter(|(_, idx_end)| *idx_end <= size)
     else {
         let int_end = &int_idx + &int_len;
-        return err!(
-            span_bounds.clone(),
-            ErrorKind::Expr(ExprErrorKind::SliceOutOfBounds { idx: int_idx, end: int_end, size }),
-        );
+        return err!(span_bounds.clone(), error::expr::slice_out_of_bounds(int_idx, int_end, size),);
     };
     match arena.kind(value_base) {
         // Text: the byte range must fall on character boundaries
         ValueKind::Text(text) => match text.get(idx..idx_end) {
             Some(text) => {
                 let text = text.to_owned();
-                Backtrack::from_result(make::text(arena, text, Span::default()), span_typ)
+                crate::interp::shared::backtrack::from_result(
+                    make::text(arena, text, Span::default()),
+                    span_typ,
+                )
             }
             None => {
-                err!(span_bounds.clone(), ErrorKind::Expr(ExprErrorKind::TextSliceBoundaryMismatch),)
+                err!(span_bounds.clone(), error::expr::text_slice_boundary_mismatch(),)
             }
         },
         // List: copy the range
@@ -493,14 +482,11 @@ pub(crate) fn update_index(
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
         _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::IndexOperandMismatch),);
+            return err!(span_base.clone(), error::expr::index_operand_mismatch(),);
         }
     };
     let Some(idx) = usize::try_from(&int_idx).ok().filter(|idx| *idx < len) else {
-        return err!(
-            span_idx.clone(),
-            ErrorKind::Expr(ExprErrorKind::IndexOutOfBounds { idx: int_idx, len }),
-        );
+        return err!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
     };
     let value = match arena.kind(value_base) {
         // Text: the replacement must be a single character
@@ -508,10 +494,7 @@ pub(crate) fn update_index(
             let size = text.len();
             let text_upd = unwrap_from_result!(get::text(arena, &value_upd), span_idx);
             if text_upd.len() != 1 {
-                return err!(
-                    span_idx.clone(),
-                    ErrorKind::Expr(ExprErrorKind::CharacterUpdateLengthMismatch),
-                );
+                return err!(span_idx.clone(), error::expr::character_update_length_mismatch(),);
             }
             // Rebuild as prefix, replacement, suffix
             let text_upd = text_upd.to_owned();
@@ -592,7 +575,7 @@ pub(crate) fn update_slice(
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
         _ => {
-            return err!(span_base.clone(), ErrorKind::Expr(ExprErrorKind::SliceOperandMismatch),);
+            return err!(span_base.clone(), error::expr::slice_operand_mismatch(),);
         }
     };
     let Some((idx, idx_end)) = usize::try_from(&int_idx)
@@ -602,10 +585,7 @@ pub(crate) fn update_slice(
         .filter(|(_, idx_end)| *idx_end <= size)
     else {
         let int_end = &int_idx + &int_len;
-        return err!(
-            span_len.clone(),
-            ErrorKind::Expr(ExprErrorKind::SliceOutOfBounds { idx: int_idx, end: int_end, size }),
-        );
+        return err!(span_len.clone(), error::expr::slice_out_of_bounds(int_idx, int_end, size),);
     };
     let value = match arena.kind(value_base) {
         // Text: the replacement must have the range's length
@@ -615,10 +595,7 @@ pub(crate) fn update_slice(
             if text_upd.len() != idx_end - idx {
                 return err!(
                     span_len.clone(),
-                    ErrorKind::Expr(ExprErrorKind::TextSliceUpdateLengthMismatch {
-                        len: idx_end - idx,
-                        actual: text_upd.len(),
-                    }),
+                    error::expr::text_slice_update_length_mismatch(idx_end - idx, text_upd.len()),
                 );
             }
             // Rebuild as prefix, replacement, suffix
@@ -670,10 +647,7 @@ pub(crate) fn update_slice(
             if values_upd.len() != idx_end - idx {
                 return err!(
                     span_len.clone(),
-                    ErrorKind::Expr(ExprErrorKind::ListSliceUpdateLengthMismatch {
-                        len: idx_end - idx,
-                        actual: values_upd.len(),
-                    }),
+                    error::expr::list_slice_update_length_mismatch(idx_end - idx, values_upd.len()),
                 );
             }
             let mut values = values.clone();
