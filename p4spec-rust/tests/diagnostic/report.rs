@@ -25,6 +25,123 @@ fn failure(message: &str, children: Vec<Report>) -> Report {
     }
 }
 
+fn chain(depth: usize, mut report: Report) -> Report {
+    for level in (1..=depth).rev() {
+        report = frame(&format!("level {level}"), vec![report]);
+    }
+    report
+}
+
+#[test]
+fn deep_trace_chains_restart_indentation_without_hiding_reports() {
+    let report = frame("root", vec![chain(8, failure("leaf", vec![]))]);
+    let text = Renderer::new(RenderConfig::default())
+        .render_to_string(&report)
+        .unwrap();
+    assert_eq!(
+        text,
+        concat!(
+            "note: root\n\n",
+            "└─ note: level 1\n\n",
+            "   └─ note: level 2\n\n",
+            "      └─ note: level 3\n\n",
+            "         └─ note: level 4\n\n",
+            "⋮ (depth 5, continued)\n",
+            "└─ note: level 5\n\n",
+            "   └─ note: level 6\n\n",
+            "      └─ note: level 7\n\n",
+            "         └─ note: level 8\n\n",
+            "⋮ (depth 9, continued)\n",
+            "└─ error[test/failure]: leaf\n\n",
+        )
+    );
+    assert_eq!(report.children.len(), 1);
+}
+
+#[test]
+fn deep_pending_siblings_keep_their_connectors_until_the_branch_finishes() {
+    let report = frame(
+        "root",
+        vec![
+            chain(10, failure("first leaf\ncontinued message", vec![])),
+            chain(4, failure("last leaf", vec![])),
+        ],
+    );
+    let text = Renderer::new(RenderConfig::default())
+        .render_to_string(&report)
+        .unwrap();
+    let (first, last) = text.split_once("\n└─ note: level 1\n").unwrap();
+    assert!(!first.contains("continued)"), "{text}");
+    assert!(!text.contains("ancestors]"), "{text}");
+    for line in first.lines().skip(2) {
+        assert!(line.starts_with('├') || line.starts_with('│'), "{line:?}\n{text}");
+    }
+    assert!(first.contains("continued message"), "{text}");
+    assert!(last.contains("⋮ (depth 5, continued)\n└─ error[test/failure]: last leaf"), "{text}");
+}
+
+#[test]
+fn folded_branches_restore_the_anchor_before_rendering_the_next_sibling() {
+    let report = frame(
+        "root",
+        vec![chain(
+            4,
+            frame(
+                "branch",
+                vec![
+                    chain(5, failure("first leaf", vec![])),
+                    chain(4, failure("last leaf", vec![])),
+                ],
+            ),
+        )],
+    );
+    let text = Renderer::new(RenderConfig::default())
+        .render_to_string(&report)
+        .unwrap();
+    let (first, last) = text.split_once("\n   └─ note: level 1\n").unwrap();
+    assert_eq!(first.matches("continued)").count(), 1, "{text}");
+    assert!(first.contains("⋮ (depth 5, continued)\n└─ note: branch"), "{text}");
+    assert!(first.contains("│"), "{text}");
+    assert!(first.contains("first leaf"), "{text}");
+    assert!(last.contains("⋮ (depth 9, continued)\n└─ note: level 4"), "{text}");
+    assert!(last.ends_with("   └─ error[test/failure]: last leaf\n\n"), "{text}");
+}
+
+#[test]
+fn folded_snippets_keep_their_source_and_ascii_character_set() {
+    let report = frame("root", vec![chain(4, report_cause(span("input", 1, 0, 1, 3)))]);
+    let mut config = RenderConfig::default();
+    config.snippet.chars = codespan_reporting::term::Chars::ascii();
+    let mut renderer = Renderer::new(config);
+    renderer.insert_source("input", "bad");
+    let text = renderer.render_to_string(&report).unwrap();
+    assert!(
+        text.contains("... (depth 5, continued)\n`- error[parse/text-escape-invalid]"),
+        "{text}"
+    );
+    assert!(text.contains("input:1:1"), "{text}");
+    assert!(text.contains("1 | bad"), "{text}");
+    assert!(text.contains("^^^ invalid escape"), "{text}");
+    assert!(text.is_ascii(), "{text}");
+}
+
+#[test]
+fn folding_does_not_consume_the_trace_budget_or_announce_hidden_nodes() {
+    let report = frame("root", vec![chain(8, failure("leaf", vec![]))]);
+    for (limit, folded, tail) in [
+        (4, false, "            └─ ... further reports omitted (trace limit: 4)\n"),
+        (5, true, "   └─ ... further reports omitted (trace limit: 5)\n"),
+    ] {
+        let text = Renderer::new(RenderConfig { trace_limit: limit, ..Default::default() })
+            .render_to_string(&report)
+            .unwrap();
+        assert_eq!(text.contains("⋮ (depth 5, continued)"), folded, "{text}");
+        assert_eq!(text.matches("note: level").count(), limit, "{text}");
+        assert!(text.ends_with(tail), "{text}");
+        assert!(!text.contains("leaf"), "{text}");
+    }
+}
+
 #[test]
 fn summary_does_not_flatten_trace_diagnostics() {
     let mut report = report_cause(span("absent.watsup", 2, 1, 2, 3));
@@ -59,7 +176,8 @@ fn deep_mixed_traces_render_and_drop_on_a_small_stack() {
                 Renderer::new(RenderConfig { trace_limit: 20_001, ..Default::default() });
             let text = renderer.render_to_string(&report).unwrap();
             assert!(text.contains("leaf"));
-            assert!(text.contains("ancestors]"));
+            assert!(text.contains("⋮ (depth 5, continued)"));
+            assert!(!text.contains("ancestors]"));
             assert!(text.len() < 10_000_000, "deep indentation must stay bounded");
             assert!(format!("{report:?}").len() < 1_000);
             drop(report);

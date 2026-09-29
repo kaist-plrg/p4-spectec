@@ -3,8 +3,8 @@
 //! A renderer caches successful and unavailable source loads for its lifetime.
 //! Explicit text overrides replace cached disk contents.
 //! Reports keep their original spans even when source text is unavailable.
-//! Child snippets follow tree connections; distant ancestor levels are folded
-//! to keep indentation bounded without hiding their reports.
+//! Child snippets follow tree connections; deep chains restart at the trace base
+//! only when no pending sibling connection would be lost.
 //! Rendering prepares output before writing stderr so invalid spans cannot
 //! leave a partially printed diagnostic.
 
@@ -46,12 +46,21 @@ fn span_location(span: &Span) -> String {
 
 // = Tree presentation
 
-/// Builds ancestor connections while folding distant levels of deep trees.
+const TRACE_FOLD_DEPTH: usize = 4;
+
+/// Retains a sibling group's indentation anchor while deeper branches render.
+#[derive(Clone, Copy)]
+struct TraceLayout {
+    // Depth whose children restart at the trace base
+    anchor: usize,
+    // No ancestor below the anchor has a pending sibling
+    foldable: bool,
+}
+
+/// Builds the ancestor connections below the current indentation anchor.
 fn trace_prefix(ancestors: &[bool], vertical: &str) -> String {
-    // Bound indentation so deep reports do not produce quadratic output
-    let start = ancestors.len().saturating_sub(8);
-    let mut prefix = if start == 0 { String::new() } else { format!("[{start} ancestors] ") };
-    for has_next in &ancestors[start..] {
+    let mut prefix = String::new();
+    for has_next in ancestors {
         prefix.push_str(if *has_next { vertical } else { "   " });
     }
     prefix
@@ -391,22 +400,38 @@ impl Renderer {
         term::emit_to_write_style(buffer, &self.config.snippet, &self.files, &diagnostic)?;
 
         // Match the snippet character set for terminals using ASCII borders
-        let (branch, last, vertical) = if self.config.snippet.chars.source_border_left.is_ascii() {
-            ("|- ", "`- ", "|  ")
-        } else {
-            ("├─ ", "└─ ", "│  ")
-        };
+        let (branch, last, vertical, continuation) =
+            if self.config.snippet.chars.source_border_left.is_ascii() {
+                ("|- ", "`- ", "|  ", "...")
+            } else {
+                ("├─ ", "└─ ", "│  ", "⋮")
+            };
         // Store cursors and ancestor continuations without recursive rendering
-        let mut pending = vec![report.children.iter()];
+        let mut pending = vec![(report.children.iter(), TraceLayout { anchor: 0, foldable: true })];
         let mut ancestors = Vec::new();
         let mut count = 0;
-        while let Some(children) = pending.last_mut() {
+        while let Some((children, layout)) = pending.last_mut() {
+            // Restore the parent's layout when this sibling group is exhausted
             let Some(child) = children.next() else {
                 pending.pop();
                 ancestors.pop();
                 continue;
             };
-            let prefix = trace_prefix(&ancestors, vertical);
+            // Restart deep chains without cutting a pending sibling connection
+            let level = ancestors.len() + 1;
+            if count < self.config.trace_limit
+                && layout.foldable
+                && level - layout.anchor > TRACE_FOLD_DEPTH
+            {
+                buffer
+                    .set_color(ColorSpec::new().set_dimmed(true))
+                    .map_err(files::Error::from)?;
+                writeln!(buffer, "{continuation} (depth {level}, continued)")
+                    .map_err(files::Error::from)?;
+                buffer.reset().map_err(files::Error::from)?;
+                layout.anchor = level - 1;
+            }
+            let prefix = trace_prefix(&ancestors[layout.anchor..], vertical);
             // Close each remaining branch at the limit without changing reports
             if count == self.config.trace_limit {
                 writeln!(
@@ -430,8 +455,11 @@ impl Renderer {
                 color: ColorSpec::new(),
             };
             term::emit_to_write_style(&mut writer, &self.config.snippet, &self.files, &diagnostic)?;
+            // Any unvisited sibling prevents folding until its branch is closed
+            let layout_children =
+                TraceLayout { anchor: layout.anchor, foldable: layout.foldable && !has_next };
             ancestors.push(has_next);
-            pending.push(child.children.iter());
+            pending.push((child.children.iter(), layout_children));
         }
         Ok(())
     }
