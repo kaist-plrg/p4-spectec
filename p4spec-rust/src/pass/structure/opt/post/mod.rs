@@ -15,7 +15,7 @@ use crate::{
 
 /// Removes dead lets, then singleton matches.
 pub(super) fn optimize(tdenv: &TDEnv, block: Block) -> Result<Block, StructureError> {
-    let block = remove_let_dead::apply(block)?;
+    let block = remove_let_dead::apply(block);
     let block = remove_match_singleton::apply(tdenv, block)?;
     Ok(block)
 }

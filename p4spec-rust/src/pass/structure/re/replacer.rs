@@ -5,7 +5,7 @@
 //! `Renamer` first moves the local binder
 //! away from the replacement's free names.
 
-use super::super::{StructureError, StructureErrorKind, ol::ast as ol};
+use super::super::ol::ast as ol;
 use super::renamer::Renamer;
 use crate::lang::{
     common::{
@@ -250,17 +250,14 @@ impl Replacer {
 
     // == Cases
 
-    pub(crate) fn replace_case(&self, case: ol::Case) -> Result<ol::Case, StructureError> {
+    pub(crate) fn replace_case(&self, case: ol::Case) -> ol::Case {
         let ol::Case { guard, block } = case;
         let guard = self.replace_guard(guard);
-        let block = self.replace_block(block)?;
-        Ok(ol::Case { guard, block })
+        let block = self.replace_block(block);
+        ol::Case { guard, block }
     }
 
-    pub(crate) fn replace_cases(
-        &self,
-        cases: Vec<ol::Case>,
-    ) -> Result<Vec<ol::Case>, StructureError> {
+    pub(crate) fn replace_cases(&self, cases: Vec<ol::Case>) -> Vec<ol::Case> {
         cases
             .into_iter()
             .map(|case| self.replace_case(case))
@@ -281,33 +278,26 @@ impl Replacer {
     // == Instructions
 
     /// Substitutes throughout an instruction, avoiding capture at binders.
-    pub(crate) fn replace_instr(&self, instr_ol: ol::Instr) -> Result<ol::Instr, StructureError> {
-        let instr_kind_ol = self.replace_instr_kind(instr_ol.node, &instr_ol.span)?;
-        Ok(phrase!(node: instr_kind_ol, span: instr_ol.span))
+    pub(crate) fn replace_instr(&self, instr_ol: ol::Instr) -> ol::Instr {
+        let instr_kind_ol = self.replace_instr_kind(instr_ol.node);
+        phrase!(node: instr_kind_ol, span: instr_ol.span)
     }
 
-    fn replace_instr_kind(
-        &self,
-        instr_kind_ol: ol::InstrKind,
-        span: &Span,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn replace_instr_kind(&self, instr_kind_ol: ol::InstrKind) -> ol::InstrKind {
         match instr_kind_ol {
             ol::InstrKind::If(instr_ol) => self.replace_if_instr(instr_ol),
             ol::InstrKind::Hold(instr_ol) => self.replace_hold_instr(instr_ol),
             ol::InstrKind::Case(instr_ol) => self.replace_case_instr(instr_ol),
             ol::InstrKind::Group(instr_ol) => self.replace_group_instr(instr_ol),
             ol::InstrKind::Let(instr_ol) => self.replace_let_instr(instr_ol),
-            ol::InstrKind::Rule(instr_ol) => self.replace_rule_instr(instr_ol, span),
-            ol::InstrKind::Result(instr_ol) => Ok(self.replace_result_instr(instr_ol)),
-            ol::InstrKind::Return(instr_ol) => Ok(self.replace_return_instr(instr_ol)),
+            ol::InstrKind::Rule(instr_ol) => self.replace_rule_instr(instr_ol),
+            ol::InstrKind::Result(instr_ol) => self.replace_result_instr(instr_ol),
+            ol::InstrKind::Return(instr_ol) => self.replace_return_instr(instr_ol),
             ol::InstrKind::Debug(instr_ol) => self.replace_debug_instr(instr_ol),
         }
     }
 
-    pub(crate) fn replace_instrs(
-        &self,
-        instrs_ol: Vec<ol::Instr>,
-    ) -> Result<Vec<ol::Instr>, StructureError> {
+    pub(crate) fn replace_instrs(&self, instrs_ol: Vec<ol::Instr>) -> Vec<ol::Instr> {
         instrs_ol
             .into_iter()
             .map(|instr_ol| self.replace_instr(instr_ol))
@@ -316,56 +306,47 @@ impl Replacer {
 
     // - If instruction
 
-    fn replace_if_instr(&self, instr_ol: ol::IfInstr) -> Result<ol::InstrKind, StructureError> {
+    fn replace_if_instr(&self, instr_ol: ol::IfInstr) -> ol::InstrKind {
         let ol::IfInstr { exp, iter_exps, block } = instr_ol;
         let exp = self.replace_exp(exp);
         let iter_exps = self.replace_iterexps(iter_exps);
-        let block = self.replace_block(block)?;
-        Ok(ol::InstrKind::If(ol::IfInstr { exp, iter_exps, block }))
+        let block = self.replace_block(block);
+        ol::InstrKind::If(ol::IfInstr { exp, iter_exps, block })
     }
 
     // - Hold instruction
 
-    fn replace_hold_instr(&self, instr_ol: ol::HoldInstr) -> Result<ol::InstrKind, StructureError> {
+    fn replace_hold_instr(&self, instr_ol: ol::HoldInstr) -> ol::InstrKind {
         let ol::HoldInstr { id, not_exp, iter_exps, block_hold, block_not_hold } = instr_ol;
         let not_exp = not_exp.map(|exp| self.replace_exp(exp.clone()));
         let iter_exps = self.replace_iterexps(iter_exps);
-        let block_hold = self.replace_block(block_hold)?;
-        let block_not_hold = self.replace_block(block_not_hold)?;
-        Ok(ol::InstrKind::Hold(ol::HoldInstr {
-            id,
-            not_exp,
-            iter_exps,
-            block_hold,
-            block_not_hold,
-        }))
+        let block_hold = self.replace_block(block_hold);
+        let block_not_hold = self.replace_block(block_not_hold);
+        ol::InstrKind::Hold(ol::HoldInstr { id, not_exp, iter_exps, block_hold, block_not_hold })
     }
 
     // - Case instruction
 
-    fn replace_case_instr(&self, instr_ol: ol::CaseInstr) -> Result<ol::InstrKind, StructureError> {
+    fn replace_case_instr(&self, instr_ol: ol::CaseInstr) -> ol::InstrKind {
         let ol::CaseInstr { exp, cases, total } = instr_ol;
         let exp = self.replace_exp(exp);
-        let cases = self.replace_cases(cases)?;
-        Ok(ol::InstrKind::Case(ol::CaseInstr { exp, cases, total }))
+        let cases = self.replace_cases(cases);
+        ol::InstrKind::Case(ol::CaseInstr { exp, cases, total })
     }
 
     // - Group instruction
 
-    fn replace_group_instr(
-        &self,
-        instr_ol: ol::GroupInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn replace_group_instr(&self, instr_ol: ol::GroupInstr) -> ol::InstrKind {
         let ol::GroupInstr { id, rel_signature, exps, block } = instr_ol;
         let exps = self.replace_exps(exps);
-        let block = self.replace_block(block)?;
-        Ok(ol::InstrKind::Group(ol::GroupInstr { id, rel_signature, exps, block }))
+        let block = self.replace_block(block);
+        ol::InstrKind::Group(ol::GroupInstr { id, rel_signature, exps, block })
     }
 
     // - Let instruction
 
     /// Substitutes in a let; its binders shadow it and are freshened first.
-    fn replace_let_instr(&self, instr_ol: ol::LetInstr) -> Result<ol::InstrKind, StructureError> {
+    fn replace_let_instr(&self, instr_ol: ol::LetInstr) -> ol::InstrKind {
         let ol::LetInstr { exp_l, exp_r, iter_instrs, block } = instr_ol;
         // Freshen colliding binders first so inserted names stay free
         let frees_l = exp_l.free_ids();
@@ -374,26 +355,23 @@ impl Replacer {
         // Then substitute in the source, iterators, and body
         let exp_l = renamer_fresh.rename_exp(&mut false, exp_l);
         let iter_instrs = renamer_fresh.rename_iterinstrs_bound(&mut false, iter_instrs);
-        let block = renamer_fresh.rename_block(&mut false, block)?;
+        let block = renamer_fresh.rename_block(&mut false, block);
         let exp_r = replacer.replace_exp(exp_r);
         let iter_instrs = replacer.replace_iterinstrs_bound(iter_instrs);
-        let block = replacer.replace_block(block)?;
-        Ok(ol::InstrKind::Let(ol::LetInstr { exp_l, exp_r, iter_instrs, block }))
+        let block = replacer.replace_block(block);
+        ol::InstrKind::Let(ol::LetInstr { exp_l, exp_r, iter_instrs, block })
     }
 
     // - Rule instruction
 
     /// Substitutes in a rule call; output binders shadow it, freshened first.
-    fn replace_rule_instr(
-        &self,
-        instr_ol: ol::RuleInstr,
-        span: &Span,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn replace_rule_instr(&self, instr_ol: ol::RuleInstr) -> ol::InstrKind {
         let ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block } = instr_ol;
         // Split the arguments by the input hint
         let exps = not_exp.args().into_iter().cloned().collect();
-        let (exps_input, exps_output) = input::split(&input_hint, exps)
-            .map_err(|error| StructureError::new(StructureErrorKind::Input(error), span.clone()))?;
+        // Elaboration validates hints; OL rewrites preserve notation arity
+        let (exps_input, exps_output) =
+            input::split(&input_hint, exps).expect("validated relation hints and argument counts");
         // Inputs are uses, outputs are binders
         let exps_input = self.replace_exps(exps_input);
         let frees_output = exps_output.as_slice().free_ids();
@@ -402,16 +380,17 @@ impl Replacer {
         let renamer_fresh = replacer.freshen_binders(&frees_output, &block);
         let exps_output = renamer_fresh.rename_exps(&mut false, exps_output);
         let iter_instrs = renamer_fresh.rename_iterinstrs_bound(&mut false, iter_instrs);
-        let block = renamer_fresh.rename_block(&mut false, block)?;
+        let block = renamer_fresh.rename_block(&mut false, block);
         // Rebuild the notation, then substitute in iterators and body
+        // Renaming preserves the argument counts returned by input::split
         let exps = input::combine(&input_hint, exps_input, exps_output)
-            .map_err(|error| StructureError::new(StructureErrorKind::Input(error), span.clone()))?;
+            .expect("validated relation hints and argument counts");
         let mixop = not_exp.to_mixop();
         let not_exp =
             Mixop::fill(&mixop, exps).expect("validated arguments preserve the mixfix arity");
         let iter_instrs = replacer.replace_iterinstrs_bound(iter_instrs);
-        let block = replacer.replace_block(block)?;
-        Ok(ol::InstrKind::Rule(ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block }))
+        let block = replacer.replace_block(block);
+        ol::InstrKind::Rule(ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block })
     }
 
     // - Result instruction
@@ -432,19 +411,16 @@ impl Replacer {
 
     // - Debug instruction
 
-    fn replace_debug_instr(
-        &self,
-        instr_ol: ol::DebugInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn replace_debug_instr(&self, instr_ol: ol::DebugInstr) -> ol::InstrKind {
         let ol::DebugInstr { exp, instr } = instr_ol;
         let exp = self.replace_exp(exp);
-        let instr = Box::new(self.replace_instr(*instr)?);
-        Ok(ol::InstrKind::Debug(ol::DebugInstr { exp, instr }))
+        let instr = Box::new(self.replace_instr(*instr));
+        ol::InstrKind::Debug(ol::DebugInstr { exp, instr })
     }
 
     // == Blocks
 
-    pub(crate) fn replace_block(&self, block: ol::Block) -> Result<ol::Block, StructureError> {
+    pub(crate) fn replace_block(&self, block: ol::Block) -> ol::Block {
         self.replace_instrs(block)
     }
 

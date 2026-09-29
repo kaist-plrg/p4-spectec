@@ -7,22 +7,21 @@
 
 use crate::lang::{
     al::ast::*,
-    common::{
-        ds::{map::IdMap, set::IdSet},
-        source::Span,
-    },
+    common::ds::{map::IdMap, set::IdSet},
     il,
-    traits::{at::At, eq::SyntaxEq, free::FreeIds},
+    traits::{
+        at::At,
+        eq::SyntaxEq,
+        free::{FreeIds, FreeVars},
+    },
 };
-
-use super::{StructureError, StructureErrorKind};
 
 // == Unification environment
 
-/// Maps original identifiers to their unified identifiers.
+/// Maps original identifiers to sets of fresh unified identifiers.
 #[derive(Default)]
 struct UEnv {
-    ids: IdMap<Id>,
+    ids: IdMap<IdSet>,
 }
 
 impl UEnv {
@@ -30,33 +29,34 @@ impl UEnv {
     fn unified(&self, id: &Id) -> bool {
         self.ids
             .iter()
-            .any(|(_, id_unified)| id_unified.syntax_eq(id))
+            .any(|(_, ids_unified)| ids_unified.contains(id))
     }
 
-    /// Merges another position's map; each identifier unifies in one position.
-    fn extend(&mut self, uenv: Self) -> Result<(), StructureError> {
-        for (id, id_unified) in uenv.ids.iter() {
-            if self.ids.contains_key(id) {
-                let error_kind = StructureErrorKind::ConflictingUnification;
-                let error = StructureError::new(error_kind, id.span.clone());
-                return Err(error);
-            }
-            self.ids.insert(id.clone(), id_unified.clone());
+    fn insert(&mut self, id: Id, id_unified: Id) {
+        if let Some(ids_unified) = self.ids.get_mut(&id) {
+            ids_unified.insert(id_unified);
+        } else {
+            self.ids.insert(id, IdSet::from([id_unified]));
         }
-        Ok(())
+    }
+
+    /// Unions the unified identifiers collected at each input position.
+    fn extend(&mut self, uenv: Self) {
+        for (id, ids_unified) in uenv.ids.iter() {
+            if let Some(ids) = self.ids.get_mut(id) {
+                ids.append(ids_unified.clone());
+            } else {
+                self.ids.insert(id.clone(), ids_unified.clone());
+            }
+        }
     }
 }
 
 // == Arity checks
 
-fn check_arity(expected: usize, actual: usize, span: &Span) -> Result<(), StructureError> {
-    if expected == actual {
-        Ok(())
-    } else {
-        let error_kind = StructureErrorKind::ArityMismatch { expected, actual };
-        let error = StructureError::new(error_kind, span.clone());
-        Err(error)
-    }
+fn check_arity(expected: usize, actual: usize) {
+    // Elaboration fixes input shapes; binding and templates preserve positions
+    assert_eq!(expected, actual, "validated input arity");
 }
 
 // == Populating expression templates
@@ -64,34 +64,30 @@ fn check_arity(expected: usize, actual: usize, span: &Span) -> Result<(), Struct
 // - Expression template
 
 /// Emits the let premises binding one input to the shared template.
-fn populate_exp_template(
-    uenv: &UEnv,
-    exp_template: &Exp,
-    exp: &Exp,
-) -> Result<Vec<Prem>, StructureError> {
+fn populate_exp_template(uenv: &UEnv, exp_template: &Exp, exp: &Exp) -> Vec<Prem> {
     if exp_template.syntax_eq(exp) {
-        return Ok(vec![]);
+        return vec![];
     }
     match (&exp_template.node, &exp.node) {
         // A unified identifier binds the whole input at this position
         (ExpKind::Id(id_template), _) if uenv.unified(id_template) => {
             let prem = populate_id_exp_template(exp_template, exp);
-            Ok(vec![prem])
+            vec![prem]
         }
         (ExpKind::Tuple(exps_template), ExpKind::Tuple(exps)) => {
-            populate_exps_templates(uenv, exps_template.iter(), exps.iter(), &exp.span)
+            populate_exps_templates(uenv, exps_template.iter(), exps.iter())
         }
         (ExpKind::Case(not_exp_template), ExpKind::Case(not_exp))
             if not_exp_template.eq_shape(not_exp) =>
         {
             let exps_template = not_exp_template.args();
             let exps = not_exp.args();
-            populate_exps_templates(uenv, exps_template.into_iter(), exps.into_iter(), &exp.span)
+            populate_exps_templates(uenv, exps_template.into_iter(), exps.into_iter())
         }
         (ExpKind::Str(exp_fields_template), ExpKind::Str(exp_fields)) => {
             let exps_template = exp_fields_template.iter().map(|ExpField { exp, .. }| exp);
             let exps = exp_fields.iter().map(|ExpField { exp, .. }| exp);
-            populate_exps_templates(uenv, exps_template, exps, &exp.span)
+            populate_exps_templates(uenv, exps_template, exps)
         }
         // Iterated inputs bind under their iteration
         (
@@ -104,13 +100,10 @@ fn populate_exp_template(
                 exp_body,
                 exp_iter,
             );
-            Ok(vec![prem])
+            vec![prem]
         }
-        _ => {
-            let error_kind = StructureErrorKind::TemplatePopulation;
-            let error = StructureError::new(error_kind, exp.span.clone());
-            Err(error)
-        }
+        // Anti-unification preserves matching shapes and records every fresh leaf
+        _ => unreachable!("input matches its anti-unified template"),
     }
 }
 
@@ -118,15 +111,14 @@ fn populate_exps_templates<'a>(
     uenv: &UEnv,
     exps_template: impl ExactSizeIterator<Item = &'a Exp>,
     exps: impl ExactSizeIterator<Item = &'a Exp>,
-    span: &Span,
-) -> Result<Vec<Prem>, StructureError> {
-    check_arity(exps_template.len(), exps.len(), span)?;
+) -> Vec<Prem> {
+    check_arity(exps_template.len(), exps.len());
     let mut prems = vec![];
     for (exp_template, exp) in exps_template.zip(exps) {
-        let prems_exp = populate_exp_template(uenv, exp_template, exp)?;
+        let prems_exp = populate_exp_template(uenv, exp_template, exp);
         prems.extend(prems_exp);
     }
-    Ok(prems)
+    prems
 }
 
 // - Identifier expression
@@ -165,31 +157,26 @@ fn populate_iter_exp_template(
 // - Expression
 
 /// Overlaps an input with the template, freshening identifiers on mismatch.
-fn antiunify_exp(
-    frees: &mut IdSet,
-    uenv: &mut UEnv,
-    exp_template: &Exp,
-    exp: &Exp,
-) -> Result<Exp, StructureError> {
+fn antiunify_exp(frees: &mut IdSet, uenv: &mut UEnv, exp_template: &Exp, exp: &Exp) -> Exp {
     // Identical inputs need no generalization
     if exp_template.syntax_eq(exp) {
-        return Ok(exp_template.clone());
+        return exp_template.clone();
     }
     let exp_kind_template = match (&exp_template.node, &exp.node) {
         // An identifier on either side becomes a fresh unified identifier
         (ExpKind::Id(id_template), _) => antiunify_id_exp(frees, uenv, id_template),
         (_, ExpKind::Id(id)) => antiunify_fresh_id_exp(frees, uenv, id),
         (ExpKind::Tuple(exps_template), ExpKind::Tuple(exps)) => {
-            let exps_template = antiunify_exps(frees, uenv, exps_template, exps, &exp.span)?;
+            let exps_template = antiunify_exps(frees, uenv, exps_template, exps);
             ExpKind::Tuple(exps_template)
         }
         (ExpKind::Case(not_exp_template), ExpKind::Case(not_exp))
             if not_exp_template.eq_shape(not_exp) =>
         {
-            antiunify_case_exp(frees, uenv, not_exp_template, not_exp)?
+            antiunify_case_exp(frees, uenv, not_exp_template, not_exp)
         }
         (ExpKind::Str(exp_fields_template), ExpKind::Str(exp_fields)) => {
-            antiunify_str_exp(frees, uenv, exp_fields_template, exp_fields, &exp.span)?
+            antiunify_str_exp(frees, uenv, exp_fields_template, exp_fields)
         }
         (
             ExpKind::Iter(exp_body_template, exp_iter_template),
@@ -201,20 +188,18 @@ fn antiunify_exp(
             exp_iter_template,
             exp_body,
             exp_iter,
-        )?,
+        ),
         // Different shapes cannot be anti-unified
         _ => {
-            let error_kind = StructureErrorKind::Antiunification;
-            let error = StructureError::new(error_kind, exp.span.clone());
-            return Err(error);
+            // Binding analysis replaces incompatible pattern shapes with variables
+            unreachable!("validated input pattern shapes");
         }
     };
-    let exp_template = crate::note_phrase! {
+    crate::note_phrase! {
         node: exp_kind_template,
         note: exp_template.note.clone(),
         span: exp_template.span.clone()
-    };
-    Ok(exp_template)
+    }
 }
 
 fn antiunify_exps(
@@ -222,9 +207,8 @@ fn antiunify_exps(
     uenv: &mut UEnv,
     exps_template: &[Exp],
     exps: &[Exp],
-    span: &Span,
-) -> Result<Vec<Exp>, StructureError> {
-    check_arity(exps_template.len(), exps.len(), span)?;
+) -> Vec<Exp> {
+    check_arity(exps_template.len(), exps.len());
     exps_template
         .iter()
         .zip(exps)
@@ -237,7 +221,6 @@ fn antiunify_exps(
 /// Keeps an already unified template identifier, otherwise freshens it.
 fn antiunify_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id_template: &Id) -> ExpKind {
     if uenv.unified(id_template) {
-        uenv.ids.insert(id_template.clone(), id_template.clone());
         ExpKind::Id(id_template.clone())
     } else {
         antiunify_fresh_id_exp(frees, uenv, id_template)
@@ -246,11 +229,11 @@ fn antiunify_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id_template: &Id) -> Exp
 
 // - Fresh identifier expression
 
-/// Introduces a fresh identifier and records `id` as unified into it.
+/// Introduces a fresh identifier and registers it under the original name.
 fn antiunify_fresh_id_exp(frees: &mut IdSet, uenv: &mut UEnv, id: &Id) -> ExpKind {
     let id_fresh = il::fresh::id(frees, id);
     frees.insert(id_fresh.clone());
-    uenv.ids.insert(id.clone(), id_fresh.clone());
+    uenv.insert(id.clone(), id_fresh.clone());
     ExpKind::Id(id_fresh)
 }
 
@@ -262,18 +245,18 @@ fn antiunify_case_exp(
     uenv: &mut UEnv,
     not_exp_template: &NotExp,
     not_exp: &NotExp,
-) -> Result<ExpKind, StructureError> {
+) -> ExpKind {
     let (mixop, exps_template) = not_exp_template.split();
     let exps = not_exp.args();
     let mut exps_unified = vec![];
     for (exp_template, exp) in exps_template.iter().zip(exps) {
-        let exp_unified = antiunify_exp(frees, uenv, exp_template, exp)?;
+        let exp_unified = antiunify_exp(frees, uenv, exp_template, exp);
         exps_unified.push(exp_unified);
     }
     let not_exp_template = Mixop::fill(&mixop, exps_unified)
         .expect("matching mixfix shapes have equal argument counts");
     let not_exp_template = Box::new(not_exp_template);
-    Ok(ExpKind::Case(not_exp_template))
+    ExpKind::Case(not_exp_template)
 }
 
 // - Record expression
@@ -284,27 +267,25 @@ fn antiunify_str_exp(
     uenv: &mut UEnv,
     exp_fields_template: &[ExpField],
     exp_fields: &[ExpField],
-    span: &Span,
-) -> Result<ExpKind, StructureError> {
-    check_arity(exp_fields_template.len(), exp_fields.len(), span)?;
+) -> ExpKind {
+    check_arity(exp_fields_template.len(), exp_fields.len());
     // Field atoms must agree pairwise
     if !exp_fields_template.iter().zip(exp_fields).all(
         |(ExpField { atom: atom_template, .. }, ExpField { atom, .. })| {
             atom_template.syntax_eq(atom)
         },
     ) {
-        let error_kind = StructureErrorKind::Antiunification;
-        let error = StructureError::new(error_kind, span.clone());
-        return Err(error);
+        // Elaboration orders record fields by their common declared type
+        unreachable!("validated record field order");
     }
     let mut exp_fields_unified = vec![];
     for (ExpField { atom: atom_template, exp: exp_template }, ExpField { exp, .. }) in
         exp_fields_template.iter().zip(exp_fields)
     {
-        let exp_template = antiunify_exp(frees, uenv, exp_template, exp)?;
+        let exp_template = antiunify_exp(frees, uenv, exp_template, exp);
         exp_fields_unified.push(ExpField { atom: atom_template.clone(), exp: exp_template });
     }
-    Ok(ExpKind::Str(exp_fields_unified))
+    ExpKind::Str(exp_fields_unified)
 }
 
 // - Iterated expression
@@ -317,20 +298,28 @@ fn antiunify_iter_exp(
     exp_iter_template: &ExpIter,
     exp: &Exp,
     exp_iter: &ExpIter,
-) -> Result<ExpKind, StructureError> {
+) -> ExpKind {
     let ExpIter { iter, vars: vars_template } = exp_iter_template;
     let ExpIter { vars, .. } = exp_iter;
-    let exp_template = antiunify_exp(frees, uenv, exp_template, exp)?;
-    // Map both sides' variables to their unified names, dropping duplicates
+    let exp_template = antiunify_exp(frees, uenv, exp_template, exp);
+    // Match both identifier and iteration depth in the resulting body
+    let vars_free = exp_template.free_vars();
     let mut vars_unified = vec![];
     for var in vars_template.iter().chain(vars) {
         let Var { id, typ, iters } = var;
-        if let Some(id_unified) = uenv.ids.get(id) {
+        let mut ids_unified = uenv.ids.get(id).cloned().unwrap_or_default();
+        // Linear input bindings cannot retain an original and its fresh replacement
+        if ids_unified.is_empty() {
+            ids_unified.insert(id.clone());
+        }
+        // One original name can produce multiple unifiers within a tuple
+        for id_unified in ids_unified.iter() {
             let var_unified =
                 Var { id: id_unified.clone(), typ: typ.clone(), iters: iters.clone() };
-            if !vars_unified
-                .iter()
-                .any(|var: &Var| var.syntax_eq(&var_unified))
+            if vars_free.iter().any(|var| var.syntax_eq(&var_unified))
+                && !vars_unified
+                    .iter()
+                    .any(|var: &Var| var.syntax_eq(&var_unified))
             {
                 vars_unified.push(var_unified);
             }
@@ -338,22 +327,18 @@ fn antiunify_iter_exp(
     }
     let exp_template = Box::new(exp_template);
     let exp_iter = ExpIter { iter: *iter, vars: vars_unified };
-    Ok(ExpKind::Iter(exp_template, exp_iter))
+    ExpKind::Iter(exp_template, exp_iter)
 }
 
 // - Expressions across matches
 
 /// Builds one template per input position across all rule matches.
-fn antiunify_exps_across_matches(
-    mut frees: IdSet,
-    exps_by_match: &[&[Exp]],
-) -> Result<(UEnv, Vec<Exp>), StructureError> {
+fn antiunify_exps_across_matches(mut frees: IdSet, exps_by_match: &[&[Exp]]) -> (UEnv, Vec<Exp>) {
     let Some((exps_head, exps_tail)) = exps_by_match.split_first() else {
-        return Ok((UEnv::default(), vec![]));
+        return (UEnv::default(), vec![]);
     };
     for exps in exps_tail {
-        let span = exps.at();
-        check_arity(exps_head.len(), exps.len(), &span)?;
+        check_arity(exps_head.len(), exps.len());
     }
     let mut uenv_acc = UEnv::default();
     let mut exps_template = vec![];
@@ -362,12 +347,12 @@ fn antiunify_exps_across_matches(
         let mut uenv = UEnv::default();
         let mut exp_template = exp_head.clone();
         for exps in exps_tail {
-            exp_template = antiunify_exp(&mut frees, &mut uenv, &exp_template, &exps[num_idx])?;
+            exp_template = antiunify_exp(&mut frees, &mut uenv, &exp_template, &exps[num_idx]);
         }
-        uenv_acc.extend(uenv)?;
+        uenv_acc.extend(uenv);
         exps_template.push(exp_template);
     }
-    Ok((uenv_acc, exps_template))
+    (uenv_acc, exps_template)
 }
 
 // == Populating argument templates
@@ -375,37 +360,27 @@ fn antiunify_exps_across_matches(
 // - Argument template
 
 /// Emits the let premises binding an argument to its template.
-fn populate_arg_template(
-    uenv: &UEnv,
-    arg_template: &Arg,
-    arg: &Arg,
-) -> Result<Vec<Prem>, StructureError> {
+fn populate_arg_template(uenv: &UEnv, arg_template: &Arg, arg: &Arg) -> Vec<Prem> {
     match (&arg_template.node, &arg.node) {
         (ArgKind::Exp(exp_template), ArgKind::Exp(exp)) => {
             populate_exp_template(uenv, exp_template, exp)
         }
-        (ArgKind::Def(id_template), ArgKind::Def(id)) if id_template.syntax_eq(id) => Ok(vec![]),
+        (ArgKind::Def(id_template), ArgKind::Def(id)) if id_template.syntax_eq(id) => vec![],
         _ => {
-            let error_kind = StructureErrorKind::IncompatibleArguments;
-            let error = StructureError::new(error_kind, arg.span.clone());
-            Err(error)
+            // Elaboration checks argument kinds and defining function names
+            unreachable!("validated argument kinds and function names")
         }
     }
 }
 
-fn populate_args_templates(
-    uenv: &UEnv,
-    args_template: &[Arg],
-    args: &[Arg],
-    span: &Span,
-) -> Result<Vec<Prem>, StructureError> {
-    check_arity(args_template.len(), args.len(), span)?;
+fn populate_args_templates(uenv: &UEnv, args_template: &[Arg], args: &[Arg]) -> Vec<Prem> {
+    check_arity(args_template.len(), args.len());
     let mut prems = vec![];
     for (arg_template, arg) in args_template.iter().zip(args) {
-        let prems_arg = populate_arg_template(uenv, arg_template, arg)?;
+        let prems_arg = populate_arg_template(uenv, arg_template, arg);
         prems.extend(prems_arg);
     }
-    Ok(prems)
+    prems
 }
 
 // == Anti-unification of arguments
@@ -413,29 +388,21 @@ fn populate_args_templates(
 // - Argument
 
 /// Overlaps an argument with its template; function arguments must agree.
-fn antiunify_arg(
-    frees: &mut IdSet,
-    uenv: &mut UEnv,
-    arg_template: &Arg,
-    arg: &Arg,
-) -> Result<Arg, StructureError> {
+fn antiunify_arg(frees: &mut IdSet, uenv: &mut UEnv, arg_template: &Arg, arg: &Arg) -> Arg {
     match (&arg_template.node, &arg.node) {
         (ArgKind::Exp(exp_template), ArgKind::Exp(exp)) => {
-            let exp_template = antiunify_exp(frees, uenv, exp_template, exp)?;
+            let exp_template = antiunify_exp(frees, uenv, exp_template, exp);
             let exp_template = Box::new(exp_template);
             let arg_kind_template = ArgKind::Exp(exp_template);
-            let arg_template =
-                crate::phrase! {node: arg_kind_template, span: arg_template.span.clone()};
-            Ok(arg_template)
+            crate::phrase! {node: arg_kind_template, span: arg_template.span.clone()}
         }
         // Function arguments must name the same function
         (ArgKind::Def(id_template), ArgKind::Def(id)) if id_template.syntax_eq(id) => {
-            Ok(arg_template.clone())
+            arg_template.clone()
         }
         _ => {
-            let error_kind = StructureErrorKind::IncompatibleArguments;
-            let error = StructureError::new(error_kind, arg.span.clone());
-            Err(error)
+            // Elaboration checks argument kinds and defining function names
+            unreachable!("validated argument kinds and function names")
         }
     }
 }
@@ -443,16 +410,13 @@ fn antiunify_arg(
 // - Arguments across clauses
 
 /// Builds one argument template per position across all clauses.
-fn antiunify_args_across_clauses(
-    mut frees: IdSet,
-    clauses: &[&Clause],
-) -> Result<(UEnv, Vec<Arg>), StructureError> {
+fn antiunify_args_across_clauses(mut frees: IdSet, clauses: &[&Clause]) -> (UEnv, Vec<Arg>) {
     let Some((clause_head, clauses_tail)) = clauses.split_first() else {
-        return Ok((UEnv::default(), vec![]));
+        return (UEnv::default(), vec![]);
     };
     let args_head = &clause_head.node.args;
     for clause in clauses_tail {
-        check_arity(args_head.len(), clause.node.args.len(), &clause.span)?;
+        check_arity(args_head.len(), clause.node.args.len());
     }
     let mut uenv_acc = UEnv::default();
     let mut args_template = vec![];
@@ -462,63 +426,48 @@ fn antiunify_args_across_clauses(
         let mut arg_template = arg_head.clone();
         for clause in clauses_tail {
             arg_template =
-                antiunify_arg(&mut frees, &mut uenv, &arg_template, &clause.node.args[num_idx])?;
+                antiunify_arg(&mut frees, &mut uenv, &arg_template, &clause.node.args[num_idx]);
         }
-        uenv_acc.extend(uenv)?;
+        uenv_acc.extend(uenv);
         args_template.push(arg_template);
     }
-    Ok((uenv_acc, args_template))
+    (uenv_acc, args_template)
 }
 
 // == Anti-unification of rule matches
 
 /// Anti-unifies rule inputs into a template with per-group bindings.
-#[expect(
-    clippy::type_complexity,
-    reason = "Destructured once per call site; a named result type would add no meaning"
-)]
 pub(super) fn antiunify_rule_matches(
     frees: IdSet,
     exps_by_rule_group: &[Vec<Exp>],
     exps_else: Option<&[Exp]>,
-) -> Result<(Vec<Exp>, Vec<Vec<Prem>>, Option<Vec<Prem>>), StructureError> {
+) -> (Vec<Exp>, Vec<Vec<Prem>>, Option<Vec<Prem>>) {
     // The otherwise group joins the matches for the template
     let exps_by_match = exps_by_rule_group
         .iter()
         .map(Vec::as_slice)
         .chain(exps_else)
         .collect::<Vec<_>>();
-    let (uenv, exps_template) = antiunify_exps_across_matches(frees, &exps_by_match)?;
+    let (uenv, exps_template) = antiunify_exps_across_matches(frees, &exps_by_match);
     // Each group binds its inputs to the template
     let prems_by_rule_group = exps_by_rule_group
         .iter()
-        .map(|exps| {
-            let span = exps.at();
-            populate_exps_templates(&uenv, exps_template.iter(), exps.iter(), &span)
-        })
-        .collect::<Result<_, _>>()?;
-    let prems_else = exps_else
-        .map(|exps| {
-            let span = exps.at();
-            populate_exps_templates(&uenv, exps_template.iter(), exps.iter(), &span)
-        })
-        .transpose()?;
-    Ok((exps_template, prems_by_rule_group, prems_else))
+        .map(|exps| populate_exps_templates(&uenv, exps_template.iter(), exps.iter()))
+        .collect();
+    let prems_else =
+        exps_else.map(|exps| populate_exps_templates(&uenv, exps_template.iter(), exps.iter()));
+    (exps_template, prems_by_rule_group, prems_else)
 }
 
 // == Anti-unification of clauses
 
 /// Prepends a clause's template bindings to its own premises.
-fn populate_clause(
-    uenv: &UEnv,
-    args_template: &[Arg],
-    clause: Clause,
-) -> Result<(Vec<Prem>, Exp), StructureError> {
+fn populate_clause(uenv: &UEnv, args_template: &[Arg], clause: Clause) -> (Vec<Prem>, Exp) {
     let clause_kind = clause.node;
     let ClauseKind { args, exp, prems } = clause_kind;
-    let mut prems_template = populate_args_templates(uenv, args_template, &args, &clause.span)?;
+    let mut prems_template = populate_args_templates(uenv, args_template, &args);
     prems_template.extend(prems);
-    Ok((prems_template, exp))
+    (prems_template, exp)
 }
 
 /// Anti-unifies clause arguments into a template with per-clause bindings.
@@ -529,19 +478,17 @@ fn populate_clause(
 pub(super) fn antiunify_clauses(
     clauses: Vec<Clause>,
     clause_else: Option<Clause>,
-) -> Result<(Vec<Arg>, Vec<(Vec<Prem>, Exp)>, Option<(Vec<Prem>, Exp)>), StructureError> {
+) -> (Vec<Arg>, Vec<(Vec<Prem>, Exp)>, Option<(Vec<Prem>, Exp)>) {
     let clauses_all = clauses.iter().chain(clause_else.iter()).collect::<Vec<_>>();
     let mut frees = IdSet::new();
     for clause in &clauses_all {
         clause.free_ids_into(&mut frees);
     }
-    let (uenv, args_template) = antiunify_args_across_clauses(frees, &clauses_all)?;
+    let (uenv, args_template) = antiunify_args_across_clauses(frees, &clauses_all);
     let paths = clauses
         .into_iter()
         .map(|clause| populate_clause(&uenv, &args_template, clause))
-        .collect::<Result<_, _>>()?;
-    let path_else = clause_else
-        .map(|clause| populate_clause(&uenv, &args_template, clause))
-        .transpose()?;
-    Ok((args_template, paths, path_else))
+        .collect();
+    let path_else = clause_else.map(|clause| populate_clause(&uenv, &args_template, clause));
+    (args_template, paths, path_else)
 }

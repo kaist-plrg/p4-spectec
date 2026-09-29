@@ -33,7 +33,7 @@ pub enum Error {
     Algo(AlgoError),
     /// Structuring AL into SL failed.
     #[error(transparent)]
-    Structure(#[from] StructureError),
+    Structure(StructureError),
     /// Converting SL into PL failed.
     #[error(transparent)]
     Prose(#[from] ProseError),

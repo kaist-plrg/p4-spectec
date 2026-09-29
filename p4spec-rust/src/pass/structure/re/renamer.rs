@@ -4,12 +4,11 @@
 //! `let y' = z { return y }`, assuming `y'` is fresh.
 //! The local binder is renamed so it does not capture the introduced `y`.
 
-use super::super::{StructureError, StructureErrorKind, ol::ast as ol};
+use super::super::ol::ast as ol;
 use crate::lang::{
     common::{
         ds::{map::IdMap, set::IdSet},
         notation::mixop::Mixop,
-        source::Span,
     },
     hints::input,
     il::{ast::*, fresh},
@@ -280,22 +279,14 @@ impl Renamer {
 
     // == Cases
 
-    pub(crate) fn rename_case(
-        &self,
-        changed: &mut bool,
-        case: ol::Case,
-    ) -> Result<ol::Case, StructureError> {
+    pub(crate) fn rename_case(&self, changed: &mut bool, case: ol::Case) -> ol::Case {
         let ol::Case { guard, block } = case;
         let guard = self.rename_guard(changed, guard);
-        let block = self.rename_block(changed, block)?;
-        Ok(ol::Case { guard, block })
+        let block = self.rename_block(changed, block);
+        ol::Case { guard, block }
     }
 
-    pub(crate) fn rename_cases(
-        &self,
-        changed: &mut bool,
-        cases: Vec<ol::Case>,
-    ) -> Result<Vec<ol::Case>, StructureError> {
+    pub(crate) fn rename_cases(&self, changed: &mut bool, cases: Vec<ol::Case>) -> Vec<ol::Case> {
         cases
             .into_iter()
             .map(|case| self.rename_case(changed, case))
@@ -318,33 +309,24 @@ impl Renamer {
     // == Instructions
 
     /// Renames identifiers throughout an instruction, avoiding capture.
-    pub(crate) fn rename_instr(
-        &self,
-        changed: &mut bool,
-        instr_ol: ol::Instr,
-    ) -> Result<ol::Instr, StructureError> {
+    pub(crate) fn rename_instr(&self, changed: &mut bool, instr_ol: ol::Instr) -> ol::Instr {
         if self.ids.is_empty() {
-            return Ok(instr_ol);
+            return instr_ol;
         }
-        let instr_kind_ol = self.rename_instr_kind(changed, &instr_ol.span, instr_ol.node)?;
-        Ok(phrase!(node: instr_kind_ol, span: instr_ol.span))
+        let instr_kind_ol = self.rename_instr_kind(changed, instr_ol.node);
+        phrase!(node: instr_kind_ol, span: instr_ol.span)
     }
 
-    fn rename_instr_kind(
-        &self,
-        changed: &mut bool,
-        span: &Span,
-        instr_kind_ol: ol::InstrKind,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_instr_kind(&self, changed: &mut bool, instr_kind_ol: ol::InstrKind) -> ol::InstrKind {
         match instr_kind_ol {
             ol::InstrKind::If(instr_ol) => self.rename_if_instr(changed, instr_ol),
             ol::InstrKind::Hold(instr_ol) => self.rename_hold_instr(changed, instr_ol),
             ol::InstrKind::Case(instr_ol) => self.rename_case_instr(changed, instr_ol),
             ol::InstrKind::Group(instr_ol) => self.rename_group_instr(changed, instr_ol),
             ol::InstrKind::Let(instr_ol) => self.rename_let_instr(changed, instr_ol),
-            ol::InstrKind::Rule(instr_ol) => self.rename_rule_instr(changed, span, instr_ol),
-            ol::InstrKind::Result(instr_ol) => Ok(self.rename_result_instr(changed, instr_ol)),
-            ol::InstrKind::Return(instr_ol) => Ok(self.rename_return_instr(changed, instr_ol)),
+            ol::InstrKind::Rule(instr_ol) => self.rename_rule_instr(changed, instr_ol),
+            ol::InstrKind::Result(instr_ol) => self.rename_result_instr(changed, instr_ol),
+            ol::InstrKind::Return(instr_ol) => self.rename_return_instr(changed, instr_ol),
             ol::InstrKind::Debug(instr_ol) => self.rename_debug_instr(changed, instr_ol),
         }
     }
@@ -353,7 +335,7 @@ impl Renamer {
         &self,
         changed: &mut bool,
         instrs_ol: Vec<ol::Instr>,
-    ) -> Result<Vec<ol::Instr>, StructureError> {
+    ) -> Vec<ol::Instr> {
         instrs_ol
             .into_iter()
             .map(|instr_ol| self.rename_instr(changed, instr_ol))
@@ -362,73 +344,47 @@ impl Renamer {
 
     // - If instruction
 
-    fn rename_if_instr(
-        &self,
-        changed: &mut bool,
-        instr_ol: ol::IfInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_if_instr(&self, changed: &mut bool, instr_ol: ol::IfInstr) -> ol::InstrKind {
         let ol::IfInstr { exp, iter_exps, block } = instr_ol;
         let exp = self.rename_exp(changed, exp);
         let iter_exps = self.rename_iterexps(changed, iter_exps);
-        let block = self.rename_block(changed, block)?;
-        Ok(ol::InstrKind::If(ol::IfInstr { exp, iter_exps, block }))
+        let block = self.rename_block(changed, block);
+        ol::InstrKind::If(ol::IfInstr { exp, iter_exps, block })
     }
 
     // - Hold instruction
 
-    fn rename_hold_instr(
-        &self,
-        changed: &mut bool,
-        instr_ol: ol::HoldInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_hold_instr(&self, changed: &mut bool, instr_ol: ol::HoldInstr) -> ol::InstrKind {
         let ol::HoldInstr { id, not_exp, iter_exps, block_hold, block_not_hold } = instr_ol;
         let not_exp = not_exp.map(|exp| self.rename_exp(changed, exp.clone()));
         let iter_exps = self.rename_iterexps(changed, iter_exps);
-        let block_hold = self.rename_block(changed, block_hold)?;
-        let block_not_hold = self.rename_block(changed, block_not_hold)?;
-        Ok(ol::InstrKind::Hold(ol::HoldInstr {
-            id,
-            not_exp,
-            iter_exps,
-            block_hold,
-            block_not_hold,
-        }))
+        let block_hold = self.rename_block(changed, block_hold);
+        let block_not_hold = self.rename_block(changed, block_not_hold);
+        ol::InstrKind::Hold(ol::HoldInstr { id, not_exp, iter_exps, block_hold, block_not_hold })
     }
 
     // - Case instruction
 
-    fn rename_case_instr(
-        &self,
-        changed: &mut bool,
-        instr_ol: ol::CaseInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_case_instr(&self, changed: &mut bool, instr_ol: ol::CaseInstr) -> ol::InstrKind {
         let ol::CaseInstr { exp, cases, total } = instr_ol;
         let exp = self.rename_exp(changed, exp);
-        let cases = self.rename_cases(changed, cases)?;
-        Ok(ol::InstrKind::Case(ol::CaseInstr { exp, cases, total }))
+        let cases = self.rename_cases(changed, cases);
+        ol::InstrKind::Case(ol::CaseInstr { exp, cases, total })
     }
 
     // - Group instruction
 
-    fn rename_group_instr(
-        &self,
-        changed: &mut bool,
-        instr_ol: ol::GroupInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_group_instr(&self, changed: &mut bool, instr_ol: ol::GroupInstr) -> ol::InstrKind {
         let ol::GroupInstr { id, rel_signature, exps, block } = instr_ol;
         let exps = self.rename_exps(changed, exps);
-        let block = self.rename_block(changed, block)?;
-        Ok(ol::InstrKind::Group(ol::GroupInstr { id, rel_signature, exps, block }))
+        let block = self.rename_block(changed, block);
+        ol::InstrKind::Group(ol::GroupInstr { id, rel_signature, exps, block })
     }
 
     // - Let instruction
 
     /// Renames a let; its binders shadow the renaming and may be freshened.
-    fn rename_let_instr(
-        &self,
-        changed: &mut bool,
-        instr_ol: ol::LetInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_let_instr(&self, changed: &mut bool, instr_ol: ol::LetInstr) -> ol::InstrKind {
         let ol::LetInstr { exp_l, exp_r, iter_instrs, block } = instr_ol;
         let exp_r = self.rename_exp(changed, exp_r);
         // Names bound here are not renamed below, except to avoid capture
@@ -444,24 +400,20 @@ impl Renamer {
                 .map(|(id, id_fresh)| (id.clone(), id_fresh.clone())),
         );
         let iter_instrs = renamer.rename_iterinstrs_bound(changed, iter_instrs);
-        let block = renamer.rename_block(changed, block)?;
-        Ok(ol::InstrKind::Let(ol::LetInstr { exp_l, exp_r, iter_instrs, block }))
+        let block = renamer.rename_block(changed, block);
+        ol::InstrKind::Let(ol::LetInstr { exp_l, exp_r, iter_instrs, block })
     }
 
     // - Rule instruction
 
     /// Renames a rule call; output binders shadow it and may be freshened.
-    fn rename_rule_instr(
-        &self,
-        changed: &mut bool,
-        span: &Span,
-        instr_ol: ol::RuleInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_rule_instr(&self, changed: &mut bool, instr_ol: ol::RuleInstr) -> ol::InstrKind {
         let ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block } = instr_ol;
         // Split the arguments by the input hint
         let exps = not_exp.args().into_iter().cloned().collect();
-        let (exps_input, exps_output) = input::split(&input_hint, exps)
-            .map_err(|error| StructureError::new(StructureErrorKind::Input(error), span.clone()))?;
+        // Elaboration validates hints; OL rewrites preserve notation arity
+        let (exps_input, exps_output) =
+            input::split(&input_hint, exps).expect("validated relation hints and argument counts");
         // Inputs are uses, outputs are binders
         let exps_input = self.rename_exps(changed, exps_input);
         let frees_output = exps_output.as_slice().free_ids();
@@ -476,14 +428,15 @@ impl Renamer {
                 .map(|(id, id_fresh)| (id.clone(), id_fresh.clone())),
         );
         // Rebuild the notation, then rename iterators and body
+        // Renaming preserves the argument counts returned by input::split
         let exps = input::combine(&input_hint, exps_input, exps_output)
-            .map_err(|error| StructureError::new(StructureErrorKind::Input(error), span.clone()))?;
+            .expect("validated relation hints and argument counts");
         let mixop = not_exp.to_mixop();
         let not_exp =
             Mixop::fill(&mixop, exps).expect("validated arguments preserve the mixfix arity");
         let iter_instrs = renamer.rename_iterinstrs_bound(changed, iter_instrs);
-        let block = renamer.rename_block(changed, block)?;
-        Ok(ol::InstrKind::Rule(ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block }))
+        let block = renamer.rename_block(changed, block);
+        ol::InstrKind::Rule(ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block })
     }
 
     // - Result instruction
@@ -504,26 +457,18 @@ impl Renamer {
 
     // - Debug instruction
 
-    fn rename_debug_instr(
-        &self,
-        changed: &mut bool,
-        instr_ol: ol::DebugInstr,
-    ) -> Result<ol::InstrKind, StructureError> {
+    fn rename_debug_instr(&self, changed: &mut bool, instr_ol: ol::DebugInstr) -> ol::InstrKind {
         let ol::DebugInstr { exp, instr } = instr_ol;
         let exp = self.rename_exp(changed, exp);
-        let instr = Box::new(self.rename_instr(changed, *instr)?);
-        Ok(ol::InstrKind::Debug(ol::DebugInstr { exp, instr }))
+        let instr = Box::new(self.rename_instr(changed, *instr));
+        ol::InstrKind::Debug(ol::DebugInstr { exp, instr })
     }
 
     // == Blocks
 
-    pub(crate) fn rename_block(
-        &self,
-        changed: &mut bool,
-        block: ol::Block,
-    ) -> Result<ol::Block, StructureError> {
+    pub(crate) fn rename_block(&self, changed: &mut bool, block: ol::Block) -> ol::Block {
         if self.ids.is_empty() {
-            return Ok(block);
+            return block;
         }
         self.rename_instrs(changed, block)
     }

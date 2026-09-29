@@ -19,8 +19,6 @@ use crate::{
     },
 };
 
-use super::{StructureError, StructureErrorKind};
-
 /// Type and meta-variable environments of the specification being structured.
 #[derive(Clone, Debug)]
 pub struct Context {
@@ -50,38 +48,31 @@ impl Context {
 
     // - Adders
 
-    fn add_typdef(&mut self, id: Id, typdef: TypeDef) -> Result<(), StructureError> {
-        if self.tdenv.contains_key(&id) {
-            let error = StructureError::new(StructureErrorKind::DuplicateType, id.span.clone());
-            return Err(error);
-        }
+    fn add_typdef(&mut self, id: Id, typdef: TypeDef) {
+        // Elaboration rejects duplicate types before binding preserves definitions
+        assert!(!self.tdenv.contains_key(&id), "type already defined");
         self.tdenv.insert(id, typdef);
-        Ok(())
     }
 
-    fn add_metavar(&mut self, id: Id, typ: ast::Typ) -> Result<(), StructureError> {
-        if self.menv.contains_key(&id) {
-            let error =
-                StructureError::new(StructureErrorKind::DuplicateMetavariable, id.span.clone());
-            return Err(error);
-        }
+    fn add_metavar(&mut self, id: Id, typ: ast::Typ) {
+        // Elaboration reserves the same primitive and type metavariable names
+        assert!(!self.menv.contains_key(&id), "metavariable already defined");
         self.menv.insert(id, typ);
-        Ok(())
     }
 
     // - Definition loading
 
     /// Loads a type or meta-variable definition; other definitions add nothing.
-    fn load_def(&mut self, def_al: &ast::Def) -> Result<(), StructureError> {
+    fn load_def(&mut self, def_al: &ast::Def) {
         let def_kind_al = &def_al.node;
         match def_kind_al {
             ast::DefKind::Typ(typ_def_al) => self.load_typ_def(typ_def_al),
             ast::DefKind::Var(def_var_al) => self.load_var_def(def_var_al),
-            _ => Ok(()),
+            _ => (),
         }
     }
 
-    fn load_typ_def(&mut self, typ_def_al: &ast::TypDef) -> Result<(), StructureError> {
+    fn load_typ_def(&mut self, typ_def_al: &ast::TypDef) {
         match typ_def_al {
             ast::TypDef::Extern(extern_typ_al) => self.load_extern_typ(extern_typ_al),
             ast::TypDef::Defined(defined_typ_al) => self.load_defined_typ(defined_typ_al),
@@ -89,19 +80,19 @@ impl Context {
     }
 
     /// Registers an extern type and a meta-variable of that type.
-    fn load_extern_typ(&mut self, extern_typ_al: &ast::ExternTyp) -> Result<(), StructureError> {
+    fn load_extern_typ(&mut self, extern_typ_al: &ast::ExternTyp) {
         let id = extern_typ_al.id.clone();
         let typ = typ::make::var(id.clone(), vec![]);
-        self.add_metavar(id.clone(), typ)?;
+        self.add_metavar(id.clone(), typ);
         self.add_typdef(id, TypeDef::Extern)
     }
 
     /// Registers a defined type and, if unparameterized, a meta-variable of it.
-    fn load_defined_typ(&mut self, defined_typ_al: &ast::DefinedTyp) -> Result<(), StructureError> {
+    fn load_defined_typ(&mut self, defined_typ_al: &ast::DefinedTyp) {
         let id = defined_typ_al.id.clone();
         if defined_typ_al.tparams.is_empty() {
             let typ = typ::make::var(id.clone(), vec![]);
-            self.add_metavar(id.clone(), typ)?;
+            self.add_metavar(id.clone(), typ);
         }
         let typdef = TypeDef::Defined(
             defined_typ_al.tparams.clone(),
@@ -110,16 +101,16 @@ impl Context {
         self.add_typdef(id, typdef)
     }
 
-    fn load_var_def(&mut self, def_var_al: &ast::VarDef) -> Result<(), StructureError> {
+    fn load_var_def(&mut self, def_var_al: &ast::VarDef) {
         self.add_metavar(def_var_al.id.clone(), def_var_al.typ.clone())
     }
 
     /// Builds the context from every definition of the specification.
-    pub fn load(spec_al: &ast::Spec) -> Result<Self, StructureError> {
+    pub fn load(spec_al: &ast::Spec) -> Self {
         let mut ctx = Self::init();
         for def_al in spec_al {
-            ctx.load_def(def_al)?;
+            ctx.load_def(def_al);
         }
-        Ok(ctx)
+        ctx
     }
 }
