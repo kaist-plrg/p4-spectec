@@ -3,13 +3,22 @@
 //! Builds diagnostics; callers choose whether to stop or try another candidate.
 
 use super::diagnostic;
-use crate::diagnostic::Diagnostic;
+use crate::diagnostic::{Diagnostic, Label};
+use crate::lang::common::source::Span;
 
 const INSTRUCTION_NONDETERMINISTIC: &str = "runtime/instruction-nondeterministic";
 
 /// Reports instruction nondeterminism.
-pub fn instruction_nondeterministic() -> Diagnostic {
-    diagnostic(INSTRUCTION_NONDETERMINISTIC, "nondeterministic instruction evaluation", Vec::new())
+pub fn instruction_nondeterministic(span: &Span) -> Diagnostic {
+    let mut diagnostic = diagnostic(
+        INSTRUCTION_NONDETERMINISTIC,
+        "nondeterministic instruction evaluation",
+        Vec::new(),
+    );
+    diagnostic
+        .labels
+        .push(Label::secondary(span, "first successful instruction"));
+    diagnostic
 }
 
 const FLOW_INVALID: &str = "runtime/flow-invalid";

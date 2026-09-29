@@ -12,7 +12,10 @@ use crate::interp::shared::error;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
     interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
-    lang::{common::source::Span, data::value::Value},
+    lang::{
+        common::source::{Phrase, Span},
+        data::value::Value,
+    },
 };
 
 /// The outcome of evaluating an instruction or block.
@@ -21,16 +24,27 @@ pub enum Flow {
     /// Fell through, with the failures met so far.
     Cont(Vec<Report>),
     /// A function body returned a value.
-    Return(Value),
+    Return(Phrase<Value>),
     /// A relation body produced its outputs.
-    Result(Vec<Value>),
+    Result(Phrase<Vec<Value>>),
     /// A function call to make in place of the current one.
-    TailFunc(ast::Id, Vec<ast::Typ>, Vec<Value>),
+    TailFunc(Phrase<(ast::Id, Vec<ast::Typ>, Vec<Value>)>),
     /// A relation call to make in place of the current one.
-    TailRel(ast::Id, Vec<Value>),
+    TailRel(Phrase<(ast::Id, Vec<Value>)>),
 }
 
 impl Flow {
+    /// Returns the instruction location for a terminating flow.
+    fn span(&self) -> &Span {
+        match self {
+            Self::Return(value) => &value.span,
+            Self::Result(values) => &values.span,
+            Self::TailFunc(call) => &call.span,
+            Self::TailRel(call) => &call.span,
+            Self::Cont(_) => unreachable!("continuations have no terminal instruction"),
+        }
+    }
+
     // = Continuation
 
     /// A continuation carrying one premise failure.
@@ -88,7 +102,7 @@ pub(crate) fn choose_sequential<C>(
 // = Deterministic choice
 
 /// Merges two flows; both terminating is nondeterminism or an invalid mix.
-fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<Flow> {
+fn combine_deterministic(flow: Flow, flow_post: Flow) -> Backtrack<Flow> {
     let flow = match (flow, flow_post) {
         // Both continue: merge the failures
         (Flow::Cont(mut errors), Flow::Cont(errors_post)) => {
@@ -102,39 +116,11 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
         | (Flow::Result(_) | Flow::TailRel(..), Flow::Return(_) | Flow::TailFunc(..)) => {
             unreachable!("function and relation conclusions cannot mix")
         }
-        // Two of the same kind: nondeterminism
-        (Flow::Return(_), Flow::Return(_))
-        | (Flow::Result(_), Flow::Result(_))
-        | (Flow::TailFunc(..), Flow::TailFunc(..))
-        | (Flow::TailRel(..), Flow::TailRel(..)) => {
-            return fatal!(span.clone(), error::call::instruction_nondeterministic(),);
-        }
-        // A result can compete with a tail call in a valid relation body
-        (Flow::Result(_), Flow::TailRel(..)) => {
+        // Two conclusions from the same callable are nondeterministic
+        (flow, flow_post) => {
             return fatal!(
-                span.clone(),
-                error::call::flow_invalid("cannot have both result and tail call"),
-            );
-        }
-        // A return can compete with a tail call in a valid function body
-        (Flow::Return(_), Flow::TailFunc(..)) => {
-            return fatal!(
-                span.clone(),
-                error::call::flow_invalid("cannot have both return and tail call"),
-            );
-        }
-        // A later return conflicts with an earlier function tail call
-        (Flow::TailFunc(..), Flow::Return(_)) => {
-            return fatal!(
-                span.clone(),
-                error::call::flow_invalid("cannot have both tail call and return"),
-            );
-        }
-        // A later result conflicts with an earlier relation tail call
-        (Flow::TailRel(..), Flow::Result(_)) => {
-            return fatal!(
-                span.clone(),
-                error::call::flow_invalid("cannot have both rel tail call and result"),
+                flow_post.span().clone(),
+                error::call::instruction_nondeterministic(flow.span()),
             );
         }
     };
@@ -145,19 +131,17 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
 pub(crate) fn choose_deterministic<C>(
     candidates: impl IntoIterator<Item = C>,
     mut evaluate: impl FnMut(C) -> Backtrack<Flow>,
-    mut span_of: impl FnMut(&C) -> Span,
 ) -> Backtrack<Flow> {
     // Start from an empty continuation
     let mut flow = Flow::Cont(vec![]);
     for candidate in candidates {
-        let span = span_of(&candidate);
         let flow_post = match evaluate(candidate) {
             // A mismatching instruction contributes nothing
             unmatch!(_) => continue,
             result => unwrap!(result),
         };
         // Merge, rejecting a second terminating flow
-        flow = unwrap!(combine_deterministic(flow, flow_post, &span));
+        flow = unwrap!(combine_deterministic(flow, flow_post));
     }
     ok!(flow)
 }

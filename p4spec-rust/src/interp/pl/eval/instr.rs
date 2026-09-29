@@ -13,6 +13,7 @@ use super::{
 };
 use crate::interp::shared::error;
 use crate::lang::hints::input;
+use crate::phrase;
 use crate::{
     interp::{
         pl::{
@@ -108,11 +109,7 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
     };
     let flow = if det {
         // Deterministic choice checks alternatives for conflicting conclusions
-        unwrap!(flow::choose_deterministic(blocks, eval, |block| {
-            block
-                .first()
-                .map_or_else(Span::default, |instr| instr.node.span.clone())
-        }))
+        unwrap!(flow::choose_deterministic(blocks, eval))
     } else {
         // A mismatch ends this alternative, but permits trying the next one
         unwrap!(flow::choose_sequential(blocks, |block| { Flow::cont_from_unmatch(eval(block)) }))
@@ -166,17 +163,24 @@ pub(super) fn eval_group_instr<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     instr: &ast::Instr<ast::GroupInstr>,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_instr(runner_ctx, ctx, instr, &mut eval_group_tier, &mut eval_group_block)
+    eval_instr(
+        runner_ctx,
+        ctx,
+        instr,
+        &mut |runner_ctx, ctx, tier| eval_group_tier(runner_ctx, ctx, &instr.node.span, tier),
+        &mut eval_group_block,
+    )
 }
 
 fn eval_group_tier<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
+    span: &Span,
     tier: &ast::GroupInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     match tier {
-        ast::GroupInstr::Result(instr) => eval_result_instr(runner_ctx, ctx, instr),
-        ast::GroupInstr::Return(instr) => eval_return_instr(runner_ctx, ctx, instr),
+        ast::GroupInstr::Result(instr) => eval_result_instr(runner_ctx, ctx, span, instr),
+        ast::GroupInstr::Return(instr) => eval_return_instr(runner_ctx, ctx, span, instr),
         ast::GroupInstr::Rule(instr) => eval_rule_instr(runner_ctx, ctx, instr),
         ast::GroupInstr::Backtrack(instr) => eval_backtrack_instr(runner_ctx, ctx, instr),
     }
@@ -410,10 +414,11 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
 fn eval_result_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
+    span: &Span,
     instr: &ast::ResultInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     let values = unwrap!(eval_exps(runner_ctx, &ctx, &instr.exps_output));
-    ok!((ctx, Flow::Result(values)))
+    ok!((ctx, Flow::Result(phrase!(node: values, span: span.clone()))))
 }
 
 // - Return instruction
@@ -422,10 +427,11 @@ fn eval_result_instr<'global, Iface: Interface, Ext: Extern>(
 fn eval_return_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
+    span: &Span,
     instr: &ast::ReturnInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    ok!((ctx, Flow::Return(value)))
+    ok!((ctx, Flow::Return(phrase!(node: value, span: span.clone()))))
 }
 
 // - Debug instruction

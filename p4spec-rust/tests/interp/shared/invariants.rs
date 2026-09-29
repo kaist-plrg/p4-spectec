@@ -138,7 +138,7 @@ fn mixed_function_and_relation_conclusions_violate_the_ir_precondition() {
 }
 
 #[test]
-fn function_return_and_tail_call_remain_a_runtime_failure() {
+fn function_return_and_tail_call_report_instruction_nondeterminism() {
     use p4spec_rust::runner::{NullExtern, Runner, Spec};
 
     let spec_el = crate::spec_fixture::parse(
@@ -159,5 +159,10 @@ fn function_return_and_tail_call_remain_a_runtime_failure() {
         .call_func("f", &[], &[])
         .unwrap_err()
         .into_report();
-    assert!(report.find_code("runtime/flow-invalid").is_some(), "{report:?}");
+    assert!(
+        report
+            .find_code("runtime/instruction-nondeterministic")
+            .is_some(),
+        "{report:?}"
+    );
 }

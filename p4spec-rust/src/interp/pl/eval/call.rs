@@ -307,7 +307,7 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     }
     match flow {
         // Results finish the relation
-        Flow::Result(values) => ok!(values),
+        Flow::Result(values) => ok!(values.node),
         // Falling through the entire body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // A relation cannot return a function result
@@ -464,7 +464,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     let (_, flow) = unwrap!(eval_block(runner_ctx, ctx_local, instrs, eval_group_instr));
     match flow {
         // The first return is the table result
-        Flow::Return(value) => ok!(value),
+        Flow::Return(value) => ok!(value.node),
         // Falling through or producing relation outputs is invalid
         _ => fatal!(id.span.clone(), error::call::flow_invalid("table did not return a value")),
     }
@@ -505,7 +505,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     }
     match flow {
         // Returns finish the function
-        Flow::Return(value) => ok!(value),
+        Flow::Return(value) => ok!(value.node),
         // Falling through the entire body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // A function cannot produce relation outputs

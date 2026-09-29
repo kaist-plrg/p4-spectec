@@ -68,6 +68,113 @@ fn configured(spec_pl: ast::Spec, det: bool) -> Runner<PlInterp, BuiltinInterfac
 }
 
 #[test]
+fn nondeterminism_labels_both_nested_terminal_instructions() {
+    use p4spec_rust::{diagnostic::LabelStyle, lang::common::source::Position};
+
+    let spans = [10, 30].map(|line| {
+        Span::new(Position::new("conclusions", line, 0), Position::new("conclusions", line, 8))
+    });
+    let mut blocks: Vec<_> = spans
+        .iter()
+        .map(|span| {
+            let mut instr_return = returning(nat(1));
+            instr_return.node.span = span.clone();
+            vec![condition(true, vec![instr_return])]
+        })
+        .collect();
+    blocks.insert(1, vec![condition(false, vec![])]);
+    let mut runner = configured(function(vec![backtrack(blocks)]), true);
+    let report = runner
+        .context()
+        .call_func("entry", &[], &[])
+        .unwrap_err()
+        .into_report();
+    let diagnostic = report
+        .find_code("runtime/instruction-nondeterministic")
+        .unwrap()
+        .diagnostic();
+    assert_eq!(diagnostic.labels.len(), 2);
+    assert!(
+        diagnostic
+            .labels
+            .iter()
+            .any(|label| label.style == LabelStyle::Secondary && label.span == spans[0])
+    );
+    assert!(
+        diagnostic
+            .labels
+            .iter()
+            .any(|label| label.style == LabelStyle::Primary && label.span == spans[1])
+    );
+}
+
+#[test]
+fn empty_relation_outputs_retain_both_terminal_locations() {
+    use p4spec_rust::{diagnostic::LabelStyle, lang::common::source::Position};
+
+    let spans = [10, 30].map(|line| {
+        Span::new(Position::new("conclusions", line, 0), Position::new("conclusions", line, 8))
+    });
+    let mut spec_pl = spec("var n : nat\nrelation R: CHECK nat\n hint(input %0)\nrule R: CHECK n");
+    let rel = spec_pl
+        .iter_mut()
+        .find_map(|def| match &mut def.node.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    let blocks = spans
+        .iter()
+        .map(|span| {
+            let mut instr_result = instr(ast::InstrKind::Tier(ast::TierInstr {
+                tier: ast::GroupInstr::Result(ast::ResultInstr {
+                    rel_signature: rel.rel_signature.clone(),
+                    exps_output: vec![],
+                }),
+            }));
+            instr_result.node.span = span.clone();
+            vec![condition(true, vec![instr_result])]
+        })
+        .collect();
+    rel.block = vec![instr(ast::InstrKind::Tier(ast::TierInstr {
+        tier: ast::DispatchInstr::Group(ast::RuleGroupInstr {
+            id_rel: rel.id.clone(),
+            id_group: rel.id.clone(),
+            rel_signature: rel.rel_signature.clone(),
+            exps_input: vec![],
+            block: vec![backtrack(blocks)],
+        }),
+    }))];
+    for det in [false, true] {
+        let mut runner = configured(spec_pl.clone(), det);
+        let value = make::nat(runner.arena_mut(), 1u64.into(), Span::default()).unwrap();
+        let result = runner.context().call_rel("R", &[value]);
+        if !det {
+            assert!(result.unwrap().is_empty());
+            continue;
+        }
+        let report = result.unwrap_err().into_report();
+        let diagnostic = report
+            .find_code("runtime/instruction-nondeterministic")
+            .unwrap()
+            .diagnostic();
+        assert_eq!(diagnostic.labels.len(), 2);
+        assert!(
+            diagnostic
+                .labels
+                .iter()
+                .any(|label| label.style == LabelStyle::Secondary && label.span == spans[0])
+        );
+        assert!(
+            diagnostic
+                .labels
+                .iter()
+                .any(|label| label.style == LabelStyle::Primary && label.span == spans[1])
+        );
+    }
+}
+
+#[test]
 #[should_panic(expected = "condition must be a boolean")]
 fn condition_typed_kind_precondition() {
     let block = vec![instr(ast::InstrKind::If(ast::IfInstr {

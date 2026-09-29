@@ -21,6 +21,7 @@ use crate::interp::shared::error;
 use crate::interp::shared::eval::{Invoker, iter, ops};
 use crate::interp::shared::util::iterate_vars;
 use crate::lang::hints::input;
+use crate::phrase;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
     interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
@@ -76,11 +77,9 @@ fn eval_block_deterministic<Iface: Interface, Ext: Extern>(
     block: &[ast::Instr],
     tail: bool,
 ) -> Backtrack<Flow> {
-    flow::choose_deterministic(
-        block,
-        |instr| eval_instr(runner_ctx, Cow::Borrowed(ctx), instr, tail),
-        |instr| instr.span.clone(),
-    )
+    flow::choose_deterministic(block, |instr| {
+        eval_instr(runner_ctx, Cow::Borrowed(ctx), instr, tail)
+    })
 }
 
 /// Runs instructions in order; the last one gets the context and the tail flag.
@@ -126,6 +125,7 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
     instr: &ast::Instr,
     tail: bool,
 ) -> Backtrack<Flow> {
+    let span = &instr.span;
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         match &instr.node {
@@ -138,13 +138,13 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
                 Flow::cont_from_unmatch(eval_let_instr(runner_ctx, ctx, instr, tail))
             }
             ast::InstrKind::Rule(instr) => {
-                Flow::cont_from_unmatch(eval_rule_instr(runner_ctx, ctx, instr, tail))
+                Flow::cont_from_unmatch(eval_rule_instr(runner_ctx, ctx, span, instr, tail))
             }
             ast::InstrKind::Result(instr) => {
-                Flow::cont_from_unmatch(eval_result_instr(runner_ctx, ctx, instr))
+                Flow::cont_from_unmatch(eval_result_instr(runner_ctx, ctx, span, instr))
             }
             ast::InstrKind::Return(instr) => {
-                Flow::cont_from_unmatch(eval_return_instr(runner_ctx, ctx, instr, tail))
+                Flow::cont_from_unmatch(eval_return_instr(runner_ctx, ctx, span, instr, tail))
             }
             ast::InstrKind::Debug(instr) => {
                 Flow::cont_from_unmatch(eval_debug_instr(runner_ctx, ctx, instr, tail))
@@ -335,6 +335,7 @@ fn eval_let_instr<Iface: Interface, Ext: Extern>(
 fn eval_rule_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
+    span: &Span,
     instr: &ast::RuleInstr,
     tail: bool,
 ) -> Backtrack<Flow> {
@@ -352,10 +353,11 @@ fn eval_rule_instr<Iface: Interface, Ext: Extern>(
             .zip(&instr_result.exps)
             .all(|(exp_l, exp_r)| exp_l.syntax_eq(exp_r))
     {
-        return ok!(Flow::TailRel(
-            instr.id.clone(),
-            unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &exps_input)),
-        ));
+        let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &exps_input));
+        return ok!(Flow::TailRel(phrase!(
+            node: (instr.id.clone(), values),
+            span: span.clone(),
+        )));
     }
     // Otherwise call, bind the outputs under the iterators, and run the block
     let ctx = unwrap!(eval_instr_iter(
@@ -378,9 +380,11 @@ fn eval_rule_instr<Iface: Interface, Ext: Extern>(
 fn eval_result_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
+    span: &Span,
     instr: &ast::ResultInstr,
 ) -> Backtrack<Flow> {
-    ok!(Flow::Result(unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &instr.exps))))
+    let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &instr.exps));
+    ok!(Flow::Result(phrase!(node: values, span: span.clone())))
 }
 
 // - Return instruction
@@ -389,6 +393,7 @@ fn eval_result_instr<Iface: Interface, Ext: Extern>(
 fn eval_return_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
+    span: &Span,
     instr: &ast::ReturnInstr,
     tail: bool,
 ) -> Backtrack<Flow> {
@@ -404,20 +409,17 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
                 .iter()
                 .any(|value| matches!(runner_ctx.arena().kind(value), ValueKind::Func(_)))
         {
-            ok!(Flow::Return(unwrap!(SlInterp::invoke_func(
-                runner_ctx,
-                ctx.as_ref(),
-                id,
-                &targs,
-                &values
-            ))))
+            let value =
+                unwrap!(SlInterp::invoke_func(runner_ctx, ctx.as_ref(), id, &targs, &values));
+            ok!(Flow::Return(phrase!(node: value, span: span.clone())))
         // Global calls become tail calls for the invoker loop
         } else {
-            ok!(Flow::TailFunc(id.clone(), targs, values))
+            ok!(Flow::TailFunc(phrase!(node: (id.clone(), targs, values), span: span.clone())))
         }
     // Any other expression is evaluated and returned
     } else {
-        ok!(Flow::Return(unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp))))
+        let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp));
+        ok!(Flow::Return(phrase!(node: value, span: span.clone())))
     }
 }
 

@@ -325,9 +325,12 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     ));
     match flow {
         // Results finish the relation
-        Flow::Result(values) => ok!(RelResult::Result(values)),
+        Flow::Result(values) => ok!(RelResult::Result(values.node)),
         // Tail calls go back to the invoker loop
-        Flow::TailRel(id, values) => ok!(RelResult::TailCall(id, values)),
+        Flow::TailRel(call) => {
+            let (id, values) = call.node;
+            ok!(RelResult::TailCall(id, values))
+        }
         // Falling through the whole body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // Function flows cannot appear in a relation
@@ -511,7 +514,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         unwrap!(instr::eval_block_sequential(runner_ctx, Cow::Owned(ctx_local), instrs, true));
     match flow {
         // A return is the table result
-        Flow::Return(value) => ok!(FuncResult::Return(value)),
+        Flow::Return(value) => ok!(FuncResult::Return(value.node)),
         // Falling through or any other flow is an invalid table
         _ => fatal!(id.span.clone(), error::call::flow_invalid("table did not return a value"),),
     }
@@ -549,9 +552,12 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     ));
     match flow {
         // Returns finish the function
-        Flow::Return(value) => ok!(FuncResult::Return(value)),
+        Flow::Return(value) => ok!(FuncResult::Return(value.node)),
         // Tail calls go back to the invoker loop
-        Flow::TailFunc(id, targs, values) => ok!(FuncResult::TailCall(id, targs, values)),
+        Flow::TailFunc(call) => {
+            let (id, targs, values) = call.node;
+            ok!(FuncResult::TailCall(id, targs, values))
+        }
         // Falling through the whole body is a mismatch
         Flow::Cont(errors) => unmatch!(errors),
         // Relation flows cannot appear in a function
