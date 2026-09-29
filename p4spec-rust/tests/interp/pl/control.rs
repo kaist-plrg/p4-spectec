@@ -1,4 +1,5 @@
 use super::*;
+use p4spec_rust::lang::hints::alter::AlterationHintKind;
 use p4spec_rust::{annotated_note_phrase, lang::common::prim::num::Number};
 
 fn nat(num: u64) -> ast::Exp {
@@ -438,22 +439,15 @@ fn shorthand_bindings_keep_their_scope() {
 fn prepared_expressions_keep_nested_hints_until_evaluation() {
     use p4spec_rust::{
         interp::pl::context::Context,
-        lang::{
-            hints::alter::{AlterationHint, Hole},
-            pl::annot::Hints,
-        },
+        lang::{hints::alter::Hole, pl::annot::Hints},
         runtime::envs::interp::pl::ast_prepared as prepared,
     };
 
     // An invalid prose hole would fail if execution tried to render the hint
     let hints = Hints {
-        prose: Some(p4spec_rust::lang::pl::annot::Hint {
-            id: p4spec_rust::phrase! { node: "prose".to_owned(), span: Default::default() },
-            value: AlterationHint::Hole(
-                p4spec_rust::phrase! { node: Hole::Num(999), span: Default::default() },
-            ),
-            span_decl: Default::default(),
-        }),
+        prose: Some(
+            p4spec_rust::phrase! { node: AlterationHintKind::Hole(Hole::Num(999)), span: Default::default() },
+        ),
         ..Hints::default()
     };
     let mut exp_inner = variable("n");

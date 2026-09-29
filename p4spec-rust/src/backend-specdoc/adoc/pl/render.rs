@@ -28,7 +28,7 @@ use crate::{
         hints::{alter, input},
         il::ast::{ListPattern, OptPattern, Pattern},
         pl::{
-            annot::{Hint, Hints},
+            annot::Hints,
             ast::{self as pl, ExpKind},
             rule_group,
         },
@@ -154,15 +154,15 @@ impl<Item> alter::Renderer<Item> for AlterRenderer<'_, Item> {
 
 /// Applies an alteration hint to prose items.
 fn alternate<Item>(
-    hint: &Hint<alter::AlterationHint>,
+    hint: &alter::AlterationHint,
     base_text: &dyn Fn(&str) -> String,
     render_item: &dyn Fn(&Item) -> Prose,
     items: &[Item],
     caps: bool,
 ) -> Prose {
     let renderer_alter = AlterRenderer { base_text, render_item };
-    let prose_alternated = alter::alternate(&hint.value, items, &renderer_alter)
-        .expect("prosify validates alteration hints");
+    let prose_alternated =
+        alter::alternate(hint, items, &renderer_alter).expect("prosify validates alteration hints");
     if caps { prose_alternated.capitalize_first() } else { prose_alternated }
 }
 

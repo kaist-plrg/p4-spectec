@@ -1,52 +1,43 @@
 use super::*;
+use p4spec_rust::lang::hints::alter::AlterationHintKind;
+
+fn alter_hint(node: AlterationHintKind) -> AlterationHint {
+    p4spec_rust::phrase! { node: node, span: span("exp") }
+}
 
 #[test]
 fn test_alter_validates_sequential_and_numbered_holes() {
-    let hint = AlterationHint::Seq(vec![
-        AlterationHint::Hole(
-            p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() },
-        ),
-        AlterationHint::Brack(
+    let hint = alter_hint(AlterationHintKind::Seq(vec![
+        alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
+        alter_hint(AlterationHintKind::Brack(
             atom("L"),
-            Box::new(AlterationHint::Fuse(
-                Box::new(AlterationHint::Hole(
-                    p4spec_rust::phrase! { node: AlterHole::Num(2), span: Default::default() },
-                )),
-                Box::new(AlterationHint::Hole(
-                    p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() },
-                )),
-            )),
+            Box::new(alter_hint(AlterationHintKind::Fuse(
+                Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(2)))),
+                Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Next))),
+            ))),
             atom("R"),
-        ),
-    ]);
+        )),
+    ]));
 
     assert_eq!(alter_impl::validate(&hint, 3), Ok(()));
     assert_eq!(
         alter_impl::validate(&hint, 1),
         Err(AlterationError::IndexOutOfBounds {
-            hole: Box::new(
-                p4spec_rust::phrase! { node: AlterHole::Num(2), span: Default::default() }
-            ),
+            hole: Box::new(p4spec_rust::phrase! { node: AlterHole::Num(2), span: span("exp") }),
             index: 2,
             item_count: 1
         })
     );
     assert_eq!(
         alter_impl::validate(
-            &AlterationHint::Seq(vec![
-                AlterationHint::Hole(
-                    p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() }
-                ),
-                AlterationHint::Hole(
-                    p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() }
-                ),
-            ]),
+            &alter_hint(AlterationHintKind::Seq(vec![
+                alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
+                alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
+            ])),
             1,
         ),
         Err(AlterationError::IndexOutOfBounds {
-            hole: Box::new(
-                p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() }
-            ),
+            hole: Box::new(p4spec_rust::phrase! { node: AlterHole::Next, span: span("exp") }),
             index: 1,
             item_count: 1
         })
@@ -55,70 +46,54 @@ fn test_alter_validates_sequential_and_numbered_holes() {
 
 #[test]
 fn test_alter_realigns_outputs_around_noncontiguous_inputs() {
-    let hint = AlterationHint::Brack(
+    let hint = alter_hint(AlterationHintKind::Brack(
         atom("L"),
-        Box::new(AlterationHint::Fuse(
-            Box::new(AlterationHint::Hole(
-                p4spec_rust::phrase! { node: AlterHole::Num(3), span: Default::default() },
-            )),
-            Box::new(AlterationHint::Seq(vec![
-                AlterationHint::Hole(
-                    p4spec_rust::phrase! { node: AlterHole::Num(1), span: Default::default() },
-                ),
-                AlterationHint::Hole(
-                    p4spec_rust::phrase! { node: AlterHole::Num(3), span: Default::default() },
-                ),
-            ])),
-        )),
+        Box::new(alter_hint(AlterationHintKind::Fuse(
+            Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(3)))),
+            Box::new(alter_hint(AlterationHintKind::Seq(vec![
+                alter_hint(AlterationHintKind::Hole(AlterHole::Num(1))),
+                alter_hint(AlterationHintKind::Hole(AlterHole::Num(3))),
+            ]))),
+        ))),
         atom("R"),
-    );
+    ));
 
     assert_eq!(
         alter_impl::realign(
             &hint,
             &InputHint::new(vec![
-                p4spec_rust::phrase!(node: 0, span: Default::default()),
-                p4spec_rust::phrase!(node: 2, span: Default::default())
+                p4spec_rust::phrase!(node: 0, span: span("exp")),
+                p4spec_rust::phrase!(node: 2, span: span("exp"))
             ])
         ),
-        AlterationHint::Brack(
+        alter_hint(AlterationHintKind::Brack(
             atom("L"),
-            Box::new(AlterationHint::Fuse(
-                Box::new(AlterationHint::Hole(
-                    p4spec_rust::phrase! { node: AlterHole::Num(1), span: Default::default() }
-                )),
-                Box::new(AlterationHint::Seq(vec![
-                    AlterationHint::Hole(
-                        p4spec_rust::phrase! { node: AlterHole::Num(0), span: Default::default() }
-                    ),
-                    AlterationHint::Hole(
-                        p4spec_rust::phrase! { node: AlterHole::Num(1), span: Default::default() }
-                    ),
-                ])),
-            )),
+            Box::new(alter_hint(AlterationHintKind::Fuse(
+                Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(1)))),
+                Box::new(alter_hint(AlterationHintKind::Seq(vec![
+                    alter_hint(AlterationHintKind::Hole(AlterHole::Num(0))),
+                    alter_hint(AlterationHintKind::Hole(AlterHole::Num(1))),
+                ]))),
+            ))),
             atom("R"),
-        )
+        ))
     );
 }
 
 #[test]
 fn test_alter_alternates_with_omission_defaults_fuse_brackets_and_other() {
-    let hint = AlterationHint::Seq(vec![
-        AlterationHint::Text("omit".into()),
-        AlterationHint::Brack(
+    let hint = alter_hint(AlterationHintKind::Seq(vec![
+        alter_hint(AlterationHintKind::Text("omit".into())),
+        alter_hint(AlterationHintKind::Brack(
             atom("L"),
-            Box::new(AlterationHint::Hole(
-                p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() },
-            )),
+            Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Next))),
             atom("R"),
-        ),
-        AlterationHint::Fuse(
-            Box::new(AlterationHint::Hole(
-                p4spec_rust::phrase! { node: AlterHole::Num(1), span: Default::default() },
-            )),
-            Box::new(AlterationHint::Other(exp(ExpKind::Text("other".into())))),
-        ),
-    ]);
+        )),
+        alter_hint(AlterationHintKind::Fuse(
+            Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(1)))),
+            Box::new(alter_hint(AlterationHintKind::Other(exp(ExpKind::Text("other".into()))))),
+        )),
+    ]));
     let result = alter_impl::alternate(
         &hint,
         &["zero", "one"],
@@ -128,17 +103,13 @@ fn test_alter_alternates_with_omission_defaults_fuse_brackets_and_other() {
     assert_eq!(result, "_ L zero R one#\"other\"");
     assert_eq!(
         alter_impl::alternate(
-            &AlterationHint::Hole(
-                p4spec_rust::phrase! { node: AlterHole::Num(2), span: Default::default() }
-            ),
+            &alter_hint(AlterationHintKind::Hole(AlterHole::Num(2))),
             &["zero"],
             &StringRenderer { empty: "", separator: "", fuse: "" }
         )
         .unwrap_err(),
         AlterationError::IndexOutOfBounds {
-            hole: Box::new(
-                p4spec_rust::phrase! { node: AlterHole::Num(2), span: Default::default() }
-            ),
+            hole: Box::new(p4spec_rust::phrase! { node: AlterHole::Num(2), span: span("exp") }),
             index: 2,
             item_count: 1
         }
@@ -146,8 +117,14 @@ fn test_alter_alternates_with_omission_defaults_fuse_brackets_and_other() {
 }
 #[test]
 fn test_alter_edge_cases_cover_init_omission_duplicates_and_next_cursor() {
-    assert!(matches!(alter_impl::init(&exp(ExpKind::Atom(atom("A")))), AlterationHint::Atom(_)));
-    assert_eq!(alter_impl::init(&exp(ExpKind::Seq(Vec::new()))), AlterationHint::Seq(Vec::new()));
+    assert!(matches!(
+        alter_impl::init(&exp(ExpKind::Atom(atom("A")))).node,
+        AlterationHintKind::Atom(_)
+    ));
+    assert_eq!(
+        alter_impl::init(&exp(ExpKind::Seq(Vec::new()))),
+        alter_hint(AlterationHintKind::Seq(Vec::new()))
+    );
     let nested = exp(ExpKind::Seq(vec![exp(ExpKind::Brack(
         atom("L"),
         Box::new(exp(ExpKind::Hole(Hole::Rest))),
@@ -155,14 +132,17 @@ fn test_alter_edge_cases_cover_init_omission_duplicates_and_next_cursor() {
     ))]));
     assert_eq!(
         alter_impl::init(&nested),
-        AlterationHint::Seq(vec![AlterationHint::Brack(
+        alter_hint(AlterationHintKind::Seq(vec![alter_hint(AlterationHintKind::Brack(
             atom("L"),
-            Box::new(AlterationHint::Other(exp(ExpKind::Hole(Hole::Rest)))),
+            Box::new(alter_hint(AlterationHintKind::Other(exp(ExpKind::Hole(Hole::Rest))))),
             atom("R"),
-        )])
+        ))]))
     );
-    let omitted =
-        AlterationHint::Brack(atom("L"), Box::new(AlterationHint::Text("omit".into())), atom("R"));
+    let omitted = alter_hint(AlterationHintKind::Brack(
+        atom("L"),
+        Box::new(alter_hint(AlterationHintKind::Text("omit".into()))),
+        atom("R"),
+    ));
     let rendered = alter_impl::alternate(
         &omitted,
         &[] as &[&str],
@@ -170,14 +150,10 @@ fn test_alter_edge_cases_cover_init_omission_duplicates_and_next_cursor() {
     )
     .unwrap();
     assert_eq!(rendered, "L|R");
-    let nexts = AlterationHint::Seq(vec![
-        AlterationHint::Hole(
-            p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() },
-        ),
-        AlterationHint::Hole(
-            p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() },
-        ),
-    ]);
+    let nexts = alter_hint(AlterationHintKind::Seq(vec![
+        alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
+        alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
+    ]));
 
     assert_eq!(
         alter_impl::alternate(
@@ -187,9 +163,7 @@ fn test_alter_edge_cases_cover_init_omission_duplicates_and_next_cursor() {
         )
         .unwrap_err(),
         AlterationError::IndexOutOfBounds {
-            hole: Box::new(
-                p4spec_rust::phrase! { node: AlterHole::Next, span: Default::default() }
-            ),
+            hole: Box::new(p4spec_rust::phrase! { node: AlterHole::Next, span: span("exp") }),
             index: 1,
             item_count: 1
         }
@@ -208,11 +182,11 @@ fn test_placeholder_locations_survive_initialization_and_realignment() {
     assert_eq!((index, item_count), (3, 2));
     let hint = alter_impl::realign(
         &hint,
-        &InputHint::new(vec![p4spec_rust::phrase! { node: 0, span: Default::default() }]),
+        &InputHint::new(vec![p4spec_rust::phrase! { node: 0, span: span("exp") }]),
     );
-    let AlterationHint::Hole(hole) = &hint else { panic!("expected placeholder") };
-    assert_eq!(hole.span, span_hole);
-    assert_eq!(hole.node, AlterHole::Num(0));
+    let AlterationHintKind::Hole(hole) = &hint.node else { panic!("expected placeholder") };
+    assert_eq!(hint.span, span_hole);
+    assert_eq!(*hole, AlterHole::Num(0));
     let error = alter_impl::alternate(
         &hint,
         &[] as &[&str],
@@ -221,4 +195,16 @@ fn test_placeholder_locations_survive_initialization_and_realignment() {
     .unwrap_err();
     let AlterationError::IndexOutOfBounds { hole, .. } = error;
     assert_eq!(hole.span, span_hole);
+}
+
+#[test]
+fn test_template_span_survives_realignment() {
+    let exp_hint = p4spec_rust::phrase! {
+        node: ExpKind::Seq(vec![exp(ExpKind::Text("result".into())), exp(ExpKind::Hole(Hole::Num(2)))]),
+        span: span("template"),
+    };
+    let hint = alter_impl::init(&exp_hint);
+    let hint_realigned = alter_impl::realign(&hint, &InputHint::new(vec![]));
+    assert_eq!(hint.span, span("template"));
+    assert_eq!(hint_realigned.span, span("template"));
 }

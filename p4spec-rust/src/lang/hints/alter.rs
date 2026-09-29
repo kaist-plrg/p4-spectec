@@ -22,12 +22,15 @@ pub enum Hole {
     Num(usize),
 }
 
-/// A prose rendering template.
+/// A prose rendering template at its original source location.
+pub type AlterationHint = Phrase<AlterationHintKind>;
+
+/// The syntax of a prose rendering template.
 ///
 /// `Hole::Next` consumes items in cursor order;
 /// `Hole::Num` selects an explicit item index.
 #[derive(Clone, Debug, PartialEq)]
-pub enum AlterationHint {
+pub enum AlterationHintKind {
     /// Literal text.
     Text(Text),
     /// A notation atom.
@@ -37,7 +40,7 @@ pub enum AlterationHint {
     /// A piece between bracket atoms.
     Brack(Atom, Box<AlterationHint>, Atom),
     /// An item placeholder at its original source location.
-    Hole(Phrase<Hole>),
+    Hole(Hole),
     /// Two pieces joined without a separator.
     Fuse(Box<AlterationHint>, Box<AlterationHint>),
     /// Any other expression, rendered by the caller.
@@ -56,27 +59,24 @@ pub enum AlterationError {
 
 /// Reads a template from a hint expression; unknown forms become `Other`.
 pub fn init(exp: &Exp) -> AlterationHint {
-    match &exp.node {
+    let hint_kind = match &exp.node {
         // Text, atoms, sequences, brackets, holes, and fuses map directly
-        ExpKind::Text(text) => AlterationHint::Text(text.clone()),
-        ExpKind::Atom(atom) => AlterationHint::Atom(atom.clone()),
-        ExpKind::Seq(exps) => AlterationHint::Seq(exps.iter().map(init).collect()),
+        ExpKind::Text(text) => AlterationHintKind::Text(text.clone()),
+        ExpKind::Atom(atom) => AlterationHintKind::Atom(atom.clone()),
+        ExpKind::Seq(exps) => AlterationHintKind::Seq(exps.iter().map(init).collect()),
         ExpKind::Brack(atom_l, exp, atom_r) => {
-            AlterationHint::Brack(atom_l.clone(), Box::new(init(exp)), atom_r.clone())
+            AlterationHintKind::Brack(atom_l.clone(), Box::new(init(exp)), atom_r.clone())
         }
         // `%` and `%N`; `%%` and `!%` have no template meaning
-        ExpKind::Hole(ElHole::Next) => {
-            AlterationHint::Hole(crate::phrase! { node: Hole::Next, span: exp.span.clone() })
-        }
-        ExpKind::Hole(ElHole::Num(index)) => {
-            AlterationHint::Hole(crate::phrase! { node: Hole::Num(*index), span: exp.span.clone() })
-        }
+        ExpKind::Hole(ElHole::Next) => AlterationHintKind::Hole(Hole::Next),
+        ExpKind::Hole(ElHole::Num(index)) => AlterationHintKind::Hole(Hole::Num(*index)),
         ExpKind::Fuse(exp_l, _, exp_r) => {
-            AlterationHint::Fuse(Box::new(init(exp_l)), Box::new(init(exp_r)))
+            AlterationHintKind::Fuse(Box::new(init(exp_l)), Box::new(init(exp_r)))
         }
         // Anything else is kept as an expression for the renderer
-        _ => AlterationHint::Other(exp.clone()),
-    }
+        _ => AlterationHintKind::Other(exp.clone()),
+    };
+    crate::phrase! { node: hint_kind, span: exp.span.clone() }
 }
 
 // == Validation
@@ -89,38 +89,32 @@ pub fn validate(hint: &AlterationHint, item_count: usize) -> Result<(), Alterati
         item_count: usize,
         cursor: usize,
     ) -> Result<usize, AlterationError> {
-        match hint {
-            AlterationHint::Text(_) | AlterationHint::Atom(_) | AlterationHint::Other(_) => {
-                Ok(cursor)
-            }
-            AlterationHint::Seq(hints) => hints
+        match &hint.node {
+            AlterationHintKind::Text(_)
+            | AlterationHintKind::Atom(_)
+            | AlterationHintKind::Other(_) => Ok(cursor),
+            AlterationHintKind::Seq(hints) => hints
                 .iter()
                 .try_fold(cursor, |cursor, hint| validate_at(hint, item_count, cursor)),
-            AlterationHint::Brack(_, hint, _) => validate_at(hint, item_count, cursor),
+            AlterationHintKind::Brack(_, hint, _) => validate_at(hint, item_count, cursor),
             // `%` takes the item at the cursor
-            AlterationHint::Hole(Phrase { node: Hole::Next, .. }) if cursor < item_count => {
-                Ok(cursor + 1)
-            }
-            AlterationHint::Hole(hole @ Phrase { node: Hole::Next, .. }) => {
-                Err(AlterationError::IndexOutOfBounds {
-                    hole: Box::new(hole.clone()),
-                    index: cursor,
-                    item_count,
-                })
-            }
+            AlterationHintKind::Hole(Hole::Next) if cursor < item_count => Ok(cursor + 1),
+            AlterationHintKind::Hole(hole @ Hole::Next) => Err(AlterationError::IndexOutOfBounds {
+                hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span.clone() }),
+                index: cursor,
+                item_count,
+            }),
             // `%N` leaves the cursor alone
-            AlterationHint::Hole(Phrase { node: Hole::Num(idx), .. }) if *idx < item_count => {
-                Ok(cursor)
-            }
-            AlterationHint::Hole(hole @ Phrase { node: Hole::Num(idx), .. }) => {
+            AlterationHintKind::Hole(Hole::Num(idx)) if *idx < item_count => Ok(cursor),
+            AlterationHintKind::Hole(hole @ Hole::Num(idx)) => {
                 Err(AlterationError::IndexOutOfBounds {
-                    hole: Box::new(hole.clone()),
+                    hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span.clone() }),
                     index: *idx,
                     item_count,
                 })
             }
             // The right piece continues the left's cursor
-            AlterationHint::Fuse(hint_l, hint_r) => {
+            AlterationHintKind::Fuse(hint_l, hint_r) => {
                 validate_at(hint_r, item_count, validate_at(hint_l, item_count, cursor)?)
             }
         }
@@ -135,15 +129,15 @@ pub fn validate(hint: &AlterationHint, item_count: usize) -> Result<(), Alterati
 pub fn realign(hint: &AlterationHint, hint_input: &InputHint) -> AlterationHint {
     /// Gathers every `%N` index in the template.
     fn collect(hint: &AlterationHint, indices_output: &mut Vec<usize>) {
-        match hint {
-            AlterationHint::Seq(hints) => {
+        match &hint.node {
+            AlterationHintKind::Seq(hints) => {
                 for hint in hints {
                     collect(hint, indices_output);
                 }
             }
-            AlterationHint::Brack(_, hint, _) => collect(hint, indices_output),
-            AlterationHint::Hole(Phrase { node: Hole::Num(idx), .. }) => indices_output.push(*idx),
-            AlterationHint::Fuse(hint_l, hint_r) => {
+            AlterationHintKind::Brack(_, hint, _) => collect(hint, indices_output),
+            AlterationHintKind::Hole(Hole::Num(idx)) => indices_output.push(*idx),
+            AlterationHintKind::Fuse(hint_l, hint_r) => {
                 collect(hint_l, indices_output);
                 collect(hint_r, indices_output);
             }
@@ -153,32 +147,31 @@ pub fn realign(hint: &AlterationHint, hint_input: &InputHint) -> AlterationHint 
 
     /// Rewrites every `%N` by the pairs.
     fn apply(hint: &AlterationHint, idx_pairs: &[(usize, usize)]) -> AlterationHint {
-        match hint {
-            AlterationHint::Seq(hints) => {
-                AlterationHint::Seq(hints.iter().map(|hint| apply(hint, idx_pairs)).collect())
+        let hint_kind = match &hint.node {
+            AlterationHintKind::Seq(hints) => {
+                AlterationHintKind::Seq(hints.iter().map(|hint| apply(hint, idx_pairs)).collect())
             }
-            AlterationHint::Brack(atom_l, hint, atom_r) => AlterationHint::Brack(
+            AlterationHintKind::Brack(atom_l, hint, atom_r) => AlterationHintKind::Brack(
                 atom_l.clone(),
                 Box::new(apply(hint, idx_pairs)),
                 atom_r.clone(),
             ),
-            AlterationHint::Hole(hole @ Phrase { node: Hole::Num(idx), .. }) => {
+            AlterationHintKind::Hole(Hole::Num(idx)) => {
                 let idx_realigned = idx_pairs
                     .iter()
                     .find_map(|(idx_source, idx_realigned)| {
                         (idx_source == idx).then_some(*idx_realigned)
                     })
                     .expect("every numbered hole is collected before realignment");
-                AlterationHint::Hole(
-                    crate::phrase! { node: Hole::Num(idx_realigned), span: hole.span.clone() },
-                )
+                AlterationHintKind::Hole(Hole::Num(idx_realigned))
             }
-            AlterationHint::Fuse(hint_l, hint_r) => AlterationHint::Fuse(
+            AlterationHintKind::Fuse(hint_l, hint_r) => AlterationHintKind::Fuse(
                 Box::new(apply(hint_l, idx_pairs)),
                 Box::new(apply(hint_r, idx_pairs)),
             ),
-            _ => hint.clone(),
-        }
+            _ => hint.node.clone(),
+        };
+        crate::phrase! { node: hint_kind, span: hint.span.clone() }
     }
 
     let mut indices_output = Vec::new();
@@ -237,11 +230,11 @@ pub fn alternate<Item, R: Renderer<Item>>(
         cursor: usize,
         renderer: &R,
     ) -> Result<(usize, Option<R::Output>), AlterationError> {
-        Ok(match hint {
-            AlterationHint::Text(text) => (cursor, renderer.text(text)),
-            AlterationHint::Atom(atom) => (cursor, Some(renderer.atom(atom))),
+        Ok(match &hint.node {
+            AlterationHintKind::Text(text) => (cursor, renderer.text(text)),
+            AlterationHintKind::Atom(atom) => (cursor, Some(renderer.atom(atom))),
             // Pieces share one cursor, so `%` holes take successive items
-            AlterationHint::Seq(hints) => {
+            AlterationHintKind::Seq(hints) => {
                 let mut cursor_next = cursor;
                 let mut outputs = Vec::new();
                 for hint in hints {
@@ -252,7 +245,7 @@ pub fn alternate<Item, R: Renderer<Item>>(
                 (cursor_next, Some(renderer.join(outputs)))
             }
             // Brackets surround the inner piece, dropped if it rendered nothing
-            AlterationHint::Brack(atom_l, hint, atom_r) => {
+            AlterationHintKind::Brack(atom_l, hint, atom_r) => {
                 let (cursor_next, output) = go(hint, items, cursor, renderer)?;
                 let mut outputs = vec![renderer.atom(atom_l)];
                 if let Some(output) = output {
@@ -262,29 +255,33 @@ pub fn alternate<Item, R: Renderer<Item>>(
                 (cursor_next, Some(renderer.join(outputs)))
             }
             // The next item, advancing the cursor
-            AlterationHint::Hole(hole @ Phrase { node: Hole::Next, .. }) => {
+            AlterationHintKind::Hole(hole @ Hole::Next) => {
                 let item = items
                     .get(cursor)
                     .ok_or_else(|| AlterationError::IndexOutOfBounds {
-                        hole: Box::new(hole.clone()),
+                        hole: Box::new(
+                            crate::phrase! { node: hole.clone(), span: hint.span.clone() },
+                        ),
                         index: cursor,
                         item_count: items.len(),
                     })?;
                 (cursor + 1, Some(renderer.item(item)))
             }
             // A specific item, leaving the cursor alone
-            AlterationHint::Hole(hole @ Phrase { node: Hole::Num(index), .. }) => {
+            AlterationHintKind::Hole(hole @ Hole::Num(index)) => {
                 let item = items
                     .get(*index)
                     .ok_or_else(|| AlterationError::IndexOutOfBounds {
-                        hole: Box::new(hole.clone()),
+                        hole: Box::new(
+                            crate::phrase! { node: hole.clone(), span: hint.span.clone() },
+                        ),
                         index: *index,
                         item_count: items.len(),
                     })?;
                 (cursor, Some(renderer.item(item)))
             }
             // Both sides render, the right one continuing the left's cursor
-            AlterationHint::Fuse(hint_l, hint_r) => {
+            AlterationHintKind::Fuse(hint_l, hint_r) => {
                 let (cursor_mid, output_l) = go(hint_l, items, cursor, renderer)?;
                 let (cursor_next, output_r) = go(hint_r, items, cursor_mid, renderer)?;
                 (
@@ -295,7 +292,7 @@ pub fn alternate<Item, R: Renderer<Item>>(
                     )),
                 )
             }
-            AlterationHint::Other(exp) => (cursor, Some(renderer.other(exp))),
+            AlterationHintKind::Other(exp) => (cursor, Some(renderer.other(exp))),
         })
     }
     Ok(go(hint, items, 0, renderer)?

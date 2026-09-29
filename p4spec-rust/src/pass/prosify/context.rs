@@ -9,7 +9,7 @@ use crate::lang::{
     data::typ,
     hints::{alter, fields},
     il,
-    pl::annot::{Hint, Hints},
+    pl::annot::Hints,
     sl::ast::{self as sl, Id},
 };
 use crate::runtime::envs::{algo::MEnv, prosify::HEnv};
@@ -64,17 +64,17 @@ impl Context {
     // - Hint lookup
 
     /// The hints of a meta-function.
-    pub(super) fn hints_func(&self, id_func: &Id) -> Option<&Hints> {
+    pub(super) fn hints_func(&self, id_func: &Id) -> Option<(&Span, &Hints)> {
         self.henv.get_func(id_func)
     }
 
     /// The hints of a relation.
-    pub(super) fn hints_rel(&self, id_rel: &Id) -> Option<&Hints> {
+    pub(super) fn hints_rel(&self, id_rel: &Id) -> Option<(&Span, &Hints)> {
         self.henv.get_rel(id_rel)
     }
 
     /// The hints of a variant case.
-    pub(super) fn hints_case(&self, id_typ: &Id, mixop: &Mixop) -> Option<&Hints> {
+    pub(super) fn hints_case(&self, id_typ: &Id, mixop: &Mixop) -> Option<(&Span, &Hints)> {
         self.henv.get_case(id_typ, mixop)
     }
 
@@ -99,8 +99,8 @@ impl Context {
 
     // - Hint loading
 
-    /// Reads alteration hints while retaining their source declarations.
-    fn load_alter_hints(hints: &mut Hints, span_decl: &Span, hints_sl: &[sl::Hint]) {
+    /// Reads alteration hints while retaining their expression locations.
+    fn load_alter_hints(hints: &mut Hints, hints_sl: &[sl::Hint]) {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
             let hint = match id_hint.node.as_str() {
                 "prose" => &mut hints.prose,
@@ -110,11 +110,7 @@ impl Context {
                 "prose_false" => &mut hints.prose_false,
                 _ => continue,
             };
-            *hint = Some(Hint {
-                id: id_hint.clone(),
-                value: alter::init(exp_hint),
-                span_decl: span_decl.clone(),
-            });
+            *hint = Some(alter::init(exp_hint));
         }
     }
 
@@ -131,14 +127,13 @@ impl Context {
                 continue;
             }
             // Field hints require text names on every declaration kind
-            let value = fields::init(exp_hint)
+            let hint = fields::init(exp_hint)
                 .map_err(|exp| error::field_hint_element_invalid(id_hint, exp, span_decl))?;
-            let hint = Hint { id: id_hint.clone(), value, span_decl: span_decl.clone() };
             // Validate each case hint before a later hint can replace it
             if let Some(num_fields) = num_fields {
-                fields::validate(&hint.value, num_fields).map_err(
+                fields::validate(&hint, num_fields).map_err(
                     |fields::FieldError::ArityMismatch { expected, actual }| {
-                        error::field_hint_arity_mismatch(&hint, expected, actual)
+                        error::field_hint_arity_mismatch(span_decl, &hint, expected, actual)
                     },
                 )?;
             }
@@ -198,7 +193,7 @@ impl Context {
         };
         for il::ast::TypCase { not_typ, hints: hints_sl, .. } in cases {
             let mut hints = Hints::default();
-            Self::load_alter_hints(&mut hints, &not_typ.span, hints_sl);
+            Self::load_alter_hints(&mut hints, hints_sl);
             Self::load_field_hints(
                 &mut hints,
                 &not_typ.span,
@@ -206,7 +201,7 @@ impl Context {
                 Some(not_typ.node.args().len()),
             )?;
             self.henv
-                .insert_case(&def_typ_sl.id, &not_typ.node.to_mixop(), hints);
+                .insert_case(&not_typ.span, &def_typ_sl.id, &not_typ.node.to_mixop(), hints);
         }
         Ok(())
     }
@@ -223,7 +218,7 @@ impl Context {
             sl::RelDef::Defined(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
         };
         let mut hints = Hints::default();
-        Self::load_alter_hints(&mut hints, &id_rel.span, hints_sl);
+        Self::load_alter_hints(&mut hints, hints_sl);
         Self::load_field_hints(&mut hints, &id_rel.span, hints_sl, None)?;
         self.henv.insert_rel(id_rel, hints);
         Ok(())
@@ -238,7 +233,7 @@ impl Context {
             sl::MetaFuncDef::Defined(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
         };
         let mut hints = Hints::default();
-        Self::load_alter_hints(&mut hints, &id_func.span, hints_sl);
+        Self::load_alter_hints(&mut hints, hints_sl);
         Self::load_field_hints(&mut hints, &id_func.span, hints_sl, None)?;
         self.henv.insert_func(id_func, hints);
         Ok(())

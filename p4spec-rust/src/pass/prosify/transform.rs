@@ -27,34 +27,49 @@ use super::{Context, ProseError, error};
 
 // == Hint validation
 
-/// Validates a located template without replacing its source with a use site.
+/// Validates a template using its source and the owning declaration.
 fn validate_hint_alter_one(
-    hint: &annot::Hint<alter::AlterationHint>,
+    span_decl: &Span,
+    name_hint: &str,
+    hint: &alter::AlterationHint,
     num_items: usize,
 ) -> Result<(), ProseError> {
-    alter::validate(&hint.value, num_items).map_err(|error| {
-        error::alteration_hint_index_out_of_bounds(&hint.id, &hint.span_decl, error)
-    })
+    alter::validate(hint, num_items)
+        .map_err(|error| error::alteration_hint_index_out_of_bounds(span_decl, name_hint, error))
 }
 
-/// Checks every alteration hint against the number of items it describes.
-fn validate_hint_alter(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
-    for hint in
-        [&hints.prose, &hints.prose_in, &hints.prose_out, &hints.prose_true, &hints.prose_false]
-            .into_iter()
-            .flatten()
-    {
-        validate_hint_alter_one(hint, num_items)?;
+/// Checks every selected alteration hint against the items it describes.
+fn validate_hint_alter(
+    span_decl: &Span,
+    hints: &annot::Hints,
+    num_items: usize,
+) -> Result<(), ProseError> {
+    // Keep the hint name beside the selected template for diagnostics
+    for (name_hint, hint) in [
+        ("prose", &hints.prose),
+        ("prose_in", &hints.prose_in),
+        ("prose_out", &hints.prose_out),
+        ("prose_true", &hints.prose_true),
+        ("prose_false", &hints.prose_false),
+    ] {
+        // Absent templates leave the default rendering in place
+        if let Some(hint) = hint {
+            validate_hint_alter_one(span_decl, name_hint, hint, num_items)?;
+        }
     }
     Ok(())
 }
 
 /// Checks the field hint against the number of fields.
-fn validate_hint_fields(hints: &annot::Hints, num_fields: usize) -> Result<(), ProseError> {
+fn validate_hint_fields(
+    span_decl: &Span,
+    hints: &annot::Hints,
+    num_fields: usize,
+) -> Result<(), ProseError> {
     if let Some(hint) = &hints.prose_fields {
-        fields::validate(&hint.value, num_fields).map_err(
+        fields::validate(hint, num_fields).map_err(
             |fields::FieldError::ArityMismatch { expected, actual }| {
-                error::field_hint_arity_mismatch(hint, expected, actual)
+                error::field_hint_arity_mismatch(span_decl, hint, expected, actual)
             },
         )?;
     }
@@ -63,15 +78,16 @@ fn validate_hint_fields(hints: &annot::Hints, num_fields: usize) -> Result<(), P
 
 /// Checks the input and output hints against their own item counts.
 fn validate_hint_split(
+    span_decl: &Span,
     hints: &annot::Hints,
     num_inputs: usize,
     num_outputs: usize,
 ) -> Result<(), ProseError> {
     if let Some(hint) = &hints.prose_in {
-        validate_hint_alter_one(hint, num_inputs)?;
+        validate_hint_alter_one(span_decl, "prose_in", hint, num_inputs)?;
     }
     if let Some(hint) = &hints.prose_out {
-        validate_hint_alter_one(hint, num_outputs)?;
+        validate_hint_alter_one(span_decl, "prose_out", hint, num_outputs)?;
     }
     Ok(())
 }
@@ -310,21 +326,17 @@ fn prosify_case_exp(
 ) -> Result<pl::Exp, ProseError> {
     let not_exp_pl = prosify_not_exp(ctx, not_exp_sl)?;
     // The variant is looked up by the expression's type and its mixfix operator
-    let hints = match exp_sl.note.as_ref() {
-        il::TypKind::Var(id_typ, _) => ctx
-            .hints_case(id_typ, &not_exp_sl.to_mixop())
-            .map(|hints_case| annot::Hints {
-                prose: hints_case.prose.clone(),
-                prose_fields: hints_case.prose_fields.clone(),
-                ..annot::Hints::default()
-            })
-            .unwrap_or_default(),
-        _ => annot::Hints::default(),
-    };
-    let num_args = not_exp_sl.args().len();
-    // Holes and field names count the notation's arguments
-    validate_hint_alter(&hints, num_args)?;
-    validate_hint_fields(&hints, num_args)?;
+    let mut hints = annot::Hints::default();
+    if let il::TypKind::Var(id_typ, _) = exp_sl.note.as_ref()
+        && let Some((span_decl, hints_case)) = ctx.hints_case(id_typ, &not_exp_sl.to_mixop())
+    {
+        hints.prose = hints_case.prose.clone();
+        hints.prose_fields = hints_case.prose_fields.clone();
+        // Holes and field names count the notation's arguments
+        let num_args = not_exp_sl.args().len();
+        validate_hint_alter(span_decl, &hints, num_args)?;
+        validate_hint_fields(span_decl, &hints, num_args)?;
+    }
     let exp_kind_pl = pl::ExpKind::Case(Box::new(not_exp_pl));
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
@@ -561,8 +573,7 @@ fn prosify_call_exp(
     args_sl: &[sl::Arg],
 ) -> Result<pl::Exp, ProseError> {
     let args_pl = prosify_args(ctx, args_sl)?;
-    let hints = build_func_hints(ctx, id_func);
-    validate_hint_alter(&hints, args_sl.len())?;
+    let hints = build_func_hints(ctx, id_func, args_sl.len())?;
     let exp_kind_pl = pl::ExpKind::Call(id_func.clone(), targs.to_vec(), args_pl);
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
@@ -874,16 +885,13 @@ fn prosify_dispatch_hold_instr(
     instr_sl: sl::HoldInstr,
     span: Span,
 ) -> Result<pl::DispatchBlock, ProseError> {
-    let hints = ctx
-        .hints_rel(&instr_sl.id)
-        .map(|hints_rel| annot::Hints {
-            prose_true: hints_rel.prose_true.clone(),
-            prose_false: hints_rel.prose_false.clone(),
-            ..annot::Hints::default()
-        })
-        .unwrap_or_default();
-    // Holes count the notation's arguments
-    validate_hint_alter(&hints, instr_sl.not_exp.args().len())?;
+    let mut hints = annot::Hints::default();
+    if let Some((span_decl, hints_rel)) = ctx.hints_rel(&instr_sl.id) {
+        hints.prose_true = hints_rel.prose_true.clone();
+        hints.prose_false = hints_rel.prose_false.clone();
+        // Holes count the notation's arguments
+        validate_hint_alter(span_decl, &hints, instr_sl.not_exp.args().len())?;
+    }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_dispatch_hold_case(ctx, instr_sl.hold_case)?;
     let instr_pl = pl::HoldInstr {
@@ -1024,16 +1032,13 @@ fn prosify_dispatch_rulegroup_instr(
     instr_sl: sl::GroupInstr,
     span: Span,
 ) -> Result<pl::DispatchBlock, ProseError> {
-    let hints = ctx
-        .hints_rel(ctx.namespace())
-        .map(|hints_rel| annot::Hints {
-            prose_in: hints_rel.prose_in.clone(),
-            prose_true: hints_rel.prose_true.clone(),
-            ..annot::Hints::default()
-        })
-        .unwrap_or_default();
-    // Inputs must fit the relation's input hint; holes count the inputs
-    validate_hint_alter(&hints, instr_sl.rel_signature.input_hint.indices().len())?;
+    let mut hints = annot::Hints::default();
+    if let Some((span_decl, hints_rel)) = ctx.hints_rel(ctx.namespace()) {
+        hints.prose_in = hints_rel.prose_in.clone();
+        hints.prose_true = hints_rel.prose_true.clone();
+        // Group headings describe the relation inputs
+        validate_hint_alter(span_decl, &hints, instr_sl.rel_signature.input_hint.indices().len())?;
+    }
     let exps_input_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let block_pl = prosify_group_block(ctx, instr_sl.block)?;
     let instr_pl = pl::RuleGroupInstr {
@@ -1146,16 +1151,13 @@ fn prosify_group_hold_instr(
     instr_sl: sl::HoldInstr,
     span: Span,
 ) -> Result<pl::GroupBlock, ProseError> {
-    let hints = ctx
-        .hints_rel(&instr_sl.id)
-        .map(|hints_rel| annot::Hints {
-            prose_true: hints_rel.prose_true.clone(),
-            prose_false: hints_rel.prose_false.clone(),
-            ..annot::Hints::default()
-        })
-        .unwrap_or_default();
-    // Holes count the notation's arguments
-    validate_hint_alter(&hints, instr_sl.not_exp.args().len())?;
+    let mut hints = annot::Hints::default();
+    if let Some((span_decl, hints_rel)) = ctx.hints_rel(&instr_sl.id) {
+        hints.prose_true = hints_rel.prose_true.clone();
+        hints.prose_false = hints_rel.prose_false.clone();
+        // Holes count the notation's arguments
+        validate_hint_alter(span_decl, &hints, instr_sl.not_exp.args().len())?;
+    }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_group_hold_case(ctx, instr_sl.hold_case)?;
     let instr_pl = pl::HoldInstr {
@@ -1296,26 +1298,19 @@ fn prosify_group_rule_instr(
     instr_sl: sl::RuleInstr,
     span: Span,
 ) -> Result<pl::GroupBlock, ProseError> {
-    let hints = ctx
-        .hints_rel(&instr_sl.id)
-        .map(|hints_rel| annot::Hints {
-            prose_in: hints_rel.prose_in.clone(),
-            prose_out: hints_rel
-                .prose_out
-                .as_ref()
-                // Output holes are numbered after the inputs are removed
-                .map(|hint| annot::Hint {
-                    value: alter::realign(&hint.value, &instr_sl.input_hint),
-                    ..hint.clone()
-                }),
-            ..annot::Hints::default()
-        })
-        .unwrap_or_default();
-    let num_args = instr_sl.not_exp.args().len();
-    // Input and output hints count their own positions
-    // Elaboration validates indices; structure and expansion preserve arity
-    let num_inputs = instr_sl.input_hint.indices().len();
-    validate_hint_split(&hints, num_inputs, num_args - num_inputs)?;
+    let mut hints = annot::Hints::default();
+    if let Some((span_decl, hints_rel)) = ctx.hints_rel(&instr_sl.id) {
+        hints.prose_in = hints_rel.prose_in.clone();
+        // Output holes are numbered after the inputs are removed
+        hints.prose_out = hints_rel
+            .prose_out
+            .as_ref()
+            .map(|hint| alter::realign(hint, &instr_sl.input_hint));
+        // Elaboration validates indices; structure and expansion preserve arity
+        let num_args = instr_sl.not_exp.args().len();
+        let num_inputs = instr_sl.input_hint.indices().len();
+        validate_hint_split(span_decl, &hints, num_inputs, num_args - num_inputs)?;
+    }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let instr_pl = pl::RuleInstr {
         id: instr_sl.id,
@@ -1347,19 +1342,15 @@ fn prosify_group_result_instr(
     instr_sl: sl::ResultInstr,
     span: Span,
 ) -> Result<pl::GroupBlock, ProseError> {
-    // The output template is the enclosing relation's, realigned
-    let hints = ctx
-        .hints_rel(ctx.namespace())
-        .and_then(|hints_rel| hints_rel.prose_out.as_ref())
-        .map(|hint| annot::Hints {
-            prose_out: Some(annot::Hint {
-                value: alter::realign(&hint.value, &instr_sl.rel_signature.input_hint),
-                ..hint.clone()
-            }),
-            ..annot::Hints::default()
-        })
-        .unwrap_or_default();
-    validate_hint_alter(&hints, instr_sl.exps.len())?;
+    let mut hints = annot::Hints::default();
+    if let Some((span_decl, hints_rel)) = ctx.hints_rel(ctx.namespace()) {
+        // The output template is the enclosing relation's, realigned
+        hints.prose_out = hints_rel
+            .prose_out
+            .as_ref()
+            .map(|hint| alter::realign(hint, &instr_sl.rel_signature.input_hint));
+        validate_hint_alter(span_decl, &hints, instr_sl.exps.len())?;
+    }
     let exps_output_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let instr_pl =
         pl::ResultInstr { rel_signature: instr_sl.rel_signature, exps_output: exps_output_pl };
@@ -1516,12 +1507,14 @@ fn build_rel_hints(
     id_rel: &sl::Id,
     rel_signature: &sl::RelSignature,
 ) -> Result<annot::Hints, ProseError> {
-    let hints_default = annot::Hints::default();
-    let hints_rel = ctx.hints_rel(id_rel).unwrap_or(&hints_default);
-    let prose_out = hints_rel.prose_out.as_ref().map(|hint| annot::Hint {
-        value: alter::realign(&hint.value, &rel_signature.input_hint),
-        ..hint.clone()
-    });
+    // Resolve the declaration before selecting templates for this signature
+    let Some((span_decl, hints_rel)) = ctx.hints_rel(id_rel) else {
+        return Ok(annot::Hints::default());
+    };
+    let prose_out = hints_rel
+        .prose_out
+        .as_ref()
+        .map(|hint| alter::realign(hint, &rel_signature.input_hint));
     // Fresh expressions only when the relation has an input template
     let (prose_input_exps, prose_output_exps) = if hints_rel.prose_in.is_some() {
         let typs = rel_signature
@@ -1566,15 +1559,15 @@ fn build_rel_hints(
     // Definition titles use full notation, input, and realigned output domains
     let num_args = rel_signature.not_typ.node.args().len();
     let num_inputs = rel_signature.input_hint.indices().len();
-    for (hint, num_items) in [
-        (&hints.prose, num_args),
-        (&hints.prose_in, num_inputs),
-        (&hints.prose_out, num_args - num_inputs),
-        (&hints.prose_true, num_inputs),
-        (&hints.prose_false, num_inputs),
+    for (name_hint, hint, num_items) in [
+        ("prose", &hints.prose, num_args),
+        ("prose_in", &hints.prose_in, num_inputs),
+        ("prose_out", &hints.prose_out, num_args - num_inputs),
+        ("prose_true", &hints.prose_true, num_inputs),
+        ("prose_false", &hints.prose_false, num_inputs),
     ] {
         if let Some(hint) = hint {
-            validate_hint_alter_one(hint, num_items)?;
+            validate_hint_alter_one(span_decl, name_hint, hint, num_items)?;
         }
     }
     Ok(hints)
@@ -1658,16 +1651,26 @@ fn prosify_func_def(
     }
 }
 
-/// A function's `prose_in`, `prose_true`, and `prose_false` hints.
-fn build_func_hints(ctx: &Context, id_func: &sl::Id) -> annot::Hints {
-    ctx.hints_func(id_func)
-        .map(|hints_func| annot::Hints {
-            prose_in: hints_func.prose_in.clone(),
-            prose_true: hints_func.prose_true.clone(),
-            prose_false: hints_func.prose_false.clone(),
-            ..annot::Hints::default()
-        })
-        .unwrap_or_default()
+/// Selects and validates a function's input and condition templates.
+fn build_func_hints(
+    ctx: &Context,
+    id_func: &sl::Id,
+    num_args: usize,
+) -> Result<annot::Hints, ProseError> {
+    // Resolve the declaration that owns the function templates
+    let Some((span_decl, hints_func)) = ctx.hints_func(id_func) else {
+        return Ok(annot::Hints::default());
+    };
+    // Function rendering consumes input and condition templates
+    let hints = annot::Hints {
+        prose_in: hints_func.prose_in.clone(),
+        prose_true: hints_func.prose_true.clone(),
+        prose_false: hints_func.prose_false.clone(),
+        ..annot::Hints::default()
+    };
+    // Calls and definitions supply the argument count for their own use
+    validate_hint_alter(span_decl, &hints, num_args)?;
+    Ok(hints)
 }
 
 // - External function definition
@@ -1678,8 +1681,7 @@ fn prosify_extern_func_def(
     def_func_sl: sl::ExternFunc,
     span: Span,
 ) -> Result<pl::Def, ProseError> {
-    let hints = build_func_hints(ctx, &def_func_sl.id);
-    validate_hint_alter(&hints, def_func_sl.params.len())?;
+    let hints = build_func_hints(ctx, &def_func_sl.id, def_func_sl.params.len())?;
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;
     let def_func_pl = pl::ExternFunc {
         id: def_func_sl.id,
@@ -1704,8 +1706,7 @@ fn prosify_builtin_func_def(
     def_func_sl: sl::BuiltinFunc,
     span: Span,
 ) -> Result<pl::Def, ProseError> {
-    let hints = build_func_hints(ctx, &def_func_sl.id);
-    validate_hint_alter(&hints, def_func_sl.params.len())?;
+    let hints = build_func_hints(ctx, &def_func_sl.id, def_func_sl.params.len())?;
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;
     let def_func_pl = pl::BuiltinFunc {
         id: def_func_sl.id,
@@ -1730,8 +1731,7 @@ fn prosify_table_func_def(
     def_func_sl: sl::TableFunc,
     span: Span,
 ) -> Result<pl::Def, ProseError> {
-    let hints = build_func_hints(ctx, &def_func_sl.id);
-    validate_hint_alter(&hints, def_func_sl.params.len())?;
+    let hints = build_func_hints(ctx, &def_func_sl.id, def_func_sl.params.len())?;
     // The body looks up its definition's hints by this name
     ctx.set_namespace(def_func_sl.id.clone());
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;
@@ -1763,8 +1763,7 @@ fn prosify_defined_func_def(
     def_func_sl: sl::DefinedFunc,
     span: Span,
 ) -> Result<pl::Def, ProseError> {
-    let hints = build_func_hints(ctx, &def_func_sl.id);
-    validate_hint_alter(&hints, def_func_sl.params.len())?;
+    let hints = build_func_hints(ctx, &def_func_sl.id, def_func_sl.params.len())?;
     // The body looks up its definition's hints by this name
     ctx.set_namespace(def_func_sl.id.clone());
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;

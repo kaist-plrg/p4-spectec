@@ -157,7 +157,7 @@ fn shorten_destruct<Tier>(instr: &mut pl::Instr<Tier>) {
         .hints
         .prose_fields
         .as_ref()
-        .map(|hint| hint.value.fields())
+        .map(|hint| hint.node.as_slice())
     else {
         return;
     };

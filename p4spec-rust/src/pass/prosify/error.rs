@@ -13,7 +13,6 @@ use crate::{
             alter::{AlterationError, Hole},
             fields::FieldHint,
         },
-        pl::annot::Hint,
         traits::print::Print,
     },
 };
@@ -35,18 +34,19 @@ const FIELD_HINT_ARITY_MISMATCH: &str = "prose/field-hint-arity-mismatch";
 
 /// Locates the first extra field name or the position of a missing name.
 pub(super) fn field_hint_arity_mismatch(
-    hint: &Hint<FieldHint>,
+    span_decl: &Span,
+    hint: &FieldHint,
     len_expect: usize,
     len_actual: usize,
 ) -> ProseError {
     // Extra names identify the first excess; missing names follow the last field
-    let fields = hint.value.fields();
+    let fields = hint.node.as_slice();
     let span = if let Some(field) = fields.get(len_expect) {
         field.span.clone()
     } else if let Some(field) = fields.last() {
         Span::new(field.span.right.clone(), field.span.right.clone())
     } else {
-        hint.id.span.clone()
+        hint.span.clone()
     };
     // Match number agreement without hiding the actual and expected counts
     let names = if len_actual == 1 { "field name" } else { "field names" };
@@ -54,12 +54,11 @@ pub(super) fn field_hint_arity_mismatch(
     cause(
         FIELD_HINT_ARITY_MISMATCH,
         format!(
-            "hint `{}` has {len_actual} {names}, but the syntax case has {len_expect} {fields}",
-            hint.id.node
+            "hint `prose_fields` has {len_actual} {names}, but the syntax case has {len_expect} {fields}"
         ),
         vec![
             Label::primary(&span, format!("expected {len_expect}, got {len_actual}")),
-            Label::secondary(&hint.span_decl, "syntax case declared here"),
+            Label::secondary(span_decl, "syntax case declared here"),
         ],
     )
 }
@@ -88,8 +87,8 @@ const ALTERATION_HINT_INDEX_OUT_OF_BOUNDS: &str = "prose/alteration-hint-index-o
 
 /// Reports the placeholder and the number of values it can select from.
 pub(super) fn alteration_hint_index_out_of_bounds(
-    id: &Id,
     span_decl: &Span,
+    name_hint: &str,
     error: AlterationError,
 ) -> ProseError {
     let AlterationError::IndexOutOfBounds { hole, index, item_count } = error;
@@ -102,8 +101,7 @@ pub(super) fn alteration_hint_index_out_of_bounds(
     cause(
         ALTERATION_HINT_INDEX_OUT_OF_BOUNDS,
         format!(
-            "hint `{}` placeholder `{text}` selects index {index}, but only {item_count} {values} {verb} available",
-            id.node
+            "hint `{name_hint}` placeholder `{text}` selects index {index}, but only {item_count} {values} {verb} available"
         ),
         vec![
             Label::primary(&hole.span, format!("index {index} is out of bounds")),

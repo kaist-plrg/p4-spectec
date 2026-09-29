@@ -5,7 +5,7 @@ use p4spec_rust::{
             source::{Position, Span},
         },
         el,
-        hints::alter::{AlterationHint, Hole},
+        hints::alter::{AlterationHintKind, Hole},
         hints::input::InputHint,
         il,
         pl::ast as pl,
@@ -292,8 +292,8 @@ fn test_call_uses_hints_loaded_from_the_original_spec() {
         panic!("expected return instruction");
     };
     assert_eq!(
-        exp_pl.hints.prose_in.as_ref().unwrap().value,
-        AlterationHint::Hole(p4spec_rust::phrase! { node: Hole::Next, span: span("hint", 0) })
+        exp_pl.hints.prose_in.as_ref().unwrap(),
+        &p4spec_rust::phrase! { node: AlterationHintKind::Hole(Hole::Next), span: span("hint", 0) }
     );
 }
 
@@ -321,6 +321,7 @@ fn test_invalid_call_hint_reports_the_hint_span() {
     };
     assert_eq!(diagnostic.code.as_deref(), Some("prose/alteration-hint-index-out-of-bounds"));
     assert_eq!(diagnostic.labels[0].span, span("hint", 0));
+    assert_eq!(diagnostic.labels[1].span, span("g", 0));
 }
 
 #[test]
