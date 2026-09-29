@@ -21,13 +21,6 @@ pub fn instruction_nondeterministic(span: &Span) -> Diagnostic {
     diagnostic
 }
 
-const FLOW_INVALID: &str = "runtime/flow-invalid";
-
-/// Reports invalid flow.
-pub fn flow_invalid(message: &'static str) -> Diagnostic {
-    diagnostic(FLOW_INVALID, message, Vec::new())
-}
-
 const TYPE_ARGUMENT_ARITY_MISMATCH: &str = "runtime/type-argument-arity-mismatch";
 
 /// Reports type argument arity mismatch.

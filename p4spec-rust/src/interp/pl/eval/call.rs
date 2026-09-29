@@ -349,7 +349,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
                 invoke_builtin_func(runner_ctx, ctx, id, func, targs, values)
             }
             ast::MetaFuncDef::Table(func_def) => {
-                invoke_table_func(runner_ctx, ctx, &func.layout, id, func_def, values)
+                invoke_table_func(runner_ctx, ctx, &func.layout, func_def, values)
             }
             ast::MetaFuncDef::Defined(func_def) => {
                 invoke_defined_func(runner_ctx, ctx, &func.layout, id, func_def, targs, values)
@@ -447,7 +447,6 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     layout: &Rc<FrameLayout>,
-    id: &ast::Id,
     func: &ast::TableFunc,
     values: &[Value],
 ) -> Backtrack<Value> {
@@ -465,8 +464,10 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     match flow {
         // The first return is the table result
         Flow::Return(value) => ok!(value.node),
-        // Falling through or producing relation outputs is invalid
-        _ => fatal!(id.span.clone(), error::call::flow_invalid("table did not return a value")),
+        // Exhausting the rows preserves their recoverable failures
+        Flow::Cont(errors) => unmatch!(errors),
+        // Relation flows cannot appear in a function table
+        Flow::Result(_) => unreachable!("relation flow in table body"),
     }
 }
 

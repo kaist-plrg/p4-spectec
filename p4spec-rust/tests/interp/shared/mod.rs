@@ -8,4 +8,5 @@ mod hold;
 mod invariants;
 mod prepare;
 mod reentry;
+mod table;
 mod tparams;

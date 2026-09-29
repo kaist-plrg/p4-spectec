@@ -23,7 +23,7 @@ use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use crate::{
     interp::shared::{
-        backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
+        backtrack::{self, Backtrack, WithFrame, ok, unmatch, unwrap, unwrap_from_result},
         cache::CallKey,
     },
     lang::data::value::{Value, ValueArena, ValueKind},
@@ -378,7 +378,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
                     invoke_builtin_func(runner_ctx, ctx, &id, func, &targs, &values)
                 ))),
                 ast::MetaFuncDef::Table(func) => {
-                    invoke_table_func(runner_ctx, ctx, layout, &id, func, &values)
+                    invoke_table_func(runner_ctx, ctx, layout, func, &values)
                 }
                 ast::MetaFuncDef::Defined(func) => {
                     invoke_defined_func(runner_ctx, ctx, layout, &id, func, &targs, &values)
@@ -496,7 +496,6 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     layout: &Rc<FrameLayout>,
-    id: &ast::Id,
     func: &ast::TableFunc,
     values: &[Value],
 ) -> Backtrack<FuncResult> {
@@ -515,8 +514,15 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     match flow {
         // A return is the table result
         Flow::Return(value) => ok!(FuncResult::Return(value.node)),
-        // Falling through or any other flow is an invalid table
-        _ => fatal!(id.span.clone(), error::call::flow_invalid("table did not return a value"),),
+        // Tail calls go back to the invoker loop
+        Flow::TailFunc(call) => {
+            let (id, targs, values) = call.node;
+            ok!(FuncResult::TailCall(id, targs, values))
+        }
+        // Exhausting the rows preserves their recoverable failures
+        Flow::Cont(errors) => unmatch!(errors),
+        // Relation flows cannot appear in a function table
+        Flow::Result(_) | Flow::TailRel(..) => unreachable!("relation flow in table body"),
     }
 }
 
