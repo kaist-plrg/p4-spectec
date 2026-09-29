@@ -1,5 +1,5 @@
 use super::*;
-use crate::interp::report::{IntoReport, ReportExt};
+use crate::interp::report::ReportExt;
 use p4spec_rust::interp::shared::backtrack::Failure;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
@@ -32,6 +32,84 @@ fn with_block(block: ast::Block, det: bool) -> Runner<SlInterp, BuiltinInterface
 }
 fn message_has(error: &p4spec_rust::diagnostic::Report, code: &str) -> bool {
     error.find_code(code).is_some()
+}
+
+#[test]
+#[should_panic(expected = "condition must be a boolean")]
+fn condition_typed_kind_precondition() {
+    let block = vec![phrase! {
+        node: ast::InstrKind::If(ast::IfInstr {
+            exp: exp(1), iter_exps: vec![], block: vec![], dangle: false,
+        }),
+        span: Span::default(),
+    }];
+    let mut runner = with_block(block, false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+fn boolean_guard_typed_kind_precondition() {
+    for expected in [true, false] {
+        let block = vec![phrase! {
+            node: ast::InstrKind::Case(ast::CaseInstr {
+                exp: exp(1),
+                cases: vec![ast::Case { guard: ast::Guard::Bool(expected), block: vec![] }],
+                dangle: false,
+            }),
+            span: Span::default(),
+        }];
+        let mut runner = with_block(block, false);
+        assert!(
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _ = runner.context().call_func("entry", &[], &[]);
+            }))
+            .is_err()
+        );
+    }
+}
+
+#[test]
+#[should_panic(expected = "relation flow in function body")]
+fn function_body_rejects_relation_flow() {
+    let spec_sl = spec("var n : nat\nrelation R: nat |- nat\n hint(input %0)\nrule R: n |- n");
+    let rel = spec_sl
+        .iter()
+        .find_map(|def| match &def.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    let instr_result = phrase!(
+        node: ast::InstrKind::Result(ast::ResultInstr {
+            rel_signature: rel.rel_signature.clone(),
+            exps: vec![exp(1)],
+        }),
+        span: Span::default()
+    );
+    let mut runner = with_block(vec![instr_result], false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "function flow in relation body")]
+fn relation_body_rejects_function_flow() {
+    let mut spec_sl = spec("var n : nat\nrelation R: nat |- nat\n hint(input %0)\nrule R: n |- n");
+    let rel = spec_sl
+        .iter_mut()
+        .find_map(|def| match &mut def.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    rel.block = vec![instr(exp(1))];
+    let mut runner = p4spec_rust::runner::build_sl(
+        spec_sl,
+        p4spec_rust::runner::Config::new(false, false, true),
+        NullExtern,
+    )
+    .unwrap();
+    let value = make::nat(runner.arena_mut(), 1u64.into(), Span::default()).unwrap();
+    let _ = runner.context().call_rel("R", &[value]);
 }
 
 #[test]
@@ -156,27 +234,10 @@ fn table_blocks_remain_sequential_even_with_determinism_enabled() {
 }
 
 #[test]
-fn empty_body_and_wrong_terminal_flow_are_reported() {
+fn empty_body_remains_a_runtime_mismatch() {
     let mut runner = with_block(vec![], false);
-    assert!(runner.context().call_func("entry", &[], &[]).is_err());
-    let spec_sl =
-        spec("var n : nat\nrelation Step: nat ~> nat\n  hint(input %0)\nrule Step/step: n ~> n");
-    let ast::DefKind::Rel(ast::RelDef::Defined(rel)) = &spec_sl[1].node else { panic!("relation") };
-    let mut runner = with_block(
-        vec![
-            phrase!(node: ast::InstrKind::Result(ast::ResultInstr { rel_signature: rel.rel_signature.clone(), exps: vec![exp(1)] }), span: Span::default()),
-        ],
-        false,
-    );
-    assert!(
-        runner
-            .context()
-            .call_func("entry", &[], &[])
-            .unwrap_err()
-            .into_report()
-            .render()
-            .contains("function cannot produce a relation")
-    );
+    let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
+    assert!(matches!(failure, Failure::Mismatch(_)));
 }
 
 #[test]
@@ -198,7 +259,7 @@ fn optional_and_list_conditions_preserve_empty_iteration_semantics() {
 }
 
 #[test]
-fn loading_rejects_duplicate_execution_definitions() {
+fn loading_duplicate_execution_definitions_violates_the_ir_precondition() {
     for source in [
         "dec $entry() : nat\ndef $entry() = 1",
         "var n : nat\nrelation Step: nat ~> nat\n  hint(input %0)\nrule Step/step: n ~> n",
@@ -207,8 +268,8 @@ fn loading_rejects_duplicate_execution_definitions() {
         let def = spec_sl.last().unwrap().clone();
         spec_sl.push(def);
         assert!(
-            Global::load(spec_sl).unwrap_err().into_report().code()
-                == Some("runtime/binding-repeated")
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| { Global::load(spec_sl) }))
+                .is_err()
         );
     }
 }

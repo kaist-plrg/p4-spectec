@@ -8,7 +8,6 @@
 //! and gathers the rows into `x*` and `y*`.
 
 use super::super::context::{ReadContext, WriteContext};
-use crate::interp::shared::error;
 use crate::interp::shared::prepare::ast;
 use crate::interp::shared::util::iterate_vars;
 use crate::lang::data::var::IdSlot;
@@ -24,14 +23,12 @@ use crate::{
             typ,
             value::{Value, ValueArena, ValueKind, get, make},
         },
-        traits::print::Print,
     },
     phrase,
 };
 
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result},
-    error::EntityKind,
+    backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
     util::find_slot_of_exp,
 };
 
@@ -45,11 +42,7 @@ pub fn assign_tparams<Ctx: WriteContext>(
     span: &Span,
 ) -> Backtrack<Ctx> {
     // Check arity before binding any type parameter
-    unwrap!(crate::interp::shared::backtrack::check(
-        tparams.len() == targs.len(),
-        span.clone(),
-        || error::call::type_argument_arity_mismatch(tparams.len(), targs.len())
-    ));
+    assert_eq!(tparams.len(), targs.len(), "type argument arity mismatch at {span}");
     // Type arguments shadow global definitions in the callee scope
     for (tparam, targ) in tparams.iter().zip(targs) {
         let def_typ = phrase!(node: ast::DefTypKind::Plain(targ.clone()), span: targ.span.clone());
@@ -95,7 +88,7 @@ pub fn assign_exp<Ctx: WriteContext>(
         // Option: both present or both absent
         (ast::ExpKind::Opt(exp_opt), ValueKind::Opt(value_opt)) => {
             let value_opt = *value_opt;
-            assign_opt_exp(arena, ctx, exp, exp_opt, &value, &value_opt)
+            assign_opt_exp(arena, ctx, exp_opt, &value_opt)
         }
         // List literal: elementwise
         (ast::ExpKind::List(exps), ValueKind::List(values)) => {
@@ -111,11 +104,8 @@ pub fn assign_exp<Ctx: WriteContext>(
         (ast::ExpKind::Iter(exp_inner, exp_iter), _) => {
             assign_iter_exp(arena, ctx, exp, exp_inner, exp_iter, value)
         }
-        // Pattern and value shapes disagree
-        _ => err!(
-            exp.span.clone(),
-            error::assign::assignment_mismatch(Print::to_string(exp), arena.to_string(&value)),
-        ),
+        // Lowering checks the pattern before destructuring it
+        _ => unreachable!("assignment pattern must match the value"),
     }
 }
 
@@ -127,12 +117,7 @@ pub fn assign_exps<Ctx: WriteContext, T: Borrow<ast::Exp> + At>(
     values: &[Value],
 ) -> Backtrack<Ctx> {
     // Counts must match
-    if exps.len() != values.len() {
-        return err!(
-            exps.at(),
-            error::assign::assignment_expression_arity_mismatch(exps.len(), values.len()),
-        );
-    }
+    assert_eq!(exps.len(), values.len(), "assignment arity mismatch");
     for (exp, value) in exps.iter().zip(values) {
         ctx = unwrap!(assign_exp(arena, ctx, exp.borrow(), *value));
     }
@@ -195,9 +180,7 @@ fn assign_str_exp<Ctx: WriteContext>(
 fn assign_opt_exp<Ctx: WriteContext>(
     arena: &mut ValueArena,
     ctx: Ctx,
-    exp: &ast::Exp,
     exp_opt: &Option<Box<ast::Exp>>,
-    value: &Value,
     value_opt: &Option<Value>,
 ) -> Backtrack<Ctx> {
     match (exp_opt, value_opt) {
@@ -205,11 +188,8 @@ fn assign_opt_exp<Ctx: WriteContext>(
         (Some(exp), Some(value)) => assign_exp(arena, ctx, exp, *value),
         // Both absent: nothing to bind
         (None, None) => ok!(ctx),
-        // One side present: mismatch
-        _ => err!(
-            exp.span.clone(),
-            error::assign::assignment_mismatch(Print::to_string(exp), arena.to_string(value)),
-        ),
+        // Lowering checks optionality before destructuring
+        _ => unreachable!("option pattern must match the value"),
     }
 }
 
@@ -236,9 +216,9 @@ fn assign_cons_exp<Ctx: WriteContext>(
     value: &Value,
     values: &[Value],
 ) -> Backtrack<Ctx> {
-    let Some((value_head, values_tail)) = values.split_first() else {
-        return err!(exp.span.clone(), error::assign::assignment_cons_empty());
-    };
+    let (value_head, values_tail) = values
+        .split_first()
+        .expect("cons pattern must match a non-empty list");
     // Rebuild the tail as a list value of the same type
     let typ = phrase!(node: arena.typ(value).clone(), span: exp.span.clone());
     let value_tail = unwrap_from_result!(
@@ -278,21 +258,11 @@ fn assign_iter_exp<Ctx: WriteContext>(
             };
             for (var, var_outer) in exp_iter.vars.iter().zip(&vars_outer) {
                 let typ = typ::make::iterate(var_outer.var.typ.clone(), &var_outer.var.iters);
-                let value_opt = match &ctx_sub {
-                    Some(ctx_sub) => Some(*unwrap_from_result!(
-                        ctx_sub.find_value_at_slot(var.slot).ok_or_else(|| {
-                            error::at(
-                                error::context::binding_undefined(
-                                    EntityKind::Value,
-                                    Print::to_string(&var.var),
-                                ),
-                                var.var.id.span.clone(),
-                            )
-                        }),
-                        &var.var.id.span
-                    )),
-                    None => None,
-                };
+                let value_opt = ctx_sub.as_ref().map(|ctx_sub| {
+                    *ctx_sub
+                        .find_value_at_slot(var.slot)
+                        .expect("value must be bound")
+                });
                 let value = unwrap_from_result!(
                     make::opt(arena, typ.node.into(), value_opt, Span::default()),
                     span
@@ -303,7 +273,9 @@ fn assign_iter_exp<Ctx: WriteContext>(
         }
         // List: one fresh sub-context per element
         ast::Iter::List => {
-            let values = unwrap_from_result!(get::list(arena, &value), span).to_vec();
+            let values = get::list(arena, &value)
+                .expect("iteration assignment value must be a list")
+                .to_vec();
             let mut ctx_sub = ctx.clone();
             ctx_sub.clear_value_bindings();
             let mut ctxs = Vec::with_capacity(values.len());
@@ -315,18 +287,9 @@ fn assign_iter_exp<Ctx: WriteContext>(
                 let typ = typ::make::iterate(var_outer.var.typ.clone(), &var_outer.var.iters);
                 let mut values = Vec::with_capacity(ctxs.len());
                 for ctx_sub in &ctxs {
-                    let value = unwrap_from_result!(
-                        ctx_sub.find_value_at_slot(var.slot).ok_or_else(|| {
-                            error::at(
-                                error::context::binding_undefined(
-                                    EntityKind::Value,
-                                    Print::to_string(&var.var),
-                                ),
-                                var.var.id.span.clone(),
-                            )
-                        }),
-                        &var.var.id.span
-                    );
+                    let value = ctx_sub
+                        .find_value_at_slot(var.slot)
+                        .expect("value must be bound");
                     values.push(*value);
                 }
                 let value_sub = unwrap_from_result!(
@@ -365,12 +328,7 @@ pub fn assign_args<Ctx: WriteContext>(
     values: &[Value],
 ) -> Backtrack<Ctx> {
     // Counts must match
-    if args.len() != values.len() {
-        return err!(
-            args.at(),
-            error::assign::assignment_argument_arity_mismatch(args.len(), values.len()),
-        );
-    }
+    assert_eq!(args.len(), values.len(), "validated argument assignment arity");
     let mut ctx = ctx_callee;
     for (arg, value) in args.iter().zip(values.iter()) {
         ctx = unwrap!(assign_arg(arena, ctx_caller, ctx, arg, *value));
@@ -401,10 +359,7 @@ pub fn assign_def<Ctx: WriteContext>(
 ) -> Backtrack<Ctx> {
     // The value must be a function reference
     let ValueKind::Func(id_func) = arena.kind(&value) else {
-        return err!(
-            id.span.clone(),
-            error::assign::assignment_definition_mismatch(arena.to_string(&value), id.node.clone()),
-        );
+        unreachable!("function parameter must receive a function reference");
     };
     // Look the definition up in the caller, bind it in the callee
     let func = unwrap_from_result!(ctx_caller.find_func(id_func), &id_func.span);

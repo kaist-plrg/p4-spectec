@@ -21,7 +21,7 @@ use crate::{
 
 // = Premise evaluation
 
-/// Evaluates a premise, propagating its classified failure unchanged.
+/// Evaluates a premise, returning any failure unchanged.
 pub fn eval_prem<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
     ctx: Context<'global>,
@@ -76,7 +76,7 @@ fn eval_if_prem<'global, Iface: Interface, Ext: Extern>(
     prem: &ast::IfPrem,
 ) -> Backtrack<Context<'global>> {
     let value = unwrap!(expr::eval_exp(runner_ctx, &ctx, &prem.exp));
-    if unwrap_from_result!(get::bool(runner_ctx.arena(), &value), &prem.exp.span) {
+    if get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean") {
         ok!(ctx)
     } else {
         unmatch!(prem.exp.span.clone(), error::prem::condition_unmet(Print::to_string(&prem.exp)),)

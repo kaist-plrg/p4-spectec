@@ -7,6 +7,11 @@ fn nat(num: u64) -> ast::Exp {
     annotated_note_phrase!(node: ast::ExpKind::Num(Number::Nat(num.into())), note: typ::make::nat().node, span: Span::default())
 }
 
+fn division_by_zero() -> ast::Exp {
+    use p4spec_rust::lang::common::prim::num::BinOp;
+    annotated_note_phrase!(node: ast::ExpKind::Bin(ast::BinOp::Num(BinOp::Div), ast::OpTyp::Nat, Box::new(nat(1)), Box::new(nat(0))), note: typ::make::nat().node, span: Span::default())
+}
+
 fn variable(name: &str) -> ast::Exp {
     annotated_note_phrase!(node: ast::ExpKind::Id(p4spec_rust::phrase!(node: name.to_owned(), span: Span::default())), note: typ::make::nat().node, span: Span::default())
 }
@@ -60,6 +65,102 @@ fn configured(spec_pl: ast::Spec, det: bool) -> Runner<PlInterp, BuiltinInterfac
         p4spec_rust::interface::p4(&Spec::Pl(vec![])),
         NullExtern,
     )
+}
+
+#[test]
+#[should_panic(expected = "condition must be a boolean")]
+fn condition_typed_kind_precondition() {
+    let block = vec![instr(ast::InstrKind::If(ast::IfInstr {
+        exp: nat(1),
+        iter_exps: vec![],
+        block: vec![],
+        dangle: false,
+    }))];
+    let mut runner = configured(function(block), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "boolean guard value must be a boolean")]
+fn boolean_guard_typed_kind_precondition() {
+    let block = vec![instr(ast::InstrKind::Case(ast::CaseInstr {
+        exp: nat(1),
+        cases: vec![ast::Case { guard: ast::Guard::Bool(true), block: vec![] }],
+        dangle: false,
+    }))];
+    let mut runner = configured(function(block), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "destructuring value must be a case")]
+fn destructuring_typed_kind_precondition() {
+    let block =
+        vec![instr(ast::InstrKind::Destruct(ast::DestructInstr { exp: nat(1), bindings: vec![] }))];
+    let mut runner = configured(function(block), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+fn option_extraction_representation_remains_a_runtime_error() {
+    let block = vec![instr(ast::InstrKind::OptionGet(ast::OptionGetInstr {
+        exp_l: variable("n"),
+        exp_r: nat(1),
+        block: vec![],
+    }))];
+    let mut runner = configured(function(block), false);
+    let report = runner
+        .context()
+        .call_func("entry", &[], &[])
+        .unwrap_err()
+        .into_report();
+    assert!(report.find_code("runtime/value-invalid").is_some());
+}
+
+#[test]
+#[should_panic(expected = "relation flow in function body")]
+fn function_body_rejects_relation_flow() {
+    let spec_pl = spec("var n : nat\nrelation R: nat |- nat\n hint(input %0)\nrule R: n |- n");
+    let rel = spec_pl
+        .iter()
+        .find_map(|def| match &def.node.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    let instr_result = instr(ast::InstrKind::Tier(ast::TierInstr {
+        tier: ast::GroupInstr::Result(ast::ResultInstr {
+            rel_signature: rel.rel_signature.clone(),
+            exps_output: vec![nat(1)],
+        }),
+    }));
+    let mut runner = configured(function(vec![instr_result]), false);
+    let _ = runner.context().call_func("entry", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "function flow in relation body")]
+fn relation_body_rejects_function_flow() {
+    let mut spec_pl = spec("var n : nat\nrelation R: nat |- nat\n hint(input %0)\nrule R: n |- n");
+    let rel = spec_pl
+        .iter_mut()
+        .find_map(|def| match &mut def.node.node {
+            ast::DefKind::Rel(ast::RelDef::Defined(rel)) => Some(rel),
+            _ => None,
+        })
+        .unwrap();
+    rel.block = vec![instr(ast::InstrKind::Tier(ast::TierInstr {
+        tier: ast::DispatchInstr::Group(ast::RuleGroupInstr {
+            id_rel: rel.id.clone(),
+            id_group: rel.id.clone(),
+            rel_signature: rel.rel_signature.clone(),
+            exps_input: vec![variable("n")],
+            block: vec![returning(nat(1))],
+        }),
+    }))];
+    let mut runner = configured(spec_pl, false);
+    let value = make::nat(runner.arena_mut(), 1u64.into(), Span::default()).unwrap();
+    let _ = runner.context().call_rel("R", &[value]);
 }
 
 #[test]
@@ -144,7 +245,7 @@ fn fatal_errors_abort_alternative_selection() {
     for det in [false, true] {
         let mut runner = configured(
             function(vec![backtrack(vec![
-                vec![returning(variable("missing"))],
+                vec![returning(division_by_zero())],
                 vec![returning(nat(7))],
             ])]),
             det,
@@ -154,7 +255,7 @@ fn fatal_errors_abort_alternative_selection() {
             .call_func("entry", &[], &[])
             .unwrap_err()
             .into_report();
-        assert!(error.render().contains("value `missing` is undefined"), "det={det}: {error}");
+        assert!(error.find_code("runtime/numeric-invalid").is_some(), "det={det}: {error}");
     }
 }
 
@@ -164,7 +265,7 @@ fn fatal_instruction_failures_keep_calls_and_causes_without_instruction_frames()
         let mut runner = configured(
             function(vec![condition(
                 true,
-                vec![returning(variable("missing")), returning(nat(123456789))],
+                vec![returning(division_by_zero()), returning(nat(123456789))],
             )]),
             det,
         );
@@ -174,13 +275,10 @@ fn fatal_instruction_failures_keep_calls_and_causes_without_instruction_frames()
             .unwrap_err()
             .into_report();
         let text = report.render();
-        assert!(
-            text.contains("error[runtime/binding-undefined]: value `missing` is undefined"),
-            "{text}"
-        );
+        assert!(text.contains("error[runtime/numeric-invalid]"), "{text}");
         assert!(!text.contains("instruction"), "{text}");
         assert!(text.contains("note: while invoking $entry"), "{text}");
-        assert!(text.contains("note: while evaluating expression missing"), "{text}");
+        assert!(text.contains("note: while evaluating expression (1 / 0)"), "{text}");
         assert!(!text.contains("123456789"), "an unevaluated PL block leaked: {text}");
         assert!(!text.contains("Else Dangling"), "{text}");
     }
@@ -293,15 +391,13 @@ fn nested_instructions_preserve_the_cause_span_without_frames_in_both_tiers() {
     // Give the failing expression its own location, distinct from the instructions
     let span_exp =
         Span::new(Position::new("expression_trace", 1, 0), Position::new("expression_trace", 1, 7));
-    let mut exp_missing = variable("missing");
-    exp_missing.node.span = span_exp.clone();
-    let ast::ExpKind::Id(id) = &mut exp_missing.node.node else { unreachable!() };
-    id.span = span_exp.clone();
+    let mut exp_failure = division_by_zero();
+    exp_failure.node.span = span_exp.clone();
     // A dispatch condition enters a group whose condition reaches a fatal result
     let mut instr_result = instr(ast::InstrKind::Tier(ast::TierInstr {
         tier: ast::GroupInstr::Result(ast::ResultInstr {
             rel_signature: rel.rel_signature.clone(),
-            exps_output: vec![exp_missing],
+            exps_output: vec![exp_failure],
         }),
     }));
     instr_result.node.span = spans[3].clone();
@@ -329,9 +425,9 @@ fn nested_instructions_preserve_the_cause_span_without_frames_in_both_tiers() {
             .call_rel("Entry", &[value])
             .unwrap_err()
             .into_report();
-        assert!(error.render().contains("value `missing` is undefined"), "{error}");
+        assert!(error.find_code("runtime/numeric-invalid").is_some(), "{error}");
         assert!(error.render().contains("while invoking Entry"), "{error}");
-        let cause = error.find_code("runtime/binding-undefined").unwrap();
+        let cause = error.find_code("runtime/numeric-invalid").unwrap();
         assert_eq!(cause.span(), span_exp);
         let mut spans_actual = vec![];
         instruction_spans(&error, &mut spans_actual);

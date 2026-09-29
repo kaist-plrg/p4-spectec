@@ -1,39 +1,10 @@
 //! Expr diagnostics for interpreter operations
 //!
-//! Constructors identify runtime checks without deciding whether callers retry.
+//! Builds diagnostics; callers choose whether to stop or try another candidate.
 
 use super::diagnostic;
 use crate::diagnostic::Diagnostic;
 use num_bigint::BigInt;
-
-const CONCATENATION_OPERAND_MISMATCH: &str = "runtime/concatenation-operand-mismatch";
-
-/// Reports concatenation operand mismatch.
-pub fn concatenation_operand_mismatch() -> Diagnostic {
-    diagnostic(
-        CONCATENATION_OPERAND_MISMATCH,
-        "concatenation expects either two texts or two lists",
-        Vec::new(),
-    )
-}
-
-const LENGTH_OPERAND_MISMATCH: &str = "runtime/length-operand-mismatch";
-
-/// Reports length operand mismatch.
-pub fn length_operand_mismatch() -> Diagnostic {
-    diagnostic(
-        LENGTH_OPERAND_MISMATCH,
-        "length operation expects either a text or a list",
-        Vec::new(),
-    )
-}
-
-const FIELD_UNDEFINED: &str = "runtime/field-undefined";
-
-/// Reports undefined field.
-pub fn field_undefined() -> Diagnostic {
-    diagnostic(FIELD_UNDEFINED, "undefined structure field", Vec::new())
-}
 
 const TEXT_SLICE_BOUNDARY_MISMATCH: &str = "runtime/text-slice-boundary-mismatch";
 
@@ -46,20 +17,6 @@ pub fn text_slice_boundary_mismatch() -> Diagnostic {
     )
 }
 
-const INDEX_OPERAND_MISMATCH: &str = "runtime/index-operand-mismatch";
-
-/// Reports index operand mismatch.
-pub fn index_operand_mismatch() -> Diagnostic {
-    diagnostic(INDEX_OPERAND_MISMATCH, "indexing expects either a text or a list", Vec::new())
-}
-
-const SLICE_OPERAND_MISMATCH: &str = "runtime/slice-operand-mismatch";
-
-/// Reports slice operand mismatch.
-pub fn slice_operand_mismatch() -> Diagnostic {
-    diagnostic(SLICE_OPERAND_MISMATCH, "slicing expects either a text or a list", Vec::new())
-}
-
 const CHARACTER_UPDATE_LENGTH_MISMATCH: &str = "runtime/character-update-length-mismatch";
 
 /// Reports character update length mismatch.
@@ -68,17 +25,6 @@ pub fn character_update_length_mismatch() -> Diagnostic {
         CHARACTER_UPDATE_LENGTH_MISMATCH,
         "updating a character requires a single-character text",
         Vec::new(),
-    )
-}
-
-const TUPLE_CAST_ARITY_MISMATCH: &str = "runtime/tuple-cast-arity-mismatch";
-
-/// Reports tuple cast arity mismatch.
-pub fn tuple_cast_arity_mismatch(expected: usize, actual: usize) -> Diagnostic {
-    diagnostic(
-        TUPLE_CAST_ARITY_MISMATCH,
-        "tuple cast arity mismatch",
-        vec![format!("expected: {expected}, actual: {actual}")],
     )
 }
 

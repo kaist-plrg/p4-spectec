@@ -21,6 +21,7 @@ use crate::interp::shared::context::{IterContext, WriteContext};
 use crate::interp::shared::error;
 use crate::interp::shared::eval::{Invoker, iter, ops};
 use crate::interp::shared::util::iterate_vars;
+use crate::lang::hints::input;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
     interp::shared::backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
@@ -191,10 +192,7 @@ fn eval_if_instr<Iface: Interface, Ext: Extern>(
         &instr.iter_exps,
         &mut |runner_ctx, ctx| {
             let value = unwrap!(eval_exp(runner_ctx, ctx, &instr.exp));
-            crate::interp::shared::backtrack::from_result(
-                get::bool(runner_ctx.arena(), &value),
-                &instr.exp.span,
-            )
+            ok!(get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
         }
     ));
     // Run the block, or fall through recording the failed condition
@@ -290,15 +288,15 @@ fn eval_guard<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<bool> {
     // The trivial guard reads the boolean itself
     if matches!(guard, ast::Guard::Bool(true)) {
-        return crate::interp::shared::backtrack::from_result(
-            get::bool(runner_ctx.arena(), &value),
-            span,
+        return ok!(
+            get::bool(runner_ctx.arena(), &value).expect("boolean guard value must be a boolean")
         );
     }
     (|| match guard {
         // Negation
         ast::Guard::Bool(_) => {
-            ok!(!unwrap_from_result!(get::bool(runner_ctx.arena(), &value), span))
+            ok!(!get::bool(runner_ctx.arena(), &value)
+                .expect("boolean guard value must be a boolean"))
         }
         // Comparison against the evaluated right side
         ast::Guard::Cmp(op, _, exp_r) => {
@@ -364,10 +362,8 @@ fn eval_rule_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     // Split the notation arguments by the input hint
-    let (exps_input, exps_output) = unwrap_from_result!(
-        crate::lang::hints::input::split(&instr.input_hint, instr.not_exp.args()),
-        &instr.id.span
-    );
+    let (exps_input, exps_output) =
+        unwrap_from_result!(input::split(&instr.input_hint, instr.not_exp.args()), &instr.id.span);
     // A tail-position call whose block just returns its outputs is a tail call
     if tail
         && instr.iter_instrs.is_empty()

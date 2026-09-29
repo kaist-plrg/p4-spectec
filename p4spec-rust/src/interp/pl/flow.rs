@@ -5,6 +5,7 @@
 //! `choose_deterministic` combines outcomes and rejects multiple conclusions.
 //! Evaluators supply candidates and manage their local bindings.
 
+use crate::diagnostic::{Diagnostic, Report};
 use crate::interp::shared::error;
 use crate::{
     interp::shared::backtrack::{Backtrack, err, ok, unmatch, unwrap},
@@ -15,7 +16,7 @@ use crate::{
 #[derive(Debug)]
 pub enum Flow {
     /// Fell through, with the failures met so far.
-    Cont(Vec<crate::diagnostic::Report>),
+    Cont(Vec<Report>),
     /// A function body returned a value.
     Return(Value),
     /// A relation body produced its outputs.
@@ -26,7 +27,7 @@ impl Flow {
     // = Continuation
 
     /// Creates a recoverable continuation with its premise diagnostic.
-    pub(crate) fn cont(span: Span, error: crate::diagnostic::Diagnostic) -> Self {
+    pub(crate) fn cont(span: Span, error: Diagnostic) -> Self {
         Self::Cont(vec![*error::at(error, span)])
     }
 
@@ -44,10 +45,7 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the most deeply nested failure, preferring the later one on ties.
-pub(super) fn retain_deepest_errors(
-    errors: &mut Vec<crate::diagnostic::Report>,
-    errors_post: Vec<crate::diagnostic::Report>,
-) {
+pub(super) fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
     if errors_post
         .iter()
         .map(error::trace::depth)
@@ -95,9 +93,7 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
             return err!(span.clone(), error::call::instruction_nondeterministic());
         }
         // Different conclusion kinds cannot belong to the same callable
-        _ => {
-            return err!(span.clone(), error::call::flow_invalid("incompatible PL conclusions"));
-        }
+        _ => unreachable!("function and relation conclusions cannot mix"),
     };
     ok!(flow)
 }

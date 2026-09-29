@@ -915,8 +915,8 @@ fn test_guards_toggle_input_checks_and_substitute_type_arguments() {
                         .call_func("ignore", &[typ::make::nat()], &[])
                         .unwrap_err()
                         .into_report()
-                        .render()
-                        .contains("function argument of ignore")
+                        .find_code("runtime/function-input-arity-mismatch")
+                        .is_some()
                 );
             } else {
                 assert_eq!(number(runner.arena(), &result.unwrap()), "1");

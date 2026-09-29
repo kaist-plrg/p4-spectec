@@ -45,15 +45,12 @@ fn var(name: &str, iters: Vec<ast::Iter>) -> ast::Var {
 }
 
 #[test]
-fn test_duplicate_global_definition_uses_second_identifier_span() {
-    let error = Global::load(vec![
+#[should_panic(expected = "global function definitions must be unique")]
+fn test_duplicate_global_function_violates_the_ir_precondition() {
+    let _ = Global::load(vec![
         def(ast::DefKind::MetaFunc(func("x", 1))),
         def(ast::DefKind::MetaFunc(func("x", 9))),
-    ])
-    .unwrap_err();
-    assert_eq!(error.span(), id("x", 9).span);
-    assert_eq!(error.code(), Some("runtime/binding-repeated"));
-    assert_eq!(error.diagnostic().message, "function `x` was already defined");
+    ]);
 }
 
 #[test]
@@ -153,7 +150,8 @@ fn test_sibling_contexts_isolate_rebinding_and_iterator_paths() {
 }
 
 #[test]
-fn test_missing_value_reports_iterator_path_and_lookup_span() {
+#[should_panic(expected = "value must be bound")]
+fn test_missing_optional_value_violates_the_ir_precondition() {
     let global = Global::load(vec![]).unwrap();
     let mut layout = FrameLayout::default();
     let slot = layout.resolve_var(p4spec_rust::lang::il::ast::Var {
@@ -161,20 +159,31 @@ fn test_missing_value_reports_iterator_path_and_lookup_span() {
         typ: p4spec_rust::lang::data::typ::make::bool(),
         iters: vec![ast::Iter::List, ast::Iter::Opt],
     });
-    let error = Context::new(&global)
+    let _ = Context::new(&global)
         .localize_with_layout(&layout.into())
-        .find_opt_values_by_var(&ValueArena::new(), &[slot])
-        .unwrap_err()
-        .into_report();
-    assert_eq!(error.span(), id("x", 9).span);
-    assert_eq!(
-        error.diagnostic().message,
-        p4spec_rust::interp::shared::error::context::binding_undefined(
-            EntityKind::Value,
-            "x*?".into()
-        )
-        .message
-    );
+        .find_opt_values_by_var(&ValueArena::new(), &[slot]);
+}
+
+#[test]
+#[should_panic(expected = "value must be bound")]
+fn test_missing_list_value_violates_the_ir_precondition() {
+    let global = Global::load(vec![]).unwrap();
+    let mut layout = FrameLayout::default();
+    let slot = layout.resolve_var(var("x", vec![ast::Iter::List]));
+    let _ = Context::new(&global)
+        .localize_with_layout(&layout.into())
+        .find_list_values_by_var(&ValueArena::new(), &[slot]);
+}
+
+#[test]
+#[should_panic(expected = "value must be bound")]
+fn test_missing_collected_value_violates_the_ir_precondition() {
+    let global = Global::load(vec![]).unwrap();
+    let mut layout = FrameLayout::default();
+    let slot = layout.resolve_var(var("x", vec![]));
+    let _ = Context::new(&global)
+        .localize_with_layout(&layout.into())
+        .collect_values_by_var(&[slot], &mut [vec![]]);
 }
 
 #[test]
@@ -257,7 +266,8 @@ fn test_loaded_native_spec_preserves_definition_bodies_and_locations() {
 }
 
 #[test]
-fn test_duplicate_relations_share_namespace_and_report_second_span() {
+#[should_panic(expected = "global relation definitions must be unique")]
+fn test_duplicate_relation_kinds_share_the_global_namespace() {
     use p4spec_rust::lang::hints::input::InputHint;
     let not_typ = phrase!(node: ast::NotTypKind::Arg(typ::make::bool()), span: id("r", 1).span);
     let rel = ast::RelDef::Extern(Box::new(ast::ExternRel {
@@ -274,19 +284,7 @@ fn test_duplicate_relations_share_namespace_and_report_second_span() {
         else_group: None,
         hints: vec![],
     }));
-    let error =
-        Global::load(vec![def(ast::DefKind::Rel(rel)), def(ast::DefKind::Rel(rel_duplicate))])
-            .unwrap_err()
-            .into_report();
-    assert_eq!(error.span(), id("r", 9).span);
-    assert_eq!(
-        error.diagnostic().message,
-        p4spec_rust::interp::shared::error::context::binding_repeated(
-            EntityKind::Relation,
-            "r".into()
-        )
-        .message
-    );
+    let _ = Global::load(vec![def(ast::DefKind::Rel(rel)), def(ast::DefKind::Rel(rel_duplicate))]);
 }
 
 #[test]

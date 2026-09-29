@@ -1,6 +1,6 @@
 //! Call diagnostics for interpreter operations
 //!
-//! Constructors identify runtime checks without deciding whether callers retry.
+//! Builds diagnostics; callers choose whether to stop or try another candidate.
 
 use super::diagnostic;
 use crate::diagnostic::Diagnostic;
@@ -19,28 +19,6 @@ pub fn flow_invalid(message: &'static str) -> Diagnostic {
     diagnostic(FLOW_INVALID, message, Vec::new())
 }
 
-const RULE_ARITY_MISMATCH: &str = "runtime/rule-arity-mismatch";
-
-/// Reports rule arity mismatch.
-pub fn rule_arity_mismatch(expected: usize, actual: usize) -> Diagnostic {
-    diagnostic(
-        RULE_ARITY_MISMATCH,
-        "arity mismatch in rule",
-        vec![format!("expected: {expected}, actual: {actual}")],
-    )
-}
-
-const TABLE_ROW_ARITY_MISMATCH: &str = "runtime/table-row-arity-mismatch";
-
-/// Reports table row arity mismatch.
-pub fn table_row_arity_mismatch(expected: usize, actual: usize) -> Diagnostic {
-    diagnostic(
-        TABLE_ROW_ARITY_MISMATCH,
-        "arity mismatch while matching table row",
-        vec![format!("expected: {expected}, actual: {actual}")],
-    )
-}
-
 const TYPE_ARGUMENT_ARITY_MISMATCH: &str = "runtime/type-argument-arity-mismatch";
 
 /// Reports type argument arity mismatch.
@@ -48,17 +26,6 @@ pub fn type_argument_arity_mismatch(expected: usize, actual: usize) -> Diagnosti
     diagnostic(
         TYPE_ARGUMENT_ARITY_MISMATCH,
         "arity mismatch in type arguments",
-        vec![format!("expected: {expected}, actual: {actual}")],
-    )
-}
-
-const CLAUSE_ARITY_MISMATCH: &str = "runtime/clause-arity-mismatch";
-
-/// Reports clause arity mismatch.
-pub fn clause_arity_mismatch(expected: usize, actual: usize) -> Diagnostic {
-    diagnostic(
-        CLAUSE_ARITY_MISMATCH,
-        "arity mismatch while matching clause",
         vec![format!("expected: {expected}, actual: {actual}")],
     )
 }

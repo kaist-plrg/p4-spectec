@@ -67,6 +67,97 @@ fn eval(
     Ok((std::mem::take(runner.arena_mut()), value))
 }
 
+#[test]
+#[should_panic(expected = "value must be bound")]
+fn test_reading_an_unbound_slot_violates_the_ir_precondition() {
+    let _ = eval(exp(ast::ExpKind::Id(id("missing")), typ::make::int()));
+}
+
+#[test]
+#[should_panic(expected = "concatenation operands must have matching kinds")]
+fn test_concatenation_requires_valid_operand_kinds() {
+    let _ = eval(exp(ast::ExpKind::Cat(Box::new(text("x")), Box::new(int(1))), typ::make::text()));
+}
+
+#[test]
+#[should_panic(expected = "length operand must be a text or list")]
+fn test_length_requires_a_valid_operand_kind() {
+    let _ = eval(exp(ast::ExpKind::Len(Box::new(int(1))), typ::make::nat()));
+}
+
+#[test]
+fn test_optional_casts_retain_representation_errors() {
+    let typ = typ::make::opt(typ::make::int());
+    let exp_inner = exp(ast::ExpKind::Bool(false), typ::make::bool());
+    for kind in [
+        ast::ExpKind::UpCast(Box::new(typ.clone()), Box::new(exp_inner.clone())),
+        ast::ExpKind::DownCast(Box::new(typ.clone()), Box::new(exp_inner)),
+    ] {
+        let report = eval(exp(kind, typ.clone())).expect_err("optional representation error");
+        assert!(report.find_code("runtime/value-invalid").is_some(), "{report:?}");
+    }
+}
+
+#[test]
+fn test_operand_shapes_are_ir_invariants() {
+    let cases = [
+        (
+            "boolean",
+            exp(
+                ast::ExpKind::Un(
+                    ast::UnOp::Bool(boolean::UnOp::Not),
+                    ast::OpTyp::Bool,
+                    Box::new(int(1)),
+                ),
+                typ::make::bool(),
+            ),
+        ),
+        (
+            "number",
+            exp(
+                ast::ExpKind::Bin(
+                    ast::BinOp::Num(num::BinOp::Add),
+                    ast::OpTyp::Int,
+                    Box::new(text("x")),
+                    Box::new(int(1)),
+                ),
+                typ::make::int(),
+            ),
+        ),
+        (
+            "membership",
+            exp(ast::ExpKind::Mem(Box::new(int(1)), Box::new(int(2))), typ::make::bool()),
+        ),
+        ("index", exp(ast::ExpKind::Idx(Box::new(int(1)), Box::new(int(0))), typ::make::int())),
+        (
+            "slice",
+            exp(
+                ast::ExpKind::Slice(Box::new(int(1)), Box::new(int(0)), Box::new(int(1))),
+                typ::make::list(typ::make::int()),
+            ),
+        ),
+        (
+            "tuple cast",
+            exp(
+                ast::ExpKind::UpCast(
+                    Box::new(typ::make::tuple(vec![typ::make::int()])),
+                    Box::new(exp(ast::ExpKind::Tuple(vec![]), typ::make::tuple(vec![]))),
+                ),
+                typ::make::tuple(vec![typ::make::int()]),
+            ),
+        ),
+    ];
+    let failures = cases
+        .into_iter()
+        .filter_map(|(name, expression)| {
+            let result =
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| eval(expression)));
+            result.is_ok().then_some(name)
+        })
+        .collect::<Vec<_>>();
+    assert!(failures.is_empty(), "expected invariant panics: {failures:?}");
+}
+
 fn numbers(arena: &ValueArena, value: &Value) -> Vec<String> {
     get::list(arena, value)
         .unwrap()
@@ -95,6 +186,64 @@ fn test_repeated_evaluation_reuses_the_expression_type_allocation_without_call_c
 
 fn path(kind: ast::PathKind, typ: ast::Typ) -> ast::Path {
     p4spec_rust::note_phrase!(node: kind, note: Rc::new(typ.node), span: typ.span)
+}
+
+#[test]
+#[should_panic(expected = "condition must be a boolean")]
+fn test_condition_typed_kind_precondition() {
+    let mut def = function("test", int(1));
+    let ast::DefKind::MetaFunc(ast::MetaFuncDef::Defined(func)) = &mut def.node else {
+        panic!("expected a defined function")
+    };
+    func.clauses[0].node.prems.push(p4spec_rust::phrase! {
+        node: ast::PremKind::If(ast::IfPrem { exp: int(1) }),
+        span: Span::default(),
+    });
+    let mut runner = Runner::new(
+        Global::load(vec![def]).unwrap(),
+        AlInterp::new(Config::new(false, false, false)),
+        NullInterface,
+        NullExtern,
+    );
+    let _ = runner.context().call_func("test", &[], &[]);
+}
+
+#[test]
+#[should_panic(expected = "field update base must be a struct")]
+fn test_field_update_typed_kind_precondition() {
+    let atom = p4spec_rust::phrase!(node: Atom::Keyword("field".into()), span: Span::default());
+    let path_root = path(ast::PathKind::Root, typ::make::int());
+    let path_field = path(ast::PathKind::Dot(Box::new(path_root), atom), typ::make::int());
+    let _ = eval(exp(
+        ast::ExpKind::Upd(Box::new(int(1)), Box::new(path_field), Box::new(int(2))),
+        typ::make::int(),
+    ));
+}
+
+#[test]
+fn test_optional_cons_tail_remains_a_runtime_error() {
+    use p4spec_rust::pass::{algo, elaborate};
+
+    let spec_el = crate::spec_fixture::parse(
+        "syntax foo = | A\nvar x : foo\ndec $cons(foo?) : foo?\ndef $cons(x?) = A :: x?",
+    )
+    .unwrap();
+    let spec_il = elaborate::convert(spec_el).unwrap();
+    let spec_al = algo::convert(spec_il).unwrap();
+    let mut runner = Runner::new(
+        Global::load(spec_al).unwrap(),
+        AlInterp::new(Config::new(false, false, true)),
+        NullInterface,
+        NullExtern,
+    );
+    let typ = typ::make::opt(typ::make::var(id("foo"), vec![]));
+    let value = make::opt(runner.arena_mut(), typ.node.into(), None, Span::default()).unwrap();
+    let report = runner
+        .context()
+        .call_func("cons", &[], &[value])
+        .unwrap_err()
+        .into_report();
+    assert!(report.find_code("runtime/value-invalid").is_some());
 }
 
 #[test]

@@ -34,9 +34,7 @@ pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncD
 impl Global {
     /// Loads type definitions and prepares each callable for slot execution.
     ///
-    /// Requires executable IR satisfying the preceding passes' invariants,
-    /// including unique global type definitions.
-    /// Direct IR constructors must uphold the same precondition.
+    /// Panics if a global definition is repeated.
     pub fn load(spec: source::Spec) -> Result<Self, Error> {
         let mut loaded = Self::new();
         // Move source definitions into the execution environments
@@ -62,7 +60,7 @@ impl Global {
                         ast::RelDef::Extern(rel) => &rel.id,
                         ast::RelDef::Defined(rel) => &rel.id,
                     };
-                    loaded.insert_rel(id.clone(), rel)?;
+                    loaded.insert_rel(id.clone(), rel);
                 }
                 source::DefKind::MetaFunc(func) => {
                     // Prepare functions before sharing them with local bindings
@@ -73,7 +71,7 @@ impl Global {
                         ast::MetaFuncDef::Table(func) => &func.id,
                         ast::MetaFuncDef::Defined(func) => &func.id,
                     };
-                    loaded.insert_func(id.clone(), func)?;
+                    loaded.insert_func(id.clone(), func);
                 }
             }
         }

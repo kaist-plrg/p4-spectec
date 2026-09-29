@@ -73,6 +73,8 @@ where
     // - Evaluation dispatch
 
     /// Runs the interpreter's program entry.
+    ///
+    /// With type guards disabled, the program must match the entry's input type.
     pub fn call_program(
         &mut self,
         name: &str,
@@ -82,11 +84,16 @@ where
     }
 
     /// Calls a relation by name through the interpreter.
+    ///
+    /// With type guards disabled, values must match the declared input types.
     pub fn call_rel(&mut self, name: &str, values: &[Value]) -> Result<Vec<Value>, Interp::Error> {
         Interp::eval_rel(self, name, values)
     }
 
     /// Calls a function by name through the interpreter.
+    ///
+    /// With type guards disabled, values and type arguments must match
+    /// the declared signature.
     pub fn call_func(
         &mut self,
         name: &str,

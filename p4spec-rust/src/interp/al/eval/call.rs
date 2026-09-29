@@ -8,12 +8,14 @@
 //! With `guard` on, inputs and outputs are type-checked at the boundary.
 
 use super::super::backtrack::{choose_deterministic, choose_sequential};
-use crate::interp::shared::backtrack::BacktrackExt;
+use crate::diagnostic::Diagnostic;
 use crate::interp::shared::context::ReadContext;
 use crate::interp::shared::error;
 use crate::interp::shared::eval::assign::assign_tparams;
+use crate::lang::hints::input;
 use crate::runtime::envs::interp::al::ast_prepared as ast;
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
+use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use std::rc::Rc;
 
 use super::super::{
@@ -22,7 +24,7 @@ use super::super::{
 };
 use super::{assign, expr, prem::eval_prems};
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{self, Backtrack, BacktrackExt, err, ok, unmatch, unwrap, unwrap_from_result},
     cache::CallKey,
 };
 use crate::lang::data::value::{ValueArena, ValueKind};
@@ -33,12 +35,13 @@ use crate::{
 
 // = Input and output checks
 
-/// Type-checks relation inputs at the positions the input hint selects.
+/// Checks the input count and, with `guard`, the input types.
 pub(in crate::interp::al) fn check_rel_inputs(
     arena: &ValueArena,
     ctx: &Context<'_>,
     id: &ast::Id,
     values: &[Value],
+    guard: bool,
 ) -> Backtrack<()> {
     let rel = unwrap_from_result!(ctx.find_rel(id), &id.span);
     // Extern and defined relations share the signature shape
@@ -48,7 +51,14 @@ pub(in crate::interp::al) fn check_rel_inputs(
     };
     let typs = not_typ.node.args();
     // The hint must fit the notation arity
-    unwrap_from_result!(crate::lang::hints::input::validate(inputs, typs.len()), &id.span);
+    unwrap_from_result!(input::validate(inputs, typs.len()), &id.span);
+    // Always check the input count, even without type guards
+    unwrap!(backtrack::check(inputs.indices().len() == values.len(), id.span.clone(), || {
+        error::guard::relation_input_arity_mismatch(inputs.indices().len(), values.len())
+    }));
+    if !guard {
+        return ok!(());
+    }
     // Input types are the notation arguments the hint selects
     let typs = inputs
         .indices()
@@ -60,15 +70,26 @@ pub(in crate::interp::al) fn check_rel_inputs(
     })
 }
 
-/// Type-checks function arguments with the type parameters bound to `targs`.
+/// Checks argument counts and, with `guard`, the argument types.
 pub(in crate::interp::al) fn check_func_inputs(
     arena: &ValueArena,
     ctx: &Context<'_>,
     id: &ast::Id,
     targs: &[ast::Typ],
     values: &[Value],
+    guard: bool,
 ) -> Backtrack<()> {
     let typ = unwrap_from_result!(ctx.find_func_typ(id), &id.span);
+    // Check type and value argument counts before binding them
+    unwrap!(backtrack::check(typ.tparams.len() == targs.len(), id.span.clone(), || {
+        error::call::type_argument_arity_mismatch(typ.tparams.len(), targs.len())
+    }));
+    unwrap!(backtrack::check(typ.typs_params.len() == values.len(), id.span.clone(), || {
+        error::guard::function_input_arity_mismatch(typ.typs_params.len(), values.len())
+    }));
+    if !guard {
+        return ok!(());
+    }
     // Bind type arguments before checking parameter types
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the bound type parameters
@@ -84,7 +105,7 @@ fn check_values(
     id: &ast::Id,
     typs: &[ast::Typ],
     values: &[Value],
-    diagnostic: impl FnOnce() -> crate::diagnostic::Diagnostic,
+    diagnostic: impl FnOnce() -> Diagnostic,
 ) -> Backtrack<()> {
     // Subtyping resolves type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
@@ -94,10 +115,10 @@ fn check_values(
     };
     // Check all values against their types at once
     let matches = unwrap_from_result!(
-        crate::runtime::ops::value::subs(arena, &find_typdef_opt, &find_func, typs, values),
+        value_ops::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    crate::interp::shared::backtrack::check(matches, id.span.clone(), diagnostic)
+    backtrack::check(matches, id.span.clone(), diagnostic)
 }
 
 /// Type-checks a function result with the type parameters substituted.
@@ -111,12 +132,8 @@ fn check_func_output(
     value: &Value,
 ) -> Backtrack<()> {
     // Substitute the type arguments into the declared result type
-    let theta =
-        unwrap_from_result!(crate::runtime::ops::typ::Theta::from_lists(tparams, targs), &id.span);
-    let typ = unwrap_from_result!(
-        crate::runtime::ops::typ::subst_typ(&|id| theta.get(id), typ),
-        &id.span
-    );
+    let theta = unwrap_from_result!(typ_ops::Theta::from_lists(tparams, targs), &id.span);
+    let typ = unwrap_from_result!(typ_ops::subst_typ(&|id| theta.get(id), typ), &id.span);
     // Check the single result
     check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
         error::guard::function_output_type_mismatch(id.node.clone())
@@ -215,13 +232,17 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // Preserve the failure classification across extern reentry
+    // Return extern failures without turning mismatches into fatal errors
     let (values, _) = unwrap!(result);
+    // Check the number of extern outputs before assigning them
+    let len = rel.not_typ.node.args().len() - rel.input_hint.indices().len();
+    unwrap!(backtrack::check(len == values.len(), id.span.clone(), || {
+        error::guard::relation_output_arity_mismatch(len, values.len())
+    }));
     if runner_ctx.interp().config.guard {
         // Output types are the notation arguments the hint leaves
         let typs = rel.not_typ.node.args().into_iter().cloned().collect();
-        let (_, typs) =
-            unwrap_from_result!(crate::lang::hints::input::split(&rel.input_hint, typs), &id.span);
+        let (_, typs) = unwrap_from_result!(input::split(&rel.input_hint, typs), &id.span);
         unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
             error::guard::relation_output_type_mismatch(id.node.clone())
         }));
@@ -241,11 +262,7 @@ fn eval_rule_path<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
     // Input count must match the rule's input patterns
-    unwrap!(crate::interp::shared::backtrack::check(
-        rule_match.exps_input.len() == values.len(),
-        path.id.span.clone(),
-        || error::call::rule_arity_mismatch(rule_match.exps_input.len(), values.len())
-    ));
+    assert_eq!(rule_match.exps_input.len(), values.len(), "validated rule input arity");
     // Inputs bind into a fresh frame for the rule
     let ctx = unwrap!(assign::assign_exps(
         runner_ctx.arena_mut(),
@@ -394,7 +411,7 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // Preserve the failure classification across extern reentry
+    // Return extern failures without turning mismatches into fatal errors
     let (value, _) = unwrap!(result);
     // Guard the result against the declared type
     if runner_ctx.interp().config.guard {
@@ -460,11 +477,7 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Argument count must match the row
-    unwrap!(crate::interp::shared::backtrack::check(
-        table_row.node.args.len() == values.len(),
-        table_row.span.clone(),
-        || error::call::table_row_arity_mismatch(table_row.node.args.len(), values.len())
-    ));
+    assert_eq!(table_row.node.args.len(), values.len(), "validated table row argument arity");
     // Arguments bind into a fresh frame for the row
     let ctx = unwrap!(assign::assign_args(
         runner_ctx.arena_mut(),
@@ -502,11 +515,7 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
     values: &[Value],
 ) -> Backtrack<Value> {
     // Argument count must match the clause
-    unwrap!(crate::interp::shared::backtrack::check(
-        clause.node.args.len() == values.len(),
-        clause.span.clone(),
-        || error::call::clause_arity_mismatch(clause.node.args.len(), values.len())
-    ));
+    assert_eq!(clause.node.args.len(), values.len(), "validated clause argument arity");
     // Arguments bind into the callee scope, evaluated in the caller's
     let ctx = unwrap!(assign::assign_args(
         runner_ctx.arena_mut(),

@@ -75,10 +75,14 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.to_owned(), span: Span::default());
         let ctx = Context::new(runner_ctx.spec());
-        // Guard the inputs unless the call would be served from the cache
-        if runner_ctx.interp().config.guard && !eval::call::cache_rel(runner_ctx, &ctx, &id) {
-            eval::call::check_rel_inputs(runner_ctx.arena(), &ctx, &id, values)?;
-        }
+        // Check the caller's inputs before running the definition
+        eval::call::check_rel_inputs(
+            runner_ctx.arena(),
+            &ctx,
+            &id,
+            values,
+            runner_ctx.interp().config.guard,
+        )?;
         Self::invoke_rel(runner_ctx, &ctx, &id, values)
     }
 
@@ -92,12 +96,15 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.to_owned(), span: Span::default());
         let ctx = Context::new(runner_ctx.spec());
-        // Guard the inputs unless the call would be served from the cache
-        if runner_ctx.interp().config.guard
-            && !eval::call::cache_func(runner_ctx, &ctx, &id, values)
-        {
-            eval::call::check_func_inputs(runner_ctx.arena(), &ctx, &id, targs, values)?;
-        }
+        // Check the caller's inputs before running the definition
+        eval::call::check_func_inputs(
+            runner_ctx.arena(),
+            &ctx,
+            &id,
+            targs,
+            values,
+            runner_ctx.interp().config.guard,
+        )?;
         Self::invoke_func(runner_ctx, &ctx, &id, targs, values)
     }
 }

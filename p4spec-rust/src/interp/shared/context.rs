@@ -22,7 +22,6 @@ use crate::{
             value::{Value, ValueArena, get, make},
             var::{SlotIdx, VarSlot},
         },
-        traits::print::Print,
     },
     runtime::{
         envs::interp::shared::{
@@ -175,9 +174,9 @@ impl<R, F> Global<R, F> {
 
     // - Types
 
-    /// Inserts a globally unique type from validated executable IR.
+    /// Inserts a global type, panicking if its name is already defined.
     pub(crate) fn insert_typdef(&mut self, id: ast::Id, typdef: TypeDef) {
-        // Elaboration ensures uniqueness; AL/SL/PL preserve type IDs one-to-one
+        // Elaboration already rejects duplicate type names
         assert!(
             !self.tdenv.contains_key(&id),
             "global type definitions must be unique: {}",
@@ -188,34 +187,31 @@ impl<R, F> Global<R, F> {
 
     // - Relations
 
-    /// Inserts a prepared relation, rejecting duplicates in its namespace.
-    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: Callable<R>) -> Result<(), Error>
+    /// Inserts a prepared relation, panicking if its name is already defined.
+    pub(crate) fn insert_rel(&mut self, id: ast::Id, rel: Callable<R>)
     where
         R: Clone,
     {
-        // Check before the persistent map can replace the existing callable
-        if self.renv.contains_key(&id) {
-            return Err(error::at(
-                error::context::binding_repeated(EntityKind::Relation, id.node),
-                id.span,
-            ));
-        }
+        // Elaboration already rejects duplicate relation names
+        assert!(
+            !self.renv.contains_key(&id),
+            "global relation definitions must be unique: {}",
+            id.node
+        );
         self.renv.insert(id, rel);
-        Ok(())
     }
 
     // - Functions
 
-    /// Inserts a prepared function, sharing it with future function arguments.
-    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) -> Result<(), Error> {
-        if self.fenv.contains_key(&id) {
-            return Err(error::at(
-                error::context::binding_repeated(EntityKind::Function, id.node),
-                id.span,
-            ));
-        }
+    /// Inserts a prepared function, panicking if its name is already defined.
+    pub(crate) fn insert_func(&mut self, id: ast::Id, func: Callable<F>) {
+        // Elaboration already rejects duplicate function names
+        assert!(
+            !self.fenv.contains_key(&id),
+            "global function definitions must be unique: {}",
+            id.node
+        );
         self.fenv.insert(id, Rc::new(func));
-        Ok(())
     }
 }
 
@@ -474,18 +470,11 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let mut values_by_var = Vec::with_capacity(vars.len());
         for var in vars {
             // Every variable must be bound
-            let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
-                error::at(
-                    error::context::binding_undefined(
-                        EntityKind::Value,
-                        Print::to_string(&var.var),
-                    ),
-                    var.var.id.span.clone(),
-                )
-            })?;
+            let value = self
+                .find_value_at_slot(var.slot)
+                .expect("value must be bound");
             // Each variable must hold a list
-            let values = get::list(arena, value)
-                .map_err(|error| error::locate(error.into(), &var.var.id.span))?;
+            let values = get::list(arena, value).expect("iteration input must be a list");
             values_by_var.push(values);
         }
         // No variables: nothing to iterate
@@ -512,15 +501,9 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
         let mut values = Vec::with_capacity(vars.len());
         for var in vars {
             // Every variable must be bound
-            let value = self.find_value_at_slot(var.slot).ok_or_else(|| {
-                error::at(
-                    error::context::binding_undefined(
-                        EntityKind::Value,
-                        Print::to_string(&var.var),
-                    ),
-                    var.var.id.span.clone(),
-                )
-            })?;
+            let value = self
+                .find_value_at_slot(var.slot)
+                .expect("value must be bound");
             // Each variable must hold an option
             let value = get::opt(arena, value)
                 .map_err(|error| error::locate(error.into(), &var.var.id.span))?;
@@ -547,18 +530,11 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
     ) -> Backtrack<()> {
         // Append this row's value of each variable
         for (var, values) in vars.iter().zip(values_by_var) {
-            values.push(*unwrap_from_result!(
-                self.find_value_at_slot(var.slot).ok_or_else(|| {
-                    error::at(
-                        error::context::binding_undefined(
-                            EntityKind::Value,
-                            Print::to_string(&var.var),
-                        ),
-                        var.var.id.span.clone(),
-                    )
-                }),
-                &var.var.id.span
-            ));
+            values.push(
+                *self
+                    .find_value_at_slot(var.slot)
+                    .expect("value must be bound"),
+            );
         }
         ok!(())
     }

@@ -1,9 +1,42 @@
 //! Guard diagnostics for interpreter operations
 //!
-//! Constructors identify runtime checks without deciding whether callers retry.
+//! Builds diagnostics; callers choose whether to stop or try another candidate.
 
 use super::diagnostic;
 use crate::diagnostic::Diagnostic;
+
+const RELATION_INPUT_ARITY_MISMATCH: &str = "runtime/relation-input-arity-mismatch";
+
+/// Reports the wrong number of relation inputs.
+pub fn relation_input_arity_mismatch(expected: usize, actual: usize) -> Diagnostic {
+    diagnostic(
+        RELATION_INPUT_ARITY_MISMATCH,
+        "arity mismatch in relation inputs",
+        vec![format!("expected: {expected}, actual: {actual}")],
+    )
+}
+
+const FUNCTION_INPUT_ARITY_MISMATCH: &str = "runtime/function-input-arity-mismatch";
+
+/// Reports the wrong number of function arguments.
+pub fn function_input_arity_mismatch(expected: usize, actual: usize) -> Diagnostic {
+    diagnostic(
+        FUNCTION_INPUT_ARITY_MISMATCH,
+        "arity mismatch in function arguments",
+        vec![format!("expected: {expected}, actual: {actual}")],
+    )
+}
+
+const RELATION_OUTPUT_ARITY_MISMATCH: &str = "runtime/relation-output-arity-mismatch";
+
+/// Reports the wrong number of extern relation outputs.
+pub fn relation_output_arity_mismatch(expected: usize, actual: usize) -> Diagnostic {
+    diagnostic(
+        RELATION_OUTPUT_ARITY_MISMATCH,
+        "arity mismatch in relation outputs",
+        vec![format!("expected: {expected}, actual: {actual}")],
+    )
+}
 
 const RELATION_INPUT_TYPE_MISMATCH: &str = "runtime/relation-input-type-mismatch";
 

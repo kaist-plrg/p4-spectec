@@ -12,6 +12,7 @@ use super::{
     expr::{eval_exp, eval_exps},
 };
 use crate::interp::shared::error;
+use crate::lang::hints::input;
 use crate::{
     interp::{
         pl::{
@@ -122,7 +123,7 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
 
 // = Instruction evaluation
 
-/// Evaluates one instruction, propagating its classified failure unchanged.
+/// Evaluates one instruction, returning any failure unchanged.
 fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
@@ -218,10 +219,7 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     let cond =
         unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
             let value = unwrap!(eval_exp(runner_ctx, ctx, &instr.exp));
-            crate::interp::shared::backtrack::from_result(
-                get::bool(runner_ctx.arena(), &value),
-                &instr.exp.node.span,
-            )
+            ok!(get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
         }));
     // Run the block, or fall through recording the failed condition
     if cond {
@@ -323,10 +321,9 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
     // Test the scrutinee before introducing checked bindings
     let matched = match guard {
         // Compare the scrutinee with the expected boolean
-        ast::Guard::Bool(expected) => crate::interp::shared::backtrack::from_result(
-            get::bool(runner_ctx.arena(), &value).map(|actual| actual == *expected),
-            &Span::default(),
-        ),
+        ast::Guard::Bool(expected) => ok!(get::bool(runner_ctx.arena(), &value)
+            .expect("boolean guard value must be a boolean")
+            == *expected),
         // Compare against the evaluated right side
         ast::Guard::Cmp(op, _, exp_r) => {
             let value_r = unwrap!(eval_exp(runner_ctx, &ctx, exp_r));
@@ -394,10 +391,8 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
     instr: &ast::RuleInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // The input hint separates arguments from output patterns
-    let (exps_input, exps_output) = unwrap_from_result!(
-        crate::lang::hints::input::split(&instr.input_hint, instr.not_exp.args()),
-        &instr.id.span
-    );
+    let (exps_input, exps_output) =
+        unwrap_from_result!(input::split(&instr.input_hint, instr.not_exp.args()), &instr.id.span);
     // Invoke the relation at each enclosing iteration
     let ctx =
         unwrap!(eval_instr_iter(runner_ctx, ctx, &instr.iter_instrs, &mut |runner_ctx, ctx| {
@@ -457,7 +452,8 @@ fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Extract fields before mutating the arena during assignment
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    let values = unwrap_from_result!(get::case(runner_ctx.arena(), &value), &instr.exp.node.span)
+    let values = get::case(runner_ctx.arena(), &value)
+        .expect("destructuring value must be a case")
         .args()
         .into_iter()
         .copied()

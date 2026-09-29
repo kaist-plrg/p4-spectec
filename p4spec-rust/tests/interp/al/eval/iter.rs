@@ -205,8 +205,7 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
     assert!(get::list(runner.arena(), &value_empty).unwrap().is_empty());
 }
 
-#[test]
-fn test_iteration_rejects_wrong_value_kind_at_variable_span() {
+fn iterate_wrong_value_kind(iter: ast::Iter) -> Result<(), Failure> {
     let mut runner = Runner::<AlInterp, _, _>::new(
         Global::load(vec![]).unwrap(),
         AlInterp::new(Config::new(false, false, false)),
@@ -216,28 +215,31 @@ fn test_iteration_rejects_wrong_value_kind_at_variable_span() {
     let mut runner = runner.context();
     let var = var("x", vec![]);
     let mut layout = FrameLayout::default();
-    let exp_iter =
-        ast::ExpIter { iter: ast::Iter::Opt, vars: vec![var.clone()] }.prepare(&mut layout);
+    let exp_iter = ast::ExpIter { iter, vars: vec![var.clone()] }.prepare(&mut layout);
     let typ_result = typ::make::iter(typ::make::bool(), exp_iter.iter)
         .node
         .into();
     let mut ctx = Context::new(runner.spec()).localize_with_layout(&layout.into());
     ctx.add_value_at_slot(
-        ctx.find_var_iterated(&exp_iter.vars[0], ast::Iter::Opt)
-            .slot,
+        ctx.find_var_iterated(&exp_iter.vars[0], iter).slot,
         make::bool(runner.arena_mut(), true, Span::default()).unwrap(),
     );
-    let Err(Failure::Fatal(errors)) =
-        map(&mut runner, &ctx, &id("iteration", 9).span, &typ_result, &exp_iter, |_, _| {
-            panic!("wrong input kind")
-        })
-    else {
-        panic!("expected value kind error");
-    };
-    assert_eq!(errors.span(), var.id.span);
-    assert!(errors.code() == Some("runtime/value-invalid"));
-    let value = ctx
-        .find_value_at_slot(ctx.find_var_iterated(&exp_iter.vars[0], exp_iter.iter).slot)
-        .unwrap();
-    assert!(get::bool(runner.arena(), value).unwrap());
+    map(&mut runner, &ctx, &id("iteration", 9).span, &typ_result, &exp_iter, |_, _| {
+        panic!("wrong input kind")
+    })
+    .map(|_| ())
+}
+
+#[test]
+fn test_option_iteration_representation_remains_a_runtime_error() {
+    let report = iterate_wrong_value_kind(ast::Iter::Opt)
+        .unwrap_err()
+        .into_report();
+    assert!(report.find_code("runtime/value-invalid").is_some());
+}
+
+#[test]
+#[should_panic(expected = "iteration input must be a list")]
+fn test_list_iteration_typed_kind_precondition() {
+    let _ = iterate_wrong_value_kind(ast::Iter::List);
 }

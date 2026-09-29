@@ -1,8 +1,8 @@
 //! Structured causes and frames for interpreter failures
 //!
-//! Constructors retain runtime error data without choosing recovery behavior.
-//! Evaluation transports reports through the separate Failure control carrier;
-//! only output consumers render source snippets.
+//! These helpers create reports and attach source locations.
+//! `Failure` distinguishes fatal errors from recoverable mismatches.
+//! The renderer reads source files when displaying the reports.
 
 use crate::{
     diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
@@ -18,7 +18,6 @@ use crate::{
 };
 use std::fmt;
 
-pub mod assign;
 pub mod call;
 pub mod context;
 pub mod expr;
@@ -27,7 +26,7 @@ mod host;
 pub mod prem;
 pub mod trace;
 
-/// Names report-only failures during loading and context operations.
+/// An interpreter error report.
 pub type Error = Box<Report>;
 
 /// Namespace of a failed context lookup.
@@ -59,13 +58,13 @@ fn diagnostic(code: &str, message: impl Into<String>, notes: Vec<String>) -> Dia
     Diagnostic::new("runtime", Severity::Error, Some(code.to_owned()), message, Vec::new(), notes)
 }
 
-/// Locates a newly authored diagnostic at its owning operation.
+/// Adds a primary source label to the diagnostic.
 pub fn at(mut diagnostic: Diagnostic, span: Span) -> Error {
     diagnostic.labels.push(Label::primary(&span, ""));
     Box::new(diagnostic.into())
 }
 
-/// Locates an unlocated local cause without replacing meaningful source labels.
+/// Adds a source label to a cause that has none, leaving frames unchanged.
 pub fn locate(mut report: Error, span: &Span) -> Error {
     if let ReportKind::Cause(diagnostic) = &mut report.kind
         && diagnostic.labels.is_empty()
@@ -85,12 +84,12 @@ const MIXOP_ARITY_MISMATCH: &str = "runtime/mixop-arity-mismatch";
 const TYPE_INVALID: &str = "runtime/type-invalid";
 const MATCH_FAILED: &str = "runtime/match-failed";
 
-/// Retains a local operation's span, leaving unknown locations for its caller.
+/// Adds a source label unless the span is unknown.
 fn local(diagnostic: Diagnostic, span: Span) -> Error {
     if span == Span::default() { Box::new(diagnostic.into()) } else { at(diagnostic, span) }
 }
 
-/// Converts local typed failures before their operation supplies a source span.
+/// Converts an error to a runtime diagnostic without source labels.
 macro_rules! from_error {
     ($typ:ty, $code:ident) => {
         impl From<$typ> for Error {

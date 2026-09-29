@@ -7,6 +7,7 @@
 //! `choose_sequential` takes the first non-continuing instruction;
 //! `choose_deterministic` runs all and rejects two that terminate.
 
+use crate::diagnostic::{Diagnostic, Report};
 use crate::interp::shared::error;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
@@ -18,7 +19,7 @@ use crate::{
 #[derive(Debug)]
 pub enum Flow {
     /// Fell through, with the failures met so far.
-    Cont(Vec<crate::diagnostic::Report>),
+    Cont(Vec<Report>),
     /// A function body returned a value.
     Return(Value),
     /// A relation body produced its outputs.
@@ -33,7 +34,7 @@ impl Flow {
     // = Continuation
 
     /// A continuation carrying one premise failure.
-    pub(crate) fn cont(span: Span, error: crate::diagnostic::Diagnostic) -> Self {
+    pub(crate) fn cont(span: Span, error: Diagnostic) -> Self {
         Self::Cont(vec![*error::at(error, span)])
     }
 
@@ -49,10 +50,7 @@ impl Flow {
 // = Sequential choice
 
 /// Keeps the failure set that got furthest, so the report is the most specific.
-fn retain_deepest_errors(
-    errors: &mut Vec<crate::diagnostic::Report>,
-    errors_post: Vec<crate::diagnostic::Report>,
-) {
+fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
     if errors_post
         .iter()
         .map(error::trace::depth)
@@ -103,26 +101,45 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
         }
         // One terminated: keep it
         (Flow::Cont(_), flow) | (flow, Flow::Cont(_)) => flow,
+        // Structuring preserves the conclusion kind of each callable
+        (Flow::Return(_) | Flow::TailFunc(..), Flow::Result(_) | Flow::TailRel(..))
+        | (Flow::Result(_) | Flow::TailRel(..), Flow::Return(_) | Flow::TailFunc(..)) => {
+            unreachable!("function and relation conclusions cannot mix")
+        }
         // Two of the same kind: nondeterminism
         (Flow::Return(_), Flow::Return(_))
         | (Flow::Result(_), Flow::Result(_))
-        | (Flow::TailFunc(..) | Flow::TailRel(..), Flow::TailFunc(..) | Flow::TailRel(..)) => {
+        | (Flow::TailFunc(..), Flow::TailFunc(..))
+        | (Flow::TailRel(..), Flow::TailRel(..)) => {
             return err!(span.clone(), error::call::instruction_nondeterministic(),);
         }
-        // Two of different kinds: an invalid body
-        (flow_pre, flow_post) => {
-            let message = match (flow_pre, flow_post) {
-                (Flow::Result(_), Flow::Return(_)) => "cannot have both result and return",
-                (Flow::Result(_), _) => "cannot have both result and tail call",
-                (Flow::Return(_), Flow::Result(_)) => "cannot have both return and result",
-                (Flow::Return(_), _) => "cannot have both return and tail call",
-                (Flow::TailFunc(..), Flow::Result(_)) => "cannot have both tail call and result",
-                (Flow::TailFunc(..), _) => "cannot have both tail call and return",
-                (Flow::TailRel(..), Flow::Result(_)) => "cannot have both rel tail call and result",
-                (Flow::TailRel(..), _) => "cannot have both rel tail call and return",
-                (Flow::Cont(_), _) => unreachable!("continuations were combined above"),
-            };
-            return err!(span.clone(), error::call::flow_invalid(message),);
+        // A result can compete with a tail call in a valid relation body
+        (Flow::Result(_), Flow::TailRel(..)) => {
+            return err!(
+                span.clone(),
+                error::call::flow_invalid("cannot have both result and tail call"),
+            );
+        }
+        // A return can compete with a tail call in a valid function body
+        (Flow::Return(_), Flow::TailFunc(..)) => {
+            return err!(
+                span.clone(),
+                error::call::flow_invalid("cannot have both return and tail call"),
+            );
+        }
+        // A later return conflicts with an earlier function tail call
+        (Flow::TailFunc(..), Flow::Return(_)) => {
+            return err!(
+                span.clone(),
+                error::call::flow_invalid("cannot have both tail call and return"),
+            );
+        }
+        // A later result conflicts with an earlier relation tail call
+        (Flow::TailRel(..), Flow::Result(_)) => {
+            return err!(
+                span.clone(),
+                error::call::flow_invalid("cannot have both rel tail call and result"),
+            );
         }
     };
     ok!(flow)

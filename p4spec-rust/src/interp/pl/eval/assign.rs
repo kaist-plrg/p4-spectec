@@ -4,7 +4,6 @@
 //! Shared assignment then binds their prepared slots.
 //! `assign_params` resolves function arguments in the caller's context.
 
-use crate::interp::shared::error;
 use std::borrow::Borrow;
 
 use super::strip::strip_exp;
@@ -16,10 +15,7 @@ use crate::{
             eval::assign as shared,
         },
     },
-    lang::{
-        common::source::Span,
-        data::value::{Value, ValueArena},
-    },
+    lang::data::value::{Value, ValueArena},
     runtime::envs::interp::pl::ast_prepared as ast,
 };
 
@@ -63,11 +59,7 @@ pub(super) fn assign_params<'g>(
     values: &[Value],
 ) -> Backtrack<Context<'g>> {
     // Argument count must match the parameters
-    unwrap!(crate::interp::shared::backtrack::check(
-        params.len() == values.len(),
-        Span::default(),
-        || error::assign::assignment_argument_arity_mismatch(params.len(), values.len())
-    ));
+    assert_eq!(params.len(), values.len(), "validated parameter argument arity");
     // Bind pairwise, threading the callee context
     for (param, value) in params.iter().zip(values) {
         let result = match &param.node {

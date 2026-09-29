@@ -1,4 +1,5 @@
 mod backtrack;
+mod boundary;
 mod context;
 mod error;
 mod eval;

@@ -204,7 +204,8 @@ fn eval_update_dot_path<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, 
 ) -> Backtrack<Value> {
     let typ = crate::phrase!(node: path.note.clone(), span: path.span.clone());
     let value = unwrap!(eval_access_path(runner_ctx, ctx, value_base, path));
-    let value_fields = unwrap_from_result!(get::structure(runner_ctx.arena(), &value), &path.span);
+    let value_fields =
+        get::structure(runner_ctx.arena(), &value).expect("field update base must be a struct");
     // Replace the named field, keep the others
     let value_fields = value_fields
         .iter()
