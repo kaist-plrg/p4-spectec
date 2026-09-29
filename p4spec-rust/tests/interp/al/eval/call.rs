@@ -137,6 +137,83 @@ def $fatal() = +9
 }
 
 #[test]
+fn test_function_failures_keep_calls_without_clause_or_row_frames() {
+    for table in [false, true] {
+        for det in [false, true] {
+            let mut spec_al = spec(
+                "extern dec $unavailable() : nat\ndec $entry() : nat\ndef $entry() = 7\n  -- if $unavailable() = 0",
+            );
+            // Exercise the same failing premise in a clause and a table row
+            if table {
+                let def = spec_al.last_mut().unwrap();
+                let ast::DefKind::MetaFunc(ast::MetaFuncDef::Defined(func)) = &def.node else {
+                    panic!("defined function")
+                };
+                let table_rows = func
+                    .clauses
+                    .iter()
+                    .map(|clause| {
+                        phrase!(node: ast::TableRowKind {
+                        exps_signature: vec![], args: clause.node.args.clone(),
+                        exp: clause.node.exp.clone(), prems: clause.node.prems.clone(),
+                    }, span: clause.span.clone())
+                    })
+                    .collect();
+                def.node = ast::DefKind::MetaFunc(ast::MetaFuncDef::Table(ast::TableFunc {
+                    id: func.id.clone(),
+                    params: func.params.clone(),
+                    typ: func.typ.clone(),
+                    table_rows,
+                    hints: func.hints.clone(),
+                }));
+            }
+            let mut runner = make_runner(spec_al, det);
+            let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
+            assert!(matches!(failure, Failure::Fatal(_)), "{failure}");
+            let text = failure.into_report().render();
+            assert!(text.contains("while invoking $entry"), "{text}");
+            assert!(text.contains("while invoking $unavailable"), "{text}");
+            assert!(text.contains("while evaluating expression"), "{text}");
+            assert!(!text.contains("while evaluating an if premise"), "{text}");
+            assert!(!text.contains("while evaluating a function clause"), "{text}");
+            assert!(!text.contains("while evaluating a table row"), "{text}");
+        }
+    }
+}
+
+#[test]
+fn test_relation_failures_keep_causes_without_path_or_premise_frames() {
+    for otherwise in [false, true] {
+        let mut spec_al = spec(
+            "relation Reject: nat |- nat\n  hint(input %0)\nrule Reject/one: 1 |- 0\n  -- if false",
+        );
+        // Exercise the same failure through the ordinary and otherwise paths
+        if otherwise {
+            let ast::DefKind::Rel(ast::RelDef::Defined(rel)) = &mut spec_al[0].node else {
+                panic!("defined relation")
+            };
+            let mut group = rel.rule_groups.remove(0);
+            rel.else_group = Some(phrase!(node: ast::ElseGroupKind {
+                id: group.node.id,
+                rule_match: group.node.rule_match,
+                rule_path: group.node.rule_paths.remove(0),
+            }, span: group.span));
+        }
+        // Sequential choice retains mismatches; deterministic choice discards them
+        let mut runner = make_runner(spec_al, false);
+        let value = nat(runner.arena_mut(), 1);
+        let failure = runner.context().call_rel("Reject", &[value]).unwrap_err();
+        assert!(matches!(failure, Failure::Mismatch(_)), "{failure}");
+        let error = failure.into_report();
+        let cause = error.find_code("runtime/condition-unmet").unwrap();
+        assert_eq!(cause.span().left.line, 4);
+        let text = error.render();
+        assert!(text.contains("while invoking Reject"), "{text}");
+        assert!(!text.contains("while evaluating"), "{text}");
+    }
+}
+
+#[test]
 fn test_higher_order_alias_is_resolved_in_the_caller() {
     let source = r#"
 var n : nat

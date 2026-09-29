@@ -624,7 +624,7 @@ fn test_index_failures_retain_the_index_expression_span() {
     }
     fn contains_evaluation(traces: &[p4spec_rust::diagnostic::Report]) -> bool {
         traces.iter().any(|trace| {
-            matches!(&trace.kind, ReportKind::Frame { message, .. } if message.starts_with("evaluation of "))
+            matches!(&trace.kind, ReportKind::Frame { message, .. } if message.starts_with("while evaluating "))
                 || contains_evaluation(&trace.children)
         })
     }

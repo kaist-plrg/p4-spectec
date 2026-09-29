@@ -4,14 +4,13 @@
 //! `eval_dispatch_block` selects relation groups through routing instructions.
 //! `eval_block` isolates bindings; `eval_alternatives` selects conclusions.
 //! Blocks run sequentially; alternatives delegate selection to `pl::flow`.
-//! `eval_instr` dispatches instructions and attaches their evaluation traces.
+//! `eval_instr` propagates failures to the enclosing block or invocation.
 //! Expression and assignment adapters remove hints before shared evaluation.
 
 use super::{
     assign,
     expr::{eval_exp, eval_exps},
 };
-use crate::interp::shared::backtrack::BacktrackExt;
 use crate::interp::shared::error;
 use crate::{
     interp::{
@@ -123,7 +122,7 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
 
 // = Instruction evaluation
 
-/// Evaluates one instruction, nesting failures under an evaluation trace.
+/// Evaluates one instruction, propagating its classified failure unchanged.
 fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
@@ -140,30 +139,27 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     ) -> Backtrack<(Context<'global>, Flow)>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Grow the stack for deep blocks
-    stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-        let result = match &instr.node.node {
-            ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, evaluate_block),
-            ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, evaluate_block),
-            ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, evaluate_block),
-            ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr),
-            ast::InstrKind::Debug(instr) => eval_debug_instr(runner_ctx, ctx, instr),
-            ast::InstrKind::Destruct(instr) => eval_destruct_instr(runner_ctx, ctx, instr),
-            ast::InstrKind::CheckLetSub(instr) => {
-                eval_check_let_sub_instr(runner_ctx, ctx, instr, evaluate_block)
-            }
-            ast::InstrKind::CheckLetMatch(instr) => {
-                eval_check_let_match_instr(runner_ctx, ctx, instr, evaluate_block)
-            }
-            ast::InstrKind::OptionGet(instr) => {
-                eval_option_get_instr(runner_ctx, ctx, instr, evaluate_block)
-            }
-            ast::InstrKind::Tier(instr) => eval_tier(runner_ctx, ctx, &instr.tier),
-        };
-        result.nest(instr.node.span.clone(), || "evaluation failed".to_owned())
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, || match &instr.node.node {
+        ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr),
+        ast::InstrKind::Debug(instr) => eval_debug_instr(runner_ctx, ctx, instr),
+        ast::InstrKind::Destruct(instr) => eval_destruct_instr(runner_ctx, ctx, instr),
+        ast::InstrKind::CheckLetSub(instr) => {
+            eval_check_let_sub_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
+        ast::InstrKind::CheckLetMatch(instr) => {
+            eval_check_let_match_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
+        ast::InstrKind::OptionGet(instr) => {
+            eval_option_get_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
+        ast::InstrKind::Tier(instr) => eval_tier(runner_ctx, ctx, &instr.tier),
     })
 }
 
-/// Evaluates one group instruction with its evaluation trace.
+/// Evaluates one group instruction.
 pub(super) fn eval_group_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
@@ -185,7 +181,7 @@ fn eval_group_tier<'global, Iface: Interface, Ext: Extern>(
     }
 }
 
-/// Evaluates one dispatch instruction with its evaluation trace.
+/// Evaluates one dispatch instruction.
 fn eval_dispatch_instr<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,

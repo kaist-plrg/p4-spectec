@@ -16,7 +16,7 @@ use std::path::Path;
 use clap::ValueEnum;
 use expect_test::expect_file;
 use indicatif::ProgressBar;
-use p4spec_rust::diagnostic::{RenderConfig, Renderer, Report};
+use p4spec_rust::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
 use crate::{Error, Result};
 
@@ -42,10 +42,19 @@ pub enum Suite {
 
 /// Executes one diagnostic suite and compares each case with its expectation.
 fn run_suite(
-    name_suite: &str,
+    suite: Suite,
     cases: &[&str],
     run_case: fn(&str) -> Result<Vec<Report>>,
 ) -> Result<()> {
+    // Match CLI presentation only for interpreter execution failures
+    let (name_suite, frame_style) = match suite {
+        Suite::Parse => ("parse", None),
+        Suite::Elab => ("elab", None),
+        Suite::Algo => ("algo", None),
+        Suite::Interp => ("interp", Some(DisplayStyle::Short)),
+        Suite::Splice => ("splice", None),
+    };
+    let config = RenderConfig { frame_style, ..Default::default() };
     let progress = ProgressBar::new(cases.len() as u64);
     let path_suite = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("expected/diagnostic")
@@ -56,7 +65,7 @@ fn run_suite(
         let reports = run_case(name)?;
         let mut text = String::new();
         for report in reports {
-            let rendered = Renderer::new(RenderConfig::default())
+            let rendered = Renderer::new(config.clone())
                 .render_to_string(&report)
                 .map_err(|error| failure(name, error))?;
             text.push_str(&rendered);
@@ -81,21 +90,21 @@ pub fn run(suite: Option<Suite>) -> Result<()> {
     // Absence selects every active suite in stage order
     match suite {
         Some(Suite::Parse) => run_parse(),
-        Some(Suite::Elab) => run_suite("elab", cases::ELAB, elab::run),
-        Some(Suite::Algo) => run_suite("algo", cases::ALGO, algo::run),
-        Some(Suite::Interp) => run_suite("interp", cases::INTERP, interp::run),
-        Some(Suite::Splice) => run_suite("splice", cases::SPLICE, splice::run),
+        Some(Suite::Elab) => run_suite(Suite::Elab, cases::ELAB, elab::run),
+        Some(Suite::Algo) => run_suite(Suite::Algo, cases::ALGO, algo::run),
+        Some(Suite::Interp) => run_suite(Suite::Interp, cases::INTERP, interp::run),
+        Some(Suite::Splice) => run_suite(Suite::Splice, cases::SPLICE, splice::run),
         None => {
             run_parse()?;
-            run_suite("elab", cases::ELAB, elab::run)?;
-            run_suite("algo", cases::ALGO, algo::run)?;
-            run_suite("interp", cases::INTERP, interp::run)?;
-            run_suite("splice", cases::SPLICE, splice::run)
+            run_suite(Suite::Elab, cases::ELAB, elab::run)?;
+            run_suite(Suite::Algo, cases::ALGO, algo::run)?;
+            run_suite(Suite::Interp, cases::INTERP, interp::run)?;
+            run_suite(Suite::Splice, cases::SPLICE, splice::run)
         }
     }
 }
 
 /// Adapts parser failures to the shared diagnostic sequence.
 fn run_parse() -> Result<()> {
-    run_suite("parse", cases::PARSE, |name| parse::run(name).map(|report| vec![*report]))
+    run_suite(Suite::Parse, cases::PARSE, |name| parse::run(name).map(|report| vec![*report]))
 }

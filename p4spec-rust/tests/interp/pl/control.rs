@@ -159,7 +159,7 @@ fn fatal_errors_abort_alternative_selection() {
 }
 
 #[test]
-fn failed_instruction_frames_do_not_print_their_pl_blocks() {
+fn fatal_instruction_failures_keep_calls_and_causes_without_instruction_frames() {
     for det in [false, true] {
         let mut runner = configured(
             function(vec![condition(
@@ -178,9 +178,38 @@ fn failed_instruction_frames_do_not_print_their_pl_blocks() {
             text.contains("error[runtime/binding-undefined]: value `missing` is undefined"),
             "{text}"
         );
-        assert_eq!(text.matches("note: evaluation failed").count(), 2, "{text}");
+        assert!(!text.contains("instruction"), "{text}");
+        assert!(text.contains("note: while invoking $entry"), "{text}");
+        assert!(text.contains("note: while evaluating expression missing"), "{text}");
         assert!(!text.contains("123456789"), "an unevaluated PL block leaked: {text}");
         assert!(!text.contains("Else Dangling"), "{text}");
+    }
+}
+
+#[test]
+fn mismatching_instructions_keep_call_frames_without_instruction_frames() {
+    use p4spec_rust::interp::shared::backtrack::Failure;
+
+    let mut spec_pl =
+        spec("builtin dec $max_nat(nat*) : nat\ndec $entry() : nat\ndef $entry() = $max_nat([])");
+    let func = spec_pl
+        .iter_mut()
+        .find_map(|def| match &mut def.node.node {
+            ast::DefKind::MetaFunc(ast::MetaFuncDef::Defined(func)) => Some(func),
+            _ => None,
+        })
+        .unwrap();
+    let block = std::mem::take(&mut func.block);
+    func.block = vec![condition(true, block)];
+    for det in [false, true] {
+        let mut runner = configured(spec_pl.clone(), det);
+        let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
+        assert!(matches!(failure, Failure::Mismatch(_)), "{failure}");
+        let text = failure.into_report().render();
+        assert!(text.contains("while invoking $entry"), "{text}");
+        assert!(text.contains("while invoking $max_nat"), "{text}");
+        assert!(text.contains("error[runtime/"), "{text}");
+        assert!(!text.contains("instruction"), "{text}");
     }
 }
 
@@ -230,13 +259,12 @@ fn dispatch_alternatives_keep_their_bindings_local() {
 }
 
 #[test]
-fn nested_instruction_traces_are_attached_once_in_both_tiers() {
+fn nested_instructions_preserve_the_cause_span_without_frames_in_both_tiers() {
     use p4spec_rust::lang::common::source::Position;
 
     // Collect instruction locations separately from expression and call traces
     fn instruction_spans(error: &p4spec_rust::diagnostic::Report, spans: &mut Vec<Span>) {
-        if matches!(&error.kind, ReportKind::Frame { message, .. } if message == "evaluation failed")
-            && error.span().left.file.as_ref() == "instruction_trace"
+        if matches!(&error.kind, ReportKind::Frame { span, .. } if span.left.file.as_ref() == "instruction_trace")
         {
             spans.push(error.span().clone());
         }
@@ -262,11 +290,18 @@ fn nested_instruction_traces_are_attached_once_in_both_tiers() {
             _ => None,
         })
         .unwrap();
+    // Give the failing expression its own location, distinct from the instructions
+    let span_exp =
+        Span::new(Position::new("expression_trace", 1, 0), Position::new("expression_trace", 1, 7));
+    let mut exp_missing = variable("missing");
+    exp_missing.node.span = span_exp.clone();
+    let ast::ExpKind::Id(id) = &mut exp_missing.node.node else { unreachable!() };
+    id.span = span_exp.clone();
     // A dispatch condition enters a group whose condition reaches a fatal result
     let mut instr_result = instr(ast::InstrKind::Tier(ast::TierInstr {
         tier: ast::GroupInstr::Result(ast::ResultInstr {
             rel_signature: rel.rel_signature.clone(),
-            exps_output: vec![variable("missing")],
+            exps_output: vec![exp_missing],
         }),
     }));
     instr_result.node.span = spans[3].clone();
@@ -285,7 +320,7 @@ fn nested_instruction_traces_are_attached_once_in_both_tiers() {
     let mut instr_dispatch = condition(true, vec![instr_group]);
     instr_dispatch.node.span = spans[0].clone();
     rel.block = vec![instr_dispatch];
-    // Each instruction contributes one trace in enclosing-to-enclosed order
+    // Both tiers retain the responsible expression, not their instruction frames
     for det in [false, true] {
         let mut runner = configured(spec_pl.clone(), det);
         let value = make::nat(runner.arena_mut(), 0u64.into(), Span::default()).unwrap();
@@ -295,9 +330,12 @@ fn nested_instruction_traces_are_attached_once_in_both_tiers() {
             .unwrap_err()
             .into_report();
         assert!(error.render().contains("value `missing` is undefined"), "{error}");
+        assert!(error.render().contains("while invoking Entry"), "{error}");
+        let cause = error.find_code("runtime/binding-undefined").unwrap();
+        assert_eq!(cause.span(), span_exp);
         let mut spans_actual = vec![];
         instruction_spans(&error, &mut spans_actual);
-        assert_eq!(spans_actual, spans, "det={det}");
+        assert!(spans_actual.is_empty(), "det={det}: {spans_actual:?}");
     }
 }
 

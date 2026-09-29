@@ -21,11 +21,11 @@ pub fn execution(children: Vec<Report>) -> Box<Report> {
 pub fn function(id: &Id, targs: &[Typ]) -> String {
     // Omit the angle brackets for monomorphic calls
     if targs.is_empty() {
-        return format!("invocation of ${} failed", id.node);
+        return format!("while invoking ${}", id.node);
     }
     // Format instantiated arguments only on the failure path
     format!(
-        "invocation of ${}<{}> failed",
+        "while invoking ${}<{}>",
         id.node,
         targs
             .iter()

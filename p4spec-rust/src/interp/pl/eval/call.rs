@@ -193,8 +193,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result =
-        result.nest(id.span.clone(), || format!("invocation of {} failed", id.node.clone()));
+    let result = result.nest(id.span.clone(), || format!("while invoking {}", id.node));
     let values = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {

@@ -102,7 +102,8 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
             eval_iter_exp(runner_ctx, ctx, exp, exp_inner, exp_iter)
         }
     })();
-    result.nest(exp.span.clone(), || format!("evaluation of {} failed", Print::to_string(exp)))
+    result
+        .nest(exp.span.clone(), || format!("while evaluating expression {}", Print::to_string(exp)))
 }
 
 pub(crate) fn eval_exps<

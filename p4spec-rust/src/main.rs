@@ -10,7 +10,7 @@ use clap::{Args, Parser, Subcommand};
 
 use p4spec_rust::{
     backend_specdoc::splicer,
-    diagnostic::{RenderConfig, Renderer, Report},
+    diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
     interface::p4::{error::P4Error, parse::parse_file},
     interp::shared::backtrack::Failure as InterpError,
     lang::{data::value::external::Encoding, traits::print::Print},
@@ -23,8 +23,8 @@ use p4spec_rust::{
 // - Diagnostic output
 
 /// Renders reports without changing their structured payloads.
-fn render_report(report: &Report) {
-    let mut renderer = Renderer::new(RenderConfig::default());
+fn render_report(report: &Report, config: RenderConfig) {
+    let mut renderer = Renderer::new(config);
     if let Err(error) = renderer.render_to_stderr(report) {
         eprintln!("{report}\ndiagnostic rendering failed: {error}");
     }
@@ -64,7 +64,7 @@ where
     CliError: From<Error>,
 {
     for report in warnings {
-        render_report(&report);
+        render_report(&report, RenderConfig::default());
     }
     result.map_err(CliError::from)
 }
@@ -385,18 +385,21 @@ fn main() -> ExitCode {
             | p4spec_rust::Error::Structure(report),
         ))
         | Err(CliError::Splice(report)) => {
-            render_report(&report);
+            render_report(&report, RenderConfig::default());
             ExitCode::FAILURE
         }
         // Preserve runtime failure reports until execution has ended
         Err(CliError::Runtime(failure))
         | Err(CliError::Simulation(sim_plugin::runner::Error::Runtime(failure))) => {
-            render_report(&failure.into_report());
+            render_report(
+                &failure.into_report(),
+                RenderConfig { frame_style: Some(DisplayStyle::Short), ..Default::default() },
+            );
             ExitCode::FAILURE
         }
         // Loading failures have no recoverable control state
         Err(CliError::Runner(runner::BuildError::Interp(report))) => {
-            render_report(&report);
+            render_report(&report, RenderConfig::default());
             ExitCode::FAILURE
         }
         // Report other typed failures once at the process boundary

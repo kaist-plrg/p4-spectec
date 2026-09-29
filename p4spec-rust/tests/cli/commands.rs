@@ -312,6 +312,59 @@ fn test_run_sl_and_pl_native_success_and_multiple_spec_paths() {
 }
 
 #[test]
+fn test_run_interpreters_use_compact_context_and_rich_causes() {
+    for stage in ["--al", "--sl", "--pl"] {
+        let output = run_command_with(stage, "Reject", "cli/run/empty.p4")
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stdout.is_empty());
+        let text = String::from_utf8(output.stderr).unwrap();
+        assert!(
+            text.starts_with("note: execution failed\n└─ note: while invoking Reject\n"),
+            "{stage}: {text}"
+        );
+        assert_eq!(text.matches("┌─").count(), 1, "only the cause has a snippet: {text}");
+        assert!(text.contains("error[runtime/condition-unmet]"), "{text}");
+        assert!(text.contains("-- if false"), "{text}");
+        assert!(text.contains("^^^^^"), "{text}");
+        if stage == "--al" {
+            assert!(!text.contains("while evaluating"), "{text}");
+            assert!(text.contains("relations.watsup:7:9"), "{text}");
+        }
+    }
+}
+
+#[test]
+fn test_execution_commands_keep_elaboration_frames_rich() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("test-driver/expected/diagnostic/elab/type-shape-index-path.watsup");
+    let output = binary().arg("elab").arg(&path).output().unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    let text = std::str::from_utf8(&output.stderr).unwrap();
+    let (context, _) = text.split_once("├─ error[").unwrap();
+    assert!(context.contains("note: expression elaboration failed\n  ┌─"), "{text}");
+    assert!(context.contains("def $f(nat) = nat[[0] = 1]"), "{text}");
+    for stage in ["--al", "--sl", "--pl"] {
+        for command in ["run", "sim"] {
+            let mut process = binary();
+            process
+                .args([command, stage])
+                .arg(&path)
+                .args(["-p", "unused.p4"]);
+            if command == "run" {
+                process.args(["--rel", "Unused"]);
+            } else {
+                process.args(["--arch", "ebpf", "--stf", "unused.stf"]);
+            }
+            let output_execution = process.output().unwrap();
+            assert_eq!(output_execution.status.code(), Some(1));
+            assert_eq!(output_execution.stderr, output.stderr, "{command} {stage}");
+        }
+    }
+}
+
+#[test]
 fn test_run_sl_and_pl_distinguish_syntax_and_runtime_failures() {
     for stage in ["--sl", "--pl"] {
         for (relation, program, category) in [
@@ -708,7 +761,7 @@ fn test_sim_interpreters_distinguish_p4_syntax_and_runtime_failures() {
     for stage in ["--al", "--sl", "--pl"] {
         for (program, category) in [
             ("cli/run/invalid.p4", "syntax error:"),
-            ("cli/run/empty.p4", "note: invocation of EBPF_init failed"),
+            ("cli/run/empty.p4", "note: while invoking EBPF_init\n└─ error[runtime/"),
         ] {
             let output = binary()
                 .args(["sim", stage])

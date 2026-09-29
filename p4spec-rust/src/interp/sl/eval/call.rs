@@ -207,12 +207,10 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
         });
         // Nest failures under this call and then under the tail-calling callers
         let pure = runner_ctx.interp_mut().cache.end();
-        let mut result =
-            result.nest(id.span.clone(), || format!("invocation of {} failed", id.node.clone()));
+        let mut result = result.nest(id.span.clone(), || format!("while invoking {}", id.node));
         if result.is_err() {
             for id in ids_pending.iter().rev() {
-                result =
-                    result.nest(id.span.clone(), || format!("invocation of {} failed", id.node));
+                result = result.nest(id.span.clone(), || format!("while invoking {}", id.node));
             }
         }
         // Fatal errors and mismatches leave the loop here

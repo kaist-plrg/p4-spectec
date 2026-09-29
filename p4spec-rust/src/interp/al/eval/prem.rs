@@ -8,7 +8,6 @@
 
 use super::super::{AlInterp, context::Context};
 use super::{assign, expr};
-use crate::interp::shared::backtrack::BacktrackExt;
 use crate::interp::shared::error;
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
@@ -22,13 +21,13 @@ use crate::{
 
 // = Premise evaluation
 
-/// Evaluates a premise, nesting failures under an evaluation trace.
+/// Evaluates a premise, propagating its classified failure unchanged.
 pub fn eval_prem<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, AlInterp, Iface, Ext>,
     ctx: Context<'global>,
     prem: &ast::Prem,
 ) -> Backtrack<Context<'global>> {
-    let result = match &prem.node {
+    match &prem.node {
         ast::PremKind::Rule(prem) => eval_rule_prem(runner_ctx, ctx, prem),
         ast::PremKind::If(prem) => eval_if_prem(runner_ctx, ctx, prem),
         ast::PremKind::IfHold(prem) => eval_if_hold_prem(runner_ctx, ctx, prem),
@@ -36,9 +35,7 @@ pub fn eval_prem<'global, Iface: Interface, Ext: Extern>(
         ast::PremKind::Let(prem) => eval_let_prem(runner_ctx, ctx, prem),
         ast::PremKind::Iter(prem) => eval_iter_prem(runner_ctx, ctx, prem),
         ast::PremKind::Debug(prem) => eval_debug_prem(runner_ctx, ctx, prem),
-    };
-    // Trace the premise on failure
-    result.nest(prem.span.clone(), || format!("evaluation of {} failed", Print::to_string(prem)))
+    }
 }
 
 /// Evaluates premises in order, threading the context.

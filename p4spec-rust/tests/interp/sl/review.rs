@@ -72,7 +72,7 @@ fn evaluate(spec_sl: ast::Spec, relation: bool) -> Error {
 fn has_invocation(error: &p4spec_rust::diagnostic::Report, text: &str) -> bool {
     matches!(
         &error.kind,
-        ReportKind::Frame { message, .. } if message == &format!("invocation of {text} failed")
+        ReportKind::Frame { message, .. } if message == &format!("while invoking {text}")
     ) || error
         .children
         .iter()

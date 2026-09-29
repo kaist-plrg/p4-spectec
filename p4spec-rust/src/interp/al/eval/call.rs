@@ -27,7 +27,7 @@ use crate::interp::shared::{
 };
 use crate::lang::data::value::{ValueArena, ValueKind};
 use crate::{
-    lang::{data::value::Value, traits::print::Print},
+    lang::data::value::Value,
     runner::{Extern, Interface, RunnerContext},
 };
 
@@ -196,7 +196,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             .insert(key, values.clone());
     }
     // Nest failures under the invocation trace
-    result.nest(id.span.clone(), || format!("invocation of {} failed", id.node.clone()))
+    result.nest(id.span.clone(), || format!("while invoking {}", id.node))
 }
 
 // - Extern relation
@@ -282,12 +282,9 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
                 .map(move |path| (&group.node, path))
         })
         .collect();
-    // Each candidate nests its failures under relation/group/path
+    // Evaluate each candidate without adding a rule-path frame
     let mut evaluate = |&(group, path): &(&ast::RuleGroupKind, &ast::RulePath)| {
         eval_rule_path(runner_ctx, ctx, layout, &group.rule_match, path, values)
-            .nest(id.span.clone(), || {
-                format!("evaluation of {}/{}/{} failed", id.node, group.id.node, path.id.node)
-            })
     };
     // Deterministic mode rejects two matching paths
     let result = if det {
@@ -314,7 +311,7 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         err!(errors) => err!(errors),
         // No path matched: the otherwise group is the fallback
         unmatch!(errors) => match &rel.else_group {
-            // The otherwise group runs like any path, traced under its own name
+            // The otherwise group runs like any path
             Some(group) => eval_rule_path(
                 runner_ctx,
                 ctx,
@@ -322,14 +319,8 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
                 &group.node.rule_match,
                 &group.node.rule_path,
                 values,
-            )
-            .nest(id.span.clone(), || {
-                format!(
-                    "evaluation of {}/{}/{} failed",
-                    id.node, group.node.id.node, group.node.rule_path.id.node
-                )
-            }),
-            // No fallback: report every candidate's mismatches
+            ),
+            // No fallback: propagate the selected mismatches
             None => unmatch!(errors),
         },
     }
@@ -468,29 +459,23 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     table_row: &ast::TableRow,
     values: &[Value],
 ) -> Backtrack<Value> {
-    let result = (|| {
-        // Argument count must match the row
-        unwrap!(crate::interp::shared::backtrack::check(
-            table_row.node.args.len() == values.len(),
-            table_row.span.clone(),
-            || error::call::table_row_arity_mismatch(table_row.node.args.len(), values.len())
-        ));
-        // Arguments bind into a fresh frame for the row
-        let ctx = unwrap!(assign::assign_args(
-            runner_ctx.arena_mut(),
-            ctx,
-            ctx.localize_with_layout(layout),
-            &table_row.node.args,
-            values
-        ));
-        // Premises, then the row body
-        let ctx = unwrap!(eval_prems(runner_ctx, ctx, &table_row.node.prems));
-        expr::eval_exp(runner_ctx, &ctx, &table_row.node.exp)
-    })();
-    // Trace the row on failure
-    result.nest(table_row.span.clone(), || {
-        format!("evaluation of {} failed", Print::to_string(table_row))
-    })
+    // Argument count must match the row
+    unwrap!(crate::interp::shared::backtrack::check(
+        table_row.node.args.len() == values.len(),
+        table_row.span.clone(),
+        || error::call::table_row_arity_mismatch(table_row.node.args.len(), values.len())
+    ));
+    // Arguments bind into a fresh frame for the row
+    let ctx = unwrap!(assign::assign_args(
+        runner_ctx.arena_mut(),
+        ctx,
+        ctx.localize_with_layout(layout),
+        &table_row.node.args,
+        values
+    ));
+    // Premises, then the row body
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &table_row.node.prems));
+    expr::eval_exp(runner_ctx, &ctx, &table_row.node.exp)
 }
 
 /// Tries the table rows in order; the first matching row decides.
@@ -516,28 +501,23 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
     clause: &ast::Clause,
     values: &[Value],
 ) -> Backtrack<Value> {
-    let result = (|| {
-        // Argument count must match the clause
-        unwrap!(crate::interp::shared::backtrack::check(
-            clause.node.args.len() == values.len(),
-            clause.span.clone(),
-            || error::call::clause_arity_mismatch(clause.node.args.len(), values.len())
-        ));
-        // Arguments bind into the callee scope, evaluated in the caller's
-        let ctx = unwrap!(assign::assign_args(
-            runner_ctx.arena_mut(),
-            ctx_caller,
-            ctx_callee.clone(),
-            &clause.node.args,
-            values
-        ));
-        // Premises, then the clause body
-        let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause.node.prems));
-        expr::eval_exp(runner_ctx, &ctx, &clause.node.exp)
-    })();
-    // Trace the clause on failure
-    result
-        .nest(clause.span.clone(), || format!("evaluation of {} failed", Print::to_string(clause)))
+    // Argument count must match the clause
+    unwrap!(crate::interp::shared::backtrack::check(
+        clause.node.args.len() == values.len(),
+        clause.span.clone(),
+        || error::call::clause_arity_mismatch(clause.node.args.len(), values.len())
+    ));
+    // Arguments bind into the callee scope, evaluated in the caller's
+    let ctx = unwrap!(assign::assign_args(
+        runner_ctx.arena_mut(),
+        ctx_caller,
+        ctx_callee.clone(),
+        &clause.node.args,
+        values
+    ));
+    // Premises, then the clause body
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause.node.prems));
+    expr::eval_exp(runner_ctx, &ctx, &clause.node.exp)
 }
 
 /// Binds the type parameters, tries the clauses, then the otherwise clause.
@@ -581,7 +561,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         unmatch!(errors) => match &defined_func.else_clause {
             // The otherwise clause runs like any clause
             Some(clause) => eval_clause(runner_ctx, ctx, &ctx_local, clause, values),
-            // No fallback: report every candidate's mismatches
+            // No fallback: propagate the selected mismatches
             None => unmatch!(errors),
         },
     }
