@@ -1,7 +1,7 @@
 use crate::{Error, Result, snapshot};
 use expect_test::expect_file;
 use p4spec_rust::{
-    backend_doc::adoc,
+    backend_specdoc::adoc,
     frontend::parse::parse_files,
     pass::{algo, elaborate, prosify, structure},
 };
@@ -25,7 +25,7 @@ pub fn run(path_output: Option<&Path>) -> Result<()> {
         structure::convert(spec_al, false).map_err(|error| Error::Invalid(error.to_string()))?;
     let spec_pl = prosify::convert(spec_sl).map_err(|error| Error::Invalid(error.to_string()))?;
 
-    // Rendering another document must not retain arm counters from the first
+    // Repeated rendering must start with fresh document anchor state
     let text_pl = adoc::pl::render_spec(&spec_pl);
     if text_pl != adoc::pl::render_spec(&spec_pl) {
         return Err(Error::Invalid("AsciiDoc arm anchors changed on repeated rendering".into()));
@@ -36,7 +36,7 @@ pub fn run(path_output: Option<&Path>) -> Result<()> {
         fs::write(path_output.join("el.adoc"), &text_el)?;
         fs::write(path_output.join("pl.adoc"), &text_pl)?;
     }
-    // Keep native corpus acceptance independent of the OCaml toolchain
+    // Compare both rendered specifications with the accepted snapshots
     let path_expected = Path::new(env!("CARGO_MANIFEST_DIR")).join("expected");
     snapshot::check(expect_file![path_expected.join("adoc-el.expected")], &text_el);
     snapshot::check(expect_file![path_expected.join("adoc-pl.expected")], &text_pl);

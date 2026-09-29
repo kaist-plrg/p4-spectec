@@ -208,7 +208,7 @@ fn test_elab_command_reports_elaboration_errors_on_stderr() {
 
 #[test]
 fn test_commands_require_at_least_one_path() {
-    for command in ["elab", "algo", "struct", "prose"] {
+    for command in ["elab", "algo", "struct", "prose", "splice"] {
         let output = binary().arg(command).output().expect("run command");
         assert_eq!(output.status.code(), Some(2));
         assert!(output.stdout.is_empty());
@@ -229,6 +229,7 @@ fn test_help_prints_commands() {
     assert!(stdout.contains("algo"));
     assert!(stdout.contains("struct"));
     assert!(stdout.contains("prose"));
+    assert!(stdout.contains("splice"));
 }
 
 #[test]

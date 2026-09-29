@@ -9,6 +9,7 @@ use std::{path::PathBuf, process::ExitCode};
 use clap::{Args, Parser, Subcommand};
 
 use p4spec_rust::{
+    backend_specdoc::splicer,
     diagnostic::{RenderConfig, Renderer, Report},
     interface::p4::{error::P4Error, parse::parse_file},
     interp::shared::error::Error as InterpError,
@@ -35,6 +36,10 @@ fn render_report(report: &Report) {
 #[derive(Debug, thiserror::Error)]
 /// A command failure with its user-facing diagnostic category.
 enum CliError {
+    #[error("command error: {0}")]
+    Command(String),
+    #[error(transparent)]
+    Splice(#[from] splicer::Error),
     #[error(transparent)]
     Spec(#[from] p4spec_rust::Error),
     #[error(transparent)]
@@ -52,9 +57,12 @@ enum CliError {
 // = Specification loading
 
 /// Renders accumulated warnings before returning the command result or error.
-fn report_warnings<Spec>(
-    (result, warnings): (Result<Spec, p4spec_rust::Error>, Vec<Report>),
-) -> Result<Spec, CliError> {
+fn report_warnings<Value, Error>(
+    (result, warnings): (Result<Value, Error>, Vec<Report>),
+) -> Result<Value, CliError>
+where
+    CliError: From<Error>,
+{
     for report in warnings {
         render_report(&report);
     }
@@ -127,6 +135,52 @@ fn prose_command(args: ProseArgs) -> Result<(), CliError> {
     let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
     println!("{}", Print::to_string(&spec_pl));
     Ok(())
+}
+
+// = Splice command
+
+#[derive(Args)]
+/// Arguments of the `splice` command.
+struct SpliceArgs {
+    /// Specification files in processing order.
+    #[arg(required = true, value_name = "PATH")]
+    paths: Vec<PathBuf>,
+    /// Skeleton documents in processing order.
+    #[arg(long = "splice", value_name = "PATH")]
+    paths_input: Vec<PathBuf>,
+    /// Output files paired with skeletons in order.
+    #[arg(long = "out", value_name = "PATH")]
+    paths_output: Vec<PathBuf>,
+    /// Replace each skeleton in place, ignoring output paths.
+    #[arg(long)]
+    inplace: bool,
+}
+
+/// Expands skeleton documents using the source and prose specifications.
+fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
+    // Resolve output paths before loading specifications or touching documents
+    let path_pairs: Vec<_> = if args.inplace {
+        args.paths_input
+            .into_iter()
+            .map(|path| (path.clone(), path))
+            .collect()
+    } else {
+        // Reject mismatched lists before zip can omit unpaired paths
+        if args.paths_input.len() != args.paths_output.len() {
+            return Err(CliError::Command(
+                "number of input and output files must match".to_owned(),
+            ));
+        }
+        args.paths_input
+            .into_iter()
+            .zip(args.paths_output)
+            .collect()
+    };
+    // Retain source definitions alongside the annotated prose representation
+    let spec_el = p4spec_rust::parse(&args.paths)?;
+    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
+    // Render accumulated splice warnings before propagating the file result
+    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
 }
 
 // = Run command
@@ -297,6 +351,8 @@ enum Command {
     Struct(StructArgs),
     /// Convert specifications and print the prose representation.
     Prose(ProseArgs),
+    /// Expand skeleton documents using specification fragments.
+    Splice(SpliceArgs),
     /// Run a P4 program with the algorithmic interpreter.
     Run(RunArgs),
     /// Simulate a P4 program and STF test on a target architecture.
@@ -310,6 +366,7 @@ fn run(cli: Cli) -> Result<(), CliError> {
         Command::Algo(args) => algo_command(args),
         Command::Struct(args) => struct_command(args),
         Command::Prose(args) => prose_command(args),
+        Command::Splice(args) => splice_command(args),
         Command::Run(args) => run_command(args),
         Command::Sim(args) => sim_command(args),
     }
@@ -326,7 +383,8 @@ fn main() -> ExitCode {
             | p4spec_rust::Error::Elab(report)
             | p4spec_rust::Error::Algo(report)
             | p4spec_rust::Error::Structure(report),
-        )) => {
+        ))
+        | Err(CliError::Splice(report)) => {
             render_report(&report);
             ExitCode::FAILURE
         }
