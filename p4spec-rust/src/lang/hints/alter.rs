@@ -22,7 +22,7 @@ pub enum Hole {
     Num(usize),
 }
 
-/// A prose rendering template
+/// A prose rendering template.
 ///
 /// `Hole::Next` consumes items in cursor order;
 /// `Hole::Num` selects an explicit item index.
@@ -36,7 +36,7 @@ pub enum AlterationHint {
     Seq(Vec<AlterationHint>),
     /// A piece between bracket atoms.
     Brack(Atom, Box<AlterationHint>, Atom),
-    /// An item placeholder.
+    /// An item placeholder at its original source location.
     Hole(Phrase<Hole>),
     /// Two pieces joined without a separator.
     Fuse(Box<AlterationHint>, Box<AlterationHint>),
@@ -131,7 +131,7 @@ pub fn validate(hint: &AlterationHint, item_count: usize) -> Result<(), Alterati
 
 // == Index realignment
 
-/// Renumbers output holes after relation input positions.
+/// Renumbers output holes after relation inputs, preserving source locations.
 pub fn realign(hint: &AlterationHint, hint_input: &InputHint) -> AlterationHint {
     /// Gathers every `%N` index in the template.
     fn collect(hint: &AlterationHint, indices_output: &mut Vec<usize>) {

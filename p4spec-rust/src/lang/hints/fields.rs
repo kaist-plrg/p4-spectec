@@ -13,7 +13,7 @@ use thiserror::Error;
 /// Field labels for prose rendering.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FieldHint {
-    /// Field labels in order.
+    /// Field labels and their source locations in order.
     fields: Vec<Phrase<Text>>,
 }
 
@@ -44,7 +44,7 @@ impl FieldHint {
 
 // == Initialization
 
-/// Initializes a field hint from one text or a sequence of texts.
+/// Initializes located field names, returning the first non-text expression.
 pub fn init(exp: &Exp) -> Result<FieldHint, &Exp> {
     // Preserve the element that violates the text-only contract
     let field = |exp: &Exp| match &exp.node {
@@ -65,7 +65,7 @@ pub fn init(exp: &Exp) -> Result<FieldHint, &Exp> {
 
 // == Validation
 
-/// Validates that the field count matches `arity`
+/// Validates that the field count matches `arity`.
 pub fn validate(hint: &FieldHint, arity: usize) -> Result<(), FieldError> {
     if hint.fields.len() == arity {
         Ok(())

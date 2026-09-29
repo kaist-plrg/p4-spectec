@@ -153,7 +153,10 @@ impl Context {
     fn load_def(&mut self, def_sl: &sl::Def) -> Result<(), ProseError> {
         match &def_sl.node {
             sl::DefKind::Typ(def_typ_sl) => self.load_typ_def(def_typ_sl),
-            sl::DefKind::Var(def_var_sl) => self.load_var_def(def_var_sl),
+            sl::DefKind::Var(def_var_sl) => {
+                self.load_var_def(def_var_sl);
+                Ok(())
+            }
             sl::DefKind::Rel(def_rel_sl) => self.load_rel_def(def_rel_sl),
             sl::DefKind::MetaFunc(def_func_sl) => self.load_func_def(def_func_sl),
         }
@@ -162,19 +165,21 @@ impl Context {
     /// Records a type definition.
     fn load_typ_def(&mut self, def_typ_sl: &sl::TypDef) -> Result<(), ProseError> {
         match def_typ_sl {
-            sl::TypDef::Extern(def_typ_sl) => self.load_extern_typ_def(def_typ_sl),
+            sl::TypDef::Extern(def_typ_sl) => {
+                self.load_extern_typ_def(def_typ_sl);
+                Ok(())
+            }
             sl::TypDef::Defined(def_typ_sl) => self.load_defined_typ_def(def_typ_sl),
         }
     }
 
     /// An extern type names itself as a meta-variable.
-    fn load_extern_typ_def(&mut self, def_typ_sl: &sl::ExternTyp) -> Result<(), ProseError> {
+    fn load_extern_typ_def(&mut self, def_typ_sl: &sl::ExternTyp) {
         let typ = crate::phrase! {
             node: il::ast::TypKind::Var(def_typ_sl.id.clone(), Vec::new()),
             span: def_typ_sl.id.span.clone(),
         };
         self.add_metavar(def_typ_sl.id.clone(), typ);
-        Ok(())
     }
 
     /// A monomorphic type names itself; each variant case adds its hints.
@@ -200,9 +205,8 @@ impl Context {
     }
 
     /// A meta-variable declaration.
-    fn load_var_def(&mut self, def_var_sl: &sl::VarDef) -> Result<(), ProseError> {
+    fn load_var_def(&mut self, def_var_sl: &sl::VarDef) {
         self.add_metavar(def_var_sl.id.clone(), def_var_sl.typ.clone());
-        Ok(())
     }
 
     /// A relation's hints, extern or defined.

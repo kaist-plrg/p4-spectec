@@ -1313,6 +1313,7 @@ fn prosify_group_rule_instr(
         .unwrap_or_default();
     let num_args = instr_sl.not_exp.args().len();
     // Input and output hints count their own positions
+    // Elaboration validates indices; structure and expansion preserve arity
     let num_inputs = instr_sl.input_hint.indices().len();
     validate_hint_split(&hints, num_inputs, num_args - num_inputs)?;
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
@@ -1443,7 +1444,7 @@ fn prosify_table_row(ctx: &Context, row_sl: sl::TableRow) -> Result<pl::TableRow
 // - Type definition
 
 /// Converts a type definition; types carry no hints.
-fn prosify_typ_def(typdef_sl: sl::TypDef, span: Span) -> Result<pl::Def, ProseError> {
+fn prosify_typ_def(typdef_sl: sl::TypDef, span: Span) -> pl::Def {
     match typdef_sl {
         sl::TypDef::Extern(def_typ_sl) => prosify_extern_typ_def(def_typ_sl, span),
         sl::TypDef::Defined(def_typ_sl) => prosify_defined_typ_def(*def_typ_sl, span),
@@ -1453,43 +1454,43 @@ fn prosify_typ_def(typdef_sl: sl::TypDef, span: Span) -> Result<pl::Def, ProseEr
 // - External type definition
 
 /// Converts an extern type.
-fn prosify_extern_typ_def(def_typ_sl: sl::ExternTyp, span: Span) -> Result<pl::Def, ProseError> {
+fn prosify_extern_typ_def(def_typ_sl: sl::ExternTyp, span: Span) -> pl::Def {
     let def_typ_pl = pl::ExternTyp { id: def_typ_sl.id };
     let def_typ_pl = pl::TypDef::Extern(def_typ_pl);
-    Ok(crate::annotated_note_phrase! {
+    crate::annotated_note_phrase! {
         node: pl::DefKind::Typ(def_typ_pl),
         note: (),
         span: span,
-    })
+    }
 }
 
 // - Defined type definition
 
 /// Converts a defined type.
-fn prosify_defined_typ_def(def_typ_sl: sl::DefinedTyp, span: Span) -> Result<pl::Def, ProseError> {
+fn prosify_defined_typ_def(def_typ_sl: sl::DefinedTyp, span: Span) -> pl::Def {
     let def_typ_pl = pl::DefinedTyp {
         id: def_typ_sl.id,
         tparams: def_typ_sl.tparams,
         def_typ: def_typ_sl.def_typ,
     };
     let def_typ_pl = pl::TypDef::Defined(Box::new(def_typ_pl));
-    Ok(crate::annotated_note_phrase! {
+    crate::annotated_note_phrase! {
         node: pl::DefKind::Typ(def_typ_pl),
         note: (),
         span: span,
-    })
+    }
 }
 
 // == Meta-variable definitions
 
 /// Converts a meta-variable definition.
-fn prosify_var_def(def_var_sl: sl::VarDef, span: Span) -> Result<pl::Def, ProseError> {
+fn prosify_var_def(def_var_sl: sl::VarDef, span: Span) -> pl::Def {
     let def_var_pl = pl::VarDef { id: def_var_sl.id, typ: def_var_sl.typ };
-    Ok(crate::annotated_note_phrase! {
+    crate::annotated_note_phrase! {
         node: pl::DefKind::Var(def_var_pl),
         note: (),
         span: span,
-    })
+    }
 }
 
 // == Relation definitions
@@ -1799,8 +1800,8 @@ fn prosify_defined_func_def(
 /// Converts one definition.
 fn prosify_def(ctx: &mut Context, def_sl: sl::Def) -> Result<pl::Def, ProseError> {
     match def_sl.node {
-        sl::DefKind::Typ(def_typ_sl) => prosify_typ_def(def_typ_sl, def_sl.span),
-        sl::DefKind::Var(def_var_sl) => prosify_var_def(def_var_sl, def_sl.span),
+        sl::DefKind::Typ(def_typ_sl) => Ok(prosify_typ_def(def_typ_sl, def_sl.span)),
+        sl::DefKind::Var(def_var_sl) => Ok(prosify_var_def(def_var_sl, def_sl.span)),
         sl::DefKind::Rel(def_rel_sl) => prosify_rel_def(ctx, def_rel_sl, def_sl.span),
         sl::DefKind::MetaFunc(def_func_sl) => prosify_func_def(ctx, def_func_sl, def_sl.span),
     }
