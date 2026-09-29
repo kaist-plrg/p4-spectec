@@ -1,17 +1,12 @@
 #lang racket/base
-;; spec-meta/common/1-syntax.watsup, plus the `var`s of common/0-stdlib.
+;; spec-meta/common/1-syntax.watsup.
 
 (require json
-         "0-prelude.rkt")
+         "0-prelude.rkt"
+         "0-stdlib.rkt")
 (provide Common)
 
-(define-language Common
-  ;; Metavariables (common/0-stdlib)
-  (bool b ::= boolean)
-  (int i ::= integer)
-  (nat n ::= natural)
-  (text t ::= string)
-
+(define-extended-language Common Stdlib
   ;; Identifiers
   (id ::= text)
   (atom ::= text)

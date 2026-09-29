@@ -1,7 +1,7 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: Steps 1 (syntax) and 2 (s-expression bridge) are done. Steps 3–11
-are planned.
+Status: Steps 1 (syntax), 2 (s-expression bridge), and 3 (common
+metafunctions) are done. Steps 4–11 are planned.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language. It transcribes the AL specification in
@@ -52,7 +52,7 @@ must stay distinguishable:
 
 Names stay as in watsup. `Eval_exp`, `Call_func`, `find_map` and `subst_typ`
 are all legal Redex names *(checked)*. The one exception is `'`, which is a
-Racket reader delimiter: `$subst_typ'` becomes `subst_typ′`, and primed
+Racket reader delimiter: `$subst_typ'` becomes `subst_type_inner`, and primed
 metavariables `C'` and `C''` become `C_1` and `C_2`. watsup subscripts
 (`exp_l`, `val_h`) are already Redex subscripts. Repeated metavariables are
 equality constraints in both languages.
@@ -302,10 +302,11 @@ spec-meta-redex/
     0-prelude.rkt         Redex re-exports; caching off; definition macros
     0-extern-json.rkt     codec for the extern JSON wire
     0-extern-wire.rkt     transport to the OCaml host
-    0-stdlib.rkt          $ite, $opt_as_seq_, $exists_, ...; builtins
+    0-stdlib.rkt          language Stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins
     1-syntax.rkt          language Common
-    2-env.rkt             varr, venv, typdef, tdenv, theta; env helpers
-    4-relation.rkt        res<X>; the three extern relations
+    2-env.rkt             language Common-env; $extend_tdenv, $theta_of_tdenv, ...
+    3-context.rkt         language Common-context (cursor)
+    4-relation.rkt        language Common-relation (res<X>); the three extern relations
     5.0-eval-typ.rkt      $subst_typ
     5.1-eval-ops.rkt      $unop_number, $binop_*, $cmpop_*, $is_tup, $is_fun
   al/
@@ -327,22 +328,23 @@ spec-meta-redex/
   test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, ...
 ```
 
-The definition macros in `common/0-prelude.rkt` wrap `define-metafunction` and
-`define-judgment-form`. They append the `⊥` clause to every metafunction (see
-[Disjoint clauses](#disjoint-clauses)). They also add two compile-time
-switches: contracts on or off, and reversed clause order (see
+The definition macros in `common/0-prelude.rkt` are `define-dec`, which wraps
+`define-metafunction`, and `define-relation`, which wraps
+`define-judgment-form`. `define-dec` appends the `⊥` clause (see
+[Disjoint clauses](#disjoint-clauses)). `SPECTEC_REDEX_CONTRACTS=0`, read when
+a module is compiled, drops the contracts of both (see
 [Verification](#verification)).
 
-The grammar has two branches over `Common` (`common/1-syntax`):
+Each file in `common/` from `0-stdlib` to `4-relation` extends the previous
+file's language with its own syntax: `Stdlib` (the `var`s, sets and maps),
+`Common`, `Common-env`, `Common-context`, and `Common-relation`.
+`AL-syntax` extends `Common` with `al/1-syntax`.
 
-- `Common-env` extends `Common` with the additions from `common/2-env` and
-  `common/4-relation`.
-- `AL-syntax` extends `Common` with `al/1-syntax`.
-
-`AL` is the `define-union-language` of the two branches, extended with
-`al/2-env`, `al/3-context`, and `al/4-relation`. Shared nonterminals merge
-without duplicate matches *(checked)*. Metafunctions defined on `Common-env`
-work on `AL` terms, so common helpers stay in `common/`.
+`AL` is the `define-union-language` of `Common-relation` and `AL-syntax`,
+extended with `al/2-env`, `al/3-context`, and `al/4-relation`. Shared
+nonterminals merge without duplicate matches *(checked)*. Metafunctions
+defined on a `common/` language work on `AL` terms, so common helpers stay in
+`common/`.
 
 ### Getting scripts into Redex
 
@@ -405,9 +407,11 @@ environments.
   They include inputs on both sides of every complementary pair of clauses.
 - **Disjointness.** For judgment forms, `main.rkt` and the test helpers fail
   loudly if a judgment returns more than one output, since that means two
-  rules overlap. For metafunctions, the test suite runs twice: once as
-  written, and once with the clause-reversal switch on. Reversal leaves the
-  `⊥` clause last. If the clauses are disjoint, the results are the same.
+  rules overlap. For metafunctions, the tests cover both sides of every
+  complement. Running them with a metafunction's clauses reversed by hand
+  (keeping `⊥` last) is a useful spot check: disjoint clauses give the same
+  results. It cannot detect overlapping clauses that agree on the overlap,
+  such as `$subst_typ` on an empty `theta`.
 - **No caching.** A test asserts that `caching-enabled?` is `#f` once
   `common/0-prelude.rkt` is loaded. The `$fresh_typeId` test in Step 9 catches a cache
   that comes back by some other route.
@@ -443,8 +447,9 @@ Step 2 emitter depend on.
 
   The `var` declarations in `common/0-stdlib.watsup` become nonterminal
   aliases: `(bool b ::= boolean)`, `(int i ::= integer)`,
-  `(nat n ::= natural)`, and `(text t ::= string)`. `extern syntax json`
-  becomes `(json ::= any)`.
+  `(nat n ::= natural)`, and `(text t ::= string)`. Step 3 moved them to
+  `Stdlib` in `common/0-stdlib.rkt`, which `Common` extends. `extern syntax
+  json` becomes a `json` that matches what `jsexpr?` accepts.
 - `al/1-syntax.rkt`: `(define-extended-language AL-syntax Common ...)` adding
   `param`, `iterprem`, `prem`, `rulmatch`, `rulpath`, `rulgroup`, `elsgroup`,
   `clause`, `elsclause`, `tblrow`, `defn`, and `script`.
@@ -497,7 +502,7 @@ Transcribe `common/0-stdlib`, `2-env`, `4-relation`, `5.0-eval-typ`, and
 `5.1-eval-ops`: every `dec`/`def` as a metafunction, plus `res<X>`.
 
 - Add the definition macros to `common/0-prelude.rkt`: the `⊥` clause, and the contract
-  and clause-reversal switches.
+  switch.
 - Write every `otherwise` as an explicit complement. The ones in this step are
   small: `$extend_tdenv`, `$is_iter_on_var`, `$subst_typ`, `$is_tup`, and
   `$is_fun`.
@@ -517,7 +522,21 @@ Transcribe `common/0-stdlib`, `2-env`, `4-relation`, `5.0-eval-typ`, and
   - An input no clause matches, such as a `$theta_of_tdenv` entry that is a
     `DEF` with type parameters, gives `⊥`. A caller's premise on it fails
     instead of raising an error.
-  - Run the suite with clause reversal on as well as off.
+- Outcome:
+  - `common/3-context` (`cursor`) got its own module and language.
+  - Partial `def`s found here, which give `⊥`: `$theta_of_tdenv` on a `DEF`
+    with type parameters or a non-`ALIAS` body, `$subst_type_inner` on a bound
+    `VAR` with type arguments, and `$binop_number` and `$cmpop_number` on
+    mixed `NAT` and `INT`.
+  - `$is_iter_on_var`'s `ITER` clause also requires `iterexp` to have exactly
+    one variable, with the same id and inner iterators. (The K port does not
+    check this.) Its premise result goes through a helper,
+    `is_iter_on_var/iter`, so it is computed once.
+  - `num.ml` has no `POW` and asserts false on division by zero. Here both
+    division by zero and a negative exponent raise an error.
+  - `cmpop_poly` compares with `equal?`. For `EXT` values this compares
+    jsexprs, so the key order of a JSON object does not matter, whereas
+    OCaml's `Stdlib.compare` on Yojson does distinguish it.
 
 ### Step 4: AL environments and context
 
@@ -647,9 +666,11 @@ moving on:
 
 ### Step 11: Test targets and docs
 
-- `make redex-test`: runs `raco test spec-meta-redex/test`, both as written and
-  with clause reversal on. It also checks the examples against checked-in
-  expected outputs, so K need not be built.
+- `make redex-test`: runs `raco test spec-meta-redex/test`. It also checks
+  the examples against checked-in expected outputs, so K need not be built.
+  `SPECTEC_REDEX_CONTRACTS` is read at compile time, so a run with contracts
+  off needs its own compiled code (no `compiled/`, or a separate
+  `PLTCOMPILEDROOTS`).
 - Optional: render every judgment form and metafunction to figures with
   `render-judgment-form` and `render-metafunction`, for side-by-side review
   against the watsup rules.
