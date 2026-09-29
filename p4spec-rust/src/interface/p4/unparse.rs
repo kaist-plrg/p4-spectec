@@ -48,9 +48,7 @@ fn insert_case_hints(
         let Some(Hint { exp, .. }) = hints_case.iter().find(|hint| hint.id.node == "print") else {
             continue;
         };
-        let Some(hint) = alter::init(exp) else {
-            continue;
-        };
+        let hint = alter::init(exp);
         hints.insert((type_id.to_owned(), not_typ.node.to_mixop()), hint);
     }
 }

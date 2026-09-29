@@ -4,14 +4,17 @@
 //! text and atoms print as they are, `%` holes take the items being described.
 //! `alternate` renders one through a `Renderer` for the output format.
 
-use crate::lang::el::ast::{Atom, Exp, ExpKind, Hole as ElHole, Text};
 use crate::lang::hints::input::InputHint;
+use crate::lang::{
+    common::source::Phrase,
+    el::ast::{Atom, Exp, ExpKind, Hole as ElHole, Text},
+};
 use thiserror::Error;
 
 // == Alteration hints
 
 /// A positional hole in an alteration hint.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Hole {
     /// `%`, the next item in cursor order.
     Next,
@@ -34,7 +37,7 @@ pub enum AlterationHint {
     /// A piece between bracket atoms.
     Brack(Atom, Box<AlterationHint>, Atom),
     /// An item placeholder.
-    Hole(Hole),
+    Hole(Phrase<Hole>),
     /// Two pieces joined without a separator.
     Fuse(Box<AlterationHint>, Box<AlterationHint>),
     /// Any other expression, rendered by the caller.
@@ -46,30 +49,34 @@ pub enum AlterationHint {
 pub enum AlterationError {
     /// A hole asked for an item that does not exist.
     #[error("alteration hint index {index} is out of bounds for {item_count} items")]
-    IndexOutOfBounds { index: usize, item_count: usize },
+    IndexOutOfBounds { hole: Box<Phrase<Hole>>, index: usize, item_count: usize },
 }
 
 // Creating hints
 
 /// Reads a template from a hint expression; unknown forms become `Other`.
-pub fn init(exp: &Exp) -> Option<AlterationHint> {
-    Some(match &exp.node {
+pub fn init(exp: &Exp) -> AlterationHint {
+    match &exp.node {
         // Text, atoms, sequences, brackets, holes, and fuses map directly
         ExpKind::Text(text) => AlterationHint::Text(text.clone()),
         ExpKind::Atom(atom) => AlterationHint::Atom(atom.clone()),
-        ExpKind::Seq(exps) => AlterationHint::Seq(exps.iter().map(init).collect::<Option<_>>()?),
+        ExpKind::Seq(exps) => AlterationHint::Seq(exps.iter().map(init).collect()),
         ExpKind::Brack(atom_l, exp, atom_r) => {
-            AlterationHint::Brack(atom_l.clone(), Box::new(init(exp)?), atom_r.clone())
+            AlterationHint::Brack(atom_l.clone(), Box::new(init(exp)), atom_r.clone())
         }
         // `%` and `%N`; `%%` and `!%` have no template meaning
-        ExpKind::Hole(ElHole::Next) => AlterationHint::Hole(Hole::Next),
-        ExpKind::Hole(ElHole::Num(index)) => AlterationHint::Hole(Hole::Num(*index)),
+        ExpKind::Hole(ElHole::Next) => {
+            AlterationHint::Hole(crate::phrase! { node: Hole::Next, span: exp.span.clone() })
+        }
+        ExpKind::Hole(ElHole::Num(index)) => {
+            AlterationHint::Hole(crate::phrase! { node: Hole::Num(*index), span: exp.span.clone() })
+        }
         ExpKind::Fuse(exp_l, _, exp_r) => {
-            AlterationHint::Fuse(Box::new(init(exp_l)?), Box::new(init(exp_r)?))
+            AlterationHint::Fuse(Box::new(init(exp_l)), Box::new(init(exp_r)))
         }
         // Anything else is kept as an expression for the renderer
         _ => AlterationHint::Other(exp.clone()),
-    })
+    }
 }
 
 // == Validation
@@ -91,14 +98,26 @@ pub fn validate(hint: &AlterationHint, item_count: usize) -> Result<(), Alterati
                 .try_fold(cursor, |cursor, hint| validate_at(hint, item_count, cursor)),
             AlterationHint::Brack(_, hint, _) => validate_at(hint, item_count, cursor),
             // `%` takes the item at the cursor
-            AlterationHint::Hole(Hole::Next) if cursor < item_count => Ok(cursor + 1),
-            AlterationHint::Hole(Hole::Next) => {
-                Err(AlterationError::IndexOutOfBounds { index: cursor, item_count })
+            AlterationHint::Hole(Phrase { node: Hole::Next, .. }) if cursor < item_count => {
+                Ok(cursor + 1)
+            }
+            AlterationHint::Hole(hole @ Phrase { node: Hole::Next, .. }) => {
+                Err(AlterationError::IndexOutOfBounds {
+                    hole: Box::new(hole.clone()),
+                    index: cursor,
+                    item_count,
+                })
             }
             // `%N` leaves the cursor alone
-            AlterationHint::Hole(Hole::Num(idx)) if *idx < item_count => Ok(cursor),
-            AlterationHint::Hole(Hole::Num(idx)) => {
-                Err(AlterationError::IndexOutOfBounds { index: *idx, item_count })
+            AlterationHint::Hole(Phrase { node: Hole::Num(idx), .. }) if *idx < item_count => {
+                Ok(cursor)
+            }
+            AlterationHint::Hole(hole @ Phrase { node: Hole::Num(idx), .. }) => {
+                Err(AlterationError::IndexOutOfBounds {
+                    hole: Box::new(hole.clone()),
+                    index: *idx,
+                    item_count,
+                })
             }
             // The right piece continues the left's cursor
             AlterationHint::Fuse(hint_l, hint_r) => {
@@ -123,7 +142,7 @@ pub fn realign(hint: &AlterationHint, hint_input: &InputHint) -> AlterationHint 
                 }
             }
             AlterationHint::Brack(_, hint, _) => collect(hint, indices_output),
-            AlterationHint::Hole(Hole::Num(idx)) => indices_output.push(*idx),
+            AlterationHint::Hole(Phrase { node: Hole::Num(idx), .. }) => indices_output.push(*idx),
             AlterationHint::Fuse(hint_l, hint_r) => {
                 collect(hint_l, indices_output);
                 collect(hint_r, indices_output);
@@ -143,14 +162,16 @@ pub fn realign(hint: &AlterationHint, hint_input: &InputHint) -> AlterationHint 
                 Box::new(apply(hint, idx_pairs)),
                 atom_r.clone(),
             ),
-            AlterationHint::Hole(Hole::Num(idx)) => {
+            AlterationHint::Hole(hole @ Phrase { node: Hole::Num(idx), .. }) => {
                 let idx_realigned = idx_pairs
                     .iter()
                     .find_map(|(idx_source, idx_realigned)| {
                         (idx_source == idx).then_some(*idx_realigned)
                     })
                     .expect("every numbered hole is collected before realignment");
-                AlterationHint::Hole(Hole::Num(idx_realigned))
+                AlterationHint::Hole(
+                    crate::phrase! { node: Hole::Num(idx_realigned), span: hole.span.clone() },
+                )
             }
             AlterationHint::Fuse(hint_l, hint_r) => AlterationHint::Fuse(
                 Box::new(apply(hint_l, idx_pairs)),
@@ -241,19 +262,25 @@ pub fn alternate<Item, R: Renderer<Item>>(
                 (cursor_next, Some(renderer.join(outputs)))
             }
             // The next item, advancing the cursor
-            AlterationHint::Hole(Hole::Next) => {
-                let item = items.get(cursor).ok_or(AlterationError::IndexOutOfBounds {
-                    index: cursor,
-                    item_count: items.len(),
-                })?;
+            AlterationHint::Hole(hole @ Phrase { node: Hole::Next, .. }) => {
+                let item = items
+                    .get(cursor)
+                    .ok_or_else(|| AlterationError::IndexOutOfBounds {
+                        hole: Box::new(hole.clone()),
+                        index: cursor,
+                        item_count: items.len(),
+                    })?;
                 (cursor + 1, Some(renderer.item(item)))
             }
             // A specific item, leaving the cursor alone
-            AlterationHint::Hole(Hole::Num(index)) => {
-                let item = items.get(*index).ok_or(AlterationError::IndexOutOfBounds {
-                    index: *index,
-                    item_count: items.len(),
-                })?;
+            AlterationHint::Hole(hole @ Phrase { node: Hole::Num(index), .. }) => {
+                let item = items
+                    .get(*index)
+                    .ok_or_else(|| AlterationError::IndexOutOfBounds {
+                        hole: Box::new(hole.clone()),
+                        index: *index,
+                        item_count: items.len(),
+                    })?;
                 (cursor, Some(renderer.item(item)))
             }
             // Both sides render, the right one continuing the left's cursor

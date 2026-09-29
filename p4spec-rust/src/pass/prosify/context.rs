@@ -9,12 +9,12 @@ use crate::lang::{
     data::typ,
     hints::{alter, fields},
     il,
-    pl::annot::Hints,
+    pl::annot::{Hint, Hints},
     sl::ast::{self as sl, Id},
 };
 use crate::runtime::envs::{algo::MEnv, prosify::HEnv};
 
-use super::{ProseError, ProseErrorKind};
+use super::{ProseError, error};
 
 // == Context
 
@@ -87,35 +87,35 @@ impl Context {
 
     // - Adders
 
-    /// Records a meta-variable; a second definition of the name is an error.
-    fn add_metavar(&mut self, id_metavar: Id, typ: il::ast::Typ) -> Result<(), ProseError> {
-        // Meta-variables are defined once
-        if self.menv.contains_key(&id_metavar) {
-            return Err(ProseError::new(
-                ProseErrorKind::DuplicateMetavariable,
-                id_metavar.span.clone(),
-            ));
-        }
+    /// Records a meta-variable from validated SL.
+    fn add_metavar(&mut self, id_metavar: Id, typ: il::ast::Typ) {
+        // Elaboration rejects duplicates; algo and structure preserve declarations
+        assert!(
+            !self.menv.contains_key(&id_metavar),
+            "elaboration rejects duplicate meta-variables"
+        );
         self.menv.insert(id_metavar, typ);
-        Ok(())
     }
 
     // - Hint loading
 
     /// Reads the `prose*` hints of one definition; other hints are ignored.
-    fn load_hints(hints_sl: &[sl::Hint]) -> Result<Hints, ProseError> {
+    fn load_hints(
+        hints_sl: &[sl::Hint],
+        span_decl: &Span,
+        num_fields: Option<usize>,
+    ) -> Result<Hints, ProseError> {
         let mut hints = Hints::default();
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
             let text_hint = id_hint.node.as_str();
             match text_hint {
                 // Alteration hints share one parser
                 "prose" | "prose_in" | "prose_out" | "prose_true" | "prose_false" => {
-                    let hint = alter::init(exp_hint).ok_or_else(|| {
-                        ProseError::new(
-                            ProseErrorKind::InvalidHintExpression(text_hint.to_owned()),
-                            exp_hint.span.clone(),
-                        )
-                    })?;
+                    let hint = Hint {
+                        id: id_hint.clone(),
+                        value: alter::init(exp_hint),
+                        span_decl: span_decl.clone(),
+                    };
                     match text_hint {
                         "prose" => hints.prose = Some(hint),
                         "prose_in" => hints.prose_in = Some(hint),
@@ -127,12 +127,19 @@ impl Context {
                 }
                 // Field hints list strings
                 "prose_fields" => {
-                    hints.prose_fields = Some(fields::init(exp_hint).ok_or_else(|| {
-                        ProseError::new(
-                            ProseErrorKind::InvalidHintExpression(text_hint.to_owned()),
-                            exp_hint.span.clone(),
-                        )
-                    })?);
+                    let value = fields::init(exp_hint).map_err(|exp| {
+                        error::field_hint_element_invalid(id_hint, exp, span_decl)
+                    })?;
+                    let hint = Hint { id: id_hint.clone(), value, span_decl: span_decl.clone() };
+                    // Validate each field hint before a later hint can replace it
+                    if let Some(num_fields) = num_fields {
+                        fields::validate(&hint.value, num_fields).map_err(
+                            |fields::FieldError::ArityMismatch { expected, actual }| {
+                                error::field_hint_arity_mismatch(&hint, expected, actual)
+                            },
+                        )?;
+                    }
+                    hints.prose_fields = Some(hint);
                 }
                 _ => {}
             }
@@ -166,7 +173,8 @@ impl Context {
             node: il::ast::TypKind::Var(def_typ_sl.id.clone(), Vec::new()),
             span: def_typ_sl.id.span.clone(),
         };
-        self.add_metavar(def_typ_sl.id.clone(), typ)
+        self.add_metavar(def_typ_sl.id.clone(), typ);
+        Ok(())
     }
 
     /// A monomorphic type names itself; each variant case adds its hints.
@@ -177,14 +185,14 @@ impl Context {
                 node: il::ast::TypKind::Var(def_typ_sl.id.clone(), Vec::new()),
                 span: def_typ_sl.id.span.clone(),
             };
-            self.add_metavar(def_typ_sl.id.clone(), typ)?;
+            self.add_metavar(def_typ_sl.id.clone(), typ);
         }
         // Only variant cases carry prose hints
         let il::ast::DefTypKind::Variant(cases) = &def_typ_sl.def_typ.node else {
             return Ok(());
         };
         for il::ast::TypCase { not_typ, hints: hints_sl, .. } in cases {
-            let hints = Self::load_hints(hints_sl)?;
+            let hints = Self::load_hints(hints_sl, &not_typ.span, Some(not_typ.node.args().len()))?;
             self.henv
                 .insert_case(&def_typ_sl.id, &not_typ.node.to_mixop(), hints);
         }
@@ -193,7 +201,8 @@ impl Context {
 
     /// A meta-variable declaration.
     fn load_var_def(&mut self, def_var_sl: &sl::VarDef) -> Result<(), ProseError> {
-        self.add_metavar(def_var_sl.id.clone(), def_var_sl.typ.clone())
+        self.add_metavar(def_var_sl.id.clone(), def_var_sl.typ.clone());
+        Ok(())
     }
 
     /// A relation's hints, extern or defined.
@@ -202,7 +211,7 @@ impl Context {
             sl::RelDef::Extern(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
             sl::RelDef::Defined(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
         };
-        let hints = Self::load_hints(hints_sl)?;
+        let hints = Self::load_hints(hints_sl, &id_rel.span, None)?;
         self.henv.insert_rel(id_rel, hints);
         Ok(())
     }
@@ -215,7 +224,7 @@ impl Context {
             sl::MetaFuncDef::Table(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
             sl::MetaFuncDef::Defined(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
         };
-        let hints = Self::load_hints(hints_sl)?;
+        let hints = Self::load_hints(hints_sl, &id_func.span, None)?;
         self.henv.insert_func(id_func, hints);
         Ok(())
     }

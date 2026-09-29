@@ -23,54 +23,55 @@ use crate::lang::{
     sl::ast as sl,
 };
 
-use super::{Context, ProseError, ProseErrorKind};
+use super::{Context, ProseError, error};
 
 // == Hint validation
 
-/// Checks every alteration hint against the number of items it describes.
-fn validate_hint_alter(
-    span: &Span,
-    hints: &annot::Hints,
+/// Validates a located template without replacing its source with a use site.
+fn validate_hint_alter_one(
+    hint: &annot::Hint<alter::AlterationHint>,
     num_items: usize,
 ) -> Result<(), ProseError> {
+    alter::validate(&hint.value, num_items).map_err(|error| {
+        error::alteration_hint_index_out_of_bounds(&hint.id, &hint.span_decl, error)
+    })
+}
+
+/// Checks every alteration hint against the number of items it describes.
+fn validate_hint_alter(hints: &annot::Hints, num_items: usize) -> Result<(), ProseError> {
     for hint in
         [&hints.prose, &hints.prose_in, &hints.prose_out, &hints.prose_true, &hints.prose_false]
             .into_iter()
             .flatten()
     {
-        alter::validate(hint, num_items)
-            .map_err(|error| ProseError::new(ProseErrorKind::Alteration(error), span.clone()))?;
+        validate_hint_alter_one(hint, num_items)?;
     }
     Ok(())
 }
 
 /// Checks the field hint against the number of fields.
-fn validate_hint_fields(
-    span: &Span,
-    hints: &annot::Hints,
-    num_fields: usize,
-) -> Result<(), ProseError> {
+fn validate_hint_fields(hints: &annot::Hints, num_fields: usize) -> Result<(), ProseError> {
     if let Some(hint) = &hints.prose_fields {
-        fields::validate(hint, num_fields)
-            .map_err(|error| ProseError::new(ProseErrorKind::Field(error), span.clone()))?;
+        fields::validate(&hint.value, num_fields).map_err(
+            |fields::FieldError::ArityMismatch { expected, actual }| {
+                error::field_hint_arity_mismatch(hint, expected, actual)
+            },
+        )?;
     }
     Ok(())
 }
 
 /// Checks the input and output hints against their own item counts.
 fn validate_hint_split(
-    span: &Span,
     hints: &annot::Hints,
     num_inputs: usize,
     num_outputs: usize,
 ) -> Result<(), ProseError> {
     if let Some(hint) = &hints.prose_in {
-        alter::validate(hint, num_inputs)
-            .map_err(|error| ProseError::new(ProseErrorKind::Alteration(error), span.clone()))?;
+        validate_hint_alter_one(hint, num_inputs)?;
     }
     if let Some(hint) = &hints.prose_out {
-        alter::validate(hint, num_outputs)
-            .map_err(|error| ProseError::new(ProseErrorKind::Alteration(error), span.clone()))?;
+        validate_hint_alter_one(hint, num_outputs)?;
     }
     Ok(())
 }
@@ -322,8 +323,8 @@ fn prosify_case_exp(
     };
     let num_args = not_exp_sl.args().len();
     // Holes and field names count the notation's arguments
-    validate_hint_alter(&exp_sl.span, &hints, num_args)?;
-    validate_hint_fields(&exp_sl.span, &hints, num_args)?;
+    validate_hint_alter(&hints, num_args)?;
+    validate_hint_fields(&hints, num_args)?;
     let exp_kind_pl = pl::ExpKind::Case(Box::new(not_exp_pl));
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
@@ -561,7 +562,7 @@ fn prosify_call_exp(
 ) -> Result<pl::Exp, ProseError> {
     let args_pl = prosify_args(ctx, args_sl)?;
     let hints = build_func_hints(ctx, id_func);
-    validate_hint_alter(&exp_sl.span, &hints, args_sl.len())?;
+    validate_hint_alter(&hints, args_sl.len())?;
     let exp_kind_pl = pl::ExpKind::Call(id_func.clone(), targs.to_vec(), args_pl);
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
@@ -834,7 +835,8 @@ fn prosify_dispatch_instr(
         sl::InstrKind::Group(instr_sl) => prosify_dispatch_rulegroup_instr(ctx, instr_sl, span),
         // Group-body instructions cannot appear before a group is chosen
         sl::InstrKind::Rule(_) | sl::InstrKind::Result(_) | sl::InstrKind::Return(_) => {
-            Err(ProseError::new(ProseErrorKind::InvalidDispatchTier, span))
+            // structure(false) keeps rule results inside groups; expansion only adds lets
+            unreachable!("structure(false) preserves dispatch tiers")
         }
     }
 }
@@ -881,7 +883,7 @@ fn prosify_dispatch_hold_instr(
         })
         .unwrap_or_default();
     // Holes count the notation's arguments
-    validate_hint_alter(&span, &hints, instr_sl.not_exp.args().len())?;
+    validate_hint_alter(&hints, instr_sl.not_exp.args().len())?;
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_dispatch_hold_case(ctx, instr_sl.hold_case)?;
     let instr_pl = pl::HoldInstr {
@@ -1031,9 +1033,7 @@ fn prosify_dispatch_rulegroup_instr(
         })
         .unwrap_or_default();
     // Inputs must fit the relation's input hint; holes count the inputs
-    input::validate(&instr_sl.rel_signature.input_hint, instr_sl.exps.len())
-        .map_err(|error| ProseError::new(ProseErrorKind::Input(error), span.clone()))?;
-    validate_hint_alter(&span, &hints, instr_sl.rel_signature.input_hint.indices().len())?;
+    validate_hint_alter(&hints, instr_sl.rel_signature.input_hint.indices().len())?;
     let exps_input_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let block_pl = prosify_group_block(ctx, instr_sl.block)?;
     let instr_pl = pl::RuleGroupInstr {
@@ -1108,7 +1108,8 @@ fn prosify_group_instr(ctx: &Context, instr_sl: sl::Instr) -> Result<pl::GroupBl
         sl::InstrKind::Result(instr_sl) => prosify_group_result_instr(ctx, instr_sl, span),
         sl::InstrKind::Return(instr_sl) => prosify_group_return_instr(ctx, instr_sl, span),
         // A rule group cannot nest inside a group body
-        sl::InstrKind::Group(_) => Err(ProseError::new(ProseErrorKind::InvalidGroupTier, span)),
+        // struct_rule_path never creates groups; optimization preserves group boundaries
+        sl::InstrKind::Group(_) => unreachable!("structure(false) preserves group tiers"),
     }
 }
 
@@ -1154,7 +1155,7 @@ fn prosify_group_hold_instr(
         })
         .unwrap_or_default();
     // Holes count the notation's arguments
-    validate_hint_alter(&span, &hints, instr_sl.not_exp.args().len())?;
+    validate_hint_alter(&hints, instr_sl.not_exp.args().len())?;
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_group_hold_case(ctx, instr_sl.hold_case)?;
     let instr_pl = pl::HoldInstr {
@@ -1303,16 +1304,17 @@ fn prosify_group_rule_instr(
                 .prose_out
                 .as_ref()
                 // Output holes are numbered after the inputs are removed
-                .map(|hint| alter::realign(hint, &instr_sl.input_hint)),
+                .map(|hint| annot::Hint {
+                    value: alter::realign(&hint.value, &instr_sl.input_hint),
+                    ..hint.clone()
+                }),
             ..annot::Hints::default()
         })
         .unwrap_or_default();
     let num_args = instr_sl.not_exp.args().len();
-    input::validate(&instr_sl.input_hint, num_args)
-        .map_err(|error| ProseError::new(ProseErrorKind::Input(error), span.clone()))?;
     // Input and output hints count their own positions
     let num_inputs = instr_sl.input_hint.indices().len();
-    validate_hint_split(&span, &hints, num_inputs, num_args - num_inputs)?;
+    validate_hint_split(&hints, num_inputs, num_args - num_inputs)?;
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let instr_pl = pl::RuleInstr {
         id: instr_sl.id,
@@ -1349,11 +1351,14 @@ fn prosify_group_result_instr(
         .hints_rel(ctx.namespace())
         .and_then(|hints_rel| hints_rel.prose_out.as_ref())
         .map(|hint| annot::Hints {
-            prose_out: Some(alter::realign(hint, &instr_sl.rel_signature.input_hint)),
+            prose_out: Some(annot::Hint {
+                value: alter::realign(&hint.value, &instr_sl.rel_signature.input_hint),
+                ..hint.clone()
+            }),
             ..annot::Hints::default()
         })
         .unwrap_or_default();
-    validate_hint_alter(&span, &hints, instr_sl.exps.len())?;
+    validate_hint_alter(&hints, instr_sl.exps.len())?;
     let exps_output_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let instr_pl =
         pl::ResultInstr { rel_signature: instr_sl.rel_signature, exps_output: exps_output_pl };
@@ -1512,10 +1517,10 @@ fn build_rel_hints(
 ) -> Result<annot::Hints, ProseError> {
     let hints_default = annot::Hints::default();
     let hints_rel = ctx.hints_rel(id_rel).unwrap_or(&hints_default);
-    let prose_out = hints_rel
-        .prose_out
-        .as_ref()
-        .map(|hint| alter::realign(hint, &rel_signature.input_hint));
+    let prose_out = hints_rel.prose_out.as_ref().map(|hint| annot::Hint {
+        value: alter::realign(&hint.value, &rel_signature.input_hint),
+        ..hint.clone()
+    });
     // Fresh expressions only when the relation has an input template
     let (prose_input_exps, prose_output_exps) = if hints_rel.prose_in.is_some() {
         let typs = rel_signature
@@ -1526,7 +1531,7 @@ fn build_rel_hints(
             .cloned()
             .collect::<Vec<_>>();
         let (typs_input, typs_output) = input::split(&rel_signature.input_hint, typs)
-            .map_err(|error| ProseError::new(ProseErrorKind::Input(error), id_rel.span.clone()))?;
+            .expect("elaboration validates relation inputs; structure preserves signature arity");
         let fresh_exps_from_typs = |typs: Vec<sl::Typ>| {
             let mut ids_used = IdSet::new();
             typs.into_iter()
@@ -1547,7 +1552,7 @@ fn build_rel_hints(
     } else {
         (None, None)
     };
-    Ok(annot::Hints {
+    let hints = annot::Hints {
         prose: hints_rel.prose.clone(),
         prose_in: hints_rel.prose_in.clone(),
         prose_out,
@@ -1556,7 +1561,22 @@ fn build_rel_hints(
         prose_input_exps,
         prose_output_exps,
         prose_fields: None,
-    })
+    };
+    // Definition titles use full notation, input, and realigned output domains
+    let num_args = rel_signature.not_typ.node.args().len();
+    let num_inputs = rel_signature.input_hint.indices().len();
+    for (hint, num_items) in [
+        (&hints.prose, num_args),
+        (&hints.prose_in, num_inputs),
+        (&hints.prose_out, num_args - num_inputs),
+        (&hints.prose_true, num_inputs),
+        (&hints.prose_false, num_inputs),
+    ] {
+        if let Some(hint) = hint {
+            validate_hint_alter_one(hint, num_items)?;
+        }
+    }
+    Ok(hints)
 }
 
 // - External relation definition
@@ -1658,6 +1678,7 @@ fn prosify_extern_func_def(
     span: Span,
 ) -> Result<pl::Def, ProseError> {
     let hints = build_func_hints(ctx, &def_func_sl.id);
+    validate_hint_alter(&hints, def_func_sl.params.len())?;
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;
     let def_func_pl = pl::ExternFunc {
         id: def_func_sl.id,
@@ -1683,6 +1704,7 @@ fn prosify_builtin_func_def(
     span: Span,
 ) -> Result<pl::Def, ProseError> {
     let hints = build_func_hints(ctx, &def_func_sl.id);
+    validate_hint_alter(&hints, def_func_sl.params.len())?;
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;
     let def_func_pl = pl::BuiltinFunc {
         id: def_func_sl.id,
@@ -1708,6 +1730,7 @@ fn prosify_table_func_def(
     span: Span,
 ) -> Result<pl::Def, ProseError> {
     let hints = build_func_hints(ctx, &def_func_sl.id);
+    validate_hint_alter(&hints, def_func_sl.params.len())?;
     // The body looks up its definition's hints by this name
     ctx.set_namespace(def_func_sl.id.clone());
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;
@@ -1740,6 +1763,7 @@ fn prosify_defined_func_def(
     span: Span,
 ) -> Result<pl::Def, ProseError> {
     let hints = build_func_hints(ctx, &def_func_sl.id);
+    validate_hint_alter(&hints, def_func_sl.params.len())?;
     // The body looks up its definition's hints by this name
     ctx.set_namespace(def_func_sl.id.clone());
     let params_pl = prosify_params(ctx, &def_func_sl.params)?;
@@ -1787,7 +1811,7 @@ fn prosify_def(ctx: &mut Context, def_sl: sl::Def) -> Result<pl::Def, ProseError
 /// The whole conversion: load hints, expand calls, convert, shorten, stamp.
 pub(super) fn prosify_spec(spec_sl: sl::Spec) -> Result<pl::Spec, ProseError> {
     let mut ctx = Context::load(&spec_sl)?;
-    let spec_sl = super::expand::expand_spec(spec_sl)?;
+    let spec_sl = super::expand::expand_spec(spec_sl);
     let mut spec_pl = Vec::with_capacity(spec_sl.len());
     for def_sl in spec_sl {
         let def_pl = prosify_def(&mut ctx, def_sl)?;

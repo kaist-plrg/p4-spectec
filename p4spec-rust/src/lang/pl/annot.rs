@@ -5,7 +5,7 @@
 //! Equality, free identifiers, and call detection see through the wrapper.
 
 use crate::lang::{
-    common::ds::set::IdSet,
+    common::{ds::set::IdSet, source::Span},
     hints::{alter, fields},
     sl,
     traits::{eq::SyntaxEq, free::FreeIds},
@@ -13,21 +13,32 @@ use crate::lang::{
 
 // Hints
 
+/// A prose hint paired with its source name and owning declaration.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Hint<T> {
+    /// The hint name at its source location.
+    pub id: sl::ast::Id,
+    /// The interpreted hint, retaining element locations.
+    pub value: T,
+    /// The declaration that establishes the hint's arity.
+    pub span_decl: Span,
+}
+
 /// Optional prose metadata for a PL node.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Hints {
     /// Replaces the node's prose.
-    pub prose: Option<alter::AlterationHint>,
+    pub prose: Option<Hint<alter::AlterationHint>>,
     /// Replaces the prose of the node's inputs.
-    pub prose_in: Option<alter::AlterationHint>,
+    pub prose_in: Option<Hint<alter::AlterationHint>>,
     /// Replaces the prose of the node's outputs.
-    pub prose_out: Option<alter::AlterationHint>,
+    pub prose_out: Option<Hint<alter::AlterationHint>>,
     /// Replaces the prose when a condition holds.
-    pub prose_true: Option<alter::AlterationHint>,
+    pub prose_true: Option<Hint<alter::AlterationHint>>,
     /// Replaces the prose when a condition does not hold.
-    pub prose_false: Option<alter::AlterationHint>,
+    pub prose_false: Option<Hint<alter::AlterationHint>>,
     /// Names the fields of a value being destructured.
-    pub prose_fields: Option<fields::FieldHint>,
+    pub prose_fields: Option<Hint<fields::FieldHint>>,
     /// Input expressions to show in place of the node's own.
     pub prose_input_exps: Option<Vec<sl::ast::Exp>>,
     /// Output expressions to show in place of the node's own.

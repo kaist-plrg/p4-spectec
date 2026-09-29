@@ -19,7 +19,10 @@ use p4spec_rust::{
             alter::{AlterationHint, Hole},
             input::InputHint,
         },
-        pl::{annot::Hints, ast as pl},
+        pl::{
+            annot::{Hint, Hints},
+            ast as pl,
+        },
     },
 };
 
@@ -58,15 +61,21 @@ fn exp_nat(value: u64) -> pl::Exp {
     }
 }
 
-fn prose_hint(text_l: &str, hole: usize, text_r: &str) -> AlterationHint {
-    AlterationHint::Seq(
-        (!text_l.is_empty())
-            .then(|| AlterationHint::Text(text_l.to_owned()))
-            .into_iter()
-            .chain(std::iter::once(AlterationHint::Hole(Hole::Num(hole))))
-            .chain((!text_r.is_empty()).then(|| AlterationHint::Text(text_r.to_owned())))
-            .collect(),
-    )
+fn prose_hint(text_l: &str, hole: usize, text_r: &str) -> Hint<AlterationHint> {
+    Hint {
+        id: id("prose"),
+        span_decl: Span::default(),
+        value: AlterationHint::Seq(
+            (!text_l.is_empty())
+                .then(|| AlterationHint::Text(text_l.to_owned()))
+                .into_iter()
+                .chain(std::iter::once(AlterationHint::Hole(
+                    p4spec_rust::phrase! { node: Hole::Num(hole), span: Default::default() },
+                )))
+                .chain((!text_r.is_empty()).then(|| AlterationHint::Text(text_r.to_owned())))
+                .collect(),
+        ),
+    }
 }
 
 fn return_exp_instr(

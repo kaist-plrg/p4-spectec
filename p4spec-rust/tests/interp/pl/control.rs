@@ -446,7 +446,16 @@ fn prepared_expressions_keep_nested_hints_until_evaluation() {
     };
 
     // An invalid prose hole would fail if execution tried to render the hint
-    let hints = Hints { prose: Some(AlterationHint::Hole(Hole::Num(999))), ..Hints::default() };
+    let hints = Hints {
+        prose: Some(p4spec_rust::lang::pl::annot::Hint {
+            id: p4spec_rust::phrase! { node: "prose".to_owned(), span: Default::default() },
+            value: AlterationHint::Hole(
+                p4spec_rust::phrase! { node: Hole::Num(999), span: Default::default() },
+            ),
+            span_decl: Default::default(),
+        }),
+        ..Hints::default()
+    };
     let mut exp_inner = variable("n");
     exp_inner.hints = hints.clone();
     let exp_list = annotated_note_phrase!(

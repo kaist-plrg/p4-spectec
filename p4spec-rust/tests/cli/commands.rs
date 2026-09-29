@@ -856,3 +856,26 @@ fn test_structuring_failures_render_source_locations() {
         assert!(text.contains("^"), "{text}");
     }
 }
+
+#[test]
+fn test_prose_and_splice_render_hint_reports_after_warnings() {
+    let path =
+        std::env::temp_dir().join(format!("p4spec-cli-prose-hint-{}.watsup", std::process::id()));
+    std::fs::write(&path, "dec $missing : nat\nsyntax record = RECORD nat\n  hint(prose_fields \"first\" \"extra\")\n").unwrap();
+    for command in ["prose", "splice"] {
+        let output = binary().arg(command).arg(&path).output().unwrap();
+        assert_eq!(output.status.code(), Some(1));
+        assert!(output.stdout.is_empty());
+        let text = String::from_utf8(output.stderr).unwrap();
+        let pos_warning = text
+            .find("warning[elab/function-clause-missing]")
+            .expect("retain warning");
+        let pos_error = text
+            .find("error[prose/field-hint-arity-mismatch]")
+            .expect("render prose report");
+        assert!(pos_warning < pos_error, "{text}");
+        assert!(text.contains("hint(prose_fields \"first\" \"extra\")"), "{text}");
+        assert!(text.contains("syntax case declared here"), "{text}");
+    }
+    std::fs::remove_file(path).unwrap();
+}

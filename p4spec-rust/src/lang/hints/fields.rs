@@ -2,7 +2,10 @@
 //!
 //! `hint(prose_fields "a" "b")` names the fields a destructuring step binds.
 
-use crate::lang::el::ast::{Exp, ExpKind, Text};
+use crate::lang::{
+    common::source::Phrase,
+    el::ast::{Exp, ExpKind, Text},
+};
 use thiserror::Error;
 
 // == Field hints
@@ -11,7 +14,7 @@ use thiserror::Error;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FieldHint {
     /// Field labels in order.
-    fields: Vec<Text>,
+    fields: Vec<Phrase<Text>>,
 }
 
 #[derive(Clone, Debug, Error, PartialEq, Eq)]
@@ -24,17 +27,17 @@ pub enum FieldError {
 
 impl FieldHint {
     /// Preserves fields without validation.
-    pub fn new(fields: Vec<Text>) -> Self {
+    pub fn new(fields: Vec<Phrase<Text>>) -> Self {
         Self { fields }
     }
 
     /// Borrows the labels.
-    pub fn fields(&self) -> &[Text] {
+    pub fn fields(&self) -> &[Phrase<Text>] {
         &self.fields
     }
 
     /// Consumes the value into fields.
-    pub fn into_fields(self) -> Vec<Text> {
+    pub fn into_fields(self) -> Vec<Phrase<Text>> {
         self.fields
     }
 }
@@ -42,20 +45,22 @@ impl FieldHint {
 // == Initialization
 
 /// Initializes a field hint from one text or a sequence of texts.
-pub fn init(exp: &Exp) -> Option<FieldHint> {
+pub fn init(exp: &Exp) -> Result<FieldHint, &Exp> {
+    // Preserve the element that violates the text-only contract
+    let field = |exp: &Exp| match &exp.node {
+        ExpKind::Text(text) => Some(crate::phrase! {
+            node: text.clone(), span: exp.span.clone(),
+        }),
+        _ => None,
+    };
     let fields = match &exp.node {
-        ExpKind::Text(text) => vec![text.clone()],
         ExpKind::Seq(exps) => exps
             .iter()
-            .map(|exp| match &exp.node {
-                ExpKind::Text(text) => Some(text.clone()),
-                _ => None,
-            })
-            .collect::<Option<_>>()?,
-        // Anything else is not a list of field names
-        _ => return None,
+            .map(|exp| field(exp).ok_or(exp))
+            .collect::<Result<_, _>>()?,
+        _ => vec![field(exp).ok_or(exp)?],
     };
-    Some(FieldHint::new(fields))
+    Ok(FieldHint::new(fields))
 }
 
 // == Validation

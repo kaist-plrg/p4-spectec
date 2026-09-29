@@ -5,13 +5,13 @@ use p4spec_rust::{
             source::{Position, Span},
         },
         el,
-        hints::alter::{AlterationError, AlterationHint, Hole},
+        hints::alter::{AlterationHint, Hole},
         hints::input::InputHint,
         il,
         pl::ast as pl,
         sl::ast as sl,
     },
-    pass::prosify::{self, ProseErrorKind},
+    pass::prosify,
 };
 
 fn span(name: &str, column: usize) -> Span {
@@ -80,7 +80,7 @@ fn extern_func(name: &str, hints: Vec<sl::Hint>) -> sl::Def {
         node: sl::DefKind::MetaFunc(sl::MetaFuncDef::Extern(sl::ExternFunc {
             id: id(name),
             tparams: Vec::new(),
-            params: Vec::new(),
+            params: vec![p4spec_rust::phrase! { node: sl::ParamKind::Exp(typ_bool(), Box::new(exp_var("arg", span("param", 0)))), span: span("param", 0) }],
             typ: typ_bool(),
             hints,
         })),
@@ -242,7 +242,8 @@ fn test_let_and_debug_precede_their_converted_continuations() {
 }
 
 #[test]
-fn test_group_in_group_body_reports_the_instruction_span() {
+#[should_panic(expected = "structure(false) preserves group tiers")]
+fn test_group_in_group_body_violates_producer_contract() {
     let span_group = span("invalid-group", 3);
     let instr_group = p4spec_rust::phrase! {
         node: sl::InstrKind::Group(sl::GroupInstr {
@@ -260,9 +261,7 @@ fn test_group_in_group_body_reports_the_instruction_span() {
         span: span_group.clone(),
     };
 
-    let error = prosify::convert(vec![defined_func(vec![instr_group])]).unwrap_err();
-    assert_eq!(error.kind, ProseErrorKind::InvalidGroupTier);
-    assert_eq!(error.span, span_group);
+    let _ = prosify::convert(vec![defined_func(vec![instr_group])]);
 }
 
 #[test]
@@ -292,11 +291,14 @@ fn test_call_uses_hints_loaded_from_the_original_spec() {
     else {
         panic!("expected return instruction");
     };
-    assert_eq!(exp_pl.hints.prose_in, Some(AlterationHint::Hole(Hole::Next)));
+    assert_eq!(
+        exp_pl.hints.prose_in.as_ref().unwrap().value,
+        AlterationHint::Hole(p4spec_rust::phrase! { node: Hole::Next, span: span("hint", 0) })
+    );
 }
 
 #[test]
-fn test_invalid_call_hint_reports_the_call_span() {
+fn test_invalid_call_hint_reports_the_hint_span() {
     let span_call = span("invalid-call", 7);
     let def_func = defined_func(vec![p4spec_rust::phrase! {
         node: sl::InstrKind::Return(sl::ReturnInstr {
@@ -314,11 +316,11 @@ fn test_invalid_call_hint_reports_the_call_span() {
     ])
     .unwrap_err();
 
-    assert_eq!(
-        error.kind,
-        ProseErrorKind::Alteration(AlterationError::IndexOutOfBounds { index: 1, item_count: 1 })
-    );
-    assert_eq!(error.span, span_call);
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+        panic!("expected cause")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("prose/alteration-hint-index-out-of-bounds"));
+    assert_eq!(diagnostic.labels[0].span, span("hint", 0));
 }
 
 #[test]
@@ -649,7 +651,8 @@ fn test_fresh_names_are_scoped_independently_across_else_blocks() {
 }
 
 #[test]
-fn test_context_rejects_duplicate_metavariables_at_the_new_binding() {
+#[should_panic(expected = "elaboration rejects duplicate meta-variables")]
+fn test_duplicate_metavariables_violate_producer_contract() {
     let span_metavar = span("duplicate-metavar", 4);
     let def_var = p4spec_rust::phrase! {
         node: sl::DefKind::Var(sl::VarDef {
@@ -659,9 +662,7 @@ fn test_context_rejects_duplicate_metavariables_at_the_new_binding() {
         }),
         span: span_metavar.clone(),
     };
-    let error = prosify::convert(vec![def_var]).unwrap_err();
-    assert_eq!(error.kind, ProseErrorKind::DuplicateMetavariable);
-    assert_eq!(error.span, span_metavar);
+    let _ = prosify::convert(vec![def_var]);
 }
 
 #[test]
@@ -689,12 +690,10 @@ fn test_zero_argument_nested_call_stays_in_the_original_expression() {
 }
 
 #[test]
-fn test_return_at_dispatch_level_reports_its_own_span() {
+#[should_panic(expected = "structure(false) preserves dispatch tiers")]
+fn test_return_at_dispatch_level_violates_producer_contract() {
     let span_return = span("invalid-dispatch", 6);
-    let error = prosify::convert(vec![defined_rel(vec![return_instr(true, span_return.clone())])])
-        .unwrap_err();
-    assert_eq!(error.kind, ProseErrorKind::InvalidDispatchTier);
-    assert_eq!(error.span, span_return);
+    let _ = prosify::convert(vec![defined_rel(vec![return_instr(true, span_return)])]);
 }
 
 #[test]
@@ -865,4 +864,121 @@ fn test_membership_guard_with_call_can_fail() {
     };
     let def_func_pl = converted_func(vec![instr]);
     assert_eq!(def_func_pl.block[0].node.note, Some(pl::Fallthrough::Fail));
+}
+
+fn prosify_source(text: &str) -> Result<pl::Spec, prosify::ProseError> {
+    use p4spec_rust::{
+        frontend::parse::parse_text,
+        pass::{algo, elaborate, structure},
+    };
+    let spec_el = parse_text("prose.watsup".into(), text).unwrap();
+    let spec_il = elaborate::convert(spec_el).unwrap();
+    let spec_al = algo::convert(spec_il).unwrap();
+    let spec_sl = structure::convert(spec_al, false).unwrap();
+    prosify::convert(spec_sl)
+}
+
+#[test]
+fn test_unused_case_field_hint_is_validated() {
+    let error =
+        prosify_source("syntax record = RECORD nat\n  hint(prose_fields \"field\" \"extra\")\n")
+            .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("prose/field-hint-arity-mismatch"),
+        "{error}"
+    );
+}
+
+#[test]
+fn test_field_hint_rejects_non_text_element() {
+    let error = prosify_source("syntax record = RECORD nat\n  hint(prose_fields 0)\n").unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("prose/field-hint-element-invalid"),
+        "{error}"
+    );
+}
+
+#[test]
+fn test_unused_function_hint_is_validated() {
+    let error = prosify_source("dec $identity(nat) : nat\n  hint(prose_in %9)\nvar value : nat\ndef $identity(value) = value\n").unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("prose/alteration-hint-index-out-of-bounds"),
+        "{error}"
+    );
+}
+
+#[test]
+fn test_nullary_relation_default_input_hint_is_valid() {
+    prosify_source("relation R : DONE\nrule R/done : DONE\n").unwrap();
+}
+
+#[test]
+fn test_field_hint_reports_the_invalid_element_in_a_sequence() {
+    let error =
+        prosify_source("syntax record = RECORD nat nat\n  hint(prose_fields \"first\" 0)\n")
+            .unwrap_err();
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+        panic!("expected cause")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("prose/field-hint-element-invalid"));
+    assert_eq!(
+        (
+            diagnostic.labels[0].span.left.line,
+            diagnostic.labels[0].span.left.column,
+            diagnostic.labels[0].span.right.column
+        ),
+        (2, 28, 29)
+    );
+}
+
+#[test]
+fn test_missing_field_hint_name_is_located_after_the_last_name() {
+    let error = prosify_source("syntax record = RECORD nat nat\n  hint(prose_fields \"first\")\n")
+        .unwrap_err();
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+        panic!("expected cause")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("prose/field-hint-arity-mismatch"));
+    assert_eq!(
+        (
+            diagnostic.labels[0].span.left.line,
+            diagnostic.labels[0].span.left.column,
+            diagnostic.labels[0].span.right.column
+        ),
+        (2, 27, 27)
+    );
+}
+
+#[test]
+fn test_relation_title_checks_the_output_domain() {
+    let error = prosify_source("extern relation R : nat ~> nat\n  hint(input %0)\n  hint(prose_in %)\n  hint(prose_out % %)\n").unwrap_err();
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+        panic!("expected cause")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("prose/alteration-hint-index-out-of-bounds"));
+    assert_eq!(
+        (
+            diagnostic.labels[0].span.left.line,
+            diagnostic.labels[0].span.left.column,
+            diagnostic.labels[0].span.right.column
+        ),
+        (4, 19, 20)
+    );
+    assert!(diagnostic.message.contains("index 1"));
+}
+
+#[test]
+fn test_each_field_hint_is_validated_before_a_later_hint_replaces_it() {
+    let error = prosify_source("syntax record = RECORD nat\n  hint(prose_fields \"first\" \"extra\")\n  hint(prose_fields \"field\")\n").unwrap_err();
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+        panic!("expected cause")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("prose/field-hint-arity-mismatch"));
+    assert_eq!(diagnostic.labels[0].span.left.line, 2);
 }
