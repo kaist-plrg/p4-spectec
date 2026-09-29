@@ -411,7 +411,8 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
     instr: &ast::RuleInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // The input hint separates arguments from output patterns
-    let (exps_input, exps_output) = input::split_validated(&instr.input_hint, instr.not_exp.args());
+    let (exps_input, exps_output) = input::split(&instr.input_hint, instr.not_exp.args())
+        .expect("input hint must fit relation");
     // Invoke the relation at each enclosing iteration
     let ctx =
         unwrap!(eval_instr_iter(runner_ctx, ctx, &instr.iter_instrs, &mut |runner_ctx, ctx| {

@@ -262,7 +262,8 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
             .cloned()
             .collect::<Vec<_>>();
         // Output types occupy the positions the input hint leaves
-        let (_, typs) = input::split_validated(&rel.rel_signature.input_hint, typs);
+        let (_, typs) = input::split(&rel.rel_signature.input_hint, typs)
+            .expect("input hint must fit relation");
         unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
             error::guard::relation_output_type_mismatch(id.node.clone())
         },));

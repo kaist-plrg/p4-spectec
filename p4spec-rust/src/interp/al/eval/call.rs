@@ -240,7 +240,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     if runner_ctx.interp().config.guard {
         // Output types are the notation arguments the hint leaves
         let typs = rel.not_typ.node.args().into_iter().cloned().collect();
-        let (_, typs) = input::split_validated(&rel.input_hint, typs);
+        let (_, typs) = input::split(&rel.input_hint, typs).expect("input hint must fit relation");
         unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
             error::guard::relation_output_type_mismatch(id.node.clone())
         }));

@@ -45,10 +45,6 @@ fn test_input_hints_validate_and_preserve_split_order() {
     let (items_input, items_output) = input_impl::split(&hint, items.to_vec()).unwrap();
     assert_eq!(items_input, vec!["zero", "two"]);
     assert_eq!(items_output, vec!["one", "three"]);
-    assert_eq!(
-        input_impl::split_validated(&hint, items.to_vec()),
-        (vec!["zero", "two"], vec!["one", "three"])
-    );
     assert_eq!(input_impl::combine(&hint, items_input, items_output), Ok(items.to_vec()));
     assert_eq!(
         input_impl::combine(&hint, vec!["zero"], vec!["one", "three"]),
@@ -88,7 +84,6 @@ fn test_zero_arity_default_hint_supports_operations_but_not_source_validation() 
     let hint = InputHint::new(vec![]);
     assert_eq!(input_impl::validate(&hint, 0), Err(InputError::Empty));
     assert_eq!(input_impl::split::<()>(&hint, vec![]), Ok((vec![], vec![])));
-    assert_eq!(input_impl::split_validated::<()>(&hint, vec![]), (vec![], vec![]));
     assert_eq!(input_impl::combine::<()>(&hint, vec![], vec![]), Ok(vec![]));
     assert_eq!(input_impl::is_conditional::<()>(&hint, &[]), Ok(true));
     assert_eq!(input_impl::split(&hint, vec![0]), Err(InputError::Empty));
