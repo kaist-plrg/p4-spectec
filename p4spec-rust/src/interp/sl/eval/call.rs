@@ -23,7 +23,9 @@ use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use crate::{
     interp::shared::{
-        backtrack::{self, Backtrack, BacktrackExt, err, ok, unmatch, unwrap, unwrap_from_result},
+        backtrack::{
+            self, Backtrack, BacktrackExt, fatal, ok, unmatch, unwrap, unwrap_from_result,
+        },
         cache::CallKey,
     },
     lang::data::value::{Value, ValueArena, ValueKind},
@@ -508,7 +510,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         // A return is the table result
         Flow::Return(value) => ok!(FuncResult::Return(value)),
         // Falling through or any other flow is an invalid table
-        _ => err!(id.span.clone(), error::call::flow_invalid("table did not return a value"),),
+        _ => fatal!(id.span.clone(), error::call::flow_invalid("table did not return a value"),),
     }
 }
 

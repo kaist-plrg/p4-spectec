@@ -7,7 +7,7 @@
 
 use crate::diagnostic::Report;
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unmatch},
+    backtrack::{Backtrack, fatal, ok, unmatch},
     error::{self, Error},
 };
 
@@ -37,7 +37,7 @@ pub fn choose_sequential<C, T>(
             // The first match wins
             ok!(value) => return ok!(value),
             // A fatal error stops the search
-            err!(errors) => return err!(errors),
+            fatal!(errors) => return fatal!(errors),
             // Retain the deepest failures before trying the next candidate
             unmatch!(errors_post) => retain_deepest_errors(&mut errors, errors_post),
         }
@@ -61,12 +61,12 @@ pub fn choose_deterministic<C, T>(
             ok!(value) => {
                 // A second match is nondeterminism
                 if let Some((first, _)) = success {
-                    return err!(nondet(first, candidate));
+                    return fatal!(nondet(first, candidate));
                 }
                 success = Some((candidate, value));
                 errors.clear();
             }
-            err!(errors) => return err!(errors),
+            fatal!(errors) => return fatal!(errors),
             // Mismatches only matter while nothing has matched
             unmatch!(mut candidate_errors) => {
                 if success.is_none() {

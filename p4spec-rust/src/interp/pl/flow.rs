@@ -8,7 +8,7 @@
 use crate::diagnostic::{Diagnostic, Report};
 use crate::interp::shared::error;
 use crate::{
-    interp::shared::backtrack::{Backtrack, err, ok, unmatch, unwrap},
+    interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
     lang::{common::source::Span, data::value::Value},
 };
 
@@ -90,7 +90,7 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
         (Flow::Cont(_), flow) | (flow, Flow::Cont(_)) => flow,
         // Two of the same kind: nondeterminism
         (Flow::Return(_), Flow::Return(_)) | (Flow::Result(_), Flow::Result(_)) => {
-            return err!(span.clone(), error::call::instruction_nondeterministic());
+            return fatal!(span.clone(), error::call::instruction_nondeterministic());
         }
         // Different conclusion kinds cannot belong to the same callable
         _ => unreachable!("function and relation conclusions cannot mix"),

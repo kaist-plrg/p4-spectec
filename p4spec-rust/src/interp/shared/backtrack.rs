@@ -141,7 +141,7 @@ macro_rules! ok {
 pub(crate) use ok;
 
 /// Constructs or matches a fatal report.
-macro_rules! err {
+macro_rules! fatal {
     ($span:expr, $diagnostic:expr $(,)?) => {
         Err($crate::interp::shared::backtrack::Failure::Fatal(
             $crate::interp::shared::error::at($diagnostic, $span)))
@@ -150,7 +150,7 @@ macro_rules! err {
         Err($crate::interp::shared::backtrack::Failure::Fatal($($report)*))
     };
 }
-pub(crate) use err;
+pub(crate) use fatal;
 
 /// Constructs or matches recoverable alternatives.
 macro_rules! unmatch {

@@ -24,7 +24,7 @@ use crate::interp::shared::util::iterate_vars;
 use crate::lang::hints::input;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
-    interp::shared::backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+    interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
     lang::{
         common::source::Span,
         data::value::{Value, ValueKind, get},
@@ -228,7 +228,7 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
                 // A mismatch means it does not
                 unmatch!(_) => ok!(false),
                 // Fatal errors propagate
-                err!(errors) => err!(errors),
+                fatal!(errors) => fatal!(errors),
             }
         }
     ));

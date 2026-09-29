@@ -11,7 +11,7 @@ use crate::diagnostic::{Diagnostic, Report};
 use crate::interp::shared::error;
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
 use crate::{
-    interp::shared::backtrack::{Backtrack, err, ok, unmatch, unwrap},
+    interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
     lang::{common::source::Span, data::value::Value},
 };
 
@@ -111,32 +111,32 @@ fn combine_deterministic(flow: Flow, flow_post: Flow, span: &Span) -> Backtrack<
         | (Flow::Result(_), Flow::Result(_))
         | (Flow::TailFunc(..), Flow::TailFunc(..))
         | (Flow::TailRel(..), Flow::TailRel(..)) => {
-            return err!(span.clone(), error::call::instruction_nondeterministic(),);
+            return fatal!(span.clone(), error::call::instruction_nondeterministic(),);
         }
         // A result can compete with a tail call in a valid relation body
         (Flow::Result(_), Flow::TailRel(..)) => {
-            return err!(
+            return fatal!(
                 span.clone(),
                 error::call::flow_invalid("cannot have both result and tail call"),
             );
         }
         // A return can compete with a tail call in a valid function body
         (Flow::Return(_), Flow::TailFunc(..)) => {
-            return err!(
+            return fatal!(
                 span.clone(),
                 error::call::flow_invalid("cannot have both return and tail call"),
             );
         }
         // A later return conflicts with an earlier function tail call
         (Flow::TailFunc(..), Flow::Return(_)) => {
-            return err!(
+            return fatal!(
                 span.clone(),
                 error::call::flow_invalid("cannot have both tail call and return"),
             );
         }
         // A later result conflicts with an earlier relation tail call
         (Flow::TailRel(..), Flow::Result(_)) => {
-            return err!(
+            return fatal!(
                 span.clone(),
                 error::call::flow_invalid("cannot have both rel tail call and result"),
             );

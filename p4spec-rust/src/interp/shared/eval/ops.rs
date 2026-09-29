@@ -22,7 +22,7 @@ use crate::{
     runtime::ops::typ::{Theta, subst_typ},
 };
 
-use crate::interp::shared::backtrack::{self, Backtrack, err, ok, unwrap, unwrap_from_result};
+use crate::interp::shared::backtrack::{self, Backtrack, fatal, ok, unwrap, unwrap_from_result};
 
 // = Operators
 
@@ -379,7 +379,7 @@ pub(crate) fn access_index(
         _ => unreachable!("index operand must be a text or list"),
     };
     let Some(idx) = usize::try_from(&int_idx).ok().filter(|idx| *idx < len) else {
-        return err!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
+        return fatal!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
     };
     match arena.kind(value_base) {
         // Text: a one-character slice
@@ -429,7 +429,10 @@ pub(crate) fn access_slice(
         .filter(|(_, idx_end)| *idx_end <= size)
     else {
         let int_end = &int_idx + &int_len;
-        return err!(span_bounds.clone(), error::expr::slice_out_of_bounds(int_idx, int_end, size),);
+        return fatal!(
+            span_bounds.clone(),
+            error::expr::slice_out_of_bounds(int_idx, int_end, size),
+        );
     };
     match arena.kind(value_base) {
         // Text: the byte range must fall on character boundaries
@@ -439,7 +442,7 @@ pub(crate) fn access_slice(
                 backtrack::from_result(make::text(arena, text, Span::default()), span_typ)
             }
             None => {
-                err!(span_bounds.clone(), error::expr::text_slice_boundary_mismatch(),)
+                fatal!(span_bounds.clone(), error::expr::text_slice_boundary_mismatch(),)
             }
         },
         // List: copy the range
@@ -476,7 +479,7 @@ pub(crate) fn update_index(
         _ => unreachable!("index operand must be a text or list"),
     };
     let Some(idx) = usize::try_from(&int_idx).ok().filter(|idx| *idx < len) else {
-        return err!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
+        return fatal!(span_idx.clone(), error::expr::index_out_of_bounds(int_idx, len),);
     };
     let value = match arena.kind(value_base) {
         // Text: the replacement must be a single character
@@ -484,7 +487,7 @@ pub(crate) fn update_index(
             let size = text.len();
             let text_upd = get::text(arena, &value_upd).expect("operand must be a text");
             if text_upd.len() != 1 {
-                return err!(span_idx.clone(), error::expr::character_update_length_mismatch(),);
+                return fatal!(span_idx.clone(), error::expr::character_update_length_mismatch(),);
             }
             // Rebuild as prefix, replacement, suffix
             let text_upd = text_upd.to_owned();
@@ -573,7 +576,7 @@ pub(crate) fn update_slice(
         .filter(|(_, idx_end)| *idx_end <= size)
     else {
         let int_end = &int_idx + &int_len;
-        return err!(span_len.clone(), error::expr::slice_out_of_bounds(int_idx, int_end, size),);
+        return fatal!(span_len.clone(), error::expr::slice_out_of_bounds(int_idx, int_end, size),);
     };
     let value = match arena.kind(value_base) {
         // Text: the replacement must have the range's length
@@ -581,7 +584,7 @@ pub(crate) fn update_slice(
             let size = text.len();
             let text_upd = get::text(arena, &value_upd).expect("operand must be a text");
             if text_upd.len() != idx_end - idx {
-                return err!(
+                return fatal!(
                     span_len.clone(),
                     error::expr::text_slice_update_length_mismatch(idx_end - idx, text_upd.len()),
                 );
@@ -633,7 +636,7 @@ pub(crate) fn update_slice(
         ValueKind::List(values) => {
             let values_upd = get::list(arena, &value_upd).expect("operand must be a list");
             if values_upd.len() != idx_end - idx {
-                return err!(
+                return fatal!(
                     span_len.clone(),
                     error::expr::list_slice_update_length_mismatch(idx_end - idx, values_upd.len()),
                 );

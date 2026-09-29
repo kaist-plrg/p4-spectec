@@ -24,7 +24,7 @@ use super::super::{
 };
 use super::{assign, expr, prem::eval_prems};
 use crate::interp::shared::{
-    backtrack::{self, Backtrack, BacktrackExt, err, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{self, Backtrack, BacktrackExt, fatal, ok, unmatch, unwrap, unwrap_from_result},
     cache::CallKey,
 };
 use crate::lang::data::value::{ValueArena, ValueKind};
@@ -325,7 +325,7 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         // A match is the answer
         ok!(values) => ok!(values),
         // A fatal error aborts
-        err!(errors) => err!(errors),
+        fatal!(errors) => fatal!(errors),
         // No path matched: the otherwise group is the fallback
         unmatch!(errors) => match &rel.else_group {
             // The otherwise group runs like any path
@@ -565,7 +565,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         // A match is the answer
         ok!(value) => ok!(value),
         // A fatal error aborts
-        err!(errors) => err!(errors),
+        fatal!(errors) => fatal!(errors),
         // No clause matched: the otherwise clause is the fallback
         unmatch!(errors) => match &defined_func.else_clause {
             // The otherwise clause runs like any clause

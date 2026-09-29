@@ -26,7 +26,7 @@ use crate::{
         },
         shared::{
             backtrack::{
-                self, Backtrack, BacktrackExt, err, ok, unmatch, unwrap, unwrap_from_result,
+                self, Backtrack, BacktrackExt, fatal, ok, unmatch, unwrap, unwrap_from_result,
             },
             cache::CallKey,
             context::ReadContext,
@@ -297,7 +297,7 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
         // A recoverable mismatch permits the otherwise block
         unmatch!(errors) => Flow::Cont(errors),
         // A fatal error aborts the call
-        err!(errors) => return err!(errors),
+        fatal!(errors) => return fatal!(errors),
     };
     // Try the otherwise block from the original input bindings
     if matches!(flow, Flow::Cont(_))
@@ -465,7 +465,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
         // The first return is the table result
         Flow::Return(value) => ok!(value),
         // Falling through or producing relation outputs is invalid
-        _ => err!(id.span.clone(), error::call::flow_invalid("table did not return a value")),
+        _ => fatal!(id.span.clone(), error::call::flow_invalid("table did not return a value")),
     }
 }
 
@@ -494,7 +494,7 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
         // A recoverable mismatch permits the otherwise block
         unmatch!(errors) => Flow::Cont(errors),
         // A fatal error aborts the call
-        err!(errors) => return err!(errors),
+        fatal!(errors) => return fatal!(errors),
     };
     // Try the otherwise block from the original input bindings
     if matches!(flow, Flow::Cont(_))

@@ -28,7 +28,7 @@ use crate::{
 
 use super::{arg::eval_args, iter, ops, path::eval_update_path};
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
     util::find_slot_of_exp,
 };
 
@@ -264,7 +264,7 @@ fn eval_case_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     // Evaluate and rebuild in one traversal, preserving early failure and order
     let eval_exp_arg = |exp: &ast::Exp| match eval_exp(runner_ctx, ctx, exp) {
         ok!(value) => Ok(value),
-        err!(errors) => Err(err!(errors)),
+        fatal!(errors) => Err(fatal!(errors)),
         unmatch!(errors) => Err(unmatch!(errors)),
     };
     let case = match not_exp.try_map(eval_exp_arg) {

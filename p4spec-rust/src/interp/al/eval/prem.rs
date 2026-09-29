@@ -10,7 +10,7 @@ use super::super::{AlInterp, context::Context};
 use super::{assign, expr};
 use crate::interp::shared::error;
 use crate::interp::shared::{
-    backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
     eval::{Invoker, iter},
 };
 use crate::runtime::envs::interp::al::ast_prepared as ast;
@@ -97,7 +97,7 @@ fn eval_if_hold_prem<'global, Iface: Interface, Ext: Extern>(
         // The relation applied: the premise passes
         ok!(_) => ok!(ctx),
         // Fatal errors propagate
-        err!(errors) => err!(errors),
+        fatal!(errors) => fatal!(errors),
         // It did not apply: the premise fails, naming the relation
         unmatch!(errors) => {
             let mut report = error::at(
@@ -127,7 +127,7 @@ fn eval_if_not_hold_prem<'global, Iface: Interface, Ext: Extern>(
             error::prem::not_hold_condition_unmet(prem.id.node.clone()),
         ),
         // Fatal errors propagate
-        err!(errors) => err!(errors),
+        fatal!(errors) => fatal!(errors),
         // It did not apply: the premise passes
         unmatch!(_) => ok!(ctx),
     }

@@ -21,7 +21,7 @@ use crate::{
             flow::{self, Flow},
         },
         shared::{
-            backtrack::{Backtrack, err, ok, unmatch, unwrap, unwrap_from_result},
+            backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
             context::{IterContext, WriteContext},
             eval::{Invoker, iter, ops},
             util::iterate_vars,
@@ -258,7 +258,7 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 // A mismatch means it does not
                 unmatch!(_) => ok!(false),
                 // Fatal errors propagate
-                err!(errors) => err!(errors),
+                fatal!(errors) => fatal!(errors),
             }
         }));
     match &instr.hold_case {
@@ -495,7 +495,7 @@ fn eval_check_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 ok!((ctx, flow))
             }
             // A failed binding lets the enclosing block continue
-            err!(report) => ok!((ctx, Flow::Cont(vec![*report]))),
+            fatal!(report) => ok!((ctx, Flow::Cont(vec![*report]))),
             // Mismatching bindings also fall through
             unmatch!(reports) => ok!((ctx, Flow::Cont(reports))),
         }
