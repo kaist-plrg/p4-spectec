@@ -226,6 +226,8 @@ pub struct Lexer<'source, 'arena> {
     template_depth: usize,
     /// Set once `End` was emitted.
     finished: bool,
+    /// Logical file/line markers have replaced physical source positions.
+    line_directives: bool,
 }
 
 // - Construction
@@ -245,7 +247,13 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             deferred_classification: None,
             template_depth: 0,
             finished: false,
+            line_directives: false,
         }
+    }
+
+    /// Reports whether logical line markers were consumed.
+    pub(crate) fn has_line_directives(&self) -> bool {
+        self.line_directives
     }
 
     // - Source cursor
@@ -760,6 +768,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
 
     /// Reads a `# line "file"` marker and resets the current position.
     fn preprocessor_line(&mut self) {
+        self.line_directives = true;
         self.take_while(|character| character != '\n');
         let text_line = self.source[..self.index]
             .rsplit_once('\n')
@@ -833,7 +842,12 @@ impl Iterator for Lexer<'_, '_> {
     type Item = Result<Phrase<Token>, P4Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.lex()
+        let token = self.lex()?;
+        Some(token.map_err(
+            |error| {
+                if self.line_directives { error.with_line_only() } else { error }
+            },
+        ))
     }
 }
 

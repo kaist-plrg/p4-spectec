@@ -66,7 +66,7 @@ impl Counter {
             ("CounterType", "packets_and_bytes") => {
                 Ok(Self::PacketsAndBytes(vec![(BigInt::zero(), BigInt::zero()); size]))
             }
-            _ => Err(ExternError::Failure(format!(
+            _ => Err(crate::sim_plugin::error::counter_type_invalid(format!(
                 "invalid CounterType enum value: {id_enum}.{id_type}"
             ))),
         }

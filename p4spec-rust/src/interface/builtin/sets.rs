@@ -123,8 +123,7 @@ pub fn unions_set(
 ) -> Result<Value, BuiltinError> {
     let typ_key = extract::one(targs)?;
     let value_sets = extract::one(values)?;
-    let values =
-        get::list(arena, value_sets).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let values = get::list(arena, value_sets).map_err(BuiltinError::from)?;
     let mut union = ValueSet::new();
     // Gather every element, then sort and deduplicate once
     for value in values {

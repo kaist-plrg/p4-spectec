@@ -91,7 +91,7 @@ fn test_static_assert_false_default_message() {
 
     let error = runner.eval_program("Program_ok", program).unwrap_err();
 
-    assert!(has_extern_failure(&error, "static_assert failed"));
+    assert!(has_extern_failure(&error, "sim/assertion-unmet", "static_assert failed"));
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn test_static_assert_false_custom_message() {
 
     let error = runner.eval_program("Program_ok", program).unwrap_err();
 
-    assert!(has_extern_failure(&error, "custom assertion failure"));
+    assert!(has_extern_failure(&error, "sim/assertion-unmet", "custom assertion failure"));
 }
 
 #[test]

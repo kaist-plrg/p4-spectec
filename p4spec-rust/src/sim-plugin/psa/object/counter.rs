@@ -54,7 +54,7 @@ impl Counter {
             ("PSA_CounterType_t", "PACKETS_AND_BYTES") => {
                 Ok(Self::PacketsAndBytes(vec![(BigInt::zero(), BigInt::zero()); size]))
             }
-            _ => Err(ExternError::Failure(format!(
+            _ => Err(crate::sim_plugin::error::counter_type_invalid(format!(
                 "invalid PSA_CounterType_t enum value: {id_enum}.{id_type}"
             ))),
         }
@@ -77,7 +77,7 @@ impl Counter {
             .map_err(ExternError::from)?;
         // Only the `PACKETS` type is supported here
         let Self::Packets(counts) = &mut self else {
-            return Err(ExternError::Failure(
+            return Err(crate::sim_plugin::error::counter_type_unsupported(
                 "Only enum value PACKETS of PSA_CounterType_t is supported".to_owned(),
             )
             .into());

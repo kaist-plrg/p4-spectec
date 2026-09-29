@@ -38,7 +38,8 @@ fn check(case: &str, kind: FailureKind, code: &str) -> Result<Vec<Report>> {
 
 #[test]
 fn fatal_execution_errors_can_be_snapshotted() {
-    let reports = check("extern-failed", FailureKind::Fatal, "runtime/extern-failed").unwrap();
+    let reports =
+        check("extern-failed", FailureKind::Fatal, "runtime/extern-unconfigured").unwrap();
     assert_eq!(reports.len(), 1);
 }
 
@@ -50,7 +51,8 @@ fn mismatches_can_be_snapshotted() {
 
 #[test]
 fn fatal_execution_errors_cannot_pass_as_mismatches() {
-    let error = check("extern-failed", FailureKind::Mismatch, "runtime/extern-failed").unwrap_err();
+    let error =
+        check("extern-failed", FailureKind::Mismatch, "runtime/extern-unconfigured").unwrap_err();
     assert!(error.contains("expected Mismatch, got Fatal"), "{error}");
 }
 
@@ -62,8 +64,9 @@ fn mismatches_cannot_pass_as_fatal_execution_errors() {
 
 #[test]
 fn unrelated_errors_cannot_be_snapshotted() {
-    let error = check("backtrack", FailureKind::Mismatch, "runtime/extern-failed").unwrap_err();
-    assert!(error.contains("missing expected diagnostic runtime/extern-failed"), "{error}");
+    let error =
+        check("backtrack", FailureKind::Mismatch, "runtime/extern-unconfigured").unwrap_err();
+    assert!(error.contains("missing expected diagnostic runtime/extern-unconfigured"), "{error}");
 }
 
 #[test]

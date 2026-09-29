@@ -21,7 +21,6 @@ pub mod call;
 pub mod context;
 pub mod expr;
 pub mod guard;
-mod host;
 pub mod prem;
 pub mod trace;
 

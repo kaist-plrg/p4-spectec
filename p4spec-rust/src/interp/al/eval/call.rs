@@ -231,7 +231,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
     // Return extern failures without turning mismatches into fatal errors
-    let (values, _) = unwrap!(result);
+    let (values, _) = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
     let len = rel.not_typ.node.args().len() - rel.input_hint.indices().len();
     unwrap!(backtrack::check(len == values.len(), id.span.clone(), || {
@@ -409,7 +409,7 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
     // Return extern failures without turning mismatches into fatal errors
-    let (value, _) = unwrap!(result);
+    let (value, _) = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the result against the declared type
     if runner_ctx.interp().config.guard {
         unwrap!(check_func_output(

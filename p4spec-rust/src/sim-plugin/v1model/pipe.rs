@@ -91,8 +91,7 @@ impl ObjectState {
         arena: &mut ValueArena,
         encoding: Encoding,
     ) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self)
-            .map_err(|error| ExternError::Failure(error.to_string()))?;
+        let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
         let typ = typ::make::var(
             crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
             Vec::new(),
@@ -109,8 +108,7 @@ impl ObjectState {
         value: &Value,
     ) -> Result<Self, ExternError> {
         let json = get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref())
-            .map_err(|error| ExternError::Failure(error.to_string()))
+        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
     }
 }
 
@@ -227,7 +225,10 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => Err(ExternError::Failure("packet_in extern not found".to_owned()).into()),
+        _ => Err(crate::sim_plugin::error::extern_object_undefined(
+            "packet_in extern not found".to_owned(),
+        )
+        .into()),
     }
 }
 
@@ -252,7 +253,10 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => Err(ExternError::Failure("packet_out extern not found".to_owned()).into()),
+        _ => Err(crate::sim_plugin::error::extern_object_undefined(
+            "packet_out extern not found".to_owned(),
+        )
+        .into()),
     }
 }
 
@@ -307,8 +311,7 @@ where
         Some(object) => object.to_value(ctx.arena_mut(), encoding)?,
         // No state: encode the unit value
         None => {
-            let payload = encode_with(ctx.arena(), encoding, &())
-                .map_err(|error| ExternError::Failure(error.to_string()))?;
+            let payload = encode_with(ctx.arena(), encoding, &()).map_err(ExternError::from)?;
             let typ = typ::make::var(
                 crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
                 Vec::new(),
@@ -382,7 +385,7 @@ where
         }
         // Anything else, such as random or truncate, is unsupported
         _ => {
-            return Err(ExternError::Failure(format!(
+            return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",
                 names.join(", ")
             ))
@@ -410,7 +413,7 @@ where
     let encoding = ctx.external().encoding;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
-        return Err(ExternError::Failure(
+        return Err(crate::sim_plugin::error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
         )
         .into());
@@ -500,7 +503,7 @@ where
                     .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
                     .collect::<Result<Vec<_>, _>>()
                     .map_err(ExternError::from)?;
-                return Err(ExternError::Failure(format!(
+                return Err(crate::sim_plugin::error::extern_method_unsupported(format!(
                     "unsupported extern method call: {}.{name}({})",
                     ids.join("."),
                     names.join(", ")
@@ -544,7 +547,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(ExternError::Failure(
+    Err(crate::sim_plugin::error::control_operation_unsupported(
         "add_mirror_session_mc is not implemented for the v1model simulator".to_owned(),
     )
     .into())
@@ -613,7 +616,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(ExternError::Failure(
+    Err(crate::sim_plugin::error::control_operation_unsupported(
         "register_read is not implemented for the v1model simulator".to_owned(),
     )
     .into())
@@ -632,7 +635,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(ExternError::Failure(
+    Err(crate::sim_plugin::error::control_operation_unsupported(
         "register_write is not implemented for the v1model simulator".to_owned(),
     )
     .into())
@@ -649,7 +652,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(ExternError::Failure(
+    Err(crate::sim_plugin::error::control_operation_unsupported(
         "register_reset is not implemented for the v1model simulator".to_owned(),
     )
     .into())

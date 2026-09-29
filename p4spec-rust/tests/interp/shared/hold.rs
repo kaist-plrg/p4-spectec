@@ -60,7 +60,7 @@ fn failed_not_holds_have_no_inner_failure() {
 fn fatal_hold_calls_do_not_become_condition_mismatches() {
     let source = include_str!("../../../test-driver/expected/diagnostic/interp/hold-fatal.watsup");
     for report in failures(source) {
-        assert!(report.find_code("runtime/extern-failed").is_some(), "{report:?}");
+        assert!(report.find_code("runtime/extern-unconfigured").is_some(), "{report:?}");
         assert!(report.find_code("runtime/hold-condition-unmet").is_none(), "{report:?}");
     }
 }
@@ -128,6 +128,6 @@ rule R/call: n |- $check([0, n, 2])
 "#;
     for report in failures(source) {
         assert!(report.find_code("runtime/hold-condition-unmet").is_some(), "{report:?}");
-        assert!(report.find_code("runtime/extern-failed").is_none(), "{report:?}");
+        assert!(report.find_code("runtime/extern-unconfigured").is_none(), "{report:?}");
     }
 }

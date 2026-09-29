@@ -300,7 +300,7 @@ fn test_builtin_interface_print_validates_both_arities() {
         assert!(matches!(
             error,
             InterfaceError::Builtin(error)
-                if error.kind == BuiltinErrorKind::ArityMismatch { expected: 1, actual }
+                if matches!(error.kind, BuiltinErrorKind::ArityMismatch { expected: 1, actual: num_actual } if num_actual == actual)
         ));
     }
 }
@@ -318,7 +318,7 @@ fn test_builtin_interface_print_preserves_unparse_failures() {
     assert!(matches!(
         error,
         InterfaceError::Builtin(error)
-            if error.kind == BuiltinErrorKind::P4Unparse(P4UnparseError::UnsupportedValue("Struct"))
+            if matches!(error.kind, BuiltinErrorKind::P4Unparse(P4UnparseError::UnsupportedValue("Struct")))
     ));
 }
 
@@ -482,4 +482,69 @@ fn test_runner_dispatches_program_entry_and_errors() {
     assert!((values[0] == program));
     let error = runner.eval_program("missing", program).unwrap_err();
     assert!(matches!(error, FixtureError::Unknown(name) if name == "missing"));
+}
+
+#[test]
+fn test_registered_builtin_report_keeps_payload_and_recoverable_kind() {
+    use p4spec_rust::{
+        diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
+        interp::shared::backtrack::Failure,
+        lang::common::source::Position,
+    };
+    let span = Span { left: Position::new("host.p4", 2, 3), right: Position::new("host.p4", 2, 6) };
+    let labels = vec![
+        Label::primary(&span, "host location"),
+        Label::secondary(&Span::default(), "host related"),
+    ];
+    let notes = vec!["host detail".to_owned(), "second detail".to_owned()];
+    let mut report = Some(Box::new(
+        Report::from(Diagnostic::new(
+            "custom",
+            Severity::Warning,
+            Some("custom/check".to_owned()),
+            "host message",
+            labels.clone(),
+            notes.clone(),
+        ))
+        .with_children(vec![Report::frame(
+            span.clone(),
+            "outer",
+            vec![
+                Report::frame(Span::default(), "first", vec![]),
+                Report::frame(Span::default(), "second", vec![]),
+            ],
+        )]),
+    ));
+    let builtins = Builtins::with_extensions([(
+        "custom",
+        Box::new(move |_arena: &mut ValueArena, _targs: &[Typ], _values: &[Value]| {
+            Err(report.take().expect("one host call").into())
+        }) as p4spec_rust::interface::builtin::call::BuiltinImpl,
+    )]);
+    let mut interface = BuiltinInterface::new(builtins);
+    let error = interface
+        .call_builtin(&mut ValueArena::new(), &id("custom"), &[], &[])
+        .unwrap_err();
+    let failure = Failure::from(error).with_span(&Span::default());
+    let Failure::Mismatch(reports) = failure else { panic!("builtin must remain recoverable") };
+    assert_eq!(reports.len(), 1);
+    let ReportKind::Cause(diagnostic) = &reports[0].kind else { panic!("host cause missing") };
+    assert_eq!(diagnostic.source, "custom");
+    assert_eq!(diagnostic.severity, Severity::Warning);
+    assert_eq!(diagnostic.code.as_deref(), Some("custom/check"));
+    assert_eq!(diagnostic.message, "host message");
+    assert_eq!(diagnostic.labels, labels);
+    assert_eq!(diagnostic.notes, notes);
+    assert_eq!(reports[0].children.len(), 1);
+    let report_outer = &reports[0].children[0];
+    assert!(
+        matches!(&report_outer.kind, ReportKind::Frame { span: span_actual, message } if *span_actual == span && message == "outer")
+    );
+    assert_eq!(report_outer.children.len(), 2);
+    for (report, message_expect) in report_outer.children.iter().zip(["first", "second"]) {
+        assert!(
+            matches!(&report.kind, ReportKind::Frame { span, message } if *span == Span::default() && message == message_expect)
+        );
+        assert!(report.children.is_empty());
+    }
 }

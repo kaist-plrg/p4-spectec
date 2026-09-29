@@ -76,8 +76,7 @@ impl ExternObject {
         arena: &mut ValueArena,
         encoding: Encoding,
     ) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self)
-            .map_err(|error| ExternError::Failure(error.to_string()))?;
+        let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
         let typ = typ::make::var(
             crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
             Vec::new(),
@@ -94,8 +93,7 @@ impl ExternObject {
         value: &Value,
     ) -> Result<Self, ExternError> {
         let json = get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref())
-            .map_err(|error| ExternError::Failure(error.to_string()))
+        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
     }
 }
 
@@ -137,8 +135,7 @@ where
     Interp: Interpreter<Iface, Ebpf>,
 {
     let encoding = ctx.external().encoding;
-    let payload = encode_with(ctx.arena(), encoding, &())
-        .map_err(|error| ExternError::Failure(error.to_string()))?;
+    let payload = encode_with(ctx.arena(), encoding, &()).map_err(ExternError::from)?;
     let typ = typ::make::var(
         crate::phrase!(node: "archState".to_owned(), span: Span::default()),
         Vec::new(),
@@ -169,8 +166,7 @@ where
         let counter = CounterArray::init(ctx.arena(), *value_ids, *value_args)?;
         ExternObject::CounterArray(counter).to_value(ctx.arena_mut(), encoding)?
     } else {
-        let payload = encode_with(ctx.arena(), encoding, &())
-            .map_err(|error| ExternError::Failure(error.to_string()))?;
+        let payload = encode_with(ctx.arena(), encoding, &()).map_err(ExternError::from)?;
         let typ = typ::make::var(
             crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
             Vec::new(),
@@ -207,7 +203,7 @@ where
         if name == "verify" && names == ["check", "toSignal"] {
             core_func::verify(ctx, *value_ctx, *value_arch)?
         } else {
-            return Err(ExternError::Failure(format!(
+            return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",
                 names.join(", ")
             ))
@@ -231,7 +227,7 @@ fn unsupported_method(
         .map(|value| get::text(arena, value).map(str::to_owned))
         .collect::<Result<Vec<_>, _>>()
         .map_err(ExternError::from)?;
-    Ok(ExternError::Failure(format!(
+    Ok(crate::sim_plugin::error::extern_method_unsupported(format!(
         "unsupported extern method call: {}.{name}({})",
         ids.join("."),
         names.join(", ")
@@ -252,7 +248,7 @@ where
     let encoding = ctx.external().encoding;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
-        return Err(ExternError::Failure(
+        return Err(crate::sim_plugin::error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
         )
         .into());

@@ -174,8 +174,7 @@ pub fn find_maps(
 ) -> Result<Value, BuiltinError> {
     let (_typ_key, typ_value) = extract::two(targs)?;
     let (value_maps, value_key) = extract::two(values)?;
-    let values =
-        get::list(arena, value_maps).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let values = get::list(arena, value_maps).map_err(BuiltinError::from)?;
     let mut value_opt = None;
     for value_map in values {
         let map = map_of_value(arena, value_map)?;
@@ -214,10 +213,10 @@ pub fn adds_map(
     let (value_map, value_keys, value_values) = extract::three(values)?;
     let mut map = map_of_value(arena, value_map)?;
     let values_key = get::list(arena, value_keys)
-        .map_err(|error| BuiltinError::new(error.to_string()))?
+        .map_err(BuiltinError::from)?
         .to_vec();
     let values_value = get::list(arena, value_values)
-        .map_err(|error| BuiltinError::new(error.to_string()))?
+        .map_err(BuiltinError::from)?
         .to_vec();
     // Keys and values pair up positionally
     if values_key.len() != values_value.len() {

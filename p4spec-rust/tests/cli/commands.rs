@@ -368,7 +368,7 @@ fn test_execution_commands_keep_elaboration_frames_rich() {
 fn test_run_sl_and_pl_distinguish_syntax_and_runtime_failures() {
     for stage in ["--sl", "--pl"] {
         for (relation, program, category) in [
-            ("Pass", "cli/run/invalid.p4", "syntax error:"),
+            ("Pass", "cli/run/invalid.p4", "error[p4/syntax-invalid]:"),
             ("Reject", "cli/run/empty.p4", "note: execution failed"),
         ] {
             let output = run_command_with(stage, relation, program).output().unwrap();
@@ -432,7 +432,7 @@ fn test_run_al_initializes_dummy_extern_objects() {
 #[test]
 fn test_run_al_distinguishes_syntax_and_runtime_failures() {
     for (relation, program, category) in [
-        ("Pass", "cli/run/invalid.p4", "syntax error:"),
+        ("Pass", "cli/run/invalid.p4", "error[p4/syntax-invalid]:"),
         ("Reject", "cli/run/empty.p4", "note: execution failed"),
     ] {
         let output = run_command(relation, program).output().unwrap();
@@ -440,7 +440,7 @@ fn test_run_al_distinguishes_syntax_and_runtime_failures() {
         assert!(output.stdout.is_empty());
         let error = String::from_utf8(output.stderr).unwrap();
         assert!(error.starts_with(category), "{error}");
-        if category == "syntax error:" {
+        if category == "error[p4/syntax-invalid]:" {
             assert!(error.contains("invalid.p4"), "{error}");
         } else {
             assert!(error.contains("Reject"), "{error}");
@@ -758,7 +758,7 @@ fn test_sim_al_runs_all_native_architectures() {
 fn test_sim_interpreters_distinguish_p4_syntax_and_runtime_failures() {
     for stage in ["--al", "--sl", "--pl"] {
         for (program, category) in [
-            ("cli/run/invalid.p4", "syntax error:"),
+            ("cli/run/invalid.p4", "error[p4/syntax-invalid]:"),
             (
                 "cli/run/empty.p4",
                 "error[runtime/binding-undefined]: relation `EBPF_init` is undefined",
@@ -789,9 +789,15 @@ fn test_sim_al_reports_stf_failures_and_preserves_prior_matches() {
         .rfind(|line| line.starts_with("packet "))
         .unwrap();
     let text_mismatch = format!("{text}\n{packet}\nexpect 0 FF\n");
-    for (name, text, detail, matches) in [
-        ("syntax", "@\n", "invalid character '@'", 0),
-        ("mismatch", text_mismatch.as_str(), "expected (0) FF but got (0)", 2),
+    for (name, text, code, detail, matches) in [
+        ("syntax", "@\n", "stf/character-invalid", "invalid character '@'", 0),
+        (
+            "mismatch",
+            text_mismatch.as_str(),
+            "sim/packet-mismatch",
+            "expected (0) FF but got (0)",
+            2,
+        ),
     ] {
         let path =
             std::env::temp_dir().join(format!("p4spec-cli-sim-{name}-{}.stf", std::process::id()));
@@ -801,7 +807,7 @@ fn test_sim_al_reports_stf_failures_and_preserves_prior_matches() {
         let output = output.unwrap();
         assert_eq!(output.status.code(), Some(1), "{name}");
         let error = after_spec_warning(&output.stderr);
-        assert!(error.starts_with("runtime error:"), "{name}: {error}");
+        assert!(error.starts_with(&format!("error[{code}]:")), "{name}: {error}");
         assert!(error.contains(detail), "{name}: {error}");
         let stdout = String::from_utf8(output.stdout).unwrap();
         assert_eq!(stdout.lines().count(), matches, "{name}: {stdout}");
@@ -938,4 +944,17 @@ fn test_prose_and_splice_render_hint_reports_after_warnings() {
         assert!(text.contains("syntax case declared here"), "{text}");
     }
     std::fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn test_command_admission_uses_unlocated_report() {
+    let output = binary().arg("unknown").output().unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+    let text = String::from_utf8(output.stderr).unwrap();
+    assert!(text.starts_with("error: unrecognized subcommand 'unknown'"), "{text}");
+    assert!(text.contains("source: command"), "{text}");
+    assert!(text.contains("Usage:"), "{text}");
+    assert!(!text.contains("generated source"), "{text}");
+    assert!(!text.contains("┌─"), "{text}");
 }

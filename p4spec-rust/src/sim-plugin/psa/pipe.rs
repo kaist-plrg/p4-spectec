@@ -97,8 +97,7 @@ impl ObjectState {
         arena: &mut ValueArena,
         encoding: Encoding,
     ) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self)
-            .map_err(|error| ExternError::Failure(error.to_string()))?;
+        let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
         let typ = typ::make::var(
             crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
             Vec::new(),
@@ -115,8 +114,7 @@ impl ObjectState {
         value: &Value,
     ) -> Result<Self, ExternError> {
         let json = get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref())
-            .map_err(|error| ExternError::Failure(error.to_string()))
+        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
     }
 }
 
@@ -217,7 +215,10 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => Err(ExternError::Failure("ingress_packet_in extern not found".to_owned()).into()),
+        _ => Err(crate::sim_plugin::error::extern_object_undefined(
+            "ingress_packet_in extern not found".to_owned(),
+        )
+        .into()),
     }
 }
 
@@ -241,7 +242,10 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => Err(ExternError::Failure("ingress_packet_out extern not found".to_owned()).into()),
+        _ => Err(crate::sim_plugin::error::extern_object_undefined(
+            "ingress_packet_out extern not found".to_owned(),
+        )
+        .into()),
     }
 }
 
@@ -265,7 +269,10 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => Err(ExternError::Failure("egress_packet_in extern not found".to_owned()).into()),
+        _ => Err(crate::sim_plugin::error::extern_object_undefined(
+            "egress_packet_in extern not found".to_owned(),
+        )
+        .into()),
     }
 }
 
@@ -289,7 +296,10 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => Err(ExternError::Failure("egress_packet_out extern not found".to_owned()).into()),
+        _ => Err(crate::sim_plugin::error::extern_object_undefined(
+            "egress_packet_out extern not found".to_owned(),
+        )
+        .into()),
     }
 }
 
@@ -316,7 +326,10 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::Register(reg) => Ok(reg),
-        _ => Err(ExternError::Failure(format!("Register extern {name} not found")).into()),
+        _ => Err(crate::sim_plugin::error::extern_object_undefined(format!(
+            "Register extern {name} not found"
+        ))
+        .into()),
     }
 }
 
@@ -398,8 +411,7 @@ where
         Some(object) => object.to_value(ctx.arena_mut(), encoding)?,
         // No state: encode the unit value
         None => {
-            let payload = encode_with(ctx.arena(), encoding, &())
-                .map_err(|error| ExternError::Failure(error.to_string()))?;
+            let payload = encode_with(ctx.arena(), encoding, &()).map_err(ExternError::from)?;
             let typ = typ::make::var(
                 crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
                 Vec::new(),
@@ -434,7 +446,7 @@ where
         .map_err(ExternError::from)?;
     // Anything but `verify` is unsupported
     if name != "verify" || names != ["check", "toSignal"] {
-        return Err(ExternError::Failure(format!(
+        return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
             "unsupported extern function call: {name}({})",
             names.join(", ")
         ))
@@ -461,7 +473,7 @@ where
     let encoding = ctx.external().encoding;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
-        return Err(ExternError::Failure(
+        return Err(crate::sim_plugin::error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
         )
         .into());
@@ -587,7 +599,7 @@ where
                     .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
                     .collect::<Result<Vec<_>, _>>()
                     .map_err(ExternError::from)?;
-                return Err(ExternError::Failure(format!(
+                return Err(crate::sim_plugin::error::extern_method_unsupported(format!(
                     "unsupported extern method call: {}.{name}({})",
                     ids.join("."),
                     names.join(", ")

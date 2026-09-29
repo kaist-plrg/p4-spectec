@@ -36,9 +36,7 @@ pub fn p4_fixed_bit(
     // The width must be a natural number
     let nat = width
         .try_into()
-        .map_err(|error: crate::lang::common::prim::num::NumericError| {
-            ExternError::Failure(error.to_string())
-        })?;
+        .map_err(|error: crate::lang::common::prim::num::NumericError| ExternError::from(error))?;
     let value_width = make::nat(arena, nat, Span::default())?;
     let value_int = make::int(arena, int, Span::default())?;
     Ok(make::case_shaped! {

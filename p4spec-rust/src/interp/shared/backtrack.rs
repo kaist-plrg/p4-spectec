@@ -73,15 +73,15 @@ impl From<Error> for Failure {
 impl From<InterfaceError> for Failure {
     fn from(error: InterfaceError) -> Self {
         // Builtin failures are mismatches; an unconfigured interface is fatal
-        let recoverable = matches!(&error, InterfaceError::Builtin(_));
-        let report: Error = error.into();
+        let recoverable = !matches!(&error, InterfaceError::NotConfigured);
+        let report = error.into_report();
         if recoverable { Self::Mismatch(vec![*report]) } else { Self::Fatal(report) }
     }
 }
 
 impl From<ExternError> for Failure {
     fn from(error: ExternError) -> Self {
-        Self::Fatal(error.into())
+        error.into_failure()
     }
 }
 

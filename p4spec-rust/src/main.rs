@@ -17,7 +17,7 @@ use p4spec_rust::{
     interface::p4::parse::parse_file,
     interp::shared::backtrack::Failure as InterpError,
     lang::{data::value::external::Encoding, traits::print::Print},
-    runner::{self, BuiltinInterface, Interpreter, Runner},
+    runner::{self, BuiltinInterface, Interpreter, ProgramError, Runner},
     sim_plugin::{self, dummy::Dummy},
 };
 
@@ -136,19 +136,18 @@ struct SpliceArgs {
 fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
     // Reject ambiguous destinations before checking input availability
     if args.inplace && !args.paths_output.is_empty() {
-        return Err(error::splice_output_conflict().into());
+        return Err(error::splice_output_conflict());
     }
     // Require at least one skeleton in either output mode
     if args.paths_input.is_empty() {
-        return Err(error::splice_input_required().into());
+        return Err(error::splice_input_required());
     }
     // Reject mismatched lists before zip can omit unpaired paths
     if !args.inplace && args.paths_input.len() != args.paths_output.len() {
         return Err(error::splice_file_count_mismatch(
             args.paths_input.len(),
             args.paths_output.len(),
-        )
-        .into());
+        ));
     }
     // Resolve output paths before loading specifications or touching documents
     let path_pairs: Vec<_> = if args.inplace {
@@ -231,7 +230,7 @@ struct RunArgs {
 }
 
 /// Builds the selected interpreter and runs the program entry relation.
-fn run_command(args: RunArgs) -> Result<(), CliError> {
+fn run_command(args: RunArgs, config_output: &mut RenderConfig) -> Result<(), CliError> {
     // Convert the specification before assembling its runner
     let spec = interp_spec(&args.paths, &args.interpreter)?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
@@ -239,15 +238,15 @@ fn run_command(args: RunArgs) -> Result<(), CliError> {
     match spec {
         runner::Spec::Al(spec) => {
             let runner = runner::build_al(spec, config, Dummy)?;
-            run_program(runner, &args)
+            run_program(runner, &args, config_output)
         }
         runner::Spec::Sl(spec) => {
             let runner = runner::build_sl(spec, config, Dummy)?;
-            run_program(runner, &args)
+            run_program(runner, &args, config_output)
         }
         runner::Spec::Pl(spec) => {
             let runner = runner::build_pl(spec, config, Dummy)?;
-            run_program(runner, &args)
+            run_program(runner, &args, config_output)
         }
     }
 }
@@ -256,12 +255,19 @@ fn run_command(args: RunArgs) -> Result<(), CliError> {
 fn run_program<Interp>(
     mut runner: Runner<Interp, BuiltinInterface, Dummy>,
     args: &RunArgs,
+    config_output: &mut RenderConfig,
 ) -> Result<(), CliError>
 where
     Interp: Interpreter<BuiltinInterface, Dummy, Error = InterpError>,
 {
-    let program = parse_file(runner.arena_mut(), &args.includes, &args.program)?;
-    runner.eval_program(&args.relation, program)?;
+    let result = runner.parse_and_eval_program(&args.relation, |arena| {
+        parse_file(arena, &args.includes, &args.program)
+    });
+    // Select execution presentation before finalizing the typed failure
+    if matches!(&result, Err(ProgramError::Runtime(_))) {
+        config_output.frame_style = Some(DisplayStyle::Short);
+    }
+    result.map_err(ProgramError::into_report)?;
     println!("passed");
     Ok(())
 }
@@ -303,18 +309,27 @@ struct SimArgs {
 }
 
 /// Builds the target simulator and runs the STF test.
-fn sim_command(args: SimArgs) -> Result<(), CliError> {
+fn sim_command(args: SimArgs, config_output: &mut RenderConfig) -> Result<(), CliError> {
     let spec = interp_spec(&args.paths, &args.interpreter)?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
     let simulator = sim_plugin::build(spec, &args.arch, config, args.plugin_encoding)?;
-    simulate(simulator, &args)
+    simulate(simulator, &args, config_output)
 }
 
 /// Runs the STF test on the simulator, printing each transmitted packet.
-fn simulate(mut simulator: sim_plugin::Simulator, args: &SimArgs) -> Result<(), CliError> {
-    simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
+fn simulate(
+    mut simulator: sim_plugin::Simulator,
+    args: &SimArgs,
+    config_output: &mut RenderConfig,
+) -> Result<(), CliError> {
+    let result = simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
         println!("[PASS] Transmitted {tx}");
-    })?;
+    });
+    // Keep specification and input diagnostics rich; compact execution frames
+    if matches!(&result, Err(sim_plugin::runner::Error::Runtime(_))) {
+        config_output.frame_style = Some(DisplayStyle::Short);
+    }
+    result.map_err(sim_plugin::runner::Error::into_report)?;
     println!("passed");
     Ok(())
 }
@@ -350,45 +365,39 @@ enum Command {
 }
 
 /// Dispatches the parsed command.
-fn run(cli: Cli) -> Result<(), CliError> {
+fn run(cli: Cli, config_output: &mut RenderConfig) -> Result<(), CliError> {
     match cli.command {
         Command::Elab(args) => elab_command(args),
         Command::Algo(args) => algo_command(args),
         Command::Struct(args) => struct_command(args),
         Command::Prose(args) => prose_command(args),
         Command::Splice(args) => splice_command(args),
-        Command::Run(args) => run_command(args),
-        Command::Sim(args) => sim_command(args),
+        Command::Run(args) => run_command(args, config_output),
+        Command::Sim(args) => sim_command(args, config_output),
     }
 }
 
 /// Runs the command and turns a failure into one diagnostic and exit code.
 fn main() -> ExitCode {
-    match run(Cli::parse()) {
-        // Successful commands have already written their output
-        Ok(()) => ExitCode::SUCCESS,
-        // Preserve source diagnostics across the completed transformation stages
-        Err(CliError::Diagnostic(report)) => {
-            render_report(&report, RenderConfig::default());
-            ExitCode::FAILURE
-        }
-        // Preserve runtime failure reports until execution has ended
-        Err(CliError::Runtime(failure))
-        | Err(CliError::Simulation(sim_plugin::runner::Error::Runtime(failure))) => {
-            render_report(
-                &failure.into_report(),
-                RenderConfig { frame_style: Some(DisplayStyle::Short), ..Default::default() },
-            );
-            ExitCode::FAILURE
-        }
-        // Loading failures have no recoverable control state
-        Err(CliError::Runner(runner::BuildError::Interp(report))) => {
-            render_report(&report, RenderConfig::default());
-            ExitCode::FAILURE
-        }
-        // Report other typed failures once at the process boundary
+    // Help and version retain clap's successful output and exit behavior
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
         Err(error) => {
-            eprintln!("{error}");
+            if error.use_stderr() {
+                render_report(&error::arguments(&error), RenderConfig::default());
+            } else if let Err(error) = error.print() {
+                eprintln!("command output failed: {error}");
+                return ExitCode::FAILURE;
+            }
+            return ExitCode::from(error.exit_code() as u8);
+        }
+    };
+    // Commands choose output policy before erasing consumed failure categories
+    let mut config_output = RenderConfig::default();
+    match run(cli, &mut config_output) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(report) => {
+            render_report(&report, config_output);
             ExitCode::FAILURE
         }
     }

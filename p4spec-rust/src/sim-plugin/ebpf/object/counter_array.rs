@@ -47,9 +47,7 @@ impl CounterArray {
         let len = usize::try_from(&unpack::p4_fixed_bit(arena, &value_max)?.1)?;
         unpack::p4_bool(arena, &value_sparse)?;
         let mut counts = Vec::new();
-        counts
-            .try_reserve_exact(len)
-            .map_err(|error| ExternError::Failure(error.to_string()))?;
+        counts.try_reserve_exact(len).map_err(ExternError::from)?;
         counts.resize(len, 0);
         Ok(Self { counts })
     }
@@ -100,8 +98,11 @@ impl CounterArray {
         // Get "value"
         let value_add = func::find_var_e_local(ctx, value_ctx, "value")?;
         let (_, int_add) = unpack::p4_fixed_bit(ctx.arena(), &value_add)?;
-        let int = u32::try_from(&int_add)
-            .map_err(|_| ExternError::Failure("counter value exceeds 32 bits".to_owned()))?;
+        let int = u32::try_from(&int_add).map_err(|_| {
+            crate::sim_plugin::error::counter_value_out_of_bounds(
+                "counter value exceeds 32 bits".to_owned(),
+            )
+        })?;
         self.update(ctx, value_ctx, value_arch, idx, int)
     }
 

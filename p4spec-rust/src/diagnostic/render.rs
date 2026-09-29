@@ -295,6 +295,22 @@ impl Renderer {
             return Ok(());
         }
 
+        // Preprocessor markers identify logical lines but not original columns
+        if label.line_only {
+            let loc = if span.left.line == span.right.line {
+                format!("{}:{}", span.left.file.escape_debug(), span.left.line)
+            } else {
+                format!("{}:{}-{}", span.left.file.escape_debug(), span.left.line, span.right.line)
+            };
+            Self::append_location_note(
+                label,
+                &loc,
+                Some("column unavailable after preprocessing"),
+                diagnostic,
+            );
+            return Ok(());
+        }
+
         // Missing source must not hide a responsible location behind related labels
         let Some(source) = self.resolve_source(&span.left.file) else {
             Self::append_location_note(
@@ -376,6 +392,7 @@ impl Renderer {
                             },
                             span: span.clone(),
                             message: String::new(),
+                            line_only: false,
                         },
                         &mut rendered,
                     )?;

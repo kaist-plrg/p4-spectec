@@ -80,3 +80,53 @@ fn test_hash_adjust_range_boundaries() {
     assert!(func::adjust(&5.into(), &3.into(), &20.into()).is_err());
     assert_eq!(func::adjust(&5.into(), &12.into(), &(-20).into()).unwrap(), 6.into());
 }
+
+#[test]
+fn test_direct_meter_rejects_invalid_meter_type_with_its_own_diagnostic() {
+    use p4spec_rust::{
+        diagnostic::ReportKind,
+        lang::{
+            common::source::Span,
+            data::{
+                typ,
+                value::{ValueArena, make},
+            },
+        },
+        runner::ExternError,
+        sim_plugin::{spec::pack, v1model::object::DirectMeter},
+    };
+    let mut arena = ValueArena::new();
+    let value_name = make::text(&mut arena, "type".to_owned(), Span::default()).unwrap();
+    let value_ids = make::list(
+        &mut arena,
+        typ::make::list(typ::make::text()).node.into(),
+        vec![value_name],
+        Span::default(),
+    )
+    .unwrap();
+    let typ_value = typ::make::var(
+        p4spec_rust::phrase!(node: "value".to_owned(), span: Span::default()),
+        vec![],
+    );
+    for (id_enum, id_type) in [("CounterType", "packets"), ("MeterType", "invalid")] {
+        let value_type = pack::p4_enum(&mut arena, id_enum, id_type).unwrap();
+        let value_args = make::list(
+            &mut arena,
+            typ::make::list(typ_value.clone()).node.into(),
+            vec![value_type],
+            Span::default(),
+        )
+        .unwrap();
+        let error = DirectMeter::init(&arena, value_ids, value_ids, value_args).unwrap_err();
+        let ExternError::Report(report) = error else {
+            panic!("expected structured meter failure")
+        };
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected meter cause") };
+        assert_eq!(diagnostic.code.as_deref(), Some("sim/meter-type-invalid"));
+        assert_eq!(diagnostic.source, "sim");
+        assert_eq!(
+            diagnostic.message,
+            format!("invalid MeterType enum value: {id_enum}.{id_type}")
+        );
+    }
+}

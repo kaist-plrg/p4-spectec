@@ -55,7 +55,7 @@ impl Register {
             .map_err(ExternError::from)?;
         // Exactly two type arguments: the element and index types
         let [value_typ, _] = values_targ else {
-            return Err(ExternError::Failure(format!(
+            return Err(crate::sim_plugin::error::register_type_argument_arity_mismatch(format!(
                 "Register constructor expects 2 type arguments, but {} were given",
                 values_targ.len()
             ))

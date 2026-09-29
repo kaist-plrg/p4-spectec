@@ -51,6 +51,7 @@ fn foreign_report() -> Box<Report> {
             style: LabelStyle::Secondary,
             span,
             message: "original label".to_owned(),
+            line_only: false,
         }],
         notes: vec!["original note".to_owned()],
         source: "foreign",
@@ -94,7 +95,7 @@ fn failure(message: &str, span: Span) -> Report {
         severity: Severity::Error,
         code: None,
         message: message.to_owned(),
-        labels: vec![Label { style: LabelStyle::Primary, span, message: String::new() }],
+        labels: vec![Label { style: LabelStyle::Primary, span, message: String::new(), line_only: false }],
         notes: Vec::new(),
         source: "test",
     };

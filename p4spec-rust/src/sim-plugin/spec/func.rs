@@ -130,7 +130,9 @@ where
     let value_opt = ctx.call_func("find_type_e", &[], &[value_cursor, value_ctx, value_name])?;
     get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
-        .ok_or_else(|| ExternError::Failure(format!("type not found: {name}")).into())
+        .ok_or_else(|| {
+            crate::sim_plugin::error::type_undefined(format!("type not found: {name}")).into()
+        })
 }
 
 /// Substitutes local type arguments into a type with `subst_type_e`.
@@ -420,7 +422,10 @@ where
     let value_opt = ctx.call_func("find_objectState_e", &[], &[value_arch, value_id])?;
     get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
-        .ok_or_else(|| ExternError::Failure("object state not found".to_owned()).into())
+        .ok_or_else(|| {
+            crate::sim_plugin::error::object_state_undefined("object state not found".to_owned())
+                .into()
+        })
 }
 
 /// Replaces the state of an extern object; missing state is an error.
@@ -439,7 +444,10 @@ where
         ctx.call_func("update_objectState_e", &[], &[value_arch, value_id, value_state])?;
     get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
-        .ok_or_else(|| ExternError::Failure("object state not found".to_owned()).into())
+        .ok_or_else(|| {
+            crate::sim_plugin::error::object_state_undefined("object state not found".to_owned())
+                .into()
+        })
 }
 
 // == Architecture state

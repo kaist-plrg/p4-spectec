@@ -903,7 +903,7 @@ fn test_builtin_failure_remains_typed_in_public_error_tree() {
         .unwrap_err()
         .into_report();
     let diagnostic = error
-        .find_code("runtime/builtin-failed")
+        .find_code("runtime/builtin-implementation-missing")
         .expect("builtin cause")
         .diagnostic();
     assert!(diagnostic.message.contains("missing_builtin"));

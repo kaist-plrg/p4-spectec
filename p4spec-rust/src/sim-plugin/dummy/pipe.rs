@@ -28,8 +28,7 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    let payload =
-        encode(ctx.arena(), &()).map_err(|error| ExternError::Failure(error.to_string()))?;
+    let payload = encode(ctx.arena(), &()).map_err(ExternError::from)?;
     let typ = typ::make::var(
         crate::phrase!(node: "archState".to_owned(), span: Span::default()),
         Vec::new(),
@@ -51,8 +50,7 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    let payload =
-        encode(ctx.arena(), &()).map_err(|error| ExternError::Failure(error.to_string()))?;
+    let payload = encode(ctx.arena(), &()).map_err(ExternError::from)?;
     let typ = typ::make::var(
         crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
         Vec::new(),
@@ -72,8 +70,10 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    Err(ExternError::Failure("unimplemented extern relation: ExternFunctionCall_eval".to_owned())
-        .into())
+    Err(crate::sim_plugin::error::extern_relation_unsupported(
+        "unimplemented extern relation: ExternFunctionCall_eval".to_owned(),
+    )
+    .into())
 }
 
 // - Method calls
@@ -87,6 +87,8 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    Err(ExternError::Failure("unimplemented extern relation: ExternMethodCall_eval".to_owned())
-        .into())
+    Err(crate::sim_plugin::error::extern_relation_unsupported(
+        "unimplemented extern relation: ExternMethodCall_eval".to_owned(),
+    )
+    .into())
 }

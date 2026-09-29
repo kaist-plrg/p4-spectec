@@ -1,20 +1,26 @@
 use p4spec_rust::{
     lang::data::value::external::Encoding,
     runner::{Config, Spec},
-    sim_plugin::{BuildError, build},
+    sim_plugin::build,
 };
 
 #[test]
 fn test_unsupported_architecture_precedes_spec_loading() {
-    assert!(matches!(
-        build(
-            Spec::Al(vec![]),
-            "unknown",
-            Config::new(true, false, false),
-            Encoding::default(),
-        ),
-        Err(BuildError::UnsupportedArchitecture(name)) if name == "unknown"
-    ));
+    let report = match build(
+        Spec::Al(vec![]),
+        "unknown",
+        Config::new(true, false, false),
+        Encoding::default(),
+    ) {
+        Ok(_) => panic!("unsupported architecture accepted"),
+        Err(report) => report,
+    };
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected architecture diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("sim/architecture-unsupported"));
+    assert_eq!(diagnostic.source, "sim");
+    assert!(diagnostic.labels.is_empty());
 }
 
 #[test]

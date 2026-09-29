@@ -126,7 +126,11 @@ def $outer() = 7
                 let mut runner = runner::$build($spec, config, host.clone()).unwrap();
                 let failure = runner.context().call_func("outer", &[], &[]).unwrap_err();
                 let Failure::Fatal(report) = failure else { panic!("expected fatal") };
-                let cause = report.find_code("runtime/extern-failed").unwrap();
+                let mut cause = report.as_ref();
+                while !cause.children.is_empty() {
+                    cause = &cause.children[0];
+                }
+                assert_eq!(cause.code(), None);
                 assert_eq!(cause.diagnostic().message, "host aborted");
                 assert_eq!(host.calls.get(), 2);
             }};

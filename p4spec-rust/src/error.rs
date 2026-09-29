@@ -1,39 +1,27 @@
 //! Command failures and splice admission diagnostics
 //!
 //! Command-owned checks construct reports before reading specification files.
-//! Other variants retain the errors supplied by their owning operations.
+//! Completed operations forward their reports without another error wrapper.
 //! The CLI renders reports and selects exit codes at its output boundary.
 
-use p4spec_rust::{
-    diagnostic::{Diagnostic, Report, Severity},
-    interface::p4::error::P4Error,
-    interp::shared::backtrack::Failure as InterpError,
-    runner, sim_plugin,
-};
+use p4spec_rust::diagnostic::{Diagnostic, Report, Severity};
 
-// == Errors
+/// A finalized command failure ready for rendering.
+pub(crate) type CliError = Box<Report>;
 
-/// A command failure with its user-facing diagnostic category.
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum CliError {
-    /// A command or specification operation produced a structured diagnostic.
-    #[error(transparent)]
-    Diagnostic(#[from] Box<Report>),
-    /// Interpreter construction failed.
-    #[error(transparent)]
-    Runner(#[from] runner::BuildError),
-    /// Simulator construction failed.
-    #[error(transparent)]
-    Simulator(#[from] sim_plugin::BuildError),
-    /// Simulation failed.
-    #[error(transparent)]
-    Simulation(#[from] sim_plugin::runner::Error),
-    /// Parsing the input program failed.
-    #[error("syntax error: {0}")]
-    Syntax(#[from] P4Error),
-    /// Evaluating the input program failed.
-    #[error("runtime error: {0}")]
-    Runtime(#[from] InterpError),
+/// Converts argument admission failures without inventing source locations.
+pub(crate) fn arguments(error: &clap::Error) -> CliError {
+    let text = error.to_string();
+    let text = text.strip_prefix("error: ").unwrap_or(&text);
+    let (message, detail) = text.split_once("\n\n").unwrap_or((text, ""));
+    // Keep usage paragraphs separate without whitespace-only rendered lines
+    let notes = detail
+        .split("\n\n")
+        .map(str::trim_end)
+        .filter(|text| !text.is_empty())
+        .map(str::to_owned)
+        .collect();
+    Box::new(Diagnostic::new("command", Severity::Error, None, message, Vec::new(), notes).into())
 }
 
 /// Constructs a command diagnostic without a specification source location.

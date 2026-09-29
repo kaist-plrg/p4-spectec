@@ -13,6 +13,7 @@ use super::{
     table,
 };
 use crate::{
+    diagnostic::{Diagnostic, Label, Report, Severity},
     interface::p4::{error::P4Error, parse},
     interp::shared::backtrack::Failure as InterpError,
     lang::{
@@ -23,7 +24,7 @@ use crate::{
         },
         traits::print::Print,
     },
-    runner::{ExternError, Interface, Interpreter, Runner, RunnerContext},
+    runner::{Interface, Interpreter, Runner, RunnerContext},
     stf::{
         self,
         ast::{Action, MatchKind, Name, Statement, TableMatch},
@@ -50,6 +51,42 @@ pub enum Error {
     /// An STF statement failed or an expectation was not met.
     #[error("runtime error: {failure} at {span}")]
     Stf { failure: Box<StfFailure>, span: Span },
+}
+
+const PACKET_MISMATCH: &str = "sim/packet-mismatch";
+const STATEMENT_UNSUPPORTED: &str = "sim/statement-unsupported";
+const PACKET_EXPECTATION_INCOMPLETE: &str = "sim/packet-expectation-incomplete";
+
+impl Error {
+    /// Returns complete reports at the final simulator execution boundary.
+    pub fn into_report(self) -> Box<Report> {
+        match self {
+            Self::P4Syntax(error) => error.into_report(),
+            Self::StfSyntax(error) => error.into_report(),
+            Self::Runtime(failure) => failure.into_report(),
+            Self::Stf { failure, span } => {
+                // Statement checks keep their own code and actual source location
+                let code = match &*failure {
+                    StfFailure::Mismatch { .. } => PACKET_MISMATCH,
+                    StfFailure::Unsupported(_) => STATEMENT_UNSUPPORTED,
+                    StfFailure::Remaining { .. } => PACKET_EXPECTATION_INCOMPLETE,
+                };
+                let labels =
+                    if span == Span::default() { vec![] } else { vec![Label::primary(&span, "")] };
+                Box::new(
+                    Diagnostic::new(
+                        "sim",
+                        Severity::Error,
+                        Some(code.to_owned()),
+                        failure.to_string(),
+                        labels,
+                        vec![],
+                    )
+                    .into(),
+                )
+            }
+        }
+    }
 }
 
 /// How an STF statement failed.
@@ -103,8 +140,9 @@ fn remaining_expects(expects: &[Expectation]) -> String {
 
 /// Parses an optionally signed integer with a `0x`, `0o` or `0b` radix prefix.
 fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, InterpError> {
-    strtoint::strtoint(&text.to_ascii_lowercase())
-        .map_err(|_| ExternError::Failure(format!("invalid integer: {text}")).into())
+    strtoint::strtoint(&text.to_ascii_lowercase()).map_err(|_| {
+        crate::sim_plugin::error::integer_invalid(format!("invalid integer: {text}")).into()
+    })
 }
 
 /// Rewrites STF's `hdr$0` index spelling to the P4 `hdr[0]` form.

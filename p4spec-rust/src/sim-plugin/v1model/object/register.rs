@@ -59,7 +59,7 @@ impl Register {
             .map_err(ExternError::from)?;
         // Exactly one type argument, the element type
         let [value_typ] = values_targ else {
-            return Err(ExternError::Failure(format!(
+            return Err(crate::sim_plugin::error::register_type_argument_arity_mismatch(format!(
                 "register constructor expects 1 type argument, but {} were given",
                 values_targ.len()
             ))

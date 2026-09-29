@@ -56,8 +56,8 @@ impl DirectMeter {
         match (id_enum.as_str(), id_type.as_str()) {
             ("MeterType", "packets") => Ok(Self::Packets(BigInt::zero())),
             ("MeterType", "bytes") => Ok(Self::Bytes(BigInt::zero())),
-            _ => Err(ExternError::Failure(format!(
-                "invalid CounterType enum value: {id_enum}.{id_type}"
+            _ => Err(crate::sim_plugin::error::meter_type_invalid(format!(
+                "invalid MeterType enum value: {id_enum}.{id_type}"
             ))),
         }
     }

@@ -10,6 +10,9 @@
 use thiserror::Error;
 
 use crate::{
+    diagnostic::{Diagnostic, Report, Severity},
+    interp::shared::backtrack::Failure,
+    lang::common::prim::num::NumericError,
     lang::data::value::{Value, ValueError},
     lang::il::ast::Typ,
 };
@@ -19,7 +22,7 @@ use super::{Interface, Interpreter, RunnerContext};
 // == Extern errors
 
 /// A failure inside a host extern.
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
+#[derive(Debug, Error)]
 pub enum ExternError {
     /// No extern is installed.
     #[error("extern is not configured")]
@@ -27,12 +30,70 @@ pub enum ExternError {
     /// A value operation failed.
     #[error(transparent)]
     Value(#[from] ValueError),
-    /// An architecture-specific failure, described by the extern.
+    /// An arbitrary external message, retained without an invented code.
     #[error("{0}")]
     Failure(String),
+    /// A structured fatal diagnostic supplied by the host.
+    #[error(transparent)]
+    Report(#[from] Box<Report>),
+    /// Ordered recoverable host alternatives.
+    #[error("extern did not match")]
+    Mismatch(Vec<Report>),
+    /// A numeric operation failed.
+    #[error(transparent)]
+    Numeric(#[from] NumericError),
+    /// A host I/O operation failed.
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    /// Serializing or decoding host state failed.
+    #[error(transparent)]
+    Encoding(#[from] serde_json::Error),
+    /// Allocating host state failed.
+    #[error(transparent)]
+    Allocation(#[from] std::collections::TryReserveError),
     /// A fixed-width value did not fit a machine word.
     #[error("fixed-width value exceeds a machine word")]
     MachineWord(#[from] num_bigint::TryFromBigIntError<()>),
+}
+
+const EXTERN_UNCONFIGURED: &str = "runtime/extern-unconfigured";
+const EXTERN_VALUE_INVALID: &str = "runtime/extern-value-invalid";
+const EXTERN_NUMERIC_INVALID: &str = "runtime/extern-numeric-invalid";
+const EXTERN_STATE_INVALID: &str = "runtime/extern-state-invalid";
+const EXTERN_ALLOCATION_FAILED: &str = "runtime/extern-allocation-failed";
+
+impl ExternError {
+    /// Preserves the host's diagnostic and recovery decision.
+    pub fn into_failure(self) -> Failure {
+        // Structured host failures cross the boundary without reconstruction
+        match self {
+            Self::Report(report) => Failure::Fatal(report),
+            Self::Mismatch(reports) => Failure::Mismatch(reports),
+            error => {
+                // Local failures acquire meaning here; external text stays uncoded
+                let code = match &error {
+                    Self::NotConfigured => Some(EXTERN_UNCONFIGURED),
+                    Self::Value(_) => Some(EXTERN_VALUE_INVALID),
+                    Self::Numeric(_) | Self::MachineWord(_) => Some(EXTERN_NUMERIC_INVALID),
+                    Self::Io(_) | Self::Encoding(_) => Some(EXTERN_STATE_INVALID),
+                    Self::Allocation(_) => Some(EXTERN_ALLOCATION_FAILED),
+                    Self::Failure(_) => None,
+                    Self::Report(_) | Self::Mismatch(_) => unreachable!(),
+                };
+                Failure::Fatal(Box::new(
+                    Diagnostic::new(
+                        "runtime",
+                        Severity::Error,
+                        code.map(str::to_owned),
+                        error.to_string(),
+                        vec![],
+                        vec![],
+                    )
+                    .into(),
+                ))
+            }
+        }
+    }
 }
 
 // == Extern contract

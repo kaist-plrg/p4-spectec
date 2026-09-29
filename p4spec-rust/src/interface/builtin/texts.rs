@@ -22,12 +22,12 @@ use super::{BuiltinError, extract};
 
 /// The text in a text value.
 fn text_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a str, BuiltinError> {
-    get::text(arena, value).map_err(|error| BuiltinError::new(error.to_string()))
+    get::text(arena, value).map_err(BuiltinError::from)
 }
 
 /// A number value printed as text.
 fn numeric_text(arena: &ValueArena, value: &Value) -> Result<String, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(Print::to_string(num))
 }
 

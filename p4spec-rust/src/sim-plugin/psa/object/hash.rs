@@ -43,7 +43,9 @@ impl HashExtern {
         let (id_enum, id_type) = unpack::p4_enum(arena, &value_algo)?;
         // Only a `PSA_HashAlgorithm_t` enumerator selects the algorithm
         if id_enum != "PSA_HashAlgorithm_t" {
-            return Err(ExternError::Failure("invalid PSA hash algorithm enum type".to_owned()));
+            return Err(crate::sim_plugin::error::hash_algorithm_invalid(
+                "invalid PSA hash algorithm enum type".to_owned(),
+            ));
         }
         // Map the enumerator to the internal algorithm name
         let algo = match id_type.as_str() {
@@ -106,7 +108,10 @@ impl HashExtern {
         let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
         let int_hash = hash::compute_checksum(&self.algo, None, ctx.arena(), &values)?;
         if max <= BigInt::zero() {
-            return Err(ExternError::Failure("hash modulus must be positive".to_owned()).into());
+            return Err(crate::sim_plugin::error::hash_range_invalid(
+                "hash modulus must be positive".to_owned(),
+            )
+            .into());
         }
         let int_hash = ((int_hash % &max) + &max) % &max + base;
         self.return_hash(ctx, value_ctx, value_arch, int_hash)

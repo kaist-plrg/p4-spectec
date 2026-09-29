@@ -5,14 +5,17 @@
 //! Comparisons preserve whitespace, and successful cases have empty expectations.
 
 mod algo;
+mod boundary;
 mod cases;
 mod command;
 mod elab;
+mod host;
 mod interp;
 mod parse;
 mod prose;
 mod specdoc;
 mod splice;
+mod syntax;
 
 use std::path::Path;
 
@@ -42,6 +45,7 @@ pub enum Suite {
     Splice,
     Specdoc,
     Command,
+    Boundary,
 }
 
 // = Acceptance runner
@@ -61,6 +65,7 @@ fn run_suite(
         Suite::Interp => ("interp", Some(DisplayStyle::Short)),
         Suite::Splice => ("splice", None),
         Suite::Specdoc => ("specdoc", None),
+        Suite::Boundary => ("boundary", None),
         Suite::Command => unreachable!("command diagnostics use subprocess output"),
     };
     let config = RenderConfig { frame_style, ..Default::default() };
@@ -119,18 +124,20 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
         Some(Suite::Elab) => run_suite(Suite::Elab, cases::ELAB, elab::run),
         Some(Suite::Algo) => run_suite(Suite::Algo, cases::ALGO, algo::run),
         Some(Suite::Prose) => run_suite(Suite::Prose, cases::PROSE, prose::run),
-        Some(Suite::Interp) => run_suite(Suite::Interp, cases::INTERP, interp::run),
+        Some(Suite::Interp) => run_suite(Suite::Interp, cases::INTERP, run_interp),
         Some(Suite::Splice) => run_suite(Suite::Splice, cases::SPLICE, splice::run),
         Some(Suite::Specdoc) => run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run),
         Some(Suite::Command) => run_command(path_cli),
+        Some(Suite::Boundary) => run_suite(Suite::Boundary, cases::BOUNDARY, boundary::run),
         None => {
             run_parse()?;
             run_suite(Suite::Elab, cases::ELAB, elab::run)?;
             run_suite(Suite::Algo, cases::ALGO, algo::run)?;
             run_suite(Suite::Prose, cases::PROSE, prose::run)?;
-            run_suite(Suite::Interp, cases::INTERP, interp::run)?;
+            run_suite(Suite::Interp, cases::INTERP, run_interp)?;
             run_suite(Suite::Splice, cases::SPLICE, splice::run)?;
             run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run)?;
+            run_suite(Suite::Boundary, cases::BOUNDARY, boundary::run)?;
             run_command(path_cli)
         }
     }
@@ -145,4 +152,15 @@ fn run_command(path_cli: Option<&Path>) -> Result<()> {
 /// Adapts parser failures to the shared diagnostic sequence.
 fn run_parse() -> Result<()> {
     run_suite(Suite::Parse, cases::PARSE, |name| parse::run(name).map(|report| vec![*report]))
+}
+
+/// Routes source execution and input-transport cases through their real owners.
+fn run_interp(name: &str) -> Result<Vec<Report>> {
+    if name.ends_with("-syntax-diagnostic") {
+        syntax::run(name)
+    } else if name.starts_with("interp-") {
+        host::run(name)
+    } else {
+        interp::run(name)
+    }
 }

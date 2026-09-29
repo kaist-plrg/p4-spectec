@@ -27,12 +27,12 @@ use super::{BuiltinError, extract};
 
 /// The elements of a list value.
 fn list_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a [Value], BuiltinError> {
-    get::list(arena, value).map_err(|error| BuiltinError::new(error.to_string()))
+    get::list(arena, value).map_err(BuiltinError::from)
 }
 
 /// The integer in a number value.
 fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 

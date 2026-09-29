@@ -44,12 +44,13 @@ fn runner_from_spec<Ext: Extern>(
     )
 }
 
-fn has_extern_failure(failure: &Failure, expected: &str) -> bool {
+fn has_extern_failure(failure: &Failure, code: &str, expected: &str) -> bool {
     let Failure::Fatal(report) = failure else { return false };
     let mut pending = vec![report.as_ref()];
     while let Some(report) = pending.pop() {
         if let ReportKind::Cause(diagnostic) = &report.kind
-            && diagnostic.code.as_deref() == Some("runtime/extern-failed")
+            && diagnostic.source == "sim"
+            && diagnostic.code.as_deref() == Some(code)
             && diagnostic.message == expected
         {
             return true;

@@ -121,7 +121,7 @@ fn zero_arity_default_hints_reach_the_host() {
             runners!(cache, guard, runner::NullExtern, |runner| {
                 assert_fatal(
                     runner.context().call_rel("Ready", &[]).unwrap_err(),
-                    "runtime/extern-failed",
+                    "runtime/extern-unconfigured",
                 );
                 let value = make::nat(runner.arena_mut(), 1u64.into(), Default::default()).unwrap();
                 assert_fatal(

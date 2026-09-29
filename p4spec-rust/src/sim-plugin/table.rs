@@ -72,8 +72,9 @@ where
     {
         return Ok(value_table);
     }
-    func::find_object_unqualified_e(ctx, value_arch, value_unqualified)?
-        .ok_or_else(|| ExternError::Failure("table not found".to_owned()).into())
+    func::find_object_unqualified_e(ctx, value_arch, value_unqualified)?.ok_or_else(|| {
+        crate::sim_plugin::error::table_undefined("table not found".to_owned()).into()
+    })
 }
 
 /// Stores a table object back under the name it was found by.
@@ -190,7 +191,9 @@ where
                 value_keys,
                 value_action,
             )?
-            .ok_or_else(|| ExternError::Failure("table entry rejected".to_owned()))?
+            .ok_or_else(|| {
+                crate::sim_plugin::error::table_entry_invalid("table entry rejected".to_owned())
+            })?
         }
     };
     // Update arch with modified table object

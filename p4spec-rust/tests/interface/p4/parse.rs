@@ -1,7 +1,8 @@
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::lang::data::value::ValueArena;
 use p4spec_rust::{
     interface::p4::{
-        error::P4ErrorKind,
+        error::P4Error,
         parse::{parse_file, parse_string},
         unparse::P4Unparser,
     },
@@ -147,9 +148,10 @@ fn test_syntax_errors_retain_the_source_location() {
     let mut arena = ValueArena::new();
     let error = parse_string(&mut arena, "broken.p4", "const bit<8> x = ;")
         .expect_err("reject a missing initializer");
-    assert_eq!(error.kind, P4ErrorKind::Syntax);
-    assert_eq!(error.span.left.file.as_ref(), "broken.p4");
-    assert_eq!(error.span.left.line, 1);
+    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    assert!(matches!(error, P4Error::Syntax(_)));
+    assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "broken.p4");
+    assert_eq!(diagnostic.labels[0].span.left.line, 1);
 }
 
 #[test]
@@ -240,8 +242,11 @@ fn test_rejects_the_negative_p4_parse_corpus() {
 
     let accepted: Vec<_> = files
         .iter()
-        .filter(|file| parse_file(&mut arena, &includes, file).is_ok())
-        .map(|file| file.display().to_string())
+        .filter_map(|file| match parse_file(&mut arena, &includes, file) {
+            Ok(_) => Some(file.display().to_string()),
+            Err(P4Error::Syntax(_)) => None,
+            Err(error) => panic!("input setup failed for {}: {error}", file.display()),
+        })
         .collect();
     assert!(accepted.is_empty(), "invalid P4 programs were accepted:\n{}", accepted.join("\n"));
 }
@@ -333,7 +338,51 @@ fn test_syntax_error_after_whitespace_uses_offending_token_span() {
     let mut arena = ValueArena::new();
     let source = "\n const bit<8> x =   ;";
     let error = parse_string(&mut arena, "syntax.p4", source).unwrap_err();
+    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
     let column = source.lines().nth(1).unwrap().find(';').unwrap();
-    assert_eq!((error.span.left.line, error.span.left.column), (2, column));
-    assert_eq!((error.span.right.line, error.span.right.column), (2, column + 1));
+    assert_eq!(
+        (diagnostic.labels[0].span.left.line, diagnostic.labels[0].span.left.column),
+        (2, column)
+    );
+    assert_eq!(
+        (diagnostic.labels[0].span.right.line, diagnostic.labels[0].span.right.column),
+        (2, column + 1)
+    );
+}
+
+#[test]
+fn test_syntax_summary_retains_diagnostic_code() {
+    let mut arena = ValueArena::new();
+    let error = parse_string(&mut arena, "broken.p4", "const bit<8> x = ;").unwrap_err();
+    assert!(error.to_string().starts_with("error[p4/syntax-invalid]:"));
+}
+
+#[test]
+fn test_line_markers_preserve_logical_span_without_original_source_columns() {
+    let mut arena = ValueArena::new();
+    let source = "# 42 \"original.p4\"\nconst bit<8> x = ;";
+    let error = parse_string(&mut arena, "expanded.p4", source).unwrap_err();
+    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    let label = &diagnostic.labels[0];
+    assert!(label.line_only);
+    assert_eq!(label.span.left.file.as_ref(), "original.p4");
+    assert_eq!((label.span.left.line, label.span.left.column), (42, 17));
+    assert_eq!((label.span.right.line, label.span.right.column), (42, 18));
+
+    let mut renderer = p4spec_rust::diagnostic::Renderer::new(Default::default());
+    renderer.insert_source("original.p4", "unrelated original text");
+    let text = renderer.render_to_string(error.report()).unwrap();
+    assert!(text.contains("original.p4:42"), "{text}");
+    assert!(!text.contains("unrelated original text"), "{text}");
+}
+
+#[test]
+fn test_hash_in_comments_does_not_disable_direct_source_locations() {
+    let mut arena = ValueArena::new();
+    let source = "/* # 42 \"original.p4\" */\nconst bit<8> x = ;";
+    let error = parse_string(&mut arena, "direct.p4", source).unwrap_err();
+    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    assert!(!diagnostic.labels[0].line_only);
+    assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "direct.p4");
+    assert_eq!(diagnostic.labels[0].span.left.line, 2);
 }

@@ -33,6 +33,26 @@ impl Drop for Directory {
 
 /// Executes a negative command through argument parsing and final rendering.
 pub fn run(path_cli: &Path, name: &str) -> Result<String> {
+    if name == "command-error" {
+        let directory = Directory::new(name)?;
+        let output = Command::new(path_cli)
+            .current_dir(&directory.0)
+            .arg("unknown")
+            .output()?;
+        if output.status.code() != Some(2) || !output.stdout.is_empty() {
+            return Err(failure(name, "expected argument rejection with exit 2 and empty stdout"));
+        }
+        let text = String::from_utf8(output.stderr).map_err(|error| failure(name, error))?;
+        if !text.starts_with("error: unrecognized subcommand 'unknown'")
+            || !text.contains("source: command")
+            || !text.contains("Usage:")
+            || text.contains("generated source")
+            || text.contains("┌─")
+        {
+            return Err(failure(name, format!("expected an unlocated command report, got {text}")));
+        }
+        return Ok(text);
+    }
     let (args, code) = match name {
         "command-splice-file-count-mismatch" => (
             vec!["--splice", "a.adoc", "--splice", "b.adoc", "--out", "out.adoc"],

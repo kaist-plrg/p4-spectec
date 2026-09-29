@@ -59,7 +59,7 @@ where
         Some(value) => unpack::p4_string(ctx.arena(), &value).map_err(Interp::Error::from)?,
         None => "static_assert failed".to_owned(),
     };
-    Err(crate::runner::ExternError::Failure(message).into())
+    Err(crate::sim_plugin::error::assertion_unmet(message).into())
 }
 
 /// Checks a predicate in the parser, leaving execution unchanged when true.

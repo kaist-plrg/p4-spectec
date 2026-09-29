@@ -13,11 +13,12 @@ mod interface;
 mod interpreter;
 
 use crate::{
-    interface as builtin,
+    diagnostic::Report,
+    interface::{self as builtin, p4::error::P4Error},
+    interp::shared::backtrack::Failure,
     interp::{
         al::{AlInterp, Config as AlConfig, context::Global as AlGlobal},
         pl::{Config as PlConfig, PlInterp, context::Global as PlGlobal},
-        shared::error::Error as InterpError,
         sl::{Config as SlConfig, SlInterp, context::Global as SlGlobal},
     },
     lang::{
@@ -61,12 +62,28 @@ impl Config {
     }
 }
 
-/// A failure while building a runner.
+/// A diagnostic produced while building a runner.
+pub type BuildError = Box<Report>;
+
+/// Distinguishes rejected input from execution failure at program composition.
 #[derive(Debug, thiserror::Error)]
-pub enum BuildError {
-    /// Loading the specification into the interpreter failed.
-    #[error(transparent)]
-    Interp(#[from] InterpError),
+pub enum ProgramError<Error> {
+    /// Parsing failed before the interpreter was called.
+    #[error("{0}")]
+    Parse(P4Error),
+    /// Evaluation failed after parsing succeeded.
+    #[error("{0}")]
+    Runtime(Error),
+}
+
+impl ProgramError<Failure> {
+    /// Finalizes the failure after input classification and execution have ended.
+    pub fn into_report(self) -> Box<Report> {
+        match self {
+            Self::Parse(error) => error.into_report(),
+            Self::Runtime(failure) => failure.into_report(),
+        }
+    }
 }
 
 /// Builds an AL runner from a specification, with the P4 builtins.
@@ -177,6 +194,20 @@ where
     ) -> Result<Vec<Value>, Interp::Error> {
         let mut ctx = self.context();
         ctx.call_program(name, program)
+    }
+
+    /// Parses one program and evaluates it only when parsing succeeds.
+    ///
+    /// The CLI supplies file preprocessing; corpus callers may supply text
+    /// preprocessed by their input worker. Parsing errors retain their identity.
+    pub fn parse_and_eval_program(
+        &mut self,
+        name: &str,
+        parse: impl FnOnce(&mut ValueArena) -> Result<Value, P4Error>,
+    ) -> Result<Vec<Value>, ProgramError<Interp::Error>> {
+        let program = parse(&mut self.arena).map_err(ProgramError::Parse)?;
+        self.eval_program(name, program)
+            .map_err(ProgramError::Runtime)
     }
 
     // - Lifecycle

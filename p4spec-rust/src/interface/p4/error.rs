@@ -1,13 +1,14 @@
 //! Errors produced while reading and rendering P4 programs
 //!
-//! Every failure of the P4 frontend becomes a `P4Error` with a span;
+//! Syntax rejection and input failures retain distinct report variants;
 //! rendering failures are separate, since they arise inside a builtin.
-
-use std::fmt;
 
 use thiserror::Error;
 
-use crate::lang::{common::source::Span, hints::alter::AlterationError};
+use crate::{
+    diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
+    lang::{common::source::Span, hints::alter::AlterationError},
+};
 
 /// A misuse of the parser's scope stack.
 #[derive(Clone, Debug, Error, PartialEq, Eq)]
@@ -68,27 +69,92 @@ pub enum P4ErrorKind {
     Syntax,
 }
 
-/// A P4 frontend failure at a source span.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct P4Error {
-    pub kind: P4ErrorKind,
-    pub span: Span,
+const VALUE_INVALID: &str = "p4/value-invalid";
+const PREPROCESSOR_FAILED: &str = "p4/preprocessor-failed";
+const CONTEXT_INVALID: &str = "p4/context-invalid";
+const TEXT_LITERAL_INCOMPLETE: &str = "p4/text-literal-incomplete";
+const TEXT_ESCAPE_UNSUPPORTED: &str = "p4/text-escape-unsupported";
+const BLOCK_COMMENT_INCOMPLETE: &str = "p4/block-comment-incomplete";
+const INTEGER_LITERAL_INVALID: &str = "p4/integer-literal-invalid";
+const INTEGER_WIDTH_INVALID: &str = "p4/integer-width-invalid";
+const SYNTAX_INVALID: &str = "p4/syntax-invalid";
+
+/// Distinguishes source rejection from failures preparing or constructing input.
+#[derive(Debug, Error)]
+pub enum P4Error {
+    /// The source's lexical or grammatical form was rejected.
+    #[error(transparent)]
+    Syntax(Box<Report>),
+    /// Preprocessing or parse-tree construction failed.
+    #[error(transparent)]
+    Input(Box<Report>),
 }
 
 impl P4Error {
-    /// An error of the given kind at `span`.
+    /// Converts a local frontend failure into its structured report and class.
     pub fn new(kind: impl Into<P4ErrorKind>, span: Span) -> Self {
-        Self { kind: kind.into(), span }
+        let kind = kind.into();
+        // Select the stable check code while retaining the local failure message
+        let code = match &kind {
+            P4ErrorKind::Value(_) => VALUE_INVALID,
+            P4ErrorKind::Preprocessor { .. } => PREPROCESSOR_FAILED,
+            P4ErrorKind::Context(_) => CONTEXT_INVALID,
+            P4ErrorKind::Lex(LexErrorKind::UnterminatedString) => TEXT_LITERAL_INCOMPLETE,
+            P4ErrorKind::Lex(LexErrorKind::UnsupportedEscape(_)) => TEXT_ESCAPE_UNSUPPORTED,
+            P4ErrorKind::Lex(LexErrorKind::UnterminatedComment) => BLOCK_COMMENT_INCOMPLETE,
+            P4ErrorKind::Lex(LexErrorKind::InvalidInteger(_)) => INTEGER_LITERAL_INVALID,
+            P4ErrorKind::Lex(LexErrorKind::SignedWidth) => INTEGER_WIDTH_INVALID,
+            P4ErrorKind::Syntax => SYNTAX_INVALID,
+        };
+        // Retain named file-only spans without inventing a source occurrence
+        let labels =
+            if span == Span::default() { Vec::new() } else { vec![Label::primary(&span, "")] };
+        let report = Box::new(
+            Diagnostic::new(
+                "p4",
+                Severity::Error,
+                Some(code.to_owned()),
+                kind.to_string(),
+                labels,
+                Vec::new(),
+            )
+            .into(),
+        );
+        // Only lexical and grammar failures count as program rejection
+        match kind {
+            P4ErrorKind::Lex(_) | P4ErrorKind::Syntax => Self::Syntax(report),
+            _ => Self::Input(report),
+        }
+    }
+
+    /// Borrows the report without losing the failure class.
+    pub fn report(&self) -> &Report {
+        match self {
+            Self::Syntax(report) | Self::Input(report) => report,
+        }
+    }
+
+    /// Returns the original report when a caller no longer needs classification.
+    pub fn into_report(self) -> Box<Report> {
+        match self {
+            Self::Syntax(report) | Self::Input(report) => report,
+        }
+    }
+
+    /// Marks columns as expanded-text coordinates unsuitable for source snippets.
+    pub(crate) fn with_line_only(mut self) -> Self {
+        let report = match &mut self {
+            Self::Syntax(report) | Self::Input(report) => report,
+        };
+        // Preserve the full span while preventing original-source column lookup
+        if let ReportKind::Cause(diagnostic) = &mut report.kind {
+            for label in &mut diagnostic.labels {
+                label.line_only = true;
+            }
+        }
+        self
     }
 }
-
-impl fmt::Display for P4Error {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{} at {}", self.kind, self.span)
-    }
-}
-
-impl std::error::Error for P4Error {}
 
 /// Why rendering a value to P4 failed.
 #[derive(Clone, Debug, Error, PartialEq, Eq)]

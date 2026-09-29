@@ -82,11 +82,15 @@ pub fn parse_string(
     // The lexer and parser share one context for name classification
     let ctx = Rc::new(Context::new(arena));
     let position = Position::new(Rc::clone(&file), 1, 0);
-    let lexer = Lexer::new(file, source, Rc::clone(&ctx));
-    let input = parser_input(ctx.as_ref(), lexer, position);
+    let mut lexer = Lexer::new(file, source, Rc::clone(&ctx));
+    let input = parser_input(ctx.as_ref(), &mut lexer, position);
 
     let result = p4programParser::new().parse(ctx.as_ref(), input);
-    result.map_err(|error| translate_lalrpop_error(ctx.as_ref(), error))
+    // Logical line markers cannot map expanded columns back to source bytes
+    result.map_err(|error| {
+        let error = translate_lalrpop_error(ctx.as_ref(), error);
+        if lexer.has_line_directives() { error.with_line_only() } else { error }
+    })
 }
 
 // - Source files
@@ -99,5 +103,5 @@ pub fn parse_file(
 ) -> Result<Value, P4Error> {
     let path = path.as_ref();
     let source = preprocess(includes, path)?;
-    parse_string(arena, path, &source)
+    parse_string(arena, path, &source).map_err(P4Error::with_line_only)
 }

@@ -91,7 +91,7 @@ fn fatal_table_rows_preserve_the_original_failure() {
         assert!(
             failure
                 .into_report()
-                .find_code("runtime/extern-failed")
+                .find_code("runtime/extern-unconfigured")
                 .is_some()
         );
     }

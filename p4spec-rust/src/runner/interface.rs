@@ -10,6 +10,7 @@
 use thiserror::Error;
 
 use crate::{
+    diagnostic::{Diagnostic, Report, Severity},
     interface::builtin::{BuiltinError, call::Builtins},
     lang::data::value::{Value, ValueArena},
     lang::il::ast::{Id, Typ},
@@ -18,7 +19,7 @@ use crate::{
 // == Interface errors
 
 /// A failure inside the builtin interface.
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
+#[derive(Debug, Error)]
 pub enum InterfaceError {
     /// No interface is installed.
     #[error("interface is not configured")]
@@ -26,6 +27,32 @@ pub enum InterfaceError {
     /// A builtin failed.
     #[error(transparent)]
     Builtin(#[from] Box<BuiltinError>),
+    /// A recoverable diagnostic supplied by an interface.
+    #[error(transparent)]
+    Report(#[from] Box<Report>),
+}
+
+const INTERFACE_UNCONFIGURED: &str = "runtime/interface-unconfigured";
+
+impl InterfaceError {
+    /// Preserves structured reports and describes unconfigured interfaces.
+    pub fn into_report(self) -> Box<Report> {
+        match self {
+            Self::Builtin(error) => error.into_report(),
+            Self::Report(report) => report,
+            Self::NotConfigured => Box::new(
+                Diagnostic::new(
+                    "runtime",
+                    Severity::Error,
+                    Some(INTERFACE_UNCONFIGURED.to_owned()),
+                    "interface is not configured",
+                    vec![],
+                    vec![],
+                )
+                .into(),
+            ),
+        }
+    }
 }
 
 // == Interface contract

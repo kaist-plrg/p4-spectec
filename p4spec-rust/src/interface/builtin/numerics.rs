@@ -31,10 +31,10 @@ const MAX_BIT_WIDTH: usize = 2048;
 
 /// The booleans of a bit-array value.
 fn bits_of_value(arena: &ValueArena, value: &Value) -> Result<Vec<bool>, BuiltinError> {
-    let values = get::list(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let values = get::list(arena, value).map_err(BuiltinError::from)?;
     let mut bits = Vec::with_capacity(values.len());
     for value in values {
-        let bit = get::bool(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+        let bit = get::bool(arena, value).map_err(BuiltinError::from)?;
         bits.push(bit);
     }
     Ok(bits)
@@ -57,7 +57,7 @@ fn value_of_bits(arena: &mut ValueArena, bits: Vec<bool>) -> Result<Value, Built
 
 /// The integer in a number value.
 fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 

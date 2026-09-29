@@ -17,7 +17,7 @@ use super::{BuiltinError, extract};
 
 /// The integer in a number value.
 fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 
@@ -30,7 +30,7 @@ fn value_of_bigint(arena: &mut ValueArena, value: BigInt) -> Result<Value, Built
 /// The elements of the single list argument.
 fn input_values<'a>(arena: &'a ValueArena, values: &[Value]) -> Result<&'a [Value], BuiltinError> {
     let value = extract::one(values)?;
-    get::list(arena, value).map_err(|error| BuiltinError::new(error.to_string()))
+    get::list(arena, value).map_err(BuiltinError::from)
 }
 
 // == Built-in implementations

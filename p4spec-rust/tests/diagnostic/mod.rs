@@ -19,6 +19,7 @@ fn report(span: Span) -> Report {
             style: LabelStyle::Primary,
             span,
             message: "invalid escape".to_owned(),
+            line_only: false,
         }],
         notes: vec!["use a supported escape".to_owned()],
         source: "parse",

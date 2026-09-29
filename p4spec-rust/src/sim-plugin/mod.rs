@@ -19,6 +19,7 @@ pub mod arch;
 pub mod core;
 pub mod dummy;
 pub mod ebpf;
+mod error;
 mod externs;
 pub mod hash;
 pub mod io;
@@ -32,15 +33,7 @@ pub mod v1model;
 // == Build errors
 
 /// Why a simulator could not be built.
-#[derive(Debug, thiserror::Error)]
-pub enum BuildError {
-    /// No architecture of that name.
-    #[error("architecture {0} is not supported")]
-    UnsupportedArchitecture(String),
-    /// The host runner could not load the specification.
-    #[error(transparent)]
-    Runner(#[from] host::BuildError),
-}
+pub type BuildError = Box<crate::diagnostic::Report>;
 
 // == Simulator
 
@@ -114,7 +107,7 @@ pub fn build(
         "ebpf" => build_for_arch(spec, config, Ebpf::new(encoding)),
         "psa" => build_for_arch(spec, config, Psa::new(encoding)),
         "v1model" => build_for_arch(spec, config, V1Model::new(encoding)),
-        _ => Err(BuildError::UnsupportedArchitecture(arch.to_owned())),
+        _ => Err(error::architecture_unsupported(arch)),
     }
 }
 

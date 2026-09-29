@@ -9,7 +9,7 @@
 use super::{io::Rx, state::SimState};
 use crate::{
     lang::data::value::Value,
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, Interface, Interpreter, RunnerContext},
     stf::ast::Statement,
 };
 use num_bigint::BigInt;
@@ -52,7 +52,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "add_mirror_session is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -70,7 +70,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "add_mirror_session_mc is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -87,7 +87,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "mc_mgrp_create is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -105,7 +105,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "mc_node_create is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -123,7 +123,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "mc_node_associate is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -141,7 +141,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "register_read is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -160,7 +160,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "register_write is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -177,7 +177,7 @@ pub trait Architecture: Extern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(crate::sim_plugin::error::control_operation_unsupported(format!(
             "register_reset is not implemented for the {} simulator",
             Self::NAME
         ))

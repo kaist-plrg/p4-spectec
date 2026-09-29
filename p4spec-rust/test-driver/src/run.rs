@@ -5,8 +5,8 @@ use crate::{
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 use p4spec_rust::{
-    interface::p4::{error::P4ErrorKind, parse::parse_string, preprocessor::preprocess},
-    runner::{self, BuiltinInterface, Config, Interpreter, Runner},
+    interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
+    runner::{self, BuiltinInterface, Config, Interpreter, ProgramError, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::{
@@ -162,20 +162,19 @@ where
                                 path.display()
                             ))
                         })?;
-                    let outcome = match parse_string(runner.arena_mut(), path, &source) {
-                        Ok(program) => match runner.eval_program(suite.id_relation, program) {
-                            Ok(_) => Outcome::Pass,
-                            Err(_) => Outcome::Fail,
-                        },
-                        Err(error) => match error.kind {
-                            P4ErrorKind::Lex(_) | P4ErrorKind::Syntax => Outcome::Fail,
-                            _ => {
-                                return Err(Error::Invalid(format!(
-                                    "{}: test execution error: {error}",
-                                    path.display()
-                                )));
-                            }
-                        },
+                    let result = runner.parse_and_eval_program(suite.id_relation, |arena| {
+                        parse_string(arena, path, &source)
+                    });
+                    let outcome = match result {
+                        Ok(_) => Outcome::Pass,
+                        Err(ProgramError::Parse(P4Error::Syntax(_)))
+                        | Err(ProgramError::Runtime(_)) => Outcome::Fail,
+                        Err(ProgramError::Parse(error)) => {
+                            return Err(Error::Invalid(format!(
+                                "{}: test execution error: {error}",
+                                path.display()
+                            )));
+                        }
                     };
                     executed += 1;
                     if outcome == Outcome::Pass {

@@ -52,8 +52,7 @@ impl Arch {
         arena: &mut ValueArena,
         encoding: Encoding,
     ) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self)
-            .map_err(|error| ExternError::Failure(error.to_string()))?;
+        let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
         let typ = typ::make::var(
             crate::phrase!(node: "archState".to_owned(), span: Span::default()),
             Vec::new(),
@@ -68,7 +67,6 @@ impl Arch {
         value: &Value,
     ) -> Result<Self, ExternError> {
         let json = get::external(arena, value)?.clone();
-        decode_with(arena, encoding, json.as_ref())
-            .map_err(|error| ExternError::Failure(error.to_string()))
+        decode_with(arena, encoding, json.as_ref()).map_err(ExternError::from)
     }
 }
