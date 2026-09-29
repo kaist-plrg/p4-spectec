@@ -1,67 +1,212 @@
-//! Pinned interpreter backtracking failures
+//! Pinned interpreter failures
 //!
-//! The same source is lowered through each public pipeline and run on nat 1.
-//! Setup errors, fatal failures, and unexpected success cannot become snapshots.
+//! Each source runs through AL, SL, and PL with nat 1 as the input to R.
+//! Cases check the runtime failure kind and code before rendering a snapshot.
+//! Setup failures and unexpected success fail the test.
 
 use super::failure;
 use crate::Result;
 use p4spec_rust::{
-    diagnostic::Report,
+    diagnostic::{Report, ReportKind},
     interp::shared::backtrack::Failure,
     lang::{common::source::Span, data::value::make},
     runner::{self, BuiltinInterface, Config, Interpreter, NullExtern, Runner},
 };
 
+// = Expectations
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum FailureKind {
+    Fatal,
+    Mismatch,
+}
+
+/// Collects runtime codes beneath invocation and expression frames.
+fn codes(report: &Report) -> Vec<&str> {
+    let mut codes_found = Vec::new();
+    let mut pending = vec![report];
+    while let Some(report) = pending.pop() {
+        // Inspect causes without depending on rendered text
+        if let ReportKind::Cause(diagnostic) = &report.kind
+            && let Some(code) = diagnostic.code.as_deref()
+        {
+            codes_found.push(code);
+        }
+        // Include causes nested under operation frames
+        pending.extend(&report.children);
+    }
+    codes_found
+}
+
 // = Execution
 
-/// Evaluates R and preserves its exhausted mismatch for final rendering.
+/// Checks that R fails with the expected kind and code.
 fn reject<Interp>(
     name: &str,
     mut runner: Runner<Interp, BuiltinInterface, NullExtern>,
+    kind_expect: FailureKind,
+    code: &str,
 ) -> Result<Vec<Report>>
 where
     Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
 {
-    // Match the reference harness's entry relation and nat input
+    // Keep the entry relation and input common to all cases
     let value = make::nat(runner.arena_mut(), 1.into(), Span::default())
         .map_err(|error| failure(name, error))?;
-    // Accept only recoverable exhaustion at the actual interpreter boundary
-    match runner.context().call_rel("R", &[value]) {
-        Err(failure @ Failure::Mismatch(_)) => Ok(vec![*failure.into_report()]),
-        Err(Failure::Fatal(report)) => {
-            Err(failure(name, format!("unexpected fatal failure: {report}")))
-        }
-        Ok(_) => Err(failure(name, "relation unexpectedly matched")),
+    let error = runner
+        .context()
+        .call_rel("R", &[value])
+        .err()
+        .ok_or_else(|| failure(name, "relation unexpectedly matched"))?;
+
+    // Check recovery behavior before converting the failure to a report
+    let kind = match &error {
+        Failure::Fatal(_) => FailureKind::Fatal,
+        Failure::Mismatch(_) => FailureKind::Mismatch,
+    };
+    if kind != kind_expect {
+        return Err(failure(name, format!("expected {kind_expect:?}, got {kind:?}")));
     }
+
+    // Reject unrelated runtime errors even when updating snapshots
+    let report = error.into_report();
+    let codes_actual = codes(&report);
+    if !codes_actual.contains(&code) {
+        return Err(failure(
+            name,
+            format!("missing expected diagnostic {code}, got {codes_actual:?}"),
+        ));
+    }
+    Ok(vec![*report])
 }
 
 // = Cases
 
-/// Runs a pinned local backtracking case through its selected interpreter.
+/// Runs a local negative case through its selected interpreter.
 pub fn run(name: &str) -> Result<Vec<Report>> {
-    let path = "interp/backtrack.watsup";
-    let config = Config::new(true, false, false);
-    // Earlier-stage or loading failures remain setup failures
-    match name {
-        "interp-al-backtrack" => {
+    // Split the stage from the shared source case
+    let (stage, case) = name
+        .strip_prefix("interp-")
+        .and_then(|name| name.split_once('-'))
+        .ok_or_else(|| failure(name, "invalid interpreter diagnostic case"))?;
+    let (kind, code) = match case {
+        "backtrack" | "deepest-failure" | "later-tie" => {
+            (FailureKind::Mismatch, "runtime/condition-unmet")
+        }
+        "index-out-of-bounds" | "nested-call" => {
+            // AL inserts a bounds condition before evaluating an index
+            (FailureKind::Mismatch, "runtime/condition-unmet")
+        }
+        "slice-out-of-bounds" => (FailureKind::Fatal, "runtime/slice-out-of-bounds"),
+        "numeric-invalid" => (FailureKind::Fatal, "runtime/numeric-invalid"),
+        "builtin-failed" => (FailureKind::Mismatch, "runtime/builtin-failed"),
+        "extern-failed" | "fatal-skips-otherwise" | "builtin-fallback" => {
+            (FailureKind::Fatal, "runtime/extern-failed")
+        }
+        "relation-nondeterministic" if stage == "al" => {
+            (FailureKind::Fatal, "runtime/relation-nondeterministic")
+        }
+        "function-nondeterministic" if stage == "al" => {
+            (FailureKind::Fatal, "runtime/function-nondeterministic")
+        }
+        "relation-nondeterministic" | "function-nondeterministic" => {
+            (FailureKind::Fatal, "runtime/instruction-nondeterministic")
+        }
+        _ => return Err(failure(name, "unknown interpreter diagnostic case")),
+    };
+
+    // Enable only the checks needed by each case
+    let det = matches!(case, "relation-nondeterministic" | "function-nondeterministic");
+    let config = Config::new(true, det, false);
+    let path = format!("interp/{case}.watsup");
+
+    // Keep parse, elaboration, lowering, and loading failures out of snapshots
+    match stage {
+        "al" => {
             let spec_al = p4spec_rust::algo([path]).map_err(|error| failure(name, error))?;
             let runner = runner::build_al(spec_al, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
-            reject(name, runner)
+            reject(name, runner, kind, code)
         }
-        "interp-sl-backtrack" => {
+        "sl" => {
             let spec_sl =
                 p4spec_rust::structure([path], true).map_err(|error| failure(name, error))?;
             let runner = runner::build_sl(spec_sl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
-            reject(name, runner)
+            reject(name, runner, kind, code)
         }
-        "interp-pl-backtrack" => {
+        "pl" => {
             let spec_pl = p4spec_rust::prosify([path]).map_err(|error| failure(name, error))?;
             let runner = runner::build_pl(spec_pl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
-            reject(name, runner)
+            reject(name, runner, kind, code)
         }
-        _ => Err(failure(name, "unknown interpreter diagnostic case")),
+        _ => Err(failure(name, "unknown interpreter stage")),
+    }
+}
+
+// = Tests
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    fn check(case: &str, kind: FailureKind, code: &str) -> Result<Vec<Report>> {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("expected/diagnostic/interp")
+            .join(case)
+            .with_extension("watsup");
+        let spec_al = p4spec_rust::algo([path]).unwrap();
+        let runner =
+            runner::build_al(spec_al, Config::new(true, false, false), NullExtern).unwrap();
+        reject(case, runner, kind, code)
+    }
+
+    #[test]
+    fn fatal_execution_errors_can_be_snapshotted() {
+        let reports = check("extern-failed", FailureKind::Fatal, "runtime/extern-failed").unwrap();
+        assert_eq!(reports.len(), 1);
+    }
+
+    #[test]
+    fn mismatches_can_be_snapshotted() {
+        let reports = check("backtrack", FailureKind::Mismatch, "runtime/condition-unmet").unwrap();
+        assert_eq!(reports.len(), 1);
+    }
+
+    #[test]
+    fn fatal_execution_errors_cannot_pass_as_mismatches() {
+        let error =
+            check("extern-failed", FailureKind::Mismatch, "runtime/extern-failed").unwrap_err();
+        assert!(error.to_string().contains("expected Mismatch, got Fatal"), "{error}");
+    }
+
+    #[test]
+    fn mismatches_cannot_pass_as_fatal_execution_errors() {
+        let error = check("backtrack", FailureKind::Fatal, "runtime/condition-unmet").unwrap_err();
+        assert!(error.to_string().contains("expected Fatal, got Mismatch"), "{error}");
+    }
+
+    #[test]
+    fn unrelated_errors_cannot_be_snapshotted() {
+        let error = check("backtrack", FailureKind::Mismatch, "runtime/extern-failed").unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("missing expected diagnostic runtime/extern-failed"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn successful_execution_cannot_be_snapshotted() {
+        let error = check(
+            "relation-nondeterministic",
+            FailureKind::Fatal,
+            "runtime/relation-nondeterministic",
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("relation unexpectedly matched"), "{error}");
     }
 }

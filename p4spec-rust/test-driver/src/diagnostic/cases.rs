@@ -240,8 +240,48 @@ pub const ALGO: &[&str] = &[
     "table-repeated-binding.watsup",
 ];
 
-/// Lists pinned local backtracking failures across interpreters.
-pub const INTERP: &[&str] = &["interp-al-backtrack", "interp-sl-backtrack", "interp-pl-backtrack"];
+/// Lists runtime failures and backtracking cases across interpreters.
+pub const INTERP: &[&str] = &[
+    "interp-al-backtrack",
+    "interp-sl-backtrack",
+    "interp-pl-backtrack",
+    "interp-al-index-out-of-bounds",
+    "interp-sl-index-out-of-bounds",
+    "interp-pl-index-out-of-bounds",
+    "interp-al-slice-out-of-bounds",
+    "interp-sl-slice-out-of-bounds",
+    "interp-pl-slice-out-of-bounds",
+    "interp-al-numeric-invalid",
+    "interp-sl-numeric-invalid",
+    "interp-pl-numeric-invalid",
+    "interp-al-builtin-failed",
+    "interp-sl-builtin-failed",
+    "interp-pl-builtin-failed",
+    "interp-al-fatal-skips-otherwise",
+    "interp-sl-fatal-skips-otherwise",
+    "interp-pl-fatal-skips-otherwise",
+    "interp-al-builtin-fallback",
+    "interp-sl-builtin-fallback",
+    "interp-pl-builtin-fallback",
+    "interp-al-nested-call",
+    "interp-sl-nested-call",
+    "interp-pl-nested-call",
+    "interp-al-deepest-failure",
+    "interp-sl-deepest-failure",
+    "interp-pl-deepest-failure",
+    "interp-al-later-tie",
+    "interp-sl-later-tie",
+    "interp-pl-later-tie",
+    "interp-al-relation-nondeterministic",
+    "interp-sl-relation-nondeterministic",
+    "interp-pl-relation-nondeterministic",
+    "interp-al-function-nondeterministic",
+    "interp-sl-function-nondeterministic",
+    "interp-pl-function-nondeterministic",
+    "interp-al-extern-failed",
+    "interp-sl-extern-failed",
+    "interp-pl-extern-failed",
+];
 
 /// Lists malformed skeletons and file operation failures.
 pub const SPLICE: &[&str] = &[
