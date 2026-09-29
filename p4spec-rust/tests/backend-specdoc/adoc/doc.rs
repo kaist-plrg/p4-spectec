@@ -49,7 +49,7 @@ fn adjacent_code_links_keep_their_own_delimiters() {
 }
 
 #[test]
-fn adjacent_code_link_failures_keep_each_declaration() {
+fn adjacent_code_link_failures_keep_each_subject_span() {
     use p4spec_rust::{diagnostic::ReportKind, lang::common::source::Position};
     let span_a = Span::new(Position::new("a.watsup", 1, 0), Position::new("a.watsup", 1, 1));
     let span_b = Span::new(Position::new("b.watsup", 2, 0), Position::new("b.watsup", 2, 1));
@@ -284,7 +284,7 @@ fn link_warnings_preserve_order_location_notes_and_deduplication() {
 }
 
 #[test]
-fn link_warnings_preserve_declarations_without_line_coordinates() {
+fn link_warnings_preserve_subject_spans_without_line_coordinates() {
     use p4spec_rust::{
         diagnostic::{LabelStyle, RenderConfig, Renderer, ReportKind},
         lang::common::source::Position,
@@ -328,11 +328,9 @@ fn link_warnings_preserve_declarations_without_line_coordinates() {
     let rendered = Renderer::new(RenderConfig::default())
         .render_to_string(&warnings[0])
         .unwrap();
-    assert!(
-        rendered.contains("at generated source: linked declaration: this inner link is suppressed")
-    );
+    assert!(rendered.contains("at generated source: this inner link is suppressed"));
     assert!(rendered.contains(
-        "related location at declaration.watsup: declaration referenced by the outer link"
+        "related location at declaration.watsup: this supplies the display text for the outer link"
     ));
     assert!(!rendered.contains("fragment.watsup"));
 }

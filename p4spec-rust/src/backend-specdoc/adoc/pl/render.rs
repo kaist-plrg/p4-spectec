@@ -878,7 +878,7 @@ impl Prose {
                     false,
                 );
                 let link = Link::Subject(Subject::Function(
-                    crate::phrase! { node: id.node.clone(), span: exp.hints.span.clone() },
+                    crate::phrase! { node: id.node.clone(), span: hint.span.clone() },
                 ));
                 Some(Prose::link(link, prose_call))
             }
@@ -1022,7 +1022,7 @@ impl Prose {
                 false,
             );
             let link = Link::Subject(Subject::Type(
-                crate::phrase! { node: id_typ.node.clone(), span: exp.hints.span.clone() },
+                crate::phrase! { node: id_typ.node.clone(), span: hint.span.clone() },
             ));
             return Prose::link(link, prose_case);
         }
@@ -1155,7 +1155,7 @@ impl Prose {
         let prose_call =
             alternate(hint, &|text_body| reindent_lines(0, text_body), &Prose::of_arg, args, false);
         let link = Link::Subject(Subject::Function(
-            crate::phrase! { node: id.node.clone(), span: exp.hints.span.clone() },
+            crate::phrase! { node: id.node.clone(), span: hint.span.clone() },
         ));
         Prose::link(link, prose_call)
     }
@@ -1853,8 +1853,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Block {
         let hint_opt =
             if hold { &instr.hints.node.prose_true } else { &instr.hints.node.prose_false };
+        let span = hint_opt
+            .as_ref()
+            .map_or(&instr.hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: hold_instr.id.node.clone(), span: instr.hints.span.clone() },
+            crate::phrase! { node: hold_instr.id.node.clone(), span: span.clone() },
         ));
         let prose_cond = match hint_opt {
             // Hinted relations describe the branch condition in prose
@@ -2110,8 +2113,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .flat_map(|iter_instr| &iter_instr.vars_bind)
             .any(|var| !var.id.node.starts_with('_'));
         // Apply paired relation hints when both sides are available
+        let span = match (&instr.hints.node.prose_in, &instr.hints.node.prose_out) {
+            (Some(hint_input), Some(_)) => &hint_input.span,
+            _ => &instr.hints.span,
+        };
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: rule_instr.id.node.clone(), span: instr.hints.span.clone() },
+            crate::phrase! { node: rule_instr.id.node.clone(), span: span.clone() },
         ));
         let prose_rule = if let (Some(hint_input), Some(hint_output)) =
             (&instr.hints.node.prose_in, &instr.hints.node.prose_out)
@@ -2807,8 +2814,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             ),
             None => Prose::of_rel_title_math(&group_instr.rel_signature, &group_instr.exps_input),
         };
+        let span = hint_opt.map_or(&instr.hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: group_instr.id_rel.node.clone(), span: instr.hints.span.clone() },
+            crate::phrase! { node: group_instr.id_rel.node.clone(), span: span.clone() },
         ));
         let prose_title = Prose::link(link, prose_body);
         // Render the group body below its linked title
@@ -2854,8 +2862,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             ),
             None => Prose::of_rel_title_math(signature, exps),
         };
+        let span = hint_opt.map_or(&hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: id_rel.node.clone(), span: hints.span.clone() },
+            crate::phrase! { node: id_rel.node.clone(), span: span.clone() },
         ));
         let prose_title = Prose::link(link, prose_body);
         // Render local arms while keeping relation fragment targets fixed
@@ -3011,8 +3020,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 Prose::PlainCode(code_signature)
             }
         };
+        let span = hint_opt.map_or(&hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Function(
-            crate::phrase! { node: id_func.node.clone(), span: hints.span.clone() },
+            crate::phrase! { node: id_func.node.clone(), span: span.clone() },
         ));
         Block::inline(Prose::link(link, prose_body))
     }

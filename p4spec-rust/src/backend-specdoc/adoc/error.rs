@@ -1,6 +1,6 @@
 //! Diagnostics owned by AsciiDoc serialization
 //!
-//! Link warnings identify the referenced declaration or the owning fragment.
+//! Link warnings locate the displayed text at its hint or declaration.
 //! Serialization collects warnings for its caller and preserves fallback text.
 
 use super::pl::doc::doc::{Link, Subject};
@@ -19,13 +19,13 @@ fn describe_link(link: &Link) -> String {
     }
 }
 
-/// Locates a link problem at its declaration or the rendered fragment.
+/// Locates a link problem at its subject span or the rendered fragment.
 fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
-    // Subject identifiers retain declaration spans independently of their hints
-    let (span, label) = match link {
-        Link::Direct(_) => (span, label.to_owned()),
+    // Subject spans identify the hint or declaration supplying displayed text
+    let span = match link {
+        Link::Direct(_) => span,
         Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) => {
-            (&id.span, format!("linked declaration: {label}"))
+            &id.span
         }
     };
     let labels = vec![Label::primary(span, label)];
@@ -64,13 +64,16 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
         ),
         "this inner link is suppressed",
     );
-    // Relate the declaration referenced by the enclosing link
+    // Relate the source of the enclosing link's displayed text
     if let Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) =
         link_outer
     {
         diagnostic.labels.push(Label::secondary(
             &id.span,
-            format!("declaration referenced by the outer link to {}", describe_link(link_outer)),
+            format!(
+                "this supplies the display text for the outer link to {}",
+                describe_link(link_outer)
+            ),
         ));
     }
     // Explain both the emitted markup and how to avoid the lost reference
@@ -92,7 +95,7 @@ pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
         link,
         LINK_BODY_EMPTY,
         format!("empty display text for the link to {}", describe_link(link)),
-        "this link has no display text",
+        "this produces no link text",
     );
     diagnostic
         .notes
@@ -109,7 +112,7 @@ pub(super) fn link_text_invalid(span: &Span, link: &Link, text: &str) -> Diagnos
         link,
         LINK_TEXT_INVALID,
         format!("cannot represent the link text for {} in AsciiDoc", describe_link(link)),
-        "this link has display text with conflicting delimiters",
+        "this produces link text with conflicting delimiters",
     );
     diagnostic
         .notes

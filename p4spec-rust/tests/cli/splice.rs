@@ -241,10 +241,7 @@ fn splice_collects_adoc_warnings_before_later_io_failure() {
     assert!(idx_warning < idx_unused && idx_unused < idx_error, "{text}");
     assert!(text.contains("spec.watsup:"), "{text}");
     assert!(text.contains(" = Generated link text: \"[x]<y>\""), "{text}");
-    assert!(
-        text.contains("linked declaration: this link has display text with conflicting delimiters"),
-        "{text}"
-    );
+    assert!(text.contains("this produces link text with conflicting delimiters"), "{text}");
     assert!(!text.contains("Warning:"), "{text}");
     assert_eq!(fs::read_to_string(directory.0.join("blocked")).unwrap(), "original");
 }

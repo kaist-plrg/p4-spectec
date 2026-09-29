@@ -66,7 +66,10 @@ pub enum Link {
     Subject(Subject),
 }
 
-/// A definition referenced by prose, located at its owning declaration.
+/// A definition referenced by prose.
+///
+/// Each identifier carries the target name and the span of the hint
+/// supplying its display text, or the declaration span when no hint is used.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Subject {
     /// Identifies a function by its source name without the dollar prefix.
