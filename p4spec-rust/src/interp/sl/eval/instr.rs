@@ -16,6 +16,7 @@ use super::{
     assign,
     expr::{self, eval_exp, eval_exps},
 };
+use crate::diagnostic::Report;
 use crate::interp::shared::context::{IterContext, WriteContext};
 use crate::interp::shared::error;
 use crate::interp::shared::eval::{Invoker, iter, ops};
@@ -193,6 +194,7 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     // Whether the relation applies to the arguments, for every element
+    let mut errors = Vec::new();
     let cond = unwrap!(eval_cond_iter(
         runner_ctx,
         ctx.as_ref(),
@@ -202,8 +204,11 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
             match SlInterp::invoke_rel(runner_ctx, ctx, &instr.id, &values) {
                 // A match means it holds
                 ok!(_) => ok!(true),
-                // A mismatch means it does not
-                unmatch!(_) => ok!(false),
+                // Keep the reason if this hold condition fails
+                unmatch!(reports) => {
+                    errors = reports;
+                    ok!(false)
+                }
                 // Fatal errors propagate
                 fatal!(errors) => fatal!(errors),
             }
@@ -219,10 +224,13 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
         // Likewise for the not-hold branch
         ast::HoldCase::NotHold(block, _) if !cond => eval_block(runner_ctx, ctx, block, tail),
         // Only the other branch present: fall through
-        ast::HoldCase::Hold(..) => ok!(Flow::cont(
-            instr.id.span.clone(),
-            error::prem::hold_condition_unmet(instr.id.node.clone()),
-        )),
+        ast::HoldCase::Hold(..) => {
+            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.clone());
+            let report = Report::from(diagnostic)
+                .with_span(&instr.id.span)
+                .with_children(errors);
+            ok!(Flow::Cont(vec![report]))
+        }
         // Likewise, recording the failed not-hold condition
         ast::HoldCase::NotHold(..) => ok!(Flow::cont(
             instr.id.span.clone(),

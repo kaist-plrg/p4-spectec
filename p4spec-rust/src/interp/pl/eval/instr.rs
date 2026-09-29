@@ -11,6 +11,7 @@ use super::{
     assign,
     expr::{eval_exp, eval_exps},
 };
+use crate::diagnostic::Report;
 use crate::interp::shared::error;
 use crate::lang::hints::input;
 use crate::phrase;
@@ -252,15 +253,19 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    // Treat a relation mismatch as false, retaining fatal errors
+    // Keep the first failed relation call under the condition
+    let mut errors = Vec::new();
     let cond =
         unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
             let values = unwrap!(eval_exps(runner_ctx, ctx, &instr.not_exp.args()));
             match PlInterp::invoke_rel(runner_ctx, ctx, &instr.id, &values) {
                 // A match means it holds
                 ok!(_) => ok!(true),
-                // A mismatch means it does not
-                unmatch!(_) => ok!(false),
+                // Keep the reason if this hold condition fails
+                unmatch!(reports) => {
+                    errors = reports;
+                    ok!(false)
+                }
                 // Fatal errors propagate
                 fatal!(errors) => fatal!(errors),
             }
@@ -274,10 +279,21 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         ast::HoldCase::Hold(block, _) if cond => evaluate_block(runner_ctx, ctx, block),
         // Likewise for the not-hold branch
         ast::HoldCase::NotHold(block, _) if !cond => evaluate_block(runner_ctx, ctx, block),
-        // Only the other branch present: fall through
-        _ => ok!((
+        // A failed hold condition retains its relation failure
+        ast::HoldCase::Hold(..) => {
+            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.clone());
+            let report = Report::from(diagnostic)
+                .with_span(&instr.id.span)
+                .with_children(errors);
+            ok!((ctx, Flow::Cont(vec![report])))
+        }
+        // A failed not-hold condition has no inner failure
+        ast::HoldCase::NotHold(..) => ok!((
             ctx,
-            Flow::cont(instr.id.span.clone(), error::prem::condition_unmet(instr.id.node.clone()))
+            Flow::cont(
+                instr.id.span.clone(),
+                error::prem::not_hold_condition_unmet(instr.id.node.clone()),
+            )
         )),
     }
 }

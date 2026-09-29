@@ -8,6 +8,7 @@
 
 use super::super::{AlInterp, context::Context};
 use super::{assign, expr};
+use crate::diagnostic::Report;
 use crate::interp::shared::error;
 use crate::interp::shared::{
     backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
@@ -100,12 +101,11 @@ fn eval_if_hold_prem<'global, Iface: Interface, Ext: Extern>(
         fatal!(errors) => fatal!(errors),
         // It did not apply: the premise fails, naming the relation
         unmatch!(errors) => {
-            let mut report = error::at(
-                error::prem::hold_condition_unmet(prem.id.node.clone()),
-                prem.id.span.clone(),
-            );
-            report.children = errors;
-            unmatch!(vec![*report])
+            let diagnostic = error::prem::hold_condition_unmet(prem.id.node.clone());
+            let report = Report::from(diagnostic)
+                .with_span(&prem.id.span)
+                .with_children(errors);
+            unmatch!(vec![report])
         }
     }
 }

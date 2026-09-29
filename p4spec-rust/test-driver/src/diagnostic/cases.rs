@@ -281,6 +281,18 @@ pub const INTERP: &[&str] = &[
     "extern-failed-interp-al",
     "extern-failed-interp-sl",
     "extern-failed-interp-pl",
+    "hold-failed-interp-al",
+    "hold-failed-interp-sl",
+    "hold-failed-interp-pl",
+    "hold-iter-failed-interp-al",
+    "hold-iter-failed-interp-sl",
+    "hold-iter-failed-interp-pl",
+    "not-hold-failed-interp-al",
+    "not-hold-failed-interp-sl",
+    "not-hold-failed-interp-pl",
+    "hold-fatal-interp-al",
+    "hold-fatal-interp-sl",
+    "hold-fatal-interp-pl",
 ];
 
 /// Lists malformed skeletons and file operation failures.
