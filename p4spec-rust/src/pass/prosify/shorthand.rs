@@ -153,7 +153,13 @@ fn visible(exp: &pl::Exp) -> bool {
 
 /// Folds `let C(x, y) = e` with a `prose_fields` hint into a destructuring.
 fn shorten_destruct<Tier>(instr: &mut pl::Instr<Tier>) {
-    let Some(field_names) = instr.hints.prose_fields.as_ref().map(|hint| hint.fields()) else {
+    let Some(field_names) = instr
+        .hints
+        .node
+        .prose_fields
+        .as_ref()
+        .map(|hint| hint.node.as_slice())
+    else {
         return;
     };
     let pl::InstrKind::Let(pl::LetInstr { exp_l, exp_r, iter_instrs }) = &instr.node.node else {
@@ -173,7 +179,7 @@ fn shorten_destruct<Tier>(instr: &mut pl::Instr<Tier>) {
     let bindings = exps
         .into_iter()
         .zip(field_names)
-        .map(|(exp, name)| (visible(exp).then(|| name.clone()), exp.clone()))
+        .map(|(exp, name)| (visible(exp).then(|| name.node.clone()), exp.clone()))
         .collect();
     instr.node.node = pl::InstrKind::Destruct(pl::DestructInstr { bindings, exp: exp_r.clone() });
 }

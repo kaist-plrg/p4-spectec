@@ -1,14 +1,17 @@
 //! Native diagnostic snapshot acceptance
 //!
-//! Each case executes a product API and renders its report without colors.
+//! Cases render product API reports or capture the product CLI's stderr.
 //! Each input has an adjacent `.expect` file containing its complete output.
 //! Comparisons preserve whitespace, and successful cases have empty expectations.
 
 mod algo;
 mod cases;
+mod command;
 mod elab;
 mod interp;
 mod parse;
+mod prose;
+mod specdoc;
 mod splice;
 
 use std::path::Path;
@@ -34,8 +37,11 @@ pub enum Suite {
     Parse,
     Elab,
     Algo,
+    Prose,
     Interp,
     Splice,
+    Specdoc,
+    Command,
 }
 
 // = Acceptance runner
@@ -51,25 +57,41 @@ fn run_suite(
         Suite::Parse => ("parse", None),
         Suite::Elab => ("elab", None),
         Suite::Algo => ("algo", None),
+        Suite::Prose => ("prose", None),
         Suite::Interp => ("interp", Some(DisplayStyle::Short)),
         Suite::Splice => ("splice", None),
+        Suite::Specdoc => ("specdoc", None),
+        Suite::Command => unreachable!("command diagnostics use subprocess output"),
     };
     let config = RenderConfig { frame_style, ..Default::default() };
-    let progress = ProgressBar::new(cases.len() as u64);
-    let path_suite = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("expected/diagnostic")
-        .join(name_suite);
-
-    // Render each input's diagnostics in emission order
-    for name in cases {
+    run_output_suite(name_suite, cases, |name| {
         let reports = run_case(name)?;
         let mut text = String::new();
+        // Retain complete report output in emission order
         for report in reports {
             let rendered = Renderer::new(config.clone())
                 .render_to_string(&report)
                 .map_err(|error| failure(name, error))?;
             text.push_str(&rendered);
         }
+        Ok(text)
+    })
+}
+
+/// Compares complete rendered API or subprocess output with native expectations.
+fn run_output_suite(
+    name_suite: &str,
+    cases: &[&str],
+    run_case: impl Fn(&str) -> Result<String>,
+) -> Result<()> {
+    let progress = ProgressBar::new(cases.len() as u64);
+    let path_suite = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("expected/diagnostic")
+        .join(name_suite);
+
+    // Exercise each input before comparing its complete rendered output
+    for name in cases {
+        let text = run_case(name)?;
         // Compare the complete output without trimming codespan whitespace
         let path = path_suite.join(name).with_extension("expect");
         expect_file![path].assert_eq(&text);
@@ -82,7 +104,11 @@ fn run_suite(
 }
 
 /// Executes selected diagnostic inputs and compares their rendered output.
-pub fn run(suite: Option<Suite>) -> Result<()> {
+pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
+    // Require an explicit binary whenever subprocess acceptance is selected
+    if matches!(suite, None | Some(Suite::Command)) && path_cli.is_none() {
+        return Err(failure("command", "--cli is required for command diagnostic acceptance"));
+    }
     // Keep source identities independent of the checkout location
     std::env::set_current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("expected/diagnostic"))?;
     eprintln!("diagnostics: OCaml reference {}", cases::REVISION);
@@ -92,16 +118,28 @@ pub fn run(suite: Option<Suite>) -> Result<()> {
         Some(Suite::Parse) => run_parse(),
         Some(Suite::Elab) => run_suite(Suite::Elab, cases::ELAB, elab::run),
         Some(Suite::Algo) => run_suite(Suite::Algo, cases::ALGO, algo::run),
+        Some(Suite::Prose) => run_suite(Suite::Prose, cases::PROSE, prose::run),
         Some(Suite::Interp) => run_suite(Suite::Interp, cases::INTERP, interp::run),
         Some(Suite::Splice) => run_suite(Suite::Splice, cases::SPLICE, splice::run),
+        Some(Suite::Specdoc) => run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run),
+        Some(Suite::Command) => run_command(path_cli),
         None => {
             run_parse()?;
             run_suite(Suite::Elab, cases::ELAB, elab::run)?;
             run_suite(Suite::Algo, cases::ALGO, algo::run)?;
+            run_suite(Suite::Prose, cases::PROSE, prose::run)?;
             run_suite(Suite::Interp, cases::INTERP, interp::run)?;
-            run_suite(Suite::Splice, cases::SPLICE, splice::run)
+            run_suite(Suite::Splice, cases::SPLICE, splice::run)?;
+            run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run)?;
+            run_command(path_cli)
         }
     }
+}
+
+/// Executes command cases after the binary-path admission check.
+fn run_command(path_cli: Option<&Path>) -> Result<()> {
+    let path_cli = path_cli.expect("command admission requires a CLI path");
+    run_output_suite("command", cases::COMMAND, |name| command::run(path_cli, name))
 }
 
 /// Adapts parser failures to the shared diagnostic sequence.

@@ -14,13 +14,16 @@ mod shorthand;
 mod stamp;
 mod transform;
 
-pub use error::{ProseError, ProseErrorKind};
+pub use error::ProseError;
 
 use context::Context;
 
 use crate::lang::{pl::ast as pl, sl::ast as sl};
 
 /// Converts a rule-group-preserving SL specification to PL.
+///
+/// Requires validated SL produced by `structure::convert(spec_al, false)`.
+/// Invalid user hints return reports; violated producer invariants panic.
 pub fn convert(spec_sl: sl::Spec) -> Result<pl::Spec, ProseError> {
     transform::prosify_spec(spec_sl)
 }

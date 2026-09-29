@@ -6,6 +6,13 @@
 /// Pins the OCaml inputs represented by the diagnostic cases.
 pub const REVISION: &str = "960e2922b55288722c413732002e33ac06664e6f";
 
+/// Lists the splice command reference followed by admission regressions.
+pub const COMMAND: &[&str] = &[
+    "command-splice-file-count-mismatch",
+    "command-splice-output-conflict",
+    "command-splice-input-required",
+];
+
 /// Lists file fixtures and constructed parser inputs in execution order.
 pub const PARSE: &[&str] = &[
     "parse-hint-on-plain.watsup",
@@ -303,3 +310,13 @@ pub const SPLICE: &[&str] = &[
     "input-missing",
     "output-parent-file",
 ];
+
+/// Lists the pinned annotate cases under their Rust prose stage.
+pub const PROSE: &[&str] = &[
+    "hint-prose-fields-arity.watsup",
+    "hint-prose-fields-shape.watsup",
+    "hint-prose-index-out-of-range.watsup",
+];
+
+/// Lists standalone source fixtures that reach AsciiDoc markup warnings.
+pub const SPECDOC: &[&str] = &["adoc-nested-link", "adoc-empty-body", "adoc-invalid-text"];

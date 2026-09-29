@@ -2,7 +2,7 @@
 //!
 //! [`parse`], [`elab`], [`algo`], [`structure`], and [`prosify`] run the passes
 //! from ordered source paths to the requested language.
-//! Errors preserve the failing stage and its source diagnostics;
+//! Errors preserve the reports produced by the failing stage;
 //! the `*_with_warnings` variants also return ordered elaboration warnings,
 //! including when a later stage fails. Callers choose how to report them.
 
@@ -10,34 +10,15 @@ use std::path::Path;
 
 use crate::{
     diagnostic::Report,
-    frontend::{error::FrontendError, parse::parse_files},
+    frontend::parse::parse_files,
     lang::{al, el, il, pl, sl},
-    pass::{
-        self, algo::AlgoError, elaborate::ElabError, prosify::ProseError, structure::StructureError,
-    },
+    pass,
 };
 
 // = Errors
 
-/// A failure while reading or transforming a specification.
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    /// Reading or parsing source failed.
-    #[error(transparent)]
-    Frontend(#[from] FrontendError),
-    /// Elaborating EL into IL failed.
-    #[error(transparent)]
-    Elab(ElabError),
-    /// Converting IL into AL failed.
-    #[error(transparent)]
-    Algo(AlgoError),
-    /// Structuring AL into SL failed.
-    #[error(transparent)]
-    Structure(StructureError),
-    /// Converting SL into PL failed.
-    #[error(transparent)]
-    Prose(#[from] ProseError),
-}
+/// A report produced while reading or transforming a specification.
+pub type Error = Box<Report>;
 
 // = Transformations
 
@@ -47,7 +28,7 @@ where
     I: IntoIterator<Item = P>,
     P: AsRef<Path>,
 {
-    Ok(parse_files(paths)?)
+    parse_files(paths)
 }
 
 /// Parses and elaborates specification paths into typed IL.
@@ -74,8 +55,7 @@ where
         // Parsing fails before elaboration can accumulate warnings
         Err(error) => return (Err(error), Vec::new()),
     };
-    let (result, warnings) = pass::elaborate::convert_with_warnings(spec_el);
-    (result.map_err(Error::Elab), warnings)
+    pass::elaborate::convert_with_warnings(spec_el)
 }
 
 /// Parses, elaborates, and converts specification paths into AL.
@@ -94,7 +74,7 @@ where
     P: AsRef<Path>,
 {
     let (result, warnings) = elab_with_warnings(paths);
-    let result = result.and_then(|spec_il| pass::algo::convert(spec_il).map_err(Error::Algo));
+    let result = result.and_then(pass::algo::convert);
     (result, warnings)
 }
 
@@ -122,9 +102,7 @@ where
     P: AsRef<Path>,
 {
     let (result, warnings) = algo_with_warnings(paths);
-    let result = result.and_then(|spec_al| {
-        pass::structure::convert(spec_al, without_rule_groups).map_err(Error::Structure)
-    });
+    let result = result.and_then(|spec_al| pass::structure::convert(spec_al, without_rule_groups));
     (result, warnings)
 }
 
@@ -146,6 +124,6 @@ where
     P: AsRef<Path>,
 {
     let (result, warnings) = structure_with_warnings(paths, false);
-    let result = result.and_then(|spec_sl| pass::prosify::convert(spec_sl).map_err(Error::Prose));
+    let result = result.and_then(pass::prosify::convert);
     (result, warnings)
 }

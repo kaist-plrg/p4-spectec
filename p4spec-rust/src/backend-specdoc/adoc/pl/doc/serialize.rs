@@ -11,7 +11,14 @@
 //! -> . +++<span class="bk-arm-anchor" id="arm"></span>+++Done
 //! ```
 
-use crate::backend_specdoc::anchor::{AnchorContext, Presentation};
+use crate::{
+    backend_specdoc::{
+        adoc::error,
+        anchor::{AnchorContext, Presentation},
+    },
+    diagnostic::{Diagnostic, Report},
+    lang::common::source::Span,
+};
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -39,29 +46,6 @@ fn adoc_mono_chopped(text: &str) -> String {
         })
         .collect();
     texts_word.join(" ")
-}
-
-// - Cross-references
-//
-//   adoc_link("t", "x")      -> xref:t[x]
-//   adoc_link("t", "a[b]")   -> <<t,a[b]>>
-//   adoc_link("t", "a<b>")   -> xref:t[a<b>]
-
-/// Chooses cross-reference delimiters that do not collide with the label.
-fn adoc_link(target: &str, text: &str) -> String {
-    // Brackets require the alternate cross-reference syntax
-    if !text.contains(['[', ']']) {
-        format!("xref:{target}[{text}]")
-    } else if !text.contains(['<', '>']) {
-        format!("<<{target},{text}>>")
-    } else {
-        // Neither delimiter can represent this label
-        eprintln!(
-            "Warning: Asciidoc link text contains both brackets and angle brackets. \
-             Link may not render correctly.\n\t{text}"
-        );
-        text.to_owned()
-    }
 }
 
 // - List markers
@@ -200,33 +184,28 @@ impl Block {
 
 // == Anchor resolution
 //
-//   subject_name(Function("f"))        -> Some("f")
-//   Link::Direct("t").target(anchor)   -> Some("t")
+//   subject_name(Function(id_f))   -> Some("f")
+//   Direct("t")                    -> Some("t")
 
 /// Resolves a subject to its unqualified definition name.
 pub fn subject_name(subject: &Subject) -> Option<String> {
     match subject {
-        Subject::Function(id) | Subject::Relation(id) => Some(id.clone()),
+        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => Some(id.node.clone()),
     }
 }
 
 impl Link {
     fn target(&self, anchor_ctx: &AnchorContext<'_>) -> Option<String> {
         match self {
-            Link::Direct(target) => Some(target.clone()),
-            Link::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, id),
-            Link::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, id),
+            Link::Direct(id) => Some(id.node.clone()),
+            Link::Subject(Subject::Type(id)) => Some(id.node.clone()),
+            Link::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, &id.node),
+            Link::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, &id.node),
         }
     }
 }
 
 // == Serialization
-
-/// A run of code tokens sharing one link target.
-struct CodeSegment {
-    target: Option<String>,
-    text: String,
-}
 
 /// Selects whether serialized code receives monospace markup.
 #[derive(Clone, Copy)]
@@ -237,16 +216,51 @@ enum CodeStyle {
     Plain,
 }
 
+impl CodeStyle {
+    fn render(self, text: &str) -> String {
+        match self {
+            Self::Mono => adoc_mono_chopped(text),
+            Self::Plain => text.to_owned(),
+        }
+    }
+}
+
 /// Per-serialization anchor labels and warnings.
 struct Serializer<'ctx, 'a> {
     anchor_ctx: &'ctx AnchorContext<'a>,
+    warnings: &'ctx mut Vec<Report>,
     markers: BTreeMap<String, String>,
     warned: BTreeSet<String>,
 }
 
 impl<'ctx, 'a> Serializer<'ctx, 'a> {
-    fn new(anchor_ctx: &'ctx AnchorContext<'a>, markers: BTreeMap<String, String>) -> Self {
-        Serializer { anchor_ctx, markers, warned: BTreeSet::new() }
+    fn new(
+        anchor_ctx: &'ctx AnchorContext<'a>,
+        warnings: &'ctx mut Vec<Report>,
+        markers: BTreeMap<String, String>,
+    ) -> Self {
+        Serializer { anchor_ctx, warnings, markers, warned: BTreeSet::new() }
+    }
+
+    // - Cross-references
+    //
+    //   adoc_link(link, "t", "x")      -> xref:t[x]
+    //   adoc_link(link, "t", "a[b]")   -> <<t,a[b]>>
+    //   adoc_link(link, "t", "a<b>")   -> xref:t[a<b>]
+
+    /// Chooses cross-reference delimiters that do not collide with the label.
+    fn adoc_link(&mut self, link: &Link, target: &str, text: &str) -> String {
+        // Brackets require the alternate cross-reference syntax
+        if !text.contains(['[', ']']) {
+            format!("xref:{target}[{text}]")
+        } else if !text.contains(['<', '>']) {
+            format!("<<{target},{text}>>")
+        } else {
+            // Neither delimiter can represent this label
+            self.warnings
+                .push(error::link_text_invalid(link, text).into());
+            text.to_owned()
+        }
     }
 
     // - Warnings
@@ -257,100 +271,22 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //   Link(Direct(""), Text("x"))
     //   -> xref:[x], warning about the empty target
 
-    fn warn(&mut self, text: String) {
-        if self.warned.insert(text.clone()) {
-            eprintln!("Warning: prose: {text}");
+    fn warn(&mut self, diagnostic: Diagnostic) {
+        if self.warned.insert(diagnostic.message.clone()) {
+            self.warnings.push(diagnostic.into());
         }
     }
 
-    fn warn_empty_target(&mut self, lint: bool, target: &str) {
+    fn warn_empty_target(&mut self, lint: bool, link: &Link, target: &str) {
         if lint && target.is_empty() {
-            self.warn("link with empty target".into());
+            self.warn(error::link_target_empty(link));
         }
     }
 
-    fn warn_nested(&mut self, lint: bool, target_outer: &str, target_inner: &str) {
+    fn warn_nested(&mut self, lint: bool, link_outer: &Link, link_inner: &Link) {
         if lint {
-            self.warn(format!(
-                "nested link: cross-reference to {target_inner:?} is dropped inside the link \
-                 to {target_outer:?} (asciidoc cannot nest cross-references)"
-            ));
+            self.warn(error::link_nested(link_outer, link_inner));
         }
-    }
-
-    // - Code segments
-    //
-    //   Seq([Token("a "), Link(Direct("f"), Token("b")), Token(" c")])
-    //   -> [(None, "a "), (Some("f"), "b"), (None, " c")]
-
-    /// Flattens code spans and coalesces adjacent tokens with the same target.
-    fn collect_code(
-        &mut self,
-        code: &Code,
-        target: Option<&str>,
-        link_ctx: Option<&str>,
-        lint: bool,
-        segments: &mut Vec<CodeSegment>,
-    ) {
-        match code {
-            Code::Token(text) => Serializer::collect_token_code(text, target, segments),
-            Code::Link(link, code_inner) => {
-                self.collect_link_code(link, code_inner, target, link_ctx, lint, segments)
-            }
-            Code::Seq(codes) => {
-                // Adjacent sequences participate in the same span coalescing
-                for code in codes {
-                    self.collect_code(code, target, link_ctx, lint, segments);
-                }
-            }
-            Code::Empty => {}
-        }
-    }
-
-    fn collect_token_code(text: &str, target: Option<&str>, segments: &mut Vec<CodeSegment>) {
-        // Empty tokens cannot split an existing span
-        if text.is_empty() {
-            return;
-        }
-        let segment_last = segments
-            .last_mut()
-            .filter(|segment| segment.target.as_deref() == target);
-        if let Some(segment) = segment_last {
-            segment.text.push_str(text);
-        } else {
-            let target = target.map(str::to_owned);
-            segments.push(CodeSegment { target, text: text.to_owned() });
-        }
-    }
-
-    fn collect_link_code(
-        &mut self,
-        link: &Link,
-        code_inner: &Code,
-        target: Option<&str>,
-        link_ctx: Option<&str>,
-        lint: bool,
-        segments: &mut Vec<CodeSegment>,
-    ) {
-        // Unresolved subjects retain the surrounding link context
-        let Some(target_inner) = link.target(self.anchor_ctx) else {
-            self.collect_code(code_inner, target, link_ctx, lint, segments);
-            return;
-        };
-        self.warn_empty_target(lint, &target_inner);
-        if let Some(target_outer) = link_ctx {
-            // Cross-references cannot nest in AsciiDoc
-            self.warn_nested(lint, target_outer, &target_inner);
-            self.collect_code(code_inner, target, link_ctx, lint, segments);
-            return;
-        }
-
-        // The outermost resolved link owns its entire code span
-        if lint && code_inner.is_empty() {
-            self.warn(format!("link to {target_inner:?} has empty body"));
-        }
-        let target_inner = Some(target_inner.as_str());
-        self.collect_code(code_inner, target_inner, target_inner, lint, segments);
     }
 
     // - Code
@@ -358,33 +294,111 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //   Seq([Token("a "), Link(Direct("f"), Token("b")), Token(" c")]) in Mono
     //   -> ``a`` xref:f[``b``] ``c``
     //
-    //   Seq([Token("a "), Link(Direct("f"), Token("b")), Token(" c")]) in Plain
-    //   -> a xref:f[b] c
+    //   Seq([Link(Direct("f"), Token("a")), Link(Direct("f"), Token("b"))])
+    //   -> xref:f[``a``]xref:f[``b``]
 
-    /// Serializes coalesced code, applying monospace only for inline prose.
+    /// Collects adjacent tokens while serializing each resolved link separately.
+    fn collect_code(
+        &mut self,
+        link_ctx: Option<&Link>,
+        lint: bool,
+        style: CodeStyle,
+        code: &Code,
+        text_pending: &mut String,
+        text: &mut String,
+    ) {
+        match code {
+            Code::Token(text_token) => text_pending.push_str(text_token),
+            Code::Link(link, code_inner) => {
+                // Unresolved and suppressed links leave the token run intact
+                let Some(text_link) = self.ser_link_code(link_ctx, lint, style, link, code_inner)
+                else {
+                    self.collect_code(link_ctx, lint, style, code_inner, text_pending, text);
+                    return;
+                };
+                // Empty links emit no markup and cannot split adjacent tokens
+                if !text_link.is_empty() {
+                    text.push_str(&style.render(text_pending));
+                    text_pending.clear();
+                    text.push_str(&text_link);
+                }
+            }
+            Code::Seq(codes) => {
+                // Sequence boundaries do not split adjacent tokens
+                for code in codes {
+                    self.collect_code(link_ctx, lint, style, code, text_pending, text);
+                }
+            }
+            Code::Empty => {}
+        }
+    }
+
+    /// Collects a link's body as text, diagnosing resolved nested references.
+    fn collect_code_text(&mut self, link_outer: &Link, lint: bool, code: &Code, text: &mut String) {
+        match code {
+            Code::Token(text_token) => text.push_str(text_token),
+            Code::Link(link, code_inner) => {
+                // Only resolved references conflict with the enclosing link
+                if let Some(target) = link.target(self.anchor_ctx) {
+                    self.warn_empty_target(lint, link, &target);
+                    self.warn_nested(lint, link_outer, link);
+                }
+                self.collect_code_text(link_outer, lint, code_inner, text);
+            }
+            Code::Seq(codes) => {
+                // Format only after the full link body has been collected
+                for code in codes {
+                    self.collect_code_text(link_outer, lint, code, text);
+                }
+            }
+            Code::Empty => {}
+        }
+    }
+
+    /// Serializes one resolved link, or leaves its body in the enclosing token run.
+    fn ser_link_code(
+        &mut self,
+        link_ctx: Option<&Link>,
+        lint: bool,
+        style: CodeStyle,
+        link: &Link,
+        code_inner: &Code,
+    ) -> Option<String> {
+        // Unresolved subjects keep their bodies without creating a boundary
+        let target = link.target(self.anchor_ctx)?;
+        self.warn_empty_target(lint, link, &target);
+        // An outer link suppresses this reference while retaining its body
+        if let Some(link_outer) = link_ctx {
+            self.warn_nested(lint, link_outer, link);
+            return None;
+        }
+        // Preserve the empty-body warning even when no tokens will be emitted
+        if lint && code_inner.is_empty() {
+            self.warn(error::link_body_empty(link));
+        }
+        let mut text = String::new();
+        self.collect_code_text(link, lint, code_inner, &mut text);
+        if text.is_empty() {
+            return Some(text);
+        }
+        // Choose delimiters with the original link and its complete display text
+        let text = style.render(&text);
+        Some(self.adoc_link(link, &target, &text))
+    }
+
+    /// Serializes token runs and individual links with the selected code style.
     fn ser_code(
         &mut self,
         style: CodeStyle,
         code: &Code,
-        link_ctx: Option<&str>,
+        link_ctx: Option<&Link>,
         lint: bool,
     ) -> String {
-        let mut segments = Vec::new();
-        self.collect_code(code, None, link_ctx, lint, &mut segments);
-        // Formatting after coalescing keeps adjacent tokens in one code span
-        segments
-            .into_iter()
-            .map(|segment| {
-                let text = match style {
-                    CodeStyle::Mono => adoc_mono_chopped(&segment.text),
-                    CodeStyle::Plain => segment.text,
-                };
-                match segment.target {
-                    Some(target) => adoc_link(&target, &text),
-                    None => text,
-                }
-            })
-            .collect()
+        let mut text = String::new();
+        let mut text_pending = String::new();
+        self.collect_code(link_ctx, lint, style, code, &mut text_pending, &mut text);
+        text.push_str(&style.render(&text_pending));
+        text
     }
 
     // - Prose
@@ -393,7 +407,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //   PlainCode(Token("x y"))                 -> x y
 
     /// Serializes inline prose with the enclosing cross-reference context.
-    fn ser_prose(&mut self, prose: &Prose, link_ctx: Option<&str>, lint: bool) -> String {
+    fn ser_prose(&mut self, prose: &Prose, link_ctx: Option<&Link>, lint: bool) -> String {
         match prose {
             Prose::Text(text) => Serializer::ser_text_prose(text),
             Prose::Code(code) => self.ser_code(CodeStyle::Mono, code, link_ctx, lint),
@@ -425,26 +439,26 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         &mut self,
         link: &Link,
         prose_inner: &Prose,
-        link_ctx: Option<&str>,
+        link_ctx: Option<&Link>,
         lint: bool,
     ) -> String {
         // Preserve the body when the enclosing document has no target
         let Some(target) = link.target(self.anchor_ctx) else {
             return self.ser_prose(prose_inner, link_ctx, lint);
         };
-        self.warn_empty_target(lint, &target);
-        if let Some(target_outer) = link_ctx {
+        self.warn_empty_target(lint, link, &target);
+        if let Some(link_outer) = link_ctx {
             // An outer link takes precedence over nested links
-            self.warn_nested(lint, target_outer, &target);
+            self.warn_nested(lint, link_outer, link);
             return self.ser_prose(prose_inner, link_ctx, lint);
         }
 
         // Format the complete body before choosing link delimiters
-        let text = self.ser_prose(prose_inner, Some(&target), lint);
+        let text = self.ser_prose(prose_inner, Some(link), lint);
         if lint && text.is_empty() {
-            self.warn(format!("link to {target:?} has empty body"));
+            self.warn(error::link_body_empty(link));
         }
-        adoc_link(&target, &text)
+        self.adoc_link(link, &target, &text)
     }
 
     // - Fallthrough prose
@@ -471,7 +485,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //
     //   Seq([Text("a"), Text("b")])   -> ab
 
-    fn ser_seq_prose(&mut self, proses: &[Prose], link_ctx: Option<&str>, lint: bool) -> String {
+    fn ser_seq_prose(&mut self, proses: &[Prose], link_ctx: Option<&Link>, lint: bool) -> String {
         proses
             .iter()
             .map(|prose| self.ser_prose(prose, link_ctx, lint))
@@ -624,28 +638,43 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 //   ser_code(&subject_name, Seq([Token("a "), Link(Direct("f"), Token("b"))]))
 //   -> a xref:f[b]
 
-/// Serializes prose using the enclosing document's anchor resolver.
-pub fn ser_prose(anchor_ctx: &AnchorContext<'_>, prose: &Prose) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, BTreeMap::new());
+/// Serializes prose and collects warnings at each link's source span.
+pub fn ser_prose(
+    anchor_ctx: &AnchorContext<'_>,
+    warnings: &mut Vec<Report>,
+    prose: &Prose,
+) -> String {
+    let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
     serializer.ser_prose(prose, None, true)
 }
 
 /// Serializes a link label without creating nested cross-references.
 pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
-    let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
-    Serializer::new(&anchor_ctx, BTreeMap::new()).ser_prose(prose, Some(""), false)
+    let anchor_ctx = AnchorContext::default();
+    Serializer::new(&anchor_ctx, &mut Vec::new(), BTreeMap::new()).ser_prose(
+        prose,
+        Some(&Link::Direct(crate::phrase! { node: String::new(), span: Span::default() })),
+        false,
+    )
 }
 
-/// Serializes code without monospace markup using the given anchor resolver.
-pub fn ser_code(anchor_ctx: &AnchorContext<'_>, code: &Code) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, BTreeMap::new());
+/// Serializes code without monospace markup and collects delimiter warnings.
+pub fn ser_code(anchor_ctx: &AnchorContext<'_>, warnings: &mut Vec<Report>, code: &Code) -> String {
+    let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
     serializer.ser_code(CodeStyle::Plain, code, None, false)
 }
 
-/// Resolves arm labels before serializing a fragment with the given anchor resolver.
-pub fn ser_block(anchor_ctx: &AnchorContext<'_>, block: &Block) -> String {
+/// Resolves arm labels and collects warnings while serializing a fragment.
+///
+/// Derived fallthrough labels must name an ordered arm within this block,
+/// as produced by the PL renderer's arm and next-target construction.
+pub fn ser_block(
+    anchor_ctx: &AnchorContext<'_>,
+    warnings: &mut Vec<Report>,
+    block: &Block,
+) -> String {
     let markers = block.anchor_markers();
-    let mut serializer = Serializer::new(anchor_ctx, markers);
+    let mut serializer = Serializer::new(anchor_ctx, warnings, markers);
     serializer.ser_block(block)
 }

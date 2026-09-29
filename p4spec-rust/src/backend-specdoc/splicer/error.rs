@@ -7,7 +7,6 @@
 
 use std::path::Path;
 
-use super::super::latex;
 use crate::{
     diagnostic::{Diagnostic, Label, Report, Severity},
     lang::common::source::Span,
@@ -69,25 +68,12 @@ pub(super) fn io(path: &Path, source: std::io::Error) -> Error {
     cause(IO, format!("{}: {message}", path.display()), Vec::new())
 }
 
-const LATEX_RENDERING_INVALID: &str = "splice/latex-rendering-invalid";
-
-/// Converts a LaTeX failure while retaining its message and expression span.
-pub(super) fn latex(error: latex::Error) -> Error {
-    let span = error.span();
-    let labels = if span.left.line == 0 {
-        Vec::new()
-    } else {
-        vec![Label::primary(&span, "cannot render this expression")]
-    };
-    cause(LATEX_RENDERING_INVALID, error.to_string(), labels)
-}
-
 // == Warnings
 
 const KEY_NOT_FOUND: &str = "splice/key-not-found";
 
 /// Reports a requested key that has no definition for its marker kind.
-pub(super) fn key_not_found(name: &str, key: &str, span: &Span) -> Report {
+pub(super) fn key_not_found(span: &Span, name: &str, key: &str) -> Report {
     warning(
         KEY_NOT_FOUND,
         format!("{name} splice key not found: {key}"),
@@ -99,7 +85,7 @@ pub(super) fn key_not_found(name: &str, key: &str, span: &Span) -> Report {
 const TARGET_DUPLICATE: &str = "splice/target-duplicate";
 
 /// Reports a title occurrence whose destination is already registered.
-pub(super) fn target_duplicate(name: &str, id: &str, span: &Span) -> Report {
+pub(super) fn target_duplicate(span: &Span, name: &str, id: &str) -> Report {
     warning(
         TARGET_DUPLICATE,
         format!("duplicate {name} target: {id}"),

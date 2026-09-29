@@ -15,6 +15,7 @@
 use crate::backend_specdoc::anchor::AnchorContext;
 
 use crate::{
+    diagnostic::Report,
     lang::{
         common::{
             Iter,
@@ -23,6 +24,7 @@ use crate::{
                 bool::{BinOp as BoolBinOp, CmpOp as BoolCmpOp, UnOp as BoolUnOp},
                 num::CmpOp as NumCmpOp,
             },
+            source::Span,
         },
         el,
         hints::{alter, input},
@@ -154,7 +156,7 @@ impl<Item> alter::Renderer<Item> for AlterRenderer<'_, Item> {
 
 /// Applies an alteration hint to prose items.
 fn alternate<Item>(
-    hint: &alter::AlterationHint,
+    hint: &alter::AlterHint,
     base_text: &dyn Fn(&str) -> String,
     render_item: &dyn Fn(&Item) -> Prose,
     items: &[Item],
@@ -410,7 +412,7 @@ impl Code {
                 Code::of_slice_exp(exp_base, exp_idx, exp_len)
             }
             ExpKind::Upd(exp_base, path, exp_field) => Code::of_upd_exp(exp_base, path, exp_field),
-            ExpKind::Call(id, targs, args) => Code::of_call_exp(id, targs, args),
+            ExpKind::Call(id, targs, args) => Code::of_call_exp(&exp.hints.span, id, targs, args),
             ExpKind::Iter(exp_inner, iter_exp) => Code::of_iter_exp(exp_inner, iter_exp),
         }
     }
@@ -699,12 +701,14 @@ impl Code {
     //
     //   $e_num(n)   -> xref:e_num[``$e_num(n)``]
 
-    fn of_call_exp(id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Code {
+    fn of_call_exp(span_hint: &Span, id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Code {
         let text_id = string_of_defid(id);
         let text_targs = string_of_targs(targs);
         let code_args = Code::of_args(args);
         let code_call = Code::seq([Code::token(text_id), Code::token(text_targs), code_args]);
-        let link = Link::Subject(Subject::Function(id.node.clone()));
+        let link = Link::Subject(Subject::Function(
+            crate::phrase! { node: id.node.clone(), span: span_hint.clone() },
+        ));
         Code::link(link, code_call)
     }
 
@@ -722,7 +726,7 @@ impl Code {
         let code_iter = Code::of_iter(iter_exp.iter);
         // Parenthesize compound bodies whose code contains spaces
         let needs_parens = !matches!(exp_inner.node.node, ExpKind::Id(_) | ExpKind::Tuple(_))
-            && serialize::ser_code(&AnchorContext::new(&|_, _| None, &|_, _| None), &code_inner)
+            && serialize::ser_code(&AnchorContext::default(), &mut Vec::new(), &code_inner)
                 .contains(' ');
         if needs_parens {
             Code::seq([Code::token("( "), code_inner, Code::token(" )"), code_iter])
@@ -848,7 +852,7 @@ impl Prose {
             }
             ExpKind::Call(id, _, args) => {
                 // Unhinted calls fall back to negated code
-                let Some(hint) = &exp.hints.prose_false else {
+                let Some(hint) = &exp.hints.node.prose_false else {
                     let code_exp = Code::of_exp(exp);
                     return Some(Prose::code(Code::seq([Code::token("~"), code_exp])));
                 };
@@ -859,7 +863,9 @@ impl Prose {
                     args,
                     false,
                 );
-                let link = Link::Subject(Subject::Function(id.node.clone()));
+                let link = Link::Subject(Subject::Function(
+                    crate::phrase! { node: id.node.clone(), span: hint.span.clone() },
+                ));
                 Some(Prose::link(link, prose_call))
             }
             _ => None,
@@ -992,7 +998,7 @@ impl Prose {
 
     fn of_case_exp(exp: &pl::Exp, not_exp: &pl::NotExp) -> Prose {
         // Hinted variant values link their prose to the type definition
-        if let (Some(hint), pl::TypKind::Var(id_typ, _)) = (&exp.hints.prose, &exp.node.note) {
+        if let (Some(hint), pl::TypKind::Var(id_typ, _)) = (&exp.hints.node.prose, &exp.node.note) {
             let exps = not_exp.args();
             let prose_case = alternate(
                 hint,
@@ -1001,7 +1007,10 @@ impl Prose {
                 &exps,
                 false,
             );
-            return Prose::link(Link::Direct(id_typ.node.clone()), prose_case);
+            let link = Link::Subject(Subject::Type(
+                crate::phrase! { node: id_typ.node.clone(), span: hint.span.clone() },
+            ));
+            return Prose::link(link, prose_case);
         }
 
         Prose::code(Code::of_case_exp(not_exp))
@@ -1128,15 +1137,18 @@ impl Prose {
         // Unhinted calls keep their code form
         let Some(hint) = exp
             .hints
+            .node
             .prose_in
             .as_ref()
-            .or(exp.hints.prose_true.as_ref())
+            .or(exp.hints.node.prose_true.as_ref())
         else {
-            return Prose::code(Code::of_call_exp(id, targs, args));
+            return Prose::code(Code::of_call_exp(&exp.hints.span, id, targs, args));
         };
         let prose_call =
             alternate(hint, &|text_body| reindent_lines(0, text_body), &Prose::of_arg, args, false);
-        let link = Link::Subject(Subject::Function(id.node.clone()));
+        let link = Link::Subject(Subject::Function(
+            crate::phrase! { node: id.node.clone(), span: hint.span.clone() },
+        ));
         Prose::link(link, prose_call)
     }
 
@@ -1447,8 +1459,12 @@ impl Prose {
 ///
 /// Create a new renderer with a distinct anchor prefix for each body occurrence.
 /// Nested blocks within that body share its block counter.
+/// Inputs must retain prosify's validated hints, synthesized relation outputs,
+/// and annotated fallthrough destinations.
+/// Warnings use the source spans carried by individual links.
 pub struct Renderer<'ctx, 'a> {
     anchor_ctx: &'ctx mut AnchorContext<'a>,
+    warnings: &'ctx mut Vec<Report>,
     anchor_prefix: String,
     num_blocks: usize,
 }
@@ -1472,8 +1488,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ///
     /// Use a distinct anchor prefix for every body composed into the same document.
     /// Keep the anchor context shared to resolve titles and declare destinations once.
-    pub fn new(anchor_ctx: &'ctx mut AnchorContext<'a>, anchor_prefix: &str) -> Self {
-        Self { anchor_ctx, anchor_prefix: anchor_prefix.to_owned(), num_blocks: 0 }
+    pub fn new(
+        anchor_ctx: &'ctx mut AnchorContext<'a>,
+        warnings: &'ctx mut Vec<Report>,
+        anchor_prefix: &str,
+    ) -> Self {
+        Self { anchor_ctx, warnings, anchor_prefix: anchor_prefix.to_owned(), num_blocks: 0 }
     }
 
     /// Allocates a block destination within this body's anchor prefix.
@@ -1645,7 +1665,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .map(|anchor| format!("+++<span id=\"{anchor}\"></span>+++"))
             .unwrap_or_default();
         let block_body = self.render_instrs(1, None, ctx, render_tier, block);
-        let text_body = serialize::ser_block(self.anchor_ctx, &block_body);
+        let text_body = serialize::ser_block(self.anchor_ctx, self.warnings, &block_body);
         let text_bullet = serialize::adoc_ordered_bullet(0);
         format!("\n\n{text_bullet}{text_anchor}Otherwise:{text_body}")
     }
@@ -1815,8 +1835,14 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         hold_instr: &pl::HoldInstr<Tier>,
         hold: bool,
     ) -> Block {
-        let hint_opt = if hold { &instr.hints.prose_true } else { &instr.hints.prose_false };
-        let link = Link::Subject(Subject::Relation(hold_instr.id.node.clone()));
+        let hint_opt =
+            if hold { &instr.hints.node.prose_true } else { &instr.hints.node.prose_false };
+        let span = hint_opt
+            .as_ref()
+            .map_or(&instr.hints.span, |hint| &hint.span);
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: hold_instr.id.node.clone(), span: span.clone() },
+        ));
         let prose_cond = match hint_opt {
             // Hinted relations describe the branch condition in prose
             Some(hint) => {
@@ -1969,10 +1995,12 @@ impl Prose {
     //
     //   Even/nil   -> goto xref:Even-nil[nil]
 
-    fn of_group_dispatch(id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
+    fn of_group_dispatch(span: &Span, id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
         let anchor_group = fallthrough::anchor_of_group(&id_rel.node, &id_group.node);
-        let prose_group =
-            Prose::link(Link::Direct(anchor_group), Prose::text(id_group.node.clone()));
+        let prose_group = Prose::link(
+            Link::Direct(crate::phrase! { node: anchor_group, span: span.clone() }),
+            Prose::text(id_group.node.clone()),
+        );
         Prose::seq([Prose::text("goto "), prose_group])
     }
 }
@@ -1984,11 +2012,13 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //   nested Sign/zero              -> . Goto xref:Sign-zero[zero]
 
     fn render_group_instr_dispatch(
+        span: &Span,
         level: usize,
         singleton: bool,
         group_instr: &pl::RuleGroupInstr,
     ) -> Rendered {
-        let prose_dispatch = Prose::of_group_dispatch(&group_instr.id_rel, &group_instr.id_group);
+        let prose_dispatch =
+            Prose::of_group_dispatch(span, &group_instr.id_rel, &group_instr.id_group);
         // A lone dispatch folds onto its heading
         if singleton {
             return Rendered::InlineGoto(Prose::seq([Prose::text(" "), prose_dispatch]));
@@ -2071,9 +2101,15 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .flat_map(|iter_instr| &iter_instr.vars_bind)
             .any(|var| !var.id.node.starts_with('_'));
         // Apply paired relation hints when both sides are available
-        let link = Link::Subject(Subject::Relation(rule_instr.id.node.clone()));
+        let span = match (&instr.hints.node.prose_in, &instr.hints.node.prose_out) {
+            (Some(hint_input), Some(_)) => &hint_input.span,
+            _ => &instr.hints.span,
+        };
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: rule_instr.id.node.clone(), span: span.clone() },
+        ));
         let prose_rule = if let (Some(hint_input), Some(hint_output)) =
-            (&instr.hints.prose_in, &instr.hints.prose_out)
+            (&instr.hints.node.prose_in, &instr.hints.node.prose_out)
         {
             let prose_output = alternate(
                 hint_output,
@@ -2128,7 +2164,7 @@ impl Prose {
             .expect("validated relation input hint");
         if is_conditional {
             Prose::text("then, the relation holds.")
-        } else if let Some(hint) = &hints.prose_out {
+        } else if let Some(hint) = &hints.node.prose_out {
             let prose_output = alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
@@ -2356,7 +2392,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Block {
         // Build the forced binding heading with its failure continuation
         let code_l = Code::of_exp(&option_instr.exp_l);
-        let link_get = Link::Direct("option_get".to_owned());
+        let link_get = Link::Direct(
+            crate::phrase! { node: "option_get".to_owned(), span: instr.node.span.clone() },
+        );
         let prose_get = Prose::link(link_get, Prose::text("*!*"));
         let prose_r = Prose::of_exp(&option_instr.exp_r);
         let prose_fallthrough = Prose::of_fallthrough_link(ctx, instr);
@@ -2455,19 +2493,26 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         exps: &[pl::Exp],
     ) -> Block {
         // Prefer synthesized inputs when prosification changed title bindings
-        let exps_synthesized = hints.prose_input_exps.as_ref().map(|exps| {
+        let exps_synthesized = hints.node.prose_input_exps.as_ref().map(|exps| {
             exps.iter()
                 .map(Self::lift_synthesized_exp)
                 .collect::<Vec<_>>()
         });
         let exps_input = exps_synthesized.as_deref().unwrap_or(exps);
         // Build the shared linked heading before selecting the title form
-        let link = Link::Subject(Subject::Relation(id_rel.node.clone()));
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: id_rel.node.clone(), span: hints.span.clone() },
+        ));
         let prose_name = Prose::link(link.clone(), Prose::text(id_rel.node.clone()));
         let prose_header = Prose::seq([prose_name, Prose::text(":")]);
         let block_header = Block::concat([Block::inline(prose_header), Block::raw("\n\n")]);
         // Select paired, input-only, truth, or notation prose
-        match (&hints.prose_in, &hints.prose_out, &hints.prose_output_exps, &hints.prose_true) {
+        match (
+            &hints.node.prose_in,
+            &hints.node.prose_out,
+            &hints.node.prose_output_exps,
+            &hints.node.prose_true,
+        ) {
             // Reject incomplete paired output hints
             (Some(_), Some(_), None, _) => panic!("prose_out title requires synthesized outputs"),
             (Some(hint_input), Some(hint_output), Some(exps_output_sl), _) => {
@@ -2673,12 +2718,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         level: usize,
         ctx: &Context,
         singleton: bool,
-        _instr: &pl::Instr<pl::DispatchInstr>,
+        instr: &pl::Instr<pl::DispatchInstr>,
         tier: &pl::DispatchInstr,
     ) -> Rendered {
         match tier {
             pl::DispatchInstr::Group(group_instr) => {
-                Self::render_group_instr_dispatch(level, singleton, group_instr)
+                Self::render_group_instr_dispatch(&instr.node.span, level, singleton, group_instr)
             }
             pl::DispatchInstr::Route(route_instr) => {
                 self.render_route_instr(level, ctx, route_instr)
@@ -2750,9 +2795,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Select hinted prose or filled relation notation for the title
         let hint_opt = instr
             .hints
+            .node
             .prose_in
             .as_ref()
-            .or(instr.hints.prose_true.as_ref());
+            .or(instr.hints.node.prose_true.as_ref());
         let prose_body = match hint_opt {
             Some(hint) => alternate(
                 hint,
@@ -2763,7 +2809,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             ),
             None => Prose::of_rel_title_math(&group_instr.rel_signature, &group_instr.exps_input),
         };
-        let link = Link::Subject(Subject::Relation(group_instr.id_rel.node.clone()));
+        let span = hint_opt.map_or(&instr.hints.span, |hint| &hint.span);
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: group_instr.id_rel.node.clone(), span: span.clone() },
+        ));
         let prose_title = Prose::link(link, prose_body);
         // Render the group body below its linked title
         let block_head = Block::item_ordered(level, Prose::seq([prose_title, Prose::text(":")]));
@@ -2796,7 +2845,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         block: &pl::GroupBlock,
     ) -> String {
         // Select hinted prose or filled relation notation for the title
-        let hint_opt = hints.prose_in.as_ref().or(hints.prose_true.as_ref());
+        let hint_opt = hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(hints.node.prose_true.as_ref());
         let prose_body = match hint_opt {
             Some(hint) => alternate(
                 hint,
@@ -2807,14 +2860,17 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             ),
             None => Prose::of_rel_title_math(signature, exps),
         };
-        let link = Link::Subject(Subject::Relation(id_rel.node.clone()));
+        let span = hint_opt.map_or(&hints.span, |hint| &hint.span);
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: id_rel.node.clone(), span: span.clone() },
+        ));
         let prose_title = Prose::link(link, prose_body);
         // Render local arms while keeping relation fragment targets fixed
         let ctx = Context::new(&id_rel.node);
         let block_body = self.render_instrs(0, None, &ctx, Self::render_instr_group, block);
         // Serialize the linked title and body as one fragment
-        let text_title = serialize::ser_prose(self.anchor_ctx, &prose_title);
-        let text_body = serialize::ser_block(self.anchor_ctx, &block_body);
+        let text_title = serialize::ser_prose(self.anchor_ctx, self.warnings, &prose_title);
+        let text_body = serialize::ser_block(self.anchor_ctx, self.warnings, &block_body);
         format!("{text_title}:\n{text_body}")
     }
 
@@ -2849,7 +2905,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let ctx = Context::new(&rel.id.node);
         let block_dispatch =
             self.render_instrs(0, None, &ctx, Self::render_instr_dispatch, &rel.block);
-        let text_dispatch = serialize::ser_block(self.anchor_ctx, &block_dispatch);
+        let text_dispatch = serialize::ser_block(self.anchor_ctx, self.warnings, &block_dispatch);
         format!("{} dispatch:\n{text_dispatch}", rel.id.node)
     }
 
@@ -2931,7 +2987,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         tparams: &[pl::TParam],
         params: &[pl::Param],
     ) -> Block {
-        let hint_opt = hints.prose_in.as_ref().or(hints.prose_true.as_ref());
+        let hint_opt = hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(hints.node.prose_true.as_ref());
         // Keep nested links visible to the final serializer
         let prose_body = match hint_opt {
             Some(hint) => alternate(
@@ -2957,7 +3017,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 Prose::PlainCode(code_signature)
             }
         };
-        let link = Link::Subject(Subject::Function(id_func.node.clone()));
+        let span = hint_opt.map_or(&hints.span, |hint| &hint.span);
+        let link = Link::Subject(Subject::Function(
+            crate::phrase! { node: id_func.node.clone(), span: span.clone() },
+        ));
         Block::inline(Prose::link(link, prose_body))
     }
 
@@ -3105,7 +3168,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 self.render_defined_func_def(&def.hints, func)
             }
         };
-        Some(serialize::ser_block(self.anchor_ctx, &block))
+        Some(serialize::ser_block(self.anchor_ctx, self.warnings, &block))
     }
 }
 
@@ -3114,7 +3177,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 //   render_spec([Oracle, Sign])   -> the two definitions joined by a blank line
 
 /// Renders a function or relation title without its defined body.
-pub fn render_def_title(anchor_ctx: &mut AnchorContext<'_>, def: &pl::Def) -> Option<String> {
+pub fn render_def_title(
+    anchor_ctx: &mut AnchorContext<'_>,
+    warnings: &mut Vec<Report>,
+    def: &pl::Def,
+) -> Option<String> {
     let block = match &def.node.node {
         pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
             Renderer::render_extern_rel_def(&def.hints, rel)
@@ -3133,7 +3200,7 @@ pub fn render_def_title(anchor_ctx: &mut AnchorContext<'_>, def: &pl::Def) -> Op
         }
         _ => return None,
     };
-    Some(serialize::ser_block(anchor_ctx, &block))
+    Some(serialize::ser_block(anchor_ctx, warnings, &block))
 }
 
 /// Renders one definition, omitting type and variable declarations.
@@ -3141,14 +3208,15 @@ pub fn render_def_title(anchor_ctx: &mut AnchorContext<'_>, def: &pl::Def) -> Op
 /// Share the anchor context and use a distinct anchor prefix for each output body.
 pub fn render_def(
     anchor_ctx: &mut AnchorContext<'_>,
+    warnings: &mut Vec<Report>,
     anchor_prefix: &str,
     def: &pl::Def,
 ) -> Option<String> {
-    Renderer::new(anchor_ctx, anchor_prefix).render_def(def)
+    Renderer::new(anchor_ctx, warnings, anchor_prefix).render_def(def)
 }
 
-/// Renders a complete prose specification with definition-name anchors.
-pub fn render_spec(spec: &pl::Spec) -> String {
+/// Renders a complete prose specification and collects markup warnings.
+pub fn render_spec(warnings: &mut Vec<Report>, spec: &pl::Spec) -> String {
     let resolve = |_, id: &str| Some(id.to_owned());
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
     spec.iter()
@@ -3165,7 +3233,7 @@ pub fn render_spec(spec: &pl::Spec) -> String {
                 pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
             };
             let anchor_prefix = format!("spec:{}:{idx_def}", id.node);
-            render_def(&mut anchor_ctx, &anchor_prefix, def)
+            render_def(&mut anchor_ctx, warnings, &anchor_prefix, def)
         })
         .collect::<Vec<_>>()
         .join("\n\n")

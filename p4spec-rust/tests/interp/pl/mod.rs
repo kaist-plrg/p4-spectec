@@ -78,7 +78,7 @@ fn prose_hints_do_not_change_function_results() {
     assert!(
         spec_annotated
             .iter()
-            .any(|def| def.hints.prose_in.is_some())
+            .any(|def| def.hints.node.prose_in.is_some())
     );
     for source in [plain, annotated] {
         let mut runner = runner(source);

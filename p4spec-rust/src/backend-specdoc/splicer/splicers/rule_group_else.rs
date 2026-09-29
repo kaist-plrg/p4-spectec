@@ -3,6 +3,8 @@
 //! Initialization selects definitions in source order.
 //! The generic splicer owns wrappers, anchors, and usage accounting.
 
+use crate::diagnostic::Report;
+
 use super::super::super::anchor::AnchorContext;
 use std::collections::BTreeMap;
 
@@ -53,6 +55,7 @@ impl<'spec> Kind<'spec> for Prose {
 
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
+        warnings: &mut Vec<Report>,
         idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
@@ -66,7 +69,7 @@ impl<'spec> Kind<'spec> for Prose {
                     selection.key,
                     selection.idx_key,
                 );
-                let mut renderer = Renderer::new(anchor_ctx, &anchor_prefix);
+                let mut renderer = Renderer::new(anchor_ctx, warnings, &anchor_prefix);
                 renderer.render_rulegroup_else(id_rel, block_else)
             })
             .collect::<Vec<_>>()

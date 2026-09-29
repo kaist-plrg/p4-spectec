@@ -37,6 +37,6 @@ pub fn convert_with_warnings(
     spec_el: el::ast::Spec,
 ) -> (Result<il::ast::Spec, ElabError>, Vec<Report>) {
     let mut warnings = Vec::new();
-    let result = transform::elab_spec(spec_el, &mut warnings);
+    let result = transform::elab_spec(&mut warnings, spec_el);
     (result, warnings)
 }

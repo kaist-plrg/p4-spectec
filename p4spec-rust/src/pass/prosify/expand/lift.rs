@@ -11,17 +11,12 @@
 //! `(...)*` binds a fresh `y*` and is read back as `y` inside the iteration.
 
 use crate::lang::{
-    common::{
-        ds::{map::IdMap, set::IdSet},
-        source::Span,
-    },
+    common::ds::{map::IdMap, set::IdSet},
     hints::input,
     il::{self, ast as il_ast},
     sl::ast as sl,
     traits::{eq::SyntaxEq, free::FreeVars},
 };
-
-use super::super::{ProseError, ProseErrorKind};
 
 // == Call lifting
 
@@ -497,14 +492,10 @@ fn lift_from_slice_path(
 // - Instruction
 
 /// Finds the next call an instruction owns directly, if any.
-fn lift_from_instr(
-    ids_used: &mut IdSet,
-    instr_sl: &mut sl::Instr,
-) -> Result<Option<LiftedCall>, ProseError> {
-    let span = instr_sl.span.clone();
-    Ok(match &mut instr_sl.node {
+fn lift_from_instr(ids_used: &mut IdSet, instr_sl: &mut sl::Instr) -> Option<LiftedCall> {
+    match &mut instr_sl.node {
         sl::InstrKind::Let(instr_sl) => lift_from_let_instr(ids_used, instr_sl),
-        sl::InstrKind::Rule(instr_sl) => lift_from_rule_instr(ids_used, instr_sl, &span)?,
+        sl::InstrKind::Rule(instr_sl) => lift_from_rule_instr(ids_used, instr_sl),
         sl::InstrKind::Hold(instr_sl) => lift_from_hold_instr(ids_used, instr_sl),
         // Results and returns own their expressions at the root
         sl::InstrKind::Result(instr_sl) => {
@@ -518,7 +509,7 @@ fn lift_from_instr(
         | sl::InstrKind::Case(_)
         | sl::InstrKind::Group(_)
         | sl::InstrKind::Debug(_) => None,
-    })
+    }
 }
 
 // - Let instruction
@@ -541,11 +532,7 @@ fn lift_from_let_instr(ids_used: &mut IdSet, instr_sl: &mut sl::LetInstr) -> Opt
 // - Rule instruction
 
 /// Lifts the leftmost eligible call from a rule instruction's inputs.
-fn lift_from_rule_instr(
-    ids_used: &mut IdSet,
-    instr_sl: &mut sl::RuleInstr,
-    span: &Span,
-) -> Result<Option<LiftedCall>, ProseError> {
+fn lift_from_rule_instr(ids_used: &mut IdSet, instr_sl: &mut sl::RuleInstr) -> Option<LiftedCall> {
     // Separate relation inputs from result positions
     let exps_sl = instr_sl
         .not_exp
@@ -554,13 +541,11 @@ fn lift_from_rule_instr(
         .cloned()
         .collect::<Vec<_>>();
     let (mut exps_input_sl, exps_output_sl) = input::split(&instr_sl.input_hint, exps_sl)
-        .map_err(|error| ProseError::new(ProseErrorKind::Input(error), span.clone()))?;
+        .expect("elaboration validates relation inputs; lifting preserves notation arity");
     let call_lifted = lift_from_exps(ids_used, CallNesting::Outer, &mut exps_input_sl);
 
     // Restore notation only when an input changed
-    let Some(call_lifted) = call_lifted else {
-        return Ok(None);
-    };
+    let call_lifted = call_lifted?;
     let mut vars_remaining_sl = exps_input_sl.as_slice().free_vars();
     let mut call_lifted = call_lifted;
     // Carry the call out through each instruction iteration
@@ -574,12 +559,12 @@ fn lift_from_rule_instr(
 
     // Restore the relation notation after changing one input
     let exps_sl = input::combine(&instr_sl.input_hint, exps_input_sl, exps_output_sl)
-        .map_err(|error| ProseError::new(ProseErrorKind::Input(error), span.clone()))?;
+        .expect("elaboration validates relation inputs; lifting preserves notation arity");
     let mut exps_sl = exps_sl.into_iter();
     instr_sl.not_exp = instr_sl
         .not_exp
         .map(|_| exps_sl.next().expect("lifting preserves notation arity"));
-    Ok(Some(call_lifted))
+    Some(call_lifted)
 }
 
 // - Hold instruction
@@ -618,13 +603,10 @@ fn lift_from_hold_instr(ids_used: &mut IdSet, instr_sl: &mut sl::HoldInstr) -> O
 /// Lifts all calls directly owned by an instruction.
 ///
 /// The boolean reports whether the returned instruction contains new bindings.
-pub(super) fn lift_instr(
-    ids_used: &mut IdSet,
-    mut instr_sl: sl::Instr,
-) -> Result<(sl::Instr, bool), ProseError> {
+pub(super) fn lift_instr(ids_used: &mut IdSet, mut instr_sl: sl::Instr) -> (sl::Instr, bool) {
     let mut calls_lifted = Vec::new();
     // Collect direct calls before nesting their bindings
-    while let Some(call_lifted) = lift_from_instr(ids_used, &mut instr_sl)? {
+    while let Some(call_lifted) = lift_from_instr(ids_used, &mut instr_sl) {
         calls_lifted.push(call_lifted);
     }
     let lifted = !calls_lifted.is_empty();
@@ -633,5 +615,5 @@ pub(super) fn lift_instr(
     for call_lifted in calls_lifted.into_iter().rev() {
         instr_sl = call_lifted.wrap_instr(instr_sl);
     }
-    Ok((instr_sl, lifted))
+    (instr_sl, lifted)
 }

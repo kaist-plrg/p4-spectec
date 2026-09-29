@@ -5,6 +5,8 @@
 //! Block::item_ordered(0, prose)   -> Item(Item { 0, Ordered(None), prose, Empty })
 //! ```
 
+use crate::lang::common::Id;
+
 // == Documents
 
 // - Prose
@@ -51,26 +53,31 @@ pub enum Code {
 
 // - Links
 //
-//   Link(Direct("t"), Text("x"))              -> xref:t[x]
-//   Link(Subject(Function("f")), Text("x"))   -> xref:f[x]
-//   ... with an unresolving anchor            -> x
+//   Direct("t"), body: Text("x")                 -> xref:t[x]
+//   Subject(Function(id_f)), body: Text("x")     -> xref:f[x]
+//   ... with an unresolving anchor               -> x
 
 /// A concrete target or a reference resolved by the enclosing document.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Link {
-    /// Uses the target verbatim, bypassing the subject resolver.
-    Direct(String),
+    /// Uses the located target verbatim, bypassing the subject resolver.
+    Direct(Id),
     /// Resolves the subject, preserving only the body if unresolved.
     Subject(Subject),
 }
 
 /// A definition referenced by prose.
+///
+/// Each identifier carries the target name and the span of the hint
+/// supplying its display text, or the declaration span when no hint is used.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Subject {
     /// Identifies a function by its source name without the dollar prefix.
-    Function(String),
+    Function(Id),
     /// Identifies a relation by its source name.
-    Relation(String),
+    Relation(Id),
+    /// Identifies a type whose variant hint supplies linked prose.
+    Type(Id),
 }
 
 // - Fallthrough labels

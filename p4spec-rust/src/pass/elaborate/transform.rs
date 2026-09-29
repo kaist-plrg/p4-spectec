@@ -2855,8 +2855,8 @@ fn elab_clause(
 /// Elaborates a definition; bodies for earlier declarations yield nothing.
 fn elab_def(
     ctx: &mut Context,
-    def_el: el::Def,
     warnings: &mut Vec<Report>,
+    def_el: el::Def,
 ) -> Result<Option<il::Def>, ElabError> {
     let span = def_el.span;
     match def_el.node {
@@ -2887,13 +2887,13 @@ fn elab_def(
         }
         // An extern relation declaration
         el::DefKind::ExternRel(extern_rel_def) => {
-            let def_kind_il = elab_extern_rel_def(ctx, extern_rel_def, &span, warnings)?;
+            let def_kind_il = elab_extern_rel_def(ctx, &span, warnings, extern_rel_def)?;
             let def_il = phrase!(node: def_kind_il, span: span);
             Ok(Some(def_il))
         }
         // A relation declaration; its rules arrive later
         el::DefKind::Rel(rel_def) => {
-            let def_kind_il = elab_rel_def(ctx, rel_def, &span, warnings)?;
+            let def_kind_il = elab_rel_def(ctx, &span, warnings, rel_def)?;
             let def_il = phrase!(node: def_kind_il, span: span);
             Ok(Some(def_il))
         }
@@ -3091,10 +3091,10 @@ fn elab_var_def(ctx: &mut Context, def: el::VarDef) -> Result<il::DefKind, ElabE
 /// Reads a relation's `input` hint; by default every position is an input.
 fn fetch_input_hint(
     span: &Span,
+    warnings: &mut Vec<Report>,
     id: &Id,
     not_typ_il: &il::NotTyp,
     hints: &[el::Hint],
-    warnings: &mut Vec<Report>,
 ) -> Result<input::InputHint, ElabError> {
     let arity = not_typ_il.node.arity();
     // Without a hint every position is an input
@@ -3162,13 +3162,13 @@ fn fetch_input_hint(
 /// Declares an extern relation.
 fn elab_extern_rel_def(
     ctx: &mut Context,
-    def: el::ExternRelDef,
     span: &Span,
     warnings: &mut Vec<Report>,
+    def: el::ExternRelDef,
 ) -> Result<il::DefKind, ElabError> {
     let typ = el::Typ::Notation(def.not_typ.clone());
     let not_typ_il = elab_not_typ(ctx, &typ)?;
-    let input_hint = fetch_input_hint(span, &def.id, &not_typ_il, &def.hints, warnings)?;
+    let input_hint = fetch_input_hint(span, warnings, &def.id, &not_typ_il, &def.hints)?;
     let extern_rel_il =
         il::ExternRel { id: def.id, not_typ: not_typ_il, input_hint, hints: def.hints };
     ctx.add_extern_rel(extern_rel_il.clone())?;
@@ -3178,13 +3178,13 @@ fn elab_extern_rel_def(
 /// Declares a relation whose rule groups arrive later.
 fn elab_rel_def(
     ctx: &mut Context,
-    def: el::RelDef,
     span: &Span,
     warnings: &mut Vec<Report>,
+    def: el::RelDef,
 ) -> Result<il::DefKind, ElabError> {
     let typ = el::Typ::Notation(def.not_typ.clone());
     let not_typ_il = elab_not_typ(ctx, &typ)?;
-    let input_hint = fetch_input_hint(span, &def.id, &not_typ_il, &def.hints, warnings)?;
+    let input_hint = fetch_input_hint(span, warnings, &def.id, &not_typ_il, &def.hints)?;
     let defined_rel_il = il::DefinedRel {
         id: def.id,
         not_typ: not_typ_il,
@@ -3479,7 +3479,7 @@ fn populate_defs(ctx: &mut Context, defs_il: il::Spec) -> il::Spec {
 // - Missing definition warnings
 
 /// Collects missing definitions in type, relation, then function order.
-fn warn_undef_defs(ctx: &Context, defs_il: &[il::Def], warnings: &mut Vec<Report>) {
+fn warn_undef_defs(ctx: &Context, warnings: &mut Vec<Report>, defs_il: &[il::Def]) {
     // Report incomplete types in identifier order
     for (id, typdef) in ctx.tdenv.iter() {
         if let TypeDef::Defining(tparams) = typdef {
@@ -3518,21 +3518,21 @@ fn warn_undef_defs(ctx: &Context, defs_il: &[il::Def], warnings: &mut Vec<Report
 
 /// Elaborates a specification: definitions, population, dimension analysis.
 pub(super) fn elab_spec(
-    spec_el: el::Spec,
     warnings: &mut Vec<Report>,
+    spec_el: el::Spec,
 ) -> Result<il::Spec, ElabError> {
     let mut ctx = Context::new();
     let mut defs_il = Vec::new();
     // Declarations become IL definitions, bodies are collected in the context
     for def_el in spec_el {
-        if let Some(def_il) = elab_def(&mut ctx, def_el, warnings)? {
+        if let Some(def_il) = elab_def(&mut ctx, warnings, def_el)? {
             defs_il.push(def_il);
         }
     }
     // Attach the collected bodies to their declarations
     let mut defs_il = populate_defs(&mut ctx, defs_il);
     // Retain missing-body warnings even if dimension analysis fails
-    warn_undef_defs(&ctx, &defs_il, warnings);
+    warn_undef_defs(&ctx, warnings, &defs_il);
     // Annotate iterations with their source variables
     dimension::analyze_spec(&mut defs_il)?;
     Ok(defs_il)

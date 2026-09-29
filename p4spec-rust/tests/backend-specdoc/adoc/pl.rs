@@ -1,4 +1,5 @@
 use p4spec_rust::backend_specdoc::anchor::AnchorContext;
+use p4spec_rust::lang::hints::alter::AlterHintKind;
 use p4spec_rust::{
     backend_specdoc::adoc::pl::{
         self as adoc,
@@ -16,7 +17,7 @@ use p4spec_rust::{
         },
         data::typ,
         hints::{
-            alter::{AlterationHint, Hole},
+            alter::{AlterHint, Hole},
             input::InputHint,
         },
         pl::{annot::Hints, ast as pl},
@@ -24,10 +25,10 @@ use p4spec_rust::{
 };
 
 fn render_def(resolve: &dyn Fn(&Subject) -> Option<String>, def: &pl::Def) -> Option<String> {
-    let func = |_, name: &str| resolve(&Subject::Function(name.to_owned()));
-    let rel = |_, name: &str| resolve(&Subject::Relation(name.to_owned()));
+    let func = |_, name: &str| resolve(&Subject::Function(id(name)));
+    let rel = |_, name: &str| resolve(&Subject::Relation(id(name)));
     let mut anchor_ctx = AnchorContext::new(&func, &rel);
-    adoc::render_def(&mut anchor_ctx, "fragment", def)
+    adoc::render_def(&mut anchor_ctx, &mut Vec::new(), "fragment", def)
 }
 
 fn id(name: &str) -> pl::Id {
@@ -58,15 +59,15 @@ fn exp_nat(value: u64) -> pl::Exp {
     }
 }
 
-fn prose_hint(text_l: &str, hole: usize, text_r: &str) -> AlterationHint {
-    AlterationHint::Seq(
+fn prose_hint(text_l: &str, hole: usize, text_r: &str) -> AlterHint {
+    p4spec_rust::phrase! { node: AlterHintKind::Seq(
         (!text_l.is_empty())
-            .then(|| AlterationHint::Text(text_l.to_owned()))
+            .then(|| p4spec_rust::phrase! { node: AlterHintKind::Text(text_l.to_owned()), span: Default::default() })
             .into_iter()
-            .chain(std::iter::once(AlterationHint::Hole(Hole::Num(hole))))
-            .chain((!text_r.is_empty()).then(|| AlterationHint::Text(text_r.to_owned())))
+            .chain(std::iter::once(p4spec_rust::phrase! { node: AlterHintKind::Hole(Hole::Num(hole)), span: Default::default() }))
+            .chain((!text_r.is_empty()).then(|| p4spec_rust::phrase! { node: AlterHintKind::Text(text_r.to_owned()), span: Default::default() }))
             .collect(),
-    )
+    ), span: Default::default() }
 }
 
 fn return_exp_instr(
@@ -145,7 +146,7 @@ fn test_function_hints_substitute_parameters_and_negative_calls() {
         note: pl::TypKind::Bool,
         span: Span::default(),
     };
-    exp_call.hints.prose_false = Some(prose_hint("", 0, "is disabled"));
+    exp_call.hints.node.prose_false = Some(prose_hint("", 0, "is disabled"));
     let exp_not = p4spec_rust::annotated_note_phrase! {
         node: pl::ExpKind::Un(pl::UnOp::Bool(BoolUnOp::Not), pl::OpTyp::Bool, Box::new(exp_call)),
         note: pl::TypKind::Bool,
@@ -156,7 +157,7 @@ fn test_function_hints_substitute_parameters_and_negative_calls() {
         vec![param],
         vec![return_exp_instr(exp_not, Some(pl::Fallthrough::Fail))],
     );
-    def.hints.prose_in = Some(prose_hint("checking whether", 0, ""));
+    def.hints.node.prose_in = Some(prose_hint("checking whether", 0, ""));
 
     assert_eq!(
         render_def(&subject_name, &def).unwrap(),
@@ -245,8 +246,9 @@ fn test_nested_backtracking_uses_local_arm_labels_and_fresh_block_counters() {
 fn test_custom_function_anchor_is_used_by_fragment_api() {
     let def = defined_func("enabled", vec![return_instr(true)]);
     let anchor = |subject: &Subject| match subject {
-        Subject::Function(id) => Some(format!("function-{id}")),
-        Subject::Relation(id) => Some(format!("relation-{id}")),
+        Subject::Function(id) => Some(format!("function-{}", id.node)),
+        Subject::Relation(id) => Some(format!("relation-{}", id.node)),
+        Subject::Type(id) => Some(id.node.clone()),
     };
 
     assert!(
@@ -263,8 +265,8 @@ fn test_full_render_is_deterministic_and_fragments_reset_counters() {
         vec![backtrack_instr(vec![vec![return_instr(false)], vec![return_instr(true)]])],
     );
     let spec = vec![def.clone(), def];
-    let rendered_a = render_spec(&spec);
-    let rendered_b = render_spec(&spec);
+    let rendered_a = render_spec(&mut Vec::new(), &spec);
+    let rendered_b = render_spec(&mut Vec::new(), &spec);
 
     assert_eq!(rendered_a, rendered_b);
     assert!(rendered_a.contains("id=\"bk-spec:choice:0-1-arm-1\""));
@@ -413,7 +415,9 @@ fn test_table_cells_use_the_enclosing_anchor_resolver() {
         span: Span::default(),
     };
     let anchor = |subject: &Subject| match subject {
-        Subject::Function(id) | Subject::Relation(id) => Some(format!("custom-{id}")),
+        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => {
+            Some(format!("custom-{}", id.node))
+        }
     };
     let def = meta_func_def(Hints::default(), pl::MetaFuncDef::Table(func));
     let text = render_def(&anchor, &def).unwrap();
@@ -430,12 +434,17 @@ fn test_function_header_suppresses_nested_pattern_links() {
         note: pl::TypKind::Var(id("Value"), vec![]),
         span: Span::default(),
     };
-    exp.hints.prose = Some(prose_hint("value", 0, ""));
+    exp.hints.node.prose = Some(prose_hint("value", 0, ""));
     let param = p4spec_rust::phrase! {
         node: pl::ParamKind::Exp(typ::make::bool(), Box::new(exp)),
         span: Span::default(),
     };
-    let hints = Hints { prose_in: Some(prose_hint("checking", 0, "")), ..Hints::default() };
+    let hints = p4spec_rust::phrase! {
+        node: p4spec_rust::lang::pl::annot::HintsKind {
+            prose_in: Some(prose_hint("checking", 0, "")), ..Default::default()
+        },
+        span: Default::default(),
+    };
     let func = pl::ExternFunc {
         id: id("check"),
         tparams: vec![],
@@ -462,14 +471,14 @@ fn test_rulegroup_fragments_keep_distinct_arm_anchors() {
     ])];
     let resolve = |_, name: &str| Some(name.to_owned());
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
-    let text_a = adoc::Renderer::new(&mut anchor_ctx, "Rel:0").render_rulegroup(
+    let text_a = adoc::Renderer::new(&mut anchor_ctx, &mut Vec::new(), "Rel:0").render_rulegroup(
         &Hints::default(),
         &id("Rel"),
         &signature,
         &[exp_bool(true)],
         &block,
     );
-    let text_b = adoc::Renderer::new(&mut anchor_ctx, "Rel:1").render_rulegroup(
+    let text_b = adoc::Renderer::new(&mut anchor_ctx, &mut Vec::new(), "Rel:1").render_rulegroup(
         &Hints::default(),
         &id("Rel"),
         &signature,
@@ -480,13 +489,8 @@ fn test_rulegroup_fragments_keep_distinct_arm_anchors() {
     assert!(text_b.contains("id=\"bk-Rel:1-1-arm-1\""), "{text_b}");
     assert!(text_b.contains("href=\"#bk-Rel:1-1-arm-2\">→ 2</a>"), "{text_b}");
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
-    let text_fresh = adoc::Renderer::new(&mut anchor_ctx, "Rel:0").render_rulegroup(
-        &Hints::default(),
-        &id("Rel"),
-        &signature,
-        &[exp_bool(true)],
-        &block,
-    );
+    let text_fresh = adoc::Renderer::new(&mut anchor_ctx, &mut Vec::new(), "Rel:0")
+        .render_rulegroup(&Hints::default(), &id("Rel"), &signature, &[exp_bool(true)], &block);
     assert_eq!(text_a, text_fresh);
 }
 
