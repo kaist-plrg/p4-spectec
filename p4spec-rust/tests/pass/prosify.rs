@@ -5,7 +5,7 @@ use p4spec_rust::{
             source::{Position, Span},
         },
         el,
-        hints::alter::{AlterationHintKind, Hole},
+        hints::alter::{AlterHintKind, Hole},
         hints::input::InputHint,
         il,
         pl::ast as pl,
@@ -293,7 +293,7 @@ fn test_call_uses_hints_loaded_from_the_original_spec() {
     };
     assert_eq!(
         exp_pl.hints.prose_in.as_ref().unwrap(),
-        &p4spec_rust::phrase! { node: AlterationHintKind::Hole(Hole::Next), span: span("hint", 0) }
+        &p4spec_rust::phrase! { node: AlterHintKind::Hole(Hole::Next), span: span("hint", 0) }
     );
 }
 

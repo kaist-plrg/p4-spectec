@@ -28,10 +28,10 @@ use super::{Context, ProseError, error};
 // == Hint validation
 
 /// Validates a template using its source and the owning declaration.
-fn validate_hint_alter_one(
+fn validate_alter_hint(
     span_decl: &Span,
     name_hint: &str,
-    hint: &alter::AlterationHint,
+    hint: &alter::AlterHint,
     num_items: usize,
 ) -> Result<(), ProseError> {
     alter::validate(hint, num_items)
@@ -39,7 +39,7 @@ fn validate_hint_alter_one(
 }
 
 /// Checks every selected alteration hint against the items it describes.
-fn validate_hint_alter(
+fn validate_alter_hints(
     span_decl: &Span,
     hints: &annot::Hints,
     num_items: usize,
@@ -54,7 +54,7 @@ fn validate_hint_alter(
     ] {
         // Absent templates leave the default rendering in place
         if let Some(hint) = hint {
-            validate_hint_alter_one(span_decl, name_hint, hint, num_items)?;
+            validate_alter_hint(span_decl, name_hint, hint, num_items)?;
         }
     }
     Ok(())
@@ -84,10 +84,10 @@ fn validate_hint_split(
     num_outputs: usize,
 ) -> Result<(), ProseError> {
     if let Some(hint) = &hints.prose_in {
-        validate_hint_alter_one(span_decl, "prose_in", hint, num_inputs)?;
+        validate_alter_hint(span_decl, "prose_in", hint, num_inputs)?;
     }
     if let Some(hint) = &hints.prose_out {
-        validate_hint_alter_one(span_decl, "prose_out", hint, num_outputs)?;
+        validate_alter_hint(span_decl, "prose_out", hint, num_outputs)?;
     }
     Ok(())
 }
@@ -334,7 +334,7 @@ fn prosify_case_exp(
         hints.prose_fields = hints_case.prose_fields.clone();
         // Holes and field names count the notation's arguments
         let num_args = not_exp_sl.args().len();
-        validate_hint_alter(span_decl, &hints, num_args)?;
+        validate_alter_hints(span_decl, &hints, num_args)?;
         validate_hint_fields(span_decl, &hints, num_args)?;
     }
     let exp_kind_pl = pl::ExpKind::Case(Box::new(not_exp_pl));
@@ -890,7 +890,7 @@ fn prosify_dispatch_hold_instr(
         hints.prose_true = hints_rel.prose_true.clone();
         hints.prose_false = hints_rel.prose_false.clone();
         // Holes count the notation's arguments
-        validate_hint_alter(span_decl, &hints, instr_sl.not_exp.args().len())?;
+        validate_alter_hints(span_decl, &hints, instr_sl.not_exp.args().len())?;
     }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_dispatch_hold_case(ctx, instr_sl.hold_case)?;
@@ -1037,7 +1037,7 @@ fn prosify_dispatch_rulegroup_instr(
         hints.prose_in = hints_rel.prose_in.clone();
         hints.prose_true = hints_rel.prose_true.clone();
         // Group headings describe the relation inputs
-        validate_hint_alter(span_decl, &hints, instr_sl.rel_signature.input_hint.indices().len())?;
+        validate_alter_hints(span_decl, &hints, instr_sl.rel_signature.input_hint.indices().len())?;
     }
     let exps_input_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let block_pl = prosify_group_block(ctx, instr_sl.block)?;
@@ -1156,7 +1156,7 @@ fn prosify_group_hold_instr(
         hints.prose_true = hints_rel.prose_true.clone();
         hints.prose_false = hints_rel.prose_false.clone();
         // Holes count the notation's arguments
-        validate_hint_alter(span_decl, &hints, instr_sl.not_exp.args().len())?;
+        validate_alter_hints(span_decl, &hints, instr_sl.not_exp.args().len())?;
     }
     let not_exp_pl = prosify_not_exp(ctx, &instr_sl.not_exp)?;
     let hold_case_pl = prosify_group_hold_case(ctx, instr_sl.hold_case)?;
@@ -1349,7 +1349,7 @@ fn prosify_group_result_instr(
             .prose_out
             .as_ref()
             .map(|hint| alter::realign(hint, &instr_sl.rel_signature.input_hint));
-        validate_hint_alter(span_decl, &hints, instr_sl.exps.len())?;
+        validate_alter_hints(span_decl, &hints, instr_sl.exps.len())?;
     }
     let exps_output_pl = prosify_exps(ctx, &instr_sl.exps)?;
     let instr_pl =
@@ -1567,7 +1567,7 @@ fn build_rel_hints(
         ("prose_false", &hints.prose_false, num_inputs),
     ] {
         if let Some(hint) = hint {
-            validate_hint_alter_one(span_decl, name_hint, hint, num_items)?;
+            validate_alter_hint(span_decl, name_hint, hint, num_items)?;
         }
     }
     Ok(hints)
@@ -1669,7 +1669,7 @@ fn build_func_hints(
         ..annot::Hints::default()
     };
     // Calls and definitions supply the argument count for their own use
-    validate_hint_alter(span_decl, &hints, num_args)?;
+    validate_alter_hints(span_decl, &hints, num_args)?;
     Ok(hints)
 }
 

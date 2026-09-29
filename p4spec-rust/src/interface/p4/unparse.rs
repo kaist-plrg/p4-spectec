@@ -14,7 +14,7 @@ use crate::{
         al,
         common::notation::{atom::Atom, mixfix::Mixfix, mixop::Mixop},
         common::prim::num::Number,
-        hints::alter::{self, AlterationHint, Renderer},
+        hints::alter::{self, AlterHint, Renderer},
         il::ast::{DefTypKind, Hint, TypCase, TypKind},
         pl, sl,
         traits::print::Print,
@@ -30,12 +30,12 @@ use super::error::P4UnparseError;
 #[derive(Clone, Debug, Default)]
 pub struct P4Unparser {
     /// Print hints by type name and case shape.
-    hints: HashMap<(String, Mixop), AlterationHint>,
+    hints: HashMap<(String, Mixop), AlterHint>,
 }
 
 /// Records the print hint of each case of a variant type.
 fn insert_case_hints(
-    hints: &mut HashMap<(String, Mixop), AlterationHint>,
+    hints: &mut HashMap<(String, Mixop), AlterHint>,
     type_id: &str,
     def_typ: &crate::lang::il::ast::DefTyp,
 ) {
@@ -155,7 +155,7 @@ impl P4Unparser {
     fn render_hint(
         &self,
         arena: &ValueArena,
-        hint: &AlterationHint,
+        hint: &AlterHint,
         values: &[&Value],
     ) -> Result<String, P4UnparseError> {
         let rendered = alter::alternate(hint, values, &ValueRenderer(self, arena));

@@ -1,19 +1,19 @@
 use super::*;
-use p4spec_rust::lang::hints::alter::AlterationHintKind;
+use p4spec_rust::lang::hints::alter::AlterHintKind;
 
-fn alter_hint(node: AlterationHintKind) -> AlterationHint {
+fn alter_hint(node: AlterHintKind) -> AlterHint {
     p4spec_rust::phrase! { node: node, span: span("exp") }
 }
 
 #[test]
 fn test_alter_validates_sequential_and_numbered_holes() {
-    let hint = alter_hint(AlterationHintKind::Seq(vec![
-        alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
-        alter_hint(AlterationHintKind::Brack(
+    let hint = alter_hint(AlterHintKind::Seq(vec![
+        alter_hint(AlterHintKind::Hole(AlterHole::Next)),
+        alter_hint(AlterHintKind::Brack(
             atom("L"),
-            Box::new(alter_hint(AlterationHintKind::Fuse(
-                Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(2)))),
-                Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Next))),
+            Box::new(alter_hint(AlterHintKind::Fuse(
+                Box::new(alter_hint(AlterHintKind::Hole(AlterHole::Num(2)))),
+                Box::new(alter_hint(AlterHintKind::Hole(AlterHole::Next))),
             ))),
             atom("R"),
         )),
@@ -30,9 +30,9 @@ fn test_alter_validates_sequential_and_numbered_holes() {
     );
     assert_eq!(
         alter_impl::validate(
-            &alter_hint(AlterationHintKind::Seq(vec![
-                alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
-                alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
+            &alter_hint(AlterHintKind::Seq(vec![
+                alter_hint(AlterHintKind::Hole(AlterHole::Next)),
+                alter_hint(AlterHintKind::Hole(AlterHole::Next)),
             ])),
             1,
         ),
@@ -46,13 +46,13 @@ fn test_alter_validates_sequential_and_numbered_holes() {
 
 #[test]
 fn test_alter_realigns_outputs_around_noncontiguous_inputs() {
-    let hint = alter_hint(AlterationHintKind::Brack(
+    let hint = alter_hint(AlterHintKind::Brack(
         atom("L"),
-        Box::new(alter_hint(AlterationHintKind::Fuse(
-            Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(3)))),
-            Box::new(alter_hint(AlterationHintKind::Seq(vec![
-                alter_hint(AlterationHintKind::Hole(AlterHole::Num(1))),
-                alter_hint(AlterationHintKind::Hole(AlterHole::Num(3))),
+        Box::new(alter_hint(AlterHintKind::Fuse(
+            Box::new(alter_hint(AlterHintKind::Hole(AlterHole::Num(3)))),
+            Box::new(alter_hint(AlterHintKind::Seq(vec![
+                alter_hint(AlterHintKind::Hole(AlterHole::Num(1))),
+                alter_hint(AlterHintKind::Hole(AlterHole::Num(3))),
             ]))),
         ))),
         atom("R"),
@@ -66,13 +66,13 @@ fn test_alter_realigns_outputs_around_noncontiguous_inputs() {
                 p4spec_rust::phrase!(node: 2, span: span("exp"))
             ])
         ),
-        alter_hint(AlterationHintKind::Brack(
+        alter_hint(AlterHintKind::Brack(
             atom("L"),
-            Box::new(alter_hint(AlterationHintKind::Fuse(
-                Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(1)))),
-                Box::new(alter_hint(AlterationHintKind::Seq(vec![
-                    alter_hint(AlterationHintKind::Hole(AlterHole::Num(0))),
-                    alter_hint(AlterationHintKind::Hole(AlterHole::Num(1))),
+            Box::new(alter_hint(AlterHintKind::Fuse(
+                Box::new(alter_hint(AlterHintKind::Hole(AlterHole::Num(1)))),
+                Box::new(alter_hint(AlterHintKind::Seq(vec![
+                    alter_hint(AlterHintKind::Hole(AlterHole::Num(0))),
+                    alter_hint(AlterHintKind::Hole(AlterHole::Num(1))),
                 ]))),
             ))),
             atom("R"),
@@ -82,16 +82,16 @@ fn test_alter_realigns_outputs_around_noncontiguous_inputs() {
 
 #[test]
 fn test_alter_alternates_with_omission_defaults_fuse_brackets_and_other() {
-    let hint = alter_hint(AlterationHintKind::Seq(vec![
-        alter_hint(AlterationHintKind::Text("omit".into())),
-        alter_hint(AlterationHintKind::Brack(
+    let hint = alter_hint(AlterHintKind::Seq(vec![
+        alter_hint(AlterHintKind::Text("omit".into())),
+        alter_hint(AlterHintKind::Brack(
             atom("L"),
-            Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Next))),
+            Box::new(alter_hint(AlterHintKind::Hole(AlterHole::Next))),
             atom("R"),
         )),
-        alter_hint(AlterationHintKind::Fuse(
-            Box::new(alter_hint(AlterationHintKind::Hole(AlterHole::Num(1)))),
-            Box::new(alter_hint(AlterationHintKind::Other(exp(ExpKind::Text("other".into()))))),
+        alter_hint(AlterHintKind::Fuse(
+            Box::new(alter_hint(AlterHintKind::Hole(AlterHole::Num(1)))),
+            Box::new(alter_hint(AlterHintKind::Other(exp(ExpKind::Text("other".into()))))),
         )),
     ]));
     let result = alter_impl::alternate(
@@ -103,7 +103,7 @@ fn test_alter_alternates_with_omission_defaults_fuse_brackets_and_other() {
     assert_eq!(result, "_ L zero R one#\"other\"");
     assert_eq!(
         alter_impl::alternate(
-            &alter_hint(AlterationHintKind::Hole(AlterHole::Num(2))),
+            &alter_hint(AlterHintKind::Hole(AlterHole::Num(2))),
             &["zero"],
             &StringRenderer { empty: "", separator: "", fuse: "" }
         )
@@ -119,11 +119,11 @@ fn test_alter_alternates_with_omission_defaults_fuse_brackets_and_other() {
 fn test_alter_edge_cases_cover_init_omission_duplicates_and_next_cursor() {
     assert!(matches!(
         alter_impl::init(&exp(ExpKind::Atom(atom("A")))).node,
-        AlterationHintKind::Atom(_)
+        AlterHintKind::Atom(_)
     ));
     assert_eq!(
         alter_impl::init(&exp(ExpKind::Seq(Vec::new()))),
-        alter_hint(AlterationHintKind::Seq(Vec::new()))
+        alter_hint(AlterHintKind::Seq(Vec::new()))
     );
     let nested = exp(ExpKind::Seq(vec![exp(ExpKind::Brack(
         atom("L"),
@@ -132,15 +132,15 @@ fn test_alter_edge_cases_cover_init_omission_duplicates_and_next_cursor() {
     ))]));
     assert_eq!(
         alter_impl::init(&nested),
-        alter_hint(AlterationHintKind::Seq(vec![alter_hint(AlterationHintKind::Brack(
+        alter_hint(AlterHintKind::Seq(vec![alter_hint(AlterHintKind::Brack(
             atom("L"),
-            Box::new(alter_hint(AlterationHintKind::Other(exp(ExpKind::Hole(Hole::Rest))))),
+            Box::new(alter_hint(AlterHintKind::Other(exp(ExpKind::Hole(Hole::Rest))))),
             atom("R"),
         ))]))
     );
-    let omitted = alter_hint(AlterationHintKind::Brack(
+    let omitted = alter_hint(AlterHintKind::Brack(
         atom("L"),
-        Box::new(alter_hint(AlterationHintKind::Text("omit".into()))),
+        Box::new(alter_hint(AlterHintKind::Text("omit".into()))),
         atom("R"),
     ));
     let rendered = alter_impl::alternate(
@@ -150,9 +150,9 @@ fn test_alter_edge_cases_cover_init_omission_duplicates_and_next_cursor() {
     )
     .unwrap();
     assert_eq!(rendered, "L|R");
-    let nexts = alter_hint(AlterationHintKind::Seq(vec![
-        alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
-        alter_hint(AlterationHintKind::Hole(AlterHole::Next)),
+    let nexts = alter_hint(AlterHintKind::Seq(vec![
+        alter_hint(AlterHintKind::Hole(AlterHole::Next)),
+        alter_hint(AlterHintKind::Hole(AlterHole::Next)),
     ]));
 
     assert_eq!(
@@ -184,7 +184,7 @@ fn test_placeholder_locations_survive_initialization_and_realignment() {
         &hint,
         &InputHint::new(vec![p4spec_rust::phrase! { node: 0, span: span("exp") }]),
     );
-    let AlterationHintKind::Hole(hole) = &hint.node else { panic!("expected placeholder") };
+    let AlterHintKind::Hole(hole) = &hint.node else { panic!("expected placeholder") };
     assert_eq!(hint.span, span_hole);
     assert_eq!(*hole, AlterHole::Num(0));
     let error = alter_impl::alternate(

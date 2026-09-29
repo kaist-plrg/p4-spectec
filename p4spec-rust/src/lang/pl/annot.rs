@@ -17,15 +17,15 @@ use crate::lang::{
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Hints {
     /// Replaces the node's prose.
-    pub prose: Option<alter::AlterationHint>,
+    pub prose: Option<alter::AlterHint>,
     /// Replaces the prose of the node's inputs.
-    pub prose_in: Option<alter::AlterationHint>,
+    pub prose_in: Option<alter::AlterHint>,
     /// Replaces the prose of the node's outputs.
-    pub prose_out: Option<alter::AlterationHint>,
+    pub prose_out: Option<alter::AlterHint>,
     /// Replaces the prose when a condition holds.
-    pub prose_true: Option<alter::AlterationHint>,
+    pub prose_true: Option<alter::AlterHint>,
     /// Replaces the prose when a condition does not hold.
-    pub prose_false: Option<alter::AlterationHint>,
+    pub prose_false: Option<alter::AlterHint>,
     /// Names the fields of a value being destructured.
     pub prose_fields: Option<fields::FieldHint>,
     /// Input expressions to show in place of the node's own.

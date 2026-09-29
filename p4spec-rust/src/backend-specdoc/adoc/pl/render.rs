@@ -154,7 +154,7 @@ impl<Item> alter::Renderer<Item> for AlterRenderer<'_, Item> {
 
 /// Applies an alteration hint to prose items.
 fn alternate<Item>(
-    hint: &alter::AlterationHint,
+    hint: &alter::AlterHint,
     base_text: &dyn Fn(&str) -> String,
     render_item: &dyn Fn(&Item) -> Prose,
     items: &[Item],

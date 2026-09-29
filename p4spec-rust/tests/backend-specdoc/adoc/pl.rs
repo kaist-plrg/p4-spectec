@@ -1,5 +1,5 @@
 use p4spec_rust::backend_specdoc::anchor::AnchorContext;
-use p4spec_rust::lang::hints::alter::AlterationHintKind;
+use p4spec_rust::lang::hints::alter::AlterHintKind;
 use p4spec_rust::{
     backend_specdoc::adoc::pl::{
         self as adoc,
@@ -17,7 +17,7 @@ use p4spec_rust::{
         },
         data::typ,
         hints::{
-            alter::{AlterationHint, Hole},
+            alter::{AlterHint, Hole},
             input::InputHint,
         },
         pl::{annot::Hints, ast as pl},
@@ -59,13 +59,13 @@ fn exp_nat(value: u64) -> pl::Exp {
     }
 }
 
-fn prose_hint(text_l: &str, hole: usize, text_r: &str) -> AlterationHint {
-    p4spec_rust::phrase! { node: AlterationHintKind::Seq(
+fn prose_hint(text_l: &str, hole: usize, text_r: &str) -> AlterHint {
+    p4spec_rust::phrase! { node: AlterHintKind::Seq(
         (!text_l.is_empty())
-            .then(|| p4spec_rust::phrase! { node: AlterationHintKind::Text(text_l.to_owned()), span: Default::default() })
+            .then(|| p4spec_rust::phrase! { node: AlterHintKind::Text(text_l.to_owned()), span: Default::default() })
             .into_iter()
-            .chain(std::iter::once(p4spec_rust::phrase! { node: AlterationHintKind::Hole(Hole::Num(hole)), span: Default::default() }))
-            .chain((!text_r.is_empty()).then(|| p4spec_rust::phrase! { node: AlterationHintKind::Text(text_r.to_owned()), span: Default::default() }))
+            .chain(std::iter::once(p4spec_rust::phrase! { node: AlterHintKind::Hole(Hole::Num(hole)), span: Default::default() }))
+            .chain((!text_r.is_empty()).then(|| p4spec_rust::phrase! { node: AlterHintKind::Text(text_r.to_owned()), span: Default::default() }))
             .collect(),
     ), span: Default::default() }
 }
