@@ -103,11 +103,11 @@ fn anchor_of_rel(anchor_ctx: &AnchorContext<'_>, id: &Id) -> Option<String> {
 
 impl Doc {
     /// Links a reference when its anchor resolves.
-    fn of_link(anchor: Option<&str>, tex_ref: Doc, span: &Span) -> Result<Doc> {
+    fn of_link(span: &Span, anchor: Option<&str>, tex_ref: Doc) -> Result<Doc> {
         let Some(anchor) = anchor else {
             return Ok(tex_ref);
         };
-        let target = Target::of_string(anchor, span)?;
+        let target = Target::of_string(span, anchor)?;
         let tex_linked = link::link_unowned_doc(&target, tex_ref);
         Ok(tex_linked)
     }
@@ -958,7 +958,7 @@ impl ExpTerm {
     ) -> Result<ExpTerm> {
         let anchor = anchor_of_func(anchor_ctx, id);
         let tex_name = Doc::of_defid(id);
-        let tex_name = Doc::of_link(anchor.as_deref(), tex_name, &id.span)?;
+        let tex_name = Doc::of_link(&id.span, anchor.as_deref(), tex_name)?;
         let tex_targs = Doc::of_targs(targs);
         let tex_args = Doc::of_args(anchor_ctx, args)?;
         let tex = Doc::concat(vec![tex_name, tex_targs, tex_args]);
@@ -1290,7 +1290,7 @@ impl Doc {
     fn of_rule_prem(anchor_ctx: &AnchorContext<'_>, id: &Id, exp: &Exp) -> Result<Doc> {
         let anchor = anchor_of_rel(anchor_ctx, id);
         let tex_exp = Doc::of_exp(anchor_ctx, exp)?;
-        Doc::of_link(anchor.as_deref(), tex_exp, &id.span)
+        Doc::of_link(&id.span, anchor.as_deref(), tex_exp)
     }
 
     // - Negated relation premises
@@ -1302,7 +1302,7 @@ impl Doc {
         let anchor = anchor_of_rel(anchor_ctx, id);
         let term = ExpTerm::of_exp(anchor_ctx, exp)?;
         let tex_exp = Doc::of_nested_exp(precedence::UNARY, Side::Right, term);
-        let tex_exp = Doc::of_link(anchor.as_deref(), tex_exp, &id.span)?;
+        let tex_exp = Doc::of_link(&id.span, anchor.as_deref(), tex_exp)?;
         let tex = Doc::concat_spaced(vec![Doc::Fixed(Symbol::Neg), tex_exp]);
         Ok(tex)
     }

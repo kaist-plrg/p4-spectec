@@ -15,18 +15,18 @@ use crate::lang::common::source::Span;
 
 // == Targets
 //
-//   Target::of_string("Eval_0", span)   -> Ok(Target("Eval_0"))
-//   Target::of_string("a-b", span) -> Err(latex/link-target-invalid)
+//   Target::of_string(span, "Eval_0")   -> Ok(Target("Eval_0"))
+//   Target::of_string(span, "a-b") -> Err(latex/link-target-invalid)
 
 impl Target {
     /// Validates a nonempty local target containing ASCII names and primes.
-    pub(crate) fn of_string(text: &str, span: &Span) -> Result<Target> {
+    pub(crate) fn of_string(span: &Span, text: &str) -> Result<Target> {
         let is_target_byte =
             |byte: u8| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'\'');
         if !text.is_empty() && text.bytes().all(is_target_byte) {
             Ok(Target(text.into()))
         } else {
-            Err(error::link_target(text, span))
+            Err(error::link_target(span, text))
         }
     }
 }

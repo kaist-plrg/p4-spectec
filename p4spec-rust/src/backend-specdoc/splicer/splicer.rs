@@ -194,9 +194,9 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
                 entry.used = true;
             } else {
                 warnings.push(error::key_not_found(
+                    &key.span,
                     SpliceKind::NAME,
                     &key.node.to_string(),
-                    &key.span,
                 ));
             }
         }

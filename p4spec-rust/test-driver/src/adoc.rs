@@ -28,14 +28,14 @@ pub fn run(path_output: Option<&Path>) -> Result<()> {
 
     // Repeated rendering must start with fresh document anchor state
     let mut warnings = Vec::new();
-    let text_pl = adoc::pl::render_spec(&spec_pl, &mut warnings);
+    let text_pl = adoc::pl::render_spec(&mut warnings, &spec_pl);
     for report in warnings {
         let text = Renderer::new(RenderConfig::default())
             .render_to_string(&report)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         eprint!("{text}");
     }
-    if text_pl != adoc::pl::render_spec(&spec_pl, &mut Vec::new()) {
+    if text_pl != adoc::pl::render_spec(&mut Vec::new(), &spec_pl) {
         return Err(Error::Invalid("AsciiDoc arm anchors changed on repeated rendering".into()));
     }
     // Save raw fragments for comparison and Asciidoctor validation

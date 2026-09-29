@@ -74,7 +74,7 @@ pub(super) fn raw_latex(span: &Span) -> Error {
 const LINK_TARGET_INVALID: &str = "latex/link-target-invalid";
 
 /// Reports the rejected destination at the referenced identifier.
-pub(super) fn link_target(text: &str, span: &Span) -> Error {
+pub(super) fn link_target(span: &Span, text: &str) -> Error {
     cause(
         LINK_TARGET_INVALID,
         format!("invalid LaTeX link target {text:?}"),

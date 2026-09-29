@@ -105,7 +105,7 @@ pub fn run(name: &str) -> Result<Vec<Report>> {
     };
     let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
     let mut warnings = Vec::new();
-    let text = serialize::ser_prose(&anchor_ctx, &mut warnings, &spec_el[0].span, &prose);
+    let text = serialize::ser_prose(&anchor_ctx, &spec_el[0].span, &mut warnings, &prose);
     if text != text_expect || warnings.len() != 1 {
         return Err(failure(name, "AsciiDoc fallback or warning count changed"));
     }

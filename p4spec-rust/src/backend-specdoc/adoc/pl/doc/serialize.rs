@@ -233,8 +233,8 @@ struct Serializer<'ctx, 'a> {
 impl<'ctx, 'a> Serializer<'ctx, 'a> {
     fn new(
         anchor_ctx: &'ctx AnchorContext<'a>,
-        warnings: &'ctx mut Vec<Report>,
         span: &'ctx Span,
+        warnings: &'ctx mut Vec<Report>,
         markers: BTreeMap<String, String>,
     ) -> Self {
         Serializer { anchor_ctx, markers, warned: BTreeSet::new(), warnings, span }
@@ -256,7 +256,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         } else {
             // Neither delimiter can represent this label
             self.warnings
-                .push(error::link_text_invalid(text, self.span).into());
+                .push(error::link_text_invalid(self.span, text).into());
             text.to_owned()
         }
     }
@@ -283,7 +283,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 
     fn warn_nested(&mut self, lint: bool, target_outer: &str, target_inner: &str) {
         if lint {
-            self.warn(error::link_nested(target_outer, target_inner, self.span));
+            self.warn(error::link_nested(self.span, target_outer, target_inner));
         }
     }
 
@@ -356,7 +356,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 
         // The outermost resolved link owns its entire code span
         if lint && code_inner.is_empty() {
-            self.warn(error::link_body_empty(&target_inner, self.span));
+            self.warn(error::link_body_empty(self.span, &target_inner));
         }
         let target_inner = Some(target_inner.as_str());
         self.collect_code(code_inner, target_inner, target_inner, lint, segments);
@@ -451,7 +451,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         // Format the complete body before choosing link delimiters
         let text = self.ser_prose(prose_inner, Some(&target), lint);
         if lint && text.is_empty() {
-            self.warn(error::link_body_empty(&target, self.span));
+            self.warn(error::link_body_empty(self.span, &target));
         }
         self.adoc_link(&target, &text)
     }
@@ -636,11 +636,11 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 /// Serializes prose and collects warnings at the owning fragment's span.
 pub fn ser_prose(
     anchor_ctx: &AnchorContext<'_>,
-    warnings: &mut Vec<Report>,
     span: &Span,
+    warnings: &mut Vec<Report>,
     prose: &Prose,
 ) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, warnings, span, BTreeMap::new());
+    let mut serializer = Serializer::new(anchor_ctx, span, warnings, BTreeMap::new());
     serializer.ser_prose(prose, None, true)
 }
 
@@ -648,7 +648,7 @@ pub fn ser_prose(
 pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
     let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
-    Serializer::new(&anchor_ctx, &mut Vec::new(), &Span::default(), BTreeMap::new()).ser_prose(
+    Serializer::new(&anchor_ctx, &Span::default(), &mut Vec::new(), BTreeMap::new()).ser_prose(
         prose,
         Some(""),
         false,
@@ -658,11 +658,11 @@ pub fn ser_prose_in_link(prose: &Prose) -> String {
 /// Serializes code without monospace markup and collects delimiter warnings.
 pub fn ser_code(
     anchor_ctx: &AnchorContext<'_>,
-    warnings: &mut Vec<Report>,
     span: &Span,
+    warnings: &mut Vec<Report>,
     code: &Code,
 ) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, warnings, span, BTreeMap::new());
+    let mut serializer = Serializer::new(anchor_ctx, span, warnings, BTreeMap::new());
     serializer.ser_code(CodeStyle::Plain, code, None, false)
 }
 
@@ -672,11 +672,11 @@ pub fn ser_code(
 /// as produced by the PL renderer's arm and next-target construction.
 pub fn ser_block(
     anchor_ctx: &AnchorContext<'_>,
-    warnings: &mut Vec<Report>,
     span: &Span,
+    warnings: &mut Vec<Report>,
     block: &Block,
 ) -> String {
     let markers = block.anchor_markers();
-    let mut serializer = Serializer::new(anchor_ctx, warnings, span, markers);
+    let mut serializer = Serializer::new(anchor_ctx, span, warnings, markers);
     serializer.ser_block(block)
 }

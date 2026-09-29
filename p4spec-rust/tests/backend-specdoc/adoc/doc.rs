@@ -17,8 +17,8 @@ fn code_links_merge_adjacent_tokens_and_drop_nested_targets() {
     assert_eq!(
         serialize::ser_prose(
             &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
-            &mut Vec::new(),
             &Span::default(),
+            &mut Vec::new(),
             &Prose::Code(code)
         ),
         "xref:outer[``a`` ``b``]"
@@ -34,8 +34,8 @@ fn unresolved_subject_keeps_body_without_cross_reference() {
     assert_eq!(
         serialize::ser_prose(
             &AnchorContext::new(&|_, _| None, &|_, _| None),
-            &mut Vec::new(),
             &Span::default(),
+            &mut Vec::new(),
             &prose
         ),
         "call"
@@ -65,8 +65,8 @@ fn fallthrough_labels_follow_nested_ordered_list_markers() {
     })]);
     let text = serialize::ser_block(
         &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
-        &mut Vec::new(),
         &Span::default(),
+        &mut Vec::new(),
         &block,
     );
     assert!(text.contains("[<a href=\"#two\">→ b</a>]"), "{text}");
@@ -82,8 +82,8 @@ fn capitalization_stops_at_code_and_reaches_text_after_empty_nodes() {
     assert_eq!(
         serialize::ser_prose(
             &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
-            &mut Vec::new(),
             &Span::default(),
+            &mut Vec::new(),
             &prose.capitalize_first()
         ),
         "Hello"
@@ -93,8 +93,8 @@ fn capitalization_stops_at_code_and_reaches_text_after_empty_nodes() {
     assert_eq!(
         serialize::ser_prose(
             &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
-            &mut Vec::new(),
             &Span::default(),
+            &mut Vec::new(),
             &prose.capitalize_first()
         ),
         "``x`` stays"
@@ -107,8 +107,8 @@ fn link_delimiters_and_quoted_code_preserve_literal_content() {
     assert_eq!(
         serialize::ser_prose(
             &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
-            &mut Vec::new(),
             &Span::default(),
+            &mut Vec::new(),
             &prose
         ),
         "<<target,a[b]>>"
@@ -117,8 +117,8 @@ fn link_delimiters_and_quoted_code_preserve_literal_content() {
     assert_eq!(
         serialize::ser_prose(
             &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
-            &mut Vec::new(),
             &Span::default(),
+            &mut Vec::new(),
             &prose
         ),
         "``{quot}a{quot}`` ``{quot}b{quot}``"
@@ -134,8 +134,8 @@ fn table_serialization_keeps_header_and_cell_boundaries() {
     assert_eq!(
         serialize::ser_block(
             &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
-            &mut Vec::new(),
             &Span::default(),
+            &mut Vec::new(),
             &block
         ),
         "[cols=\"2\", options=\"header\"]\n|===\n| Input | Output \n\n| a | b\n\n|==="
@@ -162,7 +162,7 @@ fn link_warnings_preserve_order_location_notes_and_deduplication() {
     ]);
     let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
     let mut warnings = Vec::new();
-    let text = serialize::ser_prose(&anchor_ctx, &mut warnings, span, &prose);
+    let text = serialize::ser_prose(&anchor_ctx, span, &mut warnings, &prose);
     assert_eq!(text, "xref:[empty]xref:[again]xref:outer[nested]xref:body[][a]<b>");
     let codes = [
         "adoc/link-target-empty",
@@ -185,7 +185,7 @@ fn link_warnings_preserve_order_location_notes_and_deduplication() {
         }
     }
     // Each serialization retains its own duplicate-warning scope
-    serialize::ser_prose(&anchor_ctx, &mut warnings, span, &prose);
+    serialize::ser_prose(&anchor_ctx, span, &mut warnings, &prose);
     assert_eq!(warnings.len(), 8);
 }
 
@@ -198,21 +198,21 @@ fn code_warnings_and_table_lint_policy_remain_distinct() {
     let anchor_ctx = AnchorContext::new(&|_, _| None, &|_, _| None);
     let mut warnings = Vec::new();
     let span = Span::default();
-    serialize::ser_prose(&anchor_ctx, &mut warnings, &span, &Prose::Code(code.clone()));
+    serialize::ser_prose(&anchor_ctx, &span, &mut warnings, &Prose::Code(code.clone()));
     assert_eq!(warnings.len(), 1);
     warnings.clear();
     serialize::ser_block(
         &anchor_ctx,
-        &mut warnings,
         &span,
+        &mut warnings,
         &Block::Table(Table { header: vec![Prose::text("header")], rows: vec![vec![code]] }),
     );
     assert!(warnings.is_empty());
     // Delimiter failures remain visible even in table cells with lint disabled
     serialize::ser_code(
         &anchor_ctx,
-        &mut warnings,
         &span,
+        &mut warnings,
         &Code::Link(Link::Direct("label".into()), Box::new(Code::Token("[a]<b>".into()))),
     );
     assert_eq!(warnings.len(), 1);

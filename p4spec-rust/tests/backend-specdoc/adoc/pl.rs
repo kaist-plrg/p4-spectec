@@ -264,8 +264,8 @@ fn test_full_render_is_deterministic_and_fragments_reset_counters() {
         vec![backtrack_instr(vec![vec![return_instr(false)], vec![return_instr(true)]])],
     );
     let spec = vec![def.clone(), def];
-    let rendered_a = render_spec(&spec, &mut Vec::new());
-    let rendered_b = render_spec(&spec, &mut Vec::new());
+    let rendered_a = render_spec(&mut Vec::new(), &spec);
+    let rendered_b = render_spec(&mut Vec::new(), &spec);
 
     assert_eq!(rendered_a, rendered_b);
     assert!(rendered_a.contains("id=\"bk-spec:choice:0-1-arm-1\""));

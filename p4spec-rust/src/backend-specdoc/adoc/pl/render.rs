@@ -726,8 +726,8 @@ impl Code {
         let needs_parens = !matches!(exp_inner.node.node, ExpKind::Id(_) | ExpKind::Tuple(_))
             && serialize::ser_code(
                 &AnchorContext::new(&|_, _| None, &|_, _| None),
-                &mut Vec::new(),
                 &Span::default(),
+                &mut Vec::new(),
                 &code_inner,
             )
             .contains(' ');
@@ -1669,7 +1669,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .unwrap_or_default();
         let block_body = self.render_instrs(1, None, ctx, render_tier, block);
         let text_body =
-            serialize::ser_block(self.anchor_ctx, self.warnings, &self.span, &block_body);
+            serialize::ser_block(self.anchor_ctx, &self.span, self.warnings, &block_body);
         let text_bullet = serialize::adoc_ordered_bullet(0);
         format!("\n\n{text_bullet}{text_anchor}Otherwise:{text_body}")
     }
@@ -2850,9 +2850,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let block_body = self.render_instrs(0, None, &ctx, Self::render_instr_group, block);
         // Serialize the linked title and body as one fragment
         let text_title =
-            serialize::ser_prose(self.anchor_ctx, self.warnings, &self.span, &prose_title);
+            serialize::ser_prose(self.anchor_ctx, &self.span, self.warnings, &prose_title);
         let text_body =
-            serialize::ser_block(self.anchor_ctx, self.warnings, &self.span, &block_body);
+            serialize::ser_block(self.anchor_ctx, &self.span, self.warnings, &block_body);
         format!("{text_title}:\n{text_body}")
     }
 
@@ -2890,7 +2890,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let block_dispatch =
             self.render_instrs(0, None, &ctx, Self::render_instr_dispatch, &rel.block);
         let text_dispatch =
-            serialize::ser_block(self.anchor_ctx, self.warnings, &self.span, &block_dispatch);
+            serialize::ser_block(self.anchor_ctx, &self.span, self.warnings, &block_dispatch);
         format!("{} dispatch:\n{text_dispatch}", rel.id.node)
     }
 
@@ -3151,7 +3151,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 self.render_defined_func_def(&def.hints, func)
             }
         };
-        Some(serialize::ser_block(self.anchor_ctx, self.warnings, &def.node.span, &block))
+        Some(serialize::ser_block(self.anchor_ctx, &def.node.span, self.warnings, &block))
     }
 }
 
@@ -3183,7 +3183,7 @@ pub fn render_def_title(
         }
         _ => return None,
     };
-    Some(serialize::ser_block(anchor_ctx, warnings, &def.node.span, &block))
+    Some(serialize::ser_block(anchor_ctx, &def.node.span, warnings, &block))
 }
 
 /// Renders one definition, omitting type and variable declarations.
@@ -3199,7 +3199,7 @@ pub fn render_def(
 }
 
 /// Renders a complete prose specification and collects markup warnings.
-pub fn render_spec(spec: &pl::Spec, warnings: &mut Vec<Report>) -> String {
+pub fn render_spec(warnings: &mut Vec<Report>, spec: &pl::Spec) -> String {
     let resolve = |_, id: &str| Some(id.to_owned());
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
     spec.iter()
