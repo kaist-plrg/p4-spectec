@@ -101,8 +101,8 @@ impl Context {
 
     /// Reads the `prose*` hints of one definition; other hints are ignored.
     fn load_hints(
-        hints_sl: &[sl::Hint],
         span_decl: &Span,
+        hints_sl: &[sl::Hint],
         num_fields: Option<usize>,
     ) -> Result<Hints, ProseError> {
         let mut hints = Hints::default();
@@ -197,7 +197,7 @@ impl Context {
             return Ok(());
         };
         for il::ast::TypCase { not_typ, hints: hints_sl, .. } in cases {
-            let hints = Self::load_hints(hints_sl, &not_typ.span, Some(not_typ.node.args().len()))?;
+            let hints = Self::load_hints(&not_typ.span, hints_sl, Some(not_typ.node.args().len()))?;
             self.henv
                 .insert_case(&def_typ_sl.id, &not_typ.node.to_mixop(), hints);
         }
@@ -215,7 +215,7 @@ impl Context {
             sl::RelDef::Extern(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
             sl::RelDef::Defined(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
         };
-        let hints = Self::load_hints(hints_sl, &id_rel.span, None)?;
+        let hints = Self::load_hints(&id_rel.span, hints_sl, None)?;
         self.henv.insert_rel(id_rel, hints);
         Ok(())
     }
@@ -228,7 +228,7 @@ impl Context {
             sl::MetaFuncDef::Table(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
             sl::MetaFuncDef::Defined(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
         };
-        let hints = Self::load_hints(hints_sl, &id_func.span, None)?;
+        let hints = Self::load_hints(&id_func.span, hints_sl, None)?;
         self.henv.insert_func(id_func, hints);
         Ok(())
     }
