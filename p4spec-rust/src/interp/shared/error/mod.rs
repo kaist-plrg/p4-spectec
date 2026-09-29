@@ -66,14 +66,6 @@ const MIXOP_ARITY_MISMATCH: &str = "runtime/mixop-arity-mismatch";
 const TYPE_INVALID: &str = "runtime/type-invalid";
 const MATCH_FAILED: &str = "runtime/match-failed";
 
-/// Adds a source label unless the span is unknown.
-fn local(mut diagnostic: Diagnostic, span: Span) -> Error {
-    if span != Span::default() {
-        diagnostic = diagnostic.with_label(Label::primary(&span, ""));
-    }
-    Box::new(Report::from(diagnostic))
-}
-
 /// Converts an error to a runtime diagnostic without source labels.
 macro_rules! from_error {
     ($typ:ty, $code:ident) => {
@@ -91,7 +83,11 @@ from_error!(MixopArityMismatch, MIXOP_ARITY_MISMATCH);
 
 impl From<TypeError> for Error {
     fn from(error: TypeError) -> Self {
-        local(diagnostic(TYPE_INVALID, error.kind.to_string(), Vec::new()), error.span)
+        let mut diagnostic_error = diagnostic(TYPE_INVALID, error.kind.to_string(), Vec::new());
+        if error.span != Span::default() {
+            diagnostic_error = diagnostic_error.with_label(Label::primary(&error.span, ""));
+        }
+        Box::new(Report::from(diagnostic_error))
     }
 }
 
@@ -117,6 +113,7 @@ impl fmt::Display for MatchDisplay<'_> {
 
 impl From<MatchError> for Error {
     fn from(error: MatchError) -> Self {
+        // Keep the failed operation's location when available
         let span = match &error {
             MatchError::UndefinedType { span, .. }
             | MatchError::UnexpectedTypeVariable { span }
@@ -124,6 +121,12 @@ impl From<MatchError> for Error {
             | MatchError::UndefinedFunction { span, .. } => span.clone(),
             MatchError::Type(error) => error.span.clone(),
         };
-        local(diagnostic(MATCH_FAILED, MatchDisplay(&error).to_string(), Vec::new()), span)
+        let mut diagnostic_error =
+            diagnostic(MATCH_FAILED, MatchDisplay(&error).to_string(), Vec::new());
+        // Leave unknown locations for the caller to fill
+        if span != Span::default() {
+            diagnostic_error = diagnostic_error.with_label(Label::primary(&span, ""));
+        }
+        Box::new(Report::from(diagnostic_error))
     }
 }
