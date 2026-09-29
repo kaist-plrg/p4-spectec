@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 
 use super::super::{
     config::{PREFIX_LATEX, SUFFIX_LATEX},
-    error::{self, Error},
+    error::Error,
     splicer::{Kind, Selection},
 };
 use crate::lang::{el::ast as el, pl::ast as pl};
@@ -97,7 +97,6 @@ impl<'spec> Kind<'spec> for Latex {
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
         latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))
-            .map_err(error::latex)
     }
 }
 

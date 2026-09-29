@@ -11,7 +11,7 @@ use super::super::{
     config::{
         PREFIX_LATEX, PREFIX_PROSE, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE,
     },
-    error::{self, Error},
+    error::Error,
     splicer::{Kind, Selection},
 };
 use crate::lang::{el::ast as el, pl::ast as pl};
@@ -106,7 +106,6 @@ impl<'spec> Kind<'spec> for Latex {
                 .iter()
                 .flat_map(|selection| selection.data.iter().copied()),
         )
-        .map_err(error::latex)
     }
 }
 

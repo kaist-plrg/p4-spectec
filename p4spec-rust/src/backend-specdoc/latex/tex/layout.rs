@@ -16,7 +16,6 @@
 //! `Aligned` and `Grid` columns iterate until their widths stop changing.
 
 use super::{doc::*, link, width as measure};
-use crate::backend_specdoc::latex::error::{Error, Result};
 
 // == Resolution state
 //
@@ -885,15 +884,12 @@ fn resolve_leaf_in_mode(place: Place, doc: &Doc) -> Vec<Doc> {
 
 // == Entry point
 //
-//   resolve(0, doc)    -> Err(InvalidLayoutWidth)
 //   resolve(80, doc)   -> resolve_doc(Place::start(80), doc)
 
 /// Resolves a document at a strictly positive line width.
-pub(crate) fn resolve(width: usize, doc: &Doc) -> Result<Doc> {
-    if width == 0 {
-        return Err(Error::InvalidLayoutWidth);
-    }
+pub(crate) fn resolve(width: usize, doc: &Doc) -> Doc {
+    // Callers use width 80 or subtract the fixed, shorter "if" prefix
+    assert!(width > 0, "LaTeX renderer supplies a positive layout width");
     let place = Place::start(width);
-    let doc = resolve_doc(place, doc);
-    Ok(doc)
+    resolve_doc(place, doc)
 }

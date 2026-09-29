@@ -14,7 +14,7 @@ use super::super::{
     config::{
         PREFIX_LATEX, PREFIX_PROSE, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE,
     },
-    error::{self, Error},
+    error::Error,
     splicer::{Key, Kind, Selection},
 };
 use crate::lang::{
@@ -126,7 +126,6 @@ impl<'spec> Kind<'spec> for Latex {
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
         latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))
-            .map_err(error::latex)
     }
 }
 

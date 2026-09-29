@@ -7,7 +7,6 @@
 
 use std::path::Path;
 
-use super::super::latex;
 use crate::{
     diagnostic::{Diagnostic, Label, Report, Severity},
     lang::common::source::Span,
@@ -67,19 +66,6 @@ pub(super) fn io(path: &Path, source: std::io::Error) -> Error {
         _ => source.to_string(),
     };
     cause(IO, format!("{}: {message}", path.display()), Vec::new())
-}
-
-const LATEX_RENDERING_INVALID: &str = "splice/latex-rendering-invalid";
-
-/// Converts a LaTeX failure while retaining its message and expression span.
-pub(super) fn latex(error: latex::Error) -> Error {
-    let span = error.span();
-    let labels = if span.left.line == 0 {
-        Vec::new()
-    } else {
-        vec![Label::primary(&span, "cannot render this expression")]
-    };
-    cause(LATEX_RENDERING_INVALID, error.to_string(), labels)
 }
 
 // == Warnings

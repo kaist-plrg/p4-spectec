@@ -11,7 +11,7 @@ use std::collections::BTreeMap;
 use super::super::{
     anchor::{Decls, Targets},
     config::{PREFIX_LATEX, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE},
-    error::{self, Error},
+    error::Error,
     splicer::{Kind, Selection},
 };
 use crate::lang::common::source::Phrase;
@@ -100,7 +100,6 @@ impl<'spec> Kind<'spec> for Latex {
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
         latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))
-            .map_err(error::latex)
     }
 
     fn anchor(anchor_ctx: &AnchorContext<'_>, name: &str) -> Option<String> {

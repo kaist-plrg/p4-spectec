@@ -21,17 +21,24 @@ fn cause(report: &Report) -> &Diagnostic {
 fn latex_failures_preserve_expression_locations_and_warning_order() {
     let exp = p4spec_rust::phrase! { node: el::ExpKind::Bool(true), span: Default::default() };
     let op = p4spec_rust::phrase! { node: el::FuseOpKind::Fuse, span: Default::default() };
-    for (exp_kind, message) in [
-        (el::ExpKind::Hole(el::Hole::Num(0)), "LaTeX rendering is undefined for a hole expression"),
+    for (code, exp_kind, message) in [
         (
+            "latex/hole-unsupported",
+            el::ExpKind::Hole(el::Hole::Num(0)),
+            "LaTeX rendering is undefined for a hole expression",
+        ),
+        (
+            "latex/fuse-unsupported",
             el::ExpKind::Fuse(Box::new(exp.clone()), op, Box::new(exp.clone())),
             "LaTeX rendering is undefined for a fuse expression",
         ),
         (
+            "latex/unparen-unsupported",
             el::ExpKind::Unparen(Box::new(exp)),
             "LaTeX rendering is undefined for an unparen expression",
         ),
         (
+            "latex/raw-latex-unsupported",
             el::ExpKind::Latex("x".to_owned()),
             "raw LaTeX expressions are not allowed in canonical rendering",
         ),
@@ -41,6 +48,10 @@ fn latex_failures_preserve_expression_locations_and_warning_order() {
         // Construct renderer inputs that elaboration would reject before splicing
         def.exp.node = exp_kind;
         let el::DefKind::FuncDef(def) = &spec_el[1].node else { panic!("function definition") };
+        let anchor_ctx =
+            p4spec_rust::backend_specdoc::anchor::AnchorContext::new(&|_, _| None, &|_, _| None);
+        let report_direct =
+            p4spec_rust::backend_specdoc::latex::render_def(&anchor_ctx, &spec_el[1]).unwrap_err();
         let sources = [
             ("body.adoc", "${func-prose: missing}\n${func-latex: f}"),
             ("title.adoc", "${func-title-latex: f}\n${func-title-latex: f}"),
@@ -48,10 +59,13 @@ fn latex_failures_preserve_expression_locations_and_warning_order() {
         let (result, warnings) = splice_strings_with_warnings(&spec_el, &vec![], &sources);
         let report = result.unwrap_err();
         let diagnostic = cause(&report);
-        assert_eq!(diagnostic.source, "splice");
+        assert_eq!(diagnostic.source, "latex");
         assert_eq!(diagnostic.severity, Severity::Error);
-        assert_eq!(diagnostic.code.as_deref(), Some("splice/latex-rendering-invalid"));
+        assert_eq!(diagnostic.code.as_deref(), Some(code));
         assert_eq!(diagnostic.message, message);
+        assert_eq!(diagnostic.code, cause(&report_direct).code);
+        assert_eq!(diagnostic.labels, cause(&report_direct).labels);
+        assert_eq!(diagnostic.notes, cause(&report_direct).notes);
         assert_eq!(
             diagnostic.labels,
             [Label::primary(&def.exp.span, "cannot render this expression")]
@@ -104,7 +118,7 @@ fn rendering_failure_retains_warnings_without_replacing_destinations() {
         &vec![],
         &[(path_input, path_output.clone()), (path_bad, path_new.clone())],
     );
-    assert_eq!(cause(&result.unwrap_err()).code.as_deref(), Some("splice/latex-rendering-invalid"));
+    assert_eq!(cause(&result.unwrap_err()).code.as_deref(), Some("latex/hole-unsupported"));
     assert_eq!(warnings.len(), 1);
     assert_eq!(cause(&warnings[0]).code.as_deref(), Some("splice/key-not-found"));
     assert_eq!(fs::read_to_string(path_output).unwrap(), "original");
