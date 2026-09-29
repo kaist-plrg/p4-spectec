@@ -223,7 +223,7 @@ pub(crate) fn cast_up(
         }
         // Option: the payload
         ast::TypKind::Iter(typ_inner, ast::Iter::Opt) => {
-            let value = unwrap_from_result!(get::opt(arena, &value), span);
+            let value = get::opt(arena, &value).expect("operand must be an option");
             let value = match value {
                 Some(value) => Some(unwrap!(cast_up(arena, ctx, typ_inner, value))),
                 None => None,
@@ -304,7 +304,7 @@ pub(crate) fn cast_down(
         }
         // Option: the payload
         ast::TypKind::Iter(typ_inner, ast::Iter::Opt) => {
-            let value = unwrap_from_result!(get::opt(arena, &value), span);
+            let value = get::opt(arena, &value).expect("operand must be an option");
             let value = match value {
                 Some(value) => Some(unwrap!(cast_down(arena, ctx, typ_inner, value))),
                 None => None,

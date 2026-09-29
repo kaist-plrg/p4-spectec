@@ -587,7 +587,7 @@ fn eval_option_get_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Only a present option enters the nested block
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
     if let Some(value) =
-        unwrap_from_result!(get::opt(runner_ctx.arena(), &value), &instr.exp_r.node.span)
+        get::opt(runner_ctx.arena(), &value).expect("option binding value must be an option")
     {
         // The shorthand binding belongs to the nested block
         let ctx_bound =

@@ -231,11 +231,9 @@ fn iterate_wrong_value_kind(iter: ast::Iter) -> Result<(), Failure> {
 }
 
 #[test]
-fn test_option_iteration_representation_remains_a_runtime_error() {
-    let report = iterate_wrong_value_kind(ast::Iter::Opt)
-        .unwrap_err()
-        .into_report();
-    assert!(report.find_code("runtime/value-invalid").is_some());
+#[should_panic(expected = "iteration input must be an option")]
+fn test_option_iteration_typed_kind_precondition() {
+    let _ = iterate_wrong_value_kind(ast::Iter::Opt);
 }
 
 #[test]

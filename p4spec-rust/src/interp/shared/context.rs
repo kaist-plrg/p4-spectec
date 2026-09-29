@@ -505,8 +505,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
                 .find_value_at_slot(var.slot)
                 .expect("value must be bound");
             // Each variable must hold an option
-            let value = get::opt(arena, value)
-                .map_err(|error| error::locate(error.into(), &var.var.id.span))?;
+            let value = get::opt(arena, value).expect("iteration input must be an option");
             values.push(value);
         }
         // All present, all absent, or a mismatch

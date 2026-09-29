@@ -251,7 +251,8 @@ fn assign_iter_exp<Ctx: WriteContext>(
     match exp_iter.iter {
         // Option: assign the payload once, or bind every variable to none
         ast::Iter::Opt => {
-            let value_opt = unwrap_from_result!(get::opt(arena, &value), span);
+            let value_opt =
+                get::opt(arena, &value).expect("iteration assignment value must be an option");
             let ctx_sub = match value_opt {
                 Some(value) => Some(unwrap!(assign_exp(arena, ctx.clone(), exp_inner, value))),
                 None => None,

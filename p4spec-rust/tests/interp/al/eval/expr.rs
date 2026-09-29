@@ -86,15 +86,22 @@ fn test_length_requires_a_valid_operand_kind() {
 }
 
 #[test]
-fn test_optional_casts_retain_representation_errors() {
+fn test_optional_casts_require_option_values() {
     let typ = typ::make::opt(typ::make::int());
     let exp_inner = exp(ast::ExpKind::Bool(false), typ::make::bool());
     for kind in [
         ast::ExpKind::UpCast(Box::new(typ.clone()), Box::new(exp_inner.clone())),
         ast::ExpKind::DownCast(Box::new(typ.clone()), Box::new(exp_inner)),
     ] {
-        let report = eval(exp(kind, typ.clone())).expect_err("optional representation error");
-        assert!(report.find_code("runtime/value-invalid").is_some(), "{report:?}");
+        let panic =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| eval(exp(kind, typ.clone()))))
+                .expect_err("optional casts require option operands");
+        let message = panic
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| panic.downcast_ref::<&str>().copied())
+            .unwrap();
+        assert!(message.contains("operand must be an option"), "{message}");
     }
 }
 

@@ -159,13 +159,14 @@ where
             _ => Ok(false),
         },
         // Options: absent, or present with the element type
-        TypKind::Iter(typ_inner, Iter::Opt) => {
-            if let ValueKind::Opt(Some(value)) = arena.kind(value) {
-                sub(arena, find_typdef_opt, find_func, typ_inner, value)
-            } else {
-                Ok(true)
-            }
-        }
+        TypKind::Iter(typ_inner, Iter::Opt) => match arena.kind(value) {
+            // A present option checks its payload
+            ValueKind::Opt(Some(value)) => sub(arena, find_typdef_opt, find_func, typ_inner, value),
+            // An absent option has no payload to check
+            ValueKind::Opt(None) => Ok(true),
+            // Other value kinds are not options
+            _ => Ok(false),
+        },
         // Lists: every element in the element type
         TypKind::Iter(typ_inner, Iter::List) => match arena.kind(value) {
             ValueKind::List(values) => {

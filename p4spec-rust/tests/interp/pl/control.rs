@@ -209,19 +209,15 @@ fn destructuring_typed_kind_precondition() {
 }
 
 #[test]
-fn option_extraction_representation_remains_a_runtime_error() {
+#[should_panic(expected = "option binding value must be an option")]
+fn option_extraction_requires_an_option_value() {
     let block = vec![instr(ast::InstrKind::OptionGet(ast::OptionGetInstr {
         exp_l: variable("n"),
         exp_r: nat(1),
         block: vec![],
     }))];
     let mut runner = configured(function(block), false);
-    let report = runner
-        .context()
-        .call_func("entry", &[], &[])
-        .unwrap_err()
-        .into_report();
-    assert!(report.find_code("runtime/value-invalid").is_some());
+    let _ = runner.context().call_func("entry", &[], &[]);
 }
 
 #[test]

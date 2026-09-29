@@ -1,4 +1,3 @@
-use crate::interp::report::ReportExt;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::interp::shared::{
@@ -495,11 +494,9 @@ fn assign_wrong_iteration_kind(iter_kind: ast::Iter) -> Result<(), Failure> {
 }
 
 #[test]
-fn test_option_assignment_representation_remains_a_runtime_error() {
-    let report = assign_wrong_iteration_kind(ast::Iter::Opt)
-        .unwrap_err()
-        .into_report();
-    assert!(report.find_code("runtime/value-invalid").is_some());
+#[should_panic(expected = "iteration assignment value must be an option")]
+fn test_option_assignment_typed_kind_precondition() {
+    let _ = assign_wrong_iteration_kind(ast::Iter::Opt);
 }
 
 #[test]

@@ -8,9 +8,10 @@ use p4spec_rust::{
     lang::{
         data::{
             typ,
-            value::{Value, make},
+            value::{Value, get, make},
         },
         il::ast::Typ,
+        traits::print::Print,
     },
     pass::{algo, elaborate, prosify, structure},
     runner::{self, Extern, Interface, Interpreter, RunnerContext},
@@ -113,7 +114,7 @@ macro_rules! runners {
 }
 
 #[test]
-fn optional_representation_errors_remain_runtime_errors() {
+fn optional_inputs_are_rejected_at_the_public_boundary() {
     runners!(true, true, Host { outputs: 1, reenter: false }, |runner| {
         let value = make::bool(runner.arena_mut(), false, Default::default()).unwrap();
         assert_fatal(
@@ -121,15 +122,66 @@ fn optional_representation_errors_remain_runtime_errors() {
                 .context()
                 .call_func("map_opt", &[], &[value])
                 .unwrap_err(),
-            "runtime/value-invalid",
+            "runtime/function-input-type-mismatch",
         );
+    });
+}
+
+#[test]
+fn optional_host_outputs_are_rejected_before_evaluation() {
+    runners!(true, true, Host { outputs: 1, reenter: false }, |runner| {
         let value = make::nat(runner.arena_mut(), 1u64.into(), Default::default()).unwrap();
         assert_fatal(
             runner
                 .context()
                 .call_func("use_opt", &[], &[value])
                 .unwrap_err(),
-            "runtime/value-invalid",
+            "runtime/relation-output-type-mismatch",
+        );
+    });
+}
+
+#[test]
+fn valid_optional_inputs_preserve_presence_and_payloads() {
+    for cache in [false, true] {
+        for guard in [false, true] {
+            runners!(cache, guard, Host { outputs: 1, reenter: false }, |runner| {
+                let value_nat =
+                    make::nat(runner.arena_mut(), 3u64.into(), Default::default()).unwrap();
+                for value_inner in [None, Some(value_nat)] {
+                    let value = make::opt(
+                        runner.arena_mut(),
+                        typ::make::opt(typ::make::nat()).node.into(),
+                        value_inner,
+                        Default::default(),
+                    )
+                    .unwrap();
+                    let value = runner
+                        .context()
+                        .call_func("map_opt", &[], &[value])
+                        .unwrap();
+                    let value_result = get::opt(runner.arena(), &value).unwrap();
+                    assert_eq!(value_result.is_some(), value_inner.is_some());
+                    if let Some(value) = value_result {
+                        assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), "4");
+                    }
+                }
+            });
+        }
+    }
+}
+
+#[test]
+fn unguarded_optional_inputs_require_option_values() {
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+
+    runners!(false, false, Host { outputs: 1, reenter: false }, |runner| {
+        let value = make::bool(runner.arena_mut(), false, Default::default()).unwrap();
+        assert!(
+            catch_unwind(AssertUnwindSafe(|| {
+                let _ = runner.context().call_func("map_opt", &[], &[value]);
+            }))
+            .is_err()
         );
     });
 }
