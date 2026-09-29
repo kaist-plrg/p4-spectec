@@ -1,18 +1,34 @@
 //! Ordered AL candidate selection and deterministic overlap checks
 //!
-//! `choose_sequential` returns the first candidate that matches;
+//! `choose_sequential` returns the first match or the deepest failure set;
 //! `choose_deterministic` evaluates every candidate and rejects a second match.
-//! Both stop at the first fatal error and,
-//! when nothing matches, return the mismatches of every candidate tried.
+//! Both stop at the first fatal error.
+//! Deterministic choice retains every mismatch when nothing matches.
 
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unmatch},
-    error::Error,
+    error::{self, Error},
 };
 
 // = Sequential choice
 
-/// Returns the first matching candidate, collecting the mismatches otherwise.
+/// Keeps the most deeply nested failure set, preferring the later one on ties.
+fn retain_deepest_errors(
+    errors: &mut Vec<crate::diagnostic::Report>,
+    errors_post: Vec<crate::diagnostic::Report>,
+) {
+    if errors_post
+        .iter()
+        .map(error::trace::depth)
+        .max()
+        .unwrap_or(0)
+        >= errors.iter().map(error::trace::depth).max().unwrap_or(0)
+    {
+        *errors = errors_post;
+    }
+}
+
+/// Returns the first matching candidate or the deepest failure set.
 pub fn choose_sequential<C, T>(
     candidates: impl IntoIterator<Item = C>,
     mut evaluate: impl FnMut(&C) -> Backtrack<T>,
@@ -24,8 +40,8 @@ pub fn choose_sequential<C, T>(
             ok!(value) => return ok!(value),
             // A fatal error stops the search
             err!(errors) => return err!(errors),
-            // A mismatch is recorded and the next candidate tried
-            unmatch!(mut candidate_errors) => errors.append(&mut candidate_errors),
+            // Retain the deepest failures before trying the next candidate
+            unmatch!(errors_post) => retain_deepest_errors(&mut errors, errors_post),
         }
     }
     unmatch!(errors)
