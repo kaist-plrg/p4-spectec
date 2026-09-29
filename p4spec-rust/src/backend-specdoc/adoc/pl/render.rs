@@ -1468,7 +1468,7 @@ type RenderTier<'ctx, 'a, Tier> =
     fn(&mut Renderer<'ctx, 'a>, usize, &Context, bool, &pl::Instr<Tier>, &Tier) -> Rendered;
 
 impl<'ctx, 'a> Renderer<'ctx, 'a> {
-    /// Starts one body with a unique caller-supplied anchor prefix and local counters.
+    /// Starts one body with its anchor prefix and local counters.
     ///
     /// Use a distinct anchor prefix for every body composed into the same document.
     /// Keep the anchor context shared to resolve titles and declare destinations once.

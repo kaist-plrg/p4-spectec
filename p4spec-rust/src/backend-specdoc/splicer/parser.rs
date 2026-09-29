@@ -4,7 +4,10 @@
 //! Rule groups accept one relation with an optional slash and group identifier;
 //! their closing brace is optional.
 
-use super::{error::Error, source::Source};
+use super::{
+    error::{self, Error},
+    source::Source,
+};
 use crate::lang::common::source::{Phrase, Span};
 
 // == Parsing strings with expects
@@ -44,7 +47,7 @@ fn parse_id(source: &mut Source<'_>) -> Result<Phrase<String>, Error> {
     let len = text.bytes().take_while(|ch| matches!(ch, b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'_' | b'\'' | b'`' | b'-' | b'*' | b'.')).count();
     // Empty identifiers fail at the first unexpected byte
     if len == 0 {
-        return Err(Error::Identifier(source.span()));
+        return Err(error::identifier(&source.span()));
     }
     source.advn_bytes(len);
     Ok(

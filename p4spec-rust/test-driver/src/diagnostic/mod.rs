@@ -8,6 +8,7 @@ mod algo;
 mod cases;
 mod elab;
 mod parse;
+mod splice;
 
 use std::path::Path;
 
@@ -32,6 +33,7 @@ pub enum Suite {
     Parse,
     Elab,
     Algo,
+    Splice,
 }
 
 // = Acceptance runner
@@ -79,10 +81,12 @@ pub fn run(suite: Option<Suite>) -> Result<()> {
         Some(Suite::Parse) => run_parse(),
         Some(Suite::Elab) => run_suite("elab", cases::ELAB, elab::run),
         Some(Suite::Algo) => run_suite("algo", cases::ALGO, algo::run),
+        Some(Suite::Splice) => run_suite("splice", cases::SPLICE, splice::run),
         None => {
             run_parse()?;
             run_suite("elab", cases::ELAB, elab::run)?;
-            run_suite("algo", cases::ALGO, algo::run)
+            run_suite("algo", cases::ALGO, algo::run)?;
+            run_suite("splice", cases::SPLICE, splice::run)
         }
     }
 }

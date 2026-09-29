@@ -13,7 +13,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use super::error::Error;
+use super::error::{self, Error};
 
 /// Resolves output links without requiring their final target to exist.
 fn resolve_output(path: &Path) -> std::io::Result<PathBuf> {
@@ -56,16 +56,15 @@ impl PendingFile {
     /// Stages a complete output beside its destination for an atomic rename.
     pub(super) fn new(path_output: &Path, text: &str) -> Result<Self, Error> {
         // Follow output links while permitting a new final destination
-        let path_target = resolve_output(path_output)
-            .map_err(|source| Error::Io { path: path_output.to_owned(), source })?;
+        let path_target =
+            resolve_output(path_output).map_err(|source| error::io(path_output, source))?;
         let path_output = path_target.as_path();
         // Create the parent only after every input has rendered successfully
         let parent = path_output
             .parent()
             .filter(|path| !path.as_os_str().is_empty())
             .unwrap_or(Path::new("."));
-        fs::create_dir_all(parent)
-            .map_err(|source| Error::Io { path: parent.to_owned(), source })?;
+        fs::create_dir_all(parent).map_err(|source| error::io(parent, source))?;
         // Exclusive creation prevents concurrent runs from sharing a temporary file
         static NEXT: AtomicU64 = AtomicU64::new(0);
         let (pending, mut file) = loop {
@@ -77,7 +76,7 @@ impl PendingFile {
                 // Skip temporary names already reserved by another process
                 Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
                 // Preserve the destination path in the diagnostic
-                Err(source) => return Err(Error::Io { path: path_output.to_owned(), source }),
+                Err(source) => return Err(error::io(path_output, source)),
             }
         };
         // Preserve existing destination permissions when replacing a file
@@ -85,23 +84,23 @@ impl PendingFile {
             // Keep the destination's permission bits
             Ok(metadata) => file
                 .set_permissions(metadata.permissions())
-                .map_err(|source| Error::Io { path: path_output.to_owned(), source })?,
+                .map_err(|source| error::io(path_output, source))?,
             // New destinations inherit the process's normal creation permissions
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
             // Other metadata errors must not silently change permissions
-            Err(source) => return Err(Error::Io { path: path_output.to_owned(), source }),
+            Err(source) => return Err(error::io(path_output, source)),
         }
         // Finish writing before allowing any destination to be replaced
         file.write_all(text.as_bytes())
             .and_then(|()| file.sync_all())
-            .map_err(|source| Error::Io { path: path_output.to_owned(), source })?;
+            .map_err(|source| error::io(path_output, source))?;
         Ok(pending)
     }
 
     /// Replaces one destination with its fully written temporary file.
     pub(super) fn commit(self) -> Result<(), Error> {
         fs::rename(&self.path, &self.path_output)
-            .map_err(|source| Error::Io { path: self.path_output.clone(), source })
+            .map_err(|source| error::io(&self.path_output, source))
     }
 }
 

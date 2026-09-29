@@ -239,3 +239,12 @@ pub const ALGO: &[&str] = &[
     "table-pattern-overlap.watsup",
     "table-repeated-binding.watsup",
 ];
+
+/// Lists malformed skeletons and file operation failures.
+pub const SPLICE: &[&str] = &[
+    "identifier-invalid.adoc",
+    "marker-incomplete.adoc",
+    "group-identifier-missing.adoc",
+    "input-missing",
+    "output-parent-file",
+];

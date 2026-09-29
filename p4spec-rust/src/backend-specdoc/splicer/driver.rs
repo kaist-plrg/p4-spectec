@@ -8,7 +8,7 @@ use std::{fs, path::PathBuf};
 use super::super::anchor::AnchorContext;
 use super::{
     anchor,
-    error::Error,
+    error::{self, Error},
     file::PendingFile,
     parser,
     source::Source,
@@ -175,8 +175,8 @@ pub fn splice_files(
     // Read all inputs before any path can be replaced by another output
     let mut sources = Vec::with_capacity(path_pairs.len());
     for (path_input, _) in path_pairs {
-        let text = fs::read_to_string(path_input)
-            .map_err(|source| Error::Io { path: path_input.clone(), source })?;
+        let text =
+            fs::read_to_string(path_input).map_err(|source| error::io(path_input, source))?;
         sources.push((path_input.to_string_lossy().into_owned(), text));
     }
     // Complete the target prepass and rendering before filesystem mutations

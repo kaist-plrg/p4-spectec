@@ -48,7 +48,7 @@ impl Key for String {
 /// Borrows one selected definition with its key and original request position.
 ///
 /// In `${func-prose: missing f}`, the selection for `f` retains index 1.
-/// Repeated keys remain separate selections even when they borrow the same data.
+/// Repeated keys stay separate even when they borrow the same data.
 pub(super) struct Selection<'a, Key, Value> {
     /// Retains the key's position before missing definitions are skipped.
     pub idx_key: usize,
