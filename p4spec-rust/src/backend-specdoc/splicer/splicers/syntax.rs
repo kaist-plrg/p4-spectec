@@ -3,6 +3,8 @@
 //! Initialization selects definitions in source order.
 //! The generic splicer owns wrappers, anchors, and usage accounting.
 
+use crate::diagnostic::Report;
+
 use super::super::super::adoc;
 use super::super::super::anchor::AnchorContext;
 use std::collections::BTreeMap;
@@ -48,6 +50,7 @@ impl<'spec> Kind<'spec> for Source {
 
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
+        _warnings: &mut Vec<Report>,
         _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {

@@ -221,3 +221,34 @@ fn file_replacement_preserves_relative_symlinks_and_permissions() {
     assert_eq!(fs::metadata(path_target).unwrap().permissions().mode() & 0o777, 0o640);
     assert_eq!(fs::read_dir(&directory.0).unwrap().count(), 2);
 }
+
+#[test]
+fn adoc_warnings_survive_a_later_latex_failure() {
+    use p4spec_rust::pass::{algo, elaborate, prosify, structure};
+    let mut spec_el = spec_fixture::parse(
+        "dec $f : nat\n hint(prose_in \"[x]<y>\")\ndef $f = 0\ndec $g : nat\ndef $g = $f\n",
+    )
+    .unwrap();
+    let spec_il = elaborate::convert(spec_el.clone()).unwrap();
+    let spec_al = algo::convert(spec_il).unwrap();
+    let spec_sl = structure::convert(spec_al, false).unwrap();
+    let spec_pl = prosify::convert(spec_sl).unwrap();
+    let mut defs_bad = spec_fixture::parse("def $bad = %0").unwrap();
+    spec_el.append(&mut defs_bad);
+    let sources = [("body.adoc", "${func-title-prose: f}\n${func-prose: g}\n${func-latex: bad}")];
+    let (result, warnings) = splice_strings_with_warnings(&spec_el, &spec_pl, &sources);
+    assert_eq!(cause(&result.unwrap_err()).code.as_deref(), Some("latex/hole-unsupported"));
+    // The title and its later use each own a warning before the LaTeX failure
+    assert_eq!(warnings.len(), 2);
+    for report in &warnings {
+        let diagnostic = cause(report);
+        assert_eq!(diagnostic.source, "adoc");
+        assert_eq!(diagnostic.code.as_deref(), Some("adoc/link-text-invalid"));
+        assert_eq!(diagnostic.notes, ["[x]<y>"]);
+        assert_eq!(diagnostic.labels.len(), 1);
+        assert!(diagnostic.labels[0].span.left.line > 0);
+    }
+    assert!(
+        cause(&warnings[0]).labels[0].span.left.line < cause(&warnings[1]).labels[0].span.left.line
+    );
+}

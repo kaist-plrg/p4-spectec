@@ -15,6 +15,7 @@
 use crate::backend_specdoc::anchor::AnchorContext;
 
 use crate::{
+    diagnostic::Report,
     lang::{
         common::{
             Iter,
@@ -23,6 +24,7 @@ use crate::{
                 bool::{BinOp as BoolBinOp, CmpOp as BoolCmpOp, UnOp as BoolUnOp},
                 num::CmpOp as NumCmpOp,
             },
+            source::Span,
         },
         el,
         hints::{alter, input},
@@ -722,8 +724,13 @@ impl Code {
         let code_iter = Code::of_iter(iter_exp.iter);
         // Parenthesize compound bodies whose code contains spaces
         let needs_parens = !matches!(exp_inner.node.node, ExpKind::Id(_) | ExpKind::Tuple(_))
-            && serialize::ser_code(&AnchorContext::new(&|_, _| None, &|_, _| None), &code_inner)
-                .contains(' ');
+            && serialize::ser_code(
+                &AnchorContext::new(&|_, _| None, &|_, _| None),
+                &mut Vec::new(),
+                &Span::default(),
+                &code_inner,
+            )
+            .contains(' ');
         if needs_parens {
             Code::seq([Code::token("( "), code_inner, Code::token(" )"), code_iter])
         } else {
@@ -1448,10 +1455,15 @@ impl Prose {
 ///
 /// Create a new renderer with a distinct anchor prefix for each body occurrence.
 /// Nested blocks within that body share its block counter.
+/// Inputs must retain prosify's validated hints, synthesized relation outputs,
+/// and annotated fallthrough destinations.
+/// Warnings use the owning definition or fragment span and append to the caller's list.
 pub struct Renderer<'ctx, 'a> {
     anchor_ctx: &'ctx mut AnchorContext<'a>,
     anchor_prefix: String,
     num_blocks: usize,
+    warnings: &'ctx mut Vec<Report>,
+    span: Span,
 }
 
 /// A tier instruction ready to fold inline or nest below its enclosing head.
@@ -1473,8 +1485,18 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ///
     /// Use a distinct anchor prefix for every body composed into the same document.
     /// Keep the anchor context shared to resolve titles and declare destinations once.
-    pub fn new(anchor_ctx: &'ctx mut AnchorContext<'a>, anchor_prefix: &str) -> Self {
-        Self { anchor_ctx, anchor_prefix: anchor_prefix.to_owned(), num_blocks: 0 }
+    pub fn new(
+        anchor_ctx: &'ctx mut AnchorContext<'a>,
+        warnings: &'ctx mut Vec<Report>,
+        anchor_prefix: &str,
+    ) -> Self {
+        Self {
+            anchor_ctx,
+            anchor_prefix: anchor_prefix.to_owned(),
+            num_blocks: 0,
+            warnings,
+            span: Span::default(),
+        }
     }
 
     /// Allocates a block destination within this body's anchor prefix.
@@ -1646,7 +1668,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .map(|anchor| format!("+++<span id=\"{anchor}\"></span>+++"))
             .unwrap_or_default();
         let block_body = self.render_instrs(1, None, ctx, render_tier, block);
-        let text_body = serialize::ser_block(self.anchor_ctx, &block_body);
+        let text_body =
+            serialize::ser_block(self.anchor_ctx, self.warnings, &self.span, &block_body);
         let text_bullet = serialize::adoc_ordered_bullet(0);
         format!("\n\n{text_bullet}{text_anchor}Otherwise:{text_body}")
     }
@@ -2803,6 +2826,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         exps: &[pl::Exp],
         block: &pl::GroupBlock,
     ) -> String {
+        self.span = hints.span.clone();
         // Select hinted prose or filled relation notation for the title
         let hint_opt = hints
             .node
@@ -2825,8 +2849,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let ctx = Context::new(&id_rel.node);
         let block_body = self.render_instrs(0, None, &ctx, Self::render_instr_group, block);
         // Serialize the linked title and body as one fragment
-        let text_title = serialize::ser_prose(self.anchor_ctx, &prose_title);
-        let text_body = serialize::ser_block(self.anchor_ctx, &block_body);
+        let text_title =
+            serialize::ser_prose(self.anchor_ctx, self.warnings, &self.span, &prose_title);
+        let text_body =
+            serialize::ser_block(self.anchor_ctx, self.warnings, &self.span, &block_body);
         format!("{text_title}:\n{text_body}")
     }
 
@@ -2838,6 +2864,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Renders a relation otherwise fragment with its shared destination.
     pub fn render_rulegroup_else(&mut self, id_rel: &pl::Id, block: &pl::DispatchBlock) -> String {
+        self.span = id_rel.span.clone();
         let ctx = Context::new(&id_rel.node);
         let anchor_else = fallthrough::anchor_of_else(&id_rel.node);
         let text_else = self.render_elseblock(
@@ -2858,10 +2885,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Renders relation dispatch with local arms and shared group destinations.
     pub fn render_defined_rel_def_dispatch(&mut self, rel: &pl::DefinedRel) -> String {
+        self.span = rel.id.span.clone();
         let ctx = Context::new(&rel.id.node);
         let block_dispatch =
             self.render_instrs(0, None, &ctx, Self::render_instr_dispatch, &rel.block);
-        let text_dispatch = serialize::ser_block(self.anchor_ctx, &block_dispatch);
+        let text_dispatch =
+            serialize::ser_block(self.anchor_ctx, self.warnings, &self.span, &block_dispatch);
         format!("{} dispatch:\n{text_dispatch}", rel.id.node)
     }
 
@@ -3100,6 +3129,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Renders a definition within this body's anchor prefix.
     pub fn render_def(&mut self, def: &pl::Def) -> Option<String> {
+        self.span = def.node.span.clone();
         let block = match &def.node.node {
             pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
             pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
@@ -3121,7 +3151,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 self.render_defined_func_def(&def.hints, func)
             }
         };
-        Some(serialize::ser_block(self.anchor_ctx, &block))
+        Some(serialize::ser_block(self.anchor_ctx, self.warnings, &def.node.span, &block))
     }
 }
 
@@ -3130,7 +3160,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 //   render_spec([Oracle, Sign])   -> the two definitions joined by a blank line
 
 /// Renders a function or relation title without its defined body.
-pub fn render_def_title(anchor_ctx: &mut AnchorContext<'_>, def: &pl::Def) -> Option<String> {
+pub fn render_def_title(
+    anchor_ctx: &mut AnchorContext<'_>,
+    warnings: &mut Vec<Report>,
+    def: &pl::Def,
+) -> Option<String> {
     let block = match &def.node.node {
         pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
             Renderer::render_extern_rel_def(&def.hints, rel)
@@ -3149,7 +3183,7 @@ pub fn render_def_title(anchor_ctx: &mut AnchorContext<'_>, def: &pl::Def) -> Op
         }
         _ => return None,
     };
-    Some(serialize::ser_block(anchor_ctx, &block))
+    Some(serialize::ser_block(anchor_ctx, warnings, &def.node.span, &block))
 }
 
 /// Renders one definition, omitting type and variable declarations.
@@ -3157,14 +3191,15 @@ pub fn render_def_title(anchor_ctx: &mut AnchorContext<'_>, def: &pl::Def) -> Op
 /// Share the anchor context and use a distinct anchor prefix for each output body.
 pub fn render_def(
     anchor_ctx: &mut AnchorContext<'_>,
+    warnings: &mut Vec<Report>,
     anchor_prefix: &str,
     def: &pl::Def,
 ) -> Option<String> {
-    Renderer::new(anchor_ctx, anchor_prefix).render_def(def)
+    Renderer::new(anchor_ctx, warnings, anchor_prefix).render_def(def)
 }
 
-/// Renders a complete prose specification with definition-name anchors.
-pub fn render_spec(spec: &pl::Spec) -> String {
+/// Renders a complete prose specification and collects markup warnings.
+pub fn render_spec(spec: &pl::Spec, warnings: &mut Vec<Report>) -> String {
     let resolve = |_, id: &str| Some(id.to_owned());
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
     spec.iter()
@@ -3181,7 +3216,7 @@ pub fn render_spec(spec: &pl::Spec) -> String {
                 pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
             };
             let anchor_prefix = format!("spec:{}:{idx_def}", id.node);
-            render_def(&mut anchor_ctx, &anchor_prefix, def)
+            render_def(&mut anchor_ctx, warnings, &anchor_prefix, def)
         })
         .collect::<Vec<_>>()
         .join("\n\n")

@@ -217,3 +217,30 @@ fn splice_keeps_warning_order_before_output_failure() {
     assert!(text.contains(" = missing\n"), "{text}");
     assert_eq!(fs::read_dir(&directory.0).unwrap().count(), 3);
 }
+
+#[test]
+fn splice_collects_adoc_warnings_before_later_io_failure() {
+    let directory = Directory::new("splice-adoc-warning");
+    let source =
+        "dec $f : nat\n  hint(prose_in \"[x]<y>\")\ndef $f = 0\ndec $g : nat\ndef $g = $f\n";
+    fs::write(directory.0.join("spec.watsup"), source).unwrap();
+    fs::write(directory.0.join("input.adoc"), "${func-title-prose: f}\n${func-prose: g}\n")
+        .unwrap();
+    fs::write(directory.0.join("blocked"), "original").unwrap();
+    let output = binary()
+        .current_dir(&directory.0)
+        .args(["splice", "spec.watsup", "--splice", "input.adoc", "--out", "blocked/output.adoc"])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    assert!(output.stdout.is_empty());
+    let text = String::from_utf8(output.stderr).unwrap();
+    let idx_warning = text.find("warning[adoc/link-text-invalid]").expect(&text);
+    let idx_unused = text.find("warning[splice/keys-unused]").expect(&text);
+    let idx_error = text.find("error[splice/io]").expect(&text);
+    assert!(idx_warning < idx_unused && idx_unused < idx_error, "{text}");
+    assert!(text.contains("spec.watsup:"), "{text}");
+    assert!(text.contains(" = [x]<y>"), "{text}");
+    assert!(!text.contains("Warning:"), "{text}");
+    assert_eq!(fs::read_to_string(directory.0.join("blocked")).unwrap(), "original");
+}

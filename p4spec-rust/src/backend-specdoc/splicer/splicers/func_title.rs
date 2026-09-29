@@ -72,6 +72,7 @@ impl<'spec> Kind<'spec> for Source {
 
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
+        _warnings: &mut Vec<Report>,
         _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
@@ -104,6 +105,7 @@ impl<'spec> Kind<'spec> for Latex {
 
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
+        _warnings: &mut Vec<Report>,
         _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
@@ -145,12 +147,15 @@ impl<'spec> Kind<'spec> for Prose {
 
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
+        warnings: &mut Vec<Report>,
         _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .filter_map(|selection| adoc::pl::render_def_title(anchor_ctx, selection.data))
+            .filter_map(|selection| {
+                adoc::pl::render_def_title(anchor_ctx, warnings, selection.data)
+            })
             .collect::<Vec<_>>()
             .join("\n\n"))
     }
