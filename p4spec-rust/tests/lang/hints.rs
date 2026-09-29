@@ -4,9 +4,7 @@ use p4spec_rust::{
         common::notation::atom::Atom,
         el::ast::{self, ExpKind, Hole},
         hints::{
-            alter::{
-                self as alter_impl, AlterationError, AlterationHint, Hole as AlterHole, Renderer,
-            },
+            alter::{self as alter_impl, AlterHint, AlterationError, Hole as AlterHole, Renderer},
             fields::{self as fields_impl, FieldError, FieldHint},
             input::{self as input_impl, InputError, InputHint},
         },

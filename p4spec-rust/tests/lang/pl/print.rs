@@ -82,12 +82,16 @@ fn test_group_printer_escapes_text_and_omits_annotations_and_fallthrough() {
         tier: pl::ast::GroupInstr::Return(pl::ast::ReturnInstr { exp: text("line\n\"\\") }),
     }));
     instr_a.node.note = Some(pl::ast::Fallthrough::Next);
-    instr_a.hints.prose = Some(alter::AlterationHint::Text("first prose".to_owned()));
+    instr_a.hints.node.prose = Some(
+        p4spec_rust::phrase! { node: alter::AlterHintKind::Text("first prose".to_owned()), span: Default::default() },
+    );
 
     let mut instr_b = instr_a.clone();
     instr_b.node.note = Some(pl::ast::Fallthrough::Fail);
     instr_b.node.span = span("other-source");
-    instr_b.hints.prose = Some(alter::AlterationHint::Text("other prose".to_owned()));
+    instr_b.hints.node.prose = Some(
+        p4spec_rust::phrase! { node: alter::AlterHintKind::Text("other prose".to_owned()), span: Default::default() },
+    );
 
     assert_eq!(Print::to_string(&vec![instr_a]), "1. Return \"line\\n\\\"\\\\\"");
     assert_eq!(Print::to_string(&vec![instr_b]), "1. Return \"line\\n\\\"\\\\\"");

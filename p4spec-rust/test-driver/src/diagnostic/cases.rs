@@ -248,3 +248,10 @@ pub const SPLICE: &[&str] = &[
     "input-missing",
     "output-parent-file",
 ];
+
+/// Lists the pinned annotate cases under their Rust prose stage.
+pub const PROSE: &[&str] = &[
+    "hint-prose-fields-arity.watsup",
+    "hint-prose-fields-shape.watsup",
+    "hint-prose-index-out-of-range.watsup",
+];

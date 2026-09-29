@@ -5,9 +5,7 @@ mod transform;
 
 use crate::lang::sl::ast as sl;
 
-use super::ProseError;
-
 /// Lifts nested calls in a structured-language specification.
-pub(super) fn expand_spec(spec_sl: sl::Spec) -> Result<sl::Spec, ProseError> {
+pub(super) fn expand_spec(spec_sl: sl::Spec) -> sl::Spec {
     transform::expand_spec(spec_sl)
 }

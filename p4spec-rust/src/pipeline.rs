@@ -36,7 +36,7 @@ pub enum Error {
     Structure(StructureError),
     /// Converting SL into PL failed.
     #[error(transparent)]
-    Prose(#[from] ProseError),
+    Prose(ProseError),
 }
 
 // = Transformations

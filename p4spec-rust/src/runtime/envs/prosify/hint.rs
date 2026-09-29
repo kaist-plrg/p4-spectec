@@ -7,7 +7,7 @@ use std::collections::BTreeMap;
 
 use crate::lang::{common::notation::mixop::Mixop, pl::annot::Hints, sl::ast::Id};
 
-#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 /// What a hint set belongs to.
 enum HintKey {
     /// A variant case: type name and mixfix operator.
@@ -41,19 +41,19 @@ impl HEnv {
         self.0.insert(key, hints);
     }
 
-    /// The hints of a variant case, if any.
+    /// The located hints of a variant case, if any.
     pub fn get_case(&self, id_typ: &Id, mixop: &Mixop) -> Option<&Hints> {
         let key = HintKey::Case(id_typ.node.clone(), mixop.clone());
         self.0.get(&key)
     }
 
-    /// The hints of a meta-function, if any.
+    /// The located hints of a meta-function, if any.
     pub fn get_func(&self, id_func: &Id) -> Option<&Hints> {
         let key = HintKey::Func(id_func.node.clone());
         self.0.get(&key)
     }
 
-    /// The hints of a relation, if any.
+    /// The located hints of a relation, if any.
     pub fn get_rel(&self, id_rel: &Id) -> Option<&Hints> {
         let key = HintKey::Rel(id_rel.node.clone());
         self.0.get(&key)
