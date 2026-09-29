@@ -42,7 +42,7 @@ use crate::{
 
 use super::{
     doc::{
-        doc::{Block, Code, ItemKind, Link, LinkKind, Prose, Subject, Table},
+        doc::{Block, Code, ItemKind, Link, Prose, Subject, Table},
         serialize,
     },
     fallthrough::{self, Context},
@@ -50,13 +50,13 @@ use super::{
 
 // == Render utils
 
-/// Selects input or truth prose and retains the selected hint's name.
-fn prose_input_hint(hints: &Hints) -> Option<(&'static str, &alter::AlterHint)> {
-    match (&hints.node.prose_in, &hints.node.prose_true) {
-        (Some(hint), _) => Some(("prose_in", hint)),
-        (_, Some(hint)) => Some(("prose_true", hint)),
-        _ => None,
-    }
+/// Selects input prose, falling back to truth prose.
+fn prose_input_hint(hints: &Hints) -> Option<&alter::AlterHint> {
+    hints
+        .node
+        .prose_in
+        .as_ref()
+        .or(hints.node.prose_true.as_ref())
 }
 
 /// The largest visible width kept inline by the prose renderer.
@@ -421,7 +421,7 @@ impl Code {
                 Code::of_slice_exp(exp_base, exp_idx, exp_len)
             }
             ExpKind::Upd(exp_base, path, exp_field) => Code::of_upd_exp(exp_base, path, exp_field),
-            ExpKind::Call(id, targs, args) => Code::of_call_exp(id, targs, args),
+            ExpKind::Call(id, targs, args) => Code::of_call_exp(&exp.hints.span, id, targs, args),
             ExpKind::Iter(exp_inner, iter_exp) => Code::of_iter_exp(exp_inner, iter_exp),
         }
     }
@@ -710,13 +710,14 @@ impl Code {
     //
     //   $e_num(n)   -> xref:e_num[``$e_num(n)``]
 
-    fn of_call_exp(id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Code {
+    fn of_call_exp(span: &Span, id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Code {
         let text_id = string_of_defid(id);
         let text_targs = string_of_targs(targs);
         let code_args = Code::of_args(args);
         let code_call = Code::seq([Code::token(text_id), Code::token(text_targs), code_args]);
-        let link =
-            Link { kind: LinkKind::Subject(Subject::Function(id.node.clone())), origin: None };
+        let link = Link::Subject(Subject::Function(
+            crate::phrase! { node: id.node.clone(), span: span.clone() },
+        ));
         Code::link(link, code_call)
     }
 
@@ -876,12 +877,9 @@ impl Prose {
                     args,
                     false,
                 );
-                let link = Link {
-                    kind: LinkKind::Subject(Subject::Function(id.node.clone())),
-                    origin: Some(
-                        crate::phrase! { node: "prose_false".to_owned(), span: hint.span.clone() },
-                    ),
-                };
+                let link = Link::Subject(Subject::Function(
+                    crate::phrase! { node: id.node.clone(), span: exp.hints.span.clone() },
+                ));
                 Some(Prose::link(link, prose_call))
             }
             _ => None,
@@ -1023,10 +1021,9 @@ impl Prose {
                 &exps,
                 false,
             );
-            let link = Link {
-                kind: LinkKind::Subject(Subject::Type(id_typ.node.clone())),
-                origin: Some(crate::phrase! { node: "prose".to_owned(), span: hint.span.clone() }),
-            };
+            let link = Link::Subject(Subject::Type(
+                crate::phrase! { node: id_typ.node.clone(), span: exp.hints.span.clone() },
+            ));
             return Prose::link(link, prose_case);
         }
 
@@ -1152,15 +1149,14 @@ impl Prose {
 
     fn of_call_exp(exp: &pl::Exp, id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Prose {
         // Unhinted calls keep their code form
-        let Some((name_hint, hint)) = prose_input_hint(&exp.hints) else {
-            return Prose::code(Code::of_call_exp(id, targs, args));
+        let Some(hint) = prose_input_hint(&exp.hints) else {
+            return Prose::code(Code::of_call_exp(&exp.hints.span, id, targs, args));
         };
         let prose_call =
             alternate(hint, &|text_body| reindent_lines(0, text_body), &Prose::of_arg, args, false);
-        let link = Link {
-            kind: LinkKind::Subject(Subject::Function(id.node.clone())),
-            origin: Some(crate::phrase! { node: name_hint.to_owned(), span: hint.span.clone() }),
-        };
+        let link = Link::Subject(Subject::Function(
+            crate::phrase! { node: id.node.clone(), span: exp.hints.span.clone() },
+        ));
         Prose::link(link, prose_call)
     }
 
@@ -1857,10 +1853,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Block {
         let hint_opt =
             if hold { &instr.hints.node.prose_true } else { &instr.hints.node.prose_false };
-        let link = Link {
-            kind: LinkKind::Subject(Subject::Relation(hold_instr.id.node.clone())),
-            origin: None,
-        };
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: hold_instr.id.node.clone(), span: instr.hints.span.clone() },
+        ));
         let prose_cond = match hint_opt {
             // Hinted relations describe the branch condition in prose
             Some(hint) => {
@@ -1872,13 +1867,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                     &exps,
                     false,
                 );
-                let link = Link {
-                    kind: link.kind,
-                    origin: Some(crate::phrase! {
-                        node: if hold { "prose_true" } else { "prose_false" }.to_owned(),
-                        span: hint.span.clone(),
-                    }),
-                };
                 Prose::link(link, prose_hint)
             }
             // Unhinted relations show their notation followed by the verdict
@@ -2022,10 +2010,8 @@ impl Prose {
 
     fn of_group_dispatch(id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
         let anchor_group = fallthrough::anchor_of_group(&id_rel.node, &id_group.node);
-        let prose_group = Prose::link(
-            Link { kind: LinkKind::Direct(anchor_group), origin: None },
-            Prose::text(id_group.node.clone()),
-        );
+        let prose_group =
+            Prose::link(Link::Direct(anchor_group), Prose::text(id_group.node.clone()));
         Prose::seq([Prose::text("goto "), prose_group])
     }
 }
@@ -2124,10 +2110,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .flat_map(|iter_instr| &iter_instr.vars_bind)
             .any(|var| !var.id.node.starts_with('_'));
         // Apply paired relation hints when both sides are available
-        let link = Link {
-            kind: LinkKind::Subject(Subject::Relation(rule_instr.id.node.clone())),
-            origin: None,
-        };
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: rule_instr.id.node.clone(), span: instr.hints.span.clone() },
+        ));
         let prose_rule = if let (Some(hint_input), Some(hint_output)) =
             (&instr.hints.node.prose_in, &instr.hints.node.prose_out)
         {
@@ -2146,12 +2131,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 &exps_input,
                 false,
             );
-            let link = Link {
-                kind: link.kind,
-                origin: Some(
-                    crate::phrase! { node: "prose_in".to_owned(), span: hint_input.span.clone() },
-                ),
-            };
             Prose::seq([
                 Prose::text("Let "),
                 Prose::text(text_output),
@@ -2418,7 +2397,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Block {
         // Build the forced binding heading with its failure continuation
         let code_l = Code::of_exp(&option_instr.exp_l);
-        let link_get = Link { kind: LinkKind::Direct("option_get".to_owned()), origin: None };
+        let link_get = Link::Direct("option_get".to_owned());
         let prose_get = Prose::link(link_get, Prose::text("*!*"));
         let prose_r = Prose::of_exp(&option_instr.exp_r);
         let prose_fallthrough = Prose::of_fallthrough_link(ctx, instr);
@@ -2524,8 +2503,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         });
         let exps_input = exps_synthesized.as_deref().unwrap_or(exps);
         // Build the shared linked heading before selecting the title form
-        let link =
-            Link { kind: LinkKind::Subject(Subject::Relation(id_rel.node.clone())), origin: None };
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: id_rel.node.clone(), span: hints.span.clone() },
+        ));
         let prose_name = Prose::link(link.clone(), Prose::text(id_rel.node.clone()));
         let prose_header = Prose::seq([prose_name, Prose::text(":")]);
         let block_header = Block::concat([Block::inline(prose_header), Block::raw("\n\n")]);
@@ -2818,7 +2798,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Select hinted prose or filled relation notation for the title
         let hint_opt = prose_input_hint(&instr.hints);
         let prose_body = match hint_opt {
-            Some((_, hint)) => alternate(
+            Some(hint) => alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
                 &Prose::of_exp,
@@ -2827,15 +2807,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             ),
             None => Prose::of_rel_title_math(&group_instr.rel_signature, &group_instr.exps_input),
         };
-        let link = Link {
-            kind: LinkKind::Subject(Subject::Relation(group_instr.id_rel.node.clone())),
-            origin: hint_opt.map(|(name_hint, hint)| {
-                crate::phrase! {
-                    node: name_hint.to_owned(),
-                    span: hint.span.clone(),
-                }
-            }),
-        };
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: group_instr.id_rel.node.clone(), span: instr.hints.span.clone() },
+        ));
         let prose_title = Prose::link(link, prose_body);
         // Render the group body below its linked title
         let block_head = Block::item_ordered(level, Prose::seq([prose_title, Prose::text(":")]));
@@ -2871,7 +2845,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Select hinted prose or filled relation notation for the title
         let hint_opt = prose_input_hint(hints);
         let prose_body = match hint_opt {
-            Some((_, hint)) => alternate(
+            Some(hint) => alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
                 &Prose::of_exp,
@@ -2880,15 +2854,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             ),
             None => Prose::of_rel_title_math(signature, exps),
         };
-        let link = Link {
-            kind: LinkKind::Subject(Subject::Relation(id_rel.node.clone())),
-            origin: hint_opt.map(|(name_hint, hint)| {
-                crate::phrase! {
-                    node: name_hint.to_owned(),
-                    span: hint.span.clone(),
-                }
-            }),
-        };
+        let link = Link::Subject(Subject::Relation(
+            crate::phrase! { node: id_rel.node.clone(), span: hints.span.clone() },
+        ));
         let prose_title = Prose::link(link, prose_body);
         // Render local arms while keeping relation fragment targets fixed
         let ctx = Context::new(&id_rel.node);
@@ -3020,7 +2988,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let hint_opt = prose_input_hint(hints);
         // Keep nested links visible to the final serializer
         let prose_body = match hint_opt {
-            Some((_, hint)) => alternate(
+            Some(hint) => alternate(
                 hint,
                 &|text_body| reindent_lines(0, text_body),
                 &Prose::of_param,
@@ -3043,15 +3011,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 Prose::PlainCode(code_signature)
             }
         };
-        let link = Link {
-            kind: LinkKind::Subject(Subject::Function(id_func.node.clone())),
-            origin: hint_opt.map(|(name_hint, hint)| {
-                crate::phrase! {
-                    node: name_hint.to_owned(),
-                    span: hint.span.clone(),
-                }
-            }),
-        };
+        let link = Link::Subject(Subject::Function(
+            crate::phrase! { node: id_func.node.clone(), span: hints.span.clone() },
+        ));
         Block::inline(Prose::link(link, prose_body))
     }
 

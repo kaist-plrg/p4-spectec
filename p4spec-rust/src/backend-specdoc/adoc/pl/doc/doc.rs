@@ -53,37 +53,28 @@ pub enum Code {
 
 // - Links
 //
-//   kind: Direct("t"), body: Text("x")              -> xref:t[x]
-//   kind: Subject(Function("f")), body: Text("x")   -> xref:f[x]
-//   ... with an unresolving anchor                  -> x
-
-/// A link target and the source of its displayed text.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Link {
-    /// Selects a concrete target or a definition to resolve.
-    pub kind: LinkKind,
-    /// Records the hint name and original template expression span, when present.
-    pub origin: Option<Id>,
-}
+//   Direct("t"), body: Text("x")                 -> xref:t[x]
+//   Subject(Function(id_f)), body: Text("x")     -> xref:f[x]
+//   ... with an unresolving anchor               -> x
 
 /// A concrete target or a reference resolved by the enclosing document.
 #[derive(Clone, Debug, PartialEq)]
-pub enum LinkKind {
+pub enum Link {
     /// Uses the target verbatim, bypassing the subject resolver.
     Direct(String),
     /// Resolves the subject, preserving only the body if unresolved.
     Subject(Subject),
 }
 
-/// A definition referenced by prose.
+/// A definition referenced by prose, located at its owning declaration.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Subject {
     /// Identifies a function by its source name without the dollar prefix.
-    Function(String),
+    Function(Id),
     /// Identifies a relation by its source name.
-    Relation(String),
+    Relation(Id),
     /// Identifies a type whose variant hint supplies linked prose.
-    Type(String),
+    Type(Id),
 }
 
 // - Fallthrough labels

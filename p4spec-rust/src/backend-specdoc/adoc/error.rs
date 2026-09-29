@@ -1,9 +1,9 @@
 //! Diagnostics owned by AsciiDoc serialization
 //!
-//! Link warnings identify the source subject and the template supplying its text.
+//! Link warnings identify the referenced declaration or the owning fragment.
 //! Serialization collects warnings for its caller and preserves fallback text.
 
-use super::pl::doc::doc::{Link, LinkKind, Subject};
+use super::pl::doc::doc::{Link, Subject};
 use crate::{
     diagnostic::{Diagnostic, Label, Severity},
     lang::common::source::Span,
@@ -11,32 +11,25 @@ use crate::{
 
 /// Describes the source-level reference without exposing generated anchors.
 fn describe_link(link: &Link) -> String {
-    match &link.kind {
-        LinkKind::Direct(target) => format!("destination {target:?}"),
-        LinkKind::Subject(Subject::Function(id)) => format!("function `${id}`"),
-        LinkKind::Subject(Subject::Relation(id)) => format!("relation `{id}`"),
-        LinkKind::Subject(Subject::Type(id)) => format!("type `{id}`"),
+    match link {
+        Link::Direct(target) => format!("destination {target:?}"),
+        Link::Subject(Subject::Function(id)) => format!("function `${}`", id.node),
+        Link::Subject(Subject::Relation(id)) => format!("relation `{}`", id.node),
+        Link::Subject(Subject::Type(id)) => format!("type `{}`", id.node),
     }
 }
 
-/// Locates a link problem at its template, falling back to the rendered fragment.
+/// Locates a link problem at its declaration or the rendered fragment.
 fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
-    // A propagated hint retains the template's declaration even at a call site
-    let (span, label) = match &link.origin {
-        Some(origin) => (&origin.span, format!("`{}`: {label}", origin.node)),
-        None => (span, label.to_owned()),
+    // Subject identifiers retain declaration spans independently of their hints
+    let (span, label) = match link {
+        Link::Direct(_) => (span, label.to_owned()),
+        Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) => {
+            (&id.span, format!("linked declaration: {label}"))
+        }
     };
     let labels = vec![Label::primary(span, label)];
-    // Explain how the source template becomes the displayed reference text
-    let notes = match &link.origin {
-        Some(origin) => vec![format!(
-            "The `{}` hint supplies the displayed text for links to {}.",
-            origin.node,
-            describe_link(link),
-        )],
-        None => Vec::new(),
-    };
-    Diagnostic::new("adoc", Severity::Warning, Some(code.to_owned()), message, labels, notes)
+    Diagnostic::new("adoc", Severity::Warning, Some(code.to_owned()), message, labels, Vec::new())
 }
 
 const LINK_TARGET_EMPTY: &str = "adoc/link-target-empty";
@@ -71,15 +64,13 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
         ),
         "this inner link is suppressed",
     );
-    // Relate the enclosing template when its original location is available
-    if let Some(origin) = &link_outer.origin {
+    // Relate the declaration referenced by the enclosing link
+    if let Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) =
+        link_outer
+    {
         diagnostic.labels.push(Label::secondary(
-            &origin.span,
-            format!(
-                "`{}` includes this text in the outer link to {}",
-                origin.node,
-                describe_link(link_outer)
-            ),
+            &id.span,
+            format!("declaration referenced by the outer link to {}", describe_link(link_outer)),
         ));
     }
     // Explain both the emitted markup and how to avoid the lost reference
@@ -94,21 +85,18 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
 
 const LINK_BODY_EMPTY: &str = "adoc/link-body-empty";
 
-/// Reports a template that leaves a resolved reference without display text.
+/// Reports a resolved reference without display text.
 pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
     let mut diagnostic = warning(
         span,
         link,
         LINK_BODY_EMPTY,
         format!("empty display text for the link to {}", describe_link(link)),
-        "this produces no link text",
+        "this link has no display text",
     );
-    // Suggest an edit only when a user-supplied template produced the empty text
-    diagnostic.notes.push(if let Some(origin) = &link.origin {
-        format!("Make `{}` produce nonempty text, or omit the custom prose hint.", origin.node)
-    } else {
-        "Supply nonempty display text for the link.".into()
-    });
+    diagnostic
+        .notes
+        .push("Supply nonempty display text for the link.".into());
     diagnostic
 }
 
@@ -121,7 +109,7 @@ pub(super) fn link_text_invalid(span: &Span, link: &Link, text: &str) -> Diagnos
         link,
         LINK_TEXT_INVALID,
         format!("cannot represent the link text for {} in AsciiDoc", describe_link(link)),
-        "this produces link text with conflicting delimiters",
+        "this link has display text with conflicting delimiters",
     );
     diagnostic
         .notes

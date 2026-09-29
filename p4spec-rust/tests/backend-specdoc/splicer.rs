@@ -237,7 +237,7 @@ fn adoc_warnings_survive_a_later_latex_failure() {
     let sources = [("body.adoc", "${func-title-prose: f}\n${func-prose: g}\n${func-latex: bad}")];
     let (result, warnings) = splice_strings_with_warnings(&spec_el, &spec_pl, &sources);
     assert_eq!(cause(&result.unwrap_err()).code.as_deref(), Some("latex/hole-unsupported"));
-    // Title and call warnings both retain the original template before failure
+    // Title and call warnings both point to the declaration before failure
     assert_eq!(warnings.len(), 2);
     for report in &warnings {
         let diagnostic = cause(report);
@@ -249,14 +249,9 @@ fn adoc_warnings_survive_a_later_latex_failure() {
                 .iter()
                 .any(|note| note == "Generated link text: \"[x]<y>\"")
         );
-        assert!(
-            diagnostic
-                .notes
-                .iter()
-                .any(|note| note.contains("`prose_in`") && note.contains("`$f`"))
-        );
+        assert!(diagnostic.message.contains("function `$f`"));
         assert_eq!(diagnostic.labels.len(), 1);
-        assert_eq!(diagnostic.labels[0].span.left.line, 2);
+        assert_eq!(diagnostic.labels[0].span.left.line, 1);
     }
     assert_eq!(cause(&warnings[0]).labels[0].span, cause(&warnings[1]).labels[0].span);
 }

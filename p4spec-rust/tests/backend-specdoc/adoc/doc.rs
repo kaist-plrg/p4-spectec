@@ -1,5 +1,5 @@
 use p4spec_rust::backend_specdoc::adoc::pl::doc::{
-    doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, LinkKind, Prose, Subject, Table},
+    doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, Prose, Subject, Table},
     serialize,
 };
 use p4spec_rust::backend_specdoc::anchor::AnchorContext;
@@ -8,13 +8,10 @@ use p4spec_rust::lang::common::source::Span;
 #[test]
 fn code_links_merge_adjacent_tokens_and_drop_nested_targets() {
     let code = Code::Link(
-        Link { kind: LinkKind::Direct("outer".into()), origin: None },
+        Link::Direct("outer".into()),
         Box::new(Code::Seq(vec![
             Code::Token("a ".into()),
-            Code::Link(
-                Link { kind: LinkKind::Direct("inner".into()), origin: None },
-                Box::new(Code::Token("b".into())),
-            ),
+            Code::Link(Link::Direct("inner".into()), Box::new(Code::Token("b".into()))),
         ])),
     );
     assert_eq!(
@@ -32,13 +29,10 @@ fn code_links_merge_adjacent_tokens_and_drop_nested_targets() {
 fn adjacent_code_links_keep_their_own_delimiters() {
     let code = Code::Seq(vec![
         Code::link(
-            Link { kind: LinkKind::Direct("same".into()), origin: None },
+            Link::Direct("same".into()),
             Code::Seq(vec![Code::Token("a[".into()), Code::Token("b]".into())]),
         ),
-        Code::Seq(vec![Code::link(
-            Link { kind: LinkKind::Direct("same".into()), origin: None },
-            Code::Token("<c>".into()),
-        )]),
+        Code::Seq(vec![Code::link(Link::Direct("same".into()), Code::Token("<c>".into()))]),
     ]);
     let anchor_ctx = AnchorContext::default();
     let span = Span::default();
@@ -55,33 +49,31 @@ fn adjacent_code_links_keep_their_own_delimiters() {
 }
 
 #[test]
-fn adjacent_code_link_failures_keep_each_origin() {
+fn adjacent_code_link_failures_keep_each_declaration() {
     use p4spec_rust::{diagnostic::ReportKind, lang::common::source::Position};
     let span_a = Span::new(Position::new("a.watsup", 1, 0), Position::new("a.watsup", 1, 1));
     let span_b = Span::new(Position::new("b.watsup", 2, 0), Position::new("b.watsup", 2, 1));
     let code = Code::Seq(vec![
         Code::link(
-            Link {
-                kind: LinkKind::Direct("same".into()),
-                origin: Some(p4spec_rust::phrase! {
-                    node: "prose_in".to_owned(), span: span_a.clone(),
-                }),
-            },
+            Link::Subject(Subject::Function(
+                p4spec_rust::phrase! { node: "same".into(), span: span_a.clone() },
+            )),
             Code::Token("[a]<b>".into()),
         ),
         Code::link(
-            Link {
-                kind: LinkKind::Direct("same".into()),
-                origin: Some(p4spec_rust::phrase! {
-                    node: "prose_false".to_owned(), span: span_b.clone(),
-                }),
-            },
+            Link::Subject(Subject::Function(
+                p4spec_rust::phrase! { node: "same".into(), span: span_b.clone() },
+            )),
             Code::Token("[c]<d>".into()),
         ),
     ]);
     let mut warnings = Vec::new();
-    let text =
-        serialize::ser_code(&AnchorContext::default(), &Span::default(), &mut warnings, &code);
+    let text = serialize::ser_code(
+        &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, _| None),
+        &Span::default(),
+        &mut warnings,
+        &code,
+    );
     assert_eq!(text, "[a]<b>[c]<d>");
     assert_eq!(warnings.len(), 2);
     for (report, (span, text)) in warnings
@@ -106,10 +98,12 @@ fn code_tokens_join_across_unresolved_and_empty_links() {
         Code::Seq(vec![
             Code::Empty,
             Code::link(
-                Link { kind: LinkKind::Subject(Subject::Function("missing".into())), origin: None },
+                Link::Subject(Subject::Function(
+                    p4spec_rust::phrase! { node: "missing".into(), span: Span::default() },
+                )),
                 Code::Token("b".into()),
             ),
-            Code::link(Link { kind: LinkKind::Direct("empty".into()), origin: None }, Code::Empty),
+            Code::link(Link::Direct("empty".into()), Code::Empty),
         ]),
         Code::Token("c".into()),
     ]);
@@ -132,7 +126,9 @@ fn code_tokens_join_across_unresolved_and_empty_links() {
 #[test]
 fn unresolved_subject_keeps_body_without_cross_reference() {
     let prose = Prose::Link(
-        Link { kind: LinkKind::Subject(Subject::Function("f".into())), origin: None },
+        Link::Subject(Subject::Function(
+            p4spec_rust::phrase! { node: "f".into(), span: Span::default() },
+        )),
         Box::new(Prose::Text("call".into())),
     );
     assert_eq!(
@@ -202,10 +198,7 @@ fn capitalization_stops_at_code_and_reaches_text_after_empty_nodes() {
 
 #[test]
 fn link_delimiters_and_quoted_code_preserve_literal_content() {
-    let prose = Prose::Link(
-        Link { kind: LinkKind::Direct("target".into()), origin: None },
-        Box::new(Prose::Text("a[b]".into())),
-    );
+    let prose = Prose::Link(Link::Direct("target".into()), Box::new(Prose::Text("a[b]".into())));
     assert_eq!(
         serialize::ser_prose(
             &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, id| Some(id.to_owned())),
@@ -253,26 +246,14 @@ fn link_warnings_preserve_order_location_notes_and_deduplication() {
     let spec_el = parse_text("links.watsup".into(), "def $f = true").unwrap();
     let span = &spec_el[0].span;
     let prose = Prose::Seq(vec![
+        Prose::link(Link::Direct(String::new()), Prose::text("empty")),
+        Prose::link(Link::Direct(String::new()), Prose::text("again")),
         Prose::link(
-            Link { kind: LinkKind::Direct(String::new()), origin: None },
-            Prose::text("empty"),
+            Link::Direct("outer".into()),
+            Prose::link(Link::Direct("inner".into()), Prose::text("nested")),
         ),
-        Prose::link(
-            Link { kind: LinkKind::Direct(String::new()), origin: None },
-            Prose::text("again"),
-        ),
-        Prose::link(
-            Link { kind: LinkKind::Direct("outer".into()), origin: None },
-            Prose::link(
-                Link { kind: LinkKind::Direct("inner".into()), origin: None },
-                Prose::text("nested"),
-            ),
-        ),
-        Prose::link(Link { kind: LinkKind::Direct("body".into()), origin: None }, Prose::Empty),
-        Prose::link(
-            Link { kind: LinkKind::Direct("label".into()), origin: None },
-            Prose::text("[a]<b>"),
-        ),
+        Prose::link(Link::Direct("body".into()), Prose::Empty),
+        Prose::link(Link::Direct("label".into()), Prose::text("[a]<b>")),
     ]);
     let anchor_ctx = AnchorContext::default();
     let mut warnings = Vec::new();
@@ -303,7 +284,7 @@ fn link_warnings_preserve_order_location_notes_and_deduplication() {
 }
 
 #[test]
-fn link_warnings_preserve_origins_without_line_coordinates() {
+fn link_warnings_preserve_declarations_without_line_coordinates() {
     use p4spec_rust::{
         diagnostic::{LabelStyle, RenderConfig, Renderer, ReportKind},
         lang::common::source::Position,
@@ -311,28 +292,29 @@ fn link_warnings_preserve_origins_without_line_coordinates() {
 
     let span =
         Span::new(Position::new("fragment.watsup", 1, 0), Position::new("fragment.watsup", 1, 1));
-    let span_outer =
-        Span::new(Position::new("template.watsup", 0, 0), Position::new("template.watsup", 0, 0));
+    let span_outer = Span::new(
+        Position::new("declaration.watsup", 0, 0),
+        Position::new("declaration.watsup", 0, 0),
+    );
     let span_inner = Span::default();
     let prose = Prose::link(
-        Link {
-            kind: LinkKind::Direct("outer".into()),
-            origin: Some(p4spec_rust::phrase! {
-                node: "prose_in".to_owned(), span: span_outer.clone(),
-            }),
-        },
+        Link::Subject(Subject::Function(
+            p4spec_rust::phrase! { node: "outer".into(), span: span_outer.clone() },
+        )),
         Prose::link(
-            Link {
-                kind: LinkKind::Direct("inner".into()),
-                origin: Some(p4spec_rust::phrase! {
-                    node: "prose".to_owned(), span: span_inner.clone(),
-                }),
-            },
+            Link::Subject(Subject::Function(
+                p4spec_rust::phrase! { node: "inner".into(), span: span_inner.clone() },
+            )),
             Prose::text("body"),
         ),
     );
     let mut warnings = Vec::new();
-    let text = serialize::ser_prose(&AnchorContext::default(), &span, &mut warnings, &prose);
+    let text = serialize::ser_prose(
+        &AnchorContext::new(&|_, id| Some(id.to_owned()), &|_, _| None),
+        &span,
+        &mut warnings,
+        &prose,
+    );
     assert_eq!(text, "xref:outer[body]");
     assert_eq!(warnings.len(), 1);
     let ReportKind::Cause(diagnostic) = &warnings[0].kind else { panic!("warning cause") };
@@ -346,19 +328,20 @@ fn link_warnings_preserve_origins_without_line_coordinates() {
     let rendered = Renderer::new(RenderConfig::default())
         .render_to_string(&warnings[0])
         .unwrap();
-    assert!(rendered.contains("at generated source: `prose`: this inner link is suppressed"));
-    assert!(rendered.contains("related location at template.watsup: `prose_in`"));
+    assert!(
+        rendered.contains("at generated source: linked declaration: this inner link is suppressed")
+    );
+    assert!(rendered.contains(
+        "related location at declaration.watsup: declaration referenced by the outer link"
+    ));
     assert!(!rendered.contains("fragment.watsup"));
 }
 
 #[test]
 fn code_warnings_and_table_lint_policy_remain_distinct() {
     let code = Code::Link(
-        Link { kind: LinkKind::Direct("outer".into()), origin: None },
-        Box::new(Code::Link(
-            Link { kind: LinkKind::Direct("inner".into()), origin: None },
-            Box::new(Code::Token("x".into())),
-        )),
+        Link::Direct("outer".into()),
+        Box::new(Code::Link(Link::Direct("inner".into()), Box::new(Code::Token("x".into())))),
     );
     let anchor_ctx = AnchorContext::default();
     let mut warnings = Vec::new();
@@ -383,10 +366,7 @@ fn code_warnings_and_table_lint_policy_remain_distinct() {
         &anchor_ctx,
         &span,
         &mut warnings,
-        &Code::Link(
-            Link { kind: LinkKind::Direct("label".into()), origin: None },
-            Box::new(Code::Token("[a]<b>".into())),
-        ),
+        &Code::Link(Link::Direct("label".into()), Box::new(Code::Token("[a]<b>".into()))),
     );
     assert_eq!(warnings.len(), 1);
     assert!(

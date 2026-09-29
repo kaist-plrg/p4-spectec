@@ -242,7 +242,7 @@ fn splice_collects_adoc_warnings_before_later_io_failure() {
     assert!(text.contains("spec.watsup:"), "{text}");
     assert!(text.contains(" = Generated link text: \"[x]<y>\""), "{text}");
     assert!(
-        text.contains("`prose_in` hint supplies the displayed text for links to function `$f`"),
+        text.contains("linked declaration: this link has display text with conflicting delimiters"),
         "{text}"
     );
     assert!(!text.contains("Warning:"), "{text}");

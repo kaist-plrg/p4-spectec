@@ -22,9 +22,7 @@ use crate::{
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::doc::{
-    Block, Code, FallthroughLabel, Item, ItemKind, Link, LinkKind, Prose, Subject, Table,
-};
+use super::doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, Prose, Subject, Table};
 
 // == Markup
 
@@ -186,23 +184,23 @@ impl Block {
 
 // == Anchor resolution
 //
-//   subject_name(Function("f"))        -> Some("f")
-//   kind: Direct("t"), origin: None   -> Some("t")
+//   subject_name(Function(id_f))   -> Some("f")
+//   Direct("t")                    -> Some("t")
 
 /// Resolves a subject to its unqualified definition name.
 pub fn subject_name(subject: &Subject) -> Option<String> {
     match subject {
-        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => Some(id.clone()),
+        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => Some(id.node.clone()),
     }
 }
 
 impl Link {
     fn target(&self, anchor_ctx: &AnchorContext<'_>) -> Option<String> {
-        match &self.kind {
-            LinkKind::Direct(target) => Some(target.clone()),
-            LinkKind::Subject(Subject::Type(id)) => Some(id.clone()),
-            LinkKind::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, id),
-            LinkKind::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, id),
+        match self {
+            Link::Direct(target) => Some(target.clone()),
+            Link::Subject(Subject::Type(id)) => Some(id.node.clone()),
+            Link::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, &id.node),
+            Link::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, &id.node),
         }
     }
 }
@@ -659,7 +657,7 @@ pub fn ser_prose_in_link(prose: &Prose) -> String {
     let anchor_ctx = AnchorContext::default();
     Serializer::new(&anchor_ctx, &Span::default(), &mut Vec::new(), BTreeMap::new()).ser_prose(
         prose,
-        Some(&Link { kind: LinkKind::Direct(String::new()), origin: None }),
+        Some(&Link::Direct(String::new())),
         false,
     )
 }

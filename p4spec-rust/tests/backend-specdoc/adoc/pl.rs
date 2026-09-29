@@ -25,8 +25,8 @@ use p4spec_rust::{
 };
 
 fn render_def(resolve: &dyn Fn(&Subject) -> Option<String>, def: &pl::Def) -> Option<String> {
-    let func = |_, name: &str| resolve(&Subject::Function(name.to_owned()));
-    let rel = |_, name: &str| resolve(&Subject::Relation(name.to_owned()));
+    let func = |_, name: &str| resolve(&Subject::Function(id(name)));
+    let rel = |_, name: &str| resolve(&Subject::Relation(id(name)));
     let mut anchor_ctx = AnchorContext::new(&func, &rel);
     adoc::render_def(&mut anchor_ctx, &mut Vec::new(), "fragment", def)
 }
@@ -246,9 +246,9 @@ fn test_nested_backtracking_uses_local_arm_labels_and_fresh_block_counters() {
 fn test_custom_function_anchor_is_used_by_fragment_api() {
     let def = defined_func("enabled", vec![return_instr(true)]);
     let anchor = |subject: &Subject| match subject {
-        Subject::Function(id) => Some(format!("function-{id}")),
-        Subject::Relation(id) => Some(format!("relation-{id}")),
-        Subject::Type(id) => Some(id.clone()),
+        Subject::Function(id) => Some(format!("function-{}", id.node)),
+        Subject::Relation(id) => Some(format!("relation-{}", id.node)),
+        Subject::Type(id) => Some(id.node.clone()),
     };
 
     assert!(
@@ -416,7 +416,7 @@ fn test_table_cells_use_the_enclosing_anchor_resolver() {
     };
     let anchor = |subject: &Subject| match subject {
         Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => {
-            Some(format!("custom-{id}"))
+            Some(format!("custom-{}", id.node))
         }
     };
     let def = meta_func_def(Hints::default(), pl::MetaFuncDef::Table(func));
