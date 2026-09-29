@@ -7,6 +7,7 @@
 mod algo;
 mod cases;
 mod elab;
+mod interp;
 mod parse;
 mod splice;
 
@@ -33,6 +34,7 @@ pub enum Suite {
     Parse,
     Elab,
     Algo,
+    Interp,
     Splice,
 }
 
@@ -81,11 +83,13 @@ pub fn run(suite: Option<Suite>) -> Result<()> {
         Some(Suite::Parse) => run_parse(),
         Some(Suite::Elab) => run_suite("elab", cases::ELAB, elab::run),
         Some(Suite::Algo) => run_suite("algo", cases::ALGO, algo::run),
+        Some(Suite::Interp) => run_suite("interp", cases::INTERP, interp::run),
         Some(Suite::Splice) => run_suite("splice", cases::SPLICE, splice::run),
         None => {
             run_parse()?;
             run_suite("elab", cases::ELAB, elab::run)?;
             run_suite("algo", cases::ALGO, algo::run)?;
+            run_suite("interp", cases::INTERP, interp::run)?;
             run_suite("splice", cases::SPLICE, splice::run)
         }
     }

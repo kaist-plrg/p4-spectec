@@ -77,6 +77,14 @@ pub fn locate(mut report: Error, span: &Span) -> Error {
 
 // = Local operation conversions
 
+const VALUE_INVALID: &str = "runtime/value-invalid";
+const NUMERIC_INVALID: &str = "runtime/numeric-invalid";
+const INPUT_INVALID: &str = "runtime/input-invalid";
+const ARITY_MISMATCH: &str = "runtime/arity-mismatch";
+const MIXOP_ARITY_MISMATCH: &str = "runtime/mixop-arity-mismatch";
+const TYPE_INVALID: &str = "runtime/type-invalid";
+const MATCH_FAILED: &str = "runtime/match-failed";
+
 /// Retains a local operation's span, leaving unknown locations for its caller.
 fn local(diagnostic: Diagnostic, span: Span) -> Error {
     if span == Span::default() { Box::new(diagnostic.into()) } else { at(diagnostic, span) }
@@ -84,7 +92,7 @@ fn local(diagnostic: Diagnostic, span: Span) -> Error {
 
 /// Converts local typed failures before their operation supplies a source span.
 macro_rules! from_error {
-    ($typ:ty, $code:literal) => {
+    ($typ:ty, $code:ident) => {
         impl From<$typ> for Error {
             fn from(error: $typ) -> Self {
                 Box::new(diagnostic($code, error.to_string(), Vec::new()).into())
@@ -92,31 +100,15 @@ macro_rules! from_error {
         }
     };
 }
-from_error!(ValueError, "runtime/value-invalid");
-from_error!(NumericError, "runtime/numeric-invalid");
-from_error!(InputError, "runtime/input-invalid");
-from_error!(ArityMismatch, "runtime/arity-mismatch");
-from_error!(MixopArityMismatch, "runtime/mixop-arity-mismatch");
+from_error!(ValueError, VALUE_INVALID);
+from_error!(NumericError, NUMERIC_INVALID);
+from_error!(InputError, INPUT_INVALID);
+from_error!(ArityMismatch, ARITY_MISMATCH);
+from_error!(MixopArityMismatch, MIXOP_ARITY_MISMATCH);
 
 impl From<TypeError> for Error {
     fn from(error: TypeError) -> Self {
-        local(diagnostic("runtime/type-invalid", error.kind.to_string(), Vec::new()), error.span)
-    }
-}
-
-impl From<MatchError> for Error {
-    fn from(error: MatchError) -> Self {
-        let span = match &error {
-            MatchError::UndefinedType { span, .. }
-            | MatchError::UnexpectedTypeVariable { span }
-            | MatchError::TypeArgumentMismatch { span, .. }
-            | MatchError::UndefinedFunction { span, .. } => span.clone(),
-            MatchError::Type(error) => error.span.clone(),
-        };
-        local(
-            diagnostic("runtime/match-failed", MatchDisplay(&error).to_string(), Vec::new()),
-            span,
-        )
+        local(diagnostic(TYPE_INVALID, error.kind.to_string(), Vec::new()), error.span)
     }
 }
 
@@ -137,5 +129,18 @@ impl fmt::Display for MatchDisplay<'_> {
             }
             MatchError::Type(error) => fmt::Display::fmt(&error.kind, formatter),
         }
+    }
+}
+
+impl From<MatchError> for Error {
+    fn from(error: MatchError) -> Self {
+        let span = match &error {
+            MatchError::UndefinedType { span, .. }
+            | MatchError::UnexpectedTypeVariable { span }
+            | MatchError::TypeArgumentMismatch { span, .. }
+            | MatchError::UndefinedFunction { span, .. } => span.clone(),
+            MatchError::Type(error) => error.span.clone(),
+        };
+        local(diagnostic(MATCH_FAILED, MatchDisplay(&error).to_string(), Vec::new()), span)
     }
 }

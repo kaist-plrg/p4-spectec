@@ -240,6 +240,9 @@ pub const ALGO: &[&str] = &[
     "table-repeated-binding.watsup",
 ];
 
+/// Lists pinned local backtracking failures across interpreters.
+pub const INTERP: &[&str] = &["interp-al-backtrack", "interp-sl-backtrack", "interp-pl-backtrack"];
+
 /// Lists malformed skeletons and file operation failures.
 pub const SPLICE: &[&str] = &[
     "identifier-invalid.adoc",

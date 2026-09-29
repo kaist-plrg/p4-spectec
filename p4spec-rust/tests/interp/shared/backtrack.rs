@@ -41,6 +41,15 @@ fn nesting_keeps_failure_class_and_complete_incoming_report() {
         );
         assert_eq!(frame.children.len(), 1);
         assert_eq!(frame.children[0].render(), text);
+        let diagnostic = frame.children[0].diagnostic();
+        assert_eq!(diagnostic.source, "host");
+        assert_eq!(diagnostic.severity, Severity::Warning);
+        assert_eq!(diagnostic.code.as_deref(), Some("host/custom"));
+        assert_eq!(
+            diagnostic.labels,
+            vec![Label::primary(&span(2), "input"), Label::secondary(&span(3), "origin")]
+        );
+        assert_eq!(diagnostic.notes, ["host note"]);
     }
     let result: Backtrack<_> = Ok(7);
     assert_eq!(
