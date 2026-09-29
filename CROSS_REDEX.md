@@ -313,7 +313,7 @@ spec-meta-redex/
     0-boot.rkt            boot-script, boot-p4: run spectec-boot sexp(-p4), read
     1-syntax.rkt          language AL-syntax
     2-env.rkt             languages AL-base (the union) and AL-env (reldef, funcdef)
-    3-context.rkt         language AL-context (layer, ctx); $load, $add_*, $find_*, ...
+    3-context.rkt         language AL-context (layer, ctx, ctx-shallow); $load, $add_*, ...
     4-relation.rkt        ctxres
     5.1-eval-typ.rkt      $upcast, $downcast, $subtyp
     5.2-eval-assign.rkt   Assign_exp(s), Assign_arg(s)
@@ -492,9 +492,8 @@ Then, for example:
 (current-traced-metafunctions '())
 ```
 
-Keep `$load` to the examples and `spec-meta/al`: on `spec/` it takes about 27
-minutes, even with contracts off (see Step 4). To see a language as a grammar figure (only the
-nonterminals it adds to the language it extends):
+To see a language as a grammar figure (only the nonterminals it adds to the
+language it extends):
 
 ```sh
 racket -e '(require racket/class pict redex/pict (file "spec-meta-redex/al/3-context.rkt"))
@@ -655,13 +654,21 @@ metafunctions.
     Redex's matcher memoizes these checks, but only while `caching-enabled?`
     is on, and that parameter also turns on the result cache that AL cannot
     use (see [Caching](#caching)). With caching on, `$load` on `spec-meta/al`
-    takes 0.69 s with contracts off and 1.5 s with them on. Every
-    recursive `$load` call rechecks `C`, the remaining `defn_t ...`, and the
-    loaded maps, so `$load` is quadratic in the script. On `spec-meta/al`
-    (159 definitions) it takes 8.8 s with contracts off and 20.5 s with them
-    on. On `spec/` (1,672 definitions) it takes 27 minutes (1,625 s) with
-    contracts off, so the tests load only the examples and `spec-meta/al`.
-    Patterns stay precise until Step 10 (see there for the measured fix).
+    takes 0.69 s with contracts off and 1.5 s with them on. Written with
+    precise patterns, every recursive `$load` call rechecks `C`, the remaining
+    `defn_t ...`, and the loaded maps, so `$load` is quadratic in the script.
+    On `spec-meta/al` (159 definitions) that took 8.8 s with contracts off and
+    20.5 s with them on, and on `spec/` (1,672 definitions) 27 minutes with
+    contracts off.
+  - So `$load` is the one place with shallow patterns. Its clauses run as
+    `load/shallow` on a `ctx-shallow`, which checks the record shape but not
+    the maps, with the remaining script matched as `any`. `load_typdef`,
+    `load_reldef`, and `load_funcdef`, which only `$load` calls, take a
+    `ctx-shallow` too. `$load` itself keeps watsup's signature and checks its
+    input and result against `ctx` once. On `spec-meta/al` it takes 0.19 s
+    with contracts off and 0.33 s with them on. A scratch variant built the
+    same way loaded `spec/` in 8.5 s. The tests do not load `spec/`. Every
+    other pattern stays precise until Step 10.
   - With every metafunction's clauses reversed by hand in a scratch copy, the
     whole suite still passes.
 
@@ -762,11 +769,10 @@ moving on:
   the large program. Profile first (Racket's `profile` library). Then try
   these, roughly in order of expected payoff:
   1. turn contracts off for P4 runs;
-  2. match large structures shallowly in rule patterns: a shallow `C ::=
-     {GLOBAL any LOCAL any}` apart from the precise `ctx` of contracts, and
-     `any` for layer maps and recursive tails. This took `$load` on
-     `spec-meta/al` from 8.8 s to 0.13 s, and on `spec/` to 8.5 s, with
-     contracts off (Step 4);
+  2. match large structures shallowly in rule patterns, as `$load` already
+     does with `ctx-shallow` (Step 4). Every evaluation rule has `C` in its
+     conclusion, so with precise patterns each step checks the whole loaded
+     spec;
   3. add OCaml-style caching for `Call_func` and `Call_rel`, and memos for hot
      pure metafunctions (see [Caching](#caching)). This needs a side-effect
      flag in the responses. Only `extern-serve` adds it, so the K wire is

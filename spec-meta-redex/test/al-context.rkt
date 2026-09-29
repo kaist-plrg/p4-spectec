@@ -54,6 +54,15 @@
 (test-no-match AL-context ctx (term {GLOBAL {TYP () REL () FUNC () VAL ((("x" ()) 1))}
                                      LOCAL {TYP () REL () FUNC () VAL ()}}))
 
+;; ctx-shallow checks the record shape only.
+(test-match AL-context ctx-shallow (term C-vals))
+(test-match AL-context ctx-shallow (term {GLOBAL {TYP () REL () FUNC () VAL ((("x" ()) 1))}
+                                          LOCAL {TYP () REL () FUNC () VAL ()}}))
+(test-no-match AL-context ctx-shallow (term {GLOBAL {TYP () REL () FUNC ()}
+                                             LOCAL {TYP () REL () FUNC () VAL ()}}))
+(test-no-match AL-context ctx-shallow (term {LOCAL {TYP () REL () FUNC () VAL ()}
+                                             GLOBAL {TYP () REL () FUNC () VAL ()}}))
+
 (test-equal (term (empty_layer)) '(TYP () REL () FUNC () VAL ()))
 (test-equal (term (empty_ctx))
             '(GLOBAL (TYP () REL () FUNC () VAL ()) LOCAL (TYP () REL () FUNC () VAL ())))
@@ -98,6 +107,10 @@
 
 (test-equal (term (load C-empty ())) (term C-empty))
 
+;; A definition that matches no clause gives ⊥, also after other definitions.
+(test-equal (term (load/shallow C-empty ((BOGUS "x")))) '⊥)
+(test-equal (term (load/shallow C-empty ((EXTTYP "t") (BOGUS "x")))) '⊥)
+
 ;; A later definition replaces an earlier one where it stands.
 (test-equal
  (term (load C-empty
@@ -128,8 +141,7 @@
       #:when (path-has-extension? file #".watsup"))
   (test-load file))
 
-;; spec/ is left out: with precise patterns, loading it takes about 27 minutes
-;; (see CROSS_REDEX.md, Step 4).
+;; spec/ is not loaded here, to keep the suite fast.
 (test-load (repo-path "spec-meta" "al"))
 
 ;;

@@ -14,6 +14,7 @@
          load_reldef
          load_funcdef
          load
+         load/shallow
          add_vari
          add_varr
          add_varis
@@ -34,7 +35,11 @@
 (define-extended-language AL-context AL-env
   ;; Context
   (layer ::= {TYP tdenv REL renv FUNC fenv VAL venv})
-  (ctx C ::= {GLOBAL layer LOCAL layer}))
+  (ctx C ::= {GLOBAL layer LOCAL layer})
+
+  ;; A context of the right shape, with its maps unchecked, for $load
+  (layer-shallow ::= {TYP any REL any FUNC any VAL any})
+  (ctx-shallow ::= {GLOBAL layer-shallow LOCAL layer-shallow}))
 
 (define-dec AL-context
   empty_layer : -> layer
@@ -53,52 +58,69 @@
 ;;
 ;; Loading context from a script
 ;;
+;; load runs on ctx-shallow and checks the result against `ctx` once.
 
 (define-dec AL-context
-  load_typdef : ctx id typdef -> ctx
-  [(load_typdef {GLOBAL {TYP tdenv REL renv FUNC fenv VAL venv} LOCAL layer} id typdef)
-   {GLOBAL {TYP tdenv_update REL renv FUNC fenv VAL venv} LOCAL layer}
-   (where tdenv_update (add_map tdenv id typdef))])
+  load_typdef : ctx-shallow id typdef -> ctx-shallow
+  [(load_typdef {GLOBAL {TYP any_tdenv REL any_renv FUNC any_fenv VAL any_venv}
+                 LOCAL layer-shallow}
+                id typdef)
+   {GLOBAL {TYP map_update REL any_renv FUNC any_fenv VAL any_venv} LOCAL layer-shallow}
+   (where map_update (add_map any_tdenv id typdef))])
 
 (define-dec AL-context
-  load_reldef : ctx id reldef -> ctx
-  [(load_reldef {GLOBAL {TYP tdenv REL renv FUNC fenv VAL venv} LOCAL layer} id reldef)
-   {GLOBAL {TYP tdenv REL renv_update FUNC fenv VAL venv} LOCAL layer}
-   (where renv_update (add_map renv id reldef))])
+  load_reldef : ctx-shallow id reldef -> ctx-shallow
+  [(load_reldef {GLOBAL {TYP any_tdenv REL any_renv FUNC any_fenv VAL any_venv}
+                 LOCAL layer-shallow}
+                id reldef)
+   {GLOBAL {TYP any_tdenv REL map_update FUNC any_fenv VAL any_venv} LOCAL layer-shallow}
+   (where map_update (add_map any_renv id reldef))])
 
 (define-dec AL-context
-  load_funcdef : ctx id funcdef -> ctx
-  [(load_funcdef {GLOBAL {TYP tdenv REL renv FUNC fenv VAL venv} LOCAL layer} id funcdef)
-   {GLOBAL {TYP tdenv REL renv FUNC fenv_update VAL venv} LOCAL layer}
-   (where fenv_update (add_map fenv id funcdef))])
+  load_funcdef : ctx-shallow id funcdef -> ctx-shallow
+  [(load_funcdef {GLOBAL {TYP any_tdenv REL any_renv FUNC any_fenv VAL any_venv}
+                  LOCAL layer-shallow}
+                 id funcdef)
+   {GLOBAL {TYP any_tdenv REL any_renv FUNC map_update VAL any_venv} LOCAL layer-shallow}
+   (where map_update (add_map any_fenv id funcdef))])
 
 (define-dec AL-context
   load : ctx script -> ctx
-  [(load C ((EXTTYP id) defn_t ...)) (load C_1 (defn_t ...))
-   (where C_1 (load_typdef C id EXT))]
-  [(load C ((TYP id (tparam ...) deftyp) defn_t ...)) (load C_1 (defn_t ...))
-   (where C_1 (load_typdef C id (DEF (tparam ...) deftyp)))]
-  [(load C ((EXTREL id (typ_input ...) (typ_output ...)) defn_t ...))
-   (load C_1 (defn_t ...))
-   (where C_1 (load_reldef C id (EXT id)))]
-  [(load C ((REL id (typ_input ...) (typ_output ...) (rulgroup ...) (elsgroup ...))
-            defn_t ...))
-   (load C_1 (defn_t ...))
-   (where C_1 (load_reldef C id (DEF (rulgroup ...) (elsgroup ...))))]
-  [(load C ((EXTFUNC id (tparam ...) (param ...) typ) defn_t ...))
-   (load C_1 (defn_t ...))
-   (where C_1 (load_funcdef C id (EXT id)))]
-  [(load C ((BUILTINFUNC id (tparam ...) (param ...) typ) defn_t ...))
-   (load C_1 (defn_t ...))
-   (where C_1 (load_funcdef C id (BUILTIN id (tparam ...) (param ...))))]
-  [(load C ((TABLEFUNC id (param ...) typ (tblrow ...)) defn_t ...))
-   (load C_1 (defn_t ...))
-   (where C_1 (load_funcdef C id (TABLE (param ...) (tblrow ...))))]
-  [(load C ((FUNC id (tparam ...) (param ...) typ (clause ...) (elsclause ...))
-            defn_t ...))
-   (load C_1 (defn_t ...))
-   (where C_1 (load_funcdef C id (DEF (tparam ...) (clause ...) (elsclause ...))))]
-  [(load C ()) C])
+  [(load C script) C_1
+   (where C_1 (load/shallow C script))])
+
+(define-dec AL-context
+  load/shallow : ctx-shallow (any ...) -> ctx-shallow
+  [(load/shallow ctx-shallow ((EXTTYP id) any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1 (load_typdef ctx-shallow id EXT))]
+  [(load/shallow ctx-shallow ((TYP id (tparam ...) deftyp) any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1 (load_typdef ctx-shallow id (DEF (tparam ...) deftyp)))]
+  [(load/shallow ctx-shallow ((EXTREL id (typ_input ...) (typ_output ...)) any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1 (load_reldef ctx-shallow id (EXT id)))]
+  [(load/shallow ctx-shallow
+                 ((REL id (typ_input ...) (typ_output ...) (rulgroup ...) (elsgroup ...))
+                  any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1 (load_reldef ctx-shallow id (DEF (rulgroup ...) (elsgroup ...))))]
+  [(load/shallow ctx-shallow ((EXTFUNC id (tparam ...) (param ...) typ) any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1 (load_funcdef ctx-shallow id (EXT id)))]
+  [(load/shallow ctx-shallow ((BUILTINFUNC id (tparam ...) (param ...) typ) any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1 (load_funcdef ctx-shallow id (BUILTIN id (tparam ...) (param ...))))]
+  [(load/shallow ctx-shallow ((TABLEFUNC id (param ...) typ (tblrow ...)) any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1 (load_funcdef ctx-shallow id (TABLE (param ...) (tblrow ...))))]
+  [(load/shallow ctx-shallow
+                 ((FUNC id (tparam ...) (param ...) typ (clause ...) (elsclause ...))
+                  any_t ...))
+   (load/shallow ctx-shallow_1 (any_t ...))
+   (where ctx-shallow_1
+          (load_funcdef ctx-shallow id (DEF (tparam ...) (clause ...) (elsclause ...))))]
+  [(load/shallow ctx-shallow ()) ctx-shallow])
 
 ;;
 ;; Adders
