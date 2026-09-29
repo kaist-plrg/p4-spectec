@@ -1,4 +1,5 @@
 use super::{report as report_cause, span};
+use codespan_reporting::term::DisplayStyle;
 use p4spec_rust::{
     diagnostic::{Diagnostic, RenderConfig, Renderer, Report, ReportKind, Severity},
     lang::common::source::Span,
@@ -30,6 +31,77 @@ fn chain(depth: usize, mut report: Report) -> Report {
         report = frame(&format!("level {level}"), vec![report]);
     }
     report
+}
+
+#[test]
+fn short_frames_keep_locations_while_internal_and_sibling_causes_stay_rich() {
+    let mut cause = report_cause(span("input", 2, 0, 2, 3));
+    cause.children.push(report_cause(span("input", 3, 0, 3, 3)));
+    let report = Report::frame(
+        span("input", 1, 0, 1, 5),
+        "while invoking R",
+        vec![
+            cause,
+            Report::frame(
+                span("input", 1, 0, 1, 5),
+                "while invoking S",
+                vec![report_cause(span("input", 4, 0, 4, 3))],
+            ),
+        ],
+    );
+    let mut renderer = Renderer::new(RenderConfig {
+        frame_style: Some(DisplayStyle::Short),
+        ..Default::default()
+    });
+    renderer.insert_source("input", "frame\nbad\nbad\nbad\n");
+    let text = renderer.render_to_string(&report).unwrap();
+    assert!(text.starts_with("input:1:1: note: while invoking R\n├─ error["), "{text}");
+    assert!(text.contains("└─ input:1:1: note: while invoking S\n   └─ error["), "{text}");
+    assert!(!text.contains("1 │ frame"), "{text}");
+    for line in [2, 3, 4] {
+        assert!(text.contains(&format!("{line} │ bad")), "{text}");
+    }
+    assert_eq!(text.matches("^^^ invalid escape").count(), 3, "{text}");
+    assert_eq!(text.matches("use a supported escape").count(), 3, "{text}");
+    assert_eq!(report.children.len(), 2);
+    assert_eq!(report.children[0].children.len(), 1);
+}
+
+#[test]
+fn compact_frames_preserve_fallback_locations_without_source_snippets() {
+    for style in [DisplayStyle::Short, DisplayStyle::Medium] {
+        let mut renderer =
+            Renderer::new(RenderConfig { frame_style: Some(style), ..Default::default() });
+        renderer.insert_source("control", "bad\u{1b}[31m");
+        for (span, loc) in [
+            (
+                span("missing/frame.watsup", 4, 2, 4, 2),
+                "missing/frame.watsup:4:3 (source unavailable)",
+            ),
+            (span("generated", 0, 0, 0, 0), "at generated"),
+            (span("control", 1, 0, 1, 3), "snippet omitted: source contains control characters"),
+        ] {
+            let report = Report::frame(span, "while invoking R", vec![]);
+            let text = renderer.render_to_string(&report).unwrap();
+            assert!(text.contains(loc), "{text}");
+            assert!(!text.contains('│'), "{text}");
+            assert!(!text.contains('\u{1b}'), "{text}");
+        }
+    }
+}
+
+#[test]
+fn frame_style_inherits_the_snippet_style_unless_overridden() {
+    let report = Report::frame(span("input", 1, 0, 1, 3), "context", vec![]);
+    for (style, rich) in [(DisplayStyle::Rich, true), (DisplayStyle::Short, false)] {
+        let mut config = RenderConfig::default();
+        config.snippet.display_style = style;
+        let mut renderer = Renderer::new(config);
+        renderer.insert_source("input", "bad");
+        let text = renderer.render_to_string(&report).unwrap();
+        assert_eq!(text.contains("1 │ bad"), rich, "{text}");
+        assert!(text.contains("input:1:1"), "{text}");
+    }
 }
 
 #[test]

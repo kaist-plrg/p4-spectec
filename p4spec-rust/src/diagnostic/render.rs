@@ -26,7 +26,8 @@ use codespan_reporting::{
 use crate::lang::common::source::{Position, Span};
 
 use super::{
-    ColorChoice, Diagnostic, Label, LabelStyle, Report, ReportKind, Severity, SnippetConfig,
+    ColorChoice, Diagnostic, DisplayStyle, Label, LabelStyle, Report, ReportKind, Severity,
+    SnippetConfig,
 };
 
 // = Helpers
@@ -125,6 +126,8 @@ impl WriteColor for TraceWriter<'_> {
 pub struct RenderConfig {
     /// Delegates source layout policy to codespan.
     pub snippet: SnippetConfig,
+    /// Overrides frame presentation, inheriting the snippet style when absent.
+    pub frame_style: Option<DisplayStyle>,
     /// Selects color behavior for stderr output.
     pub color: ColorChoice,
     /// Limits visible trace nodes without modifying the report.
@@ -133,7 +136,12 @@ pub struct RenderConfig {
 
 impl Default for RenderConfig {
     fn default() -> Self {
-        Self { snippet: SnippetConfig::default(), color: ColorChoice::Auto, trace_limit: 64 }
+        Self {
+            snippet: SnippetConfig::default(),
+            frame_style: None,
+            color: ColorChoice::Auto,
+            trace_limit: 64,
+        }
     }
 }
 
@@ -348,10 +356,11 @@ impl Renderer {
         Ok(rendered)
     }
 
-    /// Gives root and child nodes the same source-aware presentation.
+    /// Converts frames using a located header for compact presentation.
     fn convert_report_kind(
         &mut self,
         kind: &ReportKind,
+        style: &DisplayStyle,
     ) -> Result<CodeDiagnostic<usize>, RenderError> {
         match kind {
             // Render context as a note with its own source location
@@ -360,7 +369,11 @@ impl Renderer {
                 if *span != Span::default() {
                     self.append_label(
                         &Label {
-                            style: LabelStyle::Secondary,
+                            style: if matches!(style, DisplayStyle::Rich) {
+                                LabelStyle::Secondary
+                            } else {
+                                LabelStyle::Primary
+                            },
                             span: span.clone(),
                             message: String::new(),
                         },
@@ -390,14 +403,38 @@ impl Renderer {
 
     // - render_to_*: output destinations
 
+    /// Emits one node, retaining fallback frame locations in compact output.
+    fn render_kind(
+        &mut self,
+        writer: &mut impl WriteColor,
+        kind: &ReportKind,
+    ) -> Result<(), RenderError> {
+        let mut config = self.config.snippet.clone();
+        // Override only frames, including roots and frames without children
+        if matches!(kind, ReportKind::Frame { .. })
+            && let Some(style) = &self.config.frame_style
+        {
+            config.display_style = style.clone();
+        }
+        let diagnostic = self.convert_report_kind(kind, &config.display_style)?;
+        // Unavailable and generated sources store their frame location as a note
+        if matches!(kind, ReportKind::Frame { .. })
+            && matches!(config.display_style, DisplayStyle::Short)
+            && !diagnostic.notes.is_empty()
+        {
+            config.display_style = DisplayStyle::Medium;
+        }
+        term::emit_to_write_style(writer, &config, &self.files, &diagnostic)?;
+        Ok(())
+    }
+
     /// Emits the root and traverses visible causes in depth-first branch order.
     fn render_to_buffer(
         &mut self,
         buffer: &mut Buffer,
         report: &Report,
     ) -> Result<(), RenderError> {
-        let diagnostic = self.convert_report_kind(&report.kind)?;
-        term::emit_to_write_style(buffer, &self.config.snippet, &self.files, &diagnostic)?;
+        self.render_kind(buffer, &report.kind)?;
 
         // Match the snippet character set for terminals using ASCII borders
         let (branch, last, vertical, continuation) =
@@ -444,7 +481,6 @@ impl Renderer {
             }
             count += 1;
             let has_next = !children.as_slice().is_empty();
-            let diagnostic = self.convert_report_kind(&child.kind)?;
             // Keep snippets and multiline notes connected to the same branch
             let mut writer = TraceWriter {
                 buffer,
@@ -454,7 +490,7 @@ impl Renderer {
                 line_start: true,
                 color: ColorSpec::new(),
             };
-            term::emit_to_write_style(&mut writer, &self.config.snippet, &self.files, &diagnostic)?;
+            self.render_kind(&mut writer, &child.kind)?;
             // Any unvisited sibling prevents folding until its branch is closed
             let layout_children =
                 TraceLayout { anchor: layout.anchor, foldable: layout.foldable && !has_next };
