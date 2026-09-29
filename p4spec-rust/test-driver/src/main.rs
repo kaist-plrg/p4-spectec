@@ -35,6 +35,9 @@ enum Command {
     Diagnostics {
         #[arg(long, value_enum)]
         suite: Option<diagnostic::Suite>,
+        /// Product executable used by the boundary suite and the full run
+        #[arg(long = "cli", value_name = "PATH")]
+        path_cli: Option<PathBuf>,
     },
     /// Compare P4 parse/unparse/parse roundtrips with stored file results
     P4parse,
@@ -103,12 +106,15 @@ fn execute(mut command: Command) -> Result<()> {
     if let Command::Adoc { path_output: Some(path_output) } = &mut command {
         *path_output = std::path::absolute(&*path_output)?;
     }
+    if let Command::Diagnostics { path_cli: Some(path_cli), .. } = &mut command {
+        *path_cli = std::path::absolute(&*path_cli)?;
+    }
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
     match command {
-        Command::Diagnostics { suite } => diagnostic::run(suite),
+        Command::Diagnostics { suite, path_cli } => diagnostic::run(suite, path_cli.as_deref()),
         Command::P4parse => p4parse::run(),
         Command::Elab => elab::run(),
         Command::Algo => algo::run(),
