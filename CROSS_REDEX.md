@@ -1,8 +1,8 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
 Status: Steps 1 (syntax), 2 (s-expression bridge), 3 (common metafunctions),
-4 (AL environments and context), and 5 (type casts and subtyping) are done.
-Steps 6–11 are planned.
+4 (AL environments and context), 5 (type casts and subtyping), and 6
+(assignment) are done. Steps 7–11 are planned.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language. It transcribes the AL specification in
@@ -335,7 +335,8 @@ spec-meta-redex/
     5.7-eval-call-rel.rktl
     6-entry.rkt           Entry
   main.rkt                command-line driver
-  test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, ...
+  test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, ...;
+                          judgment.rkt holds helpers for judgment forms
 ```
 
 The definition macros in `common/0.0-prelude.rkt` are `define-dec`, which wraps
@@ -417,8 +418,10 @@ environments.
   under `spec-meta-redex/test/` and run with `raco test spec-meta-redex/test`.
   They include inputs on both sides of every complementary pair of clauses.
 - **Disjointness.** For judgment forms, `main.rkt` and the test helpers fail
-  loudly if a judgment returns more than one output, since that means two
-  rules overlap. For metafunctions, the tests cover both sides of every
+  loudly if a judgment has more than one derivation, since that means two
+  rules overlap. The helpers count derivations, not outputs, because
+  `judgment-holds` merges equal outputs of overlapping rules *(checked)*.
+  `outputs` in `test/judgment.rkt` does this. For metafunctions, the tests cover both sides of every
   complement. Running them with a metafunction's clauses reversed by hand
   (keeping `⊥` last) is a useful spot check: disjoint clauses give the same
   results. It cannot detect overlapping clauses that agree on the overlap,
@@ -498,7 +501,10 @@ racket -e '(require redex/reduction-semantics racket/port (file "spec-meta-redex
 ```
 
 A module's unexported helpers, such as `upcast/var`, need a copy of the
-module that provides them.
+module that provides them. `make-coverage` does not take judgment forms
+*(checked)*. For them, a test file ends with `check-rules-used` from
+`test/judgment.rkt`, which fails if some rule of a judgment is in none of the
+derivations that `outputs` built.
 
 ### Exploring in a REPL
 
@@ -754,6 +760,38 @@ Callers capture that with `judgment-holds` (see
   `$is_iter_on_var` (a pure call) and by the shape of the value: `simple`,
   `opt-none`, `opt-some`, and `list`. Test them hardest.
 - Tests: cover every constructor, including values that match no rule.
+- Outcome:
+  - Each watsup rule is one Redex rule, with the same premises in the same
+    order. Rules inside a rulegroup are named with it, as in `"opt/opt-some"`
+    and `"iter/list"`. No two rules evaluate a relation premise on the same
+    input: the `iter` rules check the pure `$is_iter_on_var` and the value's
+    shape before their `Assign_exp` premises.
+  - `iter/opt-some` deviates from its source, by the user's decision. The
+    source's last premise, `$add_varis(C', vari_iter*, OPT val_sub)*`,
+    elaborates to a call per `val_sub`, each with the one value
+    `OPT val_sub`, and expects exactly one result. As written, it assigns only
+    when `iterexp` has exactly one variable. With two or more, `$adds_map`
+    raises: in a probe, the meta-circular run gave `OPT Some(NAT 3)` for
+    `(W a)? = ...` and crashed on `(a, b)? = ...` with
+    `Invalid_argument List.fold_left2`. With none, the rule fails. The Redex
+    rule makes the intended single call with `(OPT val_sub)*`, the form
+    `5.5-eval-prem.watsup:67` uses, and binds every variable, as OCaml's AL
+    interpreter and the K port do. `spec-meta/` is unchanged, so on these
+    inputs the meta-circular oracle disagrees with Redex and K.
+  - Other behaviour the tests pin down:
+    - An expression other than `VAR`, `TUP`, `INJ`, `STR`, `OPT`, `LIST`,
+      `CONS`, and `ITER` has no rule, including a literal. (The elaborator
+      turns a literal in a pattern into a fresh variable plus a check: the `3`
+      in `(a, 3)?` became a variable `nat`.)
+    - A repeated variable takes the last value, with no equality check.
+    - `iter/simple` binds the iterated variable to any value.
+    - `iter/opt-some` keeps the inner assignment's bindings in the context.
+      `iter/list` does not, because it assigns each element under an empty
+      local `VAL` map. For the same reason, `iter/list` does not find a
+      variable bound only outside the iteration.
+  - `test/judgment.rkt` provides `outputs`, which fails on more than one
+    derivation, and `check-rules-used`. Every rule of the four relations
+    appears in some derivation in the tests.
 
 ### Step 7: Expressions, premises, and calls
 
