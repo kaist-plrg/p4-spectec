@@ -24,6 +24,7 @@ relation Identity: nat |- nat
 rule Identity/one: n |- n
 extern relation Host: nat |- nat
   hint(input %0)
+extern relation Ready: READY
 dec $ignore<X>(nat) : nat
 def $ignore<X>(n) = 7
 extern dec $bridge() : nat
@@ -111,6 +112,25 @@ macro_rules! runners {
         check!(build_sl, spec_sl);
         check!(build_pl, spec_pl);
     }};
+}
+
+#[test]
+fn zero_arity_default_hints_reach_the_host() {
+    for cache in [false, true] {
+        for guard in [false, true] {
+            runners!(cache, guard, runner::NullExtern, |runner| {
+                assert_fatal(
+                    runner.context().call_rel("Ready", &[]).unwrap_err(),
+                    "runtime/extern-failed",
+                );
+                let value = make::nat(runner.arena_mut(), 1u64.into(), Default::default()).unwrap();
+                assert_fatal(
+                    runner.context().call_rel("Ready", &[value]).unwrap_err(),
+                    "runtime/relation-input-arity-mismatch",
+                );
+            });
+        }
+    }
 }
 
 #[test]

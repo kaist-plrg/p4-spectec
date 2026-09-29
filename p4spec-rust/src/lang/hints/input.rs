@@ -146,6 +146,11 @@ pub fn split<Item>(
     items: Vec<Item>,
 ) -> Result<(Vec<Item>, Vec<Item>), InputError> {
     validate_items(hint, items.len())?;
+    Ok(split_validated(hint, items))
+}
+
+/// Splits items using an input hint already checked for their arity.
+pub fn split_validated<Item>(hint: &InputHint, items: Vec<Item>) -> (Vec<Item>, Vec<Item>) {
     let mut items_input = Vec::new();
     let mut items_output = Vec::new();
     // Inputs and outputs each keep source order
@@ -156,7 +161,7 @@ pub fn split<Item>(
             items_output.push(item);
         }
     }
-    Ok((items_input, items_output))
+    (items_input, items_output)
 }
 
 /// Reconstructs source-order items from input and output positions

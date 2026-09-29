@@ -53,9 +53,6 @@ pub(crate) fn check_rel_inputs(
         ast::RelDef::Extern(rel) => &rel.rel_signature,
         ast::RelDef::Defined(rel) => &rel.rel_signature,
     };
-    let typs = signature.not_typ.node.args();
-    // The hint must fit the notation arity
-    unwrap_from_result!(input::validate(&signature.input_hint, typs.len()), &id.span);
     // Always check the input count, even without type guards
     unwrap!(backtrack::check(
         signature.input_hint.indices().len() == values.len(),
@@ -71,6 +68,7 @@ pub(crate) fn check_rel_inputs(
         return ok!(());
     }
     // Select input types at the positions named by the hint
+    let typs = signature.not_typ.node.args();
     let typs = signature
         .input_hint
         .indices()
@@ -264,8 +262,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
             .cloned()
             .collect::<Vec<_>>();
         // Output types occupy the positions the input hint leaves
-        let (_, typs) =
-            unwrap_from_result!(input::split(&rel.rel_signature.input_hint, typs), &id.span);
+        let (_, typs) = input::split_validated(&rel.rel_signature.input_hint, typs);
         unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
             error::guard::relation_output_type_mismatch(id.node.clone())
         },));

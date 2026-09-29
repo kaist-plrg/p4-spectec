@@ -11,7 +11,7 @@ use super::{assign, expr};
 use crate::diagnostic::Report;
 use crate::interp::shared::error;
 use crate::interp::shared::{
-    backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
     eval::{Invoker, iter},
 };
 use crate::runtime::envs::interp::al::ast_prepared as ast;
@@ -61,8 +61,7 @@ fn eval_rule_prem<'global, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Context<'global>> {
     // Split by the input hint, evaluate inputs, bind outputs
     let exps = prem.not_exp.args();
-    let (exps_input, exps_output) =
-        unwrap_from_result!(input::split(&prem.input_hint, exps), &prem.id.span);
+    let (exps_input, exps_output) = input::split_validated(&prem.input_hint, exps);
     let values_input = unwrap!(expr::eval_exps(runner_ctx, &ctx, &exps_input));
     let values_output = unwrap!(AlInterp::invoke_rel(runner_ctx, &ctx, &prem.id, &values_input));
     assign::assign_exps(runner_ctx.arena_mut(), ctx, &exps_output, &values_output)

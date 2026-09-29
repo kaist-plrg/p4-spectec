@@ -348,8 +348,7 @@ fn eval_rule_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     // Split the notation arguments by the input hint
-    let (exps_input, exps_output) =
-        unwrap_from_result!(input::split(&instr.input_hint, instr.not_exp.args()), &instr.id.span);
+    let (exps_input, exps_output) = input::split_validated(&instr.input_hint, instr.not_exp.args());
     // A tail-position call whose block just returns its outputs is a tail call
     if tail
         && instr.iter_instrs.is_empty()

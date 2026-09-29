@@ -12,7 +12,6 @@ use crate::{
             prim::num::NumericError, source::Span,
         },
         data::value::ValueError,
-        hints::input::InputError,
     },
     runtime::ops::{typ::TypeError, value::MatchError},
 };
@@ -74,7 +73,6 @@ pub fn locate(mut report: Error, span: &Span) -> Error {
 
 const VALUE_INVALID: &str = "runtime/value-invalid";
 const NUMERIC_INVALID: &str = "runtime/numeric-invalid";
-const INPUT_INVALID: &str = "runtime/input-invalid";
 const ARITY_MISMATCH: &str = "runtime/arity-mismatch";
 const MIXOP_ARITY_MISMATCH: &str = "runtime/mixop-arity-mismatch";
 const TYPE_INVALID: &str = "runtime/type-invalid";
@@ -97,7 +95,6 @@ macro_rules! from_error {
 }
 from_error!(ValueError, VALUE_INVALID);
 from_error!(NumericError, NUMERIC_INVALID);
-from_error!(InputError, INPUT_INVALID);
 from_error!(ArityMismatch, ARITY_MISMATCH);
 from_error!(MixopArityMismatch, MIXOP_ARITY_MISMATCH);
 
