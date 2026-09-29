@@ -197,7 +197,7 @@ pub fn subject_name(subject: &Subject) -> Option<String> {
 impl Link {
     fn target(&self, anchor_ctx: &AnchorContext<'_>) -> Option<String> {
         match self {
-            Link::Direct(target) => Some(target.clone()),
+            Link::Direct(id) => Some(id.node.clone()),
             Link::Subject(Subject::Type(id)) => Some(id.node.clone()),
             Link::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, &id.node),
             Link::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, &id.node),
@@ -228,7 +228,6 @@ impl CodeStyle {
 /// Per-serialization anchor labels and warnings.
 struct Serializer<'ctx, 'a> {
     anchor_ctx: &'ctx AnchorContext<'a>,
-    span: &'ctx Span,
     warnings: &'ctx mut Vec<Report>,
     markers: BTreeMap<String, String>,
     warned: BTreeSet<String>,
@@ -237,11 +236,10 @@ struct Serializer<'ctx, 'a> {
 impl<'ctx, 'a> Serializer<'ctx, 'a> {
     fn new(
         anchor_ctx: &'ctx AnchorContext<'a>,
-        span: &'ctx Span,
         warnings: &'ctx mut Vec<Report>,
         markers: BTreeMap<String, String>,
     ) -> Self {
-        Serializer { anchor_ctx, span, warnings, markers, warned: BTreeSet::new() }
+        Serializer { anchor_ctx, warnings, markers, warned: BTreeSet::new() }
     }
 
     // - Cross-references
@@ -260,7 +258,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         } else {
             // Neither delimiter can represent this label
             self.warnings
-                .push(error::link_text_invalid(self.span, link, text).into());
+                .push(error::link_text_invalid(link, text).into());
             text.to_owned()
         }
     }
@@ -281,13 +279,13 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 
     fn warn_empty_target(&mut self, lint: bool, link: &Link, target: &str) {
         if lint && target.is_empty() {
-            self.warn(error::link_target_empty(self.span, link));
+            self.warn(error::link_target_empty(link));
         }
     }
 
     fn warn_nested(&mut self, lint: bool, link_outer: &Link, link_inner: &Link) {
         if lint {
-            self.warn(error::link_nested(self.span, link_outer, link_inner));
+            self.warn(error::link_nested(link_outer, link_inner));
         }
     }
 
@@ -376,7 +374,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         }
         // Preserve the empty-body warning even when no tokens will be emitted
         if lint && code_inner.is_empty() {
-            self.warn(error::link_body_empty(self.span, link));
+            self.warn(error::link_body_empty(link));
         }
         let mut text = String::new();
         self.collect_code_text(link, lint, code_inner, &mut text);
@@ -458,7 +456,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         // Format the complete body before choosing link delimiters
         let text = self.ser_prose(prose_inner, Some(link), lint);
         if lint && text.is_empty() {
-            self.warn(error::link_body_empty(self.span, link));
+            self.warn(error::link_body_empty(link));
         }
         self.adoc_link(link, &target, &text)
     }
@@ -640,14 +638,13 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 //   ser_code(&subject_name, Seq([Token("a "), Link(Direct("f"), Token("b"))]))
 //   -> a xref:f[b]
 
-/// Serializes prose and collects warnings at the owning fragment's span.
+/// Serializes prose and collects warnings at each link's source span.
 pub fn ser_prose(
     anchor_ctx: &AnchorContext<'_>,
-    span: &Span,
     warnings: &mut Vec<Report>,
     prose: &Prose,
 ) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, span, warnings, BTreeMap::new());
+    let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
     serializer.ser_prose(prose, None, true)
 }
 
@@ -655,21 +652,16 @@ pub fn ser_prose(
 pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
     let anchor_ctx = AnchorContext::default();
-    Serializer::new(&anchor_ctx, &Span::default(), &mut Vec::new(), BTreeMap::new()).ser_prose(
+    Serializer::new(&anchor_ctx, &mut Vec::new(), BTreeMap::new()).ser_prose(
         prose,
-        Some(&Link::Direct(String::new())),
+        Some(&Link::Direct(crate::phrase! { node: String::new(), span: Span::default() })),
         false,
     )
 }
 
 /// Serializes code without monospace markup and collects delimiter warnings.
-pub fn ser_code(
-    anchor_ctx: &AnchorContext<'_>,
-    span: &Span,
-    warnings: &mut Vec<Report>,
-    code: &Code,
-) -> String {
-    let mut serializer = Serializer::new(anchor_ctx, span, warnings, BTreeMap::new());
+pub fn ser_code(anchor_ctx: &AnchorContext<'_>, warnings: &mut Vec<Report>, code: &Code) -> String {
+    let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
     serializer.ser_code(CodeStyle::Plain, code, None, false)
 }
 
@@ -679,11 +671,10 @@ pub fn ser_code(
 /// as produced by the PL renderer's arm and next-target construction.
 pub fn ser_block(
     anchor_ctx: &AnchorContext<'_>,
-    span: &Span,
     warnings: &mut Vec<Report>,
     block: &Block,
 ) -> String {
     let markers = block.anchor_markers();
-    let mut serializer = Serializer::new(anchor_ctx, span, warnings, markers);
+    let mut serializer = Serializer::new(anchor_ctx, warnings, markers);
     serializer.ser_block(block)
 }

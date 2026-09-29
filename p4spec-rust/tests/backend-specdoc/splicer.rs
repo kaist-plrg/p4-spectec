@@ -255,3 +255,26 @@ fn adoc_warnings_survive_a_later_latex_failure() {
     }
     assert_eq!(cause(&warnings[0]).labels[0].span, cause(&warnings[1]).labels[0].span);
 }
+
+#[test]
+fn direct_group_link_warnings_use_the_rule_location() {
+    use p4spec_rust::{
+        backend_specdoc::adoc,
+        pass::{algo, elaborate, prosify, structure},
+    };
+    let spec_el = spec_fixture::parse(
+        "var n : nat\nrelation Same: nat ~~ nat\n  hint(input %0 %1)\nrule Same:\n  n ~~ n\n",
+    )
+    .unwrap();
+    let spec_il = elaborate::convert(spec_el).unwrap();
+    let spec_al = algo::convert(spec_il).unwrap();
+    let spec_sl = structure::convert(spec_al, false).unwrap();
+    let spec_pl = prosify::convert(spec_sl).unwrap();
+    let mut warnings = Vec::new();
+    let text = adoc::pl::render_spec(&mut warnings, &spec_pl);
+    assert!(text.contains("xref:Same-[]"), "{text}");
+    assert_eq!(warnings.len(), 1);
+    let diagnostic = cause(&warnings[0]);
+    assert_eq!(diagnostic.code.as_deref(), Some("adoc/link-body-empty"));
+    assert_eq!(diagnostic.labels[0].span.left.line, 4);
+}

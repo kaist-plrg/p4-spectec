@@ -726,13 +726,8 @@ impl Code {
         let code_iter = Code::of_iter(iter_exp.iter);
         // Parenthesize compound bodies whose code contains spaces
         let needs_parens = !matches!(exp_inner.node.node, ExpKind::Id(_) | ExpKind::Tuple(_))
-            && serialize::ser_code(
-                &AnchorContext::default(),
-                &Span::default(),
-                &mut Vec::new(),
-                &code_inner,
-            )
-            .contains(' ');
+            && serialize::ser_code(&AnchorContext::default(), &mut Vec::new(), &code_inner)
+                .contains(' ');
         if needs_parens {
             Code::seq([Code::token("( "), code_inner, Code::token(" )"), code_iter])
         } else {
@@ -1466,11 +1461,9 @@ impl Prose {
 /// Nested blocks within that body share its block counter.
 /// Inputs must retain prosify's validated hints, synthesized relation outputs,
 /// and annotated fallthrough destinations.
-/// Subject warnings use their hint or declaration spans.
-/// Direct-link warnings use the owning definition or fragment span.
+/// Warnings use the source spans carried by individual links.
 pub struct Renderer<'ctx, 'a> {
     anchor_ctx: &'ctx mut AnchorContext<'a>,
-    span: Span,
     warnings: &'ctx mut Vec<Report>,
     anchor_prefix: String,
     num_blocks: usize,
@@ -1500,13 +1493,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         warnings: &'ctx mut Vec<Report>,
         anchor_prefix: &str,
     ) -> Self {
-        Self {
-            anchor_ctx,
-            span: Span::default(),
-            warnings,
-            anchor_prefix: anchor_prefix.to_owned(),
-            num_blocks: 0,
-        }
+        Self { anchor_ctx, warnings, anchor_prefix: anchor_prefix.to_owned(), num_blocks: 0 }
     }
 
     /// Allocates a block destination within this body's anchor prefix.
@@ -1678,8 +1665,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .map(|anchor| format!("+++<span id=\"{anchor}\"></span>+++"))
             .unwrap_or_default();
         let block_body = self.render_instrs(1, None, ctx, render_tier, block);
-        let text_body =
-            serialize::ser_block(self.anchor_ctx, &self.span, self.warnings, &block_body);
+        let text_body = serialize::ser_block(self.anchor_ctx, self.warnings, &block_body);
         let text_bullet = serialize::adoc_ordered_bullet(0);
         format!("\n\n{text_bullet}{text_anchor}Otherwise:{text_body}")
     }
@@ -2009,10 +1995,12 @@ impl Prose {
     //
     //   Even/nil   -> goto xref:Even-nil[nil]
 
-    fn of_group_dispatch(id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
+    fn of_group_dispatch(span: &Span, id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
         let anchor_group = fallthrough::anchor_of_group(&id_rel.node, &id_group.node);
-        let prose_group =
-            Prose::link(Link::Direct(anchor_group), Prose::text(id_group.node.clone()));
+        let prose_group = Prose::link(
+            Link::Direct(crate::phrase! { node: anchor_group, span: span.clone() }),
+            Prose::text(id_group.node.clone()),
+        );
         Prose::seq([Prose::text("goto "), prose_group])
     }
 }
@@ -2024,11 +2012,13 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //   nested Sign/zero              -> . Goto xref:Sign-zero[zero]
 
     fn render_group_instr_dispatch(
+        span: &Span,
         level: usize,
         singleton: bool,
         group_instr: &pl::RuleGroupInstr,
     ) -> Rendered {
-        let prose_dispatch = Prose::of_group_dispatch(&group_instr.id_rel, &group_instr.id_group);
+        let prose_dispatch =
+            Prose::of_group_dispatch(span, &group_instr.id_rel, &group_instr.id_group);
         // A lone dispatch folds onto its heading
         if singleton {
             return Rendered::InlineGoto(Prose::seq([Prose::text(" "), prose_dispatch]));
@@ -2402,7 +2392,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Block {
         // Build the forced binding heading with its failure continuation
         let code_l = Code::of_exp(&option_instr.exp_l);
-        let link_get = Link::Direct("option_get".to_owned());
+        let link_get = Link::Direct(
+            crate::phrase! { node: "option_get".to_owned(), span: instr.node.span.clone() },
+        );
         let prose_get = Prose::link(link_get, Prose::text("*!*"));
         let prose_r = Prose::of_exp(&option_instr.exp_r);
         let prose_fallthrough = Prose::of_fallthrough_link(ctx, instr);
@@ -2726,12 +2718,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         level: usize,
         ctx: &Context,
         singleton: bool,
-        _instr: &pl::Instr<pl::DispatchInstr>,
+        instr: &pl::Instr<pl::DispatchInstr>,
         tier: &pl::DispatchInstr,
     ) -> Rendered {
         match tier {
             pl::DispatchInstr::Group(group_instr) => {
-                Self::render_group_instr_dispatch(level, singleton, group_instr)
+                Self::render_group_instr_dispatch(&instr.node.span, level, singleton, group_instr)
             }
             pl::DispatchInstr::Route(route_instr) => {
                 self.render_route_instr(level, ctx, route_instr)
@@ -2852,7 +2844,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         exps: &[pl::Exp],
         block: &pl::GroupBlock,
     ) -> String {
-        self.span = hints.span.clone();
         // Select hinted prose or filled relation notation for the title
         let hint_opt = hints
             .node
@@ -2878,10 +2869,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let ctx = Context::new(&id_rel.node);
         let block_body = self.render_instrs(0, None, &ctx, Self::render_instr_group, block);
         // Serialize the linked title and body as one fragment
-        let text_title =
-            serialize::ser_prose(self.anchor_ctx, &self.span, self.warnings, &prose_title);
-        let text_body =
-            serialize::ser_block(self.anchor_ctx, &self.span, self.warnings, &block_body);
+        let text_title = serialize::ser_prose(self.anchor_ctx, self.warnings, &prose_title);
+        let text_body = serialize::ser_block(self.anchor_ctx, self.warnings, &block_body);
         format!("{text_title}:\n{text_body}")
     }
 
@@ -2893,7 +2882,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Renders a relation otherwise fragment with its shared destination.
     pub fn render_rulegroup_else(&mut self, id_rel: &pl::Id, block: &pl::DispatchBlock) -> String {
-        self.span = id_rel.span.clone();
         let ctx = Context::new(&id_rel.node);
         let anchor_else = fallthrough::anchor_of_else(&id_rel.node);
         let text_else = self.render_elseblock(
@@ -2914,12 +2902,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Renders relation dispatch with local arms and shared group destinations.
     pub fn render_defined_rel_def_dispatch(&mut self, rel: &pl::DefinedRel) -> String {
-        self.span = rel.id.span.clone();
         let ctx = Context::new(&rel.id.node);
         let block_dispatch =
             self.render_instrs(0, None, &ctx, Self::render_instr_dispatch, &rel.block);
-        let text_dispatch =
-            serialize::ser_block(self.anchor_ctx, &self.span, self.warnings, &block_dispatch);
+        let text_dispatch = serialize::ser_block(self.anchor_ctx, self.warnings, &block_dispatch);
         format!("{} dispatch:\n{text_dispatch}", rel.id.node)
     }
 
@@ -3161,7 +3147,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Renders a definition within this body's anchor prefix.
     pub fn render_def(&mut self, def: &pl::Def) -> Option<String> {
-        self.span = def.node.span.clone();
         let block = match &def.node.node {
             pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
             pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
@@ -3183,7 +3168,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 self.render_defined_func_def(&def.hints, func)
             }
         };
-        Some(serialize::ser_block(self.anchor_ctx, &def.node.span, self.warnings, &block))
+        Some(serialize::ser_block(self.anchor_ctx, self.warnings, &block))
     }
 }
 
@@ -3215,7 +3200,7 @@ pub fn render_def_title(
         }
         _ => return None,
     };
-    Some(serialize::ser_block(anchor_ctx, &def.node.span, warnings, &block))
+    Some(serialize::ser_block(anchor_ctx, warnings, &block))
 }
 
 /// Renders one definition, omitting type and variable declarations.

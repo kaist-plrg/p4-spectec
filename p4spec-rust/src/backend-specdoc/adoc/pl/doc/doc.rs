@@ -60,8 +60,8 @@ pub enum Code {
 /// A concrete target or a reference resolved by the enclosing document.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Link {
-    /// Uses the target verbatim, bypassing the subject resolver.
-    Direct(String),
+    /// Uses the located target verbatim, bypassing the subject resolver.
+    Direct(Id),
     /// Resolves the subject, preserving only the body if unresolved.
     Subject(Subject),
 }

@@ -1,30 +1,27 @@
 //! Diagnostics owned by AsciiDoc serialization
 //!
-//! Link warnings locate the displayed text at its hint or declaration.
+//! Each link carries the source location used by its warnings.
 //! Serialization collects warnings for its caller and preserves fallback text.
 
 use super::pl::doc::doc::{Link, Subject};
-use crate::{
-    diagnostic::{Diagnostic, Label, Severity},
-    lang::common::source::Span,
-};
+use crate::diagnostic::{Diagnostic, Label, Severity};
 
 /// Describes the source-level reference without exposing generated anchors.
 fn describe_link(link: &Link) -> String {
     match link {
-        Link::Direct(target) => format!("destination {target:?}"),
+        Link::Direct(id) => format!("destination {:?}", id.node),
         Link::Subject(Subject::Function(id)) => format!("function `${}`", id.node),
         Link::Subject(Subject::Relation(id)) => format!("relation `{}`", id.node),
         Link::Subject(Subject::Type(id)) => format!("type `{}`", id.node),
     }
 }
 
-/// Locates a link problem at its subject span or the rendered fragment.
-fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
-    // Subject spans identify the hint or declaration supplying displayed text
+/// Locates a link problem at the source span carried by the link.
+fn warning(link: &Link, code: &str, message: String, label: &str) -> Diagnostic {
+    // Every target retains the source span supplied when the link was built
     let span = match link {
-        Link::Direct(_) => span,
-        Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) => {
+        Link::Direct(id)
+        | Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) => {
             &id.span
         }
     };
@@ -35,9 +32,8 @@ fn warning(span: &Span, link: &Link, code: &str, message: String, label: &str) -
 const LINK_TARGET_EMPTY: &str = "adoc/link-target-empty";
 
 /// Reports a cross-reference without a destination.
-pub(super) fn link_target_empty(span: &Span, link: &Link) -> Diagnostic {
+pub(super) fn link_target_empty(link: &Link) -> Diagnostic {
     let mut diagnostic = warning(
-        span,
         link,
         LINK_TARGET_EMPTY,
         "cross-reference has no destination anchor".into(),
@@ -52,9 +48,8 @@ pub(super) fn link_target_empty(span: &Span, link: &Link) -> Diagnostic {
 const LINK_NESTED: &str = "adoc/link-nested";
 
 /// Reports the inner link's source and the enclosing link that suppresses it.
-pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> Diagnostic {
+pub(super) fn link_nested(link_outer: &Link, link_inner: &Link) -> Diagnostic {
     let mut diagnostic = warning(
-        span,
         link_inner,
         LINK_NESTED,
         format!(
@@ -65,17 +60,19 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
         "this inner link is suppressed",
     );
     // Relate the source of the enclosing link's displayed text
-    if let Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) =
-        link_outer
-    {
-        diagnostic.labels.push(Label::secondary(
-            &id.span,
-            format!(
-                "this supplies the display text for the outer link to {}",
-                describe_link(link_outer)
-            ),
-        ));
-    }
+    let span_outer = match link_outer {
+        Link::Direct(id)
+        | Link::Subject(Subject::Function(id) | Subject::Relation(id) | Subject::Type(id)) => {
+            &id.span
+        }
+    };
+    diagnostic.labels.push(Label::secondary(
+        span_outer,
+        format!(
+            "this supplies the display text for the outer link to {}",
+            describe_link(link_outer)
+        ),
+    ));
     // Explain both the emitted markup and how to avoid the lost reference
     diagnostic.notes.push(
         "AsciiDoc cannot nest cross-references. The outer link is kept; the inner text is included without its own link.".into(),
@@ -89,9 +86,8 @@ pub(super) fn link_nested(span: &Span, link_outer: &Link, link_inner: &Link) -> 
 const LINK_BODY_EMPTY: &str = "adoc/link-body-empty";
 
 /// Reports a resolved reference without display text.
-pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
+pub(super) fn link_body_empty(link: &Link) -> Diagnostic {
     let mut diagnostic = warning(
-        span,
         link,
         LINK_BODY_EMPTY,
         format!("empty display text for the link to {}", describe_link(link)),
@@ -106,9 +102,8 @@ pub(super) fn link_body_empty(span: &Span, link: &Link) -> Diagnostic {
 const LINK_TEXT_INVALID: &str = "adoc/link-text-invalid";
 
 /// Reports a label that cannot use either AsciiDoc cross-reference delimiter.
-pub(super) fn link_text_invalid(span: &Span, link: &Link, text: &str) -> Diagnostic {
+pub(super) fn link_text_invalid(link: &Link, text: &str) -> Diagnostic {
     let mut diagnostic = warning(
-        span,
         link,
         LINK_TEXT_INVALID,
         format!("cannot represent the link text for {} in AsciiDoc", describe_link(link)),
