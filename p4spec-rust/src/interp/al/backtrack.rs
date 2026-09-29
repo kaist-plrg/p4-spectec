@@ -5,6 +5,7 @@
 //! Both stop at the first fatal error.
 //! Deterministic choice retains every mismatch when nothing matches.
 
+use crate::diagnostic::Report;
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unmatch},
     error::{self, Error},
@@ -13,10 +14,7 @@ use crate::interp::shared::{
 // = Sequential choice
 
 /// Keeps the most deeply nested failure set, preferring the later one on ties.
-fn retain_deepest_errors(
-    errors: &mut Vec<crate::diagnostic::Report>,
-    errors_post: Vec<crate::diagnostic::Report>,
-) {
+fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
     if errors_post
         .iter()
         .map(error::trace::depth)

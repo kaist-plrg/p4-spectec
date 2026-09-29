@@ -1,7 +1,6 @@
 //! Invocation and evaluation frames
 //!
 //! Frame messages are formatted only after evaluation fails.
-//! Ordered descendants retain their complete diagnostic payloads.
 
 use crate::{
     diagnostic::Report,
@@ -12,7 +11,7 @@ use crate::{
     },
 };
 
-/// Groups exhausted alternatives at the final output boundary.
+/// Wraps failures in an `execution failed` frame.
 pub fn execution(children: Vec<Report>) -> Box<Report> {
     Box::new(Report::frame(Span::default(), "execution failed", children))
 }
@@ -35,7 +34,7 @@ pub fn function(id: &Id, targs: &[Typ]) -> String {
     )
 }
 
-/// Measures trace height iteratively for structured branch selection.
+/// Returns the maximum report depth without recursion.
 pub fn depth(report: &Report) -> usize {
     let mut depth = 0;
     let mut pending = vec![(report, 1)];

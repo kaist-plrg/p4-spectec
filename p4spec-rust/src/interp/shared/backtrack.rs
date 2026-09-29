@@ -1,15 +1,21 @@
 //! Recoverable mismatches and fatal interpreter failures
 //!
-//! Failure classification survives runner and extern reentry.
-//! Ordinary Result propagation preserves both variants;
-//! only the final output boundary promotes exhausted alternatives to a report.
+//! `Fatal` stops execution; `Mismatch` lets the caller try another candidate.
+//! Runner and extern calls preserve this distinction.
+//! `into_report` groups mismatches under an execution frame for display.
 
 use super::error::{self, Error};
 use crate::{
     diagnostic::{Diagnostic, Report},
-    lang::common::source::Span,
+    lang::{
+        common::{prim::num::NumericError, source::Span},
+        data::value::ValueError,
+    },
     runner::{ExternError, InterfaceError},
 };
+
+/// Returns a value, a fatal error, or a mismatch.
+pub type Backtrack<T> = Result<T, Failure>;
 
 /// Separates aborting execution from trying another candidate.
 #[derive(Debug)]
@@ -20,13 +26,10 @@ pub enum Failure {
     Mismatch(Vec<Report>),
 }
 
-/// Carries a result without erasing recoverability.
-pub type Backtrack<T> = Result<T, Failure>;
-
-// = Failure transport
+// = Failure reports
 
 impl Failure {
-    /// Converts exhausted mismatch at the final output boundary.
+    /// Returns the fatal report or groups mismatches under an execution frame.
     pub fn into_report(self) -> Error {
         match self {
             Self::Fatal(report) => report,
@@ -34,7 +37,7 @@ impl Failure {
         }
     }
 
-    /// Adds context without changing classification or replacing incoming labels.
+    /// Adds a frame while keeping the failure kind and child reports.
     pub fn with_frame(self, span: Span, message: impl Into<String>) -> Self {
         match self {
             Self::Fatal(report) => {
@@ -44,7 +47,7 @@ impl Failure {
         }
     }
 
-    /// Locates local causes without rewriting existing report context.
+    /// Adds a source label to causes that have none, leaving frames unchanged.
     pub fn at_if_missing(self, span: &Span) -> Self {
         match self {
             Self::Fatal(report) => Self::Fatal(error::locate(report, span)),
@@ -66,7 +69,7 @@ impl From<Error> for Failure {
 
 impl From<InterfaceError> for Failure {
     fn from(error: InterfaceError) -> Self {
-        // Classify builtin rejection before converting its diagnostic payload
+        // Builtin failures are mismatches; an unconfigured interface is fatal
         let recoverable = matches!(&error, InterfaceError::Builtin(_));
         let report: Error = error.into();
         if recoverable { Self::Mismatch(vec![*report]) } else { Self::Fatal(report) }
@@ -79,14 +82,14 @@ impl From<ExternError> for Failure {
     }
 }
 
-impl From<crate::lang::data::value::ValueError> for Failure {
-    fn from(error: crate::lang::data::value::ValueError) -> Self {
+impl From<ValueError> for Failure {
+    fn from(error: ValueError) -> Self {
         Self::Fatal(error.into())
     }
 }
 
-impl From<crate::lang::common::prim::num::NumericError> for Failure {
-    fn from(error: crate::lang::common::prim::num::NumericError) -> Self {
+impl From<NumericError> for Failure {
+    fn from(error: NumericError) -> Self {
         Self::Fatal(error.into())
     }
 }
@@ -101,14 +104,14 @@ impl std::fmt::Display for Failure {
 }
 impl std::error::Error for Failure {}
 
-// = Local operation lifting
+// = Error conversion
 
-/// Lifts a local operation failure at its owning source location.
+/// Converts an error to Fatal, adding a source label if missing.
 pub fn from_result<T>(result: Result<T, impl Into<Error>>, span: &Span) -> Backtrack<T> {
     result.map_err(|error| Failure::Fatal(error::locate(error.into(), span)))
 }
 
-/// Rejects a violated runtime check at the owning operation.
+/// Returns Fatal at the given span if the condition is false.
 pub fn check(
     condition: bool,
     span: Span,
@@ -161,7 +164,7 @@ macro_rules! unmatch {
 }
 pub(crate) use unmatch;
 
-/// Propagates the complete typed failure, like the question-mark operator.
+/// Propagates a failure with `?`.
 macro_rules! unwrap {
     ($result:expr) => {
         $result?
@@ -169,7 +172,7 @@ macro_rules! unwrap {
 }
 pub(crate) use unwrap;
 
-/// Lifts a local operation at its source location before propagation.
+/// Converts an error with `from_result`, then propagates it with `?`.
 macro_rules! unwrap_from_result {
     ($result:expr, $span:expr $(,)?) => {
         $crate::interp::shared::backtrack::from_result($result, $span)?

@@ -1,8 +1,7 @@
 //! Host diagnostics at interpreter boundaries
 //!
-//! Failure class is chosen from InterfaceError before conversion.
-//! These adapters retain existing host messages;
-//! native host-specific diagnostic constructors belong to the host layer.
+//! Adds runtime error codes to builtin, interface, and extern errors.
+//! Keeps their original messages; `Failure` decides whether to retry.
 
 use super::{Error, diagnostic};
 use crate::runner::{ExternError, InterfaceError};

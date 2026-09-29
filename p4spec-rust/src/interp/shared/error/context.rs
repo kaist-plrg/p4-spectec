@@ -1,6 +1,6 @@
 //! Context diagnostics for interpreter operations
 //!
-//! Constructors identify runtime checks without deciding whether callers retry.
+//! Builds diagnostics; callers choose whether to stop or try another candidate.
 
 use super::EntityKind;
 use super::diagnostic;
@@ -8,14 +8,14 @@ use crate::diagnostic::Diagnostic;
 
 const BINDING_UNDEFINED: &str = "runtime/binding-undefined";
 
-/// Reports undefined.
+/// Reports an undefined binding.
 pub fn binding_undefined(kind: EntityKind, name: String) -> Diagnostic {
     diagnostic(BINDING_UNDEFINED, format!("{kind} `{name}` is undefined"), Vec::new())
 }
 
 const BINDING_REPEATED: &str = "runtime/binding-repeated";
 
-/// Reports duplicate.
+/// Reports a duplicate binding.
 pub fn binding_repeated(kind: EntityKind, name: String) -> Diagnostic {
     diagnostic(BINDING_REPEATED, format!("{kind} `{name}` was already defined"), Vec::new())
 }

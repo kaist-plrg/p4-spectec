@@ -4,7 +4,7 @@
 //! variable; `iterate_vars` computes the slots one iteration outward.
 
 use super::{context::ReadContext, prepare::ast};
-use crate::lang::data::var::{SlotIdx, VarSlot};
+use crate::lang::data::var::{SlotIdx, Var, VarSlot};
 
 /// Advances prepared variables through one iterator dimension.
 pub fn iterate_vars(ctx: &impl ReadContext, vars: &[ast::Var], iter: ast::Iter) -> Vec<ast::Var> {
@@ -37,7 +37,7 @@ pub fn find_var_of_exp(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<VarSlot
         // A plain variable is its own slot
         ast::ExpKind::Id(id) => Some(VarSlot {
             slot: id.slot,
-            var: crate::lang::data::var::Var {
+            var: Var {
                 id: id.id.clone(),
                 typ: crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone()),
                 iters: vec![],

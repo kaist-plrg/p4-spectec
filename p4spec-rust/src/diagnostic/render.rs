@@ -356,7 +356,7 @@ impl Renderer {
         Ok(rendered)
     }
 
-    /// Converts frames using a located header for compact presentation.
+    /// Includes the frame's source location in Short and Medium headers.
     fn convert_report_kind(
         &mut self,
         kind: &ReportKind,
@@ -403,7 +403,7 @@ impl Renderer {
 
     // - render_to_*: output destinations
 
-    /// Emits one node, retaining fallback frame locations in compact output.
+    /// Renders a node, preserving locations when snippets are unavailable.
     fn render_kind(
         &mut self,
         writer: &mut impl WriteColor,

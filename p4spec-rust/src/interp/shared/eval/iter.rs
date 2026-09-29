@@ -9,7 +9,7 @@
 use std::rc::Rc;
 
 use super::super::{
-    backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, Failure, ok, unwrap, unwrap_from_result},
     context::IterContext,
 };
 use crate::interp::shared::prepare::ast;
@@ -35,7 +35,7 @@ pub fn map<Ctx, Interp, Iface, Ext>(
 ) -> Backtrack<Value>
 where
     Ctx: IterContext,
-    Interp: Interpreter<Iface, Ext, Error = crate::interp::shared::backtrack::Failure>,
+    Interp: Interpreter<Iface, Ext, Error = Failure>,
     Iface: Interface,
     Ext: Extern,
 {
@@ -95,7 +95,7 @@ pub fn r#yield<Ctx, Interp, Iface, Ext>(
 ) -> Backtrack<Ctx>
 where
     Ctx: IterContext,
-    Interp: Interpreter<Iface, Ext, Error = crate::interp::shared::backtrack::Failure>,
+    Interp: Interpreter<Iface, Ext, Error = Failure>,
     Iface: Interface,
     Ext: Extern,
 {

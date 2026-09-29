@@ -1,6 +1,6 @@
 //! Prem diagnostics for interpreter operations
 //!
-//! Constructors identify runtime checks without deciding whether callers retry.
+//! Builds diagnostics; callers choose whether to stop or try another candidate.
 
 use super::diagnostic;
 use crate::diagnostic::Diagnostic;
