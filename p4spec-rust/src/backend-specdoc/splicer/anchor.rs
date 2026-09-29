@@ -78,7 +78,7 @@ impl Targets {
         // Ignore undeclared identifiers, retaining duplicate-target diagnostics
         for id in ids {
             if ids_declared.contains(&id.node) && !ids_target.insert(id.node.clone()) {
-                warnings.push(error::target_duplicate(name, &id.node, &id.span));
+                warnings.push(error::target_duplicate(&id.span, name, &id.node));
             }
         }
     }

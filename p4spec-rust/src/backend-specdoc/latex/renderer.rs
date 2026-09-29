@@ -15,6 +15,7 @@
 use num_traits::Signed;
 
 use crate::lang::{
+    common::source::Span,
     common::{
         Iter,
         notation::atom::Atom as AtomKind,
@@ -25,7 +26,7 @@ use crate::lang::{
 
 use super::{
     super::anchor::{AnchorContext, Presentation},
-    error::{Error, Result},
+    error::{self, Result},
     precedence::{self, Category, Prec, Side},
     tex::{
         doc::{Alignment, Block, Delimiter, Doc, GridRow, Soft, Style, Symbol, Target},
@@ -102,11 +103,11 @@ fn anchor_of_rel(anchor_ctx: &AnchorContext<'_>, id: &Id) -> Option<String> {
 
 impl Doc {
     /// Links a reference when its anchor resolves.
-    fn of_link(anchor: Option<&str>, tex_ref: Doc) -> Result<Doc> {
+    fn of_link(span: &Span, anchor: Option<&str>, tex_ref: Doc) -> Result<Doc> {
         let Some(anchor) = anchor else {
             return Ok(tex_ref);
         };
-        let target = Target::of_string(anchor)?;
+        let target = Target::of_string(span, anchor)?;
         let tex_linked = link::link_unowned_doc(&target, tex_ref);
         Ok(tex_linked)
     }
@@ -638,10 +639,10 @@ impl ExpTerm {
             ExpKind::Brack(atom_l, exp, atom_r) => {
                 ExpTerm::of_brack_exp(anchor_ctx, atom_l, exp, atom_r)
             }
-            ExpKind::Hole(_) => Err(Error::Hole(exp.span.clone())),
-            ExpKind::Fuse(..) => Err(Error::Fuse(exp.span.clone())),
-            ExpKind::Unparen(_) => Err(Error::Unparen(exp.span.clone())),
-            ExpKind::Latex(_) => Err(Error::RawLatex(exp.span.clone())),
+            ExpKind::Hole(_) => Err(error::hole(&exp.span)),
+            ExpKind::Fuse(..) => Err(error::fuse(&exp.span)),
+            ExpKind::Unparen(_) => Err(error::unparen(&exp.span)),
+            ExpKind::Latex(_) => Err(error::raw_latex(&exp.span)),
         }
     }
 
@@ -957,7 +958,7 @@ impl ExpTerm {
     ) -> Result<ExpTerm> {
         let anchor = anchor_of_func(anchor_ctx, id);
         let tex_name = Doc::of_defid(id);
-        let tex_name = Doc::of_link(anchor.as_deref(), tex_name)?;
+        let tex_name = Doc::of_link(&id.span, anchor.as_deref(), tex_name)?;
         let tex_targs = Doc::of_targs(targs);
         let tex_args = Doc::of_args(anchor_ctx, args)?;
         let tex = Doc::concat(vec![tex_name, tex_targs, tex_args]);
@@ -1289,7 +1290,7 @@ impl Doc {
     fn of_rule_prem(anchor_ctx: &AnchorContext<'_>, id: &Id, exp: &Exp) -> Result<Doc> {
         let anchor = anchor_of_rel(anchor_ctx, id);
         let tex_exp = Doc::of_exp(anchor_ctx, exp)?;
-        Doc::of_link(anchor.as_deref(), tex_exp)
+        Doc::of_link(&id.span, anchor.as_deref(), tex_exp)
     }
 
     // - Negated relation premises
@@ -1301,7 +1302,7 @@ impl Doc {
         let anchor = anchor_of_rel(anchor_ctx, id);
         let term = ExpTerm::of_exp(anchor_ctx, exp)?;
         let tex_exp = Doc::of_nested_exp(precedence::UNARY, Side::Right, term);
-        let tex_exp = Doc::of_link(anchor.as_deref(), tex_exp)?;
+        let tex_exp = Doc::of_link(&id.span, anchor.as_deref(), tex_exp)?;
         let tex = Doc::concat_spaced(vec![Doc::Fixed(Symbol::Neg), tex_exp]);
         Ok(tex)
     }
@@ -1502,7 +1503,7 @@ impl Doc {
         let tex_conclusion = Doc::of_exp(anchor_ctx, exp)?;
         let tex_fraction = Doc::fraction(tex_numerator, tex_conclusion);
         let tex_fraction = Doc::displaystyle(tex_fraction);
-        let tex_fraction = layout::resolve(WIDTH_LAYOUT, &tex_fraction)?;
+        let tex_fraction = layout::resolve(WIDTH_LAYOUT, &tex_fraction);
 
         // Keep the full rule identifier in the badge above the inference rule
         let text_badge = text_of_rule_id(id_rel, id_rule);
@@ -1707,8 +1708,8 @@ impl LayoutFunc {
         }
 
         // Resolve the two sides before placing a condition on its own spanning row
-        let tex_l = layout::resolve(WIDTH_LAYOUT, &tex_l)?;
-        let tex_body = layout::resolve(WIDTH_LAYOUT, &tex_body)?;
+        let tex_l = layout::resolve(WIDTH_LAYOUT, &tex_l);
+        let tex_body = layout::resolve(WIDTH_LAYOUT, &tex_body);
         let docs = vec![tex_l, Doc::Fixed(Symbol::Equal), tex_body];
         if texs_prem.is_empty() {
             return Ok(LayoutFunc::Single(docs));
@@ -1718,7 +1719,7 @@ impl LayoutFunc {
         let tex_if = Doc::Styled(Style::Text, "if".to_owned());
         let tex_prefix = Doc::concat(vec![Doc::Quad, tex_if, Doc::ThinSpace]);
         let width_prem = WIDTH_LAYOUT - width::flat(&tex_prefix);
-        let tex_prem = layout::resolve(width_prem, &tex_prem)?;
+        let tex_prem = layout::resolve(width_prem, &tex_prem);
         let tex_condition = Doc::concat(vec![tex_prefix, tex_prem]);
         let tex_condition = Doc::layout_group(tex_condition);
         Ok(LayoutFunc::Multi(docs, tex_condition))
@@ -1760,10 +1761,10 @@ impl Doc {
         // Multiple clauses use a grid; a compact single equation uses aligned
         let tex = if defs_func.len() > 1 {
             let alignments = vec![Alignment::Left, Alignment::Center, Alignment::Left];
-            Doc::grid(alignments, rows)?
+            Doc::grid(alignments, rows)
         } else if has_condition_below {
             let alignments = vec![Alignment::Right, Alignment::Center, Alignment::Left];
-            Doc::grid(alignments, rows)?
+            Doc::grid(alignments, rows)
         } else {
             let rows = rows
                 .into_iter()
@@ -1774,7 +1775,7 @@ impl Doc {
                 .collect();
             Doc::Aligned(rows)
         };
-        layout::resolve(WIDTH_LAYOUT, &tex)
+        Ok(layout::resolve(WIDTH_LAYOUT, &tex))
     }
 
     /// Renders one defined function clause as its own aligned layout.

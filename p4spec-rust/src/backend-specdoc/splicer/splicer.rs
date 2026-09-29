@@ -70,6 +70,7 @@ pub(super) trait Kind<'spec> {
 
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
+        warnings: &mut Vec<Report>,
         idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error>;
@@ -193,9 +194,9 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
                 entry.used = true;
             } else {
                 warnings.push(error::key_not_found(
+                    &key.span,
                     SpliceKind::NAME,
                     &key.node.to_string(),
-                    &key.span,
                 ));
             }
         }
@@ -219,7 +220,7 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
         if !headers.is_empty() {
             headers.push_str("++++\n");
         }
-        let text = SpliceKind::render(anchor_ctx, idx_request, &values)?;
+        let text = SpliceKind::render(anchor_ctx, warnings, idx_request, &values)?;
         Ok(format!("{headers}{}{text}{}", SpliceKind::PREFIX, SpliceKind::SUFFIX))
     }
 

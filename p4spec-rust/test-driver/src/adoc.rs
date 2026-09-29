@@ -2,6 +2,7 @@ use crate::{Error, Result, snapshot};
 use expect_test::expect_file;
 use p4spec_rust::{
     backend_specdoc::adoc,
+    diagnostic::{RenderConfig, Renderer},
     frontend::parse::parse_files,
     pass::{algo, elaborate, prosify, structure},
 };
@@ -26,8 +27,15 @@ pub fn run(path_output: Option<&Path>) -> Result<()> {
     let spec_pl = prosify::convert(spec_sl).map_err(|error| Error::Invalid(error.to_string()))?;
 
     // Repeated rendering must start with fresh document anchor state
-    let text_pl = adoc::pl::render_spec(&spec_pl);
-    if text_pl != adoc::pl::render_spec(&spec_pl) {
+    let mut warnings = Vec::new();
+    let text_pl = adoc::pl::render_spec(&mut warnings, &spec_pl);
+    for report in warnings {
+        let text = Renderer::new(RenderConfig::default())
+            .render_to_string(&report)
+            .map_err(|error| Error::Invalid(error.to_string()))?;
+        eprint!("{text}");
+    }
+    if text_pl != adoc::pl::render_spec(&mut Vec::new(), &spec_pl) {
         return Err(Error::Invalid("AsciiDoc arm anchors changed on repeated rendering".into()));
     }
     // Save raw fragments for comparison and Asciidoctor validation

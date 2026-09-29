@@ -42,8 +42,7 @@ fn transformations_preserve_input_order() {
 #[test]
 fn pipeline_errors_preserve_the_failing_stage_and_location() {
     let path = fixture("frontend/negative/malformed-token.watsup");
-    let error = p4spec_rust::prosify([&path]).unwrap_err();
-    let Error::Frontend(report) = error else { panic!("expected frontend failure") };
+    let report = p4spec_rust::prosify([&path]).unwrap_err();
     let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected diagnostic cause") };
     assert_eq!(diagnostic.code.as_deref(), Some("parse/character-invalid"));
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
@@ -52,24 +51,24 @@ fn pipeline_errors_preserve_the_failing_stage_and_location() {
     assert_eq!(diagnostic.labels[0].span.right.column, 1);
 
     let path = fixture("elaboration/operator_not_defined.watsup");
-    let error = p4spec_rust::prosify([&path]).unwrap_err();
-    let Error::Elab(report) = error else { panic!("expected elaboration failure") };
+    let report = p4spec_rust::prosify([&path]).unwrap_err();
     let mut reports = vec![report.as_ref()];
     let mut located = false;
     while let Some(report) = reports.pop() {
         if let ReportKind::Cause(diagnostic) = &report.kind {
-            located |= diagnostic
-                .labels
-                .iter()
-                .any(|label| label.span.left.file.as_ref() == path.to_str().unwrap());
+            located |= diagnostic.source == "elab"
+                && diagnostic.code.as_deref() == Some("elab/operator-binop-type-mismatch")
+                && diagnostic
+                    .labels
+                    .iter()
+                    .any(|label| label.span.left.file.as_ref() == path.to_str().unwrap());
         }
         reports.extend(&report.children);
     }
     assert!(located, "elaboration must retain original spans");
 
     let path = fixture("algorithmic/impure_else_premises.watsup");
-    let error = p4spec_rust::prosify([&path]).unwrap_err();
-    let Error::Algo(report) = error else { panic!("expected algorithmic failure") };
+    let report = p4spec_rust::prosify([&path]).unwrap_err();
     let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected diagnostic cause") };
     assert_eq!(diagnostic.code.as_deref(), Some("algo/otherwise-condition-invalid"));
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
@@ -135,7 +134,10 @@ fn transformations_keep_committed_warnings_on_elaboration_failure() {
     ];
     std::fs::remove_file(path).unwrap();
     for (result, warnings) in outputs {
-        assert!(matches!(result, Err(Error::Elab(_))));
+        let report = result.unwrap_err();
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("diagnostic cause") };
+        assert_eq!(diagnostic.code.as_deref(), Some("elab/function-declaration-required"));
+        assert_eq!(diagnostic.source, "elab");
         assert_eq!(warnings.len(), 1);
         let ReportKind::Cause(diagnostic) = &warnings[0].kind else {
             panic!("expected committed warning cause")
@@ -157,7 +159,10 @@ fn transformations_keep_warnings_on_algorithmic_failure() {
     ];
     std::fs::remove_file(path).unwrap();
     for (result, warnings) in outputs {
-        assert!(matches!(result, Err(Error::Algo(_))));
+        let report = result.unwrap_err();
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("diagnostic cause") };
+        assert_eq!(diagnostic.code.as_deref(), Some("algo/otherwise-condition-invalid"));
+        assert_eq!(diagnostic.source, "algo");
         assert_eq!(warnings.len(), 1);
         let ReportKind::Cause(diagnostic) = &warnings[0].kind else {
             panic!("expected elaboration warning cause")
@@ -176,7 +181,10 @@ fn transformations_return_no_warnings_on_frontend_failure() {
         print_spec(p4spec_rust::prosify_with_warnings(&paths)),
     ];
     for (result, warnings) in outputs {
-        assert!(matches!(result, Err(Error::Frontend(_))));
+        let report = result.unwrap_err();
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("diagnostic cause") };
+        assert_eq!(diagnostic.code.as_deref(), Some("parse/character-invalid"));
+        assert_eq!(diagnostic.source, "parse");
         assert!(warnings.is_empty());
     }
 }
@@ -191,7 +199,7 @@ fn transformations_preserve_structuring_reports_and_prior_warnings() {
         print_spec(p4spec_rust::prosify_with_warnings(&paths)),
     ] {
         assert_eq!(warnings.len(), 2);
-        let Error::Structure(report) = result.unwrap_err() else { panic!("structuring failure") };
+        let report = result.unwrap_err();
         let ReportKind::Cause(diagnostic) = &report.kind else { panic!("diagnostic cause") };
         assert_eq!(diagnostic.code.as_deref(), Some("structure/type-operation-invalid"));
         assert_eq!(diagnostic.source, "structure");

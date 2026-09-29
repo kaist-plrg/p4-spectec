@@ -4,14 +4,17 @@
 //! [`run`] propagates typed failures to [`main`],
 //! which renders source reports and chooses the process exit code.
 
+mod error;
+
 use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
+use error::CliError;
 
 use p4spec_rust::{
     backend_specdoc::splicer,
     diagnostic::{RenderConfig, Renderer, Report},
-    interface::p4::{error::P4Error, parse::parse_file},
+    interface::p4::parse::parse_file,
     interp::shared::error::Error as InterpError,
     lang::{data::value::external::Encoding, traits::print::Print},
     runner::{self, BuiltinInterface, Interpreter, Runner},
@@ -30,43 +33,16 @@ fn render_report(report: &Report) {
     }
 }
 
-// = Errors
-
-/// A command failure with its user-facing diagnostic category.
-#[derive(Debug, thiserror::Error)]
-/// A command failure with its user-facing diagnostic category.
-enum CliError {
-    #[error("command error: {0}")]
-    Command(String),
-    #[error(transparent)]
-    Splice(#[from] splicer::Error),
-    #[error(transparent)]
-    Spec(#[from] p4spec_rust::Error),
-    #[error(transparent)]
-    Runner(#[from] runner::BuildError),
-    #[error(transparent)]
-    Simulator(#[from] sim_plugin::BuildError),
-    #[error(transparent)]
-    Simulation(#[from] sim_plugin::runner::Error),
-    #[error("syntax error: {0}")]
-    Syntax(#[from] P4Error),
-    #[error("runtime error: {0}")]
-    Runtime(#[from] InterpError),
-}
-
 // = Specification loading
 
 /// Renders accumulated warnings before returning the command result or error.
 fn report_warnings<Value, Error>(
     (result, warnings): (Result<Value, Error>, Vec<Report>),
-) -> Result<Value, CliError>
-where
-    CliError: From<Error>,
-{
+) -> Result<Value, Error> {
     for report in warnings {
         render_report(&report);
     }
-    result.map_err(CliError::from)
+    result
 }
 
 // = Elab command
@@ -151,13 +127,29 @@ struct SpliceArgs {
     /// Output files paired with skeletons in order.
     #[arg(long = "out", value_name = "PATH")]
     paths_output: Vec<PathBuf>,
-    /// Replace each skeleton in place, ignoring output paths.
+    /// Replace each skeleton in place; cannot be combined with --out.
     #[arg(long)]
     inplace: bool,
 }
 
 /// Expands skeleton documents using the source and prose specifications.
 fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
+    // Reject ambiguous destinations before checking input availability
+    if args.inplace && !args.paths_output.is_empty() {
+        return Err(error::splice_output_conflict().into());
+    }
+    // Require at least one skeleton in either output mode
+    if args.paths_input.is_empty() {
+        return Err(error::splice_input_required().into());
+    }
+    // Reject mismatched lists before zip can omit unpaired paths
+    if !args.inplace && args.paths_input.len() != args.paths_output.len() {
+        return Err(error::splice_file_count_mismatch(
+            args.paths_input.len(),
+            args.paths_output.len(),
+        )
+        .into());
+    }
     // Resolve output paths before loading specifications or touching documents
     let path_pairs: Vec<_> = if args.inplace {
         args.paths_input
@@ -165,12 +157,6 @@ fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
             .map(|path| (path.clone(), path))
             .collect()
     } else {
-        // Reject mismatched lists before zip can omit unpaired paths
-        if args.paths_input.len() != args.paths_output.len() {
-            return Err(CliError::Command(
-                "number of input and output files must match".to_owned(),
-            ));
-        }
         args.paths_input
             .into_iter()
             .zip(args.paths_output)
@@ -180,7 +166,8 @@ fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
     let spec_el = p4spec_rust::parse(&args.paths)?;
     let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
     // Render accumulated splice warnings before propagating the file result
-    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
+    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))?;
+    Ok(())
 }
 
 // = Run command
@@ -201,7 +188,10 @@ struct InterpreterArgs {
 }
 
 /// Converts the specifications up to the selected interpreter's language.
-fn interp_spec(paths: &[PathBuf], interpreter: &InterpreterArgs) -> Result<runner::Spec, CliError> {
+fn interp_spec(
+    paths: &[PathBuf],
+    interpreter: &InterpreterArgs,
+) -> Result<runner::Spec, Box<Report>> {
     // Each pipeline stops at the language selected by the command
     if interpreter.al {
         report_warnings(p4spec_rust::algo_with_warnings(paths)).map(runner::Spec::Al)
@@ -378,14 +368,7 @@ fn main() -> ExitCode {
         // Successful commands have already written their output
         Ok(()) => ExitCode::SUCCESS,
         // Preserve source diagnostics across the completed transformation stages
-        Err(CliError::Spec(
-            p4spec_rust::Error::Frontend(report)
-            | p4spec_rust::Error::Elab(report)
-            | p4spec_rust::Error::Algo(report)
-            | p4spec_rust::Error::Structure(report)
-            | p4spec_rust::Error::Prose(report),
-        ))
-        | Err(CliError::Splice(report)) => {
+        Err(CliError::Diagnostic(report)) => {
             render_report(&report);
             ExitCode::FAILURE
         }

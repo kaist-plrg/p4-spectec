@@ -32,6 +32,13 @@ pub struct AnchorContext<'a> {
     emitted: BTreeSet<String>,
 }
 
+impl Default for AnchorContext<'_> {
+    /// Starts a document batch with no resolved links or declared destinations.
+    fn default() -> Self {
+        Self::new(&|_, _| None, &|_, _| None)
+    }
+}
+
 impl<'a> AnchorContext<'a> {
     /// Starts a document batch with supplied lookups and no declared destinations.
     pub fn new(

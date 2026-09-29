@@ -3,6 +3,8 @@
 //! Initialization selects definitions in source order.
 //! The generic splicer owns wrappers, anchors, and usage accounting.
 
+use crate::diagnostic::Report;
+
 use super::super::super::anchor::AnchorContext;
 use super::super::super::{adoc, latex};
 use std::collections::BTreeMap;
@@ -14,7 +16,7 @@ use super::super::{
     config::{
         PREFIX_LATEX, PREFIX_PROSE, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE,
     },
-    error::{self, Error},
+    error::Error,
     splicer::{Key, Kind, Selection},
 };
 use crate::lang::{
@@ -90,6 +92,7 @@ impl<'spec> Kind<'spec> for Source {
 
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
+        _warnings: &mut Vec<Report>,
         _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
@@ -122,11 +125,11 @@ impl<'spec> Kind<'spec> for Latex {
 
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
+        _warnings: &mut Vec<Report>,
         _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
         latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))
-            .map_err(error::latex)
     }
 }
 
@@ -151,6 +154,7 @@ impl<'spec> Kind<'spec> for Prose {
 
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
+        warnings: &mut Vec<Report>,
         idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
@@ -164,7 +168,7 @@ impl<'spec> Kind<'spec> for Prose {
                     selection.key.to_string(),
                     selection.idx_key,
                 );
-                let mut renderer = Renderer::new(anchor_ctx, &anchor_prefix);
+                let mut renderer = Renderer::new(anchor_ctx, warnings, &anchor_prefix);
                 renderer.render_rulegroup(
                     group.hints,
                     group.id_rel,

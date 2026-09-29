@@ -64,9 +64,10 @@ test-run-pl-unit:
 
 # Standalone expected driver; product unit tests remain in tests/
 .PHONY: test-expected test-promote test-p4parse test-elab test-algo test-structure test-prose test-run-al test-run-sl test-run-pl
-.PHONY: test-diagnostics test-diagnostics-promote
+.PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
 DRIVER_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
 DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir $(DRIVER_TARGET_DIR) --
+DIAGNOSTIC_CLI = $(abspath $(DRIVER_TARGET_DIR))/release/p4spec-rust
 
 test-p4parse:
 	env -u UPDATE_EXPECT $(DRIVER) p4parse
@@ -83,11 +84,14 @@ test-structure:
 test-prose:
 	env -u UPDATE_EXPECT $(DRIVER) prose
 
-test-diagnostics:
-	env -u UPDATE_EXPECT $(DRIVER) diagnostics
+diagnostic-cli:
+	$(CARGO) build --locked --release --bin p4spec-rust --target-dir "$(DRIVER_TARGET_DIR)"
 
-test-diagnostics-promote:
-	UPDATE_EXPECT=1 $(DRIVER) diagnostics
+test-diagnostics: diagnostic-cli
+	env -u UPDATE_EXPECT $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
+
+test-diagnostics-promote: diagnostic-cli
+	UPDATE_EXPECT=1 $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
 
 # Export fragments with $(DRIVER) adoc --output DIR for Asciidoctor validation
 test-adoc:

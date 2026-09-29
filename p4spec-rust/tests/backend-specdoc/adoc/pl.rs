@@ -25,10 +25,10 @@ use p4spec_rust::{
 };
 
 fn render_def(resolve: &dyn Fn(&Subject) -> Option<String>, def: &pl::Def) -> Option<String> {
-    let func = |_, name: &str| resolve(&Subject::Function(name.to_owned()));
-    let rel = |_, name: &str| resolve(&Subject::Relation(name.to_owned()));
+    let func = |_, name: &str| resolve(&Subject::Function(id(name)));
+    let rel = |_, name: &str| resolve(&Subject::Relation(id(name)));
     let mut anchor_ctx = AnchorContext::new(&func, &rel);
-    adoc::render_def(&mut anchor_ctx, "fragment", def)
+    adoc::render_def(&mut anchor_ctx, &mut Vec::new(), "fragment", def)
 }
 
 fn id(name: &str) -> pl::Id {
@@ -246,8 +246,9 @@ fn test_nested_backtracking_uses_local_arm_labels_and_fresh_block_counters() {
 fn test_custom_function_anchor_is_used_by_fragment_api() {
     let def = defined_func("enabled", vec![return_instr(true)]);
     let anchor = |subject: &Subject| match subject {
-        Subject::Function(id) => Some(format!("function-{id}")),
-        Subject::Relation(id) => Some(format!("relation-{id}")),
+        Subject::Function(id) => Some(format!("function-{}", id.node)),
+        Subject::Relation(id) => Some(format!("relation-{}", id.node)),
+        Subject::Type(id) => Some(id.node.clone()),
     };
 
     assert!(
@@ -264,8 +265,8 @@ fn test_full_render_is_deterministic_and_fragments_reset_counters() {
         vec![backtrack_instr(vec![vec![return_instr(false)], vec![return_instr(true)]])],
     );
     let spec = vec![def.clone(), def];
-    let rendered_a = render_spec(&spec);
-    let rendered_b = render_spec(&spec);
+    let rendered_a = render_spec(&mut Vec::new(), &spec);
+    let rendered_b = render_spec(&mut Vec::new(), &spec);
 
     assert_eq!(rendered_a, rendered_b);
     assert!(rendered_a.contains("id=\"bk-spec:choice:0-1-arm-1\""));
@@ -414,7 +415,9 @@ fn test_table_cells_use_the_enclosing_anchor_resolver() {
         span: Span::default(),
     };
     let anchor = |subject: &Subject| match subject {
-        Subject::Function(id) | Subject::Relation(id) => Some(format!("custom-{id}")),
+        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => {
+            Some(format!("custom-{}", id.node))
+        }
     };
     let def = meta_func_def(Hints::default(), pl::MetaFuncDef::Table(func));
     let text = render_def(&anchor, &def).unwrap();
@@ -468,14 +471,14 @@ fn test_rulegroup_fragments_keep_distinct_arm_anchors() {
     ])];
     let resolve = |_, name: &str| Some(name.to_owned());
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
-    let text_a = adoc::Renderer::new(&mut anchor_ctx, "Rel:0").render_rulegroup(
+    let text_a = adoc::Renderer::new(&mut anchor_ctx, &mut Vec::new(), "Rel:0").render_rulegroup(
         &Hints::default(),
         &id("Rel"),
         &signature,
         &[exp_bool(true)],
         &block,
     );
-    let text_b = adoc::Renderer::new(&mut anchor_ctx, "Rel:1").render_rulegroup(
+    let text_b = adoc::Renderer::new(&mut anchor_ctx, &mut Vec::new(), "Rel:1").render_rulegroup(
         &Hints::default(),
         &id("Rel"),
         &signature,
@@ -486,13 +489,8 @@ fn test_rulegroup_fragments_keep_distinct_arm_anchors() {
     assert!(text_b.contains("id=\"bk-Rel:1-1-arm-1\""), "{text_b}");
     assert!(text_b.contains("href=\"#bk-Rel:1-1-arm-2\">→ 2</a>"), "{text_b}");
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
-    let text_fresh = adoc::Renderer::new(&mut anchor_ctx, "Rel:0").render_rulegroup(
-        &Hints::default(),
-        &id("Rel"),
-        &signature,
-        &[exp_bool(true)],
-        &block,
-    );
+    let text_fresh = adoc::Renderer::new(&mut anchor_ctx, &mut Vec::new(), "Rel:0")
+        .render_rulegroup(&Hints::default(), &id("Rel"), &signature, &[exp_bool(true)], &block);
     assert_eq!(text_a, text_fresh);
 }
 

@@ -11,7 +11,6 @@
 //! Doc::gathered([Gap, Line(x), Gap, Gap, Line(y)])     -> Gathered([Line(x), Gap, Line(y)])
 //! ```
 
-use crate::backend_specdoc::latex::error::{Error, Result};
 use num_bigint::BigInt;
 
 // == Document model
@@ -717,18 +716,16 @@ impl Doc {
     }
 
     /// Validates grid arity, then removes blank rows and redundant gaps.
-    pub(crate) fn grid(alignments: Vec<Alignment>, rows: Vec<GridRow>) -> Result<Doc> {
+    pub(crate) fn grid(alignments: Vec<Alignment>, rows: Vec<GridRow>) -> Doc {
         // A nonempty row sequence needs a column specification
         if alignments.is_empty() {
-            return if rows.is_empty() { Ok(Doc::Empty) } else { Err(Error::GridWithoutColumns) };
+            assert!(rows.is_empty(), "function grids always have three columns");
+            return Doc::Empty;
         }
-        // Validate before normalizing so malformed blank rows remain errors
+        // LayoutFunc constructs each equation from left, equal, and right cells
         for row in &rows {
-            if let GridRow::Cells(docs) = row
-                && docs.len() != alignments.len()
-            {
-                let error = Error::GridCellCount { expected: alignments.len(), actual: docs.len() };
-                return Err(error);
+            if let GridRow::Cells(docs) = row {
+                assert_eq!(docs.len(), alignments.len(), "function grid rows match their columns");
             }
         }
         let is_gap = |row: &GridRow| matches!(row, GridRow::Gap);
@@ -738,7 +735,7 @@ impl Doc {
             GridRow::Gap => false,
         };
         let rows = Doc::normalize_rows(rows, is_gap, is_blank);
-        if rows.is_empty() { Ok(Doc::Empty) } else { Ok(Doc::Grid(alignments, rows)) }
+        if rows.is_empty() { Doc::Empty } else { Doc::Grid(alignments, rows) }
     }
 
     /// Removes empty documents from a centered stack.
