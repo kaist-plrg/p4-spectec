@@ -50,15 +50,6 @@ use super::{
 
 // == Render utils
 
-/// Selects input prose, falling back to truth prose.
-fn prose_input_hint(hints: &Hints) -> Option<&alter::AlterHint> {
-    hints
-        .node
-        .prose_in
-        .as_ref()
-        .or(hints.node.prose_true.as_ref())
-}
-
 /// The largest visible width kept inline by the prose renderer.
 const ADOC_WIDTH_SHORT: usize = 30;
 
@@ -710,13 +701,13 @@ impl Code {
     //
     //   $e_num(n)   -> xref:e_num[``$e_num(n)``]
 
-    fn of_call_exp(span: &Span, id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Code {
+    fn of_call_exp(span_hint: &Span, id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Code {
         let text_id = string_of_defid(id);
         let text_targs = string_of_targs(targs);
         let code_args = Code::of_args(args);
         let code_call = Code::seq([Code::token(text_id), Code::token(text_targs), code_args]);
         let link = Link::Subject(Subject::Function(
-            crate::phrase! { node: id.node.clone(), span: span.clone() },
+            crate::phrase! { node: id.node.clone(), span: span_hint.clone() },
         ));
         Code::link(link, code_call)
     }
@@ -1149,7 +1140,13 @@ impl Prose {
 
     fn of_call_exp(exp: &pl::Exp, id: &pl::Id, targs: &[pl::Targ], args: &[pl::Arg]) -> Prose {
         // Unhinted calls keep their code form
-        let Some(hint) = prose_input_hint(&exp.hints) else {
+        let Some(hint) = exp
+            .hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(exp.hints.node.prose_true.as_ref())
+        else {
             return Prose::code(Code::of_call_exp(&exp.hints.span, id, targs, args));
         };
         let prose_call =
@@ -1469,13 +1466,14 @@ impl Prose {
 /// Nested blocks within that body share its block counter.
 /// Inputs must retain prosify's validated hints, synthesized relation outputs,
 /// and annotated fallthrough destinations.
-/// Warnings use the owning definition or fragment span and append to the caller's list.
+/// Subject warnings use their hint or declaration spans.
+/// Direct-link warnings use the owning definition or fragment span.
 pub struct Renderer<'ctx, 'a> {
     anchor_ctx: &'ctx mut AnchorContext<'a>,
+    span: Span,
+    warnings: &'ctx mut Vec<Report>,
     anchor_prefix: String,
     num_blocks: usize,
-    warnings: &'ctx mut Vec<Report>,
-    span: Span,
 }
 
 /// A tier instruction ready to fold inline or nest below its enclosing head.
@@ -1504,10 +1502,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Self {
         Self {
             anchor_ctx,
+            span: Span::default(),
+            warnings,
             anchor_prefix: anchor_prefix.to_owned(),
             num_blocks: 0,
-            warnings,
-            span: Span::default(),
         }
     }
 
@@ -2803,7 +2801,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         group_instr: &pl::RuleGroupInstr,
     ) -> Rendered {
         // Select hinted prose or filled relation notation for the title
-        let hint_opt = prose_input_hint(&instr.hints);
+        let hint_opt = instr
+            .hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(instr.hints.node.prose_true.as_ref());
         let prose_body = match hint_opt {
             Some(hint) => alternate(
                 hint,
@@ -2851,7 +2854,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> String {
         self.span = hints.span.clone();
         // Select hinted prose or filled relation notation for the title
-        let hint_opt = prose_input_hint(hints);
+        let hint_opt = hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(hints.node.prose_true.as_ref());
         let prose_body = match hint_opt {
             Some(hint) => alternate(
                 hint,
@@ -2994,7 +3001,11 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         tparams: &[pl::TParam],
         params: &[pl::Param],
     ) -> Block {
-        let hint_opt = prose_input_hint(hints);
+        let hint_opt = hints
+            .node
+            .prose_in
+            .as_ref()
+            .or(hints.node.prose_true.as_ref());
         // Keep nested links visible to the final serializer
         let prose_body = match hint_opt {
             Some(hint) => alternate(
