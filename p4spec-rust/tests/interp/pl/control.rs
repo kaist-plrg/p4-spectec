@@ -159,6 +159,32 @@ fn fatal_errors_abort_alternative_selection() {
 }
 
 #[test]
+fn failed_instruction_frames_do_not_print_their_pl_blocks() {
+    for det in [false, true] {
+        let mut runner = configured(
+            function(vec![condition(
+                true,
+                vec![returning(variable("missing")), returning(nat(123456789))],
+            )]),
+            det,
+        );
+        let report = runner
+            .context()
+            .call_func("entry", &[], &[])
+            .unwrap_err()
+            .into_report();
+        let text = report.render();
+        assert!(
+            text.contains("error[runtime/binding-undefined]: value `missing` is undefined"),
+            "{text}"
+        );
+        assert_eq!(text.matches("note: evaluation failed").count(), 2, "{text}");
+        assert!(!text.contains("123456789"), "an unevaluated PL block leaked: {text}");
+        assert!(!text.contains("Else Dangling"), "{text}");
+    }
+}
+
+#[test]
 fn dispatch_alternatives_keep_their_bindings_local() {
     for det in [false, true] {
         let mut spec_pl =
@@ -209,7 +235,7 @@ fn nested_instruction_traces_are_attached_once_in_both_tiers() {
 
     // Collect instruction locations separately from expression and call traces
     fn instruction_spans(error: &p4spec_rust::diagnostic::Report, spans: &mut Vec<Span>) {
-        if matches!(&error.kind, ReportKind::Frame { message, .. } if message.starts_with("evaluation of "))
+        if matches!(&error.kind, ReportKind::Frame { message, .. } if message == "evaluation failed")
             && error.span().left.file.as_ref() == "instruction_trace"
         {
             spans.push(error.span().clone());

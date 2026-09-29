@@ -138,10 +138,7 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
-) -> Backtrack<(Context<'global>, Flow)>
-where
-    ast::Instr<Tier>: Print,
-{
+) -> Backtrack<(Context<'global>, Flow)> {
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let result = match &instr.node.node {
@@ -162,9 +159,7 @@ where
             }
             ast::InstrKind::Tier(instr) => eval_tier(runner_ctx, ctx, &instr.tier),
         };
-        result.nest(instr.node.span.clone(), || {
-            format!("evaluation of {} failed", Print::to_string(instr))
-        })
+        result.nest(instr.node.span.clone(), || "evaluation failed".to_owned())
     })
 }
 
