@@ -863,7 +863,12 @@ fn test_prose_and_splice_render_hint_reports_after_warnings() {
         std::env::temp_dir().join(format!("p4spec-cli-prose-hint-{}.watsup", std::process::id()));
     std::fs::write(&path, "dec $missing : nat\nsyntax record = RECORD nat\n  hint(prose_fields \"first\" \"extra\")\n").unwrap();
     for command in ["prose", "splice"] {
-        let output = binary().arg(command).arg(&path).output().unwrap();
+        let mut process = binary();
+        process.arg(command).arg(&path);
+        if command == "splice" {
+            process.args(["--splice", "input.adoc", "--out", "output.adoc"]);
+        }
+        let output = process.output().unwrap();
         assert_eq!(output.status.code(), Some(1));
         assert!(output.stdout.is_empty());
         let text = String::from_utf8(output.stderr).unwrap();
