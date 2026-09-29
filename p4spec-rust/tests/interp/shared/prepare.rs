@@ -195,7 +195,7 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
         al::context as al_context,
         shared::{
             error::{ContextErrorKind, EntityKind, ErrorKind},
-            util::find_var,
+            util::find_var_of_exp,
         },
         sl::context as sl_context,
     };
@@ -226,7 +226,7 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
         let layout = Rc::new(layout);
         let ctx_al = al_context::Context::new(&global_al).localize_with_layout(&layout);
         let ctx_sl = sl_context::Context::new(&global_sl).localize_with_layout(&layout);
-        let slot_lookup = find_var(&ctx_al, &exp_prepared).unwrap();
+        let slot_lookup = find_var_of_exp(&ctx_al, &exp_prepared).unwrap();
         assert_eq!(slot_lookup.var.id.span, span(7));
         assert_eq!(slot_lookup.var.iters, iters);
         let id = phrase!(node: "test".to_owned(), span: span(1));
@@ -313,7 +313,7 @@ fn lookup_errors_retain_leaf_spans_through_optional_and_list_bindings() {
 fn iterated_variable_lookup_requires_matching_single_binders() {
     use p4spec_rust::interp::{
         al::context::{Context, Global},
-        shared::util::find_var,
+        shared::util::{find_slot_of_exp, find_var_of_exp},
     };
     let global = Global::load(vec![]).unwrap();
     for vars in [
@@ -326,7 +326,8 @@ fn iterated_variable_lookup_requires_matching_single_binders() {
         let mut layout = FrameLayout::default();
         let exp_prepared = exp_source.clone().prepare(&mut layout);
         let ctx = Context::new(&global).localize_with_layout(&layout.into());
-        assert!(find_var(&ctx, &exp_prepared).is_none());
+        assert!(find_var_of_exp(&ctx, &exp_prepared).is_none());
+        assert!(find_slot_of_exp(&ctx, &exp_prepared).is_none());
     }
     let exp_source = note_phrase!(
         node: il_source::ExpKind::Bool(true),
@@ -338,7 +339,8 @@ fn iterated_variable_lookup_requires_matching_single_binders() {
     let mut layout = FrameLayout::default();
     let exp_prepared = exp_source.prepare(&mut layout);
     let ctx = Context::new(&global).localize_with_layout(&layout.into());
-    assert!(find_var(&ctx, &exp_prepared).is_none());
+    assert!(find_var_of_exp(&ctx, &exp_prepared).is_none());
+    assert!(find_slot_of_exp(&ctx, &exp_prepared).is_none());
 }
 
 #[test]
@@ -465,7 +467,7 @@ fn shared_mapping_preserves_nested_update_paths_and_call_arguments() {
 fn nested_iteration_edges_share_only_the_required_binding_slots() {
     use p4spec_rust::interp::{
         al::context::{Context, Global},
-        shared::util::find_var,
+        shared::util::find_var_of_exp,
     };
     let global = Global::load(vec![]).unwrap();
     let mut exp_source = expression("x", 7);
@@ -483,12 +485,12 @@ fn nested_iteration_edges_share_only_the_required_binding_slots() {
     let mut exp_inner = &exp_prepared;
     while let ast::ExpKind::Iter(exp_next, exp_iter) = &exp_inner.node {
         let var = &exp_iter.vars[0];
-        let slot_outer = layout.find_iter_var(&exp_iter.vars[0], exp_iter.iter);
+        let slot_outer = layout.find_var_iterated(&exp_iter.vars[0], exp_iter.iter);
         let mut iters_outer = var.var.iters.clone();
         iters_outer.push(exp_iter.iter);
         assert_eq!(slot_outer.var.iters, iters_outer);
-        assert_eq!(var.slot, find_var(&ctx, exp_next).unwrap().slot);
-        assert_eq!(slot_outer.slot, find_var(&ctx, exp_inner).unwrap().slot);
+        assert_eq!(var.slot, find_var_of_exp(&ctx, exp_next).unwrap().slot);
+        assert_eq!(slot_outer.slot, find_var_of_exp(&ctx, exp_inner).unwrap().slot);
         exp_inner = exp_next;
     }
 }
@@ -507,15 +509,15 @@ fn premise_iteration_reuses_identical_bound_and_output_bindings() {
     assert_eq!(prem_iter_prepared.vars_bound[0].slot, prem_iter_prepared.vars_bind[0].slot);
     assert_eq!(
         layout
-            .find_iter_var(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
+            .find_var_iterated(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
             .slot,
         layout
-            .find_iter_var(&prem_iter_prepared.vars_bind[0], prem_iter_prepared.iter)
+            .find_var_iterated(&prem_iter_prepared.vars_bind[0], prem_iter_prepared.iter)
             .slot
     );
     assert_eq!(
         layout
-            .find_iter_var(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
+            .find_var_iterated(&prem_iter_prepared.vars_bound[0], prem_iter_prepared.iter)
             .var
             .iters,
         vec![il_source::Iter::List, il_source::Iter::List, il_source::Iter::Opt]
@@ -628,4 +630,83 @@ fn binding_list_equality_preserves_paths_and_duplicate_counts() {
         let vars_r = vars_r.prepare(&mut layout_r);
         assert_eq!(vars_l.syntax_eq(&vars_r), equal);
     }
+}
+
+#[test]
+fn iteration_slots_resolve_in_either_registration_order() {
+    use p4spec_rust::lang::common::Iter::{List, Opt};
+    for reverse in [false, true] {
+        let mut layout = FrameLayout::default();
+        let mut iters = vec![vec![], vec![List], vec![Opt], vec![List, Opt]];
+        if reverse {
+            iters.reverse();
+        }
+        for iters in iters {
+            layout.resolve_var(variable("x", iters));
+        }
+        let var = layout.resolve_var(variable("x", vec![]));
+        let var_list = layout.resolve_var(variable("x", vec![List]));
+        let var_opt = layout.resolve_var(variable("x", vec![Opt]));
+        let var_list_opt = layout.resolve_var(variable("x", vec![List, Opt]));
+        assert_eq!(layout.find_slot_iterated(var.slot, List), var_list.slot);
+        assert_eq!(layout.find_slot_iterated(var.slot, Opt), var_opt.slot);
+        assert_eq!(layout.find_slot_iterated(var_list.slot, Opt), var_list_opt.slot);
+        assert_eq!(layout.len(), 4);
+    }
+}
+
+#[test]
+fn slot_recognition_distinguishes_identity_iterations_from_computed_bodies() {
+    use p4spec_rust::interp::{al::context, shared::util::find_slot_of_exp};
+    let exp = iter_expression(
+        iter_expression(expression("x", 7), il_source::Iter::Opt, vec![variable("x", vec![])], 8),
+        il_source::Iter::List,
+        vec![variable("x", vec![il_source::Iter::Opt])],
+        9,
+    );
+    let mut layout = FrameLayout::default();
+    let exp = exp.prepare(&mut layout);
+    let var = layout.resolve_var(variable("x", vec![il_source::Iter::Opt, il_source::Iter::List]));
+    let exp_other = iter_expression(
+        expression("y", 10),
+        il_source::Iter::List,
+        vec![variable("x", vec![])],
+        11,
+    )
+    .prepare(&mut layout);
+    let global = context::Global::load(vec![]).unwrap();
+    let ctx = context::Context::new(&global).localize_with_layout(&Rc::new(layout));
+    assert_eq!(find_slot_of_exp(&ctx, &exp), Some(var.slot));
+    assert_eq!(find_slot_of_exp(&ctx, &exp_other), None);
+}
+
+#[test]
+fn frame_snapshots_isolate_writes_and_wipe_all_bindings() {
+    use p4spec_rust::lang::data::value::{ValueArena, make};
+    let mut layout = FrameLayout::default();
+    let vars: Vec<_> = (0..64)
+        .map(|idx| layout.resolve_var(variable(&format!("x{idx}"), vec![])))
+        .collect();
+    let mut frame = Frame::new(Rc::new(layout));
+    let mut arena = ValueArena::new();
+    let value_a = make::bool(&mut arena, false, Span::default()).unwrap();
+    let value_b = make::bool(&mut arena, true, Span::default()).unwrap();
+    for var in &vars {
+        frame.set(var.slot, value_a);
+    }
+    let mut frame_branch = frame.clone();
+    for var in &vars {
+        frame_branch.set(var.slot, value_b);
+    }
+    let frame_empty = frame_branch.wipe();
+    for var in &vars {
+        assert_eq!(frame.get(var.slot), Some(&value_a));
+        assert_eq!(frame_branch.get(var.slot), Some(&value_b));
+        assert_eq!(frame_empty.get(var.slot), None);
+    }
+    assert!(
+        Frame::new(Rc::new(FrameLayout::default()))
+            .layout()
+            .is_empty()
+    );
 }

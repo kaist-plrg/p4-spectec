@@ -33,7 +33,7 @@ use crate::{
 use crate::interp::shared::{
     backtrack::{Backtrack, err, ok, unwrap, unwrap_from_result},
     error::{CallErrorKind, EntityKind, Error, ErrorKind},
-    util::find_var,
+    util::find_slot_of_exp,
 };
 
 // = Type parameter assignment
@@ -84,7 +84,8 @@ pub fn assign_exp<Ctx: WriteContext>(
         }
         // Case: the arguments
         (ast::ExpKind::Case(not_exp), ValueKind::Case(value_case)) => {
-            let values = value_case.args().into_iter().copied().collect::<Vec<_>>();
+            let mut values = Vec::new();
+            value_case.iter(|value| values.push(*value));
             assign_case_exp(arena, ctx, not_exp, &values)
         }
         // Struct: the fields in order
@@ -156,7 +157,7 @@ fn assign_id_exp<Ctx: WriteContext>(
     id: &IdSlot,
     value: Value,
 ) -> Backtrack<Ctx> {
-    ctx.add_value(id.slot, value);
+    ctx.add_value_at_slot(id.slot, value);
     ok!(ctx)
 }
 
@@ -273,8 +274,8 @@ fn assign_iter_exp<Ctx: WriteContext>(
     value: Value,
 ) -> Backtrack<Ctx> {
     // A bare iterated variable binds as a whole
-    if let Some(var) = find_var(&ctx, exp) {
-        ctx.add_value(var.slot, value);
+    if let Some(slot) = find_slot_of_exp(&ctx, exp) {
+        ctx.add_value_at_slot(slot, value);
         return ok!(ctx);
     }
     // Otherwise assign each element in a sub-context and gather per variable
@@ -292,7 +293,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
                 let typ = typ::make::iterate(var_outer.var.typ.clone(), &var_outer.var.iters);
                 let value_opt = match &ctx_sub {
                     Some(ctx_sub) => Some(*unwrap_from_result!(
-                        ctx_sub.find_value(var.slot).ok_or_else(|| {
+                        ctx_sub.find_value_at_slot(var.slot).ok_or_else(|| {
                             Error::undefined(
                                 EntityKind::Value,
                                 Print::to_string(&var.var),
@@ -307,7 +308,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
                     make::opt(arena, typ.node.into(), value_opt, Span::default()),
                     span
                 );
-                ctx.add_value(var_outer.slot, value);
+                ctx.add_value_at_slot(var_outer.slot, value);
             }
             ok!(ctx)
         }
@@ -326,7 +327,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
                 let mut values = Vec::with_capacity(ctxs.len());
                 for ctx_sub in &ctxs {
                     let value = unwrap_from_result!(
-                        ctx_sub.find_value(var.slot).ok_or_else(|| {
+                        ctx_sub.find_value_at_slot(var.slot).ok_or_else(|| {
                             Error::undefined(
                                 EntityKind::Value,
                                 Print::to_string(&var.var),
@@ -341,7 +342,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
                     make::list(arena, typ.node.into(), values, Span::default()),
                     span
                 );
-                ctx.add_value(var_outer.slot, value_sub);
+                ctx.add_value_at_slot(var_outer.slot, value_sub);
             }
             ok!(ctx)
         }

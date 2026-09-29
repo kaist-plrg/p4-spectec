@@ -148,3 +148,30 @@ fn test_at_covers_notation_atoms_and_preserves_default_argument_spans() {
     let mixfix = Mixfix::Seq(vec![mixfix, Mixfix::Arg(phrase!(node: 1, span: Span::default()))]);
     assert_eq!(mixfix.at(), Span::new(Position::default(), span(23).right));
 }
+
+#[test]
+fn test_try_map_preserves_order_locations_and_stops_on_error() {
+    let mixfix = Mixfix::Brack(
+        phrase!(node: Atom::LParen, span: span(3)),
+        Box::new(Mixfix::Infix(
+            Box::new(Mixfix::Arg(1)),
+            atom(Atom::Arrow),
+            Box::new(Mixfix::Seq(vec![Mixfix::Arg(2), Mixfix::Arg(3), Mixfix::Arg(4)])),
+        )),
+        phrase!(node: Atom::RParen, span: span(9)),
+    );
+    let mut args = Vec::new();
+    let result = mixfix.try_map(|arg| {
+        args.push(*arg);
+        if *arg == 3 { Err("stop") } else { Ok(arg + 10) }
+    });
+    assert_eq!(result, Err("stop"));
+    assert_eq!(args, vec![1, 2, 3]);
+    let mixfix_result = mixfix.try_map(|arg| Ok::<_, ()>(arg + 10)).unwrap();
+    assert_eq!(mixfix_result, mixfix.map(|arg| arg + 10));
+    let Mixfix::Brack(atom_l, _, atom_r) = mixfix_result else { panic!("brackets") };
+    assert_eq!(atom_l.span, span(3));
+    assert_eq!(atom_r.span, span(9));
+    let mixfix_atom: Mixfix<u32> = Mixfix::Atom(atom(Atom::Arrow));
+    assert_eq!(mixfix_atom.try_map(|_| Err::<u32, _>("unreachable")), Ok(mixfix_atom));
+}

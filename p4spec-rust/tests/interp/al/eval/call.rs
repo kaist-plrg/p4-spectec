@@ -368,13 +368,13 @@ fn test_iterated_premise_rows_read_parent_bindings_independently() {
     let mut runner = runner.context();
     let slot_n = layout.resolve_var(var("n"));
     let slot_result = layout.resolve_var(var("n_result"));
-    let slot_n_list = layout.find_iter_var(&slot_n, ast::Iter::List);
-    let slot_result_list = layout.find_iter_var(&slot_result, ast::Iter::List);
-    let slot_n_nested = layout.find_iter_var(&slot_n_list, ast::Iter::List);
-    let slot_result_nested = layout.find_iter_var(&slot_result_list, ast::Iter::List);
+    let slot_n_list = layout.find_var_iterated(&slot_n, ast::Iter::List);
+    let slot_result_list = layout.find_var_iterated(&slot_result, ast::Iter::List);
+    let slot_n_nested = layout.find_var_iterated(&slot_n_list, ast::Iter::List);
+    let slot_result_nested = layout.find_var_iterated(&slot_result_list, ast::Iter::List);
     let mut ctx = Context::new(runner.spec()).localize_with_layout(&Rc::new(layout.clone()));
     let value_parent = nat(runner.arena_mut(), 100);
-    ctx.add_value(slot_result.slot, value_parent);
+    ctx.add_value_at_slot(slot_result.slot, value_parent);
     let values = (1..=3).map(|n| nat(runner.arena_mut(), n)).collect();
     let value = make::list(
         runner.arena_mut(),
@@ -383,20 +383,20 @@ fn test_iterated_premise_rows_read_parent_bindings_independently() {
         Span::default(),
     )
     .unwrap();
-    ctx.add_value(slot_n_list.slot, value);
+    ctx.add_value_at_slot(slot_n_list.slot, value);
     let Backtrack::Ok(ctx_post) = eval_prem(&mut runner, ctx.clone(), &prem) else {
         panic!("iterated premise failed");
     };
-    let value = ctx_post.find_value(slot_result_list.slot).unwrap();
+    let value = ctx_post.find_value_at_slot(slot_result_list.slot).unwrap();
     let values: Vec<_> = get::list(runner.arena(), value)
         .unwrap()
         .iter()
         .map(|value| number(runner.arena(), value))
         .collect();
     assert_eq!(values, ["101", "102", "103"]);
-    assert_eq!(ctx_post.find_value(slot_result.slot).unwrap(), &value_parent);
-    assert!(ctx_post.find_value(slot_n.slot).is_none());
-    assert!(ctx.find_value(slot_result_list.slot).is_none());
+    assert_eq!(ctx_post.find_value_at_slot(slot_result.slot).unwrap(), &value_parent);
+    assert!(ctx_post.find_value_at_slot(slot_n.slot).is_none());
+    assert!(ctx.find_value_at_slot(slot_result_list.slot).is_none());
 
     let rows = [vec![1, 2], vec![], vec![3]]
         .into_iter()
@@ -423,11 +423,13 @@ fn test_iterated_premise_rows_read_parent_bindings_independently() {
         Span::default(),
     )
     .unwrap();
-    ctx.add_value(slot_n_nested.slot, value);
+    ctx.add_value_at_slot(slot_n_nested.slot, value);
     let Backtrack::Ok(ctx_post) = eval_prem(&mut runner, ctx.clone(), &prem_nested) else {
         panic!("nested iterated premise failed");
     };
-    let value = ctx_post.find_value(slot_result_nested.slot).unwrap();
+    let value = ctx_post
+        .find_value_at_slot(slot_result_nested.slot)
+        .unwrap();
     let rows: Vec<Vec<_>> = get::list(runner.arena(), value)
         .unwrap()
         .iter()
@@ -440,8 +442,8 @@ fn test_iterated_premise_rows_read_parent_bindings_independently() {
         })
         .collect();
     assert_eq!(rows, [vec!["101", "102"], vec![], vec!["103"]]);
-    assert!(ctx_post.find_value(slot_result_list.slot).is_none());
-    assert!(ctx.find_value(slot_result_nested.slot).is_none());
+    assert!(ctx_post.find_value_at_slot(slot_result_list.slot).is_none());
+    assert!(ctx.find_value_at_slot(slot_result_nested.slot).is_none());
 }
 
 #[test]

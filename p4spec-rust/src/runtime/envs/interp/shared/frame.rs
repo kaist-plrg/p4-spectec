@@ -3,7 +3,7 @@
 //! Layouts resolve names and iterator paths during preparation.
 //! Execution uses slots;
 //! a reserved slot stays unbound until an assignment writes its value.
-//! Frames share their value vector until one is written.
+//! Frames share their fixed-size value slice until one is written.
 
 use std::{collections::HashMap, rc::Rc};
 
@@ -17,30 +17,77 @@ use crate::lang::{
 
 // == Frame layouts
 
-/// Slot assignment for one callable, keyed by name and iteration path.
+/// Prepared optional and list transitions from one inner slot.
+#[derive(Clone, Debug, Default, PartialEq)]
+struct IterSlots {
+    slot_opt: Option<SlotIdx>,
+    slot_list: Option<SlotIdx>,
+}
+
+/// Assigns variable slots and records one-step iteration transitions.
+///
+/// If `x` has slot 0 and `x*` has slot 2:
+/// - `vars` maps `("x", [])` to slot 0 and `("x", [List])` to slot 2.
+/// - `iters[0].slot_list` points to slot 2.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct FrameLayout {
-    /// Slot of each name under its iteration path.
-    slots: HashMap<(String, Vec<Iter>), SlotIdx>,
+    /// Maps each variable's name and iteration path to its slot.
+    vars: HashMap<(String, Vec<Iter>), SlotIdx>,
+    /// Maps each slot to its optional and list iteration slots.
+    iters: Vec<IterSlots>,
 }
 
 impl FrameLayout {
     // - Accessors
 
     pub fn len(&self) -> usize {
-        self.slots.len()
+        self.vars.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.slots.is_empty()
+        self.vars.is_empty()
     }
 
     // - Resolution
 
-    /// The slot for a key, allocating the next one when the key is new.
+    /// Returns the existing slot or reserves a new one and links its iterations.
+    ///
+    /// Registering `x` and `x*` in either order establishes the same link:
+    /// `iters[slot_x].slot_list = Some(slot_x_list)`.
     fn reserve(&mut self, key: (String, Vec<Iter>)) -> SlotIdx {
-        let slot_next = SlotIdx(self.slots.len());
-        *self.slots.entry(key).or_insert(slot_next)
+        // An existing variable already has its slot and recorded links
+        if let Some(slot) = self.vars.get(&key) {
+            return *slot;
+        }
+        let slot = SlotIdx(self.vars.len());
+
+        // If `x*` was registered first, registering `x` finds its list slot here
+        let find_outer_slot = |iter| {
+            let mut key_outer = key.clone();
+            key_outer.1.push(iter);
+            self.vars.get(&key_outer).copied()
+        };
+        let slots_iter = IterSlots {
+            slot_opt: find_outer_slot(Iter::Opt),
+            slot_list: find_outer_slot(Iter::List),
+        };
+        self.iters.push(slots_iter);
+
+        // If `x` was registered first, registering `x*` fills in that same link
+        let mut key_inner = key.clone();
+        if let Some(iter) = key_inner.1.pop()
+            && let Some(slot_inner) = self.vars.get(&key_inner)
+        {
+            let slots_iter = &mut self.iters[slot_inner.0];
+            match iter {
+                Iter::Opt => slots_iter.slot_opt = Some(slot),
+                Iter::List => slots_iter.slot_list = Some(slot),
+            }
+        }
+
+        // Record the new variable after linking it to existing slots
+        self.vars.insert(key, slot);
+        slot
     }
 
     /// Resolves a plain identifier to its slot.
@@ -55,15 +102,22 @@ impl FrameLayout {
         VarSlot { slot, var }
     }
 
+    /// Resolves one prepared iteration transition without hashing names.
+    pub fn find_slot_iterated(&self, slot: SlotIdx, iter: Iter) -> SlotIdx {
+        let slots_iter = &self.iters[slot.0];
+        match iter {
+            Iter::Opt => slots_iter.slot_opt,
+            Iter::List => slots_iter.slot_list,
+        }
+        .expect("iterated binding is resolved during preparation")
+    }
+
     /// The slot of `var` one iteration deeper, resolved during preparation.
-    pub fn find_iter_var(&self, var: &VarSlot, iter: Iter) -> VarSlot {
-        let mut var = var.var.clone();
+    pub fn find_var_iterated(&self, var: &VarSlot, iter: Iter) -> VarSlot {
+        let var_inner = var;
+        let mut var = var_inner.var.clone();
         var.iters.push(iter);
-        let slot = *self
-            .slots
-            .get(&(var.id.node.clone(), var.iters.clone()))
-            .expect("iterated binding is resolved during preparation");
-        VarSlot { slot, var }
+        VarSlot { slot: self.find_slot_iterated(var_inner.slot, iter), var }
     }
 }
 
@@ -74,8 +128,8 @@ impl FrameLayout {
 pub struct Frame {
     /// Layout the slots follow.
     layout: Rc<FrameLayout>,
-    /// Slot values, shared until written.
-    values: Rc<Vec<Option<Value>>>,
+    /// Slot values in one allocation, shared until written.
+    values: Rc<[Option<Value>]>,
 }
 
 impl Frame {
@@ -83,7 +137,7 @@ impl Frame {
 
     /// An all-unbound frame for the layout.
     pub fn new(layout: Rc<FrameLayout>) -> Self {
-        let values = Rc::new(vec![None; layout.len()]);
+        let values = std::iter::repeat_n(None, layout.len()).collect();
         Self { layout, values }
     }
 

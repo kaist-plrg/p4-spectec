@@ -331,8 +331,8 @@ fn optional_condition_preserves_remaining_iterator_order_and_outer_bindings() {
                 });
                 let mut ctx =
                     Context::new(&global).localize_with_layout(&std::rc::Rc::new(layout.clone()));
-                ctx.add_value(slot.slot, value_outer);
-                ctx.add_value(slot_nested.slot, value);
+                ctx.add_value_at_slot(slot.slot, value_outer);
+                ctx.add_value_at_slot(slot_nested.slot, value);
                 let flow = eval_block(
                     &mut runner.context(),
                     std::borrow::Cow::Borrowed(&ctx),
@@ -349,7 +349,7 @@ fn optional_condition_preserves_remaining_iterator_order_and_outer_bindings() {
                     flow => panic!("unexpected flow: {flow:?}"),
                 }
                 assert_eq!(
-                    *ctx.find_value(
+                    *ctx.find_value_at_slot(
                         layout
                             .resolve_var(p4spec_rust::lang::il::ast::Var {
                                 id: id.clone(),
