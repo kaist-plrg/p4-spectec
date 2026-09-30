@@ -13,7 +13,6 @@ use super::{
     table,
 };
 use crate::{
-    diagnostic::Report,
     interface::p4::{error::P4Error, parse},
     lang::{
         common::source::{Phrase, Span},
@@ -24,7 +23,7 @@ use crate::{
         traits::print::Print,
     },
     runner::{ExternError, Interface, Interpreter, Runner, RunnerContext},
-    sim_plugin::error,
+    sim_plugin::error::{self, SimError},
     stf::{
         self,
         ast::{Action, MatchKind, Name, Statement, TableMatch},
@@ -37,7 +36,7 @@ use std::path::{Path, PathBuf};
 // == Helpers
 
 /// Parses an optionally signed integer with a `0x`, `0o` or `0b` radix prefix.
-fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, Box<Report>> {
+fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, SimError> {
     strtoint::strtoint(&text.to_ascii_lowercase())
         .map_err(|_| error::integer_invalid(format!("invalid integer: {text}")))
 }
@@ -82,7 +81,7 @@ impl Run {
     }
 
     /// Only the first new transmission can consume a pending expectation.
-    pub fn on_tx_output(&mut self) -> Result<Option<Tx>, Box<Report>> {
+    pub fn on_tx_output(&mut self) -> Result<Option<Tx>, SimError> {
         // No output: nothing to match
         let Some(tx) = self.state.txs.first() else {
             return Ok(None);
@@ -108,7 +107,7 @@ impl Run {
     }
 
     /// Matches an expectation against a queued output, or queues it.
-    pub fn on_tx_expect(&mut self, expect: Expectation) -> Result<Option<Tx>, Box<Report>> {
+    pub fn on_tx_expect(&mut self, expect: Expectation) -> Result<Option<Tx>, SimError> {
         // No queued output on that port: wait for one
         let Some(idx) = self
             .tx_output_queue
@@ -127,7 +126,7 @@ impl Run {
     }
 
     /// Fails if any output or expectation is left unmatched.
-    pub fn finish(&self) -> Result<(), Box<Report>> {
+    pub fn finish(&self) -> Result<(), SimError> {
         if self.tx_output_queue.is_empty() && self.expect_queue.is_empty() {
             Ok(())
         } else {
@@ -143,7 +142,7 @@ pub fn init_pipe<Interp, Iface, Arch>(
     runner: &mut Runner<Interp, Iface, Arch>,
     includes: &[PathBuf],
     path: &Path,
-) -> Result<Run, Box<Report>>
+) -> Result<Run, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -165,7 +164,7 @@ pub fn run_stf_stmt<Interp, Iface, Arch>(
     runner: &mut Runner<Interp, Iface, Arch>,
     run: &mut Run,
     stmt: &Phrase<Statement>,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -247,7 +246,7 @@ fn run_stf_packet_stmt<Interp, Iface, Arch>(
     run: &mut Run,
     port: String,
     packet: String,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -266,7 +265,7 @@ fn run_stf_expect_stmt(
     port: String,
     packet_expected: Option<String>,
     exact: bool,
-) -> Result<Option<Tx>, Box<Report>> {
+) -> Result<Option<Tx>, SimError> {
     let expect = Expectation {
         tx: Tx {
             port: parse_int::<usize>(&port)?,
@@ -280,7 +279,7 @@ fn run_stf_expect_stmt(
 // - Match-action table updates
 
 /// Encodes STF match keys as the specification's `tableKeyInterface` list.
-fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<Value, Box<Report>> {
+fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<Value, SimError> {
     let typ_key = typ::make::var(
         crate::phrase!(node: "tableKeyInterface".to_owned(), span: Span::default()),
         vec![],
@@ -342,7 +341,7 @@ fn run_stf_add_stmt<Interp, Iface, Arch>(
     priority: Option<i64>,
     matches: Vec<TableMatch>,
     action: Action,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -351,19 +350,19 @@ where
     // Add names use the same escaped spelling as P4 annotation names
     let text_name = escape_text(&table.into_string());
     let value_name =
-        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(Box::<Report>::from)?;
+        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(SimError::from)?;
     // Priority is optional
     let value_priority = priority
         .map(|priority| make::int(ctx.arena_mut(), priority.into(), Span::default()))
         .transpose()
-        .map_err(Box::<Report>::from)?;
+        .map_err(SimError::from)?;
     let value_priority = make::opt(
         ctx.arena_mut(),
         typ::make::opt(typ::make::int()).node.into(),
         value_priority,
         Span::default(),
     )
-    .map_err(Box::<Report>::from)?;
+    .map_err(SimError::from)?;
     let value_keys = encode_table_keys(ctx.arena_mut(), &matches)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch = table::add_entry(
@@ -380,7 +379,7 @@ where
 }
 
 /// Encodes an STF action as the specification's `tableActionInterface`.
-fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, Box<Report>> {
+fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, SimError> {
     let value_name = make::text(arena, action.name.as_str().to_owned(), Span::default())?;
     let typ_arg = typ::make::var(
         crate::phrase!(node: "tableActionArgumentInterface".to_owned(), span: Span::default()),
@@ -422,7 +421,7 @@ fn run_stf_set_default_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     table: Name,
     action: Action,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -430,7 +429,7 @@ where
 {
     // Table name and action, then let the table module store it
     let value_name = make::text(ctx.arena_mut(), table.into_string(), Span::default())
-        .map_err(Box::<Report>::from)?;
+        .map_err(SimError::from)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch =
         table::add_default_action(ctx, state.value_ctx, state.value_arch, value_name, value_action)
@@ -447,7 +446,7 @@ fn run_stf_mirroring_add_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     session: String,
     port: String,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -470,7 +469,7 @@ fn run_stf_mirroring_add_mc_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     session: String,
     id_group: String,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -494,7 +493,7 @@ fn run_stf_mc_group_create_stmt<Interp, Iface, Arch>(
     span: &Span,
     state: &mut SimState,
     id_group: String,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -512,7 +511,7 @@ fn run_stf_mc_node_create_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     id_replication: String,
     ports: Vec<String>,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -535,7 +534,7 @@ fn run_stf_mc_node_associate_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     id_group: String,
     handle: String,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -560,7 +559,7 @@ fn run_stf_register_read_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     name: Name,
     idx: String,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -580,7 +579,7 @@ fn run_stf_register_write_stmt<Interp, Iface, Arch>(
     name: Name,
     idx: String,
     value: String,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -603,7 +602,7 @@ fn run_stf_register_reset_stmt<Interp, Iface, Arch>(
     span: &Span,
     state: &mut SimState,
     name: Name,
-) -> Result<Option<Tx>, Box<Report>>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
@@ -623,7 +622,7 @@ pub fn run_stf_test<Interp, Iface, Arch>(
     path_p4: &Path,
     path_stf: &Path,
     on_match: &mut dyn FnMut(&Tx),
-) -> Result<Run, Box<Report>>
+) -> Result<Run, SimError>
 where
     Iface: Interface,
     Arch: Architecture,

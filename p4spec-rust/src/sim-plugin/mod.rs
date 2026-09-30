@@ -9,7 +9,6 @@
 
 use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 use crate::{
-    diagnostic::Report,
     lang::data::value::external::Encoding,
     runner::{self as host, BuiltinInterface, Interpreter, Runner},
 };
@@ -30,10 +29,7 @@ pub mod stf_runner;
 pub mod table;
 pub mod v1model;
 
-// == Build errors
-
-/// Why a simulator could not be built.
-pub type BuildError = Box<crate::diagnostic::Report>;
+pub use error::SimError;
 
 // == Simulator
 
@@ -45,7 +41,7 @@ trait SimulatorRunner {
         path_p4: &Path,
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
-    ) -> Result<(), Box<Report>>;
+    ) -> Result<(), SimError>;
 }
 
 impl<Interp, Arch> SimulatorRunner for Runner<Interp, BuiltinInterface, Arch>
@@ -59,7 +55,7 @@ where
         path_p4: &Path,
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
-    ) -> Result<(), Box<Report>> {
+    ) -> Result<(), SimError> {
         stf_runner::run_stf_test(self, includes, path_p4, path_stf, on_match).map(drop)
     }
 }
@@ -87,7 +83,7 @@ impl Simulator {
         path_p4: &Path,
         path_stf: &Path,
         mut on_match: impl FnMut(&Tx),
-    ) -> Result<(), Box<Report>> {
+    ) -> Result<(), SimError> {
         self.runner
             .run_stf_test(includes, path_p4, path_stf, &mut on_match)
     }
@@ -101,7 +97,7 @@ pub fn build(
     arch: &str,
     config: host::Config,
     encoding: Encoding,
-) -> Result<Simulator, BuildError> {
+) -> Result<Simulator, SimError> {
     // Each architecture is its own extern implementation
     match arch {
         "ebpf" => build_for_arch(spec, config, Ebpf::new(encoding)),
@@ -116,7 +112,7 @@ fn build_for_arch<Arch: Architecture + 'static>(
     spec: host::Spec,
     config: host::Config,
     arch: Arch,
-) -> Result<Simulator, BuildError> {
+) -> Result<Simulator, SimError> {
     match spec {
         host::Spec::Al(spec) => Ok(Simulator::new(host::build_al(spec, config, arch)?)),
         host::Spec::Sl(spec) => Ok(Simulator::new(host::build_sl(spec, config, arch)?)),
