@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Steps 1 to 3 are done.
+Status: in progress. Steps 1 to 5 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -387,6 +387,18 @@ performance, not for correctness:
 - `equal?` on two equal but not `eq?` copies of the booted `spec/` took
   194 ms *(measured)*. A large argument that is rebuilt on every call, like
   `$extend_tdenv`'s result, can therefore make lookups slow.
+- Redex looks a metafunction call up in its cache even with caching off, and
+  checks the flag only after the lookup. So a call with caching off still pays
+  a deep `equal?` when the cache holds an equal but not `eq?` copy of its
+  arguments. Loading a copy of `spec/` with caching off, after loading another
+  copy with caching on, took 243 s instead of 4.7 s *(measured)*. The
+  nonterminal memo checks the flag first.
+
+`$load` is the one place that runs with caching off: its one clause runs
+`load/shallow` under `(parameterize ([caching-enabled? #f]) ...)`. None of
+`load/shallow`'s calls repeat, so on `spec/` the cache only added 4 to 5 s of
+hashing and comparisons. Nothing else runs `load/shallow` on a large script with
+caching on, so its cache never holds a copy that a lookup would compare deeply.
 
 `set-cache-size!` and the argument order of metafunctions are Step 13's knobs.
 
@@ -413,11 +425,15 @@ instead of being lifted into triples.
 There are two exceptions to precise patterns:
 
 - **`$load` recurses as `load/shallow`,** over a `ctx-shallow` that checks the
-  record's shape but not its maps, with the remaining script matched as `any`.
-  With precise patterns, every recursive call rechecks the context and the rest
-  of the script, so `$load` is quadratic. On `spec/`, that took 27 minutes with
-  caching off, 274 s with it on, and 8.5 s shallow. `$load` itself keeps
-  watsup's signature, and checks its input and result against `ctx` once.
+  record's shape but not its maps, with the script matched as `any`. With
+  precise patterns, every recursive call rechecks the context and the rest of
+  the script, so `$load` is quadratic. On `spec/`, that took 27 minutes with
+  caching off, and 274 s with it on. `load/shallow` takes `defn_h :: defn_t*`
+  apart with a Racket escape, `uncons`, because matching `defn_t*` with an
+  ellipsis costs quadratic time (see Step 4). It runs with caching off (see
+  [Caching](#caching)). It loads `spec/` in 2.3 s, or 1.7 s with contracts off.
+  `$load` itself keeps watsup's signature, and checks its input and result
+  against `ctx` once.
 - **No `#:domain` on the relations.**
 
 ### Term encoding
@@ -967,6 +983,48 @@ metafunctions.
   result against `ctx`, recording the time. Test `$sub_list` with no iterated
   variables and with empty lists.
 
+Outcome:
+
+- Done. `test/env.rkt` and `test/context.rkt` pass (195 checks).
+- Signatures: the adders, the value finders, `sub-opt`, and `sub-list` take
+  `L`, and `finds-vari` takes `(L ...)`. `find-typ`, `find-func`, and
+  `find-rel` take `G L`. `find-rel` reads only `GLOBAL`, but the rule still
+  gives it both layers. `sub-opt` returns `() ∨ (L)`, and `sub-list` returns
+  `(L ...)`.
+- Clauses match every layer as `{TYP tdenv REL renv FUNC fenv VAL venv}`,
+  including maps that the clause does not read, and a `vari` as
+  `(id typ (iter ...))` where watsup writes `id _ iter*`.
+- `$load` on `spec/` takes 2.3 s with contracts on, and 1.7 s with them off.
+  Loading an equal copy again is a cache hit of `load`, in 0.18 s. A fresh
+  check of the result against `ctx` takes 0.3 s. `spec-meta/al` loads in
+  0.1 s. `test/context.rkt` takes 4.6 s, and the whole suite 17 s.
+- Written as watsup's recursion, with `((EXTTYP id) any_t ...)`-style clauses
+  and caching on, `$load` took 15.6 s on `spec/`. Two causes made up most of
+  it, and `load/shallow` now avoids both:
+  - Redex matches an ellipsis in a pattern with bindings in quadratic time. At
+    every point where the ellipsis could stop, it rebuilds the bindings so
+    far, even when nothing follows the ellipsis. One match of `(any ...)` on
+    1,000, 2,000, and 4,000 elements took 4.6, 14, and 42 ms *(measured)*.
+    Matching the rest of the script once per definition cost about 8 s on
+    `spec/`. Taking the script apart with `uncons` instead brought the load to
+    about 8 s.
+  - `load/shallow`'s calls never repeat, so caching gave no hits. It still
+    cost 4 to 5 s of hashing and comparisons, mostly in the nonterminal memo.
+    With caching off around `load/shallow`, the load takes 2.3 s. Placing the
+    `parameterize` around the call to `load` instead is fragile. A cached
+    `load/shallow` call on another copy of the script then makes every lookup
+    a deep `equal?` (see [Caching](#caching)).
+- A nonterminal is matched without bindings, in linear time. The nonterminal
+  `mp ::= (pr ...)` checked 8,000 pairs in 1.4 ms, while the pattern
+  `(pr ...)` took 207 ms *(measured)*. So the `map` contracts on the global
+  maps are cheap, and only ellipses in clause, `where`, and domain patterns
+  cost quadratic time.
+  This is input for Step 6 and Step 13, for frames such as
+  `(TUP ((OK val) ... hole exp ...))` over long lists.
+- A Racket fold over the definitions was about as fast as `uncons` (3.1 s
+  against 3.4 s, with caching off, in a probe). It hides watsup's recursion,
+  so `load/shallow` keeps one recursive clause per watsup clause.
+
 ### Step 5: Type casts and subtyping
 
 Transcribe `al/5.1-eval-typ`: `$upcast`, `$downcast`, `$subtyp`, and
@@ -991,6 +1049,27 @@ aren't found, component casts that fail, and tuples of the wrong length. The
   `OK (TUP (BOOL true))`. The K port differs here.
 - Tests: one per clause and one per complement case, and every clause except
   `⊥` reached (`make-coverage` on the metafunctions).
+
+Outcome:
+
+- Done. `test/eval-typ.rkt` passes (132 checks). The whole suite runs 2,938
+  checks, and 2,908 with contracts off, on a scratch copy.
+- `upcast` and `downcast` take `G L`, since `$find_typ` reads both layers.
+  So do `upcast/var` and `downcast/var`. `subtyp` keeps `tdenv`. The module
+  is written on `al-context`; the language `al` comes in Step 6.
+- A complement that dispatches on a failed `$subst_typ` matches `⊥`
+  literally, with `(where ⊥ (subst-typ theta typ))`. The complements in
+  `subtyp/var` recompute the pure premises (`$subst_typ`, `$assoc_`, and the
+  membership check), but never `$subtyp`, which appears only in results.
+- In the `VARIANT` clause of `subtyp/var`, the named ellipsis `..._m` of `val*`
+  also constrains the `where` that binds the substituted case types. So a case
+  with another number of types than values fails that clause and reaches its
+  complement, instead of raising an ellipsis error.
+- One test counts calls in Redex's trace, with caching off. An upcast of tuples
+  nested 8 deep, each with a failing sibling, makes 17 calls, so each
+  component is cast once. The same holds for `downcast`.
+- There is no `make-coverage` check, as in Step 3. The tests have a case for
+  every clause and every complement.
 
 ### Step 6: The machine
 
