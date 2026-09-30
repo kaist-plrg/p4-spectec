@@ -1318,7 +1318,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let ctx_sub_opt = Ctx.sub_opt ctx vars in
     match ctx_sub_opt with
     | Some ctx_sub ->
-        let cond, value_cond = eval_if_cond_iter ctx_sub exp_cond iterexps in
+        let cond, value_cond = eval_if_cond_iter' ctx_sub exp_cond iterexps in
         (cond, Some value_cond)
     | None -> (false, None)
 
@@ -1426,7 +1426,7 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
     let ctx_sub_opt = Ctx.sub_opt ctx vars in
     match ctx_sub_opt with
     | Some ctx_sub ->
-        let cond, value_cond = eval_hold_cond_iter ctx_sub id notexp iterexps in
+        let cond, value_cond = eval_hold_cond_iter' ctx_sub id notexp iterexps in
         (cond, Some value_cond)
     | None -> (false, None)
 
