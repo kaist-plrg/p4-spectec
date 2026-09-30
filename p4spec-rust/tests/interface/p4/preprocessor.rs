@@ -30,8 +30,15 @@ fn test_preprocessing_expands_macros_without_system_headers() {
 #[test]
 fn test_preprocessing_reports_a_typed_failure_for_missing_input() {
     let error = preprocess(&[], "/definitely/missing/p4spec-input.p4").unwrap_err();
-    assert!(matches!(error, p4spec_rust::interface::p4::error::P4Error::Input(_)));
-    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.report().kind else {
+    assert!(matches!(
+        error,
+        p4spec_rust::interface::p4::error::P4Error {
+            kind: p4spec_rust::interface::p4::error::P4ErrorKind::Preprocess { .. },
+            ..
+        }
+    ));
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.clone().into_report().kind
+    else {
         panic!("expected cause")
     };
     assert_eq!(diagnostic.code.as_deref(), Some("p4/preprocessor-failed"));
@@ -52,8 +59,13 @@ fn test_macro_expansion_rejection_keeps_logical_line_only() {
         .unwrap();
     let error = parse_file(&mut ValueArena::new(), &[], &path).unwrap_err();
     fs::remove_file(&path).unwrap();
-    assert!(matches!(error, P4Error::Syntax(_)));
-    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    assert!(matches!(
+        error,
+        P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. }
+    ));
+    let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
+        panic!("expected cause")
+    };
     assert!(diagnostic.labels[0].line_only);
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
     assert_eq!(diagnostic.labels[0].span.left.line, 2);

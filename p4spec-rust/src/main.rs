@@ -17,7 +17,7 @@ use p4spec_rust::{
     interface::p4::parse::parse_file,
     interp::shared::backtrack::Failure as InterpError,
     lang::{data::value::external::Encoding, traits::print::Print},
-    runner::{self, BuiltinInterface, Interpreter, ProgramError, Runner},
+    runner::{self, BuiltinInterface, Interpreter, Runner},
     sim_plugin::{self, dummy::Dummy},
 };
 
@@ -260,14 +260,14 @@ fn run_program<Interp>(
 where
     Interp: Interpreter<BuiltinInterface, Dummy, Error = InterpError>,
 {
-    let result = runner.parse_and_eval_program(&args.relation, |arena| {
-        parse_file(arena, &args.includes, &args.program)
-    });
-    // Select execution presentation before finalizing the typed failure
-    if matches!(&result, Err(ProgramError::Runtime(_))) {
-        config_output.frame_style = Some(DisplayStyle::Short);
-    }
-    result.map_err(ProgramError::into_report)?;
+    let program = parse_file(runner.arena_mut(), &args.includes, &args.program)
+        .map_err(|error| error.into_report())?;
+    runner
+        .eval_program(&args.relation, program)
+        .map_err(|failure| {
+            config_output.frame_style = Some(DisplayStyle::Short);
+            failure.into_report()
+        })?;
     println!("passed");
     Ok(())
 }

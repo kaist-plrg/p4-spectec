@@ -86,9 +86,17 @@ fn test_comments_are_skipped_and_unsupported_escapes_are_located_errors() {
         .next()
         .unwrap()
         .unwrap_err();
-    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
+        panic!("expected cause")
+    };
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "bad.p4");
-    assert!(matches!(error, p4spec_rust::interface::p4::error::P4Error::Syntax(_)));
+    assert!(matches!(
+        error,
+        p4spec_rust::interface::p4::error::P4Error {
+            kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_),
+            ..
+        }
+    ));
 }
 
 #[test]
@@ -197,7 +205,9 @@ fn test_string_failures_locate_the_escape_or_end_of_input() {
             .next()
             .unwrap()
             .unwrap_err();
-        let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+        let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
+            panic!("expected cause")
+        };
         assert_eq!(
             (diagnostic.labels[0].span.left.line, diagnostic.labels[0].span.left.column),
             (1, left)
@@ -220,7 +230,9 @@ fn test_line_marker_lexical_errors_do_not_use_expanded_columns_for_snippets() {
     .next()
     .unwrap()
     .unwrap_err();
-    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
+        panic!("expected cause")
+    };
     assert_eq!(diagnostic.code.as_deref(), Some("p4/integer-width-invalid"));
     assert!(diagnostic.labels[0].line_only);
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "original.p4");

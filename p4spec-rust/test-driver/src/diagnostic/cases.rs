@@ -250,9 +250,7 @@ pub const ALGO: &[&str] = &[
 
 /// Lists runtime failures and backtracking cases across interpreters.
 pub const INTERP: &[&str] = &[
-    "interp-al-syntax-diagnostic",
-    "interp-sl-syntax-diagnostic",
-    "interp-pl-syntax-diagnostic",
+    "p4-syntax",
     "backtrack-interp-al",
     "backtrack-interp-sl",
     "backtrack-interp-pl",

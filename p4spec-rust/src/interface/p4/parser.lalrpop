@@ -253,7 +253,7 @@ trailingCommaOpt: Value = {
         args: vec![],
         typ: "trailingCommaOpt",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // trailingCommaOpt ::= "COMMA"
     <l:@L> "TRAILING_COMMA" <r:@R> =>? make::case_shaped! {
@@ -262,7 +262,7 @@ trailingCommaOpt: Value = {
         args: vec![],
         typ: "trailingCommaOpt",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Booleans
@@ -275,7 +275,7 @@ booleanLiteral: Value = {
         args: vec![],
         typ: "booleanLiteral",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // booleanLiteral ::= "FALSE"
     <l:@L> "FALSE" <r:@R> =>? make::case_shaped! {
@@ -284,7 +284,7 @@ booleanLiteral: Value = {
         args: vec![],
         typ: "booleanLiteral",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Integers
@@ -297,7 +297,7 @@ integerLiteral: Value = {
         args: vec![int],
         typ: "integerLiteral",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // integerLiteral ::= "NUMBER"
     <number:"NUMBER"> => number.0,
@@ -313,7 +313,7 @@ stringLiteral: Value = {
             args: vec![text],
             typ: "stringLiteral",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Names
@@ -326,7 +326,7 @@ identifier: Value = {
             args: vec![text],
             typ: "identifier",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 typeIdentifier: Value = {
@@ -337,7 +337,7 @@ typeIdentifier: Value = {
             args: vec![text],
             typ: "typeIdentifier",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Non-type names
@@ -353,7 +353,7 @@ nonTypeName: Value = {
         args: vec![],
         typ: "nonTypeName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "KEY"
     <l:@L> "KEY" <r:@R> =>? make::case_shaped! {
@@ -362,7 +362,7 @@ nonTypeName: Value = {
         args: vec![],
         typ: "nonTypeName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "ACTIONS"
     <l:@L> "ACTIONS" <r:@R> =>? make::case_shaped! {
@@ -371,7 +371,7 @@ nonTypeName: Value = {
         args: vec![],
         typ: "nonTypeName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "STATE"
     <l:@L> "STATE" <r:@R> =>? make::case_shaped! {
@@ -380,7 +380,7 @@ nonTypeName: Value = {
         args: vec![],
         typ: "nonTypeName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "ENTRIES"
     <l:@L> "ENTRIES" <r:@R> =>? make::case_shaped! {
@@ -389,7 +389,7 @@ nonTypeName: Value = {
         args: vec![],
         typ: "nonTypeName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "TYPE"
     <l:@L> "TYPE" <r:@R> =>? make::case_shaped! {
@@ -398,7 +398,7 @@ nonTypeName: Value = {
         args: vec![],
         typ: "nonTypeName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "PRIORITY"
     <l:@L> "PRIORITY" <r:@R> =>? make::case_shaped! {
@@ -407,7 +407,7 @@ nonTypeName: Value = {
         args: vec![],
         typ: "nonTypeName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 prefixedNonTypeName: Value = {
@@ -421,7 +421,7 @@ prefixedNonTypeName: Value = {
             args: vec![n],
             typ: "prefixedNonTypeName",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Type names
@@ -442,7 +442,7 @@ prefixedTypeName: Value = {
             args: vec![tid],
             typ: "prefixedTypeName",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Table custom property names
@@ -461,7 +461,7 @@ tableCustomName: Value = {
         args: vec![],
         typ: "tableCustomName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableCustomName ::= "STATE"
     <l:@L> "STATE" <r:@R> =>? make::case_shaped! {
@@ -470,7 +470,7 @@ tableCustomName: Value = {
         args: vec![],
         typ: "tableCustomName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableCustomName ::= "TYPE"
     <l:@L> "TYPE" <r:@R> =>? make::case_shaped! {
@@ -479,7 +479,7 @@ tableCustomName: Value = {
         args: vec![],
         typ: "tableCustomName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableCustomName ::= "PRIORITY"
     <l:@L> "PRIORITY" <r:@R> =>? make::case_shaped! {
@@ -488,7 +488,7 @@ tableCustomName: Value = {
         args: vec![],
         typ: "tableCustomName",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Names
@@ -507,7 +507,7 @@ name: Value = {
         args: vec![],
         typ: "name",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 nameList: Value = {
@@ -521,7 +521,7 @@ nameList: Value = {
             args: vec![ns, n],
             typ: "nameList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 member: Value = {
@@ -540,7 +540,7 @@ direction: Value = {
         args: vec![],
         typ: "direction",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // direction ::= "IN"
     <l:@L> "IN" <r:@R> =>? make::case_shaped! {
@@ -549,7 +549,7 @@ direction: Value = {
         args: vec![],
         typ: "direction",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // direction ::= "OUT"
     <l:@L> "OUT" <r:@R> =>? make::case_shaped! {
@@ -558,7 +558,7 @@ direction: Value = {
         args: vec![],
         typ: "direction",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // direction ::= "INOUT"
     <l:@L> "INOUT" <r:@R> =>? make::case_shaped! {
@@ -567,7 +567,7 @@ direction: Value = {
         args: vec![],
         typ: "direction",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Types
@@ -582,7 +582,7 @@ baseType: Value = {
         args: vec![],
         typ: "baseType",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "MATCH_KIND"
     <l:@L> "MATCH_KIND" <r:@R> =>? make::case_shaped! {
@@ -591,7 +591,7 @@ baseType: Value = {
         args: vec![],
         typ: "baseType",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "ERROR"
     <l:@L> "ERROR" <r:@R> =>? make::case_shaped! {
@@ -600,7 +600,7 @@ baseType: Value = {
         args: vec![],
         typ: "baseType",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "BIT"
     <l:@L> "BIT" <r:@R> =>? make::case_shaped! {
@@ -609,7 +609,7 @@ baseType: Value = {
         args: vec![],
         typ: "baseType",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "STRING"
     <l:@L> "STRING" <r:@R> =>? make::case_shaped! {
@@ -618,7 +618,7 @@ baseType: Value = {
         args: vec![],
         typ: "baseType",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "INT"
     <l:@L> "INT" <r:@R> =>? make::case_shaped! {
@@ -627,7 +627,7 @@ baseType: Value = {
         args: vec![],
         typ: "baseType",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "BIT" l_angle int r_angle
     <l:@L> "BIT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? make::case_shaped! {
@@ -636,7 +636,7 @@ baseType: Value = {
             args: vec![v],
             typ: "baseType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "INT" l_angle int r_angle
     <l:@L> "INT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? make::case_shaped! {
@@ -645,7 +645,7 @@ baseType: Value = {
             args: vec![v],
             typ: "baseType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "VARBIT" l_angle int r_angle
     <l:@L> "VARBIT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? make::case_shaped! {
@@ -654,7 +654,7 @@ baseType: Value = {
             args: vec![v],
             typ: "baseType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "BIT" l_angle "L_PAREN" expression "R_PAREN" r_angle
     <l:@L> "BIT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? make::case_shaped! {
@@ -663,7 +663,7 @@ baseType: Value = {
             args: vec![e],
             typ: "baseType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "INT" l_angle "L_PAREN" expression "R_PAREN" r_angle
     <l:@L> "INT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? make::case_shaped! {
@@ -672,7 +672,7 @@ baseType: Value = {
             args: vec![e],
             typ: "baseType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "VARBIT" l_angle "L_PAREN" expression "R_PAREN" r_angle
     <l:@L> "VARBIT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? make::case_shaped! {
@@ -681,7 +681,7 @@ baseType: Value = {
             args: vec![e],
             typ: "baseType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Named types
@@ -694,7 +694,7 @@ specializedType: Value = {
             args: vec![n, tal],
             typ: "specializedType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 namedType: Value = {
@@ -716,7 +716,7 @@ arrayType: Value = {
             args: vec![t, e],
             typ: "arrayType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - List types
@@ -729,7 +729,7 @@ listType: Value = {
             args: vec![targ],
             typ: "listType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Tuple types
@@ -742,7 +742,7 @@ tupleType: Value = {
             args: vec![targs],
             typ: "tupleType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Types
@@ -775,7 +775,7 @@ typeOrVoid: Value = {
         args: vec![],
         typ: "typeOrVoid",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typeOrVoid ::= identifier
     <id:identifier> => id,
@@ -799,7 +799,7 @@ typeParameterList: Value = {
             args: vec![tps, tp],
             typ: "typeParameterList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 typeParameterListOpt: Value = {
@@ -810,7 +810,7 @@ typeParameterListOpt: Value = {
         args: vec![],
         typ: "typeParameterListOpt",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typeParameterListOpt ::= l_angle typeParameterList r_angle
     <l:@L> l_angle <tps:typeParameterList> r_angle <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
@@ -821,7 +821,7 @@ typeParameterListOpt: Value = {
             args: vec![tps],
             typ: "typeParameterListOpt",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
     }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -838,7 +838,7 @@ parameter: Value = {
                 args: vec![al, dir, t, n, i],
                 typ: "parameter",
                 span: ctx.location_span(l, r),
-            }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+            }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
         }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -853,7 +853,7 @@ nonEmptyParameterList: Value = {
             args: vec![ps, p],
             typ: "nonEmptyParameterList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 #[inline]
@@ -865,7 +865,7 @@ parameterList: Value = {
         args: vec![],
         typ: "parameterList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // parameterList ::= nonEmptyParameterList
     <ps:nonEmptyParameterList> => ps,
@@ -881,7 +881,7 @@ constructorParameterListOpt: Value = {
         args: vec![],
         typ: "constructorParameterListOpt",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // constructorParameterListOpt ::= "L_PAREN" parameterList "R_PAREN"
     <l:@L> "L_PAREN" <ps:parameterList> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -890,7 +890,7 @@ constructorParameterListOpt: Value = {
             args: vec![ps],
             typ: "constructorParameterListOpt",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Expression key-value pairs
@@ -903,7 +903,7 @@ namedExpression: Value = {
             args: vec![n, e],
             typ: "namedExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 namedExpressionList: Value = {
@@ -917,7 +917,7 @@ namedExpressionList: Value = {
             args: vec![es, e],
             typ: "namedExpressionList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Expressions
@@ -948,7 +948,7 @@ referenceExpression: Value = {
         args: vec![],
         typ: "referenceExpression",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Default expressions
@@ -961,7 +961,7 @@ defaultExpression: Value = {
         args: vec![],
         typ: "defaultExpression",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Unary, binary, and ternary expressions
@@ -1001,7 +1001,7 @@ sliceop: Value = {
         args: vec![],
         typ: "sliceop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // sliceop ::= "PLUSCOLON"
     <l:@L> "PLUSCOLON" <r:@R> =>? make::case_shaped! {
@@ -1010,7 +1010,7 @@ sliceop: Value = {
         args: vec![],
         typ: "sliceop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 // sliceAccessExpression ::= expression "L_BRACKET" expression sliceop expression "R_BRACKET"
 // accessExpression ::= errorAccessExpression | memberAccessExpression
@@ -1053,7 +1053,7 @@ TernaryExpression: Value = {
             args: vec![condition, yes, no],
             typ: "ternaryExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 ExpressionOr: Value = {
@@ -1069,7 +1069,7 @@ ExpressionOr: Value = {
             args: vec![],
             typ: "binop",
             span: span_op.clone(),
-        }.map_err(|error| P4Error::new(error, span_op))?;
+        }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
         make::case_shaped! {
             arena: &mut ctx.arena_mut(),
@@ -1077,7 +1077,7 @@ ExpressionOr: Value = {
             args: vec![lhs, value_op, rhs],
             typ: "binaryExpression",
             span: span_exp.clone(),
-        }.map_err(|error| P4Error::new(error, span_exp))?
+        }.map_err(|error| P4Error::new(span_exp, error))?
     }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -1095,7 +1095,7 @@ ExpressionAnd: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1103,7 +1103,7 @@ ExpressionAnd: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -1121,7 +1121,7 @@ ExpressionEquality: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1129,7 +1129,7 @@ ExpressionEquality: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionEquality ::= ExpressionEquality "NE" ExpressionComparison
@@ -1142,7 +1142,7 @@ ExpressionEquality: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1150,7 +1150,7 @@ ExpressionEquality: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -1193,7 +1193,7 @@ ExpressionAdditive: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1201,7 +1201,7 @@ ExpressionAdditive: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionAdditive ::= ExpressionAdditive "PLUS" ExpressionMultiplicative
@@ -1214,7 +1214,7 @@ ExpressionAdditive: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1222,7 +1222,7 @@ ExpressionAdditive: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionAdditive ::= ExpressionAdditive "PLUS_SAT" ExpressionMultiplicative
@@ -1235,7 +1235,7 @@ ExpressionAdditive: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1243,7 +1243,7 @@ ExpressionAdditive: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionAdditive ::= ExpressionAdditive "MINUS" ExpressionMultiplicative
@@ -1256,7 +1256,7 @@ ExpressionAdditive: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1264,7 +1264,7 @@ ExpressionAdditive: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionAdditive ::= ExpressionAdditive "MINUS_SAT" ExpressionMultiplicative
@@ -1277,7 +1277,7 @@ ExpressionAdditive: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1285,7 +1285,7 @@ ExpressionAdditive: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -1303,7 +1303,7 @@ ExpressionMultiplicative: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1311,7 +1311,7 @@ ExpressionMultiplicative: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionMultiplicative ::= ExpressionMultiplicative "DIV" ExpressionPrefix
@@ -1324,7 +1324,7 @@ ExpressionMultiplicative: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1332,7 +1332,7 @@ ExpressionMultiplicative: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionMultiplicative ::= ExpressionMultiplicative "MOD" ExpressionPrefix
@@ -1345,7 +1345,7 @@ ExpressionMultiplicative: Value = {
                 args: vec![],
                 typ: "binop",
                 span: span_op.clone(),
-            }.map_err(|error| P4Error::new(error, span_op))?;
+            }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
             make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
@@ -1353,7 +1353,7 @@ ExpressionMultiplicative: Value = {
                 args: vec![lhs, value_op, rhs],
                 typ: "binaryExpression",
                 span: span_exp.clone(),
-            }.map_err(|error| P4Error::new(error, span_exp))?
+            }.map_err(|error| P4Error::new(span_exp, error))?
         }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -1370,7 +1370,7 @@ ExpressionPrefix: Value = {
             args: vec![],
             typ: "unop",
             span: span_op.clone(),
-        }.map_err(|error| P4Error::new(error, span_op))?;
+        }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
         make::case_shaped! {
             arena: &mut ctx.arena_mut(),
@@ -1378,7 +1378,7 @@ ExpressionPrefix: Value = {
             args: vec![value_op, inner],
             typ: "unaryExpression",
             span: span_exp.clone(),
-        }.map_err(|error| P4Error::new(error, span_exp))?
+        }.map_err(|error| P4Error::new(span_exp, error))?
     }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionPrefix ::= "COMPLEMENT" ExpressionPrefix
@@ -1390,7 +1390,7 @@ ExpressionPrefix: Value = {
             args: vec![],
             typ: "unop",
             span: span_op.clone(),
-        }.map_err(|error| P4Error::new(error, span_op))?;
+        }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
         make::case_shaped! {
             arena: &mut ctx.arena_mut(),
@@ -1398,7 +1398,7 @@ ExpressionPrefix: Value = {
             args: vec![value_op, inner],
             typ: "unaryExpression",
             span: span_exp.clone(),
-        }.map_err(|error| P4Error::new(error, span_exp))?
+        }.map_err(|error| P4Error::new(span_exp, error))?
     }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionPrefix ::= "MINUS" ExpressionPrefix
@@ -1410,7 +1410,7 @@ ExpressionPrefix: Value = {
             args: vec![],
             typ: "unop",
             span: span_op.clone(),
-        }.map_err(|error| P4Error::new(error, span_op))?;
+        }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
         make::case_shaped! {
             arena: &mut ctx.arena_mut(),
@@ -1418,7 +1418,7 @@ ExpressionPrefix: Value = {
             args: vec![value_op, inner],
             typ: "unaryExpression",
             span: span_exp.clone(),
-        }.map_err(|error| P4Error::new(error, span_exp))?
+        }.map_err(|error| P4Error::new(span_exp, error))?
     }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionPrefix ::= "PLUS" ExpressionPrefix
@@ -1430,7 +1430,7 @@ ExpressionPrefix: Value = {
             args: vec![],
             typ: "unop",
             span: span_op.clone(),
-        }.map_err(|error| P4Error::new(error, span_op))?;
+        }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
         make::case_shaped! {
             arena: &mut ctx.arena_mut(),
@@ -1438,7 +1438,7 @@ ExpressionPrefix: Value = {
             args: vec![value_op, inner],
             typ: "unaryExpression",
             span: span_exp.clone(),
-        }.map_err(|error| P4Error::new(error, span_exp))?
+        }.map_err(|error| P4Error::new(span_exp, error))?
     }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionPrefix ::= "L_PAREN" typeRef "R_PAREN" ExpressionPrefix
@@ -1448,7 +1448,7 @@ ExpressionPrefix: Value = {
             args: vec![typ, inner],
             typ: "castExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 ExpressionPostfix: Value = {
@@ -1464,7 +1464,7 @@ ExpressionPostfix: Value = {
             args: vec![base, member],
             typ: "memberAccessExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= expressionNamedType "L_PAREN" argumentList "R_PAREN"
     <l:@L> <target:expressionNamedType> "L_PAREN" <arguments:argumentList> "R_PAREN" <r:@R>
@@ -1474,7 +1474,7 @@ ExpressionPostfix: Value = {
             args: vec![target, arguments],
             typ: "callExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= ExpressionPostfix "DOT" set_parent_namespace member
     //     clear_parent_namespace
@@ -1485,7 +1485,7 @@ ExpressionPostfix: Value = {
             args: vec![base, member],
             typ: "memberAccessExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= ExpressionPostfix "L_BRACKET" expression "R_BRACKET"
     <l:@L> <base:ExpressionPostfix> "L_BRACKET" <index:expression> "R_BRACKET" <r:@R> =>? make::case_shaped! {
@@ -1494,7 +1494,7 @@ ExpressionPostfix: Value = {
             args: vec![base, index],
             typ: "indexAccessExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= ExpressionPostfix "L_BRACKET" expression sliceop expression "R_BRACKET"
     <l:@L> <base:ExpressionPostfix> "L_BRACKET" <slice_l:expression> <operator:sliceop>
@@ -1504,7 +1504,7 @@ ExpressionPostfix: Value = {
             args: vec![base, slice_l, operator, slice_r],
             typ: "sliceAccessExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= ExpressionPostfix "L_PAREN" argumentList "R_PAREN"
     <l:@L> <target:ExpressionPostfix> "L_PAREN" <arguments:argumentList> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -1513,7 +1513,7 @@ ExpressionPostfix: Value = {
             args: vec![target, arguments],
             typ: "callExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= ExpressionPostfix "L_ANGLE_ARGS" realTypeArgumentList r_angle "L_PAREN"
     //     argumentList "R_PAREN"
@@ -1524,7 +1524,7 @@ ExpressionPostfix: Value = {
             args: vec![target, types, arguments],
             typ: "callExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 ExpressionPrimary: Value = {
@@ -1544,7 +1544,7 @@ ExpressionPrimary: Value = {
             args: vec![member],
             typ: "errorAccessExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPrimary ::= "INVALID"
     <l:@L> "INVALID" <r:@R> =>? make::case_shaped! {
@@ -1553,7 +1553,7 @@ ExpressionPrimary: Value = {
             args: vec![],
             typ: "invalidHeaderExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPrimary ::= "L_BRACE" sequenceOrRecordElementExpression trailingCommaOpt "R_BRACE"
     <l:@L> "L_BRACE" <elements:sequenceOrRecordElementExpression> <comma:trailingCommaOpt>
@@ -1563,7 +1563,7 @@ ExpressionPrimary: Value = {
             args: vec![elements, comma],
             typ: "sequenceOrRecordExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPrimary ::= "L_PAREN" expression "R_PAREN"
     <l:@L> "L_PAREN" <inner:expression> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -1572,7 +1572,7 @@ ExpressionPrimary: Value = {
             args: vec![inner],
             typ: "parenthesizedExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Expressions
@@ -1597,7 +1597,7 @@ expressionTypeIdentifier: Value = {
             args: vec![text],
             typ: "typeIdentifier",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 expressionTypeName: Value = {
@@ -1616,7 +1616,7 @@ expressionPrefixedTypeName: Value = {
             args: vec![typ],
             typ: "prefixedTypeName",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 expressionSpecializedType: Value = {
@@ -1629,7 +1629,7 @@ expressionSpecializedType: Value = {
             args: vec![name, arguments],
             typ: "specializedType",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 expressionNamedType: Value = {
@@ -1657,7 +1657,7 @@ expressionListNonEmpty: Value = {
             args: vec![el, e],
             typ: "expressionList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // memberAccessBase ::= prefixedTypeName | expression
@@ -1670,7 +1670,7 @@ sequenceElementExpression: Value = {
         args: vec![],
         typ: "expressionList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // sequenceElementExpression ::= expressionList
     expressionList,
@@ -1684,7 +1684,7 @@ recordElementExpression: Value = {
             args: vec![n, e],
             typ: "recordElementExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // recordElementExpression ::= name "ASSIGN" expression "COMMA" "DOTS"
     <l:@L> <n:name> "ASSIGN" <e:expression> "COMMA" "DOTS" <r:@R> =>? make::case_shaped! {
@@ -1693,7 +1693,7 @@ recordElementExpression: Value = {
             args: vec![n, e],
             typ: "recordElementExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // recordElementExpression ::= name "ASSIGN" expression "COMMA" namedExpressionList
     <l:@L> <n:name> "ASSIGN" <e:expression> "COMMA" <el:namedExpressionList> <r:@R> =>? make::case_shaped! {
@@ -1702,7 +1702,7 @@ recordElementExpression: Value = {
             args: vec![n, e, el],
             typ: "recordElementExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // recordElementExpression ::= name "ASSIGN" expression "COMMA" namedExpressionList "COMMA"
     //     "DOTS"
@@ -1713,7 +1713,7 @@ recordElementExpression: Value = {
             args: vec![n, e, el],
             typ: "recordElementExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 sequenceOrRecordElementExpression: Value = {
@@ -1748,7 +1748,7 @@ simpleKeysetExpression: Value = {
             args: vec![b, m],
             typ: "simpleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // simpleKeysetExpression ::= expression "RANGE" expression
     <l:@L> <lo:expression> "RANGE" <hi:expression> <r:@R> =>? make::case_shaped! {
@@ -1757,7 +1757,7 @@ simpleKeysetExpression: Value = {
             args: vec![lo, hi],
             typ: "simpleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // simpleKeysetExpression ::= "DEFAULT"
     <l:@L> "DEFAULT" <r:@R> =>? make::case_shaped! {
@@ -1766,7 +1766,7 @@ simpleKeysetExpression: Value = {
             args: vec![],
             typ: "simpleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // simpleKeysetExpression ::= "DONTCARE"
     <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
@@ -1775,7 +1775,7 @@ simpleKeysetExpression: Value = {
         args: vec![],
         typ: "simpleKeysetExpression",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 simpleKeysetExpressionList: Value = {
@@ -1789,7 +1789,7 @@ simpleKeysetExpressionList: Value = {
             args: vec![el, e],
             typ: "simpleKeysetExpressionList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tupleKeysetExpression: Value = {
@@ -1800,7 +1800,7 @@ tupleKeysetExpression: Value = {
             args: vec![b, m],
             typ: "tupleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tupleKeysetExpression ::= "L_PAREN" expression "RANGE" expression "R_PAREN"
     <l:@L> "L_PAREN" <lo:expression> "RANGE" <hi:expression> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -1809,7 +1809,7 @@ tupleKeysetExpression: Value = {
             args: vec![lo, hi],
             typ: "tupleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tupleKeysetExpression ::= "L_PAREN" "DEFAULT" "R_PAREN"
     <l:@L> "L_PAREN" "DEFAULT" "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -1818,7 +1818,7 @@ tupleKeysetExpression: Value = {
             args: vec![],
             typ: "tupleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tupleKeysetExpression ::= "L_PAREN" "DONTCARE" "R_PAREN"
     <l:@L> "L_PAREN" "DONTCARE" "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -1827,7 +1827,7 @@ tupleKeysetExpression: Value = {
             args: vec![],
             typ: "tupleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tupleKeysetExpression ::= "L_PAREN" simpleKeysetExpression "COMMA" simpleKeysetExpressionList
     //     "R_PAREN"
@@ -1838,7 +1838,7 @@ tupleKeysetExpression: Value = {
             args: vec![e, es],
             typ: "tupleKeysetExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 keysetExpression: Value = {
@@ -1862,7 +1862,7 @@ realTypeArgument: Value = {
         args: vec![],
         typ: "realTypeArgument",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // realTypeArgument ::= "DONTCARE"
     <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
@@ -1871,7 +1871,7 @@ realTypeArgument: Value = {
         args: vec![],
         typ: "realTypeArgument",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 realTypeArgumentList: Value = {
@@ -1885,7 +1885,7 @@ realTypeArgumentList: Value = {
             args: vec![targs, targ],
             typ: "realTypeArgumentList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 typeArgument: Value = {
@@ -1902,7 +1902,7 @@ typeArgument: Value = {
         args: vec![],
         typ: "typeArgument",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typeArgument ::= "DONTCARE"
     <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
@@ -1911,7 +1911,7 @@ typeArgument: Value = {
         args: vec![],
         typ: "typeArgument",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 typeArgumentList: Value = {
@@ -1922,7 +1922,7 @@ typeArgumentList: Value = {
         args: vec![],
         typ: "typeArgumentList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typeArgumentList ::= typeArgumentListNonEmpty
     typeArgumentListNonEmpty,
@@ -1939,7 +1939,7 @@ typeArgumentListNonEmpty: Value = {
             args: vec![targs, targ],
             typ: "typeArgumentList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Arguments
@@ -1955,7 +1955,7 @@ argument: Value = {
             args: vec![n, e],
             typ: "argument",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // argument ::= name "ASSIGN" "DONTCARE"
     <l:@L> <name:name> "ASSIGN" "DONTCARE" <r:@R> =>? make::case_shaped! {
@@ -1964,7 +1964,7 @@ argument: Value = {
             args: vec![name],
             typ: "argument",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // argument ::= "DONTCARE"
     <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
@@ -1973,7 +1973,7 @@ argument: Value = {
         args: vec![],
         typ: "argument",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 argumentListNonEmpty: Value = {
@@ -1987,7 +1987,7 @@ argumentListNonEmpty: Value = {
             args: vec![args, arg],
             typ: "argumentListNonEmpty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 argumentList: Value = {
@@ -1998,7 +1998,7 @@ argumentList: Value = {
         args: vec![],
         typ: "argumentList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // argumentList ::= argumentListNonEmpty
     <args:argumentListNonEmpty> => args,
@@ -2017,7 +2017,7 @@ lvalue: Value = {
             args: vec![lv, m],
             typ: "lvalue",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // lvalue ::= lvalue "L_BRACKET" expression "R_BRACKET"
     <l:@L> <lv:lvalue> "L_BRACKET" <i:expression> "R_BRACKET" <r:@R> =>? make::case_shaped! {
@@ -2026,7 +2026,7 @@ lvalue: Value = {
             args: vec![lv, i],
             typ: "lvalue",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // lvalue ::= lvalue "L_BRACKET" expression sliceop expression "R_BRACKET"
     <l:@L> <lv:lvalue> "L_BRACKET" <exp_l:expression> <s:sliceop> <exp_r:expression> "R_BRACKET"
@@ -2036,7 +2036,7 @@ lvalue: Value = {
             args: vec![lv, exp_l, s, exp_r],
             typ: "lvalue",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // lvalue ::= "L_PAREN" lvalue "R_PAREN"
     <l:@L> "L_PAREN" <lv:lvalue> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -2045,7 +2045,7 @@ lvalue: Value = {
             args: vec![lv],
             typ: "lvalue",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Statements
@@ -2060,7 +2060,7 @@ emptyStatement: Value = {
         args: vec![],
         typ: "emptyStatement",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Assignment statements
@@ -2073,7 +2073,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "PLUS_ASSIGN"
     <l:@L> "PLUS_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2082,7 +2082,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "PLUS_SAT_ASSIGN"
     <l:@L> "PLUS_SAT_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2091,7 +2091,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MINUS_ASSIGN"
     <l:@L> "MINUS_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2100,7 +2100,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MINUS_SAT_ASSIGN"
     <l:@L> "MINUS_SAT_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2109,7 +2109,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MUL_ASSIGN"
     <l:@L> "MUL_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2118,7 +2118,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "DIV_ASSIGN"
     <l:@L> "DIV_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2127,7 +2127,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MOD_ASSIGN"
     <l:@L> "MOD_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2136,7 +2136,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "SHL_ASSIGN"
     <l:@L> "SHL_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2145,7 +2145,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "SHR_ASSIGN"
     <l:@L> "SHR_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2154,7 +2154,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "BIT_AND_ASSIGN"
     <l:@L> "BIT_AND_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2163,7 +2163,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "BIT_XOR_ASSIGN"
     <l:@L> "BIT_XOR_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2172,7 +2172,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "BIT_OR_ASSIGN"
     <l:@L> "BIT_OR_ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -2181,7 +2181,7 @@ assignop: Value = {
         args: vec![],
         typ: "assignop",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 assignmentStatement: Value = {
@@ -2192,7 +2192,7 @@ assignmentStatement: Value = {
             args: vec![lv, o, e],
             typ: "assignmentStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Call statements
@@ -2205,7 +2205,7 @@ callStatement: Value = {
             args: vec![lv, args],
             typ: "callStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // callStatement ::= lvalue l_angle typeArgumentList r_angle "L_PAREN" argumentList "R_PAREN"
     //     "SEMICOLON"
@@ -2216,7 +2216,7 @@ callStatement: Value = {
             args: vec![lv, targs, args],
             typ: "callStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Direct application statements
@@ -2238,7 +2238,7 @@ directApplicationStatement: Value = {
             args: vec![t, args],
             typ: "directApplicationStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Return statements
@@ -2251,7 +2251,7 @@ returnStatement: Value = {
             args: vec![],
             typ: "returnStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // returnStatement ::= "RETURN" expression "SEMICOLON"
     <l:@L> "RETURN" <e:expression> "SEMICOLON" <r:@R> =>? make::case_shaped! {
@@ -2260,7 +2260,7 @@ returnStatement: Value = {
             args: vec![e],
             typ: "returnStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Exit statements
@@ -2273,7 +2273,7 @@ exitStatement: Value = {
             args: vec![],
             typ: "exitStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Block statements
@@ -2288,7 +2288,7 @@ blockStatement: Value = {
             args: vec![al, sl],
             typ: "blockStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Conditional statements
@@ -2306,7 +2306,7 @@ forInitStatement: Value = {
             args: vec![al, t, n, i],
             typ: "forInitStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // forInitStatement ::= lvalue "L_PAREN" argumentList "R_PAREN"
     <l:@L> <lv:lvalue> "L_PAREN" <args:argumentList> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -2315,7 +2315,7 @@ forInitStatement: Value = {
             args: vec![lv, args],
             typ: "forInitStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // forInitStatement ::= lvalue l_angle typeArgumentList r_angle "L_PAREN" argumentList "R_PAREN"
     <l:@L> <lv:lvalue> "L_ANGLE_ARGS" <targs:typeArgumentList> r_angle "L_PAREN"
@@ -2325,7 +2325,7 @@ forInitStatement: Value = {
             args: vec![lv, targs, args],
             typ: "forInitStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // forInitStatement ::= lvalue assignop expression
     <l:@L> <lv:lvalue> <o:assignop> <e:expression> <r:@R> =>? make::case_shaped! {
@@ -2334,7 +2334,7 @@ forInitStatement: Value = {
             args: vec![lv, o, e],
             typ: "forInitStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 forInitStatementListNonEmpty: Value = {
@@ -2348,7 +2348,7 @@ forInitStatementListNonEmpty: Value = {
             args: vec![sl, s],
             typ: "forInitStatementListNonEmpty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 #[inline]
@@ -2360,7 +2360,7 @@ forInitStatementList: Value = {
         args: vec![],
         typ: "forInitStatementList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // forInitStatementList ::= forInitStatementListNonEmpty
     <sl:forInitStatementListNonEmpty> => sl,
@@ -2382,7 +2382,7 @@ forUpdateStatementListNonEmpty: Value = {
             args: vec![sl, s],
             typ: "forUpdateStatementListNonEmpty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 #[inline]
@@ -2394,7 +2394,7 @@ forUpdateStatementList: Value = {
         args: vec![],
         typ: "forUpdateStatementList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // forUpdateStatementList ::= forUpdateStatementListNonEmpty
     <sl:forUpdateStatementListNonEmpty> => sl,
@@ -2411,7 +2411,7 @@ forCollectionExpression: Value = {
             args: vec![lo, hi],
             typ: "forCollectionExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // forStatement ::= annotationList "FOR" "L_PAREN" forInitStatementList
@@ -2431,7 +2431,7 @@ switchLabel: Value = {
         args: vec![],
         typ: "switchLabel",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // switchLabel ::= expressionNonBrace
     <e:expressionNonBrace> => e,
@@ -2446,7 +2446,7 @@ switchCase: Value = {
             args: vec![label, body],
             typ: "switchCase",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // switchCase ::= switchLabel "COLON"
     <l:@L> <label:switchLabel> plain_colon <r:@R> =>? make::case_shaped! {
@@ -2455,7 +2455,7 @@ switchCase: Value = {
             args: vec![label],
             typ: "switchCase",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 switchCaseList: Value = {
@@ -2466,7 +2466,7 @@ switchCaseList: Value = {
         args: vec![],
         typ: "switchCaseList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // switchCaseList ::= switchCaseList switchCase
     <l:@L> <cs:switchCaseList> <c:switchCase> <r:@R> =>? make::case_shaped! {
@@ -2475,7 +2475,7 @@ switchCaseList: Value = {
             args: vec![cs, c],
             typ: "switchCaseList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 switchStatement: Value = {
@@ -2487,7 +2487,7 @@ switchStatement: Value = {
             args: vec![e, cs],
             typ: "switchStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Break and continue statements
@@ -2500,7 +2500,7 @@ breakStatement: Value = {
             args: vec![],
             typ: "breakStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 continueStatement: Value = {
@@ -2511,7 +2511,7 @@ continueStatement: Value = {
             args: vec![],
             typ: "continueStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Statements
@@ -2573,7 +2573,7 @@ MatchedStatement: Value = {
             args: vec![condition, yes, no],
             typ: "conditionalStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 UnmatchedStatement: Value = {
@@ -2587,7 +2587,7 @@ UnmatchedStatement: Value = {
             args: vec![condition, yes],
             typ: "conditionalStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // UnmatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" MatchedStatement "ELSE"
     //     UnmatchedStatement
@@ -2598,7 +2598,7 @@ UnmatchedStatement: Value = {
             args: vec![condition, yes, no],
             typ: "conditionalStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 MatchedForStatement: Value = {
@@ -2612,7 +2612,7 @@ MatchedForStatement: Value = {
             args: vec![annotations, init, condition, update, body],
             typ: "forStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // MatchedForStatement ::= annotationList "FOR" "L_PAREN" typeRef name "IN"
     //     forCollectionExpression "R_PAREN" MatchedStatement
@@ -2623,7 +2623,7 @@ MatchedForStatement: Value = {
             args: vec![annotations, typ, name, collection, body],
             typ: "forStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // MatchedForStatement ::= annotationList "FOR" "L_PAREN" annotationListNonEmpty typeRef name
     //     "IN" forCollectionExpression "R_PAREN" MatchedStatement
@@ -2642,7 +2642,7 @@ MatchedForStatement: Value = {
             ],
             typ: "forStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 UnmatchedForStatement: Value = {
@@ -2656,7 +2656,7 @@ UnmatchedForStatement: Value = {
             args: vec![annotations, init, condition, update, body],
             typ: "forStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // UnmatchedForStatement ::= annotationList "FOR" "L_PAREN" typeRef name "IN"
     //     forCollectionExpression "R_PAREN" UnmatchedStatement
@@ -2667,7 +2667,7 @@ UnmatchedForStatement: Value = {
             args: vec![annotations, typ, name, collection, body],
             typ: "forStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // UnmatchedForStatement ::= annotationList "FOR" "L_PAREN" annotationListNonEmpty typeRef name
     //     "IN" forCollectionExpression "R_PAREN" UnmatchedStatement
@@ -2686,7 +2686,7 @@ UnmatchedForStatement: Value = {
             ],
             typ: "forStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Declarations
@@ -2700,7 +2700,7 @@ initialValue: Value = {
             args: vec![e],
             typ: "initializer",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 constantDeclaration: Value = {
@@ -2712,7 +2712,7 @@ constantDeclaration: Value = {
             args: vec![al, t, n, i],
             typ: "constantDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 #[inline]
@@ -2724,7 +2724,7 @@ initializerOpt: Value = {
         args: vec![],
         typ: "initializerOpt",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // initializerOpt ::= initialValue
     <i:initialValue> => i,
@@ -2740,7 +2740,7 @@ variableDeclaration: Value = {
             args: vec![al, t, n, i],
             typ: "variableDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
     }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -2763,7 +2763,7 @@ blockElementStatementList: Value = {
         args: vec![],
         typ: "blockElementStatementList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // blockElementStatementList ::= blockElementStatementList blockElementStatement
     <l:@L> <sl:blockElementStatementList> <s:blockElementStatement> <r:@R> =>? make::case_shaped! {
@@ -2772,7 +2772,7 @@ blockElementStatementList: Value = {
             args: vec![sl, s],
             typ: "blockElementStatementList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Function declarations
@@ -2786,7 +2786,7 @@ functionPrototype: Value = {
             args: vec![t, n, tpl, pl],
             typ: "functionPrototype",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 functionDeclaration: Value = {
@@ -2797,7 +2797,7 @@ functionDeclaration: Value = {
             args: vec![al, p, b],
             typ: "functionDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Action declarations
@@ -2811,7 +2811,7 @@ actionDeclaration: Value = {
             args: vec![al, n, pl, s],
             typ: "actionDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Instantiations
@@ -2823,7 +2823,7 @@ objectInitializer: Value = {
             args: vec![ds],
             typ: "objectInitializer",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // A type name may already carry expression-leading classification when this
@@ -2846,7 +2846,7 @@ instantiation: Value = {
             args: vec![al, t, args, n],
             typ: "instantiation",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // instantiation ::= annotationList instantiationTypeRef "L_PAREN" argumentList "R_PAREN" name
     //     objectInitializer "SEMICOLON"
@@ -2857,7 +2857,7 @@ instantiation: Value = {
             args: vec![al, t, args, n, i],
             typ: "instantiation",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 objectDeclaration: Value = {
@@ -2876,7 +2876,7 @@ objectDeclarationList: Value = {
         args: vec![],
         typ: "objectDeclarationList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // objectDeclarationList ::= objectDeclarationList objectDeclaration
     <l:@L> <ds:objectDeclarationList> <d:objectDeclaration> <r:@R> =>? make::case_shaped! {
@@ -2885,7 +2885,7 @@ objectDeclarationList: Value = {
             args: vec![ds, d],
             typ: "objectDeclarationList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Error declarations
@@ -2899,7 +2899,7 @@ errorDeclaration: Value = {
             args: vec![nl],
             typ: "errorDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
     }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -2914,7 +2914,7 @@ matchKindDeclaration: Value = {
             args: vec![nl, c],
             typ: "matchKindDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
     }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -2931,7 +2931,7 @@ enumTypeDeclaration: Value = {
             args: vec![al, n, nl, c],
             typ: "enumTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // enumTypeDeclaration ::= annotationList "ENUM" typeRef name "L_BRACE" namedExpressionList
     //     trailingCommaOpt "R_BRACE"
@@ -2942,7 +2942,7 @@ enumTypeDeclaration: Value = {
             args: vec![al, t, n, el, c],
             typ: "enumTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Struct, header, and union declarations
@@ -2955,7 +2955,7 @@ typeField: Value = {
             args: vec![al, t, n],
             typ: "typeField",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 typeFieldList: Value = {
@@ -2966,7 +2966,7 @@ typeFieldList: Value = {
         args: vec![],
         typ: "typeFieldList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typeFieldList ::= typeFieldList typeField
     <l:@L> <fl:typeFieldList> <f:typeField> <r:@R> =>? make::case_shaped! {
@@ -2975,7 +2975,7 @@ typeFieldList: Value = {
             args: vec![fl, f],
             typ: "typeFieldList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 structTypeDeclaration: Value = {
@@ -2988,7 +2988,7 @@ structTypeDeclaration: Value = {
             args: vec![al, n, tpl, fl],
             typ: "structTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 headerTypeDeclaration: Value = {
@@ -3001,7 +3001,7 @@ headerTypeDeclaration: Value = {
             args: vec![al, n, tpl, fl],
             typ: "headerTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 headerUnionTypeDeclaration: Value = {
@@ -3014,7 +3014,7 @@ headerUnionTypeDeclaration: Value = {
             args: vec![al, n, tpl, fl],
             typ: "headerUnionTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 derivedTypeDeclaration: Value = {
@@ -3054,7 +3054,7 @@ typedefDeclaration: Value = {
             args: vec![al, t, n],
             typ: "typedefDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typedefDeclaration ::= annotationList "TYPE" typeRef name "SEMICOLON"
     <l:@L> <al:annotationList> "TYPE" <t:typeRef> <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
@@ -3063,7 +3063,7 @@ typedefDeclaration: Value = {
             args: vec![al, t, n],
             typ: "typedefDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Extern declarations
@@ -3083,7 +3083,7 @@ externFunctionDeclaration: Value = {
             args: vec![al, p],
             typ: "externFunctionDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
     }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -3097,7 +3097,7 @@ constructorTypeIdentifier: Value = {
             args: vec![text],
             typ: "typeIdentifier",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // constructorTypeIdentifier ::= "NAME" "TYPENAME_EXPR"
     <l:@L> <text:"NAME"> "TYPENAME_EXPR" <r:@R> =>? make::case_shaped! {
@@ -3106,7 +3106,7 @@ constructorTypeIdentifier: Value = {
             args: vec![text],
             typ: "typeIdentifier",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 externConstructorPrototype: Value = {
@@ -3119,7 +3119,7 @@ externConstructorPrototype: Value = {
             args: vec![al, tid, pl],
             typ: "externConstructorPrototype",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 externMethodPrototype: Value = {
@@ -3138,7 +3138,7 @@ externMethodPrototype: Value = {
             args: vec![al, p],
             typ: "externMethodPrototype",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
     }) })().map_err(|error| ParseError::User { error }),
 
     // externMethodPrototype ::= annotationList "ABSTRACT" functionPrototype pop_scope "SEMICOLON"
@@ -3157,7 +3157,7 @@ externMethodPrototype: Value = {
                 args: vec![al, p],
                 typ: "externMethodPrototype",
                 span: ctx.location_span(l, r),
-            }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+            }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
         }) })().map_err(|error| ParseError::User { error }),
 };
 
@@ -3177,7 +3177,7 @@ externConstructorOrMethodPrototypeList: Value = {
             args: vec![],
             typ: "externConstructorOrMethodPrototypeList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // externConstructorOrMethodPrototypeList ::= externConstructorOrMethodPrototypeList
     //     externConstructorOrMethodPrototype
@@ -3188,7 +3188,7 @@ externConstructorOrMethodPrototypeList: Value = {
             args: vec![pl, p],
             typ: "externConstructorOrMethodPrototypeList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 externObjectDeclaration: Value = {
@@ -3202,7 +3202,7 @@ externObjectDeclaration: Value = {
                 args: vec![al, n, tpl, pl],
                 typ: "externObjectDeclaration",
                 span: ctx.location_span(l, r),
-            }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?;
+            }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?;
             declare::typ(
                 ctx,
                 &n,
@@ -3233,7 +3233,7 @@ selectCase: Value = {
             args: vec![k, n],
             typ: "selectCase",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 selectCaseList: Value = {
@@ -3244,7 +3244,7 @@ selectCaseList: Value = {
         args: vec![],
         typ: "selectCaseList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // selectCaseList ::= selectCaseList selectCase
     <l:@L> <cl:selectCaseList> <c:selectCase> <r:@R> =>? make::case_shaped! {
@@ -3253,7 +3253,7 @@ selectCaseList: Value = {
             args: vec![cl, c],
             typ: "selectCaseList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 selectExpression: Value = {
@@ -3265,14 +3265,14 @@ selectExpression: Value = {
         args: vec![],
         typ: "expressionList",
         span: ctx.location_span(empty_l, empty_l),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(empty_l, empty_l)))?;
+    }.map_err(|error| P4Error::new(ctx.location_span(empty_l, empty_l), error))?;
     make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "SELECT `( expressionList `) `{ selectCaseList `}",
         args: vec![empty, cl],
         typ: "selectExpression",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r)))?
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error))?
 }) })().map_err(|error| ParseError::User { error }),
 
     // selectExpression ::= "SELECT" "L_PAREN" expressionList "R_PAREN" "L_BRACE" selectCaseList
@@ -3284,7 +3284,7 @@ selectExpression: Value = {
             args: vec![el, cl],
             typ: "selectExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Transition statements
@@ -3296,7 +3296,7 @@ stateExpression: Value = {
             args: vec![n],
             typ: "stateExpression",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // stateExpression ::= selectExpression
     <e:selectExpression> => e,
@@ -3311,7 +3311,7 @@ transitionStatement: Value = {
         args: vec![],
         typ: "transitionStatement",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // transitionStatement ::= "TRANSITION" stateExpression
     <l:@L> "TRANSITION" <e:stateExpression> <r:@R> =>? make::case_shaped! {
@@ -3320,7 +3320,7 @@ transitionStatement: Value = {
             args: vec![e],
             typ: "transitionStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Value set declarations
@@ -3345,7 +3345,7 @@ valueSetDeclaration: Value = {
             args: vec![al, t, s, n],
             typ: "valueSetDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Parser type declarations
@@ -3359,7 +3359,7 @@ parserTypeDeclaration: Value = {
             args: vec![al, n, tpl, pl],
             typ: "parserTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Parser declarations
@@ -3382,7 +3382,7 @@ parserBlockElementStatementList: Value = {
             args: vec![],
             typ: "parserBlockElementStatementList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // parserBlockElementStatementList ::= parserBlockElementStatementList
     //     parserBlockElementStatement
@@ -3392,7 +3392,7 @@ parserBlockElementStatementList: Value = {
             args: vec![sl, s],
             typ: "parserBlockElementStatementList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 parserBlockStatement: Value = {
@@ -3404,7 +3404,7 @@ parserBlockStatement: Value = {
             args: vec![al, sl],
             typ: "parserBlockStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // parserConditionalStatement ::= "IF" "L_PAREN" expression "R_PAREN"
@@ -3448,7 +3448,7 @@ ParserMatchedStatement: Value = {
             args: vec![condition, yes, no],
             typ: "parserConditionalStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 ParserUnmatchedStatement: Value = {
@@ -3459,7 +3459,7 @@ ParserUnmatchedStatement: Value = {
             args: vec![condition, yes],
             typ: "parserConditionalStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ParserUnmatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" ParserMatchedStatement
     //     "ELSE" ParserUnmatchedStatement
@@ -3470,7 +3470,7 @@ ParserUnmatchedStatement: Value = {
             args: vec![condition, yes, no],
             typ: "parserConditionalStatement",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 parserState: Value = {
@@ -3484,7 +3484,7 @@ parserState: Value = {
             args: vec![al, n, sl, t],
             typ: "parserState",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 parserStateList: Value = {
@@ -3498,7 +3498,7 @@ parserStateList: Value = {
             args: vec![sl, s],
             typ: "parserStateList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 parserLocalDeclaration: Value = {
@@ -3523,7 +3523,7 @@ parserLocalDeclarationList: Value = {
         args: vec![],
         typ: "parserLocalDeclarationList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // parserLocalDeclarationList ::= parserLocalDeclarationList parserLocalDeclaration
     <l:@L> <dl:parserLocalDeclarationList> <d:parserLocalDeclaration> <r:@R> =>? make::case_shaped! {
@@ -3532,7 +3532,7 @@ parserLocalDeclarationList: Value = {
             args: vec![dl, d],
             typ: "parserLocalDeclarationList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 parserDeclaration: Value = {
@@ -3547,7 +3547,7 @@ parserDeclaration: Value = {
             args: vec![al, n, tpl, pl, cpl, dl, sl],
             typ: "parserDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Control statements and declarations
@@ -3563,7 +3563,7 @@ constOpt: Value = {
         args: vec![],
         typ: "constOpt",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // constOpt ::= "CONST"
     <l:@L> "CONST" <r:@R> =>? make::case_shaped! {
@@ -3572,7 +3572,7 @@ constOpt: Value = {
         args: vec![],
         typ: "constOpt",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Table key property
@@ -3585,7 +3585,7 @@ tableKey: Value = {
             args: vec![e, n, al],
             typ: "tableKey",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tableKeyList: Value = {
@@ -3596,7 +3596,7 @@ tableKeyList: Value = {
         args: vec![],
         typ: "tableKeyList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableKeyList ::= tableKeyList tableKey
     <l:@L> <kl:tableKeyList> <k:tableKey> <r:@R> =>? make::case_shaped! {
@@ -3605,7 +3605,7 @@ tableKeyList: Value = {
             args: vec![kl, k],
             typ: "tableKeyList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Table actions property
@@ -3621,7 +3621,7 @@ tableActionReference: Value = {
             args: vec![n, al],
             typ: "tableActionReference",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tableAction: Value = {
@@ -3632,7 +3632,7 @@ tableAction: Value = {
             args: vec![al, ac],
             typ: "tableAction",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tableActionList: Value = {
@@ -3643,7 +3643,7 @@ tableActionList: Value = {
         args: vec![],
         typ: "tableActionList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableActionList ::= tableActionList tableAction
     <l:@L> <acl:tableActionList> <ac:tableAction> <r:@R> =>? make::case_shaped! {
@@ -3652,7 +3652,7 @@ tableActionList: Value = {
             args: vec![acl, ac],
             typ: "tableActionList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Table entry property
@@ -3665,7 +3665,7 @@ tableEntryPriority: Value = {
             args: vec![int],
             typ: "tableEntryPriority",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableEntryPriority ::= "PRIORITY" "ASSIGN" "L_PAREN" expression "R_PAREN" "COLON"
     <l:@L> "PRIORITY" "ASSIGN" "L_PAREN" <e:expression> "R_PAREN" colon <r:@R> =>? make::case_shaped! {
@@ -3674,7 +3674,7 @@ tableEntryPriority: Value = {
             args: vec![e],
             typ: "tableEntryPriority",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tableEntry: Value = {
@@ -3687,7 +3687,7 @@ tableEntry: Value = {
             args: vec![c, p, k, ac, al],
             typ: "tableEntry",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableEntry ::= constOpt keysetExpression "COLON" tableActionReference annotationList
     //     "SEMICOLON"
@@ -3698,7 +3698,7 @@ tableEntry: Value = {
             args: vec![c, k, ac, al],
             typ: "tableEntry",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tableEntryList: Value = {
@@ -3709,7 +3709,7 @@ tableEntryList: Value = {
         args: vec![],
         typ: "tableEntryList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableEntryList ::= tableEntryList tableEntry
     <l:@L> <el:tableEntryList> <e:tableEntry> <r:@R> =>? make::case_shaped! {
@@ -3718,7 +3718,7 @@ tableEntryList: Value = {
             args: vec![el, e],
             typ: "tableEntryList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Table properties
@@ -3731,7 +3731,7 @@ tableProperty: Value = {
             args: vec![kl],
             typ: "tableProperty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableProperty ::= "ACTIONS" "ASSIGN" "L_BRACE" tableActionList "R_BRACE"
     <l:@L> "ACTIONS" "ASSIGN" "L_BRACE" <acl:tableActionList> "R_BRACE" <r:@R> =>? make::case_shaped! {
@@ -3740,7 +3740,7 @@ tableProperty: Value = {
             args: vec![acl],
             typ: "tableProperty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableProperty ::= annotationList constOpt "ENTRIES" "ASSIGN" "L_BRACE" tableEntryList
     //     "R_BRACE"
@@ -3751,7 +3751,7 @@ tableProperty: Value = {
             args: vec![al, c, el],
             typ: "tableProperty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableProperty ::= annotationList constOpt tableCustomName initialValue "SEMICOLON"
     <l:@L> <al:annotationList> <c:constOpt> <n:tableCustomName> <i:initialValue> "SEMICOLON"
@@ -3761,7 +3761,7 @@ tableProperty: Value = {
             args: vec![al, c, n, i],
             typ: "tableProperty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tablePropertyList: Value = {
@@ -3772,7 +3772,7 @@ tablePropertyList: Value = {
         args: vec![],
         typ: "tablePropertyList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tablePropertyList ::= tablePropertyList tableProperty
     <l:@L> <pl:tablePropertyList> <p:tableProperty> <r:@R> =>? make::case_shaped! {
@@ -3781,7 +3781,7 @@ tablePropertyList: Value = {
             args: vec![pl, p],
             typ: "tablePropertyList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 tableDeclaration: Value = {
@@ -3793,7 +3793,7 @@ tableDeclaration: Value = {
             args: vec![al, n, pl],
             typ: "tableDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Control type declarations
@@ -3807,7 +3807,7 @@ controlTypeDeclaration: Value = {
             args: vec![al, n, tpl, pl],
             typ: "controlTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Control declarations
@@ -3845,7 +3845,7 @@ controlLocalDeclarationList: Value = {
         args: vec![],
         typ: "controlLocalDeclarationList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // controlLocalDeclarationList ::= controlLocalDeclarationList controlLocalDeclaration
     <l:@L> <dl:controlLocalDeclarationList> <d:controlLocalDeclaration> <r:@R> =>? make::case_shaped! {
@@ -3854,7 +3854,7 @@ controlLocalDeclarationList: Value = {
             args: vec![dl, d],
             typ: "controlLocalDeclarationList",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 controlDeclaration: Value = {
@@ -3869,7 +3869,7 @@ controlDeclaration: Value = {
             args: vec![al, n, tpl, pl, cpl, dl, b],
             typ: "controlDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Package type declarations
@@ -3884,7 +3884,7 @@ packageTypeDeclaration: Value = {
             args: vec![al, n, tpl, pl],
             typ: "packageTypeDeclaration",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 // - Type declarations
@@ -3993,7 +3993,7 @@ annotationToken: Value = {
             args: vec![],
             typ: "annotationToken",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ABSTRACT"
     <l:@L> "ABSTRACT" <r:@R> =>? make::case_shaped! {
@@ -4002,7 +4002,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ACTION"
     <l:@L> "ACTION" <r:@R> =>? make::case_shaped! {
@@ -4011,7 +4011,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ACTIONS"
     <l:@L> "ACTIONS" <r:@R> =>? make::case_shaped! {
@@ -4020,7 +4020,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "APPLY"
     <l:@L> "APPLY" <r:@R> =>? make::case_shaped! {
@@ -4029,7 +4029,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BOOL"
     <l:@L> "BOOL" <r:@R> =>? make::case_shaped! {
@@ -4038,7 +4038,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT"
     <l:@L> "BIT" <r:@R> =>? make::case_shaped! {
@@ -4047,7 +4047,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BREAK"
     <l:@L> "BREAK" <r:@R> =>? make::case_shaped! {
@@ -4056,7 +4056,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "CONST"
     <l:@L> "CONST" <r:@R> =>? make::case_shaped! {
@@ -4065,7 +4065,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "CONTINUE"
     <l:@L> "CONTINUE" <r:@R> =>? make::case_shaped! {
@@ -4074,7 +4074,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "CONTROL"
     <l:@L> "CONTROL" <r:@R> =>? make::case_shaped! {
@@ -4083,7 +4083,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DEFAULT"
     <l:@L> "DEFAULT" <r:@R> =>? make::case_shaped! {
@@ -4092,7 +4092,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ELSE"
     <l:@L> "ELSE" <r:@R> =>? make::case_shaped! {
@@ -4101,7 +4101,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ENTRIES"
     <l:@L> "ENTRIES" <r:@R> =>? make::case_shaped! {
@@ -4110,7 +4110,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ENUM"
     <l:@L> "ENUM" <r:@R> =>? make::case_shaped! {
@@ -4119,7 +4119,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ERROR"
     <l:@L> "ERROR" <r:@R> =>? make::case_shaped! {
@@ -4128,7 +4128,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "EXIT"
     <l:@L> "EXIT" <r:@R> =>? make::case_shaped! {
@@ -4137,7 +4137,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "EXTERN"
     <l:@L> "EXTERN" <r:@R> =>? make::case_shaped! {
@@ -4146,7 +4146,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "FALSE"
     <l:@L> "FALSE" <r:@R> =>? make::case_shaped! {
@@ -4155,7 +4155,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "FOR"
     <l:@L> "FOR" <r:@R> =>? make::case_shaped! {
@@ -4164,7 +4164,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "HEADER"
     <l:@L> "HEADER" <r:@R> =>? make::case_shaped! {
@@ -4173,7 +4173,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "HEADER_UNION"
     <l:@L> "HEADER_UNION" <r:@R> =>? make::case_shaped! {
@@ -4182,7 +4182,7 @@ annotationToken: Value = {
             args: vec![],
             typ: "annotationToken",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "IF"
     <l:@L> "IF" <r:@R> =>? make::case_shaped! {
@@ -4191,7 +4191,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "IN"
     <l:@L> "IN" <r:@R> =>? make::case_shaped! {
@@ -4200,7 +4200,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "INOUT"
     <l:@L> "INOUT" <r:@R> =>? make::case_shaped! {
@@ -4209,7 +4209,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "INT"
     <l:@L> "INT" <r:@R> =>? make::case_shaped! {
@@ -4218,7 +4218,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "KEY"
     <l:@L> "KEY" <r:@R> =>? make::case_shaped! {
@@ -4227,7 +4227,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MATCH_KIND"
     <l:@L> "MATCH_KIND" <r:@R> =>? make::case_shaped! {
@@ -4236,7 +4236,7 @@ annotationToken: Value = {
             args: vec![],
             typ: "annotationToken",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TYPE"
     <l:@L> "TYPE" <r:@R> =>? make::case_shaped! {
@@ -4245,7 +4245,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "OUT"
     <l:@L> "OUT" <r:@R> =>? make::case_shaped! {
@@ -4254,7 +4254,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PARSER"
     <l:@L> "PARSER" <r:@R> =>? make::case_shaped! {
@@ -4263,7 +4263,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PACKAGE"
     <l:@L> "PACKAGE" <r:@R> =>? make::case_shaped! {
@@ -4272,7 +4272,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PRAGMA"
     <l:@L> "PRAGMA" <r:@R> =>? make::case_shaped! {
@@ -4281,7 +4281,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "RETURN"
     <l:@L> "RETURN" <r:@R> =>? make::case_shaped! {
@@ -4290,7 +4290,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SELECT"
     <l:@L> "SELECT" <r:@R> =>? make::case_shaped! {
@@ -4299,7 +4299,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "STATE"
     <l:@L> "STATE" <r:@R> =>? make::case_shaped! {
@@ -4308,7 +4308,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "STRING"
     <l:@L> "STRING" <r:@R> =>? make::case_shaped! {
@@ -4317,7 +4317,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "STRUCT"
     <l:@L> "STRUCT" <r:@R> =>? make::case_shaped! {
@@ -4326,7 +4326,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SWITCH"
     <l:@L> "SWITCH" <r:@R> =>? make::case_shaped! {
@@ -4335,7 +4335,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TABLE"
     <l:@L> "TABLE" <r:@R> =>? make::case_shaped! {
@@ -4344,7 +4344,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "THIS"
     <l:@L> "THIS" <r:@R> =>? make::case_shaped! {
@@ -4353,7 +4353,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TRANSITION"
     <l:@L> "TRANSITION" <r:@R> =>? make::case_shaped! {
@@ -4362,7 +4362,7 @@ annotationToken: Value = {
             args: vec![],
             typ: "annotationToken",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TRUE"
     <l:@L> "TRUE" <r:@R> =>? make::case_shaped! {
@@ -4371,7 +4371,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TUPLE"
     <l:@L> "TUPLE" <r:@R> =>? make::case_shaped! {
@@ -4380,7 +4380,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TYPEDEF"
     <l:@L> "TYPEDEF" <r:@R> =>? make::case_shaped! {
@@ -4389,7 +4389,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "VARBIT"
     <l:@L> "VARBIT" <r:@R> =>? make::case_shaped! {
@@ -4398,7 +4398,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "VALUE_SET"
     <l:@L> "VALUE_SET" <r:@R> =>? make::case_shaped! {
@@ -4407,7 +4407,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "LIST"
     <l:@L> "LIST" <r:@R> =>? make::case_shaped! {
@@ -4416,7 +4416,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "VOID"
     <l:@L> "VOID" <r:@R> =>? make::case_shaped! {
@@ -4425,7 +4425,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DONTCARE"
     <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
@@ -4434,7 +4434,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= identifier
     <id:identifier> => id,
@@ -4458,7 +4458,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "RANGE"
     <l:@L> "RANGE" <r:@R> =>? make::case_shaped! {
@@ -4467,7 +4467,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SHL"
     <l:@L> "SHL" <r:@R> =>? make::case_shaped! {
@@ -4476,7 +4476,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "AND"
     <l:@L> "AND" <r:@R> =>? make::case_shaped! {
@@ -4485,7 +4485,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "OR"
     <l:@L> "OR" <r:@R> =>? make::case_shaped! {
@@ -4494,7 +4494,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "EQ"
     <l:@L> "EQ" <r:@R> =>? make::case_shaped! {
@@ -4503,7 +4503,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "NE"
     <l:@L> "NE" <r:@R> =>? make::case_shaped! {
@@ -4512,7 +4512,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "GE"
     <l:@L> "GE" <r:@R> =>? make::case_shaped! {
@@ -4521,7 +4521,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "LE"
     <l:@L> "LE" <r:@R> =>? make::case_shaped! {
@@ -4530,7 +4530,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PLUSPLUS"
     <l:@L> "PLUSPLUS" <r:@R> =>? make::case_shaped! {
@@ -4539,7 +4539,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PLUS"
     <l:@L> "PLUS" <r:@R> =>? make::case_shaped! {
@@ -4548,7 +4548,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PLUS_SAT"
     <l:@L> "PLUS_SAT" <r:@R> =>? make::case_shaped! {
@@ -4557,7 +4557,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MINUS"
     <l:@L> "MINUS" <r:@R> =>? make::case_shaped! {
@@ -4566,7 +4566,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MINUS_SAT"
     <l:@L> "MINUS_SAT" <r:@R> =>? make::case_shaped! {
@@ -4575,7 +4575,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MUL"
     <l:@L> "MUL" <r:@R> =>? make::case_shaped! {
@@ -4584,7 +4584,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DIV"
     <l:@L> "DIV" <r:@R> =>? make::case_shaped! {
@@ -4593,7 +4593,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MOD"
     <l:@L> "MOD" <r:@R> =>? make::case_shaped! {
@@ -4602,7 +4602,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT_OR"
     <l:@L> "BIT_OR" <r:@R> =>? make::case_shaped! {
@@ -4611,7 +4611,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT_AND"
     <l:@L> "BIT_AND" <r:@R> =>? make::case_shaped! {
@@ -4620,7 +4620,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT_XOR"
     <l:@L> "BIT_XOR" <r:@R> =>? make::case_shaped! {
@@ -4629,7 +4629,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "COMPLEMENT"
     <l:@L> "COMPLEMENT" <r:@R> =>? make::case_shaped! {
@@ -4638,7 +4638,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "L_BRACKET"
     <l:@L> "L_BRACKET" <r:@R> =>? make::case_shaped! {
@@ -4647,7 +4647,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "R_BRACKET"
     <l:@L> "R_BRACKET" <r:@R> =>? make::case_shaped! {
@@ -4656,7 +4656,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "L_BRACE"
     <l:@L> "L_BRACE" <r:@R> =>? make::case_shaped! {
@@ -4665,7 +4665,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "R_BRACE"
     <l:@L> "R_BRACE" <r:@R> =>? make::case_shaped! {
@@ -4674,7 +4674,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "L_ANGLE"
     <l:@L> "L_ANGLE" <r:@R> =>? make::case_shaped! {
@@ -4683,7 +4683,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // Rust lexer adapter for annotationToken ::= "L_ANGLE"
     <l:@L> "L_ANGLE_ARGS" <r:@R> =>? make::case_shaped! {
@@ -4692,7 +4692,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "R_ANGLE"
     <l:@L> "R_ANGLE" <r:@R> =>? make::case_shaped! {
@@ -4701,7 +4701,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "NOT"
     <l:@L> "NOT" <r:@R> =>? make::case_shaped! {
@@ -4710,7 +4710,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "COLON"
     <l:@L> colon <r:@R> =>? make::case_shaped! {
@@ -4719,7 +4719,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "COMMA"
     <l:@L> "COMMA" <r:@R> =>? make::case_shaped! {
@@ -4728,7 +4728,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // Rust lexer adapter for annotationToken ::= "COMMA"
     <l:@L> "TRAILING_COMMA" <r:@R> =>? make::case_shaped! {
@@ -4737,7 +4737,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "QUESTION"
     <l:@L> "QUESTION" <r:@R> =>? make::case_shaped! {
@@ -4746,7 +4746,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DOT"
     <l:@L> "DOT" <r:@R> =>? make::case_shaped! {
@@ -4755,7 +4755,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ASSIGN"
     <l:@L> "ASSIGN" <r:@R> =>? make::case_shaped! {
@@ -4764,7 +4764,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SEMICOLON"
     <l:@L> "SEMICOLON" <r:@R> =>? make::case_shaped! {
@@ -4773,7 +4773,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "AT"
     <l:@L> "AT" <r:@R> =>? make::case_shaped! {
@@ -4782,7 +4782,7 @@ annotationToken: Value = {
         args: vec![],
         typ: "annotationToken",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 annotationBody: Value = {
@@ -4793,7 +4793,7 @@ annotationBody: Value = {
         args: vec![],
         typ: "annotationBody",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationBody ::= annotationBody "L_PAREN" annotationBody "R_PAREN"
     <l:@L> <ab:annotationBody> "L_PAREN" <ab_in:annotationBody> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -4802,7 +4802,7 @@ annotationBody: Value = {
             args: vec![ab, ab_in],
             typ: "annotationBody",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationBody ::= annotationBody annotationToken
     <l:@L> <ab:annotationBody> <atoken:annotationToken> <r:@R> =>? make::case_shaped! {
@@ -4811,7 +4811,7 @@ annotationBody: Value = {
             args: vec![ab, atoken],
             typ: "annotationBody",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 structuredAnnotationBody: Value = {
@@ -4822,7 +4822,7 @@ structuredAnnotationBody: Value = {
             args: vec![e, c],
             typ: "structuredAnnotationBody",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 annotation: Value = {
@@ -4833,7 +4833,7 @@ annotation: Value = {
             args: vec![name],
             typ: "annotation",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotation ::= "AT" name "L_PAREN" annotationBody "R_PAREN"
     <l:@L> "AT" <name:name> "L_PAREN" <body:annotationBody> "R_PAREN" <r:@R> =>? make::case_shaped! {
@@ -4842,7 +4842,7 @@ annotation: Value = {
             args: vec![name, body],
             typ: "annotation",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotation ::= "AT" name "L_BRACKET" structuredAnnotationBody "R_BRACKET"
     <l:@L> "AT" <name:name> "L_BRACKET" <body:structuredAnnotationBody> "R_BRACKET" <r:@R> =>? make::case_shaped! {
@@ -4851,7 +4851,7 @@ annotation: Value = {
             args: vec![name, body],
             typ: "annotation",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotation ::= "PRAGMA" name annotationBody "PRAGMA_END"
     <l:@L> "PRAGMA" <name:name> <body:annotationBody> "PRAGMA_END" <r:@R> =>? make::case_shaped! {
@@ -4860,7 +4860,7 @@ annotation: Value = {
             args: vec![name, body],
             typ: "annotation",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 annotationListNonEmpty: Value = {
@@ -4874,7 +4874,7 @@ annotationListNonEmpty: Value = {
             args: vec![al, a],
             typ: "annotationListNonEmpty",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 #[inline]
@@ -4886,7 +4886,7 @@ annotationList: Value = {
         args: vec![],
         typ: "annotationList",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationList ::= annotationListNonEmpty
     <al:annotationListNonEmpty> => al,
@@ -4902,7 +4902,7 @@ declarationList: Value = {
         args: vec![],
         typ: "p4program",
         span: ctx.location_span(l, r),
-    }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+    }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // declarationList ::= declarationList declaration
     <l:@L> <ds:declarationList> <d:declaration> <r:@R> =>? make::case_shaped! {
@@ -4911,7 +4911,7 @@ declarationList: Value = {
             args: vec![ds, d],
             typ: "p4program",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // declarationList ::= declarationList "SEMICOLON"
     <l:@L> <ds:declarationList> "SEMICOLON" <r:@R> =>? make::case_shaped! {
@@ -4920,7 +4920,7 @@ declarationList: Value = {
             args: vec![ds],
             typ: "p4program",
             span: ctx.location_span(l, r),
-        }.map_err(|error| P4Error::new(error, ctx.location_span(l, r))).map_err(|error| ParseError::User { error }),
+        }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 };
 
 pub p4program: Value = {

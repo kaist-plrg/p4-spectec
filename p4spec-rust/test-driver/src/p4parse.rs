@@ -24,10 +24,12 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
     let program = match parse_file(&mut arena, includes, path) {
         Ok(program) => program,
         Err(error) => match error {
-            P4Error::Syntax(_) => {
+            P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
                 return Ok(Outcome::ParseFail);
             }
-            _ => return Err(Error::Invalid(format!("{}: {error}", path.display()))),
+            _ => {
+                return Err(Error::Invalid(format!("{}: {}", path.display(), error.into_report())));
+            }
         },
     };
     let text = unparser
@@ -36,10 +38,12 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
     let program_roundtrip = match parse_string(&mut arena, path, &text) {
         Ok(program) => program,
         Err(error) => match error {
-            P4Error::Syntax(_) => {
+            P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
                 return Ok(Outcome::ReparseFail);
             }
-            _ => return Err(Error::Invalid(format!("{}: {error}", path.display()))),
+            _ => {
+                return Err(Error::Invalid(format!("{}: {}", path.display(), error.into_report())));
+            }
         },
     };
     // Canonical bodies ignore source spans and type notes, like IL value equality

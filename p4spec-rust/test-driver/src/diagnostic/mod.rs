@@ -155,5 +155,5 @@ fn run_parse() -> Result<()> {
 
 /// Routes source execution and input-transport cases through their real owners.
 fn run_interp(name: &str) -> Result<Vec<Report>> {
-    if name.ends_with("-syntax-diagnostic") { syntax::run(name) } else { interp::run(name) }
+    if name == "p4-syntax" { syntax::run(name) } else { interp::run(name) }
 }

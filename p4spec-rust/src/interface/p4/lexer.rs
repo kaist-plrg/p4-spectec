@@ -270,7 +270,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
 
     /// An error spanning from `pos_l` to here.
     fn error(&self, kind: LexErrorKind, pos_l: Position) -> P4Error {
-        P4Error::new(kind, self.span_from(pos_l))
+        P4Error::new(self.span_from(pos_l), kind)
     }
 
     /// Consumes one character, tracking line and column.
@@ -617,7 +617,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                     None => {
                         match make::text(&mut self.ctx.arena_mut(), text.to_owned(), span.clone()) {
                             Ok(value) => Token::Name(value),
-                            Err(error) => return Some(Err(P4Error::new(error, span))),
+                            Err(error) => return Some(Err(P4Error::new(span, error))),
                         }
                     }
                 };
@@ -638,7 +638,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             let span = self.span_from(pos_l);
             let value = match make::text(&mut self.ctx.arena_mut(), text, span.clone()) {
                 Ok(value) => value,
-                Err(error) => return Some(Err(P4Error::new(error, span))),
+                Err(error) => return Some(Err(P4Error::new(span, error))),
             };
             let token = Token::UnexpectedToken(value);
             return Some(Ok(phrase!(node: token, span: span)));

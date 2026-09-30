@@ -20,7 +20,7 @@ use crate::{
 
 use super::{
     context::{Context, Location},
-    error::{P4Error, P4ErrorKind},
+    error::P4Error,
     lexer::{Lexer, Token},
     parser::p4programParser,
     preprocessor::preprocess,
@@ -67,7 +67,7 @@ fn translate_lalrpop_error(ctx: &Context, error: ParseError<Location, Token, P4E
         // Lexer errors pass through unchanged
         ParseError::User { error } => return error,
     };
-    P4Error::new(P4ErrorKind::Syntax, span)
+    P4Error::new(span, super::error::P4SyntaxError::GrammarInvalid)
 }
 
 // - Source strings

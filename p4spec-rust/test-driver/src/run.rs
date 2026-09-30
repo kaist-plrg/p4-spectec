@@ -6,7 +6,7 @@ use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 use p4spec_rust::{
     interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
-    runner::{self, BuiltinInterface, Config, Interpreter, ProgramError, Runner},
+    runner::{self, BuiltinInterface, Config, Interpreter, Runner},
     sim_plugin::dummy::Dummy,
 };
 use std::{
@@ -134,7 +134,8 @@ where
         let (sender, receiver) = mpsc::sync_channel(2);
         scope.spawn(move || {
             for path in paths_preprocess {
-                let source = preprocess(&includes, &path).map_err(|error| error.to_string());
+                let source =
+                    preprocess(&includes, &path).map_err(|error| error.into_report().to_string());
                 if sender.send(source).is_err() {
                     break;
                 }
@@ -162,17 +163,20 @@ where
                                 path.display()
                             ))
                         })?;
-                    let result = runner.parse_and_eval_program(suite.id_relation, |arena| {
-                        parse_string(arena, path, &source)
-                    });
-                    let outcome = match result {
-                        Ok(_) => Outcome::Pass,
-                        Err(ProgramError::Parse(P4Error::Syntax(_)))
-                        | Err(ProgramError::Runtime(_)) => Outcome::Fail,
-                        Err(ProgramError::Parse(error)) => {
+                    let outcome = match parse_string(runner.arena_mut(), path, &source) {
+                        Ok(program) => match runner.eval_program(suite.id_relation, program) {
+                            Ok(_) => Outcome::Pass,
+                            Err(_) => Outcome::Fail,
+                        },
+                        Err(P4Error {
+                            kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_),
+                            ..
+                        }) => Outcome::Fail,
+                        Err(error) => {
                             return Err(Error::Invalid(format!(
-                                "{}: test execution error: {error}",
-                                path.display()
+                                "{}: test execution error: {}",
+                                path.display(),
+                                error.into_report()
                             )));
                         }
                     };
