@@ -1,39 +1,17 @@
-//! Typed STF lexer, parser, and file input failures
+//! Diagnostics for STF lexer, parser, and file input failures
 //!
-//! Lexer and parser checks retain their spans and diagnostic codes.
-//! Reports are constructed at the diagnostic output boundary.
+//! Constructors retain the failure code and source span directly in a report.
+//! Named file-only spans identify unreadable inputs without source occurrences.
 
 use std::io;
-
-use thiserror::Error;
 
 use crate::{
     diagnostic::{Diagnostic, Label, Report, Severity},
     lang::common::source::Span,
 };
 
-#[derive(Debug, Error)]
-/// A kind of STF lexing or parsing failure.
-pub enum StfErrorKind {
-    #[error("invalid character {0:?}")]
-    CharacterInvalid(char),
-    #[error("unterminated quoted identifier")]
-    QuotedIdentifierUnterminated,
-    #[error("integer priority is out of range: {0}")]
-    PriorityOutOfBounds(String),
-    #[error("invalid numeric literal: {0}")]
-    NumberInvalid(String),
-    #[error("unexpected end of input")]
-    InputIncomplete,
-    #[error("unexpected token")]
-    TokenUnexpected,
-    #[error("extra token")]
-    TokenExtra,
-    #[error("invalid token")]
-    TokenInvalid,
-    #[error(transparent)]
-    Io(#[from] io::Error),
-}
+/// A diagnostic produced while reading or parsing STF input.
+pub type StfError = Box<Report>;
 
 const CHARACTER_INVALID: &str = "stf/character-invalid";
 const QUOTED_IDENTIFIER_INCOMPLETE: &str = "stf/quoted-identifier-incomplete";
@@ -45,48 +23,67 @@ const TOKEN_EXTRA: &str = "stf/token-extra";
 const TOKEN_INVALID: &str = "stf/token-invalid";
 const INPUT_UNREADABLE: &str = "stf/input-unreadable";
 
-/// A local STF cause with its source location.
-#[derive(Debug, Error)]
-#[error("{kind}")]
-pub struct StfError {
-    pub span: Span,
-    pub kind: StfErrorKind,
+/// Builds a cause while retaining named file-only spans.
+fn diagnostic(span: &Span, code: &str, message: impl Into<String>) -> StfError {
+    let labels = if *span == Span::default() { Vec::new() } else { vec![Label::primary(span, "")] };
+    Box::new(
+        Diagnostic::new(
+            "stf",
+            Severity::Error,
+            Some(code.to_owned()),
+            message.into(),
+            labels,
+            Vec::new(),
+        )
+        .into(),
+    )
 }
 
-impl StfError {
-    /// Retains a frontend failure and its span.
-    pub fn new(span: Span, kind: impl Into<StfErrorKind>) -> Self {
-        Self { span, kind: kind.into() }
-    }
+/// Reports a character outside the STF token vocabulary.
+pub(crate) fn character_invalid(span: &Span, character: char) -> StfError {
+    diagnostic(span, CHARACTER_INVALID, format!("invalid character {character:?}"))
+}
 
-    /// Converts a frontend failure at a diagnostic output boundary.
-    pub fn into_report(self) -> Box<Report> {
-        let Self { span, kind } = self;
-        // Select the stable check code while retaining the local failure message
-        let code = match &kind {
-            StfErrorKind::CharacterInvalid(_) => CHARACTER_INVALID,
-            StfErrorKind::QuotedIdentifierUnterminated => QUOTED_IDENTIFIER_INCOMPLETE,
-            StfErrorKind::PriorityOutOfBounds(_) => PRIORITY_OUT_OF_BOUNDS,
-            StfErrorKind::NumberInvalid(_) => NUMBER_INVALID,
-            StfErrorKind::InputIncomplete => INPUT_INCOMPLETE,
-            StfErrorKind::TokenUnexpected => TOKEN_UNEXPECTED,
-            StfErrorKind::TokenExtra => TOKEN_EXTRA,
-            StfErrorKind::TokenInvalid => TOKEN_INVALID,
-            StfErrorKind::Io(_) => INPUT_UNREADABLE,
-        };
-        // Retain named file-only spans without inventing a source occurrence
-        let labels =
-            if span == Span::default() { Vec::new() } else { vec![Label::primary(&span, "")] };
-        Box::new(
-            Diagnostic::new(
-                "stf",
-                Severity::Error,
-                Some(code.to_owned()),
-                kind.to_string(),
-                labels,
-                Vec::new(),
-            )
-            .into(),
-        )
-    }
+/// Reports a quoted identifier without its closing quote.
+pub(crate) fn quoted_identifier_incomplete(span: &Span) -> StfError {
+    diagnostic(span, QUOTED_IDENTIFIER_INCOMPLETE, "unterminated quoted identifier")
+}
+
+/// Reports a priority outside the supported integer range.
+pub(crate) fn priority_out_of_bounds(span: &Span, spelling: &str) -> StfError {
+    diagnostic(
+        span,
+        PRIORITY_OUT_OF_BOUNDS,
+        format!("integer priority is out of range: {spelling}"),
+    )
+}
+
+/// Reports digits that do not form a numeric literal.
+pub(crate) fn number_invalid(span: &Span, spelling: &str) -> StfError {
+    diagnostic(span, NUMBER_INVALID, format!("invalid numeric literal: {spelling}"))
+}
+
+/// Reports input ending before the grammar accepts it.
+pub(crate) fn input_incomplete(span: &Span) -> StfError {
+    diagnostic(span, INPUT_INCOMPLETE, "unexpected end of input")
+}
+
+/// Reports a token that the current grammar state does not accept.
+pub(crate) fn token_unexpected(span: &Span) -> StfError {
+    diagnostic(span, TOKEN_UNEXPECTED, "unexpected token")
+}
+
+/// Reports a token after the grammar has accepted the input.
+pub(crate) fn token_extra(span: &Span) -> StfError {
+    diagnostic(span, TOKEN_EXTRA, "extra token")
+}
+
+/// Reports an invalid token from the parser.
+pub(crate) fn token_invalid(span: &Span) -> StfError {
+    diagnostic(span, TOKEN_INVALID, "invalid token")
+}
+
+/// Reports a failure to read the input file.
+pub(crate) fn input_unreadable(span: &Span, error: &io::Error) -> StfError {
+    diagnostic(span, INPUT_UNREADABLE, error.to_string())
 }

@@ -714,7 +714,7 @@ where
     Interp: Interpreter<Iface, Arch>,
 {
     let mut run = init_pipe(runner, includes, path_p4)?;
-    let stmts = stf::parse::parse_file(path_stf).map_err(stf::error::StfError::into_report)?;
+    let stmts = stf::parse::parse_file(path_stf)?;
     for stmt in &stmts {
         if let Some(tx) = run_stf_stmt(runner, &mut run, stmt)? {
             on_match(&tx);

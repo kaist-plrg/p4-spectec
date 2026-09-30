@@ -13,7 +13,7 @@ use crate::{
     phrase,
 };
 
-use super::error::{StfError, StfErrorKind};
+use super::error::{self, StfError};
 
 // == Tokens
 
@@ -160,12 +160,6 @@ impl<'source> Lexer<'source> {
         &self.source[start..self.index]
     }
 
-    /// Builds an error spanning from `pos_l` to the cursor.
-    fn error(&self, kind: StfErrorKind, pos_l: Position) -> StfError {
-        let span = self.span_from(pos_l);
-        StfError::new(span, kind)
-    }
-
     // - Layout
 
     /// Skips layout; a newline in packet-data mode returns to command mode.
@@ -236,8 +230,7 @@ impl<'source> Lexer<'source> {
         }
 
         self.bump();
-        let error = StfErrorKind::CharacterInvalid(character);
-        Err(self.error(error, pos_l))
+        Err(error::character_invalid(&self.span_from(pos_l), character))
     }
 
     /// Lexes a single punctuation token, if any.
@@ -272,10 +265,7 @@ impl<'source> Lexer<'source> {
             ('<', true) => Ok(Token::Le),
             ('>', false) => Ok(Token::Gt),
             ('>', true) => Ok(Token::Ge),
-            _ => {
-                let error = StfErrorKind::CharacterInvalid(character);
-                Err(self.error(error, pos_l))
-            }
+            _ => Err(error::character_invalid(&self.span_from(pos_l), character)),
         }
     }
 
@@ -285,8 +275,7 @@ impl<'source> Lexer<'source> {
         let start = self.index;
         self.take_while(|character| character != '"' && character != '\n');
         if self.peek() != Some('"') {
-            let error = StfErrorKind::QuotedIdentifierUnterminated;
-            return Err(self.error(error, pos_l));
+            return Err(error::quoted_identifier_incomplete(&self.span_from(pos_l)));
         }
         let id = self.source[start..self.index].to_owned();
         self.bump();
@@ -310,8 +299,7 @@ impl<'source> Lexer<'source> {
             spelling.chars().all(|digit| digit.is_ascii_digit())
         };
         if !valid {
-            let error = StfErrorKind::NumberInvalid(spelling.to_owned());
-            return Err(self.error(error, pos_l));
+            return Err(error::number_invalid(&self.span_from(pos_l), spelling));
         }
 
         // A hex spelling with `*` is ternary, otherwise plain hex
@@ -404,8 +392,7 @@ impl<'source> Lexer<'source> {
             return Ok(token);
         }
         self.bump();
-        let error = StfErrorKind::CharacterInvalid(character);
-        Err(self.error(error, pos_l))
+        Err(error::character_invalid(&self.span_from(pos_l), character))
     }
 }
 
