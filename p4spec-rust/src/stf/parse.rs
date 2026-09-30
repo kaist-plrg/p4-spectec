@@ -87,7 +87,7 @@ fn translate_lalrpop_error(
         }
         ParseError::User { error } => return error,
     };
-    StfError::new(kind, span)
+    StfError::new(span, kind)
 }
 
 /// Parses an add priority, rejecting values above the half-range cap.
@@ -97,7 +97,7 @@ pub(crate) fn parse_priority(spelling: String, span: Span) -> Result<i64, StfErr
         Some(priority) => Ok(priority),
         None => {
             let kind = StfErrorKind::PriorityOutOfBounds(spelling);
-            Err(StfError::new(kind, span))
+            Err(StfError::new(span, kind))
         }
     }
 }
@@ -121,7 +121,7 @@ pub fn parse_file(path: impl AsRef<Path>) -> Result<Program, StfError> {
     let file = Rc::<str>::from(path.to_string_lossy().into_owned());
     let source = fs::read_to_string(path).map_err(|error| {
         let position = Position::new(Rc::clone(&file), 0, 0);
-        StfError::new(StfErrorKind::Io(error), Span::new(position.clone(), position))
+        StfError::new(Span::new(position.clone(), position), StfErrorKind::Io(error))
     })?;
     parse_str(file, &source)
 }

@@ -163,7 +163,7 @@ impl<'source> Lexer<'source> {
     /// Builds an error spanning from `pos_l` to the cursor.
     fn error(&self, kind: StfErrorKind, pos_l: Position) -> StfError {
         let span = self.span_from(pos_l);
-        StfError::new(kind, span)
+        StfError::new(span, kind)
     }
 
     // - Layout

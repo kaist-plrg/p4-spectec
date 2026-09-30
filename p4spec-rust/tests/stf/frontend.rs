@@ -1,3 +1,4 @@
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::lang::traits::print::Print;
 use p4spec_rust::stf::{
     ast::{
@@ -6,7 +7,6 @@ use p4spec_rust::stf::{
     },
     r#match, parse,
 };
-use p4spec_rust::{diagnostic::ReportKind, stf::error::StfError};
 use std::path::{Path, PathBuf};
 
 #[test]
@@ -87,7 +87,7 @@ fn test_parses_packet_wildcards_and_comments() {
 #[test]
 fn test_reports_filename_line_and_column() {
     let error = parse::parse_str("bad.stf", "packet port nope\n").unwrap_err();
-    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    let ReportKind::Cause(diagnostic) = &error.into_report().kind else { panic!("expected cause") };
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "bad.stf");
     assert_eq!(diagnostic.labels[0].span.left.line, 1);
 }
@@ -98,8 +98,8 @@ fn test_rejects_priorities_outside_the_ocaml_integer_range() {
 
     let error = parse::parse_str("priority.stf", source).expect_err("priority overflow");
 
-    assert!(matches!(error, StfError::Syntax(_)));
-    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    assert!(!matches!(error.kind, p4spec_rust::stf::error::StfErrorKind::Io(_)));
+    let ReportKind::Cause(diagnostic) = &error.into_report().kind else { panic!("expected cause") };
     assert_eq!(diagnostic.code.as_deref(), Some("stf/priority-out-of-bounds"));
 }
 
@@ -108,8 +108,10 @@ fn test_rejects_digits_outside_the_selected_radix() {
     for num in ["0b102", "12b", "0x0g"] {
         let source = format!("register_read r {num}\n");
         let error = parse::parse_str("number.stf", &source).expect_err(num);
-        assert!(matches!(error, StfError::Syntax(_)));
-        let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+        assert!(!matches!(error.kind, p4spec_rust::stf::error::StfErrorKind::Io(_)));
+        let ReportKind::Cause(diagnostic) = &error.into_report().kind else {
+            panic!("expected cause")
+        };
         assert_eq!(diagnostic.code.as_deref(), Some("stf/number-invalid"));
         assert!(diagnostic.message.ends_with(num));
         assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "number.stf");
@@ -197,14 +199,19 @@ fn collect_stf(directory: &Path, files: &mut Vec<PathBuf>) {
 #[test]
 fn test_numeric_summary_retains_diagnostic_code() {
     let error = parse::parse_str("number.stf", "register_read r 0b102\n").unwrap_err();
-    assert!(error.to_string().starts_with("error[stf/number-invalid]:"));
+    assert!(
+        error
+            .into_report()
+            .to_string()
+            .starts_with("error[stf/number-invalid]:")
+    );
 }
 
 #[test]
 fn test_missing_file_is_input_failure_without_source_occurrence() {
     let error = parse::parse_file("/definitely/missing/p4spec-input.stf").unwrap_err();
-    assert!(matches!(error, StfError::Input(_)));
-    let ReportKind::Cause(diagnostic) = &error.report().kind else { panic!("expected cause") };
+    assert!(matches!(error.kind, p4spec_rust::stf::error::StfErrorKind::Io(_)));
+    let ReportKind::Cause(diagnostic) = &error.into_report().kind else { panic!("expected cause") };
     assert_eq!(diagnostic.code.as_deref(), Some("stf/input-unreadable"));
     assert_eq!(
         diagnostic.labels[0].span.left.file.as_ref(),

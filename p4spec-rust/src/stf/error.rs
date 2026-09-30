@@ -1,7 +1,7 @@
-//! Structured STF failures with syntax and input classification
+//! Typed STF lexer, parser, and file input failures
 //!
 //! Lexer and parser checks retain their spans and diagnostic codes.
-//! File input failures stay distinct so callers cannot count them as rejection.
+//! Reports are constructed at the diagnostic output boundary.
 
 use std::io;
 
@@ -45,21 +45,23 @@ const TOKEN_EXTRA: &str = "stf/token-extra";
 const TOKEN_INVALID: &str = "stf/token-invalid";
 const INPUT_UNREADABLE: &str = "stf/input-unreadable";
 
-/// Distinguishes STF source rejection from failures reading its input.
+/// A local STF cause with its source location.
 #[derive(Debug, Error)]
-pub enum StfError {
-    /// Lexical, grammatical, or numeric source validation failed.
-    #[error(transparent)]
-    Syntax(Box<Report>),
-    /// The source could not be read.
-    #[error(transparent)]
-    Input(Box<Report>),
+#[error("{kind}")]
+pub struct StfError {
+    pub span: Span,
+    pub kind: StfErrorKind,
 }
 
 impl StfError {
-    /// Converts a local frontend failure into its structured report and class.
-    pub fn new(kind: impl Into<StfErrorKind>, span: Span) -> Self {
-        let kind = kind.into();
+    /// Retains a frontend failure and its span.
+    pub fn new(span: Span, kind: impl Into<StfErrorKind>) -> Self {
+        Self { span, kind: kind.into() }
+    }
+
+    /// Converts a frontend failure at a diagnostic output boundary.
+    pub fn into_report(self) -> Box<Report> {
+        let Self { span, kind } = self;
         // Select the stable check code while retaining the local failure message
         let code = match &kind {
             StfErrorKind::CharacterInvalid(_) => CHARACTER_INVALID,
@@ -75,7 +77,7 @@ impl StfError {
         // Retain named file-only spans without inventing a source occurrence
         let labels =
             if span == Span::default() { Vec::new() } else { vec![Label::primary(&span, "")] };
-        let report = Box::new(
+        Box::new(
             Diagnostic::new(
                 "stf",
                 Severity::Error,
@@ -85,25 +87,6 @@ impl StfError {
                 Vec::new(),
             )
             .into(),
-        );
-        // Reading failures cannot count as expected syntax rejection
-        match kind {
-            StfErrorKind::Io(_) => Self::Input(report),
-            _ => Self::Syntax(report),
-        }
-    }
-
-    /// Borrows the report without losing the failure class.
-    pub fn report(&self) -> &Report {
-        match self {
-            Self::Syntax(report) | Self::Input(report) => report,
-        }
-    }
-
-    /// Returns the original report when a caller no longer needs classification.
-    pub fn into_report(self) -> Box<Report> {
-        match self {
-            Self::Syntax(report) | Self::Input(report) => report,
-        }
+        )
     }
 }
