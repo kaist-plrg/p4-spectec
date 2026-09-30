@@ -124,7 +124,7 @@ where
     ) -> Result<(Vec<Value>, bool), Interp::Error> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
-        external.eval_rel(self, name, values)
+        external.eval_rel(self, name, values).map_err(Into::into)
     }
 
     /// Calls a host function; the extern receives this context to reenter.
@@ -136,6 +136,8 @@ where
     ) -> Result<(Value, bool), Interp::Error> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
-        external.eval_func(self, name, targs, values)
+        external
+            .eval_func(self, name, targs, values)
+            .map_err(Into::into)
     }
 }

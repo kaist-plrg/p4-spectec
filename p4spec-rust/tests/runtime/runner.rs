@@ -2,7 +2,7 @@ use std::{cell::Cell, sync::Mutex};
 
 use p4spec_rust::{
     interface::{
-        builtin::{BuiltinErrorKind, call::Builtins, extract},
+        builtin::{BuiltinError, call::Builtins, extract},
         p4::error::P4UnparseError,
     },
     lang::common::source::Span,
@@ -131,18 +131,18 @@ impl Extern for FixtureExtern {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         match name {
             "first" => {
-                let value = ctx.call_func("inner", targs, values)?;
+                let value = ctx.call_func("inner", targs, values).map_err(Into::into)?;
                 Ok((value, false))
             }
             "second" => {
-                let value = ctx.call_func("done", targs, values)?;
+                let value = ctx.call_func("done", targs, values).map_err(Into::into)?;
                 Ok((value, false))
             }
             "pure" => {
@@ -162,7 +162,7 @@ impl Extern for FixtureExtern {
             }
             _ => {
                 let error = ExternError::Message(name.to_owned());
-                Err(error.into())
+                Err(error)
             }
         }
     }
@@ -172,13 +172,13 @@ impl Extern for FixtureExtern {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         _values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         let error = ExternError::Message(name.to_owned());
-        Err(error.into())
+        Err(error)
     }
 
     fn clear(&mut self) {
@@ -265,7 +265,7 @@ fn test_builtin_interface_preserves_builtin_failures() {
     assert!(matches!(
         error,
         InterfaceError::Builtin(error)
-            if matches!(error.kind, BuiltinErrorKind::ArgumentCountMismatch { .. })
+            if matches!(error, BuiltinError::ArgumentCountMismatch { .. })
     ));
 }
 
@@ -300,7 +300,7 @@ fn test_builtin_interface_print_validates_both_arities() {
         assert!(matches!(
             error,
             InterfaceError::Builtin(error)
-                if matches!(error.kind, BuiltinErrorKind::ArgumentCountMismatch { expected: 1, actual: num_actual } if num_actual == actual)
+                if matches!(error, BuiltinError::ArgumentCountMismatch { expected: 1, actual: num_actual } if num_actual == actual)
         ));
     }
 }
@@ -318,7 +318,7 @@ fn test_builtin_interface_print_preserves_unparse_failures() {
     assert!(matches!(
         error,
         InterfaceError::Builtin(error)
-            if matches!(error.kind, BuiltinErrorKind::P4Unparse(P4UnparseError::ValueUnsupported("Struct")))
+            if matches!(error, BuiltinError::P4Unparse(P4UnparseError::ValueUnsupported("Struct")))
     ));
 }
 
@@ -485,7 +485,7 @@ fn test_runner_dispatches_program_entry_and_errors() {
 }
 
 #[test]
-fn test_registered_builtin_report_keeps_payload_and_recoverable_kind() {
+fn test_registered_builtin_report_keeps_payload_and_is_fatal() {
     use p4spec_rust::{
         diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
         interp::shared::backtrack::Failure,
@@ -526,17 +526,16 @@ fn test_registered_builtin_report_keeps_payload_and_recoverable_kind() {
         .call_builtin(&mut ValueArena::new(), &id("custom"), &[], &[])
         .unwrap_err();
     let failure = Failure::from(error).with_span(&Span::default());
-    let Failure::Mismatch(reports) = failure else { panic!("builtin must remain recoverable") };
-    assert_eq!(reports.len(), 1);
-    let ReportKind::Cause(diagnostic) = &reports[0].kind else { panic!("host cause missing") };
+    let Failure::Fatal(report) = failure else { panic!("builtin must be fatal") };
+    let ReportKind::Cause(diagnostic) = &report.kind else { panic!("host cause missing") };
     assert_eq!(diagnostic.source, "custom");
     assert_eq!(diagnostic.severity, Severity::Warning);
     assert_eq!(diagnostic.code.as_deref(), Some("custom/check"));
     assert_eq!(diagnostic.message, "host message");
     assert_eq!(diagnostic.labels, labels);
     assert_eq!(diagnostic.notes, notes);
-    assert_eq!(reports[0].children.len(), 1);
-    let report_outer = &reports[0].children[0];
+    assert_eq!(report.children.len(), 1);
+    let report_outer = &report.children[0];
     assert!(
         matches!(&report_outer.kind, ReportKind::Frame { span: span_actual, message } if *span_actual == span && message == "outer")
     );
@@ -546,5 +545,15 @@ fn test_registered_builtin_report_keeps_payload_and_recoverable_kind() {
             matches!(&report.kind, ReportKind::Frame { span, message } if *span == Span::default() && message == message_expect)
         );
         assert!(report.children.is_empty());
+    }
+}
+
+impl From<FixtureError> for ExternError {
+    fn from(error: FixtureError) -> Self {
+        match error {
+            FixtureError::Interface(error) => ExternError::Report(error.into_report()),
+            FixtureError::Extern(error) => error,
+            FixtureError::Unknown(error) => ExternError::Message(error.to_string()),
+        }
     }
 }

@@ -496,3 +496,12 @@ fn test_native_table_entries_append_priorities_and_default_changes_are_isolated(
         value_other_original
     );
 }
+
+impl From<TestError> for ExternError {
+    fn from(error: TestError) -> Self {
+        match error {
+            TestError::Extern(error) => error,
+            TestError::Interface(error) => ExternError::Report(error.into_report()),
+        }
+    }
+}

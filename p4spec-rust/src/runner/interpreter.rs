@@ -24,7 +24,8 @@ where
     /// The interpreter's error type, including builtin and extern failures.
     ///
     /// AL, SL, and PL use `Failure` for fatal errors and mismatches.
-    type Error: From<InterfaceError> + From<ExternError>;
+    /// Conversion to `ExternError` finalizes failed host reentry as fatal.
+    type Error: From<InterfaceError> + From<ExternError> + Into<ExternError>;
 
     /// Clears cached results without invalidating arena values.
     fn clear(&mut self);

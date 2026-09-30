@@ -78,21 +78,26 @@ impl<Ext: Impl> Extern for Ext {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         // The three extern relations the specification defines
         let values = match name {
-            "ExternFunctionCall_eval_lctk" => self.eval_extern_func_lctk_call(ctx, values)?,
-            "ExternFunctionCall_eval" => self.eval_extern_func_call(ctx, values)?,
-            "ExternMethodCall_eval" => self.eval_extern_method_call(ctx, values)?,
+            "ExternFunctionCall_eval_lctk" => self
+                .eval_extern_func_lctk_call(ctx, values)
+                .map_err(Into::into)?,
+            "ExternFunctionCall_eval" => self
+                .eval_extern_func_call(ctx, values)
+                .map_err(Into::into)?,
+            "ExternMethodCall_eval" => self
+                .eval_extern_method_call(ctx, values)
+                .map_err(Into::into)?,
             _ => {
                 return Err(crate::sim_plugin::error::extern_relation_unsupported(format!(
                     "unimplemented extern relation: {name}"
-                ))
-                .into());
+                )));
             }
         };
         // Extern state lives in the values, so calls report no hidden effect
@@ -105,20 +110,19 @@ impl<Ext: Impl> Extern for Ext {
         name: &str,
         _targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         // The two extern functions the specification defines
         let value = match name {
-            "init_objectState" => self.eval_extern_init(ctx, values)?,
-            "init_archState" => self.init_arch_state(ctx)?,
+            "init_objectState" => self.eval_extern_init(ctx, values).map_err(Into::into)?,
+            "init_archState" => self.init_arch_state(ctx).map_err(Into::into)?,
             _ => {
                 return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
                     "unimplemented extern function: {name}"
-                ))
-                .into());
+                )));
             }
         };
         Ok((value, false))

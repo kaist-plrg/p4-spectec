@@ -110,3 +110,12 @@ fn local(runner: &mut CounterRunner, name: &str, int: i64) {
         .values_var
         .insert(name.to_owned(), value);
 }
+
+impl From<TestError> for ExternError {
+    fn from(error: TestError) -> Self {
+        match error {
+            TestError::Extern(error) => error,
+            TestError::Interface(error) => ExternError::Report(error.into_report()),
+        }
+    }
+}

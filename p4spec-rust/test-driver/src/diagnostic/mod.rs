@@ -9,7 +9,6 @@ mod boundary;
 mod cases;
 mod command;
 mod elab;
-mod host;
 mod interp;
 mod parse;
 mod prose;
@@ -156,11 +155,5 @@ fn run_parse() -> Result<()> {
 
 /// Routes source execution and input-transport cases through their real owners.
 fn run_interp(name: &str) -> Result<Vec<Report>> {
-    if name.ends_with("-syntax-diagnostic") {
-        syntax::run(name)
-    } else if name.starts_with("interp-") {
-        host::run(name)
-    } else {
-        interp::run(name)
-    }
+    if name.ends_with("-syntax-diagnostic") { syntax::run(name) } else { interp::run(name) }
 }

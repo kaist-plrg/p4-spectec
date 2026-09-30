@@ -270,7 +270,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // Return extern failures without turning mismatches into fatal errors
+    // Attach the call site to fatal host failures
     let (values, _) = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
     let len =
@@ -432,7 +432,7 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
         .interp_mut()
         .cache
         .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
-    // Return extern failures without turning mismatches into fatal errors
+    // Attach the call site to fatal host failures
     let (value, _) = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the result against the declared type
     if runner_ctx.interp().config.guard {
@@ -451,7 +451,7 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
 
 // - Builtin function
 
-/// Calls a builtin; its own failure is a mismatch, other errors are fatal.
+/// Calls a builtin, propagating every failure as fatal.
 fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: &Context<'_>,

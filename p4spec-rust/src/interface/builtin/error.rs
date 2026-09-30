@@ -1,8 +1,7 @@
 //! Errors produced while evaluating specification builtins
 //!
-//! A builtin failure is recoverable to the interpreter,
-//! which tries the next candidate;
-//! value errors inside a builtin are wrapped the same way.
+//! Every builtin returns a value or a fatal error.
+//! Local causes stay typed until the interpreter diagnostic boundary.
 
 use thiserror::Error;
 
@@ -14,7 +13,7 @@ use crate::{
 
 /// Why a builtin call failed.
 #[derive(Debug, Error)]
-pub enum BuiltinErrorKind {
+pub enum BuiltinError {
     /// A complete diagnostic returned by a registered host builtin.
     #[error(transparent)]
     Report(#[from] Box<Report>),
@@ -44,28 +43,15 @@ pub enum BuiltinErrorKind {
     P4Unparse(#[from] P4UnparseError),
 }
 
-/// A builtin failure.
-#[derive(Debug, Error)]
-#[error("{kind}")]
-pub struct BuiltinError {
-    pub kind: BuiltinErrorKind,
-}
-
 impl BuiltinError {
     /// An invalid-argument failure with a message.
     pub fn new(message: impl Into<String>) -> Self {
-        Self { kind: BuiltinErrorKind::ArgumentInvalid(message.into()) }
+        Self::ArgumentInvalid(message.into())
     }
 
     /// An arity failure.
     pub fn arity(expected: usize, actual: usize) -> Self {
-        Self { kind: BuiltinErrorKind::ArgumentCountMismatch { expected, actual } }
-    }
-}
-
-impl From<ValueError> for BuiltinError {
-    fn from(error: ValueError) -> Self {
-        Self { kind: BuiltinErrorKind::Value(error) }
+        Self::ArgumentCountMismatch { expected, actual }
     }
 }
 
@@ -79,18 +65,17 @@ impl BuiltinError {
     /// Describes a local builtin failure at the host operation boundary.
     pub fn into_report(self) -> Box<Report> {
         // Forward extension diagnostics before interpreting local failure kinds
-        let Self { kind } = self;
-        let kind = match kind {
-            BuiltinErrorKind::Report(report) => return report,
+        let kind = match self {
+            BuiltinError::Report(report) => return report,
             kind => kind,
         };
         let code = match &kind {
-            BuiltinErrorKind::Report(_) => unreachable!(),
-            BuiltinErrorKind::ArgumentCountMismatch { .. } => BUILTIN_ARGUMENT_ARITY_MISMATCH,
-            BuiltinErrorKind::ImplementationMissing(_) => BUILTIN_IMPLEMENTATION_MISSING,
-            BuiltinErrorKind::ArgumentInvalid(_) => BUILTIN_ARGUMENT_INVALID,
-            BuiltinErrorKind::Value(_) | BuiltinErrorKind::Numeric(_) => BUILTIN_VALUE_INVALID,
-            BuiltinErrorKind::P4Unparse(_) => BUILTIN_PRINT_UNSUPPORTED,
+            BuiltinError::Report(_) => unreachable!(),
+            BuiltinError::ArgumentCountMismatch { .. } => BUILTIN_ARGUMENT_ARITY_MISMATCH,
+            BuiltinError::ImplementationMissing(_) => BUILTIN_IMPLEMENTATION_MISSING,
+            BuiltinError::ArgumentInvalid(_) => BUILTIN_ARGUMENT_INVALID,
+            BuiltinError::Value(_) | BuiltinError::Numeric(_) => BUILTIN_VALUE_INVALID,
+            BuiltinError::P4Unparse(_) => BUILTIN_PRINT_UNSUPPORTED,
         };
         Box::new(
             Diagnostic::new(
@@ -103,17 +88,5 @@ impl BuiltinError {
             )
             .into(),
         )
-    }
-}
-
-impl From<crate::lang::common::prim::num::NumericError> for BuiltinError {
-    fn from(error: crate::lang::common::prim::num::NumericError) -> Self {
-        Self { kind: BuiltinErrorKind::Numeric(error) }
-    }
-}
-
-impl From<Box<Report>> for BuiltinError {
-    fn from(report: Box<Report>) -> Self {
-        Self { kind: BuiltinErrorKind::Report(report) }
     }
 }

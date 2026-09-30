@@ -1,7 +1,7 @@
 //! Recoverable mismatches and fatal interpreter failures
 //!
 //! `Fatal` stops execution; `Mismatch` lets the caller try another candidate.
-//! Runner and extern calls preserve this distinction.
+//! Host failures always abort, including exhausted interpreter reentry.
 //! `into_report` groups mismatches under an execution frame for display.
 
 use super::error::{self, Error};
@@ -72,16 +72,19 @@ impl From<Error> for Failure {
 
 impl From<InterfaceError> for Failure {
     fn from(error: InterfaceError) -> Self {
-        // Builtin failures are mismatches; an unconfigured interface is fatal
-        let recoverable = !matches!(&error, InterfaceError::InterfaceUnconfigured);
-        let report = error.into_report();
-        if recoverable { Self::Mismatch(vec![*report]) } else { Self::Fatal(report) }
+        Self::Fatal(error.into_report())
     }
 }
 
 impl From<ExternError> for Failure {
     fn from(error: ExternError) -> Self {
-        error.into_failure()
+        Self::Fatal(error.into_report())
+    }
+}
+
+impl From<Failure> for ExternError {
+    fn from(failure: Failure) -> Self {
+        Self::Report(failure.into_report())
     }
 }
 

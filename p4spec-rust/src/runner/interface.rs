@@ -26,8 +26,8 @@ pub enum InterfaceError {
     InterfaceUnconfigured,
     /// A builtin failed.
     #[error(transparent)]
-    Builtin(#[from] Box<BuiltinError>),
-    /// A recoverable diagnostic supplied by an interface.
+    Builtin(#[from] BuiltinError),
+    /// A fatal diagnostic supplied by an interface.
     #[error(transparent)]
     Report(#[from] Box<Report>),
 }
@@ -95,7 +95,7 @@ impl Interface for BuiltinInterface {
     ) -> Result<(Value, bool), InterfaceError> {
         self.builtins
             .invoke(arena, id, targs, values)
-            .map_err(|error| InterfaceError::Builtin(Box::new(error)))
+            .map_err(InterfaceError::Builtin)
     }
 
     fn clear(&mut self) {

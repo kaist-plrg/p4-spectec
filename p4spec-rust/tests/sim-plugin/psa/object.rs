@@ -165,3 +165,12 @@ fn tuple_data(runner: &mut ObjectRunner, int: i64) {
         .values_var
         .insert("data".to_owned(), value);
 }
+
+impl From<TestError> for ExternError {
+    fn from(error: TestError) -> Self {
+        match error {
+            TestError::Extern(error) => error,
+            TestError::Interface(error) => ExternError::Report(error.into_report()),
+        }
+    }
+}

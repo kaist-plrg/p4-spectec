@@ -17,7 +17,7 @@ use p4spec_rust::{
     },
 };
 
-use super::{failure, host::reports_equal};
+use super::failure;
 use crate::Result;
 
 /// Counts actual evaluation through an extern in the entry relation.
@@ -29,13 +29,13 @@ impl Extern for Probe {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         _values: &[Value],
-    ) -> std::result::Result<(Vec<Value>, bool), Interp::Error>
+    ) -> std::result::Result<(Vec<Value>, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         self.0.set(self.0.get() + 1);
-        Err(ExternError::Message("evaluation probe".to_owned()).into())
+        Err(ExternError::Message("evaluation probe".to_owned()))
     }
 
     fn eval_func<Interp, Iface>(
@@ -44,13 +44,13 @@ impl Extern for Probe {
         _name: &str,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> std::result::Result<(Value, bool), Interp::Error>
+    ) -> std::result::Result<(Value, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         self.0.set(self.0.get() + 1);
-        Err(ExternError::Message("evaluation probe".to_owned()).into())
+        Err(ExternError::Message("evaluation probe".to_owned()))
     }
 
     fn clear(&mut self) {}
@@ -144,4 +144,30 @@ pub fn run(name: &str) -> Result<Vec<Report>> {
         }
         _ => Err(failure(name, "unknown syntax transport case")),
     }
+}
+
+/// Compares every semantic field and ordered child without rendering.
+fn reports_equal(report_a: &Report, report_b: &Report) -> bool {
+    let same = match (&report_a.kind, &report_b.kind) {
+        (
+            ReportKind::Frame { span: span_a, message: message_a },
+            ReportKind::Frame { span: span_b, message: message_b },
+        ) => span_a == span_b && message_a == message_b,
+        (ReportKind::Cause(cause_a), ReportKind::Cause(cause_b)) => {
+            cause_a.severity == cause_b.severity
+                && cause_a.code == cause_b.code
+                && cause_a.message == cause_b.message
+                && cause_a.labels == cause_b.labels
+                && cause_a.notes == cause_b.notes
+                && cause_a.source == cause_b.source
+        }
+        _ => false,
+    };
+    // Child order is part of host transport
+    same && report_a.children.len() == report_b.children.len()
+        && report_a
+            .children
+            .iter()
+            .zip(&report_b.children)
+            .all(|(report_a, report_b)| reports_equal(report_a, report_b))
 }

@@ -232,3 +232,12 @@ fn test_clone_restoration_failure_preserves_queued_clones_and_completed_state() 
         ObjectState::PacketIn(PacketIn::init("AB").unwrap())
     );
 }
+
+impl From<TestError> for ExternError {
+    fn from(error: TestError) -> Self {
+        match error {
+            TestError::Extern(error) => error,
+            TestError::Interface(error) => ExternError::Report(error.into_report()),
+        }
+    }
+}

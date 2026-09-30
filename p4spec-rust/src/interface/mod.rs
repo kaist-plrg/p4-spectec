@@ -11,7 +11,7 @@ use crate::{
 };
 
 use self::{
-    builtin::{BuiltinError, BuiltinErrorKind, call::Builtins, extract},
+    builtin::{call::Builtins, extract},
     p4::unparse::P4Unparser,
 };
 
@@ -38,9 +38,7 @@ fn p4_with_unparser(unparser: P4Unparser) -> BuiltinInterface {
         Box::new(move |arena, targs, values| {
             let _typ = extract::one(targs)?;
             let value = extract::one(values)?;
-            let text = unparser
-                .render(arena, value)
-                .map_err(|error| BuiltinError { kind: BuiltinErrorKind::P4Unparse(error) })?;
+            let text = unparser.render(arena, value)?;
             Ok(value::make::text(arena, text, Span::default())?)
         }),
     )]);

@@ -319,14 +319,14 @@ impl p4spec_rust::runner::Extern for Host {
         ctx: &mut p4spec_rust::runner::RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), p4spec_rust::runner::ExternError>
     where
         Iface: p4spec_rust::runner::Interface,
         Interp: p4spec_rust::runner::Interpreter<Iface, Self>,
     {
         self.calls.set(self.calls.get() + 1);
         let values = if self.reenter {
-            ctx.call_rel("Step", values)?
+            ctx.call_rel("Step", values).map_err(Into::into)?
         } else {
             vec![(self.value)(ctx.arena_mut())]
         };
@@ -339,7 +339,7 @@ impl p4spec_rust::runner::Extern for Host {
         _name: &str,
         targs: &[ast::Typ],
         _values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), p4spec_rust::runner::ExternError>
     where
         Iface: p4spec_rust::runner::Interface,
         Interp: p4spec_rust::runner::Interpreter<Iface, Self>,
@@ -349,7 +349,7 @@ impl p4spec_rust::runner::Extern for Host {
         self.calls.set(self.calls.get() + 1);
         let value = if self.reenter {
             let value = (self.value)(ctx.arena_mut());
-            ctx.call_func("inner", &[], &[value])?
+            ctx.call_func("inner", &[], &[value]).map_err(Into::into)?
         } else {
             (self.value)(ctx.arena_mut())
         };
@@ -611,9 +611,7 @@ impl p4spec_rust::runner::Interface for CacheHost {
     ) -> Result<(Value, bool), p4spec_rust::runner::InterfaceError> {
         self.record(&id.node);
         if id.node == "fail" {
-            return Err(
-                Box::new(p4spec_rust::interface::builtin::BuiltinError::new("failure")).into()
-            );
+            return Err(p4spec_rust::interface::builtin::BuiltinError::new("failure").into());
         }
         let value = values.first().copied().unwrap_or_else(|| nat(arena, 7));
         Ok((value, id.node == "impure"))
@@ -631,14 +629,18 @@ impl p4spec_rust::runner::Extern for CacheHost {
         name: &str,
         targs: &[ast::Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), p4spec_rust::runner::ExternError>
     where
         Iface: p4spec_rust::runner::Interface,
         Interp: p4spec_rust::runner::Interpreter<Iface, Self>,
     {
         assert!(targs.is_empty());
         self.record(name);
-        let value = if name == "bridge" { ctx.call_func("inner", &[], values)? } else { values[0] };
+        let value = if name == "bridge" {
+            ctx.call_func("inner", &[], values).map_err(Into::into)?
+        } else {
+            values[0]
+        };
         Ok((value, false))
     }
 
@@ -647,7 +649,7 @@ impl p4spec_rust::runner::Extern for CacheHost {
         _ctx: &mut p4spec_rust::runner::RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), p4spec_rust::runner::ExternError>
     where
         Iface: p4spec_rust::runner::Interface,
         Interp: p4spec_rust::runner::Interpreter<Iface, Self>,
@@ -737,7 +739,7 @@ def $pair(ns_1, ns_2) = ($pure(ns_1), $pure(ns_2))
 }
 
 #[test]
-fn test_cache_propagates_effects_and_host_failures_but_caches_pure_children() {
+fn test_cache_propagates_effects_and_aborts_on_host_failure() {
     for det in [false, true] {
         for operation in ["impure", "fail"] {
             let source = format!(
@@ -761,10 +763,18 @@ def $pair(n) = ($recover(n), $recover(n))
                 NullExtern,
             );
             let value = nat(runner.arena_mut(), 5);
-            let result = runner.context().call_func("pair", &[], &[value]).unwrap();
-            assert_eq!(get::tuple(runner.arena(), &result).unwrap(), &[value, value]);
-            assert_eq!(host.count(operation), 2, "tainted wrappers cannot be cached");
-            assert_eq!(host.count("pure"), usize::from(operation == "fail"));
+            let result = runner.context().call_func("pair", &[], &[value]);
+            if operation == "fail" {
+                assert!(matches!(
+                    result,
+                    Err(p4spec_rust::interp::shared::backtrack::Failure::Fatal(_))
+                ));
+                assert_eq!(host.count(operation), 1);
+            } else {
+                assert_eq!(get::tuple(runner.arena(), &result.unwrap()).unwrap(), &[value, value]);
+                assert_eq!(host.count(operation), 2, "tainted wrappers cannot be cached");
+            }
+            assert_eq!(host.count("pure"), 0);
         }
     }
 }

@@ -203,3 +203,12 @@ fn test_extern_init_and_function_report_argument_counts_before_dispatch() {
     }
     assert!(runner_phase.context().interp().calls.is_empty());
 }
+
+impl From<TestError> for ExternError {
+    fn from(error: TestError) -> Self {
+        match error {
+            TestError::Extern(error) => error,
+            TestError::Interface(error) => ExternError::Report(error.into_report()),
+        }
+    }
+}

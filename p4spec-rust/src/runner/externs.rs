@@ -11,7 +11,6 @@ use thiserror::Error;
 
 use crate::{
     diagnostic::{Diagnostic, Report, Severity},
-    interp::shared::backtrack::Failure,
     lang::common::prim::num::NumericError,
     lang::data::value::{Value, ValueError},
     lang::il::ast::Typ,
@@ -36,9 +35,6 @@ pub enum ExternError {
     /// A structured fatal diagnostic supplied by the host.
     #[error(transparent)]
     Report(#[from] Box<Report>),
-    /// Ordered recoverable host alternatives.
-    #[error("extern did not match")]
-    Mismatch(Vec<Report>),
     /// A numeric operation failed.
     #[error(transparent)]
     Numeric(#[from] NumericError),
@@ -63,12 +59,11 @@ const EXTERN_STATE_INVALID: &str = "runtime/extern-state-invalid";
 const EXTERN_ALLOCATION_FAILED: &str = "runtime/extern-allocation-failed";
 
 impl ExternError {
-    /// Preserves the host's diagnostic and recovery decision.
-    pub fn into_failure(self) -> Failure {
+    /// Converts a host failure to its diagnostic at the interpreter boundary.
+    pub fn into_report(self) -> Box<Report> {
         // Structured host failures cross the boundary without reconstruction
         match self {
-            Self::Report(report) => Failure::Fatal(report),
-            Self::Mismatch(reports) => Failure::Mismatch(reports),
+            Self::Report(report) => report,
             error => {
                 // Local failures acquire meaning here; external text stays uncoded
                 let code = match &error {
@@ -78,9 +73,9 @@ impl ExternError {
                     Self::Io(_) | Self::Encoding(_) => Some(EXTERN_STATE_INVALID),
                     Self::Allocation(_) => Some(EXTERN_ALLOCATION_FAILED),
                     Self::Message(_) => None,
-                    Self::Report(_) | Self::Mismatch(_) => unreachable!(),
+                    Self::Report(_) => unreachable!(),
                 };
-                Failure::Fatal(Box::new(
+                Box::new(
                     Diagnostic::new(
                         "runtime",
                         Severity::Error,
@@ -90,7 +85,7 @@ impl ExternError {
                         vec![],
                     )
                     .into(),
-                ))
+                )
             }
         }
     }
@@ -98,7 +93,7 @@ impl ExternError {
 
 // == Extern contract
 
-/// Host relations and functions callable from a specification.
+/// Total host relations and functions: each call returns values or a fatal error.
 pub trait Extern: Sized {
     /// Evaluates a host relation; the flag reports a side effect.
     fn eval_rel<Interp, Iface>(
@@ -106,7 +101,7 @@ pub trait Extern: Sized {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -118,7 +113,7 @@ pub trait Extern: Sized {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -138,13 +133,13 @@ impl Extern for NullExtern {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         _values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         let error = ExternError::ExternUnconfigured;
-        Err(error.into())
+        Err(error)
     }
 
     fn eval_func<Interp, Iface>(
@@ -153,13 +148,13 @@ impl Extern for NullExtern {
         _name: &str,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         let error = ExternError::ExternUnconfigured;
-        Err(error.into())
+        Err(error)
     }
 
     fn clear(&mut self) {}

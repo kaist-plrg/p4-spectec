@@ -14,9 +14,7 @@ use crate::{
     lang::il::ast::{Id, Typ},
 };
 
-use super::{
-    BuiltinError, BuiltinErrorKind, fresh, ints, lists, maps, nats, numerics, sets, texts,
-};
+use super::{BuiltinError, fresh, ints, lists, maps, nats, numerics, sets, texts};
 
 // == Extensibility point: extra or override builtins per interface
 
@@ -152,9 +150,10 @@ impl Builtins {
         values: &[Value],
     ) -> Result<(Value, bool), BuiltinError> {
         // An undeclared builtin is a hard error, not a mismatch
-        let entry = self.funcs.get_mut(&id.node).ok_or_else(|| BuiltinError {
-            kind: BuiltinErrorKind::ImplementationMissing(id.node.clone()),
-        })?;
+        let entry = self
+            .funcs
+            .get_mut(&id.node)
+            .ok_or_else(|| BuiltinError::ImplementationMissing(id.node.clone()))?;
         let (value, side_effected) = match entry {
             // Pure results may be memoized by the interpreter
             BuiltinEntry::Pure(builtin_impl) => {

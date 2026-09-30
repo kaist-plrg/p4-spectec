@@ -99,12 +99,14 @@ pub fn run(name: &str) -> Result<Vec<Report>> {
         }
         "slice-out-of-bounds" => (FailureKind::Fatal, "runtime/slice-out-of-bounds"),
         "numeric-invalid" => (FailureKind::Fatal, "runtime/numeric-invalid"),
-        "builtin-failed" => (FailureKind::Mismatch, "runtime/builtin-argument-invalid"),
+        "builtin-failed" | "builtin-fallback" => {
+            (FailureKind::Fatal, "runtime/builtin-argument-invalid")
+        }
         "hold-failed" | "hold-iter-failed" => {
             (FailureKind::Mismatch, "runtime/hold-condition-unmet")
         }
         "not-hold-failed" => (FailureKind::Mismatch, "runtime/not-hold-condition-unmet"),
-        "extern-failed" | "fatal-skips-otherwise" | "builtin-fallback" | "hold-fatal" => {
+        "extern-failed" | "fatal-skips-otherwise" | "hold-fatal" => {
             (FailureKind::Fatal, "runtime/extern-unconfigured")
         }
         "relation-nondeterministic" if stage == "al" => {

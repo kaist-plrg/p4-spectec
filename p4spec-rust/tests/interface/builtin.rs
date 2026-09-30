@@ -7,7 +7,7 @@ mod sets;
 
 use num_bigint::BigInt;
 use p4spec_rust::{
-    interface::builtin::{BuiltinErrorKind, call::Builtins},
+    interface::builtin::{BuiltinError, call::Builtins},
     lang::{
         common::source::Span,
         data::{
@@ -90,15 +90,12 @@ fn test_missing_builtin_and_wrong_arity_are_typed_failures() {
     let mut arena = ValueArena::new();
     let missing = invoke(&mut arena, &mut Builtins::new(), "missing", &[]).unwrap_err();
     assert!(matches!(
-        missing.kind,
-        BuiltinErrorKind::ImplementationMissing(ref name) if name == "missing"
+        missing,
+        BuiltinError::ImplementationMissing(ref name) if name == "missing"
     ));
 
     let arity = invoke(&mut arena, &mut Builtins::new(), "sum_int", &[]).unwrap_err();
-    assert!(matches!(
-        arity.kind,
-        BuiltinErrorKind::ArgumentCountMismatch { expected: 1, actual: 0 }
-    ));
+    assert!(matches!(arity, BuiltinError::ArgumentCountMismatch { expected: 1, actual: 0 }));
 }
 
 #[test]

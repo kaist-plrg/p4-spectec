@@ -59,7 +59,7 @@ impl Extern for Host {
         _name: &str,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -67,6 +67,7 @@ impl Extern for Host {
         // Host reentry supplies raw arguments to the public entry
         ctx.call_func("ignore", &[], &[])
             .map(|value| (value, false))
+            .map_err(Into::into)
     }
 
     fn eval_rel<Interp, Iface>(
@@ -74,13 +75,15 @@ impl Extern for Host {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         if self.reenter {
-            ctx.call_rel("Identity", &[]).map(|values| (values, false))
+            ctx.call_rel("Identity", &[])
+                .map(|values| (values, false))
+                .map_err(Into::into)
         } else {
             Ok((vec![values[0]; self.outputs], false))
         }

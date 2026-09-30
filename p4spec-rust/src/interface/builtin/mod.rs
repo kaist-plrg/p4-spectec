@@ -17,4 +17,4 @@ pub mod numerics;
 pub mod sets;
 pub mod texts;
 
-pub use error::{BuiltinError, BuiltinErrorKind};
+pub use error::BuiltinError;

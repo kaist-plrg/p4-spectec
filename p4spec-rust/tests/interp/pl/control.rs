@@ -324,17 +324,20 @@ fn alternatives_choose_the_first_conclusion_or_report_nondeterminism() {
 
 #[test]
 fn mismatches_abort_the_block_before_trying_the_next_alternative() {
-    let mut spec_pl =
-        spec("builtin dec $unavailable() : nat\ndec $entry() : nat\ndef $entry() = $unavailable()");
+    let mut spec_pl = spec(
+        "dec $unavailable(nat) : nat\ndef $unavailable(0) = 0\ndec $entry() : nat\ndef $entry() = $unavailable(1)",
+    );
     let func = spec_pl
         .iter_mut()
         .find_map(|def| match &mut def.node.node {
-            ast::DefKind::MetaFunc(ast::MetaFuncDef::Defined(func)) => Some(func),
+            ast::DefKind::MetaFunc(ast::MetaFuncDef::Defined(func)) if func.id.node == "entry" => {
+                Some(func)
+            }
             _ => None,
         })
         .unwrap();
     let mut block = std::mem::take(&mut func.block);
-    // This conclusion must not run after the unavailable builtin mismatches
+    // This conclusion must not run after the function pattern mismatches
     block.push(returning(nat(99)));
     func.block = vec![backtrack(vec![block, vec![returning(nat(7))]])];
     for det in [false, true] {
@@ -389,7 +392,7 @@ fn fatal_instruction_failures_keep_calls_and_causes_without_instruction_frames()
 }
 
 #[test]
-fn mismatching_instructions_keep_call_frames_without_instruction_frames() {
+fn builtin_failures_keep_call_frames_without_instruction_frames() {
     use p4spec_rust::interp::shared::backtrack::Failure;
 
     let mut spec_pl =
@@ -406,7 +409,7 @@ fn mismatching_instructions_keep_call_frames_without_instruction_frames() {
     for det in [false, true] {
         let mut runner = configured(spec_pl.clone(), det);
         let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
-        assert!(matches!(failure, Failure::Mismatch(_)), "{failure}");
+        assert!(matches!(failure, Failure::Fatal(_)), "{failure}");
         let text = failure.into_report().render();
         assert!(text.contains("while invoking $entry"), "{text}");
         assert!(text.contains("while invoking $max_nat"), "{text}");

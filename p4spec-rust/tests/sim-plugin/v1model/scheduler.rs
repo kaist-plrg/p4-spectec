@@ -399,3 +399,12 @@ fn test_drive_pipe_clears_prior_transmissions_for_forwarded_and_dropped_inputs()
         }
     }
 }
+
+impl From<TestError> for ExternError {
+    fn from(error: TestError) -> Self {
+        match error {
+            TestError::Extern(error) => error,
+            TestError::Interface(error) => ExternError::Report(error.into_report()),
+        }
+    }
+}

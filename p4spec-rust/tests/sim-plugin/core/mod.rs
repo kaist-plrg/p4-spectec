@@ -143,3 +143,12 @@ fn packet_runner(size_min: usize, size_max: usize) -> (PacketRunner, Value, Valu
     }
     (runner, value_ctx, value_arch)
 }
+
+impl From<TestError> for ExternError {
+    fn from(error: TestError) -> Self {
+        match error {
+            TestError::Extern(error) => error,
+            TestError::Interface(error) => ExternError::Report(error.into_report()),
+        }
+    }
+}
