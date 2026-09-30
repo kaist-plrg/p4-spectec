@@ -6,18 +6,19 @@
 //! Premises bind variables in order,
 //! so `venv` grows as a premise list is analyzed.
 
-use crate::{
-    lang::{
-        common::{Id, ds::set::IdSet, source::Span},
-        data::typ,
-        il::ast,
-    },
-    phrase,
-    runtime::{
-        envs::algo::{MEnv, TDEnv, VEnv},
-        typdef::TypeDef,
-    },
+use crate::lang::{
+    common::{Id, ds::set::IdSet, source::Span},
+    data::typ,
 };
+
+use crate::lang::il::ast;
+
+use crate::runtime::{
+    envs::algo::{MEnv, TDEnv, VEnv},
+    typdef::TypeDef,
+};
+
+use crate::phrase;
 
 use super::super::{AlgoError, error};
 

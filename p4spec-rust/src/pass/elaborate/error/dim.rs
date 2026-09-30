@@ -3,14 +3,16 @@
 //! Dimension analysis calls these constructors after elaboration has populated
 //! bodies, preserving both occurrence spans for conflicts found during merging.
 
-use crate::diagnostic::Label;
-use crate::{
-    lang::{common::Id, traits::print::Print},
-    runtime::dim::Dim,
+use crate::lang::{
+    common::{Id, source::Span},
+    traits::print::Print,
 };
 
+use crate::diagnostic::Label;
+
+use crate::runtime::dim::Dim;
+
 use super::{ElabError, cause};
-use crate::lang::common::source::Span;
 
 const ITERATION_DIMENSION_MISMATCH: &str = "elab/iteration-dimension-mismatch";
 

@@ -4,11 +4,12 @@
 //! Rule groups accept one relation with an optional slash and group identifier;
 //! their closing brace is optional.
 
+use crate::lang::common::source::{Phrase, Span};
+
 use super::{
     error::{self, Error},
     source::Source,
 };
-use crate::lang::common::source::{Phrase, Span};
 
 // == Parsing strings with expects
 

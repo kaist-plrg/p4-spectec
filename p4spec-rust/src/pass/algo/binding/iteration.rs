@@ -8,15 +8,15 @@
 
 use std::ops::{Deref, DerefMut};
 
-use crate::{
-    lang::{
-        al,
-        common::{Id, source::Span},
-        il::ast,
-    },
-    phrase,
-    runtime::{dim::Dim, envs::algo::VEnv},
-};
+use crate::lang::common::{Id, source::Span};
+
+use crate::lang::il::ast;
+
+use crate::lang::al;
+
+use crate::runtime::{dim::Dim, envs::algo::VEnv};
+
+use crate::phrase;
 
 use super::super::{AlgoError, error};
 

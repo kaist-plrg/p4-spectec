@@ -2,8 +2,9 @@
 //!
 //! Builds diagnostics; callers choose whether to stop or try another candidate.
 
-use super::diagnostic;
 use crate::diagnostic::Diagnostic;
+
+use super::diagnostic;
 
 const CONDITION_UNMET: &str = "runtime/condition-unmet";
 

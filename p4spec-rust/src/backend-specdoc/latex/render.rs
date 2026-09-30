@@ -6,12 +6,12 @@
 
 use crate::lang::el::ast::Def;
 
+use super::super::anchor::AnchorContext;
+
 use super::{
     error::Result,
     tex::{doc::Doc, serialize},
 };
-
-use super::super::anchor::AnchorContext;
 
 /// Renders one definition without a math-mode or document wrapper.
 pub fn render_def(anchor_ctx: &AnchorContext<'_>, def: &Def) -> Result<String> {

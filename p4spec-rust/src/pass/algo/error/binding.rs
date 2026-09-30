@@ -3,20 +3,23 @@
 //! Binding environments describe new variables in deterministic name order.
 //! Dimension failures relate the later occurrence to the first binding.
 
-use super::{AlgoError, cause};
-use crate::{
-    diagnostic::Label,
-    lang::{
-        common::{
-            Id,
-            source::{Phrase, Span},
-        },
-        il::ast,
-        traits::print::Print,
+use crate::lang::{
+    common::{
+        Id,
+        source::{Phrase, Span},
     },
-    pass::algo::binding::bind::BEnv,
-    runtime::dim::Dim,
+    traits::print::Print,
 };
+
+use crate::lang::il::ast;
+
+use crate::diagnostic::Label;
+
+use crate::runtime::dim::Dim;
+
+use crate::pass::algo::binding::bind::BEnv;
+
+use super::{AlgoError, cause};
 
 /// Describes the variables introduced by a binder pattern.
 fn describe_bindings(benv: &BEnv) -> String {

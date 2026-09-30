@@ -7,10 +7,9 @@
 
 use std::fmt::{self, Write};
 
-use crate::lang::{
-    sl::ast::*,
-    traits::print::{Print, Printer},
-};
+use crate::lang::traits::print::{Print, Printer};
+
+use crate::lang::sl::ast::*;
 
 // == Printing
 

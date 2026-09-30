@@ -2,9 +2,9 @@
 //!
 //! Builds diagnostics; callers choose whether to stop or try another candidate.
 
-use super::EntityKind;
-use super::diagnostic;
 use crate::diagnostic::Diagnostic;
+
+use super::{EntityKind, diagnostic};
 
 const BINDING_UNDEFINED: &str = "runtime/binding-undefined";
 

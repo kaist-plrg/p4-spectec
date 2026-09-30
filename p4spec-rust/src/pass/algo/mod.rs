@@ -14,9 +14,11 @@ mod sidecondition;
 
 mod binding;
 
-pub use error::AlgoError;
+use crate::lang::il;
 
-use crate::lang::{al, il};
+use crate::lang::al;
+
+pub use error::AlgoError;
 
 // == Entry point
 

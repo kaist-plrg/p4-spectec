@@ -2,24 +2,25 @@
 //!
 //! Metering is not modeled; `read()` always reports the color green.
 
+use num_bigint::BigInt;
+use num_traits::Zero;
+use serde::{Deserialize, Serialize};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
 use crate::sim_plugin::{
     core::object::PacketIn,
     error,
     spec::{args, func, pack, rel, unpack},
 };
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-};
-use num_bigint::BigInt;
-use num_traits::Zero;
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// Direct meter by `MeterType`; the state is never updated.

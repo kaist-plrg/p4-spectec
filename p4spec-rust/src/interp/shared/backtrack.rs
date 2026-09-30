@@ -3,15 +3,16 @@
 //! Macros propagate the runner error and add diagnostics or evaluation frames.
 //! The runner owns the distinction between fatal errors and mismatches.
 
-use super::error::Error;
-use crate::{
-    diagnostic::{Diagnostic, Label, Report},
-    lang::{
-        common::{prim::num::NumericError, source::Span},
-        data::value::ValueError,
-    },
-    runner::InterpreterError,
+use crate::lang::{
+    common::{prim::num::NumericError, source::Span},
+    data::value::ValueError,
 };
+
+use crate::diagnostic::{Diagnostic, Label, Report};
+
+use crate::runner::InterpreterError;
+
+use super::error::Error;
 
 /// Returns a value, a fatal error, or a mismatch.
 pub type Backtrack<T> = Result<T, InterpreterError>;

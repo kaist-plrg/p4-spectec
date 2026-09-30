@@ -6,10 +6,9 @@
 
 use std::borrow::Cow;
 
-use crate::{
-    lang::il::ast::{self, DefTypKind, TypKind},
-    runtime::{envs::elab::TDEnv, typdef::TypeDef},
-};
+use crate::lang::il::ast::{self, DefTypKind, TypKind};
+
+use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
 use super::{Theta, TypeArityMismatch, TypeError, TypeErrorKind, subst_typ};
 

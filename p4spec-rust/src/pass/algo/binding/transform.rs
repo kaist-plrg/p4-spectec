@@ -40,28 +40,31 @@
 //! - `VarE`, `TupleE`, `CaseE` of a singleton case, or `StrE`
 //! - `IterE` of the above cases
 
-use crate::{
-    lang::{
-        al,
-        common::prim,
-        common::{
-            notation::mixop::Mixop,
-            source::{Phrase, Span},
-        },
-        hints::input::{self, InputHint},
-        il::ast,
-        traits::{
-            at::At,
-            free::{FreeIds, FreeVars},
-            has_call::HasCall,
-        },
+use crate::lang::{
+    common::{
+        notation::mixop::Mixop,
+        prim,
+        source::{Phrase, Span},
     },
-    phrase,
-    runtime::{dim::Dim, envs::algo::VEnv, typdef::TypeDef},
+    hints::input::{self, InputHint},
+    traits::{
+        at::At,
+        free::{FreeIds, FreeVars},
+        has_call::HasCall,
+    },
 };
 
+use crate::lang::il::ast;
+
+use crate::lang::al;
+
+use crate::runtime::{dim::Dim, envs::algo::VEnv, typdef::TypeDef};
+
+use crate::phrase;
+
+use super::super::{AlgoError, error};
+
 use super::{
-    super::{AlgoError, error},
     antiunify,
     bind::BEnv,
     collect,

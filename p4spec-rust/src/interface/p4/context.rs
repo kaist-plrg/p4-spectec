@@ -15,10 +15,12 @@ use std::{
     collections::BTreeMap,
 };
 
-use crate::lang::common::source::{Position, Span};
+use crate::lang::{
+    common::source::{Position, Span},
+    data::value::ValueArena,
+};
 
 use super::error::ContextError;
-use crate::lang::data::value::ValueArena;
 
 // == Names and scopes
 

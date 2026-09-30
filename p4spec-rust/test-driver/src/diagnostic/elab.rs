@@ -4,12 +4,15 @@
 //! Warnings and errors are returned in emission order for the shared runner
 //! to render and compare with the expected text.
 
-use p4spec_rust::{
-    diagnostic::Report, frontend::parse::parse_files, pass::elaborate::convert_with_warnings,
-};
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::frontend::parse::parse_files;
+
+use p4spec_rust::pass::elaborate::convert_with_warnings;
+
+use crate::Result;
 
 use super::failure;
-use crate::Result;
 
 /// Parses and elaborates one fixture, returning all emitted diagnostics.
 pub fn run(name: &str) -> Result<Vec<Report>> {

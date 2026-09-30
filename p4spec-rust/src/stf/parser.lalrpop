@@ -2,6 +2,10 @@
 // numeric fields with semantic constraints; for example, `WAIT` becomes one
 // `Statement::Wait` phrase and `END` terminates the program.
 
+use std::rc::Rc;
+
+use crate::lang::common::source::Phrase;
+
 use crate::stf::{
     ast::{
         Action, Argument, Condition, CounterCheck, CounterKind, CounterTarget, MatchKind, Name,
@@ -9,13 +13,10 @@ use crate::stf::{
     },
     error::StfError,
     lexer::Token,
-    parse::{Location, location_span, parse_priority},
+    parse::{location_span, parse_priority, Location},
 };
-use crate::{
-    lang::common::source::Phrase,
-    phrase,
-};
-use std::rc::Rc;
+
+use crate::phrase;
 
 grammar(file: &Rc<str>);
 

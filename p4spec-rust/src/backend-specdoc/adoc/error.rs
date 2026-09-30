@@ -3,8 +3,9 @@
 //! Each link carries the source location used by its warnings.
 //! Serialization collects warnings for its caller and preserves fallback text.
 
-use super::pl::doc::doc::{Link, Subject};
 use crate::diagnostic::{Diagnostic, Label, Severity};
+
+use super::pl::doc::doc::{Link, Subject};
 
 /// Describes the source-level reference without exposing generated anchors.
 fn describe_link(link: &Link) -> String {

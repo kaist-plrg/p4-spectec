@@ -4,19 +4,18 @@
 //! `Context` retains the shared scope, binding, and iteration operations;
 //! `FuncSignature` extracts types from prepared PL function definitions.
 
-use crate::{
-    interp::shared::{
-        context::{self as shared, FuncSignature},
-        error::Error,
-    },
-    lang::{
-        data::typ::{FuncTyp, make},
-        pl::ast as source,
-    },
-    runtime::{
-        envs::interp::{pl::ast_prepared as ast, shared::callable::Callable},
-        typdef::TypeDef,
-    },
+use crate::lang::data::typ::{FuncTyp, make};
+
+use crate::lang::pl::ast as source;
+
+use crate::runtime::{
+    envs::interp::{pl::ast_prepared as ast, shared::callable::Callable},
+    typdef::TypeDef,
+};
+
+use crate::interp::shared::{
+    context::{self as shared, FuncSignature},
+    error::Error,
 };
 
 // = Context aliases

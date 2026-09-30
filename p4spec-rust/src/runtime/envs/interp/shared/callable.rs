@@ -5,14 +5,14 @@
 
 use std::{fmt, rc::Rc};
 
-use super::frame::FrameLayout;
-use crate::{
-    interp::shared::prepare::Prepare,
-    lang::traits::{
-        eq::SyntaxEq,
-        print::{Print, Printer},
-    },
+use crate::lang::traits::{
+    eq::SyntaxEq,
+    print::{Print, Printer},
 };
+
+use crate::interp::shared::prepare::Prepare;
+
+use super::frame::FrameLayout;
 
 /// Callable syntax paired with its interpreter-owned local layout.
 #[derive(Clone, Debug, PartialEq)]

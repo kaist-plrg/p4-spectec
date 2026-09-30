@@ -11,17 +11,15 @@ use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    lang::{
-        common::prim::num,
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, get, make},
-        },
+use crate::lang::{
+    common::{prim::num, source::Span},
+    data::{
+        typ,
+        value::{Value, get, make},
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
 };
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::{
     error,

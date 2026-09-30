@@ -4,18 +4,18 @@
 //! Shared hint operations return typed failures;
 //! prose conversion supplies their source meaning and diagnostic code here.
 
-use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::{
-        common::source::Span,
-        el::ast::{Exp, Id},
-        hints::{
-            alter::{AlterationError, Hole},
-            fields::FieldHint,
-        },
-        traits::print::Print,
+use crate::lang::{
+    common::source::Span,
+    hints::{
+        alter::{AlterationError, Hole},
+        fields::FieldHint,
     },
+    traits::print::Print,
 };
+
+use crate::lang::el::ast::{Exp, Id};
+
+use crate::diagnostic::{Diagnostic, Label, Report, Severity};
 
 /// Names a prose report without adding a wrapper.
 pub type ProseError = Box<Report>;

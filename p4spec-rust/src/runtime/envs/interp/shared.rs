@@ -8,7 +8,9 @@ pub mod caches;
 pub mod callable;
 pub mod frame;
 
-use crate::{lang::common::ds::map::IdMap, runtime::typdef::TypeDef};
+use crate::lang::common::ds::map::IdMap;
+
+use crate::runtime::typdef::TypeDef;
 
 /// Type names to their definitions.
 pub type TDEnv = IdMap<TypeDef>;

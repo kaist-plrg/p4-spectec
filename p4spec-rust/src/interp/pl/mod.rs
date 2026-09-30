@@ -10,11 +10,13 @@ mod eval;
 pub mod flow;
 mod prepare;
 
-use crate::{
-    interp::shared::{cache::Cache, eval::Invoker},
-    lang::{common::source::Span, data::value::Value, pl::ast},
-    runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext},
-};
+use crate::lang::{common::source::Span, data::value::Value};
+
+use crate::lang::pl::ast;
+
+use crate::runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext};
+
+use crate::interp::shared::{cache::Cache, eval::Invoker};
 
 /// Configures the PL interpreter.
 pub struct Config {

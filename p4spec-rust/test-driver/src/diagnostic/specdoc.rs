@@ -4,14 +4,15 @@
 //! structuring, and prose conversion before the document renderer runs.
 //! The driver validates reports without constructing or modifying document nodes.
 
-use p4spec_rust::{
-    backend_specdoc::adoc,
-    diagnostic::{Report, ReportKind, Severity},
-    prosify_with_warnings,
-};
+use p4spec_rust::diagnostic::{Report, ReportKind, Severity};
+
+use p4spec_rust::backend_specdoc::adoc;
+
+use p4spec_rust::prosify_with_warnings;
+
+use crate::Result;
 
 use super::failure;
-use crate::Result;
 
 /// Renders one complete specification and requires its intended markup warning.
 pub fn run(name: &str) -> Result<Vec<Report>> {

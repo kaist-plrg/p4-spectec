@@ -1,13 +1,14 @@
 //! Source syntax rejection through the production P4 parser
 
-use p4spec_rust::{
-    diagnostic::Report,
-    interface::p4::{error::P4ErrorKind, parse},
-    lang::data::value::ValueArena,
-};
+use p4spec_rust::lang::data::value::ValueArena;
+
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::interface::p4::{error::P4ErrorKind, parse};
+
+use crate::Result;
 
 use super::failure;
-use crate::Result;
 
 /// Returns the actual source rejection for snapshot comparison.
 pub fn run(name: &str) -> Result<Vec<Report>> {

@@ -8,10 +8,9 @@
 
 use std::rc::Rc;
 
-use crate::{
-    lang::common::source::{Phrase, Position, Span},
-    phrase,
-};
+use crate::lang::common::source::{Phrase, Position, Span};
+
+use crate::phrase;
 
 use super::error::{self, StfError};
 

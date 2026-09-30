@@ -2,11 +2,11 @@
 //!
 //! Invalid hints and terminal overlap failures become reports at rule boundaries.
 
+use crate::lang::{common::source::Span, hints::input::InputError};
+
+use crate::diagnostic::Label;
+
 use super::{AlgoError, cause};
-use crate::{
-    diagnostic::Label,
-    lang::{common::source::Span, hints::input::InputError},
-};
 
 const RELATION_INPUT_HINT_INVALID: &str = "algo/relation-input-hint-invalid";
 

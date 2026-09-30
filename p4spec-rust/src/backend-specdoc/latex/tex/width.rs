@@ -9,8 +9,9 @@
 //! LeftStack([x, abc])             3   widest row
 //! ```
 
-use super::doc::*;
 use num_bigint::BigInt;
+
+use super::doc::*;
 
 // == Width parameters
 //

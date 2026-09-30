@@ -10,8 +10,9 @@ mod sim;
 mod snapshot;
 mod structure;
 
-use clap::{Parser, Subcommand};
 use std::{path::PathBuf, process::ExitCode};
+
+use clap::{Parser, Subcommand};
 
 #[derive(Debug, thiserror::Error)]
 enum Error {

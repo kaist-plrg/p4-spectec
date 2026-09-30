@@ -1,12 +1,22 @@
-use crate::{Error, Result, snapshot};
-use expect_test::expect_file;
-use p4spec_rust::{
-    backend_specdoc::adoc,
-    diagnostic::{RenderConfig, Renderer},
-    frontend::parse::parse_files,
-    pass::{algo, elaborate, prosify, structure},
-};
 use std::{fs, path::Path, time::Instant};
+
+use expect_test::expect_file;
+
+use p4spec_rust::diagnostic::{RenderConfig, Renderer};
+
+use p4spec_rust::frontend::parse::parse_files;
+
+use p4spec_rust::pass::elaborate;
+
+use p4spec_rust::pass::algo;
+
+use p4spec_rust::pass::structure;
+
+use p4spec_rust::pass::prosify;
+
+use p4spec_rust::backend_specdoc::adoc;
+
+use crate::{Error, Result, snapshot};
 
 /// Checks full-specification snapshots and optionally exports AsciiDoc documents.
 pub fn run(path_output: Option<&Path>) -> Result<()> {

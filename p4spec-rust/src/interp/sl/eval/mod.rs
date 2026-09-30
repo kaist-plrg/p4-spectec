@@ -4,18 +4,20 @@
 //! `instr` evaluates blocks and instructions into flows;
 //! `assign` adds parameter assignment; `expr` re-exports the shared evaluation.
 
-use crate::runtime::envs::interp::sl::ast_prepared as ast;
 pub mod assign;
 pub mod call;
 pub mod expr;
 pub mod instr;
 
+use crate::lang::data::value::Value;
+
+use crate::runtime::envs::interp::sl::ast_prepared as ast;
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{backtrack::Backtrack, eval::Invoker};
+
 use super::{SlInterp, context::Context};
-use crate::{
-    interp::shared::{backtrack::Backtrack, eval::Invoker},
-    lang::data::value::Value,
-    runner::{Extern, Interface, RunnerContext},
-};
 
 impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for SlInterp {
     type Context<'global> = Context<'global>;

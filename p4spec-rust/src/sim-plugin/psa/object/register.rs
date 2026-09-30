@@ -4,22 +4,26 @@
 //! an out-of-range read yields that default,
 //! an out-of-range write is ignored.
 
-use crate::lang::data::value::external::{DecodeContext, EncodeContext};
+use serde_derive_state::{DeserializeState, SerializeState};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{
+            Value,
+            external::{DecodeContext, EncodeContext},
+            make,
+        },
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
 use crate::sim_plugin::{
     error,
     spec::{args, func, unpack},
 };
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-};
-use serde_derive_state::{DeserializeState, SerializeState};
 
 #[derive(Clone, Debug, PartialEq, Eq, SerializeState, DeserializeState)]
 #[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]

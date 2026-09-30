@@ -2,8 +2,9 @@
 //!
 //! Builds diagnostics; callers choose whether to stop or try another candidate.
 
-use super::diagnostic;
 use crate::diagnostic::Diagnostic;
+
+use super::diagnostic;
 
 const RELATION_INPUT_ARITY_MISMATCH: &str = "runtime/relation-input-arity-mismatch";
 

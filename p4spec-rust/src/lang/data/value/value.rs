@@ -5,9 +5,6 @@
 //! may still be distinct entries;
 //! the canonical identity ignores spans and is what syntax equality uses.
 
-use crate::util::json::json;
-use serde_derive_state::{DeserializeState, SerializeState};
-
 use std::{
     cmp::Ordering,
     hash::{Hash, Hasher},
@@ -15,21 +12,25 @@ use std::{
     rc::Rc,
 };
 
-use super::{
-    arena::ValueArena,
-    intern::{CanonEq, CanonHash, CanonInterner, Interned},
-};
+use serde_derive_state::{DeserializeState, SerializeState};
 use thiserror::Error;
 
+use crate::util::json::json;
+
 use crate::lang::{
-    common::prim::num::{self, Number},
     common::{
         Id,
         notation::{atom::Atom, mixfix::Mixfix},
+        prim::num::{self, Number},
         source::{NotePhrase, Phrase, Span},
     },
     data::typ::TypKind,
     traits::{cmp::SyntaxCmp, eq::SyntaxEq},
+};
+
+use super::{
+    arena::ValueArena,
+    intern::{CanonEq, CanonHash, CanonInterner, Interned},
 };
 
 // = Value types

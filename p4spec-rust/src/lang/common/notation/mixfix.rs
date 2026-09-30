@@ -7,14 +7,14 @@
 //! never at atom spans;
 //! `eq_shape` compares atoms only.
 
-use serde::{Deserialize, Serialize};
-use serde_derive_state::{DeserializeState, SerializeState};
-
 use std::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
 };
+
+use serde::{Deserialize, Serialize};
+use serde_derive_state::{DeserializeState, SerializeState};
 
 use crate::lang::{
     common::ds::set::IdSet,
@@ -27,10 +27,9 @@ use crate::lang::{
     },
 };
 
-use super::{
-    super::source::{Phrase, Span},
-    atom::Atom,
-};
+use super::super::source::{Phrase, Span};
+
+use super::atom::Atom;
 
 // == Types
 

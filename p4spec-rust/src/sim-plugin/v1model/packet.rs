@@ -5,14 +5,14 @@
 use serde::{Deserialize, Serialize};
 use serde_derive_state::{DeserializeState, SerializeState};
 
-use crate::{
-    lang::data::value::{
-        Value, ValueArena,
-        external::{DecodeContext, EncodeContext},
-    },
-    runner::ExternError,
-    sim_plugin::error,
+use crate::lang::data::value::{
+    Value, ValueArena,
+    external::{DecodeContext, EncodeContext},
 };
+
+use crate::runner::ExternError;
+
+use crate::sim_plugin::error;
 
 use super::super::{core::object::PacketIn, spec::unpack};
 

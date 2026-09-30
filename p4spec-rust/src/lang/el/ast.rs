@@ -3,10 +3,7 @@
 //! Every node is a `Phrase` carrying its source span.
 //! Variant docs give the concrete syntax each form is parsed from.
 
-use crate::lang::{
-    common::prim::num,
-    common::{self, notation::atom, source::Phrase},
-};
+use crate::lang::common::{self, notation::atom, prim::num, source::Phrase};
 
 // Numbers
 

@@ -5,10 +5,9 @@
 
 use std::io;
 
-use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::common::source::Span,
-};
+use crate::lang::common::source::Span;
+
+use crate::diagnostic::{Diagnostic, Label, Report, Severity};
 
 /// A diagnostic produced while reading or parsing STF input.
 pub type StfError = Box<Report>;

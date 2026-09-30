@@ -3,17 +3,20 @@
 //! Pattern failures keep the responsible row and related declarations.
 //! Missing products are described using the existing notation printer.
 
-use super::{AlgoError, cause};
-use crate::{
-    diagnostic::Label,
-    lang::{
-        al,
-        common::{Id, source::Span},
-        il::ast,
-        traits::{at::At, print::Print},
-    },
-    pass::algo::binding::pattern::PatternSets,
+use crate::lang::{
+    common::{Id, source::Span},
+    traits::{at::At, print::Print},
 };
+
+use crate::lang::il::ast;
+
+use crate::lang::al;
+
+use crate::diagnostic::Label;
+
+use crate::pass::algo::binding::pattern::PatternSets;
+
+use super::{AlgoError, cause};
 
 const TABLE_BINDING_SHAPE_INVALID: &str = "algo/table-binding-shape-invalid";
 

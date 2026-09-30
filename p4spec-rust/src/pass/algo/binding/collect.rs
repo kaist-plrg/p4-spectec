@@ -5,13 +5,13 @@
 //! is rejected at that operation's source span.
 //! In `let (x, y + 1) = e`, `x` is collected and `y` is rejected at `y + 1`.
 
-use crate::lang::{common::source::Span, il::ast};
+use crate::lang::common::source::Span;
 
-use super::{
-    super::{AlgoError, error},
-    bind::BEnv,
-    context::Context,
-};
+use crate::lang::il::ast;
+
+use super::super::{AlgoError, error};
+
+use super::{bind::BEnv, context::Context};
 
 // == Helpers
 

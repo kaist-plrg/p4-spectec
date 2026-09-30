@@ -3,16 +3,16 @@
 //! Type elaboration calls these constructors at the failing operation;
 //! each constructor retains the declaration and use spans needed by rendering.
 
-use crate::{
-    lang::{common::Id, traits::print::Print},
-    runtime::ops::typ::TypeError,
+use crate::lang::{
+    common::{Id, source::Span},
+    traits::print::Print,
 };
 
+use crate::diagnostic::{Label, Report};
+
+use crate::runtime::ops::typ::TypeError;
+
 use super::{ElabError, cause, warning};
-use crate::{
-    diagnostic::{Label, Report},
-    lang::common::source::Span,
-};
 
 const ELABORATION_ALTERNATIVE_MISSING: &str = "elab/elaboration-alternative-missing";
 

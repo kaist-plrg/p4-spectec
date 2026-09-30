@@ -13,38 +13,43 @@
 //! Resubmit returns the original packet to the parser; recirculate returns the
 //! deparsed packet to the parser
 
+use num_bigint::BigInt;
+use serde_derive_state::{DeserializeState, SerializeState};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{
+            Value, ValueArena, ValueError,
+            external::{DecodeContext, EncodeContext, Encoding, decode_with, encode_with},
+            get, make,
+        },
+    },
+};
+
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::stf::ast::Statement;
+
+use crate::sim_plugin::error;
+
 use super::super::{
     core::{
         func as core_func,
-        object::{PacketIn, PacketOut, packet as core_packet},
+        object::{PacketIn, PacketOut, packet},
     },
     io::{Rx, Tx},
     spec::{func, pack, pgm, rel, unpack},
     state::SimState,
 };
+
 use super::{
     arch::Arch,
     func as v1model_func,
     object::{Counter, DirectCounter, DirectMeter, Register},
     packet::{CloneInfo, CloneType, Entrypoint, Packet},
 };
-use crate::lang::data::value::external::{
-    DecodeContext, EncodeContext, Encoding, decode_with, encode_with,
-};
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, ValueError, get, make},
-        },
-    },
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
-    stf::ast::Statement,
-};
-use num_bigint::BigInt;
-use serde_derive_state::{DeserializeState, SerializeState};
 
 // == Configuration
 
@@ -936,7 +941,7 @@ where
     let packet = {
         let pkt_in = find_packet_in(ctx, state.value_arch)?;
         let pkt_out = find_packet_out(ctx, state.value_arch)?;
-        core_packet::to_string(&pkt_in, &pkt_out)
+        packet::to_string(&pkt_in, &pkt_out)
     }?;
     state.txs.push(Tx { port, packet });
     Ok(())
@@ -1197,7 +1202,7 @@ where
     let packet = {
         let pkt_in = find_packet_in(ctx, state.value_arch)?;
         let pkt_out = find_packet_out(ctx, state.value_arch)?;
-        core_packet::to_string(&pkt_in, &pkt_out)
+        packet::to_string(&pkt_in, &pkt_out)
     }?;
     // The deparsed bytes become the new input
     let pkt = ObjectState::PacketIn(PacketIn::init(&packet)?);

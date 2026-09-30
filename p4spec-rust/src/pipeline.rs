@@ -8,12 +8,21 @@
 
 use std::path::Path;
 
-use crate::{
-    diagnostic::Report,
-    frontend::parse::parse_files,
-    lang::{al, el, il, pl, sl},
-    pass,
-};
+use crate::lang::el;
+
+use crate::lang::il;
+
+use crate::lang::al;
+
+use crate::lang::sl;
+
+use crate::lang::pl;
+
+use crate::diagnostic::Report;
+
+use crate::frontend::parse::parse_files;
+
+use crate::pass;
 
 // = Errors
 

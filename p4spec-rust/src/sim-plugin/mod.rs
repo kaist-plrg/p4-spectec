@@ -7,12 +7,13 @@
 //! `core` and `spec` are the helpers the architectures share;
 //! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test.
 
-use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
-use crate::{
-    lang::data::value::external::Encoding,
-    runner::{self as host, BuiltinInterface, Interpreter, Runner},
-};
 use std::path::{Path, PathBuf};
+
+use crate::lang::data::value::external::Encoding;
+
+use crate::runner::{self, BuiltinInterface, Interpreter, Runner};
+
+use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 
 pub mod arch;
 pub mod core;
@@ -93,9 +94,9 @@ impl Simulator {
 
 /// Builds a simulator for the named architecture.
 pub fn build(
-    spec: host::Spec,
+    spec: runner::Spec,
     arch: &str,
-    config: host::Config,
+    config: runner::Config,
     encoding: Encoding,
 ) -> Result<Simulator, SimError> {
     // Each architecture is its own extern implementation
@@ -109,13 +110,13 @@ pub fn build(
 
 /// Builds the AL or SL runner, whichever the specification is.
 fn build_for_arch<Arch: Architecture + 'static>(
-    spec: host::Spec,
-    config: host::Config,
+    spec: runner::Spec,
+    config: runner::Config,
     arch: Arch,
 ) -> Result<Simulator, SimError> {
     match spec {
-        host::Spec::Al(spec) => Ok(Simulator::new(host::build_al(spec, config, arch)?)),
-        host::Spec::Sl(spec) => Ok(Simulator::new(host::build_sl(spec, config, arch)?)),
-        host::Spec::Pl(spec) => Ok(Simulator::new(host::build_pl(spec, config, arch)?)),
+        runner::Spec::Al(spec) => Ok(Simulator::new(runner::build_al(spec, config, arch)?)),
+        runner::Spec::Sl(spec) => Ok(Simulator::new(runner::build_sl(spec, config, arch)?)),
+        runner::Spec::Pl(spec) => Ok(Simulator::new(runner::build_pl(spec, config, arch)?)),
     }
 }

@@ -3,9 +3,12 @@
 //! Packets are `Vec<bool>`, most significant bit first;
 //! hex text converts four bits per digit.
 
-use crate::{runner::ExternError, sim_plugin::error};
 use num_bigint::BigInt;
 use num_traits::Zero;
+
+use crate::runner::ExternError;
+
+use crate::sim_plugin::error;
 
 // Bit manipulation
 

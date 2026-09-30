@@ -5,7 +5,14 @@
 
 use std::{fs, path::PathBuf};
 
+use crate::lang::el::ast as el;
+
+use crate::lang::pl::ast as pl;
+
+use crate::diagnostic::Report;
+
 use super::super::anchor::AnchorContext;
+
 use super::{
     anchor,
     error::{self, Error},
@@ -14,10 +21,6 @@ use super::{
     source::Source,
     splicer::{Splice, Splicer},
     splicers::*,
-};
-use crate::{
-    diagnostic::Report,
-    lang::{el::ast as el, pl::ast as pl},
 };
 
 // == Splicers

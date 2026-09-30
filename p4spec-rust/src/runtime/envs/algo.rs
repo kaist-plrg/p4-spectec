@@ -2,11 +2,11 @@
 //!
 //! Binding analysis tracks types, variable dimensions, and meta-variable types.
 
-use crate::{
-    lang::{common::ds::map::IdMap, il::ast},
-    runtime::dim::Dim,
-    runtime::typdef::TypeDef,
-};
+use crate::lang::common::ds::map::IdMap;
+
+use crate::lang::il::ast;
+
+use crate::runtime::{dim::Dim, typdef::TypeDef};
 
 /// Type names to their definitions.
 pub type TDEnv = IdMap<TypeDef>;

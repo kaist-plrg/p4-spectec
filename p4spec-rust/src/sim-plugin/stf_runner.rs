@@ -6,32 +6,38 @@
 //! in either order, so both keep a queue; the rest update tables, mirrors,
 //! multicast groups, and registers through the architecture.
 
+use std::path::{Path, PathBuf};
+
+use num_bigint::BigInt;
+
+use crate::util::text::escape_text;
+
+use crate::lang::{
+    common::source::{Phrase, Span},
+    data::{
+        typ,
+        value::{Value, ValueArena, make},
+    },
+    traits::print::Print,
+};
+
+use crate::runner::{ExternError, Interface, Interpreter, Runner, RunnerContext};
+
+use crate::interface::p4::{error::P4Error, parse};
+
+use crate::stf::{
+    self,
+    ast::{Action, MatchKind, Name, Statement, TableMatch},
+};
+
+use crate::sim_plugin::error::{self, SimError};
+
 use super::{
     arch::Architecture,
     io::{self, Expectation, Rx, Tx},
     state::SimState,
     table,
 };
-use crate::{
-    interface::p4::{error::P4Error, parse},
-    lang::{
-        common::source::{Phrase, Span},
-        data::{
-            typ,
-            value::{Value, ValueArena, make},
-        },
-        traits::print::Print,
-    },
-    runner::{ExternError, Interface, Interpreter, Runner, RunnerContext},
-    sim_plugin::error::{self, SimError},
-    stf::{
-        self,
-        ast::{Action, MatchKind, Name, Statement, TableMatch},
-    },
-    util::text::escape_text,
-};
-use num_bigint::BigInt;
-use std::path::{Path, PathBuf};
 
 // == Helpers
 

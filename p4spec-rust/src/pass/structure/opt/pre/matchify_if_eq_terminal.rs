@@ -15,11 +15,13 @@
 //! and `x != STOP` becomes `not (x matches STOP)` when `STOP` has no arguments.
 //! Only the outer comparison is rewritten; nested expressions are left alone.
 
-use crate::lang::common::source::Span;
-use crate::lang::{
-    common::prim::bool::{CmpOp as BoolCmpOp, UnOp as BoolUnOp},
-    il::ast::{CmpOp, ExpKind, ListPattern, OpTyp, OptPattern, Pattern, UnOp},
+use crate::lang::common::{
+    prim::bool::{CmpOp as BoolCmpOp, UnOp as BoolUnOp},
+    source::Span,
 };
+
+use crate::lang::il::ast::{CmpOp, ExpKind, ListPattern, OpTyp, OptPattern, Pattern, UnOp};
+
 use crate::pass::structure::ol::ast::*;
 
 // == Expressions

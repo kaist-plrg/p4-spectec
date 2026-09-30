@@ -5,11 +5,12 @@
 use num_bigint::BigInt;
 use num_traits::Zero;
 
-use crate::{
-    lang::common::source::Span,
-    lang::data::value::{Value, ValueArena, get, make},
-    lang::{common::prim::num, il::ast::Typ},
+use crate::lang::{
+    common::{prim::num, source::Span},
+    data::value::{Value, ValueArena, get, make},
 };
+
+use crate::lang::il::ast::Typ;
 
 use super::{BuiltinError, extract};
 

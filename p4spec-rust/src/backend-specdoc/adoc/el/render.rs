@@ -9,14 +9,14 @@
 //!                                          ;
 //! ```
 
-use crate::{
-    lang::{
-        common::{Iter, notation::atom::Atom as AtomKind, prim::num},
-        el::ast::*,
-        traits::print::Print,
-    },
-    util::text::escape_text,
+use crate::util::text::escape_text;
+
+use crate::lang::{
+    common::{Iter, notation::atom::Atom as AtomKind, prim::num},
+    traits::print::Print,
 };
+
+use crate::lang::el::ast::*;
 
 use super::doc::doc::Doc;
 

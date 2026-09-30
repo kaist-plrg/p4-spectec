@@ -6,14 +6,16 @@
 //! for relative data.
 //! Independent payloads are trees (`indep`) that any arena can intern.
 
-use ::serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_state::{DeserializeState, SerializeState};
-
 pub mod indep;
 
-use super::{Interned, ValueArena, ValueKind};
-use crate::lang::{common::source::Span, data::typ::TypKind};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_state::{DeserializeState, SerializeState};
+
 use crate::util::json::json;
+
+use crate::lang::{common::source::Span, data::typ::TypKind};
+
+use super::{Interned, ValueArena, ValueKind};
 
 // = Configuration
 

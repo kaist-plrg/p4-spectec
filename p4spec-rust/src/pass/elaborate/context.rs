@@ -13,19 +13,20 @@
 //! `find_*` a located undefined error,
 //! and `bound_*` a boolean.
 
-use crate::{
-    lang::{
-        common::{Id, ds::set::IdSet, source::Span},
-        data::typ,
-        hints::input::InputHint,
-        il::ast,
-    },
-    phrase,
-    runtime::{
-        envs::elab::{FEnv, MEnv, REnv, TDEnv},
-        typdef::TypeDef,
-    },
+use crate::lang::{
+    common::{Id, ds::set::IdSet, source::Span},
+    data::typ,
+    hints::input::InputHint,
 };
+
+use crate::lang::il::ast;
+
+use crate::runtime::{
+    envs::elab::{FEnv, MEnv, REnv, TDEnv},
+    typdef::TypeDef,
+};
+
+use crate::phrase;
 
 use super::error::{self, ElabError};
 

@@ -9,14 +9,14 @@
 //! Expression parameters `I` and `V` resolve identifiers and variables to slots.
 //! Instruction parameter `E` selects the expression representation.
 
-use crate::lang::{
-    common::{
-        notation::mixfix::Mixfix,
-        source::{NotePhrase, Phrase},
-    },
-    pl::annot,
-    sl,
+use crate::lang::common::{
+    notation::mixfix::Mixfix,
+    source::{NotePhrase, Phrase},
 };
+
+use crate::lang::sl;
+
+use crate::lang::pl::annot;
 
 // Numbers
 

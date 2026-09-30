@@ -5,14 +5,16 @@
 //! `choose_deterministic` combines outcomes and rejects multiple conclusions.
 //! Evaluators supply candidates and manage their local bindings.
 
+use crate::lang::{
+    common::source::{Phrase, Span},
+    data::value::Value,
+};
+
 use crate::diagnostic::{Diagnostic, Label, Report};
-use crate::interp::shared::error;
-use crate::{
-    interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
-    lang::{
-        common::source::{Phrase, Span},
-        data::value::Value,
-    },
+
+use crate::interp::shared::{
+    backtrack::{Backtrack, fatal, ok, unmatch, unwrap},
+    error,
 };
 
 /// Records whether an instruction continues or concludes its callable.

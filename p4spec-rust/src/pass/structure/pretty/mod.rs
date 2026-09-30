@@ -8,8 +8,9 @@
 pub(super) mod rename_tick;
 pub(super) mod revive_underscore;
 
-use super::ol::ast::Block;
 use crate::lang::il::ast::{Arg, Exp};
+
+use super::ol::ast::Block;
 
 // == Relations
 

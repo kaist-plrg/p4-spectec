@@ -2,14 +2,17 @@
 //!
 //! Unknown architectures fail before specification loading and have no location.
 
-use super::failure;
+use p4spec_rust::lang::data::value::external::Encoding;
+
+use p4spec_rust::diagnostic::{Report, ReportKind};
+
+use p4spec_rust::runner::{Config, Spec};
+
+use p4spec_rust::sim_plugin;
+
 use crate::Result;
-use p4spec_rust::{
-    diagnostic::{Report, ReportKind},
-    lang::data::value::external::Encoding,
-    runner::{Config, Spec},
-    sim_plugin,
-};
+
+use super::failure;
 
 /// Rejects an unsupported architecture through the actual simulator builder.
 pub(super) fn run(name: &str) -> Result<Vec<Report>> {

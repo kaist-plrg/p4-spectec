@@ -7,12 +7,15 @@
 //! Compile-time known calls (`static_assert`) are handled here
 //! for all architectures.
 
+use crate::lang::data::value::Value;
+
+use crate::lang::il::ast::Typ;
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::sim_plugin::error;
+
 use super::core;
-use crate::{
-    lang::{data::value::Value, il::ast::Typ},
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
-};
 
 // == Architecture extern operations
 

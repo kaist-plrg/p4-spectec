@@ -7,12 +7,12 @@
 //! `fold` reproduces that with an operator-precedence stack
 //! over the flat operand and operator list the grammar collects.
 
-use super::error::P4Error;
-
 use crate::lang::{
     common::source::Span,
     data::value::{Value, ValueArena, make},
 };
+
+use super::error::P4Error;
 
 /// The operators the grammar leaves to precedence folding.
 #[derive(Clone, Copy)]

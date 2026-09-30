@@ -24,20 +24,21 @@
 //! -- if (n_x = n_y)*{n_x <- n_x*}
 //! ```
 
-use crate::{
-    lang::{
-        common::{
-            Id,
-            ds::map::IdMap,
-            notation::mixfix::Mixfix,
-            source::{Phrase, Span},
-        },
-        il::ast,
-        traits::eq::SyntaxEq,
+use crate::lang::{
+    common::{
+        Id,
+        ds::map::IdMap,
+        notation::mixfix::Mixfix,
+        source::{Phrase, Span},
     },
-    phrase,
-    runtime::{dim::Dim, envs::elab::VEnv},
+    traits::eq::SyntaxEq,
 };
+
+use crate::lang::il::ast;
+
+use crate::runtime::{dim::Dim, envs::elab::VEnv};
+
+use crate::phrase;
 
 use super::{ElabError, error};
 

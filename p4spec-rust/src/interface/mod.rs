@@ -5,10 +5,9 @@
 //! which renders a value back to P4 syntax
 //! using the specification's print hints.
 
-use crate::{
-    lang::{common::source::Span, data::value},
-    runner::{BuiltinInterface, Spec},
-};
+use crate::lang::{common::source::Span, data::value};
+
+use crate::runner::{BuiltinInterface, Spec};
 
 use self::{
     builtin::{call::Builtins, extract},

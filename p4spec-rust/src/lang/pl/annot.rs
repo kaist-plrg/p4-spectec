@@ -7,9 +7,10 @@
 use crate::lang::{
     common::{ds::set::IdSet, source::Phrase},
     hints::{alter, fields},
-    sl,
     traits::{eq::SyntaxEq, free::FreeIds},
 };
+
+use crate::lang::sl;
 
 // Hints
 

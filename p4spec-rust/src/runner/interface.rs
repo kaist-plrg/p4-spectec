@@ -9,12 +9,13 @@
 
 use thiserror::Error;
 
-use crate::{
-    diagnostic::{Diagnostic, Report, Severity},
-    interface::builtin::{BuiltinError, call::Builtins},
-    lang::data::value::{Value, ValueArena},
-    lang::il::ast::{Id, Typ},
-};
+use crate::lang::data::value::{Value, ValueArena};
+
+use crate::lang::il::ast::{Id, Typ};
+
+use crate::diagnostic::{Diagnostic, Report, Severity};
+
+use crate::interface::builtin::{BuiltinError, call::Builtins};
 
 // == Interface errors
 

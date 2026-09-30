@@ -4,17 +4,20 @@
 //! `let y' = z { return y }`, assuming `y'` is fresh.
 //! The local binder is renamed so it does not capture the introduced `y`.
 
-use super::super::ol::ast as ol;
 use crate::lang::{
     common::{
         ds::{map::IdMap, set::IdSet},
         notation::mixop::Mixop,
     },
     hints::input,
-    il::{ast::*, fresh},
     traits::free::FreeIds,
 };
+
+use crate::lang::il::{ast::*, fresh};
+
 use crate::{note_phrase, phrase};
+
+use super::super::ol::ast as ol;
 
 // == Environment
 

@@ -11,11 +11,14 @@ pub mod context;
 
 pub mod eval;
 
+use crate::lang::{common::source::Span, data::value::Value};
+
+use crate::lang::al::ast;
+
+use crate::runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext};
+
 use crate::interp::shared::{cache::Cache, eval::Invoker};
-use crate::{
-    lang::{al::ast, common::source::Span, data::value::Value},
-    runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext},
-};
+
 use context::{Context, Global};
 
 /// Configuration for the AL interpreter.

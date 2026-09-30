@@ -5,11 +5,11 @@
 
 use thiserror::Error;
 
-use crate::{
-    diagnostic::{Diagnostic, Report, Severity},
-    interface::p4::error::P4UnparseError,
-    lang::{common::prim::num::NumericError, data::value::ValueError},
-};
+use crate::lang::{common::prim::num::NumericError, data::value::ValueError};
+
+use crate::diagnostic::{Diagnostic, Report, Severity};
+
+use crate::interface::p4::error::P4UnparseError;
 
 /// A fatal diagnostic produced by a builtin call.
 #[derive(Debug, Error)]

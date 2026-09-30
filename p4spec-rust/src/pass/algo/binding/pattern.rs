@@ -6,10 +6,9 @@
 //! and exhaustive when subtracting them all from the type's product
 //! leaves nothing.
 
-use crate::lang::{
-    common::{ds::set::PhraseSet, source::Span},
-    il::ast,
-};
+use crate::lang::common::{ds::set::PhraseSet, source::Span};
+
+use crate::lang::il::ast;
 
 use super::super::{AlgoError, error};
 

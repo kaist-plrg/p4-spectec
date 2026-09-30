@@ -3,13 +3,21 @@
 //! Earlier stages must succeed before prosify rejects a source hint.
 //! The shared runner compares each complete rendered report with its expectation.
 
-use super::failure;
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::frontend::parse::parse_files;
+
+use p4spec_rust::pass::elaborate;
+
+use p4spec_rust::pass::algo;
+
+use p4spec_rust::pass::structure;
+
+use p4spec_rust::pass::prosify;
+
 use crate::Result;
-use p4spec_rust::{
-    diagnostic::Report,
-    frontend::parse::parse_files,
-    pass::{algo, elaborate, prosify, structure},
-};
+
+use super::failure;
 
 /// Runs one source fixture through its intended prose failure.
 pub fn run(name: &str) -> Result<Vec<Report>> {

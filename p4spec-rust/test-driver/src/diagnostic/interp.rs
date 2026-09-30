@@ -4,13 +4,17 @@
 //! Cases check the runtime failure kind and code before rendering a snapshot.
 //! Setup failures and unexpected success fail the test.
 
-use super::failure;
-use crate::Result;
-use p4spec_rust::{
-    diagnostic::{Report, ReportKind},
-    lang::{common::source::Span, data::value::make},
-    runner::{self, BuiltinInterface, Config, Interpreter, InterpreterError, NullExtern, Runner},
+use p4spec_rust::lang::{common::source::Span, data::value::make};
+
+use p4spec_rust::diagnostic::{Report, ReportKind};
+
+use p4spec_rust::runner::{
+    self, BuiltinInterface, Config, Interpreter, InterpreterError, NullExtern, Runner,
 };
+
+use crate::Result;
+
+use super::failure;
 
 // = Expectations
 

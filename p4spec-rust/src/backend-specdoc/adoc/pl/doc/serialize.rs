@@ -11,16 +11,16 @@
 //! -> . +++<span class="bk-arm-anchor" id="arm"></span>+++Done
 //! ```
 
-use crate::{
-    backend_specdoc::{
-        adoc::error,
-        anchor::{AnchorContext, Presentation},
-    },
-    diagnostic::{Diagnostic, Report},
-    lang::common::source::Span,
-};
-
 use std::collections::{BTreeMap, BTreeSet};
+
+use crate::lang::common::source::Span;
+
+use crate::diagnostic::{Diagnostic, Report};
+
+use crate::backend_specdoc::{
+    adoc::error,
+    anchor::{AnchorContext, Presentation},
+};
 
 use super::doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, Prose, Subject, Table};
 

@@ -8,7 +8,9 @@
 //! `let a = $g(x); let b = $f(a); R(b)`: one let per call, innermost first,
 //! naming each intermediate result before it is used.
 
-use crate::lang::{common::ds::set::IdSet, sl::ast as sl, traits::free::FreeIds};
+use crate::lang::{common::ds::set::IdSet, traits::free::FreeIds};
+
+use crate::lang::sl::ast as sl;
 
 use super::lift;
 

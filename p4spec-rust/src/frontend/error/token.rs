@@ -4,9 +4,11 @@
 //! LALRPOP terminal names become readable expected alternatives.
 //! Token and end-of-input reports use these descriptions in their labels.
 
-use crate::diagnostic::Label;
-use crate::frontend::lexer::Token;
 use crate::lang::common::source::{Position, Span};
+
+use crate::diagnostic::Label;
+
+use crate::frontend::lexer::Token;
 
 use super::{FrontendError, diagnostic};
 

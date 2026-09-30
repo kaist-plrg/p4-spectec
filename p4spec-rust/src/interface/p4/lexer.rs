@@ -39,20 +39,19 @@ use std::{collections::VecDeque, rc::Rc};
 
 use num_bigint::BigInt;
 
-use crate::{
-    lang::{
-        common::prim::num::Natural,
-        common::{
-            notation::{atom::Atom, mixfix::Mixfix},
-            source::{Phrase, Position, Span},
-        },
-        data::{
-            typ,
-            value::{Value, make},
-        },
+use crate::lang::{
+    common::{
+        notation::{atom::Atom, mixfix::Mixfix},
+        prim::num::Natural,
+        source::{Phrase, Position, Span},
     },
-    phrase,
+    data::{
+        typ,
+        value::{Value, make},
+    },
 };
+
+use crate::phrase;
 
 use super::{
     context::{Context, IdentKind},

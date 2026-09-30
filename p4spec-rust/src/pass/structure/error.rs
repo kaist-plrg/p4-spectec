@@ -3,11 +3,11 @@
 //! Validated AL establishes the internal shape and binding invariants.
 //! Type operations can still fail on validated inputs.
 
-use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::common::source::Span,
-    runtime::ops::typ::TypeError,
-};
+use crate::lang::common::source::Span;
+
+use crate::diagnostic::{Diagnostic, Label, Report, Severity};
+
+use crate::runtime::ops::typ::TypeError;
 
 /// Names a structuring report without adding a wrapper.
 pub type StructureError = Box<Report>;

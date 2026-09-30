@@ -8,17 +8,21 @@
 use num_traits::Signed;
 use thiserror::Error;
 
-use crate::{
-    lang::{
-        common::prim::num::{Number, Typ as NumTyp},
-        common::source::Span,
-        data::value::{Value, ValueArena, ValueKind},
-        il::ast::{DefTypKind, FuncTyp, Id, Iter, Subcheck, Typ, TypCase, TypField, TypKind},
+use crate::lang::{
+    common::{
+        prim::num::{Number, Typ as NumTyp},
+        source::Span,
     },
-    runtime::{
-        ops::typ::{Theta, TypeError, equiv_func_typ, subst_not_typ, subst_typ},
-        typdef::TypeDef,
-    },
+    data::value::{Value, ValueArena, ValueKind},
+};
+
+use crate::lang::il::ast::{
+    DefTypKind, FuncTyp, Id, Iter, Subcheck, Typ, TypCase, TypField, TypKind,
+};
+
+use crate::runtime::{
+    ops::typ::{Theta, TypeError, equiv_func_typ, subst_not_typ, subst_typ},
+    typdef::TypeDef,
 };
 
 // == Errors

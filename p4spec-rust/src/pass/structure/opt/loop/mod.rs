@@ -8,10 +8,9 @@ pub(crate) mod merge_binding;
 pub(crate) mod merge_hold;
 pub(crate) mod merge_if;
 
-use crate::{
-    pass::structure::{StructureError, ol::ast::Block},
-    runtime::envs::algo::TDEnv,
-};
+use crate::runtime::envs::algo::TDEnv;
+
+use crate::pass::structure::{StructureError, ol::ast::Block};
 
 // == Optimization
 

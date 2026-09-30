@@ -24,9 +24,11 @@ use std::collections::VecDeque;
 
 use crate::lang::{
     hints::input,
-    il::ast::{ExpField, ExpKind},
     traits::{eq::SyntaxEq, free::FreeIds},
 };
+
+use crate::lang::il::ast::{ExpField, ExpKind};
+
 use crate::pass::structure::{ol::ast::*, opt::merge::merge_block, re::renamer::Renamer};
 
 // == Bindings

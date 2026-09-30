@@ -4,14 +4,13 @@
 //! Repeated declarations label the later occurrence and the original binding;
 //! missing bodies produce warnings without changing the semantic result.
 
+use crate::lang::common::{Id, source::Span};
+
+use crate::lang::il::ast as il;
+
+use crate::diagnostic::{Label, Report};
+
 use super::{ElabError, cause, warning};
-use crate::{
-    diagnostic::{Label, Report},
-    lang::{
-        common::{Id, source::Span},
-        il::ast as il,
-    },
-};
 
 // == Type
 

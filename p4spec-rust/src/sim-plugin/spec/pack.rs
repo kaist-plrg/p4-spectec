@@ -5,13 +5,12 @@
 
 use num_bigint::BigInt;
 
-use crate::{
-    lang::{
-        common::source::Span,
-        data::value::{Value, ValueArena, make},
-    },
-    runner::ExternError,
+use crate::lang::{
+    common::source::Span,
+    data::value::{Value, ValueArena, make},
 };
+
+use crate::runner::ExternError;
 
 // == P4 values
 

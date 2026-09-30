@@ -3,8 +3,9 @@
 //! A group is an ordered list of node handles;
 //! each node replicates the packet to one port with one replication id.
 
-use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

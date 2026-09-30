@@ -7,8 +7,11 @@
 
 pub mod ast;
 
-use crate::lang::common::{Id, notation::mixfix::Mixfix, source::NotePhrase};
-use crate::lang::data::var::{IdSlot, Var, VarSlot};
+use crate::lang::{
+    common::{Id, notation::mixfix::Mixfix, source::NotePhrase},
+    data::var::{IdSlot, Var, VarSlot},
+};
+
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
 
 /// Slot resolution of one syntax node.

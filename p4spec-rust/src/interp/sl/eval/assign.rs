@@ -3,14 +3,15 @@
 //! Re-exports the shared assignment and adds parameters,
 //! whose patterns live in the parameter, not in a separate argument list.
 
-use super::super::context::Context;
+use crate::lang::data::value::{Value, ValueArena};
+
 use crate::runtime::envs::interp::sl::ast_prepared as ast;
-use crate::{
-    interp::shared::backtrack::{Backtrack, ok, unwrap},
-    lang::data::value::{Value, ValueArena},
-};
+
+use crate::interp::shared::backtrack::{Backtrack, ok, unwrap};
 
 pub use crate::interp::shared::eval::assign::*;
+
+use super::super::context::Context;
 
 // = Parameter assignment
 

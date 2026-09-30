@@ -5,10 +5,9 @@
 
 use thiserror::Error;
 
-use crate::{
-    diagnostic::{Diagnostic, Report, Severity},
-    lang::{common::source::Span, hints::alter::AlterationError},
-};
+use crate::lang::{common::source::Span, hints::alter::AlterationError};
+
+use crate::diagnostic::{Diagnostic, Report, Severity};
 
 /// A classified parser failure with its original source location.
 #[derive(Clone, Debug, Error)]

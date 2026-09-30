@@ -13,6 +13,7 @@
 //! Nested groups are removed too; their bodies stay in the same order.
 
 use crate::lang::common::source::Span;
+
 use crate::pass::structure::ol::ast::*;
 
 // == Instructions

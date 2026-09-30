@@ -6,18 +6,24 @@
 //! For `${func-prose: f f}`, one request retains both keys;
 //! rendering selects the same definition twice with distinct original positions.
 
+use std::collections::BTreeMap;
+
+use crate::lang::common::source::Phrase;
+
+use crate::lang::el::ast as el;
+
+use crate::lang::pl::ast as pl;
+
+use crate::diagnostic::Report;
+
 use super::super::anchor::AnchorContext;
+
 use super::{
     anchor::{Decls, Targets},
     error::{self, Error},
     parser,
     source::Source,
 };
-use crate::{
-    diagnostic::Report,
-    lang::{common::source::Phrase, el::ast as el, pl::ast as pl},
-};
-use std::collections::BTreeMap;
 
 // == Splice key and values
 

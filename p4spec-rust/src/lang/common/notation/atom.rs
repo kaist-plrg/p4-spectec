@@ -5,9 +5,9 @@
 //! Tags must be upper identifiers and operators must be printable on one line;
 //! the constructors enforce that.
 
-use serde::{Deserialize, Serialize};
-
 use std::{error::Error, fmt};
+
+use serde::{Deserialize, Serialize};
 
 use crate::lang::{
     common::{ds::set::IdSet, source::Phrase},

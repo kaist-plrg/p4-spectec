@@ -5,11 +5,12 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use crate::{
-    lang::common::source::Span,
-    lang::data::value::{Value, ValueArena, make},
-    lang::il::ast::Typ,
+use crate::lang::{
+    common::source::Span,
+    data::value::{Value, ValueArena, make},
 };
+
+use crate::lang::il::ast::Typ;
 
 use super::{BuiltinError, extract};
 

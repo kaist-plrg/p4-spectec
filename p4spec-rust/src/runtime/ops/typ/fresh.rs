@@ -3,13 +3,11 @@
 //! Fresh names are `__FRESH<n>`, unique within one operation;
 //! they never reach the source.
 
-use crate::{
-    lang::{
-        common::source::Span,
-        il::ast::{self, TypKind},
-    },
-    phrase,
-};
+use crate::lang::common::source::Span;
+
+use crate::lang::il::ast::{self, TypKind};
+
+use crate::phrase;
 
 /// Counter for fresh type variables.
 #[derive(Default)]

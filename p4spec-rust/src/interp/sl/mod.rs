@@ -12,11 +12,14 @@ pub mod flow;
 
 pub mod eval;
 
+use crate::lang::{common::source::Span, data::value::Value};
+
+use crate::lang::sl::ast;
+
+use crate::runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext};
+
 use crate::interp::shared::{cache::Cache, eval::Invoker};
-use crate::{
-    lang::{common::source::Span, data::value::Value, sl::ast},
-    runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext},
-};
+
 use context::{Context, Global};
 
 /// Configuration for the SL interpreter.

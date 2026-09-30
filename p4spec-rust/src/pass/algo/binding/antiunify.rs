@@ -9,26 +9,23 @@
 //! if the types are equivalent.
 //! Fresh names from the failed attempt are discarded.
 
-use crate::lang::traits::at::At;
-
-use crate::{
-    lang::{
-        common::prim,
-        common::{ds::set::IdSet, notation::mixop::Mixop, source::Span},
-        il::{ast, fresh, var},
-        traits::eq::SyntaxEq,
-    },
-    note_phrase, phrase,
-    runtime::{
-        envs::algo::{MEnv, TDEnv},
-        ops::typ::{TypeError, equiv_typ},
-    },
+use crate::lang::{
+    common::{ds::set::IdSet, notation::mixop::Mixop, prim, source::Span},
+    traits::{at::At, eq::SyntaxEq},
 };
 
-use super::{
-    super::{AlgoError, error},
-    context::Context,
+use crate::lang::il::{ast, fresh, var};
+
+use crate::runtime::{
+    envs::algo::{MEnv, TDEnv},
+    ops::typ::{TypeError, equiv_typ},
 };
+
+use crate::{note_phrase, phrase};
+
+use super::super::{AlgoError, error};
+
+use super::context::Context;
 
 /// Separates structural fallback from failures of type operations.
 enum OverlapFailure {

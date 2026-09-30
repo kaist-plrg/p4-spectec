@@ -2,9 +2,11 @@
 //!
 //! Builds diagnostics; callers choose whether to stop or try another candidate.
 
-use super::diagnostic;
-use crate::diagnostic::Diagnostic;
 use num_bigint::BigInt;
+
+use crate::diagnostic::Diagnostic;
+
+use super::diagnostic;
 
 const TEXT_SLICE_BOUNDARY_MISMATCH: &str = "runtime/text-slice-boundary-mismatch";
 

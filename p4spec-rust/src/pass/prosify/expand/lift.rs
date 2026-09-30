@@ -13,10 +13,12 @@
 use crate::lang::{
     common::ds::{map::IdMap, set::IdSet},
     hints::input,
-    il::{self, ast as il_ast},
-    sl::ast as sl,
     traits::{eq::SyntaxEq, free::FreeVars},
 };
+
+use crate::lang::il::{self, ast as il_ast};
+
+use crate::lang::sl::ast as sl;
 
 // == Call lifting
 

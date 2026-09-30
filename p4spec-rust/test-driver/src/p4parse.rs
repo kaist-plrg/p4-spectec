@@ -1,21 +1,23 @@
-use crate::{
-    Error, Result,
-    corpus::{self, Outcome, Results},
-};
-use expect_test::expect_file;
-use indicatif::{ProgressBar, ProgressStyle};
-use p4spec_rust::{
-    interface::p4::{
-        error::P4Error,
-        parse::{parse_file, parse_string},
-        unparse::P4Unparser,
-    },
-    lang::data::value::ValueArena,
-};
 use std::{
     fs,
     path::{Path, PathBuf},
     time::Instant,
+};
+
+use expect_test::expect_file;
+use indicatif::{ProgressBar, ProgressStyle};
+
+use p4spec_rust::lang::data::value::ValueArena;
+
+use p4spec_rust::interface::p4::{
+    error::P4Error,
+    parse::{parse_file, parse_string},
+    unparse::P4Unparser,
+};
+
+use crate::{
+    Error, Result,
+    corpus::{self, Outcome, Results},
 };
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {

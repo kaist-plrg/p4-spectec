@@ -9,13 +9,12 @@
 //! Bin(Bin(a, Sub, b), Sub, c)   -> a - b - c
 //! ```
 
-use crate::lang::{
-    common::{
-        notation::atom::Atom,
-        prim::{bool, num},
-    },
-    el::ast::{BinOp, CmpOp},
+use crate::lang::common::{
+    notation::atom::Atom,
+    prim::{bool, num},
 };
+
+use crate::lang::el::ast::{BinOp, CmpOp};
 
 // == Precedence model
 //
@@ -111,20 +110,20 @@ pub(super) fn needs_parentheses(prec_parent: Prec, side: Side, category_child: C
 
 /// Returns the precedence of a notation atom used as an infix operator.
 pub(super) fn of_infix(atom: &Atom) -> Prec {
-    use Assoc as A;
-    use Category as C;
     match atom {
-        Atom::DoubleArrowSub | Atom::DoubleArrowLong => Prec::new(C::Implication, A::Right),
-        Atom::Turnstile => Prec::new(C::Turnstile, A::Non),
-        Atom::Tilesturn => Prec::new(C::Tilesturn, A::Non),
-        Atom::SqArrow | Atom::SqArrowStar => Prec::new(C::SquigglyArrow, A::Right),
-        Atom::Sub | Atom::Sup | Atom::Colon | Atom::ColonEq | Atom::Tilde2 => {
-            Prec::new(C::Colon, A::Left)
+        Atom::DoubleArrowSub | Atom::DoubleArrowLong => {
+            Prec::new(Category::Implication, Assoc::Right)
         }
-        Atom::Arrow | Atom::ArrowSub => Prec::new(C::Arrow, A::Right),
-        Atom::Semicolon => Prec::new(C::Semicolon, A::Left),
-        Atom::Dot | Atom::Dot2 | Atom::Dot3 => Prec::new(C::Dot, A::Left),
-        Atom::Backslash => Prec::new(C::Multiplicative, A::Left),
+        Atom::Turnstile => Prec::new(Category::Turnstile, Assoc::Non),
+        Atom::Tilesturn => Prec::new(Category::Tilesturn, Assoc::Non),
+        Atom::SqArrow | Atom::SqArrowStar => Prec::new(Category::SquigglyArrow, Assoc::Right),
+        Atom::Sub | Atom::Sup | Atom::Colon | Atom::ColonEq | Atom::Tilde2 => {
+            Prec::new(Category::Colon, Assoc::Left)
+        }
+        Atom::Arrow | Atom::ArrowSub => Prec::new(Category::Arrow, Assoc::Right),
+        Atom::Semicolon => Prec::new(Category::Semicolon, Assoc::Left),
+        Atom::Dot | Atom::Dot2 | Atom::Dot3 => Prec::new(Category::Dot, Assoc::Left),
+        Atom::Backslash => Prec::new(Category::Multiplicative, Assoc::Left),
         Atom::Keyword(_)
         | Atom::Tag(_)
         | Atom::Operator(_)
@@ -135,7 +134,7 @@ pub(super) fn of_infix(atom: &Atom) -> Prec {
         | Atom::LBrack
         | Atom::RBrack
         | Atom::LBrace
-        | Atom::RBrace => Prec::new(C::Colon, A::Non),
+        | Atom::RBrace => Prec::new(Category::Colon, Assoc::Non),
     }
 }
 
@@ -146,17 +145,17 @@ pub(super) fn of_infix(atom: &Atom) -> Prec {
 
 /// Returns the precedence of a binary operator.
 pub(super) fn of_binop(op: BinOp) -> Prec {
-    use Assoc as A;
-    use Category as C;
     match op {
-        BinOp::Bool(bool::BinOp::Impl | bool::BinOp::Equiv) => Prec::new(C::Implication, A::Right),
-        BinOp::Bool(bool::BinOp::Or) => Prec::new(C::Disjunction, A::Left),
-        BinOp::Bool(bool::BinOp::And) => Prec::new(C::Conjunction, A::Left),
-        BinOp::Num(num::BinOp::Add | num::BinOp::Sub) => Prec::new(C::Additive, A::Left),
-        BinOp::Num(num::BinOp::Mul | num::BinOp::Div | num::BinOp::Mod) => {
-            Prec::new(C::Multiplicative, A::Left)
+        BinOp::Bool(bool::BinOp::Impl | bool::BinOp::Equiv) => {
+            Prec::new(Category::Implication, Assoc::Right)
         }
-        BinOp::Num(num::BinOp::Pow) => Prec::new(C::Power, A::Left),
+        BinOp::Bool(bool::BinOp::Or) => Prec::new(Category::Disjunction, Assoc::Left),
+        BinOp::Bool(bool::BinOp::And) => Prec::new(Category::Conjunction, Assoc::Left),
+        BinOp::Num(num::BinOp::Add | num::BinOp::Sub) => Prec::new(Category::Additive, Assoc::Left),
+        BinOp::Num(num::BinOp::Mul | num::BinOp::Div | num::BinOp::Mod) => {
+            Prec::new(Category::Multiplicative, Assoc::Left)
+        }
+        BinOp::Num(num::BinOp::Pow) => Prec::new(Category::Power, Assoc::Left),
     }
 }
 

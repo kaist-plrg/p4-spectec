@@ -12,32 +12,34 @@
 //! Accepted packets keep their original bytes and input port
 //! There is no deparser
 
-use crate::lang::data::value::external::{
-    DecodeContext, EncodeContext, Encoding, decode_with, encode_with,
-};
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, get, make},
-        },
-    },
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
-    stf::ast::{Name, Statement},
-};
 use serde_derive_state::{DeserializeState, SerializeState};
 
-use super::{
-    super::{
-        core::{func as core_func, object::PacketIn},
-        io::{Rx, Tx},
-        spec::{func, pgm, rel, unpack},
-        state::SimState,
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{
+            Value, ValueArena,
+            external::{DecodeContext, EncodeContext, Encoding, decode_with, encode_with},
+            get, make,
+        },
     },
-    object::CounterArray,
 };
+
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::stf::ast::{Name, Statement};
+
+use crate::sim_plugin::error;
+
+use super::super::{
+    core::{func as core_func, object::PacketIn},
+    io::{Rx, Tx},
+    spec::{func, pgm, rel, unpack},
+    state::SimState,
+};
+
+use super::object::CounterArray;
 
 // == Configuration
 

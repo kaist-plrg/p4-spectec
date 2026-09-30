@@ -17,13 +17,12 @@ use std::{
 
 use lalrpop_util::ParseError;
 
-use crate::lang::{
-    common::{
-        notation::{mixfix::Mixfix, mixop::Mixop},
-        source::{Position, Span},
-    },
-    el::ast::{self, Spec},
+use crate::lang::common::{
+    notation::{mixfix::Mixfix, mixop::Mixop},
+    source::{Position, Span},
 };
+
+use crate::lang::el::ast::{self, Spec};
 
 use super::{
     ctx::{Bindings, Context, Location},

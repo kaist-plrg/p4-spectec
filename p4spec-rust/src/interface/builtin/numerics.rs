@@ -11,14 +11,14 @@ use num_bigint::BigInt;
 use num_traits::{One, ToPrimitive, Zero};
 
 use crate::lang::{
-    common::prim::num,
-    common::source::Span,
+    common::{prim::num, source::Span},
     data::{
         typ,
         value::{Value, ValueArena, get, make},
     },
-    il::ast::Typ,
 };
+
+use crate::lang::il::ast::Typ;
 
 use super::{BuiltinError, extract};
 

@@ -5,16 +5,20 @@
 //! Iterations also register the outer variable `x*` for every iterated `x`,
 //! so `eval::iter` can find its slot.
 
-use super::Prepare;
 use crate::lang::data::var::{IdSlot, VarSlot};
+
 use crate::lang::il::ast as source;
+
 pub use crate::lang::il::ast::{
     Atom, BinOp, CmpOp, DefTyp, DefTypKind, DefinedTyp, ExternTyp, FuncTyp, Hint, Id, Iter,
     ListPattern, Mixop, NotTyp, NotTypKind, Num, NumOp, OpTyp, OptPattern, Param, ParamKind,
     Pattern, Subcheck, TParam, Targ, TargKind, Text, Typ, TypCase, TypDef, TypField, TypKind,
     TypOrigin, TypOriginKind, UnOp, Value, ValueCase, ValueField, ValueKind, VarDef,
 };
+
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
+
+use super::Prepare;
 
 // == Prepared syntax
 

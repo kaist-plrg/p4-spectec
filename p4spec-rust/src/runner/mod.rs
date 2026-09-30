@@ -12,20 +12,23 @@ mod externs;
 mod interface;
 mod interpreter;
 
-use crate::{
-    diagnostic::Report,
-    interface as builtin,
-    interp::{
-        al::{AlInterp, Config as AlConfig, context::Global as AlGlobal},
-        pl::{Config as PlConfig, PlInterp, context::Global as PlGlobal},
-        sl::{Config as SlConfig, SlInterp, context::Global as SlGlobal},
-    },
-    lang::{
-        al,
-        data::value::{Value, ValueArena},
-        pl, sl,
-    },
-};
+use crate::lang::data::value::{Value, ValueArena};
+
+use crate::lang::al;
+
+use crate::lang::sl;
+
+use crate::lang::pl;
+
+use crate::diagnostic::Report;
+
+use crate::interp::al::{AlInterp, Config as AlConfig, context::Global as AlGlobal};
+
+use crate::interp::sl::{Config as SlConfig, SlInterp, context::Global as SlGlobal};
+
+use crate::interp::pl::{Config as PlConfig, PlInterp, context::Global as PlGlobal};
+
+use crate::interface as builtin;
 
 pub use context::RunnerContext;
 pub use externs::{Extern, ExternError, NullExtern};

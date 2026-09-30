@@ -12,10 +12,9 @@
 
 use std::collections::HashMap;
 
-use crate::lang::{
-    pl::{ast as pl, rule_group},
-    traits::has_call::HasCall,
-};
+use crate::lang::traits::has_call::HasCall;
+
+use crate::lang::pl::{ast as pl, rule_group};
 
 /// Failure destination by rule-group name.
 type Fallthroughs = HashMap<String, pl::Fallthrough>;

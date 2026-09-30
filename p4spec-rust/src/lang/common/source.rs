@@ -6,9 +6,10 @@
 //! the default span, used for generated syntax, prints only its file.
 //! The `serde_state` impls thread an encoding context through nested nodes.
 
+use std::{fmt, rc::Rc};
+
 use serde::{Deserialize, Serialize};
 use serde_derive_state::DeserializeState;
-use std::{fmt, rc::Rc};
 
 // == Positions
 

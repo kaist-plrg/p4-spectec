@@ -3,8 +3,9 @@
 //! Constructors retain the parser's responsible locations
 //! for relation signatures, type definitions, and syntax declarations.
 
-use crate::diagnostic::Label;
 use crate::lang::common::source::Span;
+
+use crate::diagnostic::Label;
 
 use super::{FrontendError, diagnostic};
 

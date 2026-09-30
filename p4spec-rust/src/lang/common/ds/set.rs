@@ -4,8 +4,9 @@
 //! inserting an equivalent key keeps the first one stored.
 //! `IdSet` is the set of identifiers the `FreeIds` traversals collect.
 
-use crate::lang::{common::Id, traits::cmp::SyntaxCmp};
 use imbl::{GenericOrdSet, shared_ptr::RcK};
+
+use crate::lang::{common::Id, traits::cmp::SyntaxCmp};
 
 use super::collections::ByKey;
 

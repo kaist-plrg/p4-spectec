@@ -19,9 +19,9 @@
 
 use std::{cell::RefCell, collections::BTreeSet, rc::Rc};
 
-use crate::lang::{
-    common::ids::id::strip_suffix,
-    common::source::{Position, Span},
+use crate::lang::common::{
+    ids::id::strip_suffix,
+    source::{Position, Span},
 };
 
 /// A compact source location for LALRPOP.

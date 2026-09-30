@@ -1,10 +1,12 @@
-use crate::{Error, Result};
-use expect_test::ExpectFile;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
 };
+
+use expect_test::ExpectFile;
+
+use crate::{Error, Result};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Outcome {

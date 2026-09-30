@@ -3,11 +3,11 @@
 //! Elaboration tracks types, variable dimensions, and meta-variable types,
 //! plus relations, their input hints, and functions.
 
-use crate::{
-    lang::{common::ds::map::IdMap, hints::input::InputHint, il::ast},
-    runtime::dim::Dim,
-    runtime::typdef::TypeDef,
-};
+use crate::lang::{common::ds::map::IdMap, hints::input::InputHint};
+
+use crate::lang::il::ast;
+
+use crate::runtime::{dim::Dim, typdef::TypeDef};
 
 /// Type names to their definitions.
 pub type TDEnv = IdMap<TypeDef>;

@@ -3,11 +3,11 @@
 //! The specification passes parameter names and argument values as two lists;
 //! `assoc` zips them and `find` looks one up.
 
-use crate::{
-    lang::data::value::{Value, ValueArena, ValueError, get},
-    runner::ExternError,
-    sim_plugin::error,
-};
+use crate::lang::data::value::{Value, ValueArena, ValueError, get};
+
+use crate::runner::ExternError;
+
+use crate::sim_plugin::error;
 
 // == Arguments
 

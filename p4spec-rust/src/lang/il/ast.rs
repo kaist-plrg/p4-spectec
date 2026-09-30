@@ -8,15 +8,17 @@
 use std::rc::Rc;
 
 use crate::lang::{
-    common::prim::num,
     common::{
         self,
         notation::{atom, mixfix::Mixfix, mixop},
+        prim::num,
         source::{NotePhrase, Phrase},
     },
-    data, el,
+    data,
     hints::input::InputHint,
 };
+
+use crate::lang::el;
 
 // Numbers
 

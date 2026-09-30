@@ -16,9 +16,10 @@ use crate::lang::{
         typ,
         value::{Value, ValueArena, get, make},
     },
-    il::ast::Typ,
     traits::eq::SyntaxEq,
 };
+
+use crate::lang::il::ast::Typ;
 
 use super::{BuiltinError, extract};
 

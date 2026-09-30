@@ -14,11 +14,13 @@
 //! Type aliases are expanded before counting constructors;
 //! tests on types with multiple constructors remain.
 
+use crate::lang::common::source::Span;
+
+use crate::lang::il::ast::ExpKind;
+
+use crate::runtime::envs::algo::TDEnv;
+
 use crate::pass::structure::{StructureError, ol::ast::*, opt::overlap::typ_as_variant};
-use crate::{
-    lang::{common::source::Span, il::ast::ExpKind},
-    runtime::envs::algo::TDEnv,
-};
 
 // == Singleton matches
 

@@ -12,33 +12,37 @@
 //! -> xref:Oracle[Oracle: ``nat`` ``+~>+`` ``%``]
 //! ```
 
-use crate::backend_specdoc::anchor::AnchorContext;
+use crate::util::text::escape_text;
 
-use crate::{
-    diagnostic::Report,
-    lang::{
-        common::{
-            Iter,
-            notation::{atom::Atom, mixfix::Mixfix},
-            prim::{
-                bool::{BinOp as BoolBinOp, CmpOp as BoolCmpOp, UnOp as BoolUnOp},
-                num::CmpOp as NumCmpOp,
-            },
-            source::Span,
+use crate::lang::{
+    common::{
+        Iter,
+        notation::{atom::Atom, mixfix::Mixfix},
+        prim::{
+            bool::{BinOp as BoolBinOp, CmpOp as BoolCmpOp, UnOp as BoolUnOp},
+            num::CmpOp as NumCmpOp,
         },
-        el,
-        hints::{alter, input},
-        il::ast::{ListPattern, OptPattern, Pattern},
-        pl::{
-            annot::Hints,
-            ast::{self as pl, ExpKind},
-            rule_group,
-        },
-        sl,
-        traits::{has_call::HasCall, print::Print},
+        source::Span,
     },
-    util::text::escape_text,
+    hints::{alter, input},
+    traits::{has_call::HasCall, print::Print},
 };
+
+use crate::lang::el;
+
+use crate::lang::il::ast::{ListPattern, OptPattern, Pattern};
+
+use crate::lang::sl;
+
+use crate::lang::pl::{
+    annot::Hints,
+    ast::{self as pl, ExpKind},
+    rule_group,
+};
+
+use crate::diagnostic::Report;
+
+use crate::backend_specdoc::anchor::AnchorContext;
 
 use super::{
     doc::{

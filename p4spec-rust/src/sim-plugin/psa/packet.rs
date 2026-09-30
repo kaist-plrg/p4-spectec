@@ -2,11 +2,15 @@
 //!
 //! A saved context, input packet, and the pipeline it resumes at.
 
-use super::super::core::object::PacketIn;
-use crate::lang::data::value::Value;
-use crate::lang::data::value::external::{DecodeContext, EncodeContext};
 use serde::{Deserialize, Serialize};
 use serde_derive_state::{DeserializeState, SerializeState};
+
+use crate::lang::data::value::{
+    Value,
+    external::{DecodeContext, EncodeContext},
+};
+
+use super::super::core::object::PacketIn;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// Which pipeline a queued packet resumes at.

@@ -18,12 +18,13 @@ mod error;
 mod expect;
 mod transform;
 
-pub use error::ElabError;
+use crate::lang::el;
 
-use crate::{
-    diagnostic::Report,
-    lang::{el, il},
-};
+use crate::lang::il;
+
+use crate::diagnostic::Report;
+
+pub use error::ElabError;
 
 // == Entry point
 

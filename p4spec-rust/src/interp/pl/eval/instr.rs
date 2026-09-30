@@ -7,35 +7,38 @@
 //! `eval_instr` propagates failures to the enclosing block or invocation.
 //! Expression and assignment adapters remove hints before shared evaluation.
 
+use crate::lang::{
+    common::source::Span,
+    data::value::{Value, get},
+    hints::input,
+    traits::print::Print,
+};
+
+use crate::diagnostic::Report;
+
+use crate::runtime::envs::interp::pl::ast_prepared as ast;
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{
+    backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    context::{IterContext, WriteContext},
+    error,
+    eval::{Invoker, iter, ops},
+    util::iterate_vars,
+};
+
+use crate::interp::pl::{
+    PlInterp,
+    context::Context,
+    flow::{self, Flow},
+};
+
+use crate::phrase;
+
 use super::{
     assign,
     expr::{eval_exp, eval_exps},
-};
-use crate::diagnostic::Report;
-use crate::interp::shared::error;
-use crate::lang::hints::input;
-use crate::phrase;
-use crate::{
-    interp::{
-        pl::{
-            PlInterp,
-            context::Context,
-            flow::{self, Flow},
-        },
-        shared::{
-            backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
-            context::{IterContext, WriteContext},
-            eval::{Invoker, iter, ops},
-            util::iterate_vars,
-        },
-    },
-    lang::{
-        common::source::Span,
-        data::value::{Value, get},
-        traits::print::Print,
-    },
-    runner::{Extern, Interface, RunnerContext},
-    runtime::envs::interp::pl::ast_prepared as ast,
 };
 
 // = Block evaluation

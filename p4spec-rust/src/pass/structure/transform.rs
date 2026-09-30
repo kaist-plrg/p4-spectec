@@ -6,15 +6,18 @@
 //!
 //! AL -> OL -> optimize -> totalize -> prettify -> SL with fallthrough flags
 
-use super::{
-    StructureError, antiunify, context::Context, dangle, ol::ast as ol, opt, pretty, totalize,
-};
 use crate::lang::{
-    al::{ast as al, fresh},
     common::ds::set::IdSet,
     hints::input,
-    sl::ast as sl,
     traits::{at::At, eq::SyntaxEq, free::FreeIds},
+};
+
+use crate::lang::al::{ast as al, fresh};
+
+use crate::lang::sl::ast as sl;
+
+use super::{
+    StructureError, antiunify, context::Context, dangle, ol::ast as ol, opt, pretty, totalize,
 };
 
 // == Parameters

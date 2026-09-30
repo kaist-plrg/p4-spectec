@@ -3,19 +3,20 @@
 //! Matching sites supply the complete notation and its declaration kind.
 //! Argument checks retain the declaration type span even inside nested notation.
 
-use crate::{
-    diagnostic::Label,
-    lang::{
-        common::{
-            notation::{atom::Atom, mixfix::AtomPhrase},
-            source::Span,
-        },
-        il::ast as il,
-        traits::{at::At, print::Print},
+use crate::lang::{
+    common::{
+        notation::{atom::Atom, mixfix::AtomPhrase},
+        source::Span,
     },
+    traits::{at::At, print::Print},
 };
 
+use crate::lang::il::ast as il;
+
+use crate::diagnostic::Label;
+
 use super::super::expect::{NotExpect, NotExpectKind};
+
 use super::{ElabError, cause};
 
 const NOTATION_SHAPE_MISMATCH: &str = "elab/notation-shape-mismatch";

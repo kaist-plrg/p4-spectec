@@ -5,14 +5,14 @@
 //! and `bool?` adds an optional iteration around it.
 //! The name is then primed until it clashes with nothing in scope.
 
-use crate::{
-    lang::{
-        common::{ds::set::IdSet, source::Span},
-        il,
-        traits::{eq::SyntaxEq, print::Print},
-    },
-    runtime::envs::algo::MEnv,
+use crate::lang::{
+    common::{ds::set::IdSet, source::Span},
+    traits::{eq::SyntaxEq, print::Print},
 };
+
+use crate::lang::il;
+
+use crate::runtime::envs::algo::MEnv;
 
 use super::{ast::*, var};
 

@@ -3,13 +3,17 @@
 //! Every fixture must parse and elaborate before the algorithmic check fails.
 //! The runner compares the complete rendered report with its adjacent expectation.
 
-use super::failure;
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::frontend::parse::parse_files;
+
+use p4spec_rust::pass::elaborate;
+
+use p4spec_rust::pass::algo;
+
 use crate::Result;
-use p4spec_rust::{
-    diagnostic::Report,
-    frontend::parse::parse_files,
-    pass::{algo, elaborate},
-};
+
+use super::failure;
 
 /// Runs one source fixture through its intended algorithmic failure.
 pub fn run(name: &str) -> Result<Vec<Report>> {

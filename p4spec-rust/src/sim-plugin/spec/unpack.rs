@@ -6,14 +6,14 @@
 
 use num_bigint::BigInt;
 
-use crate::{
-    lang::{
-        common::prim::num,
-        data::value::{Value, ValueArena, ValueError, get},
-    },
-    runner::ExternError,
-    sim_plugin::error,
+use crate::lang::{
+    common::prim::num,
+    data::value::{Value, ValueArena, ValueError, get},
 };
+
+use crate::runner::ExternError;
+
+use crate::sim_plugin::error;
 
 // == P4 values
 

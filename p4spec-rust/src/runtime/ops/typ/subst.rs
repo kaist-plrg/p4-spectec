@@ -4,13 +4,13 @@
 //! so a substituted type cannot capture a bound type parameter.
 //! Substituting a type variable that has arguments is rejected as higher-order.
 
-use crate::lang::{
-    common::{
-        ds::map::{ArityMismatch, IdMap},
-        notation::mixop::Mixop,
-    },
-    il::ast::{self, TypKind},
+use crate::lang::common::{
+    ds::map::{ArityMismatch, IdMap},
+    notation::mixop::Mixop,
 };
+
+use crate::lang::il::ast::{self, TypKind};
+
 use crate::phrase;
 
 use super::{Fresh, TypeError, TypeErrorKind};

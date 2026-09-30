@@ -6,6 +6,7 @@
 //! Deterministic choice retains every mismatch when nothing matches.
 
 use crate::diagnostic::Report;
+
 use crate::interp::shared::{
     backtrack::{Backtrack, fatal, ok, unmatch},
     error::Error,
