@@ -1,59 +1,20 @@
-//! Errors produced while evaluating specification builtins
+//! Fatal diagnostics produced while evaluating specification builtins
 //!
-//! Every builtin returns a value or a fatal error.
-//! Local causes stay typed until the interpreter diagnostic boundary.
+//! Builtin operations describe their failures here.
+//! The interpreter attaches the call location and stops execution.
 
 use thiserror::Error;
 
 use crate::{
     diagnostic::{Diagnostic, Report, Severity},
     interface::p4::error::P4UnparseError,
-    lang::data::value::ValueError,
+    lang::{common::prim::num::NumericError, data::value::ValueError},
 };
 
-/// Why a builtin call failed.
+/// A fatal diagnostic produced by a builtin call.
 #[derive(Debug, Error)]
-pub enum BuiltinError {
-    /// A complete diagnostic returned by a registered host builtin.
-    #[error(transparent)]
-    Report(#[from] Box<Report>),
-
-    /// Wrong number of type arguments or values.
-    #[error("arity mismatch: expected {expected}, got {actual}")]
-    ArgumentCountMismatch { expected: usize, actual: usize },
-
-    /// The specification declares a builtin this interface lacks.
-    #[error("implementation for builtin {0} is missing")]
-    ImplementationMissing(String),
-
-    /// An argument had the right kind but an unusable value.
-    #[error("{0}")]
-    ArgumentInvalid(String),
-
-    /// A value projection or construction failed.
-    #[error(transparent)]
-    Value(#[from] ValueError),
-
-    /// A numeric conversion failed.
-    #[error(transparent)]
-    Numeric(#[from] crate::lang::common::prim::num::NumericError),
-
-    /// `print_` could not render the value.
-    #[error(transparent)]
-    P4Unparse(#[from] P4UnparseError),
-}
-
-impl BuiltinError {
-    /// An invalid-argument failure with a message.
-    pub fn new(message: impl Into<String>) -> Self {
-        Self::ArgumentInvalid(message.into())
-    }
-
-    /// An arity failure.
-    pub fn arity(expected: usize, actual: usize) -> Self {
-        Self::ArgumentCountMismatch { expected, actual }
-    }
-}
+#[error(transparent)]
+pub struct BuiltinError(#[from] pub Box<Report>);
 
 const BUILTIN_ARGUMENT_ARITY_MISMATCH: &str = "runtime/builtin-argument-arity-mismatch";
 const BUILTIN_IMPLEMENTATION_MISSING: &str = "runtime/builtin-implementation-missing";
@@ -62,31 +23,62 @@ const BUILTIN_VALUE_INVALID: &str = "runtime/builtin-value-invalid";
 const BUILTIN_PRINT_UNSUPPORTED: &str = "runtime/builtin-print-unsupported";
 
 impl BuiltinError {
-    /// Describes a local builtin failure at the host operation boundary.
-    pub fn into_report(self) -> Box<Report> {
-        // Forward extension diagnostics before interpreting local failure kinds
-        let kind = match self {
-            BuiltinError::Report(report) => return report,
-            kind => kind,
-        };
-        let code = match &kind {
-            BuiltinError::Report(_) => unreachable!(),
-            BuiltinError::ArgumentCountMismatch { .. } => BUILTIN_ARGUMENT_ARITY_MISMATCH,
-            BuiltinError::ImplementationMissing(_) => BUILTIN_IMPLEMENTATION_MISSING,
-            BuiltinError::ArgumentInvalid(_) => BUILTIN_ARGUMENT_INVALID,
-            BuiltinError::Value(_) | BuiltinError::Numeric(_) => BUILTIN_VALUE_INVALID,
-            BuiltinError::P4Unparse(_) => BUILTIN_PRINT_UNSUPPORTED,
-        };
-        Box::new(
+    /// Creates a diagnostic without a source location.
+    fn diagnostic(code: &str, message: impl Into<String>) -> Self {
+        Self(Box::new(
             Diagnostic::new(
                 "runtime",
                 Severity::Error,
                 Some(code.to_owned()),
-                kind.to_string(),
+                message,
                 vec![],
                 vec![],
             )
             .into(),
+        ))
+    }
+
+    /// Describes an invalid builtin argument.
+    pub fn argument_invalid(message: impl Into<String>) -> Self {
+        Self::diagnostic(BUILTIN_ARGUMENT_INVALID, message)
+    }
+
+    /// Describes an argument count mismatch.
+    pub fn arity(expected: usize, actual: usize) -> Self {
+        Self::diagnostic(
+            BUILTIN_ARGUMENT_ARITY_MISMATCH,
+            format!("arity mismatch: expected {expected}, got {actual}"),
         )
+    }
+
+    /// Describes a declared builtin with no implementation.
+    pub fn implementation_missing(name: &str) -> Self {
+        Self::diagnostic(
+            BUILTIN_IMPLEMENTATION_MISSING,
+            format!("implementation for builtin {name} is missing"),
+        )
+    }
+
+    /// Returns the builtin diagnostic without reconstructing it.
+    pub fn into_report(self) -> Box<Report> {
+        self.0
+    }
+}
+
+impl From<ValueError> for BuiltinError {
+    fn from(error: ValueError) -> Self {
+        Self::diagnostic(BUILTIN_VALUE_INVALID, error.to_string())
+    }
+}
+
+impl From<NumericError> for BuiltinError {
+    fn from(error: NumericError) -> Self {
+        Self::diagnostic(BUILTIN_VALUE_INVALID, error.to_string())
+    }
+}
+
+impl From<P4UnparseError> for BuiltinError {
+    fn from(error: P4UnparseError) -> Self {
+        Self::diagnostic(BUILTIN_PRINT_UNSUPPORTED, error.to_string())
     }
 }

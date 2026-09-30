@@ -62,7 +62,7 @@ pub fn max_nat(
     // An empty list has no maximum
     let (first, rest) = values
         .split_first()
-        .ok_or_else(|| BuiltinError::new("max of empty list"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("max of empty list"))?;
     let mut maximum = bigint_of_value(arena, first)?.clone();
     for value in rest {
         let value = bigint_of_value(arena, value)?.clone();
@@ -82,7 +82,7 @@ pub fn min_nat(
     // An empty list has no minimum
     let (first, rest) = values
         .split_first()
-        .ok_or_else(|| BuiltinError::new("min of empty list"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("min of empty list"))?;
     let mut minimum = bigint_of_value(arena, first)?.clone();
     for value in rest {
         let value = bigint_of_value(arena, value)?.clone();

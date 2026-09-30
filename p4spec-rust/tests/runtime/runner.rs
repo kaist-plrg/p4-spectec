@@ -1,10 +1,8 @@
 use std::{cell::Cell, sync::Mutex};
 
 use p4spec_rust::{
-    interface::{
-        builtin::{BuiltinError, call::Builtins, extract},
-        p4::error::P4UnparseError,
-    },
+    diagnostic::ReportKind,
+    interface::builtin::{call::Builtins, extract},
     lang::common::source::Span,
     lang::data::{
         typ,
@@ -262,11 +260,12 @@ fn test_builtin_interface_preserves_builtin_failures() {
         .call_builtin(&mut arena, &id("sum_int"), &[], &[])
         .unwrap_err();
 
-    assert!(matches!(
-        error,
-        InterfaceError::Builtin(error)
-            if matches!(error, BuiltinError::ArgumentCountMismatch { .. })
-    ));
+    let report = error.into_report();
+    let ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected a builtin diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-argument-arity-mismatch"));
+    assert_eq!(diagnostic.message, "arity mismatch: expected 1, got 0");
 }
 
 #[test]
@@ -297,11 +296,12 @@ fn test_builtin_interface_print_validates_both_arities() {
         let error = interface
             .call_builtin(&mut arena, &id("print_"), &targs, &values)
             .unwrap_err();
-        assert!(matches!(
-            error,
-            InterfaceError::Builtin(error)
-                if matches!(error, BuiltinError::ArgumentCountMismatch { expected: 1, actual: num_actual } if num_actual == actual)
-        ));
+        let report = error.into_report();
+        let ReportKind::Cause(diagnostic) = &report.kind else {
+            panic!("expected a builtin diagnostic")
+        };
+        assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-argument-arity-mismatch"));
+        assert_eq!(diagnostic.message, format!("arity mismatch: expected 1, got {actual}"));
     }
 }
 
@@ -315,11 +315,12 @@ fn test_builtin_interface_print_preserves_unparse_failures() {
     let error = p4spec_rust::interface::p4(&p4spec_rust::runner::Spec::Al(Vec::new()))
         .call_builtin(&mut arena, &id("print_"), &[typ], &[value])
         .unwrap_err();
-    assert!(matches!(
-        error,
-        InterfaceError::Builtin(error)
-            if matches!(error, BuiltinError::P4Unparse(P4UnparseError::ValueUnsupported("Struct")))
-    ));
+    let report = error.into_report();
+    let ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected a builtin diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-print-unsupported"));
+    assert_eq!(diagnostic.message, "cannot unparse runtime value kind Struct");
 }
 
 #[test]

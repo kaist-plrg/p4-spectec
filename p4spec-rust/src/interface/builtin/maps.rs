@@ -113,17 +113,18 @@ fn map_update(
 
 /// Decodes a `map<K, V>` value into its pair list.
 fn map_of_value(arena: &ValueArena, value: &Value) -> Result<ValueMap, BuiltinError> {
-    let value_case = get::case(arena, value).map_err(|_| BuiltinError::new("expected a map"))?;
+    let value_case =
+        get::case(arena, value).map_err(|_| BuiltinError::argument_invalid("expected a map"))?;
     let map_mixop = map_mixop();
     // The value must be a map case wrapping one list
     if !value_case.eq_shape(&map_mixop) {
-        return Err(BuiltinError::new("expected a map"));
+        return Err(BuiltinError::argument_invalid("expected a map"));
     }
     let args = value_case.args();
     let value_pairs = extract::one(&args)?;
     get::list(arena, value_pairs)
         .map(<[Value]>::to_vec)
-        .map_err(|_| BuiltinError::new("expected a map"))
+        .map_err(|_| BuiltinError::argument_invalid("expected a map"))
 }
 
 /// Encodes a pair list as a `map<K, V>` value.
@@ -220,7 +221,9 @@ pub fn adds_map(
         .to_vec();
     // Keys and values pair up positionally
     if values_key.len() != values_value.len() {
-        return Err(BuiltinError::new("map key and value lists must have the same length"));
+        return Err(BuiltinError::argument_invalid(
+            "map key and value lists must have the same length",
+        ));
     }
     for (value_key, value_value) in values_key.iter().zip(&values_value) {
         map = map_update(arena, typ_key, typ_value, value_key, value_value, &map)?;

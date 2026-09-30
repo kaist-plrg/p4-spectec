@@ -153,7 +153,7 @@ impl Builtins {
         let entry = self
             .funcs
             .get_mut(&id.node)
-            .ok_or_else(|| BuiltinError::ImplementationMissing(id.node.clone()))?;
+            .ok_or_else(|| BuiltinError::implementation_missing(&id.node))?;
         let (value, side_effected) = match entry {
             // Pure results may be memoized by the interpreter
             BuiltinEntry::Pure(builtin_impl) => {

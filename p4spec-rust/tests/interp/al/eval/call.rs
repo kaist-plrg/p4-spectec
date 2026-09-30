@@ -1334,7 +1334,9 @@ impl p4spec_rust::runner::Interface for CacheHost {
     ) -> Result<(Value, bool), p4spec_rust::runner::InterfaceError> {
         self.record(&id.node);
         if id.node == "fail" {
-            return Err(p4spec_rust::interface::builtin::BuiltinError::new("failure").into());
+            return Err(
+                p4spec_rust::interface::builtin::BuiltinError::argument_invalid("failure").into()
+            );
         }
         let value = values.first().copied().unwrap_or_else(|| nat(arena, 7));
         Ok((value, id.node == "impure"))

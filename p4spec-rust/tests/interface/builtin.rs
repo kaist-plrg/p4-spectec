@@ -7,7 +7,7 @@ mod sets;
 
 use num_bigint::BigInt;
 use p4spec_rust::{
-    interface::builtin::{BuiltinError, call::Builtins},
+    interface::builtin::call::Builtins,
     lang::{
         common::source::Span,
         data::{
@@ -86,16 +86,23 @@ fn test_fresh_type_ids_share_state_and_report_side_effects() {
 }
 
 #[test]
-fn test_missing_builtin_and_wrong_arity_are_typed_failures() {
+fn test_missing_builtin_and_wrong_arity_preserve_diagnostics() {
     let mut arena = ValueArena::new();
     let missing = invoke(&mut arena, &mut Builtins::new(), "missing", &[]).unwrap_err();
-    assert!(matches!(
-        missing,
-        BuiltinError::ImplementationMissing(ref name) if name == "missing"
-    ));
+    let report = missing.into_report();
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected a builtin diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-implementation-missing"));
+    assert_eq!(diagnostic.message, "implementation for builtin missing is missing");
 
     let arity = invoke(&mut arena, &mut Builtins::new(), "sum_int", &[]).unwrap_err();
-    assert!(matches!(arity, BuiltinError::ArgumentCountMismatch { expected: 1, actual: 0 }));
+    let report = arity.into_report();
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected a builtin diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-argument-arity-mismatch"));
+    assert_eq!(diagnostic.message, "arity mismatch: expected 1, got 0");
 }
 
 #[test]
