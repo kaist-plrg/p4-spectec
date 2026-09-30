@@ -358,6 +358,26 @@ fn test_native_steps_clear_raw_outputs_without_flushing_pending_queues() {
 }
 
 #[test]
+fn test_unlocated_statement_failures_do_not_invent_source_labels() {
+    use p4spec_rust::diagnostic::ReportKind;
+
+    for (source, code) in [
+        ("no_packet\n", "sim/statement-unsupported"),
+        ("expect 1 bb\n", "sim/packet-mismatch"),
+        ("packet 18446744073709551616 aa\n", "sim/integer-invalid"),
+    ] {
+        let (mut runner, mut run_case) = stf_runner(Ebpf::default());
+        run_case.tx_output_queue.push(tx(1, "AA"));
+        let mut stmts = stf::parse::parse_str("generated.stf", source).unwrap();
+        stmts[0].span = Span::default();
+        let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap_err();
+        assert_eq!(report.code(), Some(code));
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected cause") };
+        assert!(diagnostic.labels.is_empty(), "{code}: {:?}", diagnostic.labels);
+    }
+}
+
+#[test]
 fn test_integer_parsing_preserves_word_range_and_radix_prefixes() {
     for (port, port_expect) in [
         ("18446744073709551615", usize::MAX),

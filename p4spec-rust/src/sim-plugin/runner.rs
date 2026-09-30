@@ -116,6 +116,10 @@ fn remaining_expects(expects: &[Expectation]) -> String {
 
 /// Adds missing STF cause labels beneath frames without a source location.
 fn attach_statement_span(report: &mut Report, span: &Span) {
+    // Generated statements have no source location to contribute
+    if *span == Span::default() {
+        return;
+    }
     let mut pending = vec![report];
     // Unlocated frames can group exhausted interpreter alternatives
     while let Some(report) = pending.pop() {
