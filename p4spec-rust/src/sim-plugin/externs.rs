@@ -11,6 +11,7 @@ use super::core;
 use crate::{
     lang::{data::value::Value, il::ast::Typ},
     runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    sim_plugin::error,
 };
 
 // == Architecture extern operations
@@ -95,7 +96,7 @@ impl<Ext: Impl> Extern for Ext {
                 .eval_extern_method_call(ctx, values)
                 .map_err(Into::into)?,
             _ => {
-                return Err(crate::sim_plugin::error::extern_relation_unsupported(format!(
+                return Err(error::extern_relation_unsupported(format!(
                     "unimplemented extern relation: {name}"
                 )));
             }
@@ -120,7 +121,7 @@ impl<Ext: Impl> Extern for Ext {
             "init_objectState" => self.eval_extern_init(ctx, values).map_err(Into::into)?,
             "init_archState" => self.init_arch_state(ctx).map_err(Into::into)?,
             _ => {
-                return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
+                return Err(error::extern_function_unsupported(format!(
                     "unimplemented extern function: {name}"
                 )));
             }
@@ -145,7 +146,7 @@ where
 {
     // Arguments: context, function name, parameter names
     let [value_ctx, value_name, value_names_param] = values else {
-        return Err(crate::sim_plugin::error::extern_argument_arity_mismatch(
+        return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to local compile-time known extern function call"
                 .to_owned(),
         )
@@ -167,7 +168,7 @@ where
         ("static_assert", ["check", "message"]) => true,
         ("static_assert", ["check"]) => false,
         _ => {
-            return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
+            return Err(error::extern_function_unsupported(format!(
                 "unsupported local compile-time known extern function call: {name_func}({})",
                 names_param.join(", ")
             ))

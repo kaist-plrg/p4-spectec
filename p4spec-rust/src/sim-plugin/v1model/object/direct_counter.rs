@@ -5,6 +5,7 @@
 
 use crate::sim_plugin::{
     core::object::PacketIn,
+    error,
     spec::{args, unpack},
 };
 use crate::{
@@ -67,7 +68,7 @@ impl DirectCounter {
             ("CounterType", "packets_and_bytes") => {
                 Ok(Self::PacketsAndBytes((BigInt::zero(), BigInt::zero())))
             }
-            _ => Err(crate::sim_plugin::error::counter_type_invalid(format!(
+            _ => Err(error::counter_type_invalid(format!(
                 "invalid CounterType enum value: {id_enum}.{id_type}"
             ))),
         }

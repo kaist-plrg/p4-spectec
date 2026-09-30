@@ -40,6 +40,7 @@ use crate::{
         },
     },
     runner::{ExternError, Interface, Interpreter, RunnerContext},
+    sim_plugin::error,
     stf::ast::Statement,
 };
 use num_bigint::BigInt;
@@ -225,10 +226,7 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => Err(crate::sim_plugin::error::extern_object_undefined(
-            "packet_in extern not found".to_owned(),
-        )
-        .into()),
+        _ => Err(error::extern_object_undefined("packet_in extern not found".to_owned()).into()),
     }
 }
 
@@ -253,10 +251,7 @@ where
         .map_err(ExternError::from)?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => Err(crate::sim_plugin::error::extern_object_undefined(
-            "packet_out extern not found".to_owned(),
-        )
-        .into()),
+        _ => Err(error::extern_object_undefined("packet_out extern not found".to_owned()).into()),
     }
 }
 
@@ -385,7 +380,7 @@ where
         }
         // Anything else, such as random or truncate, is unsupported
         _ => {
-            return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
+            return Err(error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",
                 names.join(", ")
             ))
@@ -413,7 +408,7 @@ where
     let encoding = ctx.external().encoding;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
-        return Err(crate::sim_plugin::error::extern_argument_arity_mismatch(
+        return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
         )
         .into());
@@ -503,7 +498,7 @@ where
                     .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
                     .collect::<Result<Vec<_>, _>>()
                     .map_err(ExternError::from)?;
-                return Err(crate::sim_plugin::error::extern_method_unsupported(format!(
+                return Err(error::extern_method_unsupported(format!(
                     "unsupported extern method call: {}.{name}({})",
                     ids.join("."),
                     names.join(", ")
@@ -547,7 +542,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(crate::sim_plugin::error::control_operation_unsupported(
+    Err(error::control_operation_unsupported(
         "add_mirror_session_mc is not implemented for the v1model simulator".to_owned(),
     )
     .into())
@@ -616,7 +611,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(crate::sim_plugin::error::control_operation_unsupported(
+    Err(error::control_operation_unsupported(
         "register_read is not implemented for the v1model simulator".to_owned(),
     )
     .into())
@@ -635,7 +630,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(crate::sim_plugin::error::control_operation_unsupported(
+    Err(error::control_operation_unsupported(
         "register_write is not implemented for the v1model simulator".to_owned(),
     )
     .into())
@@ -652,7 +647,7 @@ where
     Interp: Interpreter<Iface, V1Model>,
 {
     let _ = ctx;
-    Err(crate::sim_plugin::error::control_operation_unsupported(
+    Err(error::control_operation_unsupported(
         "register_reset is not implemented for the v1model simulator".to_owned(),
     )
     .into())

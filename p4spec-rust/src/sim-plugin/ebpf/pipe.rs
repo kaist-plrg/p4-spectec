@@ -24,6 +24,7 @@ use crate::{
         },
     },
     runner::{ExternError, Interface, Interpreter, RunnerContext},
+    sim_plugin::error,
     stf::ast::{Name, Statement},
 };
 use serde_derive_state::{DeserializeState, SerializeState};
@@ -203,7 +204,7 @@ where
         if name == "verify" && names == ["check", "toSignal"] {
             core_func::verify(ctx, *value_ctx, *value_arch)?
         } else {
-            return Err(crate::sim_plugin::error::extern_function_unsupported(format!(
+            return Err(error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",
                 names.join(", ")
             ))
@@ -227,7 +228,7 @@ fn unsupported_method(
         .map(|value| get::text(arena, value).map(str::to_owned))
         .collect::<Result<Vec<_>, _>>()
         .map_err(ExternError::from)?;
-    Ok(crate::sim_plugin::error::extern_method_unsupported(format!(
+    Ok(error::extern_method_unsupported(format!(
         "unsupported extern method call: {}.{name}({})",
         ids.join("."),
         names.join(", ")
@@ -248,7 +249,7 @@ where
     let encoding = ctx.external().encoding;
     // Context, state, object id, method name, parameter names
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
-        return Err(crate::sim_plugin::error::extern_argument_arity_mismatch(
+        return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
         )
         .into());

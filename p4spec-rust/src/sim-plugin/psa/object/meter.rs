@@ -2,7 +2,10 @@
 //!
 //! Metering is not modeled; `execute` always returns green.
 
-use crate::sim_plugin::spec::{args, pack, unpack};
+use crate::sim_plugin::{
+    error,
+    spec::{args, pack, unpack},
+};
 use crate::{
     lang::{
         common::source::Span,
@@ -57,7 +60,7 @@ impl Meter {
         match (id_enum.as_str(), id_type.as_str()) {
             ("PSA_MeterType_t", "PACKETS") => Ok(Self::Packets(vec![Color::Green; size])),
             ("PSA_MeterType_t", "BYTES") => Ok(Self::Bytes(vec![Color::Green; size])),
-            _ => Err(crate::sim_plugin::error::meter_type_invalid(format!(
+            _ => Err(error::meter_type_invalid(format!(
                 "invalid PSA_MeterType_t enum value: {id_enum}.{id_type}"
             ))),
         }

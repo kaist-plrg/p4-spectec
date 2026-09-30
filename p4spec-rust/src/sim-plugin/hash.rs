@@ -12,6 +12,7 @@ use super::spec::unpack;
 use crate::{
     lang::data::value::{Value, ValueArena},
     runner::ExternError,
+    sim_plugin::error,
     util::bigint::{remainder, width_bit},
 };
 
@@ -21,7 +22,7 @@ use crate::{
 fn width_bit_aligned(width: &BigInt, alignment: usize) -> Result<usize, ExternError> {
     let width = width_bit(width)?;
     if !width.is_multiple_of(alignment) {
-        return Err(crate::sim_plugin::error::hash_width_invalid(format!(
+        return Err(error::hash_width_invalid(format!(
             "hash width {width} must be a multiple of {alignment} bits"
         )));
     }
@@ -99,9 +100,7 @@ pub fn compute_hash(
         // Identity passes the packed value through
         "identity" => Ok(int.clone()),
         // Other algorithms are not implemented
-        _ => Err(crate::sim_plugin::error::hash_algorithm_unsupported(format!(
-            "(TODO: compute_hash) {algo}"
-        ))),
+        _ => Err(error::hash_algorithm_unsupported(format!("(TODO: compute_hash) {algo}"))),
     }
 }
 

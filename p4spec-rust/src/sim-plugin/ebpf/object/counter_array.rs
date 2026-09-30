@@ -2,7 +2,10 @@
 //!
 //! A dense array of 32-bit counters the data plane increments.
 
-use crate::sim_plugin::spec::{args, func, unpack};
+use crate::sim_plugin::{
+    error,
+    spec::{args, func, unpack},
+};
 use crate::{
     lang::{
         common::source::Span,
@@ -99,9 +102,7 @@ impl CounterArray {
         let value_add = func::find_var_e_local(ctx, value_ctx, "value")?;
         let (_, int_add) = unpack::p4_fixed_bit(ctx.arena(), &value_add)?;
         let int = u32::try_from(&int_add).map_err(|_| {
-            crate::sim_plugin::error::counter_value_out_of_bounds(
-                "counter value exceeds 32 bits".to_owned(),
-            )
+            error::counter_value_out_of_bounds("counter value exceeds 32 bits".to_owned())
         })?;
         self.update(ctx, value_ctx, value_arch, idx, int)
     }

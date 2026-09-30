@@ -11,6 +11,7 @@ use crate::{
         },
     },
     runner::{ExternError, Interface, Interpreter, RunnerContext},
+    sim_plugin::error,
 };
 
 // == Configuration
@@ -70,7 +71,7 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    Err(crate::sim_plugin::error::extern_relation_unsupported(
+    Err(error::extern_relation_unsupported(
         "unimplemented extern relation: ExternFunctionCall_eval".to_owned(),
     )
     .into())
@@ -87,7 +88,7 @@ where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
 {
-    Err(crate::sim_plugin::error::extern_relation_unsupported(
+    Err(error::extern_relation_unsupported(
         "unimplemented extern relation: ExternMethodCall_eval".to_owned(),
     )
     .into())

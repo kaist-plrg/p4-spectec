@@ -7,7 +7,7 @@
 use super::{V1Model, packet::CloneInfo, pipe};
 use crate::sim_plugin::{
     core::object::PacketIn,
-    hash as checksum,
+    error, hash as checksum,
     spec::{func, pack, rel, unpack},
 };
 use crate::{
@@ -201,9 +201,7 @@ pub fn adjust(base: &BigInt, rmax: &BigInt, int: &BigInt) -> Result<BigInt, Exte
     let int_range = rmax - base;
     // The divisor max - base must be positive
     if int_range <= BigInt::zero() {
-        return Err(crate::sim_plugin::error::hash_range_invalid(
-            "hash range divisor must be positive".to_owned(),
-        ));
+        return Err(error::hash_range_invalid("hash range divisor must be positive".to_owned()));
     }
     Ok(remainder(int, &int_range) + base)
 }
@@ -231,7 +229,7 @@ where
     let (id_enum, id_field) = unpack::p4_enum(ctx.arena(), &value_algo)?;
     // Only a `HashAlgorithm` enumerator selects the algorithm
     if id_enum != "HashAlgorithm" {
-        return Err(crate::sim_plugin::error::hash_algorithm_invalid(format!(
+        return Err(error::hash_algorithm_invalid(format!(
             "invalid HashAlgorithm enum value: {id_enum}.{id_field}"
         ))
         .into());
@@ -737,7 +735,7 @@ pub fn format_braces(arena: &ValueArena, fmt: &str, args: &[Value]) -> Result<St
             ('{', Some('}')) => {
                 chars.next();
                 let value = args.next().ok_or_else(|| {
-                    crate::sim_plugin::error::format_argument_arity_mismatch(
+                    error::format_argument_arity_mismatch(
                         "not enough arguments for format string in log_msg".to_owned(),
                     )
                 })?;
@@ -749,7 +747,7 @@ pub fn format_braces(arena: &ValueArena, fmt: &str, args: &[Value]) -> Result<St
     }
     // Every argument must be consumed
     if args.next().is_some() {
-        return Err(crate::sim_plugin::error::format_argument_arity_mismatch(
+        return Err(error::format_argument_arity_mismatch(
             "too many arguments for format string in log_msg".to_owned(),
         ));
     }

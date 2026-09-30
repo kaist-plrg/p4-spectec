@@ -11,6 +11,7 @@ use crate::{
         external::{DecodeContext, EncodeContext},
     },
     runner::ExternError,
+    sim_plugin::error,
 };
 
 use super::super::{core::object::PacketIn, spec::unpack};
@@ -44,7 +45,7 @@ impl CloneInfo {
             "E2E" => CloneType::E2E,
             // Any other tag is not a `CloneType`
             name => {
-                return Err(crate::sim_plugin::error::clone_direction_invalid(format!(
+                return Err(error::clone_direction_invalid(format!(
                     "Invalid enum value \"{name}\". Expected I2E or E2E"
                 )));
             }

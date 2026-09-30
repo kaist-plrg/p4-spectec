@@ -25,6 +25,7 @@ use crate::{
         traits::print::Print,
     },
     runner::{Interface, Interpreter, Runner, RunnerContext},
+    sim_plugin::error,
     stf::{
         self,
         ast::{Action, MatchKind, Name, Statement, TableMatch},
@@ -140,9 +141,8 @@ fn remaining_expects(expects: &[Expectation]) -> String {
 
 /// Parses an optionally signed integer with a `0x`, `0o` or `0b` radix prefix.
 fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, InterpError> {
-    strtoint::strtoint(&text.to_ascii_lowercase()).map_err(|_| {
-        crate::sim_plugin::error::integer_invalid(format!("invalid integer: {text}")).into()
-    })
+    strtoint::strtoint(&text.to_ascii_lowercase())
+        .map_err(|_| error::integer_invalid(format!("invalid integer: {text}")).into())
 }
 
 /// Rewrites STF's `hdr$0` index spelling to the P4 `hdr[0]` form.

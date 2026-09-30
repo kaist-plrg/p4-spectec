@@ -5,7 +5,10 @@
 //! an out-of-range write is ignored.
 
 use crate::lang::data::value::external::{DecodeContext, EncodeContext};
-use crate::sim_plugin::spec::{args, func, unpack};
+use crate::sim_plugin::{
+    error,
+    spec::{args, func, unpack},
+};
 use crate::{
     lang::{
         common::source::Span,
@@ -55,7 +58,7 @@ impl Register {
             .map_err(ExternError::from)?;
         // Exactly two type arguments: the element and index types
         let [value_typ, _] = values_targ else {
-            return Err(crate::sim_plugin::error::register_type_argument_arity_mismatch(format!(
+            return Err(error::register_type_argument_arity_mismatch(format!(
                 "Register constructor expects 2 type arguments, but {} were given",
                 values_targ.len()
             ))

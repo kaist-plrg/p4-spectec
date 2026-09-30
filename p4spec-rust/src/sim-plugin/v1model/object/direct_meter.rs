@@ -4,6 +4,7 @@
 
 use crate::sim_plugin::{
     core::object::PacketIn,
+    error,
     spec::{args, func, pack, rel, unpack},
 };
 use crate::{
@@ -56,7 +57,7 @@ impl DirectMeter {
         match (id_enum.as_str(), id_type.as_str()) {
             ("MeterType", "packets") => Ok(Self::Packets(BigInt::zero())),
             ("MeterType", "bytes") => Ok(Self::Bytes(BigInt::zero())),
-            _ => Err(crate::sim_plugin::error::meter_type_invalid(format!(
+            _ => Err(error::meter_type_invalid(format!(
                 "invalid MeterType enum value: {id_enum}.{id_type}"
             ))),
         }
