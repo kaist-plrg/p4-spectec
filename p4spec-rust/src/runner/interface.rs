@@ -18,40 +18,38 @@ use crate::{
 
 // == Interface errors
 
-/// A failure inside the builtin interface.
+/// A fatal diagnostic produced by the builtin interface.
 #[derive(Debug, Error)]
-pub enum InterfaceError {
-    /// No interface is installed.
-    #[error("interface is not configured")]
-    InterfaceUnconfigured,
-    /// A builtin failed.
-    #[error(transparent)]
-    Builtin(#[from] BuiltinError),
-    /// A fatal diagnostic supplied by an interface.
-    #[error(transparent)]
-    Report(#[from] Box<Report>),
-}
+#[error(transparent)]
+pub struct InterfaceError(#[from] pub Box<Report>);
 
 const INTERFACE_UNCONFIGURED: &str = "runtime/interface-unconfigured";
 
 impl InterfaceError {
-    /// Preserves structured reports and describes unconfigured interfaces.
+    /// Describes an interface that has not been configured.
+    pub fn unconfigured() -> Self {
+        Self(Box::new(
+            Diagnostic::new(
+                "runtime",
+                Severity::Error,
+                Some(INTERFACE_UNCONFIGURED.to_owned()),
+                "interface is not configured",
+                vec![],
+                vec![],
+            )
+            .into(),
+        ))
+    }
+
+    /// Returns the interface diagnostic without reconstructing it.
     pub fn into_report(self) -> Box<Report> {
-        match self {
-            Self::Builtin(error) => error.into_report(),
-            Self::Report(report) => report,
-            Self::InterfaceUnconfigured => Box::new(
-                Diagnostic::new(
-                    "runtime",
-                    Severity::Error,
-                    Some(INTERFACE_UNCONFIGURED.to_owned()),
-                    "interface is not configured",
-                    vec![],
-                    vec![],
-                )
-                .into(),
-            ),
-        }
+        self.0
+    }
+}
+
+impl From<BuiltinError> for InterfaceError {
+    fn from(error: BuiltinError) -> Self {
+        Self(error.into_report())
     }
 }
 
@@ -95,7 +93,7 @@ impl Interface for BuiltinInterface {
     ) -> Result<(Value, bool), InterfaceError> {
         self.builtins
             .invoke(arena, id, targs, values)
-            .map_err(InterfaceError::Builtin)
+            .map_err(InterfaceError::from)
     }
 
     fn clear(&mut self) {
@@ -114,7 +112,7 @@ impl Interface for NullInterface {
         _targs: &[Typ],
         _values: &[Value],
     ) -> Result<(Value, bool), InterfaceError> {
-        Err(InterfaceError::InterfaceUnconfigured)
+        Err(InterfaceError::unconfigured())
     }
 
     fn clear(&mut self) {}

@@ -11,8 +11,8 @@ use p4spec_rust::{
     lang::il::ast::Typ,
     phrase,
     runner::{
-        BuiltinInterface, Extern, ExternError, Interface, InterfaceError, Interpreter,
-        InterpreterError, NullExtern, NullInterface, Runner, RunnerContext,
+        BuiltinInterface, Extern, ExternError, Interface, Interpreter, InterpreterError,
+        NullExtern, NullInterface, Runner, RunnerContext,
     },
 };
 
@@ -183,7 +183,12 @@ fn test_null_interface_reports_configuration_failure() {
         .call_builtin(&mut arena, &id("sum_int"), &[], &[])
         .unwrap_err();
 
-    assert!(matches!(error, InterfaceError::InterfaceUnconfigured));
+    let report = error.into_report();
+    let ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected an interface diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/interface-unconfigured"));
+    assert_eq!(diagnostic.message, "interface is not configured");
 }
 
 #[test]
