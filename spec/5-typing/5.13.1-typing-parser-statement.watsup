@@ -58,14 +58,17 @@ rulegroup SelectCase_keyset_simple_ok/expression {
 
 ;;;;;; expression `&&& expression
 
-tbl dec $compat_mask(typeIR, typeIR) : bool
-tbl def $compat_mask =
-  | (INT, INT) => true
-  | (INT `< w_l `>, INT `< w_r `>) => $(w_l = w_r)
-  | (BIT `< w_l `>, BIT `< w_r `>) => $(w_l = w_r)
-  | (TYPEDEF _ typeIR_l, typeIR_r) => $compat_mask(typeIR_l, typeIR_r)
-  | (typeIR_l, TYPEDEF _ typeIR_r) => $compat_mask(typeIR_l, typeIR_r)
-  | (_, _) => false
+dec $compat_mask(typeIR, typeIR) : bool
+def $compat_mask(INT, INT) = true
+def $compat_mask(INT `< w_l `>, INT `< w_r `>) = $(w_l = w_r)
+def $compat_mask(BIT `< w_l `>, BIT `< w_r `>) = $(w_l = w_r)
+def $compat_mask(TYPEDEF _ typeIR_l, typeIR_r)
+  = $compat_mask(typeIR_l, typeIR_r)
+def $compat_mask(typeIR_l, TYPEDEF _ typeIR_r)
+  = $compat_mask(typeIR_l, typeIR_r)
+  -- if ~(typeIR_l <: typedefTypeIR)
+def $compat_mask(_, _) = false
+  -- otherwise
 
 rule SelectCase_keyset_simple_ok/mask:
   TC typeIR_key |- expression_l '&&&' expression_r

@@ -13763,108 +13763,153 @@ xref:compat_uplusminus[$compat_uplusminus(typeIR'')]:
 
 |===
 
-xref:compat_plusminusmult[$compat_plusminusmult(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_plusminusmult[$compat_plusminusmult(typeIR, typeIR')]
 
-| +INT+, +INT+ | true
-| +INT+ +`<+ w~l~ +`>+, +INT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +BIT+ +`<+ w~l~ +`>+, +BIT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_plusminusmult[$compat_plusminusmult(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_plusminusmult[$compat_plusminusmult(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_plusminusmult-1-arm-1"></span>+++Try:
+ .. If let ``intTypeIR`` be ``typeIR``:
+  ... Let!~type~ ``intTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_plusminusmult-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``true``.
+ .. Else if let ``+INT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+INT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_plusminusmult-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else if let ``+BIT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_plusminusmult-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_plusminusmult[``$compat_plusminusmult(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_plusminusmult-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_plusminusmult-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_plusminusmult-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_plusminusmult[``$compat_plusminusmult(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_plusminusmult-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_plusminusmult-else"></span>+++Otherwise: return ``false``.
 
-xref:compat_satplusminus[$compat_satplusminus(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_satplusminus[$compat_satplusminus(typeIR, typeIR')]
 
-| +INT+ +`<+ w~l~ +`>+, +INT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +BIT+ +`<+ w~l~ +`>+, +BIT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_satplusminus[$compat_satplusminus(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_satplusminus[$compat_satplusminus(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_satplusminus-1-arm-1"></span>+++Try:
+ .. If let ``+INT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+INT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_satplusminus-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else if let ``+BIT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_satplusminus-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_satplusminus[``$compat_satplusminus(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_satplusminus-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_satplusminus-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_satplusminus-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_satplusminus[``$compat_satplusminus(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_satplusminus-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_satplusminus-else"></span>+++Otherwise: return ``false``.
 
-xref:compat_divmod[$compat_divmod(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_divmod[$compat_divmod(typeIR, typeIR')]
 
-| +INT+, +INT+ | true
-| +BIT+ +`<+ w~l~ +`>+, +BIT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_divmod[$compat_divmod(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_divmod[$compat_divmod(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_divmod-1-arm-1"></span>+++Try:
+ .. If let ``intTypeIR`` be ``typeIR``:
+  ... Let!~type~ ``intTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_divmod-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``true``.
+ .. Else if let ``+BIT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_divmod-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_divmod[``$compat_divmod(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_divmod-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_divmod-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_divmod-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_divmod[``$compat_divmod(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_divmod-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_divmod-else"></span>+++Otherwise: return ``false``.
 
-xref:compat_shift[$compat_shift(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_shift[$compat_shift(typeIR, typeIR')]
 
-| +INT+, +INT+ | true
-| +INT+, +INT+ +`<+ ++_++ +`>+ | true
-| +INT+, +BIT+ +`<+ ++_++ +`>+ | true
-| +INT+ +`<+ ++_++ +`>+, +INT+ | true
-| +INT+ +`<+ ++_++ +`>+, +INT+ +`<+ ++_++ +`>+ | true
-| +INT+ +`<+ ++_++ +`>+, +BIT+ +`<+ ++_++ +`>+ | true
-| +BIT+ +`<+ ++_++ +`>+, +INT+ | true
-| +BIT+ +`<+ ++_++ +`>+, +INT+ +`<+ ++_++ +`>+ | true
-| +BIT+ +`<+ ++_++ +`>+, +BIT+ +`<+ ++_++ +`>+ | true
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_shift[$compat_shift(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_shift[$compat_shift(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_shift-1-arm-1"></span>+++Try:
+ .. If let ``intTypeIR`` be ``typeIR``:
+  ... If let ``intTypeIR'`` be ``typeIR'``: return ``true``.
+  ... Else if ``typeIR'`` has type ``fixedIntTypeIR``: return ``true``.
+  ... Else: return ``true``.
+ .. Else if ``typeIR`` has type ``fixedIntTypeIR``:
+  ... If let ``intTypeIR`` be ``typeIR'``: return ``true``.
+  ... Else if ``typeIR'`` has type ``fixedIntTypeIR``: return ``true``.
+  ... Else: return ``true``.
+ .. Else if ``typeIR`` has type ``fixedBitTypeIR``:
+  ... If let ``intTypeIR`` be ``typeIR'``: return ``true``.
+  ... Else if ``typeIR'`` has type ``fixedIntTypeIR``: return ``true``.
+  ... Else: return ``true``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_shift[``$compat_shift(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_shift-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_shift-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_shift-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_shift[``$compat_shift(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_shift-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_shift-else"></span>+++Otherwise: return ``false``.
 
-xref:compat_compare[$compat_compare(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_compare[$compat_compare(typeIR, typeIR')]
 
-| +INT+, +INT+ | true
-| +INT+ +`<+ w~l~ +`>+, +INT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +BIT+ +`<+ w~l~ +`>+, +BIT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_compare[$compat_compare(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_compare[$compat_compare(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_compare-1-arm-1"></span>+++Try:
+ .. If let ``intTypeIR`` be ``typeIR``:
+  ... Let!~type~ ``intTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_compare-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``true``.
+ .. Else if let ``+INT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+INT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_compare-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else if let ``+BIT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_compare-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_compare[``$compat_compare(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_compare-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_compare-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_compare-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_compare[``$compat_compare(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_compare-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_compare-else"></span>+++Otherwise: return ``false``.
 
-xref:compat_bitwise[$compat_bitwise(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_bitwise[$compat_bitwise(typeIR, typeIR')]
 
-| +INT+ +`<+ w~l~ +`>+, +INT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +BIT+ +`<+ w~l~ +`>+, +BIT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_bitwise[$compat_bitwise(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_bitwise[$compat_bitwise(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_bitwise-1-arm-1"></span>+++Try:
+ .. If let ``+INT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+INT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_bitwise-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else if let ``+BIT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_bitwise-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_bitwise[``$compat_bitwise(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_bitwise-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_bitwise-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_bitwise-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_bitwise[``$compat_bitwise(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_bitwise-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_bitwise-else"></span>+++Otherwise: return ``false``.
 
-xref:compat_concat[$compat_concat(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_concat[$compat_concat(typeIR, typeIR')]
 
-| +STRING+, +STRING+ | true
-| +INT+ +`<+ ++_++ +`>+, +INT+ +`<+ ++_++ +`>+ | true
-| +INT+ +`<+ ++_++ +`>+, +BIT+ +`<+ ++_++ +`>+ | true
-| +BIT+ +`<+ ++_++ +`>+, +INT+ +`<+ ++_++ +`>+ | true
-| +BIT+ +`<+ ++_++ +`>+, +BIT+ +`<+ ++_++ +`>+ | true
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_concat[$compat_concat(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_concat[$compat_concat(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_concat-1-arm-1"></span>+++Try:
+ .. If let ``stringTypeIR`` be ``typeIR``:
+  ... Let!~type~ ``stringTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_concat-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``true``.
+ .. Else if ``typeIR`` has type ``fixedIntTypeIR``:
+  ... If ``typeIR'`` has type ``fixedIntTypeIR``: return ``true``.
+  ... Else: return ``true``.
+ .. Else if ``typeIR`` has type ``fixedBitTypeIR``:
+  ... If ``typeIR'`` has type ``fixedIntTypeIR``: return ``true``.
+  ... Else: return ``true``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_concat[``$compat_concat(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_concat-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_concat-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_concat-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_concat[``$compat_concat(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_concat-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_concat-else"></span>+++Otherwise: return ``false``.
 
 xref:result_concat[$result_concat(typeIR, typeIR')]
 
@@ -13889,17 +13934,21 @@ xref:result_concat[$result_concat(typeIR, typeIR')]
  .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
  .. Return xref:result_concat[``$result_concat(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[FAIL]</sub>+++
 
-xref:compat_logical[$compat_logical(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_logical[$compat_logical(typeIR, typeIR')]
 
-| +BOOL+, +BOOL+ | true
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_logical[$compat_logical(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_logical[$compat_logical(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_logical-1-arm-1"></span>+++Try:
+ .. If let ``boolTypeIR`` be ``typeIR``:
+  ... Let!~type~ ``boolTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_logical-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``true``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_logical[``$compat_logical(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_logical-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_logical-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_logical-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_logical[``$compat_logical(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_logical-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_logical-else"></span>+++Otherwise: return ``false``.
 
 xref:compat_array_index[``typeIR''`` can be used as an array index]:
 [cols="2", options="header"]
@@ -14179,19 +14228,27 @@ ForCollectionExpr_ok dispatch:
  .. Let ``expression~l~`` ``+'..'+`` ``expression~r~`` be ``forCollectionExpression``.
  .. Goto xref:ForCollectionExpr_ok-range[range]
 
-xref:compat_range[``typeIR''`` and ``typeIR'''`` can be used as range bounds]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_range[``typeIR`` and ``typeIR'`` can be used as range bounds]
 
-| +INT+, +INT+ | true
-| +INT+ +`<+ w~l~ +`>+, +INT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +BIT+ +`<+ w~l~ +`>+, +BIT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_range[$compat_range(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_range[$compat_range(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_range-1-arm-1"></span>+++Try:
+ .. If let ``intTypeIR`` be ``typeIR``:
+  ... Let!~type~ ``intTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_range-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``true``.
+ .. Else if let ``+INT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+INT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_range-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else if let ``+BIT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_range-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_range[``typeIR~l~`` and ``typeIR'`` can be used as range bounds].+++<sub class="bk-mark">[<a href="#bk-compat_range-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_range-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_range-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_range[``typeIR`` and ``typeIR~r~`` can be used as range bounds].+++<sub class="bk-mark">[<a href="#compat_range-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_range-else"></span>+++Otherwise: return ``false``.
 
 xref:check_switchLabelIR_default[Default label is only in the last position of ``switchLabelIR^{asterisk}^``]
 
@@ -14694,19 +14751,27 @@ SelectCase_keyset_simple_ok dispatch:
 . Else if ``simpleKeysetExpression`` matches pattern ``+DEFAULT+``: goto xref:SelectCase_keyset_simple_ok-default[default]
 . Else: goto xref:SelectCase_keyset_simple_ok-dontcare[dontcare]
 
-xref:compat_mask[$compat_mask(typeIR'', typeIR''')]:
-[cols="3", options="header"]
-|===
-| (``typeIR''``, ``typeIR'''``) | Result 
+xref:compat_mask[$compat_mask(typeIR, typeIR')]
 
-| +INT+, +INT+ | true
-| +INT+ +`<+ w~l~ +`>+, +INT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +BIT+ +`<+ w~l~ +`>+, +BIT+ +`<+ w~r~ +`>+ | w~l~ = w~r~
-| +TYPEDEF+ ++_++ typeIR~l~, typeIR~r~ | xref:compat_mask[$compat_mask(typeIR~l~, typeIR~r~)]
-| typeIR~l~, +TYPEDEF+ ++_++ typeIR~r~ | xref:compat_mask[$compat_mask(typeIR~l~, typeIR~r~)]
-| ++_++, ++_++ | false
+. +++<span class="bk-arm-anchor" id="bk-compat_mask-1-arm-1"></span>+++Try:
+ .. If let ``intTypeIR`` be ``typeIR``:
+  ... Let!~type~ ``intTypeIR'`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_mask-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``true``.
+ .. Else if let ``+INT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+INT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_mask-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else if let ``+BIT+`` ``+`<+`` ``w~l~`` ``+`>+`` be ``typeIR``:
+  ... Let!~type~ ``+BIT+`` ``+`<+`` ``w~r~`` ``+`>+`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#bk-compat_mask-1-arm-2">→ 2</a>]</sub>+++
+  ... Return ``w~l~`` is equal to ``w~r~``.
+ .. Else:
+  ... Let ``+TYPEDEF+`` ``++_++`` ``typeIR~l~`` be ``typeIR``.
+  ... Return xref:compat_mask[``$compat_mask(typeIR~l~,`` ``typeIR')``].+++<sub class="bk-mark">[<a href="#bk-compat_mask-1-arm-2">→ 2</a>]</sub>+++
+. +++<span class="bk-arm-anchor" id="bk-compat_mask-1-arm-2"></span>+++Then, try:
+ .. Let!~type~ ``+TYPEDEF+`` ``++_++`` ``typeIR~r~`` be ``typeIR'``.+++<sub class="bk-mark">[<a href="#compat_mask-else">→ ⋅</a>]</sub>+++
+ .. Check that ``typeIR`` does not have type ``typedefTypeIR``.
+ .. Return xref:compat_mask[``$compat_mask(typeIR,`` ``typeIR~r~)``].+++<sub class="bk-mark">[<a href="#compat_mask-else">→ ⋅</a>]</sub>+++
 
-|===
+. +++<span id="compat_mask-else"></span>+++Otherwise: return ``false``.
 
 xref:SelectCase_keyset_ok[SelectCase_keyset_ok]:
 
