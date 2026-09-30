@@ -21,9 +21,9 @@ use crate::{
 fn width_bit_aligned(width: &BigInt, alignment: usize) -> Result<usize, ExternError> {
     let width = width_bit(width)?;
     if !width.is_multiple_of(alignment) {
-        return Err(crate::sim_plugin::error::hash_width_invalid(
-            "bitslice x[y:z] must have y > z > 0".to_owned(),
-        ));
+        return Err(crate::sim_plugin::error::hash_width_invalid(format!(
+            "hash width {width} must be a multiple of {alignment} bits"
+        )));
     }
     Ok(width)
 }
@@ -43,9 +43,7 @@ fn crc(
     for idx in (0..width).step_by(8).rev() {
         let byte = ((int >> idx) & BigInt::from(255_u16))
             .to_u32()
-            .ok_or_else(|| {
-                crate::sim_plugin::error::hash_byte_invalid("invalid CRC byte".to_owned())
-            })?;
+            .expect("masked CRC byte fits u32");
         // Eight reflected shift-and-xor steps per byte
         let mut entry = (int_crc ^ byte) & 255;
         for _ in 0..8 {

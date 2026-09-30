@@ -130,13 +130,6 @@ pub(super) fn hash_algorithm_unsupported(message: impl Into<String>) -> ExternEr
     ExternError::Report(report(HASH_ALGORITHM_UNSUPPORTED, message))
 }
 
-const HASH_BYTE_INVALID: &str = "sim/hash-byte-invalid";
-
-/// Reports a hash byte that is invalid.
-pub(super) fn hash_byte_invalid(message: impl Into<String>) -> ExternError {
-    ExternError::Report(report(HASH_BYTE_INVALID, message))
-}
-
 const HASH_RANGE_INVALID: &str = "sim/hash-range-invalid";
 
 /// Reports a hash range that is invalid.
