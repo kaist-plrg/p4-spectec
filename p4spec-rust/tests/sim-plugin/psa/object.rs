@@ -80,7 +80,9 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for ObjectInterp {
                 .values_var
                 .get(&name_call)
                 .copied()
-                .ok_or_else(|| ExternError::message(format!("missing {name_call}")).into()),
+                .ok_or_else(|| {
+                    ExternError::diagnostic_message(format!("missing {name_call}")).into()
+                }),
             "default" => Ok(ctx.interp().value_default.unwrap()),
             "find_type_e" => {
                 let value_typ = ctx.interp().value_default;

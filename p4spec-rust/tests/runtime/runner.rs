@@ -45,7 +45,9 @@ where
     ) -> Result<Vec<Value>, InterpreterError> {
         match name {
             "identity" => Ok(vec![program]),
-            _ => Err(ExternError::message(format!("unknown fixture call: {name}")).into()),
+            _ => {
+                Err(ExternError::diagnostic_message(format!("unknown fixture call: {name}")).into())
+            }
         }
     }
 
@@ -92,7 +94,9 @@ where
                 let (value, _) = ctx.call_builtin(&id, targs, values)?;
                 Ok(value)
             }
-            _ => Err(ExternError::message(format!("unknown fixture call: {name}")).into()),
+            _ => {
+                Err(ExternError::diagnostic_message(format!("unknown fixture call: {name}")).into())
+            }
         }
     }
 
@@ -101,7 +105,7 @@ where
         name: &str,
         _values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
-        Err(ExternError::message(format!("unknown fixture call: {name}")).into())
+        Err(ExternError::diagnostic_message(format!("unknown fixture call: {name}")).into())
     }
 }
 
@@ -147,7 +151,7 @@ impl Extern for FixtureExtern {
                 Ok((value, true))
             }
             _ => {
-                let error = ExternError::message(name.to_owned());
+                let error = ExternError::diagnostic_message(name.to_owned());
                 Err(error)
             }
         }
@@ -163,7 +167,7 @@ impl Extern for FixtureExtern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::message(name.to_owned());
+        let error = ExternError::diagnostic_message(name.to_owned());
         Err(error)
     }
 

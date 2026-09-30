@@ -106,7 +106,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
             .calls
             .push((name.to_owned(), values.to_vec()));
         if ctx.interp().fail_rel {
-            return Err(ExternError::message("write failed".to_owned()).into());
+            return Err(ExternError::diagnostic_message("write failed".to_owned()).into());
         }
         Ok(vec![values[4]; ctx.interp().arity_rel])
     }

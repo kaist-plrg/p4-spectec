@@ -26,7 +26,7 @@ impl Extern for Reentry {
     {
         self.calls.set(self.calls.get() + 1);
         if name == "abort" {
-            return Err(runner::ExternError::message("host aborted"));
+            return Err(runner::ExternError::diagnostic_message("host aborted"));
         }
         ctx.call_func("inner", targs, values)
             .map(|value| (value, false))

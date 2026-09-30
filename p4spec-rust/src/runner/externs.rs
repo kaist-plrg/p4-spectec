@@ -49,12 +49,12 @@ impl ExternError {
     }
 
     /// Describes an extern that has not been configured.
-    pub fn unconfigured() -> Self {
+    pub fn diagnostic_unconfigured() -> Self {
         Self::diagnostic(Some(EXTERN_UNCONFIGURED), "extern is not configured")
     }
 
     /// Retains an external message without inventing a diagnostic code.
-    pub fn message(message: impl Into<String>) -> Self {
+    pub fn diagnostic_message(message: impl Into<String>) -> Self {
         Self::diagnostic(None, message)
     }
 
@@ -154,7 +154,7 @@ impl Extern for NullExtern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::unconfigured();
+        let error = ExternError::diagnostic_unconfigured();
         Err(error)
     }
 
@@ -169,7 +169,7 @@ impl Extern for NullExtern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::unconfigured();
+        let error = ExternError::diagnostic_unconfigured();
         Err(error)
     }
 

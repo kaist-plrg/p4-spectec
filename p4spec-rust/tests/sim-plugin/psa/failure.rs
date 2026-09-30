@@ -98,7 +98,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for FailureInterp {
             "update_archState_e" => {
                 ctx.interp_mut().updates_arch += 1;
                 if ctx.interp().updates_arch == 2 {
-                    return Err(ExternError::message("restore failed".to_owned()).into());
+                    return Err(ExternError::diagnostic_message("restore failed".to_owned()).into());
                 }
                 let value_arch = update_field(ctx.arena_mut(), values[0], "STATE", values[1]);
                 ctx.interp_mut().value_arch_completed = Some(value_arch);

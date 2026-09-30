@@ -27,7 +27,7 @@ const INTERFACE_UNCONFIGURED: &str = "runtime/interface-unconfigured";
 
 impl InterfaceError {
     /// Describes an interface that has not been configured.
-    pub fn unconfigured() -> Self {
+    pub fn diagnostic_unconfigured() -> Self {
         Self(Box::new(
             Diagnostic::new(
                 "runtime",
@@ -112,7 +112,7 @@ impl Interface for NullInterface {
         _targs: &[Typ],
         _values: &[Value],
     ) -> Result<(Value, bool), InterfaceError> {
-        Err(InterfaceError::unconfigured())
+        Err(InterfaceError::diagnostic_unconfigured())
     }
 
     fn clear(&mut self) {}
