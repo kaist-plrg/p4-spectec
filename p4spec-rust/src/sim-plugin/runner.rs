@@ -36,64 +36,12 @@ use std::path::{Path, PathBuf};
 
 // == Errors
 
-/// Why an STF test failed.
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    /// Reading, preprocessing, parsing, or constructing the P4 input failed.
-    #[error("P4 input error: {0}")]
-    P4Input(#[from] P4Error),
-    /// Reading or parsing the STF input failed.
-    #[error("STF input error: {0}")]
-    StfInput(#[from] stf::error::StfError),
-    /// A simulator operation failed while executing.
-    #[error("runtime error: {0}")]
-    Runtime(#[from] Box<Report>),
-    /// An STF statement failed or an expectation was not met.
-    #[error("runtime error: {failure} at {span}")]
-    StfExecution { failure: Box<StfFailure>, span: Span },
-}
-
-impl From<ExternError> for Error {
-    fn from(error: ExternError) -> Self {
-        Self::Runtime(error.into_report())
-    }
-}
+/// A diagnostic produced while running an STF test.
+pub type Error = Box<Report>;
 
 const PACKET_MISMATCH: &str = "sim/packet-mismatch";
 const STATEMENT_UNSUPPORTED: &str = "sim/statement-unsupported";
 const PACKET_EXPECTATION_INCOMPLETE: &str = "sim/packet-expectation-incomplete";
-
-impl Error {
-    /// Returns complete reports at the final simulator execution boundary.
-    pub fn into_report(self) -> Box<Report> {
-        match self {
-            Self::P4Input(error) => error.into_report(),
-            Self::StfInput(error) => error.into_report(),
-            Self::Runtime(report) => report,
-            Self::StfExecution { failure, span } => {
-                // Statement checks keep their own code and actual source location
-                let code = match &*failure {
-                    StfFailure::PacketMismatch { .. } => PACKET_MISMATCH,
-                    StfFailure::StatementUnsupported(_) => STATEMENT_UNSUPPORTED,
-                    StfFailure::PacketsRemaining { .. } => PACKET_EXPECTATION_INCOMPLETE,
-                };
-                let labels =
-                    if span == Span::default() { vec![] } else { vec![Label::primary(&span, "")] };
-                Box::new(
-                    Diagnostic::new(
-                        "sim",
-                        Severity::Error,
-                        Some(code.to_owned()),
-                        failure.to_string(),
-                        labels,
-                        vec![],
-                    )
-                    .into(),
-                )
-            }
-        }
-    }
-}
 
 /// How an STF statement failed.
 #[derive(Debug, thiserror::Error)]
@@ -107,6 +55,28 @@ pub enum StfFailure {
     /// Packets or expectations left over at the end.
     #[error("{}{}", remaining_outputs(.txs), remaining_expects(.expects))]
     PacketsRemaining { txs: Vec<Tx>, expects: Vec<Expectation> },
+}
+
+impl StfFailure {
+    /// Converts a statement failure before its caller attaches a source span.
+    pub fn into_report(self) -> Box<Report> {
+        let code = match &self {
+            Self::PacketMismatch { .. } => PACKET_MISMATCH,
+            Self::StatementUnsupported(_) => STATEMENT_UNSUPPORTED,
+            Self::PacketsRemaining { .. } => PACKET_EXPECTATION_INCOMPLETE,
+        };
+        Box::new(
+            Diagnostic::new(
+                "sim",
+                Severity::Error,
+                Some(code.to_owned()),
+                self.to_string(),
+                vec![],
+                vec![],
+            )
+            .into(),
+        )
+    }
 }
 
 /// Lists unmatched outputs, or nothing.
@@ -282,8 +252,10 @@ where
 {
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
-    let program = parse::parse_file(runner.arena_mut(), includes, path)?;
-    let state = Arch::init_pipe(&mut runner.context(), program)?;
+    let program =
+        parse::parse_file(runner.arena_mut(), includes, path).map_err(P4Error::into_report)?;
+    let state =
+        Arch::init_pipe(&mut runner.context(), program).map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -348,21 +320,12 @@ where
         // Statements with no effect here
         Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
         // Anything else is unsupported
-        stmt => Err(Error::StfExecution {
-            failure: Box::new(StfFailure::StatementUnsupported(Print::to_string(&stmt))),
-            span: Span::default(),
-        }),
+        stmt => Err(StfFailure::StatementUnsupported(Print::to_string(&stmt)).into_report()),
     };
     // Attach the statement's span to failures that have none
-    let tx = result.map_err(|error| match error {
-        Error::Runtime(mut report) => {
-            attach_statement_span(&mut report, &stmt.span);
-            Error::Runtime(report)
-        }
-        Error::StfExecution { failure, .. } => {
-            Error::StfExecution { failure, span: stmt.span.clone() }
-        }
-        error => error,
+    let tx = result.map_err(|mut report| {
+        attach_statement_span(&mut report, &stmt.span);
+        report
     })?;
     // Record matched outputs for the caller
     if let Some(tx) = &tx {
@@ -387,11 +350,8 @@ where
 {
     // Payloads compare in uppercase hex
     let rx = Rx { port: parse_int::<usize>(&port)?, packet: packet.to_ascii_uppercase() };
-    Arch::drive_pipe(ctx, &mut run.state, &rx)?;
-    run.on_tx_output().map_err(|failure| Error::StfExecution {
-        failure: Box::new(failure),
-        span: Span::default(),
-    })
+    Arch::drive_pipe(ctx, &mut run.state, &rx).map_err(ExternError::into_report)?;
+    run.on_tx_output().map_err(StfFailure::into_report)
 }
 
 /// Records an expectation, matching a queued output if one is waiting.
@@ -408,11 +368,7 @@ fn run_stf_expect_stmt(
         },
         exact,
     };
-    run.on_tx_expect(expect)
-        .map_err(|failure| Error::StfExecution {
-            failure: Box::new(failure),
-            span: Span::default(),
-        })
+    run.on_tx_expect(expect).map_err(StfFailure::into_report)
 }
 
 // - Match-action table updates
@@ -511,7 +467,8 @@ where
         value_priority,
         value_keys,
         value_action,
-    )?;
+    )
+    .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -567,13 +524,9 @@ where
     let value_name = make::text(ctx.arena_mut(), table.into_string(), Span::default())
         .map_err(Box::<Report>::from)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
-    state.value_arch = table::add_default_action(
-        ctx,
-        state.value_ctx,
-        state.value_arch,
-        value_name,
-        value_action,
-    )?;
+    state.value_arch =
+        table::add_default_action(ctx, state.value_ctx, state.value_arch, value_name, value_action)
+            .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -596,7 +549,8 @@ where
         state.value_arch,
         parse_int::<usize>(&session)?,
         parse_int::<usize>(&port)?,
-    )?;
+    )
+    .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -617,7 +571,8 @@ where
         state.value_arch,
         parse_int::<usize>(&session)?,
         parse_int::<usize>(&id_group)?,
-    )?;
+    )
+    .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -634,7 +589,8 @@ where
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?)?;
+    state.value_arch = Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?)
+        .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -655,7 +611,8 @@ where
         .iter()
         .map(|port| parse_int::<usize>(port))
         .collect::<Result<Vec<_>, _>>()?;
-    state.value_arch = Arch::mc_node_create(ctx, state.value_arch, instance, &ports)?;
+    state.value_arch = Arch::mc_node_create(ctx, state.value_arch, instance, &ports)
+        .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -676,7 +633,8 @@ where
         state.value_arch,
         parse_int::<usize>(&id_group)?,
         parse_int::<usize>(&handle)?,
-    )?;
+    )
+    .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -695,7 +653,8 @@ where
     Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch =
-        Arch::register_read(ctx, state.value_arch, name.as_str(), parse_int::<usize>(&idx)?)?;
+        Arch::register_read(ctx, state.value_arch, name.as_str(), parse_int::<usize>(&idx)?)
+            .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -718,7 +677,8 @@ where
         name.as_str(),
         parse_int::<usize>(&idx)?,
         BigInt::from(parse_int::<i128>(&value)?),
-    )?;
+    )
+    .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -733,7 +693,8 @@ where
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::register_reset(ctx, state.value_arch, name.as_str())?;
+    state.value_arch = Arch::register_reset(ctx, state.value_arch, name.as_str())
+        .map_err(ExternError::into_report)?;
     Ok(None)
 }
 
@@ -753,16 +714,13 @@ where
     Interp: Interpreter<Iface, Arch>,
 {
     let mut run = init_pipe(runner, includes, path_p4)?;
-    let stmts = stf::parse::parse_file(path_stf)?;
+    let stmts = stf::parse::parse_file(path_stf).map_err(stf::error::StfError::into_report)?;
     for stmt in &stmts {
         if let Some(tx) = run_stf_stmt(runner, &mut run, stmt)? {
             on_match(&tx);
         }
     }
     // Everything expected must have arrived, and nothing unexpected
-    run.finish().map_err(|failure| Error::StfExecution {
-        failure: Box::new(failure),
-        span: Span::default(),
-    })?;
+    run.finish().map_err(StfFailure::into_report)?;
     Ok(run)
 }

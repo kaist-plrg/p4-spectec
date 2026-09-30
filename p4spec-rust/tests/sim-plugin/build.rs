@@ -39,7 +39,10 @@ fn test_selected_architecture_uses_its_program_entry() {
             Ok(_) => panic!("an empty specification cannot initialize {arch}"),
             Err(error) => error,
         };
-        assert!(matches!(error, p4spec_rust::sim_plugin::runner::Error::Runtime(_)));
+        let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+            panic!("expected missing relation diagnostic");
+        };
+        assert_eq!(diagnostic.code.as_deref(), Some("runtime/binding-undefined"));
         assert!(error.to_string().contains(relation), "{error}");
     }
     std::fs::remove_file(path).unwrap();

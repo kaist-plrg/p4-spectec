@@ -106,10 +106,7 @@ use p4spec_rust::{
         il::ast::Typ,
     },
     runner::{Extern, Interface, Interpreter, NullInterface, Runner, RunnerContext},
-    sim_plugin::{
-        ebpf::Ebpf,
-        runner::{self, Error},
-    },
+    sim_plugin::{ebpf::Ebpf, runner},
     stf::{
         self,
         ast::{Action, Argument, MatchKind, Statement, TableMatch},
@@ -354,9 +351,9 @@ fn test_native_steps_clear_raw_outputs_without_flushing_pending_queues() {
         Some(tx(1, "AAFF"))
     );
     assert_eq!(run_case.matches, vec![tx(1, "AAFF")]);
-    assert!(
-        matches!(runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]), Err(Error::StfExecution { failure, span }) if matches!(*failure, StfFailure::StatementUnsupported(_)) && span == stmts[3].span)
-    );
+    let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]).unwrap_err();
+    assert_eq!(report.code(), Some("sim/statement-unsupported"));
+    assert_eq!(report.span(), stmts[3].span);
     run_case.finish().unwrap();
 }
 
@@ -395,12 +392,9 @@ fn test_integer_failure_is_located_and_precedes_pipeline_dispatch() {
         "register_write r 0 0x****************",
     ] {
         let stmts = stf::parse::parse_str("overflow.stf", source).unwrap();
-        let Err(Error::Runtime(failure)) =
-            runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0])
-        else {
-            panic!("expected integer failure");
-        };
-        assert_eq!(failure.span(), stmts[0].span);
+        let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap_err();
+        assert_eq!(report.code(), Some("sim/integer-invalid"));
+        assert_eq!(report.span(), stmts[0].span);
     }
     assert!(runner.context().interp().calls.is_empty());
 }
@@ -867,10 +861,7 @@ fn test_runtime_reentry_preserves_causes_and_fills_missing_statement_locations()
         cause("located", vec![Label::secondary(&span_spec, "origin")]),
         Report::frame(span_spec.clone(), "located call", vec![cause("nested", vec![])]),
     ]));
-    let Err(Error::Runtime(report)) = runner::run_stf_stmt(&mut runner, &mut run_case, &stmt)
-    else {
-        panic!("expected runtime diagnostic");
-    };
+    let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmt).unwrap_err();
     assert!(
         matches!(&report.kind, ReportKind::Frame { message, .. } if message == "execution failed")
     );

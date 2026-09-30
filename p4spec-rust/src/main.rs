@@ -326,14 +326,11 @@ fn simulate(mut simulator: sim_plugin::Simulator, args: &SimArgs) -> Result<(), 
     let result = simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
         println!("[PASS] Transmitted {tx}");
     });
-    result.map_err(|error| {
-        // Keep input diagnostics rich; compact execution frames
-        let config = RenderConfig {
-            frame_style: matches!(&error, sim_plugin::runner::Error::Runtime(_))
-                .then_some(DisplayStyle::Short),
-            ..RenderConfig::default()
-        };
-        render_report(&error.into_report(), config);
+    result.map_err(|report| {
+        // Input causes stay rich; only execution frames use compact rendering
+        let config =
+            RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
+        render_report(&report, config);
     })?;
     println!("passed");
     Ok(())
