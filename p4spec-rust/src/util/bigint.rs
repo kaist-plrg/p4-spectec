@@ -19,7 +19,7 @@ pub(crate) fn remainder(int: &BigInt, int_modulus: &BigInt) -> BigInt {
 pub(crate) fn width_bit(width: &BigInt) -> Result<usize, ExternError> {
     width
         .to_usize()
-        .ok_or_else(|| ExternError::Message(format!("invalid hash bit width: {width}")))
+        .ok_or_else(|| ExternError::message(format!("invalid hash bit width: {width}")))
 }
 
 /// Flip the low `width` bits, keeping higher bits unchanged.

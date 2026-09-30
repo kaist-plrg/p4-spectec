@@ -115,7 +115,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
             .calls
             .push((name.to_owned(), values.to_vec()));
         if ctx.interp().fail_rel {
-            return Err(ExternError::Message("write failed".to_owned()).into());
+            return Err(ExternError::message("write failed".to_owned()).into());
         }
         Ok(vec![values[4]; ctx.interp().arity_rel])
     }
@@ -148,7 +148,7 @@ impl From<TestError> for ExternError {
     fn from(error: TestError) -> Self {
         match error {
             TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError::Report(error.into_report()),
+            TestError::Interface(error) => ExternError(error.into_report()),
         }
     }
 }

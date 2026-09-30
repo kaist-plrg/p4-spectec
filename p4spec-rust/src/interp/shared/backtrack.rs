@@ -82,12 +82,6 @@ impl From<ExternError> for Failure {
     }
 }
 
-impl From<Failure> for ExternError {
-    fn from(failure: Failure) -> Self {
-        Self::Report(failure.into_report())
-    }
-}
-
 impl From<ValueError> for Failure {
     fn from(error: ValueError) -> Self {
         Self::Fatal(error.into())

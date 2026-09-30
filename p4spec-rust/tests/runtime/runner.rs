@@ -159,7 +159,7 @@ impl Extern for FixtureExtern {
                 Ok((value, true))
             }
             _ => {
-                let error = ExternError::Message(name.to_owned());
+                let error = ExternError::message(name.to_owned());
                 Err(error)
             }
         }
@@ -175,7 +175,7 @@ impl Extern for FixtureExtern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::Message(name.to_owned());
+        let error = ExternError::message(name.to_owned());
         Err(error)
     }
 
@@ -427,7 +427,11 @@ fn test_null_extern_reports_configuration_failure() {
 
     let error = runner.context().call_func("extern", &[], &[]).unwrap_err();
 
-    assert!(matches!(error, FixtureError::Extern(ExternError::ExternUnconfigured)));
+    crate::diagnostic_fixture::assert_diagnostic(
+        error,
+        Some("runtime/extern-unconfigured"),
+        "extern is not configured",
+    );
 }
 
 fn eval_text(
@@ -552,9 +556,9 @@ fn test_registered_builtin_report_keeps_payload_and_is_fatal() {
 impl From<FixtureError> for ExternError {
     fn from(error: FixtureError) -> Self {
         match error {
-            FixtureError::Interface(error) => ExternError::Report(error.into_report()),
+            FixtureError::Interface(error) => ExternError(error.into_report()),
             FixtureError::Extern(error) => error,
-            FixtureError::Unknown(error) => ExternError::Message(error.to_string()),
+            FixtureError::Unknown(error) => ExternError::message(error.to_string()),
         }
     }
 }

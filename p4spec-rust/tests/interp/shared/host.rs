@@ -62,7 +62,7 @@ impl Host {
         if self.mismatch {
             Failure::Mismatch(traces()).into()
         } else {
-            ExternError::Report(Box::new(diagnostic()))
+            ExternError(Box::new(diagnostic()))
         }
     }
 }

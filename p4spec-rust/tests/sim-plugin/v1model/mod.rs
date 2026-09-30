@@ -118,9 +118,7 @@ fn test_direct_meter_rejects_invalid_meter_type_with_its_own_diagnostic() {
         )
         .unwrap();
         let error = DirectMeter::init(&arena, value_ids, value_ids, value_args).unwrap_err();
-        let ExternError::Report(report) = error else {
-            panic!("expected structured meter failure")
-        };
+        let ExternError(report) = error;
         let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected meter cause") };
         assert_eq!(diagnostic.code.as_deref(), Some("sim/meter-type-invalid"));
         assert_eq!(diagnostic.source, "sim");

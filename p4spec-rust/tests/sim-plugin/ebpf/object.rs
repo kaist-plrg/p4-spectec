@@ -71,7 +71,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for CounterInterp {
             .values_var
             .get(&name_var)
             .copied()
-            .ok_or_else(|| ExternError::Message(format!("missing local {name_var}")).into())
+            .ok_or_else(|| ExternError::message(format!("missing local {name_var}")).into())
     }
 }
 
@@ -115,7 +115,7 @@ impl From<TestError> for ExternError {
     fn from(error: TestError) -> Self {
         match error {
             TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError::Report(error.into_report()),
+            TestError::Interface(error) => ExternError(error.into_report()),
         }
     }
 }

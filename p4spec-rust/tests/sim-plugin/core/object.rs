@@ -3,7 +3,7 @@ mod packet_in;
 #[path = "object/packet_out.rs"]
 mod packet_out;
 
-use super::{TestError, packet_runner};
+use super::packet_runner;
 use num_bigint::BigInt;
 use p4spec_rust::{
     lang::{
@@ -11,10 +11,9 @@ use p4spec_rust::{
         common::source::Span,
         data::{
             typ::{self, TypKind},
-            value::{Value, ValueArena, ValueError, get, make},
+            value::{Value, ValueArena, get, make},
         },
     },
-    runner::ExternError,
     sim_plugin::{
         core::object::{self, PacketIn, PacketOut},
         spec::pack,

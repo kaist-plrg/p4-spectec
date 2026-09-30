@@ -404,7 +404,7 @@ impl From<TestError> for ExternError {
     fn from(error: TestError) -> Self {
         match error {
             TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError::Report(error.into_report()),
+            TestError::Interface(error) => ExternError(error.into_report()),
         }
     }
 }

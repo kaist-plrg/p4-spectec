@@ -6,7 +6,7 @@ use p4spec_rust::{
         common::{notation::atom::Atom, source::Span},
         data::{
             typ::{self, Typ, TypKind},
-            value::{Value, ValueArena, ValueError, ValueTag, get, make},
+            value::{Value, ValueArena, get, make},
         },
     },
     runner::{
@@ -321,13 +321,11 @@ fn test_retry_shape_count_and_second_failure_never_update_architecture() {
         )
         .unwrap_err();
         if invalid == "tuple projection" {
-            assert!(matches!(
+            crate::diagnostic_fixture::assert_diagnostic(
                 error,
-                TestError::Extern(ExternError::Value(ValueError::KindMismatch {
-                    expected: ValueTag::Tuple,
-                    actual: ValueTag::Bool
-                }))
-            ));
+                Some("runtime/extern-value-invalid"),
+                "expected Tuple value, got Bool",
+            );
         }
         assert!(runner.context().interp().calls.is_empty(), "{invalid}");
     }
@@ -501,7 +499,7 @@ impl From<TestError> for ExternError {
     fn from(error: TestError) -> Self {
         match error {
             TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError::Report(error.into_report()),
+            TestError::Interface(error) => ExternError(error.into_report()),
         }
     }
 }

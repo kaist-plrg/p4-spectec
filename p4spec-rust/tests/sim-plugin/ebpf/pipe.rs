@@ -3,7 +3,7 @@ use p4spec_rust::{
         common::source::Span,
         data::{
             typ,
-            value::{Value, ValueError, get, make},
+            value::{Value, get, make},
         },
         il::ast::Typ,
     },
@@ -144,8 +144,10 @@ fn test_phase_arity_failure_retains_only_completed_phase_state() {
             &Rx { port: 1, packet: "aB".to_owned() },
         )
         .unwrap_err();
-        assert!(
-            matches!(error, TestError::Extern(ExternError::Value(ValueError::CountMismatch { expected: count_expected, actual: count_actual })) if count_expected == expected && count_actual == actual)
+        crate::diagnostic_fixture::assert_diagnostic(
+            error,
+            Some("runtime/extern-value-invalid"),
+            &format!("expected exactly {expected} values, got {actual}"),
         );
         assert_eq!(get::text(runner_phase.arena(), &state.value_ctx).unwrap(), name_ctx);
         assert_eq!(get::text(runner_phase.arena(), &state.value_arch).unwrap(), name_arch);
@@ -158,13 +160,13 @@ fn test_phase_arity_failure_retains_only_completed_phase_state() {
 fn test_initialization_requires_two_outputs_and_filter_result_is_ignored() {
     let mut runner_phase = runner("");
     let value = runner_phase.context().interp().values[0];
-    assert!(matches!(
-        ebpf::init_pipe(&mut runner_phase.context(), value),
-        Err(TestError::Extern(ExternError::Value(ValueError::CountMismatch {
-            expected: 2,
-            actual: 1
-        })))
-    ));
+    crate::diagnostic_fixture::assert_diagnostic(
+        ebpf::init_pipe(&mut runner_phase.context(), value)
+            .err()
+            .expect("invalid output count"),
+        Some("runtime/extern-value-invalid"),
+        "expected exactly 2 values, got 1",
+    );
     let mut state = SimState { value_ctx: value, value_arch: value, txs: vec![] };
     ebpf::drive_pipe(
         &mut runner_phase.context(),
@@ -192,13 +194,11 @@ fn test_extern_init_and_function_report_argument_counts_before_dispatch() {
             .call_extern_rel("ExternFunctionCall_eval", &values)
             .unwrap_err();
         for error in [error_init, error_func] {
-            assert!(matches!(
+            crate::diagnostic_fixture::assert_diagnostic(
                 error,
-                TestError::Extern(ExternError::Value(ValueError::CountMismatch {
-                    expected: 4,
-                    actual: count,
-                })) if count == actual
-            ));
+                Some("runtime/extern-value-invalid"),
+                &format!("expected exactly 4 values, got {actual}"),
+            );
         }
     }
     assert!(runner_phase.context().interp().calls.is_empty());
@@ -208,7 +208,7 @@ impl From<TestError> for ExternError {
     fn from(error: TestError) -> Self {
         match error {
             TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError::Report(error.into_report()),
+            TestError::Interface(error) => ExternError(error.into_report()),
         }
     }
 }

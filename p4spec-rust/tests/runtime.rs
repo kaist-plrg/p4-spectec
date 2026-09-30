@@ -14,3 +14,6 @@ mod sim_plugin;
 
 #[path = "interp/mod.rs"]
 mod interp;
+
+#[path = "support/diagnostic.rs"]
+mod diagnostic_fixture;

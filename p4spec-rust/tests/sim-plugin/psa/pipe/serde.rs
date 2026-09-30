@@ -2,12 +2,11 @@ use p4spec_rust::{
     lang::{
         common::source::Span,
         data::value::{
-            ValueArena, ValueError,
+            ValueArena,
             external::{Encoding, decode_with, encode, encode_with},
             get, make,
         },
     },
-    runner::ExternError,
     sim_plugin::{
         core::object::PacketIn,
         psa::{object::Register, pipe::ObjectState},
@@ -110,10 +109,11 @@ fn test_object_restores_nested_register_values_from_its_arena() {
         value = get::opt(&arena, &value).unwrap().unwrap();
     }
     assert!(get::bool(&arena, &value).unwrap());
-    assert!(matches!(
-        ObjectState::from_value(&mut arena, Encoding::ArenaIndependent, &value_typ),
-        Err(ExternError::Value(ValueError::KindMismatch { .. }))
-    ));
+    crate::diagnostic_fixture::assert_diagnostic(
+        ObjectState::from_value(&mut arena, Encoding::ArenaIndependent, &value_typ).unwrap_err(),
+        Some("runtime/extern-value-invalid"),
+        "expected Extern value, got Bool",
+    );
     stacker::grow(32 * 1024 * 1024, || drop(arena));
 }
 
