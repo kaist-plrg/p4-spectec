@@ -1,3 +1,4 @@
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::lang::traits::print::Print;
 use p4spec_rust::stf::{
     ast::{
@@ -86,8 +87,9 @@ fn test_parses_packet_wildcards_and_comments() {
 #[test]
 fn test_reports_filename_line_and_column() {
     let error = parse::parse_str("bad.stf", "packet port nope\n").unwrap_err();
-    let rendered = error.to_string();
-    assert!(rendered.contains("bad.stf:1."), "{rendered}");
+    let ReportKind::Cause(diagnostic) = &error.kind else { panic!("expected cause") };
+    assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "bad.stf");
+    assert_eq!(diagnostic.labels[0].span.left.line, 1);
 }
 
 #[test]
@@ -96,7 +98,8 @@ fn test_rejects_priorities_outside_the_ocaml_integer_range() {
 
     let error = parse::parse_str("priority.stf", source).expect_err("priority overflow");
 
-    assert!(matches!(error.kind, p4spec_rust::stf::error::StfErrorKind::InvalidPriority(_)));
+    let ReportKind::Cause(diagnostic) = &error.kind else { panic!("expected cause") };
+    assert_eq!(diagnostic.code.as_deref(), Some("stf/priority-out-of-bounds"));
 }
 
 #[test]
@@ -104,13 +107,11 @@ fn test_rejects_digits_outside_the_selected_radix() {
     for num in ["0b102", "12b", "0x0g"] {
         let source = format!("register_read r {num}\n");
         let error = parse::parse_str("number.stf", &source).expect_err(num);
-        assert!(matches!(
-            error.kind,
-            p4spec_rust::stf::error::StfErrorKind::InvalidNumber(ref spelling)
-                if spelling == num
-        ));
-        assert_eq!(error.span.left.file.as_ref(), "number.stf");
-        assert_eq!(error.span.left.line, 1);
+        let ReportKind::Cause(diagnostic) = &error.kind else { panic!("expected cause") };
+        assert_eq!(diagnostic.code.as_deref(), Some("stf/number-invalid"));
+        assert!(diagnostic.message.ends_with(num));
+        assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "number.stf");
+        assert_eq!(diagnostic.labels[0].span.left.line, 1);
     }
 }
 
@@ -188,5 +189,58 @@ fn collect_stf(directory: &Path, files: &mut Vec<PathBuf>) {
         } else if path.extension().is_some_and(|extension| extension == "stf") {
             files.push(path);
         }
+    }
+}
+
+#[test]
+fn test_numeric_summary_retains_diagnostic_code() {
+    let error = parse::parse_str("number.stf", "register_read r 0b102\n").unwrap_err();
+    assert!(error.to_string().starts_with("error[stf/number-invalid]:"));
+}
+
+#[test]
+fn test_missing_file_is_input_failure_without_source_occurrence() {
+    let error = parse::parse_file("/definitely/missing/p4spec-input.stf").unwrap_err();
+    let ReportKind::Cause(diagnostic) = &error.kind else { panic!("expected cause") };
+    assert_eq!(diagnostic.code.as_deref(), Some("stf/input-unreadable"));
+    assert_eq!(
+        diagnostic.labels[0].span.left.file.as_ref(),
+        "/definitely/missing/p4spec-input.stf"
+    );
+    assert_eq!(diagnostic.labels[0].span.left.line, 0);
+    assert_eq!(diagnostic.labels[0].span.left, diagnostic.labels[0].span.right);
+}
+
+#[test]
+fn test_lexical_and_grammar_failures_preserve_diagnostic_metadata() {
+    use p4spec_rust::diagnostic::{LabelStyle, Severity};
+
+    for (source, code, message, col_l, col_r) in [
+        ("@", "stf/character-invalid", "invalid character '@'", 0, 1),
+        (
+            "\"unterminated",
+            "stf/quoted-identifier-incomplete",
+            "unterminated quoted identifier",
+            0,
+            13,
+        ),
+        ("setdefault tab", "stf/token-unexpected", "unexpected token", 14, 14),
+    ] {
+        let report = parse::parse_str("invalid.stf", source).unwrap_err();
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected cause") };
+        assert_eq!(diagnostic.source, "stf");
+        assert_eq!(diagnostic.severity, Severity::Error);
+        assert_eq!(diagnostic.code.as_deref(), Some(code));
+        assert_eq!(diagnostic.message, message);
+        assert!(diagnostic.notes.is_empty());
+        assert!(report.children.is_empty());
+        assert_eq!(diagnostic.labels.len(), 1);
+        let label = &diagnostic.labels[0];
+        assert_eq!(label.style, LabelStyle::Primary);
+        assert_eq!(label.span.left.file.as_ref(), "invalid.stf");
+        assert_eq!(label.span.left.line, 1);
+        assert_eq!(label.span.right.line, 1);
+        assert_eq!(label.span.left.column, col_l);
+        assert_eq!(label.span.right.column, col_r);
     }
 }

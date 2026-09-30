@@ -5,6 +5,7 @@
 
 use crate::sim_plugin::{
     core::object::PacketIn,
+    error,
     spec::{args, unpack},
 };
 use crate::{
@@ -67,9 +68,10 @@ impl DirectCounter {
             ("CounterType", "packets_and_bytes") => {
                 Ok(Self::PacketsAndBytes((BigInt::zero(), BigInt::zero())))
             }
-            _ => Err(ExternError::Failure(format!(
+            _ => Err(error::counter_type_invalid(format!(
                 "invalid CounterType enum value: {id_enum}.{id_type}"
-            ))),
+            ))
+            .into()),
         }
     }
 
@@ -90,7 +92,7 @@ impl DirectCounter {
         value_ctx: Value,
         value_arch: Value,
         packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -109,16 +111,14 @@ impl DirectCounter {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

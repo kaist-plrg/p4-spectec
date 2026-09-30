@@ -152,7 +152,7 @@ fn malformed_known_text_spans_fail_instead_of_being_clamped() {
     ] {
         assert!(matches!(
             renderer.render_to_string(&report(span)),
-            Err(RenderError::InvalidSpan { .. })
+            Err(RenderError::SpanInvalid { .. })
         ));
     }
 }
@@ -230,7 +230,7 @@ fn control_characters_in_source_never_reach_the_terminal() {
         // Source suppression must not mask malformed producer coordinates
         assert!(matches!(
             renderer.render_to_string(&super::report(span(file.name(), 1, 0, 1, 99))),
-            Err(RenderError::InvalidSpan { .. })
+            Err(RenderError::SpanInvalid { .. })
         ));
     }
 }

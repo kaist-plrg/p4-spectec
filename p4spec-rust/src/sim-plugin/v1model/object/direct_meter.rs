@@ -4,6 +4,7 @@
 
 use crate::sim_plugin::{
     core::object::PacketIn,
+    error,
     spec::{args, func, pack, rel, unpack},
 };
 use crate::{
@@ -56,9 +57,10 @@ impl DirectMeter {
         match (id_enum.as_str(), id_type.as_str()) {
             ("MeterType", "packets") => Ok(Self::Packets(BigInt::zero())),
             ("MeterType", "bytes") => Ok(Self::Bytes(BigInt::zero())),
-            _ => Err(ExternError::Failure(format!(
-                "invalid CounterType enum value: {id_enum}.{id_type}"
-            ))),
+            _ => Err(error::meter_type_invalid(format!(
+                "invalid MeterType enum value: {id_enum}.{id_type}"
+            ))
+            .into()),
         }
     }
 
@@ -88,7 +90,7 @@ impl DirectMeter {
         value_ctx: Value,
         value_arch: Value,
         _packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -106,16 +108,14 @@ impl DirectMeter {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

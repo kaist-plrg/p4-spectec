@@ -11,6 +11,7 @@ use super::core;
 use crate::{
     lang::{data::value::Value, il::ast::Typ},
     runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    sim_plugin::error,
 };
 
 // == Architecture extern operations
@@ -22,7 +23,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -32,7 +33,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, Interp::Error>
+    ) -> Result<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -45,7 +46,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, Interp::Error>
+    ) -> Result<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -55,7 +56,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, Interp::Error>
+    ) -> Result<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -64,7 +65,7 @@ pub(crate) trait Impl: Extern {
     fn init_arch_state<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -78,7 +79,7 @@ impl<Ext: Impl> Extern for Ext {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -89,9 +90,10 @@ impl<Ext: Impl> Extern for Ext {
             "ExternFunctionCall_eval" => self.eval_extern_func_call(ctx, values)?,
             "ExternMethodCall_eval" => self.eval_extern_method_call(ctx, values)?,
             _ => {
-                return Err(
-                    ExternError::Failure(format!("unimplemented extern relation: {name}")).into()
-                );
+                return Err(error::extern_relation_unsupported(format!(
+                    "unimplemented extern relation: {name}"
+                ))
+                .into());
             }
         };
         // Extern state lives in the values, so calls report no hidden effect
@@ -104,7 +106,7 @@ impl<Ext: Impl> Extern for Ext {
         name: &str,
         _targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -114,9 +116,10 @@ impl<Ext: Impl> Extern for Ext {
             "init_objectState" => self.eval_extern_init(ctx, values)?,
             "init_archState" => self.init_arch_state(ctx)?,
             _ => {
-                return Err(
-                    ExternError::Failure(format!("unimplemented extern function: {name}")).into()
-                );
+                return Err(error::extern_function_unsupported(format!(
+                    "unimplemented extern function: {name}"
+                ))
+                .into());
             }
         };
         Ok((value, false))
@@ -131,7 +134,7 @@ impl<Ext: Impl> Extern for Ext {
 pub(crate) fn eval_func_lctk<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     values: &[Value],
-) -> Result<Vec<Value>, Interp::Error>
+) -> Result<Vec<Value>, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -139,21 +142,18 @@ where
 {
     // Arguments: context, function name, parameter names
     let [value_ctx, value_name, value_names_param] = values else {
-        return Err(ExternError::Failure(
+        return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to local compile-time known extern function call"
                 .to_owned(),
         )
         .into());
     };
-    let name_func = crate::lang::data::value::get::text(ctx.arena(), value_name)
-        .map_err(|error| Interp::Error::from(ExternError::Failure(error.to_string())))?;
-    let values_name_param = crate::lang::data::value::get::list(ctx.arena(), value_names_param)
-        .map_err(|error| Interp::Error::from(ExternError::Failure(error.to_string())))?;
+    let name_func = crate::lang::data::value::get::text(ctx.arena(), value_name)?;
+    let values_name_param = crate::lang::data::value::get::list(ctx.arena(), value_names_param)?;
     let names_param = values_name_param
         .iter()
         .map(|value| {
-            crate::lang::data::value::get::text(ctx.arena(), value)
-                .map_err(|error| Interp::Error::from(ExternError::Failure(error.to_string())))
+            crate::lang::data::value::get::text(ctx.arena(), value).map_err(ExternError::from)
         })
         .collect::<Result<Vec<_>, _>>()?;
     // Both overloads of `static_assert`; nothing else is known
@@ -161,7 +161,7 @@ where
         ("static_assert", ["check", "message"]) => true,
         ("static_assert", ["check"]) => false,
         _ => {
-            return Err(ExternError::Failure(format!(
+            return Err(error::extern_function_unsupported(format!(
                 "unsupported local compile-time known extern function call: {name_func}({})",
                 names_param.join(", ")
             ))

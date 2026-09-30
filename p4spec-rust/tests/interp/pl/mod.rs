@@ -91,7 +91,8 @@ fn prose_hints_do_not_change_function_results() {
 fn otherwise_block_handles_recoverable_mismatch() {
     let mut runner = runner(
         r#"
-builtin dec $unavailable(nat) : nat
+dec $unavailable(nat) : nat
+def $unavailable(0) = 0
 var n : nat
 dec $fallback(nat) : nat
 def $fallback(n) = $unavailable(n)

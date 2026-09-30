@@ -10,34 +10,106 @@
 use thiserror::Error;
 
 use crate::{
+    diagnostic::{Diagnostic, Report, Severity},
+    lang::common::prim::num::NumericError,
     lang::data::value::{Value, ValueError},
     lang::il::ast::Typ,
+    runner::InterpreterError,
 };
 
 use super::{Interface, Interpreter, RunnerContext};
 
 // == Extern errors
 
-/// A failure inside a host extern.
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
-pub enum ExternError {
-    /// No extern is installed.
-    #[error("extern is not configured")]
-    NotConfigured,
-    /// A value operation failed.
-    #[error(transparent)]
-    Value(#[from] ValueError),
-    /// An architecture-specific failure, described by the extern.
-    #[error("{0}")]
-    Failure(String),
-    /// A fixed-width value did not fit a machine word.
-    #[error("fixed-width value exceeds a machine word")]
-    MachineWord(#[from] num_bigint::TryFromBigIntError<()>),
+/// A fatal diagnostic produced by a host extern.
+#[derive(Debug, Error)]
+#[error(transparent)]
+pub struct ExternError(#[from] pub Box<Report>);
+
+const EXTERN_UNCONFIGURED: &str = "runtime/extern-unconfigured";
+const EXTERN_VALUE_INVALID: &str = "runtime/extern-value-invalid";
+const EXTERN_NUMERIC_INVALID: &str = "runtime/extern-numeric-invalid";
+const EXTERN_STATE_INVALID: &str = "runtime/extern-state-invalid";
+const EXTERN_ALLOCATION_FAILED: &str = "runtime/extern-allocation-failed";
+
+impl ExternError {
+    /// Creates a host diagnostic without a source location.
+    fn diagnostic(code: Option<&str>, message: impl Into<String>) -> Self {
+        Self(Box::new(
+            Diagnostic::new(
+                "runtime",
+                Severity::Error,
+                code.map(str::to_owned),
+                message,
+                vec![],
+                vec![],
+            )
+            .into(),
+        ))
+    }
+
+    /// Describes an extern that has not been configured.
+    pub fn diagnostic_unconfigured() -> Self {
+        Self::diagnostic(Some(EXTERN_UNCONFIGURED), "extern is not configured")
+    }
+
+    /// Retains an external message without inventing a diagnostic code.
+    pub fn diagnostic_message(message: impl Into<String>) -> Self {
+        Self::diagnostic(None, message)
+    }
+
+    /// Returns the host diagnostic without reconstructing it.
+    pub fn into_report(self) -> Box<Report> {
+        self.0
+    }
+}
+
+impl From<ValueError> for ExternError {
+    fn from(error: ValueError) -> Self {
+        Self::diagnostic(Some(EXTERN_VALUE_INVALID), error.to_string())
+    }
+}
+
+impl From<NumericError> for ExternError {
+    fn from(error: NumericError) -> Self {
+        Self::diagnostic(Some(EXTERN_NUMERIC_INVALID), error.to_string())
+    }
+}
+
+impl From<std::io::Error> for ExternError {
+    fn from(error: std::io::Error) -> Self {
+        Self::diagnostic(Some(EXTERN_STATE_INVALID), error.to_string())
+    }
+}
+
+impl From<serde_json::Error> for ExternError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::diagnostic(Some(EXTERN_STATE_INVALID), error.to_string())
+    }
+}
+
+impl From<std::collections::TryReserveError> for ExternError {
+    fn from(error: std::collections::TryReserveError) -> Self {
+        Self::diagnostic(Some(EXTERN_ALLOCATION_FAILED), error.to_string())
+    }
+}
+
+impl From<num_bigint::TryFromBigIntError<()>> for ExternError {
+    fn from(_: num_bigint::TryFromBigIntError<()>) -> Self {
+        Self::diagnostic(Some(EXTERN_NUMERIC_INVALID), "fixed-width value exceeds a machine word")
+    }
+}
+
+impl From<InterpreterError> for ExternError {
+    fn from(failure: InterpreterError) -> Self {
+        // Finalize exhausted reentry before returning from the host call
+        Self(failure.into_report())
+    }
 }
 
 // == Extern contract
 
-/// Host relations and functions callable from a specification.
+/// Total host relations and functions: each call returns values or a fatal error.
 pub trait Extern: Sized {
     /// Evaluates a host relation; the flag reports a side effect.
     fn eval_rel<Interp, Iface>(
@@ -45,7 +117,7 @@ pub trait Extern: Sized {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -57,7 +129,7 @@ pub trait Extern: Sized {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -77,13 +149,13 @@ impl Extern for NullExtern {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         _values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::NotConfigured;
-        Err(error.into())
+        let error = ExternError::diagnostic_unconfigured();
+        Err(error)
     }
 
     fn eval_func<Interp, Iface>(
@@ -92,13 +164,13 @@ impl Extern for NullExtern {
         _name: &str,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::NotConfigured;
-        Err(error.into())
+        let error = ExternError::diagnostic_unconfigured();
+        Err(error)
     }
 
     fn clear(&mut self) {}

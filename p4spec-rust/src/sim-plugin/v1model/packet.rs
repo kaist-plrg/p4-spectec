@@ -11,6 +11,7 @@ use crate::{
         external::{DecodeContext, EncodeContext},
     },
     runner::ExternError,
+    sim_plugin::error,
 };
 
 use super::super::{core::object::PacketIn, spec::unpack};
@@ -44,9 +45,10 @@ impl CloneInfo {
             "E2E" => CloneType::E2E,
             // Any other tag is not a `CloneType`
             name => {
-                return Err(ExternError::Failure(format!(
+                return Err(error::clone_direction_invalid(format!(
                     "Invalid enum value \"{name}\". Expected I2E or E2E"
-                )));
+                ))
+                .into());
             }
         };
         let session = usize::try_from(&unpack::p4_fixed_bit(arena, value_session)?.1)?;

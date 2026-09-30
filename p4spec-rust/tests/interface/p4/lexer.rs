@@ -1,3 +1,4 @@
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::lang::data::value::ValueArena;
 use std::rc::Rc;
 
@@ -85,8 +86,19 @@ fn test_comments_are_skipped_and_unsupported_escapes_are_located_errors() {
         .next()
         .unwrap()
         .unwrap_err();
+    let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
+        panic!("expected cause")
+    };
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(diagnostic.notes, ["at bad.p4:1"]);
     assert_eq!(error.span.left.file.as_ref(), "bad.p4");
-    assert!(matches!(error.kind, p4spec_rust::interface::p4::error::P4ErrorKind::Lex(_)));
+    assert!(matches!(
+        error,
+        p4spec_rust::interface::p4::error::P4Error {
+            kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_),
+            ..
+        }
+    ));
 }
 
 #[test]
@@ -195,7 +207,32 @@ fn test_string_failures_locate_the_escape_or_end_of_input() {
             .next()
             .unwrap()
             .unwrap_err();
+        let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
+            panic!("expected cause")
+        };
+        assert!(diagnostic.labels.is_empty());
+        assert_eq!(diagnostic.notes, ["at string.p4:1"]);
         assert_eq!((error.span.left.line, error.span.left.column), (1, left));
         assert_eq!((error.span.right.line, error.span.right.column), (1, right));
     }
+}
+
+#[test]
+fn test_line_marker_lexical_errors_do_not_use_expanded_columns_for_snippets() {
+    let mut arena = ValueArena::new();
+    let error = Lexer::new(
+        Rc::from("expanded.p4"),
+        "# 7 \"original.p4\"\n1s1",
+        Rc::new(Context::new(&mut arena)),
+    )
+    .next()
+    .unwrap()
+    .unwrap_err();
+    let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
+        panic!("expected cause")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("p4/integer-width-invalid"));
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(error.span.left.file.as_ref(), "original.p4");
+    assert_eq!(error.span.left.line, 7);
 }

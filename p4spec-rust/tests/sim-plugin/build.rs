@@ -1,20 +1,26 @@
 use p4spec_rust::{
     lang::data::value::external::Encoding,
     runner::{Config, Spec},
-    sim_plugin::{BuildError, build},
+    sim_plugin::build,
 };
 
 #[test]
 fn test_unsupported_architecture_precedes_spec_loading() {
-    assert!(matches!(
-        build(
-            Spec::Al(vec![]),
-            "unknown",
-            Config::new(true, false, false),
-            Encoding::default(),
-        ),
-        Err(BuildError::UnsupportedArchitecture(name)) if name == "unknown"
-    ));
+    let report = match build(
+        Spec::Al(vec![]),
+        "unknown",
+        Config::new(true, false, false),
+        Encoding::default(),
+    ) {
+        Ok(_) => panic!("unsupported architecture accepted"),
+        Err(report) => report,
+    };
+    let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected architecture diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("sim/architecture-unsupported"));
+    assert_eq!(diagnostic.source, "sim");
+    assert!(diagnostic.labels.is_empty());
 }
 
 #[test]
@@ -33,7 +39,10 @@ fn test_selected_architecture_uses_its_program_entry() {
             Ok(_) => panic!("an empty specification cannot initialize {arch}"),
             Err(error) => error,
         };
-        assert!(matches!(error, p4spec_rust::sim_plugin::runner::Error::Runtime(_)));
+        let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &error.kind else {
+            panic!("expected missing relation diagnostic");
+        };
+        assert_eq!(diagnostic.code.as_deref(), Some("runtime/binding-undefined"));
         assert!(error.to_string().contains(relation), "{error}");
     }
     std::fs::remove_file(path).unwrap();

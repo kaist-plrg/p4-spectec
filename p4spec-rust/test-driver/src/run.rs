@@ -5,7 +5,7 @@ use crate::{
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 use p4spec_rust::{
-    interface::p4::{error::P4ErrorKind, parse::parse_string, preprocessor::preprocess},
+    interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
     runner::{self, BuiltinInterface, Config, Interpreter, Runner},
     sim_plugin::dummy::Dummy,
 };
@@ -134,7 +134,8 @@ where
         let (sender, receiver) = mpsc::sync_channel(2);
         scope.spawn(move || {
             for path in paths_preprocess {
-                let source = preprocess(&includes, &path).map_err(|error| error.to_string());
+                let source =
+                    preprocess(&includes, &path).map_err(|error| error.into_report().to_string());
                 if sender.send(source).is_err() {
                     break;
                 }
@@ -167,15 +168,17 @@ where
                             Ok(_) => Outcome::Pass,
                             Err(_) => Outcome::Fail,
                         },
-                        Err(error) => match error.kind {
-                            P4ErrorKind::Lex(_) | P4ErrorKind::Syntax => Outcome::Fail,
-                            _ => {
-                                return Err(Error::Invalid(format!(
-                                    "{}: test execution error: {error}",
-                                    path.display()
-                                )));
-                            }
-                        },
+                        Err(P4Error {
+                            kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_),
+                            ..
+                        }) => Outcome::Fail,
+                        Err(error) => {
+                            return Err(Error::Invalid(format!(
+                                "{}: test execution error: {}",
+                                path.display(),
+                                error.into_report()
+                            )));
+                        }
                     };
                     executed += 1;
                     if outcome == Outcome::Pass {

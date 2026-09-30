@@ -89,18 +89,18 @@ pub enum Atom {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AtomError {
     /// A tag that is not an upper identifier.
-    InvalidTag(String),
+    TagInvalid(String),
     /// An operator containing a quote or newline.
-    InvalidOperator(String),
+    OperatorInvalid(String),
 }
 
 impl fmt::Display for AtomError {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidTag(id) => {
+            Self::TagInvalid(id) => {
                 write!(fmt, "invalid tag identifier {id:?}: expected an uppercase identifier")
             }
-            Self::InvalidOperator(op) => {
+            Self::OperatorInvalid(op) => {
                 write!(fmt, "invalid operator {op:?}: must not contain a quote or newline")
             }
         }
@@ -190,7 +190,7 @@ impl Atom {
     /// Constructs a tag atom when the identifier is a valid upper identifier.
     pub fn tag(id: impl Into<String>) -> Result<Self, AtomError> {
         let id = id.into();
-        if Self::is_upid(&id) { Ok(Self::Tag(id)) } else { Err(AtomError::InvalidTag(id)) }
+        if Self::is_upid(&id) { Ok(Self::Tag(id)) } else { Err(AtomError::TagInvalid(id)) }
     }
 
     // - Operator
@@ -199,7 +199,7 @@ impl Atom {
     pub fn operator(op: impl Into<String>) -> Result<Self, AtomError> {
         let op = op.into();
         if op.contains(['\'', '\n']) {
-            Err(AtomError::InvalidOperator(op))
+            Err(AtomError::OperatorInvalid(op))
         } else {
             Ok(Self::Operator(op))
         }

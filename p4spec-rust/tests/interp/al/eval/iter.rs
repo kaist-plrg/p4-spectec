@@ -1,7 +1,7 @@
 //! Iterated evaluation preserves input scopes and diagnostic spans
 
 use crate::interp::report::ReportExt;
-use p4spec_rust::interp::shared::backtrack::Failure;
+
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::runtime::envs::interp::shared::frame::FrameLayout;
@@ -22,7 +22,7 @@ use p4spec_rust::{
         },
     },
     phrase,
-    runner::{NullExtern, NullInterface, Runner},
+    runner::{InterpreterError, NullExtern, NullInterface, Runner},
 };
 
 fn id(name: &str, line: usize) -> ast::Id {
@@ -70,7 +70,7 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
         }
         Ok(value)
     })
-    .map_err(Failure::into_report)
+    .map_err(InterpreterError::into_report)
     .unwrap();
     assert_eq!(get::opt(runner.arena(), &value_opt).unwrap(), Some(value));
     assert_eq!(runner.arena().typ(&value_opt), &typ_result);
@@ -83,7 +83,7 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
             .slot,
         make::opt(runner.arena_mut(), typ.node.clone().into(), None, Span::default()).unwrap(),
     );
-    let Err(Failure::Fatal(errors)) =
+    let Err(InterpreterError::Fatal(errors)) =
         map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| panic!("mixed optionality"))
     else {
         panic!("expected optionality mismatch");
@@ -100,7 +100,7 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
     );
     let value_none =
         map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| panic!("absent inputs"))
-            .map_err(Failure::into_report)
+            .map_err(InterpreterError::into_report)
             .unwrap();
     assert!(get::opt(runner.arena(), &value_none).unwrap().is_none());
     let value_empty = map(
@@ -111,7 +111,7 @@ fn test_map_opt_requires_agreement_and_preserves_parent() {
         &ast::ExpIter { iter: ast::Iter::Opt, vars: vec![] }.prepare(&mut FrameLayout::default()),
         |_, _| Ok(value),
     )
-    .map_err(Failure::into_report)
+    .map_err(InterpreterError::into_report)
     .unwrap();
     assert_eq!(get::opt(runner.arena(), &value_empty).unwrap(), Some(value));
 }
@@ -158,7 +158,7 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
         );
         Ok(*ctx_sub.find_value_at_slot(exp_iter.vars[0].slot).unwrap())
     })
-    .map_err(Failure::into_report)
+    .map_err(InterpreterError::into_report)
     .unwrap();
     assert_eq!(runner.arena().typ(&value_list), &typ_result);
     assert_eq!(*runner.arena().span(&value_list), Span::default());
@@ -175,9 +175,9 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
     let mut count = 0;
     let result = map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| {
         count += 1;
-        Err(Failure::Mismatch(vec![]))
+        Err(InterpreterError::Mismatch(vec![]))
     });
-    assert!(matches!(result, Err(Failure::Mismatch(_))));
+    assert!(matches!(result, Err(InterpreterError::Mismatch(_))));
     assert_eq!(count, 1);
     ctx.add_value_at_slot(
         ctx.find_var_iterated(&exp_iter.vars[1], ast::Iter::List)
@@ -185,7 +185,7 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
         make::list(runner.arena_mut(), typ::make::bool().node.into(), vec![], Span::default())
             .unwrap(),
     );
-    let Err(Failure::Fatal(errors)) =
+    let Err(InterpreterError::Fatal(errors)) =
         map(&mut runner, &ctx, &span, &typ_result, &exp_iter, |_, _| panic!("unequal lengths"))
     else {
         panic!("expected iteration length mismatch");
@@ -200,12 +200,12 @@ fn test_map_list_transposes_in_order_without_leaking_bindings() {
         &ast::ExpIter { iter: ast::Iter::List, vars: vec![] }.prepare(&mut FrameLayout::default()),
         |_, _| panic!("no inputs"),
     )
-    .map_err(Failure::into_report)
+    .map_err(InterpreterError::into_report)
     .unwrap();
     assert!(get::list(runner.arena(), &value_empty).unwrap().is_empty());
 }
 
-fn iterate_wrong_value_kind(iter: ast::Iter) -> Result<(), Failure> {
+fn iterate_wrong_value_kind(iter: ast::Iter) -> Result<(), InterpreterError> {
     let mut runner = Runner::<AlInterp, _, _>::new(
         Global::load(vec![]).unwrap(),
         AlInterp::new(Config::new(false, false, false)),

@@ -1,40 +1,9 @@
-//! Command failures and splice admission diagnostics
+//! Diagnostics for command-owned argument checks
 //!
 //! Command-owned checks construct reports before reading specification files.
-//! Other variants retain the errors supplied by their owning operations.
 //! The CLI renders reports and selects exit codes at its output boundary.
 
-use p4spec_rust::{
-    diagnostic::{Diagnostic, Report, Severity},
-    interface::p4::error::P4Error,
-    interp::shared::backtrack::Failure as InterpError,
-    runner, sim_plugin,
-};
-
-// == Errors
-
-/// A command failure with its user-facing diagnostic category.
-#[derive(Debug, thiserror::Error)]
-pub(crate) enum CliError {
-    /// A command or specification operation produced a structured diagnostic.
-    #[error(transparent)]
-    Diagnostic(#[from] Box<Report>),
-    /// Interpreter construction failed.
-    #[error(transparent)]
-    Runner(#[from] runner::BuildError),
-    /// Simulator construction failed.
-    #[error(transparent)]
-    Simulator(#[from] sim_plugin::BuildError),
-    /// Simulation failed.
-    #[error(transparent)]
-    Simulation(#[from] sim_plugin::runner::Error),
-    /// Parsing the input program failed.
-    #[error("syntax error: {0}")]
-    Syntax(#[from] P4Error),
-    /// Evaluating the input program failed.
-    #[error("runtime error: {0}")]
-    Runtime(#[from] InterpError),
-}
+use p4spec_rust::diagnostic::{Diagnostic, Report, Severity};
 
 /// Constructs a command diagnostic without a specification source location.
 fn command(code: &str, message: impl Into<String>) -> Box<Report> {

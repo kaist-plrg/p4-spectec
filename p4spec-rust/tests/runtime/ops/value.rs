@@ -113,7 +113,7 @@ fn test_undefined_names_return_located_typed_errors() {
     let error = sub(&arena, &find_typdef_opt, &|_: &str| None::<FuncTyp>, &missing_typ, &value)
         .unwrap_err();
 
-    assert!(matches!(error, MatchError::UndefinedType { ref name, .. } if name == "missing"));
+    assert!(matches!(error, MatchError::TypeUndefined { ref name, .. } if name == "missing"));
 
     let mut span = Span::default();
     span.left.line = 17;
@@ -129,7 +129,7 @@ fn test_undefined_names_return_located_typed_errors() {
     let typ = typ::make::func(vec![], vec![], typ::make::bool());
     let error = sub(&arena, &find_typdef_opt, &|_| None, &typ, &value).unwrap_err();
     assert!(
-        matches!(error, MatchError::UndefinedFunction { name, span: span_error } if name == "missing" && span_error == span)
+        matches!(error, MatchError::FunctionUndefined { name, span: span_error } if name == "missing" && span_error == span)
     );
 }
 

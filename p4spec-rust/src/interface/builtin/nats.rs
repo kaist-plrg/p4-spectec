@@ -18,14 +18,13 @@ use super::{BuiltinError, extract};
 
 /// The integer in a number value.
 fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 
 /// A natural value; a negative integer is an error.
 fn value_of_bigint(arena: &mut ValueArena, value: BigInt) -> Result<Value, BuiltinError> {
-    let value =
-        num::Natural::try_from(value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let value = num::Natural::try_from(value).map_err(BuiltinError::from)?;
     let value = make::nat(arena, value, Span::default())?;
     Ok(value)
 }
@@ -33,7 +32,7 @@ fn value_of_bigint(arena: &mut ValueArena, value: BigInt) -> Result<Value, Built
 /// The elements of the single list argument.
 fn input_values<'a>(arena: &'a ValueArena, values: &[Value]) -> Result<&'a [Value], BuiltinError> {
     let value = extract::one(values)?;
-    get::list(arena, value).map_err(|error| BuiltinError::new(error.to_string()))
+    get::list(arena, value).map_err(BuiltinError::from)
 }
 
 // == Built-in implementations
@@ -63,7 +62,7 @@ pub fn max_nat(
     // An empty list has no maximum
     let (first, rest) = values
         .split_first()
-        .ok_or_else(|| BuiltinError::new("max of empty list"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("max of empty list"))?;
     let mut maximum = bigint_of_value(arena, first)?.clone();
     for value in rest {
         let value = bigint_of_value(arena, value)?.clone();
@@ -83,7 +82,7 @@ pub fn min_nat(
     // An empty list has no minimum
     let (first, rest) = values
         .split_first()
-        .ok_or_else(|| BuiltinError::new("min of empty list"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("min of empty list"))?;
     let mut minimum = bigint_of_value(arena, first)?.clone();
     for value in rest {
         let value = bigint_of_value(arena, value)?.clone();

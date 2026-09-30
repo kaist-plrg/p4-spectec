@@ -1,7 +1,6 @@
 use crate::interp::report::ReportExt;
 use p4spec_rust::{
     diagnostic::Report,
-    interp::shared::backtrack::Failure,
     lang::{common::source::Span, data::value::make},
     pass::{algo, elaborate, prosify, structure},
     runner::{self, BuiltinInterface, Config, Interpreter, NullExtern, Runner},
@@ -9,7 +8,7 @@ use p4spec_rust::{
 
 fn invoke<Interp>(mut runner: Runner<Interp, BuiltinInterface, NullExtern>) -> Report
 where
-    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
+    Interp: Interpreter<BuiltinInterface, NullExtern>,
 {
     let value = make::nat(runner.arena_mut(), 1.into(), Span::default()).unwrap();
     let failure = runner.context().call_rel("R", &[value]).unwrap_err();
@@ -60,7 +59,7 @@ fn failed_not_holds_have_no_inner_failure() {
 fn fatal_hold_calls_do_not_become_condition_mismatches() {
     let source = include_str!("../../../test-driver/expected/diagnostic/interp/hold-fatal.watsup");
     for report in failures(source) {
-        assert!(report.find_code("runtime/extern-failed").is_some(), "{report:?}");
+        assert!(report.find_code("runtime/extern-unconfigured").is_some(), "{report:?}");
         assert!(report.find_code("runtime/hold-condition-unmet").is_none(), "{report:?}");
     }
 }
@@ -128,6 +127,6 @@ rule R/call: n |- $check([0, n, 2])
 "#;
     for report in failures(source) {
         assert!(report.find_code("runtime/hold-condition-unmet").is_some(), "{report:?}");
-        assert!(report.find_code("runtime/extern-failed").is_none(), "{report:?}");
+        assert!(report.find_code("runtime/extern-unconfigured").is_none(), "{report:?}");
     }
 }

@@ -4,7 +4,6 @@
 
 use crate::interp::report::ReportExt;
 use p4spec_rust::{
-    interp::shared::backtrack::Failure,
     lang::{
         data::{
             typ,
@@ -14,7 +13,7 @@ use p4spec_rust::{
         traits::print::Print,
     },
     pass::{algo, elaborate, prosify, structure},
-    runner::{self, Extern, Interface, Interpreter, RunnerContext},
+    runner::{self, Extern, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 
 const SOURCE: &str = r#"
@@ -59,7 +58,7 @@ impl Extern for Host {
         _name: &str,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -67,6 +66,7 @@ impl Extern for Host {
         // Host reentry supplies raw arguments to the public entry
         ctx.call_func("ignore", &[], &[])
             .map(|value| (value, false))
+            .map_err(Into::into)
     }
 
     fn eval_rel<Interp, Iface>(
@@ -74,13 +74,15 @@ impl Extern for Host {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         if self.reenter {
-            ctx.call_rel("Identity", &[]).map(|values| (values, false))
+            ctx.call_rel("Identity", &[])
+                .map(|values| (values, false))
+                .map_err(Into::into)
         } else {
             Ok((vec![values[0]; self.outputs], false))
         }
@@ -89,8 +91,8 @@ impl Extern for Host {
     fn clear(&mut self) {}
 }
 
-fn assert_fatal(failure: Failure, code: &str) {
-    let Failure::Fatal(report) = failure else { panic!("expected fatal diagnostic") };
+fn assert_fatal(failure: InterpreterError, code: &str) {
+    let InterpreterError::Fatal(report) = failure else { panic!("expected fatal diagnostic") };
     assert!(report.find_code(code).is_some(), "{}", report.render());
 }
 
@@ -121,7 +123,7 @@ fn zero_arity_default_hints_reach_the_host() {
             runners!(cache, guard, runner::NullExtern, |runner| {
                 assert_fatal(
                     runner.context().call_rel("Ready", &[]).unwrap_err(),
-                    "runtime/extern-failed",
+                    "runtime/extern-unconfigured",
                 );
                 let value = make::nat(runner.arena_mut(), 1u64.into(), Default::default()).unwrap();
                 assert_fatal(

@@ -19,7 +19,7 @@ pub struct TypeError {
 pub enum TypeErrorKind {
     /// A type variable with arguments was substituted.
     #[error("higher-order substitution is disallowed")]
-    HigherOrderSubstitution,
+    HigherOrderSubstitutionUnsupported,
 
     /// Two type-level lists differ in length.
     #[error("{0}")]
@@ -27,7 +27,7 @@ pub enum TypeErrorKind {
 
     /// A type name has no definition.
     #[error("type variable {0} is not defined")]
-    UndefinedType(String),
+    TypeUndefined(String),
 }
 
 /// Context of an arity mismatch in a runtime type operation.

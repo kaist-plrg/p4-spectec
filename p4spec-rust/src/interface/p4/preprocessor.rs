@@ -33,22 +33,22 @@ pub fn preprocess(includes: &[PathBuf], path: impl AsRef<Path>) -> Result<String
     let output = command.output();
     // Failing to start the compiler is reported like a failed run
     let output = output.map_err(|error| {
-        let kind = P4ErrorKind::Preprocessor { status: None, stderr: error.to_string() };
-        P4Error::new(kind, span_file(path))
+        let kind = P4ErrorKind::Preprocess { status: None, stderr: error.to_string() };
+        P4Error::new(span_file(path), kind)
     })?;
     // A nonzero status carries the compiler's diagnostics
     if !output.status.success() {
-        let kind = P4ErrorKind::Preprocessor {
+        let kind = P4ErrorKind::Preprocess {
             status: output.status.code(),
             stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
         };
-        return Err(P4Error::new(kind, span_file(path)));
+        return Err(P4Error::new(span_file(path), kind));
     }
     // The output must be UTF-8 to be lexed
     let source = String::from_utf8(output.stdout);
     source.map_err(|error| {
         let kind =
-            P4ErrorKind::Preprocessor { status: output.status.code(), stderr: error.to_string() };
-        P4Error::new(kind, span_file(path))
+            P4ErrorKind::Preprocess { status: output.status.code(), stderr: error.to_string() };
+        P4Error::new(span_file(path), kind)
     })
 }

@@ -10,7 +10,7 @@ use p4spec_rust::{
         },
     },
     runner::{
-        Extern, ExternError, Interface, InterfaceError, Interpreter, NullInterface, Runner,
+        Extern, ExternError, Interface, Interpreter, InterpreterError, NullInterface, Runner,
         RunnerContext,
     },
     sim_plugin::{
@@ -26,14 +26,6 @@ use p4spec_rust::{
         state::SimState,
     },
 };
-
-#[derive(Debug, thiserror::Error)]
-enum TestError {
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-}
 
 #[derive(Default)]
 struct FailureInterp {
@@ -81,7 +73,6 @@ fn name_of_id(arena: &ValueArena, value_id: &Value) -> String {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for FailureInterp {
     type Spec = ();
-    type Error = TestError;
 
     fn clear(&mut self) {}
 
@@ -91,7 +82,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for FailureInterp {
         _: &mut RunnerContext<'_, Self, Iface, Ext>,
         _: &str,
         _: Value,
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -100,14 +91,14 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for FailureInterp {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, TestError> {
+    ) -> Result<Value, InterpreterError> {
         assert!(targs.is_empty());
         match name {
             "find_archState_e" => Ok(field(ctx.arena(), values[0], "STATE")),
             "update_archState_e" => {
                 ctx.interp_mut().updates_arch += 1;
                 if ctx.interp().updates_arch == 2 {
-                    return Err(ExternError::Failure("restore failed".to_owned()).into());
+                    return Err(ExternError::diagnostic_message("restore failed".to_owned()).into());
                 }
                 let value_arch = update_field(ctx.arena_mut(), values[0], "STATE", values[1]);
                 ctx.interp_mut().value_arch_completed = Some(value_arch);
@@ -131,7 +122,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for FailureInterp {
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         match name {
             "Lvalue_read" => {
                 let value_name = *get::case(ctx.arena(), &values[3]).unwrap().args()[1];
@@ -212,8 +203,10 @@ fn test_clone_restoration_failure_preserves_queued_clones_and_completed_state() 
     let tx = Tx { port: 99, packet: "prior output".to_owned() };
     let mut state = SimState { value_ctx, value_arch, txs: vec![tx] };
 
-    assert!(
-        matches!(pipe::run_pre(&mut runner.context(), &mut state), Err(TestError::Extern(ExternError::Failure(msg))) if msg == "restore failed")
+    crate::diagnostic_fixture::assert_diagnostic(
+        pipe::run_pre(&mut runner.context(), &mut state).unwrap_err(),
+        None,
+        "restore failed",
     );
     assert_eq!(runner.context().interp().updates_arch, 2);
     assert_eq!(Some(state.value_arch), runner.context().interp().value_arch_completed);

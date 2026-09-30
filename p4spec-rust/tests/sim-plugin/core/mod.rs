@@ -15,19 +15,11 @@ use p4spec_rust::{
         il::ast::Typ,
     },
     runner::{
-        Extern, ExternError, Interface, InterfaceError, Interpreter, NullInterface, Runner,
+        Extern, ExternError, Interface, Interpreter, InterpreterError, NullInterface, Runner,
         RunnerContext,
     },
     sim_plugin::{dummy::Dummy, spec::pack},
 };
-
-#[derive(Debug, thiserror::Error)]
-enum TestError {
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-}
 
 #[derive(Default)]
 struct PacketInterp {
@@ -43,7 +35,6 @@ struct PacketInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
     type Spec = ();
-    type Error = TestError;
 
     fn clear(&mut self) {}
 
@@ -53,7 +44,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
         _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         _name: &str,
         _program: Value,
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -62,7 +53,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, TestError> {
+    ) -> Result<Value, InterpreterError> {
         assert!(targs.is_empty());
         ctx.interp_mut()
             .calls
@@ -108,14 +99,14 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         assert_eq!(name, "Lvalue_write");
         assert_eq!(values.len(), 5);
         ctx.interp_mut()
             .calls
             .push((name.to_owned(), values.to_vec()));
         if ctx.interp().fail_rel {
-            return Err(ExternError::Failure("write failed".to_owned()).into());
+            return Err(ExternError::diagnostic_message("write failed".to_owned()).into());
         }
         Ok(vec![values[4]; ctx.interp().arity_rel])
     }

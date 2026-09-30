@@ -28,19 +28,19 @@ use crate::{
 pub enum MatchError {
     /// The type name has no definition.
     #[error("undefined type {name} at {span}")]
-    UndefinedType { name: String, span: Span },
+    TypeUndefined { name: String, span: Span },
 
     /// A parameter or unfinished type, which no value inhabits.
     #[error("unexpected type variable at {span}")]
-    UnexpectedTypeVariable { span: Span },
+    TypeVariableUnexpected { span: Span },
 
     /// Type arguments do not match the definition's parameters.
     #[error("expected {expected} type arguments, got {actual} at {span}")]
-    TypeArgumentMismatch { expected: usize, actual: usize, span: Span },
+    TypeArgumentCountMismatch { expected: usize, actual: usize, span: Span },
 
     /// A function value names an unknown function.
     #[error("undefined function {name} at {span}")]
-    UndefinedFunction { name: String, span: Span },
+    FunctionUndefined { name: String, span: Span },
 
     /// A type operation failed.
     #[error(transparent)]
@@ -78,14 +78,14 @@ where
         TypKind::Text => Ok(matches!(arena.kind(value), ValueKind::Text(_))),
         // A named type: unfold its definition
         TypKind::Var(id, targs) => {
-            let typdef = find_typdef_opt(id).ok_or_else(|| MatchError::UndefinedType {
+            let typdef = find_typdef_opt(id).ok_or_else(|| MatchError::TypeUndefined {
                 name: id.node.clone(),
                 span: typ.span.clone(),
             })?;
             match typdef {
                 // Nothing inhabits a parameter or an unfinished type
                 TypeDef::Parameter | TypeDef::Defining(_) => {
-                    Err(MatchError::UnexpectedTypeVariable { span: typ.span.clone() })
+                    Err(MatchError::TypeVariableUnexpected { span: typ.span.clone() })
                 }
                 // Extern types hold extern values
                 TypeDef::Extern => Ok(matches!(arena.kind(value), ValueKind::Extern(_))),
@@ -93,11 +93,12 @@ where
                 TypeDef::Defined(tparams, def_typ) => {
                     // Type arguments must match the parameters
                     let theta = Theta::from_lists(tparams, targs);
-                    let theta = theta.map_err(|mismatch| MatchError::TypeArgumentMismatch {
-                        expected: mismatch.expected,
-                        actual: mismatch.actual,
-                        span: typ.span.clone(),
-                    })?;
+                    let theta =
+                        theta.map_err(|mismatch| MatchError::TypeArgumentCountMismatch {
+                            expected: mismatch.expected,
+                            actual: mismatch.actual,
+                            span: typ.span.clone(),
+                        })?;
                     match (&def_typ.node, arena.kind(value)) {
                         // An alias: test against the aliased type
                         (DefTypKind::Plain(typ), _) => {
@@ -184,7 +185,7 @@ where
         TypKind::Func(func_typ) => match arena.kind(value) {
             ValueKind::Func(id) => {
                 let func_typ_actual = find_func(&id.node).ok_or_else(|| {
-                    MatchError::UndefinedFunction { name: id.node.clone(), span: id.span.clone() }
+                    MatchError::FunctionUndefined { name: id.node.clone(), span: id.span.clone() }
                 })?;
                 let equivalent =
                     equiv_func_typ(find_typdef_opt, &typ.span, func_typ, &func_typ_actual)?;

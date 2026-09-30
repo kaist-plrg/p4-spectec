@@ -10,6 +10,7 @@
 use thiserror::Error;
 
 use crate::{
+    diagnostic::{Diagnostic, Report, Severity},
     interface::builtin::{BuiltinError, call::Builtins},
     lang::data::value::{Value, ValueArena},
     lang::il::ast::{Id, Typ},
@@ -17,15 +18,39 @@ use crate::{
 
 // == Interface errors
 
-/// A failure inside the builtin interface.
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
-pub enum InterfaceError {
-    /// No interface is installed.
-    #[error("interface is not configured")]
-    NotConfigured,
-    /// A builtin failed.
-    #[error(transparent)]
-    Builtin(#[from] Box<BuiltinError>),
+/// A fatal diagnostic produced by the builtin interface.
+#[derive(Debug, Error)]
+#[error(transparent)]
+pub struct InterfaceError(#[from] pub Box<Report>);
+
+const INTERFACE_UNCONFIGURED: &str = "runtime/interface-unconfigured";
+
+impl InterfaceError {
+    /// Describes an interface that has not been configured.
+    pub fn diagnostic_unconfigured() -> Self {
+        Self(Box::new(
+            Diagnostic::new(
+                "runtime",
+                Severity::Error,
+                Some(INTERFACE_UNCONFIGURED.to_owned()),
+                "interface is not configured",
+                vec![],
+                vec![],
+            )
+            .into(),
+        ))
+    }
+
+    /// Returns the interface diagnostic without reconstructing it.
+    pub fn into_report(self) -> Box<Report> {
+        self.0
+    }
+}
+
+impl From<BuiltinError> for InterfaceError {
+    fn from(error: BuiltinError) -> Self {
+        Self(error.into_report())
+    }
 }
 
 // == Interface contract
@@ -68,7 +93,7 @@ impl Interface for BuiltinInterface {
     ) -> Result<(Value, bool), InterfaceError> {
         self.builtins
             .invoke(arena, id, targs, values)
-            .map_err(|error| InterfaceError::Builtin(Box::new(error)))
+            .map_err(InterfaceError::from)
     }
 
     fn clear(&mut self) {
@@ -87,7 +112,7 @@ impl Interface for NullInterface {
         _targs: &[Typ],
         _values: &[Value],
     ) -> Result<(Value, bool), InterfaceError> {
-        Err(InterfaceError::NotConfigured)
+        Err(InterfaceError::diagnostic_unconfigured())
     }
 
     fn clear(&mut self) {}

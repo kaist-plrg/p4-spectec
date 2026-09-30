@@ -1,9 +1,10 @@
 //! String and filesystem entry points for the STF parser
 //!
-//! `parse_file` reads a source before delegating to `parse_str`. Located lexer
-//! tokens become LALRPOP input, statements retain their source spans, and
-//! parse failures become typed errors. For example, `wait` becomes one located
-//! `Statement::Wait`.
+//! `parse_file` reads a source before delegating to `parse_str`.
+//! Located lexer tokens become LALRPOP input,
+//! statements retain their source spans,
+//! and parse failures become diagnostic reports.
+//! For example, `wait` becomes one located `Statement::Wait`.
 
 use std::{fs, path::Path, rc::Rc};
 
@@ -13,7 +14,7 @@ use crate::lang::common::source::{Phrase, Position, Span};
 
 use super::{
     ast::Program,
-    error::{StfError, StfErrorKind},
+    error::{self, StfError},
     lexer::{Lexer, Token},
     parser,
 };
@@ -65,29 +66,26 @@ where
     })
 }
 
-/// Turns a LALRPOP error into a typed STF error with its span.
+/// Turns a LALRPOP error into an STF diagnostic with its span.
 fn translate_lalrpop_error(
     file: &Rc<str>,
     error: ParseError<Location, Token, StfError>,
 ) -> StfError {
-    let (kind, span) = match error {
+    match error {
         ParseError::InvalidToken { location: loc } => {
-            let span = location_span(file, loc, loc);
-            (StfErrorKind::InvalidToken, span)
+            error::token_invalid(&location_span(file, loc, loc))
         }
         ParseError::UnrecognizedEof { location: loc, .. } => {
-            let span = location_span(file, loc, loc);
-            (StfErrorKind::UnexpectedEndOfInput, span)
+            error::input_incomplete(&location_span(file, loc, loc))
         }
         ParseError::UnrecognizedToken { token: (loc_l, _, loc_r), .. } => {
-            (StfErrorKind::UnexpectedToken, location_span(file, loc_l, loc_r))
+            error::token_unexpected(&location_span(file, loc_l, loc_r))
         }
         ParseError::ExtraToken { token: (loc_l, _, loc_r) } => {
-            (StfErrorKind::ExtraToken, location_span(file, loc_l, loc_r))
+            error::token_extra(&location_span(file, loc_l, loc_r))
         }
-        ParseError::User { error } => return error,
-    };
-    StfError::new(kind, span)
+        ParseError::User { error } => error,
+    }
 }
 
 /// Parses an add priority, rejecting values above the half-range cap.
@@ -95,10 +93,7 @@ pub(crate) fn parse_priority(spelling: String, span: Span) -> Result<i64, StfErr
     let priority = spelling.parse::<i64>().ok();
     match priority.filter(|priority| *priority <= MAX_PRIORITY) {
         Some(priority) => Ok(priority),
-        None => {
-            let kind = StfErrorKind::InvalidPriority(spelling);
-            Err(StfError::new(kind, span))
-        }
+        None => Err(error::priority_out_of_bounds(&span, &spelling)),
     }
 }
 
@@ -121,7 +116,7 @@ pub fn parse_file(path: impl AsRef<Path>) -> Result<Program, StfError> {
     let file = Rc::<str>::from(path.to_string_lossy().into_owned());
     let source = fs::read_to_string(path).map_err(|error| {
         let position = Position::new(Rc::clone(&file), 0, 0);
-        StfError::new(StfErrorKind::Io(error), Span::new(position.clone(), position))
+        error::input_unreadable(&Span::new(position.clone(), position), &error)
     })?;
     parse_str(file, &source)
 }

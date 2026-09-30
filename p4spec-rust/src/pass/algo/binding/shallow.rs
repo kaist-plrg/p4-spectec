@@ -14,9 +14,9 @@ use crate::{
 /// A shallow binding failure retaining its original syntax.
 pub enum ShallowFailure<'a> {
     /// An argument outside the shallow pattern language.
-    InvalidShape(&'a ast::Arg),
+    ShapeInvalid(&'a ast::Arg),
     /// A new binder repeated after its previous occurrence.
-    RepeatedBinding { id: &'a ast::Id, id_previous: &'a ast::Id },
+    BindingRepeated { id: &'a ast::Id, id_previous: &'a ast::Id },
 }
 
 /// Checks for a variable under any number of iterations.
@@ -57,7 +57,7 @@ pub fn check_args<'a>(venv: &VEnv, args: &'a [ast::Arg]) -> Result<(), ShallowFa
     // Reject the first invalid shape before traversing its binders
     for arg in args {
         if !check_arg(arg) {
-            return Err(ShallowFailure::InvalidShape(arg));
+            return Err(ShallowFailure::ShapeInvalid(arg));
         }
     }
     // Reject repeated new binders in occurrence order, before renaming
@@ -86,7 +86,7 @@ fn check_repeated_binding<'a>(
             }
             // Keep the first source occurrence even when names sort differently
             if let Some(id_previous) = ids_seen.get(id) {
-                return Err(ShallowFailure::RepeatedBinding { id, id_previous });
+                return Err(ShallowFailure::BindingRepeated { id, id_previous });
             }
             ids_seen.insert(id.clone(), id);
         }

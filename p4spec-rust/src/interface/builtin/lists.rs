@@ -27,12 +27,12 @@ use super::{BuiltinError, extract};
 
 /// The elements of a list value.
 fn list_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a [Value], BuiltinError> {
-    get::list(arena, value).map_err(|error| BuiltinError::new(error.to_string()))
+    get::list(arena, value).map_err(BuiltinError::from)
 }
 
 /// The integer in a number value.
 fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 
@@ -143,7 +143,7 @@ pub fn assoc_(
         let pair = match arena.kind(pair) {
             ValueKind::Tuple(pair) if pair.len() == 2 => pair,
             _ => {
-                return Err(BuiltinError::new("expected an association pair"));
+                return Err(BuiltinError::argument_invalid("expected an association pair"));
             }
         };
         // The first match wins, but the rest are still checked for shape
@@ -174,7 +174,7 @@ pub fn sort_(
         let pair_values = match arena.kind(pair) {
             ValueKind::Tuple(pair) if pair.len() == 2 => pair,
             _ => {
-                return Err(BuiltinError::new("expected a numeric pair"));
+                return Err(BuiltinError::argument_invalid("expected a numeric pair"));
             }
         };
         let key = bigint_of_value(arena, &pair_values[0])?.clone();
@@ -212,7 +212,7 @@ pub fn transpose_(
         let row = list_of_value(arena, row)?;
         // Every row must have the same width
         if row.len() != width {
-            return Err(BuiltinError::new("cannot transpose a matrix of values"));
+            return Err(BuiltinError::argument_invalid("cannot transpose a matrix of values"));
         }
         for (index, value) in row.iter().enumerate() {
             columns[index].push(*value);

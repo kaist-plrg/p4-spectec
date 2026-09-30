@@ -105,7 +105,7 @@ fn test_substitution_freshens_function_binders_and_rejects_higher_order_targets(
         span: higher_order_span.clone(),
     };
     let error = subst_typ(&|id| theta.get(id), &higher_order).unwrap_err();
-    assert_eq!(error.kind, TypeErrorKind::HigherOrderSubstitution);
+    assert_eq!(error.kind, TypeErrorKind::HigherOrderSubstitutionUnsupported);
     assert_eq!(error.span, higher_order_span);
 }
 
@@ -153,7 +153,7 @@ fn test_expansion_resolves_plain_aliases_and_reports_invalid_references() {
         TypeErrorKind::ArityMismatch(TypeArityMismatch::TypeArgument(ArityMismatch::new(1, 0)))
     );
     let missing = expand_typ(&env, &var("Missing", vec![])).unwrap_err();
-    assert_eq!(missing.kind, TypeErrorKind::UndefinedType("Missing".to_owned()));
+    assert_eq!(missing.kind, TypeErrorKind::TypeUndefined("Missing".to_owned()));
 }
 
 #[test]
@@ -306,7 +306,7 @@ fn lookup_substitution_freshens_binders_and_reports_higher_order_targets() {
         p4spec_rust::lang::common::source::Position::new("lookup", 3, 8),
     );
     let error = subst_typ(&find_subst, &typ_input).unwrap_err();
-    assert_eq!(error.kind, TypeErrorKind::HigherOrderSubstitution);
+    assert_eq!(error.kind, TypeErrorKind::HigherOrderSubstitutionUnsupported);
     assert_eq!(error.span, typ_input.span);
 }
 

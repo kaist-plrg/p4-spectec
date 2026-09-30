@@ -3,7 +3,7 @@
 //! Type parameters shadow global definitions in both input checks and bodies.
 
 use crate::interp::report::ReportExt;
-use p4spec_rust::interp::shared::backtrack::Failure;
+
 use p4spec_rust::{
     interp::{
         al::context as ctx_al,
@@ -27,12 +27,12 @@ use p4spec_rust::{
     },
     pass::{algo, elaborate, prosify, structure},
     phrase,
-    runner::{self, BuiltinInterface, Config, Interpreter, NullExtern, Runner},
+    runner::{self, BuiltinInterface, Config, Interpreter, InterpreterError, NullExtern, Runner},
 };
 
 fn check_shadowing<Interp>(mut runner: Runner<Interp, BuiltinInterface, NullExtern>)
 where
-    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
+    Interp: Interpreter<BuiltinInterface, NullExtern>,
 {
     let value = make::bool(runner.arena_mut(), true, Span::default()).unwrap();
     let value = runner
@@ -90,7 +90,7 @@ fn check_binding_errors<Ctx: WriteContext>(ctx: Ctx) {
     else {
         panic!("expected a successful type parameter binding")
     };
-    let Err(Failure::Fatal(errors)) =
+    let Err(InterpreterError::Fatal(errors)) =
         assign_tparams(ctx, &[tparam], &[typ::make::bool()], &span_call)
     else {
         panic!("expected a duplicate type parameter error")
@@ -136,7 +136,8 @@ fn check_argument_invariants<Ctx: WriteContext>(ctx: Ctx) {
     let value =
         make::func(&mut arena, id.clone(), vec![], vec![], typ::make::bool(), Span::default())
             .unwrap();
-    let Err(Failure::Fatal(report)) = assign_def(&arena, &ctx, ctx.clone(), &id, value) else {
+    let Err(InterpreterError::Fatal(report)) = assign_def(&arena, &ctx, ctx.clone(), &id, value)
+    else {
         panic!("unknown raw function reference must remain a diagnostic")
     };
     assert!(report.find_code("runtime/binding-undefined").is_some());

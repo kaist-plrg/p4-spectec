@@ -108,15 +108,19 @@ fn test_malformed_or_failed_write_does_not_install_partial_packet_or_context() {
     let error = pkt
         .extract(&mut runner.context(), value_ctx, value_arch)
         .unwrap_err();
-    assert!(matches!(
+    crate::diagnostic_fixture::assert_diagnostic(
         error,
-        TestError::Extern(ExternError::Value(ValueError::ExpectedCount { expected: 1, actual: 2 }))
-    ));
+        Some("runtime/extern-value-invalid"),
+        "expected exactly 1 values, got 2",
+    );
     assert_eq!(pkt.idx, 0);
     assert_eq!(get::text(runner.arena(), &value_ctx), Ok("ctx"));
     runner.context().interp_mut().fail_rel = true;
-    assert!(
-        matches!(pkt.extract(&mut runner.context(), value_ctx, value_arch), Err(TestError::Extern(ExternError::Failure(message))) if message == "write failed")
+    crate::diagnostic_fixture::assert_diagnostic(
+        pkt.extract(&mut runner.context(), value_ctx, value_arch)
+            .unwrap_err(),
+        None,
+        "write failed",
     );
     assert_eq!(pkt.idx, 0);
     runner.context().interp_mut().fail_rel = false;

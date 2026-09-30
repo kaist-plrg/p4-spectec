@@ -47,15 +47,17 @@ fn set_mixop() -> Rc<Mixop> {
 
 /// Decodes a `set<K>` value into a sorted set.
 fn set_of_value(arena: &ValueArena, value: &Value) -> Result<ValueSet, BuiltinError> {
-    let value_case = get::case(arena, value).map_err(|_| BuiltinError::new("expected a set"))?;
+    let value_case =
+        get::case(arena, value).map_err(|_| BuiltinError::argument_invalid("expected a set"))?;
     let set_mixop = set_mixop();
     // The value must be a set case wrapping one list
     if !value_case.eq_shape(&set_mixop) {
-        return Err(BuiltinError::new("expected a set"));
+        return Err(BuiltinError::argument_invalid("expected a set"));
     }
     let args = value_case.args();
     let value_set = extract::one(&args)?;
-    let values = get::list(arena, value_set).map_err(|_| BuiltinError::new("expected a set"))?;
+    let values = get::list(arena, value_set)
+        .map_err(|_| BuiltinError::argument_invalid("expected a set"))?;
     let mut set = values.to_vec();
     sort_set(arena, &mut set);
     Ok(set)
@@ -123,8 +125,7 @@ pub fn unions_set(
 ) -> Result<Value, BuiltinError> {
     let typ_key = extract::one(targs)?;
     let value_sets = extract::one(values)?;
-    let values =
-        get::list(arena, value_sets).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let values = get::list(arena, value_sets).map_err(BuiltinError::from)?;
     let mut union = ValueSet::new();
     // Gather every element, then sort and deduplicate once
     for value in values {

@@ -1,10 +1,8 @@
 use std::{cell::Cell, sync::Mutex};
 
 use p4spec_rust::{
-    interface::{
-        builtin::{BuiltinErrorKind, call::Builtins, extract},
-        p4::error::P4UnparseError,
-    },
+    diagnostic::ReportKind,
+    interface::builtin::{call::Builtins, extract},
     lang::common::source::Span,
     lang::data::{
         typ,
@@ -13,23 +11,12 @@ use p4spec_rust::{
     lang::il::ast::Typ,
     phrase,
     runner::{
-        BuiltinInterface, Extern, ExternError, Interface, InterfaceError, Interpreter, NullExtern,
-        NullInterface, Runner, RunnerContext,
+        BuiltinInterface, Extern, ExternError, Interface, Interpreter, InterpreterError,
+        NullExtern, NullInterface, Runner, RunnerContext,
     },
 };
-use thiserror::Error;
 
 static FRESH_BUILTIN: Mutex<()> = Mutex::new(());
-
-#[derive(Debug, Error)]
-enum FixtureError {
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error("unknown fixture call: {0}")]
-    Unknown(String),
-}
 
 #[derive(Default)]
 struct FixtureConfig {
@@ -46,7 +33,6 @@ where
     Ext: Extern,
 {
     type Spec = ();
-    type Error = FixtureError;
 
     fn clear(&mut self) {}
 
@@ -56,10 +42,12 @@ where
         _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Self::Error> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         match name {
             "identity" => Ok(vec![program]),
-            _ => Err(FixtureError::Unknown(name.to_owned())),
+            _ => {
+                Err(ExternError::diagnostic_message(format!("unknown fixture call: {name}")).into())
+            }
         }
     }
 
@@ -68,7 +56,7 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, Self::Error> {
+    ) -> Result<Value, InterpreterError> {
         match name {
             "done" => {
                 Ok(value::make::text(ctx.arena_mut(), "done".to_owned(), Span::default()).unwrap())
@@ -106,7 +94,9 @@ where
                 let (value, _) = ctx.call_builtin(&id, targs, values)?;
                 Ok(value)
             }
-            _ => Err(FixtureError::Unknown(name.to_owned())),
+            _ => {
+                Err(ExternError::diagnostic_message(format!("unknown fixture call: {name}")).into())
+            }
         }
     }
 
@@ -114,8 +104,8 @@ where
         _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         _values: &[Value],
-    ) -> Result<Vec<Value>, Self::Error> {
-        Err(FixtureError::Unknown(name.to_owned()))
+    ) -> Result<Vec<Value>, InterpreterError> {
+        Err(ExternError::diagnostic_message(format!("unknown fixture call: {name}")).into())
     }
 }
 
@@ -131,7 +121,7 @@ impl Extern for FixtureExtern {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -161,8 +151,8 @@ impl Extern for FixtureExtern {
                 Ok((value, true))
             }
             _ => {
-                let error = ExternError::Failure(name.to_owned());
-                Err(error.into())
+                let error = ExternError::diagnostic_message(name.to_owned());
+                Err(error)
             }
         }
     }
@@ -172,13 +162,13 @@ impl Extern for FixtureExtern {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         _values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::Failure(name.to_owned());
-        Err(error.into())
+        let error = ExternError::diagnostic_message(name.to_owned());
+        Err(error)
     }
 
     fn clear(&mut self) {
@@ -197,7 +187,12 @@ fn test_null_interface_reports_configuration_failure() {
         .call_builtin(&mut arena, &id("sum_int"), &[], &[])
         .unwrap_err();
 
-    assert!(matches!(error, InterfaceError::NotConfigured));
+    let report = error.into_report();
+    let ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected an interface diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/interface-unconfigured"));
+    assert_eq!(diagnostic.message, "interface is not configured");
 }
 
 #[test]
@@ -262,11 +257,12 @@ fn test_builtin_interface_preserves_builtin_failures() {
         .call_builtin(&mut arena, &id("sum_int"), &[], &[])
         .unwrap_err();
 
-    assert!(matches!(
-        error,
-        InterfaceError::Builtin(error)
-            if matches!(error.kind, BuiltinErrorKind::ArityMismatch { .. })
-    ));
+    let report = error.into_report();
+    let ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected a builtin diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-argument-arity-mismatch"));
+    assert_eq!(diagnostic.message, "arity mismatch: expected 1, got 0");
 }
 
 #[test]
@@ -297,11 +293,12 @@ fn test_builtin_interface_print_validates_both_arities() {
         let error = interface
             .call_builtin(&mut arena, &id("print_"), &targs, &values)
             .unwrap_err();
-        assert!(matches!(
-            error,
-            InterfaceError::Builtin(error)
-                if error.kind == BuiltinErrorKind::ArityMismatch { expected: 1, actual }
-        ));
+        let report = error.into_report();
+        let ReportKind::Cause(diagnostic) = &report.kind else {
+            panic!("expected a builtin diagnostic")
+        };
+        assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-argument-arity-mismatch"));
+        assert_eq!(diagnostic.message, format!("arity mismatch: expected 1, got {actual}"));
     }
 }
 
@@ -315,11 +312,12 @@ fn test_builtin_interface_print_preserves_unparse_failures() {
     let error = p4spec_rust::interface::p4(&p4spec_rust::runner::Spec::Al(Vec::new()))
         .call_builtin(&mut arena, &id("print_"), &[typ], &[value])
         .unwrap_err();
-    assert!(matches!(
-        error,
-        InterfaceError::Builtin(error)
-            if error.kind == BuiltinErrorKind::P4Unparse(P4UnparseError::UnsupportedValue("Struct"))
-    ));
+    let report = error.into_report();
+    let ReportKind::Cause(diagnostic) = &report.kind else {
+        panic!("expected a builtin diagnostic")
+    };
+    assert_eq!(diagnostic.code.as_deref(), Some("runtime/builtin-print-unsupported"));
+    assert_eq!(diagnostic.message, "cannot unparse runtime value kind Struct");
 }
 
 #[test]
@@ -426,7 +424,11 @@ fn test_null_extern_reports_configuration_failure() {
 
     let error = runner.context().call_func("extern", &[], &[]).unwrap_err();
 
-    assert!(matches!(error, FixtureError::Extern(ExternError::NotConfigured)));
+    crate::diagnostic_fixture::assert_diagnostic(
+        error,
+        Some("runtime/extern-unconfigured"),
+        "extern is not configured",
+    );
 }
 
 fn eval_text(
@@ -481,5 +483,69 @@ fn test_runner_dispatches_program_entry_and_errors() {
     assert_eq!(values.len(), 1);
     assert!((values[0] == program));
     let error = runner.eval_program("missing", program).unwrap_err();
-    assert!(matches!(error, FixtureError::Unknown(name) if name == "missing"));
+    crate::diagnostic_fixture::assert_diagnostic(error, None, "unknown fixture call: missing");
+}
+
+#[test]
+fn test_registered_builtin_report_keeps_payload_and_is_fatal() {
+    use p4spec_rust::{
+        diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
+        lang::common::source::Position,
+        runner::InterpreterError,
+    };
+    let span = Span { left: Position::new("host.p4", 2, 3), right: Position::new("host.p4", 2, 6) };
+    let labels = vec![
+        Label::primary(&span, "host location"),
+        Label::secondary(&Span::default(), "host related"),
+    ];
+    let notes = vec!["host detail".to_owned(), "second detail".to_owned()];
+    let mut report = Some(Box::new(
+        Report::from(Diagnostic::new(
+            "custom",
+            Severity::Warning,
+            Some("custom/check".to_owned()),
+            "host message",
+            labels.clone(),
+            notes.clone(),
+        ))
+        .with_children(vec![Report::frame(
+            span.clone(),
+            "outer",
+            vec![
+                Report::frame(Span::default(), "first", vec![]),
+                Report::frame(Span::default(), "second", vec![]),
+            ],
+        )]),
+    ));
+    let builtins = Builtins::with_extensions([(
+        "custom",
+        Box::new(move |_arena: &mut ValueArena, _targs: &[Typ], _values: &[Value]| {
+            Err(report.take().expect("one host call").into())
+        }) as p4spec_rust::interface::builtin::call::BuiltinImpl,
+    )]);
+    let mut interface = BuiltinInterface::new(builtins);
+    let error = interface
+        .call_builtin(&mut ValueArena::new(), &id("custom"), &[], &[])
+        .unwrap_err();
+    let failure = InterpreterError::from(error).with_span(&Span::default());
+    let InterpreterError::Fatal(report) = failure else { panic!("builtin must be fatal") };
+    let ReportKind::Cause(diagnostic) = &report.kind else { panic!("host cause missing") };
+    assert_eq!(diagnostic.source, "custom");
+    assert_eq!(diagnostic.severity, Severity::Warning);
+    assert_eq!(diagnostic.code.as_deref(), Some("custom/check"));
+    assert_eq!(diagnostic.message, "host message");
+    assert_eq!(diagnostic.labels, labels);
+    assert_eq!(diagnostic.notes, notes);
+    assert_eq!(report.children.len(), 1);
+    let report_outer = &report.children[0];
+    assert!(
+        matches!(&report_outer.kind, ReportKind::Frame { span: span_actual, message } if *span_actual == span && message == "outer")
+    );
+    assert_eq!(report_outer.children.len(), 2);
+    for (report, message_expect) in report_outer.children.iter().zip(["first", "second"]) {
+        assert!(
+            matches!(&report.kind, ReportKind::Frame { span, message } if *span == Span::default() && message == message_expect)
+        );
+        assert!(report.children.is_empty());
+    }
 }

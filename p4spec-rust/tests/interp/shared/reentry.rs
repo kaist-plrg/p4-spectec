@@ -1,13 +1,9 @@
 use crate::interp::report::ReportExt;
-use p4spec_rust::interp::shared::backtrack::Failure;
-use p4spec_rust::lang::traits::print::Print;
+
 use p4spec_rust::{
-    lang::{
-        data::value::{Value, get},
-        il::ast::Typ,
-    },
+    lang::{data::value::Value, il::ast::Typ},
     pass::{algo, elaborate, prosify, structure},
-    runner::{self, Extern, Interface, Interpreter, RunnerContext},
+    runner::{self, Extern, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 use std::{cell::Cell, rc::Rc};
 
@@ -23,17 +19,18 @@ impl Extern for Reentry {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error>
+    ) -> Result<(Value, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         self.calls.set(self.calls.get() + 1);
         if name == "abort" {
-            return Err(runner::ExternError::Failure("host aborted".into()).into());
+            return Err(runner::ExternError::diagnostic_message("host aborted"));
         }
         ctx.call_func("inner", targs, values)
             .map(|value| (value, false))
+            .map_err(Into::into)
     }
 
     fn eval_rel<Interp, Iface>(
@@ -41,13 +38,15 @@ impl Extern for Reentry {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error>
+    ) -> Result<(Vec<Value>, bool), p4spec_rust::runner::ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
         self.calls.set(self.calls.get() + 1);
-        ctx.call_rel("Inner", values).map(|values| (values, false))
+        ctx.call_rel("Inner", values)
+            .map(|values| (values, false))
+            .map_err(Into::into)
     }
 
     fn clear(&mut self) {
@@ -56,7 +55,7 @@ impl Extern for Reentry {
 }
 
 #[test]
-fn mismatch_through_extern_reentry_reaches_otherwise() {
+fn builtin_failure_through_extern_reentry_skips_otherwise() {
     let source = r#"
 builtin dec $max_nat(nat*) : nat
 extern dec $bridge() : nat
@@ -80,17 +79,9 @@ def $pair() = ($outer(), $outer())
             ($build:ident, $spec:expr) => {{
                 let host = Reentry::default();
                 let mut runner = runner::$build($spec, config, host.clone()).unwrap();
-                let value = runner.context().call_func("pair", &[], &[]).unwrap();
-                let values = get::tuple(runner.arena(), &value).unwrap();
-                assert_eq!(values.len(), 2);
-                for value in values {
-                    assert_eq!(get::num(runner.arena(), value).unwrap().to_string(), "7");
-                }
-                assert_eq!(
-                    host.calls.get(),
-                    2,
-                    "failed extern calls taint the enclosing cache entry"
-                );
+                let failure = runner.context().call_func("pair", &[], &[]).unwrap_err();
+                assert!(matches!(failure, InterpreterError::Fatal(_)));
+                assert_eq!(host.calls.get(), 1);
                 runner.reset();
                 assert_eq!(host.calls.get(), 0);
             }};
@@ -125,8 +116,12 @@ def $outer() = 7
                 let host = Reentry::default();
                 let mut runner = runner::$build($spec, config, host.clone()).unwrap();
                 let failure = runner.context().call_func("outer", &[], &[]).unwrap_err();
-                let Failure::Fatal(report) = failure else { panic!("expected fatal") };
-                let cause = report.find_code("runtime/extern-failed").unwrap();
+                let InterpreterError::Fatal(report) = failure else { panic!("expected fatal") };
+                let mut cause = report.as_ref();
+                while !cause.children.is_empty() {
+                    cause = &cause.children[0];
+                }
+                assert_eq!(cause.code(), None);
                 assert_eq!(cause.diagnostic().message, "host aborted");
                 assert_eq!(host.calls.get(), 2);
             }};
@@ -138,7 +133,7 @@ def $outer() = 7
 }
 
 #[test]
-fn relation_mismatch_through_extern_reentry_reaches_otherwise() {
+fn relation_mismatch_through_extern_reentry_is_fatal() {
     let source = r#"
 var n : nat
 var m : nat
@@ -171,10 +166,47 @@ rule Outer/fallback: n |- 7
                     Default::default(),
                 )
                 .unwrap();
-                let values = runner.context().call_rel("Outer", &[value]).unwrap();
-                assert_eq!(values.len(), 1);
-                assert_eq!(get::num(runner.arena(), &values[0]).unwrap().to_string(), "7");
+                let failure = runner.context().call_rel("Outer", &[value]).unwrap_err();
+                assert!(matches!(failure, InterpreterError::Fatal(_)));
                 assert_eq!(host.calls.get(), 1);
+            }};
+        }
+        check!(build_al, spec_al);
+        check!(build_sl, spec_sl);
+        check!(build_pl, spec_pl);
+    }
+}
+
+#[test]
+fn function_mismatch_through_extern_reentry_is_fatal() {
+    let source = r#"
+extern dec $bridge() : nat
+dec $inner() : nat
+def $inner() = 0
+  -- if false
+dec $outer() : nat
+def $outer() = $bridge()
+def $outer() = 7
+  -- otherwise
+dec $pair() : (nat, nat)
+def $pair() = ($outer(), $outer())
+"#;
+    for det in [false, true] {
+        let spec_el = crate::spec_fixture::parse(source).unwrap();
+        let spec_il = elaborate::convert(spec_el).unwrap();
+        let spec_al = algo::convert(spec_il).unwrap();
+        let spec_sl = structure::convert(spec_al.clone(), false).unwrap();
+        let spec_pl = prosify::convert(spec_sl.clone()).unwrap();
+        let config = runner::Config::new(true, det, true);
+        macro_rules! check {
+            ($build:ident, $spec:expr) => {{
+                let host = Reentry::default();
+                let mut runner = runner::$build($spec, config, host.clone()).unwrap();
+                let failure = runner.context().call_func("pair", &[], &[]).unwrap_err();
+                assert!(matches!(failure, InterpreterError::Fatal(_)));
+                assert_eq!(host.calls.get(), 1);
+                runner.reset();
+                assert_eq!(host.calls.get(), 0);
             }};
         }
         check!(build_al, spec_al);

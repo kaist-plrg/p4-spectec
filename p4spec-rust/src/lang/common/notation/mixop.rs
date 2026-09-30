@@ -89,16 +89,16 @@ impl<T> Mixfix<T> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ArityMismatch {
     /// Fewer arguments were supplied than the mixop requires.
-    TooFew,
+    ArgumentCountTooFew,
     /// More arguments were supplied than the mixop requires.
-    TooMany,
+    ArgumentCountTooMany,
 }
 
 impl fmt::Display for ArityMismatch {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::TooFew => fmt.write_str("Mixop.fill: too few arguments"),
-            Self::TooMany => fmt.write_str("Mixop.fill: too many arguments"),
+            Self::ArgumentCountTooFew => fmt.write_str("Mixop.fill: too few arguments"),
+            Self::ArgumentCountTooMany => fmt.write_str("Mixop.fill: too many arguments"),
         }
     }
 }
@@ -114,7 +114,7 @@ impl Mixop {
         // Consume arguments in tree order; leftovers are too many
         let mut args = args.into_iter();
         let mixfix = mixop.fill_inner(&mut args)?;
-        if args.next().is_some() { Err(ArityMismatch::TooMany) } else { Ok(mixfix) }
+        if args.next().is_some() { Err(ArityMismatch::ArgumentCountTooMany) } else { Ok(mixfix) }
     }
 
     /// Fills the positions of this subtree, taking arguments from the iterator.
@@ -124,7 +124,10 @@ impl Mixop {
     ) -> Result<Mixfix<T>, ArityMismatch> {
         match self {
             // A hole takes the next argument
-            Self::Arg(()) => args.next().map(Mixfix::Arg).ok_or(ArityMismatch::TooFew),
+            Self::Arg(()) => args
+                .next()
+                .map(Mixfix::Arg)
+                .ok_or(ArityMismatch::ArgumentCountTooFew),
             // Atoms are copied
             Self::Atom(atom) => Ok(Mixfix::Atom(atom.clone())),
             // Compound shapes fill their parts left to right

@@ -6,7 +6,7 @@
 
 use crate::{
     lang::data::value::Value,
-    runner::{Interface, Interpreter, RunnerContext},
+    runner::{ExternError, Interface, Interpreter, RunnerContext},
 };
 
 use super::externs as external;
@@ -28,7 +28,7 @@ impl external::Impl for Psa {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -40,7 +40,7 @@ impl external::Impl for Psa {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, Interp::Error>
+    ) -> Result<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -52,7 +52,7 @@ impl external::Impl for Psa {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, Interp::Error>
+    ) -> Result<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -63,7 +63,7 @@ impl external::Impl for Psa {
     fn init_arch_state<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,

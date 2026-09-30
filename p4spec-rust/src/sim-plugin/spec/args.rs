@@ -6,6 +6,7 @@
 use crate::{
     lang::data::value::{Value, ValueArena, ValueError, get},
     runner::ExternError,
+    sim_plugin::error,
 };
 
 // == Arguments
@@ -25,7 +26,7 @@ pub fn assoc(
     // One value per name
     if names.len() != values.len() {
         return Err(
-            ValueError::ExpectedCount { expected: names.len(), actual: values.len() }.into()
+            ValueError::CountMismatch { expected: names.len(), actual: values.len() }.into()
         );
     }
     Ok(names.into_iter().zip(values.iter().copied()).collect())
@@ -36,5 +37,7 @@ pub fn find(args: &[(String, Value)], name: &str) -> Result<Value, ExternError> 
     args.iter()
         .find(|(name_arg, _)| name_arg == name)
         .map(|(_, value)| *value)
-        .ok_or_else(|| ExternError::Failure(format!("argument not found: {name}")))
+        .ok_or_else(|| {
+            error::function_argument_undefined(format!("argument not found: {name}")).into()
+        })
 }

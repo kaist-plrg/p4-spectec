@@ -1,21 +1,19 @@
 //! Command-line specification transformation and execution
 //!
 //! Commands render accumulated warnings before their result or error.
-//! [`run`] propagates typed failures to [`main`],
-//! which renders source reports and chooses the process exit code.
+//! `run` and `sim` choose how their execution failures are rendered.
+//! [`main`] turns the command result into a process exit code.
 
 mod error;
 
 use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
-use error::CliError;
 
 use p4spec_rust::{
     backend_specdoc::splicer,
     diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
     interface::p4::parse::parse_file,
-    interp::shared::backtrack::Failure as InterpError,
     lang::{data::value::external::Encoding, traits::print::Print},
     runner::{self, BuiltinInterface, Interpreter, Runner},
     sim_plugin::{self, dummy::Dummy},
@@ -25,8 +23,13 @@ use p4spec_rust::{
 
 // - Diagnostic output
 
+/// Renders a report with the default diagnostic presentation.
+fn render_report(report: &Report) {
+    render_report_with_config(report, RenderConfig::default());
+}
+
 /// Renders reports without changing their structured payloads.
-fn render_report(report: &Report, config: RenderConfig) {
+fn render_report_with_config(report: &Report, config: RenderConfig) {
     let mut renderer = Renderer::new(config);
     if let Err(error) = renderer.render_to_stderr(report) {
         eprintln!("{report}\ndiagnostic rendering failed: {error}");
@@ -40,7 +43,7 @@ fn report_warnings<Value, Error>(
     (result, warnings): (Result<Value, Error>, Vec<Report>),
 ) -> Result<Value, Error> {
     for report in warnings {
-        render_report(&report, RenderConfig::default());
+        render_report(&report);
     }
     result
 }
@@ -56,8 +59,9 @@ struct ElabArgs {
 }
 
 /// Elaborates the specifications and prints the internal language.
-fn elab_command(args: ElabArgs) -> Result<(), CliError> {
-    let spec_il = report_warnings(p4spec_rust::elab_with_warnings(&args.paths))?;
+fn elab_command(args: ElabArgs) -> Result<(), ()> {
+    let spec_il = report_warnings(p4spec_rust::elab_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_il));
     Ok(())
 }
@@ -73,8 +77,9 @@ struct AlgoArgs {
 }
 
 /// Converts the specifications and prints the algorithmic language.
-fn algo_command(args: AlgoArgs) -> Result<(), CliError> {
-    let spec_al = report_warnings(p4spec_rust::algo_with_warnings(&args.paths))?;
+fn algo_command(args: AlgoArgs) -> Result<(), ()> {
+    let spec_al = report_warnings(p4spec_rust::algo_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_al));
     Ok(())
 }
@@ -90,8 +95,9 @@ struct StructArgs {
 }
 
 /// Structures the specifications and prints them without rule groups.
-fn struct_command(args: StructArgs) -> Result<(), CliError> {
-    let spec_sl = report_warnings(p4spec_rust::structure_with_warnings(&args.paths, true))?;
+fn struct_command(args: StructArgs) -> Result<(), ()> {
+    let spec_sl = report_warnings(p4spec_rust::structure_with_warnings(&args.paths, true))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_sl));
     Ok(())
 }
@@ -107,8 +113,9 @@ struct ProseArgs {
 }
 
 /// Converts the specifications and prints the prose language.
-fn prose_command(args: ProseArgs) -> Result<(), CliError> {
-    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
+fn prose_command(args: ProseArgs) -> Result<(), ()> {
+    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_pl));
     Ok(())
 }
@@ -133,22 +140,24 @@ struct SpliceArgs {
 }
 
 /// Expands skeleton documents using the source and prose specifications.
-fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
+fn splice_command(args: SpliceArgs) -> Result<(), ()> {
     // Reject ambiguous destinations before checking input availability
     if args.inplace && !args.paths_output.is_empty() {
-        return Err(error::splice_output_conflict().into());
+        render_report(&error::splice_output_conflict());
+        return Err(());
     }
     // Require at least one skeleton in either output mode
     if args.paths_input.is_empty() {
-        return Err(error::splice_input_required().into());
+        render_report(&error::splice_input_required());
+        return Err(());
     }
     // Reject mismatched lists before zip can omit unpaired paths
     if !args.inplace && args.paths_input.len() != args.paths_output.len() {
-        return Err(error::splice_file_count_mismatch(
+        render_report(&error::splice_file_count_mismatch(
             args.paths_input.len(),
             args.paths_output.len(),
-        )
-        .into());
+        ));
+        return Err(());
     }
     // Resolve output paths before loading specifications or touching documents
     let path_pairs: Vec<_> = if args.inplace {
@@ -163,10 +172,12 @@ fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
             .collect()
     };
     // Retain source definitions alongside the annotated prose representation
-    let spec_el = p4spec_rust::parse(&args.paths)?;
-    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
+    let spec_el = p4spec_rust::parse(&args.paths).map_err(|report| render_report(&report))?;
+    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     // Render accumulated splice warnings before propagating the file result
-    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))?;
+    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
+        .map_err(|report| render_report(&report))?;
     Ok(())
 }
 
@@ -231,22 +242,26 @@ struct RunArgs {
 }
 
 /// Builds the selected interpreter and runs the program entry relation.
-fn run_command(args: RunArgs) -> Result<(), CliError> {
+fn run_command(args: RunArgs) -> Result<(), ()> {
     // Convert the specification before assembling its runner
-    let spec = interp_spec(&args.paths, &args.interpreter)?;
+    let spec =
+        interp_spec(&args.paths, &args.interpreter).map_err(|report| render_report(&report))?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
     // Each runner uses the same P4 frontend and dummy extern implementation
     match spec {
         runner::Spec::Al(spec) => {
-            let runner = runner::build_al(spec, config, Dummy)?;
+            let runner =
+                runner::build_al(spec, config, Dummy).map_err(|report| render_report(&report))?;
             run_program(runner, &args)
         }
         runner::Spec::Sl(spec) => {
-            let runner = runner::build_sl(spec, config, Dummy)?;
+            let runner =
+                runner::build_sl(spec, config, Dummy).map_err(|report| render_report(&report))?;
             run_program(runner, &args)
         }
         runner::Spec::Pl(spec) => {
-            let runner = runner::build_pl(spec, config, Dummy)?;
+            let runner =
+                runner::build_pl(spec, config, Dummy).map_err(|report| render_report(&report))?;
             run_program(runner, &args)
         }
     }
@@ -256,12 +271,19 @@ fn run_command(args: RunArgs) -> Result<(), CliError> {
 fn run_program<Interp>(
     mut runner: Runner<Interp, BuiltinInterface, Dummy>,
     args: &RunArgs,
-) -> Result<(), CliError>
+) -> Result<(), ()>
 where
-    Interp: Interpreter<BuiltinInterface, Dummy, Error = InterpError>,
+    Interp: Interpreter<BuiltinInterface, Dummy>,
 {
-    let program = parse_file(runner.arena_mut(), &args.includes, &args.program)?;
-    runner.eval_program(&args.relation, program)?;
+    let program = parse_file(runner.arena_mut(), &args.includes, &args.program)
+        .map_err(|error| render_report(&error.into_report()))?;
+    runner
+        .eval_program(&args.relation, program)
+        .map_err(|failure| {
+            let config =
+                RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
+            render_report_with_config(&failure.into_report(), config);
+        })?;
     println!("passed");
     Ok(())
 }
@@ -303,17 +325,25 @@ struct SimArgs {
 }
 
 /// Builds the target simulator and runs the STF test.
-fn sim_command(args: SimArgs) -> Result<(), CliError> {
-    let spec = interp_spec(&args.paths, &args.interpreter)?;
+fn sim_command(args: SimArgs) -> Result<(), ()> {
+    let spec =
+        interp_spec(&args.paths, &args.interpreter).map_err(|report| render_report(&report))?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
-    let simulator = sim_plugin::build(spec, &args.arch, config, args.plugin_encoding)?;
+    let simulator = sim_plugin::build(spec, &args.arch, config, args.plugin_encoding)
+        .map_err(|report| render_report(&report))?;
     simulate(simulator, &args)
 }
 
 /// Runs the STF test on the simulator, printing each transmitted packet.
-fn simulate(mut simulator: sim_plugin::Simulator, args: &SimArgs) -> Result<(), CliError> {
-    simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
+fn simulate(mut simulator: sim_plugin::Simulator, args: &SimArgs) -> Result<(), ()> {
+    let result = simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
         println!("[PASS] Transmitted {tx}");
+    });
+    result.map_err(|report| {
+        // Input causes stay rich; only execution frames use compact rendering
+        let config =
+            RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
+        render_report_with_config(&report, config);
     })?;
     println!("passed");
     Ok(())
@@ -350,7 +380,7 @@ enum Command {
 }
 
 /// Dispatches the parsed command.
-fn run(cli: Cli) -> Result<(), CliError> {
+fn run(cli: Cli) -> Result<(), ()> {
     match cli.command {
         Command::Elab(args) => elab_command(args),
         Command::Algo(args) => algo_command(args),
@@ -364,32 +394,19 @@ fn run(cli: Cli) -> Result<(), CliError> {
 
 /// Runs the command and turns a failure into one diagnostic and exit code.
 fn main() -> ExitCode {
-    match run(Cli::parse()) {
-        // Successful commands have already written their output
-        Ok(()) => ExitCode::SUCCESS,
-        // Preserve source diagnostics across the completed transformation stages
-        Err(CliError::Diagnostic(report)) => {
-            render_report(&report, RenderConfig::default());
-            ExitCode::FAILURE
-        }
-        // Preserve runtime failure reports until execution has ended
-        Err(CliError::Runtime(failure))
-        | Err(CliError::Simulation(sim_plugin::runner::Error::Runtime(failure))) => {
-            render_report(
-                &failure.into_report(),
-                RenderConfig { frame_style: Some(DisplayStyle::Short), ..Default::default() },
-            );
-            ExitCode::FAILURE
-        }
-        // Loading failures have no recoverable control state
-        Err(CliError::Runner(runner::BuildError::Interp(report))) => {
-            render_report(&report, RenderConfig::default());
-            ExitCode::FAILURE
-        }
-        // Report other typed failures once at the process boundary
+    // Help and version retain clap's successful output and exit behavior
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
         Err(error) => {
-            eprintln!("{error}");
-            ExitCode::FAILURE
+            if let Err(error) = error.print() {
+                eprintln!("command output failed: {error}");
+                return ExitCode::FAILURE;
+            }
+            return ExitCode::from(error.exit_code() as u8);
         }
+    };
+    match run(cli) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(()) => ExitCode::FAILURE,
     }
 }

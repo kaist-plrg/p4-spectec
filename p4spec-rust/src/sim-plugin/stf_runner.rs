@@ -14,7 +14,6 @@ use super::{
 };
 use crate::{
     interface::p4::{error::P4Error, parse},
-    interp::shared::backtrack::Failure as InterpError,
     lang::{
         common::source::{Phrase, Span},
         data::{
@@ -24,6 +23,7 @@ use crate::{
         traits::print::Print,
     },
     runner::{ExternError, Interface, Interpreter, Runner, RunnerContext},
+    sim_plugin::error::{self, SimError},
     stf::{
         self,
         ast::{Action, MatchKind, Name, Statement, TableMatch},
@@ -33,78 +33,12 @@ use crate::{
 use num_bigint::BigInt;
 use std::path::{Path, PathBuf};
 
-// == Errors
-
-/// Why an STF test failed.
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    /// The P4 program did not parse.
-    #[error("syntax error: {0}")]
-    P4Syntax(#[from] P4Error),
-    /// The STF file did not parse.
-    #[error("runtime error: {0}")]
-    StfSyntax(#[from] stf::error::StfError),
-    /// The specification failed while executing.
-    #[error("runtime error: {0}")]
-    Runtime(#[from] InterpError),
-    /// An STF statement failed or an expectation was not met.
-    #[error("runtime error: {failure} at {span}")]
-    Stf { failure: Box<StfFailure>, span: Span },
-}
-
-/// How an STF statement failed.
-#[derive(Debug, thiserror::Error)]
-pub enum StfFailure {
-    /// An output packet did not match its expectation.
-    #[error("expected {expect} but got {tx}")]
-    Mismatch { expect: Tx, tx: Tx },
-    /// A statement kind the runner does not execute.
-    #[error("not yet supported: {0}")]
-    Unsupported(String),
-    /// Packets or expectations left over at the end.
-    #[error("{}{}", remaining_outputs(.txs), remaining_expects(.expects))]
-    Remaining { txs: Vec<Tx>, expects: Vec<Expectation> },
-}
-
-/// Lists unmatched outputs, or nothing.
-fn remaining_outputs(txs: &[Tx]) -> String {
-    // Nothing to report when all outputs matched
-    if txs.is_empty() {
-        String::new()
-    } else {
-        format!(
-            "[FAIL] Remaining packets to be matched:\n{}",
-            txs.iter()
-                .map(ToString::to_string)
-                .collect::<Vec<_>>()
-                .join("\n")
-        )
-    }
-}
-
-/// Lists unmet expectations, or nothing.
-fn remaining_expects(expects: &[Expectation]) -> String {
-    // Nothing to report when all expectations were met
-    if expects.is_empty() {
-        String::new()
-    } else {
-        format!(
-            "[FAIL] Expected packets to be output:\n{}",
-            expects
-                .iter()
-                .map(|expect| expect.tx.to_string())
-                .collect::<Vec<_>>()
-                .join("\n")
-        )
-    }
-}
-
 // == Helpers
 
 /// Parses an optionally signed integer with a `0x`, `0o` or `0b` radix prefix.
-fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, InterpError> {
+fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, SimError> {
     strtoint::strtoint(&text.to_ascii_lowercase())
-        .map_err(|_| ExternError::Failure(format!("invalid integer: {text}")).into())
+        .map_err(|_| error::integer_invalid(format!("invalid integer: {text}")))
 }
 
 /// Rewrites STF's `hdr$0` index spelling to the P4 `hdr[0]` form.
@@ -147,7 +81,7 @@ impl Run {
     }
 
     /// Only the first new transmission can consume a pending expectation.
-    pub fn on_tx_output(&mut self) -> Result<Option<Tx>, StfFailure> {
+    pub fn on_tx_output(&mut self) -> Result<Option<Tx>, SimError> {
         // No output: nothing to match
         let Some(tx) = self.state.txs.first() else {
             return Ok(None);
@@ -164,7 +98,7 @@ impl Run {
         let expect = &self.expect_queue[idx];
         // A pending expectation must match, else the test fails here
         if !io::matches(tx, expect) {
-            return Err(StfFailure::Mismatch { expect: expect.tx.clone(), tx: tx.clone() });
+            return Err(error::packet_mismatch(&expect.tx, tx));
         }
         // Consume the expectation; later outputs wait in the queue
         let expect = self.expect_queue.remove(idx);
@@ -173,7 +107,7 @@ impl Run {
     }
 
     /// Matches an expectation against a queued output, or queues it.
-    pub fn on_tx_expect(&mut self, expect: Expectation) -> Result<Option<Tx>, StfFailure> {
+    pub fn on_tx_expect(&mut self, expect: Expectation) -> Result<Option<Tx>, SimError> {
         // No queued output on that port: wait for one
         let Some(idx) = self
             .tx_output_queue
@@ -186,20 +120,17 @@ impl Run {
         // The first output on the port must match
         let tx = &self.tx_output_queue[idx];
         if !io::matches(tx, &expect) {
-            return Err(StfFailure::Mismatch { expect: expect.tx, tx: tx.clone() });
+            return Err(error::packet_mismatch(&expect.tx, tx));
         }
         Ok(Some(self.tx_output_queue.remove(idx)))
     }
 
     /// Fails if any output or expectation is left unmatched.
-    pub fn finish(&self) -> Result<(), StfFailure> {
+    pub fn finish(&self) -> Result<(), SimError> {
         if self.tx_output_queue.is_empty() && self.expect_queue.is_empty() {
             Ok(())
         } else {
-            Err(StfFailure::Remaining {
-                txs: self.tx_output_queue.clone(),
-                expects: self.expect_queue.clone(),
-            })
+            Err(error::packet_expectation_incomplete(&self.tx_output_queue, &self.expect_queue))
         }
     }
 }
@@ -211,16 +142,18 @@ pub fn init_pipe<Interp, Iface, Arch>(
     runner: &mut Runner<Interp, Iface, Arch>,
     includes: &[PathBuf],
     path: &Path,
-) -> Result<Run, Error>
+) -> Result<Run, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
-    let program = parse::parse_file(runner.arena_mut(), includes, path)?;
-    let state = Arch::init_pipe(&mut runner.context(), program)?;
+    let program =
+        parse::parse_file(runner.arena_mut(), includes, path).map_err(P4Error::into_report)?;
+    let state =
+        Arch::init_pipe(&mut runner.context(), program).map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -231,11 +164,11 @@ pub fn run_stf_stmt<Interp, Iface, Arch>(
     runner: &mut Runner<Interp, Iface, Arch>,
     run: &mut Run,
     stmt: &Phrase<Statement>,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Fresh output list; the architecture may rewrite the statement first
     run.state.txs.clear();
@@ -243,58 +176,59 @@ where
     let mut ctx = runner.context();
     let result = match stmt_kind {
         // Packets drive the pipeline
-        Statement::Packet { port, packet } => run_stf_packet_stmt(&mut ctx, run, port, packet),
+        Statement::Packet { port, packet } => {
+            run_stf_packet_stmt(&mut ctx, &stmt.span, run, port, packet)
+        }
         // Expectations match outputs
         Statement::Expect { port, packet_expected, exact } => {
             run_stf_expect_stmt(run, port, packet_expected, exact)
         }
         // Table control plane
         Statement::Add { table, priority, matches, action, .. } => {
-            run_stf_add_stmt(&mut ctx, &mut run.state, table, priority, matches, action)
+            run_stf_add_stmt(&mut ctx, &stmt.span, &mut run.state, table, priority, matches, action)
         }
         Statement::SetDefault { table, action } => {
-            run_stf_set_default_stmt(&mut ctx, &mut run.state, table, action)
+            run_stf_set_default_stmt(&mut ctx, &stmt.span, &mut run.state, table, action)
         }
         // Mirror sessions
         Statement::MirroringAdd { session, port } => {
-            run_stf_mirroring_add_stmt(&mut ctx, &mut run.state, session, port)
+            run_stf_mirroring_add_stmt(&mut ctx, &stmt.span, &mut run.state, session, port)
         }
         Statement::MirroringAddMc { session, group_id } => {
-            run_stf_mirroring_add_mc_stmt(&mut ctx, &mut run.state, session, group_id)
+            run_stf_mirroring_add_mc_stmt(&mut ctx, &stmt.span, &mut run.state, session, group_id)
         }
         // Multicast groups and nodes
         Statement::McGroupCreate { group_id } => {
-            run_stf_mc_group_create_stmt(&mut ctx, &mut run.state, group_id)
+            run_stf_mc_group_create_stmt(&mut ctx, &stmt.span, &mut run.state, group_id)
         }
         Statement::McNodeCreate { replication_id, ports } => {
-            run_stf_mc_node_create_stmt(&mut ctx, &mut run.state, replication_id, ports)
+            run_stf_mc_node_create_stmt(&mut ctx, &stmt.span, &mut run.state, replication_id, ports)
         }
         Statement::McNodeAssociate { group_id, handle } => {
-            run_stf_mc_node_associate_stmt(&mut ctx, &mut run.state, group_id, handle)
+            run_stf_mc_node_associate_stmt(&mut ctx, &stmt.span, &mut run.state, group_id, handle)
         }
         // Registers
         Statement::RegisterRead { name, index } => {
-            run_stf_register_read_stmt(&mut ctx, &mut run.state, name, index)
+            run_stf_register_read_stmt(&mut ctx, &stmt.span, &mut run.state, name, index)
         }
         Statement::RegisterWrite { name, index, value } => {
-            run_stf_register_write_stmt(&mut ctx, &mut run.state, name, index, value)
+            run_stf_register_write_stmt(&mut ctx, &stmt.span, &mut run.state, name, index, value)
         }
         Statement::RegisterReset { name } => {
-            run_stf_register_reset_stmt(&mut ctx, &mut run.state, name)
+            run_stf_register_reset_stmt(&mut ctx, &stmt.span, &mut run.state, name)
         }
         // Statements with no effect here
         Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
         // Anything else is unsupported
-        stmt => Err(Error::Stf {
-            failure: Box::new(StfFailure::Unsupported(Print::to_string(&stmt))),
-            span: Span::default(),
-        }),
+        stmt => Err(error::statement_unsupported(Print::to_string(&stmt))),
     };
     // Attach the statement's span to failures that have none
-    let tx = result.map_err(|error| match error {
-        Error::Runtime(error) => Error::Runtime(error.with_span(&stmt.span)),
-        Error::Stf { failure, .. } => Error::Stf { failure, span: stmt.span.clone() },
-        error => error,
+    let tx = result.map_err(|report| {
+        if stmt.span == Span::default() {
+            report
+        } else {
+            Box::new((*report).with_span(&stmt.span))
+        }
     })?;
     // Record matched outputs for the caller
     if let Some(tx) = &tx {
@@ -308,20 +242,21 @@ where
 /// Drives one packet through the pipeline and matches the first output.
 fn run_stf_packet_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     run: &mut Run,
     port: String,
     packet: String,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Payloads compare in uppercase hex
     let rx = Rx { port: parse_int::<usize>(&port)?, packet: packet.to_ascii_uppercase() };
-    Arch::drive_pipe(ctx, &mut run.state, &rx)?;
+    Arch::drive_pipe(ctx, &mut run.state, &rx)
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     run.on_tx_output()
-        .map_err(|failure| Error::Stf { failure: Box::new(failure), span: Span::default() })
 }
 
 /// Records an expectation, matching a queued output if one is waiting.
@@ -330,7 +265,7 @@ fn run_stf_expect_stmt(
     port: String,
     packet_expected: Option<String>,
     exact: bool,
-) -> Result<Option<Tx>, Error> {
+) -> Result<Option<Tx>, SimError> {
     let expect = Expectation {
         tx: Tx {
             port: parse_int::<usize>(&port)?,
@@ -339,13 +274,12 @@ fn run_stf_expect_stmt(
         exact,
     };
     run.on_tx_expect(expect)
-        .map_err(|failure| Error::Stf { failure: Box::new(failure), span: Span::default() })
 }
 
 // - Match-action table updates
 
 /// Encodes STF match keys as the specification's `tableKeyInterface` list.
-fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<Value, InterpError> {
+fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<Value, SimError> {
     let typ_key = typ::make::var(
         crate::phrase!(node: "tableKeyInterface".to_owned(), span: Span::default()),
         vec![],
@@ -401,33 +335,34 @@ fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<V
 /// Adds a table entry: name, optional priority, keys, and action.
 fn run_stf_add_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     table: Name,
     priority: Option<i64>,
     matches: Vec<TableMatch>,
     action: Action,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Add names use the same escaped spelling as P4 annotation names
     let text_name = escape_text(&table.into_string());
     let value_name =
-        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(InterpError::from)?;
+        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(SimError::from)?;
     // Priority is optional
     let value_priority = priority
         .map(|priority| make::int(ctx.arena_mut(), priority.into(), Span::default()))
         .transpose()
-        .map_err(InterpError::from)?;
+        .map_err(SimError::from)?;
     let value_priority = make::opt(
         ctx.arena_mut(),
         typ::make::opt(typ::make::int()).node.into(),
         value_priority,
         Span::default(),
     )
-    .map_err(InterpError::from)?;
+    .map_err(SimError::from)?;
     let value_keys = encode_table_keys(ctx.arena_mut(), &matches)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch = table::add_entry(
@@ -438,12 +373,13 @@ where
         value_priority,
         value_keys,
         value_action,
-    )?;
+    )
+    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Encodes an STF action as the specification's `tableActionInterface`.
-fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, InterpError> {
+fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, SimError> {
     let value_name = make::text(arena, action.name.as_str().to_owned(), Span::default())?;
     let typ_arg = typ::make::var(
         crate::phrase!(node: "tableActionArgumentInterface".to_owned(), span: Span::default()),
@@ -481,26 +417,23 @@ fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value,
 /// Sets a table's default action.
 fn run_stf_set_default_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     table: Name,
     action: Action,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Table name and action, then let the table module store it
     let value_name = make::text(ctx.arena_mut(), table.into_string(), Span::default())
-        .map_err(InterpError::from)?;
+        .map_err(SimError::from)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
-    state.value_arch = table::add_default_action(
-        ctx,
-        state.value_ctx,
-        state.value_arch,
-        value_name,
-        value_action,
-    )?;
+    state.value_arch =
+        table::add_default_action(ctx, state.value_ctx, state.value_arch, value_name, value_action)
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
@@ -509,42 +442,46 @@ where
 /// Maps a mirror session to a port.
 fn run_stf_mirroring_add_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     session: String,
     port: String,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::add_mirror_session(
         ctx,
         state.value_arch,
         parse_int::<usize>(&session)?,
         parse_int::<usize>(&port)?,
-    )?;
+    )
+    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Maps a mirror session to a multicast group.
 fn run_stf_mirroring_add_mc_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     session: String,
     id_group: String,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::add_mirror_session_mc(
         ctx,
         state.value_arch,
         parse_int::<usize>(&session)?,
         parse_int::<usize>(&id_group)?,
-    )?;
+    )
+    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
@@ -553,57 +490,63 @@ where
 /// Creates a multicast group.
 fn run_stf_mc_group_create_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     id_group: String,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?)?;
+    state.value_arch = Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?)
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Creates a multicast node over the listed ports.
 fn run_stf_mc_node_create_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     id_replication: String,
     ports: Vec<String>,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     let instance = parse_int::<usize>(&id_replication)?;
     let ports = ports
         .iter()
         .map(|port| parse_int::<usize>(port))
         .collect::<Result<Vec<_>, _>>()?;
-    state.value_arch = Arch::mc_node_create(ctx, state.value_arch, instance, &ports)?;
+    state.value_arch = Arch::mc_node_create(ctx, state.value_arch, instance, &ports)
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Adds a multicast node to a group.
 fn run_stf_mc_node_associate_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     id_group: String,
     handle: String,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::mc_node_associate(
         ctx,
         state.value_arch,
         parse_int::<usize>(&id_group)?,
         parse_int::<usize>(&handle)?,
-    )?;
+    )
+    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
@@ -612,32 +555,35 @@ where
 /// Reads a register cell.
 fn run_stf_register_read_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     name: Name,
     idx: String,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch =
-        Arch::register_read(ctx, state.value_arch, name.as_str(), parse_int::<usize>(&idx)?)?;
+        Arch::register_read(ctx, state.value_arch, name.as_str(), parse_int::<usize>(&idx)?)
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Writes a register cell.
 fn run_stf_register_write_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     name: Name,
     idx: String,
     value: String,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::register_write(
         ctx,
@@ -645,22 +591,25 @@ where
         name.as_str(),
         parse_int::<usize>(&idx)?,
         BigInt::from(parse_int::<i128>(&value)?),
-    )?;
+    )
+    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
 /// Clears a register.
 fn run_stf_register_reset_stmt<Interp, Iface, Arch>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Arch>,
+    span: &Span,
     state: &mut SimState,
     name: Name,
-) -> Result<Option<Tx>, Error>
+) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::register_reset(ctx, state.value_arch, name.as_str())?;
+    state.value_arch = Arch::register_reset(ctx, state.value_arch, name.as_str())
+        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
     Ok(None)
 }
 
@@ -673,11 +622,11 @@ pub fn run_stf_test<Interp, Iface, Arch>(
     path_p4: &Path,
     path_stf: &Path,
     on_match: &mut dyn FnMut(&Tx),
-) -> Result<Run, Error>
+) -> Result<Run, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     let mut run = init_pipe(runner, includes, path_p4)?;
     let stmts = stf::parse::parse_file(path_stf)?;
@@ -687,7 +636,6 @@ where
         }
     }
     // Everything expected must have arrived, and nothing unexpected
-    run.finish()
-        .map_err(|failure| Error::Stf { failure: Box::new(failure), span: Span::default() })?;
+    run.finish()?;
     Ok(run)
 }

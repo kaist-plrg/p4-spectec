@@ -97,7 +97,7 @@ fn test_interned_bodies_preserve_outer_and_child_annotations() {
     assert_eq!(arena.typ(&children[0]).as_ref(), &typ::TypKind::Bool);
     assert_eq!(
         get::bool(&arena, &tuple),
-        Err(ValueError::UnexpectedKind { expected: ValueTag::Bool, actual: ValueTag::Tuple })
+        Err(ValueError::KindMismatch { expected: ValueTag::Bool, actual: ValueTag::Tuple })
     );
 }
 

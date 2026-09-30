@@ -10,6 +10,7 @@ use super::{io::Rx, state::SimState};
 use crate::{
     lang::data::value::Value,
     runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    sim_plugin::error,
     stf::ast::Statement,
 };
 use num_bigint::BigInt;
@@ -26,7 +27,7 @@ pub trait Architecture: Extern {
     fn init_pipe<Interp, Iface>(
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         program: Value,
-    ) -> Result<SimState, Interp::Error>
+    ) -> Result<SimState, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -36,7 +37,7 @@ pub trait Architecture: Extern {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         state: &mut SimState,
         rx: &Rx,
-    ) -> Result<(), Interp::Error>
+    ) -> Result<(), ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -47,12 +48,12 @@ pub trait Architecture: Extern {
         _value_arch: Value,
         _session: usize,
         _port: usize,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "add_mirror_session is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -65,12 +66,12 @@ pub trait Architecture: Extern {
         _value_arch: Value,
         _session: usize,
         _group: usize,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "add_mirror_session_mc is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -82,12 +83,12 @@ pub trait Architecture: Extern {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _value_arch: Value,
         _group: usize,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "mc_mgrp_create is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -100,12 +101,12 @@ pub trait Architecture: Extern {
         _value_arch: Value,
         _instance: usize,
         _ports: &[usize],
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "mc_node_create is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -118,12 +119,12 @@ pub trait Architecture: Extern {
         _value_arch: Value,
         _group: usize,
         _handle: usize,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "mc_node_associate is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -136,12 +137,12 @@ pub trait Architecture: Extern {
         _value_arch: Value,
         _name: &str,
         _idx: usize,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "register_read is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -155,12 +156,12 @@ pub trait Architecture: Extern {
         _name: &str,
         _idx: usize,
         _int: BigInt,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "register_write is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -172,12 +173,12 @@ pub trait Architecture: Extern {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _value_arch: Value,
         _name: &str,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        Err(ExternError::Failure(format!(
+        Err(error::control_operation_unsupported(format!(
             "register_reset is not implemented for the {} simulator",
             Self::NAME
         ))
@@ -196,7 +197,7 @@ macro_rules! delegate_pipe {
         fn init_pipe<Interp, Iface>(
             ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
             program: Value,
-        ) -> Result<SimState, Interp::Error>
+        ) -> Result<SimState, ExternError>
         where
             Iface: Interface,
             Interp: Interpreter<Iface, Self>,
@@ -209,7 +210,7 @@ macro_rules! delegate_pipe {
             ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
             state: &mut SimState,
             rx: &Rx,
-        ) -> Result<(), Interp::Error>
+        ) -> Result<(), ExternError>
         where
             Iface: Interface,
             Interp: Interpreter<Iface, Self>,
@@ -227,7 +228,7 @@ macro_rules! delegate_method {
             ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
             value_arch: Value,
             $($arg: $typ),*
-        ) -> Result<Value, Interp::Error>
+        ) -> Result<Value, ExternError>
         where
             Iface: Interface,
             Interp: Interpreter<Iface, Self>,

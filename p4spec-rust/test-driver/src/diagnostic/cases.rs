@@ -8,6 +8,7 @@ pub const REVISION: &str = "960e2922b55288722c413732002e33ac06664e6f";
 
 /// Lists the splice command reference followed by admission regressions.
 pub const COMMAND: &[&str] = &[
+    "command-error",
     "command-splice-file-count-mismatch",
     "command-splice-output-conflict",
     "command-splice-input-required",
@@ -249,6 +250,7 @@ pub const ALGO: &[&str] = &[
 
 /// Lists runtime failures and backtracking cases across interpreters.
 pub const INTERP: &[&str] = &[
+    "p4-syntax",
     "backtrack-interp-al",
     "backtrack-interp-sl",
     "backtrack-interp-pl",
@@ -320,3 +322,6 @@ pub const PROSE: &[&str] = &[
 
 /// Lists standalone source fixtures that reach AsciiDoc markup warnings.
 pub const SPECDOC: &[&str] = &["adoc-nested-link", "adoc-empty-body", "adoc-invalid-text"];
+
+/// Lists native simulator admission failures.
+pub const SIM: &[&str] = &["sim-unsupported-architecture"];

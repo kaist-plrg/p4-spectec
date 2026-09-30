@@ -31,10 +31,10 @@ const MAX_BIT_WIDTH: usize = 2048;
 
 /// The booleans of a bit-array value.
 fn bits_of_value(arena: &ValueArena, value: &Value) -> Result<Vec<bool>, BuiltinError> {
-    let values = get::list(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let values = get::list(arena, value).map_err(BuiltinError::from)?;
     let mut bits = Vec::with_capacity(values.len());
     for value in values {
-        let bit = get::bool(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+        let bit = get::bool(arena, value).map_err(BuiltinError::from)?;
         bits.push(bit);
     }
     Ok(bits)
@@ -57,7 +57,7 @@ fn value_of_bits(arena: &mut ValueArena, bits: Vec<bool>) -> Result<Value, Built
 
 /// The integer in a number value.
 fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 
@@ -70,18 +70,20 @@ fn value_of_bigint(arena: &mut ValueArena, value: BigInt) -> Result<Value, Built
 /// A width as `usize`: negative clamps to zero, over the cap is an error.
 fn width_of_bigint(width: &BigInt, too_large: &'static str) -> Result<usize, BuiltinError> {
     if width > &BigInt::from(MAX_BIT_WIDTH) {
-        return Err(BuiltinError::new(too_large));
+        return Err(BuiltinError::argument_invalid(too_large));
     }
     if width <= &BigInt::zero() {
         return Ok(0);
     }
-    width.to_usize().ok_or_else(|| BuiltinError::new(too_large))
+    width
+        .to_usize()
+        .ok_or_else(|| BuiltinError::argument_invalid(too_large))
 }
 
 /// A bit-array width; unlike shifts, negative is an error.
 fn array_width_of_bigint(width: &BigInt) -> Result<usize, BuiltinError> {
     if width < &BigInt::zero() {
-        return Err(BuiltinError::new("negative bit array width"));
+        return Err(BuiltinError::argument_invalid("negative bit array width"));
     }
     width_of_bigint(width, "bitstr width too large")
 }
@@ -93,7 +95,7 @@ fn pow2_value(width: &BigInt) -> Result<BigInt, BuiltinError> {
     }
     let width = width
         .to_usize()
-        .ok_or_else(|| BuiltinError::new("shift amount too large"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("shift amount too large"))?;
     let value = BigInt::one() << width;
     Ok(value)
 }
@@ -230,7 +232,7 @@ pub fn bits_to_int_signed(
     let bits = bits_of_value(arena, value_bits)?;
     // The first bit is the sign; there must be one
     let Some(sign) = bits.first() else {
-        return Err(BuiltinError::new("empty bit array"));
+        return Err(BuiltinError::argument_invalid("empty bit array"));
     };
     let mut value = bits_to_int_unsigned_value(&bits);
     // A set sign bit means the value is `2^n` too high
@@ -344,11 +346,11 @@ pub fn bitacc(
     // Shift the low end to bit zero, then mask the slice width
     // The slice must start at a non-negative, representable bit
     if rawint_l < &BigInt::zero() {
-        return Err(BuiltinError::new("bitslice x[y:z] must have y > z > 0"));
+        return Err(BuiltinError::argument_invalid("bitslice x[y:z] must have y > z > 0"));
     }
     let low = rawint_l
         .to_usize()
-        .ok_or_else(|| BuiltinError::new("bitslice index too large"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("bitslice index too large"))?;
     let slice_width = rawint_h + 1 - rawint_l;
     let mask = pow2_value(&slice_width)? - 1;
     let shifted = rawint_b >> low;
@@ -371,11 +373,11 @@ pub fn bitacc_replace(
     let rawint_rhs = bigint_of_value(arena, value_rhs)?;
     // The slice must start at a non-negative, representable bit
     if rawint_l < &BigInt::zero() {
-        return Err(BuiltinError::new("bitslice x[y:z] must have y > z > 0"));
+        return Err(BuiltinError::argument_invalid("bitslice x[y:z] must have y > z > 0"));
     }
     let low = rawint_l
         .to_usize()
-        .ok_or_else(|| BuiltinError::new("bitslice index too large"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("bitslice index too large"))?;
     // Clear the slice with a mask of ones outside `h..l`, then or in `rhs`
     let rhs = rawint_rhs << low;
     let mask_hi_width = rawint_h + 1;

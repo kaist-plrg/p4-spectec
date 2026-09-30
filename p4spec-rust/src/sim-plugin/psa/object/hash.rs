@@ -3,7 +3,7 @@
 //! The constructor's algorithm enumerator maps to a `hash` algorithm name.
 
 use crate::sim_plugin::{
-    hash,
+    error, hash,
     spec::{args, func, pack, unpack},
 };
 use crate::{
@@ -43,7 +43,10 @@ impl HashExtern {
         let (id_enum, id_type) = unpack::p4_enum(arena, &value_algo)?;
         // Only a `PSA_HashAlgorithm_t` enumerator selects the algorithm
         if id_enum != "PSA_HashAlgorithm_t" {
-            return Err(ExternError::Failure("invalid PSA hash algorithm enum type".to_owned()));
+            return Err(error::hash_algorithm_invalid(
+                "invalid PSA hash algorithm enum type".to_owned(),
+            )
+            .into());
         }
         // Map the enumerator to the internal algorithm name
         let algo = match id_type.as_str() {
@@ -65,7 +68,7 @@ impl HashExtern {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -92,7 +95,7 @@ impl HashExtern {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -106,7 +109,9 @@ impl HashExtern {
         let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
         let int_hash = hash::compute_checksum(&self.algo, None, ctx.arena(), &values)?;
         if max <= BigInt::zero() {
-            return Err(ExternError::Failure("hash modulus must be positive".to_owned()).into());
+            return Err(
+                error::hash_range_invalid("hash modulus must be positive".to_owned()).into()
+            );
         }
         let int_hash = ((int_hash % &max) + &max) % &max + base;
         self.return_hash(ctx, value_ctx, value_arch, int_hash)
@@ -119,7 +124,7 @@ impl HashExtern {
         value_ctx: Value,
         value_arch: Value,
         int_hash: BigInt,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -133,16 +138,14 @@ impl HashExtern {
             Vec::new(),
         ));
         let value_opt =
-            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_result), Span::default())
-                .map_err(ExternError::from)?;
+            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_result), Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

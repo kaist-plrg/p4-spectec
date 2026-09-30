@@ -21,7 +21,6 @@ fn counter_counts<Interp>(
 ) -> Vec<u32>
 where
     Interp: p4spec_rust::runner::Interpreter<p4spec_rust::runner::BuiltinInterface, Ebpf>,
-    Interp::Error: std::fmt::Debug,
 {
     let values = names
         .iter()

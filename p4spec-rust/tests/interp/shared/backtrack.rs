@@ -1,8 +1,10 @@
 use crate::interp::report::ReportExt;
+
 use p4spec_rust::{
     diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
-    interp::shared::backtrack::{self, Backtrack, Failure, WithFrame},
+    interp::shared::backtrack::{self, Backtrack, WithFrame},
     lang::common::source::{Position, Span},
+    runner::InterpreterError,
 };
 
 fn span(line: usize) -> Span {
@@ -30,12 +32,15 @@ fn nesting_keeps_failure_class_and_complete_incoming_report() {
     for fatal in [false, true] {
         let report = report();
         let text = report.render();
-        let result: Backtrack<()> =
-            Err(if fatal { Failure::Fatal(report) } else { Failure::Mismatch(vec![*report]) });
+        let result: Backtrack<()> = Err(if fatal {
+            InterpreterError::Fatal(report)
+        } else {
+            InterpreterError::Mismatch(vec![*report])
+        });
         let failure = result
             .with_frame(span(1), || "invocation".into())
             .unwrap_err();
-        assert_eq!(matches!(&failure, Failure::Fatal(_)), fatal);
+        assert_eq!(matches!(&failure, InterpreterError::Fatal(_)), fatal);
         let report = failure.into_report();
         let frame = if fatal { &*report } else { &report.children[0] };
         assert!(
@@ -64,8 +69,8 @@ fn nesting_keeps_failure_class_and_complete_incoming_report() {
 
 #[test]
 fn exhausted_mismatch_is_promoted_only_at_output() {
-    let failure = Failure::Mismatch(Vec::new()).with_frame(span(1), "empty alternatives");
-    assert!(matches!(&failure, Failure::Mismatch(reports) if reports.len() == 1));
+    let failure = InterpreterError::Mismatch(Vec::new()).with_frame(span(1), "empty alternatives");
+    assert!(matches!(&failure, InterpreterError::Mismatch(reports) if reports.len() == 1));
     let report = failure.into_report();
     assert!(
         matches!(&report.kind, ReportKind::Frame { message, .. } if message == "execution failed")
@@ -79,7 +84,7 @@ fn exhausted_mismatch_is_promoted_only_at_output() {
 fn fatal_output_preserves_the_report_without_an_execution_wrapper() {
     let report = report();
     let text = report.render();
-    let report = Failure::Fatal(report).into_report();
+    let report = InterpreterError::Fatal(report).into_report();
     assert_eq!(report.render(), text);
 }
 
@@ -88,15 +93,15 @@ fn lifting_local_failures_preserves_existing_locations_and_children() {
     let report = report();
     let text = report.render();
     let result: Backtrack<()> = backtrack::from_result(Err(report), &span(9));
-    let Failure::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
+    let InterpreterError::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
     assert_eq!(report.render(), text);
 }
 
 #[test]
 fn lifting_numeric_failure_locates_its_cause() {
-    let error = p4spec_rust::lang::common::prim::num::NumericError::NegativeNatural((-1).into());
+    let error = p4spec_rust::lang::common::prim::num::NumericError::NaturalNegative((-1).into());
     let result: Backtrack<()> = backtrack::from_result(Err(error), &span(3));
-    let Failure::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
+    let InterpreterError::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
     assert_eq!(report.span(), span(3));
     assert_eq!(report.diagnostic().code.as_deref(), Some("runtime/numeric-invalid"));
 }
@@ -109,14 +114,16 @@ fn lifting_type_and_match_failures_fills_only_unknown_locations() {
     };
     for (span_error, span_expect) in [(Span::default(), span(3)), (span(2), span(2))] {
         let reports: [Box<Report>; 2] = [
-            TypeError { kind: TypeErrorKind::UndefinedType("X".into()), span: span_error.clone() }
+            TypeError { kind: TypeErrorKind::TypeUndefined("X".into()), span: span_error.clone() }
                 .into(),
-            MatchError::UnexpectedTypeVariable { span: span_error.clone() }.into(),
+            MatchError::TypeVariableUnexpected { span: span_error.clone() }.into(),
         ];
         for report in reports {
             assert_eq!(report.diagnostic().labels.is_empty(), span_error == Span::default());
             let result: Backtrack<()> = backtrack::from_result(Err(report), &span(3));
-            let Failure::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
+            let InterpreterError::Fatal(report) = result.unwrap_err() else {
+                panic!("expected fatal")
+            };
             assert_eq!(report.span(), span_expect);
         }
     }

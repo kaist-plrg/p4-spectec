@@ -30,7 +30,7 @@ pub(super) fn expand_typ_with<'a, 'env>(
     };
     // An unknown type name is an error, not a non-alias
     let Some(typdef) = find_typdef_opt(id) else {
-        let error_kind = TypeErrorKind::UndefinedType(id.node.clone());
+        let error_kind = TypeErrorKind::TypeUndefined(id.node.clone());
         let error = TypeError::new(error_kind, typ.span.clone());
         return Err(error);
     };

@@ -1,4 +1,5 @@
 use p4spec_rust::lang::traits::print::Print;
+
 use p4spec_rust::{
     interp::sl::{Config, SlInterp, context::Global},
     lang::{
@@ -59,7 +60,7 @@ def $use(n) = n_result
 }
 
 #[test]
-fn builtin_backtracking_reaches_else_but_fatal_extern_does_not() {
+fn builtin_and_extern_failures_skip_otherwise() {
     let source = r#"
 builtin dec $text_to_int(text) : int
 extern dec $unavailable() : int
@@ -74,8 +75,10 @@ def $fatal() = +9
 "#;
     for det in [false, true] {
         let mut runner = runner(source, det);
-        let value = runner.context().call_func("recover", &[], &[]).unwrap();
-        assert_eq!(get::num(runner.arena(), &value).unwrap().to_string(), "+7");
+        assert!(matches!(
+            runner.context().call_func("recover", &[], &[]),
+            Err(p4spec_rust::runner::InterpreterError::Fatal(_))
+        ));
         assert!(runner.context().call_func("fatal", &[], &[]).is_err());
     }
 }

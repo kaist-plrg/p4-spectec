@@ -1,14 +1,16 @@
 use crate::interp::report::ReportExt;
+
 use p4spec_rust::{
     diagnostic::{Label, Report},
     interp::{
         al::backtrack::{choose_deterministic, choose_sequential},
         shared::{
-            backtrack::{Backtrack, Failure},
+            backtrack::Backtrack,
             error::{self, EntityKind, Error},
         },
     },
     lang::common::source::{Position, Span},
+    runner::InterpreterError,
 };
 
 fn report(name: &str, line: usize) -> Error {
@@ -20,7 +22,7 @@ fn report(name: &str, line: usize) -> Error {
 }
 
 fn mismatch<T>(name: &str, line: usize) -> Backtrack<T> {
-    Err(Failure::Mismatch(vec![*report(name, line)]))
+    Err(InterpreterError::Mismatch(vec![*report(name, line)]))
 }
 
 #[test]
@@ -31,13 +33,15 @@ fn sequential_choice_stops_at_first_success_or_fatal() {
             visited.push(*idx);
             match idx {
                 0 => mismatch("first", 1),
-                1 if fatal => Err(Failure::Fatal(report("fatal", 2))),
+                1 if fatal => Err(InterpreterError::Fatal(report("fatal", 2))),
                 _ => Ok(42),
             }
         });
         assert_eq!(visited, [0, 1]);
         if fatal {
-            let Failure::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
+            let InterpreterError::Fatal(report) = result.unwrap_err() else {
+                panic!("expected fatal")
+            };
             assert_eq!(report.span().left.line, 2);
         } else {
             assert_eq!(result.unwrap(), 42);
@@ -57,7 +61,9 @@ fn exhausted_choices_select_later_ties_or_merge_deterministic_failures() {
         } else {
             choose_sequential([1, 2], |line| mismatch("candidate", *line))
         };
-        let Failure::Mismatch(reports) = result.unwrap_err() else { panic!("expected mismatch") };
+        let InterpreterError::Mismatch(reports) = result.unwrap_err() else {
+            panic!("expected mismatch")
+        };
         assert_eq!(
             reports
                 .iter()
@@ -67,13 +73,13 @@ fn exhausted_choices_select_later_ties_or_merge_deterministic_failures() {
         );
     }
     let empty: Backtrack<()> = choose_sequential([], |_: &()| panic!("empty choice evaluated"));
-    assert!(matches!(empty, Err(Failure::Mismatch(reports)) if reports.is_empty()));
+    assert!(matches!(empty, Err(InterpreterError::Mismatch(reports)) if reports.is_empty()));
     let empty: Backtrack<()> = choose_deterministic(
         [],
         |_: &()| panic!("empty choice evaluated"),
         |_, _| panic!("overlap"),
     );
-    assert!(matches!(empty, Err(Failure::Mismatch(reports)) if reports.is_empty()));
+    assert!(matches!(empty, Err(InterpreterError::Mismatch(reports)) if reports.is_empty()));
 }
 
 #[test]
@@ -82,7 +88,7 @@ fn sequential_choice_preserves_the_deepest_failure_set() {
         let result: Backtrack<()> = choose_sequential(0..depths.len(), |idx| {
             let depth = depths[*idx];
             if depth == 0 {
-                return Err(Failure::Mismatch(vec![]));
+                return Err(InterpreterError::Mismatch(vec![]));
             }
             // Keep both nested causes and a sibling in the selected candidate
             let line = idx + 1;
@@ -90,9 +96,11 @@ fn sequential_choice_preserves_the_deepest_failure_set() {
             for _ in 1..depth {
                 error = Report::frame(error.span(), "call", vec![error]);
             }
-            Err(Failure::Mismatch(vec![error, *report("sibling", line + 10)]))
+            Err(InterpreterError::Mismatch(vec![error, *report("sibling", line + 10)]))
         });
-        let Failure::Mismatch(reports) = result.unwrap_err() else { panic!("expected mismatch") };
+        let InterpreterError::Mismatch(reports) = result.unwrap_err() else {
+            panic!("expected mismatch")
+        };
         assert_eq!(reports.len(), 2, "depths={depths:?}");
         assert_eq!(reports[0].span().left.line, line_expect);
         assert_eq!(reports[1].span().left.line, line_expect + 10);
@@ -115,7 +123,7 @@ fn deterministic_choice_rejects_equal_successes_and_stops() {
         |id_a, id_b| report(&format!("{id_a}, {id_b}"), 3),
     );
     assert_eq!(visited, ["miss", "first", "second"]);
-    let Failure::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
+    let InterpreterError::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
     assert!(report.diagnostic().message.contains("first, second"));
 }
 
@@ -130,14 +138,14 @@ fn fatal_before_or_after_success_wins_without_retry() {
                 match idx {
                     0 if success => Ok(7),
                     0 => mismatch("miss", 1),
-                    1 => Err(Failure::Fatal(report("fatal", 2))),
+                    1 => Err(InterpreterError::Fatal(report("fatal", 2))),
                     _ => panic!("evaluated after fatal"),
                 }
             },
             |_, _| panic!("one success"),
         );
         assert_eq!(visited, [0, 1]);
-        assert!(matches!(result, Err(Failure::Fatal(_))));
+        assert!(matches!(result, Err(InterpreterError::Fatal(_))));
     }
 }
 

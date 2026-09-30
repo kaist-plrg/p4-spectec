@@ -5,11 +5,10 @@
 //! with that architecture as its extern,
 //! and boxes it as a `Simulator` that runs STF tests.
 //! `core` and `spec` are the helpers the architectures share;
-//! `runner`, `table`, `hash`, `io`, and `state` drive one test.
+//! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test.
 
-use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, runner::Error, v1model::V1Model};
+use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 use crate::{
-    interp::shared::backtrack::Failure as InterpError,
     lang::data::value::external::Encoding,
     runner::{self as host, BuiltinInterface, Interpreter, Runner},
 };
@@ -19,28 +18,18 @@ pub mod arch;
 pub mod core;
 pub mod dummy;
 pub mod ebpf;
+mod error;
 mod externs;
 pub mod hash;
 pub mod io;
 pub mod psa;
-pub mod runner;
 pub mod spec;
 pub mod state;
+pub mod stf_runner;
 pub mod table;
 pub mod v1model;
 
-// == Build errors
-
-/// Why a simulator could not be built.
-#[derive(Debug, thiserror::Error)]
-pub enum BuildError {
-    /// No architecture of that name.
-    #[error("architecture {0} is not supported")]
-    UnsupportedArchitecture(String),
-    /// The host runner could not load the specification.
-    #[error(transparent)]
-    Runner(#[from] host::BuildError),
-}
+pub use error::SimError;
 
 // == Simulator
 
@@ -52,12 +41,12 @@ trait SimulatorRunner {
         path_p4: &Path,
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
-    ) -> Result<(), Error>;
+    ) -> Result<(), SimError>;
 }
 
 impl<Interp, Arch> SimulatorRunner for Runner<Interp, BuiltinInterface, Arch>
 where
-    Interp: Interpreter<BuiltinInterface, Arch, Error = InterpError> + 'static,
+    Interp: Interpreter<BuiltinInterface, Arch> + 'static,
     Arch: Architecture + 'static,
 {
     fn run_stf_test(
@@ -66,8 +55,8 @@ where
         path_p4: &Path,
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
-    ) -> Result<(), Error> {
-        runner::run_stf_test(self, includes, path_p4, path_stf, on_match).map(drop)
+    ) -> Result<(), SimError> {
+        stf_runner::run_stf_test(self, includes, path_p4, path_stf, on_match).map(drop)
     }
 }
 
@@ -81,7 +70,7 @@ impl Simulator {
     /// Boxes a runner.
     fn new<Interp, Arch>(runner: Runner<Interp, BuiltinInterface, Arch>) -> Self
     where
-        Interp: Interpreter<BuiltinInterface, Arch, Error = InterpError> + 'static,
+        Interp: Interpreter<BuiltinInterface, Arch> + 'static,
         Arch: Architecture + 'static,
     {
         Self { runner: Box::new(runner) }
@@ -94,7 +83,7 @@ impl Simulator {
         path_p4: &Path,
         path_stf: &Path,
         mut on_match: impl FnMut(&Tx),
-    ) -> Result<(), Error> {
+    ) -> Result<(), SimError> {
         self.runner
             .run_stf_test(includes, path_p4, path_stf, &mut on_match)
     }
@@ -108,13 +97,13 @@ pub fn build(
     arch: &str,
     config: host::Config,
     encoding: Encoding,
-) -> Result<Simulator, BuildError> {
+) -> Result<Simulator, SimError> {
     // Each architecture is its own extern implementation
     match arch {
         "ebpf" => build_for_arch(spec, config, Ebpf::new(encoding)),
         "psa" => build_for_arch(spec, config, Psa::new(encoding)),
         "v1model" => build_for_arch(spec, config, V1Model::new(encoding)),
-        _ => Err(BuildError::UnsupportedArchitecture(arch.to_owned())),
+        _ => Err(error::architecture_unsupported(arch)),
     }
 }
 
@@ -123,7 +112,7 @@ fn build_for_arch<Arch: Architecture + 'static>(
     spec: host::Spec,
     config: host::Config,
     arch: Arch,
-) -> Result<Simulator, BuildError> {
+) -> Result<Simulator, SimError> {
     match spec {
         host::Spec::Al(spec) => Ok(Simulator::new(host::build_al(spec, config, arch)?)),
         host::Spec::Sl(spec) => Ok(Simulator::new(host::build_sl(spec, config, arch)?)),

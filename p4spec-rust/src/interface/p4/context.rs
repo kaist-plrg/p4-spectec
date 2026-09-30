@@ -102,7 +102,7 @@ impl<'a> Context<'a> {
     /// Binds a name in the innermost scope.
     fn declare(&self, id: impl Into<String>, kind: IdentKind) -> Result<(), ContextError> {
         let mut scopes = self.scopes.borrow_mut();
-        let scope = scopes.last_mut().ok_or(ContextError::MissingScope)?;
+        let scope = scopes.last_mut().ok_or(ContextError::ScopeMissing)?;
         scope.insert(id.into(), kind);
         Ok(())
     }
@@ -158,16 +158,16 @@ impl<'a> Context<'a> {
         let mut scopes = self.scopes.borrow_mut();
         // The global scope stays
         if scopes.len() <= 1 {
-            return Err(ContextError::RootScope);
+            return Err(ContextError::RootScopePopForbidden);
         }
-        scopes.pop().ok_or(ContextError::MissingScope)
+        scopes.pop().ok_or(ContextError::ScopeMissing)
     }
 
     /// Sets the local scopes aside, leaving only the global one.
     pub fn scope_to_toplevel(&self) -> Result<(), ContextError> {
         let mut scopes = self.scopes.borrow_mut();
         if scopes.is_empty() {
-            return Err(ContextError::MissingScope);
+            return Err(ContextError::ScopeMissing);
         }
         *self.scopes_suspended.borrow_mut() = scopes.split_off(1);
         Ok(())

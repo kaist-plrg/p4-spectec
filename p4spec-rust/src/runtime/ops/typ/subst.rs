@@ -76,7 +76,7 @@ pub(crate) fn subst_typ_inner<'env>(
             // A substituted variable cannot take arguments
             Some(_) if !targs.is_empty() => {
                 return Err(TypeError::new(
-                    TypeErrorKind::HigherOrderSubstitution,
+                    TypeErrorKind::HigherOrderSubstitutionUnsupported,
                     typ.span.clone(),
                 ));
             }

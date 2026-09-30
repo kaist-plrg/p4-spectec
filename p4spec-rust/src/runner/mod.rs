@@ -13,11 +13,11 @@ mod interface;
 mod interpreter;
 
 use crate::{
+    diagnostic::Report,
     interface as builtin,
     interp::{
         al::{AlInterp, Config as AlConfig, context::Global as AlGlobal},
         pl::{Config as PlConfig, PlInterp, context::Global as PlGlobal},
-        shared::error::Error as InterpError,
         sl::{Config as SlConfig, SlInterp, context::Global as SlGlobal},
     },
     lang::{
@@ -30,7 +30,7 @@ use crate::{
 pub use context::RunnerContext;
 pub use externs::{Extern, ExternError, NullExtern};
 pub use interface::{BuiltinInterface, Interface, InterfaceError, NullInterface};
-pub use interpreter::Interpreter;
+pub use interpreter::{Interpreter, InterpreterError};
 
 // == Runner construction
 
@@ -61,13 +61,8 @@ impl Config {
     }
 }
 
-/// A failure while building a runner.
-#[derive(Debug, thiserror::Error)]
-pub enum BuildError {
-    /// Loading the specification into the interpreter failed.
-    #[error(transparent)]
-    Interp(#[from] InterpError),
-}
+/// A diagnostic produced while building a runner.
+pub type BuildError = Box<Report>;
 
 /// Builds an AL runner from a specification, with the P4 builtins.
 ///
@@ -174,7 +169,7 @@ where
         &mut self,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Interp::Error> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         let mut ctx = self.context();
         ctx.call_program(name, program)
     }

@@ -97,7 +97,18 @@ fn test_hash_width_and_complement_boundaries() {
         );
     }
     for algo in ["crc16", "crc32", "csum16", "csum16_sub"] {
-        assert!(hash::compute_hash(algo, None, &(4.into(), 10.into())).is_err());
+        let report = hash::compute_hash(algo, None, &(4.into(), 10.into()))
+            .unwrap_err()
+            .into_report();
+        let p4spec_rust::diagnostic::ReportKind::Cause(diagnostic) = &report.kind else {
+            panic!("expected cause")
+        };
+        assert_eq!(diagnostic.code.as_deref(), Some("sim/hash-width-invalid"));
+        let alignment = if algo.starts_with("crc") { 8 } else { 16 };
+        assert_eq!(
+            diagnostic.message,
+            format!("hash width 4 must be a multiple of {alignment} bits")
+        );
     }
     let bits = ((-1).into(), BigInt::from(123));
     assert_eq!(hash::compute_hash("identity", None, &bits).unwrap(), bits.1);

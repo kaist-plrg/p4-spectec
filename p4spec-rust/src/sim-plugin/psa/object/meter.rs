@@ -2,7 +2,10 @@
 //!
 //! Metering is not modeled; `execute` always returns green.
 
-use crate::sim_plugin::spec::{args, pack, unpack};
+use crate::sim_plugin::{
+    error,
+    spec::{args, pack, unpack},
+};
 use crate::{
     lang::{
         common::source::Span,
@@ -57,9 +60,10 @@ impl Meter {
         match (id_enum.as_str(), id_type.as_str()) {
             ("PSA_MeterType_t", "PACKETS") => Ok(Self::Packets(vec![Color::Green; size])),
             ("PSA_MeterType_t", "BYTES") => Ok(Self::Bytes(vec![Color::Green; size])),
-            _ => Err(ExternError::Failure(format!(
+            _ => Err(error::meter_type_invalid(format!(
                 "invalid PSA_MeterType_t enum value: {id_enum}.{id_type}"
-            ))),
+            ))
+            .into()),
         }
     }
 
@@ -74,7 +78,7 @@ impl Meter {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -87,16 +91,14 @@ impl Meter {
             Vec::new(),
         ));
         let value_opt =
-            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_color), Span::default())
-                .map_err(ExternError::from)?;
+            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_color), Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 
@@ -109,7 +111,7 @@ impl Meter {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,

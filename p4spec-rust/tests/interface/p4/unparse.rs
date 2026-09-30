@@ -125,7 +125,7 @@ fn test_unsupported_values_return_typed_errors() {
     .unwrap();
     assert_eq!(
         P4Unparser::default().render(&arena, &structure),
-        Err(P4UnparseError::UnsupportedValue("Struct"))
+        Err(P4UnparseError::ValueUnsupported("Struct"))
     );
 }
 

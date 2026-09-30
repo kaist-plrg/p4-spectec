@@ -6,7 +6,7 @@ use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 use p4spec_rust::{
     interface::p4::{
-        error::P4ErrorKind,
+        error::P4Error,
         parse::{parse_file, parse_string},
         unparse::P4Unparser,
     },
@@ -23,11 +23,13 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
     fs::File::open(path)?;
     let program = match parse_file(&mut arena, includes, path) {
         Ok(program) => program,
-        Err(error) => match error.kind {
-            P4ErrorKind::Lex(_) | P4ErrorKind::Syntax => {
+        Err(error) => match error {
+            P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
                 return Ok(Outcome::ParseFail);
             }
-            _ => return Err(Error::Invalid(format!("{}: {error}", path.display()))),
+            _ => {
+                return Err(Error::Invalid(format!("{}: {}", path.display(), error.into_report())));
+            }
         },
     };
     let text = unparser
@@ -35,11 +37,13 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
         .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
     let program_roundtrip = match parse_string(&mut arena, path, &text) {
         Ok(program) => program,
-        Err(error) => match error.kind {
-            P4ErrorKind::Lex(_) | P4ErrorKind::Syntax => {
+        Err(error) => match error {
+            P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
                 return Ok(Outcome::ReparseFail);
             }
-            _ => return Err(Error::Invalid(format!("{}: {error}", path.display()))),
+            _ => {
+                return Err(Error::Invalid(format!("{}: {}", path.display(), error.into_report())));
+            }
         },
     };
     // Canonical bodies ignore source spans and type notes, like IL value equality

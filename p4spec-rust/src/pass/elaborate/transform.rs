@@ -3116,8 +3116,8 @@ fn fetch_input_hint(
     // The hint must stay within the notation arity
     if let Err(error_input) = input::validate(&input_hint, arity) {
         return Err(match error_input {
-            input::InputError::Empty => error::prem::relation_input_hint_empty(&exp_hint.span),
-            input::InputError::DuplicateIndex { idx, idx_previous } => {
+            input::InputError::InputEmpty => error::prem::relation_input_hint_empty(&exp_hint.span),
+            input::InputError::IndexDuplicate { idx, idx_previous } => {
                 error::prem::relation_input_hint_index_repeated(
                     idx.node,
                     &idx.span,

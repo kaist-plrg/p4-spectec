@@ -20,7 +20,7 @@ use crate::{
 
 use super::{
     context::{Context, Location},
-    error::{P4Error, P4ErrorKind},
+    error::P4Error,
     lexer::{Lexer, Token},
     parser::p4programParser,
     preprocessor::preprocess,
@@ -67,7 +67,7 @@ fn translate_lalrpop_error(ctx: &Context, error: ParseError<Location, Token, P4E
         // Lexer errors pass through unchanged
         ParseError::User { error } => return error,
     };
-    P4Error::new(P4ErrorKind::Syntax, span)
+    P4Error::new(span, super::error::P4SyntaxError::GrammarInvalid)
 }
 
 // - Source strings
@@ -82,8 +82,8 @@ pub fn parse_string(
     // The lexer and parser share one context for name classification
     let ctx = Rc::new(Context::new(arena));
     let position = Position::new(Rc::clone(&file), 1, 0);
-    let lexer = Lexer::new(file, source, Rc::clone(&ctx));
-    let input = parser_input(ctx.as_ref(), lexer, position);
+    let mut lexer = Lexer::new(file, source, Rc::clone(&ctx));
+    let input = parser_input(ctx.as_ref(), &mut lexer, position);
 
     let result = p4programParser::new().parse(ctx.as_ref(), input);
     result.map_err(|error| translate_lalrpop_error(ctx.as_ref(), error))

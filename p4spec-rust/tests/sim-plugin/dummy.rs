@@ -65,11 +65,19 @@ fn test_unsupported_extern_fails() {
     }
     .unwrap_err();
 
-    assert!(has_extern_failure(&error, "unimplemented extern relation: Unsupported"));
+    assert!(has_extern_failure(
+        &error,
+        "sim/extern-relation-unsupported",
+        "unimplemented extern relation: Unsupported"
+    ));
 
     for name in ["ExternFunctionCall_eval", "ExternMethodCall_eval"] {
         let error = runner.context().call_extern_rel(name, &[]).unwrap_err();
-        assert!(has_extern_failure(&error, &format!("unimplemented extern relation: {name}")));
+        assert!(has_extern_failure(
+            &error,
+            "sim/extern-relation-unsupported",
+            &format!("unimplemented extern relation: {name}")
+        ));
     }
 
     let value_ctx = make::bool(runner.arena_mut(), true, Span::default()).unwrap();
@@ -95,6 +103,7 @@ fn test_unsupported_extern_fails() {
 
     assert!(has_extern_failure(
         &error,
+        "sim/extern-function-unsupported",
         "unsupported local compile-time known extern function call: static_assert(message, check)"
     ));
 }

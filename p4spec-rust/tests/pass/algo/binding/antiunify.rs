@@ -164,7 +164,7 @@ fn test_nested_type_error_keeps_its_category_and_span() {
     let error =
         antiunify::antiunify(&mut ctx, vec![vec![exp_tuple_a], vec![exp_tuple_b]]).unwrap_err();
 
-    let error_kind = TypeErrorKind::UndefinedType("Missing".to_owned());
+    let error_kind = TypeErrorKind::TypeUndefined("Missing".to_owned());
     assert_eq!(error.kind, AlgoErrorKind::Type(error_kind));
     assert_eq!(error.span, span(3));
     assert_eq!(ctx.frees, ids_free);

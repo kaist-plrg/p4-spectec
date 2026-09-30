@@ -262,7 +262,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
 
     /// An error spanning from `pos_l` to here.
     fn error(&self, kind: LexErrorKind, pos_l: Position) -> P4Error {
-        P4Error::new(kind, self.span_from(pos_l))
+        P4Error::new(self.span_from(pos_l), kind)
     }
 
     /// Consumes one character, tracking line and column.
@@ -550,7 +550,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                     crossed_newline |= self.bump() == Some('\n');
                 }
                 if self.index == self.source.len() {
-                    return Some(Err(self.error(LexErrorKind::UnterminatedComment, pos_l)));
+                    return Some(Err(self.error(LexErrorKind::CommentUnterminated, pos_l)));
                 }
                 self.bump();
                 self.bump();
@@ -609,7 +609,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                     None => {
                         match make::text(&mut self.ctx.arena_mut(), text.to_owned(), span.clone()) {
                             Ok(value) => Token::Name(value),
-                            Err(error) => return Some(Err(P4Error::new(error, span))),
+                            Err(error) => return Some(Err(P4Error::new(span, error))),
                         }
                     }
                 };
@@ -630,7 +630,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             let span = self.span_from(pos_l);
             let value = match make::text(&mut self.ctx.arena_mut(), text, span.clone()) {
                 Ok(value) => value,
-                Err(error) => return Some(Err(P4Error::new(error, span))),
+                Err(error) => return Some(Err(P4Error::new(span, error))),
             };
             let token = Token::UnexpectedToken(value);
             return Some(Ok(phrase!(node: token, span: span)));
@@ -648,7 +648,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             let pos_char = self.source_position();
             // The source may not end inside the literal
             let Some(character) = self.bump() else {
-                return Err(self.error(LexErrorKind::UnterminatedString, pos_char));
+                return Err(self.error(LexErrorKind::StringUnterminated, pos_char));
             };
             match character {
                 '"' => break pos_char,
@@ -656,7 +656,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 '\\' => {
                     let Some(escaped) = self.bump() else {
                         return Err(
-                            self.error(LexErrorKind::UnterminatedString, self.source_position())
+                            self.error(LexErrorKind::StringUnterminated, self.source_position())
                         );
                     };
                     match escaped {
@@ -665,7 +665,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                         '\\' => text.push('\\'),
                         escaped => {
                             return Err(self.error(
-                                LexErrorKind::UnsupportedEscape(format!("\\{escaped}")),
+                                LexErrorKind::EscapeUnsupported(format!("\\{escaped}")),
                                 pos_char,
                             ));
                         }
@@ -705,18 +705,18 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 let sign = spelling.as_bytes()[index] as char;
                 let digits = &spelling[index + 1..];
                 let int = parse_integer(digits).ok_or_else(|| {
-                    self.error(LexErrorKind::InvalidInteger(spelling.to_owned()), pos_l.clone())
+                    self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l.clone())
                 })?;
                 let int_width = parse_integer(width).ok_or_else(|| {
-                    self.error(LexErrorKind::InvalidInteger(spelling.to_owned()), pos_l.clone())
+                    self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l.clone())
                 })?;
                 // A signed literal needs a sign bit and a value bit
                 if sign == 's' && int_width < BigInt::from(2) {
-                    return Err(self.error(LexErrorKind::SignedWidth, pos_l));
+                    return Err(self.error(LexErrorKind::SignedWidthInvalid, pos_l));
                 }
                 let span = self.span_from(pos_l.clone());
                 let nat_width = Natural::try_from(int_width).map_err(|_| {
-                    self.error(LexErrorKind::InvalidInteger(spelling.to_owned()), pos_l.clone())
+                    self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l.clone())
                 })?;
                 let value_width = make::nat(&mut self.ctx.arena_mut(), nat_width, span.clone())?;
                 let value_int = make::int(&mut self.ctx.arena_mut(), int, span.clone())?;
@@ -741,7 +741,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             // Plain: an integer value
             _ => {
                 let int = parse_integer(spelling).ok_or_else(|| {
-                    self.error(LexErrorKind::InvalidInteger(spelling.to_owned()), pos_l.clone())
+                    self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l.clone())
                 })?;
                 let span = self.span_from(pos_l.clone());
                 (make::int(&mut self.ctx.arena_mut(), int, span)?, spelling.to_owned())
@@ -833,7 +833,8 @@ impl Iterator for Lexer<'_, '_> {
     type Item = Result<Phrase<Token>, P4Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.lex()
+        let token = self.lex()?;
+        Some(token)
     }
 }
 

@@ -3,7 +3,7 @@
 //! Packets are `Vec<bool>`, most significant bit first;
 //! hex text converts four bits per digit.
 
-use crate::runner::ExternError;
+use crate::{runner::ExternError, sim_plugin::error};
 use num_bigint::BigInt;
 use num_traits::Zero;
 
@@ -14,7 +14,7 @@ pub fn string_to_bits(text: &str) -> Result<Vec<bool>, ExternError> {
     let mut bits = Vec::with_capacity(text.len().saturating_mul(4));
     for char in text.chars() {
         let int = char.to_digit(16).ok_or_else(|| {
-            ExternError::Failure(format!("invalid hexadecimal packet digit: {char}"))
+            error::packet_digit_invalid(format!("invalid hexadecimal packet digit: {char}"))
         })?;
         // Most significant bit of the nibble first
         for idx in (0..4).rev() {

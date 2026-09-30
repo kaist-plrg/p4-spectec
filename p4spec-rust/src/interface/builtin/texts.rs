@@ -22,12 +22,12 @@ use super::{BuiltinError, extract};
 
 /// The text in a text value.
 fn text_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a str, BuiltinError> {
-    get::text(arena, value).map_err(|error| BuiltinError::new(error.to_string()))
+    get::text(arena, value).map_err(BuiltinError::from)
 }
 
 /// A number value printed as text.
 fn numeric_text(arena: &ValueArena, value: &Value) -> Result<String, BuiltinError> {
-    let num = get::num(arena, value).map_err(|error| BuiltinError::new(error.to_string()))?;
+    let num = get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(Print::to_string(num))
 }
 
@@ -66,7 +66,7 @@ pub fn text_to_int(
     };
     // Digits must all be valid in the radix
     let mut int = BigInt::parse_bytes(digits.as_bytes(), radix)
-        .ok_or_else(|| BuiltinError::new("invalid digit found in string"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("invalid digit found in string"))?;
     if negative {
         int = -int;
     }
@@ -100,7 +100,7 @@ pub fn split_text(
     let separator = text_of_value(arena, value_separator)?;
     // The separator is a single byte
     if separator.len() != 1 {
-        return Err(BuiltinError::new("separator must be one byte"));
+        return Err(BuiltinError::argument_invalid("separator must be one byte"));
     }
     let separator = char::from(separator.as_bytes()[0]);
     let parts = text.split(separator).map(str::to_owned).collect::<Vec<_>>();
@@ -127,7 +127,7 @@ pub fn strip_prefix(
     // A missing prefix is an error, not a no-op
     let text = text
         .strip_prefix(prefix)
-        .ok_or_else(|| BuiltinError::new("text does not start with prefix"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("text does not start with prefix"))?;
     let text = text.to_owned();
     let value = make::text(arena, text, Span::default())?;
     Ok(value)
@@ -147,7 +147,7 @@ pub fn strip_suffix(
     // A missing suffix is an error, not a no-op
     let text = text
         .strip_suffix(suffix)
-        .ok_or_else(|| BuiltinError::new("text does not end with suffix"))?;
+        .ok_or_else(|| BuiltinError::argument_invalid("text does not end with suffix"))?;
     let text = text.to_owned();
     let value = make::text(arena, text, Span::default())?;
     Ok(value)

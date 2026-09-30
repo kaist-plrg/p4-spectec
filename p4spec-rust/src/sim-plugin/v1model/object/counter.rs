@@ -5,6 +5,7 @@
 
 use crate::sim_plugin::{
     core::object::PacketIn,
+    error,
     spec::{args, func, unpack},
 };
 use crate::{
@@ -66,9 +67,10 @@ impl Counter {
             ("CounterType", "packets_and_bytes") => {
                 Ok(Self::PacketsAndBytes(vec![(BigInt::zero(), BigInt::zero()); size]))
             }
-            _ => Err(ExternError::Failure(format!(
+            _ => Err(error::counter_type_invalid(format!(
                 "invalid CounterType enum value: {id_enum}.{id_type}"
-            ))),
+            ))
+            .into()),
         }
     }
 
@@ -90,15 +92,14 @@ impl Counter {
         value_ctx: Value,
         value_arch: Value,
         packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)
-            .map_err(ExternError::from)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
         // An out-of-range index leaves the array untouched
         match &mut self {
             Self::Packets(counts) => {
@@ -123,16 +124,14 @@ impl Counter {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

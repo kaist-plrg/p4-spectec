@@ -1,5 +1,6 @@
 use crate::interp::report::{IntoReport, ReportExt};
-use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
+
+use p4spec_rust::diagnostic::ReportKind;
 use std::{cell::RefCell, rc::Rc};
 
 use p4spec_rust::{
@@ -17,7 +18,7 @@ use p4spec_rust::{
         },
         il::ast::{ListPattern, OptPattern},
     },
-    runner::{Interface, InterfaceError, NullExtern, NullInterface, Runner},
+    runner::{Interface, InterfaceError, InterpreterError, NullExtern, NullInterface, Runner},
 };
 
 fn id(name: &str) -> ast::Id {
@@ -63,7 +64,7 @@ fn eval(
     let value = runner
         .context()
         .call_func("test", &[], &[])
-        .map_err(Failure::into_report)?;
+        .map_err(InterpreterError::into_report)?;
     Ok((std::mem::take(runner.arena_mut()), value))
 }
 
@@ -903,7 +904,7 @@ fn test_builtin_failure_remains_typed_in_public_error_tree() {
         .unwrap_err()
         .into_report();
     let diagnostic = error
-        .find_code("runtime/builtin-failed")
+        .find_code("runtime/builtin-implementation-missing")
         .expect("builtin cause")
         .diagnostic();
     assert!(diagnostic.message.contains("missing_builtin"));

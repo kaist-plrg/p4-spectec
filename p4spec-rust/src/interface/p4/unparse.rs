@@ -114,7 +114,7 @@ impl P4Unparser {
             ValueKind::Num(Number::Int(value)) => Ok(value.to_string()),
             ValueKind::Text(value) => Ok(escape_text(value)),
             // Structs have no P4 spelling
-            ValueKind::Struct(_) => Err(P4UnparseError::UnsupportedValue("Struct")),
+            ValueKind::Struct(_) => Err(P4UnparseError::ValueUnsupported("Struct")),
             // Cases go through their hint or shape
             ValueKind::Case(value_case) => self.render_case(arena, arena.typ(value), value_case),
             // Tuples in parentheses, comma separated
@@ -128,8 +128,8 @@ impl P4Unparser {
             // Lists are space separated
             ValueKind::List(values) => self.render_values(arena, values, " "),
             // Functions and externs have no P4 spelling
-            ValueKind::Func(_) => Err(P4UnparseError::UnsupportedValue("Func")),
-            ValueKind::Extern(_) => Err(P4UnparseError::UnsupportedValue("Extern")),
+            ValueKind::Func(_) => Err(P4UnparseError::ValueUnsupported("Func")),
+            ValueKind::Extern(_) => Err(P4UnparseError::ValueUnsupported("Extern")),
         }
     }
 
