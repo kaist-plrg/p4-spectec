@@ -42,9 +42,9 @@ fn test_preprocessing_reports_a_typed_failure_for_missing_input() {
         panic!("expected cause")
     };
     assert_eq!(diagnostic.code.as_deref(), Some("p4/preprocessor-failed"));
-    assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "/definitely/missing/p4spec-input.p4");
-    assert_eq!(diagnostic.labels[0].span.left.line, 0);
-    assert_eq!(diagnostic.labels[0].span.left, diagnostic.labels[0].span.right);
+    assert_eq!(error.span.left.file.as_ref(), "/definitely/missing/p4spec-input.p4");
+    assert_eq!(error.span.left.line, 0);
+    assert_eq!(error.span.left, error.span.right);
 }
 
 #[test]
@@ -66,8 +66,8 @@ fn test_macro_expansion_rejection_keeps_logical_line_only() {
     let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
         panic!("expected cause")
     };
-    assert!(diagnostic.labels[0].line_only);
-    assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
-    assert_eq!(diagnostic.labels[0].span.left.line, 2);
-    assert!(diagnostic.labels[0].span.left.column > 24);
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(error.span.left.file.as_ref(), path.to_str().unwrap());
+    assert_eq!(error.span.left.line, 2);
+    assert!(error.span.left.column > 24);
 }

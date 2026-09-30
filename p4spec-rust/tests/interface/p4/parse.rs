@@ -155,8 +155,10 @@ fn test_syntax_errors_retain_the_source_location() {
         error,
         P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. }
     ));
-    assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "broken.p4");
-    assert_eq!(diagnostic.labels[0].span.left.line, 1);
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(diagnostic.notes, ["at broken.p4:1"]);
+    assert_eq!(error.span.left.file.as_ref(), "broken.p4");
+    assert_eq!(error.span.left.line, 1);
 }
 
 #[test]
@@ -349,15 +351,11 @@ fn test_syntax_error_after_whitespace_uses_offending_token_span() {
     let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
         panic!("expected cause")
     };
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(diagnostic.notes, ["at syntax.p4:2"]);
     let column = source.lines().nth(1).unwrap().find(';').unwrap();
-    assert_eq!(
-        (diagnostic.labels[0].span.left.line, diagnostic.labels[0].span.left.column),
-        (2, column)
-    );
-    assert_eq!(
-        (diagnostic.labels[0].span.right.line, diagnostic.labels[0].span.right.column),
-        (2, column + 1)
-    );
+    assert_eq!((error.span.left.line, error.span.left.column), (2, column));
+    assert_eq!((error.span.right.line, error.span.right.column), (2, column + 1));
 }
 
 #[test]
@@ -380,11 +378,10 @@ fn test_line_markers_preserve_logical_span_without_original_source_columns() {
     let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
         panic!("expected cause")
     };
-    let label = &diagnostic.labels[0];
-    assert!(label.line_only);
-    assert_eq!(label.span.left.file.as_ref(), "original.p4");
-    assert_eq!((label.span.left.line, label.span.left.column), (42, 17));
-    assert_eq!((label.span.right.line, label.span.right.column), (42, 18));
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(error.span.left.file.as_ref(), "original.p4");
+    assert_eq!((error.span.left.line, error.span.left.column), (42, 17));
+    assert_eq!((error.span.right.line, error.span.right.column), (42, 18));
 
     let mut renderer = p4spec_rust::diagnostic::Renderer::new(Default::default());
     renderer.insert_source("original.p4", "unrelated original text");
@@ -394,16 +391,16 @@ fn test_line_markers_preserve_logical_span_without_original_source_columns() {
 }
 
 #[test]
-fn test_hash_in_comments_does_not_disable_direct_source_locations() {
+fn test_hash_in_comments_preserves_direct_source_location() {
     let mut arena = ValueArena::new();
     let source = "/* # 42 \"original.p4\" */\nconst bit<8> x = ;";
     let error = parse_string(&mut arena, "direct.p4", source).unwrap_err();
     let ReportKind::Cause(diagnostic) = &error.clone().into_report().kind else {
         panic!("expected cause")
     };
-    assert!(!diagnostic.labels[0].line_only);
-    assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), "direct.p4");
-    assert_eq!(diagnostic.labels[0].span.left.line, 2);
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(error.span.left.file.as_ref(), "direct.p4");
+    assert_eq!(error.span.left.line, 2);
 }
 
 #[test]
@@ -420,10 +417,27 @@ fn construction_failure_preserves_typed_cause_and_source_location() {
     let error = P4Error::new(span.clone(), ValueError::IndexOverflow);
     assert!(matches!(error.kind, P4ErrorKind::Construction(ValueError::IndexOverflow)));
     assert_eq!(error.span, span);
-    let report = error.into_report();
+    let report = error.clone().into_report();
     let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected cause") };
     assert_eq!(diagnostic.code.as_deref(), Some("p4/value-invalid"));
     assert_eq!(diagnostic.message, "value arena index overflow");
-    assert_eq!(diagnostic.labels.len(), 1);
-    assert_eq!(diagnostic.labels[0].span, span);
+    assert!(diagnostic.labels.is_empty());
+    assert_eq!(diagnostic.notes, ["at input.p4:2"]);
+}
+
+#[test]
+fn test_parse_reports_only_file_and_line_for_direct_and_preprocessed_input() {
+    for source in ["const bit<8> x = ;", "# 1 \"input.p4\"\nconst bit<8> x = ;"] {
+        let mut arena = ValueArena::new();
+        let error = parse_string(&mut arena, "input.p4", source).unwrap_err();
+        let report = error.into_report();
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected cause") };
+        assert!(diagnostic.labels.is_empty());
+        assert_eq!(diagnostic.notes, ["at input.p4:1"]);
+        let mut renderer = p4spec_rust::diagnostic::Renderer::new(Default::default());
+        renderer.insert_source("input.p4", "const bit<8> x = ;");
+        let text = renderer.render_to_string(&report).unwrap();
+        assert!(text.contains("at input.p4:1"), "{text}");
+        assert!(!text.contains("┌─"), "{text}");
+    }
 }

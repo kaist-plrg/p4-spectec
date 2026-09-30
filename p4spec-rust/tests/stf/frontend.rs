@@ -237,7 +237,6 @@ fn test_lexical_and_grammar_failures_preserve_diagnostic_metadata() {
         assert_eq!(diagnostic.labels.len(), 1);
         let label = &diagnostic.labels[0];
         assert_eq!(label.style, LabelStyle::Primary);
-        assert!(!label.line_only);
         assert_eq!(label.span.left.file.as_ref(), "invalid.stf");
         assert_eq!(label.span.left.line, 1);
         assert_eq!(label.span.right.line, 1);

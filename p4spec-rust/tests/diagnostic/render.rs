@@ -44,7 +44,6 @@ fn two_files_keep_label_roles_messages_and_notes() {
         style: LabelStyle::Secondary,
         span: span("decl.watsup", 1, 4, 1, 7),
         message: "first declared here".to_owned(),
-        line_only: false,
     });
     let text = renderer.render_to_string(&report).unwrap();
     for part in [
@@ -118,7 +117,6 @@ fn unavailable_sources_keep_the_responsible_location() {
             style: LabelStyle::Secondary,
             span: super::span("related", 1, 0, 1, 3),
             message: "related declaration".to_owned(),
-            line_only: false,
         });
         let text = renderer.render_to_string(&report).unwrap();
         assert!(text.contains(loc), "{text}");
@@ -187,7 +185,6 @@ fn fallback_locations_use_readable_roles_and_colon_coordinates() {
         style: LabelStyle::Secondary,
         span: span("missing-decl", 4, 0, 4, 2),
         message: "declared here".to_owned(),
-        line_only: false,
     });
     let text = renderer.render_to_string(&report).unwrap();
     assert!(text.contains("at missing-input:2:4-missing-input:2:6: invalid escape"), "{text}");
@@ -257,20 +254,4 @@ fn source_names_escape_terminal_controls_without_changing_source_identity() {
         .unwrap();
     assert!(!text.contains('\u{1b}'), "{text:?}");
     assert!(text.contains(&file.escape_debug().to_string()), "{text}");
-}
-
-#[test]
-fn logical_line_labels_do_not_apply_expanded_columns_to_source() {
-    let mut renderer = Renderer::new(RenderConfig::default());
-    renderer.insert_source("original.p4", "x\n");
-    let span = span("original.p4", 73, 250, 73, 300);
-    let mut report = report(span.clone());
-    let label = &mut super::cause_mut(&mut report).labels[0];
-    *label = label.clone().with_line_only();
-    let text = renderer.render_to_string(&report).unwrap();
-    assert!(text.contains("at original.p4:73"), "{text}");
-    assert!(text.contains("column unavailable after preprocessing"), "{text}");
-    assert!(!text.contains(":251"), "{text}");
-    assert!(!text.contains("┌─"), "{text}");
-    assert_eq!(super::cause_mut(&mut report).labels[0].span, span);
 }

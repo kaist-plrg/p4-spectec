@@ -22,37 +22,17 @@ pub struct Label {
     pub span: Span,
     /// Explains why the span is relevant.
     pub message: String,
-    /// Marks logical line coordinates whose columns belong to expanded text.
-    pub line_only: bool,
 }
 
 impl Label {
     /// Labels the source occurrence responsible for a diagnostic.
     pub fn primary(span: &Span, message: impl Into<String>) -> Self {
-        Self {
-            style: LabelStyle::Primary,
-            span: span.clone(),
-            message: message.into(),
-            line_only: false,
-        }
+        Self { style: LabelStyle::Primary, span: span.clone(), message: message.into() }
     }
 
     /// Relates another source occurrence to the responsible occurrence.
     pub fn secondary(span: &Span, message: impl Into<String>) -> Self {
-        Self {
-            style: LabelStyle::Secondary,
-            span: span.clone(),
-            message: message.into(),
-            line_only: false,
-        }
-    }
-}
-
-impl Label {
-    /// Retains a logical line without claiming original-source column precision.
-    pub fn with_line_only(mut self) -> Self {
-        self.line_only = true;
-        self
+        Self { style: LabelStyle::Secondary, span: span.clone(), message: message.into() }
     }
 }
 
