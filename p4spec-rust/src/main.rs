@@ -1,8 +1,8 @@
 //! Command-line specification transformation and execution
 //!
 //! Commands render accumulated warnings before their result or error.
-//! [`run`] propagates typed failures to [`main`],
-//! which renders source reports and chooses the process exit code.
+//! `run` and `sim` choose how their execution failures are rendered.
+//! [`main`] turns the command result into a process exit code.
 
 mod error;
 
@@ -229,23 +229,27 @@ struct RunArgs {
 }
 
 /// Builds the selected interpreter and runs the program entry relation.
-fn run_command(args: RunArgs, config_output: &mut RenderConfig) -> Result<(), CliError> {
+fn run_command(args: RunArgs) -> Result<(), ()> {
     // Convert the specification before assembling its runner
-    let spec = interp_spec(&args.paths, &args.interpreter)?;
+    let spec = interp_spec(&args.paths, &args.interpreter)
+        .map_err(|report| render_report(&report, RenderConfig::default()))?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
     // Each runner uses the same P4 frontend and dummy extern implementation
     match spec {
         runner::Spec::Al(spec) => {
-            let runner = runner::build_al(spec, config, Dummy)?;
-            run_program(runner, &args, config_output)
+            let runner = runner::build_al(spec, config, Dummy)
+                .map_err(|report| render_report(&report, RenderConfig::default()))?;
+            run_program(runner, &args)
         }
         runner::Spec::Sl(spec) => {
-            let runner = runner::build_sl(spec, config, Dummy)?;
-            run_program(runner, &args, config_output)
+            let runner = runner::build_sl(spec, config, Dummy)
+                .map_err(|report| render_report(&report, RenderConfig::default()))?;
+            run_program(runner, &args)
         }
         runner::Spec::Pl(spec) => {
-            let runner = runner::build_pl(spec, config, Dummy)?;
-            run_program(runner, &args, config_output)
+            let runner = runner::build_pl(spec, config, Dummy)
+                .map_err(|report| render_report(&report, RenderConfig::default()))?;
+            run_program(runner, &args)
         }
     }
 }
@@ -254,18 +258,18 @@ fn run_command(args: RunArgs, config_output: &mut RenderConfig) -> Result<(), Cl
 fn run_program<Interp>(
     mut runner: Runner<Interp, BuiltinInterface, Dummy>,
     args: &RunArgs,
-    config_output: &mut RenderConfig,
-) -> Result<(), CliError>
+) -> Result<(), ()>
 where
     Interp: Interpreter<BuiltinInterface, Dummy>,
 {
     let program = parse_file(runner.arena_mut(), &args.includes, &args.program)
-        .map_err(|error| error.into_report())?;
+        .map_err(|error| render_report(&error.into_report(), RenderConfig::default()))?;
     runner
         .eval_program(&args.relation, program)
         .map_err(|failure| {
-            config_output.frame_style = Some(DisplayStyle::Short);
-            failure.into_report()
+            let config =
+                RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
+            render_report(&failure.into_report(), config);
         })?;
     println!("passed");
     Ok(())
@@ -308,27 +312,29 @@ struct SimArgs {
 }
 
 /// Builds the target simulator and runs the STF test.
-fn sim_command(args: SimArgs, config_output: &mut RenderConfig) -> Result<(), CliError> {
-    let spec = interp_spec(&args.paths, &args.interpreter)?;
+fn sim_command(args: SimArgs) -> Result<(), ()> {
+    let spec = interp_spec(&args.paths, &args.interpreter)
+        .map_err(|report| render_report(&report, RenderConfig::default()))?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
-    let simulator = sim_plugin::build(spec, &args.arch, config, args.plugin_encoding)?;
-    simulate(simulator, &args, config_output)
+    let simulator = sim_plugin::build(spec, &args.arch, config, args.plugin_encoding)
+        .map_err(|report| render_report(&report, RenderConfig::default()))?;
+    simulate(simulator, &args)
 }
 
 /// Runs the STF test on the simulator, printing each transmitted packet.
-fn simulate(
-    mut simulator: sim_plugin::Simulator,
-    args: &SimArgs,
-    config_output: &mut RenderConfig,
-) -> Result<(), CliError> {
+fn simulate(mut simulator: sim_plugin::Simulator, args: &SimArgs) -> Result<(), ()> {
     let result = simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
         println!("[PASS] Transmitted {tx}");
     });
-    // Keep specification and input diagnostics rich; compact execution frames
-    if matches!(&result, Err(sim_plugin::runner::Error::Runtime(_))) {
-        config_output.frame_style = Some(DisplayStyle::Short);
-    }
-    result.map_err(sim_plugin::runner::Error::into_report)?;
+    result.map_err(|error| {
+        // Keep input diagnostics rich; compact execution frames
+        let config = RenderConfig {
+            frame_style: matches!(&error, sim_plugin::runner::Error::Runtime(_))
+                .then_some(DisplayStyle::Short),
+            ..RenderConfig::default()
+        };
+        render_report(&error.into_report(), config);
+    })?;
     println!("passed");
     Ok(())
 }
@@ -364,16 +370,17 @@ enum Command {
 }
 
 /// Dispatches the parsed command.
-fn run(cli: Cli, config_output: &mut RenderConfig) -> Result<(), CliError> {
-    match cli.command {
+fn run(cli: Cli) -> Result<(), ()> {
+    let result = match cli.command {
         Command::Elab(args) => elab_command(args),
         Command::Algo(args) => algo_command(args),
         Command::Struct(args) => struct_command(args),
         Command::Prose(args) => prose_command(args),
         Command::Splice(args) => splice_command(args),
-        Command::Run(args) => run_command(args, config_output),
-        Command::Sim(args) => sim_command(args, config_output),
-    }
+        Command::Run(args) => return run_command(args),
+        Command::Sim(args) => return sim_command(args),
+    };
+    result.map_err(|report| render_report(&report, RenderConfig::default()))
 }
 
 /// Runs the command and turns a failure into one diagnostic and exit code.
@@ -391,13 +398,8 @@ fn main() -> ExitCode {
             return ExitCode::from(error.exit_code() as u8);
         }
     };
-    // Commands choose output policy before erasing consumed failure categories
-    let mut config_output = RenderConfig::default();
-    match run(cli, &mut config_output) {
+    match run(cli) {
         Ok(()) => ExitCode::SUCCESS,
-        Err(report) => {
-            render_report(&report, config_output);
-            ExitCode::FAILURE
-        }
+        Err(()) => ExitCode::FAILURE,
     }
 }
