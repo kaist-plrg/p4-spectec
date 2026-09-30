@@ -1,4 +1,4 @@
-//! Simulator selection through the production build boundary
+//! Simulator construction diagnostics
 //!
 //! Unknown architectures fail before specification loading and have no location.
 
@@ -14,7 +14,7 @@ use p4spec_rust::{
 /// Rejects an unsupported architecture through the actual simulator builder.
 pub(super) fn run(name: &str) -> Result<Vec<Report>> {
     if name != "sim-unsupported-architecture" {
-        return Err(failure(name, "unknown boundary case"));
+        return Err(failure(name, "unknown simulator case"));
     }
     let report = match sim_plugin::build(
         Spec::Al(vec![]),

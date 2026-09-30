@@ -324,4 +324,4 @@ pub const PROSE: &[&str] = &[
 pub const SPECDOC: &[&str] = &["adoc-nested-link", "adoc-empty-body", "adoc-invalid-text"];
 
 /// Lists native simulator admission failures.
-pub const BOUNDARY: &[&str] = &["sim-unsupported-architecture"];
+pub const SIM: &[&str] = &["sim-unsupported-architecture"];

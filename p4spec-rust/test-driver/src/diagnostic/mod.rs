@@ -5,13 +5,13 @@
 //! Comparisons preserve whitespace, and successful cases have empty expectations.
 
 mod algo;
-mod boundary;
 mod cases;
 mod command;
 mod elab;
 mod interp;
 mod parse;
 mod prose;
+mod sim;
 mod specdoc;
 mod splice;
 mod syntax;
@@ -44,7 +44,7 @@ pub enum Suite {
     Splice,
     Specdoc,
     Command,
-    Boundary,
+    Sim,
 }
 
 // = Acceptance runner
@@ -64,7 +64,7 @@ fn run_suite(
         Suite::Interp => ("interp", Some(DisplayStyle::Short)),
         Suite::Splice => ("splice", None),
         Suite::Specdoc => ("specdoc", None),
-        Suite::Boundary => ("boundary", None),
+        Suite::Sim => ("sim", None),
         Suite::Command => unreachable!("command diagnostics use subprocess output"),
     };
     let config = RenderConfig { frame_style, ..Default::default() };
@@ -127,7 +127,7 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
         Some(Suite::Splice) => run_suite(Suite::Splice, cases::SPLICE, splice::run),
         Some(Suite::Specdoc) => run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run),
         Some(Suite::Command) => run_command(path_cli),
-        Some(Suite::Boundary) => run_suite(Suite::Boundary, cases::BOUNDARY, boundary::run),
+        Some(Suite::Sim) => run_suite(Suite::Sim, cases::SIM, sim::run),
         None => {
             run_parse()?;
             run_suite(Suite::Elab, cases::ELAB, elab::run)?;
@@ -136,7 +136,7 @@ pub fn run(suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
             run_suite(Suite::Interp, cases::INTERP, run_interp)?;
             run_suite(Suite::Splice, cases::SPLICE, splice::run)?;
             run_suite(Suite::Specdoc, cases::SPECDOC, specdoc::run)?;
-            run_suite(Suite::Boundary, cases::BOUNDARY, boundary::run)?;
+            run_suite(Suite::Sim, cases::SIM, sim::run)?;
             run_command(path_cli)
         }
     }
