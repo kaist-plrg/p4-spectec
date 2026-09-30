@@ -31,7 +31,7 @@ fn test_runtime_type_failure_keeps_its_category_and_source_span() {
     };
     let type_error = expand_typ(&TDEnv::new(), &typ).unwrap_err();
 
-    assert_eq!(type_error.kind, TypeErrorKind::UndefinedType("Missing".to_owned()));
+    assert_eq!(type_error.kind, TypeErrorKind::TypeUndefined("Missing".to_owned()));
     assert_eq!(type_error.span, span);
     let report = error::typ::type_operation_invalid("expand type", type_error);
     let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected type cause") };

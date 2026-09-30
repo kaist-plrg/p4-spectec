@@ -27,11 +27,11 @@ pub struct InputHint {
 pub enum InputError {
     /// No input position at all.
     #[error("input hint is empty")]
-    Empty,
+    InputEmpty,
 
     /// A position listed twice.
     #[error("input hint contains duplicate index {}", idx.node)]
-    DuplicateIndex { idx: Box<Phrase<usize>>, idx_previous: Box<Phrase<usize>> },
+    IndexDuplicate { idx: Box<Phrase<usize>>, idx_previous: Box<Phrase<usize>> },
 
     /// A position past the relation's arity.
     #[error("input hint index {} is out of bounds for arity {arity}", idx.node)]
@@ -110,7 +110,7 @@ pub fn init(hint_exp: &Exp) -> Option<InputHint> {
 /// Validates non-empty, unique positions within `arity`
 pub fn validate(hint: &InputHint, arity: usize) -> Result<(), InputError> {
     if hint.indices.is_empty() {
-        return Err(InputError::Empty);
+        return Err(InputError::InputEmpty);
     }
     // Each position at most once
     for (idx_hint, idx) in hint.indices.iter().enumerate() {
@@ -118,7 +118,7 @@ pub fn validate(hint: &InputHint, arity: usize) -> Result<(), InputError> {
             .iter()
             .find(|idx_previous| idx_previous.node == idx.node)
         {
-            return Err(InputError::DuplicateIndex {
+            return Err(InputError::IndexDuplicate {
                 idx: Box::new(idx.clone()),
                 idx_previous: Box::new(idx_previous.clone()),
             });

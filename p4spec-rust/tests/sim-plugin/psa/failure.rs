@@ -107,7 +107,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for FailureInterp {
             "update_archState_e" => {
                 ctx.interp_mut().updates_arch += 1;
                 if ctx.interp().updates_arch == 2 {
-                    return Err(ExternError::Failure("restore failed".to_owned()).into());
+                    return Err(ExternError::Message("restore failed".to_owned()).into());
                 }
                 let value_arch = update_field(ctx.arena_mut(), values[0], "STATE", values[1]);
                 ctx.interp_mut().value_arch_completed = Some(value_arch);
@@ -213,7 +213,7 @@ fn test_clone_restoration_failure_preserves_queued_clones_and_completed_state() 
     let mut state = SimState { value_ctx, value_arch, txs: vec![tx] };
 
     assert!(
-        matches!(pipe::run_pre(&mut runner.context(), &mut state), Err(TestError::Extern(ExternError::Failure(msg))) if msg == "restore failed")
+        matches!(pipe::run_pre(&mut runner.context(), &mut state), Err(TestError::Extern(ExternError::Message(msg))) if msg == "restore failed")
     );
     assert_eq!(runner.context().interp().updates_arch, 2);
     assert_eq!(Some(state.value_arch), runner.context().interp().value_arch_completed);

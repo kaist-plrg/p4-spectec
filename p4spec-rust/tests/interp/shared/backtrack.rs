@@ -94,7 +94,7 @@ fn lifting_local_failures_preserves_existing_locations_and_children() {
 
 #[test]
 fn lifting_numeric_failure_locates_its_cause() {
-    let error = p4spec_rust::lang::common::prim::num::NumericError::NegativeNatural((-1).into());
+    let error = p4spec_rust::lang::common::prim::num::NumericError::NaturalNegative((-1).into());
     let result: Backtrack<()> = backtrack::from_result(Err(error), &span(3));
     let Failure::Fatal(report) = result.unwrap_err() else { panic!("expected fatal") };
     assert_eq!(report.span(), span(3));
@@ -109,9 +109,9 @@ fn lifting_type_and_match_failures_fills_only_unknown_locations() {
     };
     for (span_error, span_expect) in [(Span::default(), span(3)), (span(2), span(2))] {
         let reports: [Box<Report>; 2] = [
-            TypeError { kind: TypeErrorKind::UndefinedType("X".into()), span: span_error.clone() }
+            TypeError { kind: TypeErrorKind::TypeUndefined("X".into()), span: span_error.clone() }
                 .into(),
-            MatchError::UnexpectedTypeVariable { span: span_error.clone() }.into(),
+            MatchError::TypeVariableUnexpected { span: span_error.clone() }.into(),
         ];
         for report in reports {
             assert_eq!(report.diagnostic().labels.is_empty(), span_error == Span::default());

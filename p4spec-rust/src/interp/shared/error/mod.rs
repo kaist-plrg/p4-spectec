@@ -95,14 +95,14 @@ struct MatchDisplay<'a>(&'a MatchError);
 impl fmt::Display for MatchDisplay<'_> {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.0 {
-            MatchError::UndefinedType { name, .. } => write!(formatter, "undefined type {name}"),
-            MatchError::UnexpectedTypeVariable { .. } => {
+            MatchError::TypeUndefined { name, .. } => write!(formatter, "undefined type {name}"),
+            MatchError::TypeVariableUnexpected { .. } => {
                 formatter.write_str("unexpected type variable")
             }
-            MatchError::TypeArgumentMismatch { expected, actual, .. } => {
+            MatchError::TypeArgumentCountMismatch { expected, actual, .. } => {
                 write!(formatter, "expected {expected} type arguments, got {actual}")
             }
-            MatchError::UndefinedFunction { name, .. } => {
+            MatchError::FunctionUndefined { name, .. } => {
                 write!(formatter, "undefined function {name}")
             }
             MatchError::Type(error) => fmt::Display::fmt(&error.kind, formatter),
@@ -114,10 +114,10 @@ impl From<MatchError> for Error {
     fn from(error: MatchError) -> Self {
         // Keep the failed operation's location when available
         let span = match &error {
-            MatchError::UndefinedType { span, .. }
-            | MatchError::UnexpectedTypeVariable { span }
-            | MatchError::TypeArgumentMismatch { span, .. }
-            | MatchError::UndefinedFunction { span, .. } => span.clone(),
+            MatchError::TypeUndefined { span, .. }
+            | MatchError::TypeVariableUnexpected { span }
+            | MatchError::TypeArgumentCountMismatch { span, .. }
+            | MatchError::FunctionUndefined { span, .. } => span.clone(),
             MatchError::Type(error) => error.span.clone(),
         };
         let mut diagnostic_error =

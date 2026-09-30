@@ -153,7 +153,7 @@ impl Builtins {
     ) -> Result<(Value, bool), BuiltinError> {
         // An undeclared builtin is a hard error, not a mismatch
         let entry = self.funcs.get_mut(&id.node).ok_or_else(|| BuiltinError {
-            kind: BuiltinErrorKind::MissingImplementation(id.node.clone()),
+            kind: BuiltinErrorKind::ImplementationMissing(id.node.clone()),
         })?;
         let (value, side_effected) = match entry {
             // Pure results may be memoized by the interpreter

@@ -41,10 +41,10 @@ use std::path::{Path, PathBuf};
 pub enum Error {
     /// The P4 program did not parse.
     #[error("syntax error: {0}")]
-    P4Syntax(#[from] P4Error),
+    P4Parse(#[from] P4Error),
     /// The STF file did not parse.
     #[error("runtime error: {0}")]
-    StfSyntax(#[from] stf::error::StfError),
+    StfParse(#[from] stf::error::StfError),
     /// The specification failed while executing.
     #[error("runtime error: {0}")]
     Runtime(#[from] InterpError),
@@ -61,15 +61,15 @@ impl Error {
     /// Returns complete reports at the final simulator execution boundary.
     pub fn into_report(self) -> Box<Report> {
         match self {
-            Self::P4Syntax(error) => error.into_report(),
-            Self::StfSyntax(error) => error.into_report(),
+            Self::P4Parse(error) => error.into_report(),
+            Self::StfParse(error) => error.into_report(),
             Self::Runtime(failure) => failure.into_report(),
             Self::Stf { failure, span } => {
                 // Statement checks keep their own code and actual source location
                 let code = match &*failure {
-                    StfFailure::Mismatch { .. } => PACKET_MISMATCH,
-                    StfFailure::Unsupported(_) => STATEMENT_UNSUPPORTED,
-                    StfFailure::Remaining { .. } => PACKET_EXPECTATION_INCOMPLETE,
+                    StfFailure::PacketMismatch { .. } => PACKET_MISMATCH,
+                    StfFailure::StatementUnsupported(_) => STATEMENT_UNSUPPORTED,
+                    StfFailure::PacketsRemaining { .. } => PACKET_EXPECTATION_INCOMPLETE,
                 };
                 let labels =
                     if span == Span::default() { vec![] } else { vec![Label::primary(&span, "")] };
@@ -94,13 +94,13 @@ impl Error {
 pub enum StfFailure {
     /// An output packet did not match its expectation.
     #[error("expected {expect} but got {tx}")]
-    Mismatch { expect: Tx, tx: Tx },
+    PacketMismatch { expect: Tx, tx: Tx },
     /// A statement kind the runner does not execute.
     #[error("not yet supported: {0}")]
-    Unsupported(String),
+    StatementUnsupported(String),
     /// Packets or expectations left over at the end.
     #[error("{}{}", remaining_outputs(.txs), remaining_expects(.expects))]
-    Remaining { txs: Vec<Tx>, expects: Vec<Expectation> },
+    PacketsRemaining { txs: Vec<Tx>, expects: Vec<Expectation> },
 }
 
 /// Lists unmatched outputs, or nothing.
@@ -202,7 +202,7 @@ impl Run {
         let expect = &self.expect_queue[idx];
         // A pending expectation must match, else the test fails here
         if !io::matches(tx, expect) {
-            return Err(StfFailure::Mismatch { expect: expect.tx.clone(), tx: tx.clone() });
+            return Err(StfFailure::PacketMismatch { expect: expect.tx.clone(), tx: tx.clone() });
         }
         // Consume the expectation; later outputs wait in the queue
         let expect = self.expect_queue.remove(idx);
@@ -224,7 +224,7 @@ impl Run {
         // The first output on the port must match
         let tx = &self.tx_output_queue[idx];
         if !io::matches(tx, &expect) {
-            return Err(StfFailure::Mismatch { expect: expect.tx, tx: tx.clone() });
+            return Err(StfFailure::PacketMismatch { expect: expect.tx, tx: tx.clone() });
         }
         Ok(Some(self.tx_output_queue.remove(idx)))
     }
@@ -234,7 +234,7 @@ impl Run {
         if self.tx_output_queue.is_empty() && self.expect_queue.is_empty() {
             Ok(())
         } else {
-            Err(StfFailure::Remaining {
+            Err(StfFailure::PacketsRemaining {
                 txs: self.tx_output_queue.clone(),
                 expects: self.expect_queue.clone(),
             })
@@ -324,7 +324,7 @@ where
         Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
         // Anything else is unsupported
         stmt => Err(Error::Stf {
-            failure: Box::new(StfFailure::Unsupported(Print::to_string(&stmt))),
+            failure: Box::new(StfFailure::StatementUnsupported(Print::to_string(&stmt))),
             span: Span::default(),
         }),
     };

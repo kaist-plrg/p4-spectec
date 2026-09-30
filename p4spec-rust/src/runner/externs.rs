@@ -26,13 +26,13 @@ use super::{Interface, Interpreter, RunnerContext};
 pub enum ExternError {
     /// No extern is installed.
     #[error("extern is not configured")]
-    NotConfigured,
+    ExternUnconfigured,
     /// A value operation failed.
     #[error(transparent)]
     Value(#[from] ValueError),
     /// An arbitrary external message, retained without an invented code.
     #[error("{0}")]
-    Failure(String),
+    Message(String),
     /// A structured fatal diagnostic supplied by the host.
     #[error(transparent)]
     Report(#[from] Box<Report>),
@@ -53,7 +53,7 @@ pub enum ExternError {
     Allocation(#[from] std::collections::TryReserveError),
     /// A fixed-width value did not fit a machine word.
     #[error("fixed-width value exceeds a machine word")]
-    MachineWord(#[from] num_bigint::TryFromBigIntError<()>),
+    MachineWordOverflow(#[from] num_bigint::TryFromBigIntError<()>),
 }
 
 const EXTERN_UNCONFIGURED: &str = "runtime/extern-unconfigured";
@@ -72,12 +72,12 @@ impl ExternError {
             error => {
                 // Local failures acquire meaning here; external text stays uncoded
                 let code = match &error {
-                    Self::NotConfigured => Some(EXTERN_UNCONFIGURED),
+                    Self::ExternUnconfigured => Some(EXTERN_UNCONFIGURED),
                     Self::Value(_) => Some(EXTERN_VALUE_INVALID),
-                    Self::Numeric(_) | Self::MachineWord(_) => Some(EXTERN_NUMERIC_INVALID),
+                    Self::Numeric(_) | Self::MachineWordOverflow(_) => Some(EXTERN_NUMERIC_INVALID),
                     Self::Io(_) | Self::Encoding(_) => Some(EXTERN_STATE_INVALID),
                     Self::Allocation(_) => Some(EXTERN_ALLOCATION_FAILED),
-                    Self::Failure(_) => None,
+                    Self::Message(_) => None,
                     Self::Report(_) | Self::Mismatch(_) => unreachable!(),
                 };
                 Failure::Fatal(Box::new(
@@ -143,7 +143,7 @@ impl Extern for NullExtern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::NotConfigured;
+        let error = ExternError::ExternUnconfigured;
         Err(error.into())
     }
 
@@ -158,7 +158,7 @@ impl Extern for NullExtern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::NotConfigured;
+        let error = ExternError::ExternUnconfigured;
         Err(error.into())
     }
 

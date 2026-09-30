@@ -103,7 +103,7 @@ fn test_counter_reentry_failure_and_oversized_operands() {
         .add(&mut runner.context(), value_ctx, value_ctx)
         .expect_err("missing local must propagate");
     assert!(
-        matches!(error, TestError::Extern(ExternError::Failure(msg)) if msg == "missing local value")
+        matches!(error, TestError::Extern(ExternError::Message(msg)) if msg == "missing local value")
     );
     assert_eq!(runner.context().interp().calls, ["index", "value"]);
     local(&mut runner, "index", 1_i64 << 62);

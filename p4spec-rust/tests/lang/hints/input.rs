@@ -11,7 +11,7 @@ fn test_input_hints_validate_and_preserve_split_order() {
             p4spec_rust::phrase!(node: 0, span: Default::default())
         ]))
     );
-    assert_eq!(input_impl::validate(&InputHint::new(vec![]), 3), Err(InputError::Empty));
+    assert_eq!(input_impl::validate(&InputHint::new(vec![]), 3), Err(InputError::InputEmpty));
     assert_eq!(
         input_impl::validate(
             &InputHint::new(vec![
@@ -20,7 +20,7 @@ fn test_input_hints_validate_and_preserve_split_order() {
             ]),
             3
         ),
-        Err(InputError::DuplicateIndex {
+        Err(InputError::IndexDuplicate {
             idx: Box::new(p4spec_rust::phrase!(node: 1, span: Default::default())),
             idx_previous: Box::new(p4spec_rust::phrase!(node: 1, span: Default::default()))
         })
@@ -82,11 +82,11 @@ fn test_input_hints_validate_and_preserve_split_order() {
 #[test]
 fn test_zero_arity_default_hint_supports_operations_but_not_source_validation() {
     let hint = InputHint::new(vec![]);
-    assert_eq!(input_impl::validate(&hint, 0), Err(InputError::Empty));
+    assert_eq!(input_impl::validate(&hint, 0), Err(InputError::InputEmpty));
     assert_eq!(input_impl::split::<()>(&hint, vec![]), Ok((vec![], vec![])));
     assert_eq!(input_impl::combine::<()>(&hint, vec![], vec![]), Ok(vec![]));
     assert_eq!(input_impl::is_conditional::<()>(&hint, &[]), Ok(true));
-    assert_eq!(input_impl::split(&hint, vec![0]), Err(InputError::Empty));
+    assert_eq!(input_impl::split(&hint, vec![0]), Err(InputError::InputEmpty));
 }
 
 #[test]
@@ -98,7 +98,7 @@ fn test_input_hint_duplicates_take_precedence_over_bounds() {
     ]);
     assert_eq!(
         input_impl::validate(&hint, 2),
-        Err(InputError::DuplicateIndex {
+        Err(InputError::IndexDuplicate {
             idx: Box::new(p4spec_rust::phrase!(node: 0, span: Default::default())),
             idx_previous: Box::new(p4spec_rust::phrase!(node: 0, span: Default::default()))
         })
@@ -146,7 +146,7 @@ fn test_input_hint_preserves_element_spans_without_changing_equivalence() {
     assert_eq!(hint_repeated.indices()[1].span, idx_repeated.span);
     let error = input_impl::validate(&hint_repeated, 3).unwrap_err();
     assert_eq!(error.to_string(), "input hint contains duplicate index 2");
-    let InputError::DuplicateIndex { idx: idx_error, idx_previous } = error else {
+    let InputError::IndexDuplicate { idx: idx_error, idx_previous } = error else {
         panic!("expected a duplicate input index");
     };
     assert_eq!(idx_error.node, idx_repeated.node);

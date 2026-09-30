@@ -152,7 +152,7 @@ impl Default for RenderConfig {
 pub enum RenderError {
     /// Rejects a malformed span rather than changing its coordinates.
     #[error("invalid diagnostic span {}: {reason}", span_location(.span))]
-    InvalidSpan {
+    SpanInvalid {
         /// Preserves the rejected coordinates.
         span: Box<Span>,
         /// Explains the violated coordinate contract.
@@ -183,7 +183,7 @@ impl Renderer {
     // - invalid_*: span errors
 
     fn invalid_span(span: &Span, reason: &'static str) -> RenderError {
-        RenderError::InvalidSpan { span: Box::new(span.clone()), reason }
+        RenderError::SpanInvalid { span: Box::new(span.clone()), reason }
     }
 
     // - register_*: source storage

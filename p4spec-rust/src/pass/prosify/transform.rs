@@ -82,7 +82,7 @@ fn validate_hint_prose_false(hints: &annot::Hints, num_items: usize) -> Result<(
 fn validate_hint_fields(hints: &annot::Hints, num_fields: usize) -> Result<(), ProseError> {
     if let Some(hint) = &hints.node.prose_fields {
         fields::validate(hint, num_fields).map_err(
-            |fields::FieldError::ArityMismatch { expected, actual }| {
+            |fields::FieldError::FieldCountMismatch { expected, actual }| {
                 error::field_hint_arity_mismatch(&hints.span, hint, expected, actual)
             },
         )?;

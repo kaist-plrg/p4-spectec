@@ -23,7 +23,7 @@ use crate::{
 pub enum InterfaceError {
     /// No interface is installed.
     #[error("interface is not configured")]
-    NotConfigured,
+    InterfaceUnconfigured,
     /// A builtin failed.
     #[error(transparent)]
     Builtin(#[from] Box<BuiltinError>),
@@ -40,7 +40,7 @@ impl InterfaceError {
         match self {
             Self::Builtin(error) => error.into_report(),
             Self::Report(report) => report,
-            Self::NotConfigured => Box::new(
+            Self::InterfaceUnconfigured => Box::new(
                 Diagnostic::new(
                     "runtime",
                     Severity::Error,
@@ -114,7 +114,7 @@ impl Interface for NullInterface {
         _targs: &[Typ],
         _values: &[Value],
     ) -> Result<(Value, bool), InterfaceError> {
-        Err(InterfaceError::NotConfigured)
+        Err(InterfaceError::InterfaceUnconfigured)
     }
 
     fn clear(&mut self) {}

@@ -27,7 +27,7 @@ fn test_numeric_operations_preserve_kinds_and_signed_rendering() {
 fn test_natural_numbers_reject_negative_payloads() {
     assert_eq!(
         Natural::try_from(BigInt::from(-1)),
-        Err(NumericError::NegativeNatural(BigInt::from(-1)))
+        Err(NumericError::NaturalNegative(BigInt::from(-1)))
     );
 }
 #[test]
@@ -38,7 +38,7 @@ fn test_binary_operations_report_zero_divisors() {
         for operation in [BinOp::Div, BinOp::Mod] {
             assert_eq!(
                 num_impl::bin(operation, &number_l, &number_r),
-                Err(NumericError::ZeroDivisor(operation))
+                Err(NumericError::DivisorZero(operation))
             );
         }
     }
@@ -47,7 +47,7 @@ fn test_binary_operations_report_zero_divisors() {
 fn test_numeric_operations_report_mismatched_kinds() {
     let nat = natural(1);
     let int = Number::Int(1.into());
-    let error = NumericError::MismatchedKinds { typ_l: Typ::Nat, typ_r: Typ::Int };
+    let error = NumericError::KindMismatch { typ_l: Typ::Nat, typ_r: Typ::Int };
 
     assert_eq!(num_impl::bin(BinOp::Add, &nat, &int), Err(error.clone()));
     assert_eq!(num_impl::cmp(CmpOp::Lt, &nat, &int), Err(error));
@@ -56,6 +56,6 @@ fn test_numeric_operations_report_mismatched_kinds() {
 fn test_unsupported_binary_operations_return_errors() {
     assert_eq!(
         num_impl::bin(BinOp::Pow, &natural(2), &natural(3)),
-        Err(NumericError::UnsupportedBinaryOperation(BinOp::Pow))
+        Err(NumericError::BinaryOperationUnsupported(BinOp::Pow))
     );
 }

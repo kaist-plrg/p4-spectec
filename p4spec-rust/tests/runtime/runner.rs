@@ -161,7 +161,7 @@ impl Extern for FixtureExtern {
                 Ok((value, true))
             }
             _ => {
-                let error = ExternError::Failure(name.to_owned());
+                let error = ExternError::Message(name.to_owned());
                 Err(error.into())
             }
         }
@@ -177,7 +177,7 @@ impl Extern for FixtureExtern {
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::Failure(name.to_owned());
+        let error = ExternError::Message(name.to_owned());
         Err(error.into())
     }
 
@@ -197,7 +197,7 @@ fn test_null_interface_reports_configuration_failure() {
         .call_builtin(&mut arena, &id("sum_int"), &[], &[])
         .unwrap_err();
 
-    assert!(matches!(error, InterfaceError::NotConfigured));
+    assert!(matches!(error, InterfaceError::InterfaceUnconfigured));
 }
 
 #[test]
@@ -265,7 +265,7 @@ fn test_builtin_interface_preserves_builtin_failures() {
     assert!(matches!(
         error,
         InterfaceError::Builtin(error)
-            if matches!(error.kind, BuiltinErrorKind::ArityMismatch { .. })
+            if matches!(error.kind, BuiltinErrorKind::ArgumentCountMismatch { .. })
     ));
 }
 
@@ -300,7 +300,7 @@ fn test_builtin_interface_print_validates_both_arities() {
         assert!(matches!(
             error,
             InterfaceError::Builtin(error)
-                if matches!(error.kind, BuiltinErrorKind::ArityMismatch { expected: 1, actual: num_actual } if num_actual == actual)
+                if matches!(error.kind, BuiltinErrorKind::ArgumentCountMismatch { expected: 1, actual: num_actual } if num_actual == actual)
         ));
     }
 }
@@ -318,7 +318,7 @@ fn test_builtin_interface_print_preserves_unparse_failures() {
     assert!(matches!(
         error,
         InterfaceError::Builtin(error)
-            if matches!(error.kind, BuiltinErrorKind::P4Unparse(P4UnparseError::UnsupportedValue("Struct")))
+            if matches!(error.kind, BuiltinErrorKind::P4Unparse(P4UnparseError::ValueUnsupported("Struct")))
     ));
 }
 
@@ -426,7 +426,7 @@ fn test_null_extern_reports_configuration_failure() {
 
     let error = runner.context().call_func("extern", &[], &[]).unwrap_err();
 
-    assert!(matches!(error, FixtureError::Extern(ExternError::NotConfigured)));
+    assert!(matches!(error, FixtureError::Extern(ExternError::ExternUnconfigured)));
 }
 
 fn eval_text(

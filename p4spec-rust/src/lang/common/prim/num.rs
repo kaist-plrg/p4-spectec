@@ -18,7 +18,7 @@ use crate::lang::traits::print::{Print, Printer};
 /// A non-negative arbitrary-precision integer
 ///
 /// Construct with `TryFrom<BigInt>`;
-/// negative inputs return `NumericError::NegativeNatural`.
+/// negative inputs return `NumericError::NaturalNegative`.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[serde(try_from = "BigInt")]
 pub struct Natural(BigInt);
@@ -91,19 +91,19 @@ pub enum CmpOp {
 pub enum NumericError {
     /// A negative value was given where a natural was needed.
     #[error("natural number cannot be negative: {0}")]
-    NegativeNatural(BigInt),
+    NaturalNegative(BigInt),
 
     /// An operation mixed a natural and an integer.
     #[error("numeric operands have mismatched kinds: {typ_l:?} and {typ_r:?}")]
-    MismatchedKinds { typ_l: Typ, typ_r: Typ },
+    KindMismatch { typ_l: Typ, typ_r: Typ },
 
     /// Division or modulo by zero.
     #[error("numeric operation {0:?} has a zero divisor")]
-    ZeroDivisor(BinOp),
+    DivisorZero(BinOp),
 
     /// An operator with no implementation, currently `^`.
     #[error("unsupported numeric binary operation: {0:?}")]
-    UnsupportedBinaryOperation(BinOp),
+    BinaryOperationUnsupported(BinOp),
 }
 
 impl Natural {
@@ -117,7 +117,7 @@ impl TryFrom<BigInt> for Natural {
     type Error = NumericError;
 
     fn try_from(int: BigInt) -> Result<Self, Self::Error> {
-        if int.is_negative() { Err(NumericError::NegativeNatural(int)) } else { Ok(Self(int)) }
+        if int.is_negative() { Err(NumericError::NaturalNegative(int)) } else { Ok(Self(int)) }
     }
 }
 
@@ -274,12 +274,12 @@ pub fn bin(binop: BinOp, number_l: &Number, number_r: &Number) -> Result<Number,
         (binop @ (BinOp::Div | BinOp::Mod), Number::Nat(_), Number::Nat(natural_r))
             if natural_r.0.is_zero() =>
         {
-            Err(NumericError::ZeroDivisor(binop))
+            Err(NumericError::DivisorZero(binop))
         }
         (binop @ (BinOp::Div | BinOp::Mod), Number::Int(_), Number::Int(integer_r))
             if integer_r.is_zero() =>
         {
-            Err(NumericError::ZeroDivisor(binop))
+            Err(NumericError::DivisorZero(binop))
         }
         // Division and modulo stay within the kind
         (BinOp::Div, Number::Nat(natural_l), Number::Nat(natural_r)) => {
@@ -297,11 +297,11 @@ pub fn bin(binop: BinOp, number_l: &Number, number_r: &Number) -> Result<Number,
         // Exponentiation is not implemented
         (BinOp::Pow, Number::Nat(_), Number::Nat(_))
         | (BinOp::Pow, Number::Int(_), Number::Int(_)) => {
-            Err(NumericError::UnsupportedBinaryOperation(binop))
+            Err(NumericError::BinaryOperationUnsupported(binop))
         }
         // Mixed kinds are an error
         (_, number_l, number_r) => {
-            Err(NumericError::MismatchedKinds { typ_l: to_typ(number_l), typ_r: to_typ(number_r) })
+            Err(NumericError::KindMismatch { typ_l: to_typ(number_l), typ_r: to_typ(number_r) })
         }
     }
 }
@@ -332,7 +332,7 @@ pub fn cmp(cmpop: CmpOp, number_l: &Number, number_r: &Number) -> Result<bool, N
         (CmpOp::Ge, Number::Int(integer_l), Number::Int(integer_r)) => Ok(integer_l >= integer_r),
         // Mixed kinds are an error
         (_, number_l, number_r) => {
-            Err(NumericError::MismatchedKinds { typ_l: to_typ(number_l), typ_r: to_typ(number_r) })
+            Err(NumericError::KindMismatch { typ_l: to_typ(number_l), typ_r: to_typ(number_r) })
         }
     }
 }

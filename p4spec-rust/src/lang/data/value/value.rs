@@ -400,13 +400,13 @@ pub enum ValueError {
     IndexOverflow,
     /// A projection met a value of another kind.
     #[error("expected {expected:?} value, got {actual:?}")]
-    UnexpectedKind { expected: ValueTag, actual: ValueTag },
+    KindMismatch { expected: ValueTag, actual: ValueTag },
     /// An element index past the end.
     #[error("value index {index} is out of bounds for length {len}")]
     IndexOutOfBounds { index: usize, len: usize },
     /// A fixed-arity projection met another count.
     #[error("expected exactly {expected} values, got {actual}")]
-    ExpectedCount { expected: usize, actual: usize },
+    CountMismatch { expected: usize, actual: usize },
 }
 
 // - Index overflow

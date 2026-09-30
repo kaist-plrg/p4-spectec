@@ -16,21 +16,21 @@ use crate::{
 /// A kind of STF lexing or parsing failure.
 pub enum StfErrorKind {
     #[error("invalid character {0:?}")]
-    InvalidCharacter(char),
+    CharacterInvalid(char),
     #[error("unterminated quoted identifier")]
-    UnterminatedQuotedIdentifier,
+    QuotedIdentifierUnterminated,
     #[error("integer priority is out of range: {0}")]
-    InvalidPriority(String),
+    PriorityOutOfBounds(String),
     #[error("invalid numeric literal: {0}")]
-    InvalidNumber(String),
+    NumberInvalid(String),
     #[error("unexpected end of input")]
-    UnexpectedEndOfInput,
+    InputIncomplete,
     #[error("unexpected token")]
-    UnexpectedToken,
+    TokenUnexpected,
     #[error("extra token")]
-    ExtraToken,
+    TokenExtra,
     #[error("invalid token")]
-    InvalidToken,
+    TokenInvalid,
     #[error(transparent)]
     Io(#[from] io::Error),
 }
@@ -62,14 +62,14 @@ impl StfError {
         let kind = kind.into();
         // Select the stable check code while retaining the local failure message
         let code = match &kind {
-            StfErrorKind::InvalidCharacter(_) => CHARACTER_INVALID,
-            StfErrorKind::UnterminatedQuotedIdentifier => QUOTED_IDENTIFIER_INCOMPLETE,
-            StfErrorKind::InvalidPriority(_) => PRIORITY_OUT_OF_BOUNDS,
-            StfErrorKind::InvalidNumber(_) => NUMBER_INVALID,
-            StfErrorKind::UnexpectedEndOfInput => INPUT_INCOMPLETE,
-            StfErrorKind::UnexpectedToken => TOKEN_UNEXPECTED,
-            StfErrorKind::ExtraToken => TOKEN_EXTRA,
-            StfErrorKind::InvalidToken => TOKEN_INVALID,
+            StfErrorKind::CharacterInvalid(_) => CHARACTER_INVALID,
+            StfErrorKind::QuotedIdentifierUnterminated => QUOTED_IDENTIFIER_INCOMPLETE,
+            StfErrorKind::PriorityOutOfBounds(_) => PRIORITY_OUT_OF_BOUNDS,
+            StfErrorKind::NumberInvalid(_) => NUMBER_INVALID,
+            StfErrorKind::InputIncomplete => INPUT_INCOMPLETE,
+            StfErrorKind::TokenUnexpected => TOKEN_UNEXPECTED,
+            StfErrorKind::TokenExtra => TOKEN_EXTRA,
+            StfErrorKind::TokenInvalid => TOKEN_INVALID,
             StfErrorKind::Io(_) => INPUT_UNREADABLE,
         };
         // Retain named file-only spans without inventing a source occurrence

@@ -91,11 +91,14 @@ fn test_missing_builtin_and_wrong_arity_are_typed_failures() {
     let missing = invoke(&mut arena, &mut Builtins::new(), "missing", &[]).unwrap_err();
     assert!(matches!(
         missing.kind,
-        BuiltinErrorKind::MissingImplementation(ref name) if name == "missing"
+        BuiltinErrorKind::ImplementationMissing(ref name) if name == "missing"
     ));
 
     let arity = invoke(&mut arena, &mut Builtins::new(), "sum_int", &[]).unwrap_err();
-    assert!(matches!(arity.kind, BuiltinErrorKind::ArityMismatch { expected: 1, actual: 0 }));
+    assert!(matches!(
+        arity.kind,
+        BuiltinErrorKind::ArgumentCountMismatch { expected: 1, actual: 0 }
+    ));
 }
 
 #[test]

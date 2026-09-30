@@ -110,13 +110,13 @@ fn test_malformed_or_failed_write_does_not_install_partial_packet_or_context() {
         .unwrap_err();
     assert!(matches!(
         error,
-        TestError::Extern(ExternError::Value(ValueError::ExpectedCount { expected: 1, actual: 2 }))
+        TestError::Extern(ExternError::Value(ValueError::CountMismatch { expected: 1, actual: 2 }))
     ));
     assert_eq!(pkt.idx, 0);
     assert_eq!(get::text(runner.arena(), &value_ctx), Ok("ctx"));
     runner.context().interp_mut().fail_rel = true;
     assert!(
-        matches!(pkt.extract(&mut runner.context(), value_ctx, value_arch), Err(TestError::Extern(ExternError::Failure(message))) if message == "write failed")
+        matches!(pkt.extract(&mut runner.context(), value_ctx, value_arch), Err(TestError::Extern(ExternError::Message(message))) if message == "write failed")
     );
     assert_eq!(pkt.idx, 0);
     runner.context().interp_mut().fail_rel = false;

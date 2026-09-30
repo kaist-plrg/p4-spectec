@@ -71,7 +71,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for CounterInterp {
             .values_var
             .get(&name_var)
             .copied()
-            .ok_or_else(|| ExternError::Failure(format!("missing local {name_var}")).into())
+            .ok_or_else(|| ExternError::Message(format!("missing local {name_var}")).into())
     }
 }
 

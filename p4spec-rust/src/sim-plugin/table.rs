@@ -152,7 +152,7 @@ where
                 .map_err(ExternError::from)?;
             // Key count must then agree
             if values_name.len() != values_key.len() {
-                return Err(ExternError::Value(ValueError::ExpectedCount {
+                return Err(ExternError::Value(ValueError::CountMismatch {
                     expected: values_name.len(),
                     actual: values_key.len(),
                 })

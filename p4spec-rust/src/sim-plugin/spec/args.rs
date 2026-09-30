@@ -25,7 +25,7 @@ pub fn assoc(
     // One value per name
     if names.len() != values.len() {
         return Err(
-            ValueError::ExpectedCount { expected: names.len(), actual: values.len() }.into()
+            ValueError::CountMismatch { expected: names.len(), actual: values.len() }.into()
         );
     }
     Ok(names.into_iter().zip(values.iter().copied()).collect())

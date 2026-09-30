@@ -34,7 +34,7 @@ fn test_output_matches_only_first_transmission() {
     assert_eq!(run_case.on_tx_output().unwrap(), Some(tx(1, "AA")));
     assert_eq!(run_case.tx_output_queue, vec![tx(2, "BB")]);
     assert_eq!(run_case.expect_queue.len(), 1);
-    assert!(matches!(run_case.finish(), Err(StfFailure::Remaining { .. })));
+    assert!(matches!(run_case.finish(), Err(StfFailure::PacketsRemaining { .. })));
 }
 
 #[test]
@@ -47,14 +47,14 @@ fn test_first_same_port_mismatch_preserves_queues() {
         .on_tx_expect(Expectation { tx: tx(1, "AA"), exact: true })
         .unwrap();
     run_case.state.txs = vec![tx(1, "AA")];
-    assert!(matches!(run_case.on_tx_output(), Err(StfFailure::Mismatch { .. })));
+    assert!(matches!(run_case.on_tx_output(), Err(StfFailure::PacketMismatch { .. })));
     assert_eq!(run_case.expect_queue.len(), 2);
     let mut run_case = run();
     run_case.state.txs = vec![tx(1, "BB"), tx(1, "AA")];
     run_case.on_tx_output().unwrap();
     assert!(matches!(
         run_case.on_tx_expect(Expectation { tx: tx(1, "AA"), exact: true }),
-        Err(StfFailure::Mismatch { .. })
+        Err(StfFailure::PacketMismatch { .. })
     ));
     assert_eq!(run_case.tx_output_queue.len(), 2);
 }
@@ -87,7 +87,7 @@ fn test_dropped_packet_retains_expectation() {
         .on_tx_expect(Expectation { tx: tx(1, ""), exact: false })
         .unwrap();
     assert_eq!(run_case.on_tx_output().unwrap(), None);
-    assert!(matches!(run_case.finish(), Err(StfFailure::Remaining { .. })));
+    assert!(matches!(run_case.finish(), Err(StfFailure::PacketsRemaining { .. })));
 }
 
 use p4spec_rust::{
@@ -351,7 +351,7 @@ fn test_native_steps_clear_raw_outputs_without_flushing_pending_queues() {
     );
     assert_eq!(run_case.matches, vec![tx(1, "AAFF")]);
     assert!(
-        matches!(runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]), Err(Error::Stf { failure, span }) if matches!(*failure, StfFailure::Unsupported(_)) && span == stmts[3].span)
+        matches!(runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]), Err(Error::Stf { failure, span }) if matches!(*failure, StfFailure::StatementUnsupported(_)) && span == stmts[3].span)
     );
     run_case.finish().unwrap();
 }

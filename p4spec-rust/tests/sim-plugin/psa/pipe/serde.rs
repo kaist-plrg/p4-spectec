@@ -112,7 +112,7 @@ fn test_object_restores_nested_register_values_from_its_arena() {
     assert!(get::bool(&arena, &value).unwrap());
     assert!(matches!(
         ObjectState::from_value(&mut arena, Encoding::ArenaIndependent, &value_typ),
-        Err(ExternError::Value(ValueError::UnexpectedKind { .. }))
+        Err(ExternError::Value(ValueError::KindMismatch { .. }))
     ));
     stacker::grow(32 * 1024 * 1024, || drop(arena));
 }

@@ -323,7 +323,7 @@ fn test_retry_shape_count_and_second_failure_never_update_architecture() {
         if invalid == "tuple projection" {
             assert!(matches!(
                 error,
-                TestError::Extern(ExternError::Value(ValueError::UnexpectedKind {
+                TestError::Extern(ExternError::Value(ValueError::KindMismatch {
                     expected: ValueTag::Tuple,
                     actual: ValueTag::Bool
                 }))

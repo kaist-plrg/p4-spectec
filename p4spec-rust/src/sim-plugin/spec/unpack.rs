@@ -23,7 +23,7 @@ pub fn p4_bool(arena: &ValueArena, value: &Value) -> Result<bool, ExternError> {
         "_B bool" => |values| {
             // Exactly one argument
             let [value] = values.as_slice() else {
-                return Err(ValueError::ExpectedCount {
+                return Err(ValueError::CountMismatch {
                     expected: 1,
                     actual: values.len(),
                 }.into());
@@ -41,7 +41,7 @@ pub fn p4_string(arena: &ValueArena, value: &Value) -> Result<String, ExternErro
         "'\"' text '\"'" => |values| {
             // Exactly one argument
             let [value] = values.as_slice() else {
-                return Err(ValueError::ExpectedCount {
+                return Err(ValueError::CountMismatch {
                     expected: 1,
                     actual: values.len(),
                 }.into());
@@ -58,7 +58,7 @@ pub fn p4_enum(arena: &ValueArena, value: &Value) -> Result<(String, String), Ex
         "tid '.' id" => |values| {
             // Type name, then member
             let [value_enum, value_id] = values.as_slice() else {
-                return Err(ValueError::ExpectedCount { expected: 2, actual: values.len() }.into());
+                return Err(ValueError::CountMismatch { expected: 2, actual: values.len() }.into());
             };
             Ok((get::text(arena, value_enum)?.to_owned(), get::text(arena, value_id)?.to_owned()))
         },
@@ -72,7 +72,7 @@ pub fn p4_tuple(arena: &ValueArena, value: &Value) -> Result<Vec<Value>, ExternE
         "TUPLE `( value* `)" => |values| {
             // One list of components
             let [value_list] = values.as_slice() else {
-                return Err(ValueError::ExpectedCount { expected: 1, actual: values.len() }.into());
+                return Err(ValueError::CountMismatch { expected: 1, actual: values.len() }.into());
             };
             Ok(get::list(arena, value_list)?.to_vec())
         },
@@ -88,7 +88,7 @@ pub fn p4_fixed_bit(arena: &ValueArena, value: &Value) -> Result<(BigInt, BigInt
         "nat W int" => |values| {
             // Width, then value
             let [value_width, value_int] = values.as_slice() else {
-                return Err(ValueError::ExpectedCount {
+                return Err(ValueError::CountMismatch {
                     expected: 2,
                     actual: values.len(),
                 }.into());
@@ -111,7 +111,7 @@ pub fn p4_precision_number(
         "nat W int" | "nat S int" => |values| {
             // Width, then value
             let [value_width, value_int] = values.as_slice() else {
-                return Err(ValueError::ExpectedCount { expected: 2, actual: values.len() }.into());
+                return Err(ValueError::CountMismatch { expected: 2, actual: values.len() }.into());
             };
             Ok((
                 num::to_int(get::num(arena, value_width)?).clone(),
@@ -121,7 +121,7 @@ pub fn p4_precision_number(
         // A varbit carries its maximum width first; only the actual one matters
         "nat '.' nat V int" => |values| {
             let [value_width_max, value_width, value_int] = values.as_slice() else {
-                return Err(ValueError::ExpectedCount { expected: 3, actual: values.len() }.into());
+                return Err(ValueError::CountMismatch { expected: 3, actual: values.len() }.into());
             };
             get::num(arena, value_width_max)?;
             Ok((

@@ -262,10 +262,10 @@ fn analyze_args_as_bind_shallow(
 ) -> Result<(VEnv, Vec<ast::Arg>, Vec<al::ast::Prem>), AlgoError> {
     // Translate shallow binding failures into table diagnostics
     shallow::check_args(&ctx.venv, args_il).map_err(|failure| match failure {
-        shallow::ShallowFailure::InvalidShape(arg) => {
+        shallow::ShallowFailure::ShapeInvalid(arg) => {
             error::table::table_binding_shape_invalid(arg)
         }
-        shallow::ShallowFailure::RepeatedBinding { id, id_previous } => {
+        shallow::ShallowFailure::BindingRepeated { id, id_previous } => {
             error::table::table_binding_repeated(id, &id_previous.at())
         }
     })?;

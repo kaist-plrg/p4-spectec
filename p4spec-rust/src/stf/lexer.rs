@@ -236,7 +236,7 @@ impl<'source> Lexer<'source> {
         }
 
         self.bump();
-        let error = StfErrorKind::InvalidCharacter(character);
+        let error = StfErrorKind::CharacterInvalid(character);
         Err(self.error(error, pos_l))
     }
 
@@ -273,7 +273,7 @@ impl<'source> Lexer<'source> {
             ('>', false) => Ok(Token::Gt),
             ('>', true) => Ok(Token::Ge),
             _ => {
-                let error = StfErrorKind::InvalidCharacter(character);
+                let error = StfErrorKind::CharacterInvalid(character);
                 Err(self.error(error, pos_l))
             }
         }
@@ -285,7 +285,7 @@ impl<'source> Lexer<'source> {
         let start = self.index;
         self.take_while(|character| character != '"' && character != '\n');
         if self.peek() != Some('"') {
-            let error = StfErrorKind::UnterminatedQuotedIdentifier;
+            let error = StfErrorKind::QuotedIdentifierUnterminated;
             return Err(self.error(error, pos_l));
         }
         let id = self.source[start..self.index].to_owned();
@@ -310,7 +310,7 @@ impl<'source> Lexer<'source> {
             spelling.chars().all(|digit| digit.is_ascii_digit())
         };
         if !valid {
-            let error = StfErrorKind::InvalidNumber(spelling.to_owned());
+            let error = StfErrorKind::NumberInvalid(spelling.to_owned());
             return Err(self.error(error, pos_l));
         }
 
@@ -404,7 +404,7 @@ impl<'source> Lexer<'source> {
             return Ok(token);
         }
         self.bump();
-        let error = StfErrorKind::InvalidCharacter(character);
+        let error = StfErrorKind::CharacterInvalid(character);
         Err(self.error(error, pos_l))
     }
 }

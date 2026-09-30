@@ -73,17 +73,17 @@ fn translate_lalrpop_error(
     let (kind, span) = match error {
         ParseError::InvalidToken { location: loc } => {
             let span = location_span(file, loc, loc);
-            (StfErrorKind::InvalidToken, span)
+            (StfErrorKind::TokenInvalid, span)
         }
         ParseError::UnrecognizedEof { location: loc, .. } => {
             let span = location_span(file, loc, loc);
-            (StfErrorKind::UnexpectedEndOfInput, span)
+            (StfErrorKind::InputIncomplete, span)
         }
         ParseError::UnrecognizedToken { token: (loc_l, _, loc_r), .. } => {
-            (StfErrorKind::UnexpectedToken, location_span(file, loc_l, loc_r))
+            (StfErrorKind::TokenUnexpected, location_span(file, loc_l, loc_r))
         }
         ParseError::ExtraToken { token: (loc_l, _, loc_r) } => {
-            (StfErrorKind::ExtraToken, location_span(file, loc_l, loc_r))
+            (StfErrorKind::TokenExtra, location_span(file, loc_l, loc_r))
         }
         ParseError::User { error } => return error,
     };
@@ -96,7 +96,7 @@ pub(crate) fn parse_priority(spelling: String, span: Span) -> Result<i64, StfErr
     match priority.filter(|priority| *priority <= MAX_PRIORITY) {
         Some(priority) => Ok(priority),
         None => {
-            let kind = StfErrorKind::InvalidPriority(spelling);
+            let kind = StfErrorKind::PriorityOutOfBounds(spelling);
             Err(StfError::new(kind, span))
         }
     }

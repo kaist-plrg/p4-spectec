@@ -215,7 +215,7 @@ pub mod get {
 
     /// The error for a value of the wrong kind.
     fn unexpected(arena: &ValueArena, value: &Value, expected: ValueTag) -> ValueError {
-        ValueError::UnexpectedKind { expected, actual: arena.kind(value).tag() }
+        ValueError::KindMismatch { expected, actual: arena.kind(value).tag() }
     }
 
     // - Primitives
@@ -360,7 +360,7 @@ pub mod get {
     pub fn one(values: &[Value]) -> Result<&Value, ValueError> {
         match values {
             [value] => Ok(value),
-            _ => Err(ValueError::ExpectedCount { expected: 1, actual: values.len() }),
+            _ => Err(ValueError::CountMismatch { expected: 1, actual: values.len() }),
         }
     }
 
@@ -368,7 +368,7 @@ pub mod get {
     pub fn two(values: &[Value]) -> Result<(&Value, &Value), ValueError> {
         match values {
             [value_a, value_b] => Ok((value_a, value_b)),
-            _ => Err(ValueError::ExpectedCount { expected: 2, actual: values.len() }),
+            _ => Err(ValueError::CountMismatch { expected: 2, actual: values.len() }),
         }
     }
 
@@ -377,7 +377,7 @@ pub mod get {
     pub fn three(values: &[Value]) -> Result<(&Value, &Value, &Value), ValueError> {
         match values {
             [value_a, value_b, value_c] => Ok((value_a, value_b, value_c)),
-            _ => Err(ValueError::ExpectedCount { expected: 3, actual: values.len() }),
+            _ => Err(ValueError::CountMismatch { expected: 3, actual: values.len() }),
         }
     }
 
@@ -386,7 +386,7 @@ pub mod get {
     pub fn four(values: &[Value]) -> Result<(&Value, &Value, &Value, &Value), ValueError> {
         match values {
             [value_a, value_b, value_c, value_d] => Ok((value_a, value_b, value_c, value_d)),
-            _ => Err(ValueError::ExpectedCount { expected: 4, actual: values.len() }),
+            _ => Err(ValueError::CountMismatch { expected: 4, actual: values.len() }),
         }
     }
 }

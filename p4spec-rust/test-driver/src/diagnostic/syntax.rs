@@ -35,7 +35,7 @@ impl Extern for Probe {
         Interp: Interpreter<Iface, Self>,
     {
         self.0.set(self.0.get() + 1);
-        Err(ExternError::Failure("evaluation probe".to_owned()).into())
+        Err(ExternError::Message("evaluation probe".to_owned()).into())
     }
 
     fn eval_func<Interp, Iface>(
@@ -50,7 +50,7 @@ impl Extern for Probe {
         Interp: Interpreter<Iface, Self>,
     {
         self.0.set(self.0.get() + 1);
-        Err(ExternError::Failure("evaluation probe".to_owned()).into())
+        Err(ExternError::Message("evaluation probe".to_owned()).into())
     }
 
     fn clear(&mut self) {}

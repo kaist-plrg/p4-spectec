@@ -22,7 +22,7 @@ fn test_fields_initialize_only_text_and_require_exact_arity() {
     assert_eq!(fields_impl::validate(&hint, 2), Ok(()));
     assert_eq!(
         fields_impl::validate(&hint, 1),
-        Err(FieldError::ArityMismatch { expected: 1, actual: 2 })
+        Err(FieldError::FieldCountMismatch { expected: 1, actual: 2 })
     );
 }
 
@@ -33,6 +33,6 @@ fn test_empty_field_hint_retains_its_expression_span() {
     assert_eq!(hint.span, span("empty-fields"));
     assert_eq!(
         fields_impl::validate(&hint, 1),
-        Err(FieldError::ArityMismatch { expected: 1, actual: 0 })
+        Err(FieldError::FieldCountMismatch { expected: 1, actual: 0 })
     );
 }

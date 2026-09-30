@@ -145,7 +145,7 @@ fn test_phase_arity_failure_retains_only_completed_phase_state() {
         )
         .unwrap_err();
         assert!(
-            matches!(error, TestError::Extern(ExternError::Value(ValueError::ExpectedCount { expected: count_expected, actual: count_actual })) if count_expected == expected && count_actual == actual)
+            matches!(error, TestError::Extern(ExternError::Value(ValueError::CountMismatch { expected: count_expected, actual: count_actual })) if count_expected == expected && count_actual == actual)
         );
         assert_eq!(get::text(runner_phase.arena(), &state.value_ctx).unwrap(), name_ctx);
         assert_eq!(get::text(runner_phase.arena(), &state.value_arch).unwrap(), name_arch);
@@ -160,7 +160,7 @@ fn test_initialization_requires_two_outputs_and_filter_result_is_ignored() {
     let value = runner_phase.context().interp().values[0];
     assert!(matches!(
         ebpf::init_pipe(&mut runner_phase.context(), value),
-        Err(TestError::Extern(ExternError::Value(ValueError::ExpectedCount {
+        Err(TestError::Extern(ExternError::Value(ValueError::CountMismatch {
             expected: 2,
             actual: 1
         })))
@@ -194,7 +194,7 @@ fn test_extern_init_and_function_report_argument_counts_before_dispatch() {
         for error in [error_init, error_func] {
             assert!(matches!(
                 error,
-                TestError::Extern(ExternError::Value(ValueError::ExpectedCount {
+                TestError::Extern(ExternError::Value(ValueError::CountMismatch {
                     expected: 4,
                     actual: count,
                 })) if count == actual

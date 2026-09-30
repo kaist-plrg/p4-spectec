@@ -21,15 +21,15 @@ pub enum BuiltinErrorKind {
 
     /// Wrong number of type arguments or values.
     #[error("arity mismatch: expected {expected}, got {actual}")]
-    ArityMismatch { expected: usize, actual: usize },
+    ArgumentCountMismatch { expected: usize, actual: usize },
 
     /// The specification declares a builtin this interface lacks.
     #[error("implementation for builtin {0} is missing")]
-    MissingImplementation(String),
+    ImplementationMissing(String),
 
     /// An argument had the right kind but an unusable value.
     #[error("{0}")]
-    InvalidArgument(String),
+    ArgumentInvalid(String),
 
     /// A value projection or construction failed.
     #[error(transparent)]
@@ -54,12 +54,12 @@ pub struct BuiltinError {
 impl BuiltinError {
     /// An invalid-argument failure with a message.
     pub fn new(message: impl Into<String>) -> Self {
-        Self { kind: BuiltinErrorKind::InvalidArgument(message.into()) }
+        Self { kind: BuiltinErrorKind::ArgumentInvalid(message.into()) }
     }
 
     /// An arity failure.
     pub fn arity(expected: usize, actual: usize) -> Self {
-        Self { kind: BuiltinErrorKind::ArityMismatch { expected, actual } }
+        Self { kind: BuiltinErrorKind::ArgumentCountMismatch { expected, actual } }
     }
 }
 
@@ -86,9 +86,9 @@ impl BuiltinError {
         };
         let code = match &kind {
             BuiltinErrorKind::Report(_) => unreachable!(),
-            BuiltinErrorKind::ArityMismatch { .. } => BUILTIN_ARGUMENT_ARITY_MISMATCH,
-            BuiltinErrorKind::MissingImplementation(_) => BUILTIN_IMPLEMENTATION_MISSING,
-            BuiltinErrorKind::InvalidArgument(_) => BUILTIN_ARGUMENT_INVALID,
+            BuiltinErrorKind::ArgumentCountMismatch { .. } => BUILTIN_ARGUMENT_ARITY_MISMATCH,
+            BuiltinErrorKind::ImplementationMissing(_) => BUILTIN_IMPLEMENTATION_MISSING,
+            BuiltinErrorKind::ArgumentInvalid(_) => BUILTIN_ARGUMENT_INVALID,
             BuiltinErrorKind::Value(_) | BuiltinErrorKind::Numeric(_) => BUILTIN_VALUE_INVALID,
             BuiltinErrorKind::P4Unparse(_) => BUILTIN_PRINT_UNSUPPORTED,
         };

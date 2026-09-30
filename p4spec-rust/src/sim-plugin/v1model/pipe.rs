@@ -855,7 +855,7 @@ where
     let value_error = get::matches! { ctx.arena(), &value_call_result,
         "REJECT errorValue" => |values| match values.as_slice() {
             [value_error] => Some(**value_error),
-            _ => return Err(ExternError::from(ValueError::ExpectedCount {
+            _ => return Err(ExternError::from(ValueError::CountMismatch {
                 expected: 1,
                 actual: values.len(),
             }).into()),

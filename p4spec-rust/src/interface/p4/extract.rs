@@ -13,7 +13,7 @@ use super::{context::TypeId, error::ExtractError};
 
 /// The text of a `name` value, including the keywords usable as names.
 pub(super) fn id_name(arena: &ValueArena, value: &Value) -> Result<String, ExtractError> {
-    let unexpected = || ExtractError::UnexpectedValue("id_name");
+    let unexpected = || ExtractError::ValueUnexpected("id_name");
     get::matches! { arena,
         value,
         // Identifiers carry their text; keyword names spell themselves
@@ -47,7 +47,7 @@ pub(super) fn id_function_prototype(
         "typeOrVoid name typeParameterListOpt `( parameterList `)" => |values| {
             id_name(arena, values[1])
         },
-        _ => Err(ExtractError::UnexpectedValue("id_function_prototype")),
+        _ => Err(ExtractError::ValueUnexpected("id_function_prototype")),
     }
 }
 
@@ -102,7 +102,7 @@ pub(super) fn id_declaration(arena: &ValueArena, value: &Value) -> Result<String
             id_name(arena, values[1])
         },
         "annotationList TABLE name `{ tablePropertyList `}" => |values| id_name(arena, values[1]),
-        _ => Err(ExtractError::UnexpectedValue("id_declaration")),
+        _ => Err(ExtractError::ValueUnexpected("id_declaration")),
     }
 }
 
@@ -110,7 +110,7 @@ pub(super) fn id_declaration(arena: &ValueArena, value: &Value) -> Result<String
 
 /// The named type a `typeRef` refers to; built-in types have no members.
 pub(super) fn type_id_type_ref(arena: &ValueArena, value: &Value) -> Result<TypeId, ExtractError> {
-    let unexpected = || ExtractError::UnexpectedValue("type_id_type_ref");
+    let unexpected = || ExtractError::ValueUnexpected("type_id_type_ref");
     get::matches! { arena,
         value,
         // Built-in types have no members to resolve
@@ -160,7 +160,7 @@ pub(super) fn type_id_declaration(
         | "annotationList type `( argumentList `) name objectInitializer ';'" => |values| {
             type_id_type_ref(arena, values[1])
         },
-        _ => Err(ExtractError::UnexpectedValue("type_id_declaration")),
+        _ => Err(ExtractError::ValueUnexpected("type_id_declaration")),
     }
 }
 
@@ -172,7 +172,7 @@ fn has_type_params(arena: &ValueArena, value: &Value) -> Result<bool, ExtractErr
         value,
         "_EMPTY" => |_values| Ok(false),
         "`< typeParameterList `>" => |_values| Ok(true),
-        _ => Err(ExtractError::UnexpectedValue("has_type_params")),
+        _ => Err(ExtractError::ValueUnexpected("has_type_params")),
     }
 }
 
@@ -186,7 +186,7 @@ pub(super) fn has_type_params_function_prototype(
         "typeOrVoid name typeParameterListOpt `( parameterList `)" => |values| {
             has_type_params(arena, values[2])
         },
-        _ => Err(ExtractError::UnexpectedValue(
+        _ => Err(ExtractError::ValueUnexpected(
             "has_type_params_function_prototype",
         )),
     }
@@ -234,7 +234,7 @@ pub(super) fn has_type_params_declaration(
             has_type_params(arena, values[2])
         },
         "annotationList TABLE name `{ tablePropertyList `}" => |_values| Ok(false),
-        _ => Err(ExtractError::UnexpectedValue(
+        _ => Err(ExtractError::ValueUnexpected(
             "has_type_params_declaration",
         )),
     }

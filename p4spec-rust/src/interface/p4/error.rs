@@ -15,10 +15,10 @@ use crate::{
 pub enum ContextError {
     /// No scope to declare into.
     #[error("P4 context has no scope")]
-    MissingScope,
+    ScopeMissing,
     /// The global scope was popped.
     #[error("cannot pop the root P4 scope")]
-    RootScope,
+    RootScopePopForbidden,
 }
 
 /// A parse-tree value of an unexpected shape.
@@ -26,7 +26,7 @@ pub enum ContextError {
 pub enum ExtractError {
     /// The named extractor met a value it has no case for.
     #[error("@{0}: unexpected value")]
-    UnexpectedValue(&'static str),
+    ValueUnexpected(&'static str),
 }
 
 /// A lexical failure in P4 source.
@@ -34,19 +34,19 @@ pub enum ExtractError {
 pub enum LexErrorKind {
     /// The source ended inside a string.
     #[error("unterminated string literal")]
-    UnterminatedString,
+    StringUnterminated,
     /// An escape other than `\"`, `\n`, or `\\`.
     #[error("unsupported escape sequence {0}")]
-    UnsupportedEscape(String),
+    EscapeUnsupported(String),
     /// The source ended inside `/* */`.
     #[error("unterminated block comment")]
-    UnterminatedComment,
+    CommentUnterminated,
     /// Digits that do not parse in their radix.
     #[error("invalid integer literal {0}")]
-    InvalidInteger(String),
+    IntegerInvalid(String),
     /// A `1s...` literal.
     #[error("signed integers must have width at least 2")]
-    SignedWidth,
+    SignedWidthInvalid,
 }
 
 /// Why reading a P4 program failed.
@@ -99,11 +99,11 @@ impl P4Error {
             P4ErrorKind::Value(_) => VALUE_INVALID,
             P4ErrorKind::Preprocessor { .. } => PREPROCESSOR_FAILED,
             P4ErrorKind::Context(_) => CONTEXT_INVALID,
-            P4ErrorKind::Lex(LexErrorKind::UnterminatedString) => TEXT_LITERAL_INCOMPLETE,
-            P4ErrorKind::Lex(LexErrorKind::UnsupportedEscape(_)) => TEXT_ESCAPE_UNSUPPORTED,
-            P4ErrorKind::Lex(LexErrorKind::UnterminatedComment) => BLOCK_COMMENT_INCOMPLETE,
-            P4ErrorKind::Lex(LexErrorKind::InvalidInteger(_)) => INTEGER_LITERAL_INVALID,
-            P4ErrorKind::Lex(LexErrorKind::SignedWidth) => INTEGER_WIDTH_INVALID,
+            P4ErrorKind::Lex(LexErrorKind::StringUnterminated) => TEXT_LITERAL_INCOMPLETE,
+            P4ErrorKind::Lex(LexErrorKind::EscapeUnsupported(_)) => TEXT_ESCAPE_UNSUPPORTED,
+            P4ErrorKind::Lex(LexErrorKind::CommentUnterminated) => BLOCK_COMMENT_INCOMPLETE,
+            P4ErrorKind::Lex(LexErrorKind::IntegerInvalid(_)) => INTEGER_LITERAL_INVALID,
+            P4ErrorKind::Lex(LexErrorKind::SignedWidthInvalid) => INTEGER_WIDTH_INVALID,
             P4ErrorKind::Syntax => SYNTAX_INVALID,
         };
         // Retain named file-only spans without inventing a source occurrence
@@ -161,7 +161,7 @@ impl P4Error {
 pub enum P4UnparseError {
     /// Structs, functions, and externs have no P4 spelling.
     #[error("cannot unparse runtime value kind {0}")]
-    UnsupportedValue(&'static str),
+    ValueUnsupported(&'static str),
     /// A print hint asked for an item that does not exist.
     #[error(transparent)]
     Alteration(#[from] AlterationError),
