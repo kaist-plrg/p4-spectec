@@ -44,12 +44,12 @@ pub fn run(path_cli: &Path, name: &str) -> Result<String> {
         }
         let text = String::from_utf8(output.stderr).map_err(|error| failure(name, error))?;
         if !text.starts_with("error: unrecognized subcommand 'unknown'")
-            || !text.contains("source: command")
-            || !text.contains("Usage:")
+            || text.contains("source: command")
+            || !text.contains("\n\nUsage:")
             || text.contains("generated source")
             || text.contains("┌─")
         {
-            return Err(failure(name, format!("expected an unlocated command report, got {text}")));
+            return Err(failure(name, format!("expected clap argument output, got {text}")));
         }
         return Ok(text);
     }

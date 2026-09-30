@@ -9,7 +9,6 @@ mod error;
 use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
-use error::CliError;
 
 use p4spec_rust::{
     backend_specdoc::splicer,
@@ -24,8 +23,13 @@ use p4spec_rust::{
 
 // - Diagnostic output
 
+/// Renders a report with the default diagnostic presentation.
+fn render_report(report: &Report) {
+    render_report_with_config(report, RenderConfig::default());
+}
+
 /// Renders reports without changing their structured payloads.
-fn render_report(report: &Report, config: RenderConfig) {
+fn render_report_with_config(report: &Report, config: RenderConfig) {
     let mut renderer = Renderer::new(config);
     if let Err(error) = renderer.render_to_stderr(report) {
         eprintln!("{report}\ndiagnostic rendering failed: {error}");
@@ -39,7 +43,7 @@ fn report_warnings<Value, Error>(
     (result, warnings): (Result<Value, Error>, Vec<Report>),
 ) -> Result<Value, Error> {
     for report in warnings {
-        render_report(&report, RenderConfig::default());
+        render_report(&report);
     }
     result
 }
@@ -55,8 +59,9 @@ struct ElabArgs {
 }
 
 /// Elaborates the specifications and prints the internal language.
-fn elab_command(args: ElabArgs) -> Result<(), CliError> {
-    let spec_il = report_warnings(p4spec_rust::elab_with_warnings(&args.paths))?;
+fn elab_command(args: ElabArgs) -> Result<(), ()> {
+    let spec_il = report_warnings(p4spec_rust::elab_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_il));
     Ok(())
 }
@@ -72,8 +77,9 @@ struct AlgoArgs {
 }
 
 /// Converts the specifications and prints the algorithmic language.
-fn algo_command(args: AlgoArgs) -> Result<(), CliError> {
-    let spec_al = report_warnings(p4spec_rust::algo_with_warnings(&args.paths))?;
+fn algo_command(args: AlgoArgs) -> Result<(), ()> {
+    let spec_al = report_warnings(p4spec_rust::algo_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_al));
     Ok(())
 }
@@ -89,8 +95,9 @@ struct StructArgs {
 }
 
 /// Structures the specifications and prints them without rule groups.
-fn struct_command(args: StructArgs) -> Result<(), CliError> {
-    let spec_sl = report_warnings(p4spec_rust::structure_with_warnings(&args.paths, true))?;
+fn struct_command(args: StructArgs) -> Result<(), ()> {
+    let spec_sl = report_warnings(p4spec_rust::structure_with_warnings(&args.paths, true))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_sl));
     Ok(())
 }
@@ -106,8 +113,9 @@ struct ProseArgs {
 }
 
 /// Converts the specifications and prints the prose language.
-fn prose_command(args: ProseArgs) -> Result<(), CliError> {
-    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
+fn prose_command(args: ProseArgs) -> Result<(), ()> {
+    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_pl));
     Ok(())
 }
@@ -132,21 +140,24 @@ struct SpliceArgs {
 }
 
 /// Expands skeleton documents using the source and prose specifications.
-fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
+fn splice_command(args: SpliceArgs) -> Result<(), ()> {
     // Reject ambiguous destinations before checking input availability
     if args.inplace && !args.paths_output.is_empty() {
-        return Err(error::splice_output_conflict());
+        render_report(&error::splice_output_conflict());
+        return Err(());
     }
     // Require at least one skeleton in either output mode
     if args.paths_input.is_empty() {
-        return Err(error::splice_input_required());
+        render_report(&error::splice_input_required());
+        return Err(());
     }
     // Reject mismatched lists before zip can omit unpaired paths
     if !args.inplace && args.paths_input.len() != args.paths_output.len() {
-        return Err(error::splice_file_count_mismatch(
+        render_report(&error::splice_file_count_mismatch(
             args.paths_input.len(),
             args.paths_output.len(),
         ));
+        return Err(());
     }
     // Resolve output paths before loading specifications or touching documents
     let path_pairs: Vec<_> = if args.inplace {
@@ -161,10 +172,12 @@ fn splice_command(args: SpliceArgs) -> Result<(), CliError> {
             .collect()
     };
     // Retain source definitions alongside the annotated prose representation
-    let spec_el = p4spec_rust::parse(&args.paths)?;
-    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))?;
+    let spec_el = p4spec_rust::parse(&args.paths).map_err(|report| render_report(&report))?;
+    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))
+        .map_err(|report| render_report(&report))?;
     // Render accumulated splice warnings before propagating the file result
-    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))?;
+    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
+        .map_err(|report| render_report(&report))?;
     Ok(())
 }
 
@@ -231,24 +244,24 @@ struct RunArgs {
 /// Builds the selected interpreter and runs the program entry relation.
 fn run_command(args: RunArgs) -> Result<(), ()> {
     // Convert the specification before assembling its runner
-    let spec = interp_spec(&args.paths, &args.interpreter)
-        .map_err(|report| render_report(&report, RenderConfig::default()))?;
+    let spec =
+        interp_spec(&args.paths, &args.interpreter).map_err(|report| render_report(&report))?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
     // Each runner uses the same P4 frontend and dummy extern implementation
     match spec {
         runner::Spec::Al(spec) => {
-            let runner = runner::build_al(spec, config, Dummy)
-                .map_err(|report| render_report(&report, RenderConfig::default()))?;
+            let runner =
+                runner::build_al(spec, config, Dummy).map_err(|report| render_report(&report))?;
             run_program(runner, &args)
         }
         runner::Spec::Sl(spec) => {
-            let runner = runner::build_sl(spec, config, Dummy)
-                .map_err(|report| render_report(&report, RenderConfig::default()))?;
+            let runner =
+                runner::build_sl(spec, config, Dummy).map_err(|report| render_report(&report))?;
             run_program(runner, &args)
         }
         runner::Spec::Pl(spec) => {
-            let runner = runner::build_pl(spec, config, Dummy)
-                .map_err(|report| render_report(&report, RenderConfig::default()))?;
+            let runner =
+                runner::build_pl(spec, config, Dummy).map_err(|report| render_report(&report))?;
             run_program(runner, &args)
         }
     }
@@ -263,13 +276,13 @@ where
     Interp: Interpreter<BuiltinInterface, Dummy>,
 {
     let program = parse_file(runner.arena_mut(), &args.includes, &args.program)
-        .map_err(|error| render_report(&error.into_report(), RenderConfig::default()))?;
+        .map_err(|error| render_report(&error.into_report()))?;
     runner
         .eval_program(&args.relation, program)
         .map_err(|failure| {
             let config =
                 RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
-            render_report(&failure.into_report(), config);
+            render_report_with_config(&failure.into_report(), config);
         })?;
     println!("passed");
     Ok(())
@@ -313,11 +326,11 @@ struct SimArgs {
 
 /// Builds the target simulator and runs the STF test.
 fn sim_command(args: SimArgs) -> Result<(), ()> {
-    let spec = interp_spec(&args.paths, &args.interpreter)
-        .map_err(|report| render_report(&report, RenderConfig::default()))?;
+    let spec =
+        interp_spec(&args.paths, &args.interpreter).map_err(|report| render_report(&report))?;
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
     let simulator = sim_plugin::build(spec, &args.arch, config, args.plugin_encoding)
-        .map_err(|report| render_report(&report, RenderConfig::default()))?;
+        .map_err(|report| render_report(&report))?;
     simulate(simulator, &args)
 }
 
@@ -330,7 +343,7 @@ fn simulate(mut simulator: sim_plugin::Simulator, args: &SimArgs) -> Result<(), 
         // Input causes stay rich; only execution frames use compact rendering
         let config =
             RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
-        render_report(&report, config);
+        render_report_with_config(&report, config);
     })?;
     println!("passed");
     Ok(())
@@ -368,16 +381,15 @@ enum Command {
 
 /// Dispatches the parsed command.
 fn run(cli: Cli) -> Result<(), ()> {
-    let result = match cli.command {
+    match cli.command {
         Command::Elab(args) => elab_command(args),
         Command::Algo(args) => algo_command(args),
         Command::Struct(args) => struct_command(args),
         Command::Prose(args) => prose_command(args),
         Command::Splice(args) => splice_command(args),
-        Command::Run(args) => return run_command(args),
-        Command::Sim(args) => return sim_command(args),
-    };
-    result.map_err(|report| render_report(&report, RenderConfig::default()))
+        Command::Run(args) => run_command(args),
+        Command::Sim(args) => sim_command(args),
+    }
 }
 
 /// Runs the command and turns a failure into one diagnostic and exit code.
@@ -386,9 +398,7 @@ fn main() -> ExitCode {
     let cli = match Cli::try_parse() {
         Ok(cli) => cli,
         Err(error) => {
-            if error.use_stderr() {
-                render_report(&error::arguments(&error), RenderConfig::default());
-            } else if let Err(error) = error.print() {
+            if let Err(error) = error.print() {
                 eprintln!("command output failed: {error}");
                 return ExitCode::FAILURE;
             }

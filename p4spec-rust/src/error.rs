@@ -1,28 +1,9 @@
-//! Command failures and splice admission diagnostics
+//! Diagnostics for command-owned argument checks
 //!
 //! Command-owned checks construct reports before reading specification files.
-//! Completed operations forward their reports without another error wrapper.
 //! The CLI renders reports and selects exit codes at its output boundary.
 
 use p4spec_rust::diagnostic::{Diagnostic, Report, Severity};
-
-/// A finalized command failure ready for rendering.
-pub(crate) type CliError = Box<Report>;
-
-/// Converts argument admission failures without inventing source locations.
-pub(crate) fn arguments(error: &clap::Error) -> CliError {
-    let text = error.to_string();
-    let text = text.strip_prefix("error: ").unwrap_or(&text);
-    let (message, detail) = text.split_once("\n\n").unwrap_or((text, ""));
-    // Keep usage paragraphs separate without whitespace-only rendered lines
-    let notes = detail
-        .split("\n\n")
-        .map(str::trim_end)
-        .filter(|text| !text.is_empty())
-        .map(str::to_owned)
-        .collect();
-    Box::new(Diagnostic::new("command", Severity::Error, None, message, Vec::new(), notes).into())
-}
 
 /// Constructs a command diagnostic without a specification source location.
 fn command(code: &str, message: impl Into<String>) -> Box<Report> {

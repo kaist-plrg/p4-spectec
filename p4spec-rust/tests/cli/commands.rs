@@ -947,13 +947,14 @@ fn test_prose_and_splice_render_hint_reports_after_warnings() {
 }
 
 #[test]
-fn test_command_admission_uses_unlocated_report() {
+fn test_command_admission_preserves_clap_output() {
     let output = binary().arg("unknown").output().unwrap();
     assert_eq!(output.status.code(), Some(2));
     assert!(output.stdout.is_empty());
     let text = String::from_utf8(output.stderr).unwrap();
     assert!(text.starts_with("error: unrecognized subcommand 'unknown'"), "{text}");
-    assert!(text.contains("source: command"), "{text}");
+    assert!(!text.contains("source: command"), "{text}");
+    assert!(text.contains("\n\nUsage:"), "{text}");
     assert!(text.contains("Usage:"), "{text}");
     assert!(!text.contains("generated source"), "{text}");
     assert!(!text.contains("┌─"), "{text}");
