@@ -14,7 +14,7 @@ use crate::{
             value::{Value, ValueArena, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
 };
 use serde::{Deserialize, Serialize};
 
@@ -77,7 +77,7 @@ impl Meter {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -90,16 +90,14 @@ impl Meter {
             Vec::new(),
         ));
         let value_opt =
-            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_color), Span::default())
-                .map_err(ExternError::from)?;
+            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_color), Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 
@@ -112,7 +110,7 @@ impl Meter {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,

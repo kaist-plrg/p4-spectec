@@ -8,7 +8,7 @@ use crate::{
         common::source::Span,
         data::value::{Value, get, make},
     },
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
     sim_plugin::error,
 };
 
@@ -50,26 +50,23 @@ pub fn find_var_value_t<Interp, Iface, Ext>(
     value_cursor: &Value,
     value_ctx: &Value,
     name: &str,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     // The name as a bare `prefixedNameIR`
-    let value_name = make::text(ctx.arena_mut(), name.to_owned(), Span::default())
-        .map_err(ExternError::from)
-        .map_err(InterpreterError::from)?;
+    let value_name = make::text(ctx.arena_mut(), name.to_owned(), Span::default())?;
     let value_name = make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "_BARE nameIR",
         args: vec![value_name],
         typ: "prefixedNameIR",
         span: Span::default(),
-    }
-    .map_err(ExternError::from)
-    .map_err(InterpreterError::from)?;
+    }?;
     ctx.call_func("find_var_value_t", &[], &[value_name, *value_cursor, *value_ctx])
+        .map_err(ExternError::from)
 }
 
 /// Looks a local variable's value up.
@@ -77,7 +74,7 @@ pub fn find_var_value_t_local<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: &Value,
     name: &str,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -90,9 +87,7 @@ where
         args: Vec::new(),
         typ: "cursor",
         span: Span::default(),
-    }
-    .map_err(ExternError::from)
-    .map_err(InterpreterError::from)?;
+    }?;
     find_var_value_t(ctx, &value_cursor, value_ctx, name)
 }
 
@@ -101,7 +96,7 @@ pub fn find_var_e_local<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     name: &str,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -110,6 +105,7 @@ where
     let value_cursor = local_cursor(ctx.arena_mut())?;
     let value_name = bare_name(ctx.arena_mut(), name)?;
     ctx.call_func("find_var_e", &[], &[value_name, value_cursor, value_ctx])
+        .map_err(ExternError::from)
 }
 
 // == Types
@@ -119,19 +115,17 @@ pub fn find_type_e_local<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     name: &str,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     let value_cursor = local_cursor(ctx.arena_mut())?;
-    let value_name =
-        make::text(ctx.arena_mut(), name.to_owned(), Span::default()).map_err(ExternError::from)?;
+    let value_name = make::text(ctx.arena_mut(), name.to_owned(), Span::default())?;
     let value_opt = ctx.call_func("find_type_e", &[], &[value_cursor, value_ctx, value_name])?;
-    get::opt(ctx.arena(), &value_opt)
-        .map_err(ExternError::from)?
-        .ok_or_else(|| error::type_undefined(format!("type not found: {name}")).into())
+    get::opt(ctx.arena(), &value_opt)?
+        .ok_or_else(|| error::type_undefined(format!("type not found: {name}")))
 }
 
 /// Substitutes local type arguments into a type with `subst_type_e`.
@@ -139,7 +133,7 @@ pub fn subst_type_e_local<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_typ: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -147,53 +141,49 @@ where
 {
     let value_cursor = local_cursor(ctx.arena_mut())?;
     ctx.call_func("subst_type_e", &[], &[value_cursor, value_ctx, value_typ])
+        .map_err(ExternError::from)
 }
 
 /// The default value of a type.
 pub fn default<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_typ: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("default", &[], &[value_typ])
+        .map_err(ExternError::from)
 }
 
 /// The minimum size of a type in bits.
 pub fn sizeof_min_size_in_bits<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_typ: Value,
-) -> Result<num_bigint::BigInt, InterpreterError>
+) -> Result<num_bigint::BigInt, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     let value_size = ctx.call_func("sizeof_minSizeInBits'", &[], &[value_typ])?;
-    Ok(crate::lang::common::prim::num::to_int(
-        get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
-    )
-    .clone())
+    Ok(crate::lang::common::prim::num::to_int(get::num(ctx.arena(), &value_size)?).clone())
 }
 
 /// The maximum size of a type in bits.
 pub fn sizeof_max_size_in_bits<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_typ: Value,
-) -> Result<num_bigint::BigInt, InterpreterError>
+) -> Result<num_bigint::BigInt, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     let value_size = ctx.call_func("sizeof_maxSizeInBits'", &[], &[value_typ])?;
-    Ok(crate::lang::common::prim::num::to_int(
-        get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
-    )
-    .clone())
+    Ok(crate::lang::common::prim::num::to_int(get::num(ctx.arena(), &value_size)?).clone())
 }
 
 /// Casts a value to a type.
@@ -201,13 +191,14 @@ pub fn cast_op<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_typ: Value,
     value: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("cast_op", &[], &[value_typ, value])
+        .map_err(ExternError::from)
 }
 
 // == Bits
@@ -216,13 +207,14 @@ where
 pub fn write_bits_from_value<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_source: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("write_bits_from_value", &[], &[value_source])
+        .map_err(ExternError::from)
 }
 
 /// Fills a value from bits, sizing its variable field to `size_varsize`.
@@ -231,7 +223,7 @@ pub fn write_value_from_bits<Interp, Iface, Ext>(
     value_target: Value,
     size_varsize: usize,
     bits: &[bool],
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -243,22 +235,20 @@ where
         crate::lang::common::prim::num::Natural::try_from(num_bigint::BigInt::from(size_varsize))
             .expect("packet size is nonnegative"),
         Span::default(),
-    )
-    .map_err(ExternError::from)?;
+    )?;
     // Bits travel as a `bit*` list of booleans
     let values_bits = bits
         .iter()
         .map(|bit| make::bool(ctx.arena_mut(), *bit, Span::default()))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     let typ_bits = crate::lang::data::typ::make::list(crate::lang::data::typ::make::var(
         crate::phrase!(node: "bit".to_owned(), span: Span::default()),
         Vec::new(),
     ));
     let value_bits =
-        make::list(ctx.arena_mut(), typ_bits.node.into(), values_bits, Span::default())
-            .map_err(ExternError::from)?;
+        make::list(ctx.arena_mut(), typ_bits.node.into(), values_bits, Span::default())?;
     ctx.call_func("write_value_from_bits", &[], &[value_target, value_varsize, value_bits])
+        .map_err(ExternError::from)
 }
 
 /// Extracts the bit range `hi..lo` of a value.
@@ -267,13 +257,14 @@ pub fn bitacc_range_op<Interp, Iface, Ext>(
     value_base: Value,
     value_hi: Value,
     value_lo: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("bitacc_range_op", &[], &[value_base, value_hi, value_lo])
+        .map_err(ExternError::from)
 }
 
 // == Tables
@@ -282,7 +273,7 @@ where
 pub fn key_interface_of_table_object<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_table: Value,
-) -> Result<Vec<(Value, Value, Value)>, InterpreterError>
+) -> Result<Vec<(Value, Value, Value)>, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -290,13 +281,11 @@ where
 {
     // Each key is a (name, match kind, type) triple
     let value_keys = ctx.call_func("key_interface_of_tableObject", &[], &[value_table])?;
-    get::list(ctx.arena(), &value_keys)
-        .map_err(ExternError::from)?
+    get::list(ctx.arena(), &value_keys)?
         .iter()
         .map(|value_key| {
-            let values = get::tuple(ctx.arena(), value_key).map_err(ExternError::from)?;
-            let (value_name, value_match_kind, value_typ) =
-                get::three(values).map_err(ExternError::from)?;
+            let values = get::tuple(ctx.arena(), value_key)?;
+            let (value_name, value_match_kind, value_typ) = get::three(values)?;
             Ok((*value_name, *value_match_kind, *value_typ))
         })
         .collect()
@@ -310,7 +299,7 @@ pub fn table_object_add_entry<Interp, Iface, Ext>(
     value_priority: Value,
     value_keys: Value,
     value_action: Value,
-) -> Result<Option<Value>, InterpreterError>
+) -> Result<Option<Value>, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -321,7 +310,7 @@ where
         &[],
         &[value_ctx, value_table, value_priority, value_keys, value_action],
     )?;
-    Ok(get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
+    Ok(get::opt(ctx.arena(), &value_opt)?)
 }
 
 /// Sets a table object's default action.
@@ -330,13 +319,14 @@ pub fn table_object_add_default_action<Interp, Iface, Ext>(
     value_ctx: Value,
     value_table: Value,
     value_action: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("tableObject_add_default_action", &[], &[value_ctx, value_table, value_action])
+        .map_err(ExternError::from)
 }
 
 // == Objects
@@ -348,14 +338,14 @@ pub fn find_object_qualified_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_id: Value,
-) -> Result<Option<Value>, InterpreterError>
+) -> Result<Option<Value>, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx.call_func("find_object_qualified_e", &[], &[value_arch, value_id])?;
-    Ok(get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
+    Ok(get::opt(ctx.arena(), &value_opt)?)
 }
 
 /// Finds an object by bare name.
@@ -363,14 +353,14 @@ pub fn find_object_unqualified_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_id: Value,
-) -> Result<Option<Value>, InterpreterError>
+) -> Result<Option<Value>, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx.call_func("find_object_unqualified_e", &[], &[value_arch, value_id])?;
-    Ok(get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
+    Ok(get::opt(ctx.arena(), &value_opt)?)
 }
 
 // - Update
@@ -381,13 +371,14 @@ pub fn update_object_qualified_e<Interp, Iface, Ext>(
     value_arch: Value,
     value_id: Value,
     value_object: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("update_object_qualified_e", &[], &[value_arch, value_id, value_object])
+        .map_err(ExternError::from)
 }
 
 /// Replaces an object found by bare name.
@@ -396,13 +387,14 @@ pub fn update_object_unqualified_e<Interp, Iface, Ext>(
     value_arch: Value,
     value_id: Value,
     value_object: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("update_object_unqualified_e", &[], &[value_arch, value_id, value_object])
+        .map_err(ExternError::from)
 }
 
 // == Object state
@@ -412,16 +404,15 @@ pub fn find_object_state_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_id: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx.call_func("find_objectState_e", &[], &[value_arch, value_id])?;
-    get::opt(ctx.arena(), &value_opt)
-        .map_err(ExternError::from)?
-        .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()).into())
+    get::opt(ctx.arena(), &value_opt)?
+        .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()))
 }
 
 /// Replaces the state of an extern object; missing state is an error.
@@ -430,7 +421,7 @@ pub fn update_object_state_e<Interp, Iface, Ext>(
     value_arch: Value,
     value_id: Value,
     value_state: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -438,9 +429,8 @@ where
 {
     let value_opt =
         ctx.call_func("update_objectState_e", &[], &[value_arch, value_id, value_state])?;
-    get::opt(ctx.arena(), &value_opt)
-        .map_err(ExternError::from)?
-        .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()).into())
+    get::opt(ctx.arena(), &value_opt)?
+        .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()))
 }
 
 // == Architecture state
@@ -449,13 +439,14 @@ where
 pub fn find_arch_state_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("find_archState_e", &[], &[value_arch])
+        .map_err(ExternError::from)
 }
 
 /// Replaces the architecture state.
@@ -463,11 +454,12 @@ pub fn update_arch_state_e<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_state: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("update_archState_e", &[], &[value_arch, value_state])
+        .map_err(ExternError::from)
 }

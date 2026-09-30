@@ -13,7 +13,7 @@ use crate::{
             value::{Value, ValueArena, ValueError, get, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
     sim_plugin::error,
 };
 
@@ -61,7 +61,7 @@ pub fn find_table<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_name: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -74,7 +74,7 @@ where
         return Ok(value_table);
     }
     func::find_object_unqualified_e(ctx, value_arch, value_unqualified)?
-        .ok_or_else(|| error::table_undefined("table not found".to_owned()).into())
+        .ok_or_else(|| error::table_undefined("table not found".to_owned()))
 }
 
 /// Stores a table object back under the name it was found by.
@@ -83,7 +83,7 @@ pub fn update_table<Interp, Iface, Ext>(
     value_arch: Value,
     value_name: Value,
     value_table: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -109,7 +109,7 @@ pub fn add_entry<Interp, Iface, Ext>(
     value_priority: Value,
     value_keys: Value,
     value_action: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -133,30 +133,24 @@ where
             let mut values_name = Vec::new();
             for (value_name, value_match_kind, _) in keys {
                 // Selector keys take no STF value
-                if get::text(ctx.arena(), &value_match_kind).map_err(ExternError::from)?
-                    != "selector"
-                {
+                if get::text(ctx.arena(), &value_match_kind)? != "selector" {
                     values_name.push(value_name);
                 }
             }
-            let values_key = get::list(ctx.arena(), &value_keys)
-                .map_err(ExternError::from)?
+            let values_key = get::list(ctx.arena(), &value_keys)?
                 .iter()
                 .map(|value_key| get::tuple(ctx.arena(), value_key))
-                .collect::<Result<Vec<_>, ValueError>>()
-                .map_err(ExternError::from)?;
+                .collect::<Result<Vec<_>, ValueError>>()?;
             let values_key = values_key
                 .into_iter()
                 .map(|values| get::nth(values, 1).copied())
-                .collect::<Result<Vec<_>, ValueError>>()
-                .map_err(ExternError::from)?;
+                .collect::<Result<Vec<_>, ValueError>>()?;
             // Key count must then agree
             if values_name.len() != values_key.len() {
                 return Err(ExternError::from(ValueError::CountMismatch {
                     expected: values_name.len(),
                     actual: values_key.len(),
-                })
-                .into());
+                }));
             }
             let typ_key = typ::make::var(
                 crate::phrase!(node: "tableKeyInterface".to_owned(), span: Span::default()),
@@ -173,15 +167,13 @@ where
                         Span::default(),
                     )
                 })
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(ExternError::from)?;
+                .collect::<Result<Vec<_>, _>>()?;
             let value_keys = make::list(
                 ctx.arena_mut(),
                 typ::make::list(typ_key).node.into(),
                 values_key,
                 Span::default(),
-            )
-            .map_err(ExternError::from)?;
+            )?;
             // A second rejection is final
             func::table_object_add_entry(
                 ctx,
@@ -205,7 +197,7 @@ pub fn add_default_action<Interp, Iface, Ext>(
     value_arch: Value,
     value_name: Value,
     value_action: Value,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,

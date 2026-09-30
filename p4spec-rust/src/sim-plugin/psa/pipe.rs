@@ -43,7 +43,7 @@ use crate::{
             value::{Value, ValueArena, ValueError, get, make},
         },
     },
-    runner::{ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{ExternError, Interface, Interpreter, RunnerContext},
     sim_plugin::error,
     stf::ast::Statement,
 };
@@ -98,7 +98,7 @@ impl ObjectState {
         arena: &mut ValueArena,
         encoding: Encoding,
     ) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
+        let payload = encode_with(arena, encoding, self)?;
         let typ = typ::make::var(
             crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
             Vec::new(),
@@ -139,29 +139,27 @@ pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
 /// The initial architecture state: empty queue, tables, and groups.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
     let encoding = ctx.external().encoding;
-    Arch::default()
-        .to_value(ctx.arena_mut(), encoding)
-        .map_err(Into::into)
+    Arch::default().to_value(ctx.arena_mut(), encoding)
 }
 
 /// Decodes the architecture state stored in `value_arch`.
 pub fn find_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
-) -> Result<Arch, InterpreterError>
+) -> Result<Arch, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
     let encoding = ctx.external().encoding;
     let value_state = func::find_arch_state_e(ctx, value_arch)?;
-    Ok(Arch::from_value(ctx.arena_mut(), encoding, &value_state)?)
+    Arch::from_value(ctx.arena_mut(), encoding, &value_state)
 }
 
 /// Encodes `arch` back into `value_arch`.
@@ -169,7 +167,7 @@ pub fn update_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
     arch: &Arch,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -186,40 +184,35 @@ pub fn find_object_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
     value_id: Value,
-) -> Result<ObjectState, InterpreterError>
+) -> Result<ObjectState, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
     let encoding = ctx.external().encoding;
     let value_object = func::find_object_state_e(ctx, value_arch, value_id)?;
-    Ok(ObjectState::from_value(ctx.arena_mut(), encoding, &value_object)?)
+    ObjectState::from_value(ctx.arena_mut(), encoding, &value_object)
 }
 
 /// The ingress `packet_in` object.
 fn find_ingress_packet_in<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
-) -> Result<PacketIn, InterpreterError>
+) -> Result<PacketIn, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
-    let value_name = make::text(ctx.arena_mut(), "ingress_packet_in".to_owned(), Span::default())
-        .map_err(ExternError::from)?;
+    let value_name = make::text(ctx.arena_mut(), "ingress_packet_in".to_owned(), Span::default())?;
     let values_name = vec![value_name];
     let typ_id = typ::make::list(typ::make::var(
         crate::phrase!(node: "id".to_owned(), span: Span::default()),
         vec![],
     ));
-    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-        .map_err(ExternError::from)?;
+    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => {
-            Err(error::extern_object_undefined("ingress_packet_in extern not found".to_owned())
-                .into())
-        }
+        _ => Err(error::extern_object_undefined("ingress_packet_in extern not found".to_owned())),
     }
 }
 
@@ -227,26 +220,21 @@ where
 fn find_ingress_packet_out<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
-) -> Result<PacketOut, InterpreterError>
+) -> Result<PacketOut, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
-    let value_name = make::text(ctx.arena_mut(), "ingress_packet_out".to_owned(), Span::default())
-        .map_err(ExternError::from)?;
+    let value_name = make::text(ctx.arena_mut(), "ingress_packet_out".to_owned(), Span::default())?;
     let values_name = vec![value_name];
     let typ_id = typ::make::list(typ::make::var(
         crate::phrase!(node: "id".to_owned(), span: Span::default()),
         vec![],
     ));
-    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-        .map_err(ExternError::from)?;
+    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => {
-            Err(error::extern_object_undefined("ingress_packet_out extern not found".to_owned())
-                .into())
-        }
+        _ => Err(error::extern_object_undefined("ingress_packet_out extern not found".to_owned())),
     }
 }
 
@@ -254,26 +242,21 @@ where
 fn find_egress_packet_in<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
-) -> Result<PacketIn, InterpreterError>
+) -> Result<PacketIn, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
-    let value_name = make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())
-        .map_err(ExternError::from)?;
+    let value_name = make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())?;
     let values_name = vec![value_name];
     let typ_id = typ::make::list(typ::make::var(
         crate::phrase!(node: "id".to_owned(), span: Span::default()),
         vec![],
     ));
-    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-        .map_err(ExternError::from)?;
+    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => {
-            Err(error::extern_object_undefined("egress_packet_in extern not found".to_owned())
-                .into())
-        }
+        _ => Err(error::extern_object_undefined("egress_packet_in extern not found".to_owned())),
     }
 }
 
@@ -281,26 +264,21 @@ where
 fn find_egress_packet_out<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
-) -> Result<PacketOut, InterpreterError>
+) -> Result<PacketOut, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
-    let value_name = make::text(ctx.arena_mut(), "egress_packet_out".to_owned(), Span::default())
-        .map_err(ExternError::from)?;
+    let value_name = make::text(ctx.arena_mut(), "egress_packet_out".to_owned(), Span::default())?;
     let values_name = vec![value_name];
     let typ_id = typ::make::list(typ::make::var(
         crate::phrase!(node: "id".to_owned(), span: Span::default()),
         vec![],
     ));
-    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-        .map_err(ExternError::from)?;
+    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => {
-            Err(error::extern_object_undefined("egress_packet_out extern not found".to_owned())
-                .into())
-        }
+        _ => Err(error::extern_object_undefined("egress_packet_out extern not found".to_owned())),
     }
 }
 
@@ -309,7 +287,7 @@ fn find_register<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
     name: &str,
-) -> Result<Register, InterpreterError>
+) -> Result<Register, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -317,19 +295,15 @@ where
     let values_name = name
         .split('.')
         .map(|name| make::text(ctx.arena_mut(), name.to_owned(), Span::default()))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     let typ_id = typ::make::list(typ::make::var(
         crate::phrase!(node: "id".to_owned(), span: Span::default()),
         vec![],
     ));
-    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-        .map_err(ExternError::from)?;
+    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::Register(reg) => Ok(reg),
-        _ => {
-            Err(error::extern_object_undefined(format!("Register extern {name} not found")).into())
-        }
+        _ => Err(error::extern_object_undefined(format!("Register extern {name} not found"))),
     }
 }
 
@@ -339,7 +313,7 @@ fn update_register<Interp, Iface>(
     value_arch: Value,
     name: &str,
     reg: Register,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -347,14 +321,12 @@ where
     let values_name = name
         .split('.')
         .map(|name| make::text(ctx.arena_mut(), name.to_owned(), Span::default()))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     let typ_id = typ::make::list(typ::make::var(
         crate::phrase!(node: "id".to_owned(), span: Span::default()),
         vec![],
     ));
-    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-        .map_err(ExternError::from)?;
+    let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     let encoding = ctx.external().encoding;
     let value_reg = ObjectState::Register(reg).to_value(ctx.arena_mut(), encoding)?;
     func::update_object_state_e(ctx, value_arch, value_id, value_reg)
@@ -370,17 +342,14 @@ where
 pub(super) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     values: &[Value],
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
     let encoding = ctx.external().encoding;
-    let (value_name, value_targs, value_ids, value_args) =
-        get::four(values).map_err(ExternError::from)?;
-    let name = get::text(ctx.arena(), value_name)
-        .map_err(ExternError::from)?
-        .to_owned();
+    let (value_name, value_targs, value_ids, value_args) = get::four(values)?;
+    let name = get::text(ctx.arena(), value_name)?.to_owned();
     let object = match name.as_str() {
         "Counter" => Some(ObjectState::Counter(Counter::init(
             ctx.arena(),
@@ -411,13 +380,12 @@ where
         Some(object) => object.to_value(ctx.arena_mut(), encoding)?,
         // No state: encode the unit value
         None => {
-            let payload = encode_with(ctx.arena(), encoding, &()).map_err(ExternError::from)?;
+            let payload = encode_with(ctx.arena(), encoding, &())?;
             let typ = typ::make::var(
                 crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
                 Vec::new(),
             );
-            make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())
-                .map_err(ExternError::from)?
+            make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?
         }
     })
 }
@@ -428,29 +396,23 @@ where
 pub(super) fn eval_extern_func_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     values: &[Value],
-) -> Result<Vec<Value>, InterpreterError>
+) -> Result<Vec<Value>, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
-    let (value_ctx, value_arch, value_name, value_names) =
-        get::four(values).map_err(ExternError::from)?;
-    let name = get::text(ctx.arena(), value_name)
-        .map_err(ExternError::from)?
-        .to_owned();
-    let names = get::list(ctx.arena(), value_names)
-        .map_err(ExternError::from)?
+    let (value_ctx, value_arch, value_name, value_names) = get::four(values)?;
+    let name = get::text(ctx.arena(), value_name)?.to_owned();
+    let names = get::list(ctx.arena(), value_names)?
         .iter()
         .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     // Anything but `verify` is unsupported
     if name != "verify" || names != ["check", "toSignal"] {
         return Err(error::extern_function_unsupported(format!(
             "unsupported extern function call: {name}({})",
             names.join(", ")
-        ))
-        .into());
+        )));
     }
     let (value_ctx, value_arch, value_call_result) =
         core_func::verify(ctx, *value_ctx, *value_arch)?;
@@ -465,7 +427,7 @@ where
 pub(super) fn eval_extern_method_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     values: &[Value],
-) -> Result<Vec<Value>, InterpreterError>
+) -> Result<Vec<Value>, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -475,19 +437,14 @@ where
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
-        )
-        .into());
+        ));
     };
     let object = find_object_state(ctx, *value_arch, *value_id)?;
-    let name = get::text(ctx.arena(), value_name)
-        .map_err(ExternError::from)?
-        .to_owned();
-    let names = get::list(ctx.arena(), value_names)
-        .map_err(ExternError::from)?
+    let name = get::text(ctx.arena(), value_name)?.to_owned();
+    let names = get::list(ctx.arena(), value_names)?
         .iter()
         .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     let names_ref: Vec<_> = names.iter().map(String::as_str).collect();
     // Each arm hands the object to its method and wraps it again
     let (object, value_ctx, value_arch, value_call_result) =
@@ -593,18 +550,15 @@ where
             }
             // Unknown method: name the object in the error
             _ => {
-                let ids = get::list(ctx.arena(), value_id)
-                    .map_err(ExternError::from)?
+                let ids = get::list(ctx.arena(), value_id)?
                     .iter()
                     .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(ExternError::from)?;
+                    .collect::<Result<Vec<_>, _>>()?;
                 return Err(error::extern_method_unsupported(format!(
                     "unsupported extern method call: {}.{name}({})",
                     ids.join("."),
                     names.join(", ")
-                ))
-                .into());
+                )));
             }
         };
     // Write the updated object back
@@ -621,7 +575,7 @@ pub fn add_mirror_session_mc<Interp, Iface>(
     value_arch: Value,
     session: usize,
     group: usize,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -638,7 +592,7 @@ pub fn mc_mgrp_create<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
     group: usize,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -654,7 +608,7 @@ pub fn mc_node_create<Interp, Iface>(
     value_arch: Value,
     instance: usize,
     ports: &[usize],
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -670,7 +624,7 @@ pub fn mc_node_associate<Interp, Iface>(
     value_arch: Value,
     group: usize,
     handle: usize,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -688,7 +642,7 @@ pub fn register_read<Interp, Iface>(
     value_arch: Value,
     name: &str,
     idx: usize,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -709,7 +663,7 @@ pub fn register_write<Interp, Iface>(
     name: &str,
     idx: usize,
     int: BigInt,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -729,7 +683,7 @@ pub fn register_reset<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     value_arch: Value,
     name: &str,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -747,7 +701,7 @@ fn insert_packet<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     packet: Packet,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -758,16 +712,14 @@ where
         Entrypoint::Egress => "egress_packet_in",
     };
     state.value_arch = {
-        let value_name = make::text(ctx.arena_mut(), name.to_owned(), Span::default())
-            .map_err(ExternError::from)?;
+        let value_name = make::text(ctx.arena_mut(), name.to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object =
             ObjectState::PacketIn(packet.packet_in).to_value(ctx.arena_mut(), encoding)?;
@@ -781,7 +733,7 @@ where
 fn remove_ingress_packet_in<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -790,16 +742,14 @@ where
     pkt.reset();
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "ingress_packet_in".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "ingress_packet_in".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object = ObjectState::PacketIn(pkt).to_value(ctx.arena_mut(), encoding)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
@@ -811,23 +761,21 @@ where
 fn remove_ingress_packet_out<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "ingress_packet_out".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "ingress_packet_out".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object =
             ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), encoding)?;
@@ -840,23 +788,21 @@ where
 fn remove_egress_packet_out<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
 {
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "egress_packet_out".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "egress_packet_out".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object =
             ObjectState::PacketOut(PacketOut::default()).to_value(ctx.arena_mut(), encoding)?;
@@ -869,7 +815,7 @@ where
 fn is_ingress_clone<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<bool, InterpreterError>
+) -> Result<bool, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -881,14 +827,14 @@ where
         "ingress_output_metadata",
         "clone",
     )?;
-    Ok(unpack::p4_bool(ctx.arena(), &value)?)
+    unpack::p4_bool(ctx.arena(), &value)
 }
 
 /// Whether ingress requested a drop.
 fn is_ingress_drop<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<bool, InterpreterError>
+) -> Result<bool, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -900,14 +846,14 @@ where
         "ingress_output_metadata",
         "drop",
     )?;
-    Ok(unpack::p4_bool(ctx.arena(), &value)?)
+    unpack::p4_bool(ctx.arena(), &value)
 }
 
 /// Whether ingress requested a resubmit.
 fn is_ingress_resubmit<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<bool, InterpreterError>
+) -> Result<bool, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -919,14 +865,14 @@ where
         "ingress_output_metadata",
         "resubmit",
     )?;
-    Ok(unpack::p4_bool(ctx.arena(), &value)?)
+    unpack::p4_bool(ctx.arena(), &value)
 }
 
 /// The clone session id requested by ingress.
 fn get_ingress_clone_session_id<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<usize, InterpreterError>
+) -> Result<usize, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -938,14 +884,14 @@ where
         "ingress_output_metadata",
         "clone_session_id",
     )?;
-    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)?)
+    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1)?)
 }
 
 /// The multicast group requested by ingress.
 fn get_multicast_group<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<usize, InterpreterError>
+) -> Result<usize, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -957,14 +903,14 @@ where
         "ingress_output_metadata",
         "multicast_group",
     )?;
-    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)?)
+    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1)?)
 }
 
 /// Whether egress requested a clone.
 fn is_egress_clone<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<bool, InterpreterError>
+) -> Result<bool, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -976,14 +922,14 @@ where
         "egress_output_metadata",
         "clone",
     )?;
-    Ok(unpack::p4_bool(ctx.arena(), &value)?)
+    unpack::p4_bool(ctx.arena(), &value)
 }
 
 /// Whether egress requested a drop.
 fn is_egress_drop<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<bool, InterpreterError>
+) -> Result<bool, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -995,14 +941,14 @@ where
         "egress_output_metadata",
         "drop",
     )?;
-    Ok(unpack::p4_bool(ctx.arena(), &value)?)
+    unpack::p4_bool(ctx.arena(), &value)
 }
 
 /// Whether the egress port is the recirculation port.
 fn is_egress_recirculate<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<bool, InterpreterError>
+) -> Result<bool, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1023,7 +969,7 @@ where
 fn get_egress_clone_session_id<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<usize, InterpreterError>
+) -> Result<usize, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1035,7 +981,7 @@ where
         "egress_output_metadata",
         "clone_session_id",
     )?;
-    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1).map_err(ExternError::from)?)
+    Ok(usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value)?.1)?)
 }
 
 // == Pipeline initializer
@@ -1044,7 +990,7 @@ where
 pub fn init_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     program: Value,
-) -> Result<SimState, InterpreterError>
+) -> Result<SimState, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1059,7 +1005,7 @@ where
 fn prepare_unicast_ctx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1103,7 +1049,7 @@ fn prepare_multicast_ctx<Interp, Iface>(
     state: &mut SimState,
     instance: usize,
     port: usize,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1137,7 +1083,7 @@ fn prepare_clone_i2e_ctx<Interp, Iface>(
     state: &mut SimState,
     instance: usize,
     port: usize,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1171,7 +1117,7 @@ fn prepare_clone_e2e_ctx<Interp, Iface>(
     state: &mut SimState,
     instance: usize,
     port: usize,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1203,7 +1149,7 @@ where
 fn prepare_resubmit_ctx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1227,7 +1173,7 @@ where
 fn prepare_recirculate_ctx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1249,7 +1195,7 @@ pub fn schedule_packet<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     entrypoint: Entrypoint,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1270,7 +1216,7 @@ where
 fn schedule_unicast<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1284,16 +1230,14 @@ where
     let pkt = ObjectState::PacketIn(PacketIn::init(&packet)?);
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object = pkt.to_value(ctx.arena_mut(), encoding)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
@@ -1307,7 +1251,7 @@ pub fn schedule_multicast<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     group: usize,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1326,16 +1270,14 @@ where
     let pkt = ObjectState::PacketIn(PacketIn::init(&packet)?);
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object = pkt.to_value(ctx.arena_mut(), encoding)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
@@ -1360,7 +1302,7 @@ fn schedule_clone_i2e<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     session: usize,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1379,16 +1321,14 @@ where
     let pkt = find_ingress_packet_in(ctx, state.value_arch)?;
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object = ObjectState::PacketIn(pkt).to_value(ctx.arena_mut(), encoding)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
@@ -1416,7 +1356,7 @@ fn schedule_clone_e2e<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     session: usize,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1440,16 +1380,14 @@ where
     let pkt = PacketIn::init(&packet)?;
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "egress_packet_in".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object = ObjectState::PacketIn(pkt).to_value(ctx.arena_mut(), encoding)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
@@ -1476,7 +1414,7 @@ where
 pub fn schedule_resubmit<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1490,7 +1428,7 @@ where
 pub fn schedule_recirculate<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1504,16 +1442,14 @@ where
     let pkt = ObjectState::PacketIn(PacketIn::init(&packet)?);
     state.value_arch = {
         let value_name =
-            make::text(ctx.arena_mut(), "ingress_packet_in".to_owned(), Span::default())
-                .map_err(ExternError::from)?;
+            make::text(ctx.arena_mut(), "ingress_packet_in".to_owned(), Span::default())?;
         let values_name = vec![value_name];
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "id".to_owned(), span: Span::default()),
             vec![],
         ));
         let value_id =
-            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())
-                .map_err(ExternError::from)?;
+            make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
         let encoding = ctx.external().encoding;
         let value_object = pkt.to_value(ctx.arena_mut(), encoding)?;
         func::update_object_state_e(ctx, state.value_arch, value_id, value_object)
@@ -1526,7 +1462,7 @@ where
 fn transfer_packet<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1558,7 +1494,7 @@ fn setup_rx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     rx: &Rx,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1596,7 +1532,7 @@ where
 fn drive_ip<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1610,7 +1546,7 @@ where
             _ => return Err(ExternError::from(ValueError::CountMismatch {
                 expected: 1,
                 actual: values.len(),
-            }).into()),
+            })),
         },
         _ => None,
     };
@@ -1632,7 +1568,7 @@ where
 fn drive_ig<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1647,7 +1583,7 @@ where
 fn drive_id<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1662,7 +1598,7 @@ where
 pub fn drive_ingress_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1679,7 +1615,7 @@ where
 pub fn run_pre<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1707,7 +1643,7 @@ where
 fn drive_ep<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1721,7 +1657,7 @@ where
             _ => return Err(ExternError::from(ValueError::CountMismatch {
                 expected: 1,
                 actual: values.len(),
-            }).into()),
+            })),
         },
         _ => None,
     };
@@ -1743,7 +1679,7 @@ where
 fn drive_eg<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1758,7 +1694,7 @@ where
 fn drive_ed<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1773,7 +1709,7 @@ where
 pub fn drive_egress_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1790,7 +1726,7 @@ where
 pub fn run_bqe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1818,7 +1754,7 @@ pub fn drive_packet<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     packet: Packet,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1841,7 +1777,7 @@ where
 pub fn run_scheduler<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,
@@ -1862,7 +1798,7 @@ pub fn drive_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Psa>,
     state: &mut SimState,
     rx: &Rx,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Psa>,

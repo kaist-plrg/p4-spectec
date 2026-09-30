@@ -14,7 +14,7 @@ use crate::{
             value::{Value, ValueArena, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
 };
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +50,7 @@ impl CounterArray {
         let len = usize::try_from(&unpack::p4_fixed_bit(arena, &value_max)?.1)?;
         unpack::p4_bool(arena, &value_sparse)?;
         let mut counts = Vec::new();
-        counts.try_reserve_exact(len).map_err(ExternError::from)?;
+        counts.try_reserve_exact(len)?;
         counts.resize(len, 0);
         Ok(Self { counts })
     }
@@ -65,7 +65,7 @@ impl CounterArray {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -73,8 +73,7 @@ impl CounterArray {
     {
         // Get "index"
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)
-            .map_err(ExternError::from)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
         self.update(ctx, value_ctx, value_arch, idx, 1)
     }
 
@@ -88,7 +87,7 @@ impl CounterArray {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -96,8 +95,7 @@ impl CounterArray {
     {
         // Get "index"
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)
-            .map_err(ExternError::from)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
         // Get "value"
         let value_add = func::find_var_e_local(ctx, value_ctx, "value")?;
         let (_, int_add) = unpack::p4_fixed_bit(ctx.arena(), &value_add)?;
@@ -115,7 +113,7 @@ impl CounterArray {
         value_arch: Value,
         idx: usize,
         int: u32,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -132,16 +130,14 @@ impl CounterArray {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

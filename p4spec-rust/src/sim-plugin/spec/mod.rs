@@ -5,6 +5,7 @@
 //! `args` pairs extern arguments with their names;
 //! `pack` and `unpack` convert P4 values
 //! between Rust and the specification's cases.
+//! Calls finalize exhausted interpreter searches as fatal extern diagnostics.
 
 // == Calls
 

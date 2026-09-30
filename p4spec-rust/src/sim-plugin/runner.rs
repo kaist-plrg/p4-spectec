@@ -13,7 +13,7 @@ use super::{
     table,
 };
 use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
+    diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
     interface::p4::{error::P4Error, parse},
     lang::{
         common::source::{Phrase, Span},
@@ -23,7 +23,7 @@ use crate::{
         },
         traits::print::Print,
     },
-    runner::{Interface, Interpreter, InterpreterError, Runner, RunnerContext},
+    runner::{ExternError, Interface, Interpreter, Runner, RunnerContext},
     sim_plugin::error,
     stf::{
         self,
@@ -39,18 +39,24 @@ use std::path::{Path, PathBuf};
 /// Why an STF test failed.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    /// The P4 program did not parse.
-    #[error("syntax error: {0}")]
-    P4Parse(#[from] P4Error),
-    /// The STF file did not parse.
+    /// Reading, preprocessing, parsing, or constructing the P4 input failed.
+    #[error("P4 input error: {0}")]
+    P4Input(#[from] P4Error),
+    /// Reading or parsing the STF input failed.
+    #[error("STF input error: {0}")]
+    StfInput(#[from] stf::error::StfError),
+    /// A simulator operation failed while executing.
     #[error("runtime error: {0}")]
-    StfParse(#[from] stf::error::StfError),
-    /// The specification failed while executing.
-    #[error("runtime error: {0}")]
-    Runtime(#[from] InterpreterError),
+    Runtime(#[from] Box<Report>),
     /// An STF statement failed or an expectation was not met.
     #[error("runtime error: {failure} at {span}")]
-    Stf { failure: Box<StfFailure>, span: Span },
+    StfExecution { failure: Box<StfFailure>, span: Span },
+}
+
+impl From<ExternError> for Error {
+    fn from(error: ExternError) -> Self {
+        Self::Runtime(error.into_report())
+    }
 }
 
 const PACKET_MISMATCH: &str = "sim/packet-mismatch";
@@ -61,10 +67,10 @@ impl Error {
     /// Returns complete reports at the final simulator execution boundary.
     pub fn into_report(self) -> Box<Report> {
         match self {
-            Self::P4Parse(error) => error.into_report(),
-            Self::StfParse(error) => error.into_report(),
-            Self::Runtime(failure) => failure.into_report(),
-            Self::Stf { failure, span } => {
+            Self::P4Input(error) => error.into_report(),
+            Self::StfInput(error) => error.into_report(),
+            Self::Runtime(report) => report,
+            Self::StfExecution { failure, span } => {
                 // Statement checks keep their own code and actual source location
                 let code = match &*failure {
                     StfFailure::PacketMismatch { .. } => PACKET_MISMATCH,
@@ -138,10 +144,30 @@ fn remaining_expects(expects: &[Expectation]) -> String {
 
 // == Helpers
 
+/// Adds missing STF cause labels beneath frames without a source location.
+fn attach_statement_span(report: &mut Report, span: &Span) {
+    let mut pending = vec![report];
+    // Unlocated frames can group exhausted interpreter alternatives
+    while let Some(report) = pending.pop() {
+        match &mut report.kind {
+            // Retain any locations the producer already supplied
+            ReportKind::Cause(diagnostic) if diagnostic.labels.is_empty() => {
+                diagnostic.labels.push(Label::primary(span, ""));
+            }
+            // Descend through unlocated frames without rewriting the tree
+            ReportKind::Frame { span: span_frame, .. } if *span_frame == Span::default() => {
+                pending.extend(&mut report.children);
+            }
+            // Located context frames already explain their child failures
+            _ => {}
+        }
+    }
+}
+
 /// Parses an optionally signed integer with a `0x`, `0o` or `0b` radix prefix.
-fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, InterpreterError> {
+fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, Box<Report>> {
     strtoint::strtoint(&text.to_ascii_lowercase())
-        .map_err(|_| error::integer_invalid(format!("invalid integer: {text}")).into())
+        .map_err(|_| error::integer_invalid(format!("invalid integer: {text}")).into_report())
 }
 
 /// Rewrites STF's `hdr$0` index spelling to the P4 `hdr[0]` form.
@@ -322,15 +348,20 @@ where
         // Statements with no effect here
         Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
         // Anything else is unsupported
-        stmt => Err(Error::Stf {
+        stmt => Err(Error::StfExecution {
             failure: Box::new(StfFailure::StatementUnsupported(Print::to_string(&stmt))),
             span: Span::default(),
         }),
     };
     // Attach the statement's span to failures that have none
     let tx = result.map_err(|error| match error {
-        Error::Runtime(error) => Error::Runtime(error.with_span(&stmt.span)),
-        Error::Stf { failure, .. } => Error::Stf { failure, span: stmt.span.clone() },
+        Error::Runtime(mut report) => {
+            attach_statement_span(&mut report, &stmt.span);
+            Error::Runtime(report)
+        }
+        Error::StfExecution { failure, .. } => {
+            Error::StfExecution { failure, span: stmt.span.clone() }
+        }
         error => error,
     })?;
     // Record matched outputs for the caller
@@ -357,8 +388,10 @@ where
     // Payloads compare in uppercase hex
     let rx = Rx { port: parse_int::<usize>(&port)?, packet: packet.to_ascii_uppercase() };
     Arch::drive_pipe(ctx, &mut run.state, &rx)?;
-    run.on_tx_output()
-        .map_err(|failure| Error::Stf { failure: Box::new(failure), span: Span::default() })
+    run.on_tx_output().map_err(|failure| Error::StfExecution {
+        failure: Box::new(failure),
+        span: Span::default(),
+    })
 }
 
 /// Records an expectation, matching a queued output if one is waiting.
@@ -376,16 +409,16 @@ fn run_stf_expect_stmt(
         exact,
     };
     run.on_tx_expect(expect)
-        .map_err(|failure| Error::Stf { failure: Box::new(failure), span: Span::default() })
+        .map_err(|failure| Error::StfExecution {
+            failure: Box::new(failure),
+            span: Span::default(),
+        })
 }
 
 // - Match-action table updates
 
 /// Encodes STF match keys as the specification's `tableKeyInterface` list.
-fn encode_table_keys(
-    arena: &mut ValueArena,
-    matches: &[TableMatch],
-) -> Result<Value, InterpreterError> {
+fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<Value, Box<Report>> {
     let typ_key = typ::make::var(
         crate::phrase!(node: "tableKeyInterface".to_owned(), span: Span::default()),
         vec![],
@@ -455,19 +488,19 @@ where
     // Add names use the same escaped spelling as P4 annotation names
     let text_name = escape_text(&table.into_string());
     let value_name =
-        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(InterpreterError::from)?;
+        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(Box::<Report>::from)?;
     // Priority is optional
     let value_priority = priority
         .map(|priority| make::int(ctx.arena_mut(), priority.into(), Span::default()))
         .transpose()
-        .map_err(InterpreterError::from)?;
+        .map_err(Box::<Report>::from)?;
     let value_priority = make::opt(
         ctx.arena_mut(),
         typ::make::opt(typ::make::int()).node.into(),
         value_priority,
         Span::default(),
     )
-    .map_err(InterpreterError::from)?;
+    .map_err(Box::<Report>::from)?;
     let value_keys = encode_table_keys(ctx.arena_mut(), &matches)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch = table::add_entry(
@@ -483,7 +516,7 @@ where
 }
 
 /// Encodes an STF action as the specification's `tableActionInterface`.
-fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, InterpreterError> {
+fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, Box<Report>> {
     let value_name = make::text(arena, action.name.as_str().to_owned(), Span::default())?;
     let typ_arg = typ::make::var(
         crate::phrase!(node: "tableActionArgumentInterface".to_owned(), span: Span::default()),
@@ -532,7 +565,7 @@ where
 {
     // Table name and action, then let the table module store it
     let value_name = make::text(ctx.arena_mut(), table.into_string(), Span::default())
-        .map_err(InterpreterError::from)?;
+        .map_err(Box::<Report>::from)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch = table::add_default_action(
         ctx,
@@ -727,7 +760,9 @@ where
         }
     }
     // Everything expected must have arrived, and nothing unexpected
-    run.finish()
-        .map_err(|failure| Error::Stf { failure: Box::new(failure), span: Span::default() })?;
+    run.finish().map_err(|failure| Error::StfExecution {
+        failure: Box::new(failure),
+        span: Span::default(),
+    })?;
     Ok(run)
 }

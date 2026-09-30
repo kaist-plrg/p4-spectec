@@ -17,7 +17,7 @@ use crate::{
             value::{Value, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
 };
 use serde_derive_state::{DeserializeState, SerializeState};
 
@@ -52,28 +52,25 @@ impl Register {
         value_targs: Value,
         value_ids: Value,
         value_args: Value,
-    ) -> Result<Self, InterpreterError>
+    ) -> Result<Self, ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        let values_targ = crate::lang::data::value::get::list(ctx.arena(), &value_targs)
-            .map_err(ExternError::from)?;
+        let values_targ = crate::lang::data::value::get::list(ctx.arena(), &value_targs)?;
         // Exactly one type argument, the element type
         let [value_typ] = values_targ else {
             return Err(error::register_type_argument_arity_mismatch(format!(
                 "register constructor expects 1 type argument, but {} were given",
                 values_targ.len()
-            ))
-            .into());
+            )));
         };
         let value_typ = *value_typ;
         let args = args::assoc(ctx.arena(), value_ids, value_args)?;
         let value_size = args::find(&args, "size")?;
         let value_initial = func::default(ctx, value_typ)?;
-        let size = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_size)?.1)
-            .map_err(ExternError::from)?;
+        let size = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_size)?.1)?;
         Ok(Self { value_typ, values: vec![value_initial; size] })
     }
 
@@ -96,15 +93,14 @@ impl Register {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)
-            .map_err(ExternError::from)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
         // Out of range: the default, since the result is unspecified
         let value = match self.values.get(idx) {
             Some(value) => *value,
@@ -116,16 +112,14 @@ impl Register {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 
@@ -155,15 +149,14 @@ impl Register {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
         let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)
-            .map_err(ExternError::from)?;
+        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
         let value_target = func::find_var_e_local(ctx, value_ctx, "value")?;
         // Out of range: ignored
         if let Some(value) = self.values.get_mut(idx) {
@@ -174,16 +167,14 @@ impl Register {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

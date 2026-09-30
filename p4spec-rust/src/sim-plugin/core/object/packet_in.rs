@@ -20,7 +20,7 @@ use crate::{
             value::{Value, get, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
 };
 
 use crate::sim_plugin::{
@@ -108,7 +108,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -123,24 +123,21 @@ impl PacketIn {
         // Too few bits: reject with `PacketTooShort`
         if !self.has_size(size)? {
             let value_name =
-                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())
-                    .map_err(ExternError::from)?;
+                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
             let value_err = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             let value_call_result = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
                 typ: "rejectTransitionResult",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             return Ok((self.clone(), value_ctx, value_arch, value_call_result));
         }
         // Fill the header from the bits and write it to the `out` argument
@@ -152,16 +149,14 @@ impl PacketIn {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((pkt, value_ctx, value_arch, value_call_result))
     }
 
@@ -176,7 +171,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -200,19 +195,16 @@ impl PacketIn {
             .to_usize()
             .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
         // The variable size as a number
-        let values_size = get::case(ctx.arena(), &value_size)
-            .map_err(ExternError::from)?
-            .args();
+        let values_size = get::case(ctx.arena(), &value_size)?.args();
         let value_varsize = values_size.get(1).ok_or_else(|| {
             ExternError::from(crate::lang::data::value::ValueError::IndexOutOfBounds {
                 index: 1,
                 len: values_size.len(),
             })
         })?;
-        let size_varsize =
-            (num::to_int(get::num(ctx.arena(), value_varsize).map_err(ExternError::from)?))
-                .to_usize()
-                .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
+        let size_varsize = (num::to_int(get::num(ctx.arena(), value_varsize)?))
+            .to_usize()
+            .ok_or_else(|| error::packet_size_invalid("invalid packet size".to_owned()))?;
         // Total size is the fixed part plus the variable part
         let size = size_min
             .checked_add(size_varsize)
@@ -220,70 +212,61 @@ impl PacketIn {
         // Misaligned: reject with `ParserInvalidArgument`
         if alignment != 0 {
             let value_name =
-                make::text(ctx.arena_mut(), "ParserInvalidArgument".to_owned(), Span::default())
-                    .map_err(ExternError::from)?;
+                make::text(ctx.arena_mut(), "ParserInvalidArgument".to_owned(), Span::default())?;
             let value_err = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             let value_call_result = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
                 typ: "rejectTransitionResult",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             return Ok((self.clone(), value_ctx, value_arch, value_call_result));
         }
         // Too few bits: reject with `PacketTooShort`
         if !self.has_size(size)? {
             let value_name =
-                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())
-                    .map_err(ExternError::from)?;
+                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
             let value_err = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             let value_call_result = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
                 typ: "rejectTransitionResult",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             return Ok((self.clone(), value_ctx, value_arch, value_call_result));
         }
         // Larger than the type allows: reject with `HeaderTooShort`
         if size > size_max {
             let value_name =
-                make::text(ctx.arena_mut(), "HeaderTooShort".to_owned(), Span::default())
-                    .map_err(ExternError::from)?;
+                make::text(ctx.arena_mut(), "HeaderTooShort".to_owned(), Span::default())?;
             let value_err = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             let value_call_result = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
                 typ: "rejectTransitionResult",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             return Ok((self.clone(), value_ctx, value_arch, value_call_result));
         }
         // Fill the header, sizing its variable field, and write it back
@@ -301,16 +284,14 @@ impl PacketIn {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((pkt, value_ctx, value_arch, value_call_result))
     }
 
@@ -324,7 +305,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -340,24 +321,21 @@ impl PacketIn {
         let value_hdr = func::default(ctx, value_typ)?;
         if !self.has_size(size)? {
             let value_name =
-                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())
-                    .map_err(ExternError::from)?;
+                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
             let value_err = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             let value_call_result = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
                 typ: "rejectTransitionResult",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             return Ok((self.clone(), value_ctx, value_arch, value_call_result));
         }
         // Read without moving the cursor; the value is returned, not stored
@@ -368,16 +346,14 @@ impl PacketIn {
             Vec::new(),
         ));
         let value_opt =
-            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_hdr), Span::default())
-                .map_err(ExternError::from)?;
+            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_hdr), Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self.clone(), value_ctx, value_arch, value_call_result))
     }
 
@@ -391,7 +367,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -405,24 +381,21 @@ impl PacketIn {
         // Too few bits: reject with `PacketTooShort`
         if !self.has_size(size)? {
             let value_name =
-                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())
-                    .map_err(ExternError::from)?;
+                make::text(ctx.arena_mut(), "PacketTooShort".to_owned(), Span::default())?;
             let value_err = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "ERROR '.' nameIR",
                 args: vec![value_name],
                 typ: "errorValue",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             let value_call_result = make::case_shaped! {
                 arena: ctx.arena_mut(),
                 shape: "REJECT errorValue",
                 args: vec![value_err],
                 typ: "rejectTransitionResult",
                 span: Span::default(),
-            }
-            .map_err(ExternError::from)?;
+            }?;
             return Ok((self.clone(), value_ctx, value_arch, value_call_result));
         }
         let pkt = Self { idx: self.idx + size, ..self.clone() };
@@ -430,16 +403,14 @@ impl PacketIn {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((pkt, value_ctx, value_arch, value_call_result))
     }
 
@@ -453,7 +424,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), InterpreterError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -468,16 +439,14 @@ impl PacketIn {
             Vec::new(),
         ));
         let value_opt =
-            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_len), Span::default())
-                .map_err(ExternError::from)?;
+            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_len), Span::default())?;
         let value_call_result = make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?;
+        }?;
         Ok((self.clone(), value_ctx, value_arch, value_call_result))
     }
 }

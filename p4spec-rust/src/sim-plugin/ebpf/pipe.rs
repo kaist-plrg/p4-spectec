@@ -23,7 +23,7 @@ use crate::{
             value::{Value, ValueArena, get, make},
         },
     },
-    runner::{ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{ExternError, Interface, Interpreter, RunnerContext},
     sim_plugin::error,
     stf::ast::{Name, Statement},
 };
@@ -77,7 +77,7 @@ impl ExternObject {
         arena: &mut ValueArena,
         encoding: Encoding,
     ) -> Result<Value, ExternError> {
-        let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
+        let payload = encode_with(arena, encoding, self)?;
         let typ = typ::make::var(
             crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
             Vec::new(),
@@ -130,19 +130,18 @@ pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
 /// The initial architecture state: an encoded unit value.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
 {
     let encoding = ctx.external().encoding;
-    let payload = encode_with(ctx.arena(), encoding, &()).map_err(ExternError::from)?;
+    let payload = encode_with(ctx.arena(), encoding, &())?;
     let typ = typ::make::var(
         crate::phrase!(node: "archState".to_owned(), span: Span::default()),
         Vec::new(),
     );
-    Ok(make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())
-        .map_err(ExternError::from)?)
+    Ok(make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
 }
 
 // == Extern calls
@@ -153,27 +152,25 @@ where
 pub(super) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
 {
     let encoding = ctx.external().encoding;
-    let (value_name, _value_targs, value_ids, value_args) =
-        get::four(values).map_err(ExternError::from)?;
-    let name = get::text(ctx.arena(), value_name).map_err(ExternError::from)?;
+    let (value_name, _value_targs, value_ids, value_args) = get::four(values)?;
+    let name = get::text(ctx.arena(), value_name)?;
     // Only `CounterArray` carries state
     Ok(if name == "CounterArray" {
         let counter = CounterArray::init(ctx.arena(), *value_ids, *value_args)?;
         ExternObject::CounterArray(counter).to_value(ctx.arena_mut(), encoding)?
     } else {
-        let payload = encode_with(ctx.arena(), encoding, &()).map_err(ExternError::from)?;
+        let payload = encode_with(ctx.arena(), encoding, &())?;
         let typ = typ::make::var(
             crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
             Vec::new(),
         );
-        make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())
-            .map_err(ExternError::from)?
+        make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?
     })
 }
 
@@ -183,22 +180,17 @@ where
 pub(super) fn eval_extern_func_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
-) -> Result<Vec<Value>, InterpreterError>
+) -> Result<Vec<Value>, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
 {
-    let (value_ctx, value_arch, value_name, value_names) =
-        get::four(values).map_err(ExternError::from)?;
-    let name = get::text(ctx.arena(), value_name)
-        .map_err(ExternError::from)?
-        .to_owned();
-    let names = get::list(ctx.arena(), value_names)
-        .map_err(ExternError::from)?
+    let (value_ctx, value_arch, value_name, value_names) = get::four(values)?;
+    let name = get::text(ctx.arena(), value_name)?.to_owned();
+    let names = get::list(ctx.arena(), value_names)?
         .iter()
         .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     let (value_ctx, value_arch, value_call_result) =
         // Only `verify` is supported
         if name == "verify" && names == ["check", "toSignal"] {
@@ -207,8 +199,7 @@ where
             return Err(error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",
                 names.join(", ")
-            ))
-            .into());
+            )));
         };
     Ok(vec![value_ctx, value_arch, value_call_result])
 }
@@ -222,12 +213,10 @@ fn unsupported_method(
     name: &str,
     names: &[String],
 ) -> Result<ExternError, ExternError> {
-    let ids = get::list(arena, &value_id)
-        .map_err(ExternError::from)?
+    let ids = get::list(arena, &value_id)?
         .iter()
         .map(|value| get::text(arena, value).map(str::to_owned))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     Ok(error::extern_method_unsupported(format!(
         "unsupported extern method call: {}.{name}({})",
         ids.join("."),
@@ -241,7 +230,7 @@ fn unsupported_method(
 pub(super) fn eval_extern_method_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
-) -> Result<Vec<Value>, InterpreterError>
+) -> Result<Vec<Value>, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
@@ -251,20 +240,15 @@ where
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
-        )
-        .into());
+        ));
     };
     let value_state = func::find_object_state_e(ctx, *value_arch, *value_id)?;
     let object = ExternObject::from_value(ctx.arena_mut(), encoding, &value_state)?;
-    let name = get::text(ctx.arena(), value_name)
-        .map_err(ExternError::from)?
-        .to_owned();
-    let names = get::list(ctx.arena(), value_names)
-        .map_err(ExternError::from)?
+    let name = get::text(ctx.arena(), value_name)?.to_owned();
+    let names = get::list(ctx.arena(), value_names)?
         .iter()
         .map(|value| get::text(ctx.arena(), value).map(str::to_owned))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(ExternError::from)?;
+        .collect::<Result<Vec<_>, _>>()?;
     let (object, value_ctx, value_arch, value_call_result) = match object {
         ExternObject::PacketIn(pkt) => {
             let (object, value_ctx, value_arch, value_call_result) = match (
@@ -283,7 +267,7 @@ where
                 ("advance", ["sizeInBits"]) => pkt.advance(ctx, *value_ctx, *value_arch)?,
                 ("length", []) => pkt.length(ctx, *value_ctx, *value_arch)?,
                 _ => {
-                    return Err(unsupported_method(ctx.arena(), *value_id, &name, &names)?.into());
+                    return Err(unsupported_method(ctx.arena(), *value_id, &name, &names)?);
                 }
             };
             (ExternObject::PacketIn(object), value_ctx, value_arch, value_call_result)
@@ -300,7 +284,7 @@ where
                 ("increment", ["index"]) => counter.increment(ctx, *value_ctx, *value_arch)?,
                 ("add", ["index", "value"]) => counter.add(ctx, *value_ctx, *value_arch)?,
                 _ => {
-                    return Err(unsupported_method(ctx.arena(), *value_id, &name, &names)?.into());
+                    return Err(unsupported_method(ctx.arena(), *value_id, &name, &names)?);
                 }
             };
             (ExternObject::CounterArray(object), value_ctx, value_arch, value_call_result)
@@ -319,7 +303,7 @@ where
 pub fn init_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     program: Value,
-) -> Result<SimState, InterpreterError>
+) -> Result<SimState, ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
@@ -337,7 +321,7 @@ pub fn drive_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     state: &mut SimState,
     rx: &Rx,
-) -> Result<(), InterpreterError>
+) -> Result<(), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,

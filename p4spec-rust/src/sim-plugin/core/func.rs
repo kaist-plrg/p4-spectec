@@ -12,7 +12,7 @@ use crate::{
             value::{Value, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
     sim_plugin::error,
 };
 
@@ -37,7 +37,7 @@ pub fn static_assert<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: &Value,
     has_message: bool,
-) -> Result<Value, InterpreterError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -50,17 +50,17 @@ where
     } else {
         None
     };
-    let check = unpack::p4_bool(ctx.arena(), &value_check).map_err(InterpreterError::from)?;
+    let check = unpack::p4_bool(ctx.arena(), &value_check)?;
     // A passing assertion evaluates to its check
     if check {
         return Ok(value_check);
     }
     // The default message when the one-argument overload is used
     let message = match value_message {
-        Some(value) => unpack::p4_string(ctx.arena(), &value).map_err(InterpreterError::from)?,
+        Some(value) => unpack::p4_string(ctx.arena(), &value)?,
         None => "static_assert failed".to_owned(),
     };
-    Err(error::assertion_unmet(message).into())
+    Err(error::assertion_unmet(message))
 }
 
 /// Checks a predicate in the parser, leaving execution unchanged when true.
@@ -74,7 +74,7 @@ pub fn verify<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), InterpreterError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -90,16 +90,14 @@ where
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())
-            .map_err(ExternError::from)?;
+        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
         make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
             typ: "returnResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?
+        }?
     } else {
         make::case_shaped! {
             arena: ctx.arena_mut(),
@@ -107,8 +105,7 @@ where
             args: vec![value_signal],
             typ: "rejectResult",
             span: Span::default(),
-        }
-        .map_err(ExternError::from)?
+        }?
     };
     Ok((value_ctx, value_arch, value_call_result))
 }

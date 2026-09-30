@@ -120,6 +120,7 @@ use p4spec_rust::{
 struct StfInterp {
     calls: Vec<(String, Vec<Value>)>,
     initialized: bool,
+    failure: Option<InterpreterError>,
 }
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for StfInterp {
@@ -163,6 +164,9 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for StfInterp {
         ctx.interp_mut()
             .calls
             .push((name.to_owned(), values.to_vec()));
+        if let Some(failure) = ctx.interp_mut().failure.take() {
+            return Err(failure);
+        }
         match name {
             "find_object_unqualified_e" => Ok(make::opt(
                 ctx.arena_mut(),
@@ -351,7 +355,7 @@ fn test_native_steps_clear_raw_outputs_without_flushing_pending_queues() {
     );
     assert_eq!(run_case.matches, vec![tx(1, "AAFF")]);
     assert!(
-        matches!(runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]), Err(Error::Stf { failure, span }) if matches!(*failure, StfFailure::StatementUnsupported(_)) && span == stmts[3].span)
+        matches!(runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]), Err(Error::StfExecution { failure, span }) if matches!(*failure, StfFailure::StatementUnsupported(_)) && span == stmts[3].span)
     );
     run_case.finish().unwrap();
 }
@@ -396,7 +400,7 @@ fn test_integer_failure_is_located_and_precedes_pipeline_dispatch() {
         else {
             panic!("expected integer failure");
         };
-        assert_eq!(failure.into_report().span(), stmts[0].span);
+        assert_eq!(failure.span(), stmts[0].span);
     }
     assert!(runner.context().interp().calls.is_empty());
 }
@@ -831,4 +835,60 @@ fn test_native_stf_encoding_modes_preserve_outputs_and_state() {
         }
         assert_eq!(fs::read_dir(&snapshots.0).unwrap().count(), 0);
     });
+}
+
+#[test]
+fn test_runtime_reentry_preserves_causes_and_fills_missing_statement_locations() {
+    use p4spec_rust::{
+        diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
+        lang::common::source::Position,
+    };
+
+    let (mut runner, mut run_case) = stf_runner(Ebpf::default());
+    let mut stmt = statement(Statement::SetDefault {
+        table: "tab".into(),
+        action: Action { name: "action".into(), args: vec![] },
+    });
+    stmt.span =
+        Span::new(Position::new("commands.stf", 2, 0), Position::new("commands.stf", 2, 20));
+    let span_spec = Span::new(Position::new("spec", 3, 0), Position::new("spec", 3, 8));
+    let cause = |message, labels| {
+        Report::from(Diagnostic::new(
+            "fixture",
+            Severity::Error,
+            Some("fixture/reentry".into()),
+            message,
+            labels,
+            vec!["retained note".into()],
+        ))
+    };
+    runner.context().interp_mut().failure = Some(InterpreterError::Mismatch(vec![
+        cause("unlocated", vec![]),
+        cause("located", vec![Label::secondary(&span_spec, "origin")]),
+        Report::frame(span_spec.clone(), "located call", vec![cause("nested", vec![])]),
+    ]));
+    let Err(Error::Runtime(report)) = runner::run_stf_stmt(&mut runner, &mut run_case, &stmt)
+    else {
+        panic!("expected runtime diagnostic");
+    };
+    assert!(
+        matches!(&report.kind, ReportKind::Frame { message, .. } if message == "execution failed")
+    );
+    assert_eq!(report.children.len(), 3);
+    for (report, message, labels) in [
+        (&report.children[0], "unlocated", vec![Label::primary(&stmt.span, "")]),
+        (&report.children[1], "located", vec![Label::secondary(&span_spec, "origin")]),
+        (&report.children[2].children[0], "nested", vec![]),
+    ] {
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected cause") };
+        assert_eq!(diagnostic.labels, labels);
+        assert_eq!(diagnostic.message, message);
+        assert_eq!(diagnostic.source, "fixture");
+        assert_eq!(diagnostic.code.as_deref(), Some("fixture/reentry"));
+        assert_eq!(diagnostic.severity, Severity::Error);
+        assert_eq!(diagnostic.notes, ["retained note"]);
+    }
+    assert!(
+        matches!(&report.children[2].kind, ReportKind::Frame { span, .. } if span == &span_spec)
+    );
 }

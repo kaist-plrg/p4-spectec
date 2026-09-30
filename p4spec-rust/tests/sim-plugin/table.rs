@@ -25,6 +25,7 @@ struct Call {
 #[derive(Default)]
 struct TableInterp {
     calls: VecDeque<Call>,
+    failure: Option<InterpreterError>,
 }
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for TableInterp {
@@ -57,6 +58,9 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for TableInterp {
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
         assert!(targs.is_empty());
+        if let Some(failure) = ctx.interp_mut().failure.take() {
+            return Err(failure);
+        }
         let call_expect = ctx.interp_mut().calls.pop_front().expect("unexpected call");
         assert_eq!(name, call_expect.name);
         assert_eq!(values.len(), call_expect.args.len());
@@ -484,4 +488,46 @@ fn test_native_table_entries_append_priorities_and_default_changes_are_isolated(
         table::find_table(&mut runner.context(), value_arch_updated, value_other).unwrap(),
         value_other_original
     );
+}
+
+#[test]
+fn test_spec_helper_finalizes_exhausted_reentry() {
+    use p4spec_rust::diagnostic::{Diagnostic, ReportKind, Severity};
+
+    let mut runner = scripted_runner();
+    let value_typ = text(runner.arena_mut(), "T");
+    runner.context().interp_mut().failure = Some(InterpreterError::Mismatch(
+        ["first", "second"]
+            .into_iter()
+            .map(|message| {
+                Diagnostic::new(
+                    "fixture",
+                    Severity::Error,
+                    Some(format!("fixture/{message}")),
+                    message,
+                    vec![],
+                    vec![format!("note {message}")],
+                )
+                .into()
+            })
+            .collect(),
+    ));
+    let failure: InterpreterError =
+        p4spec_rust::sim_plugin::spec::func::default(&mut runner.context(), value_typ)
+            .unwrap_err()
+            .into();
+    let InterpreterError::Fatal(report) = failure else {
+        panic!("host helper must finalize exhausted reentry");
+    };
+    assert!(
+        matches!(&report.kind, ReportKind::Frame { message, .. } if message == "execution failed")
+    );
+    assert_eq!(report.children.len(), 2);
+    for (report, message) in report.children.iter().zip(["first", "second"]) {
+        let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected cause") };
+        assert_eq!(diagnostic.source, "fixture");
+        assert_eq!(diagnostic.code.as_deref(), Some(format!("fixture/{message}").as_str()));
+        assert_eq!(diagnostic.message, message);
+        assert_eq!(diagnostic.notes, [format!("note {message}")]);
+    }
 }
