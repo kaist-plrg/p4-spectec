@@ -1,8 +1,9 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
 Status: Steps 1 (syntax), 2 (s-expression bridge), 3 (common metafunctions),
-4 (AL environments and context), 5 (type casts and subtyping), and 6
-(assignment) are done. Steps 7–11 are planned.
+4 (AL environments and context), 5 (type casts and subtyping), 6
+(assignment), and 7 (expressions, premises, and calls) are done. Steps 8–11
+are planned.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language. It transcribes the AL specification in
@@ -104,9 +105,11 @@ no earlier clause applies. Each `otherwise` becomes an explicit complement:
 - **Judgment forms:** the nine `otherwise` rules (`Eval_exp/fail`,
   `Eval_path/fail`, `Eval_path_upd/fail`, `Eval_arg/fail`, `Eval_prem/fail`,
   `Eval_clause/fail`, `Eval_tblrow/fail`, `Eval_rul/fail`, and
-  `Eval_rulgroup/fail`) become explicit `"fail"` rules. Each is the
-  complement of the success rules, and each lives in an auxiliary judgment
-  described in the next section.
+  `Eval_rulgroup/fail`) become explicit `"fail"` rules, spread over the
+  auxiliary judgments described in the next section. Together they are the
+  complement of the success rules. In the SL interpreter, a premise whose
+  relation has no derivation also makes its rule fail, so the complement
+  covers that case too.
 
 Two more kinds of case need explicit handling:
 
@@ -133,7 +136,8 @@ Two more kinds of case need explicit handling:
     match it against a pattern narrower than `any`. `⊥` can then only make a
     premise fail, and never flows into a term.
   - When a rule dispatches on a call's result instead of matching it, `⊥` is
-    one of the cases its complement covers.
+    one of the cases its complement covers. A `"fail"` rule matches it with
+    the literal pattern: `(where ⊥ (binop-number numbinop num_l num_r))`.
 
   Judgment forms need nothing extra: a relation with no applicable rule has no
   derivation, and the premise that called it fails.
@@ -176,10 +180,18 @@ are disjoint by input:
    (eval-prem/ifpr C valres FAIL)])
 ```
 
-Each auxiliary judgment is named after the watsup rulegroup it implements, and
-its rules are named after that group's rules. Every watsup rule still has one
-Redex counterpart, and the `"fail"` rules hold the cases that watsup's
-`otherwise` covered.
+Each auxiliary judgment is named after the watsup rulegroup, or the rule, it
+implements (`<judgment>/<group>`), and its rules are named after that group's
+rules. The `"fail"` rules hold the cases that watsup's `otherwise` covered.
+
+A later premise is evaluated only if watsup would evaluate it. So when a
+group's rules evaluate further premises, each later result goes to a judgment
+of its own, `<judgment>/<group>-<premise>`. For example, `eval-exp/binary`
+gets the left operand and evaluates the right one only if the left one fits a
+rule, and `eval-exp/binary-right` gets both. A watsup rule then has one Redex
+rule at each of these steps, all named after it. Rule names are unique within
+a judgment, so where a rule's input matched but a pure premise failed, the
+complement gets a rule of its own, `"<rule>-fail"`.
 
 The same technique has three variants:
 
@@ -187,11 +199,15 @@ The same technique has three variants:
   `(Eval_exp: C |- exp : OK val)*`, goes through a sequence judgment
   (`eval-exps`) that stops at the first `FAIL`. Later elements are then not
   evaluated, and their side effects do not happen.
-- **Relations with no `FAIL` output.** `assign-exp(s)` and `assign-arg(s)`
-  simply have no derivation when they don't apply. A caller captures this in
-  one evaluation, with
+- **Relations that may have no derivation.** `assign-exp(s)`,
+  `assign-arg(s)`, `eval-targs`, `call-func`, and `call-rel` have no
+  derivation when they don't apply. A caller captures this in one evaluation,
+  with
   `(where (C_1 ...) ,(judgment-holds (assign-exp C exp val C_out) C_out))`,
-  and then dispatches on the empty or one-element list *(checked)*.
+  and then dispatches on the empty or one-element list *(checked)*. Two
+  outputs, from overlapping rules, match neither, so they leave no derivation
+  rather than a `FAIL`. The captured derivations are not part of the
+  caller's.
 - **Repeated calls.** A pure metafunction call may appear in several
   complementary rules, because repeating it costs only time. A judgment
   premise may not, because it evaluates AL and can reach side effects.
@@ -293,7 +309,7 @@ rule.
 | `-- if ~(val <: num)` | `(side-condition ,(not (redex-match? al num (term val))))` |
 | `-- otherwise` | the complement of the other clauses; see [Disjoint clauses](#disjoint-clauses) |
 | `-- debug e` | `(where _ ,(debug (term e)))`, printing to stderr |
-| `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes, collected as helpers in `common/0.1-stdlib.rkt` |
+| `$(n - 1)`, `\|x*\|`, `x*[n]`, slices, `x*[[n] = y]`, `++` | Racket escapes; indexing, slicing, and updating are helpers in `common/0.1-stdlib.rkt` (`list-idx`, `text-slice`, ...) |
 
 A `where` pattern that reuses a variable bound earlier in the clause is an
 equality constraint, not a new binding *(checked)*, just as a repeated
@@ -331,15 +347,15 @@ spec-meta-redex/
     1-syntax.rkt          language al-syntax
     2-env.rkt             languages al-base (the union) and al-env (reldef, funcdef)
     3-context.rkt         language al-context (layer, ctx, ctx-shallow); $load, $add_*, ...
-    4-relation.rkt        ctxres
+    4-relation.rkt        language al (ctxres, ctxsres); cons-valsres, cons-ctxsres
     5.1-eval-typ.rkt      $upcast, $downcast, $subtyp
     5.2-eval-assign.rkt   Assign_exp(s), Assign_arg(s)
     5-eval.rkt            includes the five fragments below
-    5.3-eval-exp.rktl
-    5.4-eval-arg.rktl
-    5.5-eval-prem.rktl
-    5.6-eval-call-func.rktl
-    5.7-eval-call-rel.rktl
+    5.3-eval-exp.rktl     Eval_exp, Eval_path, Eval_path_upd; eval-exps, eval-exp-subs
+    5.4-eval-arg.rktl     Eval_arg, Eval_targs; eval-args
+    5.5-eval-prem.rktl    Eval_prem, Eval_prems; eval-prem-subs
+    5.6-eval-call-func.rktl  Eval_clause(s), Eval_tblrow(s), Call_*_func, Call_func
+    5.7-eval-call-rel.rktl   Eval_rul(s), Eval_rulgroup(s), Call_*_rel, Call_rel
     6-entry.rkt           Entry
   main.rkt                command-line driver
   test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, ...;
@@ -467,7 +483,7 @@ racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
 ### Tests
 
 ```sh
-raco test spec-meta-redex/test                   # everything, about a minute
+raco test spec-meta-redex/test                   # everything, about two minutes
 raco test spec-meta-redex/test/al-context.rkt    # one file
 SPECTEC_REDEX_CONTRACTS=0 raco test spec-meta-redex/test
 ```
@@ -482,6 +498,7 @@ reverses every metafunction's clauses. All tests should still pass:
 ```sh
 REV=/tmp/redex-rev
 rm -rf "$REV" && mkdir -p "$REV" && cp -r spec-meta-redex "$REV"/
+find "$REV" -name compiled -type d -prune -exec rm -rf {} +   # stale code would not reverse
 for d in examples spec spec-meta p4c spectec-boot; do ln -s "$PWD/$d" "$REV/$d"; done
 python3 - "$REV" <<'EOF'
 import sys
@@ -511,7 +528,15 @@ A module's unexported helpers, such as `upcast/var`, need a copy of the
 module that provides them. `make-coverage` does not take judgment forms
 *(checked)*. For them, a test file ends with `check-rules-used` from
 `test/judgment.rkt`, which fails if some rule of a judgment is in none of the
-derivations that `outputs` built.
+derivations that `outputs` built. `#:except` skips rules that cannot have a
+derivation yet, such as the extern stubs. A relation captured with
+`judgment-holds` is not in its caller's derivations, so it needs tests of its
+own.
+
+`count-calls` in `test/judgment.rkt` counts a judgment's calls in Redex's
+trace. The nesting tests use it to check that a shared premise is evaluated
+once: the calls at depth 10 must be fewer than 10 times those at depth 4.
+Evaluating a premise twice at each level multiplies them by 64.
 
 ### Exploring in a REPL
 
@@ -826,6 +851,71 @@ moving on:
   through Step 2. Include a nested case for each auxiliary judgment, to catch
   a shared premise that was not factored: with caching off, it shows up as
   exponential running time.
+- Outcome:
+  - 101 judgment forms with 272 rules: the 22 watsup relations, 4 sequence
+    judgments, and 75 auxiliary judgments (see
+    [Evaluating each premise once](#evaluating-each-premise-once)). A rule
+    whose premises cannot fail stays in the main judgment
+    (`"literal/boolean"`, `"root"`). A group whose rules share a premise has
+    one rule there, named after the group, which evaluates the premise and
+    hands the result on.
+  - Premises keep watsup's order, and none is evaluated where watsup would
+    not evaluate it. `Eval_exp/binary`, `compare`, and `concat` check the left
+    operand's kind before evaluating the right one. `Eval_path/slice` checks
+    each index before evaluating the next. `Eval_path_upd/slice` checks that
+    the new value is a text or a list before evaluating anything. The tests
+    put `(BIN DIV (NAT 1) (NAT 0))`, which raises, where a premise must not be
+    evaluated. The K port evaluates both operands of a binary operator
+    regardless.
+  - The sequence judgments `eval-exps`, `eval-args`, `eval-exp-subs`, and
+    `eval-prem-subs` stop at the first `FAIL`. The elaborated AL evaluates
+    every element before it checks any, so the two differ only when a later
+    element raises or has a side effect. `CONS`, `MEM`, and `UPD` evaluate
+    their two operands with `eval-exps` too, which keeps watsup's order.
+    `Eval_exp/opt`'s two rules are one rule over `(OPT (exp ...))`, whose
+    premise is `(Eval_exp: C |- exp : OK val)?`.
+  - `Eval_prem/iterpr-*` and `Eval_exp/iter` decide between their rules by
+    pure calls (`$sub_opt`, `$sub_list`, `$find_varr`), so their main rule
+    hands on the premise's parts instead of a result. `(where ⊥ ...)` covers a
+    `$sub_opt` or `$sub_list` with no clause.
+  - Deviations, by the user's decision (see
+    [Step 6](#step-6-assignment) for the first):
+    - `Eval_exp/call` passes `typ_input*` to `Call_func`. watsup computes it
+      with `Eval_targs` and then passes the unsubstituted `targ*`, so a type
+      parameter passed on through a polymorphic call was resolved in the
+      callee. OCaml's AL interpreter (`eval_call_exp`) and the K port
+      substitute. A test calls `$g<X>` from a context where `X` is `NAT`.
+    - `Eval_path_upd/slice/list` takes `LIST val_n*`, whose elements replace
+      the slice, as the text rule takes `TEXT t_n`. watsup writes
+      `val*[[n_i : n_n] = val_n]`, which the elaborator makes `[val_n]`: the
+      meta-circular run gives `[1, [8], 3, 4]` for `[1, 2, 3, 4][[1 : 1] = [8]]`
+      and errors on a longer slice. As in OCaml's AL interpreter, a list of
+      another length than the slice raises an error.
+    - On these inputs the meta-circular oracle disagrees with Redex.
+  - Texts are indexed by UTF-8 bytes, as OCaml's `String` is: `|"é"|` is 2.
+    A result that splits a character raises an error. Racket's own string
+    operations count characters, so the helpers in `common/0.1-stdlib.rkt`
+    work on bytes.
+  - The elaborator adds `n < |x|` to `Eval_path/idx`, so an index out of
+    bounds is `FAIL`. Nothing bounds slices or updates, so an index or slice
+    out of bounds there raises an error, as in the meta-circular run. The K
+    port gives `FAIL` for all of them.
+  - `debug` writes the Redex term to stderr.
+  - Tests: `test/al-eval-{exp,arg,prem,call-func,call-rel,examples}.rkt`.
+    Every rule is in some derivation, except the stubs for the three extern
+    relations. Every auxiliary judgment that gets a judgment's result has a
+    nesting test, which also checks that the nesting reaches its bottom. A
+    scratch variant that evaluated `UN`'s operand twice went from 31 calls at
+    depth 4 to 2,047 at depth 10. The suite passes with contracts off and
+    with every metafunction's clauses reversed.
+  - `$main()` of the seven examples that need no builtins gives the
+    meta-circular oracle's values: `add` 119, `fibo` 89, `iter-nontrivial`
+    -42, `iter-sequence` 1085, `mutual-recursion` 289, `relation-typing` 110,
+    and `variant-tree` 6. With contracts on, these take 16 ms, 10 s, 0.3 s,
+    18 s, 52 s, 5.8 s, and 4.9 s; with them off, about 20% less. A profile of
+    `fibo` spends 98% in Redex's matcher: every rule's conclusion checks `C`
+    against `ctx` in full. That is Step 10's second item. The tests run the
+    four fast examples.
 
 ### Step 8: Entry and driver
 

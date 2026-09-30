@@ -3,7 +3,8 @@
 ;;
 ;; Type parameters are dropped: `any` stands for them in contracts.
 
-(require "0.0-prelude.rkt")
+(require (only-in racket/list drop list-set take)
+         "0.0-prelude.rkt")
 (provide stdlib
          ite
          opt-as-seq-
@@ -18,7 +19,18 @@
          find-map
          find-maps
          add-map
-         adds-map)
+         adds-map
+         ;; Racket helpers for watsup's operators and `debug`
+         list-idx
+         list-slice
+         list-upd
+         list-upd-slice
+         text-length
+         text-idx
+         text-slice
+         text-upd
+         text-upd-slice
+         debug)
 
 (define-language stdlib
   ;; Metavariables for int, nat, bool, and text
@@ -159,3 +171,85 @@
        (unless (= (length row) width)
          (error 'transpose- "cannot transpose a matrix of values")))
      (apply map list rows)]))
+
+;;
+;; Indexing, slicing, and updating, as Racket escapes
+;;
+;; These follow p4spec/lib/interp: an index or a slice out of bounds raises an
+;; error, and a slice x[i : n] is the n elements from i. Texts are indexed by
+;; their UTF-8 bytes, as OCaml's String is, so a result that splits a
+;; character raises an error.
+
+(define (check-idx who n len)
+  (unless (< -1 n len)
+    (error who "index ~a out of bounds [0, ~a)" n len)))
+
+(define (check-slice who i n len)
+  (unless (and (<= 0 i) (<= 0 n) (<= (+ i n) len))
+    (error who "slice [~a, ~a) out of bounds [0, ~a)" i (+ i n) len)))
+
+(define (check-length who n len)
+  (unless (= n len)
+    (error who "a slice of length ~a updated with one of length ~a" n len)))
+
+;; x*[n]
+(define (list-idx xs n)
+  (check-idx 'list-idx n (length xs))
+  (list-ref xs n))
+
+;; x*[i : n]
+(define (list-slice xs i n)
+  (check-slice 'list-slice i n (length xs))
+  (take (drop xs i) n))
+
+;; x*[[n] = x]
+(define (list-upd xs n x)
+  (check-idx 'list-upd n (length xs))
+  (list-set xs n x))
+
+;; x*[[i : n] = y*]
+(define (list-upd-slice xs i n ys)
+  (check-slice 'list-upd-slice i n (length xs))
+  (check-length 'list-upd-slice n (length ys))
+  (append (take xs i) ys (drop xs (+ i n))))
+
+(define (bytes->text who bs)
+  (with-handlers ([exn:fail:contract?
+                   (λ (_) (error who "~s splits a UTF-8 character" bs))])
+    (bytes->string/utf-8 bs)))
+
+;; |t|
+(define (text-length t)
+  (bytes-length (string->bytes/utf-8 t)))
+
+;; t[n]
+(define (text-idx t n)
+  (define bs (string->bytes/utf-8 t))
+  (check-idx 'text-idx n (bytes-length bs))
+  (bytes->text 'text-idx (subbytes bs n (+ n 1))))
+
+;; t[i : n]
+(define (text-slice t i n)
+  (define bs (string->bytes/utf-8 t))
+  (check-slice 'text-slice i n (bytes-length bs))
+  (bytes->text 'text-slice (subbytes bs i (+ i n))))
+
+;; t[[n] = t_n]
+(define (text-upd t n t_n)
+  (define bs (string->bytes/utf-8 t))
+  (define bs_n (string->bytes/utf-8 t_n))
+  (check-idx 'text-upd n (bytes-length bs))
+  (check-length 'text-upd 1 (bytes-length bs_n))
+  (bytes->text 'text-upd (bytes-append (subbytes bs 0 n) bs_n (subbytes bs (+ n 1)))))
+
+;; t[[i : n] = t_n]
+(define (text-upd-slice t i n t_n)
+  (define bs (string->bytes/utf-8 t))
+  (define bs_n (string->bytes/utf-8 t_n))
+  (check-slice 'text-upd-slice i n (bytes-length bs))
+  (check-length 'text-upd-slice n (bytes-length bs_n))
+  (bytes->text 'text-upd-slice (bytes-append (subbytes bs 0 i) bs_n (subbytes bs (+ i n)))))
+
+;; `-- debug e`: writes the value of e to stderr.
+(define (debug x)
+  (writeln x (current-error-port)))

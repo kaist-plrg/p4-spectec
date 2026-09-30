@@ -1,16 +1,9 @@
 #lang racket/base
 
-(require racket/list
-         "../common/0.0-prelude.rkt"
+(require "../common/0.0-prelude.rkt"
          "../al/3-context.rkt"
          "../al/5.2-eval-assign.rkt"
          "judgment.rkt")
-
-;; A context with the given global and local layers, each a list of the
-;; TYP, REL, FUNC, and VAL maps.
-(define (ctx-of global local)
-  (define (layer maps) (append-map list '(TYP REL FUNC VAL) maps))
-  (list 'GLOBAL (layer global) 'LOCAL (layer local)))
 
 (define (local-funcs C) (list-ref (list-ref C 3) 5))
 (define (local-vals C) (list-ref (list-ref C 3) 7))
