@@ -195,7 +195,9 @@ pub fn adjust(base: &BigInt, rmax: &BigInt, int: &BigInt) -> Result<BigInt, Exte
     let int_range = rmax - base;
     // The divisor max - base must be positive
     if int_range <= BigInt::zero() {
-        return Err(error::hash_range_invalid("hash range divisor must be positive".to_owned()));
+        return Err(
+            error::hash_range_invalid("hash range divisor must be positive".to_owned()).into()
+        );
     }
     Ok(remainder(int, &int_range) + base)
 }
@@ -225,7 +227,8 @@ where
     if id_enum != "HashAlgorithm" {
         return Err(error::hash_algorithm_invalid(format!(
             "invalid HashAlgorithm enum value: {id_enum}.{id_field}"
-        )));
+        ))
+        .into());
     }
     checksum::compute_checksum(&id_field, None, ctx.arena(), &values)
 }
@@ -724,7 +727,8 @@ pub fn format_braces(arena: &ValueArena, fmt: &str, args: &[Value]) -> Result<St
     if args.next().is_some() {
         return Err(error::format_argument_arity_mismatch(
             "too many arguments for format string in log_msg".to_owned(),
-        ));
+        )
+        .into());
     }
     Ok(text)
 }

@@ -8,8 +8,8 @@ use p4spec_rust::{
     },
     sim_plugin::{
         io::{Expectation, Tx},
-        runner::{Run, StfFailure},
         state::SimState,
+        stf_runner::Run,
     },
 };
 
@@ -36,7 +36,7 @@ fn test_output_matches_only_first_transmission() {
     assert_eq!(run_case.on_tx_output().unwrap(), Some(tx(1, "AA")));
     assert_eq!(run_case.tx_output_queue, vec![tx(2, "BB")]);
     assert_eq!(run_case.expect_queue.len(), 1);
-    assert!(matches!(run_case.finish(), Err(StfFailure::PacketsRemaining { .. })));
+    assert_eq!(run_case.finish().unwrap_err().code(), Some("sim/packet-expectation-incomplete"));
 }
 
 #[test]
@@ -49,15 +49,18 @@ fn test_first_same_port_mismatch_preserves_queues() {
         .on_tx_expect(Expectation { tx: tx(1, "AA"), exact: true })
         .unwrap();
     run_case.state.txs = vec![tx(1, "AA")];
-    assert!(matches!(run_case.on_tx_output(), Err(StfFailure::PacketMismatch { .. })));
+    assert_eq!(run_case.on_tx_output().unwrap_err().code(), Some("sim/packet-mismatch"));
     assert_eq!(run_case.expect_queue.len(), 2);
     let mut run_case = run();
     run_case.state.txs = vec![tx(1, "BB"), tx(1, "AA")];
     run_case.on_tx_output().unwrap();
-    assert!(matches!(
-        run_case.on_tx_expect(Expectation { tx: tx(1, "AA"), exact: true }),
-        Err(StfFailure::PacketMismatch { .. })
-    ));
+    assert_eq!(
+        run_case
+            .on_tx_expect(Expectation { tx: tx(1, "AA"), exact: true })
+            .unwrap_err()
+            .code(),
+        Some("sim/packet-mismatch")
+    );
     assert_eq!(run_case.tx_output_queue.len(), 2);
 }
 
@@ -89,7 +92,7 @@ fn test_dropped_packet_retains_expectation() {
         .on_tx_expect(Expectation { tx: tx(1, ""), exact: false })
         .unwrap();
     assert_eq!(run_case.on_tx_output().unwrap(), None);
-    assert!(matches!(run_case.finish(), Err(StfFailure::PacketsRemaining { .. })));
+    assert_eq!(run_case.finish().unwrap_err().code(), Some("sim/packet-expectation-incomplete"));
 }
 
 use p4spec_rust::{
@@ -106,7 +109,7 @@ use p4spec_rust::{
         il::ast::Typ,
     },
     runner::{Extern, Interface, Interpreter, NullInterface, Runner, RunnerContext},
-    sim_plugin::{ebpf::Ebpf, runner},
+    sim_plugin::{ebpf::Ebpf, stf_runner},
     stf::{
         self,
         ast::{Action, Argument, MatchKind, Statement, TableMatch},
@@ -227,7 +230,7 @@ fn test_add_escapes_table_names_but_set_default_preserves_them() {
         (Statement::SetDefault { table: text_name.into(), action }, text_name),
     ] {
         let (mut runner, mut run_case) = stf_runner(Ebpf::default());
-        runner::run_stf_stmt(&mut runner, &mut run_case, &statement(stmt)).unwrap();
+        stf_runner::run_stf_stmt(&mut runner, &mut run_case, &statement(stmt)).unwrap();
         let calls = runner.context().interp().calls.clone();
         assert_eq!(calls[0].0, "find_object_unqualified_e");
         assert_eq!(get::text(runner.arena(), &calls[0].1[1]).unwrap(), text_expect);
@@ -262,7 +265,7 @@ fn test_ordered_table_encoding_and_register_failure() {
         action: action.clone(),
         id: Some("ignored".into()),
     });
-    runner::run_stf_stmt(&mut runner, &mut run_case, &stmt).unwrap();
+    stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmt).unwrap();
     let value_added = run_case.state.value_arch;
     let values = get::tuple(runner.arena(), &value_added).unwrap();
     let value_priority = get::opt(runner.arena(), &values[1]).unwrap().unwrap();
@@ -303,7 +306,7 @@ fn test_ordered_table_encoding_and_register_failure() {
     assert_eq!(get::text(runner.arena(), &values_arg[1][0]).unwrap(), "first");
     let calls = runner.context().interp().calls.clone();
     assert_eq!(get::text(runner.arena(), &calls[0].1[1]).unwrap(), "tab\\\"");
-    runner::run_stf_stmt(
+    stf_runner::run_stf_stmt(
         &mut runner,
         &mut run_case,
         &statement(Statement::SetDefault { table: "tab\"".into(), action }),
@@ -314,7 +317,7 @@ fn test_ordered_table_encoding_and_register_failure() {
     let calls = runner.context().interp().calls.clone();
     assert_eq!(get::text(runner.arena(), &calls[3].1[1]).unwrap(), "tab\"");
     let value_default = run_case.state.value_arch;
-    let error = runner::run_stf_stmt(
+    let error = stf_runner::run_stf_stmt(
         &mut runner,
         &mut run_case,
         &statement(Statement::RegisterWrite {
@@ -342,16 +345,16 @@ fn test_native_steps_clear_raw_outputs_without_flushing_pending_queues() {
         "wait\nmirroring_get 4611686018427387904\nexpect 1 aa*\nno_packet\n",
     )
     .unwrap();
-    runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap();
+    stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap();
     assert!(run_case.state.txs.is_empty());
     assert_eq!(run_case.tx_output_queue, vec![tx(1, "AAFF")]);
-    runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[1]).unwrap();
+    stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[1]).unwrap();
     assert_eq!(
-        runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[2]).unwrap(),
+        stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[2]).unwrap(),
         Some(tx(1, "AAFF"))
     );
     assert_eq!(run_case.matches, vec![tx(1, "AAFF")]);
-    let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]).unwrap_err();
+    let report = stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[3]).unwrap_err();
     assert_eq!(report.code(), Some("sim/statement-unsupported"));
     assert_eq!(report.span(), stmts[3].span);
     run_case.finish().unwrap();
@@ -370,7 +373,7 @@ fn test_unlocated_statement_failures_do_not_invent_source_labels() {
         run_case.tx_output_queue.push(tx(1, "AA"));
         let mut stmts = stf::parse::parse_str("generated.stf", source).unwrap();
         stmts[0].span = Span::default();
-        let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap_err();
+        let report = stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap_err();
         assert_eq!(report.code(), Some(code));
         let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected cause") };
         assert!(diagnostic.labels.is_empty(), "{code}: {:?}", diagnostic.labels);
@@ -395,7 +398,7 @@ fn test_integer_parsing_preserves_word_range_and_radix_prefixes() {
             exact: true,
         });
         assert!(
-            runner::run_stf_stmt(&mut runner, &mut run_case, &stmt)
+            stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmt)
                 .unwrap()
                 .is_none()
         );
@@ -412,7 +415,7 @@ fn test_integer_failure_is_located_and_precedes_pipeline_dispatch() {
         "register_write r 0 0x****************",
     ] {
         let stmts = stf::parse::parse_str("overflow.stf", source).unwrap();
-        let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap_err();
+        let report = stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmts[0]).unwrap_err();
         assert_eq!(report.code(), Some("sim/integer-invalid"));
         assert_eq!(report.span(), stmts[0].span);
     }
@@ -424,11 +427,11 @@ fn test_fresh_run_resets_interpreter_state_and_queues() {
     let (mut runner, _) = stf_runner(Ebpf::default());
     let path = std::env::temp_dir().join(format!("p4spec-stf-reset-{}.p4", std::process::id()));
     std::fs::write(&path, "").unwrap();
-    let mut run_case = runner::init_pipe(&mut runner, &[], &path).unwrap();
+    let mut run_case = stf_runner::init_pipe(&mut runner, &[], &path).unwrap();
     run_case
         .on_tx_expect(Expectation { tx: tx(1, "AA"), exact: true })
         .unwrap();
-    let run_case = runner::init_pipe(&mut runner, &[], &path).unwrap();
+    let run_case = stf_runner::init_pipe(&mut runner, &[], &path).unwrap();
     std::fs::remove_file(path).unwrap();
     assert!(run_case.state.txs.is_empty());
     assert!(run_case.matches.is_empty());
@@ -712,7 +715,7 @@ fn test_native_stf_encoding_modes_preserve_outputs_and_state() {
         runner::{Config, build_al},
         sim_plugin::{
             psa::{Psa, pipe},
-            runner as sim_runner,
+            stf_runner as sim_runner,
         },
     };
     use std::{
@@ -852,7 +855,7 @@ fn test_native_stf_encoding_modes_preserve_outputs_and_state() {
 }
 
 #[test]
-fn test_runtime_reentry_preserves_causes_and_fills_missing_statement_locations() {
+fn test_runtime_reentry_preserves_causes_under_statement_frame() {
     use p4spec_rust::{
         diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
         lang::common::source::Position,
@@ -881,13 +884,20 @@ fn test_runtime_reentry_preserves_causes_and_fills_missing_statement_locations()
         cause("located", vec![Label::secondary(&span_spec, "origin")]),
         Report::frame(span_spec.clone(), "located call", vec![cause("nested", vec![])]),
     ]));
-    let report = runner::run_stf_stmt(&mut runner, &mut run_case, &stmt).unwrap_err();
-    assert!(
-        matches!(&report.kind, ReportKind::Frame { message, .. } if message == "execution failed")
-    );
+    let report = stf_runner::run_stf_stmt(&mut runner, &mut run_case, &stmt).unwrap_err();
+    assert!(matches!(
+        &report.kind,
+        ReportKind::Frame { message, span } if message == "while executing STF statement" && span == &stmt.span
+    ));
+    assert_eq!(report.children.len(), 1);
+    let report = &report.children[0];
+    assert!(matches!(
+        &report.kind,
+        ReportKind::Frame { message, span } if message == "execution failed" && span == &Span::default()
+    ));
     assert_eq!(report.children.len(), 3);
     for (report, message, labels) in [
-        (&report.children[0], "unlocated", vec![Label::primary(&stmt.span, "")]),
+        (&report.children[0], "unlocated", vec![]),
         (&report.children[1], "located", vec![Label::secondary(&span_spec, "origin")]),
         (&report.children[2].children[0], "nested", vec![]),
     ] {

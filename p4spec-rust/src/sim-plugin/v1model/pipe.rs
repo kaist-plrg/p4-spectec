@@ -222,7 +222,7 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => Err(error::extern_object_undefined("packet_in extern not found".to_owned())),
+        _ => Err(error::extern_object_undefined("packet_in extern not found".to_owned()).into()),
     }
 }
 
@@ -245,7 +245,7 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => Err(error::extern_object_undefined("packet_out extern not found".to_owned())),
+        _ => Err(error::extern_object_undefined("packet_out extern not found".to_owned()).into()),
     }
 }
 
@@ -368,7 +368,8 @@ where
             return Err(error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",
                 names.join(", ")
-            )));
+            ))
+            .into());
         }
     };
     Ok(vec![value_ctx, value_arch, value_call_result])
@@ -394,7 +395,8 @@ where
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
-        ));
+        )
+        .into());
     };
     let object = find_object_state(ctx, *value_arch, *value_id)?;
     let name = get::text(ctx.arena(), value_name)?.to_owned();
@@ -479,7 +481,8 @@ where
                     "unsupported extern method call: {}.{name}({})",
                     ids.join("."),
                     names.join(", ")
-                )));
+                ))
+                .into());
             }
         };
     // Write the updated object back
@@ -520,7 +523,8 @@ where
     let _ = ctx;
     Err(error::control_operation_unsupported(
         "add_mirror_session_mc is not implemented for the v1model simulator".to_owned(),
-    ))
+    )
+    .into())
 }
 
 // == Multicast interface
@@ -588,7 +592,8 @@ where
     let _ = ctx;
     Err(error::control_operation_unsupported(
         "register_read is not implemented for the v1model simulator".to_owned(),
-    ))
+    )
+    .into())
 }
 
 /// Control-plane register writes are not supported.
@@ -606,7 +611,8 @@ where
     let _ = ctx;
     Err(error::control_operation_unsupported(
         "register_write is not implemented for the v1model simulator".to_owned(),
-    ))
+    )
+    .into())
 }
 
 /// Control-plane register resets are not supported.
@@ -622,7 +628,8 @@ where
     let _ = ctx;
     Err(error::control_operation_unsupported(
         "register_reset is not implemented for the v1model simulator".to_owned(),
-    ))
+    )
+    .into())
 }
 
 // == Packet state

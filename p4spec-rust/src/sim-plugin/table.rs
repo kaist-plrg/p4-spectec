@@ -74,7 +74,7 @@ where
         return Ok(value_table);
     }
     func::find_object_unqualified_e(ctx, value_arch, value_unqualified)?
-        .ok_or_else(|| error::table_undefined("table not found".to_owned()))
+        .ok_or_else(|| error::table_undefined("table not found".to_owned()).into())
 }
 
 /// Stores a table object back under the name it was found by.

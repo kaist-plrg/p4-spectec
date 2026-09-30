@@ -37,5 +37,7 @@ pub fn find(args: &[(String, Value)], name: &str) -> Result<Value, ExternError> 
     args.iter()
         .find(|(name_arg, _)| name_arg == name)
         .map(|(_, value)| *value)
-        .ok_or_else(|| error::function_argument_undefined(format!("argument not found: {name}")))
+        .ok_or_else(|| {
+            error::function_argument_undefined(format!("argument not found: {name}")).into()
+        })
 }

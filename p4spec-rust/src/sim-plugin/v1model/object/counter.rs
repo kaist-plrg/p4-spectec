@@ -69,7 +69,8 @@ impl Counter {
             }
             _ => Err(error::counter_type_invalid(format!(
                 "invalid CounterType enum value: {id_enum}.{id_type}"
-            ))),
+            ))
+            .into()),
         }
     }
 

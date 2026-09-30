@@ -59,7 +59,8 @@ impl DirectMeter {
             ("MeterType", "bytes") => Ok(Self::Bytes(BigInt::zero())),
             _ => Err(error::meter_type_invalid(format!(
                 "invalid MeterType enum value: {id_enum}.{id_type}"
-            ))),
+            ))
+            .into()),
         }
     }
 

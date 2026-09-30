@@ -212,7 +212,10 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => Err(error::extern_object_undefined("ingress_packet_in extern not found".to_owned())),
+        _ => {
+            Err(error::extern_object_undefined("ingress_packet_in extern not found".to_owned())
+                .into())
+        }
     }
 }
 
@@ -234,7 +237,10 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => Err(error::extern_object_undefined("ingress_packet_out extern not found".to_owned())),
+        _ => {
+            Err(error::extern_object_undefined("ingress_packet_out extern not found".to_owned())
+                .into())
+        }
     }
 }
 
@@ -256,7 +262,10 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketIn(pkt) => Ok(pkt),
-        _ => Err(error::extern_object_undefined("egress_packet_in extern not found".to_owned())),
+        _ => {
+            Err(error::extern_object_undefined("egress_packet_in extern not found".to_owned())
+                .into())
+        }
     }
 }
 
@@ -278,7 +287,10 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::PacketOut(pkt) => Ok(pkt),
-        _ => Err(error::extern_object_undefined("egress_packet_out extern not found".to_owned())),
+        _ => {
+            Err(error::extern_object_undefined("egress_packet_out extern not found".to_owned())
+                .into())
+        }
     }
 }
 
@@ -303,7 +315,9 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     match find_object_state(ctx, value_arch, value_id)? {
         ObjectState::Register(reg) => Ok(reg),
-        _ => Err(error::extern_object_undefined(format!("Register extern {name} not found"))),
+        _ => {
+            Err(error::extern_object_undefined(format!("Register extern {name} not found")).into())
+        }
     }
 }
 
@@ -412,7 +426,8 @@ where
         return Err(error::extern_function_unsupported(format!(
             "unsupported extern function call: {name}({})",
             names.join(", ")
-        )));
+        ))
+        .into());
     }
     let (value_ctx, value_arch, value_call_result) =
         core_func::verify(ctx, *value_ctx, *value_arch)?;
@@ -437,7 +452,8 @@ where
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
-        ));
+        )
+        .into());
     };
     let object = find_object_state(ctx, *value_arch, *value_id)?;
     let name = get::text(ctx.arena(), value_name)?.to_owned();
@@ -558,7 +574,8 @@ where
                     "unsupported extern method call: {}.{name}({})",
                     ids.join("."),
                     names.join(", ")
-                )));
+                ))
+                .into());
             }
         };
     // Write the updated object back

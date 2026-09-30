@@ -24,7 +24,8 @@ fn width_bit_aligned(width: &BigInt, alignment: usize) -> Result<usize, ExternEr
     if !width.is_multiple_of(alignment) {
         return Err(error::hash_width_invalid(format!(
             "hash width {width} must be a multiple of {alignment} bits"
-        )));
+        ))
+        .into());
     }
     Ok(width)
 }
@@ -100,7 +101,7 @@ pub fn compute_hash(
         // Identity passes the packed value through
         "identity" => Ok(int.clone()),
         // Other algorithms are not implemented
-        _ => Err(error::hash_algorithm_unsupported(format!("(TODO: compute_hash) {algo}"))),
+        _ => Err(error::hash_algorithm_unsupported(format!("(TODO: compute_hash) {algo}")).into()),
     }
 }
 

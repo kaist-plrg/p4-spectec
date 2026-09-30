@@ -60,7 +60,7 @@ where
         Some(value) => unpack::p4_string(ctx.arena(), &value)?,
         None => "static_assert failed".to_owned(),
     };
-    Err(error::assertion_unmet(message))
+    Err(error::assertion_unmet(message).into())
 }
 
 /// Checks a predicate in the parser, leaving execution unchanged when true.

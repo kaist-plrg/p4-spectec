@@ -92,7 +92,8 @@ impl<Ext: Impl> Extern for Ext {
             _ => {
                 return Err(error::extern_relation_unsupported(format!(
                     "unimplemented extern relation: {name}"
-                )));
+                ))
+                .into());
             }
         };
         // Extern state lives in the values, so calls report no hidden effect
@@ -117,7 +118,8 @@ impl<Ext: Impl> Extern for Ext {
             _ => {
                 return Err(error::extern_function_unsupported(format!(
                     "unimplemented extern function: {name}"
-                )));
+                ))
+                .into());
             }
         };
         Ok((value, false))
@@ -143,7 +145,8 @@ where
         return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to local compile-time known extern function call"
                 .to_owned(),
-        ));
+        )
+        .into());
     };
     let name_func = crate::lang::data::value::get::text(ctx.arena(), value_name)?;
     let values_name_param = crate::lang::data::value::get::list(ctx.arena(), value_names_param)?;
@@ -161,7 +164,8 @@ where
             return Err(error::extern_function_unsupported(format!(
                 "unsupported local compile-time known extern function call: {name_func}({})",
                 names_param.join(", ")
-            )));
+            ))
+            .into());
         }
     };
     let value = core::func::static_assert(ctx, value_ctx, has_message)?;

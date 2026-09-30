@@ -199,7 +199,7 @@ where
             return Err(error::extern_function_unsupported(format!(
                 "unsupported extern function call: {name}({})",
                 names.join(", ")
-            )));
+            )).into());
         };
     Ok(vec![value_ctx, value_arch, value_call_result])
 }
@@ -221,7 +221,8 @@ fn unsupported_method(
         "unsupported extern method call: {}.{name}({})",
         ids.join("."),
         names.join(", ")
-    )))
+    ))
+    .into())
 }
 
 /// Dispatches an extern method call on the object named `value_id`.
@@ -240,7 +241,8 @@ where
     let [value_ctx, value_arch, value_id, value_name, value_names] = values else {
         return Err(error::extern_argument_arity_mismatch(
             "unexpected number of arguments to extern method call".to_owned(),
-        ));
+        )
+        .into());
     };
     let value_state = func::find_object_state_e(ctx, *value_arch, *value_id)?;
     let object = ExternObject::from_value(ctx.arena_mut(), encoding, &value_state)?;

@@ -31,7 +31,7 @@ pub fn p4_bool(arena: &ValueArena, value: &Value) -> Result<bool, ExternError> {
             };
             get::bool(arena, value).map_err(ExternError::from)
         },
-        _ => Err(error::value_invalid("expected P4 bool value".to_owned())),
+        _ => Err(error::value_invalid("expected P4 bool value".to_owned()).into()),
     }
 }
 
@@ -49,7 +49,7 @@ pub fn p4_string(arena: &ValueArena, value: &Value) -> Result<String, ExternErro
             };
             get::text(arena, value).map(str::to_owned).map_err(ExternError::from)
         },
-        _ => Err(error::value_invalid("expected P4 string value".to_owned())),
+        _ => Err(error::value_invalid("expected P4 string value".to_owned()).into()),
     }
 }
 
@@ -63,7 +63,7 @@ pub fn p4_enum(arena: &ValueArena, value: &Value) -> Result<(String, String), Ex
             };
             Ok((get::text(arena, value_enum)?.to_owned(), get::text(arena, value_id)?.to_owned()))
         },
-        _ => Err(error::value_invalid("expected P4 enum value".to_owned())),
+        _ => Err(error::value_invalid("expected P4 enum value".to_owned()).into()),
     }
 }
 
@@ -77,7 +77,7 @@ pub fn p4_tuple(arena: &ValueArena, value: &Value) -> Result<Vec<Value>, ExternE
             };
             Ok(get::list(arena, value_list)?.to_vec())
         },
-        _ => Err(error::value_invalid("expected P4 tuple value".to_owned())),
+        _ => Err(error::value_invalid("expected P4 tuple value".to_owned()).into()),
     }
 }
 
@@ -99,7 +99,7 @@ pub fn p4_fixed_bit(arena: &ValueArena, value: &Value) -> Result<(BigInt, BigInt
                 num::to_int(get::num(arena, value_int)?).clone(),
             ))
         },
-        _ => Err(error::value_invalid("expected P4 fixed-bit value".to_owned())),
+        _ => Err(error::value_invalid("expected P4 fixed-bit value".to_owned()).into()),
     }
 }
 
@@ -130,6 +130,6 @@ pub fn p4_precision_number(
                 num::to_int(get::num(arena, value_int)?).clone(),
             ))
         },
-        _ => Err(error::value_invalid("expected P4 precision number value".to_owned())),
+        _ => Err(error::value_invalid("expected P4 precision number value".to_owned()).into()),
     }
 }

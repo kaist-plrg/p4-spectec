@@ -59,7 +59,8 @@ impl Counter {
             }
             _ => Err(error::counter_type_invalid(format!(
                 "invalid PSA_CounterType_t enum value: {id_enum}.{id_type}"
-            ))),
+            ))
+            .into()),
         }
     }
 
@@ -81,7 +82,8 @@ impl Counter {
         let Self::Packets(counts) = &mut self else {
             return Err(error::counter_type_unsupported(
                 "Only enum value PACKETS of PSA_CounterType_t is supported".to_owned(),
-            ));
+            )
+            .into());
         };
         if let Some(count) = counts.get_mut(idx) {
             *count += BigInt::one();

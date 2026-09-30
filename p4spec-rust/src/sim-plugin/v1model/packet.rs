@@ -47,7 +47,8 @@ impl CloneInfo {
             name => {
                 return Err(error::clone_direction_invalid(format!(
                     "Invalid enum value \"{name}\". Expected I2E or E2E"
-                )));
+                ))
+                .into());
             }
         };
         let session = usize::try_from(&unpack::p4_fixed_bit(arena, value_session)?.1)?;

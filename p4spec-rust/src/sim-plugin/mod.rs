@@ -5,10 +5,11 @@
 //! with that architecture as its extern,
 //! and boxes it as a `Simulator` that runs STF tests.
 //! `core` and `spec` are the helpers the architectures share;
-//! `runner`, `table`, `hash`, `io`, and `state` drive one test.
+//! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test.
 
-use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, runner::Error, v1model::V1Model};
+use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 use crate::{
+    diagnostic::Report,
     lang::data::value::external::Encoding,
     runner::{self as host, BuiltinInterface, Interpreter, Runner},
 };
@@ -23,9 +24,9 @@ mod externs;
 pub mod hash;
 pub mod io;
 pub mod psa;
-pub mod runner;
 pub mod spec;
 pub mod state;
+pub mod stf_runner;
 pub mod table;
 pub mod v1model;
 
@@ -44,7 +45,7 @@ trait SimulatorRunner {
         path_p4: &Path,
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
-    ) -> Result<(), Error>;
+    ) -> Result<(), Box<Report>>;
 }
 
 impl<Interp, Arch> SimulatorRunner for Runner<Interp, BuiltinInterface, Arch>
@@ -58,8 +59,8 @@ where
         path_p4: &Path,
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
-    ) -> Result<(), Error> {
-        runner::run_stf_test(self, includes, path_p4, path_stf, on_match).map(drop)
+    ) -> Result<(), Box<Report>> {
+        stf_runner::run_stf_test(self, includes, path_p4, path_stf, on_match).map(drop)
     }
 }
 
@@ -86,7 +87,7 @@ impl Simulator {
         path_p4: &Path,
         path_stf: &Path,
         mut on_match: impl FnMut(&Tx),
-    ) -> Result<(), Error> {
+    ) -> Result<(), Box<Report>> {
         self.runner
             .run_stf_test(includes, path_p4, path_stf, &mut on_match)
     }

@@ -71,7 +71,8 @@ where
 {
     Err(error::extern_relation_unsupported(
         "unimplemented extern relation: ExternFunctionCall_eval".to_owned(),
-    ))
+    )
+    .into())
 }
 
 // - Method calls
@@ -87,5 +88,6 @@ where
 {
     Err(error::extern_relation_unsupported(
         "unimplemented extern relation: ExternMethodCall_eval".to_owned(),
-    ))
+    )
+    .into())
 }

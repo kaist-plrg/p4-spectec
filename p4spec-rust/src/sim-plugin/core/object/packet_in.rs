@@ -58,7 +58,9 @@ impl PacketIn {
     /// Guards against a cursor or length past the packet.
     fn check_bounds(&self) -> Result<(), ExternError> {
         if self.idx > self.len || self.len > self.bits.len() {
-            return Err(error::packet_cursor_invalid("invalid packet cursor or length".to_owned()));
+            return Err(
+                error::packet_cursor_invalid("invalid packet cursor or length".to_owned()).into()
+            );
         }
         Ok(())
     }
@@ -74,7 +76,8 @@ impl PacketIn {
         if !self.has_size(size)? {
             return Err(error::packet_size_out_of_bounds(
                 "packet parse exceeds available bits".to_owned(),
-            ));
+            )
+            .into());
         }
         let bits = self.bits[self.idx..self.idx + size].to_vec();
         let pkt = Self { idx: self.idx + size, ..self.clone() };

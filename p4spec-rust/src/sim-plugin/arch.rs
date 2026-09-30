@@ -56,7 +56,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "add_mirror_session is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 
     /// `mirroring_add_mc`: maps a session to a multicast group.
@@ -73,7 +74,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "add_mirror_session_mc is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 
     /// `mc_mgrp_create`: creates a multicast group.
@@ -89,7 +91,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "mc_mgrp_create is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 
     /// `mc_node_create`: creates a replication node over ports.
@@ -106,7 +109,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "mc_node_create is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 
     /// `mc_node_associate`: adds a node to a group.
@@ -123,7 +127,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "mc_node_associate is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 
     /// `register_read`: reads a register cell.
@@ -140,7 +145,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "register_read is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 
     /// `register_write`: writes a register cell.
@@ -158,7 +164,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "register_write is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 
     /// `register_reset`: clears a register.
@@ -174,7 +181,8 @@ pub trait Architecture: Extern {
         Err(error::control_operation_unsupported(format!(
             "register_reset is not implemented for the {} simulator",
             Self::NAME
-        )))
+        ))
+        .into())
     }
 }
 

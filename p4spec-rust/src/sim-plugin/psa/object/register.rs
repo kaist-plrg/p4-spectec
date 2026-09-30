@@ -60,7 +60,8 @@ impl Register {
             return Err(error::register_type_argument_arity_mismatch(format!(
                 "Register constructor expects 2 type arguments, but {} were given",
                 values_targ.len()
-            )));
+            ))
+            .into());
         };
         let value_typ = *value_typ;
         let args = args::assoc(ctx.arena(), value_ids, value_args)?;

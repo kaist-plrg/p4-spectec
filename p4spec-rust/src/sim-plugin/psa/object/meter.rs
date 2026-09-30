@@ -62,7 +62,8 @@ impl Meter {
             ("PSA_MeterType_t", "BYTES") => Ok(Self::Bytes(vec![Color::Green; size])),
             _ => Err(error::meter_type_invalid(format!(
                 "invalid PSA_MeterType_t enum value: {id_enum}.{id_type}"
-            ))),
+            ))
+            .into()),
         }
     }
 
