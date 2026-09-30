@@ -93,9 +93,11 @@ where
     if let Some(value_id) = value_qualified
         && func::find_object_qualified_e(ctx, value_arch, value_id)?.is_some()
     {
-        return func::update_object_qualified_e(ctx, value_arch, value_id, value_table);
+        return func::update_object_qualified_e(ctx, value_arch, value_id, value_table)
+            .map_err(ExternError::from);
     }
     func::update_object_unqualified_e(ctx, value_arch, value_unqualified, value_table)
+        .map_err(ExternError::from)
 }
 
 // == Table entries

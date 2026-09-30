@@ -174,7 +174,7 @@ where
 {
     let encoding = ctx.external().encoding;
     let value_state = arch.to_value(ctx.arena_mut(), encoding)?;
-    func::update_arch_state_e(ctx, value_arch, value_state)
+    func::update_arch_state_e(ctx, value_arch, value_state).map_err(ExternError::from)
 }
 
 // == Object state
@@ -329,7 +329,7 @@ where
     let value_id = make::list(ctx.arena_mut(), typ_id.node.into(), values_name, Span::default())?;
     let encoding = ctx.external().encoding;
     let value_reg = ObjectState::Register(reg).to_value(ctx.arena_mut(), encoding)?;
-    func::update_object_state_e(ctx, value_arch, value_id, value_reg)
+    func::update_object_state_e(ctx, value_arch, value_id, value_reg).map_err(ExternError::from)
 }
 
 // == Extern calls

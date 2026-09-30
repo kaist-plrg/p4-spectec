@@ -491,7 +491,7 @@ fn test_native_table_entries_append_priorities_and_default_changes_are_isolated(
 }
 
 #[test]
-fn test_spec_helper_finalizes_exhausted_reentry() {
+fn test_spec_helper_preserves_mismatch_until_host_conversion() {
     use p4spec_rust::diagnostic::{Diagnostic, ReportKind, Severity};
 
     let mut runner = scripted_runner();
@@ -513,11 +513,11 @@ fn test_spec_helper_finalizes_exhausted_reentry() {
             .collect(),
     ));
     let failure: InterpreterError =
-        p4spec_rust::sim_plugin::spec::func::default(&mut runner.context(), value_typ)
-            .unwrap_err()
-            .into();
+        p4spec_rust::sim_plugin::spec::func::default(&mut runner.context(), value_typ).unwrap_err();
+    assert!(matches!(&failure, InterpreterError::Mismatch(_)));
+    let failure = InterpreterError::from(p4spec_rust::runner::ExternError::from(failure));
     let InterpreterError::Fatal(report) = failure else {
-        panic!("host helper must finalize exhausted reentry");
+        panic!("host operation must finalize exhausted reentry");
     };
     assert!(
         matches!(&report.kind, ReportKind::Frame { message, .. } if message == "execution failed")

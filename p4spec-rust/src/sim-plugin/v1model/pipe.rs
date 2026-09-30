@@ -183,7 +183,7 @@ where
 {
     let encoding = ctx.external().encoding;
     let value_state = arch.to_value(ctx.arena_mut(), encoding)?;
-    func::update_arch_state_e(ctx, value_arch, value_state)
+    func::update_arch_state_e(ctx, value_arch, value_state).map_err(ExternError::from)
 }
 
 // == Object state
