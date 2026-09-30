@@ -8,9 +8,8 @@ use super::failure;
 use crate::Result;
 use p4spec_rust::{
     diagnostic::{Report, ReportKind},
-    interp::shared::backtrack::Failure,
     lang::{common::source::Span, data::value::make},
-    runner::{self, BuiltinInterface, Config, Interpreter, NullExtern, Runner},
+    runner::{self, BuiltinInterface, Config, Interpreter, InterpreterError, NullExtern, Runner},
 };
 
 // = Expectations
@@ -49,7 +48,7 @@ pub(super) fn reject<Interp>(
     code: &str,
 ) -> Result<Vec<Report>>
 where
-    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
+    Interp: Interpreter<BuiltinInterface, NullExtern>,
 {
     // Keep the entry relation and input common to all cases
     let value = make::nat(runner.arena_mut(), 1.into(), Span::default())
@@ -62,8 +61,8 @@ where
 
     // Check recovery behavior before converting the failure to a report
     let kind = match &error {
-        Failure::Fatal(_) => FailureKind::Fatal,
-        Failure::Mismatch(_) => FailureKind::Mismatch,
+        InterpreterError::Fatal(_) => FailureKind::Fatal,
+        InterpreterError::Mismatch(_) => FailureKind::Mismatch,
     };
     if kind != kind_expect {
         return Err(failure(name, format!("expected {kind_expect:?}, got {kind:?}")));

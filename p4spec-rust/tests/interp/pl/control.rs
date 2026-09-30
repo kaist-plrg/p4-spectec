@@ -1,4 +1,6 @@
 use super::*;
+use p4spec_rust::runner::InterpreterError;
+
 use crate::interp::report::ReportExt;
 use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::lang::hints::alter::AlterHintKind;
@@ -393,8 +395,6 @@ fn fatal_instruction_failures_keep_calls_and_causes_without_instruction_frames()
 
 #[test]
 fn builtin_failures_keep_call_frames_without_instruction_frames() {
-    use p4spec_rust::interp::shared::backtrack::Failure;
-
     let mut spec_pl =
         spec("builtin dec $max_nat(nat*) : nat\ndec $entry() : nat\ndef $entry() = $max_nat([])");
     let func = spec_pl
@@ -409,7 +409,7 @@ fn builtin_failures_keep_call_frames_without_instruction_frames() {
     for det in [false, true] {
         let mut runner = configured(spec_pl.clone(), det);
         let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
-        assert!(matches!(failure, Failure::Fatal(_)), "{failure}");
+        assert!(matches!(failure, InterpreterError::Fatal(_)), "{failure}");
         let text = failure.into_report().render();
         assert!(text.contains("while invoking $entry"), "{text}");
         assert!(text.contains("while invoking $max_nat"), "{text}");

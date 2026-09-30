@@ -1,4 +1,6 @@
 use crate::interp::report::ReportExt;
+use p4spec_rust::runner::InterpreterError;
+
 use p4spec_rust::{
     lang::{
         common::source::Span,
@@ -91,7 +93,6 @@ fn test_dropped_packet_retains_expectation() {
 }
 
 use p4spec_rust::{
-    interp::shared::backtrack::Failure as InterpError,
     lang::{
         common::prim::num,
         data::{
@@ -123,7 +124,6 @@ struct StfInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for StfInterp {
     type Spec = ();
-    type Error = InterpError;
 
     fn clear(&mut self) {
         self.calls.clear();
@@ -138,7 +138,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for StfInterp {
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         _program: Value,
-    ) -> Result<Vec<Value>, InterpError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         assert_eq!(name, "EBPF_init");
         assert!(!ctx.interp().initialized, "previous run's interpreter state was not reset");
         ctx.interp_mut().initialized = true;
@@ -150,7 +150,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for StfInterp {
         _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         _name: &str,
         _values: &[Value],
-    ) -> Result<Vec<Value>, InterpError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -159,7 +159,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for StfInterp {
         name: &str,
         _targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, InterpError> {
+    ) -> Result<Value, InterpreterError> {
         ctx.interp_mut()
             .calls
             .push((name.to_owned(), values.to_vec()));

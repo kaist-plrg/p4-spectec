@@ -16,7 +16,7 @@ use crate::{
             value::{Value, ValueArena, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
@@ -91,7 +91,7 @@ impl Counter {
         value_ctx: Value,
         value_arch: Value,
         packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,

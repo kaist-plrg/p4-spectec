@@ -1,114 +1,38 @@
-//! Recoverable mismatches and fatal interpreter failures
+//! Evaluation helpers for recoverable mismatches and fatal failures
 //!
-//! `Fatal` stops execution; `Mismatch` lets the caller try another candidate.
-//! Host failures always abort, including exhausted interpreter reentry.
-//! `into_report` groups mismatches under an execution frame for display.
+//! Macros propagate the runner error and add diagnostics or evaluation frames.
+//! The runner owns the distinction between fatal errors and mismatches.
 
-use super::error::{self, Error};
+use super::error::Error;
 use crate::{
     diagnostic::{Diagnostic, Label, Report},
     lang::{
         common::{prim::num::NumericError, source::Span},
         data::value::ValueError,
     },
-    runner::{ExternError, InterfaceError},
+    runner::InterpreterError,
 };
 
 /// Returns a value, a fatal error, or a mismatch.
-pub type Backtrack<T> = Result<T, Failure>;
+pub type Backtrack<T> = Result<T, InterpreterError>;
 
-/// Separates aborting execution from trying another candidate.
-#[derive(Debug)]
-pub enum Failure {
-    /// Aborts execution without retrying another candidate.
-    Fatal(Error),
-    /// Retains the ordered reports of candidates that did not match.
-    Mismatch(Vec<Report>),
-}
-
-// = Failure reports
-
-impl Failure {
-    /// Returns the fatal report or groups mismatches under an execution frame.
-    pub fn into_report(self) -> Error {
-        match self {
-            Self::Fatal(report) => report,
-            Self::Mismatch(reports) => error::trace::frame_execution_failure(reports),
-        }
-    }
-
-    /// Adds a frame while keeping the failure kind and child reports.
-    pub fn with_frame(self, span: Span, message: impl Into<String>) -> Self {
-        match self {
-            Self::Fatal(report) => {
-                Self::Fatal(Box::new(Report::frame(span, message, vec![*report])))
-            }
-            Self::Mismatch(reports) => Self::Mismatch(vec![Report::frame(span, message, reports)]),
-        }
-    }
-
-    /// Adds a source label to causes that have none, leaving frames unchanged.
-    pub fn with_span(self, span: &Span) -> Self {
-        match self {
-            Self::Fatal(mut report) => {
-                *report = report.with_span(span);
-                Self::Fatal(report)
-            }
-            Self::Mismatch(reports) => Self::Mismatch(
-                reports
-                    .into_iter()
-                    .map(|report| report.with_span(span))
-                    .collect(),
-            ),
-        }
-    }
-}
-
-impl From<Error> for Failure {
-    fn from(report: Error) -> Self {
-        Self::Fatal(report)
-    }
-}
-
-impl From<InterfaceError> for Failure {
-    fn from(error: InterfaceError) -> Self {
-        Self::Fatal(error.into_report())
-    }
-}
-
-impl From<ExternError> for Failure {
-    fn from(error: ExternError) -> Self {
-        Self::Fatal(error.into_report())
-    }
-}
-
-impl From<ValueError> for Failure {
+impl From<ValueError> for InterpreterError {
     fn from(error: ValueError) -> Self {
         Self::Fatal(error.into())
     }
 }
 
-impl From<NumericError> for Failure {
+impl From<NumericError> for InterpreterError {
     fn from(error: NumericError) -> Self {
         Self::Fatal(error.into())
     }
 }
 
-impl std::fmt::Display for Failure {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Fatal(report) => std::fmt::Display::fmt(report, fmt),
-            Self::Mismatch(_) => fmt.write_str("execution did not match"),
-        }
-    }
-}
-impl std::error::Error for Failure {}
-
 // = Error conversion
 
 /// Converts an error to Fatal, adding a source label if missing.
 pub fn from_result<T>(result: Result<T, impl Into<Error>>, span: &Span) -> Backtrack<T> {
-    result.map_err(|error| Failure::Fatal(error.into()).with_span(span))
+    result.map_err(|error| InterpreterError::Fatal(error.into()).with_span(span))
 }
 
 /// Returns Fatal at the given span if the condition is false.
@@ -121,7 +45,7 @@ pub fn check(
         Ok(())
     } else {
         let diagnostic = diagnostic().with_label(Label::primary(&span, ""));
-        Err(Failure::Fatal(Box::new(Report::from(diagnostic))))
+        Err(InterpreterError::Fatal(Box::new(Report::from(diagnostic))))
     }
 }
 
@@ -149,12 +73,12 @@ pub(crate) use ok;
 macro_rules! fatal {
     ($span:expr, $diagnostic:expr $(,)?) => {{
         use $crate::diagnostic::{Label, Report};
-        use $crate::interp::shared::backtrack::Failure;
+        use $crate::runner::InterpreterError;
         let diagnostic = ($diagnostic).with_label(Label::primary(&$span, ""));
-        Err(Failure::Fatal(Box::new(Report::from(diagnostic))))
+        Err(InterpreterError::Fatal(Box::new(Report::from(diagnostic))))
     }};
     ($($report:tt)*) => {
-        Err($crate::interp::shared::backtrack::Failure::Fatal($($report)*))
+        Err($crate::runner::InterpreterError::Fatal($($report)*))
     };
 }
 pub(crate) use fatal;
@@ -163,12 +87,12 @@ pub(crate) use fatal;
 macro_rules! unmatch {
     ($span:expr, $diagnostic:expr $(,)?) => {{
         use $crate::diagnostic::{Label, Report};
-        use $crate::interp::shared::backtrack::Failure;
+        use $crate::runner::InterpreterError;
         let diagnostic = ($diagnostic).with_label(Label::primary(&$span, ""));
-        Err(Failure::Mismatch(vec![Report::from(diagnostic)]))
+        Err(InterpreterError::Mismatch(vec![Report::from(diagnostic)]))
     }};
     ($($reports:tt)*) => {
-        Err($crate::interp::shared::backtrack::Failure::Mismatch($($reports)*))
+        Err($crate::runner::InterpreterError::Mismatch($($reports)*))
     };
 }
 pub(crate) use unmatch;

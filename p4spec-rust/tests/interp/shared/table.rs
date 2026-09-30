@@ -2,10 +2,9 @@
 
 use crate::interp::report::ReportExt;
 use p4spec_rust::{
-    interp::shared::backtrack::Failure,
     lang::{al::ast as al, data::value::get, pl::ast as pl, sl::ast as sl},
     pass::{algo, elaborate, prosify, structure},
-    runner::{self, BuiltinInterface, Config, Interpreter, NullExtern, Runner},
+    runner::{self, BuiltinInterface, Config, Interpreter, InterpreterError, NullExtern, Runner},
 };
 
 /// Compiles complete table patterns with independently supplied row bodies.
@@ -33,16 +32,18 @@ def $entry() = $table(B)
 }
 
 /// Calls the source entry and observes its boolean result or failure kind.
-fn invoke<Interp>(mut runner: Runner<Interp, BuiltinInterface, NullExtern>) -> Result<bool, Failure>
+fn invoke<Interp>(
+    mut runner: Runner<Interp, BuiltinInterface, NullExtern>,
+) -> Result<bool, InterpreterError>
 where
-    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
+    Interp: Interpreter<BuiltinInterface, NullExtern>,
 {
     let value = runner.context().call_func("entry", &[], &[])?;
     Ok(get::bool(runner.arena(), &value).unwrap())
 }
 
 /// Runs the corresponding source programs through all interpreter stages.
-fn outcomes(specs: (al::Spec, sl::Spec, pl::Spec)) -> Vec<Result<bool, Failure>> {
+fn outcomes(specs: (al::Spec, sl::Spec, pl::Spec)) -> Vec<Result<bool, InterpreterError>> {
     let (spec_al, spec_sl, spec_pl) = specs;
     let config = Config::new(true, false, true);
     vec![
@@ -72,7 +73,7 @@ fn rejected_table_rows_remain_recoverable_mismatches() {
     let defs = "dec $reject() : bool\ndef $reject() = true\n  -- if false";
     for outcome in outcomes(specs("false", "$reject()", defs)) {
         let failure = outcome.unwrap_err();
-        assert!(matches!(failure, Failure::Mismatch(_)), "{failure:?}");
+        assert!(matches!(failure, InterpreterError::Mismatch(_)), "{failure:?}");
         assert!(
             failure
                 .into_report()
@@ -87,7 +88,7 @@ fn fatal_table_rows_preserve_the_original_failure() {
     let defs = "extern dec $unavailable() : bool";
     for outcome in outcomes(specs("false", "$unavailable()", defs)) {
         let failure = outcome.unwrap_err();
-        assert!(matches!(failure, Failure::Fatal(_)), "{failure:?}");
+        assert!(matches!(failure, InterpreterError::Fatal(_)), "{failure:?}");
         assert!(
             failure
                 .into_report()
@@ -118,7 +119,7 @@ fn empty_table_ir_remains_a_recoverable_mismatch() {
     }
     for outcome in outcomes((spec_al, spec_sl, spec_pl)) {
         let failure = outcome.unwrap_err();
-        assert!(matches!(failure, Failure::Mismatch(_)), "{failure:?}");
+        assert!(matches!(failure, InterpreterError::Mismatch(_)), "{failure:?}");
     }
 }
 

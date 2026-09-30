@@ -7,7 +7,7 @@
 
 use crate::{
     lang::data::value::Value,
-    runner::{Interface, Interpreter, RunnerContext},
+    runner::{Interface, Interpreter, InterpreterError, RunnerContext},
 };
 
 use super::externs as external;
@@ -30,7 +30,7 @@ impl external::Impl for V1Model {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, InterpreterError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -42,7 +42,7 @@ impl external::Impl for V1Model {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, Interp::Error>
+    ) -> Result<Vec<Value>, InterpreterError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -54,7 +54,7 @@ impl external::Impl for V1Model {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, Interp::Error>
+    ) -> Result<Vec<Value>, InterpreterError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -65,7 +65,7 @@ impl external::Impl for V1Model {
     fn init_arch_state<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Result<Value, Interp::Error>
+    ) -> Result<Value, InterpreterError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,

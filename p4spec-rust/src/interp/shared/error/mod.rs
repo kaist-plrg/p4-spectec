@@ -1,7 +1,7 @@
 //! Structured causes and frames for interpreter failures
 //!
 //! These helpers create reports and attach source locations.
-//! `Failure` distinguishes fatal errors from recoverable mismatches.
+//! `InterpreterError` distinguishes fatal errors from recoverable mismatches.
 //! The renderer reads source files when displaying the reports.
 
 use crate::{

@@ -12,10 +12,10 @@ pub mod flow;
 
 pub mod eval;
 
-use crate::interp::shared::{backtrack::Failure, cache::Cache, eval::Invoker};
+use crate::interp::shared::{cache::Cache, eval::Invoker};
 use crate::{
     lang::{common::source::Span, data::value::Value, sl::ast},
-    runner::{Extern, Interface, Interpreter, RunnerContext},
+    runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 use context::{Context, Global};
 
@@ -49,7 +49,6 @@ impl SlInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
     type Spec = Global;
-    type Error = Failure;
 
     fn clear(&mut self) {
         self.cache.clear();
@@ -63,7 +62,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Failure> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         runner_ctx.call_rel(name, &[program])
     }
 
@@ -71,7 +70,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, Failure> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.to_owned(), span: Span::default());
@@ -92,7 +91,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         name: &str,
         targs: &[ast::Typ],
         values: &[Value],
-    ) -> Result<Value, Failure> {
+    ) -> Result<Value, InterpreterError> {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.to_owned(), span: Span::default());

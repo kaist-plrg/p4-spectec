@@ -2,15 +2,14 @@
 
 use p4spec_rust::{
     diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
-    interp::shared::backtrack::Failure,
     lang::{
         common::source::{Position, Span},
         data::value::{Value, make},
         il::ast::Typ,
     },
     runner::{
-        self, BuiltinInterface, Config, Extern, ExternError, Interface, Interpreter, Runner,
-        RunnerContext,
+        self, BuiltinInterface, Config, Extern, ExternError, Interface, Interpreter,
+        InterpreterError, Runner, RunnerContext,
     },
 };
 
@@ -60,7 +59,7 @@ fn traces() -> Vec<Report> {
 impl Host {
     fn error(&self) -> ExternError {
         if self.mismatch {
-            Failure::Mismatch(traces()).into()
+            InterpreterError::Mismatch(traces()).into()
         } else {
             ExternError(Box::new(diagnostic()))
         }
@@ -127,11 +126,11 @@ pub(super) fn reports_equal(report_a: &Report, report_b: &Report) -> bool {
 /// Checks the entire host subtree beneath unary interpreter context frames.
 fn check<Interp>(mut runner: Runner<Interp, BuiltinInterface, Host>, mismatch: bool)
 where
-    Interp: Interpreter<BuiltinInterface, Host, Error = Failure>,
+    Interp: Interpreter<BuiltinInterface, Host>,
 {
     let value = make::nat(runner.arena_mut(), 1.into(), Span::default()).unwrap();
     let failure = runner.context().call_rel("R", &[value]).unwrap_err();
-    let Failure::Fatal(report) = failure else { panic!("host failures must be fatal") };
+    let InterpreterError::Fatal(report) = failure else { panic!("host failures must be fatal") };
     let report_expect = if mismatch {
         Report::frame(Span::default(), "execution failed", traces())
     } else {

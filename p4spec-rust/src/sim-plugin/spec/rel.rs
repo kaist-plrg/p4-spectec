@@ -7,7 +7,7 @@
 
 use crate::{
     lang::data::value::{Value, get},
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 
 // == Lvalues
@@ -20,7 +20,7 @@ pub fn lvalue_read_var_global<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     name: &str,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -48,7 +48,7 @@ pub fn lvalue_read_dot_global<Interp, Iface, Ext>(
     value_arch: Value,
     name: &str,
     member: &str,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -89,7 +89,7 @@ pub fn lvalue_write_var_local<Interp, Iface, Ext>(
     value_arch: Value,
     name: &str,
     value: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -111,7 +111,7 @@ pub fn lvalue_write_dot_local<Interp, Iface, Ext>(
     name: &str,
     member: &str,
     value: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -152,7 +152,7 @@ pub fn lvalue_write_dot_global<Interp, Iface, Ext>(
     name: &str,
     member: &str,
     value: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -195,7 +195,7 @@ pub fn ebpf_init_packet_in<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_packet: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -211,7 +211,7 @@ pub fn ebpf_init_globals<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -228,7 +228,7 @@ pub fn ebpf_parse<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -245,7 +245,7 @@ pub fn ebpf_filter<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -267,7 +267,7 @@ pub fn psa_ingress_init_packet_in<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_packet: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -285,7 +285,7 @@ pub fn psa_ingress_init_packet_out<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_packet: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -303,7 +303,7 @@ pub fn psa_ingress_init_globals<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     port: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -327,7 +327,7 @@ pub fn psa_ingress_init_metadata<Interp, Iface, Ext>(
     value_arch: Value,
     port: usize,
     path: &str,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -350,7 +350,7 @@ pub fn psa_ingress_parser<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -367,7 +367,7 @@ pub fn psa_ingress<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -384,7 +384,7 @@ pub fn psa_ingress_deparser<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -404,7 +404,7 @@ pub fn psa_egress_init_packet_in<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_packet: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -422,7 +422,7 @@ pub fn psa_egress_init_packet_out<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_packet: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -440,7 +440,7 @@ pub fn psa_egress_init_globals<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     port: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -466,7 +466,7 @@ pub fn psa_egress_init_metadata<Interp, Iface, Ext>(
     path: &str,
     cos: usize,
     instance: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -496,7 +496,7 @@ pub fn psa_egress_parser<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -513,7 +513,7 @@ pub fn psa_egress<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -530,7 +530,7 @@ pub fn psa_egress_deparser<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -552,7 +552,7 @@ pub fn v1model_init_packet_in<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_packet: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -569,7 +569,7 @@ pub fn v1model_init_packet_out<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_packet: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -586,7 +586,7 @@ pub fn v1model_init_globals<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     port: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -610,7 +610,7 @@ pub fn v1model_parser<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -627,7 +627,7 @@ pub fn v1model_verify<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -644,7 +644,7 @@ pub fn v1model_ingress<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -661,7 +661,7 @@ pub fn v1model_egress<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -678,7 +678,7 @@ pub fn v1model_check<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -695,7 +695,7 @@ pub fn v1model_deparse<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -715,7 +715,7 @@ pub fn v1model_setup_preserved_meta_fields<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     value_idx: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,

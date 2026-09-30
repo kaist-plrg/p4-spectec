@@ -9,7 +9,6 @@
 
 use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, runner::Error, v1model::V1Model};
 use crate::{
-    interp::shared::backtrack::Failure as InterpError,
     lang::data::value::external::Encoding,
     runner::{self as host, BuiltinInterface, Interpreter, Runner},
 };
@@ -50,7 +49,7 @@ trait SimulatorRunner {
 
 impl<Interp, Arch> SimulatorRunner for Runner<Interp, BuiltinInterface, Arch>
 where
-    Interp: Interpreter<BuiltinInterface, Arch, Error = InterpError> + 'static,
+    Interp: Interpreter<BuiltinInterface, Arch> + 'static,
     Arch: Architecture + 'static,
 {
     fn run_stf_test(
@@ -74,7 +73,7 @@ impl Simulator {
     /// Boxes a runner.
     fn new<Interp, Arch>(runner: Runner<Interp, BuiltinInterface, Arch>) -> Self
     where
-        Interp: Interpreter<BuiltinInterface, Arch, Error = InterpError> + 'static,
+        Interp: Interpreter<BuiltinInterface, Arch> + 'static,
         Arch: Architecture + 'static,
     {
         Self { runner: Box::new(runner) }

@@ -11,10 +11,10 @@ use thiserror::Error;
 
 use crate::{
     diagnostic::{Diagnostic, Report, Severity},
-    interp::shared::backtrack::Failure,
     lang::common::prim::num::NumericError,
     lang::data::value::{Value, ValueError},
     lang::il::ast::Typ,
+    runner::InterpreterError,
 };
 
 use super::{Interface, Interpreter, RunnerContext};
@@ -100,8 +100,8 @@ impl From<num_bigint::TryFromBigIntError<()>> for ExternError {
     }
 }
 
-impl From<Failure> for ExternError {
-    fn from(failure: Failure) -> Self {
+impl From<InterpreterError> for ExternError {
+    fn from(failure: InterpreterError) -> Self {
         // Finalize exhausted reentry before returning from the host call
         Self(failure.into_report())
     }

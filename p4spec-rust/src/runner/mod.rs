@@ -30,7 +30,7 @@ use crate::{
 pub use context::RunnerContext;
 pub use externs::{Extern, ExternError, NullExtern};
 pub use interface::{BuiltinInterface, Interface, InterfaceError, NullInterface};
-pub use interpreter::Interpreter;
+pub use interpreter::{Interpreter, InterpreterError};
 
 // == Runner construction
 
@@ -169,7 +169,7 @@ where
         &mut self,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Interp::Error> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         let mut ctx = self.context();
         ctx.call_program(name, program)
     }

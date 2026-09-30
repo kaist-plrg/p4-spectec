@@ -23,7 +23,7 @@ use crate::{
             value::{Value, ValueArena, get, make},
         },
     },
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
+    runner::{ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
     sim_plugin::error,
     stf::ast::{Name, Statement},
 };
@@ -130,7 +130,7 @@ pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
 /// The initial architecture state: an encoded unit value.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
@@ -153,7 +153,7 @@ where
 pub(super) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
@@ -183,7 +183,7 @@ where
 pub(super) fn eval_extern_func_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
-) -> Result<Vec<Value>, Interp::Error>
+) -> Result<Vec<Value>, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
@@ -241,7 +241,7 @@ fn unsupported_method(
 pub(super) fn eval_extern_method_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     values: &[Value],
-) -> Result<Vec<Value>, Interp::Error>
+) -> Result<Vec<Value>, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
@@ -319,7 +319,7 @@ where
 pub fn init_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     program: Value,
-) -> Result<SimState, Interp::Error>
+) -> Result<SimState, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,
@@ -337,7 +337,7 @@ pub fn drive_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ebpf>,
     state: &mut SimState,
     rx: &Rx,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Ebpf>,

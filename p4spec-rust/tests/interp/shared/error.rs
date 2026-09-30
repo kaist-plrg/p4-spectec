@@ -1,14 +1,15 @@
 use crate::interp::report::ReportExt;
+
 use p4spec_rust::{
     diagnostic::Report,
-    interp::shared::backtrack::Failure,
     lang::common::source::{Position, Span},
+    runner::InterpreterError,
 };
 
 #[test]
 fn rendering_preserves_branch_order_and_locations() {
     let span = Span::new(Position::new("spec", 3, 4), Position::new("spec", 3, 5));
-    let report = Failure::Mismatch(vec![
+    let report = InterpreterError::Mismatch(vec![
         Report::frame(span, "first mismatch", vec![]),
         Report::frame(Span::default(), "second mismatch", vec![]),
     ])

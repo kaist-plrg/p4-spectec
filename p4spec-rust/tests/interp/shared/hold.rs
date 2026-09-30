@@ -1,7 +1,6 @@
 use crate::interp::report::ReportExt;
 use p4spec_rust::{
     diagnostic::Report,
-    interp::shared::backtrack::Failure,
     lang::{common::source::Span, data::value::make},
     pass::{algo, elaborate, prosify, structure},
     runner::{self, BuiltinInterface, Config, Interpreter, NullExtern, Runner},
@@ -9,7 +8,7 @@ use p4spec_rust::{
 
 fn invoke<Interp>(mut runner: Runner<Interp, BuiltinInterface, NullExtern>) -> Report
 where
-    Interp: Interpreter<BuiltinInterface, NullExtern, Error = Failure>,
+    Interp: Interpreter<BuiltinInterface, NullExtern>,
 {
     let value = make::nat(runner.arena_mut(), 1.into(), Span::default()).unwrap();
     let failure = runner.context().call_rel("R", &[value]).unwrap_err();

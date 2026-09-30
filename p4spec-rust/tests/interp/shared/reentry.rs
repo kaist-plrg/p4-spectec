@@ -1,9 +1,9 @@
 use crate::interp::report::ReportExt;
-use p4spec_rust::interp::shared::backtrack::Failure;
+
 use p4spec_rust::{
     lang::{data::value::Value, il::ast::Typ},
     pass::{algo, elaborate, prosify, structure},
-    runner::{self, Extern, Interface, Interpreter, RunnerContext},
+    runner::{self, Extern, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 use std::{cell::Cell, rc::Rc};
 
@@ -80,7 +80,7 @@ def $pair() = ($outer(), $outer())
                 let host = Reentry::default();
                 let mut runner = runner::$build($spec, config, host.clone()).unwrap();
                 let failure = runner.context().call_func("pair", &[], &[]).unwrap_err();
-                assert!(matches!(failure, Failure::Fatal(_)));
+                assert!(matches!(failure, InterpreterError::Fatal(_)));
                 assert_eq!(host.calls.get(), 1);
                 runner.reset();
                 assert_eq!(host.calls.get(), 0);
@@ -116,7 +116,7 @@ def $outer() = 7
                 let host = Reentry::default();
                 let mut runner = runner::$build($spec, config, host.clone()).unwrap();
                 let failure = runner.context().call_func("outer", &[], &[]).unwrap_err();
-                let Failure::Fatal(report) = failure else { panic!("expected fatal") };
+                let InterpreterError::Fatal(report) = failure else { panic!("expected fatal") };
                 let mut cause = report.as_ref();
                 while !cause.children.is_empty() {
                     cause = &cause.children[0];
@@ -167,7 +167,7 @@ rule Outer/fallback: n |- 7
                 )
                 .unwrap();
                 let failure = runner.context().call_rel("Outer", &[value]).unwrap_err();
-                assert!(matches!(failure, Failure::Fatal(_)));
+                assert!(matches!(failure, InterpreterError::Fatal(_)));
                 assert_eq!(host.calls.get(), 1);
             }};
         }
@@ -203,7 +203,7 @@ def $pair() = ($outer(), $outer())
                 let host = Reentry::default();
                 let mut runner = runner::$build($spec, config, host.clone()).unwrap();
                 let failure = runner.context().call_func("pair", &[], &[]).unwrap_err();
-                assert!(matches!(failure, Failure::Fatal(_)));
+                assert!(matches!(failure, InterpreterError::Fatal(_)));
                 assert_eq!(host.calls.get(), 1);
                 runner.reset();
                 assert_eq!(host.calls.get(), 0);

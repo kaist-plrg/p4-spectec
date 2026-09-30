@@ -1,11 +1,13 @@
 use super::*;
+
 use crate::interp::report::ReportExt;
-use p4spec_rust::interp::shared::backtrack::Failure;
+
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::{
     lang::{common::prim::num::Number, data::typ},
     note_phrase, phrase,
+    runner::InterpreterError,
 };
 
 fn exp(num: u64) -> ast::Exp {
@@ -458,7 +460,7 @@ fn table_blocks_remain_sequential_even_with_determinism_enabled() {
 fn empty_body_remains_a_runtime_mismatch() {
     let mut runner = with_block(vec![], false);
     let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
-    assert!(matches!(failure, Failure::Mismatch(_)));
+    assert!(matches!(failure, InterpreterError::Mismatch(_)));
 }
 
 #[test]
@@ -623,7 +625,7 @@ fn optional_condition_preserves_remaining_iterator_order_and_outer_bindings() {
                     &block,
                     false,
                 )
-                .map_err(Failure::into_report)
+                .map_err(InterpreterError::into_report)
                 .unwrap();
                 match flow {
                     Flow::Return(value) => {

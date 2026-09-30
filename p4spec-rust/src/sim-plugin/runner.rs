@@ -15,7 +15,6 @@ use super::{
 use crate::{
     diagnostic::{Diagnostic, Label, Report, Severity},
     interface::p4::{error::P4Error, parse},
-    interp::shared::backtrack::Failure as InterpError,
     lang::{
         common::source::{Phrase, Span},
         data::{
@@ -24,7 +23,7 @@ use crate::{
         },
         traits::print::Print,
     },
-    runner::{Interface, Interpreter, Runner, RunnerContext},
+    runner::{Interface, Interpreter, InterpreterError, Runner, RunnerContext},
     sim_plugin::error,
     stf::{
         self,
@@ -48,7 +47,7 @@ pub enum Error {
     StfParse(#[from] stf::error::StfError),
     /// The specification failed while executing.
     #[error("runtime error: {0}")]
-    Runtime(#[from] InterpError),
+    Runtime(#[from] InterpreterError),
     /// An STF statement failed or an expectation was not met.
     #[error("runtime error: {failure} at {span}")]
     Stf { failure: Box<StfFailure>, span: Span },
@@ -140,7 +139,7 @@ fn remaining_expects(expects: &[Expectation]) -> String {
 // == Helpers
 
 /// Parses an optionally signed integer with a `0x`, `0o` or `0b` radix prefix.
-fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, InterpError> {
+fn parse_int<Int: strtoint::StrToInt>(text: &str) -> Result<Int, InterpreterError> {
     strtoint::strtoint(&text.to_ascii_lowercase())
         .map_err(|_| error::integer_invalid(format!("invalid integer: {text}")).into())
 }
@@ -253,7 +252,7 @@ pub fn init_pipe<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
@@ -273,7 +272,7 @@ pub fn run_stf_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Fresh output list; the architecture may rewrite the statement first
     run.state.txs.clear();
@@ -353,7 +352,7 @@ fn run_stf_packet_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Payloads compare in uppercase hex
     let rx = Rx { port: parse_int::<usize>(&port)?, packet: packet.to_ascii_uppercase() };
@@ -383,7 +382,10 @@ fn run_stf_expect_stmt(
 // - Match-action table updates
 
 /// Encodes STF match keys as the specification's `tableKeyInterface` list.
-fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<Value, InterpError> {
+fn encode_table_keys(
+    arena: &mut ValueArena,
+    matches: &[TableMatch],
+) -> Result<Value, InterpreterError> {
     let typ_key = typ::make::var(
         crate::phrase!(node: "tableKeyInterface".to_owned(), span: Span::default()),
         vec![],
@@ -448,24 +450,24 @@ fn run_stf_add_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Add names use the same escaped spelling as P4 annotation names
     let text_name = escape_text(&table.into_string());
     let value_name =
-        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(InterpError::from)?;
+        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(InterpreterError::from)?;
     // Priority is optional
     let value_priority = priority
         .map(|priority| make::int(ctx.arena_mut(), priority.into(), Span::default()))
         .transpose()
-        .map_err(InterpError::from)?;
+        .map_err(InterpreterError::from)?;
     let value_priority = make::opt(
         ctx.arena_mut(),
         typ::make::opt(typ::make::int()).node.into(),
         value_priority,
         Span::default(),
     )
-    .map_err(InterpError::from)?;
+    .map_err(InterpreterError::from)?;
     let value_keys = encode_table_keys(ctx.arena_mut(), &matches)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch = table::add_entry(
@@ -481,7 +483,7 @@ where
 }
 
 /// Encodes an STF action as the specification's `tableActionInterface`.
-fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, InterpError> {
+fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, InterpreterError> {
     let value_name = make::text(arena, action.name.as_str().to_owned(), Span::default())?;
     let typ_arg = typ::make::var(
         crate::phrase!(node: "tableActionArgumentInterface".to_owned(), span: Span::default()),
@@ -526,11 +528,11 @@ fn run_stf_set_default_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     // Table name and action, then let the table module store it
     let value_name = make::text(ctx.arena_mut(), table.into_string(), Span::default())
-        .map_err(InterpError::from)?;
+        .map_err(InterpreterError::from)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch = table::add_default_action(
         ctx,
@@ -554,7 +556,7 @@ fn run_stf_mirroring_add_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::add_mirror_session(
         ctx,
@@ -575,7 +577,7 @@ fn run_stf_mirroring_add_mc_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::add_mirror_session_mc(
         ctx,
@@ -597,7 +599,7 @@ fn run_stf_mc_group_create_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?)?;
     Ok(None)
@@ -613,7 +615,7 @@ fn run_stf_mc_node_create_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     let instance = parse_int::<usize>(&id_replication)?;
     let ports = ports
@@ -634,7 +636,7 @@ fn run_stf_mc_node_associate_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::mc_node_associate(
         ctx,
@@ -657,7 +659,7 @@ fn run_stf_register_read_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch =
         Arch::register_read(ctx, state.value_arch, name.as_str(), parse_int::<usize>(&idx)?)?;
@@ -675,7 +677,7 @@ fn run_stf_register_write_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::register_write(
         ctx,
@@ -696,7 +698,7 @@ fn run_stf_register_reset_stmt<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     state.value_arch = Arch::register_reset(ctx, state.value_arch, name.as_str())?;
     Ok(None)
@@ -715,7 +717,7 @@ pub fn run_stf_test<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch, Error = InterpError>,
+    Interp: Interpreter<Iface, Arch>,
 {
     let mut run = init_pipe(runner, includes, path_p4)?;
     let stmts = stf::parse::parse_file(path_stf)?;

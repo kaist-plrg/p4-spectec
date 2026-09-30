@@ -15,7 +15,6 @@ use p4spec_rust::{
     backend_specdoc::splicer,
     diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
     interface::p4::parse::parse_file,
-    interp::shared::backtrack::Failure as InterpError,
     lang::{data::value::external::Encoding, traits::print::Print},
     runner::{self, BuiltinInterface, Interpreter, Runner},
     sim_plugin::{self, dummy::Dummy},
@@ -258,7 +257,7 @@ fn run_program<Interp>(
     config_output: &mut RenderConfig,
 ) -> Result<(), CliError>
 where
-    Interp: Interpreter<BuiltinInterface, Dummy, Error = InterpError>,
+    Interp: Interpreter<BuiltinInterface, Dummy>,
 {
     let program = parse_file(runner.arena_mut(), &args.includes, &args.program)
         .map_err(|error| error.into_report())?;

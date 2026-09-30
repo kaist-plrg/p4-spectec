@@ -5,7 +5,7 @@
 
 use crate::{
     lang::data::value::{Value, get},
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 
 // == eBPF
@@ -14,7 +14,7 @@ use crate::{
 pub fn ebpf_init<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     program: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -31,7 +31,7 @@ where
 pub fn psa_init<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     program: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -48,7 +48,7 @@ where
 pub fn v1model_init<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     program: Value,
-) -> Result<(Value, Value), Interp::Error>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,

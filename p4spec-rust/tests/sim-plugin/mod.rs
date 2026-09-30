@@ -1,5 +1,6 @@
 use p4spec_rust::lang::data::value::ValueArena;
-use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
+
+use p4spec_rust::diagnostic::ReportKind;
 use std::path::Path;
 
 use p4spec_rust::{
@@ -8,7 +9,7 @@ use p4spec_rust::{
     interp::al::{AlInterp, Config, context::Global},
     lang::data::value::Value,
     pass::{algo, elaborate},
-    runner::{BuiltinInterface, Extern, Runner, Spec},
+    runner::{BuiltinInterface, Extern, InterpreterError, Runner, Spec},
 };
 
 #[path = "core/mod.rs"]
@@ -44,8 +45,8 @@ fn runner_from_spec<Ext: Extern>(
     )
 }
 
-fn has_extern_failure(failure: &Failure, code: &str, expected: &str) -> bool {
-    let Failure::Fatal(report) = failure else { return false };
+fn has_extern_failure(failure: &InterpreterError, code: &str, expected: &str) -> bool {
+    let InterpreterError::Fatal(report) = failure else { return false };
     let mut pending = vec![report.as_ref()];
     while let Some(report) = pending.pop() {
         if let ReportKind::Cause(diagnostic) = &report.kind

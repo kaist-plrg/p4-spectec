@@ -4,7 +4,6 @@
 
 use crate::interp::report::ReportExt;
 use p4spec_rust::{
-    interp::shared::backtrack::Failure,
     lang::{
         data::{
             typ,
@@ -14,7 +13,7 @@ use p4spec_rust::{
         traits::print::Print,
     },
     pass::{algo, elaborate, prosify, structure},
-    runner::{self, Extern, Interface, Interpreter, RunnerContext},
+    runner::{self, Extern, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 
 const SOURCE: &str = r#"
@@ -92,8 +91,8 @@ impl Extern for Host {
     fn clear(&mut self) {}
 }
 
-fn assert_fatal(failure: Failure, code: &str) {
-    let Failure::Fatal(report) = failure else { panic!("expected fatal diagnostic") };
+fn assert_fatal(failure: InterpreterError, code: &str) {
+    let InterpreterError::Fatal(report) = failure else { panic!("expected fatal diagnostic") };
     assert!(report.find_code(code).is_some(), "{}", report.render());
 }
 

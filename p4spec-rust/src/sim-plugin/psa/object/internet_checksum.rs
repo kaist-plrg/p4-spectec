@@ -15,7 +15,7 @@ use crate::{
             value::{Value, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
     util::bigint,
 };
 use num_bigint::BigInt;
@@ -55,7 +55,7 @@ impl InternetChecksum {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -86,7 +86,7 @@ impl InternetChecksum {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -104,7 +104,7 @@ impl InternetChecksum {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -120,7 +120,7 @@ impl InternetChecksum {
         value_ctx: Value,
         value_arch: Value,
         algo: &str,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -155,7 +155,7 @@ impl InternetChecksum {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -174,7 +174,7 @@ impl InternetChecksum {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -208,7 +208,7 @@ impl InternetChecksum {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,

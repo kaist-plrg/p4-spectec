@@ -39,7 +39,7 @@ use crate::{
             value::{Value, ValueArena, ValueError, get, make},
         },
     },
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
+    runner::{ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
     sim_plugin::error,
     stf::ast::Statement,
 };
@@ -148,7 +148,7 @@ pub fn transform_stf_stmt(mut stmt: Statement) -> Statement {
 /// The initial architecture state: empty queue, tables, and requests.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -163,7 +163,7 @@ where
 pub fn find_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
-) -> Result<Arch, Interp::Error>
+) -> Result<Arch, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -178,7 +178,7 @@ pub fn update_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
     arch: &Arch,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -195,7 +195,7 @@ pub fn find_object_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
     value_id: Value,
-) -> Result<ObjectState, Interp::Error>
+) -> Result<ObjectState, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -209,7 +209,7 @@ where
 fn find_packet_in<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
-) -> Result<PacketIn, Interp::Error>
+) -> Result<PacketIn, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -234,7 +234,7 @@ where
 fn find_packet_out<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
-) -> Result<PacketOut, Interp::Error>
+) -> Result<PacketOut, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -266,7 +266,7 @@ where
 pub(super) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     values: &[Value],
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -326,7 +326,7 @@ where
 pub(super) fn eval_extern_func_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     values: &[Value],
-) -> Result<Vec<Value>, Interp::Error>
+) -> Result<Vec<Value>, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -400,7 +400,7 @@ where
 pub(super) fn eval_extern_method_call<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     values: &[Value],
-) -> Result<Vec<Value>, Interp::Error>
+) -> Result<Vec<Value>, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -520,7 +520,7 @@ pub fn add_mirror_session<Interp, Iface>(
     value_arch: Value,
     session: usize,
     port: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -536,7 +536,7 @@ pub fn add_mirror_session_mc<Interp, Iface>(
     _value_arch: Value,
     _session: usize,
     _group: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -555,7 +555,7 @@ pub fn mc_mgrp_create<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_arch: Value,
     group: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -571,7 +571,7 @@ pub fn mc_node_create<Interp, Iface>(
     value_arch: Value,
     instance: usize,
     ports: &[usize],
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -587,7 +587,7 @@ pub fn mc_node_associate<Interp, Iface>(
     value_arch: Value,
     group: usize,
     handle: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -605,7 +605,7 @@ pub fn register_read<Interp, Iface>(
     _value_arch: Value,
     _name: &str,
     _idx: usize,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -624,7 +624,7 @@ pub fn register_write<Interp, Iface>(
     _name: &str,
     _idx: usize,
     _int: BigInt,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -641,7 +641,7 @@ pub fn register_reset<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     _value_arch: Value,
     _name: &str,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -661,7 +661,7 @@ fn insert_packet<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     packet: Packet,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -691,7 +691,7 @@ where
 fn remove_packet_in<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -721,7 +721,7 @@ where
 fn remove_packet_out<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -750,7 +750,7 @@ where
 fn is_dropped<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &SimState,
-) -> Result<bool, Interp::Error>
+) -> Result<bool, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -770,7 +770,7 @@ where
 fn get_mcast_grp<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<usize, Interp::Error>
+) -> Result<usize, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -794,7 +794,7 @@ where
 pub fn init_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     program: Value,
-) -> Result<SimState, Interp::Error>
+) -> Result<SimState, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -811,7 +811,7 @@ pub fn setup_rx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     rx: &Rx,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -838,7 +838,7 @@ where
 pub fn drive_p<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -875,7 +875,7 @@ where
 pub fn drive_vr<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -890,7 +890,7 @@ where
 pub fn drive_pipe_pre<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -910,7 +910,7 @@ where
 pub fn drive_ck<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -925,7 +925,7 @@ where
 pub fn drive_dep<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -940,7 +940,7 @@ where
 pub fn drive_pipe_post<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -976,7 +976,7 @@ fn prepare_resubmit_ctx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     idx: usize,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1009,7 +1009,7 @@ fn prepare_clone_ctx<Interp, Iface>(
     clone_type: CloneType,
     port: usize,
     idx: usize,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1053,7 +1053,7 @@ fn prepare_recirculate_ctx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     idx: usize,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1085,7 +1085,7 @@ fn prepare_multicast_ctx<Interp, Iface>(
     state: &mut SimState,
     rid: usize,
     port: usize,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1129,7 +1129,7 @@ pub fn schedule_packet<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     entrypoint: Entrypoint,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1151,7 +1151,7 @@ pub fn schedule_resubmit<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     arch: &Arch,
-) -> Result<bool, Interp::Error>
+) -> Result<bool, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1174,7 +1174,7 @@ pub fn schedule_clone<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     arch: &Arch,
-) -> Result<bool, Interp::Error>
+) -> Result<bool, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1204,7 +1204,7 @@ pub fn schedule_recirculate<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     arch: &Arch,
-) -> Result<bool, Interp::Error>
+) -> Result<bool, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1257,7 +1257,7 @@ pub fn schedule_multicast<Interp, Iface>(
     state: &mut SimState,
     arch: &Arch,
     group: usize,
-) -> Result<bool, Interp::Error>
+) -> Result<bool, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1284,7 +1284,7 @@ where
 pub fn drive_ig<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1313,7 +1313,7 @@ where
 fn prepare_egress_ctx<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1340,7 +1340,7 @@ where
 pub fn drive_eg<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<Option<Value>, Interp::Error>
+) -> Result<Option<Value>, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1368,7 +1368,7 @@ pub fn drive_packet<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     packet: Packet,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1393,7 +1393,7 @@ where
 pub fn run_scheduler<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
@@ -1416,7 +1416,7 @@ pub fn drive_pipe<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     state: &mut SimState,
     rx: &Rx,
-) -> Result<(), Interp::Error>
+) -> Result<(), InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,

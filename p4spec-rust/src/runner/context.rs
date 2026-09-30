@@ -9,7 +9,7 @@ use crate::{
         data::value::{Value, ValueArena},
         il::ast::{Id, Typ},
     },
-    runner::{Extern, Interface, Interpreter},
+    runner::{Extern, Interface, Interpreter, InterpreterError},
 };
 
 // == Runner context
@@ -79,14 +79,18 @@ where
         &mut self,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Interp::Error> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         Interp::eval_program(self, name, program)
     }
 
     /// Calls a relation by name through the interpreter.
     ///
     /// With type guards disabled, values must match the declared input types.
-    pub fn call_rel(&mut self, name: &str, values: &[Value]) -> Result<Vec<Value>, Interp::Error> {
+    pub fn call_rel(
+        &mut self,
+        name: &str,
+        values: &[Value],
+    ) -> Result<Vec<Value>, InterpreterError> {
         Interp::eval_rel(self, name, values)
     }
 
@@ -99,7 +103,7 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, Interp::Error> {
+    ) -> Result<Value, InterpreterError> {
         Interp::eval_func(self, name, targs, values)
     }
 
@@ -111,7 +115,7 @@ where
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error> {
+    ) -> Result<(Value, bool), InterpreterError> {
         let result = self.interface.call_builtin(self.arena, id, targs, values)?;
         Ok(result)
     }
@@ -121,7 +125,7 @@ where
         &mut self,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), Interp::Error> {
+    ) -> Result<(Vec<Value>, bool), InterpreterError> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
         external.eval_rel(self, name, values).map_err(Into::into)
@@ -133,7 +137,7 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), Interp::Error> {
+    ) -> Result<(Value, bool), InterpreterError> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
         external

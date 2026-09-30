@@ -1,8 +1,9 @@
 use super::*;
+
 use crate::interp::report::ReportExt;
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
-use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use p4spec_rust::{
     interp::{
         shared::{error::Error, eval::assign::assign_exp},
@@ -14,6 +15,7 @@ use p4spec_rust::{
         hints::input::InputHint,
     },
     note_phrase, phrase,
+    runner::InterpreterError,
 };
 
 fn id(name: &str) -> ast::Id {
@@ -107,7 +109,7 @@ fn optional_destructuring_preserves_outer_scalars() {
         make::opt(&mut arena, typ_opt.node.clone().into(), Some(value_tuple), Span::default())
             .unwrap();
     let ctx = assign_exp(&mut arena, ctx, &exp, value_opt)
-        .map_err(Failure::into_report)
+        .map_err(InterpreterError::into_report)
         .unwrap();
     assert_eq!(
         *ctx.find_value_at_slot(
@@ -150,7 +152,7 @@ fn optional_destructuring_preserves_outer_scalars() {
     }
     let value_none = make::opt(&mut arena, typ_opt.node.into(), None, Span::default()).unwrap();
     let ctx = assign_exp(&mut arena, ctx, &exp, value_none)
-        .map_err(Failure::into_report)
+        .map_err(InterpreterError::into_report)
         .unwrap();
     assert_eq!(
         *ctx.find_value_at_slot(

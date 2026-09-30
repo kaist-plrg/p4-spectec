@@ -12,7 +12,7 @@ use crate::{
             value::{Value, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
     sim_plugin::error,
 };
 
@@ -37,7 +37,7 @@ pub fn static_assert<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: &Value,
     has_message: bool,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -50,14 +50,14 @@ where
     } else {
         None
     };
-    let check = unpack::p4_bool(ctx.arena(), &value_check).map_err(Interp::Error::from)?;
+    let check = unpack::p4_bool(ctx.arena(), &value_check).map_err(InterpreterError::from)?;
     // A passing assertion evaluates to its check
     if check {
         return Ok(value_check);
     }
     // The default message when the one-argument overload is used
     let message = match value_message {
-        Some(value) => unpack::p4_string(ctx.arena(), &value).map_err(Interp::Error::from)?,
+        Some(value) => unpack::p4_string(ctx.arena(), &value).map_err(InterpreterError::from)?,
         None => "static_assert failed".to_owned(),
     };
     Err(error::assertion_unmet(message).into())
@@ -74,7 +74,7 @@ pub fn verify<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), Interp::Error>
+) -> Result<(Value, Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,

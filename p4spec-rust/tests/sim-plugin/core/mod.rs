@@ -15,19 +15,11 @@ use p4spec_rust::{
         il::ast::Typ,
     },
     runner::{
-        Extern, ExternError, Interface, InterfaceError, Interpreter, NullInterface, Runner,
+        Extern, ExternError, Interface, Interpreter, InterpreterError, NullInterface, Runner,
         RunnerContext,
     },
     sim_plugin::{dummy::Dummy, spec::pack},
 };
-
-#[derive(Debug, thiserror::Error)]
-enum TestError {
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-}
 
 #[derive(Default)]
 struct PacketInterp {
@@ -43,7 +35,6 @@ struct PacketInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
     type Spec = ();
-    type Error = TestError;
 
     fn clear(&mut self) {}
 
@@ -53,7 +44,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
         _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         _name: &str,
         _program: Value,
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -62,7 +53,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, TestError> {
+    ) -> Result<Value, InterpreterError> {
         assert!(targs.is_empty());
         ctx.interp_mut()
             .calls
@@ -108,7 +99,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PacketInterp {
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         assert_eq!(name, "Lvalue_write");
         assert_eq!(values.len(), 5);
         ctx.interp_mut()
@@ -142,13 +133,4 @@ fn packet_runner(size_min: usize, size_max: usize) -> (PacketRunner, Value, Valu
             .insert(name.to_owned(), value_ctx);
     }
     (runner, value_ctx, value_arch)
-}
-
-impl From<TestError> for ExternError {
-    fn from(error: TestError) -> Self {
-        match error {
-            TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError(error.into_report()),
-        }
-    }
 }

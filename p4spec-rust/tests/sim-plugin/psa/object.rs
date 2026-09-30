@@ -21,7 +21,7 @@ use p4spec_rust::{
         },
     },
     runner::{
-        Extern, ExternError, Interface, InterfaceError, Interpreter, NullInterface, Runner,
+        Extern, ExternError, Interface, Interpreter, InterpreterError, NullInterface, Runner,
         RunnerContext,
     },
     sim_plugin::{
@@ -30,14 +30,6 @@ use p4spec_rust::{
         spec::{pack, unpack},
     },
 };
-
-#[derive(Debug, thiserror::Error)]
-enum TestError {
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-}
 
 #[derive(Default)]
 struct ObjectInterp {
@@ -48,7 +40,6 @@ struct ObjectInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for ObjectInterp {
     type Spec = ();
-    type Error = TestError;
 
     fn clear(&mut self) {}
 
@@ -58,7 +49,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for ObjectInterp {
         _: &mut RunnerContext<'_, Self, Iface, Ext>,
         _: &str,
         _: Value,
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -66,7 +57,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for ObjectInterp {
         _: &mut RunnerContext<'_, Self, Iface, Ext>,
         _: &str,
         _: &[Value],
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -75,7 +66,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for ObjectInterp {
         name: &str,
         _: &[typ::Typ],
         values: &[Value],
-    ) -> Result<Value, TestError> {
+    ) -> Result<Value, InterpreterError> {
         let name_call = if name == "find_var_e" {
             let value_name = *get::case(ctx.arena(), &values[0]).unwrap().args()[0];
             get::text(ctx.arena(), &value_name).unwrap().to_owned()
@@ -164,13 +155,4 @@ fn tuple_data(runner: &mut ObjectRunner, int: i64) {
         .interp_mut()
         .values_var
         .insert("data".to_owned(), value);
-}
-
-impl From<TestError> for ExternError {
-    fn from(error: TestError) -> Self {
-        match error {
-            TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError(error.into_report()),
-        }
-    }
 }

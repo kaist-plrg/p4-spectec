@@ -8,8 +8,7 @@ use p4spec_rust::{
         il::ast::Typ,
     },
     runner::{
-        Extern, ExternError, Interface, InterfaceError, Interpreter, NullInterface, Runner,
-        RunnerContext,
+        Extern, Interface, Interpreter, InterpreterError, NullInterface, Runner, RunnerContext,
     },
     sim_plugin::{
         ebpf::{self, Ebpf},
@@ -17,14 +16,6 @@ use p4spec_rust::{
         state::SimState,
     },
 };
-
-#[derive(Debug, thiserror::Error)]
-enum TestError {
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-}
 
 struct PhaseInterp {
     name_bad: &'static str,
@@ -34,7 +25,6 @@ struct PhaseInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PhaseInterp {
     type Spec = ();
-    type Error = TestError;
 
     fn clear(&mut self) {}
 
@@ -44,7 +34,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PhaseInterp {
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         _: Value,
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         assert_eq!(name, "EBPF_init");
         Ok(vec![ctx.interp().values[0]])
     }
@@ -54,7 +44,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PhaseInterp {
         _: &str,
         _: &[Typ],
         _: &[Value],
-    ) -> Result<Value, TestError> {
+    ) -> Result<Value, InterpreterError> {
         unreachable!()
     }
 
@@ -62,7 +52,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PhaseInterp {
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         ctx.interp_mut().calls.push(name.to_owned());
         let values_state = ctx.interp().values.clone();
         let (arity, mut values_result) = match name {
@@ -202,13 +192,4 @@ fn test_extern_init_and_function_report_argument_counts_before_dispatch() {
         }
     }
     assert!(runner_phase.context().interp().calls.is_empty());
-}
-
-impl From<TestError> for ExternError {
-    fn from(error: TestError) -> Self {
-        match error {
-            TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError(error.into_report()),
-        }
-    }
 }

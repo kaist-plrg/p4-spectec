@@ -20,7 +20,7 @@ use crate::{
             value::{Value, get, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 
 use crate::sim_plugin::{
@@ -108,7 +108,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -176,7 +176,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -324,7 +324,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -391,7 +391,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -453,7 +453,7 @@ impl PacketIn {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,

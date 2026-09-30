@@ -11,23 +11,12 @@ use p4spec_rust::{
     lang::il::ast::Typ,
     phrase,
     runner::{
-        BuiltinInterface, Extern, ExternError, Interface, InterfaceError, Interpreter, NullExtern,
-        NullInterface, Runner, RunnerContext,
+        BuiltinInterface, Extern, ExternError, Interface, InterfaceError, Interpreter,
+        InterpreterError, NullExtern, NullInterface, Runner, RunnerContext,
     },
 };
-use thiserror::Error;
 
 static FRESH_BUILTIN: Mutex<()> = Mutex::new(());
-
-#[derive(Debug, Error)]
-enum FixtureError {
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error("unknown fixture call: {0}")]
-    Unknown(String),
-}
 
 #[derive(Default)]
 struct FixtureConfig {
@@ -44,7 +33,6 @@ where
     Ext: Extern,
 {
     type Spec = ();
-    type Error = FixtureError;
 
     fn clear(&mut self) {}
 
@@ -54,10 +42,10 @@ where
         _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Self::Error> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         match name {
             "identity" => Ok(vec![program]),
-            _ => Err(FixtureError::Unknown(name.to_owned())),
+            _ => Err(ExternError::message(format!("unknown fixture call: {name}")).into()),
         }
     }
 
@@ -66,7 +54,7 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, Self::Error> {
+    ) -> Result<Value, InterpreterError> {
         match name {
             "done" => {
                 Ok(value::make::text(ctx.arena_mut(), "done".to_owned(), Span::default()).unwrap())
@@ -104,7 +92,7 @@ where
                 let (value, _) = ctx.call_builtin(&id, targs, values)?;
                 Ok(value)
             }
-            _ => Err(FixtureError::Unknown(name.to_owned())),
+            _ => Err(ExternError::message(format!("unknown fixture call: {name}")).into()),
         }
     }
 
@@ -112,8 +100,8 @@ where
         _ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         _values: &[Value],
-    ) -> Result<Vec<Value>, Self::Error> {
-        Err(FixtureError::Unknown(name.to_owned()))
+    ) -> Result<Vec<Value>, InterpreterError> {
+        Err(ExternError::message(format!("unknown fixture call: {name}")).into())
     }
 }
 
@@ -136,11 +124,11 @@ impl Extern for FixtureExtern {
     {
         match name {
             "first" => {
-                let value = ctx.call_func("inner", targs, values).map_err(Into::into)?;
+                let value = ctx.call_func("inner", targs, values)?;
                 Ok((value, false))
             }
             "second" => {
-                let value = ctx.call_func("done", targs, values).map_err(Into::into)?;
+                let value = ctx.call_func("done", targs, values)?;
                 Ok((value, false))
             }
             "pure" => {
@@ -486,15 +474,15 @@ fn test_runner_dispatches_program_entry_and_errors() {
     assert_eq!(values.len(), 1);
     assert!((values[0] == program));
     let error = runner.eval_program("missing", program).unwrap_err();
-    assert!(matches!(error, FixtureError::Unknown(name) if name == "missing"));
+    crate::diagnostic_fixture::assert_diagnostic(error, None, "unknown fixture call: missing");
 }
 
 #[test]
 fn test_registered_builtin_report_keeps_payload_and_is_fatal() {
     use p4spec_rust::{
         diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
-        interp::shared::backtrack::Failure,
         lang::common::source::Position,
+        runner::InterpreterError,
     };
     let span = Span { left: Position::new("host.p4", 2, 3), right: Position::new("host.p4", 2, 6) };
     let labels = vec![
@@ -530,8 +518,8 @@ fn test_registered_builtin_report_keeps_payload_and_is_fatal() {
     let error = interface
         .call_builtin(&mut ValueArena::new(), &id("custom"), &[], &[])
         .unwrap_err();
-    let failure = Failure::from(error).with_span(&Span::default());
-    let Failure::Fatal(report) = failure else { panic!("builtin must be fatal") };
+    let failure = InterpreterError::from(error).with_span(&Span::default());
+    let InterpreterError::Fatal(report) = failure else { panic!("builtin must be fatal") };
     let ReportKind::Cause(diagnostic) = &report.kind else { panic!("host cause missing") };
     assert_eq!(diagnostic.source, "custom");
     assert_eq!(diagnostic.severity, Severity::Warning);
@@ -550,15 +538,5 @@ fn test_registered_builtin_report_keeps_payload_and_is_fatal() {
             matches!(&report.kind, ReportKind::Frame { span, message } if *span == Span::default() && message == message_expect)
         );
         assert!(report.children.is_empty());
-    }
-}
-
-impl From<FixtureError> for ExternError {
-    fn from(error: FixtureError) -> Self {
-        match error {
-            FixtureError::Interface(error) => ExternError(error.into_report()),
-            FixtureError::Extern(error) => error,
-            FixtureError::Unknown(error) => ExternError::message(error.to_string()),
-        }
     }
 }

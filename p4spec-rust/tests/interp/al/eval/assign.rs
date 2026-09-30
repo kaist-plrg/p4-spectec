@@ -1,9 +1,7 @@
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
+
 use p4spec_rust::interp::shared::prepare::Prepare;
-use p4spec_rust::interp::shared::{
-    backtrack::{Backtrack, Failure},
-    util::find_var_of_exp,
-};
+use p4spec_rust::interp::shared::{backtrack::Backtrack, util::find_var_of_exp};
 use p4spec_rust::runtime::envs::interp::al::ast_prepared as prepared;
 use p4spec_rust::runtime::envs::interp::shared::{callable::Callable, frame::FrameLayout};
 use std::rc::Rc;
@@ -24,6 +22,7 @@ use p4spec_rust::{
         },
     },
     note_phrase, phrase,
+    runner::InterpreterError,
 };
 
 fn span(line: usize) -> Span {
@@ -484,7 +483,7 @@ fn test_empty_iteration_creates_empty_collections_for_every_binding() {
     }
 }
 
-fn assign_wrong_iteration_kind(iter_kind: ast::Iter) -> Result<(), Failure> {
+fn assign_wrong_iteration_kind(iter_kind: ast::Iter) -> Result<(), InterpreterError> {
     let mut arena = ValueArena::new();
     let global = Global::load(vec![]).unwrap();
     let exp = iter(exp(ast::ExpKind::Tuple(vec![id_exp("x")])), iter_kind, vec![var("x", vec![])]);

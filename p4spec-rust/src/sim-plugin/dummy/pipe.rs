@@ -10,7 +10,7 @@ use crate::{
             value::{Value, external::encode, make},
         },
     },
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
+    runner::{ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
     sim_plugin::error,
 };
 
@@ -24,7 +24,7 @@ pub struct Dummy;
 /// The initial architecture state: an encoded unit value.
 pub(super) fn init_arch_state<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
@@ -46,7 +46,7 @@ where
 pub(super) fn eval_extern_init<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
     _values: &[Value],
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
@@ -66,7 +66,7 @@ where
 pub(super) fn eval_extern_func_call<Interp, Iface>(
     _ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
     _values: &[Value],
-) -> Result<Vec<Value>, Interp::Error>
+) -> Result<Vec<Value>, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,
@@ -83,7 +83,7 @@ where
 pub(super) fn eval_extern_method_call<Interp, Iface>(
     _ctx: &mut RunnerContext<'_, Interp, Iface, Dummy>,
     _values: &[Value],
-) -> Result<Vec<Value>, Interp::Error>
+) -> Result<Vec<Value>, InterpreterError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, Dummy>,

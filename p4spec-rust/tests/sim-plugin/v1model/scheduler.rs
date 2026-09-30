@@ -1,4 +1,5 @@
 use num_traits::ToPrimitive;
+
 use p4spec_rust::{
     lang::{
         common::{notation::atom::Atom, source::Span},
@@ -8,7 +9,7 @@ use p4spec_rust::{
         },
     },
     runner::{
-        ExternError, Interface, InterfaceError, Interpreter, NullInterface, Runner, RunnerContext,
+        ExternError, Interface, Interpreter, InterpreterError, NullInterface, Runner, RunnerContext,
     },
     sim_plugin::{
         core::object::{PacketIn, PacketOut},
@@ -22,14 +23,6 @@ use p4spec_rust::{
         },
     },
 };
-
-#[derive(Debug, thiserror::Error)]
-enum TestError {
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-}
 
 #[derive(Clone, Copy)]
 enum Scenario {
@@ -101,7 +94,6 @@ fn write_int(arena: &mut ValueArena, value_ctx: Value, name: &str, width: i64, i
 
 impl<Iface: Interface> Interpreter<Iface, V1Model> for TraceInterp {
     type Spec = ();
-    type Error = TestError;
 
     fn clear(&mut self) {}
 
@@ -111,7 +103,7 @@ impl<Iface: Interface> Interpreter<Iface, V1Model> for TraceInterp {
         _: &mut RunnerContext<'_, Self, Iface, V1Model>,
         _: &str,
         _: Value,
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -120,7 +112,7 @@ impl<Iface: Interface> Interpreter<Iface, V1Model> for TraceInterp {
         name: &str,
         _: &[Typ],
         values: &[Value],
-    ) -> Result<Value, TestError> {
+    ) -> Result<Value, InterpreterError> {
         match name {
             "find_archState_e" => Ok(field(ctx.arena(), values[0], "STATE")),
             "update_archState_e" => Ok(update(ctx.arena_mut(), values[0], "STATE", values[1])),
@@ -142,7 +134,7 @@ impl<Iface: Interface> Interpreter<Iface, V1Model> for TraceInterp {
         ctx: &mut RunnerContext<'_, Self, Iface, V1Model>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         match name {
             "V1Model_init_packet_in" | "V1Model_init_packet_out" => {
                 let name_field = name.strip_prefix("V1Model_init_").unwrap();
@@ -396,15 +388,6 @@ fn test_drive_pipe_clears_prior_transmissions_for_forwarded_and_dropped_inputs()
             assert!(state.txs.is_empty(), "dropped input retained prior transmissions");
         } else {
             assert_eq!(state.txs, [Tx { port: 3, packet: "CD".to_owned() }]);
-        }
-    }
-}
-
-impl From<TestError> for ExternError {
-    fn from(error: TestError) -> Self {
-        match error {
-            TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError(error.into_report()),
         }
     }
 }

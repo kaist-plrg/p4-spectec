@@ -13,7 +13,7 @@ use crate::{
             value::{Value, ValueArena, ValueError, get, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
     sim_plugin::error,
 };
 
@@ -61,7 +61,7 @@ pub fn find_table<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_name: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -83,7 +83,7 @@ pub fn update_table<Interp, Iface, Ext>(
     value_arch: Value,
     value_name: Value,
     value_table: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -109,7 +109,7 @@ pub fn add_entry<Interp, Iface, Ext>(
     value_priority: Value,
     value_keys: Value,
     value_action: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -205,7 +205,7 @@ pub fn add_default_action<Interp, Iface, Ext>(
     value_arch: Value,
     value_name: Value,
     value_action: Value,
-) -> Result<Value, Interp::Error>
+) -> Result<Value, InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,

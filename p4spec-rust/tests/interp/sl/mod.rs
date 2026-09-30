@@ -1,4 +1,5 @@
 use p4spec_rust::lang::traits::print::Print;
+
 use p4spec_rust::{
     interp::sl::{Config, SlInterp, context::Global},
     lang::{
@@ -76,7 +77,7 @@ def $fatal() = +9
         let mut runner = runner(source, det);
         assert!(matches!(
             runner.context().call_func("recover", &[], &[]),
-            Err(p4spec_rust::interp::shared::backtrack::Failure::Fatal(_))
+            Err(p4spec_rust::runner::InterpreterError::Fatal(_))
         ));
         assert!(runner.context().call_func("fatal", &[], &[]).is_err());
     }

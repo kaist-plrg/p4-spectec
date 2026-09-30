@@ -1,8 +1,9 @@
 use crate::interp::report::ReportExt;
+
+use p4spec_rust::diagnostic::ReportKind;
 use p4spec_rust::interp::shared::context::{ReadContext, WriteContext};
 use p4spec_rust::interp::shared::prepare::Prepare;
 use p4spec_rust::lang::data::value::ValueArena;
-use p4spec_rust::{diagnostic::ReportKind, interp::shared::backtrack::Failure};
 use std::rc::Rc;
 
 use p4spec_rust::lang::traits::print::Print;
@@ -18,7 +19,7 @@ use p4spec_rust::{
     },
     pass::{algo, elaborate},
     phrase,
-    runner::{BuiltinInterface, NullExtern, Runner},
+    runner::{BuiltinInterface, InterpreterError, NullExtern, Runner},
 };
 
 fn spec(source: &str) -> ast::Spec {
@@ -118,7 +119,7 @@ def $fatal() = +9
         let mut runner = make_runner(spec(source), det);
         assert!(matches!(
             runner.context().call_func("recover", &[], &[]),
-            Err(p4spec_rust::interp::shared::backtrack::Failure::Fatal(_))
+            Err(p4spec_rust::runner::InterpreterError::Fatal(_))
         ));
         let error = runner
             .context()
@@ -166,7 +167,7 @@ fn test_function_failures_keep_calls_without_clause_or_row_frames() {
             }
             let mut runner = make_runner(spec_al, det);
             let failure = runner.context().call_func("entry", &[], &[]).unwrap_err();
-            assert!(matches!(failure, Failure::Fatal(_)), "{failure}");
+            assert!(matches!(failure, InterpreterError::Fatal(_)), "{failure}");
             let text = failure.into_report().render();
             assert!(text.contains("while invoking $entry"), "{text}");
             assert!(text.contains("while invoking $unavailable"), "{text}");
@@ -200,7 +201,7 @@ fn test_relation_failures_keep_causes_without_path_or_premise_frames() {
         let mut runner = make_runner(spec_al, false);
         let value = nat(runner.arena_mut(), 1);
         let failure = runner.context().call_rel("Reject", &[value]).unwrap_err();
-        assert!(matches!(failure, Failure::Mismatch(_)), "{failure}");
+        assert!(matches!(failure, InterpreterError::Mismatch(_)), "{failure}");
         let error = failure.into_report();
         let cause = error.find_code("runtime/condition-unmet").unwrap();
         assert_eq!(cause.span().left.line, 4);
@@ -832,7 +833,7 @@ impl p4spec_rust::runner::Extern for Host {
     {
         self.calls.set(self.calls.get() + 1);
         let values = if self.reenter {
-            ctx.call_rel("Step", values).map_err(Into::into)?
+            ctx.call_rel("Step", values)?
         } else {
             vec![(self.value)(ctx.arena_mut())]
         };
@@ -855,7 +856,7 @@ impl p4spec_rust::runner::Extern for Host {
         self.calls.set(self.calls.get() + 1);
         let value = if self.reenter {
             let value = (self.value)(ctx.arena_mut());
-            ctx.call_func("inner", &[], &[value]).map_err(Into::into)?
+            ctx.call_func("inner", &[], &[value])?
         } else {
             (self.value)(ctx.arena_mut())
         };
@@ -1361,11 +1362,7 @@ impl p4spec_rust::runner::Extern for CacheHost {
     {
         assert!(targs.is_empty());
         self.record(name);
-        let value = if name == "bridge" {
-            ctx.call_func("inner", &[], values).map_err(Into::into)?
-        } else {
-            values[0]
-        };
+        let value = if name == "bridge" { ctx.call_func("inner", &[], values)? } else { values[0] };
         Ok((value, false))
     }
 
@@ -1464,10 +1461,7 @@ def $pair(n) = ($recover(n), $recover(n))
             let value = nat(runner.arena_mut(), 5);
             let result = runner.context().call_func("pair", &[], &[value]);
             if operation == "fail" {
-                assert!(matches!(
-                    result,
-                    Err(p4spec_rust::interp::shared::backtrack::Failure::Fatal(_))
-                ));
+                assert!(matches!(result, Err(p4spec_rust::runner::InterpreterError::Fatal(_))));
                 assert_eq!(host.count(operation), 1);
             } else {
                 assert_eq!(get::tuple(runner.arena(), &result.unwrap()).unwrap(), &[value, value]);
@@ -1593,7 +1587,7 @@ def $pair() = ($pure<nat>(7), $pure<bool>(7))
         let mut ctx_runner = runner.context();
         let ctx = p4spec_rust::interp::al::context::Context::new(ctx_runner.spec());
         p4spec_rust::interp::al::eval::call::invoke_func(&mut ctx_runner, &ctx, &id, &[], &[])
-            .map_err(Failure::into_report)
+            .map_err(InterpreterError::into_report)
             .unwrap()
     };
     assert_eq!(host.count("pure"), 1);
@@ -1603,7 +1597,7 @@ def $pair() = ($pure<nat>(7), $pure<bool>(7))
         let mut ctx_runner = runner.context();
         let ctx = p4spec_rust::interp::al::context::Context::new(ctx_runner.spec());
         p4spec_rust::interp::al::eval::call::invoke_func(&mut ctx_runner, &ctx, &id, &[], &[])
-            .map_err(Failure::into_report)
+            .map_err(InterpreterError::into_report)
             .unwrap()
     };
     assert_eq!(get::tuple(runner.arena(), &value_new).unwrap().len(), 2);
@@ -1634,7 +1628,7 @@ fn test_program_reset_isolates_cached_values_between_arenas() {
                 &[],
                 &[value],
             )
-            .map_err(Failure::into_report)
+            .map_err(InterpreterError::into_report)
             .unwrap()
         };
         assert_eq!(get::tuple(runner.arena(), &value_pair).unwrap(), &[value, value]);

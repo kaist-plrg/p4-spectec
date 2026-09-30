@@ -1,4 +1,5 @@
 use crate::interp::report::ReportExt;
+
 use std::collections::VecDeque;
 
 use p4spec_rust::{
@@ -10,19 +11,10 @@ use p4spec_rust::{
         },
     },
     runner::{
-        Extern, ExternError, Interface, InterfaceError, Interpreter, NullInterface, Runner,
-        RunnerContext,
+        Extern, Interface, Interpreter, InterpreterError, NullInterface, Runner, RunnerContext,
     },
     sim_plugin::{dummy::Dummy, table},
 };
-
-#[derive(Debug, thiserror::Error)]
-enum TestError {
-    #[error(transparent)]
-    Extern(#[from] ExternError),
-    #[error(transparent)]
-    Interface(#[from] InterfaceError),
-}
 
 struct Call {
     name: &'static str,
@@ -37,7 +29,6 @@ struct TableInterp {
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for TableInterp {
     type Spec = ();
-    type Error = TestError;
 
     fn clear(&mut self) {}
 
@@ -47,7 +38,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for TableInterp {
         _: &mut RunnerContext<'_, Self, Iface, Ext>,
         _: &str,
         _: Value,
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -55,7 +46,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for TableInterp {
         _: &mut RunnerContext<'_, Self, Iface, Ext>,
         _: &str,
         _: &[Value],
-    ) -> Result<Vec<Value>, TestError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         unreachable!()
     }
 
@@ -64,7 +55,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for TableInterp {
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, TestError> {
+    ) -> Result<Value, InterpreterError> {
         assert!(targs.is_empty());
         let call_expect = ctx.interp_mut().calls.pop_front().expect("unexpected call");
         assert_eq!(name, call_expect.name);
@@ -493,13 +484,4 @@ fn test_native_table_entries_append_priorities_and_default_changes_are_isolated(
         table::find_table(&mut runner.context(), value_arch_updated, value_other).unwrap(),
         value_other_original
     );
-}
-
-impl From<TestError> for ExternError {
-    fn from(error: TestError) -> Self {
-        match error {
-            TestError::Extern(error) => error,
-            TestError::Interface(error) => ExternError(error.into_report()),
-        }
-    }
 }

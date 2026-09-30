@@ -17,7 +17,7 @@ use crate::{
             value::{Value, make},
         },
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
+    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
 };
 use serde_derive_state::{DeserializeState, SerializeState};
 
@@ -52,7 +52,7 @@ impl Register {
         value_targs: Value,
         value_ids: Value,
         value_args: Value,
-    ) -> Result<Self, Interp::Error>
+    ) -> Result<Self, InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -96,7 +96,7 @@ impl Register {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,
@@ -155,7 +155,7 @@ impl Register {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), Interp::Error>
+    ) -> Result<(Self, Value, Value, Value), InterpreterError>
     where
         Iface: Interface,
         Ext: Extern,

@@ -3,13 +3,94 @@
 //! An interpreter owns its configuration and cache for one language stage.
 //! Evaluation receives the assembled runner context, including the interpreter,
 //! so extern calls can reenter without a second mutable interpreter borrow.
+//! Mismatches allow another candidate; host failures always abort.
 
 use crate::{
-    lang::{data::value::Value, il::ast::Typ},
+    diagnostic::Report,
+    lang::{common::source::Span, data::value::Value, il::ast::Typ},
     runner::{ExternError, InterfaceError},
 };
 
 use super::{Extern, Interface, RunnerContext};
+
+// == Interpreter errors
+
+/// Separates aborting execution from trying another candidate.
+#[derive(Debug)]
+pub enum InterpreterError {
+    /// Aborts execution without retrying another candidate.
+    Fatal(Box<Report>),
+    /// Retains the ordered reports of candidates that did not match.
+    Mismatch(Vec<Report>),
+}
+
+// = Error reports
+
+impl InterpreterError {
+    /// Returns the fatal report or groups mismatches under an execution frame.
+    pub fn into_report(self) -> Box<Report> {
+        match self {
+            Self::Fatal(report) => report,
+            Self::Mismatch(reports) => {
+                Box::new(Report::frame(Span::default(), "execution failed", reports))
+            }
+        }
+    }
+
+    /// Adds a frame while keeping the failure kind and child reports.
+    pub fn with_frame(self, span: Span, message: impl Into<String>) -> Self {
+        match self {
+            Self::Fatal(report) => {
+                Self::Fatal(Box::new(Report::frame(span, message, vec![*report])))
+            }
+            Self::Mismatch(reports) => Self::Mismatch(vec![Report::frame(span, message, reports)]),
+        }
+    }
+
+    /// Adds a source label to causes that have none, leaving frames unchanged.
+    pub fn with_span(self, span: &Span) -> Self {
+        match self {
+            Self::Fatal(mut report) => {
+                *report = report.with_span(span);
+                Self::Fatal(report)
+            }
+            Self::Mismatch(reports) => Self::Mismatch(
+                reports
+                    .into_iter()
+                    .map(|report| report.with_span(span))
+                    .collect(),
+            ),
+        }
+    }
+}
+
+impl From<Box<Report>> for InterpreterError {
+    fn from(report: Box<Report>) -> Self {
+        Self::Fatal(report)
+    }
+}
+
+impl From<InterfaceError> for InterpreterError {
+    fn from(error: InterfaceError) -> Self {
+        Self::Fatal(error.into_report())
+    }
+}
+
+impl From<ExternError> for InterpreterError {
+    fn from(error: ExternError) -> Self {
+        Self::Fatal(error.into_report())
+    }
+}
+
+impl std::fmt::Display for InterpreterError {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Fatal(report) => std::fmt::Display::fmt(report, fmt),
+            Self::Mismatch(_) => fmt.write_str("execution did not match"),
+        }
+    }
+}
+impl std::error::Error for InterpreterError {}
 
 // == Interpreter contract
 
@@ -21,11 +102,6 @@ where
 {
     /// Loaded global definitions.
     type Spec;
-    /// The interpreter's error type, including builtin and extern failures.
-    ///
-    /// AL, SL, and PL use `Failure` for fatal errors and mismatches.
-    /// Conversion to `ExternError` finalizes failed host reentry as fatal.
-    type Error: From<InterfaceError> + From<ExternError> + Into<ExternError>;
 
     /// Clears cached results without invalidating arena values.
     fn clear(&mut self);
@@ -38,7 +114,7 @@ where
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, Self::Error>;
+    ) -> Result<Vec<Value>, InterpreterError>;
 
     /// Calls a relation by name.
     ///
@@ -48,7 +124,7 @@ where
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, Self::Error>;
+    ) -> Result<Vec<Value>, InterpreterError>;
 
     /// Calls a function by name with type arguments.
     ///
@@ -60,5 +136,5 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, Self::Error>;
+    ) -> Result<Value, InterpreterError>;
 }
