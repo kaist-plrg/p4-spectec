@@ -228,9 +228,9 @@ module Make (Interface : Run.INTERFACE) (Extern : Run.EXTERN) () :
       (value : value) : Ctx.t backtrack =
     match Value.Get.opt value with
     | Some inner_value ->
-        let* ctx = assign_exp ctx exp inner_value in
+        let* ctx_sub = assign_exp ctx exp inner_value in
         let* inner_values =
-          Ctx.find_values ctx
+          Ctx.find_values ctx_sub
             (List.map (fun (id, _, iters) -> (id, iters)) vars)
         in
         let ctx =
