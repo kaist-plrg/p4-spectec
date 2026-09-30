@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Step 1 is done.
+Status: in progress. Steps 1 to 3 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -663,10 +663,6 @@ and decide with the user before deviating. Record each deviation here.
   `->al` applies the rules at every candidate position, so its counts are
   inflated.
 - **Disjoint metafunctions.** The tests cover both sides of every complement.
-  Running them with a metafunction's clauses reversed (keeping `⊥` last) is a
-  useful spot check: disjoint clauses give the same results. It cannot detect
-  overlapping clauses that agree on the overlap, such as `$subst_typ` on an
-  empty `theta`.
 - **Caching.** A test asserts that `caching-enabled?` is `#t` once
   `common/0.0-prelude.rkt` is loaded. The `$fresh_typeId` test in Step 12
   catches an impure call that reached a cached metafunction.
@@ -707,33 +703,25 @@ racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
 ```sh
 raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test
 raco make spec-meta-redex/test/machine.rkt && raco test spec-meta-redex/test/machine.rkt
-SPECTEC_REDEX_CONTRACTS=0 raco test spec-meta-redex/test
 ```
 
 The contract switch is read at compile time, so it only takes effect on code
-compiled with it: delete `compiled/` first, or use a separate
-`PLTCOMPILEDROOTS`. `test/prelude.rkt` fails if the loaded code was compiled
-with the other setting.
-
-To spot-check disjointness, run the suite on a copy whose `define-dec`
-reverses every metafunction's clauses. All tests should still pass:
+compiled with it. To run the tests with contracts off, use a scratch copy
+without `compiled/`:
 
 ```sh
-REV=/tmp/redex-rev
-rm -rf "$REV" && mkdir -p "$REV" && cp -r spec-meta-redex "$REV"/
-find "$REV" -name compiled -type d -prune -exec rm -rf {} +   # stale code would not reverse
-for d in examples spec spec-meta p4c spectec-boot; do ln -s "$PWD/$d" "$REV/$d"; done
-python3 - "$REV" <<'EOF'
-import sys
-p = sys.argv[1] + "/spec-meta-redex/common/0.0-prelude.rkt"
-s = open(p).read()
-s = s.replace("(with-syntax ([(contract ...)",
-              "(with-syntax ([(clause ...) (reverse (syntax->list #'(clause ...)))]\n"
-              "                   [(contract ...)", 1)
-open(p, "w").write(s)
-EOF
-(cd "$REV" && raco test spec-meta-redex/test)
+COPY=/tmp/redex-nc
+rm -rf "$COPY" && mkdir -p "$COPY" && cp -r spec-meta-redex "$COPY"/
+find "$COPY" -name compiled -type d -prune -exec rm -rf {} +
+for d in examples spec spec-meta p4c spectec-boot; do ln -s "$PWD/$d" "$COPY/$d"; done
+(cd "$COPY" && export SPECTEC_REDEX_CONTRACTS=0 &&
+   raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test)
 ```
+
+A separate `PLTCOMPILEDROOTS` would recompile Redex and its dependencies too,
+in memory for every test file, which takes more than 10 minutes for the suite.
+`test/prelude.rkt` fails if the loaded code was compiled with the other
+setting.
 
 To list the rules a test file never reaches (here the expression rules):
 
@@ -874,6 +862,18 @@ Outcome:
 
 Done when all of them match.
 
+Outcome:
+
+- Done. `test/boot.rkt` passes. All 11 examples, `spec/` (1,672
+  definitions), and `spec-meta/al` match `script`. The four P4 programs of
+  Step 13 boot through `sexp-p4` and match `val`. The grammar and the emitter
+  needed no change.
+- With caching on, `spec/` boots in 2.1 s and matches `script` in 0.2 s. The
+  large P4 program (dash) boots in 0.2 s and matches `val` in 0.15 s. The test
+  file takes 4.5 s.
+- No P4 program produces an `EXT` value, so the test decodes a hand-written
+  `EXT` to check `decode-ext`.
+
 ### Step 3: Common metafunctions
 
 Transcribe `common/0-stdlib`, `2-env`, `3-context`, `4-relation`,
@@ -907,6 +907,35 @@ Transcribe `common/0-stdlib`, `2-env`, `3-context`, `4-relation`,
     instead of raising an error. Examples are `$theta_of_tdenv` on a `DEF` with
     type parameters or a non-`ALIAS` body, `$subst_typ'` on a bound `VAR` with
     type arguments, and `$binop_number` on mixed `NAT` and `INT`.
+
+Outcome:
+
+- Done. `test/common-stdlib.rkt`, `common-env.rkt`, `common-relation.rkt`,
+  `common-eval-typ.rkt`, and `common-eval-ops.rkt` pass. The whole suite runs
+  2,611 checks in 10 s, and 2,589 with contracts off, on a scratch copy.
+- There is no clause-coverage check for metafunctions for now. A probe found
+  that `make-coverage` on a metafunction counts only clauses that give a
+  result, not the ones whose side-condition or `where` fails, and that caching
+  does not hide calls from it. It reports the `⊥` clause at the location of
+  the `define-dec` header *(measured)*.
+- `define-dec` takes `range ∨ range ...`, so a watsup `X?` result has a
+  precise contract, such as `() ∨ (varr)` for `$is_iter_on_var`.
+- The map and list builtins follow `maps.ml` and `lists.ml`:
+  - `$find_map`, `$find_maps`, and `$assoc_` take the first match.
+  - `$add_map` replaces the first pair with the key where it stands, or
+    appends a pair.
+  - `$adds_map` with more keys than values, or fewer, raises an error, as
+    OCaml's `fold_left2` does. `$transpose_` raises on rows of different
+    lengths.
+- DIV and MOD truncate in the meta-circular run: `-7 / 2` is `-3`, `-7 \ 2`
+  is `-1`, and `7 \ -2` is `1` *(measured)*. `num.ml` has no `POW` clause, so
+  `POW` has no oracle.
+- `$subst_typ'` is `subst-typ-inner`. The host procedures are
+  `host-call-extern-func`, `host-call-builtin-func`, and
+  `host-call-extern-rel`, which keeps them apart from the machine forms of the
+  same relations.
+- The text and list helpers and `debug`, which the layout puts in
+  `common/0.1-stdlib.rkt`, are left to Step 8, which specifies and uses them.
 
 ### Step 4: AL environments and contexts
 

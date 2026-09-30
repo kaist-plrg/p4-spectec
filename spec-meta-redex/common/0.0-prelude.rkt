@@ -21,7 +21,7 @@
   #`#,contracts-on?)
 (define contracts? (compiled-contracts?))
 
-;; (define-dec lang f : dom ... -> range clause ...)
+;; (define-dec lang f : dom ... -> range (∨ range) ... clause ...)
 ;;
 ;; A watsup `dec` and its `def`s, as a metafunction. A last clause returns ⊥
 ;; when no other applies, so a call is partial rather than an error. A caller
@@ -29,9 +29,13 @@
 ;; returns it as its own result.
 (define-syntax (define-dec stx)
   (syntax-parse stx
-    [(_ lang f (~datum :) dom ... (~datum ->) range clause ...)
+    [(_ lang f (~datum :) dom ... (~datum ->)
+        range (~seq (~datum ∨) range-alt) ...
+        clause ...)
      (with-syntax ([(contract ...)
-                    (if contracts-on? #'(f : dom ... -> range ∨ ⊥) #'())])
+                    (if contracts-on?
+                        #'(f : dom ... -> range (~@ ∨ range-alt) ... ∨ ⊥)
+                        #'())])
        #'(define-metafunction lang
            contract ...
            clause ...

@@ -1,0 +1,100 @@
+#lang racket/base
+
+(require rackunit
+         "../common/0.0-prelude.rkt"
+         "../common/0.1-stdlib.rkt")
+
+;;
+;; General bool functions
+;;
+
+(test-equal (term (ite #t 1 2)) 1)
+(test-equal (term (ite #f 1 2)) 2)
+
+;;
+;; General option functions
+;;
+
+(test-equal (term (opt-as-seq- ())) '())
+(test-equal (term (opt-as-seq- (x))) '(x))
+(test-equal (term (opt-as-seq- (x y))) '⊥)
+
+;;
+;; General sequence functions
+;;
+
+(test-equal (term (exists- ())) #f)
+(test-equal (term (exists- (#f #f))) #f)
+(test-equal (term (exists- (#f #t))) #t)
+(test-equal (term (exists- (#t #f))) #t)
+
+(test-equal (term (forall- ())) #t)
+(test-equal (term (forall- (#t #t))) #t)
+(test-equal (term (forall- (#t #f))) #f)
+(test-equal (term (forall- (#f #t))) #f)
+
+(test-equal (term (repeat- x 0)) '())
+(test-equal (term (repeat- x 1)) '(x))
+(test-equal (term (repeat- (TUP ()) 3)) '((TUP ()) (TUP ()) (TUP ())))
+
+(test-equal (term (rev- ())) '())
+(test-equal (term (rev- (1 2 3))) '(3 2 1))
+
+;; The first pair with the key
+(test-equal (term (assoc- a ())) '())
+(test-equal (term (assoc- a ((b 1)))) '())
+(test-equal (term (assoc- a ((b 1) (a 2) (a 3)))) '(2))
+(test-equal (term (assoc- (NAT 1) (((INT 1) x) ((NAT 1) y)))) '(y))
+
+(test-equal (term (transpose- ())) '())
+(test-equal (term (transpose- (()))) '())
+(test-equal (term (transpose- (() ()))) '())
+(test-equal (term (transpose- ((1)))) '((1)))
+(test-equal (term (transpose- ((1 2 3)))) '((1) (2) (3)))
+(test-equal (term (transpose- ((1 2) (3 4) (5 6)))) '((1 3 5) (2 4 6)))
+(check-exn #rx"cannot transpose" (λ () (term (transpose- ((1 2) (3))))))
+(check-exn #rx"cannot transpose" (λ () (term (transpose- (() (1))))))
+
+;;
+;; General set and map functions
+;;
+
+(test-equal (term (empty-set)) '())
+(test-equal (term (empty-map)) '())
+
+(test-equal (term (find-map () a)) '())
+(test-equal (term (find-map ((a 1) (b 2)) b)) '(2))
+(test-equal (term (find-map ((a 1) (a 2)) a)) '(1))
+(test-equal (term (find-map ((("x" (STAR)) 1)) ("x" ()))) '())
+(test-equal (term (find-map ((("x" (STAR)) 1)) ("x" (STAR)))) '(1))
+
+;; The first map with the key
+(test-equal (term (find-maps () a)) '())
+(test-equal (term (find-maps (() ((b 1))) a)) '())
+(test-equal (term (find-maps (((a 1)) ((a 2))) a)) '(1))
+(test-equal (term (find-maps (((b 1)) ((a 2))) a)) '(2))
+
+;; A new key goes last; an existing key is replaced where it first stands.
+(test-equal (term (add-map () a 1)) '((a 1)))
+(test-equal (term (add-map ((a 1) (b 2)) c 3)) '((a 1) (b 2) (c 3)))
+(test-equal (term (add-map ((a 1) (b 2)) a 3)) '((a 3) (b 2)))
+(test-equal (term (add-map ((a 1) (b 2) (a 4)) a 3)) '((a 3) (b 2) (a 4)))
+
+(test-equal (term (adds-map ((a 1)) () ())) '((a 1)))
+(test-equal (term (adds-map ((a 1)) (b a) (2 3))) '((a 3) (b 2)))
+(test-equal (term (adds-map () (a a) (1 2))) '((a 2)))
+(check-exn #rx"adds-map" (λ () (term (adds-map () (a b) (1)))))
+
+;;
+;; Contracts
+;;
+
+(when contracts?
+  (check-exn #rx"not in my domain" (λ () (term (ite 1 x y))))
+  (check-exn #rx"not in my domain" (λ () (term (exists- (1)))))
+  (check-exn #rx"not in my domain" (λ () (term (repeat- x -1))))
+  (check-exn #rx"not in my domain" (λ () (term (assoc- a ((a 1 2))))))
+  (check-exn #rx"not in my domain" (λ () (term (transpose- (1)))))
+  (check-exn #rx"not in my domain" (λ () (term (find-map (a) a))))
+  (check-exn #rx"not in my domain" (λ () (term (find-maps ((a)) a))))
+  (check-exn #rx"not in my domain" (λ () (term (add-map ((a)) a 1)))))
