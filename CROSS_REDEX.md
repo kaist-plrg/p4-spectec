@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Steps 1 to 10 are done.
+Status: in progress. Steps 1 to 11 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -545,9 +545,9 @@ codec and wire live in `common/`: the host procedures in
 spec-meta-redex/
   common/
     0.0-prelude.rkt       Redex re-exports; caching on; define-dec
-    0-extern-json.rkt     codec for the extern JSON wire
-    0-extern-wire.rkt     transport to the OCaml host
     0.1-stdlib.rkt        language stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins; text and list helpers; debug
+    0.2-extern-json.rkt   codec for the extern JSON wire
+    0-extern-wire.rkt     transport to the OCaml host
     1-syntax.rkt          language common
     2-env.rkt             language common-env; $extend_tdenv, $theta_of_tdenv, $is_iter_on_var, ...
     3-context.rkt         language common-context (cursor)
@@ -568,8 +568,7 @@ spec-meta-redex/
     5.6-eval-call-func.rkt  rules of Eval_clause(s), Eval_tblrow(s), Call_*_func, Call_func
     5.7-eval-call-rel.rkt   rules of Eval_rul(s), Eval_rulgroup(s), Call_*_rel, Call_rel
     5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al; the driver
-    6-entry.rkt           Entry: load, then run $main() or a relation
-  main.rkt                command-line driver
+    6-entry.rkt           Entry: load, then run $main() or a relation; the command-line driver
   test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, machine.rkt, ...
 ```
 
@@ -618,7 +617,7 @@ OCaml implementation over the existing JSON wire
 three evaluators share host behavior:
 
 ```text
-reduction rule -> common/4-relation.rkt -> common/0-extern-json.rkt
+reduction rule -> common/4-relation.rkt -> common/0.2-extern-json.rkt
   -> common/0-extern-wire.rkt -> spectec-boot extern-serve -> SpecTec runner
 ```
 
@@ -670,9 +669,12 @@ and decide with the user before deviating. Record each deviation here.
 - **Oracles.** There are two: the K port (`./spec-meta-k/scripts/k-run.sh
   FILE`, which prints the result as JSON), and the OCaml meta-circular run
   (`./spectec-boot run spec-meta/al -rel Entry -tec FILE -ali`, which prints
-  the value through `Entry`'s `debug`). `main.rkt` prints results in
-  `k-run.sh`'s JSON format, so the outputs can be compared as text. Where K
-  differs from watsup, compare with the meta-circular run.
+  the value through `Entry`'s `debug`). `al/6-entry.rkt`, run as a program,
+  prints results in `k-run.sh`'s JSON format, so the outputs can be compared
+  as text. `k-run.sh` prints the debug messages on stdout before the result,
+  and `al/6-entry.rkt` prints them on stderr, so its stdout is the last line
+  of `k-run.sh`'s. Where K differs from watsup, compare with the meta-circular
+  run.
 - **Unit tests.** `test-equal` and `test-match` go under `spec-meta-redex/test/`
   and run with `raco test spec-meta-redex/test`. Machine tests run a term
   under a given `G` and `L` through the driver, with helpers in
@@ -729,6 +731,13 @@ it with its transcription:
 racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
            (for ([d (boot-script "spec-meta/al")] #:when (equal? (cadr d) "find_vari"))
              (pretty-write d))'
+```
+
+### Running a script
+
+```sh
+raco make spec-meta-redex/al/6-entry.rkt
+racket spec-meta-redex/al/6-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
 ```
 
 ### Tests
@@ -796,6 +805,13 @@ What a script should evaluate to, for the comparisons from Step 11 on:
 ```sh
 ./spectec-boot run spec-meta/al -rel Entry -tec examples/add.watsup -ali   # OCaml, meta-circular
 make k-spec && ./spec-meta-k/scripts/k-run.sh examples/add.watsup          # K, JSON output
+```
+
+To compare Redex's output with K's:
+
+```sh
+diff <(racket spec-meta-redex/al/6-entry.rkt examples/add.watsup 2>/dev/null) \
+     <(./spec-meta-k/scripts/k-run.sh examples/add.watsup | tail -n 1)
 ```
 
 ## Steps
@@ -878,7 +894,8 @@ Outcome:
 ### Step 2: Booting scripts
 
 - `al/0-boot.rkt`: `(boot-script path)` runs `spectec-boot sexp` and `read`s
-  the result, so that tests and `main.rkt` accept `.watsup` paths directly.
+  the result, so that tests and `al/6-entry.rkt` accept `.watsup` paths
+  directly.
   `(boot-p4 path #:includes dirs)` does the same with `sexp-p4`, and decodes
   `EXT` values.
 - Test: every `examples/*.watsup` file, and the whole of `spec/`, boots to a
@@ -1454,20 +1471,67 @@ Outcome:
   `(G (IN L_0 (CALL "main" () ())))` to a result, printing `Entry`'s `debug`
   messages to stderr. For a P4 program it runs
   `(G (IN L_0 (call-rel "Program_ok" (val_p4))))`, as K's `afterLoad` does.
-- `main.rkt`: `racket spec-meta-redex/main.rkt FILE.watsup` boots the file,
-  runs `Entry`, and prints the value in `k-run.sh`'s JSON format, or `fail`.
-- Compile with `raco make spec-meta-redex/main.rkt`.
+- The command-line driver, in `al/6-entry.rkt`'s `main` submodule:
+  `racket spec-meta-redex/al/6-entry.rkt FILE.watsup` boots the file, runs
+  `Entry`, and prints the value in `k-run.sh`'s JSON format, or `fail`.
+- Compile with `raco make spec-meta-redex/al/6-entry.rkt`.
 - Test: the examples that need no builtins produce the same output as
   `k-run.sh` and the meta-circular run: `add` 119, `fibo` 89,
   `iter-nontrivial` -42, `iter-sequence` 1085, `mutual-recursion` 289,
   `relation-typing` 110, and `variant-tree` 6. Record each one's time and
   number of steps. The tests run the fast ones, with the cross-check on.
 
+Outcome:
+
+- Done. `test/entry.rkt` passes (20 checks, 14 s). The whole suite runs 3,564
+  checks in 54 s, and 3,534 with contracts off, on a scratch copy.
+- `entry` and `entry-p4` in `al/6-entry.rkt` are Racket procedures around the
+  driver. `entry` gives `(OK val)`, or `FAIL` where `Entry` has no derivation.
+  It writes `Entry`'s debug messages with `debug`, including the last one,
+  `debug val`. The run starts under the `LOCAL` layer of the loaded context,
+  which is `$empty_layer`. `entry-p4` gives `(OK (val ...))` or `FAIL`. It is
+  tested on a toy `Program_ok`, and the driver's `--p4` is left to Step 13.
+- The driver prints the value with `val->jsexpr` and `jsexpr->string`.
+  `val->jsexpr` is the extern wire's encoding of `val`, so it is in
+  `common/0.2-extern-json.rkt`, which Step 12 completes. The test checks a
+  value with every kind except `FUNC` and `EXT` against `k-run.sh`'s output.
+- K writes `Entry`'s debug messages and `-- debug` premises on stdout, as JSON,
+  before the result. The driver writes them on stderr, as terms, as `debug`
+  does since Step 8. So the driver's stdout is the last line of `k-run.sh`'s,
+  and the tests compare with that line.
+- K garbles non-ASCII text: it prints `"é"` as the bytes `8D 79`, where UTF-8
+  is `C3 A9` *(measured)*. The driver writes UTF-8, and escapes only control
+  characters, `"`, and `\`.
+- All seven examples print what `k-run.sh` prints. A failing `$main()`, and a
+  script without `$main`, print `fail` in both, and the meta-circular run
+  reports that `Entry` failed.
+- Steps and times *(measured)*. The driver columns leave out booting, and
+  `$load` takes at most 6 ms. The program's wall clock includes Racket's
+  startup and booting, about 0.9 s:
+
+  | Example | Steps | Driver | Cross-check on | `al/6-entry.rkt` |
+  | --- | --- | --- | --- | --- |
+  | `add` | 27 | 4 ms | 19 ms | 0.9 s |
+  | `iter-nontrivial` | 170 | 47 ms | 0.35 s | 1.0 s |
+  | `variant-tree` | 963 | 0.46 s | 4.1 s | 1.6 s |
+  | `relation-typing` | 1,284 | 0.51 s | 4.6 s | 1.9 s |
+  | `iter-sequence` | 1,937 | 0.92 s | 7.8 s | 2.1 s |
+  | `mutual-recursion` | 5,638 | 5.3 s | 44 s | 5.3 s |
+  | `fibo` | 6,478 | 7.1 s | 62 s | 7.0 s |
+
+  `k-run.sh` takes 8 to 11 s on each, and the meta-circular run 0.2 to 0.3 s.
+- The tests run `add`, `iter-nontrivial`, `variant-tree`, and
+  `relation-typing` with the cross-check on, and `iter-sequence` without it.
+  `fibo` and `mutual-recursion` are left out; Step 14 checks every example.
+- `Entry`'s own debug messages are written once, since no rule writes them.
+  The cross-check writes a `-- debug` premise's message twice, as in Step 9,
+  so the test of `add`'s stderr runs without it.
+
 ### Step 12: Builtins and externs
 
-- `common/0-extern-json.rkt`: a Racket codec for the wire format documented in
-  `extern_json.ml` (`val`, `typ`, `mixop`, request, and response), built on
-  Racket's `json` library.
+- `common/0.2-extern-json.rkt`: a Racket codec for the wire format documented
+  in `extern_json.ml` (`val`, `typ`, `mixop`, request, and response), built on
+  Racket's `json` library. Step 11 added the encoding of `val`.
 - Add `spectec-boot extern-serve`. `common/0-extern-wire.rkt` starts it on the
   first extern call and shuts it down at exit.
 - Replace the Step 3 stubs for the three host procedures, and add the native
@@ -1481,9 +1545,9 @@ Outcome:
 
 ### Step 13: P4 type checking and performance
 
-- `racket spec-meta-redex/main.rkt --p4 PROGRAM spec` boots `spec/`, boots
-  PROGRAM with `sexp-p4`, runs `Program_ok` on it, and prints `passed` or
-  `fail`.
+- `racket spec-meta-redex/al/6-entry.rkt --p4 PROGRAM spec` boots `spec/`,
+  boots PROGRAM with `sexp-p4`, runs `Program_ok` on it, and prints `passed`
+  or `fail`.
 - Run only the three benchmark programs, smallest first:
   `p4c/testdata/p4_16_samples/action-bind.p4`, `checksum-l4-bmv2.p4`, and
   `dash/dash-pipeline-v1model-bmv2.p4`. Also run the negative
