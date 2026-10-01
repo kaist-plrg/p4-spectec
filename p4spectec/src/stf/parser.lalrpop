@@ -1,0 +1,390 @@
+// Parses an STF command stream into source-annotated statements and validates
+// numeric fields with semantic constraints; for example, `WAIT` becomes one
+// `Statement::Wait` phrase and `END` terminates the program.
+
+use std::rc::Rc;
+
+use crate::lang::common::source::Phrase;
+
+use crate::stf::{
+    ast::{
+        Action, Argument, Condition, CounterCheck, CounterKind, CounterTarget, MatchKind, Name,
+        Program, Statement, TableMatch,
+    },
+    error::StfError,
+    lexer::Token,
+    parse::{location_span, parse_priority, Location},
+};
+
+use crate::phrase;
+
+grammar(file: &Rc<str>);
+
+extern {
+    type Location = Location;
+    type Error = StfError;
+
+    enum Token {
+        "END" => Token::End,
+        "ADD" => Token::Add,
+        "ALL" => Token::All,
+        "BYTES" => Token::Bytes,
+        "CHECK_COUNTER" => Token::CheckCounter,
+        "EXPECT" => Token::Expect,
+        "NO_PACKET" => Token::NoPacket,
+        "PACKET" => Token::Packet,
+        "PACKETS" => Token::Packets,
+        "EXACT" => Token::Exact,
+        "REMOVE" => Token::Remove,
+        "SETDEFAULT" => Token::SetDefault,
+        "WAIT" => Token::Wait,
+        "PACKET_WILDCARD" => Token::PacketWildcard,
+        "DATA_TERN" => Token::DataTernary,
+        "MIRRORING_ADD" => Token::MirroringAdd,
+        "MIRRORING_ADD_MC" => Token::MirroringAddMc,
+        "MIRRORING_GET" => Token::MirroringGet,
+        "MC_GROUP_CREATE" => Token::McGroupCreate,
+        "MC_NODE_CREATE" => Token::McNodeCreate,
+        "MC_NODE_ASSOCIATE" => Token::McNodeAssociate,
+        "REGISTER_READ" => Token::RegisterRead,
+        "REGISTER_WRITE" => Token::RegisterWrite,
+        "REGISTER_RESET" => Token::RegisterReset,
+        "ID" => Token::Id(<String>),
+        ":" => Token::Colon,
+        "," => Token::Comma,
+        "." => Token::Dot,
+        "(" => Token::LeftParen,
+        ")" => Token::RightParen,
+        "/" => Token::Slash,
+        "=" => Token::Assign,
+        "==" => Token::Eq,
+        "<" => Token::Lt,
+        "<=" => Token::Le,
+        ">" => Token::Gt,
+        ">=" => Token::Ge,
+        "!=" => Token::Ne,
+        "[" => Token::LeftBracket,
+        "]" => Token::RightBracket,
+        "INT_CONST_DEC" => Token::IntDecimal(<String>),
+        "INT_CONST_HEX" => Token::IntHex(<String>),
+        "INT_CONST_BIN" => Token::IntBinary(<String>),
+        "TERN_CONST_HEX" => Token::TernaryHex(<String>),
+        "DATA_DEC" => Token::DataDecimal(<String>),
+        "DATA_HEX" => Token::DataHex(<String>),
+    }
+}
+
+pub Statements: Program = {
+    // Statements ::= StatementRule* END
+    <statements:StatementRule*> "END" => statements,
+};
+
+StatementRule: Phrase<Statement> = {
+    // StatementRule ::= StatementNode
+    <l:@L> <node:StatementNode> <r:@R> => {
+        let span = location_span(file, l, r);
+        phrase! { node: node, span: span }
+    },
+};
+
+StatementNode: Statement = {
+    // StatementNode ::= ADD QualifiedName Priority MatchRule+ ActionRule
+    "ADD" <table:QualifiedName> <priority:Priority> <matches:MatchRule+>
+        <action:ActionRule> => Statement::Add {
+            table, priority: Some(priority), matches, action, id: None,
+        },
+
+    // StatementNode ::= ADD QualifiedName MatchRule+ ActionRule
+    "ADD" <table:QualifiedName> <matches:MatchRule+>
+        <action:ActionRule> => Statement::Add {
+            table, priority: None, matches, action, id: None,
+        },
+
+    // StatementNode ::= ADD QualifiedName Priority MatchRule+ ActionRule "=" ID
+    "ADD" <table:QualifiedName> <priority:Priority> <matches:MatchRule+>
+        <action:ActionRule> "=" <id:"ID"> => Statement::Add {
+            table, priority: Some(priority), matches, action, id: Some(id),
+        },
+
+    // StatementNode ::= ADD QualifiedName MatchRule+ ActionRule "=" ID
+    "ADD" <table:QualifiedName> <matches:MatchRule+>
+        <action:ActionRule> "=" <id:"ID"> => Statement::Add {
+            table, priority: None, matches, action, id: Some(id),
+        },
+
+    // StatementNode ::= CHECK_COUNTER ID "(" IdOrIndexRule ")"
+    "CHECK_COUNTER" <id:"ID"> "(" <target:IdOrIndexRule> ")" => {
+        Statement::CheckCounter {
+            counter: id,
+            target,
+            check: CounterCheck {
+                kind: None,
+                condition: Condition::Eq,
+                num: "0".to_owned(),
+            },
+        }
+    },
+
+    // StatementNode ::= CHECK_COUNTER ID "(" IdOrIndexRule ")" CounterKindRule ConditionRule Number
+    "CHECK_COUNTER" <id:"ID"> "(" <target:IdOrIndexRule> ")"
+        <kind:CounterKindRule> <condition:ConditionRule> <num:Number> => {
+            Statement::CheckCounter {
+                counter: id,
+                target,
+                check: CounterCheck {
+                    kind: Some(kind),
+                    condition,
+                    num,
+                },
+            }
+        },
+
+    // StatementNode ::= EXPECT Port ExpectedData EXACT
+    "EXPECT" <port:Port> <expected:ExpectedData> "EXACT" => {
+        Statement::Expect {
+            port,
+            packet_expected: expected,
+            exact: true,
+        }
+    },
+
+    // StatementNode ::= EXPECT Port ExpectedData
+    "EXPECT" <port:Port> <expected:ExpectedData> => {
+        Statement::Expect {
+            port,
+            packet_expected: expected,
+            exact: false,
+        }
+    },
+
+    // StatementNode ::= EXPECT Port EXACT
+    "EXPECT" <port:Port> "EXACT" => Statement::Expect {
+        port,
+        packet_expected: None,
+        exact: true,
+    },
+
+    // StatementNode ::= EXPECT Port
+    "EXPECT" <port:Port> => Statement::Expect {
+        port,
+        packet_expected: None,
+        exact: false,
+    },
+
+    // StatementNode ::= MIRRORING_ADD Decimal Decimal
+    "MIRRORING_ADD" <session:Decimal> <port:Decimal> => {
+        Statement::MirroringAdd { session, port }
+    },
+
+    // StatementNode ::= MIRRORING_ADD_MC Decimal Decimal
+    "MIRRORING_ADD_MC" <session:Decimal> <id:Decimal> => {
+        Statement::MirroringAddMc {
+            session,
+            group_id: id,
+        }
+    },
+
+    // StatementNode ::= MIRRORING_GET Decimal
+    "MIRRORING_GET" <session:Decimal> => Statement::MirroringGet { session },
+
+    // StatementNode ::= NO_PACKET
+    "NO_PACKET" => Statement::NoPacket,
+
+    // StatementNode ::= PACKET Port PacketData
+    "PACKET" <port:Port> <packet:PacketData> => Statement::Packet { port, packet },
+
+    // StatementNode ::= SETDEFAULT QualifiedName ActionRule
+    "SETDEFAULT" <table:QualifiedName> <action:ActionRule> => {
+        Statement::SetDefault { table, action }
+    },
+
+    // StatementNode ::= MC_GROUP_CREATE Decimal
+    "MC_GROUP_CREATE" <id:Decimal> => Statement::McGroupCreate { group_id: id },
+
+    // StatementNode ::= MC_NODE_CREATE Decimal Number+
+    "MC_NODE_CREATE" <id:Decimal> <ports:Number+> => Statement::McNodeCreate {
+        replication_id: id,
+        ports,
+    },
+
+    // StatementNode ::= MC_NODE_ASSOCIATE Decimal Decimal
+    "MC_NODE_ASSOCIATE" <id:Decimal> <handle:Decimal> => {
+        Statement::McNodeAssociate {
+            group_id: id,
+            handle,
+        }
+    },
+
+    // StatementNode ::= REGISTER_READ QualifiedName Number
+    "REGISTER_READ" <name:QualifiedName> <index:Number> => {
+        Statement::RegisterRead { name, index }
+    },
+
+    // StatementNode ::= REGISTER_WRITE QualifiedName Number Number
+    "REGISTER_WRITE" <name:QualifiedName> <index:Number> <value:Number> => {
+        Statement::RegisterWrite { name, index, value }
+    },
+
+    // StatementNode ::= REGISTER_RESET QualifiedName
+    "REGISTER_RESET" <name:QualifiedName> => Statement::RegisterReset { name },
+
+    // StatementNode ::= REMOVE ALL
+    "REMOVE" "ALL" => Statement::RemoveAll,
+
+    // StatementNode ::= WAIT
+    "WAIT" => Statement::Wait,
+};
+
+Number: String = {
+    // Number ::= Decimal
+    Decimal,
+
+    // Number ::= INT_CONST_BIN
+    "INT_CONST_BIN",
+
+    // Number ::= INT_CONST_HEX
+    "INT_CONST_HEX",
+
+    // Number ::= TERN_CONST_HEX
+    "TERN_CONST_HEX",
+};
+
+NumberOrLpm: MatchKind = {
+    // NumberOrLpm ::= Number "/" Number
+    <l:Number> "/" <r:Number> => MatchKind::Slash(l, r),
+
+    // NumberOrLpm ::= Number
+    <num:Number> => MatchKind::Number(num),
+};
+
+MatchRule: TableMatch = {
+    // MatchRule ::= QualifiedName ":" NumberOrLpm
+    <name:QualifiedName> ":" <kind:NumberOrLpm> => TableMatch { name, kind },
+};
+
+QualifiedName: Name = {
+    // QualifiedName ::= ID
+    <id:"ID"> => id.into(),
+
+    // QualifiedName ::= ID "[" Decimal "]"
+    <id:"ID"> "[" <index:Decimal> "]" => format!("{id}[{index}]").into(),
+
+    // QualifiedName ::= QualifiedName "." ID
+    <prefix:QualifiedName> "." <id:"ID"> => format!("{prefix}.{id}").into(),
+};
+
+IdOrIndexRule: CounterTarget = {
+    // IdOrIndexRule ::= ID
+    <id:"ID"> => CounterTarget::Id(id),
+
+    // IdOrIndexRule ::= Number
+    <num:Number> => CounterTarget::Index(num),
+};
+
+CounterKindRule: CounterKind = {
+    // CounterKindRule ::= BYTES
+    "BYTES" => CounterKind::Bytes,
+
+    // CounterKindRule ::= PACKETS
+    "PACKETS" => CounterKind::Packets,
+};
+
+ConditionRule: Condition = {
+    // ConditionRule ::= "=="
+    "==" => Condition::Eq,
+
+    // ConditionRule ::= "!="
+    "!=" => Condition::Ne,
+
+    // ConditionRule ::= "<="
+    "<=" => Condition::Le,
+
+    // ConditionRule ::= "<"
+    "<" => Condition::Lt,
+
+    // ConditionRule ::= ">="
+    ">=" => Condition::Ge,
+
+    // ConditionRule ::= ">"
+    ">" => Condition::Gt,
+};
+
+ActionRule: Action = {
+    // ActionRule ::= QualifiedName "(" Comma<Argument> ")"
+    <name:QualifiedName> "(" <args:Comma<Argument>> ")" => Action { name, args },
+};
+
+Argument: Argument = {
+    // Argument ::= ADD ":" Number
+    "ADD" ":" <num:Number> => Argument {
+        id: "add".to_owned(),
+        num,
+    },
+
+    // Argument ::= ID ":" Number
+    <id:"ID"> ":" <num:Number> => Argument { id, num },
+};
+
+Comma<T>: Vec<T> = {
+    // Comma<T> ::= epsilon
+    => vec![],
+
+    // Comma<T> ::= T ("," T)*
+    <head:T> <tail:("," <T>)*> => {
+        let mut values = vec![head];
+        values.extend(tail);
+        values
+    },
+};
+
+Priority: i64 = {
+    // Priority ::= Decimal
+    <l:@L> <value:Decimal> <r:@R> =>? {
+        let span = location_span(file, l, r);
+        let priority = parse_priority(value, span);
+        priority.map_err(|error| lalrpop_util::ParseError::User { error })
+    },
+};
+
+Decimal: String = {
+    // Decimal ::= INT_CONST_DEC
+    "INT_CONST_DEC",
+};
+
+Port: String = {
+    // Port ::= DATA_DEC
+    "DATA_DEC",
+};
+
+ExpectedData: Option<String> = {
+    // ExpectedData ::= ExpectedDatum+
+    <data:ExpectedDatum+> => data.into_iter().fold(None, |result, datum| match (result, datum) {
+        (Some(l), Some(r)) => Some(l + &r),
+        (Some(value), None) | (None, Some(value)) => Some(value),
+        (None, None) => None,
+    }),
+};
+
+ExpectedDatum: Option<String> = {
+    // ExpectedDatum ::= PacketDatum
+    <data:PacketDatum> => Some(data),
+
+    // ExpectedDatum ::= PACKET_WILDCARD
+    "PACKET_WILDCARD" => Some("*".to_owned()),
+
+    // ExpectedDatum ::= DATA_TERN
+    "DATA_TERN" => None,
+};
+
+PacketData: String = {
+    // PacketData ::= PacketDatum+
+    <data:PacketDatum+> => data.concat(),
+};
+
+PacketDatum: String = {
+    // PacketDatum ::= DATA_DEC
+    "DATA_DEC",
+
+    // PacketDatum ::= DATA_HEX
+    "DATA_HEX",
+};
