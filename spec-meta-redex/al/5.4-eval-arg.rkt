@@ -14,7 +14,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-arg
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Argument evaluation rules
@@ -29,7 +29,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-arg
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Type argument evaluation rules

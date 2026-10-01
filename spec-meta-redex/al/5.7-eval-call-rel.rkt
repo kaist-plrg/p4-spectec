@@ -22,7 +22,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-call-rel
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Rule path evaluation
@@ -99,7 +99,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-call-rel
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Rule path sequence evaluation

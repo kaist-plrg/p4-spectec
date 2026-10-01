@@ -19,7 +19,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-exp
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Boolean, number, and text evaluation rules
@@ -419,7 +419,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-exp
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Variable evaluation rules

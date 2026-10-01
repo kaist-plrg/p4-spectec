@@ -36,7 +36,7 @@
 ;;
 
 (define ->redex/eval
-  (reduction-relation
+  (reduction-relation/forms
    al
    ;; Leaving a local context
    (--> (IN L (OK any)) (OK any)
@@ -53,34 +53,39 @@
 
 ;; The rules that neither read nor write the context, on the redex r
 (define ->redex
-  (union-reduction-relations ->redex/eval
-                             ->redex/eval-assign
-                             ->redex/eval-exp
-                             ->redex/eval-arg
-                             ->redex/eval-prem
-                             ->redex/eval-call-func
-                             ->redex/eval-call-rel))
+  (union-reduction-relations/forms ->redex/eval
+                                   ->redex/eval-assign
+                                   ->redex/eval-exp
+                                   ->redex/eval-arg
+                                   ->redex/eval-prem
+                                   ->redex/eval-call-func
+                                   ->redex/eval-call-rel))
 
 ;; The rules that read G or L, or write L, on the focus triple (r G L)
 (define ->ctx
-  (union-reduction-relations ->ctx/eval-assign
-                             ->ctx/eval-exp
-                             ->ctx/eval-arg
-                             ->ctx/eval-prem
-                             ->ctx/eval-call-func
-                             ->ctx/eval-call-rel))
+  (union-reduction-relations/forms ->ctx/eval-assign
+                                   ->ctx/eval-exp
+                                   ->ctx/eval-arg
+                                   ->ctx/eval-prem
+                                   ->ctx/eval-call-func
+                                   ->ctx/eval-call-rel))
 
 ;; Every (r_1 G L_1) that ->redex (with L_1 = L) or ->ctx gives for (r G L)
 (define (focus-steps triple)
   (map cadr (focus-steps/names ->redex ->ctx triple)))
 
-;; The same, each with the name of its rule
+;; The same, each with the name of its rule. A relation that is #f has no
+;; rules.
 (define (focus-steps/names ->redex ->ctx triple)
   (match-define (list r G L) triple)
   (append
-   (for/list ([name+r_1 (in-list (apply-reduction-relation/tag-with-names ->redex r))])
+   (for/list ([name+r_1 (in-list (if ->redex
+                                     (apply-reduction-relation/tag-with-names ->redex r)
+                                     '()))])
      (list (car name+r_1) (list (cadr name+r_1) G L)))
-   (apply-reduction-relation/tag-with-names ->ctx triple)))
+   (if ->ctx
+       (apply-reduction-relation/tag-with-names ->ctx triple)
+       '())))
 
 ;;
 ;; The closure, on configurations
@@ -233,9 +238,13 @@
               #:unless (done? (cdr Fr+sub)))
      Fr+sub)))
 
-;; The contractum of redex r under G and L, the new layer, and the rule's name
+;; The contractum of redex r under G and L, the new layer, and the rule's name.
+;; Only the rules for r's head symbol are tried.
 (define (reduce-redex m r G L)
-  (match (focus-steps/names (machine-->redex m) (machine-->ctx m) (list r G L))
+  (define triple (list r G L))
+  (match (focus-steps/names (relation-for-head (machine-->redex m) (term-head r))
+                            (relation-for-head (machine-->ctx m) (term-head triple))
+                            triple)
     [(list (list rule triple))
      (match triple
        [(list r_1 G_1 L_1)

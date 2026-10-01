@@ -15,7 +15,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-assign
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Assigning to an expression
@@ -137,7 +137,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-assign
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Assigning to an expression

@@ -263,7 +263,8 @@ driver that computes the same relation faster:
    each node it matches `Fr` one level deep, and moves into the one evaluation
    position whose subterm is not `done`.
 3. The node where no such position exists is the redex. The driver applies
-   `->redex` and `->ctx` to it once, and puts `r'` in focus under `L'`.
+   the rules of `->redex` and `->ctx` for the redex's head symbol to it once,
+   and puts `r'` in focus under `L'`.
 
 A node's other subterms do not change while its pending subterm is evaluated,
 so its pending position stays the same until that subterm is `done`. So a step
@@ -552,7 +553,7 @@ codec and transport live in `common/`: the host procedures in
 ```text
 spec-meta-redex/
   common/
-    0.0-prelude.rkt       Redex re-exports; caching on; define-dec
+    0.0-prelude.rkt       Redex re-exports; caching on; define-dec; reduction-relation/forms
     0.1-stdlib.rkt        language stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins; text and list helpers; debug
     0.2-extern-json.rkt   codec for the extern JSON wire
     0.3-extern-ffi.rkt    transport to the OCaml host, over ffi2
@@ -586,6 +587,17 @@ spec-meta-redex/
 `define-metafunction`. It appends the `⊥` clause, and builds the contract from
 the watsup declaration. `SPECTEC_REDEX_CONTRACTS=0`, read when a module is
 compiled, drops the contracts.
+
+The fragments build their relations with `reduction-relation/forms`, in place
+of `reduction-relation`. It groups the rules by the head symbol of their
+left-hand side, which for a focus triple is the head of the redex. The
+relation is the union of one relation per run of consecutive rules with the
+same head, in the order of the source. `union-reduction-relations/forms`
+keeps the groups, and `(relation-for-head rel head)` gives the rules of `rel`
+for a head. A rule whose left-hand side has no literal head symbol, such as
+`(in-hole Fr-pass FAIL)` or `num`, belongs to every head. Every term that a
+rule's left-hand side matches has that rule's head, so the rules for a head
+give the same steps as the whole relation.
 
 Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
 file's language with its own syntax: `stdlib` (the `var`s, sets and maps),
@@ -1811,8 +1823,43 @@ Outcome so far:
 
   The steps, the rules applied, and the 102 host calls are the same. The step
   time stays flat over the run. Matching `Fr` now takes 2.6 s of the run, so
-  applying the rules is most of the rest. The other programs have not been
-  rerun.
+  applying the rules is most of the rest.
+- With the cursor, the profile put 84% of `action-bind.p4`'s run in
+  `reduce-redex`, which tried all 197 rules of `->redex` and `->ctx` on every
+  redex. 39% was self time in Redex's memo of pattern matches
+  (`matcher.rkt:1166`), which hashes each term and compares it with `equal?`.
+  Each rule tried looks its left-hand side up there *(measured)*.
+- Item 3 is done with `reduction-relation/forms` (see
+  [Layout and languages](#layout-and-languages)). Every fragment builds its
+  relations with it, and `al/5-eval.rkt` combines them with
+  `union-reduction-relations/forms`. The driver's `reduce-redex` applies
+  `(relation-for-head ->redex (term-head r))`, and the same for `->ctx` on the
+  triple. `->al` and `focus-steps` keep the whole relations, so the
+  cross-check compares the dispatched rules with all of them on every step.
+  A redex now meets 2 to 16 rules instead of 197. Only `"frame/fail"` and
+  `"eval-exp/literal/number"` belong to every head. `test/prelude.rkt` tests
+  the grouping, including a head that is a nonterminal, a head under an
+  ellipsis, `in-hole`, a focus triple, a union, and a relation that the macro
+  did not build. The whole suite runs 3,636 checks in 48 s.
+- With the cursor and dispatch *(measured)*:
+
+  | Program | Result | Steps | Driver | `al/6-entry.rkt` |
+  | --- | --- | --- | --- | --- |
+  | `p4_16_samples/action-bind.p4` | `passed` | 73,932 | 10.0 s | 15.4 s |
+  | `p4_16_errors/action-bind.p4` | `fail` | 24,444 | 4.4 s | 9.8 s |
+  | `checksum-l4-bmv2.p4` | none | over 1,090,000 | over 295 s | stopped at 5 min |
+
+  On `action-bind.p4`, the driver went from 193 s, to 14.6 s with the cursor,
+  to 10.0 s with dispatch, 0.14 ms per step. The steps and host calls of both
+  `action-bind.p4` programs are the same as before.
+  `checksum-l4-bmv2.p4` reached step 1,537 in 286 s before the cursor. Now it
+  takes 11.5 s for the first 10,000 steps, and then 0.2 to 0.3 ms per step,
+  up to 1 ms between steps 610,000 and 690,000. Its total number of steps is
+  not known.
+- With dispatch, the memo is 56% of `action-bind.p4`'s self time, and
+  metafunction calls 26% of its total. Which keys make the memo slow is not
+  measured yet. Items 4 and 5 are about the large `G` and `L` that keys can
+  hold.
 
 ### Step 14: Test targets and docs
 

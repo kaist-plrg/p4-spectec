@@ -15,7 +15,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-prem
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Relation premises
@@ -85,7 +85,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-prem
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; If-not-hold premises

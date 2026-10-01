@@ -17,7 +17,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-call-func
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Clause invocation
@@ -104,7 +104,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-call-func
-  (reduction-relation
+  (reduction-relation/forms
    al
 
    ;;; Clause invocation
