@@ -123,25 +123,23 @@ and rulegroup' = id * rulematch * rulepath list
 
 and elsegroup = elsegroup' phrase
 and elsegroup' = id * rulematch * rulepath
-[@@deriving yojson]
 
 (* Clauses *)
 
-type clause = Il.clause [@@deriving yojson]
-type clause' = Il.clause' [@@deriving yojson]
+type clause = Il.clause
+type clause' = Il.clause'
 
-type elseclause = Il.elseclause [@@deriving yojson]
-type elseclause' = Il.elseclause' [@@deriving yojson]
+type elseclause = Il.elseclause
+type elseclause' = Il.elseclause'
 
 (* Table rows *)
 
 and tablerow = tablerow' phrase
 and tablerow' = exp list * arg list * exp * prem list
-[@@deriving yojson]
 
 (* Hints *)
 
-type hint = El.hint [@@deriving yojson]
+type hint = El.hint
 
 (* Definitions *)
 
@@ -165,8 +163,7 @@ and def' =
   | TableDecD of id * param list * typ * tablerow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
   | FuncDecD of id * tparam list * param list * typ * clause list * elseclause option * hint list
-[@@deriving yojson]
 
 (* Spec *)
 
-type spec = def list [@@deriving yojson]
+type spec = def list

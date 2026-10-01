@@ -39,7 +39,7 @@ RUN apt-get update && \
 RUN opam init --disable-sandboxing --auto-setup && \
     opam switch create 5.1.0 && \
     eval $(opam env) && \
-    opam install dune 'menhir=20240715' 'menhirLib=20240715' bignum core core_unix bisect_ppx yojson ppx_deriving_yojson -y
+    opam install dune 'menhir=20240715' 'menhirLib=20240715' bignum core core_unix bisect_ppx yojson ppx_deriving_yojson uucp uuseg uutf -y
 
 # Set opam environment permanently
 ENV OPAM_SWITCH_PREFIX=/root/.opam/5.1.0
@@ -73,6 +73,6 @@ ENV P4SPECTEC_PATH=/home/p4-spectec
 # Stage 6: Asciidoc dependencies
 # --------------------------------------
 RUN apt-get update
-RUN docs/install-asciidoctor-linux.sh
+RUN docs/p4/install-asciidoctor-linux.sh
 
 RUN echo 'source /usr/local/rvm/scripts/rvm' >> ~/.bashrc

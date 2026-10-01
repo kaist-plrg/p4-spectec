@@ -143,7 +143,7 @@ let invalid_spec =
     $ at;
   ]
 
-let () =
+let run () =
   let latex =
     Backend_splice.Ctx.
       {
@@ -166,7 +166,13 @@ let () =
   print_endline (splice "${func-latex: absent}");
   Backend_splice.Driver.init invalid_spec [];
   try ignore (splice "${rulegroup-latex: Invalid/value}")
-  with Backend_splice__Error.SpliceError error ->
-    let at, message = Backend_splice.to_region_msg error in
+  with Backend_splice.Error.SpliceError error ->
+    let at, message = Diagnostic.region_msg error in
     print_endline "[latex-error]";
     print_endline (Util.Error.string_of_error at message)
+
+let () =
+  let (), report = Diagnostic.collect run in
+  if not (Diagnostic.Report.is_empty report) then
+    Printf.eprintf "%s\n"
+      (Diagnostic.Render.render_report ~ansi:Diagnostic.Ansi.plain report)

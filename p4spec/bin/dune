@@ -1,10 +1,16 @@
+(library
+ (name cli_error)
+ (wrapped false)
+ (modules cli_error)
+ (libraries p4spectec unix))
+
 (executable
  (public_name p4spectec)
  (name main)
  (preprocess
   (pps ppx_let))
  (modules main)
- (libraries p4spectec core core_unix core_unix.command_unix))
+ (libraries cli_error p4spectec core core_unix core_unix.command_unix))
 
 (executable
  (public_name p4boot)
@@ -12,4 +18,4 @@
  (preprocess
   (pps ppx_let))
  (modules boot)
- (libraries p4spectec core core_unix core_unix.command_unix))
+ (libraries cli_error p4spectec core core_unix core_unix.command_unix))

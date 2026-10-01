@@ -1,0 +1,15 @@
+syntax foo = nat
+
+var x : foo
+var y : foo
+
+extern relation ExternFunctionCall_eval:
+  foo |- foo
+  hint(input %0)
+
+relation R: foo |- foo
+  hint(input %0)
+
+rule R/extern:
+  x |- y
+  -- ExternFunctionCall_eval: x |- y

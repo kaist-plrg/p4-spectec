@@ -1,4 +1,5 @@
 open Lang
+open Pl
 open Domain
 open Lib
 
@@ -46,13 +47,13 @@ module HEnv = struct
 
   let add_alter (henv : t) (hid : HId.t) (key : key)
       (hint_alter : Hints.Alter.t) : t =
-    add henv hid key (Hintkinds.Kind.Alter hint_alter)
+    add henv hid key (Hintkinds.Kind.Alter { id = hid; value = hint_alter })
 
   let add_fields (henv : t) (hid : HId.t) (key : key)
       (hint_fields : Hints.Fields.t) : t =
-    add henv hid key (Hintkinds.Kind.Fields hint_fields)
+    add henv hid key (Hintkinds.Kind.Fields { id = hid; value = hint_fields })
 
-  let find (henv : t) (hid : HId.t) (key : key) : Hintkinds.Kind.t option =
+  let find_kind (henv : t) (hid : HId.t) (key : key) : Hintkinds.Kind.t option =
     match HIdMap.find_opt hid henv with
     | Some kinds -> (
         match key with
@@ -61,13 +62,15 @@ module HEnv = struct
         | `Rel rid -> Hintkinds.find_rel rid kinds)
     | None -> None
 
-  let find_alter (henv : t) (hid : HId.t) (key : key) : Hints.Alter.t option =
-    match find henv hid key with
-    | Some (Hintkinds.Kind.Alter hint_alter) -> Some hint_alter
+  let find_alter (henv : t) (hid : HId.t) (key : key) :
+      Hints.Alter.t Annot.hint option =
+    match find_kind henv hid key with
+    | Some (Hintkinds.Kind.Alter hint) -> Some hint
     | _ -> None
 
-  let find_fields (henv : t) (hid : HId.t) (key : key) : Hints.Fields.t option =
-    match find henv hid key with
-    | Some (Hintkinds.Kind.Fields hint_fields) -> Some hint_fields
+  let find_fields (henv : t) (hid : HId.t) (key : key) :
+      Hints.Fields.t Annot.hint option =
+    match find_kind henv hid key with
+    | Some (Hintkinds.Kind.Fields hint) -> Some hint
     | _ -> None
 end

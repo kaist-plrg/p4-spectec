@@ -13,7 +13,8 @@ splice: spectec
 	rm -r sections || true
 	cp -r sections-skeleton sections
 	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "-splice {}" | tr '\n' ' '); \
-	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing
+	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing \
+	  || { cat splice.missing; exit 1; }
 
 ${GEN}.html: ${SPEC}.adoc splice
 	time asciidoctor -q \

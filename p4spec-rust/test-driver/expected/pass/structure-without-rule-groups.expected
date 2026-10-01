@@ -4104,7 +4104,7 @@ def $unroll_typeIR(typeIR')
 
   1. Return typeIR'
 
-def $unroll_aliasType(typeIR')
+def $unroll_aliasTypeIR(typeIR')
 
 1. Case analysis on typeIR'
 
@@ -4112,13 +4112,13 @@ def $unroll_aliasType(typeIR')
 
     1. (Let TYPE _typeId typeIR be typeIR' as newTypeIR)
 
-      1. Return $unroll_aliasType(typeIR)
+      1. Return $unroll_aliasTypeIR(typeIR)
 
   2. Case (% has type typedefTypeIR)
 
     1. (Let TYPEDEF _typeId typeIR be typeIR' as typedefTypeIR)
 
-      1. Return $unroll_aliasType(typeIR)
+      1. Return $unroll_aliasTypeIR(typeIR)
 
 2. Otherwise,
 
@@ -8518,7 +8518,35 @@ def $bin_eq(value, value')
 
       1. Else Dangling
 
-  8. Case (% has type arrayValue)
+  8. Case (% has type sequenceValue)
+
+    1. (Let sequenceValue be value as sequenceValue)
+
+      1. If (sequenceValue matches SEQ `( % `)), then
+
+        1. (Let SEQ `( value_a*{value_a <- value_a*} `) be sequenceValue)
+
+          1. If (value' <: sequenceValue), then
+
+            1. (Let sequenceValue' be value' as sequenceValue)
+
+              1. If (sequenceValue' matches SEQ `( % `)), then
+
+                1. (Let SEQ `( value_b*{value_b <- value_b*} `) be sequenceValue')
+
+                  1. If ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)), then
+
+                    1. Return ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+
+                  1. Else Dangling
+
+              1. Else Dangling
+
+          1. Else Dangling
+
+      1. Else Dangling
+
+  9. Case (% has type arrayValue)
 
     1. (Let ARRAY `[ value_a*{value_a <- value_a*} `] be value as arrayValue)
 
@@ -8534,7 +8562,7 @@ def $bin_eq(value, value')
 
       1. Else Dangling
 
-  9. Case (% has type headerStackValue)
+  10. Case (% has type headerStackValue)
 
     1. (Let HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] be value as headerStackValue)
 
@@ -8550,7 +8578,7 @@ def $bin_eq(value, value')
 
       1. Else Dangling
 
-  10. Case (% has type structValue)
+  11. Case (% has type structValue)
 
     1. (Let STRUCT typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} be value as structValue)
 
@@ -8574,7 +8602,7 @@ def $bin_eq(value, value')
 
       1. Else Dangling
 
-  11. Case (% has type headerValue)
+  12. Case (% has type headerValue)
 
     1. (Let HEADER typeId_a `{ _b ';' fieldValue_a*{fieldValue_a <- fieldValue_a*} `} be value as headerValue)
 
@@ -8598,7 +8626,7 @@ def $bin_eq(value, value')
 
       1. Else Dangling
 
-  12. Case (% has type headerUnionValue)
+  13. Case (% has type headerUnionValue)
 
     1. (Let HEADER_UNION typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} be value as headerUnionValue)
 
@@ -8622,7 +8650,7 @@ def $bin_eq(value, value')
 
       1. Else Dangling
 
-  13. Case (% has type enumValue)
+  14. Case (% has type enumValue)
 
     1. (Let enumValue be value as enumValue)
 
@@ -8664,7 +8692,7 @@ def $bin_eq(value, value')
 
             1. Else Dangling
 
-  14. Case (% has type invalidHeaderValue)
+  15. Case (% has type invalidHeaderValue)
 
     1. (Let invalidHeaderValue be value as invalidHeaderValue)
 
@@ -9042,7 +9070,17 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_error(typeIR_unroll, errorValue)
 
-  4. Case (% has type stringValue)
+  4. Case (% has type matchKindValue)
+
+    1. (Let MATCH_KIND '.' nameIR be value as matchKindValue)
+
+      1. If ((MATCH_KIND as typeIR = $unroll_typeIR(typeIR))), then
+
+        1. Return MATCH_KIND '.' nameIR as value
+
+      1. Else Dangling
+
+  5. Case (% has type stringValue)
 
     1. (Let stringValue be value as stringValue)
 
@@ -9050,7 +9088,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_string(typeIR_unroll, stringValue)
 
-  5. Case (% has type listValue)
+  6. Case (% has type listValue)
 
     1. (Let listValue be value as listValue)
 
@@ -9058,7 +9096,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_list(typeIR_unroll, listValue)
 
-  6. Case (% has type tupleValue)
+  7. Case (% has type tupleValue)
 
     1. (Let tupleValue be value as tupleValue)
 
@@ -9066,7 +9104,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_tuple(typeIR_unroll, tupleValue)
 
-  7. Case (% has type arrayValue)
+  8. Case (% has type arrayValue)
 
     1. (Let arrayValue be value as arrayValue)
 
@@ -9074,7 +9112,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_array(typeIR_unroll, arrayValue)
 
-  8. Case (% has type headerStackValue)
+  9. Case (% has type headerStackValue)
 
     1. (Let headerStackValue be value as headerStackValue)
 
@@ -9082,7 +9120,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_header_stack(typeIR_unroll, headerStackValue)
 
-  9. Case (% has type structValue)
+  10. Case (% has type structValue)
 
     1. (Let structValue be value as structValue)
 
@@ -9090,7 +9128,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_struct(typeIR_unroll, structValue)
 
-  10. Case (% has type headerValue)
+  11. Case (% has type headerValue)
 
     1. (Let headerValue be value as headerValue)
 
@@ -9098,7 +9136,15 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_header(typeIR_unroll, headerValue)
 
-  11. Case (% has type enumValue)
+  12. Case (% has type headerUnionValue)
+
+    1. (Let headerUnionValue be value as headerUnionValue)
+
+      1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
+
+        1. Return $cast_header_union(typeIR_unroll, headerUnionValue)
+
+  13. Case (% has type enumValue)
 
     1. (Let enumValue be value as enumValue)
 
@@ -9106,7 +9152,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_enum(typeIR_unroll, enumValue)
 
-  12. Case (% has type sequenceValue)
+  14. Case (% has type sequenceValue)
 
     1. (Let sequenceValue be value as sequenceValue)
 
@@ -9114,7 +9160,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_sequence(typeIR_unroll, sequenceValue)
 
-  13. Case (% has type recordValue)
+  15. Case (% has type recordValue)
 
     1. (Let recordValue be value as recordValue)
 
@@ -9122,7 +9168,7 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_record(typeIR_unroll, recordValue)
 
-  14. Case (% has type defaultValue)
+  16. Case (% has type defaultValue)
 
     1. (Let defaultValue be value as defaultValue)
 
@@ -9130,13 +9176,13 @@ def $cast_op(typeIR, value)
 
         1. Return $cast_default(typeIR_unroll, DEFAULT)
 
-  15. Case (% has type invalidHeaderValue)
+  17. Case (% has type invalidHeaderValue)
 
     1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
 
       1. Return $cast_invalid_header(typeIR_unroll)
 
-  16. Case (% has type setValue)
+  18. Case (% has type setValue)
 
     1. (Let setValue be value as setValue)
 
@@ -9356,13 +9402,13 @@ def $cast_bool(typeIR', boolValue)
 
     1. (Let TYPE _typeId typeIR be typeIR' as newTypeIR)
 
-      1. Return $cast_bool(typeIR, boolValue)
+      1. Return $cast_op(typeIR, boolValue as value)
 
   3. Case (% has type setTypeIR)
 
     1. (Let SET `< typeIR `> be typeIR' as setTypeIR)
 
-      1. Return SET `{ $cast_bool(typeIR, boolValue) `} as value
+      1. Return SET `{ $cast_op(typeIR, boolValue as value) `} as value
 
 2. Else Dangling
 
@@ -9646,19 +9692,29 @@ def $cast_list(typeIR', LIST `[ value*{value <- value*} `])
 
 1. Else Dangling
 
-def $cast_tuple(typeIR', TUPLE `( value*{value <- value*} `))
+def $cast_tuple(typeIR', tupleValue)
 
-1. If (typeIR' <: tupleTypeIR), then
+1. (Let TUPLE `( value*{value <- value*} `) be tupleValue)
 
-  1. (Let TUPLE `< typeIR*{typeIR <- typeIR*} `> be typeIR' as tupleTypeIR)
+  1. If (typeIR' <: tupleTypeIR), then
 
-    1. If ((|typeIR*{typeIR <- typeIR*}| = |value*{value <- value*}|)), then
+    1. (Let TUPLE `< typeIR*{typeIR <- typeIR*} `> be typeIR' as tupleTypeIR)
 
-      1. Return TUPLE `( $cast_op(typeIR, value)*{typeIR <- typeIR*, value <- value*} `) as value
+      1. If ((|typeIR*{typeIR <- typeIR*}| = |value*{value <- value*}|)), then
 
-    1. Else Dangling
+        1. Return TUPLE `( $cast_op(typeIR, value)*{typeIR <- typeIR*, value <- value*} `) as value
 
-1. Else Dangling
+      1. Else Dangling
+
+  1. Else Dangling
+
+2. If (typeIR' <: setTypeIR), then
+
+  1. (Let SET `< typeIR `> be typeIR' as setTypeIR)
+
+    1. Return SET `{ $cast_op(typeIR, tupleValue as value) `} as value
+
+2. Else Dangling
 
 def $cast_array(typeIR, ARRAY `[ value*{value <- value*} `])
 
@@ -9699,6 +9755,20 @@ def $cast_header(typeIR, HEADER typeId' `{ b ';' value_field nameIR_field ';'*{n
     1. If ((typeId = typeId')), then
 
       1. Return HEADER typeId `{ b ';' value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} as value
+
+    1. Else Dangling
+
+1. Else Dangling
+
+def $cast_header_union(typeIR, HEADER_UNION typeId' `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `})
+
+1. If (typeIR <: headerUnionTypeIR), then
+
+  1. (Let HEADER_UNION typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} be typeIR as headerUnionTypeIR)
+
+    1. If ((typeId = typeId')), then
+
+      1. Return HEADER_UNION typeId `{ value_field nameIR_field ';'*{nameIR_field <- nameIR_field*, value_field <- value_field*} `} as value
 
     1. Else Dangling
 
@@ -9764,7 +9834,13 @@ def $cast_sequence(typeIR', sequenceValue)
 
 1. Case analysis on typeIR'
 
-  1. Case (% has type listTypeIR)
+  1. Case (% has type setTypeIR)
+
+    1. (Let SET `< typeIR `> be typeIR' as setTypeIR)
+
+      1. Return SET `{ $cast_op(typeIR, sequenceValue as value) `} as value
+
+  2. Case (% has type listTypeIR)
 
     1. (Let LIST `< typeIR `> be typeIR' as listTypeIR)
 
@@ -9776,7 +9852,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
       1. Else Dangling
 
-  2. Case (% has type tupleTypeIR)
+  3. Case (% has type tupleTypeIR)
 
     1. (Let TUPLE `< typeIR*{typeIR <- typeIR*} `> be typeIR' as tupleTypeIR)
 
@@ -9810,7 +9886,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
               1. Else Dangling
 
-  3. Case (% has type sequenceTypeIR)
+  4. Case (% has type sequenceTypeIR)
 
     1. (Let sequenceTypeIR be typeIR' as sequenceTypeIR)
 
@@ -9850,7 +9926,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
             1. Else Dangling
 
-  4. Case (% has type arrayTypeIR)
+  5. Case (% has type arrayTypeIR)
 
     1. (Let ARRAY typeIR `[ n_size `] be typeIR' as arrayTypeIR)
 
@@ -9884,7 +9960,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
                 1. Else Dangling
 
-  5. Case (% has type headerStackTypeIR)
+  6. Case (% has type headerStackTypeIR)
 
     1. (Let HEADER_STACK typeIR `[ n_size `] be typeIR' as headerStackTypeIR)
 
@@ -9922,7 +9998,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
                 1. Else Dangling
 
-  6. Case (% has type structTypeIR)
+  7. Case (% has type structTypeIR)
 
     1. (Let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} be typeIR' as structTypeIR)
 
@@ -9962,7 +10038,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
               1. Else Dangling
 
-  7. Case (% has type headerTypeIR)
+  8. Case (% has type headerTypeIR)
 
     1. (Let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} be typeIR' as headerTypeIR)
 
@@ -10146,13 +10222,19 @@ def $cast_invalid_header(typeIR)
 
 1. Case analysis on typeIR
 
-  1. Case (% has type headerTypeIR)
+  1. Case (% has type invalidHeaderTypeIR)
+
+    1. (Let invalidHeaderTypeIR be typeIR as invalidHeaderTypeIR)
+
+      1. Return '{#}' as value
+
+  2. Case (% has type headerTypeIR)
 
     1. (Let headerTypeIR be typeIR as headerTypeIR)
 
       1. Return $default(headerTypeIR as typeIR)
 
-  2. Case (% has type headerUnionTypeIR)
+  3. Case (% has type headerUnionTypeIR)
 
     1. (Let headerUnionTypeIR be typeIR as headerUnionTypeIR)
 
@@ -10560,9 +10642,21 @@ def $sizeof_minSizeInBits'(typeIR')
 
   13. Case (% has type headerUnionTypeIR)
 
-    1. (Let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} be typeIR' as headerUnionTypeIR)
+    1. (Let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} be typeIR' as headerUnionTypeIR)
 
-      1. Return $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+      1. If (fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []), then
+
+        1. Return 0
+
+      1. Else Dangling
+
+    2. (Let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} be typeIR' as headerUnionTypeIR)
+
+      1. If (typeIR*{typeIR <- typeIR*} matches _ :: _), then
+
+        1. Return $min_nat($sizeof_minSizeInBits'(typeIR)*{typeIR <- typeIR*})
+
+      1. Else Dangling
 
 1. Else Dangling
 
@@ -10654,9 +10748,21 @@ def $sizeof_maxSizeInBits'(typeIR')
 
   13. Case (% has type headerUnionTypeIR)
 
-    1. (Let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} be typeIR' as headerUnionTypeIR)
+    1. (Let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} `} be typeIR' as headerUnionTypeIR)
 
-      1. Return $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+      1. If (fieldTypeIR*{fieldTypeIR <- fieldTypeIR*} matches []), then
+
+        1. Return 0
+
+      1. Else Dangling
+
+    2. (Let HEADER_UNION _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR _nameIR ';'*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `} be typeIR' as headerUnionTypeIR)
+
+      1. If (typeIR*{typeIR <- typeIR*} matches _ :: _), then
+
+        1. Return $max_nat($sizeof_maxSizeInBits'(typeIR)*{typeIR <- typeIR*})
+
+      1. Else Dangling
 
 1. Else Dangling
 
@@ -16574,7 +16680,7 @@ def $update_mode_tbl(TBLC, tableKeyIR*{tableKeyIR <- tableKeyIR*})
 
                   1. (Let typeIR be $type_of_typedExpressionIR(typedExpressionIR))
 
-                    1. (Let typeIR' be $unroll_aliasType(typeIR))
+                    1. (Let typeIR' be $unroll_aliasTypeIR(typeIR))
 
                       1. If (typeIR' <: integerTypeIR), then
 
@@ -21283,17 +21389,25 @@ relation Expr_ok: p TC |- expression'' : %
 
           1. (Let n S i be integerLiteral)
 
-            1. (Let expressionNoteIR be `( INT `< n `> as typeIR LCTK `))
+            1. (Let i_norm be $int_to_bitstr(n as int, i))
 
-              1. Result in: % % |- % : n S i as expressionIR '#' expressionNoteIR
+              1. (Let expressionNoteIR be `( INT `< n `> as typeIR LCTK `))
+
+                1. If ((n > 0)), then
+
+                  1. Result in: % % |- % : n S i_norm as expressionIR '#' expressionNoteIR
+
+                1. Else Dangling
 
         3. Case (% matches pattern % W %)
 
           1. (Let n W i be integerLiteral)
 
-            1. (Let expressionNoteIR be `( BIT `< n `> as typeIR LCTK `))
+            1. (Let i_norm be $int_to_bitstr(n as int, i))
 
-              1. Result in: % % |- % : n W i as expressionIR '#' expressionNoteIR
+              1. (Let expressionNoteIR be `( BIT `< n `> as typeIR LCTK `))
+
+                1. Result in: % % |- % : n W i_norm as expressionIR '#' expressionNoteIR
 
   3. Case (% has type stringLiteral)
 
@@ -22587,7 +22701,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                                                                           1. (Let ?(n_w) be nat'?{nat' <- nat'?})
 
-                                                                            1. (Let i be ((n_w + n_l) - 1))
+                                                                            1. (Let i be $ite<int>((n_w = 0), n_l as int, ((n_w + n_l) - 1)))
 
                                                                               1. If (i <: nat), then
 
@@ -23647,7 +23761,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
                                     1. (Let TC_6 be $set_control_t(TC_5, TC_2.CONTROL))
 
-                                      1. (Let TC_7 be $set_loop_t(TC_6, TC_3.LOOP))
+                                      1. (Let TC_7 be $set_loop_t(TC_6, TC_2.LOOP))
 
                                         1. (Let forStatementIR be annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR `) statementIR)
 
@@ -23697,7 +23811,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
                                 1. (Let TC_6 be $set_control_t(TC_5, TC_2.CONTROL))
 
-                                  1. (Let TC_7 be $set_loop_t(TC_6, TC_3.LOOP))
+                                  1. (Let TC_7 be $set_loop_t(TC_6, TC_2.LOOP))
 
                                     1. (Let forStatementIR be annotationList FOR `( forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} ';' typedExpressionIR ';' forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} `) statementIR)
 
@@ -24213,7 +24327,7 @@ relation ParserStmt_ok: TC |- parserStatement : % %
 
           1. (Let TC_3 be $exit_t(TC_2))
 
-            1. Result in: % |- % : TC_1 parserBlockStatementIR as parserStatementIR
+            1. Result in: % |- % : TC_3 parserBlockStatementIR as parserStatementIR
 
   6. Case (% has type parserConditionalStatement)
 
@@ -32048,35 +32162,39 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
           1. (Let TYPE prefixedNameIR be memberAccessBaseIR)
 
-            1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_i(p, IC, prefixedNameIR))
+            1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_i(p, IC, prefixedNameIR))
 
-              1. If (typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)), then
+              1. If (typeDefIR?{typeDefIR <- typeDefIR?} matches (_)), then
 
-                1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+                1. (Let ?(typeDefIR_base) be typeDefIR?{typeDefIR <- typeDefIR?})
 
-                  1. Case analysis on typeDefIR
+                  1. (Let typeIR_base be $typeIR_of_typeDefIR(typeDefIR_base))
 
-                    1. Case (% has type simpleEnumTypeIR)
+                    1. (Let typeIR be $unroll_typeIR(typeIR_base))
 
-                      1. (Let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} be typeDefIR as simpleEnumTypeIR)
+                      1. Case analysis on typeIR
 
-                        1. Result in: % % % |- % : STO typeId '.' nameIR as value
+                        1. Case (% has type simpleEnumTypeIR)
 
-                    2. Case (% has type serializableEnumTypeIR)
+                          1. (Let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} be typeIR as simpleEnumTypeIR)
 
-                      1. (Let ENUM typeId `< _typeIR `> `{ id_member '=' value_member ';'*{id_member <- id_member*, value_member <- value_member*} `} be typeDefIR as serializableEnumTypeIR)
+                            1. Result in: % % % |- % : STO typeId '.' nameIR as value
 
-                        1. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_member, value_member)*{id_member <- id_member*, value_member <- value_member*}))
+                        2. Case (% has type serializableEnumTypeIR)
 
-                          1. If (value'?{value' <- value'?} matches (_)), then
+                          1. (Let ENUM typeId `< _typeIR `> `{ id_member '=' value_member ';'*{id_member <- id_member*, value_member <- value_member*} `} be typeIR as serializableEnumTypeIR)
 
-                            1. (Let ?(value) be value'?{value' <- value'?})
+                            1. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (id_member, value_member)*{id_member <- id_member*, value_member <- value_member*}))
 
-                              1. Result in: % % % |- % : STO typeId '.' nameIR '.' value as value
+                              1. If (value'?{value' <- value'?} matches (_)), then
 
-                          1. Else Dangling
+                                1. (Let ?(value) be value'?{value' <- value'?})
 
-                  1. Else Dangling
+                                  1. Result in: % % % |- % : STO typeId '.' nameIR '.' value as value
+
+                              1. Else Dangling
+
+                      1. Else Dangling
 
               1. Else Dangling
 
@@ -32828,13 +32946,17 @@ relation ParserState_inst: IC_0 STO_0 |- parserStateIR : % %
 
 1. (Let annotationList STATE nameIR `{ parserBlockElementStatementListIR transitionStatementIR `} be parserStateIR)
 
-  1. (ParserBlockElementStmtList_inst: IC_0 STO_0 |- parserBlockElementStatementListIR : IC_1 STO_1 parserBlockElementStatementListIR_inst)
+  1. (Let IC_1 be $enter_i(IC_0))
 
-    1. (Let parserStateIR_inst be annotationList STATE nameIR `{ parserBlockElementStatementListIR_inst transitionStatementIR `})
+    1. (ParserBlockElementStmtList_inst: IC_1 STO_0 |- parserBlockElementStatementListIR : IC_2 STO_1 parserBlockElementStatementListIR_inst)
 
-      1. (Let IC_2 be $add_parserState_i(IC_1, nameIR, parserStateIR_inst))
+      1. (Let IC_3 be $exit_i(IC_2))
 
-        1. Result in: % % |- % : IC_2 STO_1
+        1. (Let parserStateIR_inst be annotationList STATE nameIR `{ parserBlockElementStatementListIR_inst transitionStatementIR `})
+
+          1. (Let IC_4 be $add_parserState_i(IC_3, nameIR, parserStateIR_inst))
+
+            1. Result in: % % |- % : IC_4 STO_1
 
 relation ParserStates_inst: IC STO |- parserStateIR*{parserStateIR <- parserStateIR*} : % %
 
@@ -35246,39 +35368,43 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
           1. (Let TYPE prefixedNameIR be memberAccessBaseIR)
 
-            1. (Let typeDefIR'?{typeDefIR' <- typeDefIR'?} be $find_typeDef_e(p, EC, prefixedNameIR))
+            1. (Let typeDefIR?{typeDefIR <- typeDefIR?} be $find_typeDef_e(p, EC, prefixedNameIR))
 
-              1. If (typeDefIR'?{typeDefIR' <- typeDefIR'?} matches (_)), then
+              1. If (typeDefIR?{typeDefIR <- typeDefIR?} matches (_)), then
 
-                1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
+                1. (Let ?(typeDefIR_base) be typeDefIR?{typeDefIR <- typeDefIR?})
 
-                  1. Case analysis on typeDefIR
+                  1. (Let typeIR_base be $typeIR_of_typeDefIR(typeDefIR_base))
 
-                    1. Case (% has type simpleEnumTypeIR)
+                    1. (Let typeIR be $unroll_typeIR(typeIR_base))
 
-                      1. (Let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} be typeDefIR as simpleEnumTypeIR)
+                      1. Case analysis on typeIR
 
-                        1. (Let expressionResult be _CONT typeId '.' nameIR as value as expressionResult)
+                        1. Case (% has type simpleEnumTypeIR)
 
-                          1. Result in: % % % |- % : EC ARCH expressionResult
+                          1. (Let ENUM typeId `{ _nameIR*{_nameIR <- _nameIR*} `} be typeIR as simpleEnumTypeIR)
 
-                    2. Case (% has type serializableEnumTypeIR)
+                            1. (Let expressionResult be _CONT typeId '.' nameIR as value as expressionResult)
 
-                      1. (Let ENUM typeId `< _typeIR `> `{ nameIR_member '=' value_member ';'*{nameIR_member <- nameIR_member*, value_member <- value_member*} `} be typeDefIR as serializableEnumTypeIR)
+                              1. Result in: % % % |- % : EC ARCH expressionResult
 
-                        1. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*{nameIR_member <- nameIR_member*, value_member <- value_member*}))
+                        2. Case (% has type serializableEnumTypeIR)
 
-                          1. If (value'?{value' <- value'?} matches (_)), then
+                          1. (Let ENUM typeId `< _typeIR `> `{ nameIR_member '=' value_member ';'*{nameIR_member <- nameIR_member*, value_member <- value_member*} `} be typeIR as serializableEnumTypeIR)
 
-                            1. (Let ?(value) be value'?{value' <- value'?})
+                            1. (Let value'?{value' <- value'?} be $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*{nameIR_member <- nameIR_member*, value_member <- value_member*}))
 
-                              1. (Let expressionResult be _CONT typeId '.' nameIR '.' value as value as expressionResult)
+                              1. If (value'?{value' <- value'?} matches (_)), then
 
-                                1. Result in: % % % |- % : EC ARCH expressionResult
+                                1. (Let ?(value) be value'?{value' <- value'?})
 
-                          1. Else Dangling
+                                  1. (Let expressionResult be _CONT typeId '.' nameIR '.' value as value as expressionResult)
 
-                  1. Else Dangling
+                                    1. Result in: % % % |- % : EC ARCH expressionResult
+
+                              1. Else Dangling
+
+                      1. Else Dangling
 
               1. Else Dangling
 

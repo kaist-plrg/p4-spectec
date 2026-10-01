@@ -45,7 +45,7 @@ module Make
         | Empty_mode -> assert false)
         |> function
         | Pass value -> value
-        | Fail (at, msg) -> error at msg
+        | Fail failure -> raise (ExternError failure)
       in
       let call_rel name values =
         (match mode_ with
@@ -55,7 +55,7 @@ module Make
         | Empty_mode -> assert false)
         |> function
         | Pass values -> values
-        | Fail (at, msg) -> error at msg
+        | Fail failure -> raise (ExternError failure)
       in
       let call_pgm relname includes path =
         (match mode_ with
@@ -66,7 +66,8 @@ module Make
         |> function
         | Pass [ value_ctx; value_arch ] -> (value_ctx, value_arch)
         | Pass _ -> error no_region "unexpected number of return values"
-        | Fail (`Syntax (at, msg) | `Runtime (at, msg)) -> error at msg
+        | Fail (`Syntax diagnostic) -> raise (ExternError (Abort diagnostic))
+        | Fail (`Runtime failure) -> raise (ExternError failure)
       in
       Spec_.Func.register call_func;
       Spec_.Rel.register call_rel;
@@ -415,11 +416,12 @@ module Make
       let value_ctx, value_arch = Arch.init_pipe includes_p4 path_p4 in
       let stf_stmts = Stf.Parse.parse_file path_stf in
       run_stf_stmts value_ctx value_arch stf_stmts;
-      Pass
+      Pass ()
     with
-    | P4.Error.ParseError (at, msg) -> Fail (`Syntax (at, msg))
-    | Interp_common.Error.InterpError (at, msg)
-    | Runtime.Dynamic_Runner.Signature.ExternError (at, msg) ->
-        Fail (`Runtime (at, msg))
-    | Stf.Error.StfError msg -> Fail (`Runtime (no_region, msg))
+    | P4.Error.ParseError (at, msg) ->
+        Fail (`Syntax (Diagnostic.error ~source:"p4" at msg))
+    | Runtime.Dynamic_Runner.Signature.ExternError failure ->
+        Fail (`Runtime failure)
+    | Stf.Error.StfError msg ->
+        Fail (`Runtime (abort ~source:"sim" no_region msg))
 end

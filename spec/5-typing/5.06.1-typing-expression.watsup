@@ -21,11 +21,14 @@ rulegroup Expr_ok/literalExpression {
     -- if expressionNoteIR = `( INT LCTK `)
 
   rule Expr_ok/integerLiteral-fixint:
-    p TC |- n S i : (n S i) '#' expressionNoteIR
+    p TC |- n S i : (n S i_norm) '#' expressionNoteIR
+    -- if i_norm = $int_to_bitstr(n, i)
     -- if expressionNoteIR = `( (INT `< n `>) LCTK `)
+    -- if $(n > 0)
 
   rule Expr_ok/integerLiteral-fixbit:
-    p TC |- n W i : (n W i) '#' expressionNoteIR
+    p TC |- n W i : (n W i_norm) '#' expressionNoteIR
+    -- if i_norm = $int_to_bitstr(n, i)
     -- if expressionNoteIR = `( (BIT `< n `>) LCTK `)
 
   rule Expr_ok/stringLiteral:
@@ -1285,7 +1288,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if ctk_w_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w
     -- if n_w = $nat_of_integerValue(integerValue_w)
-    -- if n_h = $(n_w + n_l - 1)
+    -- if n_h = $ite<int>(n_w = 0, n_l, $(n_w + n_l - 1))
     -- if $is_valid_bitslice(typeIR_base_reduced, n_l, n_h)
     ---- ;; create typed expression
     -- if typeIR = BIT `< n_w `>

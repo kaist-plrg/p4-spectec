@@ -301,14 +301,18 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
   rule Expr_eval/enum:
     p EC ARCH |- ((TYPE prefixedNameIR) '.' nameIR) '#' _
                : EC ARCH expressionResult
-    -- if ENUM typeId `{ _ `} = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeDefIR_base = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if ENUM typeId `{ _ `} = $unroll_typeIR(typeIR_base)
     -- if expressionResult = _CONT (typeId '.' nameIR)
 
   rule Expr_eval/serenum:
     p EC ARCH |- ((TYPE prefixedNameIR) '.' nameIR) '#' _
                : EC ARCH expressionResult
+    -- if typeDefIR_base = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if ENUM typeId `< _ `> `{ (nameIR_member '=' value_member ';')* `}
-        = $find_typeDef_e(p, EC, prefixedNameIR)
+        = $unroll_typeIR(typeIR_base)
     -- if value = $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*)
     -- if expressionResult = _CONT (typeId '.' nameIR '.' value)
 

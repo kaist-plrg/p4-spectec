@@ -23,4 +23,7 @@
     (core (>= "v0.17.0"))
     (core_unix (>= "v0.17.0"))
     (ppx_let (>= "v0.17.0"))
-    (ppx_deriving_yojson (>= "3.9.1"))))
+    (ppx_deriving_yojson (>= "3.9.1"))
+    uucp
+    uuseg
+    uutf))

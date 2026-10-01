@@ -1924,7 +1924,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //   -> . If ``t'^{asterisk}^`` matches pattern ``[]``: return ``""``.
     //      . Else if let ``t~h~`` be ``t'^{asterisk}^``: return ``t~h~``.
 
-    /// Renders a check or an if/else-if/else case ladder.
+    /// Renders a check or an if/else-if case ladder with explicit guards.
     fn render_case_instr<Tier>(
         &mut self,
         level: usize,
@@ -1950,29 +1950,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let num_cases = case_instr.cases.len();
         let mut blocks_case = Vec::with_capacity(num_cases);
         for (idx, case) in case_instr.cases.iter().enumerate() {
-            // Turn the final total arm into an otherwise branch
-            if idx + 1 == num_cases && !case_instr.dangle {
-                let block_else = Block::item_ordered(level, Prose::text("Else:"));
-                let is_binding =
-                    matches!(case.guard, pl::Guard::CheckLetSub(..) | pl::Guard::CheckLetMatch(..));
-                let block_case = if is_binding {
-                    // A binding guard becomes the first step of the otherwise branch
-                    let prose_guard =
-                        Prose::of_guard(&case_instr.exp, &case.guard).capitalize_first();
-                    let prose_bind = Prose::seq([prose_guard, Prose::text(".")]);
-                    let block_bind = Block::item_ordered(level + 1, prose_bind);
-                    let blocks_rendered = case
-                        .block
-                        .iter()
-                        .map(|instr| self.render_instr(level + 1, ctx, render_tier, instr));
-                    Block::seq([block_else, block_bind].into_iter().chain(blocks_rendered))
-                } else {
-                    self.render_instrs(level + 1, Some(block_else), ctx, render_tier, &case.block)
-                };
-                blocks_case.push(block_case);
-                continue;
-            }
-
             // Attach fallthrough only where evaluating the condition can fail
             let can_fail = case.guard.has_call() || (idx == 0 && case_instr.exp.has_call());
             let prose_label = if can_fail { prose_fallthrough.clone() } else { Prose::Empty };

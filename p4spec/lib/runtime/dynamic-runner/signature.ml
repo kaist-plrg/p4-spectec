@@ -1,36 +1,45 @@
 open Domain.Lib
 open Lang
 module Typ = Type.Typ
-open Util.Source
 
 (* Module signatures for interpreter-extern interaction *)
 
 type mode = AL_mode | SL_mode | PL_mode | Empty_mode
 type spec = AL of Al.spec | SL of Sl.spec | PL of Pl.spec | Empty
 
+(* Error *)
+
+type error = Diagnostic.t
+
+(* Failure reported by the entry points below: an abort that propagates as
+   is, or an unmatch that re-enters the caller's backtracking *)
+
+type failure = Abort of error | Unmatch of Util.Attempt.failtrace list
+
+(* Constructor for failure *)
+
+let abort ~source at msg = Abort (Diagnostic.error ~source at msg)
+
+(* Unmatch failtraces are rendered only by [diagnostic_of_failure]. *)
+
+let diagnostic_of_failure = function
+  | Abort diagnostic -> diagnostic
+  | Unmatch failtraces ->
+      Diagnostic.of_failtraces ~source:"interp" ~fallback:"evaluation failed"
+        failtraces
+
 (* Raised by an extern implementation, caught by its caller *)
 
-exception ExternError of region * string
-
-(* Failure reported by the entry points below *)
-
-type error = { at : region; msg : string }
-
-let to_region_msg { at; msg } = (at, msg)
+exception ExternError of failure
 
 (* Result types *)
 
-type rel_result = Pass of Value.t list | Fail of region * string
-type func_result = Pass of Value.t | Fail of region * string
-type parse_result = Pass of Value.t | Fail of [ `Syntax of region * string ]
-
-type program_result =
-  | Pass of Value.t list
-  | Fail of [ `Syntax of region * string | `Runtime of region * string ]
-
-type stf_result =
-  | Pass
-  | Fail of [ `Syntax of region * string | `Runtime of region * string ]
+type ('value, 'failure) outcome = Pass of 'value | Fail of 'failure
+type rel_result = (Value.t list, failure) outcome
+type func_result = (Value.t, failure) outcome
+type parse_result = (Value.t, error) outcome
+type program_failure = [ `Syntax of error | `Runtime of failure ]
+type program_result = (Value.t list, program_failure) outcome
 
 (* Cache management *)
 

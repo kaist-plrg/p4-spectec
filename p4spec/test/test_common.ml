@@ -238,7 +238,7 @@ let cover_sim_dangling ?(arch : string option) mode paths_spec includes_p4
         in
         let wellformed, welltyped =
           match program_result with
-          | Pass -> (true, true)
+          | Pass () -> (true, true)
           | Fail (`Syntax _) -> (true, false)
           | Fail (`Runtime _) -> (false, false)
         in

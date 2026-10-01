@@ -11,7 +11,7 @@ let print_def name definition =
   print name (Backend_latex.El.render_def definition |> Result.get_ok)
 
 let bad_hint =
-  { hintid = "latex" $ at; hintexp = LatexE "must not be visited" $ at }
+  { hintid = "latex" $ at; hintexp = LatexE "must not be visited" $ at } $ at
 
 let bool_type = BoolT $ at
 let nat_type = NumT `NatT $ at

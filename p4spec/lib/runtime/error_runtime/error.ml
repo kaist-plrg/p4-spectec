@@ -5,7 +5,7 @@ open Util.Source
 exception RuntimeError of region * string
 
 let error (at : region) (msg : string) = raise (RuntimeError (at, msg))
-let warn (at : region) (msg : string) = Util.Error.warn at "runtime" msg
+let warn (at : region) (msg : string) = Diagnostic.warn ~source:"runtime" at msg
 
 (* Checks *)
 
