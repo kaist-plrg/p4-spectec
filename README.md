@@ -114,15 +114,12 @@ make p4spec-release
 # P4 draft document: HTML only, or HTML and PDF
 make p4spec-draft-html
 make p4spec-draft
-# SL and AL meta-specification documents
-make slspec-html alspec-html
-make slspec alspec
 ```
 
-The generated files are in `docs/p4/`, `docs/sl/`, and `docs/al/`.
+The generated files are in `docs/p4/`.
 These targets build the release executable and splice the specifications into
 AsciiDoc skeletons before rendering. Missing prose and references are reported
-in each document directory's `splice.missing` file.
+in `docs/p4/splice.missing`.
 
 To splice another skeleton, use the Rust CLI's long options:
 
@@ -173,7 +170,7 @@ simulation, and exclusions are not promoted by these targets.
 CI runs Rust builds, formatting, Clippy, API documentation, E2E acceptance, and
 HTML specification generation for pull requests and pushes to `rust-port`
 and `main`, version tags, and manual dispatches. Version tags and manual
-runs also render the P4 release, SL, and AL PDF specifications.
+runs also render the P4 release PDF specification.
 
 ## Retired OCaml workflows
 
@@ -182,7 +179,8 @@ by the Rust release. The frozen OCaml implementation is preserved at
 [`v0.1.3`](https://github.com/kaist-plrg/p4-spectec/tree/v0.1.3), with its
 [installation and fuzzing instructions](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/README.md)
 and [boot documentation](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/BOOT.md).
-Rust boot support is tracked in
+The meta specifications and their SL/AL documents are also available in that
+frozen version. Rust boot support is tracked in
 [#77](https://github.com/jaehyun1ee/p4-spectec/issues/77).
 
 ## Contributing

@@ -37,7 +37,6 @@ promote: test-promote
 
 # Specification documents
 .PHONY: p4spec-draft p4spec-draft-html p4spec-release p4spec-release-html
-.PHONY: slspec slspec-html alspec alspec-html
 
 p4spec-draft:
 	$(MAKE) -C docs/p4 CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" draft
@@ -47,15 +46,6 @@ p4spec-release:
 	$(MAKE) -C docs/p4 CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" release
 p4spec-release-html:
 	$(MAKE) -C docs/p4 CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" release-html
-
-slspec:
-	$(MAKE) -C docs/sl CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" spec
-slspec-html:
-	$(MAKE) -C docs/sl CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" spec-html
-alspec:
-	$(MAKE) -C docs/al CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" spec
-alspec-html:
-	$(MAKE) -C docs/al CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" spec-html
 
 clean:
 	rm -f ./$(SPEC)
