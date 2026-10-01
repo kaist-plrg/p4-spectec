@@ -13,6 +13,21 @@ val with_diagnostics : (unit -> 'a result) -> 'a result * Diagnostic.Report.t
 
 (* Spec transformations *)
 
+type spec_source = { filename : string; contents : string }
+
+(* Sorted directory traversal skips include directories. *)
+(* [include_file] is included in directory order even if absent on disk. *)
+(* [include_file] must use the supplied directory's path spelling. *)
+val collect_spec_files : ?include_file:string -> string -> string list
+
+(* The nearest ancestor containing a *.spec file defines the root. *)
+val spec_root_of_file : string -> string option
+
+(* Source order and filenames are preserved. *)
+val parse_sources : spec_source list -> Lang.El.spec result
+
+(* Elaboration runs on each call. *)
+val elab_spec : Lang.El.spec -> Lang.Il.spec result
 val parse : string list -> Lang.El.spec result
 val elab : string list -> Lang.Il.spec result
 val algo : string list -> Lang.Al.spec result

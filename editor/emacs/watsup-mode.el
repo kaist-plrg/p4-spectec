@@ -118,6 +118,9 @@ Nested block comments (; ... ;) are applied by `watsup-syntax-propertize'.")
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.watsup\\'" . watsup-mode))
 
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '(watsup-mode . ("p4spectec-lsp"))))
+
 (provide 'watsup-mode)
 
 ;;; watsup-mode.el ends here

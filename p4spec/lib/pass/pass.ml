@@ -6,6 +6,7 @@ let ( let* ) = Result.bind
 
 let parse_string = Frontend.Parse.parse_string
 let parse_files = Frontend.Parse.parse_files
+let parse_sources = Frontend.Parse.parse_sources
 let elab_spec = Elaborate.elab_spec
 let algo_spec = Algo.algo_spec
 let struct_spec = Structure.struct_spec

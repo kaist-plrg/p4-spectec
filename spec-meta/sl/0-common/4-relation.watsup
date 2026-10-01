@@ -1,0 +1,30 @@
+;; Result to represent backtracking in evaluation
+
+syntax unitres = OK | FAIL
+syntax res<X> = OK X | FAIL
+
+syntax valres = res<val>
+syntax valsres = res<val*>
+
+;;; Extern meta-function invocation
+
+extern relation Call_extern_func:
+  |- id `< typ* `> `( val* `) : res<val>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating extern function"
+                %0 "with types" %1 "and inputs" %2)
+  hint(prose_out %3)
+
+;;; Builtin meta-function invocation
+
+extern relation Call_builtin_func:
+  |- id '@' `< typ* `> `( val* `) : res<val>
+  hint(input %0 %1 %2)
+
+;;; Extern relations
+
+extern relation Call_extern_rel:
+  |- id val* : res<val*>
+  hint(input %0 %1)
+  hint(prose_in "evaluating extern relation" %0 "with inputs" %1)
+  hint(prose_out %2)

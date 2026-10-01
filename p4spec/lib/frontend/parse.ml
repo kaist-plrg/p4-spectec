@@ -5,6 +5,7 @@ module Source = Util.Source
 open Source
 
 type error = Diagnostic.t
+type spec_source = { filename : string; contents : string }
 
 let label_lexbuf name lexbuf =
   let open Lexing in
@@ -66,8 +67,7 @@ let parse_file file =
       ("I/O error: " ^ Diagnostic.quote msg)
 
 let expand_path path =
-  if Sys_unix.is_directory_exn path then
-    Util.Filesys.collect_files ~suffix:".watsup" path
+  if Sys_unix.is_directory_exn path then Util.Spec_files.collect path
   else [ path ]
 
 let parse_files paths =
@@ -85,4 +85,13 @@ let parse_files paths =
 let parse_string str =
   let lexbuf = Lexing.from_string str in
   try Ok (with_lexbuf "<string>" lexbuf Parser.spec)
+  with ParseError d -> Error d
+
+let parse_sources sources =
+  try
+    Ok
+      (List.concat_map
+         (fun { filename; contents } ->
+           with_lexbuf filename (Lexing.from_string contents) Parser.spec)
+         sources)
   with ParseError d -> Error d

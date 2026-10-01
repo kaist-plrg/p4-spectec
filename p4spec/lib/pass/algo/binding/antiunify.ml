@@ -9,8 +9,8 @@ open Util.Source
 
 (* Compute the anti-unified template by overlapping expressions *)
 
-let rec overlap_exp (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
-    (frees : IdSet.t) (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
+let rec overlap_exp (tdenv : Ctx.TDEnv.t) (menv : Envs.MEnv.t) (frees : IdSet.t)
+    (unifiers : IdSet.t) (exp_template : exp) (exp : exp) :
     (IdSet.t * IdSet.t * exp) attempt =
   let at, note = (exp_template.at, exp_template.note) in
   let fail =
@@ -66,7 +66,9 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
     | Fail _ ->
         let typ_template = exp_template.note $ exp_template.at in
         let typ = exp.note $ exp.at in
-        let find_typdef_opt tid = Envs.TDEnv.find_opt tid tdenv in
+        let find_typdef_opt tid =
+          Ctx.TDEnv.find_opt tid tdenv |> Option.map (fun td -> td.it)
+        in
         if not (Type.Equiv.equiv_typ find_typdef_opt typ_template typ) then fail
         else
           let id_fresh, typ_fresh, iter_fresh =
@@ -82,7 +84,7 @@ let rec overlap_exp (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
   if Il.Eq.eq_exp exp_template exp then Ok (frees, unifiers, exp_template)
   else overlap_exp_unequal ()
 
-and overlap_exps (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t) (frees : IdSet.t)
+and overlap_exps (tdenv : Ctx.TDEnv.t) (menv : Envs.MEnv.t) (frees : IdSet.t)
     (unifiers : IdSet.t) (exps_template : exp list) (exps : exp list) :
     (IdSet.t * IdSet.t * exp list) attempt =
   match (exps_template, exps) with
@@ -98,7 +100,7 @@ and overlap_exps (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t) (frees : IdSet.t)
   | _ ->
       fail no_region "cannot anti-unify expression lists of different lengths"
 
-let overlap_exp_group (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
+let overlap_exp_group (tdenv : Ctx.TDEnv.t) (menv : Envs.MEnv.t)
     (frees : IdSet.t) (exps : exp list) : IdSet.t * IdSet.t * exp =
   let exp_template, exps = (List.hd exps, List.tl exps) in
   List.fold_left
@@ -111,7 +113,7 @@ let overlap_exp_group (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
     (frees, IdSet.empty, exp_template)
     exps
 
-let overlap_exps_group (tdenv : Envs.TDEnv.t) (menv : Envs.MEnv.t)
+let overlap_exps_group (tdenv : Ctx.TDEnv.t) (menv : Envs.MEnv.t)
     (frees : IdSet.t) (exps_group : exp list list) : IdSet.t * exp list =
   match exps_group with
   | [] -> (IdSet.empty, [])
