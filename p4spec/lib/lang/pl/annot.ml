@@ -1,16 +1,19 @@
+open Domain.Lib
+
 (* Hints *)
 
+type 'a hint = { id : HId.t; value : 'a }
+
 type hints = {
-  prose : Hints.Alter.t option;
-  prose_in : Hints.Alter.t option;
-  prose_out : Hints.Alter.t option;
-  prose_true : Hints.Alter.t option;
-  prose_false : Hints.Alter.t option;
-  prose_fields : Hints.Fields.t option;
+  prose : Hints.Alter.t hint option;
+  prose_in : Hints.Alter.t hint option;
+  prose_out : Hints.Alter.t hint option;
+  prose_true : Hints.Alter.t hint option;
+  prose_false : Hints.Alter.t hint option;
+  prose_fields : Hints.Fields.t hint option;
   prose_input_exps : Sl.exp list option;
   prose_output_exps : Sl.exp list option;
 }
-[@@deriving yojson]
 
 let empty : hints =
   {
@@ -24,7 +27,7 @@ let empty : hints =
     prose_output_exps = None;
   }
 
-type 'a t = { node : 'a; hints : hints } [@@deriving yojson]
+type 'a t = { node : 'a; hints : hints }
 
 (* Wrap a node with no prose hints. *)
 

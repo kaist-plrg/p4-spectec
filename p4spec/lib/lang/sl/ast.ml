@@ -35,13 +35,13 @@ type var = Il.var [@@deriving yojson]
 (* Types *)
 
 type typ = Il.typ [@@deriving yojson]
-type typ' = Il.typ' [@@deriving yojson]
+type typ' = Il.typ'
 
 type nottyp = Il.nottyp [@@deriving yojson]
-type nottyp' = Il.nottyp' [@@deriving yojson]
+type nottyp' = Il.nottyp'
 
 type deftyp = Il.deftyp [@@deriving yojson]
-type deftyp' = Il.deftyp' [@@deriving yojson]
+type deftyp' = Il.deftyp'
 
 type typfield = Il.typfield [@@deriving yojson]
 type typcase = Il.typcase [@@deriving yojson]

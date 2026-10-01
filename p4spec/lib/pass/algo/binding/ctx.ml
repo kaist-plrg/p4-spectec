@@ -55,6 +55,16 @@ let add_bounds (ctx : t) (venv : VEnv.t) : t =
 
 (* Finders *)
 
+let find_typdef_with_region (ctx : t) (tid : TId.t) : region * Typdef.t =
+  match
+    TDEnv.find_first_opt (fun tid_key -> TId.compare tid_key tid >= 0) ctx.tdenv
+  with
+  | Some (tid_key, typdef) when TId.compare tid_key tid = 0 ->
+      (tid_key.at, typdef)
+  | _ ->
+      (* Callers pass only identifiers present in [ctx.tdenv]. *)
+      assert false
+
 let find_typdef_opt (ctx : t) (tid : TId.t) : Typdef.t option =
   TDEnv.find_opt tid ctx.tdenv
 

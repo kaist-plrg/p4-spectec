@@ -575,10 +575,10 @@ and prose_of_negated_exp_opt (exp : exp) : Adoc.prose option =
           ++ code_prose (code_of_exp exp_s))
   | CallE (id, _targs, args) -> (
       match exp.hints.prose_false with
-      | Some hints ->
+      | Some hint ->
           Some
             (Adoc.link_subject_prose (Adoc.Function id.it)
-               (alternate hints (reindent_lines ~level:0) prose_of_arg args))
+               (alternate hint.value (reindent_lines ~level:0) prose_of_arg args))
       | None ->
           Some
             (Adoc.code_prose
@@ -685,9 +685,9 @@ and prose_of_case_exp (exp : exp) (notexp : notexp) : Adoc.prose =
   let hint_opt = exp.hints.prose in
   let link_opt = tid_of_typ exp.node.note in
   match (hint_opt, link_opt) with
-  | Some hints, Some tid ->
+  | Some hint, Some tid ->
       Adoc.link_prose ~target:tid.it
-        (alternate hints (reindent_lines ~level:0) prose_of_exp
+        (alternate hint.value (reindent_lines ~level:0) prose_of_exp
            (Mixfix.args notexp))
   | _ -> Adoc.code_prose (code_of_notexp notexp)
 
@@ -795,9 +795,9 @@ and prose_of_call_exp (exp : exp) (id : id) (args : arg list) : Adoc.prose =
   let hint_in = exp.hints.prose_in in
   let hint_true = exp.hints.prose_true in
   match (hint_in, hint_true) with
-  | Some hints, _ | _, Some hints ->
+  | Some hint, _ | _, Some hint ->
       Adoc.link_subject_prose (Adoc.Function id.it)
-        (alternate hints (reindent_lines ~level:0) prose_of_arg args)
+        (alternate hint.value (reindent_lines ~level:0) prose_of_arg args)
   | None, None -> Adoc.code_prose (code_of_exp exp)
 
 (* Iterated, as prose
@@ -1008,9 +1008,9 @@ let rec render_instr ?(level : int = 0) ~(ctx_fallthrough : Fallthrough.ctx)
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
       render_hold_instr ~level ~ctx_fallthrough render_instr_tier instr
         instr.hints id_rel notexp iterexps holdcase
-  | CaseI (exp_scrut, cases, dangle) ->
+  | CaseI (exp_scrut, cases, _) ->
       render_case_instr ~level ~ctx_fallthrough render_instr_tier instr
-        exp_scrut cases dangle
+        exp_scrut cases
   | LetI (exp_l, exp_r, iterinstrs) ->
       render_let_instr ~level ~ctx_fallthrough instr exp_l exp_r iterinstrs
   | DebugI exp -> render_debug_instr ~level ~ctx_fallthrough instr exp
@@ -1204,7 +1204,7 @@ and render_hold_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     | Some hint ->
         Adoc.link_subject_prose
           (Adoc.Relation (string_of_relid id_rel))
-          (alternate hint (reindent_lines ~level:0) prose_of_exp exps)
+          (alternate hint.value (reindent_lines ~level:0) prose_of_exp exps)
     | None ->
         Adoc.(
           link_subject_prose
@@ -1241,18 +1241,16 @@ and render_hold_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
             ~ctx_fallthrough render_instr_tier block_nothold;
         ]
 
-(* Case analysis: single case as a Check bullet, else an If/Else-if/Else ladder;
-   a total analysis makes the last case "Else:"
+(* Case analysis: single case as a Check bullet, else an If/Else-if ladder;
+   retain the final guard since dangle does not prove exhaustiveness
 
      . If t matches pattern A: return 1.
      . Else if t matches pattern B: return 2.
-     . Else: return 3. *)
+     . Else if t matches pattern C: return 3. *)
 
 and render_case_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     render_instr_tier (instr : _ instr) (exp_scrut : exp)
-    (cases : 'instr_tier case list) (dangle : dangle) : Adoc.block =
-  let total = not dangle in
-  let n = List.length cases in
+    (cases : 'instr_tier case list) : Adoc.block =
   let prose_fallthrough =
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
@@ -1276,45 +1274,23 @@ and render_case_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
       Adoc.seq_block
         (cases
         |> List.mapi (fun idx (guard, block_then) ->
-               if idx = n - 1 && total then
-                 let block_else =
-                   Adoc.item_ordered_block ~level (Adoc.text "Else:")
-                 in
-                 match guard with
-                 | CheckLetSubG _ | CheckLetMatchG _ ->
-                     let prose_bind = prose_of_guard exp_scrut guard in
-                     let block_bind =
-                       Adoc.item_ordered_block ~level:(level + 1)
-                         Adoc.(capitalize_first_prose prose_bind ++ text ".")
-                     in
-                     Adoc.seq_block
-                       (block_else :: block_bind
-                       :: List.map
-                            (render_instr ~level:(level + 1) ~ctx_fallthrough
-                               render_instr_tier)
-                            block_then)
-                 | _ ->
-                     render_instrs ~block_head:(Some block_else)
-                       ~level:(level + 1) ~ctx_fallthrough render_instr_tier
-                       block_then
-               else
-                 let keyword = if idx = 0 then "If" else "Else if" in
-                 let label =
-                   if
-                     Partial.is_partial_guard guard
-                     || (idx = 0 && Partial.is_partial_exp exp_scrut)
-                   then prose_fallthrough
-                   else Adoc.empty_prose
-                 in
-                 let block_head =
-                   Adoc.item_ordered_block ~level
-                     Adoc.(
-                       text (keyword ^ " ")
-                       ++ prose_of_guard exp_scrut guard
-                       ++ text ":" ++ label)
-                 in
-                 render_instrs ~block_head:(Some block_head) ~level:(level + 1)
-                   ~ctx_fallthrough render_instr_tier block_then))
+               let keyword = if idx = 0 then "If" else "Else if" in
+               let label =
+                 if
+                   Partial.is_partial_guard guard
+                   || (idx = 0 && Partial.is_partial_exp exp_scrut)
+                 then prose_fallthrough
+                 else Adoc.empty_prose
+               in
+               let block_head =
+                 Adoc.item_ordered_block ~level
+                   Adoc.(
+                     text (keyword ^ " ")
+                     ++ prose_of_guard exp_scrut guard
+                     ++ text ":" ++ label)
+               in
+               render_instrs ~block_head:(Some block_head) ~level:(level + 1)
+                 ~ctx_fallthrough render_instr_tier block_then))
 
 (* Cross-group edge, as an inline goto link into that group's dispatch anchor
 
@@ -1391,12 +1367,12 @@ and render_rule_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     | Some hint_in, Some hint_out ->
         let prose_out =
           Adoc.ser_prose_in_link
-            (alternate hint_out unindent_lines prose_of_exp exps_out)
+            (alternate hint_out.value unindent_lines prose_of_exp exps_out)
         in
         let prose_in_typed =
           Adoc.link_subject_prose
             (Adoc.Relation (string_of_relid id_rel))
-            (alternate hint_in unindent_lines prose_of_exp exps_in)
+            (alternate hint_in.value unindent_lines prose_of_exp exps_in)
         in
         Adoc.(
           text "Let " ++ text prose_out ++ text " be the result of "
@@ -1437,7 +1413,7 @@ and prose_of_result (hints : Annot.hints) (rel_signature : rel_signature)
     | Some hint, _ ->
         Adoc.(
           text "the result is "
-          ++ alternate hint (reindent_lines ~level:0) prose_of_exp exps
+          ++ alternate hint.value (reindent_lines ~level:0) prose_of_exp exps
           ++ text ".")
     | None, [] -> Adoc.text "the relation holds."
     | None, _ -> Adoc.(text "the result is " ++ prose_of_exps exps ++ text ".")
@@ -1630,13 +1606,13 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
         [
           block_title_header;
           Adoc.item_unordered_block ~level:0
-            (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
-               exps_in_title);
+            (alternate ~caps:true hint_in.value (reindent_lines ~level:1)
+               prose_of_exp exps_in_title);
           Adoc.raw_block ":\n";
           Adoc.item_unordered_block ~level:0
             Adoc.(
               text "The result is "
-              ++ alternate ~caps:false hint_out (reindent_lines ~level:1)
+              ++ alternate ~caps:false hint_out.value (reindent_lines ~level:1)
                    prose_of_exp exps_out);
           Adoc.raw_block ".";
         ]
@@ -1645,8 +1621,8 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
         [
           block_title_header;
           Adoc.item_unordered_block ~level:0
-            (alternate ~caps:true hint_in (reindent_lines ~level:1) prose_of_exp
-               exps_in_title);
+            (alternate ~caps:true hint_in.value (reindent_lines ~level:1)
+               prose_of_exp exps_in_title);
           Adoc.raw_block ".";
         ]
   | _, _, _, Some hint_true ->
@@ -1654,7 +1630,7 @@ and render_rel_title_block (hints : Annot.hints) (id_rel : id)
         [
           block_title_header;
           Adoc.item_unordered_block ~level:0
-            (alternate ~caps:true hint_true (reindent_lines ~level:0)
+            (alternate ~caps:true hint_true.value (reindent_lines ~level:0)
                prose_of_exp exps);
         ]
   | _ ->
@@ -1805,8 +1781,8 @@ let render_instr_dispatch_inline ~(level : int)
         | Some hint, _ | _, Some hint ->
             Adoc.link_subject_prose
               (Adoc.Relation (string_of_relid id_rel))
-              (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_exp
-                 exps)
+              (alternate ~caps:true hint.value (reindent_lines ~level:0)
+                 prose_of_exp exps)
         | None, None ->
             Adoc.link_subject_prose
               (Adoc.Relation (string_of_relid id_rel))
@@ -1841,8 +1817,8 @@ let render_rulegroup ?(anchors = Adoc.subject_name) (hints : Annot.hints)
         Adoc.ser_prose ~anchor:anchors
           (Adoc.link_subject_prose
              (Adoc.Relation (string_of_relid id_rel))
-             (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_exp
-                exps))
+             (alternate ~caps:true hint.value (reindent_lines ~level:0)
+                prose_of_exp exps))
     | None, None ->
         Adoc.ser_prose ~anchor:anchors
           (Adoc.link_subject_prose
@@ -1944,8 +1920,8 @@ let render_func_title_block (hints : Annot.hints) (id_func : id)
           Adoc.inline_block Adoc.(prose_title ++ text ":");
           Adoc.raw_block "\n\n";
           Adoc.item_unordered_block ~level:0
-            (alternate ~caps:true hint (reindent_lines ~level:0) prose_of_param
-               params);
+            (alternate ~caps:true hint.value (reindent_lines ~level:0)
+               prose_of_param params);
         ]
   | None, None ->
       Adoc.concat_block
@@ -1975,7 +1951,7 @@ let render_func_header_block (hints : Annot.hints) (id_func : id)
         (Adoc.link_subject_prose (Adoc.Function id_func.it)
            (Adoc.text
               (Adoc.ser_prose
-                 (alternate ~caps:true hint (reindent_lines ~level:0)
+                 (alternate ~caps:true hint.value (reindent_lines ~level:0)
                     prose_of_param params))))
   | None, None ->
       Adoc.inline_block

@@ -1,10 +1,4 @@
-open Util.Source
-
-(* Errors *)
-
-type error
-
-val to_region_msg : error -> region * string
+type error = Diagnostic.t
 
 (* Stages *)
 

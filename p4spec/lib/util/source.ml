@@ -7,8 +7,8 @@ let no_pos = { file = ""; line = 0; column = 0 }
 let no_region = { left = no_pos; right = no_pos }
 let pos_of_file file = { no_pos with file }
 let region_of_file file = { left = pos_of_file file; right = pos_of_file file }
-let before_region region = { left = region.left; right = region.left }
-let after_region region = { left = region.right; right = region.right }
+let region_before region = { left = region.left; right = region.left }
+let region_after region = { left = region.right; right = region.right }
 
 let string_of_pos pos =
   if pos.line = -1 then Printf.sprintf "0x%x" pos.column

@@ -304,12 +304,13 @@ rulegroup Eval_path_upd/slice {
         C |- val_b path := (TEXT t[ [n_i : n_n] = t_n ]) : valres
 
   rule Eval_path_upd/list:
-    C |- val_b (SLICE path exp_i exp_n) := val_n : valres
+    C |- val_b (SLICE path exp_i exp_n) := LIST val_n* : valres
     -- Eval_path: C |- val_b path : OK (LIST val*)
     -- Eval_exp: C |- exp_i : OK (NAT n_i)
     -- Eval_exp: C |- exp_n : OK (NAT n_n)
+    -- if |val_n*| = n_n
     -- Eval_path_upd:
-        C |- val_b path := (LIST val*[ [n_i : n_n] = val_n ]) : valres
+        C |- val_b path := (LIST val*[ [n_i : n_n] = val_n* ]) : valres
 
 }
 
@@ -338,7 +339,7 @@ rule Eval_exp/call:
   C |- CALL id targ* arg* : valres
   -- Eval_targs: C |- targ* : typ_input*
   -- (Eval_arg: C |- arg : OK val_input)*
-  -- Call_func: C |- id targ* val_input* : valres
+  -- Call_func: C |- id typ_input* val_input* : valres
 
 ;;; Iterated expression evaluation rules
 

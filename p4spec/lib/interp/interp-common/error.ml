@@ -1,16 +1,15 @@
 open Util.Source
 
-(* Error *)
+(* Diagnostics *)
 
-exception InterpError of region * string
+type error = Diagnostic.t
 
-let error (at : region) (msg : string) = raise (InterpError (at, msg))
-let warn (at : region) (msg : string) = Util.Error.warn at "interp" msg
+let error (at : region) (msg : string) : error =
+  Diagnostic.error ~source:"interp" at msg
 
-(* Check *)
+let warn (at : region) (msg : string) = Diagnostic.warn ~source:"interp" at msg
 
-let check (b : bool) (at : region) (msg : string) : unit =
-  if not b then error at msg
+(* Guard *)
 
 let guard (b : bool) (at : region) (msg : string) : unit =
   if not b then warn at msg

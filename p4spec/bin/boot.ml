@@ -1,6 +1,6 @@
 open Lang
 open Runtime.Dynamic_Runner.Signature
-module Error = P4spectec.Error
+open Cli_error
 open Backend_boot.Config
 
 let ( let* ) = Result.bind
@@ -26,9 +26,11 @@ let elab_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match P4spectec.elab paths_spec with
-       | Ok spec_il -> Format.printf "%s\n" (Il.Print.string_of_spec spec_il)
-       | Error e -> Format.printf "%s\n" (Error.to_string e))
+       run_with_diagnostics
+         ~action:(fun () -> P4spectec.elab paths_spec)
+         ~on_success:(fun spec_il ->
+           Format.printf "%s\n" (Il.Print.string_of_spec spec_il);
+           Ok ()))
 
 let algo_command =
   Core.Command.basic ~summary:"check algorithmic property of a spec"
@@ -38,9 +40,11 @@ let algo_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match P4spectec.algo paths_spec with
-       | Ok spec_al -> Format.printf "%s\n" (Al.Print.string_of_spec spec_al)
-       | Error e -> Format.printf "%s\n" (Error.to_string e))
+       run_with_diagnostics
+         ~action:(fun () -> P4spectec.algo paths_spec)
+         ~on_success:(fun spec_al ->
+           Format.printf "%s\n" (Al.Print.string_of_spec spec_al);
+           Ok ()))
 
 let struct_command =
   Core.Command.basic ~summary:"insert structured control flow to a spec"
@@ -50,9 +54,11 @@ let struct_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match P4spectec.structure ~final:true paths_spec with
-       | Ok spec_sl -> Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl)
-       | Error e -> Format.printf "%s\n" (Error.to_string e))
+       run_with_diagnostics
+         ~action:(fun () -> P4spectec.structure ~final:true paths_spec)
+         ~on_success:(fun spec_sl ->
+           Format.printf "%s\n" (Sl.Print.string_of_spec spec_sl);
+           Ok ()))
 
 let prose_command =
   Core.Command.basic ~summary:"annotate a spec"
@@ -62,9 +68,11 @@ let prose_command =
        anon (non_empty_sequence_as_list ("path" %: string))
      in
      fun () ->
-       match P4spectec.annotate paths_spec with
-       | Ok spec_pl -> Format.printf "%s\n" (Pl.Print.string_of_spec spec_pl)
-       | Error e -> Format.printf "%s\n" (Error.to_string e))
+       run_with_diagnostics
+         ~action:(fun () -> P4spectec.annotate paths_spec)
+         ~on_success:(fun spec_pl ->
+           Format.printf "%s\n" (Pl.Print.string_of_spec spec_pl);
+           Ok ()))
 
 let run_command =
   Core.Command.basic ~summary:"execute the spec"
@@ -110,13 +118,14 @@ let run_command =
      in
      fun () ->
        let cache = not no_cache in
-       match
-         let* spec = P4spectec.spec_of_mode mode paths_spec in
-         let* runner = P4spectec.build_null ~cache ~det ~guard interface spec in
-         Ok (spec, runner)
-       with
-       | Error e -> Format.printf "%s\n" (Error.to_string e)
-       | Ok (spec, (module Runner : RUNNER)) -> (
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* spec = P4spectec.spec_of_mode mode paths_spec in
+           let* runner =
+             P4spectec.build_null ~cache ~det ~guard interface spec
+           in
+           Ok (spec, runner))
+         ~on_success:(fun (spec, (module Runner : RUNNER)) ->
            let handlers =
              if profile then
                let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
@@ -137,10 +146,11 @@ let run_command =
            let result = Runner.Interp.eval_program relname [] path_spectec in
            Inst.Hook.finish ();
            match result with
-           | Pass _ -> Format.printf "passed\n"
-           | Fail (`Syntax (_, msg)) -> Format.printf "syntax error: %s\n" msg
-           | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
-           ))
+           | Pass _ ->
+               Format.printf "passed\n";
+               Ok ()
+           | Fail (`Syntax diagnostic) -> Error diagnostic
+           | Fail (`Runtime failure) -> Error (diagnostic_of_failure failure)))
 
 let boot_n_command =
   Core.Command.basic ~summary:"run meta-circular interpreter"
@@ -167,15 +177,14 @@ let boot_n_command =
      in
      fun () ->
        let target = { includes = includes_target; path = path_target } in
-       match
-         let* tower = P4spectec.tower_of_file path_tower target in
-         let* spec_boot, booter =
-           P4spectec.build_tower ~cache:(not no_cache) ~det ~guard tower
-         in
-         Ok (tower, spec_boot, booter)
-       with
-       | Error e -> Format.printf "%s\n" (Error.to_string e)
-       | Ok (tower, spec, (module Booter : RUNNER)) -> (
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* tower = P4spectec.tower_of_file path_tower target in
+           let* spec_boot, booter =
+             P4spectec.build_tower ~cache:(not no_cache) ~det ~guard tower
+           in
+           Ok (tower, spec_boot, booter))
+         ~on_success:(fun (tower, spec, (module Booter : RUNNER)) ->
            let handlers =
              if profile then
                let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
@@ -198,8 +207,10 @@ let boot_n_command =
            let result = Booter.Interp.eval_rel rel_boot [ value ] in
            Inst.Hook.finish ();
            match result with
-           | Pass _ -> Format.printf "passed\n"
-           | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg))
+           | Pass _ ->
+               Format.printf "passed\n";
+               Ok ()
+           | Fail failure -> Error (diagnostic_of_failure failure)))
 
 let parse_command =
   Core.Command.basic ~summary:"parse a SpecTec program"
@@ -219,39 +230,41 @@ let parse_command =
          ~if_nothing_chosen:(Default_to SL_interface)
      in
      fun () ->
-       match
-         let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
-         P4spectec.build_null interface spec
-       with
-       | Error e -> Format.printf "%s\n" (Error.to_string e)
-       | Ok (module Runner) -> (
+       run_with_diagnostics
+         ~action:(fun () ->
+           let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
+           P4spectec.build_null interface spec)
+         ~on_success:(fun (module Runner : RUNNER) ->
+           let file_error msg =
+             Error
+               (Diagnostic.error ~source:"spectec" Util.Source.no_region msg)
+           in
            try
              match Runner.Interface.parse_program [] [ path_spectec ] with
-             | Fail (`Syntax (at, msg)) ->
-                 Format.printf "Parse error: %s\n"
-                   (Util.Error.string_of_error at msg)
+             | Fail diagnostic -> Error diagnostic
              | Pass value_program ->
                  let str_program =
                    Runner.Interface.unparse_program value_program
                  in
-                 if roundtrip then
+                 if roundtrip then (
                    match
                      Runner.Interface.parse_string path_spectec str_program
                    with
-                   | Fail (`Syntax (at, msg)) ->
-                       Format.printf "Parse error: %s\n"
-                         (Util.Error.string_of_error at msg)
+                   | Fail diagnostic -> Error diagnostic
                    | Pass value_program_roundtrip ->
                        Il.Eq.eq_value ~dbg:true value_program
                          value_program_roundtrip
                        |> (fun b ->
                             if b then "Roundtrip successful"
                             else "Roundtrip failed")
-                       |> print_endline
-                 else str_program |> print_endline
+                       |> print_endline;
+                       Ok ())
+                 else (
+                   str_program |> print_endline;
+                   Ok ())
            with
-           | Sys_error msg -> Format.printf "File error: %s\n" msg
-           | e -> Format.printf "Unknown error: %s\n" (Printexc.to_string e)))
+           | Sys_error msg -> file_error ("file error: " ^ msg)
+           | e -> file_error ("unknown error: " ^ Printexc.to_string e)))
 
 (* Command-line interface *)
 

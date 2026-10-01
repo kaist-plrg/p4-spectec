@@ -1,0 +1,884 @@
+=== ctx-builtin-dec-redefined.watsup ===
+error[elab/builtin-function-redefined]: builtin function `f` was already defined
+  --> ctx-builtin-dec-redefined.watsup:4:14
+  |
+4 | builtin dec $f : nat
+  |              ^
+  |
+  | related: originally defined here
+  |   --> ctx-builtin-dec-redefined.watsup:3:14
+  |   |
+  | 3 | builtin dec $f : nat
+  |   |              ^
+=== ctx-builtin-dec-tparam-duplicate.watsup ===
+error[elab/builtin-dec-tparam-not-distinct]: type parameter `U` is duplicated
+  --> ctx-builtin-dec-tparam-duplicate.watsup:4:22
+  |
+4 | builtin dec $f<T, U, U, T> : nat
+  |                      ^
+  |
+  | related: first declared here
+  |   --> ctx-builtin-dec-tparam-duplicate.watsup:4:19
+  |   |
+  | 4 | builtin dec $f<T, U, U, T> : nat
+  |   |                   ^
+=== ctx-dec-redefined.watsup ===
+error[elab/function-redefined]: function `f` was already defined
+  --> ctx-dec-redefined.watsup:4:6
+  |
+4 | dec $f(nat) : nat
+  |      ^^
+  |
+  | related: originally defined here
+  |   --> ctx-dec-redefined.watsup:3:6
+  |   |
+  | 3 | dec $f(nat) : nat
+  |   |      ^^
+=== ctx-dec-tparam-duplicate.watsup ===
+error[elab/dec-tparam-not-distinct]: type parameter `U` is duplicated
+  --> ctx-dec-tparam-duplicate.watsup:3:14
+  |
+3 | dec $f<T, U, U, T> : nat
+  |              ^
+  |
+  | related: first declared here
+  |   --> ctx-dec-tparam-duplicate.watsup:3:11
+  |   |
+  | 3 | dec $f<T, U, U, T> : nat
+  |   |           ^
+=== ctx-dec-undefined.watsup ===
+error[elab/function-undefined]: function `missing` is undefined
+  --> ctx-dec-undefined.watsup:6:19
+  |
+6 | def $caller(n) = $missing(n)
+  |                   ^^^^^^^^
+=== ctx-defined-dec-undefined.watsup ===
+error[elab/function-declaration-required]: a definition of function `missing` requires a preceding matching `dec` declaration
+  --> ctx-defined-dec-undefined.watsup:3:6
+  |
+3 | def $missing(n) = n
+  |      ^^^^^^^^
+=== ctx-extern-dec-redefined.watsup ===
+error[elab/extern-function-redefined]: extern function `f` was already defined
+  --> ctx-extern-dec-redefined.watsup:2:13
+  |
+2 | extern dec $f : nat
+  |             ^
+  |
+  | related: originally defined here
+  |   --> ctx-extern-dec-redefined.watsup:1:13
+  |   |
+  | 1 | extern dec $f : nat
+  |   |             ^
+=== ctx-extern-dec-tparam-duplicate.watsup ===
+error[elab/extern-dec-tparam-not-distinct]: type parameter `U` is duplicated
+  --> ctx-extern-dec-tparam-duplicate.watsup:1:21
+  |
+1 | extern dec $f<T, U, U, T> : nat
+  |                     ^
+  |
+  | related: first declared here
+  |   --> ctx-extern-dec-tparam-duplicate.watsup:1:18
+  |   |
+  | 1 | extern dec $f<T, U, U, T> : nat
+  |   |                  ^
+=== ctx-extern-relation-redefined.watsup ===
+error[elab/extern-relation-redefined]: relation `R` was already defined
+  --> ctx-extern-relation-redefined.watsup:5:17
+  |
+5 | extern relation R:
+  |                 ^
+  |
+  | related: originally defined here
+  |   --> ctx-extern-relation-redefined.watsup:1:17
+  |   |
+  | 1 | extern relation R:
+  |   |                 ^
+=== ctx-extern-relation-rules.watsup ===
+error[elab/extern-relation-rules]: extern relation `R` does not allow rules
+  --> ctx-extern-relation-rules.watsup:5:6
+  |
+5 | rule R/case:
+  |      ^
+  |
+  | related: extern relation declared here
+  |   --> ctx-extern-relation-rules.watsup:1:17
+  |   |
+  | 1 | extern relation R:
+  |   |                 ^
+=== ctx-function-otherwise-redefined.watsup ===
+error[elab/function-otherwise-redefined]: an `otherwise` clause for function `fallback` was already defined
+  --> ctx-function-otherwise-redefined.watsup:8:1
+  |
+8 | def $fallback = 1
+  | ^^^^^^^^^^^^^^^^^
+9 |   -- otherwise
+  | ^^^^^^^^^^^^^^
+  |
+  | related: previous `otherwise` clause defined here
+  |   --> ctx-function-otherwise-redefined.watsup:5:1
+  |   |
+  | 5 | def $fallback = 0
+  |   | ^^^^^^^^^^^^^^^^^
+  | 6 |   -- otherwise
+  |   | ^^^^^^^^^^^^^^
+=== ctx-funparam-tparam-duplicate.watsup ===
+error[elab/funparam-tparam-not-distinct]: type parameter `U` is duplicated
+  --> ctx-funparam-tparam-duplicate.watsup:4:21
+  |
+4 | dec $f(def $g<T, U, U, T> : nat) : nat
+  |                     ^
+  |
+  | related: first declared here
+  |   --> ctx-funparam-tparam-duplicate.watsup:4:18
+  |   |
+  | 4 | dec $f(def $g<T, U, U, T> : nat) : nat
+  |   |                  ^
+=== ctx-invalid-metavar-in-prem.watsup ===
+error[elab/var-prem-invalid-metavar]: meta-variable identifier `x_1` must not have a suffix
+  --> ctx-invalid-metavar-in-prem.watsup:11:10
+   |
+11 |   -- var x_1 : foo
+   |          ^^^
+=== ctx-metavar-id-has-suffix.watsup ===
+error[elab/var-def-invalid-metavar]: meta-variable identifier `x_1` must not have a suffix
+  --> ctx-metavar-id-has-suffix.watsup:4:5
+  |
+4 | var x_1 : nat
+  |     ^^^
+=== ctx-metavar-redefined.watsup ===
+error[elab/meta-variable-redefined]: meta-variable `x` was already defined
+  --> ctx-metavar-redefined.watsup:4:5
+  |
+4 | var x : int
+  |     ^
+  |
+  | related: originally defined here
+  |   --> ctx-metavar-redefined.watsup:3:5
+  |   |
+  | 3 | var x : nat
+  |   |     ^
+=== ctx-otherwise-redefined.watsup ===
+error[elab/relation-otherwise-redefined]: an `otherwise` rule was already defined for relation `R`
+  --> ctx-otherwise-redefined.watsup:10:1
+   |
+10 | rule R/second:
+   | ^^^^^^^^^^^^^^
+11 |   0 |- 0
+   | ^^^^^^^^
+12 |   -- otherwise
+   | ^^^^^^^^^^^^^^
+   |
+   | related: previous `otherwise` rule defined here
+   |   --> ctx-otherwise-redefined.watsup:6:1
+   |   |
+   | 6 | rule R/first:
+   |   | ^^^^^^^^^^^^^
+   | 7 |   0 |- 0
+   |   | ^^^^^^^^
+   | 8 |   -- otherwise
+   |   | ^^^^^^^^^^^^^^
+=== ctx-relation-redefined.watsup ===
+error[elab/relation-redefined]: relation `R` was already defined
+  --> ctx-relation-redefined.watsup:8:10
+  |
+8 | relation R: nat |- foo
+  |          ^
+  |
+  | related: originally defined here
+  |   --> ctx-relation-redefined.watsup:5:10
+  |   |
+  | 5 | relation R: nat |- foo
+  |   |          ^
+=== ctx-relation-undefined-in-premise.watsup ===
+error[elab/relation-undefined]: relation `Missing` is undefined
+  --> ctx-relation-undefined-in-premise.watsup:10:6
+   |
+10 |   -- Missing: 0 |- 0
+   |      ^^^^^^^
+=== ctx-relation-undefined.watsup ===
+error[elab/rule-relation-undefined]: relation `Missing` is undefined
+  --> ctx-relation-undefined.watsup:5:6
+  |
+5 | rule Missing/case:
+  |      ^^^^^^^
+=== ctx-rulegroup-redefined.watsup ===
+error[elab/rule-group-redefined]: rule group `same` was already defined
+  --> ctx-rulegroup-redefined.watsup:9:7
+  |
+9 | rule R/same:
+  |       ^^^^^
+  |
+  | related: originally defined here
+  |   --> ctx-rulegroup-redefined.watsup:6:7
+  |   |
+  | 6 | rule R/same:
+  |   |       ^^^^^
+=== ctx-table-dec-redefined.watsup ===
+error[elab/table-function-redefined]: table function `lookup` was already defined
+  --> ctx-table-dec-redefined.watsup:2:10
+  |
+2 | tbl dec $lookup(nat) : bool
+  |          ^^^^^^^
+  |
+  | related: originally defined here
+  |   --> ctx-table-dec-redefined.watsup:1:10
+  |   |
+  | 1 | tbl dec $lookup(nat) : bool
+  |   |          ^^^^^^^
+=== ctx-table-dec-undefined.watsup ===
+error[elab/table-function-undefined]: table function `missing` is undefined
+  --> ctx-table-dec-undefined.watsup:1:10
+  |
+1 | tbl def $missing =
+  |          ^^^^^^^
+=== ctx-table-function-required.watsup ===
+error[elab/table-function-required]: non-table function `lookup` does not allow table rows
+  --> ctx-table-function-required.watsup:3:10
+  |
+3 | tbl def $lookup =
+  |          ^^^^^^
+  |
+  | related: function declared here
+  |   --> ctx-table-function-required.watsup:1:6
+  |   |
+  | 1 | dec $lookup(nat) : bool
+  |   |      ^^^^^^^
+=== ctx-table-rows-redefined.watsup ===
+error[elab/table-rows-redefined]: table `lookup` was already defined
+  --> ctx-table-rows-redefined.watsup:6:10
+  |
+6 | tbl def $lookup =
+  |          ^^^^^^
+  |
+  | related: first table definition here
+  |   --> ctx-table-rows-redefined.watsup:4:5
+  |   |
+  | 4 |   | _ => true
+  |   |     ^^^^^^^^^
+=== ctx-type-already-defined-in-prem.watsup ===
+error[elab/var-prem-type-redefined]: meta-variable name `foo` is already used by a type
+  --> ctx-type-already-defined-in-prem.watsup:11:10
+   |
+11 |   -- var foo : nat
+   |          ^^^
+   |
+   | related: originally defined here
+   |   --> ctx-type-already-defined-in-prem.watsup:4:8
+   |   |
+   | 4 | syntax foo = nat
+   |   |        ^^^
+=== ctx-type-already-defined-in-var.watsup ===
+error[elab/var-def-type-redefined]: meta-variable name `foo` is already used by a type
+  --> ctx-type-already-defined-in-var.watsup:6:5
+  |
+6 | var foo : int
+  |     ^^^
+  |
+  | related: originally defined here
+  |   --> ctx-type-already-defined-in-var.watsup:4:8
+  |   |
+  | 4 | syntax foo = nat
+  |   |        ^^^
+=== ctx-type-fully-redefined.watsup ===
+error[elab/typ-fully-redefined]: type `foo` was already fully defined
+  --> ctx-type-fully-redefined.watsup:4:8
+  |
+4 | syntax foo = int
+  |        ^^^
+  |
+  | related: originally defined here
+  |   --> ctx-type-fully-redefined.watsup:3:8
+  |   |
+  | 3 | syntax foo = nat
+  |   |        ^^^
+=== empty-iteration-expression.watsup ===
+error[elab/empty-iteration-expression]: iteration has no variable to iterate over
+  --> empty-iteration-expression.watsup:4:10
+  |
+4 | def $f = 0*
+  |          ^^
+  |
+  | note: Each iteration consumes one `*` (or `?`) from a variable inside it.
+  |       Here, no variable has an iteration left to consume: either the body
+  |       has no variables, or every variable's `*`s have already been consumed
+  |       by surrounding iterations.
+=== empty-iteration-premise.watsup ===
+error[elab/empty-iteration-premise]: iteration has no variable to iterate over
+  --> empty-iteration-premise.watsup:10:6
+   |
+10 |   -- (if true)*
+   |      ^^^^^^^^^^
+   |
+   | note: Each iteration consumes one `*` (or `?`) from a variable inside it.
+   |       Here, no variable has an iteration left to consume: either the body
+   |       has no variables, or every variable's `*`s have already been consumed
+   |       by surrounding iterations.
+=== extern-type-syn-invalid-id.watsup ===
+error[elab/extern-syn-invalid-id]: type identifier `x_1` must not have a suffix
+  --> extern-type-syn-invalid-id.watsup:1:15
+  |
+1 | extern syntax x_1
+  |               ^^^
+=== iteration-dimension-mismatch.watsup ===
+error[elab/iteration-dimension-mismatch]: identifier `i_a` has incompatible iteration dimensions: `int*` and `int?`
+  --> iteration-dimension-mismatch.watsup:4:14
+  |
+4 | def $f(i_a*, i_a?) = 0
+  |              ^^^
+  |
+  | related: other occurrence has dimension `int*`
+  |   --> iteration-dimension-mismatch.watsup:4:8
+  |   |
+  | 4 | def $f(i_a*, i_a?) = 0
+  |   |        ^^^
+=== relation-input-hint-duplicate-index.watsup ===
+error[elab/relation-input-hint-duplicate-index]: input hint repeats index `%1`
+  --> relation-input-hint-duplicate-index.watsup:6:20
+  |
+6 |   hint(input %0 %1 %1 %0)
+  |                    ^^
+  |
+  | related: first occurrence here
+  |   --> relation-input-hint-duplicate-index.watsup:6:17
+  |   |
+  | 6 |   hint(input %0 %1 %1 %0)
+  |   |                 ^^
+=== relation-input-hint-empty.watsup ===
+error[elab/relation-input-hint-empty]: input hint must contain at least one index such as `%0`
+  --> relation-input-hint-empty.watsup:6:13
+  |
+6 |   hint(input)
+  |             ^
+=== relation-input-hint-non-hole.watsup ===
+error[elab/relation-input-hint-non-hole]: input hint must be a sequence of indexed holes such as `%0`, but got `0`
+  --> relation-input-hint-non-hole.watsup:7:14
+  |
+7 |   hint(input 0)
+  |              ^
+=== relation-input-hint-out-of-bounds.watsup ===
+error[elab/relation-input-hint-out-of-bounds]: input hint index `%2` is out of bounds for a relation with 2 positions
+  --> relation-input-hint-out-of-bounds.watsup:4:14
+  |
+4 |   hint(input %2)
+  |              ^^
+  |
+  | related: relation has 2 positions
+  |   --> relation-input-hint-out-of-bounds.watsup:3:13
+  |   |
+  | 3 | relation R: foo |- foo
+  |   |             ^^^^^^^^^^
+=== relation-iter-otherwise-premise.watsup ===
+error[elab/iter-otherwise-premise]: cannot iterate an `otherwise` premise
+  --> relation-iter-otherwise-premise.watsup:8:7
+  |
+8 |   -- (otherwise)*
+  |       ^^^^^^^^^
+  |
+  | note: `otherwise` selects one fallback path for the rule, so it cannot be
+  |       repeated by an iteration.
+=== relation-iter-var-premise.watsup ===
+error[elab/iter-var-premise]: cannot iterate a `var` premise
+  --> relation-iter-var-premise.watsup:10:7
+   |
+10 |   -- (var x : foo)*
+   |       ^^^^^^^^^^^
+   |
+   | note: A variable premise declares its variable once for the rule, not once
+   |       per iteration.
+=== relation-missing-rules.watsup ===
+warning[elab/relation-missing-rules]: relation `Foo_ok` has no rules defined
+  --> relation-missing-rules.watsup:6:1
+  |
+6 | relation Foo_ok: |- foo
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+7 |   hint(input %0)
+  | ^^^^^^^^^^^^^^^^
+=== relation-multiple-otherwise-premises.watsup ===
+error[elab/prem-multiple-otherwise]: cannot use more than one `otherwise` premise
+  --> relation-multiple-otherwise-premises.watsup:9:6
+  |
+9 |   -- otherwise
+  |      ^^^^^^^^^
+  |
+  | related: first `otherwise` premise here
+  |   --> relation-multiple-otherwise-premises.watsup:8:6
+  |   |
+  | 8 |   -- otherwise
+  |   |      ^^^^^^^^^
+=== relation-negated-premise-on-output-relation.watsup ===
+error[elab/negated-premise-has-outputs]: negated rule premise for relation `R` cannot use output positions
+  --> relation-negated-premise-on-output-relation.watsup:16:15
+   |
+16 |   -- R:/ 0 |- 0
+   |               ^
+   |
+   | note: Rule premise negation is supported only for relations without
+   |       outputs. This constraint may be relaxed in future versions.
+   |
+   | related: relation signature with output positions here
+   |   --> relation-negated-premise-on-output-relation.watsup:5:17
+   |   |
+   | 5 | relation R: foo |- foo
+   |   |                 ^^
+=== relation-no-input-hint.watsup ===
+warning[elab/relation-no-input-hint]: relation `Foo_ok` has no input hint
+  --> relation-no-input-hint.watsup:3:1
+  |
+3 | relation Foo_ok: |- foo
+  | ^^^^^^^^^^^^^^^^^^^^^^^
+=== rule-multiple-otherwise-rules.watsup ===
+error[elab/rule-multiple-otherwise]: cannot use more than one `otherwise` rule in a rule group
+  --> rule-multiple-otherwise-rules.watsup:10:3
+   |
+10 |   rule R/second:
+   |   ^^^^^^^^^^^^^^
+11 |     0 |- 0
+   | ^^^^^^^^^^
+12 |     -- otherwise
+   | ^^^^^^^^^^^^^^^^
+   |
+   | related: first `otherwise` rule here
+   |   --> rule-multiple-otherwise-rules.watsup:7:3
+   |   |
+   | 7 |   rule R/first:
+   |   |   ^^^^^^^^^^^^^
+   | 8 |     0 |- 0
+   |   | ^^^^^^^^^^
+   | 9 |     -- otherwise
+   |   | ^^^^^^^^^^^^^^^^
+=== rule-other-rule-before-otherwise.watsup ===
+error[elab/rule-otherwise-with-other-rule]: an `otherwise` rule must be the only rule in its rule group
+  --> rule-other-rule-before-otherwise.watsup:9:3
+   |
+ 9 |   rule R/fallback:
+   |   ^^^^^^^^^^^^^^^^
+10 |     0 |- 0
+   | ^^^^^^^^^^
+11 |     -- otherwise
+   | ^^^^^^^^^^^^^^^^
+  |
+  | related: other rule here
+  |   --> rule-other-rule-before-otherwise.watsup:7:3
+  |   |
+  | 7 |   rule R/regular:
+  |   |   ^^^^^^^^^^^^^^^
+  | 8 |     0 |- 0
+  |   | ^^^^^^^^^^
+=== rule-relation-mismatch.watsup ===
+error[elab/rule-relation-mismatch]: rule belongs to relation `S`, but its enclosing rule group belongs to relation `R`
+  --> rule-relation-mismatch.watsup:11:8
+   |
+11 |   rule S/case:
+   |        ^
+   |
+   | related: enclosing rule group names relation `R`
+   |   --> rule-relation-mismatch.watsup:9:11
+   |   |
+   | 9 | rulegroup R/group {
+   |   |           ^
+=== table-function-parameter.watsup ===
+error[elab/table-function-parameter]: table parameter `key` must be a value parameter, but it is a function parameter
+  --> table-function-parameter.watsup:1:17
+  |
+1 | tbl dec $lookup(def $key : nat) : bool
+  |                 ^^^^^^^^^^^^^^
+=== table-missing-rows.watsup ===
+warning[elab/table-missing-rows]: table `lookup` has no rows defined
+  --> table-missing-rows.watsup:1:1
+  |
+1 | tbl dec $lookup(nat) : bool
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== table-non-bool-return.watsup ===
+error[elab/table-non-bool-return]: table `lookup` must return `bool`, but its return type is `nat`
+  --> table-non-bool-return.watsup:7:24
+  |
+7 | tbl dec $lookup(nat) : nat
+  |                        ^^^
+=== type-call-arg-arity-mismatch.watsup ===
+error[elab/call-arg-arity-mismatch]: function `f` expects 2 arguments, but got 1
+  --> type-call-arg-arity-mismatch.watsup:6:10
+  |
+6 | def $g = $f(0)
+  |          ^^^^^
+  |
+  | related: function declared here
+  |   --> type-call-arg-arity-mismatch.watsup:3:6
+  |   |
+  | 3 | dec $f(nat, nat) : nat
+  |   |      ^^
+=== type-call-targ-arity-mismatch.watsup ===
+error[elab/call-targ-arity-mismatch]: function `f` expects 1 type argument, but got 2
+  --> type-call-targ-arity-mismatch.watsup:6:18
+  |
+6 | def $g = $f<nat, nat>(0)
+  |                  ^^^
+  |
+  | related: declared here
+  |   --> type-call-targ-arity-mismatch.watsup:3:6
+  |   |
+  | 3 | dec $f<T>(T) : T
+  |   |      ^^
+=== type-clause-arg-arity-mismatch.watsup ===
+error[elab/clause-arg-arity-mismatch]: function `f` was declared with 1 parameter, but this clause has 2
+  --> type-clause-arg-arity-mismatch.watsup:4:11
+  |
+4 | def $f(x, y) = x
+  |           ^
+  |
+  | related: declared here
+  |   --> type-clause-arg-arity-mismatch.watsup:3:6
+  |   |
+  | 3 | dec $f(nat) : nat
+  |   |      ^^
+=== type-clause-tparam-mismatch.watsup ===
+error[elab/clause-tparam-mismatch]: function `f` was declared with type parameters `<T>`, but this clause has type parameters `<U, V>`
+  --> type-clause-tparam-mismatch.watsup:4:8
+  |
+4 | def $f<U, V> = 0
+  |        ^^^^
+  |
+  | note: A `def $f<...> = ...` clause must repeat the type parameters from its
+  |       `dec` declaration with the same count and the same names in the same
+  |       order.
+  |
+  | related: expected type parameters declared here
+  |   --> type-clause-tparam-mismatch.watsup:3:8
+  |   |
+  | 3 | dec $f<T> : nat
+  |   |        ^
+=== type-dec-missing-clauses.watsup ===
+warning[elab/dec-missing-clauses]: function `missing` has no clauses defined
+  --> type-dec-missing-clauses.watsup:1:1
+  |
+1 | dec $missing : nat
+  | ^^^^^^^^^^^^^^^^^^
+=== type-define-extern.watsup ===
+error[elab/typ-define-extern]: extern type `opaque` does not allow a definition
+  --> type-define-extern.watsup:2:8
+  |
+2 | syntax opaque = nat
+  |        ^^^^^^
+  |
+  | related: extern type declared here
+  |   --> type-define-extern.watsup:1:15
+  |   |
+  | 1 | extern syntax opaque
+  |   |               ^^^^^^
+=== type-extend-extern.watsup ===
+error[elab/extend-non-variant-extern]: extension is not allowed for extern type `opaque`
+  --> type-extend-extern.watsup:4:5
+  |
+4 |   | opaque
+  |     ^^^^^^
+  |
+  | note: `| T` extends a variant with `T`'s cases, but extern types have no
+  |       cases.
+  |
+  | related: extern type declared here
+  |   --> type-extend-extern.watsup:1:15
+  |   |
+  | 1 | extern syntax opaque
+  |   |               ^^^^^^
+=== type-extend-forward-decl.watsup ===
+error[elab/extend-incomplete]: extension is not allowed for incomplete type `incomplete`
+  --> type-extend-forward-decl.watsup:7:5
+  |
+7 |   | incomplete
+  |     ^^^^^^^^^^
+  |
+  | note: A case-line `| T` extends the surrounding variant with the cases of
+  |       `T`. The type named here was declared with `syntax T` but has no body
+  |       yet, so there are no cases to contribute.
+  |
+  | related: originally declared here
+  |   --> type-extend-forward-decl.watsup:4:8
+  |   |
+  | 4 | syntax incomplete
+  |   |        ^^^^^^^^^^
+=== type-extend-param.watsup ===
+error[elab/extend-non-variant-tparam]: extension is not allowed for type parameter `T`
+  --> type-extend-param.watsup:2:5
+  |
+2 |   | T
+  |     ^
+  |
+  | note: `| T` extends a variant with `T`'s cases, but type parameters have no
+  |       known cases.
+  |
+  | related: type parameter declared here
+  |   --> type-extend-param.watsup:1:16
+  |   |
+  | 1 | syntax wrapper<T> =
+  |   |                ^
+=== type-extend-primitive.watsup ===
+error[elab/extend-non-variant-primitive]: extension is not allowed for primitive type `bool`
+  --> type-extend-primitive.watsup:2:5
+  |
+2 |   | bool
+  |     ^^^^
+  |
+  | note: A case-line `| T` extends the surrounding variant with the cases of
+  |       `T`. The expression here is a primitive type, not a named variant, so
+  |       there are no cases to contribute.
+=== type-extend-struct.watsup ===
+error[elab/extend-non-variant-struct]: extension is not allowed for struct type `myStruct`
+  --> type-extend-struct.watsup:7:5
+  |
+7 |   | myStruct
+  |     ^^^^^^^^
+  |
+  | note: A case-line `| T` extends the surrounding variant with the cases of
+  |       `T`. The type named here has a body that is not a variant, so it has
+  |       no cases to contribute.
+  |
+  | related: originally defined here
+  |   --> type-extend-struct.watsup:4:8
+  |   |
+  | 4 | syntax myStruct = { X nat }
+  |   |        ^^^^^^^^
+=== type-forward-tparam-mismatch.watsup ===
+error[elab/typ-tparam-mismatch]: type `foo` was forward-declared with no type parameters, but its definition has type parameters `<T>`
+  --> type-forward-tparam-mismatch.watsup:5:12
+  |
+5 | syntax foo<T> = T
+  |            ^
+  |
+  | note: A `syntax T<...> = ...` body must repeat the type parameters from its
+  |       forward declaration with the same count and the same names in the same
+  |       order.
+  |
+  | related: declaration with no type parameters here
+  |   --> type-forward-tparam-mismatch.watsup:4:8
+  |   |
+  | 4 | syntax foo
+  |   |        ^^^
+=== type-funarg-expected-exp-got-fun.watsup ===
+error[elab/funarg-expected-exp-got-fun]: expected an expression argument, but got a function argument
+  --> type-funarg-expected-exp-got-fun.watsup:9:21
+  |
+9 | def $main = $caller(def $g)
+  |                     ^^^^^^
+  |
+  | related: parameter declared here
+  |   --> type-funarg-expected-exp-got-fun.watsup:6:13
+  |   |
+  | 6 | dec $caller(nat) : nat
+  |   |             ^^^
+=== type-funarg-expected-fun-got-exp.watsup ===
+error[elab/funarg-expected-fun-got-exp]: expected a function argument, but got an expression argument
+  --> type-funarg-expected-fun-got-exp.watsup:8:21
+  |
+8 | def $main = $caller(0)
+  |                     ^
+  |
+  | related: parameter declared here
+  |   --> type-funarg-expected-fun-got-exp.watsup:4:13
+  |   |
+  | 4 | dec $caller(def $f(nat) : nat) : nat
+  |   |             ^^^^^^^^^^^^^^^^^
+=== type-funarg-name-mismatch.watsup ===
+error[elab/funarg-name-mismatch]: function argument `g` must have the same name as declared function parameter `expected`
+  --> type-funarg-name-mismatch.watsup:5:18
+  |
+5 | def $caller(def $g) = 0
+  |                  ^
+  |
+  | note: A function argument in a `def` clause must bind to the same name as
+  |       the declared function parameter in the `dec`. The clause body uses
+  |       that name to call the function.
+  |
+  | related: function parameter declared here
+  |   --> type-funarg-name-mismatch.watsup:4:18
+  |   |
+  | 4 | dec $caller(def $expected : nat) : nat
+  |   |                  ^^^^^^^^
+=== type-funarg-signature-mismatch.watsup ===
+error[elab/funarg-signature-mismatch]: passed function `h` must have the same signature as function parameter `f`
+  --> type-funarg-signature-mismatch.watsup:6:21
+  |
+6 | def $main = $caller(def $h)
+  |                     ^^^^^^
+  |
+  | note: A function argument at a call site must have the same signature (type
+  |       parameters, parameter types, and return type) as the declared function
+  |       parameter. The function passed here was declared with a different
+  |       signature.
+  |
+  | related: function parameter declared here
+  |   --> type-funarg-signature-mismatch.watsup:3:18
+  |   |
+  | 3 | dec $caller(def $f(nat) : nat) : nat
+  |   |                  ^^
+  |
+  | related: passed function declared here
+  |   --> type-funarg-signature-mismatch.watsup:1:6
+  |   |
+  | 1 | dec $h(text) : nat
+  |   |      ^^
+=== type-functyp-param-arity-mismatch.watsup ===
+error[elab/functyp-param-arity-mismatch]: function parameter `h` has 2 parameters, but passed function `g` has 1
+  --> type-functyp-param-arity-mismatch.watsup:8:20
+  |
+8 | def $bad = $caller(def $g)
+  |                    ^^^^^^
+  |
+  | note: A function argument at a call site must have the same signature (type
+  |       parameters, parameter types, and return type) as the declared function
+  |       parameter. The function passed here was declared with a different
+  |       signature.
+  |
+  | related: function parameter declared here
+  |   --> type-functyp-param-arity-mismatch.watsup:5:18
+  |   |
+  | 5 | dec $caller(def $h(nat, nat) : nat) : nat
+  |   |                  ^^
+  |
+  | related: passed function declared here
+  |   --> type-functyp-param-arity-mismatch.watsup:4:6
+  |   |
+  | 4 | dec $g(nat) : nat
+  |   |      ^^
+=== type-functyp-tparam-arity-mismatch.watsup ===
+error[elab/functyp-tparam-arity-mismatch]: function parameter `h` has 2 type parameters, but passed function `g` has 1
+  --> type-functyp-tparam-arity-mismatch.watsup:8:20
+  |
+8 | def $bad = $caller(def $g)
+  |                    ^^^^^^
+  |
+  | note: A function argument at a call site must have the same signature (type
+  |       parameters, parameter types, and return type) as the declared function
+  |       parameter. The function passed here was declared with a different
+  |       signature.
+  |
+  | related: function parameter declared here
+  |   --> type-functyp-tparam-arity-mismatch.watsup:5:18
+  |   |
+  | 5 | dec $caller(def $h<U, V>(nat) : nat) : nat
+  |   |                  ^^
+  |
+  | related: passed function declared here
+  |   --> type-functyp-tparam-arity-mismatch.watsup:4:6
+  |   |
+  | 4 | dec $g<T>(T) : T
+  |   |      ^^
+=== type-fuse-outside-hint.watsup ===
+error[elab/fuse-outside-hint]: token concatenation `#` is not allowed outside a hint
+  --> type-fuse-outside-hint.watsup:5:12
+  |
+5 | def $f = 0 # 1
+  |            ^
+  |
+  | note: The `#` operator joins two fragments without a space inside a
+  |       `hint(...)` expression's rendered output, like
+  |       `hint(prose %0#suffix)`. Outside a hint, it has no meaning.
+=== type-hole-outside-hint.watsup ===
+error[elab/hole-outside-hint]: hole is not allowed outside a hint
+  --> type-hole-outside-hint.watsup:5:10
+  |
+5 | def $f = %0
+  |          ^^
+  |
+  | note: A `%`, `%N`, `%%`, or `!%` marks an argument slot inside a `hint(...)`
+  |       expression, like `hint(input %0 %1)`. Outside a hint, it has no
+  |       meaning.
+=== type-latex-outside-hint.watsup ===
+error[elab/latex-outside-hint]: LaTeX literals are not allowed outside a hint
+  --> type-latex-outside-hint.watsup:5:10
+  |
+5 | def $f = %latex("hello")
+  |          ^^^^^^^^^^^^^^^
+  |
+  | note: A `%latex("...")` literal embeds raw LaTeX source inside a `hint(...)`
+  |       expression's rendered form. Outside a hint, it has no meaning.
+=== type-missing-definition.watsup ===
+warning[elab/typ-missing-definition]: type `missing<T>` was declared but not defined
+  --> type-missing-definition.watsup:1:8
+  |
+1 | syntax missing<T>
+  |        ^^^^^^^^
+=== type-redeclared.watsup ===
+error[elab/type-redeclared]: type `foo` was already declared
+  --> type-redeclared.watsup:2:8
+  |
+2 | syntax foo
+  |        ^^^
+  |
+  | related: first declared here
+  |   --> type-redeclared.watsup:1:8
+  |   |
+  | 1 | syntax foo
+  |   |        ^^^
+=== type-syn-invalid-id.watsup ===
+error[elab/syn-invalid-id]: type identifier `x_1` must not have a suffix
+  --> type-syn-invalid-id.watsup:4:8
+  |
+4 | syntax x_1
+  |        ^^^
+=== type-syn-tparam-duplicate.watsup ===
+error[elab/syn-tparam-not-distinct]: type parameter `U` is duplicated
+  --> type-syn-tparam-duplicate.watsup:1:18
+  |
+1 | syntax foo<T, U, U, T>
+  |                  ^
+  |
+  | related: first declared here
+  |   --> type-syn-tparam-duplicate.watsup:1:15
+  |   |
+  | 1 | syntax foo<T, U, U, T>
+  |   |               ^
+=== type-typ-invalid-id.watsup ===
+error[elab/typ-invalid-id]: type identifier `x_1` must not have a suffix
+  --> type-typ-invalid-id.watsup:4:8
+  |
+4 | syntax x_1 = nat
+  |        ^^^
+=== type-typ-invalid-tparam.watsup ===
+error[elab/typ-invalid-tparam]: type parameter `T_1` must not have a suffix
+  --> type-typ-invalid-tparam.watsup:4:12
+  |
+4 | syntax foo<T_1> = nat
+  |            ^^^
+=== type-undefined-syntax.watsup ===
+error[elab/type-undefined]: type `nope` is undefined
+  --> type-undefined-syntax.watsup:3:23
+  |
+3 | syntax wrapper = wrap<nope>
+  |                       ^^^^
+=== type-unparen-outside-hint.watsup ===
+error[elab/unparen-outside-hint]: unparenthesizing operator `##` is not allowed outside a hint
+  --> type-unparen-outside-hint.watsup:5:10
+  |
+5 | def $f = ## 0
+  |          ^^
+  |
+  | note: The `##` operator strips enclosing parentheses from its operand when a
+  |       `hint(...)` expression is rendered, giving finer control over the
+  |       rendered form. Outside a hint, it has no meaning.
+=== type-variant-mixop-collision.watsup ===
+error[elab/variant-mixop-collision]: variant case shape `FOO %` conflicts with an earlier case
+  --> type-variant-mixop-collision.watsup:6:5
+  |
+6 |   | FOO int
+  |     ^^^
+  |
+  | note: Variant cases must differ in their literal tokens or argument
+  |       positions. Differences in argument types do not distinguish cases.
+  |
+  | related: earlier case with this shape
+  |   --> type-variant-mixop-collision.watsup:5:5
+  |   |
+  | 5 |   | FOO nat
+  |   |     ^^^
+=== type-vart-targ-arity-mismatch.watsup ===
+error[elab/vart-targ-arity-mismatch]: type `foo` expects 1 type argument, but got 0
+  --> type-vart-targ-arity-mismatch.watsup:5:14
+  |
+5 | syntax bar = foo
+  |              ^^^
+  |
+  | related: type declared here
+  |   --> type-vart-targ-arity-mismatch.watsup:3:8
+  |   |
+  | 3 | syntax foo<T> = T
+  |   |        ^^^^

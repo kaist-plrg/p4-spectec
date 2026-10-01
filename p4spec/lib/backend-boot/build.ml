@@ -60,10 +60,10 @@ let spectec_interface_of (interface : Config.interface) :
   match interface with
   | P4_interface ->
       Error
-        {
-          Run.at = no_region;
-          msg = "P4 interface not supported outside of target level";
-        }
+        (Diagnostic.error
+           ~code:(Error.render_code Error.Unsupported_interface)
+           ~source:"boot" no_region
+           "P4 interface is supported only at the target level")
   | AL_interface -> Ok (module Interface.SpecTec_AL : Spectec.INTERFACE_SPECTEC)
   | SL_interface -> Ok (module Interface.SpecTec_SL : Spectec.INTERFACE_SPECTEC)
 

@@ -1,0 +1,100 @@
+;; Negative diagnostic tests grouped by pass
+
+(executable
+ (name test)
+ (modules test)
+ (libraries
+  p4spectec
+  unix
+  interp_al
+  interp_sl
+  interp_pl
+  interface
+  backend_sim))
+
+(rule
+ (alias speclang)
+ (action
+  (progn
+   (ignore-outputs
+    (diff parse.expected parse.actual))
+   (ignore-outputs
+    (diff elab.expected elab.actual))
+   (ignore-outputs
+    (diff algo.expected algo.actual))
+   (ignore-outputs
+    (diff annotate.expected annotate.actual))
+   (ignore-outputs
+    (diff interp.expected interp.actual))
+   (ignore-outputs
+    (diff boundary.expected boundary.actual)))))
+
+(rule
+ (target parse.actual)
+ (deps
+  test.exe
+  (source_tree cases/parse))
+ (action
+  (with-stdout-to
+   parse.actual
+   (with-stderr-to
+    parse.err
+    (run ./test.exe parse cases/parse)))))
+
+(rule
+ (target elab.actual)
+ (deps
+  test.exe
+  (source_tree cases/elab))
+ (action
+  (with-stdout-to
+   elab.actual
+   (with-stderr-to
+    elab.err
+    (run ./test.exe elab cases/elab)))))
+
+(rule
+ (target algo.actual)
+ (deps
+  test.exe
+  (source_tree cases/algo))
+ (action
+  (with-stdout-to
+   algo.actual
+   (with-stderr-to
+    algo.err
+    (run ./test.exe algo cases/algo)))))
+
+(rule
+ (target annotate.actual)
+ (deps
+  test.exe
+  (source_tree cases/annotate))
+ (action
+  (with-stdout-to
+   annotate.actual
+   (with-stderr-to
+    annotate.err
+    (run ./test.exe annotate cases/annotate)))))
+
+(rule
+ (target boundary.actual)
+ (deps test.exe)
+ (action
+  (with-stdout-to
+   boundary.actual
+   (with-stderr-to
+    boundary.err
+    (run ./test.exe boundary .)))))
+
+(rule
+ (target interp.actual)
+ (deps
+  test.exe
+  (source_tree cases/interp))
+ (action
+  (with-stdout-to
+   interp.actual
+   (with-stderr-to
+    interp.err
+    (run ./test.exe interp cases/interp)))))

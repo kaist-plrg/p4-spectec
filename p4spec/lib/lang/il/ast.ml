@@ -231,7 +231,7 @@ and tablerow' = arg list * exp
 
 (* Hints *)
 
-and hint = El.hint [@@deriving yojson]
+and hint = El.hint
 
 (* Definitions *)
 
@@ -255,8 +255,7 @@ and def' =
   | TableDecD of id * param list * typ * tablerow list * hint list
   (* `dec` id `<` list(tparam, `,`) `>` list(param, `,`) `:` typ clause* hint* *)
   | FuncDecD of id * tparam list * param list * typ * clause list * elseclause option * hint list
-[@@deriving yojson]
 
 (* Spec *)
 
-type spec = def list [@@deriving yojson]
+type spec = def list

@@ -87,7 +87,7 @@ the specification parser and the high-level architecture of the tool.
   ```shell
   $ opam switch create 5.1.0
   $ eval $(opam env)
-  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson
+  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson uucp uuseg uutf
   ```
 
 #### Compiling the Project

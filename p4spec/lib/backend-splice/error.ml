@@ -1,14 +1,25 @@
 open Util.Source
 
+(* [code] identifies a splice diagnostic across runs. *)
+
+type code = File_io_error
+
+let string_of_code = function File_io_error -> "file-io-error"
+let render_code (code : code) : string = "splice/" ^ string_of_code code
+
 (* Error *)
 
-type error = { at : region; msg : string }
+exception SpliceError of Diagnostic.t
 
-exception SpliceError of error
+let error ?code (at : region) (msg : string) =
+  raise
+    (SpliceError
+       (Diagnostic.error
+          ?code:(Option.map render_code code)
+          ~source:"splice" at msg))
 
-let to_region_msg (error : error) : region * string = (error.at, error.msg)
-let error (at : region) (msg : string) = raise (SpliceError { at; msg })
-let warn (at : region) (msg : string) = Util.Error.warn at "splice" msg
+let warn ?(detail : string option) (at : region) (msg : string) =
+  Diagnostic.warn ?detail ~source:"splice" at msg
 
 (* Check *)
 

@@ -107,7 +107,7 @@ let print_first_anchor_position rendered =
   in
   Printf.printf "first anchor precedes second occurrence: %b\n" before_second
 
-let () =
+let run () =
   let open Backend_splice in
   let context =
     Anchor.collect spec [ ("a.adoc", source_a); ("b.adoc", source_b) ]
@@ -205,3 +205,9 @@ let () =
   Backend_splice.Driver.init ~context [] spec_pl;
   let rendered = splice_anchor () in
   rendered |> print_anchor_counts "second"
+
+let () =
+  let (), report = Diagnostic.collect run in
+  if not (Diagnostic.Report.is_empty report) then
+    Printf.eprintf "%s\n"
+      (Diagnostic.Render.render_report ~ansi:Diagnostic.Ansi.plain report)
