@@ -16,7 +16,7 @@ use serde::{Deserialize, de::DeserializeOwned};
 use crate::{Error, Result, diagnostic};
 
 /// Selects the production interpreter used by a corpus suite.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, clap::Subcommand)]
 #[serde(rename_all = "lowercase")]
 pub enum Language {
     Al,

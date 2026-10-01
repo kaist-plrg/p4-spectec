@@ -42,16 +42,16 @@ test-adoc:
 	env -u UPDATE_EXPECT $(DRIVER) adoc
 
 test-run-al:
-	env -u UPDATE_EXPECT $(DRIVER) run-al
-	env -u UPDATE_EXPECT $(DRIVER) run-al --det
+	env -u UPDATE_EXPECT $(DRIVER) run al
+	env -u UPDATE_EXPECT $(DRIVER) run al --det
 
 test-run-sl:
-	env -u UPDATE_EXPECT $(DRIVER) run-sl
-	env -u UPDATE_EXPECT $(DRIVER) run-sl --det
+	env -u UPDATE_EXPECT $(DRIVER) run sl
+	env -u UPDATE_EXPECT $(DRIVER) run sl --det
 
 test-run-pl:
-	env -u UPDATE_EXPECT $(DRIVER) run-pl
-	env -u UPDATE_EXPECT $(DRIVER) run-pl --det
+	env -u UPDATE_EXPECT $(DRIVER) run pl
+	env -u UPDATE_EXPECT $(DRIVER) run pl --det
 
 test-expected: test-p4parse test-elab test-algo test-structure test-prose test-adoc test-run-al test-run-sl test-run-pl test-diagnostics
 
@@ -67,13 +67,13 @@ test-promote:
 .PHONY: test-sim-al test-sim-sl test-sim-pl
 
 test-sim-al:
-	env -u UPDATE_EXPECT $(DRIVER) sim-al
-	env -u UPDATE_EXPECT $(DRIVER) sim-al --det
+	env -u UPDATE_EXPECT $(DRIVER) sim al
+	env -u UPDATE_EXPECT $(DRIVER) sim al --det
 
 test-sim-sl:
-	env -u UPDATE_EXPECT $(DRIVER) sim-sl
-	env -u UPDATE_EXPECT $(DRIVER) sim-sl --det
+	env -u UPDATE_EXPECT $(DRIVER) sim sl
+	env -u UPDATE_EXPECT $(DRIVER) sim sl --det
 
 test-sim-pl:
-	env -u UPDATE_EXPECT $(DRIVER) sim-pl
-	env -u UPDATE_EXPECT $(DRIVER) sim-pl --det
+	env -u UPDATE_EXPECT $(DRIVER) sim pl
+	env -u UPDATE_EXPECT $(DRIVER) sim pl --det

@@ -10,7 +10,7 @@ use p4spec_rust::interface::p4::{error::P4Error, parse::parse_string, preprocess
 use p4spec_rust::sim_plugin::dummy::Dummy;
 
 use crate::{
-    Error, Result,
+    Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
     suite::{self, Config as SuiteConfig, Language, RunSuite},
 };
@@ -26,8 +26,10 @@ pub fn run(
     config: &SuiteConfig,
     registrations: &[RunSuite],
     language: Language,
-    det: bool,
+    options: ExecutionOptions,
 ) -> Result<()> {
+    let ExecutionOptions { cache_on, det } = options;
+    let text_cache = if cache_on { "on" } else { "off" };
     // Collect registered corpus roots in suite order
     let suites = registrations
         .iter()
@@ -45,24 +47,30 @@ pub fn run(
         return Err(Error::Invalid(format!("no {} execution suites registered", language.name())));
     }
     match language {
-        Language::Al => run_with(config, &format!("AL cache=on det={det}"), suites, || {
-            let spec_al = p4spec_rust::algo(&config.spec)
-                .map_err(|error| Error::Invalid(error.to_string()))?;
-            runner::build_al(spec_al, Config::new(true, det, false), Dummy)
-                .map_err(|error| Error::Invalid(error.to_string()))
-        }),
-        Language::Sl => run_with(config, &format!("SL cache=on det={det}"), suites, || {
-            let spec_sl = p4spec_rust::structure(&config.spec, true)
-                .map_err(|error| Error::Invalid(error.to_string()))?;
-            runner::build_sl(spec_sl, Config::new(true, det, false), Dummy)
-                .map_err(|error| Error::Invalid(error.to_string()))
-        }),
-        Language::Pl => run_with(config, &format!("PL cache=on det={det}"), suites, || {
-            let spec_pl = p4spec_rust::prosify(&config.spec)
-                .map_err(|error| Error::Invalid(error.to_string()))?;
-            runner::build_pl(spec_pl, Config::new(true, det, false), Dummy)
-                .map_err(|error| Error::Invalid(error.to_string()))
-        }),
+        Language::Al => {
+            run_with(config, &format!("AL cache={text_cache} det={det}"), suites, || {
+                let spec_al = p4spec_rust::algo(&config.spec)
+                    .map_err(|error| Error::Invalid(error.to_string()))?;
+                runner::build_al(spec_al, Config::new(cache_on, det, false), Dummy)
+                    .map_err(|error| Error::Invalid(error.to_string()))
+            })
+        }
+        Language::Sl => {
+            run_with(config, &format!("SL cache={text_cache} det={det}"), suites, || {
+                let spec_sl = p4spec_rust::structure(&config.spec, true)
+                    .map_err(|error| Error::Invalid(error.to_string()))?;
+                runner::build_sl(spec_sl, Config::new(cache_on, det, false), Dummy)
+                    .map_err(|error| Error::Invalid(error.to_string()))
+            })
+        }
+        Language::Pl => {
+            run_with(config, &format!("PL cache={text_cache} det={det}"), suites, || {
+                let spec_pl = p4spec_rust::prosify(&config.spec)
+                    .map_err(|error| Error::Invalid(error.to_string()))?;
+                runner::build_pl(spec_pl, Config::new(cache_on, det, false), Dummy)
+                    .map_err(|error| Error::Invalid(error.to_string()))
+            })
+        }
     }
 }
 

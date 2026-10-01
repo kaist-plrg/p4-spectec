@@ -13,7 +13,7 @@ mod suite;
 
 use std::{path::PathBuf, process::ExitCode};
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 use suite::{Config, Language};
 
@@ -64,50 +64,38 @@ enum Command {
         #[arg(long = "output")]
         path_output: Option<PathBuf>,
     },
-    /// Compare the full P4 corpus with stored file results (cache on)
-    RunAl {
-        #[arg(long)]
-        det: bool,
+    /// Compare execution outcomes with stored file results
+    Run {
+        #[command(subcommand)]
+        language: Language,
+        #[command(flatten)]
+        options: ExecutionOptions,
     },
-    /// Compare native SL outcomes with source-derived results (cache on)
-    RunSl {
-        #[arg(long)]
-        det: bool,
+    /// Compare simulation outcomes and matched packets
+    Sim {
+        #[command(subcommand)]
+        language: Language,
+        #[command(flatten)]
+        options: ExecutionOptions,
     },
-    /// Compare native PL outcomes with source-derived results (cache on)
-    RunPl {
-        #[arg(long)]
-        det: bool,
-    },
-    /// Compare simulation outcomes and matched outputs (cache on)
-    SimAl {
-        #[arg(long)]
-        det: bool,
-    },
-    /// Compare native SL simulation outcomes and matched outputs (cache on)
-    SimSl {
-        #[arg(long)]
-        det: bool,
-    },
-    /// Compare native PL simulation outcomes and matched outputs (cache on)
-    SimPl {
-        #[arg(long)]
-        det: bool,
-    },
+}
+
+/// Configures interpreter execution consistently for run and sim.
+#[derive(Clone, Copy, Args)]
+struct ExecutionOptions {
+    /// Reject nondeterministic candidate selection
+    #[arg(long, global = true)]
+    det: bool,
+    /// Enable or disable interpreter caching
+    #[arg(long, global = true, default_value_t = true, action = clap::ArgAction::Set)]
+    cache_on: bool,
 }
 
 fn execute(mut cli: Cli) -> Result<()> {
     let command = &mut cli.command;
     if matches!(
         command,
-        Command::P4parse
-            | Command::Structure
-            | Command::RunAl { .. }
-            | Command::RunSl { .. }
-            | Command::RunPl { .. }
-            | Command::SimAl { .. }
-            | Command::SimSl { .. }
-            | Command::SimPl { .. }
+        Command::P4parse | Command::Structure | Command::Run { .. } | Command::Sim { .. }
     ) && std::env::var_os("UPDATE_EXPECT").is_some()
     {
         return Err(Error::Invalid(
@@ -167,23 +155,11 @@ fn execute(mut cli: Cli) -> Result<()> {
         Command::Adoc { path_output } => {
             adoc::run(&suite::load_adoc(&config.suites.adoc)?, path_output.as_deref())
         }
-        Command::RunAl { det } => {
-            run::run(&config, &suite::load_execution(&config.suites.run)?, Language::Al, *det)
+        Command::Run { language, options } => {
+            run::run(&config, &suite::load_execution(&config.suites.run)?, *language, *options)
         }
-        Command::RunSl { det } => {
-            run::run(&config, &suite::load_execution(&config.suites.run)?, Language::Sl, *det)
-        }
-        Command::RunPl { det } => {
-            run::run(&config, &suite::load_execution(&config.suites.run)?, Language::Pl, *det)
-        }
-        Command::SimAl { det } => {
-            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, Language::Al, *det)
-        }
-        Command::SimSl { det } => {
-            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, Language::Sl, *det)
-        }
-        Command::SimPl { det } => {
-            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, Language::Pl, *det)
+        Command::Sim { language, options } => {
+            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, *language, *options)
         }
     }
 }

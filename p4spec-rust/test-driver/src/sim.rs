@@ -15,7 +15,7 @@ use p4spec_rust::runner::{Config, Spec};
 use p4spec_rust::sim_plugin::{self, io::Tx};
 
 use crate::{
-    Error, Result, corpus,
+    Error, ExecutionOptions, Result, corpus,
     suite::{self, Config as SuiteConfig, Language, SimSuite},
 };
 
@@ -156,9 +156,9 @@ pub fn run(
     config: &SuiteConfig,
     registrations: &[SimSuite],
     language: Language,
-    det: bool,
+    options: ExecutionOptions,
 ) -> Result<()> {
-    run_with(config, registrations, language, det, || match language {
+    run_with(config, registrations, language, options, || match language {
         Language::Al => p4spec_rust::algo(&config.spec)
             .map(Spec::Al)
             .map_err(|error| Error::Invalid(error.to_string())),
@@ -175,12 +175,14 @@ fn run_with<BuildSpec>(
     config: &SuiteConfig,
     registrations: &[SimSuite],
     language: Language,
-    det: bool,
+    options: ExecutionOptions,
     build_spec: BuildSpec,
 ) -> Result<()>
 where
     BuildSpec: Fn() -> Result<Spec>,
 {
+    let ExecutionOptions { cache_on, det } = options;
+    let text_cache = if cache_on { "on" } else { "off" };
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
     for path in config
@@ -208,7 +210,7 @@ where
         })
         .count();
     eprintln!(
-        "Simulation cache=on det={det}: collected={collected} excluded={excluded}; preparing specification"
+        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded}; preparing specification"
     );
     let includes = &config.includes;
     let progress = ProgressBar::new(collected as u64).with_style(
@@ -244,7 +246,7 @@ where
         let mut simulator = sim_plugin::build_with_output(
             build_spec()?,
             arch,
-            Config::new(true, det, false),
+            Config::new(cache_on, det, false),
             Encoding::default(),
             io::sink(),
         )
@@ -286,13 +288,13 @@ where
             results.check();
         }
         eprintln!(
-            "Simulation {arch} cache=on det={det}: collected={collected_arch} excluded={excluded_arch} executed={} patched={patched_arch}",
+            "Simulation {arch} cache={text_cache} det={det}: collected={collected_arch} excluded={excluded_arch} executed={} patched={patched_arch}",
             collected_arch - excluded_arch
         );
     }
     progress.finish_with_message("complete");
     eprintln!(
-        "Simulation cache=on det={det}: collected={collected} excluded={excluded} executed={executed} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
+        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded} executed={executed} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
         start.elapsed().as_secs_f64()
     );
     Ok(())
