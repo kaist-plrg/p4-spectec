@@ -3,13 +3,13 @@
 ROUGE_STYLE=github
 ROUGE_CSS=style
 
-SPECTEC=p4spectec
+SPECTEC=bin/p4spectec
 SPECFILES=../../spec-meta/sl
 SPEC=SL-spec-skel
 GEN=SL-spec
 
 spectec:
-	$(MAKE) -C ../.. release
+	$(MAKE) -C ../.. build
 
 splice: spectec
 	rm -rf sections

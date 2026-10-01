@@ -6,13 +6,13 @@
 
 use std::path::Path;
 
-use p4spec_rust::lang::data::value::external::Encoding;
+use p4spectec::lang::data::value::external::Encoding;
 
-use p4spec_rust::diagnostic::{Report, ReportKind};
+use p4spectec::diagnostic::{Report, ReportKind};
 
-use p4spec_rust::runner::{self, Config, RunError, Spec};
+use p4spectec::runner::{self, Config, RunError, Spec};
 
-use p4spec_rust::sim_plugin;
+use p4spectec::sim_plugin;
 
 use crate::Result;
 
@@ -26,8 +26,8 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
         &groups,
         path_cli,
         Some(run_case),
-        p4spec_rust::diagnostic::RenderConfig {
-            frame_style: Some(p4spec_rust::diagnostic::DisplayStyle::Short),
+        p4spectec::diagnostic::RenderConfig {
+            frame_style: Some(p4spectec::diagnostic::DisplayStyle::Short),
             ..Default::default()
         },
     )
@@ -45,7 +45,7 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
                 "architecture case requires one architecture argument",
             ));
         };
-        let spec_al = p4spec_rust::algo(&[path]).map_err(|report| {
+        let spec_al = p4spectec::algo(&[path]).map_err(|report| {
             failure(&case.name, format!("conversion failed before simulator admission: {report}"))
         })?;
         let report = sim_plugin::build(Spec::Al(spec_al), arch, config, Encoding::default())
@@ -58,7 +58,7 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
         return Err(failure(&case.name, "simulation requires specification and include inputs"));
     };
     // Parsing and loading failures must not count as assertion failures
-    let spec_al = p4spec_rust::algo(std::slice::from_ref(path_spec)).map_err(|report| {
+    let spec_al = p4spectec::algo(std::slice::from_ref(path_spec)).map_err(|report| {
         failure(&case.name, format!("conversion failed before simulation: {report}"))
     })?;
     let report = match runner::run(

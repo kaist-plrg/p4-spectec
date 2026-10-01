@@ -6,11 +6,11 @@
 
 use std::path::Path;
 
-use p4spec_rust::lang::{common::source::Span, data::value::make};
+use p4spectec::lang::{common::source::Span, data::value::make};
 
-use p4spec_rust::diagnostic::{Report, ReportKind};
+use p4spectec::diagnostic::{Report, ReportKind};
 
-use p4spec_rust::runner::{
+use p4spectec::runner::{
     self, BuiltinInterface, Config, Interpreter, InterpreterError, NullExtern, Runner,
 };
 
@@ -26,8 +26,8 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
         &groups,
         path_cli,
         Some(run_case),
-        p4spec_rust::diagnostic::RenderConfig {
-            frame_style: Some(p4spec_rust::diagnostic::DisplayStyle::Short),
+        p4spectec::diagnostic::RenderConfig {
+            frame_style: Some(p4spectec::diagnostic::DisplayStyle::Short),
             ..Default::default()
         },
     )
@@ -126,20 +126,20 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
     match stage.as_str() {
         "al" => {
-            let spec_al = p4spec_rust::algo(&[path]).map_err(|error| failure(name, error))?;
+            let spec_al = p4spectec::algo(&[path]).map_err(|error| failure(name, error))?;
             let runner = runner::build_al(spec_al, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)
         }
         "sl" => {
             let spec_sl =
-                p4spec_rust::structure(&[path], true).map_err(|error| failure(name, error))?;
+                p4spectec::structure(&[path], true).map_err(|error| failure(name, error))?;
             let runner = runner::build_sl(spec_sl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)
         }
         "pl" => {
-            let spec_pl = p4spec_rust::prosify(&[path]).map_err(|error| failure(name, error))?;
+            let spec_pl = p4spectec::prosify(&[path]).map_err(|error| failure(name, error))?;
             let runner = runner::build_pl(spec_pl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)

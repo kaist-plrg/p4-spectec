@@ -1,10 +1,10 @@
 //! Source syntax rejection through the production P4 parser
 
-use p4spec_rust::lang::data::value::ValueArena;
+use p4spectec::lang::data::value::ValueArena;
 
-use p4spec_rust::diagnostic::Report;
+use p4spectec::diagnostic::Report;
 
-use p4spec_rust::interface::p4::{error::P4ErrorKind, parse};
+use p4spectec::interface::p4::{error::P4ErrorKind, parse};
 
 use crate::Result;
 

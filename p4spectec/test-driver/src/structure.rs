@@ -3,7 +3,7 @@ use std::time::Instant;
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spec_rust::lang::traits::print::Print;
+use p4spectec::lang::traits::print::Print;
 
 use crate::{
     Error, Result, snapshot,
@@ -24,7 +24,7 @@ pub fn run(snapshots: &[StructureSnapshot]) -> Result<()> {
     let mut num_defs = 0;
     for snapshot in snapshots {
         progress.set_message(format!("structure: {}", snapshot.name));
-        let spec_sl = p4spec_rust::structure(&snapshot.inputs, snapshot.without_rule_groups)
+        let spec_sl = p4spectec::structure(&snapshot.inputs, snapshot.without_rule_groups)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         num_defs = spec_sl.len();
         let text_actual = Print::to_string(&spec_sl) + "\n";

@@ -8,11 +8,11 @@ use std::{
 use expect_test::{ExpectFile, expect_file};
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spec_rust::lang::data::value::external::Encoding;
+use p4spectec::lang::data::value::external::Encoding;
 
-use p4spec_rust::runner::{Config, Spec};
+use p4spectec::runner::{Config, Spec};
 
-use p4spec_rust::sim_plugin::{self, io::Tx};
+use p4spectec::sim_plugin::{self, io::Tx};
 
 use crate::{
     Error, ExecutionOptions, Result, corpus,
@@ -154,13 +154,13 @@ impl Results {
 /// Runs registered simulation suites with the selected interpreter.
 pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) -> Result<()> {
     run_with(config, language, options, || match language {
-        Language::Al => p4spec_rust::algo(&config.spec)
+        Language::Al => p4spectec::algo(&config.spec)
             .map(Spec::Al)
             .map_err(|error| Error::Invalid(error.to_string())),
-        Language::Sl => p4spec_rust::structure(&config.spec, true)
+        Language::Sl => p4spectec::structure(&config.spec, true)
             .map(Spec::Sl)
             .map_err(|error| Error::Invalid(error.to_string())),
-        Language::Pl => p4spec_rust::prosify(&config.spec)
+        Language::Pl => p4spectec::prosify(&config.spec)
             .map(Spec::Pl)
             .map_err(|error| Error::Invalid(error.to_string())),
     })

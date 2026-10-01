@@ -5,9 +5,9 @@
 
 use std::path::Path;
 
-use p4spec_rust::diagnostic::Report;
+use p4spectec::diagnostic::Report;
 
-use p4spec_rust::frontend::parse::{parse_files, parse_mixop};
+use p4spectec::frontend::parse::{parse_files, parse_mixop};
 
 use crate::Result;
 

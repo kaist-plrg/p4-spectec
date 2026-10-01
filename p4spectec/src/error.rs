@@ -3,7 +3,7 @@
 //! Command-owned checks construct reports before reading specification files.
 //! The CLI renders reports and selects exit codes at its output boundary.
 
-use p4spec_rust::diagnostic::{Diagnostic, Report, Severity};
+use p4spectec::diagnostic::{Diagnostic, Report, Severity};
 
 /// Constructs a command diagnostic without a specification source location.
 fn command(code: &str, message: impl Into<String>) -> Box<Report> {

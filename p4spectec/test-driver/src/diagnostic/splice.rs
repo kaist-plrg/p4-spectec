@@ -5,9 +5,9 @@
 
 use std::path::Path;
 
-use p4spec_rust::diagnostic::Report;
+use p4spectec::diagnostic::Report;
 
-use p4spec_rust::specdoc::splicer;
+use p4spectec::specdoc::splicer;
 
 use crate::Result;
 
@@ -26,10 +26,10 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
         return Err(failure(&case.name, "splice requires source specification inputs"));
     }
     // Obtain both document inputs from the product pipeline
-    let spec_el = p4spec_rust::frontend::parse::parse_files(&paths).map_err(|report| {
+    let spec_el = p4spectec::frontend::parse::parse_files(&paths).map_err(|report| {
         failure(&case.name, format!("parsing failed before splicing: {report}"))
     })?;
-    let spec_pl = p4spec_rust::prosify(&paths).map_err(|report| {
+    let spec_pl = p4spectec::prosify(&paths).map_err(|report| {
         failure(&case.name, format!("conversion failed before splicing: {report}"))
     })?;
     let path = case.path_input();

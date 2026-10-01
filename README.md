@@ -11,7 +11,7 @@ parser and the high-level architecture of the tool.
 
 Install [Rust through rustup](https://rustup.rs/), GNU Make, and a C compiler
 available as `cc`. The P4 parser also uses `cc` to preprocess P4 input files.
-The toolchain is pinned in `p4spec-rust/rust-toolchain.toml`; rustup selects it
+The toolchain is pinned in `p4spectec/rust-toolchain.toml`; rustup selects it
 when Make enters the Rust crate. OCaml, opam, and Dune are not required.
 
 On Linux, install the native build tools with your package manager, for example
@@ -26,20 +26,21 @@ git submodule update --init p4c
 make build
 ```
 
-This creates the debug executable `./p4spectec`. For an optimized executable:
+This creates the optimized executable `./bin/p4spectec`. `make` and
+`make release` also build in release mode. To build a debug executable:
 
 ```shell
-make release
-./p4spectec --help
+make debug
+./bin/p4spectec --help
 ```
 
-Both targets replace `./p4spectec`. Cargo's internal binary is named
-`p4spec-rust`, and build output defaults to `p4spec-rust/target/`.
+All build targets replace `./bin/p4spectec`. The Cargo package and binary are
+named `p4spectec`, and build output defaults to `p4spectec/target/`.
 To select another build directory, pass `CARGO_TARGET_DIR` to Make; a relative
 path is resolved from the directory where Make is invoked:
 
 ```shell
-make release CARGO_TARGET_DIR=target
+make build CARGO_TARGET_DIR=target
 ```
 
 Docker images and a Nix development shell are currently not provided.
@@ -52,16 +53,16 @@ SL (structured language), and PL (prose language).
 
 ```shell
 # Parse and elaborate the specification to IL
-./p4spectec elab spec
+./bin/p4spectec elab spec
 # Translate to AL
-./p4spectec algo spec
+./bin/p4spectec algo spec
 # Structure the specification as SL
-./p4spectec struct spec
+./bin/p4spectec struct spec
 # Generate PL
-./p4spectec prose spec
+./bin/p4spectec prose spec
 ```
 
-Run `./p4spectec <command> --help` for command-specific arguments.
+Run `./bin/p4spectec <command> --help` for command-specific arguments.
 
 ## Running P4 programs
 
@@ -70,10 +71,10 @@ or `Program_inst` for instantiation. SL is the default interpreter;
 `--al`, `--sl`, and `--pl` select a language explicitly.
 
 ```shell
-./p4spectec run spec --rel Program_ok -i p4c/p4include \
+./bin/p4spectec run spec --rel Program_ok -i p4c/p4include \
   -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4
 
-./p4spectec run spec --rel Program_inst -i p4c/p4include \
+./bin/p4spectec run spec --rel Program_inst -i p4c/p4include \
   -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 --al
 ```
 
@@ -81,7 +82,7 @@ or `Program_inst` for instantiation. SL is the default interpreter;
 `v1model`, `ebpf`, and `psa`:
 
 ```shell
-./p4spectec sim spec --arch v1model -i p4c/p4include \
+./bin/p4spectec sim spec --arch v1model -i p4c/p4include \
   -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
   --stf testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
 ```
@@ -126,9 +127,9 @@ in each document directory's `splice.missing` file.
 To splice another skeleton, use the Rust CLI's long options:
 
 ```shell
-./p4spectec splice spec --splice input.adoc --out output.adoc
+./bin/p4spectec splice spec --splice input.adoc --out output.adoc
 # Or replace the skeleton in place
-./p4spectec splice spec --splice input.adoc --inplace
+./bin/p4spectec splice spec --splice input.adoc --inplace
 ```
 
 ## Development and tests
@@ -146,7 +147,7 @@ make test         # Run all registered E2E suites
 `make test` runs specification/document snapshots, P4 parsing, diagnostics,
 and AL/SL/PL execution and simulation. Execution and simulation each run with
 cache enabled and determinism checking both disabled and enabled.
-The suite registrations live in `p4spec-rust/test-driver/suites.json`.
+The suite registrations live in `p4spectec/test-driver/suites.json`.
 
 Individual targets are available for focused runs:
 
@@ -167,7 +168,7 @@ separate `make test-diagnostics-promote` target. These commands rerun the suites
 review their diffs before committing. P4 parsing, structure, execution,
 simulation, and exclusions are not promoted by these targets.
 
-`make clean` removes the root executable and the selected Cargo build directory.
+`make clean` removes `bin/p4spectec` and the selected Cargo build directory.
 
 CI runs Rust builds, formatting, Clippy, API documentation, E2E acceptance, and
 HTML specification generation for pull requests and pushes to `rust-port`

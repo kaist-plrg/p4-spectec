@@ -10,11 +10,11 @@ use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
 
-use p4spec_rust::lang::{data::value::external::Encoding, traits::print::Print};
+use p4spectec::lang::{data::value::external::Encoding, traits::print::Print};
 
-use p4spec_rust::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
+use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
-use p4spec_rust::runner::{self, RunError};
+use p4spectec::runner::{self, RunError};
 
 // = Helpers
 
@@ -63,7 +63,7 @@ struct ElabArgs {
 
 /// Elaborates the specifications and prints the internal language.
 fn elab_command(args: ElabArgs) -> Result<(), ()> {
-    let spec_il = report_warnings(p4spec_rust::elab_with_warnings(&args.paths))
+    let spec_il = report_warnings(p4spectec::elab_with_warnings(&args.paths))
         .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_il));
     Ok(())
@@ -81,7 +81,7 @@ struct AlgoArgs {
 
 /// Converts the specifications and prints the algorithmic language.
 fn algo_command(args: AlgoArgs) -> Result<(), ()> {
-    let spec_al = report_warnings(p4spec_rust::algo_with_warnings(&args.paths))
+    let spec_al = report_warnings(p4spectec::algo_with_warnings(&args.paths))
         .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_al));
     Ok(())
@@ -99,7 +99,7 @@ struct StructArgs {
 
 /// Structures the specifications and prints them without rule groups.
 fn struct_command(args: StructArgs) -> Result<(), ()> {
-    let spec_sl = report_warnings(p4spec_rust::structure_with_warnings(&args.paths, true))
+    let spec_sl = report_warnings(p4spectec::structure_with_warnings(&args.paths, true))
         .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_sl));
     Ok(())
@@ -117,7 +117,7 @@ struct ProseArgs {
 
 /// Converts the specifications and prints the prose language.
 fn prose_command(args: ProseArgs) -> Result<(), ()> {
-    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))
+    let spec_pl = report_warnings(p4spectec::prosify_with_warnings(&args.paths))
         .map_err(|report| render_report(&report))?;
     println!("{}", Print::to_string(&spec_pl));
     Ok(())
@@ -175,10 +175,10 @@ fn splice_command(args: SpliceArgs) -> Result<(), ()> {
             .collect()
     };
     // Retain source definitions alongside the annotated prose representation
-    let (spec_el, spec_pl) = report_warnings(p4spec_rust::specdoc_spec_with_warnings(&args.paths))
+    let (spec_el, spec_pl) = report_warnings(p4spectec::specdoc_spec_with_warnings(&args.paths))
         .map_err(|report| render_report(&report))?;
     // Render accumulated splice warnings before propagating the file result
-    report_warnings(p4spec_rust::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
+    report_warnings(p4spectec::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
         .map_err(|report| render_report(&report))?;
     Ok(())
 }
@@ -201,13 +201,13 @@ struct InterpArgs {
 }
 
 impl InterpArgs {
-    fn spec_lang(&self) -> p4spec_rust::SpecLang {
+    fn spec_lang(&self) -> p4spectec::SpecLang {
         if self.al {
-            p4spec_rust::SpecLang::Al
+            p4spectec::SpecLang::Al
         } else if self.pl {
-            p4spec_rust::SpecLang::Pl
+            p4spectec::SpecLang::Pl
         } else {
-            p4spec_rust::SpecLang::Sl
+            p4spectec::SpecLang::Sl
         }
     }
 }
@@ -243,7 +243,7 @@ struct RunArgs {
 /// Prepares and runs a program, rendering diagnostics at the CLI boundary.
 fn run_command(args: RunArgs) -> Result<(), ()> {
     // Render specification warnings before constructing the runner
-    let spec = report_warnings(p4spec_rust::runner_spec_with_warnings(
+    let spec = report_warnings(p4spectec::runner_spec_with_warnings(
         args.interpreter.spec_lang(),
         &args.paths,
     ))
@@ -251,7 +251,7 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
 
     // Execute with the requested interpreter controls
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
-    p4spec_rust::run(spec, config, &args.relation, &args.includes, &args.program).map_err(
+    p4spectec::run(spec, config, &args.relation, &args.includes, &args.program).map_err(
         |error| match error {
             RunError::Build(report) => {
                 // Render runner preparation with the default presentation
@@ -312,7 +312,7 @@ struct SimArgs {
 /// Prepares a simulator and runs its STF test with CLI progress output.
 fn sim_command(args: SimArgs) -> Result<(), ()> {
     // Render specification warnings before constructing the simulator
-    let spec = report_warnings(p4spec_rust::runner_spec_with_warnings(
+    let spec = report_warnings(p4spectec::runner_spec_with_warnings(
         args.interpreter.spec_lang(),
         &args.paths,
     ))
@@ -320,9 +320,8 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
 
     // Build the requested native architecture
     let config = runner::Config::new(!args.no_cache, args.det, args.guard);
-    let mut simulator =
-        p4spec_rust::build_simulator(spec, &args.arch, config, args.plugin_encoding)
-            .map_err(|report| render_report(&report))?;
+    let mut simulator = p4spectec::build_simulator(spec, &args.arch, config, args.plugin_encoding)
+        .map_err(|report| render_report(&report))?;
 
     // Print matched packets as execution proceeds
     simulator

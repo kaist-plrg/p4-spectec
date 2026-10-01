@@ -5,9 +5,9 @@
 
 use std::path::Path;
 
-use p4spec_rust::diagnostic::{Report, ReportKind, Severity};
+use p4spectec::diagnostic::{Report, ReportKind, Severity};
 
-use p4spec_rust::specdoc::adoc;
+use p4spectec::specdoc::adoc;
 
 use crate::Result;
 
@@ -23,7 +23,7 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
 fn run_case(case: &Case) -> Result<Vec<Report>> {
     let path = case.path_input();
     // Earlier diagnostics reject setup before backend acceptance
-    let (result, reports) = p4spec_rust::prosify_with_warnings(std::slice::from_ref(&path));
+    let (result, reports) = p4spectec::prosify_with_warnings(std::slice::from_ref(&path));
     let spec_pl = result.map_err(|report| {
         failure(&case.name, format!("conversion failed before AsciiDoc rendering: {report}"))
     })?;

@@ -2,19 +2,19 @@ use std::{fs, path::Path, time::Instant};
 
 use expect_test::expect_file;
 
-use p4spec_rust::diagnostic::{RenderConfig, Renderer};
+use p4spectec::diagnostic::{RenderConfig, Renderer};
 
-use p4spec_rust::frontend::parse::parse_files;
+use p4spectec::frontend::parse::parse_files;
 
-use p4spec_rust::pass::elaborate;
+use p4spectec::pass::elaborate;
 
-use p4spec_rust::pass::algo;
+use p4spectec::pass::algo;
 
-use p4spec_rust::pass::structure;
+use p4spectec::pass::structure;
 
-use p4spec_rust::pass::prosify;
+use p4spectec::pass::prosify;
 
-use p4spec_rust::specdoc::adoc;
+use p4spectec::specdoc::adoc;
 
 use crate::{
     Error, Result, snapshot,

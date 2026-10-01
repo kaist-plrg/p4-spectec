@@ -7,9 +7,9 @@ use std::{
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spec_rust::lang::data::value::ValueArena;
+use p4spectec::lang::data::value::ValueArena;
 
-use p4spec_rust::interface::p4::{
+use p4spectec::interface::p4::{
     error::P4Error,
     parse::{parse_file, parse_string},
     unparse::P4Unparser,
@@ -27,7 +27,7 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
     let program = match parse_file(&mut arena, includes, path) {
         Ok(program) => program,
         Err(error) => match error {
-            P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
+            P4Error { kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
                 return Ok(Outcome::ParseFail);
             }
             _ => {
@@ -41,7 +41,7 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
     let program_roundtrip = match parse_string(&mut arena, path, &text) {
         Ok(program) => program,
         Err(error) => match error {
-            P4Error { kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
+            P4Error { kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_), .. } => {
                 return Ok(Outcome::ReparseFail);
             }
             _ => {
@@ -76,7 +76,7 @@ pub fn run(config: &ParseConfig) -> Result<()> {
     let collected: usize = suites.iter().map(|(paths, _)| paths.len()).sum();
     eprintln!("P4 parser: collected={collected}, excluded=0; preparing print hints");
     let spec_al =
-        p4spec_rust::algo(&config.spec).map_err(|error| Error::Invalid(error.to_string()))?;
+        p4spectec::algo(&config.spec).map_err(|error| Error::Invalid(error.to_string()))?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
     let includes = &config.includes;
     for path in includes {

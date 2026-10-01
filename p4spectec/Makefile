@@ -6,13 +6,13 @@ ifeq ($(filter /%,$(TARGET_DIR)),)
 TARGET_DIR := $(CURDIR)/$(TARGET_DIR)
 endif
 
-.PHONY: build release fmt fmt-check lint rustdoc clean
+.PHONY: build release debug fmt fmt-check lint rustdoc clean
 
-build:
-	$(CARGO) build --locked --bin p4spec-rust --target-dir "$(TARGET_DIR)"
+debug:
+	$(CARGO) build --locked --bin p4spectec --target-dir "$(TARGET_DIR)"
 
-release:
-	$(CARGO) build --locked --release --bin p4spec-rust --target-dir "$(TARGET_DIR)"
+build release:
+	$(CARGO) build --locked --release --bin p4spectec --target-dir "$(TARGET_DIR)"
 
 fmt:
 	$(CARGO) fmt
@@ -42,7 +42,7 @@ test: test-expected test-sim-al test-sim-sl test-sim-pl
 .PHONY: test-expected test-promote test-elab test-algo test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl
 .PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
 DRIVER = $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --
-DIAGNOSTIC_CLI = $(TARGET_DIR)/release/p4spec-rust
+DIAGNOSTIC_CLI = $(TARGET_DIR)/release/p4spectec
 
 test-elab:
 	env -u UPDATE_EXPECT $(DRIVER) elab

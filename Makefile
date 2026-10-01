@@ -1,5 +1,5 @@
-SPEC = p4spectec
-RUST_DIR = p4spec-rust
+SPEC = bin/p4spectec
+RUST_DIR = p4spectec
 # Resolve an override before entering the Rust crate or documentation directories
 override CARGO_TARGET_DIR := $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),$(RUST_DIR)/target)
 ifeq ($(filter /%,$(CARGO_TARGET_DIR)),)
@@ -12,12 +12,13 @@ export CARGO_TARGET_DIR
 # Recursive Rust tests still use the caller's parallel job count
 .NOTPARALLEL:
 
-.PHONY: build release fmt fmt-check lint rustdoc clean promote
+.PHONY: build release debug fmt fmt-check lint rustdoc clean promote
 
-build release:
+build release debug:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
+	mkdir -p $(dir $(SPEC))
 	rm -f ./$(SPEC)
-	cp "$(CARGO_TARGET_DIR)/$(if $(filter release,$@),release,debug)/p4spec-rust" ./$(SPEC)
+	cp "$(CARGO_TARGET_DIR)/$(if $(filter debug,$@),debug,release)/p4spectec" ./$(SPEC)
 
 fmt fmt-check lint rustdoc:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@

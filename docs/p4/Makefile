@@ -4,7 +4,7 @@ ROUGE_STYLE=github
 ROUGE_CSS=style
 ROUGE_LEXER=./resources/rouge/watsup.rb
 
-SPECTEC=p4spectec
+SPECTEC=bin/p4spectec
 SPECFILES=../../spec/*/*.watsup
 SPEC=P4-16-spec-new
 RELEASE=P4-16-spec-release
@@ -14,7 +14,7 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
 spectec:
-	$(MAKE) -C ../.. release
+	$(MAKE) -C ../.. build
 
 splice: spectec
 	rm -rf sections

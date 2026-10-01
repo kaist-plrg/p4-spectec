@@ -5,13 +5,13 @@
 
 use std::path::Path;
 
-use p4spec_rust::diagnostic::Report;
+use p4spectec::diagnostic::Report;
 
-use p4spec_rust::frontend::parse::parse_files;
+use p4spectec::frontend::parse::parse_files;
 
-use p4spec_rust::pass::elaborate;
+use p4spectec::pass::elaborate;
 
-use p4spec_rust::pass::algo;
+use p4spectec::pass::algo;
 
 use crate::Result;
 

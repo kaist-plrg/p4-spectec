@@ -3,11 +3,11 @@ use std::{collections::BTreeSet, fs, path::PathBuf, sync::mpsc, thread, time::In
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spec_rust::runner::{self, BuiltinInterface, Config, Interpreter, Runner};
+use p4spectec::runner::{self, BuiltinInterface, Config, Interpreter, Runner};
 
-use p4spec_rust::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
+use p4spectec::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
 
-use p4spec_rust::sim_plugin::dummy::Dummy;
+use p4spectec::sim_plugin::dummy::Dummy;
 
 use crate::{
     Error, ExecutionOptions, Result,
@@ -45,7 +45,7 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
     match language {
         Language::Al => {
             run_with(config, &format!("AL cache={text_cache} det={det}"), suites, || {
-                let spec_al = p4spec_rust::algo(&config.spec)
+                let spec_al = p4spectec::algo(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
                 runner::build_al(spec_al, Config::new(cache_on, det, false), Dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
@@ -53,7 +53,7 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
         }
         Language::Sl => {
             run_with(config, &format!("SL cache={text_cache} det={det}"), suites, || {
-                let spec_sl = p4spec_rust::structure(&config.spec, true)
+                let spec_sl = p4spectec::structure(&config.spec, true)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
                 runner::build_sl(spec_sl, Config::new(cache_on, det, false), Dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
@@ -61,7 +61,7 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
         }
         Language::Pl => {
             run_with(config, &format!("PL cache={text_cache} det={det}"), suites, || {
-                let spec_pl = p4spec_rust::prosify(&config.spec)
+                let spec_pl = p4spectec::prosify(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
                 runner::build_pl(spec_pl, Config::new(cache_on, det, false), Dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
@@ -155,7 +155,7 @@ where
                             Err(_) => Outcome::Fail,
                         },
                         Err(P4Error {
-                            kind: p4spec_rust::interface::p4::error::P4ErrorKind::Syntax(_),
+                            kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_),
                             ..
                         }) => Outcome::Fail,
                         Err(error) => {

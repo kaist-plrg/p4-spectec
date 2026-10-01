@@ -37,7 +37,7 @@ use expect_test::expect_file;
 use indicatif::ProgressBar;
 use serde::Deserialize;
 
-use p4spec_rust::diagnostic::{RenderConfig, Renderer, Report};
+use p4spectec::diagnostic::{RenderConfig, Renderer, Report};
 
 use crate::{Error, Result};
 

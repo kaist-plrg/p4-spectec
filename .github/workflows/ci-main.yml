@@ -26,7 +26,7 @@ jobs:
           submodules: true
 
       - name: Select the pinned Rust toolchain
-        working-directory: p4spec-rust
+        working-directory: p4spectec
         run: rustup show
 
       - name: Cache Rust dependencies and build output
@@ -35,8 +35,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            p4spec-rust/target
-          key: rust-${{ runner.os }}-${{ hashFiles('p4spec-rust/rust-toolchain.toml', '**/Cargo.lock') }}
+            p4spectec/target
+          key: rust-${{ runner.os }}-${{ hashFiles('p4spectec/rust-toolchain.toml', '**/Cargo.lock') }}
 
       - name: Install native and document dependencies
         run: |
@@ -48,7 +48,7 @@ jobs:
         run: make fmt-check lint
 
       - name: Build debug, release, and API documentation
-        run: make build release rustdoc
+        run: make debug build rustdoc
 
       - name: Run registered E2E acceptance
         run: make -j2 test
@@ -61,4 +61,4 @@ jobs:
         run: make p4spec-release slspec alspec
 
       - name: Check that acceptance leaves fixtures unchanged
-        run: git diff --exit-code -- p4spec-rust/test-driver excludes testdata patches
+        run: git diff --exit-code -- p4spectec/test-driver excludes testdata patches

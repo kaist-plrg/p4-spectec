@@ -5,9 +5,9 @@
 
 use std::path::Path;
 
-use p4spec_rust::diagnostic::Report;
+use p4spectec::diagnostic::Report;
 
-use p4spec_rust::pass::structure;
+use p4spectec::pass::structure;
 
 use crate::Result;
 
@@ -22,7 +22,7 @@ pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
 /// Requires a structure failure after successful source-to-AL conversion.
 fn run_case(case: &Case) -> Result<Vec<Report>> {
     // Keep earlier pass failures out of the structure snapshot
-    let spec_al = p4spec_rust::algo(&[case.path_input()]).map_err(|report| {
+    let spec_al = p4spectec::algo(&[case.path_input()]).map_err(|report| {
         failure(&case.name, format!("conversion failed before structuring: {report}"))
     })?;
     let without_rule_groups = match case.args.as_slice() {
