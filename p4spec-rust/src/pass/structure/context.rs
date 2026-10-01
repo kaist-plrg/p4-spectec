@@ -6,18 +6,19 @@
 //! for example to expand a variant type when totalizing a case analysis
 //! or to pick fresh input names from meta-variable types.
 
-use crate::{
-    lang::{
-        al::ast,
-        common::{Id, source::Span},
-        data::typ,
-    },
-    phrase,
-    runtime::{
-        envs::algo::{MEnv, TDEnv},
-        typdef::TypeDef,
-    },
+use crate::lang::{
+    common::{Id, source::Span},
+    data::typ,
 };
+
+use crate::lang::al::ast;
+
+use crate::runtime::{
+    envs::algo::{MEnv, TDEnv},
+    typdef::TypeDef,
+};
+
+use crate::phrase;
 
 /// Type and meta-variable environments of the specification being structured.
 #[derive(Clone, Debug)]

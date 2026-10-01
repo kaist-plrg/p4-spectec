@@ -9,9 +9,11 @@
 //!
 //! Renderer, layout, and serializer call these in that order.
 
-use super::doc::*;
-use crate::backend_specdoc::latex::error::{self, Result};
 use crate::lang::common::source::Span;
+
+use crate::backend_specdoc::latex::error::{self, Result};
+
+use super::doc::*;
 
 // == Targets
 //

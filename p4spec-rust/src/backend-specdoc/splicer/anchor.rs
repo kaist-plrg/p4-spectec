@@ -3,16 +3,19 @@
 //! Target collection precedes rendering across every input file.
 //! Only title markers for declared EL identifiers create reference destinations.
 
-use super::error;
-use crate::{
-    diagnostic::Report,
-    lang::{common::source::Phrase, el::ast as el},
-};
 use std::collections::BTreeSet;
 
-// == Anchor targets
+use crate::lang::common::source::Phrase;
+
+use crate::lang::el::ast as el;
+
+use crate::diagnostic::Report;
 
 use super::super::anchor::Presentation;
+
+use super::error;
+
+// == Anchor targets
 
 #[derive(Default)]
 pub(super) struct Decls {

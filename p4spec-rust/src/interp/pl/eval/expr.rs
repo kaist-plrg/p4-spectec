@@ -6,16 +6,17 @@
 
 use std::borrow::Borrow;
 
+use crate::lang::data::value::Value;
+
+use crate::runtime::envs::interp::pl::ast_prepared as ast;
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{backtrack::Backtrack, eval::expr as shared};
+
+use crate::interp::pl::{PlInterp, context::Context};
+
 use super::strip::strip_exp;
-use crate::{
-    interp::{
-        pl::{PlInterp, context::Context},
-        shared::{backtrack::Backtrack, eval::expr as shared},
-    },
-    lang::data::value::Value,
-    runner::{Extern, Interface, RunnerContext},
-    runtime::envs::interp::pl::ast_prepared as ast,
-};
 
 // = Expression evaluation
 

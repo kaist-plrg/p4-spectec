@@ -4,8 +4,9 @@
 //! an explicit fallback makes it false.
 //! A total `Case` also gets `dangle=false`.
 
-use super::ol::ast as ol;
 use crate::lang::sl::ast as sl;
+
+use super::ol::ast as ol;
 
 // == Instructions
 

@@ -4,7 +4,6 @@
 //! Everything else here is stage-independent:
 //! `expr`, `assign`, `arg`, `path`, `ops`, and `iter`.
 
-use crate::interp::shared::prepare::ast;
 pub(crate) mod arg;
 pub mod assign;
 pub(crate) mod expr;
@@ -12,11 +11,13 @@ pub mod iter;
 pub(crate) mod ops;
 pub(crate) mod path;
 
+use crate::lang::data::value::Value;
+
+use crate::runner::{Extern, Interface, Interpreter, RunnerContext};
+
+use crate::interp::shared::prepare::ast;
+
 use super::{backtrack::Backtrack, context::IterContext};
-use crate::{
-    lang::data::value::Value,
-    runner::{Extern, Interface, Interpreter, RunnerContext},
-};
 
 // = Invocation
 

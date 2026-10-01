@@ -2,10 +2,9 @@
 //!
 //! Frame messages are formatted only after evaluation fails.
 
-use crate::lang::{
-    il::ast::{Id, Typ},
-    traits::print::Print,
-};
+use crate::lang::traits::print::Print;
+
+use crate::lang::il::ast::{Id, Typ};
 
 /// Describes a function invocation, including supplied type arguments.
 pub fn message_func_invocation(id: &Id, targs: &[Typ]) -> String {

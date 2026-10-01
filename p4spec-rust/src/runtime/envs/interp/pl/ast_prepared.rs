@@ -4,11 +4,11 @@
 //! Identifiers and iterations resolve to the same slots as AL and SL;
 //! evaluation removes expression hints at the shared evaluator boundary.
 
+use crate::lang::data::var::{IdSlot, VarSlot};
+
+use crate::lang::pl::ast as source;
+
 pub use crate::interp::shared::prepare::ast::*;
-use crate::lang::{
-    data::var::{IdSlot, VarSlot},
-    pl::ast as source,
-};
 
 pub use source::{Fallthrough, RelSignature, TierInstr};
 

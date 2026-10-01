@@ -4,14 +4,15 @@
 
 pub mod ast_prepared;
 
-use super::shared::callable::Callable;
-
-use self::ast_prepared as ast;
 use std::rc::Rc;
 
 use crate::lang::common::ds::map::IdMap;
 
+use super::shared::callable::Callable;
+
 pub use super::shared::TDEnv;
+
+use self::ast_prepared as ast;
 /// Relations to their prepared callables.
 pub type REnv = IdMap<Callable<ast::RelDef>>;
 /// Functions to their prepared callables, shared through `Rc`.

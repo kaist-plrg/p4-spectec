@@ -8,19 +8,25 @@
 
 use std::collections::HashMap;
 
-use crate::{
-    lang::data::value::{Value, ValueArena, ValueCase, ValueKind},
-    lang::{
-        al,
-        common::notation::{atom::Atom, mixfix::Mixfix, mixop::Mixop},
-        common::prim::num::Number,
-        hints::alter::{self, AlterHint, Renderer},
-        il::ast::{DefTypKind, Hint, TypCase, TypKind},
-        pl, sl,
-        traits::print::Print,
+use crate::util::text::escape_text;
+
+use crate::lang::{
+    common::{
+        notation::{atom::Atom, mixfix::Mixfix, mixop::Mixop},
+        prim::num::Number,
     },
-    util::text::escape_text,
+    data::value::{Value, ValueArena, ValueCase, ValueKind},
+    hints::alter::{self, AlterHint, Renderer},
+    traits::print::Print,
 };
+
+use crate::lang::il::ast::{DefTypKind, Hint, TypCase, TypKind};
+
+use crate::lang::al;
+
+use crate::lang::sl;
+
+use crate::lang::pl;
 
 use super::error::P4UnparseError;
 

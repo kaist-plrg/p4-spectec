@@ -5,11 +5,13 @@
 //! so extern calls can reenter without a second mutable interpreter borrow.
 //! Mismatches allow another candidate; host failures always abort.
 
-use crate::{
-    diagnostic::Report,
-    lang::{common::source::Span, data::value::Value, il::ast::Typ},
-    runner::{ExternError, InterfaceError},
-};
+use crate::lang::{common::source::Span, data::value::Value};
+
+use crate::lang::il::ast::Typ;
+
+use crate::diagnostic::Report;
+
+use crate::runner::{ExternError, InterfaceError};
 
 use super::{Extern, Interface, RunnerContext};
 

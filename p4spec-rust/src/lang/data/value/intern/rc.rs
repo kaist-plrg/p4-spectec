@@ -12,8 +12,9 @@ use std::{
     rc::Rc,
 };
 
-use super::idx::Interned;
 use foldhash::fast::RandomState;
+
+use super::idx::Interned;
 
 // = Interning storage
 

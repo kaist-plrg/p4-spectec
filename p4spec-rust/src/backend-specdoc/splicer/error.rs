@@ -7,10 +7,9 @@
 
 use std::path::Path;
 
-use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::common::source::Span,
-};
+use crate::lang::common::source::Span;
+
+use crate::diagnostic::{Diagnostic, Label, Report, Severity};
 
 // == Errors
 

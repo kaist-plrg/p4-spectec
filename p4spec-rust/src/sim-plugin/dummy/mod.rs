@@ -4,12 +4,11 @@
 //! Compile-time assertions such as `static_assert` are supported;
 //! runtime extern function and method calls are not.
 
-use crate::{
-    lang::data::value::Value,
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
-};
+use crate::lang::data::value::Value;
 
-use super::externs as external;
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
+
+use super::externs;
 
 pub mod pipe;
 
@@ -18,7 +17,7 @@ pub use pipe::Dummy;
 // == Extern calls
 
 /// Hands every extern hook to the pipeline module.
-impl external::Impl for Dummy {
+impl externs::Impl for Dummy {
     fn eval_extern_init<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,

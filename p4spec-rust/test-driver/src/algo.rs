@@ -1,8 +1,11 @@
-use crate::{Error, Result, snapshot};
+use std::{path::Path, time::Instant};
+
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
+
 use p4spec_rust::lang::traits::print::Print;
-use std::{path::Path, time::Instant};
+
+use crate::{Error, Result, snapshot};
 
 pub fn run() -> Result<()> {
     let start = Instant::now();

@@ -6,7 +6,6 @@
 
 use std::fmt;
 
-use super::super::typ::Typ;
 use crate::lang::{
     common::{Id, Iter, ds::set::IdSet},
     traits::{
@@ -15,6 +14,8 @@ use crate::lang::{
         print::{Print, Printer},
     },
 };
+
+use super::super::typ::Typ;
 
 /// A variable reference.
 #[derive(Clone, Debug, PartialEq)]

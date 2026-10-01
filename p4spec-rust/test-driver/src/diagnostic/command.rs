@@ -10,8 +10,9 @@ use std::{
     process::Command,
 };
 
-use super::failure;
 use crate::Result;
+
+use super::failure;
 
 /// Owns one subprocess directory without changing the driver's working directory.
 struct Directory(PathBuf);

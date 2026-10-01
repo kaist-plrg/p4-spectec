@@ -6,13 +6,11 @@
 //! `optimize_sub_typ` reduces a static subtype relation
 //! to the runtime check still needed.
 
-use crate::{
-    lang::{
-        common::prim::num,
-        il::ast::{self, DefTypKind, Iter, Subcheck, TypKind},
-    },
-    runtime::{envs::elab::TDEnv, typdef::TypeDef},
-};
+use crate::lang::common::prim::num;
+
+use crate::lang::il::ast::{self, DefTypKind, Iter, Subcheck, TypKind};
+
+use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
 use super::{
     Fresh, Theta, TypeArityMismatch, TypeError, TypeErrorKind, equiv_not_typ, equiv_typ_expanded,

@@ -6,18 +6,18 @@
 
 use std::borrow::Borrow;
 
-use super::strip::strip_exp;
-use crate::{
-    interp::{
-        pl::context::Context,
-        shared::{
-            backtrack::{Backtrack, ok, unwrap},
-            eval::assign as shared,
-        },
-    },
-    lang::data::value::{Value, ValueArena},
-    runtime::envs::interp::pl::ast_prepared as ast,
+use crate::lang::data::value::{Value, ValueArena};
+
+use crate::runtime::envs::interp::pl::ast_prepared as ast;
+
+use crate::interp::shared::{
+    backtrack::{Backtrack, ok, unwrap},
+    eval::assign as shared,
 };
+
+use crate::interp::pl::context::Context;
+
+use super::strip::strip_exp;
 
 use shared::assign_def;
 

@@ -49,9 +49,9 @@ use std::rc::Rc;
 
 use num_bigint::BigInt;
 
-use crate::lang::{
-    common::prim::num::Natural,
-    common::source::{Phrase, Position, Span},
+use crate::lang::common::{
+    prim::num::Natural,
+    source::{Phrase, Position, Span},
 };
 
 use super::error::{self, LexError};

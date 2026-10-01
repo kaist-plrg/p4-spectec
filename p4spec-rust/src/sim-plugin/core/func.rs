@@ -4,17 +4,17 @@
 //! and return specification values:
 //! a boolean, or a parser `RETURN`/`REJECT` result.
 
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, make},
-        },
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, make},
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
 };
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::sim_plugin::error;
 
 use super::super::spec::{func, unpack};
 

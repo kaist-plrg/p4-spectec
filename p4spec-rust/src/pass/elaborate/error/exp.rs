@@ -3,10 +3,16 @@
 //! Expression attempts create these terminal causes and keep them beneath
 //! uncoded attempt frames until one alternative succeeds or elaboration finishes.
 
+use crate::lang::{common::source::Span, traits::print::Print};
+
+use crate::lang::el::ast as el;
+
+use crate::lang::il::ast as il;
+
 use crate::diagnostic::{Label, Report, ReportKind};
-use crate::lang::{common::source::Span, el::ast as el, il::ast as il, traits::print::Print};
 
 use super::super::expect::{ExpExpect, ExpExpectKind, StructExpect};
+
 use super::{ElabError, cause};
 
 const EXPRESSION_INFERENCE_INVALID: &str = "elab/expression-inference-invalid";

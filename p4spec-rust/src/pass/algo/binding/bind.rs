@@ -7,13 +7,11 @@
 //! In `let (x, x) = e`, `x` is `Multiple`
 //! and later gets renamed with an equality side condition.
 
-use crate::{
-    lang::{
-        common::{Id, ds::map::IdMap},
-        il::ast,
-    },
-    runtime::{dim::Dim, envs::algo::VEnv},
-};
+use crate::lang::common::{Id, ds::map::IdMap};
+
+use crate::lang::il::ast;
+
+use crate::runtime::{dim::Dim, envs::algo::VEnv};
 
 use super::super::{AlgoError, error};
 

@@ -4,25 +4,28 @@
 //! random, clone, truncate, assert, and assume are not implemented;
 //! the pipeline's dispatch rejects them as unsupported calls.
 
-use super::{V1Model, packet::CloneInfo, pipe};
-use crate::sim_plugin::{
-    core::object::PacketIn,
-    error, hash as checksum,
-    spec::{func, pack, rel, unpack},
-};
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-    util::bigint::remainder,
-};
 use num_bigint::BigInt;
 use num_traits::Zero;
+
+use crate::util::bigint::remainder;
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::sim_plugin::{
+    core::object::PacketIn,
+    error, hash,
+    spec::{func, pack, rel, unpack},
+};
+
+use super::{V1Model, packet::CloneInfo, pipe};
 
 /// Calling digest causes a message containing the values specified in
 /// the data parameter to be sent to the control plane software.  It is
@@ -230,7 +233,7 @@ where
         ))
         .into());
     }
-    checksum::compute_checksum(&id_field, None, ctx.arena(), &values)
+    hash::compute_checksum(&id_field, None, ctx.arena(), &values)
 }
 
 /// Shared body of `verify_checksum` and its `_with_payload` variant.

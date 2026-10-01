@@ -3,24 +3,26 @@
 //! State is the running ones-complement sum;
 //! `add` and `subtract` fold data in and out, `get` returns the complement.
 
+use num_bigint::BigInt;
+use num_traits::Zero;
+use serde::{Deserialize, Serialize};
+
+use crate::util::bigint;
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
 use crate::sim_plugin::{
     hash,
     spec::{func, pack, unpack},
 };
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-    util::bigint,
-};
-use num_bigint::BigInt;
-use num_traits::Zero;
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// The running ones-complement sum.

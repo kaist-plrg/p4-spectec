@@ -11,15 +11,15 @@ use std::rc::Rc;
 use num_bigint::BigInt;
 
 use crate::lang::{
-    common::prim::num,
-    common::source::Span,
+    common::{prim::num, source::Span},
     data::{
         typ,
         value::{Value, ValueArena, ValueKind, get, make},
     },
-    il::ast::Typ,
     traits::{cmp::SyntaxCmp, eq::SyntaxEq},
 };
+
+use crate::lang::il::ast::Typ;
 
 use super::{BuiltinError, extract};
 

@@ -6,10 +6,13 @@
 
 use std::{env, fs, path::PathBuf};
 
-use p4spec_rust::{backend_specdoc::splicer, diagnostic::Report};
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::backend_specdoc::splicer;
+
+use crate::Result;
 
 use super::failure;
-use crate::Result;
 
 // == Rejection checks
 

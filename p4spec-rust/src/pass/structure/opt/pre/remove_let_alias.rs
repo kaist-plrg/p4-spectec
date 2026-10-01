@@ -15,13 +15,14 @@
 //! so that uses of `y` still refer to the outer `x`;
 //! iterated aliases need matching iterators.
 
-use crate::lang::common::source::Span;
-use crate::lang::{
-    il::ast::{ExpKind, Id, Iter},
-    traits::eq::SyntaxEq,
+use crate::lang::{common::source::Span, traits::eq::SyntaxEq};
+
+use crate::lang::il::ast::{ExpKind, Id, Iter};
+
+use crate::pass::structure::{
+    ol::ast::*,
+    re::{renamer::Renamer, replacer::Replacer},
 };
-use crate::pass::structure::ol::ast::*;
-use crate::pass::structure::re::{renamer::Renamer, replacer::Replacer};
 
 // == Instructions
 

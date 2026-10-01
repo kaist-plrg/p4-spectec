@@ -3,10 +3,9 @@
 //! Relation declarations emit input-hint warnings directly, while premise and
 //! rule elaboration attach these failures to their enclosing attempt frames.
 
-use crate::{
-    diagnostic::{Label, Report},
-    lang::common::{Id, source::Span},
-};
+use crate::lang::common::{Id, source::Span};
+
+use crate::diagnostic::{Label, Report};
 
 use super::{ElabError, cause, warning};
 

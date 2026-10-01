@@ -5,12 +5,11 @@
 //! the scheduler in `pipe` acts on them once the control returns.
 //! Stateful objects live in `object`, extern functions in `func`.
 
-use crate::{
-    lang::data::value::Value,
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
-};
+use crate::lang::data::value::Value;
 
-use super::externs as external;
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
+
+use super::externs;
 
 pub mod arch;
 pub mod func;
@@ -25,7 +24,7 @@ pub use pipe::{V1Model, drive_pipe, init_pipe, transform_stf_stmt};
 // == Extern calls
 
 /// Hands every extern hook to the pipeline module.
-impl external::Impl for V1Model {
+impl externs::Impl for V1Model {
     fn eval_extern_init<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,

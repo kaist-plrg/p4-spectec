@@ -12,20 +12,22 @@
 //! -- let (int, int', int'') = ...,
 //! -- if int = int' && int = int''
 
-use crate::{
-    lang::{
-        al,
-        common::prim,
-        common::{
-            Id,
-            ds::{map::IdMap, set::IdSet},
-        },
-        il::ast,
-        traits::free::FreeIds,
+use crate::lang::{
+    common::{
+        Id,
+        ds::{map::IdMap, set::IdSet},
+        prim,
     },
-    note_phrase, phrase,
-    runtime::{dim::Dim, envs::algo::VEnv},
+    traits::free::FreeIds,
 };
+
+use crate::lang::il::ast;
+
+use crate::lang::al;
+
+use crate::runtime::{dim::Dim, envs::algo::VEnv};
+
+use crate::{note_phrase, phrase};
 
 use super::{
     bind::{BEnv, Binding},

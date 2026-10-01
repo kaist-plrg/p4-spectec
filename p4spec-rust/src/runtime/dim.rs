@@ -6,13 +6,12 @@
 
 use std::fmt;
 
-use crate::lang::{
-    il::ast::{self, Iter},
-    traits::{
-        eq::SyntaxEq,
-        print::{Print, Printer},
-    },
+use crate::lang::traits::{
+    eq::SyntaxEq,
+    print::{Print, Printer},
 };
+
+use crate::lang::il::ast::{self, Iter};
 
 /// A base type paired with the iteration dimensions around it.
 #[derive(Clone, Debug, PartialEq)]

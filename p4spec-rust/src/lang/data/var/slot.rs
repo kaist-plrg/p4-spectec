@@ -5,7 +5,6 @@
 
 use std::fmt;
 
-use super::Var;
 use crate::lang::{
     common::Id,
     traits::{
@@ -13,6 +12,8 @@ use crate::lang::{
         print::{Print, Printer},
     },
 };
+
+use super::Var;
 
 /// Position of a binding in a frame.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

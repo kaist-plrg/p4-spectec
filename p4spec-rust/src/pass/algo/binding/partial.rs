@@ -24,24 +24,26 @@
 //!
 //! Generated premises retain the iteration context of the source pattern.
 
-use crate::{
-    lang::{
-        al,
-        common::prim,
-        common::{ds::set::IdSet, notation::mixop::Mixop, source::Span},
-        il::{ast, fresh, var},
-        traits::free::FreeIds,
-    },
-    note_phrase, phrase,
-    runtime::{
-        dim::Dim,
-        ops::typ::{Theta, optimize_sub_typ, subst_typ},
-        typdef::TypeDef,
-    },
+use crate::lang::{
+    common::{ds::set::IdSet, notation::mixop::Mixop, prim, source::Span},
+    traits::free::FreeIds,
 };
 
+use crate::lang::il::{ast, fresh, var};
+
+use crate::lang::al;
+
+use crate::runtime::{
+    dim::Dim,
+    ops::typ::{Theta, optimize_sub_typ, subst_typ},
+    typdef::TypeDef,
+};
+
+use crate::{note_phrase, phrase};
+
+use super::super::{AlgoError, error};
+
 use super::{
-    super::{AlgoError, error},
     context::Context,
     dimension,
     iteration::{ICtx, Iteration},

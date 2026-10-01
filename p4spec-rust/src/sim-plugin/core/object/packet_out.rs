@@ -3,18 +3,19 @@
 //! Emitting a header appends its bits;
 //! the buffer is prepended to the payload when the packet leaves.
 
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, get, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::spec::func,
-};
 use serde::{Deserialize, Serialize};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, get, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::sim_plugin::spec::func;
 
 /// Output packet data accumulated by emission.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]

@@ -13,30 +13,33 @@
 //! while `elab_exp` checks against an expected type and inserts casts,
 //! so a `nat` variable where `int` is expected becomes an upcast.
 
-use crate::{
-    diagnostic::Report,
-    lang::{
-        common::prim,
-        common::{
-            Id,
-            ds::map::IdMap,
-            notation::mixfix::Mixfix,
-            source::{Phrase, Span},
-        },
-        el::ast as el,
-        hints::input,
-        il::{ast as il, fresh as il_fresh, var as il_var},
-        traits::{at::At, free::FreeIds, print::Print},
+use crate::lang::{
+    common::{
+        Id,
+        ds::map::IdMap,
+        notation::mixfix::Mixfix,
+        prim,
+        source::{Phrase, Span},
     },
-    note_phrase, phrase,
-    runtime::{
-        ops::typ::{
-            Theta, equiv_func_typ, equiv_typ, expand_typ, optimize_sub_typ, sub_typ, subst_not_typ,
-            subst_params, subst_typ, subst_typs,
-        },
-        typdef::TypeDef,
-    },
+    hints::input,
+    traits::{at::At, free::FreeIds, print::Print},
 };
+
+use crate::lang::el::ast as el;
+
+use crate::lang::il::{ast as il, fresh, var};
+
+use crate::diagnostic::Report;
+
+use crate::runtime::{
+    ops::typ::{
+        Theta, equiv_func_typ, equiv_typ, expand_typ, optimize_sub_typ, sub_typ, subst_not_typ,
+        subst_params, subst_typ, subst_typs,
+    },
+    typdef::TypeDef,
+};
+
+use crate::{note_phrase, phrase};
 
 use super::{
     backtrack::{
@@ -1618,8 +1621,8 @@ fn elab_wildcard_exp(
     exp: &el::Exp,
 ) -> Backtrack<il::Exp> {
     let var_il =
-        il_fresh::var_from_typ_wildcard(&ctx.menv, &ctx.frees, exp.span.clone(), typ_expect_il);
-    let exp_il = il_var::as_exp(false, &var_il);
+        fresh::var_from_typ_wildcard(&ctx.menv, &ctx.frees, exp.span.clone(), typ_expect_il);
+    let exp_il = var::as_exp(false, &var_il);
     ctx.add_free(var_il.id);
     success!(exp_il)
 }

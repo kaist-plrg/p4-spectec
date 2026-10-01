@@ -2,21 +2,22 @@
 //!
 //! A dense array of 32-bit counters the data plane increments.
 
+use serde::{Deserialize, Serialize};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
 use crate::sim_plugin::{
     error,
     spec::{args, func, unpack},
 };
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-};
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// A counter array as a vector of 32-bit values.

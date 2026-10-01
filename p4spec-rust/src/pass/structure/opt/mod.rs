@@ -9,8 +9,9 @@ pub(super) mod overlap;
 pub(super) mod post;
 pub(super) mod pre;
 
-use super::{StructureError, ol::ast::Block};
 use crate::runtime::envs::algo::TDEnv;
+
+use super::{StructureError, ol::ast::Block};
 
 // == Optimization
 

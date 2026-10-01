@@ -6,15 +6,17 @@
 //! Inputs -> shared template -> binding premises prepended to each path
 
 use crate::lang::{
-    al::ast::*,
     common::ds::{map::IdMap, set::IdSet},
-    il,
     traits::{
         at::At,
         eq::SyntaxEq,
         free::{FreeIds, FreeVars},
     },
 };
+
+use crate::lang::il;
+
+use crate::lang::al::ast::*;
 
 // == Unification environment
 

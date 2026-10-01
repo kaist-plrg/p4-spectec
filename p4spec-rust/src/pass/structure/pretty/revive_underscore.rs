@@ -16,15 +16,13 @@
 //! `apply_rel` and `apply_func` also check uses of inputs in the fallback,
 //! while nested bindings of the same underscore name stop substitution.
 
-use crate::lang::{
-    common::ds::set::IdSet,
-    hints::input,
-    il::{
-        ast::{Arg, Exp, Mixop},
-        fresh,
-    },
-    traits::free::FreeIds,
+use crate::lang::{common::ds::set::IdSet, hints::input, traits::free::FreeIds};
+
+use crate::lang::il::{
+    ast::{Arg, Exp, Mixop},
+    fresh,
 };
+
 use crate::pass::structure::{ol::ast::*, re::renamer::Renamer};
 
 // == Candidate names

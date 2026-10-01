@@ -6,14 +6,17 @@
 //! Operations an architecture lacks default to a "not implemented" failure.
 //! The impls at the bottom delegate to each architecture's `pipe` module.
 
-use super::{io::Rx, state::SimState};
-use crate::{
-    lang::data::value::Value,
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
-    stf::ast::Statement,
-};
 use num_bigint::BigInt;
+
+use crate::lang::data::value::Value;
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::stf::ast::Statement;
+
+use crate::sim_plugin::error;
+
+use super::{io::Rx, state::SimState};
 
 /// What the STF runner needs from an architecture.
 pub trait Architecture: Extern {
@@ -190,7 +193,7 @@ pub trait Architecture: Extern {
 macro_rules! delegate_pipe {
     ($pipe:path) => {
         fn transform_stf_stmt(stmt: Statement) -> Statement {
-            use $pipe as pipe;
+            use $pipe;
             pipe::transform_stf_stmt(stmt)
         }
 
@@ -202,7 +205,7 @@ macro_rules! delegate_pipe {
             Iface: Interface,
             Interp: Interpreter<Iface, Self>,
         {
-            use $pipe as pipe;
+            use $pipe;
             pipe::init_pipe(ctx, program)
         }
 
@@ -215,7 +218,7 @@ macro_rules! delegate_pipe {
             Iface: Interface,
             Interp: Interpreter<Iface, Self>,
         {
-            use $pipe as pipe;
+            use $pipe;
             pipe::drive_pipe(ctx, state, rx)
         }
     };
@@ -233,7 +236,7 @@ macro_rules! delegate_method {
             Iface: Interface,
             Interp: Interpreter<Iface, Self>,
         {
-            use $pipe as pipe;
+            use $pipe;
             pipe::$name(ctx, value_arch, $($arg),*)
         }
     };

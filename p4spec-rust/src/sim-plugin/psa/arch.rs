@@ -3,22 +3,25 @@
 //! The packet queue, mirror sessions, and multicast groups,
 //! stored in the specification's architecture state as an encoded value.
 
-use super::{mirror, multicast, packet::Packet};
-use crate::lang::data::value::external::{
-    DecodeContext, EncodeContext, Encoding, decode_with, encode_with,
-};
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, get, make},
+use std::collections::VecDeque;
+
+use serde_derive_state::{DeserializeState, SerializeState};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{
+            Value, ValueArena,
+            external::{DecodeContext, EncodeContext, Encoding, decode_with, encode_with},
+            get, make,
         },
     },
-    runner::ExternError,
 };
-use serde_derive_state::{DeserializeState, SerializeState};
-use std::collections::VecDeque;
+
+use crate::runner::ExternError;
+
+use super::{mirror, multicast, packet::Packet};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, SerializeState, DeserializeState)]
 #[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]

@@ -12,9 +12,10 @@ use crate::lang::{
         typ,
         value::{Value, ValueArena, get, make},
     },
-    il::ast::Typ,
     traits::print::Print,
 };
+
+use crate::lang::il::ast::Typ;
 
 use super::{BuiltinError, extract};
 

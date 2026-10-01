@@ -4,10 +4,11 @@
 //! it records free variables
 //! and retains the minimal dimension when one occurs more than once.
 
-use crate::{
-    lang::{common::ds::map::IdMap, il::ast},
-    runtime::{dim::Dim, envs::algo::VEnv},
-};
+use crate::lang::common::ds::map::IdMap;
+
+use crate::lang::il::ast;
+
+use crate::runtime::{dim::Dim, envs::algo::VEnv};
 
 // == Variable inference
 

@@ -14,6 +14,7 @@ mod subst;
 pub use equiv::*;
 pub use error::*;
 pub use expand::*;
-pub(crate) use fresh::Fresh;
 pub use sub::*;
 pub use subst::*;
+
+pub(crate) use fresh::Fresh;

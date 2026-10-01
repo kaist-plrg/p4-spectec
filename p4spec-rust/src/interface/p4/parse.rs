@@ -13,9 +13,9 @@ use std::{
 
 use lalrpop_util::ParseError;
 
-use crate::{
-    lang::common::source::{Phrase, Position, Span},
-    lang::data::value::{Value, ValueArena},
+use crate::lang::{
+    common::source::{Phrase, Position, Span},
+    data::value::{Value, ValueArena},
 };
 
 use super::{

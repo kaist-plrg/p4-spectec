@@ -4,12 +4,14 @@
 //! A fatal failure stops the search immediately.
 //! Every failure retains complete reports in source candidate order.
 
-use crate::{
-    diagnostic::{LabelStyle, Report, ReportKind},
-    lang::common::source::Span,
-};
+use crate::lang::common::source::Span;
 
-use super::{context::Context, error, error::ElabError};
+use crate::diagnostic::{LabelStyle, Report, ReportKind};
+
+use super::{
+    context::Context,
+    error::{self, ElabError},
+};
 
 // == Result
 

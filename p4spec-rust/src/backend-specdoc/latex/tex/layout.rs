@@ -15,7 +15,7 @@
 //!
 //! `Aligned` and `Grid` columns iterate until their widths stop changing.
 
-use super::{doc::*, link, width as measure};
+use super::{doc::*, link, width};
 
 // == Resolution state
 //
@@ -106,8 +106,8 @@ fn concat_lines(mut lines_l: Vec<Doc>, lines_r: Vec<Doc>) -> Vec<Doc> {
 fn column_after_lines(column: usize, lines: &[Doc]) -> usize {
     match lines {
         [] => column,
-        [doc] => column + measure::flat(doc),
-        [.., doc] => measure::flat(doc),
+        [doc] => column + width::flat(doc),
+        [.., doc] => width::flat(doc),
     }
 }
 
@@ -131,7 +131,7 @@ fn width_before_break(doc: &Doc) -> (usize, bool) {
             let docs = Doc::fill_line(separator, docs);
             width_before_break_in_docs(docs)
         }
-        _ => (measure::flat(doc), false),
+        _ => (width::flat(doc), false),
     }
 }
 
@@ -153,7 +153,7 @@ fn width_before_break_in_docs<'a>(docs: impl IntoIterator<Item = &'a Doc>) -> (u
 fn width_suffix_of_docs(mode: Mode, width_suffix: usize, docs: &[Doc]) -> usize {
     match mode {
         Mode::Flat => {
-            let width_docs = docs.iter().map(measure::flat).sum::<usize>();
+            let width_docs = docs.iter().map(width::flat).sum::<usize>();
             width_suffix + width_docs
         }
         Mode::Broken => {
@@ -193,7 +193,7 @@ fn resolve_concat_lines(
 
 /// Converts remaining normal-size columns into a positive script budget.
 fn width_script_budget(place: Place, doc_base: &Doc) -> usize {
-    let width_base = measure::flat(doc_base);
+    let width_base = width::flat(doc_base);
     let width_used = place.column + place.width_suffix + width_base;
     let width_remaining = place.width.saturating_sub(width_used);
     (2 * width_remaining).max(1)
@@ -206,9 +206,7 @@ fn resolve_script_base(
     docs_script: &[&Doc],
     resolve: impl Fn(Place, &Doc) -> Doc,
 ) -> Doc {
-    let widths_script = docs_script
-        .iter()
-        .map(|doc| measure::flat_script_width(doc));
+    let widths_script = docs_script.iter().map(|doc| width::flat_script_width(doc));
     let width_script = widths_script.max().unwrap_or(0);
     let width_suffix = place.width_suffix + width_script;
     let place_base = Place { width_suffix, ..place };
@@ -238,7 +236,7 @@ fn resolve_fraction_parts(
     doc_den: &Doc,
     resolve: impl Fn(Place, &Doc) -> Doc,
 ) -> (Doc, Doc) {
-    let width = place.width.saturating_sub(measure::FRACTION_MARGIN).max(1);
+    let width = place.width.saturating_sub(width::FRACTION_MARGIN).max(1);
     let place_child = Place::start(width);
     let doc_num = resolve(place_child, doc_num);
     let doc_den = resolve(place_child, doc_den);
@@ -361,7 +359,7 @@ fn resolve_displaystyle(place: Place, doc: &Doc) -> Doc {
 //   Delimited(Paren, x)   -> Delimited(Paren, x resolved at width - 2)
 
 fn resolve_delimited(place: Place, delimiter: Delimiter, doc: &Doc) -> Doc {
-    let width = place.width.saturating_sub(measure::DELIMITER_MARGIN).max(1);
+    let width = place.width.saturating_sub(width::DELIMITER_MARGIN).max(1);
     let place_child = Place { width, ..place };
     let doc = resolve_doc(place_child, doc);
     Doc::Delimited(delimiter, Box::new(doc))
@@ -438,7 +436,7 @@ fn resolve_soft_break(soft: Soft) -> Doc {
 
 /// Chooses a flat or broken mode including the pending suffix width.
 fn resolve_layout_group(place: Place, doc: &Doc) -> Doc {
-    let width_flat = place.column + measure::flat(doc) + place.width_suffix;
+    let width_flat = place.column + width::flat(doc) + place.width_suffix;
     let mode = if width_flat <= place.width { Mode::Flat } else { Mode::Broken };
     let lines = resolve_in_mode(mode, place, doc);
     Doc::of_lines(lines)
@@ -474,13 +472,13 @@ fn resolve_fill(place: Place, indent: usize, separator: &Doc, docs: &[Doc]) -> D
     let place_head = Place { width_suffix: width_suffix_head, ..place };
     let doc_head = resolve_doc(place_head, doc_head);
     let mut lines = doc_head.into_lines();
-    let width_separator = measure::flat(separator);
+    let width_separator = width::flat(separator);
     // Overflow starts a fresh indented line and drops the separator
     for (idx, doc) in docs.iter().enumerate() {
         let is_last = idx + 1 == docs.len();
         let width_suffix = if is_last { place.width_suffix } else { 0 };
         let column = column_after_lines(place.column, &lines);
-        let width_needed = width_separator + measure::flat(doc) + width_suffix;
+        let width_needed = width_separator + width::flat(doc) + width_suffix;
         // Continue the current line after the separator
         if column + width_needed <= place.width {
             let column_doc = column + width_separator;
@@ -520,19 +518,19 @@ fn resolve_cells(
     let mut docs_resolved = Vec::new();
     // Candidate widths determine both alignment padding and remaining space
     for (idx, doc) in docs.iter().enumerate() {
-        let width_doc = measure::flat(doc);
+        let width_doc = width::flat(doc);
         let width_cell = column_widths.get(idx).copied().unwrap_or(width_doc);
         let width_remaining = match column_widths.get(idx + 1..) {
             // Shared columns include one gap each after the current cell
             Some(widths) => {
                 let width_columns = widths.iter().sum::<usize>();
-                width_columns + measure::INTERCOLUMN_SPACING * widths.len()
+                width_columns + width::INTERCOLUMN_SPACING * widths.len()
             }
             // A ragged row can introduce columns absent from the candidate
             None => {
                 let docs_rest = &docs[idx + 1..];
-                let width_docs = docs_rest.iter().map(measure::flat).sum::<usize>();
-                width_docs + measure::INTERCOLUMN_SPACING * docs_rest.len()
+                let width_docs = docs_rest.iter().map(width::flat).sum::<usize>();
+                width_docs + width::INTERCOLUMN_SPACING * docs_rest.len()
             }
         };
         let alignment = alignments.and_then(|alignments| alignments.get(idx));
@@ -546,7 +544,7 @@ fn resolve_cells(
         let place_cell = Place { column: padding, ..place_line };
         let doc_resolved = resolve_doc(place_cell, doc);
         docs_resolved.push(doc_resolved);
-        column += width_cell + measure::INTERCOLUMN_SPACING;
+        column += width_cell + width::INTERCOLUMN_SPACING;
     }
     docs_resolved
 }
@@ -557,7 +555,7 @@ fn resolve_rows<'a>(
     alignments: Option<&[Alignment]>,
     rows: impl Iterator<Item = &'a [Doc]> + Clone,
 ) -> Vec<Vec<Doc>> {
-    let mut column_widths = measure::flat_column_widths(rows.clone());
+    let mut column_widths = width::flat_column_widths(rows.clone());
     let mut seen = vec![column_widths.clone()];
     let mut best: Option<(Vec<usize>, Vec<Vec<Doc>>)> = None;
     // Always resolve the original rows at the current candidate widths
@@ -567,12 +565,12 @@ fn resolve_rows<'a>(
             .map(|docs| resolve_cells(width, &column_widths, alignments, docs))
             .collect();
         let rows_measured = rows_resolved.iter().map(Vec::as_slice);
-        let column_widths_resolved = measure::flat_column_widths(rows_measured);
+        let column_widths_resolved = width::flat_column_widths(rows_measured);
         // Keep the narrowest resolution seen so far
-        let width_resolved = measure::flat_columns(&column_widths_resolved);
+        let width_resolved = width::flat_columns(&column_widths_resolved);
         let is_narrower = match &best {
             None => true,
-            Some((widths_best, _)) => width_resolved < measure::flat_columns(widths_best),
+            Some((widths_best, _)) => width_resolved < width::flat_columns(widths_best),
         };
         if is_narrower {
             best = Some((column_widths_resolved.clone(), rows_resolved.clone()));
@@ -653,7 +651,7 @@ fn resolve_left_stack(place: Place, docs: &[Doc]) -> Doc {
 //   Numbered([p, q])   -> p and q resolved after reserving the label gutter
 
 fn resolve_numbered(place: Place, docs: &[Doc]) -> Doc {
-    let width_gutter = measure::flat_numbered_gutter(docs.len());
+    let width_gutter = width::flat_numbered_gutter(docs.len());
     let width = place.width.saturating_sub(width_gutter).max(1);
     let docs = resolve_rows_fresh(width, docs);
     Doc::Numbered(docs)
@@ -769,7 +767,7 @@ fn resolve_delimited_in_mode(
     delimiter: Delimiter,
     doc: &Doc,
 ) -> Vec<Doc> {
-    let width = place.width.saturating_sub(measure::DELIMITER_MARGIN).max(1);
+    let width = place.width.saturating_sub(width::DELIMITER_MARGIN).max(1);
     let place_child = Place { width, ..place };
     let doc = resolve_single_in_mode(mode, place_child, doc);
     vec![Doc::Delimited(delimiter, Box::new(doc))]

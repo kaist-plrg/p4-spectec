@@ -3,22 +3,22 @@
 //! An expression argument evaluates to its value;
 //! a function argument `$f` becomes a function value carrying the type of `$f`.
 
-use super::super::context::ReadContext;
-use super::Invoker;
-use crate::interp::shared::backtrack::WithFrame;
-use crate::interp::shared::prepare::ast;
-
-use crate::{
-    lang::{
-        common::source::Span,
-        data::value::{Value, ValueArena, make},
-        traits::print::Print,
-    },
-    runner::{Extern, Interface, RunnerContext},
+use crate::lang::{
+    common::source::Span,
+    data::value::{Value, ValueArena, make},
+    traits::print::Print,
 };
 
-use super::expr::eval_exp;
-use crate::interp::shared::backtrack::{Backtrack, ok, unwrap, unwrap_from_result};
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{
+    backtrack::{Backtrack, WithFrame, ok, unwrap, unwrap_from_result},
+    prepare::ast,
+};
+
+use super::super::context::ReadContext;
+
+use super::{Invoker, expr::eval_exp};
 
 /// Evaluates one argument, nesting failures under an evaluation trace.
 fn eval_arg<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>(

@@ -11,14 +11,13 @@ mod expr;
 mod instr;
 mod strip;
 
-use crate::{
-    interp::{
-        pl::{PlInterp, context},
-        shared::{backtrack::Backtrack, eval::Invoker, prepare::ast as exec},
-    },
-    lang::data::value::Value,
-    runner::{Extern, Interface, RunnerContext},
-};
+use crate::lang::data::value::Value;
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{backtrack::Backtrack, eval::Invoker, prepare::ast};
+
+use crate::interp::pl::{PlInterp, context};
 
 impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for PlInterp {
     type Context<'global> = context::Context<'global>;
@@ -26,8 +25,8 @@ impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for PlInterp {
     fn invoke_func<'global>(
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         ctx: &Self::Context<'global>,
-        id: &exec::Id,
-        targs: &[exec::Typ],
+        id: &ast::Id,
+        targs: &[ast::Typ],
         values: &[Value],
     ) -> Backtrack<Value> {
         call::invoke_func(runner_ctx, ctx, id, targs, values)
@@ -36,7 +35,7 @@ impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for PlInterp {
     fn invoke_rel<'global>(
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         ctx: &Self::Context<'global>,
-        id: &exec::Id,
+        id: &ast::Id,
         values: &[Value],
     ) -> Backtrack<Vec<Value>> {
         call::invoke_rel(runner_ctx, ctx, id, values)

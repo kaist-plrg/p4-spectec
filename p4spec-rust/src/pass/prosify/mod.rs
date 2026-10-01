@@ -14,11 +14,13 @@ mod shorthand;
 mod stamp;
 mod transform;
 
-pub use error::ProseError;
+use crate::lang::sl::ast as sl;
+
+use crate::lang::pl::ast as pl;
 
 use context::Context;
 
-use crate::lang::{pl::ast as pl, sl::ast as sl};
+pub use error::ProseError;
 
 /// Converts a rule-group-preserving SL specification to PL.
 ///

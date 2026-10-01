@@ -3,26 +3,32 @@
 //! Operators, predicates, casts, access, and updates on arena values;
 //! every failure is located at the span the caller passes in.
 
-use super::super::context::ReadContext;
-use crate::interp::shared::error;
-use crate::runtime::ops::value as value_ops;
+use std::rc::Rc;
 
 use num_bigint::BigInt;
 
-use std::rc::Rc;
-
-use crate::{
-    lang::{
-        common::prim::{bool as boolean, num},
-        common::source::{Phrase, Span},
-        data::value::{Value, ValueArena, ValueKind, get, make},
-        il::ast,
-        traits::eq::SyntaxEq,
+use crate::lang::{
+    common::{
+        prim::{bool, num},
+        source::{Phrase, Span},
     },
-    runtime::ops::typ::{Theta, subst_typ},
+    data::value::{Value, ValueArena, ValueKind, get, make},
+    traits::eq::SyntaxEq,
 };
 
-use crate::interp::shared::backtrack::{self, Backtrack, fatal, ok, unwrap, unwrap_from_result};
+use crate::lang::il::ast;
+
+use crate::runtime::ops::{
+    typ::{Theta, subst_typ},
+    value,
+};
+
+use crate::interp::shared::{
+    backtrack::{self, Backtrack, fatal, ok, unwrap, unwrap_from_result},
+    error,
+};
+
+use super::super::context::ReadContext;
 
 // = Operators
 
@@ -37,7 +43,7 @@ pub(crate) fn unop(
 ) -> Backtrack<Value> {
     let value = match op {
         // Boolean negation
-        ast::UnOp::Bool(boolean::UnOp::Not) => {
+        ast::UnOp::Bool(bool::UnOp::Not) => {
             let bool = !get::bool(arena, &value).expect("operand must be a boolean");
             unwrap_from_result!(make::bool(arena, bool, Span::default()), span)
         }
@@ -67,10 +73,10 @@ pub(crate) fn binop(
             let bool_l = get::bool(arena, &value_l).expect("operand must be a boolean");
             let bool_r = get::bool(arena, &value_r).expect("operand must be a boolean");
             let result = match op {
-                boolean::BinOp::And => bool_l && bool_r,
-                boolean::BinOp::Or => bool_l || bool_r,
-                boolean::BinOp::Impl => !bool_l || bool_r,
-                boolean::BinOp::Equiv => bool_l == bool_r,
+                bool::BinOp::And => bool_l && bool_r,
+                bool::BinOp::Or => bool_l || bool_r,
+                bool::BinOp::Impl => !bool_l || bool_r,
+                bool::BinOp::Equiv => bool_l == bool_r,
             };
             unwrap_from_result!(make::bool(arena, result, Span::default()), span)
         }
@@ -97,9 +103,9 @@ pub(crate) fn cmpop(
 ) -> Backtrack<bool> {
     ok!(match op {
         // Equality is syntactic
-        ast::CmpOp::Bool(boolean::CmpOp::Eq) => arena.view(value_l).syntax_eq(&arena.view(value_r)),
+        ast::CmpOp::Bool(bool::CmpOp::Eq) => arena.view(value_l).syntax_eq(&arena.view(value_r)),
         // So is inequality
-        ast::CmpOp::Bool(boolean::CmpOp::Ne) => {
+        ast::CmpOp::Bool(bool::CmpOp::Ne) => {
             !arena.view(value_l).syntax_eq(&arena.view(value_r))
         }
         // Ordering compares numbers
@@ -129,7 +135,7 @@ pub(crate) fn sub(
         ctx.find_func_typ(&id).ok()
     };
     backtrack::from_result(
-        value_ops::check(arena, &find_typdef_opt, &find_func, subcheck, &value),
+        value::check(arena, &find_typdef_opt, &find_func, subcheck, &value),
         span,
     )
 }

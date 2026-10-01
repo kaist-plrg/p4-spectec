@@ -2,11 +2,11 @@
 //!
 //! `hint(prose_fields "a" "b")` names the fields a destructuring step binds.
 
-use crate::lang::{
-    common::source::Phrase,
-    el::ast::{Exp, ExpKind, Text},
-};
 use thiserror::Error;
+
+use crate::lang::common::source::Phrase;
+
+use crate::lang::el::ast::{Exp, ExpKind, Text};
 
 // == Field hints
 

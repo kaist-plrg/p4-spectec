@@ -6,10 +6,11 @@
 //! `check_args` rejects invalid shapes and repeated new binders.
 //! Failures retain the responsible syntax for caller-specific diagnostics.
 
-use crate::{
-    lang::{common::ds::map::IdMap, il::ast},
-    runtime::envs::algo::VEnv,
-};
+use crate::lang::common::ds::map::IdMap;
+
+use crate::lang::il::ast;
+
+use crate::runtime::envs::algo::VEnv;
 
 /// A shallow binding failure retaining its original syntax.
 pub enum ShallowFailure<'a> {

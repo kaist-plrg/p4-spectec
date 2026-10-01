@@ -4,9 +4,10 @@
 //! that distinguishes occurrences of the same base name;
 //! `strip_suffix` recovers the base.
 
-use crate::lang::traits::print::{Print, Printer};
-
-use crate::lang::common::source::Phrase;
+use crate::lang::{
+    common::source::Phrase,
+    traits::print::{Print, Printer},
+};
 
 /// Source-annotated identifier.
 pub type Id = Phrase<String>;

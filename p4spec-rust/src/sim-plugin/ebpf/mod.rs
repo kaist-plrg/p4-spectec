@@ -3,12 +3,11 @@
 //! Extern calls reach the pipeline module;
 //! the only stateful object is a counter array.
 
-use crate::{
-    lang::data::value::Value,
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
-};
+use crate::lang::data::value::Value;
 
-use super::externs as external;
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
+
+use super::externs;
 
 pub mod object;
 pub mod pipe;
@@ -18,7 +17,7 @@ pub use pipe::{Ebpf, drive_pipe, init_pipe, transform_stf_stmt};
 // == Extern calls
 
 /// Hands every extern hook to the pipeline module.
-impl external::Impl for Ebpf {
+impl externs::Impl for Ebpf {
     fn eval_extern_init<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,

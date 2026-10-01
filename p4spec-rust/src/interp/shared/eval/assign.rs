@@ -7,30 +7,29 @@
 //! while `(x, y)* <- [...]` assigns each row in a fresh sub-context
 //! and gathers the rows into `x*` and `y*`.
 
-use super::super::context::{ReadContext, WriteContext};
-use crate::interp::shared::prepare::ast;
-use crate::interp::shared::util::iterate_vars;
-use crate::lang::data::var::IdSlot;
-use crate::lang::traits::at::At;
-use crate::runtime::typdef::TypeDef;
-
 use std::{borrow::Borrow, rc::Rc};
 
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, ValueKind, get, make},
-        },
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, ValueKind, get, make},
+        var::IdSlot,
     },
-    phrase,
+    traits::at::At,
 };
+
+use crate::runtime::typdef::TypeDef;
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
-    util::find_slot_of_exp,
+    prepare::ast,
+    util::{find_slot_of_exp, iterate_vars},
 };
+
+use crate::phrase;
+
+use super::super::context::{ReadContext, WriteContext};
 
 // = Type parameter assignment
 

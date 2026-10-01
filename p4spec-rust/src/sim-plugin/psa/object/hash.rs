@@ -2,23 +2,24 @@
 //!
 //! The constructor's algorithm enumerator maps to a `hash` algorithm name.
 
+use num_bigint::BigInt;
+use num_traits::Zero;
+use serde::{Deserialize, Serialize};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
 use crate::sim_plugin::{
     error, hash,
     spec::{args, func, pack, unpack},
 };
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-};
-use num_bigint::BigInt;
-use num_traits::Zero;
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// A hash configured with one algorithm.

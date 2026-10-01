@@ -6,11 +6,11 @@
 //! Each callable collects its frame layout during the same traversal.
 //! Shared container and phrase implementations preserve metadata and grow stacks.
 
-use crate::{
-    interp::shared::prepare::Prepare,
-    lang::pl::{annot::Annotated, ast as pl},
-    runtime::envs::interp::{pl::ast_prepared as ast, shared::frame::FrameLayout},
-};
+use crate::lang::pl::{annot::Annotated, ast as pl};
+
+use crate::runtime::envs::interp::{pl::ast_prepared as ast, shared::frame::FrameLayout};
+
+use crate::interp::shared::prepare::Prepare;
 
 // = Annotations
 

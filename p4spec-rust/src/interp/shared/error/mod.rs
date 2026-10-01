@@ -4,18 +4,19 @@
 //! `InterpreterError` distinguishes fatal errors from recoverable mismatches.
 //! The renderer reads source files when displaying the reports.
 
-use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::{
-        common::{
-            ds::map::ArityMismatch, notation::mixop::ArityMismatch as MixopArityMismatch,
-            prim::num::NumericError, source::Span,
-        },
-        data::value::ValueError,
-    },
-    runtime::ops::{typ::TypeError, value::MatchError},
-};
 use std::fmt;
+
+use crate::lang::{
+    common::{
+        ds::map::ArityMismatch, notation::mixop::ArityMismatch as MixopArityMismatch,
+        prim::num::NumericError, source::Span,
+    },
+    data::value::ValueError,
+};
+
+use crate::diagnostic::{Diagnostic, Label, Report, Severity};
+
+use crate::runtime::ops::{typ::TypeError, value::MatchError};
 
 pub mod call;
 pub mod context;

@@ -8,10 +8,14 @@ use crate::lang::{
     common::{notation::mixop::Mixop, source::Span},
     data::typ,
     hints::{alter, fields},
-    il,
-    pl::annot::{Hints, HintsKind},
-    sl::ast::{self as sl, Id},
 };
+
+use crate::lang::il;
+
+use crate::lang::sl::ast::{self as sl, Id};
+
+use crate::lang::pl::annot::{Hints, HintsKind};
+
 use crate::runtime::envs::{algo::MEnv, prosify::HEnv};
 
 use super::{ProseError, error};

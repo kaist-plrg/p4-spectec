@@ -8,13 +8,15 @@
 use num_bigint::BigInt;
 use num_traits::{One, ToPrimitive, Zero};
 
+use crate::util::bigint::{remainder, width_bit};
+
+use crate::lang::data::value::{Value, ValueArena};
+
+use crate::runner::ExternError;
+
+use crate::sim_plugin::error;
+
 use super::spec::unpack;
-use crate::{
-    lang::data::value::{Value, ValueArena},
-    runner::ExternError,
-    sim_plugin::error,
-    util::bigint::{remainder, width_bit},
-};
 
 // == Bit operations
 

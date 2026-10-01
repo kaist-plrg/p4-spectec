@@ -3,10 +3,9 @@
 //! Each architecture's `_init` relation takes the parsed program
 //! and returns the initial context and architecture values.
 
-use crate::{
-    lang::data::value::{Value, get},
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
-};
+use crate::lang::data::value::{Value, get};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext};
 
 // == eBPF
 

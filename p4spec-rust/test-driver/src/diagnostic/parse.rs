@@ -9,13 +9,13 @@ use std::{env, fs, path::PathBuf, rc::Rc};
 #[cfg(unix)]
 use std::{io, os::unix::fs::PermissionsExt};
 
-use p4spec_rust::{
-    diagnostic::Report,
-    frontend::parse::{parse_files, parse_mixop, parse_utf8_bytes},
-};
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::frontend::parse::{parse_files, parse_mixop, parse_utf8_bytes};
+
+use crate::Result;
 
 use super::failure;
-use crate::Result;
 
 // = Helpers
 

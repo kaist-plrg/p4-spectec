@@ -5,7 +5,11 @@
 
 use std::collections::BTreeMap;
 
-use crate::lang::{common::notation::mixop::Mixop, pl::annot::Hints, sl::ast::Id};
+use crate::lang::common::notation::mixop::Mixop;
+
+use crate::lang::sl::ast::Id;
+
+use crate::lang::pl::annot::Hints;
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 /// What a hint set belongs to.

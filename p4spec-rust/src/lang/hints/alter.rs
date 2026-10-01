@@ -4,12 +4,11 @@
 //! text and atoms print as they are, `%` holes take the items being described.
 //! `alternate` renders one through a `Renderer` for the output format.
 
-use crate::lang::hints::input::InputHint;
-use crate::lang::{
-    common::source::Phrase,
-    el::ast::{Atom, Exp, ExpKind, Hole as ElHole, Text},
-};
 use thiserror::Error;
+
+use crate::lang::{common::source::Phrase, hints::input::InputHint};
+
+use crate::lang::el::ast::{Atom, Exp, ExpKind, Hole as ElHole, Text};
 
 // == Alteration hints
 

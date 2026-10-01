@@ -7,31 +7,37 @@
 //! rule paths of a defined relation likewise, then the otherwise group.
 //! With `guard` on, inputs and outputs are type-checked at the boundary.
 
-use super::super::backtrack::{choose_deterministic, choose_sequential};
-use crate::diagnostic::{Diagnostic, Label, Report};
-use crate::interp::shared::context::ReadContext;
-use crate::interp::shared::error;
-use crate::interp::shared::eval::assign::assign_tparams;
-use crate::lang::hints::input;
-use crate::runtime::envs::interp::al::ast_prepared as ast;
-use crate::runtime::envs::interp::shared::frame::FrameLayout;
-use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use std::rc::Rc;
 
-use super::super::{
-    AlInterp,
-    context::{Context, Scope},
+use crate::lang::{
+    data::value::{Value, ValueArena, ValueKind},
+    hints::input,
 };
-use super::{assign, expr, prem::eval_prems};
+
+use crate::diagnostic::{Diagnostic, Label, Report};
+
+use crate::runtime::{
+    envs::interp::{al::ast_prepared as ast, shared::frame::FrameLayout},
+    ops::{typ, value},
+};
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
     cache::CallKey,
+    context::ReadContext,
+    error,
+    eval::assign::assign_tparams,
 };
-use crate::lang::data::value::{ValueArena, ValueKind};
-use crate::{
-    lang::data::value::Value,
-    runner::{Extern, Interface, RunnerContext},
+
+use super::super::{
+    AlInterp,
+    backtrack::{choose_deterministic, choose_sequential},
+    context::{Context, Scope},
 };
+
+use super::{assign, expr, prem::eval_prems};
 
 // = Input and output checks
 
@@ -113,7 +119,7 @@ fn check_values(
     };
     // Check all values against their types at once
     let matches = unwrap_from_result!(
-        value_ops::subs(arena, &find_typdef_opt, &find_func, typs, values),
+        value::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
     backtrack::check(matches, id.span.clone(), diagnostic)
@@ -130,8 +136,8 @@ fn check_func_output(
     value: &Value,
 ) -> Backtrack<()> {
     // Substitute the type arguments into the declared result type
-    let theta = unwrap_from_result!(typ_ops::Theta::from_lists(tparams, targs), &id.span);
-    let typ = unwrap_from_result!(typ_ops::subst_typ(&|id| theta.get(id), typ), &id.span);
+    let theta = unwrap_from_result!(typ::Theta::from_lists(tparams, targs), &id.span);
+    let typ = unwrap_from_result!(typ::subst_typ(&|id| theta.get(id), typ), &id.span);
     // Check the single result
     check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
         error::guard::function_output_type_mismatch(id.node.clone())

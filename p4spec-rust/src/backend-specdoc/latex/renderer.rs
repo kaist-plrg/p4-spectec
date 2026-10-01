@@ -14,18 +14,18 @@
 
 use num_traits::Signed;
 
-use crate::lang::{
-    common::source::Span,
-    common::{
-        Iter,
-        notation::atom::Atom as AtomKind,
-        prim::{bool, num},
-    },
-    el::ast::*,
+use crate::lang::common::{
+    Iter,
+    notation::atom::Atom as AtomKind,
+    prim::{bool, num},
+    source::Span,
 };
 
+use crate::lang::el::ast::*;
+
+use super::super::anchor::{AnchorContext, Presentation};
+
 use super::{
-    super::anchor::{AnchorContext, Presentation},
     error::{self, Result},
     precedence::{self, Category, Prec, Side},
     tex::{
@@ -181,43 +181,43 @@ impl Doc {
 
     /// Renders a notation atom with its fixed TeX spelling.
     fn of_atom(atom: &Atom) -> Doc {
-        use AtomKind as A;
-        use Symbol as S;
         match &atom.node {
-            A::Keyword(text) => Doc::Styled(Style::Mathsf, text.clone()),
-            A::Tag(text) => {
+            AtomKind::Keyword(text) => Doc::Styled(Style::Mathsf, text.clone()),
+            AtomKind::Tag(text) => {
                 let tex_tag = Doc::Styled(Style::Mathsf, text.clone());
                 Doc::sub(Doc::ThinSpace, tex_tag)
             }
-            A::Operator(text) => {
+            AtomKind::Operator(text) => {
                 let tex_op = Doc::Styled(Style::Mathtt, text.clone());
                 Doc::mathbin(tex_op)
             }
-            A::Sub => Doc::of_rel_symbols(S::Less, S::Colon),
-            A::Sup => Doc::of_rel_symbols(S::Colon, S::Greater),
-            A::Turnstile => Doc::mathrel(Doc::Fixed(S::Turnstile)),
-            A::Tilesturn => Doc::mathrel(Doc::Fixed(S::Tilesturn)),
-            A::Arrow | A::ArrowSub => Doc::Fixed(S::To),
-            A::DoubleArrowSub => Doc::Fixed(S::Rightarrow),
-            A::DoubleArrowLong => Doc::Fixed(S::Longrightarrow),
-            A::SqArrow => Doc::Fixed(S::Hookrightarrow),
-            A::SqArrowStar => Doc::sup(Doc::Fixed(S::Hookrightarrow), Doc::Fixed(S::Ast)),
-            A::Dot => Doc::group(Doc::Fixed(S::Dot)),
-            A::Dot2 => Doc::Fixed(S::Dot2),
-            A::Dot3 => Doc::Fixed(S::Ellipsis),
-            A::Semicolon => Doc::Fixed(S::Semicolon),
-            A::Colon => Doc::Fixed(S::Colon),
-            A::ColonEq => Doc::of_rel_symbols(S::Colon, S::Equal),
-            A::Tilde2 => Doc::Fixed(S::Sim),
-            A::Backslash => Doc::Fixed(S::Setminus),
-            A::LAngle => Doc::Fixed(S::Less),
-            A::RAngle => Doc::Fixed(S::Greater),
-            A::LParen => Doc::Fixed(S::LeftParen),
-            A::RParen => Doc::Fixed(S::RightParen),
-            A::LBrack => Doc::Fixed(S::LeftBracket),
-            A::RBrack => Doc::Fixed(S::RightBracket),
-            A::LBrace => Doc::Fixed(S::LeftBrace),
-            A::RBrace => Doc::Fixed(S::RightBrace),
+            AtomKind::Sub => Doc::of_rel_symbols(Symbol::Less, Symbol::Colon),
+            AtomKind::Sup => Doc::of_rel_symbols(Symbol::Colon, Symbol::Greater),
+            AtomKind::Turnstile => Doc::mathrel(Doc::Fixed(Symbol::Turnstile)),
+            AtomKind::Tilesturn => Doc::mathrel(Doc::Fixed(Symbol::Tilesturn)),
+            AtomKind::Arrow | AtomKind::ArrowSub => Doc::Fixed(Symbol::To),
+            AtomKind::DoubleArrowSub => Doc::Fixed(Symbol::Rightarrow),
+            AtomKind::DoubleArrowLong => Doc::Fixed(Symbol::Longrightarrow),
+            AtomKind::SqArrow => Doc::Fixed(Symbol::Hookrightarrow),
+            AtomKind::SqArrowStar => {
+                Doc::sup(Doc::Fixed(Symbol::Hookrightarrow), Doc::Fixed(Symbol::Ast))
+            }
+            AtomKind::Dot => Doc::group(Doc::Fixed(Symbol::Dot)),
+            AtomKind::Dot2 => Doc::Fixed(Symbol::Dot2),
+            AtomKind::Dot3 => Doc::Fixed(Symbol::Ellipsis),
+            AtomKind::Semicolon => Doc::Fixed(Symbol::Semicolon),
+            AtomKind::Colon => Doc::Fixed(Symbol::Colon),
+            AtomKind::ColonEq => Doc::of_rel_symbols(Symbol::Colon, Symbol::Equal),
+            AtomKind::Tilde2 => Doc::Fixed(Symbol::Sim),
+            AtomKind::Backslash => Doc::Fixed(Symbol::Setminus),
+            AtomKind::LAngle => Doc::Fixed(Symbol::Less),
+            AtomKind::RAngle => Doc::Fixed(Symbol::Greater),
+            AtomKind::LParen => Doc::Fixed(Symbol::LeftParen),
+            AtomKind::RParen => Doc::Fixed(Symbol::RightParen),
+            AtomKind::LBrack => Doc::Fixed(Symbol::LeftBracket),
+            AtomKind::RBrack => Doc::Fixed(Symbol::RightBracket),
+            AtomKind::LBrace => Doc::Fixed(Symbol::LeftBrace),
+            AtomKind::RBrace => Doc::Fixed(Symbol::RightBrace),
         }
     }
 

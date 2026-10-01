@@ -4,14 +4,19 @@
 //! reserving slots in the callable's `FrameLayout` as they go.
 //! Extern and builtin definitions have no body and pass through unchanged.
 
-use crate::interp::shared::prepare::Prepare;
-pub use crate::interp::shared::prepare::ast::*;
+use crate::lang::data::var::{IdSlot, VarSlot};
+
 use crate::lang::al::ast as source;
+
 pub use crate::lang::al::ast::{
     BuiltinFunc, DefinedTyp, ExternFunc, ExternRel, ExternTyp, TypDef, VarDef,
 };
-use crate::lang::data::var::{IdSlot, VarSlot};
+
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
+
+use crate::interp::shared::prepare::Prepare;
+
+pub use crate::interp::shared::prepare::ast::*;
 
 // == Prepared syntax
 

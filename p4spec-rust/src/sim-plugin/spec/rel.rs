@@ -5,10 +5,9 @@
 //! `Lvalue_read` and `Lvalue_write` take a cursor (`LOCAL` or `GLOBAL`)
 //! and a reference.
 
-use crate::{
-    lang::data::value::{Value, get},
-    runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext},
-};
+use crate::lang::data::value::{Value, get};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext};
 
 // == Lvalues
 

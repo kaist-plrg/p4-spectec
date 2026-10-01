@@ -5,14 +5,11 @@
 //! Function types compare up to renaming of their type parameters,
 //! using fresh variables bound in a local type environment.
 
-use crate::{
-    lang::{
-        common::prim::num,
-        common::{ds::map::ArityMismatch, source::Span},
-        il::ast::{self, TypKind},
-    },
-    runtime::{envs::elab::TDEnv, typdef::TypeDef},
-};
+use crate::lang::common::{ds::map::ArityMismatch, prim::num, source::Span};
+
+use crate::lang::il::ast::{self, TypKind};
+
+use crate::runtime::{envs::elab::TDEnv, typdef::TypeDef};
 
 use super::{
     Fresh, Theta, TypeArityMismatch, TypeError, TypeErrorKind, expand_typ_with, subst_typ_inner,

@@ -3,8 +3,9 @@
 //! Input entry points retain original bytes and paths in their reports.
 //! Filesystem cause descriptions remain local to these constructors.
 
-use crate::diagnostic::Label;
 use crate::lang::common::source::Span;
+
+use crate::diagnostic::Label;
 
 use super::{FrontendError, describe_utf8_error, diagnostic};
 

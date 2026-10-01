@@ -3,8 +3,9 @@
 //! Lexer sites supply responsible spans and invalid input details.
 //! Character descriptions remain local to their lexical diagnostics.
 
-use crate::diagnostic::Label;
 use crate::lang::common::source::Span;
+
+use crate::diagnostic::Label;
 
 use super::{LexError, describe_utf8_error, diagnostic};
 

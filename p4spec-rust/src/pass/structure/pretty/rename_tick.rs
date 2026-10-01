@@ -15,12 +15,10 @@
 //! `apply_rel` and `apply_func` rename definition inputs consistently
 //! in both the main body and the fallback, avoiding names already used there.
 
-use crate::lang::{
-    common::ds::set::IdSet,
-    hints::input,
-    il::ast::{Arg, Exp, Mixop},
-    traits::free::FreeIds,
-};
+use crate::lang::{common::ds::set::IdSet, hints::input, traits::free::FreeIds};
+
+use crate::lang::il::ast::{Arg, Exp, Mixop};
+
 use crate::pass::structure::{ol::ast::*, re::renamer::Renamer};
 
 // == Candidate names

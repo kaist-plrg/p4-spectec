@@ -5,8 +5,6 @@
 //! `Renamer` first moves the local binder
 //! away from the replacement's free names.
 
-use super::super::ol::ast as ol;
-use super::renamer::Renamer;
 use crate::lang::{
     common::{
         ds::{map::IdMap, set::IdSet},
@@ -14,10 +12,16 @@ use crate::lang::{
         source::Span,
     },
     hints::input,
-    il::{ast::*, fresh},
     traits::free::FreeIds,
 };
+
+use crate::lang::il::{ast::*, fresh};
+
 use crate::{note_phrase, phrase};
+
+use super::super::ol::ast as ol;
+
+use super::renamer::Renamer;
 
 // == Environment
 

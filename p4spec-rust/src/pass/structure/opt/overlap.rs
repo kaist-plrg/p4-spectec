@@ -11,11 +11,15 @@
 //! disjoint conditions may leave cases uncovered.
 //! Fuzzy means the analysis cannot decide whether the conditions overlap.
 
+use crate::lang::{common::prim::bool, traits::eq::SyntaxEq};
+
+use crate::lang::il::ast::*;
+
+use crate::lang::sl::ast::Guard;
+
+use crate::runtime::{envs::algo::TDEnv, ops::typ::expand_typ, typdef::TypeDef};
+
 use crate::pass::structure::error::{self, StructureError};
-use crate::{
-    lang::{common::prim::bool as boolop, il::ast::*, sl::ast::Guard, traits::eq::SyntaxEq},
-    runtime::{envs::algo::TDEnv, ops::typ::expand_typ, typdef::TypeDef},
-};
 
 // == Overlap results
 
@@ -40,24 +44,20 @@ pub(crate) enum Overlap {
 pub(crate) fn exp_as_guard(exp_target: &Exp, exp_cond: &Exp) -> Option<Guard> {
     match &exp_cond.node {
         // Negation of the target itself
-        ExpKind::Un(UnOp::Bool(boolop::UnOp::Not), _, exp)
-            if exp_target.syntax_eq(exp.as_ref()) =>
-        {
+        ExpKind::Un(UnOp::Bool(bool::UnOp::Not), _, exp) if exp_target.syntax_eq(exp.as_ref()) => {
             Some(Guard::Bool(false))
         }
         // Equality or inequality with the target on either side
-        ExpKind::Cmp(
-            op @ CmpOp::Bool(boolop::CmpOp::Eq | boolop::CmpOp::Ne),
-            optyp,
-            exp_l,
-            exp_r,
-        ) if exp_target.syntax_eq(exp_l) => Some(Guard::Cmp(*op, *optyp, exp_r.as_ref().clone())),
-        ExpKind::Cmp(
-            op @ CmpOp::Bool(boolop::CmpOp::Eq | boolop::CmpOp::Ne),
-            optyp,
-            exp_l,
-            exp_r,
-        ) if exp_target.syntax_eq(exp_r) => Some(Guard::Cmp(*op, *optyp, exp_l.as_ref().clone())),
+        ExpKind::Cmp(op @ CmpOp::Bool(bool::CmpOp::Eq | bool::CmpOp::Ne), optyp, exp_l, exp_r)
+            if exp_target.syntax_eq(exp_l) =>
+        {
+            Some(Guard::Cmp(*op, *optyp, exp_r.as_ref().clone()))
+        }
+        ExpKind::Cmp(op @ CmpOp::Bool(bool::CmpOp::Eq | bool::CmpOp::Ne), optyp, exp_l, exp_r)
+            if exp_target.syntax_eq(exp_r) =>
+        {
+            Some(Guard::Cmp(*op, *optyp, exp_l.as_ref().clone()))
+        }
         // Subtype, pattern, and membership tests on the target
         ExpKind::Sub(exp, typ, subcheck) if exp_target.syntax_eq(exp.as_ref()) => {
             Some(Guard::Sub(typ.as_ref().clone(), subcheck.clone()))
@@ -79,7 +79,7 @@ pub(crate) fn guard_as_exp(exp_target: &Exp, guard: &Guard) -> Exp {
     let exp_kind = match guard {
         Guard::Bool(true) => return exp_target.clone(),
         Guard::Bool(false) => {
-            ExpKind::Un(UnOp::Bool(boolop::UnOp::Not), OpTyp::Bool, Box::new(exp_target.clone()))
+            ExpKind::Un(UnOp::Bool(bool::UnOp::Not), OpTyp::Bool, Box::new(exp_target.clone()))
         }
         Guard::Cmp(op, optyp, exp) => {
             ExpKind::Cmp(*op, *optyp, Box::new(exp_target.clone()), Box::new(exp.clone()))
@@ -119,7 +119,7 @@ pub(crate) fn overlap_exp(
     }
     match (&exp_a.node, &exp_b.node) {
         // Negation: !p vs p -> Partition
-        (ExpKind::Un(UnOp::Bool(boolop::UnOp::Not), _, exp_inner), _)
+        (ExpKind::Un(UnOp::Bool(bool::UnOp::Not), _, exp_inner), _)
             if exp_inner.as_ref().syntax_eq(exp_b) =>
         {
             Ok(Overlap::Partition {
@@ -129,7 +129,7 @@ pub(crate) fn overlap_exp(
             })
         }
         // p vs !p -> Partition, with the guards in the opposite order
-        (_, ExpKind::Un(UnOp::Bool(boolop::UnOp::Not), _, exp_inner))
+        (_, ExpKind::Un(UnOp::Bool(bool::UnOp::Not), _, exp_inner))
             if exp_a.syntax_eq(exp_inner.as_ref()) =>
         {
             Ok(Overlap::Partition {
@@ -141,8 +141,8 @@ pub(crate) fn overlap_exp(
         // Equals literal
         // x == true vs x == false -> Partition
         (
-            ExpKind::Cmp(op_a @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
-            ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
+            ExpKind::Cmp(op_a @ CmpOp::Bool(bool::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
+            ExpKind::Cmp(op_b @ CmpOp::Bool(bool::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b
             && exp_a_l.syntax_eq(exp_b_l)
             && partition_exp_literal(exp_a_r, exp_b_r) =>
@@ -155,8 +155,8 @@ pub(crate) fn overlap_exp(
         }
         // x == true vs false == x -> Partition
         (
-            ExpKind::Cmp(op_a @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
-            ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
+            ExpKind::Cmp(op_a @ CmpOp::Bool(bool::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
+            ExpKind::Cmp(op_b @ CmpOp::Bool(bool::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b
             && exp_a_l.syntax_eq(exp_b_r)
             && partition_exp_literal(exp_a_r, exp_b_l) =>
@@ -169,8 +169,8 @@ pub(crate) fn overlap_exp(
         }
         // x == 1 vs x == 2 -> Disjoint
         (
-            ExpKind::Cmp(op_a @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
-            ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
+            ExpKind::Cmp(op_a @ CmpOp::Bool(bool::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
+            ExpKind::Cmp(op_b @ CmpOp::Bool(bool::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b
             && exp_a_l.syntax_eq(exp_b_l)
             && disjoint_exp_literal(exp_a_r, exp_b_r) =>
@@ -183,8 +183,8 @@ pub(crate) fn overlap_exp(
         }
         // x == 1 vs 2 == x -> Disjoint
         (
-            ExpKind::Cmp(op_a @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
-            ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
+            ExpKind::Cmp(op_a @ CmpOp::Bool(bool::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
+            ExpKind::Cmp(op_b @ CmpOp::Bool(bool::CmpOp::Eq), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b
             && exp_a_l.syntax_eq(exp_b_r)
             && disjoint_exp_literal(exp_a_r, exp_b_l) =>
@@ -198,8 +198,8 @@ pub(crate) fn overlap_exp(
         // Equals and not equals
         // x == 1 vs x != 1 -> Partition
         (
-            ExpKind::Cmp(op_a @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
-            ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Ne), optyp_b, exp_b_l, exp_b_r),
+            ExpKind::Cmp(op_a @ CmpOp::Bool(bool::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
+            ExpKind::Cmp(op_b @ CmpOp::Bool(bool::CmpOp::Ne), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b && exp_a_l.syntax_eq(exp_b_l) && exp_a_r.syntax_eq(exp_b_r) => {
             Ok(Overlap::Partition {
                 exp: exp_a_l.as_ref().clone(),
@@ -209,8 +209,8 @@ pub(crate) fn overlap_exp(
         }
         // x == 1 vs 1 != x -> Partition
         (
-            ExpKind::Cmp(op_a @ CmpOp::Bool(boolop::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
-            ExpKind::Cmp(op_b @ CmpOp::Bool(boolop::CmpOp::Ne), optyp_b, exp_b_l, exp_b_r),
+            ExpKind::Cmp(op_a @ CmpOp::Bool(bool::CmpOp::Eq), optyp_a, exp_a_l, exp_a_r),
+            ExpKind::Cmp(op_b @ CmpOp::Bool(bool::CmpOp::Ne), optyp_b, exp_b_l, exp_b_r),
         ) if optyp_a == optyp_b && exp_a_l.syntax_eq(exp_b_r) && exp_a_r.syntax_eq(exp_b_l) => {
             Ok(Overlap::Partition {
                 exp: exp_a_l.as_ref().clone(),

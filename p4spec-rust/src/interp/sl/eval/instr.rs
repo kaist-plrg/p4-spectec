@@ -7,33 +7,41 @@
 //! The `tail` flag marks the last instruction of a callee body,
 //! so a return or rule call there can become a tail call.
 
+use std::borrow::Cow;
+
+use crate::lang::{
+    common::source::Span,
+    data::value::{Value, ValueKind, get},
+    hints::input,
+    traits::{eq::SyntaxEq, print::Print},
+};
+
+use crate::diagnostic::Report;
+
+use crate::runtime::envs::interp::sl::ast_prepared as ast;
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{
+    backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    context::{IterContext, WriteContext},
+    error,
+    eval::{Invoker, iter, ops},
+    util::iterate_vars,
+};
+
+use crate::phrase;
+
 use super::super::{
     SlInterp,
     context::{Context, Scope},
     flow::{self, Flow},
 };
+
 use super::{
     assign,
     expr::{self, eval_exp, eval_exps},
 };
-use crate::diagnostic::Report;
-use crate::interp::shared::context::{IterContext, WriteContext};
-use crate::interp::shared::error;
-use crate::interp::shared::eval::{Invoker, iter, ops};
-use crate::interp::shared::util::iterate_vars;
-use crate::lang::hints::input;
-use crate::phrase;
-use crate::runtime::envs::interp::sl::ast_prepared as ast;
-use crate::{
-    interp::shared::backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    lang::{
-        common::source::Span,
-        data::value::{Value, ValueKind, get},
-        traits::{eq::SyntaxEq, print::Print},
-    },
-    runner::{Extern, Interface, RunnerContext},
-};
-use std::borrow::Cow;
 
 // = Block evaluation
 

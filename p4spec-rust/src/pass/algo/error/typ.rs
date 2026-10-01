@@ -2,12 +2,13 @@
 //!
 //! Constructors preserve locations from type operations and directly supplied IL.
 
+use crate::lang::common::{Id, source::Span};
+
+use crate::diagnostic::Label;
+
+use crate::runtime::ops::typ::TypeError;
+
 use super::{AlgoError, cause};
-use crate::{
-    diagnostic::Label,
-    lang::common::{Id, source::Span},
-    runtime::ops::typ::TypeError,
-};
 
 const TYPE_OPERATION_INVALID: &str = "algo/type-operation-invalid";
 

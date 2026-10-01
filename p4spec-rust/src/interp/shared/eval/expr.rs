@@ -5,32 +5,33 @@
 //! Operators delegate to `ops`, calls to the stage's `Invoker`,
 //! iterations to `iter::map`.
 
-use super::super::context::ReadContext;
-use super::Invoker;
-use crate::interp::shared::backtrack::WithFrame;
-use crate::interp::shared::prepare::ast;
-use crate::lang::data::var::IdSlot;
-
 use std::{borrow::Borrow, rc::Rc};
 
-use crate::{
-    lang::{
-        common::source::Span,
-        data::value::{Value, ValueKind, get, make},
-        traits::print::Print,
+use crate::lang::{
+    common::source::Span,
+    data::{
+        value::{Value, ValueKind, get, make},
+        var::IdSlot,
     },
-    runner::{Extern, Interface, RunnerContext},
-    runtime::{
-        ops::typ::{TypeError, subst_typ},
-        typdef::TypeDef,
-    },
+    traits::print::Print,
 };
 
-use super::{arg::eval_args, iter, ops, path::eval_update_path};
+use crate::runtime::{
+    ops::typ::{TypeError, subst_typ},
+    typdef::TypeDef,
+};
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
 use crate::interp::shared::{
-    backtrack::{Backtrack, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    prepare::ast,
     util::find_slot_of_exp,
 };
+
+use super::super::context::ReadContext;
+
+use super::{Invoker, arg::eval_args, iter, ops, path::eval_update_path};
 
 // = Expression evaluation
 

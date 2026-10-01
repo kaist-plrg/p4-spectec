@@ -7,8 +7,6 @@
 
 use std::{cell::RefCell, collections::HashMap, error::Error, fmt, rc::Rc};
 
-use crate::frontend;
-
 use crate::lang::{
     common::ds::set::IdSet,
     traits::{
@@ -17,6 +15,8 @@ use crate::lang::{
         print::{Print, Printer},
     },
 };
+
+use crate::frontend;
 
 use super::mixfix::Mixfix;
 

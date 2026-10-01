@@ -4,7 +4,11 @@
 //! SL adds parameters with patterns, guards, and the instruction forms.
 //! The `I` and `V` parameters let the interpreter instantiate names with slots.
 
-use crate::lang::{common::source::Phrase, el, hints::input::InputHint, il};
+use crate::lang::{common::source::Phrase, hints::input::InputHint};
+
+use crate::lang::el;
+
+use crate::lang::il;
 
 // Numbers
 

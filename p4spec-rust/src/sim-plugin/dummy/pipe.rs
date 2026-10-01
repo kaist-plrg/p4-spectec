@@ -2,17 +2,17 @@
 //!
 //! Runtime extern function and method calls remain unsupported.
 
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, external::encode, make},
-        },
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, external::encode, make},
     },
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
 };
+
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::sim_plugin::error;
 
 // == Configuration
 

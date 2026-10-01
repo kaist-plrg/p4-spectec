@@ -6,35 +6,39 @@
 //! Only pure results are memoized; failures retain their invocation trace.
 //! With `guard` enabled, host outputs and public inputs are type-checked.
 
-use crate::diagnostic::Diagnostic;
-use crate::interp::shared::error;
-use crate::interp::shared::eval::assign::assign_tparams;
-use crate::lang::hints::input;
-use crate::runtime::ops::{typ as typ_ops, value as value_ops};
 use std::rc::Rc;
+
+use crate::lang::{
+    data::value::{Value, ValueArena, ValueKind},
+    hints::input,
+};
+
+use crate::diagnostic::Diagnostic;
+
+use crate::runtime::{
+    envs::interp::{pl::ast_prepared as ast, shared::frame::FrameLayout},
+    ops::{typ, value},
+};
+
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{
+    backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
+    cache::CallKey,
+    context::ReadContext,
+    error,
+    eval::assign::assign_tparams,
+};
+
+use crate::interp::pl::{
+    PlInterp,
+    context::{Context, Scope},
+    flow::Flow,
+};
 
 use super::{
     assign::{assign_exps, assign_params},
     instr::{eval_block, eval_dispatch_block, eval_group_block, eval_group_instr},
-};
-use crate::{
-    interp::{
-        pl::{
-            PlInterp,
-            context::{Context, Scope},
-            flow::Flow,
-        },
-        shared::{
-            backtrack::{
-                self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result,
-            },
-            cache::CallKey,
-            context::ReadContext,
-        },
-    },
-    lang::data::value::{Value, ValueArena, ValueKind},
-    runner::{Extern, Interface, RunnerContext},
-    runtime::envs::interp::{pl::ast_prepared as ast, shared::frame::FrameLayout},
 };
 
 // = Input and output checks
@@ -125,7 +129,7 @@ fn check_values(
     };
     // Check all values against their declared types
     let matches = unwrap_from_result!(
-        value_ops::subs(arena, &find_typdef_opt, &find_func, typs, values),
+        value::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
     backtrack::check(matches, id.span.clone(), diagnostic)
@@ -142,8 +146,8 @@ fn check_func_output(
     value: &Value,
 ) -> Backtrack<()> {
     // Substitute type arguments into the declared result type
-    let theta = unwrap_from_result!(typ_ops::Theta::from_lists(tparams, targs), &id.span);
-    let typ = unwrap_from_result!(typ_ops::subst_typ(&|id| theta.get(id), typ), &id.span);
+    let theta = unwrap_from_result!(typ::Theta::from_lists(tparams, targs), &id.span);
+    let typ = unwrap_from_result!(typ::subst_typ(&|id| theta.get(id), typ), &id.span);
     // Check the single result
     check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
         error::guard::function_output_type_mismatch(id.node.clone())

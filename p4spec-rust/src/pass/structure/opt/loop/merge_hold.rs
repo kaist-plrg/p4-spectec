@@ -21,6 +21,7 @@
 use std::collections::VecDeque;
 
 use crate::lang::traits::eq::SyntaxEq;
+
 use crate::pass::structure::{ol::ast::*, opt::merge};
 
 // == Instructions

@@ -6,10 +6,9 @@
 pub(crate) mod remove_let_dead;
 pub(crate) mod remove_match_singleton;
 
-use crate::{
-    pass::structure::{StructureError, ol::ast::Block},
-    runtime::envs::algo::TDEnv,
-};
+use crate::runtime::envs::algo::TDEnv;
+
+use crate::pass::structure::{StructureError, ol::ast::Block};
 
 // == Optimization
 

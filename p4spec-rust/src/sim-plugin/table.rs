@@ -5,17 +5,17 @@
 //! Adding an entry goes through the specification's `tableObject_add_entry`,
 //! retrying with the table's own key names when the STF key names do not match.
 
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, ValueError, get, make},
-        },
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, ValueError, get, make},
     },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
 };
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::sim_plugin::error;
 
 use super::spec::func;
 

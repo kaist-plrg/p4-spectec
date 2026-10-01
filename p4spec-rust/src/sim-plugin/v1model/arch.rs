@@ -4,25 +4,28 @@
 //! and the current packet's requested actions,
 //! stored in the specification's architecture state as an encoded value.
 
+use std::collections::VecDeque;
+
+use serde_derive_state::{DeserializeState, SerializeState};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{
+            Value, ValueArena,
+            external::{DecodeContext, EncodeContext, Encoding, decode_with, encode_with},
+            get, make,
+        },
+    },
+};
+
+use crate::runner::ExternError;
+
 use super::{
     mirror, multicast,
     packet::{Action, Packet},
 };
-use crate::lang::data::value::external::{
-    DecodeContext, EncodeContext, Encoding, decode_with, encode_with,
-};
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, get, make},
-        },
-    },
-    runner::ExternError,
-};
-use serde_derive_state::{DeserializeState, SerializeState};
-use std::collections::VecDeque;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, SerializeState, DeserializeState)]
 #[serde(deny_unknown_fields, serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]

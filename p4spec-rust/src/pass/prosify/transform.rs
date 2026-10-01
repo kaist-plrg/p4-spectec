@@ -13,15 +13,19 @@
 //! sequence `let x be e` then `R(x)` as sibling steps rather than a nested
 //! block, so the prose reads as consecutive numbered steps.
 
-use crate::lang::traits::at::At;
 use crate::lang::{
-    al,
     common::{ds::set::IdSet, notation::mixfix::Mixfix, source::Span},
     hints::{alter, fields, input},
-    il::ast as il,
-    pl::{annot, ast as pl},
-    sl::ast as sl,
+    traits::at::At,
 };
+
+use crate::lang::il::ast as il;
+
+use crate::lang::al;
+
+use crate::lang::sl::ast as sl;
+
+use crate::lang::pl::{annot, ast as pl};
 
 use super::{Context, ProseError, error};
 

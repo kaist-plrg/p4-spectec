@@ -2,16 +2,18 @@
 //!
 //! Callers locate the first forbidden premise or nested function call.
 
-use super::{AlgoError, cause};
-use crate::{
-    diagnostic::Label,
-    lang::{
-        common::{Id, source::Span},
-        il::ast::Otherwise,
-        traits::at::At,
-    },
-    pass::algo::binding::partial::Origin,
+use crate::lang::{
+    common::{Id, source::Span},
+    traits::at::At,
 };
+
+use crate::lang::il::ast::Otherwise;
+
+use crate::diagnostic::Label;
+
+use crate::pass::algo::binding::partial::Origin;
+
+use super::{AlgoError, cause};
 
 const OTHERWISE_CONDITION_INVALID: &str = "algo/otherwise-condition-invalid";
 const OTHERWISE_MULTIBIND_INVALID: &str = "algo/otherwise-multibind-invalid";

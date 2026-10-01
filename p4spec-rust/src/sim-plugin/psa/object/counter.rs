@@ -2,23 +2,24 @@
 //!
 //! Only the `PACKETS` counter type is supported by `count`.
 
+use num_bigint::BigInt;
+use num_traits::{One, Zero};
+use serde::{Deserialize, Serialize};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
 use crate::sim_plugin::{
     error,
     spec::{args, func, unpack},
 };
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-};
-use num_bigint::BigInt;
-use num_traits::{One, Zero};
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// Counter array by `PSA_CounterType_t`.

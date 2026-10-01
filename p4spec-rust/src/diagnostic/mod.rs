@@ -7,7 +7,11 @@
 mod render;
 mod report;
 
-pub use codespan_reporting::diagnostic::{LabelStyle, Severity};
-pub use codespan_reporting::term::{Config as SnippetConfig, DisplayStyle, termcolor::ColorChoice};
-pub use render::{RenderConfig, RenderError, Renderer};
+pub use codespan_reporting::{
+    diagnostic::{LabelStyle, Severity},
+    term::{Config as SnippetConfig, DisplayStyle, termcolor::ColorChoice},
+};
+
 pub use report::{Diagnostic, Label, Report, ReportKind};
+
+pub use render::{RenderConfig, RenderError, Renderer};

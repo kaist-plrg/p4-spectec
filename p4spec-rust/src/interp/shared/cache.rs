@@ -4,9 +4,10 @@
 //! Public entries clear the memo tables;
 //! active effect frames survive reentry and propagate taint back to callers.
 
+use std::hash::{Hash, Hasher};
+
 use foldhash::fast::RandomState;
 use hashbrown::{Equivalent, HashMap};
-use std::hash::{Hash, Hasher};
 
 use crate::lang::data::value::{CanonId, Value, ValueArena, ValueKind};
 

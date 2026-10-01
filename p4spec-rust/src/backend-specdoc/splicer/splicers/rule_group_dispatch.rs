@@ -3,19 +3,21 @@
 //! Initialization selects definitions in source order.
 //! The generic splicer owns wrappers, anchors, and usage accounting.
 
-use crate::diagnostic::Report;
-
-use super::super::super::anchor::AnchorContext;
 use std::collections::BTreeMap;
 
-use super::super::super::adoc::pl::Renderer;
+use crate::lang::el::ast as el;
+
+use crate::lang::pl::ast as pl;
+
+use crate::diagnostic::Report;
+
+use super::super::super::{adoc::pl::Renderer, anchor::AnchorContext};
 
 use super::super::{
     config::{PREFIX_PROSE, SUFFIX_PROSE},
     error::Error,
     splicer::{Kind, Selection},
 };
-use crate::lang::{el::ast as el, pl::ast as pl};
 
 // == Splice initialization
 

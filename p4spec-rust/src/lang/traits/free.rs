@@ -6,9 +6,10 @@ use std::rc::Rc;
 
 use crate::lang::{
     common::{ds::set::IdSet, source::NotePhrase},
-    il::ast::Var,
     traits::eq::SyntaxEq,
 };
+
+use crate::lang::il::ast::Var;
 
 // == Free identifiers
 

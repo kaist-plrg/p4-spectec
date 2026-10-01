@@ -9,13 +9,16 @@
 
 use thiserror::Error;
 
-use crate::{
-    diagnostic::{Diagnostic, Report, Severity},
-    lang::common::prim::num::NumericError,
-    lang::data::value::{Value, ValueError},
-    lang::il::ast::Typ,
-    runner::InterpreterError,
+use crate::lang::{
+    common::prim::num::NumericError,
+    data::value::{Value, ValueError},
 };
+
+use crate::lang::il::ast::Typ;
+
+use crate::diagnostic::{Diagnostic, Report, Severity};
+
+use crate::runner::InterpreterError;
 
 use super::{Interface, Interpreter, RunnerContext};
 

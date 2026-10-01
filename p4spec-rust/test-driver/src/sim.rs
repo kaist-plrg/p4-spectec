@@ -1,18 +1,20 @@
-use crate::{Error, Result, corpus};
-use expect_test::{ExpectFile, expect_file};
-use indicatif::{ProgressBar, ProgressStyle};
-use p4spec_rust::sim_plugin::io::Tx;
-use p4spec_rust::{
-    lang::data::value::external::Encoding,
-    runner::{Config, Spec},
-    sim_plugin,
-};
-use std::time::Instant;
 use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
+    time::Instant,
 };
+
+use expect_test::{ExpectFile, expect_file};
+use indicatif::{ProgressBar, ProgressStyle};
+
+use p4spec_rust::lang::data::value::external::Encoding;
+
+use p4spec_rust::runner::{Config, Spec};
+
+use p4spec_rust::sim_plugin::{self, io::Tx};
+
+use crate::{Error, Result, corpus};
 
 struct Suite {
     arch: &'static str,

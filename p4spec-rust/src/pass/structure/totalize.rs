@@ -2,12 +2,13 @@
 //!
 //! For a type `A | B`, branches matching `A` and `B` set `total=true`.
 
-use super::{error::StructureError, ol::ast::*, opt::overlap::typ_as_variant};
-use crate::{
-    lang::il::ast::{Mixop, Pattern},
-    runtime::envs::algo::TDEnv,
-};
 use std::collections::BTreeSet;
+
+use crate::lang::il::ast::{Mixop, Pattern};
+
+use crate::runtime::envs::algo::TDEnv;
+
+use super::{error::StructureError, ol::ast::*, opt::overlap::typ_as_variant};
 
 // == Variant coverage
 

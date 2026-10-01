@@ -5,19 +5,19 @@
 //! `x.f[i] := v` reads `x.f`, replaces element `i`,
 //! then replaces field `f` in `x`.
 
-use super::Invoker;
-use crate::interp::shared::prepare::ast;
-
-use crate::{
-    lang::{
-        common::source::Span,
-        data::value::{Value, get, make},
-    },
-    runner::{Extern, Interface, RunnerContext},
+use crate::lang::{
+    common::source::Span,
+    data::value::{Value, get, make},
 };
 
-use super::{expr::eval_exp, ops};
-use crate::interp::shared::backtrack::{Backtrack, ok, unwrap, unwrap_from_result};
+use crate::runner::{Extern, Interface, RunnerContext};
+
+use crate::interp::shared::{
+    backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
+    prepare::ast,
+};
+
+use super::{Invoker, expr::eval_exp, ops};
 
 // - Access
 

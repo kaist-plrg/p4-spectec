@@ -12,7 +12,9 @@
 
 use std::collections::VecDeque;
 
-use crate::lang::{il::ast::OptPattern, pl::ast as pl};
+use crate::lang::il::ast::OptPattern;
+
+use crate::lang::pl::ast as pl;
 
 // == Expression aliases
 

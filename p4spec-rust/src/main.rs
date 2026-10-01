@@ -10,14 +10,17 @@ use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
 
-use p4spec_rust::{
-    backend_specdoc::splicer,
-    diagnostic::{DisplayStyle, RenderConfig, Renderer, Report},
-    interface::p4::parse::parse_file,
-    lang::{data::value::external::Encoding, traits::print::Print},
-    runner::{self, BuiltinInterface, Interpreter, Runner},
-    sim_plugin::{self, dummy::Dummy},
-};
+use p4spec_rust::lang::{data::value::external::Encoding, traits::print::Print};
+
+use p4spec_rust::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
+
+use p4spec_rust::runner::{self, BuiltinInterface, Interpreter, Runner};
+
+use p4spec_rust::interface::p4::parse::parse_file;
+
+use p4spec_rust::sim_plugin::{self, dummy::Dummy};
+
+use p4spec_rust::backend_specdoc::splicer;
 
 // = Helpers
 

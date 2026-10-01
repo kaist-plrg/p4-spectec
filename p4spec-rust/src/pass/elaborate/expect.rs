@@ -4,10 +4,9 @@
 //! Unfolding an alias changes the current type while retaining that context.
 //! Notation checks retain the complete declaration and its owner during recursion.
 
-use crate::lang::{
-    common::{Id, source::Span},
-    il::ast as il,
-};
+use crate::lang::common::{Id, source::Span};
+
+use crate::lang::il::ast as il;
 
 /// Carries the current expected type and the check that introduced it.
 #[derive(Clone, Copy)]

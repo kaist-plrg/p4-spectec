@@ -3,20 +3,23 @@
 //! A tree contains its child values and annotations, without arena handles,
 //! so it can be written to JSON and read into any arena.
 
-use ::serde::{Deserialize, Serialize};
+use std::rc::Rc;
 
-use super::super::{Value as ArenaValue, ValueArena, ValueError, ValueKind as ArenaValueKind};
+use serde::{Deserialize, Serialize};
+
+use crate::util::json::json;
+
 use crate::lang::{
-    common::prim::num::Number,
     common::{
         Id,
         notation::{atom::Atom, mixfix::Mixfix},
+        prim::num::Number,
         source::{NotePhrase, Phrase},
     },
     data::typ::TypKind,
 };
-use crate::util::json::json;
-use std::rc::Rc;
+
+use super::super::{Value as ArenaValue, ValueArena, ValueError, ValueKind as ArenaValueKind};
 
 // == Types
 

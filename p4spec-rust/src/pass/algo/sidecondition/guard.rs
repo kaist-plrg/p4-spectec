@@ -9,14 +9,14 @@
 //! `(let (x, y) = z){x -> x*, y -> y*, z <- z*}` establishes the list-length
 //! equalities above. Guards entailed by these earlier premises are omitted.
 
-use crate::{
-    lang::{
-        al::{self, ast},
-        common::prim,
-        traits::{at::At, eq::SyntaxEq, free::FreeIds},
-    },
-    note_phrase, phrase,
+use crate::lang::{
+    common::prim,
+    traits::{at::At, eq::SyntaxEq, free::FreeIds},
 };
+
+use crate::lang::al::{self, ast};
+
+use crate::{note_phrase, phrase};
 
 // == Equivalence filtering
 

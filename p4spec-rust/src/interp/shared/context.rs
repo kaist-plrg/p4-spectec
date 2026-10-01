@@ -6,32 +6,32 @@
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
 //! `FuncSignature` reads function types from each stage's prepared syntax.
 
-use crate::interp::shared::error;
 use std::rc::Rc;
 
-use crate::{
-    diagnostic::{Label, Report},
-    interp::shared::{
-        backtrack::{Backtrack, ok, unwrap_from_result},
-        error::{EntityKind, Error},
-        prepare::ast,
+use crate::lang::{
+    common::{ds::map::IdMap, source::Span},
+    data::{
+        typ,
+        value::{Value, ValueArena, get, make},
+        var::{SlotIdx, VarSlot},
     },
-    lang::{
-        common::{ds::map::IdMap, source::Span},
-        data::{
-            typ,
-            value::{Value, ValueArena, get, make},
-            var::{SlotIdx, VarSlot},
-        },
+};
+
+use crate::diagnostic::{Label, Report};
+
+use crate::runtime::{
+    envs::interp::shared::{
+        TDEnv,
+        callable::Callable,
+        frame::{Frame, FrameLayout},
     },
-    runtime::{
-        envs::interp::shared::{
-            TDEnv,
-            callable::Callable,
-            frame::{Frame, FrameLayout},
-        },
-        typdef::TypeDef,
-    },
+    typdef::TypeDef,
+};
+
+use crate::interp::shared::{
+    backtrack::{Backtrack, ok, unwrap_from_result},
+    error::{self, EntityKind, Error},
+    prepare::ast,
 };
 
 // = Function signatures

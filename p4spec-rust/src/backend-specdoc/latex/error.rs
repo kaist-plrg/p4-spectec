@@ -4,10 +4,9 @@
 //! Invalid link targets retain the referenced identifier and rejected destination.
 //! Splicing forwards these reports without replacing their codes or payloads.
 
-use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::common::source::Span,
-};
+use crate::lang::common::source::Span;
+
+use crate::diagnostic::{Diagnostic, Label, Report, Severity};
 
 /// Carries a complete LaTeX diagnostic without a formatting wrapper.
 pub type Error = Box<Report>;

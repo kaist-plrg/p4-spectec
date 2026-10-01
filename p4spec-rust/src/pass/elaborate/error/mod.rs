@@ -4,10 +4,11 @@
 //! spans available at its semantic check. Attempt frames remain uncoded context;
 //! terminal causes keep their complete diagnostic payload in [`Report`].
 
-use crate::{
-    diagnostic::{Diagnostic, Label, Report, Severity},
-    lang::{il::ast as il, traits::print::Print},
-};
+use crate::lang::traits::print::Print;
+
+use crate::lang::il::ast as il;
+
+use crate::diagnostic::{Diagnostic, Label, Report, Severity};
 
 pub(super) mod arg;
 pub(super) mod decl;

@@ -2,9 +2,11 @@
 //!
 //! Builds diagnostics; callers choose whether to stop or try another candidate.
 
-use super::diagnostic;
-use crate::diagnostic::{Diagnostic, Label};
 use crate::lang::common::source::Span;
+
+use crate::diagnostic::{Diagnostic, Label};
+
+use super::diagnostic;
 
 const INSTRUCTION_NONDETERMINISTIC: &str = "runtime/instruction-nondeterministic";
 

@@ -18,6 +18,7 @@ use crate::lang::{
     hints::input,
     traits::{free::FreeIds, has_call::HasCall},
 };
+
 use crate::pass::structure::ol::ast::*;
 
 // == Downstream uses

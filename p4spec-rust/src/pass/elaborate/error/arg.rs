@@ -3,11 +3,11 @@
 //! Argument elaboration validates counts and kinds before signatures,
 //! then uses these constructors with the offending use and declaration spans.
 
+use crate::lang::common::{Id, source::Span};
+
+use crate::lang::il::ast as il;
+
 use crate::diagnostic::Label;
-use crate::lang::{
-    common::{Id, source::Span},
-    il::ast as il,
-};
 
 use super::{ElabError, cause};
 

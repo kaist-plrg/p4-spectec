@@ -19,9 +19,11 @@ mod re;
 mod totalize;
 mod transform;
 
-pub use error::StructureError;
+use crate::lang::al::ast as al;
 
-use crate::lang::{al::ast as al, sl::ast as sl};
+use crate::lang::sl::ast as sl;
+
+pub use error::StructureError;
 
 // == Entry point
 

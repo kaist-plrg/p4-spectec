@@ -5,24 +5,29 @@
 //! `get` projects a kind back out or fails with `ValueError`.
 //! Primitive types are allocated once per thread and shared.
 
-use std::rc::Rc;
-
 mod arena;
 pub mod external;
 mod intern;
 #[allow(clippy::module_inception, reason = "separate facade and implementation")]
 mod value;
 
+use std::rc::Rc;
+
+use crate::util::json::json;
+
+use crate::lang::{
+    common::{
+        Id, TId,
+        notation::mixfix::Mixfix,
+        prim::num::{self, Number},
+        source::Span,
+    },
+    data::typ::{self, Typ, TypKind},
+};
+
 pub use arena::ValueArena;
 pub use intern::{CanonEq, CanonHash, CanonId, CanonInterner, Interned, Interner, RcInterner};
 pub use value::*;
-
-use crate::lang::{
-    common::prim::num::{self, Number},
-    common::{Id, TId, notation::mixfix::Mixfix, source::Span},
-    data::typ::{self, Typ, TypKind},
-};
-use crate::util::json::json;
 
 // = Smart constructors
 

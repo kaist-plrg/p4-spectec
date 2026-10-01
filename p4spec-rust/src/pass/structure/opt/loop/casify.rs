@@ -21,17 +21,17 @@
 
 use std::collections::VecDeque;
 
-use crate::{
-    lang::traits::eq::SyntaxEq,
-    pass::structure::{
-        StructureError,
-        ol::ast::*,
-        opt::{
-            merge::merge_block,
-            overlap::{Overlap, exp_as_guard, overlap_exp, overlap_guard},
-        },
+use crate::lang::traits::eq::SyntaxEq;
+
+use crate::runtime::envs::algo::TDEnv;
+
+use crate::pass::structure::{
+    StructureError,
+    ol::ast::*,
+    opt::{
+        merge::merge_block,
+        overlap::{Overlap, exp_as_guard, overlap_exp, overlap_guard},
     },
-    runtime::envs::algo::TDEnv,
 };
 
 // == Instructions

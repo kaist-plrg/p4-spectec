@@ -12,10 +12,13 @@
 //! A grid mixing cell and spanning rows renders once in `\mathrlap`,
 //! then reserves its width with a link-free `\hphantom` copy.
 
-use super::{doc::*, link};
-use crate::lang::traits::print::{Print, Printer};
-use num_bigint::BigInt;
 use std::fmt::{self, Write};
+
+use num_bigint::BigInt;
+
+use crate::lang::traits::print::{Print, Printer};
+
+use super::{doc::*, link};
 
 // == Helpers
 

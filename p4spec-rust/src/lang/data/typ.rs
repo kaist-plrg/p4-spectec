@@ -4,18 +4,19 @@
 //! primitives, named types with arguments, tuples, iterations, and functions.
 //! `make` builds types with default spans; `SyntaxCmp` orders them by shape.
 
-use serde::{Deserialize, Serialize};
-
 use std::cmp::Ordering;
 
+use serde::{Deserialize, Serialize};
+
 use crate::lang::{
-    common::prim::num,
     common::{
         Id, Iter, TId,
+        prim::num,
         source::{Phrase, Span},
     },
     traits::cmp::SyntaxCmp,
 };
+
 use crate::phrase;
 
 // == Types

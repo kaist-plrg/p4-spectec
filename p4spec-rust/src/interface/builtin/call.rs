@@ -9,10 +9,9 @@
 
 use std::collections::HashMap;
 
-use crate::{
-    lang::data::value::{Value, ValueArena},
-    lang::il::ast::{Id, Typ},
-};
+use crate::lang::data::value::{Value, ValueArena};
+
+use crate::lang::il::ast::{Id, Typ};
 
 use super::{BuiltinError, fresh, ints, lists, maps, nats, numerics, sets, texts};
 

@@ -1,20 +1,23 @@
-use crate::{
-    Error, Result,
-    corpus::{self, Outcome, Results},
-};
-use expect_test::expect_file;
-use indicatif::{ProgressBar, ProgressStyle};
-use p4spec_rust::{
-    interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess},
-    runner::{self, BuiltinInterface, Config, Interpreter, Runner},
-    sim_plugin::dummy::Dummy,
-};
 use std::{
     fs,
     path::{Path, PathBuf},
     sync::mpsc,
     thread,
     time::Instant,
+};
+
+use expect_test::expect_file;
+use indicatif::{ProgressBar, ProgressStyle};
+
+use p4spec_rust::runner::{self, BuiltinInterface, Config, Interpreter, Runner};
+
+use p4spec_rust::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
+
+use p4spec_rust::sim_plugin::dummy::Dummy;
+
+use crate::{
+    Error, Result,
+    corpus::{self, Outcome, Results},
 };
 
 struct RunSuite {

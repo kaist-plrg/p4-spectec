@@ -4,13 +4,11 @@
 //! An extern receives the same context and can reenter the interpreter
 //! after its own shared borrow has been copied into a local reference.
 
-use crate::{
-    lang::{
-        data::value::{Value, ValueArena},
-        il::ast::{Id, Typ},
-    },
-    runner::{Extern, Interface, Interpreter, InterpreterError},
-};
+use crate::lang::data::value::{Value, ValueArena};
+
+use crate::lang::il::ast::{Id, Typ};
+
+use crate::runner::{Extern, Interface, Interpreter, InterpreterError};
 
 // == Runner context
 

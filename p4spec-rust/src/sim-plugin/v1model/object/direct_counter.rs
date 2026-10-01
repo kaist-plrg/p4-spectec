@@ -3,24 +3,25 @@
 //! The simulator keeps one count per object,
 //! bumped only when `count()` is called.
 
+use num_bigint::BigInt;
+use num_traits::{One, Zero};
+use serde::{Deserialize, Serialize};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{Value, ValueArena, make},
+    },
+};
+
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+
 use crate::sim_plugin::{
     core::object::PacketIn,
     error,
     spec::{args, unpack},
 };
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, make},
-        },
-    },
-    runner::{Extern, ExternError, Interface, Interpreter, RunnerContext},
-};
-use num_bigint::BigInt;
-use num_traits::{One, Zero};
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 /// Direct counter by `CounterType`.

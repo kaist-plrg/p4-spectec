@@ -4,12 +4,11 @@
 //! the rest are outputs the relation computes.
 //! `split` and `combine` move between source order and the input/output lists.
 
-use crate::lang::{
-    common::source::Phrase,
-    el::ast::{Exp, ExpKind, Hole},
-    traits::eq::SyntaxEq,
-};
 use thiserror::Error;
+
+use crate::lang::{common::source::Phrase, traits::eq::SyntaxEq};
+
+use crate::lang::el::ast::{Exp, ExpKind, Hole};
 
 /// Relation input positions in source order
 ///

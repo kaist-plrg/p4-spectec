@@ -21,6 +21,7 @@ use std::path::Path;
 use clap::ValueEnum;
 use expect_test::expect_file;
 use indicatif::ProgressBar;
+
 use p4spec_rust::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
 use crate::{Error, Result};

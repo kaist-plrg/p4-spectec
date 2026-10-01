@@ -6,11 +6,12 @@
 
 use std::rc::Rc;
 
+use crate::lang::{common::source::Span, data::typ::TypKind};
+
 use super::{
     intern::{CanonId, CanonInterner, Interner, RcInterner},
     value::{Value, ValueError, ValueKind, ValueRef},
 };
-use crate::lang::{common::source::Span, data::typ::TypKind};
 
 // = Arena storage
 

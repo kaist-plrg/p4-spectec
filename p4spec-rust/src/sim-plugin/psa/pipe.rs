@@ -18,37 +18,42 @@
 //! Both engines can drop the current packet after scheduling its clones
 //! The scheduler runs queued packets until none remain
 
+use num_bigint::BigInt;
+use serde_derive_state::{DeserializeState, SerializeState};
+
+use crate::lang::{
+    common::source::Span,
+    data::{
+        typ,
+        value::{
+            Value, ValueArena, ValueError,
+            external::{DecodeContext, EncodeContext, Encoding, decode_with, encode_with},
+            get, make,
+        },
+    },
+};
+
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
+
+use crate::stf::ast::Statement;
+
+use crate::sim_plugin::error;
+
 use super::super::{
     core::{
         func as core_func,
-        object::{PacketIn, PacketOut, packet as core_packet},
+        object::{PacketIn, PacketOut, packet},
     },
     io::{Rx, Tx},
     spec::{func, pack, pgm, rel, unpack},
     state::SimState,
 };
+
 use super::{
     arch::Arch,
     object::{Counter, HashExtern, InternetChecksum, Meter, Register},
     packet::{Entrypoint, Packet},
 };
-use crate::lang::data::value::external::{
-    DecodeContext, EncodeContext, Encoding, decode_with, encode_with,
-};
-use crate::{
-    lang::{
-        common::source::Span,
-        data::{
-            typ,
-            value::{Value, ValueArena, ValueError, get, make},
-        },
-    },
-    runner::{ExternError, Interface, Interpreter, RunnerContext},
-    sim_plugin::error,
-    stf::ast::Statement,
-};
-use num_bigint::BigInt;
-use serde_derive_state::{DeserializeState, SerializeState};
 
 // == Configuration
 
@@ -1242,7 +1247,7 @@ where
         let pkt_in = find_ingress_packet_in(ctx, state.value_arch)?;
         let pkt_out = find_ingress_packet_out(ctx, state.value_arch)?;
         // Serialize the current packet to bytes
-        core_packet::to_string(&pkt_in, &pkt_out)
+        packet::to_string(&pkt_in, &pkt_out)
     }?;
     let pkt = ObjectState::PacketIn(PacketIn::init(&packet)?);
     state.value_arch = {
@@ -1282,7 +1287,7 @@ where
         let pkt_in = find_ingress_packet_in(ctx, state.value_arch)?;
         let pkt_out = find_ingress_packet_out(ctx, state.value_arch)?;
         // Serialize the current packet to bytes
-        core_packet::to_string(&pkt_in, &pkt_out)
+        packet::to_string(&pkt_in, &pkt_out)
     }?;
     let pkt = ObjectState::PacketIn(PacketIn::init(&packet)?);
     state.value_arch = {
@@ -1392,7 +1397,7 @@ where
         let pkt_in = find_egress_packet_in(ctx, state.value_arch)?;
         let pkt_out = find_egress_packet_out(ctx, state.value_arch)?;
         // Serialize the current packet to bytes
-        core_packet::to_string(&pkt_in, &pkt_out)
+        packet::to_string(&pkt_in, &pkt_out)
     }?;
     let pkt = PacketIn::init(&packet)?;
     state.value_arch = {
@@ -1454,7 +1459,7 @@ where
         let pkt_in = find_egress_packet_in(ctx, state.value_arch)?;
         let pkt_out = find_egress_packet_out(ctx, state.value_arch)?;
         // Serialize the current packet to bytes
-        core_packet::to_string(&pkt_in, &pkt_out)
+        packet::to_string(&pkt_in, &pkt_out)
     }?;
     let pkt = ObjectState::PacketIn(PacketIn::init(&packet)?);
     state.value_arch = {
@@ -1498,7 +1503,7 @@ where
         let pkt_in = find_egress_packet_in(ctx, state.value_arch)?;
         let pkt_out = find_egress_packet_out(ctx, state.value_arch)?;
         // Serialize the current packet to bytes
-        core_packet::to_string(&pkt_in, &pkt_out)
+        packet::to_string(&pkt_in, &pkt_out)
     }?;
     state.txs.push(Tx { port, packet });
     Ok(())

@@ -3,12 +3,11 @@
 //! Constructors return reports; extern callers supply the fatal host wrapper.
 //! Incoming reports and low-level value failures retain their own payloads.
 
-use super::io::{Expectation, Tx};
+use crate::lang::common::source::Span;
 
-use crate::{
-    diagnostic::{Diagnostic, Report, Severity},
-    lang::common::source::Span,
-};
+use crate::diagnostic::{Diagnostic, Report, Severity};
+
+use super::io::{Expectation, Tx};
 
 /// A diagnostic from simulator construction or execution.
 pub type SimError = Box<Report>;

@@ -8,10 +8,9 @@
 
 use std::fmt::{self, Write};
 
-use crate::{
-    lang::traits::print::{Print, Printer},
-    util::text::escape_text,
-};
+use crate::util::text::escape_text;
+
+use crate::lang::traits::print::{Print, Printer};
 
 use super::ast::*;
 
