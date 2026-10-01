@@ -65,6 +65,8 @@
      (SLICE e exp exp)
      (UPD e path exp)
      (UPD (OK val) path e)
+     (eval-exp/call id e (arg ...))
+     (eval-exp/call id (OK (typ ...)) ((OK val) ... e arg ...))
      (eval-exp/iter/opt ())
      (eval-exp/iter/opt (e))
      (eval-exp/iter/list ((OK val) ...))
@@ -95,13 +97,68 @@
      ;; Eval_arg, Eval_targs
      arg
      (EXP e)
-     (eval-targs (targ ...)))
+     (eval-targs (targ ...))
+     ;; Eval_prem, Eval_prems
+     prem
+     (REL id ((OK val) ... e exp ...) (exp ...))
+     (eval-prem/relpr e (exp ...))
+     (IF e)
+     (IFHOLD id ((OK val) ... e exp ...))
+     (eval-prem/ifholdpr/hold e)
+     (IFNOTHOLD id ((OK val) ... e exp ...))
+     (eval-prem/ifholdpr/nothold e)
+     (LET exp e)
+     (eval-prem/iterpr-opt/some e (vari ...))
+     (eval-prem/iterpr-list/list ((IN L OK) ... e (IN L prem) ...) (vari ...))
+     (DEBUG e)
+     (eval-prems (prem ...))
+     (eval-prems/head e (prem ...))
+     ;; Eval_clause(s): assigning the arguments, evaluating the premises, and
+     ;; evaluating the output
+     (eval-clause L clause (val ...))
+     (eval-clause/succ e (eval-prems (prem ...)) exp)
+     (eval-clause/succ OK e exp)
+     (eval-clause/succ OK OK e)
+     (eval-clauses L (clause ...) (val ...))
+     (eval-clauses/cons e L (clause ...) (val ...))
+     ;; Eval_tblrow(s), Call_table_func
+     (eval-tblrow tblrow (val ...))
+     (eval-tblrow/succ e (eval-prems (prem ...)) exp)
+     (eval-tblrow/succ OK e exp)
+     (eval-tblrow/succ OK OK e)
+     (eval-tblrows (tblrow ...) (val ...))
+     (eval-tblrows/cons e (tblrow ...) (val ...))
+     (call-table-func tableFuncDef (val ...))
+     ;; Call_defined_func, Call_func_dispatch, Call_func, and the extern
+     ;; relations for functions
+     (call-defined-func definedFuncDef (typ ...) (val ...))
+     (call-func-dispatch funcdef (typ ...) (val ...))
+     (call-func id (typ ...) (val ...))
+     (call-extern-func id (typ ...) (val ...))
+     (call-builtin-func id (typ ...) (val ...))
+     ;; Eval_rul(s): as Eval_clause(s), with the outputs evaluated in order
+     (eval-rul rulmatch rulpath (val ...))
+     (eval-rul/succ e (eval-prems (prem ...)) (exp ...))
+     (eval-rul/succ OK e (exp ...))
+     (eval-rul/succ OK OK ((OK val) ... e exp ...))
+     (eval-ruls rulmatch (rulpath ...) (val ...))
+     (eval-ruls/cons e rulmatch (rulpath ...) (val ...))
+     ;; Eval_rulgroup(s)
+     (eval-rulgroup rulgroup (val ...))
+     (eval-rulgroups (rulgroup ...) (val ...))
+     (eval-rulgroups/cons e (rulgroup ...) (val ...))
+     ;; Call_defined_rel, Call_rel_dispatch, Call_rel, and the extern relation
+     ;; for relations
+     (call-defined-rel definedRelDef (val ...))
+     (call-rel-dispatch reldef (val ...))
+     (call-rel id (val ...))
+     (call-extern-rel id (val ...)))
 
   ;; Finished subterms
   (done ::= res (IN L OK))
 
-  ;; Frames, one level each, through which FAIL passes. Redex has no empty
-  ;; nonterminals, so Fr-catch comes with the first frame that catches FAIL.
+  ;; Frames, one level each: those through which FAIL passes, and those
+  ;; where a rule looks at FAIL
   (Fr-pass ::=
            ;; Assign_exp(s), Assign_arg(s)
            (assign-exp/cons hole exp (LIST (val ...)))
@@ -139,6 +196,8 @@
            (SLICE hole exp exp)
            (UPD hole path exp)
            (UPD (OK val) path hole)
+           (eval-exp/call id hole (arg ...))
+           (eval-exp/call id (OK (typ ...)) ((OK val) ... hole arg ...))
            (eval-exp/iter/opt (hole))
            (eval-exp/iter/list ((OK val) ... hole (IN L exp) ...))
            ;; Eval_path
@@ -162,8 +221,39 @@
            (eval-path-upd/slice (OK (LIST (val ...))) (OK (NAT n)) hole val path (LIST (val ...)))
            (eval-path-upd/dot hole atom val path val)
            ;; Eval_arg
-           (EXP hole))
-  (Fr ::= Fr-pass)
+           (EXP hole)
+           ;; Eval_prem, Eval_prems
+           (REL id ((OK val) ... hole exp ...) (exp ...))
+           (eval-prem/relpr hole (exp ...))
+           (IF hole)
+           (IFHOLD id ((OK val) ... hole exp ...))
+           (eval-prem/ifholdpr/hold hole)
+           (IFNOTHOLD id ((OK val) ... hole exp ...))
+           (LET exp hole)
+           (eval-prem/iterpr-opt/some hole (vari ...))
+           (eval-prem/iterpr-list/list ((IN L OK) ... hole (IN L prem) ...) (vari ...))
+           (DEBUG hole)
+           (eval-prems/head hole (prem ...))
+           ;; Eval_clause, Eval_tblrow
+           (eval-clause/succ hole (eval-prems (prem ...)) exp)
+           (eval-clause/succ OK hole exp)
+           (eval-clause/succ OK OK hole)
+           (eval-tblrow/succ hole (eval-prems (prem ...)) exp)
+           (eval-tblrow/succ OK hole exp)
+           (eval-tblrow/succ OK OK hole)
+           ;; Eval_rul
+           (eval-rul/succ hole (eval-prems (prem ...)) (exp ...))
+           (eval-rul/succ OK hole (exp ...))
+           (eval-rul/succ OK OK ((OK val) ... hole exp ...)))
+  (Fr-catch ::=
+            ;; Eval_prem/nothold
+            (eval-prem/ifholdpr/nothold hole)
+            ;; the cons-fail rules, which try the next alternative
+            (eval-clauses/cons hole L (clause ...) (val ...))
+            (eval-tblrows/cons hole (tblrow ...) (val ...))
+            (eval-ruls/cons hole rulmatch (rulpath ...) (val ...))
+            (eval-rulgroups/cons hole (rulgroup ...) (val ...)))
+  (Fr ::= Fr-pass Fr-catch)
 
   ;; Frames within one local context, and across local contexts
   (F ::= hole (in-hole Fr F))

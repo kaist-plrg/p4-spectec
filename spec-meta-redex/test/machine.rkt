@@ -1,40 +1,64 @@
 #lang racket/base
 ;; Helpers that run machine terms through the driver, and the driver's tests.
 
-(require racket/list
+(require racket/file
+         racket/list
          racket/match
          rackunit
          "../common/0.0-prelude.rkt"
+         "../al/0-boot.rkt"
+         "../al/3-context.rkt"
          "../al/5-eval.rkt")
 (provide run-in
          eval-in
          trace-in
+         boot-text
+         global-of
          start-coverage
          check-coverage)
 
-;; Runs e under G and L to (G (IN L_1 res)), with the cross-check and the
-;; grammar check on, and returns (list res L_1).
-(define (run-in G L e)
-  (match (run-traced G L e)
+;; Runs e under G and L to (G (IN L_1 res)), with the grammar check on, and
+;; returns (list res L_1). The cross-check is on unless #:cross-check? is #f.
+(define (run-in G L e #:cross-check? [cross-check-on? #t])
+  (match (run-traced G L e cross-check-on?)
     [(cons (list _ (list 'IN L_1 res)) _) (list res L_1)]))
 
 ;; The result of e under G and L
-(define (eval-in G L e)
-  (car (run-in G L e)))
+(define (eval-in G L e #:cross-check? [cross-check-on? #t])
+  (car (run-in G L e #:cross-check? cross-check-on?)))
 
 ;; The names of the rules that running e under G and L applies, in order
-(define (trace-in G L e)
-  (cdr (run-traced G L e)))
+(define (trace-in G L e #:cross-check? [cross-check-on? #t])
+  (cdr (run-traced G L e cross-check-on?)))
 
-;; The final configuration and the rules applied, which coverage records
-(define (run-traced G L e)
-  (define-values (final rules)
-    (parameterize ([cross-check? #t]
-                   [check-conf? #t])
-      (run/trace (list G (list 'IN L e)))))
-  (for ([rule (in-list rules)])
-    (hash-update! rule-counts rule add1 0))
-  (cons final rules))
+;; The final configuration and the rules applied. Coverage records each rule
+;; as it is applied, so a run that raises still records the rules before.
+(define (run-traced G L e cross-check-on?)
+  (parameterize ([cross-check? cross-check-on?]
+                 [check-conf? #t])
+    (let loop ([conf (list G (list 'IN L e))] [rules '()])
+      (define-values (next rule) (step/rule conf))
+      (cond
+        [next
+         (hash-update! rule-counts rule add1 0)
+         (loop next (cons rule rules))]
+        [else (cons conf (reverse rules))]))))
+
+;; The script that spectec-boot gives for the watsup source text
+(define (boot-text text)
+  (define path (make-temporary-file "redex-test-~a.watsup"))
+  (dynamic-wind
+   void
+   (λ ()
+     (call-with-output-file path #:exists 'truncate
+       (λ (out) (write-string text out)))
+     (boot-script path))
+   (λ () (delete-file path))))
+
+;; The global layer that $load builds from script
+(define (global-of script)
+  (match (term (load (empty-ctx) ,script))
+    [(list 'GLOBAL G 'LOCAL _) G]))
 
 ;; How often the driver applied each rule, by name. Redex's make-coverage
 ;; counts a rule once its first `where` matches, even if a later premise fails.
@@ -55,8 +79,7 @@
                 "rules never used"))
 
 (module+ test
-  (require "../al/3-context.rkt"
-           "../al/4-relation.rkt")
+  (require "../al/4-relation.rkt")
 
   (define coverage (start-coverage ->redex/eval))
 

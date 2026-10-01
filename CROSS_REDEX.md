@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Steps 1 to 8 are done.
+Status: in progress. Steps 1 to 10 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -86,7 +86,10 @@ across groups and relations, and `union-reduction-relations` rejects two rules
 with the same name *(measured)*. A rule that runs in stages keeps its name for
 the first stage, and each later stage adds a word for what it does:
 `"assign-exp/cons"` assigns the head, and `"assign-exp/cons/tail"` the tail.
-Complement rules end in `fail`:
+Two rules that share their first premise share that stage, which is named
+after the common part of their names: `"eval-clauses/cons"` runs the head
+clause, and then `"eval-clauses/cons-succ"` or `"eval-clauses/cons-fail"`
+applies. Complement rules end in `fail`:
 
 - `".../fail-<subterm>"` where a subterm just evaluated fits no rule, as in
   `"eval-exp/binary/fail-left"`;
@@ -164,11 +167,13 @@ argument: this is the caller's layer, written `C_caller` in watsup.
 A rule whose premises evaluate sub-relations one after another has an
 intermediate form that holds them. The form is named after the rule that
 builds it: `<relation>/<rule>`, `<relation>/<group>/<rule>` for a rule in a
-group, or `<relation>/<group>` when the group's rules share the premise. Its
-frames give the positions in the order the premises run. For example,
-`Eval_path/idx` becomes `(eval-path/idx (eval-path val path) exp_i)`: the
-inner path first, and the index once the base is a text or a list. These forms
-play the role of K's `...AwaitK` items.
+group, or `<relation>/<group>` when the group's rules share the premise. When
+two rules share their first premise, the form is named after the common part
+of their names, as `eval-clauses/cons` is for `Eval_clauses/cons-succ` and
+`cons-fail`. Its frames give the positions in the order the premises run. For
+example, `Eval_path/idx` becomes `(eval-path/idx (eval-path val path) exp_i)`:
+the inner path first, and the index once the base is a text or a list. These
+forms play the role of K's `...AwaitK` items.
 
 A rule that inspects a premise's result before it evaluates the next premise
 waits in a frame whose production requires that result. For example,
@@ -685,7 +690,8 @@ and decide with the user before deviating. Record each deviation here.
   scripts without externs, builtins, or `debug` output that matters.
 - **Coverage.** A test file ends by checking that every rule of the relations
   it exercises was applied, except the extern rules until Step 12. The helpers
-  in `test/machine.rkt` count the rules that the driver applies, by name.
+  in `test/machine.rkt` count the rules that the driver applies, by name, as
+  it applies them, so a run that raises still counts the rules before.
   Redex's `make-coverage` is not used: it counts a rule once the rule's
   left-hand side and first `where` match, even when a later premise fails (see
   Step 7), and `->al` applies the rules at every candidate position.
@@ -1315,6 +1321,47 @@ Transcribe `al/5.5-eval-prem`: `Eval_prem` and `Eval_prems`.
 - Tests: `test/eval-prem.rkt`. `REL`, `IFHOLD`, and `IFNOTHOLD` need
   `Call_rel`, so their tests come with Step 10.
 
+Outcome:
+
+- Done. `test/eval-prem.rkt` passes (75 checks), with every rule of
+  `->redex/eval-prem` and `->ctx/eval-prem` applied. Step 10 was done with
+  this step, so the file also tests `REL`, `IFHOLD`, and `IFNOTHOLD`, on
+  relations booted from a watsup text.
+- `IF`, `LET`, `DEBUG`, and the inputs of `REL`, `IFHOLD`, and `IFNOTHOLD`
+  evaluate in place. The relation premises then call `call-rel` in
+  `eval-prem/relpr`, `eval-prem/ifholdpr/hold`, or
+  `eval-prem/ifholdpr/nothold`, whose frame is a catcher. The iterations wait
+  in `eval-prem/iterpr-opt/some` and `eval-prem/iterpr-list/list`, and
+  `Eval_prems` in `eval-prems/head`, which `head-fail` and `head-succ` share.
+- `Eval_prem/fail` is `"frame/fail"` wherever a sub-relation fails, and
+  `Eval_prems/head-fail` is too. The other cases are complement rules:
+  - `"eval-prem/ifpr/fail"`: the condition is not a boolean.
+  - `"eval-prem/ifholdpr/hold/fail"`: the relation has outputs.
+  - `"eval-prem/ifholdpr/nothold/fail"`: the relation holds.
+  - `"eval-prem/ifholdpr/nothold/fail-rel"`: there is no such relation.
+  - `"eval-prem/iterpr-opt/fail"` and `"eval-prem/iterpr-list/fail"`:
+    `$sub_opt` or `$sub_list` gives `⊥`.
+  - `"eval-prem/iterpr-opt/some/fail"` and `"eval-prem/iterpr-list/list/fail"`:
+    the premise leaves a variable to bind unbound.
+- `IFHOLD` holds only if the relation gives `OK eps`, as watsup states.
+  OCaml's AL interpreter accepts any outputs. The 14 hold premises of `spec/`
+  all name relations without outputs *(measured)*, so only a hand-built term
+  tells the two apart.
+- `IFNOTHOLD` evaluates its inputs before it looks the relation up, so an
+  input that raises also raises for an unknown relation.
+- An optional iteration with no bound variable runs its premise once, and a
+  list iteration with none runs it zero times, as `$sub_opt` and `$sub_list`
+  give.
+- `debug` writes once per step of the driver. The cross-check applies the
+  rule again and writes a second time, which a test pins down.
+- Changes to `test/machine.rkt`:
+  - `run-in`, `eval-in`, and `trace-in` take `#:cross-check?`.
+  - `boot-text` boots a watsup text through a temporary file, and
+    `global-of` loads a script and gives its `GLOBAL` layer.
+  - Coverage counts each rule as the driver applies it, through `step/rule`,
+    which `al/5-eval.rkt` now provides. So a run that raises, such as an
+    extern call, still counts the rules before.
+
 ### Step 10: Function and relation calls
 
 Transcribe `al/5.6-eval-call-func` and `al/5.7-eval-call-rel`, and
@@ -1349,6 +1396,57 @@ Transcribe `al/5.6-eval-call-func` and `al/5.7-eval-call-rel`, and
   argument, a polymorphic call from a context where `X` is `NAT`, an unknown
   relation under `IFNOTHOLD`, and deep recursion. Every rule used, except the
   extern rules.
+
+Outcome:
+
+- Done. `test/eval-call-func.rkt` (52 checks), `test/eval-call-rel.rkt` (22),
+  and the call tests in `test/eval-exp.rkt` pass. Every rule of the two
+  fragments and of `Eval_exp/call` is applied, except the three extern rules.
+  The whole suite runs 3,544 checks in 34 s, and 3,514 with contracts off, on
+  a scratch copy.
+- A function call reduces through `eval-exp/call`, `call-func`,
+  `call-func-dispatch`, and `call-defined-func` to
+  `(IN L_callee (eval-clauses L (clause_all ...) (val ...)))`. Each clause
+  then runs in `(eval-clauses/cons (IN L_callee (eval-clause ...)) ...)`. A
+  relation call reduces through `call-rel`, `call-rel-dispatch`, and
+  `call-defined-rel` to `(IN L_local (eval-rulgroups ...))`, and each rule
+  path runs in `(eval-ruls/cons (IN L_local (eval-rul ...)) ...)`.
+- `eval-clause/succ`, `eval-tblrow/succ`, and `eval-rul/succ` have three
+  positions, in the order the premises run: the assignment,
+  `(eval-prems (prem ...))`, and the output or outputs. Each position waits
+  for `OK` in the one before.
+- The rules in `->ctx` copy the layer (`eval-clauses/cons`,
+  `eval-ruls/cons`), read the caller's layer (`eval-tblrow/succ`,
+  `call-defined-func`), or look a definition up (`call-func`, `call-rel`).
+  `call-defined-rel` builds its layer from `$empty_layer` alone, so it is in
+  `->redex`.
+- `Eval_rulgroup/succ` and `Eval_rulgroup/fail` are one rule,
+  `"eval-rulgroup"`, which reduces to `eval-ruls`: the group's result is that
+  of its paths.
+- The elaborator adds `|tparam*| = |typ*|` to `Call_defined_func`. The rule
+  states it as a named ellipsis that its left-hand side and a `where` share,
+  and `"call-defined-func/fail"` is its complement.
+- `outer<NAT>` calls `fits<Y>`, and the test checks that `fits` sees `NAT`,
+  which needs the fix to `Eval_exp/call`. `thrice(def $inc, 3)` passes its
+  function argument `k` on to `twice`, which finds `k` in `thrice`'s layer.
+- The seven examples of Step 11 that need no builtins already give their
+  expected values. Without the cross-check, `fibo` takes 6,478 steps in 6.4 s,
+  and `mutual-recursion` 5,638 steps in 4.8 s.
+- Step time grows with call depth. `$sum(n)` takes about 42 steps per level
+  of recursion, and each level nests five nodes (`BIN`, two `IN` nodes,
+  `eval-clauses/cons`, and `eval-clause/succ`). Mean time per step
+  *(measured)*:
+
+  | n | 10 | 30 | 50 | 100 | 200 |
+  | --- | --- | --- | --- | --- | --- |
+  | driver | 0.68 ms | | 3.7 ms | 6.6 ms | 12 ms |
+  | cross-check on | 6.7 ms | 25 ms | | | |
+
+  The driver walks the whole path on every step, which Step 13's "resume from
+  the last hole" avoids. The test runs `$sum(30)` without the cross-check.
+- The front end accepts a table row's pattern only as a variable or an upcast
+  case. So the test script declares each case in a type of its own, and
+  `color` as their union.
 
 ### Step 11: Entry and driver
 

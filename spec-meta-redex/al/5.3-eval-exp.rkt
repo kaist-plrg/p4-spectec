@@ -398,6 +398,16 @@
    (--> (UPD (OK val_b) path (OK val_f)) (eval-path-upd val_b path val_f)
         "eval-exp/upd")
 
+   ;;; Meta-function call evaluation rules
+
+   ;; rule Eval_exp/call: the type arguments, then the arguments
+   (--> (CALL id (targ ...) (arg ...)) (eval-exp/call id (eval-targs (targ ...)) (arg ...))
+        "eval-exp/call")
+   ;; It passes typ_input*, where spec-meta passes targ*.
+   (--> (eval-exp/call id (OK (typ_input ...)) ((OK val_input) ...))
+        (call-func id (typ_input ...) (val_input ...))
+        "eval-exp/call/func")
+
    ;;; Iterated expression evaluation rules
 
    ;; Eval_exp/iter/opt and Eval_exp/iter/list, once exp is evaluated in each

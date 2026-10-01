@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require rackunit
+(require racket/list
+         rackunit
          "../common/0.0-prelude.rkt"
          "../al/5.3-eval-exp.rkt"
          "machine.rkt")
@@ -11,11 +12,14 @@
 (define DIV0 (term (BIN DIV (NAT 1) (NAT 0))))
 
 ;; G binds a value too, which no variable finds, and types that L partly
-;; shadows.
+;; shadows. Its functions add their arguments to 1, or to each other.
 (define-term G-vals
   {TYP (("T" (DEF () (ALIAS INT)))
         ("S" (DEF () (ALIAS INT))))
-   REL () FUNC ()
+   REL ()
+   FUNC (("inc" (DEF () ((((EXP (VAR "n"))) (BIN ADD (VAR "n") (NAT 1)) ())) ()))
+         ("add" (DEF () ((((EXP (VAR "a")) (EXP (VAR "b"))) (BIN ADD (VAR "a") (VAR "b")) ()))
+                     ())))
    VAL ((("g" ()) (NAT 0)))})
 
 (define-term L-vals
@@ -530,6 +534,25 @@
 ;; The inner path fails.
 (test-equal (eval-exp (term (UPD (VAR "l") (DOT (IDX ROOT (NAT 5)) "A") (NAT 0)))) 'FAIL)
 (test-equal (eval-exp (term (UPD (VAR "s") (IDX (DOT ROOT "C") (NAT 0)) (NAT 0)))) 'FAIL)
+;;
+;; Calls
+;;
+
+;; The type arguments, then the arguments left to right, and then the call
+(test-equal (eval-exp (term (CALL "inc" () ((EXP (VAR "x")))))) (term (OK (NAT 2))))
+(test-equal (eval-exp (term (CALL "add" () ((EXP (VAR "x")) (EXP (NAT 2)))))) (term (OK (NAT 3))))
+(test-equal (take (trace-exp (term (CALL "add" () ((EXP (VAR "x")) (EXP (NAT 2)))))) 7)
+            '("eval-exp/call" "eval-targs" "eval-exp/variable" "eval-arg/exp"
+              "eval-exp/literal/number" "eval-arg/exp" "eval-exp/call/func"))
+;; The type arguments fail, and no argument is evaluated.
+(test-equal (trace-exp (term (CALL "inc" ((VAR "S" (BOOL))) ((EXP ,DIV0)))))
+            '("eval-exp/call" "eval-targs/fail-subst" "frame/fail"))
+;; An argument fails, and no later one is evaluated.
+(test-equal (trace-exp (term (CALL "add" () ((EXP (VAR "y")) (EXP ,DIV0)))))
+            '("eval-exp/call" "eval-targs" "eval-exp/variable/fail" "frame/fail" "frame/fail"))
+;; No such function: a variable bound to a function value is not one.
+(test-equal (trace-exp (term (CALL "f" () ((FUN "inc")))))
+            '("eval-exp/call" "eval-targs" "eval-arg/fun" "eval-exp/call/func" "call-func/fail"))
 
 ;;
 ;; Iterated expressions

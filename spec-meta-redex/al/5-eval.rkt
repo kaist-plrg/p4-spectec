@@ -8,7 +8,10 @@
          "4-relation.rkt"
          "5.2-eval-assign.rkt"
          "5.3-eval-exp.rkt"
-         "5.4-eval-arg.rkt")
+         "5.4-eval-arg.rkt"
+         "5.5-eval-prem.rkt"
+         "5.6-eval-call-func.rkt"
+         "5.7-eval-call-rel.rkt")
 (provide ->redex/eval
          ->redex
          ->ctx
@@ -21,6 +24,7 @@
          check-conf?
          final?
          step
+         step/rule
          run
          run/trace)
 
@@ -49,13 +53,19 @@
   (union-reduction-relations ->redex/eval
                              ->redex/eval-assign
                              ->redex/eval-exp
-                             ->redex/eval-arg))
+                             ->redex/eval-arg
+                             ->redex/eval-prem
+                             ->redex/eval-call-func
+                             ->redex/eval-call-rel))
 
 ;; The rules that read G or L, or write L, on the focus triple (r G L)
 (define ->ctx
   (union-reduction-relations ->ctx/eval-assign
                              ->ctx/eval-exp
-                             ->ctx/eval-arg))
+                             ->ctx/eval-arg
+                             ->ctx/eval-prem
+                             ->ctx/eval-call-func
+                             ->ctx/eval-call-rel))
 
 ;; Every (r_1 G L_1) that ->redex (with L_1 = L) or ->ctx gives for (r G L)
 (define (focus-steps triple)
@@ -135,7 +145,7 @@
 
 ;; The configuration after conf and the name of the rule applied, or #f and #f
 ;; if conf is final
-(define (step/rule conf m)
+(define (step/rule conf #:machine [m al-machine])
   (when (and (check-conf?) (not (conf? conf)))
     (error 'step "not a configuration (G e), with e: ~e" (conf-term conf)))
   (define-values (next rule)
@@ -215,18 +225,18 @@
 
 ;; The configuration after conf, or #f if conf is final
 (define (step conf #:machine [m al-machine])
-  (define-values (next _rule) (step/rule conf m))
+  (define-values (next _rule) (step/rule conf #:machine m))
   next)
 
 ;; The final configuration that conf reduces to
 (define (run conf #:machine [m al-machine])
-  (define-values (next _rule) (step/rule conf m))
+  (define-values (next _rule) (step/rule conf #:machine m))
   (if next (run next #:machine m) conf))
 
 ;; The final configuration, and the names of the rules applied, in order
 (define (run/trace conf #:machine [m al-machine])
   (let loop ([conf conf] [rules '()])
-    (define-values (next rule) (step/rule conf m))
+    (define-values (next rule) (step/rule conf #:machine m))
     (if next
         (loop next (cons rule rules))
         (values conf (reverse rules)))))
