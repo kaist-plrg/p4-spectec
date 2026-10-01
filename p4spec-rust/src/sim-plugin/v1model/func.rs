@@ -671,19 +671,18 @@ where
 ///
 /// `extern void log_msg(string msg);`
 /// `extern void log_msg<T>(string msg, in T data);`
-pub fn log_msg<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+pub fn log_msg<Interp, Iface>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_ctx: Value,
     value_arch: Value,
 ) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
+    Interp: Interpreter<Iface, V1Model>,
 {
     let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
     let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
-    println!("{msg}");
+    ctx.external().write_log(&msg)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
@@ -737,22 +736,21 @@ pub fn format_braces(arena: &ValueArena, fmt: &str, args: &[Value]) -> Result<St
 }
 
 /// Prints `msg` with each `{}` replaced by the next element of `data`.
-pub fn log_msg_format<Interp, Iface, Ext>(
-    ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
+pub fn log_msg_format<Interp, Iface>(
+    ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_ctx: Value,
     value_arch: Value,
 ) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
-    Ext: Extern,
-    Interp: Interpreter<Iface, Ext>,
+    Interp: Interpreter<Iface, V1Model>,
 {
     let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
     let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
     let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
     let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
     let text = format_braces(ctx.arena(), &msg, &values)?;
-    println!("{text}");
+    ctx.external().write_log(&text)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
         crate::phrase!(node: "value".to_owned(), span: Span::default()),

@@ -194,6 +194,13 @@ pub(super) fn register_type_argument_arity_mismatch(message: impl Into<String>) 
 
 // = Values, formatting, and lookups
 
+const PROGRAM_OUTPUT_FAILED: &str = "sim/program-output-failed";
+
+/// Reports a failure to write a program log message.
+pub(super) fn program_output_failed(message: impl Into<String>) -> SimError {
+    report(PROGRAM_OUTPUT_FAILED, message)
+}
+
 const FORMAT_ARGUMENT_ARITY_MISMATCH: &str = "sim/format-argument-arity-mismatch";
 
 /// Reports a format argument arity that is mismatch.
