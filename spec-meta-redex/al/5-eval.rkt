@@ -6,7 +6,9 @@
          racket/match
          "../common/0.0-prelude.rkt"
          "4-relation.rkt"
-         "5.3-eval-exp.rkt")
+         "5.2-eval-assign.rkt"
+         "5.3-eval-exp.rkt"
+         "5.4-eval-arg.rkt")
 (provide ->redex/eval
          ->redex
          ->ctx
@@ -45,10 +47,15 @@
 ;; The rules that neither read nor write the context, on the redex r
 (define ->redex
   (union-reduction-relations ->redex/eval
-                             ->redex/eval-exp))
+                             ->redex/eval-assign
+                             ->redex/eval-exp
+                             ->redex/eval-arg))
 
 ;; The rules that read G or L, or write L, on the focus triple (r G L)
-(define ->ctx ->ctx/eval-exp)
+(define ->ctx
+  (union-reduction-relations ->ctx/eval-assign
+                             ->ctx/eval-exp
+                             ->ctx/eval-arg))
 
 ;; Every (r_1 G L_1) that ->redex (with L_1 = L) or ->ctx gives for (r G L)
 (define (focus-steps triple)

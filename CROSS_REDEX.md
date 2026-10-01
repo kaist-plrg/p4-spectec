@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Steps 1 to 6 are done.
+Status: in progress. Steps 1 to 8 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -83,7 +83,16 @@ names their Redex transcriptions.
 Rule names combine the relation, the rulegroup, and the rule, for example
 `"eval-exp/unary/boolean"` and `"eval-exp/unary/fail"`. watsup reuses rule names
 across groups and relations, and `union-reduction-relations` rejects two rules
-with the same name *(measured)*.
+with the same name *(measured)*. A rule that runs in stages keeps its name for
+the first stage, and each later stage adds a word for what it does:
+`"assign-exp/cons"` assigns the head, and `"assign-exp/cons/tail"` the tail.
+Complement rules end in `fail`:
+
+- `".../fail-<subterm>"` where a subterm just evaluated fits no rule, as in
+  `"eval-exp/binary/fail-left"`;
+- `".../fail"` where the last subterm evaluated fits no rule;
+- `".../<rule>/fail"` where a rule's own premise fails, as in
+  `"eval-exp/binary/number/fail"`, on a `⊥`.
 
 ### Configurations
 
@@ -153,9 +162,10 @@ argument: this is the caller's layer, written `C_caller` in watsup.
 | `Entry` | the driver in `al/6-entry.rkt` | |
 
 A rule whose premises evaluate sub-relations one after another has an
-intermediate form for each point where it waits. The form is named
-`<relation>/<rule>`, or `<relation>/<group>` when a group's rules share the
-premise, and later stages add a suffix for what they wait for. For example,
+intermediate form that holds them. The form is named after the rule that
+builds it: `<relation>/<rule>`, `<relation>/<group>/<rule>` for a rule in a
+group, or `<relation>/<group>` when the group's rules share the premise. Its
+frames give the positions in the order the premises run. For example,
 `Eval_path/idx` becomes `(eval-path/idx (eval-path val path) exp_i)`: the
 inner path first, and the index once the base is a text or a list. These forms
 play the role of K's `...AwaitK` items.
@@ -673,11 +683,12 @@ and decide with the user before deviating. Record each deviation here.
   `->al` to each configuration, and fails unless `->al` gives exactly its
   successor. The check applies the rules a second time, so it runs only on
   scripts without externs, builtins, or `debug` output that matters.
-- **Coverage.** `make-coverage` takes reduction relations. A test file ends by
-  checking that every rule of the relations it exercises was used, except the
-  extern rules until Step 12. Coverage is recorded through the driver:
-  `->al` applies the rules at every candidate position, so its counts are
-  inflated.
+- **Coverage.** A test file ends by checking that every rule of the relations
+  it exercises was applied, except the extern rules until Step 12. The helpers
+  in `test/machine.rkt` count the rules that the driver applies, by name.
+  Redex's `make-coverage` is not used: it counts a rule once the rule's
+  left-hand side and first `where` match, even when a later premise fails (see
+  Step 7), and `->al` applies the rules at every candidate position.
 - **Disjoint metafunctions.** The tests cover both sides of every complement.
 - **Caching.** A test asserts that `caching-enabled?` is `#t` once
   `common/0.0-prelude.rkt` is loaded. The `$fresh_typeId` test in Step 12
@@ -739,15 +750,8 @@ in memory for every test file, which takes more than 10 minutes for the suite.
 `test/prelude.rkt` fails if the loaded code was compiled with the other
 setting.
 
-To list the rules a test file never reaches (here the expression rules):
-
-```sh
-racket -e '(require redex/reduction-semantics racket/port (file "spec-meta-redex/al/5-eval.rkt"))
-           (define c (make-coverage ->redex))
-           (parameterize ([relation-coverage (list c)] [current-output-port (open-output-nowhere)])
-             (dynamic-require (quote (file "spec-meta-redex/test/eval-exp.rkt")) #f))
-           (for ([p (covered-cases c)] #:when (zero? (cdr p))) (displayln (car p)))'
-```
+A test file's last check, `check-coverage`, fails with the names of the rules
+of its relations that the driver never applied.
 
 ### Exploring in a REPL
 
@@ -1158,7 +1162,7 @@ Outcome:
 
 Transcribe `al/5.2-eval-assign` as reduction rules on `assign-exp`,
 `assign-exps`, `assign-arg`, and `assign-args`, and their intermediate forms
-(`assign-exp/cons`, `assign-exp/opt-some`, `assign-exp/list`,
+(`assign-exp/cons`, `assign-exp/iter/opt-some`, `assign-exp/iter/list`,
 `assign-exps/cons`, `assign-args/cons`). A successful assignment updates the
 innermost `IN`'s layer and reduces to `OK`. An input no rule matches reduces to
 `FAIL` (see [FAIL and backtracking](#fail-and-backtracking)).
@@ -1182,6 +1186,42 @@ innermost `IN`'s layer and reduces to `OK`. An input no rule matches reduces to
     `iter/list` does not, because it assigns under `C_local`, and so it does
     not find a variable bound only outside the iteration.
 - Tests: every constructor, values that match no rule, and every rule used.
+
+Outcome:
+
+- Done. `test/eval-assign.rkt` passes (101 checks), with every step
+  cross-checked against `->al`, every configuration checked against `conf`,
+  and every rule of `->redex/eval-assign` and `->ctx/eval-assign` applied.
+  With Step 8, the whole suite runs 3,389 checks in 22 s, and 3,359 with
+  contracts off, on a scratch copy.
+- The forms of the two `Assign_exp/iter` rules are `assign-exp/iter/opt-some`
+  and `assign-exp/iter/list`. The planned `assign-exp/opt-some` and
+  `assign-exp/list` read as the forms of `Assign_exp/opt/opt-some` and
+  `Assign_exp/list`, which need none. So a form is now named after the rule
+  that builds it, with the rule's group (see [Machine terms](#machine-terms)).
+- The rules that write `L` or read `G` are in `->ctx`: `variable`,
+  `iter/simple`, `iter/opt-none`, the start of `iter/list` (which builds
+  `C_local` from `L`), the binding stages of `iter/opt-some` and `iter/list`,
+  and `Assign_arg/fun`. The rest are in `->redex`.
+- `Assign_exp/str` matches `(STR ((atom exp) ...))` against
+  `(STR ((atom val) ...))`. The repeated `atom` makes the atoms equal in order,
+  and so the lengths equal, as the checks in the elaborated rule do.
+- The complement of `Assign_exp` is two rules: `"assign-exp/fail"` for an exp
+  other than `ITER` that no rule matches, and `"assign-exp/iter/fail"` for an
+  `ITER` whose iterator and value fit no rule. `Assign_arg/fun` has one
+  complement per premise: a value other than `FUNC` (in `->redex`), and a
+  function that the caller lacks (in `->ctx`, since it reads `G`).
+- An assignment that fails partway leaves the bindings made so far in the
+  layer: `TUP (VAR a) := TUP (1, 2)` binds `a` before `Assign_exps` fails. The
+  enclosing premise, clause, or rule path drops that layer with its `IN`, so
+  the tests check only the result.
+- Redex's `make-coverage` counts a reduction rule once its left-hand side and
+  its first `where` match, even when a later `where` or `side-condition` fails
+  *(measured)*. `"assign-exp/iter/fail"`, which four tests reach, was counted
+  26 times. In Redex's `build-rewrite-proc/leaf`, a later premise that fails
+  gives `'()`, which counts as a match. So `test/machine.rkt` now counts the
+  rules that the driver applies, from `run/trace`. `start-coverage` takes the
+  relations, and `check-coverage` reports their rules that were never applied.
 
 ### Step 8: Expressions, paths, and arguments
 
@@ -1216,6 +1256,47 @@ Complete `al/5.3-eval-exp` and `al/5.4-eval-arg`: `Eval_exp` without `CALL`,
 - `debug` writes the Redex term to stderr.
 - Tests: `test/eval-exp.rkt` and `test/eval-arg.rkt`, with every rule used,
   and a case for each evaluation-order rule above.
+
+Outcome:
+
+- Done. `test/eval-exp.rkt` (266 checks), `test/eval-arg.rkt` (19), and the
+  helper tests in `test/common-stdlib.rkt` pass, with every rule of the three
+  fragments applied.
+- `al/4-relation.rkt` has a frame for every evaluation position. A position
+  that waits on an earlier result requires that result in its frame, as
+  `(BIN boolbinop (OK (BOOL b)) hole)` does. That covers each case of
+  evaluation order above, and the tests put `(BIN DIV (NAT 1) (NAT 0))` at each
+  position that must not be evaluated.
+- Complement rules follow the naming in
+  [Relations and functions](#relations-and-functions). `Eval_path/slice` has
+  `"fail-base"`, `"fail-index"`, and `"fail"`, one for each result that can fit
+  no rule. `"eval-exp/binary/number/fail"` and `"eval-exp/compare/number/fail"`
+  match the `⊥` of `$binop_number` and `$cmpop_number` on a nat and an int.
+- `$upcast`, `$downcast`, and `$subtyp` are total, so `Eval_exp/upcast`,
+  `downcast`, and `subtype` have no complement. A `⊥` would leave the driver
+  stuck, and it would report the term.
+- With the fix to `Eval_path_upd/slice/list`, both slice rules take the new
+  value's kind as an input pattern. So a new value that is neither a text nor a
+  list fails before anything is evaluated (`"eval-path-upd/slice/fail-value"`),
+  and a base of the other kind fails before the indices are
+  (`"eval-path-upd/slice/fail-base"`). `Eval_path_upd/idx/list` takes any new
+  value, so `IDX` always reads the inner path.
+- The meta-circular run indexes texts by UTF-8 bytes, and a slice is a start
+  and a length: `|"é"| + 10·|"abcd"[1 : 2]| + 100·|"aéb"[3]| + 1000·|"aé"[[0] = "x"]|`
+  is 3122 *(measured)*. The helpers in `common/0.1-stdlib.rkt` (`text-len`,
+  `text-idx`, `text-slice`, `text-upd`, `text-upd-slice`, and the `list-`
+  ones) give the same results, and their errors follow the messages of
+  `interp.ml`. Where OCaml returns a text that splits a character, the helpers
+  raise.
+- Division by zero raises Racket's own error (`quotient: undefined for 0`) out
+  of the driver.
+- `Eval_path_upd/dot` updates every field with the atom, and leaves a struct
+  without the atom unchanged, as the rule states.
+- `$exists_((val_e = val)*)` in `Eval_exp/mem`, and `atom = atom_field` in
+  `Eval_path_upd/dot`, compare in a Racket escape. A Redex template cannot
+  unquote under an ellipsis.
+- `debug` writes the term to stderr with `writeln`. `Eval_prem/dbg` uses it in
+  Step 9.
 
 ### Step 9: Premises
 

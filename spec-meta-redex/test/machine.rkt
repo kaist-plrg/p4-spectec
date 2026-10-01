@@ -1,7 +1,8 @@
 #lang racket/base
 ;; Helpers that run machine terms through the driver, and the driver's tests.
 
-(require racket/match
+(require racket/list
+         racket/match
          rackunit
          "../common/0.0-prelude.rkt"
          "../al/5-eval.rkt")
@@ -14,8 +15,8 @@
 ;; Runs e under G and L to (G (IN L_1 res)), with the cross-check and the
 ;; grammar check on, and returns (list res L_1).
 (define (run-in G L e)
-  (match (checked (λ () (run (list G (list 'IN L e)))))
-    [(list _ (list 'IN L_1 res)) (list res L_1)]))
+  (match (run-traced G L e)
+    [(cons (list _ (list 'IN L_1 res)) _) (list res L_1)]))
 
 ;; The result of e under G and L
 (define (eval-in G L e)
@@ -23,27 +24,33 @@
 
 ;; The names of the rules that running e under G and L applies, in order
 (define (trace-in G L e)
-  (define-values (_final rules)
-    (checked (λ () (run/trace (list G (list 'IN L e))))))
-  rules)
+  (cdr (run-traced G L e)))
 
-(define (checked thunk)
-  (parameterize ([cross-check? #t]
-                 [check-conf? #t])
-    (thunk)))
+;; The final configuration and the rules applied, which coverage records
+(define (run-traced G L e)
+  (define-values (final rules)
+    (parameterize ([cross-check? #t]
+                   [check-conf? #t])
+      (run/trace (list G (list 'IN L e)))))
+  (for ([rule (in-list rules)])
+    (hash-update! rule-counts rule add1 0))
+  (cons final rules))
 
-;; Records from now on how often each rule of rels is used by the driver.
+;; How often the driver applied each rule, by name. Redex's make-coverage
+;; counts a rule once its first `where` matches, even if a later premise fails.
+(define rule-counts (make-hash))
+
+;; Records from now on how often each rule of rels is applied by the driver,
+;; through the helpers above.
 (define (start-coverage . rels)
-  (define coverage (for/list ([rel (in-list rels)]) (make-coverage rel)))
-  (relation-coverage (append coverage (relation-coverage)))
-  coverage)
+  (hash-clear! rule-counts)
+  (map symbol->string (append-map reduction-relation->rule-names rels)))
 
-;; Checks that every rule recorded in coverage was used.
+;; Checks that every rule recorded in coverage was applied.
 (define (check-coverage coverage)
-  (check-equal? (for*/list ([cov (in-list coverage)]
-                            [case (in-list (covered-cases cov))]
-                            #:when (zero? (cdr case)))
-                  (car case))
+  (check-equal? (for/list ([rule (in-list coverage)]
+                           #:unless (hash-has-key? rule-counts rule))
+                  rule)
                 '()
                 "rules never used"))
 
