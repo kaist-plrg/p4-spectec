@@ -64,8 +64,11 @@ enum Command {
         #[arg(long = "output")]
         path_output: Option<PathBuf>,
     },
-    /// Compare the full P4 corpus with stored file results (cache on, det off)
-    RunAl,
+    /// Compare the full P4 corpus with stored file results (cache on)
+    RunAl {
+        #[arg(long)]
+        det: bool,
+    },
     /// Compare native SL outcomes with source-derived results (cache on)
     RunSl {
         #[arg(long)]
@@ -99,7 +102,7 @@ fn execute(mut cli: Cli) -> Result<()> {
         command,
         Command::P4parse
             | Command::Structure
-            | Command::RunAl
+            | Command::RunAl { .. }
             | Command::RunSl { .. }
             | Command::RunPl { .. }
             | Command::SimAl { .. }
@@ -171,7 +174,7 @@ fn execute(mut cli: Cli) -> Result<()> {
         Command::Structure => structure::run(&registry),
         Command::Prose => prose::run(&registry),
         Command::Adoc { path_output } => adoc::run(&registry, path_output.as_deref()),
-        Command::RunAl => run::run(&registry, Language::Al, false),
+        Command::RunAl { det } => run::run(&registry, Language::Al, *det),
         Command::RunSl { det } => run::run(&registry, Language::Sl, *det),
         Command::RunPl { det } => run::run(&registry, Language::Pl, *det),
         Command::SimAl { det } => sim::run(&registry, Language::Al, *det),

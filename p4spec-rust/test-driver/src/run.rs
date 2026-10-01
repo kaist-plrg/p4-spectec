@@ -40,10 +40,10 @@ pub fn run(registry: &Registry, language: Language, det: bool) -> Result<()> {
         return Err(Error::Invalid(format!("no {} execution suites registered", language.name())));
     }
     match language {
-        Language::Al => run_with(registry, "AL cache=on det=false", suites, || {
+        Language::Al => run_with(registry, &format!("AL cache=on det={det}"), suites, || {
             let spec_al = p4spec_rust::algo(&registry.spec)
                 .map_err(|error| Error::Invalid(error.to_string()))?;
-            runner::build_al(spec_al, Config::new(true, false, false), Dummy)
+            runner::build_al(spec_al, Config::new(true, det, false), Dummy)
                 .map_err(|error| Error::Invalid(error.to_string()))
         }),
         Language::Sl => run_with(registry, &format!("SL cache=on det={det}"), suites, || {

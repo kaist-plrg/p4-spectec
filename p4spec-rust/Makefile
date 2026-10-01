@@ -43,6 +43,7 @@ test-adoc:
 
 test-run-al:
 	env -u UPDATE_EXPECT $(DRIVER) run-al
+	env -u UPDATE_EXPECT $(DRIVER) run-al --det
 
 test-run-sl:
 	env -u UPDATE_EXPECT $(DRIVER) run-sl
