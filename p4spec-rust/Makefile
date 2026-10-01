@@ -1,68 +1,12 @@
-# Test targets for the Rust port.
-#
-# The default targets run the native Rust unit and integration tests.
+# End-to-end acceptance through the registered Rust driver
 
 CARGO := cargo
 
-.PHONY: test test-frontend test-p4parse-unit test-elab-unit test-algo-unit test-structure-unit test-prose-unit test-lang \
-        test-runtime test-run-al-unit test-run-sl-unit test-run-pl-unit
+.PHONY: test test-adoc
 
-# Fast unit tests (no OCaml toolchain required)
+test: test-expected test-sim-al test-sim-sl test-sim-pl
 
-test:
-	$(CARGO) test
-
-test-frontend:
-	$(CARGO) test --test frontend
-
-# P4 parser regressions; full roundtrip corpus lives in test-p4parse
-test-p4parse-unit:
-	$(CARGO) test --test interface p4_parse:: -- --nocapture
-
-test-elab-unit:
-	$(CARGO) test --test pass elaborate::
-
-# algo tests live in two places: the binding/side-condition unit tests run
-# inside the library (`--lib`), the conversion tests in the `pass` binary.
-test-algo-unit:
-	$(CARGO) test --lib pass::algo
-	$(CARGO) test --test pass algo::
-
-test-structure-unit:
-	$(CARGO) test --locked --lib pass::structure::
-	$(CARGO) test --locked --test pass structure::
-	$(CARGO) test --locked --test lang al::fresh::
-
-test-prose-unit:
-	$(CARGO) test --locked --test lang hints::
-	$(CARGO) test --locked --test lang pl::
-	$(CARGO) test --locked --test pass prosify::
-
-.PHONY: test-adoc-unit test-adoc
-test-adoc-unit:
-	$(CARGO) test --locked --test specdoc
-
-test-lang:
-	$(CARGO) test --test lang
-
-test-runtime:
-	$(CARGO) test --test runtime
-
-# Native AL execution and command-line checks
-test-run-al-unit:
-	$(CARGO) test --locked --test runtime interp::al::
-	$(CARGO) test --locked --test cli
-
-test-run-sl-unit:
-	$(CARGO) test --locked --test runtime interp::sl::
-	$(CARGO) test --locked --test runtime sim_plugin::ebpf::test_sl_counter_state
-	$(CARGO) test --locked --test cli
-
-test-run-pl-unit:
-	$(CARGO) test --locked --test runtime interp::pl::
-	$(CARGO) test --locked --test cli
-
-# Standalone expected driver; product unit tests remain in tests/
+# Standalone acceptance driver; registrations live in test-driver/suites.json
 .PHONY: test-expected test-promote test-p4parse test-elab test-algo test-structure test-prose test-run-al test-run-sl test-run-pl
 .PHONY: test-diagnostics test-diagnostics-promote diagnostic-cli
 DRIVER_TARGET_DIR ?= $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)

@@ -12,16 +12,21 @@ use p4spec_rust::pass::elaborate::convert_with_warnings;
 
 use crate::Result;
 
-use super::failure;
+use super::{Case, failure};
 
 /// Parses and elaborates one fixture, returning all emitted diagnostics.
-pub fn run(name: &str) -> Result<Vec<Report>> {
+pub fn run(case: &Case) -> Result<Vec<Report>> {
+    let name = case.name.as_str();
     // Reject setup failures from the earlier frontend stage
-    let spec_el = parse_files([format!("elab/{name}")])
+    let spec_el = parse_files([case.path_input()])
         .map_err(|report| failure(name, format!("parser failed before elaboration: {report}")))?;
 
     // Preserve warnings emitted before the final elaboration result
     let (result, mut reports) = convert_with_warnings(spec_el);
+    // Only explicitly registered baseline controls may elaborate successfully
+    if result.is_ok() && !case.allow_success {
+        return Err(failure(name, "elaboration accepted negative input"));
+    }
     if let Err(report) = result {
         reports.push(*report);
     }

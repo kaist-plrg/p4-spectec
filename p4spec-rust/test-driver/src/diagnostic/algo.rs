@@ -13,12 +13,13 @@ use p4spec_rust::pass::algo;
 
 use crate::Result;
 
-use super::failure;
+use super::{Case, failure};
 
 /// Runs one source fixture through its intended algorithmic failure.
-pub fn run(name: &str) -> Result<Vec<Report>> {
+pub fn run(case: &Case) -> Result<Vec<Report>> {
+    let name = case.name.as_str();
     // Earlier stage failures are setup errors, never accepted snapshots
-    let spec_el = parse_files([format!("algo/{name}")]).map_err(|report| {
+    let spec_el = parse_files([case.path_input()]).map_err(|report| {
         failure(name, format!("parser failed before algorithmic conversion: {report}"))
     })?;
     let spec_il = elaborate::convert(spec_el).map_err(|report| {

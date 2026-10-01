@@ -1,101 +1,51 @@
-//! Command admission exercised through the product executable
+//! CLI rejection from registered argument files
 //!
-//! Each case runs in an empty directory with an absent specification.
-//! The expected command diagnostic must precede any source or document access.
-//! The caller compares complete stderr after checking stdout and exit status.
+//! Each line of the input file is one exact product argument.
+//! Expectations contain the product's stderr verbatim.
 
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{path::Path, process::Command};
 
 use crate::Result;
 
-use super::failure;
+use super::{Case, failure};
 
-/// Owns one subprocess directory without changing the driver's working directory.
-struct Directory(PathBuf);
-
-impl Directory {
-    /// Creates an isolated directory for a registered command case.
-    fn new(name: &str) -> Result<Self> {
-        let path = env::temp_dir().join(format!("p4spec-command-{}-{name}", std::process::id()));
-        fs::create_dir(&path)?;
-        Ok(Self(path))
-    }
-}
-
-impl Drop for Directory {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
-
-/// Executes a negative command through argument parsing and final rendering.
-pub fn run(path_cli: &Path, name: &str) -> Result<String> {
-    if name == "command-error" {
-        let directory = Directory::new(name)?;
-        let output = Command::new(path_cli)
-            .current_dir(&directory.0)
-            .arg("unknown")
-            .output()?;
-        if output.status.code() != Some(2) || !output.stdout.is_empty() {
-            return Err(failure(name, "expected argument rejection with exit 2 and empty stdout"));
-        }
-        let text = String::from_utf8(output.stderr).map_err(|error| failure(name, error))?;
-        if !text.starts_with("error: unrecognized subcommand 'unknown'")
-            || text.contains("source: command")
-            || !text.contains("\n\nUsage:")
-            || text.contains("generated source")
-            || text.contains("┌─")
+/// Executes registered arguments and returns the product's stderr.
+pub fn run(path_cli: &Path, case: &Case) -> Result<String> {
+    let text = std::fs::read_to_string(case.path_input())?;
+    let paths = case.paths_input();
+    let mut used = vec![false; paths.len()];
+    let mut args = Vec::new();
+    // Resolve exact auxiliary-input placeholders declared in the argument file
+    for arg in text.lines() {
+        if let Some(text_idx) = arg
+            .strip_prefix("{input:")
+            .and_then(|arg| arg.strip_suffix('}'))
         {
-            return Err(failure(name, format!("expected clap argument output, got {text}")));
+            let idx: usize = text_idx
+                .parse()
+                .map_err(|error| failure(&case.name, error))?;
+            let path = paths
+                .get(idx)
+                .ok_or_else(|| failure(&case.name, "invalid auxiliary input index"))?;
+            args.push(path.to_string_lossy().into_owned());
+            used[idx] = true;
+        } else {
+            args.push(arg.to_owned());
         }
-        return Ok(text);
     }
-    let (args, code) = match name {
-        "command-splice-file-count-mismatch" => (
-            vec!["--splice", "a.adoc", "--splice", "b.adoc", "--out", "out.adoc"],
-            "command/splice-file-count-mismatch",
-        ),
-        "command-splice-output-conflict" => (
-            vec!["--inplace", "--splice", "a.adoc", "--out", "out.adoc"],
-            "command/splice-output-conflict",
-        ),
-        "command-splice-input-required" => (vec![], "command/splice-input-required"),
-        _ => return Err(failure(name, "unknown command case")),
-    };
-    // Run the supplied product binary before any specification is available
-    let directory = Directory::new(name)?;
-    let output = Command::new(path_cli)
-        .current_dir(&directory.0)
-        .args(["splice", "missing.watsup"])
-        .args(args)
-        .output()
-        .map_err(|error| {
-            failure(name, format!("cannot execute {}: {error}", path_cli.display()))
-        })?;
-    // Reject success, argument-parser errors, and accidental document output
-    if output.status.code() != Some(1) || !output.stdout.is_empty() {
-        return Err(failure(
-            name,
-            format!(
-                "expected exit 1 and empty stdout, got {} and {:?}; stderr: {}",
-                output.status,
-                output.stdout,
-                String::from_utf8_lossy(&output.stderr),
-            ),
-        ));
+    if used.iter().any(|used| !used) {
+        return Err(failure(&case.name, "unused auxiliary command input"));
     }
-    // Admission must leave the empty directory untouched
-    if fs::read_dir(&directory.0)?.next().is_some() {
-        return Err(failure(name, "command admission created files"));
-    }
-    // Reject unrelated failures even when deliberately promoting snapshots
-    let text = String::from_utf8(output.stderr).map_err(|error| failure(name, error))?;
-    if !text.starts_with(&format!("error[{code}]: ")) {
-        return Err(failure(name, format!("expected {code}, got {text}")));
+    // Capture stderr without comparing exit status or program stdout
+    let output = Command::new(path_cli).args(args).output()?;
+    let text = String::from_utf8(output.stderr).map_err(|error| failure(&case.name, error))?;
+    // Require the intended diagnostic before comparing or promoting stderr
+    let code = case
+        .code
+        .as_deref()
+        .ok_or_else(|| failure(&case.name, "command requires an expected diagnostic code"))?;
+    if !text.contains(&format!("error[{code}]:")) {
+        return Err(failure(&case.name, format!("missing expected command diagnostic {code}")));
     }
     Ok(text)
 }

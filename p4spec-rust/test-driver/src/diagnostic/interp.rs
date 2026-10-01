@@ -14,7 +14,7 @@ use p4spec_rust::runner::{
 
 use crate::Result;
 
-use super::failure;
+use super::{Case, failure};
 
 // = Expectations
 
@@ -87,67 +87,38 @@ where
 // = Cases
 
 /// Runs a local negative case through its selected interpreter.
-pub fn run(name: &str) -> Result<Vec<Report>> {
-    // Split the stage from the shared source case
-    let (case, stage) = name
-        .rsplit_once("-interp-")
-        .ok_or_else(|| failure(name, "invalid interpreter diagnostic case"))?;
-    let (kind, code) = match case {
-        "backtrack" | "deepest-failure" | "later-tie" => {
-            (FailureKind::Mismatch, "runtime/condition-unmet")
-        }
-        "index-out-of-bounds" | "nested-call" => {
-            // AL inserts a bounds condition before evaluating an index
-            (FailureKind::Mismatch, "runtime/condition-unmet")
-        }
-        "slice-out-of-bounds" => (FailureKind::Fatal, "runtime/slice-out-of-bounds"),
-        "numeric-invalid" => (FailureKind::Fatal, "runtime/numeric-invalid"),
-        "builtin-failed" | "builtin-fallback" => {
-            (FailureKind::Fatal, "runtime/builtin-argument-invalid")
-        }
-        "hold-failed" | "hold-iter-failed" => {
-            (FailureKind::Mismatch, "runtime/hold-condition-unmet")
-        }
-        "not-hold-failed" => (FailureKind::Mismatch, "runtime/not-hold-condition-unmet"),
-        "extern-failed" | "fatal-skips-otherwise" | "hold-fatal" => {
-            (FailureKind::Fatal, "runtime/extern-unconfigured")
-        }
-        "relation-nondeterministic" if stage == "al" => {
-            (FailureKind::Fatal, "runtime/relation-nondeterministic")
-        }
-        "function-nondeterministic" if stage == "al" => {
-            (FailureKind::Fatal, "runtime/function-nondeterministic")
-        }
-        "relation-nondeterministic" | "function-nondeterministic" => {
-            (FailureKind::Fatal, "runtime/instruction-nondeterministic")
-        }
-        _ => return Err(failure(name, "unknown interpreter diagnostic case")),
+pub fn run(case: &Case) -> Result<Vec<Report>> {
+    let name = case.name.as_str();
+    // Runtime stage and acceptance guards come from the registry
+    let [stage, arg_kind, code, arg_det] = case.args.as_slice() else {
+        return Err(failure(name, "interpreter requires stage, kind, code, and det arguments"));
     };
-
-    // Enable only the checks needed by each case
-    let det = matches!(case, "relation-nondeterministic" | "function-nondeterministic");
+    let kind = match arg_kind.as_str() {
+        "fatal" => FailureKind::Fatal,
+        "mismatch" => FailureKind::Mismatch,
+        _ => return Err(failure(name, "invalid interpreter failure kind")),
+    };
+    let det = arg_det.parse().map_err(|error| failure(name, error))?;
     let config = Config::new(true, det, false);
-    let path = format!("interp/{case}.watsup");
+    let path = case.path_input();
 
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
-    match stage {
+    match stage.as_str() {
         "al" => {
-            let spec_al =
-                p4spec_rust::algo(&[path.into()]).map_err(|error| failure(name, error))?;
+            let spec_al = p4spec_rust::algo(&[path]).map_err(|error| failure(name, error))?;
             let runner = runner::build_al(spec_al, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)
         }
         "sl" => {
-            let spec_sl = p4spec_rust::structure(&[path.into()], true)
-                .map_err(|error| failure(name, error))?;
+            let spec_sl =
+                p4spec_rust::structure(&[path], true).map_err(|error| failure(name, error))?;
             let runner = runner::build_sl(spec_sl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)
         }
         "pl" => {
-            let spec_pl =
-                p4spec_rust::prosify(&[path.into()]).map_err(|error| failure(name, error))?;
+            let spec_pl = p4spec_rust::prosify(&[path]).map_err(|error| failure(name, error))?;
             let runner = runner::build_pl(spec_pl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)

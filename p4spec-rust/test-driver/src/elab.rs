@@ -1,23 +1,35 @@
-use std::{path::Path, time::Instant};
+use std::time::Instant;
 
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spec_rust::lang::traits::print::Print;
 
-use crate::{Error, Result, snapshot};
+use crate::{
+    Error, Result, snapshot,
+    suite::{self, Registry, Stage},
+};
 
-pub fn run() -> Result<()> {
+/// Checks registered elab snapshots.
+pub fn run(registry: &Registry) -> Result<()> {
     let start = Instant::now();
-    let progress = ProgressBar::new(1).with_style(
+    let snapshots = registry.snapshots(Stage::Elab);
+    if snapshots.is_empty() {
+        return Err(Error::Invalid("no elab snapshots registered".into()));
+    }
+    let progress = ProgressBar::new(snapshots.len() as u64).with_style(
         ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
             .map_err(|error| Error::Invalid(error.to_string()))?,
     );
-    progress.set_message("elab: full specification");
-    let spec_il = p4spec_rust::elab(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
-    let actual = Print::to_string(&spec_il) + "\n";
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("expected/pass/elab.expected");
-    snapshot::check(expect_file![path], &actual);
+    for snapshot in snapshots {
+        progress.set_message(format!("elab: {}", snapshot.name));
+        let spec_il = p4spec_rust::elab(&snapshot.inputs)
+            .map_err(|error| Error::Invalid(error.to_string()))?;
+        let actual = Print::to_string(&spec_il) + "\n";
+        let path_expected = suite::expected_path(&snapshot.expected);
+        snapshot::check(expect_file![path_expected], &actual);
+        progress.inc(1);
+    }
     progress.finish_with_message("complete");
     eprintln!(
         "elab: specification snapshot checked, elapsed={:.3}s",

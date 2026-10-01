@@ -9,10 +9,13 @@ mod run;
 mod sim;
 mod snapshot;
 mod structure;
+mod suite;
 
 use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Parser, Subcommand};
+
+use suite::{Language, Registry};
 
 #[derive(Debug, thiserror::Error)]
 enum Error {
@@ -23,15 +26,20 @@ enum Error {
 }
 type Result<T> = std::result::Result<T, Error>;
 
-/// Native expected tests, independent of the product's unit tests
+/// Source and expected-file acceptance for the Rust implementation
 #[derive(Parser)]
 struct Cli {
+    /// Suite registration file, relative to the invoking directory
+    #[arg(long = "registry", global = true)]
+    path_registry: Option<PathBuf>,
     #[command(subcommand)]
     command: Command,
 }
 
 #[derive(Subcommand)]
 enum Command {
+    /// List all registered suites, inputs, and expectation files
+    List,
     /// Compare diagnostic output with stored snapshots
     Diagnostics {
         #[arg(long, value_enum)]
@@ -85,7 +93,8 @@ enum Command {
     },
 }
 
-fn execute(mut command: Command) -> Result<()> {
+fn execute(mut cli: Cli) -> Result<()> {
+    let command = &mut cli.command;
     if matches!(
         command,
         Command::P4parse
@@ -104,30 +113,66 @@ fn execute(mut command: Command) -> Result<()> {
         ));
     }
     // Resolve output paths before changing to the specification repository
-    if let Command::Adoc { path_output: Some(path_output) } = &mut command {
+    if let Command::Adoc { path_output: Some(path_output) } = &mut *command {
         *path_output = std::path::absolute(&*path_output)?;
     }
-    if let Command::Diagnostics { path_cli: Some(path_cli), .. } = &mut command {
+    if let Command::Diagnostics { path_cli: Some(path_cli), .. } = &mut *command {
         *path_cli = std::path::absolute(&*path_cli)?;
     }
+    let path_registry = cli
+        .path_registry
+        .as_deref()
+        .map(std::path::absolute)
+        .transpose()?
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("suites.json"));
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
+    let registry = Registry::load(&path_registry)?;
     match command {
-        Command::Diagnostics { suite, path_cli } => diagnostic::run(suite, path_cli.as_deref()),
-        Command::P4parse => p4parse::run(),
-        Command::Elab => elab::run(),
-        Command::Algo => algo::run(),
-        Command::Structure => structure::run(),
-        Command::Prose => prose::run(),
-        Command::Adoc { path_output } => adoc::run(path_output.as_deref()),
-        Command::RunAl => run::run(),
-        Command::RunSl { det } => run::run_sl(det),
-        Command::RunPl { det } => run::run_pl(det),
-        Command::SimAl { det } => sim::run(det),
-        Command::SimSl { det } => sim::run_sl(det),
-        Command::SimPl { det } => sim::run_pl(det),
+        Command::List => {
+            registry.list();
+            Ok(())
+        }
+        Command::Diagnostics { suite, path_cli } => {
+            let suites: Vec<_> = registry
+                .suites
+                .iter()
+                .filter_map(|entry| match entry {
+                    suite::Suite::Negative { stage, cases, .. }
+                        if suite.is_none_or(|selected| selected == *stage) =>
+                    {
+                        Some((*stage, cases))
+                    }
+                    _ => None,
+                })
+                .collect();
+            if suites.is_empty() {
+                return Err(Error::Invalid("no diagnostic suites selected".into()));
+            }
+            if path_cli.is_none() && suites.iter().any(|(stage, _)| stage.name() == "command") {
+                return Err(Error::Invalid(
+                    "--cli is required for command diagnostic acceptance".into(),
+                ));
+            }
+            for (stage, cases) in suites {
+                diagnostic::run_registered(stage, cases, path_cli.as_deref())?;
+            }
+            Ok(())
+        }
+        Command::P4parse => p4parse::run(&registry),
+        Command::Elab => elab::run(&registry),
+        Command::Algo => algo::run(&registry),
+        Command::Structure => structure::run(&registry),
+        Command::Prose => prose::run(&registry),
+        Command::Adoc { path_output } => adoc::run(&registry, path_output.as_deref()),
+        Command::RunAl => run::run(&registry, Language::Al, false),
+        Command::RunSl { det } => run::run(&registry, Language::Sl, *det),
+        Command::RunPl { det } => run::run(&registry, Language::Pl, *det),
+        Command::SimAl { det } => sim::run(&registry, Language::Al, *det),
+        Command::SimSl { det } => sim::run(&registry, Language::Sl, *det),
+        Command::SimPl { det } => sim::run(&registry, Language::Pl, *det),
     }
 }
 
@@ -136,7 +181,7 @@ fn main() -> ExitCode {
     let result = std::thread::Builder::new()
         .name("expected-driver".to_owned())
         .stack_size(64 * 1024 * 1024)
-        .spawn(move || execute(cli.command));
+        .spawn(move || execute(cli));
     match result {
         Ok(thread) => match thread.join() {
             Ok(Ok(())) => ExitCode::SUCCESS,

@@ -1,10 +1,4 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    sync::mpsc,
-    thread,
-    time::Instant,
-};
+use std::{collections::BTreeSet, fs, path::PathBuf, sync::mpsc, thread, time::Instant};
 
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -18,83 +12,59 @@ use p4spec_rust::sim_plugin::dummy::Dummy;
 use crate::{
     Error, Result,
     corpus::{self, Outcome, Results},
+    suite::{self, Language, Registry},
 };
 
-struct RunSuite {
+struct CollectedSuite {
     paths: Vec<PathBuf>,
-    id_relation: &'static str,
-    use_excludes: bool,
+    id_relation: String,
     results: Results,
 }
 
-fn collect_suite(
-    path_dir: &str,
-    id_relation: &'static str,
-    name_expected: &str,
-    use_excludes: bool,
-) -> Result<RunSuite> {
-    let path_expected = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("expected/run")
-        .join(name_expected);
-    Ok(RunSuite {
-        paths: corpus::collect(Path::new(path_dir), ".p4")?,
-        id_relation,
-        use_excludes,
-        results: Results::new(expect_file![path_expected]),
-    })
-}
-
-pub fn run() -> Result<()> {
-    let suites = [
-        collect_suite("p4c/testdata/p4_16_samples", "Program_inst", "pos-al.expected", true),
-        collect_suite("p4c/testdata/p4_16_errors", "Program_ok", "neg-al.expected", true),
-    ]
-    .into_iter()
-    .collect::<Result<Vec<_>>>()?;
-    run_with("AL cache=on det=false", suites, || {
-        let spec_al =
-            p4spec_rust::algo(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
-        runner::build_al(spec_al, Config::new(true, false, false), Dummy)
-            .map_err(|error| Error::Invalid(error.to_string()))
-    })
-}
-
-/// Runs the SL execution suites against source-derived expected results
-pub fn run_sl(det: bool) -> Result<()> {
-    // The OCaml SL outcomes are byte-identical to these AL expectation files
-    let suites = [
-        collect_suite("p4c/testdata/p4_16_samples", "Program_inst", "pos-al.expected", true),
-        collect_suite("p4c/testdata/p4_16_errors", "Program_ok", "neg-al.expected", true),
-    ]
-    .into_iter()
-    .collect::<Result<Vec<_>>>()?;
-    run_with(&format!("SL cache=on det={det}"), suites, || {
-        let spec_sl = p4spec_rust::structure(&["spec".into()], true)
-            .map_err(|error| Error::Invalid(error.to_string()))?;
-        runner::build_sl(spec_sl, Config::new(true, det, false), Dummy)
-            .map_err(|error| Error::Invalid(error.to_string()))
-    })
-}
-
-/// Runs the PL execution suites against source-derived expected results.
-pub fn run_pl(det: bool) -> Result<()> {
-    let suites = [
-        collect_suite("p4c/testdata/p4_16_samples", "Program_inst", "pos-al.expected", true),
-        collect_suite("p4c/testdata/p4_16_errors", "Program_ok", "neg-al.expected", true),
-    ]
-    .into_iter()
-    .collect::<Result<Vec<_>>>()?;
-    run_with(&format!("PL cache=on det={det}"), suites, || {
-        let spec_pl =
-            p4spec_rust::prosify(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
-        runner::build_pl(spec_pl, Config::new(true, det, false), Dummy)
-            .map_err(|error| Error::Invalid(error.to_string()))
-    })
+/// Runs registered execution suites with the selected interpreter.
+pub fn run(registry: &Registry, language: Language, det: bool) -> Result<()> {
+    // Collect registered corpus roots in suite order
+    let suites = registry
+        .execution(language)
+        .into_iter()
+        .map(|suite| {
+            let path_expected = suite::expected_path(&suite.expected);
+            Ok(CollectedSuite {
+                paths: corpus::collect(&suite.root, ".p4")?,
+                id_relation: suite.relation.clone(),
+                results: Results::new(expect_file![path_expected]),
+            })
+        })
+        .collect::<Result<Vec<_>>>()?;
+    if suites.is_empty() {
+        return Err(Error::Invalid(format!("no {} execution suites registered", language.name())));
+    }
+    match language {
+        Language::Al => run_with(registry, "AL cache=on det=false", suites, || {
+            let spec_al = p4spec_rust::algo(&registry.spec)
+                .map_err(|error| Error::Invalid(error.to_string()))?;
+            runner::build_al(spec_al, Config::new(true, false, false), Dummy)
+                .map_err(|error| Error::Invalid(error.to_string()))
+        }),
+        Language::Sl => run_with(registry, &format!("SL cache=on det={det}"), suites, || {
+            let spec_sl = p4spec_rust::structure(&registry.spec, true)
+                .map_err(|error| Error::Invalid(error.to_string()))?;
+            runner::build_sl(spec_sl, Config::new(true, det, false), Dummy)
+                .map_err(|error| Error::Invalid(error.to_string()))
+        }),
+        Language::Pl => run_with(registry, &format!("PL cache=on det={det}"), suites, || {
+            let spec_pl = p4spec_rust::prosify(&registry.spec)
+                .map_err(|error| Error::Invalid(error.to_string()))?;
+            runner::build_pl(spec_pl, Config::new(true, det, false), Dummy)
+                .map_err(|error| Error::Invalid(error.to_string()))
+        }),
+    }
 }
 
 fn run_with<Interp, Build>(
+    registry: &Registry,
     text_mode: &str,
-    mut suites: Vec<RunSuite>,
+    mut suites: Vec<CollectedSuite>,
     build_runner: Build,
 ) -> Result<()>
 where
@@ -102,11 +72,13 @@ where
     Build: FnOnce() -> Result<Runner<Interp, BuiltinInterface, Dummy>>,
 {
     let start = Instant::now();
-    let excludes = corpus::collect_excludes(Path::new("excludes/static"))?;
+    let mut excludes = BTreeSet::new();
+    for path in &registry.excludes_static {
+        excludes.extend(corpus::collect_excludes(path)?);
+    }
     let collected: usize = suites.iter().map(|suite| suite.paths.len()).sum();
     let excluded = suites
         .iter()
-        .filter(|suite| suite.use_excludes)
         .flat_map(|suite| &suite.paths)
         .filter(|path| path.to_str().is_some_and(|path| excludes.contains(path)))
         .count();
@@ -115,15 +87,18 @@ where
         collected - excluded
     );
     let mut runner = build_runner()?;
-    let includes = vec![PathBuf::from("p4c/p4include")];
-    fs::read_dir(&includes[0])?;
+    let includes = &registry.includes;
+    for path in includes {
+        fs::read_dir(path)?;
+    }
     // Preprocess upcoming files while the runner parses and evaluates in order
     let paths_preprocess: Vec<_> = suites
         .iter()
         .flat_map(|suite| {
-            suite.paths.iter().filter(|path| {
-                !suite.use_excludes || !path.to_str().is_some_and(|path| excludes.contains(path))
-            })
+            suite
+                .paths
+                .iter()
+                .filter(|path| !path.to_str().is_some_and(|path| excludes.contains(path)))
         })
         .cloned()
         .collect();
@@ -138,7 +113,7 @@ where
         scope.spawn(move || {
             for path in paths_preprocess {
                 let source =
-                    preprocess(&includes, &path).map_err(|error| error.into_report().to_string());
+                    preprocess(includes, &path).map_err(|error| error.into_report().to_string());
                 if sender.send(source).is_err() {
                     break;
                 }
@@ -147,8 +122,7 @@ where
         for suite in &mut suites {
             for path in &suite.paths {
                 progress.set_message(path.display().to_string());
-                let excluded =
-                    suite.use_excludes && path.to_str().is_some_and(|path| excludes.contains(path));
+                let excluded = path.to_str().is_some_and(|path| excludes.contains(path));
                 let outcome = if excluded {
                     Outcome::Exclude
                 } else {
@@ -167,7 +141,7 @@ where
                             ))
                         })?;
                     let outcome = match parse_string(runner.arena_mut(), path, &source) {
-                        Ok(program) => match runner.eval_program(suite.id_relation, program) {
+                        Ok(program) => match runner.eval_program(&suite.id_relation, program) {
                             Ok(_) => Outcome::Pass,
                             Err(_) => Outcome::Fail,
                         },

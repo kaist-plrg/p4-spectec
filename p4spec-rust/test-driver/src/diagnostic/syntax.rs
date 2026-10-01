@@ -8,14 +8,15 @@ use p4spec_rust::interface::p4::{error::P4ErrorKind, parse};
 
 use crate::Result;
 
-use super::failure;
+use super::{Case, failure};
 
 /// Returns the actual source rejection for snapshot comparison.
-pub fn run(name: &str) -> Result<Vec<Report>> {
+pub fn run(case: &Case) -> Result<Vec<Report>> {
+    let name = case.name.as_str();
     let mut arena = ValueArena::new();
-    let path = "interp/p4-syntax.p4";
-    let source = std::fs::read_to_string(path)?;
-    let error = parse::parse_string(&mut arena, path, &source)
+    let path = case.path_input();
+    let source = std::fs::read_to_string(&path)?;
+    let error = parse::parse_string(&mut arena, &path, &source)
         .err()
         .ok_or_else(|| failure(name, "invalid P4 unexpectedly parsed"))?;
     if !matches!(error.kind, P4ErrorKind::Syntax(_)) {
