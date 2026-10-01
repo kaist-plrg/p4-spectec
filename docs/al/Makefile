@@ -1,19 +1,21 @@
+.PHONY: spectec splice clean spec spec-html
+
 ROUGE_STYLE=github
 ROUGE_CSS=style
 
-SPECTEC=p4spectec
+SPECTEC=bin/p4spectec
 SPECFILES=../../spec-meta/al
 SPEC=AL-spec-skel
 GEN=AL-spec
 
 spectec:
-	cd ../.. && make release && cd docs
+	$(MAKE) -C ../.. build
 
 splice: spectec
-	rm -r sections || true
+	rm -rf sections
 	cp -r sections-skeleton sections
-	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "-splice {}" | tr '\n' ' '); \
-	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing \
+	SPLICEFILES=$$(find sections -type f -name '*.adoc' | xargs -I {} echo "--splice {}" | tr '\n' ' '); \
+	../../${SPECTEC} splice ${SPECFILES} --inplace $${SPLICEFILES} 2> splice.missing \
 	  || { cat splice.missing; exit 1; }
 
 ${GEN}.html: ${SPEC}.adoc splice
@@ -29,9 +31,6 @@ ${GEN}.pdf: ${SPEC}.adoc splice
 
 spec: ${GEN}.html ${GEN}.pdf
 spec-html: ${GEN}.html
-
-release: ${RELEASE}.html ${RELEASE}.pdf
-release-html: ${RELEASE}.html
 
 clean:
 	/bin/rm -f ${SPEC}.pdf ${SPEC}.html ${GEN}.html ${GEN}.pdf

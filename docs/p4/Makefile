@@ -1,8 +1,10 @@
+.PHONY: spectec splice clean draft draft-html release release-html
+
 ROUGE_STYLE=github
 ROUGE_CSS=style
 ROUGE_LEXER=./resources/rouge/watsup.rb
 
-SPECTEC=p4spectec
+SPECTEC=bin/p4spectec
 SPECFILES=../../spec/*/*.watsup
 SPEC=P4-16-spec-new
 RELEASE=P4-16-spec-release
@@ -12,15 +14,15 @@ grammar.trimmed.adoc: grammar.adoc trim-asciidoc-tag-comments.py
 	./trim-asciidoc-tag-comments.py $< > $@
 
 spectec:
-	cd ../.. && make release && cd docs
+	$(MAKE) -C ../.. build
 
 splice: spectec
-	rm -r sections || true
+	rm -rf sections
 	cp -r sections-skeleton sections
 	SPLICEFILES=$$(ruby -rasciidoctor -e \
-		'Asciidoctor.load_file(ARGV[0], safe: :unsafe, parse: true).references[:includes].each_key { |path| puts "-splice #{path}.adoc" }' \
+		'Asciidoctor.load_file(ARGV[0], safe: :unsafe, parse: true).references[:includes].each_key { |path| puts "--splice #{path}.adoc" }' \
 		${SPEC}.adoc | tr '\n' ' '); \
-	../../${SPECTEC} splice ${SPECFILES} -inplace $${SPLICEFILES} 2> splice.missing \
+	../../${SPECTEC} splice ${SPECFILES} --inplace $${SPLICEFILES} 2> splice.missing \
 	  || { cat splice.missing; exit 1; }
 	python3 text_missing.py > text.missing
 
