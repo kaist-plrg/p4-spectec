@@ -1,5 +1,5 @@
 " Vim syntax file for WatSup (P4-SpecTec DSL)
-" Derived from p4spec/lib/frontend/lexer.mll
+" Syntax reference: p4spectec/src/frontend/lexer.rs
 
 if exists("b:current_syntax")
   finish

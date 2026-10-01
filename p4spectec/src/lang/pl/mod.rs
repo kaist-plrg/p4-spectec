@@ -5,7 +5,7 @@
 //! and a group-body tier (what the group does),
 //! shorthand instructions fold common patterns into one prose step,
 //! and nodes carry prose hints and fall-through markers.
-//! `pass::prosify` produces PL from SL; `wire` decodes the OCaml form.
+//! `pass::prosify` produces PL from SL.
 
 pub mod annot;
 pub mod ast;

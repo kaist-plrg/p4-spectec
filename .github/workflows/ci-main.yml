@@ -53,12 +53,12 @@ jobs:
       - name: Run registered E2E acceptance
         run: make -j2 test
 
-      - name: Render HTML specifications
-        run: make p4spec-draft-html p4spec-release-html slspec-html alspec-html
+      - name: Render P4 HTML specifications
+        run: make p4spec-draft-html p4spec-release-html
 
-      - name: Render PDF specifications
+      - name: Render P4 release PDF
         if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-        run: make p4spec-release slspec alspec
+        run: make p4spec-release
 
       - name: Check that acceptance leaves fixtures unchanged
         run: git diff --exit-code -- p4spectec/test-driver excludes testdata patches
