@@ -2,10 +2,14 @@
 ;; spec-meta/common/4-relation.watsup.
 ;;
 ;; The three extern relations are reduction rules on machine forms (in al/).
-;; Their rules call the host procedures here, which are impure, so only a
-;; reduction rule may call them, never a metafunction.
+;; Their rules call the host procedures here, which go to the OCaml host over
+;; the extern wire. They are impure, so only a reduction rule may call them,
+;; never a metafunction.
 
-(require "0.0-prelude.rkt"
+(require json
+         "0.0-prelude.rkt"
+         "0.2-extern-json.rkt"
+         "0.3-extern-ffi.rkt"
          "3-context.rkt")
 (provide common-relation
          host-call-extern-func
@@ -19,24 +23,24 @@
   (valres ::= (OK val) FAIL)
   (valsres ::= (OK (val ...)) FAIL))
 
-;; Until the host is reachable, every extern call raises.
-(define (unreachable who)
-  (error who "the host is not reachable yet"))
+;; Sends a request to the OCaml host, and gives its response as a jsexpr.
+(define (host-request request)
+  (string->jsexpr (host-eval (jsexpr->string request))))
 
 ;;; Extern meta-function invocation
 
 ;; |- id `< typ* `> `( val* `) : res<val>, as a valres
 (define (host-call-extern-func id typs vals)
-  (unreachable 'host-call-extern-func))
+  (response->valres (host-request (extern-func-request id typs vals))))
 
 ;;; Builtin meta-function invocation
 
 ;; |- id '@' `< typ* `> `( val* `) : res<val>, as a valres
 (define (host-call-builtin-func id typs vals)
-  (unreachable 'host-call-builtin-func))
+  (response->valres (host-request (builtin-request id typs vals))))
 
 ;;; Extern relations
 
 ;; |- id val* : res<val*>, as a valsres
 (define (host-call-extern-rel id vals)
-  (unreachable 'host-call-extern-rel))
+  (response->valsres (host-request (extern-rel-request id vals))))

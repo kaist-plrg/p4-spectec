@@ -538,8 +538,10 @@ relation's form, and does not call that relation. So every watsup file becomes
 one module. `al/5-eval.rkt` combines the fragments' relations.
 
 Modules in `common/` never require modules in `al/`. That is why the extern
-codec and wire live in `common/`: the host procedures in
-`common/4-relation.rkt` call them.
+codec and transport live in `common/`: the host procedures in
+`common/4-relation.rkt` call them. They mirror K's `4.1-extern-json.k` and
+`4.2-extern-ffi.k`. The transport's C shim is in `ffi/`, as K's is in
+`spec-meta-k/ffi/`.
 
 ```text
 spec-meta-redex/
@@ -547,7 +549,7 @@ spec-meta-redex/
     0.0-prelude.rkt       Redex re-exports; caching on; define-dec
     0.1-stdlib.rkt        language stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins; text and list helpers; debug
     0.2-extern-json.rkt   codec for the extern JSON wire
-    0-extern-wire.rkt     transport to the OCaml host
+    0.3-extern-ffi.rkt    transport to the OCaml host, over ffi2
     1-syntax.rkt          language common
     2-env.rkt             language common-env; $extend_tdenv, $theta_of_tdenv, $is_iter_on_var, ...
     3-context.rkt         language common-context (cursor)
@@ -570,6 +572,8 @@ spec-meta-redex/
     5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al; the driver
     6-entry.rkt           Entry: load, then run $main() or a relation; the command-line driver
   test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, machine.rkt, ...
+  ffi/
+    shim.c                C shim between 0.3-extern-ffi.rkt and p4spec/bin/kffi.ml
 ```
 
 `common/0.0-prelude.rkt` defines `define-dec`, which wraps
@@ -618,24 +622,98 @@ three evaluators share host behavior:
 
 ```text
 reduction rule -> common/4-relation.rkt -> common/0.2-extern-json.rkt
-  -> common/0-extern-wire.rkt -> spectec-boot extern-serve -> SpecTec runner
+  -> common/0.3-extern-ffi.rkt --ffi2--> spec-meta-redex/ffi/shim.c
+  --caml_callback--> p4spec/bin/kffi.ml -> SpecTec runner
 ```
 
-The transport is a single long-lived `spectec-boot extern-serve SPECDIR`
-subprocess per run. It reads one JSON request per line on stdin and writes one
-response per line on stdout. Its dispatch is `eval` from
-[`kffi.ml`](p4spec/bin/kffi.ml), moved into the library so that `kffi.ml` and
-`boot.ml` share it. One process per run keeps `$fresh_typeId`'s counter
-consistent across calls. If the pipe turns out to be a bottleneck, the C shim
-in `spec-meta-k/ffi/` can instead be loaded as a shared object through
-Racket's `ffi/unsafe` (Step 13).
+The OCaml side is the K port's [`kffi.ml`](p4spec/bin/kffi.ml), with the
+same JSON requests and replies. K links the OCaml runtime, `p4spec/`,
+`kffi.ml`, and its C shim, [`spec-meta-k/ffi/shim.c`](spec-meta-k/ffi/shim.c),
+into its interpreter. Redex has a C shim of its own,
+`spec-meta-redex/ffi/shim.c`, and loads it and the OCaml side into the Racket
+process as shared objects. K's shim and its build stay as they are. Redex
+calls the shim with Racket's
+[`ffi2`](https://docs.racket-lang.org/ffi2/index.html) library, a more static
+C FFI than `ffi/unsafe`, which compiles foreign calls at `raco make` time. One
+OCaml runtime per Racket process keeps `$fresh_typeId`'s counter consistent
+across calls, as one per `krun` does in K. Probes in a scratch layout checked
+each point below *(measured)*. The OCaml shared object was linked by hand, with
+dune's link command plus `-runtime-variant _pic`, and a toy dune project
+checked the stanza:
 
-As in the K port, the hot object-level map builtins (`find_map`, `find_maps`,
-`add_map`, `adds_map`, `update_map`, `assoc_`) are native Racket that works on
-AL map values (`INJ` with the `` `{ `} `` mixop). They are pure, so the
-`call-builtin-func` rule calls them in place of the host. They are separate
-from the meta-level `find-map` in `common/0.1-stdlib.rkt`, which works on
-Redex's own environments.
+- **Building.** There are two shared objects:
+  - `_build/default/p4spec/bin/kffi.so` holds the OCaml runtime, `p4spec/`,
+    and `kffi.ml`. Dune builds it once the `kffi` executable's modes are
+    `object shared_object`. Dune links the `shared_object` mode with
+    `-runtime-variant _pic`, and the `object` mode as before, so K's
+    `kffi.exe.o` does not change. `kffi.exe.o` itself cannot go into a shared
+    object: it embeds the non-PIC `libasmrun.a`, and `gcc -shared` rejects a
+    `R_X86_64_TPOFF32` relocation against `domain_self`. The link reuses the
+    compiled libraries and takes under a second.
+  - `spec-meta-redex/ffi/shim.so` is the Redex shim, compiled against
+    `kffi.so` with `-l:kffi.so` and the run path
+    `$ORIGIN/../../_build/default/p4spec/bin`. Racket loads only `shim.so`,
+    and the dynamic loader finds `kffi.so` from the shim's own location,
+    whatever the working directory.
+- **The shim.** It provides two functions:
+  - `host_init(spec)` starts the OCaml runtime on its first call. It then
+    builds the runner for `spec` through `kffi.ml`'s `ml_init`, called with
+    `caml_callback_exn`. It returns 1, 0 if `ml_init` raised (for example, on
+    a spec path that does not exist), and -1 if `kffi.ml`'s callbacks are
+    missing. The transport raises a Racket error on anything but 1, and the
+    process survives.
+  - `host_eval(request)` returns the reply in a buffer that the shim owns and
+    frees on the next call. An OCaml exception gives the same
+    `{"error": ...}` reply as K's shim. So the Racket side declares it as
+    `(-> string_t string_t)`, which copies the reply into a Racket string
+    before the next call, and needs no `free` or length function.
+- **Loading.** `0.3-extern-ffi.rkt` loads `shim.so` on the first extern call,
+  so a run without one never loads it. If the file is missing, the error names
+  `make redex-ffi`. It binds each function with
+  `(ffi2-procedure (ffi2-lib-ref lib "host_eval") (-> string_t string_t))`.
+  The docs give `(ffi2-lib-ref name lib)`, but ffi2-lib 1.1 takes the library
+  first. The spec path goes as `string_t`: ffi2's `path_t` accepts only path
+  objects. `dlopen` takes 12 ms.
+- **Initialization.** As with K's `<specdir>`, the spec path is the file being
+  run: the script, or `spec/` for a P4 program. `entry` takes a booted script,
+  so the path comes from a parameter, `host-spec`, that the command-line
+  driver and the tests set. A call while it is `#f` raises. The path goes to
+  OCaml as a complete path, since OCaml resolves a relative one against the
+  process's working directory, not Racket's `current-directory`. A call under
+  a different path runs `host_init` again. That replaces the runner, while
+  `$fresh_typeId`'s counter keeps counting. If `host_init` fails, the previous
+  runner stays. The runner cannot be built from a script with a relation that
+  has no input hint, so a test script that is also `host-spec` gives each
+  relation a `hint(input ...)`. `host_init` takes 95 to 115 ms on the
+  examples and 1.1 s on `spec/`.
+- **Calls.** Text crosses as UTF-8 in both directions. A small builtin call
+  takes 5 µs (20,000 calls); Racket's JSON encoding and decoding added about
+  10 µs per call in an earlier probe. `{"fail": null}` becomes `FAIL`.
+  `{"error": msg}` raises a Racket error with OCaml's message, since runtime
+  errors are not `FAIL`. K has no rule for it, so it gets stuck there.
+- **One OS thread.** The OCaml runtime belongs to the OS thread that started
+  it. All Racket threads of one place run on that place's OS thread, so the
+  driver can call it freely, but no other place may. `raco test` runs several
+  files in separate processes by default, so each file gets its own runtime;
+  do not pass `--place`.
+- **Output.** OCaml writes its diagnostics (elaboration warnings, failed
+  extern calls) to file descriptor 2 directly, not through Racket's
+  `current-error-port`. So a test that captures stderr cannot see or silence
+  them, and only scripts without extern calls should have their stderr
+  compared. Subprocesses, such as the one `boot-script` starts, still work
+  after the runtime is up.
+
+Unlike K's interpreter, which embeds a snapshot of `p4spec/` when it is
+kompiled, Redex loads `kffi.so` at run time. After editing `p4spec/`,
+`make redex-ffi` is enough, with no `raco make`.
+
+Every object-level builtin goes to the host, including the map builtins
+(`find_map`, `find_maps`, `add_map`, `adds_map`, `update_map`, `assoc_`) that
+the K port implements natively (`nativeBuiltin` in `5.5-eval-call-func.k`).
+Step 13 lists native versions as an option, to take only after asking the
+user. The object-level builtins are separate from the meta-level ones,
+such as `find-map` in `common/0.1-stdlib.rkt`, which work on Redex's own
+environments and stay metafunctions.
 
 ### Deviations from spec-meta
 
@@ -691,7 +769,7 @@ and decide with the user before deviating. Record each deviation here.
   successor. The check applies the rules a second time, so it runs only on
   scripts without externs, builtins, or `debug` output that matters.
 - **Coverage.** A test file ends by checking that every rule of the relations
-  it exercises was applied, except the extern rules until Step 12. The helpers
+  it exercises was applied. The helpers
   in `test/machine.rkt` count the rules that the driver applies, by name, as
   it applies them, so a run that raises still counts the rules before.
   Redex's `make-coverage` is not used: it counts a rule once the rule's
@@ -733,6 +811,14 @@ racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
              (pretty-write d))'
 ```
 
+### The OCaml host
+
+From Step 12 on, builtins and externs need `kffi.so` and `shim.so`:
+
+```sh
+make redex-ffi    # after editing p4spec/ or the shim; no raco make needed
+```
+
 ### Running a script
 
 ```sh
@@ -747,6 +833,10 @@ raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test
 raco make spec-meta-redex/test/machine.rkt && raco test spec-meta-redex/test/machine.rkt
 ```
 
+The tests call the OCaml host, so they need `make redex-ffi` first. Its
+diagnostics, such as `extern func ext failed`, go to file descriptor 2 and
+show in the output of passing tests.
+
 The contract switch is read at compile time, so it only takes effect on code
 compiled with it. To run the tests with contracts off, use a scratch copy
 without `compiled/`:
@@ -755,11 +845,12 @@ without `compiled/`:
 COPY=/tmp/redex-nc
 rm -rf "$COPY" && mkdir -p "$COPY" && cp -r spec-meta-redex "$COPY"/
 find "$COPY" -name compiled -type d -prune -exec rm -rf {} +
-for d in examples spec spec-meta p4c spectec-boot; do ln -s "$PWD/$d" "$COPY/$d"; done
+for d in examples spec spec-meta p4c spectec-boot _build; do ln -s "$PWD/$d" "$COPY/$d"; done
 (cd "$COPY" && export SPECTEC_REDEX_CONTRACTS=0 &&
    raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test)
 ```
 
+The copied `shim.so` finds `kffi.so` through `_build`, relative to itself.
 A separate `PLTCOMPILEDROOTS` would recompile Redex and its dependencies too,
 in memory for every test file, which takes more than 10 minutes for the suite.
 `test/prelude.rkt` fails if the loaded code was compiled with the other
@@ -847,7 +938,7 @@ languages. This step fixes the term encoding that every later step and the
 - `al/1-syntax.rkt`: `(define-extended-language al-syntax common ...)` adding
   `param`, `iterprem`, `prem`, `rulmatch`, `rulpath`, `rulgroup`, `elsgroup`,
   `clause`, `elsclause`, `tblrow`, `defn`, and `script`.
-- Add `spec-meta-redex/**/compiled/` to `.gitignore`.
+- Add `**/compiled/` to `spec-meta-redex/.gitignore`.
 
 The `exp` nonterminal shows the encoding:
 
@@ -1529,19 +1620,91 @@ Outcome:
 
 ### Step 12: Builtins and externs
 
+- Build the host as two shared objects (see
+  [Builtins and externs](#builtins-and-externs)):
+  - In `p4spec/bin/dune`, the `kffi` executable's modes become
+    `object shared_object`.
+  - `spec-meta-redex/ffi/shim.c`: the Redex shim, with `host_init` and
+    `host_eval`.
+  - `make redex-ffi` runs `dune build bin/kffi.so`, as `$(KFFI_OBJ)` does for
+    `bin/kffi.exe.o`. It then compiles `shim.c` into
+    `spec-meta-redex/ffi/shim.so` against `kffi.so`. `make clean` removes
+    `shim.so`, and `spec-meta-redex/.gitignore` gets `ffi/*.so`.
+  - K's shim, its Makefile rules, and `kffi.exe.o` stay unchanged.
 - `common/0.2-extern-json.rkt`: a Racket codec for the wire format documented
   in `extern_json.ml` (`val`, `typ`, `mixop`, request, and response), built on
   Racket's `json` library. Step 11 added the encoding of `val`.
-- Add `spectec-boot extern-serve`. `common/0-extern-wire.rkt` starts it on the
-  first extern call and shuts it down at exit.
-- Replace the Step 3 stubs for the three host procedures, and add the native
-  map builtins.
+- `common/0.3-extern-ffi.rkt`: the transport, with the parameter `host-spec`
+  and `(host-eval request)`, which returns the reply text. It loads,
+  initializes, and calls as described in
+  [Builtins and externs](#builtins-and-externs).
+- Replace the Step 3 stubs for the three host procedures. Every builtin,
+  including the map builtins, goes to the host. The `main` submodule of
+  `al/6-entry.rkt` sets `host-spec` to
+  the file it boots.
 - Tests:
   - The `builtin-*.watsup` examples match `k-run.sh`.
   - Values from `sexp-p4` survive a round trip through the codec.
   - A script that declares `builtin dec $fresh_typeId` and calls it twice gets
     two distinct ids, with caching on. This fails if an impure call sits behind
     any cache.
+  - An extern function that the runner lacks gives `FAIL`, and a malformed
+    request sent to `host-eval` raises with OCaml's message.
+  - A `host-spec` that names no file raises an error, and a later call under
+    a valid `host-spec` still succeeds.
+
+Outcome:
+
+- Done. `test/extern.rkt` (44 checks) is new. `test/common-relation.rkt`
+  (17), `eval-call-func.rkt` (54), `eval-call-rel.rkt` (23), and `entry.rkt`
+  (28) now call the host, and coverage no longer leaves out the extern rules.
+  The whole suite runs 3,622 checks in 55 s, and 3,592 with contracts off, on
+  a scratch copy.
+- The four `builtin-*.watsup` examples print what `k-run.sh` prints:
+  `builtin-extra` 277, `builtin-list` 19, `builtin-map` 45, and
+  `builtin-nested` 65. The tests run them without the cross-check. Steps,
+  host calls, and times *(measured)*. The driver column leaves out booting and
+  `host_init`. The program's wall clock includes Racket's startup, booting,
+  and `host_init`:
+
+  | Example | Steps | Host calls | Driver | `al/6-entry.rkt` |
+  | --- | --- | --- | --- | --- |
+  | `builtin-list` | 179 | 4 | 90 ms | 1.2 s |
+  | `builtin-map` | 187 | 7 | 90 ms | 1.2 s |
+  | `builtin-extra` | 308 | 17 | 0.12 s | 1.3 s |
+  | `builtin-nested` | 803 | 11 | 0.5 s | 1.6 s |
+
+  `k-run.sh` takes 8 to 9 s on each.
+- `make redex-ffi` takes about 2 s once `p4spec/` is compiled. `kffi.exe.o`
+  is byte for byte the same after the change to the modes, so K's build is
+  unaffected. `shim.so` is linked again only when `shim.c` changes: `kffi.so`
+  is an order-only prerequisite, since the shim finds it when it is loaded.
+- The codec adds `jsexpr->val`, `typ->jsexpr`, `builtin-request`,
+  `extern-func-request`, `extern-rel-request`, `response->valres`, and
+  `response->valsres` to `val->jsexpr`. Types are only encoded, since no
+  response carries one. Decoding is strict: a nat or int must be the decimal
+  digits that `Bigint.to_string` writes, and a response must have exactly one
+  field. Anything else raises `extern-json: expected ...`.
+- `host-eval` returns the reply text, as planned, so a malformed request gives
+  `{"error": msg}` and does not raise by itself. The host procedures in
+  `common/4-relation.rkt` decode every reply, and `{"error": msg}` raises
+  `host: msg`; the test checks both. Builtins never reply `{"fail": null}`: a
+  missing builtin or a wrong number of arguments is an error. An extern
+  function or relation that the runner lacks, or declares `extern` itself,
+  gives `FAIL`, and OCaml writes why on file descriptor 2.
+- `extern-func` and `extern-rel` evaluate the function or relation of that
+  name in the spec of `host-spec`. So the tests reach a function and a
+  relation of their script on the host through hand-written `(EXT "inc")` and
+  `(EXT "Halves")` entries in `G`.
+- The `$fresh_typeId` test calls it twice directly and twice through a
+  defined function, and gets four distinct ids, and four more under a second
+  `host-spec`. The values of the four P4 programs survive a trip through the
+  codec, and another through the host as `$rev_`'s argument.
+- The shim's `host_eval` gives an `{"error": ...}` reply if it is called
+  before `host_init`, which the transport never does.
+- `test/machine.rkt` has `text-file`, which writes a script to a temporary
+  file that is deleted when the process exits, for a script that is also
+  `host-spec`.
 
 ### Step 13: P4 type checking and performance
 
@@ -1567,7 +1730,9 @@ Outcome:
      who asked for precise patterns;
   6. store the global maps as Racket immutable hashes behind the same builtin
      metafunctions;
-  7. move the wire to `ffi/unsafe`, if extern calls show up in the profile.
+  7. implement the object-level map builtins natively, as K does, if host
+     calls show up in the profile, but only after asking the user, who asked
+     for every builtin to go to the host.
 
   After each change, rerun the `$fresh_typeId` test and the negative program.
 - Done when the small program passes, and the medium and large results are
@@ -1577,8 +1742,8 @@ Outcome:
 ### Step 14: Test targets and docs
 
 - `make redex-test`: runs `raco make` and `raco test` on
-  `spec-meta-redex/test`. It also checks the examples against checked-in
-  expected outputs, so K need not be built. `SPECTEC_REDEX_CONTRACTS` is read
+  `spec-meta-redex/test`, after `redex-ffi`. It also checks the examples
+  against checked-in expected outputs, so K need not be built. `SPECTEC_REDEX_CONTRACTS` is read
   at compile time, so a run with contracts off needs its own compiled code.
 - Render the grammar, `->redex`, `->ctx`, and the closure rule to figures with
   `language->pict` and `reduction-relation->pict`, for side-by-side review

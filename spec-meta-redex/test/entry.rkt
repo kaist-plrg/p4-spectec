@@ -6,6 +6,7 @@
          rackunit
          "../common/0.0-prelude.rkt"
          "../common/0.2-extern-json.rkt"
+         "../common/0.3-extern-ffi.rkt"
          "../al/0-boot.rkt"
          "../al/5-eval.rkt"
          "../al/6-entry.rkt"
@@ -13,8 +14,11 @@
 
 (define-runtime-path examples "../../examples")
 
+(define (example-path name)
+  (build-path examples (string-append name ".watsup")))
+
 (define (example name)
-  (boot-script (build-path examples (string-append name ".watsup"))))
+  (boot-script (example-path name)))
 
 ;; Gives the result of running thunk, every configuration checked against
 ;; conf, and what it wrote to stderr
@@ -60,6 +64,20 @@
 (test-example "iter-sequence" (term (INT 1085)) "[\"intN\",\"1085\"]" #:cross-check? #f)
 ;; fibo and mutual-recursion take 7 and 5 s, and 62 and 44 s with the
 ;; cross-check, so they are left out.
+
+;;
+;; The examples with builtins
+;;
+
+;; Without the cross-check, which would call the host twice
+(define (test-builtin-example name val output)
+  (parameterize ([host-spec (example-path name)])
+    (test-example name val output #:cross-check? #f)))
+
+(test-builtin-example "builtin-extra" (term (INT 277)) "[\"intN\",\"277\"]")
+(test-builtin-example "builtin-list" (term (INT 19)) "[\"intN\",\"19\"]")
+(test-builtin-example "builtin-map" (term (INT 45)) "[\"intN\",\"45\"]")
+(test-builtin-example "builtin-nested" (term (INT 65)) "[\"intN\",\"65\"]")
 
 ;; Entry's debug premises, and $main's, write to stderr.
 (test-equal (entry/output (example "add") #:cross-check? #f)

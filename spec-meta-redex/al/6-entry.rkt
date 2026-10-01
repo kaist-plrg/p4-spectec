@@ -15,6 +15,7 @@
          "../common/0.0-prelude.rkt"
          "../common/0.1-stdlib.rkt"
          "../common/0.2-extern-json.rkt"
+         "../common/0.3-extern-ffi.rkt"
          "0-boot.rkt"
          "3-context.rkt"
          "5-eval.rkt")
@@ -62,4 +63,5 @@
     (command-line
      #:program "6-entry.rkt"
      #:args (file) file))
-  (displayln (result->output (entry (boot-script path)))))
+  (parameterize ([host-spec path])
+    (displayln (result->output (entry (boot-script path))))))

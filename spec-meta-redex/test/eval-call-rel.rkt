@@ -5,18 +5,18 @@
          rackunit
          "../common/0.0-prelude.rkt"
          "../common/0.1-stdlib.rkt"
+         "../common/0.3-extern-ffi.rkt"
+         "../al/0-boot.rkt"
          "../al/5.7-eval-call-rel.rkt"
          "machine.rkt")
 
-(define coverage
-  (remove* '("call-extern-rel")
-           (start-coverage ->redex/eval-call-rel ->ctx/eval-call-rel)))
+(define coverage (start-coverage ->redex/eval-call-rel ->ctx/eval-call-rel))
 
 ;; Raises when evaluated, where a premise must not be evaluated
 (define DIV0 (term (BIN DIV (NAT 1) (NAT 0))))
 
-(define script
-  (boot-text #<<EOF
+(define script-path
+  (text-file #<<EOF
 var n : nat
 
 syntax tm = NUM nat | NEG tm | ADD tm tm
@@ -57,6 +57,11 @@ extern relation Ext: |- nat ':' nat
 EOF
              ))
 
+(define script (boot-script script-path))
+
+;; The host builds its runner from the script.
+(host-spec script-path)
+
 ;; G has the script's relations, and these, which are written by hand:
 ;; - Leak has a path that binds y and then fails, and one that reads y;
 ;; - First has a path that succeeds, and one that fails if evaluated;
@@ -64,7 +69,8 @@ EOF
 ;;   fails if evaluated;
 ;; - Outs has two outputs, of which the first fails;
 ;; - Pattern has a group that matches only an empty tuple, and an else group;
-;; - Env has no inputs, and reads x.
+;; - Env has no inputs, and reads x;
+;; - Ext-halves is the host's Halves.
 (define G-rels
   (match (global-of script)
     [(list 'TYP tdenv 'REL renv 'FUNC fenv 'VAL venv)
@@ -85,7 +91,8 @@ EOF
                       ("Outs" (DEF (("g" (((VAR "a")) ()) (("p" ((VAR "z") ,DIV0) ())))) ()))
                       ("Pattern" (DEF (("g" (((TUP ())) ()) (("p" ((NAT 1)) ()))))
                                       (("e" (((VAR "a")) ()) ("e" ((NAT 0)) ())))))
-                      ("Env" (DEF (("g" (() ()) (("p" ((VAR "x")) ())))) ()))))
+                      ("Env" (DEF (("g" (() ()) (("p" ((VAR "x")) ())))) ()))
+                      ("Ext-halves" (EXT "Halves"))))
                     )])
          (match-define (list id reldef) id+reldef)
          (term (add-map ,renv ,id ,reldef))))
@@ -169,8 +176,11 @@ EOF
             (term ((OK ((NAT 2) (NAT 0))) L-caller)))
 ;; Call_rel: no such relation
 (test-equal (trace-rel "Nope" '()) '("call-rel/fail"))
-;; An extern relation reaches the host, which is not reachable yet.
-(check-exn #rx"host-call-extern-rel: the host is not reachable yet"
-           (λ () (call-rel "Ext" (term ((NAT 1))))))
+;; An extern relation goes to the host, without the cross-check, which would
+;; call it twice. One the host lacks fails.
+(test-equal (eval-in G-rels (term L-caller) (term (call-rel "Ext-halves" ((NAT 7)))) #:cross-check? #f)
+            (term (OK ((NAT 3) (NAT 1)))))
+(test-equal (eval-in G-rels (term L-caller) (term (call-rel "Ext" ((NAT 1)))) #:cross-check? #f)
+            'FAIL)
 
 (check-coverage coverage)

@@ -13,6 +13,7 @@
          eval-in
          trace-in
          boot-text
+         text-file
          global-of
          start-coverage
          check-coverage)
@@ -54,6 +55,16 @@
        (λ (out) (write-string text out)))
      (boot-script path))
    (λ () (delete-file path))))
+
+;; A temporary file with the watsup source text, deleted when the process
+;; exits, for a script that is also host-spec
+(define (text-file text)
+  (define path (make-temporary-file "redex-test-~a.watsup"))
+  (call-with-output-file path #:exists 'truncate
+    (λ (out) (write-string text out)))
+  (plumber-add-flush! (current-plumber)
+                      (λ (_) (when (file-exists? path) (delete-file path))))
+  path)
 
 ;; The global layer that $load builds from script
 (define (global-of script)

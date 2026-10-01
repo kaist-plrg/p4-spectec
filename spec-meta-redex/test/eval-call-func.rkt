@@ -4,19 +4,19 @@
          racket/match
          rackunit
          "../common/0.0-prelude.rkt"
+         "../common/0.3-extern-ffi.rkt"
+         "../al/0-boot.rkt"
          "../al/3-context.rkt"
          "../al/5.6-eval-call-func.rkt"
          "machine.rkt")
 
-(define coverage
-  (remove* '("call-extern-func" "call-builtin-func")
-           (start-coverage ->redex/eval-call-func ->ctx/eval-call-func)))
+(define coverage (start-coverage ->redex/eval-call-func ->ctx/eval-call-func))
 
 ;; Raises when evaluated, where a premise must not be evaluated
 (define DIV0 (term (BIN DIV (NAT 1) (NAT 0))))
 
-(define script
-  (boot-text #<<EOF
+(define script-path
+  (text-file #<<EOF
 var i : int
 var n : nat
 
@@ -66,12 +66,18 @@ builtin dec $rev_<X>(X*) : X*
 EOF
              ))
 
+(define script (boot-script script-path))
+
+;; The host builds its runner from the script.
+(host-spec script-path)
+
 ;; G has the script's functions, and these, which are written by hand:
 ;; - fits<X>(v) is whether v has type X, and outer<Y>(v) calls fits<Y>(v);
 ;; - leak(v) has a clause that binds y and then fails, and one that reads y;
 ;; - poly<X>(v) fails if evaluated;
 ;; - small has a row for nats below 3 only, and env one that reads x;
-;; - apply1 has a row whose function argument it calls.
+;; - apply1 has a row whose function argument it calls;
+;; - ext-inc is the host's $inc, and missing a builtin the host lacks.
 (define G-funcs
   (for/fold ([G (global-of script)])
             ([id+funcdef
@@ -90,7 +96,9 @@ EOF
                                  ((((EXP (VAR "n"))) (BOOL #t) ((IF (CMP LT (VAR "n") (NAT 3))))))))
                  ("env" (TABLE ((EXP NAT)) ((((EXP (VAR "n"))) (VAR "x") ()))))
                  ("apply1" (TABLE ((FUN "k" () ((EXP NAT)) BOOL))
-                                  ((((FUN "k")) (CALL "k" () ((EXP (NAT 1)))) ())))))))])
+                                  ((((FUN "k")) (CALL "k" () ((EXP (NAT 1)))) ()))))
+                 ("ext-inc" (EXT "inc"))
+                 ("missing" (BUILTIN "missing" () ())))))])
     (match-define (list id funcdef) id+funcdef)
     (term (add-func ,G ,id ,funcdef))))
 
@@ -109,6 +117,10 @@ EOF
 
 (define (trace-call e)
   (trace-in G-funcs (term L-caller) e))
+
+;; Without the cross-check, which would call the host twice
+(define (eval-host e)
+  (eval-in G-funcs (term L-caller) e #:cross-check? #f))
 
 (define (int i) (term (EXP (INT ,i))))
 
@@ -236,11 +248,14 @@ EOF
 (test-equal (eval-call (term (CALL "small" (NAT) ((EXP (NAT 1)))))) 'FAIL)
 (test-equal (take-right (trace-call (term (CALL "small" (NAT) ((EXP (NAT 1)))))) 2)
             '("call-func" "call-func-dispatch/table/fail"))
-;; Extern and builtin functions reach the host, which is not reachable yet.
-(check-exn #rx"host-call-extern-func: the host is not reachable yet"
-           (λ () (eval-call (term (CALL "ext" () ((EXP (NAT 1))))))))
-(check-exn #rx"host-call-builtin-func: the host is not reachable yet"
-           (λ () (eval-call (term (CALL "rev_" (NAT) ((EXP (LIST ((NAT 1))))))))))
+;; Extern and builtin functions go to the host. An extern function the host
+;; lacks fails, and a builtin it lacks raises.
+(test-equal (eval-host (term (CALL "ext-inc" () (,(int 1))))) (term (OK (INT 2))))
+(test-equal (eval-host (term (CALL "ext" () ((EXP (NAT 1)))))) 'FAIL)
+(test-equal (eval-host (term (CALL "rev_" (NAT) ((EXP (LIST ((NAT 1) (NAT 2))))))))
+            (term (OK (LIST ((NAT 2) (NAT 1))))))
+(check-exn #rx"host: Builtin error: implementation for builtin missing is missing"
+           (λ () (eval-host (term (CALL "missing" () ())))))
 
 ;;
 ;; Calls

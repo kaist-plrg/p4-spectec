@@ -165,6 +165,26 @@ k-test: k-spec
 	python3 $(KSPECDIR)/scripts/run-k-typecheck.py --neg || status=1; \
 	exit $$status
 
+# PLT Redex specification
+
+RSPECDIR = spec-meta-redex
+
+RFFI_SO = _build/default/p4spec/bin/kffi.so
+RSHIM_SRC = $(RSPECDIR)/ffi/shim.c
+RSHIM_SO = $(RSPECDIR)/ffi/shim.so
+
+.PHONY: redex-ffi
+redex-ffi: $(RFFI_SO) $(RSHIM_SO)
+
+.PHONY: $(RFFI_SO)
+$(RFFI_SO):
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/kffi.so && echo
+
+# shim.so finds kffi.so through its run path, relative to its own location.
+$(RSHIM_SO): $(RSHIM_SRC) | $(RFFI_SO)
+	gcc -shared -fPIC -O2 -Wall -I "$(OCAMLWHERE)" -o $@ $< \
+	  -L$(dir $(RFFI_SO)) -l:kffi.so '-Wl,-rpath,$$ORIGIN/../../$(dir $(RFFI_SO))'
+
 # Cleanup
 
 .PHONY: clean
@@ -175,3 +195,4 @@ clean:
 	rm -rf $(KDEFDIR) $(KSHIM_OBJ)
 	rm -f $(KSPECDIR)/specdir $(KSPECDIR)/spectec-k-* $(KSPECDIR)/run-k-typecheck-*.result
 	rm -rf $(KSPECDIR)/.kore-cache
+	rm -f $(RSHIM_SO)
