@@ -40,7 +40,7 @@ pub fn collect_excludes(dir: &Path) -> Result<BTreeSet<String>> {
     let mut excludes = BTreeSet::new();
     for path in collect(dir, ".exclude")? {
         let text = fs::read_to_string(path)?;
-        // OCaml input_line strips only LF; do not trim whitespace or CR
+        // Split on LF only; preserve whitespace and CR in exclusion entries
         excludes.extend(
             text.split_terminator('\n')
                 .filter(|line| !line.starts_with('#'))
