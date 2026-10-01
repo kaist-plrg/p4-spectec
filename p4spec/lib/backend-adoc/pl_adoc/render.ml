@@ -1008,9 +1008,9 @@ let rec render_instr ?(level : int = 0) ~(ctx_fallthrough : Fallthrough.ctx)
   | HoldI (id_rel, notexp, iterexps, holdcase) ->
       render_hold_instr ~level ~ctx_fallthrough render_instr_tier instr
         instr.hints id_rel notexp iterexps holdcase
-  | CaseI (exp_scrut, cases, dangle) ->
+  | CaseI (exp_scrut, cases, _) ->
       render_case_instr ~level ~ctx_fallthrough render_instr_tier instr
-        exp_scrut cases dangle
+        exp_scrut cases
   | LetI (exp_l, exp_r, iterinstrs) ->
       render_let_instr ~level ~ctx_fallthrough instr exp_l exp_r iterinstrs
   | DebugI exp -> render_debug_instr ~level ~ctx_fallthrough instr exp
@@ -1241,18 +1241,16 @@ and render_hold_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
             ~ctx_fallthrough render_instr_tier block_nothold;
         ]
 
-(* Case analysis: single case as a Check bullet, else an If/Else-if/Else ladder;
-   a total analysis makes the last case "Else:"
+(* Case analysis: single case as a Check bullet, else an If/Else-if ladder;
+   retain the final guard since dangle does not prove exhaustiveness
 
      . If t matches pattern A: return 1.
      . Else if t matches pattern B: return 2.
-     . Else: return 3. *)
+     . Else if t matches pattern C: return 3. *)
 
 and render_case_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
     render_instr_tier (instr : _ instr) (exp_scrut : exp)
-    (cases : 'instr_tier case list) (dangle : dangle) : Adoc.block =
-  let total = not dangle in
-  let n = List.length cases in
+    (cases : 'instr_tier case list) : Adoc.block =
   let prose_fallthrough =
     Fallthrough.prose_of_fallthrough_link ~ctx_fallthrough instr
   in
@@ -1276,45 +1274,23 @@ and render_case_instr ~(level : int) ~(ctx_fallthrough : Fallthrough.ctx)
       Adoc.seq_block
         (cases
         |> List.mapi (fun idx (guard, block_then) ->
-               if idx = n - 1 && total then
-                 let block_else =
-                   Adoc.item_ordered_block ~level (Adoc.text "Else:")
-                 in
-                 match guard with
-                 | CheckLetSubG _ | CheckLetMatchG _ ->
-                     let prose_bind = prose_of_guard exp_scrut guard in
-                     let block_bind =
-                       Adoc.item_ordered_block ~level:(level + 1)
-                         Adoc.(capitalize_first_prose prose_bind ++ text ".")
-                     in
-                     Adoc.seq_block
-                       (block_else :: block_bind
-                       :: List.map
-                            (render_instr ~level:(level + 1) ~ctx_fallthrough
-                               render_instr_tier)
-                            block_then)
-                 | _ ->
-                     render_instrs ~block_head:(Some block_else)
-                       ~level:(level + 1) ~ctx_fallthrough render_instr_tier
-                       block_then
-               else
-                 let keyword = if idx = 0 then "If" else "Else if" in
-                 let label =
-                   if
-                     Partial.is_partial_guard guard
-                     || (idx = 0 && Partial.is_partial_exp exp_scrut)
-                   then prose_fallthrough
-                   else Adoc.empty_prose
-                 in
-                 let block_head =
-                   Adoc.item_ordered_block ~level
-                     Adoc.(
-                       text (keyword ^ " ")
-                       ++ prose_of_guard exp_scrut guard
-                       ++ text ":" ++ label)
-                 in
-                 render_instrs ~block_head:(Some block_head) ~level:(level + 1)
-                   ~ctx_fallthrough render_instr_tier block_then))
+               let keyword = if idx = 0 then "If" else "Else if" in
+               let label =
+                 if
+                   Partial.is_partial_guard guard
+                   || (idx = 0 && Partial.is_partial_exp exp_scrut)
+                 then prose_fallthrough
+                 else Adoc.empty_prose
+               in
+               let block_head =
+                 Adoc.item_ordered_block ~level
+                   Adoc.(
+                     text (keyword ^ " ")
+                     ++ prose_of_guard exp_scrut guard
+                     ++ text ":" ++ label)
+               in
+               render_instrs ~block_head:(Some block_head) ~level:(level + 1)
+                 ~ctx_fallthrough render_instr_tier block_then))
 
 (* Cross-group edge, as an inline goto link into that group's dispatch anchor
 
