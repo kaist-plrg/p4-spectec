@@ -3,9 +3,9 @@
 use std::fs;
 
 use p4spec_rust::{
-    backend_specdoc::splicer::{splice_files_with_warnings, splice_strings_with_warnings},
     diagnostic::{Diagnostic, Label, Report, ReportKind, Severity},
     lang::el::ast as el,
+    specdoc::splicer::{splice_files_with_warnings, splice_strings_with_warnings},
 };
 
 use crate::{directory::Directory, spec_fixture};
@@ -48,9 +48,9 @@ fn latex_failures_preserve_expression_locations_and_warning_order() {
         // Construct renderer inputs that elaboration would reject before splicing
         def.exp.node = exp_kind;
         let el::DefKind::FuncDef(def) = &spec_el[1].node else { panic!("function definition") };
-        let anchor_ctx = p4spec_rust::backend_specdoc::anchor::AnchorContext::default();
+        let anchor_ctx = p4spec_rust::specdoc::anchor::AnchorContext::default();
         let report_direct =
-            p4spec_rust::backend_specdoc::latex::render_def(&anchor_ctx, &spec_el[1]).unwrap_err();
+            p4spec_rust::specdoc::latex::render_def(&anchor_ctx, &spec_el[1]).unwrap_err();
         let sources = [
             ("body.adoc", "${func-prose: missing}\n${func-latex: f}"),
             ("title.adoc", "${func-title-latex: f}\n${func-title-latex: f}"),
@@ -259,8 +259,8 @@ fn adoc_warnings_survive_a_later_latex_failure() {
 #[test]
 fn direct_group_link_warnings_use_the_rule_location() {
     use p4spec_rust::{
-        backend_specdoc::adoc,
         pass::{algo, elaborate, prosify, structure},
+        specdoc::adoc,
     };
     let spec_el = spec_fixture::parse(
         "var n : nat\nrelation Same: nat ~~ nat\n  hint(input %0 %1)\nrule Same:\n  n ~~ n\n",

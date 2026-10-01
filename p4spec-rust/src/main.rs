@@ -20,7 +20,7 @@ use p4spec_rust::interface::p4::parse::parse_file;
 
 use p4spec_rust::sim_plugin::{self, dummy::Dummy};
 
-use p4spec_rust::backend_specdoc::splicer;
+use p4spec_rust::specdoc::splicer;
 
 // = Helpers
 

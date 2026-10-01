@@ -6,7 +6,7 @@
 
 use p4spec_rust::diagnostic::{Report, ReportKind, Severity};
 
-use p4spec_rust::backend_specdoc::adoc;
+use p4spec_rust::specdoc::adoc;
 
 use p4spec_rust::prosify_with_warnings;
 

@@ -1,9 +1,9 @@
-use p4spec_rust::backend_specdoc::adoc::pl::doc::{
+use p4spec_rust::lang::common::source::Span;
+use p4spec_rust::specdoc::adoc::pl::doc::{
     doc::{Block, Code, FallthroughLabel, Item, ItemKind, Link, Prose, Subject, Table},
     serialize,
 };
-use p4spec_rust::backend_specdoc::anchor::AnchorContext;
-use p4spec_rust::lang::common::source::Span;
+use p4spec_rust::specdoc::anchor::AnchorContext;
 
 #[test]
 fn code_links_merge_adjacent_tokens_and_drop_nested_targets() {

@@ -17,7 +17,7 @@ use crate::lang::common::source::Span;
 
 use crate::diagnostic::{Diagnostic, Report};
 
-use crate::backend_specdoc::{
+use crate::specdoc::{
     adoc::error,
     anchor::{AnchorContext, Presentation},
 };
@@ -55,14 +55,14 @@ fn adoc_mono_chopped(text: &str) -> String {
 //   adoc_unordered_bullet(1)   -> " ** "
 
 /// Returns an ordered-list marker at the requested nesting level.
-pub(in crate::backend_specdoc::adoc::pl) fn adoc_ordered_bullet(level: usize) -> String {
+pub(in crate::specdoc::adoc::pl) fn adoc_ordered_bullet(level: usize) -> String {
     let indent = " ".repeat(level);
     let marker = ".".repeat(level + 1);
     format!("{indent}{marker} ")
 }
 
 /// Returns an unordered-list marker at the requested nesting level.
-pub(in crate::backend_specdoc::adoc::pl) fn adoc_unordered_bullet(level: usize) -> String {
+pub(in crate::specdoc::adoc::pl) fn adoc_unordered_bullet(level: usize) -> String {
     let indent = " ".repeat(level);
     let marker = "*".repeat(level + 1);
     format!("{indent}{marker} ")

@@ -42,7 +42,7 @@ use crate::lang::pl::{
 
 use crate::diagnostic::Report;
 
-use crate::backend_specdoc::anchor::AnchorContext;
+use crate::specdoc::anchor::AnchorContext;
 
 use super::{
     doc::{

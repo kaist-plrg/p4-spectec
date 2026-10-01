@@ -1,9 +1,9 @@
 use p4spec_rust::{
-    backend_specdoc::adoc::el::render_def,
     lang::{
         common::source::Span,
         el::ast::{self, DefKind, ExpKind},
     },
+    specdoc::adoc::el::render_def,
 };
 
 fn render(source: &str) -> String {
