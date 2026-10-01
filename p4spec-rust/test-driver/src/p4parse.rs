@@ -18,7 +18,7 @@ use p4spec_rust::interface::p4::{
 use crate::{
     Error, Result,
     corpus::{self, Outcome, Results},
-    suite::{self, Config, ParseSuite},
+    suite::{self, ParseConfig},
 };
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
@@ -59,10 +59,10 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
 }
 
 /// Checks registered P4 parsing corpora against their expected outcomes.
-pub fn run(config: &Config, registrations: &[ParseSuite]) -> Result<()> {
+pub fn run(config: &ParseConfig) -> Result<()> {
     let start = Instant::now();
     let mut suites = Vec::new();
-    for suite in registrations {
+    for suite in &config.suites {
         let path_expected = suite::expected_path(&suite.expected);
         let mut paths = Vec::new();
         for path in &suite.roots {

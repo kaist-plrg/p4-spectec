@@ -16,7 +16,7 @@ use p4spec_rust::sim_plugin::{self, io::Tx};
 
 use crate::{
     Error, ExecutionOptions, Result, corpus,
-    suite::{self, Config as SuiteConfig, Language, SimSuite},
+    suite::{self, Language, SimConfig, SimSuite},
 };
 
 struct Input {
@@ -152,13 +152,8 @@ impl Results {
 }
 
 /// Runs registered simulation suites with the selected interpreter.
-pub fn run(
-    config: &SuiteConfig,
-    registrations: &[SimSuite],
-    language: Language,
-    options: ExecutionOptions,
-) -> Result<()> {
-    run_with(config, registrations, language, options, || match language {
+pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) -> Result<()> {
+    run_with(config, language, options, || match language {
         Language::Al => p4spec_rust::algo(&config.spec)
             .map(Spec::Al)
             .map_err(|error| Error::Invalid(error.to_string())),
@@ -172,8 +167,7 @@ pub fn run(
 }
 
 fn run_with<BuildSpec>(
-    config: &SuiteConfig,
-    registrations: &[SimSuite],
+    config: &SimConfig,
     language: Language,
     options: ExecutionOptions,
     build_spec: BuildSpec,
@@ -185,14 +179,11 @@ where
     let text_cache = if cache_on { "on" } else { "off" };
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
-    for path in config
-        .excludes_static
-        .iter()
-        .chain(&config.excludes_dynamic)
-    {
+    for path in &config.excludes {
         excludes.extend(corpus::collect_excludes(path)?);
     }
-    let suites = registrations
+    let suites = config
+        .suites
         .iter()
         .filter(|suite| suite.languages.contains(&language))
         .map(|suite| Ok((suite, suite.collect()?)))

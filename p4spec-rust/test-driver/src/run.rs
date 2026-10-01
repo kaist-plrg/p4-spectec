@@ -12,7 +12,7 @@ use p4spec_rust::sim_plugin::dummy::Dummy;
 use crate::{
     Error, ExecutionOptions, Result,
     corpus::{self, Outcome, Results},
-    suite::{self, Config as SuiteConfig, Language, RunSuite},
+    suite::{self, Language, RunConfig},
 };
 
 struct CollectedSuite {
@@ -22,16 +22,12 @@ struct CollectedSuite {
 }
 
 /// Runs registered execution suites with the selected interpreter.
-pub fn run(
-    config: &SuiteConfig,
-    registrations: &[RunSuite],
-    language: Language,
-    options: ExecutionOptions,
-) -> Result<()> {
+pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) -> Result<()> {
     let ExecutionOptions { cache_on, det } = options;
     let text_cache = if cache_on { "on" } else { "off" };
     // Collect registered corpus roots in suite order
-    let suites = registrations
+    let suites = config
+        .suites
         .iter()
         .filter(|suite| suite.languages.contains(&language))
         .map(|suite| {
@@ -75,7 +71,7 @@ pub fn run(
 }
 
 fn run_with<Interp, Build>(
-    config: &SuiteConfig,
+    config: &RunConfig,
     text_mode: &str,
     mut suites: Vec<CollectedSuite>,
     build_runner: Build,
@@ -86,7 +82,7 @@ where
 {
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
-    for path in &config.excludes_static {
+    for path in &config.excludes {
         excludes.extend(corpus::collect_excludes(path)?);
     }
     let collected: usize = suites.iter().map(|suite| suite.paths.len()).sum();

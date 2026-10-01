@@ -1,6 +1,6 @@
 //! Typed registration files for individual acceptance runners
 //!
-//! `Config::load` resolves module filenames from the root index.
+//! `Index::load` resolves module filenames from the root index.
 //! Each module loader reads its own registration type and validates its paths.
 //! Corpus paths are relative to the repository;
 //! diagnostic inputs and expectations are relative to the driver.
@@ -96,6 +96,35 @@ pub struct SimSuite {
     pub languages: Vec<Language>,
 }
 
+/// Supplies the parser's specification, includes, and corpus registrations.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParseConfig {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
+    pub suites: Vec<ParseSuite>,
+}
+
+/// Supplies execution dependencies and corpus registrations.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RunConfig {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
+    pub excludes: Vec<PathBuf>,
+    pub suites: Vec<RunSuite>,
+}
+
+/// Supplies simulation dependencies and P4/STF registrations.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SimConfig {
+    pub spec: Vec<PathBuf>,
+    pub includes: Vec<PathBuf>,
+    pub excludes: Vec<PathBuf>,
+    pub suites: Vec<SimSuite>,
+}
+
 /// Names each runner's registration file without storing its tests.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -111,14 +140,10 @@ pub struct Modules {
     pub diagnostics: diagnostic::Modules,
 }
 
-/// Supplies shared corpus settings and module registration filenames.
+/// Indexes module registration filenames without test execution settings.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Config {
-    pub spec: Vec<PathBuf>,
-    pub includes: Vec<PathBuf>,
-    pub excludes_static: Vec<PathBuf>,
-    pub excludes_dynamic: Vec<PathBuf>,
+pub struct Index {
     pub suites: Modules,
 }
 
@@ -248,24 +273,35 @@ pub fn load_adoc(path: &Path) -> Result<AdocSuite> {
     Ok(suites)
 }
 
-/// Loads P4 parsing corpora for the parser runner.
-pub fn load_parsing(path: &Path) -> Result<Vec<ParseSuite>> {
-    let suites: Vec<ParseSuite> = load(path)?;
+/// Loads parser dependencies and roundtrip corpus registrations.
+pub fn load_parsing(path: &Path) -> Result<ParseConfig> {
+    let config: ParseConfig = load(path)?;
+    // Validate dependencies declared by this module before corpus discovery
+    paths_exist(&config.spec, "parser specification")?;
+    directories_exist(&config.includes, "parser include directories")?;
+    let suites = &config.suites;
     names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
     // Parsing discovers files only within the registered directories
-    for suite in &suites {
+    for suite in suites {
         directories_exist(&suite.roots, &suite.name)?;
         expectation_exists(&suite.expected)?;
     }
-    Ok(suites)
+    Ok(config)
 }
 
-/// Loads execution corpora for the selected run command.
-pub fn load_execution(path: &Path) -> Result<Vec<RunSuite>> {
-    let suites: Vec<RunSuite> = load(path)?;
+/// Loads execution dependencies and corpus registrations.
+pub fn load_execution(path: &Path) -> Result<RunConfig> {
+    let config: RunConfig = load(path)?;
+    // Validate dependencies declared by this module before corpus discovery
+    paths_exist(&config.spec, "execution specification")?;
+    directories_exist(&config.includes, "execution include directories")?;
+    for path in &config.excludes {
+        directories_exist(std::slice::from_ref(path), "execution exclusions")?;
+    }
+    let suites = &config.suites;
     names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
     // Entry relations and interpreter selections belong to each corpus
-    for suite in &suites {
+    for suite in suites {
         directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
         languages_valid(&suite.languages)?;
         if suite.relation.is_empty() {
@@ -273,15 +309,22 @@ pub fn load_execution(path: &Path) -> Result<Vec<RunSuite>> {
         }
         expectation_exists(&suite.expected)?;
     }
-    Ok(suites)
+    Ok(config)
 }
 
-/// Loads simulation corpora with explicit P4/STF pairing.
-pub fn load_simulation(path: &Path) -> Result<Vec<SimSuite>> {
-    let suites: Vec<SimSuite> = load(path)?;
+/// Loads simulation dependencies and explicit P4/STF corpus pairing.
+pub fn load_simulation(path: &Path) -> Result<SimConfig> {
+    let config: SimConfig = load(path)?;
+    // Validate dependencies declared by this module before corpus discovery
+    paths_exist(&config.spec, "simulation specification")?;
+    directories_exist(&config.includes, "simulation include directories")?;
+    for path in &config.excludes {
+        directories_exist(std::slice::from_ref(path), "simulation exclusions")?;
+    }
+    let suites = &config.suites;
     names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
     // Validate simulation inputs and optional patches before discovery
-    for suite in &suites {
+    for suite in suites {
         directories_exist(&[suite.p4.clone(), suite.stf.clone()], &suite.name)?;
         if let Some(path) = &suite.patches {
             directories_exist(std::slice::from_ref(path), &suite.name)?;
@@ -295,26 +338,16 @@ pub fn load_simulation(path: &Path) -> Result<Vec<SimSuite>> {
         }
         expectation_exists(&suite.expected)?;
     }
-    Ok(suites)
+    Ok(config)
 }
 
-impl Config {
-    /// Reads shared settings and resolves module paths relative to the index.
+impl Index {
+    /// Resolves module paths relative to the index without loading their settings.
     pub fn load(path: &Path) -> Result<Self> {
-        let mut config: Self = load(path)?;
+        let mut index: Self = load(path)?;
         let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
-        // Preserve repository-relative corpus and driver-relative expected paths
-        paths_exist(&config.spec, "specification")?;
-        directories_exist(&config.includes, "include directories")?;
-        for path in config
-            .excludes_static
-            .iter()
-            .chain(&config.excludes_dynamic)
-        {
-            directories_exist(std::slice::from_ref(path), "exclusions")?;
-        }
         // Resolve filenames without loading unrelated modules
-        let modules = &mut config.suites;
+        let modules = &mut index.suites;
         for path in [
             &mut modules.elab,
             &mut modules.algo,
@@ -330,15 +363,11 @@ impl Config {
         {
             *path = path_parent.join(&*path);
         }
-        Ok(config)
+        Ok(index)
     }
 
     /// Prints typed module registrations without executing their tests.
     pub fn list(&self) -> Result<()> {
-        println!("specification: {:?}", self.spec);
-        println!("includes: {:?}", self.includes);
-        println!("static exclusions: {:?}", self.excludes_static);
-        println!("dynamic exclusions: {:?}", self.excludes_dynamic);
         // Validate and display each module through its normal loader
         println!("elab: {:#?}", load_snapshots(&self.suites.elab)?);
         println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);

@@ -15,7 +15,7 @@ use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
 
-use suite::{Config, Language};
+use suite::{Index, Language};
 
 #[derive(Debug, thiserror::Error)]
 enum Error {
@@ -120,25 +120,25 @@ fn execute(mut cli: Cli) -> Result<()> {
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
-    let config = Config::load(&path_registry)?;
+    let index = Index::load(&path_registry)?;
     match command {
-        Command::List => config.list(),
+        Command::List => index.list(),
         Command::Diagnostics { suite, path_cli } => {
-            diagnostic::run(&config.suites.diagnostics, *suite, path_cli.as_deref())
+            diagnostic::run(&index.suites.diagnostics, *suite, path_cli.as_deref())
         }
-        Command::P4parse => p4parse::run(&config, &suite::load_parsing(&config.suites.p4parse)?),
-        Command::Elab => elab::run(&suite::load_snapshots(&config.suites.elab)?),
-        Command::Algo => algo::run(&suite::load_snapshots(&config.suites.algo)?),
-        Command::Structure => structure::run(&suite::load_structure(&config.suites.structure)?),
-        Command::Prose => prose::run(&suite::load_snapshots(&config.suites.prose)?),
+        Command::P4parse => p4parse::run(&suite::load_parsing(&index.suites.p4parse)?),
+        Command::Elab => elab::run(&suite::load_snapshots(&index.suites.elab)?),
+        Command::Algo => algo::run(&suite::load_snapshots(&index.suites.algo)?),
+        Command::Structure => structure::run(&suite::load_structure(&index.suites.structure)?),
+        Command::Prose => prose::run(&suite::load_snapshots(&index.suites.prose)?),
         Command::Adoc { path_output } => {
-            adoc::run(&suite::load_adoc(&config.suites.adoc)?, path_output.as_deref())
+            adoc::run(&suite::load_adoc(&index.suites.adoc)?, path_output.as_deref())
         }
         Command::Run { language, options } => {
-            run::run(&config, &suite::load_execution(&config.suites.run)?, *language, *options)
+            run::run(&suite::load_execution(&index.suites.run)?, *language, *options)
         }
         Command::Sim { language, options } => {
-            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, *language, *options)
+            sim::run(&suite::load_simulation(&index.suites.sim)?, *language, *options)
         }
     }
 }
