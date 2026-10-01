@@ -2656,13 +2656,13 @@ def $unroll_typeIR(typeIR) = typeIR
 
 
 
-dec $unroll_aliasType(typeIR) : typeIR
+dec $unroll_aliasTypeIR(typeIR) : typeIR
 
-def $unroll_aliasType(TYPE _ typeIR) = $unroll_aliasType(typeIR)
+def $unroll_aliasTypeIR(TYPE _ typeIR) = $unroll_aliasTypeIR(typeIR)
 
-def $unroll_aliasType(TYPEDEF _ typeIR) = $unroll_aliasType(typeIR)
+def $unroll_aliasTypeIR(TYPEDEF _ typeIR) = $unroll_aliasTypeIR(typeIR)
 
-def $unroll_aliasType(typeIR) = typeIR
+def $unroll_aliasTypeIR(typeIR) = typeIR
   -- otherwise
 
 
@@ -4812,6 +4812,9 @@ def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `])
 def $bin_eq(TUPLE `( value_a* `), TUPLE `( value_b* `))
   = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
 
+def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `))
+  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+
 def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `])
   = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
 
@@ -5005,10 +5008,10 @@ def $cast_bool(BIT `< w `>, _B true) = w W 1
 
 def $cast_bool(BIT `< w `>, _B false) = w W 0
 
-def $cast_bool(TYPE _ typeIR, boolValue) = $cast_bool(typeIR, boolValue)
+def $cast_bool(TYPE _ typeIR, boolValue) = $cast_op(typeIR, boolValue)
 
 def $cast_bool(SET `< typeIR `>, boolValue)
-  = SET `{ $cast_bool(typeIR, boolValue) `}
+  = SET `{ $cast_op(typeIR, boolValue) `}
 
 def $cast_op(typeIR, boolValue) = $cast_bool(typeIR_unroll, boolValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
@@ -5088,6 +5091,13 @@ def $cast_op(typeIR, errorValue) = $cast_error(typeIR_unroll, errorValue)
 
 
 
+def $cast_op(typeIR, MATCH_KIND '.' nameIR) = MATCH_KIND '.' nameIR
+  -- if MATCH_KIND = $unroll_typeIR(typeIR)
+
+
+
+
+
 dec $cast_string(typeIR, stringValue) : value
 
 def $cast_string(STRING, stringValue) = stringValue
@@ -5115,6 +5125,9 @@ dec $cast_tuple(typeIR, tupleValue) : value
 
 def $cast_tuple(TUPLE `< typeIR* `>, TUPLE `( value* `))
   = TUPLE `( $cast_op(typeIR, value)* `)
+
+def $cast_tuple(SET `< typeIR `>, tupleValue)
+  = SET `{ $cast_op(typeIR, tupleValue) `}
 
 def $cast_op(typeIR, tupleValue) = $cast_tuple(typeIR_unroll, tupleValue)
   -- if typeIR_unroll = $unroll_typeIR(typeIR)
@@ -5178,6 +5191,21 @@ def $cast_op(typeIR, headerValue) = $cast_header(typeIR_unroll, headerValue)
 
 
 
+dec $cast_header_union(typeIR, headerUnionValue) : value
+
+def $cast_header_union(
+    HEADER_UNION typeId `< _ `> `{ _ `},
+    HEADER_UNION typeId `{ (value_field nameIR_field ';')* `})
+  = HEADER_UNION typeId `{ (value_field nameIR_field ';')* `}
+
+def $cast_op(typeIR, headerUnionValue)
+  = $cast_header_union(typeIR_unroll, headerUnionValue)
+  -- if typeIR_unroll = $unroll_typeIR(typeIR)
+
+
+
+
+
 dec $cast_enum(typeIR, enumValue) : value
 
 def $cast_enum(ENUM typeId `{ _ `}, typeId '.' nameIR) = typeId '.' nameIR
@@ -5199,6 +5227,9 @@ def $cast_op(typeIR, enumValue) = $cast_enum(typeIR_unroll, enumValue)
 
 
 dec $cast_sequence(typeIR, sequenceValue) : value
+
+def $cast_sequence(SET `< typeIR `>, sequenceValue)
+  = SET `{ $cast_op(typeIR, sequenceValue) `}
 
 def $cast_sequence(LIST `< typeIR `>, SEQ `( value* `))
   = LIST `[ $cast_op(typeIR, value)* `]
@@ -5390,6 +5421,8 @@ def $cast_op(typeIR, DEFAULT) = $cast_default(typeIR_unroll, DEFAULT)
 
 
 dec $cast_invalid_header(typeIR) : value
+
+def $cast_invalid_header(HEADER_INVALID) = '{#}'
 
 def $cast_invalid_header(headerTypeIR) = $default(headerTypeIR)
 
@@ -5615,8 +5648,11 @@ def $sizeof_minSizeInBits'(STRUCT _ `< _ `> `{ (_ typeIR _ ';')* `})
 def $sizeof_minSizeInBits'(HEADER _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $sum_nat($sizeof_minSizeInBits'(typeIR)*)
 
+def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ `> `{ eps `}) = 0
+
 def $sizeof_minSizeInBits'(HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $min_nat($sizeof_minSizeInBits'(typeIR)*)
+  -- if typeIR* =/= eps
 
 def $sizeof(typeIR, "minSizeInBits") = $sizeof_minSizeInBits(typeIR)
 
@@ -5665,8 +5701,11 @@ def $sizeof_maxSizeInBits'(STRUCT _ `< _ `> `{ (_ typeIR _ ';')* `})
 def $sizeof_maxSizeInBits'(HEADER _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $sum_nat($sizeof_maxSizeInBits'(typeIR)*)
 
+def $sizeof_maxSizeInBits'(HEADER_UNION _ `< _ `> `{ eps `}) = 0
+
 def $sizeof_maxSizeInBits'(HEADER_UNION _ `< _ `> `{ (_ typeIR _ ';')* `})
   = $max_nat($sizeof_maxSizeInBits'(typeIR)*)
+  -- if typeIR* =/= eps
 
 def $sizeof(typeIR, "maxSizeInBits") = $sizeof_maxSizeInBits(typeIR)
 
@@ -10882,7 +10921,7 @@ def $update_mode_tbl(TBLC, tableKeyIR*) = TBLC[MODE = LPM n]
   -- if tableKeyIR_lpm = $filter_<tableKeyIR>(tableKeyIR*, b_lpm*)
   -- if typedExpressionIR '#' _ ':' "lpm" _ ';' = tableKeyIR_lpm
   -- if typeIR = $type_of_typedExpressionIR(typedExpressionIR)
-  -- if integerTypeIR = $unroll_aliasType(typeIR)
+  -- if integerTypeIR = $unroll_aliasTypeIR(typeIR)
   -- if n = $width_of_integerTypeIR(integerTypeIR)
 
 def $update_mode_tbl(TBLC, tableKeyIR*) = TBLC[MODE = NONE]
@@ -13319,11 +13358,14 @@ rulegroup Expr_ok/literalExpression {
     -- if expressionNoteIR = `( INT LCTK `)
 
   rule Expr_ok/integerLiteral-fixint:
-    p TC |- n S i : (n S i) '#' expressionNoteIR
+    p TC |- n S i : (n S i_norm) '#' expressionNoteIR
+    -- if i_norm = $int_to_bitstr(n, i)
     -- if expressionNoteIR = `( (INT `< n `>) LCTK `)
+    -- if $(n > 0)
 
   rule Expr_ok/integerLiteral-fixbit:
-    p TC |- n W i : (n W i) '#' expressionNoteIR
+    p TC |- n W i : (n W i_norm) '#' expressionNoteIR
+    -- if i_norm = $int_to_bitstr(n, i)
     -- if expressionNoteIR = `( (BIT `< n `>) LCTK `)
 
   rule Expr_ok/stringLiteral:
@@ -14486,7 +14528,7 @@ rulegroup Expr_ok/sliceAccessExpression {
     -- if ctk_w_reduced = LCTK
     -- Expr_eval_lctk: p TC |- typedExpressionIR_w_reduced ~> integerValue_w
     -- if n_w = $nat_of_integerValue(integerValue_w)
-    -- if n_h = $(n_w + n_l - 1)
+    -- if n_h = $ite<int>(n_w = 0, n_l, $(n_w + n_l - 1))
     -- if $is_valid_bitslice(typeIR_base_reduced, n_l, n_h)
     -- if typeIR = BIT `< n_w `>
     -- if expressionNoteIR = `( typeIR ctk_base_reduced `)
@@ -15848,7 +15890,7 @@ rule Stmt_ok/forStatement-three-clause:
   -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
   -- if TC_5 = $exit_t(TC_4)
   -- if TC_6 = $set_control_t(TC_5, TC_2.CONTROL)
-  -- if TC_7 = $set_loop_t(TC_6, TC_3.LOOP)
+  -- if TC_7 = $set_loop_t(TC_6, TC_2.LOOP)
   -- if forStatementIR
       = annotationList FOR
       `( forInitStatementIR* ';' typedExpressionIR ';' forUpdateStatementIR* `)
@@ -15937,7 +15979,7 @@ rulegroup Stmt_ok/forStatement-in {
     -- Stmt_ok: LOCAL TC_3 |- statement : TC_4 statementIR
     -- if TC_5 = $exit_t(TC_4)
     -- if TC_6 = $set_control_t(TC_5, TC_2.CONTROL)
-    -- if TC_7 = $set_loop_t(TC_6, TC_3.LOOP)
+    -- if TC_7 = $set_loop_t(TC_6, TC_2.LOOP)
     -- if forStatementIR
         = annotationList FOR `( typeIR nameIR IN forCollectionExpressionIR `)
         statementIR
@@ -17694,7 +17736,7 @@ rule ParserStmt_ok/directApplicationStatement:
 
 
 rule ParserStmt_ok/parserBlockStatement:
-  TC_0 |- parserBlockStatement : TC_1 parserBlockStatementIR
+  TC_0 |- parserBlockStatement : TC_3 parserBlockStatementIR
   -- if TC_1 = $enter_t(TC_0)
   -- ParserBlock_ok: TC_1 |- parserBlockStatement : TC_2 parserBlockStatementIR
   -- if TC_3 = $exit_t(TC_2)
@@ -21295,14 +21337,18 @@ rulegroup Expr_inst/memberAccessExpressionIR-type {
   rule Expr_inst/enum:
     p IC STO
         |- ((TYPE prefixedNameIR) '.' nameIR) '#' _ : STO (typeId '.' nameIR)
-    -- if ENUM typeId `{ _ `} = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeDefIR_base = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if ENUM typeId `{ _ `} = $unroll_typeIR(typeIR_base)
 
   rule Expr_inst/serenum:
     p IC STO
         |- ((TYPE prefixedNameIR) '.' nameIR) '#' _
             : STO (typeId '.' nameIR '.' value)
+    -- if typeDefIR_base = $find_typeDef_i(p, IC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if ENUM typeId `< _ `> `{ (id_member '=' value_member ';')* `}
-        = $find_typeDef_i(p, IC, prefixedNameIR)
+        = $unroll_typeIR(typeIR_base)
     -- if value = $assoc_<nameIR, value>(nameIR, (id_member, value_member)*)
 
 }
@@ -22624,18 +22670,20 @@ rule ParserBlock_inst:
               : IC_1 STO_1 parserBlockElementStatementListIR_inst
 
 rule ParserState_inst:
-  IC_0 STO_0 |- parserStateIR : IC_2 STO_1
+  IC_0 STO_0 |- parserStateIR : IC_4 STO_1
   -- if annotationList STATE nameIR
   `{ parserBlockElementStatementListIR transitionStatementIR `}
       = parserStateIR
+  -- if IC_1 = $enter_i(IC_0)
   -- ParserBlockElementStmtList_inst:
-      IC_0 STO_0
+      IC_1 STO_0
           |- parserBlockElementStatementListIR
-              : IC_1 STO_1 parserBlockElementStatementListIR_inst
+              : IC_2 STO_1 parserBlockElementStatementListIR_inst
+  -- if IC_3 = $exit_i(IC_2)
   -- if parserStateIR_inst
       = annotationList STATE nameIR
       `{ parserBlockElementStatementListIR_inst transitionStatementIR `}
-  -- if IC_2 = $add_parserState_i(IC_1, nameIR, parserStateIR_inst)
+  -- if IC_4 = $add_parserState_i(IC_3, nameIR, parserStateIR_inst)
 
 
 
@@ -24327,14 +24375,18 @@ rulegroup Expr_eval/memberAccessExpressionIR-type {
   rule Expr_eval/enum:
     p EC ARCH
         |- ((TYPE prefixedNameIR) '.' nameIR) '#' _ : EC ARCH expressionResult
-    -- if ENUM typeId `{ _ `} = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeDefIR_base = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
+    -- if ENUM typeId `{ _ `} = $unroll_typeIR(typeIR_base)
     -- if expressionResult = _CONT (typeId '.' nameIR)
 
   rule Expr_eval/serenum:
     p EC ARCH
         |- ((TYPE prefixedNameIR) '.' nameIR) '#' _ : EC ARCH expressionResult
+    -- if typeDefIR_base = $find_typeDef_e(p, EC, prefixedNameIR)
+    -- if typeIR_base = $typeIR_of_typeDefIR(typeDefIR_base)
     -- if ENUM typeId `< _ `> `{ (nameIR_member '=' value_member ';')* `}
-        = $find_typeDef_e(p, EC, prefixedNameIR)
+        = $unroll_typeIR(typeIR_base)
     -- if value = $assoc_<nameIR, value>(nameIR, (nameIR_member, value_member)*)
     -- if expressionResult = _CONT (typeId '.' nameIR '.' value)
 
