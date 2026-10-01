@@ -12,6 +12,13 @@ mod externs;
 mod interface;
 mod interpreter;
 
+use std::path::{Path, PathBuf};
+
+use crate::{
+    interface::p4::{error::P4Error, parse::parse_file},
+    sim_plugin::dummy::Dummy,
+};
+
 use crate::lang::data::value::{Value, ValueArena};
 
 use crate::lang::al;
@@ -190,4 +197,64 @@ where
         self.interface.clear();
         self.arena = ValueArena::new();
     }
+}
+
+// == Program execution
+
+/// A failure while building a runner, parsing P4, or evaluating a program.
+#[derive(Debug, thiserror::Error)]
+pub enum RunError {
+    /// A diagnostic from runner construction.
+    #[error(transparent)]
+    Build(BuildError),
+    /// A P4 preprocessing or syntax failure.
+    #[error(transparent)]
+    Parse(P4Error),
+    /// An aborting evaluation or unmatched relation.
+    #[error(transparent)]
+    Eval(InterpreterError),
+}
+
+/// Builds a runner with dummy externs and evaluates a P4 program's entry.
+pub fn run(
+    spec: Spec,
+    config: Config,
+    relation: &str,
+    includes: &[PathBuf],
+    path_p4: &Path,
+) -> Result<(), RunError> {
+    match spec {
+        Spec::Al(spec_al) => {
+            let runner = build_al(spec_al, config, Dummy).map_err(RunError::Build)?;
+            run_program(runner, relation, includes, path_p4)
+        }
+        Spec::Sl(spec_sl) => {
+            let runner = build_sl(spec_sl, config, Dummy).map_err(RunError::Build)?;
+            run_program(runner, relation, includes, path_p4)
+        }
+        Spec::Pl(spec_pl) => {
+            let runner = build_pl(spec_pl, config, Dummy).map_err(RunError::Build)?;
+            run_program(runner, relation, includes, path_p4)
+        }
+    }
+}
+
+/// Parses P4 into the runner's arena and evaluates its entry relation.
+fn run_program<Interp>(
+    mut runner: Runner<Interp, BuiltinInterface, Dummy>,
+    relation: &str,
+    includes: &[PathBuf],
+    path_p4: &Path,
+) -> Result<(), RunError>
+where
+    Interp: Interpreter<BuiltinInterface, Dummy>,
+{
+    // Parse the program into the arena used by evaluation
+    let program = parse_file(runner.arena_mut(), includes, path_p4).map_err(RunError::Parse)?;
+
+    // Evaluate the entry without retaining arena-relative results
+    runner
+        .eval_program(relation, program)
+        .map_err(RunError::Eval)?;
+    Ok(())
 }

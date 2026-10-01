@@ -6,7 +6,7 @@
 //! the `*_with_warnings` variants also return ordered elaboration warnings,
 //! including when a later stage fails. Callers choose how to report them.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::lang::il;
 
@@ -19,6 +19,8 @@ use crate::lang::pl;
 use crate::diagnostic::Report;
 
 use crate::frontend::parse::parse_files;
+
+use crate::{lang::el, runner};
 
 pub mod algo;
 pub mod elaborate;
@@ -126,5 +128,59 @@ where
 {
     let (result, warnings) = structure_with_warnings(paths, false);
     let result = result.and_then(prosify::convert);
+    (result, warnings)
+}
+
+// == Runner specifications
+
+/// Selects the specification language used for execution.
+#[derive(Clone, Copy, Debug)]
+pub enum SpecLang {
+    /// The algorithmic language.
+    Al,
+    /// The structured language.
+    Sl,
+    /// The prose language.
+    Pl,
+}
+
+/// Converts paths into the selected runner language with accumulated warnings.
+pub fn runner_spec_with_warnings(
+    lang: SpecLang,
+    paths: &[PathBuf],
+) -> (Result<runner::Spec, Error>, Vec<Report>) {
+    match lang {
+        SpecLang::Al => {
+            let (result, warnings) = algo_with_warnings(paths);
+            (result.map(runner::Spec::Al), warnings)
+        }
+        SpecLang::Sl => {
+            let (result, warnings) = structure_with_warnings(paths, true);
+            (result.map(runner::Spec::Sl), warnings)
+        }
+        SpecLang::Pl => {
+            let (result, warnings) = prosify_with_warnings(paths);
+            (result.map(runner::Spec::Pl), warnings)
+        }
+    }
+}
+
+// == Document specifications
+
+/// Prepares source and prose specifications for document splicing.
+pub fn specdoc_spec_with_warnings(
+    paths: &[PathBuf],
+) -> (Result<(el::ast::Spec, pl::ast::Spec), Error>, Vec<Report>) {
+    // Retain source definitions before starting prose conversion
+    let spec_el = match parse_files(paths) {
+        // Keep the source representation for document fragments
+        Ok(spec_el) => spec_el,
+        // Stop before prose conversion can accumulate warnings
+        Err(error) => return (Err(error), Vec::new()),
+    };
+
+    // Preserve prose warnings even when conversion fails
+    let (result, warnings) = prosify_with_warnings(paths);
+    let result = result.map(|spec_pl| (spec_el, spec_pl));
     (result, warnings)
 }

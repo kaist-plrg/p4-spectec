@@ -3,8 +3,9 @@
 //! `parse` reads source files into EL;
 //! `elab`, `algo`, `structure`, and `prosify` transform them through `pass`.
 //! `specdoc` renders specifications and expands skeleton documents.
-//! `runner` executes AL, SL, or PL against P4 programs;
-//! `sim_plugin` provides native architectures for STF execution.
+//! `runner_spec_with_warnings` prepares AL, SL, or PL for execution;
+//! `run` evaluates a P4 program,
+//! and `build_simulator` prepares native STF execution.
 //! Callers render returned diagnostics and accumulated warnings.
 
 // == Shared foundations
@@ -33,6 +34,16 @@ pub mod stf;
 
 pub use frontend::parse::parse_files as parse;
 pub use pass::{
-    Error, algo, algo_with_warnings, elab, elab_with_warnings, prosify, prosify_with_warnings,
-    structure, structure_with_warnings,
+    Error, SpecLang, algo, algo_with_warnings, elab, elab_with_warnings, prosify,
+    prosify_with_warnings, runner_spec_with_warnings, specdoc_spec_with_warnings, structure,
+    structure_with_warnings,
 };
+
+// == Document generation APIs
+
+pub use specdoc::splicer::splice_files_with_warnings;
+
+// == Execution APIs
+
+pub use runner::{RunError, run};
+pub use sim_plugin::{SimError, Simulator, build as build_simulator};

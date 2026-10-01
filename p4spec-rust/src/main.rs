@@ -14,13 +14,7 @@ use p4spec_rust::lang::{data::value::external::Encoding, traits::print::Print};
 
 use p4spec_rust::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 
-use p4spec_rust::runner::{self, BuiltinInterface, Interpreter, Runner};
-
-use p4spec_rust::interface::p4::parse::parse_file;
-
-use p4spec_rust::sim_plugin::{self, dummy::Dummy};
-
-use p4spec_rust::specdoc::splicer;
+use p4spec_rust::runner::{self, RunError};
 
 // = Helpers
 
@@ -37,6 +31,12 @@ fn render_report_with_config(report: &Report, config: RenderConfig) {
     if let Err(error) = renderer.render_to_stderr(report) {
         eprintln!("{report}\ndiagnostic rendering failed: {error}");
     }
+}
+
+/// Renders execution frames compactly while retaining rich causes.
+fn render_execution_report(report: &Report) {
+    let config = RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
+    render_report_with_config(report, config);
 }
 
 // = Specification loading
@@ -175,11 +175,10 @@ fn splice_command(args: SpliceArgs) -> Result<(), ()> {
             .collect()
     };
     // Retain source definitions alongside the annotated prose representation
-    let spec_el = p4spec_rust::parse(&args.paths).map_err(|report| render_report(&report))?;
-    let spec_pl = report_warnings(p4spec_rust::prosify_with_warnings(&args.paths))
+    let (spec_el, spec_pl) = report_warnings(p4spec_rust::specdoc_spec_with_warnings(&args.paths))
         .map_err(|report| render_report(&report))?;
     // Render accumulated splice warnings before propagating the file result
-    report_warnings(splicer::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
+    report_warnings(p4spec_rust::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
         .map_err(|report| render_report(&report))?;
     Ok(())
 }
@@ -201,18 +200,15 @@ struct InterpreterArgs {
     pl: bool,
 }
 
-/// Converts the specifications up to the selected interpreter's language.
-fn interp_spec(
-    paths: &[PathBuf],
-    interpreter: &InterpreterArgs,
-) -> Result<runner::Spec, Box<Report>> {
-    // Each pipeline stops at the language selected by the command
-    if interpreter.al {
-        report_warnings(p4spec_rust::algo_with_warnings(paths)).map(runner::Spec::Al)
-    } else if interpreter.sl {
-        report_warnings(p4spec_rust::structure_with_warnings(paths, true)).map(runner::Spec::Sl)
-    } else {
-        report_warnings(p4spec_rust::prosify_with_warnings(paths)).map(runner::Spec::Pl)
+impl InterpreterArgs {
+    fn spec_lang(&self) -> p4spec_rust::SpecLang {
+        if self.al {
+            p4spec_rust::SpecLang::Al
+        } else if self.sl {
+            p4spec_rust::SpecLang::Sl
+        } else {
+            p4spec_rust::SpecLang::Pl
+        }
     }
 }
 
@@ -244,49 +240,35 @@ struct RunArgs {
     guard: bool,
 }
 
-/// Builds the selected interpreter and runs the program entry relation.
+/// Prepares and runs a program, rendering diagnostics at the CLI boundary.
 fn run_command(args: RunArgs) -> Result<(), ()> {
-    // Convert the specification before assembling its runner
-    let spec =
-        interp_spec(&args.paths, &args.interpreter).map_err(|report| render_report(&report))?;
-    let config = runner::Config::new(!args.no_cache, args.det, args.guard);
-    // Each runner uses the same P4 frontend and dummy extern implementation
-    match spec {
-        runner::Spec::Al(spec) => {
-            let runner =
-                runner::build_al(spec, config, Dummy).map_err(|report| render_report(&report))?;
-            run_program(runner, &args)
-        }
-        runner::Spec::Sl(spec) => {
-            let runner =
-                runner::build_sl(spec, config, Dummy).map_err(|report| render_report(&report))?;
-            run_program(runner, &args)
-        }
-        runner::Spec::Pl(spec) => {
-            let runner =
-                runner::build_pl(spec, config, Dummy).map_err(|report| render_report(&report))?;
-            run_program(runner, &args)
-        }
-    }
-}
+    // Render specification warnings before constructing the runner
+    let spec = report_warnings(p4spec_rust::runner_spec_with_warnings(
+        args.interpreter.spec_lang(),
+        &args.paths,
+    ))
+    .map_err(|report| render_report(&report))?;
 
-/// Parses the P4 program and evaluates the entry relation.
-fn run_program<Interp>(
-    mut runner: Runner<Interp, BuiltinInterface, Dummy>,
-    args: &RunArgs,
-) -> Result<(), ()>
-where
-    Interp: Interpreter<BuiltinInterface, Dummy>,
-{
-    let program = parse_file(runner.arena_mut(), &args.includes, &args.program)
-        .map_err(|error| render_report(&error.into_report()))?;
-    runner
-        .eval_program(&args.relation, program)
-        .map_err(|failure| {
-            let config =
-                RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
-            render_report_with_config(&failure.into_report(), config);
-        })?;
+    // Execute with the requested interpreter controls
+    let config = runner::Config::new(!args.no_cache, args.det, args.guard);
+    p4spec_rust::run(spec, config, &args.relation, &args.includes, &args.program).map_err(
+        |error| match error {
+            RunError::Build(report) => {
+                // Render runner preparation with the default presentation
+                render_report(&report);
+            }
+            RunError::Parse(error) => {
+                // Keep P4 input failures rich
+                render_report(&error.into_report());
+            }
+            RunError::Eval(error) => {
+                // Compact only the execution frames
+                render_execution_report(&error.into_report());
+            }
+        },
+    )?;
+
+    // Print success only after evaluation completes
     println!("passed");
     Ok(())
 }
@@ -327,27 +309,28 @@ struct SimArgs {
     guard: bool,
 }
 
-/// Builds the target simulator and runs the STF test.
+/// Prepares a simulator and runs its STF test with CLI progress output.
 fn sim_command(args: SimArgs) -> Result<(), ()> {
-    let spec =
-        interp_spec(&args.paths, &args.interpreter).map_err(|report| render_report(&report))?;
-    let config = runner::Config::new(!args.no_cache, args.det, args.guard);
-    let simulator = sim_plugin::build(spec, &args.arch, config, args.plugin_encoding)
-        .map_err(|report| render_report(&report))?;
-    simulate(simulator, &args)
-}
+    // Render specification warnings before constructing the simulator
+    let spec = report_warnings(p4spec_rust::runner_spec_with_warnings(
+        args.interpreter.spec_lang(),
+        &args.paths,
+    ))
+    .map_err(|report| render_report(&report))?;
 
-/// Runs the STF test on the simulator, printing each transmitted packet.
-fn simulate(mut simulator: sim_plugin::Simulator, args: &SimArgs) -> Result<(), ()> {
-    let result = simulator.run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
-        println!("[PASS] Transmitted {tx}");
-    });
-    result.map_err(|report| {
-        // Input causes stay rich; only execution frames use compact rendering
-        let config =
-            RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
-        render_report_with_config(&report, config);
-    })?;
+    // Build the requested native architecture
+    let config = runner::Config::new(!args.no_cache, args.det, args.guard);
+    let mut simulator =
+        p4spec_rust::build_simulator(spec, &args.arch, config, args.plugin_encoding)
+            .map_err(|report| render_report(&report))?;
+
+    // Print matched packets as execution proceeds
+    simulator
+        .run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
+            println!("[PASS] Transmitted {tx}");
+        })
+        .map_err(|report| render_execution_report(&report))?;
+
     println!("passed");
     Ok(())
 }
