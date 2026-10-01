@@ -7,13 +7,12 @@ use p4spec_rust::lang::traits::print::Print;
 
 use crate::{
     Error, Result, snapshot,
-    suite::{self, Registry, Stage},
+    suite::{self, Snapshot},
 };
 
 /// Checks registered algo snapshots.
-pub fn run(registry: &Registry) -> Result<()> {
+pub fn run(snapshots: &[Snapshot]) -> Result<()> {
     let start = Instant::now();
-    let snapshots = registry.snapshots(Stage::Algo);
     if snapshots.is_empty() {
         return Err(Error::Invalid("no algo snapshots registered".into()));
     }

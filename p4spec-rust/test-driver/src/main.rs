@@ -15,7 +15,7 @@ use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Parser, Subcommand};
 
-use suite::{Language, Registry};
+use suite::{Config, Language};
 
 #[derive(Debug, thiserror::Error)]
 enum Error {
@@ -132,24 +132,15 @@ fn execute(mut cli: Cli) -> Result<()> {
         .join("../..")
         .canonicalize()?;
     std::env::set_current_dir(&root)?;
-    let registry = Registry::load(&path_registry)?;
+    let config = Config::load(&path_registry)?;
     match command {
-        Command::List => {
-            registry.list();
-            Ok(())
-        }
+        Command::List => config.list(),
         Command::Diagnostics { suite, path_cli } => {
-            let suites: Vec<_> = registry
-                .suites
+            let groups = diagnostic::load(&config.suites.diagnostics)?;
+            let suites: Vec<_> = groups
                 .iter()
-                .filter_map(|entry| match entry {
-                    suite::Suite::Negative { stage, cases, .. }
-                        if suite.is_none_or(|selected| selected == *stage) =>
-                    {
-                        Some((*stage, cases))
-                    }
-                    _ => None,
-                })
+                .filter(|group| suite.is_none_or(|selected| selected == group.stage))
+                .map(|group| (group.stage, &group.cases))
                 .collect();
             if suites.is_empty() {
                 return Err(Error::Invalid("no diagnostic suites selected".into()));
@@ -168,18 +159,32 @@ fn execute(mut cli: Cli) -> Result<()> {
             }
             Ok(())
         }
-        Command::P4parse => p4parse::run(&registry),
-        Command::Elab => elab::run(&registry),
-        Command::Algo => algo::run(&registry),
-        Command::Structure => structure::run(&registry),
-        Command::Prose => prose::run(&registry),
-        Command::Adoc { path_output } => adoc::run(&registry, path_output.as_deref()),
-        Command::RunAl { det } => run::run(&registry, Language::Al, *det),
-        Command::RunSl { det } => run::run(&registry, Language::Sl, *det),
-        Command::RunPl { det } => run::run(&registry, Language::Pl, *det),
-        Command::SimAl { det } => sim::run(&registry, Language::Al, *det),
-        Command::SimSl { det } => sim::run(&registry, Language::Sl, *det),
-        Command::SimPl { det } => sim::run(&registry, Language::Pl, *det),
+        Command::P4parse => p4parse::run(&config, &suite::load_parsing(&config.suites.p4parse)?),
+        Command::Elab => elab::run(&suite::load_snapshots(&config.suites.elab)?),
+        Command::Algo => algo::run(&suite::load_snapshots(&config.suites.algo)?),
+        Command::Structure => structure::run(&suite::load_structure(&config.suites.structure)?),
+        Command::Prose => prose::run(&suite::load_snapshots(&config.suites.prose)?),
+        Command::Adoc { path_output } => {
+            adoc::run(&suite::load_adoc(&config.suites.adoc)?, path_output.as_deref())
+        }
+        Command::RunAl { det } => {
+            run::run(&config, &suite::load_execution(&config.suites.run)?, Language::Al, *det)
+        }
+        Command::RunSl { det } => {
+            run::run(&config, &suite::load_execution(&config.suites.run)?, Language::Sl, *det)
+        }
+        Command::RunPl { det } => {
+            run::run(&config, &suite::load_execution(&config.suites.run)?, Language::Pl, *det)
+        }
+        Command::SimAl { det } => {
+            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, Language::Al, *det)
+        }
+        Command::SimSl { det } => {
+            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, Language::Sl, *det)
+        }
+        Command::SimPl { det } => {
+            sim::run(&config, &suite::load_simulation(&config.suites.sim)?, Language::Pl, *det)
+        }
     }
 }
 

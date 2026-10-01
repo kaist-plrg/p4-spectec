@@ -7,13 +7,12 @@ use p4spec_rust::lang::traits::print::Print;
 
 use crate::{
     Error, Result, snapshot,
-    suite::{self, Registry, Stage},
+    suite::{self, Snapshot},
 };
 
 /// Checks registered prose snapshots.
-pub fn run(registry: &Registry) -> Result<()> {
+pub fn run(snapshots: &[Snapshot]) -> Result<()> {
     let start = Instant::now();
-    let snapshots = registry.snapshots(Stage::Prose);
     if snapshots.is_empty() {
         return Err(Error::Invalid("no prose snapshots registered".into()));
     }

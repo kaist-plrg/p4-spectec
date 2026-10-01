@@ -1,9 +1,9 @@
-//! File registration for the driver's acceptance suites
+//! Typed registration files for individual acceptance runners
 //!
-//! `Registry::load` reads module registrations listed in the root index.
-//! It validates source and expectation paths before execution.
-//! Corpus paths are relative to the repository; diagnostic inputs and all
-//! expectations are relative to the driver. Typed kinds select existing runners.
+//! `Config::load` resolves module filenames from the root index.
+//! Each module loader reads its own registration type and validates its paths.
+//! Corpus paths are relative to the repository;
+//! diagnostic inputs and expectations are relative to the driver.
 
 use std::{
     collections::BTreeSet,
@@ -35,28 +35,32 @@ impl Language {
     }
 }
 
-/// Selects the output compared by a full specification snapshot.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "kebab-case")]
-pub enum Stage {
-    Elab,
-    Algo,
-    Structure,
-    Prose,
-    AdocEl,
-    AdocPl,
-}
-
-/// Registers one transformation or document snapshot.
+/// Registers a transformation snapshot owned by its module.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
     pub name: String,
-    pub stage: Stage,
+    pub inputs: Vec<PathBuf>,
+    pub expected: PathBuf,
+}
+
+/// Registers a structured snapshot with its rule-group setting.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StructureSnapshot {
+    pub name: String,
     pub inputs: Vec<PathBuf>,
     pub expected: PathBuf,
     #[serde(default)]
     pub without_rule_groups: bool,
+}
+
+/// Groups EL and PL document snapshots by their rendering entry points.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdocSuite {
+    pub el: Vec<Snapshot>,
+    pub pl: Vec<StructureSnapshot>,
 }
 
 /// Registers P4 parsing and roundtrip inputs.
@@ -92,53 +96,34 @@ pub struct SimSuite {
     pub languages: Vec<Language>,
 }
 
-/// Distinguishes registration data consumed by each runner.
-#[derive(Debug, Deserialize)]
-#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
-pub enum Suite {
-    Snapshot(Snapshot),
-    P4parse(ParseSuite),
-    Run(RunSuite),
-    Sim(SimSuite),
-    Negative { name: String, stage: diagnostic::Suite, cases: Vec<diagnostic::Case> },
-}
-
-impl Suite {
-    /// Returns the unique registration identifier.
-    pub fn name(&self) -> &str {
-        match self {
-            Self::Snapshot(suite) => &suite.name,
-            Self::P4parse(suite) => &suite.name,
-            Self::Run(suite) => &suite.name,
-            Self::Sim(suite) => &suite.name,
-            Self::Negative { name, .. } => name,
-        }
-    }
-}
-
-/// Lists shared configuration and module files relative to the root index.
+/// Names each runner's registration file without storing its tests.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Registration {
-    spec: Vec<PathBuf>,
-    includes: Vec<PathBuf>,
-    excludes_static: Vec<PathBuf>,
-    excludes_dynamic: Vec<PathBuf>,
-    suites: Vec<PathBuf>,
+pub struct Modules {
+    pub elab: PathBuf,
+    pub algo: PathBuf,
+    pub structure: PathBuf,
+    pub prose: PathBuf,
+    pub adoc: PathBuf,
+    pub p4parse: PathBuf,
+    pub run: PathBuf,
+    pub sim: PathBuf,
+    pub diagnostics: Vec<PathBuf>,
 }
 
-/// Owns the shared corpus configuration and loaded suite registrations.
-#[derive(Debug)]
-pub struct Registry {
+/// Supplies shared corpus settings and module registration filenames.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Config {
     pub spec: Vec<PathBuf>,
     pub includes: Vec<PathBuf>,
     pub excludes_static: Vec<PathBuf>,
     pub excludes_dynamic: Vec<PathBuf>,
-    pub suites: Vec<Suite>,
+    pub suites: Modules,
 }
 
 /// Reads typed JSON with its file path attached to errors.
-fn read_registration<T: DeserializeOwned>(path: &Path) -> Result<T> {
+pub fn load<T: DeserializeOwned>(path: &Path) -> Result<T> {
     let text = fs::read_to_string(path)
         .map_err(|error| Error::Invalid(format!("{}: {error}", path.display())))?;
     serde_json::from_str(&text)
@@ -196,238 +181,174 @@ fn languages_valid(languages: &[Language]) -> Result<()> {
     Ok(())
 }
 
-impl Registry {
-    /// Loads module registrations and validates their sources and expectations.
-    pub fn load(path: &Path) -> Result<Self> {
-        let registration: Registration = read_registration(path)?;
-        let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
-        let mut suites = Vec::new();
-        // Resolve module files from the index without changing input namespaces
-        for path_module in &registration.suites {
-            let suites_module: Vec<Suite> = read_registration(&path_parent.join(path_module))?;
-            suites.extend(suites_module);
+/// Rejects empty or duplicate names within a module's registrations.
+fn names_valid<'a>(names: impl IntoIterator<Item = &'a str>) -> Result<()> {
+    let mut names_seen = BTreeSet::new();
+    // Check names in registration order before any execution
+    for name in names {
+        if name.is_empty() || !names_seen.insert(name) {
+            return Err(Error::Invalid(format!("empty or duplicate registration {name}")));
         }
-        // Validate the complete registration after preserving module order
-        let registry = Self {
-            spec: registration.spec,
-            includes: registration.includes,
-            excludes_static: registration.excludes_static,
-            excludes_dynamic: registration.excludes_dynamic,
-            suites,
-        };
-        registry.validate()?;
-        Ok(registry)
     }
+    if names_seen.is_empty() {
+        return Err(Error::Invalid("no tests registered".into()));
+    }
+    Ok(())
+}
 
-    /// Rejects duplicate registrations and unavailable acceptance inputs.
-    fn validate(&self) -> Result<()> {
-        paths_exist(&self.spec, "specification")?;
-        directories_exist(&self.includes, "include directories")?;
-        for path in self.excludes_static.iter().chain(&self.excludes_dynamic) {
+/// Loads source snapshots directly for elab, algo, or prose.
+pub fn load_snapshots(path: &Path) -> Result<Vec<Snapshot>> {
+    let snapshots: Vec<Snapshot> = load(path)?;
+    names_valid(snapshots.iter().map(|snapshot| snapshot.name.as_str()))?;
+    // Validate only the selected module's sources and expectations
+    for snapshot in &snapshots {
+        paths_exist(&snapshot.inputs, &snapshot.name)?;
+        expectation_exists(&snapshot.expected)?;
+    }
+    Ok(snapshots)
+}
+
+/// Loads structured snapshots with module-owned rule-group options.
+pub fn load_structure(path: &Path) -> Result<Vec<StructureSnapshot>> {
+    let snapshots: Vec<StructureSnapshot> = load(path)?;
+    names_valid(snapshots.iter().map(|snapshot| snapshot.name.as_str()))?;
+    // Validate source snapshots before structural conversion
+    for snapshot in &snapshots {
+        paths_exist(&snapshot.inputs, &snapshot.name)?;
+        expectation_exists(&snapshot.expected)?;
+    }
+    Ok(snapshots)
+}
+
+/// Loads EL and PL document registrations without a stage selector.
+pub fn load_adoc(path: &Path) -> Result<AdocSuite> {
+    let suites: AdocSuite = load(path)?;
+    names_valid(
+        suites
+            .el
+            .iter()
+            .map(|snapshot| snapshot.name.as_str())
+            .chain(suites.pl.iter().map(|snapshot| snapshot.name.as_str())),
+    )?;
+    // Both document modes require complete source and expectation pairs
+    for (name, inputs, expected) in suites
+        .el
+        .iter()
+        .map(|snapshot| (&snapshot.name, &snapshot.inputs, &snapshot.expected))
+        .chain(
+            suites
+                .pl
+                .iter()
+                .map(|snapshot| (&snapshot.name, &snapshot.inputs, &snapshot.expected)),
+        )
+    {
+        paths_exist(inputs, name)?;
+        expectation_exists(expected)?;
+    }
+    Ok(suites)
+}
+
+/// Loads P4 parsing corpora for the parser runner.
+pub fn load_parsing(path: &Path) -> Result<Vec<ParseSuite>> {
+    let suites: Vec<ParseSuite> = load(path)?;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    // Parsing discovers files only within the registered directories
+    for suite in &suites {
+        directories_exist(&suite.roots, &suite.name)?;
+        expectation_exists(&suite.expected)?;
+    }
+    Ok(suites)
+}
+
+/// Loads execution corpora for the selected run command.
+pub fn load_execution(path: &Path) -> Result<Vec<RunSuite>> {
+    let suites: Vec<RunSuite> = load(path)?;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    // Entry relations and interpreter selections belong to each corpus
+    for suite in &suites {
+        directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
+        languages_valid(&suite.languages)?;
+        if suite.relation.is_empty() {
+            return Err(Error::Invalid(format!("{}: empty entry relation", suite.name)));
+        }
+        expectation_exists(&suite.expected)?;
+    }
+    Ok(suites)
+}
+
+/// Loads simulation corpora with explicit P4/STF pairing.
+pub fn load_simulation(path: &Path) -> Result<Vec<SimSuite>> {
+    let suites: Vec<SimSuite> = load(path)?;
+    names_valid(suites.iter().map(|suite| suite.name.as_str()))?;
+    // Validate simulation inputs and optional patches before discovery
+    for suite in &suites {
+        directories_exist(&[suite.p4.clone(), suite.stf.clone()], &suite.name)?;
+        if let Some(path) = &suite.patches {
+            directories_exist(std::slice::from_ref(path), &suite.name)?;
+        }
+        languages_valid(&suite.languages)?;
+        if !matches!(suite.arch.as_str(), "v1model" | "ebpf" | "psa") {
+            return Err(Error::Invalid(format!(
+                "{}: unknown architecture {}",
+                suite.name, suite.arch
+            )));
+        }
+        expectation_exists(&suite.expected)?;
+    }
+    Ok(suites)
+}
+
+impl Config {
+    /// Reads shared settings and resolves module paths relative to the index.
+    pub fn load(path: &Path) -> Result<Self> {
+        let mut config: Self = load(path)?;
+        let path_parent = path.parent().unwrap_or_else(|| Path::new("."));
+        // Preserve repository-relative corpus and driver-relative expected paths
+        paths_exist(&config.spec, "specification")?;
+        directories_exist(&config.includes, "include directories")?;
+        for path in config
+            .excludes_static
+            .iter()
+            .chain(&config.excludes_dynamic)
+        {
             directories_exist(std::slice::from_ref(path), "exclusions")?;
         }
-        if self.suites.is_empty() {
-            return Err(Error::Invalid("no suites registered".into()));
+        // Resolve filenames without loading unrelated modules
+        let modules = &mut config.suites;
+        for path in [
+            &mut modules.elab,
+            &mut modules.algo,
+            &mut modules.structure,
+            &mut modules.prose,
+            &mut modules.adoc,
+            &mut modules.p4parse,
+            &mut modules.run,
+            &mut modules.sim,
+        ]
+        .into_iter()
+        .chain(modules.diagnostics.iter_mut())
+        {
+            *path = path_parent.join(&*path);
         }
-        let mut names = BTreeSet::new();
-        for suite in &self.suites {
-            if suite.name().is_empty() || !names.insert(suite.name()) {
-                return Err(Error::Invalid(format!("empty or duplicate suite {}", suite.name())));
-            }
-            match suite {
-                // Transformation sources must exist before snapshot execution
-                Suite::Snapshot(suite) => {
-                    paths_exist(&suite.inputs, &suite.name)?;
-                    if suite.without_rule_groups
-                        && !matches!(suite.stage, Stage::Structure | Stage::AdocPl)
-                    {
-                        return Err(Error::Invalid(format!(
-                            "{}: rule-group mode is unavailable for this stage",
-                            suite.name
-                        )));
-                    }
-                    expectation_exists(&suite.expected)?;
-                }
-                // Parsing suites discover only their registered corpus roots
-                Suite::P4parse(suite) => {
-                    directories_exist(&suite.roots, &suite.name)?;
-                    expectation_exists(&suite.expected)?;
-                }
-                // Execution requires a relation and at least one interpreter
-                Suite::Run(suite) => {
-                    directories_exist(std::slice::from_ref(&suite.root), &suite.name)?;
-                    languages_valid(&suite.languages)?;
-                    if suite.relation.is_empty() {
-                        return Err(Error::Invalid(format!(
-                            "{}: empty entry relation",
-                            suite.name
-                        )));
-                    }
-                    expectation_exists(&suite.expected)?;
-                }
-                // Simulation retains explicit architecture and corpus pairing
-                Suite::Sim(suite) => {
-                    directories_exist(&[suite.p4.clone(), suite.stf.clone()], &suite.name)?;
-                    if let Some(path) = &suite.patches {
-                        directories_exist(std::slice::from_ref(path), &suite.name)?;
-                    }
-                    languages_valid(&suite.languages)?;
-                    if !matches!(suite.arch.as_str(), "v1model" | "ebpf" | "psa") {
-                        return Err(Error::Invalid(format!(
-                            "{}: unknown architecture {}",
-                            suite.name, suite.arch
-                        )));
-                    }
-                    expectation_exists(&suite.expected)?;
-                }
-                // Every negative has an explicit input and its own expectation
-                Suite::Negative { name, stage, cases } => {
-                    if cases.is_empty() {
-                        return Err(Error::Invalid(format!("{name}: no negative cases")));
-                    }
-                    let mut names_case = BTreeSet::new();
-                    for case in cases {
-                        // Argument files own all CLI arguments and source paths
-                        if case.uses_cli() && (!case.inputs.is_empty() || !case.args.is_empty()) {
-                            return Err(Error::Invalid(format!(
-                                "{name}: {} arguments and inputs belong in the .args file",
-                                case.name
-                            )));
-                        }
-                        // Command and run stages consume exact CLI argument files
-                        if matches!(stage, diagnostic::Suite::Command | diagnostic::Suite::Run)
-                            && !case.uses_cli()
-                        {
-                            return Err(Error::Invalid(format!(
-                                "{name}: {} requires an .args input",
-                                case.name
-                            )));
-                        }
-                        if case.name.is_empty() || !names_case.insert(&case.name) {
-                            return Err(Error::Invalid(format!(
-                                "{name}: empty or duplicate case {}",
-                                case.name
-                            )));
-                        }
-                        if !expected_path(&case.input).is_file() {
-                            return Err(Error::Invalid(format!(
-                                "{name}: missing input {}",
-                                case.input.display()
-                            )));
-                        }
-                        for path in &case.inputs {
-                            paths_exist(&[expected_path(path)], name)?;
-                        }
-                        expectation_exists(&case.expected)?;
-                    }
-                }
-            }
-        }
-        Ok(())
+        Ok(config)
     }
 
-    /// Selects the registered snapshots for a transformation stage.
-    pub fn snapshots(&self, stage: Stage) -> Vec<&Snapshot> {
-        self.suites
-            .iter()
-            .filter_map(|suite| match suite {
-                Suite::Snapshot(suite) if suite.stage == stage => Some(suite),
-                _ => None,
-            })
-            .collect()
-    }
-
-    /// Selects P4 parsing suites in registration order.
-    pub fn parsing(&self) -> Vec<&ParseSuite> {
-        self.suites
-            .iter()
-            .filter_map(|suite| match suite {
-                Suite::P4parse(suite) => Some(suite),
-                _ => None,
-            })
-            .collect()
-    }
-
-    /// Selects execution corpora supporting the requested interpreter.
-    pub fn execution(&self, lang: Language) -> Vec<&RunSuite> {
-        self.suites
-            .iter()
-            .filter_map(|suite| match suite {
-                Suite::Run(suite) if suite.languages.contains(&lang) => Some(suite),
-                _ => None,
-            })
-            .collect()
-    }
-
-    /// Selects simulation corpora supporting the requested interpreter.
-    pub fn simulation(&self, lang: Language) -> Vec<&SimSuite> {
-        self.suites
-            .iter()
-            .filter_map(|suite| match suite {
-                Suite::Sim(suite) if suite.languages.contains(&lang) => Some(suite),
-                _ => None,
-            })
-            .collect()
-    }
-
-    /// Prints every suite's sources and expectations without executing it.
-    pub fn list(&self) {
+    /// Prints typed module registrations without executing their tests.
+    pub fn list(&self) -> Result<()> {
         println!("specification: {:?}", self.spec);
         println!("includes: {:?}", self.includes);
         println!("static exclusions: {:?}", self.excludes_static);
         println!("dynamic exclusions: {:?}", self.excludes_dynamic);
-        for suite in &self.suites {
-            println!("{}", suite.name());
-            match suite {
-                Suite::Snapshot(suite) => println!(
-                    "  snapshot {:?}: {:?} -> {}",
-                    suite.stage,
-                    suite.inputs,
-                    suite.expected.display()
-                ),
-                Suite::P4parse(suite) => {
-                    println!("  p4parse {:?} -> {}", suite.roots, suite.expected.display())
-                }
-                Suite::Run(suite) => println!(
-                    "  run {:?} {} {} -> {}",
-                    suite.languages,
-                    suite.root.display(),
-                    suite.relation,
-                    suite.expected.display()
-                ),
-                Suite::Sim(suite) => println!(
-                    "  sim {:?} {} {} / {} patches={:?} -> {}",
-                    suite.languages,
-                    suite.arch,
-                    suite.p4.display(),
-                    suite.stf.display(),
-                    suite.patches,
-                    suite.expected.display()
-                ),
-                Suite::Negative { stage, cases, .. } => {
-                    println!("  {}: {} cases", stage.name(), cases.len());
-                    for case in cases {
-                        println!(
-                            "    {}: {} -> {}",
-                            case.name,
-                            case.input.display(),
-                            case.expected.display()
-                        );
-                        if !case.inputs.is_empty() {
-                            println!("      inputs: {:?}", case.inputs);
-                        }
-                        if !case.args.is_empty() {
-                            println!("      args: {:?}", case.args);
-                        }
-                        if let Some(code) = &case.code {
-                            println!("      diagnostic: {code}");
-                        }
-                        if case.allow_success {
-                            println!("      allows success: reference control");
-                        }
-                    }
-                }
-            }
-        }
+        // Validate and display each module through its normal loader
+        println!("elab: {:#?}", load_snapshots(&self.suites.elab)?);
+        println!("algo: {:#?}", load_snapshots(&self.suites.algo)?);
+        println!("structure: {:#?}", load_structure(&self.suites.structure)?);
+        println!("prose: {:#?}", load_snapshots(&self.suites.prose)?);
+        println!("adoc: {:#?}", load_adoc(&self.suites.adoc)?);
+        println!("p4parse: {:#?}", load_parsing(&self.suites.p4parse)?);
+        println!("run: {:#?}", load_execution(&self.suites.run)?);
+        println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
+        println!("diagnostics: {:#?}", diagnostic::load(&self.suites.diagnostics)?);
+        Ok(())
     }
 }

@@ -7,13 +7,12 @@ use p4spec_rust::lang::traits::print::Print;
 
 use crate::{
     Error, Result, snapshot,
-    suite::{self, Registry, Stage},
+    suite::{self, StructureSnapshot},
 };
 
 /// Checks registered structured specification snapshots.
-pub fn run(registry: &Registry) -> Result<()> {
+pub fn run(snapshots: &[StructureSnapshot]) -> Result<()> {
     let start = Instant::now();
-    let snapshots = registry.snapshots(Stage::Structure);
     if snapshots.is_empty() {
         return Err(Error::Invalid("no structure snapshots registered".into()));
     }

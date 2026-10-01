@@ -1,6 +1,7 @@
 //! Registered negative diagnostic acceptance
 //!
-//! The JSON registry supplies every source, auxiliary input, and expectation.
+//! Module registrations supply source fixtures and expectations.
+//! CLI argument files contain their complete invocation and input paths.
 //! Reports render from a stable fixture directory before full-text comparison.
 //! Each stage rejects failures from preceding passes as setup errors.
 
@@ -16,7 +17,10 @@ mod splice;
 mod structure;
 mod syntax;
 
-use std::path::{Path, PathBuf};
+use std::{
+    collections::BTreeSet,
+    path::{Path, PathBuf},
+};
 
 use clap::ValueEnum;
 use expect_test::expect_file;
@@ -82,6 +86,70 @@ pub struct Case {
     pub inputs: Vec<PathBuf>,
     #[serde(default)]
     pub args: Vec<String>,
+}
+
+/// Registers diagnostics separately from transformation and corpus tests.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Group {
+    pub name: String,
+    pub stage: Suite,
+    pub cases: Vec<Case>,
+}
+
+/// Loads diagnostic modules and validates their source/expectation pairs.
+pub fn load(paths: &[PathBuf]) -> Result<Vec<Group>> {
+    let mut groups = Vec::new();
+    let mut names = BTreeSet::new();
+    // Preserve module and case order within diagnostic acceptance
+    for path in paths {
+        let groups_module: Vec<Group> = crate::suite::load(path)?;
+        for group in groups_module {
+            if group.name.is_empty() || !names.insert(group.name.clone()) {
+                return Err(failure(&group.name, "empty or duplicate diagnostic group"));
+            }
+            if group.cases.is_empty() {
+                return Err(failure(&group.name, "no negative cases"));
+            }
+            let mut names_case = BTreeSet::new();
+            // Validate every registered pair before running any diagnostic
+            for case in &group.cases {
+                if case.name.is_empty() || !names_case.insert(&case.name) {
+                    return Err(failure(&group.name, "empty or duplicate case"));
+                }
+                if case.uses_cli() && (!case.inputs.is_empty() || !case.args.is_empty()) {
+                    return Err(failure(
+                        &case.name,
+                        "arguments and inputs belong in the .args file",
+                    ));
+                }
+                if matches!(group.stage, Suite::Command | Suite::Run) && !case.uses_cli() {
+                    return Err(failure(&case.name, "requires an .args input"));
+                }
+                for path in [&case.input, &case.expected] {
+                    if !crate::suite::expected_path(path).is_file() {
+                        return Err(failure(
+                            &case.name,
+                            format!("missing file {}", path.display()),
+                        ));
+                    }
+                }
+                for path in &case.inputs {
+                    if !crate::suite::expected_path(path).exists() {
+                        return Err(failure(
+                            &case.name,
+                            format!("missing input {}", path.display()),
+                        ));
+                    }
+                }
+            }
+            groups.push(group);
+        }
+    }
+    if groups.is_empty() {
+        return Err(failure("diagnostics", "no groups registered"));
+    }
+    Ok(groups)
 }
 
 impl Case {
@@ -151,7 +219,7 @@ pub fn run_registered(stage: Suite, cases: &[Case], path_cli: Option<&Path>) -> 
             }
             text
         };
-        // Every comparison uses the explicit registry expectation
+        // Every comparison uses the explicit registered expectation
         let path = path_manifest.join(&case.expected);
         expect_file![path].assert_eq(&text);
         progress.inc(1);

@@ -18,7 +18,7 @@ use p4spec_rust::interface::p4::{
 use crate::{
     Error, Result,
     corpus::{self, Outcome, Results},
-    suite::{self, Registry},
+    suite::{self, Config, ParseSuite},
 };
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
@@ -59,10 +59,10 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
 }
 
 /// Checks registered P4 parsing corpora against their expected outcomes.
-pub fn run(registry: &Registry) -> Result<()> {
+pub fn run(config: &Config, registrations: &[ParseSuite]) -> Result<()> {
     let start = Instant::now();
     let mut suites = Vec::new();
-    for suite in registry.parsing() {
+    for suite in registrations {
         let path_expected = suite::expected_path(&suite.expected);
         let mut paths = Vec::new();
         for path in &suite.roots {
@@ -76,9 +76,9 @@ pub fn run(registry: &Registry) -> Result<()> {
     let collected: usize = suites.iter().map(|(paths, _)| paths.len()).sum();
     eprintln!("P4 parser: collected={collected}, excluded=0; preparing print hints");
     let spec_al =
-        p4spec_rust::algo(&registry.spec).map_err(|error| Error::Invalid(error.to_string()))?;
+        p4spec_rust::algo(&config.spec).map_err(|error| Error::Invalid(error.to_string()))?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
-    let includes = &registry.includes;
+    let includes = &config.includes;
     for path in includes {
         fs::read_dir(path)?;
     }

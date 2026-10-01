@@ -16,7 +16,7 @@ use p4spec_rust::sim_plugin::{self, io::Tx};
 
 use crate::{
     Error, Result, corpus,
-    suite::{self, Language, Registry, SimSuite},
+    suite::{self, Config as SuiteConfig, Language, SimSuite},
 };
 
 struct Input {
@@ -152,22 +152,28 @@ impl Results {
 }
 
 /// Runs registered simulation suites with the selected interpreter.
-pub fn run(registry: &Registry, language: Language, det: bool) -> Result<()> {
-    run_with(registry, language, det, || match language {
-        Language::Al => p4spec_rust::algo(&registry.spec)
+pub fn run(
+    config: &SuiteConfig,
+    registrations: &[SimSuite],
+    language: Language,
+    det: bool,
+) -> Result<()> {
+    run_with(config, registrations, language, det, || match language {
+        Language::Al => p4spec_rust::algo(&config.spec)
             .map(Spec::Al)
             .map_err(|error| Error::Invalid(error.to_string())),
-        Language::Sl => p4spec_rust::structure(&registry.spec, true)
+        Language::Sl => p4spec_rust::structure(&config.spec, true)
             .map(Spec::Sl)
             .map_err(|error| Error::Invalid(error.to_string())),
-        Language::Pl => p4spec_rust::prosify(&registry.spec)
+        Language::Pl => p4spec_rust::prosify(&config.spec)
             .map(Spec::Pl)
             .map_err(|error| Error::Invalid(error.to_string())),
     })
 }
 
 fn run_with<BuildSpec>(
-    registry: &Registry,
+    config: &SuiteConfig,
+    registrations: &[SimSuite],
     language: Language,
     det: bool,
     build_spec: BuildSpec,
@@ -177,16 +183,16 @@ where
 {
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
-    for path in registry
+    for path in config
         .excludes_static
         .iter()
-        .chain(&registry.excludes_dynamic)
+        .chain(&config.excludes_dynamic)
     {
         excludes.extend(corpus::collect_excludes(path)?);
     }
-    let suites = registry
-        .simulation(language)
-        .into_iter()
+    let suites = registrations
+        .iter()
+        .filter(|suite| suite.languages.contains(&language))
         .map(|suite| Ok((suite, suite.collect()?)))
         .collect::<Result<Vec<_>>>()?;
     if suites.is_empty() {
@@ -204,7 +210,7 @@ where
     eprintln!(
         "Simulation cache=on det={det}: collected={collected} excluded={excluded}; preparing specification"
     );
-    let includes = &registry.includes;
+    let includes = &config.includes;
     let progress = ProgressBar::new(collected as u64).with_style(
         ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
             .map_err(|error| Error::Invalid(error.to_string()))?,

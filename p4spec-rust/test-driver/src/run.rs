@@ -12,7 +12,7 @@ use p4spec_rust::sim_plugin::dummy::Dummy;
 use crate::{
     Error, Result,
     corpus::{self, Outcome, Results},
-    suite::{self, Language, Registry},
+    suite::{self, Config as SuiteConfig, Language, RunSuite},
 };
 
 struct CollectedSuite {
@@ -22,11 +22,16 @@ struct CollectedSuite {
 }
 
 /// Runs registered execution suites with the selected interpreter.
-pub fn run(registry: &Registry, language: Language, det: bool) -> Result<()> {
+pub fn run(
+    config: &SuiteConfig,
+    registrations: &[RunSuite],
+    language: Language,
+    det: bool,
+) -> Result<()> {
     // Collect registered corpus roots in suite order
-    let suites = registry
-        .execution(language)
-        .into_iter()
+    let suites = registrations
+        .iter()
+        .filter(|suite| suite.languages.contains(&language))
         .map(|suite| {
             let path_expected = suite::expected_path(&suite.expected);
             Ok(CollectedSuite {
@@ -40,20 +45,20 @@ pub fn run(registry: &Registry, language: Language, det: bool) -> Result<()> {
         return Err(Error::Invalid(format!("no {} execution suites registered", language.name())));
     }
     match language {
-        Language::Al => run_with(registry, &format!("AL cache=on det={det}"), suites, || {
-            let spec_al = p4spec_rust::algo(&registry.spec)
+        Language::Al => run_with(config, &format!("AL cache=on det={det}"), suites, || {
+            let spec_al = p4spec_rust::algo(&config.spec)
                 .map_err(|error| Error::Invalid(error.to_string()))?;
             runner::build_al(spec_al, Config::new(true, det, false), Dummy)
                 .map_err(|error| Error::Invalid(error.to_string()))
         }),
-        Language::Sl => run_with(registry, &format!("SL cache=on det={det}"), suites, || {
-            let spec_sl = p4spec_rust::structure(&registry.spec, true)
+        Language::Sl => run_with(config, &format!("SL cache=on det={det}"), suites, || {
+            let spec_sl = p4spec_rust::structure(&config.spec, true)
                 .map_err(|error| Error::Invalid(error.to_string()))?;
             runner::build_sl(spec_sl, Config::new(true, det, false), Dummy)
                 .map_err(|error| Error::Invalid(error.to_string()))
         }),
-        Language::Pl => run_with(registry, &format!("PL cache=on det={det}"), suites, || {
-            let spec_pl = p4spec_rust::prosify(&registry.spec)
+        Language::Pl => run_with(config, &format!("PL cache=on det={det}"), suites, || {
+            let spec_pl = p4spec_rust::prosify(&config.spec)
                 .map_err(|error| Error::Invalid(error.to_string()))?;
             runner::build_pl(spec_pl, Config::new(true, det, false), Dummy)
                 .map_err(|error| Error::Invalid(error.to_string()))
@@ -62,7 +67,7 @@ pub fn run(registry: &Registry, language: Language, det: bool) -> Result<()> {
 }
 
 fn run_with<Interp, Build>(
-    registry: &Registry,
+    config: &SuiteConfig,
     text_mode: &str,
     mut suites: Vec<CollectedSuite>,
     build_runner: Build,
@@ -73,7 +78,7 @@ where
 {
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
-    for path in &registry.excludes_static {
+    for path in &config.excludes_static {
         excludes.extend(corpus::collect_excludes(path)?);
     }
     let collected: usize = suites.iter().map(|suite| suite.paths.len()).sum();
@@ -87,7 +92,7 @@ where
         collected - excluded
     );
     let mut runner = build_runner()?;
-    let includes = &registry.includes;
+    let includes = &config.includes;
     for path in includes {
         fs::read_dir(path)?;
     }

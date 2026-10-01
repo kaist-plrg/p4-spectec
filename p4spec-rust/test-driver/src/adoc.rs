@@ -18,14 +18,14 @@ use p4spec_rust::specdoc::adoc;
 
 use crate::{
     Error, Result, snapshot,
-    suite::{self, Registry, Stage},
+    suite::{self, AdocSuite},
 };
 
 /// Checks full-specification snapshots and optionally exports AsciiDoc documents.
-pub fn run(registry: &Registry, path_output: Option<&Path>) -> Result<()> {
+pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
     let start = Instant::now();
-    let snapshots_el = registry.snapshots(Stage::AdocEl);
-    let snapshots_pl = registry.snapshots(Stage::AdocPl);
+    let snapshots_el = &suites.el;
+    let snapshots_pl = &suites.pl;
     if snapshots_el.is_empty() && snapshots_pl.is_empty() {
         return Err(Error::Invalid("no AsciiDoc snapshots registered".into()));
     }
