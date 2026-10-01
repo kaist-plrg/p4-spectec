@@ -287,6 +287,13 @@ impl Registry {
                     }
                     let mut names_case = BTreeSet::new();
                     for case in cases {
+                        // Argument files own all CLI arguments and source paths
+                        if case.uses_cli() && (!case.inputs.is_empty() || !case.args.is_empty()) {
+                            return Err(Error::Invalid(format!(
+                                "{name}: {} arguments and inputs belong in the .args file",
+                                case.name
+                            )));
+                        }
                         // Command and run stages consume exact CLI argument files
                         if matches!(stage, diagnostic::Suite::Command | diagnostic::Suite::Run)
                             && !case.uses_cli()
