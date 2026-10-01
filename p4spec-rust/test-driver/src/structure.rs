@@ -19,7 +19,7 @@ pub fn run() -> Result<()> {
         [(true, "without-rule-groups"), (false, "with-rule-groups")]
     {
         progress.set_message(format!("structure: {text_mode}"));
-        let spec_sl = p4spec_rust::structure(["spec"], without_rule_groups)
+        let spec_sl = p4spec_rust::structure(&["spec".into()], without_rule_groups)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         num_defs = spec_sl.len();
         let text_actual = Print::to_string(&spec_sl) + "\n";

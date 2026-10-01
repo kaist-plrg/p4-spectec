@@ -132,20 +132,22 @@ pub fn run(name: &str) -> Result<Vec<Report>> {
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
     match stage {
         "al" => {
-            let spec_al = p4spec_rust::algo([path]).map_err(|error| failure(name, error))?;
+            let spec_al =
+                p4spec_rust::algo(&[path.into()]).map_err(|error| failure(name, error))?;
             let runner = runner::build_al(spec_al, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)
         }
         "sl" => {
-            let spec_sl =
-                p4spec_rust::structure([path], true).map_err(|error| failure(name, error))?;
+            let spec_sl = p4spec_rust::structure(&[path.into()], true)
+                .map_err(|error| failure(name, error))?;
             let runner = runner::build_sl(spec_sl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)
         }
         "pl" => {
-            let spec_pl = p4spec_rust::prosify([path]).map_err(|error| failure(name, error))?;
+            let spec_pl =
+                p4spec_rust::prosify(&[path.into()]).map_err(|error| failure(name, error))?;
             let runner = runner::build_pl(spec_pl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
             reject(name, runner, kind, code)

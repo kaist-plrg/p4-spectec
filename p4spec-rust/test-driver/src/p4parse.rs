@@ -75,7 +75,7 @@ pub fn run() -> Result<()> {
     }
     let collected: usize = suites.iter().map(|(paths, _)| paths.len()).sum();
     eprintln!("P4 parser: collected={collected}, excluded=0; preparing print hints");
-    let spec_al = p4spec_rust::algo(["spec"]).map_err(|error| Error::Invalid(error.to_string()))?;
+    let spec_al = p4spec_rust::algo(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
     let includes = vec![PathBuf::from("p4c/p4include")];
     fs::read_dir(&includes[0])?;

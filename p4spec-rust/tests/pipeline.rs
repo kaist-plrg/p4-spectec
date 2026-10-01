@@ -42,7 +42,7 @@ fn transformations_preserve_input_order() {
 #[test]
 fn pipeline_errors_preserve_the_failing_stage_and_location() {
     let path = fixture("frontend/negative/malformed-token.watsup");
-    let report = p4spec_rust::prosify([&path]).unwrap_err();
+    let report = p4spec_rust::prosify(std::slice::from_ref(&path)).unwrap_err();
     let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected diagnostic cause") };
     assert_eq!(diagnostic.code.as_deref(), Some("parse/character-invalid"));
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
@@ -51,7 +51,7 @@ fn pipeline_errors_preserve_the_failing_stage_and_location() {
     assert_eq!(diagnostic.labels[0].span.right.column, 1);
 
     let path = fixture("elaboration/operator_not_defined.watsup");
-    let report = p4spec_rust::prosify([&path]).unwrap_err();
+    let report = p4spec_rust::prosify(std::slice::from_ref(&path)).unwrap_err();
     let mut reports = vec![report.as_ref()];
     let mut located = false;
     while let Some(report) = reports.pop() {
@@ -68,7 +68,7 @@ fn pipeline_errors_preserve_the_failing_stage_and_location() {
     assert!(located, "elaboration must retain original spans");
 
     let path = fixture("algorithmic/impure_else_premises.watsup");
-    let report = p4spec_rust::prosify([&path]).unwrap_err();
+    let report = p4spec_rust::prosify(std::slice::from_ref(&path)).unwrap_err();
     let ReportKind::Cause(diagnostic) = &report.kind else { panic!("expected diagnostic cause") };
     assert_eq!(diagnostic.code.as_deref(), Some("algo/otherwise-condition-invalid"));
     assert_eq!(diagnostic.labels[0].span.left.file.as_ref(), path.to_str().unwrap());
@@ -127,10 +127,10 @@ fn transformations_keep_committed_warnings_on_elaboration_failure() {
         .join(format!("p4spec-pipeline-warning-elab-error-{}.watsup", std::process::id()));
     std::fs::write(&path, "relation R: nat |- nat\ndef $missing = 0\n").unwrap();
     let outputs = [
-        print_spec(p4spec_rust::elab_with_warnings([&path])),
-        print_spec(p4spec_rust::algo_with_warnings([&path])),
-        print_spec(p4spec_rust::structure_with_warnings([&path], true)),
-        print_spec(p4spec_rust::prosify_with_warnings([&path])),
+        print_spec(p4spec_rust::elab_with_warnings(std::slice::from_ref(&path))),
+        print_spec(p4spec_rust::algo_with_warnings(std::slice::from_ref(&path))),
+        print_spec(p4spec_rust::structure_with_warnings(std::slice::from_ref(&path), true)),
+        print_spec(p4spec_rust::prosify_with_warnings(std::slice::from_ref(&path))),
     ];
     std::fs::remove_file(path).unwrap();
     for (result, warnings) in outputs {

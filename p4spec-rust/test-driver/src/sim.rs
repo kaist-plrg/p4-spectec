@@ -208,7 +208,7 @@ impl Results {
 
 pub fn run(det: bool) -> Result<()> {
     run_with(det, || {
-        p4spec_rust::algo(["spec"])
+        p4spec_rust::algo(&["spec".into()])
             .map(Spec::Al)
             .map_err(|error| Error::Invalid(error.to_string()))
     })
@@ -216,7 +216,7 @@ pub fn run(det: bool) -> Result<()> {
 
 pub fn run_sl(det: bool) -> Result<()> {
     run_with(det, || {
-        p4spec_rust::structure(["spec"], true)
+        p4spec_rust::structure(&["spec".into()], true)
             .map(Spec::Sl)
             .map_err(|error| Error::Invalid(error.to_string()))
     })
@@ -224,7 +224,7 @@ pub fn run_sl(det: bool) -> Result<()> {
 
 pub fn run_pl(det: bool) -> Result<()> {
     run_with(det, || {
-        p4spec_rust::prosify(["spec"])
+        p4spec_rust::prosify(&["spec".into()])
             .map(Spec::Pl)
             .map_err(|error| Error::Invalid(error.to_string()))
     })

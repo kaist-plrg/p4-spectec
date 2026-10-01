@@ -18,7 +18,7 @@ use super::failure;
 pub fn run(name: &str) -> Result<Vec<Report>> {
     let path = format!("specdoc/{name}.watsup");
     // Earlier diagnostics reject the fixture before backend acceptance
-    let (result, reports) = prosify_with_warnings([path.as_str()]);
+    let (result, reports) = prosify_with_warnings(&[path.as_str().into()]);
     let spec_pl = result.map_err(|report| {
         failure(name, format!("conversion failed before AsciiDoc rendering: {report}"))
     })?;

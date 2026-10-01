@@ -53,7 +53,7 @@ pub fn run() -> Result<()> {
     .collect::<Result<Vec<_>>>()?;
     run_with("AL cache=on det=false", suites, || {
         let spec_al =
-            p4spec_rust::algo(["spec"]).map_err(|error| Error::Invalid(error.to_string()))?;
+            p4spec_rust::algo(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
         runner::build_al(spec_al, Config::new(true, false, false), Dummy)
             .map_err(|error| Error::Invalid(error.to_string()))
     })
@@ -69,7 +69,7 @@ pub fn run_sl(det: bool) -> Result<()> {
     .into_iter()
     .collect::<Result<Vec<_>>>()?;
     run_with(&format!("SL cache=on det={det}"), suites, || {
-        let spec_sl = p4spec_rust::structure(["spec"], true)
+        let spec_sl = p4spec_rust::structure(&["spec".into()], true)
             .map_err(|error| Error::Invalid(error.to_string()))?;
         runner::build_sl(spec_sl, Config::new(true, det, false), Dummy)
             .map_err(|error| Error::Invalid(error.to_string()))
@@ -86,7 +86,7 @@ pub fn run_pl(det: bool) -> Result<()> {
     .collect::<Result<Vec<_>>>()?;
     run_with(&format!("PL cache=on det={det}"), suites, || {
         let spec_pl =
-            p4spec_rust::prosify(["spec"]).map_err(|error| Error::Invalid(error.to_string()))?;
+            p4spec_rust::prosify(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
         runner::build_pl(spec_pl, Config::new(true, det, false), Dummy)
             .map_err(|error| Error::Invalid(error.to_string()))
     })

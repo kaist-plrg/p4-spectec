@@ -31,7 +31,7 @@ fn check(case: &str, kind: FailureKind, code: &str) -> Result<Vec<Report>> {
         .join(case)
         .with_extension("watsup");
     // Keep the same configuration used by the harness acceptance tests
-    let spec_al = p4spec_rust::algo([path]).unwrap();
+    let spec_al = p4spec_rust::algo(&[path]).unwrap();
     let runner = runner::build_al(spec_al, Config::new(true, false, false), NullExtern).unwrap();
     reject(case, runner, kind, code)
 }
