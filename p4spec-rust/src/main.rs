@@ -20,11 +20,6 @@ use p4spec_rust::runner::{self, RunError};
 
 // - Diagnostic output
 
-/// Renders a report with the default diagnostic presentation.
-fn render_report(report: &Report) {
-    render_report_with_config(report, RenderConfig::default());
-}
-
 /// Renders reports without changing their structured payloads.
 fn render_report_with_config(report: &Report, config: RenderConfig) {
     let mut renderer = Renderer::new(config);
@@ -33,8 +28,13 @@ fn render_report_with_config(report: &Report, config: RenderConfig) {
     }
 }
 
+/// Renders a report with the default diagnostic presentation.
+fn render_report(report: &Report) {
+    render_report_with_config(report, RenderConfig::default());
+}
+
 /// Renders execution frames compactly while retaining rich causes.
-fn render_execution_report(report: &Report) {
+fn render_exec_report(report: &Report) {
     let config = RenderConfig { frame_style: Some(DisplayStyle::Short), ..RenderConfig::default() };
     render_report_with_config(report, config);
 }
@@ -188,7 +188,7 @@ fn splice_command(args: SpliceArgs) -> Result<(), ()> {
 #[derive(Args)]
 #[group(multiple = false)]
 /// Selects which language the run and sim commands execute.
-struct InterpreterArgs {
+struct InterpArgs {
     /// Execute the algorithmic representation.
     #[arg(long)]
     al: bool,
@@ -200,7 +200,7 @@ struct InterpreterArgs {
     pl: bool,
 }
 
-impl InterpreterArgs {
+impl InterpArgs {
     fn spec_lang(&self) -> p4spec_rust::SpecLang {
         if self.al {
             p4spec_rust::SpecLang::Al
@@ -216,7 +216,7 @@ impl InterpreterArgs {
 /// Arguments of the `run` command.
 struct RunArgs {
     #[command(flatten)]
-    interpreter: InterpreterArgs,
+    interpreter: InterpArgs,
     /// Specification files in processing order.
     #[arg(required = true, value_name = "PATH")]
     paths: Vec<PathBuf>,
@@ -263,7 +263,7 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
             }
             RunError::Eval(error) => {
                 // Compact only the execution frames
-                render_execution_report(&error.into_report());
+                render_exec_report(&error.into_report());
             }
         },
     )?;
@@ -279,7 +279,7 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
 /// Arguments of the `sim` command.
 struct SimArgs {
     #[command(flatten)]
-    interpreter: InterpreterArgs,
+    interpreter: InterpArgs,
     /// Specification files in processing order.
     #[arg(required = true, value_name = "PATH")]
     paths: Vec<PathBuf>,
@@ -329,7 +329,7 @@ fn sim_command(args: SimArgs) -> Result<(), ()> {
         .run_stf_test(&args.includes, &args.program, &args.stf, |tx| {
             println!("[PASS] Transmitted {tx}");
         })
-        .map_err(|report| render_execution_report(&report))?;
+        .map_err(|report| render_exec_report(&report))?;
 
     println!("passed");
     Ok(())
