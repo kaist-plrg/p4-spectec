@@ -29,8 +29,6 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
     if snapshots_el.is_empty() && snapshots_pl.is_empty() {
         return Err(Error::Invalid("no AsciiDoc snapshots registered".into()));
     }
-    let mut num_bytes_el = 0;
-    let mut num_bytes_pl = 0;
     // Render each registered source snapshot with its own input files
     for snapshot in snapshots_el {
         let spec_el =
@@ -40,7 +38,6 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
             .map(adoc::el::render_def)
             .collect::<Vec<_>>()
             .join("\n\n");
-        num_bytes_el += text_el.len();
         if let Some(path_output) = path_output {
             fs::create_dir_all(path_output)?;
             fs::write(path_output.join("el.adoc"), &text_el)?;
@@ -74,7 +71,6 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
                 "AsciiDoc arm anchors changed on repeated rendering".into(),
             ));
         }
-        num_bytes_pl += text_pl.len();
         // Save raw fragments for comparison and Asciidoctor validation
         if let Some(path_output) = path_output {
             fs::create_dir_all(path_output)?;
@@ -84,7 +80,7 @@ pub fn run(suites: &AdocSuite, path_output: Option<&Path>) -> Result<()> {
         snapshot::check(expect_file![path_expected], &text_pl);
     }
     eprintln!(
-        "adoc: specification snapshots checked, EL={num_bytes_el} bytes, PL={num_bytes_pl} bytes, elapsed={:.3}s",
+        "adoc: specification snapshots checked, elapsed={:.3}s",
         start.elapsed().as_secs_f64(),
     );
     Ok(())
