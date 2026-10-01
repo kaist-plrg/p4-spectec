@@ -1,7 +1,7 @@
 /* C shim between Racket's ffi2 and the OCaml implementation.
  *
  *   common/0.3-extern-ffi.rkt  --ffi2-->  shim.c  --caml_callback-->
- *   p4spec/bin/kffi.ml
+ *   p4spec/bin/ffi.ml
  *
  * Every call must come from the OS thread that ran the first host_init. */
 
@@ -36,7 +36,7 @@ static int init_runner(const char* spec) {
 }
 
 /* Starts the runtime on the first call, then (re)builds the runner for spec.
-   Returns 1, 0 if ml_init raised, or -1 if kffi.ml's callbacks are missing. */
+   Returns 1, 0 if ml_init raised, or -1 if ffi.ml's callbacks are missing. */
 int64_t host_init(const char* spec) {
   if (ml_init == NULL || ml_eval == NULL) {
     static char* argv[] = { "racket", NULL };

@@ -129,9 +129,9 @@ Complete AL and P4 inputs are trees of constructor applications and tokens in
 the same envelope. The emitter is implemented in
 [`kast.ml`](p4spec/lib/interface/spectec/ali/kast.ml).
 
-[`kffi.ml`](p4spec/bin/kffi.ml) is an additional OCaml object target used by the
-K interpreter. It initializes the SpecTec runner and dispatches builtin and
-external calls made during K evaluation.
+[`ffi.ml`](p4spec/bin/ffi.ml) is an additional OCaml object target used by the
+K interpreter and the Redex port. It initializes the SpecTec runner and
+dispatches builtin and external calls made during evaluation.
 
 ## K–OCaml wire
 
@@ -140,12 +140,12 @@ that both evaluators use the same host-side behavior. Calls cross the boundary
 as JSON requests and responses:
 
 ```text
-K rules -> JSON codec -> C shim -> kffi.ml -> SpecTec runner
+K rules -> JSON codec -> C shim -> ffi.ml -> SpecTec runner
 ```
 
 The K side is implemented by
 [`al/4.1-extern-json.k`](spec-meta-k/al/4.1-extern-json.k) and
 [`al/4.2-extern-ffi.k`](spec-meta-k/al/4.2-extern-ffi.k). The thin C bridge is
 [`ffi/shim.c`](spec-meta-k/ffi/shim.c), which starts the embedded OCaml runtime
-and forwards requests to callbacks registered by `kffi.ml`. `make k-spec`
+and forwards requests to callbacks registered by `ffi.ml`. `make k-spec`
 builds and links these pieces into the K interpreter.

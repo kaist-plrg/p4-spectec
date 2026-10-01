@@ -2,7 +2,7 @@
 ;; Transport for the extern wire: Racket -> C shim -> OCaml, over ffi2.
 ;;
 ;;   host-eval  --ffi2-->  spec-meta-redex/ffi/shim.c  --caml_callback-->
-;;   p4spec/bin/kffi.ml
+;;   p4spec/bin/ffi.ml
 ;;
 ;; The OCaml runtime lives in this process, and only this place may call it.
 ;; `make redex-ffi` builds the shim.
@@ -35,7 +35,7 @@
   (case ((car (force shim)) spec)
     [(1) (set! current-spec spec)]
     [(0) (error 'host-eval "the host cannot build a runner for ~a" spec)]
-    [else (error 'host-eval "kffi.ml's callbacks are missing from the host")]))
+    [else (error 'host-eval "ffi.ml's callbacks are missing from the host")]))
 
 ;; JSON request text -> JSON reply text, under the runner for host-spec
 (define (host-eval request)

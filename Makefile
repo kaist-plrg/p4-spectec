@@ -137,7 +137,7 @@ promote:
 KDEFDIR = al-kompiled
 KSPECDIR = spec-meta-k
 
-KFFI_OBJ = _build/default/p4spec/bin/kffi.exe.o
+KFFI_OBJ = _build/default/p4spec/bin/ffi.exe.o
 KSHIM_SRC = $(KSPECDIR)/ffi/shim.c
 KSHIM_OBJ = $(KSPECDIR)/ffi/shim.o
 OCAMLWHERE = $(shell opam exec --switch=5.1.0 -- ocamlopt -where)
@@ -153,7 +153,7 @@ k-spec: boot $(KFFI_OBJ) $(KSHIM_OBJ)
 
 .PHONY: $(KFFI_OBJ)
 $(KFFI_OBJ):
-	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/kffi.exe.o && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/ffi.exe.o && echo
 
 $(KSHIM_OBJ): $(KSHIM_SRC)
 	gcc -c -fPIC -O2 -I "$(OCAMLWHERE)" -o $@ $<
@@ -169,7 +169,7 @@ k-test: k-spec
 
 RSPECDIR = spec-meta-redex
 
-RFFI_SO = _build/default/p4spec/bin/kffi.so
+RFFI_SO = _build/default/p4spec/bin/ffi.so
 RSHIM_SRC = $(RSPECDIR)/ffi/shim.c
 RSHIM_SO = $(RSPECDIR)/ffi/shim.so
 
@@ -178,12 +178,12 @@ redex-ffi: $(RFFI_SO) $(RSHIM_SO)
 
 .PHONY: $(RFFI_SO)
 $(RFFI_SO):
-	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/kffi.so && echo
+	cd p4spec && opam exec --switch=5.1.0 -- dune build bin/ffi.so && echo
 
-# shim.so finds kffi.so through its run path, relative to its own location.
+# shim.so finds ffi.so through its run path, relative to its own location.
 $(RSHIM_SO): $(RSHIM_SRC) | $(RFFI_SO)
 	gcc -shared -fPIC -O2 -Wall -I "$(OCAMLWHERE)" -o $@ $< \
-	  -L$(dir $(RFFI_SO)) -l:kffi.so '-Wl,-rpath,$$ORIGIN/../../$(dir $(RFFI_SO))'
+	  -L$(dir $(RFFI_SO)) -l:ffi.so '-Wl,-rpath,$$ORIGIN/../../$(dir $(RFFI_SO))'
 
 # Cleanup
 

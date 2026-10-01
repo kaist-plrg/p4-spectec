@@ -580,7 +580,7 @@ spec-meta-redex/
     6-entry.rkt           Entry: load, then run $main() or a relation; the command-line driver
   test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, machine.rkt, ...
   ffi/
-    shim.c                C shim between 0.3-extern-ffi.rkt and p4spec/bin/kffi.ml
+    shim.c                C shim between 0.3-extern-ffi.rkt and p4spec/bin/ffi.ml
 ```
 
 `common/0.0-prelude.rkt` defines `define-dec`, which wraps
@@ -641,12 +641,12 @@ three evaluators share host behavior:
 ```text
 reduction rule -> common/4-relation.rkt -> common/0.2-extern-json.rkt
   -> common/0.3-extern-ffi.rkt --ffi2--> spec-meta-redex/ffi/shim.c
-  --caml_callback--> p4spec/bin/kffi.ml -> SpecTec runner
+  --caml_callback--> p4spec/bin/ffi.ml -> SpecTec runner
 ```
 
-The OCaml side is the K port's [`kffi.ml`](p4spec/bin/kffi.ml), with the
+The OCaml side is [`ffi.ml`](p4spec/bin/ffi.ml), shared with the K port, with the
 same JSON requests and replies. K links the OCaml runtime, `p4spec/`,
-`kffi.ml`, and its C shim, [`spec-meta-k/ffi/shim.c`](spec-meta-k/ffi/shim.c),
+`ffi.ml`, and its C shim, [`spec-meta-k/ffi/shim.c`](spec-meta-k/ffi/shim.c),
 into its interpreter. Redex has a C shim of its own,
 `spec-meta-redex/ffi/shim.c`, and loads it and the OCaml side into the Racket
 process as shared objects. K's shim and its build stay as they are. Redex
@@ -660,24 +660,24 @@ dune's link command plus `-runtime-variant _pic`, and a toy dune project
 checked the stanza:
 
 - **Building.** There are two shared objects:
-  - `_build/default/p4spec/bin/kffi.so` holds the OCaml runtime, `p4spec/`,
-    and `kffi.ml`. Dune builds it once the `kffi` executable's modes are
+  - `_build/default/p4spec/bin/ffi.so` holds the OCaml runtime, `p4spec/`,
+    and `ffi.ml`. Dune builds it once the `ffi` executable's modes are
     `object shared_object`. Dune links the `shared_object` mode with
     `-runtime-variant _pic`, and the `object` mode as before, so K's
-    `kffi.exe.o` does not change. `kffi.exe.o` itself cannot go into a shared
+    `ffi.exe.o` does not change. `ffi.exe.o` itself cannot go into a shared
     object: it embeds the non-PIC `libasmrun.a`, and `gcc -shared` rejects a
     `R_X86_64_TPOFF32` relocation against `domain_self`. The link reuses the
     compiled libraries and takes under a second.
   - `spec-meta-redex/ffi/shim.so` is the Redex shim, compiled against
-    `kffi.so` with `-l:kffi.so` and the run path
+    `ffi.so` with `-l:ffi.so` and the run path
     `$ORIGIN/../../_build/default/p4spec/bin`. Racket loads only `shim.so`,
-    and the dynamic loader finds `kffi.so` from the shim's own location,
+    and the dynamic loader finds `ffi.so` from the shim's own location,
     whatever the working directory.
 - **The shim.** It provides two functions:
   - `host_init(spec)` starts the OCaml runtime on its first call. It then
-    builds the runner for `spec` through `kffi.ml`'s `ml_init`, called with
+    builds the runner for `spec` through `ffi.ml`'s `ml_init`, called with
     `caml_callback_exn`. It returns 1, 0 if `ml_init` raised (for example, on
-    a spec path that does not exist), and -1 if `kffi.ml`'s callbacks are
+    a spec path that does not exist), and -1 if `ffi.ml`'s callbacks are
     missing. The transport raises a Racket error on anything but 1, and the
     process survives.
   - `host_eval(request)` returns the reply in a buffer that the shim owns and
@@ -722,7 +722,7 @@ checked the stanza:
   after the runtime is up.
 
 Unlike K's interpreter, which embeds a snapshot of `p4spec/` when it is
-kompiled, Redex loads `kffi.so` at run time. After editing `p4spec/`,
+kompiled, Redex loads `ffi.so` at run time. After editing `p4spec/`,
 `make redex-ffi` is enough, with no `raco make`.
 
 Every object-level builtin goes to the host, including the map builtins
@@ -831,7 +831,7 @@ racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
 
 ### The OCaml host
 
-From Step 12 on, builtins and externs need `kffi.so` and `shim.so`:
+From Step 12 on, builtins and externs need `ffi.so` and `shim.so`:
 
 ```sh
 make redex-ffi    # after editing p4spec/ or the shim; no raco make needed
@@ -872,7 +872,7 @@ for d in examples spec spec-meta p4c spectec-boot _build; do ln -s "$PWD/$d" "$C
    raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test)
 ```
 
-The copied `shim.so` finds `kffi.so` through `_build`, relative to itself.
+The copied `shim.so` finds `ffi.so` through `_build`, relative to itself.
 A separate `PLTCOMPILEDROOTS` would recompile Redex and its dependencies too,
 in memory for every test file, which takes more than 10 minutes for the suite.
 `test/prelude.rkt` fails if the loaded code was compiled with the other
@@ -1644,15 +1644,15 @@ Outcome:
 
 - Build the host as two shared objects (see
   [Builtins and externs](#builtins-and-externs)):
-  - In `p4spec/bin/dune`, the `kffi` executable's modes become
+  - In `p4spec/bin/dune`, the `ffi` executable's modes become
     `object shared_object`.
   - `spec-meta-redex/ffi/shim.c`: the Redex shim, with `host_init` and
     `host_eval`.
-  - `make redex-ffi` runs `dune build bin/kffi.so`, as `$(KFFI_OBJ)` does for
-    `bin/kffi.exe.o`. It then compiles `shim.c` into
-    `spec-meta-redex/ffi/shim.so` against `kffi.so`. `make clean` removes
+  - `make redex-ffi` runs `dune build bin/ffi.so`, as `$(KFFI_OBJ)` does for
+    `bin/ffi.exe.o`. It then compiles `shim.c` into
+    `spec-meta-redex/ffi/shim.so` against `ffi.so`. `make clean` removes
     `shim.so`, and `spec-meta-redex/.gitignore` gets `ffi/*.so`.
-  - K's shim, its Makefile rules, and `kffi.exe.o` stay unchanged.
+  - K's shim, its Makefile rules, and `ffi.exe.o` stay unchanged.
 - `common/0.2-extern-json.rkt`: a Racket codec for the wire format documented
   in `extern_json.ml` (`val`, `typ`, `mixop`, request, and response), built on
   Racket's `json` library. Step 11 added the encoding of `val`.
@@ -1697,9 +1697,9 @@ Outcome:
   | `builtin-nested` | 803 | 11 | 0.5 s | 1.6 s |
 
   `k-run.sh` takes 8 to 9 s on each.
-- `make redex-ffi` takes about 2 s once `p4spec/` is compiled. `kffi.exe.o`
+- `make redex-ffi` takes about 2 s once `p4spec/` is compiled. `ffi.exe.o`
   is byte for byte the same after the change to the modes, so K's build is
-  unaffected. `shim.so` is linked again only when `shim.c` changes: `kffi.so`
+  unaffected. `shim.so` is linked again only when `shim.c` changes: `ffi.so`
   is an order-only prerequisite, since the shim finds it when it is loaded.
 - The codec adds `jsexpr->val`, `typ->jsexpr`, `builtin-request`,
   `extern-func-request`, `extern-rel-request`, `response->valres`, and

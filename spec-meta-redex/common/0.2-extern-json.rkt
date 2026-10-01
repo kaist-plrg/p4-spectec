@@ -105,7 +105,7 @@
 ;; response ::= {"ok": val}         builtin and extern-func
 ;;            | {"ok": [val, ...]}  extern-rel
 ;;            | {"fail": null}
-;;            | {"error": <text>}   kffi.ml, on an OCaml exception
+;;            | {"error": <text>}   ffi.ml, on an OCaml exception
 
 ;; An object with key as its only field
 (define-match-expander only-field
