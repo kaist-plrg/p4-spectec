@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Steps 1 to 5 are done.
+Status: in progress. Steps 1 to 6 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -1101,6 +1101,58 @@ driver. Try them on a first slice of `Eval_exp` before writing the rest.
   `G` of `spec/`, and record it.
 
 Done when the slice's tests pass through the driver and the cross-check.
+
+Outcome:
+
+- Done. `test/eval-exp.rkt` (37 checks) and the `test` submodule of
+  `test/machine.rkt` (31) pass, with every step cross-checked against `->al`
+  and every configuration checked against `conf`. The whole suite runs 3,006
+  checks in 26 s, and 2,976 with contracts off, on a scratch copy.
+- `e` contains all of `exp`, plus the partly evaluated forms `(UN unop e)` and
+  `(TUP ((OK val) ... e exp ...))`. An `IN` can only be at a pending position,
+  so the grammar rejects `(TUP ((VAR "x") (IN L e)))`.
+- Redex rejects a nonterminal with no productions. So `Fr` is `Fr-pass` alone
+  until the first frame that catches `FAIL`.
+- The driver provides `step`, `run`, `run/trace` (which also returns the rule
+  names in order), and `final?`, with the parameters `cross-check?` and
+  `check-conf?`. A `machine` holds the frames, `->redex`, `->ctx`, and the
+  `->al` to cross-check against. `(frames-of lang)` matches
+  `(in-hole Fr any)` one level deep. The tests use these to build drivers with
+  an extra frame or rule; `al-machine` is the specification's.
+- A `->ctx` result must keep `G` (by `equal?`), as the closure rule requires
+  by repeating `G`. In `->al`, `(where (_ ... (e_1 G L_1) _ ...) ...)` gives
+  one successor per focus step, so two rules show up as two successors.
+- `make-coverage` is a macro. On a fragment relation, it counts the fragment's
+  rules when the union `->redex` applies them *(measured)*.
+  `apply-reduction-relation/tag-with-names` records coverage as well. The
+  cross-check runs with `relation-coverage` empty, so only the driver's
+  applications count.
+- Step time, with contracts on and the `G` of `spec/`, on a tuple nested
+  D deep with an `IN` at each level *(measured)*:
+
+  | Depth D | 10 | 50 | 200 |
+  | --- | --- | --- | --- |
+  | driver | 0.15 ms | 0.7 ms | 6.8 ms |
+  | driver, a 27,000-cons value in each tuple's evaluated prefix | 3.2 ms | 15 ms | 76 ms |
+  | cross-check on | 1.5 ms | 12 ms | |
+  | `conf` check on | 0.54 ms | 4.2 ms | |
+
+  An empty `G` gives the same driver times. The first rule that matches a
+  fresh `G` against `layer` takes 0.58 s, and later matches hit the memo.
+  If another layer takes `G`'s slot in the 63-entry memo, the next match pays
+  that again.
+- Step time grows faster than depth because of the nonterminal memo. Every step
+  matches `Fr` at each node on the path to the redex, and the memo's key is
+  the node. Nodes along a deep path look alike to the bounded hash, so they
+  collide, and each lookup costs a deep `equal?`.
+  - The driver checks `done` and `res` by their outer shape; `check-conf?`
+    checks them precisely. With the `done` nonterminal, depth 200 took
+    36 ms per step.
+  - Matching `Fr` with caching off avoids the collisions (1.7 ms per step at
+    depth 200). But it then rechecks every evaluated sibling on every step:
+    66 ms per step at depth 10 with the large value, against 3.2 ms with
+    caching on. So `Fr` stays cached.
+  - Step 13's "resume from the last hole" avoids matching the path again.
 
 ### Step 7: Assignment
 
