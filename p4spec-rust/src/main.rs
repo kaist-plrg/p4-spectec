@@ -186,13 +186,13 @@ fn splice_command(args: SpliceArgs) -> Result<(), ()> {
 // = Run command
 
 #[derive(Args)]
-#[group(required = true, multiple = false)]
+#[group(multiple = false)]
 /// Selects which language the run and sim commands execute.
 struct InterpreterArgs {
     /// Execute the algorithmic representation.
     #[arg(long)]
     al: bool,
-    /// Execute the structured representation.
+    /// Execute the structured representation (default).
     #[arg(long)]
     sl: bool,
     /// Execute the prose representation.
@@ -204,10 +204,10 @@ impl InterpreterArgs {
     fn spec_lang(&self) -> p4spec_rust::SpecLang {
         if self.al {
             p4spec_rust::SpecLang::Al
-        } else if self.sl {
-            p4spec_rust::SpecLang::Sl
-        } else {
+        } else if self.pl {
             p4spec_rust::SpecLang::Pl
+        } else {
+            p4spec_rust::SpecLang::Sl
         }
     }
 }
@@ -359,7 +359,7 @@ enum Command {
     Prose(ProseArgs),
     /// Expand skeleton documents using specification fragments.
     Splice(SpliceArgs),
-    /// Run a P4 program with the algorithmic interpreter.
+    /// Run a P4 program with the selected interpreter.
     Run(RunArgs),
     /// Simulate a P4 program and STF test on a target architecture.
     Sim(SimArgs),
