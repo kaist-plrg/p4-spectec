@@ -1,6 +1,6 @@
 use std::{
-    collections::BTreeMap,
-    fs,
+    collections::{BTreeMap, BTreeSet},
+    fs, io,
     path::{Path, PathBuf},
     time::Instant,
 };
@@ -14,62 +14,10 @@ use p4spec_rust::runner::{Config, Spec};
 
 use p4spec_rust::sim_plugin::{self, io::Tx};
 
-use crate::{Error, Result, corpus};
-
-struct Suite {
-    arch: &'static str,
-    name: &'static str,
-    dir_p4: &'static str,
-    dir_stf: &'static str,
-    dir_patch: Option<&'static str>,
-}
-
-// Suites mirror p4spec/test/sim/dune. The six shared OCaml SL outcomes and
-// ordered transmissions are byte-identical to the existing AL expectations
-const SUITES: [Suite; 6] = [
-    Suite {
-        arch: "v1model",
-        name: "v1model-p4c",
-        dir_p4: "p4c/testdata/p4_16_samples",
-        dir_stf: "p4c/testdata/p4_16_samples",
-        dir_patch: Some("patches/v1model"),
-    },
-    Suite {
-        arch: "v1model",
-        name: "v1model-p4testgen",
-        dir_p4: "p4c/testdata/p4_16_samples",
-        dir_stf: "testdata/p4testgen",
-        dir_patch: Some("patches/v1model"),
-    },
-    Suite {
-        arch: "v1model",
-        name: "v1model-custom",
-        dir_p4: "testdata/custom",
-        dir_stf: "testdata/custom",
-        dir_patch: Some("patches/v1model"),
-    },
-    Suite {
-        arch: "ebpf",
-        name: "ebpf-p4c",
-        dir_p4: "p4c/testdata/p4_16_samples",
-        dir_stf: "p4c/testdata/p4_16_samples",
-        dir_patch: None,
-    },
-    Suite {
-        arch: "ebpf",
-        name: "ebpf-p4testgen",
-        dir_p4: "p4c/testdata/p4_16_samples",
-        dir_stf: "testdata/p4testgen",
-        dir_patch: None,
-    },
-    Suite {
-        arch: "psa",
-        name: "psa-p4c",
-        dir_p4: "p4c/testdata/p4_16_samples",
-        dir_stf: "p4c/testdata/p4_16_samples",
-        dir_patch: None,
-    },
-];
+use crate::{
+    Error, ExecutionOptions, Result, corpus,
+    suite::{self, Language, SimConfig, SimSuite},
+};
 
 struct Input {
     dir: PathBuf,
@@ -77,8 +25,7 @@ struct Input {
     patched: bool,
 }
 
-fn collect(dir: &str, suffix: &str) -> Result<Vec<Input>> {
-    let dir = Path::new(dir);
+fn collect(dir: &Path, suffix: &str) -> Result<Vec<Input>> {
     corpus::collect(dir, suffix)?
         .into_iter()
         .map(|path| {
@@ -110,10 +57,10 @@ struct Pair {
     patched: bool,
 }
 
-impl Suite {
+impl SimSuite {
     fn collect(&self) -> Result<Vec<Pair>> {
-        let mut inputs_p4 = collect(self.dir_p4, ".p4")?;
-        let include = match self.arch {
+        let mut inputs_p4 = collect(&self.p4, ".p4")?;
+        let include = match self.arch.as_str() {
             "v1model" => "v1model.p4",
             "ebpf" => "ebpf_model.p4",
             "psa" => "bmv2/psa.p4",
@@ -130,8 +77,8 @@ impl Suite {
                 inputs_arch.push(input);
             }
         }
-        let mut inputs_stf = collect(self.dir_stf, ".stf")?;
-        if let Some(dir) = self.dir_patch {
+        let mut inputs_stf = collect(&self.stf, ".stf")?;
+        if let Some(dir) = &self.patches {
             patch(&mut inputs_arch, &collect(dir, ".p4")?);
             patch(&mut inputs_stf, &collect(dir, ".stf")?);
         }
@@ -162,11 +109,9 @@ struct Results {
 }
 
 impl Results {
-    fn new(name: &str) -> Self {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("expected/sim")
-            .join(format!("{name}.expected"));
-        Self { expected: expect_file![path], records: BTreeMap::new() }
+    fn new(path_expected: &Path) -> Self {
+        let path_expected = suite::expected_path(path_expected);
+        Self { expected: expect_file![path_expected], records: BTreeMap::new() }
     }
 
     fn record(&mut self, pair: &Pair, status: &str, txs: &[Tx]) -> Result<()> {
@@ -206,41 +151,46 @@ impl Results {
     }
 }
 
-pub fn run(det: bool) -> Result<()> {
-    run_with(det, || {
-        p4spec_rust::algo(&["spec".into()])
+/// Runs registered simulation suites with the selected interpreter.
+pub fn run(config: &SimConfig, language: Language, options: ExecutionOptions) -> Result<()> {
+    run_with(config, language, options, || match language {
+        Language::Al => p4spec_rust::algo(&config.spec)
             .map(Spec::Al)
-            .map_err(|error| Error::Invalid(error.to_string()))
-    })
-}
-
-pub fn run_sl(det: bool) -> Result<()> {
-    run_with(det, || {
-        p4spec_rust::structure(&["spec".into()], true)
+            .map_err(|error| Error::Invalid(error.to_string())),
+        Language::Sl => p4spec_rust::structure(&config.spec, true)
             .map(Spec::Sl)
-            .map_err(|error| Error::Invalid(error.to_string()))
-    })
-}
-
-pub fn run_pl(det: bool) -> Result<()> {
-    run_with(det, || {
-        p4spec_rust::prosify(&["spec".into()])
+            .map_err(|error| Error::Invalid(error.to_string())),
+        Language::Pl => p4spec_rust::prosify(&config.spec)
             .map(Spec::Pl)
-            .map_err(|error| Error::Invalid(error.to_string()))
+            .map_err(|error| Error::Invalid(error.to_string())),
     })
 }
 
-fn run_with<BuildSpec>(det: bool, build_spec: BuildSpec) -> Result<()>
+fn run_with<BuildSpec>(
+    config: &SimConfig,
+    language: Language,
+    options: ExecutionOptions,
+    build_spec: BuildSpec,
+) -> Result<()>
 where
     BuildSpec: Fn() -> Result<Spec>,
 {
+    let ExecutionOptions { cache_on, det } = options;
+    let text_cache = if cache_on { "on" } else { "off" };
     let start = Instant::now();
-    let mut excludes = corpus::collect_excludes(Path::new("excludes/static"))?;
-    excludes.extend(corpus::collect_excludes(Path::new("excludes/dynamic"))?);
-    let suites = SUITES
+    let mut excludes = BTreeSet::new();
+    for path in &config.excludes {
+        excludes.extend(corpus::collect_excludes(path)?);
+    }
+    let suites = config
+        .suites
         .iter()
+        .filter(|suite| suite.languages.contains(&language))
         .map(|suite| Ok((suite, suite.collect()?)))
         .collect::<Result<Vec<_>>>()?;
+    if suites.is_empty() {
+        return Err(Error::Invalid(format!("no {} simulation suites registered", language.name())));
+    }
     let collected: usize = suites.iter().map(|(_, pairs)| pairs.len()).sum();
     let excluded = suites
         .iter()
@@ -251,9 +201,9 @@ where
         })
         .count();
     eprintln!(
-        "Simulation cache=on det={det}: collected={collected} excluded={excluded}; preparing specification"
+        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded}; preparing specification"
     );
-    let includes = vec![PathBuf::from("p4c/p4include")];
+    let includes = &config.includes;
     let progress = ProgressBar::new(collected as u64).with_style(
         ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
             .map_err(|error| Error::Invalid(error.to_string()))?,
@@ -261,7 +211,14 @@ where
     let mut executed = 0;
     let mut matched = 0;
     let mut patched = 0;
-    for arch in ["v1model", "ebpf", "psa"] {
+    // Build one simulator per registered architecture in first-suite order
+    let mut archs = Vec::new();
+    for (suite, _) in &suites {
+        if !archs.contains(&suite.arch.as_str()) {
+            archs.push(suite.arch.as_str());
+        }
+    }
+    for arch in archs {
         let pairs_arch = suites
             .iter()
             .filter(|(suite, _)| suite.arch == arch)
@@ -277,15 +234,16 @@ where
             })
             .count();
         let patched_arch = pairs_arch.filter(|pair| pair.patched).count();
-        let mut simulator = sim_plugin::build(
+        let mut simulator = sim_plugin::build_with_output(
             build_spec()?,
             arch,
-            Config::new(true, det, false),
+            Config::new(cache_on, det, false),
             Encoding::default(),
+            io::sink(),
         )
         .map_err(|error| Error::Invalid(error.to_string()))?;
         for (suite, pairs) in suites.iter().filter(|(suite, _)| suite.arch == arch) {
-            let mut results = Results::new(suite.name);
+            let mut results = Results::new(&suite.expected);
             for pair in pairs {
                 let id = format!(
                     "{}:{}:{}",
@@ -309,7 +267,7 @@ where
                 fs::File::open(&pair.path_stf)?;
                 let mut txs = Vec::new();
                 simulator
-                    .run_stf_test(&includes, &pair.path_p4, &pair.path_stf, |tx| {
+                    .run_stf_test(includes, &pair.path_p4, &pair.path_stf, |tx| {
                         txs.push(tx.clone());
                     })
                     .map_err(|error| Error::Invalid(format!("{id}: {error}")))?;
@@ -321,13 +279,13 @@ where
             results.check();
         }
         eprintln!(
-            "Simulation {arch} cache=on det={det}: collected={collected_arch} excluded={excluded_arch} executed={} patched={patched_arch}",
+            "Simulation {arch} cache={text_cache} det={det}: collected={collected_arch} excluded={excluded_arch} executed={} patched={patched_arch}",
             collected_arch - excluded_arch
         );
     }
     progress.finish_with_message("complete");
     eprintln!(
-        "Simulation cache=on det={det}: collected={collected} excluded={excluded} executed={executed} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
+        "Simulation cache={text_cache} det={det}: collected={collected} excluded={excluded} executed={executed} patched={patched} matches={matched} elapsed={:.3}s; all expected records matched",
         start.elapsed().as_secs_f64()
     );
     Ok(())

@@ -13,6 +13,8 @@
 //! Resubmit returns the original packet to the parser; recirculate returns the
 //! deparsed packet to the parser
 
+use std::{cell::RefCell, io::Write};
+
 use num_bigint::BigInt;
 use serde_derive_state::{DeserializeState, SerializeState};
 
@@ -53,17 +55,35 @@ use super::{
 
 // == Configuration
 
-#[derive(Default)]
 /// The v1model architecture, parameterized by its state encoding.
 pub struct V1Model {
     /// Encoding of architecture and object states as external values.
     encoding: Encoding,
+    /// Host writer for program log messages, separate from semantic states.
+    output: RefCell<Box<dyn Write>>,
+}
+
+impl Default for V1Model {
+    fn default() -> Self {
+        Self::new(Encoding::default())
+    }
 }
 
 impl V1Model {
     /// Creates the architecture with the given state encoding.
     pub fn new(encoding: Encoding) -> Self {
-        Self { encoding }
+        Self::new_with_output(encoding, std::io::stdout())
+    }
+
+    /// Creates the architecture with a writer for program log messages.
+    pub fn new_with_output(encoding: Encoding, output: impl Write + 'static) -> Self {
+        Self { encoding, output: RefCell::new(Box::new(output)) }
+    }
+
+    /// Writes one program log message with its terminating newline.
+    pub(super) fn write_log(&self, text: &str) -> Result<(), ExternError> {
+        writeln!(self.output.borrow_mut(), "{text}")
+            .map_err(|error| error::program_output_failed(error.to_string()).into())
     }
 }
 

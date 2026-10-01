@@ -18,6 +18,7 @@ use p4spec_rust::interface::p4::{
 use crate::{
     Error, Result,
     corpus::{self, Outcome, Results},
+    suite::{self, ParseConfig},
 };
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
@@ -57,28 +58,30 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
     Ok(outcome)
 }
 
-pub fn run() -> Result<()> {
+/// Checks registered P4 parsing corpora against their expected outcomes.
+pub fn run(config: &ParseConfig) -> Result<()> {
     let start = Instant::now();
     let mut suites = Vec::new();
-    for (name, dirs) in [
-        ("pos.expected", &["p4c/testdata/p4_16_samples", "testdata/custom"][..]),
-        ("neg.expected", &["p4c/testdata/p4_16_errors"][..]),
-    ] {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("expected/p4parse")
-            .join(name);
+    for suite in &config.suites {
+        let path_expected = suite::expected_path(&suite.expected);
         let mut paths = Vec::new();
-        for dir in dirs {
-            paths.extend(corpus::collect(Path::new(dir), ".p4")?);
+        for path in &suite.roots {
+            paths.extend(corpus::collect(path, ".p4")?);
         }
-        suites.push((paths, Results::new(expect_file![path])));
+        suites.push((paths, Results::new(expect_file![path_expected])));
+    }
+    if suites.is_empty() {
+        return Err(Error::Invalid("no P4 parsing suites registered".into()));
     }
     let collected: usize = suites.iter().map(|(paths, _)| paths.len()).sum();
     eprintln!("P4 parser: collected={collected}, excluded=0; preparing print hints");
-    let spec_al = p4spec_rust::algo(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
+    let spec_al =
+        p4spec_rust::algo(&config.spec).map_err(|error| Error::Invalid(error.to_string()))?;
     let unparser = P4Unparser::from_al_spec(&spec_al);
-    let includes = vec![PathBuf::from("p4c/p4include")];
-    fs::read_dir(&includes[0])?;
+    let includes = &config.includes;
+    for path in includes {
+        fs::read_dir(path)?;
+    }
     let progress = ProgressBar::new(collected as u64).with_style(
         ProgressStyle::with_template("[{bar:24}] {pos}/{len} {elapsed_precise} {msg}")
             .map_err(|error| Error::Invalid(error.to_string()))?,
@@ -87,7 +90,7 @@ pub fn run() -> Result<()> {
     for (paths, results) in &mut suites {
         for path in paths.iter() {
             progress.set_message(path.display().to_string());
-            let outcome = roundtrip(&unparser, &includes, path)?;
+            let outcome = roundtrip(&unparser, includes, path)?;
             if outcome == Outcome::Pass {
                 passed += 1;
             }

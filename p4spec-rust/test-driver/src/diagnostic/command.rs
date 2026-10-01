@@ -1,101 +1,13 @@
-//! Command admission exercised through the product executable
+//! Argument-file command diagnostic acceptance
 //!
-//! Each case runs in an empty directory with an absent specification.
-//! The expected command diagnostic must precede any source or document access.
-//! The caller compares complete stderr after checking stdout and exit status.
+//! Each fixture supplies the complete product invocation and expected stderr.
 
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::path::Path;
 
 use crate::Result;
 
-use super::failure;
-
-/// Owns one subprocess directory without changing the driver's working directory.
-struct Directory(PathBuf);
-
-impl Directory {
-    /// Creates an isolated directory for a registered command case.
-    fn new(name: &str) -> Result<Self> {
-        let path = env::temp_dir().join(format!("p4spec-command-{}-{name}", std::process::id()));
-        fs::create_dir(&path)?;
-        Ok(Self(path))
-    }
-}
-
-impl Drop for Directory {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
-    }
-}
-
-/// Executes a negative command through argument parsing and final rendering.
-pub fn run(path_cli: &Path, name: &str) -> Result<String> {
-    if name == "command-error" {
-        let directory = Directory::new(name)?;
-        let output = Command::new(path_cli)
-            .current_dir(&directory.0)
-            .arg("unknown")
-            .output()?;
-        if output.status.code() != Some(2) || !output.stdout.is_empty() {
-            return Err(failure(name, "expected argument rejection with exit 2 and empty stdout"));
-        }
-        let text = String::from_utf8(output.stderr).map_err(|error| failure(name, error))?;
-        if !text.starts_with("error: unrecognized subcommand 'unknown'")
-            || text.contains("source: command")
-            || !text.contains("\n\nUsage:")
-            || text.contains("generated source")
-            || text.contains("┌─")
-        {
-            return Err(failure(name, format!("expected clap argument output, got {text}")));
-        }
-        return Ok(text);
-    }
-    let (args, code) = match name {
-        "command-splice-file-count-mismatch" => (
-            vec!["--splice", "a.adoc", "--splice", "b.adoc", "--out", "out.adoc"],
-            "command/splice-file-count-mismatch",
-        ),
-        "command-splice-output-conflict" => (
-            vec!["--inplace", "--splice", "a.adoc", "--out", "out.adoc"],
-            "command/splice-output-conflict",
-        ),
-        "command-splice-input-required" => (vec![], "command/splice-input-required"),
-        _ => return Err(failure(name, "unknown command case")),
-    };
-    // Run the supplied product binary before any specification is available
-    let directory = Directory::new(name)?;
-    let output = Command::new(path_cli)
-        .current_dir(&directory.0)
-        .args(["splice", "missing.watsup"])
-        .args(args)
-        .output()
-        .map_err(|error| {
-            failure(name, format!("cannot execute {}: {error}", path_cli.display()))
-        })?;
-    // Reject success, argument-parser errors, and accidental document output
-    if output.status.code() != Some(1) || !output.stdout.is_empty() {
-        return Err(failure(
-            name,
-            format!(
-                "expected exit 1 and empty stdout, got {} and {:?}; stderr: {}",
-                output.status,
-                output.stdout,
-                String::from_utf8_lossy(&output.stderr),
-            ),
-        ));
-    }
-    // Admission must leave the empty directory untouched
-    if fs::read_dir(&directory.0)?.next().is_some() {
-        return Err(failure(name, "command admission created files"));
-    }
-    // Reject unrelated failures even when deliberately promoting snapshots
-    let text = String::from_utf8(output.stderr).map_err(|error| failure(name, error))?;
-    if !text.starts_with(&format!("error[{code}]: ")) {
-        return Err(failure(name, format!("expected {code}, got {text}")));
-    }
-    Ok(text)
+/// Loads and compares this module's CLI diagnostic fixtures.
+pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
+    let groups = super::load(path, true)?;
+    super::run_registered("command", &groups, path_cli, None, Default::default())
 }

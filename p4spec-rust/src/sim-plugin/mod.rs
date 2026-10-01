@@ -4,10 +4,14 @@
 //! builds a host runner over the AL or SL specification
 //! with that architecture as its extern,
 //! and boxes it as a `Simulator` that runs STF tests.
+//! `build_with_output` routes program log messages to a host writer.
 //! `core` and `spec` are the helpers the architectures share;
 //! `stf_runner`, `table`, `hash`, `io`, and `state` drive one test.
 
-use std::path::{Path, PathBuf};
+use std::{
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use crate::lang::data::value::external::Encoding;
 
@@ -92,18 +96,29 @@ impl Simulator {
 
 // == Construction
 
-/// Builds a simulator for the named architecture.
+/// Builds a simulator for the named architecture, logging to stdout.
 pub fn build(
     spec: runner::Spec,
     arch: &str,
     config: runner::Config,
     encoding: Encoding,
 ) -> Result<Simulator, SimError> {
+    build_with_output(spec, arch, config, encoding, std::io::stdout())
+}
+
+/// Builds a simulator whose program log messages use the given writer.
+pub fn build_with_output(
+    spec: runner::Spec,
+    arch: &str,
+    config: runner::Config,
+    encoding: Encoding,
+    output: impl Write + 'static,
+) -> Result<Simulator, SimError> {
     // Each architecture is its own extern implementation
     match arch {
         "ebpf" => build_for_arch(spec, config, Ebpf::new(encoding)),
         "psa" => build_for_arch(spec, config, Psa::new(encoding)),
-        "v1model" => build_for_arch(spec, config, V1Model::new(encoding)),
+        "v1model" => build_for_arch(spec, config, V1Model::new_with_output(encoding, output)),
         _ => Err(error::architecture_unsupported(arch)),
     }
 }

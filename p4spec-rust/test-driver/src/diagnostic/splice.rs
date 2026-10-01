@@ -1,10 +1,9 @@
-//! Negative splice inputs rendered as diagnostic snapshots
+//! Source-backed negative document skeleton acceptance
 //!
-//! `.adoc` inputs exercise located marker failures through `splice_strings`.
-//! File cases call `splice_files` in isolated directories with relative paths.
-//! Every case requires rejection before the shared runner snapshots its report.
+//! Registered auxiliary specification files are parsed and prosified normally.
+//! The primary .adoc fixture then reaches the public splice API.
 
-use std::{env, fs, path::PathBuf};
+use std::path::Path;
 
 use p4spec_rust::diagnostic::Report;
 
@@ -12,82 +11,33 @@ use p4spec_rust::specdoc::splicer;
 
 use crate::Result;
 
-use super::failure;
+use super::{Case, failure};
 
-// == Rejection checks
-
-/// Requires a product failure carrying a structured diagnostic.
-fn rejected<T>(name: &str, result: std::result::Result<T, splicer::Error>) -> Result<Vec<Report>> {
-    match result {
-        Ok(_) => Err(failure(name, "splicer unexpectedly accepted negative input")),
-        Err(report) => Ok(vec![*report]),
-    }
+/// Loads and compares this module's diagnostic fixtures.
+pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
+    let groups = super::load(path, false)?;
+    super::run_registered("specdoc", &groups, path_cli, Some(run_case), Default::default())
 }
 
-// == Filesystem cases
-
-/// Restores the fixture directory and removes temporary files on every exit.
-struct Directory {
-    path: PathBuf,
-    path_previous: PathBuf,
-}
-
-impl Directory {
-    /// Enters an exclusively created directory for one filesystem failure.
-    fn enter(name: &str) -> Result<Self> {
-        let path_previous = env::current_dir()?;
-        let path = env::temp_dir().join(format!("p4spec-splice-{}-{name}", std::process::id()));
-        fs::create_dir(&path)?;
-        let directory = Self { path, path_previous };
-        env::set_current_dir(&directory.path)?;
-        Ok(directory)
+/// Splices a registered skeleton against its declared source specification.
+fn run_case(case: &Case) -> Result<Vec<Report>> {
+    let paths = case.paths_input();
+    if paths.is_empty() {
+        return Err(failure(&case.name, "splice requires source specification inputs"));
     }
-}
-
-impl Drop for Directory {
-    fn drop(&mut self) {
-        let _ = env::set_current_dir(&self.path_previous);
-        let _ = fs::remove_dir_all(&self.path);
-    }
-}
-
-/// Runs the splice API and returns its rejection for snapshot rendering.
-pub fn run(name: &str) -> Result<Vec<Report>> {
-    // Skeleton paths also identify the on-disk source used by the report renderer
-    if name.ends_with(".adoc") {
-        let path = format!("splice/{name}");
-        let text = fs::read_to_string(&path)?;
-        return rejected(
-            name,
-            splicer::splice_strings(&Vec::new(), &Vec::new(), &[(&path, &text)]),
-        );
-    }
-    // Relative paths prevent temporary directory names from entering snapshots
-    let _directory = Directory::enter(name)?;
-    match name {
-        // No input file is created, so reading must fail before rendering
-        "input-missing" => rejected(
-            name,
-            splicer::splice_files(
-                &Vec::new(),
-                &Vec::new(),
-                &[("missing.adoc".into(), "out.adoc".into())],
-            ),
-        ),
-        // A regular file cannot serve as the output's parent directory
-        "output-parent-file" => {
-            fs::write("input.adoc", "literal text")?;
-            fs::write("blocked", "regular file")?;
-            rejected(
-                name,
-                splicer::splice_files(
-                    &Vec::new(),
-                    &Vec::new(),
-                    &[("input.adoc".into(), "blocked/out.adoc".into())],
-                ),
-            )
-        }
-        // Reject missing harness cases rather than silently omitting coverage
-        _ => Err(failure(name, "unknown constructed splice case")),
-    }
+    // Obtain both document inputs from the product pipeline
+    let spec_el = p4spec_rust::frontend::parse::parse_files(&paths).map_err(|report| {
+        failure(&case.name, format!("parsing failed before splicing: {report}"))
+    })?;
+    let spec_pl = p4spec_rust::prosify(&paths).map_err(|report| {
+        failure(&case.name, format!("conversion failed before splicing: {report}"))
+    })?;
+    let path = case.path_input();
+    let text = std::fs::read_to_string(&path)?;
+    let text_path = path.to_string_lossy();
+    // Require an actual marker rejection before comparing its report
+    let report = splicer::splice_strings(&spec_el, &spec_pl, &[(&text_path, &text)])
+        .err()
+        .ok_or_else(|| failure(&case.name, "splicer accepted negative input"))?;
+    Ok(vec![*report])
 }

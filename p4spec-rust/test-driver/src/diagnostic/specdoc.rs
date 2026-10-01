@@ -1,59 +1,57 @@
-//! Source-driven AsciiDoc diagnostic acceptance
+//! Source-driven AsciiDoc warning acceptance
 //!
-//! Each fixture passes through parsing, elaboration, algorithmic conversion,
-//! structuring, and prose conversion before the document renderer runs.
-//! The driver validates reports without constructing or modifying document nodes.
+//! Source conversion must succeed without warnings before rendering markup.
+//! Every backend warning must retain a label on the registered source file.
+
+use std::path::Path;
 
 use p4spec_rust::diagnostic::{Report, ReportKind, Severity};
 
 use p4spec_rust::specdoc::adoc;
 
-use p4spec_rust::prosify_with_warnings;
-
 use crate::Result;
 
-use super::failure;
+use super::{Case, failure};
 
-/// Renders one complete specification and requires its intended markup warning.
-pub fn run(name: &str) -> Result<Vec<Report>> {
-    let path = format!("specdoc/{name}.watsup");
-    // Earlier diagnostics reject the fixture before backend acceptance
-    let (result, reports) = prosify_with_warnings(&[path.as_str().into()]);
+/// Loads and compares this module's diagnostic fixtures.
+pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
+    let groups = super::load(path, false)?;
+    super::run_registered("specdoc", &groups, path_cli, Some(run_case), Default::default())
+}
+
+/// Renders one source specification and requires located markup warnings.
+fn run_case(case: &Case) -> Result<Vec<Report>> {
+    let path = case.path_input();
+    // Earlier diagnostics reject setup before backend acceptance
+    let (result, reports) = p4spec_rust::prosify_with_warnings(std::slice::from_ref(&path));
     let spec_pl = result.map_err(|report| {
-        failure(name, format!("conversion failed before AsciiDoc rendering: {report}"))
+        failure(&case.name, format!("conversion failed before AsciiDoc rendering: {report}"))
     })?;
     if !reports.is_empty() {
-        return Err(failure(name, "conversion warned before AsciiDoc rendering"));
+        return Err(failure(&case.name, "conversion warned before AsciiDoc rendering"));
     }
-
-    // The public renderer supplies normal link resolution for every definition
     let mut warnings = Vec::new();
     adoc::pl::render_spec(&mut warnings, &spec_pl);
-    let code = match name {
-        "adoc-nested-link" => "adoc/link-nested",
-        "adoc-empty-body" => "adoc/link-body-empty",
-        "adoc-invalid-text" => "adoc/link-text-invalid",
-        _ => return Err(failure(name, "unknown AsciiDoc case")),
-    };
     if warnings.is_empty() {
-        return Err(failure(name, "AsciiDoc unexpectedly rendered without warnings"));
+        return Err(failure(&case.name, "AsciiDoc rendered without warnings"));
     }
-
-    // Require the intended warning and its actual input source before promotion
+    // Require backend causes with the real input's source location
     for report in &warnings {
         let ReportKind::Cause(diagnostic) = &report.kind else {
-            return Err(failure(name, "expected a backend diagnostic cause"));
+            return Err(failure(&case.name, "expected backend diagnostic cause"));
         };
-        if diagnostic.code.as_deref() != Some(code) || diagnostic.severity != Severity::Warning {
-            return Err(failure(name, "unexpected backend diagnostic"));
-        }
-        if diagnostic.labels.is_empty()
+        if diagnostic.severity != Severity::Warning
+            || !diagnostic
+                .code
+                .as_deref()
+                .is_some_and(|code| code.starts_with("adoc/"))
+            || diagnostic.labels.is_empty()
             || diagnostic
                 .labels
                 .iter()
-                .any(|label| label.span.left.file.as_ref() != path)
+                .any(|label| label.span.left.file.as_ref() != path.to_string_lossy())
         {
-            return Err(failure(name, "backend diagnostic lost its input source location"));
+            return Err(failure(&case.name, "unexpected backend diagnostic"));
         }
     }
     Ok(warnings)
