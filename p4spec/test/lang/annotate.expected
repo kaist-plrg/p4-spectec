@@ -24954,346 +24954,323 @@ tbl def $compat_uplusminus(typeIR'')
 
     1. Return false
 
-tbl def $compat_plusminusmult(typeIR'', typeIR''')
-=
+def $compat_plusminusmult(typeIR, typeIR')
 
-  Row : ((INT) as typeIR), ((INT) as typeIR) -> true:
+1. Block (2 arms)
 
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
+Arm 1:
 
-      1. (Let intTypeIR' be typeIR''', typeIR''' has type intTypeIR)
+  1. Case analysis on typeIR
+
+    1. Case (let intTypeIR be %, % has type intTypeIR)
+
+      1. (Let intTypeIR' be typeIR', typeIR' has type intTypeIR)
 
         1. Return true
 
-  Row : ((INT `< w_l `>) as typeIR), ((INT `< w_r `>) as typeIR) -> (w_l = w_r):
+    2. Case (let (INT `< w_l `>) be %, % has type fixedIntTypeIR)
 
-    1. (Let (INT `< w_l `>) be typeIR'', typeIR'' has type fixedIntTypeIR)
-
-      1. (Let (INT `< w_r `>) be typeIR''', typeIR''' has type fixedIntTypeIR)
+      1. (Let (INT `< w_r `>) be typeIR', typeIR' has type fixedIntTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((BIT `< w_l `>) as typeIR), ((BIT `< w_r `>) as typeIR) -> (w_l = w_r):
+    3. Case (let (BIT `< w_l `>) be %, % has type fixedBitTypeIR)
 
-    1. (Let (BIT `< w_l `>) be typeIR'', typeIR'' has type fixedBitTypeIR)
-
-      1. (Let (BIT `< w_r `>) be typeIR''', typeIR''' has type fixedBitTypeIR)
+      1. (Let (BIT `< w_r `>) be typeIR', typeIR' has type fixedBitTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_plusminusmult(typeIR_l, typeIR_r):
+    4. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
+      1. Return $compat_plusminusmult(typeIR_l, typeIR')
 
-      1. Return $compat_plusminusmult(typeIR_l, typeIR''')
+Arm 2:
 
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_plusminusmult(typeIR_l, typeIR_r):
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
+    1. If (~(typeIR has type typedefTypeIR)), then
 
-      1. Return $compat_plusminusmult(typeIR'', typeIR_r)
+      1. Return $compat_plusminusmult(typeIR, typeIR_r)
 
-  Row : _typeIR, _typeIR' -> false:
+2. Otherwise,
 
-    1. Return false
+  1. Return false
 
-tbl def $compat_satplusminus(typeIR'', typeIR''')
-=
+def $compat_satplusminus(typeIR, typeIR')
 
-  Row : ((INT `< w_l `>) as typeIR), ((INT `< w_r `>) as typeIR) -> (w_l = w_r):
+1. Block (2 arms)
 
-    1. (Let (INT `< w_l `>) be typeIR'', typeIR'' has type fixedIntTypeIR)
+Arm 1:
 
-      1. (Let (INT `< w_r `>) be typeIR''', typeIR''' has type fixedIntTypeIR)
+  1. Case analysis on typeIR
 
-        1. Return (w_l = w_r)
+    1. Case (let (INT `< w_l `>) be %, % has type fixedIntTypeIR)
 
-  Row : ((BIT `< w_l `>) as typeIR), ((BIT `< w_r `>) as typeIR) -> (w_l = w_r):
-
-    1. (Let (BIT `< w_l `>) be typeIR'', typeIR'' has type fixedBitTypeIR)
-
-      1. (Let (BIT `< w_r `>) be typeIR''', typeIR''' has type fixedBitTypeIR)
+      1. (Let (INT `< w_r `>) be typeIR', typeIR' has type fixedIntTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_satplusminus(typeIR_l, typeIR_r):
+    2. Case (let (BIT `< w_l `>) be %, % has type fixedBitTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
-
-      1. Return $compat_satplusminus(typeIR_l, typeIR''')
-
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_satplusminus(typeIR_l, typeIR_r):
-
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
-
-      1. Return $compat_satplusminus(typeIR'', typeIR_r)
-
-  Row : _typeIR, _typeIR' -> false:
-
-    1. Return false
-
-tbl def $compat_divmod(typeIR'', typeIR''')
-=
-
-  Row : ((INT) as typeIR), ((INT) as typeIR) -> true:
-
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
-
-      1. (Let intTypeIR' be typeIR''', typeIR''' has type intTypeIR)
-
-        1. Return true
-
-  Row : ((BIT `< w_l `>) as typeIR), ((BIT `< w_r `>) as typeIR) -> (w_l = w_r):
-
-    1. (Let (BIT `< w_l `>) be typeIR'', typeIR'' has type fixedBitTypeIR)
-
-      1. (Let (BIT `< w_r `>) be typeIR''', typeIR''' has type fixedBitTypeIR)
+      1. (Let (BIT `< w_r `>) be typeIR', typeIR' has type fixedBitTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_divmod(typeIR_l, typeIR_r):
+    3. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
+      1. Return $compat_satplusminus(typeIR_l, typeIR')
 
-      1. Return $compat_divmod(typeIR_l, typeIR''')
+Arm 2:
 
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_divmod(typeIR_l, typeIR_r):
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
+    1. If (~(typeIR has type typedefTypeIR)), then
 
-      1. Return $compat_divmod(typeIR'', typeIR_r)
+      1. Return $compat_satplusminus(typeIR, typeIR_r)
 
-  Row : _typeIR, _typeIR' -> false:
+2. Otherwise,
 
-    1. Return false
+  1. Return false
 
-tbl def $compat_shift(typeIR'', typeIR''')
-=
+def $compat_divmod(typeIR, typeIR')
 
-  Row : ((INT) as typeIR), ((INT) as typeIR) -> true:
+1. Block (2 arms)
 
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
+Arm 1:
 
-      1. (Let intTypeIR' be typeIR''', typeIR''' has type intTypeIR)
+  1. Case analysis on typeIR
 
-        1. Return true
+    1. Case (let intTypeIR be %, % has type intTypeIR)
 
-  Row : ((INT) as typeIR), ((INT `< _nat `>) as typeIR) -> true:
-
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
-
-      1. If ((typeIR''' has type fixedIntTypeIR)), then
+      1. (Let intTypeIR' be typeIR', typeIR' has type intTypeIR)
 
         1. Return true
 
-  Row : ((INT) as typeIR), ((BIT `< _nat `>) as typeIR) -> true:
+    2. Case (let (BIT `< w_l `>) be %, % has type fixedBitTypeIR)
 
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
-
-      1. If ((typeIR''' has type fixedBitTypeIR)), then
-
-        1. Return true
-
-  Row : ((INT `< _nat `>) as typeIR), ((INT) as typeIR) -> true:
-
-    1. If ((typeIR'' has type fixedIntTypeIR)), then
-
-      1. (Let intTypeIR be typeIR''', typeIR''' has type intTypeIR)
-
-        1. Return true
-
-  Row : ((INT `< _nat `>) as typeIR), ((INT `< _nat' `>) as typeIR) -> true:
-
-    1. If ((typeIR'' has type fixedIntTypeIR)), then
-
-      1. If ((typeIR''' has type fixedIntTypeIR)), then
-
-        1. Return true
-
-  Row : ((INT `< _nat `>) as typeIR), ((BIT `< _nat' `>) as typeIR) -> true:
-
-    1. If ((typeIR'' has type fixedIntTypeIR)), then
-
-      1. If ((typeIR''' has type fixedBitTypeIR)), then
-
-        1. Return true
-
-  Row : ((BIT `< _nat `>) as typeIR), ((INT) as typeIR) -> true:
-
-    1. If ((typeIR'' has type fixedBitTypeIR)), then
-
-      1. (Let intTypeIR be typeIR''', typeIR''' has type intTypeIR)
-
-        1. Return true
-
-  Row : ((BIT `< _nat `>) as typeIR), ((INT `< _nat' `>) as typeIR) -> true:
-
-    1. If ((typeIR'' has type fixedBitTypeIR)), then
-
-      1. If ((typeIR''' has type fixedIntTypeIR)), then
-
-        1. Return true
-
-  Row : ((BIT `< _nat `>) as typeIR), ((BIT `< _nat' `>) as typeIR) -> true:
-
-    1. If ((typeIR'' has type fixedBitTypeIR)), then
-
-      1. If ((typeIR''' has type fixedBitTypeIR)), then
-
-        1. Return true
-
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_shift(typeIR_l, typeIR_r):
-
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
-
-      1. Return $compat_shift(typeIR_l, typeIR''')
-
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_shift(typeIR_l, typeIR_r):
-
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
-
-      1. Return $compat_shift(typeIR'', typeIR_r)
-
-  Row : _typeIR, _typeIR' -> false:
-
-    1. Return false
-
-tbl def $compat_compare(typeIR'', typeIR''')
-=
-
-  Row : ((INT) as typeIR), ((INT) as typeIR) -> true:
-
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
-
-      1. (Let intTypeIR' be typeIR''', typeIR''' has type intTypeIR)
-
-        1. Return true
-
-  Row : ((INT `< w_l `>) as typeIR), ((INT `< w_r `>) as typeIR) -> (w_l = w_r):
-
-    1. (Let (INT `< w_l `>) be typeIR'', typeIR'' has type fixedIntTypeIR)
-
-      1. (Let (INT `< w_r `>) be typeIR''', typeIR''' has type fixedIntTypeIR)
+      1. (Let (BIT `< w_r `>) be typeIR', typeIR' has type fixedBitTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((BIT `< w_l `>) as typeIR), ((BIT `< w_r `>) as typeIR) -> (w_l = w_r):
+    3. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (BIT `< w_l `>) be typeIR'', typeIR'' has type fixedBitTypeIR)
+      1. Return $compat_divmod(typeIR_l, typeIR')
 
-      1. (Let (BIT `< w_r `>) be typeIR''', typeIR''' has type fixedBitTypeIR)
+Arm 2:
+
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
+
+    1. If (~(typeIR has type typedefTypeIR)), then
+
+      1. Return $compat_divmod(typeIR, typeIR_r)
+
+2. Otherwise,
+
+  1. Return false
+
+def $compat_shift(typeIR, typeIR')
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. Case analysis on typeIR
+
+    1. Case (let intTypeIR be %, % has type intTypeIR)
+
+      1. Case analysis on typeIR'
+
+        1. Case (let intTypeIR' be %, % has type intTypeIR)
+
+          1. Return true
+
+        2. Case (% has type fixedIntTypeIR)
+
+          1. Return true
+
+        3. Case (% has type fixedBitTypeIR)
+
+          1. Return true
+
+    2. Case (% has type fixedIntTypeIR)
+
+      1. Case analysis on typeIR'
+
+        1. Case (let intTypeIR be %, % has type intTypeIR)
+
+          1. Return true
+
+        2. Case (% has type fixedIntTypeIR)
+
+          1. Return true
+
+        3. Case (% has type fixedBitTypeIR)
+
+          1. Return true
+
+    3. Case (% has type fixedBitTypeIR)
+
+      1. Case analysis on typeIR'
+
+        1. Case (let intTypeIR be %, % has type intTypeIR)
+
+          1. Return true
+
+        2. Case (% has type fixedIntTypeIR)
+
+          1. Return true
+
+        3. Case (% has type fixedBitTypeIR)
+
+          1. Return true
+
+    4. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
+
+      1. Return $compat_shift(typeIR_l, typeIR')
+
+Arm 2:
+
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
+
+    1. If (~(typeIR has type typedefTypeIR)), then
+
+      1. Return $compat_shift(typeIR, typeIR_r)
+
+2. Otherwise,
+
+  1. Return false
+
+def $compat_compare(typeIR, typeIR')
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. Case analysis on typeIR
+
+    1. Case (let intTypeIR be %, % has type intTypeIR)
+
+      1. (Let intTypeIR' be typeIR', typeIR' has type intTypeIR)
+
+        1. Return true
+
+    2. Case (let (INT `< w_l `>) be %, % has type fixedIntTypeIR)
+
+      1. (Let (INT `< w_r `>) be typeIR', typeIR' has type fixedIntTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_compare(typeIR_l, typeIR_r):
+    3. Case (let (BIT `< w_l `>) be %, % has type fixedBitTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
-
-      1. Return $compat_compare(typeIR_l, typeIR''')
-
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_compare(typeIR_l, typeIR_r):
-
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
-
-      1. Return $compat_compare(typeIR'', typeIR_r)
-
-  Row : _typeIR, _typeIR' -> false:
-
-    1. Return false
-
-tbl def $compat_bitwise(typeIR'', typeIR''')
-=
-
-  Row : ((INT `< w_l `>) as typeIR), ((INT `< w_r `>) as typeIR) -> (w_l = w_r):
-
-    1. (Let (INT `< w_l `>) be typeIR'', typeIR'' has type fixedIntTypeIR)
-
-      1. (Let (INT `< w_r `>) be typeIR''', typeIR''' has type fixedIntTypeIR)
+      1. (Let (BIT `< w_r `>) be typeIR', typeIR' has type fixedBitTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((BIT `< w_l `>) as typeIR), ((BIT `< w_r `>) as typeIR) -> (w_l = w_r):
+    4. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (BIT `< w_l `>) be typeIR'', typeIR'' has type fixedBitTypeIR)
+      1. Return $compat_compare(typeIR_l, typeIR')
 
-      1. (Let (BIT `< w_r `>) be typeIR''', typeIR''' has type fixedBitTypeIR)
+Arm 2:
+
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
+
+    1. If (~(typeIR has type typedefTypeIR)), then
+
+      1. Return $compat_compare(typeIR, typeIR_r)
+
+2. Otherwise,
+
+  1. Return false
+
+def $compat_bitwise(typeIR, typeIR')
+
+1. Block (2 arms)
+
+Arm 1:
+
+  1. Case analysis on typeIR
+
+    1. Case (let (INT `< w_l `>) be %, % has type fixedIntTypeIR)
+
+      1. (Let (INT `< w_r `>) be typeIR', typeIR' has type fixedIntTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_bitwise(typeIR_l, typeIR_r):
+    2. Case (let (BIT `< w_l `>) be %, % has type fixedBitTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
+      1. (Let (BIT `< w_r `>) be typeIR', typeIR' has type fixedBitTypeIR)
 
-      1. Return $compat_bitwise(typeIR_l, typeIR''')
+        1. Return (w_l = w_r)
 
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_bitwise(typeIR_l, typeIR_r):
+    3. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
+      1. Return $compat_bitwise(typeIR_l, typeIR')
 
-      1. Return $compat_bitwise(typeIR'', typeIR_r)
+Arm 2:
 
-  Row : _typeIR, _typeIR' -> false:
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
 
-    1. Return false
+    1. If (~(typeIR has type typedefTypeIR)), then
 
-tbl def $compat_concat(typeIR'', typeIR''')
-=
+      1. Return $compat_bitwise(typeIR, typeIR_r)
 
-  Row : ((STRING) as typeIR), ((STRING) as typeIR) -> true:
+2. Otherwise,
 
-    1. (Let stringTypeIR be typeIR'', typeIR'' has type stringTypeIR)
+  1. Return false
 
-      1. (Let stringTypeIR' be typeIR''', typeIR''' has type stringTypeIR)
+def $compat_concat(typeIR, typeIR')
 
-        1. Return true
+1. Block (2 arms)
 
-  Row : ((INT `< _nat `>) as typeIR), ((INT `< _nat' `>) as typeIR) -> true:
+Arm 1:
 
-    1. If ((typeIR'' has type fixedIntTypeIR)), then
+  1. Case analysis on typeIR
 
-      1. If ((typeIR''' has type fixedIntTypeIR)), then
+    1. Case (let stringTypeIR be %, % has type stringTypeIR)
 
-        1. Return true
-
-  Row : ((INT `< _nat `>) as typeIR), ((BIT `< _nat' `>) as typeIR) -> true:
-
-    1. If ((typeIR'' has type fixedIntTypeIR)), then
-
-      1. If ((typeIR''' has type fixedBitTypeIR)), then
+      1. (Let stringTypeIR' be typeIR', typeIR' has type stringTypeIR)
 
         1. Return true
 
-  Row : ((BIT `< _nat `>) as typeIR), ((INT `< _nat' `>) as typeIR) -> true:
+    2. Case (% has type fixedIntTypeIR)
 
-    1. If ((typeIR'' has type fixedBitTypeIR)), then
+      1. Case analysis on typeIR'
 
-      1. If ((typeIR''' has type fixedIntTypeIR)), then
+        1. Case (% has type fixedIntTypeIR)
 
-        1. Return true
+          1. Return true
 
-  Row : ((BIT `< _nat `>) as typeIR), ((BIT `< _nat' `>) as typeIR) -> true:
+        2. Case (% has type fixedBitTypeIR)
 
-    1. If ((typeIR'' has type fixedBitTypeIR)), then
+          1. Return true
 
-      1. If ((typeIR''' has type fixedBitTypeIR)), then
+    3. Case (% has type fixedBitTypeIR)
 
-        1. Return true
+      1. Case analysis on typeIR'
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_concat(typeIR_l, typeIR_r):
+        1. Case (% has type fixedIntTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
+          1. Return true
 
-      1. Return $compat_concat(typeIR_l, typeIR''')
+        2. Case (% has type fixedBitTypeIR)
 
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_concat(typeIR_l, typeIR_r):
+          1. Return true
 
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
+    4. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-      1. Return $compat_concat(typeIR'', typeIR_r)
+      1. Return $compat_concat(typeIR_l, typeIR')
 
-  Row : _typeIR, _typeIR' -> false:
+Arm 2:
 
-    1. Return false
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
+
+    1. If (~(typeIR has type typedefTypeIR)), then
+
+      1. Return $compat_concat(typeIR, typeIR_r)
+
+2. Otherwise,
+
+  1. Return false
 
 def $result_concat(typeIR, typeIR')
 
@@ -25321,7 +25298,7 @@ Arm 1:
 
           1. Return ((INT `< (w_a + w_b) `>) as typeIR)
 
-      1. Else Dangling#8989
+      1. Else Dangling#8960
 
     3. Case (let (BIT `< w_a `>) be %, % has type fixedBitTypeIR)
 
@@ -25335,13 +25312,13 @@ Arm 1:
 
           1. Return ((BIT `< (w_a + w_b) `>) as typeIR)
 
-      1. Else Dangling#8995
+      1. Else Dangling#8966
 
     4. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
       1. Return $result_concat(typeIR_l, typeIR')
 
-  1. Else Dangling#8983
+  1. Else Dangling#8954
 
 Arm 2:
 
@@ -25351,34 +25328,37 @@ Arm 2:
 
       1. Return $result_concat(typeIR, typeIR_r)
 
-    1. Else Dangling#9004
+    1. Else Dangling#8975
 
-tbl def $compat_logical(typeIR'', typeIR''')
-=
+def $compat_logical(typeIR, typeIR')
 
-  Row : ((BOOL) as typeIR), ((BOOL) as typeIR) -> true:
+1. Block (2 arms)
 
-    1. (Let boolTypeIR be typeIR'', typeIR'' has type boolTypeIR)
+Arm 1:
 
-      1. (Let boolTypeIR' be typeIR''', typeIR''' has type boolTypeIR)
+  1. Case analysis on typeIR
+
+    1. Case (let boolTypeIR be %, % has type boolTypeIR)
+
+      1. (Let boolTypeIR' be typeIR', typeIR' has type boolTypeIR)
 
         1. Return true
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_logical(typeIR_l, typeIR_r):
+    2. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
+      1. Return $compat_logical(typeIR_l, typeIR')
 
-      1. Return $compat_logical(typeIR_l, typeIR''')
+Arm 2:
 
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_logical(typeIR_l, typeIR_r):
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
+    1. If (~(typeIR has type typedefTypeIR)), then
 
-      1. Return $compat_logical(typeIR'', typeIR_r)
+      1. Return $compat_logical(typeIR, typeIR_r)
 
-  Row : _typeIR, _typeIR' -> false:
+2. Otherwise,
 
-    1. Return false
+  1. Return false
 
 tbl def $compat_array_index(typeIR'')
 =
@@ -25657,7 +25637,7 @@ relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
 
           1. Result in: % |- % : (typedLvalueIR assignop typedExpressionIR)
 
-        1. Else Dangling#9125
+        1. Else Dangling#9096
 
 relation ForUpdateStmtList_ok: TC |- forUpdateStatementList : %
 
@@ -25697,11 +25677,11 @@ relation ForInitStmt_ok: TC |- forInitStatement : % %
 
                 3. Result in: % |- % : TC_1 (annotationList typeIR nameIR ?())
 
-              1. Else Dangling#9138
+              1. Else Dangling#9109
 
-            2. Else Dangling#9137
+            2. Else Dangling#9108
 
-          2. Else Dangling#9136
+          2. Else Dangling#9107
 
         2. Case (let ('=' expression_init) be %, % has type initializer)
 
@@ -25725,11 +25705,11 @@ relation ForInitStmt_ok: TC |- forInitStatement : % %
 
                   3. Result in: % |- % : TC_1 (annotationList typeIR nameIR ?(('=' typedExpressionIR_init_cast)))
 
-              1. Else Dangling#9146
+              1. Else Dangling#9117
 
-            2. Else Dangling#9145
+            2. Else Dangling#9116
 
-          2. Else Dangling#9144
+          2. Else Dangling#9115
 
     2. Case (let forUpdateStatement be %, % has type forUpdateStatement)
 
@@ -25789,7 +25769,7 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
             1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
 
-          2. Else Dangling#9177
+          2. Else Dangling#9148
 
         2. Case (let (ARRAY typeIR_e `[ _nat `]) be %, % has type arrayTypeIR)
 
@@ -25797,7 +25777,7 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
             1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
 
-          1. Else Dangling#9180
+          1. Else Dangling#9151
 
         3. Case (let (HEADER_STACK typeIR_e `[ _nat `]) be %, % has type headerStackTypeIR)
 
@@ -25805,9 +25785,9 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
             1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
 
-          1. Else Dangling#9183
+          1. Else Dangling#9154
 
-      4. Else Dangling#9174
+      4. Else Dangling#9145
 
   2. Case (let (expression_l '..' expression_r) be %, % matches pattern `% .. %`)
 
@@ -25829,50 +25809,49 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
             1. Result in: % % |- % : (typedExpressionIR_l_casted '..' typedExpressionIR_r_casted)
 
-          3. Else Dangling#9197
+          3. Else Dangling#9168
 
-tbl def $compat_range(typeIR'', typeIR''')
-=
+def $compat_range(typeIR, typeIR')
 
-  Row : ((INT) as typeIR), ((INT) as typeIR) -> true:
+1. Block (2 arms)
 
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
+Arm 1:
 
-      1. (Let intTypeIR' be typeIR''', typeIR''' has type intTypeIR)
+  1. Case analysis on typeIR
+
+    1. Case (let intTypeIR be %, % has type intTypeIR)
+
+      1. (Let intTypeIR' be typeIR', typeIR' has type intTypeIR)
 
         1. Return true
 
-  Row : ((INT `< w_l `>) as typeIR), ((INT `< w_r `>) as typeIR) -> (w_l = w_r):
+    2. Case (let (INT `< w_l `>) be %, % has type fixedIntTypeIR)
 
-    1. (Let (INT `< w_l `>) be typeIR'', typeIR'' has type fixedIntTypeIR)
-
-      1. (Let (INT `< w_r `>) be typeIR''', typeIR''' has type fixedIntTypeIR)
+      1. (Let (INT `< w_r `>) be typeIR', typeIR' has type fixedIntTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((BIT `< w_l `>) as typeIR), ((BIT `< w_r `>) as typeIR) -> (w_l = w_r):
+    3. Case (let (BIT `< w_l `>) be %, % has type fixedBitTypeIR)
 
-    1. (Let (BIT `< w_l `>) be typeIR'', typeIR'' has type fixedBitTypeIR)
-
-      1. (Let (BIT `< w_r `>) be typeIR''', typeIR''' has type fixedBitTypeIR)
+      1. (Let (BIT `< w_r `>) be typeIR', typeIR' has type fixedBitTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_range(typeIR_l, typeIR_r):
+    4. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
+      1. Return $compat_range(typeIR_l, typeIR')
 
-      1. Return $compat_range(typeIR_l, typeIR''')
+Arm 2:
 
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_range(typeIR_l, typeIR_r):
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
+    1. If (~(typeIR has type typedefTypeIR)), then
 
-      1. Return $compat_range(typeIR'', typeIR_r)
+      1. Return $compat_range(typeIR, typeIR_r)
 
-  Row : _typeIR, _typeIR' -> false:
+2. Otherwise,
 
-    1. Return false
+  1. Return false
 
 def $check_switchLabelIR_default((switchLabelIR)*{switchLabelIR <- switchLabelIR*})
 
@@ -25924,9 +25903,9 @@ relation SwitchLabel_table_ok: TC typeId_table |- switchLabel : %
 
               2. Result in: % % |- % : (typedExpressionIR_label as switchLabelIR)
 
-            1. Else Dangling#9241
+            1. Else Dangling#9210
 
-  1. Else Dangling#9228
+  1. Else Dangling#9197
 
 relation SwitchCase_table_ok: TC_0 typeId_table |- switchCase : % %
 
@@ -26016,7 +25995,7 @@ relation SwitchLabel_general_ok: TC typeIR |- switchLabel : %
 
           1. Result in: % % |- % : (typedExpressionIR_label_cast as switchLabelIR)
 
-        2. Else Dangling#9280
+        2. Else Dangling#9249
 
 relation SwitchCase_general_ok: TC_0 typeIR_switch |- switchCase : % %
 
@@ -26119,7 +26098,7 @@ relation Switch_general_ok: TC_0 |- SWITCH `( typedExpressionIR_switch `) `{ swi
 
     2. Result in: % |- SWITCH `( % `) `{ % `} : TC_1 (switchCaseIR)*{switchCaseIR <- switchCaseIR*}
 
-  2. Else Dangling#9319
+  2. Else Dangling#9288
 
 relation BlockElementStmts_ok: TC |- (blockElementStatement)*{blockElementStatement <- blockElementStatement*} : % %
 
@@ -26171,7 +26150,7 @@ relation InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTyp
 
     5. Result in: % % |- % % `< % `> `( % `) % ';' : TC_1 instantiationIR
 
-  9. Else Dangling#9338
+  9. Else Dangling#9307
 
 relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
 
@@ -26229,11 +26208,11 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
             3. Result in: % % % % |- % : typeFrame externMethodTypeDefEnv_init (functionDeclarationIR as objectDeclarationIR)
 
-          5. Else Dangling#9368
+          5. Else Dangling#9337
 
-        4. Else Dangling#9364
+        4. Else Dangling#9333
 
-      6. Else Dangling#9360
+      6. Else Dangling#9329
 
 relation ObjectDecls_ok: p TC typeFrame externMethodTypeDefEnv |- (objectDeclaration)*{objectDeclaration <- objectDeclaration*} : % % %
 
@@ -26273,7 +26252,7 @@ Arm 1:
 
     1. Return externMethodTypeDefEnv_extern
 
-  1. Else Dangling#9383
+  1. Else Dangling#9352
 
 Arm 2:
 
@@ -26295,7 +26274,7 @@ Arm 2:
 
           2. Return $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern_subst, (`{ ((callableId_init_t ':' externMethodTypeDefIR_init_t))*{callableId_init_t <- callableId_init_t*, externMethodTypeDefIR_init_t <- externMethodTypeDefIR_init_t*} `}))
 
-        2. Else Dangling#9395
+        2. Else Dangling#9364
 
 relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name '=' `{ objectDeclarationList `} ';' : % %
 
@@ -26341,7 +26320,7 @@ relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeNam
 
       5. Result in: % % |- % % `< % `> `( % `) % '=' `{ % `} ';' : TC_2 instantiationIR
 
-    5. Else Dangling#9414
+    5. Else Dangling#9383
 
 def $split_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList)
 
@@ -26387,7 +26366,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- (name '=' expres
 
       5. Result in: % % % |- % : TC_1 (nameIR '=' value)
 
-    1. Else Dangling#9435
+    1. Else Dangling#9404
 
 relation Enum_serializable_fields_ok: TC nameIR_enum typeIR |- (namedExpression)*{namedExpression <- namedExpression*} : % %
 
@@ -26455,7 +26434,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
               3. Result in: % % |- % : (typedExpressionIR_cast as simpleKeysetExpressionIR)
 
-            2. Else Dangling#9464
+            2. Else Dangling#9433
 
         2. Case false
 
@@ -26469,7 +26448,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
             3. Result in: % % |- % : (typedExpressionIR_cast as simpleKeysetExpressionIR)
 
-          2. Else Dangling#9469
+          2. Else Dangling#9438
 
   2. Case (let (expression_l '&&&' expression_r) be %, % matches pattern `% &&& %`)
 
@@ -26513,7 +26492,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
                 1. Result in: % % |- % : (typedExpressionIR_l_casted '..' typedExpressionIR_r_casted)
 
-          2. Else Dangling#9502
+          2. Else Dangling#9471
 
   4. Case (% matches pattern `DEFAULT`)
 
@@ -26527,48 +26506,47 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
       1. Result in: % % |- % : ('_')
 
-tbl def $compat_mask(typeIR'', typeIR''')
-=
+def $compat_mask(typeIR, typeIR')
 
-  Row : ((INT) as typeIR), ((INT) as typeIR) -> true:
+1. Block (2 arms)
 
-    1. (Let intTypeIR be typeIR'', typeIR'' has type intTypeIR)
+Arm 1:
 
-      1. (Let intTypeIR' be typeIR''', typeIR''' has type intTypeIR)
+  1. Case analysis on typeIR
+
+    1. Case (let intTypeIR be %, % has type intTypeIR)
+
+      1. (Let intTypeIR' be typeIR', typeIR' has type intTypeIR)
 
         1. Return true
 
-  Row : ((INT `< w_l `>) as typeIR), ((INT `< w_r `>) as typeIR) -> (w_l = w_r):
+    2. Case (let (INT `< w_l `>) be %, % has type fixedIntTypeIR)
 
-    1. (Let (INT `< w_l `>) be typeIR'', typeIR'' has type fixedIntTypeIR)
-
-      1. (Let (INT `< w_r `>) be typeIR''', typeIR''' has type fixedIntTypeIR)
+      1. (Let (INT `< w_r `>) be typeIR', typeIR' has type fixedIntTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((BIT `< w_l `>) as typeIR), ((BIT `< w_r `>) as typeIR) -> (w_l = w_r):
+    3. Case (let (BIT `< w_l `>) be %, % has type fixedBitTypeIR)
 
-    1. (Let (BIT `< w_l `>) be typeIR'', typeIR'' has type fixedBitTypeIR)
-
-      1. (Let (BIT `< w_r `>) be typeIR''', typeIR''' has type fixedBitTypeIR)
+      1. (Let (BIT `< w_r `>) be typeIR', typeIR' has type fixedBitTypeIR)
 
         1. Return (w_l = w_r)
 
-  Row : ((TYPEDEF _typeId typeIR_l) as typeIR), typeIR_r -> $compat_mask(typeIR_l, typeIR_r):
+    4. Case (let (TYPEDEF _typeId typeIR_l) be %, % has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_l) be typeIR'', typeIR'' has type typedefTypeIR)
+      1. Return $compat_mask(typeIR_l, typeIR')
 
-      1. Return $compat_mask(typeIR_l, typeIR''')
+Arm 2:
 
-  Row : typeIR_l, ((TYPEDEF _typeId typeIR_r) as typeIR) -> $compat_mask(typeIR_l, typeIR_r):
+  1. (Let (TYPEDEF _typeId typeIR_r) be typeIR', typeIR' has type typedefTypeIR)
 
-    1. (Let (TYPEDEF _typeId typeIR_r) be typeIR''', typeIR''' has type typedefTypeIR)
+    1. If (~(typeIR has type typedefTypeIR)), then
 
-      1. Return $compat_mask(typeIR'', typeIR_r)
+      1. Return $compat_mask(typeIR, typeIR_r)
 
-  Row : _typeIR, _typeIR' -> false:
+2. Otherwise,
 
-    1. Return false
+  1. Return false
 
 relation SelectCase_keyset_ok: TC (typeIR)*{typeIR <- typeIR*} |- keysetExpression : %
 
@@ -26614,7 +26592,7 @@ Arm 1:
 
                   2. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-              1. Else Dangling#9545
+              1. Else Dangling#9512
 
           Arm 3:
 
@@ -26632,7 +26610,7 @@ Arm 1:
 
                 2. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-            1. Else Dangling#9552
+            1. Else Dangling#9519
 
         2. Case (% matches pattern [])
 
@@ -26640,9 +26618,9 @@ Arm 1:
 
             1. Result in: % % |- % : ((DEFAULT) as keysetExpressionIR)
 
-          1. Else Dangling#9557
+          1. Else Dangling#9524
 
-      1. Else Dangling#9537
+      1. Else Dangling#9504
 
     Arm 2:
 
@@ -26656,7 +26634,7 @@ Arm 1:
 
           3. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-        1. Else Dangling#9561
+        1. Else Dangling#9528
 
     Arm 3:
 
@@ -26670,7 +26648,7 @@ Arm 1:
 
             2. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-          1. Else Dangling#9566
+          1. Else Dangling#9533
 
         2. Case (% = (('_') as keysetExpression))
 
@@ -26680,9 +26658,9 @@ Arm 1:
 
             2. Result in: % % |- % : (simpleKeysetExpressionIR as keysetExpressionIR)
 
-          1. Else Dangling#9569
+          1. Else Dangling#9536
 
-      1. Else Dangling#9565
+      1. Else Dangling#9532
 
 Arm 2:
 
@@ -26722,7 +26700,7 @@ Arm 2:
 
               2. Result in: % % |- % : ((`( [simpleKeysetExpressionIR] `)) as keysetExpressionIR)
 
-          1. Else Dangling#9577
+          1. Else Dangling#9544
 
       Arm 2:
 
@@ -26736,7 +26714,7 @@ Arm 2:
 
               2. Result in: % % |- % : ((`( [simpleKeysetExpressionIR] `)) as keysetExpressionIR)
 
-            1. Else Dangling#9589
+            1. Else Dangling#9556
 
           2. Case (% matches pattern `(_)`)
 
@@ -26746,7 +26724,7 @@ Arm 2:
 
               2. Result in: % % |- % : ((`( [simpleKeysetExpressionIR] `)) as keysetExpressionIR)
 
-            1. Else Dangling#9592
+            1. Else Dangling#9559
 
           3. Case (let (`( simpleKeysetExpression_h ',' simpleKeysetExpressionList_t `)) be %, % matches pattern `(% , %)`)
 
@@ -26760,9 +26738,9 @@ Arm 2:
 
               2. Result in: % % |- % : ((`( (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `)) as keysetExpressionIR)
 
-            3. Else Dangling#9598
+            3. Else Dangling#9565
 
-        1. Else Dangling#9588
+        1. Else Dangling#9555
 
 relation SelectCase_ok: TC (nameIR_state)*{nameIR_state <- nameIR_state*} (typeIR_key)*{typeIR_key <- typeIR_key*} |- (keysetExpression ':' name ';') : %
 
@@ -26776,7 +26754,7 @@ relation SelectCase_ok: TC (nameIR_state)*{nameIR_state <- nameIR_state*} (typeI
 
     1. Result in: % % % |- % : (keysetExpressionIR ':' nameIR ';')
 
-  3. Else Dangling#9604
+  3. Else Dangling#9571
 
 relation ParserBlockElementStmts_ok: TC |- (parserBlockElementStatement)*{parserBlockElementStatement <- parserBlockElementStatement*} : % %
 
@@ -27006,7 +26984,7 @@ Arm 1:
 
                 3. Result in: % % |- % '@' % : (LPM n) (typedExpressionIR_set as simpleKeysetExpressionIR)
 
-              5. Else Dangling#9690
+              5. Else Dangling#9657
 
           2. Case (% =/= "lpm")
 
@@ -27036,9 +27014,9 @@ Arm 1:
 
                         3. Result in: % % |- % '@' % : (NON_LPM) (typedExpressionIR_set as simpleKeysetExpressionIR)
 
-                      5. Else Dangling#9704
+                      5. Else Dangling#9671
 
-                    1. Else Dangling#9699
+                    1. Else Dangling#9666
 
               2. Case false
 
@@ -27058,7 +27036,7 @@ Arm 1:
 
                   3. Result in: % % |- % '@' % : (NON_LPM) (typedExpressionIR_set as simpleKeysetExpressionIR)
 
-                5. Else Dangling#9712
+                5. Else Dangling#9679
 
     2. Case (let (expression_l '&&&' expression_r) be %, % matches pattern `% &&& %`)
 
@@ -27098,7 +27076,7 @@ Arm 1:
 
                           3. Result in: % % |- % '@' % : (LPM n_prefix) (typedExpressionIR_l_reduced '&&&' typedExpressionIR_r_reduced)
 
-                    2. Else Dangling#9734
+                    2. Else Dangling#9701
 
           2. Case (% = "ternary")
 
@@ -27114,7 +27092,7 @@ Arm 1:
 
                   1. Result in: % % |- % '@' % : (NON_LPM) (typedExpressionIR_l_reduced '&&&' typedExpressionIR_r_reduced)
 
-        1. Else Dangling#9718
+        1. Else Dangling#9685
 
     3. Case (% matches pattern `DEFAULT`)
 
@@ -27136,7 +27114,7 @@ Arm 1:
 
               1. Result in: % % |- % '@' % : (NON_LPM) (DEFAULT)
 
-            1. Else Dangling#9761
+            1. Else Dangling#9728
 
     4. Case (% matches pattern `_`)
 
@@ -27152,7 +27130,7 @@ Arm 1:
 
               1. Result in: % % |- % '@' % : (LPM 0) ('_')
 
-            2. Else Dangling#9766
+            2. Else Dangling#9733
 
           2. Case (% =/= "lpm")
 
@@ -27160,9 +27138,9 @@ Arm 1:
 
               1. Result in: % % |- % '@' % : (NON_LPM) ('_')
 
-            1. Else Dangling#9768
+            1. Else Dangling#9735
 
-  1. Else Dangling#9679
+  1. Else Dangling#9646
 
 Arm 2:
 
@@ -27184,7 +27162,7 @@ Arm 2:
 
               1. Result in: % % |- % '@' % : (NON_LPM) (typedExpressionIR_l_reduced '..' typedExpressionIR_r_reduced)
 
-  1. Else Dangling#9770
+  1. Else Dangling#9737
 
 def $is_singleton_list_expression(expression)
 
@@ -27212,7 +27190,7 @@ relation TableEntry_keysets_simple_ok: TC TBLC TBLS |- (matchKey)*{matchKey <- m
 
         1. Result in: % % % |- % '@' % : TBLS []
 
-      1. Else Dangling#9794
+      1. Else Dangling#9761
 
     2. Case (let matchKey_h :: (matchKey_t)*{matchKey_t <- matchKey_t*} be %, % matches pattern _ :: _)
 
@@ -27388,7 +27366,7 @@ def $infer((typeId)*{typeId <- typeId*}, (parameterIR)*{parameterIR <- parameter
 
       5. Return inference_resolved
 
-    8. Else Dangling#9852
+    8. Else Dangling#9819
 
 def $infer_pair(constraint, parameterIR, argumentIR)
 
@@ -27448,7 +27426,7 @@ def $gen_constraint(constraint, (typeIR_param)*{typeIR_param <- typeIR_param*}, 
 
   2. Return $merge_constraints(constraint, (constraint_pair)*{constraint_pair <- constraint_pair*})
 
-1. Else Dangling#9879
+1. Else Dangling#9846
 
 def $gen_constraint_pair(constraint, typeIR, typeIR_arg')
 
@@ -27594,7 +27572,7 @@ def $merge_constraint(constraint_pre, constraint_post)
 
   1. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_pre)*{typeId_pre <- typeId_pre*}, (`{ [] `}))
 
-3. Else Dangling#9959
+3. Else Dangling#9926
 
 def $merge_constraint'(constraint_pre, constraint_post, (typeId)*{typeId <- typeId*}, constraint)
 
@@ -27622,7 +27600,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*{typeId <- type
 
             2. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*{typeId_t <- typeId_t*}, constraint_updated)
 
-          1. Else Dangling#9965
+          1. Else Dangling#9932
 
         Arm 2:
 
@@ -27634,7 +27612,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*{typeId <- type
 
               2. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*{typeId_t <- typeId_t*}, constraint_updated)
 
-      1. Else Dangling#9964
+      1. Else Dangling#9931
 
     Arm 2:
 
@@ -27652,7 +27630,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*{typeId <- type
 
               2. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*{typeId_t <- typeId_t*}, constraint_updated)
 
-            1. Else Dangling#9980
+            1. Else Dangling#9947
 
           Arm 2:
 
@@ -27680,7 +27658,7 @@ def $merge_constraint'(constraint_pre, constraint_post, (typeId)*{typeId <- type
 
                       2. Return $merge_constraint'(constraint_pre, constraint_post, (typeId_t)*{typeId_t <- typeId_t*}, constraint_updated)
 
-                    2. Else Dangling#9993
+                    2. Else Dangling#9960
 
 def $merge_constraints(constraint_pre, (constraint)*{constraint <- constraint*})
 
@@ -27708,7 +27686,7 @@ Arm 1:
 
     1. Return (`{ [] `})
 
-  1. Else Dangling#10002
+  1. Else Dangling#9969
 
 Arm 2:
 
@@ -27728,9 +27706,9 @@ Arm 2:
 
             1. Return (`{ (typeId_h ':' typeIR_h) :: ((typeId_t ':' typeIR_t))*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `})
 
-          1. Else Dangling#10011
+          1. Else Dangling#9978
 
-        2. Else Dangling#10010
+        2. Else Dangling#9977
 
       2. Case (% matches pattern `UNKNOWN`)
 
@@ -27744,11 +27722,11 @@ Arm 2:
 
               1. Return (`{ (typeId_h ':' ((BOOL) as typeIR)) :: ((typeId_t ':' typeIR_t))*{typeIR_t <- typeIR_t*, typeId_t <- typeId_t*} `})
 
-            1. Else Dangling#10016
+            1. Else Dangling#9983
 
-          2. Else Dangling#10015
+          2. Else Dangling#9982
 
-        1. Else Dangling#10013
+        1. Else Dangling#9980
 
 def $resolve_type_alias(typeIR)
 
@@ -27766,7 +27744,7 @@ def $resolve_type_alias(typeIR)
 
     1. Return (nameIR_alias, (typeIR_arg)*{typeIR_arg <- typeIR_arg*})
 
-1. Else Dangling#10018
+1. Else Dangling#9985
 
 def $instantiable_extern(p, TC, instctxt)
 
@@ -27886,7 +27864,7 @@ def $instantiable(p, TC, instctxt, typeIR)
 
     1. Return $instantiable_table(p, TC, instctxt)
 
-2. Else Dangling#10052
+2. Else Dangling#10019
 
 def $callable_action(p, TC)
 
@@ -28450,7 +28428,7 @@ def $add_var_i(p, IC, id, value)
 
       2. Return IC[GLOBAL.FRAME = frame]
 
-    1. Else Dangling#10174
+    1. Else Dangling#10141
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -28460,7 +28438,7 @@ def $add_var_i(p, IC, id, value)
 
       2. Return IC[BLOCK.FRAME = frame]
 
-    1. Else Dangling#10177
+    1. Else Dangling#10144
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -28474,7 +28452,7 @@ def $add_var_i(p, IC, id, value)
 
         2. Return IC[LOCAL.FRAMES = frame_h' :: (frame_t)*{frame_t <- frame_t*}]
 
-      1. Else Dangling#10183
+      1. Else Dangling#10150
 
 def $add_vars_i(p, IC, (id)*{id <- id*}, (value)*{value <- value*})
 
@@ -28486,7 +28464,7 @@ def $add_vars_i(p, IC, (id)*{id <- id*}, (value)*{value <- value*})
 
       1. Return IC
 
-    1. Else Dangling#10187
+    1. Else Dangling#10154
 
   2. Case (let id_h :: (id_t)*{id_t <- id_t*} be %, % matches pattern _ :: _)
 
@@ -28506,7 +28484,7 @@ def $add_typeDef_i(p, IC, typeId, typeDefIR)
 
   2. Return IC[GLOBAL.TYPE = typeDefEnv]
 
-1. Else Dangling#10195
+1. Else Dangling#10162
 
 def $add_parserState_i(IC, nameIR, parserStateIR)
 
@@ -28516,7 +28494,7 @@ def $add_parserState_i(IC, nameIR, parserStateIR)
 
   2. Return IC[BLOCK.STATE = stateEnv]
 
-1. Else Dangling#10198
+1. Else Dangling#10165
 
 def $add_type_i(p, IC, typeId, typeIR)
 
@@ -28534,7 +28512,7 @@ def $add_type_i(p, IC, typeId, typeIR)
 
     2. Return IC[LOCAL.TYPE = theta]
 
-1. Else Dangling#10201
+1. Else Dangling#10168
 
 def $add_types_i(p, IC, (typeId)*{typeId <- typeId*}, (typeIR)*{typeIR <- typeIR*})
 
@@ -28546,7 +28524,7 @@ def $add_types_i(p, IC, (typeId)*{typeId <- typeId*}, (typeIR)*{typeIR <- typeIR
 
       1. Return IC
 
-    1. Else Dangling#10207
+    1. Else Dangling#10174
 
   2. Case (let typeId_h :: (typeId_t)*{typeId_t <- typeId_t*} be %, % matches pattern _ :: _)
 
@@ -28568,7 +28546,7 @@ def $add_callableDef_overload_i(p, IC, callableId, callableDef)
 
       2. Return IC[GLOBAL.CALLABLE = callableDefEnv]
 
-    1. Else Dangling#10215
+    1. Else Dangling#10182
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -28578,9 +28556,9 @@ def $add_callableDef_overload_i(p, IC, callableId, callableDef)
 
       2. Return IC[BLOCK.CALLABLE = callableDefEnv]
 
-    1. Else Dangling#10218
+    1. Else Dangling#10185
 
-1. Else Dangling#10214
+1. Else Dangling#10181
 
 def $add_callableDef_non_overload_i(p, IC, callableId, callableDef)
 
@@ -28598,7 +28576,7 @@ def $add_callableDef_non_overload_i(p, IC, callableId, callableDef)
 
       2. Return IC[GLOBAL.CALLABLE = callableDefEnv]
 
-    3. Else Dangling#10224
+    3. Else Dangling#10191
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -28612,9 +28590,9 @@ def $add_callableDef_non_overload_i(p, IC, callableId, callableDef)
 
       2. Return IC[BLOCK.CALLABLE = callableDefEnv]
 
-    3. Else Dangling#10229
+    3. Else Dangling#10196
 
-1. Else Dangling#10221
+1. Else Dangling#10188
 
 def $find_callableDef_non_overload_i(p, IC, prefixedNameIR)
 
@@ -28632,7 +28610,7 @@ Arm 1:
 
         1. Return ?()
 
-      1. Else Dangling#10234
+      1. Else Dangling#10201
 
     Arm 2:
 
@@ -28668,7 +28646,7 @@ Arm 2:
 
             1. Return $find_callableDef_non_overload_i((GLOBAL), IC, (_BARE nameIR))
 
-          1. Else Dangling#10250
+          1. Else Dangling#10217
 
     3. Case (% matches pattern `LOCAL`)
 
@@ -28692,7 +28670,7 @@ def $add_constructorDefs_i(IC, (callableId)*{callableId <- callableId*}, (constr
 
       1. Return IC
 
-    1. Else Dangling#10258
+    1. Else Dangling#10225
 
   2. Case (let callableId_h :: (callableId_t)*{callableId_t <- callableId_t*} be %, % matches pattern _ :: _)
 
@@ -28740,7 +28718,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
             1. Return $find_var_i((_BARE id), (GLOBAL), IC)
 
-          1. Else Dangling#10282
+          1. Else Dangling#10249
 
       3. Case (% matches pattern `LOCAL`)
 
@@ -28758,7 +28736,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
             1. Return $find_var_i((_BARE id), (BLOCK), IC)
 
-          1. Else Dangling#10288
+          1. Else Dangling#10255
 
 def $find_typeDef_i(_p, IC, prefixedNameIR)
 
@@ -28840,7 +28818,7 @@ Arm 1:
 
         1. Result in: % % % |- % : STO (stringLiteral as value)
 
-    1. Else Dangling#10313
+    1. Else Dangling#10280
 
 Arm 2:
 
@@ -28884,7 +28862,7 @@ Arm 2:
 
             3. Result in: % % % |- % : STO_2 $bin_op(binop, value_l, value_r)
 
-          1. Else Dangling#10335
+          1. Else Dangling#10302
 
         Arm 2:
 
@@ -28906,7 +28884,7 @@ Arm 2:
 
                   2. Result in: % % % |- % : STO_2 value_r
 
-              2. Else Dangling#10341
+              2. Else Dangling#10308
 
             2. Case (% matches pattern `||`)
 
@@ -28924,9 +28902,9 @@ Arm 2:
 
                   2. Result in: % % % |- % : STO_2 value_r
 
-              2. Else Dangling#10346
+              2. Else Dangling#10313
 
-          1. Else Dangling#10339
+          1. Else Dangling#10306
 
     5. Case (let (typedExpressionIR_cond '?' typedExpressionIR_true ':' typedExpressionIR_false) be %, % has type ternaryExpressionIR)
 
@@ -28948,7 +28926,7 @@ Arm 2:
 
             2. Result in: % % % |- % : STO_2 value_false
 
-        2. Else Dangling#10353
+        2. Else Dangling#10320
 
     6. Case (let (`( typeIR `) typedExpressionIR) be %, % has type castExpressionIR)
 
@@ -28998,7 +28976,7 @@ Arm 2:
 
               1. Result in: % % % |- % : STO_1 ((RECORD `{ ((value nameIR ';'))*{nameIR <- nameIR*, value <- value*} `}) as value)
 
-            2. Else Dangling#10380
+            2. Else Dangling#10347
 
           2. Case (let (RECORD `{ ((nameIR '=' typedExpressionIR))*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} ',' '...' `}) be %, % matches pattern `RECORD {% , ...}`)
 
@@ -29008,7 +28986,7 @@ Arm 2:
 
               1. Result in: % % % |- % : STO_1 ((RECORD `{ ((value nameIR ';'))*{nameIR <- nameIR*, value <- value*} ',' '...' `}) as value)
 
-            2. Else Dangling#10384
+            2. Else Dangling#10351
 
     10. Case (let (ERROR '.' nameIR) be %, % has type errorAccessExpressionIR)
 
@@ -29046,7 +29024,7 @@ Arm 2:
 
                     1. Result in: % % % |- % : STO ((typeId '.' nameIR '.' value) as value)
 
-              3. Else Dangling#10400
+              3. Else Dangling#10367
 
         2. Case (let typedExpressionIR_base be %, % has type typedExpressionIR)
 
@@ -29066,7 +29044,7 @@ Arm 2:
 
                   1. Result in: % % % |- % : STO ((32 W (n_size as int)) as value)
 
-                1. Else Dangling#10414
+                1. Else Dangling#10381
 
             Arm 2:
 
@@ -29098,7 +29076,7 @@ Arm 2:
 
                     1. Result in: % % % |- % : STO_1 value
 
-              2. Else Dangling#10417
+              2. Else Dangling#10384
 
     12. Case (let (typedExpressionIR_base `[ typedExpressionIR_index `]) be %, % has type indexAccessExpressionIR)
 
@@ -29124,9 +29102,9 @@ Arm 2:
 
                     2. Result in: % % % |- % : STO_2 value
 
-                  1. Else Dangling#10448
+                  1. Else Dangling#10415
 
-                1. Else Dangling#10447
+                1. Else Dangling#10414
 
             2. Case (let (ARRAY `[ (value_e)*{value_e <- value_e*} `]) be %, % has type arrayValue)
 
@@ -29140,9 +29118,9 @@ Arm 2:
 
                     2. Result in: % % % |- % : STO_2 value
 
-                  1. Else Dangling#10456
+                  1. Else Dangling#10423
 
-                1. Else Dangling#10455
+                1. Else Dangling#10422
 
             3. Case (let (HEADER_STACK `[ (value_e)*{value_e <- value_e*} `( _nat `) `]) be %, % has type headerStackValue)
 
@@ -29156,11 +29134,11 @@ Arm 2:
 
                     2. Result in: % % % |- % : STO_2 value
 
-                  1. Else Dangling#10464
+                  1. Else Dangling#10431
 
-                1. Else Dangling#10463
+                1. Else Dangling#10430
 
-          1. Else Dangling#10442
+          1. Else Dangling#10409
 
     13. Case (let (typedExpressionIR_base `[ typedExpressionIR sliceop typedExpressionIR' `]) be %, % has type sliceAccessExpressionIR)
 
@@ -29224,7 +29202,7 @@ Arm 2:
 
                     1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                  2. Else Dangling#10492
+                  2. Else Dangling#10459
 
                 2. Case (let (TYPE prefixedNameIR '.' nameIR) be %, % matches pattern `TYPE % . %`)
 
@@ -29240,7 +29218,7 @@ Arm 2:
 
                           1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                        2. Else Dangling#10500
+                        2. Else Dangling#10467
 
                       2. Case false
 
@@ -29252,11 +29230,11 @@ Arm 2:
 
                             1. Result in: % % % |- % : STO $sizeof(typeIR_base, nameIR)
 
-                          2. Else Dangling#10504
+                          2. Else Dangling#10471
 
-                        1. Else Dangling#10502
+                        1. Else Dangling#10469
 
-              1. Else Dangling#10489
+              1. Else Dangling#10456
 
           Arm 2:
 
@@ -29276,7 +29254,7 @@ Arm 2:
 
         2. Result in: % % % |- % : STO_1 value
 
-  1. Else Dangling#10321
+  1. Else Dangling#10288
 
 relation Exprs_inst: p IC STO |- (typedExpressionIR)*{typedExpressionIR <- typedExpressionIR*} : % %
 
@@ -29314,7 +29292,7 @@ relation Argument_inst: p IC STO_0 |- argumentIR : % %
 
       2. Result in: % % % |- % : STO_1 value
 
-  1. Else Dangling#10523
+  1. Else Dangling#10490
 
 relation DirectApplicationStmt_inst: p IC STO_0 |- (constructorTargetIR '.' APPLY `( argumentListIR `) ';') : % % %
 
@@ -29452,9 +29430,9 @@ Arm 1:
 
                 3. Result in: % % % |- % : IC STO_1 (forStatementIR as statementIR)
 
-              1. Else Dangling#10588
+              1. Else Dangling#10555
 
-          1. Else Dangling#10582
+          1. Else Dangling#10549
 
     8. Case (let breakStatementIR be %, % has type breakStatementIR)
 
@@ -29476,7 +29454,7 @@ Arm 1:
 
         2. Result in: % % % |- % : IC STO_1 ((SWITCH `( typedExpressionIR `) `{ switchCaseListIR_inst `}) as statementIR)
 
-  1. Else Dangling#10546
+  1. Else Dangling#10513
 
 Arm 2:
 
@@ -29502,9 +29480,9 @@ Arm 2:
 
           4. Result in: % % % |- % : IC_3 STO_1 ((annotationList `{ blockElementStatementListIR_inst `}) as statementIR)
 
-    1. Else Dangling#10603
+    1. Else Dangling#10570
 
-  1. Else Dangling#10602
+  1. Else Dangling#10569
 
 relation BlockElementStmt_inst: IC STO |- blockElementStatementIR : % % %
 
@@ -29886,7 +29864,7 @@ relation TableAction_inst: IC STO |- (annotationList tableActionReferenceIR '#' 
 
           5. Result in: % % |- % : STO tableActionIR
 
-        1. Else Dangling#10781
+        1. Else Dangling#10748
 
 relation TableActions_inst: IC STO |- (tableActionIR)*{tableActionIR <- tableActionIR*} : % %
 
@@ -30048,7 +30026,7 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
             3. Result in: % % |- % : IC_1 STO_2 ?((constantDeclarationIR as controlLocalDeclarationIR))
 
-          1. Else Dangling#10855
+          1. Else Dangling#10822
 
         Arm 2:
 
@@ -30162,7 +30140,7 @@ relation InstDecl_inst: p IC_0 STO_0 |- (annotationList typeIR constructorTarget
 
       5. Result in: % % % |- % : IC_1 STO_2 constantDeclarationIR
 
-    4. Else Dangling#10902
+    4. Else Dangling#10869
 
 relation FuncDecl_inst: p IC_0 |- (annotationList (typeIR nameIR `< typeParameterListIR_expl ',' typeParameterListIR_impl `> `( parameterListIR `)) blockStatementIR) : %
 
@@ -30464,7 +30442,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
                         4. Result in: % % |- % : IC_2 STO
 
-                      1. Else Dangling#11047
+                      1. Else Dangling#11014
 
       2. Case (let (annotationList TYPE typeIR nameIR ';') be %, % matches pattern `% TYPE % % ;`)
 
@@ -30570,7 +30548,7 @@ relation Copy_in_inst: STO p_caller IC_caller (argumentIR)*{argumentIR <- argume
 
         1. Result in: % % % % '@' % % % ~> STO IC
 
-      1. Else Dangling#11096
+      1. Else Dangling#11063
 
     2. Case (let argumentIR_h :: (argumentIR_t)*{argumentIR_t <- argumentIR_t*} be %, % matches pattern _ :: _)
 
@@ -30640,7 +30618,7 @@ relation Constructor_inst: p IC |- prefixedNameIR `< (typeArgumentIR')*{typeArgu
 
         1. Result in: % % |- % `< % `> `( % `) : constructorDef `< (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} `> `( '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `)
 
-    1. Else Dangling#11125
+    1. Else Dangling#11092
 
   Arm 2:
 
@@ -30652,7 +30630,7 @@ relation Constructor_inst: p IC |- prefixedNameIR `< (typeArgumentIR')*{typeArgu
 
           1. Result in: % % |- % `< % `> `( % `) : constructorDef `< (typeArgumentIR')*{typeArgumentIR' <- typeArgumentIR'*} `> `( '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `)
 
-      1. Else Dangling#11133
+      1. Else Dangling#11100
 
   Arm 3:
 
@@ -30668,7 +30646,7 @@ relation Constructor_inst: p IC |- prefixedNameIR `< (typeArgumentIR')*{typeArgu
 
             1. Result in: % % |- % `< % `> `( % `) : constructorDef `< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} `> `( '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `)
 
-    1. Else Dangling#11138
+    1. Else Dangling#11105
 
 relation Constructor_call: p IC STO_0 |- constructorDef `< (typeArgumentIR)*{typeArgumentIR <- typeArgumentIR*} `> `( (argumentIR)*{argumentIR <- argumentIR*} '#' (id_default)*{id_default <- id_default*} '#' (id_optional)*{id_optional <- id_optional*} `) : % %
 
@@ -30732,15 +30710,15 @@ relation Constructor_call: p IC STO_0 |- constructorDef `< (typeArgumentIR)*{typ
 
                 7. Result in: % % % |- % `< % `> `( % '#' % '#' % `) : STO_2 object_extern
 
-              3. Else Dangling#11171
+              3. Else Dangling#11138
 
-            1. Else Dangling#11168
+            1. Else Dangling#11135
 
-          3. Else Dangling#11167
+          3. Else Dangling#11134
 
-        9. Else Dangling#11164
+        9. Else Dangling#11131
 
-      4. Else Dangling#11155
+      4. Else Dangling#11122
 
   2. Case (let parserObjectConstructorDef be %, % has type parserObjectConstructorDef)
 
@@ -30778,7 +30756,7 @@ relation Constructor_call: p IC STO_0 |- constructorDef `< (typeArgumentIR)*{typ
 
         12. Result in: % % % |- % `< % `> `( % '#' % '#' % `) : STO_4 object_parser
 
-      4. Else Dangling#11184
+      4. Else Dangling#11151
 
   3. Case (let controlObjectConstructorDef be %, % has type controlObjectConstructorDef)
 
@@ -30820,9 +30798,9 @@ relation Constructor_call: p IC STO_0 |- constructorDef `< (typeArgumentIR)*{typ
 
           3. Result in: % % % |- % `< % `> `( % '#' % '#' % `) : STO_4 object_control
 
-        11. Else Dangling#11213
+        11. Else Dangling#11180
 
-      4. Else Dangling#11202
+      4. Else Dangling#11169
 
   4. Case (let packageObjectConstructorDef be %, % has type packageObjectConstructorDef)
 
@@ -30854,7 +30832,7 @@ relation Constructor_call: p IC STO_0 |- constructorDef `< (typeArgumentIR)*{typ
 
         9. Result in: % % % |- % `< % `> `( % '#' % '#' % `) : STO_2 object_package
 
-      4. Else Dangling#11222
+      4. Else Dangling#11189
 
 relation SwitchCase_inst: p IC STO |- switchCaseIR : % %
 
@@ -30906,7 +30884,7 @@ Arm 1:
 
     1. Return externMethodDefEnv
 
-  1. Else Dangling#11249
+  1. Else Dangling#11216
 
 Arm 2:
 
@@ -31028,7 +31006,7 @@ Arm 2:
 
     1. Return (KEY '=' `{ [] `})
 
-  1. Else Dangling#11306
+  1. Else Dangling#11273
 
 def $init_tableEntries((tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 
@@ -31050,7 +31028,7 @@ Arm 2:
 
     1. Return ((_EMPTY) ?() ENTRIES '=' `{ [] `})
 
-  1. Else Dangling#11314
+  1. Else Dangling#11281
 
 syntax globalEvalLayer = globalInstLayer
 
@@ -31162,7 +31140,7 @@ def $add_vars_e(p, EC, (prefixedNameIR)*{prefixedNameIR <- prefixedNameIR*}, (va
 
       1. Return EC
 
-    1. Else Dangling#11352
+    1. Else Dangling#11319
 
   2. Case (let prefixedNameIR_h :: (prefixedNameIR_t)*{prefixedNameIR_t <- prefixedNameIR_t*} be %, % matches pattern _ :: _)
 
@@ -31202,7 +31180,7 @@ Arm 2:
 
           2. Return EC[GLOBAL.FRAME = frame']
 
-        2. Else Dangling#11368
+        2. Else Dangling#11335
 
     2. Case (% matches pattern `BLOCK`)
 
@@ -31234,7 +31212,7 @@ Arm 2:
 
             1. Return $update_var_e((BLOCK), EC, (_BARE id), value)
 
-          1. Else Dangling#11380
+          1. Else Dangling#11347
 
         Arm 2:
 
@@ -31294,7 +31272,7 @@ def $find_var_e(prefixedNameIR, p, EC)
 
             1. Return $find_var_e((_BARE id), (GLOBAL), EC)
 
-          1. Else Dangling#11407
+          1. Else Dangling#11374
 
       3. Case (% matches pattern `LOCAL`)
 
@@ -31312,7 +31290,7 @@ def $find_var_e(prefixedNameIR, p, EC)
 
             1. Return $find_var_e((_BARE id), (BLOCK), EC)
 
-          1. Else Dangling#11413
+          1. Else Dangling#11380
 
 def $find_typeDef_e(_p, EC, prefixedNameIR)
 
@@ -31350,9 +31328,9 @@ def $find_type_e(p, EC, nameIR)
 
         1. Return $find_type_e((BLOCK), EC, nameIR)
 
-      1. Else Dangling#11426
+      1. Else Dangling#11393
 
-1. Else Dangling#11420
+1. Else Dangling#11387
 
 def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, (argumentIR)*{argumentIR <- argumentIR*})
 
@@ -31380,7 +31358,7 @@ def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, (argumentIR)*{argument
 
             1. Return ?()
 
-          1. Else Dangling#11436
+          1. Else Dangling#11403
 
       2. Case (let ('.' nameIR) be %, % matches pattern `. %`)
 
@@ -31400,7 +31378,7 @@ def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, (argumentIR)*{argument
 
             1. Return ?()
 
-          1. Else Dangling#11444
+          1. Else Dangling#11411
 
   2. Case (% matches pattern `BLOCK`)
 
@@ -31422,7 +31400,7 @@ def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, (argumentIR)*{argument
 
           1. Return $find_callableDef_overloaded_e((GLOBAL), EC, (_BARE nameIR), (argumentIR)*{argumentIR <- argumentIR*})
 
-        1. Else Dangling#11453
+        1. Else Dangling#11420
 
   3. Case (% matches pattern `LOCAL`)
 
@@ -31548,7 +31526,7 @@ def $update_object_qualified_e(ARCH_0, objectId, object)
 
   2. Return ARCH_1
 
-1. Else Dangling#11499
+1. Else Dangling#11466
 
 def $update_object_unqualified_e(ARCH_0, id, object)
 
@@ -31644,7 +31622,7 @@ Arm 1:
 
         2. Result in: % % % |- % : EC ARCH expressionResult
 
-    1. Else Dangling#11522
+    1. Else Dangling#11489
 
 Arm 2:
 
@@ -31716,7 +31694,7 @@ Arm 2:
 
                   3. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-          1. Else Dangling#11554
+          1. Else Dangling#11521
 
         Arm 2:
 
@@ -31750,7 +31728,7 @@ Arm 2:
 
                     2. Result in: % % % |- % : EC_2 ARCH_2 expressionResult_r
 
-                1. Else Dangling#11569
+                1. Else Dangling#11536
 
             2. Case (% matches pattern `||`)
 
@@ -31780,9 +31758,9 @@ Arm 2:
 
                     2. Result in: % % % |- % : EC_2 ARCH_2 expressionResult_r
 
-                1. Else Dangling#11578
+                1. Else Dangling#11545
 
-          1. Else Dangling#11564
+          1. Else Dangling#11531
 
     5. Case (let (typedExpressionIR_cond '?' typedExpressionIR_true ':' typedExpressionIR_false) be %, % has type ternaryExpressionIR)
 
@@ -31814,7 +31792,7 @@ Arm 2:
 
               2. Result in: % % % |- % : EC_2 ARCH_2 expressionResult_false
 
-          1. Else Dangling#11589
+          1. Else Dangling#11556
 
     6. Case (let (`( typeIR `) typedExpressionIR) be %, % has type castExpressionIR)
 
@@ -31904,7 +31882,7 @@ Arm 2:
 
                   2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                1. Else Dangling#11635
+                1. Else Dangling#11602
 
           2. Case (let (RECORD `{ ((nameIR '=' typedExpressionIR))*{nameIR <- nameIR*, typedExpressionIR <- typedExpressionIR*} ',' '...' `}) be %, % matches pattern `RECORD {% , ...}`)
 
@@ -31924,7 +31902,7 @@ Arm 2:
 
                   2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                1. Else Dangling#11644
+                1. Else Dangling#11611
 
     10. Case (let (ERROR '.' nameIR) be %, % has type errorAccessExpressionIR)
 
@@ -31968,7 +31946,7 @@ Arm 2:
 
                     2. Result in: % % % |- % : EC ARCH expressionResult
 
-              3. Else Dangling#11662
+              3. Else Dangling#11629
 
         2. Case (let typedExpressionIR_base be %, % has type typedExpressionIR)
 
@@ -32032,7 +32010,7 @@ Arm 2:
 
                                   3. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                                1. Else Dangling#11694
+                                1. Else Dangling#11661
 
                         3. Case (% = "lastIndex")
 
@@ -32048,7 +32026,7 @@ Arm 2:
 
                             3. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                      2. Else Dangling#11682
+                      2. Else Dangling#11649
 
                     2. Case (let structValue_base be %, % has type structValue)
 
@@ -32080,7 +32058,7 @@ Arm 2:
 
                         2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                  1. Else Dangling#11679
+                  1. Else Dangling#11646
 
             Arm 2:
 
@@ -32112,7 +32090,7 @@ Arm 2:
 
                       2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                  2. Else Dangling#11731
+                  2. Else Dangling#11698
 
     12. Case (let (typedExpressionIR_base `[ typedExpressionIR_index `]) be %, % has type indexAccessExpressionIR)
 
@@ -32146,7 +32124,7 @@ Arm 2:
 
                         2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                      1. Else Dangling#11755
+                      1. Else Dangling#11722
 
                 2. Case (let arrayValue_base be %, % has type arrayValue)
 
@@ -32170,7 +32148,7 @@ Arm 2:
 
                         2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                      1. Else Dangling#11768
+                      1. Else Dangling#11735
 
                 3. Case (let headerStackValue_base be %, % has type headerStackValue)
 
@@ -32194,9 +32172,9 @@ Arm 2:
 
                         2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-                      1. Else Dangling#11781
+                      1. Else Dangling#11748
 
-              1. Else Dangling#11747
+              1. Else Dangling#11714
 
     13. Case (let (typedExpressionIR_base `[ typedExpressionIR sliceop typedExpressionIR' `]) be %, % has type sliceAccessExpressionIR)
 
@@ -32282,7 +32260,7 @@ Arm 2:
 
         2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-  1. Else Dangling#11533
+  1. Else Dangling#11500
 
 syntax expressionListResult = 
    | _CONT value* (from continueResult<value*>) 
@@ -32356,7 +32334,7 @@ relation Argument_eval: p EC_0 ARCH_0 |- argumentIR : % % %
 
       2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-  1. Else Dangling#11846
+  1. Else Dangling#11813
 
 syntax storageReferenceResult = 
    | _CONT storageReference? (from continueResult<storageReference?>) 
@@ -32443,9 +32421,9 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR '#' lvalueNoteIR) : % % %
 
                       2. Result in: % % % |- % : EC_1 ARCH_1 (rejectTransitionResult as storageReferenceResult)
 
-                    2. Else Dangling#11888
+                    2. Else Dangling#11855
 
-                  1. Else Dangling#11886
+                  1. Else Dangling#11853
 
                 Arm 2:
 
@@ -32459,9 +32437,9 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR '#' lvalueNoteIR) : % % %
 
                       2. Result in: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
-                    1. Else Dangling#11893
+                    1. Else Dangling#11860
 
-                  2. Else Dangling#11892
+                  2. Else Dangling#11859
 
                 Arm 3:
 
@@ -32475,9 +32453,9 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR '#' lvalueNoteIR) : % % %
 
                       2. Result in: % % % |- % : EC_1 ARCH_1 (rejectTransitionResult as storageReferenceResult)
 
-                    2. Else Dangling#11898
+                    2. Else Dangling#11865
 
-                  1. Else Dangling#11896
+                  1. Else Dangling#11863
 
                 Arm 4:
 
@@ -32491,9 +32469,9 @@ relation Lvalue_eval: p EC ARCH |- (lvalueIR '#' lvalueNoteIR) : % % %
 
                       2. Result in: % % % |- % : EC_1 ARCH_1 storageReferenceResult
 
-                    1. Else Dangling#11903
+                    1. Else Dangling#11870
 
-                  2. Else Dangling#11902
+                  2. Else Dangling#11869
 
               2. Case false
 
@@ -32621,9 +32599,9 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                   2. Result in: % % % |- % : value
 
-                1. Else Dangling#11972
+                1. Else Dangling#11939
 
-              2. Else Dangling#11971
+              2. Else Dangling#11938
 
             2. Case (% = "last")
 
@@ -32641,11 +32619,11 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                     2. Result in: % % % |- % : value
 
-                  1. Else Dangling#11980
+                  1. Else Dangling#11947
 
-              2. Else Dangling#11976
+              2. Else Dangling#11943
 
-          2. Else Dangling#11969
+          2. Else Dangling#11936
 
         3. Case (let structValue_base be %, % has type structValue)
 
@@ -32671,7 +32649,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
             1. Result in: % % % |- % : value
 
-      2. Else Dangling#11956
+      2. Else Dangling#11923
 
   3. Case (let (storageReference `[ value' `]) be %, % matches pattern `% [%]`)
 
@@ -32705,7 +32683,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                     2. Result in: % % % |- % : value
 
-                  1. Else Dangling#12015
+                  1. Else Dangling#11982
 
               2. Case false
 
@@ -32719,7 +32697,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                     2. Result in: % % % |- % : value
 
-                1. Else Dangling#12018
+                1. Else Dangling#11985
 
           2. Case (let headerStackValue_base be %, % has type headerStackValue)
 
@@ -32743,7 +32721,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                     2. Result in: % % % |- % : value
 
-                  1. Else Dangling#12032
+                  1. Else Dangling#11999
 
               2. Case false
 
@@ -32757,9 +32735,9 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                     2. Result in: % % % |- % : value
 
-                1. Else Dangling#12035
+                1. Else Dangling#12002
 
-        2. Else Dangling#12006
+        2. Else Dangling#11973
 
   4. Case (let (storageReference `[ value' sliceop value'' `]) be %, % matches pattern `% [% % %]`)
 
@@ -32833,7 +32811,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
                 4. Result in: % % % |- % := % : EC_1
 
-          2. Else Dangling#12061
+          2. Else Dangling#12028
 
         2. Case (let structValue_base be %, % has type structValue)
 
@@ -32895,7 +32873,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
                     4. Result in: % % % |- % := % : EC_1
 
-      2. Else Dangling#12058
+      2. Else Dangling#12025
 
   3. Case (let (storageReference `[ value' `]) be %, % matches pattern `% [%]`)
 
@@ -32963,7 +32941,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
                 1. Result in: % % % |- % := % : EC_0
 
-        2. Else Dangling#12110
+        2. Else Dangling#12077
 
   4. Case (let (storageReference `[ value' sliceop value'' `]) be %, % matches pattern `% [% % %]`)
 
@@ -33160,7 +33138,7 @@ Arm 1:
 
                   1. Result in: % % % |- % : EC_cond ARCH_cond ((_EMPTY) as statementResult)
 
-              1. Else Dangling#12210
+              1. Else Dangling#12177
 
           2. Case (let (IF `( typedExpressionIR_cond `) statementIR_then ELSE statementIR_else) be %, % matches pattern `IF (%) % ELSE %`)
 
@@ -33190,9 +33168,9 @@ Arm 1:
 
                   2. Result in: % % % |- % : EC_else ARCH_else statementResult
 
-              1. Else Dangling#12219
+              1. Else Dangling#12186
 
-  1. Else Dangling#12148
+  1. Else Dangling#12115
 
 Arm 2:
 
@@ -33254,7 +33232,7 @@ Arm 2:
 
                   3. Result in: % % % |- % : EC_4 ARCH_2 statementResult
 
-              3. Else Dangling#12243
+              3. Else Dangling#12210
 
         Arm 2:
 
@@ -33296,7 +33274,7 @@ Arm 2:
 
                 2. Result in: % % % |- % : EC_1 ARCH_1 statementResult
 
-            1. Else Dangling#12252
+            1. Else Dangling#12219
 
       3. Case (let breakStatement be %, % has type breakStatement)
 
@@ -33340,9 +33318,9 @@ Arm 2:
 
                   2. Result in: % % % |- % : EC_2 ARCH_2 statementResult
 
-    1. Else Dangling#12225
+    1. Else Dangling#12192
 
-  1. Else Dangling#12224
+  1. Else Dangling#12191
 
 relation BlockElementStmt_eval: EC_0 ARCH |- blockElementStatementIR : % % %
 
@@ -33390,7 +33368,7 @@ relation BlockElementStmtList_eval: EC ARCH |- (blockElementStatementIR)*{blockE
 
           1. Result in: % % |- % : EC_1 ARCH_1 statementResult
 
-        1. Else Dangling#12305
+        1. Else Dangling#12272
 
       Arm 2:
 
@@ -33442,7 +33420,7 @@ relation ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : % % %
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((_EMPTY) as parserStatementResult)
 
-      2. Else Dangling#12324
+      2. Else Dangling#12291
 
   3. Case (let callStatementIR be %, % has type callStatementIR)
 
@@ -33460,7 +33438,7 @@ relation ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : % % %
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((_EMPTY) as parserStatementResult)
 
-      2. Else Dangling#12332
+      2. Else Dangling#12299
 
   4. Case (let parserBlockStatementIR be %, % has type parserBlockStatementIR)
 
@@ -33506,7 +33484,7 @@ relation ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : % % %
 
                 1. Result in: % % |- % : EC_cond ARCH_cond ((_EMPTY) as parserStatementResult)
 
-            1. Else Dangling#12351
+            1. Else Dangling#12318
 
         2. Case (let (IF `( typedExpressionIR_cond `) parserStatementIR_then ELSE parserStatementIR_else) be %, % matches pattern `IF (%) % ELSE %`)
 
@@ -33536,9 +33514,9 @@ relation ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : % % %
 
                 2. Result in: % % |- % : EC_else ARCH_else parserStatementResult
 
-            1. Else Dangling#12360
+            1. Else Dangling#12327
 
-1. Else Dangling#12314
+1. Else Dangling#12281
 
 relation ParserBlockElementStmt_eval: EC_0 ARCH |- parserBlockElementStatementIR : % % %
 
@@ -33566,7 +33544,7 @@ relation ParserBlockElementStmt_eval: EC_0 ARCH |- parserBlockElementStatementIR
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((_EMPTY) as parserStatementResult)
 
-      2. Else Dangling#12372
+      2. Else Dangling#12339
 
     3. Case (let parserStatementIR be %, % has type parserStatementIR)
 
@@ -33596,7 +33574,7 @@ relation ParserBlockElementStmtList_eval: EC ARCH |- (parserBlockElementStatemen
 
           1. Result in: % % |- % : EC_1 ARCH_1 parserStatementResult
 
-        1. Else Dangling#12385
+        1. Else Dangling#12352
 
       Arm 2:
 
@@ -33659,7 +33637,7 @@ relation ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : % % %
 
               2. Result in: % % |- % : EC_3 ARCH_3 transitionResult
 
-  3. Else Dangling#12397
+  3. Else Dangling#12364
 
 relation ParserTransition_eval: EC ARCH |- (TRANSITION stateExpressionIR) : % % %
 
@@ -33685,7 +33663,7 @@ relation ParserTransition_eval: EC ARCH |- (TRANSITION stateExpressionIR) : % % 
 
             2. Result in: % % |- % : EC ARCH ((REJECT errorValue) as transitionResult)
 
-        1. Else Dangling#12415
+        1. Else Dangling#12382
 
       Arm 2:
 
@@ -33693,7 +33671,7 @@ relation ParserTransition_eval: EC ARCH |- (TRANSITION stateExpressionIR) : % % 
 
           1. Result in: % % |- % : EC ARCH ((STATE nameIR) as transitionResult)
 
-        1. Else Dangling#12419
+        1. Else Dangling#12386
 
     2. Case (let selectExpressionIR be %, % has type selectExpressionIR)
 
@@ -33781,9 +33759,9 @@ relation ParserLocalDecl_eval: EC_0 ARCH |- parserLocalDeclarationIR : % % %
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((_EMPTY) as parserStatementResult)
 
-      2. Else Dangling#12457
+      2. Else Dangling#12424
 
-1. Else Dangling#12449
+1. Else Dangling#12416
 
 relation ParserLocalDecls_eval: EC ARCH |- (parserLocalDeclarationIR)*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} : % % %
 
@@ -33867,7 +33845,7 @@ relation Table_eval: EC_0 ARCH_0 |- typeId TBL : % % %
 
               6. Result in: % % |- % % : EC_3 ARCH_3 ((RETURN ?((tableMetadataStructValue as value))) as tableResult)
 
-          3. Else Dangling#12487
+          3. Else Dangling#12454
 
 syntax controlBodyResult = 
    | EXIT (from exitResult) 
@@ -33893,7 +33871,7 @@ relation ControlBody_eval: EC_0 ARCH_0 |- controlBodyIR : % % %
 
         1. Result in: % % |- % : EC_1 ARCH_1 ((EXIT) as controlBodyResult)
 
-    1. Else Dangling#12498
+    1. Else Dangling#12465
 
   Arm 2:
 
@@ -33901,7 +33879,7 @@ relation ControlBody_eval: EC_0 ARCH_0 |- controlBodyIR : % % %
 
       1. Result in: % % |- % : EC_1 ARCH_1 ((RETURN ?()) as controlBodyResult)
 
-    1. Else Dangling#12503
+    1. Else Dangling#12470
 
 syntax controlLocalDeclarationResult = 
    | _EMPTY (from continueEmptyResult) 
@@ -33935,9 +33913,9 @@ relation ControlLocalDecl_eval: EC_0 ARCH |- controlLocalDeclarationIR : % % %
 
           1. Result in: % % |- % : EC_1 ARCH_1 ((_EMPTY) as controlLocalDeclarationResult)
 
-      2. Else Dangling#12513
+      2. Else Dangling#12480
 
-1. Else Dangling#12505
+1. Else Dangling#12472
 
 relation ControlLocalDecls_eval: EC ARCH |- (controlLocalDeclarationIR)*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : % % %
 
@@ -34105,7 +34083,7 @@ Arm 1:
 
                       2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinPushFrontMethodCallee as callee)) as calleeResult)
 
-              1. Else Dangling#12585
+              1. Else Dangling#12552
 
         2. Case (% = "pop_front")
 
@@ -34139,7 +34117,7 @@ Arm 1:
 
                       2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinPopFrontMethodCallee as callee)) as calleeResult)
 
-              1. Else Dangling#12604
+              1. Else Dangling#12571
 
         3. Case (% = "isValid")
 
@@ -34173,7 +34151,7 @@ Arm 1:
 
                       2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinIsValidMethodCallee as callee)) as calleeResult)
 
-              1. Else Dangling#12623
+              1. Else Dangling#12590
 
         4. Case (% = "setValid")
 
@@ -34207,7 +34185,7 @@ Arm 1:
 
                       2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinSetValidMethodCallee as callee)) as calleeResult)
 
-              1. Else Dangling#12642
+              1. Else Dangling#12609
 
         5. Case (% = "setInvalid")
 
@@ -34241,11 +34219,11 @@ Arm 1:
 
                       2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (builtinSetInvalidMethodCallee as callee)) as calleeResult)
 
-              1. Else Dangling#12661
+              1. Else Dangling#12628
 
-      1. Else Dangling#12576
+      1. Else Dangling#12543
 
-  1. Else Dangling#12546
+  1. Else Dangling#12513
 
 Arm 2:
 
@@ -34265,9 +34243,9 @@ Arm 2:
 
           3. Result in: % % % |- % `< '_' `> `( % `) : EC ARCH ((_CONT (builtinSizeMethodCallee as callee)) as calleeResult)
 
-        1. Else Dangling#12677
+        1. Else Dangling#12644
 
-    1. Else Dangling#12675
+    1. Else Dangling#12642
 
 Arm 3:
 
@@ -34313,7 +34291,7 @@ Arm 3:
 
                             2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (externMethodCallee as callee)) as calleeResult)
 
-                          1. Else Dangling#12708
+                          1. Else Dangling#12675
 
     Arm 2:
 
@@ -34397,7 +34375,7 @@ Arm 3:
 
                             2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (controlApplyMethodCallee as callee)) as calleeResult)
 
-      1. Else Dangling#12711
+      1. Else Dangling#12678
 
 Arm 4:
 
@@ -34437,9 +34415,9 @@ Arm 4:
 
                         2. Result in: % % % |- % `< '_' `> `( % `) : EC_1 ARCH_1 ((_CONT (tableApplyMethodCallee as callee)) as calleeResult)
 
-      1. Else Dangling#12770
+      1. Else Dangling#12737
 
-    1. Else Dangling#12769
+    1. Else Dangling#12736
 
 Arm 5:
 
@@ -34480,7 +34458,7 @@ Arm 1:
 
           2. Result in: % |- % % % '@' % % % ~> ARCH_1 EC_caller_1 EC_callee_1 '#' ((_CONT ?()) as copyInArgumentResult)
 
-    1. Else Dangling#12798
+    1. Else Dangling#12765
 
 Arm 2:
 
@@ -34530,7 +34508,7 @@ Arm 2:
 
             4. Result in: % |- % % % '@' % % % ~> ARCH_1 EC_caller_1 EC_callee_1 '#' ((_CONT (storageReference)?{storageReference <- storageReference?}) as copyInArgumentResult)
 
-  1. Else Dangling#12806
+  1. Else Dangling#12773
 
 syntax copyInResult = 
    | _CONT storageReference?* (from continueResult<storageReference?*>) 
@@ -34551,7 +34529,7 @@ relation Copy_in: p_shared ARCH |- p_caller EC (parameterIR)*{parameterIR <- par
 
         2. Result in: % % |- % % % '@' % % % ~> ARCH EC EC_callee_1 '#' ((_CONT []) as copyInResult)
 
-      1. Else Dangling#12830
+      1. Else Dangling#12797
 
     2. Case (let parameterIR_h :: (parameterIR_t)*{parameterIR_t <- parameterIR_t*} be %, % matches pattern _ :: _)
 
@@ -34599,9 +34577,9 @@ relation Copy_in_default: (parameterIR)*{parameterIR <- parameterIR*} '@' p_call
 
       3. Result in: % '@' % % ~> EC_callee_1
 
-    2. Else Dangling#12852
+    2. Else Dangling#12819
 
-  2. Else Dangling#12850
+  2. Else Dangling#12817
 
 relation Copy_out_argument: ARCH |- p_caller EC_caller_0 (annotationList direction typeIR nameIR parameterInitializerOptIR) '@' p_callee EC_callee (storageReference')?{storageReference' <- storageReference'?} ~> %
 
@@ -34617,9 +34595,9 @@ Arm 1:
 
         1. Result in: % |- % % % '@' % % % ~> EC_caller_0
 
-      1. Else Dangling#12858
+      1. Else Dangling#12825
 
-  1. Else Dangling#12856
+  1. Else Dangling#12823
 
 Arm 2:
 
@@ -34633,7 +34611,7 @@ Arm 2:
 
           1. Result in: % |- % % % '@' % % % ~> EC_caller_0
 
-        1. Else Dangling#12862
+        1. Else Dangling#12829
 
       2. Case (let ?(storageReference) be %, % matches pattern (_))
 
@@ -34645,7 +34623,7 @@ Arm 2:
 
           3. Result in: % |- % % % '@' % % % ~> EC_caller_1
 
-        1. Else Dangling#12865
+        1. Else Dangling#12832
 
 relation Copy_out: p_shared ARCH |- p_caller EC_caller_0 parameterListIR '@' p_callee EC_callee ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> %
 
@@ -34715,11 +34693,11 @@ Arm 1:
 
                     2. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 ((RETURN ?()) as callResult)
 
-                  1. Else Dangling#12892
+                  1. Else Dangling#12859
 
-            5. Else Dangling#12882
+            5. Else Dangling#12849
 
-        1. Else Dangling#12876
+        1. Else Dangling#12843
 
       2. Case (let definedFunctionCallee be %, % has type definedFunctionCallee)
 
@@ -34755,9 +34733,9 @@ Arm 1:
 
                 4. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 (definedFunctionResult as callResult)
 
-          3. Else Dangling#12899
+          3. Else Dangling#12866
 
-    1. Else Dangling#12874
+    1. Else Dangling#12841
 
   Arm 2:
 
@@ -34809,7 +34787,7 @@ Arm 1:
 
                   2. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 callResult
 
-        3. Else Dangling#12918
+        3. Else Dangling#12885
 
   Arm 3:
 
@@ -34879,7 +34857,7 @@ Arm 1:
 
                               6. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                          1. Else Dangling#12959
+                          1. Else Dangling#12926
 
                         Arm 2:
 
@@ -34895,9 +34873,9 @@ Arm 1:
 
                             5. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                          1. Else Dangling#12971
+                          1. Else Dangling#12938
 
-        1. Else Dangling#12937
+        1. Else Dangling#12904
 
       2. Case (let builtinPopFrontMethodCallee be %, % has type builtinPopFrontMethodCallee)
 
@@ -34961,7 +34939,7 @@ Arm 1:
 
                               7. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                          1. Else Dangling#13000
+                          1. Else Dangling#12967
 
                         Arm 2:
 
@@ -34979,11 +34957,11 @@ Arm 1:
 
                               3. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_1 ((RETURN ?()) as callResult)
 
-                          1. Else Dangling#13011
+                          1. Else Dangling#12978
 
-        1. Else Dangling#12978
+        1. Else Dangling#12945
 
-    1. Else Dangling#12935
+    1. Else Dangling#12902
 
   Arm 4:
 
@@ -35039,9 +35017,9 @@ Arm 1:
 
                   7. Result in: % % % |- % '@' `< % `> `( % `) : EC_0 ARCH_0 (returnResult as callResult)
 
-          1. Else Dangling#13023
+          1. Else Dangling#12990
 
-        1. Else Dangling#13022
+        1. Else Dangling#12989
 
       2. Case (let builtinSetValidMethodCallee be %, % has type builtinSetValidMethodCallee)
 
@@ -35067,9 +35045,9 @@ Arm 1:
 
                 5. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_0 (returnResult as callResult)
 
-          1. Else Dangling#13045
+          1. Else Dangling#13012
 
-        1. Else Dangling#13044
+        1. Else Dangling#13011
 
       3. Case (let builtinSetInvalidMethodCallee be %, % has type builtinSetInvalidMethodCallee)
 
@@ -35095,9 +35073,9 @@ Arm 1:
 
                 5. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_0 (returnResult as callResult)
 
-          1. Else Dangling#13058
+          1. Else Dangling#13025
 
-        1. Else Dangling#13057
+        1. Else Dangling#13024
 
       4. Case (let builtinSizeMethodCallee be %, % has type builtinSizeMethodCallee)
 
@@ -35115,9 +35093,9 @@ Arm 1:
 
               4. Result in: % % % |- % '@' `< % `> `( % `) : EC_0 ARCH_0 (returnResult as callResult)
 
-          1. Else Dangling#13071
+          1. Else Dangling#13038
 
-        1. Else Dangling#13070
+        1. Else Dangling#13037
 
       5. Case (let externMethodCallee be %, % has type externMethodCallee)
 
@@ -35161,7 +35139,7 @@ Arm 1:
 
                     4. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 (definedFunctionResult as callResult)
 
-              4. Else Dangling#13084
+              4. Else Dangling#13051
 
             2. Case (% matches pattern ())
 
@@ -35209,9 +35187,9 @@ Arm 1:
 
                         2. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_2 callResult
 
-              4. Else Dangling#13100
+              4. Else Dangling#13067
 
-    2. Else Dangling#13020
+    2. Else Dangling#12987
 
 Arm 2:
 
@@ -35271,9 +35249,9 @@ Arm 2:
 
                     2. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_3 ((RETURN ?()) as callResult)
 
-                2. Else Dangling#13137
+                2. Else Dangling#13104
 
-        7. Else Dangling#13126
+        7. Else Dangling#13093
 
     2. Case (let controlApplyMethodCallee be %, % has type controlApplyMethodCallee)
 
@@ -35335,9 +35313,9 @@ Arm 2:
 
                     2. Result in: % % % |- % '@' `< % `> `( % `) : EC_2 ARCH_3 ((RETURN ?()) as callResult)
 
-                  1. Else Dangling#13169
+                  1. Else Dangling#13136
 
-        8. Else Dangling#13153
+        8. Else Dangling#13120
 
     3. Case (let tableApplyMethodCallee be %, % has type tableApplyMethodCallee)
 
@@ -35369,7 +35347,7 @@ Arm 2:
 
               2. Result in: % % % |- % '@' `< % `> `( % `) : EC_1 ARCH_1 (returnResult as callResult)
 
-  1. Else Dangling#13117
+  1. Else Dangling#13084
 
 extern relation ExternFunctionCall_eval: EC ARCH |- nameIR `( (nameIR')*{nameIR' <- nameIR'*} `) : % % %
 
@@ -35389,7 +35367,7 @@ Arm 1:
 
         1. Return true
 
-      1. Else Dangling#13189
+      1. Else Dangling#13156
 
     2. Case (let [setValue] be %, % matches pattern [ _/1 ])
 
@@ -35399,7 +35377,7 @@ Arm 1:
 
           1. Return $match_keyset(setValue, value_key)
 
-        1. Else Dangling#13194
+        1. Else Dangling#13161
 
     3. Case (let setValue_h :: (setValue_t)*{setValue_t <- setValue_t*} be %, % matches pattern _ :: _)
 
@@ -35419,11 +35397,11 @@ Arm 1:
 
                 1. Return false
 
-          1. Else Dangling#13200
+          1. Else Dangling#13167
 
-        1. Else Dangling#13199
+        1. Else Dangling#13166
 
-  1. Else Dangling#13188
+  1. Else Dangling#13155
 
 Arm 2:
 
@@ -35431,7 +35409,7 @@ Arm 2:
 
     1. Return true
 
-  1. Else Dangling#13204
+  1. Else Dangling#13171
 
 def $match_keyset(setValue, value_key)
 
@@ -35510,7 +35488,7 @@ Arm 1:
 
                     2. Result in: % % |- % : EC_1 ARCH_1 ((_CONT setValue) as simpleKeysetExpressionResult)
 
-            1. Else Dangling#13224
+            1. Else Dangling#13191
 
     2. Case (let (typedExpressionIR_l '&&&' typedExpressionIR_r) be %, % matches pattern `% &&& %`)
 
@@ -35568,7 +35546,7 @@ Arm 1:
 
                 2. Result in: % % |- % : EC_2 ARCH_2 ((_CONT setValue) as simpleKeysetExpressionResult)
 
-  1. Else Dangling#13216
+  1. Else Dangling#13183
 
 Arm 2:
 
@@ -35580,7 +35558,7 @@ Arm 2:
 
       2. Result in: % % |- % : EC_0 ARCH_0 ((_CONT setValue) as simpleKeysetExpressionResult)
 
-    1. Else Dangling#13264
+    1. Else Dangling#13231
 
 relation Eval_keysets_simple: EC ARCH |- (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} : % % %
 
@@ -35662,7 +35640,7 @@ relation ForUpdateStmts_eval: EC ARCH |- (forUpdateStatementIR)*{forUpdateStatem
 
           2. Result in: % % |- % : EC_2 ARCH_2 statementResult
 
-      2. Else Dangling#13296
+      2. Else Dangling#13263
 
 relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
@@ -35688,7 +35666,7 @@ relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
           4. Result in: % % |- % : EC_1 ARCH ((_EMPTY) as statementResult)
 
-        2. Else Dangling#13305
+        2. Else Dangling#13272
 
       Arm 2:
 
@@ -35742,7 +35720,7 @@ relation ForInitStmts_eval: EC ARCH |- (forInitStatementIR)*{forInitStatementIR 
 
           2. Result in: % % |- % : EC_2 ARCH_2 statementResult
 
-      2. Else Dangling#13328
+      2. Else Dangling#13295
 
 relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR forUpdateStatementListIR : % % %
 
@@ -35788,7 +35766,7 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
               1. Result in: % % |- % % % : EC_2 ARCH_2 ((_EMPTY) as statementResult)
 
-          1. Else Dangling#13342
+          1. Else Dangling#13309
 
         Arm 2:
 
@@ -35808,11 +35786,11 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
                 2. Result in: % % |- % % % : EC_4 ARCH_4 statementResult
 
-            2. Else Dangling#13351
+            2. Else Dangling#13318
 
-          1. Else Dangling#13349
+          1. Else Dangling#13316
 
-    1. Else Dangling#13339
+    1. Else Dangling#13306
 
 relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % %
 
@@ -35852,7 +35830,7 @@ relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % 
 
               2. Result in: % % |- % : EC_1 ARCH_1 ((_CONT (value)*{value <- value*}) as expressionListResult)
 
-          1. Else Dangling#13365
+          1. Else Dangling#13332
 
   2. Case (let (typedExpressionIR_l '..' typedExpressionIR_r) be %, % matches pattern `% .. %`)
 
@@ -35902,7 +35880,7 @@ def $values_of_setValue((SET `< typeIR `>), setValue)
 
       4. Return value_l :: (value)*{value <- value*}
 
-    1. Else Dangling#13392
+    1. Else Dangling#13359
 
   Arm 2:
 
@@ -35910,7 +35888,7 @@ def $values_of_setValue((SET `< typeIR `>), setValue)
 
       1. Return [value_l]
 
-    1. Else Dangling#13396
+    1. Else Dangling#13363
 
   Arm 3:
 
@@ -35918,7 +35896,7 @@ def $values_of_setValue((SET `< typeIR `>), setValue)
 
       1. Return []
 
-    1. Else Dangling#13398
+    1. Else Dangling#13365
 
 relation ForInStmt_eval: EC ARCH |- nameIR (value)*{value <- value*} statementIR : % % %
 
@@ -35954,7 +35932,7 @@ relation ForInStmt_eval: EC ARCH |- nameIR (value)*{value <- value*} statementIR
 
             1. Result in: % % |- % % % : EC_2 ARCH_1 ((_EMPTY) as statementResult)
 
-        1. Else Dangling#13406
+        1. Else Dangling#13373
 
       Arm 2:
 
@@ -35964,7 +35942,7 @@ relation ForInStmt_eval: EC ARCH |- nameIR (value)*{value <- value*} statementIR
 
           2. Result in: % % |- % % % : EC_3 ARCH_2 statementResult
 
-        1. Else Dangling#13413
+        1. Else Dangling#13380
 
 relation Switch_table_eval: EC_0 ARCH_0 |- SWITCH `( id_enum `) `{ (switchCaseIR)*{switchCaseIR <- switchCaseIR*} `} : % % %
 
@@ -36060,7 +36038,7 @@ relation SwitchCases_table_eval: id |- (switchCaseIR)*{switchCaseIR <- switchCas
 
                   1. Result in: % |- % : ?()
 
-                1. Else Dangling#13451
+                1. Else Dangling#13418
 
             2. Case false
 
@@ -36116,7 +36094,7 @@ relation SwitchLabel_general_eval: p EC_0 ARCH_0 |- switchLabelIR : % % %
 
         2. Result in: % % % |- % : EC_1 ARCH_1 expressionResult
 
-1. Else Dangling#13465
+1. Else Dangling#13432
 
 def $match_switchLabelIR_general(value, value')
 
@@ -36192,7 +36170,7 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- (switchCaseIR)*{switch
 
                       1. Result in: % % % % |- % : EC_1 ARCH_1 ?()
 
-                    1. Else Dangling#13501
+                    1. Else Dangling#13468
 
                 2. Case false
 
@@ -36200,7 +36178,7 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- (switchCaseIR)*{switch
 
                   2. Result in: % % % % |- % : EC_2 ARCH_2 (blockStatementIR)?{blockStatementIR <- blockStatementIR?}
 
-1. Else Dangling#13476
+1. Else Dangling#13443
 
 syntax selectCaseMatchResult = 
    | _CONT nameIR? (from continueResult<nameIR?>) 
@@ -36230,7 +36208,7 @@ relation SelectCase_match: EC_0 ARCH_0 (value_key)*{value_key <- value_key*} |- 
 
           1. Result in: % % % |- % : EC_1 ARCH_1 ((_CONT ?(nameIR)) as selectCaseMatchResult)
 
-  2. Else Dangling#13507
+  2. Else Dangling#13474
 
 relation SelectCases_match: EC ARCH (value_key)*{value_key <- value_key*} |- (selectCaseIR)*{selectCaseIR <- selectCaseIR*} : % % %
 
@@ -36270,7 +36248,7 @@ relation SelectCases_match: EC ARCH (value_key)*{value_key <- value_key*} |- (se
 
           2. Result in: % % % |- % : EC_2 ARCH_2 selectCaseMatchResult
 
-        1. Else Dangling#13526
+        1. Else Dangling#13493
 
 syntax tableKeyValue = 
    | value ':' nameIR (from tableKeyValue) 
@@ -36297,7 +36275,7 @@ relation TableKey_eval: EC_0 ARCH_0 |- (typedExpressionIR '#' nameIR' ':' nameIR
 
       2. Result in: % % |- % : EC_1 ARCH_1 ((_CONT tableKeyValue) as tableKeyResult)
 
-  2. Else Dangling#13531
+  2. Else Dangling#13498
 
 syntax tableKeysResult = 
    | _CONT tableKeyValue* (from continueResult<tableKeyValue*>) 
@@ -36392,7 +36370,7 @@ relation TableMatch_eval: EC_0 ARCH_0 |- (tableKeyValue)*{tableKeyValue <- table
 
           2. Result in: % % |- % '@' % : EC_1 ARCH_1 ((_CONT ?(tableMatch)) as tableMatchResult)
 
-  4. Else Dangling#13564
+  4. Else Dangling#13531
 
 syntax tableMatchesResult = 
    | _CONT tableMatch* (from continueResult<tableMatch*>) 
@@ -36462,7 +36440,7 @@ Arm 2:
 
     1. Return true
 
-  1. Else Dangling#13598
+  1. Else Dangling#13565
 
 def $is_largest_priority_wins(tableCustomPropertyIR)
 
@@ -36496,7 +36474,7 @@ Arm 1:
 
       2. Return tableActionReferenceIR
 
-  1. Else Dangling#13605
+  1. Else Dangling#13572
 
 Arm 2:
 
@@ -36526,9 +36504,9 @@ Arm 2:
 
             1. Return tableActionReferenceIR_h
 
-    2. Else Dangling#13613
+    2. Else Dangling#13580
 
-  1. Else Dangling#13611
+  1. Else Dangling#13578
 
 relation Copy_out_inner: ARCH |- p_caller EC (parameterIR)*{parameterIR <- parameterIR*} '@' p_callee EC_callee ((storageReference)?{storageReference <- storageReference?})*{storageReference? <- storageReference?*} ~> %
 
@@ -36542,7 +36520,7 @@ relation Copy_out_inner: ARCH |- p_caller EC (parameterIR)*{parameterIR <- param
 
         1. Result in: % |- % % % '@' % % % ~> EC
 
-      1. Else Dangling#13626
+      1. Else Dangling#13593
 
     2. Case (let parameterIR_h :: (parameterIR_t)*{parameterIR_t <- parameterIR_t*} be %, % matches pattern _ :: _)
 
@@ -36580,7 +36558,7 @@ relation ActionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
         1. Result in: % % |- % : EC_1 ARCH_1 ((EXIT) as actionResult)
 
-    1. Else Dangling#13637
+    1. Else Dangling#13604
 
   Arm 2:
 
@@ -36588,7 +36566,7 @@ relation ActionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
       1. Result in: % % |- % : EC_1 ARCH_1 ((RETURN ?()) as actionResult)
 
-    1. Else Dangling#13642
+    1. Else Dangling#13609
 
 syntax definedFunctionResult = 
    | EXIT (from exitResult) 
@@ -36614,7 +36592,7 @@ relation DefinedFunctionBody_eval: EC_0 ARCH_0 |- blockStatementIR : % % %
 
       1. Result in: % % |- % : EC_1 ARCH_1 (returnResult as definedFunctionResult)
 
-  2. Else Dangling#13646
+  2. Else Dangling#13613
 
 relation Var_init: EC_0 |- typeIR nameIR : %
 
@@ -36652,11 +36630,11 @@ relation Extern_init: EC ARCH_0 |- nameIR_extern nameIR : %
 
         6. Result in: % % |- % % : ARCH_2
 
-      1. Else Dangling#13662
+      1. Else Dangling#13629
 
-    1. Else Dangling#13661
+    1. Else Dangling#13628
 
-  3. Else Dangling#13660
+  3. Else Dangling#13627
 
 relation Program_init: |- p4program : % %
 
@@ -36780,7 +36758,7 @@ def $reverse_bytes_of_hex(t)
 
     2. Return "0x" ++ text
 
-1. Else Dangling#13726
+1. Else Dangling#13693
 
 def $reverse_bytes_of_hex'(t)
 
@@ -36792,7 +36770,7 @@ Arm 1:
 
     1. Return t
 
-  1. Else Dangling#13732
+  1. Else Dangling#13699
 
 Arm 2:
 
@@ -36812,7 +36790,7 @@ Arm 2:
 
       3. Return t_bytes_rev ++ t_byte
 
-  2. Else Dangling#13735
+  2. Else Dangling#13702
 
 syntax tableEntryPriorityInterface = int?
 
@@ -36862,7 +36840,7 @@ Arm 1:
 
     1. Return ?()
 
-  2. Else Dangling#13752
+  2. Else Dangling#13719
 
 Arm 2:
 
@@ -36950,7 +36928,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
               2. Return simpleKeysetExpressionIR
 
-      1. Else Dangling#13779
+      1. Else Dangling#13746
 
   3. Case (% = "lpm")
 
@@ -36984,7 +36962,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                 2. Return simpleKeysetExpressionIR
 
-          2. Else Dangling#13816
+          2. Else Dangling#13783
 
         2. Case (let (_BIN text_key_value) be %, % matches pattern `_BIN %`)
 
@@ -37012,7 +36990,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                 2. Return simpleKeysetExpressionIR
 
-          2. Else Dangling#13833
+          2. Else Dangling#13800
 
         3. Case (let (text_key_prefix_value _SLASH n_key_prefix_width) be %, % matches pattern `% _SLASH %`)
 
@@ -37046,9 +37024,9 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
                   2. Return simpleKeysetExpressionIR
 
-          4. Else Dangling#13852
+          4. Else Dangling#13819
 
-      1. Else Dangling#13813
+      1. Else Dangling#13780
 
   4. Case (% = "optional")
 
@@ -37078,7 +37056,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
               2. Return simpleKeysetExpressionIR
 
-        1. Else Dangling#13872
+        1. Else Dangling#13839
 
   5. Case (% = "selector")
 
@@ -37090,7 +37068,7 @@ def $tableObject_create_entry_key(EC, (nameIR_key, t, typeIR), (tableKeyInterfac
 
       2. Return simpleKeysetExpressionIR
 
-1. Else Dangling#13761
+1. Else Dangling#13728
 
 def $tableObject_create_entry_keys(EC, ((nameIR, nameIR, typeIR))*{(nameIR, nameIR, typeIR) <- (nameIR, nameIR, typeIR)*}, tableKeysetInterface)
 
@@ -37102,7 +37080,7 @@ Arm 1:
 
     1. Return []
 
-  1. Else Dangling#13893
+  1. Else Dangling#13860
 
 Arm 2:
 
@@ -37144,7 +37122,7 @@ def $tableObject_create_entry_keyset(EC, (KEY '=' `{ (tableKeyIR)*{tableKeyIR <-
 
   2. Return ((`( (simpleKeysetExpressionIR)*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} `)) as keysetExpressionIR)
 
-4. Else Dangling#13908
+4. Else Dangling#13875
 
 def $alias_to_original_lookup_map((parameterIR)*{parameterIR <- parameterIR*})
 
@@ -37168,9 +37146,9 @@ def $alias_to_original_lookup_map((parameterIR)*{parameterIR <- parameterIR*})
 
     1. Return $extend_map<nameIR, nameIR>((`{ ((nameIR_alias ':' nameIR_original))*{nameIR_alias <- nameIR_alias*, nameIR_original <- nameIR_original*} `}), (`{ ((id ':' id))*{id <- id*} `}))
 
-  2. Else Dangling#13919
+  2. Else Dangling#13886
 
-7. Else Dangling#13917
+7. Else Dangling#13884
 
 def $align_tableActionArgumentInterfaces((parameterIR)*{parameterIR <- parameterIR*}, ((nameIR_arg, i_arg))*{i_arg <- i_arg*, nameIR_arg <- nameIR_arg*})
 
@@ -37190,9 +37168,9 @@ def $align_tableActionArgumentInterfaces((parameterIR)*{parameterIR <- parameter
 
     2. Return (i_aligned)*{i_aligned <- i_aligned*}
 
-  3. Else Dangling#13926
+  3. Else Dangling#13893
 
-3. Else Dangling#13923
+3. Else Dangling#13890
 
 def $align_tableActionArgumentInterfaces'((`{ ((id_arg ':' i_arg))*{i_arg <- i_arg*, id_arg <- id_arg*} `}), (_annotationList _direction _typeIR nameIR_param _parameterInitializerOptIR))
 
@@ -37210,7 +37188,7 @@ Arm 2:
 
     1. Return (0 as int)
 
-  1. Else Dangling#13933
+  1. Else Dangling#13900
 
 def $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR)
 
@@ -37234,7 +37212,7 @@ def $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionI
 
         1. Return $find_tableActionIR_qualified((tableActionIR_t)*{tableActionIR_t <- tableActionIR_t*}, nameIR)
 
-      1. Else Dangling#13940
+      1. Else Dangling#13907
 
     Arm 2:
 
@@ -37244,7 +37222,7 @@ def $find_tableActionIR_qualified((tableActionIR)*{tableActionIR <- tableActionI
 
         2. Return ?((nameIR_action, tableActionIR_h))
 
-      1. Else Dangling#13942
+      1. Else Dangling#13909
 
 def $find_tableActionIR_unqualified((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR)
 
@@ -37258,7 +37236,7 @@ def $find_tableActionIR_unqualified((tableActionIR)*{tableActionIR <- tableActio
 
   3. Return $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR_action)
 
-2. Else Dangling#13946
+2. Else Dangling#13913
 
 def $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActionIR*}, nameIR)
 
@@ -37290,7 +37268,7 @@ def $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActi
 
             1. Return $find_tableActionIR_unqualified'((tableActionIR_t)*{tableActionIR_t <- tableActionIR_t*}, nameIR)
 
-          1. Else Dangling#13960
+          1. Else Dangling#13927
 
         Arm 2:
 
@@ -37300,7 +37278,7 @@ def $find_tableActionIR_unqualified'((tableActionIR)*{tableActionIR <- tableActi
 
             2. Return ?((nameIR_action, tableActionIR_h))
 
-          1. Else Dangling#13962
+          1. Else Dangling#13929
 
 def $tableObject_create_entry_action(EC, (ACTIONS '=' `{ (tableActionIR)*{tableActionIR <- tableActionIR*} `}), (nameIR_action_update, (tableActionArgumentInterface_update)*{tableActionArgumentInterface_update <- tableActionArgumentInterface_update*}))
 
@@ -37330,9 +37308,9 @@ Arm 1:
 
         3. Return ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
 
-      2. Else Dangling#13974
+      2. Else Dangling#13941
 
-    5. Else Dangling#13972
+    5. Else Dangling#13939
 
 Arm 2:
 
@@ -37360,11 +37338,11 @@ Arm 2:
 
           3. Return ((_BARE nameIR_found) controlPlaneNameIR `( (argumentIR)*{argumentIR <- argumentIR*} `))
 
-        2. Else Dangling#13988
+        2. Else Dangling#13955
 
-      5. Else Dangling#13986
+      5. Else Dangling#13953
 
-  1. Else Dangling#13978
+  1. Else Dangling#13945
 
 def $tableObject_add_entry(EC, (TABLE typeId `{ frame TBL `}), tableEntryPriorityInterface, tableKeysetInterface, tableActionInterface)
 
@@ -37404,7 +37382,7 @@ def $tableObject_add_default_action(EC, (TABLE typeId `{ frame TBL `}), tableAct
 
   4. Return (TABLE typeId `{ frame TBL_updated `})
 
-2. Else Dangling#14003
+2. Else Dangling#13970
 
 relation V1Model_init: |- p4program : % %
 
@@ -37696,7 +37674,7 @@ relation V1Model_parser: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-  10. Else Dangling#14223
+  10. Else Dangling#14190
 
 relation V1Model_verify: EC_0 ARCH_0 |- % % %
 
@@ -37726,7 +37704,7 @@ relation V1Model_verify: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-  8. Else Dangling#14236
+  8. Else Dangling#14203
 
 relation V1Model_ingress: EC_0 ARCH_0 |- % % %
 
@@ -37758,7 +37736,7 @@ relation V1Model_ingress: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((RETURN ?()) as callResult)
 
-  9. Else Dangling#14250
+  9. Else Dangling#14217
 
 relation V1Model_egress: EC_0 ARCH_0 |- % % %
 
@@ -37790,7 +37768,7 @@ relation V1Model_egress: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-  9. Else Dangling#14264
+  9. Else Dangling#14231
 
 relation V1Model_check: EC_0 ARCH_0 |- % % %
 
@@ -37820,7 +37798,7 @@ relation V1Model_check: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-  8. Else Dangling#14277
+  8. Else Dangling#14244
 
 relation V1Model_deparse: EC_0 ARCH_0 |- % % %
 
@@ -37850,7 +37828,7 @@ relation V1Model_deparse: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-  8. Else Dangling#14290
+  8. Else Dangling#14257
 
 def $field_list_annotation_index(annotationList)
 
@@ -38128,7 +38106,7 @@ relation EBPF_parse: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-  8. Else Dangling#14459
+  8. Else Dangling#14426
 
 relation EBPF_filter: EC_0 ARCH_0 |- % % %
 
@@ -38158,7 +38136,7 @@ relation EBPF_filter: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-  8. Else Dangling#14472
+  8. Else Dangling#14439
 
 relation PSA_init: |- p4program : % %
 
@@ -38658,7 +38636,7 @@ relation PSA_ingress_parser: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-  13. Else Dangling#14844
+  13. Else Dangling#14811
 
 relation PSA_ingress: EC_0 ARCH_0 |- % % %
 
@@ -38694,7 +38672,7 @@ relation PSA_ingress: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((RETURN ?()) as callResult)
 
-  11. Else Dangling#14860
+  11. Else Dangling#14827
 
 relation PSA_ingress_deparser: EC_0 ARCH_0 |- % % %
 
@@ -38736,7 +38714,7 @@ relation PSA_ingress_deparser: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-  14. Else Dangling#14879
+  14. Else Dangling#14846
 
 relation PSA_egress_init_packet_in: EC_0 ARCH_0 |- objectState_packet_in : % %
 
@@ -39154,7 +39132,7 @@ relation PSA_egress_parser: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 (rejectTransitionResult as transitionResult)
 
-  14. Else Dangling#15166
+  14. Else Dangling#15133
 
 relation PSA_egress: EC_0 ARCH_0 |- % % %
 
@@ -39190,7 +39168,7 @@ relation PSA_egress: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((RETURN ?()) as callResult)
 
-  11. Else Dangling#15182
+  11. Else Dangling#15149
 
 relation PSA_egress_deparser: EC_0 ARCH_0 |- % % %
 
@@ -39232,4 +39210,4 @@ relation PSA_egress_deparser: EC_0 ARCH_0 |- % % %
 
       1. Result in: % % |- EC_1 ARCH_1 ((EXIT) as callResult)
 
-  14. Else Dangling#15201
+  14. Else Dangling#15168

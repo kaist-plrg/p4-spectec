@@ -47,7 +47,7 @@ and merge_if_case' (tdenv : TDEnv.t) (exp : exp) (cases : case list)
       | Identical ->
           let block_h = Merge.merge_block block_then_target block_h in
           let case_h = (guard_h, block_h) in
-          Some (case_h :: cases_t)
+          Some (cases_leftover @ (case_h :: cases_t))
       | Disjoint _ | Partition _ ->
           let cases_leftover = cases_leftover @ [ case_h ] in
           merge_if_case' tdenv exp cases_t total cases_leftover guard_target
@@ -91,7 +91,7 @@ and merge_case_if' (tdenv : TDEnv.t) (exp_target : exp)
       | Identical ->
           let block_target_h = Merge.merge_block block_target_h block in
           let case_target_h = (guard_target_h, block_target_h) in
-          Some (case_target_h :: cases_target_t)
+          Some (cases_target_leftover @ (case_target_h :: cases_target_t))
       | Disjoint _ | Partition _ ->
           let cases_target_leftover =
             cases_target_leftover @ [ case_target_h ]
