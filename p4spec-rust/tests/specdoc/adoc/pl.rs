@@ -1,11 +1,6 @@
-use p4spec_rust::backend_specdoc::anchor::AnchorContext;
 use p4spec_rust::lang::hints::alter::AlterHintKind;
+use p4spec_rust::specdoc::anchor::AnchorContext;
 use p4spec_rust::{
-    backend_specdoc::adoc::pl::{
-        self as adoc,
-        doc::{doc::Subject, serialize::subject_name},
-        render_spec,
-    },
     lang::{
         common::{
             notation::{atom::Atom, mixfix::Mixfix},
@@ -21,6 +16,11 @@ use p4spec_rust::{
             input::InputHint,
         },
         pl::{annot::Hints, ast as pl},
+    },
+    specdoc::adoc::pl::{
+        self as adoc,
+        doc::{doc::Subject, serialize::subject_name},
+        render_spec,
     },
 };
 

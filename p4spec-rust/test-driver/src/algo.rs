@@ -14,7 +14,7 @@ pub fn run() -> Result<()> {
             .map_err(|error| Error::Invalid(error.to_string()))?,
     );
     progress.set_message("algo: full specification");
-    let spec_al = p4spec_rust::algo(["spec"]).map_err(|error| Error::Invalid(error.to_string()))?;
+    let spec_al = p4spec_rust::algo(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
     let actual = Print::to_string(&spec_al) + "\n";
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("expected/pass/algo.expected");
     snapshot::check(expect_file![path], &actual);

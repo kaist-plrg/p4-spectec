@@ -15,7 +15,7 @@ pub fn run() -> Result<()> {
     );
     progress.set_message("prose: full specification");
     let spec_pl =
-        p4spec_rust::prosify(["spec"]).map_err(|error| Error::Invalid(error.to_string()))?;
+        p4spec_rust::prosify(&["spec".into()]).map_err(|error| Error::Invalid(error.to_string()))?;
     let text_actual = Print::to_string(&spec_pl) + "\n";
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("expected/pass/prose.expected");
     snapshot::check(expect_file![path], &text_actual);

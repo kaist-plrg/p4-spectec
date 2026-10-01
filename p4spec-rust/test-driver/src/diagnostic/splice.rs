@@ -8,7 +8,7 @@ use std::{env, fs, path::PathBuf};
 
 use p4spec_rust::diagnostic::Report;
 
-use p4spec_rust::backend_specdoc::splicer;
+use p4spec_rust::specdoc::splicer;
 
 use crate::Result;
 

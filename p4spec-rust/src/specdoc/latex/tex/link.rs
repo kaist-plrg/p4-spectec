@@ -11,7 +11,7 @@
 
 use crate::lang::common::source::Span;
 
-use crate::backend_specdoc::latex::error::{self, Result};
+use crate::specdoc::latex::error::{self, Result};
 
 use super::doc::*;
 

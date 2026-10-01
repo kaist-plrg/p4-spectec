@@ -488,7 +488,6 @@ fn test_run_al_requires_flags_and_rejects_unsupported_options() {
         vec!["run", "--al"],
         vec!["run", "--al", "spec", "--rel", "Pass"],
         vec!["run", "--al", "spec", "-p", "empty.p4"],
-        vec!["run", "spec", "--rel", "Pass", "-p", "empty.p4"],
         vec!["run", "--al", "--rel", "Pass", "-p", "empty.p4"],
         vec!["run", "--sl"],
     ] {
@@ -626,26 +625,29 @@ fn test_sim_sl_preserves_host_state_across_stf_statements() {
 }
 
 #[test]
-fn test_run_and_sim_require_exactly_one_interpreter_stage() {
-    for args in [
-        vec!["run", "--al", "--sl", "spec", "--rel", "Pass", "-p", "empty.p4"],
-        vec!["run", "--sl", "--pl", "spec", "--rel", "Pass", "-p", "empty.p4"],
-        vec![
-            "sim",
-            "--al",
-            "--sl",
-            "spec",
-            "--arch",
-            "ebpf",
-            "-p",
-            "empty.p4",
-            "--stf",
-            "input.stf",
-        ],
-    ] {
-        let output = binary().args(args).output().unwrap();
-        assert_eq!(output.status.code(), Some(2));
-        assert!(String::from_utf8_lossy(&output.stderr).contains("cannot be used with"));
+fn test_run_and_sim_reject_multiple_interpreter_languages() {
+    for command in ["run", "sim"] {
+        for flags in [["--al", "--sl"], ["--al", "--pl"], ["--sl", "--pl"]] {
+            let args = if command == "run" {
+                vec![command, flags[0], flags[1], "spec", "--rel", "Pass", "-p", "empty.p4"]
+            } else {
+                vec![
+                    command,
+                    flags[0],
+                    flags[1],
+                    "spec",
+                    "--arch",
+                    "ebpf",
+                    "-p",
+                    "empty.p4",
+                    "--stf",
+                    "input.stf",
+                ]
+            };
+            let output = binary().args(args).output().unwrap();
+            assert_eq!(output.status.code(), Some(2));
+            assert!(String::from_utf8_lossy(&output.stderr).contains("cannot be used with"));
+        }
     }
 }
 
@@ -682,7 +684,7 @@ fn test_sim_help_lists_native_controls_without_processing_inputs() {
 #[test]
 fn test_sim_al_requires_flags() {
     let args = ["sim", "--al", "spec", "--arch", "ebpf", "-p", "empty.p4", "--stf", "input.stf"];
-    for (idx, len) in [(1, 1), (2, 1), (3, 2), (5, 2), (7, 2)] {
+    for (idx, len) in [(2, 1), (3, 2), (5, 2), (7, 2)] {
         let output = binary()
             .args(&args[..idx])
             .args(&args[idx + len..])
@@ -958,4 +960,66 @@ fn test_command_admission_preserves_clap_output() {
     assert!(text.contains("Usage:"), "{text}");
     assert!(!text.contains("generated source"), "{text}");
     assert!(!text.contains("┌─"), "{text}");
+}
+
+#[test]
+fn test_run_defaults_to_sl_and_preserves_execution_controls() {
+    for (relation, flags, code) in [
+        ("Pass", vec![], 0),
+        ("Reject", vec![], 1),
+        ("Ambiguous", vec!["--det", "--no-cache"], 1),
+        ("Unchecked", vec!["--guard", "--no-cache"], 1),
+    ] {
+        let output = binary()
+            .arg("run")
+            .arg(fixture("cli/run/types.watsup"))
+            .arg(fixture("cli/run/relations.watsup"))
+            .args(["--rel", relation, "-p"])
+            .arg(fixture("cli/run/empty.p4"))
+            .args(&flags)
+            .output()
+            .unwrap();
+        assert_eq!(output.status.code(), Some(code));
+        let output_sl = run_command_with("--sl", relation, "cli/run/empty.p4")
+            .args(&flags)
+            .output()
+            .unwrap();
+        assert_eq!(output.stdout, output_sl.stdout);
+        assert_eq!(output.stderr, output_sl.stderr);
+        if code == 0 {
+            assert_eq!(output.stdout, b"passed\n");
+            assert!(output.stderr.is_empty());
+        } else {
+            assert!(output.stdout.is_empty());
+            assert!(!output.stderr.is_empty());
+        }
+    }
+}
+
+#[test]
+fn test_sim_defaults_to_sl_with_native_controls() {
+    let repo = repo();
+    let output = binary()
+        .arg("sim")
+        .arg(repo.join("spec"))
+        .args(["--arch", "ebpf", "--plugin-encoding", "arena-independent"])
+        .arg("-p")
+        .arg(repo.join("p4spec/test/micro/sim-ebpf/ebpf.p4"))
+        .arg("-i")
+        .arg(repo.join("p4c/p4include"))
+        .arg("--stf")
+        .arg(repo.join("p4spec/test/micro/sim-ebpf/ebpf.stf"))
+        .args(["--no-cache", "--det", "--guard"])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(after_spec_warning(&output.stderr).is_empty());
+    let expected =
+        std::fs::read_to_string(repo.join("p4spec/test/micro/micro_sim_ebpf_al.expected")).unwrap();
+    let mut lines: Vec<_> = expected
+        .lines()
+        .filter(|line| line.starts_with("[PASS] Transmitted "))
+        .collect();
+    lines.push("passed");
+    assert_eq!(output.stdout, format!("{}\n", lines.join("\n")).as_bytes());
 }

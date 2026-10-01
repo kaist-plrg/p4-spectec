@@ -14,7 +14,7 @@ use p4spec_rust::pass::structure;
 
 use p4spec_rust::pass::prosify;
 
-use p4spec_rust::backend_specdoc::adoc;
+use p4spec_rust::specdoc::adoc;
 
 use crate::{Error, Result, snapshot};
 

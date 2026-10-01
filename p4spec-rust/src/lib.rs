@@ -1,29 +1,49 @@
-//! Language models and codecs for P4 `SpecTec`
+//! Specification processing and P4 execution for SpecTec
 //!
-//! `parse`, `elab`, `algo`, `structure`, and `prosify` transform source paths
-//! into EL, IL, AL, SL, and PL through `frontend` and `pass`;
-//! `backend_specdoc` renders EL as canonical LaTeX and EL and PL as AsciiDoc;
-//! `interp` and `runner` execute AL, SL, or PL against a P4 program,
-//! with `interface` builtins and `sim_plugin` architectures;
-//! `lang`, `runtime`, `stf`, and `util` are the shared data and codecs.
+//! `parse` reads source files into EL;
+//! `elab`, `algo`, `structure`, and `prosify` transform them through `pass`.
+//! `specdoc` renders specifications and expands skeleton documents.
+//! `runner_spec_with_warnings` prepares AL, SL, or PL for execution;
+//! `run` evaluates a P4 program,
+//! and `build_simulator` prepares native STF execution.
+//! Callers render returned diagnostics and accumulated warnings.
 
-#[path = "backend-specdoc/mod.rs"]
-pub mod backend_specdoc;
+// == Shared foundations
+
 pub mod diagnostic;
+pub mod lang;
+pub mod runtime;
+pub mod util;
+
+// == Specification processing
+
 pub mod frontend;
+pub mod pass;
+pub mod specdoc;
+
+// == Execution
+
 pub mod interface;
 pub mod interp;
-pub mod lang;
-pub mod pass;
-mod pipeline;
 pub mod runner;
-pub mod runtime;
 #[path = "sim-plugin/mod.rs"]
 pub mod sim_plugin;
 pub mod stf;
-pub mod util;
 
-pub use pipeline::{
-    Error, algo, algo_with_warnings, elab, elab_with_warnings, parse, prosify,
-    prosify_with_warnings, structure, structure_with_warnings,
+// == Parsing and transformation APIs
+
+pub use frontend::parse::parse_files as parse;
+pub use pass::{
+    Error, SpecLang, algo, algo_with_warnings, elab, elab_with_warnings, prosify,
+    prosify_with_warnings, runner_spec_with_warnings, specdoc_spec_with_warnings, structure,
+    structure_with_warnings,
 };
+
+// == Document generation APIs
+
+pub use specdoc::splicer::splice_files_with_warnings;
+
+// == Execution APIs
+
+pub use runner::{RunError, run};
+pub use sim_plugin::{SimError, Simulator, build as build_simulator};
