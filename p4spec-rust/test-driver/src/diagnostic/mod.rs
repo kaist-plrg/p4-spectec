@@ -7,10 +7,12 @@
 
 mod algo;
 mod cli;
+mod command;
 mod elab;
+mod frontend;
 mod interp;
-mod parse;
 mod prose;
+mod run;
 mod sim;
 mod specdoc;
 mod splice;
@@ -27,7 +29,7 @@ use expect_test::expect_file;
 use indicatif::ProgressBar;
 use serde::Deserialize;
 
-use p4spec_rust::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
+use p4spec_rust::diagnostic::{RenderConfig, Renderer, Report};
 
 use crate::{Error, Result};
 
@@ -35,11 +37,9 @@ fn failure(name: &str, message: impl std::fmt::Display) -> Error {
     Error::Invalid(format!("{name}: {message}"))
 }
 
-/// Selects the product stage exercised by a registered fixture.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, ValueEnum)]
-#[serde(rename_all = "kebab-case")]
+/// Selects a diagnostic module from the driver's command line.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
 pub enum Suite {
-    #[serde(alias = "parse")]
     #[value(alias = "parse")]
     Frontend,
     Elab,
@@ -53,22 +53,96 @@ pub enum Suite {
     Sim,
 }
 
-impl Suite {
-    /// Returns the registry's stage name.
-    pub fn name(self) -> &'static str {
-        match self {
-            Self::Frontend => "frontend",
-            Self::Elab => "elab",
-            Self::Algo => "algo",
-            Self::Structure => "structure",
-            Self::Prose => "prose",
-            Self::Interp => "interp",
-            Self::Specdoc => "specdoc",
-            Self::Command => "command",
-            Self::Run => "run",
-            Self::Sim => "sim",
-        }
+/// Names diagnostic registration files by their owning Rust modules.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Modules {
+    pub command: PathBuf,
+    pub run: PathBuf,
+    pub frontend: PathBuf,
+    pub elab: PathBuf,
+    pub algo: PathBuf,
+    pub interp: PathBuf,
+    pub splice: PathBuf,
+    pub prose: PathBuf,
+    pub specdoc: PathBuf,
+    pub sim: PathBuf,
+    pub structure: PathBuf,
+}
+
+impl Modules {
+    /// Returns module filenames for resolution relative to the root index.
+    pub fn paths_mut(&mut self) -> [&mut PathBuf; 11] {
+        [
+            &mut self.command,
+            &mut self.run,
+            &mut self.frontend,
+            &mut self.elab,
+            &mut self.algo,
+            &mut self.interp,
+            &mut self.splice,
+            &mut self.prose,
+            &mut self.specdoc,
+            &mut self.sim,
+            &mut self.structure,
+        ]
     }
+
+    /// Prints each module through the same validation used for execution.
+    pub fn list(&self) -> Result<()> {
+        println!("diagnostics/command: {:#?}", load(&self.command, true)?);
+        println!("diagnostics/run: {:#?}", load(&self.run, true)?);
+        println!("diagnostics/frontend: {:#?}", load(&self.frontend, false)?);
+        println!("diagnostics/elab: {:#?}", load(&self.elab, false)?);
+        println!("diagnostics/algo: {:#?}", load(&self.algo, false)?);
+        println!("diagnostics/interp: {:#?}", load(&self.interp, false)?);
+        println!("diagnostics/splice: {:#?}", load(&self.splice, false)?);
+        println!("diagnostics/prose: {:#?}", load(&self.prose, false)?);
+        println!("diagnostics/specdoc: {:#?}", load(&self.specdoc, false)?);
+        println!("diagnostics/sim: {:#?}", load(&self.sim, false)?);
+        println!("diagnostics/structure: {:#?}", load(&self.structure, false)?);
+        Ok(())
+    }
+}
+
+/// Runs the selected module or all modules in registration order.
+pub fn run(modules: &Modules, suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
+    // The CLI selector chooses modules without inspecting their registrations
+    if suite.is_none_or(|suite| suite == Suite::Command) {
+        command::run(&modules.command, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Run) {
+        run::run(&modules.run, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Frontend) {
+        frontend::run(&modules.frontend, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Elab) {
+        elab::run(&modules.elab, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Algo) {
+        algo::run(&modules.algo, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Interp) {
+        interp::run(&modules.interp, path_cli)?;
+    }
+    // Specdoc owns both skeleton splicing and rendered document diagnostics
+    if suite.is_none_or(|suite| suite == Suite::Specdoc) {
+        splice::run(&modules.splice, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Prose) {
+        prose::run(&modules.prose, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Specdoc) {
+        specdoc::run(&modules.specdoc, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Sim) {
+        sim::run(&modules.sim, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Structure) {
+        structure::run(&modules.structure, path_cli)?;
+    }
+    Ok(())
 }
 
 /// Supplies fixture paths relative to the test-driver manifest directory.
@@ -93,61 +167,48 @@ pub struct Case {
 #[serde(deny_unknown_fields)]
 pub struct Group {
     pub name: String,
-    pub stage: Suite,
     pub cases: Vec<Case>,
 }
 
-/// Loads diagnostic modules and validates their source/expectation pairs.
-pub fn load(paths: &[PathBuf]) -> Result<Vec<Group>> {
-    let mut groups = Vec::new();
+/// Loads one module and validates its source/expectation pairs.
+fn load(path: &Path, cli_only: bool) -> Result<Vec<Group>> {
+    let groups: Vec<Group> = crate::suite::load(path)?;
     let mut names = BTreeSet::new();
-    // Preserve module and case order within diagnostic acceptance
-    for path in paths {
-        let groups_module: Vec<Group> = crate::suite::load(path)?;
-        for group in groups_module {
-            if group.name.is_empty() || !names.insert(group.name.clone()) {
-                return Err(failure(&group.name, "empty or duplicate diagnostic group"));
-            }
-            if group.cases.is_empty() {
-                return Err(failure(&group.name, "no negative cases"));
-            }
-            let mut names_case = BTreeSet::new();
-            // Validate every registered pair before running any diagnostic
-            for case in &group.cases {
-                if case.name.is_empty() || !names_case.insert(&case.name) {
-                    return Err(failure(&group.name, "empty or duplicate case"));
-                }
-                if case.uses_cli() && (!case.inputs.is_empty() || !case.args.is_empty()) {
-                    return Err(failure(
-                        &case.name,
-                        "arguments and inputs belong in the .args file",
-                    ));
-                }
-                if matches!(group.stage, Suite::Command | Suite::Run) && !case.uses_cli() {
-                    return Err(failure(&case.name, "requires an .args input"));
-                }
-                for path in [&case.input, &case.expected] {
-                    if !crate::suite::expected_path(path).is_file() {
-                        return Err(failure(
-                            &case.name,
-                            format!("missing file {}", path.display()),
-                        ));
-                    }
-                }
-                for path in &case.inputs {
-                    if !crate::suite::expected_path(path).exists() {
-                        return Err(failure(
-                            &case.name,
-                            format!("missing input {}", path.display()),
-                        ));
-                    }
-                }
-            }
-            groups.push(group);
-        }
-    }
     if groups.is_empty() {
         return Err(failure("diagnostics", "no groups registered"));
+    }
+    // Validate every registered pair before running this module's diagnostics
+    for group in &groups {
+        if group.name.is_empty() || !names.insert(&group.name) {
+            return Err(failure(&group.name, "empty or duplicate diagnostic group"));
+        }
+        if group.cases.is_empty() {
+            return Err(failure(&group.name, "no negative cases"));
+        }
+        let mut names_case = BTreeSet::new();
+        for case in &group.cases {
+            if case.name.is_empty() || !names_case.insert(&case.name) {
+                return Err(failure(&group.name, "empty or duplicate case"));
+            }
+            // Complete invocations belong in the argument file
+            if case.uses_cli() && (!case.inputs.is_empty() || !case.args.is_empty()) {
+                return Err(failure(&case.name, "arguments and inputs belong in the .args file"));
+            }
+            if cli_only && !case.uses_cli() {
+                return Err(failure(&case.name, "requires an .args input"));
+            }
+            for path in [&case.input, &case.expected] {
+                if !crate::suite::expected_path(path).is_file() {
+                    return Err(failure(&case.name, format!("missing file {}", path.display())));
+                }
+            }
+            // API fixtures may declare additional source inputs
+            for path in &case.inputs {
+                if !crate::suite::expected_path(path).exists() {
+                    return Err(failure(&case.name, format!("missing input {}", path.display())));
+                }
+            }
+        }
     }
     Ok(groups)
 }
@@ -187,62 +248,55 @@ impl Drop for Directory {
     }
 }
 
-/// Executes exactly the registered inputs and compares their full output.
-pub fn run_registered(stage: Suite, cases: &[Case], path_cli: Option<&Path>) -> Result<()> {
+type RunCase = fn(&Case) -> Result<Vec<Report>>;
+
+/// Compares module-owned fixture output with its registered expectations.
+fn run_registered(
+    name: &str,
+    groups: &[Group],
+    path_cli: Option<&Path>,
+    run_case: Option<RunCase>,
+    config: RenderConfig,
+) -> Result<()> {
     // Resolve subprocess paths before entering the stable fixture directory
     let path_cli = path_cli.map(std::path::absolute).transpose()?;
-    if cases.iter().any(Case::uses_cli) && path_cli.is_none() {
-        return Err(failure(stage.name(), "--cli is required for argument-file acceptance"));
+    if groups
+        .iter()
+        .any(|group| group.cases.iter().any(Case::uses_cli))
+        && path_cli.is_none()
+    {
+        return Err(failure(name, "--cli is required for argument-file acceptance"));
     }
     let _directory = Directory(std::env::current_dir()?);
     let path_manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
     std::env::set_current_dir(path_manifest.join("expected/diagnostic"))?;
-    let progress = ProgressBar::new(cases.len() as u64);
 
-    // Match CLI frame presentation for runtime and simulation failures
-    let config = RenderConfig {
-        frame_style: matches!(stage, Suite::Interp | Suite::Sim).then_some(DisplayStyle::Short),
-        ..Default::default()
-    };
-    for case in cases {
-        // Argument-file expectations compare stderr independently of the stage
-        let text = if case.uses_cli() {
-            cli::run(path_cli.as_deref().expect("CLI admission checked"), case)?
-        } else {
-            let reports = run_case(stage, case)?;
-            let mut text = String::new();
-            for report in reports {
-                let rendered = Renderer::new(config.clone())
-                    .render_to_string(&report)
-                    .map_err(|error| failure(&case.name, error))?;
-                text.push_str(&rendered);
-            }
-            text
-        };
-        // Every comparison uses the explicit registered expectation
-        let path = path_manifest.join(&case.expected);
-        expect_file![path].assert_eq(&text);
-        progress.inc(1);
-    }
-    progress.finish_and_clear();
-    eprintln!("diagnostics/{}: {} cases passed", stage.name(), cases.len());
-    Ok(())
-}
-
-fn run_case(stage: Suite, case: &Case) -> Result<Vec<Report>> {
-    match stage {
-        Suite::Frontend => parse::run(case),
-        Suite::Elab => elab::run(case),
-        Suite::Algo => algo::run(case),
-        Suite::Structure => structure::run(case),
-        Suite::Prose => prose::run(case),
-        Suite::Interp if case.input.extension().is_some_and(|ext| ext == "p4") => syntax::run(case),
-        Suite::Interp => interp::run(case),
-        Suite::Specdoc if case.input.extension().is_some_and(|ext| ext == "adoc") => {
-            splice::run(case)
+    // Preserve group and case order from this module's registration file
+    for group in groups {
+        let progress = ProgressBar::new(group.cases.len() as u64);
+        for case in &group.cases {
+            let text = if case.uses_cli() {
+                // Argument files compare product stderr verbatim
+                cli::run(path_cli.as_deref().expect("CLI admission checked"), case)?
+            } else {
+                // The owning module supplies its source runner and report style
+                let reports = run_case.expect("source runner supplied by owning module")(case)?;
+                let mut text = String::new();
+                for report in reports {
+                    let rendered = Renderer::new(config.clone())
+                        .render_to_string(&report)
+                        .map_err(|error| failure(&case.name, error))?;
+                    text.push_str(&rendered);
+                }
+                text
+            };
+            // Every comparison uses the explicit registered expectation
+            let path = path_manifest.join(&case.expected);
+            expect_file![path].assert_eq(&text);
+            progress.inc(1);
         }
-        Suite::Specdoc => specdoc::run(case),
-        Suite::Sim => sim::run(case),
-        Suite::Command | Suite::Run => unreachable!("argument-file stages use subprocess output"),
+        progress.finish_and_clear();
+        eprintln!("diagnostics/{name}: {} cases passed", group.cases.len());
     }
+    Ok(())
 }

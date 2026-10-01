@@ -108,7 +108,7 @@ pub struct Modules {
     pub p4parse: PathBuf,
     pub run: PathBuf,
     pub sim: PathBuf,
-    pub diagnostics: Vec<PathBuf>,
+    pub diagnostics: diagnostic::Modules,
 }
 
 /// Supplies shared corpus settings and module registration filenames.
@@ -326,7 +326,7 @@ impl Config {
             &mut modules.sim,
         ]
         .into_iter()
-        .chain(modules.diagnostics.iter_mut())
+        .chain(modules.diagnostics.paths_mut())
         {
             *path = path_parent.join(&*path);
         }
@@ -348,7 +348,6 @@ impl Config {
         println!("p4parse: {:#?}", load_parsing(&self.suites.p4parse)?);
         println!("run: {:#?}", load_execution(&self.suites.run)?);
         println!("sim: {:#?}", load_simulation(&self.suites.sim)?);
-        println!("diagnostics: {:#?}", diagnostic::load(&self.suites.diagnostics)?);
-        Ok(())
+        self.suites.diagnostics.list()
     }
 }

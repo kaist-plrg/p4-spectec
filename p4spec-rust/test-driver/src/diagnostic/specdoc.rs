@@ -3,6 +3,8 @@
 //! Source conversion must succeed without warnings before rendering markup.
 //! Every backend warning must retain a label on the registered source file.
 
+use std::path::Path;
+
 use p4spec_rust::diagnostic::{Report, ReportKind, Severity};
 use p4spec_rust::specdoc::adoc;
 
@@ -10,8 +12,14 @@ use crate::Result;
 
 use super::{Case, failure};
 
+/// Loads and compares this module's diagnostic fixtures.
+pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
+    let groups = super::load(path, false)?;
+    super::run_registered("specdoc", &groups, path_cli, Some(run_case), Default::default())
+}
+
 /// Renders one source specification and requires located markup warnings.
-pub fn run(case: &Case) -> Result<Vec<Report>> {
+fn run_case(case: &Case) -> Result<Vec<Report>> {
     let path = case.path_input();
     // Earlier diagnostics reject setup before backend acceptance
     let (result, reports) = p4spec_rust::prosify_with_warnings(std::slice::from_ref(&path));

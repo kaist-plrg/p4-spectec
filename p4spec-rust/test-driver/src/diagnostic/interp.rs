@@ -4,6 +4,8 @@
 //! Cases check the runtime failure kind and code before rendering a snapshot.
 //! Setup failures and unexpected success fail the test.
 
+use std::path::Path;
+
 use p4spec_rust::lang::{common::source::Span, data::value::make};
 
 use p4spec_rust::diagnostic::{Report, ReportKind};
@@ -15,6 +17,21 @@ use p4spec_rust::runner::{
 use crate::Result;
 
 use super::{Case, failure};
+
+/// Loads and compares this module's diagnostic fixtures.
+pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
+    let groups = super::load(path, false)?;
+    super::run_registered(
+        "interp",
+        &groups,
+        path_cli,
+        Some(run_case),
+        p4spec_rust::diagnostic::RenderConfig {
+            frame_style: Some(p4spec_rust::diagnostic::DisplayStyle::Short),
+            ..Default::default()
+        },
+    )
+}
 
 // = Expectations
 
@@ -87,9 +104,13 @@ where
 // = Cases
 
 /// Runs a local negative case through its selected interpreter.
-pub fn run(case: &Case) -> Result<Vec<Report>> {
+fn run_case(case: &Case) -> Result<Vec<Report>> {
+    // P4 syntax fixtures use the production source parser
+    if case.input.extension().is_some_and(|ext| ext == "p4") {
+        return super::syntax::run(case);
+    }
     let name = case.name.as_str();
-    // Runtime stage and acceptance guards come from the registry
+    // Interpreter language and acceptance guards come from the registration
     let [stage, arg_kind, code, arg_det] = case.args.as_slice() else {
         return Err(failure(name, "interpreter requires stage, kind, code, and det arguments"));
     };

@@ -124,28 +124,7 @@ fn execute(mut cli: Cli) -> Result<()> {
     match command {
         Command::List => config.list(),
         Command::Diagnostics { suite, path_cli } => {
-            let groups = diagnostic::load(&config.suites.diagnostics)?;
-            let suites: Vec<_> = groups
-                .iter()
-                .filter(|group| suite.is_none_or(|selected| selected == group.stage))
-                .map(|group| (group.stage, &group.cases))
-                .collect();
-            if suites.is_empty() {
-                return Err(Error::Invalid("no diagnostic suites selected".into()));
-            }
-            if path_cli.is_none()
-                && suites
-                    .iter()
-                    .any(|(_, cases)| cases.iter().any(diagnostic::Case::uses_cli))
-            {
-                return Err(Error::Invalid(
-                    "--cli is required for argument-file diagnostic acceptance".into(),
-                ));
-            }
-            for (stage, cases) in suites {
-                diagnostic::run_registered(stage, cases, path_cli.as_deref())?;
-            }
-            Ok(())
+            diagnostic::run(&config.suites.diagnostics, *suite, path_cli.as_deref())
         }
         Command::P4parse => p4parse::run(&config, &suite::load_parsing(&config.suites.p4parse)?),
         Command::Elab => elab::run(&suite::load_snapshots(&config.suites.elab)?),

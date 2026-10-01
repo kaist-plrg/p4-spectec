@@ -3,14 +3,22 @@
 //! Registered auxiliary specification files are parsed and prosified normally.
 //! The primary .adoc fixture then reaches the public splice API.
 
+use std::path::Path;
+
 use p4spec_rust::{diagnostic::Report, specdoc::splicer};
 
 use crate::Result;
 
 use super::{Case, failure};
 
+/// Loads and compares this module's diagnostic fixtures.
+pub fn run(path: &Path, path_cli: Option<&Path>) -> Result<()> {
+    let groups = super::load(path, false)?;
+    super::run_registered("specdoc", &groups, path_cli, Some(run_case), Default::default())
+}
+
 /// Splices a registered skeleton against its declared source specification.
-pub fn run(case: &Case) -> Result<Vec<Report>> {
+fn run_case(case: &Case) -> Result<Vec<Report>> {
     let paths = case.paths_input();
     if paths.is_empty() {
         return Err(failure(&case.name, "splice requires source specification inputs"));
