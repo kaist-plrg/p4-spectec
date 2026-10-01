@@ -1,6 +1,6 @@
 //! File-based entry points for specification transformations
 //!
-//! [`elab`], [`algo`], [`structure`], and [`prosify`] run the passes
+//! [`elab()`], [`algo()`], [`structure()`], and [`prosify()`] run the passes
 //! from ordered source paths to the requested language.
 //! Errors preserve the reports produced by the failing stage;
 //! the `*_with_warnings` variants also return ordered elaboration warnings,
@@ -95,7 +95,7 @@ where
 
 /// Converts paths into SL and preserves warnings across stage failures.
 ///
-/// Uses the same rule-group setting as [`structure`].
+/// Uses the same rule-group setting as [`structure()`].
 pub fn structure_with_warnings<I, P>(
     paths: I,
     without_rule_groups: bool,
@@ -120,7 +120,7 @@ where
 
 /// Converts paths into annotated PL and preserves warnings across stage failures.
 ///
-/// Retains SL rule groups for prose conversion, as in [`prosify`].
+/// Retains SL rule groups for prose conversion, as in [`prosify()`].
 pub fn prosify_with_warnings<I, P>(paths: I) -> (Result<pl::ast::Spec, Error>, Vec<Report>)
 where
     I: IntoIterator<Item = P>,
