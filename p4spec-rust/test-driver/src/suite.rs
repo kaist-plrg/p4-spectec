@@ -281,12 +281,21 @@ impl Registry {
                     expectation_exists(&suite.expected)?;
                 }
                 // Every negative has an explicit input and its own expectation
-                Suite::Negative { name, cases, .. } => {
+                Suite::Negative { name, stage, cases } => {
                     if cases.is_empty() {
                         return Err(Error::Invalid(format!("{name}: no negative cases")));
                     }
                     let mut names_case = BTreeSet::new();
                     for case in cases {
+                        // Command and run stages consume exact CLI argument files
+                        if matches!(stage, diagnostic::Suite::Command | diagnostic::Suite::Run)
+                            && !case.uses_cli()
+                        {
+                            return Err(Error::Invalid(format!(
+                                "{name}: {} requires an .args input",
+                                case.name
+                            )));
+                        }
                         if case.name.is_empty() || !names_case.insert(&case.name) {
                             return Err(Error::Invalid(format!(
                                 "{name}: empty or duplicate case {}",

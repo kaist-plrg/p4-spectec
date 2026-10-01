@@ -5,7 +5,7 @@
 //! Each stage rejects failures from preceding passes as setup errors.
 
 mod algo;
-mod command;
+mod cli;
 mod elab;
 mod interp;
 mod parse;
@@ -45,6 +45,7 @@ pub enum Suite {
     Interp,
     Specdoc,
     Command,
+    Run,
     Sim,
 }
 
@@ -60,6 +61,7 @@ impl Suite {
             Self::Interp => "interp",
             Self::Specdoc => "specdoc",
             Self::Command => "command",
+            Self::Run => "run",
             Self::Sim => "sim",
         }
     }
@@ -83,6 +85,11 @@ pub struct Case {
 }
 
 impl Case {
+    /// Selects subprocess acceptance for an exact argument-file input.
+    pub fn uses_cli(&self) -> bool {
+        self.input.extension().is_some_and(|ext| ext == "args")
+    }
+
     /// Resolves an input from the diagnostic fixture working directory.
     fn path_input(&self) -> PathBuf {
         fixture_path(&self.input)
@@ -116,8 +123,8 @@ impl Drop for Directory {
 pub fn run_registered(stage: Suite, cases: &[Case], path_cli: Option<&Path>) -> Result<()> {
     // Resolve subprocess paths before entering the stable fixture directory
     let path_cli = path_cli.map(std::path::absolute).transpose()?;
-    if stage == Suite::Command && path_cli.is_none() {
-        return Err(failure(stage.name(), "--cli is required for command acceptance"));
+    if cases.iter().any(Case::uses_cli) && path_cli.is_none() {
+        return Err(failure(stage.name(), "--cli is required for argument-file acceptance"));
     }
     let _directory = Directory(std::env::current_dir()?);
     let path_manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -130,9 +137,9 @@ pub fn run_registered(stage: Suite, cases: &[Case], path_cli: Option<&Path>) -> 
         ..Default::default()
     };
     for case in cases {
-        // Command expectations compare stderr directly
-        let text = if stage == Suite::Command {
-            command::run(path_cli.as_deref().expect("command admission checked"), case)?
+        // Argument-file expectations compare stderr independently of the stage
+        let text = if case.uses_cli() {
+            cli::run(path_cli.as_deref().expect("CLI admission checked"), case)?
         } else {
             let reports = run_case(stage, case)?;
             let mut text = String::new();
@@ -168,6 +175,6 @@ fn run_case(stage: Suite, case: &Case) -> Result<Vec<Report>> {
         }
         Suite::Specdoc => specdoc::run(case),
         Suite::Sim => sim::run(case),
-        Suite::Command => unreachable!("command cases use subprocess output"),
+        Suite::Command | Suite::Run => unreachable!("argument-file stages use subprocess output"),
     }
 }

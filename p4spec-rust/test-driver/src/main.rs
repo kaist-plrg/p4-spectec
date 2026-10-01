@@ -44,7 +44,7 @@ enum Command {
     Diagnostics {
         #[arg(long, value_enum)]
         suite: Option<diagnostic::Suite>,
-        /// Product executable used by the command suite and the full run
+        /// Product executable used by registered argument-file inputs
         #[arg(long = "cli", value_name = "PATH")]
         path_cli: Option<PathBuf>,
     },
@@ -151,9 +151,13 @@ fn execute(mut cli: Cli) -> Result<()> {
             if suites.is_empty() {
                 return Err(Error::Invalid("no diagnostic suites selected".into()));
             }
-            if path_cli.is_none() && suites.iter().any(|(stage, _)| stage.name() == "command") {
+            if path_cli.is_none()
+                && suites
+                    .iter()
+                    .any(|(_, cases)| cases.iter().any(diagnostic::Case::uses_cli))
+            {
                 return Err(Error::Invalid(
-                    "--cli is required for command diagnostic acceptance".into(),
+                    "--cli is required for argument-file diagnostic acceptance".into(),
                 ));
             }
             for (stage, cases) in suites {

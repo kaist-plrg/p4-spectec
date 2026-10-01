@@ -1,4 +1,4 @@
-//! CLI rejection from registered argument files
+//! Stage diagnostics from registered CLI argument files
 //!
 //! Each line of the input file is one exact product argument.
 //! Expectations contain the product's stderr verbatim.
@@ -34,7 +34,7 @@ pub fn run(path_cli: &Path, case: &Case) -> Result<String> {
         }
     }
     if used.iter().any(|used| !used) {
-        return Err(failure(&case.name, "unused auxiliary command input"));
+        return Err(failure(&case.name, "unused auxiliary CLI input"));
     }
     // Capture stderr without comparing exit status or program stdout
     let output = Command::new(path_cli).args(args).output()?;
@@ -43,9 +43,9 @@ pub fn run(path_cli: &Path, case: &Case) -> Result<String> {
     let code = case
         .code
         .as_deref()
-        .ok_or_else(|| failure(&case.name, "command requires an expected diagnostic code"))?;
+        .ok_or_else(|| failure(&case.name, "CLI input requires an expected diagnostic code"))?;
     if !text.contains(&format!("error[{code}]:")) {
-        return Err(failure(&case.name, format!("missing expected command diagnostic {code}")));
+        return Err(failure(&case.name, format!("missing expected diagnostic {code}")));
     }
     Ok(text)
 }
