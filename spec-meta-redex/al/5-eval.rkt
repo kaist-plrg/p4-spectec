@@ -26,7 +26,10 @@
          step
          step/rule
          run
-         run/trace)
+         run/trace
+         conf->cursor
+         cursor->conf
+         cursor-step)
 
 ;;
 ;; The IN and FAIL rules
@@ -94,10 +97,13 @@
 ;;
 ;; The driver
 ;;
-;; On (G (IN L e)), it descends to the redex through the one pending
-;; evaluation position of each node, applies the rules to it once, and plugs
-;; the contractum and the new layer back. It fails on a node with two pending
-;; positions, on a redex that two rules apply to, and when it is stuck.
+;; It holds (G (IN L e)) as a cursor at the last contractum. A step moves the
+;; cursor to the redex, applies the rules to it once, and puts the contractum
+;; and the new layer at the cursor. To reach the redex, the cursor climbs past
+;; the nodes whose subterm is done, and then descends through the one pending
+;; evaluation position of each node. So a step matches only the nodes it
+;; enters, not the whole path from the root. It fails on a node with two
+;; pending positions, on a redex that two rules apply to, and when it is stuck.
 
 ;; frames maps a node to its one-level decompositions (in-hole Fr any), as
 ;; (Fr . subterm) pairs. The driver's steps are checked against ->al, if any.
@@ -146,51 +152,76 @@
 ;; The configuration after conf and the name of the rule applied, or #f and #f
 ;; if conf is final
 (define (step/rule conf #:machine [m al-machine])
-  (when (and (check-conf?) (not (conf? conf)))
-    (error 'step "not a configuration (G e), with e: ~e" (conf-term conf)))
-  (define-values (next rule)
-    (match conf
-      [(list _ (list 'IN _ (? res?))) (values #f #f)]
-      [(list G (list 'IN L body))
-       (define-values (r L_r plug-r) (descend m body L))
-       (define-values (r_1 L_1 rule) (reduce-redex m r G L_r))
-       (define-values (body_1 L_body) (plug-r r_1 L_1))
-       (values (list G (list 'IN L_body body_1)) rule)]
-      [_ (error 'step "not a configuration (G (IN L e)), with (IN L e): ~e"
-                (conf-term conf))]))
-  (when (and (cross-check?) (machine-->al m))
-    (cross-check m conf next))
-  (values next rule))
+  (define-values (next rule) (cursor-step (conf->cursor conf) #:machine m))
+  (values (and next (cursor->conf next)) rule))
 
 ;; The machine term of a configuration, for error messages that leave out G
 (define (conf-term conf)
   (if (and (list? conf) (= (length conf) 2)) (cadr conf) conf))
 
-;; The redex in t, which is not done and has the layer L as its innermost IN's,
-;; the redex's own layer, and (plug r_1 L_1). plug puts the contractum r_1 in
-;; place of the redex, and L_1 in place of the redex's layer, and returns t's
-;; new term and L's replacement.
-(define (descend m t L)
-  (define (here) (values t L values))
+;; (G (IN L_root body)) with the subterm t of body in focus. L is the layer of
+;; t's innermost IN, and path holds t's ancestors in body, innermost first.
+(struct cursor (G path t L))
+;; The ancestor (in-hole Fr t)
+(struct path-fr (Fr))
+;; The ancestor (IN L t), whose own innermost IN has the layer L_outer
+(struct path-in (L_outer))
+
+(define (conf->cursor conf)
+  (match conf
+    [(list G (list 'IN L body)) (cursor G '() body L)]
+    [_ (error 'step "not a configuration (G (IN L e)), with (IN L e): ~e"
+              (conf-term conf))]))
+
+(define (cursor->conf c)
+  (match-define (cursor G path t L) c)
+  (let loop ([path path] [t t] [L L])
+    (match path
+      ['() (list G (list 'IN L t))]
+      [(cons (path-fr Fr) path_1) (loop path_1 (plug Fr t) L)]
+      [(cons (path-in L_outer) path_1) (loop path_1 (list 'IN L t) L_outer)])))
+
+;; The cursor after the step of c's configuration and the name of the rule
+;; applied, or #f and #f if the configuration is final
+(define (cursor-step c #:machine [m al-machine])
+  (define conf (and (or (check-conf?) (cross-check?)) (cursor->conf c)))
+  (when (and (check-conf?) (not (conf? conf)))
+    (error 'step "not a configuration (G e), with e: ~e" (conf-term conf)))
+  (define-values (next rule)
+    (match (settle m c)
+      [#f (values #f #f)]
+      [(cursor G path r L)
+       (define-values (r_1 L_1 rule) (reduce-redex m r G L))
+       (values (cursor G path r_1 L_1) rule)]))
+  (when (and (cross-check?) (machine-->al m))
+    (cross-check m conf (and next (cursor->conf next))))
+  (values next rule))
+
+;; c moved to the redex, or #f if c's configuration is final. A node whose
+;; pending subterm is not done keeps that position, so the cursor climbs only
+;; past done subterms.
+(define (settle m c)
+  (match-define (cursor G path t L) c)
+  (let climb ([path path] [t t] [L L])
+    (cond
+      [(and (null? path) (res? t)) #f]
+      [(or (null? path) (not (done? t))) (descend m G path t L)]
+      [else
+       (match path
+         [(cons (path-fr Fr) path_1) (climb path_1 (plug Fr t) L)]
+         [(cons (path-in L_outer) path_1) (climb path_1 (list 'IN L t) L_outer)])])))
+
+;; The cursor at the redex in t, which is not done unless it is the root's body
+(define (descend m G path t L)
   (match t
     [(list 'IN L_t body)
-     (cond
-       [(done? body) (here)]
-       [else
-        (define-values (r L_r plug-r) (descend m body L_t))
-        (values r L_r
-                (λ (r_1 L_1)
-                  (define-values (body_1 L_t1) (plug-r r_1 L_1))
-                  (values (list 'IN L_t1 body_1) L)))])]
+     (if (done? body)
+         (cursor G path t L)
+         (descend m G (cons (path-in L) path) body L_t))]
     [_
      (match (pending m t)
-       ['() (here)]
-       [(list (cons Fr sub))
-        (define-values (r L_r plug-r) (descend m sub L))
-        (values r L_r
-                (λ (r_1 L_1)
-                  (define-values (sub_1 L_2) (plug-r r_1 L_1))
-                  (values (plug Fr sub_1) L_2)))]
+       ['() (cursor G path t L)]
+       [(list (cons Fr sub)) (descend m G (cons (path-fr Fr) path) sub L)]
        [positions
         (error 'step "~a pending positions, with subterms ~e, in ~e"
                (length positions) (map cdr positions) t)])]))
@@ -230,13 +261,14 @@
 
 ;; The final configuration that conf reduces to
 (define (run conf #:machine [m al-machine])
-  (define-values (next _rule) (step/rule conf #:machine m))
-  (if next (run next #:machine m) conf))
+  (let loop ([c (conf->cursor conf)])
+    (define-values (next _rule) (cursor-step c #:machine m))
+    (if next (loop next) (cursor->conf c))))
 
 ;; The final configuration, and the names of the rules applied, in order
 (define (run/trace conf #:machine [m al-machine])
-  (let loop ([conf conf] [rules '()])
-    (define-values (next rule) (step/rule conf #:machine m))
+  (let loop ([c (conf->cursor conf)] [rules '()])
+    (define-values (next rule) (cursor-step c #:machine m))
     (if next
         (loop next (cons rule rules))
-        (values conf (reverse rules)))))
+        (values (cursor->conf c) (reverse rules)))))

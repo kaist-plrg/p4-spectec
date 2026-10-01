@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Steps 1 to 11 are done.
+Status: in progress. Steps 1 to 12 are done, and Step 13 is under way.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -255,17 +255,23 @@ two through the contexts:
 figures refer to, and the relation `traces` can show. Programs are run by a
 driver that computes the same relation faster:
 
-1. It descends from the root, remembering the innermost `IN`. At each node it
-   matches `Fr` one level deep, and moves into the one evaluation position
-   whose subterm is not `done`.
-2. The node where no such position exists is the redex. The driver applies
-   `->redex` and `->ctx` to it once.
-3. It plugs `r'` back, and replaces the innermost `IN`'s layer with `L'`.
+1. It holds the configuration as a cursor: a subterm in focus, the layer of
+   its innermost `IN`, and the nodes on the path from it to the root. A run
+   starts with the root's body in focus.
+2. It climbs from the focus past the nodes whose subterm is `done`, and
+   rebuilds each one. From the first node that is not `done`, it descends: at
+   each node it matches `Fr` one level deep, and moves into the one evaluation
+   position whose subterm is not `done`.
+3. The node where no such position exists is the redex. The driver applies
+   `->redex` and `->ctx` to it once, and puts `r'` in focus under `L'`.
 
-The driver fails loudly if two evaluation positions are pending at one node,
-if the rules give two results, or if a configuration that is not final has no
-step. It loops with `apply-reduction-relation`, and never uses
-`apply-reduction-relation*` (see below). The rules, the grammar, and
+A node's other subterms do not change while its pending subterm is evaluated,
+so its pending position stays the same until that subterm is `done`. So a step
+matches `Fr` only at the nodes it enters, not along the whole path from the
+root. The driver fails loudly if two evaluation positions are pending at a
+node it enters, if the rules give two results, or if a configuration that is
+not final has no step. It loops with `apply-reduction-relation`, and never
+uses `apply-reduction-relation*` (see below). The rules, the grammar, and
 `->al` are the specification; the driver adds no semantics. Tests check that
 its step equals `->al`'s on every step of small runs (see
 [Verification](#verification)).
@@ -824,7 +830,11 @@ make redex-ffi    # after editing p4spec/ or the shim; no raco make needed
 ```sh
 raco make spec-meta-redex/al/6-entry.rkt
 racket spec-meta-redex/al/6-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
+racket spec-meta-redex/al/6-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 spec   # passed, in about 3 minutes
 ```
+
+`--p4` takes `-i DIR` for each P4 include directory, and uses
+`p4c/p4include` when none is given.
 
 ### Tests
 
@@ -1738,6 +1748,71 @@ Outcome:
 - Done when the small program passes, and the medium and large results are
   recorded with timings. This step answers whether the large program is within
   reach.
+
+Outcome so far:
+
+- `--p4` is in `al/6-entry.rkt`'s `main` submodule. It boots the spec and the
+  program, sets `host-spec` to the spec, runs `entry-p4`, and prints `passed`
+  or `fail`. `-i DIR` adds a P4 include directory; without one, it uses
+  `p4c/p4include`, as `k-run-p4.sh` does. There is no test of it yet.
+- The small program passes, and the negative one fails. The large program
+  has not been run. Times *(measured)*, with contracts and caching on, before
+  profiling or any optimization:
+
+  | Program | Value (conses) | Result | Steps | Host calls | Driver | `al/6-entry.rkt` |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | `p4_16_samples/action-bind.p4` | 949 | `passed` | 73,932 | 102 | 193 s | 194 s |
+  | `p4_16_errors/action-bind.p4` | 1,006 | `fail` | 24,444 | 53 | 79 s | 77 s |
+  | `checksum-l4-bmv2.p4` | 27,311 | none | over 1,537 | none yet | over 286 s | stopped at 5 min |
+
+  The driver column includes `host_init` (1.1 s). The last two columns come
+  from separate runs, which differ by a few seconds. Booting `spec/` takes 1.1 s,
+  booting the program 0.03 to 0.06 s, and `$load` about 2.1 s. The peak
+  resident memory on `action-bind.p4` is 520 MB. All host calls are builtins.
+- On `action-bind.p4`, a step takes 2.6 ms on average. Over each 5,000
+  steps, the mean step time varies between 1.2 and 3.8 ms. GC takes 1.8 s of
+  the 193 s. The rules applied most often are
+  `assign-exp/variable` (6,061 times), `eval-exp/variable` (4,891), and
+  `assign-exps/cons` (4,767).
+- On `checksum-l4-bmv2.p4`, no single step takes over 0.5 s, but every step
+  is slow. Steps average 73 ms over the first 500, 200 ms over the next 500,
+  and 280 ms by step 1,500, which is 40 to 150 times `action-bind.p4`'s rate.
+  The run never reached a host call. Its program value is 29 times larger, and
+  about the size of the 27,000-cons value that slowed the driver in Step 6.
+  The interrupted run was in Redex's nonterminal matcher
+  (`match-nt/boolean`). That fits Step 6's finding, where the driver's
+  matching of `Fr` along the path collides in the memo and costs a deep
+  `equal?`, but no profile confirms it yet.
+- The profile of `action-bind.p4`'s first 15,000 steps put 93% of the time
+  in the driver's `pending`, which matches `(in-hole Fr any)` at each node on
+  the path to the redex. Applying the rules took about 7%, and metafunction
+  calls under 1%. The driver matched `Fr` 50 times per step, at 0.03 to
+  0.09 ms each, mostly at the five nodes of each relation call
+  (`eval-rulgroups/cons`, `eval-ruls/cons`, `eval-rul/succ`, `eval-prems/head`,
+  and `eval-prem/relpr`). The typing relations nest about 9 calls deep on
+  average *(measured)*.
+- Item 2 is done. The driver keeps a cursor between steps, as
+  [The notion of reduction and its closure](#the-notion-of-reduction-and-its-closure)
+  describes. `al/5-eval.rkt` provides `conf->cursor`, `cursor-step`, and
+  `cursor->conf`. `run` and `run/trace` step a cursor, and `step/rule` on a
+  configuration starts one from the root. The tests step a cursor too, so the
+  cross-check compares every resumed step with `->al`. A new test checks that
+  20 nested negations match `Fr` 41 times, where descending from the root
+  matched it 231 times. The whole suite runs 3,624 checks in 51 s.
+- With the cursor, on `action-bind.p4` *(measured)*:
+
+  | | Before | With the cursor |
+  | --- | --- | --- |
+  | Steps | 73,932 | 73,932 |
+  | `Fr` matches per step | 50 | 1.4 |
+  | Driver | 193 s | 14.6 s |
+  | Mean step | 2.6 ms | 0.20 ms |
+  | `al/6-entry.rkt` | 194 s | 18.3 s |
+
+  The steps, the rules applied, and the 102 host calls are the same. The step
+  time stays flat over the run. Matching `Fr` now takes 2.6 s of the run, so
+  applying the rules is most of the rest. The other programs have not been
+  rerun.
 
 ### Step 14: Test targets and docs
 

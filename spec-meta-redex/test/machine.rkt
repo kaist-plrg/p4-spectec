@@ -37,13 +37,13 @@
 (define (run-traced G L e cross-check-on?)
   (parameterize ([cross-check? cross-check-on?]
                  [check-conf? #t])
-    (let loop ([conf (list G (list 'IN L e))] [rules '()])
-      (define-values (next rule) (step/rule conf))
+    (let loop ([c (conf->cursor (list G (list 'IN L e)))] [rules '()])
+      (define-values (next rule) (cursor-step c))
       (cond
         [next
          (hash-update! rule-counts rule add1 0)
          (loop next (cons rule rules))]
-        [else (cons conf (reverse rules))]))))
+        [else (cons (cursor->conf c) (reverse rules))]))))
 
 ;; The script that spectec-boot gives for the watsup source text
 (define (boot-text text)
@@ -206,6 +206,19 @@
              (λ ()
                (parameterize ([cross-check? #t])
                  (step (conf-of (term L-x) (term (WRAP (NAT 1)))) #:machine wraps))))
+
+  ;; The driver resumes at the contractum. On 20 nested negations, each node
+  ;; is matched once on the way down, and once more when its operand is done,
+  ;; instead of once per step for each node on the path from the root.
+  (define frame-matches 0)
+  (define counting
+    (machine-with #:frames (λ (t)
+                             (set! frame-matches (add1 frame-matches))
+                             ((machine-frames al-machine) t))))
+  (define e-nots (for/fold ([e (term (BOOL #t))]) ([_ 20]) (list 'UN 'NOT e)))
+  (test-equal (run (conf-of (term L-x) e-nots) #:machine counting)
+              (conf-of (term L-x) (term (OK (BOOL #t)))))
+  (test-equal frame-matches 41)
 
   ;; A rule that writes L updates the innermost IN's layer.
   (define binding
