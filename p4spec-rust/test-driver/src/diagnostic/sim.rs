@@ -6,12 +6,13 @@
 
 use std::path::Path;
 
-use p4spec_rust::{
-    diagnostic::{Report, ReportKind},
-    lang::data::value::external::Encoding,
-    runner::{self, Config, RunError, Spec},
-    sim_plugin,
-};
+use p4spec_rust::lang::data::value::external::Encoding;
+
+use p4spec_rust::diagnostic::{Report, ReportKind};
+
+use p4spec_rust::runner::{self, Config, RunError, Spec};
+
+use p4spec_rust::sim_plugin;
 
 use crate::Result;
 

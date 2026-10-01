@@ -5,7 +5,9 @@
 
 use std::path::Path;
 
-use p4spec_rust::{diagnostic::Report, pass::structure};
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::pass::structure;
 
 use crate::Result;
 

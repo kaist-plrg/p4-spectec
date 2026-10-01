@@ -5,19 +5,27 @@
 //! Reports render from a stable fixture directory before full-text comparison.
 //! Each stage rejects failures from preceding passes as setup errors.
 
-mod algo;
 mod cli;
-mod command;
-mod elab;
+mod syntax;
+
 mod frontend;
-mod interp;
+
+mod elab;
+
+mod algo;
+
+mod structure;
+
 mod prose;
-mod run;
-mod sim;
+
 mod specdoc;
 mod splice;
-mod structure;
-mod syntax;
+
+mod interp;
+
+mod command;
+mod run;
+mod sim;
 
 use std::{
     collections::BTreeSet,
@@ -46,8 +54,8 @@ pub enum Suite {
     Algo,
     Structure,
     Prose,
-    Interp,
     Specdoc,
+    Interp,
     Command,
     Run,
     Sim,
@@ -57,50 +65,50 @@ pub enum Suite {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Modules {
-    pub command: PathBuf,
-    pub run: PathBuf,
     pub frontend: PathBuf,
     pub elab: PathBuf,
     pub algo: PathBuf,
-    pub interp: PathBuf,
-    pub splice: PathBuf,
+    pub structure: PathBuf,
     pub prose: PathBuf,
     pub specdoc: PathBuf,
+    pub splice: PathBuf,
+    pub interp: PathBuf,
+    pub command: PathBuf,
+    pub run: PathBuf,
     pub sim: PathBuf,
-    pub structure: PathBuf,
 }
 
 impl Modules {
     /// Returns module filenames for resolution relative to the root index.
     pub fn paths_mut(&mut self) -> [&mut PathBuf; 11] {
         [
-            &mut self.command,
-            &mut self.run,
             &mut self.frontend,
             &mut self.elab,
             &mut self.algo,
-            &mut self.interp,
-            &mut self.splice,
+            &mut self.structure,
             &mut self.prose,
             &mut self.specdoc,
+            &mut self.splice,
+            &mut self.interp,
+            &mut self.command,
+            &mut self.run,
             &mut self.sim,
-            &mut self.structure,
         ]
     }
 
     /// Prints each module through the same validation used for execution.
     pub fn list(&self) -> Result<()> {
-        println!("diagnostics/command: {:#?}", load(&self.command, true)?);
-        println!("diagnostics/run: {:#?}", load(&self.run, true)?);
         println!("diagnostics/frontend: {:#?}", load(&self.frontend, false)?);
         println!("diagnostics/elab: {:#?}", load(&self.elab, false)?);
         println!("diagnostics/algo: {:#?}", load(&self.algo, false)?);
-        println!("diagnostics/interp: {:#?}", load(&self.interp, false)?);
-        println!("diagnostics/splice: {:#?}", load(&self.splice, false)?);
+        println!("diagnostics/structure: {:#?}", load(&self.structure, false)?);
         println!("diagnostics/prose: {:#?}", load(&self.prose, false)?);
         println!("diagnostics/specdoc: {:#?}", load(&self.specdoc, false)?);
+        println!("diagnostics/splice: {:#?}", load(&self.splice, false)?);
+        println!("diagnostics/interp: {:#?}", load(&self.interp, false)?);
+        println!("diagnostics/command: {:#?}", load(&self.command, true)?);
+        println!("diagnostics/run: {:#?}", load(&self.run, true)?);
         println!("diagnostics/sim: {:#?}", load(&self.sim, false)?);
-        println!("diagnostics/structure: {:#?}", load(&self.structure, false)?);
         Ok(())
     }
 }
@@ -108,12 +116,6 @@ impl Modules {
 /// Runs the selected module or all modules in registration order.
 pub fn run(modules: &Modules, suite: Option<Suite>, path_cli: Option<&Path>) -> Result<()> {
     // The CLI selector chooses modules without inspecting their registrations
-    if suite.is_none_or(|suite| suite == Suite::Command) {
-        command::run(&modules.command, path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Run) {
-        run::run(&modules.run, path_cli)?;
-    }
     if suite.is_none_or(|suite| suite == Suite::Frontend) {
         frontend::run(&modules.frontend, path_cli)?;
     }
@@ -123,24 +125,30 @@ pub fn run(modules: &Modules, suite: Option<Suite>, path_cli: Option<&Path>) -> 
     if suite.is_none_or(|suite| suite == Suite::Algo) {
         algo::run(&modules.algo, path_cli)?;
     }
-    if suite.is_none_or(|suite| suite == Suite::Interp) {
-        interp::run(&modules.interp, path_cli)?;
-    }
-    // Specdoc owns both skeleton splicing and rendered document diagnostics
-    if suite.is_none_or(|suite| suite == Suite::Specdoc) {
-        splice::run(&modules.splice, path_cli)?;
+    if suite.is_none_or(|suite| suite == Suite::Structure) {
+        structure::run(&modules.structure, path_cli)?;
     }
     if suite.is_none_or(|suite| suite == Suite::Prose) {
         prose::run(&modules.prose, path_cli)?;
     }
+    // Specdoc owns both rendered document and skeleton splicing diagnostics
     if suite.is_none_or(|suite| suite == Suite::Specdoc) {
         specdoc::run(&modules.specdoc, path_cli)?;
     }
+    if suite.is_none_or(|suite| suite == Suite::Specdoc) {
+        splice::run(&modules.splice, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Interp) {
+        interp::run(&modules.interp, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Command) {
+        command::run(&modules.command, path_cli)?;
+    }
+    if suite.is_none_or(|suite| suite == Suite::Run) {
+        run::run(&modules.run, path_cli)?;
+    }
     if suite.is_none_or(|suite| suite == Suite::Sim) {
         sim::run(&modules.sim, path_cli)?;
-    }
-    if suite.is_none_or(|suite| suite == Suite::Structure) {
-        structure::run(&modules.structure, path_cli)?;
     }
     Ok(())
 }

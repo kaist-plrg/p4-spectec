@@ -13,10 +13,10 @@
 //! Resubmit returns the original packet to the parser; recirculate returns the
 //! deparsed packet to the parser
 
+use std::{cell::RefCell, io::Write};
+
 use num_bigint::BigInt;
 use serde_derive_state::{DeserializeState, SerializeState};
-
-use std::{cell::RefCell, io::Write};
 
 use crate::lang::{
     common::source::Span,

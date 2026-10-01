@@ -5,7 +5,9 @@
 
 use std::path::Path;
 
-use p4spec_rust::{diagnostic::Report, specdoc::splicer};
+use p4spec_rust::diagnostic::Report;
+
+use p4spec_rust::specdoc::splicer;
 
 use crate::Result;
 

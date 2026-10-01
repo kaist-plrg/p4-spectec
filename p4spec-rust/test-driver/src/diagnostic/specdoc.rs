@@ -6,6 +6,7 @@
 use std::path::Path;
 
 use p4spec_rust::diagnostic::{Report, ReportKind, Severity};
+
 use p4spec_rust::specdoc::adoc;
 
 use crate::Result;

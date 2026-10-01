@@ -1,15 +1,22 @@
-mod adoc;
-mod algo;
 mod corpus;
-mod diagnostic;
+mod snapshot;
+mod suite;
+
 mod elab;
-mod p4parse;
+
+mod algo;
+
+mod structure;
+
 mod prose;
+
+mod adoc;
+
+mod p4parse;
 mod run;
 mod sim;
-mod snapshot;
-mod structure;
-mod suite;
+
+mod diagnostic;
 
 use std::{path::PathBuf, process::ExitCode};
 
@@ -40,16 +47,6 @@ struct Cli {
 enum Command {
     /// List all registered suites, inputs, and expectation files
     List,
-    /// Compare diagnostic output with stored snapshots
-    Diagnostics {
-        #[arg(long, value_enum)]
-        suite: Option<diagnostic::Suite>,
-        /// Product executable used by registered argument-file inputs
-        #[arg(long = "cli", value_name = "PATH")]
-        path_cli: Option<PathBuf>,
-    },
-    /// Compare P4 parse/unparse/parse roundtrips with stored file results
-    P4parse,
     /// Compare the elaborated P4 specification with expected output
     Elab,
     /// Compare the algorithmic P4 specification with expected output
@@ -64,6 +61,8 @@ enum Command {
         #[arg(long = "output")]
         path_output: Option<PathBuf>,
     },
+    /// Compare P4 parse/unparse/parse roundtrips with stored file results
+    P4parse,
     /// Compare execution outcomes with stored file results
     Run {
         #[command(subcommand)]
@@ -77,6 +76,14 @@ enum Command {
         language: Language,
         #[command(flatten)]
         options: ExecutionOptions,
+    },
+    /// Compare diagnostic output with stored snapshots
+    Diagnostics {
+        #[arg(long, value_enum)]
+        suite: Option<diagnostic::Suite>,
+        /// Product executable used by registered argument-file inputs
+        #[arg(long = "cli", value_name = "PATH")]
+        path_cli: Option<PathBuf>,
     },
 }
 
@@ -95,7 +102,7 @@ fn execute(mut cli: Cli) -> Result<()> {
     let command = &mut cli.command;
     if matches!(
         command,
-        Command::P4parse | Command::Structure | Command::Run { .. } | Command::Sim { .. }
+        Command::Structure | Command::P4parse | Command::Run { .. } | Command::Sim { .. }
     ) && std::env::var_os("UPDATE_EXPECT").is_some()
     {
         return Err(Error::Invalid(
@@ -123,10 +130,6 @@ fn execute(mut cli: Cli) -> Result<()> {
     let index = Index::load(&path_registry)?;
     match command {
         Command::List => index.list(),
-        Command::Diagnostics { suite, path_cli } => {
-            diagnostic::run(&index.suites.diagnostics, *suite, path_cli.as_deref())
-        }
-        Command::P4parse => p4parse::run(&suite::load_parsing(&index.suites.p4parse)?),
         Command::Elab => elab::run(&suite::load_snapshots(&index.suites.elab)?),
         Command::Algo => algo::run(&suite::load_snapshots(&index.suites.algo)?),
         Command::Structure => structure::run(&suite::load_structure(&index.suites.structure)?),
@@ -134,11 +137,15 @@ fn execute(mut cli: Cli) -> Result<()> {
         Command::Adoc { path_output } => {
             adoc::run(&suite::load_adoc(&index.suites.adoc)?, path_output.as_deref())
         }
+        Command::P4parse => p4parse::run(&suite::load_parsing(&index.suites.p4parse)?),
         Command::Run { language, options } => {
             run::run(&suite::load_execution(&index.suites.run)?, *language, *options)
         }
         Command::Sim { language, options } => {
             sim::run(&suite::load_simulation(&index.suites.sim)?, *language, *options)
+        }
+        Command::Diagnostics { suite, path_cli } => {
+            diagnostic::run(&index.suites.diagnostics, *suite, path_cli.as_deref())
         }
     }
 }
