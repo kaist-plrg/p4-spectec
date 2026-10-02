@@ -172,9 +172,14 @@ RSPECDIR = spec-meta-redex
 RFFI_SO = _build/default/p4spec/bin/ffi.so
 RSHIM_SRC = $(RSPECDIR)/ffi/shim.c
 RSHIM_SO = $(RSPECDIR)/ffi/shim.so
+RENTRY = $(RSPECDIR)/al/6-entry.rkt
+RTYPECHECK = $(RSPECDIR)/test/p4-typecheck.rkt
 
-.PHONY: redex-ffi
-redex-ffi: $(RFFI_SO) $(RSHIM_SO)
+# spectec-boot boots scripts and P4 programs; ffi.so and shim.so are the host
+# of builtins and externs. raco make keeps compiled/ in step with the sources.
+.PHONY: redex
+redex: boot $(RFFI_SO) $(RSHIM_SO)
+	raco make $(RENTRY)
 
 .PHONY: $(RFFI_SO)
 $(RFFI_SO):
@@ -184,6 +189,16 @@ $(RFFI_SO):
 $(RSHIM_SO): $(RSHIM_SRC) | $(RFFI_SO)
 	gcc -shared -fPIC -O2 -Wall -I "$(OCAMLWHERE)" -o $@ $< \
 	  -L$(dir $(RFFI_SO)) -l:ffi.so '-Wl,-rpath,$$ORIGIN/../../$(dir $(RFFI_SO))'
+
+# Type-checks the P4 programs of p4_16_samples (positive) and p4_16_errors
+# (negative); not the other tests in $(RSPECDIR)/test.
+.PHONY: redex-test
+redex-test: redex
+	raco make $(RTYPECHECK)
+	@status=0; \
+	racket $(RTYPECHECK) --p4-dir p4c/testdata/p4_16_samples -e excludes/static -i p4c/p4include spec || status=1; \
+	racket $(RTYPECHECK) --p4-dir p4c/testdata/p4_16_errors -e excludes/static -i p4c/p4include --neg spec || status=1; \
+	exit $$status
 
 # Cleanup
 
@@ -195,4 +210,4 @@ clean:
 	rm -rf $(KDEFDIR) $(KSHIM_OBJ)
 	rm -f $(KSPECDIR)/specdir $(KSPECDIR)/spectec-k-* $(KSPECDIR)/run-k-typecheck-*.result
 	rm -rf $(KSPECDIR)/.kore-cache
-	rm -f $(RSHIM_SO)
+	rm -f $(RSHIM_SO) $(RSPECDIR)/p4-typecheck-*.result

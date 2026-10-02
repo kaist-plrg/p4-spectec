@@ -5,7 +5,7 @@
 ;;   p4spec/bin/ffi.ml
 ;;
 ;; The OCaml runtime lives in this process, and only this place may call it.
-;; `make redex-ffi` builds the shim.
+;; `make redex` builds the shim.
 
 (require ffi2
          racket/promise
@@ -23,7 +23,7 @@
 (define shim
   (delay
     (unless (file-exists? shim-path)
-      (error 'host-eval "~a is missing; run `make redex-ffi`" (simplify-path shim-path)))
+      (error 'host-eval "~a is missing; run `make redex`" (simplify-path shim-path)))
     (define lib (ffi2-lib shim-path))
     (cons (ffi2-procedure (ffi2-lib-ref lib "host_init") (-> string_t int64_t))
           (ffi2-procedure (ffi2-lib-ref lib "host_eval") (-> string_t string_t)))))

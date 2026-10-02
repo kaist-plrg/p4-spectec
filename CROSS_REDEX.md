@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: in progress. Steps 1 to 12 are done, and Step 13 is under way.
+Status: done. Steps 1 to 14 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -579,6 +579,7 @@ spec-meta-redex/
     5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al; the driver
     6-entry.rkt           Entry: load, then run $main() or a relation; the command-line driver
   test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, machine.rkt, ...
+    p4-typecheck.rkt      make redex-test: type-checks the P4 samples; raco test skips it
   ffi/
     shim.c                C shim between 0.3-extern-ffi.rkt and p4spec/bin/ffi.ml
 ```
@@ -687,7 +688,7 @@ checked the stanza:
     before the next call, and needs no `free` or length function.
 - **Loading.** `0.3-extern-ffi.rkt` loads `shim.so` on the first extern call,
   so a run without one never loads it. If the file is missing, the error names
-  `make redex-ffi`. It binds each function with
+  `make redex`. It binds each function with
   `(ffi2-procedure (ffi2-lib-ref lib "host_eval") (-> string_t string_t))`.
   The docs give `(ffi2-lib-ref name lib)`, but ffi2-lib 1.1 takes the library
   first. The spec path goes as `string_t`: ffi2's `path_t` accepts only path
@@ -723,7 +724,7 @@ checked the stanza:
 
 Unlike K's interpreter, which embeds a snapshot of `p4spec/` when it is
 kompiled, Redex loads `ffi.so` at run time. After editing `p4spec/`,
-`make redex-ffi` is enough, with no `raco make`.
+`make redex` rebuilds it, and its `raco make` has nothing to do.
 
 Every object-level builtin goes to the host, including the map builtins
 (`find_map`, `find_maps`, `add_map`, `adds_map`, `update_map`, `assoc_`) that
@@ -829,20 +830,25 @@ racket -e '(require racket/pretty (file "spec-meta-redex/al/0-boot.rkt"))
              (pretty-write d))'
 ```
 
-### The OCaml host
-
-From Step 12 on, builtins and externs need `ffi.so` and `shim.so`:
+### Building
 
 ```sh
-make redex-ffi    # after editing p4spec/ or the shim; no raco make needed
+make redex    # spectec-boot, ffi.so, shim.so, and raco make on al/6-entry.rkt
 ```
+
+`spectec-boot` boots scripts and P4 programs, and `ffi.so` and `shim.so` are
+the host of builtins and externs. The Racket modules run without `raco make`,
+but compile in memory on every run: `examples/add.watsup` takes 8.6 s that
+way, and 0.9 s compiled *(measured)*. Once `compiled/` exists, a stale `.zo`
+is loaded without a check of its dependencies, so run `make redex`, or
+`raco make` on the module to run, after editing a module.
 
 ### Running a script
 
 ```sh
 raco make spec-meta-redex/al/6-entry.rkt
 racket spec-meta-redex/al/6-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
-racket spec-meta-redex/al/6-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 spec   # passed, in about 3 minutes
+racket spec-meta-redex/al/6-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 spec   # passed, in about 15 s
 ```
 
 `--p4` takes `-i DIR` for each P4 include directory, and uses
@@ -855,7 +861,7 @@ raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test
 raco make spec-meta-redex/test/machine.rkt && raco test spec-meta-redex/test/machine.rkt
 ```
 
-The tests call the OCaml host, so they need `make redex-ffi` first. Its
+The tests call the OCaml host, so they need `make redex` first. Its
 diagnostics, such as `extern func ext failed`, go to file descriptor 2 and
 show in the output of passing tests.
 
@@ -880,6 +886,32 @@ setting.
 
 A test file's last check, `check-coverage`, fails with the names of the rules
 of its relations that the driver never applied.
+
+### Type-checking the P4 samples
+
+```sh
+make redex-test                       # every sample and every error program, minus the excludes
+raco make spec-meta-redex/test/p4-typecheck.rkt
+racket spec-meta-redex/test/p4-typecheck.rkt \
+  --p4-dir p4spec/test/micro/programs -e excludes/static -i p4c/p4include spec
+```
+
+`make redex-test` runs the same command twice: with
+`--p4-dir p4c/testdata/p4_16_samples`, whose programs must pass, and with
+`--p4-dir p4c/testdata/p4_16_errors --neg`, whose programs must fail. It
+fails if either run does. `--p4-dir`, `-e`, `-i`, and the spec are required.
+Each of the three flags can be repeated. `-d` lists the programs that would
+be checked. Entries in the `.exclude` files are relative to the repository
+root. The 11 micro programs take about 5 minutes.
+
+`make redex-test` does not run the other tests in `spec-meta-redex/test`, and
+`raco test` does not run `p4-typecheck.rkt`'s programs. There is no timeout.
+Each program passes or fails, and one that raises fails. The outcomes go to
+`spec-meta-redex/p4-typecheck-pos.result`, or `p4-typecheck-neg.result` with
+`--neg`, as they come; `-o FILE` names another. Under each program that
+raises, the result file also has its stderr and error message, indented.
+The programs without the expected result are listed at the end, under
+`failing`.
 
 ### Exploring in a REPL
 
@@ -1761,8 +1793,10 @@ Outcome:
   recorded with timings. This step answers whether the large program is within
   reach.
 
-Outcome so far:
+Outcome:
 
+- Closed here, at the user's request. The small program passes. The large
+  program was not run, and items 1 and 4 to 7 were not taken up.
 - `--p4` is in `al/6-entry.rkt`'s `main` submodule. It boots the spec and the
   program, sets `host-spec` to the spec, runs `entry-p4`, and prints `passed`
   or `fail`. `-i DIR` adds a P4 include directory; without one, it uses
@@ -1861,14 +1895,112 @@ Outcome so far:
   measured yet. Items 4 and 5 are about the large `G` and `L` that keys can
   hold.
 
-### Step 14: Test targets and docs
+### Step 14: Type-checking the P4 samples
 
-- `make redex-test`: runs `raco make` and `raco test` on
-  `spec-meta-redex/test`, after `redex-ffi`. It also checks the examples
-  against checked-in expected outputs, so K need not be built. `SPECTEC_REDEX_CONTRACTS` is read
-  at compile time, so a run with contracts off needs its own compiled code.
-- Render the grammar, `->redex`, `->ctx`, and the closure rule to figures with
-  `language->pict` and `reduction-relation->pict`, for side-by-side review
-  against the watsup rules.
-- Rewrite this file as an overview of the finished port, like
-  [`CROSS.md`](CROSS.md).
+This replaces the earlier plan for Step 14 (a `make redex-test` over
+`spec-meta-redex/test` and the examples, figures of the rules, and a rewrite
+of this file as an overview).
+
+- `make redex-test` type-checks the P4 programs of
+  `p4c/testdata/p4_16_samples/` with `spec/`, which must pass, and those of
+  `p4c/testdata/p4_16_errors/`, which must fail. It does not run the tests in
+  `spec-meta-redex/test`.
+- The runner is `test/p4-typecheck.rkt`, after K's
+  `spec-meta-k/scripts/run-k-typecheck.py`. It skips the programs named in
+  `excludes/static/**/*.exclude` and the files under `include/` directories.
+- The Makefile, not the runner, names the directories and the spec, with
+  required arguments, as `p4spec/test/run/test.ml` takes them:
+
+  ```sh
+  racket spec-meta-redex/test/p4-typecheck.rkt --p4-dir p4c/testdata/p4_16_samples \
+    -e excludes/static -i p4c/p4include spec
+  racket spec-meta-redex/test/p4-typecheck.rkt --p4-dir p4c/testdata/p4_16_errors \
+    -e excludes/static -i p4c/p4include --neg spec
+  ```
+- It boots and loads `spec/` once, and runs every program under that context,
+  in one Racket process. The user chose this over a worker process driven by a
+  Python runner, over caching the loaded context on disk with one process per
+  program, and over parallel workers.
+
+Outcome:
+
+- Done. `make redex` builds what the Redex spec needs: `spectec-boot` (through
+  `boot`), `ffi.so`, and `shim.so`, and runs `raco make` on
+  `al/6-entry.rkt`. It replaces `make redex-ffi`, and takes 10 s when nothing
+  is stale *(measured)*.
+- `make redex-test` runs `raco make` on `test/p4-typecheck.rkt`, after
+  `make redex`, and then the positive and the negative run, as K's
+  `make k-test` does. `make clean` removes the two result files, which
+  `spec-meta-redex/.gitignore` lists. An empty `test` submodule is what
+  `raco test` runs, in 0.6 s.
+- `al/6-entry.rkt` provides `load-script`, which gives the context a script
+  loads into. `entry-p4` takes that context in place of the script.
+  `test/entry.rkt` passes (28 checks).
+- On the samples, the runner checks 1,267 programs, the same list as K's, in
+  the same order. `--neg` on `p4_16_errors` gives K's `--neg` list, checked
+  on the four `action-bind*` programs. The runner differs from K's script in
+  four ways:
+  - It has no timeout, and each program passes or fails, both at the
+    user's request. A run that raises, such as on a stuck term or a host
+    error, fails, and its message goes to the result file. An error leaves
+    Redex's caches whole for the next program: a memo stores an answer only
+    once it is computed.
+  - The directories and the spec are arguments. `--p4-dir`, `-e`, and `-i`
+    are required and can be repeated, as in `test.ml`, which spells the first
+    `-p4-dir`. `racket/cmdline` takes no flag of that form.
+    Entries in the `.exclude` files are relative to the repository root, as
+    for K's and OCaml's tests, whatever the current directory.
+  - The stderr that Racket code writes during each program, with `Entry`'s
+    debug messages, is kept apart from the terminal, and goes to the result
+    file for a run that raises. OCaml's diagnostics still go to file
+    descriptor 2.
+  - Progress goes to stdout as well as the result file. The list of programs
+    without the expected result is `failing` in both modes, where K's says
+    `not failing` for negative tests.
+- Before the timeout was removed, a run with `-t 5`, checked between steps,
+  timed out on `action-bind.p4` after 35,955 steps. In the same run,
+  `empty.p4` then passed, the negative `p4_16_errors/action-bind.p4` gave
+  `fail`, and a program that does not parse gave `error`, a status since
+  merged into `fail`.
+- The P4 preprocessor ignores the exit status of `cc`
+  ([`preprocessor.ml`](p4spec/lib/interface/p4/preprocessor.ml)). So
+  `sexp-p4` boots a missing file as an empty program, which passes. The OCaml
+  and K front ends share the preprocessor, and `p4spec/` is unchanged. The
+  runner only checks files that it finds under `--p4-dir`, and refuses a
+  `--p4-dir`, `-e`, or `-i` that is not a directory.
+- With a filter on `action-bind` in `collect-programs`, which the user added
+  for testing, `make redex-test` passes in 35 s *(measured)*. The positive
+  `action-bind.p4` passes, and the negative `action-bind.p4` and
+  `action-bind1.p4` to `action-bind3.p4` fail. With `--neg`, the positive
+  `action-bind.p4` is listed under `failing`, and the run exits with 1.
+- The 11 programs of `p4spec/test/micro/programs` pass, in 10 to 67 s each
+  *(measured)*. Nine ran in one run, which a 5-minute limit stopped, and the
+  last two, `types.p4` and `types_adv.p4`, in another.
+- Running each program as its own process cost 5.3 s before the program
+  started *(measured)*:
+
+  | Stage | Time |
+  | --- | --- |
+  | Racket and the compiled modules | 1.1 s |
+  | Booting `spec/` | 1.0 s |
+  | `$load` | 2.0 s |
+  | `host_init` | 1.1 s |
+
+  Over the 1,267 programs, that is about 1.9 hours. The runner pays it once,
+  and starts the host before the first program with a call to `$rev_`.
+- On `action-bind.p4` and `action-uses.p4` *(measured)*:
+
+  | | One process per program | One process |
+  | --- | --- | --- |
+  | `action-bind.p4` | 14.1 s | 10.3 s |
+  | `action-uses.p4` | 13.2 s | 8.6 s |
+  | Loading `spec/` | in each | 4.7 s, once |
+  | Total | 27.3 s | 24.7 s |
+
+  The peak resident memory was 534 MB. Booting a program takes 30 to 40 ms.
+  Redex's caches stay warm from one program to the next, so a program's time
+  depends on what ran before it. In an earlier probe, the negative
+  `action-bind.p4` took 3.0 s after three positive programs, and about 4.4 s
+  on its own. The host's `$fresh_typeId` counter keeps counting across
+  programs, as in OCaml's own harness (`p4spec/test/run/test.ml`).
+- One crash of the process, such as running out of memory, ends the run.

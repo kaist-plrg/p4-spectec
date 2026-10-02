@@ -1,7 +1,8 @@
 #lang racket/base
 ;; spec-meta/al/6-entry.watsup: load a script, then run $main() through the
 ;; driver. entry-p4 runs Program_ok on a P4 program instead, as K's afterLoad
-;; does.
+;; does, under a context that load-script gives, so one load can serve many
+;; programs.
 ;;
 ;; As a program, it runs $main() of a SpecTec script through Entry, and
 ;; prints its value in k-run.sh's JSON format, or `fail`. With --p4, it runs
@@ -25,6 +26,7 @@
          "5-eval.rkt")
 (provide entry
          entry-p4
+         load-script
          result->output)
 
 ;; rule Entry:
@@ -37,21 +39,26 @@
 ;;   -- debug val
 ;; Gives (OK val), or FAIL where Entry has no derivation.
 (define (entry script)
-  (match (run-loaded script (term (CALL "main" () ())))
+  (match (run-loaded (load-script script) (term (CALL "main" () ())))
     [(and res (list 'OK val))
      (debug val)
      res]
     ['FAIL 'FAIL]))
 
-;; The result of Program_ok on the P4 program val_p4: (OK (val ...)), or FAIL
-(define (entry-p4 script val_p4)
-  (run-loaded script (term (call-rel "Program_ok" (,val_p4)))))
+;; The result of Program_ok on the P4 program val_p4, under the context C that
+;; the spec loads into: (OK (val ...)), or FAIL
+(define (entry-p4 C val_p4)
+  (run-loaded C (term (call-rel "Program_ok" (,val_p4)))))
 
-;; The result of e under the context that script loads into
-(define (run-loaded script e)
+;; The context that script loads into, (GLOBAL G LOCAL L)
+(define (load-script script)
   (debug (term (TEXT "entry-al")))
-  (match-define (list 'GLOBAL G 'LOCAL L) (term (load (empty-ctx) ,script)))
-  (debug (term (TEXT "load complete")))
+  (begin0 (term (load (empty-ctx) ,script))
+    (debug (term (TEXT "load complete")))))
+
+;; The result of e under the loaded context C
+(define (run-loaded C e)
+  (match-define (list 'GLOBAL G 'LOCAL L) C)
   (debug (term (TEXT "into call")))
   (match (run (list G (list 'IN L e)))
     [(list _ (list 'IN _ res)) res]))
@@ -89,5 +96,5 @@
          (let ([val_p4 (boot-p4 p4 #:includes (if (null? includes)
                                                   (list p4include-default)
                                                   includes))])
-           (result-p4->output (entry-p4 (boot-script path) val_p4)))
+           (result-p4->output (entry-p4 (load-script (boot-script path)) val_p4)))
          (result->output (entry (boot-script path)))))))

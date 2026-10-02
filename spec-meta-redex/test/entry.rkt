@@ -165,7 +165,7 @@ EOF
              ))
 
 (define (entry-p4/stderr script val_p4)
-  (with-stderr (λ () (entry-p4 script val_p4)) #:cross-check? #t))
+  (with-stderr (λ () (entry-p4 (load-script script) val_p4)) #:cross-check? #t))
 
 (test-equal (entry-p4/stderr program-ok (term (INJ ((("PROGRAM") ()) ((NAT 3))))))
             (list (term (OK ((NAT 3)))) (entry-stderr)))
