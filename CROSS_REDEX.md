@@ -578,7 +578,7 @@ spec-meta-redex/
     5.7-eval-call-rel.rkt   rules of Eval_rul(s), Eval_rulgroup(s), Call_*_rel, Call_rel
     5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al; the driver
     6-entry.rkt           Entry: load, then run $main() or a relation; the command-line driver
-  test/                   unnumbered: prelude.rkt, syntax.rkt, boot.rkt, machine.rkt, ...
+  test/                   unnumbered
     p4-typecheck.rkt      make redex-test: type-checks the P4 samples; raco test skips it
   ffi/
     shim.c                C shim between 0.3-extern-ffi.rkt and p4spec/bin/ffi.ml
@@ -848,44 +848,10 @@ is loaded without a check of its dependencies, so run `make redex`, or
 ```sh
 raco make spec-meta-redex/al/6-entry.rkt
 racket spec-meta-redex/al/6-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
-racket spec-meta-redex/al/6-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 spec   # passed, in about 15 s
+racket spec-meta-redex/al/6-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include spec   # passed, in about 15 s
 ```
 
-`--p4` takes `-i DIR` for each P4 include directory, and uses
-`p4c/p4include` when none is given.
-
-### Tests
-
-```sh
-raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test
-raco make spec-meta-redex/test/machine.rkt && raco test spec-meta-redex/test/machine.rkt
-```
-
-The tests call the OCaml host, so they need `make redex` first. Its
-diagnostics, such as `extern func ext failed`, go to file descriptor 2 and
-show in the output of passing tests.
-
-The contract switch is read at compile time, so it only takes effect on code
-compiled with it. To run the tests with contracts off, use a scratch copy
-without `compiled/`:
-
-```sh
-COPY=/tmp/redex-nc
-rm -rf "$COPY" && mkdir -p "$COPY" && cp -r spec-meta-redex "$COPY"/
-find "$COPY" -name compiled -type d -prune -exec rm -rf {} +
-for d in examples spec spec-meta p4c spectec-boot _build; do ln -s "$PWD/$d" "$COPY/$d"; done
-(cd "$COPY" && export SPECTEC_REDEX_CONTRACTS=0 &&
-   raco make spec-meta-redex/test/*.rkt && raco test spec-meta-redex/test)
-```
-
-The copied `shim.so` finds `ffi.so` through `_build`, relative to itself.
-A separate `PLTCOMPILEDROOTS` would recompile Redex and its dependencies too,
-in memory for every test file, which takes more than 10 minutes for the suite.
-`test/prelude.rkt` fails if the loaded code was compiled with the other
-setting.
-
-A test file's last check, `check-coverage`, fails with the names of the rules
-of its relations that the driver never applied.
+`--p4` takes `-i DIR` for each P4 include directory, and needs at least one.
 
 ### Type-checking the P4 samples
 

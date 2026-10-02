@@ -75,7 +75,6 @@
    (for*/list ([dir (in-list p4-dirs)]
                [path (in-directory dir)]
                #:when (and (path-has-extension? path #".p4") (file-exists? path))
-              ;  #:when (string-prefix? (path->string (file-name-from-path path)) "action-bind")
                #:do [(define rel (find-relative-path (simple-form-path dir) (simple-form-path path)))]
                #:unless (member "include" (map path->string (drop-right (explode-path rel) 1)))
                #:unless (set-member? excluded (simple-form-path path)))

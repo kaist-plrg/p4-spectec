@@ -7,16 +7,15 @@
 ;; As a program, it runs $main() of a SpecTec script through Entry, and
 ;; prints its value in k-run.sh's JSON format, or `fail`. With --p4, it runs
 ;; Program_ok of the spec on a P4 program, and prints `passed` or `fail`, as
-;; k-run-p4.sh does. -i adds a P4 include directory; the default is
-;; p4c/p4include. Entry's debug messages go to stderr.
+;; k-run-p4.sh does. -i adds a P4 include directory, and --p4 needs at least
+;; one. Entry's debug messages go to stderr.
 ;;
 ;;   racket spec-meta-redex/al/6-entry.rkt FILE.watsup
-;;   racket spec-meta-redex/al/6-entry.rkt --p4 PROGRAM.p4 [-i DIR]... spec
+;;   racket spec-meta-redex/al/6-entry.rkt --p4 PROGRAM.p4 -i DIR [-i DIR]... spec
 
 (require json
          racket/cmdline
          racket/match
-         racket/runtime-path
          "../common/0.0-prelude.rkt"
          "../common/0.1-stdlib.rkt"
          "../common/0.2-extern-json.rkt"
@@ -75,8 +74,6 @@
     [(list 'OK _) "passed"]
     ['FAIL "fail"]))
 
-(define-runtime-path p4include-default "../../p4c/p4include")
-
 (module+ main
   (define p4 #f)
   (define includes '())
@@ -87,14 +84,14 @@
      [("--p4") program "Run Program_ok of the spec FILE on a P4 program"
                (set! p4 program)]
      #:multi
-     [("-i") dir "Add a P4 include directory (default: p4c/p4include)"
+     [("-i") dir "Add a P4 include directory (required with --p4)"
              (set! includes (append includes (list dir)))]
      #:args (file) file))
+  (when (and p4 (null? includes))
+    (raise-user-error '6-entry.rkt "-i is required with --p4"))
   (parameterize ([host-spec path])
     (displayln
      (if p4
-         (let ([val_p4 (boot-p4 p4 #:includes (if (null? includes)
-                                                  (list p4include-default)
-                                                  includes))])
+         (let ([val_p4 (boot-p4 p4 #:includes includes)])
            (result-p4->output (entry-p4 (load-script (boot-script path)) val_p4)))
          (result->output (entry (boot-script path)))))))

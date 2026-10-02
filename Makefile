@@ -191,7 +191,7 @@ $(RSHIM_SO): $(RSHIM_SRC) | $(RFFI_SO)
 	  -L$(dir $(RFFI_SO)) -l:ffi.so '-Wl,-rpath,$$ORIGIN/../../$(dir $(RFFI_SO))'
 
 # Type-checks the P4 programs of p4_16_samples (positive) and p4_16_errors
-# (negative); not the other tests in $(RSPECDIR)/test.
+# (negative).
 .PHONY: redex-test
 redex-test: redex
 	raco make $(RTYPECHECK)
