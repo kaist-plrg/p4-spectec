@@ -1,255 +1,192 @@
 # P4-SpecTec
 
 A mechanized formal specification for the P4 programming language, using the
-SpecTec framework. This reuses parts of the
-[Petr4](https://github.com/verified-network-toolchain/petr4) codebase,
-especially the parser and numerics implementation. This also reuses parts of
-the [Wasm-SpecTec](https://github.com/Wasm-DSL/spectec) codebase, especially
-the specification parser and the high-level architecture of the tool.
+SpecTec framework. The implementation is written in Rust. It reuses work from
+[Petr4](https://github.com/verified-network-toolchain/petr4), especially the
+parser and numerics implementation, and
+[Wasm-SpecTec](https://github.com/Wasm-DSL/spectec), especially the specification
+parser and the high-level architecture of the tool.
 
-## Table of Contents
+## Building
 
-- [Building the Project](#building-the-project)
-  - [Building from Source](#building-from-source)
-    - [Submodule(s)](#submodules)
-    - [Prerequisites (Linux)](#prerequisites-linux)
-    - [Prerequisites (MacOS)](#prerequisites-macos)
-    - [Prerequisites (Windows)](#prerequisites-windows)
-    - [OCaml compiler and packages](#ocaml-compiler-and-packages)
-    - [Compiling the Project](#compiling-the-project)
-    - [Additional Notes](#additional-notes)
-  - [Docker builds](#docker-builds)
-  - [Nix Flake](#nix-flake)
-- [P4-SpecTec: A language specification framework for P4](#p4-spectec-a-language-specification-framework-for-p4)
-  - [Processing the specification](#processing-the-specification)
-  - [Generating the specification document](#generating-the-specification-document)
-  - [Running the specification](#running-the-specification)
-  - [Running the specification against packet inputs](#running-the-specification-against-packet-inputs)
-  - [To initiate a fuzz loop generating (intentionally) ill-typed P4 programs](#to-initiate-a-fuzz-loop-generating-intentionally-ill-typed-p4-programs)
-- [Experimental: Meta-circular specification](#experimental-meta-circular-specification)
-- [Contributing](#contributing)
-- [License](#license)
+Install [Rust through rustup](https://rustup.rs/), GNU Make, and a C compiler
+available as `cc`. The P4 parser also uses `cc` to preprocess P4 input files.
+The toolchain is pinned in `p4spectec/rust-toolchain.toml`; rustup selects it
+when Make enters the Rust crate. OCaml, opam, and Dune are not required.
 
-## Building the Project
+On Linux, install the native build tools with your package manager, for example
+`sudo apt-get install build-essential` on Debian/Ubuntu. On macOS, install the
+Xcode command line tools with `xcode-select --install`. On Windows, use WSL2
+and the Linux instructions.
 
-### Building from Source
-
-#### Submodule(s)
-
-* `p4c` is a submodule of this project, as we reuse the tests and the P4 include files from `p4c`.
-  You can initialize it by running:
-  ```shell
-  $ git submodule update --init
-  ```
-
-#### Prerequisites (Linux)
-
-* Install `opam` version 2.0.5 or higher.
-  ```shell
-  $ apt-get install opam
-  $ opam init
-  ```
-
-* `creduce` is used in the test generation beckend to reduce the generated test cases.
-  You can install it by running:
-  ```shell
-  $ apt-get install creduce
-  ```
-  <!-- Apply the patch in `creduce-patches/creduce` to adapt it to our use case. -->
-  Note that `creduce` is only necessary for the test generation backend, so you
-  can skip this step if you only want to use the specification and the
-  simulation features.
-
-* `asciidoctor` is used to generate HTML/PDF document from the AsciiDoc source files.
-  Use `docs/install-asciidoctor-linux.sh` to install it on Linux.
-
-#### Prerequisites (MacOS)
-
-* Install `opam` version 2.0.5 or higher following the instructions [here](https://ocaml.org/docs/installing-ocaml).
-
-* Install `creduce` using [Homebrew](https://formulae.brew.sh/formula/creduce).
-  <!-- Apply the patch in `creduce-patches/creduce` to adapt it to our use case. -->
-  Note that `creduce` is only necessary for the test generation backend, so you
-  can skip this step if you only want to use the specification and the
-  simulation features.
-
-* Install `asciidoctor` following the instructions [here](https://docs.asciidoctor.org/asciidoctor/latest/install/macos/).
-
-#### Prerequisites (Windows)
-
-* For now, we do *not* have instructions for building on Windows.
-  We recommend using WSL2 or using [Docker](#docker-builds) to build and run P4-SpecTec on Windows.
-
-#### OCaml compiler and packages
-
-* Create OCaml switch for version 5.1.0
-  Install `dune` version 3.16.1, `bignum` version v0.17.0, `menhir` version 20240715, `core` version v0.17.1, `core_unix` version v0.17.0, and `bisect_ppx` version 2.8.3 via `opam`.
-  ```shell
-  $ opam switch create 5.1.0
-  $ eval $(opam env)
-  $ opam install dune bignum 'menhir=20240715' 'menhirLib=20240715' core core_unix bisect_ppx yojson ppx_deriving_yojson uucp uuseg uutf
-  ```
-
-#### Compiling the Project
+Initialize the `p4c` submodule for its P4 include files and test corpus:
 
 ```shell
-$ make build
+git submodule update --init p4c
+make build
 ```
 
-This creates an executable `p4spectec` in the project root.
-
-#### Additional Notes
-
-You may also need `libgmp-dev` and `pkg-config`, depending on your system.
-
-### Docker builds
-
-We provide two dockerfiles, `p4spectec.dockerfile` for P4-SpecTec and
-`p4spectec_p4c.dockerfile` for both P4-SpecTec and p4c. The former is useful
-for users who only want to use P4-SpecTec, while the latter is useful for users
-who also want to use p4c tools.
+This creates the optimized executable `./bin/p4spectec`. `make` and
+`make release` also build in release mode. To build a debug executable:
 
 ```shell
-# without p4c
-$ docker build -f p4spectec.dockerfile -t p4spectec:latest .
-
-# with p4c, for RQ3-b branch coverage measurement
-$ docker build -f p4spectec_p4c.dockerfile -t p4spectec_with_p4c:latest .
+make debug
+./bin/p4spectec --help
 ```
 
-### Nix Flake
-
-A `flake.nix` is provided for reproducible development environments via [Nix](https://nixos.org/).
-It sets up OCaml 5.1 and all project dependencies without requiring manual `opam` configuration.
-
-**Prerequisites:** Nix with flakes enabled. If you haven't enabled flakes, add this to `/etc/nix/nix.conf` or `~/.config/nix/nix.conf`:
-
-```
-experimental-features = nix-command flakes
-```
-
-**Enter the dev shell:**
+All build targets replace `./bin/p4spectec`. The Cargo package and binary are
+named `p4spectec`, and build output defaults to `p4spectec/target/`.
+To select another build directory, pass `CARGO_TARGET_DIR` to Make; a relative
+path is resolved from the directory where Make is invoked:
 
 ```shell
-$ nix develop
+make build CARGO_TARGET_DIR=target
 ```
 
-This drops you into a shell with OCaml 5.1, `dune`, `menhir`, `core`, and all other required packages available.
-It also includes development tooling: `ocaml-lsp-server`, `utop`, and `ocamlformat`.
+Docker images and a Nix development shell are currently not provided.
 
-**Automatic shell activation with direnv:**
+## Processing the specification
 
-Create a `.envrc` at the project root with `use flake`, then run `direnv allow` once to activate the dev shell automatically on `cd`.
-
-## P4-SpecTec: A language specification framework for P4
-
-The spec source files are located in the `spec` directory.
-
-### Processing the specification
-
-The specification is processed in multiple stages: parsing, elaboration, structuring, and prose generation.
-
-* Parsing: The input spec files are parsed.
-  At this stage, the spec is called EL (external language).
-* Elaboration: The parsed spec files are type checked, and auxiliary information is annotated on the spec.
-  At this stage, the spec is called IL (internal language).
-  ```shell
-  $ ./p4spectec elab spec
-  ```
-* Structuring: The elaborated spec is *structured*, where structured control flow is introduced.
-  At this stage, the spec is called SL (structured language).
-  ```shell
-  $ ./p4spectec struct spec
-  ```
-* Prose generation: The structured spec is converted to a human-readable format, in AsciiDoc format.
-  At this stage, the spec is called PL (prose language).
-  ```shell
-  $ ./p4spectec prose spec
-  ```
-
-### Generating the specification document
-
-From the project root, run the following command to generate the specification document in HTML and PDF format.
+The specification source files live in `spec/`. The tool processes them through
+EL (external language), IL (internal language), AL (algorithmic language),
+SL (structured language), and PL (prose language).
 
 ```shell
-# Only HTML
-make spec-release-html
-# Both HTML and PDF (takes more time)
-make spec-release
+# Parse and elaborate the specification to IL
+./bin/p4spectec elab spec
+# Translate to AL
+./bin/p4spectec algo spec
+# Structure the specification as SL
+./bin/p4spectec struct spec
+# Generate PL
+./bin/p4spectec prose spec
 ```
 
-The generated documents can be found in the `docs` directory.
+Run `./bin/p4spectec <command> --help` for command-specific arguments.
 
-### Running the specification
+## Running P4 programs
 
-Given a P4 program, below command runs a particular relation on it.
-`RELNAME` may be `Program_ok` (for typing) or `Program_inst` (for instantiation).
+`run` evaluates a relation on a P4 program. Use `Program_ok` for type checking
+or `Program_inst` for instantiation. SL is the default interpreter;
+`--al`, `--sl`, and `--pl` select a language explicitly.
 
 ```shell
-# To run the IL
-$ ./p4spectec run spec -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -il
-# To run the SL
-$ ./p4spectec run spec -rel [RELNAME] -i p4c/p4include -p [FILENAME].p4 -sl
+./bin/p4spectec run spec --rel Program_ok -i p4c/p4include \
+  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4
+
+./bin/p4spectec run spec --rel Program_inst -i p4c/p4include \
+  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 --al
 ```
 
-e.g., `$ ./p4spectec run spec/*/*.watsup -rel Program_ok -i
-p4c/p4include -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 -sl` type
-checks the `basic_routing-bmv2.p4` program using the relation `Program_ok`
-specified in the spec.
-
-### Running the specification against packet inputs
-
-We currently support the V1Model and eBPF architectures, and the STF format for specifying input/output packets.
-`ARCH` may be `v1model` or `ebpf`.
+`sim` executes packet tests in STF format. The supported architectures are
+`v1model`, `ebpf`, and `psa`:
 
 ```shell
-# To run the IL
-$ ./p4spectec sim spec -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -il
-# To run the SL
-$ ./p4spectec sim spec -arch [ARCH] -i p4c/p4include -p [FILENAME].p4 -stf [STF_FILENAME].stf -sl
+./bin/p4spectec sim spec --arch v1model -i p4c/p4include \
+  -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 \
+  --stf testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf
 ```
 
-e.g., `$ ./p4spectec sim spec/*/*.watsup -arch v1model -i
-p4c/p4include -p p4c/testdata/p4_16_samples/basic_routing-bmv2.p4 -stf
-testdata/p4testgen/basic_routing-bmv2/basic_routing-bmv2_1.stf -sl` runs the
-`basic_routing-bmv2.p4` program on the input packet specified in
-`basic_routing-bmv2_1.stf`, and checks if the output packet matches the
-expected output specified in the same STF file.
+Both commands enable interpreter caching by default. Use `--no-cache` to
+disable it or `--det` to check deterministic execution.
 
-### To initiate a fuzz loop generating (intentionally) ill-typed P4 programs
+## Generating specification documents
 
-P4-SpecTec also supports fuzzing negative type checker tests for P4 type checkers.
-i.e., it can generate various ill-typed P4 programs that should be rejected by the type checker.
+Document generation additionally requires Ruby, Python 3.10 or later, and the
+`asciidoctor`, `asciidoctor-pdf`, and `rouge` Ruby gems:
 
 ```shell
-$ mkdir [GEN_DIR]
-$ ./p4spectec testgen spec -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-dir [BOOT_DIR]
+gem install asciidoctor asciidoctor-pdf rouge
 ```
 
-This will generate P4 programs in the directory `[GEN_DIR]` using the seed
-files in the directory `[BOOT_DIR]`. `[NUM]` is the number of fuzz cycles to
-run. For instance, you may set `[BOOT_DIR]` to `p4c/testdata/p4_16_samples`,
-and `[NUM]` to `10` to run 10 fuzzing iterations starting from the sample P4
-programs in `p4c/testdata/p4_16_samples`.
+Use a Ruby installation where you can install gems. On Linux, native gem
+extensions may also require the Ruby development package (`ruby-dev` on
+Debian/Ubuntu). On macOS, a package-manager Ruby installation avoids modifying
+the system Ruby. Ensure its gem executables and a supported `python3` are on
+`PATH`; macOS may select an older system Python by default.
 
-After the fuzz loop, you may find the generated P4 programs in the directory `[GEN_DIR]`, with the log file `fuzz.log`,
-query files for mutations `query.log` and an initial coverage file `boot.coverage`.
-
-In later runs with the same boot directory, you can use warm boot to skip the initial coverage collection phase, and directly start with the fuzz loop.
+From the project root:
 
 ```shell
-$ ./p4spectec testgen spec -rel Program_ok -i p4c/p4include -gen [GEN_DIR] -fuel [NUM] -boot-file [BOOT_FILE].coverage
+# P4 release document: HTML only, or HTML and PDF
+make p4spec-release-html
+make p4spec-release
+# P4 draft document: HTML only, or HTML and PDF
+make p4spec-draft-html
+make p4spec-draft
 ```
 
-## Experimental: Meta-circular specification
+The generated files are in `docs/p4/`.
+These targets build the release executable and splice the specifications into
+AsciiDoc skeletons before rendering. Missing prose and references are reported
+in `docs/p4/splice.missing`.
 
-Read [this document](BOOT.md) for how to apply meta-circular interpretation
-to the P4-SpecTec framework, intuitively, running the
-specification-of-specification on P4-SpecTec.
+To splice another skeleton, use the Rust CLI's long options:
+
+```shell
+./bin/p4spectec splice spec --splice input.adoc --out output.adoc
+# Or replace the skeleton in place
+./bin/p4spectec splice spec --splice input.adoc --inplace
+```
+
+## Development and tests
+
+Run these commands from the project root:
+
+```shell
+make fmt          # Format the product and E2E driver
+make fmt-check    # Check formatting without rewriting files
+make lint         # Clippy for the product and E2E driver
+make rustdoc      # Build the Rust API documentation
+make test         # Run all registered E2E suites
+```
+
+`make test` runs specification/document snapshots, P4 parsing, diagnostics,
+and AL/SL/PL execution and simulation. Execution and simulation each run with
+cache enabled and determinism checking both disabled and enabled.
+The suite registrations live in `p4spectec/test-driver/suites.json`.
+
+Individual targets are available for focused runs:
+
+| Targets | Coverage |
+| --- | --- |
+| `test-elab`, `test-algo`, `test-structure`, `test-prose` | Specification processing |
+| `test-adoc` | AsciiDoc snapshots and anchor determinism |
+| `test-p4parse` | P4 parse/unparse/parse corpus |
+| `test-diagnostics` | Source/expected diagnostics, including CLI and splicing errors |
+| `test-run-al`, `test-run-sl`, `test-run-pl` | P4 execution corpus |
+| `test-sim-al`, `test-sim-sl`, `test-sim-pl` | Packet simulation corpus |
+| `test-expected` | All of the above except simulation |
+
+Normal test targets clear `UPDATE_EXPECT` and compare against stored results.
+To deliberately regenerate the elaboration, AL, prose, and AsciiDoc snapshots,
+run `make promote` (also available as `make test-promote`). Diagnostics have a
+separate `make test-diagnostics-promote` target. These commands rerun the suites;
+review their diffs before committing. P4 parsing, structure, execution,
+simulation, and exclusions are not promoted by these targets.
+
+`make clean` removes `bin/p4spectec` and the selected Cargo build directory.
+
+CI runs Rust builds, formatting, Clippy, API documentation, E2E acceptance, and
+HTML specification generation for pull requests and pushes to `rust-port`
+and `main`, version tags, and manual dispatches. Version tags and manual
+runs also render the P4 release PDF specification.
+
+## Retired OCaml workflows
+
+Fuzzing, coverage collection, and meta-circular boot execution are not supported
+by the Rust release. The frozen OCaml implementation is preserved at
+[`v0.1.3`](https://github.com/kaist-plrg/p4-spectec/tree/v0.1.3), with its
+[installation and fuzzing instructions](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/README.md)
+and [boot documentation](https://github.com/kaist-plrg/p4-spectec/blob/v0.1.3/BOOT.md).
+The meta specifications and their SL/AL documents are also available in that
+frozen version. Rust boot support is tracked in
+[#77](https://github.com/jaehyun1ee/p4-spectec/issues/77).
 
 ## Contributing
 
-P4-SpecTec is an open-source project. Please feel free to contribute by opening issues or pull requests.
+P4-SpecTec is an open-source project. Please feel free to contribute by opening
+issues or pull requests.
 
 ## License
 

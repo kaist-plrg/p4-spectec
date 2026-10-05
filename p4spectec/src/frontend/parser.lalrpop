@@ -1,0 +1,3135 @@
+// Parses SpecTec source by entering declaration scopes, building EL phrases,
+// and attaching source spans; for example, `syntax bit = nat` becomes one type
+// definition whose right edge is the `nat` token.
+
+use crate::lang::common::{
+    notation::atom::Atom,
+    prim::{self, num},
+    source::{Phrase, Position, Span},
+};
+
+use crate::lang::el::ast::{self, *};
+
+use crate::frontend::{
+    ctx::{Context, Location as Loc},
+    error::{self, FrontendError},
+    lexer::Token,
+};
+
+grammar(ctx: &Context);
+
+extern {
+    type Location = Loc;
+    type Error = FrontendError;
+
+    enum Token {
+        "TAG_UPID" => Token::TagUpperId(<String>),
+        "OPERATOR" => Token::Operator(<String>),
+        "TICK_LPAREN" => Token::TickLeftParen,
+        "TICK_RPAREN" => Token::TickRightParen,
+        "TICK_LBRACK" => Token::TickLeftBracket,
+        "TICK_RBRACK" => Token::TickRightBracket,
+        "TICK_LBRACE" => Token::TickLeftBrace,
+        "TICK_RBRACE" => Token::TickRightBrace,
+        "TICK_LANGLE" => Token::TickLeftAngle,
+        "TICK_RANGLE" => Token::TickRightAngle,
+        "NL_BAR" => Token::NewlineBar,
+        "NL2" => Token::Newline2,
+        "NL3" => Token::Newline3,
+        "SEQ" => Token::Sequence,
+        "SUB" => Token::Subtype,
+        "TURNSTILE" => Token::Turnstile,
+        "TILESTURN" => Token::Tilesturn,
+        "ARROW" => Token::Arrow,
+        "ARROW_SUB" => Token::ArrowSub,
+        "DOUBLE_ARROW" => Token::DoubleArrow,
+        "DOUBLE_ARROW_SUB" => Token::DoubleArrowSub,
+        "DOUBLE_ARROW_BOTH" => Token::DoubleArrowBoth,
+        "DOUBLE_ARROW_LONG" => Token::DoubleArrowLong,
+        "SQARROW" => Token::SquigglyArrow,
+        "SQARROW_STAR" => Token::SquigglyArrowStar,
+        "AND" => Token::And,
+        "OR" => Token::Or,
+        "DOT" => Token::Dot,
+        "DOT2" => Token::DoubleDot,
+        "DOT3" => Token::TripleDot,
+        "COMMA" => Token::Comma,
+        "COMMA_NL" => Token::CommaNewline,
+        "SEMICOLON" => Token::Semicolon,
+        "COLON" => Token::Colon,
+        "COLON2" => Token::DoubleColon,
+        "COLON_SLASH" => Token::ColonSlash,
+        "COLON_EQ" => Token::ColonEquals,
+        "HASH" => Token::Hash,
+        "HASH2" => Token::DoubleHash,
+        "DOLLAR" => Token::Dollar,
+        "QUEST" => Token::Question,
+        "TILDE" => Token::Tilde,
+        "TILDE2" => Token::DoubleTilde,
+        "LANGLE" => Token::LeftAngle,
+        "LANGLE_DASH" => Token::LeftAngleDash,
+        "LANGLE_EQ" => Token::LeftAngleEquals,
+        "RANGLE" => Token::RightAngle,
+        "RANGLE_EQ" => Token::RightAngleEquals,
+        "RANGLE_LPAREN" => Token::RightAngleLeftParen,
+        "LPAREN" => Token::LeftParen,
+        "RPAREN" => Token::RightParen,
+        "LBRACK" => Token::LeftBracket,
+        "RBRACK" => Token::RightBracket,
+        "LBRACE" => Token::LeftBrace,
+        "RBRACE" => Token::RightBrace,
+        "PLUS" => Token::Plus,
+        "PLUS2" => Token::DoublePlus,
+        "MINUS" => Token::Minus,
+        "DASH" => Token::Dash,
+        "STAR" => Token::Star,
+        "ITER_STAR" => Token::IterStar,
+        "SLASH" => Token::Slash,
+        "BACKSLASH" => Token::Backslash,
+        "HOLE" => Token::Hole,
+        "HOLE_NUM" => Token::NumberedHole(<usize>),
+        "HOLE_MULTI" => Token::MultipleHole,
+        "HOLE_NIL" => Token::EmptyHole,
+        "EQ" => Token::Equals,
+        "NEQ" => Token::NotEquals,
+        "UP" => Token::Up,
+        "BAR" => Token::Bar,
+        "LATEX" => Token::Latex,
+        "BOOL" => Token::Bool,
+        "NAT" => Token::Nat,
+        "INT" => Token::Int,
+        "TEXT" => Token::Text,
+        "SYNTAX" => Token::Syntax,
+        "EXTERN" => Token::Extern,
+        "TABLE" => Token::Table,
+        "RELATION" => Token::Relation,
+        "RULEGROUP" => Token::RuleGroup,
+        "RULE" => Token::Rule,
+        "VAR" => Token::Var,
+        "BUILTIN" => Token::Builtin,
+        "DEC" => Token::Dec,
+        "DEF" => Token::Def,
+        "IF" => Token::If,
+        "OTHERWISE" => Token::Otherwise,
+        "DEBUG" => Token::Debug,
+        "HINT_LPAREN" => Token::HintLeftParen,
+        "EPS" => Token::Epsilon,
+        "BOOLLIT" => Token::BoolLiteral(<bool>),
+        "NATLIT" => Token::NaturalLiteral(<num::Natural>),
+        "HEXLIT" => Token::HexLiteral(<num::Natural>),
+        "TEXTLIT" => Token::TextLiteral(<String>),
+        "UPID" => Token::UpperId(<String>),
+        "LOID" => Token::LowerId(<String>),
+        "DOTID" => Token::DotId(<String>),
+        "UPID_LPAREN" => Token::UpperIdLeftParen(<String>),
+        "LOID_LPAREN" => Token::LowerIdLeftParen(<String>),
+        "UPID_LANGLE" => Token::UpperIdLeftAngle(<String>),
+        "LOID_LANGLE" => Token::LowerIdLeftAngle(<String>),
+        "EOF" => Token::Eof,
+    }
+}
+
+pub Spec: ast::Spec = {
+    // Spec ::= NL2* Def* EOF
+    "NL2"* <definitions:Def*> "EOF" => definitions,
+};
+
+Def: ast::Def = {
+    // Def ::= DefCore NL2*
+    <def:DefCore> "NL2"* => def,
+};
+
+DefCore: ast::Def = {
+    // DefCore ::= RuleRule
+    <l:@L> <rule:RuleRule> => {
+        let r = rule.span.right.clone();
+        let ast::RuleKind { id_rel, id_rule, .. } = rule.node.clone();
+        let kind = DefKind::RuleGroup(RuleGroupDef {
+            relid: id_rel,
+            groupid: id_rule,
+            rules: vec![rule],
+        });
+        crate::phrase! {
+            node: kind,
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefCore ::= DefKindRule
+    DefKindRule,
+};
+
+DefKindRule: ast::Def = {
+    // DefKindRule ::= EXTERN SYNTAX VarId Hints
+    <l:@L> "EXTERN" "SYNTAX" <id:VarId> <hints:Hints> => {
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| id.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::ExternSyntax(ExternSyntaxDef { id, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= SYNTAX CommaList<SynId>
+    <l:@L> "SYNTAX" <syntax_r:@R> <entries:CommaList<SynId>> <r:@R> =>? {
+        if entries.is_empty() {
+            Err(lalrpop_util::ParseError::User {
+                error: error::syntax_identifier_missing(ctx.span(l, syntax_r)),
+            })
+        } else {
+            Ok(crate::phrase! {
+                node: DefKind::Syntax(SyntaxDef { entries }),
+                span: ctx.span(l, r),
+            })
+        }
+    },
+
+    // DefKindRule ::= SYNTAX VarIdBind Hints DefTypEquals DefTyp
+    <l:@L> "SYNTAX" <id:VarIdBind> <hints:Hints> <equal_r:DefTypEquals>
+        <def_typ:DefTyp?> =>? {
+        let def_typ = def_typ.ok_or_else(|| lalrpop_util::ParseError::User {
+            error: error::syntax_body_missing(ctx.span(equal_r, equal_r)),
+        })?;
+        let r = def_typ.span.right.clone();
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        Ok(crate::phrase! {
+            node: DefKind::Typ(TypDef {
+                id,
+                tparams: vec![],
+                def_typ,
+                hints,
+            }),
+            span: Span::new(ctx.position(l), r),
+        })
+    },
+
+    // DefKindRule ::= SYNTAX VarIdLAngleBind EnterScope CommaList<TParam> RANGLE Hints DefTypEquals
+    //     DefTyp
+    <l:@L> "SYNTAX" <id:VarIdLAngleBind> <_enter:EnterScope>
+        <tparams:CommaList<TParam>> "RANGLE" <hints:Hints> <equal_r:DefTypEquals>
+        <def_typ:DefTyp?> =>? {
+            ctx.exit_scope();
+            let def_typ = def_typ.ok_or_else(|| lalrpop_util::ParseError::User {
+                error: error::syntax_body_missing(ctx.span(equal_r, equal_r)),
+            })?;
+            let r = def_typ.span.right.clone();
+            let hints = hints.into_iter().map(|hint| hint.node).collect();
+            Ok(crate::phrase! {
+                node: DefKind::Typ(TypDef {
+                    id,
+                    tparams,
+                    def_typ,
+                    hints,
+                }),
+                span: Span::new(ctx.position(l), r),
+            })
+        },
+
+    // DefKindRule ::= VAR VarIdBind COLON PlainTyp Hints
+    <l:@L> "VAR" <id:VarIdBind> "COLON" <plain_typ:PlainTyp> <hints:Hints> => {
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| plain_typ.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::Var(VarDef { id, plain_typ, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= EXTERN RELATION RelId COLON NotTyp Hints
+    <l:@L> "EXTERN" "RELATION" <id:RelId> "COLON" <not_typ:NotTyp>
+        <hints:Hints> => {
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| not_typ.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::ExternRel(ExternRelDef { id, not_typ, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= RELATION RelId COLON NotTyp Hints
+    <l:@L> "RELATION" <id:RelId> "COLON" <not_typ:NotTyp> <hints:Hints> => {
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| not_typ.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::Rel(RelDef { id, not_typ, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= RULEGROUP RelId RuleIds SEQ? LBRACE Rules RBRACE
+    <l:@L> "RULEGROUP" <relid:RelId> <ruleids:RuleIds> "SEQ"? "LBRACE"
+        <rules:Rules> "RBRACE" <r:@R> => {
+        let groupid = if ruleids.node.is_empty() {
+            String::new()
+        } else {
+            ruleids.node[1..].to_owned()
+        };
+        crate::phrase! {
+            node: DefKind::RuleGroup(RuleGroupDef {
+                relid,
+                groupid: crate::phrase! {
+                    node: groupid,
+                    span: ruleids.span,
+                },
+                rules,
+            }),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // DefKindRule ::= EXTERN DEC DOLLAR CallableDec
+    <l:@L> "EXTERN" "DEC" "DOLLAR" <signature:CallableDec> => {
+        let (id, tparams, params, plain_typ, hints) = signature;
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| plain_typ.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::ExternDec(ExternDecDef { id, tparams, params, plain_typ, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= BUILTIN DEC DOLLAR CallableDec
+    <l:@L> "BUILTIN" "DEC" "DOLLAR" <signature:CallableDec> => {
+        let (id, tparams, params, plain_typ, hints) = signature;
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| plain_typ.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::BuiltinDec(BuiltinDecDef { id, tparams, params, plain_typ, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= TABLE DEC DOLLAR TableDecSignature
+    <l:@L> "TABLE" "DEC" "DOLLAR" <signature:TableDecSignature> => {
+        let (id, params, plain_typ, hints) = signature;
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| plain_typ.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::TableDec(TableDecDef { id, params, plain_typ, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= DEC DOLLAR CallableDec
+    <l:@L> "DEC" "DOLLAR" <signature:CallableDec> => {
+        let (id, tparams, params, plain_typ, hints) = signature;
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| plain_typ.span.right.clone());
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        crate::phrase! {
+            node: DefKind::FuncDec(FuncDecDef { id, tparams, params, plain_typ, hints }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= TABLE DEF DOLLAR DefId EQ TableBody
+    <l:@L> "TABLE" "DEF" "DOLLAR" <id:DefId> "EQ" <rows:TableBody>
+        <r:@R> => {
+        crate::phrase! {
+            node: DefKind::TableDef(TableDef { id, rows }),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // DefKindRule ::= DEF DOLLAR FunctionDefSignature
+    <l:@L> "DEF" "DOLLAR" <signature:FunctionDefSignature> => {
+        let (id, tparams, args, exp, prems) = signature;
+        let r = prems
+            .last()
+            .map(|prem| prem.span.right.clone())
+            .unwrap_or_else(|| exp.span.right.clone());
+        let prems = prems
+            .into_iter()
+            .filter_map(|prem| prem.node)
+            .collect();
+        crate::phrase! {
+            node: DefKind::FuncDef(FuncDef { id, tparams, args, exp, prems }),
+            span: Span::new(ctx.position(l), r),
+        }
+    },
+
+    // DefKindRule ::= NL3
+    <l:@L> "NL3" <r:@R> => crate::phrase! {
+        node: DefKind::Sep,
+        span: ctx.span(l, r),
+    },
+};
+
+EnterScope: () = {
+    // EnterScope ::= ε
+    => ctx.enter_scope(),
+};
+
+ExitScope: () = {
+    // ExitScope ::= ε
+    => ctx.exit_scope(),
+};
+
+EnterExp: () = {
+    // EnterExp ::= ε
+    => ctx.enter_exp(),
+};
+
+EnterArith: () = {
+    // EnterArith ::= ε
+    => ctx.enter_arith(),
+};
+
+ExitMode: () = {
+    // ExitMode ::= ε
+    => ctx.exit_mode(),
+};
+
+DefTypEquals: Loc = {
+    // DefTypEquals ::= EQ
+    "EQ" <r:@R> => r,
+};
+
+Comma: () = {
+    // Comma ::= COMMA
+    "COMMA" => (),
+
+    // Comma ::= COMMA_NL
+    "COMMA_NL" => (),
+};
+
+Separated<T, Sep>: Vec<T> = {
+    // Separated<T, Sep> ::= ε
+    => vec![],
+
+    // Separated<T, Sep> ::= T (Sep T)*
+    <head:T> <tail:(<Sep> <T>)*> => {
+        let mut items = Vec::with_capacity(tail.len() + 1);
+        items.push(head);
+        items.extend(tail.into_iter().map(|(_, item)| item));
+        items
+    },
+};
+
+// CommaList<T> ::= Separated<T, Comma>
+CommaList<T>: Vec<T> = Separated<T, Comma>;
+
+Id: ast::Id = {
+    // Id ::= UPID
+    <l:@L> <id:"UPID"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+
+    // Id ::= LOID
+    <l:@L> <id:"LOID"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+};
+
+IdLParen: ast::Id = {
+    // IdLParen ::= UPID_LPAREN
+    <l:@L> <id:"UPID_LPAREN"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+
+    // IdLParen ::= LOID_LPAREN
+    <l:@L> <id:"LOID_LPAREN"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+};
+
+IdLAngle: ast::Id = {
+    // IdLAngle ::= UPID_LANGLE
+    <l:@L> <id:"UPID_LANGLE"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+
+    // IdLAngle ::= LOID_LANGLE
+    <l:@L> <id:"LOID_LANGLE"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+};
+
+VarId: ast::Id = {
+    // VarId ::= LOID
+    <l:@L> <id:"LOID"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+};
+
+VarIdBind: ast::Id = {
+    // VarIdBind ::= VarId
+    <id:VarId> => {
+        ctx.add_id(&id.node);
+        id
+    },
+
+    // VarIdBind ::= UPID
+    <l:@L> <id:"UPID"> <r:@R> => {
+        ctx.add_id(&id);
+        crate::phrase! {
+            node: id,
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+VarIdLAngle: ast::Id = {
+    // VarIdLAngle ::= LOID_LANGLE
+    <l:@L> <id:"LOID_LANGLE"> <r:@R> => crate::phrase! {
+        node: id,
+        span: ctx.span(l, r),
+    },
+};
+
+VarIdLAngleBind: ast::Id = {
+    // VarIdLAngleBind ::= VarIdLAngle
+    <id:VarIdLAngle> => {
+        ctx.add_id(&id.node);
+        id
+    },
+
+    // VarIdLAngleBind ::= UPID_LANGLE
+    <l:@L> <id:"UPID_LANGLE"> <r:@R> => {
+        ctx.add_id(&id);
+        crate::phrase! {
+            node: id,
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+AtomIdRaw: String = {
+    // AtomIdRaw ::= UPID
+    <id:"UPID"> => id,
+};
+
+AtomIdLParen: String = {
+    // AtomIdLParen ::= UPID_LPAREN
+    <id:"UPID_LPAREN"> => id,
+};
+
+AtomIdLAngle: String = {
+    // AtomIdLAngle ::= UPID_LANGLE
+    <id:"UPID_LANGLE"> => id,
+};
+
+DotId: ast::Atom = {
+    // DotId ::= DOTID
+    <l:@L> <id:"DOTID"> <r:@R> => {
+        crate::phrase! {
+            node: Atom::Keyword(id),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+FieldId: ast::Atom = {
+    // FieldId ::= AtomIdRaw
+    <l:@L> <id:AtomIdRaw> <r:@R> => {
+        crate::phrase! {
+            node: Atom::Keyword(id),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+// RelId ::= Id
+RelId: ast::Id = Id;
+
+// DefId ::= Id
+DefId: ast::Id = Id;
+
+// DefIdLParen ::= IdLParen
+DefIdLParen: ast::Id = IdLParen;
+
+// DefIdLAngle ::= IdLAngle
+DefIdLAngle: ast::Id = IdLAngle;
+
+HintId: String = {
+    // HintId ::= UPID
+    <id:"UPID"> => id,
+
+    // HintId ::= LOID
+    <id:"LOID"> => id,
+};
+
+SynId: SyntaxDefEntry = {
+    // SynId ::= VarId
+    //   ExitScope
+    <id:VarId> => SyntaxDefEntry { id, tparams: vec![] },
+
+    // SynId ::= VarIdLAngleBind EnterScope CommaList<TParam> RANGLE
+    <id:VarIdLAngleBind> <_enter:EnterScope> <tparams:CommaList<TParam>> "RANGLE"
+        <_exit:ExitScope> => SyntaxDefEntry { id, tparams },
+};
+
+RuleId: String = {
+    // RuleId ::= UPID
+    <id:"UPID"> => id,
+
+    // RuleId ::= LOID
+    <id:"LOID"> => id,
+
+    // RuleId ::= TEXT
+    "TEXT" => "text".to_owned(),
+
+    // RuleId ::= EXTERN
+    "EXTERN" => "extern".to_owned(),
+
+    // RuleId ::= BUILTIN
+    "BUILTIN" => "builtin".to_owned(),
+
+    // RuleId ::= NATLIT
+    <value:"NATLIT"> => value.to_string(),
+
+    // RuleId ::= BOOLLIT
+    <value:"BOOLLIT"> => value.to_string(),
+
+    // RuleId ::= RuleId DOTID
+    <prefix:RuleId> <suffix:"DOTID"> => format!("{prefix}.{suffix}"),
+};
+
+RuleIdSegment: String = {
+    // RuleIdSegment ::= SLASH RuleId
+    "SLASH" <id:RuleId> => format!("/{id}"),
+
+    // RuleIdSegment ::= MINUS RuleId
+    "MINUS" <id:RuleId> => format!("-{id}"),
+};
+
+RuleIds: ast::Id = {
+    // RuleIds ::= RuleIdSegment*
+    <l:@L> <segments:RuleIdSegment*> <r:@R> => {
+        crate::phrase! {
+            node: segments.concat(),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+// TParam ::= VarIdBind
+TParam: ast::TParam = VarIdBind;
+
+// Targ ::= PlainTyp
+Targ: ast::Targ = PlainTyp;
+
+#[inline]
+IterRule: Iter = {
+    // IterRule ::= QUEST
+    "QUEST" => Iter::Opt,
+
+    // IterRule ::= STAR
+    "STAR" => Iter::List,
+
+    // IterRule ::= ITER_STAR
+    "ITER_STAR" => Iter::List,
+};
+
+PlainTyp: ast::PlainTyp = {
+    // PlainTyp ::= PlainTypBase
+    #[precedence(level="0")]
+    <l:@L> <kind:PlainTypBase> <r:@R> => crate::phrase! {
+        node: kind,
+        span: ctx.span(l, r),
+    },
+
+    // PlainTyp ::= PlainTyp IterRule
+    #[precedence(level="1")]
+    #[assoc(side="left")]
+    <l:@L> <plain_typ:PlainTyp> <iter:IterRule> <r:@R> => {
+        crate::phrase! {
+            node: PlainTypKind::Iter(Box::new(plain_typ), iter),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+PlainTypBase: PlainTypKind = {
+    // PlainTypBase ::= PlainTypPrimaryKind
+    PlainTypPrimaryKind,
+
+    // PlainTypBase ::= LPAREN CommaList<PlainTyp> RPAREN
+    <l:@L> "LPAREN" <types:CommaList<PlainTyp>> "RPAREN" <r:@R> => {
+        match types.as_slice() {
+            [] => PlainTypKind::Paren(Box::new(crate::phrase! {
+                node: PlainTypKind::Tuple(vec![]),
+                span: ctx.span(l, r),
+            })),
+            [plain_typ] => PlainTypKind::Paren(Box::new(plain_typ.clone())),
+            _ => PlainTypKind::Tuple(types),
+        }
+    },
+};
+
+PlainTypPrimaryKind: PlainTypKind = {
+    // PlainTypPrimaryKind ::= VarId
+    <id:VarId> => PlainTypKind::Var(id, vec![]),
+
+    // PlainTypPrimaryKind ::= VarIdLAngle CommaList<Targ> RANGLE
+    <id:VarIdLAngle> <targs:CommaList<Targ>> "RANGLE" => PlainTypKind::Var(id, targs),
+
+    // PlainTypPrimaryKind ::= BOOL
+    "BOOL" => PlainTypKind::Bool,
+
+    // PlainTypPrimaryKind ::= NAT
+    "NAT" => PlainTypKind::Num(num::Typ::Nat),
+
+    // PlainTypPrimaryKind ::= INT
+    "INT" => PlainTypKind::Num(num::Typ::Int),
+
+    // PlainTypPrimaryKind ::= TEXT
+    "TEXT" => PlainTypKind::Text,
+};
+
+AtomRule: ast::Atom = {
+    // AtomRule ::= AtomKind
+    <l:@L> <atom:AtomKind> <r:@R> => crate::phrase! {
+        node: atom,
+        span: ctx.span(l, r),
+    },
+};
+
+AtomKind: Atom = {
+    // AtomKind ::= AtomIdRaw
+    <id:AtomIdRaw> => Atom::Keyword(id),
+
+    // AtomKind ::= TAG_UPID
+    <id:"TAG_UPID"> => Atom::Tag(id),
+
+    // AtomKind ::= OPERATOR
+    <op:"OPERATOR"> => Atom::Operator(op),
+};
+
+TypAtom: ast::Atom = {
+    // TypAtom ::= AtomIdRaw DOTID*
+    <l:@L> <id:AtomIdRaw> <suffixes:"DOTID"*> <r:@R> => {
+        let id = suffixes.into_iter().fold(id, |prefix, suffix| {
+            format!("{prefix}.{suffix}")
+        });
+        crate::phrase! {
+            node: Atom::Keyword(id),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // TypAtom ::= TAG_UPID
+    <l:@L> <id:"TAG_UPID"> <r:@R> => crate::phrase! {
+        node: Atom::Tag(id),
+        span: ctx.span(l, r),
+    },
+
+    // TypAtom ::= OPERATOR
+    <l:@L> <op:"OPERATOR"> <r:@R> => {
+        crate::phrase! {
+            node: Atom::Operator(op),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+TypPrimary: Typ = {
+    // TypPrimary ::= PlainTyp
+    <plain_typ:PlainTyp> => Typ::Plain(plain_typ),
+
+    // TypPrimary ::= TypAtom
+    <atom:TypAtom> => {
+        let span = atom.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Atom(atom),
+            span: span,
+        })
+    },
+
+    // TypPrimary ::= TickLAngle Typ TickRAngle
+    <l:TickLAngle> <typ:Typ> <r:TickRAngle> => {
+        let span = l.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Brack(l, Box::new(typ), r),
+            span: span,
+        })
+    },
+
+    // TypPrimary ::= TickLParen Typ TickRParen
+    <l:TickLParen> <typ:Typ> <r:TickRParen> => {
+        let span = l.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Brack(l, Box::new(typ), r),
+            span: span,
+        })
+    },
+
+    // TypPrimary ::= TickLBrack Typ TickRBrack
+    <l:TickLBrack> <typ:Typ> <r:TickRBrack> => {
+        let span = l.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Brack(l, Box::new(typ), r),
+            span: span,
+        })
+    },
+
+    // TypPrimary ::= TickLBrace Typ TickRBrace
+    <l:TickLBrace> <typ:Typ> <r:TickRBrace> => {
+        let span = l.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Brack(l, Box::new(typ), r),
+            span: span,
+        })
+    },
+};
+
+Typ: Typ = {
+    // Typ ::= RelationOperator Typ
+    <op:RelationOperator> <r:Typ> => {
+        let span = op.span.clone();
+        let l = Typ::Notation(crate::phrase! {
+            node: NotTypKind::Seq(vec![]),
+            span: span.clone(),
+        });
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // Typ ::= TypDoubleArrow
+    TypDoubleArrow,
+};
+
+TypDoubleArrow: Typ = {
+    // TypDoubleArrow ::= TypTurnstile DoubleArrowTypOperator TypDoubleArrow
+    <l:TypTurnstile> <op:DoubleArrowTypOperator> <r:TypDoubleArrow> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypDoubleArrow ::= TypTurnstile
+    TypTurnstile,
+};
+
+TypTurnstile: Typ = {
+    // TypTurnstile ::= TypTilesturn TurnstileOperator TypTilesturn
+    <l:TypTilesturn> <op:TurnstileOperator> <r:TypTilesturn> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypTurnstile ::= TypTilesturn
+    TypTilesturn,
+};
+
+TypTilesturn: Typ = {
+    // TypTilesturn ::= TypSquiggly TilesturnOperator TypSquiggly
+    <l:TypSquiggly> <op:TilesturnOperator> <r:TypSquiggly> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypTilesturn ::= TypSquiggly
+    TypSquiggly,
+};
+
+TypSquiggly: Typ = {
+    // TypSquiggly ::= TypColon SquigglyOperator TypSquiggly
+    <l:TypColon> <op:SquigglyOperator> <r:TypSquiggly> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypSquiggly ::= TypColon
+    TypColon,
+};
+
+TypColon: Typ = {
+    // TypColon ::= TypColon ColonTypOperator TypArrow
+    <l:TypColon> <op:ColonTypOperator> <r:TypArrow> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypColon ::= TypArrow
+    TypArrow,
+};
+
+TypArrow: Typ = {
+    // TypArrow ::= TypSemicolon ArrowTypOperator TypArrow
+    <l:TypSemicolon> <op:ArrowTypOperator> <r:TypArrow> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypArrow ::= TypSemicolon
+    TypSemicolon,
+};
+
+TypSemicolon: Typ = {
+    // TypSemicolon ::= TypSemicolon SemicolonOperator TypDot
+    <l:TypSemicolon> <op:SemicolonOperator> <r:TypDot> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypSemicolon ::= TypDot
+    TypDot,
+};
+
+TypDot: Typ = {
+    // TypDot ::= TypDot DotOperator TypBackslash
+    <l:TypDot> <op:DotOperator> <r:TypBackslash> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypDot ::= TypBackslash
+    TypBackslash,
+};
+
+TypBackslash: Typ = {
+    // TypBackslash ::= TypBackslash BackslashOperator TypPrefix
+    <l:TypBackslash> <op:BackslashOperator> <r:TypPrefix> => {
+        let span = op.span.clone();
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypBackslash ::= TypPrefix
+    TypPrefix,
+};
+
+TypPrefix: Typ = {
+    // TypPrefix ::= InfixOperator TypPrefix
+    <op:InfixOperator> <r:TypPrefix> => {
+        let span = op.span.clone();
+        let l = Typ::Notation(crate::phrase! {
+            node: NotTypKind::Seq(vec![]),
+            span: span.clone(),
+        });
+        Typ::Notation(crate::phrase! {
+            node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        })
+    },
+
+    // TypPrefix ::= TypSeq
+    TypSeq,
+};
+
+TypSeq: Typ = {
+    // TypSeq ::= TypPrimary (SEQ TypPrimary)*
+    <first:TypPrimary> <first_r:@R> <rest:("SEQ" <TypPrimary>)*> => {
+        if rest.is_empty() {
+            first
+        } else {
+            let l = match &first {
+                Typ::Plain(plain_typ) => plain_typ.span.left.clone(),
+                Typ::Notation(not_typ) => not_typ.span.left.clone(),
+            };
+            let span = Span::new(l, ctx.position(first_r));
+            let mut types = Vec::with_capacity(rest.len() + 1);
+            types.push(first);
+            types.extend(rest);
+            Typ::Notation(crate::phrase! {
+                node: NotTypKind::Seq(types),
+                span: span,
+            })
+        }
+    },
+};
+
+pub CheckTyp: Typ = {
+    // CheckTyp ::= Typ EOF
+    <typ:Typ> "EOF" => typ,
+};
+
+NotTyp: ast::NotTyp = {
+    // NotTyp ::= Typ
+    <l:@L> <typ:Typ> <r:@R> =>? match typ {
+        Typ::Notation(not_typ) => Ok(not_typ),
+        Typ::Plain(_) => Err(lalrpop_util::ParseError::User {
+            error: error::relation_signature_invalid(ctx.span(l, r)),
+        }),
+    },
+};
+
+FieldTyp: ast::TypField = {
+    // FieldTyp ::= FieldId SEQ PlainTyp Hints
+    <atom:FieldId> "SEQ" <plain_typ:PlainTyp> <hints:Hints> => {
+        let hints = hints.into_iter().map(|hint| hint.node).collect();
+        ast::TypField { atom, typ: plain_typ, hints }
+    },
+};
+
+CaseTyp: (Typ, Vec<Phrase<ast::Hint>>, Position) = {
+    // CaseTyp ::= Typ Hints
+    <typ:Typ> <typ_r:@R> <hints:Hints> => {
+        let r = hints
+            .last()
+            .map(|hint| hint.span.right.clone())
+            .unwrap_or_else(|| ctx.position(typ_r));
+        (typ, hints, r)
+    },
+};
+
+CaseTypList: (Vec<(Typ, Vec<Phrase<ast::Hint>>, Position)>, Option<Loc>) = {
+    // CaseTypList ::= CaseTyp (Bar CaseTyp)* BarAt?
+    <head:CaseTyp> <tail:(<Bar> <CaseTyp>)*> <trailing:BarAt?> => {
+        let mut cases = Vec::with_capacity(tail.len() + 1);
+        cases.push(head);
+        cases.extend(tail.into_iter().map(|(_, case)| case));
+        (cases, trailing)
+    },
+};
+
+BarAt: Loc = {
+    // BarAt ::= Bar
+    <_bar:Bar> <r:@R> => r,
+};
+
+DefTyp: ast::DefTyp = {
+    // DefTyp ::= LBRACE CommaList<FieldTyp> RBRACE
+    <l:@L> "LBRACE" <fields:CommaList<FieldTyp>> "RBRACE" <r:@R> =>? {
+        if fields.is_empty() {
+            Err(lalrpop_util::ParseError::User {
+                error: error::struct_field_missing(ctx.span(l, r)),
+            })
+        } else {
+            Ok(crate::phrase! {
+                node: DefTypKind::Struct(fields),
+                span: ctx.span(l, r),
+            })
+        }
+    },
+
+    // DefTyp ::= Bar CaseTypList
+    <l:@L> <_bar:Bar> <bar_r:@R> <case_list:CaseTypList?> =>? {
+        let (cases, trailing) = case_list.unwrap_or_else(|| (vec![], None));
+        let actual_r = trailing
+            .map(|loc| ctx.position(loc))
+            .or_else(|| cases.last().map(|(_, _, r)| r.clone()))
+            .unwrap_or_else(|| ctx.position(bar_r));
+        let actual_r_location = ctx.location(actual_r.clone());
+        // CaseTyp preserves hint spans until plain-type validation completes
+        for (typ, hints, _) in &cases {
+            if let (Typ::Plain(_), Some(hint)) = (typ, hints.first()) {
+                return Err(lalrpop_util::ParseError::User {
+                    error: error::plain_type_hint_unsupported(hint.span.clone()),
+                });
+            }
+        }
+        let cases: Vec<ast::TypCase> = cases
+            .into_iter()
+            .map(|(typ, hints, _)| ast::TypCase {
+                typ, hints: hints.into_iter().map(|hint| hint.node).collect(),
+            })
+            .collect();
+        let kind = if cases.is_empty() {
+            Err(error::variant_case_missing(ctx.span(l, actual_r_location)))
+        } else if let [ast::TypCase { typ: Typ::Plain(plain_typ), .. }] = cases.as_slice() {
+            Ok(DefTypKind::Plain(plain_typ.clone()))
+        } else {
+            Ok(DefTypKind::Variant(cases))
+        };
+        kind
+            .map(|kind| crate::phrase! {
+                node: kind,
+                span: Span::new(ctx.position(l), actual_r),
+            })
+            .map_err(|error| lalrpop_util::ParseError::User { error })
+    },
+
+    // DefTyp ::= CaseTypList
+    <l:@L> <case_list:CaseTypList> =>? {
+        let (cases, trailing) = case_list;
+        let actual_r = trailing
+            .map(|loc| ctx.position(loc))
+            .or_else(|| cases.last().map(|(_, _, r)| r.clone()))
+            .expect("a non-empty case type list has a closing position");
+        // CaseTyp preserves hint spans until plain-type validation completes
+        for (typ, hints, _) in &cases {
+            if let (Typ::Plain(_), Some(hint)) = (typ, hints.first()) {
+                return Err(lalrpop_util::ParseError::User {
+                    error: error::plain_type_hint_unsupported(hint.span.clone()),
+                });
+            }
+        }
+        let cases: Vec<ast::TypCase> = cases
+            .into_iter()
+            .map(|(typ, hints, _)| ast::TypCase {
+                typ, hints: hints.into_iter().map(|hint| hint.node).collect(),
+            })
+            .collect();
+        // CaseTypList constructs its list from one mandatory head
+        assert!(!cases.is_empty());
+        let kind = if let [ast::TypCase { typ: Typ::Plain(plain_typ), .. }] = cases.as_slice() {
+            DefTypKind::Plain(plain_typ.clone())
+        } else {
+            DefTypKind::Variant(cases)
+        };
+        Ok(crate::phrase! {
+            node: kind,
+            span: Span::new(ctx.position(l), actual_r),
+        })
+    },
+};
+
+TickLAngle: ast::Atom = {
+    // TickLAngle ::= TICK_LANGLE
+    <l:@L> "TICK_LANGLE" <r:@R> => crate::phrase! {
+        node: Atom::LAngle,
+        span: ctx.span(l, r),
+    },
+};
+
+TickRAngle: ast::Atom = {
+    // TickRAngle ::= TICK_RANGLE
+    <l:@L> "TICK_RANGLE" <r:@R> => crate::phrase! {
+        node: Atom::RAngle,
+        span: ctx.span(l, r),
+    },
+};
+
+TickLParen: ast::Atom = {
+    // TickLParen ::= TICK_LPAREN
+    <l:@L> "TICK_LPAREN" <r:@R> => crate::phrase! {
+        node: Atom::LParen,
+        span: ctx.span(l, r),
+    },
+};
+
+TickRParen: ast::Atom = {
+    // TickRParen ::= TICK_RPAREN
+    <l:@L> "TICK_RPAREN" <r:@R> => crate::phrase! {
+        node: Atom::RParen,
+        span: ctx.span(l, r),
+    },
+};
+
+TickLBrack: ast::Atom = {
+    // TickLBrack ::= TICK_LBRACK
+    <l:@L> "TICK_LBRACK" <r:@R> => crate::phrase! {
+        node: Atom::LBrack,
+        span: ctx.span(l, r),
+    },
+};
+
+TickRBrack: ast::Atom = {
+    // TickRBrack ::= TICK_RBRACK
+    <l:@L> "TICK_RBRACK" <r:@R> => crate::phrase! {
+        node: Atom::RBrack,
+        span: ctx.span(l, r),
+    },
+};
+
+TickLBrace: ast::Atom = {
+    // TickLBrace ::= TICK_LBRACE
+    <l:@L> "TICK_LBRACE" <r:@R> => crate::phrase! {
+        node: Atom::LBrace,
+        span: ctx.span(l, r),
+    },
+};
+
+TickRBrace: ast::Atom = {
+    // TickRBrace ::= TICK_RBRACE
+    <l:@L> "TICK_RBRACE" <r:@R> => crate::phrase! {
+        node: Atom::RBrace,
+        span: ctx.span(l, r),
+    },
+};
+
+InfixOperator: ast::Atom = {
+    // InfixOperator ::= DotOperator
+    DotOperator,
+
+    // InfixOperator ::= SemicolonOperator
+    SemicolonOperator,
+
+    // InfixOperator ::= BackslashOperator
+    BackslashOperator,
+
+    // InfixOperator ::= ArrowTypOperator
+    ArrowTypOperator,
+
+    // InfixOperator ::= DoubleArrowTypOperator
+    DoubleArrowTypOperator,
+};
+
+RelationOperator: ast::Atom = {
+    // RelationOperator ::= ColonTypOperator
+    ColonTypOperator,
+
+    // RelationOperator ::= SquigglyOperator
+    SquigglyOperator,
+
+    // RelationOperator ::= TilesturnOperator
+    TilesturnOperator,
+
+    // RelationOperator ::= TurnstileOperator
+    TurnstileOperator,
+};
+
+DoubleArrowTypOperator: ast::Atom = {
+    // DoubleArrowTypOperator ::= DOUBLE_ARROW_SUB
+    <l:@L> "DOUBLE_ARROW_SUB" <r:@R> => {
+        crate::phrase! {
+            node: Atom::DoubleArrowSub,
+            span: ctx.span(l, r),
+        }
+    },
+
+    // DoubleArrowTypOperator ::= DOUBLE_ARROW_LONG
+    <l:@L> "DOUBLE_ARROW_LONG" <r:@R> => {
+        crate::phrase! {
+            node: Atom::DoubleArrowLong,
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+TurnstileOperator: ast::Atom = {
+    // TurnstileOperator ::= TURNSTILE
+    <l:@L> "TURNSTILE" <r:@R> => crate::phrase! {
+        node: Atom::Turnstile,
+        span: ctx.span(l, r),
+    },
+};
+
+TilesturnOperator: ast::Atom = {
+    // TilesturnOperator ::= TILESTURN
+    <l:@L> "TILESTURN" <r:@R> => crate::phrase! {
+        node: Atom::Tilesturn,
+        span: ctx.span(l, r),
+    },
+};
+
+SquigglyOperator: ast::Atom = {
+    // SquigglyOperator ::= SQARROW
+    <l:@L> "SQARROW" <r:@R> => crate::phrase! {
+        node: Atom::SqArrow,
+        span: ctx.span(l, r),
+    },
+
+    // SquigglyOperator ::= SQARROW_STAR
+    <l:@L> "SQARROW_STAR" <r:@R> => {
+        crate::phrase! {
+            node: Atom::SqArrowStar,
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+ColonTypOperator: ast::Atom = {
+    // ColonTypOperator ::= COLON
+    <l:@L> "COLON" <r:@R> => crate::phrase! {
+        node: Atom::Colon,
+        span: ctx.span(l, r),
+    },
+
+    // ColonTypOperator ::= COLON_EQ
+    <l:@L> "COLON_EQ" <r:@R> => crate::phrase! {
+        node: Atom::ColonEq,
+        span: ctx.span(l, r),
+    },
+
+    // ColonTypOperator ::= TILDE2
+    <l:@L> "TILDE2" <r:@R> => crate::phrase! {
+        node: Atom::Tilde2,
+        span: ctx.span(l, r),
+    },
+};
+
+ArrowTypOperator: ast::Atom = {
+    // ArrowTypOperator ::= ARROW
+    <l:@L> "ARROW" <r:@R> => crate::phrase! {
+        node: Atom::Arrow,
+        span: ctx.span(l, r),
+    },
+
+    // ArrowTypOperator ::= ARROW_SUB
+    <l:@L> "ARROW_SUB" <r:@R> => crate::phrase! {
+        node: Atom::ArrowSub,
+        span: ctx.span(l, r),
+    },
+};
+
+SemicolonOperator: ast::Atom = {
+    // SemicolonOperator ::= SEMICOLON
+    <l:@L> "SEMICOLON" <r:@R> => crate::phrase! {
+        node: Atom::Semicolon,
+        span: ctx.span(l, r),
+    },
+};
+
+DotOperator: ast::Atom = {
+    // DotOperator ::= DOT
+    <l:@L> "DOT" <r:@R> => crate::phrase! {
+        node: Atom::Dot,
+        span: ctx.span(l, r),
+    },
+
+    // DotOperator ::= DOT2
+    <l:@L> "DOT2" <r:@R> => crate::phrase! {
+        node: Atom::Dot2,
+        span: ctx.span(l, r),
+    },
+
+    // DotOperator ::= DOT3
+    <l:@L> "DOT3" <r:@R> => crate::phrase! {
+        node: Atom::Dot3,
+        span: ctx.span(l, r),
+    },
+};
+
+BackslashOperator: ast::Atom = {
+    // BackslashOperator ::= BACKSLASH
+    <l:@L> "BACKSLASH" <r:@R> => crate::phrase! {
+        node: Atom::Backslash,
+        span: ctx.span(l, r),
+    },
+};
+
+Bar: () = {
+    // Bar ::= BAR
+    "BAR" => (),
+
+    // Bar ::= NL_BAR
+    "NL_BAR" => (),
+};
+
+// BarList<T> ::= Separated<T, Bar>
+BarList<T>: Vec<T> = Separated<T, Bar>;
+
+Exp: ast::Exp = {
+    // Exp ::= ExpPost
+    #[precedence(level="0")]
+    ExpPost,
+
+    // Exp ::= ExpListIter
+    ExpListIter,
+
+    // Exp ::= Exp SEQ Exp
+    #[precedence(level="2")]
+    #[assoc(side="left")]
+    <l:Exp> "SEQ" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let mut exps = match l.node {
+            ExpKind::Seq(exps) if exps.len() >= 2 => exps,
+            exp_kind => vec![crate::phrase! {
+                node: exp_kind,
+                span: l.span,
+            }],
+        };
+        exps.push(r);
+        crate::phrase! {
+            node: ExpKind::Seq(exps),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp HASH Exp
+    <exp_l:Exp> <l:@L> "HASH" <r:@R> <exp_r:Exp> => {
+        let span = Span::new(exp_l.span.left.clone(), exp_r.span.right.clone());
+        let op = crate::phrase! {
+            node: FuseOpKind::Fuse,
+            span: ctx.span(l, r),
+        };
+        crate::phrase! {
+            node: ExpKind::Fuse(Box::new(exp_l), op, Box::new(exp_r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= BAR Exp BAR
+    #[precedence(level="3")]
+    <l:@L> "BAR" <exp:Exp> "BAR" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Len(Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // Exp ::= UnaryOperator Exp
+    <l:@L> <op:UnaryOperator> <exp:Exp> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Un(op, Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // Exp ::= InfixOperator Exp
+    <op:InfixOperator> <r:Exp> => {
+        let span = Span::new(op.span.left.clone(), r.span.right.clone());
+        let l = crate::phrase! {
+            node: ExpKind::Seq(vec![]),
+            span: op.span.clone(),
+        };
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp StarOperator Exp
+    #[precedence(level="4")]
+    #[assoc(side="left")]
+    <l:Exp> <_operator:StarOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mul), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp SLASH Exp
+    <l:Exp> "SLASH" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Div), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp BACKSLASH Exp
+    <l:Exp> "BACKSLASH" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mod), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp PLUS Exp
+    #[precedence(level="5")]
+    #[assoc(side="left")]
+    <l:Exp> "PLUS" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Add), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp MINUS Exp
+    <l:Exp> "MINUS" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Sub), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp PLUS2 Exp
+    <l:Exp> "PLUS2" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cat(Box::new(l), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp DotOperator Exp
+    #[precedence(level="6")]
+    #[assoc(side="left")]
+    <l:Exp> <op:DotOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp SemicolonOperator Exp
+    #[precedence(level="7")]
+    #[assoc(side="left")]
+    <l:Exp> <op:SemicolonOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp ArrowTypOperator Exp
+    #[precedence(level="8")]
+    #[assoc(side="right")]
+    <l:Exp> <op:ArrowTypOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp COLON2 Exp
+    #[precedence(level="9")]
+    #[assoc(side="right")]
+    <head:Exp> "COLON2" <tail:Exp> => {
+        let span = Span::new(head.span.left.clone(), tail.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cons(Box::new(head), Box::new(tail)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp EQ Exp
+    #[precedence(level="10")]
+    #[assoc(side="right")]
+    <l:Exp> "EQ" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Eq), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp NEQ Exp
+    <l:Exp> "NEQ" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Ne), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp LANGLE_DASH Exp
+    <l:Exp> "LANGLE_DASH" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Mem(Box::new(l), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp SUB PlainTyp
+    #[precedence(level="11")]
+    #[assoc(side="left")]
+    <l:Exp> "SUB" <plain_typ:PlainTyp> => {
+        let span = Span::new(l.span.left.clone(), plain_typ.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Sub(Box::new(l), plain_typ),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp ColonTypOperator Exp
+    <l:Exp> <op:ColonTypOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp SquigglyOperator Exp
+    #[precedence(level="12")]
+    #[assoc(side="right")]
+    <l:Exp> <op:SquigglyOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp TilesturnOperator Exp
+    #[precedence(level="13")]
+    #[assoc(side="none")]
+    <l:Exp> <op:TilesturnOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp TurnstileOperator Exp
+    #[precedence(level="14")]
+    #[assoc(side="none")]
+    <l:Exp> <op:TurnstileOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp AND Exp
+    #[precedence(level="15")]
+    #[assoc(side="left")]
+    <l:Exp> "AND" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::And), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp OR Exp
+    #[precedence(level="16")]
+    #[assoc(side="left")]
+    <l:Exp> "OR" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Or), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp DOUBLE_ARROW Exp
+    #[precedence(level="17")]
+    #[assoc(side="right")]
+    <l:Exp> "DOUBLE_ARROW" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Impl), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp DOUBLE_ARROW_BOTH Exp
+    <l:Exp> "DOUBLE_ARROW_BOTH" <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Equiv), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= Exp DoubleArrowTypOperator Exp
+    <l:Exp> <op:DoubleArrowTypOperator> <r:Exp> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // Exp ::= RelationOperator Exp
+    #[precedence(level="18")]
+    #[assoc(side="right")]
+    <op:RelationOperator> <r:Exp> => {
+        let span = Span::new(op.span.left.clone(), r.span.right.clone());
+        let l = crate::phrase! {
+            node: ExpKind::Seq(vec![]),
+            span: op.span.clone(),
+        };
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+};
+
+// Menhir deliberately uses `exp_bin` (rather than `exp`) at collection,
+// argument, and table-body boundaries.  This parallel precedence grammar
+// excludes the relation operators while retaining all ordinary expression
+// operators and the full-expression escape hatches inside postfix forms.
+ExpBin: ast::Exp = {
+    // ExpBin ::= ExpPost
+    #[precedence(level="0")]
+    ExpPost,
+
+    // ExpBin ::= ExpListIter
+    ExpListIter,
+
+    // ExpBin ::= ExpBin SEQ ExpBin
+    #[precedence(level="2")]
+    #[assoc(side="left")]
+    <l:ExpBin> "SEQ" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let mut exps = match l.node {
+            ExpKind::Seq(exps) if exps.len() >= 2 => exps,
+            exp_kind => vec![crate::phrase! {
+                node: exp_kind,
+                span: l.span,
+            }],
+        };
+        exps.push(r);
+        crate::phrase! {
+            node: ExpKind::Seq(exps),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin HASH ExpBin
+    <exp_l:ExpBin> <l:@L> "HASH" <r:@R> <exp_r:ExpBin> => {
+        let span = Span::new(exp_l.span.left.clone(), exp_r.span.right.clone());
+        let op = crate::phrase! {
+            node: FuseOpKind::Fuse,
+            span: ctx.span(l, r),
+        };
+        crate::phrase! {
+            node: ExpKind::Fuse(Box::new(exp_l), op, Box::new(exp_r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= BAR Exp BAR
+    #[precedence(level="3")]
+    <l:@L> "BAR" <exp:Exp> "BAR" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Len(Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpBin ::= UnaryOperator ExpBin
+    <l:@L> <op:UnaryOperator> <exp:ExpBin> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Un(op, Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpBin ::= InfixOperator ExpBin
+    <op:InfixOperator> <r:ExpBin> => {
+        let span = Span::new(op.span.left.clone(), r.span.right.clone());
+        let l = crate::phrase! {
+            node: ExpKind::Seq(vec![]),
+            span: op.span.clone(),
+        };
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin StarOperator ExpBin
+    #[precedence(level="4")]
+    #[assoc(side="left")]
+    <l:ExpBin> <_operator:StarOperator> <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mul), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin SLASH ExpBin
+    <l:ExpBin> "SLASH" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Div), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin BACKSLASH ExpBin
+    <l:ExpBin> "BACKSLASH" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mod), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin PLUS ExpBin
+    #[precedence(level="5")]
+    #[assoc(side="left")]
+    <l:ExpBin> "PLUS" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Add), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin MINUS ExpBin
+    <l:ExpBin> "MINUS" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Sub), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin PLUS2 ExpBin
+    <l:ExpBin> "PLUS2" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cat(Box::new(l), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin DotOperator ExpBin
+    #[precedence(level="6")]
+    #[assoc(side="left")]
+    <l:ExpBin> <op:DotOperator> <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin SemicolonOperator ExpBin
+    #[precedence(level="7")]
+    #[assoc(side="left")]
+    <l:ExpBin> <op:SemicolonOperator> <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin ArrowTypOperator ExpBin
+    #[precedence(level="8")]
+    #[assoc(side="right")]
+    <l:ExpBin> <op:ArrowTypOperator> <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin COLON2 ExpBin
+    #[precedence(level="9")]
+    #[assoc(side="right")]
+    <head:ExpBin> "COLON2" <tail:ExpBin> => {
+        let span = Span::new(head.span.left.clone(), tail.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cons(Box::new(head), Box::new(tail)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin EQ ExpBin
+    #[precedence(level="10")]
+    #[assoc(side="right")]
+    <l:ExpBin> "EQ" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Eq), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin NEQ ExpBin
+    <l:ExpBin> "NEQ" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Ne), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin LANGLE_DASH ExpBin
+    <l:ExpBin> "LANGLE_DASH" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Mem(Box::new(l), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin SUB PlainTyp
+    #[precedence(level="11")]
+    #[assoc(side="left")]
+    <l:ExpBin> "SUB" <plain_typ:PlainTyp> => {
+        let span = Span::new(l.span.left.clone(), plain_typ.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Sub(Box::new(l), plain_typ),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin AND ExpBin
+    #[precedence(level="15")]
+    #[assoc(side="left")]
+    <l:ExpBin> "AND" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::And), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin OR ExpBin
+    #[precedence(level="16")]
+    #[assoc(side="left")]
+    <l:ExpBin> "OR" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Or), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin DOUBLE_ARROW ExpBin
+    #[precedence(level="17")]
+    #[assoc(side="right")]
+    <l:ExpBin> "DOUBLE_ARROW" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Impl), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin DOUBLE_ARROW_BOTH ExpBin
+    <l:ExpBin> "DOUBLE_ARROW_BOTH" <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Equiv), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ExpBin ::= ExpBin DoubleArrowTypOperator ExpBin
+    <l:ExpBin> <op:DoubleArrowTypOperator> <r:ExpBin> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+};
+
+ExpListBase: ast::Exp = {
+    // ExpListBase ::= LBRACK CommaList<ExpBin> RBRACK
+    <l:@L> "LBRACK" <exps:CommaList<ExpBin>> "RBRACK" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::List(exps),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+ExpListIter: ast::Exp = {
+    // ExpListIter ::= ExpListBase QuestionIterAt*
+    <l:@L> <base:ExpListBase> <iterations:QuestionIterAt*> => {
+        iterations.into_iter().fold(base, |exp, (iter, r)| {
+            crate::phrase! {
+                node: ExpKind::Iter(Box::new(exp), iter),
+                span: ctx.span(l, r),
+            }
+        })
+    },
+};
+
+UnaryOperator: UnOp = {
+    // UnaryOperator ::= TILDE
+    "TILDE" => UnOp::Bool(prim::bool::UnOp::Not),
+
+    // UnaryOperator ::= PLUS
+    "PLUS" => UnOp::Num(num::UnOp::Plus),
+
+    // UnaryOperator ::= MINUS
+    "MINUS" => UnOp::Num(num::UnOp::Minus),
+};
+
+// `ParserTokens` inserts `SEQ` after a binary `*` when its right operand can
+// also begin a notation sequence. Consuming it here leaves the same token as a
+// real sequence separator after a postfix type iteration.
+StarOperator: () = {
+    // StarOperator ::= STAR SEQ
+    "STAR" "SEQ" => (),
+
+    // StarOperator ::= STAR
+    "STAR" => (),
+};
+
+QuestionIter: Iter = {
+    // QuestionIter ::= QUEST
+    "QUEST" => Iter::Opt,
+
+    // QuestionIter ::= ITER_STAR
+    "ITER_STAR" => Iter::List,
+};
+
+QuestionIterAt: (Iter, Loc) = {
+    // QuestionIterAt ::= QuestionIter
+    <iter:QuestionIter> <r:@R> => (iter, r),
+};
+
+ExpAtomBase: ast::Exp = {
+    // ExpAtomBase ::= ExpPrimary
+    ExpPrimary,
+
+    // ExpAtomBase ::= AtomRule
+    <atom:AtomRule> => {
+        let span = atom.span.clone();
+        crate::phrase! {
+            node: ExpKind::Atom(atom),
+            span: span,
+        }
+    },
+
+    // ExpAtomBase ::= AtomIdLParen Exp RPAREN
+    <l:@L> <id:AtomIdLParen> <id_r:@R> <exp:Exp> "RPAREN" <r:@R> => {
+        let atom = crate::phrase! {
+            node: Atom::Keyword(id),
+            span: ctx.span(l, id_r),
+        };
+        let atom_span = atom.span.clone();
+        let atom_exp = crate::phrase! {
+            node: ExpKind::Atom(atom),
+            span: atom_span,
+        };
+        let paren_span = exp.span.clone();
+        let paren_exp = crate::phrase! {
+            node: ExpKind::Paren(Box::new(exp)),
+            span: paren_span,
+        };
+        crate::phrase! {
+            node: ExpKind::Seq(vec![atom_exp, paren_exp]),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+// A postfix-only expression is used where whitespace-separated atoms form a
+// record field or table pattern.  Keeping it separate from `Exp` prevents the
+// separator from absorbing binary and relation operators.
+ExpPost: ast::Exp = {
+    // ExpPost ::= ExpAtomBase
+    ExpAtomBase,
+
+    // ExpPost ::= ExpPost LBRACK Arith RBRACK
+    <l:@L> <base:ExpPost> "LBRACK" <index:Arith> "RBRACK" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Idx(Box::new(base), Box::new(index)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpPost ::= ExpPost LBRACK Arith COLON Arith RBRACK
+    <l:@L> <base:ExpPost> "LBRACK" <start:Arith> "COLON" <end:Arith>
+        "RBRACK" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Slice(Box::new(base), Box::new(start), Box::new(end)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpPost ::= ExpPost UpdatePath EQ Exp RBRACK
+    <l:@L> <base:ExpPost> <path:UpdatePath> "EQ" <value:Exp> "RBRACK"
+        <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Upd(Box::new(base), path, Box::new(value)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpPost ::= ExpPost QuestionIter
+    <l:@L> <base:ExpPost> <iter:QuestionIter> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Iter(Box::new(base), iter),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpPost ::= ExpPost DotId
+    <l:@L> <base:ExpPost> <field:DotId> <r:@R> => {
+        match (base.node, field.node) {
+            (ExpKind::Atom(atom), Atom::Keyword(suffix)) => match atom.node {
+                Atom::Keyword(prefix) => {
+                    let span = ctx.span(l, r);
+                    let atom = crate::phrase! {
+                        node: Atom::Keyword(format!("{prefix}.{suffix}")),
+                        span: span.clone(),
+                    };
+                    crate::phrase! {
+                        node: ExpKind::Atom(atom),
+                        span: span,
+                    }
+                }
+                atom_kind => crate::phrase! {
+                    node: ExpKind::Dot(
+                        Box::new(crate::phrase! {
+                            node: ExpKind::Atom(crate::phrase! {
+                                node: atom_kind,
+                                span: atom.span,
+                            }),
+                            span: base.span,
+                        }),
+                        crate::phrase! {
+                            node: Atom::Keyword(suffix),
+                            span: field.span,
+                        },
+                    ),
+                    span: ctx.span(l, r),
+                },
+            },
+            (exp_kind, atom_kind) => crate::phrase! {
+                node: ExpKind::Dot(
+                    Box::new(crate::phrase! {
+                        node: exp_kind,
+                        span: base.span,
+                    }),
+                    crate::phrase! {
+                        node: atom_kind,
+                        span: field.span,
+                    },
+                ),
+                span: ctx.span(l, r),
+            },
+        }
+    },
+};
+
+ExpPrimary: ast::Exp = {
+    // ExpPrimary ::= ExpLiteral
+    ExpLiteral,
+
+    // ExpPrimary ::= ExpId
+    ExpId,
+
+    // ExpPrimary ::= ExpCall
+    ExpCall,
+
+    // ExpPrimary ::= ExpHole
+    ExpHole,
+
+    // ExpPrimary ::= EPS
+    <l:@L> "EPS" <r:@R> => crate::phrase! {
+        node: ExpKind::Eps,
+        span: ctx.span(l, r),
+    },
+
+    // ExpPrimary ::= LBRACE CommaList<FieldExp> RBRACE
+    <l:@L> "LBRACE" <fields:CommaList<FieldExp>> "RBRACE" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Str(fields),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpPrimary ::= LPAREN CommaList<ExpBin> RPAREN
+    <l:@L> "LPAREN" <exps:CommaList<ExpBin>> "RPAREN" <r:@R> => {
+        let kind = match exps.as_slice() {
+            [] => ExpKind::Paren(Box::new(crate::phrase! {
+                node: ExpKind::Tuple(vec![]),
+                span: ctx.span(l, r),
+            })),
+            [exp] => ExpKind::Paren(Box::new(exp.clone())),
+            _ => ExpKind::Tuple(exps),
+        };
+        crate::phrase! {
+            node: kind,
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpPrimary ::= TickLAngle Exp TickRAngle
+    <l:TickLAngle> <exp:Exp> <r:TickRAngle> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Brack(l, Box::new(exp), r),
+            span: span,
+        }
+    },
+
+    // ExpPrimary ::= TickLParen Exp TickRParen
+    <l:TickLParen> <exp:Exp> <r:TickRParen> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Brack(l, Box::new(exp), r),
+            span: span,
+        }
+    },
+
+    // ExpPrimary ::= TickLBrack Exp TickRBrack
+    <l:TickLBrack> <exp:Exp> <r:TickRBrack> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Brack(l, Box::new(exp), r),
+            span: span,
+        }
+    },
+
+    // ExpPrimary ::= TickLBrace Exp TickRBrace
+    <l:TickLBrace> <exp:Exp> <r:TickRBrace> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Brack(l, Box::new(exp), r),
+            span: span,
+        }
+    },
+
+    // ExpPrimary ::= DOLLAR LPAREN Arith RPAREN
+    <l:@L> "DOLLAR" "LPAREN" <arith:Arith> "RPAREN" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Arith(Box::new(arith)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpPrimary ::= HASH2 ExpPrimary
+    <l:@L> "HASH2" <exp:ExpPrimary> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Unparen(Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+ExpLiteral: ast::Exp = {
+    // ExpLiteral ::= BOOLLIT
+    <l:@L> <value:"BOOLLIT"> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Bool(value),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpLiteral ::= NATLIT
+    <l:@L> <value:"NATLIT"> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Num(NumOp::Dec, num::Number::Nat(value)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpLiteral ::= HEXLIT
+    <l:@L> <value:"HEXLIT"> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Num(NumOp::Hex, num::Number::Nat(value)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpLiteral ::= TEXTLIT
+    <l:@L> <text:"TEXTLIT"> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Text(text),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+ExpId: ast::Exp = {
+    // ExpId ::= VarId
+    <id:VarId> => {
+        let span = id.span.clone();
+        crate::phrase! {
+            node: ExpKind::Id(id),
+            span: span,
+        }
+    },
+
+    // ExpId ::= BOOL
+    <l:@L> "BOOL" <r:@R> => {
+        let span = ctx.span(l, r);
+        let id = crate::phrase! {
+            node: "bool".to_owned(),
+            span: span.clone(),
+        };
+        crate::phrase! {
+            node: ExpKind::Id(id),
+            span: span,
+        }
+    },
+
+    // ExpId ::= NAT
+    <l:@L> "NAT" <r:@R> => {
+        let span = ctx.span(l, r);
+        let id = crate::phrase! {
+            node: "nat".to_owned(),
+            span: span.clone(),
+        };
+        crate::phrase! {
+            node: ExpKind::Id(id),
+            span: span,
+        }
+    },
+
+    // ExpId ::= INT
+    <l:@L> "INT" <r:@R> => {
+        let span = ctx.span(l, r);
+        let id = crate::phrase! {
+            node: "int".to_owned(),
+            span: span.clone(),
+        };
+        crate::phrase! {
+            node: ExpKind::Id(id),
+            span: span,
+        }
+    },
+
+    // ExpId ::= TEXT
+    <l:@L> "TEXT" <r:@R> => {
+        let span = ctx.span(l, r);
+        let id = crate::phrase! {
+            node: "text".to_owned(),
+            span: span.clone(),
+        };
+        crate::phrase! {
+            node: ExpKind::Id(id),
+            span: span,
+        }
+    },
+};
+
+ExpCall: ast::Exp = {
+    // ExpCall ::= DOLLAR DefId
+    <l:@L> "DOLLAR" <id:DefId> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Call(id, vec![], vec![]),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpCall ::= DOLLAR DefIdLParen CommaList<Arg> RPAREN
+    <l:@L> "DOLLAR" <id:DefIdLParen> <args:CommaList<Arg>> "RPAREN" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Call(id, vec![], args),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpCall ::= DOLLAR DefIdLAngle CommaList<Targ> RANGLE
+    <l:@L> "DOLLAR" <id:DefIdLAngle> <targs:CommaList<Targ>> "RANGLE" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Call(id, targs, vec![]),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpCall ::= DOLLAR DefIdLAngle CommaList<Targ> RANGLE_LPAREN CommaList<Arg> RPAREN
+    <l:@L> "DOLLAR" <id:DefIdLAngle> <targs:CommaList<Targ>> "RANGLE_LPAREN"
+        <args:CommaList<Arg>> "RPAREN" <r:@R> => {
+            crate::phrase! {
+                node: ExpKind::Call(id, targs, args),
+                span: ctx.span(l, r),
+            }
+        },
+};
+
+ExpHole: ast::Exp = {
+    // ExpHole ::= HOLE_NUM
+    <l:@L> <num:"HOLE_NUM"> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Hole(Hole::Num(num)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpHole ::= HOLE
+    <l:@L> "HOLE" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Hole(Hole::Next),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpHole ::= HOLE_MULTI
+    <l:@L> "HOLE_MULTI" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Hole(Hole::Rest),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpHole ::= HOLE_NIL
+    <l:@L> "HOLE_NIL" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Hole(Hole::None),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ExpHole ::= LATEX LPAREN TEXTLIT* RPAREN
+    <l:@L> "LATEX" "LPAREN" <parts:"TEXTLIT"*> "RPAREN" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Latex(parts.join(" ")),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+FieldExp: (ast::Atom, ast::Exp) = {
+    // FieldExp ::= FieldId SEQ ExpPost (SEQ ExpPost)*
+    <field:FieldId> "SEQ" <first:ExpPost> <rest:("SEQ" <ExpPost>)*> => {
+        let mut exps = Vec::with_capacity(rest.len() + 1);
+        exps.push(first);
+        exps.extend(rest);
+        let exp = if exps.len() == 1 {
+            exps.into_iter().next().expect("one expression")
+        } else {
+            let span = Span::new(
+                exps.first()
+                    .expect("nonempty expressions")
+                    .span
+                    .left
+                    .clone(),
+                exps.last()
+                    .expect("nonempty expressions")
+                    .span
+                    .right
+                    .clone(),
+            );
+            crate::phrase! {
+                node: ExpKind::Seq(exps),
+                span: span,
+            }
+        };
+        (field, exp)
+    },
+};
+
+Arg: ast::Arg = {
+    // Arg ::= EnterExp ExpBin ExitMode
+    <l:@L> <_enter:EnterExp> <exp:ExpBin> <r:@R> <_exit:ExitMode> => {
+        crate::phrase! {
+            node: ArgKind::Exp(Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // Arg ::= DEF DOLLAR DefId
+    <l:@L> "DEF" "DOLLAR" <id:DefId> <r:@R> => {
+        crate::phrase! {
+            node: ArgKind::Def(id),
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+Arith: ast::Exp = {
+    // Arith ::= EnterArith ArithDoubleArrow ExitMode
+    <_enter:EnterArith> <arith:ArithDoubleArrow> <_exit:ExitMode> => arith,
+};
+
+ArithDoubleArrow: ast::Exp = {
+    // ArithDoubleArrow ::= ArithOr DOUBLE_ARROW ArithDoubleArrow
+    <l:ArithOr> "DOUBLE_ARROW" <r:ArithDoubleArrow> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Impl), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithDoubleArrow ::= ArithOr DOUBLE_ARROW_BOTH ArithDoubleArrow
+    <l:ArithOr> "DOUBLE_ARROW_BOTH" <r:ArithDoubleArrow> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Equiv), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithDoubleArrow ::= ArithOr
+    ArithOr,
+};
+
+ArithOr: ast::Exp = {
+    // ArithOr ::= ArithOr OR ArithAnd
+    <l:ArithOr> "OR" <r:ArithAnd> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Or), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithOr ::= ArithAnd
+    ArithAnd,
+};
+
+ArithAnd: ast::Exp = {
+    // ArithAnd ::= ArithAnd AND ArithComparison
+    <l:ArithAnd> "AND" <r:ArithComparison> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::And), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithAnd ::= ArithComparison
+    ArithComparison,
+};
+
+ArithComparison: ast::Exp = {
+    // ArithComparison ::= ArithAdd ArithCompareOperator ArithComparison
+    <l:ArithAdd> <op:ArithCompareOperator> <r:ArithComparison> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cmp(Box::new(l), op, Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithComparison ::= ArithAdd LANGLE_DASH ArithComparison
+    <l:ArithAdd> "LANGLE_DASH" <r:ArithComparison> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Mem(Box::new(l), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithComparison ::= ArithAdd
+    ArithAdd,
+};
+
+ArithCompareOperator: CmpOp = {
+    // ArithCompareOperator ::= EQ
+    "EQ" => CmpOp::Bool(prim::bool::CmpOp::Eq),
+
+    // ArithCompareOperator ::= NEQ
+    "NEQ" => CmpOp::Bool(prim::bool::CmpOp::Ne),
+
+    // ArithCompareOperator ::= LANGLE
+    "LANGLE" => CmpOp::Num(num::CmpOp::Lt),
+
+    // ArithCompareOperator ::= RANGLE
+    "RANGLE" => CmpOp::Num(num::CmpOp::Gt),
+
+    // ArithCompareOperator ::= LANGLE_EQ
+    "LANGLE_EQ" => CmpOp::Num(num::CmpOp::Le),
+
+    // ArithCompareOperator ::= RANGLE_EQ
+    "RANGLE_EQ" => CmpOp::Num(num::CmpOp::Ge),
+};
+
+ArithAdd: ast::Exp = {
+    // ArithAdd ::= ArithAdd PLUS ArithMul
+    <l:ArithAdd> "PLUS" <r:ArithMul> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Add), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithAdd ::= ArithAdd MINUS ArithMul
+    <l:ArithAdd> "MINUS" <r:ArithMul> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Sub), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithAdd ::= ArithAdd PLUS2 ArithMul
+    <l:ArithAdd> "PLUS2" <r:ArithMul> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Cat(Box::new(l), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithAdd ::= ArithMul
+    ArithMul,
+};
+
+ArithMul: ast::Exp = {
+    // ArithMul ::= ArithMul StarOperator ArithUnary
+    <l:ArithMul> <_operator:StarOperator> <r:ArithUnary> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mul), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithMul ::= ArithMul SLASH ArithUnary
+    <l:ArithMul> "SLASH" <r:ArithUnary> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Div), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithMul ::= ArithMul BACKSLASH ArithUnary
+    <l:ArithMul> "BACKSLASH" <r:ArithUnary> => {
+        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        crate::phrase! {
+            node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mod), Box::new(r)),
+            span: span,
+        }
+    },
+
+    // ArithMul ::= ArithUnary
+    ArithUnary,
+};
+
+ArithUnary: ast::Exp = {
+    // ArithUnary ::= BAR EnterExp Exp BAR ExitMode
+    <l:@L> "BAR" <_enter:EnterExp> <exp:Exp> "BAR" <r:@R> <_exit:ExitMode> => {
+        crate::phrase! {
+            node: ExpKind::Len(Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ArithUnary ::= UnaryOperator ArithUnary
+    <l:@L> <op:UnaryOperator> <exp:ArithUnary> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Un(op, Box::new(exp)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ArithUnary ::= ArithPost
+    ArithPost,
+};
+
+ArithPost: ast::Exp = {
+    // ArithPost ::= ArithAtomBase
+    ArithAtomBase,
+
+    // ArithPost ::= ArithPost UP ArithAtomBase
+    <l:@L> <base:ArithPost> "UP" <exponent:ArithAtomBase> <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Bin(
+                Box::new(base),
+                BinOp::Num(num::BinOp::Pow),
+                Box::new(exponent),
+            ),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ArithPost ::= ArithPost LBRACK Arith RBRACK
+    <l:@L> <base:ArithPost> "LBRACK" <index:Arith> "RBRACK" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Idx(Box::new(base), Box::new(index)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ArithPost ::= ArithPost DotId
+    <l:@L> <base:ArithPost> <field:DotId> <r:@R> => {
+        match (base.node, field.node) {
+            (ExpKind::Atom(atom), Atom::Keyword(suffix)) => match atom.node {
+                Atom::Keyword(prefix) => {
+                    let span = ctx.span(l, r);
+                    let atom = crate::phrase! {
+                        node: Atom::Keyword(format!("{prefix}.{suffix}")),
+                        span: span.clone(),
+                    };
+                    crate::phrase! {
+                        node: ExpKind::Atom(atom),
+                        span: span,
+                    }
+                }
+                atom_kind => crate::phrase! {
+                    node: ExpKind::Dot(
+                        Box::new(crate::phrase! {
+                            node: ExpKind::Atom(crate::phrase! {
+                                node: atom_kind,
+                                span: atom.span,
+                            }),
+                            span: base.span,
+                        }),
+                        crate::phrase! {
+                            node: Atom::Keyword(suffix),
+                            span: field.span,
+                        },
+                    ),
+                    span: ctx.span(l, r),
+                },
+            },
+            (exp_kind, atom_kind) => crate::phrase! {
+                node: ExpKind::Dot(
+                    Box::new(crate::phrase! {
+                        node: exp_kind,
+                        span: base.span,
+                    }),
+                    crate::phrase! {
+                        node: atom_kind,
+                        span: field.span,
+                    },
+                ),
+                span: ctx.span(l, r),
+            },
+        }
+    },
+};
+
+ArithAtomBase: ast::Exp = {
+    // ArithAtomBase ::= ExpLiteral
+    ExpLiteral,
+
+    // ArithAtomBase ::= ExpId
+    ExpId,
+
+    // ArithAtomBase ::= ExpCall
+    ExpCall,
+
+    // ArithAtomBase ::= ExpHole
+    ExpHole,
+
+    // ArithAtomBase ::= LPAREN Arith RPAREN
+    <l:@L> "LPAREN" <arith:Arith> "RPAREN" <r:@R> => {
+        crate::phrase! {
+            node: ExpKind::Paren(Box::new(arith)),
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ArithAtomBase ::= DOLLAR LPAREN EnterExp Exp RPAREN ExitMode
+    <l:@L> "DOLLAR" "LPAREN" <_enter:EnterExp> <exp:Exp> "RPAREN" <r:@R>
+        <_exit:ExitMode> => {
+        crate::phrase! {
+            node: exp.node,
+            span: ctx.span(l, r),
+        }
+    },
+
+    // ArithAtomBase ::= AtomRule
+    <atom:AtomRule> => {
+        let span = atom.span.clone();
+        crate::phrase! {
+            node: ExpKind::Atom(atom),
+            span: span,
+        }
+    },
+};
+
+UpdatePath: ast::Path = {
+    // UpdatePath ::= LBRACK
+    "LBRACK" <r:@R> => crate::phrase! {
+        node: PathKind::Root,
+        span: ctx.span(r, r),
+    },
+
+    // UpdatePath ::= UpdatePath LBRACK Arith RBRACK
+    <path:UpdatePath> "LBRACK" <index:Arith> "RBRACK" <r:@R> => {
+        let l = path.span.left.clone();
+        crate::phrase! {
+            node: PathKind::Idx(Box::new(path), Box::new(index)),
+            span: Span::new(l, ctx.position(r)),
+        }
+    },
+
+    // UpdatePath ::= UpdatePath LBRACK Arith COLON Arith RBRACK
+    <path:UpdatePath> "LBRACK" <start:Arith> "COLON" <end:Arith> "RBRACK"
+        <r:@R> => {
+        let l = path.span.left.clone();
+        crate::phrase! {
+            node: PathKind::Slice(Box::new(path), Box::new(start), Box::new(end)),
+            span: Span::new(l, ctx.position(r)),
+        }
+    },
+
+    // UpdatePath ::= UpdatePath DotId
+    <path:UpdatePath> <field:DotId> <r:@R> => {
+        let l = path.span.left.clone();
+        crate::phrase! {
+            node: PathKind::Dot(Box::new(path), field),
+            span: Span::new(l, ctx.position(r)),
+        }
+    },
+};
+
+Param: ast::Param = {
+    // Param ::= ParamKindRule
+    <l:@L> <kind:ParamKindRule> <r:@R> => crate::phrase! {
+        node: kind,
+        span: ctx.span(l, r),
+    },
+};
+
+ParamKindRule: ParamKind = {
+    // ParamKindRule ::= PlainTyp
+    <plain_typ:PlainTyp> => ParamKind::Exp(plain_typ),
+
+    // ParamKindRule ::= DEF DOLLAR DefId COLON PlainTyp
+    "DEF" "DOLLAR" <id:DefId> "COLON" <plain_typ:PlainTyp> => {
+        ParamKind::Def(id, vec![], vec![], plain_typ)
+    },
+
+    // ParamKindRule ::= DEF DOLLAR DefIdLParen EnterScope CommaList<Param> RPAREN COLON PlainTyp
+    //     ExitScope
+    "DEF" "DOLLAR" <id:DefIdLParen> <_enter:EnterScope> <params:CommaList<Param>>
+        "RPAREN" "COLON" <plain_typ:PlainTyp> <_exit:ExitScope> => {
+            ParamKind::Def(id, vec![], params, plain_typ)
+        },
+
+    // ParamKindRule ::= DEF DOLLAR DefIdLAngle EnterScope CommaList<TParam> RANGLE COLON PlainTyp
+    //     ExitScope
+    "DEF" "DOLLAR" <id:DefIdLAngle> <_enter:EnterScope> <tparams:CommaList<TParam>>
+        "RANGLE" "COLON" <plain_typ:PlainTyp> <_exit:ExitScope> => {
+            ParamKind::Def(id, tparams, vec![], plain_typ)
+        },
+
+    // ParamKindRule ::= DEF DOLLAR DefIdLAngle EnterScope CommaList<TParam> RANGLE_LPAREN
+    //     CommaList<Param> RPAREN COLON PlainTyp ExitScope
+    "DEF" "DOLLAR" <id:DefIdLAngle> <_enter:EnterScope> <tparams:CommaList<TParam>>
+        "RANGLE_LPAREN" <params:CommaList<Param>> "RPAREN" "COLON" <plain_typ:PlainTyp>
+        <_exit:ExitScope> => ParamKind::Def(id, tparams, params, plain_typ),
+};
+
+PremList: Vec<Phrase<Option<ast::Prem>>> = {
+    // PremList ::= EnterScope PremEntry* ExitScope
+    <_enter:EnterScope> <entries:PremEntry*> <_exit:ExitScope> => entries,
+};
+
+PremEntry: Phrase<Option<ast::Prem>> = {
+    // PremEntry ::= DASH DASH
+    <l:@L> "DASH" "DASH" <r:@R> => crate::phrase! {
+        node: None,
+        span: ctx.span(l, r),
+    },
+
+    // PremEntry ::= DASH Prem
+    <l:@L> "DASH" <prem:Prem> <r:@R> => crate::phrase! {
+        node: Some(prem),
+        span: ctx.span(l, r),
+    },
+};
+
+Prem: ast::Prem = {
+    // Prem ::= PremKindRule
+    <l:@L> <kind:PremKindRule> <r:@R> => crate::phrase! {
+        node: kind,
+        span: ctx.span(l, r),
+    },
+};
+
+PremKindRule: PremKind = {
+    // PremKindRule ::= OTHERWISE
+    "OTHERWISE" => PremKind::Else,
+
+    // PremKindRule ::= LPAREN Prem RPAREN IterRule*
+    <l:@L> "LPAREN" <prem:Prem> "RPAREN" <iterations:IterRule*> <r:@R> => {
+        let mut prem = prem;
+        for iter in iterations {
+            prem = crate::phrase! {
+                node: PremKind::Iter(IterPrem {
+                    prem: Box::new(prem),
+                    iter,
+                }),
+                span: ctx.span(l, r),
+            };
+        }
+        prem.node
+    },
+
+    // PremKindRule ::= RelId COLON Exp
+    <id:RelId> "COLON" <exp:Exp> => PremKind::Rule(RulePrem { id, exp }),
+
+    // PremKindRule ::= RelId COLON_SLASH Exp
+    <id:RelId> "COLON_SLASH" <exp:Exp> => PremKind::RuleNot(RuleNotPrem { id, exp }),
+
+    // PremKindRule ::= VAR VarIdBind COLON PlainTyp
+    "VAR" <id:VarIdBind> "COLON" <plain_typ:PlainTyp> => {
+        PremKind::Var(VarPrem { id, plain_typ })
+    },
+
+    // PremKindRule ::= IF Exp
+    "IF" <exp:Exp> => {
+        fn from_exp(exp: ast::Exp) -> PremKind {
+            match exp.node {
+                ExpKind::Iter(exp, iter) => {
+                    let span = exp.span.clone();
+                    PremKind::Iter(IterPrem {
+                        prem: Box::new(crate::phrase! {
+                            node: from_exp(*exp),
+                            span: span,
+                        }),
+                        iter,
+                    })
+                }
+                exp_kind => PremKind::If(IfPrem {
+                    exp: crate::phrase! {
+                        node: exp_kind,
+                        span: exp.span,
+                    },
+                }),
+            }
+        }
+        from_exp(exp)
+    },
+
+    // PremKindRule ::= DEBUG Exp
+    "DEBUG" <exp:Exp> => PremKind::Debug(DebugPrem { exp }),
+};
+
+Hint: Phrase<ast::Hint> = {
+    // Hint ::= HINT_LPAREN HintId SEQ Exp RPAREN
+    <l:@L> "HINT_LPAREN" <id_l:@L> <id:HintId> <id_r:@R> "SEQ"
+        <exp:Exp> "RPAREN" <r:@R> => {
+        let id = crate::phrase! {
+            node: id,
+            span: ctx.span(id_l, id_r),
+        };
+        crate::phrase! {
+            node: ast::Hint { id, exp },
+            span: ctx.span(l, r),
+        }
+    },
+
+    // Hint ::= HINT_LPAREN HintId RPAREN
+    <l:@L> "HINT_LPAREN" <id_l:@L> <id:HintId> <id_r:@R> <empty:@L> "RPAREN"
+        <r:@R> => {
+        let id = crate::phrase! {
+            node: id,
+            span: ctx.span(id_l, id_r),
+        };
+        let exp = crate::phrase! {
+            node: ExpKind::Seq(vec![]),
+            span: ctx.span(empty, empty),
+        };
+        crate::phrase! {
+            node: ast::Hint { id, exp },
+            span: ctx.span(l, r),
+        }
+    },
+};
+
+Hints: Vec<Phrase<ast::Hint>> = {
+    // Hints ::= Hint*
+    <hints:Hint*> => hints,
+};
+
+TableBody: Vec<ast::TableRow> = {
+    // TableBody ::= Bar BarList<TableRow>
+    <_bar:Bar> <rows:BarList<TableRow>> => rows,
+};
+
+TableRow: ast::TableRow = {
+    // TableRow ::= TablePattern DOUBLE_ARROW ExpBin
+    <exp_pattern:TablePattern> "DOUBLE_ARROW" <exp_body:ExpBin> => {
+        let span = Span::new(exp_pattern.span.left.clone(), exp_body.span.right.clone());
+        crate::phrase! {
+            node: ast::TableRowKind { exp_pattern, exp_body },
+            span: span,
+        }
+    },
+};
+
+// TablePattern ::= ExpSeq
+TablePattern: ast::Exp = ExpSeq;
+
+ExpSeq: ast::Exp = {
+    // ExpSeq ::= ExpSeqStart ExpSeqTail*
+    <first:ExpSeqStart> <rest:ExpSeqTail*> => {
+        rest.into_iter().fold(first, |exp_l, (op, exp_r)| {
+            let span = Span::new(exp_l.span.left.clone(), exp_r.span.right.clone());
+            if let Some(op) = op {
+                crate::phrase! {
+                    node: ExpKind::Fuse(Box::new(exp_l), op, Box::new(exp_r)),
+                    span: span,
+                }
+            } else {
+                let mut exps = match exp_l.node {
+                    ExpKind::Seq(exps) if exps.len() >= 2 => exps,
+                    exp_kind => vec![crate::phrase! {
+                        node: exp_kind,
+                        span: exp_l.span,
+                    }],
+                };
+                exps.push(exp_r);
+                crate::phrase! {
+                    node: ExpKind::Seq(exps),
+                    span: span,
+                }
+            }
+        })
+    },
+};
+
+ExpSeqStart: ast::Exp = {
+    // ExpSeqStart ::= ExpPost
+    ExpPost,
+
+    // ExpSeqStart ::= ExpListIter
+    ExpListIter,
+};
+
+ExpSeqTail: (Option<ast::FuseOp>, ast::Exp) = {
+    // ExpSeqTail ::= SEQ ExpPost
+    "SEQ" <exp:ExpPost> => (None, exp),
+
+    // ExpSeqTail ::= HASH ExpPost
+    <l:@L> "HASH" <r:@R> <exp:ExpPost> => {
+        let op = crate::phrase! {
+            node: FuseOpKind::Fuse,
+            span: ctx.span(l, r),
+        };
+        (Some(op), exp)
+    },
+};
+
+RuleRule: ast::Rule = {
+    // RuleRule ::= RULE RelId RuleIds COLON Exp PremList
+    <l:@L> "RULE" <id_rel:RelId> <id_rule_raw:RuleIds> "COLON" <exp:Exp>
+        <prems:PremList> => {
+            let id_rule = if id_rule_raw.node.is_empty() {
+                String::new()
+            } else {
+                id_rule_raw.node[1..].to_owned()
+            };
+            let id_rule = crate::phrase! {
+                node: id_rule,
+                span: id_rule_raw.span,
+            };
+            let r = prems
+                .last()
+                .map(|prem| prem.span.right.clone())
+                .unwrap_or_else(|| exp.span.right.clone());
+            let prems = prems
+                .into_iter()
+                .filter_map(|prem| prem.node)
+                .collect();
+            crate::phrase! {
+                node: ast::RuleKind { id_rel, id_rule, exp, prems },
+                span: Span::new(ctx.position(l), r),
+            }
+        },
+};
+
+RuleItem: Option<ast::Rule> = {
+    // RuleItem ::= NL2
+    "NL2" => None,
+
+    // RuleItem ::= NL3
+    "NL3" => None,
+
+    // RuleItem ::= RuleRule
+    <rule:RuleRule> => Some(rule),
+};
+
+Rules: Vec<ast::Rule> = {
+    // Rules ::= RuleItem*
+    <items:RuleItem*> => items.into_iter().flatten().collect(),
+};
+
+CallableDec: (
+    ast::Id,
+    Vec<ast::TParam>,
+    Vec<ast::Param>,
+    ast::PlainTyp,
+    Vec<Phrase<ast::Hint>>,
+) = {
+    // CallableDec ::= DefId COLON PlainTyp Hints
+    <id:DefId> "COLON" <plain_typ:PlainTyp> <hints:Hints> => {
+        (id, vec![], vec![], plain_typ, hints)
+    },
+
+    // CallableDec ::= DefIdLParen EnterScope CommaList<Param> RPAREN COLON PlainTyp Hints ExitScope
+    <id:DefIdLParen> <_enter:EnterScope> <params:CommaList<Param>> "RPAREN" "COLON"
+        <plain_typ:PlainTyp> <hints:Hints> <_exit:ExitScope> => {
+            (id, vec![], params, plain_typ, hints)
+        },
+
+    // CallableDec ::= DefIdLAngle EnterScope CommaList<TParam> RANGLE COLON PlainTyp Hints
+    //     ExitScope
+    <id:DefIdLAngle> <_enter:EnterScope> <tparams:CommaList<TParam>> "RANGLE" "COLON"
+        <plain_typ:PlainTyp> <hints:Hints> <_exit:ExitScope> => {
+            (id, tparams, vec![], plain_typ, hints)
+        },
+
+    // CallableDec ::= DefIdLAngle EnterScope CommaList<TParam> RANGLE_LPAREN CommaList<Param>
+    //     RPAREN COLON PlainTyp Hints ExitScope
+    <id:DefIdLAngle> <_enter:EnterScope> <tparams:CommaList<TParam>> "RANGLE_LPAREN"
+        <params:CommaList<Param>> "RPAREN" "COLON" <plain_typ:PlainTyp> <hints:Hints>
+        <_exit:ExitScope> => {
+            (id, tparams, params, plain_typ, hints)
+        },
+};
+
+TableDecSignature: (
+    ast::Id,
+    Vec<ast::Param>,
+    ast::PlainTyp,
+    Vec<Phrase<ast::Hint>>,
+) = {
+    // TableDecSignature ::= DefId COLON PlainTyp Hints
+    <id:DefId> "COLON" <plain_typ:PlainTyp> <hints:Hints> => {
+        (id, vec![], plain_typ, hints)
+    },
+
+    // TableDecSignature ::= DefIdLParen EnterScope CommaList<Param> RPAREN COLON PlainTyp Hints
+    //     ExitScope
+    <id:DefIdLParen> <_enter:EnterScope> <params:CommaList<Param>> "RPAREN" "COLON"
+        <plain_typ:PlainTyp> <hints:Hints> <_exit:ExitScope> => {
+            (id, params, plain_typ, hints)
+        },
+};
+
+FunctionDefSignature: (
+    ast::Id,
+    Vec<ast::TParam>,
+    Vec<ast::Arg>,
+    ast::Exp,
+    Vec<Phrase<Option<ast::Prem>>>,
+) = {
+    // FunctionDefSignature ::= DefId EQ Exp PremList
+    <id:DefId> "EQ" <exp:Exp> <prems:PremList> => {
+        (id, vec![], vec![], exp, prems)
+    },
+
+    // FunctionDefSignature ::= DefIdLParen EnterScope CommaList<Arg> RPAREN EQ Exp PremList
+    //     ExitScope
+    <id:DefIdLParen> <_enter:EnterScope> <args:CommaList<Arg>> "RPAREN" "EQ"
+        <exp:Exp> <prems:PremList> <_exit:ExitScope> => {
+            (id, vec![], args, exp, prems)
+        },
+
+    // FunctionDefSignature ::= DefIdLAngle EnterScope CommaList<TParam> RANGLE EQ Exp PremList
+    //     ExitScope
+    <id:DefIdLAngle> <_enter:EnterScope> <tparams:CommaList<TParam>> "RANGLE" "EQ"
+        <exp:Exp> <prems:PremList> <_exit:ExitScope> => {
+            (id, tparams, vec![], exp, prems)
+        },
+
+    // FunctionDefSignature ::= DefIdLAngle EnterScope CommaList<TParam> RANGLE_LPAREN
+    //     CommaList<Arg> RPAREN EQ Exp PremList ExitScope
+    <id:DefIdLAngle> <_enter:EnterScope> <tparams:CommaList<TParam>> "RANGLE_LPAREN"
+        <args:CommaList<Arg>> "RPAREN" "EQ" <exp:Exp> <prems:PremList>
+        <_exit:ExitScope> => {
+            (id, tparams, args, exp, prems)
+        },
+};

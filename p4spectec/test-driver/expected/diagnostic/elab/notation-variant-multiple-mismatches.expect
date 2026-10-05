@@ -1,0 +1,26 @@
+note: expression does not match any variant case
+  ┌─ elab/notation-variant-multiple-mismatches.watsup:3:10
+  │
+3 │ def $f = missing ',' 1
+  │          -------------
+
+├─ error[elab/expression-inference-invalid]: cannot infer type of variable
+│    ┌─ elab/notation-variant-multiple-mismatches.watsup:3:10
+│    │
+│  1 │ syntax choice = A | nat ',' nat | bool ';' bool
+│    │                     --- argument 0 of notation expects 'nat'
+│  2 │ dec $f : choice
+│    │          ------ return value of function '$f' expects 'choice'
+│  3 │ def $f = missing ',' 1
+│    │          ^^^^^^^
+│
+└─ error[elab/expression-inference-invalid]: cannot infer type of variable
+     ┌─ elab/notation-variant-multiple-mismatches.watsup:3:10
+     │
+   1 │ syntax choice = A | nat ',' nat | bool ';' bool
+     │                                   ---- argument 0 of notation expects 'bool'
+   2 │ dec $f : choice
+     │          ------ return value of function '$f' expects 'choice'
+   3 │ def $f = missing ',' 1
+     │          ^^^^^^^
+
