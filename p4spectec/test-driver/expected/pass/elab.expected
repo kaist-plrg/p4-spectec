@@ -12680,11 +12680,13 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
 
   rulegroup expression
 
-    rule list: TC typeIR_var |- expression as forCollectionExpression : typedExpressionIR as forCollectionExpressionIR
+    rule list: TC typeIR_var |- expression as forCollectionExpression : typedExpressionIR_cast as forCollectionExpressionIR
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if (typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR))
     -- if (LIST `< typeIR_e `> as typeIR = $unroll_typeIR(typeIR_expression))
-    -- Cast_impl: typeIR_e -> typeIR_var : OK _typeIR*{_typeIR <- _typeIR*}
+    -- Cast_impl: typeIR_e -> typeIR_var : OK typeIR_cast*{typeIR_cast <- typeIR_cast*}
+    -- (if (typeIR_cast_list = LIST `< typeIR_cast `> as typeIR))*{typeIR_cast <- typeIR_cast*, typeIR_cast_list <- typeIR_cast_list*}
+    -- if (typedExpressionIR_cast = $apply_cast(typedExpressionIR, typeIR_cast_list*{typeIR_cast_list <- typeIR_cast_list*}))
 
     rule array: TC typeIR_var |- expression as forCollectionExpression : typedExpressionIR as forCollectionExpressionIR
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR

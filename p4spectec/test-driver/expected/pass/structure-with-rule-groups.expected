@@ -29277,7 +29277,13 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
                       1. If (castResult matches OK %), then
 
-                        1. Result in: % % |- % : typedExpressionIR as forCollectionExpressionIR
+                        1. (Let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} be castResult)
+
+                          1. (Let typeIR_cast_list be LIST `< typeIR_cast `> as typeIR)*{typeIR_cast <- typeIR_cast*, typeIR_cast_list -> typeIR_cast_list*}
+
+                            1. (Let typedExpressionIR_cast be $apply_cast(typedExpressionIR, typeIR_cast_list*{typeIR_cast_list <- typeIR_cast_list*}))
+
+                              1. Result in: % % |- % : typedExpressionIR_cast as forCollectionExpressionIR
 
                       1. Else Dangling
 

@@ -14690,7 +14690,16 @@ xref:ForCollectionExpr_ok[Typing ``expression`` under context ``TC`` with iterat
 . If let ``+LIST+`` ``+`<+`` ``typeIR~e~`` ``+`>+`` of type ``listTypeIR`` be ``typeIR``:
  .. Let casts ``castResult`` be the result of xref:Cast_impl[checking if ``typeIR~e~`` can be implicitly cast to ``typeIR~var~``].
  .. Check that ``castResult`` matches pattern ``+OK+`` ``%``.
- .. The result is ``typedExpressionIR``.
+ .. Let ``+OK+`` ``typeIR~cast~^{asterisk}^`` be ``castResult``.
+ .. For each ``typeIR~cast~`` in ``typeIR~cast~^{asterisk}^``:
++
+--
+  *** Let ``typeIR~cast_list~`` be ``+LIST+`` ``+`<+`` ``typeIR~cast~`` ``+`>+``.
+--
++
+Let ``typeIR~cast_list~^{asterisk}^`` be the resulting list.
+ .. Let ``typedExpressionIR~cast~`` be xref:apply_cast[``typedExpressionIR`` cast through ``typeIR~cast_list~^{asterisk}^``].
+ .. The result is ``typedExpressionIR~cast~``.
 . Else if let ``+ARRAY+`` ``typeIR~e~`` ``+`[+`` ``++_++`` ``+`]+`` of type ``arrayTypeIR`` be ``typeIR``:
  .. If xref:Type_alpha[``typeIR~e~`` and ``typeIR~var~`` are the same type]:
   ... The result is ``typedExpressionIR``.

@@ -15924,11 +15924,14 @@ def $compat_range(_, _) = false
 rulegroup ForCollectionExpr_ok/expression {
 
   rule ForCollectionExpr_ok/list:
-    TC typeIR_var |- expression : typedExpressionIR
+    TC typeIR_var |- expression : typedExpressionIR_cast
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
     -- if typeIR_expression = $type_of_typedExpressionIR(typedExpressionIR)
     -- if LIST `< typeIR_e `> = $unroll_typeIR(typeIR_expression)
-    -- Cast_impl: typeIR_e -> typeIR_var : OK _
+    -- Cast_impl: typeIR_e -> typeIR_var : OK typeIR_cast*
+    -- (if (typeIR_cast_list = LIST `< typeIR_cast `>))*
+    -- if typedExpressionIR_cast
+        = $apply_cast(typedExpressionIR, typeIR_cast_list*)
 
   rule ForCollectionExpr_ok/array:
     TC typeIR_var |- expression : typedExpressionIR

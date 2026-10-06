@@ -26703,7 +26703,13 @@ relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
           2. Check ((castResult matches pattern OK %))
 
-            1. Result in: % % |- % : (typedExpressionIR as forCollectionExpressionIR)
+            1. (Let (OK (typeIR_cast)*{typeIR_cast <- typeIR_cast*}) be castResult)
+
+            2. (Let typeIR_cast_list be ((LIST `< typeIR_cast `>) as typeIR))*{typeIR_cast <- typeIR_cast*, typeIR_cast_list -> typeIR_cast_list*}
+
+            3. (Let typedExpressionIR_cast be $apply_cast(typedExpressionIR, (typeIR_cast_list)*{typeIR_cast_list <- typeIR_cast_list*}))
+
+            4. Result in: % % |- % : (typedExpressionIR_cast as forCollectionExpressionIR)
 
         2. Case (% has type arrayTypeIR, let (ARRAY typeIR_e `[ _nat `]) = %)
 

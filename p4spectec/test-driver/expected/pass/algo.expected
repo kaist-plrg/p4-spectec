@@ -21501,8 +21501,10 @@ relation ForCollectionExpr_ok: typingContext typeIR |- forCollectionExpression :
     -- let LIST `< typeIR_e `> = typeIR as listTypeIR
     -- Cast_impl: typeIR_e -> typeIR_var : castResult
     -- if castResult matches OK %
-    -- let OK _typeIR*{_typeIR <- _typeIR*} = castResult
-    -- output: % % |- % : typedExpressionIR as forCollectionExpressionIR
+    -- let OK typeIR_cast*{typeIR_cast <- typeIR_cast*} = castResult
+    -- (let typeIR_cast_list = LIST `< typeIR_cast `> as typeIR)*{typeIR_cast <- typeIR_cast*, typeIR_cast_list -> typeIR_cast_list*}
+    -- let typedExpressionIR_cast = $apply_cast(typedExpressionIR, typeIR_cast_list*{typeIR_cast_list <- typeIR_cast_list*})
+    -- output: % % |- % : typedExpressionIR_cast as forCollectionExpressionIR
 
     rulepath array
     -- Expr_ok: LOCAL TC |- expression : typedExpressionIR
