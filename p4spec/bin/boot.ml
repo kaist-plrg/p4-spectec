@@ -142,6 +142,190 @@ let run_command =
            | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
            ))
 
+let krun_command =
+  Core.Command.basic
+    ~summary:"run a kompiled K definition (definition.kore) with the K spec"
+    (let open Core.Command.Let_syntax in
+     let open Core.Command.Param in
+     let%map paths_spec = anon (non_empty_sequence_as_list ("path" %: string))
+     and path_def =
+       flag "-def" (required string) ~doc:"FILE definition.kore from kompile"
+     and path_init =
+       flag "-init" (required string)
+         ~doc:"FILE initial term, as krun --save-temps writes it (tmp.in.*)"
+     and depth = flag "-depth" (optional int) ~doc:"N stop after N steps"
+     and path_expect =
+       flag "-expect" (optional string)
+         ~doc:"FILE expected final configuration (krun --output kore)"
+     and path_expect_any =
+       flag "-expect-any" (optional string)
+         ~doc:
+           "FILE final configurations krun --search found (a disjunction); \
+            the result must be one of them"
+     and path_out =
+       flag "-o" (optional string) ~doc:"FILE write the final configuration"
+     and det = flag "-det" no_arg ~doc:"deterministic mode"
+     and no_cache = flag "-no-cache" no_arg ~doc:"disable caching"
+     and profile = flag "-profile" no_arg ~doc:"profiling"
+     and path_cover =
+       flag "-cover" (optional string)
+         ~doc:"FILE write the spec with the instructions the run executes marked"
+     in
+     fun () ->
+       (* The GC settings above favour speed over memory. K runs keep large
+          configurations alive, so use OCaml's default space overhead (120),
+          unless SPECTEC_SPACE_OVERHEAD says otherwise: at 1,500 steps of
+          KOOL factorial it halves the heap (949 MB to 424 MB) at no cost. *)
+       let space_overhead =
+         match Sys.getenv_opt "SPECTEC_SPACE_OVERHEAD" with
+         | Some s -> ( try int_of_string s with Failure _ -> 120)
+         | None -> 120
+       in
+       Gc.set { (Gc.get ()) with Gc.space_overhead };
+       let time f =
+         let t = Unix.gettimeofday () in
+         let x = f () in
+         (x, Unix.gettimeofday () -. t)
+       in
+       match
+         let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
+         let* runner =
+           Kore.K.runner ~cache:(not no_cache) ~det spec
+           |> Result.map_error (fun e -> Error.RunError e)
+         in
+         Ok (spec, runner)
+       with
+       | Error e -> Format.printf "%s\n" (Error.to_string e)
+       | Ok (spec, (module Runner : RUNNER)) -> (
+           try
+             let (loaded, value_init), t_load =
+               time (fun () ->
+                   let loaded =
+                     Kore.Load.load_definition
+                       (Kore.Parse.definition_of_file path_def)
+                   in
+                   let value_init =
+                     Kore.Load.load_pattern loaded.info
+                       (Kore.Parse.pattern_of_file path_init)
+                   in
+                   (loaded, value_init))
+             in
+             Format.printf "loaded %d rules, %d equations (%.2fs)\n"
+               loaded.rules loaded.equations t_load;
+             let value_depth =
+               Value.Make.opt
+                 (Runtime.Type.Typ.Make.opt Runtime.Type.Typ.Make.nat)
+                 (Option.map (fun n -> Value.Make.nat (Bigint.of_int n)) depth)
+             in
+             let handlers =
+               if profile then
+                 let (module PH : Inst.Handler.HANDLER) = Inst.Profile.make () in
+                 [ (module PH : Inst.Handler.HANDLER) ]
+               else []
+             in
+             (* instruction coverage, as p4spectec's cover-run *)
+             let handlers, read_cover =
+               match path_cover with
+               | Some _ ->
+                   let (module CH : Inst.Handler.HANDLER), read =
+                     Inst.Coverage_instr.make ()
+                   in
+                   (handlers @ [ (module CH : Inst.Handler.HANDLER) ], Some read)
+               | None -> (handlers, None)
+             in
+             Inst.Hook.register handlers;
+             Inst.Hook.init_spec spec;
+             let result, t_run =
+               time (fun () ->
+                   Runner.Interp.eval_func "krun" []
+                     [ loaded.definition; value_init; value_depth ])
+             in
+             Inst.Hook.finish ();
+             (* the spec with each instruction marked executed (+) or not (-) *)
+             (match (path_cover, read_cover, spec) with
+             | Some path, Some read, SL spec_sl ->
+                 let cover =
+                   Coverage.Instr.Multi.extend
+                     (Coverage.Instr.Multi.init spec_sl)
+                     path_init (read ())
+                 in
+                 Coverage.Instr.Log.log_spec ~path_cov_opt:(Some path) cover
+                   spec_sl
+             | _ -> ());
+             let report status steps term =
+               Format.printf "%s after %s steps (%.2fs)\n" status
+                 (Value.to_string steps) t_run;
+               let output = Kore.Unparse.string_of_term loaded.info term in
+               (match path_out with
+               | Some path ->
+                   Out_channel.with_open_bin path (fun oc ->
+                       output_string oc output;
+                       output_char oc '\n')
+               | None -> Format.printf "%s\n" output);
+               match path_expect with
+               | Some path ->
+                   let expected =
+                     Kore.Parse.pattern_of_file path
+                     |> Kore.Unparse.normalize loaded.info
+                     |> Kore.Ast.string_of_pattern
+                   in
+                   if String.equal expected output then
+                     Format.printf "matches %s\n" path
+                   else (
+                     Format.printf "DIFFERS from %s\n" path;
+                     (* keep the normalized expectation next to the output for diffing *)
+                     Option.iter
+                       (fun out ->
+                         Out_channel.with_open_bin (out ^ ".expected") (fun oc ->
+                             output_string oc expected;
+                             output_char oc '\n'))
+                       path_out)
+               | None -> ()
+             in
+             let report status steps term =
+               report status steps term;
+               match path_expect_any with
+               | Some path ->
+                   let output =
+                     Kore.Unparse.string_of_term loaded.info term
+                   in
+                   let rec alternatives (p : Kore.Ast.pattern) =
+                     match p with
+                     | Kore.Ast.App ("\\or", _, ps) ->
+                         List.concat_map alternatives ps
+                     | Kore.Ast.App ("\\bottom", _, _) -> []
+                     | Kore.Ast.App ("\\equals", _, [ _; p ]) -> [ p ]
+                     | p -> [ p ]
+                   in
+                   let solutions =
+                     alternatives (Kore.Parse.pattern_of_file path)
+                     |> List.map (fun p ->
+                            Kore.Unparse.normalize loaded.info p
+                            |> Kore.Ast.string_of_pattern)
+                   in
+                   if List.mem output solutions then
+                     Format.printf "matches one of %d final states in %s\n"
+                       (List.length solutions) path
+                   else
+                     Format.printf "DIFFERS from all %d final states in %s\n"
+                       (List.length solutions) path
+               | None -> ()
+             in
+             match result with
+             | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg
+             | Pass value -> (
+                 match Value.Get.(value |>>? "FINAL nat term") with
+                 | Some [ steps; term ] -> report "final" steps term
+                 | _ -> (
+                     match Value.Get.(value |>>? "ERROR nat term") with
+                     | Some [ steps; term ] -> report "ERROR" steps term
+                     | _ ->
+                         Format.printf "initial term failed to evaluate: %s\n"
+                           (Value.to_string value)))
+           with
+           | Kore.Parse.Error msg -> Format.printf "KORE parse error: %s\n" msg
+           | Kore.Load.Error msg -> Format.printf "KORE load error: %s\n" msg))
+
 let boot_n_command =
   Core.Command.basic ~summary:"run meta-circular interpreter"
     (let open Core.Command.Let_syntax in
@@ -269,6 +453,7 @@ let command_core =
       (* Execution *)
       ("run", run_command);
       ("boot-n", boot_n_command);
+      ("krun", krun_command);
       (* Interfacing with IL specification *)
       ("parse", parse_command);
     ]
