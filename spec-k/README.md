@@ -32,8 +32,15 @@ $ spec-k/scripts/ktest.py kwasm --only conformance-i32.wast   # one program
 ```
 
 Languages are kompiled once into `spec-k/_k-test/<suite>/kompiled`, and
-results are written to `spec-k/_k-test/<suite>.md`. Two programs are tested
-at a time (`-j`).
+results are written to `spec-k/_k-test/<suite>.md` (with `--only`, only to
+the screen). Two programs are tested at a time (`-j`).
+
+Each program is compared with `krun`: the final configuration after
+normalization, and the number of rewrite steps. A program on which `krun`
+fails must fail at the same step. A nondeterministic program (SIMPLE threads)
+is checked step by step instead: each step of the spec must be one of the
+next configurations that the `search` binary of the kompiled definition
+finds (`difftest.py --check-steps-for`).
 
 Spec coverage: add `--cover`, then
 
@@ -44,7 +51,13 @@ $ spec-k/scripts/coverage_summary.py spec-k/_k-test/coverage [-o coverage.log]
 Diff test of other programs:
 
 ```shell
-$ spec-k/scripts/difftest.py -k <name>-kompiled <program or directory>... [--ext <ext>]
+$ spec-k/scripts/difftest.py -k <name>-kompiled <program or directory>... [--ext <ext>] [--depth N]
+```
+
+To find the first step where the spec and `krun` disagree:
+
+```shell
+$ spec-k/scripts/stepdiff.py -k <name>-kompiled <program> [--krun-arg ...]
 ```
 
 Each run of the spec is capped at 2.5 GB through `systemd-run` when it is

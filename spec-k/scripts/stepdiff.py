@@ -30,7 +30,7 @@ def krun_at(args, stdin, n, out):
 
 
 def spec_at(args, init, n, expect, out):
-    cmd = [args.boot, "krun"] + SPEC + ["-def", os.path.join(args.kompiled, "definition.kore"), "-init", init,
+    cmd = [BOOT, "krun"] + SPEC + ["-def", os.path.join(args.kompiled, "definition.kore"), "-init", init,
                                         "-depth", str(n), "-expect", expect, "-o", out]
     p = subprocess.run(cmd, capture_output=True, text=True)
     m = re.search(r"after (\d+) steps", p.stdout)
@@ -43,7 +43,6 @@ def main():
     ap.add_argument("program")
     ap.add_argument("--krun-arg", action="append", default=[])
     ap.add_argument("--max", type=int, default=100000)
-    ap.add_argument("--boot", default=BOOT)
     ap.add_argument("--pp", default=None, help="pretty printer for KORE terms")
     args = ap.parse_args()
     stdin = open(args.program + ".in").read() if os.path.exists(args.program + ".in") else ""
