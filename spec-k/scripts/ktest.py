@@ -71,6 +71,7 @@ REGRESSION_SKIP = {
     "search-bound": "krun --search --bound", "no-pattern": "krun --search-final", "imp++-llvm": "krun --search",
     "issue-3520-freshConfig": "krun --search --pattern", "io-llvm": "file IO", "rand": "random numbers",
     "exit-code-no-gen-top": "the exit code",
+    "trace": "#trace (IO)", "unparseKORE": "#unparseKORE (reflection)",
 }
 # Programs left out of a regression test, with the reason
 REGRESSION_EXCLUDE = {
