@@ -27128,9 +27128,11 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
         1. (Let ?(varTypeIR) be (varTypeIR')?{varTypeIR' <- varTypeIR'?})
 
-        2. (Let typeFrame_init be $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
+        2. Check (~$in_set<id>(nameIR, $dom_map<id, varTypeIR>(typeFrame)))
 
-        3. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv (instantiationIR as objectDeclarationIR)
+          1. (Let typeFrame_init be $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
+
+          2. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv (instantiationIR as objectDeclarationIR)
 
     2. Case (% has type functionDeclaration, let (annotationList (typeOrVoid name typeParameterListOpt `( parameterList `)) blockStatement) = %)
 
@@ -32140,7 +32142,7 @@ relation ObjectDecl_inst: IC_0 STO |- objectDeclarationIR : % %
 
     2. Case (% has type instantiationIR, let instantiationIR = %)
 
-      1. (InstDecl_inst: (GLOBAL) IC_0 STO |- instantiationIR : IC_1 STO_1 _constantDeclarationIR)
+      1. (InstDecl_inst: (BLOCK) IC_0 STO |- instantiationIR : IC_1 STO_1 _constantDeclarationIR)
 
       2. Result in: % % |- % : IC_1 STO_1
 

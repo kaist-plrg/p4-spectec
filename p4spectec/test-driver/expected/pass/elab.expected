@@ -12892,6 +12892,7 @@ relation ObjectDecl_ok: cursor typingContext typeFrame externMethodTypeDefEnv |-
     -- InstDecl_ok: p TC_0 |- instantiation : TC_1 instantiationIR
     -- if (_annotationList _typeIR _constructorTargetIR `( _argumentListIR `) nameIR _objectInitializerOptIR ';' = instantiationIR)
     -- if (?(varTypeIR) = $find_var_t(_BARE nameIR, p, TC_1))
+    -- if ~$in_set<id>(nameIR, $dom_map<id, varTypeIR>(typeFrame))
     -- if (typeFrame_init = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
 
     rule functionDeclaration: p TC_0 typeFrame externMethodTypeDefEnv |- annotationList typeOrVoid name typeParameterListOpt `( parameterList `) blockStatement as objectDeclaration : typeFrame externMethodTypeDefEnv_init functionDeclarationIR as objectDeclarationIR
@@ -15290,7 +15291,7 @@ relation ObjectDecl_inst: instContext store |- objectDeclarationIR : instContext
     -- FuncDecl_inst: BLOCK IC_0 |- functionDeclarationIR : IC_1
 
     rule instantiationIR: IC_0 STO_0 |- instantiationIR as objectDeclarationIR : IC_1 STO_1
-    -- InstDecl_inst: GLOBAL IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _constantDeclarationIR
+    -- InstDecl_inst: BLOCK IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _constantDeclarationIR
 
 relation ObjectDecls_inst: instContext store |- objectDeclarationListIR : instContext store
 

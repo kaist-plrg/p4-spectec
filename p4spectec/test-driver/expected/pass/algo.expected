@@ -21932,6 +21932,7 @@ relation ObjectDecl_ok: cursor typingContext typeFrame externMethodTypeDefEnv |-
     -- let varTypeIR'?{varTypeIR' <- varTypeIR'?} = $find_var_t(_BARE nameIR, p, TC_1)
     -- if varTypeIR'?{varTypeIR' <- varTypeIR'?} matches (_)
     -- let ?(varTypeIR) = varTypeIR'?{varTypeIR' <- varTypeIR'?}
+    -- if ~$in_set<id>(nameIR, $dom_map<id, varTypeIR>(typeFrame))
     -- let typeFrame_init = $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR)
     -- output: % % % % |- % : typeFrame_init externMethodTypeDefEnv instantiationIR as objectDeclarationIR
 
@@ -26643,7 +26644,7 @@ relation ObjectDecl_inst: instContext store |- objectDeclarationIR : instContext
     -- let objectDeclarationIR' = objectDeclarationIR
     -- if objectDeclarationIR' <: instantiationIR
     -- let instantiationIR = objectDeclarationIR' as instantiationIR
-    -- InstDecl_inst: GLOBAL IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _constantDeclarationIR
+    -- InstDecl_inst: BLOCK IC_0 STO_0 |- instantiationIR : IC_1 STO_1 _constantDeclarationIR
     -- output: % % |- % : IC_1 STO_1
 
 relation ObjectDecls_inst: instContext store |- objectDeclarationListIR : instContext store

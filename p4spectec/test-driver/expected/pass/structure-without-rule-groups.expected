@@ -28986,9 +28986,13 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
               1. (Let ?(varTypeIR) be varTypeIR'?{varTypeIR' <- varTypeIR'?})
 
-                1. (Let typeFrame_init be $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
+                1. If (~$in_set<id>(nameIR, $dom_map<id, varTypeIR>(typeFrame))), then
 
-                  1. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv instantiationIR as objectDeclarationIR
+                  1. (Let typeFrame_init be $update_map<id, varTypeIR>(typeFrame, nameIR, varTypeIR))
+
+                    1. Result in: % % % % |- % : typeFrame_init externMethodTypeDefEnv instantiationIR as objectDeclarationIR
+
+                1. Else Dangling
 
             1. Else Dangling
 
@@ -34222,7 +34226,7 @@ relation ObjectDecl_inst: IC_0 STO |- objectDeclarationIR : % %
 
     1. (Let instantiationIR be objectDeclarationIR as instantiationIR)
 
-      1. (InstDecl_inst: GLOBAL IC_0 STO |- instantiationIR : IC_1 STO_1 _constantDeclarationIR)
+      1. (InstDecl_inst: BLOCK IC_0 STO |- instantiationIR : IC_1 STO_1 _constantDeclarationIR)
 
         1. Result in: % % |- % : IC_1 STO_1
 
