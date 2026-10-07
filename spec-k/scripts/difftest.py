@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
 """Diff test: run programs with krun and with the K spec, and compare.
 
-For each program, krun runs once with --save-temps, which gives the step
-count (--statistics), the initial term it passed to the LLVM interpreter
-(tmp.in.*), and the final configuration (result.kore). The K spec then runs
-from the same initial term (spectec-boot krun) and its final configuration is
-compared with krun's after normalization (-expect).
+For each program, krun --dry-run parses it and gives the command krun runs:
+the LLVM backend's interpreter on the initial term. Running that command
+gives the step count (--statistics) and the final configuration. The K spec
+then runs from the same initial term (spectec-boot krun) and its final
+configuration is compared with krun's after normalization (-expect).
 
 When krun ends with an error (a hook reporting an invalid argument, e.g. a
-division by zero), the step where it fails is found with krun --depth, and
-the K spec must fail at the same step: after the same configuration as
-krun --depth gives one step before, or on the initial term.
+division by zero), the step where it fails is found by running the
+interpreter with step limits (krun --depth), and the K spec must fail at the
+same step: after the same configuration as the run one step before, or on
+the initial term.
 
 usage:
   spec-k/scripts/difftest.py -k imp-kompiled tests/*.imp
-  spec-k/scripts/difftest.py -k imp-kompiled tests/ --ext imp --timeout 600
+  spec-k/scripts/difftest.py -k imp-kompiled tests/ --ext imp --timeout 600 -j 2
 
 spectec-boot must be built (make boot).
 """
 import argparse
+import concurrent.futures
 import glob
 import os
 import re
@@ -53,67 +55,91 @@ def run(cmd, timeout, cwd=None, stdin=None, env=None):
 
 
 def run_krun(kompiled, program, workdir, krun_args, timeout):
-    """Run krun; return (steps, initial term file, result file, seconds, error).
+    """Run krun; return (steps, interpreter command, result file, seconds, error).
 
-    krun --dry-run prints the interpreter command, whose first argument is the
-    initial term after parsing and macro expansion; krun keeps several
-    tmp.in.* files, some of them before macro expansion. A second, real run
-    gives the step count and the final configuration."""
-    base = ["krun", "-d", os.path.abspath(kompiled), os.path.abspath(program)] + krun_args
+    krun --dry-run parses the program and prints the command it would run:
+    the LLVM backend's interpreter, with the initial term after parsing and
+    macro expansion as its first argument (krun keeps several tmp.in.* files,
+    some of them before macro expansion). That command is then run directly,
+    which is what krun does, without starting krun again."""
     # standard input comes from <program>.in when it exists, as in the tutorial Makefiles
     stdin = open(program + ".in").read() if os.path.exists(program + ".in") else ""
     dry = os.path.join(workdir, "dry")
     os.makedirs(dry, exist_ok=True)
-    rc, out, err, _ = run(base + ["--save-temps", "--temp-dir", dry, "--dry-run"], timeout, stdin=stdin)
-    m = re.search(r"interpreter (\S+) -?\d+ ", out + err)
-    if rc != 0 or not m or not os.path.exists(m.group(1)):
+    rc, out, err, _ = run(["krun", "-d", os.path.abspath(kompiled), os.path.abspath(program)] + krun_args
+                          + ["--save-temps", "--temp-dir", dry, "--dry-run"], timeout, stdin=stdin)
+    line = next((l for l in (out + err).splitlines() if re.search(r"(^|/)interpreter \S+ -?\d+ ", l)), None)
+    if rc != 0 or line is None:
         return None, None, None, 0.0, "krun --dry-run failed (exit %s): %s" % (rc, oneline(out + err))
-    init = m.group(1)
-    temp = os.path.join(workdir, "krun")
-    os.makedirs(temp, exist_ok=True)
-    rc, out, err, secs = run(base + ["--save-temps", "--temp-dir", temp, "--output", "kore", "--statistics"], timeout,
-                             stdin=stdin)
-    if rc is None:
-        return None, init, None, secs, "krun timeout"
-    if rc != 0:
-        return None, init, None, secs, "krun failed (exit %s): %s" % (rc, oneline(err))
-    m = re.search(r"\[(\d+) steps\]", out + err)
-    steps = int(m.group(1)) if m else None
-    results = glob.glob(os.path.join(temp, ".krun-*", "result.kore"))
-    if not results:
-        return steps, init, None, secs, "krun left no result.kore"
-    return steps, init, results[0], secs, None
+    words = line.split()
+    command = Interpreter(words[next(i for i, w in enumerate(words) if w.endswith("interpreter")):], stdin)
+    steps, result, secs, err = command.run(os.path.join(workdir, "result.kore"), None, timeout)
+    return steps, command, result, secs, err
 
 
-def krun_at_depth(kompiled, program, workdir, krun_args, n, timeout):
-    """krun stopped after n steps: the result file, or None when it fails."""
-    temp = os.path.join(workdir, "depth%d" % n)
-    os.makedirs(temp, exist_ok=True)
-    stdin = open(program + ".in").read() if os.path.exists(program + ".in") else ""
-    rc, _, _, _ = run(["krun", "-d", os.path.abspath(kompiled), os.path.abspath(program), "--depth", str(n),
-                       "--save-temps", "--temp-dir", temp, "--output", "kore"] + krun_args, timeout, stdin=stdin)
-    results = glob.glob(os.path.join(temp, ".krun-*", "result.kore"))
-    return results[0] if rc == 0 and results else None
+class Interpreter:
+    """The interpreter command krun runs: interpreter <initial term> <depth>
+    <output>, with the program's standard input. preload is a library that
+    makes it exit at once on an uncaught exception (fast_throw)."""
+
+    preload = None
+
+    def __init__(self, words, stdin):
+        self.words, self.stdin = words[:4], stdin
+        self.init = words[1]
+
+    def run(self, out, depth, timeout):
+        """Run it, stopped after depth steps when depth is given; return (steps,
+        result file, seconds, error). With --statistics the interpreter writes
+        the step count as the first line of its output."""
+        raw = out + ".raw"
+        if os.path.exists(raw):
+            os.remove(raw)  # the interpreter appends to its output file
+        words = [self.words[0], self.init, str(depth) if depth is not None else self.words[2], raw, "--statistics"]
+        env = dict(os.environ, LD_PRELOAD=self.preload) if self.preload else None
+        rc, _, err, secs = run(words, timeout, stdin=self.stdin, env=env)
+        if rc is None:
+            return None, None, secs, "krun timeout"
+        if rc != 0 or not os.path.exists(raw):
+            return None, None, secs, "krun failed (exit %s): %s" % (rc, oneline(err))
+        count, term = open(raw).read().split("\n", 1)
+        with open(out, "w") as fh:
+            fh.write(term)
+        return int(count), out, secs, None
 
 
-def failing_step(kompiled, program, workdir, krun_args, timeout):
+def fast_throw():
+    """Build fastthrow.c with gcc once; the library, or None without gcc"""
+    source = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fastthrow.c")
+    out = os.path.join(tempfile.gettempdir(), "difftest-fastthrow-%d.so" % os.getuid())
+    if not os.path.exists(out) or os.path.getmtime(out) < os.path.getmtime(source):
+        if not shutil.which("gcc") or subprocess.run(["gcc", "-shared", "-fPIC", "-O2", "-o", out + ".tmp", source],
+                                                     capture_output=True).returncode != 0:
+            return None
+        os.replace(out + ".tmp", out)
+    return out
+
+
+def failing_step(command, workdir, timeout):
     """For a program on which krun fails: (n, result of krun --depth n), where
     step n + 1 fails, or (None, None) when the initial term fails. krun --depth
     n succeeds exactly for the n before the failing step."""
-    if krun_at_depth(kompiled, program, workdir, krun_args, 0, timeout) is None:
+    def at(n):
+        return command.run(os.path.join(workdir, "depth%d.kore" % n), n, timeout)[1]
+    if at(0) is None:
         return None, None
     ok, bad = 0, 1
-    while krun_at_depth(kompiled, program, workdir, krun_args, bad, timeout) is not None:
+    while at(bad) is not None:
         ok, bad = bad, bad * 2
         if bad > 1 << 24:
             raise RuntimeError("krun fails, but not within %d steps" % bad)
     while bad - ok > 1:
         mid = (ok + bad) // 2
-        if krun_at_depth(kompiled, program, workdir, krun_args, mid, timeout) is not None:
+        if at(mid) is not None:
             ok = mid
         else:
             bad = mid
-    return ok, krun_at_depth(kompiled, program, workdir, krun_args, ok, timeout)
+    return ok, at(ok)
 
 
 def run_search(kompiled, init, workdir, timeout, memory_max):
@@ -177,6 +203,7 @@ def main():
     ap.add_argument("--cover-dir", default=None,
                     help="write the spec with the instructions each run executes marked to <dir>/<program>.log "
                          "(spectec-boot krun -cover; merge them with coverage_summary.py)")
+    ap.add_argument("-j", "--jobs", type=int, default=1, help="programs to test at a time")
     ap.add_argument("--search-timeout", type=float, default=None, help="seconds for krun's search (default: --timeout)")
     ap.add_argument("--search-for", action="append", default=[],
                     help="compare this program against all final states krun --search finds (nondeterministic "
@@ -197,64 +224,73 @@ def main():
         sys.exit("no definition.kore in %s" % args.kompiled)
 
     root = args.keep or tempfile.mkdtemp(prefix="difftest-")
-    rows, failures = [], 0
+    Interpreter.preload = fast_throw()
     print("| program | krun steps | spec steps | result | krun s | spec s |")
     print("|---|---|---|---|---|---|")
-    for prog in programs:
-        name = os.path.basename(prog)
-        work = os.path.join(root, name)
-        os.makedirs(work, exist_ok=True)
-        search = name in args.search_for
-        k_steps, init, result, k_secs, err = run_krun(args.kompiled, prog, work, args.krun_arg, args.timeout)
-        fails_at = False  # krun fails: after this many steps, or None on the initial term
-        if err and err.startswith("krun failed") and init:
-            fails_at, result = failing_step(args.kompiled, prog, work, args.krun_arg, args.timeout)
-            k_steps = "fails at init" if fails_at is None else "fails after %d" % fails_at
-            err = None
-        if search and init:
-            k_steps = "search"
-            result, k_secs, err = run_search(args.kompiled, init, work, args.search_timeout or args.timeout,
-                                             args.memory_max)
-        if err:
-            verdict, s_steps, s_secs = "skip: " + err, None, 0.0
-        else:
-            extra = list(args.spec_arg)
-            if args.cover_dir:
-                os.makedirs(args.cover_dir, exist_ok=True)
-                extra += ["-cover", os.path.join(os.path.abspath(args.cover_dir), name + ".log")]
-            status, s_steps, ok, s_secs, msg = run_spec(args.boot, definition, init,
-                                                         result or os.devnull,
-                                                         os.path.join(work, "spec.kore"), args.timeout,
-                                                         args.memory_max, extra, search)
-            if fails_at is None:
-                verdict = "pass (both fail on the initial term)" if status == "initfail" else \
-                    "FAIL: krun fails on the initial term, the spec: " + status
-            elif fails_at is not False:
-                if status == "stuck-error" and ok and s_steps == fails_at:
-                    verdict = "pass (both fail after %d steps)" % fails_at
-                else:
-                    verdict = "FAIL: krun fails after %d steps, the spec: %s after %s steps%s" % (
-                        fails_at, status, s_steps, "" if ok else ", configuration differs")
-            elif search and status == "final":
-                verdict = "pass (one of the search results)" if ok else "FAIL: not among the search results"
-            elif status == "final" and ok and s_steps == k_steps:
-                verdict = "pass"
-            elif status == "final" and ok:
-                verdict = "FAIL: steps differ"
-            elif status == "final":
-                verdict = "FAIL: configuration differs"
-            else:
-                verdict = "FAIL: " + status + (": " + msg if msg else "")
-        if not verdict.startswith(("pass", "skip")):
-            failures += 1
-        rows.append((name, verdict))
-        fmt = lambda x: "-" if x is None else str(x)
-        print("| %s | %s | %s | %s | %.1f | %.1f |" % (name, fmt(k_steps), fmt(s_steps), verdict, k_secs, s_secs),
-              flush=True)
-    passed = sum(1 for _, v in rows if v.startswith("pass"))
-    skipped = sum(1 for _, v in rows if v.startswith("skip"))
+    # programs run --jobs at a time; rows are printed in program order
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        futures = [pool.submit(test_program, prog, root, definition, args) for prog in programs]
+        verdicts = []
+        for future in futures:
+            row, verdict = future.result()
+            print(row, flush=True)
+            verdicts.append(verdict)
+    passed = sum(1 for v in verdicts if v.startswith("pass"))
+    skipped = sum(1 for v in verdicts if v.startswith("skip"))
+    failures = len(verdicts) - passed - skipped
     print("\n%d passed, %d failed, %d skipped (work files: %s)" % (passed, failures, skipped, root))
     sys.exit(1 if failures else 0)
+
+
+def test_program(prog, root, definition, args):
+    """Diff test one program; returns (table row, verdict)."""
+    name = os.path.basename(prog)
+    work = os.path.join(root, name)
+    os.makedirs(work, exist_ok=True)
+    search = name in args.search_for
+    k_steps, command, result, k_secs, err = run_krun(args.kompiled, prog, work, args.krun_arg, args.timeout)
+    init = command.init if command else None
+    fails_at = False  # krun fails: after this many steps, or None on the initial term
+    if err and err.startswith("krun failed") and command:
+        fails_at, result = failing_step(command, work, args.timeout)
+        k_steps = "fails at init" if fails_at is None else "fails after %d" % fails_at
+        err = None
+    if search and init:
+        k_steps = "search"
+        result, k_secs, err = run_search(args.kompiled, init, work, args.search_timeout or args.timeout,
+                                         args.memory_max)
+    s_steps, s_secs = None, 0.0
+    if err:
+        verdict = "skip: " + err
+    else:
+        extra = list(args.spec_arg)
+        if args.cover_dir:
+            os.makedirs(args.cover_dir, exist_ok=True)
+            extra += ["-cover", os.path.join(os.path.abspath(args.cover_dir), name + ".log")]
+        status, s_steps, ok, s_secs, msg = run_spec(args.boot, definition, init, result or os.devnull,
+                                                     os.path.join(work, "spec.kore"), args.timeout,
+                                                     args.memory_max, extra, search)
+        if fails_at is None:
+            verdict = "pass (both fail on the initial term)" if status == "initfail" else \
+                "FAIL: krun fails on the initial term, the spec: " + status
+        elif fails_at is not False:
+            if status == "stuck-error" and ok and s_steps == fails_at:
+                verdict = "pass (both fail after %d steps)" % fails_at
+            else:
+                verdict = "FAIL: krun fails after %d steps, the spec: %s after %s steps%s" % (
+                    fails_at, status, s_steps, "" if ok else ", configuration differs")
+        elif search and status == "final":
+            verdict = "pass (one of the search results)" if ok else "FAIL: not among the search results"
+        elif status == "final" and ok and s_steps == k_steps:
+            verdict = "pass"
+        elif status == "final" and ok:
+            verdict = "FAIL: steps differ"
+        elif status == "final":
+            verdict = "FAIL: configuration differs"
+        else:
+            verdict = "FAIL: " + status + (": " + msg if msg else "")
+    fmt = lambda x: "-" if x is None else str(x)
+    return "| %s | %s | %s | %s | %.1f | %.1f |" % (name, fmt(k_steps), fmt(s_steps), verdict, k_secs, s_secs), verdict
 
 
 if __name__ == "__main__":

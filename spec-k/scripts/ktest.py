@@ -9,10 +9,11 @@ usage:
   spec-k/scripts/ktest.py regression/list-set
 
 Each definition is kompiled once into <work>/<suite>/ and kept there. Results
-go to <work>/<suite>.md (the table of difftest.py). The exit code is 1 if a
-test fails.
+go to <work>/<suite>.md (the table of difftest.py). Two programs are tested
+at a time (--jobs). The exit code is 1 if a test fails.
 """
 import argparse
+import concurrent.futures
 import glob
 import os
 import re
@@ -81,7 +82,7 @@ REGRESSION_EXCLUDE = {
 
 
 def run_difftest(name, definition, kompile_flags, programs, args, ext=None, krun=(), exclude=(), search=(),
-                 timeout=3600, spec=(), kompiled_as=None):
+                 timeout=3600, spec=(), kompiled_as=None, jobs=None):
     """Kompile the definition once into <work>/<name>/kompiled (or that of
     kompiled_as), then diff test the programs. Returns (passed, last line of
     the results)."""
@@ -104,7 +105,7 @@ def run_difftest(name, definition, kompile_flags, programs, args, ext=None, krun
             return True, "no program among --only"
     cmd = [sys.executable, os.path.join(ROOT, "spec-k/scripts/difftest.py"), "-k", kompiled,
            "--timeout", str(args.timeout or timeout), "--search-timeout", "900",
-           "--keep", os.path.join(work, name, "runs")] + programs
+           "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs)] + programs
     cmd += ["--ext", ext] if ext else []
     cmd += ["--krun-arg=" + a for a in krun]
     cmd += ["--spec-arg=" + a for a in spec]
@@ -204,14 +205,17 @@ def run_regression(names, args):
     for n in names:
         if n not in tests:
             sys.exit("unknown regression test %s" % n)
-    ok, rows = True, []
-    for d in names or tests:
+    # the tests are small, so --jobs of them run at a time, each one program at a time
+    def one(d):
         t = tests[d]
         passed, summary = run_difftest("regression/" + d, t["definition"], t["kompile"], [t["testdir"]], args,
-                                       t["ext"], t["krun"], REGRESSION_EXCLUDE.get(d, []))
+                                       t["ext"], t["krun"], REGRESSION_EXCLUDE.get(d, []), jobs=1)
         print("%s: %s" % (d, summary), flush=True)
-        ok &= passed
-        rows.append("| %s | %s |" % (d, summary))
+        return passed, "| %s | %s |" % (d, summary)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        results = list(pool.map(one, names or list(tests)))
+    ok = all(passed for passed, _ in results)
+    rows = [row for _, row in results]
     if not names:
         with open(os.path.join(args.work, "regression.md"), "w") as out:
             out.write("| test | result |\n|---|---|\n" + "\n".join(rows) + "\n")
@@ -232,6 +236,7 @@ def main():
     ap.add_argument("--only", action="append", default=[], help="run only this program (file name; repeatable)")
     ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec")
     ap.add_argument("--cover", action="store_true", help="record spec coverage in <work>/coverage/<suite>/")
+    ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()
     suites = args.suites or list(SUITES) + ["regression"]
     for s in suites:

@@ -32,8 +32,8 @@ $ spec-k/scripts/ktest.py kwasm --only conformance-i32.wast   # one program
 ```
 
 Languages are kompiled once into `spec-k/_k-test/<suite>/kompiled`, and
-results are written to `spec-k/_k-test/<suite>.md`. All suites take several hours on two cores;
-`kwasm` takes most of it.
+results are written to `spec-k/_k-test/<suite>.md`. Two programs are tested
+at a time (`-j`).
 
 Spec coverage: add `--cover`, then
 
