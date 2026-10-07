@@ -2,9 +2,6 @@
 ;; K in P4-SpecTec: the executable fragment of KORE
 ;;
 
-;;; What the LLVM backend executes from a definition.kore (K 7.1.337): rewrite
-;;; rules, equations of unhooked functions, symbols, and subsorts
-
 ;; Names, kept verbatim from KORE
 
 syntax sortid = text  ;; e.g. "SortInt"
@@ -13,30 +10,27 @@ syntax varid = text   ;; e.g. "VarX"
 syntax hookid = text  ;; e.g. "INT.add"
 
 ;; Sorts
-;; Executable axioms of a kompiled definition mention only concrete sorts.
-;; Sort variables appear only in declarations of parametric symbols, e.g. inj.
 
 syntax sort =
   | SORT sortid sort*
   | SORTVAR sortid
 
-;; Terms: ground terms that make up a configuration. Domain values of hooked
-;; sorts are P4-SpecTec values; collections arise only by evaluation.
+;; Terms: ground terms; collections arise only by evaluation
 
 syntax rangeitem
 
 syntax term =
   | APP symid sort* term*     ;; symbol application, including inj and kseq
   | DV sort text              ;; domain value of an unhooked sort, e.g. an Id
-  | INT int                   ;; INT.Int
-  | BOOL bool                 ;; BOOL.Bool
-  | STRING text               ;; STRING.String
+  | INT int
+  | BOOL bool
+  | STRING text
   | FLOAT text                ;; FLOAT.Float, in the backend's output format
   | BYTES nat*                ;; BYTES.Bytes, one nat per byte
   | MINT nat nat              ;; MINT.MInt: width, and value below 2^width
-  | MAP sort map<term, term>  ;; MAP.Map
-  | SET sort set<term>        ;; SET.Set
-  | LIST sort term*           ;; LIST.List
+  | MAP sort map<term, term>
+  | SET sort set<term>
+  | LIST sort term*
   | RANGEMAP sort rangeitem*  ;; RANGEMAP.RangeMap, by start
 
 ;; A range of integer keys [start, end) and its value. The ranges of a range
@@ -44,15 +38,10 @@ syntax term =
 
 syntax rangeitem = RANGE int int term
 
-;; Scalar values carry no sort: in IMP, KWasm, and KEVM each scalar hook is
-;; used by exactly one sort. Collections carry their sort because several
-;; sorts may share a collection hook (e.g. one Map sort per cell map).
-
 ;; Patterns
-;; Left- and right-hand sides of rules and equations, and requires clauses.
 
 syntax pattern =
-  | VAR varid sort                  ;; element variable
+  | VAR varid sort
   | AND sort pattern pattern        ;; \and, used as an as-pattern on the left
   | OR sort pattern pattern         ;; \or on the left: either side matches
   | APP symid sort* pattern*
@@ -73,14 +62,13 @@ syntax symkind =
   | ANYWHERE       ;; a constructor rewritten by its equations (anywhere)
   | HOOKED hookid  ;; defined by the backend; equations ignored
 
-syntax symdecl = sort* '->' sort symkind  ;; argument sorts, result sort, kind
+syntax symdecl = sort* '->' sort symkind
 
-;; Subsort relation, from axioms with the subsort attribute
+;; Subsorts
 
 syntax subsort = sort '<' sort
 
-;; Overloads, from axioms with the symbol-overload attribute: the second
-;; symbol is a more specific version of the first (on smaller sorts)
+;; Overloads: the second symbol is a more specific version of the first
 
 syntax overload = symid '>' symid
 
@@ -92,11 +80,9 @@ syntax attr =
   | COOL
   | COOLLIKE
 
-;; Rewrite rules: lhs => rhs requires cond
+;; Rules and equations
 
 syntax krule = RULE pattern '=>' pattern 'requires' pattern? attr*
-
-;; Function equations: f(args) = rhs requires cond
 
 syntax equation = EQN symid pattern* '=' pattern 'requires' pattern? attr*
 

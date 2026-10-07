@@ -150,8 +150,9 @@ let ceil a = unary (M.ceil ~prec:a.prec) a
 let floor a = unary (M.floor ~prec:a.prec) a
 let trunc a = unary (M.trunc ~prec:a.prec) a
 
-(* rootFloat(a, n): only square roots, which mpfr_rootn_ui computes as mpfr_sqrt
-   does (both are correctly rounded); mlmpfr has no binding for other roots *)
+(* rootFloat(a, n): only square roots, with mpfr_sqrt, as mlmpfr has no
+   mpfr_rootn_ui. The LLVM backend uses mpfr_rootn_ui, which gives +0.0 for
+   -0.0 where mpfr_sqrt gives -0.0. *)
 let root (a : t) (n : int) : t option =
   if n = 2 then Some (unary (M.sqrt ~rnd ~prec:a.prec) a) else None
 

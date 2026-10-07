@@ -39,9 +39,7 @@ dec $is_subsort(definition, sort, sort) : bool
   hint(prose_true %1 "is a subsort of" %2)
 def $is_subsort(D, sort_1, sort_2) = (sort_1 '<' sort_2) <- D.SUBSORTS
 
-;; Transitive closure of a subsort relation (the relation is acyclic). The
-;; direct supersorts of each sort are collected once, and the sorts reachable
-;; from each are then found by following them.
+;; Transitive closure of a subsort relation (the relation is acyclic)
 
 var SM : map<sort, sort*>
 
@@ -59,7 +57,6 @@ def $supersort_map((sort_a '<' sort_b) :: subsort_t*)
                              sort_b :: $direct_supersorts(SM, sort_a))
   -- if SM = $supersort_map(subsort_t*)
 
-;; the sorts reachable from a worklist of sorts, given those already seen
 dec $reachable(map<sort, sort*>, sort*, sort*) : sort*
 def $reachable(SM, eps, sort_s*) = sort_s*
 def $reachable(SM, sort_h :: sort_t*, sort_s*)
@@ -331,8 +328,6 @@ def $match(D, subst, pattern, term) = eps
 def $match_all(D, eps, pattern, term) = eps
 def $match_all(D, subst_h :: subst_t*, pattern, term)
   = $match(D, subst_h, pattern, term) ++ $match_all(D, subst_t*, pattern, term)
-
-;;; Lists of patterns, left to right
 
 def $match_list(D, subst, eps, eps) = [ subst ]
 def $match_list(D, subst, pattern_h :: pattern_t*, term_h :: term_t*)

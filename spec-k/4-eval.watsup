@@ -224,8 +224,6 @@ def $eval_app(D, subst, t, symid, sort*, pattern*)
 def $eval_app(D, subst, t, symid, sort*, pattern*) = FAIL
   -- otherwise
 
-;;; Applying a symbol to evaluated arguments
-
 def $apply(D, symid, sort*, term*) = $apply_kind(D, kind, symid, sort*, term*)
   -- if kind = $kind_of_symbol(D, symid)
 def $apply(D, symid, sort*, term*) = FAIL
@@ -264,8 +262,6 @@ def $apply_equations(D, eqn*, term*)
 def $apply_found(D, OK (subst, pattern_r)) = $eval(D, subst, pattern_r)
 def $apply_found(D, FAIL) = FAIL
 
-;;; The first equation that applies, with its substitution and right-hand side
-
 def $find_equation(D, eps, term*) = FAIL
 def $find_equation(D, eqn_h :: eqn_t*, term*)
   = $equation_or_next(D, eqn_h, eqn_t*, term*, $try_equation(D, eqn_h, term*))
@@ -275,8 +271,6 @@ def $equation_or_next(D, eqn, eqn_t*, term*, OK subst)
 def $equation_or_next(D, eqn, eqn_t*, term*, FAIL)
   = $find_equation(D, eqn_t*, term*)
 
-;;; An equation applies when its arguments match and its requires clause holds
-
 def $try_equation(
     D, EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*, term*)
   = $first_holding(
@@ -284,8 +278,6 @@ def $try_equation(
 
 def $rhs_of(EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*)
   = pattern_r
-
-;;; A requires clause holds when it evaluates to true
 
 ;;; Among the ways a left-hand side matches, in order, the first one under
 ;;; which the requires clause holds

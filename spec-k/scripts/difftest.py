@@ -1,24 +1,6 @@
 #!/usr/bin/env python3
-"""Diff test: run programs with krun and with the K spec, and compare.
-
-For each program, krun --dry-run parses it and gives the command krun runs:
-the LLVM backend's interpreter on the initial term. Running that command
-gives the step count (--statistics) and the final configuration. The K spec
-then runs from the same initial term (spectec-boot krun) and its final
-configuration is compared with krun's after normalization (-expect).
-
-When krun ends with an error (a hook reporting an invalid argument, e.g. a
-division by zero), the step where it fails is found by running the
-interpreter with step limits, and the K spec must fail at the same step:
-after the same configuration as the run one step before, or on the initial
-term.
-
-A nondeterministic program (e.g. with threads) is checked step by step
-(--check-steps-for): each configuration of the spec's run must be one of the
-next configurations that the search binary of the kompiled definition (kompile
---enable-search) finds one step on, and the interpreter must take no step from
-the last. The step count is not compared with krun's run. NAME:N checks only
-the first N steps, for a program whose runs may not end.
+"""Diff test: run programs with krun and with the K spec, and compare the
+final configurations and step counts (see spec-k/README.md).
 
 usage:
   spec-k/scripts/difftest.py -k imp-kompiled tests/*.imp

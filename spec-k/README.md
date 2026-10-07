@@ -40,7 +40,8 @@ normalization, and the number of rewrite steps. A program on which `krun`
 fails must fail at the same step. A nondeterministic program (SIMPLE threads)
 is checked step by step instead: each step of the spec must be one of the
 next configurations that the `search` binary of the kompiled definition
-finds (`difftest.py --check-steps-for`).
+finds (`difftest.py --check-steps-for NAME`; `NAME:N` checks only the first
+N steps, for a program whose runs may not end).
 
 Spec coverage: add `--cover`, then
 

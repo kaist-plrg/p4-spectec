@@ -10,8 +10,6 @@ syntax stepres =
   | STUCK       ;; no rule applies
   | ERROR       ;; a rule applies but its right-hand side cannot be built
 
-;; Rewrite rules in the order they are tried (stable by priority, see 4-eval)
-
 dec $rule_with_priority(krule) : (nat, krule)
 def $rule_with_priority(
     RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
@@ -22,8 +20,6 @@ dec $rules_in_order(definition) : krule*
   hint(prose_in "the rewrite rules of" %0 "in the order they are tried")
 def $rules_in_order(D) = $sort_by_priority<krule>($rule_with_priority(krule)*)
   -- if krule* = D.RULES
-
-;; A rule applies when its left-hand side matches and its requires clause holds
 
 dec $try_rule(definition, krule, term) : res<subst>
 def $try_rule(D, RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*,
@@ -143,8 +139,6 @@ def $guard(D, pattern) = HEAD step* symid
   -- if $plain(D, symid)
 def $guard(D, pattern) = ANY
   -- otherwise
-
-;; Building the index of rules, numbered in the order they are tried
 
 dec $index_rules(definition, krule*) : ruleindex
 dec $index_from(definition, krule*, nat, ruleindex) : ruleindex
