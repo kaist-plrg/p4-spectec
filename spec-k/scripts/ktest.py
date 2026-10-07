@@ -27,10 +27,13 @@ from difftest import ROOT  # noqa: E402
 TUTORIAL = "k-distribution/tests/regression-new/pl-tutorial"
 
 # Settings follow the tutorial Makefiles. Nondeterministic SIMPLE programs are
-# compared against all final states of krun's search; threads_05 and
-# threads_12 are left out since the search does not end.
-SIMPLE_SEARCH = ["threads_01", "threads_02", "threads_04", "threads_06", "threads_07", "threads_09",
-                 "threads_10", "threads_11", "exceptions_07", "div-nondet"]
+# checked step by step against the next configurations of krun's search
+# (difftest.py --check-steps-for), without exploring all runs. threads_05 has
+# runs that do not end (the main thread loops until the spawned one runs), and
+# the spec's choice of thread takes one, so only its first 1,000 steps are
+# checked; the tutorial's Makefile also bounds its search (--bound 5).
+SIMPLE_NONDET = ["threads_01", "threads_02", "threads_04", "threads_05:1000", "threads_06", "threads_07",
+                 "threads_09", "threads_10", "threads_11", "threads_12", "exceptions_07", "div-nondet"]
 SUITES = {
     "imp": dict(src="k", dir=TUTORIAL + "/1_k/2_imp/lesson_4", def_="imp.k", ext="imp",
                 kompile=["--gen-glr-bison-parser"], tests=["tests"]),
@@ -38,8 +41,8 @@ SUITES = {
                    kompile=["--gen-glr-bison-parser"], tests=["tests"]),
     "simple": dict(src="k", dir=TUTORIAL + "/2_languages/1_simple/1_untyped", def_="simple-untyped.md", ext="simple",
                    kompile=["--enable-search"], tests=["tests/diverse", "tests/exceptions", "tests/threads"],
-                   krun=["--io", "off"], exclude=["threads_05.simple", "threads_12.simple"],
-                   search=[t + ".simple" for t in SIMPLE_SEARCH]),
+                   krun=["--io", "off"], check_steps=[t.replace(":", ".simple:") if ":" in t else t + ".simple"
+                                                   for t in SIMPLE_NONDET]),
     "kool": dict(src="k", dir=TUTORIAL + "/2_languages/2_kool/1_untyped", def_="kool-untyped.md", ext="kool",
                  tests=["tests"], krun=["--io", "off"], exclude=["threads.kool"]),
     # memory_copy, memory_fill, memory_grow (7 to 13 million steps) and call
@@ -80,9 +83,16 @@ REGRESSION_EXCLUDE = {
     # lib/codegen/CreateTerm.cpp)
     "withConfig2": ["1.test"],
 }
+# krun arguments in place of a regression test's KRUN_FLAGS, with the reason
+REGRESSION_KRUN = {
+    # its own run script passes a second configuration variable, $MODE, to
+    # llvm-krun, which krun takes as -cMODE; noprint, since print writes to
+    # stdout with #write (IO). The variable is parsed the same in both modes.
+    "parseNonPgm": ["-cMODE=noprint"],
+}
 
 
-def run_difftest(name, definition, kompile_flags, programs, args, ext=None, krun=(), exclude=(), search=(),
+def run_difftest(name, definition, kompile_flags, programs, args, ext=None, krun=(), exclude=(), check_steps=(),
                  timeout=3600, spec=(), kompiled_as=None, jobs=None):
     """Kompile the definition once into <work>/<name>/kompiled (or that of
     kompiled_as), then diff test the programs. Returns (passed, last line of
@@ -105,13 +115,13 @@ def run_difftest(name, definition, kompile_flags, programs, args, ext=None, krun
         if not programs:
             return True, "no program among --only"
     cmd = [sys.executable, os.path.join(ROOT, "spec-k/scripts/difftest.py"), "-k", kompiled,
-           "--timeout", str(args.timeout or timeout), "--search-timeout", "900",
+           "--timeout", str(args.timeout or timeout),
            "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs)] + programs
     cmd += ["--ext", ext] if ext else []
     cmd += ["--krun-arg=" + a for a in krun]
     cmd += ["--spec-arg=" + a for a in spec]
     cmd += sum((["--exclude", e] for e in exclude), [])
-    cmd += sum((["--search-for", e] for e in search), [])
+    cmd += sum((["--check-steps-for", e] for e in check_steps), [])
     if args.cover:
         cmd += ["--cover-dir", os.path.join(work, "coverage", name)]
     print("diff test %s" % name, flush=True)
@@ -149,7 +159,7 @@ def run_suite(suite, args):
     else:
         programs = [os.path.join(src, s["dir"], t) for t in s["tests"]]
     ok, summary = run_difftest(suite, os.path.join(src, s["dir"], s["def_"]), s.get("kompile", []), programs, args,
-                               s["ext"], s.get("krun", []), s.get("exclude", []), s.get("search", []),
+                               s["ext"], s.get("krun", []), s.get("exclude", []), s.get("check_steps", []),
                                s.get("timeout", 3600), s.get("spec", []), s.get("kompiled"))
     print(summary, flush=True)
     return ok
@@ -194,6 +204,7 @@ def regression_tests(src):
                 flags.pop(0)
             elif f != "--profile":
                 krun.append(f)
+        krun = REGRESSION_KRUN.get(d, krun)
         tests[d] = dict(definition=definition, testdir=testdir, ext=v["EXT"], krun=["--no-exc-wrap"] + krun,
                         kompile=shlex.split(v.get("KOMPILE_FLAGS", "")) + ["--no-exc-wrap", "--type-inference-mode",
                                                                            "checked"])

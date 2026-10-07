@@ -13,6 +13,15 @@ interpreter with step limits (krun --depth), and the K spec must fail at the
 same step: after the same configuration as the run one step before, or on
 the initial term.
 
+A nondeterministic program (e.g. with threads) is checked step by step
+(--check-steps-for): each configuration of the spec's run must be one of the
+next configurations that the search binary of the kompiled definition (kompile
+--enable-search) finds one step on, and the interpreter must take no step from
+the last. The final configuration is then one of those krun --search finds,
+without exploring all runs. The step count is not compared with krun's run.
+A program whose runs may not end is checked for its first N steps
+(--check-steps-for NAME:N).
+
 usage:
   spec-k/scripts/difftest.py -k imp-kompiled tests/*.imp
   spec-k/scripts/difftest.py -k imp-kompiled tests/ --ext imp --timeout 600 -j 2
@@ -142,22 +151,6 @@ def failing_step(command, workdir, timeout):
     return ok, at(ok)
 
 
-def run_search(kompiled, init, workdir, timeout, memory_max):
-    """All final states krun --search would find: run the search binary of the
-    kompiled definition (it needs kompile --enable-search) on the initial term.
-    Returns (file with a disjunction of final states, seconds, error)."""
-    out = os.path.join(workdir, "search.kore")
-    binary = os.path.join(os.path.abspath(kompiled), "search")
-    if not os.path.exists(binary):
-        return None, 0.0, "no search binary (kompile --enable-search)"
-    rc, _, err, secs = run(capped([binary, init, "-1", out], memory_max), timeout)
-    if rc is None:
-        return None, secs, "search timeout"
-    if rc != 0 or not os.path.exists(out):
-        return None, secs, "search failed (exit %s): %s" % (rc, oneline(err))
-    return out, secs, None
-
-
 def capped(cmd, memory_max):
     """Run under a memory cap, so that only this process is killed when it is exceeded."""
     if not memory_max:
@@ -166,11 +159,12 @@ def capped(cmd, memory_max):
             "-p", "MemorySwapMax=0"] + cmd
 
 
-def run_spec(boot, definition, init, result, out, timeout, memory_max=None, extra=(), search=False):
+def run_spec(boot, definition, init, result, out, timeout, memory_max=None, extra=(), check=None):
     """Run the K spec; return (status, steps, matches, seconds, message).
-    With search, result holds all final states and the spec must reach one of them."""
-    expect = "-expect-any" if search else "-expect"
-    cmd = capped([boot, "krun"] + SPEC + ["-def", definition, "-init", init, expect, result, "-o", out]
+    With check (a kompiled directory), each step is checked against it instead
+    of comparing with result."""
+    compare = ["-check-steps", check] if check else ["-expect", result]
+    cmd = capped([boot, "krun"] + SPEC + ["-def", definition, "-init", init, "-o", out] + compare
                  + list(extra), memory_max)
     rc, stdout, stderr, secs = run(cmd, timeout, env=SPEC_ENV)
     if rc is None:
@@ -183,7 +177,10 @@ def run_spec(boot, definition, init, result, out, timeout, memory_max=None, extr
         # a negative exit code is the signal that killed the process (e.g. -9 when out of memory)
         return "error", None, False, secs, "exit %s: %s" % (rc, oneline(msg[-1]) if msg else "no output")
     status = "final" if m.group(1) == "final" else "stuck-error"
-    return status, int(m.group(2)), ("matches " in stdout or "matches one of" in stdout), secs, ""
+    if check:
+        failed = re.search(r"^steps check FAILED: (.*)$", stdout, re.M)
+        return status, int(m.group(2)), "steps check: each of" in stdout, secs, failed.group(1) if failed else ""
+    return status, int(m.group(2)), "matches " in stdout, secs, ""
 
 
 def main():
@@ -204,10 +201,11 @@ def main():
                     help="write the spec with the instructions each run executes marked to <dir>/<program>.log "
                          "(spectec-boot krun -cover; merge them with coverage_summary.py)")
     ap.add_argument("-j", "--jobs", type=int, default=1, help="programs to test at a time")
-    ap.add_argument("--search-timeout", type=float, default=None, help="seconds for krun's search (default: --timeout)")
-    ap.add_argument("--search-for", action="append", default=[],
-                    help="compare this program against all final states krun --search finds (nondeterministic "
-                         "programs, e.g. with threads); the step count is not compared")
+    ap.add_argument("--check-steps-for", action="append", default=[],
+                    help="check each step of this program against the next configurations the search binary "
+                         "finds, instead of comparing with krun's run (nondeterministic programs, e.g. with "
+                         "threads); the step count is not compared. NAME:N checks only the first N steps "
+                         "(a program whose runs may not end)")
     args = ap.parse_args()
 
     programs = []
@@ -247,7 +245,9 @@ def test_program(prog, root, definition, args):
     name = os.path.basename(prog)
     work = os.path.join(root, name)
     os.makedirs(work, exist_ok=True)
-    search = name in args.search_for
+    limits = dict((c.split(":") + [None])[:2] for c in args.check_steps_for)
+    check = os.path.abspath(args.kompiled) if name in limits else None
+    limit = int(limits[name]) if check and limits[name] else None
     k_steps, command, result, k_secs, err = run_krun(args.kompiled, prog, work, args.krun_arg, args.timeout)
     init = command.init if command else None
     fails_at = False  # krun fails: after this many steps, or None on the initial term
@@ -255,21 +255,19 @@ def test_program(prog, root, definition, args):
         fails_at, result = failing_step(command, work, args.timeout)
         k_steps = "fails at init" if fails_at is None else "fails after %d" % fails_at
         err = None
-    if search and init:
-        k_steps = "search"
-        result, k_secs, err = run_search(args.kompiled, init, work, args.search_timeout or args.timeout,
-                                         args.memory_max)
+    if check and init and not err:
+        k_steps = "each step"
     s_steps, s_secs = None, 0.0
     if err:
         verdict = "skip: " + err
     else:
-        extra = list(args.spec_arg)
+        extra = list(args.spec_arg) + (["-depth", str(limit)] if limit else [])
         if args.cover_dir:
             os.makedirs(args.cover_dir, exist_ok=True)
             extra += ["-cover", os.path.join(os.path.abspath(args.cover_dir), name + ".log")]
         status, s_steps, ok, s_secs, msg = run_spec(args.boot, definition, init, result or os.devnull,
                                                      os.path.join(work, "spec.kore"), args.timeout,
-                                                     args.memory_max, extra, search)
+                                                     args.memory_max, extra, check)
         if fails_at is None:
             verdict = "pass (both fail on the initial term)" if status == "initfail" else \
                 "FAIL: krun fails on the initial term, the spec: " + status
@@ -279,8 +277,13 @@ def test_program(prog, root, definition, args):
             else:
                 verdict = "FAIL: krun fails after %d steps, the spec: %s after %s steps%s" % (
                     fails_at, status, s_steps, "" if ok else ", configuration differs")
-        elif search and status == "final":
-            verdict = "pass (one of the search results)" if ok else "FAIL: not among the search results"
+        elif check and status == "final":
+            if not ok:
+                verdict = "FAIL: " + (msg or "steps check")
+            elif limit and s_steps == limit:
+                verdict = "pass (each of the first %d steps is one K allows; the run goes on)" % limit
+            else:
+                verdict = "pass (each step is one K allows)"
         elif status == "final" and ok and s_steps == k_steps:
             verdict = "pass"
         elif status == "final" and ok:
