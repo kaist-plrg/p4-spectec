@@ -128,12 +128,16 @@ dec $eval_app(definition, subst, text, symid, sort*, pattern*) : res<term>
 dec $apply(definition, symid, sort*, term*) : res<term>
   hint(prose_in "applying" %1 "to" %3)
 dec $apply_kind(definition, symkind, symid, sort*, term*) : res<term>
+dec $apply_anywhere(definition, symid, sort*, term*, res<(subst, pattern)>) : res<term>
 dec $apply_equations(definition, equation*, term*) : res<term>
+dec $apply_found(definition, res<(subst, pattern)>) : res<term>
 dec $find_equation(definition, equation*, term*) : res<(subst, pattern)>
+dec $equation_or_next(definition, equation, equation*, term*, res<subst>) : res<(subst, pattern)>
 var result : res<term>
 dec $is_true(res<term>) : bool
 dec $requires_hold(definition, subst, pattern?) : bool
 dec $first_holding(definition, subst*, pattern?) : res<subst>
+dec $holding_or_next(definition, subst, subst*, pattern?, bool) : res<subst>
 dec $try_equation(definition, equation, term*) : res<subst>
 dec $rhs_of(equation) : pattern
 
@@ -212,29 +216,32 @@ def $apply_kind(D, BINDER, symid, sort*, term*) = OK $construct(symid, sort*, te
 def $apply_kind(D, HOOKED hookid, symid, sort*, term*) = $hook(D, hookid, sort_r, term*)
   -- if sort_r = $result_instance(D, symid, sort*)
 def $apply_kind(D, FUNCTION, symid, sort*, term*) = $apply_equations(D, $equations_of(D, symid), term*)
-def $apply_kind(D, ANYWHERE, symid, sort*, term*) = $eval(D, subst, pattern_r)
-  -- if OK (subst, pattern_r) = $find_equation(D, $equations_of(D, symid), term*)
-def $apply_kind(D, ANYWHERE, symid, sort*, term*) = OK $construct(symid, sort*, term*)
-  -- if FAIL = $find_equation(D, $equations_of(D, symid), term*)
+def $apply_kind(D, ANYWHERE, symid, sort*, term*) = $apply_anywhere(D, symid, sort*, term*, $find_equation(D, $equations_of(D, symid), term*))
 def $apply_kind(D, kind, symid, sort*, term*) = FAIL
   -- otherwise
+
+;;; An anywhere symbol is rewritten by its first equation that applies, and
+;;; stays a constructor when none does
+
+def $apply_anywhere(D, symid, sort*, term*, OK (subst, pattern_r)) = $eval(D, subst, pattern_r)
+def $apply_anywhere(D, symid, sort*, term*, FAIL) = OK $construct(symid, sort*, term*)
 
 ;;; The first equation, in priority order, whose arguments match and whose
 ;;; requires clause holds gives the result. Failing to evaluate its right-hand
 ;;; side does not fall back to later equations.
 
-def $apply_equations(D, eqn*, term*) = $eval(D, subst, pattern_r)
-  -- if OK (subst, pattern_r) = $find_equation(D, eqn*, term*)
-def $apply_equations(D, eqn*, term*) = FAIL
-  -- if FAIL = $find_equation(D, eqn*, term*)
+def $apply_equations(D, eqn*, term*) = $apply_found(D, $find_equation(D, eqn*, term*))
+
+def $apply_found(D, OK (subst, pattern_r)) = $eval(D, subst, pattern_r)
+def $apply_found(D, FAIL) = FAIL
 
 ;;; The first equation that applies, with its substitution and right-hand side
 
 def $find_equation(D, eps, term*) = FAIL
-def $find_equation(D, eqn_h :: eqn_t*, term*) = OK (subst, $rhs_of(eqn_h))
-  -- if OK subst = $try_equation(D, eqn_h, term*)
-def $find_equation(D, eqn_h :: eqn_t*, term*) = $find_equation(D, eqn_t*, term*)
-  -- if FAIL = $try_equation(D, eqn_h, term*)
+def $find_equation(D, eqn_h :: eqn_t*, term*) = $equation_or_next(D, eqn_h, eqn_t*, term*, $try_equation(D, eqn_h, term*))
+
+def $equation_or_next(D, eqn, eqn_t*, term*, OK subst) = OK (subst, $rhs_of(eqn))
+def $equation_or_next(D, eqn, eqn_t*, term*, FAIL) = $find_equation(D, eqn_t*, term*)
 
 ;;; An equation applies when its arguments match and its requires clause holds
 
@@ -249,10 +256,10 @@ def $rhs_of(EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) = pa
 ;;; which the requires clause holds
 
 def $first_holding(D, eps, pattern_c?) = FAIL
-def $first_holding(D, subst_h :: subst_t*, pattern_c?) = OK subst_h
-  -- if $requires_hold(D, subst_h, pattern_c?)
-def $first_holding(D, subst_h :: subst_t*, pattern_c?) = $first_holding(D, subst_t*, pattern_c?)
-  -- if ~$requires_hold(D, subst_h, pattern_c?)
+def $first_holding(D, subst_h :: subst_t*, pattern_c?) = $holding_or_next(D, subst_h, subst_t*, pattern_c?, $requires_hold(D, subst_h, pattern_c?))
+
+def $holding_or_next(D, subst, subst_t*, pattern_c?, true) = OK subst
+def $holding_or_next(D, subst, subst_t*, pattern_c?, false) = $first_holding(D, subst_t*, pattern_c?)
 
 def $requires_hold(D, subst, eps) = true
 def $requires_hold(D, subst, pattern) = $is_true($eval(D, subst, pattern))

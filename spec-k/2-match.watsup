@@ -209,7 +209,9 @@ dec $match_list(definition, subst, pattern*, term*) : subst*
 dec $match_all(definition, subst*, pattern, term) : subst*
 dec $match_map(definition, subst, pattern*, pattern*, sort, map<term, term>) : subst*
 dec $choose_map(definition, subst, pattern, pattern, pattern*, pattern*, sort, map<term, term>, (term, term)*) : subst*
+dec $match_entry(definition, subst, res<term>, pattern, pattern, pattern*, pattern*, sort, map<term, term>) : subst*
 dec $match_set(definition, subst, pattern*, pattern*, sort, set<term>) : subst*
+dec $match_element(definition, subst, res<term>, pattern, pattern*, pattern*, sort, set<term>) : subst*
 dec $choose_set(definition, subst, pattern, pattern*, pattern*, sort, set<term>, term*) : subst*
 dec $match_rest(definition, subst, pattern*, term) : subst*
 dec $match_seq(definition, subst, pattern*, sort, term*) : subst*
@@ -324,16 +326,16 @@ def $match_rest(D, subst, pattern*, term) = eps
 
 def $match_map(D, subst, eps, pattern_o*, sort, M) = $match_rest(D, subst, pattern_o*, MAP sort M)
 def $match_map(D, subst, APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*, pattern_o*, sort, M)
+  = $match_entry(D, subst, $eval(D, subst, pattern_k), pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M)
+
+def $match_entry(D, subst, OK term_k, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M)
   = $concat_<subst>($match_map(D, subst_v, pattern_e*, pattern_o*, sort, $diff_set<pair<term, term>>(M, `{ term_k ':' term_v `}))*)
-  -- if OK term_k = $eval(D, subst, pattern_k)
   -- if term_v = $find_map<term, term>(M, term_k)
   -- if subst_v* = $match(D, subst, pattern_v, term_v)
-def $match_map(D, subst, APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*, pattern_o*, sort, M) = eps
-  -- if OK term_k = $eval(D, subst, pattern_k)
+def $match_entry(D, subst, OK term_k, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M) = eps
   -- if eps = $find_map<term, term>(M, term_k)
-def $match_map(D, subst, APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*, pattern_o*, sort, `{ (term_k ':' term_v)* `})
+def $match_entry(D, subst, FAIL, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, `{ (term_k ':' term_v)* `})
   = $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, `{ (term_k ':' term_v)* `}, (term_k, term_v)*)
-  -- if FAIL = $eval(D, subst, pattern_k)
 
 def $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M, eps) = eps
 def $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M, (term_k, term_v) :: (term_k', term_v')*)
@@ -345,16 +347,16 @@ def $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M,
 ;;; element is tried in turn
 
 def $match_set(D, subst, eps, pattern_o*, sort, S) = $match_rest(D, subst, pattern_o*, SET sort S)
-def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*, pattern_o*, sort, `{ term_s* `})
+def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*, pattern_o*, sort, S)
+  = $match_element(D, subst, $eval(D, subst, pattern), pattern, pattern_e*, pattern_o*, sort, S)
+
+def $match_element(D, subst, OK term, pattern, pattern_e*, pattern_o*, sort, `{ term_s* `})
   = $match_set(D, subst, pattern_e*, pattern_o*, sort, $diff_set<term>(`{ term_s* `}, `{ term `}))
-  -- if OK term = $eval(D, subst, pattern)
   -- if term <- term_s*
-def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*, pattern_o*, sort, `{ term_s* `}) = eps
-  -- if OK term = $eval(D, subst, pattern)
+def $match_element(D, subst, OK term, pattern, pattern_e*, pattern_o*, sort, `{ term_s* `}) = eps
   -- if ~(term <- term_s*)
-def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*, pattern_o*, sort, `{ term_s* `})
+def $match_element(D, subst, FAIL, pattern, pattern_e*, pattern_o*, sort, `{ term_s* `})
   = $choose_set(D, subst, pattern, pattern_e*, pattern_o*, sort, `{ term_s* `}, term_s*)
-  -- if FAIL = $eval(D, subst, pattern)
 
 def $choose_set(D, subst, pattern, pattern_e*, pattern_o*, sort, S, eps) = eps
 def $choose_set(D, subst, pattern, pattern_e*, pattern_o*, sort, S, term_h :: term_t*)

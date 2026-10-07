@@ -199,12 +199,13 @@ def $candidates(krule*, INDEX SI pathindex*, term) = $pick(krule*, n*)
 
 dec $step(definition, krule*, term) : stepres
   hint(prose_in "a rewrite step of" %2)
+dec $rewrite_or_next(definition, krule, krule*, term, res<subst>) : stepres
+dec $rewrite(term, res<term>) : stepres
 def $step(D, eps, term) = STUCK
-def $step(D, krule_h :: krule_t*, term) = STEP term'
-  -- if OK subst = $try_rule(D, krule_h, term)
-  -- if OK term' = $eval(D, subst, $rhs_of_rule(krule_h))
-def $step(D, krule_h :: krule_t*, term) = ERROR
-  -- if OK subst = $try_rule(D, krule_h, term)
-  -- if FAIL = $eval(D, subst, $rhs_of_rule(krule_h))
-def $step(D, krule_h :: krule_t*, term) = $step(D, krule_t*, term)
-  -- if FAIL = $try_rule(D, krule_h, term)
+def $step(D, krule_h :: krule_t*, term) = $rewrite_or_next(D, krule_h, krule_t*, term, $try_rule(D, krule_h, term))
+
+def $rewrite_or_next(D, krule, krule_t*, term, OK subst) = $rewrite(term, $eval(D, subst, $rhs_of_rule(krule)))
+def $rewrite_or_next(D, krule, krule_t*, term, FAIL) = $step(D, krule_t*, term)
+
+def $rewrite(term, OK term') = STEP term'
+def $rewrite(term, FAIL) = ERROR
