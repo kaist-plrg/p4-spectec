@@ -142,6 +142,119 @@ let run_command =
            | Fail (`Runtime (_, msg)) -> Format.printf "runtime error: %s\n" msg
            ))
 
+(* The configurations of a disjunction, as the search binary of a kompiled
+   definition writes them *)
+let rec kore_alternatives (p : Kore.Ast.pattern) : Kore.Ast.pattern list =
+  match p with
+  | Kore.Ast.App ("\\or", _, ps) -> List.concat_map kore_alternatives ps
+  | Kore.Ast.App ("\\bottom", _, _) -> []
+  | Kore.Ast.App ("\\equals", _, [ _; p ]) -> [ p ]
+  | p -> [ p ]
+
+(* Checking a run step by step against K (krun -check-steps DIR). Each next
+   configuration must be one of those the search binary of the kompiled
+   definition DIR finds one step on, and the interpreter must take no step
+   from the last configuration of a run that ends. A nondeterministic program
+   is checked along the run the spec takes, without exploring the others. *)
+module Step_check = struct
+  type t = {
+    dir : string;
+    info : Kore.Load.info;
+    current : string;  (* the configuration given to K *)
+    next : string;  (* what K writes *)
+    mutable last : Value.t option;
+    mutable steps : int;
+    mutable branching : int;  (* steps where K allows more than one *)
+    mutable failure : string option;
+  }
+
+  let make dir info =
+    {
+      dir;
+      info;
+      current = Filename.temp_file "kstep" ".kore";
+      next = Filename.temp_file "knext" ".kore";
+      last = None;
+      steps = 0;
+      branching = 0;
+      failure = None;
+    }
+
+  (* Run DIR/binary on a configuration; the exit code *)
+  let run_k c binary term depth extra =
+    Out_channel.with_open_bin c.current (fun oc ->
+        output_string oc
+          (Kore.Ast.string_of_pattern (Kore.Unparse.pattern_of_term c.info term)));
+    if Sys.file_exists c.next then Sys.remove c.next;
+    Sys.command
+      (Filename.quote_command ~stdin:"/dev/null" ~stderr:"/dev/null"
+         (Filename.concat c.dir binary)
+         ([ c.current; string_of_int depth; c.next ] @ extra))
+
+  (* A new configuration of the run: one step after the last one *)
+  let step c term =
+    (match (c.failure, c.last) with
+    | None, Some last ->
+        if run_k c "search" last 1 [] <> 0 then
+          c.failure <-
+            Some (Printf.sprintf "search failed after %d steps" c.steps)
+        else
+          let nexts =
+            kore_alternatives (Kore.Parse.pattern_of_file c.next)
+            |> List.map (fun p ->
+                   Kore.Unparse.normalize c.info p |> Kore.Ast.string_of_pattern)
+          in
+          if List.mem (Kore.Unparse.string_of_term c.info term) nexts then (
+            c.steps <- c.steps + 1;
+            if List.length (List.sort_uniq String.compare nexts) > 1 then
+              c.branching <- c.branching + 1)
+          else
+            c.failure <-
+              Some
+                (Printf.sprintf "step %d is none of the %d steps K allows"
+                   (c.steps + 1) (List.length nexts))
+    | _ -> ());
+    c.last <- Some term
+
+  (* After the run: K takes no step from the last configuration *)
+  let finish c ~ended =
+    (match (c.failure, c.last, ended) with
+    | None, Some last, true ->
+        if run_k c "interpreter" last 1 [ "--statistics" ] <> 0 then
+          c.failure <- Some "the interpreter failed on the last configuration"
+        else if
+          not
+            (String.equal "0"
+               (In_channel.with_open_bin c.next In_channel.input_line
+               |> Option.value ~default:""))
+        then
+          c.failure <-
+            Some
+              (Printf.sprintf "K takes a step from the configuration after %d steps"
+                 c.steps)
+    | _ -> ());
+    List.iter (fun f -> if Sys.file_exists f then Sys.remove f) [ c.current; c.next ];
+    match c.failure with
+    | None ->
+        Format.printf
+          "steps check: each of %d steps is one K allows (K allows more than one \
+           at %d)%s\n"
+          c.steps c.branching
+          (if ended then ", and K takes no step from the last" else "")
+    | Some msg -> Format.printf "steps check FAILED: %s\n" msg
+
+  (* A handler that sees the configuration of each step: the last argument
+     of each call of $run (spec-k/6-entry.watsup) *)
+  let handler c : (module Inst.Handler.HANDLER) =
+    (module struct
+      include Inst.Handler.Default
+
+      let on_func_enter (fid : Domain.Lib.FId.t) (values : Value.t list) =
+        if String.equal (Domain.Lib.FId.to_string fid) "run" then
+          match List.rev values with term :: _ -> step c term | [] -> ()
+    end)
+end
+
 let krun_command =
   Core.Command.basic
     ~summary:"run a kompiled K definition (definition.kore) with the K spec"
@@ -170,6 +283,12 @@ let krun_command =
      and path_cover =
        flag "-cover" (optional string)
          ~doc:"FILE write the spec with the instructions the run executes marked"
+     and path_check =
+       flag "-check-steps" (optional string)
+         ~doc:
+           "DIR check each step against the kompiled definition DIR (kompile \
+            --enable-search): the next configuration must be one DIR/search \
+            finds one step on"
      in
      fun () ->
        (* The GC settings above favour speed over memory. K runs keep large
@@ -233,6 +352,12 @@ let krun_command =
                    (handlers @ [ (module CH : Inst.Handler.HANDLER) ], Some read)
                | None -> (handlers, None)
              in
+             let check = Option.map (fun dir -> Step_check.make dir loaded.info) path_check in
+             let handlers =
+               match check with
+               | Some c -> handlers @ [ Step_check.handler c ]
+               | None -> handlers
+             in
              Inst.Hook.register handlers;
              Inst.Hook.init_spec spec;
              let result, t_run =
@@ -289,16 +414,8 @@ let krun_command =
                    let output =
                      Kore.Unparse.string_of_term loaded.info term
                    in
-                   let rec alternatives (p : Kore.Ast.pattern) =
-                     match p with
-                     | Kore.Ast.App ("\\or", _, ps) ->
-                         List.concat_map alternatives ps
-                     | Kore.Ast.App ("\\bottom", _, _) -> []
-                     | Kore.Ast.App ("\\equals", _, [ _; p ]) -> [ p ]
-                     | p -> [ p ]
-                   in
                    let solutions =
-                     alternatives (Kore.Parse.pattern_of_file path)
+                     kore_alternatives (Kore.Parse.pattern_of_file path)
                      |> List.map (fun p ->
                             Kore.Unparse.normalize loaded.info p
                             |> Kore.Ast.string_of_pattern)
@@ -315,10 +432,20 @@ let krun_command =
              | Fail (_, msg) -> Format.printf "runtime error: %s\n" msg
              | Pass value -> (
                  match Value.Get.(value |>>? "FINAL nat term") with
-                 | Some [ steps; term ] -> report "final" steps term
+                 | Some [ steps; term ] ->
+                     report "final" steps term;
+                     (* the run ended, unless it stopped at the step limit *)
+                     let ended =
+                       match (depth, int_of_string_opt (Value.to_string steps)) with
+                       | Some d, Some n -> n < d
+                       | _ -> true
+                     in
+                     Option.iter (Step_check.finish ~ended) check
                  | _ -> (
                      match Value.Get.(value |>>? "ERROR nat term") with
-                     | Some [ steps; term ] -> report "ERROR" steps term
+                     | Some [ steps; term ] ->
+                         report "ERROR" steps term;
+                         Option.iter (Step_check.finish ~ended:false) check
                      | _ ->
                          Format.printf "initial term failed to evaluate: %s\n"
                            (Value.to_string value)))
