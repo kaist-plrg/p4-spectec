@@ -1,0 +1,384 @@
+;;
+;; Matching a pattern against a term
+;;
+;; Corresponds to the decision-tree matching of the LLVM backend. A match
+;; extends a substitution from variables to terms. A pattern may match a term
+;; in several ways when it picks an element out of a collection; $match gives
+;; all of them in the order they are tried, and none when it fails.
+;;
+
+var D : definition
+var kind : symkind
+var M : map<term, term>
+var S : set<term>
+
+syntax subst = map<varid, term>
+
+;; Definition lookups
+
+dec $find_symdecl(definition, symid) : symdecl?
+  hint(prose_in "the declaration of symbol" %1)
+def $find_symdecl(D, symid) = $find_map<symid, symdecl>(D.SYMBOLS, symid)
+
+dec $kind_of(symdecl?) : symkind?
+def $kind_of(eps) = eps
+def $kind_of(sort_a* '->' sort kind) = kind
+
+dec $hook_of_kind(symkind?) : hookid?
+def $hook_of_kind(HOOKED hookid) = hookid
+def $hook_of_kind(kind?) = eps
+  -- otherwise
+
+dec $hook_of(definition, symid) : hookid?
+  hint(prose_in "the hook of symbol" %1)
+def $hook_of(D, symid) = $hook_of_kind($kind_of($find_symdecl(D, symid)))
+
+;; Subsorting
+;; The subsort axioms of a kompiled definition are not always transitively
+;; closed (LAMBDA lists Int < Val and Val < KResult but not Int < KResult), so
+;; $krun closes them once before running (6-entry). After that, membership in
+;; D.SUBSORTS decides subsorting.
+
+dec $is_subsort(definition, sort, sort) : bool
+  hint(prose_true %1 "is a subsort of" %2)
+def $is_subsort(D, sort_1, sort_2) = (sort_1 '<' sort_2) <- D.SUBSORTS
+
+;; Transitive closure of a subsort relation (the relation is acyclic). The
+;; direct supersorts of each sort are collected once, and the sorts reachable
+;; from each are then found by following them.
+
+var SM : map<sort, sort*>
+
+dec $direct_supersorts(map<sort, sort*>, sort) : sort*
+  hint(prose_in "the direct supersorts of" %1)
+def $direct_supersorts(SM, sort) = sort_s*
+  -- if (sort_s*) = $find_map<sort, sort*>(SM, sort)
+def $direct_supersorts(SM, sort) = eps
+  -- otherwise
+
+dec $supersort_map(subsort*) : map<sort, sort*>
+def $supersort_map(eps) = $empty_map<sort, sort*>
+def $supersort_map((sort_a '<' sort_b) :: subsort_t*) = $update_map<sort, sort*>(SM, sort_a, sort_b :: $direct_supersorts(SM, sort_a))
+  -- if SM = $supersort_map(subsort_t*)
+
+;; the sorts reachable from a worklist of sorts, given those already seen
+dec $reachable(map<sort, sort*>, sort*, sort*) : sort*
+def $reachable(SM, eps, sort_s*) = sort_s*
+def $reachable(SM, sort_h :: sort_t*, sort_s*) = $reachable(SM, sort_t*, sort_s*)
+  -- if sort_h <- sort_s*
+def $reachable(SM, sort_h :: sort_t*, sort_s*) = $reachable(SM, $direct_supersorts(SM, sort_h) ++ sort_t*, sort_s* ++ [ sort_h ])
+  -- if ~(sort_h <- sort_s*)
+
+dec $subsorts_from(map<sort, sort*>, sort) : subsort*
+def $subsorts_from(SM, sort) = (sort '<' sort_u)*
+  -- if sort_u* = $reachable(SM, $direct_supersorts(SM, sort), eps)
+
+dec $close_subsorts(subsort*) : subsort*
+  hint(prose_in "the transitive closure of" %0)
+def $close_subsorts(subsort*) = $concat_<subsort>($subsorts_from(SM, sort_a)*)
+  -- if SM = $supersort_map(subsort*)
+  -- if `{ (sort_a ':' sort_b*)* `} = SM
+
+;; Equality of terms, as KEQUAL.eq: structural, except that maps and sets are
+;; compared as sets of entries
+
+dec $term_eq(term, term) : bool
+dec $terms_eq(term*, term*) : bool
+def $term_eq(APP symid sort* term*, APP symid' sort'* term'*) = symid = symid' /\ sort* = sort'* /\ $terms_eq(term*, term'*)
+def $term_eq(MAP sort M, MAP sort' M') = sort = sort' /\ $eq_set<pair<term, term>>(M, M')
+def $term_eq(SET sort S, SET sort' S') = sort = sort' /\ $eq_set<term>(S, S')
+def $term_eq(LIST sort term*, LIST sort' term'*) = sort = sort' /\ $terms_eq(term*, term'*)
+def $term_eq(RANGEMAP sort (RANGE i_s i_e term)*, RANGEMAP sort' (RANGE i_s' i_e' term')*)
+  = sort = sort' /\ i_s* = i_s'* /\ i_e* = i_e'* /\ $terms_eq(term*, term'*)
+def $term_eq(term_1, term_2) = term_1 = term_2
+  -- otherwise
+def $terms_eq(eps, eps) = true
+def $terms_eq(term_h :: term_t*, term_h' :: term_t'*) = $term_eq(term_h, term_h') /\ $terms_eq(term_t*, term_t'*)
+def $terms_eq(term*, term'*) = false
+  -- otherwise
+
+;; Building constructor terms: nested injections are composed,
+;; inj{B,C}(inj{A,B}(t)) = inj{A,C}(t)
+
+dec $construct(symid, sort*, term*) : term
+def $construct("inj", ([sort_b, sort_c]), ([APP "inj" ([sort_a, sort_b']) ([term])])) = APP "inj" ([sort_a, sort_c]) ([term])
+  -- if sort_b = sort_b'
+def $construct(symid, sort*, term*) = APP symid sort* term*
+  -- otherwise
+
+;; Keys of map patterns and elements of set patterns are evaluated when all
+;; their variables are bound; function calls in them are computed, as in
+;; <globalAddrs> ... #ContextLookup(IDS, I) |-> ADDR ... </globalAddrs> in KWasm.
+;; Evaluation fails on an unbound variable, and then entries are tried in turn.
+;; $eval is defined with the other evaluation functions (4-eval.watsup).
+
+dec $eval(definition, subst, pattern) : res<term>
+  hint(prose_in "evaluating" %2 "under" %1)
+dec $evals(definition, subst, pattern*) : res<term*>
+
+;; Collection patterns
+;; A pattern built from the concat, element, and unit symbols of a collection
+;; sort is flattened into its parts: element patterns and at most one other
+;; pattern (usually a variable) that matches the remaining elements.
+
+dec $collection_of_hook(hookid) : text?
+dec $collection_of(definition, pattern) : text?
+  hint(prose_in "the collection that" %1 "is built with")
+def $collection_of(D, APP symid sort* pattern*) = $collection_of_hook(hookid)
+  -- if hookid = $hook_of(D, symid)
+def $collection_of(D, pattern) = eps
+  -- otherwise
+
+def $collection_of_hook("MAP.concat") = "MAP"
+def $collection_of_hook("MAP.element") = "MAP"
+def $collection_of_hook("MAP.unit") = "MAP"
+def $collection_of_hook("SET.concat") = "SET"
+def $collection_of_hook("SET.element") = "SET"
+def $collection_of_hook("SET.unit") = "SET"
+def $collection_of_hook("LIST.concat") = "LIST"
+def $collection_of_hook("LIST.element") = "LIST"
+def $collection_of_hook("LIST.unit") = "LIST"
+def $collection_of_hook(hookid) = eps
+  -- otherwise
+
+dec $parts(definition, text, pattern) : pattern*
+def $parts(D, t_c, APP symid sort* ([pattern_1, pattern_2])) = $parts(D, t_c, pattern_1) ++ $parts(D, t_c, pattern_2)
+  -- if $hook_of(D, symid) = t_c ++ ".concat"
+def $parts(D, t_c, APP symid sort* eps) = eps
+  -- if $hook_of(D, symid) = t_c ++ ".unit"
+def $parts(D, t_c, pattern) = [ pattern ]
+  -- otherwise
+
+dec $is_element(definition, text, pattern) : bool
+def $is_element(D, t_c, APP symid sort* pattern*) = $hook_of(D, symid) = t_c ++ ".element"
+def $is_element(D, t_c, pattern) = false
+  -- otherwise
+
+dec $elements(definition, text, pattern*) : pattern*
+def $elements(D, t_c, eps) = eps
+def $elements(D, t_c, pattern_h :: pattern_t*) = pattern_h :: $elements(D, t_c, pattern_t*)
+  -- if $is_element(D, t_c, pattern_h)
+def $elements(D, t_c, pattern_h :: pattern_t*) = $elements(D, t_c, pattern_t*)
+  -- if ~$is_element(D, t_c, pattern_h)
+
+dec $others(definition, text, pattern*) : pattern*
+def $others(D, t_c, eps) = eps
+def $others(D, t_c, pattern_h :: pattern_t*) = $others(D, t_c, pattern_t*)
+  -- if $is_element(D, t_c, pattern_h)
+def $others(D, t_c, pattern_h :: pattern_t*) = pattern_h :: $others(D, t_c, pattern_t*)
+  -- if ~$is_element(D, t_c, pattern_h)
+
+;; Injecting terms of the first sorts into the second sorts, where they differ
+
+dec $coerce_all(sort*, sort*, term*) : term*
+def $coerce_all(eps, eps, eps) = eps
+def $coerce_all(sort_t :: sort_tt*, sort_p :: sort_pt*, term_h :: term_t*) = term_h :: $coerce_all(sort_tt*, sort_pt*, term_t*)
+  -- if sort_t = sort_p
+def $coerce_all(sort_t :: sort_tt*, sort_p :: sort_pt*, term_h :: term_t*) = $construct("inj", ([sort_t, sort_p]), ([term_h])) :: $coerce_all(sort_tt*, sort_pt*, term_t*)
+  -- if sort_t =/= sort_p
+
+;; An integer as a natural number, when it is not negative. Where the LLVM backend
+;; reports an error on a negative length, index, or shift amount, a hook
+;; fails instead (3-hook).
+
+dec $nat_of(int) : nat?
+def $nat_of(i) = n
+  -- if i <: nat
+  -- if n = i
+def $nat_of(i) = eps
+  -- otherwise
+
+;; The element of a list at an index; a negative index counts from the end,
+;; as in hook_LIST_get_null
+
+dec $list_at(term*, int) : term?
+def $list_at(term*, i) = term*[n]
+  -- if n = $nat_of(i)
+  -- if $(n < |term*|)
+def $list_at(term*, i) = term*[n]
+  -- if $(i < 0)
+  -- if n = $nat_of($(|term*| + i))
+def $list_at(term*, i) = eps
+  -- otherwise
+
+;; Matching
+
+dec $match(definition, subst, pattern, term) : subst*
+  hint(prose_in "the ways" %2 "matches" %3 "extending" %1)
+dec $match_list(definition, subst, pattern*, term*) : subst*
+dec $match_all(definition, subst*, pattern, term) : subst*
+dec $match_map(definition, subst, pattern*, pattern*, sort, map<term, term>) : subst*
+dec $choose_map(definition, subst, pattern, pattern, pattern*, pattern*, sort, map<term, term>, (term, term)*) : subst*
+dec $match_set(definition, subst, pattern*, pattern*, sort, set<term>) : subst*
+dec $choose_set(definition, subst, pattern, pattern*, pattern*, sort, set<term>, term*) : subst*
+dec $match_rest(definition, subst, pattern*, term) : subst*
+dec $match_seq(definition, subst, pattern*, sort, term*) : subst*
+
+;;; Variables bind the term, or must agree with an earlier binding
+
+def $match(D, subst, VAR varid sort, term) = [ $add_map<varid, term>(subst, varid, term) ]
+  -- if eps = $find_map<varid, term>(subst, varid)
+def $match(D, subst, VAR varid sort, term) = [ subst ]
+  -- if term' = $find_map<varid, term>(subst, varid)
+  -- if $term_eq(term', term)
+
+;;; As-patterns: the term matches both sides
+
+def $match(D, subst, AND sort pattern_1 pattern_2, term) = $match_all(D, $match(D, subst, pattern_1, term), pattern_2, term)
+
+;;; Or-patterns: the ways the left side matches, then those of the right side,
+;;; as the LLVM backend expands them into one row each (expandOr in
+;;; matching/pattern/Pattern.scala)
+
+def $match(D, subst, OR sort pattern_1 pattern_2, term) = $match(D, subst, pattern_1, term) ++ $match(D, subst, pattern_2, term)
+
+;;; Domain values
+
+def $match(D, subst, DV sort t, DV sort' t') = [ subst ]
+  -- if sort = sort' /\ t = t'
+def $match(D, subst, INT i, INT i') = [ subst ]
+  -- if i = i'
+def $match(D, subst, BOOL b, BOOL b') = [ subst ]
+  -- if b = b'
+def $match(D, subst, STRING t, STRING t') = [ subst ]
+  -- if t = t'
+def $match(D, subst, FLOAT t, FLOAT t') = [ subst ]
+  -- if t = t'
+def $match(D, subst, BYTES n*, BYTES n'*) = [ subst ]
+  -- if n* = n'*
+def $match(D, subst, MINT n_w n_v, MINT n_w' n_v') = [ subst ]
+  -- if n_w = n_w' /\ n_v = n_v'
+
+;;; Injections into the same sort from a smaller sort:
+;;; inj{A,C}(p) matches inj{B,C}(t) with B < A by matching p against inj{B,A}(t)
+
+def $match(D, subst, APP "inj" ([sort_a, sort_c]) ([pattern]), APP "inj" ([sort_b, sort_c']) ([term]))
+  = $match(D, subst, pattern, APP "inj" ([sort_b, sort_a]) ([term]))
+  -- if sort_c = sort_c' /\ sort_a =/= sort_b
+  -- if $is_subsort(D, sort_b, sort_a)
+
+;;; Symbol applications with the same symbol and sort arguments
+
+def $match(D, subst, APP symid sort_p* pattern*, APP symid' sort_t* term*) = $match_list(D, subst, pattern*, term*)
+  -- if symid = symid' /\ sort_p* = sort_t*
+
+;;; Overloads: a pattern f(p1, ..., pn) matches inj{B,S}(g(t1, ..., tn)) when g is
+;;; a more specific overload of f; each ti is injected into the argument sort
+;;; of f where the argument sorts differ (isValidOverload in the LLVM backend's
+;;; matching/pattern/Pattern.scala)
+
+def $match(D, subst, APP symid_f sort_p* pattern*, APP "inj" ([sort_b, sort_s]) ([APP symid_g sort_t* term*]))
+  = $match_list(D, subst, pattern*, $coerce_all(sort_g*, sort_f*, term*))
+  -- if (symid_f '>' symid_g) <- D.OVERLOADS
+  -- if (sort_f* '->' sort_rf kind_f) = $find_symdecl(D, symid_f)
+  -- if (sort_g* '->' sort_rg kind_g) = $find_symdecl(D, symid_g)
+  -- if sort_rf = sort_s /\ sort_rg = sort_b
+
+;;; Collection patterns against collection values
+
+def $match(D, subst, pattern, MAP sort M) = $match_map(D, subst, $elements(D, "MAP", pattern_p*), $others(D, "MAP", pattern_p*), sort, M)
+  -- if "MAP" = $collection_of(D, pattern)
+  -- if pattern_p* = $parts(D, "MAP", pattern)
+def $match(D, subst, pattern, SET sort S) = $match_set(D, subst, $elements(D, "SET", pattern_p*), $others(D, "SET", pattern_p*), sort, S)
+  -- if "SET" = $collection_of(D, pattern)
+  -- if pattern_p* = $parts(D, "SET", pattern)
+def $match(D, subst, pattern, LIST sort term*) = $match_seq(D, subst, $parts(D, "LIST", pattern), sort, term*)
+  -- if "LIST" = $collection_of(D, pattern)
+
+;;; L[I <- V] on the left is a lookup: the element at index I, which must
+;;; evaluate, matches V, and L matches the whole list (ListGetP in the LLVM
+;;; backend's matching/Generator.scala; hook_LIST_get_null finds the element)
+
+def $match(D, subst, APP symid sort_p* ([pattern_f, pattern_k, pattern_v]), LIST sort term*)
+  = $match_all(D, $match(D, subst, pattern_v, term_e), pattern_f, LIST sort term*)
+  -- if $hook_of(D, symid) = "LIST.update"
+  -- if OK (INT i) = $eval(D, subst, pattern_k)
+  -- if term_e = $list_at(term*, i)
+
+;;; Anything else fails
+
+def $match(D, subst, pattern, term) = eps
+  -- otherwise
+
+def $match_all(D, eps, pattern, term) = eps
+def $match_all(D, subst_h :: subst_t*, pattern, term) = $match(D, subst_h, pattern, term) ++ $match_all(D, subst_t*, pattern, term)
+
+;;; Lists of patterns, left to right
+
+def $match_list(D, subst, eps, eps) = [ subst ]
+def $match_list(D, subst, pattern_h :: pattern_t*, term_h :: term_t*) = $concat_<subst>($match_list(D, subst_h, pattern_t*, term_t*)*)
+  -- if subst_h* = $match(D, subst, pattern_h, term_h)
+def $match_list(D, subst, pattern*, term*) = eps
+  -- otherwise
+
+;;; The parts other than elements match what is left: nothing, or one pattern
+
+def $match_rest(D, subst, eps, MAP sort `{ eps `}) = [ subst ]
+def $match_rest(D, subst, eps, SET sort `{ eps `}) = [ subst ]
+def $match_rest(D, subst, [ pattern ], term) = $match(D, subst, pattern, term)
+def $match_rest(D, subst, pattern*, term) = eps
+  -- otherwise
+
+;;; Maps: an element whose key evaluates is looked up; otherwise each entry
+;;; is tried in turn
+
+def $match_map(D, subst, eps, pattern_o*, sort, M) = $match_rest(D, subst, pattern_o*, MAP sort M)
+def $match_map(D, subst, APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*, pattern_o*, sort, M)
+  = $concat_<subst>($match_map(D, subst_v, pattern_e*, pattern_o*, sort, $diff_set<pair<term, term>>(M, `{ term_k ':' term_v `}))*)
+  -- if OK term_k = $eval(D, subst, pattern_k)
+  -- if term_v = $find_map<term, term>(M, term_k)
+  -- if subst_v* = $match(D, subst, pattern_v, term_v)
+def $match_map(D, subst, APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*, pattern_o*, sort, M) = eps
+  -- if OK term_k = $eval(D, subst, pattern_k)
+  -- if eps = $find_map<term, term>(M, term_k)
+def $match_map(D, subst, APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*, pattern_o*, sort, `{ (term_k ':' term_v)* `})
+  = $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, `{ (term_k ':' term_v)* `}, (term_k, term_v)*)
+  -- if FAIL = $eval(D, subst, pattern_k)
+
+def $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M, eps) = eps
+def $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M, (term_k, term_v) :: (term_k', term_v')*)
+  = $concat_<subst>($match_map(D, subst_v, pattern_e*, pattern_o*, sort, $diff_set<pair<term, term>>(M, `{ term_k ':' term_v `}))*)
+    ++ $choose_map(D, subst, pattern_k, pattern_v, pattern_e*, pattern_o*, sort, M, (term_k', term_v')*)
+  -- if subst_v* = $match_all(D, $match(D, subst, pattern_k, term_k), pattern_v, term_v)
+
+;;; Sets: an element that evaluates is checked for membership; otherwise each
+;;; element is tried in turn
+
+def $match_set(D, subst, eps, pattern_o*, sort, S) = $match_rest(D, subst, pattern_o*, SET sort S)
+def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*, pattern_o*, sort, `{ term_s* `})
+  = $match_set(D, subst, pattern_e*, pattern_o*, sort, $diff_set<term>(`{ term_s* `}, `{ term `}))
+  -- if OK term = $eval(D, subst, pattern)
+  -- if term <- term_s*
+def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*, pattern_o*, sort, `{ term_s* `}) = eps
+  -- if OK term = $eval(D, subst, pattern)
+  -- if ~(term <- term_s*)
+def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*, pattern_o*, sort, `{ term_s* `})
+  = $choose_set(D, subst, pattern, pattern_e*, pattern_o*, sort, `{ term_s* `}, term_s*)
+  -- if FAIL = $eval(D, subst, pattern)
+
+def $choose_set(D, subst, pattern, pattern_e*, pattern_o*, sort, S, eps) = eps
+def $choose_set(D, subst, pattern, pattern_e*, pattern_o*, sort, S, term_h :: term_t*)
+  = $concat_<subst>($match_set(D, subst_h, pattern_e*, pattern_o*, sort, $diff_set<term>(S, `{ term_h `}))*)
+    ++ $choose_set(D, subst, pattern, pattern_e*, pattern_o*, sort, S, term_t*)
+  -- if subst_h* = $match(D, subst, pattern, term_h)
+
+;;; Lists: elements before the other part match the front, elements after it
+;;; match the back, and the other part matches the list in between
+
+def $match_seq(D, subst, eps, sort, eps) = [ subst ]
+def $match_seq(D, subst, eps, sort, term_h :: term_t*) = eps
+def $match_seq(D, subst, APP symid sort_e* ([pattern]) :: pattern_t*, sort, term_h :: term_t*)
+  = $concat_<subst>($match_seq(D, subst_h, pattern_t*, sort, term_t*)*)
+  -- if $hook_of(D, symid) = "LIST.element"
+  -- if subst_h* = $match(D, subst, pattern, term_h)
+def $match_seq(D, subst, APP symid sort_e* ([pattern]) :: pattern_t*, sort, eps) = eps
+  -- if $hook_of(D, symid) = "LIST.element"
+def $match_seq(D, subst, pattern_o :: pattern_t*, sort, term*)
+  = $concat_<subst>($match_seq(D, subst_o, pattern_t*, sort, term*[n_m : |pattern_t*|])*)
+  -- if ~$is_element(D, "LIST", pattern_o)
+  -- if $(|term*| >= |pattern_t*|)
+  -- if n_m = $(|term*| - |pattern_t*|)
+  -- if subst_o* = $match(D, subst, pattern_o, LIST sort term*[0 : n_m])
+def $match_seq(D, subst, pattern_o :: pattern_t*, sort, term*) = eps
+  -- if ~$is_element(D, "LIST", pattern_o)
+  -- if $(|term*| < |pattern_t*|)

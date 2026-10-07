@@ -1,0 +1,36 @@
+;;
+;; Running a program: krun
+;;
+;; Corresponds to the interpreter that krun calls. The initial term is a
+;; function call, initGeneratedTopCell($PGM |-> program), so evaluating it
+;; builds the initial configuration. Rewrite steps then repeat until no rule
+;; applies, or until the optional step limit (krun --depth) is reached.
+;;
+
+syntax runres =
+  | FINAL nat term   ;; steps taken and the final configuration
+  | ERROR nat term   ;; steps taken and the configuration where a step failed
+  | INITFAIL         ;; the initial term cannot be evaluated
+
+dec $run(definition, krule*, nat, nat?, term) : runres
+  hint(prose_in "running from" %4 "after" %2 "steps")
+def $run(D, krule*, n, n_max, term) = FINAL n term
+  -- if n = n_max
+def $run(D, krule*, n, n_max?, term) = FINAL n term
+  -- if n_max? =/= (n)
+  -- if STUCK = $step(D, krule*, term)
+def $run(D, krule*, n, n_max?, term) = ERROR n term
+  -- if n_max? =/= (n)
+  -- if ERROR = $step(D, krule*, term)
+def $run(D, krule*, n, n_max?, term) = $run(D, krule*, $(n + 1), n_max?, term')
+  -- if n_max? =/= (n)
+  -- if STEP term' = $step(D, krule*, term)
+
+dec $krun(definition, pattern, nat?) : runres
+  hint(prose_in "running" %1 "under" %0)
+def $krun(D, pattern, n_max?) = $run(D', $rules_in_order(D'), 0, n_max?, term)
+  -- if D' = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
+  -- if OK term = $eval(D', $empty_map<varid, term>, pattern)
+def $krun(D, pattern, n_max?) = INITFAIL
+  -- if D' = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
+  -- if FAIL = $eval(D', $empty_map<varid, term>, pattern)

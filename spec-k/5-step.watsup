@@ -1,0 +1,48 @@
+;;
+;; One rewrite step on the whole configuration
+;;
+;; All rewrite rules of a kompiled definition apply to the top cell
+;; (<generatedTop>), so a step matches the configuration as a whole. Rules are
+;; tried in priority order; the first rule whose left-hand side matches and
+;; whose requires clause holds rewrites the configuration.
+;;
+
+syntax stepres =
+  | STEP term   ;; the next configuration
+  | STUCK       ;; no rule applies
+  | ERROR       ;; a rule applies but its right-hand side cannot be built
+
+;; Rewrite rules in the order they are tried (stable by priority, see 4-eval)
+
+dec $rule_with_priority(krule) : (nat, krule)
+def $rule_with_priority(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
+  = ($priority(attr*), RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
+
+dec $rules_in_order(definition) : krule*
+  hint(prose_in "the rewrite rules of" %0 "in the order they are tried")
+def $rules_in_order(D) = $sort_by_priority<krule>($rule_with_priority(krule)*)
+  -- if krule* = D.RULES
+
+;; A rule applies when its left-hand side matches and its requires clause holds
+
+dec $try_rule(definition, krule, term) : res<subst>
+def $try_rule(D, RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*, term)
+  = $first_holding(D, $match(D, $empty_map<varid, term>, pattern_l, term), pattern_c?)
+
+dec $rhs_of_rule(krule) : pattern
+def $rhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*) = pattern_r
+
+;; A step tries the rules in order. Once a rule applies, failing to build its
+;; right-hand side is an error and does not fall back to later rules.
+
+dec $step(definition, krule*, term) : stepres
+  hint(prose_in "a rewrite step of" %2)
+def $step(D, eps, term) = STUCK
+def $step(D, krule_h :: krule_t*, term) = STEP term'
+  -- if OK subst = $try_rule(D, krule_h, term)
+  -- if OK term' = $eval(D, subst, $rhs_of_rule(krule_h))
+def $step(D, krule_h :: krule_t*, term) = ERROR
+  -- if OK subst = $try_rule(D, krule_h, term)
+  -- if FAIL = $eval(D, subst, $rhs_of_rule(krule_h))
+def $step(D, krule_h :: krule_t*, term) = $step(D, krule_t*, term)
+  -- if FAIL = $try_rule(D, krule_h, term)

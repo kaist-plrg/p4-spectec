@@ -1,0 +1,121 @@
+;;
+;; K in P4-SpecTec: the executable fragment of KORE
+;;
+;; The input is a definition.kore produced by kompile (K 7.1.337). The converter
+;; keeps only what the LLVM backend executes: rewrite rules, equations of
+;; unhooked functions, symbol declarations, and the subsort relation. Logical
+;; axioms are dropped (decisions D8 in k-in-p4).
+;;
+
+;; Names, kept verbatim from KORE
+
+syntax sortid = text  ;; e.g. "SortInt"
+syntax symid = text   ;; e.g. "Lbl'UndsPlus'Int'Unds'"
+syntax varid = text   ;; e.g. "VarX"
+syntax hookid = text  ;; e.g. "INT.add"
+
+;; Sorts
+;; Executable axioms of a kompiled definition mention only concrete sorts.
+;; Sort variables appear only in declarations of parametric symbols, e.g. inj.
+
+syntax sort =
+  | SORT sortid sort*
+  | SORTVAR sortid
+
+;; Terms
+;; Ground terms that make up a configuration. Domain values of hooked sorts
+;; become values of the corresponding P4-SpecTec type; collections only arise
+;; by evaluating their hooked constructors (MAP.concat, MAP.element, ...).
+
+syntax rangeitem
+
+syntax term =
+  | APP symid sort* term*           ;; symbol application, including inj and kseq
+  | DV sort text                    ;; domain value of an unhooked sort, e.g. an Id
+  | INT int                         ;; sort hooked to INT.Int
+  | BOOL bool                       ;; sort hooked to BOOL.Bool
+  | STRING text                     ;; sort hooked to STRING.String
+  | FLOAT text                      ;; sort hooked to FLOAT.Float, in the backend's output format
+  | BYTES nat*                      ;; sort hooked to BYTES.Bytes, one nat per byte
+  | MINT nat nat                    ;; sort hooked to MINT.MInt: width in bits, and value
+                                    ;; as an unsigned number below 2^width
+  | MAP sort map<term, term>        ;; sort hooked to MAP.Map
+  | SET sort set<term>              ;; sort hooked to SET.Set
+  | LIST sort term*                 ;; sort hooked to LIST.List
+  | RANGEMAP sort rangeitem*        ;; sort hooked to RANGEMAP.RangeMap, by start
+
+;; A range of integer keys [start, end) and its value. The ranges of a range
+;; map do not overlap, and adjacent ones have different values.
+
+syntax rangeitem = RANGE int int term
+
+;; Scalar values carry no sort: in IMP, KWasm, and KEVM each scalar hook is
+;; used by exactly one sort. Collections carry their sort because several
+;; sorts may share a collection hook (e.g. one Map sort per cell map).
+
+;; Patterns
+;; Left- and right-hand sides of rules and equations, and requires clauses.
+
+syntax pattern =
+  | VAR varid sort                  ;; element variable
+  | AND sort pattern pattern        ;; \and, used as an as-pattern on the left
+  | OR sort pattern pattern         ;; \or on the left: either side matches
+  | APP symid sort* pattern*
+  | DV sort text
+  | INT int
+  | BOOL bool
+  | STRING text
+  | FLOAT text
+  | BYTES nat*
+  | MINT nat nat
+
+;; Symbols
+
+syntax symkind =
+  | CONSTRUCTOR
+  | BINDER                          ;; a constructor binding its first argument, a KVar,
+                                    ;; in the other arguments (binder attribute)
+  | FUNCTION                        ;; defined by equations
+  | ANYWHERE                        ;; a constructor rewritten by its equations wherever
+                                    ;; one applies (anywhere attribute, e.g. overloads)
+  | HOOKED hookid                   ;; defined by the backend; equations ignored
+
+syntax symdecl = sort* '->' sort symkind  ;; argument sorts, result sort, and kind
+
+;; Subsort relation, from axioms with the subsort attribute
+
+syntax subsort = sort '<' sort
+
+;; Overloads, from axioms with the symbol-overload attribute: the second
+;; symbol is a more specific version of the first (on smaller sorts)
+
+syntax overload = symid '>' symid
+
+;; Attributes that affect execution
+
+syntax attr =
+  | OWISE
+  | PRIORITY nat
+  | COOL
+  | COOLLIKE
+
+;; Rewrite rules: lhs => rhs requires cond
+
+syntax krule = RULE pattern '=>' pattern 'requires' pattern? attr*
+
+;; Function equations: f(args) = rhs requires cond
+
+syntax equation = EQN symid pattern* '=' pattern 'requires' pattern? attr*
+
+;; Definitions
+
+syntax definition =
+  { SYMBOLS map<symid, symdecl>,   ;; the symbol table
+    SUBSORTS subsort*,
+    OVERLOADS overload*,
+    RULES krule*,
+    EQUATIONS map<symid, equation*>,  ;; grouped by the symbol they define, in file order
+    PARAMS map<symid, sortid*>,       ;; sort parameters of parametric symbols, e.g. MInt
+                                      ;; operations on MInt{Width}
+    NATSORTS map<sortid, nat> }       ;; sorts that stand for a number (nat attribute),
+                                      ;; e.g. Sort8 in MInt{8}

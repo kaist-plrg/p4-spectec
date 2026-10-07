@@ -1,0 +1,982 @@
+;;
+;; Hooks: built-in operations of hooked sorts (decisions D6 in k-in-p4)
+;;
+;; Corresponds to the hook runtime of the LLVM backend (/usr/lib/kllvm,
+;; lib/codegen/CreateTerm.cpp). Hooks whose arguments are evaluated lazily
+;; (BOOL.and, KEQUAL.ite, ...) are handled in the evaluator instead.
+;;
+
+dec $in_list(term, term*) : bool
+def $in_list(term, term_e*) = term <- term_e*
+
+;; Membership under KEQUAL.eq, as hook_LIST_in compares elements
+
+dec $in_terms(term, term*) : bool
+def $in_terms(term, eps) = false
+def $in_terms(term, term_h :: term_t*) = $term_eq(term, term_h) \/ $in_terms(term, term_t*)
+
+;; Map concatenation fails on a duplicate key, as hook_MAP_concat does
+
+dec $concat_map(map<term, term>, map<term, term>) : res<map<term, term>>
+def $concat_map(M, `{ eps `}) = OK M
+def $concat_map(M, `{ (term_k ':' term_v) :: (term_kt ':' term_vt)* `}) = $concat_map(M', `{ (term_kt ':' term_vt)* `})
+  -- if eps = $find_map<term, term>(M, term_k)
+  -- if M' = $add_map<term, term>(M, term_k, term_v)
+def $concat_map(M_1, M_2) = FAIL
+  -- otherwise
+
+
+;; Substitution helpers. Variables are domain values of the KVar sort sort_x.
+
+dec $is_binder(definition, symid) : bool
+def $is_binder(D, symid) = true
+  -- if (sort_a* '->' sort BINDER) = $find_symdecl(D, symid)
+def $is_binder(D, symid) = false
+  -- otherwise
+
+dec $remove_text(text*, text) : text*
+def $remove_text(eps, t) = eps
+def $remove_text(t_h :: t_t*, t) = $remove_text(t_t*, t)
+  -- if t_h = t
+def $remove_text(t_h :: t_t*, t) = t_h :: $remove_text(t_t*, t)
+  -- if t_h =/= t
+
+;; Variables of sort sort_x occurring in a term: free ones, or all of them
+
+dec $vars(definition, sort, bool, term) : text*
+dec $vars_list(definition, sort, bool, term*) : text*
+def $vars(D, sort_x, b, DV sort t) = [ t ]
+  -- if sort = sort_x
+def $vars(D, sort_x, true, APP symid sort* (DV sort_y t_y :: term*)) = $remove_text($vars_list(D, sort_x, true, term*), t_y)
+  -- if $is_binder(D, symid)
+def $vars(D, sort_x, false, APP symid sort* (DV sort_y t_y :: term*)) = t_y :: $vars_list(D, sort_x, false, term*)
+  -- if $is_binder(D, symid)
+def $vars(D, sort_x, b, APP symid sort* term*) = $vars_list(D, sort_x, b, term*)
+  -- if ~$is_binder(D, symid)
+def $vars(D, sort_x, b, term) = eps
+  -- otherwise
+def $vars_list(D, sort_x, b, eps) = eps
+def $vars_list(D, sort_x, b, term_h :: term_t*) = $vars(D, sort_x, b, term_h) ++ $vars_list(D, sort_x, b, term_t*)
+
+;; A variable name not among the given ones, made by adding primes
+
+dec $fresh_var(text, text*) : text
+def $fresh_var(t, t_a*) = t ++ "'"
+  -- if ~((t ++ "'") <- t_a*)
+def $fresh_var(t, t_a*) = $fresh_var(t ++ "'", t_a*)
+  -- if (t ++ "'") <- t_a*
+
+;; Renaming the free occurrences of a variable
+
+dec $rename(definition, sort, text, text, term) : term
+dec $rename_list(definition, sort, text, text, term*) : term*
+def $rename(D, sort_x, t, t', DV sort t_o) = DV sort t'
+  -- if sort = sort_x /\ t_o = t
+def $rename(D, sort_x, t, t', DV sort t_o) = DV sort t_o
+  -- if ~(sort = sort_x /\ t_o = t)
+def $rename(D, sort_x, t, t', APP symid sort* (DV sort_y t_y :: term*)) = APP symid sort* (DV sort_y t_y :: term*)
+  -- if $is_binder(D, symid) /\ t_y = t
+def $rename(D, sort_x, t, t', APP symid sort* (DV sort_y t_y :: term*)) = APP symid sort* (DV sort_y t_y :: $rename_list(D, sort_x, t, t', term*))
+  -- if $is_binder(D, symid) /\ t_y =/= t
+def $rename(D, sort_x, t, t', APP symid sort* term*) = APP symid sort* $rename_list(D, sort_x, t, t', term*)
+  -- if ~$is_binder(D, symid)
+def $rename(D, sort_x, t, t', INT i) = INT i
+def $rename(D, sort_x, t, t', BOOL b) = BOOL b
+def $rename(D, sort_x, t, t', STRING t_s) = STRING t_s
+def $rename(D, sort_x, t, t', FLOAT t_f) = FLOAT t_f
+def $rename(D, sort_x, t, t', BYTES n*) = BYTES n*
+def $rename(D, sort_x, t, t', MINT n_w n_v) = MINT n_w n_v
+def $rename(D, sort_x, t, t', MAP sort M) = MAP sort M
+def $rename(D, sort_x, t, t', SET sort S) = SET sort S
+def $rename(D, sort_x, t, t', LIST sort term*) = LIST sort term*
+def $rename(D, sort_x, t, t', RANGEMAP sort rangeitem*) = RANGEMAP sort rangeitem*
+def $rename_list(D, sort_x, t, t', eps) = eps
+def $rename_list(D, sort_x, t, t', term_h :: term_t*) = $rename(D, sort_x, t, t', term_h) :: $rename_list(D, sort_x, t, t', term_t*)
+
+;; Putting V of sort sort_v where a term of sort sort_s is expected. The LLVM
+;; backend puts V there with its injection, also when the sorts are the same
+;; (hook_SUBSTITUTION_substOne in runtime/meta/substitution.cpp), and krun then
+;; prints inj{S, S}(V).
+
+dec $inject(sort, sort, term) : term
+def $inject(sort_v, sort_s, term) = $construct("inj", ([sort_v, sort_s]), ([term]))
+
+dec $is_var_occurrence(sort, text, term) : bool
+def $is_var_occurrence(sort_x, t_x, APP "inj" ([sort_x', sort_s]) ([DV sort_x'' t])) = true
+  -- if sort_x' = sort_x /\ sort_x'' = sort_x /\ t = t_x
+def $is_var_occurrence(sort_x, t_x, term) = false
+  -- otherwise
+
+;; Capture-avoiding substitution of V (of sort sort_v) for the variable t_x of sort sort_x
+
+dec $subst(definition, sort, text, sort, term, term) : res<term>
+dec $subst_list(definition, sort, text, sort, term, term*) : res<term*>
+
+;;; an occurrence of the variable, injected into the sort expected at its position
+def $subst(D, sort_x, t_x, sort_v, term_v, APP "inj" ([sort_x', sort_s]) ([DV sort_x'' t])) = OK $inject(sort_v, sort_s, term_v)
+  -- if sort_x' = sort_x /\ sort_x'' = sort_x /\ t = t_x
+;;; a binder of the same variable hides it
+def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* (DV sort_y t_y :: term*)) = OK (APP symid sort* (DV sort_y t_y :: term*))
+  -- if $is_binder(D, symid) /\ t_y = t_x
+;;; a binder of another variable that does not occur free in V
+def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* (DV sort_y t_y :: term*)) = OK (APP symid sort* (DV sort_y t_y :: term'*))
+  -- if $is_binder(D, symid) /\ t_y =/= t_x
+  -- if ~(t_y <- $vars(D, sort_x, true, term_v))
+  -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
+;;; a binder of a variable that occurs free in V is renamed first
+def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* (DV sort_y t_y :: term*)) = OK (APP symid sort* (DV sort_y t_y' :: term'*))
+  -- if $is_binder(D, symid) /\ t_y =/= t_x
+  -- if t_y <- $vars(D, sort_x, true, term_v)
+  -- if t_y' = $fresh_var(t_y, $vars(D, sort_x, true, term_v) ++ $vars_list(D, sort_x, false, term*))
+  -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, $rename_list(D, sort_x, t_y, t_y', term*))
+;;; other symbol applications
+def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* term*) = OK (APP symid sort* term'*)
+  -- if ~$is_binder(D, symid)
+  -- if ~$is_var_occurrence(sort_x, t_x, APP symid sort* term*)
+  -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
+;;; domain values
+def $subst(D, sort_x, t_x, sort_v, term_v, DV sort t) = OK (DV sort t)
+def $subst(D, sort_x, t_x, sort_v, term_v, INT i) = OK (INT i)
+def $subst(D, sort_x, t_x, sort_v, term_v, BOOL b) = OK (BOOL b)
+def $subst(D, sort_x, t_x, sort_v, term_v, STRING t) = OK (STRING t)
+def $subst(D, sort_x, t_x, sort_v, term_v, FLOAT t) = OK (FLOAT t)
+def $subst(D, sort_x, t_x, sort_v, term_v, BYTES n*) = OK (BYTES n*)
+def $subst(D, sort_x, t_x, sort_v, term_v, MINT n_w n_v) = OK (MINT n_w n_v)
+;;; collections are not supported yet
+def $subst(D, sort_x, t_x, sort_v, term_v, term) = FAIL
+  -- otherwise
+
+def $subst_list(D, sort_x, t_x, sort_v, term_v, eps) = OK eps
+def $subst_list(D, sort_x, t_x, sort_v, term_v, term_h :: term_t*) = OK (term_h' :: term_t'*)
+  -- if OK term_h' = $subst(D, sort_x, t_x, sort_v, term_v, term_h)
+  -- if OK term_t'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term_t*)
+def $subst_list(D, sort_x, t_x, sort_v, term_v, term*) = FAIL
+  -- otherwise
+
+;; Builtins the K spec delegates to (decisions D6 in k-in-p4), implemented in
+;; p4spec/lib/interface/kore/builtins.ml after the LLVM backend's runtime.
+;; Together with P4-SpecTec's own builtins, this list is the trusted base for
+;; hooks.
+
+builtin dec $string_length(text) : int
+  hint(prose_in "the number of bytes of" %0)
+builtin dec $string_substr(text, int, int) : text
+  hint(prose_in "the bytes of" %0 "from" %1 "up to" %2)
+builtin dec $string_find(text, text, int) : int
+  hint(prose_in "the first position from" %2 "where" %1 "occurs in" %0 ", or -1")
+builtin dec $string_find_char(text, text, int) : int
+  hint(prose_in "the first position from" %2 "where a byte of" %1 "occurs in" %0 ", or -1")
+builtin dec $string_chr(int) : text
+  hint(prose_in "the byte" %0)
+builtin dec $int_to_string(int) : text
+  hint(prose_in "the decimal notation of" %0)
+builtin dec $string_to_int(text) : int?
+  hint(prose_in "the integer written in decimal as" %0)
+builtin dec $string_replace(text, text, text, nat) : text
+  hint(prose_in %0 "with its first" %3 "occurrences of" %1 "replaced by" %2)
+builtin dec $string_count(text, text) : nat
+  hint(prose_in "the number of occurrences of" %1 "in" %0)
+builtin dec $string_to_base(text, int) : int?
+  hint(prose_in "the integer written in base" %1 "as" %0)
+builtin dec $int_and(int, int) : int
+  hint(prose_in "the bitwise and of" %0 "and" %1 "in two's complement")
+builtin dec $int_or(int, int) : int
+  hint(prose_in "the bitwise or of" %0 "and" %1 "in two's complement")
+builtin dec $int_xor(int, int) : int
+  hint(prose_in "the bitwise exclusive or of" %0 "and" %1 "in two's complement")
+builtin dec $int_not(int) : int
+  hint(prose_in "the bitwise complement of" %0 "in two's complement")
+builtin dec $int_shl(int, nat) : int
+  hint(prose_in %0 "shifted left by" %1 "bits")
+builtin dec $int_shr(int, nat) : int
+  hint(prose_in %0 "shifted right by" %1 "bits, rounding down")
+builtin dec $int_log2(int) : int
+  hint(prose_in "the base-2 logarithm of" %0 ", rounded down")
+builtin dec $int_to_bytes(nat, int, bool) : nat*
+  hint(prose_in "the" %0 "lowest bytes of" %1 "in two's complement, big-endian if" %2)
+builtin dec $bytes_to_int(nat*, bool, bool) : int
+  hint(prose_in "the integer with bytes" %0 ", big-endian if" %1 ", signed if" %2)
+builtin dec $float_add(text, text) : text
+  hint(prose_in "the sum of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_sub(text, text) : text
+  hint(prose_in "the difference of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_mul(text, text) : text
+  hint(prose_in "the product of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_div(text, text) : text
+  hint(prose_in "the quotient of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_min(text, text) : text
+  hint(prose_in "the smaller of" %0 "and" %1)
+builtin dec $float_max(text, text) : text
+  hint(prose_in "the larger of" %0 "and" %1)
+builtin dec $float_neg(text) : text
+  hint(prose_in "the negation of" %0)
+builtin dec $float_abs(text) : text
+  hint(prose_in "the absolute value of" %0)
+builtin dec $float_ceil(text) : text
+  hint(prose_in %0 "rounded up to an integer")
+builtin dec $float_floor(text) : text
+  hint(prose_in %0 "rounded down to an integer")
+builtin dec $float_trunc(text) : text
+  hint(prose_in %0 "rounded towards zero to an integer")
+builtin dec $float_root(text, nat) : text?
+  hint(prose_in "the" %1 "-th root of" %0)
+builtin dec $float_round(text, nat, nat) : text
+  hint(prose_in %0 "rounded to precision" %1 "with" %2 "exponent bits")
+builtin dec $int_to_float(int, nat, nat) : text
+  hint(prose_in %0 "rounded to precision" %1 "with" %2 "exponent bits")
+builtin dec $float_to_int(text) : int?
+  hint(prose_in %0 "rounded to the nearest integer")
+builtin dec $float_max_value(nat, nat) : text
+  hint(prose_in "the largest finite float of precision" %0 "with" %1 "exponent bits")
+builtin dec $float_precision(text) : nat
+  hint(prose_in "the precision of" %0)
+builtin dec $float_exponent_bits(text) : nat
+  hint(prose_in "the number of exponent bits of" %0)
+builtin dec $float_sign(text) : bool
+  hint(prose_in "whether the sign bit of" %0 "is set")
+builtin dec $float_is_nan(text) : bool
+  hint(prose_in "whether" %0 "is NaN")
+builtin dec $float_eq(text, text) : bool
+  hint(prose_in "whether" %0 "equals" %1)
+builtin dec $float_lt(text, text) : bool
+  hint(prose_in "whether" %0 "is less than" %1)
+builtin dec $float_le(text, text) : bool
+  hint(prose_in "whether" %0 "is at most" %1)
+builtin dec $float_gt(text, text) : bool
+  hint(prose_in "whether" %0 "is greater than" %1)
+builtin dec $float_ge(text, text) : bool
+  hint(prose_in "whether" %0 "is at least" %1)
+builtin dec $string_to_bytes(text) : nat*
+  hint(prose_in "the bytes of" %0)
+builtin dec $bytes_to_string(nat*) : text
+  hint(prose_in "the text with bytes" %0)
+
+dec $hook(definition, hookid, sort, term*) : res<term>
+  hint(prose_in "the result of hook" %0 "on" %2)
+
+;;; BOOL
+
+def $hook(D, "BOOL.not", sort, ([BOOL b])) = OK (BOOL (~b))
+def $hook(D, "BOOL.eq", sort, ([BOOL b_1, BOOL b_2])) = OK (BOOL $(b_1 = b_2))
+def $hook(D, "BOOL.ne", sort, ([BOOL b_1, BOOL b_2])) = OK (BOOL $(b_1 =/= b_2))
+
+;;; INT
+;;; P4-SpecTec division truncates towards zero and its remainder takes the sign
+;;; of the dividend, as INT.tdiv and INT.tmod do. Division by zero fails, as the
+;;; LLVM backend reports an error.
+
+def $hook(D, "INT.add", sort, ([INT i_1, INT i_2])) = OK (INT $(i_1 + i_2))
+def $hook(D, "INT.sub", sort, ([INT i_1, INT i_2])) = OK (INT $(i_1 - i_2))
+def $hook(D, "INT.mul", sort, ([INT i_1, INT i_2])) = OK (INT $(i_1 * i_2))
+def $hook(D, "INT.tdiv", sort, ([INT i_1, INT i_2])) = OK (INT $(i_1 / i_2))
+  -- if i_2 =/= 0
+def $hook(D, "INT.tmod", sort, ([INT i_1, INT i_2])) = OK (INT $(i_1 \ i_2))
+  -- if i_2 =/= 0
+def $hook(D, "INT.eq", sort, ([INT i_1, INT i_2])) = OK (BOOL $(i_1 = i_2))
+def $hook(D, "INT.ne", sort, ([INT i_1, INT i_2])) = OK (BOOL $(i_1 =/= i_2))
+def $hook(D, "INT.lt", sort, ([INT i_1, INT i_2])) = OK (BOOL $(i_1 < i_2))
+def $hook(D, "INT.le", sort, ([INT i_1, INT i_2])) = OK (BOOL $(i_1 <= i_2))
+def $hook(D, "INT.gt", sort, ([INT i_1, INT i_2])) = OK (BOOL $(i_1 > i_2))
+def $hook(D, "INT.ge", sort, ([INT i_1, INT i_2])) = OK (BOOL $(i_1 >= i_2))
+
+def $hook(D, "INT.min", sort, ([INT i_1, INT i_2])) = OK (INT i_1)
+  -- if $(i_1 <= i_2)
+def $hook(D, "INT.min", sort, ([INT i_1, INT i_2])) = OK (INT i_2)
+  -- if $(i_1 > i_2)
+def $hook(D, "INT.max", sort, ([INT i_1, INT i_2])) = OK (INT i_1)
+  -- if $(i_1 >= i_2)
+def $hook(D, "INT.max", sort, ([INT i_1, INT i_2])) = OK (INT i_2)
+  -- if $(i_1 < i_2)
+
+;;; Euclidean remainder: the truncated remainder, made non-negative; Euclidean
+;;; division leaves it, as hook_INT_ediv rounds down for a positive divisor
+;;; and up for a negative one
+
+def $hook(D, "INT.emod", sort, ([INT i_1, INT i_2])) = OK (INT $(i_1 \ i_2))
+  -- if i_2 =/= 0
+  -- if $((i_1 \ i_2) >= 0)
+def $hook(D, "INT.emod", sort, ([INT i_1, INT i_2])) = OK (INT $((i_1 \ i_2) + i_2))
+  -- if $(i_2 > 0)
+  -- if $((i_1 \ i_2) < 0)
+def $hook(D, "INT.emod", sort, ([INT i_1, INT i_2])) = OK (INT $((i_1 \ i_2) - i_2))
+  -- if $(i_2 < 0)
+  -- if $((i_1 \ i_2) < 0)
+def $hook(D, "INT.ediv", sort, ([INT i_1, INT i_2])) = OK (INT $((i_1 - i_r) / i_2))
+  -- if OK (INT i_r) = $hook(D, "INT.emod", sort, ([INT i_1, INT i_2]))
+
+;;; Powers by repeated squaring; a negative exponent fails
+
+dec $int_pow(int, nat) : int
+def $int_pow(i, n) = 1
+  -- if n = 0
+def $int_pow(i, n) = $int_pow($(i * i), n_h)
+  -- if $(n > 0) /\ $(n \ 2 = 0)
+  -- if n_h = $(n / 2)
+def $int_pow(i, n) = $(i * $int_pow($(i * i), n_h))
+  -- if $(n \ 2 = 1)
+  -- if n_h = $(n / 2)
+
+def $hook(D, "INT.pow", sort, ([INT i_1, INT i_2])) = OK (INT $int_pow(i_1, n))
+  -- if n = $nat_of(i_2)
+def $hook(D, "INT.abs", sort, ([INT i])) = OK (INT i)
+  -- if $(i >= 0)
+def $hook(D, "INT.abs", sort, ([INT i])) = OK (INT $(- i))
+  -- if $(i < 0)
+
+;;; Bitwise operations work on two's complement and are builtins. A negative
+;;; shift amount and the logarithm of a nonpositive number fail.
+
+def $hook(D, "INT.and", sort, ([INT i_1, INT i_2])) = OK (INT $int_and(i_1, i_2))
+def $hook(D, "INT.or", sort, ([INT i_1, INT i_2])) = OK (INT $int_or(i_1, i_2))
+def $hook(D, "INT.xor", sort, ([INT i_1, INT i_2])) = OK (INT $int_xor(i_1, i_2))
+def $hook(D, "INT.not", sort, ([INT i])) = OK (INT $int_not(i))
+def $hook(D, "INT.shl", sort, ([INT i_1, INT i_2])) = OK (INT $int_shl(i_1, n))
+  -- if n = $nat_of(i_2)
+def $hook(D, "INT.shr", sort, ([INT i_1, INT i_2])) = OK (INT $int_shr(i_1, n))
+  -- if n = $nat_of(i_2)
+def $hook(D, "INT.log2", sort, ([INT i])) = OK (INT $int_log2(i))
+  -- if $(i > 0)
+
+;;; KEQUAL (#if is lazy and handled by the evaluator)
+
+def $hook(D, "KEQUAL.eq", sort, ([term_1, term_2])) = OK (BOOL $term_eq(term_1, term_2))
+def $hook(D, "KEQUAL.ne", sort, ([term_1, term_2])) = OK (BOOL (~$term_eq(term_1, term_2)))
+
+;;; STRING
+;;; Concatenation and comparison are P4-SpecTec's own; the others are builtins.
+;;; Where the LLVM backend reports an error, the hook fails.
+
+def $hook(D, "STRING.concat", sort, ([STRING t_1, STRING t_2])) = OK (STRING (t_1 ++ t_2))
+def $hook(D, "STRING.eq", sort, ([STRING t_1, STRING t_2])) = OK (BOOL $(t_1 = t_2))
+def $hook(D, "STRING.ne", sort, ([STRING t_1, STRING t_2])) = OK (BOOL $(t_1 =/= t_2))
+def $hook(D, "STRING.length", sort, ([STRING t])) = OK (INT $string_length(t))
+def $hook(D, "STRING.substr", sort, ([STRING t, INT i_1, INT i_2])) = OK (STRING $string_substr(t, i_1, i_2))
+  -- if $(0 <= i_1) /\ $(i_1 <= i_2) /\ $(i_2 <= $string_length(t))
+def $hook(D, "STRING.find", sort, ([STRING t_1, STRING t_2, INT i])) = OK (INT $string_find(t_1, t_2, i))
+  -- if $(i >= 0)
+def $hook(D, "STRING.findChar", sort, ([STRING t_1, STRING t_2, INT i])) = OK (INT $string_find_char(t_1, t_2, i))
+  -- if $(i >= 0)
+def $hook(D, "STRING.chr", sort, ([INT i])) = OK (STRING $string_chr(i))
+  -- if $(0 <= i) /\ $(i <= 255)
+def $hook(D, "STRING.int2string", sort, ([INT i])) = OK (STRING $int_to_string(i))
+def $hook(D, "STRING.string2int", sort, ([STRING t])) = OK (INT i)
+  -- if i = $string_to_int(t)
+def $hook(D, "STRING.string2base", sort, ([STRING t, INT i_b])) = OK (INT i)
+  -- if i = $string_to_base(t, i_b)
+
+;;; Replacing: replaceAll replaces as many occurrences as the string has bytes
+
+def $hook(D, "STRING.replace", sort, ([STRING t, STRING t_n, STRING t_r, INT i])) = OK (STRING $string_replace(t, t_n, t_r, n))
+  -- if n = $nat_of(i)
+def $hook(D, "STRING.replaceAll", sort, ([STRING t, STRING t_n, STRING t_r])) = OK (STRING $string_replace(t, t_n, t_r, n))
+  -- if n = $nat_of($string_length(t))
+def $hook(D, "STRING.replaceFirst", sort, ([STRING t, STRING t_n, STRING t_r])) = OK (STRING $string_replace(t, t_n, t_r, 1))
+def $hook(D, "STRING.countAllOccurrences", sort, ([STRING t, STRING t_n])) = OK (INT $string_count(t, t_n))
+
+;;; The text of a token, possibly under one injection, or of a string
+
+def $hook(D, "STRING.token2string", sort, ([DV sort_t t])) = OK (STRING t)
+def $hook(D, "STRING.token2string", sort, ([APP "inj" ([sort_1, sort_2]) ([DV sort_t t])])) = OK (STRING t)
+def $hook(D, "STRING.token2string", sort, ([STRING t])) = OK (STRING t)
+
+;;; A token of the result sort with the text of a string (String2KVar in
+;;; substitution.md)
+
+def $hook(D, "STRING.string2token", sort, ([STRING t])) = OK (DV sort t)
+
+;;; BUFFER: a string buffer is its text so far
+
+def $hook(D, "BUFFER.empty", sort, eps) = OK (STRING "")
+def $hook(D, "BUFFER.concat", sort, ([STRING t_1, STRING t_2])) = OK (STRING (t_1 ++ t_2))
+def $hook(D, "BUFFER.toString", sort, ([STRING t])) = OK (STRING t)
+
+;;; LIST
+
+def $hook(D, "LIST.unit", sort, eps) = OK (LIST sort eps)
+def $hook(D, "LIST.element", sort, ([term])) = OK (LIST sort ([ term ]))
+def $hook(D, "LIST.concat", sort, ([LIST sort_1 term_1*, LIST sort_2 term_2*])) = OK (LIST sort (term_1* ++ term_2*))
+def $hook(D, "LIST.make", sort, ([INT i, term])) = OK (LIST sort $repeat_<term>(term, n))
+  -- if n = $nat_of(i)
+def $hook(D, "LIST.size", sort, ([LIST sort_l term*])) = OK (INT $(|term*|))
+def $hook(D, "LIST.get", sort, ([LIST sort_l term*, INT i])) = OK term_e
+  -- if term_e = $list_at(term*, i)
+def $hook(D, "LIST.in", sort, ([term, LIST sort_l term_e*])) = OK (BOOL $in_terms(term, term_e*))
+def $hook(D, "LIST.update", sort, ([LIST sort_l term*, INT i, term_v]))
+  = OK (LIST sort_l (term*[0 : n] ++ [ term_v ] ++ term*[n_a : n_r]))
+  -- if n = $nat_of(i)
+  -- if $(n < |term*|)
+  -- if n_a = $(n + 1)
+  -- if n_r = $nat_of($(|term*| - n_a))
+
+;;; MAP
+;;; The result sort of the hooked symbol decides which map sort is built.
+
+def $hook(D, "MAP.unit", sort, eps) = OK (MAP sort `{ eps `})
+def $hook(D, "MAP.element", sort, ([term_k, term_v])) = OK (MAP sort `{ term_k ':' term_v `})
+def $hook(D, "MAP.concat", sort, ([MAP sort_1 M_1, MAP sort_2 M_2])) = OK (MAP sort M)
+  -- if OK M = $concat_map(M_1, M_2)
+def $hook(D, "MAP.lookup", sort, ([MAP sort_m M, term_k])) = OK term_v
+  -- if term_v = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.keys", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}])) = OK (SET sort `{ term_k* `})
+def $hook(D, "MAP.update", sort, ([MAP sort_m M, term_k, term_v])) = OK (MAP sort_m $update_map<term, term>(M, term_k, term_v))
+def $hook(D, "MAP.in_keys", sort, ([term_k, MAP sort_m M])) = OK (BOOL true)
+  -- if term_v = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.in_keys", sort, ([term_k, MAP sort_m M])) = OK (BOOL false)
+  -- if eps = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.lookupOrDefault", sort, ([MAP sort_m M, term_k, term_d])) = OK term_v
+  -- if term_v = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.lookupOrDefault", sort, ([MAP sort_m M, term_k, term_d])) = OK term_d
+  -- if eps = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.size", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}])) = OK (INT $(|term_k*|))
+
+;;; choice gives some key or element: K leaves which one unspecified, and the
+;;; LLVM backend gives the first one in its hash trie. Here it is the smallest
+;;; in the order of P4-SpecTec values, in which sets are kept
+;;; (p4spec/lib/interface/builtin/sets.ml), so it agrees with krun when the
+;;; collection has one element.
+
+def $hook(D, "MAP.choice", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}])) = OK term
+  -- if `{ term :: term_t* `} = $union_set<term>(`{ term_k* `}, `{ eps `})
+
+;;; SET
+
+def $hook(D, "SET.unit", sort, eps) = OK (SET sort `{ eps `})
+def $hook(D, "SET.element", sort, ([term])) = OK (SET sort `{ term `})
+def $hook(D, "SET.concat", sort, ([SET sort_1 S_1, SET sort_2 S_2])) = OK (SET sort $union_set<term>(S_1, S_2))
+def $hook(D, "SET.difference", sort, ([SET sort_1 S_1, SET sort_2 S_2])) = OK (SET sort_1 $diff_set<term>(S_1, S_2))
+def $hook(D, "SET.choice", sort, ([SET sort_s S])) = OK term
+  -- if `{ term :: term_t* `} = $union_set<term>(S, `{ eps `})
+def $hook(D, "SET.in", sort, ([term, SET sort_s `{ term_e* `}])) = OK (BOOL $in_list(term, term_e*))
+
+;;; BYTES
+;;; A byte list (decisions D9 in k-in-p4). memset takes a fill value from -128
+;;; to 127, as hook_BYTES_memset does. Structural operations are written
+;;; here with P4-SpecTec's list operations; conversions to and from integers
+;;; and strings are builtins. Where the LLVM backend reports an error (a
+;;; negative length or index, a slice or replacement out of bounds, a padding
+;;; value that is not a byte), the hook fails.
+
+dec $is_big_endian(term) : bool
+def $is_big_endian(APP "LblbigEndianBytes" eps eps) = true
+def $is_big_endian(term) = false
+  -- otherwise
+
+dec $is_unsigned(term) : bool
+def $is_unsigned(APP "LblunsignedBytes" eps eps) = true
+def $is_unsigned(term) = false
+  -- otherwise
+
+def $hook(D, "BYTES.empty", sort, eps) = OK (BYTES eps)
+def $hook(D, "BYTES.length", sort, ([BYTES n*])) = OK (INT $(|n*|))
+def $hook(D, "BYTES.concat", sort, ([BYTES n_1*, BYTES n_2*])) = OK (BYTES (n_1* ++ n_2*))
+def $hook(D, "BYTES.substr", sort, ([BYTES n*, INT i_s, INT i_e])) = OK (BYTES n*[n_s : n_l])
+  -- if n_s = $nat_of(i_s)
+  -- if n_e = $nat_of(i_e)
+  -- if $(n_s <= n_e) /\ $(n_e <= |n*|)
+  -- if n_l = $nat_of($(n_e - n_s))
+def $hook(D, "BYTES.replaceAt", sort, ([BYTES n_d*, INT i, BYTES n_r*]))
+  = OK (BYTES (n_d*[0 : n_s] ++ n_r* ++ n_d*[n_a : n_l]))
+  -- if n_s = $nat_of(i)
+  -- if n_a = $(n_s + |n_r*|)
+  -- if $(n_a <= |n_d*|)
+  -- if n_l = $nat_of($(|n_d*| - n_a))
+def $hook(D, "BYTES.padRight", sort, ([BYTES n*, INT i_l, INT i_v])) = OK (BYTES n*)
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l <= |n*|)
+def $hook(D, "BYTES.padRight", sort, ([BYTES n*, INT i_l, INT i_v])) = OK (BYTES (n* ++ $repeat_<nat>(n_v, n_p)))
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l > |n*|)
+  -- if n_v = $nat_of(i_v)
+  -- if $(n_v <= 255)
+  -- if n_p = $nat_of($(n_l - |n*|))
+def $hook(D, "BYTES.padLeft", sort, ([BYTES n*, INT i_l, INT i_v])) = OK (BYTES n*)
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l <= |n*|)
+def $hook(D, "BYTES.padLeft", sort, ([BYTES n*, INT i_l, INT i_v])) = OK (BYTES ($repeat_<nat>(n_v, n_p) ++ n*))
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l > |n*|)
+  -- if n_v = $nat_of(i_v)
+  -- if $(n_v <= 255)
+  -- if n_p = $nat_of($(n_l - |n*|))
+def $hook(D, "BYTES.get", sort, ([BYTES n*, INT i])) = OK (INT n*[n_i])
+  -- if n_i = $nat_of(i)
+  -- if $(n_i < |n*|)
+def $hook(D, "BYTES.update", sort, ([BYTES n*, INT i, INT i_v])) = OK (BYTES (n*[0 : n_i] ++ [ n_v ] ++ n*[n_a : n_l]))
+  -- if n_i = $nat_of(i)
+  -- if $(n_i < |n*|)
+  -- if n_v = $nat_of(i_v)
+  -- if $(n_v < 256)
+  -- if n_a = $(n_i + 1)
+  -- if n_l = $nat_of($(|n*| - n_a))
+def $hook(D, "BYTES.memset", sort, ([BYTES n*, INT i_s, INT i_c, INT i_v]))
+  = OK (BYTES (n*[0 : n_s] ++ $repeat_<nat>(n_v, n_c) ++ n*[n_a : n_l]))
+  -- if n_s = $nat_of(i_s)
+  -- if n_c = $nat_of(i_c)
+  -- if n_a = $(n_s + n_c)
+  -- if $(n_a <= |n*|)
+  -- if $(-128 <= i_v) /\ $(i_v <= 127)
+  -- if n_v = $nat_of($((i_v + 256) \ 256))
+  -- if n_l = $nat_of($(|n*| - n_a))
+def $hook(D, "BYTES.int2bytes", sort, ([INT i_l, INT i, term_e])) = OK (BYTES $int_to_bytes(n_l, i, $is_big_endian(term_e)))
+  -- if n_l = $nat_of(i_l)
+;;; a negative length counts by its absolute value, as hook_BYTES_int2bytes
+;;; reads it with mpz_get_ui
+def $hook(D, "BYTES.int2bytes", sort, ([INT i_l, INT i, term_e])) = OK (BYTES $int_to_bytes(n_l, i, $is_big_endian(term_e)))
+  -- if $(i_l < 0)
+  -- if n_l = $nat_of($(- i_l))
+def $hook(D, "BYTES.bytes2int", sort, ([BYTES n*, term_e, term_s])) = OK (INT $bytes_to_int(n*, $is_big_endian(term_e), ~$is_unsigned(term_s)))
+def $hook(D, "BYTES.string2bytes", sort, ([STRING t])) = OK (BYTES $string_to_bytes(t))
+def $hook(D, "BYTES.bytes2string", sort, ([BYTES n*])) = OK (STRING $bytes_to_string(n*))
+
+;;; FLOAT
+;;; Floats are text in the backend's output format (decisions D9 in k-in-p4) and
+;;; all operations are builtins, computed with MPFR as the LLVM backend does.
+;;; Equality ==Float is numeric (NaN is unequal to itself, -0.0 equals 0.0),
+;;; unlike ==K. A negative precision or exponent width, a root other than a
+;;; square root, and the integer of an infinity or NaN fail.
+
+def $hook(D, "FLOAT.add", sort, ([FLOAT t_1, FLOAT t_2])) = OK (FLOAT $float_add(t_1, t_2))
+def $hook(D, "FLOAT.sub", sort, ([FLOAT t_1, FLOAT t_2])) = OK (FLOAT $float_sub(t_1, t_2))
+def $hook(D, "FLOAT.mul", sort, ([FLOAT t_1, FLOAT t_2])) = OK (FLOAT $float_mul(t_1, t_2))
+def $hook(D, "FLOAT.div", sort, ([FLOAT t_1, FLOAT t_2])) = OK (FLOAT $float_div(t_1, t_2))
+def $hook(D, "FLOAT.min", sort, ([FLOAT t_1, FLOAT t_2])) = OK (FLOAT $float_min(t_1, t_2))
+def $hook(D, "FLOAT.max", sort, ([FLOAT t_1, FLOAT t_2])) = OK (FLOAT $float_max(t_1, t_2))
+def $hook(D, "FLOAT.neg", sort, ([FLOAT t])) = OK (FLOAT $float_neg(t))
+def $hook(D, "FLOAT.abs", sort, ([FLOAT t])) = OK (FLOAT $float_abs(t))
+def $hook(D, "FLOAT.ceil", sort, ([FLOAT t])) = OK (FLOAT $float_ceil(t))
+def $hook(D, "FLOAT.floor", sort, ([FLOAT t])) = OK (FLOAT $float_floor(t))
+def $hook(D, "FLOAT.trunc", sort, ([FLOAT t])) = OK (FLOAT $float_trunc(t))
+def $hook(D, "FLOAT.root", sort, ([FLOAT t, INT i])) = OK (FLOAT t')
+  -- if n = $nat_of(i)
+  -- if t' = $float_root(t, n)
+def $hook(D, "FLOAT.round", sort, ([FLOAT t, INT i_p, INT i_e])) = OK (FLOAT $float_round(t, n_p, n_e))
+  -- if n_p = $nat_of(i_p)
+  -- if n_e = $nat_of(i_e)
+  -- if $(n_p >= 1) /\ $(n_e >= 1)
+def $hook(D, "FLOAT.int2float", sort, ([INT i, INT i_p, INT i_e])) = OK (FLOAT $int_to_float(i, n_p, n_e))
+  -- if n_p = $nat_of(i_p)
+  -- if n_e = $nat_of(i_e)
+  -- if $(n_p >= 1) /\ $(n_e >= 1)
+def $hook(D, "FLOAT.float2int", sort, ([FLOAT t])) = OK (INT i)
+  -- if i = $float_to_int(t)
+def $hook(D, "FLOAT.maxValue", sort, ([INT i_p, INT i_e])) = OK (FLOAT $float_max_value(n_p, n_e))
+  -- if n_p = $nat_of(i_p)
+  -- if n_e = $nat_of(i_e)
+  -- if $(n_p >= 1) /\ $(n_e >= 1)
+def $hook(D, "FLOAT.precision", sort, ([FLOAT t])) = OK (INT $float_precision(t))
+def $hook(D, "FLOAT.exponentBits", sort, ([FLOAT t])) = OK (INT $float_exponent_bits(t))
+def $hook(D, "FLOAT.sign", sort, ([FLOAT t])) = OK (BOOL $float_sign(t))
+def $hook(D, "FLOAT.isNaN", sort, ([FLOAT t])) = OK (BOOL $float_is_nan(t))
+def $hook(D, "FLOAT.eq", sort, ([FLOAT t_1, FLOAT t_2])) = OK (BOOL $float_eq(t_1, t_2))
+def $hook(D, "FLOAT.ne", sort, ([FLOAT t_1, FLOAT t_2])) = OK (BOOL (~$float_eq(t_1, t_2)))
+def $hook(D, "FLOAT.lt", sort, ([FLOAT t_1, FLOAT t_2])) = OK (BOOL $float_lt(t_1, t_2))
+def $hook(D, "FLOAT.le", sort, ([FLOAT t_1, FLOAT t_2])) = OK (BOOL $float_le(t_1, t_2))
+def $hook(D, "FLOAT.gt", sort, ([FLOAT t_1, FLOAT t_2])) = OK (BOOL $float_gt(t_1, t_2))
+def $hook(D, "FLOAT.ge", sort, ([FLOAT t_1, FLOAT t_2])) = OK (BOOL $float_ge(t_1, t_2))
+
+;;; RANGEMAP
+;;; A range map with integer keys (decisions D5 in k-in-p4), after the LLVM
+;;; backend's runtime (include/runtime/collections/rangemap.h and
+;;; runtime/collections/rangemaps.cpp). Inserting a range cuts the ranges it
+;;; overlaps that have other values, and merges it with those it overlaps or
+;;; touches that have the same value; so a range map has one representation,
+;;; its ranges in order. Inserting or removing an empty range, concatenating
+;;; overlapping maps, and looking up a missing key fail. choice gives the
+;;; smallest key; the LLVM backend gives the start of the range at the root of
+;;; its tree, which agrees when the map has one range.
+
+;; Keys are integers injected into KItem
+
+dec $key_int(term) : int?
+def $key_int(APP "inj" ([sort_a, sort_k]) ([INT i])) = i
+def $key_int(term) = eps
+  -- otherwise
+
+dec $int_key(int) : term
+def $int_key(i) = APP "inj" ([SORT "SortInt" eps, SORT "SortKItem" eps]) ([INT i])
+
+;; Ranges are RangeMap:Range(start, end) terms, injected into KItem as keys
+
+dec $range_term(int, int) : term
+def $range_term(i_s, i_e) = APP "LblRangeMap'Coln'Range" eps ([$int_key(i_s), $int_key(i_e)])
+
+dec $range_key(int, int) : term
+def $range_key(i_s, i_e) = APP "inj" ([SORT "SortRange" eps, SORT "SortKItem" eps]) ([$range_term(i_s, i_e)])
+
+dec $range_bounds(term) : (int, int)?
+def $range_bounds(APP "LblRangeMap'Coln'Range" eps ([term_s, term_e])) = (i_s, i_e)
+  -- if i_s = $key_int(term_s)
+  -- if i_e = $key_int(term_e)
+def $range_bounds(APP "inj" ([sort_r, sort_k]) ([term])) = $range_bounds(term)
+def $range_bounds(term) = eps
+  -- otherwise
+
+dec $imin(int, int) : int
+def $imin(i_1, i_2) = i_1
+  -- if $(i_1 <= i_2)
+def $imin(i_1, i_2) = i_2
+  -- if $(i_1 > i_2)
+
+dec $imax(int, int) : int
+def $imax(i_1, i_2) = i_1
+  -- if $(i_1 >= i_2)
+def $imax(i_1, i_2) = i_2
+  -- if $(i_1 < i_2)
+
+;; Whether a range overlaps [i_s, i_e), or overlaps or touches it
+
+dec $overlaps(int, int, rangeitem) : bool
+def $overlaps(i_s, i_e, RANGE i_rs i_re term) = $(i_re > i_s) /\ $(i_e > i_rs)
+
+dec $touches(int, int, rangeitem) : bool
+def $touches(i_s, i_e, RANGE i_rs i_re term) = $(i_re >= i_s) /\ $(i_e >= i_rs)
+
+;; Whether [i_s, i_e) with value V absorbs a range: same value, and they
+;; overlap or touch
+
+dec $absorbs(int, int, term, rangeitem) : bool
+def $absorbs(i_s, i_e, term, RANGE i_rs i_re term_r) = $term_eq(term_r, term) /\ $touches(i_s, i_e, RANGE i_rs i_re term_r)
+
+;; The parts of [i_rs, i_re) outside [i_a, i_b), with value V
+
+dec $left_part(int, int, term) : rangeitem*
+def $left_part(i_rs, i_a, term) = [ RANGE i_rs i_a term ]
+  -- if $(i_rs < i_a)
+def $left_part(i_rs, i_a, term) = eps
+  -- if $(i_rs >= i_a)
+
+dec $right_part(int, int, term) : rangeitem*
+def $right_part(i_b, i_re, term) = [ RANGE i_b i_re term ]
+  -- if $(i_re > i_b)
+def $right_part(i_b, i_re, term) = eps
+  -- if $(i_re <= i_b)
+
+dec $outside(int, int, int, int, term) : rangeitem*
+def $outside(i_rs, i_re, i_a, i_b, term) = $left_part(i_rs, i_a, term) ++ $right_part(i_b, i_re, term)
+
+;; Inserting [i_s, i_e) |-> V: the bounds after absorbing ranges, the other
+;; ranges cut outside them, and the new range placed by its start
+
+dec $absorbed_bounds(rangeitem*, int, int, term, int, int) : (int, int)
+def $absorbed_bounds(eps, i_s, i_e, term, i_a, i_b) = (i_a, i_b)
+def $absorbed_bounds((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  = $absorbed_bounds(rangeitem_t*, i_s, i_e, term, $imin(i_a, i_rs), $imax(i_b, i_re))
+  -- if $absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+def $absorbed_bounds((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  = $absorbed_bounds(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if ~$absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+
+dec $cut(rangeitem*, int, int, term, int, int) : rangeitem*
+def $cut(eps, i_s, i_e, term, i_a, i_b) = eps
+def $cut((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b) = $cut(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if $absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+def $cut((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  = $outside(i_rs, i_re, i_a, i_b, term_r) ++ $cut(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if ~$absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+  -- if $overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+def $cut((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  = (RANGE i_rs i_re term_r) :: $cut(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if ~$absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+  -- if ~$overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+
+dec $place(rangeitem*, rangeitem) : rangeitem*
+def $place(eps, rangeitem) = [ rangeitem ]
+def $place((RANGE i_rs i_re term_r) :: rangeitem_t*, RANGE i_s i_e term) = (RANGE i_s i_e term) :: (RANGE i_rs i_re term_r) :: rangeitem_t*
+  -- if $(i_s < i_rs)
+def $place((RANGE i_rs i_re term_r) :: rangeitem_t*, RANGE i_s i_e term) = (RANGE i_rs i_re term_r) :: $place(rangeitem_t*, RANGE i_s i_e term)
+  -- if $(i_s >= i_rs)
+
+dec $rm_insert(rangeitem*, int, int, term) : res<rangeitem*>
+  hint(prose_in %0 "with" %1 "to" %2 "mapped to" %3)
+def $rm_insert(rangeitem*, i_s, i_e, term) = OK $place($cut(rangeitem*, i_s, i_e, term, i_a, i_b), RANGE i_a i_b term)
+  -- if $(i_s < i_e)
+  -- if (i_a, i_b) = $absorbed_bounds(rangeitem*, i_s, i_e, term, i_s, i_e)
+def $rm_insert(rangeitem*, i_s, i_e, term) = FAIL
+  -- if $(i_s >= i_e)
+
+dec $rm_insert_all(rangeitem*, rangeitem*) : res<rangeitem*>
+def $rm_insert_all(rangeitem*, eps) = OK rangeitem*
+def $rm_insert_all(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*) = $rm_insert_all(rangeitem'*, rangeitem_t*)
+  -- if OK rangeitem'* = $rm_insert(rangeitem*, i_s, i_e, term)
+def $rm_insert_all(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*) = FAIL
+  -- if FAIL = $rm_insert(rangeitem*, i_s, i_e, term)
+
+;; Removing [i_s, i_e): the ranges it overlaps are cut outside it
+
+dec $rm_remove(rangeitem*, int, int) : rangeitem*
+def $rm_remove(eps, i_s, i_e) = eps
+def $rm_remove((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e) = $outside(i_rs, i_re, i_s, i_e, term_r) ++ $rm_remove(rangeitem_t*, i_s, i_e)
+  -- if $overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+def $rm_remove((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e) = (RANGE i_rs i_re term_r) :: $rm_remove(rangeitem_t*, i_s, i_e)
+  -- if ~$overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+
+dec $rm_remove_all(rangeitem*, (int, int)*) : res<rangeitem*>
+def $rm_remove_all(rangeitem*, eps) = OK rangeitem*
+def $rm_remove_all(rangeitem*, (i_s, i_e) :: (i_ts, i_te)*) = $rm_remove_all($rm_remove(rangeitem*, i_s, i_e), (i_ts, i_te)*)
+  -- if $(i_s < i_e)
+def $rm_remove_all(rangeitem*, (i_s, i_e) :: (i_ts, i_te)*) = FAIL
+  -- if $(i_s >= i_e)
+
+;; The range containing a key
+
+dec $rm_lookup(rangeitem*, int) : rangeitem?
+def $rm_lookup(eps, i) = eps
+def $rm_lookup((RANGE i_s i_e term) :: rangeitem_t*, i) = RANGE i_s i_e term
+  -- if $(i_s <= i) /\ $(i < i_e)
+def $rm_lookup((RANGE i_s i_e term) :: rangeitem_t*, i) = $rm_lookup(rangeitem_t*, i)
+  -- if ~($(i_s <= i) /\ $(i < i_e))
+
+;; Concatenation requires that no ranges overlap
+
+dec $overlaps_any(rangeitem*, int, int) : bool
+def $overlaps_any(eps, i_s, i_e) = false
+def $overlaps_any(rangeitem_h :: rangeitem_t*, i_s, i_e) = $overlaps(i_s, i_e, rangeitem_h) \/ $overlaps_any(rangeitem_t*, i_s, i_e)
+
+dec $disjoint(rangeitem*, rangeitem*) : bool
+def $disjoint(rangeitem*, eps) = true
+def $disjoint(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*) = ~$overlaps_any(rangeitem*, i_s, i_e) /\ $disjoint(rangeitem*, rangeitem_t*)
+
+;; Where two range maps agree: the overlaps of their ranges with equal values
+;; (get_intersection_ranges)
+
+dec $agree_one(rangeitem, rangeitem*) : (int, int)*
+def $agree_one(rangeitem, eps) = eps
+def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*) = ($imax(i_s, i_s'), $imin(i_e, i_e')) :: $agree_one(RANGE i_s i_e term, rangeitem_t*)
+  -- if $overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ $term_eq(term, term')
+def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*) = $agree_one(RANGE i_s i_e term, rangeitem_t*)
+  -- if ~($overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ $term_eq(term, term'))
+
+dec $agree(rangeitem*, rangeitem*) : (int, int)*
+def $agree(eps, rangeitem'*) = eps
+def $agree(rangeitem_h :: rangeitem_t*, rangeitem'*) = $agree_one(rangeitem_h, rangeitem'*) ++ $agree(rangeitem_t*, rangeitem'*)
+
+;; Inclusion: the ranges of the first map are exactly where the maps agree
+
+dec $range_pairs(rangeitem*) : (int, int)*
+def $range_pairs((RANGE i_s i_e term)*) = (i_s, i_e)*
+
+dec $set_ranges(term*) : res<(int, int)*>
+def $set_ranges(eps) = OK eps
+def $set_ranges(term_h :: term_t*) = OK ((i_s, i_e) :: (i_ts, i_te)*)
+  -- if (i_s, i_e) = $range_bounds(term_h)
+  -- if OK (i_ts, i_te)* = $set_ranges(term_t*)
+def $set_ranges(term*) = FAIL
+  -- otherwise
+
+def $hook(D, "RANGEMAP.unit", sort, eps) = OK (RANGEMAP sort eps)
+def $hook(D, "RANGEMAP.elementRng", sort, ([term_r, term_v])) = OK (RANGEMAP sort rangeitem*)
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if OK rangeitem* = $rm_insert(eps, i_s, i_e, term_v)
+def $hook(D, "RANGEMAP.concat", sort, ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*])) = OK (RANGEMAP sort rangeitem*)
+  -- if $disjoint(rangeitem_1*, rangeitem_2*)
+  -- if OK rangeitem* = $rm_insert_all(rangeitem_1*, rangeitem_2*)
+def $hook(D, "RANGEMAP.updateRng", sort, ([RANGEMAP sort_m rangeitem_m*, term_r, term_v])) = OK (RANGEMAP sort_m rangeitem*)
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if OK rangeitem* = $rm_insert(rangeitem_m*, i_s, i_e, term_v)
+def $hook(D, "RANGEMAP.updateAll", sort, ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*])) = OK (RANGEMAP sort_1 rangeitem*)
+  -- if OK rangeitem* = $rm_insert_all(rangeitem_1*, rangeitem_2*)
+def $hook(D, "RANGEMAP.removeRng", sort, ([RANGEMAP sort_m rangeitem_m*, term_r])) = OK (RANGEMAP sort_m rangeitem*)
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if OK rangeitem* = $rm_remove_all(rangeitem_m*, [ (i_s, i_e) ])
+def $hook(D, "RANGEMAP.removeAll", sort, ([RANGEMAP sort_m rangeitem_m*, SET sort_s `{ term* `}])) = OK (RANGEMAP sort_m rangeitem*)
+  -- if OK (i_s, i_e)* = $set_ranges(term*)
+  -- if OK rangeitem* = $rm_remove_all(rangeitem_m*, (i_s, i_e)*)
+def $hook(D, "RANGEMAP.difference", sort, ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*])) = OK (RANGEMAP sort_1 rangeitem*)
+  -- if OK rangeitem* = $rm_remove_all(rangeitem_1*, $agree(rangeitem_1*, rangeitem_2*))
+def $hook(D, "RANGEMAP.inclusion", sort, ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (BOOL $($range_pairs(rangeitem_1*) = $agree(rangeitem_1*, rangeitem_2*)))
+def $hook(D, "RANGEMAP.lookup", sort, ([RANGEMAP sort_m rangeitem*, term_k])) = OK term_v
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.lookupOrDefault", sort, ([RANGEMAP sort_m rangeitem*, term_k, term_d])) = OK term_v
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.lookupOrDefault", sort, ([RANGEMAP sort_m rangeitem*, term_k, term_d])) = OK term_d
+  -- if i = $key_int(term_k)
+  -- if eps = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.find_range", sort, ([RANGEMAP sort_m rangeitem*, term_k])) = OK $range_term(i_s, i_e)
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.in_keys", sort, ([term_k, RANGEMAP sort_m rangeitem*])) = OK (BOOL true)
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.in_keys", sort, ([term_k, RANGEMAP sort_m rangeitem*])) = OK (BOOL false)
+  -- if i = $key_int(term_k)
+  -- if eps = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.keys", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*])) = OK (SET sort `{ $range_key(i_s, i_e)* `})
+def $hook(D, "RANGEMAP.keys_list", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*])) = OK (LIST sort $range_key(i_s, i_e)*)
+def $hook(D, "RANGEMAP.values", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*])) = OK (LIST sort term*)
+def $hook(D, "RANGEMAP.size", sort, ([RANGEMAP sort_m rangeitem*])) = OK (INT $(|rangeitem*|))
+def $hook(D, "RANGEMAP.choice", sort, ([RANGEMAP sort_m ((RANGE i_s i_e term) :: rangeitem_t*)])) = OK $int_key(i_s)
+
+;;; MINT
+;;; A machine integer of a fixed width (decisions D5 in k-in-p4). The LLVM
+;;; backend compiles these hooks to LLVM instructions (create_hardcoded_hook in
+;;; lib/codegen/CreateTerm.cpp): arithmetic wraps around, and signed
+;;; operations read the value in two's complement. Where an instruction is
+;;; undefined (division by zero, signed division that overflows, a shift by
+;;; the width or more), the hook fails. The width of a result that does not
+;;; come from an argument is the number of the result sort, e.g. 8 in MInt{8}.
+
+dec $width(definition, sort) : nat?
+  hint(prose_in "the width of" %1)
+def $width(D, SORT sortid ([SORT sortid_w eps])) = n
+  -- if n = $find_map<sortid, nat>(D.NATSORTS, sortid_w)
+def $width(D, sort) = eps
+  -- otherwise
+
+;; i modulo 2^n_w, and an unsigned value read in two's complement
+
+dec $wrap(nat, int) : nat
+  hint(prose_in %1 "modulo 2 to the" %0)
+def $wrap(n_w, i) = n
+  -- if i_m = $int_pow(2, n_w)
+  -- if n = $nat_of($(((i \ i_m) + i_m) \ i_m))
+
+dec $signed(nat, nat) : int
+  hint(prose_in "the" %0 "-bit value" %1 "in two's complement")
+def $signed(n_w, n_v) = n_v
+  -- if n_p = $nat_of($(n_w - 1))
+  -- if $(n_v < $int_pow(2, n_p))
+def $signed(n_w, n_v) = $(n_v - $int_pow(2, n_w))
+  -- if n_p = $nat_of($(n_w - 1))
+  -- if $(n_v >= $int_pow(2, n_p))
+
+;; Powers modulo i_m, as hook_MINT_pow64 multiplies with wraparound
+
+dec $pow_mod(int, nat, int) : int
+def $pow_mod(i, n, i_m) = $(1 \ i_m)
+  -- if n = 0
+def $pow_mod(i, n, i_m) = $pow_mod($((i * i) \ i_m), n_h, i_m)
+  -- if $(n > 0) /\ $(n \ 2 = 0)
+  -- if n_h = $(n / 2)
+def $pow_mod(i, n, i_m) = $((i * $pow_mod($((i * i) \ i_m), n_h, i_m)) \ i_m)
+  -- if $(n \ 2 = 1)
+  -- if n_h = $(n / 2)
+
+;;; Conversions
+
+def $hook(D, "MINT.integer", sort, ([INT i])) = OK (MINT n_w $wrap(n_w, i))
+  -- if n_w = $width(D, sort)
+def $hook(D, "MINT.uvalue", sort, ([MINT n_w n_v])) = OK (INT n_v)
+def $hook(D, "MINT.svalue", sort, ([MINT n_w n_v])) = OK (INT $signed(n_w, n_v))
+def $hook(D, "MINT.round", sort, ([MINT n_w n_v])) = OK (MINT n_o $wrap(n_o, n_v))
+  -- if n_o = $width(D, sort)
+def $hook(D, "MINT.sext", sort, ([MINT n_w n_v])) = OK (MINT n_o $wrap(n_o, $signed(n_w, n_v)))
+  -- if n_o = $width(D, sort)
+
+;;; Bytes, big-endian and unsigned (only MInt{256} is supported by the LLVM
+;;; backend; only byte strings as long as the width were compared with it)
+
+def $hook(D, "MINT.MInt2bytes", sort, ([MINT n_w n_v])) = OK (BYTES $int_to_bytes(n_b, n_v, true))
+  -- if $(n_w \ 8 = 0)
+  -- if n_b = $(n_w / 8)
+def $hook(D, "MINT.bytes2MInt", sort, ([BYTES n*])) = OK (MINT n_w $wrap(n_w, $bytes_to_int(n*, true, false)))
+  -- if n_w = $width(D, sort)
+
+;;; Arithmetic and bitwise operations wrap around
+
+def $hook(D, "MINT.add", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $(n_1 + n_2)))
+def $hook(D, "MINT.sub", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $(n_1 - n_2)))
+def $hook(D, "MINT.mul", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $(n_1 * n_2)))
+def $hook(D, "MINT.neg", sort, ([MINT n_w n_v])) = OK (MINT n_w $wrap(n_w, $(- n_v)))
+def $hook(D, "MINT.pow", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $pow_mod(n_1, n_2, $int_pow(2, n_w))))
+def $hook(D, "MINT.and", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $int_and(n_1, n_2)))
+def $hook(D, "MINT.or", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $int_or(n_1, n_2)))
+def $hook(D, "MINT.xor", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $int_xor(n_1, n_2)))
+def $hook(D, "MINT.not", sort, ([MINT n_w n_v])) = OK (MINT n_w $wrap(n_w, $int_not(n_v)))
+
+def $hook(D, "MINT.udiv", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $(n_1 / n_2)))
+  -- if n_2 =/= 0
+def $hook(D, "MINT.urem", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $(n_1 \ n_2)))
+  -- if n_2 =/= 0
+
+;;; Signed division truncates towards zero, and its remainder takes the sign
+;;; of the dividend, as P4-SpecTec's / and \ do; the quotient must fit
+
+def $hook(D, "MINT.sdiv", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, i_q))
+  -- if i_1 = $signed(n_w, n_1)
+  -- if i_2 = $signed(n_w, n_2)
+  -- if i_2 =/= 0
+  -- if i_q = $(i_1 / i_2)
+  -- if $signed(n_w, $wrap(n_w, i_q)) = i_q
+def $hook(D, "MINT.srem", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $(i_1 \ i_2)))
+  -- if i_1 = $signed(n_w, n_1)
+  -- if i_2 = $signed(n_w, n_2)
+  -- if i_2 =/= 0
+  -- if i_q = $(i_1 / i_2)
+  -- if $signed(n_w, $wrap(n_w, i_q)) = i_q
+
+;;; Shifts by less than the width
+
+def $hook(D, "MINT.shl", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $int_shl(n_1, n_2)))
+  -- if $(n_2 < n_w)
+def $hook(D, "MINT.lshr", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $int_shr(n_1, n_2)))
+  -- if $(n_2 < n_w)
+def $hook(D, "MINT.ashr", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w $wrap(n_w, $int_shr($signed(n_w, n_1), n_2)))
+  -- if $(n_2 < n_w)
+
+;;; Comparisons, unsigned and signed
+
+def $hook(D, "MINT.eq", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $(n_1 = n_2))
+def $hook(D, "MINT.ne", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $(n_1 =/= n_2))
+def $hook(D, "MINT.ult", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $(n_1 < n_2))
+def $hook(D, "MINT.ule", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $(n_1 <= n_2))
+def $hook(D, "MINT.ugt", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $(n_1 > n_2))
+def $hook(D, "MINT.uge", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $(n_1 >= n_2))
+def $hook(D, "MINT.slt", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $($signed(n_w, n_1) < $signed(n_w, n_2)))
+def $hook(D, "MINT.sle", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $($signed(n_w, n_1) <= $signed(n_w, n_2)))
+def $hook(D, "MINT.sgt", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $($signed(n_w, n_1) > $signed(n_w, n_2)))
+def $hook(D, "MINT.sge", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (BOOL $($signed(n_w, n_1) >= $signed(n_w, n_2)))
+
+def $hook(D, "MINT.umin", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_1)
+  -- if $(n_1 <= n_2)
+def $hook(D, "MINT.umin", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_2)
+  -- if $(n_1 > n_2)
+def $hook(D, "MINT.umax", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_1)
+  -- if $(n_1 >= n_2)
+def $hook(D, "MINT.umax", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_2)
+  -- if $(n_1 < n_2)
+def $hook(D, "MINT.smin", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_1)
+  -- if $($signed(n_w, n_1) <= $signed(n_w, n_2))
+def $hook(D, "MINT.smin", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_2)
+  -- if $($signed(n_w, n_1) > $signed(n_w, n_2))
+def $hook(D, "MINT.smax", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_1)
+  -- if $($signed(n_w, n_1) >= $signed(n_w, n_2))
+def $hook(D, "MINT.smax", sort, ([MINT n_w n_1, MINT n_w' n_2])) = OK (MINT n_w n_2)
+  -- if $($signed(n_w, n_1) < $signed(n_w, n_2))
+
+;;; Bytes and lists with machine-integer indices and sizes: the same as with
+;;; integers, on the unsigned values
+
+def $hook(D, "BYTES.lengthMInt", sort, ([BYTES n*])) = OK (MINT n_w $wrap(n_w, $(|n*|)))
+  -- if n_w = $width(D, sort)
+def $hook(D, "BYTES.getMInt", sort, ([BYTES n*, MINT n_w n_i])) = OK (MINT n_o $wrap(n_o, i_b))
+  -- if OK (INT i_b) = $hook(D, "BYTES.get", sort, ([BYTES n*, INT n_i]))
+  -- if n_o = $width(D, sort)
+def $hook(D, "BYTES.updateMInt", sort, ([BYTES n*, MINT n_w n_i, MINT n_w' n_v])) = $hook(D, "BYTES.update", sort, ([BYTES n*, INT n_i, INT n_v]))
+def $hook(D, "BYTES.substrMInt", sort, ([BYTES n*, MINT n_w n_s, MINT n_w' n_e])) = $hook(D, "BYTES.substr", sort, ([BYTES n*, INT n_s, INT n_e]))
+def $hook(D, "BYTES.replaceAtMInt", sort, ([BYTES n*, MINT n_w n_i, BYTES n_r*])) = $hook(D, "BYTES.replaceAt", sort, ([BYTES n*, INT n_i, BYTES n_r*]))
+def $hook(D, "BYTES.padRightMInt", sort, ([BYTES n*, MINT n_w n_l, MINT n_w' n_v])) = $hook(D, "BYTES.padRight", sort, ([BYTES n*, INT n_l, INT n_v]))
+def $hook(D, "BYTES.padLeftMInt", sort, ([BYTES n*, MINT n_w n_l, MINT n_w' n_v])) = $hook(D, "BYTES.padLeft", sort, ([BYTES n*, INT n_l, INT n_v]))
+def $hook(D, "LIST.sizeMInt", sort, ([LIST sort_l term*])) = OK (MINT n_w $wrap(n_w, $(|term*|)))
+  -- if n_w = $width(D, sort)
+def $hook(D, "LIST.getMInt", sort, ([LIST sort_l term*, MINT n_w n_i])) = $hook(D, "LIST.get", sort, ([LIST sort_l term*, INT n_i]))
+def $hook(D, "LIST.updateMInt", sort, ([LIST sort_l term*, MINT n_w n_i, term_v])) = $hook(D, "LIST.update", sort, ([LIST sort_l term*, INT n_i, term_v]))
+
+;;; SUBSTITUTION
+;;; E[V / X] replaces the free occurrences of the variable X in E by V
+;;; (/usr/include/kframework/builtin/substitution.md). A binder whose variable
+;;; occurs free in V is renamed first, so that V is not captured. The LLVM
+;;; backend does the same with de Bruijn indices and names bound variables
+;;; afresh when rewriting ends, so names of bound variables are only
+;;; determined up to renaming.
+
+def $hook(D, "SUBSTITUTION.substOne", sort, ([term_e, APP "inj" ([sort_v, sort_k]) ([term_v]), APP "inj" ([sort_x, sort_k']) ([DV sort_x' t_x])]))
+  = $subst(D, sort_x, t_x, sort_v, term_v, term_e)
+  -- if sort_x = sort_x'
+
+;;; Anything else is not supported (yet)
+
+def $hook(D, hookid, sort, term*) = FAIL
+  -- otherwise

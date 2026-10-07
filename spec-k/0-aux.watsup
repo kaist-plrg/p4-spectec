@@ -1,0 +1,25 @@
+;;
+;; Auxiliary definitions on top of spec-meta/common/0-stdlib.watsup
+;;
+
+;; Results that may fail, as in P4-SpecTec² (spec-meta/common/4-relation.watsup)
+
+syntax res<X> = OK X | FAIL
+
+;; Set and map builtins, implemented in p4spec/lib/interface/builtin
+;; (declared the same way in spec/0-aux)
+
+builtin dec $diff_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in %0 "without the elements of" %1)
+
+builtin dec $eq_set<K>(set<K>, set<K>) : bool
+  hint(prose_in %0 "and" %1 "have the same elements")
+
+builtin dec $update_map<K, V>(map<K, V>, K, V) : map<K, V>
+  hint(prose_in %0 "where" %1 "is updated to" %2)
+
+builtin dec $concat_<X>((X*)*) : X*
+  hint(prose_in "the concatenation of" %0)
+
+builtin dec $union_set<K>(set<K>, set<K>) : set<K>
+  hint(prose_in "the union of" %0 "and" %1)
