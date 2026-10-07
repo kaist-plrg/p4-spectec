@@ -1,7 +1,7 @@
-(* Builtins for hooks the K spec delegates (decisions D6 in k-in-p4).
+(* Builtins for hooks the K spec delegates (spec-k/3.1-hook-builtin.watsup).
    Each follows the LLVM backend's runtime (llvm-backend f02284f,
    runtime/strings/strings.cpp, runtime/strings/bytes.cpp). Preconditions under
-   which the backend reports an error are checked in the spec (3-hook.watsup),
+   which the backend reports an error are checked in the spec (3.4-hook.watsup),
    which fails instead of calling these. *)
 
 module Value = Runtime.Value
@@ -9,10 +9,20 @@ module Typ = Runtime.Type.Typ
 module Num = Lang.Xl.Num
 module Extract = Builtin.Extract
 
-type impl = (Value.t -> unit) -> Util.Source.region -> Typ.t list -> Value.t list -> Value.t
+type impl =
+  (Value.t -> unit) ->
+  Util.Source.region ->
+  Typ.t list ->
+  Value.t list ->
+  Value.t
 
-let get_int (v : Value.t) : Bigint.t = match Value.Get.num v with `Int i | `Nat i -> i
-let ret add v = add v; v
+let get_int (v : Value.t) : Bigint.t =
+  match Value.Get.num v with `Int i | `Nat i -> i
+
+let ret add v =
+  add v;
+  v
+
 let int add i = ret add (Value.Make.int i)
 let text add s = ret add (Value.Make.text s)
 
@@ -28,7 +38,9 @@ let string_substr : impl =
  fun add at targs vs ->
   Extract.zero at targs;
   let s, a, b = Extract.three at vs in
-  let s = Value.Get.text s and a = Bigint.to_int_exn (get_int a) and b = Bigint.to_int_exn (get_int b) in
+  let s = Value.Get.text s
+  and a = Bigint.to_int_exn (get_int a)
+  and b = Bigint.to_int_exn (get_int b) in
   text add (String.sub s a (b - a))
 
 (* the first index >= pos where test holds, or -1 when pos >= length *)
@@ -42,16 +54,22 @@ let string_find : impl =
  fun add at targs vs ->
   Extract.zero at targs;
   let h, n, p = Extract.three at vs in
-  let h = Value.Get.text h and n = Value.Get.text n and p = Bigint.to_int_exn (get_int p) in
+  let h = Value.Get.text h
+  and n = Value.Get.text n
+  and p = Bigint.to_int_exn (get_int p) in
   let ln = String.length n and lh = String.length h in
-  int add (Bigint.of_int (search h p (fun i -> i + ln <= lh && String.sub h i ln = n)))
+  int add
+    (Bigint.of_int
+       (search h p (fun i -> i + ln <= lh && String.sub h i ln = n)))
 
 (* dec $string_find_char(text, text, int) : int -- as hook_STRING_findChar *)
 let string_find_char : impl =
  fun add at targs vs ->
   Extract.zero at targs;
   let h, cs, p = Extract.three at vs in
-  let h = Value.Get.text h and cs = Value.Get.text cs and p = Bigint.to_int_exn (get_int p) in
+  let h = Value.Get.text h
+  and cs = Value.Get.text cs
+  and p = Bigint.to_int_exn (get_int p) in
   int add (Bigint.of_int (search h p (fun i -> String.contains cs h.[i])))
 
 (* dec $string_chr(int) : text -- one byte, as hook_STRING_chr *)
@@ -72,10 +90,23 @@ let int_to_string : impl =
    leading '+' is dropped first, as hook_STRING_string2base_long does. None
    when GMP rejects the string. *)
 let parse_base (s : string) (base : int) : Bigint.t option =
-  let s = if String.length s > 0 && s.[0] = '+' then String.sub s 1 (String.length s - 1) else s in
-  let s = String.concat "" (List.filter (fun t -> t <> "") (String.split_on_char ' ' s))
-          |> String.to_seq |> Seq.filter (fun c -> not (String.contains "\t\n\011\012\r" c)) |> String.of_seq in
-  let neg, body = if String.length s > 0 && s.[0] = '-' then (true, String.sub s 1 (String.length s - 1)) else (false, s) in
+  let s =
+    if String.length s > 0 && s.[0] = '+' then
+      String.sub s 1 (String.length s - 1)
+    else s
+  in
+  let s =
+    String.concat ""
+      (List.filter (fun t -> t <> "") (String.split_on_char ' ' s))
+    |> String.to_seq
+    |> Seq.filter (fun c -> not (String.contains "\t\n\011\012\r" c))
+    |> String.of_seq
+  in
+  let neg, body =
+    if String.length s > 0 && s.[0] = '-' then
+      (true, String.sub s 1 (String.length s - 1))
+    else (false, s)
+  in
   let digit c =
     match c with
     | '0' .. '9' -> Char.code c - Char.code '0'
@@ -83,10 +114,17 @@ let parse_base (s : string) (base : int) : Bigint.t option =
     | 'A' .. 'Z' -> Char.code c - Char.code 'A' + 10
     | _ -> 99
   in
-  if base < 2 || base > 36 || body = "" || not (String.for_all (fun c -> digit c < base) body) then None
+  if
+    base < 2 || base > 36 || body = ""
+    || not (String.for_all (fun c -> digit c < base) body)
+  then None
   else
     let b = Bigint.of_int base in
-    let v = String.fold_left (fun acc c -> Bigint.(acc * b + of_int (digit c))) Bigint.zero body in
+    let v =
+      String.fold_left
+        (fun acc c -> Bigint.((acc * b) + of_int (digit c)))
+        Bigint.zero body
+    in
     Some (if neg then Bigint.neg v else v)
 
 let opt_int add (v : Bigint.t option) =
@@ -106,7 +144,9 @@ let string_to_base : impl =
   Extract.zero at targs;
   let s, b = Extract.two at vs in
   let b = get_int b in
-  let base = if Bigint.(b >= of_int 2 && b <= of_int 36) then Bigint.to_int_exn b else 0 in
+  let base =
+    if Bigint.(b >= of_int 2 && b <= of_int 36) then Bigint.to_int_exn b else 0
+  in
   opt_int add (parse_base (Value.Get.text s) base)
 
 (* Positions where needle occurs in s, searching again one byte after each
@@ -118,8 +158,12 @@ let occurrences (s : string) (needle : string) (limit : int) : int list =
   let rec go p acc count =
     if count >= limit || p > n then List.rev acc
     else
-      let rec next q = if q >= n then None else if matches_at q then Some q else next (q + 1) in
-      match next p with None -> List.rev acc | Some q -> go (q + 1) (q :: acc) (count + 1)
+      let rec next q =
+        if q >= n then None else if matches_at q then Some q else next (q + 1)
+      in
+      match next p with
+      | None -> List.rev acc
+      | Some q -> go (q + 1) (q :: acc) (count + 1)
   in
   go 0 [] 0
 
@@ -130,7 +174,9 @@ let string_replace : impl =
   Extract.zero at targs;
   match vs with
   | [ s; needle; replacer; count ] ->
-      let s = Value.Get.text s and needle = Value.Get.text needle and replacer = Value.Get.text replacer in
+      let s = Value.Get.text s
+      and needle = Value.Get.text needle
+      and replacer = Value.Get.text replacer in
       let ms = occurrences s needle (Bigint.to_int_exn (get_int count)) in
       let b = Buffer.create (String.length s) in
       let h =
@@ -151,7 +197,11 @@ let string_count : impl =
   Extract.zero at targs;
   let s, needle = Extract.two at vs in
   let s = Value.Get.text s in
-  ret add (Value.Make.nat (Bigint.of_int (List.length (occurrences s (Value.Get.text needle) (String.length s + 1)))))
+  ret add
+    (Value.Make.nat
+       (Bigint.of_int
+          (List.length
+             (occurrences s (Value.Get.text needle) (String.length s + 1)))))
 
 (* Integers: GMP semantics through Zarith, as runtime/arithmetic/int.cpp *)
 
@@ -187,13 +237,18 @@ let int_log2 : impl =
   Extract.zero at targs;
   zint add (Z.of_int (Z.numbits (z (Extract.one at vs)) - 1))
 
-(* Bytes are lists of nats (decisions D9 in k-in-p4) *)
+(* Bytes are lists of nats *)
 
 let bytes_of_value (v : Value.t) : string =
-  Value.Get.list v |> List.map (fun b -> Char.chr (Bigint.to_int_exn (get_int b))) |> List.to_seq |> String.of_seq
+  Value.Get.list v
+  |> List.map (fun b -> Char.chr (Bigint.to_int_exn (get_int b)))
+  |> List.to_seq |> String.of_seq
 
 let value_of_bytes add (s : string) : Value.t =
-  let bytes = List.init (String.length s) (fun i -> Value.Make.nat (Bigint.of_int (Char.code s.[i]))) in
+  let bytes =
+    List.init (String.length s) (fun i ->
+        Value.Make.nat (Bigint.of_int (Char.code s.[i])))
+  in
   List.iter add bytes;
   ret add (Value.Make.list (Typ.Make.list Typ.Make.nat) bytes)
 
@@ -205,8 +260,13 @@ let int_to_bytes : impl =
   let len, i, big = Extract.three at vs in
   let len = Bigint.to_int_exn (get_int len) in
   let x = Z.extract (z i) 0 (8 * len) in
-  let little = String.init len (fun k -> Char.chr (Z.to_int (Z.extract x (8 * k) 8))) in
-  let s = if Value.Get.bool big then String.init len (fun k -> little.[len - 1 - k]) else little in
+  let little =
+    String.init len (fun k -> Char.chr (Z.to_int (Z.extract x (8 * k) 8)))
+  in
+  let s =
+    if Value.Get.bool big then String.init len (fun k -> little.[len - 1 - k])
+    else little
+  in
   value_of_bytes add s
 
 (* dec $bytes_to_int(nat*, bool, bool) : int -- as hook_BYTES_bytes2int: big-endian
@@ -217,10 +277,18 @@ let bytes_to_int : impl =
   let b, big, signed = Extract.three at vs in
   let s = bytes_of_value b in
   let n = String.length s in
-  let byte k = Char.code (if Value.Get.bool big then s.[k] else s.[n - 1 - k]) in
+  let byte k =
+    Char.code (if Value.Get.bool big then s.[k] else s.[n - 1 - k])
+  in
   let x = ref Z.zero in
-  for k = 0 to n - 1 do x := Z.(add (shift_left !x 8) (of_int (byte k))) done;
-  let x = if Value.Get.bool signed && n > 0 && byte 0 >= 0x80 then Z.sub !x (Z.shift_left Z.one (8 * n)) else !x in
+  for k = 0 to n - 1 do
+    x := Z.(add (shift_left !x 8) (of_int (byte k)))
+  done;
+  let x =
+    if Value.Get.bool signed && n > 0 && byte 0 >= 0x80 then
+      Z.sub !x (Z.shift_left Z.one (8 * n))
+    else !x
+  in
   zint add x
 
 (* dec $string_to_bytes(text) : nat*, $bytes_to_string(nat* ) : text -- the
@@ -235,8 +303,8 @@ let bytes_to_string : impl =
   Extract.zero at targs;
   text add (bytes_of_value (Extract.one at vs))
 
-(* Floats are text in the backend's output format (decisions D9 in k-in-p4);
-   operations are in floats.ml *)
+(* Floats are text in the backend's output format; operations are in
+   floats.ml *)
 
 let float_of (v : Value.t) : Floats.t = Floats.of_literal (Value.Get.text v)
 let float add (f : Floats.t) = text add (Floats.to_string f)
@@ -270,7 +338,11 @@ let float_root : impl =
  fun add at targs vs ->
   Extract.zero at targs;
   let a, n = Extract.two at vs in
-  let v = Option.map (fun f -> Value.Make.text (Floats.to_string f)) (Floats.root (float_of a) (small n)) in
+  let v =
+    Option.map
+      (fun f -> Value.Make.text (Floats.to_string f))
+      (Floats.root (float_of a) (small n))
+  in
   Option.iter add v;
   ret add (Value.Make.opt (Typ.Make.opt Typ.Make.text) v)
 
@@ -292,7 +364,9 @@ let int_to_float : impl =
 let float_to_int : impl =
  fun add at targs vs ->
   Extract.zero at targs;
-  opt_int add (Option.map Bigint.of_zarith_bigint (Floats.to_int (float_of (Extract.one at vs))))
+  opt_int add
+    (Option.map Bigint.of_zarith_bigint
+       (Floats.to_int (float_of (Extract.one at vs))))
 
 (* dec $float_max_value(nat, nat) : text *)
 let float_max_value : impl =

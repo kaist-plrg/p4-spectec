@@ -3,7 +3,7 @@
 module Run = Runtime.Dynamic_Runner.Signature
 
 (* The SpecTec SL interface with the builtins the K spec delegates hooks to
-   (spec-k/3-hook.watsup, decisions D6 in k-in-p4) *)
+   (spec-k/3.1-hook-builtin.watsup) *)
 module Interface_K = struct
   include Interface.SpecTec_SL
   module Builtin_K = Builtin.Call.Make (Builtins) ()
@@ -15,7 +15,8 @@ end
 
 (* A runner without a tower, as Backend_boot.Build.build_null makes, with the
    interface above *)
-let runner ?(cache = true) ?(det = false) (spec : Run.spec) : ((module Run.RUNNER), Run.error) result =
+let runner ?(cache = true) ?(det = false) (spec : Run.spec) :
+    ((module Run.RUNNER), Run.error) result =
   let (module Runner) =
     (module Runner.Make.Make_rec
               (Interface_K)
@@ -24,4 +25,6 @@ let runner ?(cache = true) ?(det = false) (spec : Run.spec) : ((module Run.RUNNE
               (Interp_sl.Interp.Make)
               (Interp_pl.Interp.Make) : Run.RUNNER)
   in
-  Result.map (fun () -> (module Runner : Run.RUNNER)) (Runner.init ~cache ~det ~guard:false spec)
+  Result.map
+    (fun () -> (module Runner : Run.RUNNER))
+    (Runner.init ~cache ~det ~guard:false spec)

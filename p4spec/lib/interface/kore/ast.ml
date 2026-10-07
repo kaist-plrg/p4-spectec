@@ -13,7 +13,12 @@ type attr = pattern
 
 type sentence =
   | Import of string
-  | SortDecl of { name : string; params : string list; hooked : bool; attrs : attr list }
+  | SortDecl of {
+      name : string;
+      params : string list;
+      hooked : bool;
+      attrs : attr list;
+    }
   | SymbolDecl of {
       name : string;
       params : string list;

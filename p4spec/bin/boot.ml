@@ -164,7 +164,8 @@ let krun_command =
      and profile = flag "-profile" no_arg ~doc:"profiling"
      and path_cover =
        flag "-cover" (optional string)
-         ~doc:"FILE write the spec with the instructions the run executes marked"
+         ~doc:
+           "FILE write the spec with the instructions the run executes marked"
      and path_check =
        flag "-check-steps" (optional string)
          ~doc:

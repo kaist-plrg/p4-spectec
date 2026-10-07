@@ -6,22 +6,29 @@ open Load
 module Value = Runtime.Value
 module Num = Lang.Xl.Num
 
-let get (v : Value.t) (mixop : string) : Value.t list option = Value.Get.(v |>>? mixop)
+let get (v : Value.t) (mixop : string) : Value.t list option =
+  Value.Get.(v |>>? mixop)
 
 let rec sort_of_value (v : Value.t) : sort =
   match get v "SORT sortid sort*" with
-  | Some [ name; sorts ] -> Sort (Value.Get.text name, List.map sort_of_value (Value.Get.list sorts))
+  | Some [ name; sorts ] ->
+      Sort (Value.Get.text name, List.map sort_of_value (Value.Get.list sorts))
   | _ -> (
       match get v "SORTVAR sortid" with
       | Some [ name ] -> SortVar (Value.Get.text name)
       | _ -> error "not a sort: %s" (Value.to_string v))
 
-(* The unique sort hooked to a scalar hook (decisions D9 in k-in-p4) *)
+(* The unique sort hooked to a scalar hook *)
 let sort_of_hook (info : info) (hook : string) : sort =
-  match Hashtbl.fold (fun s h acc -> if h = hook then s :: acc else acc) info.sort_hooks [] with
+  match
+    Hashtbl.fold
+      (fun s h acc -> if h = hook then s :: acc else acc)
+      info.sort_hooks []
+  with
   | [ s ] -> Sort (s, [])
   | [] -> error "no sort is hooked to %s" hook
-  | ss -> error "several sorts are hooked to %s: %s" hook (String.concat ", " ss)
+  | ss ->
+      error "several sorts are hooked to %s: %s" hook (String.concat ", " ss)
 
 (* Constructor symbols of a collection sort, from its concat/element/unit attributes *)
 let collection_symbol (info : info) (s : sort) (which : string) : string =
@@ -40,11 +47,15 @@ let pairs_of_map (v : Value.t) : (Value.t * Value.t) list =
   | Some [ pairs ] ->
       Value.Get.list pairs
       |> List.map (fun pair ->
-             match get pair "k ':' v" with Some [ k; v ] -> (k, v) | _ -> error "not a map entry")
+             match get pair "k ':' v" with
+             | Some [ k; v ] -> (k, v)
+             | _ -> error "not a map entry")
   | _ -> error "not a map: %s" (Value.to_string v)
 
 let elements_of_set (v : Value.t) : Value.t list =
-  match get v "`{ k `}" with Some [ elems ] -> Value.Get.list elems | _ -> error "not a set"
+  match get v "`{ k `}" with
+  | Some [ elems ] -> Value.Get.list elems
+  | _ -> error "not a set"
 
 let build_collection (info : info) (s : sort) (elems : pattern list) : pattern =
   match elems with
@@ -55,7 +66,9 @@ let build_collection (info : info) (s : sort) (elems : pattern list) : pattern =
       List.fold_left (fun acc x -> App (concat, [], [ acc; x ])) e rest
 
 let rec pattern_of_term (info : info) (v : Value.t) : pattern =
-  let ( >>? ) mixop k = match get v mixop with Some args -> Some (k args) | None -> None in
+  let ( >>? ) mixop k =
+    match get v mixop with Some args -> Some (k args) | None -> None
+  in
   let first = List.find_map (fun f -> f ()) in
   match
     first
@@ -76,11 +89,15 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
           "INT int" >>? function
           | [ i ] -> (
               match Value.Get.num i with
-              | `Int i | `Nat i -> dv (sort_of_hook info "INT.Int") (Bigint.to_string i))
+              | `Int i | `Nat i ->
+                  dv (sort_of_hook info "INT.Int") (Bigint.to_string i))
           | _ -> assert false);
         (fun () ->
           "BOOL bool" >>? function
-          | [ b ] -> dv (sort_of_hook info "BOOL.Bool") (string_of_bool (Value.Get.bool b))
+          | [ b ] ->
+              dv
+                (sort_of_hook info "BOOL.Bool")
+                (string_of_bool (Value.Get.bool b))
           | _ -> assert false);
         (fun () ->
           "STRING text" >>? function
@@ -93,8 +110,13 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
         (fun () ->
           "BYTES nat*" >>? function
           | [ l ] ->
-              let byte b = match Value.Get.num b with `Int i | `Nat i -> Char.chr (Bigint.to_int_exn i) in
-              dv (sort_of_hook info "BYTES.Bytes") (String.of_seq (List.to_seq (List.map byte (Value.Get.list l))))
+              let byte b =
+                match Value.Get.num b with
+                | `Int i | `Nat i -> Char.chr (Bigint.to_int_exn i)
+              in
+              dv
+                (sort_of_hook info "BYTES.Bytes")
+                (String.of_seq (List.to_seq (List.map byte (Value.Get.list l))))
           | _ -> assert false);
         (fun () ->
           "MINT nat nat" >>? function
@@ -105,14 +127,24 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let width_sort =
                 Hashtbl.fold
                   (fun s attrs acc ->
-                    if string_attr "nat" attrs = Some (Bigint.to_string w) then Some s else acc)
+                    if string_attr "nat" attrs = Some (Bigint.to_string w) then
+                      Some s
+                    else acc)
                   info.sort_attrs None
               in
               let width_sort =
-                match width_sort with Some s -> s | None -> error "no sort stands for the width %s" (Bigint.to_string w)
+                match width_sort with
+                | Some s -> s
+                | None ->
+                    error "no sort stands for the width %s" (Bigint.to_string w)
               in
-              let mint = match sort_of_hook info "MINT.MInt" with Sort (s, _) | SortVar s -> s in
-              dv (Sort (mint, [ Sort (width_sort, []) ])) (Bigint.to_string n ^ "p" ^ Bigint.to_string w)
+              let mint =
+                match sort_of_hook info "MINT.MInt" with
+                | Sort (s, _) | SortVar s -> s
+              in
+              dv
+                (Sort (mint, [ Sort (width_sort, []) ]))
+                (Bigint.to_string n ^ "p" ^ Bigint.to_string w)
           | _ -> assert false);
         (fun () ->
           "MAP sort m" >>? function
@@ -120,7 +152,11 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let s = sort_of_value s in
               let element = collection_symbol info s "element" in
               pairs_of_map m
-              |> List.map (fun (k, v) -> App (element, [], [ pattern_of_term info k; pattern_of_term info v ]))
+              |> List.map (fun (k, v) ->
+                     App
+                       ( element,
+                         [],
+                         [ pattern_of_term info k; pattern_of_term info v ] ))
               |> build_collection info s
           | _ -> assert false);
         (fun () ->
@@ -129,7 +165,8 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let s = sort_of_value s in
               let element = collection_symbol info s "element" in
               elements_of_set set
-              |> List.map (fun e -> App (element, [], [ pattern_of_term info e ]))
+              |> List.map (fun e ->
+                     App (element, [], [ pattern_of_term info e ]))
               |> build_collection info s
           | _ -> assert false);
         (fun () ->
@@ -141,13 +178,23 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let element = collection_symbol info s "element" in
               let key i =
                 let i = match Value.Get.num i with `Int i | `Nat i -> i in
-                App ("inj", [ sort_of_hook info "INT.Int"; Sort ("SortKItem", []) ], [ dv (sort_of_hook info "INT.Int") (Bigint.to_string i) ])
+                App
+                  ( "inj",
+                    [ sort_of_hook info "INT.Int"; Sort ("SortKItem", []) ],
+                    [ dv (sort_of_hook info "INT.Int") (Bigint.to_string i) ] )
               in
               Value.Get.list items
               |> List.map (fun item ->
                      match get item "RANGE int int term" with
                      | Some [ a; b; v ] ->
-                         App (element, [], [ App ("LblRangeMap'Coln'Range", [], [ key a; key b ]); pattern_of_term info v ])
+                         App
+                           ( element,
+                             [],
+                             [
+                               App
+                                 ("LblRangeMap'Coln'Range", [], [ key a; key b ]);
+                               pattern_of_term info v;
+                             ] )
                      | _ -> error "not a range: %s" (Value.to_string item))
               |> build_collection info s
           | _ -> assert false);
@@ -157,7 +204,8 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let s = sort_of_value s in
               let element = collection_symbol info s "element" in
               Value.Get.list l
-              |> List.map (fun e -> App (element, [], [ pattern_of_term info e ]))
+              |> List.map (fun e ->
+                     App (element, [], [ pattern_of_term info e ]))
               |> build_collection info s
           | _ -> assert false);
       ]
@@ -174,7 +222,10 @@ let normalize (info : info) (p : pattern) : pattern =
     Hashtbl.fold
       (fun s h acc ->
         if h = "MAP.Map" || h = "SET.Set" then
-          match collection_symbol info (Sort (s, [])) "concat", collection_symbol info (Sort (s, [])) "unit" with
+          match
+            ( collection_symbol info (Sort (s, [])) "concat",
+              collection_symbol info (Sort (s, [])) "unit" )
+          with
           | concat, unit -> (concat, (unit, Sort (s, []))) :: acc
           | exception Error _ -> acc
         else acc)
@@ -193,7 +244,11 @@ let normalize (info : info) (p : pattern) : pattern =
               | q -> [ q ]
             in
             let elems = List.concat_map flatten args in
-            let elems = List.sort (fun a b -> compare (string_of_pattern a) (string_of_pattern b)) elems in
+            let elems =
+              List.sort
+                (fun a b -> compare (string_of_pattern a) (string_of_pattern b))
+                elems
+            in
             ignore sorts;
             build_collection info s elems
         | None -> App (f, sorts, args))
@@ -202,15 +257,25 @@ let normalize (info : info) (p : pattern) : pattern =
   (* Bound variables get canonical names by binder depth, since the LLVM
      backend names them afresh when rewriting ends (substitution.md) *)
   let is_binder f =
-    match Hashtbl.find_opt info.symbols f with Some { is_binder; _ } -> is_binder | None -> false
+    match Hashtbl.find_opt info.symbols f with
+    | Some { is_binder; _ } -> is_binder
+    | None -> false
   in
-  let rec alpha (env : (string * string) list) (depth : int) (p : pattern) : pattern =
+  let rec alpha (env : (string * string) list) (depth : int) (p : pattern) :
+      pattern =
     match p with
-    | App ("\\dv", [ s ], [ Str x ]) when sort_hook info s = Some "KVAR.KVar" -> (
-        match List.assoc_opt x env with Some y -> App ("\\dv", [ s ], [ Str y ]) | None -> p)
+    | App ("\\dv", [ s ], [ Str x ]) when sort_hook info s = Some "KVAR.KVar"
+      -> (
+        match List.assoc_opt x env with
+        | Some y -> App ("\\dv", [ s ], [ Str y ])
+        | None -> p)
     | App (f, sorts, App ("\\dv", [ s ], [ Str x ]) :: rest) when is_binder f ->
         let y = Printf.sprintf "#bound%d" depth in
-        App (f, sorts, App ("\\dv", [ s ], [ Str y ]) :: List.map (alpha ((x, y) :: env) (depth + 1)) rest)
+        App
+          ( f,
+            sorts,
+            App ("\\dv", [ s ], [ Str y ])
+            :: List.map (alpha ((x, y) :: env) (depth + 1)) rest )
     | App (f, sorts, args) -> App (f, sorts, List.map (alpha env depth) args)
     | p -> p
   in
