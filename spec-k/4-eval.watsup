@@ -112,18 +112,22 @@ def $result_instance(D, symid, sort_a*) = $sort_instance(sortid_p*, sort_a*, sor
 def $result_instance(D, symid, sort_a*) = $result_sort(D, symid)
   -- if eps = $find_map<symid, sortid*>(D.PARAMS, symid)
 
-;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook)
+;; Hooks whose arguments are evaluated lazily (create_hardcoded_hook): the
+;; hook of the symbol, or "" for any other symbol
 
-dec $is_lazy_hook(definition, symid) : bool
-def $is_lazy_hook(D, symid) = hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or", "BOOL.orElse", "BOOL.implies", "KEQUAL.ite" ]
+dec $lazy_hook(definition, symid) : text
+def $lazy_hook(D, symid) = hookid
   -- if hookid = $hook_of(D, symid)
-def $is_lazy_hook(D, symid) = false
+  -- if hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or", "BOOL.orElse", "BOOL.implies", "KEQUAL.ite" ]
+def $lazy_hook(D, symid) = ""
   -- otherwise
 
 ;; Evaluation
 
+dec $eval_app(definition, subst, text, symid, sort*, pattern*) : res<term>
 dec $apply(definition, symid, sort*, term*) : res<term>
   hint(prose_in "applying" %1 "to" %3)
+dec $apply_kind(definition, symkind, symid, sort*, term*) : res<term>
 dec $apply_equations(definition, equation*, term*) : res<term>
 dec $find_equation(definition, equation*, term*) : res<(subst, pattern)>
 var result : res<term>
@@ -145,35 +149,10 @@ def $eval(D, subst, FLOAT t) = OK (FLOAT t)
 def $eval(D, subst, BYTES n*) = OK (BYTES n*)
 def $eval(D, subst, MINT n_w n_v) = OK (MINT n_w n_v)
 
-;;; Lazy hooks: the second argument is evaluated only when the first does not decide
+;;; Symbol applications: lazy hooks, or arguments first, left to right, then
+;;; the symbol (the kind of symbol is looked up once)
 
-def $eval(D, subst, APP symid sort* ([pattern_1, pattern_2])) = OK (BOOL false)
-  -- if $hook_of(D, symid) = "BOOL.and" \/ $hook_of(D, symid) = "BOOL.andThen"
-  -- if OK (BOOL false) = $eval(D, subst, pattern_1)
-def $eval(D, subst, APP symid sort* ([pattern_1, pattern_2])) = OK (BOOL true)
-  -- if $hook_of(D, symid) = "BOOL.or" \/ $hook_of(D, symid) = "BOOL.orElse"
-  -- if OK (BOOL true) = $eval(D, subst, pattern_1)
-def $eval(D, subst, APP symid sort* ([pattern_1, pattern_2])) = OK (BOOL true)
-  -- if $hook_of(D, symid) = "BOOL.implies"
-  -- if OK (BOOL false) = $eval(D, subst, pattern_1)
-def $eval(D, subst, APP symid sort* ([pattern_1, pattern_2])) = $eval(D, subst, pattern_2)
-  -- if $hook_of(D, symid) = "BOOL.and" \/ $hook_of(D, symid) = "BOOL.andThen" \/ $hook_of(D, symid) = "BOOL.implies"
-  -- if OK (BOOL true) = $eval(D, subst, pattern_1)
-def $eval(D, subst, APP symid sort* ([pattern_1, pattern_2])) = $eval(D, subst, pattern_2)
-  -- if $hook_of(D, symid) = "BOOL.or" \/ $hook_of(D, symid) = "BOOL.orElse"
-  -- if OK (BOOL false) = $eval(D, subst, pattern_1)
-def $eval(D, subst, APP symid sort* ([pattern_c, pattern_t, pattern_e])) = $eval(D, subst, pattern_t)
-  -- if $hook_of(D, symid) = "KEQUAL.ite"
-  -- if OK (BOOL true) = $eval(D, subst, pattern_c)
-def $eval(D, subst, APP symid sort* ([pattern_c, pattern_t, pattern_e])) = $eval(D, subst, pattern_e)
-  -- if $hook_of(D, symid) = "KEQUAL.ite"
-  -- if OK (BOOL false) = $eval(D, subst, pattern_c)
-
-;;; Other symbols: arguments first, left to right, then the symbol
-
-def $eval(D, subst, APP symid sort* pattern*) = $apply(D, symid, sort*, term*)
-  -- if ~$is_lazy_hook(D, symid)
-  -- if OK term* = $evals(D, subst, pattern*)
+def $eval(D, subst, APP symid sort* pattern*) = $eval_app(D, subst, $lazy_hook(D, symid), symid, sort*, pattern*)
 
 ;;; Anything else (an unbound variable, \and outside a left-hand side, a
 ;;; failing argument) fails
@@ -188,25 +167,56 @@ def $evals(D, subst, pattern_h :: pattern_t*) = OK (term_h :: term_t*)
 def $evals(D, subst, pattern*) = FAIL
   -- otherwise
 
+;;; The second argument of a lazy hook is evaluated only when the first does
+;;; not decide
+
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = OK (BOOL false)
+  -- if t = "BOOL.and" \/ t = "BOOL.andThen"
+  -- if OK (BOOL false) = $eval(D, subst, pattern_1)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = OK (BOOL true)
+  -- if t = "BOOL.or" \/ t = "BOOL.orElse"
+  -- if OK (BOOL true) = $eval(D, subst, pattern_1)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = OK (BOOL true)
+  -- if t = "BOOL.implies"
+  -- if OK (BOOL false) = $eval(D, subst, pattern_1)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = $eval(D, subst, pattern_2)
+  -- if t = "BOOL.and" \/ t = "BOOL.andThen" \/ t = "BOOL.implies"
+  -- if OK (BOOL true) = $eval(D, subst, pattern_1)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = $eval(D, subst, pattern_2)
+  -- if t = "BOOL.or" \/ t = "BOOL.orElse"
+  -- if OK (BOOL false) = $eval(D, subst, pattern_1)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_c, pattern_t, pattern_e])) = $eval(D, subst, pattern_t)
+  -- if t = "KEQUAL.ite"
+  -- if OK (BOOL true) = $eval(D, subst, pattern_c)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_c, pattern_t, pattern_e])) = $eval(D, subst, pattern_e)
+  -- if t = "KEQUAL.ite"
+  -- if OK (BOOL false) = $eval(D, subst, pattern_c)
+
+;;; Other symbols: arguments first, left to right, then the symbol
+
+def $eval_app(D, subst, t, symid, sort*, pattern*) = $apply(D, symid, sort*, term*)
+  -- if t = ""
+  -- if OK term* = $evals(D, subst, pattern*)
+def $eval_app(D, subst, t, symid, sort*, pattern*) = FAIL
+  -- otherwise
+
 ;;; Applying a symbol to evaluated arguments
 
-def $apply(D, symid, sort*, term*) = OK $construct(symid, sort*, term*)
-  -- if CONSTRUCTOR = $kind_of_symbol(D, symid)
-def $apply(D, symid, sort*, term*) = OK $construct(symid, sort*, term*)
-  -- if BINDER = $kind_of_symbol(D, symid)
-def $apply(D, symid, sort*, term*) = $hook(D, hookid, sort_r, term*)
-  -- if (HOOKED hookid) = $kind_of_symbol(D, symid)
-  -- if sort_r = $result_instance(D, symid, sort*)
-def $apply(D, symid, sort*, term*) = $apply_equations(D, eqn*, term*)
-  -- if FUNCTION = $kind_of_symbol(D, symid)
-  -- if eqn* = $equations_of(D, symid)
-def $apply(D, symid, sort*, term*) = $eval(D, subst, pattern_r)
-  -- if ANYWHERE = $kind_of_symbol(D, symid)
-  -- if OK (subst, pattern_r) = $find_equation(D, $equations_of(D, symid), term*)
-def $apply(D, symid, sort*, term*) = OK $construct(symid, sort*, term*)
-  -- if ANYWHERE = $kind_of_symbol(D, symid)
-  -- if FAIL = $find_equation(D, $equations_of(D, symid), term*)
+def $apply(D, symid, sort*, term*) = $apply_kind(D, kind, symid, sort*, term*)
+  -- if kind = $kind_of_symbol(D, symid)
 def $apply(D, symid, sort*, term*) = FAIL
+  -- if eps = $kind_of_symbol(D, symid)
+
+def $apply_kind(D, CONSTRUCTOR, symid, sort*, term*) = OK $construct(symid, sort*, term*)
+def $apply_kind(D, BINDER, symid, sort*, term*) = OK $construct(symid, sort*, term*)
+def $apply_kind(D, HOOKED hookid, symid, sort*, term*) = $hook(D, hookid, sort_r, term*)
+  -- if sort_r = $result_instance(D, symid, sort*)
+def $apply_kind(D, FUNCTION, symid, sort*, term*) = $apply_equations(D, $equations_of(D, symid), term*)
+def $apply_kind(D, ANYWHERE, symid, sort*, term*) = $eval(D, subst, pattern_r)
+  -- if OK (subst, pattern_r) = $find_equation(D, $equations_of(D, symid), term*)
+def $apply_kind(D, ANYWHERE, symid, sort*, term*) = OK $construct(symid, sort*, term*)
+  -- if FAIL = $find_equation(D, $equations_of(D, symid), term*)
+def $apply_kind(D, kind, symid, sort*, term*) = FAIL
   -- otherwise
 
 ;;; The first equation, in priority order, whose arguments match and whose
