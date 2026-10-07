@@ -32,6 +32,168 @@ def $try_rule(D, RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*, term
 dec $rhs_of_rule(krule) : pattern
 def $rhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*) = pattern_r
 
+dec $lhs_of_rule(krule) : pattern
+def $lhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*) = pattern_l
+
+;; Indexing rules by the head of the computation
+;; A rule whose left-hand side puts an application of a constructor f first in
+;; a computation (f(...) ~> ...) can only match a configuration with f there,
+;; so a step tries only the rules indexed under the configuration's heads and
+;; those not indexed, in their order. This is the first switch of the LLVM
+;; backend's decision trees. The path to the computation goes through plain
+;; constructors (cells, ~>) and through the elements of cell maps and cell
+;; bags (the threads of SIMPLE and KOOL: some thread must have f first); a
+;; rule is not indexed when an injection, a list, an overloaded symbol, or a
+;; variable is in the way.
+
+syntax step =
+  | ARG nat              ;; the argument at this position
+  | VALUE                ;; some value of a map or element of a set
+
+syntax guard =
+  | HEAD step* symid     ;; the application at this path, under injections, must be of symid
+  | ANY
+
+syntax pathindex = PATH step* map<symid, set<nat>>  ;; rules by their head at a path
+syntax ruleindex = INDEX set<nat> pathindex*        ;; rules not indexed, and rules by path
+
+var SI : set<nat>
+var MI : map<symid, set<nat>>
+
+;; A constructor that a pattern only matches by its own symbol
+
+dec $overloaded(overload*, symid) : bool
+def $overloaded(eps, symid) = false
+def $overloaded((symid_f '>' symid_g) :: overload_t*, symid) = symid_f = symid \/ $overloaded(overload_t*, symid)
+
+dec $plain(definition, symid) : bool
+def $plain(D, symid) = symid =/= "inj" /\ ~$overloaded(D.OVERLOADS, symid)
+  -- if CONSTRUCTOR = $kind_of_symbol(D, symid)
+def $plain(D, symid) = ~$overloaded(D.OVERLOADS, symid)
+  -- if BINDER = $kind_of_symbol(D, symid)
+def $plain(D, symid) = false
+  -- otherwise
+
+;; The path to the first computation in a pattern, left to right, and its head
+
+dec $strip_inj(pattern) : pattern
+def $strip_inj(APP "inj" sort* ([pattern])) = $strip_inj(pattern)
+def $strip_inj(pattern) = pattern
+  -- otherwise
+
+dec $plain_head(definition, pattern) : bool
+def $plain_head(D, pattern) = $plain(D, symid)
+  -- if (APP symid sort* pattern_a*) = $strip_inj(pattern)
+def $plain_head(D, pattern) = false
+  -- otherwise
+
+;; When the first element is not a plain constructor (a variable, as in the
+;; cooling rules of strict symbols: V ~> #freezer(...) ~> K), the next one is
+;; used
+
+dec $first_head(definition, pattern) : res<(step*, pattern)>
+dec $first_head_args(definition, pattern*, nat) : res<(step*, pattern)>
+dec $first_head_values(definition, pattern*) : res<(step*, pattern)>
+dec $first_head_elements(definition, pattern*) : res<(step*, pattern)>
+def $first_head(D, APP "kseq" sort* ([pattern_h, pattern_t])) = OK (([ARG 0]), pattern_h)
+  -- if $plain_head(D, pattern_h)
+def $first_head(D, APP "kseq" sort* ([pattern_h, pattern_t])) = OK (ARG 1 :: step*, pattern)
+  -- if ~$plain_head(D, pattern_h)
+  -- if OK (step*, pattern) = $first_head(D, pattern_t)
+def $first_head(D, AND sort pattern_1 pattern_2) = $first_head(D, pattern_1)
+def $first_head(D, APP symid sort* pattern*) = $first_head_args(D, pattern*, 0)
+  -- if symid =/= "kseq" /\ $plain(D, symid)
+def $first_head(D, pattern) = $first_head_values(D, $elements(D, "MAP", $parts(D, "MAP", pattern)))
+  -- if "MAP" = $collection_of(D, pattern)
+def $first_head(D, pattern) = $first_head_elements(D, $elements(D, "SET", $parts(D, "SET", pattern)))
+  -- if "SET" = $collection_of(D, pattern)
+def $first_head(D, pattern) = FAIL
+  -- otherwise
+def $first_head_args(D, eps, n) = FAIL
+def $first_head_args(D, pattern_h :: pattern_t*, n) = OK (ARG n :: step*, pattern)
+  -- if OK (step*, pattern) = $first_head(D, pattern_h)
+def $first_head_args(D, pattern_h :: pattern_t*, n) = $first_head_args(D, pattern_t*, $(n + 1))
+  -- if FAIL = $first_head(D, pattern_h)
+def $first_head_values(D, eps) = FAIL
+def $first_head_values(D, (APP symid sort* ([pattern_k, pattern_v])) :: pattern_t*) = OK (VALUE :: step*, pattern)
+  -- if OK (step*, pattern) = $first_head(D, pattern_v)
+def $first_head_values(D, (APP symid sort* ([pattern_k, pattern_v])) :: pattern_t*) = $first_head_values(D, pattern_t*)
+  -- if FAIL = $first_head(D, pattern_v)
+def $first_head_elements(D, eps) = FAIL
+def $first_head_elements(D, (APP symid sort* ([pattern_e])) :: pattern_t*) = OK (VALUE :: step*, pattern)
+  -- if OK (step*, pattern) = $first_head(D, pattern_e)
+def $first_head_elements(D, (APP symid sort* ([pattern_e])) :: pattern_t*) = $first_head_elements(D, pattern_t*)
+  -- if FAIL = $first_head(D, pattern_e)
+
+dec $guard(definition, pattern) : guard
+def $guard(D, pattern) = HEAD step* symid
+  -- if OK (step*, pattern_h) = $first_head(D, pattern)
+  -- if (APP symid sort* pattern_a*) = $strip_inj(pattern_h)
+  -- if $plain(D, symid)
+def $guard(D, pattern) = ANY
+  -- otherwise
+
+;; Building the index of rules, numbered in the order they are tried
+
+dec $index_rules(definition, krule*) : ruleindex
+dec $index_from(definition, krule*, nat, ruleindex) : ruleindex
+dec $index_add(ruleindex, nat, guard) : ruleindex
+dec $index_path(pathindex*, step*, symid, nat) : pathindex*
+dec $add_index(map<symid, set<nat>>, symid, nat) : map<symid, set<nat>>
+
+def $index_rules(D, krule*) = $index_from(D, krule*, 0, INDEX `{ eps `} eps)
+def $index_from(D, eps, n, ruleindex) = ruleindex
+def $index_from(D, krule_h :: krule_t*, n, ruleindex) = $index_from(D, krule_t*, $(n + 1), $index_add(ruleindex, n, $guard(D, $lhs_of_rule(krule_h))))
+def $index_add(INDEX SI pathindex*, n, ANY) = INDEX $union_set<nat>(SI, `{ n `}) pathindex*
+def $index_add(INDEX SI pathindex*, n, HEAD step* symid) = INDEX SI $index_path(pathindex*, step*, symid, n)
+def $index_path(eps, step*, symid, n) = [ PATH step* `{ symid ':' `{ n `} `} ]
+def $index_path((PATH step_q* MI) :: pathindex_t*, step*, symid, n) = (PATH step_q* $add_index(MI, symid, n)) :: pathindex_t*
+  -- if step_q* = step*
+def $index_path((PATH step_q* MI) :: pathindex_t*, step*, symid, n) = (PATH step_q* MI) :: $index_path(pathindex_t*, step*, symid, n)
+  -- if step_q* =/= step*
+def $add_index(MI, symid, n) = $update_map<symid, set<nat>>(MI, symid, $union_set<nat>(SI, `{ n `}))
+  -- if SI = $find_map<symid, set<nat>>(MI, symid)
+def $add_index(MI, symid, n) = $update_map<symid, set<nat>>(MI, symid, `{ n `})
+  -- if eps = $find_map<symid, set<nat>>(MI, symid)
+
+;; The candidate rules for a configuration: the head symbols at each path,
+;; under injections, select rules; the union is in the order rules are tried
+
+dec $heads_at(term, step*) : set<symid>
+dec $heads_in(term*, step*) : set<symid>
+def $heads_at(APP "inj" sort* ([term]), eps) = $heads_at(term, eps)
+def $heads_at(APP symid sort* term*, eps) = `{ symid `}
+  -- if symid =/= "inj"
+def $heads_at(APP symid sort* term*, (ARG n) :: step*) = $heads_at(term*[n], step*)
+  -- if $(n < |term*|)
+def $heads_at(MAP sort `{ (term_k ':' term_v)* `}, VALUE :: step*) = $heads_in(term_v*, step*)
+def $heads_at(SET sort `{ term_e* `}, VALUE :: step*) = $heads_in(term_e*, step*)
+def $heads_at(term, step*) = `{ eps `}
+  -- otherwise
+def $heads_in(eps, step*) = `{ eps `}
+def $heads_in(term_h :: term_t*, step*) = $union_set<symid>($heads_at(term_h, step*), $heads_in(term_t*, step*))
+
+dec $lookup_all(map<symid, set<nat>>, symid*) : set<nat>
+def $lookup_all(MI, eps) = `{ eps `}
+def $lookup_all(MI, symid :: symid_t*) = $union_set<nat>(SI, $lookup_all(MI, symid_t*))
+  -- if SI = $find_map<symid, set<nat>>(MI, symid)
+def $lookup_all(MI, symid :: symid_t*) = $lookup_all(MI, symid_t*)
+  -- if eps = $find_map<symid, set<nat>>(MI, symid)
+
+dec $indexed(pathindex*, term) : set<nat>
+def $indexed(eps, term) = `{ eps `}
+def $indexed((PATH step* MI) :: pathindex_t*, term) = $union_set<nat>($lookup_all(MI, symid*), $indexed(pathindex_t*, term))
+  -- if `{ symid* `} = $heads_at(term, step*)
+
+dec $pick(krule*, nat*) : krule*
+def $pick(krule*, eps) = eps
+def $pick(krule*, n :: n_t*) = krule*[n] :: $pick(krule*, n_t*)
+
+dec $candidates(krule*, ruleindex, term) : krule*
+  hint(prose_in "the rules that may rewrite" %2)
+def $candidates(krule*, INDEX SI pathindex*, term) = $pick(krule*, n*)
+  -- if `{ n* `} = $union_set<nat>(SI, $indexed(pathindex*, term))
+
 ;; A step tries the rules in order. Once a rule applies, failing to build its
 ;; right-hand side is an error and does not fall back to later rules.
 
