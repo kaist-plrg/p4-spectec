@@ -1,0 +1,104 @@
+;;
+;; Hooks delegated to builtins
+;;
+
+;;; Implemented in p4spec/lib/interface/kore/builtins.ml after the LLVM
+;;; backend's runtime; with P4-SpecTec's own builtins, the trusted base of hooks
+
+builtin dec $string_length(text) : int
+  hint(prose_in "the number of bytes of" %0)
+builtin dec $string_substr(text, int, int) : text
+  hint(prose_in "the bytes of" %0 "from" %1 "up to" %2)
+builtin dec $string_find(text, text, int) : int
+  hint(prose_in "the first position from" %2 "where" %1 "occurs in" %0
+                ", or -1")
+builtin dec $string_find_char(text, text, int) : int
+  hint(prose_in "the first position from" %2 "where a byte of" %1 "occurs in" %0
+                ", or -1")
+builtin dec $string_chr(int) : text
+  hint(prose_in "the byte" %0)
+builtin dec $int_to_string(int) : text
+  hint(prose_in "the decimal notation of" %0)
+builtin dec $string_to_int(text) : int?
+  hint(prose_in "the integer written in decimal as" %0)
+builtin dec $string_replace(text, text, text, nat) : text
+  hint(prose_in %0 "with its first" %3 "occurrences of" %1 "replaced by" %2)
+builtin dec $string_count(text, text) : nat
+  hint(prose_in "the number of occurrences of" %1 "in" %0)
+builtin dec $string_to_base(text, int) : int?
+  hint(prose_in "the integer written in base" %1 "as" %0)
+builtin dec $int_and(int, int) : int
+  hint(prose_in "the bitwise and of" %0 "and" %1 "in two's complement")
+builtin dec $int_or(int, int) : int
+  hint(prose_in "the bitwise or of" %0 "and" %1 "in two's complement")
+builtin dec $int_xor(int, int) : int
+  hint(prose_in "the bitwise exclusive or of" %0 "and" %1 "in two's complement")
+builtin dec $int_not(int) : int
+  hint(prose_in "the bitwise complement of" %0 "in two's complement")
+builtin dec $int_shl(int, nat) : int
+  hint(prose_in %0 "shifted left by" %1 "bits")
+builtin dec $int_shr(int, nat) : int
+  hint(prose_in %0 "shifted right by" %1 "bits, rounding down")
+builtin dec $int_log2(int) : int
+  hint(prose_in "the base-2 logarithm of" %0 ", rounded down")
+builtin dec $int_to_bytes(nat, int, bool) : nat*
+  hint(prose_in "the" %0 "lowest bytes of" %1
+                "in two's complement, big-endian if" %2)
+builtin dec $bytes_to_int(nat*, bool, bool) : int
+  hint(prose_in "the integer with bytes" %0 ", big-endian if" %1 ", signed if"
+                %2)
+builtin dec $float_add(text, text) : text
+  hint(prose_in "the sum of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_sub(text, text) : text
+  hint(prose_in "the difference of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_mul(text, text) : text
+  hint(prose_in "the product of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_div(text, text) : text
+  hint(prose_in "the quotient of" %0 "and" %1 "in the format of" %0)
+builtin dec $float_min(text, text) : text
+  hint(prose_in "the smaller of" %0 "and" %1)
+builtin dec $float_max(text, text) : text
+  hint(prose_in "the larger of" %0 "and" %1)
+builtin dec $float_neg(text) : text
+  hint(prose_in "the negation of" %0)
+builtin dec $float_abs(text) : text
+  hint(prose_in "the absolute value of" %0)
+builtin dec $float_ceil(text) : text
+  hint(prose_in %0 "rounded up to an integer")
+builtin dec $float_floor(text) : text
+  hint(prose_in %0 "rounded down to an integer")
+builtin dec $float_trunc(text) : text
+  hint(prose_in %0 "rounded towards zero to an integer")
+builtin dec $float_root(text, nat) : text?
+  hint(prose_in "the" %1 "-th root of" %0)
+builtin dec $float_round(text, nat, nat) : text
+  hint(prose_in %0 "rounded to precision" %1 "with" %2 "exponent bits")
+builtin dec $int_to_float(int, nat, nat) : text
+  hint(prose_in %0 "rounded to precision" %1 "with" %2 "exponent bits")
+builtin dec $float_to_int(text) : int?
+  hint(prose_in %0 "rounded to the nearest integer")
+builtin dec $float_max_value(nat, nat) : text
+  hint(prose_in "the largest finite float of precision" %0 "with" %1
+                "exponent bits")
+builtin dec $float_precision(text) : nat
+  hint(prose_in "the precision of" %0)
+builtin dec $float_exponent_bits(text) : nat
+  hint(prose_in "the number of exponent bits of" %0)
+builtin dec $float_sign(text) : bool
+  hint(prose_in "whether the sign bit of" %0 "is set")
+builtin dec $float_is_nan(text) : bool
+  hint(prose_in "whether" %0 "is NaN")
+builtin dec $float_eq(text, text) : bool
+  hint(prose_in "whether" %0 "equals" %1)
+builtin dec $float_lt(text, text) : bool
+  hint(prose_in "whether" %0 "is less than" %1)
+builtin dec $float_le(text, text) : bool
+  hint(prose_in "whether" %0 "is at most" %1)
+builtin dec $float_gt(text, text) : bool
+  hint(prose_in "whether" %0 "is greater than" %1)
+builtin dec $float_ge(text, text) : bool
+  hint(prose_in "whether" %0 "is at least" %1)
+builtin dec $string_to_bytes(text) : nat*
+  hint(prose_in "the bytes of" %0)
+builtin dec $bytes_to_string(nat*) : text
+  hint(prose_in "the text with bytes" %0)

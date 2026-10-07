@@ -1,11 +1,9 @@
 ;;
 ;; One rewrite step on the whole configuration
 ;;
-;; All rewrite rules of a kompiled definition apply to the top cell
-;; (<generatedTop>), so a step matches the configuration as a whole. Rules are
-;; tried in priority order; the first rule whose left-hand side matches and
-;; whose requires clause holds rewrites the configuration.
 ;;
+
+;;; Rules apply to the whole configuration, tried in priority order
 
 syntax stepres =
   | STEP term   ;; the next configuration
@@ -15,8 +13,10 @@ syntax stepres =
 ;; Rewrite rules in the order they are tried (stable by priority, see 4-eval)
 
 dec $rule_with_priority(krule) : (nat, krule)
-def $rule_with_priority(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
-  = ($priority(attr*), RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
+def $rule_with_priority(
+    RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
+  = ($priority(attr*),
+     RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
 
 dec $rules_in_order(definition) : krule*
   hint(prose_in "the rewrite rules of" %0 "in the order they are tried")
@@ -26,36 +26,34 @@ def $rules_in_order(D) = $sort_by_priority<krule>($rule_with_priority(krule)*)
 ;; A rule applies when its left-hand side matches and its requires clause holds
 
 dec $try_rule(definition, krule, term) : res<subst>
-def $try_rule(D, RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*, term)
-  = $first_holding(D, $match(D, $empty_map<varid, term>, pattern_l, term), pattern_c?)
+def $try_rule(D, RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*,
+              term)
+  = $first_holding(D, $match(D, $empty_map<varid, term>, pattern_l, term),
+                   pattern_c?)
 
 dec $rhs_of_rule(krule) : pattern
-def $rhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*) = pattern_r
+def $rhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
+  = pattern_r
 
 dec $lhs_of_rule(krule) : pattern
-def $lhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*) = pattern_l
+def $lhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
+  = pattern_l
 
-;; Indexing rules by the head of the computation
-;; A rule whose left-hand side puts an application of a constructor f first in
-;; a computation (f(...) ~> ...) can only match a configuration with f there,
-;; so a step tries only the rules indexed under the configuration's heads and
-;; those not indexed, in their order. This is the first switch of the LLVM
-;; backend's decision trees. The path to the computation goes through plain
-;; constructors (cells, ~>) and through the elements of cell maps and cell
-;; bags (the threads of SIMPLE and KOOL: some thread must have f first); a
-;; rule is not indexed when an injection, a list, an overloaded symbol, or a
-;; variable is in the way.
+;; Indexing rules by the head f of the computation (f(...) ~> ...), as the
+;; first switch of the LLVM backend's decision trees; a step tries the rules
+;; indexed under the configuration's heads and those not indexed, in order
 
 syntax step =
   | ARG nat              ;; the argument at this position
   | VALUE                ;; some value of a map or element of a set
 
 syntax guard =
-  | HEAD step* symid     ;; the application at this path, under injections, must be of symid
+  | HEAD step* symid     ;; the application at this path is of symid
   | ANY
 
-syntax pathindex = PATH step* map<symid, set<nat>>  ;; rules by their head at a path
-syntax ruleindex = INDEX set<nat> pathindex*        ;; rules not indexed, and rules by path
+;; Rules by their head at a path, and rules not indexed with rules by path
+syntax pathindex = PATH step* map<symid, set<nat>>
+syntax ruleindex = INDEX set<nat> pathindex*
 
 var SI : set<nat>
 var MI : map<symid, set<nat>>
@@ -64,7 +62,8 @@ var MI : map<symid, set<nat>>
 
 dec $overloaded(overload*, symid) : bool
 def $overloaded(eps, symid) = false
-def $overloaded((symid_f '>' symid_g) :: overload_t*, symid) = symid_f = symid \/ $overloaded(overload_t*, symid)
+def $overloaded((symid_f '>' symid_g) :: overload_t*, symid)
+  = symid_f = symid \/ $overloaded(overload_t*, symid)
 
 dec $plain(definition, symid) : bool
 def $plain(D, symid) = symid =/= "inj" /\ ~$overloaded(D.OVERLOADS, symid)
@@ -95,34 +94,46 @@ dec $first_head(definition, pattern) : res<(step*, pattern)>
 dec $first_head_args(definition, pattern*, nat) : res<(step*, pattern)>
 dec $first_head_values(definition, pattern*) : res<(step*, pattern)>
 dec $first_head_elements(definition, pattern*) : res<(step*, pattern)>
-def $first_head(D, APP "kseq" sort* ([pattern_h, pattern_t])) = OK (([ARG 0]), pattern_h)
+def $first_head(D, APP "kseq" sort* ([pattern_h, pattern_t]))
+  = OK (([ARG 0]), pattern_h)
   -- if $plain_head(D, pattern_h)
-def $first_head(D, APP "kseq" sort* ([pattern_h, pattern_t])) = OK (ARG 1 :: step*, pattern)
+def $first_head(D, APP "kseq" sort* ([pattern_h, pattern_t]))
+  = OK (ARG 1 :: step*, pattern)
   -- if ~$plain_head(D, pattern_h)
   -- if OK (step*, pattern) = $first_head(D, pattern_t)
 def $first_head(D, AND sort pattern_1 pattern_2) = $first_head(D, pattern_1)
 def $first_head(D, APP symid sort* pattern*) = $first_head_args(D, pattern*, 0)
   -- if symid =/= "kseq" /\ $plain(D, symid)
-def $first_head(D, pattern) = $first_head_values(D, $elements(D, "MAP", $parts(D, "MAP", pattern)))
+def $first_head(D, pattern)
+  = $first_head_values(D, $elements(D, "MAP", $parts(D, "MAP", pattern)))
   -- if "MAP" = $collection_of(D, pattern)
-def $first_head(D, pattern) = $first_head_elements(D, $elements(D, "SET", $parts(D, "SET", pattern)))
+def $first_head(D, pattern)
+  = $first_head_elements(D, $elements(D, "SET", $parts(D, "SET", pattern)))
   -- if "SET" = $collection_of(D, pattern)
 def $first_head(D, pattern) = FAIL
   -- otherwise
 def $first_head_args(D, eps, n) = FAIL
-def $first_head_args(D, pattern_h :: pattern_t*, n) = OK (ARG n :: step*, pattern)
+def $first_head_args(D, pattern_h :: pattern_t*, n)
+  = OK (ARG n :: step*, pattern)
   -- if OK (step*, pattern) = $first_head(D, pattern_h)
-def $first_head_args(D, pattern_h :: pattern_t*, n) = $first_head_args(D, pattern_t*, $(n + 1))
+def $first_head_args(D, pattern_h :: pattern_t*, n)
+  = $first_head_args(D, pattern_t*, $(n + 1))
   -- if FAIL = $first_head(D, pattern_h)
 def $first_head_values(D, eps) = FAIL
-def $first_head_values(D, (APP symid sort* ([pattern_k, pattern_v])) :: pattern_t*) = OK (VALUE :: step*, pattern)
+def $first_head_values(D,
+                       (APP symid sort* ([pattern_k, pattern_v])) :: pattern_t*)
+  = OK (VALUE :: step*, pattern)
   -- if OK (step*, pattern) = $first_head(D, pattern_v)
-def $first_head_values(D, (APP symid sort* ([pattern_k, pattern_v])) :: pattern_t*) = $first_head_values(D, pattern_t*)
+def $first_head_values(D,
+                       (APP symid sort* ([pattern_k, pattern_v])) :: pattern_t*)
+  = $first_head_values(D, pattern_t*)
   -- if FAIL = $first_head(D, pattern_v)
 def $first_head_elements(D, eps) = FAIL
-def $first_head_elements(D, (APP symid sort* ([pattern_e])) :: pattern_t*) = OK (VALUE :: step*, pattern)
+def $first_head_elements(D, (APP symid sort* ([pattern_e])) :: pattern_t*)
+  = OK (VALUE :: step*, pattern)
   -- if OK (step*, pattern) = $first_head(D, pattern_e)
-def $first_head_elements(D, (APP symid sort* ([pattern_e])) :: pattern_t*) = $first_head_elements(D, pattern_t*)
+def $first_head_elements(D, (APP symid sort* ([pattern_e])) :: pattern_t*)
+  = $first_head_elements(D, pattern_t*)
   -- if FAIL = $first_head(D, pattern_e)
 
 dec $guard(definition, pattern) : guard
@@ -143,15 +154,22 @@ dec $add_index(map<symid, set<nat>>, symid, nat) : map<symid, set<nat>>
 
 def $index_rules(D, krule*) = $index_from(D, krule*, 0, INDEX `{ eps `} eps)
 def $index_from(D, eps, n, ruleindex) = ruleindex
-def $index_from(D, krule_h :: krule_t*, n, ruleindex) = $index_from(D, krule_t*, $(n + 1), $index_add(ruleindex, n, $guard(D, $lhs_of_rule(krule_h))))
-def $index_add(INDEX SI pathindex*, n, ANY) = INDEX $union_set<nat>(SI, `{ n `}) pathindex*
-def $index_add(INDEX SI pathindex*, n, HEAD step* symid) = INDEX SI $index_path(pathindex*, step*, symid, n)
+def $index_from(D, krule_h :: krule_t*, n, ruleindex)
+  = $index_from(D, krule_t*, $(n + 1),
+                $index_add(ruleindex, n, $guard(D, $lhs_of_rule(krule_h))))
+def $index_add(INDEX SI pathindex*, n, ANY)
+  = INDEX $union_set<nat>(SI, `{ n `}) pathindex*
+def $index_add(INDEX SI pathindex*, n, HEAD step* symid)
+  = INDEX SI $index_path(pathindex*, step*, symid, n)
 def $index_path(eps, step*, symid, n) = [ PATH step* `{ symid ':' `{ n `} `} ]
-def $index_path((PATH step_q* MI) :: pathindex_t*, step*, symid, n) = (PATH step_q* $add_index(MI, symid, n)) :: pathindex_t*
+def $index_path((PATH step_q* MI) :: pathindex_t*, step*, symid, n)
+  = (PATH step_q* $add_index(MI, symid, n)) :: pathindex_t*
   -- if step_q* = step*
-def $index_path((PATH step_q* MI) :: pathindex_t*, step*, symid, n) = (PATH step_q* MI) :: $index_path(pathindex_t*, step*, symid, n)
+def $index_path((PATH step_q* MI) :: pathindex_t*, step*, symid, n)
+  = (PATH step_q* MI) :: $index_path(pathindex_t*, step*, symid, n)
   -- if step_q* =/= step*
-def $add_index(MI, symid, n) = $update_map<symid, set<nat>>(MI, symid, $union_set<nat>(SI, `{ n `}))
+def $add_index(MI, symid, n)
+  = $update_map<symid, set<nat>>(MI, symid, $union_set<nat>(SI, `{ n `}))
   -- if SI = $find_map<symid, set<nat>>(MI, symid)
 def $add_index(MI, symid, n) = $update_map<symid, set<nat>>(MI, symid, `{ n `})
   -- if eps = $find_map<symid, set<nat>>(MI, symid)
@@ -164,25 +182,31 @@ dec $heads_in(term*, step*) : set<symid>
 def $heads_at(APP "inj" sort* ([term]), eps) = $heads_at(term, eps)
 def $heads_at(APP symid sort* term*, eps) = `{ symid `}
   -- if symid =/= "inj"
-def $heads_at(APP symid sort* term*, (ARG n) :: step*) = $heads_at(term*[n], step*)
+def $heads_at(APP symid sort* term*, (ARG n) :: step*)
+  = $heads_at(term*[n], step*)
   -- if $(n < |term*|)
-def $heads_at(MAP sort `{ (term_k ':' term_v)* `}, VALUE :: step*) = $heads_in(term_v*, step*)
-def $heads_at(SET sort `{ term_e* `}, VALUE :: step*) = $heads_in(term_e*, step*)
+def $heads_at(MAP sort `{ (term_k ':' term_v)* `}, VALUE :: step*)
+  = $heads_in(term_v*, step*)
+def $heads_at(SET sort `{ term_e* `}, VALUE :: step*)
+  = $heads_in(term_e*, step*)
 def $heads_at(term, step*) = `{ eps `}
   -- otherwise
 def $heads_in(eps, step*) = `{ eps `}
-def $heads_in(term_h :: term_t*, step*) = $union_set<symid>($heads_at(term_h, step*), $heads_in(term_t*, step*))
+def $heads_in(term_h :: term_t*, step*)
+  = $union_set<symid>($heads_at(term_h, step*), $heads_in(term_t*, step*))
 
 dec $lookup_all(map<symid, set<nat>>, symid*) : set<nat>
 def $lookup_all(MI, eps) = `{ eps `}
-def $lookup_all(MI, symid :: symid_t*) = $union_set<nat>(SI, $lookup_all(MI, symid_t*))
+def $lookup_all(MI, symid :: symid_t*)
+  = $union_set<nat>(SI, $lookup_all(MI, symid_t*))
   -- if SI = $find_map<symid, set<nat>>(MI, symid)
 def $lookup_all(MI, symid :: symid_t*) = $lookup_all(MI, symid_t*)
   -- if eps = $find_map<symid, set<nat>>(MI, symid)
 
 dec $indexed(pathindex*, term) : set<nat>
 def $indexed(eps, term) = `{ eps `}
-def $indexed((PATH step* MI) :: pathindex_t*, term) = $union_set<nat>($lookup_all(MI, symid*), $indexed(pathindex_t*, term))
+def $indexed((PATH step* MI) :: pathindex_t*, term)
+  = $union_set<nat>($lookup_all(MI, symid*), $indexed(pathindex_t*, term))
   -- if `{ symid* `} = $heads_at(term, step*)
 
 dec $pick(krule*, nat*) : krule*
@@ -202,9 +226,11 @@ dec $step(definition, krule*, term) : stepres
 dec $rewrite_or_next(definition, krule, krule*, term, res<subst>) : stepres
 dec $rewrite(term, res<term>) : stepres
 def $step(D, eps, term) = STUCK
-def $step(D, krule_h :: krule_t*, term) = $rewrite_or_next(D, krule_h, krule_t*, term, $try_rule(D, krule_h, term))
+def $step(D, krule_h :: krule_t*, term)
+  = $rewrite_or_next(D, krule_h, krule_t*, term, $try_rule(D, krule_h, term))
 
-def $rewrite_or_next(D, krule, krule_t*, term, OK subst) = $rewrite(term, $eval(D, subst, $rhs_of_rule(krule)))
+def $rewrite_or_next(D, krule, krule_t*, term, OK subst)
+  = $rewrite(term, $eval(D, subst, $rhs_of_rule(krule)))
 def $rewrite_or_next(D, krule, krule_t*, term, FAIL) = $step(D, krule_t*, term)
 
 def $rewrite(term, OK term') = STEP term'

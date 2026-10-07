@@ -1,11 +1,10 @@
 ;;
 ;; Running a program: krun
 ;;
-;; Corresponds to the interpreter that krun calls. The initial term is a
-;; function call, initGeneratedTopCell($PGM |-> program), so evaluating it
-;; builds the initial configuration. Rewrite steps then repeat until no rule
-;; applies, or until the optional step limit (krun --depth) is reached.
 ;;
+
+;;; As the interpreter krun calls: evaluate the initial term, a call of
+;;; initGeneratedTopCell, then rewrite until no rule applies or --depth
 
 syntax runres =
   | FINAL nat term   ;; steps taken and the final configuration
@@ -17,18 +16,22 @@ dec $run(definition, krule*, ruleindex, nat, nat?, term) : runres
 dec $continue(definition, krule*, ruleindex, nat, nat?, term, stepres) : runres
 def $run(D, krule*, ruleindex, n, n_max, term) = FINAL n term
   -- if n = n_max
-def $run(D, krule*, ruleindex, n, n_max?, term) = $continue(D, krule*, ruleindex, n, n_max?, term, $step(D, $candidates(krule*, ruleindex, term), term))
+def $run(D, krule*, ruleindex, n, n_max?, term)
+  = $continue(D, krule*, ruleindex, n, n_max?, term,
+              $step(D, $candidates(krule*, ruleindex, term), term))
   -- if n_max? =/= (n)
 
 ;; After a step: stop when no rule applies or a step fails, or go on
 
 def $continue(D, krule*, ruleindex, n, n_max?, term, STUCK) = FINAL n term
 def $continue(D, krule*, ruleindex, n, n_max?, term, ERROR) = ERROR n term
-def $continue(D, krule*, ruleindex, n, n_max?, term, STEP term') = $run(D, krule*, ruleindex, $(n + 1), n_max?, term')
+def $continue(D, krule*, ruleindex, n, n_max?, term, STEP term')
+  = $run(D, krule*, ruleindex, $(n + 1), n_max?, term')
 
 dec $krun(definition, pattern, nat?) : runres
   hint(prose_in "running" %1 "under" %0)
-def $krun(D, pattern, n_max?) = $run(D', krule*, $index_rules(D', krule*), 0, n_max?, term)
+def $krun(D, pattern, n_max?)
+  = $run(D', krule*, $index_rules(D', krule*), 0, n_max?, term)
   -- if D' = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
   -- if krule* = $rules_in_order(D')
   -- if OK term = $eval(D', $empty_map<varid, term>, pattern)

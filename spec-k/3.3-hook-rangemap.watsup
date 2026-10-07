@@ -1,0 +1,212 @@
+;;
+;; Range maps (hook RANGEMAP)
+;;
+
+;;; Integer keys only, as the LLVM backend's rangemap.h: inserting cuts the
+;;; ranges it overlaps and merges those with the same value, so a range map
+;;; has one form, its ranges in order
+
+
+;; Keys are integers injected into KItem
+
+dec $key_int(term) : int?
+def $key_int(APP "inj" ([sort_a, sort_k]) ([INT i])) = i
+def $key_int(term) = eps
+  -- otherwise
+
+dec $int_key(int) : term
+def $int_key(i)
+  = APP "inj" ([SORT "SortInt" eps, SORT "SortKItem" eps]) ([INT i])
+
+;; Ranges are RangeMap:Range(start, end) terms, injected into KItem as keys
+
+dec $range_term(int, int) : term
+def $range_term(i_s, i_e)
+  = APP "LblRangeMap'Coln'Range" eps ([$int_key(i_s), $int_key(i_e)])
+
+dec $range_key(int, int) : term
+def $range_key(i_s, i_e)
+  = APP "inj" ([SORT "SortRange" eps,
+                SORT "SortKItem" eps]) ([$range_term(i_s, i_e)])
+
+dec $range_bounds(term) : (int, int)?
+def $range_bounds(APP "LblRangeMap'Coln'Range" eps ([term_s, term_e]))
+  = (i_s, i_e)
+  -- if i_s = $key_int(term_s)
+  -- if i_e = $key_int(term_e)
+def $range_bounds(APP "inj" ([sort_r, sort_k]) ([term])) = $range_bounds(term)
+def $range_bounds(term) = eps
+  -- otherwise
+
+dec $imin(int, int) : int
+def $imin(i_1, i_2) = i_1
+  -- if $(i_1 <= i_2)
+def $imin(i_1, i_2) = i_2
+  -- if $(i_1 > i_2)
+
+dec $imax(int, int) : int
+def $imax(i_1, i_2) = i_1
+  -- if $(i_1 >= i_2)
+def $imax(i_1, i_2) = i_2
+  -- if $(i_1 < i_2)
+
+;; Whether a range overlaps [i_s, i_e), or overlaps or touches it
+
+dec $overlaps(int, int, rangeitem) : bool
+def $overlaps(i_s, i_e, RANGE i_rs i_re term) = $(i_re > i_s) /\ $(i_e > i_rs)
+
+dec $touches(int, int, rangeitem) : bool
+def $touches(i_s, i_e, RANGE i_rs i_re term) = $(i_re >= i_s) /\ $(i_e >= i_rs)
+
+;; Whether [i_s, i_e) with value V absorbs a range: same value, and they
+;; overlap or touch
+
+dec $absorbs(int, int, term, rangeitem) : bool
+def $absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+  = $term_eq(term_r, term) /\ $touches(i_s, i_e, RANGE i_rs i_re term_r)
+
+;; The parts of [i_rs, i_re) outside [i_a, i_b), with value V
+
+dec $left_part(int, int, term) : rangeitem*
+def $left_part(i_rs, i_a, term) = [ RANGE i_rs i_a term ]
+  -- if $(i_rs < i_a)
+def $left_part(i_rs, i_a, term) = eps
+  -- if $(i_rs >= i_a)
+
+dec $right_part(int, int, term) : rangeitem*
+def $right_part(i_b, i_re, term) = [ RANGE i_b i_re term ]
+  -- if $(i_re > i_b)
+def $right_part(i_b, i_re, term) = eps
+  -- if $(i_re <= i_b)
+
+dec $outside(int, int, int, int, term) : rangeitem*
+def $outside(i_rs, i_re, i_a, i_b, term)
+  = $left_part(i_rs, i_a, term) ++ $right_part(i_b, i_re, term)
+
+;; Inserting [i_s, i_e) |-> V: the bounds after absorbing ranges, the other
+;; ranges cut outside them, and the new range placed by its start
+
+dec $absorbed_bounds(rangeitem*, int, int, term, int, int) : (int, int)
+def $absorbed_bounds(eps, i_s, i_e, term, i_a, i_b) = (i_a, i_b)
+def $absorbed_bounds((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term,
+                     i_a, i_b)
+  = $absorbed_bounds(rangeitem_t*, i_s, i_e, term, $imin(i_a, i_rs),
+                     $imax(i_b, i_re))
+  -- if $absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+def $absorbed_bounds((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term,
+                     i_a, i_b)
+  = $absorbed_bounds(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if ~$absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+
+dec $cut(rangeitem*, int, int, term, int, int) : rangeitem*
+def $cut(eps, i_s, i_e, term, i_a, i_b) = eps
+def $cut((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  = $cut(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if $absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+def $cut((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  = $outside(i_rs, i_re, i_a, i_b,
+             term_r) ++ $cut(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if ~$absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+  -- if $overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+def $cut((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  = (RANGE i_rs i_re term_r) :: $cut(rangeitem_t*, i_s, i_e, term, i_a, i_b)
+  -- if ~$absorbs(i_s, i_e, term, RANGE i_rs i_re term_r)
+  -- if ~$overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+
+dec $place(rangeitem*, rangeitem) : rangeitem*
+def $place(eps, rangeitem) = [ rangeitem ]
+def $place((RANGE i_rs i_re term_r) :: rangeitem_t*, RANGE i_s i_e term)
+  = (RANGE i_s i_e term) :: (RANGE i_rs i_re term_r) :: rangeitem_t*
+  -- if $(i_s < i_rs)
+def $place((RANGE i_rs i_re term_r) :: rangeitem_t*, RANGE i_s i_e term)
+  = (RANGE i_rs i_re term_r) :: $place(rangeitem_t*, RANGE i_s i_e term)
+  -- if $(i_s >= i_rs)
+
+dec $rm_insert(rangeitem*, int, int, term) : res<rangeitem*>
+  hint(prose_in %0 "with" %1 "to" %2 "mapped to" %3)
+def $rm_insert(rangeitem*, i_s, i_e, term)
+  = OK $place($cut(rangeitem*, i_s, i_e, term, i_a, i_b), RANGE i_a i_b term)
+  -- if $(i_s < i_e)
+  -- if (i_a, i_b) = $absorbed_bounds(rangeitem*, i_s, i_e, term, i_s, i_e)
+def $rm_insert(rangeitem*, i_s, i_e, term) = FAIL
+  -- if $(i_s >= i_e)
+
+dec $rm_insert_all(rangeitem*, rangeitem*) : res<rangeitem*>
+def $rm_insert_all(rangeitem*, eps) = OK rangeitem*
+def $rm_insert_all(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*)
+  = $rm_insert_all(rangeitem'*, rangeitem_t*)
+  -- if OK rangeitem'* = $rm_insert(rangeitem*, i_s, i_e, term)
+def $rm_insert_all(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*) = FAIL
+  -- if FAIL = $rm_insert(rangeitem*, i_s, i_e, term)
+
+;; Removing [i_s, i_e): the ranges it overlaps are cut outside it
+
+dec $rm_remove(rangeitem*, int, int) : rangeitem*
+def $rm_remove(eps, i_s, i_e) = eps
+def $rm_remove((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e)
+  = $outside(i_rs, i_re, i_s, i_e, term_r) ++ $rm_remove(rangeitem_t*, i_s, i_e)
+  -- if $overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+def $rm_remove((RANGE i_rs i_re term_r) :: rangeitem_t*, i_s, i_e)
+  = (RANGE i_rs i_re term_r) :: $rm_remove(rangeitem_t*, i_s, i_e)
+  -- if ~$overlaps(i_s, i_e, RANGE i_rs i_re term_r)
+
+dec $rm_remove_all(rangeitem*, (int, int)*) : res<rangeitem*>
+def $rm_remove_all(rangeitem*, eps) = OK rangeitem*
+def $rm_remove_all(rangeitem*, (i_s, i_e) :: (i_ts, i_te)*)
+  = $rm_remove_all($rm_remove(rangeitem*, i_s, i_e), (i_ts, i_te)*)
+  -- if $(i_s < i_e)
+def $rm_remove_all(rangeitem*, (i_s, i_e) :: (i_ts, i_te)*) = FAIL
+  -- if $(i_s >= i_e)
+
+;; The range containing a key
+
+dec $rm_lookup(rangeitem*, int) : rangeitem?
+def $rm_lookup(eps, i) = eps
+def $rm_lookup((RANGE i_s i_e term) :: rangeitem_t*, i) = RANGE i_s i_e term
+  -- if $(i_s <= i) /\ $(i < i_e)
+def $rm_lookup((RANGE i_s i_e term) :: rangeitem_t*, i)
+  = $rm_lookup(rangeitem_t*, i)
+  -- if ~($(i_s <= i) /\ $(i < i_e))
+
+;; Concatenation requires that no ranges overlap
+
+dec $overlaps_any(rangeitem*, int, int) : bool
+def $overlaps_any(eps, i_s, i_e) = false
+def $overlaps_any(rangeitem_h :: rangeitem_t*, i_s, i_e)
+  = $overlaps(i_s, i_e, rangeitem_h) \/ $overlaps_any(rangeitem_t*, i_s, i_e)
+
+dec $disjoint(rangeitem*, rangeitem*) : bool
+def $disjoint(rangeitem*, eps) = true
+def $disjoint(rangeitem*, (RANGE i_s i_e term) :: rangeitem_t*)
+  = ~$overlaps_any(rangeitem*, i_s, i_e) /\ $disjoint(rangeitem*, rangeitem_t*)
+
+;; Where two range maps agree: the overlaps of their ranges with equal values
+;; (get_intersection_ranges)
+
+dec $agree_one(rangeitem, rangeitem*) : (int, int)*
+def $agree_one(rangeitem, eps) = eps
+def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*)
+  = ($imax(i_s, i_s'),
+     $imin(i_e, i_e')) :: $agree_one(RANGE i_s i_e term, rangeitem_t*)
+  -- if $overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ $term_eq(term, term')
+def $agree_one(RANGE i_s i_e term, (RANGE i_s' i_e' term') :: rangeitem_t*)
+  = $agree_one(RANGE i_s i_e term, rangeitem_t*)
+  -- if ~($overlaps(i_s, i_e, RANGE i_s' i_e' term') /\ $term_eq(term, term'))
+
+dec $agree(rangeitem*, rangeitem*) : (int, int)*
+def $agree(eps, rangeitem'*) = eps
+def $agree(rangeitem_h :: rangeitem_t*, rangeitem'*)
+  = $agree_one(rangeitem_h, rangeitem'*) ++ $agree(rangeitem_t*, rangeitem'*)
+
+;; Inclusion: the ranges of the first map are exactly where the maps agree
+
+dec $range_pairs(rangeitem*) : (int, int)*
+def $range_pairs((RANGE i_s i_e term)*) = (i_s, i_e)*
+
+dec $set_ranges(term*) : res<(int, int)*>
+def $set_ranges(eps) = OK eps
+def $set_ranges(term_h :: term_t*) = OK ((i_s, i_e) :: (i_ts, i_te)*)
+  -- if (i_s, i_e) = $range_bounds(term_h)
+  -- if OK (i_ts, i_te)* = $set_ranges(term_t*)
+def $set_ranges(term*) = FAIL
+  -- otherwise

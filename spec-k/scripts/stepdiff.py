@@ -8,7 +8,7 @@ before, through a pretty printer if one is given.
 
 usage:
   spec-k/scripts/stepdiff.py -k simple-untyped-kompiled prog.simple --krun-arg=--io --krun-arg=off \
-      [--max N] [--pp ../k-in-p4/tools/kore-survey/pp_term.py]
+      [--max N] [--pp pp_term.py]
 """
 import argparse
 import os

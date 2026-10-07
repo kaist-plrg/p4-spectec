@@ -1,11 +1,10 @@
 ;;
 ;; Evaluation: building a term from a pattern and a substitution
 ;;
-;; Corresponds to create_term of the LLVM backend: right-hand sides are built
-;; bottom-up, and every function symbol is evaluated as soon as its term is
-;; built. Hooks take their meaning from 3-hook; other functions are applied by
-;; their equations.
 ;;
+
+;;; As create_term of the LLVM backend: bottom-up, evaluating each function
+;;; symbol as soon as its term is built
 
 var eqn : equation
 
@@ -43,14 +42,17 @@ def $priority(attr*) = 50
 
 dec $insert_by_priority<X>((nat, X), (nat, X)*) : (nat, X)*
 def $insert_by_priority<X>((n, X), eps) = [ (n, X) ]
-def $insert_by_priority<X>((n, X), (n_h, X_h) :: (n_t, X_t)*) = (n, X) :: (n_h, X_h) :: (n_t, X_t)*
+def $insert_by_priority<X>((n, X), (n_h, X_h) :: (n_t, X_t)*)
+  = (n, X) :: (n_h, X_h) :: (n_t, X_t)*
   -- if $(n <= n_h)
-def $insert_by_priority<X>((n, X), (n_h, X_h) :: (n_t, X_t)*) = (n_h, X_h) :: $insert_by_priority<X>((n, X), (n_t, X_t)*)
+def $insert_by_priority<X>((n, X), (n_h, X_h) :: (n_t, X_t)*)
+  = (n_h, X_h) :: $insert_by_priority<X>((n, X), (n_t, X_t)*)
   -- if $(n > n_h)
 
 dec $sort_by_priority_pairs<X>((nat, X)*) : (nat, X)*
 def $sort_by_priority_pairs<X>(eps) = eps
-def $sort_by_priority_pairs<X>((n_h, X_h) :: (n_t, X_t)*) = $insert_by_priority<X>((n_h, X_h), $sort_by_priority_pairs<X>((n_t, X_t)*))
+def $sort_by_priority_pairs<X>((n_h, X_h) :: (n_t, X_t)*)
+  = $insert_by_priority<X>((n_h, X_h), $sort_by_priority_pairs<X>((n_t, X_t)*))
 
 dec $sort_by_priority<X>((nat, X)*) : X*
 def $sort_by_priority<X>((n_u, X_u)*) = X*
@@ -62,8 +64,11 @@ def $sort_by_priority<X>((n_u, X_u)*) = X*
 
 dec $prioritized(equation*) : (nat, equation)*
 def $prioritized(eps) = eps
-def $prioritized((EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) :: eqn_t*)
-  = ($priority(attr*), EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) :: $prioritized(eqn_t*)
+def $prioritized(
+    (EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) :: eqn_t*)
+  = ($priority(attr*),
+     EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*)
+    :: $prioritized(eqn_t*)
 
 dec $equations_of(definition, symid) : equation*
   hint(prose_in "the equations of" %1 "in priority order")
@@ -92,7 +97,8 @@ def $result_sort(D, symid) = $sort_of_decl($find_symdecl(D, symid))
 dec $lookup_param(sortid*, sort*, sortid) : sort?
 def $lookup_param(sortid_h :: sortid_t*, sort_h :: sort_t*, sortid) = sort_h
   -- if sortid_h = sortid
-def $lookup_param(sortid_h :: sortid_t*, sort_h :: sort_t*, sortid) = $lookup_param(sortid_t*, sort_t*, sortid)
+def $lookup_param(sortid_h :: sortid_t*, sort_h :: sort_t*, sortid)
+  = $lookup_param(sortid_t*, sort_t*, sortid)
   -- if sortid_h =/= sortid
 def $lookup_param(sortid_p*, sort_a*, sortid) = eps
   -- otherwise
@@ -100,13 +106,15 @@ def $lookup_param(sortid_p*, sort_a*, sortid) = eps
 dec $sort_instance(sortid*, sort*, sort) : sort
 def $sort_instance(sortid_p*, sort_a*, SORTVAR sortid) = sort
   -- if sort = $lookup_param(sortid_p*, sort_a*, sortid)
-def $sort_instance(sortid_p*, sort_a*, SORT sortid sort_s*) = SORT sortid $sort_instance(sortid_p*, sort_a*, sort_s)*
+def $sort_instance(sortid_p*, sort_a*, SORT sortid sort_s*)
+  = SORT sortid $sort_instance(sortid_p*, sort_a*, sort_s)*
 def $sort_instance(sortid_p*, sort_a*, sort) = sort
   -- otherwise
 
 dec $result_instance(definition, symid, sort*) : sort?
   hint(prose_in "the result sort of" %1 "applied with sorts" %2)
-def $result_instance(D, symid, sort_a*) = $sort_instance(sortid_p*, sort_a*, sort_r)
+def $result_instance(D, symid, sort_a*)
+  = $sort_instance(sortid_p*, sort_a*, sort_r)
   -- if sort_r = $result_sort(D, symid)
   -- if (sortid_p*) = $find_map<symid, sortid*>(D.PARAMS, symid)
 def $result_instance(D, symid, sort_a*) = $result_sort(D, symid)
@@ -118,7 +126,8 @@ def $result_instance(D, symid, sort_a*) = $result_sort(D, symid)
 dec $lazy_hook(definition, symid) : text
 def $lazy_hook(D, symid) = hookid
   -- if hookid = $hook_of(D, symid)
-  -- if hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or", "BOOL.orElse", "BOOL.implies", "KEQUAL.ite" ]
+  -- if hookid <- [ "BOOL.and", "BOOL.andThen", "BOOL.or", "BOOL.orElse",
+                   "BOOL.implies", "KEQUAL.ite" ]
 def $lazy_hook(D, symid) = ""
   -- otherwise
 
@@ -128,11 +137,13 @@ dec $eval_app(definition, subst, text, symid, sort*, pattern*) : res<term>
 dec $apply(definition, symid, sort*, term*) : res<term>
   hint(prose_in "applying" %1 "to" %3)
 dec $apply_kind(definition, symkind, symid, sort*, term*) : res<term>
-dec $apply_anywhere(definition, symid, sort*, term*, res<(subst, pattern)>) : res<term>
+dec $apply_anywhere(definition, symid, sort*, term*,
+                    res<(subst, pattern)>) : res<term>
 dec $apply_equations(definition, equation*, term*) : res<term>
 dec $apply_found(definition, res<(subst, pattern)>) : res<term>
 dec $find_equation(definition, equation*, term*) : res<(subst, pattern)>
-dec $equation_or_next(definition, equation, equation*, term*, res<subst>) : res<(subst, pattern)>
+dec $equation_or_next(definition, equation, equation*, term*,
+                      res<subst>) : res<(subst, pattern)>
 var result : res<term>
 dec $is_true(res<term>) : bool
 dec $requires_hold(definition, subst, pattern?) : bool
@@ -156,7 +167,8 @@ def $eval(D, subst, MINT n_w n_v) = OK (MINT n_w n_v)
 ;;; Symbol applications: lazy hooks, or arguments first, left to right, then
 ;;; the symbol (the kind of symbol is looked up once)
 
-def $eval(D, subst, APP symid sort* pattern*) = $eval_app(D, subst, $lazy_hook(D, symid), symid, sort*, pattern*)
+def $eval(D, subst, APP symid sort* pattern*)
+  = $eval_app(D, subst, $lazy_hook(D, symid), symid, sort*, pattern*)
 
 ;;; Anything else (an unbound variable, \and outside a left-hand side, a
 ;;; failing argument) fails
@@ -174,31 +186,39 @@ def $evals(D, subst, pattern*) = FAIL
 ;;; The second argument of a lazy hook is evaluated only when the first does
 ;;; not decide
 
-def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = OK (BOOL false)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2]))
+  = OK (BOOL false)
   -- if t = "BOOL.and" \/ t = "BOOL.andThen"
   -- if OK (BOOL false) = $eval(D, subst, pattern_1)
-def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = OK (BOOL true)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2]))
+  = OK (BOOL true)
   -- if t = "BOOL.or" \/ t = "BOOL.orElse"
   -- if OK (BOOL true) = $eval(D, subst, pattern_1)
-def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = OK (BOOL true)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2]))
+  = OK (BOOL true)
   -- if t = "BOOL.implies"
   -- if OK (BOOL false) = $eval(D, subst, pattern_1)
-def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = $eval(D, subst, pattern_2)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2]))
+  = $eval(D, subst, pattern_2)
   -- if t = "BOOL.and" \/ t = "BOOL.andThen" \/ t = "BOOL.implies"
   -- if OK (BOOL true) = $eval(D, subst, pattern_1)
-def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2])) = $eval(D, subst, pattern_2)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_1, pattern_2]))
+  = $eval(D, subst, pattern_2)
   -- if t = "BOOL.or" \/ t = "BOOL.orElse"
   -- if OK (BOOL false) = $eval(D, subst, pattern_1)
-def $eval_app(D, subst, t, symid, sort*, ([pattern_c, pattern_t, pattern_e])) = $eval(D, subst, pattern_t)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_c, pattern_t, pattern_e]))
+  = $eval(D, subst, pattern_t)
   -- if t = "KEQUAL.ite"
   -- if OK (BOOL true) = $eval(D, subst, pattern_c)
-def $eval_app(D, subst, t, symid, sort*, ([pattern_c, pattern_t, pattern_e])) = $eval(D, subst, pattern_e)
+def $eval_app(D, subst, t, symid, sort*, ([pattern_c, pattern_t, pattern_e]))
+  = $eval(D, subst, pattern_e)
   -- if t = "KEQUAL.ite"
   -- if OK (BOOL false) = $eval(D, subst, pattern_c)
 
 ;;; Other symbols: arguments first, left to right, then the symbol
 
-def $eval_app(D, subst, t, symid, sort*, pattern*) = $apply(D, symid, sort*, term*)
+def $eval_app(D, subst, t, symid, sort*, pattern*)
+  = $apply(D, symid, sort*, term*)
   -- if t = ""
   -- if OK term* = $evals(D, subst, pattern*)
 def $eval_app(D, subst, t, symid, sort*, pattern*) = FAIL
@@ -211,26 +231,35 @@ def $apply(D, symid, sort*, term*) = $apply_kind(D, kind, symid, sort*, term*)
 def $apply(D, symid, sort*, term*) = FAIL
   -- if eps = $kind_of_symbol(D, symid)
 
-def $apply_kind(D, CONSTRUCTOR, symid, sort*, term*) = OK $construct(symid, sort*, term*)
-def $apply_kind(D, BINDER, symid, sort*, term*) = OK $construct(symid, sort*, term*)
-def $apply_kind(D, HOOKED hookid, symid, sort*, term*) = $hook(D, hookid, sort_r, term*)
+def $apply_kind(D, CONSTRUCTOR, symid, sort*, term*)
+  = OK $construct(symid, sort*, term*)
+def $apply_kind(D, BINDER, symid, sort*, term*)
+  = OK $construct(symid, sort*, term*)
+def $apply_kind(D, HOOKED hookid, symid, sort*, term*)
+  = $hook(D, hookid, sort_r, term*)
   -- if sort_r = $result_instance(D, symid, sort*)
-def $apply_kind(D, FUNCTION, symid, sort*, term*) = $apply_equations(D, $equations_of(D, symid), term*)
-def $apply_kind(D, ANYWHERE, symid, sort*, term*) = $apply_anywhere(D, symid, sort*, term*, $find_equation(D, $equations_of(D, symid), term*))
+def $apply_kind(D, FUNCTION, symid, sort*, term*)
+  = $apply_equations(D, $equations_of(D, symid), term*)
+def $apply_kind(D, ANYWHERE, symid, sort*, term*)
+  = $apply_anywhere(D, symid, sort*, term*,
+                    $find_equation(D, $equations_of(D, symid), term*))
 def $apply_kind(D, kind, symid, sort*, term*) = FAIL
   -- otherwise
 
 ;;; An anywhere symbol is rewritten by its first equation that applies, and
 ;;; stays a constructor when none does
 
-def $apply_anywhere(D, symid, sort*, term*, OK (subst, pattern_r)) = $eval(D, subst, pattern_r)
-def $apply_anywhere(D, symid, sort*, term*, FAIL) = OK $construct(symid, sort*, term*)
+def $apply_anywhere(D, symid, sort*, term*, OK (subst, pattern_r))
+  = $eval(D, subst, pattern_r)
+def $apply_anywhere(D, symid, sort*, term*, FAIL)
+  = OK $construct(symid, sort*, term*)
 
 ;;; The first equation, in priority order, whose arguments match and whose
 ;;; requires clause holds gives the result. Failing to evaluate its right-hand
 ;;; side does not fall back to later equations.
 
-def $apply_equations(D, eqn*, term*) = $apply_found(D, $find_equation(D, eqn*, term*))
+def $apply_equations(D, eqn*, term*)
+  = $apply_found(D, $find_equation(D, eqn*, term*))
 
 def $apply_found(D, OK (subst, pattern_r)) = $eval(D, subst, pattern_r)
 def $apply_found(D, FAIL) = FAIL
@@ -238,17 +267,23 @@ def $apply_found(D, FAIL) = FAIL
 ;;; The first equation that applies, with its substitution and right-hand side
 
 def $find_equation(D, eps, term*) = FAIL
-def $find_equation(D, eqn_h :: eqn_t*, term*) = $equation_or_next(D, eqn_h, eqn_t*, term*, $try_equation(D, eqn_h, term*))
+def $find_equation(D, eqn_h :: eqn_t*, term*)
+  = $equation_or_next(D, eqn_h, eqn_t*, term*, $try_equation(D, eqn_h, term*))
 
-def $equation_or_next(D, eqn, eqn_t*, term*, OK subst) = OK (subst, $rhs_of(eqn))
-def $equation_or_next(D, eqn, eqn_t*, term*, FAIL) = $find_equation(D, eqn_t*, term*)
+def $equation_or_next(D, eqn, eqn_t*, term*, OK subst)
+  = OK (subst, $rhs_of(eqn))
+def $equation_or_next(D, eqn, eqn_t*, term*, FAIL)
+  = $find_equation(D, eqn_t*, term*)
 
 ;;; An equation applies when its arguments match and its requires clause holds
 
-def $try_equation(D, EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*, term*)
-  = $first_holding(D, $match_list(D, $empty_map<varid, term>, pattern_a*, term*), pattern_c?)
+def $try_equation(
+    D, EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*, term*)
+  = $first_holding(
+      D, $match_list(D, $empty_map<varid, term>, pattern_a*, term*), pattern_c?)
 
-def $rhs_of(EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) = pattern_r
+def $rhs_of(EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*)
+  = pattern_r
 
 ;;; A requires clause holds when it evaluates to true
 
@@ -256,10 +291,13 @@ def $rhs_of(EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) = pa
 ;;; which the requires clause holds
 
 def $first_holding(D, eps, pattern_c?) = FAIL
-def $first_holding(D, subst_h :: subst_t*, pattern_c?) = $holding_or_next(D, subst_h, subst_t*, pattern_c?, $requires_hold(D, subst_h, pattern_c?))
+def $first_holding(D, subst_h :: subst_t*, pattern_c?)
+  = $holding_or_next(D, subst_h, subst_t*, pattern_c?,
+                     $requires_hold(D, subst_h, pattern_c?))
 
 def $holding_or_next(D, subst, subst_t*, pattern_c?, true) = OK subst
-def $holding_or_next(D, subst, subst_t*, pattern_c?, false) = $first_holding(D, subst_t*, pattern_c?)
+def $holding_or_next(D, subst, subst_t*, pattern_c?, false)
+  = $first_holding(D, subst_t*, pattern_c?)
 
 def $requires_hold(D, subst, eps) = true
 def $requires_hold(D, subst, pattern) = $is_true($eval(D, subst, pattern))

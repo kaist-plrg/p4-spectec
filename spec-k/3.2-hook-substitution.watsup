@@ -1,0 +1,152 @@
+;;
+;; Substitution of K variables (hook SUBSTITUTION)
+;;
+
+;;; Variables are domain values of the KVar sort sort_x
+
+dec $is_binder(definition, symid) : bool
+def $is_binder(D, symid) = true
+  -- if (sort_a* '->' sort BINDER) = $find_symdecl(D, symid)
+def $is_binder(D, symid) = false
+  -- otherwise
+
+dec $remove_text(text*, text) : text*
+def $remove_text(eps, t) = eps
+def $remove_text(t_h :: t_t*, t) = $remove_text(t_t*, t)
+  -- if t_h = t
+def $remove_text(t_h :: t_t*, t) = t_h :: $remove_text(t_t*, t)
+  -- if t_h =/= t
+
+;; Variables of sort sort_x occurring in a term: free ones, or all of them
+
+dec $vars(definition, sort, bool, term) : text*
+dec $vars_list(definition, sort, bool, term*) : text*
+def $vars(D, sort_x, b, DV sort t) = [ t ]
+  -- if sort = sort_x
+def $vars(D, sort_x, true, APP symid sort* (DV sort_y t_y :: term*))
+  = $remove_text($vars_list(D, sort_x, true, term*), t_y)
+  -- if $is_binder(D, symid)
+def $vars(D, sort_x, false, APP symid sort* (DV sort_y t_y :: term*))
+  = t_y :: $vars_list(D, sort_x, false, term*)
+  -- if $is_binder(D, symid)
+def $vars(D, sort_x, b, APP symid sort* term*) = $vars_list(D, sort_x, b, term*)
+  -- if ~$is_binder(D, symid)
+def $vars(D, sort_x, b, term) = eps
+  -- otherwise
+def $vars_list(D, sort_x, b, eps) = eps
+def $vars_list(D, sort_x, b, term_h :: term_t*)
+  = $vars(D, sort_x, b, term_h) ++ $vars_list(D, sort_x, b, term_t*)
+
+;; A variable name not among the given ones, made by adding primes
+
+dec $fresh_var(text, text*) : text
+def $fresh_var(t, t_a*) = t ++ "'"
+  -- if ~((t ++ "'") <- t_a*)
+def $fresh_var(t, t_a*) = $fresh_var(t ++ "'", t_a*)
+  -- if (t ++ "'") <- t_a*
+
+;; Renaming the free occurrences of a variable
+
+dec $rename(definition, sort, text, text, term) : term
+dec $rename_list(definition, sort, text, text, term*) : term*
+def $rename(D, sort_x, t, t', DV sort t_o) = DV sort t'
+  -- if sort = sort_x /\ t_o = t
+def $rename(D, sort_x, t, t', DV sort t_o) = DV sort t_o
+  -- if ~(sort = sort_x /\ t_o = t)
+def $rename(D, sort_x, t, t', APP symid sort* (DV sort_y t_y :: term*))
+  = APP symid sort* (DV sort_y t_y :: term*)
+  -- if $is_binder(D, symid) /\ t_y = t
+def $rename(D, sort_x, t, t', APP symid sort* (DV sort_y t_y :: term*))
+  = APP symid sort* (DV sort_y t_y :: $rename_list(D, sort_x, t, t', term*))
+  -- if $is_binder(D, symid) /\ t_y =/= t
+def $rename(D, sort_x, t, t', APP symid sort* term*)
+  = APP symid sort* $rename_list(D, sort_x, t, t', term*)
+  -- if ~$is_binder(D, symid)
+def $rename(D, sort_x, t, t', INT i) = INT i
+def $rename(D, sort_x, t, t', BOOL b) = BOOL b
+def $rename(D, sort_x, t, t', STRING t_s) = STRING t_s
+def $rename(D, sort_x, t, t', FLOAT t_f) = FLOAT t_f
+def $rename(D, sort_x, t, t', BYTES n*) = BYTES n*
+def $rename(D, sort_x, t, t', MINT n_w n_v) = MINT n_w n_v
+def $rename(D, sort_x, t, t', MAP sort M) = MAP sort M
+def $rename(D, sort_x, t, t', SET sort S) = SET sort S
+def $rename(D, sort_x, t, t', LIST sort term*) = LIST sort term*
+def $rename(D, sort_x, t, t', RANGEMAP sort rangeitem*)
+  = RANGEMAP sort rangeitem*
+def $rename_list(D, sort_x, t, t', eps) = eps
+def $rename_list(D, sort_x, t, t', term_h :: term_t*)
+  = $rename(D, sort_x, t, t', term_h) :: $rename_list(D, sort_x, t, t', term_t*)
+
+;; Putting V of sort sort_v where sort_s is expected: always with its
+;; injection, even inj{S, S}(V), as hook_SUBSTITUTION_substOne does
+
+dec $inject(sort, sort, term) : term
+def $inject(sort_v, sort_s, term)
+  = $construct("inj", ([sort_v, sort_s]), ([term]))
+
+dec $is_var_occurrence(sort, text, term) : bool
+def $is_var_occurrence(sort_x, t_x,
+                       APP "inj" ([sort_x', sort_s]) ([DV sort_x'' t]))
+  = true
+  -- if sort_x' = sort_x /\ sort_x'' = sort_x /\ t = t_x
+def $is_var_occurrence(sort_x, t_x, term) = false
+  -- otherwise
+
+;; Capture-avoiding substitution of V (of sort sort_v) for t_x (of sort sort_x)
+
+dec $subst(definition, sort, text, sort, term, term) : res<term>
+dec $subst_list(definition, sort, text, sort, term, term*) : res<term*>
+
+;;; an occurrence of the variable, injected into the sort expected there
+def $subst(D, sort_x, t_x, sort_v, term_v,
+           APP "inj" ([sort_x', sort_s]) ([DV sort_x'' t]))
+  = OK $inject(sort_v, sort_s, term_v)
+  -- if sort_x' = sort_x /\ sort_x'' = sort_x /\ t = t_x
+;;; a binder of the same variable hides it
+def $subst(D, sort_x, t_x, sort_v, term_v,
+           APP symid sort* (DV sort_y t_y :: term*))
+  = OK (APP symid sort* (DV sort_y t_y :: term*))
+  -- if $is_binder(D, symid) /\ t_y = t_x
+;;; a binder of another variable that does not occur free in V
+def $subst(D, sort_x, t_x, sort_v, term_v,
+           APP symid sort* (DV sort_y t_y :: term*))
+  = OK (APP symid sort* (DV sort_y t_y :: term'*))
+  -- if $is_binder(D, symid) /\ t_y =/= t_x
+  -- if ~(t_y <- $vars(D, sort_x, true, term_v))
+  -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
+;;; a binder of a variable that occurs free in V is renamed first
+def $subst(D, sort_x, t_x, sort_v, term_v,
+           APP symid sort* (DV sort_y t_y :: term*))
+  = OK (APP symid sort* (DV sort_y t_y' :: term'*))
+  -- if $is_binder(D, symid) /\ t_y =/= t_x
+  -- if t_y <- $vars(D, sort_x, true, term_v)
+  -- if t_y' = $fresh_var(t_y,
+                          $vars(D, sort_x, true,
+                                term_v) ++ $vars_list(D, sort_x, false, term*))
+  -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v,
+                                $rename_list(D, sort_x, t_y, t_y', term*))
+;;; other symbol applications
+def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* term*)
+  = OK (APP symid sort* term'*)
+  -- if ~$is_binder(D, symid)
+  -- if ~$is_var_occurrence(sort_x, t_x, APP symid sort* term*)
+  -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
+;;; domain values
+def $subst(D, sort_x, t_x, sort_v, term_v, DV sort t) = OK (DV sort t)
+def $subst(D, sort_x, t_x, sort_v, term_v, INT i) = OK (INT i)
+def $subst(D, sort_x, t_x, sort_v, term_v, BOOL b) = OK (BOOL b)
+def $subst(D, sort_x, t_x, sort_v, term_v, STRING t) = OK (STRING t)
+def $subst(D, sort_x, t_x, sort_v, term_v, FLOAT t) = OK (FLOAT t)
+def $subst(D, sort_x, t_x, sort_v, term_v, BYTES n*) = OK (BYTES n*)
+def $subst(D, sort_x, t_x, sort_v, term_v, MINT n_w n_v) = OK (MINT n_w n_v)
+;;; collections are not supported yet
+def $subst(D, sort_x, t_x, sort_v, term_v, term) = FAIL
+  -- otherwise
+
+def $subst_list(D, sort_x, t_x, sort_v, term_v, eps) = OK eps
+def $subst_list(D, sort_x, t_x, sort_v, term_v, term_h :: term_t*)
+  = OK (term_h' :: term_t'*)
+  -- if OK term_h' = $subst(D, sort_x, t_x, sort_v, term_v, term_h)
+  -- if OK term_t'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term_t*)
+def $subst_list(D, sort_x, t_x, sort_v, term_v, term*) = FAIL
+  -- otherwise

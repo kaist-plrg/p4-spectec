@@ -1,11 +1,9 @@
 ;;
 ;; K in P4-SpecTec: the executable fragment of KORE
 ;;
-;; The input is a definition.kore produced by kompile (K 7.1.337). The converter
-;; keeps only what the LLVM backend executes: rewrite rules, equations of
-;; unhooked functions, symbol declarations, and the subsort relation. Logical
-;; axioms are dropped (decisions D8 in k-in-p4).
-;;
+
+;;; What the LLVM backend executes from a definition.kore (K 7.1.337): rewrite
+;;; rules, equations of unhooked functions, symbols, and subsorts
 
 ;; Names, kept verbatim from KORE
 
@@ -22,27 +20,24 @@ syntax sort =
   | SORT sortid sort*
   | SORTVAR sortid
 
-;; Terms
-;; Ground terms that make up a configuration. Domain values of hooked sorts
-;; become values of the corresponding P4-SpecTec type; collections only arise
-;; by evaluating their hooked constructors (MAP.concat, MAP.element, ...).
+;; Terms: ground terms that make up a configuration. Domain values of hooked
+;; sorts are P4-SpecTec values; collections arise only by evaluation.
 
 syntax rangeitem
 
 syntax term =
-  | APP symid sort* term*           ;; symbol application, including inj and kseq
-  | DV sort text                    ;; domain value of an unhooked sort, e.g. an Id
-  | INT int                         ;; sort hooked to INT.Int
-  | BOOL bool                       ;; sort hooked to BOOL.Bool
-  | STRING text                     ;; sort hooked to STRING.String
-  | FLOAT text                      ;; sort hooked to FLOAT.Float, in the backend's output format
-  | BYTES nat*                      ;; sort hooked to BYTES.Bytes, one nat per byte
-  | MINT nat nat                    ;; sort hooked to MINT.MInt: width in bits, and value
-                                    ;; as an unsigned number below 2^width
-  | MAP sort map<term, term>        ;; sort hooked to MAP.Map
-  | SET sort set<term>              ;; sort hooked to SET.Set
-  | LIST sort term*                 ;; sort hooked to LIST.List
-  | RANGEMAP sort rangeitem*        ;; sort hooked to RANGEMAP.RangeMap, by start
+  | APP symid sort* term*     ;; symbol application, including inj and kseq
+  | DV sort text              ;; domain value of an unhooked sort, e.g. an Id
+  | INT int                   ;; INT.Int
+  | BOOL bool                 ;; BOOL.Bool
+  | STRING text               ;; STRING.String
+  | FLOAT text                ;; FLOAT.Float, in the backend's output format
+  | BYTES nat*                ;; BYTES.Bytes, one nat per byte
+  | MINT nat nat              ;; MINT.MInt: width, and value below 2^width
+  | MAP sort map<term, term>  ;; MAP.Map
+  | SET sort set<term>        ;; SET.Set
+  | LIST sort term*           ;; LIST.List
+  | RANGEMAP sort rangeitem*  ;; RANGEMAP.RangeMap, by start
 
 ;; A range of integer keys [start, end) and its value. The ranges of a range
 ;; map do not overlap, and adjacent ones have different values.
@@ -73,14 +68,12 @@ syntax pattern =
 
 syntax symkind =
   | CONSTRUCTOR
-  | BINDER                          ;; a constructor binding its first argument, a KVar,
-                                    ;; in the other arguments (binder attribute)
-  | FUNCTION                        ;; defined by equations
-  | ANYWHERE                        ;; a constructor rewritten by its equations wherever
-                                    ;; one applies (anywhere attribute, e.g. overloads)
-  | HOOKED hookid                   ;; defined by the backend; equations ignored
+  | BINDER         ;; a constructor binding its first argument (binder)
+  | FUNCTION       ;; defined by equations
+  | ANYWHERE       ;; a constructor rewritten by its equations (anywhere)
+  | HOOKED hookid  ;; defined by the backend; equations ignored
 
-syntax symdecl = sort* '->' sort symkind  ;; argument sorts, result sort, and kind
+syntax symdecl = sort* '->' sort symkind  ;; argument sorts, result sort, kind
 
 ;; Subsort relation, from axioms with the subsort attribute
 
@@ -110,12 +103,10 @@ syntax equation = EQN symid pattern* '=' pattern 'requires' pattern? attr*
 ;; Definitions
 
 syntax definition =
-  { SYMBOLS map<symid, symdecl>,   ;; the symbol table
+  { SYMBOLS map<symid, symdecl>,
     SUBSORTS subsort*,
     OVERLOADS overload*,
     RULES krule*,
-    EQUATIONS map<symid, equation*>,  ;; grouped by the symbol they define, in file order
-    PARAMS map<symid, sortid*>,       ;; sort parameters of parametric symbols, e.g. MInt
-                                      ;; operations on MInt{Width}
-    NATSORTS map<sortid, nat> }       ;; sorts that stand for a number (nat attribute),
-                                      ;; e.g. Sort8 in MInt{8}
+    EQUATIONS map<symid, equation*>,  ;; by the symbol defined, in file order
+    PARAMS map<symid, sortid*>,       ;; sort parameters, e.g. of MInt{Width}
+    NATSORTS map<sortid, nat> }       ;; sorts standing for a number, e.g. Sort8
