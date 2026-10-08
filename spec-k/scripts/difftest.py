@@ -12,6 +12,8 @@ import argparse
 import collections
 import concurrent.futures
 import glob
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -77,6 +79,13 @@ class Interpreter:
         return int(count), out, secs, None
 
 
+def program_input(program, input_dir):
+    """The standard input of a program: <program>.in, or <input_dir>/<name>.in,
+    when it exists, as in the tutorial Makefiles (RESULTDIR)"""
+    inp = os.path.join(input_dir, os.path.basename(program)) + ".in" if input_dir else program + ".in"
+    return open(inp).read() if os.path.exists(inp) else ""
+
+
 def run_krun(kompiled, program, workdir, krun_args, timeout, input_dir=None, depth=None):
     """Run krun; return (steps, interpreter command, result file, seconds, error).
 
@@ -85,10 +94,7 @@ def run_krun(kompiled, program, workdir, krun_args, timeout, input_dir=None, dep
     macro expansion as its first argument (krun keeps several tmp.in.* files,
     some of them before macro expansion). That command is then run directly,
     which is what krun does, without starting krun again."""
-    # standard input comes from <program>.in, or <input_dir>/<name>.in, when it
-    # exists, as in the tutorial Makefiles (RESULTDIR)
-    inp = os.path.join(input_dir, os.path.basename(program)) + ".in" if input_dir else program + ".in"
-    stdin = open(inp).read() if os.path.exists(inp) else ""
+    stdin = program_input(program, input_dir)
     dry = os.path.join(workdir, "dry")
     os.makedirs(dry, exist_ok=True)
     rc, out, err, _ = run(["krun", "-d", os.path.abspath(kompiled), os.path.abspath(program)] + krun_args
@@ -187,6 +193,47 @@ def judge(spec, k_steps, fails_at, check, limit):
     return "pass" if spec.steps == k_steps else "FAIL: steps differ"
 
 
+def krun_outcome(prog, work, args, depth):
+    """What krun does with a program: (steps, initial term, result, seconds,
+    error, fails_at), where steps is a count or says where krun fails, and
+    fails_at is as in judge. A run of krun depends only on the K version, the
+    kompiled definition, the program, its input, the krun options, and the
+    step limit, so with --krun-cache the outcome is kept under their hash and
+    krun is not run again."""
+    krun_args = args.krun_arg + (["--depth", str(args.depth)] if args.depth else [])
+    entry = None
+    if args.krun_cache:
+        h = hashlib.sha256()
+        for part in [args.k_version, args.definition_hash, open(prog, "rb").read().hex(),
+                     program_input(prog, args.input_dir), json.dumps(krun_args), str(depth)]:
+            h.update(part.encode() + b"\0")
+        entry = os.path.join(args.krun_cache, h.hexdigest())
+        meta = os.path.join(entry, "krun.json")
+        if os.path.exists(meta):
+            m = json.load(open(meta))
+            result = os.path.join(entry, "result.kore") if m["result"] else None
+            return (m["steps"], os.path.join(entry, "init.kore"), result, m["secs"], m["error"],
+                    m["fails_at"])
+    steps, command, result, secs, err = run_krun(args.kompiled, prog, work, krun_args, args.timeout,
+                                                 args.input_dir, depth)
+    fails_at = False
+    if err and err.startswith("krun failed") and command:
+        fails_at, result = failing_step(command, work, args.timeout)
+        steps = "fails at init" if fails_at is None else "fails after %d" % fails_at
+        err = None
+    init = command.init if command else None
+    if entry and err != "krun timeout":
+        os.makedirs(entry, exist_ok=True)
+        if init:
+            shutil.copyfile(init, os.path.join(entry, "init.kore"))
+        if result:
+            shutil.copyfile(result, os.path.join(entry, "result.kore"))
+        with open(os.path.join(entry, "krun.json.tmp"), "w") as fh:
+            json.dump(dict(steps=steps, secs=secs, error=err, fails_at=fails_at, result=bool(result)), fh)
+        os.replace(os.path.join(entry, "krun.json.tmp"), os.path.join(entry, "krun.json"))
+    return steps, init, result, secs, err, fails_at
+
+
 def test_program(prog, root, definition, args):
     """Diff test one program; returns (table row, verdict)."""
     name = os.path.basename(prog)
@@ -195,15 +242,8 @@ def test_program(prog, root, definition, args):
     limits = dict((c.split(":") + [None])[:2] for c in args.check_steps_for)
     check = name in limits
     limit = int(limits[name]) if check and limits[name] else args.depth
-    krun_args = args.krun_arg + (["--depth", str(args.depth)] if args.depth else [])
     # a run checked step by step for its first steps need not end under krun
-    k_steps, command, result, k_secs, err = run_krun(args.kompiled, prog, work, krun_args, args.timeout,
-                                                     args.input_dir, limit if check else None)
-    fails_at = False
-    if err and err.startswith("krun failed") and command:
-        fails_at, result = failing_step(command, work, args.timeout)
-        k_steps = "fails at init" if fails_at is None else "fails after %d" % fails_at
-        err = None
+    k_steps, init, result, k_secs, err, fails_at = krun_outcome(prog, work, args, limit if check else None)
     if err:
         return "| %s | - | - | skip: %s | %.1f | 0.0 |" % (name, err, k_secs), "skip: " + err
     if check:
@@ -213,7 +253,7 @@ def test_program(prog, root, definition, args):
     if args.cover_dir:
         os.makedirs(args.cover_dir, exist_ok=True)
         extra += ["-cover", os.path.join(os.path.abspath(args.cover_dir), name + ".log")]
-    spec = run_spec(definition, command.init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
+    spec = run_spec(definition, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
                     args.memory_max)
     verdict = judge(spec, k_steps, fails_at, check, limit)
     steps = "-" if spec.steps is None else spec.steps
@@ -238,6 +278,8 @@ def main():
     ap.add_argument("--cover-dir", default=None,
                     help="write the spec with the instructions each run executes marked to <dir>/<program>.log "
                          "(spectec-boot krun -cover; merge them with coverage_summary.py)")
+    ap.add_argument("--krun-cache", default=None,
+                    help="keep what krun does with each program in this directory, and reuse it")
     ap.add_argument("-j", "--jobs", type=int, default=1, help="programs to test at a time")
     ap.add_argument("--check-steps-for", action="append", default=[], metavar="NAME[:N]",
                     help="check each step of this program against the search binary instead of comparing "
@@ -256,6 +298,10 @@ def main():
     if not os.path.exists(definition):
         sys.exit("no definition.kore in %s" % args.kompiled)
 
+    if args.krun_cache:
+        args.krun_cache = os.path.abspath(args.krun_cache)
+        args.k_version = run(["krun", "--version"], 60)[1]
+        args.definition_hash = hashlib.sha256(open(definition, "rb").read()).hexdigest()
     root = args.keep or tempfile.mkdtemp(prefix="difftest-")
     Interpreter.preload = fast_throw()
     print("| program | krun steps | spec steps | result | krun s | spec s |")

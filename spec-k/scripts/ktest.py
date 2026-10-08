@@ -58,6 +58,7 @@ def run_difftest(name, t, args, jobs=None):
            "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs), "--ext", t["ext"]] + programs
     cmd += ["--krun-arg=" + a for a in t.get("krun", [])]
     cmd += ["--depth=%d" % t["depth"]] if "depth" in t else []
+    cmd += ["--krun-cache", os.path.join(work, "krun-cache")]
     cmd += ["--input-dir", t["inputs"]] if "inputs" in t else []
     cmd += sum((["--exclude", e] for e in t.get("exclude", [])), [])
     cmd += sum((["--check-steps-for", e] for e in t.get("check_steps", [])), [])

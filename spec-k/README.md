@@ -34,7 +34,10 @@ $ spec-k/scripts/ktest.py kwasm --only conformance-i32.wast   # one program
 The suites are defined in `spec-k/scripts/suites.toml`. Languages are
 kompiled once into `spec-k/_k-test/<suite>/kompiled`, and
 results are written to `spec-k/_k-test/<suite>.md` (with `--only`, only to
-the screen). Two programs are tested at a time (`-j`).
+the screen). Two programs are tested at a time (`-j`). What `krun` does with
+each program is kept in `spec-k/_k-test/krun-cache`, under the hash of the K
+version, the kompiled definition, the program, its input, and the options, so
+`krun` runs only for new or changed programs and definitions.
 
 Each program is compared with `krun`: the final configuration after
 normalization, and the number of rewrite steps. A program on which `krun`
