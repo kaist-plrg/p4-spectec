@@ -37,30 +37,28 @@ def $priority(attr*) = n
 def $priority(attr*) = 50
   -- otherwise
 
-;; Stable sort by priority: entries with the same priority keep the order of
-;; the KORE file, as the LLVM backend sorts axioms stably by priority.
+;; Stable sort by priority: for each priority, smallest first, the entries
+;; with that priority in their order, which is the order of the KORE file, as
+;; the LLVM backend sorts axioms stably by priority.
 
-dec $insert_by_priority<X>((nat, X), (nat, X)*) : (nat, X)*
-def $insert_by_priority<X>((n, X), eps) = [ (n, X) ]
-def $insert_by_priority<X>((n, X), (n_h, X_h) :: (n_t, X_t)*)
-  = (n, X) :: (n_h, X_h) :: (n_t, X_t)*
-  -- if $(n <= n_h)
-def $insert_by_priority<X>((n, X), (n_h, X_h) :: (n_t, X_t)*)
-  = (n_h, X_h) :: $insert_by_priority<X>((n, X), (n_t, X_t)*)
-  -- if $(n > n_h)
+dec $if_priority<X>(nat, nat, X) : X*
+def $if_priority<X>(n_p, n, X) = [ X ]
+  -- if n = n_p
+def $if_priority<X>(n_p, n, X) = eps
+  -- otherwise
 
-dec $sort_by_priority_pairs<X>((nat, X)*) : (nat, X)*
-def $sort_by_priority_pairs<X>(eps) = eps
-def $sort_by_priority_pairs<X>((n_h, X_h) :: (n_t, X_t)*)
-  = $insert_by_priority<X>((n_h, X_h), $sort_by_priority_pairs<X>((n_t, X_t)*))
+dec $by_priorities<X>(nat*, (nat, X)*) : X*
+def $by_priorities<X>(eps, (n, X)*) = eps
+def $by_priorities<X>(n_h :: n_t*, (n, X)*)
+  = $concat_<X>($if_priority<X>(n_h, n, X)*) ++ $by_priorities<X>(n_t*, (n, X)*)
 
 dec $sort_by_priority<X>((nat, X)*) : X*
-def $sort_by_priority<X>((n_u, X_u)*) = X*
-  -- if (n, X)* = $sort_by_priority_pairs<X>((n_u, X_u)*)
+def $sort_by_priority<X>((n, X)*) = $by_priorities<X>(n_p*, (n, X)*)
+  -- if `{ n_p* `} = $union_set<nat>(`{ n* `}, `{ eps `})
 
 ;; Equations of a function symbol, in the order they are tried. The definition
-;; groups equations by the symbol they define, in file order; priorities order
-;; them here.
+;; groups equations by the symbol they define, in file order; $krun orders each
+;; group by priority once (6-entry).
 
 dec $prioritized(equation*) : (nat, equation)*
 def $prioritized(eps) = eps
@@ -70,9 +68,13 @@ def $prioritized(
      EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*)
     :: $prioritized(eqn_t*)
 
+dec $sorted_equations(map<symid, equation*>) : map<symid, equation*>
+def $sorted_equations(`{ (symid ':' eqn*)* `})
+  = `{ (symid ':' $sort_by_priority<equation>($prioritized(eqn*)))* `}
+
 dec $equations_of(definition, symid) : equation*
   hint(prose_in "the equations of" %1 "in priority order")
-def $equations_of(D, symid) = $sort_by_priority<equation>($prioritized(eqn*))
+def $equations_of(D, symid) = eqn*
   -- if (eqn*) = $find_map<symid, equation*>(D.EQUATIONS, symid)
 def $equations_of(D, symid) = eps
   -- otherwise
