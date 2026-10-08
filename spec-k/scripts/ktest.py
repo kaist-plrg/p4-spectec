@@ -8,10 +8,10 @@ usage:
   spec-k/scripts/ktest.py kwasm --only conformance-i32.wast
   spec-k/scripts/ktest.py regression/list-set
 
-Each definition is kompiled once into <work>/<suite>/ and kept there. Results
-go to <work>/<suite>.md (the table of difftest.py), or only to the screen with
---only. Two programs are tested at a time (--jobs). The exit code is 1 if a
-test fails.
+Each definition is kompiled once into <work>/<suite>/ and kept there. Each
+result row is shown as its program is done, and the table of difftest.py goes
+to <work>/<suite>.md (not with --only). Two programs are tested at a time
+(--jobs). The exit code is 1 if a test fails.
 """
 import argparse
 import concurrent.futures
@@ -71,13 +71,18 @@ def run_difftest(name, t, args, jobs=None):
         cmd += ["--cover-dir", os.path.join(work, "coverage", name)]
     print("diff test %s" % name, flush=True)
     env = dict(os.environ, SPECTEC_CACHE_SIZE=str(t["cache_size"])) if "cache_size" in t else None
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, env=env)
-    if args.only:
-        print(p.stdout, end="")
-    else:
+    # each row is shown as its program is done, with the suite's name
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, env=env)
+    output = []
+    for line in p.stdout:
+        output.append(line)
+        if line.startswith("| ") and not line.startswith("| program"):
+            print("%s %s" % (name, line.rstrip()), flush=True)
+    p.wait()
+    if not args.only:
         with open(os.path.join(work, name + ".md"), "w") as out:
-            out.write(p.stdout)
-    lines = p.stdout.strip().splitlines()
+            out.write("".join(output))
+    lines = "".join(output).strip().splitlines()
     return p.returncode == 0, lines[-1] if lines else "no output"
 
 
@@ -145,8 +150,7 @@ def run_suite(suite, args):
     if "inputs" in t:
         t["inputs"] = os.path.join(src, t["dir"], t["inputs"])
     ok, summary = run_difftest(suite, t, args)
-    if not args.only:
-        print(summary, flush=True)
+    print(summary, flush=True)
     return ok
 
 
