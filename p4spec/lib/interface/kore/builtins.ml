@@ -275,6 +275,18 @@ let int_to_bytes : impl =
   in
   value_of_bytes add s
 
+(* dec $bytes_fill(nat, nat) : nat* -- n copies of the byte b, as the padding of
+   hook_BYTES_padRight, hook_BYTES_padLeft and hook_BYTES_memset; one value shared by all copies *)
+let bytes_fill : impl =
+ fun add at targs vs ->
+  Extract.zero at targs;
+  let b, n = Extract.two at vs in
+  let b = Value.Make.nat (get_int b) in
+  add b;
+  let n = Bigint.to_int_exn (get_int n) in
+  ret add
+    (Value.Make.list (Typ.Make.list Typ.Make.nat) (List.init n (fun _ -> b)))
+
 (* dec $bytes_to_int(nat*, bool, bool) : int -- as hook_BYTES_bytes2int: big-endian
    if the first flag, two's complement if the second *)
 let bytes_to_int : impl =
@@ -491,6 +503,7 @@ let entries : (string * impl) list =
     ("int_shr", int_shr);
     ("int_log2", int_log2);
     ("int_to_bytes", int_to_bytes);
+    ("bytes_fill", bytes_fill);
     ("bytes_to_int", bytes_to_int);
     ("string_to_bytes", string_to_bytes);
     ("bytes_to_string", bytes_to_string);
