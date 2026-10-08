@@ -18,6 +18,8 @@
 #   depth        stop krun and the spec after this many steps
 #   kompiled_as  use the kompiled definition of that suite
 #   timeout      seconds for each run of the spec (default 3600)
+#   cache_size   entries of the executor's call cache (SPECTEC_CACHE_SIZE;
+#                default 32768); fewer bound the memory of large configurations
 #   kore_input   the programs are initial terms in KORE (kevm: made from
 #                the GeneralStateTests in gst, with mode and schedule)
 #
@@ -189,6 +191,9 @@ gst = "tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests"
 gst_exclude = ["vmPerformance"]
 mode = "VMTESTS"
 schedule = "DEFAULT"
+# twoOps (51,547 steps) needs 1.3 GB with 4,096 entries, and more than 2.5 GB
+# with the default
+cache_size = 4096
 kompile = [
   "--main-module", "ETHEREUM-SIMULATION", "--syntax-module", "ETHEREUM-SIMULATION",
   "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics", "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin",

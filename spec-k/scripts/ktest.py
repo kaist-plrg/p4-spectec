@@ -70,7 +70,8 @@ def run_difftest(name, t, args, jobs=None):
     if args.cover:
         cmd += ["--cover-dir", os.path.join(work, "coverage", name)]
     print("diff test %s" % name, flush=True)
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, text=True)
+    env = dict(os.environ, SPECTEC_CACHE_SIZE=str(t["cache_size"])) if "cache_size" in t else None
+    p = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, env=env)
     if args.only:
         print(p.stdout, end="")
     else:
