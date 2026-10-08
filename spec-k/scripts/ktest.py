@@ -217,12 +217,15 @@ def regression_tests(src):
 
 def llvm_tests(src):
     """The tests of the LLVM backend (test/defn/<name>.kore) that run its
-    interpreter on initial terms (test/input/<name>.in or test/input/<name>/*.in)."""
+    interpreter on initial terms (test/input/<name>.in or test/input/<name>/*.in).
+    Tests that only build the interpreter (never run it) are left out: their
+    inputs need not fit the definition."""
     tests = {}
     for definition in sorted(glob.glob(os.path.join(src, "test/defn/*.kore"))):
         name = os.path.basename(definition)[:-len(".kore")]
         runs = [l for l in open(definition) if l.startswith("// RUN:")]
-        if name in LLVM["skip"] or not any("%interpreter" in l or "%gcs-interpreter" in l for l in runs):
+        if name in LLVM["skip"] or not any("%interpreter" in l or "%gcs-interpreter" in l for l in runs) \
+                or not any(m in l for l in runs for m in ("%check", "%run", "%t.interpreter")):
             continue
         inputs = [p for p in [os.path.join(src, "test/input", name + ".in"), os.path.join(src, "test/input", name)]
                   if os.path.exists(p)]
