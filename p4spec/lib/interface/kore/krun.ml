@@ -85,9 +85,7 @@ let run ((module Runner : Run.RUNNER) : (module Run.RUNNER)) (spec : Run.spec)
       Option.iter
         (fun path ->
           let expected =
-            Parse.pattern_of_file path
-            |> Unparse.normalize loaded.info
-            |> Ast.string_of_pattern
+            Unparse.normal_text loaded.info (Parse.pattern_of_file path)
           in
           Format.printf "%s %s\n"
             (if String.equal expected output then "matches" else "DIFFERS from")

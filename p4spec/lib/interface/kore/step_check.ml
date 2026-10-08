@@ -11,18 +11,25 @@ type t = {
   info : Load.info;
   current : string; (* the configuration given to K *)
   next : string; (* what K writes *)
-  mutable last : Value.t option;
+  memo : Unparse.memo option;
+  text : Value.t -> string; (* the normal text of a configuration of the spec *)
+  normal : Ast.pattern -> string; (* the normal text of one K writes *)
+  mutable last : (Value.t * string) option; (* and its normal text *)
   mutable steps : int;
   mutable branching : int; (* steps where K allows more than one *)
   mutable failure : string option;
 }
 
 let make dir info =
+  let memo = Unparse.make_memo info in
   {
     dir;
     info;
     current = Filename.temp_file "kstep" ".kore";
     next = Filename.temp_file "knext" ".kore";
+    memo;
+    text = Unparse.string_of_term ?memo info;
+    normal = Unparse.normal_text info;
     last = None;
     steps = 0;
     branching = 0;
@@ -37,11 +44,15 @@ let rec alternatives (p : Ast.pattern) : Ast.pattern list =
   | Ast.App ("\\equals", _, [ _; p ]) -> [ p ]
   | p -> [ p ]
 
-(* Run DIR/binary on a configuration; the exit code *)
-let run_k c binary term depth extra =
+(* Run DIR/binary on a configuration; the exit code. Without binders the normal
+   text is the same term to K (Map and Set elements in another order), so it
+   is given as it is; with binders, the term as the spec has it. *)
+let run_k c binary (term, text) depth extra =
   Out_channel.with_open_bin c.current (fun oc ->
       output_string oc
-        (Ast.string_of_pattern (Unparse.pattern_of_term c.info term)));
+        (match c.memo with
+        | Some _ -> text
+        | None -> Ast.string_of_pattern (Unparse.pattern_of_term c.info term)));
   if Sys.file_exists c.next then Sys.remove c.next;
   Sys.command
     (Filename.quote_command ~stdin:"/dev/null" ~stderr:"/dev/null"
@@ -50,28 +61,29 @@ let run_k c binary term depth extra =
 
 (* A new configuration of the run: one step after the last one *)
 let step c term =
-  (match (c.failure, c.last) with
-  | None, Some last ->
-      if run_k c "search" last 1 [] <> 0 then
-        c.failure <-
-          Some (Printf.sprintf "search failed after %d steps" c.steps)
-      else
-        let nexts =
-          alternatives (Parse.pattern_of_file c.next)
-          |> List.map (fun p ->
-                 Unparse.normalize c.info p |> Ast.string_of_pattern)
-        in
-        if List.mem (Unparse.string_of_term c.info term) nexts then (
-          c.steps <- c.steps + 1;
-          if List.length (List.sort_uniq String.compare nexts) > 1 then
-            c.branching <- c.branching + 1)
-        else
+  if Option.is_none c.failure then (
+    let text = c.text term in
+    Option.iter Unparse.next_step c.memo;
+    (match c.last with
+    | Some last ->
+        if run_k c "search" last 1 [] <> 0 then
           c.failure <-
-            Some
-              (Printf.sprintf "step %d is none of the %d steps K allows"
-                 (c.steps + 1) (List.length nexts))
-  | _ -> ());
-  c.last <- Some term
+            Some (Printf.sprintf "search failed after %d steps" c.steps)
+        else
+          let nexts =
+            alternatives (Parse.pattern_of_file c.next) |> List.map c.normal
+          in
+          if List.mem text nexts then (
+            c.steps <- c.steps + 1;
+            if List.length (List.sort_uniq String.compare nexts) > 1 then
+              c.branching <- c.branching + 1)
+          else
+            c.failure <-
+              Some
+                (Printf.sprintf "step %d is none of the %d steps K allows"
+                   (c.steps + 1) (List.length nexts))
+    | None -> ());
+    c.last <- Some (term, text))
 
 (* After the run: K takes no step from the last configuration *)
 let finish c ~ended =

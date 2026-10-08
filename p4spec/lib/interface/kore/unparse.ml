@@ -42,13 +42,14 @@ let collection_symbol (info : info) (s : sort) (which : string) : string =
 
 let dv s text = App ("\\dv", [ s ], [ Str text ])
 
-let pairs_of_map (v : Value.t) : (Value.t * Value.t) list =
+(* Each entry of a map: the entry, its key, and its value *)
+let pairs_of_map (v : Value.t) : (Value.t * Value.t * Value.t) list =
   match get v "`{ k `}" with
   | Some [ pairs ] ->
       Value.Get.list pairs
       |> List.map (fun pair ->
              match get pair "k ':' v" with
-             | Some [ k; v ] -> (k, v)
+             | Some [ k; v ] -> (pair, k, v)
              | _ -> error "not a map entry")
   | _ -> error "not a map: %s" (Value.to_string v)
 
@@ -65,7 +66,12 @@ let build_collection (info : info) (s : sort) (elems : pattern list) : pattern =
       let concat = collection_symbol info s "concat" in
       List.fold_left (fun acc x -> App (concat, [], [ acc; x ])) e rest
 
-let rec pattern_of_term (info : info) (v : Value.t) : pattern =
+(* With memo, each element of a Map or Set is written through memo, which may
+   give its text written before (see normal_text) *)
+let rec pattern_of_term ?memo (info : info) (v : Value.t) : pattern =
+  let memoized (e : Value.t) (build : unit -> pattern) : pattern =
+    match memo with Some m -> m e build | None -> build ()
+  in
   let ( >>? ) mixop k =
     match get v mixop with Some args -> Some (k args) | None -> None
   in
@@ -79,7 +85,7 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               App
                 ( Value.Get.text f,
                   List.map sort_of_value (Value.Get.list sorts),
-                  List.map (pattern_of_term info) (Value.Get.list args) )
+                  List.map (pattern_of_term ?memo info) (Value.Get.list args) )
           | _ -> assert false);
         (fun () ->
           "DV sort text" >>? function
@@ -152,11 +158,15 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let s = sort_of_value s in
               let element = collection_symbol info s "element" in
               pairs_of_map m
-              |> List.map (fun (k, v) ->
-                     App
-                       ( element,
-                         [],
-                         [ pattern_of_term info k; pattern_of_term info v ] ))
+              |> List.map (fun ((pair, k, v) : Value.t * Value.t * Value.t) ->
+                     memoized pair (fun () ->
+                         App
+                           ( element,
+                             [],
+                             [
+                               pattern_of_term ?memo info k;
+                               pattern_of_term ?memo info v;
+                             ] )))
               |> build_collection info s
           | _ -> assert false);
         (fun () ->
@@ -166,7 +176,8 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let element = collection_symbol info s "element" in
               elements_of_set set
               |> List.map (fun e ->
-                     App (element, [], [ pattern_of_term info e ]))
+                     memoized e (fun () ->
+                         App (element, [], [ pattern_of_term ?memo info e ])))
               |> build_collection info s
           | _ -> assert false);
         (fun () ->
@@ -193,7 +204,7 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
                              [
                                App
                                  ("LblRangeMap'Coln'Range", [], [ key a; key b ]);
-                               pattern_of_term info v;
+                               pattern_of_term ?memo info v;
                              ] )
                      | _ -> error "not a range: %s" (Value.to_string item))
               |> build_collection info s
@@ -205,7 +216,7 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
               let element = collection_symbol info s "element" in
               Value.Get.list l
               |> List.map (fun e ->
-                     App (element, [], [ pattern_of_term info e ]))
+                     App (element, [], [ pattern_of_term ?memo info e ]))
               |> build_collection info s
           | _ -> assert false);
       ]
@@ -213,11 +224,51 @@ let rec pattern_of_term (info : info) (v : Value.t) : pattern =
   | Some p -> p
   | None -> error "not a term: %s" (Value.to_string v)
 
-(* Normal form for comparison: associativity sugar expanded, and for Map and
-   Set sorts, nested concatenations flattened, units dropped, and elements
-   sorted. Lists keep their order. *)
+(* Normal form for comparison, as text: associativity sugar expanded, and for
+   Map and Set sorts, nested concatenations flattened, units dropped, and
+   elements sorted by their text. Lists keep their order. Bound variables get
+   canonical names by binder depth, since the LLVM backend names them afresh
+   when rewriting ends (substitution.md).
 
-let normalize (info : info) (p : pattern) : pattern =
+   Each element is written once, when it is sorted, and its text is reused
+   above it; an element can also come as the text it had before (rendered). *)
+
+type normal =
+  | Node of string * sort list * normal list
+  | Text of string (* written already *)
+  | Leaf of pattern (* a variable or a string *)
+
+let rec add_normal b = function
+  | Text s -> Buffer.add_string b s
+  | Leaf p -> add_pattern b p
+  | Node (name, sorts, args) ->
+      Buffer.add_string b name;
+      Buffer.add_char b '{';
+      Buffer.add_string b (string_of_sorts sorts);
+      Buffer.add_string b "}(";
+      List.iteri
+        (fun i n ->
+          if i > 0 then Buffer.add_string b ", ";
+          add_normal b n)
+        args;
+      Buffer.add_char b ')'
+
+let text_of_normal n =
+  let b = Buffer.create 256 in
+  add_normal b n;
+  Buffer.contents b
+
+(* An element given as its normal text *)
+let rendered (text : string) : pattern = App ("\\rendered", [], [ Str text ])
+
+let has_binders (info : info) : bool =
+  Hashtbl.fold
+    (fun _ (sym : symbol) acc -> acc || sym.is_binder)
+    info.symbols false
+
+(* The normalizer of a definition *)
+let normal_text (info : info) : pattern -> string =
+  (* concat symbol of each Map and Set sort, with its unit *)
   let unordered =
     Hashtbl.fold
       (fun s h acc ->
@@ -226,37 +277,43 @@ let normalize (info : info) (p : pattern) : pattern =
             ( collection_symbol info (Sort (s, [])) "concat",
               collection_symbol info (Sort (s, [])) "unit" )
           with
-          | concat, unit -> (concat, (unit, Sort (s, []))) :: acc
+          | concat, unit -> (concat, unit) :: acc
           | exception Error _ -> acc
         else acc)
       info.sort_hooks []
   in
-  let rec norm (p : pattern) : pattern =
+  (* the normal form, and for a Map or Set its concat and sorted elements *)
+  let rec norm (p : pattern) : normal * (string * string list) option =
     match p with
+    | App ("\\rendered", [], [ Str s ]) -> (Text s, None)
     | App (f, sorts, args) -> (
-        let args = List.map norm args in
         match List.assoc_opt f unordered with
-        | Some (unit, s) ->
-            let rec flatten q =
-              match q with
-              | App (g, _, xs) when g = f -> List.concat_map flatten xs
-              | App (g, _, []) when g = unit -> []
-              | q -> [ q ]
-            in
-            let elems = List.concat_map flatten args in
-            (* sorted by their text, computed once for each element *)
+        | Some unit ->
             let elems =
-              List.map (fun e -> (string_of_pattern e, e)) elems
-              |> List.sort (fun (a, _) (b, _) -> String.compare a b)
-              |> List.map snd
+              List.concat_map
+                (fun a ->
+                  match a with
+                  | App (g, _, []) when g = unit -> []
+                  | _ -> (
+                      match norm a with
+                      | _, Some (g, es) when g = f -> es
+                      | n, _ -> [ text_of_normal n ]))
+                args
+              |> List.sort String.compare
             in
-            ignore sorts;
-            build_collection info s elems
-        | None -> App (f, sorts, args))
-    | p -> p
+            let n =
+              match elems with
+              | [] -> Node (unit, [], [])
+              | e :: rest ->
+                  List.fold_left
+                    (fun acc x -> Node (f, [], [ acc; Text x ]))
+                    (Text e) rest
+            in
+            (n, Some (f, elems))
+        | None -> (Node (f, sorts, List.map (fun a -> fst (norm a)) args), None)
+        )
+    | p -> (Leaf p, None)
   in
-  (* Bound variables get canonical names by binder depth, since the LLVM
-     backend names them afresh when rewriting ends (substitution.md) *)
   let is_binder f =
     match Hashtbl.find_opt info.symbols f with
     | Some { is_binder; _ } -> is_binder
@@ -280,7 +337,49 @@ let normalize (info : info) (p : pattern) : pattern =
     | App (f, sorts, args) -> App (f, sorts, List.map (alpha env depth) args)
     | p -> p
   in
-  norm (alpha [] 0 (desugar_assoc p))
+  fun p -> text_of_normal (fst (norm (alpha [] 0 (desugar_assoc p))))
 
-let string_of_term (info : info) (v : Value.t) : string =
-  string_of_pattern (normalize info (pattern_of_term info v))
+(* The normal texts of the elements of Maps and Sets in terms of the spec,
+   kept by value id from one step to the next. Only for definitions without
+   binders, where an element's normal text does not depend on where it is. *)
+type memo = {
+  normal : pattern -> string;
+  mutable current : (int, string) Hashtbl.t; (* used by this step *)
+  mutable previous : (int, string) Hashtbl.t; (* used by the step before *)
+}
+
+let make_memo (info : info) : memo option =
+  if has_binders info then None
+  else
+    Some
+      {
+        normal = normal_text info;
+        current = Hashtbl.create 1024;
+        previous = Hashtbl.create 1024;
+      }
+
+let next_step (m : memo) =
+  m.previous <- m.current;
+  m.current <- Hashtbl.create (Hashtbl.length m.previous)
+
+(* The normal text of a term of the spec, reusing what memo kept *)
+let string_of_term ?memo (info : info) : Value.t -> string =
+  match memo with
+  | None ->
+      let normal = normal_text info in
+      fun v -> normal (pattern_of_term info v)
+  | Some m ->
+      let element (e : Value.t) build =
+        let id = e.Util.Source.note.Lang.Il.vid in
+        match Hashtbl.find_opt m.current id with
+        | Some s -> rendered s
+        | None ->
+            let s =
+              match Hashtbl.find_opt m.previous id with
+              | Some s -> s
+              | None -> m.normal (build ())
+            in
+            Hashtbl.replace m.current id s;
+            rendered s
+      in
+      fun v -> m.normal (pattern_of_term ~memo:element info v)
