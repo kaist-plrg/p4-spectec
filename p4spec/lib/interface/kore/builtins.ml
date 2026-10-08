@@ -228,8 +228,14 @@ let int_not : impl =
 (* dec $int_shl(int, nat) : int -- mpz_mul_2exp *)
 let int_shl = int_binop (fun a b -> Z.shift_left a (Z.to_int b))
 
-(* dec $int_shr(int, nat) : int -- mpz_fdiv_q_2exp, rounding down *)
-let int_shr = int_binop (fun a b -> Z.shift_right a (Z.to_int b))
+(* dec $int_shr(int, nat) : int -- mpz_fdiv_q_2exp, rounding down; a shift
+   by at least the number of bits of a gives 0 or -1, as hook_INT_shr does
+   also for amounts that do not fit in an unsigned long *)
+let int_shr =
+  int_binop (fun a b ->
+      if Z.geq b (Z.of_int (Z.numbits a)) then
+        if Z.sign a < 0 then Z.minus_one else Z.zero
+      else Z.shift_right a (Z.to_int b))
 
 (* dec $int_log2(int) : int -- mpz_sizeinbase(a, 2) - 1, for a > 0 *)
 let int_log2 : impl =
@@ -414,7 +420,9 @@ let string_compare : impl =
  fun add at targs vs ->
   Extract.zero at targs;
   let a, b = Extract.two at vs in
-  zint add (Z.of_int (compare (String.compare (Value.Get.text a) (Value.Get.text b)) 0))
+  zint add
+    (Z.of_int
+       (compare (String.compare (Value.Get.text a) (Value.Get.text b)) 0))
 
 (* KRYPTO digests, as plugin-c/crypto.cpp (Crypto++) of the blockchain plugin:
    dec $keccak256(nat* ) : nat*, $sha256, $ripemd160 *)
@@ -423,9 +431,13 @@ let digest (f : string -> string) : impl =
   Extract.zero at targs;
   value_of_bytes add (f (bytes_of_value (Extract.one at vs)))
 
-let keccak256 = digest (fun s -> Digestif.KECCAK_256.(to_raw_string (digest_string s)))
+let keccak256 =
+  digest (fun s -> Digestif.KECCAK_256.(to_raw_string (digest_string s)))
+
 let sha256 = digest (fun s -> Digestif.SHA256.(to_raw_string (digest_string s)))
-let ripemd160 = digest (fun s -> Digestif.RMD160.(to_raw_string (digest_string s)))
+
+let ripemd160 =
+  digest (fun s -> Digestif.RMD160.(to_raw_string (digest_string s)))
 
 external ecdsa_recover_c : string -> int -> string -> string -> string
   = "kore_ecdsa_recover"
@@ -443,7 +455,8 @@ let ecdsa_recover : impl =
       and v = z v in
       value_of_bytes add
         (if
-           String.length hash <> 32 || String.length r <> 32
+           String.length hash <> 32
+           || String.length r <> 32
            || String.length s <> 32
            || Z.lt v (Z.of_int 27)
            || Z.gt v (Z.of_int 28)
