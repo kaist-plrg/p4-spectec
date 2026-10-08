@@ -77,7 +77,7 @@ class Interpreter:
         return int(count), out, secs, None
 
 
-def run_krun(kompiled, program, workdir, krun_args, timeout):
+def run_krun(kompiled, program, workdir, krun_args, timeout, input_dir=None, depth=None):
     """Run krun; return (steps, interpreter command, result file, seconds, error).
 
     krun --dry-run parses the program and prints the command it would run:
@@ -85,8 +85,10 @@ def run_krun(kompiled, program, workdir, krun_args, timeout):
     macro expansion as its first argument (krun keeps several tmp.in.* files,
     some of them before macro expansion). That command is then run directly,
     which is what krun does, without starting krun again."""
-    # standard input comes from <program>.in when it exists, as in the tutorial Makefiles
-    stdin = open(program + ".in").read() if os.path.exists(program + ".in") else ""
+    # standard input comes from <program>.in, or <input_dir>/<name>.in, when it
+    # exists, as in the tutorial Makefiles (RESULTDIR)
+    inp = os.path.join(input_dir, os.path.basename(program)) + ".in" if input_dir else program + ".in"
+    stdin = open(inp).read() if os.path.exists(inp) else ""
     dry = os.path.join(workdir, "dry")
     os.makedirs(dry, exist_ok=True)
     rc, out, err, _ = run(["krun", "-d", os.path.abspath(kompiled), os.path.abspath(program)] + krun_args
@@ -96,7 +98,7 @@ def run_krun(kompiled, program, workdir, krun_args, timeout):
         return None, None, None, 0.0, "krun --dry-run failed (exit %s): %s" % (rc, oneline(out + err))
     words = line.split()
     command = Interpreter(words[next(i for i, w in enumerate(words) if w.endswith("interpreter")):], stdin)
-    steps, result, secs, err = command.run(os.path.join(workdir, "result.kore"), None, timeout)
+    steps, result, secs, err = command.run(os.path.join(workdir, "result.kore"), depth, timeout)
     return steps, command, result, secs, err
 
 
@@ -194,7 +196,9 @@ def test_program(prog, root, definition, args):
     check = name in limits
     limit = int(limits[name]) if check and limits[name] else args.depth
     krun_args = args.krun_arg + (["--depth", str(args.depth)] if args.depth else [])
-    k_steps, command, result, k_secs, err = run_krun(args.kompiled, prog, work, krun_args, args.timeout)
+    # a run checked step by step for its first steps need not end under krun
+    k_steps, command, result, k_secs, err = run_krun(args.kompiled, prog, work, krun_args, args.timeout,
+                                                     args.input_dir, limit if check else None)
     fails_at = False
     if err and err.startswith("krun failed") and command:
         fails_at, result = failing_step(command, work, args.timeout)
@@ -225,6 +229,8 @@ def main():
     ap.add_argument("--krun-arg", action="append", default=[], help="extra argument for krun")
     ap.add_argument("--depth", type=int, default=None, help="stop krun and the spec after this many steps")
     ap.add_argument("--keep", default=None, help="keep work files in this directory")
+    ap.add_argument("--input-dir", default=None,
+                    help="read <name>.in from this directory instead of beside the program")
     ap.add_argument("--exclude", action="append", default=[], help="skip programs with this file name")
     ap.add_argument("--memory-max", default="2500M" if shutil.which("systemd-run") else "",
                     help="memory cap for each run of the spec (systemd-run MemoryMax; empty for none, "

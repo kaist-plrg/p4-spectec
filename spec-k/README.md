@@ -8,7 +8,7 @@
   $ opam install mlmpfr
   ```
 - [K](https://github.com/runtimeverification/k) v7.1.337, with `kompile` and `krun` on `PATH`
-- Python 3
+- Python 3.11 or later
 - Test inputs, next to this repository (or set `K_SRC` and `KWASM_SRC`):
   ```shell
   $ git clone --filter=blob:none --sparse --branch v7.1.337 https://github.com/runtimeverification/k ../k
@@ -31,14 +31,15 @@ $ spec-k/scripts/ktest.py regression/list-set                 # one regression t
 $ spec-k/scripts/ktest.py kwasm --only conformance-i32.wast   # one program
 ```
 
-Languages are kompiled once into `spec-k/_k-test/<suite>/kompiled`, and
+The suites are defined in `spec-k/scripts/suites.toml`. Languages are
+kompiled once into `spec-k/_k-test/<suite>/kompiled`, and
 results are written to `spec-k/_k-test/<suite>.md` (with `--only`, only to
 the screen). Two programs are tested at a time (`-j`).
 
 Each program is compared with `krun`: the final configuration after
 normalization, and the number of rewrite steps. A program on which `krun`
-fails must fail at the same step. A nondeterministic program (SIMPLE threads)
-is checked step by step instead: each step of the spec must be one of the
+fails must fail at the same step. A nondeterministic program (threads, or an
+order K leaves open) is checked step by step instead: each step of the spec must be one of the
 next configurations that the `search` binary of the kompiled definition
 finds (`difftest.py --check-steps-for NAME`; `NAME:N` checks only the first
 N steps, for a program whose runs may not end).

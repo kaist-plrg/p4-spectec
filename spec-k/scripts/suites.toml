@@ -1,0 +1,255 @@
+# The test suites of ktest.py: K definitions whose programs are run by krun
+# and by the K spec, and compared (difftest.py).
+#
+# [suite.<name>], run in this order by default:
+#   src          where dir is: "k" (K v7.1.337), "kwasm" (wasm-semantics),
+#                or "spec" (this repository)
+#   dir, def     the directory of the definition, and its file
+#   ext          the extension of the programs
+#   tests        directories of the programs, relative to dir (default ["tests"])
+#   inputs       directory of the <program>.in files, relative to dir
+#                (default: beside the programs)
+#   kompile      extra kompile options
+#   krun         extra krun options
+#   exclude      programs left out
+#   check_steps  programs checked step by step against K's search rather than
+#                compared with krun's run (NAME, or NAME:N for the first N
+#                steps of a run that may not end)
+#   depth        stop krun and the spec after this many steps
+#   kompiled_as  use the kompiled definition of that suite
+#   timeout      seconds for each run of the spec (default 3600)
+#
+# In the tutorial languages, the programs that the tutorial Makefiles run with
+# --search are checked step by step, and those they skip are left out. The
+# type checkers work on several tasks, and FUN binds the names of a pattern,
+# in an order K leaves open; the programs where that order changes the result
+# are checked step by step.
+
+[suite.imp]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
+def = "imp.k"
+ext = "imp"
+kompile = ["--gen-glr-bison-parser"]
+
+[suite.lambda]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/1_lambda/lesson_8"
+def = "lambda.k"
+ext = "lambda"
+kompile = ["--gen-glr-bison-parser"]
+
+[suite.simple]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/1_untyped"
+def = "simple-untyped.md"
+ext = "simple"
+kompile = ["--enable-search"]
+krun = ["--io", "off"]
+tests = ["tests/diverse", "tests/exceptions", "tests/threads"]
+# threads_05 may not end
+check_steps = [
+  "threads_01.simple", "threads_02.simple", "threads_04.simple", "threads_05.simple:1000",
+  "threads_06.simple", "threads_07.simple", "threads_09.simple", "threads_10.simple",
+  "threads_11.simple", "threads_12.simple", "exceptions_07.simple", "div-nondet.simple",
+]
+
+[suite.kool]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/1_untyped"
+def = "kool-untyped.md"
+ext = "kool"
+krun = ["--io", "off"]
+exclude = ["threads.kool"]
+
+[suite."lambda++"]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/3_lambda++/lesson_5"
+def = "lambda.k"
+ext = "lambda"
+kompile = ["--enable-search", "--syntax-module", "LAMBDA"]
+tests = ["tests/deterministic", "tests/nondeterministic"]
+check_steps = [
+  "arithmetic.lambda", "callcc-env1.lambda", "callcc-env2.lambda", "callcc-with-let.lambda",
+  "closed-variable-capture.lambda", "free-variable-capture.lambda", "identity.lambda",
+  "if.lambda", "lets.lambda",
+]
+
+# The proofs of the lesson (kprove, the Haskell backend) are not run
+[suite."imp++"]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/4_imp++/lesson_7"
+def = "imp.k"
+ext = "imp"
+kompile = ["--gen-glr-bison-parser", "--enable-search"]
+krun = ["--io", "off"]
+check_steps = ["div.imp", "spawn.imp"]
+
+[suite.simple-typed-static]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/1_static"
+def = "simple-typed-static.md"
+ext = "simple"
+kompile = ["--enable-search"]
+tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
+inputs = "tests"
+check_steps = [
+  "dekker.simple", "factorial.simple", "higher-order.simple", "sortings.simple",
+  "exceptions_02.simple", "exceptions_05.simple", "exceptions_09.simple", "exceptions_11.simple",
+  "threads_03.simple", "threads_04.simple", "threads_08.simple", "threads_11.simple",
+]
+
+[suite.simple-typed-dynamic]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/2_dynamic"
+def = "simple-typed-dynamic.md"
+ext = "simple"
+kompile = ["--enable-search"]
+krun = ["--io", "off"]
+tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
+inputs = "tests"
+# they do not end
+exclude = ["dekker.simple", "threads_03.simple", "threads_08.simple"]
+check_steps = [
+  "exceptions_07.simple", "threads_01.simple", "threads_02.simple", "threads_04.simple",
+  "threads_05.simple:1000", "threads_06.simple", "threads_09.simple", "threads_12.simple",
+  "div-nondet.simple",
+]
+
+[suite.kool-typed-dynamic]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/1_dynamic"
+def = "kool-typed-dynamic.md"
+ext = "kool"
+krun = ["--io", "off"]
+tests = ["../programs"]
+inputs = "tests"
+exclude = ["cycle.kool", "threads.kool"]
+
+[suite.kool-typed-static]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/2_static"
+def = "kool-typed-static.md"
+ext = "kool"
+kompile = ["--enable-search"]
+krun = ["--io", "off"]
+tests = ["../programs"]
+inputs = "tests"
+exclude = ["return-object.kool"]
+check_steps = [
+  "cycle.kool", "exceptions-1.kool", "field-shadowing-1.kool", "matrix.kool",
+  "method-sharing.kool", "odd-even.kool", "sorting.kool", "super-1.kool", "super-2.kool",
+]
+
+[suite.fun]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/3_fun/1_untyped/1_environment"
+def = "fun-untyped.md"
+ext = "fun"
+kompile = ["--enable-search"]
+tests = ["../../programs"]
+inputs = "tests"
+check_steps = [
+  "references-5.fun", "ackermann.fun", "callcc-looping.fun", "constructor-bst-sorting.fun",
+  "constructor-expr-distributivity.fun", "constructor-expr-toString.fun",
+  "constructor-list-length.fun", "factorial-and-list-max.fun", "list-length.fun", "list-max.fun",
+  "list-nth.fun", "nth.fun", "pattern.fun", "references-2.fun", "tuple-2.fun", "tuple-3.fun",
+  "tuple-4.fun", "tuple-5.fun",
+]
+
+[suite.kwasm]
+src = "kwasm"
+dir = "pykwasm/src/pykwasm/kdist/wasm-semantics"
+def = "test.md"
+ext = "wast"
+kompile = [
+  "--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k",
+  "--gen-glr-bison-parser", "-O3",
+]
+# left out for their length (0.5 to 13 million steps)
+exclude = [
+  "conformance-memory_copy.wast", "conformance-memory_fill.wast", "conformance-memory_grow.wast",
+  "conformance-call.wast",
+]
+timeout = 7200
+
+# IMP stopped after 20 steps
+[suite.depth]
+src = "k"
+dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
+def = "imp.k"
+ext = "imp"
+kompiled_as = "imp"
+depth = 20
+
+# Definitions written for the K features and errors that the languages above
+# do not exercise, with their programs in tests/
+
+[suite.priority]
+src = "spec"
+dir = "spec-k/test/priority"
+def = "priority.k"
+ext = "priority"
+
+[suite.equality]
+src = "spec"
+dir = "spec-k/test/equality"
+def = "equality.k"
+ext = "equality"
+
+# mint.k cannot have a module MINT, which K's domains.md has
+[suite.mint]
+src = "spec"
+dir = "spec-k/test/mint"
+def = "mint.k"
+ext = "mint"
+kompile = ["--main-module", "MINT-TEST", "--syntax-module", "MINT-TEST"]
+
+[suite.binder]
+src = "spec"
+dir = "spec-k/test/binder"
+def = "binder.k"
+ext = "binder"
+
+[suite.errors]
+src = "spec"
+dir = "spec-k/test/errors"
+def = "errors.k"
+ext = "errors"
+
+# The regression tests of K (in dir) that kompile with the LLVM backend and
+# krun their programs through ktest.mak, with the settings of their Makefiles
+[regression]
+dir = "k-distribution/tests/regression-new"
+
+# Tests that krun differently from a plain run of each program
+[regression.skip]
+proof-instrumentation = "krun --proof-hint"
+proof-instrumentation-debug = "krun --proof-hint"
+issue-1602 = "krun --dry-run"
+krun-deserialize = "a custom parser"
+issue-582 = "a custom parser"
+star-multiplicity = "a custom parser"
+issue-1169 = "a preprocessed definition"
+imp-outer-json = "a definition in JSON"
+issue-2273 = "kast tests"
+issue-946 = "a custom krun target"
+search-bound = "krun --search --bound"
+no-pattern = "krun --search-final"
+"imp++-llvm" = "krun --search"
+issue-3520-freshConfig = "krun --search --pattern"
+io-llvm = "file IO"
+rand = "random numbers"
+exit-code-no-gen-top = "the exit code"
+trace = "#trace (IO)"
+unparseKORE = "#unparseKORE (reflection)"
+
+# Programs left out
+[regression.exclude]
+# kompile leaves a fresh variable of a function equation unbound
+withConfig2 = ["1.test"]
+
+# krun options in place of those of the Makefile
+[regression.krun]
+# its own script passes $MODE; print would write to stdout (IO)
+parseNonPgm = ["-cMODE=noprint"]

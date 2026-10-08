@@ -21,61 +21,16 @@ import re
 import shlex
 import subprocess
 import sys
+import tomllib
 
 sys.path.insert(0, os.path.dirname(__file__))
 from difftest import ROOT  # noqa: E402
 
-TUTORIAL = "k-distribution/tests/regression-new/pl-tutorial"
-REGRESSION = "k-distribution/tests/regression-new"
-
-SUITES = {
-    "imp": dict(src="k", dir=TUTORIAL + "/1_k/2_imp/lesson_4", def_="imp.k", ext="imp",
-                kompile=["--gen-glr-bison-parser"]),
-    "lambda": dict(src="k", dir=TUTORIAL + "/1_k/1_lambda/lesson_8", def_="lambda.k", ext="lambda",
-                   kompile=["--gen-glr-bison-parser"]),
-    # nondeterministic programs; threads_05 may not end, so 1,000 steps
-    "simple": dict(src="k", dir=TUTORIAL + "/2_languages/1_simple/1_untyped", def_="simple-untyped.md",
-                   ext="simple", kompile=["--enable-search"], krun=["--io", "off"],
-                   tests=["tests/diverse", "tests/exceptions", "tests/threads"],
-                   check_steps=["threads_01.simple", "threads_02.simple", "threads_04.simple",
-                                "threads_05.simple:1000", "threads_06.simple", "threads_07.simple",
-                                "threads_09.simple", "threads_10.simple", "threads_11.simple",
-                                "threads_12.simple", "exceptions_07.simple", "div-nondet.simple"]),
-    "kool": dict(src="k", dir=TUTORIAL + "/2_languages/2_kool/1_untyped", def_="kool-untyped.md", ext="kool",
-                 krun=["--io", "off"], exclude=["threads.kool"]),
-    # left out for their length (0.5 to 13 million steps)
-    "kwasm": dict(src="kwasm", dir="pykwasm/src/pykwasm/kdist/wasm-semantics", def_="test.md", ext="wast",
-                  kompile=["--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k",
-                           "--gen-glr-bison-parser", "-O3"],
-                  exclude=["conformance-memory_copy.wast", "conformance-memory_fill.wast",
-                           "conformance-memory_grow.wast", "conformance-call.wast"],
-                  timeout=7200),
-    # IMP stopped after 20 steps
-    "depth": dict(src="k", dir=TUTORIAL + "/1_k/2_imp/lesson_4", def_="imp.k", ext="imp", kompiled_as="imp",
-                  depth=20),
-}
-# Definitions written for the K features and errors that the languages above
-# do not exercise, in spec-k/test/<name>/<name>.k with programs in tests/
-for name in ["priority", "equality", "mint", "binder", "errors"]:
-    SUITES[name] = dict(src="spec", dir="spec-k/test/" + name, def_=name + ".k", ext=name)
-# mint.k cannot have a module MINT, which K's domains.md has
-SUITES["mint"]["kompile"] = ["--main-module", "MINT-TEST", "--syntax-module", "MINT-TEST"]
-
-# Regression tests that krun differently from a plain run of each program
-REGRESSION_SKIP = {
-    "proof-instrumentation": "krun --proof-hint", "proof-instrumentation-debug": "krun --proof-hint",
-    "issue-1602": "krun --dry-run", "krun-deserialize": "a custom parser", "issue-582": "a custom parser",
-    "star-multiplicity": "a custom parser", "issue-1169": "a preprocessed definition",
-    "imp-outer-json": "a definition in JSON", "issue-2273": "kast tests", "issue-946": "a custom krun target",
-    "search-bound": "krun --search --bound", "no-pattern": "krun --search-final", "imp++-llvm": "krun --search",
-    "issue-3520-freshConfig": "krun --search --pattern", "io-llvm": "file IO", "rand": "random numbers",
-    "exit-code-no-gen-top": "the exit code",
-    "trace": "#trace (IO)", "unparseKORE": "#unparseKORE (reflection)",
-}
-# kompile leaves a fresh variable of a function equation unbound
-REGRESSION_EXCLUDE = {"withConfig2": ["1.test"]}
-# its own script passes $MODE; print would write to stdout (IO)
-REGRESSION_KRUN = {"parseNonPgm": ["-cMODE=noprint"]}
+# The suites and the settings of the regression tests (suites.toml)
+with open(os.path.join(os.path.dirname(__file__), "suites.toml"), "rb") as f:
+    CONFIG = tomllib.load(f)
+SUITES = CONFIG["suite"]
+REGRESSION = CONFIG["regression"]
 
 
 def run_difftest(name, t, args, jobs=None):
@@ -103,6 +58,7 @@ def run_difftest(name, t, args, jobs=None):
            "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs), "--ext", t["ext"]] + programs
     cmd += ["--krun-arg=" + a for a in t.get("krun", [])]
     cmd += ["--depth=%d" % t["depth"]] if "depth" in t else []
+    cmd += ["--input-dir", t["inputs"]] if "inputs" in t else []
     cmd += sum((["--exclude", e] for e in t.get("exclude", [])), [])
     cmd += sum((["--check-steps-for", e] for e in t.get("check_steps", [])), [])
     if args.cover:
@@ -140,11 +96,13 @@ def kwasm_programs(src, work):
 def run_suite(suite, args):
     t = dict(SUITES[suite])
     src = os.path.abspath({"kwasm": args.kwasm_src, "k": args.k_src, "spec": ROOT}[t["src"]])
-    t["definition"] = os.path.join(src, t["dir"], t["def_"])
+    t["definition"] = os.path.join(src, t["dir"], t["def"])
     if suite == "kwasm":
         t["programs"] = [kwasm_programs(src, os.path.abspath(args.work))]
     else:
         t["programs"] = [os.path.join(src, t["dir"], d) for d in t.get("tests", ["tests"])]
+    if "inputs" in t:
+        t["inputs"] = os.path.join(src, t["dir"], t["inputs"])
     ok, summary = run_difftest(suite, t, args)
     if not args.only:
         print(summary, flush=True)
@@ -169,10 +127,10 @@ def regression_tests(src):
     """Regression tests that kompile with the LLVM backend and krun programs
     through ktest.mak, as suites with the settings of their Makefiles."""
     tests = {}
-    root = os.path.join(src, REGRESSION)
+    root = os.path.join(src, REGRESSION["dir"])
     for d in sorted(os.listdir(root)):
         makefile = os.path.join(root, d, "Makefile")
-        if d in REGRESSION_SKIP or not os.path.isfile(makefile) or "ktest.mak" not in open(makefile).read():
+        if d in REGRESSION["skip"] or not os.path.isfile(makefile) or "ktest.mak" not in open(makefile).read():
             continue
         v = read_makefile(makefile)
         if v.get("KOMPILE_BACKEND", "llvm") != "llvm" or "DEF" not in v or "EXT" not in v:
@@ -191,10 +149,10 @@ def regression_tests(src):
             elif f != "--profile":
                 krun.append(f)
         tests[d] = dict(definition=definition, programs=[testdir], ext=v["EXT"],
-                        krun=["--no-exc-wrap"] + REGRESSION_KRUN.get(d, krun),
+                        krun=["--no-exc-wrap"] + REGRESSION["krun"].get(d, krun),
                         kompile=shlex.split(v.get("KOMPILE_FLAGS", "")) + ["--no-exc-wrap", "--type-inference-mode",
                                                                            "checked"],
-                        exclude=REGRESSION_EXCLUDE.get(d, []))
+                        exclude=REGRESSION["exclude"].get(d, []))
     return tests
 
 
