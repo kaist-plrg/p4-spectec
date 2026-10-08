@@ -245,10 +245,10 @@ let sentence p : sentence =
       expect p Colon "':'";
       ignore (sort p);
       keyword p "where";
-      ignore (pattern p);
+      let lhs = pattern p in
       expect p ColonEq "':='";
-      ignore (pattern p);
-      AliasDecl { name; attrs = attrs p }
+      let body = pattern p in
+      AliasDecl { name; lhs; body; attrs = attrs p }
   | "axiom" ->
       let params = sort_params p in
       let pattern = pattern p in

@@ -334,7 +334,68 @@ type loaded = {
   equations : int;
 }
 
+(* Aliases (alias f(X1, ..., Xn) := body) are abbreviations: each use
+   f(p1, ..., pn) in an axiom is replaced by body with Xi := pi, as the LLVM
+   backend does before compiling the axioms (matching/.../Parser.scala,
+   getAxioms). kompile of K 5 named the left-hand sides of rules this way. *)
+let expand_aliases (defn : definition) : definition =
+  let aliases = Hashtbl.create 16 in
+  List.iter
+    (fun (m : module_) ->
+      List.iter
+        (function
+          | AliasDecl { name; lhs = App (_, _, params); body; _ } ->
+              let names =
+                List.map
+                  (function
+                    | Var (x, _) | SetVar (x, _) -> x
+                    | _ -> error "alias %s: a parameter is not a variable" name)
+                  params
+              in
+              Hashtbl.replace aliases name (names, body)
+          | AliasDecl { name; _ } -> error "malformed alias %s" name
+          | _ -> ())
+        m.sentences)
+    defn.modules;
+  let rec subst env (p : pattern) : pattern =
+    match p with
+    | Var (x, _) | SetVar (x, _) -> (
+        match List.assoc_opt x env with Some q -> q | None -> p)
+    | App (f, sorts, args) -> App (f, sorts, List.map (subst env) args)
+    | p -> p
+  in
+  let rec expand (p : pattern) : pattern =
+    match p with
+    | App (f, sorts, args) -> (
+        let args = List.map expand args in
+        match Hashtbl.find_opt aliases f with
+        | Some (names, body) when List.length names = List.length args ->
+            expand (subst (List.combine names args) body)
+        | Some _ -> error "alias %s applied to the wrong number of arguments" f
+        | None -> App (f, sorts, args))
+    | p -> p
+  in
+  if Hashtbl.length aliases = 0 then defn
+  else
+    {
+      defn with
+      modules =
+        List.map
+          (fun (m : module_) ->
+            {
+              m with
+              sentences =
+                List.map
+                  (function
+                    | Axiom a -> Axiom { a with pattern = expand a.pattern }
+                    | s -> s)
+                  m.sentences;
+            })
+          defn.modules;
+    }
+
 let load_definition (defn : definition) : loaded =
+  let defn = expand_aliases defn in
   let info = info_of_definition defn in
   let rules = ref []
   and equations = ref []

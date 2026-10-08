@@ -27,7 +27,12 @@ type sentence =
       hooked : bool;
       attrs : attr list;
     }
-  | AliasDecl of { name : string; attrs : attr list }
+  | AliasDecl of {
+      name : string;
+      lhs : pattern; (* name(X1, ..., Xn) *)
+      body : pattern;
+      attrs : attr list;
+    }
   | Axiom of { params : string list; pattern : pattern; attrs : attr list }
   | Claim of { params : string list; pattern : pattern; attrs : attr list }
 
