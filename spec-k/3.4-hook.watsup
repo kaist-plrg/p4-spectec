@@ -211,19 +211,26 @@ def $hook(D, "LIST.update", sort, ([LIST sort_l term*, INT i, term_v]))
 
 ;;; MAP
 ;;; The result sort of the hooked symbol decides which map sort is built.
+;;; A map keeps its entries in order, as a set does, so that maps with the same
+;;; entries are the same value, as K compares them; this matters when maps are
+;;; in the elements of a set or the keys of a map (e.g. the type environments
+;;; of the tasks of a type checker).
+
+dec $sorted_map(map<term, term>) : map<term, term>
+def $sorted_map(M) = $union_set<pair<term, term>>(M, `{ eps `})
 
 def $hook(D, "MAP.unit", sort, eps) = OK (MAP sort `{ eps `})
 def $hook(D, "MAP.element", sort, ([term_k, term_v]))
   = OK (MAP sort `{ term_k ':' term_v `})
 def $hook(D, "MAP.concat", sort, ([MAP sort_1 M_1, MAP sort_2 M_2]))
-  = OK (MAP sort M)
+  = OK (MAP sort $sorted_map(M))
   -- if OK M = $concat_map(M_1, M_2)
 def $hook(D, "MAP.lookup", sort, ([MAP sort_m M, term_k])) = OK term_v
   -- if term_v = $find_map<term, term>(M, term_k)
 def $hook(D, "MAP.keys", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
   = OK (SET sort `{ term_k* `})
 def $hook(D, "MAP.update", sort, ([MAP sort_m M, term_k, term_v]))
-  = OK (MAP sort_m $update_map<term, term>(M, term_k, term_v))
+  = OK (MAP sort_m $sorted_map($update_map<term, term>(M, term_k, term_v)))
 def $hook(D, "MAP.in_keys", sort, ([term_k, MAP sort_m M])) = OK (BOOL true)
   -- if term_v = $find_map<term, term>(M, term_k)
 def $hook(D, "MAP.in_keys", sort, ([term_k, MAP sort_m M])) = OK (BOOL false)
