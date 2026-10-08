@@ -244,10 +244,11 @@ let normalize (info : info) (p : pattern) : pattern =
               | q -> [ q ]
             in
             let elems = List.concat_map flatten args in
+            (* sorted by their text, computed once for each element *)
             let elems =
-              List.sort
-                (fun a b -> compare (string_of_pattern a) (string_of_pattern b))
-                elems
+              List.map (fun e -> (string_of_pattern e, e)) elems
+              |> List.sort (fun (a, _) (b, _) -> String.compare a b)
+              |> List.map snd
             in
             ignore sorts;
             build_collection info s elems

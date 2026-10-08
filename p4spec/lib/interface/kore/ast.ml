@@ -75,11 +75,37 @@ let escape (s : string) : string =
     s;
   Buffer.contents b
 
-let rec string_of_pattern = function
-  | Var (name, sort) -> name ^ ":" ^ string_of_sort sort
-  | SetVar (name, sort) -> name ^ ":" ^ string_of_sort sort
+(* Written into one buffer, since terms can be large and deep *)
+let rec add_pattern b = function
+  | Var (name, sort) | SetVar (name, sort) ->
+      Buffer.add_string b name;
+      Buffer.add_char b ':';
+      Buffer.add_string b (string_of_sort sort)
   | App (name, sorts, args) ->
-      name ^ "{" ^ string_of_sorts sorts ^ "}(" ^ string_of_patterns args ^ ")"
-  | Str s -> "\"" ^ escape s ^ "\""
+      Buffer.add_string b name;
+      Buffer.add_char b '{';
+      Buffer.add_string b (string_of_sorts sorts);
+      Buffer.add_string b "}(";
+      add_patterns b args;
+      Buffer.add_char b ')'
+  | Str s ->
+      Buffer.add_char b '"';
+      Buffer.add_string b (escape s);
+      Buffer.add_char b '"'
 
-and string_of_patterns ps = String.concat ", " (List.map string_of_pattern ps)
+and add_patterns b ps =
+  List.iteri
+    (fun i p ->
+      if i > 0 then Buffer.add_string b ", ";
+      add_pattern b p)
+    ps
+
+let string_of_pattern p =
+  let b = Buffer.create 256 in
+  add_pattern b p;
+  Buffer.contents b
+
+let string_of_patterns ps =
+  let b = Buffer.create 256 in
+  add_patterns b ps;
+  Buffer.contents b
