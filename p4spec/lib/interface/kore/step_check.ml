@@ -76,15 +76,23 @@ let step c term =
 (* After the run: K takes no step from the last configuration *)
 let finish c ~ended =
   (match (c.failure, c.last, ended) with
-  | None, Some last, true ->
-      if run_k c "interpreter" last 1 [ "--statistics" ] <> 0 then
-        c.failure <- Some "the interpreter failed on the last configuration"
-      else if In_channel.with_open_bin c.next In_channel.input_line <> Some "0"
-      then
-        c.failure <-
-          Some
-            (Printf.sprintf
-               "K takes a step from the configuration after %d steps" c.steps)
+  | None, Some last, true -> (
+      (* the exit code is the configuration's exit-code cell, so the step
+         count it writes tells whether it ran *)
+      ignore (run_k c "interpreter" last 1 [ "--statistics" ]);
+      match
+        if Sys.file_exists c.next then
+          In_channel.with_open_bin c.next In_channel.input_line
+        else None
+      with
+      | Some "0" -> ()
+      | Some _ ->
+          c.failure <-
+            Some
+              (Printf.sprintf
+                 "K takes a step from the configuration after %d steps" c.steps)
+      | None ->
+          c.failure <- Some "the interpreter failed on the last configuration")
   | _ -> ());
   List.iter
     (fun f -> if Sys.file_exists f then Sys.remove f)
