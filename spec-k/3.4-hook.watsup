@@ -117,6 +117,12 @@ def $hook(D, "INT.shr", sort, ([INT i_1, INT i_2])) = OK (INT $int_shr(i_1, n))
   -- if n = $nat_of(i_2)
 def $hook(D, "INT.log2", sort, ([INT i])) = OK (INT $int_log2(i))
   -- if $(i > 0)
+def $hook(D, "INT.bitRange", sort, ([INT i, INT i_o, INT i_l]))
+  = OK (INT $int_bit_range(i, n_o, n_l))
+  -- if n_o = $nat_of(i_o)
+  -- if n_l = $nat_of(i_l)
+def $hook(D, "INT.powmod", sort, ([INT i_1, INT i_2, INT i_m])) = OK (INT i)
+  -- if i = $int_powmod(i_1, i_2, i_m)
 
 ;;; KEQUAL (#if is lazy and handled by the evaluator)
 
@@ -135,6 +141,12 @@ def $hook(D, "STRING.eq", sort, ([STRING t_1, STRING t_2]))
   = OK (BOOL $(t_1 = t_2))
 def $hook(D, "STRING.ne", sort, ([STRING t_1, STRING t_2]))
   = OK (BOOL $(t_1 =/= t_2))
+def $hook(D, "STRING.lt", sort, ([STRING t_1, STRING t_2]))
+  = OK (BOOL $($string_compare(t_1, t_2) < 0))
+def $hook(D, "STRING.le", sort, ([STRING t_1, STRING t_2]))
+  = OK (BOOL $($string_compare(t_1, t_2) <= 0))
+def $hook(D, "STRING.ge", sort, ([STRING t_1, STRING t_2]))
+  = OK (BOOL $($string_compare(t_1, t_2) >= 0))
 def $hook(D, "STRING.length", sort, ([STRING t])) = OK (INT $string_length(t))
 def $hook(D, "STRING.substr", sort, ([STRING t, INT i_1, INT i_2]))
   = OK (STRING $string_substr(t, i_1, i_2))
@@ -265,6 +277,15 @@ def $hook(D, "SET.choice", sort, ([SET sort_s S])) = OK term
   -- if `{ term :: term_t* `} = $union_set<term>(S, `{ eps `})
 def $hook(D, "SET.in", sort, ([term, SET sort_s `{ term_e* `}]))
   = OK (BOOL $in_list(term, term_e*))
+def $hook(D, "SET.union", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
+  = OK (SET sort $union_set<term>(S_1, S_2))
+def $hook(D, "SET.size", sort, ([SET sort_s `{ term* `}])) = OK (INT $(|term*|))
+
+;;; Set2List: the elements in the order of the set here, the order of its hash
+;;; trie in the LLVM backend; they agree on a set of one element
+
+def $hook(D, "SET.set2list", sort, ([SET sort_s `{ term* `}]))
+  = OK (LIST sort term*)
 
 ;;; BYTES
 ;;; A list of bytes; conversions are builtins. A hook fails where the LLVM
@@ -353,6 +374,33 @@ def $hook(D, "BYTES.string2bytes", sort, ([STRING t]))
   = OK (BYTES $string_to_bytes(t))
 def $hook(D, "BYTES.bytes2string", sort, ([BYTES n*]))
   = OK (STRING $bytes_to_string(n*))
+
+;;; KRYPTO
+;;; The hooks of the blockchain plugin (plugin-c/crypto.cpp of
+;;; blockchain-k-plugin, used by KEVM): digests are builtins, given as bytes or
+;;; as lower-case hexadecimal text; a signature recovers its public key, or no
+;;; bytes
+
+;; Lower-case hexadecimal digits of bytes, as hexEncode of the plugin
+
+dec $hex_digit(nat) : text
+def $hex_digit(n) = $string_substr("0123456789abcdef", n, $(n + 1))
+
+dec $hex(nat*) : text
+def $hex(eps) = ""
+def $hex(n :: n_t*) = $hex_digit($(n / 16)) ++ $hex_digit($(n \ 16)) ++ $hex(n_t*)
+
+def $hook(D, "KRYPTO.keccak256", sort, ([BYTES n*]))
+  = OK (STRING $hex($keccak256(n*)))
+def $hook(D, "KRYPTO.keccak256raw", sort, ([BYTES n*]))
+  = OK (BYTES $keccak256(n*))
+def $hook(D, "KRYPTO.sha256", sort, ([BYTES n*])) = OK (STRING $hex($sha256(n*)))
+def $hook(D, "KRYPTO.sha256raw", sort, ([BYTES n*])) = OK (BYTES $sha256(n*))
+def $hook(D, "KRYPTO.ripemd160", sort, ([BYTES n*]))
+  = OK (STRING $hex($ripemd160(n*)))
+def $hook(D, "KRYPTO.ecdsaRecover", sort,
+          ([BYTES n_h*, INT i_v, BYTES n_r*, BYTES n_s*]))
+  = OK (BYTES $ecdsa_recover(n_h*, i_v, n_r*, n_s*))
 
 ;;; FLOAT
 ;;; Text in the backend's output format; all operations are MPFR builtins.

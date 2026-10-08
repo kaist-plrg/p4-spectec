@@ -386,8 +386,80 @@ let float_exponent_bits : impl =
   Extract.zero at targs;
   ret add (Value.Make.nat (Bigint.of_int (float_of (Extract.one at vs)).exp))
 
+(* dec $int_bit_range(int, nat, nat) : int -- as hook_INT_bitRange: len bits
+   of i from bit off, in two's complement *)
+let int_bit_range : impl =
+ fun add at targs vs ->
+  Extract.zero at targs;
+  let i, off, len = Extract.three at vs in
+  let len = Z.to_int (z len) in
+  zint add (if len = 0 then Z.zero else Z.extract (z i) (Z.to_int (z off)) len)
+
+(* dec $int_powmod(int, int, int) : int? -- as hook_INT_powmod (mpz_powm): a
+   negative exponent needs the inverse of the base; none for modulus 0, where
+   GMP fails *)
+let int_powmod : impl =
+ fun add at targs vs ->
+  Extract.zero at targs;
+  let a, b, m = Extract.three at vs in
+  let a = z a and b = z b and m = z m in
+  opt_int add
+    (if Z.sign m = 0 || (Z.sign b < 0 && not (Z.equal (Z.gcd a m) Z.one)) then
+       None
+     else Some (Bigint.of_zarith_bigint (Z.powm a b m)))
+
+(* dec $string_compare(text, text) : int -- byte by byte, then by length, as
+   hook_STRING_lt (memcmp) *)
+let string_compare : impl =
+ fun add at targs vs ->
+  Extract.zero at targs;
+  let a, b = Extract.two at vs in
+  zint add (Z.of_int (compare (String.compare (Value.Get.text a) (Value.Get.text b)) 0))
+
+(* KRYPTO digests, as plugin-c/crypto.cpp (Crypto++) of the blockchain plugin:
+   dec $keccak256(nat* ) : nat*, $sha256, $ripemd160 *)
+let digest (f : string -> string) : impl =
+ fun add at targs vs ->
+  Extract.zero at targs;
+  value_of_bytes add (f (bytes_of_value (Extract.one at vs)))
+
+let keccak256 = digest (fun s -> Digestif.KECCAK_256.(to_raw_string (digest_string s)))
+let sha256 = digest (fun s -> Digestif.SHA256.(to_raw_string (digest_string s)))
+let ripemd160 = digest (fun s -> Digestif.RMD160.(to_raw_string (digest_string s)))
+
+external ecdsa_recover_c : string -> int -> string -> string -> string
+  = "kore_ecdsa_recover"
+
+(* dec $ecdsa_recover(nat*, int, nat*, nat* ) : nat* -- as hook_KRYPTO_ecdsaRecover:
+   the public key of the signature (v, r, s) of a 32-byte hash, or no bytes *)
+let ecdsa_recover : impl =
+ fun add at targs vs ->
+  Extract.zero at targs;
+  match vs with
+  | [ hash; v; r; s ] ->
+      let hash = bytes_of_value hash
+      and r = bytes_of_value r
+      and s = bytes_of_value s
+      and v = z v in
+      value_of_bytes add
+        (if
+           String.length hash <> 32 || String.length r <> 32
+           || String.length s <> 32
+           || Z.lt v (Z.of_int 27)
+           || Z.gt v (Z.of_int 28)
+         then ""
+         else ecdsa_recover_c hash (Z.to_int v - 27) r s)
+  | _ -> Builtin.Error.error at "ecdsa_recover: expected four arguments"
+
 let entries : (string * impl) list =
   [
+    ("int_bit_range", int_bit_range);
+    ("int_powmod", int_powmod);
+    ("string_compare", string_compare);
+    ("keccak256", keccak256);
+    ("sha256", sha256);
+    ("ripemd160", ripemd160);
+    ("ecdsa_recover", ecdsa_recover);
     ("string_length", string_length);
     ("string_substr", string_substr);
     ("string_find", string_find);
