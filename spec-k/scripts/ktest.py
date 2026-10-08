@@ -115,13 +115,30 @@ def kwasm_programs(src, work):
     return out
 
 
+def kevm_programs(src, work, t):
+    """The initial terms of the KEVM tests in t["gst"] (GeneralStateTests,
+    leaving out the directories in t["gst_exclude"]), as kevm-pyk run makes
+    them (kevm_inputs.py, in the Python environment of kevm-pyk)."""
+    out = os.path.join(work, "kevm", "programs")
+    files = sorted(f for f in glob.glob(os.path.join(src, t["gst"], "**", "*.json"), recursive=True)
+                   if not any("/%s/" % d in f for d in t.get("gst_exclude", [])))
+    p = subprocess.run(["uv", "run", "--directory", os.path.join(src, "kevm-pyk"), "python",
+                        os.path.join(ROOT, "spec-k/scripts/kevm_inputs.py"), out, t["mode"], t["schedule"]] + files,
+                       capture_output=True, text=True)
+    if p.returncode != 0:
+        sys.exit("kevm_inputs.py failed: " + p.stderr[-2000:])
+    return out
+
+
 def run_suite(suite, args):
     t = dict(SUITES[suite])
-    src = os.path.abspath({"kwasm": args.kwasm_src, "k": args.k_src, "spec": ROOT}[t["src"]])
+    src = os.path.abspath({"kwasm": args.kwasm_src, "kevm": args.kevm_src, "k": args.k_src, "spec": ROOT}[t["src"]])
     t["src_dir"] = src
     t["definition"] = os.path.join(src, t["dir"], t["def"])
     if suite == "kwasm":
         t["programs"] = [kwasm_programs(src, os.path.abspath(args.work))]
+    elif suite == "kevm":
+        t["programs"] = [kevm_programs(src, os.path.abspath(args.work), t)]
     else:
         t["programs"] = [os.path.join(src, t["dir"], d) for d in t.get("tests", ["tests"])]
     if "inputs" in t:
@@ -239,6 +256,9 @@ def main():
     ap.add_argument("--kwasm-src", default=os.environ.get("KWASM_SRC", os.path.join(ROOT, "../wasm-semantics")),
                     help="checkout of runtimeverification/wasm-semantics 212271b with its submodules "
                          "(env KWASM_SRC, default ../wasm-semantics)")
+    ap.add_argument("--kevm-src", default=os.environ.get("KEVM_SRC", os.path.join(ROOT, "../evm-semantics")),
+                    help="checkout of runtimeverification/evm-semantics 866e563 with the blockchain plugin built "
+                         "(env KEVM_SRC, default ../evm-semantics)")
     ap.add_argument("--llvm-src", default=os.environ.get("LLVM_SRC", os.path.join(ROOT, "../llvm-backend")),
                     help="checkout of runtimeverification/llvm-backend f02284f (env LLVM_SRC, default ../llvm-backend)")
     ap.add_argument("--work", default=os.path.join(ROOT, "spec-k/_k-test"),

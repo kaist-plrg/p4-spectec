@@ -18,6 +18,8 @@
 #   depth        stop krun and the spec after this many steps
 #   kompiled_as  use the kompiled definition of that suite
 #   timeout      seconds for each run of the spec (default 3600)
+#   kore_input   the programs are initial terms in KORE (kevm: made from
+#                the GeneralStateTests in gst, with mode and schedule)
 #
 # In the tutorial languages, the programs that the tutorial Makefiles run with
 # --search are checked step by step, and those they skip are left out. The
@@ -173,6 +175,27 @@ exclude = [
   "conformance-call.wast",
 ]
 timeout = 7200
+
+# KEVM: the VMTests of ethereum-tests, as kevm-pyk run makes their initial
+# terms (VMTESTS mode, default schedule), with the blockchain plugin built in
+# the plugin directory (make); vmPerformance is left out for its length
+[suite.kevm]
+src = "kevm"
+dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
+def = "driver.md"
+ext = "kore"
+kore_input = true
+gst = "tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests"
+gst_exclude = ["vmPerformance"]
+mode = "VMTESTS"
+schedule = "DEFAULT"
+kompile = [
+  "--main-module", "ETHEREUM-SIMULATION", "--syntax-module", "ETHEREUM-SIMULATION",
+  "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics", "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin",
+  "--md-selector", "k & ! symbolic", "--hook-namespaces", "JSON KRYPTO", "--emit-json", "-O3",
+  "--type-inference-mode", "simplesub", "-ccopt", "-std=c++20", "-ccopt", "-lssl", "-ccopt", "-lcrypto",
+  "-ccopt", "-lsecp256k1", "-ccopt", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
+]
 
 # IMP stopped after 20 steps
 [suite.depth]
