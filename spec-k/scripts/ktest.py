@@ -19,6 +19,7 @@ import glob
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -31,6 +32,7 @@ with open(os.path.join(os.path.dirname(__file__), "suites.toml"), "rb") as f:
     CONFIG = tomllib.load(f)
 SUITES = CONFIG["suite"]
 REGRESSION = CONFIG["regression"]
+LLVM = CONFIG["llvm"]
 
 
 def run_difftest(name, t, args, jobs=None):
@@ -43,8 +45,10 @@ def run_difftest(name, t, args, jobs=None):
     # kompile again when the definition changed since
     if not os.path.exists(stamp) or os.path.getmtime(t["definition"]) > os.path.getmtime(stamp):
         print("kompiling %s" % name, flush=True)
-        p = subprocess.run(["kompile", "--backend", "llvm", t["definition"], "--output-definition", kompiled]
-                           + t.get("kompile", []), capture_output=True, text=True)
+        p = (llvm_kompile(t["definition"], kompiled) if t.get("kore") else
+             subprocess.run(["kompile", "--backend", "llvm", t["definition"], "--output-definition", kompiled]
+                            + [a.replace("{src}", t["src_dir"]) for a in t.get("kompile", [])],
+                            capture_output=True, text=True))
         if p.returncode != 0:
             print(p.stdout + p.stderr)
             return False, "kompile failed"
@@ -58,6 +62,7 @@ def run_difftest(name, t, args, jobs=None):
            "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs), "--ext", t["ext"]] + programs
     cmd += ["--krun-arg=" + a for a in t.get("krun", [])]
     cmd += ["--depth=%d" % t["depth"]] if "depth" in t else []
+    cmd += ["--kore-input"] if t.get("kore") or t.get("kore_input") else []
     cmd += ["--krun-cache", os.path.join(work, "krun-cache")]
     cmd += ["--input-dir", t["inputs"]] if "inputs" in t else []
     cmd += sum((["--exclude", e] for e in t.get("exclude", [])), [])
@@ -73,6 +78,22 @@ def run_difftest(name, t, args, jobs=None):
             out.write(p.stdout)
     lines = p.stdout.strip().splitlines()
     return p.returncode == 0, lines[-1] if lines else "no output"
+
+
+def llvm_kompile(definition, kompiled):
+    """A kompiled directory for a definition already in KORE: the definition,
+    and its interpreter built by the LLVM backend, as kompile does
+    (llvm-kompile-matching for the decision trees)."""
+    dt = os.path.join(kompiled, "dt")
+    os.makedirs(dt, exist_ok=True)
+    shutil.copyfile(definition, os.path.join(kompiled, "definition.kore"))
+    for cmd in (["llvm-kompile-matching", "definition.kore", "qbaL", "dt", "0"],
+                ["llvm-kompile", "definition.kore", "dt", "main", "-o", "interpreter"]):
+        p = subprocess.run(cmd, cwd=kompiled, capture_output=True, text=True)
+        if p.returncode != 0:
+            return p
+    open(os.path.join(kompiled, "timestamp"), "w").close()
+    return p
 
 
 def kwasm_programs(src, work):
@@ -97,6 +118,7 @@ def kwasm_programs(src, work):
 def run_suite(suite, args):
     t = dict(SUITES[suite])
     src = os.path.abspath({"kwasm": args.kwasm_src, "k": args.k_src, "spec": ROOT}[t["src"]])
+    t["src_dir"] = src
     t["definition"] = os.path.join(src, t["dir"], t["def"])
     if suite == "kwasm":
         t["programs"] = [kwasm_programs(src, os.path.abspath(args.work))]
@@ -142,37 +164,67 @@ def regression_tests(src):
         definition = os.path.join(root, d, v["DEF"] + ".k")
         if not os.path.exists(definition):
             definition = os.path.join(root, d, v["DEF"] + ".md")
-        krun, flags = [], shlex.split(v.get("KRUN_FLAGS", ""))
+        # difftest.py sets the output; a search is checked step by step, and
+        # --depth limits both krun and the spec
+        krun, search, depth, flags = [], False, None, shlex.split(v.get("KRUN_FLAGS", ""))
         while flags:
             f = flags.pop(0)
-            if f in ("-o", "--output"):  # difftest.py sets the output format
+            if f in ("-o", "--output", "--pattern", "--bound"):
                 flags.pop(0)
-            elif f != "--profile":
+            elif f in ("--search", "--search-final", "--search-all"):
+                search = True
+            elif f == "--depth":
+                depth = int(flags.pop(0))
+            elif f not in ("--profile", "--no-pattern"):
                 krun.append(f)
+        # cells with a stream attribute buffer IO in the configuration (decisions D10 in k-in-p4)
+        if 'stream="' in open(definition).read():
+            krun += ["--io", "off"]
         tests[d] = dict(definition=definition, programs=[testdir], ext=v["EXT"],
                         krun=["--no-exc-wrap"] + REGRESSION["krun"].get(d, krun),
                         kompile=shlex.split(v.get("KOMPILE_FLAGS", "")) + ["--no-exc-wrap", "--type-inference-mode",
                                                                            "checked"],
                         exclude=REGRESSION["exclude"].get(d, []))
+        if search:
+            tests[d]["check_steps"] = [os.path.basename(f) + ("" if depth is None else ":%d" % depth)
+                                       for f in glob.glob(os.path.join(testdir, "*." + v["EXT"]))]
+        elif depth is not None:
+            tests[d]["depth"] = depth
     return tests
 
 
-def run_regression(names, args):
-    """The regression tests of K (all, or those named), with a summary in <work>/regression.md."""
-    tests = regression_tests(os.path.abspath(args.k_src))
+def llvm_tests(src):
+    """The tests of the LLVM backend (test/defn/<name>.kore) that run its
+    interpreter on initial terms (test/input/<name>.in or test/input/<name>/*.in)."""
+    tests = {}
+    for definition in sorted(glob.glob(os.path.join(src, "test/defn/*.kore"))):
+        name = os.path.basename(definition)[:-len(".kore")]
+        runs = [l for l in open(definition) if l.startswith("// RUN:")]
+        if name in LLVM["skip"] or not any("%interpreter" in l or "%gcs-interpreter" in l for l in runs):
+            continue
+        inputs = [p for p in [os.path.join(src, "test/input", name + ".in"), os.path.join(src, "test/input", name)]
+                  if os.path.exists(p)]
+        if inputs:
+            tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True)
+    return tests
+
+
+def run_group(group, tests, names, args):
+    """The tests of a group (regression or llvm; all, or those named), with a
+    summary in <work>/<group>.md."""
     for n in names:
         if n not in tests:
-            sys.exit("unknown regression test %s" % n)
+            sys.exit("unknown %s test %s" % (group, n))
 
     # the tests are small, so --jobs of them run at a time, each one program at a time
     def one(d):
-        passed, summary = run_difftest("regression/" + d, tests[d], args, jobs=1)
+        passed, summary = run_difftest(group + "/" + d, tests[d], args, jobs=1)
         print("%s: %s" % (d, summary), flush=True)
         return passed, "| %s | %s |" % (d, summary)
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(one, names or list(tests)))
     if not names and not args.only:
-        with open(os.path.join(args.work, "regression.md"), "w") as out:
+        with open(os.path.join(args.work, group + ".md"), "w") as out:
             out.write("| test | result |\n|---|---|\n" + "\n".join(row for _, row in results) + "\n")
     return all(passed for passed, _ in results)
 
@@ -180,12 +232,15 @@ def run_regression(names, args):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("suites", nargs="*",
-                    help="%s, regression, or regression/<test> (default: all)" % ", ".join(SUITES))
+                    help="%s, regression, regression/<test>, llvm, or llvm/<test> (default: all)"
+                    % ", ".join(SUITES))
     ap.add_argument("--k-src", default=os.environ.get("K_SRC", os.path.join(ROOT, "../k")),
                     help="checkout of runtimeverification/k v7.1.337 (env K_SRC, default ../k)")
     ap.add_argument("--kwasm-src", default=os.environ.get("KWASM_SRC", os.path.join(ROOT, "../wasm-semantics")),
                     help="checkout of runtimeverification/wasm-semantics 212271b with its submodules "
                          "(env KWASM_SRC, default ../wasm-semantics)")
+    ap.add_argument("--llvm-src", default=os.environ.get("LLVM_SRC", os.path.join(ROOT, "../llvm-backend")),
+                    help="checkout of runtimeverification/llvm-backend f02284f (env LLVM_SRC, default ../llvm-backend)")
     ap.add_argument("--work", default=os.path.join(ROOT, "spec-k/_k-test"),
                     help="directory for kompiled definitions and results (default spec-k/_k-test)")
     ap.add_argument("--only", action="append", default=[],
@@ -194,18 +249,21 @@ def main():
     ap.add_argument("--cover", action="store_true", help="record spec coverage in <work>/coverage/<suite>/")
     ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()
-    suites = args.suites or list(SUITES) + ["regression"]
+    groups = {"regression": lambda: regression_tests(os.path.abspath(args.k_src)),
+              "llvm": lambda: llvm_tests(os.path.abspath(args.llvm_src))}
+    suites = args.suites or list(SUITES) + list(groups)
     for s in suites:
-        if s not in SUITES and s != "regression" and not s.startswith("regression/"):
+        if s not in SUITES and s.split("/", 1)[0] not in groups:
             sys.exit("unknown suite %s" % s)
     os.makedirs(args.work, exist_ok=True)
     ok = True
     for s in suites:
         if s in SUITES:
             ok &= run_suite(s, args)
-    named = [s.split("/", 1)[1] for s in suites if s.startswith("regression/")]
-    if "regression" in suites or named:
-        ok &= run_regression([] if "regression" in suites else named, args)
+    for group, tests in groups.items():
+        named = [s.split("/", 1)[1] for s in suites if s.startswith(group + "/")]
+        if group in suites or named:
+            ok &= run_group(group, tests(), [] if group in suites else named, args)
     sys.exit(0 if ok else 1)
 
 

@@ -94,9 +94,10 @@ kompile = ["--enable-search"]
 tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
 inputs = "tests"
 check_steps = [
-  "dekker.simple", "factorial.simple", "higher-order.simple", "sortings.simple",
-  "exceptions_02.simple", "exceptions_05.simple", "exceptions_09.simple", "exceptions_11.simple",
+  "collatz.simple", "dekker.simple", "higher-order.simple", "matrix.simple", "sortings.simple",
+  "exceptions_02.simple", "exceptions_06.simple", "exceptions_09.simple", "exceptions_11.simple",
   "threads_03.simple", "threads_04.simple", "threads_08.simple", "threads_11.simple",
+  "threads_12.simple",
 ]
 
 [suite.simple-typed-dynamic]
@@ -218,7 +219,9 @@ def = "errors.k"
 ext = "errors"
 
 # The regression tests of K (in dir) that kompile with the LLVM backend and
-# krun their programs through ktest.mak, with the settings of their Makefiles
+# krun their programs through ktest.mak, with the settings of their Makefiles.
+# Those run with --search are checked step by step, with the --depth of the
+# Makefile as the step limit.
 [regression]
 dir = "k-distribution/tests/regression-new"
 
@@ -234,15 +237,14 @@ issue-1169 = "a preprocessed definition"
 imp-outer-json = "a definition in JSON"
 issue-2273 = "kast tests"
 issue-946 = "a custom krun target"
-search-bound = "krun --search --bound"
-no-pattern = "krun --search-final"
-"imp++-llvm" = "krun --search"
-issue-3520-freshConfig = "krun --search --pattern"
 io-llvm = "file IO"
 rand = "random numbers"
 exit-code-no-gen-top = "the exit code"
 trace = "#trace (IO)"
 unparseKORE = "#unparseKORE (reflection)"
+# the initializers take the configuration as an argument (fresh variables in
+# the configuration), but krun's initial term does not pass it
+issue-3520-freshConfig = "an initial term with fewer arguments than the initializer"
 
 # Programs left out
 [regression.exclude]
@@ -253,3 +255,11 @@ withConfig2 = ["1.test"]
 [regression.krun]
 # its own script passes $MODE; print would write to stdout (IO)
 parseNonPgm = ["-cMODE=noprint"]
+
+# The tests of the LLVM backend (llvm-backend f02284f, test/defn/<name>.kore)
+# that run its interpreter on initial terms in KORE (test/input), compared
+# with the interpreter llvm-kompile builds from the same definition
+[llvm.skip]
+io = "file IO (the interpreter writes files in the working directory)"
+test26 = "file IO (the interpreter writes files in the working directory)"
+test28 = "file IO (the interpreter writes files in the working directory)"

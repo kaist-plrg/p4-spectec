@@ -86,15 +86,21 @@ def program_input(program, input_dir):
     return open(inp).read() if os.path.exists(inp) else ""
 
 
-def run_krun(kompiled, program, workdir, krun_args, timeout, input_dir=None, depth=None):
+def run_krun(kompiled, program, workdir, krun_args, timeout, input_dir=None, depth=None, kore_input=False):
     """Run krun; return (steps, interpreter command, result file, seconds, error).
 
     krun --dry-run parses the program and prints the command it would run:
     the LLVM backend's interpreter, with the initial term after parsing and
     macro expansion as its first argument (krun keeps several tmp.in.* files,
     some of them before macro expansion). That command is then run directly,
-    which is what krun does, without starting krun again."""
+    which is what krun does, without starting krun again. With kore_input the
+    program is the initial term already, and the interpreter runs it."""
     stdin = program_input(program, input_dir)
+    if kore_input:
+        command = Interpreter([os.path.join(os.path.abspath(kompiled), "interpreter"), os.path.abspath(program),
+                               "-1"], stdin)
+        steps, result, secs, err = command.run(os.path.join(workdir, "result.kore"), depth, timeout)
+        return steps, command, result, secs, err
     dry = os.path.join(workdir, "dry")
     os.makedirs(dry, exist_ok=True)
     rc, out, err, _ = run(["krun", "-d", os.path.abspath(kompiled), os.path.abspath(program)] + krun_args
@@ -215,7 +221,7 @@ def krun_outcome(prog, work, args, depth):
             return (m["steps"], os.path.join(entry, "init.kore"), result, m["secs"], m["error"],
                     m["fails_at"])
     steps, command, result, secs, err = run_krun(args.kompiled, prog, work, krun_args, args.timeout,
-                                                 args.input_dir, depth)
+                                                 args.input_dir, depth, args.kore_input)
     fails_at = False
     if err and err.startswith("krun failed") and command:
         fails_at, result = failing_step(command, work, args.timeout)
@@ -278,6 +284,9 @@ def main():
     ap.add_argument("--cover-dir", default=None,
                     help="write the spec with the instructions each run executes marked to <dir>/<program>.log "
                          "(spectec-boot krun -cover; merge them with coverage_summary.py)")
+    ap.add_argument("--kore-input", action="store_true",
+                    help="the programs are initial terms in KORE, run by the interpreter of the kompiled "
+                         "definition without krun")
     ap.add_argument("--krun-cache", default=None,
                     help="keep what krun does with each program in this directory, and reuse it")
     ap.add_argument("-j", "--jobs", type=int, default=1, help="programs to test at a time")
@@ -290,7 +299,8 @@ def main():
     for p in args.programs:
         if os.path.isdir(p):
             programs += sorted(f for f in glob.glob(os.path.join(p, "*." + args.ext if args.ext else "*"))
-                               if os.path.isfile(f) and not f.endswith((".out", ".in")))
+                               if os.path.isfile(f)
+                               and (args.kore_input or not f.endswith((".out", ".in"))))
         else:
             programs.append(p)
     programs = [p for p in programs if os.path.basename(p) not in args.exclude]
