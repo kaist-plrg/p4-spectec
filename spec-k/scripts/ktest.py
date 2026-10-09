@@ -52,7 +52,7 @@ def run_difftest(name, t, args, jobs=None):
     no_search = not os.path.islink(kompiled) and not os.path.exists(os.path.join(kompiled, "search"))
     if not os.path.exists(stamp) or os.path.getmtime(t["definition"]) > os.path.getmtime(stamp) or no_search:
         print("kompiling %s" % name, flush=True)
-        flags = [a.replace("{src}", t["src_dir"]) for a in t.get("kompile", [])]
+        flags = [a.replace("{src}", t.get("src_dir", "")) for a in t.get("kompile", [])]
         p = (llvm_kompile(t["definition"], kompiled) if t.get("kore") else
              subprocess.run(["kompile", "--backend", "llvm", t["definition"], "--output-definition", kompiled]
                             + flags + ([] if "--enable-search" in flags else ["--enable-search"]),
