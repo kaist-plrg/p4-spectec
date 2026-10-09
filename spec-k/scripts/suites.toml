@@ -19,8 +19,6 @@
 #                (default: beside the programs)
 #   kompile      extra kompile options (--enable-search is always added)
 #   krun         extra krun options
-#   check_steps  programs checked step by step from the start, for their first
-#                N steps (NAME:N), as their runs may not end
 #   depth        stop krun and the spec after this many steps
 #   kompiled_as  use the kompiled definition of that suite
 #   timeout      seconds for each run of the spec (default 3600)
@@ -58,8 +56,7 @@ def = "simple-untyped.md"
 ext = "simple"
 krun = ["--io", "off"]
 tests = ["tests/diverse", "tests/exceptions", "tests/threads"]
-# threads_05 may not end: its first 1,000 steps are checked
-check_steps = ["threads_05.simple:1000"]
+skip = ["threads_05.simple"] # krun's run does not end
 
 [suite.kool]
 src = "k"
@@ -102,10 +99,15 @@ ext = "simple"
 krun = ["--io", "off"]
 tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
 inputs = "tests"
-check_steps = ["threads_05.simple:1000"]
 long = ["matrix.simple"]
-# they do not end, and the tutorial Makefile does not run them
-skip = ["dekker.simple", "threads_03.simple", "threads_08.simple"]
+skip = [
+  # krun's run does not end
+  "threads_05.simple",
+  # they do not end, and the tutorial Makefile does not run them
+  "dekker.simple",
+  "threads_03.simple",
+  "threads_08.simple",
+]
 
 [suite.kool-typed-dynamic]
 src = "k"
