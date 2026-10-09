@@ -92,7 +92,11 @@ def $is_var_occurrence(sort_x, t_x,
 def $is_var_occurrence(sort_x, t_x, term) = false
   -- otherwise
 
-;; Capture-avoiding substitution of V (of sort sort_v) for t_x (of sort sort_x)
+;; Capture-avoiding substitution of V (of sort sort_v) for t_x (of sort sort_x).
+;; It builds symbol applications with $apply, which is in 4-eval.
+
+dec $apply(definition, symid, sort*, term*) : res<term>
+  hint(prose_in "applying" %1 "to" %3)
 
 dec $subst(definition, sort, text, sort, term, term) : res<term>
 dec $subst_list(definition, sort, text, sort, term, term*) : res<term*>
@@ -125,9 +129,12 @@ def $subst(D, sort_x, t_x, sort_v, term_v,
                                 term_v) ++ $vars_list(D, sort_x, false, term*))
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v,
                                 $rename_list(D, sort_x, t_y, t_y', term*))
-;;; other symbol applications
+;;; other symbol applications, built again as evaluation builds them: the
+;;; LLVM backend's substitution evaluates each function and anywhere symbol it
+;;; rebuilds (runtime/meta/substitution.cpp), so a redex the substitution
+;;; makes is reduced at once
 def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* term*)
-  = OK (APP symid sort* term'*)
+  = $apply(D, symid, sort*, term'*)
   -- if ~$is_binder(D, symid)
   -- if ~$is_var_occurrence(sort_x, t_x, APP symid sort* term*)
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
