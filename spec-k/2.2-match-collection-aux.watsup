@@ -1,0 +1,92 @@
+;;
+;; Collection patterns, and helpers for matching them
+;;
+
+;; Collection patterns: flattened into element patterns and at most one other
+;; pattern, usually a variable, for the remaining elements
+
+dec $collection_of_hook(hookid) : text?
+dec $collection_of(definition, pattern) : text?
+  hint(prose_in "the collection that" %1 "is built with")
+def $collection_of(D, APP symid sort* pattern*) = $collection_of_hook(hookid)
+  -- if hookid = $hook_of(D, symid)
+def $collection_of(D, pattern) = eps
+  -- otherwise
+
+def $collection_of_hook("MAP.concat") = "MAP"
+def $collection_of_hook("MAP.element") = "MAP"
+def $collection_of_hook("MAP.unit") = "MAP"
+def $collection_of_hook("SET.concat") = "SET"
+def $collection_of_hook("SET.element") = "SET"
+def $collection_of_hook("SET.unit") = "SET"
+def $collection_of_hook("LIST.concat") = "LIST"
+def $collection_of_hook("LIST.element") = "LIST"
+def $collection_of_hook("LIST.unit") = "LIST"
+def $collection_of_hook(hookid) = eps
+  -- otherwise
+
+dec $parts(definition, text, pattern) : pattern*
+def $parts(D, t_c, APP symid sort* ([pattern_1, pattern_2]))
+  = $parts(D, t_c, pattern_1) ++ $parts(D, t_c, pattern_2)
+  -- if $hook_of(D, symid) = t_c ++ ".concat"
+def $parts(D, t_c, APP symid sort* eps) = eps
+  -- if $hook_of(D, symid) = t_c ++ ".unit"
+def $parts(D, t_c, pattern) = [ pattern ]
+  -- otherwise
+
+dec $is_element(definition, text, pattern) : bool
+def $is_element(D, t_c, APP symid sort* pattern*)
+  = $hook_of(D, symid) = t_c ++ ".element"
+def $is_element(D, t_c, pattern) = false
+  -- otherwise
+
+dec $elements(definition, text, pattern*) : pattern*
+def $elements(D, t_c, eps) = eps
+def $elements(D, t_c, pattern_h :: pattern_t*)
+  = pattern_h :: $elements(D, t_c, pattern_t*)
+  -- if $is_element(D, t_c, pattern_h)
+def $elements(D, t_c, pattern_h :: pattern_t*) = $elements(D, t_c, pattern_t*)
+  -- if ~$is_element(D, t_c, pattern_h)
+
+dec $others(definition, text, pattern*) : pattern*
+def $others(D, t_c, eps) = eps
+def $others(D, t_c, pattern_h :: pattern_t*) = $others(D, t_c, pattern_t*)
+  -- if $is_element(D, t_c, pattern_h)
+def $others(D, t_c, pattern_h :: pattern_t*)
+  = pattern_h :: $others(D, t_c, pattern_t*)
+  -- if ~$is_element(D, t_c, pattern_h)
+
+;; Injecting terms of the first sorts into the second sorts, where they differ
+
+dec $coerce_all(sort*, sort*, term*) : term*
+def $coerce_all(eps, eps, eps) = eps
+def $coerce_all(sort_t :: sort_tt*, sort_p :: sort_pt*, term_h :: term_t*)
+  = term_h :: $coerce_all(sort_tt*, sort_pt*, term_t*)
+  -- if sort_t = sort_p
+def $coerce_all(sort_t :: sort_tt*, sort_p :: sort_pt*, term_h :: term_t*)
+  = $construct("inj", ([sort_t, sort_p]),
+               ([term_h])) :: $coerce_all(sort_tt*, sort_pt*, term_t*)
+  -- if sort_t =/= sort_p
+
+;; An integer as a natural number, when it is not negative (hooks fail on a
+;; negative length, index, or shift amount)
+
+dec $nat_of(int) : nat?
+def $nat_of(i) = n
+  -- if i <: nat
+  -- if n = i
+def $nat_of(i) = eps
+  -- otherwise
+
+;; The element of a list at an index; a negative index counts from the end,
+;; as in hook_LIST_get_null
+
+dec $list_at(term*, int) : term?
+def $list_at(term*, i) = term*[n]
+  -- if n = $nat_of(i)
+  -- if $(n < |term*|)
+def $list_at(term*, i) = term*[n]
+  -- if $(i < 0)
+  -- if n = $nat_of($(|term*| + i))
+def $list_at(term*, i) = eps
+  -- otherwise

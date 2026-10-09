@@ -60,7 +60,7 @@ def main():
     for line in lines:
         m = re.match(r";; (\S+?):(\d+)", line)
         if m:
-            # paths relative to the worktree, e.g. spec-k/2-match.watsup
+            # paths relative to the worktree, e.g. spec-k/2.3-match.watsup
             current = re.sub(r"^.*/(?=spec-k/|spec-meta/)", "", m.group(1))
             header = line.strip()
             continue

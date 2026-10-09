@@ -1,0 +1,118 @@
+;;
+;; Hooks of bytes (BYTES, KRYPTO)
+;;
+
+;;; BYTES
+;;; A list of bytes; conversions are builtins. A hook fails where the LLVM
+;;; backend reports an error.
+
+dec $is_big_endian(term) : bool
+def $is_big_endian(APP "LblbigEndianBytes" eps eps) = true
+def $is_big_endian(term) = false
+  -- otherwise
+
+dec $is_unsigned(term) : bool
+def $is_unsigned(APP "LblunsignedBytes" eps eps) = true
+def $is_unsigned(term) = false
+  -- otherwise
+
+def $hook(D, "BYTES.empty", sort, eps) = OK (BYTES eps)
+def $hook(D, "BYTES.length", sort, ([BYTES n*])) = OK (INT $(|n*|))
+def $hook(D, "BYTES.concat", sort, ([BYTES n_1*, BYTES n_2*]))
+  = OK (BYTES (n_1* ++ n_2*))
+def $hook(D, "BYTES.substr", sort, ([BYTES n*, INT i_s, INT i_e]))
+  = OK (BYTES n*[n_s : n_l])
+  -- if n_s = $nat_of(i_s)
+  -- if n_e = $nat_of(i_e)
+  -- if $(n_s <= n_e) /\ $(n_e <= |n*|)
+  -- if n_l = $nat_of($(n_e - n_s))
+def $hook(D, "BYTES.replaceAt", sort, ([BYTES n_d*, INT i, BYTES n_r*]))
+  = OK (BYTES (n_d*[0 : n_s] ++ n_r* ++ n_d*[n_a : n_l]))
+  -- if n_s = $nat_of(i)
+  -- if n_a = $(n_s + |n_r*|)
+  -- if $(n_a <= |n_d*|)
+  -- if n_l = $nat_of($(|n_d*| - n_a))
+def $hook(D, "BYTES.padRight", sort, ([BYTES n*, INT i_l, INT i_v]))
+  = OK (BYTES n*)
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l <= |n*|)
+def $hook(D, "BYTES.padRight", sort, ([BYTES n*, INT i_l, INT i_v]))
+  = OK (BYTES (n* ++ $bytes_fill(n_v, n_p)))
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l > |n*|)
+  -- if n_v = $nat_of(i_v)
+  -- if $(n_v <= 255)
+  -- if n_p = $nat_of($(n_l - |n*|))
+def $hook(D, "BYTES.padLeft", sort, ([BYTES n*, INT i_l, INT i_v]))
+  = OK (BYTES n*)
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l <= |n*|)
+def $hook(D, "BYTES.padLeft", sort, ([BYTES n*, INT i_l, INT i_v]))
+  = OK (BYTES ($bytes_fill(n_v, n_p) ++ n*))
+  -- if n_l = $nat_of(i_l)
+  -- if $(n_l > |n*|)
+  -- if n_v = $nat_of(i_v)
+  -- if $(n_v <= 255)
+  -- if n_p = $nat_of($(n_l - |n*|))
+def $hook(D, "BYTES.get", sort, ([BYTES n*, INT i])) = OK (INT n*[n_i])
+  -- if n_i = $nat_of(i)
+  -- if $(n_i < |n*|)
+def $hook(D, "BYTES.update", sort, ([BYTES n*, INT i, INT i_v]))
+  = OK (BYTES (n*[0 : n_i] ++ [ n_v ] ++ n*[n_a : n_l]))
+  -- if n_i = $nat_of(i)
+  -- if $(n_i < |n*|)
+  -- if n_v = $nat_of(i_v)
+  -- if $(n_v < 256)
+  -- if n_a = $(n_i + 1)
+  -- if n_l = $nat_of($(|n*| - n_a))
+def $hook(D, "BYTES.memset", sort, ([BYTES n*, INT i_s, INT i_c, INT i_v]))
+  = OK (BYTES (n*[0 : n_s] ++ $bytes_fill(n_v, n_c) ++ n*[n_a : n_l]))
+  -- if n_s = $nat_of(i_s)
+  -- if n_c = $nat_of(i_c)
+  -- if n_a = $(n_s + n_c)
+  -- if $(n_a <= |n*|)
+  -- if $(-128 <= i_v) /\ $(i_v <= 127)
+  -- if n_v = $nat_of($((i_v + 256) \ 256))
+  -- if n_l = $nat_of($(|n*| - n_a))
+def $hook(D, "BYTES.int2bytes", sort, ([INT i_l, INT i, term_e]))
+  = OK (BYTES $int_to_bytes(n_l, i, $is_big_endian(term_e)))
+  -- if n_l = $nat_of(i_l)
+;;; a negative length counts by its absolute value, as hook_BYTES_int2bytes
+;;; reads it with mpz_get_ui
+def $hook(D, "BYTES.int2bytes", sort, ([INT i_l, INT i, term_e]))
+  = OK (BYTES $int_to_bytes(n_l, i, $is_big_endian(term_e)))
+  -- if $(i_l < 0)
+  -- if n_l = $nat_of($(- i_l))
+def $hook(D, "BYTES.bytes2int", sort, ([BYTES n*, term_e, term_s]))
+  = OK (INT $bytes_to_int(n*, $is_big_endian(term_e), ~$is_unsigned(term_s)))
+def $hook(D, "BYTES.string2bytes", sort, ([STRING t]))
+  = OK (BYTES $string_to_bytes(t))
+def $hook(D, "BYTES.bytes2string", sort, ([BYTES n*]))
+  = OK (STRING $bytes_to_string(n*))
+
+;;; KRYPTO
+;;; The hooks of the blockchain plugin (plugin-c/crypto.cpp of
+;;; blockchain-k-plugin, used by KEVM): digests are builtins, given as bytes or
+;;; as lower-case hexadecimal text; a signature recovers its public key, or no
+;;; bytes
+
+;; Lower-case hexadecimal digits of bytes, as hexEncode of the plugin
+
+dec $hex_digit(nat) : text
+def $hex_digit(n) = $string_substr("0123456789abcdef", n, $(n + 1))
+
+dec $hex(nat*) : text
+def $hex(eps) = ""
+def $hex(n :: n_t*) = $hex_digit($(n / 16)) ++ $hex_digit($(n \ 16)) ++ $hex(n_t*)
+
+def $hook(D, "KRYPTO.keccak256", sort, ([BYTES n*]))
+  = OK (STRING $hex($keccak256(n*)))
+def $hook(D, "KRYPTO.keccak256raw", sort, ([BYTES n*]))
+  = OK (BYTES $keccak256(n*))
+def $hook(D, "KRYPTO.sha256", sort, ([BYTES n*])) = OK (STRING $hex($sha256(n*)))
+def $hook(D, "KRYPTO.sha256raw", sort, ([BYTES n*])) = OK (BYTES $sha256(n*))
+def $hook(D, "KRYPTO.ripemd160", sort, ([BYTES n*]))
+  = OK (STRING $hex($ripemd160(n*)))
+def $hook(D, "KRYPTO.ecdsaRecover", sort,
+          ([BYTES n_h*, INT i_v, BYTES n_r*, BYTES n_s*]))
+  = OK (BYTES $ecdsa_recover(n_h*, i_v, n_r*, n_s*))

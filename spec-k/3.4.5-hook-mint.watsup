@@ -1,0 +1,212 @@
+;;
+;; Hooks of machine integers (MINT), and the hooks not supported
+;;
+
+;;; MINT
+;;; Machine integers wrap around, as the LLVM instructions of
+;;; create_hardcoded_hook; a hook fails where an instruction is undefined
+
+dec $width(definition, sort) : nat?
+  hint(prose_in "the width of" %1)
+def $width(D, SORT sortid ([SORT sortid_w eps])) = n
+  -- if n = $find_map<sortid, nat>(D.NATSORTS, sortid_w)
+def $width(D, sort) = eps
+  -- otherwise
+
+;; i modulo 2^n_w, and an unsigned value read in two's complement
+
+dec $wrap(nat, int) : nat
+  hint(prose_in %1 "modulo 2 to the" %0)
+def $wrap(n_w, i) = n
+  -- if i_m = $int_pow(2, n_w)
+  -- if n = $nat_of($(((i \ i_m) + i_m) \ i_m))
+
+dec $signed(nat, nat) : int
+  hint(prose_in "the" %0 "-bit value" %1 "in two's complement")
+def $signed(n_w, n_v) = n_v
+  -- if n_p = $nat_of($(n_w - 1))
+  -- if $(n_v < $int_pow(2, n_p))
+def $signed(n_w, n_v) = $(n_v - $int_pow(2, n_w))
+  -- if n_p = $nat_of($(n_w - 1))
+  -- if $(n_v >= $int_pow(2, n_p))
+
+;; Powers modulo i_m, as hook_MINT_pow64 multiplies with wraparound
+
+dec $pow_mod(int, nat, int) : int
+def $pow_mod(i, n, i_m) = $(1 \ i_m)
+  -- if n = 0
+def $pow_mod(i, n, i_m) = $pow_mod($((i * i) \ i_m), n_h, i_m)
+  -- if $(n > 0) /\ $(n \ 2 = 0)
+  -- if n_h = $(n / 2)
+def $pow_mod(i, n, i_m) = $((i * $pow_mod($((i * i) \ i_m), n_h, i_m)) \ i_m)
+  -- if $(n \ 2 = 1)
+  -- if n_h = $(n / 2)
+
+;;; Conversions
+
+def $hook(D, "MINT.integer", sort, ([INT i])) = OK (MINT n_w $wrap(n_w, i))
+  -- if n_w = $width(D, sort)
+def $hook(D, "MINT.uvalue", sort, ([MINT n_w n_v])) = OK (INT n_v)
+def $hook(D, "MINT.svalue", sort, ([MINT n_w n_v])) = OK (INT $signed(n_w, n_v))
+def $hook(D, "MINT.round", sort, ([MINT n_w n_v]))
+  = OK (MINT n_o $wrap(n_o, n_v))
+  -- if n_o = $width(D, sort)
+def $hook(D, "MINT.sext", sort, ([MINT n_w n_v]))
+  = OK (MINT n_o $wrap(n_o, $signed(n_w, n_v)))
+  -- if n_o = $width(D, sort)
+
+;;; Bytes, big-endian and unsigned (only MInt{256} is supported by the LLVM
+;;; backend; only byte strings as long as the width were compared with it)
+
+def $hook(D, "MINT.MInt2bytes", sort, ([MINT n_w n_v]))
+  = OK (BYTES $int_to_bytes(n_b, n_v, true))
+  -- if $(n_w \ 8 = 0)
+  -- if n_b = $(n_w / 8)
+def $hook(D, "MINT.bytes2MInt", sort, ([BYTES n*]))
+  = OK (MINT n_w $wrap(n_w, $bytes_to_int(n*, true, false)))
+  -- if n_w = $width(D, sort)
+
+;;; Arithmetic and bitwise operations wrap around
+
+def $hook(D, "MINT.add", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $(n_1 + n_2)))
+def $hook(D, "MINT.sub", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $(n_1 - n_2)))
+def $hook(D, "MINT.mul", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $(n_1 * n_2)))
+def $hook(D, "MINT.neg", sort, ([MINT n_w n_v]))
+  = OK (MINT n_w $wrap(n_w, $(- n_v)))
+def $hook(D, "MINT.pow", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $pow_mod(n_1, n_2, $int_pow(2, n_w))))
+def $hook(D, "MINT.and", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $int_and(n_1, n_2)))
+def $hook(D, "MINT.or", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $int_or(n_1, n_2)))
+def $hook(D, "MINT.xor", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $int_xor(n_1, n_2)))
+def $hook(D, "MINT.not", sort, ([MINT n_w n_v]))
+  = OK (MINT n_w $wrap(n_w, $int_not(n_v)))
+
+def $hook(D, "MINT.udiv", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $(n_1 / n_2)))
+  -- if n_2 =/= 0
+def $hook(D, "MINT.urem", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $(n_1 \ n_2)))
+  -- if n_2 =/= 0
+
+;;; Signed division truncates towards zero, and its remainder takes the sign
+;;; of the dividend, as P4-SpecTec's / and \ do; the quotient must fit
+
+def $hook(D, "MINT.sdiv", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, i_q))
+  -- if i_1 = $signed(n_w, n_1)
+  -- if i_2 = $signed(n_w, n_2)
+  -- if i_2 =/= 0
+  -- if i_q = $(i_1 / i_2)
+  -- if $signed(n_w, $wrap(n_w, i_q)) = i_q
+def $hook(D, "MINT.srem", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $(i_1 \ i_2)))
+  -- if i_1 = $signed(n_w, n_1)
+  -- if i_2 = $signed(n_w, n_2)
+  -- if i_2 =/= 0
+  -- if i_q = $(i_1 / i_2)
+  -- if $signed(n_w, $wrap(n_w, i_q)) = i_q
+
+;;; Shifts by less than the width
+
+def $hook(D, "MINT.shl", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $int_shl(n_1, n_2)))
+  -- if $(n_2 < n_w)
+def $hook(D, "MINT.lshr", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $int_shr(n_1, n_2)))
+  -- if $(n_2 < n_w)
+def $hook(D, "MINT.ashr", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w $wrap(n_w, $int_shr($signed(n_w, n_1), n_2)))
+  -- if $(n_2 < n_w)
+
+;;; Comparisons, unsigned and signed
+
+def $hook(D, "MINT.eq", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $(n_1 = n_2))
+def $hook(D, "MINT.ne", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $(n_1 =/= n_2))
+def $hook(D, "MINT.ult", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $(n_1 < n_2))
+def $hook(D, "MINT.ule", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $(n_1 <= n_2))
+def $hook(D, "MINT.ugt", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $(n_1 > n_2))
+def $hook(D, "MINT.uge", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $(n_1 >= n_2))
+def $hook(D, "MINT.slt", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $($signed(n_w, n_1) < $signed(n_w, n_2)))
+def $hook(D, "MINT.sle", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $($signed(n_w, n_1) <= $signed(n_w, n_2)))
+def $hook(D, "MINT.sgt", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $($signed(n_w, n_1) > $signed(n_w, n_2)))
+def $hook(D, "MINT.sge", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (BOOL $($signed(n_w, n_1) >= $signed(n_w, n_2)))
+
+def $hook(D, "MINT.umin", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_1)
+  -- if $(n_1 <= n_2)
+def $hook(D, "MINT.umin", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_2)
+  -- if $(n_1 > n_2)
+def $hook(D, "MINT.umax", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_1)
+  -- if $(n_1 >= n_2)
+def $hook(D, "MINT.umax", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_2)
+  -- if $(n_1 < n_2)
+def $hook(D, "MINT.smin", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_1)
+  -- if $($signed(n_w, n_1) <= $signed(n_w, n_2))
+def $hook(D, "MINT.smin", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_2)
+  -- if $($signed(n_w, n_1) > $signed(n_w, n_2))
+def $hook(D, "MINT.smax", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_1)
+  -- if $($signed(n_w, n_1) >= $signed(n_w, n_2))
+def $hook(D, "MINT.smax", sort, ([MINT n_w n_1, MINT n_w' n_2]))
+  = OK (MINT n_w n_2)
+  -- if $($signed(n_w, n_1) < $signed(n_w, n_2))
+
+;;; Bytes and lists with machine-integer indices and sizes: the same as with
+;;; integers, on the unsigned values
+
+def $hook(D, "BYTES.lengthMInt", sort, ([BYTES n*]))
+  = OK (MINT n_w $wrap(n_w, $(|n*|)))
+  -- if n_w = $width(D, sort)
+def $hook(D, "BYTES.getMInt", sort, ([BYTES n*, MINT n_w n_i]))
+  = OK (MINT n_o $wrap(n_o, i_b))
+  -- if OK (INT i_b) = $hook(D, "BYTES.get", sort, ([BYTES n*, INT n_i]))
+  -- if n_o = $width(D, sort)
+def $hook(D, "BYTES.updateMInt", sort,
+          ([BYTES n*, MINT n_w n_i, MINT n_w' n_v]))
+  = $hook(D, "BYTES.update", sort, ([BYTES n*, INT n_i, INT n_v]))
+def $hook(D, "BYTES.substrMInt", sort,
+          ([BYTES n*, MINT n_w n_s, MINT n_w' n_e]))
+  = $hook(D, "BYTES.substr", sort, ([BYTES n*, INT n_s, INT n_e]))
+def $hook(D, "BYTES.replaceAtMInt", sort,
+          ([BYTES n*, MINT n_w n_i, BYTES n_r*]))
+  = $hook(D, "BYTES.replaceAt", sort, ([BYTES n*, INT n_i, BYTES n_r*]))
+def $hook(D, "BYTES.padRightMInt", sort,
+          ([BYTES n*, MINT n_w n_l, MINT n_w' n_v]))
+  = $hook(D, "BYTES.padRight", sort, ([BYTES n*, INT n_l, INT n_v]))
+def $hook(D, "BYTES.padLeftMInt", sort,
+          ([BYTES n*, MINT n_w n_l, MINT n_w' n_v]))
+  = $hook(D, "BYTES.padLeft", sort, ([BYTES n*, INT n_l, INT n_v]))
+def $hook(D, "LIST.sizeMInt", sort, ([LIST sort_l term*]))
+  = OK (MINT n_w $wrap(n_w, $(|term*|)))
+  -- if n_w = $width(D, sort)
+def $hook(D, "LIST.getMInt", sort, ([LIST sort_l term*, MINT n_w n_i]))
+  = $hook(D, "LIST.get", sort, ([LIST sort_l term*, INT n_i]))
+def $hook(D, "LIST.updateMInt", sort,
+          ([LIST sort_l term*, MINT n_w n_i, term_v]))
+  = $hook(D, "LIST.update", sort, ([LIST sort_l term*, INT n_i, term_v]))
+
+;;; Anything else is not supported (yet)
+
+def $hook(D, hookid, sort, term*) = FAIL
+  -- otherwise

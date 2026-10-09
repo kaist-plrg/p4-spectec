@@ -1,0 +1,205 @@
+;;
+;; Matching a pattern against a term
+;;
+;;
+
+;;; As the LLVM backend's decision trees. A pattern that picks an element out
+;;; of a collection may match in several ways; Match gives them all, in order.
+
+;; Keys of map patterns and elements of set patterns are evaluated when their
+;; variables are bound (e.g. #ContextLookup(IDS, I) |-> ADDR in KWasm);
+;; otherwise the entries are tried in turn. The rules of Eval are in 4.2-eval.
+
+relation Eval:
+  definition subst |- pattern : res<term>
+  hint(input %0 %1 %2)
+  hint(prose_in "evaluating" %2 "under" %1)
+  hint(prose_out %3)
+
+var result : res<term>
+
+;; Matching: the ways a pattern matches a term, extending a substitution, in
+;; the order the LLVM backend tries them
+
+relation Match:
+  definition subst |- pattern ~~ term : subst*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the ways" %2 "matches" %3 "extending" %1)
+  hint(prose_out %4)
+
+relation Match_list:
+  definition subst |- pattern* ~~ term* : subst*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the ways" %2 "match" %3 "extending" %1)
+  hint(prose_out %4)
+
+relation Match_rest:
+  definition subst |- pattern* ~~ term : subst*
+  hint(input %0 %1 %2 %3)
+  hint(prose_in "the ways the other parts" %2 "match what is left," %3)
+  hint(prose_out %4)
+
+relation Match_map:
+  definition subst |- pattern* pattern* ~~ sort map<term, term> : subst*
+  hint(input %0 %1 %2 %3 %4 %5)
+  hint(prose_in "the ways the entries" %2 "and the other parts" %3 "match the map" %5)
+  hint(prose_out %6)
+
+relation Choose_map:
+  definition subst |- pattern pattern pattern* pattern* ~~ sort map<term, term> (term, term)* : subst*
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7 %8)
+  hint(prose_in "the ways the entry" %2 "|->" %3 "matches one of" %8)
+  hint(prose_out %9)
+
+relation Match_set:
+  definition subst |- pattern* pattern* ~~ sort set<term> : subst*
+  hint(input %0 %1 %2 %3 %4 %5)
+  hint(prose_in "the ways the elements" %2 "and the other parts" %3 "match the set" %5)
+  hint(prose_out %6)
+
+relation Choose_set:
+  definition subst |- pattern pattern* pattern* ~~ sort set<term> term* : subst*
+  hint(input %0 %1 %2 %3 %4 %5 %6 %7)
+  hint(prose_in "the ways the element" %2 "matches one of" %7)
+  hint(prose_out %8)
+
+relation Match_seq:
+  definition subst |- pattern* ~~ sort term* : subst*
+  hint(input %0 %1 %2 %3 %4)
+  hint(prose_in "the ways" %2 "match the list" %4)
+  hint(prose_out %5)
+
+;;; Variables bind the term, or must agree with an earlier binding
+
+rule Match/bind:
+  D subst |- VAR varid sort ~~ term : [ $add_map<varid, term>(subst, varid, term) ]
+  -- if eps = $find_map<varid, term>(subst, varid)
+
+rule Match/bound:
+  D subst |- VAR varid sort ~~ term : [ subst ]
+  -- if term' = $find_map<varid, term>(subst, varid)
+  -- if $term_eq(term', term)
+
+;;; As-patterns: the term matches both sides
+
+rule Match/and:
+  D subst |- AND sort pattern_1 pattern_2 ~~ term : $concat_<subst>(subst_2**)
+  -- Match: D subst |- pattern_1 ~~ term : subst_1*
+  -- (Match: D subst_1 |- pattern_2 ~~ term : subst_2*)*
+
+;;; Or-patterns: the ways the left side matches, then those of the right side,
+;;; as the LLVM backend expands them into one row each (expandOr in
+;;; matching/pattern/Pattern.scala)
+
+rule Match/or:
+  D subst |- OR sort pattern_1 pattern_2 ~~ term : subst_1* ++ subst_2*
+  -- Match: D subst |- pattern_1 ~~ term : subst_1*
+  -- Match: D subst |- pattern_2 ~~ term : subst_2*
+
+;;; Domain values
+
+rule Match/token:
+  D subst |- DV sort t ~~ DV sort' t' : [ subst ]
+  -- if sort = sort' /\ t = t'
+
+rule Match/integer:
+  D subst |- INT i ~~ INT i' : [ subst ]
+  -- if i = i'
+
+rule Match/boolean:
+  D subst |- BOOL b ~~ BOOL b' : [ subst ]
+  -- if b = b'
+
+rule Match/string:
+  D subst |- STRING t ~~ STRING t' : [ subst ]
+  -- if t = t'
+
+rule Match/float:
+  D subst |- FLOAT t ~~ FLOAT t' : [ subst ]
+  -- if t = t'
+
+rule Match/bytes:
+  D subst |- BYTES n* ~~ BYTES n'* : [ subst ]
+  -- if n* = n'*
+
+rule Match/mint:
+  D subst |- MINT n_w n_v ~~ MINT n_w' n_v' : [ subst ]
+  -- if n_w = n_w' /\ n_v = n_v'
+
+;;; Injections into the same sort from a smaller sort:
+;;; inj{A,C}(p) matches inj{B,C}(t) with B < A by matching p against inj{B,A}(t)
+
+rule Match/injection:
+  D subst |- APP "inj" ([sort_a, sort_c]) ([pattern]) ~~ APP "inj" ([sort_b, sort_c']) ([term]) : subst'*
+  -- if sort_c = sort_c' /\ sort_a =/= sort_b
+  -- if $is_subsort(D, sort_b, sort_a)
+  -- Match: D subst |- pattern ~~ APP "inj" ([sort_b, sort_a]) ([term]) : subst'*
+
+;;; Symbol applications with the same symbol and sort arguments
+
+rule Match/application:
+  D subst |- APP symid sort_p* pattern* ~~ APP symid' sort_t* term* : subst'*
+  -- if symid = symid' /\ sort_p* = sort_t*
+  -- Match_list: D subst |- pattern* ~~ term* : subst'*
+
+;;; Overloads: f(p1, ..., pn) matches inj{B,S}(g(t1, ..., tn)) when g is a
+;;; more specific overload of f, injecting each ti as needed (isValidOverload)
+
+rule Match/overload:
+  D subst |- APP symid_f sort_p* pattern* ~~ APP "inj" ([sort_b, sort_s]) ([APP symid_g sort_t* term*]) : subst'*
+  -- if (symid_f '>' symid_g) <- D.OVERLOADS
+  -- if (sort_f* '->' sort_rf kind_f) = $find_symdecl(D, symid_f)
+  -- if (sort_g* '->' sort_rg kind_g) = $find_symdecl(D, symid_g)
+  -- if sort_rf = sort_s /\ sort_rg = sort_b
+  -- Match_list: D subst |- pattern* ~~ $coerce_all(sort_g*, sort_f*, term*) : subst'*
+
+;;; Collection patterns against collection values
+
+rule Match/map:
+  D subst |- pattern ~~ MAP sort M : subst'*
+  -- if "MAP" = $collection_of(D, pattern)
+  -- if pattern_p* = $parts(D, "MAP", pattern)
+  -- Match_map: D subst |- $elements(D, "MAP", pattern_p*) $others(D, "MAP", pattern_p*) ~~ sort M : subst'*
+
+rule Match/set:
+  D subst |- pattern ~~ SET sort S : subst'*
+  -- if "SET" = $collection_of(D, pattern)
+  -- if pattern_p* = $parts(D, "SET", pattern)
+  -- Match_set: D subst |- $elements(D, "SET", pattern_p*) $others(D, "SET", pattern_p*) ~~ sort S : subst'*
+
+rule Match/list:
+  D subst |- pattern ~~ LIST sort term* : subst'*
+  -- if "LIST" = $collection_of(D, pattern)
+  -- Match_seq: D subst |- $parts(D, "LIST", pattern) ~~ sort term* : subst'*
+
+;;; L[I <- V] on the left is a lookup: the element at index I, which must
+;;; evaluate, matches V, and L matches the whole list (ListGetP in the LLVM
+;;; backend's matching/Generator.scala; hook_LIST_get_null finds the element)
+
+rule Match/list-update:
+  D subst |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : $concat_<subst>(subst_f**)
+  -- if $hook_of(D, symid) = "LIST.update"
+  -- Eval: D subst |- pattern_k : OK (INT i)
+  -- if term_e = $list_at(term*, i)
+  -- Match: D subst |- pattern_v ~~ term_e : subst_v*
+  -- (Match: D subst_v |- pattern_f ~~ LIST sort term* : subst_f*)*
+
+;;; Anything else fails
+
+rule Match/fail:
+  D subst |- pattern ~~ term : eps
+  -- otherwise
+
+;;; Arguments, left to right
+
+rule Match_list/nil:
+  D subst |- eps ~~ eps : [ subst ]
+
+rule Match_list/cons:
+  D subst |- (pattern_h :: pattern_t*) ~~ (term_h :: term_t*) : $concat_<subst>(subst_t**)
+  -- Match: D subst |- pattern_h ~~ term_h : subst_h*
+  -- (Match_list: D subst_h |- pattern_t* ~~ term_t* : subst_t*)*
+
+rule Match_list/fail:
+  D subst |- pattern* ~~ term* : eps
+  -- otherwise

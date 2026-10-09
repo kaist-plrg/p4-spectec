@@ -1,0 +1,190 @@
+;;
+;; Hooks of collections: lists, maps, sets, and range maps
+;;
+
+dec $in_list(term, term*) : bool
+def $in_list(term, term_e*) = term <- term_e*
+
+;; Membership under KEQUAL.eq, as hook_LIST_in compares elements
+
+dec $in_terms(term, term*) : bool
+def $in_terms(term, eps) = false
+def $in_terms(term, term_h :: term_t*)
+  = $term_eq(term, term_h) \/ $in_terms(term, term_t*)
+
+;; Map concatenation fails on a duplicate key, as hook_MAP_concat does
+
+dec $concat_map(map<term, term>, map<term, term>) : res<map<term, term>>
+def $concat_map(M, `{ eps `}) = OK M
+def $concat_map(M, `{ (term_k ':' term_v) :: (term_kt ':' term_vt)* `})
+  = $concat_map(M', `{ (term_kt ':' term_vt)* `})
+  -- if eps = $find_map<term, term>(M, term_k)
+  -- if M' = $add_map<term, term>(M, term_k, term_v)
+def $concat_map(M_1, M_2) = FAIL
+  -- otherwise
+
+;;; LIST
+
+def $hook(D, "LIST.unit", sort, eps) = OK (LIST sort eps)
+def $hook(D, "LIST.element", sort, ([term])) = OK (LIST sort ([ term ]))
+def $hook(D, "LIST.concat", sort, ([LIST sort_1 term_1*, LIST sort_2 term_2*]))
+  = OK (LIST sort (term_1* ++ term_2*))
+def $hook(D, "LIST.make", sort, ([INT i, term]))
+  = OK (LIST sort $repeat_<term>(term, n))
+  -- if n = $nat_of(i)
+def $hook(D, "LIST.size", sort, ([LIST sort_l term*])) = OK (INT $(|term*|))
+def $hook(D, "LIST.get", sort, ([LIST sort_l term*, INT i])) = OK term_e
+  -- if term_e = $list_at(term*, i)
+def $hook(D, "LIST.in", sort, ([term, LIST sort_l term_e*]))
+  = OK (BOOL $in_terms(term, term_e*))
+def $hook(D, "LIST.update", sort, ([LIST sort_l term*, INT i, term_v]))
+  = OK (LIST sort_l (term*[0 : n] ++ [ term_v ] ++ term*[n_a : n_r]))
+  -- if n = $nat_of(i)
+  -- if $(n < |term*|)
+  -- if n_a = $(n + 1)
+  -- if n_r = $nat_of($(|term*| - n_a))
+
+;;; MAP
+;;; The result sort of the hooked symbol decides which map sort is built.
+;;; A map keeps its entries in order, as a set does, so that maps with the same
+;;; entries are the same value, as K compares them; this matters when maps are
+;;; in the elements of a set or the keys of a map (e.g. the type environments
+;;; of the tasks of a type checker).
+
+dec $sorted_map(map<term, term>) : map<term, term>
+def $sorted_map(M) = $union_set<pair<term, term>>(M, `{ eps `})
+
+def $hook(D, "MAP.unit", sort, eps) = OK (MAP sort `{ eps `})
+def $hook(D, "MAP.element", sort, ([term_k, term_v]))
+  = OK (MAP sort `{ term_k ':' term_v `})
+def $hook(D, "MAP.concat", sort, ([MAP sort_1 M_1, MAP sort_2 M_2]))
+  = OK (MAP sort $sorted_map(M))
+  -- if OK M = $concat_map(M_1, M_2)
+def $hook(D, "MAP.lookup", sort, ([MAP sort_m M, term_k])) = OK term_v
+  -- if term_v = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.keys", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
+  = OK (SET sort `{ term_k* `})
+def $hook(D, "MAP.update", sort, ([MAP sort_m M, term_k, term_v]))
+  = OK (MAP sort_m $sorted_map($update_map<term, term>(M, term_k, term_v)))
+def $hook(D, "MAP.in_keys", sort, ([term_k, MAP sort_m M])) = OK (BOOL true)
+  -- if term_v = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.in_keys", sort, ([term_k, MAP sort_m M])) = OK (BOOL false)
+  -- if eps = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.lookupOrDefault", sort, ([MAP sort_m M, term_k, term_d]))
+  = OK term_v
+  -- if term_v = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.lookupOrDefault", sort, ([MAP sort_m M, term_k, term_d]))
+  = OK term_d
+  -- if eps = $find_map<term, term>(M, term_k)
+def $hook(D, "MAP.size", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
+  = OK (INT $(|term_k*|))
+
+;;; choice: the smallest element here, the first in its hash trie in the LLVM
+;;; backend; they agree on a collection of one element
+
+def $hook(D, "MAP.choice", sort, ([MAP sort_m `{ (term_k ':' term_v)* `}]))
+  = OK term
+  -- if `{ term :: term_t* `} = $union_set<term>(`{ term_k* `}, `{ eps `})
+
+;;; SET
+
+def $hook(D, "SET.unit", sort, eps) = OK (SET sort `{ eps `})
+def $hook(D, "SET.element", sort, ([term])) = OK (SET sort `{ term `})
+def $hook(D, "SET.concat", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
+  = OK (SET sort $union_set<term>(S_1, S_2))
+def $hook(D, "SET.difference", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
+  = OK (SET sort_1 $diff_set<term>(S_1, S_2))
+def $hook(D, "SET.intersection", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
+  = OK (SET sort_1 $intersect_set<term>(S_1, S_2))
+def $hook(D, "SET.choice", sort, ([SET sort_s S])) = OK term
+  -- if `{ term :: term_t* `} = $union_set<term>(S, `{ eps `})
+def $hook(D, "SET.in", sort, ([term, SET sort_s `{ term_e* `}]))
+  = OK (BOOL $in_list(term, term_e*))
+def $hook(D, "SET.union", sort, ([SET sort_1 S_1, SET sort_2 S_2]))
+  = OK (SET sort $union_set<term>(S_1, S_2))
+def $hook(D, "SET.size", sort, ([SET sort_s `{ term* `}])) = OK (INT $(|term*|))
+
+;;; Set2List: the elements in the order of the set here, the order of its hash
+;;; trie in the LLVM backend; they agree on a set of one element
+
+def $hook(D, "SET.set2list", sort, ([SET sort_s `{ term* `}]))
+  = OK (LIST sort term*)
+
+;;; RANGEMAP
+
+def $hook(D, "RANGEMAP.unit", sort, eps) = OK (RANGEMAP sort eps)
+def $hook(D, "RANGEMAP.elementRng", sort, ([term_r, term_v]))
+  = OK (RANGEMAP sort rangeitem*)
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if OK rangeitem* = $rm_insert(eps, i_s, i_e, term_v)
+def $hook(D, "RANGEMAP.concat", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (RANGEMAP sort rangeitem*)
+  -- if $disjoint(rangeitem_1*, rangeitem_2*)
+  -- if OK rangeitem* = $rm_insert_all(rangeitem_1*, rangeitem_2*)
+def $hook(D, "RANGEMAP.updateRng", sort,
+          ([RANGEMAP sort_m rangeitem_m*, term_r, term_v]))
+  = OK (RANGEMAP sort_m rangeitem*)
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if OK rangeitem* = $rm_insert(rangeitem_m*, i_s, i_e, term_v)
+def $hook(D, "RANGEMAP.updateAll", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (RANGEMAP sort_1 rangeitem*)
+  -- if OK rangeitem* = $rm_insert_all(rangeitem_1*, rangeitem_2*)
+def $hook(D, "RANGEMAP.removeRng", sort,
+          ([RANGEMAP sort_m rangeitem_m*, term_r]))
+  = OK (RANGEMAP sort_m rangeitem*)
+  -- if (i_s, i_e) = $range_bounds(term_r)
+  -- if OK rangeitem* = $rm_remove_all(rangeitem_m*, [ (i_s, i_e) ])
+def $hook(D, "RANGEMAP.removeAll", sort,
+          ([RANGEMAP sort_m rangeitem_m*, SET sort_s `{ term* `}]))
+  = OK (RANGEMAP sort_m rangeitem*)
+  -- if OK (i_s, i_e)* = $set_ranges(term*)
+  -- if OK rangeitem* = $rm_remove_all(rangeitem_m*, (i_s, i_e)*)
+def $hook(D, "RANGEMAP.difference", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (RANGEMAP sort_1 rangeitem*)
+  -- if OK rangeitem* = $rm_remove_all(rangeitem_1*,
+                                       $agree(rangeitem_1*, rangeitem_2*))
+def $hook(D, "RANGEMAP.inclusion", sort,
+          ([RANGEMAP sort_1 rangeitem_1*, RANGEMAP sort_2 rangeitem_2*]))
+  = OK (BOOL $($range_pairs(rangeitem_1*) = $agree(rangeitem_1*, rangeitem_2*)))
+def $hook(D, "RANGEMAP.lookup", sort, ([RANGEMAP sort_m rangeitem*, term_k]))
+  = OK term_v
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.lookupOrDefault", sort,
+          ([RANGEMAP sort_m rangeitem*, term_k, term_d]))
+  = OK term_v
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.lookupOrDefault", sort,
+          ([RANGEMAP sort_m rangeitem*, term_k, term_d]))
+  = OK term_d
+  -- if i = $key_int(term_k)
+  -- if eps = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.find_range", sort,
+          ([RANGEMAP sort_m rangeitem*, term_k]))
+  = OK $range_term(i_s, i_e)
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.in_keys", sort, ([term_k, RANGEMAP sort_m rangeitem*]))
+  = OK (BOOL true)
+  -- if i = $key_int(term_k)
+  -- if (RANGE i_s i_e term_v) = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.in_keys", sort, ([term_k, RANGEMAP sort_m rangeitem*]))
+  = OK (BOOL false)
+  -- if i = $key_int(term_k)
+  -- if eps = $rm_lookup(rangeitem*, i)
+def $hook(D, "RANGEMAP.keys", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*]))
+  = OK (SET sort `{ $range_key(i_s, i_e)* `})
+def $hook(D, "RANGEMAP.keys_list", sort,
+          ([RANGEMAP sort_m (RANGE i_s i_e term)*]))
+  = OK (LIST sort $range_key(i_s, i_e)*)
+def $hook(D, "RANGEMAP.values", sort, ([RANGEMAP sort_m (RANGE i_s i_e term)*]))
+  = OK (LIST sort term*)
+def $hook(D, "RANGEMAP.size", sort, ([RANGEMAP sort_m rangeitem*]))
+  = OK (INT $(|rangeitem*|))
+def $hook(D, "RANGEMAP.choice", sort,
+          ([RANGEMAP sort_m ((RANGE i_s i_e term) :: rangeitem_t*)]))
+  = OK $int_key(i_s)

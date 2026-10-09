@@ -1,0 +1,118 @@
+;;
+;; Matching collection patterns against maps, sets, and lists
+;;
+
+;;; The parts other than elements match what is left: nothing, or one pattern
+
+rule Match_rest/empty-map:
+  D subst |- eps ~~ MAP sort `{ eps `} : [ subst ]
+
+rule Match_rest/empty-set:
+  D subst |- eps ~~ SET sort `{ eps `} : [ subst ]
+
+rule Match_rest/one:
+  D subst |- ([ pattern ]) ~~ term : subst'*
+  -- Match: D subst |- pattern ~~ term : subst'*
+
+rule Match_rest/fail:
+  D subst |- pattern* ~~ term : eps
+  -- otherwise
+
+;;; Maps: an element whose key evaluates is looked up; otherwise each entry
+;;; is tried in turn
+
+rule Match_map/rest:
+  D subst |- eps pattern_o* ~~ sort M : subst'*
+  -- Match_rest: D subst |- pattern_o* ~~ MAP sort M : subst'*
+
+rule Match_map/lookup:
+  D subst |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort M : $concat_<subst>(subst_r**)
+  -- Eval: D subst |- pattern_k : OK term_k
+  -- if term_v = $find_map<term, term>(M, term_k)
+  -- Match: D subst |- pattern_v ~~ term_v : subst_v*
+  -- (Match_map: D subst_v |- pattern_e* pattern_o* ~~ sort $diff_set<pair<term, term>>(M, `{ term_k ':' term_v `}) : subst_r*)*
+
+rule Match_map/absent:
+  D subst |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort M : eps
+  -- Eval: D subst |- pattern_k : OK term_k
+  -- if eps = $find_map<term, term>(M, term_k)
+
+rule Match_map/choose:
+  D subst |- (APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*) pattern_o* ~~ sort `{ (term_k ':' term_v)* `} : subst'*
+  -- Eval: D subst |- pattern_k : FAIL
+  -- Choose_map: D subst |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort `{ (term_k ':' term_v)* `} (term_k, term_v)* : subst'*
+
+rule Choose_map/none:
+  D subst |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M eps : eps
+
+rule Choose_map/entry:
+  D subst |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M ((term_k, term_v) :: (term_k', term_v')*) : $concat_<subst>(subst_r**) ++ subst_t*
+  -- Match: D subst |- pattern_k ~~ term_k : subst_k*
+  -- (Match: D subst_k |- pattern_v ~~ term_v : subst_v*)*
+  -- if subst_kv* = $concat_<subst>(subst_v**)
+  -- (Match_map: D subst_kv |- pattern_e* pattern_o* ~~ sort $diff_set<pair<term, term>>(M, `{ term_k ':' term_v `}) : subst_r*)*
+  -- Choose_map: D subst |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k', term_v')* : subst_t*
+
+;;; Sets: an element that evaluates is checked for membership; otherwise each
+;;; element is tried in turn
+
+rule Match_set/rest:
+  D subst |- eps pattern_o* ~~ sort S : subst'*
+  -- Match_rest: D subst |- pattern_o* ~~ SET sort S : subst'*
+
+rule Match_set/member:
+  D subst |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort `{ term_s* `} : subst'*
+  -- Eval: D subst |- pattern : OK term
+  -- if term <- term_s*
+  -- Match_set: D subst |- pattern_e* pattern_o* ~~ sort $diff_set<term>(`{ term_s* `}, `{ term `}) : subst'*
+
+rule Match_set/absent:
+  D subst |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort `{ term_s* `} : eps
+  -- Eval: D subst |- pattern : OK term
+  -- if ~(term <- term_s*)
+
+rule Match_set/choose:
+  D subst |- (APP symid sort_e* ([pattern]) :: pattern_e*) pattern_o* ~~ sort `{ term_s* `} : subst'*
+  -- Eval: D subst |- pattern : FAIL
+  -- Choose_set: D subst |- pattern pattern_e* pattern_o* ~~ sort `{ term_s* `} term_s* : subst'*
+
+rule Choose_set/none:
+  D subst |- pattern pattern_e* pattern_o* ~~ sort S eps : eps
+
+rule Choose_set/element:
+  D subst |- pattern pattern_e* pattern_o* ~~ sort S (term_h :: term_t*) : $concat_<subst>(subst_r**) ++ subst_t*
+  -- Match: D subst |- pattern ~~ term_h : subst_h*
+  -- (Match_set: D subst_h |- pattern_e* pattern_o* ~~ sort $diff_set<term>(S, `{ term_h `}) : subst_r*)*
+  -- Choose_set: D subst |- pattern pattern_e* pattern_o* ~~ sort S term_t* : subst_t*
+
+;;; Lists: elements before the other part match the front, elements after it
+;;; match the back, and the other part matches the list in between
+
+rule Match_seq/end:
+  D subst |- eps ~~ sort eps : [ subst ]
+
+rule Match_seq/longer:
+  D subst |- eps ~~ sort (term_h :: term_t*) : eps
+
+rule Match_seq/element:
+  D subst |- (APP symid sort_e* ([pattern]) :: pattern_t*) ~~ sort (term_h :: term_t*) : $concat_<subst>(subst_r**)
+  -- if $hook_of(D, symid) = "LIST.element"
+  -- Match: D subst |- pattern ~~ term_h : subst_h*
+  -- (Match_seq: D subst_h |- pattern_t* ~~ sort term_t* : subst_r*)*
+
+rule Match_seq/shorter:
+  D subst |- (APP symid sort_e* ([pattern]) :: pattern_t*) ~~ sort eps : eps
+  -- if $hook_of(D, symid) = "LIST.element"
+
+rule Match_seq/middle:
+  D subst |- (pattern_o :: pattern_t*) ~~ sort term* : $concat_<subst>(subst_r**)
+  -- if ~$is_element(D, "LIST", pattern_o)
+  -- if $(|term*| >= |pattern_t*|)
+  -- if n_m = $(|term*| - |pattern_t*|)
+  -- Match: D subst |- pattern_o ~~ LIST sort term*[0 : n_m] : subst_o*
+  -- (Match_seq: D subst_o |- pattern_t* ~~ sort term*[n_m : |pattern_t*|] : subst_r*)*
+
+rule Match_seq/too-short:
+  D subst |- (pattern_o :: pattern_t*) ~~ sort term* : eps
+  -- if ~$is_element(D, "LIST", pattern_o)
+  -- if $(|term*| < |pattern_t*|)
