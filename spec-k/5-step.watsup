@@ -8,7 +8,8 @@
 syntax stepres =
   | STEP term   ;; the next configuration
   | STUCK       ;; no rule applies
-  | ERROR       ;; a rule applies but its right-hand side cannot be built
+  | ERROR       ;; a rule's requires clause or right-hand side cannot be
+                ;; evaluated
 
 dec $rule_with_priority(krule) : (nat, krule)
 def $rule_with_priority(
@@ -22,7 +23,7 @@ def $rules_in_order(D) = $sort_by_priority<krule>($rule_with_priority(krule)*)
   -- if krule* = D.RULES
 
 relation Rule_applies:
-  definition |- krule term : res<subst>
+  definition |- krule term : applies<subst>
   hint(input %0 %1 %2)
   hint(prose_in "the way" %1 "applies to" %2)
   hint(prose_out %3)
@@ -220,7 +221,7 @@ def $candidates(krule*, INDEX SI pathindex*, term) = $pick(krule*, n*)
 ;; A step tries the rules in order: the first rule whose left-hand side
 ;; matches and whose requires clause holds rewrites the configuration. Once a
 ;; rule applies, failing to build its right-hand side is an error and does not
-;; fall back to later rules.
+;; fall back to later rules; so is a requires clause that cannot be evaluated.
 
 relation Step:
   definition |- term krule* ~> stepres
@@ -233,15 +234,19 @@ rule Step/stuck:
 
 rule Step/rewrite:
   D |- term (krule_h :: krule_t*) ~> STEP term'
-  -- Rule_applies: D |- krule_h term : OK subst
+  -- Rule_applies: D |- krule_h term : APPLIES subst
   -- Eval: D subst |- $rhs_of_rule(krule_h) : OK term'
 
 rule Step/error:
   D |- term (krule_h :: krule_t*) ~> ERROR
-  -- Rule_applies: D |- krule_h term : OK subst
+  -- Rule_applies: D |- krule_h term : APPLIES subst
   -- Eval: D subst |- $rhs_of_rule(krule_h) : FAIL
+
+rule Step/undefined:
+  D |- term (krule_h :: krule_t*) ~> ERROR
+  -- Rule_applies: D |- krule_h term : UNDEFINED
 
 rule Step/next:
   D |- term (krule_h :: krule_t*) ~> stepres
-  -- Rule_applies: D |- krule_h term : FAIL
+  -- Rule_applies: D |- krule_h term : SKIPS
   -- Step: D |- term krule_t* ~> stepres

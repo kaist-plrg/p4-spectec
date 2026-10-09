@@ -1,5 +1,6 @@
 // Programs on which krun ends with an error: a hook given an invalid argument,
-// a function with no equation for its arguments, or the initial term. The K
+// a function with no equation for its arguments (also in a requires clause,
+// where the rules after it are not tried), or the initial term. The K
 // spec must fail at the same step. Arguments come from the program, so that
 // kompile does not fold them.
 module ERRORS
@@ -23,7 +24,7 @@ module ERRORS
                | memset(Int) | int2bytes(Int)
                | rangelookup(Int) | rangeempty(Int) | rangeconcat(Int) | rangefind(Int) | rangechoice(RangeMap)
                | float2int(Float) | int2float(Int)
-               | noequation(Int)
+               | noequation(Int) | norequires(Int) | norequireseq(Int)
 
   // the error comes after one step
   rule <k> later(I) => step(I) </k>
@@ -72,4 +73,12 @@ module ERRORS
   syntax Int ::= g(Int) [function]
   rule g(0) => 1
   rule <k> noequation(I) => g(I) </k>
+
+  rule <k> norequires(I) => 1 </k> requires g(I) ==Int 1
+  rule <k> norequires(_) => 2 </k> [owise]
+
+  syntax Int ::= h(Int) [function]
+  rule h(I) => 1 requires g(I) ==Int 1
+  rule h(_) => 2 [owise]
+  rule <k> norequireseq(I) => h(I) </k>
 endmodule
