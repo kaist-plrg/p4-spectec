@@ -9,13 +9,16 @@
   ```
 - [K](https://github.com/runtimeverification/k) v7.1.337, with `kompile` and `krun` on `PATH`
 - Python 3.11 or later
-- Test inputs, next to this repository (or set `K_SRC` and `KWASM_SRC`):
+- Test inputs, next to this repository (or set `K_SRC`, `KWASM_SRC`, and `KMIR_SRC`):
   ```shell
   $ git clone --filter=blob:none --sparse --branch v7.1.337 https://github.com/runtimeverification/k ../k
   $ git -C ../k sparse-checkout set k-distribution/tests/regression-new
   $ git clone https://github.com/runtimeverification/wasm-semantics ../wasm-semantics
   $ git -C ../wasm-semantics checkout 212271b
   $ git -C ../wasm-semantics submodule update --init --depth 1 tests/wasm-tests
+  $ git clone --filter=blob:none https://github.com/runtimeverification/mir-semantics ../mir-semantics
+  $ git -C ../mir-semantics checkout 4d79325
+  $ uv --project ../mir-semantics/kmir sync    # kmir, which makes the KMIR inputs
   ```
 
 Build with `make boot`.

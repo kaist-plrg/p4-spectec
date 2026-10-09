@@ -62,7 +62,7 @@ def run_difftest(name, t, args, jobs=None):
         if p.returncode != 0:
             print(p.stdout + p.stderr)
             return False, "kompile failed"
-    programs = t["programs"]
+    programs = t["make_programs"](kompiled) if "make_programs" in t else t["programs"]
     only = args.only or t.get("only", [])
     if only:
         programs = [q for p in programs
@@ -170,19 +170,50 @@ def kevm_programs(src, work):
     return out
 
 
+def kmir_programs(src, work, kompiled):
+    """The initial terms of the exec-smir tests of KMIR, as kmir run makes them
+    from their SMIR JSON for the LLVM backend (kmir_inputs.py, in the Python
+    environment of kmir): <dir>-<name>.kore for each <name>.smir.json. They
+    name symbols of the kompiled definition, so they are made after it."""
+    out = os.path.join(work, "kmir", "programs")
+    files = sorted(glob.glob(os.path.join(src, "kmir/src/tests/integration/data/exec-smir/*/*.smir.json")))
+    script = os.path.join(ROOT, "spec-k/scripts/kmir_inputs.py")
+    # made once: the stamp names the script, the kompiled definition, and the
+    # files with their sizes and times, so a change makes them again
+    h = hashlib.sha256(open(script, "rb").read())
+    h.update(b"%d\0" % os.stat(os.path.join(kompiled, "timestamp")).st_mtime_ns)
+    for f in files:
+        st = os.stat(f)
+        h.update(("%s %d %d\0" % (os.path.relpath(f, src), st.st_size, st.st_mtime_ns)).encode())
+    stamp = os.path.join(out, ".stamp")
+    if os.path.exists(stamp) and open(stamp).read() == h.hexdigest():
+        return [out]
+    p = subprocess.run(["uv", "run", "--project", os.path.join(src, "kmir"), "python", script, kompiled, out]
+                       + files, capture_output=True, text=True)
+    if p.returncode != 0:
+        sys.exit("kmir_inputs.py failed: " + p.stderr[-2000:])
+    with open(stamp, "w") as fh:
+        fh.write(h.hexdigest())
+    return [out]
+
+
 def run_suite(suite, args):
     t = dict(SUITES[suite])
     if args.quick:
         if "quick" not in t:
             return True
         t["only"] = t["quick"]
-    src = os.path.abspath({"kwasm": args.kwasm_src, "kevm": args.kevm_src, "k": args.k_src, "spec": ROOT}[t["src"]])
+    src = os.path.abspath({"kwasm": args.kwasm_src, "kevm": args.kevm_src, "kmir": args.kmir_src, "k": args.k_src,
+                       "spec": ROOT}[t["src"]])
     t["src_dir"] = src
     t["definition"] = os.path.join(src, t["dir"], t["def"])
     if suite == "kwasm":
         t["programs"] = [kwasm_programs(src, os.path.abspath(args.work))]
     elif suite == "kevm":
         t["programs"] = [kevm_programs(src, os.path.abspath(args.work))]
+        t["kore_input"] = True
+    elif suite == "kmir":
+        t["make_programs"] = functools.partial(kmir_programs, src, os.path.abspath(args.work))
         t["kore_input"] = True
     else:
         t["programs"] = [os.path.join(src, t["dir"], d) for d in t.get("tests", ["tests"])]
@@ -320,6 +351,9 @@ def main():
     ap.add_argument("--kevm-src", default=os.environ.get("KEVM_SRC", os.path.join(ROOT, "../evm-semantics")),
                     help="checkout of runtimeverification/evm-semantics 866e563 with the blockchain plugin built "
                          "(env KEVM_SRC, default ../evm-semantics)")
+    ap.add_argument("--kmir-src", default=os.environ.get("KMIR_SRC", os.path.join(ROOT, "../mir-semantics")),
+                    help="checkout of runtimeverification/mir-semantics 4d79325 with its Python environment "
+                         "(uv sync --project kmir; env KMIR_SRC, default ../mir-semantics)")
     ap.add_argument("--llvm-src", default=os.environ.get("LLVM_SRC", os.path.join(ROOT, "../llvm-backend")),
                     help="checkout of runtimeverification/llvm-backend f02284f (env LLVM_SRC, default ../llvm-backend)")
     ap.add_argument("--work", default=os.path.join(ROOT, "spec-k/_k-test"),

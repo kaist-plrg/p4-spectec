@@ -27,6 +27,8 @@ def $concat_map(M_1, M_2) = FAIL
 
 def $hook(D, "LIST.unit", sort, eps) = OK (LIST sort eps)
 def $hook(D, "LIST.element", sort, ([term])) = OK (LIST sort ([ term ]))
+def $hook(D, "LIST.push", sort, ([term_v, LIST sort_l term*]))
+  = OK (LIST sort (term_v :: term*))
 def $hook(D, "LIST.concat", sort, ([LIST sort_1 term_1*, LIST sort_2 term_2*]))
   = OK (LIST sort (term_1* ++ term_2*))
 def $hook(D, "LIST.make", sort, ([INT i, term]))
@@ -42,6 +44,20 @@ def $hook(D, "LIST.update", sort, ([LIST sort_l term*, INT i, term_v]))
   -- if n = $nat_of(i)
   -- if $(n < |term*|)
   -- if n_a = $(n + 1)
+  -- if n_r = $nat_of($(|term*| - n_a))
+;; n_f elements off the front and n_b off the back
+def $hook(D, "LIST.range", sort, ([LIST sort_l term*, INT i_f, INT i_b]))
+  = OK (LIST sort term*[n_f : n])
+  -- if n_f = $nat_of(i_f)
+  -- if n_b = $nat_of(i_b)
+  -- if n = $nat_of($(|term*| - n_f - n_b))
+;; The elements from n on replaced by term_s*. Out of range fails, as K
+;; documents; hook_LIST_updateAll does not check it when n is 0
+def $hook(D, "LIST.updateAll", sort,
+  ([LIST sort_l term*, INT i, LIST sort_s term_s*]))
+  = OK (LIST sort_l (term*[0 : n] ++ term_s* ++ term*[n_a : n_r]))
+  -- if n = $nat_of(i)
+  -- if n_a = $(n + |term_s*|)
   -- if n_r = $nat_of($(|term*| - n_a))
 
 ;;; MAP

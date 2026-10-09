@@ -15,7 +15,8 @@
 #
 # [suite.<name>], run in this order by default:
 #   src          where dir is: "k" (K v7.1.337), "kwasm" (wasm-semantics),
-#                "kevm" (evm-semantics), or "spec" (this repository)
+#                "kevm" (evm-semantics), "kmir" (mir-semantics), or "spec"
+#                (this repository)
 #   dir, def     the directory of the definition, and its file
 #   ext          the extension of the programs
 #   tests        directories of the programs, relative to dir (default ["tests"])
@@ -214,6 +215,27 @@ kompile = [
   "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
 ]
 quick = ["arith-arith_d0g0v0_Cancun.kore", "byte-byte_d0g0v0_Cancun.kore"]
+
+# KMIR: the exec-smir tests of mir-semantics, as kmir run makes their initial
+# terms from the SMIR JSON in the repository (ktest.py), with the options of
+# its kdist target mir-semantics.llvm
+[suite.kmir]
+src = "kmir"
+dir = "kmir/src/kmir/kdist/mir-semantics"
+def = "kmir.md"
+ext = "kore"
+kompile = [
+  "-I",
+  "{src}/kmir/src/kmir/kdist",
+  "--syntax-module",
+  "KMIR-AST",
+  "--md-selector",
+  "k & ! symbolic",
+  "-O2",
+  "-w2e",
+  "--emit-json",
+]
+quick = ["allocs-array_const_compare.kore"]
 
 # IMP stopped after 20 steps
 [suite.depth]

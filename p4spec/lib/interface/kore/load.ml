@@ -272,17 +272,15 @@ let split_side (side : pattern) : pattern * pattern list =
       (b, fst (split_predicate a))
   | _ -> (side, [])
 
-let check_ensures (ens : pattern list) =
-  if ens <> [] && not (List.for_all is_true ens) then
-    error "ensures clauses are not supported"
-
 let opt_pattern info p = opt typ_pattern (Option.map (value_of_pattern info) p)
 
 let value_of_rule (info : info) (lhs_side : pattern) (rhs_side : pattern)
     (attrs : attr list) : Value.t =
   let lhs, reqs = split_side lhs_side in
-  let rhs, ens = split_side rhs_side in
-  check_ensures ens;
+  (* ensures clauses are dropped: the LLVM backend keeps them in AxiomInfo
+     (matching/.../Parser.scala) but never uses them, and its code takes the
+     right-hand side X of \and(X, _) (lib/ast/pattern_matching.cpp) *)
+  let rhs, _ens = split_side rhs_side in
   case "RULE pattern '=>' pattern 'requires' pattern? attr*"
     [
       value_of_pattern info lhs;
@@ -295,8 +293,7 @@ let value_of_rule (info : info) (lhs_side : pattern) (rhs_side : pattern)
 let value_of_equation (info : info) (cond : pattern) (f : string)
     (xs : pattern list) (rhs_side : pattern) (attrs : attr list) : Value.t =
   let reqs, ins = split_predicate cond in
-  let rhs, ens = split_side rhs_side in
-  check_ensures ens;
+  let rhs, _ens = split_side rhs_side in
   let arg x =
     match List.find_opt (fun (y, _) -> y = x) ins with
     | Some (_, pat) -> pat
