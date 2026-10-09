@@ -193,12 +193,12 @@ def $hook(D, "STRING.token2string", sort, ([STRING t])) = OK (STRING t)
 
 def $hook(D, "STRING.string2token", sort, ([STRING t])) = OK (DV sort t)
 
-;;; BUFFER: a string buffer is its text so far
+;;; BUFFER: a string buffer is its text so far, a token of its sort
 
-def $hook(D, "BUFFER.empty", sort, eps) = OK (STRING "")
-def $hook(D, "BUFFER.concat", sort, ([STRING t_1, STRING t_2]))
-  = OK (STRING (t_1 ++ t_2))
-def $hook(D, "BUFFER.toString", sort, ([STRING t])) = OK (STRING t)
+def $hook(D, "BUFFER.empty", sort, eps) = OK (DV sort "")
+def $hook(D, "BUFFER.concat", sort, ([DV sort_1 t_1, STRING t_2]))
+  = OK (DV sort_1 (t_1 ++ t_2))
+def $hook(D, "BUFFER.toString", sort, ([DV sort_1 t])) = OK (STRING t)
 
 ;;; LIST
 
