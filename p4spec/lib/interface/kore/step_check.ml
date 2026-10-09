@@ -118,13 +118,13 @@ let finish c ~ended =
         (if ended then ", and K takes no step from the last" else "")
   | Some msg -> Format.printf "steps check FAILED: %s\n" msg
 
-(* A handler that sees the configuration of each step: the last argument of
-   each call of $run (spec-k/6-entry.watsup) *)
+(* A handler that sees the configuration of each step: the term input of
+   each use of the relation Run (spec-k/6-entry.watsup), its fourth input *)
 let handler c : (module Inst.Handler.HANDLER) =
   (module struct
     include Inst.Handler.Default
 
-    let on_func_enter (fid : Domain.Lib.FId.t) (values : Value.t list) =
-      if String.equal (Domain.Lib.FId.to_string fid) "run" then
-        match List.rev values with term :: _ -> step c term | [] -> ()
+    let on_rel_enter (rid : Domain.Lib.RId.t) (values : Value.t list) =
+      if String.equal (Domain.Lib.RId.to_string rid) "Run" then
+        match values with _ :: _ :: _ :: term :: _ -> step c term | _ -> ()
   end)

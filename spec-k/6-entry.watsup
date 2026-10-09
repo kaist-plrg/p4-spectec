@@ -11,30 +11,54 @@ syntax runres =
   | ERROR nat term   ;; steps taken and the configuration where a step failed
   | INITFAIL         ;; the initial term cannot be evaluated
 
-dec $run(definition, krule*, ruleindex, nat, nat?, term) : runres
-  hint(prose_in "running from" %5 "after" %3 "steps")
-dec $continue(definition, krule*, ruleindex, nat, nat?, term, stepres) : runres
-def $run(D, krule*, ruleindex, n, n_max, term) = FINAL n term
-  -- if n = n_max
-def $run(D, krule*, ruleindex, n, n_max?, term)
-  = $continue(D, krule*, ruleindex, n, n_max?, term,
-              $step(D, $candidates(krule*, ruleindex, term), term))
+;; Rewriting from a configuration after n steps, up to n_max steps: a step
+;; by the rules that may rewrite it, then on from the next configuration
+
+relation Run:
+  definition krule* ruleindex |- term nat nat? ~>* runres
+  hint(input %0 %1 %2 %3 %4 %5)
+  hint(prose_in "running from" %3 "after" %4 "steps")
+  hint(prose_out %6)
+
+rule Run/limit:
+  D krule* ruleindex |- term n (n) ~>* FINAL n term
+
+rule Run/final:
+  D krule* ruleindex |- term n n_max? ~>* FINAL n term
   -- if n_max? =/= (n)
+  -- Step: D |- term $candidates(krule*, ruleindex, term) ~> STUCK
 
-def $continue(D, krule*, ruleindex, n, n_max?, term, STUCK) = FINAL n term
-def $continue(D, krule*, ruleindex, n, n_max?, term, ERROR) = ERROR n term
-def $continue(D, krule*, ruleindex, n, n_max?, term, STEP term')
-  = $run(D, krule*, ruleindex, $(n + 1), n_max?, term')
+rule Run/error:
+  D krule* ruleindex |- term n n_max? ~>* ERROR n term
+  -- if n_max? =/= (n)
+  -- Step: D |- term $candidates(krule*, ruleindex, term) ~> ERROR
 
-dec $krun(definition, pattern, nat?) : runres
+rule Run/step:
+  D krule* ruleindex |- term n n_max? ~>* runres
+  -- if n_max? =/= (n)
+  -- Step: D |- term $candidates(krule*, ruleindex, term) ~> STEP term'
+  -- Run: D krule* ruleindex |- term' $(n + 1) n_max? ~>* runres
+
+;; krun: the initial term is evaluated (a call of initGeneratedTopCell), then
+;; rewritten. The definition is prepared once: its subsort relation closed,
+;; its equations ordered by priority, its rules ordered and indexed.
+
+relation Krun:
+  definition |- pattern nat? : runres
+  hint(input %0 %1 %2)
   hint(prose_in "running" %1 "under" %0)
-def $krun(D, pattern, n_max?)
-  = $run(D', krule*, $index_rules(D', krule*), 0, n_max?, term)
+  hint(prose_out %3)
+
+rule Krun/run:
+  D |- pattern n_max? : runres
   -- if D_s = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
   -- if D' = D_s[ .EQUATIONS = $sorted_equations(D.EQUATIONS) ]
   -- if krule* = $rules_in_order(D')
   -- if OK term = $eval(D', $empty_map<varid, term>, pattern)
-def $krun(D, pattern, n_max?) = INITFAIL
+  -- Run: D' krule* $index_rules(D', krule*) |- term 0 n_max? ~>* runres
+
+rule Krun/initfail:
+  D |- pattern n_max? : INITFAIL
   -- if D_s = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
   -- if D' = D_s[ .EQUATIONS = $sorted_equations(D.EQUATIONS) ]
   -- if FAIL = $eval(D', $empty_map<varid, term>, pattern)

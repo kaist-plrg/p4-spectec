@@ -58,7 +58,7 @@ let run ((module Runner : Run.RUNNER) : (module Run.RUNNER)) (spec : Run.spec)
     Inst.Hook.init_spec spec;
     let result, t_run =
       time (fun () ->
-          Runner.Interp.eval_func "krun" []
+          Runner.Interp.eval_rel "Krun"
             [ loaded.definition; value_init; value_depth ])
     in
     Inst.Hook.finish ();
@@ -94,7 +94,9 @@ let run ((module Runner : Run.RUNNER) : (module Run.RUNNER)) (spec : Run.spec)
     in
     match result with
     | Run.Fail (_, msg) -> Format.printf "runtime error: %s\n" msg
-    | Run.Pass value -> (
+    | Run.Pass ([] | _ :: _ :: _) ->
+        Format.printf "runtime error: Krun gives one result\n"
+    | Run.Pass [ value ] -> (
         match Value.Get.(value |>>? "FINAL nat term") with
         | Some [ steps; term ] ->
             report "final" steps term;

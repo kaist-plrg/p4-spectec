@@ -212,20 +212,31 @@ dec $candidates(krule*, ruleindex, term) : krule*
 def $candidates(krule*, INDEX SI pathindex*, term) = $pick(krule*, n*)
   -- if `{ n* `} = $union_set<nat>(SI, $indexed(pathindex*, term))
 
-;; A step tries the rules in order. Once a rule applies, failing to build its
-;; right-hand side is an error and does not fall back to later rules.
+;; A step tries the rules in order: the first rule whose left-hand side
+;; matches and whose requires clause holds rewrites the configuration. Once a
+;; rule applies, failing to build its right-hand side is an error and does not
+;; fall back to later rules.
 
-dec $step(definition, krule*, term) : stepres
-  hint(prose_in "a rewrite step of" %2)
-dec $rewrite_or_next(definition, krule, krule*, term, res<subst>) : stepres
-dec $rewrite(term, res<term>) : stepres
-def $step(D, eps, term) = STUCK
-def $step(D, krule_h :: krule_t*, term)
-  = $rewrite_or_next(D, krule_h, krule_t*, term, $try_rule(D, krule_h, term))
+relation Step:
+  definition |- term krule* ~> stepres
+  hint(input %0 %1 %2)
+  hint(prose_in "a rewrite step of" %1 "by the rules" %2)
+  hint(prose_out %3)
 
-def $rewrite_or_next(D, krule, krule_t*, term, OK subst)
-  = $rewrite(term, $eval(D, subst, $rhs_of_rule(krule)))
-def $rewrite_or_next(D, krule, krule_t*, term, FAIL) = $step(D, krule_t*, term)
+rule Step/stuck:
+  D |- term eps ~> STUCK
 
-def $rewrite(term, OK term') = STEP term'
-def $rewrite(term, FAIL) = ERROR
+rule Step/rewrite:
+  D |- term (krule_h :: krule_t*) ~> STEP term'
+  -- if OK subst = $try_rule(D, krule_h, term)
+  -- if OK term' = $eval(D, subst, $rhs_of_rule(krule_h))
+
+rule Step/error:
+  D |- term (krule_h :: krule_t*) ~> ERROR
+  -- if OK subst = $try_rule(D, krule_h, term)
+  -- if FAIL = $eval(D, subst, $rhs_of_rule(krule_h))
+
+rule Step/next:
+  D |- term (krule_h :: krule_t*) ~> stepres
+  -- if FAIL = $try_rule(D, krule_h, term)
+  -- Step: D |- term krule_t* ~> stepres
