@@ -21,11 +21,15 @@ dec $rules_in_order(definition) : krule*
 def $rules_in_order(D) = $sort_by_priority<krule>($rule_with_priority(krule)*)
   -- if krule* = D.RULES
 
-dec $try_rule(definition, krule, term) : res<subst>
-def $try_rule(D, RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*,
-              term)
-  = $first_holding(D, $match(D, $empty_map<varid, term>, pattern_l, term),
-                   pattern_c?)
+relation Rule_applies:
+  definition |- krule term : res<subst>
+  hint(input %0 %1 %2)
+  hint(prose_in "the way" %1 "applies to" %2)
+  hint(prose_out %3)
+
+rule Rule_applies:
+  D |- (RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*) term : matched
+  -- First_holding: D |- $match(D, $empty_map<varid, term>, pattern_l, term) pattern_c? : matched
 
 dec $rhs_of_rule(krule) : pattern
 def $rhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
@@ -228,15 +232,15 @@ rule Step/stuck:
 
 rule Step/rewrite:
   D |- term (krule_h :: krule_t*) ~> STEP term'
-  -- if OK subst = $try_rule(D, krule_h, term)
-  -- if OK term' = $eval(D, subst, $rhs_of_rule(krule_h))
+  -- Rule_applies: D |- krule_h term : OK subst
+  -- Eval: D subst |- $rhs_of_rule(krule_h) : OK term'
 
 rule Step/error:
   D |- term (krule_h :: krule_t*) ~> ERROR
-  -- if OK subst = $try_rule(D, krule_h, term)
-  -- if FAIL = $eval(D, subst, $rhs_of_rule(krule_h))
+  -- Rule_applies: D |- krule_h term : OK subst
+  -- Eval: D subst |- $rhs_of_rule(krule_h) : FAIL
 
 rule Step/next:
   D |- term (krule_h :: krule_t*) ~> stepres
-  -- if FAIL = $try_rule(D, krule_h, term)
+  -- Rule_applies: D |- krule_h term : FAIL
   -- Step: D |- term krule_t* ~> stepres

@@ -113,11 +113,15 @@ def $construct(symid, sort*, term*) = APP symid sort* term*
 
 ;; Keys of map patterns and elements of set patterns are evaluated when their
 ;; variables are bound (e.g. #ContextLookup(IDS, I) |-> ADDR in KWasm);
-;; otherwise the entries are tried in turn. $eval is in 4-eval.
+;; otherwise the entries are tried in turn. The rules of Eval are in 4-eval.
 
-dec $eval(definition, subst, pattern) : res<term>
+relation Eval:
+  definition subst |- pattern : res<term>
+  hint(input %0 %1 %2)
   hint(prose_in "evaluating" %2 "under" %1)
-dec $evals(definition, subst, pattern*) : res<term*>
+  hint(prose_out %3)
+
+var result : res<term>
 
 ;; Collection patterns: flattened into element patterns and at most one other
 ;; pattern, usually a variable, for the remaining elements
@@ -317,7 +321,7 @@ def $match(D, subst, APP symid sort_p* ([pattern_f, pattern_k, pattern_v]),
   = $match_all(D, $match(D, subst, pattern_v, term_e), pattern_f,
                LIST sort term*)
   -- if $hook_of(D, symid) = "LIST.update"
-  -- if OK (INT i) = $eval(D, subst, pattern_k)
+  -- Eval: D subst |- pattern_k : OK (INT i)
   -- if term_e = $list_at(term*, i)
 
 ;;; Anything else fails
@@ -352,8 +356,9 @@ def $match_map(D, subst, eps, pattern_o*, sort, M)
 def $match_map(
     D, subst, APP symid sort_e* ([pattern_k, pattern_v]) :: pattern_e*,
     pattern_o*, sort, M)
-  = $match_entry(D, subst, $eval(D, subst, pattern_k), pattern_k, pattern_v,
-                 pattern_e*, pattern_o*, sort, M)
+  = $match_entry(D, subst, result, pattern_k, pattern_v, pattern_e*,
+                 pattern_o*, sort, M)
+  -- Eval: D subst |- pattern_k : result
 
 def $match_entry(D, subst, OK term_k, pattern_k, pattern_v, pattern_e*,
                  pattern_o*, sort, M)
@@ -391,8 +396,8 @@ def $match_set(D, subst, eps, pattern_o*, sort, S)
   = $match_rest(D, subst, pattern_o*, SET sort S)
 def $match_set(D, subst, APP symid sort_e* ([pattern]) :: pattern_e*,
                pattern_o*, sort, S)
-  = $match_element(D, subst, $eval(D, subst, pattern), pattern, pattern_e*,
-                   pattern_o*, sort, S)
+  = $match_element(D, subst, result, pattern, pattern_e*, pattern_o*, sort, S)
+  -- Eval: D subst |- pattern : result
 
 def $match_element(D, subst, OK term, pattern, pattern_e*, pattern_o*, sort,
                    `{ term_s* `})

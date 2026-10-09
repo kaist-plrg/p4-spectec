@@ -54,11 +54,11 @@ rule Krun/run:
   -- if D_s = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
   -- if D' = D_s[ .EQUATIONS = $sorted_equations(D.EQUATIONS) ]
   -- if krule* = $rules_in_order(D')
-  -- if OK term = $eval(D', $empty_map<varid, term>, pattern)
+  -- Eval: D' $empty_map<varid, term> |- pattern : OK term
   -- Run: D' krule* $index_rules(D', krule*) |- term 0 n_max? ~>* runres
 
 rule Krun/initfail:
   D |- pattern n_max? : INITFAIL
   -- if D_s = D[ .SUBSORTS = $close_subsorts(D.SUBSORTS) ]
   -- if D' = D_s[ .EQUATIONS = $sorted_equations(D.EQUATIONS) ]
-  -- if FAIL = $eval(D', $empty_map<varid, term>, pattern)
+  -- Eval: D' $empty_map<varid, term> |- pattern : FAIL

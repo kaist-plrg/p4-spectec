@@ -93,10 +93,13 @@ def $is_var_occurrence(sort_x, t_x, term) = false
   -- otherwise
 
 ;; Capture-avoiding substitution of V (of sort sort_v) for t_x (of sort sort_x).
-;; It builds symbol applications with $apply, which is in 4-eval.
+;; It builds symbol applications with Apply, whose rules are in 4-eval.
 
-dec $apply(definition, symid, sort*, term*) : res<term>
+relation Apply:
+  definition |- symid sort* term* : res<term>
+  hint(input %0 %1 %2 %3)
   hint(prose_in "applying" %1 "to" %3)
+  hint(prose_out %4)
 
 dec $subst(definition, sort, text, sort, term, term) : res<term>
 dec $subst_list(definition, sort, text, sort, term, term*) : res<term*>
@@ -134,10 +137,11 @@ def $subst(D, sort_x, t_x, sort_v, term_v,
 ;;; rebuilds (runtime/meta/substitution.cpp), so a redex the substitution
 ;;; makes is reduced at once
 def $subst(D, sort_x, t_x, sort_v, term_v, APP symid sort* term*)
-  = $apply(D, symid, sort*, term'*)
+  = result
   -- if ~$is_binder(D, symid)
   -- if ~$is_var_occurrence(sort_x, t_x, APP symid sort* term*)
   -- if OK term'* = $subst_list(D, sort_x, t_x, sort_v, term_v, term*)
+  -- Apply: D |- symid sort* term'* : result
 ;;; domain values
 def $subst(D, sort_x, t_x, sort_v, term_v, DV sort t) = OK (DV sort t)
 def $subst(D, sort_x, t_x, sort_v, term_v, INT i) = OK (INT i)
