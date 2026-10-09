@@ -6,8 +6,12 @@
 # step must be one K allows (K leaves the choice among rules of the same
 # priority and the order of map elements open).
 #
-# A quick run (the default) leaves out the programs marked long; a full run
-# (ktest.py --full) runs them too. Programs marked skip never run.
+# A quick run (ktest.py with no suite named) runs the programs in the quick
+# lists; ktest.py --full, or naming suites, runs all of them. Programs in the
+# skip lists never run. The quick lists were chosen on 2026-10-09 so that
+# together they cover every spec instruction the runs of all programs covered
+# (ktest.py --cover), at the least spec time, with a program of every suite;
+# they are kept by hand.
 #
 # [suite.<name>], run in this order by default:
 #   src          where dir is: "k" (K v7.1.337), "kwasm" (wasm-semantics),
@@ -22,9 +26,8 @@
 #   depth        stop krun and the spec after this many steps
 #   cache_size   entries of the executor's call cache (SPECTEC_CACHE_SIZE;
 #                default 32768); fewer bound the memory of large configurations
-#   long         programs (glob patterns) left out of a quick run: those whose
-#                spec run takes more than five minutes
 #   skip         programs (glob patterns) never run, with why in comments
+#   quick        programs of a quick run
 #
 # The tutorial languages leave out the programs that the tutorial Makefiles do
 # not run.
@@ -35,6 +38,7 @@ dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
 def = "imp.k"
 ext = "imp"
 kompile = ["--gen-glr-bison-parser"]
+quick = ["primes.imp"]
 
 [suite.lambda]
 src = "k"
@@ -42,6 +46,7 @@ dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/1_lambda/lesson_8"
 def = "lambda.k"
 ext = "lambda"
 kompile = ["--gen-glr-bison-parser"]
+quick = ["factorial-letrec.lambda", "free-variable-capture.lambda"]
 
 [suite.simple]
 src = "k"
@@ -51,6 +56,7 @@ ext = "simple"
 krun = ["--io", "off"]
 tests = ["tests/diverse", "tests/exceptions", "tests/threads"]
 skip = ["threads_05.simple"] # krun's run does not end
+quick = ["exceptions_14.simple"]
 
 [suite.kool]
 src = "k"
@@ -59,6 +65,7 @@ def = "kool-untyped.md"
 ext = "kool"
 krun = ["--io", "off"]
 skip = ["threads.kool"] # the tutorial Makefile does not run it
+quick = ["hello-world.kool"]
 
 [suite."lambda++"]
 src = "k"
@@ -67,6 +74,7 @@ def = "lambda.k"
 ext = "lambda"
 kompile = ["--syntax-module", "LAMBDA"]
 tests = ["tests/deterministic", "tests/nondeterministic"]
+quick = ["arithmetic-div-zero.lambda"]
 
 # The proofs of the lesson (kprove, the Haskell backend) are not run
 [suite."imp++"]
@@ -76,6 +84,7 @@ def = "imp.k"
 ext = "imp"
 kompile = ["--gen-glr-bison-parser"]
 krun = ["--io", "off"]
+quick = ["io.imp"]
 
 [suite.simple-typed-static]
 src = "k"
@@ -84,6 +93,7 @@ def = "simple-typed-static.md"
 ext = "simple"
 tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
 inputs = "tests"
+quick = ["exceptions_13.simple"]
 
 [suite.simple-typed-dynamic]
 src = "k"
@@ -93,7 +103,6 @@ ext = "simple"
 krun = ["--io", "off"]
 tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
 inputs = "tests"
-long = ["matrix.simple"]
 skip = [
   # krun's run does not end
   "threads_05.simple",
@@ -102,6 +111,7 @@ skip = [
   "threads_03.simple",
   "threads_08.simple",
 ]
+quick = ["exceptions_14.simple"]
 
 [suite.kool-typed-dynamic]
 src = "k"
@@ -111,8 +121,8 @@ ext = "kool"
 krun = ["--io", "off"]
 tests = ["../programs"]
 inputs = "tests"
-long = ["matrix.kool"]
 skip = ["cycle.kool", "threads.kool"] # the tutorial Makefile does not run them
+quick = ["hello-world.kool"]
 
 [suite.kool-typed-static]
 src = "k"
@@ -123,6 +133,7 @@ krun = ["--io", "off"]
 tests = ["../programs"]
 inputs = "tests"
 skip = ["return-object.kool"] # the tutorial Makefile does not run it
+quick = ["hello-world.kool"]
 
 [suite.fun]
 src = "k"
@@ -135,7 +146,7 @@ ext = "fun"
 cache_size = 1024
 tests = ["../../programs"]
 inputs = "tests"
-long = ["constructor-bst-sorting.fun"]
+quick = ["empty-argument-2.fun", "tuple-2.fun"]
 
 [suite.kwasm]
 src = "kwasm"
@@ -152,16 +163,15 @@ kompile = [
   "--gen-glr-bison-parser",
   "-O3",
 ]
-long = [
-  "conformance-f32_cmp.wast",
-  "conformance-f64_cmp.wast",
-  "conformance-names.wast",
-  "conformance-table_copy.wast",
-  "conformance-table_init.wast",
-  "conformance-memory_copy.wast",
-  "conformance-memory_fill.wast",
-  "conformance-memory_grow.wast",
-  "conformance-call.wast",
+quick = [
+  "conformance-local_set.wast",
+  "conformance-table.wast",
+  "simple-bitwise.wast",
+  "simple-constants.wast",
+  "simple-f64-cs.wast",
+  "simple-f64_bitwise-cs.wast",
+  "simple-f64_cmp-cs.wast",
+  "simple-modules.wast",
 ]
 
 # KEVM: the VMTests of ethereum-tests, as kevm-pyk run makes their initial
@@ -203,7 +213,7 @@ kompile = [
   "-ccopt",
   "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
 ]
-long = ["*"]
+quick = ["arith-arith_d0g0v0_Cancun.kore", "byte-byte_d0g0v0_Cancun.kore"]
 
 # IMP stopped after 20 steps
 [suite.depth]
@@ -212,6 +222,7 @@ dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
 def = "imp.k"
 ext = "imp"
 depth = 20
+quick = ["sum.imp"]
 
 # Definitions written for the K features and errors that the languages above
 # do not exercise, with their programs in tests/
@@ -221,12 +232,21 @@ src = "spec"
 dir = "spec-k/test/priority"
 def = "priority.k"
 ext = "priority"
+quick = ["a.priority"]
 
 [suite.equality]
 src = "spec"
 dir = "spec-k/test/equality"
 def = "equality.k"
 ext = "equality"
+quick = [
+  "bytes-match.equality",
+  "float-match.equality",
+  "float-other.equality",
+  "implies.equality",
+  "signed.equality",
+  "strings.equality",
+]
 
 # mint.k cannot have a module MINT, which K's domains.md has
 [suite.mint]
@@ -235,18 +255,32 @@ dir = "spec-k/test/mint"
 def = "mint.k"
 ext = "mint"
 kompile = ["--main-module", "MINT-TEST", "--syntax-module", "MINT-TEST"]
+quick = ["minmax.mint", "unsigned.mint", "widths.mint"]
 
 [suite.binder]
 src = "spec"
 dir = "spec-k/test/binder"
 def = "binder.k"
 ext = "binder"
+quick = ["capture.binder"]
 
 [suite.errors]
 src = "spec"
 dir = "spec-k/test/errors"
 def = "errors.k"
 ext = "errors"
+quick = [
+  "ediv.errors",
+  "initial.errors",
+  "int2bytes.errors",
+  "int2float.errors",
+  "listget.errors",
+  "mapchoice.errors",
+  "mapconcat.errors",
+  "noequation.errors",
+  "pow.errors",
+  "rangeempty.errors",
+]
 
 # The regression tests of K (in dir) that kompile with the LLVM backend and
 # krun their programs through ktest.mak, with the settings of their Makefiles.
@@ -254,7 +288,7 @@ ext = "errors"
 # Makefile as the step limit.
 [regression]
 dir = "k-distribution/tests/regression-new"
-# tests (or <test>/<program>) not run
+# skip names tests or <test>/<program>, quick <test>/<program>
 skip = [
   # they krun differently from a plain run of each program:
   # krun --proof-hint
@@ -287,6 +321,53 @@ skip = [
   # kompile leaves a fresh variable of a function equation unbound
   "withConfig2/1.test",
 ]
+quick = [
+  "bytes-memset/1.test",
+  "f32-mul/1.mul",
+  "group/1.test",
+  "int-llvm/test2.llvmint",
+  "int2bytes-no-len/14.test",
+  "issue-1186/1.test",
+  "list-in-bug/test2.listin",
+  "mint-llvm-4/1.test",
+  "mint-llvm-4/10.test",
+  "mint-llvm-4/11.test",
+  "mint-llvm-4/12.test",
+  "mint-llvm-4/13.test",
+  "mint-llvm-4/2.test",
+  "mint-llvm-4/3.test",
+  "mint-llvm-4/4.test",
+  "mint-llvm-4/5.test",
+  "mint-llvm-4/6.test",
+  "mint-llvm-4/7.test",
+  "mint-llvm-4/8.test",
+  "mint-llvm-4/9.test",
+  "mint-llvm/1.test",
+  "mint-llvm/10.test",
+  "mint-llvm/11.test",
+  "mint-llvm/12.test",
+  "mint-llvm/13.test",
+  "mint-llvm/14.test",
+  "mint-llvm/15.test",
+  "mint-llvm/16.test",
+  "mint-llvm/18.test",
+  "mint-llvm/2.test",
+  "mint-llvm/3.test",
+  "mint-llvm/4.test",
+  "mint-llvm/5.test",
+  "mint-llvm/6.test",
+  "mint-llvm/7.test",
+  "mint-llvm/8.test",
+  "mint-llvm/9.test",
+  "or-llvm/3.test",
+  "rangemap-tests-llvm/in-keys-02.test",
+  "rangemap-tests-llvm/in-keys-06.test",
+  "rangemap-tests-llvm/inclusion-9.test",
+  "rangemap-tests-llvm/keys-1.test",
+  "rangemap-tests-llvm/keys-list-0.test",
+  "rangemap-tests-llvm/lookup-0.test",
+  "string_escape/1.a",
+]
 
 # krun options in place of those of the Makefile
 [regression.krun]
@@ -295,10 +376,9 @@ parseNonPgm = ["-cMODE=noprint"]
 
 # The tests of the LLVM backend (llvm-backend f02284f, test/defn/<name>.kore)
 # that run its interpreter on initial terms in KORE (test/input), compared
-# with the interpreter llvm-kompile builds from the same definition. long and
-# skip name tests, or <test>/<program>
+# with the interpreter llvm-kompile builds from the same definition. skip names
+# tests or <test>/<program>, quick <test>/<program>
 [llvm]
-long = ["migrate-map-root", "imp-with-rangemaps", "test-gc-stringbuffer"]
 skip = [
   # file IO (the interpreter writes files in the working directory)
   "io",
@@ -321,4 +401,24 @@ skip = [
   # a function recursing 2^19 deep in one step: the LLVM backend makes it a
   # tail call, the spec nests it (about 12 KB a level)
   "iterated-map-pointer-residual",
+]
+quick = [
+  "lambda/closed-variable-capture.in",
+  "mint-literal/mint-literal.in",
+  "rangemap-simple/rangemap-simple-1.in",
+  "rangemap-simple/rangemap-simple-100.in",
+  "rangemap-simple/rangemap-simple-13.in",
+  "rangemap-simple/rangemap-simple-17.in",
+  "rangemap-simple/rangemap-simple-55.in",
+  "rangemap-simple/rangemap-simple-68.in",
+  "rangemap-simple/rangemap-simple-71.in",
+  "rangemap-simple/rangemap-simple-78.in",
+  "rangemap-simple/rangemap-simple-79.in",
+  "rangemap-simple/rangemap-simple-87.in",
+  "rangemap-simple/rangemap-simple-97.in",
+  "strip_injection/strip_injection.in",
+  "test-list-get/11.in",
+  "test32/test32.in",
+  "test4/test4.in",
+  "test6/test6.in",
 ]

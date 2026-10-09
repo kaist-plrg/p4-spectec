@@ -3,19 +3,19 @@
 suites.toml, the regression tests of K, and the tests of the LLVM backend.
 
 usage:
-  spec-k/scripts/ktest.py                    # all suites, quick
-  spec-k/scripts/ktest.py --full             # all suites, with the long programs
-  spec-k/scripts/ktest.py imp lambda         # some suites
+  spec-k/scripts/ktest.py                    # the quick run: the quick lists of suites.toml
+  spec-k/scripts/ktest.py --full             # all programs of all suites
+  spec-k/scripts/ktest.py imp lambda         # all programs of some suites
   spec-k/scripts/ktest.py kwasm --only conformance-i32.wast
   spec-k/scripts/ktest.py regression/list-set
 
-A quick run leaves out the programs marked long in suites.toml; --full runs
-them too. Programs marked skip never run. Each run of the spec may take two
-hours (--timeout).
+Programs marked skip in suites.toml never run. Each run of the spec may take
+two hours (--timeout).
 
 Each definition is kompiled once into <work>/<suite>/ and kept there, with the
 search binary that step checks use. Each result row is shown as its program is
-done, and the table of difftest.py goes to <work>/<suite>.md (not with --only).
+done, and the table of difftest.py goes to <work>/<suite>.md when all programs
+of the suite run.
 Two programs are tested at a time (--jobs). The exit code is 1 if a test fails.
 """
 import argparse
@@ -61,10 +61,13 @@ def run_difftest(name, t, args, jobs=None):
             print(p.stdout + p.stderr)
             return False, "kompile failed"
     programs = t["programs"]
-    if args.only:
-        programs = [os.path.join(p, n) for p in programs for n in args.only if os.path.exists(os.path.join(p, n))]
+    only = args.only or t.get("only", [])
+    if only:
+        programs = [q for p in programs
+                    for q in ([os.path.join(p, n) for n in only] if os.path.isdir(p) else [p])
+                    if os.path.exists(q) and os.path.basename(q) in only]
         if not programs:
-            return True, "no program among --only"
+            return True, "no program among those named"
     cmd = [sys.executable, os.path.join(ROOT, "spec-k/scripts/difftest.py"), "-k", kompiled,
            "--timeout", str(args.timeout or 7200),
            "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs), "--ext", t["ext"]] + programs
@@ -87,7 +90,7 @@ def run_difftest(name, t, args, jobs=None):
         if line.startswith("| ") and not line.startswith("| program"):
             print("%s %s" % (name, line.rstrip()), flush=True)
     p.wait()
-    if not args.only:
+    if not only:
         with open(os.path.join(work, name + ".md"), "w") as out:
             out.write("".join(output))
     lines = "".join(output).strip().splitlines()
@@ -145,17 +148,12 @@ def kevm_programs(src, work):
     return out
 
 
-def left_out(skip, long, full):
-    """Patterns of the programs not run: those skipped, and the long ones in a
-    quick run."""
-    return list(skip) + ([] if full else list(long))
-
-
 def run_suite(suite, args):
     t = dict(SUITES[suite])
-    if "*" in t.get("long", []) and not args.full:
-        print("%s: long, left out of a quick run" % suite, flush=True)
-        return True
+    if args.quick:
+        if "quick" not in t:
+            return True
+        t["only"] = t["quick"]
     src = os.path.abspath({"kwasm": args.kwasm_src, "kevm": args.kevm_src, "k": args.k_src, "spec": ROOT}[t["src"]])
     t["src_dir"] = src
     t["definition"] = os.path.join(src, t["dir"], t["def"])
@@ -168,7 +166,7 @@ def run_suite(suite, args):
         t["programs"] = [os.path.join(src, t["dir"], d) for d in t.get("tests", ["tests"])]
     if "inputs" in t:
         t["inputs"] = os.path.join(src, t["dir"], t["inputs"])
-    t["exclude"] = left_out(t.get("skip", []), t.get("long", []), args.full)
+    t["exclude"] = t.get("skip", [])
     ok, summary = run_difftest(suite, t, args)
     print(summary, flush=True)
     return ok
@@ -188,22 +186,24 @@ def read_makefile(path):
     return v
 
 
-def group_left_out(group, d, full):
-    """Whether test d of a group (regression or llvm) is not run, and the
-    patterns of its programs not run: keys <test> or <test>/<program> of the
-    group's skip and long tables."""
-    keys = left_out(group.get("skip", []), group.get("long", []), full)
-    return d in keys, [k.split("/", 1)[1] for k in keys if k.startswith(d + "/")]
+def group_left_out(group, d, quick):
+    """Whether test d of a group (regression or llvm) is not run, the patterns
+    of its programs not run (<test> or <test>/<program> in the group's skip
+    list), and in a quick run the programs to run (<test>/<program> in its
+    quick list)."""
+    skip = group.get("skip", [])
+    only = [k.split("/", 1)[1] for k in group.get("quick", []) if k.startswith(d + "/")] if quick else []
+    return d in skip or (quick and not only), [k.split("/", 1)[1] for k in skip if k.startswith(d + "/")], only
 
 
-def regression_tests(src, full):
+def regression_tests(src, quick):
     """Regression tests that kompile with the LLVM backend and krun programs
     through ktest.mak, as suites with the settings of their Makefiles."""
     tests = {}
     root = os.path.join(src, REGRESSION["dir"])
     for d in sorted(os.listdir(root)):
         makefile = os.path.join(root, d, "Makefile")
-        out, exclude = group_left_out(REGRESSION, d, full)
+        out, exclude, only = group_left_out(REGRESSION, d, quick)
         if out or not os.path.isfile(makefile) or "ktest.mak" not in open(makefile).read():
             continue
         v = read_makefile(makefile)
@@ -235,7 +235,7 @@ def regression_tests(src, full):
                         krun=["--no-exc-wrap"] + REGRESSION["krun"].get(d, krun),
                         kompile=shlex.split(v.get("KOMPILE_FLAGS", "")) + ["--no-exc-wrap", "--type-inference-mode",
                                                                            "checked"],
-                        exclude=exclude)
+                        exclude=exclude, only=only)
         if search:
             tests[d]["check_steps"] = [os.path.basename(f) + ("" if depth is None else ":%d" % depth)
                                        for f in glob.glob(os.path.join(testdir, "*." + v["EXT"]))]
@@ -244,7 +244,7 @@ def regression_tests(src, full):
     return tests
 
 
-def llvm_tests(src, full):
+def llvm_tests(src, quick):
     """The tests of the LLVM backend (test/defn/<name>.kore) that run its
     interpreter on initial terms (test/input/<name>.in or test/input/<name>/*.in).
     Tests that only build the interpreter (never run it) are left out: their
@@ -253,14 +253,15 @@ def llvm_tests(src, full):
     for definition in sorted(glob.glob(os.path.join(src, "test/defn/*.kore"))):
         name = os.path.basename(definition)[:-len(".kore")]
         runs = [l for l in open(definition) if l.startswith("// RUN:")]
-        out, exclude = group_left_out(LLVM, name, full)
+        out, exclude, only = group_left_out(LLVM, name, quick)
         if out or not any("%interpreter" in l or "%gcs-interpreter" in l for l in runs) \
                 or not any(m in l for l in runs for m in ("%check", "%run", "%t.interpreter")):
             continue
         inputs = [p for p in [os.path.join(src, "test/input", name + ".in"), os.path.join(src, "test/input", name)]
                   if os.path.exists(p)]
         if inputs:
-            tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True, exclude=exclude)
+            tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True, exclude=exclude,
+                               only=only)
     return tests
 
 
@@ -278,7 +279,7 @@ def run_group(group, tests, names, args):
         return passed, "| %s | %s |" % (d, summary)
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
         results = list(pool.map(one, names or list(tests)))
-    if not names and not args.only:
+    if not names and not args.only and not args.quick:
         with open(os.path.join(args.work, group + ".md"), "w") as out:
             out.write("| test | result |\n|---|---|\n" + "\n".join(row for _, row in results) + "\n")
     return all(passed for passed, _ in results)
@@ -304,12 +305,14 @@ def main():
     ap.add_argument("--only", action="append", default=[],
                     help="run only this program (file name; repeatable); results go only to the screen")
     ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec (default 7200)")
-    ap.add_argument("--full", action="store_true", help="also run the programs marked long")
+    ap.add_argument("--full", action="store_true",
+                    help="run all programs (default: the quick lists, or all programs of the suites named)")
     ap.add_argument("--cover", action="store_true", help="record spec coverage in <work>/coverage/<suite>/")
     ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()
-    groups = {"regression": lambda: regression_tests(os.path.abspath(args.k_src), args.full),
-              "llvm": lambda: llvm_tests(os.path.abspath(args.llvm_src), args.full)}
+    args.quick = not args.full and not args.suites
+    groups = {"regression": lambda: regression_tests(os.path.abspath(args.k_src), args.quick),
+              "llvm": lambda: llvm_tests(os.path.abspath(args.llvm_src), args.quick)}
     suites = args.suites or list(SUITES) + list(groups)
     for s in suites:
         if s not in SUITES and s.split("/", 1)[0] not in groups:
