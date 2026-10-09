@@ -18,7 +18,9 @@
   $ git -C ../wasm-semantics submodule update --init --depth 1 tests/wasm-tests
   $ git clone --filter=blob:none https://github.com/runtimeverification/mir-semantics ../mir-semantics
   $ git -C ../mir-semantics checkout 4d79325
+  $ git -C ../mir-semantics submodule update --init deps/stable-mir-json
   $ uv --project ../mir-semantics/kmir sync    # kmir, which makes the KMIR inputs
+  $ make -C ../mir-semantics stable-mir-json   # needs rustup; for the Rust sources
   ```
 
 Build with `make boot`.

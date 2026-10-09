@@ -171,12 +171,16 @@ def kevm_programs(src, work):
 
 
 def kmir_programs(src, work, kompiled):
-    """The initial terms of the exec-smir tests of KMIR, as kmir run makes them
-    from their SMIR JSON for the LLVM backend (kmir_inputs.py, in the Python
-    environment of kmir): <dir>-<name>.kore for each <name>.smir.json. They
-    name symbols of the kompiled definition, so they are made after it."""
+    """The initial terms of KMIR tests, as kmir run makes them for the LLVM
+    backend (kmir_inputs.py, in the Python environment of kmir): those of
+    exec-smir from their SMIR JSON (<dir>-<name>.kore), and those of run-rs
+    and ub from their Rust source through stable-mir-json, built in the
+    repository (make stable-mir-json; rs-<dir>-<name>.kore). They name symbols
+    of the kompiled definition, so they are made after it."""
     out = os.path.join(work, "kmir", "programs")
-    files = sorted(glob.glob(os.path.join(src, "kmir/src/tests/integration/data/exec-smir/*/*.smir.json")))
+    data = os.path.join(src, "kmir/src/tests/integration/data")
+    files = sorted(glob.glob(os.path.join(data, "exec-smir/*/*.smir.json"))
+                   + glob.glob(os.path.join(data, "run-rs/*/*.rs")) + glob.glob(os.path.join(data, "ub/*.rs")))
     script = os.path.join(ROOT, "spec-k/scripts/kmir_inputs.py")
     # made once: the stamp names the script, the kompiled definition, and the
     # files with their sizes and times, so a change makes them again
