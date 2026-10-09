@@ -29,7 +29,8 @@ relation Rule_applies:
 
 rule Rule_applies:
   D |- (RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*) term : matched
-  -- First_holding: D |- $match(D, $empty_map<varid, term>, pattern_l, term) pattern_c? : matched
+  -- Match: D $empty_map<varid, term> |- pattern_l ~~ term : subst*
+  -- First_holding: D |- subst* pattern_c? : matched
 
 dec $rhs_of_rule(krule) : pattern
 def $rhs_of_rule(RULE pattern_l '=>' pattern_r 'requires' pattern_c? attr*)
