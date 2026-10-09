@@ -43,9 +43,11 @@ def run_difftest(name, t, args, jobs=None):
     kompiled = os.path.join(work, t.get("kompiled_as", name), "kompiled")
     stamp = os.path.join(kompiled, "timestamp")
     # kompile again when the definition changed since
-    if not os.path.exists(stamp) or os.path.getmtime(t["definition"]) > os.path.getmtime(stamp):
+    search = bool(t.get("check_steps"))
+    if not os.path.exists(stamp) or os.path.getmtime(t["definition"]) > os.path.getmtime(stamp) \
+            or (t.get("kore") and search and not os.path.exists(os.path.join(kompiled, "search"))):
         print("kompiling %s" % name, flush=True)
-        p = (llvm_kompile(t["definition"], kompiled) if t.get("kore") else
+        p = (llvm_kompile(t["definition"], kompiled, search) if t.get("kore") else
              subprocess.run(["kompile", "--backend", "llvm", t["definition"], "--output-definition", kompiled]
                             + [a.replace("{src}", t["src_dir"]) for a in t.get("kompile", [])],
                             capture_output=True, text=True))
@@ -86,15 +88,19 @@ def run_difftest(name, t, args, jobs=None):
     return p.returncode == 0, lines[-1] if lines else "no output"
 
 
-def llvm_kompile(definition, kompiled):
+def llvm_kompile(definition, kompiled, search=False):
     """A kompiled directory for a definition already in KORE: the definition,
     and its interpreter built by the LLVM backend, as kompile does
-    (llvm-kompile-matching for the decision trees)."""
+    (llvm-kompile-matching for the decision trees); with search, also the search
+    binary that step checks use, as kompile --enable-search does."""
     dt = os.path.join(kompiled, "dt")
     os.makedirs(dt, exist_ok=True)
     shutil.copyfile(definition, os.path.join(kompiled, "definition.kore"))
-    for cmd in (["llvm-kompile-matching", "definition.kore", "qbaL", "dt", "0"],
-                ["llvm-kompile", "definition.kore", "dt", "main", "-o", "interpreter"]):
+    cmds = [["llvm-kompile-matching", "definition.kore", "qbaL", "dt", "0"],
+            ["llvm-kompile", "definition.kore", "dt", "main", "-o", "interpreter"]]
+    if search:
+        cmds.append(["llvm-kompile", "definition.kore", "dt", "search", "-o", "search"])
+    for cmd in cmds:
         p = subprocess.run(cmd, cwd=kompiled, capture_output=True, text=True)
         if p.returncode != 0:
             return p
@@ -230,7 +236,8 @@ def llvm_tests(src):
         inputs = [p for p in [os.path.join(src, "test/input", name + ".in"), os.path.join(src, "test/input", name)]
                   if os.path.exists(p)]
         if inputs:
-            tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True)
+            tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True,
+                               check_steps=LLVM.get("check_steps", {}).get(name, []))
     return tests
 
 

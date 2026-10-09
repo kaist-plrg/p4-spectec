@@ -162,7 +162,7 @@ inputs = "tests"
 check_steps = [
   "references-5.fun", "ackermann.fun", "callcc-looping.fun", "constructor-bst-sorting.fun",
   "constructor-expr-distributivity.fun", "constructor-expr-toString.fun",
-  "constructor-list-length.fun", "factorial-and-list-max.fun", "list-length.fun", "list-max.fun",
+  "constructor-list-length.fun", "factorial-and-list-max.fun", "list-4.fun", "list-length.fun", "list-max.fun",
   "list-nth.fun", "nth.fun", "pattern.fun", "references-2.fun", "tuple-2.fun", "tuple-3.fun",
   "tuple-4.fun", "tuple-5.fun",
 ]
@@ -308,8 +308,22 @@ parseNonPgm = ["-cMODE=noprint"]
 # The tests of the LLVM backend (llvm-backend f02284f, test/defn/<name>.kore)
 # that run its interpreter on initial terms in KORE (test/input), compared
 # with the interpreter llvm-kompile builds from the same definition
+
+# Inputs checked step by step (krun -check-steps)
+[llvm.check_steps]
+# heating _+_ and the rule that rewrites A + B at once overlap at the same
+# priority; the LLVM backend heats first, the spec takes the rule first in KORE
+test19 = ["test19.in"]
+
+# Tests left out
 [llvm.skip]
 io = "file IO (the interpreter writes files in the working directory)"
 test26 = "file IO (the interpreter writes files in the working directory)"
 test28 = "file IO (the interpreter writes files in the working directory)"
+issue-539-priorities = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
+kool-static = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
+locations = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
+sk = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
+test8 = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
+test33 = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
 iterated-map-pointer-residual = "a function recursing 2^19 deep in one step: the LLVM backend makes it a tail call, the spec nests it (about 12 KB a level)"
