@@ -16,13 +16,22 @@ let run ((module Runner : Run.RUNNER) : (module Run.RUNNER)) (spec : Run.spec)
   (* The GC settings of spectec-boot favour speed over memory. K runs keep
      large configurations alive, so use OCaml's default space overhead (120),
      unless SPECTEC_SPACE_OVERHEAD says otherwise: at 1,500 steps of KOOL
-     factorial it halves the heap (949 MB to 424 MB) at no cost. *)
-  let space_overhead =
-    match Sys.getenv_opt "SPECTEC_SPACE_OVERHEAD" with
-    | Some s -> ( try int_of_string s with Failure _ -> 120)
-    | None -> 120
+     factorial it halves the heap (949 MB to 424 MB) at no cost. The minor
+     heap is OCaml's default too (256K words, 2 MB), unless SPECTEC_MINOR_HEAP
+     says otherwise: spectec-boot's 16M words (128 MB) do not fit the
+     processor's cache, and K runs are 20-25% slower with them (2026-10-09,
+     IMP, KOOL, KEVM, KWasm). *)
+  let env_int name default =
+    match Sys.getenv_opt name with
+    | Some s -> ( try int_of_string s with Failure _ -> default)
+    | None -> default
   in
-  Gc.set { (Gc.get ()) with Gc.space_overhead };
+  Gc.set
+    {
+      (Gc.get ()) with
+      Gc.space_overhead = env_int "SPECTEC_SPACE_OVERHEAD" 120;
+      Gc.minor_heap_size = env_int "SPECTEC_MINOR_HEAP" (256 * 1024);
+    };
   try
     let (loaded, value_init), t_load =
       time (fun () ->

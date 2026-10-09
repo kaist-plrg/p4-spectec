@@ -306,6 +306,8 @@ def main():
                          "definition without krun")
     ap.add_argument("--krun-cache", default=None,
                     help="keep what krun does with each program in this directory, and reuse it")
+    ap.add_argument("--k-version", default=None,
+                    help="the output of krun --version, for the keys of the krun cache (default: run it)")
     ap.add_argument("-j", "--jobs", type=int, default=1, help="programs to test at a time")
     ap.add_argument("--check-steps-for", action="append", default=[], metavar="NAME[:N]",
                     help="check each step of this program against the search binary instead of comparing "
@@ -328,7 +330,7 @@ def main():
 
     if args.krun_cache:
         args.krun_cache = os.path.abspath(args.krun_cache)
-        args.k_version = run(["krun", "--version"], 60)[1]
+        args.k_version = args.k_version or run(["krun", "--version"], 60)[1]
         args.definition_hash = hashlib.sha256(open(definition, "rb").read()).hexdigest()
     root = args.keep or tempfile.mkdtemp(prefix="difftest-")
     Interpreter.preload = fast_throw()

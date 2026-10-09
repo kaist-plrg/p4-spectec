@@ -21,7 +21,9 @@ Two programs are tested at a time (--jobs). The exit code is 1 if a test fails.
 import argparse
 import concurrent.futures
 import fnmatch
+import functools
 import glob
+import hashlib
 import os
 import re
 import shlex
@@ -74,7 +76,7 @@ def run_difftest(name, t, args, jobs=None):
     cmd += ["--krun-arg=" + a for a in t.get("krun", [])]
     cmd += ["--depth=%d" % t["depth"]] if "depth" in t else []
     cmd += ["--kore-input"] if t.get("kore") or t.get("kore_input") else []
-    cmd += ["--krun-cache", os.path.join(work, "krun-cache")]
+    cmd += ["--krun-cache", os.path.join(work, "krun-cache"), "--k-version", k_version()]
     cmd += ["--input-dir", t["inputs"]] if "inputs" in t else []
     cmd += sum((["--exclude", e] for e in t.get("exclude", [])), [])
     cmd += sum((["--check-steps-for", e] for e in t.get("check_steps", [])), [])
@@ -95,6 +97,12 @@ def run_difftest(name, t, args, jobs=None):
             out.write("".join(output))
     lines = "".join(output).strip().splitlines()
     return p.returncode == 0, lines[-1] if lines else "no output"
+
+
+@functools.cache
+def k_version():
+    """krun --version, run once for all the difftest.py runs (0.2 s each)"""
+    return subprocess.run(["krun", "--version"], capture_output=True, text=True).stdout
 
 
 def llvm_kompile(definition, kompiled):
@@ -140,11 +148,22 @@ def kevm_programs(src, work):
     out = os.path.join(work, "kevm", "programs")
     gst = "tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests"
     files = sorted(glob.glob(os.path.join(src, gst, "**", "*.json"), recursive=True))
-    p = subprocess.run(["uv", "run", "--directory", os.path.join(src, "kevm-pyk"), "python",
-                        os.path.join(ROOT, "spec-k/scripts/kevm_inputs.py"), out, "VMTESTS", "DEFAULT"] + files,
-                       capture_output=True, text=True)
+    script = os.path.join(ROOT, "spec-k/scripts/kevm_inputs.py")
+    # made once (about 10 s): the stamp names the script, the mode, and the
+    # files with their sizes and times, so a change makes them again
+    h = hashlib.sha256(open(script, "rb").read() + b"VMTESTS DEFAULT")
+    for f in files:
+        st = os.stat(f)
+        h.update(("%s %d %d\0" % (os.path.relpath(f, src), st.st_size, st.st_mtime_ns)).encode())
+    stamp = os.path.join(out, ".stamp")
+    if os.path.exists(stamp) and open(stamp).read() == h.hexdigest():
+        return out
+    p = subprocess.run(["uv", "run", "--directory", os.path.join(src, "kevm-pyk"), "python", script, out,
+                        "VMTESTS", "DEFAULT"] + files, capture_output=True, text=True)
     if p.returncode != 0:
         sys.exit("kevm_inputs.py failed: " + p.stderr[-2000:])
+    with open(stamp, "w") as fh:
+        fh.write(h.hexdigest())
     return out
 
 
