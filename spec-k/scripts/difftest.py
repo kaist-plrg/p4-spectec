@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Diff test: run programs with krun and with the K spec, and compare the
-final configurations and step counts (see spec-k/README.md).
+final configurations and step counts (see spec-k/README.md). When they differ
+and the kompiled definition has a search binary (kompile --enable-search), the
+run of the spec is checked step by step instead: each step must be one K
+allows, as K leaves some choices open (rules of the same priority, the order
+of map elements).
 
 usage:
   spec-k/scripts/difftest.py -k imp-kompiled tests/*.imp
@@ -11,6 +15,7 @@ spectec-boot must be built (make boot).
 import argparse
 import collections
 import concurrent.futures
+import fnmatch
 import glob
 import hashlib
 import json
@@ -262,6 +267,17 @@ def test_program(prog, root, definition, args):
     spec = run_spec(definition, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
                     args.memory_max)
     verdict = judge(spec, k_steps, fails_at, check, limit)
+    # a run that ends elsewhere or in other steps than krun's may still take
+    # only steps K allows
+    if verdict in ("FAIL: configuration differs", "FAIL: steps differ") \
+            and os.path.exists(os.path.join(args.kompiled, "search")):
+        differs = verdict[len("FAIL: "):]
+        compare = ["-check-steps", os.path.abspath(args.kompiled)]
+        spec = run_spec(definition, init, os.path.join(work, "spec.kore"), compare, extra, args.timeout,
+                        args.memory_max)
+        verdict = judge(spec, k_steps, fails_at, True, limit)
+        verdict = verdict.replace("pass (each step is one K allows)",
+                                  "pass by steps (%s; each step is one K allows)" % differs)
     steps = "-" if spec.steps is None else spec.steps
     return "| %s | %s | %s | %s | %.1f | %.1f |" % (name, k_steps, steps, verdict, k_secs, spec.secs), verdict
 
@@ -277,7 +293,8 @@ def main():
     ap.add_argument("--keep", default=None, help="keep work files in this directory")
     ap.add_argument("--input-dir", default=None,
                     help="read <name>.in from this directory instead of beside the program")
-    ap.add_argument("--exclude", action="append", default=[], help="skip programs with this file name")
+    ap.add_argument("--exclude", action="append", default=[],
+                    help="skip programs whose file name matches this (a glob pattern)")
     ap.add_argument("--memory-max", default="2500M" if shutil.which("systemd-run") else "",
                     help="memory cap for each run of the spec (systemd-run MemoryMax; empty for none, "
                          "the default without systemd)")
@@ -303,7 +320,8 @@ def main():
                                and (args.kore_input or not f.endswith((".out", ".in"))))
         else:
             programs.append(p)
-    programs = [p for p in programs if os.path.basename(p) not in args.exclude]
+    programs = [p for p in programs
+                if not any(fnmatch.fnmatchcase(os.path.basename(p), e) for e in args.exclude)]
     definition = os.path.join(args.kompiled, "definition.kore")
     if not os.path.exists(definition):
         sys.exit("no definition.kore in %s" % args.kompiled)
