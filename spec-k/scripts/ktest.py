@@ -9,8 +9,9 @@ usage:
   spec-k/scripts/ktest.py kwasm --only conformance-i32.wast
   spec-k/scripts/ktest.py regression/list-set
 
-A quick run leaves out the programs marked long in suites.toml (and runs only
-a sample of KEVM); --full runs them too. Programs marked skip never run.
+A quick run leaves out the programs marked long in suites.toml; --full runs
+them too. Programs marked skip never run. Each run of the spec may take two
+hours (--timeout).
 
 Each definition is kompiled once into <work>/<suite>/ and kept there, with the
 search binary that step checks use. Each result row is shown as its program is
@@ -41,11 +42,10 @@ LLVM = CONFIG["llvm"]
 
 
 def run_difftest(name, t, args, jobs=None):
-    """Kompile t["definition"] once into <work>/<name>/kompiled (or that of
-    t["kompiled_as"]), then diff test t["programs"]. Returns (passed, last line
-    of the results)."""
+    """Kompile t["definition"] once into <work>/<name>/kompiled, then diff test
+    t["programs"]. Returns (passed, last line of the results)."""
     work = os.path.abspath(args.work)
-    kompiled = os.path.join(work, t.get("kompiled_as", name), "kompiled")
+    kompiled = os.path.join(work, name, "kompiled")
     stamp = os.path.join(kompiled, "timestamp")
     # kompile again when the definition changed since, or when the search
     # binary is missing (not for a kompiled directory linked from elsewhere)
@@ -66,7 +66,7 @@ def run_difftest(name, t, args, jobs=None):
         if not programs:
             return True, "no program among --only"
     cmd = [sys.executable, os.path.join(ROOT, "spec-k/scripts/difftest.py"), "-k", kompiled,
-           "--timeout", str(args.timeout or t.get("timeout", 3600)),
+           "--timeout", str(args.timeout or 7200),
            "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs), "--ext", t["ext"]] + programs
     cmd += ["--krun-arg=" + a for a in t.get("krun", [])]
     cmd += ["--depth=%d" % t["depth"]] if "depth" in t else []
@@ -130,14 +130,15 @@ def kwasm_programs(src, work):
     return out
 
 
-def kevm_programs(src, work, t):
-    """The initial terms of the KEVM tests in t["gst"] (GeneralStateTests), as
-    kevm-pyk run makes them (kevm_inputs.py, in the Python environment of
-    kevm-pyk): <file>-<test>.kore for each test of each file."""
+def kevm_programs(src, work):
+    """The initial terms of the VMTests of ethereum-tests, as kevm-pyk run makes
+    them (kevm_inputs.py, in the Python environment of kevm-pyk; VMTESTS mode,
+    default schedule): <file>-<test>.kore for each test of each file."""
     out = os.path.join(work, "kevm", "programs")
-    files = sorted(glob.glob(os.path.join(src, t["gst"], "**", "*.json"), recursive=True))
+    gst = "tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests"
+    files = sorted(glob.glob(os.path.join(src, gst, "**", "*.json"), recursive=True))
     p = subprocess.run(["uv", "run", "--directory", os.path.join(src, "kevm-pyk"), "python",
-                        os.path.join(ROOT, "spec-k/scripts/kevm_inputs.py"), out, t["mode"], t["schedule"]] + files,
+                        os.path.join(ROOT, "spec-k/scripts/kevm_inputs.py"), out, "VMTESTS", "DEFAULT"] + files,
                        capture_output=True, text=True)
     if p.returncode != 0:
         sys.exit("kevm_inputs.py failed: " + p.stderr[-2000:])
@@ -152,26 +153,22 @@ def left_out(skip, long, full):
 
 def run_suite(suite, args):
     t = dict(SUITES[suite])
+    if "*" in t.get("long", []) and not args.full:
+        print("%s: long, left out of a quick run" % suite, flush=True)
+        return True
     src = os.path.abspath({"kwasm": args.kwasm_src, "kevm": args.kevm_src, "k": args.k_src, "spec": ROOT}[t["src"]])
     t["src_dir"] = src
     t["definition"] = os.path.join(src, t["dir"], t["def"])
     if suite == "kwasm":
         t["programs"] = [kwasm_programs(src, os.path.abspath(args.work))]
     elif suite == "kevm":
-        t["programs"] = [kevm_programs(src, os.path.abspath(args.work), t)]
+        t["programs"] = [kevm_programs(src, os.path.abspath(args.work))]
+        t["kore_input"] = True
     else:
         t["programs"] = [os.path.join(src, t["dir"], d) for d in t.get("tests", ["tests"])]
     if "inputs" in t:
         t["inputs"] = os.path.join(src, t["dir"], t["inputs"])
-    t["exclude"] = left_out(t.get("skip", {}), t.get("long", {}), args.full)
-    # a quick run takes the first programs of each file (<file>-<test>)
-    if "quick_per_file" in t and not args.full:
-        seen = {}
-        for f in sorted(os.listdir(t["programs"][0])):
-            stem = f.split("-", 1)[0]
-            seen[stem] = seen.get(stem, 0) + 1
-            if seen[stem] > t["quick_per_file"]:
-                t["exclude"].append(f)
+    t["exclude"] = left_out(t.get("skip", []), t.get("long", []), args.full)
     ok, summary = run_difftest(suite, t, args)
     print(summary, flush=True)
     return ok
@@ -195,7 +192,7 @@ def group_left_out(group, d, full):
     """Whether test d of a group (regression or llvm) is not run, and the
     patterns of its programs not run: keys <test> or <test>/<program> of the
     group's skip and long tables."""
-    keys = left_out(group.get("skip", {}), group.get("long", {}), full)
+    keys = left_out(group.get("skip", []), group.get("long", []), full)
     return d in keys, [k.split("/", 1)[1] for k in keys if k.startswith(d + "/")]
 
 
@@ -306,8 +303,8 @@ def main():
                     help="directory for kompiled definitions and results (default spec-k/_k-test)")
     ap.add_argument("--only", action="append", default=[],
                     help="run only this program (file name; repeatable); results go only to the screen")
-    ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec")
-    ap.add_argument("--full", action="store_true", help="also run the programs marked long (and all of KEVM)")
+    ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec (default 7200)")
+    ap.add_argument("--full", action="store_true", help="also run the programs marked long")
     ap.add_argument("--cover", action="store_true", help="record spec coverage in <work>/coverage/<suite>/")
     ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()

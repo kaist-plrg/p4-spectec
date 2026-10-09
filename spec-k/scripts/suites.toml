@@ -20,14 +20,8 @@
 #   kompile      extra kompile options (--enable-search is always added)
 #   krun         extra krun options
 #   depth        stop krun and the spec after this many steps
-#   kompiled_as  use the kompiled definition of that suite
-#   timeout      seconds for each run of the spec (default 3600)
 #   cache_size   entries of the executor's call cache (SPECTEC_CACHE_SIZE;
 #                default 32768); fewer bound the memory of large configurations
-#   kore_input   the programs are initial terms in KORE (kevm: made from
-#                the GeneralStateTests in gst, with mode and schedule)
-#   quick_per_file  in a quick run, only this many programs of each
-#                <file>-<test> group
 #   long         programs (glob patterns) left out of a quick run: those whose
 #                spec run takes more than five minutes
 #   skip         programs (glob patterns) never run, with why in comments
@@ -139,7 +133,6 @@ ext = "fun"
 # configuration): a smaller call cache keeps the spec under its memory limit,
 # and its 13,914 steps take about 66 minutes step by step
 cache_size = 1024
-timeout = 7200
 tests = ["../../programs"]
 inputs = "tests"
 long = ["constructor-bst-sorting.fun"]
@@ -159,7 +152,6 @@ kompile = [
   "--gen-glr-bison-parser",
   "-O3",
 ]
-timeout = 7200
 long = [
   "conformance-f32_cmp.wast",
   "conformance-f64_cmp.wast",
@@ -173,18 +165,13 @@ long = [
 ]
 
 # KEVM: the VMTests of ethereum-tests, as kevm-pyk run makes their initial
-# terms (VMTESTS mode, default schedule), with the blockchain plugin built in
-# the plugin directory (make). A quick run takes the first test of each file
+# terms (ktest.py), with the blockchain plugin built in the plugin directory
+# (make). All of them are long: a quick run leaves KEVM out
 [suite.kevm]
 src = "kevm"
 dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
 def = "driver.md"
 ext = "kore"
-kore_input = true
-gst = "tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests"
-quick_per_file = 1
-mode = "VMTESTS"
-schedule = "DEFAULT"
 # twoOps (51,547 steps) needs 1.3 GB with 4,096 entries, and more than 2.5 GB
 # with the default
 cache_size = 4096
@@ -216,7 +203,7 @@ kompile = [
   "-ccopt",
   "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
 ]
-long = ["vmPerformance-*"]
+long = ["*"]
 
 # IMP stopped after 20 steps
 [suite.depth]
@@ -224,7 +211,6 @@ src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/2_imp/lesson_4"
 def = "imp.k"
 ext = "imp"
-kompiled_as = "imp"
 depth = 20
 
 # Definitions written for the K features and errors that the languages above
