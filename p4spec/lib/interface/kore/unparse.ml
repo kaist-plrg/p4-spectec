@@ -224,11 +224,13 @@ let rec pattern_of_term ?memo (info : info) (v : Value.t) : pattern =
   | Some p -> p
   | None -> error "not a term: %s" (Value.to_string v)
 
-(* Normal form for comparison, as text: associativity sugar expanded, and for
-   Map and Set sorts, nested concatenations flattened, units dropped, and
-   elements sorted by their text. Lists keep their order. Bound variables get
-   canonical names by binder depth, since the LLVM backend names them afresh
-   when rewriting ends (substitution.md).
+(* Normal form for comparison, as text. It covers how krun writes a
+   configuration, not what K computes, which is the spec's: associativity
+   sugar expanded; for Map and Set sorts, nested concatenations flattened,
+   units dropped, and elements sorted by their text (lists keep their order);
+   variables named as the LLVM backend's printer names them; and bound
+   variables then named canonically by binder depth, since the printer names
+   them afresh (substitution.md).
 
    Each element is written once, when it is sorted, and its text is reused
    above it; an element can also come as the text it had before (rendered). *)
@@ -337,7 +339,69 @@ let normal_text (info : info) : pattern -> string =
     | App (f, sorts, args) -> App (f, sorts, List.map (alpha env depth) args)
     | p -> p
   in
-  fun p -> text_of_normal (fst (norm (alpha [] 0 (desugar_assoc p))))
+  let is_kvar s = sort_hook info s = Some "KVAR.KVar" in
+  (* Variable names as the LLVM backend's printer gives them
+     (runtime/util/ConfigurationPrinter.cpp): each binder's variable is a
+     variable of its own, free variables are one per name, and each gets its
+     name when first printed, with a number from one counter added if another
+     variable has that name already. So a free variable can be renamed: krun
+     prints (\y.y) y as (\y.y) y0. The spec's names are the LLVM ones with
+     the primes its substitution adds (3.2-hook-substitution.watsup) *)
+  let printer_names (p : pattern) : pattern =
+    let used = Hashtbl.create 16 and free = Hashtbl.create 16 in
+    let counter = ref 0 in
+    let name x =
+      let base =
+        let n = ref (String.length x) in
+        while !n > 0 && x.[!n - 1] = '\'' do
+          decr n
+        done;
+        String.sub x 0 !n
+      in
+      let rec go suffix =
+        if Hashtbl.mem used (base ^ suffix) then (
+          let suffix = string_of_int !counter in
+          incr counter;
+          go suffix)
+        else base ^ suffix
+      in
+      let y = go "" in
+      Hashtbl.replace used y ();
+      y
+    in
+    let rec walk env p =
+      match p with
+      | App ("\\dv", [ s ], [ Str x ]) when is_kvar s -> (
+          match List.assoc_opt x env with
+          | Some y -> App ("\\dv", [ s ], [ Str y ])
+          | None ->
+              let y =
+                match Hashtbl.find_opt free x with
+                | Some y -> y
+                | None ->
+                    let y = name x in
+                    Hashtbl.replace free x y;
+                    y
+              in
+              App ("\\dv", [ s ], [ Str y ]))
+      | App (f, sorts, App ("\\dv", [ s ], [ Str x ]) :: rest) when is_binder f
+        ->
+          let y = name x in
+          App
+            ( f,
+              sorts,
+              App ("\\dv", [ s ], [ Str y ])
+              :: List.map (walk ((x, y) :: env)) rest )
+      | App (f, sorts, args) -> App (f, sorts, List.map (walk env) args)
+      | p -> p
+    in
+    walk [] p
+  in
+  let binders = has_binders info in
+  fun p ->
+    let p = desugar_assoc p in
+    let p = if binders then alpha [] 0 (printer_names p) else p in
+    text_of_normal (fst (norm p))
 
 (* The normal texts of the elements of Maps and Sets in terms of the spec,
    kept by value id from one step to the next. Only for definitions without
