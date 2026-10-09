@@ -1,20 +1,26 @@
+# Formatted with: uvx taplo fmt -o align_comments=false -o column_width=100
+#
 # The test suites of ktest.py: K definitions whose programs are run by krun
-# and by the K spec, and compared (difftest.py).
+# and by the K spec, and compared (difftest.py). When the final configuration
+# or the step count differs, the run of the spec is checked step by step: each
+# step must be one K allows (K leaves the choice among rules of the same
+# priority and the order of map elements open).
+#
+# A quick run (the default) leaves out the programs marked long; a full run
+# (ktest.py --full) runs them too. Programs marked skip never run.
 #
 # [suite.<name>], run in this order by default:
 #   src          where dir is: "k" (K v7.1.337), "kwasm" (wasm-semantics),
-#                or "spec" (this repository)
+#                "kevm" (evm-semantics), or "spec" (this repository)
 #   dir, def     the directory of the definition, and its file
 #   ext          the extension of the programs
 #   tests        directories of the programs, relative to dir (default ["tests"])
 #   inputs       directory of the <program>.in files, relative to dir
 #                (default: beside the programs)
-#   kompile      extra kompile options
+#   kompile      extra kompile options (--enable-search is always added)
 #   krun         extra krun options
-#   exclude      programs left out
-#   check_steps  programs checked step by step against K's search rather than
-#                compared with krun's run (NAME, or NAME:N for the first N
-#                steps of a run that may not end)
+#   check_steps  programs checked step by step from the start, for their first
+#                N steps (NAME:N), as their runs may not end
 #   depth        stop krun and the spec after this many steps
 #   kompiled_as  use the kompiled definition of that suite
 #   timeout      seconds for each run of the spec (default 3600)
@@ -22,12 +28,14 @@
 #                default 32768); fewer bound the memory of large configurations
 #   kore_input   the programs are initial terms in KORE (kevm: made from
 #                the GeneralStateTests in gst, with mode and schedule)
+#   quick_per_file  in a quick run, only this many programs of each
+#                <file>-<test> group
+#   long         programs (glob patterns) left out of a quick run: those whose
+#                spec run takes more than five minutes
+#   skip         programs (glob patterns) never run, with why in comments
 #
-# In the tutorial languages, the programs that the tutorial Makefiles run with
-# --search are checked step by step, and those they skip are left out. The
-# type checkers work on several tasks, and FUN binds the names of a pattern,
-# in an order K leaves open; the programs where that order changes the result
-# are checked step by step.
+# The tutorial languages leave out the programs that the tutorial Makefiles do
+# not run.
 
 [suite.imp]
 src = "k"
@@ -48,15 +56,10 @@ src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/1_untyped"
 def = "simple-untyped.md"
 ext = "simple"
-kompile = ["--enable-search"]
 krun = ["--io", "off"]
 tests = ["tests/diverse", "tests/exceptions", "tests/threads"]
-# threads_05 may not end
-check_steps = [
-  "threads_01.simple", "threads_02.simple", "threads_04.simple", "threads_05.simple:1000",
-  "threads_06.simple", "threads_07.simple", "threads_09.simple", "threads_10.simple",
-  "threads_11.simple", "threads_12.simple", "exceptions_07.simple", "div-nondet.simple",
-]
+# threads_05 may not end: its first 1,000 steps are checked
+check_steps = ["threads_05.simple:1000"]
 
 [suite.kool]
 src = "k"
@@ -64,20 +67,15 @@ dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/1_unty
 def = "kool-untyped.md"
 ext = "kool"
 krun = ["--io", "off"]
-exclude = ["threads.kool"]
+skip = ["threads.kool"] # the tutorial Makefile does not run it
 
 [suite."lambda++"]
 src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/3_lambda++/lesson_5"
 def = "lambda.k"
 ext = "lambda"
-kompile = ["--enable-search", "--syntax-module", "LAMBDA"]
+kompile = ["--syntax-module", "LAMBDA"]
 tests = ["tests/deterministic", "tests/nondeterministic"]
-check_steps = [
-  "arithmetic.lambda", "callcc-env1.lambda", "callcc-env2.lambda", "callcc-with-let.lambda",
-  "closed-variable-capture.lambda", "free-variable-capture.lambda", "identity.lambda",
-  "if.lambda", "lets.lambda",
-]
 
 # The proofs of the lesson (kprove, the Haskell backend) are not run
 [suite."imp++"]
@@ -85,41 +83,29 @@ src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/1_k/4_imp++/lesson_7"
 def = "imp.k"
 ext = "imp"
-kompile = ["--gen-glr-bison-parser", "--enable-search"]
+kompile = ["--gen-glr-bison-parser"]
 krun = ["--io", "off"]
-check_steps = ["div.imp", "spawn.imp"]
 
 [suite.simple-typed-static]
 src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/1_static"
 def = "simple-typed-static.md"
 ext = "simple"
-kompile = ["--enable-search"]
 tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
 inputs = "tests"
-check_steps = [
-  "collatz.simple", "dekker.simple", "higher-order.simple", "matrix.simple", "sortings.simple",
-  "exceptions_02.simple", "exceptions_06.simple", "exceptions_09.simple", "exceptions_11.simple",
-  "threads_03.simple", "threads_04.simple", "threads_08.simple", "threads_11.simple",
-  "threads_12.simple",
-]
 
 [suite.simple-typed-dynamic]
 src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/1_simple/2_typed/2_dynamic"
 def = "simple-typed-dynamic.md"
 ext = "simple"
-kompile = ["--enable-search"]
 krun = ["--io", "off"]
 tests = ["../programs/diverse", "../programs/exceptions", "../programs/threads"]
 inputs = "tests"
-# they do not end
-exclude = ["dekker.simple", "threads_03.simple", "threads_08.simple"]
-check_steps = [
-  "exceptions_07.simple", "threads_01.simple", "threads_02.simple", "threads_04.simple",
-  "threads_05.simple:1000", "threads_06.simple", "threads_09.simple", "threads_12.simple",
-  "div-nondet.simple",
-]
+check_steps = ["threads_05.simple:1000"]
+long = ["matrix.simple"]
+# they do not end, and the tutorial Makefile does not run them
+skip = ["dekker.simple", "threads_03.simple", "threads_08.simple"]
 
 [suite.kool-typed-dynamic]
 src = "k"
@@ -129,29 +115,24 @@ ext = "kool"
 krun = ["--io", "off"]
 tests = ["../programs"]
 inputs = "tests"
-exclude = ["cycle.kool", "threads.kool"]
+long = ["matrix.kool"]
+skip = ["cycle.kool", "threads.kool"] # the tutorial Makefile does not run them
 
 [suite.kool-typed-static]
 src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/2_kool/2_typed/2_static"
 def = "kool-typed-static.md"
 ext = "kool"
-kompile = ["--enable-search"]
 krun = ["--io", "off"]
 tests = ["../programs"]
 inputs = "tests"
-exclude = ["return-object.kool"]
-check_steps = [
-  "cycle.kool", "exceptions-1.kool", "field-shadowing-1.kool", "matrix.kool",
-  "method-sharing.kool", "odd-even.kool", "sorting.kool", "super-1.kool", "super-2.kool",
-]
+skip = ["return-object.kool"] # the tutorial Makefile does not run it
 
 [suite.fun]
 src = "k"
 dir = "k-distribution/tests/regression-new/pl-tutorial/2_languages/3_fun/1_untyped/1_environment"
 def = "fun-untyped.md"
 ext = "fun"
-kompile = ["--enable-search"]
 # constructor-bst-sorting grows the store to 1,131 entries (a 1 MB
 # configuration): a smaller call cache keeps the spec under its memory limit,
 # and its 13,914 steps take about 66 minutes step by step
@@ -159,13 +140,7 @@ cache_size = 1024
 timeout = 7200
 tests = ["../../programs"]
 inputs = "tests"
-check_steps = [
-  "references-5.fun", "ackermann.fun", "callcc-looping.fun", "constructor-bst-sorting.fun",
-  "constructor-expr-distributivity.fun", "constructor-expr-toString.fun",
-  "constructor-list-length.fun", "factorial-and-list-max.fun", "list-4.fun", "list-length.fun", "list-max.fun",
-  "list-nth.fun", "nth.fun", "pattern.fun", "references-2.fun", "tuple-2.fun", "tuple-3.fun",
-  "tuple-4.fun", "tuple-5.fun",
-]
+long = ["constructor-bst-sorting.fun"]
 
 [suite.kwasm]
 src = "kwasm"
@@ -173,19 +148,31 @@ dir = "pykwasm/src/pykwasm/kdist/wasm-semantics"
 def = "test.md"
 ext = "wast"
 kompile = [
-  "--main-module", "WASM-TEST", "--syntax-module", "WASM-TEST-SYNTAX", "--md-selector", "k",
-  "--gen-glr-bison-parser", "-O3",
-]
-# left out for their length (0.5 to 13 million steps)
-exclude = [
-  "conformance-memory_copy.wast", "conformance-memory_fill.wast", "conformance-memory_grow.wast",
-  "conformance-call.wast",
+  "--main-module",
+  "WASM-TEST",
+  "--syntax-module",
+  "WASM-TEST-SYNTAX",
+  "--md-selector",
+  "k",
+  "--gen-glr-bison-parser",
+  "-O3",
 ]
 timeout = 7200
+long = [
+  "conformance-f32_cmp.wast",
+  "conformance-f64_cmp.wast",
+  "conformance-names.wast",
+  "conformance-table_copy.wast",
+  "conformance-table_init.wast",
+  "conformance-memory_copy.wast",
+  "conformance-memory_fill.wast",
+  "conformance-memory_grow.wast",
+  "conformance-call.wast",
+]
 
 # KEVM: the VMTests of ethereum-tests, as kevm-pyk run makes their initial
 # terms (VMTESTS mode, default schedule), with the blockchain plugin built in
-# the plugin directory (make); vmPerformance is left out for its length
+# the plugin directory (make). A quick run takes the first test of each file
 [suite.kevm]
 src = "kevm"
 dir = "kevm-pyk/src/kevm_pyk/kproj/evm-semantics"
@@ -193,35 +180,41 @@ def = "driver.md"
 ext = "kore"
 kore_input = true
 gst = "tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests"
-gst_exclude = ["vmPerformance"]
+quick_per_file = 1
 mode = "VMTESTS"
 schedule = "DEFAULT"
 # twoOps (51,547 steps) needs 1.3 GB with 4,096 entries, and more than 2.5 GB
 # with the default
 cache_size = 4096
-# Two rules of the same priority both apply to a short signature value r or s:
-# one pads it to 32 bytes (driver.md), one stores it (state-utils.md). The LLVM
-# backend picks the first by its decision tree, the spec the second by the
-# order of the KORE file, and the transaction is then invalid. K leaves the
-# choice open, so these are checked step by step
-check_steps = [
-  "addmod-addmod_d8g0v0_Cancun.kore", "calldatasize-calldatasize_d4g0v0_Cancun.kore",
-  "divByZero-divByZero_d18g0v0_Cancun.kore", "dup-dup_d8g0v0_Cancun.kore",
-  "exp-exp_d8g0v0_Cancun.kore", "jump-jump_d8g0v0_Cancun.kore", "jumpi-jumpi_d21g0v0_Cancun.kore",
-  "jumpi-jumpi_d24g0v0_Cancun.kore", "log1-log1_d8g0v0_Cancun.kore",
-  "log2-log2_d8g0v0_Cancun.kore", "log3-log3_d8g0v0_Cancun.kore", "log4-log4_d8g0v0_Cancun.kore",
-  "loopsConditionals-loopsConditionals_d8g0v0_Cancun.kore", "mul-mul_d8g0v0_Cancun.kore",
-  "mulmod-mulmod_d8g0v0_Cancun.kore", "push-push_d8g0v0_Cancun.kore",
-  "sdiv-sdiv_d8g0v0_Cancun.kore", "sha3-sha3_d8g0v0_Cancun.kore",
-  "signextend-signextend_d8g0v0_Cancun.kore", "swap-swap_d8g0v0_Cancun.kore",
-]
 kompile = [
-  "--main-module", "ETHEREUM-SIMULATION", "--syntax-module", "ETHEREUM-SIMULATION",
-  "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics", "-I", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin",
-  "--md-selector", "k & ! symbolic", "--hook-namespaces", "JSON KRYPTO", "--emit-json", "-O3", "--enable-search",
-  "--type-inference-mode", "simplesub", "-ccopt", "-std=c++20", "-ccopt", "-lssl", "-ccopt", "-lcrypto",
-  "-ccopt", "-lsecp256k1", "-ccopt", "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
+  "--main-module",
+  "ETHEREUM-SIMULATION",
+  "--syntax-module",
+  "ETHEREUM-SIMULATION",
+  "-I",
+  "{src}/kevm-pyk/src/kevm_pyk/kproj/evm-semantics",
+  "-I",
+  "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin",
+  "--md-selector",
+  "k & ! symbolic",
+  "--hook-namespaces",
+  "JSON KRYPTO",
+  "--emit-json",
+  "-O3",
+  "--type-inference-mode",
+  "simplesub",
+  "-ccopt",
+  "-std=c++20",
+  "-ccopt",
+  "-lssl",
+  "-ccopt",
+  "-lcrypto",
+  "-ccopt",
+  "-lsecp256k1",
+  "-ccopt",
+  "{src}/kevm-pyk/src/kevm_pyk/kproj/plugin/build/krypto/lib/krypto.a",
 ]
+long = ["vmPerformance-*"]
 
 # IMP stopped after 20 steps
 [suite.depth]
@@ -273,32 +266,39 @@ ext = "errors"
 # Makefile as the step limit.
 [regression]
 dir = "k-distribution/tests/regression-new"
-
-# Tests that krun differently from a plain run of each program
-[regression.skip]
-proof-instrumentation = "krun --proof-hint"
-proof-instrumentation-debug = "krun --proof-hint"
-issue-1602 = "krun --dry-run"
-krun-deserialize = "a custom parser"
-issue-582 = "a custom parser"
-star-multiplicity = "a custom parser"
-issue-1169 = "a preprocessed definition"
-imp-outer-json = "a definition in JSON"
-issue-2273 = "kast tests"
-issue-946 = "a custom krun target"
-io-llvm = "file IO"
-rand = "random numbers"
-exit-code-no-gen-top = "the exit code"
-trace = "#trace (IO)"
-unparseKORE = "#unparseKORE (reflection)"
-# the initializers take the configuration as an argument (fresh variables in
-# the configuration), but krun's initial term does not pass it
-issue-3520-freshConfig = "an initial term with fewer arguments than the initializer"
-
-# Programs left out
-[regression.exclude]
-# kompile leaves a fresh variable of a function equation unbound
-withConfig2 = ["1.test"]
+# tests (or <test>/<program>) not run
+skip = [
+  # they krun differently from a plain run of each program:
+  # krun --proof-hint
+  "proof-instrumentation",
+  "proof-instrumentation-debug",
+  # krun --dry-run
+  "issue-1602",
+  # a custom parser
+  "krun-deserialize",
+  "issue-582",
+  "star-multiplicity",
+  # a preprocessed definition
+  "issue-1169",
+  # a definition in JSON
+  "imp-outer-json",
+  # kast tests
+  "issue-2273",
+  # a custom krun target
+  "issue-946",
+  # they use what the spec does not cover:
+  # file IO, random numbers, the exit code, #trace (IO), #unparseKORE (reflection)
+  "io-llvm",
+  "rand",
+  "exit-code-no-gen-top",
+  "trace",
+  "unparseKORE",
+  # the initializers take the configuration as an argument (fresh variables
+  # in the configuration), but krun's initial term does not pass it
+  "issue-3520-freshConfig",
+  # kompile leaves a fresh variable of a function equation unbound
+  "withConfig2/1.test",
+]
 
 # krun options in place of those of the Makefile
 [regression.krun]
@@ -307,28 +307,30 @@ parseNonPgm = ["-cMODE=noprint"]
 
 # The tests of the LLVM backend (llvm-backend f02284f, test/defn/<name>.kore)
 # that run its interpreter on initial terms in KORE (test/input), compared
-# with the interpreter llvm-kompile builds from the same definition
-
-# Inputs checked step by step (krun -check-steps)
-[llvm.check_steps]
-# heating _+_ and the rule that rewrites A + B at once overlap at the same
-# priority; the LLVM backend heats first, the spec takes the rule first in KORE
-test19 = ["test19.in"]
-
-# Tests left out
-[llvm.skip]
-io = "file IO (the interpreter writes files in the working directory)"
-test26 = "file IO (the interpreter writes files in the working directory)"
-test28 = "file IO (the interpreter writes files in the working directory)"
-issue-539-priorities = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
-kool-static = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
-locations = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
-sk = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
-test8 = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
-test33 = "an older kompile's KORE: rule sides as ruleNLHS aliases with \\equals and \\top, owise as \\not(priorityLE50())"
-test18 = "a fresh variable left unbound in a function equation, as withConfig2's 1.test"
-test21 = "FFI hooks (native memory and calls)"
-test34 = "JSON hooks, not in the spec yet"
-imp-with-rangemaps = "266,050 krun steps for the first input: over four hours in the spec"
-test-gc-stringbuffer = "2,000,006 steps (3.6 hours in the spec); a GC stress test of StringBuffer"
-iterated-map-pointer-residual = "a function recursing 2^19 deep in one step: the LLVM backend makes it a tail call, the spec nests it (about 12 KB a level)"
+# with the interpreter llvm-kompile builds from the same definition. long and
+# skip name tests, or <test>/<program>
+[llvm]
+long = ["migrate-map-root", "imp-with-rangemaps", "test-gc-stringbuffer"]
+skip = [
+  # file IO (the interpreter writes files in the working directory)
+  "io",
+  "test26",
+  "test28",
+  # an older kompile's KORE: rule sides as ruleNLHS aliases with \equals and
+  # \top, owise as \not(priorityLE50())
+  "issue-539-priorities",
+  "kool-static",
+  "locations",
+  "sk",
+  "test8",
+  "test33",
+  # a fresh variable left unbound in a function equation, as withConfig2/1.test
+  "test18",
+  # FFI hooks (native memory and calls)
+  "test21",
+  # JSON hooks, not in the spec yet
+  "test34",
+  # a function recursing 2^19 deep in one step: the LLVM backend makes it a
+  # tail call, the spec nests it (about 12 KB a level)
+  "iterated-map-pointer-residual",
+]

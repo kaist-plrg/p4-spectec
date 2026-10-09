@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
-"""Run the diff tests of the K spec against krun on the K tutorial languages,
-KWasm, and the regression tests of K.
+"""Run the diff tests of the K spec against krun on the suites of
+suites.toml, the regression tests of K, and the tests of the LLVM backend.
 
 usage:
-  spec-k/scripts/ktest.py                    # all suites
+  spec-k/scripts/ktest.py                    # all suites, quick
+  spec-k/scripts/ktest.py --full             # all suites, with the long programs
   spec-k/scripts/ktest.py imp lambda         # some suites
   spec-k/scripts/ktest.py kwasm --only conformance-i32.wast
   spec-k/scripts/ktest.py regression/list-set
 
-Each definition is kompiled once into <work>/<suite>/ and kept there. Each
-result row is shown as its program is done, and the table of difftest.py goes
-to <work>/<suite>.md (not with --only). Two programs are tested at a time
-(--jobs). The exit code is 1 if a test fails.
+A quick run leaves out the programs marked long in suites.toml (and runs only
+a sample of KEVM); --full runs them too. Programs marked skip never run.
+
+Each definition is kompiled once into <work>/<suite>/ and kept there, with the
+search binary that step checks use. Each result row is shown as its program is
+done, and the table of difftest.py goes to <work>/<suite>.md (not with --only).
+Two programs are tested at a time (--jobs). The exit code is 1 if a test fails.
 """
 import argparse
 import concurrent.futures
+import fnmatch
 import glob
 import os
 import re
@@ -42,14 +47,15 @@ def run_difftest(name, t, args, jobs=None):
     work = os.path.abspath(args.work)
     kompiled = os.path.join(work, t.get("kompiled_as", name), "kompiled")
     stamp = os.path.join(kompiled, "timestamp")
-    # kompile again when the definition changed since
-    search = bool(t.get("check_steps"))
-    if not os.path.exists(stamp) or os.path.getmtime(t["definition"]) > os.path.getmtime(stamp) \
-            or (t.get("kore") and search and not os.path.exists(os.path.join(kompiled, "search"))):
+    # kompile again when the definition changed since, or when the search
+    # binary is missing (not for a kompiled directory linked from elsewhere)
+    no_search = not os.path.islink(kompiled) and not os.path.exists(os.path.join(kompiled, "search"))
+    if not os.path.exists(stamp) or os.path.getmtime(t["definition"]) > os.path.getmtime(stamp) or no_search:
         print("kompiling %s" % name, flush=True)
-        p = (llvm_kompile(t["definition"], kompiled, search) if t.get("kore") else
+        flags = [a.replace("{src}", t["src_dir"]) for a in t.get("kompile", [])]
+        p = (llvm_kompile(t["definition"], kompiled) if t.get("kore") else
              subprocess.run(["kompile", "--backend", "llvm", t["definition"], "--output-definition", kompiled]
-                            + [a.replace("{src}", t["src_dir"]) for a in t.get("kompile", [])],
+                            + flags + ([] if "--enable-search" in flags else ["--enable-search"]),
                             capture_output=True, text=True))
         if p.returncode != 0:
             print(p.stdout + p.stderr)
@@ -88,19 +94,16 @@ def run_difftest(name, t, args, jobs=None):
     return p.returncode == 0, lines[-1] if lines else "no output"
 
 
-def llvm_kompile(definition, kompiled, search=False):
+def llvm_kompile(definition, kompiled):
     """A kompiled directory for a definition already in KORE: the definition,
-    and its interpreter built by the LLVM backend, as kompile does
-    (llvm-kompile-matching for the decision trees); with search, also the search
-    binary that step checks use, as kompile --enable-search does."""
+    and its interpreter and search binary built by the LLVM backend, as
+    kompile --enable-search does (llvm-kompile-matching for the decision trees)."""
     dt = os.path.join(kompiled, "dt")
     os.makedirs(dt, exist_ok=True)
     shutil.copyfile(definition, os.path.join(kompiled, "definition.kore"))
-    cmds = [["llvm-kompile-matching", "definition.kore", "qbaL", "dt", "0"],
-            ["llvm-kompile", "definition.kore", "dt", "main", "-o", "interpreter"]]
-    if search:
-        cmds.append(["llvm-kompile", "definition.kore", "dt", "search", "-o", "search"])
-    for cmd in cmds:
+    for cmd in (["llvm-kompile-matching", "definition.kore", "qbaL", "dt", "0"],
+                ["llvm-kompile", "definition.kore", "dt", "main", "-o", "interpreter"],
+                ["llvm-kompile", "definition.kore", "dt", "search", "-o", "search"]):
         p = subprocess.run(cmd, cwd=kompiled, capture_output=True, text=True)
         if p.returncode != 0:
             return p
@@ -128,18 +131,23 @@ def kwasm_programs(src, work):
 
 
 def kevm_programs(src, work, t):
-    """The initial terms of the KEVM tests in t["gst"] (GeneralStateTests,
-    leaving out the directories in t["gst_exclude"]), as kevm-pyk run makes
-    them (kevm_inputs.py, in the Python environment of kevm-pyk)."""
+    """The initial terms of the KEVM tests in t["gst"] (GeneralStateTests), as
+    kevm-pyk run makes them (kevm_inputs.py, in the Python environment of
+    kevm-pyk): <file>-<test>.kore for each test of each file."""
     out = os.path.join(work, "kevm", "programs")
-    files = sorted(f for f in glob.glob(os.path.join(src, t["gst"], "**", "*.json"), recursive=True)
-                   if not any("/%s/" % d in f for d in t.get("gst_exclude", [])))
+    files = sorted(glob.glob(os.path.join(src, t["gst"], "**", "*.json"), recursive=True))
     p = subprocess.run(["uv", "run", "--directory", os.path.join(src, "kevm-pyk"), "python",
                         os.path.join(ROOT, "spec-k/scripts/kevm_inputs.py"), out, t["mode"], t["schedule"]] + files,
                        capture_output=True, text=True)
     if p.returncode != 0:
         sys.exit("kevm_inputs.py failed: " + p.stderr[-2000:])
     return out
+
+
+def left_out(skip, long, full):
+    """Patterns of the programs not run: those skipped, and the long ones in a
+    quick run."""
+    return list(skip) + ([] if full else list(long))
 
 
 def run_suite(suite, args):
@@ -155,6 +163,15 @@ def run_suite(suite, args):
         t["programs"] = [os.path.join(src, t["dir"], d) for d in t.get("tests", ["tests"])]
     if "inputs" in t:
         t["inputs"] = os.path.join(src, t["dir"], t["inputs"])
+    t["exclude"] = left_out(t.get("skip", {}), t.get("long", {}), args.full)
+    # a quick run takes the first programs of each file (<file>-<test>)
+    if "quick_per_file" in t and not args.full:
+        seen = {}
+        for f in sorted(os.listdir(t["programs"][0])):
+            stem = f.split("-", 1)[0]
+            seen[stem] = seen.get(stem, 0) + 1
+            if seen[stem] > t["quick_per_file"]:
+                t["exclude"].append(f)
     ok, summary = run_difftest(suite, t, args)
     print(summary, flush=True)
     return ok
@@ -174,14 +191,23 @@ def read_makefile(path):
     return v
 
 
-def regression_tests(src):
+def group_left_out(group, d, full):
+    """Whether test d of a group (regression or llvm) is not run, and the
+    patterns of its programs not run: keys <test> or <test>/<program> of the
+    group's skip and long tables."""
+    keys = left_out(group.get("skip", {}), group.get("long", {}), full)
+    return d in keys, [k.split("/", 1)[1] for k in keys if k.startswith(d + "/")]
+
+
+def regression_tests(src, full):
     """Regression tests that kompile with the LLVM backend and krun programs
     through ktest.mak, as suites with the settings of their Makefiles."""
     tests = {}
     root = os.path.join(src, REGRESSION["dir"])
     for d in sorted(os.listdir(root)):
         makefile = os.path.join(root, d, "Makefile")
-        if d in REGRESSION["skip"] or not os.path.isfile(makefile) or "ktest.mak" not in open(makefile).read():
+        out, exclude = group_left_out(REGRESSION, d, full)
+        if out or not os.path.isfile(makefile) or "ktest.mak" not in open(makefile).read():
             continue
         v = read_makefile(makefile)
         if v.get("KOMPILE_BACKEND", "llvm") != "llvm" or "DEF" not in v or "EXT" not in v:
@@ -212,7 +238,7 @@ def regression_tests(src):
                         krun=["--no-exc-wrap"] + REGRESSION["krun"].get(d, krun),
                         kompile=shlex.split(v.get("KOMPILE_FLAGS", "")) + ["--no-exc-wrap", "--type-inference-mode",
                                                                            "checked"],
-                        exclude=REGRESSION["exclude"].get(d, []))
+                        exclude=exclude)
         if search:
             tests[d]["check_steps"] = [os.path.basename(f) + ("" if depth is None else ":%d" % depth)
                                        for f in glob.glob(os.path.join(testdir, "*." + v["EXT"]))]
@@ -221,7 +247,7 @@ def regression_tests(src):
     return tests
 
 
-def llvm_tests(src):
+def llvm_tests(src, full):
     """The tests of the LLVM backend (test/defn/<name>.kore) that run its
     interpreter on initial terms (test/input/<name>.in or test/input/<name>/*.in).
     Tests that only build the interpreter (never run it) are left out: their
@@ -230,14 +256,14 @@ def llvm_tests(src):
     for definition in sorted(glob.glob(os.path.join(src, "test/defn/*.kore"))):
         name = os.path.basename(definition)[:-len(".kore")]
         runs = [l for l in open(definition) if l.startswith("// RUN:")]
-        if name in LLVM["skip"] or not any("%interpreter" in l or "%gcs-interpreter" in l for l in runs) \
+        out, exclude = group_left_out(LLVM, name, full)
+        if out or not any("%interpreter" in l or "%gcs-interpreter" in l for l in runs) \
                 or not any(m in l for l in runs for m in ("%check", "%run", "%t.interpreter")):
             continue
         inputs = [p for p in [os.path.join(src, "test/input", name + ".in"), os.path.join(src, "test/input", name)]
                   if os.path.exists(p)]
         if inputs:
-            tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True,
-                               check_steps=LLVM.get("check_steps", {}).get(name, []))
+            tests[name] = dict(definition=definition, programs=inputs, ext="in", kore=True, exclude=exclude)
     return tests
 
 
@@ -281,11 +307,12 @@ def main():
     ap.add_argument("--only", action="append", default=[],
                     help="run only this program (file name; repeatable); results go only to the screen")
     ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec")
+    ap.add_argument("--full", action="store_true", help="also run the programs marked long (and all of KEVM)")
     ap.add_argument("--cover", action="store_true", help="record spec coverage in <work>/coverage/<suite>/")
     ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()
-    groups = {"regression": lambda: regression_tests(os.path.abspath(args.k_src)),
-              "llvm": lambda: llvm_tests(os.path.abspath(args.llvm_src))}
+    groups = {"regression": lambda: regression_tests(os.path.abspath(args.k_src), args.full),
+              "llvm": lambda: llvm_tests(os.path.abspath(args.llvm_src), args.full)}
     suites = args.suites or list(SUITES) + list(groups)
     for s in suites:
         if s not in SUITES and s.split("/", 1)[0] not in groups:
