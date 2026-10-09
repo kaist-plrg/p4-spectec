@@ -82,6 +82,8 @@ def run_difftest(name, t, args, jobs=None):
     cmd += sum((["--check-steps-for", e] for e in t.get("check_steps", [])), [])
     if args.cover:
         cmd += ["--cover-dir", os.path.join(work, "coverage", name)]
+    if args.det:
+        cmd += ["--det"]
     print("diff test %s" % name, flush=True)
     env = dict(os.environ, SPECTEC_CACHE_SIZE=str(t["cache_size"])) if "cache_size" in t else None
     # each row is shown as its program is done, with the suite's name
@@ -92,7 +94,8 @@ def run_difftest(name, t, args, jobs=None):
         if line.startswith("| ") and not line.startswith("| program"):
             print("%s %s" % (name, line.rstrip()), flush=True)
     p.wait()
-    if not only:
+    # a run in deterministic mode checks the spec, not the result: the table stays
+    if not only and not args.det:
         with open(os.path.join(work, name + ".md"), "w") as out:
             out.write("".join(output))
     lines = "".join(output).strip().splitlines()
@@ -326,6 +329,9 @@ def main():
     ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec (default 7200)")
     ap.add_argument("--full", action="store_true",
                     help="run all programs (default: the quick lists, or all programs of the suites named)")
+    ap.add_argument("--det", action="store_true",
+                    help="run the spec in deterministic mode: a run fails when two rules or clauses of the spec "
+                         "both apply (the tables in <work> are not written)")
     ap.add_argument("--cover", action="store_true", help="record spec coverage in <work>/coverage/<suite>/")
     ap.add_argument("-j", "--jobs", type=int, default=2, help="programs to test at a time (default 2)")
     args = ap.parse_args()

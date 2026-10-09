@@ -261,6 +261,8 @@ def test_program(prog, root, definition, args):
         k_steps = "each step"
     compare = ["-check-steps", os.path.abspath(args.kompiled)] if check else ["-expect", result or os.devnull]
     extra = ["-depth", str(limit)] if limit else []
+    if args.det:
+        extra += ["-det"]
     if args.cover_dir:
         os.makedirs(args.cover_dir, exist_ok=True)
         extra += ["-cover", os.path.join(os.path.abspath(args.cover_dir), name + ".log")]
@@ -301,6 +303,9 @@ def main():
     ap.add_argument("--cover-dir", default=None,
                     help="write the spec with the instructions each run executes marked to <dir>/<program>.log "
                          "(spectec-boot krun -cover; merge them with coverage_summary.py)")
+    ap.add_argument("--det", action="store_true",
+                    help="run the spec in deterministic mode (spectec-boot krun -det): a run fails when two "
+                         "rules or clauses of the spec both apply")
     ap.add_argument("--kore-input", action="store_true",
                     help="the programs are initial terms in KORE, run by the interpreter of the kompiled "
                          "definition without krun")

@@ -162,6 +162,9 @@ let krun_command =
      and path_out =
        flag "-o" (optional string) ~doc:"FILE write the final configuration"
      and profile = flag "-profile" no_arg ~doc:"profiling"
+     and det =
+       flag "-det" no_arg
+         ~doc:"deterministic mode: fail when two rules or clauses both apply"
      and path_cover =
        flag "-cover" (optional string)
          ~doc:
@@ -177,7 +180,7 @@ let krun_command =
        match
          let* spec = P4spectec.spec_of_mode SL_mode paths_spec in
          let* runner =
-           Kore.K.runner spec |> Result.map_error (fun e -> Error.RunError e)
+           Kore.K.runner ~det spec |> Result.map_error (fun e -> Error.RunError e)
          in
          Ok (spec, runner)
        with
