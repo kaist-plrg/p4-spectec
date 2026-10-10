@@ -3,7 +3,7 @@
 //! Source bodies become collapsible `[source,watsup]` listings inside `====`.
 //! LaTeX bodies use `[latexmath]` with `++++` passthrough delimiters.
 //! Both are conditional on `backend-html5`; prose bodies use `****` sidebars.
-//! For example, a prose marker emits `****\n<body>\n****`.
+//! Prose markers add the `prose-algorithm` role to their sidebar.
 
 /// Opens a collapsible source listing for HTML output.
 pub(super) const PREFIX_SOURCE: &str = "ifdef::backend-html5[]\n.Click to view the specification source\n[%collapsible]\n====\n[source,watsup]\n----\n";
@@ -14,6 +14,6 @@ pub(super) const PREFIX_LATEX: &str = "ifdef::backend-html5[]\n[latexmath]\n++++
 /// Closes the LaTeX block and its HTML conditional.
 pub(super) const SUFFIX_LATEX: &str = "\n++++\nendif::[]";
 /// Opens a prose sidebar.
-pub(super) const PREFIX_PROSE: &str = "****\n";
+pub(super) const PREFIX_PROSE: &str = "[.prose-algorithm]\n****\n";
 /// Closes a prose sidebar.
 pub(super) const SUFFIX_PROSE: &str = "\n****";

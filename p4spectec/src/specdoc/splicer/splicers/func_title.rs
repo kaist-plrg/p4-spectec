@@ -144,7 +144,7 @@ impl<'spec> Kind<'spec> for Prose {
     type Key = String;
     type Value = &'spec pl::Def;
     const NAME: &'static str = "func-title-prose";
-    const PREFIX: &'static str = "[.sidebar-title]\n****\n";
+    const PREFIX: &'static str = "[.sidebar-title.prose-algorithm]\n****\n";
     const SUFFIX: &'static str = SUFFIX_PROSE;
 
     fn init(
