@@ -1,7 +1,8 @@
 requires "substitution.md"
 
 // Substitution into values of every kind, and renaming a binder whose
-// variable occurs free in the substituted value. After a capture, krun prints
+// variable occurs free in the substituted value, also through inner binders
+// (one of the same variable, which the renaming stops at). After a capture, krun prints
 // the free variable renamed (y0), so check(E) compares it while rewriting.
 module BINDER
   imports INT

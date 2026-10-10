@@ -1,6 +1,7 @@
 // ==K on collections, float and bytes literals on the left, lazy impliesBool,
-// list patterns longer than the list, and a few hooks the languages do not
-// use. Values come from the program, so that kompile does not fold them.
+// list patterns longer than the list, and hooks the languages do not use
+// (or use on paths their tests do not reach). Values come from the program,
+// so that kompile does not fold them.
 module EQUALITY
   imports INT
   imports MAP
@@ -17,6 +18,7 @@ module EQUALITY
   syntax Pgm ::= Float | Bytes
                | maps(Int, Int) | sets(Int, Int) | lists(Int, Int) | implies(Int)
                | short(Int) | strings(String) | signed(Bytes)
+               | ints(Int, Int) | compare(String, String) | single(Int)
 
   rule <k> maps(A, B) => ListItem((A |-> B B |-> A) ==K (B |-> A A |-> B))
                          ListItem((A |-> B) ==K (A |-> A))
@@ -41,4 +43,13 @@ module EQUALITY
 
   rule <k> strings(S) => ListItem(replace(S, "a", "b", 2)) ListItem(countAllOccurrences(S, "aa")) </k>
   rule <k> signed(B) => ListItem(Bytes2Int(B, BE, Signed)) ListItem(Bytes2Int(B, LE, Signed)) </k>
+
+  rule <k> ints(I, J) => ListItem(absInt(I)) ListItem(absInt(J)) ListItem(I modInt J) ListItem(J modInt I)
+                         ListItem(signExtendBitRangeInt(I, 0, 8)) ListItem(signExtendBitRangeInt(J, 0, 8))
+                         ListItem(signExtendBitRangeInt(I, 0, 0)) </k>
+  rule <k> compare(S, T) => ListItem(S <String T) ListItem(S <=String T) ListItem(S >=String T)
+                            ListItem(T <String S) ListItem(T <=String S) ListItem(T >=String S) </k>
+  // one element, since K leaves open which of several choice gives
+  rule <k> single(I) => ListItem(pushList(I, ListItem(1))) ListItem(choice(SetItem(I)))
+                        ListItem(choice(I |-> 1)) </k>
 endmodule
