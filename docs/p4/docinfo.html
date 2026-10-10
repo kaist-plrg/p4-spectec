@@ -18,6 +18,28 @@
         },
         chtml: {
             scale: 0.96
+        },
+        startup: {
+            pageReady: function () {
+                return MathJax.startup.defaultPageReady().then(function () {
+                    // Process opened math without waiting for MathJax's idle callback
+                    function typesetOpenedMath(block) {
+                        if (!block.open) return;
+                        const markers = block.querySelectorAll("mjx-lazy");
+                        if (markers.length === 0) return;
+                        const doc = MathJax.startup.document;
+                        for (const marker of markers) {
+                            doc.lazySet.add(marker.getAttribute("data-mjx-lazy"));
+                        }
+                        doc.lazyHandleSet();
+                    }
+
+                    document.addEventListener("toggle", function (event) {
+                        if (event.target.tagName === "DETAILS") typesetOpenedMath(event.target);
+                    }, true);
+                    document.querySelectorAll("details[open]").forEach(typesetOpenedMath);
+                });
+            }
         }
     };
 </script>
