@@ -7,7 +7,6 @@
 
 mod arena;
 pub mod external;
-mod intern;
 #[allow(clippy::module_inception, reason = "separate facade and implementation")]
 mod value;
 
@@ -26,7 +25,6 @@ use crate::lang::{
 };
 
 pub use arena::ValueArena;
-pub use intern::{CanonEq, CanonHash, CanonId, CanonInterner, Interned, Interner, RcInterner};
 pub use value::*;
 
 // = Smart constructors

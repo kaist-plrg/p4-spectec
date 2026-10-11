@@ -6,12 +6,15 @@
 
 use std::rc::Rc;
 
-use crate::lang::{common::source::Span, data::typ::TypKind};
-
-use super::{
-    intern::{CanonId, CanonInterner, Interner, RcInterner},
-    value::{Value, ValueError, ValueKind, ValueRef},
+use crate::lang::{
+    common::source::Span,
+    data::{
+        intern::{CanonId, CanonInterner, Interner, RcInterner},
+        typ::TypKind,
+    },
 };
+
+use super::value::{Value, ValueError, ValueKind, ValueRef};
 
 // = Arena storage
 
@@ -53,7 +56,7 @@ impl ValueArena {
         typ: Rc<TypKind>,
         span: Span,
     ) -> Result<Value, ValueError> {
-        let node = self.values.intern(kind)?;
+        let node = self.values.intern(&(), kind)?;
         let note = self.types.intern(typ)?;
         let span = self.spans.intern(span)?;
         Ok(Value { node, note, span })

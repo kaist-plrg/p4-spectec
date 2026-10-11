@@ -13,9 +13,12 @@ use serde_state::{DeserializeState, SerializeState};
 
 use crate::util::json::json;
 
-use crate::lang::{common::source::Span, data::typ::TypKind};
+use crate::lang::{
+    common::source::Span,
+    data::{intern::Interned, typ::TypKind},
+};
 
-use super::{Interned, ValueArena, ValueKind};
+use super::{ValueArena, ValueKind};
 
 // = Configuration
 
@@ -206,7 +209,7 @@ impl<'de> DeserializeState<'de, DecodeContext<'_>> for Interned<ValueKind> {
                     .map_err(::serde::de::Error::custom)?;
                 arena
                     .values
-                    .intern(kind)
+                    .intern(&(), kind)
                     .map_err(::serde::de::Error::custom)
             }
         }

@@ -24,14 +24,14 @@ use crate::lang::{
         prim::num::{self, Number},
         source::{NotePhrase, Phrase, Span},
     },
-    data::typ::TypKind,
+    data::{
+        intern::{CanonEq, CanonHash, CanonInterner, Interned},
+        typ::TypKind,
+    },
     traits::{cmp::SyntaxCmp, eq::SyntaxEq},
 };
 
-use super::{
-    arena::ValueArena,
-    intern::{CanonEq, CanonHash, CanonInterner, Interned},
-};
+use super::arena::ValueArena;
 
 // = Value types
 
@@ -221,7 +221,7 @@ impl Hash for ValueKind {
 // = Canonical equality and hashing
 
 impl CanonEq for ValueKind {
-    fn canon_eq(&self, interner: &CanonInterner<Self>, kind_r: &Self) -> bool {
+    fn canon_eq(&self, interner: &CanonInterner<Self>, _: &(), kind_r: &Self) -> bool {
         // Children compare by canonical id, computed when they were interned
         let eq_value = |value_l: &Value, value_r: &Value| {
             interner.canon_id(value_l.node) == interner.canon_id(value_r.node)
@@ -262,7 +262,7 @@ impl CanonEq for ValueKind {
 }
 
 impl CanonHash for ValueKind {
-    fn canon_hash<H: Hasher>(&self, interner: &CanonInterner<Self>, hasher: &mut H) {
+    fn canon_hash<H: Hasher>(&self, interner: &CanonInterner<Self>, _: &(), hasher: &mut H) {
         /// Case hash over atom names and children's canonical ids.
         fn canon_hash_case<H: Hasher>(
             value_case: &ValueCase,

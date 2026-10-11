@@ -9,7 +9,10 @@ use std::hash::{Hash, Hasher};
 use foldhash::fast::RandomState;
 use hashbrown::{Equivalent, HashMap};
 
-use crate::lang::data::value::{CanonId, Value, ValueArena, ValueKind};
+use crate::lang::data::{
+    intern::CanonId,
+    value::{Value, ValueArena, ValueKind},
+};
 
 // = Call identity
 
