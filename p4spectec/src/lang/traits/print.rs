@@ -24,6 +24,22 @@ pub trait Print {
     }
 }
 
+// - Borrowed values
+
+impl<T: Print + ?Sized> Print for &T {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        (**self).print(printer)
+    }
+}
+
+// - Literal text
+
+impl Print for str {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        printer.write(self)
+    }
+}
+
 // - Printer
 
 /// Maintains output and layout state while rendering syntax.

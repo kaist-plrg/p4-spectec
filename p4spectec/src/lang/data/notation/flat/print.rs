@@ -1,34 +1,42 @@
 //! Printing flat notation
 //!
-//! Flat traversal resolves handles and supplies atoms and argument positions;
-//! shared helpers apply spacing and silent-atom rules.
+//! Traversal supplies atoms and argument positions in reading order.
+//! Each argument is viewed through `Print`; silent atoms add no separator.
 
 use std::fmt;
 
-use crate::lang::traits::print::Printer;
+use crate::lang::traits::print::{Print, Printer};
 
-use super::super::print::print_item;
+use super::super::items::Item;
 use super::{Mixfix, Mixop, MixopArena};
 
 // = Notation forms
 
 impl Mixop {
-    /// Writes atoms and arguments, separating non-empty pieces with spaces.
-    ///
-    /// Empty keyword atoms print nothing, not even a space;
-    /// `print_arg` writes the argument at a position.
-    pub fn print_with(
+    /// Writes atoms and viewed arguments, separating nonempty items with spaces.
+    pub fn print_with<T: Print>(
         self,
         arena_mixop: &MixopArena,
         printer: &mut Printer<'_>,
-        mut print_arg: impl FnMut(usize, &mut Printer<'_>) -> fmt::Result,
+        mut view_arg: impl FnMut(usize) -> T,
     ) -> fmt::Result {
         let mut is_first = true;
         let mut result = Ok(());
-        self.visit(arena_mixop, |visit_item| {
-            if result.is_ok() {
-                result = print_item(visit_item, printer, &mut is_first, &mut print_arg);
+        self.visit(arena_mixop, |item| {
+            // Ignore silent atoms and stop writing after an output error
+            if result.is_err() || item.is_silent() {
+                return;
             }
+            // Separate only the items that contribute output
+            result = if is_first { Ok(()) } else { printer.write(" ") };
+            is_first = false;
+            result = result.and_then(|()| {
+                let item = match item {
+                    Item::Atom(atom) => Item::Atom(atom),
+                    Item::Arg(pos) => Item::Arg(view_arg(pos)),
+                };
+                item.print(printer)
+            });
         });
         result
     }
@@ -37,14 +45,14 @@ impl Mixop {
 // = Filled forms
 
 impl<T> Mixfix<T> {
-    /// Writes atoms and arguments as the expanded tree would print.
-    pub fn print_with(
-        &self,
+    /// Writes atoms and viewed arguments in notation order.
+    pub fn print_with<'a, U: Print>(
+        &'a self,
         arena_mixop: &MixopArena,
         printer: &mut Printer<'_>,
-        mut print_arg: impl FnMut(&T, &mut Printer<'_>) -> fmt::Result,
+        mut view_arg: impl FnMut(&'a T) -> U,
     ) -> fmt::Result {
         self.mixop
-            .print_with(arena_mixop, printer, |pos, printer| print_arg(&self.args[pos], printer))
+            .print_with(arena_mixop, printer, |pos| view_arg(&self.args[pos]))
     }
 }

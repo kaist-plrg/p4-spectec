@@ -26,6 +26,20 @@ pub struct ExpRef<'a> {
     exp: &'a Exp,
 }
 
+/// Borrows prepared expressions for comma-separated printing.
+#[derive(Clone, Copy, Debug)]
+pub struct ExpsRef<'a> {
+    arena_mixop: &'a MixopArena,
+    exps: &'a [Exp],
+}
+
+/// Borrows a prepared path and its notation arena for printing.
+#[derive(Clone, Copy, Debug)]
+pub struct PathRef<'a> {
+    arena_mixop: &'a MixopArena,
+    path: &'a Path,
+}
+
 /// Borrows a prepared argument and its notation arena for printing.
 #[derive(Clone, Copy, Debug)]
 pub struct ArgRef<'a> {
@@ -33,6 +47,13 @@ pub struct ArgRef<'a> {
     arena_mixop: &'a MixopArena,
     /// The prepared argument to render.
     arg: &'a Arg,
+}
+
+/// Borrows prepared arguments, printing parentheses only for nonempty lists.
+#[derive(Clone, Copy, Debug)]
+pub struct ArgsRef<'a> {
+    arena_mixop: &'a MixopArena,
+    args: &'a [Arg],
 }
 
 /// Borrows a prepared pattern and its notation arena for printing.
@@ -51,10 +72,31 @@ impl Exp {
     }
 }
 
+impl<'a> ExpsRef<'a> {
+    /// Borrows the slice with its notation arena for printing.
+    pub fn new(arena_mixop: &'a MixopArena, exps: &'a [Exp]) -> Self {
+        Self { arena_mixop, exps }
+    }
+}
+
+impl Path {
+    /// Borrows this path with its notation arena for printing.
+    pub fn view<'a>(&'a self, arena_mixop: &'a MixopArena) -> PathRef<'a> {
+        PathRef { arena_mixop, path: self }
+    }
+}
+
 impl Arg {
     /// Borrows this argument with its notation arena for printing.
     pub fn view<'a>(&'a self, arena_mixop: &'a MixopArena) -> ArgRef<'a> {
         ArgRef { arena_mixop, arg: self }
+    }
+}
+
+impl<'a> ArgsRef<'a> {
+    /// Borrows the slice with its notation arena for printing.
+    pub fn new(arena_mixop: &'a MixopArena, args: &'a [Arg]) -> Self {
+        Self { arena_mixop, args }
     }
 }
 
@@ -117,12 +159,12 @@ impl Print for ExpRef<'_> {
             }
             ExpKind::Tuple(exps) => {
                 printer.write_char('(')?;
-                ExpRef::print_exps(arena_mixop, exps, printer)?;
+                ExpsRef::new(arena_mixop, exps).print(printer)?;
                 printer.write_char(')')
             }
-            ExpKind::Case(not_exp) => not_exp.print_with(arena_mixop, printer, |exp, printer| {
-                exp.view(arena_mixop).print(printer)
-            }),
+            ExpKind::Case(not_exp) => {
+                not_exp.print_with(arena_mixop, printer, |exp| exp.view(arena_mixop))
+            }
             ExpKind::Str(exp_fields) => {
                 printer.write_char('{')?;
                 for (idx, ExpField { atom, exp }) in exp_fields.iter().enumerate() {
@@ -144,7 +186,7 @@ impl Print for ExpRef<'_> {
             }
             ExpKind::List(exps) => {
                 printer.write_char('[')?;
-                ExpRef::print_exps(arena_mixop, exps, printer)?;
+                ExpsRef::new(arena_mixop, exps).print(printer)?;
                 printer.write_char(']')
             }
             ExpKind::Cons(exp_head, exp_tail) => {
@@ -189,7 +231,7 @@ impl Print for ExpRef<'_> {
             ExpKind::Upd(exp_base, path, exp_field) => {
                 exp_base.view(arena_mixop).print(printer)?;
                 printer.write_char('[')?;
-                ExpRef::print_path(arena_mixop, path, printer)?;
+                path.view(arena_mixop).print(printer)?;
                 printer.write_str(" = ")?;
                 exp_field.view(arena_mixop).print(printer)?;
                 printer.write_char(']')
@@ -202,7 +244,7 @@ impl Print for ExpRef<'_> {
                     printer.separated(targs, ", ")?;
                     printer.write_char('>')?;
                 }
-                ArgRef::print_args(arena_mixop, args, printer)
+                ArgsRef::new(arena_mixop, args).print(printer)
             }
             ExpKind::Iter(exp, exp_iter) => {
                 exp.view(arena_mixop).print(printer)?;
@@ -212,13 +254,10 @@ impl Print for ExpRef<'_> {
     }
 }
 
-impl ExpRef<'_> {
-    /// Prints expressions in order, separated by commas.
-    fn print_exps(
-        arena_mixop: &MixopArena,
-        exps: &[Exp],
-        printer: &mut Printer<'_>,
-    ) -> fmt::Result {
+impl Print for ExpsRef<'_> {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        let arena_mixop = self.arena_mixop;
+        let exps = self.exps;
         for (idx, exp) in exps.iter().enumerate() {
             if idx != 0 {
                 printer.write(", ")?;
@@ -227,19 +266,24 @@ impl ExpRef<'_> {
         }
         Ok(())
     }
+}
 
-    /// Prints a path, resolving its index and slice expressions.
-    fn print_path(arena_mixop: &MixopArena, path: &Path, printer: &mut Printer<'_>) -> fmt::Result {
+// - Paths
+
+impl Print for PathRef<'_> {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        let arena_mixop = self.arena_mixop;
+        let path = self.path;
         match &path.node {
             PathKind::Root => Ok(()),
             PathKind::Idx(path, exp_idx) => {
-                ExpRef::print_path(arena_mixop, path, printer)?;
+                path.view(arena_mixop).print(printer)?;
                 printer.write_char('[')?;
                 exp_idx.view(arena_mixop).print(printer)?;
                 printer.write_char(']')
             }
             PathKind::Slice(path, exp_idx, exp_len) => {
-                ExpRef::print_path(arena_mixop, path, printer)?;
+                path.view(arena_mixop).print(printer)?;
                 printer.write_char('[')?;
                 exp_idx.view(arena_mixop).print(printer)?;
                 printer.write_str(" : ")?;
@@ -248,7 +292,7 @@ impl ExpRef<'_> {
             }
             PathKind::Dot(path, atom) if matches!(path.node, PathKind::Root) => atom.print(printer),
             PathKind::Dot(path, atom) => {
-                ExpRef::print_path(arena_mixop, path, printer)?;
+                path.view(arena_mixop).print(printer)?;
                 printer.write_char('.')?;
                 atom.print(printer)
             }
@@ -272,13 +316,10 @@ impl Print for ArgRef<'_> {
     }
 }
 
-impl ArgRef<'_> {
-    /// Prints nonempty argument lists in parentheses.
-    fn print_args(
-        arena_mixop: &MixopArena,
-        args: &[Arg],
-        printer: &mut Printer<'_>,
-    ) -> fmt::Result {
+impl Print for ArgsRef<'_> {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        let arena_mixop = self.arena_mixop;
+        let args = self.args;
         if args.is_empty() {
             return Ok(());
         }
@@ -300,9 +341,7 @@ impl Print for PatternRef<'_> {
         let arena_mixop = self.arena_mixop;
         let pattern = self.pattern;
         match pattern {
-            Pattern::Case(mixop) => {
-                mixop.print_with(arena_mixop, printer, |_, printer| printer.write("%"))
-            }
+            Pattern::Case(mixop) => mixop.print_with(arena_mixop, printer, |_| "%"),
             Pattern::List(ListPattern::Cons) => printer.write_str("_ :: _"),
             Pattern::List(ListPattern::Fixed(length)) => write!(printer, "[ _/{length} ]"),
             Pattern::List(ListPattern::Nil) => printer.write_str("[]"),

@@ -4,7 +4,7 @@
 //! `flat::Mixop` refers to a `flat::MixopKind` in a `MixopArena`.
 //! `Mixfix` pairs either form with its arguments in notation order.
 //! Each representation owns its comparisons and traversals;
-//! `print` renders their atoms and argument positions.
+//! `items` defines traversal items and their printing.
 //! EL uses only atoms, which stay in `common::notation`.
 
 use crate::lang::common::{notation::atom::Atom, source::Phrase};
@@ -13,10 +13,9 @@ mod error;
 pub mod flat;
 mod free;
 mod get;
+pub(crate) mod items;
 mod map;
-mod print;
 pub mod tree;
-pub(crate) mod visit;
 
 pub use error::{ArityMismatch, MixopError};
 pub use flat::MixopArena;

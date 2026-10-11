@@ -14,7 +14,7 @@ use crate::lang::{
     common::{notation::atom::Atom, prim::num::Number},
     data::{
         arena::Arena,
-        notation::{tree::Mixop, visit::VisitItem},
+        notation::{items::Item, tree::Mixop},
         value::flat::{Value, ValueCase, ValueKind},
     },
     hints::alter::{self, AlterHint, Renderer},
@@ -223,9 +223,9 @@ impl P4Unparser {
         for visit_item in visit_items {
             match visit_item {
                 // Arguments render recursively
-                VisitItem::Arg(pos) => rendered.push(self.render(arena, &value_case.args()[pos])?),
+                Item::Arg(pos) => rendered.push(self.render(arena, &value_case.args()[pos])?),
                 // Silent atoms are dropped rather than left as empty pieces
-                VisitItem::Atom(atom) => {
+                Item::Atom(atom) => {
                     let rendered_atom = Self::render_atom(&atom.node);
                     if !rendered_atom.is_empty() {
                         rendered.push(rendered_atom);

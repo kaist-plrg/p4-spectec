@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::lang::{
-    data::notation::tree as notation,
+    data::notation::{items, tree as notation},
     traits::print::{Print, Printer},
 };
 
@@ -446,10 +446,7 @@ fn write_relinput(
             .position(|idx_input| idx_input.node == index)
             .map(|position| &exps_input[position])
     });
-    mixfix.print_with(output, |exp, output| match exp {
-        Some(exp) => exp.print(output),
-        None => output.write("%"),
-    })
+    mixfix.print_with(output, |exp| items::ArgRef { arg: *exp })
 }
 
 /// Fills the output expressions into the notation at the non-input positions.
@@ -471,10 +468,7 @@ fn write_reloutput(
             .position(|output| *output == index)
             .map(|position| &exps_output[position])
     });
-    mixfix.print_with(output, |exp, output| match exp {
-        Some(exp) => exp.print(output),
-        None => output.write("%"),
-    })
+    mixfix.print_with(output, |exp| items::ArgRef { arg: *exp })
 }
 
 // == Meta-function definitions

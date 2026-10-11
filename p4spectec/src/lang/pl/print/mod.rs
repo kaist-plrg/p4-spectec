@@ -6,4 +6,4 @@
 mod prepared;
 mod source;
 
-pub use prepared::{ArgRef, ExpRef};
+pub use prepared::{ArgRef, ArgsRef, ExpRef, ExpsRef, PathRef};

@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::lang::{
-    data::notation::tree as notation,
+    data::notation::{items, tree as notation},
     hints::input::InputHint,
     traits::print::{Print, Printer},
 };
@@ -458,8 +458,5 @@ fn write_notation(
 ) -> fmt::Result {
     notation::Mixfix::new(Rc::clone(not_typ.node.mixop()), exps)
         .expect("one argument slot per notation position")
-        .print_with(output, |exp, output| match exp {
-            Some(exp) => exp.print(output),
-            None => output.write("%"),
-        })
+        .print_with(output, |exp| items::ArgRef { arg: *exp })
 }

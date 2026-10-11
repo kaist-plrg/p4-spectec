@@ -20,8 +20,7 @@ use super::super::ast::*;
 
 impl Print for NotTyp {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        self.node
-            .print_with(printer, |typ, printer| typ.print(printer))
+        self.node.print_with(printer, |typ| typ)
     }
 }
 
@@ -237,7 +236,7 @@ impl Print for [Exp] {
 
 impl Print for NotExp {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        self.print_with(printer, |exp, printer| exp.print(printer))
+        self.print_with(printer, |exp| exp)
     }
 }
 

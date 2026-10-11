@@ -14,7 +14,7 @@ use std::{
 use crate::util::text::escape_text;
 
 use crate::lang::{
-    data::notation::tree as notation,
+    data::notation::{items, tree as notation},
     traits::print::{Print, Printer},
 };
 
@@ -176,7 +176,7 @@ impl Print for Exp {
 
 impl Print for NotExp {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        self.print_with(printer, |exp, printer| exp.print(printer))
+        self.print_with(printer, |exp| exp)
     }
 }
 
@@ -326,7 +326,7 @@ fn write_instr_with<Tier>(
                 output.write_str("If (")?;
                 id.print(output)?;
                 output.write_str(": ")?;
-                not_exp.print_with(output, |exp, output| exp.print(output))?;
+                not_exp.print_with(output, |exp| exp)?;
                 output.write_char(')')?;
                 iter_exps.as_slice().print(output)?;
                 output.write_char(' ')?;
@@ -501,7 +501,7 @@ fn write_group_instr_with(
             output.write_char('(')?;
             id.print(output)?;
             output.write_str(": ")?;
-            not_exp.print_with(output, |exp, output| exp.print(output))?;
+            not_exp.print_with(output, |exp| exp)?;
             output.write_char(')')?;
             iter_instrs.as_slice().print(output)
         }
@@ -828,10 +828,7 @@ fn write_relinput(
             .position(|idx_input| idx_input.node == index)
             .map(|position| &exps_input[position])
     });
-    mixfix.print_with(output, |exp, output| match exp {
-        Some(exp) => exp.print(output),
-        None => output.write("%"),
-    })
+    mixfix.print_with(output, |exp| items::ArgRef { arg: *exp })
 }
 
 /// Fills the output expressions into the notation at the non-input positions.
@@ -853,10 +850,7 @@ fn write_reloutput(
             .position(|output| *output == index)
             .map(|position| &exps_output[position])
     });
-    mixfix.print_with(output, |exp, output| match exp {
-        Some(exp) => exp.print(output),
-        None => output.write("%"),
-    })
+    mixfix.print_with(output, |exp| items::ArgRef { arg: *exp })
 }
 
 // == Meta-function definitions
