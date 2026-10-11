@@ -6,7 +6,9 @@
 //! Primitive types are allocated once per thread and shared.
 
 mod arena;
+mod error;
 pub mod external;
+pub mod flat;
 pub mod tree;
 #[allow(clippy::module_inception, reason = "separate facade and implementation")]
 mod value;
@@ -26,6 +28,7 @@ use crate::lang::{
 };
 
 pub use arena::ValueArena;
+pub use error::ValueError;
 pub use value::*;
 
 // = Smart constructors

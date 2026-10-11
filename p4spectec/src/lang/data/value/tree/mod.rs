@@ -15,6 +15,7 @@ use crate::lang::{
     data::{notation::AtomPhrase, typ::TypKind},
 };
 
+mod convert;
 mod external;
 pub mod get;
 

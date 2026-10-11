@@ -4,6 +4,8 @@
 //! and one notion of variable; EL has its own.
 //! `intern` holds the handle-based storage these representations build on.
 
+pub mod arena;
+pub mod encoding;
 pub mod intern;
 pub mod notation;
 pub mod typ;

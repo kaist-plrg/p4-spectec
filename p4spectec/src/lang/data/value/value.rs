@@ -8,12 +8,10 @@
 use std::{
     cmp::Ordering,
     hash::{Hash, Hasher},
-    num::TryFromIntError,
     rc::Rc,
 };
 
 use serde_derive_state::{DeserializeState, SerializeState};
-use thiserror::Error;
 
 use crate::util::json::json;
 
@@ -388,32 +386,5 @@ impl SyntaxCmp for ValueRef<'_> {
             // Different kinds order by tag
             _ => kind_l.tag().cmp(&kind_r.tag()),
         }
-    }
-}
-
-// = Errors
-
-/// A failure building or projecting a value.
-#[derive(Clone, Debug, Error, Eq, PartialEq)]
-pub enum ValueError {
-    /// The arena ran out of 32-bit handles.
-    #[error("value arena index overflow")]
-    IndexOverflow,
-    /// A projection met a value of another kind.
-    #[error("expected {expected:?} value, got {actual:?}")]
-    KindMismatch { expected: ValueTag, actual: ValueTag },
-    /// An element index past the end.
-    #[error("value index {index} is out of bounds for length {len}")]
-    IndexOutOfBounds { index: usize, len: usize },
-    /// A fixed-arity projection met another count.
-    #[error("expected exactly {expected} values, got {actual}")]
-    CountMismatch { expected: usize, actual: usize },
-}
-
-// - Index overflow
-
-impl From<TryFromIntError> for ValueError {
-    fn from(_: TryFromIntError) -> Self {
-        Self::IndexOverflow
     }
 }

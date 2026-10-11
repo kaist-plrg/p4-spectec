@@ -14,7 +14,8 @@ use crate::lang::{
     },
 };
 
-use super::value::{Value, ValueError, ValueKind, ValueRef};
+use super::ValueError;
+use super::value::{Value, ValueKind, ValueRef};
 
 // = Arena storage
 
