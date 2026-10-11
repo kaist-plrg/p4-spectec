@@ -7,6 +7,7 @@
 
 mod arena;
 pub mod external;
+pub mod tree;
 #[allow(clippy::module_inception, reason = "separate facade and implementation")]
 mod value;
 
