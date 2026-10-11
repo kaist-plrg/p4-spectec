@@ -5,6 +5,7 @@
 //! `intern` holds the handle-based storage these representations build on.
 
 pub mod intern;
+pub mod notation;
 pub mod typ;
 pub mod value;
 pub mod var;
