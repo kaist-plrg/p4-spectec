@@ -5,83 +5,123 @@
 //! so evaluation can find its slot.
 //! Type definitions prepare their mixops without allocating frame slots.
 
-use crate::lang::data::{
-    notation::{self, MixopArena},
-    var::VarSlot,
+use crate::lang::{
+    common::Id,
+    data::{
+        notation::{self, MixopArena, flat, tree},
+        var::{IdSlot, Var, VarSlot},
+    },
 };
 
 use crate::lang::il::{ast as source, prepared::*};
 
 use crate::runtime::envs::interp::shared::frame::FrameLayout;
 
-use super::{Prepare, PrepareContext, prepare_mixop};
+use super::{Prepare, mixop};
+
+// - Preparation context
+
+/// Records IL slots and interned mixops.
+pub struct PrepareContext<'a> {
+    /// The specification's notation arena.
+    pub arena_mixop: &'a mut MixopArena,
+    /// The callable's frame layout.
+    pub layout: &'a mut FrameLayout,
+}
+
+impl PrepareContext<'_> {
+    /// Registers the outer variable of every iterated variable.
+    fn prepare_outer_vars(&mut self, vars: &[VarSlot], iter: Iter) {
+        for var in vars {
+            let mut var_outer = var.var.clone();
+            var_outer.iters.push(iter);
+            self.layout.resolve_var(var_outer);
+        }
+    }
+}
+
+// - Names
+
+impl Prepare<PrepareContext<'_>> for Id {
+    type Output = IdSlot;
+
+    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        ctx.layout.resolve_id(self)
+    }
+}
+
+impl Prepare<PrepareContext<'_>> for Var {
+    type Output = VarSlot;
+
+    fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
+        ctx.layout.resolve_var(self)
+    }
+}
 
 // - Type definitions
 
-/// Prepares a type definition body, interning its case notations as shapes.
-///
-/// Type definitions have no frame of their own, so only `arena_mixop` is filled.
-pub fn prepare_def_typ(arena_mixop: &mut MixopArena, def_typ: source::DefTyp) -> DefTyp {
-    let def_typ_kind = match def_typ.node {
-        source::DefTypKind::Plain(typ) => DefTypKind::Plain(typ),
-        source::DefTypKind::Struct(typ_fields) => DefTypKind::Struct(typ_fields),
-        source::DefTypKind::Variant(typ_cases) => DefTypKind::Variant(
-            typ_cases
-                .into_iter()
-                .map(|typ_case| prepare_typ_case(arena_mixop, typ_case))
-                .collect(),
-        ),
-    };
-    crate::phrase!(node: def_typ_kind, span: def_typ.span)
+impl Prepare<mixop::PrepareContext> for source::DefTypKind {
+    type Output = DefTypKind;
+
+    fn prepare(self, arena_mixop: &mut mixop::PrepareContext) -> Self::Output {
+        match self {
+            source::DefTypKind::Plain(typ) => DefTypKind::Plain(typ),
+            source::DefTypKind::Struct(typ_fields) => DefTypKind::Struct(typ_fields),
+            source::DefTypKind::Variant(typ_cases) => {
+                DefTypKind::Variant(typ_cases.prepare(arena_mixop))
+            }
+        }
+    }
 }
 
-/// Prepares one variant case, interning its notation as a shape.
-fn prepare_typ_case(arena_mixop: &mut MixopArena, typ_case: source::TypCase) -> TypCase {
-    let source::TypCase { not_typ, typ_origin, hints } = typ_case;
-    let (mixop, typs) = not_typ.node.into_parts();
-    let mixop = arena_mixop
-        .intern(&mixop)
-        .expect("specification mixops fit in 32-bit shape handles");
-    let not_typ_kind = notation::flat::Mixfix::new(arena_mixop, mixop, typs)
-        .expect("a notation type fills every position");
-    TypCase { not_typ: crate::phrase!(node: not_typ_kind, span: not_typ.span), typ_origin, hints }
+impl Prepare<mixop::PrepareContext> for source::TypCase {
+    type Output = TypCase;
+
+    fn prepare(self, arena_mixop: &mut mixop::PrepareContext) -> Self::Output {
+        let source::TypCase { not_typ, typ_origin, hints } = self;
+        let (mixop, typs) = not_typ.node.into_parts();
+        let mixop = mixop.prepare(arena_mixop);
+        let not_typ_kind = notation::flat::Mixfix::new(arena_mixop, mixop, typs)
+            .expect("a notation type fills every position");
+        TypCase {
+            not_typ: crate::phrase!(node: not_typ_kind, span: not_typ.span),
+            typ_origin,
+            hints,
+        }
+    }
 }
 
 // - Patterns and subtype checks
 
-impl Prepare for source::Pattern {
+impl Prepare<PrepareContext<'_>> for source::Pattern {
     type Output = Pattern;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         match self {
-            source::Pattern::Case(mixop) => Pattern::Case(prepare_mixop(ctx, &mixop)),
+            source::Pattern::Case(mixop) => Pattern::Case(mixop.prepare(ctx.arena_mixop)),
             source::Pattern::List(pattern) => Pattern::List(pattern),
             source::Pattern::Opt(pattern) => Pattern::Opt(pattern),
         }
     }
 }
 
-impl Prepare for source::Subcheck {
+impl Prepare<PrepareContext<'_>> for source::Subcheck {
     type Output = Subcheck;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         match self {
             source::Subcheck::Skip => Subcheck::Skip,
-            source::Subcheck::Mixop(mixops) => Subcheck::Mixop(
-                mixops
-                    .iter()
-                    .map(|mixop| prepare_mixop(ctx, mixop))
-                    .collect(),
-            ),
+            source::Subcheck::Mixop(mixops) => Subcheck::Mixop(mixops.prepare(ctx.arena_mixop)),
             source::Subcheck::Tuple(subchecks) => Subcheck::Tuple(subchecks.prepare(ctx)),
             source::Subcheck::Iter(iter, subcheck) => Subcheck::Iter(iter, subcheck.prepare(ctx)),
             source::Subcheck::Recurse(typ) => Subcheck::Recurse(typ),
         }
     }
 }
+
 // - Expressions
 
-impl Prepare for source::ExpKind {
+impl Prepare<PrepareContext<'_>> for source::ExpKind {
     type Output = ExpKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
@@ -150,7 +190,7 @@ impl Prepare for source::ExpKind {
     }
 }
 
-impl Prepare for source::ExpField {
+impl Prepare<PrepareContext<'_>> for source::ExpField {
     type Output = ExpField;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
@@ -158,25 +198,21 @@ impl Prepare for source::ExpField {
     }
 }
 
-impl Prepare for source::ExpIter {
+impl Prepare<PrepareContext<'_>> for source::ExpIter {
     type Output = ExpIter;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
         let source::ExpIter { iter, vars } = self;
         // Register `x*` for every iterated `x` so its slot exists
         let vars = vars.prepare(ctx);
-        for var in &vars {
-            let mut var_outer = var.var.clone();
-            var_outer.iters.push(iter);
-            ctx.layout.resolve_var(var_outer);
-        }
+        ctx.prepare_outer_vars(&vars, iter);
         ExpIter { iter, vars }
     }
 }
 
 // - Paths
 
-impl Prepare for source::PathKind {
+impl Prepare<PrepareContext<'_>> for source::PathKind {
     type Output = PathKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
@@ -197,7 +233,7 @@ impl Prepare for source::PathKind {
 
 // - Arguments
 
-impl Prepare for source::ArgKind {
+impl Prepare<PrepareContext<'_>> for source::ArgKind {
     type Output = ArgKind;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
@@ -210,23 +246,29 @@ impl Prepare for source::ArgKind {
 
 // - Premises
 
-impl Prepare for source::PremIter {
+impl Prepare<PrepareContext<'_>> for source::PremIter {
     type Output = PremIter;
 
     fn prepare(self, ctx: &mut PrepareContext<'_>) -> Self::Output {
-        fn prepare_outer_vars(layout: &mut FrameLayout, vars: &[VarSlot], iter: Iter) {
-            for var in vars {
-                let mut var_outer = var.var.clone();
-                var_outer.iters.push(iter);
-                layout.resolve_var(var_outer);
-            }
-        }
-
         // Register the outer variables of the bound and binding variables
         let vars_bound = self.vars_bound.prepare(ctx);
         let vars_bind = self.vars_bind.prepare(ctx);
-        prepare_outer_vars(ctx.layout, &vars_bound, self.iter);
-        prepare_outer_vars(ctx.layout, &vars_bind, self.iter);
+        ctx.prepare_outer_vars(&vars_bound, self.iter);
+        ctx.prepare_outer_vars(&vars_bind, self.iter);
         PremIter { iter: self.iter, vars_bound, vars_bind }
+    }
+}
+
+// - Notation
+
+impl<'a, T: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for tree::Mixfix<T> {
+    type Output = flat::Mixfix<T::Output>;
+
+    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
+        let (mixop, args) = self.into_parts();
+        let mixop = mixop.prepare(ctx.arena_mixop);
+        let args = args.prepare(ctx);
+        notation::flat::Mixfix::new(ctx.arena_mixop, mixop, args)
+            .expect("a mixfix fills every position")
     }
 }

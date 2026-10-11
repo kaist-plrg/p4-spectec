@@ -1,7 +1,7 @@
 //! Prepared callable syntax and its local frame layout
 //!
 //! `Callable` stores a definition beside the layout followed by its frames.
-//! Its preparation implementation lives in `interp/shared/prepare`.
+//! Each interpreter's top-level preparation constructs its callables.
 
 use std::rc::Rc;
 
