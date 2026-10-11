@@ -6,7 +6,7 @@ use crate::lang::{
     common::source::Span,
     data::{
         typ,
-        value::{Value, external::encode, make},
+        value::flat::{self as value, Value, external::encode},
     },
 };
 
@@ -34,7 +34,7 @@ where
         crate::phrase!(node: "archState".to_owned(), span: Span::default()),
         Vec::new(),
     );
-    Ok(make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
+    Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
 }
 
 // == Extern calls
@@ -55,7 +55,7 @@ where
         crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
         Vec::new(),
     );
-    Ok(make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
+    Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
 }
 
 // - Function calls

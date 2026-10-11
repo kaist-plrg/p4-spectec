@@ -40,12 +40,14 @@
 //! - `VarE`, `TupleE`, `CaseE` of a singleton case, or `StrE`
 //! - `IterE` of the above cases
 
+use std::rc::Rc;
+
 use crate::lang::{
     common::{
-        notation::mixop::Mixop,
         prim,
         source::{Phrase, Span},
     },
+    data::notation::tree as notation,
     hints::input::{self, InputHint},
     traits::{
         at::At,
@@ -188,7 +190,7 @@ fn analyze_exps_as_bind(
     let mut renv_partial = partial::RenameEnv::new();
     let mut iter_ctx_exp = ICtx::new();
     let exps_al =
-        partial::rename_exps(ctx, &venv.domain(), &mut renv_partial, &mut iter_ctx_exp, exps_al)?;
+        partial::rename_exps(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exps_al)?;
     update_venv_partial(&mut venv, &renv_partial);
     let prems_partial = partial::gen_prems(ctx, iter_ctx, &renv_partial)?;
     Ok((venv, exps_al, generated_prems(prems_partial, prems_multiple)))
@@ -252,7 +254,7 @@ fn analyze_args_as_bind(
     let mut renv_partial = partial::RenameEnv::new();
     let mut iter_ctx_arg = ICtx::new();
     let args_al =
-        partial::rename_args(ctx, &venv.domain(), &mut renv_partial, &mut iter_ctx_arg, args_al)?;
+        partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
     let prems_partial = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?;
     Ok((venv, args_al, generated_prems(prems_partial, prems_multiple)))
@@ -290,7 +292,7 @@ fn analyze_args_as_bind_shallow(
     let mut renv_partial = partial::RenameEnv::new();
     let mut iter_ctx_arg = ICtx::new();
     let args_al =
-        partial::rename_args(ctx, &venv.domain(), &mut renv_partial, &mut iter_ctx_arg, args_al)?;
+        partial::rename_args(ctx, &mut renv_partial, &mut iter_ctx_arg, &venv.domain(), args_al)?;
     update_venv_partial(&mut venv, &renv_partial);
     let prems_al = partial::gen_prems(ctx, &ICtx::new(), &renv_partial)?
         .into_iter()
@@ -412,13 +414,8 @@ fn lower_rule_prem(
     span: &Span,
     rule_prem_il: &ast::RulePrem,
 ) -> Result<(VEnv, al::ast::Prem, Vec<AnalyzedPrem>), AlgoError> {
-    let mixop = rule_prem_il.not_exp.to_mixop();
-    let exps_il = rule_prem_il
-        .not_exp
-        .args()
-        .into_iter()
-        .cloned()
-        .collect::<Vec<_>>();
+    let mixop = Rc::clone(rule_prem_il.not_exp.mixop());
+    let exps_il = rule_prem_il.not_exp.args().to_vec();
     let (exps_input_il, exps_output_il) = input::split(&rule_prem_il.input_hint, exps_il)
         .map_err(|error| input_error(error, span.clone()))?;
     // Inputs are bound, outputs are binders
@@ -432,7 +429,7 @@ fn lower_rule_prem(
     let exps_al =
         input::combine(&rule_prem_il.input_hint, exps_input_il.clone(), exps_output_al.clone())
             .map_err(|error| input_error(error, span.clone()))?;
-    let not_exp_al = Mixop::fill(&mixop, exps_al)
+    let not_exp_al = notation::Mixfix::new(mixop, exps_al)
         .expect("arguments obtained from the same mixfix must match its arity");
     let prem_al = phrase! {
         node: al::ast::PremKind::Rule(al::ast::RulePrem {
@@ -481,8 +478,8 @@ fn lower_if_eq_prem(
             Ok((VEnv::new(), iter_ctx.iterate_prem(prem_al), vec![]))
         }
         // Both sides binding is ambiguous
-        (false, true) => lower_let_prem(ctx, span, iter_ctx, exp_l_il, &benv_l, exp_r_il),
-        (true, false) => lower_let_prem(ctx, span, iter_ctx, exp_r_il, &benv_r, exp_l_il),
+        (false, true) => lower_let_prem(ctx, iter_ctx, span, exp_l_il, &benv_l, exp_r_il),
+        (true, false) => lower_let_prem(ctx, iter_ctx, span, exp_r_il, &benv_r, exp_l_il),
         (false, false) => {
             Err(error::binding::equality_binding_invalid(&if_prem_il.exp.span, &benv_l, &benv_r))
         }
@@ -564,8 +561,8 @@ fn lower_if_not_hold_prem(
 /// Analyzes `let pattern = exp`, rewriting the pattern side.
 fn lower_let_prem(
     ctx: &mut Context,
-    span: &Span,
     iter_ctx: ICtx,
+    span: &Span,
     exp_l_il: &ast::Exp,
     benv_l: &BEnv,
     exp_r_il: &ast::Exp,
@@ -581,7 +578,7 @@ fn lower_let_prem(
     let mut renv_partial = partial::RenameEnv::new();
     let mut iter_ctx_exp = ICtx::new();
     let exp_l_al =
-        partial::rename_exp(ctx, &venv.domain(), &mut renv_partial, &mut iter_ctx_exp, exp_l_al)?;
+        partial::rename_exp(ctx, &mut renv_partial, &mut iter_ctx_exp, &venv.domain(), exp_l_al)?;
     update_venv_partial(&mut venv, &renv_partial);
     let prems_partial = partial::gen_prems(ctx, &iter_ctx, &renv_partial)?;
     let prems_analyzed = generated_prems(prems_partial, prems_multiple);

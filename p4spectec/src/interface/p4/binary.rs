@@ -9,7 +9,10 @@
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, ValueArena, make},
+    data::{
+        arena::Arena,
+        value::flat::{self as value, Value},
+    },
 };
 
 use super::error::P4Error;
@@ -101,22 +104,25 @@ impl BinaryOperator {
 
 /// Pops one operator and its operands, pushing the binary expression.
 fn reduce(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     values: &mut Vec<Value>,
     operators: &mut Vec<StackedOperator>,
 ) -> Result<(), P4Error> {
     let op = operators.pop().expect("binary operator");
     let value_r = values.pop().expect("binary right operand");
     let value_l = values.pop().expect("binary left operand");
-    let value_operator = make::case_shaped! { arena: arena,
+    let value_operator = value::make::case_shaped! { arena: arena,
         shape: op.op.shape(),
         args: vec![],
         typ: "binop",
         span: op.span,
     }?;
     // The expression spans both operands
-    let span = Span::new(arena.span(&value_l).left.clone(), arena.span(&value_r).right.clone());
-    values.push(make::case_shaped! { arena: arena,
+    let span = Span::new(
+        arena.value.span(value_l.span).left.clone(),
+        arena.value.span(value_r.span).right.clone(),
+    );
+    values.push(value::make::case_shaped! { arena: arena,
         shape: "expression binop expression",
         args: vec![value_l, value_operator, value_r],
         typ: "binaryExpression",
@@ -128,7 +134,7 @@ fn reduce(
 /// Folds `first op1 rhs1 op2 rhs2 ...` into a tree by precedence,
 /// left-associative.
 pub(crate) fn fold(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     first: Value,
     parts: Vec<BinaryExpressionPart>,
 ) -> Result<Value, P4Error> {

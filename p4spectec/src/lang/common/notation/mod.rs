@@ -1,9 +1,7 @@
-//! Mixfix notation shared by the language representations
+//! Notation atoms shared by every language representation
 //!
-//! A notation form such as `C |- e : t` is a `Mixfix`:
-//! atoms (`|-`, `:`) interleaved with argument holes.
-//! `Mixop` is the shape alone; `Atom` is one literal piece.
+//! An `Atom` is one literal piece of a notation form,
+//! such as `|-` or `:` in `C |- e : t`;
+//! the forms themselves live in `data::notation` from IL on.
 
 pub mod atom;
-pub mod mixfix;
-pub mod mixop;

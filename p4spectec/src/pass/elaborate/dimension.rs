@@ -24,13 +24,15 @@
 //! -- if (n_x = n_y)*{n_x <- n_x*}
 //! ```
 
+use std::{rc::Rc, slice};
+
 use crate::lang::{
     common::{
         Id,
         ds::map::IdMap,
-        notation::mixfix::Mixfix,
         source::{Phrase, Span},
     },
+    data::notation::tree::Mixop,
     traits::eq::SyntaxEq,
 };
 
@@ -185,7 +187,9 @@ fn infer_exps(dim_ctx: &mut DimContext, exps: &[ast::Exp], iters: &[ast::Iter]) 
 // - Notation expression inference
 
 fn infer_not_exp(dim_ctx: &mut DimContext, not_exp: &ast::NotExp, iters: &[ast::Iter]) {
-    not_exp.iter(|exp| infer_exp(dim_ctx, exp, iters));
+    for exp in not_exp.args() {
+        infer_exp(dim_ctx, exp, iters);
+    }
 }
 
 // - Path inference
@@ -666,15 +670,25 @@ fn annotate_iter_exp(
 // - Notation expression annotation
 
 /// Annotates the argument expressions of a notation expression.
+///
+/// Occurrences combine as the notation nests, left to right.
 fn annotate_not_exp(bounds: &VEnv, not_exp: &mut ast::NotExp) -> Result<Occurrences, ElabError> {
-    match not_exp {
-        Mixfix::Arg(exp) => annotate_arg_not_exp(bounds, exp),
-        Mixfix::Atom(_) => Ok(annotate_atom_not_exp()),
-        Mixfix::Brack(_, not_exp_inner, _) => annotate_brack_not_exp(bounds, not_exp_inner),
-        Mixfix::Infix(not_exp_l, _, not_exp_r) => {
-            annotate_infix_not_exp(bounds, not_exp_l, not_exp_r)
-        }
-        Mixfix::Seq(not_exps) => annotate_seq_not_exp(bounds, not_exps),
+    let mixop = Rc::clone(not_exp.mixop());
+    annotate_mixop(bounds, &mixop, &mut not_exp.args_mut().iter_mut())
+}
+
+/// Annotates the arguments at a mixop's positions, taking them in order.
+fn annotate_mixop(
+    bounds: &VEnv,
+    mixop: &Mixop,
+    exps: &mut slice::IterMut<'_, ast::Exp>,
+) -> Result<Occurrences, ElabError> {
+    match mixop {
+        Mixop::Arg => annotate_arg_not_exp(bounds, exps.next().expect("one argument per position")),
+        Mixop::Atom(_) => Ok(annotate_atom_not_exp()),
+        Mixop::Brack(_, mixop_inner, _) => annotate_brack_not_exp(bounds, mixop_inner, exps),
+        Mixop::Infix(mixop_l, _, mixop_r) => annotate_infix_not_exp(bounds, mixop_l, mixop_r, exps),
+        Mixop::Seq(mixops) => annotate_seq_not_exp(bounds, mixops, exps),
     }
 }
 
@@ -694,20 +708,22 @@ fn annotate_atom_not_exp() -> Occurrences {
 
 fn annotate_brack_not_exp(
     bounds: &VEnv,
-    not_exp_inner: &mut ast::NotExp,
+    mixop_inner: &Mixop,
+    exps: &mut slice::IterMut<'_, ast::Exp>,
 ) -> Result<Occurrences, ElabError> {
-    annotate_not_exp(bounds, not_exp_inner)
+    annotate_mixop(bounds, mixop_inner, exps)
 }
 
 // - Infix notation expressions
 
 fn annotate_infix_not_exp(
     bounds: &VEnv,
-    not_exp_l: &mut ast::NotExp,
-    not_exp_r: &mut ast::NotExp,
+    mixop_l: &Mixop,
+    mixop_r: &Mixop,
+    exps: &mut slice::IterMut<'_, ast::Exp>,
 ) -> Result<Occurrences, ElabError> {
-    let occurs_l = annotate_not_exp(bounds, not_exp_l)?;
-    let occurs_r = annotate_not_exp(bounds, not_exp_r)?;
+    let occurs_l = annotate_mixop(bounds, mixop_l, exps)?;
+    let occurs_r = annotate_mixop(bounds, mixop_r, exps)?;
     occurs_l.union(occurs_r)
 }
 
@@ -715,11 +731,12 @@ fn annotate_infix_not_exp(
 
 fn annotate_seq_not_exp(
     bounds: &VEnv,
-    not_exps: &mut [ast::NotExp],
+    mixops: &[Mixop],
+    exps: &mut slice::IterMut<'_, ast::Exp>,
 ) -> Result<Occurrences, ElabError> {
     let mut occurs = Occurrences::new();
-    for not_exp in not_exps {
-        let occurs_exp = annotate_not_exp(bounds, not_exp)?;
+    for mixop in mixops {
+        let occurs_exp = annotate_mixop(bounds, mixop, exps)?;
         occurs = occurs.union(occurs_exp)?;
     }
     Ok(occurs)

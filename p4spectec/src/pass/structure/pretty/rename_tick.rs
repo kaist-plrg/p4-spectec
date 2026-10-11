@@ -15,9 +15,13 @@
 //! `apply_rel` and `apply_func` rename definition inputs consistently
 //! in both the main body and the fallback, avoiding names already used there.
 
-use crate::lang::{common::ds::set::IdSet, hints::input, traits::free::FreeIds};
+use std::rc::Rc;
 
-use crate::lang::il::ast::{Arg, Exp, Mixop};
+use crate::lang::{
+    common::ds::set::IdSet, data::notation::tree as notation, hints::input, traits::free::FreeIds,
+};
+
+use crate::lang::il::ast::{Arg, Exp};
 
 use crate::pass::structure::{ol::ast::*, re::renamer::Renamer};
 
@@ -177,7 +181,7 @@ fn upstream_rule_instr(
     instr_ol: RuleInstr,
 ) -> InstrKind {
     let RuleInstr { id, not_exp, input_hint, iter_instrs, block } = instr_ol;
-    let exps = not_exp.args().into_iter().cloned().collect();
+    let exps = not_exp.args().to_vec();
     // Elaboration validates hints; OL rewrites preserve notation arity
     let (exps_input, exps_output) =
         input::split(&input_hint, exps).expect("validated relation hints and argument counts");
@@ -204,8 +208,8 @@ fn upstream_rule_instr(
     // Renaming preserves the argument counts returned by input::split
     let exps = input::combine(&input_hint, exps_input, exps_output)
         .expect("validated relation hints and argument counts");
-    let mixop = not_exp.to_mixop();
-    let not_exp = Mixop::fill(&mixop, exps).expect("validated arguments preserve the mixfix arity");
+    let not_exp = notation::Mixfix::new(Rc::clone(not_exp.mixop()), exps)
+        .expect("validated arguments preserve the mixfix arity");
     let block = renamer.rename_block(changed, block);
     let block = upstream_block(changed, &frees, block);
     let instr = RuleInstr { id, not_exp, input_hint, iter_instrs, block };

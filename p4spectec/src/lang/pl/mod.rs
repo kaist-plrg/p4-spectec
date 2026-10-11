@@ -12,5 +12,7 @@ pub mod ast;
 pub mod eq;
 pub mod free;
 pub mod has_call;
+pub mod prepared;
 pub mod print;
 pub mod rule_group;
+pub mod stage;

@@ -11,27 +11,26 @@ use std::rc::Rc;
 use crate::lang::{
     common::{ds::map::IdMap, source::Span},
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, get, make},
+        value::flat::{self as value, Value},
         var::{SlotIdx, VarSlot},
     },
 };
 
+use crate::lang::il::prepared as ast;
+
 use crate::diagnostic::{Label, Report};
 
-use crate::runtime::{
-    envs::interp::shared::{
-        TDEnv,
-        callable::Callable,
-        frame::{Frame, FrameLayout},
-    },
-    typdef::TypeDef,
+use crate::runtime::envs::interp::shared::{
+    TDEnv, TypeDef,
+    callable::Callable,
+    frame::{Frame, FrameLayout},
 };
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap_from_result},
     error::{self, EntityKind, Error},
-    prepare::ast,
 };
 
 // = Function signatures
@@ -105,14 +104,14 @@ pub trait IterContext: WriteContext {
     /// Finds the list values bound to `vars`, requiring equal lengths.
     fn find_list_values_by_var<'arena>(
         &self,
-        arena: &'arena ValueArena,
+        arena: &'arena Arena,
         vars: &[ast::Var],
     ) -> Result<Vec<&'arena [Value]>, Error>;
 
     /// Finds the option values bound to `vars`, all present or all absent.
     fn find_opt_values_by_var(
         &self,
-        arena: &ValueArena,
+        arena: &Arena,
         vars: &[ast::Var],
     ) -> Result<Option<Vec<Value>>, Error>;
 
@@ -128,7 +127,7 @@ pub trait IterContext: WriteContext {
     /// Binds each variable to the list of its column.
     fn bind_list_values_by_var(
         &mut self,
-        arena: &mut ValueArena,
+        arena: &mut Arena,
         vars: &[ast::Var],
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()>;
@@ -136,7 +135,7 @@ pub trait IterContext: WriteContext {
     /// Binds each variable to the option built from its column.
     fn bind_opt_values_by_var(
         &mut self,
-        arena: &mut ValueArena,
+        arena: &mut Arena,
         vars: &[ast::Var],
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()>;
@@ -463,7 +462,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
 
     fn find_list_values_by_var<'a>(
         &self,
-        arena: &'a ValueArena,
+        arena: &'a Arena,
         vars: &[ast::Var],
     ) -> Result<Vec<&'a [Value]>, Error> {
         let mut values_by_var = Vec::with_capacity(vars.len());
@@ -473,7 +472,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
                 .find_value_at_slot(var.slot)
                 .expect("value must be bound");
             // Each variable must hold a list
-            let values = get::list(arena, value).expect("iteration input must be a list");
+            let values = value::get::list(arena, value).expect("iteration input must be a list");
             values_by_var.push(values);
         }
         // No variables: nothing to iterate
@@ -494,7 +493,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
 
     fn find_opt_values_by_var(
         &self,
-        arena: &ValueArena,
+        arena: &Arena,
         vars: &[ast::Var],
     ) -> Result<Option<Vec<Value>>, Error> {
         let mut values = Vec::with_capacity(vars.len());
@@ -504,7 +503,7 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
                 .find_value_at_slot(var.slot)
                 .expect("value must be bound");
             // Each variable must hold an option
-            let value = get::opt(arena, value).expect("iteration input must be an option");
+            let value = value::get::opt(arena, value).expect("iteration input must be an option");
             values.push(value);
         }
         // All present, all absent, or a mismatch
@@ -543,14 +542,14 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
 
     fn bind_list_values_by_var(
         &mut self,
-        arena: &mut ValueArena,
+        arena: &mut Arena,
         vars: &[ast::Var],
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
             let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
             // Each variable becomes a list one iteration outward
-            let value = make::list(arena, typ.node.into(), values, Span::default());
+            let value = value::make::list(arena, typ.node.into(), values, Span::default());
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }
@@ -559,15 +558,19 @@ impl<R, F: FuncSignature> IterContext for Context<'_, R, F> {
 
     fn bind_opt_values_by_var(
         &mut self,
-        arena: &mut ValueArena,
+        arena: &mut Arena,
         vars: &[ast::Var],
         values_by_var: Vec<Vec<Value>>,
     ) -> Backtrack<()> {
         for (var, values) in vars.iter().zip(values_by_var) {
             let typ = typ::make::iterate(var.var.typ.clone(), &var.var.iters);
             // Each variable becomes an option one iteration outward
-            let value =
-                make::opt(arena, typ.node.into(), values.into_iter().next(), Span::default());
+            let value = value::make::opt(
+                arena,
+                typ.node.into(),
+                values.into_iter().next(),
+                Span::default(),
+            );
             let value = unwrap_from_result!(value, &Span::default());
             self.add_value_at_slot(var.slot, value);
         }

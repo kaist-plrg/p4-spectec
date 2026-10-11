@@ -7,8 +7,9 @@ use serde::{Deserialize, Serialize};
 use crate::lang::{
     common::source::Span,
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, make},
+        value::flat::{self as value, Value},
     },
 };
 
@@ -40,11 +41,7 @@ impl CounterArray {
     /// ```p4
     /// CounterArray(bit<32> max_index, bool sparse);
     /// ```
-    pub fn init(
-        arena: &ValueArena,
-        value_ids: Value,
-        value_args: Value,
-    ) -> Result<Self, ExternError> {
+    pub fn init(arena: &Arena, value_ids: Value, value_args: Value) -> Result<Self, ExternError> {
         let args = args::assoc(arena, value_ids, value_args)?;
         let value_max = args::find(&args, "max_index")?;
         let value_sparse = args::find(&args, "sparse")?;
@@ -131,8 +128,8 @@ impl CounterArray {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

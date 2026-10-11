@@ -15,7 +15,7 @@ use lalrpop_util::ParseError;
 
 use crate::lang::{
     common::source::{Phrase, Position, Span},
-    data::value::{Value, ValueArena},
+    data::{arena::Arena, value::flat::Value},
 };
 
 use super::{
@@ -74,7 +74,7 @@ fn translate_lalrpop_error(ctx: &Context, error: ParseError<Location, Token, P4E
 
 /// Parses an already preprocessed P4 source string into a value tree.
 pub fn parse_string(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     path: impl AsRef<Path>,
     source: &str,
 ) -> Result<Value, P4Error> {
@@ -82,7 +82,7 @@ pub fn parse_string(
     // The lexer and parser share one context for name classification
     let ctx = Rc::new(Context::new(arena));
     let position = Position::new(Rc::clone(&file), 1, 0);
-    let mut lexer = Lexer::new(file, source, Rc::clone(&ctx));
+    let mut lexer = Lexer::new(Rc::clone(&ctx), file, source);
     let input = parser_input(ctx.as_ref(), &mut lexer, position);
 
     let result = p4programParser::new().parse(ctx.as_ref(), input);
@@ -93,7 +93,7 @@ pub fn parse_string(
 
 /// Preprocesses and parses a P4 source file.
 pub fn parse_file(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     includes: &[PathBuf],
     path: impl AsRef<Path>,
 ) -> Result<Value, P4Error> {

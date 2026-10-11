@@ -1,6 +1,6 @@
 use lalrpop_util::ParseError;
 
-use crate::lang::data::value::{make, Value};
+use crate::lang::data::value::flat::{self as value, Value};
 
 use crate::interface::p4::{
     binary::{self, BinaryExpressionPart, BinaryOperator},
@@ -246,7 +246,7 @@ l_angle: () = {
 // `TRAILING_COMMA` preserves the canonical `COMMA` after lexer lookahead.
 trailingCommaOpt: Value = {
     // trailingCommaOpt ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -255,7 +255,7 @@ trailingCommaOpt: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // trailingCommaOpt ::= "COMMA"
-    <l:@L> "TRAILING_COMMA" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TRAILING_COMMA" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "','",
         args: vec![],
@@ -268,7 +268,7 @@ trailingCommaOpt: Value = {
 
 booleanLiteral: Value = {
     // booleanLiteral ::= "TRUE"
-    <l:@L> "TRUE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TRUE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TRUE",
         args: vec![],
@@ -277,7 +277,7 @@ booleanLiteral: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // booleanLiteral ::= "FALSE"
-    <l:@L> "FALSE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "FALSE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "FALSE",
         args: vec![],
@@ -290,7 +290,7 @@ booleanLiteral: Value = {
 
 integerLiteral: Value = {
     // integerLiteral ::= int
-    <l:@L> <int:int> <r:@R> =>? make::case_shaped! {
+    <l:@L> <int:int> <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "D int",
         args: vec![int],
@@ -306,7 +306,7 @@ integerLiteral: Value = {
 
 stringLiteral: Value = {
     // stringLiteral ::= "STRING_LITERAL"
-    <l:@L> <text:"STRING_LITERAL"> <r:@R> =>? make::case_shaped! {
+    <l:@L> <text:"STRING_LITERAL"> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'\"' text '\"'",
             args: vec![text],
@@ -319,7 +319,7 @@ stringLiteral: Value = {
 
 identifier: Value = {
     // identifier ::= "NAME" "IDENTIFIER"
-    <l:@L> <text:"NAME"> "IDENTIFIER" <r:@R> =>? make::case_shaped! {
+    <l:@L> <text:"NAME"> "IDENTIFIER" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_ID text",
             args: vec![text],
@@ -330,7 +330,7 @@ identifier: Value = {
 
 typeIdentifier: Value = {
     // typeIdentifier ::= "NAME" "TYPENAME"
-    <l:@L> <text:"NAME"> "TYPENAME" <r:@R> =>? make::case_shaped! {
+    <l:@L> <text:"NAME"> "TYPENAME" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_TID text",
             args: vec![text],
@@ -346,7 +346,7 @@ nonTypeName: Value = {
     <id:identifier> => id,
 
     // nonTypeName ::= "APPLY"
-    <l:@L> "APPLY" <r:@R> =>? make::case_shaped! {
+    <l:@L> "APPLY" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "APPLY",
         args: vec![],
@@ -355,7 +355,7 @@ nonTypeName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "KEY"
-    <l:@L> "KEY" <r:@R> =>? make::case_shaped! {
+    <l:@L> "KEY" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "KEY",
         args: vec![],
@@ -364,7 +364,7 @@ nonTypeName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "ACTIONS"
-    <l:@L> "ACTIONS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ACTIONS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ACTIONS",
         args: vec![],
@@ -373,7 +373,7 @@ nonTypeName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "STATE"
-    <l:@L> "STATE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "STATE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "STATE",
         args: vec![],
@@ -382,7 +382,7 @@ nonTypeName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "ENTRIES"
-    <l:@L> "ENTRIES" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ENTRIES" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ENTRIES",
         args: vec![],
@@ -391,7 +391,7 @@ nonTypeName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "TYPE"
-    <l:@L> "TYPE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TYPE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TYPE",
         args: vec![],
@@ -400,7 +400,7 @@ nonTypeName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // nonTypeName ::= "PRIORITY"
-    <l:@L> "PRIORITY" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PRIORITY" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "PRIORITY",
         args: vec![],
@@ -414,7 +414,7 @@ prefixedNonTypeName: Value = {
     <n:nonTypeName> => n,
 
     // prefixedNonTypeName ::= "DOT" go_toplevel nonTypeName go_local
-    <l:@L> "DOT" go_toplevel <n:nonTypeName> go_local <r:@R> =>? make::case_shaped! {
+    <l:@L> "DOT" go_toplevel <n:nonTypeName> go_local <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_ID '.' nonTypeName",
             args: vec![n],
@@ -435,7 +435,7 @@ prefixedTypeName: Value = {
     <n:typeName> => n,
 
     // prefixedTypeName ::= "DOT" go_toplevel typeName go_local
-    <l:@L> "DOT" go_toplevel <tid:typeName> go_local <r:@R> =>? make::case_shaped! {
+    <l:@L> "DOT" go_toplevel <tid:typeName> go_local <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_TID '.' typeName",
             args: vec![tid],
@@ -454,7 +454,7 @@ tableCustomName: Value = {
     <tid:typeIdentifier> => tid,
 
     // tableCustomName ::= "APPLY"
-    <l:@L> "APPLY" <r:@R> =>? make::case_shaped! {
+    <l:@L> "APPLY" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "APPLY",
         args: vec![],
@@ -463,7 +463,7 @@ tableCustomName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableCustomName ::= "STATE"
-    <l:@L> "STATE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "STATE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "STATE",
         args: vec![],
@@ -472,7 +472,7 @@ tableCustomName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableCustomName ::= "TYPE"
-    <l:@L> "TYPE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TYPE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TYPE",
         args: vec![],
@@ -481,7 +481,7 @@ tableCustomName: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableCustomName ::= "PRIORITY"
-    <l:@L> "PRIORITY" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PRIORITY" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "PRIORITY",
         args: vec![],
@@ -500,7 +500,7 @@ name: Value = {
     <n:typeName> => n,
 
     // name ::= "LIST"
-    <l:@L> "LIST" <r:@R> =>? make::case_shaped! {
+    <l:@L> "LIST" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "LIST",
         args: vec![],
@@ -514,7 +514,7 @@ nameList: Value = {
     <n:name> => n,
 
     // nameList ::= nameList "COMMA" name
-    <l:@L> <ns:nameList> "COMMA" <n:name> <r:@R> =>? make::case_shaped! {
+    <l:@L> <ns:nameList> "COMMA" <n:name> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "nameList ',' name",
             args: vec![ns, n],
@@ -533,7 +533,7 @@ member: Value = {
 #[inline]
 direction: Value = {
     // direction ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -542,7 +542,7 @@ direction: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // direction ::= "IN"
-    <l:@L> "IN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "IN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "IN",
         args: vec![],
@@ -551,7 +551,7 @@ direction: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // direction ::= "OUT"
-    <l:@L> "OUT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "OUT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "OUT",
         args: vec![],
@@ -560,7 +560,7 @@ direction: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // direction ::= "INOUT"
-    <l:@L> "INOUT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "INOUT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "INOUT",
         args: vec![],
@@ -575,7 +575,7 @@ direction: Value = {
 
 baseType: Value = {
     // baseType ::= "BOOL"
-    <l:@L> "BOOL" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BOOL" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "BOOL",
         args: vec![],
@@ -584,7 +584,7 @@ baseType: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "MATCH_KIND"
-    <l:@L> "MATCH_KIND" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MATCH_KIND" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "MATCH_KIND",
         args: vec![],
@@ -593,7 +593,7 @@ baseType: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "ERROR"
-    <l:@L> "ERROR" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ERROR" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ERROR",
         args: vec![],
@@ -602,7 +602,7 @@ baseType: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "BIT"
-    <l:@L> "BIT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "BIT",
         args: vec![],
@@ -611,7 +611,7 @@ baseType: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "STRING"
-    <l:@L> "STRING" <r:@R> =>? make::case_shaped! {
+    <l:@L> "STRING" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "STRING",
         args: vec![],
@@ -620,7 +620,7 @@ baseType: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "INT"
-    <l:@L> "INT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "INT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "INT",
         args: vec![],
@@ -629,7 +629,7 @@ baseType: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "BIT" l_angle int r_angle
-    <l:@L> "BIT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "BIT `< int `>",
             args: vec![v],
@@ -638,7 +638,7 @@ baseType: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "INT" l_angle int r_angle
-    <l:@L> "INT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "INT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "INT `< int `>",
             args: vec![v],
@@ -647,7 +647,7 @@ baseType: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "VARBIT" l_angle int r_angle
-    <l:@L> "VARBIT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "VARBIT" "L_ANGLE_ARGS" <v:int> r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "VARBIT `< int `>",
             args: vec![v],
@@ -656,7 +656,7 @@ baseType: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "BIT" l_angle "L_PAREN" expression "R_PAREN" r_angle
-    <l:@L> "BIT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "BIT `< `( expression `) `>",
             args: vec![e],
@@ -665,7 +665,7 @@ baseType: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "INT" l_angle "L_PAREN" expression "R_PAREN" r_angle
-    <l:@L> "INT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "INT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "INT `< `( expression `) `>",
             args: vec![e],
@@ -674,7 +674,7 @@ baseType: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // baseType ::= "VARBIT" l_angle "L_PAREN" expression "R_PAREN" r_angle
-    <l:@L> "VARBIT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "VARBIT" "L_ANGLE_ARGS" "L_PAREN" <e:expression> "R_PAREN" r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "VARBIT `< `( expression `) `>",
             args: vec![e],
@@ -687,7 +687,7 @@ baseType: Value = {
 
 specializedType: Value = {
     // specializedType ::= prefixedTypeName l_angle typeArgumentList r_angle
-    <l:@L> <n:prefixedTypeName> "L_ANGLE_ARGS" <tal:typeArgumentList> r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:prefixedTypeName> "L_ANGLE_ARGS" <tal:typeArgumentList> r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "prefixedTypeName `< typeArgumentList `>",
             args: vec![n, tal],
@@ -709,7 +709,7 @@ namedType: Value = {
 #[inline]
 arrayType: Value = {
     // arrayType ::= typeRef "L_BRACKET" expression "R_BRACKET"
-    <l:@L> <t:typeRef> "L_BRACKET" <e:expression> "R_BRACKET" <r:@R> =>? make::case_shaped! {
+    <l:@L> <t:typeRef> "L_BRACKET" <e:expression> "R_BRACKET" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "typeRef `[ expression `]",
             args: vec![t, e],
@@ -722,7 +722,7 @@ arrayType: Value = {
 
 listType: Value = {
     // listType ::= "LIST" l_angle typeArgument r_angle
-    <l:@L> "LIST" "L_ANGLE_ARGS" <targ:typeArgument> r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "LIST" "L_ANGLE_ARGS" <targ:typeArgument> r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "LIST `< typeArgument `>",
             args: vec![targ],
@@ -735,7 +735,7 @@ listType: Value = {
 
 tupleType: Value = {
     // tupleType ::= "TUPLE" l_angle typeArgumentList r_angle
-    <l:@L> "TUPLE" "L_ANGLE_ARGS" <targs:typeArgumentList> r_angle <r:@R> =>? make::case_shaped! {
+    <l:@L> "TUPLE" "L_ANGLE_ARGS" <targs:typeArgumentList> r_angle <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "TUPLE `< typeArgumentList `>",
             args: vec![targs],
@@ -768,7 +768,7 @@ typeOrVoid: Value = {
     <t:typeRef> => t,
 
     // typeOrVoid ::= "VOID"
-    <l:@L> "VOID" <r:@R> =>? make::case_shaped! {
+    <l:@L> "VOID" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "VOID",
         args: vec![],
@@ -792,7 +792,7 @@ typeParameterList: Value = {
     <tp:typeParameter> => tp,
 
     // typeParameterList ::= typeParameterList "COMMA" typeParameter
-    <l:@L> <tps:typeParameterList> "COMMA" <tp:typeParameter> <r:@R> =>? make::case_shaped! {
+    <l:@L> <tps:typeParameterList> "COMMA" <tp:typeParameter> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "typeParameterList ',' typeParameter",
             args: vec![tps, tp],
@@ -803,7 +803,7 @@ typeParameterList: Value = {
 
 typeParameterListOpt: Value = {
     // typeParameterListOpt ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -814,7 +814,7 @@ typeParameterListOpt: Value = {
     // typeParameterListOpt ::= l_angle typeParameterList r_angle
     <l:@L> l_angle <tps:typeParameterList> r_angle <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         declare::typs(ctx, &tps);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`< typeParameterList `>",
             args: vec![tps],
@@ -831,7 +831,7 @@ parameter: Value = {
     <l:@L> <al:annotationList> <dir:direction> <t:typeRef> <n:name> <i:initializerOpt> <r:@R>
         =>? (|| -> Result<_, P4Error> { Ok({
             declare::var(ctx, &n, false, Some(&t));
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "annotationList direction type name initializerOpt",
                 args: vec![al, dir, t, n, i],
@@ -846,7 +846,7 @@ nonEmptyParameterList: Value = {
     <p:parameter> => p,
 
     // nonEmptyParameterList ::= nonEmptyParameterList "COMMA" parameter
-    <l:@L> <ps:nonEmptyParameterList> "COMMA" <p:parameter> <r:@R> =>? make::case_shaped! {
+    <l:@L> <ps:nonEmptyParameterList> "COMMA" <p:parameter> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "nonEmptyParameterList ',' parameter",
             args: vec![ps, p],
@@ -858,7 +858,7 @@ nonEmptyParameterList: Value = {
 #[inline]
 parameterList: Value = {
     // parameterList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -874,7 +874,7 @@ parameterList: Value = {
 
 constructorParameterListOpt: Value = {
     // constructorParameterListOpt ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -883,7 +883,7 @@ constructorParameterListOpt: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // constructorParameterListOpt ::= "L_PAREN" parameterList "R_PAREN"
-    <l:@L> "L_PAREN" <ps:parameterList> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" <ps:parameterList> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( parameterList `)",
             args: vec![ps],
@@ -896,7 +896,7 @@ constructorParameterListOpt: Value = {
 
 namedExpression: Value = {
     // namedExpression ::= name "ASSIGN" expression
-    <l:@L> <n:name> "ASSIGN" <e:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:name> "ASSIGN" <e:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name '=' expression",
             args: vec![n, e],
@@ -910,7 +910,7 @@ namedExpressionList: Value = {
     <e:namedExpression> => e,
 
     // namedExpressionList ::= namedExpressionList "COMMA" namedExpression
-    <l:@L> <es:namedExpressionList> "COMMA" <e:namedExpression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <es:namedExpressionList> "COMMA" <e:namedExpression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "namedExpressionList ',' namedExpression",
             args: vec![es, e],
@@ -941,7 +941,7 @@ referenceExpression: Value = {
     <n:prefixedNonTypeName> => n,
 
     // referenceExpression ::= "THIS"
-    <l:@L> "THIS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "THIS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "THIS",
         args: vec![],
@@ -954,7 +954,7 @@ referenceExpression: Value = {
 
 defaultExpression: Value = {
     // defaultExpression ::= "DOTS"
-    <l:@L> "DOTS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DOTS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'...'",
         args: vec![],
@@ -994,7 +994,7 @@ defaultExpression: Value = {
 // indexAccessExpression ::= expression "L_BRACKET" expression "R_BRACKET"
 sliceop: Value = {
     // sliceop ::= "COLON"
-    <l:@L> colon <r:@R> =>? make::case_shaped! {
+    <l:@L> colon <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "':'",
         args: vec![],
@@ -1003,7 +1003,7 @@ sliceop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // sliceop ::= "PLUSCOLON"
-    <l:@L> "PLUSCOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PLUSCOLON" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'+:'",
         args: vec![],
@@ -1046,7 +1046,7 @@ TernaryExpression: Value = {
 
     // TernaryExpression ::= ExpressionOr "QUESTION" expression colon expression
     <l:@L> <condition:ExpressionOr> "QUESTION" <yes:expression> colon <no:expression> <r:@R>
-        =>? make::case_shaped! {
+        =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression '?' expression ':' expression",
             args: vec![condition, yes, no],
@@ -1062,7 +1062,7 @@ ExpressionOr: Value = {
     // ExpressionOr ::= ExpressionOr "OR" ExpressionAnd
     <l:@L> <lhs:ExpressionOr> <op_l:@L> "OR" <op_r:@R> <rhs:ExpressionAnd> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         let span_op = ctx.location_span(op_l, op_r);
-        let value_op = make::case_shaped! {
+        let value_op = value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'||'",
             args: vec![],
@@ -1070,7 +1070,7 @@ ExpressionOr: Value = {
             span: span_op.clone(),
         }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression binop expression",
             args: vec![lhs, value_op, rhs],
@@ -1088,7 +1088,7 @@ ExpressionAnd: Value = {
     <l:@L> <lhs:ExpressionAnd> <op_l:@L> "AND" <op_r:@R> <rhs:ExpressionEquality>
         <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'&&'",
                 args: vec![],
@@ -1096,7 +1096,7 @@ ExpressionAnd: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1114,7 +1114,7 @@ ExpressionEquality: Value = {
     <l:@L> <lhs:ExpressionEquality> <op_l:@L> "EQ" <op_r:@R> <rhs:ExpressionComparison>
         <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'=='",
                 args: vec![],
@@ -1122,7 +1122,7 @@ ExpressionEquality: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1135,7 +1135,7 @@ ExpressionEquality: Value = {
     <l:@L> <lhs:ExpressionEquality> <op_l:@L> "NE" <op_r:@R> <rhs:ExpressionComparison>
         <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'!='",
                 args: vec![],
@@ -1143,7 +1143,7 @@ ExpressionEquality: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1186,7 +1186,7 @@ ExpressionAdditive: Value = {
     <l:@L> <lhs:ExpressionAdditive> <op_l:@L> "PLUSPLUS" <op_r:@R>
         <rhs:ExpressionMultiplicative> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'++'",
                 args: vec![],
@@ -1194,7 +1194,7 @@ ExpressionAdditive: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1207,7 +1207,7 @@ ExpressionAdditive: Value = {
     <l:@L> <lhs:ExpressionAdditive> <op_l:@L> "PLUS" <op_r:@R>
         <rhs:ExpressionMultiplicative> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'+'",
                 args: vec![],
@@ -1215,7 +1215,7 @@ ExpressionAdditive: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1228,7 +1228,7 @@ ExpressionAdditive: Value = {
     <l:@L> <lhs:ExpressionAdditive> <op_l:@L> "PLUS_SAT" <op_r:@R>
         <rhs:ExpressionMultiplicative> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'|+|'",
                 args: vec![],
@@ -1236,7 +1236,7 @@ ExpressionAdditive: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1249,7 +1249,7 @@ ExpressionAdditive: Value = {
     <l:@L> <lhs:ExpressionAdditive> <op_l:@L> "MINUS" <op_r:@R>
         <rhs:ExpressionMultiplicative> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'-'",
                 args: vec![],
@@ -1257,7 +1257,7 @@ ExpressionAdditive: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1270,7 +1270,7 @@ ExpressionAdditive: Value = {
     <l:@L> <lhs:ExpressionAdditive> <op_l:@L> "MINUS_SAT" <op_r:@R>
         <rhs:ExpressionMultiplicative> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'|-|'",
                 args: vec![],
@@ -1278,7 +1278,7 @@ ExpressionAdditive: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1296,7 +1296,7 @@ ExpressionMultiplicative: Value = {
     <l:@L> <lhs:ExpressionMultiplicative> <op_l:@L> "MUL" <op_r:@R> <rhs:ExpressionPrefix>
         <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'*'",
                 args: vec![],
@@ -1304,7 +1304,7 @@ ExpressionMultiplicative: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1317,7 +1317,7 @@ ExpressionMultiplicative: Value = {
     <l:@L> <lhs:ExpressionMultiplicative> <op_l:@L> "DIV" <op_r:@R> <rhs:ExpressionPrefix>
         <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'/'",
                 args: vec![],
@@ -1325,7 +1325,7 @@ ExpressionMultiplicative: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1338,7 +1338,7 @@ ExpressionMultiplicative: Value = {
     <l:@L> <lhs:ExpressionMultiplicative> <op_l:@L> "MOD" <op_r:@R> <rhs:ExpressionPrefix>
         <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
             let span_op = ctx.location_span(op_l, op_r);
-            let value_op = make::case_shaped! {
+            let value_op = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "'%'",
                 args: vec![],
@@ -1346,7 +1346,7 @@ ExpressionMultiplicative: Value = {
                 span: span_op.clone(),
             }.map_err(|error| P4Error::new(span_op, error))?;
             let span_exp = ctx.location_span(l, r);
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "expression binop expression",
                 args: vec![lhs, value_op, rhs],
@@ -1363,7 +1363,7 @@ ExpressionPrefix: Value = {
     // ExpressionPrefix ::= "NOT" ExpressionPrefix
     <l:@L> <op_l:@L> "NOT" <op_r:@R> <inner:ExpressionPrefix> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         let span_op = ctx.location_span(op_l, op_r);
-        let value_op = make::case_shaped! {
+        let value_op = value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'!'",
             args: vec![],
@@ -1371,7 +1371,7 @@ ExpressionPrefix: Value = {
             span: span_op.clone(),
         }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "unop expression",
             args: vec![value_op, inner],
@@ -1383,7 +1383,7 @@ ExpressionPrefix: Value = {
     // ExpressionPrefix ::= "COMPLEMENT" ExpressionPrefix
     <l:@L> <op_l:@L> "COMPLEMENT" <op_r:@R> <inner:ExpressionPrefix> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         let span_op = ctx.location_span(op_l, op_r);
-        let value_op = make::case_shaped! {
+        let value_op = value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'~'",
             args: vec![],
@@ -1391,7 +1391,7 @@ ExpressionPrefix: Value = {
             span: span_op.clone(),
         }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "unop expression",
             args: vec![value_op, inner],
@@ -1403,7 +1403,7 @@ ExpressionPrefix: Value = {
     // ExpressionPrefix ::= "MINUS" ExpressionPrefix
     <l:@L> <op_l:@L> "MINUS" <op_r:@R> <inner:ExpressionPrefix> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         let span_op = ctx.location_span(op_l, op_r);
-        let value_op = make::case_shaped! {
+        let value_op = value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'-'",
             args: vec![],
@@ -1411,7 +1411,7 @@ ExpressionPrefix: Value = {
             span: span_op.clone(),
         }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "unop expression",
             args: vec![value_op, inner],
@@ -1423,7 +1423,7 @@ ExpressionPrefix: Value = {
     // ExpressionPrefix ::= "PLUS" ExpressionPrefix
     <l:@L> <op_l:@L> "PLUS" <op_r:@R> <inner:ExpressionPrefix> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         let span_op = ctx.location_span(op_l, op_r);
-        let value_op = make::case_shaped! {
+        let value_op = value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'+'",
             args: vec![],
@@ -1431,7 +1431,7 @@ ExpressionPrefix: Value = {
             span: span_op.clone(),
         }.map_err(|error| P4Error::new(span_op, error))?;
         let span_exp = ctx.location_span(l, r);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "unop expression",
             args: vec![value_op, inner],
@@ -1441,7 +1441,7 @@ ExpressionPrefix: Value = {
     }) })().map_err(|error| ParseError::User { error }),
 
     // ExpressionPrefix ::= "L_PAREN" typeRef "R_PAREN" ExpressionPrefix
-    <l:@L> "L_PAREN" <typ:typeRef> "R_PAREN" <inner:ExpressionPrefix> <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" <typ:typeRef> "R_PAREN" <inner:ExpressionPrefix> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( typeRef `) expression",
             args: vec![typ, inner],
@@ -1457,7 +1457,7 @@ ExpressionPostfix: Value = {
     // ExpressionPostfix ::= expressionPrefixedTypeName "DOT" set_parent_namespace member
     //     clear_parent_namespace
     <l:@L> <base:expressionPrefixedTypeName> "DOT" set_parent_namespace <member:member>
-        clear_parent_namespace <r:@R> =>? make::case_shaped! {
+        clear_parent_namespace <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "memberAccessBase '.' member",
             args: vec![base, member],
@@ -1467,7 +1467,7 @@ ExpressionPostfix: Value = {
 
     // ExpressionPostfix ::= expressionNamedType "L_PAREN" argumentList "R_PAREN"
     <l:@L> <target:expressionNamedType> "L_PAREN" <arguments:argumentList> "R_PAREN" <r:@R>
-        =>? make::case_shaped! {
+        =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "callTarget `( argumentList `)",
             args: vec![target, arguments],
@@ -1478,7 +1478,7 @@ ExpressionPostfix: Value = {
     // ExpressionPostfix ::= ExpressionPostfix "DOT" set_parent_namespace member
     //     clear_parent_namespace
     <l:@L> <base:ExpressionPostfix> "DOT" set_parent_namespace <member:member>
-        clear_parent_namespace <r:@R> =>? make::case_shaped! {
+        clear_parent_namespace <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "memberAccessBase '.' member",
             args: vec![base, member],
@@ -1487,7 +1487,7 @@ ExpressionPostfix: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= ExpressionPostfix "L_BRACKET" expression "R_BRACKET"
-    <l:@L> <base:ExpressionPostfix> "L_BRACKET" <index:expression> "R_BRACKET" <r:@R> =>? make::case_shaped! {
+    <l:@L> <base:ExpressionPostfix> "L_BRACKET" <index:expression> "R_BRACKET" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression `[ expression `]",
             args: vec![base, index],
@@ -1497,7 +1497,7 @@ ExpressionPostfix: Value = {
 
     // ExpressionPostfix ::= ExpressionPostfix "L_BRACKET" expression sliceop expression "R_BRACKET"
     <l:@L> <base:ExpressionPostfix> "L_BRACKET" <slice_l:expression> <operator:sliceop>
-        <slice_r:expression> "R_BRACKET" <r:@R> =>? make::case_shaped! {
+        <slice_r:expression> "R_BRACKET" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression `[ expression sliceop expression `]",
             args: vec![base, slice_l, operator, slice_r],
@@ -1506,7 +1506,7 @@ ExpressionPostfix: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPostfix ::= ExpressionPostfix "L_PAREN" argumentList "R_PAREN"
-    <l:@L> <target:ExpressionPostfix> "L_PAREN" <arguments:argumentList> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> <target:ExpressionPostfix> "L_PAREN" <arguments:argumentList> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "callTarget `( argumentList `)",
             args: vec![target, arguments],
@@ -1517,7 +1517,7 @@ ExpressionPostfix: Value = {
     // ExpressionPostfix ::= ExpressionPostfix "L_ANGLE_ARGS" realTypeArgumentList r_angle "L_PAREN"
     //     argumentList "R_PAREN"
     <l:@L> <target:ExpressionPostfix> "L_ANGLE_ARGS" <types:realTypeArgumentList> r_angle
-        "L_PAREN" <arguments:argumentList> "R_PAREN" <r:@R> =>? make::case_shaped! {
+        "L_PAREN" <arguments:argumentList> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "callTarget `< realTypeArgumentList `> `( argumentList `)",
             args: vec![target, types, arguments],
@@ -1537,7 +1537,7 @@ ExpressionPrimary: Value = {
     defaultExpression,
 
     // ExpressionPrimary ::= "ERROR_EXPR" "DOT" member
-    <l:@L> "ERROR_EXPR" "DOT" <member:member> <r:@R> =>? make::case_shaped! {
+    <l:@L> "ERROR_EXPR" "DOT" <member:member> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "ERROR '.' member",
             args: vec![member],
@@ -1546,7 +1546,7 @@ ExpressionPrimary: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPrimary ::= "INVALID"
-    <l:@L> "INVALID" <r:@R> =>? make::case_shaped! {
+    <l:@L> "INVALID" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'{#}'",
             args: vec![],
@@ -1556,7 +1556,7 @@ ExpressionPrimary: Value = {
 
     // ExpressionPrimary ::= "L_BRACE" sequenceOrRecordElementExpression trailingCommaOpt "R_BRACE"
     <l:@L> "L_BRACE" <elements:sequenceOrRecordElementExpression> <comma:trailingCommaOpt>
-        "R_BRACE" <r:@R> =>? make::case_shaped! {
+        "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`{ sequenceOrRecordElementExpression trailingCommaOpt `}",
             args: vec![elements, comma],
@@ -1565,7 +1565,7 @@ ExpressionPrimary: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // ExpressionPrimary ::= "L_PAREN" expression "R_PAREN"
-    <l:@L> "L_PAREN" <inner:expression> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" <inner:expression> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( expression `)",
             args: vec![inner],
@@ -1590,7 +1590,7 @@ expression: Value = {
 
 expressionTypeIdentifier: Value = {
     // expressionTypeIdentifier ::= "NAME" "TYPENAME_EXPR"
-    <l:@L> <text:"NAME"> "TYPENAME_EXPR" <r:@R> =>? make::case_shaped! {
+    <l:@L> <text:"NAME"> "TYPENAME_EXPR" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_TID text",
             args: vec![text],
@@ -1609,7 +1609,7 @@ expressionPrefixedTypeName: Value = {
     expressionTypeName,
 
     // expressionPrefixedTypeName ::= "DOT" go_toplevel expressionTypeName go_local
-    <l:@L> "DOT" go_toplevel <typ:expressionTypeName> go_local <r:@R> =>? make::case_shaped! {
+    <l:@L> "DOT" go_toplevel <typ:expressionTypeName> go_local <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_TID '.' typeName",
             args: vec![typ],
@@ -1622,7 +1622,7 @@ expressionSpecializedType: Value = {
     // expressionSpecializedType ::= expressionPrefixedTypeName "L_ANGLE_ARGS"
     //   typeArgumentList r_angle
     <l:@L> <name:expressionPrefixedTypeName> "L_ANGLE_ARGS" <arguments:typeArgumentList> r_angle
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "prefixedTypeName `< typeArgumentList `>",
             args: vec![name, arguments],
@@ -1650,7 +1650,7 @@ expressionListNonEmpty: Value = {
     <e:expression> => e,
 
     // expressionListNonEmpty ::= expressionListNonEmpty "COMMA" expression
-    <l:@L> <el:expressionListNonEmpty> "COMMA" <e:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <el:expressionListNonEmpty> "COMMA" <e:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expressionList ',' expression",
             args: vec![el, e],
@@ -1663,7 +1663,7 @@ expressionListNonEmpty: Value = {
 
 // LALRPOP lowering for expressionList ::= epsilon
 sequenceElementExpression: Value = {
-    <l:@L> <r:@R> =>? make::case_shaped! {
+    <l:@L> <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -1677,7 +1677,7 @@ sequenceElementExpression: Value = {
 
 recordElementExpression: Value = {
     // recordElementExpression ::= name "ASSIGN" expression
-    <l:@L> <n:name> "ASSIGN" <e:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:name> "ASSIGN" <e:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name '=' expression",
             args: vec![n, e],
@@ -1686,7 +1686,7 @@ recordElementExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // recordElementExpression ::= name "ASSIGN" expression "COMMA" "DOTS"
-    <l:@L> <n:name> "ASSIGN" <e:expression> "COMMA" "DOTS" <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:name> "ASSIGN" <e:expression> "COMMA" "DOTS" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name '=' expression ',' '...'",
             args: vec![n, e],
@@ -1695,7 +1695,7 @@ recordElementExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // recordElementExpression ::= name "ASSIGN" expression "COMMA" namedExpressionList
-    <l:@L> <n:name> "ASSIGN" <e:expression> "COMMA" <el:namedExpressionList> <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:name> "ASSIGN" <e:expression> "COMMA" <el:namedExpressionList> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name '=' expression ',' namedExpressionList",
             args: vec![n, e, el],
@@ -1706,7 +1706,7 @@ recordElementExpression: Value = {
     // recordElementExpression ::= name "ASSIGN" expression "COMMA" namedExpressionList "COMMA"
     //     "DOTS"
     <l:@L> <n:name> "ASSIGN" <e:expression> "COMMA" <el:namedExpressionList> "COMMA" "DOTS"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name '=' expression ',' namedExpressionList ',' '...'",
             args: vec![n, e, el],
@@ -1741,7 +1741,7 @@ simpleKeysetExpression: Value = {
     <e:expression> => e,
 
     // simpleKeysetExpression ::= expression "MASK" expression
-    <l:@L> <b:expression> "MASK" <m:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <b:expression> "MASK" <m:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression '&&&' expression",
             args: vec![b, m],
@@ -1750,7 +1750,7 @@ simpleKeysetExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // simpleKeysetExpression ::= expression "RANGE" expression
-    <l:@L> <lo:expression> "RANGE" <hi:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <lo:expression> "RANGE" <hi:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression '..' expression",
             args: vec![lo, hi],
@@ -1759,7 +1759,7 @@ simpleKeysetExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // simpleKeysetExpression ::= "DEFAULT"
-    <l:@L> "DEFAULT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DEFAULT" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "DEFAULT",
             args: vec![],
@@ -1768,7 +1768,7 @@ simpleKeysetExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // simpleKeysetExpression ::= "DONTCARE"
-    <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DONTCARE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'_'",
         args: vec![],
@@ -1782,7 +1782,7 @@ simpleKeysetExpressionList: Value = {
     <e:simpleKeysetExpression> => e,
 
     // simpleKeysetExpressionList ::= simpleKeysetExpressionList "COMMA" simpleKeysetExpression
-    <l:@L> <el:simpleKeysetExpressionList> "COMMA" <e:simpleKeysetExpression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <el:simpleKeysetExpressionList> "COMMA" <e:simpleKeysetExpression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "simpleKeysetExpressionList ',' simpleKeysetExpression",
             args: vec![el, e],
@@ -1793,7 +1793,7 @@ simpleKeysetExpressionList: Value = {
 
 tupleKeysetExpression: Value = {
     // tupleKeysetExpression ::= "L_PAREN" expression "MASK" expression "R_PAREN"
-    <l:@L> "L_PAREN" <b:expression> "MASK" <m:expression> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" <b:expression> "MASK" <m:expression> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( expression '&&&' expression `)",
             args: vec![b, m],
@@ -1802,7 +1802,7 @@ tupleKeysetExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tupleKeysetExpression ::= "L_PAREN" expression "RANGE" expression "R_PAREN"
-    <l:@L> "L_PAREN" <lo:expression> "RANGE" <hi:expression> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" <lo:expression> "RANGE" <hi:expression> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( expression '..' expression `)",
             args: vec![lo, hi],
@@ -1811,7 +1811,7 @@ tupleKeysetExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tupleKeysetExpression ::= "L_PAREN" "DEFAULT" "R_PAREN"
-    <l:@L> "L_PAREN" "DEFAULT" "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" "DEFAULT" "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( DEFAULT `)",
             args: vec![],
@@ -1820,7 +1820,7 @@ tupleKeysetExpression: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tupleKeysetExpression ::= "L_PAREN" "DONTCARE" "R_PAREN"
-    <l:@L> "L_PAREN" "DONTCARE" "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" "DONTCARE" "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( '_' `)",
             args: vec![],
@@ -1831,7 +1831,7 @@ tupleKeysetExpression: Value = {
     // tupleKeysetExpression ::= "L_PAREN" simpleKeysetExpression "COMMA" simpleKeysetExpressionList
     //     "R_PAREN"
     <l:@L> "L_PAREN" <e:simpleKeysetExpression> "COMMA" <es:simpleKeysetExpressionList> "R_PAREN"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( simpleKeysetExpression ',' simpleKeysetExpressionList `)",
             args: vec![e, es],
@@ -1855,7 +1855,7 @@ realTypeArgument: Value = {
     <t:typeRef> => t,
 
     // realTypeArgument ::= "VOID"
-    <l:@L> "VOID" <r:@R> =>? make::case_shaped! {
+    <l:@L> "VOID" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "VOID",
         args: vec![],
@@ -1864,7 +1864,7 @@ realTypeArgument: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // realTypeArgument ::= "DONTCARE"
-    <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DONTCARE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'_'",
         args: vec![],
@@ -1878,7 +1878,7 @@ realTypeArgumentList: Value = {
     <targ:realTypeArgument> => targ,
 
     // realTypeArgumentList ::= realTypeArgumentList "COMMA" realTypeArgument
-    <l:@L> <targs:realTypeArgumentList> "COMMA" <targ:realTypeArgument> <r:@R> =>? make::case_shaped! {
+    <l:@L> <targs:realTypeArgumentList> "COMMA" <targ:realTypeArgument> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "realTypeArgumentList ',' realTypeArgument",
             args: vec![targs, targ],
@@ -1895,7 +1895,7 @@ typeArgument: Value = {
     <t:nonTypeName> => t,
 
     // typeArgument ::= "VOID"
-    <l:@L> "VOID" <r:@R> =>? make::case_shaped! {
+    <l:@L> "VOID" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "VOID",
         args: vec![],
@@ -1904,7 +1904,7 @@ typeArgument: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typeArgument ::= "DONTCARE"
-    <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DONTCARE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'_'",
         args: vec![],
@@ -1915,7 +1915,7 @@ typeArgument: Value = {
 
 typeArgumentList: Value = {
     // typeArgumentList ::= epsilon
-    <l:@L> <r:@R> =>? make::case_shaped! {
+    <l:@L> <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -1932,7 +1932,7 @@ typeArgumentListNonEmpty: Value = {
     <targ:typeArgument> => targ,
 
     // typeArgumentListNonEmpty ::= typeArgumentListNonEmpty "COMMA" typeArgument
-    <l:@L> <targs:typeArgumentListNonEmpty> "COMMA" <targ:typeArgument> <r:@R> =>? make::case_shaped! {
+    <l:@L> <targs:typeArgumentListNonEmpty> "COMMA" <targ:typeArgument> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "typeArgumentList ',' typeArgument",
             args: vec![targs, targ],
@@ -1948,7 +1948,7 @@ argument: Value = {
     <e:expression> => e,
 
     // argument ::= name "ASSIGN" expression
-    <l:@L> <n:name> "ASSIGN" <e:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:name> "ASSIGN" <e:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name '=' expression",
             args: vec![n, e],
@@ -1957,7 +1957,7 @@ argument: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // argument ::= name "ASSIGN" "DONTCARE"
-    <l:@L> <name:name> "ASSIGN" "DONTCARE" <r:@R> =>? make::case_shaped! {
+    <l:@L> <name:name> "ASSIGN" "DONTCARE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name '=' '_' ",
             args: vec![name],
@@ -1966,7 +1966,7 @@ argument: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // argument ::= "DONTCARE"
-    <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DONTCARE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'_'",
         args: vec![],
@@ -1980,7 +1980,7 @@ argumentListNonEmpty: Value = {
     <arg:argument> => arg,
 
     // argumentListNonEmpty ::= argumentListNonEmpty "COMMA" argument
-    <l:@L> <args:argumentListNonEmpty> "COMMA" <arg:argument> <r:@R> =>? make::case_shaped! {
+    <l:@L> <args:argumentListNonEmpty> "COMMA" <arg:argument> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "argumentListNonEmpty ',' argument",
             args: vec![args, arg],
@@ -1991,7 +1991,7 @@ argumentListNonEmpty: Value = {
 
 argumentList: Value = {
     // argumentList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2010,7 +2010,7 @@ lvalue: Value = {
     <e:referenceExpression> => e,
 
     // lvalue ::= lvalue "DOT" set_parent_namespace member clear_parent_namespace
-    <l:@L> <lv:lvalue> "DOT" set_parent_namespace <m:member> clear_parent_namespace <r:@R> =>? make::case_shaped! {
+    <l:@L> <lv:lvalue> "DOT" set_parent_namespace <m:member> clear_parent_namespace <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue '.' member",
             args: vec![lv, m],
@@ -2019,7 +2019,7 @@ lvalue: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // lvalue ::= lvalue "L_BRACKET" expression "R_BRACKET"
-    <l:@L> <lv:lvalue> "L_BRACKET" <i:expression> "R_BRACKET" <r:@R> =>? make::case_shaped! {
+    <l:@L> <lv:lvalue> "L_BRACKET" <i:expression> "R_BRACKET" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue `[ expression `]",
             args: vec![lv, i],
@@ -2029,7 +2029,7 @@ lvalue: Value = {
 
     // lvalue ::= lvalue "L_BRACKET" expression sliceop expression "R_BRACKET"
     <l:@L> <lv:lvalue> "L_BRACKET" <exp_l:expression> <s:sliceop> <exp_r:expression> "R_BRACKET"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue `[ expression sliceop expression `]",
             args: vec![lv, exp_l, s, exp_r],
@@ -2038,7 +2038,7 @@ lvalue: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // lvalue ::= "L_PAREN" lvalue "R_PAREN"
-    <l:@L> "L_PAREN" <lv:lvalue> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_PAREN" <lv:lvalue> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "`( lvalue `)",
             args: vec![lv],
@@ -2053,7 +2053,7 @@ lvalue: Value = {
 
 emptyStatement: Value = {
     // emptyStatement ::= "SEMICOLON"
-    <l:@L> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "';'",
         args: vec![],
@@ -2066,7 +2066,7 @@ emptyStatement: Value = {
 
 assignop: Value = {
     // assignop ::= "ASSIGN"
-    <l:@L> "ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'='",
         args: vec![],
@@ -2075,7 +2075,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "PLUS_ASSIGN"
-    <l:@L> "PLUS_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PLUS_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'+='",
         args: vec![],
@@ -2084,7 +2084,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "PLUS_SAT_ASSIGN"
-    <l:@L> "PLUS_SAT_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PLUS_SAT_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'|+|='",
         args: vec![],
@@ -2093,7 +2093,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MINUS_ASSIGN"
-    <l:@L> "MINUS_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MINUS_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'-='",
         args: vec![],
@@ -2102,7 +2102,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MINUS_SAT_ASSIGN"
-    <l:@L> "MINUS_SAT_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MINUS_SAT_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'|-|='",
         args: vec![],
@@ -2111,7 +2111,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MUL_ASSIGN"
-    <l:@L> "MUL_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MUL_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'*='",
         args: vec![],
@@ -2120,7 +2120,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "DIV_ASSIGN"
-    <l:@L> "DIV_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DIV_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'/='",
         args: vec![],
@@ -2129,7 +2129,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "MOD_ASSIGN"
-    <l:@L> "MOD_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MOD_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'%='",
         args: vec![],
@@ -2138,7 +2138,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "SHL_ASSIGN"
-    <l:@L> "SHL_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "SHL_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'<<='",
         args: vec![],
@@ -2147,7 +2147,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "SHR_ASSIGN"
-    <l:@L> "SHR_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "SHR_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'>>='",
         args: vec![],
@@ -2156,7 +2156,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "BIT_AND_ASSIGN"
-    <l:@L> "BIT_AND_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT_AND_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'&='",
         args: vec![],
@@ -2165,7 +2165,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "BIT_XOR_ASSIGN"
-    <l:@L> "BIT_XOR_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT_XOR_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'^='",
         args: vec![],
@@ -2174,7 +2174,7 @@ assignop: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // assignop ::= "BIT_OR_ASSIGN"
-    <l:@L> "BIT_OR_ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT_OR_ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'|='",
         args: vec![],
@@ -2185,7 +2185,7 @@ assignop: Value = {
 
 assignmentStatement: Value = {
     // assignmentStatement ::= lvalue assignop expression "SEMICOLON"
-    <l:@L> <lv:lvalue> <o:assignop> <e:expression> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <lv:lvalue> <o:assignop> <e:expression> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue assignop expression ';'",
             args: vec![lv, o, e],
@@ -2198,7 +2198,7 @@ assignmentStatement: Value = {
 
 callStatement: Value = {
     // callStatement ::= lvalue "L_PAREN" argumentList "R_PAREN" "SEMICOLON"
-    <l:@L> <lv:lvalue> "L_PAREN" <args:argumentList> "R_PAREN" "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <lv:lvalue> "L_PAREN" <args:argumentList> "R_PAREN" "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue `( argumentList `) ';'",
             args: vec![lv, args],
@@ -2209,7 +2209,7 @@ callStatement: Value = {
     // callStatement ::= lvalue l_angle typeArgumentList r_angle "L_PAREN" argumentList "R_PAREN"
     //     "SEMICOLON"
     <l:@L> <lv:lvalue> "L_ANGLE_ARGS" <targs:typeArgumentList> r_angle "L_PAREN"
-        <args:argumentList> "R_PAREN" "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <args:argumentList> "R_PAREN" "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue `< typeArgumentList `> `( argumentList `) ';'",
             args: vec![lv, targs, args],
@@ -2231,7 +2231,7 @@ directApplicationStatement: Value = {
     // directApplicationStatement ::= namedType "DOT" "APPLY" "L_PAREN"
     //   argumentList "R_PAREN" "SEMICOLON"
     <l:@L> <t:directApplicationType> "DOT" "APPLY" "L_PAREN" <args:argumentList> "R_PAREN"
-        "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "namedType '.' APPLY `( argumentList `) ';'",
             args: vec![t, args],
@@ -2244,7 +2244,7 @@ directApplicationStatement: Value = {
 
 returnStatement: Value = {
     // returnStatement ::= "RETURN" "SEMICOLON"
-    <l:@L> "RETURN" "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "RETURN" "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "RETURN ';'",
             args: vec![],
@@ -2253,7 +2253,7 @@ returnStatement: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // returnStatement ::= "RETURN" expression "SEMICOLON"
-    <l:@L> "RETURN" <e:expression> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "RETURN" <e:expression> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "RETURN expression ';'",
             args: vec![e],
@@ -2266,7 +2266,7 @@ returnStatement: Value = {
 
 exitStatement: Value = {
     // exitStatement ::= "EXIT" "SEMICOLON"
-    <l:@L> "EXIT" "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "EXIT" "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "EXIT ';'",
             args: vec![],
@@ -2281,7 +2281,7 @@ blockStatement: Value = {
     // blockStatement ::= annotationList "L_BRACE" push_scope
     //   blockElementStatementList "R_BRACE" pop_scope
     <l:@L> <al:annotationList> "L_BRACE" push_scope <sl:blockElementStatementList> "R_BRACE"
-        pop_scope <r:@R> =>? make::case_shaped! {
+        pop_scope <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList `{ blockElementStatementList `}",
             args: vec![al, sl],
@@ -2299,7 +2299,7 @@ blockStatement: Value = {
 
 forInitStatement: Value = {
     // forInitStatement ::= annotationList typeRef name initializerOpt
-    <l:@L> <al:annotationList> <t:typeRef> <n:name> <i:initializerOpt> <r:@R> =>? make::case_shaped! {
+    <l:@L> <al:annotationList> <t:typeRef> <n:name> <i:initializerOpt> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList type name initializerOpt",
             args: vec![al, t, n, i],
@@ -2308,7 +2308,7 @@ forInitStatement: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // forInitStatement ::= lvalue "L_PAREN" argumentList "R_PAREN"
-    <l:@L> <lv:lvalue> "L_PAREN" <args:argumentList> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> <lv:lvalue> "L_PAREN" <args:argumentList> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue `( argumentList `)",
             args: vec![lv, args],
@@ -2318,7 +2318,7 @@ forInitStatement: Value = {
 
     // forInitStatement ::= lvalue l_angle typeArgumentList r_angle "L_PAREN" argumentList "R_PAREN"
     <l:@L> <lv:lvalue> "L_ANGLE_ARGS" <targs:typeArgumentList> r_angle "L_PAREN"
-        <args:argumentList> "R_PAREN" <r:@R> =>? make::case_shaped! {
+        <args:argumentList> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue `< typeArgumentList `> `( argumentList `)",
             args: vec![lv, targs, args],
@@ -2327,7 +2327,7 @@ forInitStatement: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // forInitStatement ::= lvalue assignop expression
-    <l:@L> <lv:lvalue> <o:assignop> <e:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <lv:lvalue> <o:assignop> <e:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "lvalue assignop expression",
             args: vec![lv, o, e],
@@ -2341,7 +2341,7 @@ forInitStatementListNonEmpty: Value = {
     <s:forInitStatement> => s,
 
     // forInitStatementListNonEmpty ::= forInitStatementListNonEmpty "COMMA" forInitStatement
-    <l:@L> <sl:forInitStatementListNonEmpty> "COMMA" <s:forInitStatement> <r:@R> =>? make::case_shaped! {
+    <l:@L> <sl:forInitStatementListNonEmpty> "COMMA" <s:forInitStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "forInitStatementListNonEmpty ',' forInitStatement",
             args: vec![sl, s],
@@ -2353,7 +2353,7 @@ forInitStatementListNonEmpty: Value = {
 #[inline]
 forInitStatementList: Value = {
     // forInitStatementList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2375,7 +2375,7 @@ forUpdateStatementListNonEmpty: Value = {
     <s:forUpdateStatement> => s,
 
     // forUpdateStatementListNonEmpty ::= forUpdateStatementListNonEmpty "COMMA" forUpdateStatement
-    <l:@L> <sl:forUpdateStatementListNonEmpty> "COMMA" <s:forUpdateStatement> <r:@R> =>? make::case_shaped! {
+    <l:@L> <sl:forUpdateStatementListNonEmpty> "COMMA" <s:forUpdateStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "forUpdateStatementListNonEmpty ',' forUpdateStatement",
             args: vec![sl, s],
@@ -2387,7 +2387,7 @@ forUpdateStatementListNonEmpty: Value = {
 #[inline]
 forUpdateStatementList: Value = {
     // forUpdateStatementList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2404,7 +2404,7 @@ forCollectionExpression: Value = {
     <e:expression> => e,
 
     // forCollectionExpression ::= expression "RANGE" expression
-    <l:@L> <lo:expression> "RANGE" <hi:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> <lo:expression> "RANGE" <hi:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression '..' expression",
             args: vec![lo, hi],
@@ -2424,7 +2424,7 @@ forCollectionExpression: Value = {
 
 switchLabel: Value = {
     // switchLabel ::= "DEFAULT"
-    <l:@L> "DEFAULT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DEFAULT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "DEFAULT",
         args: vec![],
@@ -2439,7 +2439,7 @@ switchLabel: Value = {
 #[inline]
 switchCase: Value = {
     // switchCase ::= switchLabel "COLON" blockStatement
-    <l:@L> <label:switchLabel> "BLOCK_COLON" <body:blockStatement> <r:@R> =>? make::case_shaped! {
+    <l:@L> <label:switchLabel> "BLOCK_COLON" <body:blockStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "switchLabel ':' blockStatement",
             args: vec![label, body],
@@ -2448,7 +2448,7 @@ switchCase: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // switchCase ::= switchLabel "COLON"
-    <l:@L> <label:switchLabel> plain_colon <r:@R> =>? make::case_shaped! {
+    <l:@L> <label:switchLabel> plain_colon <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "switchLabel ':'",
             args: vec![label],
@@ -2459,7 +2459,7 @@ switchCase: Value = {
 
 switchCaseList: Value = {
     // switchCaseList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2468,7 +2468,7 @@ switchCaseList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // switchCaseList ::= switchCaseList switchCase
-    <l:@L> <cs:switchCaseList> <c:switchCase> <r:@R> =>? make::case_shaped! {
+    <l:@L> <cs:switchCaseList> <c:switchCase> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "switchCaseList switchCase",
             args: vec![cs, c],
@@ -2480,7 +2480,7 @@ switchCaseList: Value = {
 switchStatement: Value = {
     // switchStatement ::= "SWITCH" "L_PAREN" expression "R_PAREN" "L_BRACE" switchCaseList "R_BRACE"
     <l:@L> "SWITCH" "L_PAREN" <e:expression> "R_PAREN" "L_BRACE" <cs:switchCaseList> "R_BRACE"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "SWITCH `( expression `) `{ switchCaseList `}",
             args: vec![e, cs],
@@ -2493,7 +2493,7 @@ switchStatement: Value = {
 
 breakStatement: Value = {
     // breakStatement ::= "BREAK" "SEMICOLON"
-    <l:@L> "BREAK" "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BREAK" "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "BREAK ';'",
             args: vec![],
@@ -2504,7 +2504,7 @@ breakStatement: Value = {
 
 continueStatement: Value = {
     // continueStatement ::= "CONTINUE" "SEMICOLON"
-    <l:@L> "CONTINUE" "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "CONTINUE" "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "CONTINUE ';'",
             args: vec![],
@@ -2566,7 +2566,7 @@ MatchedStatement: Value = {
     // MatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" MatchedStatement "ELSE"
     //     MatchedStatement
     <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:MatchedStatement> "ELSE"
-        <no:MatchedStatement> <r:@R> =>? make::case_shaped! {
+        <no:MatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "IF `( expression `) statement ELSE statement",
             args: vec![condition, yes, no],
@@ -2580,7 +2580,7 @@ UnmatchedStatement: Value = {
     UnmatchedForStatement,
 
     // UnmatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" statement
-    <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:statement> <r:@R> =>? make::case_shaped! {
+    <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:statement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "IF `( expression `) statement",
             args: vec![condition, yes],
@@ -2591,7 +2591,7 @@ UnmatchedStatement: Value = {
     // UnmatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" MatchedStatement "ELSE"
     //     UnmatchedStatement
     <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:MatchedStatement> "ELSE"
-        <no:UnmatchedStatement> <r:@R> =>? make::case_shaped! {
+        <no:UnmatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "IF `( expression `) statement ELSE statement",
             args: vec![condition, yes, no],
@@ -2605,7 +2605,7 @@ MatchedForStatement: Value = {
     //     expression "SEMICOLON" forUpdateStatementList "R_PAREN" MatchedStatement
     <l:@L> <annotations:annotationList> "FOR" "L_PAREN" <init:forInitStatementList> "SEMICOLON"
         <condition:expression> "SEMICOLON" <update:forUpdateStatementList> "R_PAREN"
-        <body:MatchedStatement> <r:@R> =>? make::case_shaped! {
+        <body:MatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList FOR `( forInitStatementList ';' expression ';' forUpdateStatementList `) statement",
             args: vec![annotations, init, condition, update, body],
@@ -2616,7 +2616,7 @@ MatchedForStatement: Value = {
     // MatchedForStatement ::= annotationList "FOR" "L_PAREN" typeRef name "IN"
     //     forCollectionExpression "R_PAREN" MatchedStatement
     <l:@L> <annotations:annotationList> "FOR" "L_PAREN" <typ:typeRef> <name:name> "IN"
-        <collection:forCollectionExpression> "R_PAREN" <body:MatchedStatement> <r:@R> =>? make::case_shaped! {
+        <collection:forCollectionExpression> "R_PAREN" <body:MatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList FOR `( typeRef name IN forCollectionExpression `) statement",
             args: vec![annotations, typ, name, collection, body],
@@ -2628,7 +2628,7 @@ MatchedForStatement: Value = {
     //     "IN" forCollectionExpression "R_PAREN" MatchedStatement
     <l:@L> <annotations:annotationList> "FOR" "L_PAREN"
         <inner_annotations:annotationListNonEmpty> <typ:typeRef> <name:name> "IN"
-        <collection:forCollectionExpression> "R_PAREN" <body:MatchedStatement> <r:@R> =>? make::case_shaped! {
+        <collection:forCollectionExpression> "R_PAREN" <body:MatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList FOR `( annotationList typeRef name IN forCollectionExpression `) statement",
             args: vec![
@@ -2649,7 +2649,7 @@ UnmatchedForStatement: Value = {
     //     expression "SEMICOLON" forUpdateStatementList "R_PAREN" UnmatchedStatement
     <l:@L> <annotations:annotationList> "FOR" "L_PAREN" <init:forInitStatementList> "SEMICOLON"
         <condition:expression> "SEMICOLON" <update:forUpdateStatementList> "R_PAREN"
-        <body:UnmatchedStatement> <r:@R> =>? make::case_shaped! {
+        <body:UnmatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList FOR `( forInitStatementList ';' expression ';' forUpdateStatementList `) statement",
             args: vec![annotations, init, condition, update, body],
@@ -2660,7 +2660,7 @@ UnmatchedForStatement: Value = {
     // UnmatchedForStatement ::= annotationList "FOR" "L_PAREN" typeRef name "IN"
     //     forCollectionExpression "R_PAREN" UnmatchedStatement
     <l:@L> <annotations:annotationList> "FOR" "L_PAREN" <typ:typeRef> <name:name> "IN"
-        <collection:forCollectionExpression> "R_PAREN" <body:UnmatchedStatement> <r:@R> =>? make::case_shaped! {
+        <collection:forCollectionExpression> "R_PAREN" <body:UnmatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList FOR `( typeRef name IN forCollectionExpression `) statement",
             args: vec![annotations, typ, name, collection, body],
@@ -2672,7 +2672,7 @@ UnmatchedForStatement: Value = {
     //     "IN" forCollectionExpression "R_PAREN" UnmatchedStatement
     <l:@L> <annotations:annotationList> "FOR" "L_PAREN"
         <inner_annotations:annotationListNonEmpty> <typ:typeRef> <name:name> "IN"
-        <collection:forCollectionExpression> "R_PAREN" <body:UnmatchedStatement> <r:@R> =>? make::case_shaped! {
+        <collection:forCollectionExpression> "R_PAREN" <body:UnmatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList FOR `( annotationList typeRef name IN forCollectionExpression `) statement",
             args: vec![
@@ -2693,7 +2693,7 @@ UnmatchedForStatement: Value = {
 // - Constant and variable declarations
 initialValue: Value = {
     // initialValue ::= "ASSIGN" expression
-    <l:@L> "ASSIGN" <e:expression> <r:@R> =>? make::case_shaped! {
+    <l:@L> "ASSIGN" <e:expression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'=' expression",
             args: vec![e],
@@ -2705,7 +2705,7 @@ initialValue: Value = {
 constantDeclaration: Value = {
     // constantDeclaration ::= annotationList "CONST" typeRef name initialValue "SEMICOLON"
     <l:@L> <al:annotationList> "CONST" <t:typeRef> <n:name> <i:initialValue> "SEMICOLON"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList CONST typeRef name initializer ';'",
             args: vec![al, t, n, i],
@@ -2717,7 +2717,7 @@ constantDeclaration: Value = {
 #[inline]
 initializerOpt: Value = {
     // initializerOpt ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2733,7 +2733,7 @@ variableDeclaration: Value = {
     // variableDeclaration ::= annotationList typeRef name initializerOpt "SEMICOLON"
     <l:@L> <al:annotationList> <t:typeRef> <n:name> <i:initializerOpt> "SEMICOLON" <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         declare::var(ctx, &n, false, Some(&t));
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList typeRef name initializerOpt ';'",
             args: vec![al, t, n, i],
@@ -2756,7 +2756,7 @@ blockElementStatement: Value = {
 
 blockElementStatementList: Value = {
     // blockElementStatementList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2765,7 +2765,7 @@ blockElementStatementList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // blockElementStatementList ::= blockElementStatementList blockElementStatement
-    <l:@L> <sl:blockElementStatementList> <s:blockElementStatement> <r:@R> =>? make::case_shaped! {
+    <l:@L> <sl:blockElementStatementList> <s:blockElementStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "blockElementStatementList blockElementStatement",
             args: vec![sl, s],
@@ -2779,7 +2779,7 @@ functionPrototype: Value = {
     // functionPrototype ::= typeOrVoid name push_scope typeParameterListOpt "L_PAREN" parameterList
     //     "R_PAREN"
     <l:@L> <t:typeOrVoid> <n:declarationName> push_scope <tpl:typeParameterListOpt> "L_PAREN"
-        <pl:parameterList> "R_PAREN" <r:@R> =>? make::case_shaped! {
+        <pl:parameterList> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "typeOrVoid name typeParameterListOpt `( parameterList `)",
             args: vec![t, n, tpl, pl],
@@ -2790,7 +2790,7 @@ functionPrototype: Value = {
 
 functionDeclaration: Value = {
     // functionDeclaration ::= annotationList functionPrototype blockStatement pop_scope
-    <l:@L> <al:annotationList> <p:functionPrototype> <b:blockStatement> pop_scope <r:@R> =>? make::case_shaped! {
+    <l:@L> <al:annotationList> <p:functionPrototype> <b:blockStatement> pop_scope <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList functionPrototype blockStatement",
             args: vec![al, p, b],
@@ -2804,7 +2804,7 @@ actionDeclaration: Value = {
     // actionDeclaration ::= annotationList "ACTION" name "L_PAREN" parameterList "R_PAREN"
     //     blockStatement
     <l:@L> <al:annotationList> "ACTION" <n:name> "L_PAREN" <pl:parameterList> "R_PAREN"
-        <s:blockStatement> <r:@R> =>? make::case_shaped! {
+        <s:blockStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList ACTION name `( parameterList `) blockStatement",
             args: vec![al, n, pl, s],
@@ -2816,7 +2816,7 @@ actionDeclaration: Value = {
 // - Instantiations
 objectInitializer: Value = {
     // objectInitializer ::= "ASSIGN" "L_BRACE" objectDeclarationList "R_BRACE"
-    <l:@L> "ASSIGN" "L_BRACE" <ds:objectDeclarationList> "R_BRACE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ASSIGN" "L_BRACE" <ds:objectDeclarationList> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'=' `{ objectDeclarationList `}",
             args: vec![ds],
@@ -2839,7 +2839,7 @@ instantiation: Value = {
     // instantiation ::= annotationList instantiationTypeRef "L_PAREN" argumentList "R_PAREN" name
     //     "SEMICOLON"
     <l:@L> <al:annotationList> <t:instantiationTypeRef> "L_PAREN" <args:argumentList> "R_PAREN"
-        <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <n:name> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList typeRef `( argumentList `) name ';'",
             args: vec![al, t, args, n],
@@ -2850,7 +2850,7 @@ instantiation: Value = {
     // instantiation ::= annotationList instantiationTypeRef "L_PAREN" argumentList "R_PAREN" name
     //     objectInitializer "SEMICOLON"
     <l:@L> <al:annotationList> <t:instantiationTypeRef> "L_PAREN" <args:argumentList> "R_PAREN"
-        <n:name> <i:objectInitializer> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <n:name> <i:objectInitializer> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList typeRef `( argumentList `) name objectInitializer ';'",
             args: vec![al, t, args, n, i],
@@ -2869,7 +2869,7 @@ objectDeclaration: Value = {
 
 objectDeclarationList: Value = {
     // objectDeclarationList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2878,7 +2878,7 @@ objectDeclarationList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // objectDeclarationList ::= objectDeclarationList objectDeclaration
-    <l:@L> <ds:objectDeclarationList> <d:objectDeclaration> <r:@R> =>? make::case_shaped! {
+    <l:@L> <ds:objectDeclarationList> <d:objectDeclaration> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "objectDeclarationList objectDeclaration",
             args: vec![ds, d],
@@ -2892,7 +2892,7 @@ errorDeclaration: Value = {
     // errorDeclaration ::= "ERROR" "L_BRACE" nameList "R_BRACE"
     <l:@L> "ERROR" "L_BRACE" <nl:nameList> "R_BRACE" <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         declare::vars(ctx, &nl);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "ERROR `{ nameList `}",
             args: vec![nl],
@@ -2907,7 +2907,7 @@ matchKindDeclaration: Value = {
     // matchKindDeclaration ::= "MATCH_KIND" "L_BRACE" nameList trailingCommaOpt "R_BRACE"
     <l:@L> "MATCH_KIND" "L_BRACE" <nl:nameList> <c:trailingCommaOpt> "R_BRACE" <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
         declare::vars(ctx, &nl);
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "MATCH_KIND `{ nameList trailingCommaOpt `}",
             args: vec![nl, c],
@@ -2924,7 +2924,7 @@ matchKindDeclaration: Value = {
 enumTypeDeclaration: Value = {
     // enumTypeDeclaration ::= annotationList "ENUM" name "L_BRACE" nameList trailingCommaOpt "R_BRACE"
     <l:@L> <al:annotationList> "ENUM" <n:name> "L_BRACE" <nl:nameList> <c:trailingCommaOpt>
-        "R_BRACE" <r:@R> =>? make::case_shaped! {
+        "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList ENUM name `{ nameList trailingCommaOpt `}",
             args: vec![al, n, nl, c],
@@ -2935,7 +2935,7 @@ enumTypeDeclaration: Value = {
     // enumTypeDeclaration ::= annotationList "ENUM" typeRef name "L_BRACE" namedExpressionList
     //     trailingCommaOpt "R_BRACE"
     <l:@L> <al:annotationList> "ENUM" <t:typeRef> <n:name> "L_BRACE" <el:namedExpressionList>
-        <c:trailingCommaOpt> "R_BRACE" <r:@R> =>? make::case_shaped! {
+        <c:trailingCommaOpt> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList ENUM typeRef name `{ namedExpressionList trailingCommaOpt `}",
             args: vec![al, t, n, el, c],
@@ -2948,7 +2948,7 @@ enumTypeDeclaration: Value = {
 
 typeField: Value = {
     // typeField ::= annotationList typeRef name "SEMICOLON"
-    <l:@L> <al:annotationList> <t:typeRef> <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <al:annotationList> <t:typeRef> <n:name> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList typeRef name ';'",
             args: vec![al, t, n],
@@ -2959,7 +2959,7 @@ typeField: Value = {
 
 typeFieldList: Value = {
     // typeFieldList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -2968,7 +2968,7 @@ typeFieldList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typeFieldList ::= typeFieldList typeField
-    <l:@L> <fl:typeFieldList> <f:typeField> <r:@R> =>? make::case_shaped! {
+    <l:@L> <fl:typeFieldList> <f:typeField> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "typeFieldList typeField",
             args: vec![fl, f],
@@ -2981,7 +2981,7 @@ structTypeDeclaration: Value = {
     // structTypeDeclaration ::= annotationList "STRUCT" name typeParameterListOpt "L_BRACE"
     //     typeFieldList "R_BRACE"
     <l:@L> <al:annotationList> "STRUCT" <n:name> <tpl:typeParameterListOpt> "L_BRACE"
-        <fl:typeFieldList> "R_BRACE" <r:@R> =>? make::case_shaped! {
+        <fl:typeFieldList> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList STRUCT name typeParameterListOpt `{ typeFieldList `}",
             args: vec![al, n, tpl, fl],
@@ -2994,7 +2994,7 @@ headerTypeDeclaration: Value = {
     // headerTypeDeclaration ::= annotationList "HEADER" name typeParameterListOpt "L_BRACE"
     //     typeFieldList "R_BRACE"
     <l:@L> <al:annotationList> "HEADER" <n:name> <tpl:typeParameterListOpt> "L_BRACE"
-        <fl:typeFieldList> "R_BRACE" <r:@R> =>? make::case_shaped! {
+        <fl:typeFieldList> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList HEADER name typeParameterListOpt `{ typeFieldList `}",
             args: vec![al, n, tpl, fl],
@@ -3007,7 +3007,7 @@ headerUnionTypeDeclaration: Value = {
     // headerUnionTypeDeclaration ::= annotationList "HEADER_UNION" name typeParameterListOpt "L_BRACE"
     //     typeFieldList "R_BRACE"
     <l:@L> <al:annotationList> "HEADER_UNION" <n:name> <tpl:typeParameterListOpt> "L_BRACE"
-        <fl:typeFieldList> "R_BRACE" <r:@R> =>? make::case_shaped! {
+        <fl:typeFieldList> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList HEADER_UNION name typeParameterListOpt `{ typeFieldList `}",
             args: vec![al, n, tpl, fl],
@@ -3047,7 +3047,7 @@ typedef: Value = {
 
 typedefDeclaration: Value = {
     // typedefDeclaration ::= annotationList "TYPEDEF" typedef name "SEMICOLON"
-    <l:@L> <al:annotationList> "TYPEDEF" <t:typedef> <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <al:annotationList> "TYPEDEF" <t:typedef> <n:name> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList TYPEDEF typedef name ';'",
             args: vec![al, t, n],
@@ -3056,7 +3056,7 @@ typedefDeclaration: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // typedefDeclaration ::= annotationList "TYPE" typeRef name "SEMICOLON"
-    <l:@L> <al:annotationList> "TYPE" <t:typeRef> <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <al:annotationList> "TYPE" <t:typeRef> <n:name> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList TYPE typeRef name ';'",
             args: vec![al, t, n],
@@ -3076,7 +3076,7 @@ externFunctionDeclaration: Value = {
         ctx
             .declare_var(id, has_params, TypeId::Empty)
             .expect("P4 parser scope");
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList EXTERN functionPrototype ';'",
             args: vec![al, p],
@@ -3090,7 +3090,7 @@ externFunctionDeclaration: Value = {
 // the following token, so this production accepts both classifications.
 constructorTypeIdentifier: Value = {
     // constructorTypeIdentifier ::= "NAME" "TYPENAME"
-    <l:@L> <text:"NAME"> "TYPENAME" <r:@R> =>? make::case_shaped! {
+    <l:@L> <text:"NAME"> "TYPENAME" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_TID text",
             args: vec![text],
@@ -3099,7 +3099,7 @@ constructorTypeIdentifier: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // constructorTypeIdentifier ::= "NAME" "TYPENAME_EXPR"
-    <l:@L> <text:"NAME"> "TYPENAME_EXPR" <r:@R> =>? make::case_shaped! {
+    <l:@L> <text:"NAME"> "TYPENAME_EXPR" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_TID text",
             args: vec![text],
@@ -3112,7 +3112,7 @@ externConstructorPrototype: Value = {
     // externConstructorPrototype ::= annotationList constructorTypeIdentifier "L_PAREN" parameterList
     //     "R_PAREN" "SEMICOLON"
     <l:@L> <al:annotationList> <tid:constructorTypeIdentifier> "L_PAREN" <pl:parameterList>
-        "R_PAREN" "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        "R_PAREN" "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList typeIdentifier `( parameterList `) ';'",
             args: vec![al, tid, pl],
@@ -3131,7 +3131,7 @@ externMethodPrototype: Value = {
         ctx
             .declare_var(id, has_params, TypeId::Empty)
             .expect("P4 parser scope");
-        make::case_shaped! {
+        value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList functionPrototype ';'",
             args: vec![al, p],
@@ -3150,7 +3150,7 @@ externMethodPrototype: Value = {
             ctx
                 .declare_var(id, has_params, TypeId::Empty)
                 .expect("P4 parser scope");
-            make::case_shaped! {
+            value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "annotationList ABSTRACT functionPrototype ';'",
                 args: vec![al, p],
@@ -3170,7 +3170,7 @@ externConstructorOrMethodPrototype: Value = {
 
 externConstructorOrMethodPrototypeList: Value = {
     // externConstructorOrMethodPrototypeList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_EMPTY",
             args: vec![],
@@ -3181,7 +3181,7 @@ externConstructorOrMethodPrototypeList: Value = {
     // externConstructorOrMethodPrototypeList ::= externConstructorOrMethodPrototypeList
     //     externConstructorOrMethodPrototype
     <l:@L> <pl:externConstructorOrMethodPrototypeList> <p:externConstructorOrMethodPrototype>
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "externConstructorOrMethodPrototypeList externConstructorOrMethodPrototype",
             args: vec![pl, p],
@@ -3195,7 +3195,7 @@ externObjectDeclaration: Value = {
     //     "L_BRACE" externConstructorOrMethodPrototypeList "R_BRACE" pop_scope
     <l:@L> <al:annotationList> "EXTERN" <n:push_externName> <tpl:typeParameterListOpt> "L_BRACE"
         <pl:externConstructorOrMethodPrototypeList> "R_BRACE" <s:pop_scope> <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
-            let decl = make::case_shaped! {
+            let decl = value::make::case_shaped! {
                 arena: &mut ctx.arena_mut(),
                 shape: "annotationList EXTERN name typeParameterListOpt `{ externConstructorOrMethodPrototypeList `}",
                 args: vec![al, n, tpl, pl],
@@ -3226,7 +3226,7 @@ externDeclaration: Value = {
 // - Select expressions
 selectCase: Value = {
     // selectCase ::= keysetExpression "COLON" name "SEMICOLON"
-    <l:@L> <k:keysetExpression> colon <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <k:keysetExpression> colon <n:name> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "keysetExpression ':' name ';'",
             args: vec![k, n],
@@ -3237,7 +3237,7 @@ selectCase: Value = {
 
 selectCaseList: Value = {
     // selectCaseList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3246,7 +3246,7 @@ selectCaseList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // selectCaseList ::= selectCaseList selectCase
-    <l:@L> <cl:selectCaseList> <c:selectCase> <r:@R> =>? make::case_shaped! {
+    <l:@L> <cl:selectCaseList> <c:selectCase> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "selectCaseList selectCase",
             args: vec![cl, c],
@@ -3258,14 +3258,14 @@ selectCaseList: Value = {
 selectExpression: Value = {
     // selectExpression ::= "SELECT" "L_PAREN" "R_PAREN" "L_BRACE" selectCaseList "R_BRACE"
     <l:@L> "SELECT" "L_PAREN" <empty_l:@L> "R_PAREN" "L_BRACE" <cl:selectCaseList> "R_BRACE" <r:@R> =>? (|| -> Result<_, P4Error> { Ok({
-    let empty = make::case_shaped! {
+    let empty = value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
         typ: "expressionList",
         span: ctx.location_span(empty_l, empty_l),
     }.map_err(|error| P4Error::new(ctx.location_span(empty_l, empty_l), error))?;
-    make::case_shaped! {
+    value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "SELECT `( expressionList `) `{ selectCaseList `}",
         args: vec![empty, cl],
@@ -3277,7 +3277,7 @@ selectExpression: Value = {
     // selectExpression ::= "SELECT" "L_PAREN" expressionList "R_PAREN" "L_BRACE" selectCaseList
     //     "R_BRACE"
     <l:@L> "SELECT" "L_PAREN" <el:expressionList> "R_PAREN" "L_BRACE" <cl:selectCaseList>
-        "R_BRACE" <r:@R> =>? make::case_shaped! {
+        "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "SELECT `( expressionList `) `{ selectCaseList `}",
             args: vec![el, cl],
@@ -3289,7 +3289,7 @@ selectExpression: Value = {
 // - Transition statements
 stateExpression: Value = {
     // stateExpression ::= name "SEMICOLON"
-    <l:@L> <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:name> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "name ';'",
             args: vec![n],
@@ -3304,7 +3304,7 @@ stateExpression: Value = {
 #[inline]
 transitionStatement: Value = {
     // transitionStatement ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3313,7 +3313,7 @@ transitionStatement: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // transitionStatement ::= "TRANSITION" stateExpression
-    <l:@L> "TRANSITION" <e:stateExpression> <r:@R> =>? make::case_shaped! {
+    <l:@L> "TRANSITION" <e:stateExpression> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "TRANSITION stateExpression",
             args: vec![e],
@@ -3338,7 +3338,7 @@ valueSetDeclaration: Value = {
     // valueSetDeclaration ::= annotationList "VALUE_SET" l_angle valueSetType
     //   r_angle "L_PAREN" expression "R_PAREN" name "SEMICOLON"
     <l:@L> <al:annotationList> "VALUE_SET" "L_ANGLE_ARGS" <t:valueSetType> r_angle "L_PAREN"
-        <s:expression> "R_PAREN" <n:name> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <s:expression> "R_PAREN" <n:name> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList VALUE_SET `< valueSetType `> `( expression `) name ';'",
             args: vec![al, t, s, n],
@@ -3352,7 +3352,7 @@ parserTypeDeclaration: Value = {
     // parserTypeDeclaration ::= annotationList "PARSER" push_name typeParameterListOpt "L_PAREN"
     //     parameterList "R_PAREN" pop_scope "SEMICOLON"
     <l:@L> <al:annotationList> "PARSER" <n:push_name> <tpl:typeParameterListOpt> "L_PAREN"
-        <pl:parameterList> "R_PAREN" pop_scope "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <pl:parameterList> "R_PAREN" pop_scope "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList PARSER name typeParameterListOpt `( parameterList `) ';'",
             args: vec![al, n, tpl, pl],
@@ -3375,7 +3375,7 @@ parserBlockElementStatement: Value = {
 
 parserBlockElementStatementList: Value = {
     // parserBlockElementStatementList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "_EMPTY",
             args: vec![],
@@ -3385,7 +3385,7 @@ parserBlockElementStatementList: Value = {
 
     // parserBlockElementStatementList ::= parserBlockElementStatementList
     //     parserBlockElementStatement
-    <l:@L> <sl:parserBlockElementStatementList> <s:parserBlockElementStatement> <r:@R> =>? make::case_shaped! {
+    <l:@L> <sl:parserBlockElementStatementList> <s:parserBlockElementStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "parserBlockElementStatementList parserBlockElementStatement",
             args: vec![sl, s],
@@ -3397,7 +3397,7 @@ parserBlockElementStatementList: Value = {
 parserBlockStatement: Value = {
     // parserBlockStatement ::= annotationList "L_BRACE" parserBlockElementStatementList "R_BRACE"
     <l:@L> <al:annotationList> "L_BRACE" <sl:parserBlockElementStatementList> "R_BRACE"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList `{ parserBlockElementStatementList `}",
             args: vec![al, sl],
@@ -3441,7 +3441,7 @@ ParserMatchedStatement: Value = {
     // ParserMatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" ParserMatchedStatement "ELSE"
     //     ParserMatchedStatement
     <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:ParserMatchedStatement> "ELSE"
-        <no:ParserMatchedStatement> <r:@R> =>? make::case_shaped! {
+        <no:ParserMatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "IF `( expression `) parserStatement ELSE parserStatement",
             args: vec![condition, yes, no],
@@ -3452,7 +3452,7 @@ ParserMatchedStatement: Value = {
 
 ParserUnmatchedStatement: Value = {
     // ParserUnmatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" parserStatement
-    <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:parserStatement> <r:@R> =>? make::case_shaped! {
+    <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:parserStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "IF `( expression `) parserStatement",
             args: vec![condition, yes],
@@ -3463,7 +3463,7 @@ ParserUnmatchedStatement: Value = {
     // ParserUnmatchedStatement ::= "IF" "L_PAREN" expression "R_PAREN" ParserMatchedStatement
     //     "ELSE" ParserUnmatchedStatement
     <l:@L> "IF" "L_PAREN" <condition:expression> "R_PAREN" <yes:ParserMatchedStatement> "ELSE"
-        <no:ParserUnmatchedStatement> <r:@R> =>? make::case_shaped! {
+        <no:ParserUnmatchedStatement> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "IF `( expression `) parserStatement ELSE parserStatement",
             args: vec![condition, yes, no],
@@ -3477,7 +3477,7 @@ parserState: Value = {
     //     transitionStatement "R_BRACE" pop_scope
     <l:@L> <al:annotationList> "STATE" <n:push_name> "L_BRACE"
         <sl:parserBlockElementStatementList> <t:transitionStatement> "R_BRACE" pop_scope <r:@R>
-        =>? make::case_shaped! {
+        =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList STATE name `{ parserBlockElementStatementList transitionStatement `}",
             args: vec![al, n, sl, t],
@@ -3491,7 +3491,7 @@ parserStateList: Value = {
     <s:parserState> => s,
 
     // parserStateList ::= parserStateList parserState
-    <l:@L> <sl:parserStateList> <s:parserState> <r:@R> =>? make::case_shaped! {
+    <l:@L> <sl:parserStateList> <s:parserState> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "parserStateList parserState",
             args: vec![sl, s],
@@ -3516,7 +3516,7 @@ parserLocalDeclaration: Value = {
 
 parserLocalDeclarationList: Value = {
     // parserLocalDeclarationList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3525,7 +3525,7 @@ parserLocalDeclarationList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // parserLocalDeclarationList ::= parserLocalDeclarationList parserLocalDeclaration
-    <l:@L> <dl:parserLocalDeclarationList> <d:parserLocalDeclaration> <r:@R> =>? make::case_shaped! {
+    <l:@L> <dl:parserLocalDeclarationList> <d:parserLocalDeclaration> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "parserLocalDeclarationList parserLocalDeclaration",
             args: vec![dl, d],
@@ -3540,7 +3540,7 @@ parserDeclaration: Value = {
     //     parserStateList "R_BRACE" pop_scope
     <l:@L> <al:annotationList> "PARSER" <n:push_name> <tpl:typeParameterListOpt> "L_PAREN"
         <pl:parameterList> "R_PAREN" <cpl:constructorParameterListOpt> "L_BRACE"
-        <dl:parserLocalDeclarationList> <sl:parserStateList> "R_BRACE" pop_scope <r:@R> =>? make::case_shaped! {
+        <dl:parserLocalDeclarationList> <sl:parserStateList> "R_BRACE" pop_scope <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList PARSER name typeParameterListOpt `( parameterList `) constructorParameterListOpt `{ parserLocalDeclarationList parserStateList `}",
             args: vec![al, n, tpl, pl, cpl, dl, sl],
@@ -3556,7 +3556,7 @@ parserDeclaration: Value = {
 #[inline]
 constOpt: Value = {
     // constOpt ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3565,7 +3565,7 @@ constOpt: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // constOpt ::= "CONST"
-    <l:@L> "CONST" <r:@R> =>? make::case_shaped! {
+    <l:@L> "CONST" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "CONST",
         args: vec![],
@@ -3578,7 +3578,7 @@ constOpt: Value = {
 
 tableKey: Value = {
     // tableKey ::= expression "COLON" name annotationList "SEMICOLON"
-    <l:@L> <e:expression> colon <n:name> <al:annotationList> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <e:expression> colon <n:name> <al:annotationList> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "expression ':' name annotationList ';'",
             args: vec![e, n, al],
@@ -3589,7 +3589,7 @@ tableKey: Value = {
 
 tableKeyList: Value = {
     // tableKeyList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3598,7 +3598,7 @@ tableKeyList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableKeyList ::= tableKeyList tableKey
-    <l:@L> <kl:tableKeyList> <k:tableKey> <r:@R> =>? make::case_shaped! {
+    <l:@L> <kl:tableKeyList> <k:tableKey> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "tableKeyList tableKey",
             args: vec![kl, k],
@@ -3614,7 +3614,7 @@ tableActionReference: Value = {
     <n:prefixedNonTypeName> => n,
 
     // tableActionReference ::= prefixedNonTypeName "L_PAREN" argumentList "R_PAREN"
-    <l:@L> <n:prefixedNonTypeName> "L_PAREN" <al:argumentList> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> <n:prefixedNonTypeName> "L_PAREN" <al:argumentList> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "prefixedNonTypeName `( argumentList `)",
             args: vec![n, al],
@@ -3625,7 +3625,7 @@ tableActionReference: Value = {
 
 tableAction: Value = {
     // tableAction ::= annotationList tableActionReference "SEMICOLON"
-    <l:@L> <al:annotationList> <ac:tableActionReference> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <al:annotationList> <ac:tableActionReference> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList tableActionReference ';'",
             args: vec![al, ac],
@@ -3636,7 +3636,7 @@ tableAction: Value = {
 
 tableActionList: Value = {
     // tableActionList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3645,7 +3645,7 @@ tableActionList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableActionList ::= tableActionList tableAction
-    <l:@L> <acl:tableActionList> <ac:tableAction> <r:@R> =>? make::case_shaped! {
+    <l:@L> <acl:tableActionList> <ac:tableAction> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "tableActionList tableAction",
             args: vec![acl, ac],
@@ -3658,7 +3658,7 @@ tableActionList: Value = {
 
 tableEntryPriority: Value = {
     // tableEntryPriority ::= "PRIORITY" "ASSIGN" integerLiteral "COLON"
-    <l:@L> "PRIORITY" "ASSIGN" <int:integerLiteral> colon <r:@R> =>? make::case_shaped! {
+    <l:@L> "PRIORITY" "ASSIGN" <int:integerLiteral> colon <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "PRIORITY '=' integerLiteral ':'",
             args: vec![int],
@@ -3667,7 +3667,7 @@ tableEntryPriority: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableEntryPriority ::= "PRIORITY" "ASSIGN" "L_PAREN" expression "R_PAREN" "COLON"
-    <l:@L> "PRIORITY" "ASSIGN" "L_PAREN" <e:expression> "R_PAREN" colon <r:@R> =>? make::case_shaped! {
+    <l:@L> "PRIORITY" "ASSIGN" "L_PAREN" <e:expression> "R_PAREN" colon <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "PRIORITY '=' `( expression `) ':'",
             args: vec![e],
@@ -3680,7 +3680,7 @@ tableEntry: Value = {
     // tableEntry ::= constOpt tableEntryPriority keysetExpression "COLON"
     //   tableActionReference annotationList "SEMICOLON"
     <l:@L> <c:constOpt> <p:tableEntryPriority> <k:keysetExpression> colon
-        <ac:tableActionReference> <al:annotationList> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <ac:tableActionReference> <al:annotationList> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "constOpt tableEntryPriority keysetExpression ':' tableActionReference annotationList ';'",
             args: vec![c, p, k, ac, al],
@@ -3691,7 +3691,7 @@ tableEntry: Value = {
     // tableEntry ::= constOpt keysetExpression "COLON" tableActionReference annotationList
     //     "SEMICOLON"
     <l:@L> <c:constOpt> <k:keysetExpression> colon <ac:tableActionReference> <al:annotationList>
-        "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "constOpt keysetExpression ':' tableActionReference annotationList ';'",
             args: vec![c, k, ac, al],
@@ -3702,7 +3702,7 @@ tableEntry: Value = {
 
 tableEntryList: Value = {
     // tableEntryList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3711,7 +3711,7 @@ tableEntryList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableEntryList ::= tableEntryList tableEntry
-    <l:@L> <el:tableEntryList> <e:tableEntry> <r:@R> =>? make::case_shaped! {
+    <l:@L> <el:tableEntryList> <e:tableEntry> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "tableEntryList tableEntry",
             args: vec![el, e],
@@ -3724,7 +3724,7 @@ tableEntryList: Value = {
 
 tableProperty: Value = {
     // tableProperty ::= "KEY" "ASSIGN" "L_BRACE" tableKeyList "R_BRACE"
-    <l:@L> "KEY" "ASSIGN" "L_BRACE" <kl:tableKeyList> "R_BRACE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "KEY" "ASSIGN" "L_BRACE" <kl:tableKeyList> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "KEY '=' `{ tableKeyList `}",
             args: vec![kl],
@@ -3733,7 +3733,7 @@ tableProperty: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tableProperty ::= "ACTIONS" "ASSIGN" "L_BRACE" tableActionList "R_BRACE"
-    <l:@L> "ACTIONS" "ASSIGN" "L_BRACE" <acl:tableActionList> "R_BRACE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ACTIONS" "ASSIGN" "L_BRACE" <acl:tableActionList> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "ACTIONS '=' `{ tableActionList `}",
             args: vec![acl],
@@ -3744,7 +3744,7 @@ tableProperty: Value = {
     // tableProperty ::= annotationList constOpt "ENTRIES" "ASSIGN" "L_BRACE" tableEntryList
     //     "R_BRACE"
     <l:@L> <al:annotationList> <c:constOpt> "ENTRIES" "ASSIGN" "L_BRACE" <el:tableEntryList>
-        "R_BRACE" <r:@R> =>? make::case_shaped! {
+        "R_BRACE" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList constOpt ENTRIES '=' `{ tableEntryList `}",
             args: vec![al, c, el],
@@ -3754,7 +3754,7 @@ tableProperty: Value = {
 
     // tableProperty ::= annotationList constOpt tableCustomName initialValue "SEMICOLON"
     <l:@L> <al:annotationList> <c:constOpt> <n:tableCustomName> <i:initialValue> "SEMICOLON"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList constOpt tableCustomName initializer ';'",
             args: vec![al, c, n, i],
@@ -3765,7 +3765,7 @@ tableProperty: Value = {
 
 tablePropertyList: Value = {
     // tablePropertyList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3774,7 +3774,7 @@ tablePropertyList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // tablePropertyList ::= tablePropertyList tableProperty
-    <l:@L> <pl:tablePropertyList> <p:tableProperty> <r:@R> =>? make::case_shaped! {
+    <l:@L> <pl:tablePropertyList> <p:tableProperty> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "tablePropertyList tableProperty",
             args: vec![pl, p],
@@ -3786,7 +3786,7 @@ tablePropertyList: Value = {
 tableDeclaration: Value = {
     // tableDeclaration ::= annotationList "TABLE" name "L_BRACE" tablePropertyList "R_BRACE"
     <l:@L> <al:annotationList> "TABLE" <n:name> "L_BRACE" <pl:tablePropertyList> "R_BRACE"
-        <r:@R> =>? make::case_shaped! {
+        <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList TABLE name `{ tablePropertyList `}",
             args: vec![al, n, pl],
@@ -3800,7 +3800,7 @@ controlTypeDeclaration: Value = {
     // controlTypeDeclaration ::= annotationList "CONTROL" push_name typeParameterListOpt "L_PAREN"
     //     parameterList "R_PAREN" pop_scope "SEMICOLON"
     <l:@L> <al:annotationList> "CONTROL" <n:push_name> <tpl:typeParameterListOpt> "L_PAREN"
-        <pl:parameterList> "R_PAREN" pop_scope "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <pl:parameterList> "R_PAREN" pop_scope "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList CONTROL name typeParameterListOpt `( parameterList `) ';'",
             args: vec![al, n, tpl, pl],
@@ -3838,7 +3838,7 @@ controlLocalDeclaration: Value = {
 
 controlLocalDeclarationList: Value = {
     // controlLocalDeclarationList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -3847,7 +3847,7 @@ controlLocalDeclarationList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // controlLocalDeclarationList ::= controlLocalDeclarationList controlLocalDeclaration
-    <l:@L> <dl:controlLocalDeclarationList> <d:controlLocalDeclaration> <r:@R> =>? make::case_shaped! {
+    <l:@L> <dl:controlLocalDeclarationList> <d:controlLocalDeclaration> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "controlLocalDeclarationList controlLocalDeclaration",
             args: vec![dl, d],
@@ -3862,7 +3862,7 @@ controlDeclaration: Value = {
     //     "APPLY" controlBody "R_BRACE" pop_scope
     <l:@L> <al:annotationList> "CONTROL" <n:push_name> <tpl:typeParameterListOpt> "L_PAREN"
         <pl:parameterList> "R_PAREN" <cpl:constructorParameterListOpt> "L_BRACE"
-        <dl:controlLocalDeclarationList> "APPLY" <b:controlBody> "R_BRACE" pop_scope <r:@R> =>? make::case_shaped! {
+        <dl:controlLocalDeclarationList> "APPLY" <b:controlBody> "R_BRACE" pop_scope <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList CONTROL name typeParameterListOpt `( parameterList `) constructorParameterListOpt `{ controlLocalDeclarationList APPLY controlBody `}",
             args: vec![al, n, tpl, pl, cpl, dl, b],
@@ -3877,7 +3877,7 @@ packageTypeDeclaration: Value = {
     // packageTypeDeclaration ::= annotationList "PACKAGE" push_name typeParameterListOpt "L_PAREN"
     //     parameterList "R_PAREN" pop_scope "SEMICOLON"
     <l:@L> <al:annotationList> "PACKAGE" <n:push_name> <tpl:typeParameterListOpt> "L_PAREN"
-        <pl:parameterList> "R_PAREN" pop_scope "SEMICOLON" <r:@R> =>? make::case_shaped! {
+        <pl:parameterList> "R_PAREN" pop_scope "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationList PACKAGE name typeParameterListOpt `( parameterList `) ';'",
             args: vec![al, n, tpl, pl],
@@ -3986,7 +3986,7 @@ declaration: Value = {
 // the Rust lexer; both retain the canonical annotation token value.
 annotationToken: Value = {
     // annotationToken ::= "UNEXPECTED_TOKEN"
-    <l:@L> "UNEXPECTED_TOKEN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "UNEXPECTED_TOKEN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "UNEXPECTED_TOKEN",
             args: vec![],
@@ -3995,7 +3995,7 @@ annotationToken: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ABSTRACT"
-    <l:@L> "ABSTRACT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ABSTRACT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ABSTRACT",
         args: vec![],
@@ -4004,7 +4004,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ACTION"
-    <l:@L> "ACTION" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ACTION" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ACTION",
         args: vec![],
@@ -4013,7 +4013,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ACTIONS"
-    <l:@L> "ACTIONS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ACTIONS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ACTIONS",
         args: vec![],
@@ -4022,7 +4022,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "APPLY"
-    <l:@L> "APPLY" <r:@R> =>? make::case_shaped! {
+    <l:@L> "APPLY" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "APPLY",
         args: vec![],
@@ -4031,7 +4031,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BOOL"
-    <l:@L> "BOOL" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BOOL" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "BOOL",
         args: vec![],
@@ -4040,7 +4040,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT"
-    <l:@L> "BIT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "BIT",
         args: vec![],
@@ -4049,7 +4049,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BREAK"
-    <l:@L> "BREAK" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BREAK" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "BREAK",
         args: vec![],
@@ -4058,7 +4058,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "CONST"
-    <l:@L> "CONST" <r:@R> =>? make::case_shaped! {
+    <l:@L> "CONST" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "CONST",
         args: vec![],
@@ -4067,7 +4067,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "CONTINUE"
-    <l:@L> "CONTINUE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "CONTINUE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "CONTINUE",
         args: vec![],
@@ -4076,7 +4076,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "CONTROL"
-    <l:@L> "CONTROL" <r:@R> =>? make::case_shaped! {
+    <l:@L> "CONTROL" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "CONTROL",
         args: vec![],
@@ -4085,7 +4085,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DEFAULT"
-    <l:@L> "DEFAULT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DEFAULT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "DEFAULT",
         args: vec![],
@@ -4094,7 +4094,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ELSE"
-    <l:@L> "ELSE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ELSE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ELSE",
         args: vec![],
@@ -4103,7 +4103,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ENTRIES"
-    <l:@L> "ENTRIES" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ENTRIES" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ENTRIES",
         args: vec![],
@@ -4112,7 +4112,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ENUM"
-    <l:@L> "ENUM" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ENUM" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ENUM",
         args: vec![],
@@ -4121,7 +4121,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ERROR"
-    <l:@L> "ERROR" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ERROR" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "ERROR",
         args: vec![],
@@ -4130,7 +4130,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "EXIT"
-    <l:@L> "EXIT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "EXIT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "EXIT",
         args: vec![],
@@ -4139,7 +4139,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "EXTERN"
-    <l:@L> "EXTERN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "EXTERN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "EXTERN",
         args: vec![],
@@ -4148,7 +4148,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "FALSE"
-    <l:@L> "FALSE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "FALSE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "FALSE",
         args: vec![],
@@ -4157,7 +4157,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "FOR"
-    <l:@L> "FOR" <r:@R> =>? make::case_shaped! {
+    <l:@L> "FOR" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "FOR",
         args: vec![],
@@ -4166,7 +4166,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "HEADER"
-    <l:@L> "HEADER" <r:@R> =>? make::case_shaped! {
+    <l:@L> "HEADER" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "HEADER",
         args: vec![],
@@ -4175,7 +4175,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "HEADER_UNION"
-    <l:@L> "HEADER_UNION" <r:@R> =>? make::case_shaped! {
+    <l:@L> "HEADER_UNION" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "HEADER_UNION",
             args: vec![],
@@ -4184,7 +4184,7 @@ annotationToken: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "IF"
-    <l:@L> "IF" <r:@R> =>? make::case_shaped! {
+    <l:@L> "IF" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "IF",
         args: vec![],
@@ -4193,7 +4193,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "IN"
-    <l:@L> "IN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "IN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "IN",
         args: vec![],
@@ -4202,7 +4202,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "INOUT"
-    <l:@L> "INOUT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "INOUT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "INOUT",
         args: vec![],
@@ -4211,7 +4211,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "INT"
-    <l:@L> "INT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "INT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "INT",
         args: vec![],
@@ -4220,7 +4220,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "KEY"
-    <l:@L> "KEY" <r:@R> =>? make::case_shaped! {
+    <l:@L> "KEY" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "KEY",
         args: vec![],
@@ -4229,7 +4229,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MATCH_KIND"
-    <l:@L> "MATCH_KIND" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MATCH_KIND" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "MATCH_KIND",
             args: vec![],
@@ -4238,7 +4238,7 @@ annotationToken: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TYPE"
-    <l:@L> "TYPE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TYPE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TYPE",
         args: vec![],
@@ -4247,7 +4247,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "OUT"
-    <l:@L> "OUT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "OUT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "OUT",
         args: vec![],
@@ -4256,7 +4256,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PARSER"
-    <l:@L> "PARSER" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PARSER" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "PARSER",
         args: vec![],
@@ -4265,7 +4265,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PACKAGE"
-    <l:@L> "PACKAGE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PACKAGE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "PACKAGE",
         args: vec![],
@@ -4274,7 +4274,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PRAGMA"
-    <l:@L> "PRAGMA" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PRAGMA" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "PRAGMA",
         args: vec![],
@@ -4283,7 +4283,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "RETURN"
-    <l:@L> "RETURN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "RETURN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "RETURN",
         args: vec![],
@@ -4292,7 +4292,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SELECT"
-    <l:@L> "SELECT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "SELECT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "SELECT",
         args: vec![],
@@ -4301,7 +4301,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "STATE"
-    <l:@L> "STATE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "STATE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "STATE",
         args: vec![],
@@ -4310,7 +4310,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "STRING"
-    <l:@L> "STRING" <r:@R> =>? make::case_shaped! {
+    <l:@L> "STRING" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "STRING",
         args: vec![],
@@ -4319,7 +4319,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "STRUCT"
-    <l:@L> "STRUCT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "STRUCT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "STRUCT",
         args: vec![],
@@ -4328,7 +4328,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SWITCH"
-    <l:@L> "SWITCH" <r:@R> =>? make::case_shaped! {
+    <l:@L> "SWITCH" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "SWITCH",
         args: vec![],
@@ -4337,7 +4337,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TABLE"
-    <l:@L> "TABLE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TABLE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TABLE",
         args: vec![],
@@ -4346,7 +4346,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "THIS"
-    <l:@L> "THIS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "THIS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "THIS",
         args: vec![],
@@ -4355,7 +4355,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TRANSITION"
-    <l:@L> "TRANSITION" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TRANSITION" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "TRANSITION",
             args: vec![],
@@ -4364,7 +4364,7 @@ annotationToken: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TRUE"
-    <l:@L> "TRUE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TRUE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TRUE",
         args: vec![],
@@ -4373,7 +4373,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TUPLE"
-    <l:@L> "TUPLE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TUPLE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TUPLE",
         args: vec![],
@@ -4382,7 +4382,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "TYPEDEF"
-    <l:@L> "TYPEDEF" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TYPEDEF" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "TYPEDEF",
         args: vec![],
@@ -4391,7 +4391,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "VARBIT"
-    <l:@L> "VARBIT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "VARBIT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "VARBIT",
         args: vec![],
@@ -4400,7 +4400,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "VALUE_SET"
-    <l:@L> "VALUE_SET" <r:@R> =>? make::case_shaped! {
+    <l:@L> "VALUE_SET" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "VALUE_SET",
         args: vec![],
@@ -4409,7 +4409,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "LIST"
-    <l:@L> "LIST" <r:@R> =>? make::case_shaped! {
+    <l:@L> "LIST" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "LIST",
         args: vec![],
@@ -4418,7 +4418,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "VOID"
-    <l:@L> "VOID" <r:@R> =>? make::case_shaped! {
+    <l:@L> "VOID" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "VOID",
         args: vec![],
@@ -4427,7 +4427,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DONTCARE"
-    <l:@L> "DONTCARE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DONTCARE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'_'",
         args: vec![],
@@ -4451,7 +4451,7 @@ annotationToken: Value = {
     <int:integerLiteral> => int,
 
     // annotationToken ::= "MASK"
-    <l:@L> "MASK" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MASK" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'&&&'",
         args: vec![],
@@ -4460,7 +4460,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "RANGE"
-    <l:@L> "RANGE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "RANGE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'..'",
         args: vec![],
@@ -4469,7 +4469,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SHL"
-    <l:@L> "SHL" <r:@R> =>? make::case_shaped! {
+    <l:@L> "SHL" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'<<'",
         args: vec![],
@@ -4478,7 +4478,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "AND"
-    <l:@L> "AND" <r:@R> =>? make::case_shaped! {
+    <l:@L> "AND" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'&&'",
         args: vec![],
@@ -4487,7 +4487,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "OR"
-    <l:@L> "OR" <r:@R> =>? make::case_shaped! {
+    <l:@L> "OR" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'||'",
         args: vec![],
@@ -4496,7 +4496,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "EQ"
-    <l:@L> "EQ" <r:@R> =>? make::case_shaped! {
+    <l:@L> "EQ" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'=='",
         args: vec![],
@@ -4505,7 +4505,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "NE"
-    <l:@L> "NE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "NE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'!='",
         args: vec![],
@@ -4514,7 +4514,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "GE"
-    <l:@L> "GE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "GE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'>='",
         args: vec![],
@@ -4523,7 +4523,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "LE"
-    <l:@L> "LE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "LE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'<='",
         args: vec![],
@@ -4532,7 +4532,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PLUSPLUS"
-    <l:@L> "PLUSPLUS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PLUSPLUS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'++'",
         args: vec![],
@@ -4541,7 +4541,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PLUS"
-    <l:@L> "PLUS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PLUS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'+'",
         args: vec![],
@@ -4550,7 +4550,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "PLUS_SAT"
-    <l:@L> "PLUS_SAT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PLUS_SAT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'|+|'",
         args: vec![],
@@ -4559,7 +4559,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MINUS"
-    <l:@L> "MINUS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MINUS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'-'",
         args: vec![],
@@ -4568,7 +4568,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MINUS_SAT"
-    <l:@L> "MINUS_SAT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MINUS_SAT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'|-|'",
         args: vec![],
@@ -4577,7 +4577,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MUL"
-    <l:@L> "MUL" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MUL" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'*'",
         args: vec![],
@@ -4586,7 +4586,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DIV"
-    <l:@L> "DIV" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DIV" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'/'",
         args: vec![],
@@ -4595,7 +4595,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "MOD"
-    <l:@L> "MOD" <r:@R> =>? make::case_shaped! {
+    <l:@L> "MOD" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'%'",
         args: vec![],
@@ -4604,7 +4604,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT_OR"
-    <l:@L> "BIT_OR" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT_OR" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'|'",
         args: vec![],
@@ -4613,7 +4613,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT_AND"
-    <l:@L> "BIT_AND" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT_AND" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'&'",
         args: vec![],
@@ -4622,7 +4622,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "BIT_XOR"
-    <l:@L> "BIT_XOR" <r:@R> =>? make::case_shaped! {
+    <l:@L> "BIT_XOR" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'^'",
         args: vec![],
@@ -4631,7 +4631,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "COMPLEMENT"
-    <l:@L> "COMPLEMENT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "COMPLEMENT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'~'",
         args: vec![],
@@ -4640,7 +4640,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "L_BRACKET"
-    <l:@L> "L_BRACKET" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_BRACKET" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'['",
         args: vec![],
@@ -4649,7 +4649,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "R_BRACKET"
-    <l:@L> "R_BRACKET" <r:@R> =>? make::case_shaped! {
+    <l:@L> "R_BRACKET" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "']'",
         args: vec![],
@@ -4658,7 +4658,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "L_BRACE"
-    <l:@L> "L_BRACE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_BRACE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'{'",
         args: vec![],
@@ -4667,7 +4667,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "R_BRACE"
-    <l:@L> "R_BRACE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "R_BRACE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'}'",
         args: vec![],
@@ -4676,7 +4676,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "L_ANGLE"
-    <l:@L> "L_ANGLE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_ANGLE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'<'",
         args: vec![],
@@ -4685,7 +4685,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // Rust lexer adapter for annotationToken ::= "L_ANGLE"
-    <l:@L> "L_ANGLE_ARGS" <r:@R> =>? make::case_shaped! {
+    <l:@L> "L_ANGLE_ARGS" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'<'",
         args: vec![],
@@ -4694,7 +4694,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "R_ANGLE"
-    <l:@L> "R_ANGLE" <r:@R> =>? make::case_shaped! {
+    <l:@L> "R_ANGLE" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'>'",
         args: vec![],
@@ -4703,7 +4703,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "NOT"
-    <l:@L> "NOT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "NOT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'!'",
         args: vec![],
@@ -4712,7 +4712,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "COLON"
-    <l:@L> colon <r:@R> =>? make::case_shaped! {
+    <l:@L> colon <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "':'",
         args: vec![],
@@ -4721,7 +4721,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "COMMA"
-    <l:@L> "COMMA" <r:@R> =>? make::case_shaped! {
+    <l:@L> "COMMA" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "','",
         args: vec![],
@@ -4730,7 +4730,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // Rust lexer adapter for annotationToken ::= "COMMA"
-    <l:@L> "TRAILING_COMMA" <r:@R> =>? make::case_shaped! {
+    <l:@L> "TRAILING_COMMA" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "','",
         args: vec![],
@@ -4739,7 +4739,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "QUESTION"
-    <l:@L> "QUESTION" <r:@R> =>? make::case_shaped! {
+    <l:@L> "QUESTION" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'?'",
         args: vec![],
@@ -4748,7 +4748,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "DOT"
-    <l:@L> "DOT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "DOT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'.'",
         args: vec![],
@@ -4757,7 +4757,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "ASSIGN"
-    <l:@L> "ASSIGN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "ASSIGN" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'='",
         args: vec![],
@@ -4766,7 +4766,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "SEMICOLON"
-    <l:@L> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "';'",
         args: vec![],
@@ -4775,7 +4775,7 @@ annotationToken: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationToken ::= "AT"
-    <l:@L> "AT" <r:@R> =>? make::case_shaped! {
+    <l:@L> "AT" <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "'@'",
         args: vec![],
@@ -4786,7 +4786,7 @@ annotationToken: Value = {
 
 annotationBody: Value = {
     // annotationBody ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -4795,7 +4795,7 @@ annotationBody: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationBody ::= annotationBody "L_PAREN" annotationBody "R_PAREN"
-    <l:@L> <ab:annotationBody> "L_PAREN" <ab_in:annotationBody> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> <ab:annotationBody> "L_PAREN" <ab_in:annotationBody> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationBody `( annotationBody `)",
             args: vec![ab, ab_in],
@@ -4804,7 +4804,7 @@ annotationBody: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotationBody ::= annotationBody annotationToken
-    <l:@L> <ab:annotationBody> <atoken:annotationToken> <r:@R> =>? make::case_shaped! {
+    <l:@L> <ab:annotationBody> <atoken:annotationToken> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationBody annotationToken",
             args: vec![ab, atoken],
@@ -4815,7 +4815,7 @@ annotationBody: Value = {
 
 structuredAnnotationBody: Value = {
     // structuredAnnotationBody ::= sequenceOrRecordElementExpression trailingCommaOpt
-    <l:@L> <e:sequenceOrRecordElementExpression> <c:trailingCommaOpt> <r:@R> =>? make::case_shaped! {
+    <l:@L> <e:sequenceOrRecordElementExpression> <c:trailingCommaOpt> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "sequenceOrRecordElementExpression trailingCommaOpt",
             args: vec![e, c],
@@ -4826,7 +4826,7 @@ structuredAnnotationBody: Value = {
 
 annotation: Value = {
     // annotation ::= "AT" name
-    <l:@L> "AT" <name:name> <r:@R> =>? make::case_shaped! {
+    <l:@L> "AT" <name:name> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'@' name",
             args: vec![name],
@@ -4835,7 +4835,7 @@ annotation: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotation ::= "AT" name "L_PAREN" annotationBody "R_PAREN"
-    <l:@L> "AT" <name:name> "L_PAREN" <body:annotationBody> "R_PAREN" <r:@R> =>? make::case_shaped! {
+    <l:@L> "AT" <name:name> "L_PAREN" <body:annotationBody> "R_PAREN" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'@' name `( annotationBody `)",
             args: vec![name, body],
@@ -4844,7 +4844,7 @@ annotation: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotation ::= "AT" name "L_BRACKET" structuredAnnotationBody "R_BRACKET"
-    <l:@L> "AT" <name:name> "L_BRACKET" <body:structuredAnnotationBody> "R_BRACKET" <r:@R> =>? make::case_shaped! {
+    <l:@L> "AT" <name:name> "L_BRACKET" <body:structuredAnnotationBody> "R_BRACKET" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'@' name `[ structuredAnnotationBody `]",
             args: vec![name, body],
@@ -4853,7 +4853,7 @@ annotation: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // annotation ::= "PRAGMA" name annotationBody "PRAGMA_END"
-    <l:@L> "PRAGMA" <name:name> <body:annotationBody> "PRAGMA_END" <r:@R> =>? make::case_shaped! {
+    <l:@L> "PRAGMA" <name:name> <body:annotationBody> "PRAGMA_END" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "'@' PRAGMA name annotationBody",
             args: vec![name, body],
@@ -4867,7 +4867,7 @@ annotationListNonEmpty: Value = {
     <a:annotation> => a,
 
     // annotationListNonEmpty ::= annotationListNonEmpty annotation
-    <l:@L> <al:annotationListNonEmpty> <a:annotation> <r:@R> =>? make::case_shaped! {
+    <l:@L> <al:annotationListNonEmpty> <a:annotation> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "annotationListNonEmpty annotation",
             args: vec![al, a],
@@ -4879,7 +4879,7 @@ annotationListNonEmpty: Value = {
 #[inline]
 annotationList: Value = {
     // annotationList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -4895,7 +4895,7 @@ annotationList: Value = {
 
 declarationList: Value = {
     // declarationList ::= epsilon
-    <l:@L>  <r:@R> =>? make::case_shaped! {
+    <l:@L>  <r:@R> =>? value::make::case_shaped! {
         arena: &mut ctx.arena_mut(),
         shape: "_EMPTY",
         args: vec![],
@@ -4904,7 +4904,7 @@ declarationList: Value = {
     }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // declarationList ::= declarationList declaration
-    <l:@L> <ds:declarationList> <d:declaration> <r:@R> =>? make::case_shaped! {
+    <l:@L> <ds:declarationList> <d:declaration> <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "p4program declaration",
             args: vec![ds, d],
@@ -4913,7 +4913,7 @@ declarationList: Value = {
         }.map_err(|error| P4Error::new(ctx.location_span(l, r), error)).map_err(|error| ParseError::User { error }),
 
     // declarationList ::= declarationList "SEMICOLON"
-    <l:@L> <ds:declarationList> "SEMICOLON" <r:@R> =>? make::case_shaped! {
+    <l:@L> <ds:declarationList> "SEMICOLON" <r:@R> =>? value::make::case_shaped! {
             arena: &mut ctx.arena_mut(),
             shape: "p4program ';'",
             args: vec![ds],

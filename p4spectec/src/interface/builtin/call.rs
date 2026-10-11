@@ -9,7 +9,7 @@
 
 use std::collections::HashMap;
 
-use crate::lang::data::value::{Value, ValueArena};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::il::ast::{Id, Typ};
 
@@ -18,8 +18,7 @@ use super::{BuiltinError, fresh, ints, lists, maps, nats, numerics, sets, texts}
 // == Extensibility point: extra or override builtins per interface
 
 /// A builtin body: arena, type arguments, values in; a value out.
-pub type BuiltinImpl =
-    Box<dyn FnMut(&mut ValueArena, &[Typ], &[Value]) -> Result<Value, BuiltinError>>;
+pub type BuiltinImpl = Box<dyn FnMut(&mut Arena, &[Typ], &[Value]) -> Result<Value, BuiltinError>>;
 
 /// A registered builtin and whether calling it has effects.
 enum BuiltinEntry {
@@ -143,7 +142,7 @@ impl Builtins {
     /// Calls a builtin by name; the flag reports whether it had effects.
     pub fn invoke(
         &mut self,
-        arena: &mut ValueArena,
+        arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],

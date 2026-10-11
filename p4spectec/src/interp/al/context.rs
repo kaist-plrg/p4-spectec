@@ -4,18 +4,19 @@
 //! `Context` retains the shared scope, binding, and iteration operations;
 //! `FuncSignature` extracts types from prepared AL function definitions.
 
-use crate::lang::data::typ::{FuncTyp, make};
-
-use crate::lang::al::ast as source;
-
-use crate::runtime::{
-    envs::interp::{al::ast_prepared as ast, shared::callable::Callable},
-    typdef::TypeDef,
+use crate::lang::data::{
+    notation::MixopArena,
+    typ::{FuncTyp, make},
 };
+
+use crate::lang::al::{ast as source, prepared as ast};
+
+use crate::runtime::envs::interp::shared::{TypeDef, callable::Callable};
 
 use crate::interp::shared::{
     context::{self as shared, FuncSignature},
     error::Error,
+    prepare::prepare_def_typ,
 };
 
 // = Context aliases
@@ -31,10 +32,15 @@ pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncD
 // = Loading
 
 impl Global {
-    /// Loads a specification and prepares its callables for slot execution.
+    /// Loads a specification and prepares its callables for slot execution,
+    /// interning their notations into `arena_mixop`.
     ///
     /// Panics if a global definition is repeated.
-    pub fn load(spec: source::Spec) -> Result<Self, Error> {
+    pub fn load(
+        arena_mixop: &mut MixopArena,
+        det: bool,
+        spec: source::Spec,
+    ) -> Result<Self, Error> {
         let mut loaded = Self::new();
         // Prepare definitions before inserting them into their namespaces
         for def in spec {
@@ -45,7 +51,13 @@ impl Global {
                         ast::TypDef::Extern(typdef) => (typdef.id, TypeDef::Extern),
                         ast::TypDef::Defined(typdef) => {
                             let ast::DefinedTyp { id, tparams, def_typ, .. } = *typdef;
-                            (id, TypeDef::Defined(tparams, Box::new(def_typ)))
+                            (
+                                id,
+                                TypeDef::Defined(
+                                    tparams,
+                                    Box::new(prepare_def_typ(arena_mixop, def_typ)),
+                                ),
+                            )
                         }
                     };
                     loaded.insert_typdef(id, typdef);
@@ -54,7 +66,7 @@ impl Global {
                 source::DefKind::Var(_) => {}
                 source::DefKind::Rel(rel) => {
                     // Relations are prepared into callables with a frame layout
-                    let rel = Callable::prepare(rel);
+                    let rel = Callable::prepare(arena_mixop, det, rel);
                     let id = match &rel.def {
                         ast::RelDef::Extern(rel) => &rel.id,
                         ast::RelDef::Defined(rel) => &rel.id,
@@ -63,7 +75,7 @@ impl Global {
                 }
                 source::DefKind::MetaFunc(func) => {
                     // Prepare functions before sharing them with local bindings
-                    let func = Callable::prepare(func);
+                    let func = Callable::prepare(arena_mixop, det, func);
                     let id = match &func.def {
                         ast::MetaFuncDef::Extern(func) => &func.id,
                         ast::MetaFuncDef::Builtin(func) => &func.id,

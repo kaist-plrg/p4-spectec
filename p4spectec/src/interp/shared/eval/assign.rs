@@ -12,18 +12,20 @@ use std::{borrow::Borrow, rc::Rc};
 use crate::lang::{
     common::source::Span,
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, ValueKind, get, make},
+        value::flat::{self as value, Value, ValueKind},
         var::IdSlot,
     },
     traits::at::At,
 };
 
-use crate::runtime::typdef::TypeDef;
+use crate::lang::il::prepared as ast;
+
+use crate::runtime::envs::interp::shared::TypeDef;
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
-    prepare::ast,
     util::{find_slot_of_exp, iterate_vars},
 };
 
@@ -57,12 +59,12 @@ pub fn assign_tparams<Ctx: WriteContext>(
 
 /// Matches `value` against the pattern `exp`, binding its variables.
 pub fn assign_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     exp: &ast::Exp,
     value: Value,
 ) -> Backtrack<Ctx> {
-    match (&exp.node, arena.kind(&value)) {
+    match (&exp.node, arena.value.kind(value.node)) {
         // A variable binds directly
         (ast::ExpKind::Id(id), _) => assign_id_exp(arena, ctx, id, value),
         // Tuple: componentwise
@@ -72,15 +74,14 @@ pub fn assign_exp<Ctx: WriteContext>(
         }
         // Case: the arguments
         (ast::ExpKind::Case(not_exp), ValueKind::Case(value_case)) => {
-            let mut values = Vec::new();
-            value_case.iter(|value| values.push(*value));
+            let values = value_case.args().to_vec();
             assign_case_exp(arena, ctx, not_exp, &values)
         }
         // Struct: the fields in order
         (ast::ExpKind::Str(exp_fields), ValueKind::Struct(value_fields)) => {
             let values = value_fields
                 .iter()
-                .map(|(_, value)| *value)
+                .map(|value_field| value_field.value)
                 .collect::<Vec<_>>();
             assign_str_exp(arena, ctx, exp_fields, &values)
         }
@@ -110,7 +111,7 @@ pub fn assign_exp<Ctx: WriteContext>(
 
 /// Assigns values to patterns pairwise, requiring equal counts.
 pub fn assign_exps<Ctx: WriteContext, T: Borrow<ast::Exp> + At>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     mut ctx: Ctx,
     exps: &[T],
     values: &[Value],
@@ -126,7 +127,7 @@ pub fn assign_exps<Ctx: WriteContext, T: Borrow<ast::Exp> + At>(
 // - Identifier expression
 
 fn assign_id_exp<Ctx: WriteContext>(
-    _arena: &mut ValueArena,
+    _arena: &mut Arena,
     mut ctx: Ctx,
     id: &IdSlot,
     value: Value,
@@ -138,7 +139,7 @@ fn assign_id_exp<Ctx: WriteContext>(
 // - Tuple expression
 
 fn assign_tuple_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     exps: &[ast::Exp],
     values: &[Value],
@@ -149,19 +150,18 @@ fn assign_tuple_exp<Ctx: WriteContext>(
 // - Case expression
 
 fn assign_case_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     not_exp: &ast::NotExp,
     values: &[Value],
 ) -> Backtrack<Ctx> {
-    let exps = not_exp.args();
-    assign_exps(arena, ctx, &exps, values)
+    assign_exps(arena, ctx, not_exp.args(), values)
 }
 
 // - Struct expression
 
 fn assign_str_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     exp_fields: &[ast::ExpField],
     values: &[Value],
@@ -177,7 +177,7 @@ fn assign_str_exp<Ctx: WriteContext>(
 
 /// Assigns an option: a payload to a payload, absence to absence.
 fn assign_opt_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     exp_opt: &Option<Box<ast::Exp>>,
     value_opt: &Option<Value>,
@@ -195,7 +195,7 @@ fn assign_opt_exp<Ctx: WriteContext>(
 // - List expression
 
 fn assign_list_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     exps: &[ast::Exp],
     values: &[Value],
@@ -207,7 +207,7 @@ fn assign_list_exp<Ctx: WriteContext>(
 
 /// Splits a non-empty list into head and tail and assigns each.
 fn assign_cons_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     exp: &ast::Exp,
     exp_head: &ast::Exp,
@@ -219,9 +219,9 @@ fn assign_cons_exp<Ctx: WriteContext>(
         .split_first()
         .expect("cons pattern must match a non-empty list");
     // Rebuild the tail as a list value of the same type
-    let typ = phrase!(node: arena.typ(value).clone(), span: exp.span.clone());
+    let typ = phrase!(node: arena.value.typ(value.note).clone(), span: exp.span.clone());
     let value_tail = unwrap_from_result!(
-        make::list(arena, typ.node.clone(), values_tail.to_vec(), Span::default()),
+        value::make::list(arena, typ.node.clone(), values_tail.to_vec(), Span::default()),
         &Span::default()
     );
     let ctx = unwrap!(assign_exp(arena, ctx, exp_head, *value_head));
@@ -232,7 +232,7 @@ fn assign_cons_exp<Ctx: WriteContext>(
 
 /// Assigns an iterated pattern, binding its variables one iteration outward.
 fn assign_iter_exp<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     mut ctx: Ctx,
     exp: &ast::Exp,
     exp_inner: &ast::Exp,
@@ -250,8 +250,8 @@ fn assign_iter_exp<Ctx: WriteContext>(
     match exp_iter.iter {
         // Option: assign the payload once, or bind every variable to none
         ast::Iter::Opt => {
-            let value_opt =
-                get::opt(arena, &value).expect("iteration assignment value must be an option");
+            let value_opt = value::get::opt(arena, &value)
+                .expect("iteration assignment value must be an option");
             let ctx_sub = match value_opt {
                 Some(value) => Some(unwrap!(assign_exp(arena, ctx.clone(), exp_inner, value))),
                 None => None,
@@ -264,7 +264,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
                         .expect("value must be bound")
                 });
                 let value = unwrap_from_result!(
-                    make::opt(arena, typ.node.into(), value_opt, Span::default()),
+                    value::make::opt(arena, typ.node.into(), value_opt, Span::default()),
                     span
                 );
                 ctx.add_value_at_slot(var_outer.slot, value);
@@ -273,7 +273,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
         }
         // List: one fresh sub-context per element
         ast::Iter::List => {
-            let values = get::list(arena, &value)
+            let values = value::get::list(arena, &value)
                 .expect("iteration assignment value must be a list")
                 .to_vec();
             let mut ctx_sub = ctx.clone();
@@ -293,7 +293,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
                     values.push(*value);
                 }
                 let value_sub = unwrap_from_result!(
-                    make::list(arena, typ.node.into(), values, Span::default()),
+                    value::make::list(arena, typ.node.into(), values, Span::default()),
                     span
                 );
                 ctx.add_value_at_slot(var_outer.slot, value_sub);
@@ -307,7 +307,7 @@ fn assign_iter_exp<Ctx: WriteContext>(
 
 /// Assigns an argument value: to a pattern, or as a function definition.
 pub fn assign_arg<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx_caller: &impl ReadContext<Func = Ctx::Func>,
     ctx_callee: Ctx,
     arg: &ast::Arg,
@@ -321,7 +321,7 @@ pub fn assign_arg<Ctx: WriteContext>(
 
 /// Assigns values to arguments pairwise, requiring equal counts.
 pub fn assign_args<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx_caller: &impl ReadContext<Func = Ctx::Func>,
     ctx_callee: Ctx,
     args: &[ast::Arg],
@@ -339,7 +339,7 @@ pub fn assign_args<Ctx: WriteContext>(
 // - Expression argument
 
 fn assign_exp_arg<Ctx: WriteContext>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Ctx,
     exp: &ast::Exp,
     value: Value,
@@ -351,14 +351,14 @@ fn assign_exp_arg<Ctx: WriteContext>(
 
 /// Binds a function argument in the callee from its definition in the caller.
 pub fn assign_def<Ctx: WriteContext>(
-    arena: &ValueArena,
+    arena: &Arena,
     ctx_caller: &impl ReadContext<Func = Ctx::Func>,
     mut ctx_callee: Ctx,
     id: &ast::Id,
     value: Value,
 ) -> Backtrack<Ctx> {
     // The value must be a function reference
-    let ValueKind::Func(id_func) = arena.kind(&value) else {
+    let ValueKind::Func(id_func) = arena.value.kind(value.node) else {
         unreachable!("function parameter must receive a function reference");
     };
     // Look the definition up in the caller, bind it in the callee

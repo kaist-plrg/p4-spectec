@@ -19,8 +19,8 @@ pub fn expand_typ<'a>(tdenv: &TDEnv, typ: &'a ast::Typ) -> Result<Cow<'a, ast::T
 }
 
 /// Expands through a lookup closure, so callers can layer local environments.
-pub(super) fn expand_typ_with<'a, 'env>(
-    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef>,
+pub(super) fn expand_typ_with<'a, 'env, P: ast::Stage>(
+    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef<P>>,
     typ: &'a ast::Typ,
 ) -> Result<Cow<'a, ast::Typ>, TypeError> {
     // Only type variables can be aliases

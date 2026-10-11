@@ -1,24 +1,27 @@
 //! Internal language model
 //!
 //! Expressions and paths are `NotePhrase`s whose note is the type.
-//! `ExpKind` and friends take identifier and variable parameters `I` and `V`
-//! so the interpreters can instantiate them with frame slots;
-//! the defaults are the plain `Id` and `Var`.
+//! `ExpKind` and friends take a stage `P` (`stage::Stage`)
+//! that chooses identifiers, variables, and how mixops are held,
+//! so the interpreters can instantiate them with frame slots and shapes;
+//! the default is the `Source` stage.
 
 use std::rc::Rc;
 
 use crate::lang::{
     common::{
         self,
-        notation::{atom, mixfix::Mixfix, mixop},
+        notation::atom,
         prim::num,
         source::{NotePhrase, Phrase},
     },
-    data,
+    data::{self, notation::Mixfix},
     hints::input::InputHint,
 };
 
 use crate::lang::el;
+
+pub use super::stage::{Source, Stage};
 
 // Numbers
 
@@ -43,7 +46,7 @@ pub type Atom = Phrase<atom::Atom>;
 // Mixfix operators
 
 /// The atom skeleton of a notation form, without its arguments.
-pub type Mixop = mixop::Mixop;
+pub type Mixop = data::notation::tree::Mixop;
 
 // Iterators
 
@@ -68,15 +71,15 @@ pub type FuncTyp = data::typ::FuncTyp;
 
 /// The runtime part of a subtype check, after static subtyping is decided.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Subcheck {
+pub enum Subcheck<P: Stage = Source> {
     /// Statically a subtype: nothing to check.
     Skip,
     /// A variant value: its case must be one of these.
-    Mixop(Vec<Mixop>),
+    Mixop(Vec<P::Mixop>),
     /// A tuple: check each component.
-    Tuple(Vec<Subcheck>),
+    Tuple(Vec<Subcheck<P>>),
     /// An option or list: check each element.
-    Iter(Iter, Box<Subcheck>),
+    Iter(Iter, Box<Subcheck<P>>),
     /// Fall back to full membership in this type.
     Recurse(Typ),
 }
@@ -84,22 +87,22 @@ pub enum Subcheck {
 // Defined types
 
 /// A notation type with its span.
-pub type NotTyp = Phrase<NotTypKind>;
+pub type NotTyp<P = Source> = Phrase<NotTypKind<P>>;
 /// A notation type: a mixfix skeleton with types as arguments.
-pub type NotTypKind = Mixfix<Typ>;
+pub type NotTypKind<P = Source> = Mixfix<<P as Stage>::Mixop, Typ>;
 
 /// The body of a type definition.
-pub type DefTyp = Phrase<DefTypKind>;
+pub type DefTyp<P = Source> = Phrase<DefTypKind<P>>;
 
 /// An alias, a struct of fields, or a variant of cases.
 #[derive(Clone, Debug, PartialEq)]
-pub enum DefTypKind {
+pub enum DefTypKind<P: Stage = Source> {
     /// An alias for another type.
     Plain(Typ),
     /// A struct with named fields.
     Struct(Vec<TypField>),
     /// A variant with notation cases.
-    Variant(Vec<TypCase>),
+    Variant(Vec<TypCase<P>>),
 }
 
 /// One field of a struct type.
@@ -120,8 +123,8 @@ pub struct TypOriginKind {
 
 /// One case of a variant type, with the type that introduced it.
 #[derive(Clone, Debug, PartialEq)]
-pub struct TypCase {
-    pub not_typ: NotTyp,
+pub struct TypCase<P: Stage = Source> {
+    pub not_typ: NotTyp<P>,
     pub typ_origin: TypOrigin,
     pub hints: Vec<Hint>,
 }
@@ -129,13 +132,13 @@ pub struct TypCase {
 // == Values
 
 /// A runtime value handle.
-pub type Value = data::value::Value;
+pub type Value = data::value::flat::Value;
 /// The forms of a runtime value.
-pub type ValueKind = data::value::ValueKind;
+pub type ValueKind = data::value::flat::ValueKind;
 /// One field of a struct value.
-pub type ValueField = data::value::ValueField;
+pub type ValueField = data::value::flat::ValueField;
 /// A variant value: a mixfix skeleton with values as arguments.
-pub type ValueCase = data::value::ValueCase;
+pub type ValueCase = data::value::flat::ValueCase;
 
 // Operators
 
@@ -159,11 +162,11 @@ pub enum OpTyp {
 // Expressions
 
 /// A typed expression: its form, its span, and its type as the note.
-pub type Exp<I = Id, V = Var> = NotePhrase<ExpKind<I, V>, Rc<TypKind>>;
+pub type Exp<P = Source> = NotePhrase<ExpKind<P>, Rc<TypKind>>;
 
 /// The forms of a typed expression.
 #[derive(Clone, Debug, PartialEq)]
-pub enum ExpKind<I = Id, V = Var> {
+pub enum ExpKind<P: Stage = Source> {
     /// `bool`
     Bool(bool),
     /// `num`
@@ -171,61 +174,61 @@ pub enum ExpKind<I = Id, V = Var> {
     /// `text`
     Text(Text),
     /// `varid`
-    Id(I),
+    Id(P::Id),
     /// `unop exp`
-    Un(UnOp, OpTyp, Box<Exp<I, V>>),
+    Un(UnOp, OpTyp, Box<Exp<P>>),
     /// `exp binop exp`
-    Bin(BinOp, OpTyp, Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Bin(BinOp, OpTyp, Box<Exp<P>>, Box<Exp<P>>),
     /// `exp cmpop exp`
-    Cmp(CmpOp, OpTyp, Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Cmp(CmpOp, OpTyp, Box<Exp<P>>, Box<Exp<P>>),
     /// `exp as typ`
-    UpCast(Box<Typ>, Box<Exp<I, V>>),
+    UpCast(Box<Typ>, Box<Exp<P>>),
     /// `exp as typ`
-    DownCast(Box<Typ>, Box<Exp<I, V>>),
+    DownCast(Box<Typ>, Box<Exp<P>>),
     /// `exp <: typ`
-    Sub(Box<Exp<I, V>>, Box<Typ>, Box<Subcheck>),
+    Sub(Box<Exp<P>>, Box<Typ>, Box<Subcheck<P>>),
     /// `exp matches pattern`
-    Match(Box<Exp<I, V>>, Pattern),
+    Match(Box<Exp<P>>, Pattern<P>),
     /// `(` exp* `)`
-    Tuple(Vec<Exp<I, V>>),
+    Tuple(Vec<Exp<P>>),
     /// `notexp`
-    Case(Box<NotExp<I, V>>),
+    Case(Box<NotExp<P>>),
     /// `{` expfield* `}`
-    Str(Vec<ExpField<I, V>>),
+    Str(Vec<ExpField<P>>),
     /// `exp?`
-    Opt(Option<Box<Exp<I, V>>>),
+    Opt(Option<Box<Exp<P>>>),
     /// `[` exp* `]`
-    List(Vec<Exp<I, V>>),
+    List(Vec<Exp<P>>),
     /// `exp :: exp`
-    Cons(Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Cons(Box<Exp<P>>, Box<Exp<P>>),
     /// `exp ++ exp`
-    Cat(Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Cat(Box<Exp<P>>, Box<Exp<P>>),
     /// `exp <- exp`
-    Mem(Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Mem(Box<Exp<P>>, Box<Exp<P>>),
     /// `|` exp `|`
-    Len(Box<Exp<I, V>>),
+    Len(Box<Exp<P>>),
     /// `exp.atom`
-    Dot(Box<Exp<I, V>>, Atom),
+    Dot(Box<Exp<P>>, Atom),
     /// `exp [` exp `]`
-    Idx(Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Idx(Box<Exp<P>>, Box<Exp<P>>),
     /// `exp [` exp `:` exp `]`
-    Slice(Box<Exp<I, V>>, Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Slice(Box<Exp<P>>, Box<Exp<P>>, Box<Exp<P>>),
     /// `exp [` path `=` exp `]`
-    Upd(Box<Exp<I, V>>, Box<Path<I, V>>, Box<Exp<I, V>>),
+    Upd(Box<Exp<P>>, Box<Path<P>>, Box<Exp<P>>),
     /// `$id<` targ* `>(` arg* `)`
-    Call(Id, Vec<Targ>, Vec<Arg<I, V>>),
+    Call(Id, Vec<Targ>, Vec<Arg<P>>),
     /// `exp iterexp`
-    Iter(Box<Exp<I, V>>, ExpIter<V>),
+    Iter(Box<Exp<P>>, ExpIter<P::Var>),
 }
 
 /// A notation expression: a mixfix skeleton with expressions as arguments.
-pub type NotExp<I = Id, V = Var> = Mixfix<Exp<I, V>>;
+pub type NotExp<P = Source> = Mixfix<<P as Stage>::Mixop, Exp<P>>;
 
 /// One field of a struct expression.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExpField<I = Id, V = Var> {
+pub struct ExpField<P: Stage = Source> {
     pub atom: Atom,
-    pub exp: Exp<I, V>,
+    pub exp: Exp<P>,
 }
 
 /// An iteration over an expression and the variables it iterates.
@@ -241,9 +244,9 @@ pub struct ExpIter<V = Var> {
 
 /// A shape an expression is matched against, without binding.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Pattern {
+pub enum Pattern<P: Stage = Source> {
     /// A variant case with this skeleton.
-    Case(Box<Mixop>),
+    Case(P::Mixop),
     /// A list of some shape.
     List(ListPattern),
     /// An option, present or absent.
@@ -271,19 +274,19 @@ pub enum OptPattern {
 // Paths
 
 /// A typed path into a value, for updates.
-pub type Path<I = Id, V = Var> = NotePhrase<PathKind<I, V>, Rc<TypKind>>;
+pub type Path<P = Source> = NotePhrase<PathKind<P>, Rc<TypKind>>;
 
 /// The steps of a path, from the root outward.
 #[derive(Clone, Debug, PartialEq)]
-pub enum PathKind<I = Id, V = Var> {
+pub enum PathKind<P: Stage = Source> {
     /// The value itself.
     Root,
     /// `path [` exp `]`
-    Idx(Box<Path<I, V>>, Box<Exp<I, V>>),
+    Idx(Box<Path<P>>, Box<Exp<P>>),
     /// `path [` exp `:` exp `]`
-    Slice(Box<Path<I, V>>, Box<Exp<I, V>>, Box<Exp<I, V>>),
+    Slice(Box<Path<P>>, Box<Exp<P>>, Box<Exp<P>>),
     /// `path . atom`
-    Dot(Box<Path<I, V>>, Atom),
+    Dot(Box<Path<P>>, Atom),
 }
 
 // Parameters
@@ -308,13 +311,13 @@ pub type TParam = common::TId;
 // Arguments
 
 /// A call argument with its span.
-pub type Arg<I = Id, V = Var> = Phrase<ArgKind<I, V>>;
+pub type Arg<P = Source> = Phrase<ArgKind<P>>;
 
 /// An argument: a value expression or a function name.
 #[derive(Clone, Debug, PartialEq)]
-pub enum ArgKind<I = Id, V = Var> {
+pub enum ArgKind<P: Stage = Source> {
     /// `exp`
-    Exp(Box<Exp<I, V>>),
+    Exp(Box<Exp<P>>),
     /// `$id`
     Def(Id),
 }

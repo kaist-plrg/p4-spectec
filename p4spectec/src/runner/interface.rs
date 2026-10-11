@@ -9,7 +9,7 @@
 
 use thiserror::Error;
 
-use crate::lang::data::value::{Value, ValueArena};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::il::ast::{Id, Typ};
 
@@ -61,7 +61,7 @@ pub trait Interface {
     /// Calls a builtin; the flag reports an interface state change.
     fn call_builtin(
         &mut self,
-        arena: &mut ValueArena,
+        arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
@@ -87,7 +87,7 @@ impl BuiltinInterface {
 impl Interface for BuiltinInterface {
     fn call_builtin(
         &mut self,
-        arena: &mut ValueArena,
+        arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
@@ -108,7 +108,7 @@ pub struct NullInterface;
 impl Interface for NullInterface {
     fn call_builtin(
         &mut self,
-        _arena: &mut ValueArena,
+        _arena: &mut Arena,
         _id: &Id,
         _targs: &[Typ],
         _values: &[Value],

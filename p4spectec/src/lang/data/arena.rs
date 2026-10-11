@@ -5,7 +5,7 @@
 //! and outlive `reset_values`; a case body's notation is one of them.
 //! `value` allocates values into the arena and reads them back.
 
-use super::{notation::MixopArena, value::flat::ValueArena};
+use super::{notation::MixopArena, value::ValueArena};
 
 // = Arena storage
 

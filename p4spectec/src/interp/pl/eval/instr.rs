@@ -9,14 +9,14 @@
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, get},
+    data::value::flat::{self as value, Value},
     hints::input,
     traits::print::Print,
 };
 
-use crate::diagnostic::Report;
+use crate::lang::pl::prepared as ast;
 
-use crate::runtime::envs::interp::pl::ast_prepared as ast;
+use crate::diagnostic::Report;
 
 use crate::runner::{Extern, Interface, RunnerContext};
 
@@ -227,7 +227,7 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     let cond =
         unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
             let value = unwrap!(eval_exp(runner_ctx, ctx, &instr.exp));
-            ok!(get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
+            ok!(value::get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
         }));
     // Run the block, or fall through recording the failed condition
     if cond {
@@ -237,7 +237,7 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
             ctx,
             Flow::cont(
                 instr.exp.node.span.clone(),
-                error::prem::condition_unmet(Print::to_string(&instr.exp))
+                error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string())
             )
         ))
     }
@@ -260,7 +260,7 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     let mut errors = Vec::new();
     let cond =
         unwrap!(eval_cond_iter(runner_ctx, &ctx, &instr.iter_exps, &mut |runner_ctx, ctx| {
-            let values = unwrap!(eval_exps(runner_ctx, ctx, &instr.not_exp.args()));
+            let values = unwrap!(eval_exps(runner_ctx, ctx, instr.not_exp.args()));
             match PlInterp::invoke_rel(runner_ctx, ctx, &instr.id, &values) {
                 // A match means it holds
                 ok!(_) => ok!(true),
@@ -329,7 +329,7 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         ctx,
         Flow::cont(
             instr.exp.node.span.clone(),
-            error::prem::condition_unmet(Print::to_string(&instr.exp))
+            error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string())
         )
     ))
 }
@@ -344,7 +344,7 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
     // Test the scrutinee before introducing checked bindings
     let matched = match guard {
         // Compare the scrutinee with the expected boolean
-        ast::Guard::Bool(expected) => ok!(get::bool(runner_ctx.arena(), &value)
+        ast::Guard::Bool(expected) => ok!(value::get::bool(runner_ctx.arena(), &value)
             .expect("boolean guard value must be a boolean")
             == *expected),
         // Compare against the evaluated right side
@@ -414,8 +414,9 @@ fn eval_rule_instr<'global, Iface: Interface, Ext: Extern>(
     instr: &ast::RuleInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // The input hint separates arguments from output patterns
-    let (exps_input, exps_output) = input::split(&instr.input_hint, instr.not_exp.args())
-        .expect("input hint must fit relation");
+    let (exps_input, exps_output) =
+        input::split(&instr.input_hint, instr.not_exp.args().iter().collect())
+            .expect("input hint must fit relation");
     // Invoke the relation at each enclosing iteration
     let ctx =
         unwrap!(eval_instr_iter(runner_ctx, ctx, &instr.iter_instrs, &mut |runner_ctx, ctx| {
@@ -463,7 +464,7 @@ fn eval_debug_instr<'global, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Evaluate before printing so expression failures keep their trace
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    println!("{}", runner_ctx.arena().to_string(&value));
+    println!("{}", value.view(runner_ctx.arena()).to_string());
     ok!((ctx, Flow::Cont(vec![])))
 }
 
@@ -477,12 +478,9 @@ fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Extract fields before mutating the arena during assignment
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
-    let values = get::case(runner_ctx.arena(), &value)
-        .expect("destructuring value must be a case")
-        .args()
-        .into_iter()
-        .copied()
-        .collect::<Vec<_>>();
+    let value_case =
+        value::get::case(runner_ctx.arena(), &value).expect("destructuring value must be a case");
+    let values = value_case.args().to_vec();
     let exps = instr
         .bindings
         .iter()
@@ -525,7 +523,7 @@ fn eval_check_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 instr.exp_r.node.span.clone(),
                 error::prem::condition_unmet(format!(
                     "{} is not a subtype of {}",
-                    Print::to_string(&instr.exp_r),
+                    instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
                     Print::to_string(&instr.typ)
                 ))
             )
@@ -561,7 +559,7 @@ fn eval_check_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 instr.exp_r.node.span.clone(),
                 error::prem::condition_unmet(format!(
                     "{} does not match the expected pattern",
-                    Print::to_string(&instr.exp_r)
+                    instr.exp_r.view(&runner_ctx.arena().mixop).to_string()
                 ))
             )
         ))
@@ -584,7 +582,7 @@ fn eval_option_get_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Only a present option enters the nested block
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
     if let Some(value) =
-        get::opt(runner_ctx.arena(), &value).expect("option binding value must be an option")
+        value::get::opt(runner_ctx.arena(), &value).expect("option binding value must be an option")
     {
         // The shorthand binding belongs to the nested block
         let ctx_bound =
@@ -598,7 +596,7 @@ fn eval_option_get_instr<'global, Tier, Iface: Interface, Ext: Extern>(
                 instr.exp_r.node.span.clone(),
                 error::prem::condition_unmet(format!(
                     "{} evaluated to an empty option",
-                    Print::to_string(&instr.exp_r)
+                    instr.exp_r.view(&runner_ctx.arena().mixop).to_string()
                 ))
             )
         ))

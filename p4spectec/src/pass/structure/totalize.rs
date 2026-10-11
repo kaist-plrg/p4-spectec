@@ -2,7 +2,7 @@
 //!
 //! For a type `A | B`, branches matching `A` and `B` set `total=true`.
 
-use std::collections::BTreeSet;
+use std::{collections::BTreeSet, rc::Rc};
 
 use crate::lang::il::ast::{Mixop, Pattern};
 
@@ -16,7 +16,7 @@ use super::{error::StructureError, ol::ast::*, opt::overlap::typ_as_variant};
 fn find_variant_case_analysis(
     tdenv: &TDEnv,
     cases: &[Case],
-) -> Result<Option<Vec<Mixop>>, StructureError> {
+) -> Result<Option<Vec<Rc<Mixop>>>, StructureError> {
     let mut mixops = Vec::new();
     for case in cases {
         match &case.guard {
@@ -27,7 +27,7 @@ fn find_variant_case_analysis(
                     typ_as_variant(tdenv, typ)?.expect("case subtype guard has a variant type");
                 mixops.extend(mixops_sub);
             }
-            Guard::Match(Pattern::Case(mixop)) => mixops.push(mixop.as_ref().clone()),
+            Guard::Match(Pattern::Case(mixop)) => mixops.push(Rc::clone(mixop)),
             _ => return Ok(None),
         }
     }

@@ -5,7 +5,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::lang::common::notation::mixop::Mixop;
+use crate::lang::data::notation::tree::Mixop;
 
 use crate::lang::sl::ast::Id;
 

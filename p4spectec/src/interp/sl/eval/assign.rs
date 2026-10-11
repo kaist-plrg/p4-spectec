@@ -3,9 +3,9 @@
 //! Re-exports the shared assignment and adds parameters,
 //! whose patterns live in the parameter, not in a separate argument list.
 
-use crate::lang::data::value::{Value, ValueArena};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
-use crate::runtime::envs::interp::sl::ast_prepared as ast;
+use crate::lang::sl::prepared as ast;
 
 use crate::interp::shared::backtrack::{Backtrack, ok, unwrap};
 
@@ -17,7 +17,7 @@ use super::super::context::Context;
 
 /// Assigns a value to a parameter: to its pattern, or as a function definition.
 fn assign_param<'global>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx_caller: &Context<'_>,
     ctx: Context<'global>,
     param: &ast::Param,
@@ -31,7 +31,7 @@ fn assign_param<'global>(
 
 /// Assigns values to parameters pairwise, requiring equal counts.
 pub(in crate::interp::sl) fn assign_params<'global>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx_caller: &Context<'_>,
     mut ctx: Context<'global>,
     params: &[ast::Param],

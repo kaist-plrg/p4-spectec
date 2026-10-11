@@ -15,8 +15,9 @@ use crate::util::text::escape_text;
 use crate::lang::{
     common::source::{Phrase, Span},
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, make},
+        value::flat::{self as value, Value},
     },
     traits::print::Print,
 };
@@ -285,15 +286,18 @@ fn run_stf_expect_stmt(
 // - Match-action table updates
 
 /// Encodes STF match keys as the specification's `tableKeyInterface` list.
-fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<Value, SimError> {
+fn encode_table_keys(arena: &mut Arena, matches: &[TableMatch]) -> Result<Value, SimError> {
     let typ_key = typ::make::var(
         crate::phrase!(node: "tableKeyInterface".to_owned(), span: Span::default()),
         vec![],
     );
     let mut values_key = Vec::new();
     for key in matches {
-        let value_name =
-            make::text(arena, convert_dollar_to_brackets(key.name.as_str()), Span::default())?;
+        let value_name = value::make::text(
+            arena,
+            convert_dollar_to_brackets(key.name.as_str()),
+            Span::default(),
+        )?;
         // Numbers keep their radix spelling as a tagged text
         let value_key = match &key.kind {
             MatchKind::Number(num) => {
@@ -304,8 +308,8 @@ fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<V
                 } else {
                     ("_DEC text", num.as_str())
                 };
-                let value_num = make::text(arena, num.to_owned(), Span::default())?;
-                make::case_shaped! {
+                let value_num = value::make::text(arena, num.to_owned(), Span::default())?;
+                value::make::case_shaped! {
                     arena: arena,
                     shape: shape,
                     args: vec![value_num],
@@ -315,11 +319,11 @@ fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<V
             }
             // `prefix/mask` becomes a text and a natural
             MatchKind::Slash(prefix, mask) => {
-                let value_prefix = make::text(arena, prefix.clone(), Span::default())?;
+                let value_prefix = value::make::text(arena, prefix.clone(), Span::default())?;
                 let mask = BigInt::from(parse_int::<i128>(mask)?);
                 let nat = crate::lang::common::prim::num::Natural::try_from(mask)?;
-                let value_mask = make::nat(arena, nat, Span::default())?;
-                make::case_shaped! {
+                let value_mask = value::make::nat(arena, nat, Span::default())?;
+                value::make::case_shaped! {
                     arena: arena,
                     shape: "text _SLASH nat",
                     args: vec![value_prefix, value_mask],
@@ -328,14 +332,14 @@ fn encode_table_keys(arena: &mut ValueArena, matches: &[TableMatch]) -> Result<V
                 }?
             }
         };
-        values_key.push(make::tuple(
+        values_key.push(value::make::tuple(
             arena,
             typ_key.node.clone().into(),
             vec![value_name, value_key],
             Span::default(),
         )?);
     }
-    Ok(make::list(arena, typ::make::list(typ_key).node.into(), values_key, Span::default())?)
+    Ok(value::make::list(arena, typ::make::list(typ_key).node.into(), values_key, Span::default())?)
 }
 
 /// Adds a table entry: name, optional priority, keys, and action.
@@ -356,13 +360,13 @@ where
     // Add names use the same escaped spelling as P4 annotation names
     let text_name = escape_text(&table.into_string());
     let value_name =
-        make::text(ctx.arena_mut(), text_name, Span::default()).map_err(SimError::from)?;
+        value::make::text(ctx.arena_mut(), text_name, Span::default()).map_err(SimError::from)?;
     // Priority is optional
     let value_priority = priority
-        .map(|priority| make::int(ctx.arena_mut(), priority.into(), Span::default()))
+        .map(|priority| value::make::int(ctx.arena_mut(), priority.into(), Span::default()))
         .transpose()
         .map_err(SimError::from)?;
-    let value_priority = make::opt(
+    let value_priority = value::make::opt(
         ctx.arena_mut(),
         typ::make::opt(typ::make::int()).node.into(),
         value_priority,
@@ -385,8 +389,8 @@ where
 }
 
 /// Encodes an STF action as the specification's `tableActionInterface`.
-fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value, SimError> {
-    let value_name = make::text(arena, action.name.as_str().to_owned(), Span::default())?;
+fn encode_table_action(arena: &mut Arena, action: &Action) -> Result<Value, SimError> {
+    let value_name = value::make::text(arena, action.name.as_str().to_owned(), Span::default())?;
     let typ_arg = typ::make::var(
         crate::phrase!(node: "tableActionArgumentInterface".to_owned(), span: Span::default()),
         vec![],
@@ -394,10 +398,10 @@ fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value,
     let mut values_arg = Vec::new();
     // Each argument is a name and an integer
     for arg in &action.args {
-        let value_name = make::text(arena, arg.id.clone(), Span::default())?;
+        let value_name = value::make::text(arena, arg.id.clone(), Span::default())?;
         let int = BigInt::from(parse_int::<i128>(&arg.num)?);
-        let value_int = make::int(arena, int, Span::default())?;
-        values_arg.push(make::tuple(
+        let value_int = value::make::int(arena, int, Span::default())?;
+        values_arg.push(value::make::tuple(
             arena,
             typ_arg.node.clone().into(),
             vec![value_name, value_int],
@@ -405,9 +409,13 @@ fn encode_table_action(arena: &mut ValueArena, action: &Action) -> Result<Value,
         )?);
     }
     // An action is its name and its argument list
-    let value_args =
-        make::list(arena, typ::make::list(typ_arg).node.into(), values_arg, Span::default())?;
-    Ok(make::tuple(
+    let value_args = value::make::list(
+        arena,
+        typ::make::list(typ_arg).node.into(),
+        values_arg,
+        Span::default(),
+    )?;
+    Ok(value::make::tuple(
         arena,
         typ::make::var(
             crate::phrase!(node: "tableActionInterface".to_owned(), span: Span::default()),
@@ -434,7 +442,7 @@ where
     Interp: Interpreter<Iface, Arch>,
 {
     // Table name and action, then let the table module store it
-    let value_name = make::text(ctx.arena_mut(), table.into_string(), Span::default())
+    let value_name = value::make::text(ctx.arena_mut(), table.into_string(), Span::default())
         .map_err(SimError::from)?;
     let value_action = encode_table_action(ctx.arena_mut(), &action)?;
     state.value_arch =

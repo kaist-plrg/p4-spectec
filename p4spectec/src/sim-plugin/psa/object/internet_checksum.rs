@@ -13,7 +13,7 @@ use crate::lang::{
     common::source::Span,
     data::{
         typ,
-        value::{Value, make},
+        value::flat::{self as value, Value},
     },
 };
 
@@ -67,8 +67,8 @@ impl InternetChecksum {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -128,14 +128,14 @@ impl InternetChecksum {
     {
         let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
         let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        let int = hash::compute_checksum(algo, Some(&self.int), ctx.arena(), &values)?;
+        let int = hash::compute_checksum(ctx.arena(), algo, Some(&self.int), &values)?;
         self.int = bigint::bitwise_neg(&int, &16.into())?;
         let typ = typ::make::opt(typ::make::var(
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -183,9 +183,13 @@ impl InternetChecksum {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt =
-            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_checksum), Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(
+            ctx.arena_mut(),
+            typ.node.into(),
+            Some(value_checksum),
+            Span::default(),
+        )?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -216,8 +220,8 @@ impl InternetChecksum {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

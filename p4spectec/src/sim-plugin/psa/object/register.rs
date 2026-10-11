@@ -10,10 +10,9 @@ use crate::lang::{
     common::source::Span,
     data::{
         typ,
-        value::{
-            Value,
+        value::flat::{
+            self as value, Value,
             external::{DecodeContext, EncodeContext},
-            make,
         },
     },
 };
@@ -58,7 +57,7 @@ impl Register {
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        let values_targ = crate::lang::data::value::get::list(ctx.arena(), &value_targs)?;
+        let values_targ = crate::lang::data::value::flat::get::list(ctx.arena(), &value_targs)?;
         // Exactly two type arguments: the element and index types
         let [value_typ, _] = values_targ else {
             return Err(error::register_type_argument_arity_mismatch(format!(
@@ -103,8 +102,9 @@ impl Register {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), Some(value), Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt =
+            value::make::opt(ctx.arena_mut(), typ.node.into(), Some(value), Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -138,8 +138,8 @@ impl Register {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

@@ -8,7 +8,7 @@
 
 use num_bigint::BigInt;
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 

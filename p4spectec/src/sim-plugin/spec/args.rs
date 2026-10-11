@@ -3,7 +3,13 @@
 //! The specification passes parameter names and argument values as two lists;
 //! `assoc` zips them and `find` looks one up.
 
-use crate::lang::data::value::{Value, ValueArena, ValueError, get};
+use crate::lang::data::{
+    arena::Arena,
+    value::{
+        ValueError,
+        flat::{self as value, Value},
+    },
+};
 
 use crate::runner::ExternError;
 
@@ -13,16 +19,16 @@ use crate::sim_plugin::error;
 
 /// Pairs parameter names with argument values; the counts must match.
 pub fn assoc(
-    arena: &ValueArena,
+    arena: &Arena,
     value_ids: Value,
     value_args: Value,
 ) -> Result<Vec<(String, Value)>, ExternError> {
     // Names are texts, arguments any values
-    let names = get::list(arena, &value_ids)?
+    let names = value::get::list(arena, &value_ids)?
         .iter()
-        .map(|value_id| get::text(arena, value_id).map(str::to_owned))
+        .map(|value_id| value::get::text(arena, value_id).map(str::to_owned))
         .collect::<Result<Vec<_>, _>>()?;
-    let values = get::list(arena, &value_args)?;
+    let values = value::get::list(arena, &value_args)?;
     // One value per name
     if names.len() != values.len() {
         return Err(

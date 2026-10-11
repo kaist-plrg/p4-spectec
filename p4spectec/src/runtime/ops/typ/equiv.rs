@@ -25,8 +25,8 @@ pub fn equiv_typ(tdenv: &TDEnv, typ_l: &ast::Typ, typ_r: &ast::Typ) -> Result<bo
 }
 
 /// Equivalence through a lookup closure.
-fn equiv_typ_with<'env>(
-    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef>,
+fn equiv_typ_with<'env, P: ast::Stage>(
+    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef<P>>,
     typ_l: &ast::Typ,
     typ_r: &ast::Typ,
 ) -> Result<bool, TypeError> {
@@ -46,8 +46,8 @@ pub(super) fn equiv_typ_expanded(
 }
 
 /// Structural comparison; type variables here are nominal.
-fn equiv_typ_expanded_with<'env>(
-    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef>,
+fn equiv_typ_expanded_with<'env, P: ast::Stage>(
+    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef<P>>,
     typ_l: &ast::Typ,
     typ_r: &ast::Typ,
 ) -> Result<bool, TypeError> {
@@ -83,8 +83,8 @@ fn equiv_typ_expanded_with<'env>(
 }
 
 /// Pairwise equivalence of two lists of equal length.
-fn equiv_typs_with<'env>(
-    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef>,
+fn equiv_typs_with<'env, P: ast::Stage>(
+    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef<P>>,
     typs_l: &[ast::Typ],
     typs_r: &[ast::Typ],
 ) -> Result<bool, TypeError> {
@@ -118,13 +118,13 @@ fn equiv_not_typ_with<'env>(
     not_typ_r: &ast::NotTyp,
 ) -> Result<bool, TypeError> {
     // Shapes must agree before arguments are compared
-    if !not_typ_l.node.eq_shape(&not_typ_r.node) {
+    if !not_typ_l.node.eq_mixop(&not_typ_r.node) {
         return Ok(false);
     }
     // Then the arguments pairwise
     let typs_l = not_typ_l.node.args();
     let typs_r = not_typ_r.node.args();
-    for (typ_l, typ_r) in typs_l.into_iter().zip(typs_r) {
+    for (typ_l, typ_r) in typs_l.iter().zip(typs_r) {
         if !equiv_typ_with(find_typdef_opt, typ_l, typ_r)? {
             return Ok(false);
         }
@@ -135,8 +135,8 @@ fn equiv_not_typ_with<'env>(
 // == Function types
 
 /// Tests alpha-equivalence of two function types.
-pub fn equiv_func_typ<'env>(
-    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef>,
+pub fn equiv_func_typ<'env, P: ast::Stage>(
+    find_typdef_opt: &impl Fn(&ast::Id) -> Option<&'env TypeDef<P>>,
     span: &Span,
     func_typ_l: &ast::FuncTyp,
     func_typ_r: &ast::FuncTyp,
@@ -166,7 +166,7 @@ pub fn equiv_func_typ<'env>(
     let mut fresh = Fresh::default();
     let mut theta_l = Theta::new();
     let mut theta_r = Theta::new();
-    let mut tdenv_fresh = TDEnv::new();
+    let mut tdenv_fresh = TDEnv::<P>::new();
     for (tparam_l, tparam_r) in tparams_l.iter().zip(tparams_r) {
         let (tparam_fresh, typ_fresh) = fresh.fresh();
         tdenv_fresh.insert(tparam_fresh, TypeDef::Parameter);

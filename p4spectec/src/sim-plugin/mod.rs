@@ -13,7 +13,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::lang::data::value::external::Encoding;
+use crate::lang::data::encoding::Encoding;
 
 use crate::runner::{self, BuiltinInterface, Interpreter, Runner};
 

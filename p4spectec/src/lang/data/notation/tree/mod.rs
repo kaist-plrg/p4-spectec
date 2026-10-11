@@ -15,6 +15,7 @@ mod cmp;
 mod convert;
 mod hash;
 pub mod make;
+pub mod parse;
 mod print;
 mod view;
 mod visit;

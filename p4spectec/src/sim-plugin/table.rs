@@ -8,8 +8,12 @@
 use crate::lang::{
     common::source::Span,
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, ValueError, get, make},
+        value::{
+            ValueError,
+            flat::{self as value, Value},
+        },
     },
 };
 
@@ -22,14 +26,11 @@ use super::spec::func;
 // == Table names
 
 /// Splits a dotted name into its last segment and, if dotted, its full path.
-fn table_name(
-    arena: &mut ValueArena,
-    value_name: Value,
-) -> Result<(Value, Option<Value>), ExternError> {
+fn table_name(arena: &mut Arena, value_name: Value) -> Result<(Value, Option<Value>), ExternError> {
     // The last segment is the bare name
-    let name = get::text(arena, &value_name)?.to_owned();
+    let name = value::get::text(arena, &value_name)?.to_owned();
     let names: Vec<_> = name.split('.').collect();
-    let value_unqualified = make::text(
+    let value_unqualified = value::make::text(
         arena,
         names
             .last()
@@ -43,13 +44,13 @@ fn table_name(
     } else {
         let values_name = names
             .into_iter()
-            .map(|name| make::text(arena, name.to_owned(), Span::default()))
+            .map(|name| value::make::text(arena, name.to_owned(), Span::default()))
             .collect::<Result<Vec<_>, _>>()?;
         let typ_id = typ::make::list(typ::make::var(
             crate::phrase!(node: "nameIR".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        Some(make::list(arena, typ_id.node.into(), values_name, Span::default())?)
+        Some(value::make::list(arena, typ_id.node.into(), values_name, Span::default())?)
     };
     Ok((value_unqualified, value_qualified))
 }
@@ -135,17 +136,17 @@ where
             let mut values_name = Vec::new();
             for (value_name, value_match_kind, _) in keys {
                 // Selector keys take no STF value
-                if get::text(ctx.arena(), &value_match_kind)? != "selector" {
+                if value::get::text(ctx.arena(), &value_match_kind)? != "selector" {
                     values_name.push(value_name);
                 }
             }
-            let values_key = get::list(ctx.arena(), &value_keys)?
+            let values_key = value::get::list(ctx.arena(), &value_keys)?
                 .iter()
-                .map(|value_key| get::tuple(ctx.arena(), value_key))
+                .map(|value_key| value::get::tuple(ctx.arena(), value_key))
                 .collect::<Result<Vec<_>, ValueError>>()?;
             let values_key = values_key
                 .into_iter()
-                .map(|values| get::nth(values, 1).copied())
+                .map(|values| value::get::nth(values, 1).copied())
                 .collect::<Result<Vec<_>, ValueError>>()?;
             // Key count must then agree
             if values_name.len() != values_key.len() {
@@ -162,7 +163,7 @@ where
                 .into_iter()
                 .zip(values_key)
                 .map(|(value_name, value_key)| {
-                    make::tuple(
+                    value::make::tuple(
                         ctx.arena_mut(),
                         typ_key.node.clone().into(),
                         vec![value_name, value_key],
@@ -170,7 +171,7 @@ where
                     )
                 })
                 .collect::<Result<Vec<_>, _>>()?;
-            let value_keys = make::list(
+            let value_keys = value::make::list(
                 ctx.arena_mut(),
                 typ::make::list(typ_key).node.into(),
                 values_key,

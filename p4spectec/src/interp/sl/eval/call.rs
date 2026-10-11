@@ -10,14 +10,19 @@
 use std::{borrow::Cow, rc::Rc};
 
 use crate::lang::{
-    data::value::{Value, ValueArena, ValueKind},
+    data::{
+        arena::Arena,
+        value::flat::{Value, ValueKind},
+    },
     hints::input,
 };
+
+use crate::lang::sl::prepared as ast;
 
 use crate::diagnostic::Diagnostic;
 
 use crate::runtime::{
-    envs::interp::{shared::frame::FrameLayout, sl::ast_prepared as ast},
+    envs::interp::shared::frame::FrameLayout,
     ops::{typ, value},
 };
 
@@ -57,7 +62,7 @@ enum RelResult {
 
 /// Checks the input count and, with `guard`, the input types.
 pub(in crate::interp::sl) fn check_rel_inputs(
-    arena: &ValueArena,
+    arena: &Arena,
     ctx: &Context<'_>,
     id: &ast::Id,
     values: &[Value],
@@ -90,7 +95,7 @@ pub(in crate::interp::sl) fn check_rel_inputs(
 
 /// Checks argument counts and, with `guard`, the argument types.
 pub(in crate::interp::sl) fn check_func_inputs(
-    arena: &ValueArena,
+    arena: &Arena,
     ctx: &Context<'_>,
     id: &ast::Id,
     targs: &[ast::Typ],
@@ -118,7 +123,7 @@ pub(in crate::interp::sl) fn check_func_inputs(
 
 /// Checks each value against its type, failing with `error`.
 fn check_values(
-    arena: &ValueArena,
+    arena: &Arena,
     ctx: &Context<'_>,
     id: &ast::Id,
     typs: &[ast::Typ],
@@ -141,7 +146,7 @@ fn check_values(
 
 /// Type-checks a function result with the type parameters substituted.
 fn check_func_output(
-    arena: &ValueArena,
+    arena: &Arena,
     ctx: &Context<'_>,
     id: &ast::Id,
     tparams: &[ast::TParam],
@@ -185,7 +190,7 @@ pub(in crate::interp::sl) fn cache_func<Iface: Interface, Ext: Extern>(
             if !matches!(&func.def, ast::MetaFuncDef::Extern(_)))
         && !values
             .iter()
-            .any(|value| matches!(runner_ctx.arena().kind(value), ValueKind::Func(_)))
+            .any(|value| matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_)))
 }
 
 // = Relation invocation
@@ -288,14 +293,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     }));
     if runner_ctx.interp().config.guard {
         // Output types are the notation arguments the hint leaves
-        let typs = rel
-            .rel_signature
-            .not_typ
-            .node
-            .args()
-            .into_iter()
-            .cloned()
-            .collect();
+        let typs = rel.rel_signature.not_typ.node.args().to_vec();
         let (_, typs) = input::split(&rel.rel_signature.input_hint, typs)
             .expect("input hint must fit relation");
         unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {

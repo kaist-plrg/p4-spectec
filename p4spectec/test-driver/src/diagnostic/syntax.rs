@@ -1,6 +1,6 @@
 //! Source syntax rejection through the production P4 parser
 
-use p4spectec::lang::data::value::ValueArena;
+use p4spectec::lang::data::arena::Arena;
 
 use p4spectec::diagnostic::Report;
 
@@ -13,7 +13,7 @@ use super::{Case, failure};
 /// Returns the actual source rejection for snapshot comparison.
 pub fn run(case: &Case) -> Result<Vec<Report>> {
     let name = case.name.as_str();
-    let mut arena = ValueArena::new();
+    let mut arena = Arena::new();
     let path = case.path_input();
     let source = std::fs::read_to_string(&path)?;
     let error = parse::parse_string(&mut arena, &path, &source)

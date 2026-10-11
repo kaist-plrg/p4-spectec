@@ -38,7 +38,7 @@ fn p4_with_unparser(unparser: P4Unparser) -> BuiltinInterface {
             let _typ = extract::one(targs)?;
             let value = extract::one(values)?;
             let text = unparser.render(arena, value)?;
-            Ok(value::make::text(arena, text, Span::default())?)
+            Ok(value::flat::make::text(arena, text, Span::default())?)
         }),
     )]);
     BuiltinInterface::new(builtins)

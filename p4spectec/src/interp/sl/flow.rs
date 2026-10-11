@@ -9,12 +9,12 @@
 
 use crate::lang::{
     common::source::{Phrase, Span},
-    data::value::Value,
+    data::value::flat::Value,
 };
 
-use crate::diagnostic::{Diagnostic, Label, Report};
+use crate::lang::sl::prepared as ast;
 
-use crate::runtime::envs::interp::sl::ast_prepared as ast;
+use crate::diagnostic::{Diagnostic, Label, Report};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, fatal, ok, unmatch, unwrap},

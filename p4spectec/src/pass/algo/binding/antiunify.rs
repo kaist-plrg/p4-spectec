@@ -9,8 +9,11 @@
 //! if the types are equivalent.
 //! Fresh names from the failed attempt are discarded.
 
+use std::rc::Rc;
+
 use crate::lang::{
-    common::{ds::set::IdSet, notation::mixop::Mixop, prim, source::Span},
+    common::{ds::set::IdSet, prim, source::Span},
+    data::notation::tree as notation,
     traits::{at::At, eq::SyntaxEq},
 };
 
@@ -132,7 +135,7 @@ fn overlap_exp_kind(
         }
         // Cases with the same mixfix overlap their arguments
         (ast::ExpKind::Case(not_exp_template), ast::ExpKind::Case(not_exp))
-            if not_exp_template.eq_shape(not_exp) =>
+            if not_exp_template.eq_mixop(not_exp) =>
         {
             overlap_case_exp(tdenv, menv, ids_free, ids_unifier, not_exp_template, not_exp)
         }
@@ -183,18 +186,17 @@ fn overlap_case_exp(
     not_exp_template: &ast::NotExp,
     not_exp: &ast::NotExp,
 ) -> Result<ast::ExpKind, OverlapFailure> {
-    let (mixop, exps_template) = not_exp_template.split();
-    let exps = not_exp.args();
     let exps_template = overlap_exps(
         tdenv,
         menv,
         ids_free,
         ids_unifier,
-        exps_template.into_iter(),
-        exps.into_iter(),
+        not_exp_template.args().iter(),
+        not_exp.args().iter(),
     )?;
-    let not_exp_template = Mixop::fill(&mixop, exps_template)
-        .expect("overlapped arguments must preserve the template mixfix arity");
+    let not_exp_template =
+        notation::Mixfix::new(Rc::clone(not_exp_template.mixop()), exps_template)
+            .expect("overlapped arguments must preserve the template mixfix arity");
     let not_exp_template = Box::new(not_exp_template);
     Ok(ast::ExpKind::Case(not_exp_template))
 }
@@ -305,11 +307,9 @@ fn populate_exp(ids_unifier: &IdSet, exp_template: &ast::Exp, exp: &ast::Exp) ->
             populate_exps(ids_unifier, exps_template.iter(), exps.iter())
         }
         (ast::ExpKind::Case(not_exp_template), ast::ExpKind::Case(not_exp))
-            if not_exp_template.eq_shape(not_exp) =>
+            if not_exp_template.eq_mixop(not_exp) =>
         {
-            let exps_template = not_exp_template.args();
-            let exps = not_exp.args();
-            populate_exps(ids_unifier, exps_template.into_iter(), exps.into_iter())
+            populate_exps(ids_unifier, not_exp_template.args().iter(), not_exp.args().iter())
         }
         (ast::ExpKind::Str(exp_fields_template), ast::ExpKind::Str(exp_fields)) => {
             let exps_template = exp_fields_template

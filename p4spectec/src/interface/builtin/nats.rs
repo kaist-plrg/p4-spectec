@@ -8,7 +8,10 @@ use num_traits::Zero;
 
 use crate::lang::{
     common::{prim::num, source::Span},
-    data::value::{Value, ValueArena, get, make},
+    data::{
+        arena::Arena,
+        value::flat::{self as value, Value},
+    },
 };
 
 use crate::lang::il::ast::Typ;
@@ -18,32 +21,28 @@ use super::{BuiltinError, extract};
 // == Conversion between meta-numerics and Rust numerics
 
 /// The integer in a number value.
-fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(BuiltinError::from)?;
+fn bigint_of_value<'a>(arena: &'a Arena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
+    let num = value::get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 
 /// A natural value; a negative integer is an error.
-fn value_of_bigint(arena: &mut ValueArena, value: BigInt) -> Result<Value, BuiltinError> {
+fn value_of_bigint(arena: &mut Arena, value: BigInt) -> Result<Value, BuiltinError> {
     let value = num::Natural::try_from(value).map_err(BuiltinError::from)?;
-    let value = make::nat(arena, value, Span::default())?;
+    let value = value::make::nat(arena, value, Span::default())?;
     Ok(value)
 }
 
 /// The elements of the single list argument.
-fn input_values<'a>(arena: &'a ValueArena, values: &[Value]) -> Result<&'a [Value], BuiltinError> {
+fn input_values<'a>(arena: &'a Arena, values: &[Value]) -> Result<&'a [Value], BuiltinError> {
     let value = extract::one(values)?;
-    get::list(arena, value).map_err(BuiltinError::from)
+    value::get::list(arena, value).map_err(BuiltinError::from)
 }
 
 // == Built-in implementations
 
 /// `dec $sum_nat(nat*) : nat`, the sum of the list.
-pub fn sum_nat(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn sum_nat(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let mut sum = BigInt::zero();
     for value in input_values(arena, values)? {
@@ -53,11 +52,7 @@ pub fn sum_nat(
 }
 
 /// `dec $max_nat(nat*) : nat`, the largest element.
-pub fn max_nat(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn max_nat(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let values = input_values(arena, values)?;
     // An empty list has no maximum
@@ -73,11 +68,7 @@ pub fn max_nat(
 }
 
 /// `dec $min_nat(nat*) : nat`, the smallest element.
-pub fn min_nat(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn min_nat(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let values = input_values(arena, values)?;
     // An empty list has no minimum

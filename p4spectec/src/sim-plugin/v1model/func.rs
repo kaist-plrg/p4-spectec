@@ -12,9 +12,11 @@ use crate::util::bigint::remainder;
 use crate::lang::{
     common::source::Span,
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, make},
+        value::flat::{self as value, Value},
     },
+    traits::print::Print,
 };
 
 use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
@@ -66,8 +68,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -122,8 +124,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -178,8 +180,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -233,7 +235,7 @@ where
         ))
         .into());
     }
-    hash::compute_checksum(&id_field, None, ctx.arena(), &values)
+    hash::compute_checksum(ctx.arena(), &id_field, None, &values)
 }
 
 /// Shared body of `verify_checksum` and its `_with_payload` variant.
@@ -256,8 +258,8 @@ where
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -288,8 +290,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -383,8 +385,8 @@ where
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],
@@ -405,8 +407,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -533,8 +535,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -586,8 +588,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -654,8 +656,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -688,8 +690,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],
@@ -700,7 +702,7 @@ where
 }
 
 /// Expands `{}` holes in `fmt` with `args`; `{{` and `}}` are literal braces.
-pub fn format_braces(arena: &ValueArena, fmt: &str, args: &[Value]) -> Result<String, ExternError> {
+pub fn format_braces(arena: &Arena, fmt: &str, args: &[Value]) -> Result<String, ExternError> {
     let mut chars = fmt.chars().peekable();
     let mut args = args.iter();
     let mut text = String::with_capacity(fmt.len());
@@ -719,7 +721,7 @@ pub fn format_braces(arena: &ValueArena, fmt: &str, args: &[Value]) -> Result<St
                         "not enough arguments for format string in log_msg".to_owned(),
                     )
                 })?;
-                text.push_str(&arena.to_string(value));
+                text.push_str(&value.view(arena).to_string());
             }
             // Anything else is copied
             _ => text.push(char),
@@ -756,8 +758,8 @@ where
         crate::phrase!(node: "value".to_owned(), span: Span::default()),
         Vec::new(),
     ));
-    let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-    let value_call_result = make::case_shaped! {
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "RETURN value?",
         args: vec![value_opt],

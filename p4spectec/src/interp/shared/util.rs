@@ -5,7 +5,9 @@
 
 use crate::lang::data::var::{SlotIdx, Var, VarSlot};
 
-use super::{context::ReadContext, prepare::ast};
+use crate::lang::il::prepared as ast;
+
+use super::context::ReadContext;
 
 /// Advances prepared variables through one iterator dimension.
 pub fn iterate_vars(ctx: &impl ReadContext, vars: &[ast::Var], iter: ast::Iter) -> Vec<ast::Var> {

@@ -9,8 +9,9 @@ use serde::{Deserialize, Serialize};
 use crate::lang::{
     common::source::Span,
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, make},
+        value::flat::{self as value, Value},
     },
 };
 
@@ -34,7 +35,7 @@ impl HashExtern {
     /// Hash(PSA_HashAlgorithm_t algo);
     /// ```
     pub fn init(
-        arena: &ValueArena,
+        arena: &Arena,
         _value_targs: Value,
         value_ids: Value,
         value_args: Value,
@@ -77,7 +78,7 @@ impl HashExtern {
     {
         let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
         let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        let int_hash = hash::compute_checksum(&self.algo, None, ctx.arena(), &values)?;
+        let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
         self.return_hash(ctx, value_ctx, value_arch, int_hash)
     }
 
@@ -108,7 +109,7 @@ impl HashExtern {
         let max = unpack::p4_fixed_bit(ctx.arena(), &value_max)?.1;
         let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
         let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        let int_hash = hash::compute_checksum(&self.algo, None, ctx.arena(), &values)?;
+        let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
         if max <= BigInt::zero() {
             return Err(
                 error::hash_range_invalid("hash modulus must be positive".to_owned()).into()
@@ -138,9 +139,13 @@ impl HashExtern {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt =
-            make::opt(ctx.arena_mut(), typ.node.into(), Some(value_result), Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(
+            ctx.arena_mut(),
+            typ.node.into(),
+            Some(value_result),
+            Span::default(),
+        )?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

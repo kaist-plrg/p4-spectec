@@ -6,9 +6,9 @@
 
 use std::borrow::Borrow;
 
-use crate::lang::data::value::{Value, ValueArena};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
-use crate::runtime::envs::interp::pl::ast_prepared as ast;
+use crate::lang::pl::prepared as ast;
 
 use crate::interp::shared::{
     backtrack::{Backtrack, ok, unwrap},
@@ -25,7 +25,7 @@ use shared::assign_def;
 
 /// Assigns a value to a PL pattern after removing its prose hints.
 pub(super) fn assign_exp<'g>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Context<'g>,
     exp: &ast::Exp,
     value: Value,
@@ -36,7 +36,7 @@ pub(super) fn assign_exp<'g>(
 
 /// Assigns values pairwise to PL patterns through shared assignment.
 pub(super) fn assign_exps<'g, T: Borrow<ast::Exp>>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: Context<'g>,
     exps: &[T],
     values: &[Value],
@@ -52,7 +52,7 @@ pub(super) fn assign_exps<'g, T: Borrow<ast::Exp>>(
 
 /// Binds prepared parameter patterns and resolves caller function aliases.
 pub(super) fn assign_params<'g>(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx_caller: &Context<'_>,
     mut ctx: Context<'g>,
     params: &[ast::Param],

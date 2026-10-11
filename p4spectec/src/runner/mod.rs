@@ -14,12 +14,7 @@ mod interpreter;
 
 use std::path::{Path, PathBuf};
 
-use crate::{
-    interface::p4::{error::P4Error, parse::parse_file},
-    sim_plugin::dummy::Dummy,
-};
-
-use crate::lang::data::value::{Value, ValueArena};
+use crate::lang::data::{arena::Arena, notation::MixopArena, value::flat::Value};
 
 use crate::lang::al;
 
@@ -35,7 +30,12 @@ use crate::interp::sl::{Config as SlConfig, SlInterp, context::Global as SlGloba
 
 use crate::interp::pl::{Config as PlConfig, PlInterp, context::Global as PlGlobal};
 
-use crate::interface as builtin;
+use crate::interface::{
+    self as builtin,
+    p4::{error::P4Error, parse::parse_file},
+};
+
+use crate::sim_plugin::dummy::Dummy;
 
 pub use context::RunnerContext;
 pub use externs::{Extern, ExternError, NullExtern};
@@ -87,9 +87,10 @@ pub fn build_al<Ext: Extern>(
     let interface = builtin::p4(&spec);
     let Spec::Al(spec) = spec else { unreachable!() };
     // Load and prepare the definitions
-    let global = AlGlobal::load(spec)?;
+    let mut arena_mixop = MixopArena::new();
+    let global = AlGlobal::load(&mut arena_mixop, config.det, spec)?;
     let config = AlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(global, AlInterp::new(config), interface, external))
+    Ok(Runner::new(arena_mixop, global, AlInterp::new(config), interface, external))
 }
 
 /// Builds an SL runner from a specification, with the P4 builtins.
@@ -105,9 +106,10 @@ pub fn build_sl<Ext: Extern>(
     let interface = builtin::p4(&spec);
     let Spec::Sl(spec) = spec else { unreachable!() };
     // Load and prepare the definitions
-    let global = SlGlobal::load(spec)?;
+    let mut arena_mixop = MixopArena::new();
+    let global = SlGlobal::load(&mut arena_mixop, config.det, spec)?;
     let config = SlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(global, SlInterp::new(config), interface, external))
+    Ok(Runner::new(arena_mixop, global, SlInterp::new(config), interface, external))
 }
 
 /// Builds a PL runner from a specification, with the P4 builtins.
@@ -121,21 +123,22 @@ pub fn build_pl<Ext: Extern>(
     let spec = Spec::Pl(spec);
     let interface = builtin::p4(&spec);
     let Spec::Pl(spec) = spec else { unreachable!() };
-    let global = PlGlobal::load(spec)?;
+    let mut arena_mixop = MixopArena::new();
+    let global = PlGlobal::load(&mut arena_mixop, config.det, spec)?;
     let config = PlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(global, PlInterp::new(config), interface, external))
+    Ok(Runner::new(arena_mixop, global, PlInterp::new(config), interface, external))
 }
 
 // == Runner assembly
 
-/// An interpreter and its host components sharing one value arena.
+/// An interpreter and its host components sharing one arena.
 pub struct Runner<Interp, Iface, Ext>
 where
     Interp: Interpreter<Iface, Ext>,
     Iface: Interface,
     Ext: Extern,
 {
-    arena: ValueArena,
+    arena: Arena,
     spec: Interp::Spec,
     interp: Interp,
     interface: Iface,
@@ -148,9 +151,15 @@ where
     Iface: Interface,
     Ext: Extern,
 {
-    /// Assembles the components around a fresh arena.
-    pub fn new(spec: Interp::Spec, interp: Interp, interface: Iface, external: Ext) -> Self {
-        Self { arena: ValueArena::new(), spec, interp, interface, external }
+    /// Assembles the components around an arena over the specification's shapes.
+    pub fn new(
+        arena_mixop: MixopArena,
+        spec: Interp::Spec,
+        interp: Interp,
+        interface: Iface,
+        external: Ext,
+    ) -> Self {
+        Self { arena: Arena::with_arena_mixop(arena_mixop), spec, interp, interface, external }
     }
 
     /// Borrows the assembled components for a stage-specific evaluation entry.
@@ -164,11 +173,11 @@ where
         )
     }
 
-    pub fn arena(&self) -> &ValueArena {
+    pub fn arena(&self) -> &Arena {
         &self.arena
     }
 
-    pub fn arena_mut(&mut self) -> &mut ValueArena {
+    pub fn arena_mut(&mut self) -> &mut Arena {
         &mut self.arena
     }
 
@@ -188,14 +197,15 @@ where
 
     /// Starts an independent program, keeping definitions and configuration.
     ///
-    /// All previously returned arena handles become invalid.
+    /// All previously returned value handles become invalid;
+    /// the specification's shapes stay, since its prepared syntax refers to them.
     /// Call this before parsing the next program,
     /// after discarding the preceding program's values.
     pub fn reset(&mut self) {
         self.interp.reset();
         self.external.clear();
         self.interface.clear();
-        self.arena = ValueArena::new();
+        self.arena.reset_values();
     }
 }
 

@@ -5,21 +5,24 @@
 //! and then its paths, with inputs and outputs filled into the notation
 //! and `%` standing for the positions a side does not mention.
 
-use std::fmt::{self, Write};
+use std::{
+    fmt::{self, Write},
+    rc::Rc,
+};
 
 use crate::lang::{
-    common::notation::mixop::Mixop,
+    data::notation::tree as notation,
     hints::input::InputHint,
     traits::print::{Print, Printer},
 };
 
-use super::ast::*;
+use super::super::ast::*;
 
 // == Printing
 
 // - Premises
 
-impl<I: Print, V: Print> Print for Prem<I, V> {
+impl Print for Prem {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match &self.node {
             PremKind::Rule(RulePrem { id, not_exp, .. }) => {
@@ -71,18 +74,14 @@ impl<I: Print, V: Print> Print for Prem<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for [Prem<I, V>] {
+impl Print for [Prem] {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         write_prems_with(printer, 0, self)
     }
 }
 
 /// Prints each premise on its own `--` line at the given indent.
-fn write_prems_with<I: Print, V: Print>(
-    output: &mut Printer<'_>,
-    level: usize,
-    prems: &[Prem<I, V>],
-) -> fmt::Result {
+fn write_prems_with(output: &mut Printer<'_>, level: usize, prems: &[Prem]) -> fmt::Result {
     for prem in prems {
         write!(output, "\n{}-- ", indent(level))?;
         prem.print(output)?;
@@ -93,11 +92,11 @@ fn write_prems_with<I: Print, V: Print>(
 // - Rules
 
 /// Prints the rule groups separated by blank lines.
-fn write_rulegroups<I: Print, V: Print>(
+fn write_rulegroups(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    rule_groups: &[RuleGroup<I, V>],
+    rule_groups: &[RuleGroup],
 ) -> fmt::Result {
     for (index, rule_group) in rule_groups.iter().enumerate() {
         if index != 0 {
@@ -109,11 +108,11 @@ fn write_rulegroups<I: Print, V: Print>(
 }
 
 /// Prints one group as `rulegroup id`, its `match`, then its `paths`.
-fn write_rulegroup<I: Print, V: Print>(
+fn write_rulegroup(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    rule_group: &RuleGroup<I, V>,
+    rule_group: &RuleGroup,
 ) -> fmt::Result {
     write!(output, "{}rulegroup ", indent(1))?;
     rule_group.node.id.print(output)?;
@@ -124,11 +123,11 @@ fn write_rulegroup<I: Print, V: Print>(
 }
 
 /// Prints the otherwise group under an `elsegroup` heading, if present.
-fn write_elsegroup_opt<I: Print, V: Print>(
+fn write_elsegroup_opt(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    else_group: &Option<ElseGroup<I, V>>,
+    else_group: &Option<ElseGroup>,
 ) -> fmt::Result {
     if let Some(else_group) = else_group {
         write!(output, "\n\n{}elsegroup\n\n", indent(1))?;
@@ -138,11 +137,11 @@ fn write_elsegroup_opt<I: Print, V: Print>(
 }
 
 /// Prints the otherwise group like a rule group with a single path.
-fn write_elsegroup<I: Print, V: Print>(
+fn write_elsegroup(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    else_group: &ElseGroup<I, V>,
+    else_group: &ElseGroup,
 ) -> fmt::Result {
     write!(output, "{}rulegroup ", indent(1))?;
     else_group.node.id.print(output)?;
@@ -153,11 +152,11 @@ fn write_elsegroup<I: Print, V: Print>(
 }
 
 /// Prints the signature, the input patterns, and the shared premises.
-fn write_rulematch<I: Print, V: Print>(
+fn write_rulematch(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    rule_match: &RuleMatch<I, V>,
+    rule_match: &RuleMatch,
 ) -> fmt::Result {
     write!(output, "{}(signature) ", indent(2))?;
     write_ruleinput(output, not_typ, input_hint, &rule_match.exps_signature)?;
@@ -168,11 +167,11 @@ fn write_rulematch<I: Print, V: Print>(
 }
 
 /// Prints the paths separated by blank lines.
-fn write_rulepaths<I: Print, V: Print>(
+fn write_rulepaths(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    rule_paths: &[RulePath<I, V>],
+    rule_paths: &[RulePath],
 ) -> fmt::Result {
     for (index, rule_path) in rule_paths.iter().enumerate() {
         if index != 0 {
@@ -184,11 +183,11 @@ fn write_rulepaths<I: Print, V: Print>(
 }
 
 /// Prints one path as `rulepath id`, its premises, and its outputs.
-fn write_rulepath<I: Print, V: Print>(
+fn write_rulepath(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    rule_path: &RulePath<I, V>,
+    rule_path: &RulePath,
 ) -> fmt::Result {
     write!(output, "{}rulepath ", indent(2))?;
     rule_path.id.print(output)?;
@@ -199,17 +198,16 @@ fn write_rulepath<I: Print, V: Print>(
 }
 
 /// Fills the input expressions into the notation at the hint's positions.
-fn write_ruleinput<I: Print, V: Print>(
+fn write_ruleinput(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    exps_input: &[Exp<I, V>],
+    exps_input: &[Exp],
 ) -> fmt::Result {
     let idxs_input = input_hint.indices();
     assert_eq!(idxs_input.len(), exps_input.len());
-    let (_, typs) = not_typ.node.split();
     // Each notation position takes its input, or nothing
-    let exps = (0..typs.len())
+    let exps = (0..not_typ.node.arity())
         .map(|index| {
             idxs_input
                 .iter()
@@ -221,16 +219,15 @@ fn write_ruleinput<I: Print, V: Print>(
 }
 
 /// Fills the output expressions into the notation at the non-input positions.
-fn write_ruleoutput<I: Print, V: Print>(
+fn write_ruleoutput(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
     input_hint: &InputHint,
-    exps_output: &[Exp<I, V>],
+    exps_output: &[Exp],
 ) -> fmt::Result {
     let idxs_input = input_hint.indices();
-    let (_, typs) = not_typ.node.split();
     // Outputs are the positions the hint leaves
-    let outputs = (0..typs.len())
+    let outputs = (0..not_typ.node.arity())
         .filter(|index| !idxs_input.iter().any(|idx_input| idx_input.node == *index))
         .collect::<Vec<_>>();
     assert_eq!(outputs.len(), exps_output.len());
@@ -238,7 +235,7 @@ fn write_ruleoutput<I: Print, V: Print>(
     if exps_output.is_empty() {
         output.write_str("-- the relation holds")
     } else {
-        let exps = (0..typs.len())
+        let exps = (0..not_typ.node.arity())
             .map(|index| {
                 outputs
                     .iter()
@@ -253,7 +250,7 @@ fn write_ruleoutput<I: Print, V: Print>(
 
 // - Clauses
 
-impl<I: Print, V: Print> Print for Clause<I, V> {
+impl Print for Clause {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         self.node.args.print(printer)?;
         printer.write_str(" = ")?;
@@ -264,7 +261,7 @@ impl<I: Print, V: Print> Print for Clause<I, V> {
 
 // - Table rows
 
-impl<I: Print, V: Print> Print for TableRow<I, V> {
+impl Print for TableRow {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         write!(printer, "\n{}(signature) ", indent(2))?;
         for (index, exp) in self.node.exps_signature.iter().enumerate() {
@@ -282,7 +279,7 @@ impl<I: Print, V: Print> Print for TableRow<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for [TableRow<I, V>] {
+impl Print for [TableRow] {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         for (index, table_row) in self.iter().enumerate() {
             write!(printer, "\n{}row {index} :", indent(1))?;
@@ -318,7 +315,7 @@ impl Print for TypDef {
 
 // == Relation definitions
 
-impl<I: Print, V: Print> Print for RelDef<I, V> {
+impl Print for RelDef {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match self {
             Self::Extern(extern_rel) => {
@@ -352,7 +349,7 @@ impl<I: Print, V: Print> Print for RelDef<I, V> {
 
 // == Meta-function definitions
 
-impl<I: Print, V: Print> Print for MetaFuncDef<I, V> {
+impl Print for MetaFuncDef {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match self {
             Self::Extern(extern_func) => {
@@ -416,7 +413,7 @@ impl<I: Print, V: Print> Print for MetaFuncDef<I, V> {
 
 // == Definitions
 
-impl<I: Print, V: Print> Print for Def<I, V> {
+impl Print for Def {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match &self.node {
             DefKind::Typ(typ_def) => typ_def.print(printer),
@@ -434,7 +431,7 @@ impl<I: Print, V: Print> Print for Def<I, V> {
 
 // == Specifications
 
-impl<I: Print, V: Print> Print for Spec<I, V> {
+impl Print for Spec {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         for (index, def) in self.iter().enumerate() {
             if index != 0 {
@@ -454,15 +451,13 @@ fn indent(level: usize) -> String {
 }
 
 /// Prints the notation with the given arguments, `%` where one is absent.
-fn write_notation<I: Print, V: Print>(
+fn write_notation(
     output: &mut Printer<'_>,
     not_typ: &NotTyp,
-    exps: Vec<Option<&Exp<I, V>>>,
+    exps: Vec<Option<&Exp>>,
 ) -> fmt::Result {
-    let (mixop, typs) = not_typ.node.split();
-    assert_eq!(typs.len(), exps.len());
-    Mixop::fill(&mixop, exps)
-        .expect("notation arguments came from the same split notation")
+    notation::Mixfix::new(Rc::clone(not_typ.node.mixop()), exps)
+        .expect("one argument slot per notation position")
         .print_with(output, |exp, output| match exp {
             Some(exp) => exp.print(output),
             None => output.write("%"),

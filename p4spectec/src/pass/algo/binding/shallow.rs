@@ -38,7 +38,7 @@ pub fn check_exp(exp: &ast::Exp) -> bool {
         ast::ExpKind::UpCast(_, exp) => {
             matches!(&exp.node, ast::ExpKind::Id(_) | ast::ExpKind::Case(_))
         }
-        ast::ExpKind::Case(not_exp) => not_exp.args().into_iter().all(is_iterated_id_exp),
+        ast::ExpKind::Case(not_exp) => not_exp.args().iter().all(is_iterated_id_exp),
         _ => false,
     }
 }

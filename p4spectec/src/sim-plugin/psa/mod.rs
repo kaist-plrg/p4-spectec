@@ -4,7 +4,7 @@
 //! the PRE and BQE schedule clones, multicast, resubmit, and recirculate.
 //! Stateful objects live in `object`, the scheduler in `pipe`.
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 

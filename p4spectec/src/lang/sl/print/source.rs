@@ -5,9 +5,15 @@
 //! with relation inputs and outputs filled into the notation and `%` elsewhere.
 //! `short` prints a step's heading without its blocks.
 
-use std::fmt::{self, Write};
+use std::{
+    fmt::{self, Write},
+    rc::Rc,
+};
 
-use crate::lang::traits::print::{Print, Printer};
+use crate::lang::{
+    data::notation::tree as notation,
+    traits::print::{Print, Printer},
+};
 
 use crate::lang::sl::ast::*;
 
@@ -15,7 +21,7 @@ use crate::lang::sl::ast::*;
 
 // - Parameters
 
-impl<I: Print, V: Print> Print for Param<I, V> {
+impl Print for Param {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match &self.node {
             ParamKind::Exp(_, exp) => exp.print(printer),
@@ -35,7 +41,7 @@ impl<I: Print, V: Print> Print for Param<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for [Param<I, V>] {
+impl Print for [Param] {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         if self.is_empty() {
             return Ok(());
@@ -53,16 +59,16 @@ impl<I: Print, V: Print> Print for [Param<I, V>] {
 
 // - Instructions
 
-impl<I: Print, V: Print> Print for Instr<I, V> {
+impl Print for Instr {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         write_instr_with(printer, self, false, 0, 0)
     }
 }
 
 /// Prints one instruction as a numbered step, then its blocks unless `short`.
-fn write_instr_with<I: Print, V: Print>(
+fn write_instr_with(
     output: &mut Printer<'_>,
-    instr: &Instr<I, V>,
+    instr: &Instr,
     short: bool,
     level: usize,
     index: usize,
@@ -236,7 +242,7 @@ fn write_instr_with<I: Print, V: Print>(
 
 // - Case analysis
 
-impl<I: Print, V: Print> Print for Guard<I, V> {
+impl Print for Guard {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match self {
             Guard::Bool(value) => write!(printer, "{value}"),
@@ -267,11 +273,7 @@ impl<I: Print, V: Print> Print for Guard<I, V> {
 }
 
 /// Prints the arms of a case analysis, numbered from one.
-fn write_cases_with<I: Print, V: Print>(
-    output: &mut Printer<'_>,
-    cases: &[Case<I, V>],
-    level: usize,
-) -> fmt::Result {
+fn write_cases_with(output: &mut Printer<'_>, cases: &[Case], level: usize) -> fmt::Result {
     for (index, case) in cases.iter().enumerate() {
         if index != 0 {
             output.write_str("\n\n")?;
@@ -282,9 +284,9 @@ fn write_cases_with<I: Print, V: Print>(
 }
 
 /// Prints one arm as `Case guard` and its block.
-fn write_case_with<I: Print, V: Print>(
+fn write_case_with(
     output: &mut Printer<'_>,
-    case: &Case<I, V>,
+    case: &Case,
     level: usize,
     index: usize,
 ) -> fmt::Result {
@@ -296,16 +298,16 @@ fn write_case_with<I: Print, V: Print>(
 
 // - Blocks
 
-impl<I: Print, V: Print> Print for Block<I, V> {
+impl Print for Block {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         write_block_with(printer, self, 0, 0)
     }
 }
 
 /// Prints a block's instructions as consecutive steps.
-fn write_block_with<I: Print, V: Print>(
+fn write_block_with(
     output: &mut Printer<'_>,
-    block: &Block<I, V>,
+    block: &Block,
     level: usize,
     index: usize,
 ) -> fmt::Result {
@@ -319,9 +321,9 @@ fn write_block_with<I: Print, V: Print>(
 }
 
 /// Prints the otherwise block, if present.
-fn write_elseblock_opt_with<I: Print, V: Print>(
+fn write_elseblock_opt_with(
     output: &mut Printer<'_>,
-    block: &Option<ElseBlock<I, V>>,
+    block: &Option<ElseBlock>,
     level: usize,
     index: usize,
 ) -> fmt::Result {
@@ -333,9 +335,9 @@ fn write_elseblock_opt_with<I: Print, V: Print>(
 }
 
 /// Prints the otherwise block as the next step, `Otherwise,`.
-fn write_elseblock_with<I: Print, V: Print>(
+fn write_elseblock_with(
     output: &mut Printer<'_>,
-    block: &ElseBlock<I, V>,
+    block: &ElseBlock,
     level: usize,
     index: usize,
 ) -> fmt::Result {
@@ -345,7 +347,7 @@ fn write_elseblock_with<I: Print, V: Print>(
 
 // - Table rows
 
-impl<I: Print, V: Print> Print for TableRow<I, V> {
+impl Print for TableRow {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         printer.write_str("\n  Row : ")?;
         printer.separated(&self.exps_input, ", ")?;
@@ -356,7 +358,7 @@ impl<I: Print, V: Print> Print for TableRow<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for [TableRow<I, V>] {
+impl Print for [TableRow] {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         for (index, table_row) in self.iter().enumerate() {
             if index != 0 {
@@ -394,7 +396,7 @@ impl Print for TypDef {
 
 // == Relation definitions
 
-impl<I: Print, V: Print> Print for RelDef<I, V> {
+impl Print for RelDef {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match self {
             Self::Extern(relation) => {
@@ -409,7 +411,7 @@ impl<I: Print, V: Print> Print for RelDef<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for ExternRel<I, V> {
+impl Print for ExternRel {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         self.id.print(printer)?;
         printer.write_str(": ")?;
@@ -417,7 +419,7 @@ impl<I: Print, V: Print> Print for ExternRel<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for DefinedRel<I, V> {
+impl Print for DefinedRel {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         self.id.print(printer)?;
         printer.write_str(": ")?;
@@ -429,23 +431,21 @@ impl<I: Print, V: Print> Print for DefinedRel<I, V> {
 }
 
 /// Fills the input expressions into the notation at the hint's positions.
-fn write_relinput<I: Print, V: Print>(
+fn write_relinput(
     output: &mut Printer<'_>,
     rel_signature: &RelSignature,
-    exps_input: &[Exp<I, V>],
+    exps_input: &[Exp],
 ) -> fmt::Result {
     let not_typ = &rel_signature.not_typ;
     let idxs_input = rel_signature.input_hint.indices();
     assert_eq!(idxs_input.len(), exps_input.len());
     // Each notation position takes its input, or `%`
-    let args = (0..not_typ.node.arity()).map(|index| {
+    let mixfix = notation::Mixfix::fill(Rc::clone(not_typ.node.mixop()), |index| {
         idxs_input
             .iter()
             .position(|idx_input| idx_input.node == index)
             .map(|position| &exps_input[position])
     });
-    let mixfix =
-        Mixop::fill(&not_typ.node.to_mixop(), args).expect("relation input arity matches notation");
     mixfix.print_with(output, |exp, output| match exp {
         Some(exp) => exp.print(output),
         None => output.write("%"),
@@ -453,10 +453,10 @@ fn write_relinput<I: Print, V: Print>(
 }
 
 /// Fills the output expressions into the notation at the non-input positions.
-fn write_reloutput<I: Print, V: Print>(
+fn write_reloutput(
     output: &mut Printer<'_>,
     rel_signature: &RelSignature,
-    exps_output: &[Exp<I, V>],
+    exps_output: &[Exp],
 ) -> fmt::Result {
     let not_typ = &rel_signature.not_typ;
     let idxs_input = rel_signature.input_hint.indices();
@@ -465,14 +465,12 @@ fn write_reloutput<I: Print, V: Print>(
         .filter(|index| !idxs_input.iter().any(|idx_input| idx_input.node == *index))
         .collect::<Vec<_>>();
     assert_eq!(outputs.len(), exps_output.len());
-    let args = (0..not_typ.node.arity()).map(|index| {
+    let mixfix = notation::Mixfix::fill(Rc::clone(not_typ.node.mixop()), |index| {
         outputs
             .iter()
             .position(|output| *output == index)
             .map(|position| &exps_output[position])
     });
-    let mixfix = Mixop::fill(&not_typ.node.to_mixop(), args)
-        .expect("relation output arity matches notation");
     mixfix.print_with(output, |exp, output| match exp {
         Some(exp) => exp.print(output),
         None => output.write("%"),
@@ -481,7 +479,7 @@ fn write_reloutput<I: Print, V: Print>(
 
 // == Meta-function definitions
 
-impl<I: Print, V: Print> Print for MetaFuncDef<I, V> {
+impl Print for MetaFuncDef {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match self {
             Self::Extern(func) => {
@@ -504,7 +502,7 @@ impl<I: Print, V: Print> Print for MetaFuncDef<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for ExternFunc<I, V> {
+impl Print for ExternFunc {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         printer.write_char('$')?;
         self.id.print(printer)?;
@@ -517,7 +515,7 @@ impl<I: Print, V: Print> Print for ExternFunc<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for BuiltinFunc<I, V> {
+impl Print for BuiltinFunc {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         printer.write_char('$')?;
         self.id.print(printer)?;
@@ -530,7 +528,7 @@ impl<I: Print, V: Print> Print for BuiltinFunc<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for TableFunc<I, V> {
+impl Print for TableFunc {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         printer.write_char('$')?;
         self.id.print(printer)?;
@@ -546,7 +544,7 @@ impl<I: Print, V: Print> Print for TableFunc<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for DefinedFunc<I, V> {
+impl Print for DefinedFunc {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         printer.write_char('$')?;
         self.id.print(printer)?;
@@ -564,7 +562,7 @@ impl<I: Print, V: Print> Print for DefinedFunc<I, V> {
 
 // == Definitions
 
-impl<I: Print, V: Print> Print for Def<I, V> {
+impl Print for Def {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match &self.node {
             DefKind::Typ(typ_def) => typ_def.print(printer),
@@ -580,7 +578,7 @@ impl<I: Print, V: Print> Print for Def<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for [Def<I, V>] {
+impl Print for [Def] {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         for (index, def) in self.iter().enumerate() {
             if index != 0 {
@@ -594,7 +592,7 @@ impl<I: Print, V: Print> Print for [Def<I, V>] {
 
 // == Specifications
 
-impl<I: Print, V: Print> Print for Spec<I, V> {
+impl Print for Spec {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         self.as_slice().print(printer)
     }

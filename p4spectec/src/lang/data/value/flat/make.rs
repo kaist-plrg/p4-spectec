@@ -109,6 +109,38 @@ pub fn case(
     Value::new(arena, ValueKind::Case(value_case), typ, span)
 }
 
+/// A variant case from a mixop text, its arguments, and its type name.
+macro_rules! case_shaped {
+    (
+        arena: $arena:expr,
+        shape: $shape:expr,
+        args: $args:expr,
+        typ: $typ:expr,
+        span: $span:expr $(,)?
+    ) => {{
+        let (mixop_text, args, typ_name, span) = ($shape, $args, $typ, $span);
+        let mixop = $crate::lang::data::notation::tree::parse::mixop(mixop_text);
+        let mixfix = $crate::lang::data::notation::tree::Mixfix::new(
+            mixop,
+            std::iter::IntoIterator::into_iter(args).collect(),
+        )
+        .expect("mixop arity matches its value constructor");
+        let id = $crate::phrase! {
+            node: typ_name.to_owned(),
+            span: $crate::lang::common::source::Span::default(),
+        };
+        let typ = $crate::lang::data::typ::make::var(id, std::vec::Vec::new());
+        $crate::lang::data::value::flat::make::case(
+            $arena,
+            std::rc::Rc::new(typ.node),
+            mixfix,
+            span,
+        )
+    }};
+}
+
+pub(crate) use case_shaped;
+
 // - Sequences
 
 /// A tuple.

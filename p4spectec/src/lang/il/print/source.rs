@@ -3,63 +3,18 @@
 //! Prints IL in a readable source-like syntax:
 //! binary operators are parenthesized, premises print on `--` lines,
 //! iterations show their bound (`<-`) and binding (`->`) variables.
-//! Values print through `print_value`,
-//! with a short form that elides large aggregates.
 
 use std::fmt::{self, Write};
 
 use crate::util::text::escape_text;
 
-use crate::lang::{
-    common::prim::num,
-    traits::print::{Print, Printer},
-};
+use crate::lang::traits::print::{Print, Printer};
 
-use super::ast::*;
+use super::super::ast::*;
 
 // == Printing
 
 // - Types
-
-impl Print for Typ {
-    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
-        match &self.node {
-            TypKind::Bool => printer.write_str("bool"),
-            TypKind::Num(num::Typ::Nat) => printer.write_str("nat"),
-            TypKind::Num(num::Typ::Int) => printer.write_str("int"),
-            TypKind::Text => printer.write_str("text"),
-            TypKind::Var(id, targs) => {
-                id.print(printer)?;
-                if !targs.is_empty() {
-                    printer.write_char('<')?;
-                    printer.separated(targs, ", ")?;
-                    printer.write_char('>')?;
-                }
-                Ok(())
-            }
-            TypKind::Tuple(typs) => {
-                printer.write_char('(')?;
-                printer.separated(typs, ", ")?;
-                printer.write_char(')')
-            }
-            TypKind::Iter(typ, iter) => {
-                typ.print(printer)?;
-                iter.print(printer)
-            }
-            TypKind::Func(func_typ) => {
-                if !func_typ.tparams.is_empty() {
-                    printer.write_char('<')?;
-                    printer.separated(&func_typ.tparams, ", ")?;
-                    printer.write_char('>')?;
-                }
-                printer.write_char('(')?;
-                printer.separated(&func_typ.typs_params, ", ")?;
-                printer.write_str(") : ")?;
-                func_typ.typ_ret.print(printer)
-            }
-        }
-    }
-}
 
 // - Notation types
 
@@ -133,109 +88,9 @@ impl Print for [TypCase] {
     }
 }
 
-// - Values
-
-/// Prints a value in full, resolving handles through the arena.
-pub fn print_value(
-    arena: &crate::lang::data::value::ValueArena,
-    value: &Value,
-    printer: &mut Printer<'_>,
-) -> fmt::Result {
-    write_value_with(arena, printer, value, false, 0)
-}
-
-/// Prints a value; `short` elides struct and list contents to a count.
-fn write_value_with(
-    arena: &crate::lang::data::value::ValueArena,
-    output: &mut Printer<'_>,
-    value: &Value,
-    short: bool,
-    level: usize,
-) -> fmt::Result {
-    match arena.kind(value) {
-        ValueKind::Bool(value) => write!(output, "{value}"),
-        ValueKind::Num(value) => value.print(output),
-        ValueKind::Text(text) => output.write_str(&escape_text(text)),
-        // Empty structs stay on one line
-        ValueKind::Struct(fields) if fields.is_empty() => output.write_str("{}"),
-        // Short form: field count only
-        ValueKind::Struct(fields) if short => write!(output, "{{ .../{} }}", fields.len()),
-        // One field per line, indented one level deeper
-        ValueKind::Struct(fields) => {
-            output.write_str("{\n")?;
-            for (index, (atom, value)) in fields.iter().enumerate() {
-                if index != 0 {
-                    output.write_str(";\n")?;
-                }
-                output.write_str(&indent(level + 1))?;
-                atom.print(output)?;
-                output.write_char(' ')?;
-                write_value_with(arena, output, value, short, level + 1)?;
-            }
-            output.write_char('\n')?;
-            output.write_str(&indent(level))?;
-            output.write_char('}')
-        }
-        // Short form: the case skeleton without arguments
-        ValueKind::Case(case) if short => case.to_mixop().print(output),
-        ValueKind::Case(case) => write_notval_with(arena, output, case, level),
-        ValueKind::Tuple(values) => {
-            output.write_char('(')?;
-            for (index, value) in values.iter().enumerate() {
-                if index != 0 {
-                    output.write_str(", ")?;
-                }
-                write_value_with(arena, output, value, short, level + 1)?;
-            }
-            output.write_char(')')
-        }
-        ValueKind::Opt(Some(value)) => {
-            output.write_str("Some(")?;
-            write_value_with(arena, output, value, short, level + 1)?;
-            output.write_char(')')
-        }
-        ValueKind::Opt(None) => output.write_str("None"),
-        // Empty lists stay on one line
-        ValueKind::List(values) if values.is_empty() => output.write_str("[]"),
-        // Short form: element count only
-        ValueKind::List(values) if short => write!(output, "[ .../{} ]", values.len()),
-        // One element per line, indented one level deeper
-        ValueKind::List(values) => {
-            output.write_str("[\n")?;
-            for (index, value) in values.iter().enumerate() {
-                if index != 0 {
-                    output.write_str(",\n")?;
-                }
-                output.write_str(&indent(level + 1))?;
-                write_value_with(arena, output, value, short, level + 1)?;
-            }
-            output.write_char('\n')?;
-            output.write_str(&indent(level))?;
-            output.write_char(']')
-        }
-        ValueKind::Func(id) => {
-            output.write_char('$')?;
-            output.write_str(&id.node)
-        }
-        ValueKind::Extern(_) => output.write_str("extern"),
-    }
-}
-
-/// Prints a variant value with its arguments filled into the skeleton.
-fn write_notval_with(
-    arena: &crate::lang::data::value::ValueArena,
-    output: &mut Printer<'_>,
-    not_val: &ValueCase,
-    level: usize,
-) -> fmt::Result {
-    not_val.print_with(output, |value, output| {
-        write_value_with(arena, output, value, false, level + 1)
-    })
-}
-
 // - Expressions
 
-impl<I: Print, V: Print> Print for Exp<I, V> {
+impl Print for Exp {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match &self.node {
             ExpKind::Bool(value) => write!(printer, "{value}"),
@@ -374,13 +229,13 @@ impl<I: Print, V: Print> Print for Exp<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for [Exp<I, V>] {
+impl Print for [Exp] {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         printer.separated(self, ", ")
     }
 }
 
-impl<I: Print, V: Print> Print for NotExp<I, V> {
+impl Print for NotExp {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         self.print_with(printer, |exp, printer| exp.print(printer))
     }
@@ -429,7 +284,7 @@ impl Print for Pattern {
 
 // - Paths
 
-impl<I: Print, V: Print> Print for Path<I, V> {
+impl Print for Path {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match &self.node {
             PathKind::Root => Ok(()),
@@ -497,7 +352,7 @@ impl Print for [Param] {
 
 // - Arguments
 
-impl<I: Print, V: Print> Print for Arg<I, V> {
+impl Print for Arg {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         match &self.node {
             ArgKind::Exp(exp) => exp.print(printer),
@@ -509,7 +364,7 @@ impl<I: Print, V: Print> Print for Arg<I, V> {
     }
 }
 
-impl<I: Print, V: Print> Print for [Arg<I, V>] {
+impl Print for [Arg] {
     fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
         if self.is_empty() {
             return Ok(());
@@ -610,7 +465,7 @@ fn write_prems_with(output: &mut Printer<'_>, level: usize, prems: &[Prem]) -> f
 }
 
 /// Prints an iteration as `*{x <- x*, y -> y*}`: bound, then binding variables.
-pub(crate) fn print_prem_iter<B: Print>(
+fn print_prem_iter<B: Print>(
     iter: &Iter,
     vars_bound: &[B],
     vars_bind: &[B],

@@ -4,10 +4,8 @@
 //! Argument checks retain the declaration type span even inside nested notation.
 
 use crate::lang::{
-    common::{
-        notation::{atom::Atom, mixfix::AtomPhrase},
-        source::Span,
-    },
+    common::{notation::atom::Atom, source::Span},
+    data::notation::AtomPhrase,
     traits::{at::At, print::Print},
 };
 

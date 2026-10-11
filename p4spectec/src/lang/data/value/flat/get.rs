@@ -65,6 +65,53 @@ pub fn case<'a>(arena: &'a Arena, value: &Value) -> Result<&'a ValueCase, ValueE
     }
 }
 
+/// Matches a case value against mixop texts, binding its arguments per arm.
+macro_rules! matches {
+    (
+        @arms $arena:ident, $value_case:ident;
+        $shape:literal $(| $shape_alt:literal)* => |$values:ident| $body:expr,
+        $($rest:tt)+
+    ) => {{
+        match $value_case {
+            Some(value_case)
+                if {
+                    use $crate::lang::traits::eq::SyntaxEq as _;
+
+                    let mixop = value_case.mixop().into_tree(&$arena.mixop);
+                    [$shape, $($shape_alt),*].into_iter().any(|mixop_text| {
+                        let mixop_expect = $crate::lang::data::notation::tree::parse::mixop(mixop_text);
+                        mixop.syntax_eq(mixop_expect.as_ref())
+                    })
+                } =>
+            {
+                let $values = value_case.args();
+                $body
+            }
+            _ => $crate::lang::data::value::flat::get::matches! {
+                @arms $arena, $value_case;
+                $($rest)+
+            },
+        }
+    }};
+    (@arms $arena:ident, $value_case:ident; _ => $fallback:expr $(,)?) => {
+        $fallback
+    };
+    ($arena:expr, $value:expr, $($arms:tt)+) => {{
+        let value = $value;
+        let arena = $arena;
+        let value_case = match arena.value.kind(value.node) {
+            $crate::lang::data::value::flat::ValueKind::Case(value_case) => Some(value_case),
+            _ => None,
+        };
+        $crate::lang::data::value::flat::get::matches! {
+            @arms arena, value_case;
+            $($arms)+
+        }
+    }};
+}
+
+pub(crate) use matches;
+
 // - Sequences
 
 /// The components of a tuple value.

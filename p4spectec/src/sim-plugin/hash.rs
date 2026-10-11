@@ -10,7 +10,7 @@ use num_traits::{One, ToPrimitive, Zero};
 
 use crate::util::bigint::{remainder, width_bit};
 
-use crate::lang::data::value::{Value, ValueArena};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::runner::ExternError;
 
@@ -108,7 +108,7 @@ pub fn compute_hash(
 }
 
 /// Concatenates fixed-width fields into one integer, padded to 16 bits.
-pub fn package(arena: &ValueArena, values: &[Value]) -> Result<(BigInt, BigInt), ExternError> {
+pub fn package(arena: &Arena, values: &[Value]) -> Result<(BigInt, BigInt), ExternError> {
     let mut width_pack = BigInt::zero();
     let mut int_pack = BigInt::zero();
     for value in values {
@@ -131,9 +131,9 @@ pub fn package(arena: &ValueArena, values: &[Value]) -> Result<(BigInt, BigInt),
 
 /// Packs the fields and hashes them.
 pub fn compute_checksum(
+    arena: &Arena,
     algo: &str,
     int_init: Option<&BigInt>,
-    arena: &ValueArena,
     values: &[Value],
 ) -> Result<BigInt, ExternError> {
     let bits = package(arena, values)?;

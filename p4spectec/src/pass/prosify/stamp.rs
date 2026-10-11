@@ -44,7 +44,7 @@ fn can_fail_instr(instr: &pl::Instr<pl::GroupInstr>) -> bool {
 fn can_fail_group_instr(instr: &pl::GroupInstr) -> bool {
     match instr {
         pl::GroupInstr::Rule(pl::RuleInstr { not_exp, .. }) => {
-            not_exp.args().into_iter().any(HasCall::has_call)
+            not_exp.args().iter().any(HasCall::has_call)
         }
         pl::GroupInstr::Result(pl::ResultInstr { exps_output, .. }) => {
             exps_output.iter().any(HasCall::has_call)

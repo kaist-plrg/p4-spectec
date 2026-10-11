@@ -5,9 +5,12 @@
 use serde::{Deserialize, Serialize};
 use serde_derive_state::{DeserializeState, SerializeState};
 
-use crate::lang::data::value::{
-    Value, ValueArena,
-    external::{DecodeContext, EncodeContext},
+use crate::lang::data::{
+    arena::Arena,
+    value::flat::{
+        Value,
+        external::{DecodeContext, EncodeContext},
+    },
 };
 
 use crate::runner::ExternError;
@@ -34,7 +37,7 @@ pub struct CloneInfo(pub CloneType, pub usize, pub usize);
 impl CloneInfo {
     /// Reads the clone type, session, and field-list index from the arguments.
     pub fn new(
-        arena: &ValueArena,
+        arena: &Arena,
         value_clone_type: &Value,
         value_session: &Value,
         value_idx: &Value,
