@@ -4,13 +4,18 @@
 //! in the same arena. Exact equality includes atom spans;
 //! canonical equality ignores spans and compares canonical child identities.
 
+use serde_derive_state::{DeserializeState, SerializeState};
+
 use crate::lang::data::intern::Interned;
 
 use super::{AtomPhrase, MixopTag};
 
+use self::external::{DecodeContext, EncodeContext};
+
 mod arena;
 mod cmp;
 mod convert;
+pub mod external;
 mod hash;
 mod make;
 mod print;
@@ -29,13 +34,16 @@ pub type Mixop = Interned<MixopKind>;
 pub type Mixfix<T> = super::Mixfix<Mixop, T>;
 
 /// One interned notation node, with child handles in the same arena.
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, SerializeState, DeserializeState)]
+#[serde(rename = "Mixop")]
+#[serde(serialize_state = "EncodeContext<'arena>", ser_parameters = "'arena")]
+#[serde(deserialize_state = "DecodeContext<'de>")]
 pub enum MixopKind {
     Arg,
-    Atom(AtomPhrase),
-    Brack(AtomPhrase, Mixop, AtomPhrase),
-    Infix(Mixop, AtomPhrase, Mixop),
-    Seq(Vec<Mixop>),
+    Atom(#[serde(state)] AtomPhrase),
+    Brack(#[serde(state)] AtomPhrase, #[serde(state)] Mixop, #[serde(state)] AtomPhrase),
+    Infix(#[serde(state)] Mixop, #[serde(state)] AtomPhrase, #[serde(state)] Mixop),
+    Seq(#[serde(state)] Vec<Mixop>),
 }
 
 // = Structural properties
