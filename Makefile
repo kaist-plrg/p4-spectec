@@ -211,3 +211,4 @@ clean:
 	rm -f $(KSPECDIR)/specdir $(KSPECDIR)/spectec-k-* $(KSPECDIR)/run-k-typecheck-*.result
 	rm -rf $(KSPECDIR)/.kore-cache
 	rm -f $(RSHIM_SO) $(RSPECDIR)/p4-typecheck-*.result
+	rm -rf $(RSPECDIR)/*/compiled
