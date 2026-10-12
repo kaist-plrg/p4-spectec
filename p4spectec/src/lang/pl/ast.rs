@@ -258,6 +258,8 @@ pub struct CaseInstr<Tier, P: Stage = Source> {
     pub exp: Exp<P>,
     pub cases: Vec<Case<Tier, P>>,
     pub dangle: Dangle,
+    /// Whether the guards cover every value of the scrutinee type.
+    pub total: bool,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Bind `exp_l` to `exp_r` under the iterations.

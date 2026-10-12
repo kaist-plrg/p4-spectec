@@ -76,7 +76,7 @@ fn insert_case_instr(instr_ol: ol::CaseInstr, dangle: bool) -> sl::InstrKind {
         .into_iter()
         .map(|case_ol| insert_case(case_ol, dangle))
         .collect();
-    sl::InstrKind::Case(sl::CaseInstr { exp, cases, dangle: dangle && !total })
+    sl::InstrKind::Case(sl::CaseInstr { exp, cases, total, dangle: dangle && !total })
 }
 
 // - Group instruction

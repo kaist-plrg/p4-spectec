@@ -213,6 +213,8 @@ pub struct CaseInstr<P: Stage = Source> {
     pub exp: Exp<P>,
     pub cases: Vec<Case<P>>,
     pub dangle: Dangle,
+    /// Whether the guards cover every value of the scrutinee type.
+    pub total: bool,
 }
 /// A rule group's block, entered when the inputs match `exps`.
 #[derive(Clone, Debug, PartialEq)]

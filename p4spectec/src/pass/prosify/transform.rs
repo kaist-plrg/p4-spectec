@@ -937,7 +937,12 @@ fn prosify_dispatch_case_instr(
         let case_pl = prosify_dispatch_case(ctx, case_sl)?;
         cases_pl.push(case_pl);
     }
-    let instr_pl = pl::CaseInstr { exp: exp_pl, cases: cases_pl, dangle: instr_sl.dangle };
+    let instr_pl = pl::CaseInstr {
+        exp: exp_pl,
+        cases: cases_pl,
+        total: instr_sl.total,
+        dangle: instr_sl.dangle,
+    };
     let instr_kind_pl = pl::InstrKind::Case(instr_pl);
     let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
@@ -1205,7 +1210,12 @@ fn prosify_group_case_instr(
         let case_pl = prosify_group_case(ctx, case_sl)?;
         cases_pl.push(case_pl);
     }
-    let instr_pl = pl::CaseInstr { exp: exp_pl, cases: cases_pl, dangle: instr_sl.dangle };
+    let instr_pl = pl::CaseInstr {
+        exp: exp_pl,
+        cases: cases_pl,
+        total: instr_sl.total,
+        dangle: instr_sl.dangle,
+    };
     let instr_kind_pl = pl::InstrKind::Case(instr_pl);
     let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,

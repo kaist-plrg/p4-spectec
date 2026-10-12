@@ -374,10 +374,13 @@ fn write_instr_with<Tier>(
             }
         }
         // `Case analysis on` and the numbered arms
-        InstrKind::Case(CaseInstr { exp, cases, dangle }) => {
+        InstrKind::Case(CaseInstr { exp, cases, total, dangle }) => {
             write_order(output)?;
             output.write_str("Case analysis on ")?;
             exp.print(output)?;
+            if *total {
+                output.write_str(" (total)")?;
+            }
             if !short {
                 output.write_str("\n\n")?;
                 write_cases_with(output, cases, tier_printer, level + 1)?;

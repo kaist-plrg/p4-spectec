@@ -259,6 +259,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
         ast::CaseInstr {
             exp: self.exp.prepare(ctx),
             cases: self.cases.prepare(ctx),
+            total: self.total,
             dangle: self.dangle,
         }
     }

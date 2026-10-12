@@ -28,7 +28,7 @@ use crate::lang::{
     },
     data::notation::tree::{self as notation, MixfixRef, MixfixView},
     hints::{alter, input},
-    traits::print::Print,
+    traits::{eq::SyntaxEq, print::Print},
 };
 
 use crate::lang::el;
@@ -51,6 +51,175 @@ use super::doc::{
     doc::{Block, Code, ItemKind, Link, Prose, Subject, Table},
     serialize,
 };
+
+// == Conditional bindings
+
+#[derive(Clone, Copy)]
+/// The full predicate represented by a conditional binding.
+enum BindingCondition<'a> {
+    Sub(&'a pl::Typ, &'a pl::Subcheck),
+    Match(&'a pl::Pattern),
+}
+
+/// A borrowed heading and continuation; the PL instructions remain intact.
+struct IfLet<'a, Tier> {
+    condition: BindingCondition<'a>,
+    exp_scrut: &'a pl::Exp,
+    instr_let: &'a pl::LetInstr,
+    block_rest: &'a [pl::Instr<Tier>],
+}
+
+/// Whether a subtype test only inspects value shape, without fallible lookup.
+fn structural_subcheck(subcheck: &pl::Subcheck) -> bool {
+    match subcheck {
+        pl::Subcheck::Skip | pl::Subcheck::Mixop(_) => true,
+        pl::Subcheck::Tuple(subchecks) => subchecks.iter().all(structural_subcheck),
+        pl::Subcheck::Iter(_, subcheck) => structural_subcheck(subcheck),
+        pl::Subcheck::Recurse(_) => false,
+    }
+}
+
+/// Whether omitting a guard can remove neither expression evaluation nor failure.
+fn elidable_guard(guard: &pl::Guard) -> bool {
+    match guard {
+        pl::Guard::Bool(_) | pl::Guard::Match(_) => true,
+        pl::Guard::Sub(_, subcheck) => structural_subcheck(subcheck),
+        pl::Guard::Cmp(..) | pl::Guard::Mem(_) => false,
+    }
+}
+
+/// Accepts distinct plain binders, rejecting every additional pattern constraint.
+fn simple_binder<'a>(exp: &'a pl::Exp, ids: &mut std::collections::HashSet<&'a str>) -> bool {
+    if exp.hints.node != Default::default() {
+        return false;
+    }
+    match &exp.node.node {
+        pl::ExpKind::Id(id) => ids.insert(&id.node),
+        _ => false,
+    }
+}
+
+/// Checks that the guard already proves the whole binding pattern's shape.
+fn implied_binding(pattern: &pl::Pattern, exp: &pl::Exp) -> bool {
+    if exp.hints.node != Default::default() {
+        return false;
+    }
+    let mut ids = std::collections::HashSet::new();
+    match (pattern, &exp.node.node) {
+        (Pattern::Case(mixop), ExpKind::Case(not_exp)) => {
+            not_exp.mixop().syntax_eq(mixop)
+                && not_exp.args().len() == mixop.arity()
+                && not_exp
+                    .args()
+                    .iter()
+                    .all(|exp| simple_binder(exp, &mut ids))
+        }
+        (Pattern::List(ListPattern::Nil), ExpKind::List(exps)) => exps.is_empty(),
+        (Pattern::List(ListPattern::Fixed(len)), ExpKind::List(exps)) => {
+            exps.len() == *len && exps.iter().all(|exp| simple_binder(exp, &mut ids))
+        }
+        (Pattern::List(ListPattern::Cons), ExpKind::Cons(exp_head, exp_tail)) => {
+            simple_binder(exp_head, &mut ids) && simple_binder(exp_tail, &mut ids)
+        }
+        (Pattern::Opt(OptPattern::None), ExpKind::Opt(None)) => true,
+        (Pattern::Opt(OptPattern::Some), ExpKind::Opt(Some(exp))) => simple_binder(exp, &mut ids),
+        _ => false,
+    }
+}
+
+/// Compares only plain variable references, retaining their type distinction.
+fn same_variable(exp_l: &pl::Exp, exp_r: &pl::Exp) -> bool {
+    matches!((&exp_l.node.node, &exp_r.node.node), (ExpKind::Id(id_l), ExpKind::Id(id_r)) if id_l.node == id_r.node)
+        && exp_l.node.note.syntax_eq(&exp_r.node.note)
+        && exp_l.hints.node == Default::default()
+        && exp_r.hints.node == Default::default()
+}
+
+/// Borrows a leading let only when guard success implies binding success.
+fn if_let_view<'a, Tier>(
+    condition: BindingCondition<'a>,
+    exp_scrut: &'a pl::Exp,
+    block: &'a [pl::Instr<Tier>],
+) -> Option<IfLet<'a, Tier>> {
+    let (instr, block_rest) = block.split_first()?;
+    if instr.hints.node != Default::default() {
+        return None;
+    }
+    let pl::InstrKind::Let(instr_let) = &instr.node.node else { return None };
+    if !instr_let.iter_instrs.is_empty() || instr_let.exp_r.hints.node != Default::default() {
+        return None;
+    }
+    let safe = match condition {
+        BindingCondition::Sub(typ, subcheck) => {
+            let same_source = match &instr_let.exp_r.node.node {
+                ExpKind::DownCast(typ_cast, exp) => {
+                    typ.syntax_eq(typ_cast) && same_variable(exp, exp_scrut)
+                }
+                _ => same_variable(&instr_let.exp_r, exp_scrut),
+            };
+            same_source
+                && structural_subcheck(subcheck)
+                && instr_let.exp_l.node.note.syntax_eq(&typ.node)
+                && instr_let.exp_r.node.note.syntax_eq(&typ.node)
+                && simple_binder(&instr_let.exp_l, &mut std::collections::HashSet::new())
+        }
+        BindingCondition::Match(pattern) => {
+            same_variable(&instr_let.exp_r, exp_scrut)
+                && instr_let
+                    .exp_l
+                    .node
+                    .note
+                    .syntax_eq(&instr_let.exp_r.node.note)
+                && implied_binding(pattern, &instr_let.exp_l)
+        }
+    };
+    safe.then_some(IfLet { condition, exp_scrut, instr_let, block_rest })
+}
+
+impl Code {
+    /// Renders binding shapes without erasing option or singleton-list wrappers.
+    fn of_binding(exp: &pl::Exp) -> Code {
+        match &exp.node.node {
+            ExpKind::Case(not_exp) => Code::of_mixfix(not_exp.as_ref().as_ref(), &Code::of_binding),
+            ExpKind::List(exps) => Code::seq([
+                Code::token("+[+"),
+                Code::join(", ", exps.iter().map(Code::of_binding)),
+                Code::token("+]+"),
+            ]),
+            ExpKind::Opt(Some(exp)) => {
+                Code::seq([Code::token("?("), Code::of_binding(exp), Code::token(")")])
+            }
+            ExpKind::Opt(None) => Code::token("?()"),
+            ExpKind::Cons(exp_head, exp_tail) => Code::seq([
+                Code::of_binding(exp_head),
+                Code::token(" {two-colons} "),
+                Code::of_binding(exp_tail),
+            ]),
+            _ => Code::of_exp(exp),
+        }
+    }
+}
+
+impl<Tier> IfLet<'_, Tier> {
+    /// Renders both the guard's shape or subtype and the binding in one heading.
+    fn heading(&self, keyword: &str) -> Prose {
+        let prose_typ = match self.condition {
+            BindingCondition::Sub(typ, _) => {
+                Prose::seq([Prose::text(" of type "), Prose::code(Code::of_typ(typ))])
+            }
+            BindingCondition::Match(_) => Prose::text(""),
+        };
+        Prose::seq([
+            Prose::text(keyword),
+            Prose::text("let "),
+            Prose::code(Code::of_binding(&self.instr_let.exp_l)),
+            prose_typ,
+            Prose::text(" be "),
+            Prose::code(Code::of_exp(self.exp_scrut)),
+            Prose::text(":"),
+        ])
+    }
+}
 
 // == Render utils
 
@@ -1735,6 +1904,26 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         render_tier: RenderTier<'ctx, 'a, Tier>,
         instr_if: &pl::IfInstr<Tier>,
     ) -> Block {
+        if instr_if.iter_exps.is_empty() {
+            let view = match &instr_if.exp.node.node {
+                ExpKind::Sub(exp, typ, subcheck) => {
+                    if_let_view(BindingCondition::Sub(typ, subcheck), exp, &instr_if.block)
+                }
+                ExpKind::Match(exp, pattern) => {
+                    if_let_view(BindingCondition::Match(pattern), exp, &instr_if.block)
+                }
+                _ => None,
+            };
+            if let Some(view) = view {
+                let block_head = Block::item_ordered(level, view.heading("If "));
+                return self.render_instrs(
+                    level + 1,
+                    Some(block_head),
+                    render_tier,
+                    view.block_rest,
+                );
+            }
+        }
         let prose_cond = Prose::of_exp(&instr_if.exp);
         let prose_suffix = Prose::of_iterexp_suffix(&instr_if.iter_exps);
         let prose_head =
@@ -1857,13 +2046,38 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let num_cases = case_instr.cases.len();
         let mut blocks_case = Vec::with_capacity(num_cases);
         for (idx, case) in case_instr.cases.iter().enumerate() {
+            let is_else =
+                idx > 0 && idx + 1 == num_cases && case_instr.total && elidable_guard(&case.guard);
             let keyword = if idx == 0 { "If " } else { "Else if " };
-            // Nest the selected case body below its condition
-            let prose_guard = Prose::of_guard(&case_instr.exp, &case.guard);
-            let prose_head = Prose::seq([Prose::text(keyword), prose_guard, Prose::text(":")]);
+            let view = if is_else {
+                None
+            } else {
+                match &case.guard {
+                    pl::Guard::Sub(typ, subcheck) => if_let_view(
+                        BindingCondition::Sub(typ, subcheck),
+                        &case_instr.exp,
+                        &case.block,
+                    ),
+                    pl::Guard::Match(pattern) => {
+                        if_let_view(BindingCondition::Match(pattern), &case_instr.exp, &case.block)
+                    }
+                    _ => None,
+                }
+            };
+            let (prose_head, block_body) = if is_else {
+                (Prose::text("Else:"), case.block.as_slice())
+            } else if let Some(view) = view {
+                (view.heading(keyword), view.block_rest)
+            } else {
+                let prose_guard = Prose::of_guard(&case_instr.exp, &case.guard);
+                (
+                    Prose::seq([Prose::text(keyword), prose_guard, Prose::text(":")]),
+                    case.block.as_slice(),
+                )
+            };
             let block_head = Block::item_ordered(level, prose_head);
             let block_case =
-                self.render_instrs(level + 1, Some(block_head), render_tier, &case.block);
+                self.render_instrs(level + 1, Some(block_head), render_tier, block_body);
             blocks_case.push(block_case);
         }
         Block::seq(blocks_case)
@@ -2813,9 +3027,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .as_ref()
             .is_some_and(|block| !block.is_empty());
         // Choose the compact boolean or general body form
-        let block_body;
-        let anchor_else;
-        match func.block.as_slice() {
+        let (block_body, anchor_else) = match func.block.as_slice() {
             [instr]
                 if let pl::InstrKind::Tier(tier_instr) = &instr.node.node
                     && let pl::GroupInstr::Return(return_instr) = &tier_instr.tier
@@ -2825,8 +3037,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 let code_exp = Code::of_exp(&return_instr.exp);
                 let prose_tail =
                     Prose::seq([Prose::text(" return "), Prose::code(code_exp), Prose::text(".")]);
-                block_body = Block::inline(prose_tail);
-                anchor_else = None;
+                (Block::inline(prose_tail), None)
             }
             _ => {
                 // Render the general instruction sequence with an optional target
@@ -2835,10 +3046,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                     .iter()
                     .map(|instr| self.render_instr(0, Self::render_instr_group, instr))
                     .collect();
-                block_body = Block::seq(blocks_rendered);
-                anchor_else = anchor_else_input.filter(|_| has_else);
+                (Block::seq(blocks_rendered), anchor_else_input.filter(|_| has_else))
             }
-        }
+        };
         // Append the otherwise clause after the selected body form
         let block_header = Self::render_func_title(hints, &func.id, &func.tparams, &func.params);
         let text_else = self.render_elseblock(
