@@ -47,12 +47,12 @@ use super::{
 pub(super) fn eval_block<'global, 'instr, Tier: 'instr, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instrs: impl IntoIterator<Item = &'instr ast::Instr<Tier>>,
     mut evaluate: impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Instr<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instrs: impl IntoIterator<Item = &'instr ast::Instr<Tier>>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Assignments extend this block, not its enclosing scope
     let mut ctx_local = ctx.clone();
@@ -80,7 +80,7 @@ pub(super) fn eval_group_block<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     block: &ast::GroupBlock,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_block(runner_ctx, ctx, block, eval_group_instr)
+    eval_block(runner_ctx, ctx, eval_group_instr, block)
 }
 
 /// Runs relation routing in its own local scope.
@@ -89,7 +89,7 @@ pub(super) fn eval_dispatch_block<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     block: &ast::DispatchBlock,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_block(runner_ctx, ctx, block, eval_dispatch_instr)
+    eval_block(runner_ctx, ctx, eval_dispatch_instr, block)
 }
 
 // - Alternative selection
@@ -98,12 +98,12 @@ pub(super) fn eval_dispatch_block<'global, Iface: Interface, Ext: Extern>(
 fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    blocks: &[ast::Block<Tier>],
     mut evaluate: impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    blocks: &[ast::Block<Tier>],
 ) -> Backtrack<(Context<'global>, Flow)> {
     let det = runner_ctx.interp().config.det;
     // Every alternative starts from the enclosing bindings
@@ -128,7 +128,6 @@ fn eval_alternatives<'global, Tier, Iface: Interface, Ext: Extern>(
 fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instr: &ast::Instr<Tier>,
     eval_tier: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
@@ -139,19 +138,20 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instr: &ast::Instr<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || match &instr.node.node {
-        ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, evaluate_block, instr),
         ast::InstrKind::IfLetSub(instr) => {
-            eval_if_let_sub_instr(runner_ctx, ctx, instr, evaluate_block)
+            eval_if_let_sub_instr(runner_ctx, ctx, evaluate_block, instr)
         }
         ast::InstrKind::IfLetMatch(instr) => {
-            eval_if_let_match_instr(runner_ctx, ctx, instr, evaluate_block)
+            eval_if_let_match_instr(runner_ctx, ctx, evaluate_block, instr)
         }
-        ast::InstrKind::Check(instr) => eval_check_instr(runner_ctx, ctx, instr, evaluate_block),
-        ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, evaluate_block),
-        ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Check(instr) => eval_check_instr(runner_ctx, ctx, evaluate_block, instr),
+        ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, evaluate_block, instr),
+        ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, evaluate_block, instr),
         ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr),
         ast::InstrKind::Debug(instr) => eval_debug_instr(runner_ctx, ctx, instr),
         ast::InstrKind::Destruct(instr) => eval_destruct_instr(runner_ctx, ctx, instr),
@@ -168,9 +168,9 @@ pub(super) fn eval_group_instr<'global, Iface: Interface, Ext: Extern>(
     eval_instr(
         runner_ctx,
         ctx,
-        instr,
         &mut |runner_ctx, ctx, tier| eval_group_tier(runner_ctx, ctx, &instr.node.span, tier),
         &mut eval_group_block,
+        instr,
     )
 }
 
@@ -194,7 +194,7 @@ fn eval_dispatch_instr<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     instr: &ast::Instr<ast::DispatchInstr>,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_instr(runner_ctx, ctx, instr, &mut eval_dispatch_tier, &mut eval_dispatch_block)
+    eval_instr(runner_ctx, ctx, &mut eval_dispatch_tier, &mut eval_dispatch_block, instr)
 }
 
 fn eval_dispatch_tier<'global, Iface: Interface, Ext: Extern>(
@@ -214,14 +214,14 @@ fn eval_dispatch_tier<'global, Iface: Interface, Ext: Extern>(
 fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instr: &ast::IfInstr<Tier>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instr: &ast::IfInstr<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_condition(runner_ctx, ctx, &instr.exp, &instr.iter_exps, &instr.block, evaluate_block)
+    eval_condition(runner_ctx, ctx, evaluate_block, &instr.exp, &instr.iter_exps, &instr.block)
 }
 
 // - Subtype binding instruction
@@ -230,12 +230,12 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instr: &ast::IfLetSubInstr<Tier>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instr: &ast::IfLetSubInstr<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Test the original value before narrowing it for the binding
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
@@ -270,12 +270,12 @@ fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 fn eval_if_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instr: &ast::IfLetMatchInstr<Tier>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instr: &ast::IfLetMatchInstr<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Evaluate and test before introducing local bindings
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
@@ -303,14 +303,14 @@ fn eval_if_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 fn eval_check_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instr: &ast::CheckInstr<Tier>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instr: &ast::CheckInstr<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_condition(runner_ctx, ctx, &instr.exp, &instr.iter_exps, &instr.block, evaluate_block)
+    eval_condition(runner_ctx, ctx, evaluate_block, &instr.exp, &instr.iter_exps, &instr.block)
 }
 
 // - Conditions
@@ -319,14 +319,14 @@ fn eval_check_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    exp: &ast::Exp,
-    iter_exps: &[ast::ExpIter],
-    block: &ast::Block<Tier>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    exp: &ast::Exp,
+    iter_exps: &[ast::ExpIter],
+    block: &ast::Block<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Test the condition across all enclosing iterations
     let cond = unwrap!(eval_cond_iter(runner_ctx, &ctx, iter_exps, &mut |runner_ctx, ctx| {
@@ -353,12 +353,12 @@ fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
 fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instr: &ast::HoldInstr<Tier>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instr: &ast::HoldInstr<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Keep the first failed relation call under the condition
     let mut errors = Vec::new();
@@ -411,12 +411,12 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
-    instr: &ast::CaseInstr<Tier>,
     evaluate_block: &mut impl FnMut(
         &mut RunnerContext<'_, PlInterp, Iface, Ext>,
         Context<'global>,
         &ast::Block<Tier>,
     ) -> Backtrack<(Context<'global>, Flow)>,
+    instr: &ast::CaseInstr<Tier>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Evaluate the scrutinee once
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
@@ -597,7 +597,7 @@ fn eval_backtrack_instr<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     instr: &ast::BacktrackInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_alternatives(runner_ctx, ctx, &instr.blocks, eval_group_block)
+    eval_alternatives(runner_ctx, ctx, eval_group_block, &instr.blocks)
 }
 
 // - Rule group instruction
@@ -619,7 +619,7 @@ fn eval_route_instr<'global, Iface: Interface, Ext: Extern>(
     ctx: Context<'global>,
     instr: &ast::RouteInstr,
 ) -> Backtrack<(Context<'global>, Flow)> {
-    eval_alternatives(runner_ctx, ctx, &instr.blocks, eval_dispatch_block)
+    eval_alternatives(runner_ctx, ctx, eval_dispatch_block, &instr.blocks)
 }
 
 // = Iteration
