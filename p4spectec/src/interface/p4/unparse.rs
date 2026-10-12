@@ -52,7 +52,8 @@ fn insert_case_hints(
     };
     for TypCase { not_typ, hints: hints_case, .. } in cases {
         // Cases without a print hint fall back to their shape
-        let Some(Hint { exp, .. }) = hints_case.iter().find(|hint| hint.id.node == "print") else {
+        let Some(Hint { exp, .. }) = hints_case.iter().find(|hint| &*hint.id.node == "print")
+        else {
             continue;
         };
         let hint = alter::init(exp);
@@ -151,7 +152,7 @@ impl P4Unparser {
     ) -> Result<String, P4UnparseError> {
         let mixop = value_case.mixop().into_tree(&arena.mixop);
         if let TypKind::Var(type_id, _) = typ
-            && let Some(hint) = self.hints.get(&(type_id.node.clone(), mixop))
+            && let Some(hint) = self.hints.get(&(type_id.node.to_string(), mixop))
         {
             let values = value_case.args().iter().collect::<Vec<_>>();
             return self.render_hint(arena, hint, &values);

@@ -97,13 +97,13 @@ impl<K: SyntaxCmp, V> PhraseMap<K, V> {
 impl<V> PhraseMap<Id, V> {
     /// Returns the value for an equivalent key.
     pub fn get(&self, key: &Id) -> Option<&V> {
-        self.entries.get(&key.node)
+        self.entries.get(&*key.node)
     }
 
     /// Returns the stored identifier and value without replacing its source span.
     pub fn get_key_value(&self, key: &Id) -> Option<(&Id, &V)> {
         self.entries
-            .get_key_value(&key.node)
+            .get_key_value(&*key.node)
             .map(|(key, value)| (&key.0, value))
     }
 
@@ -112,12 +112,12 @@ impl<V> PhraseMap<Id, V> {
     where
         V: Clone,
     {
-        self.entries.get_mut(&key.node)
+        self.entries.get_mut(&*key.node)
     }
 
     /// Returns whether an equivalent key is present.
     pub fn contains_key(&self, key: &Id) -> bool {
-        self.entries.contains_key(&key.node)
+        self.entries.contains_key(&*key.node)
     }
 
     /// Removes and returns the value for an equivalent key.
@@ -125,7 +125,7 @@ impl<V> PhraseMap<Id, V> {
     where
         V: Clone,
     {
-        self.entries.remove(&key.node)
+        self.entries.remove(&*key.node)
     }
 
     /// Removes and returns the stored key and value for an equivalent key.
@@ -134,7 +134,7 @@ impl<V> PhraseMap<Id, V> {
         V: Clone,
     {
         self.entries
-            .remove_with_key(&key.node)
+            .remove_with_key(&*key.node)
             .map(|(key, value)| (key.0, value))
     }
 }

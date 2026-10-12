@@ -37,6 +37,12 @@ impl SyntaxEq for String {
     }
 }
 
+impl SyntaxEq for str {
+    fn syntax_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 // - Source annotations
 
 impl<T: SyntaxEq, N, S> SyntaxEq for NotePhrase<T, N, S> {

@@ -20,7 +20,7 @@ impl Fresh {
     pub(crate) fn fresh(&mut self) -> (ast::TParam, ast::Typ) {
         let next = self.next;
         self.next += 1;
-        let tparam = phrase!(node: format!("__FRESH{next}"), span: Span::default());
+        let tparam = phrase!(node: format!("__FRESH{next}").into(), span: Span::default());
         let typ_kind = TypKind::Var(tparam.clone(), vec![]);
         let typ = phrase!(node: typ_kind, span: Span::default());
         (tparam, typ)

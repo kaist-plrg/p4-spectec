@@ -89,7 +89,7 @@ fn fresh_id(ids: &IdSet, id: &Id) -> Id {
         .collect::<IdSet>();
     let mut id_fresh = id.clone();
     while ids_same_base.contains(&id_fresh) {
-        id_fresh.node.push('\'');
+        id_fresh.node = format!("{}'", id_fresh.node).into();
     }
     id_fresh
 }

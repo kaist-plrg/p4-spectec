@@ -134,7 +134,7 @@ pub(crate) fn sub(
 ) -> Backtrack<bool> {
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
     let find_func = |name: &str| {
-        let id = crate::phrase!(node: name.to_owned(), span: *span);
+        let id = crate::phrase!(node: name.into(), span: *span);
         ctx.find_func_typ(&id).ok()
     };
     backtrack::from_result(

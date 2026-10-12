@@ -235,7 +235,7 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
         ast::HoldCase::NotHold(block, _) if !cond => eval_block(runner_ctx, ctx, block, tail),
         // Only the other branch present: fall through
         ast::HoldCase::Hold(..) => {
-            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.clone());
+            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.to_string());
             let report = Report::from(diagnostic)
                 .with_span(&instr.id.span)
                 .with_children(errors);
@@ -244,7 +244,7 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
         // Likewise, recording the failed not-hold condition
         ast::HoldCase::NotHold(..) => ok!(Flow::cont(
             instr.id.span,
-            error::prem::not_hold_condition_unmet(instr.id.node.clone()),
+            error::prem::not_hold_condition_unmet(instr.id.node.to_string()),
         )),
     }
 }

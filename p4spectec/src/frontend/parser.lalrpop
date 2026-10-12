@@ -280,7 +280,7 @@ DefKindRule: ast::Def = {
             node: DefKind::RuleGroup(RuleGroupDef {
                 relid,
                 groupid: crate::phrase! {
-                    node: groupid,
+                    node: groupid.into(),
                     span: ruleids.span,
                 },
                 rules,
@@ -435,13 +435,13 @@ CommaList<T>: Vec<T> = Separated<T, Comma>;
 Id: ast::Id = {
     // Id ::= UPID
     <l:@L> <id:"UPID"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 
     // Id ::= LOID
     <l:@L> <id:"LOID"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -449,13 +449,13 @@ Id: ast::Id = {
 IdLParen: ast::Id = {
     // IdLParen ::= UPID_LPAREN
     <l:@L> <id:"UPID_LPAREN"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 
     // IdLParen ::= LOID_LPAREN
     <l:@L> <id:"LOID_LPAREN"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -463,13 +463,13 @@ IdLParen: ast::Id = {
 IdLAngle: ast::Id = {
     // IdLAngle ::= UPID_LANGLE
     <l:@L> <id:"UPID_LANGLE"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 
     // IdLAngle ::= LOID_LANGLE
     <l:@L> <id:"LOID_LANGLE"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -477,7 +477,7 @@ IdLAngle: ast::Id = {
 VarId: ast::Id = {
     // VarId ::= LOID
     <l:@L> <id:"LOID"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -493,7 +493,7 @@ VarIdBind: ast::Id = {
     <l:@L> <id:"UPID"> <r:@R> => {
         ctx.add_id(&id);
         crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(l, r),
         }
     },
@@ -502,7 +502,7 @@ VarIdBind: ast::Id = {
 VarIdLAngle: ast::Id = {
     // VarIdLAngle ::= LOID_LANGLE
     <l:@L> <id:"LOID_LANGLE"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -518,7 +518,7 @@ VarIdLAngleBind: ast::Id = {
     <l:@L> <id:"UPID_LANGLE"> <r:@R> => {
         ctx.add_id(&id);
         crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(l, r),
         }
     },
@@ -627,7 +627,7 @@ RuleIds: ast::Id = {
     // RuleIds ::= RuleIdSegment*
     <l:@L> <segments:RuleIdSegment*> <r:@R> => {
         crate::phrase! {
-            node: segments.concat(),
+            node: segments.concat().into(),
             span: ctx.span(l, r),
         }
     },
@@ -2265,7 +2265,7 @@ ExpId: ast::Exp = {
     <l:@L> "BOOL" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "bool".to_owned(),
+            node: "bool".into(),
             span: span.clone(),
         };
         crate::phrase! {
@@ -2278,7 +2278,7 @@ ExpId: ast::Exp = {
     <l:@L> "NAT" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "nat".to_owned(),
+            node: "nat".into(),
             span: span.clone(),
         };
         crate::phrase! {
@@ -2291,7 +2291,7 @@ ExpId: ast::Exp = {
     <l:@L> "INT" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "int".to_owned(),
+            node: "int".into(),
             span: span.clone(),
         };
         crate::phrase! {
@@ -2304,7 +2304,7 @@ ExpId: ast::Exp = {
     <l:@L> "TEXT" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "text".to_owned(),
+            node: "text".into(),
             span: span.clone(),
         };
         crate::phrase! {
@@ -2901,7 +2901,7 @@ Hint: Phrase<ast::Hint> = {
     <l:@L> "HINT_LPAREN" <id_l:@L> <id:HintId> <id_r:@R> "SEQ"
         <exp:Exp> "RPAREN" <r:@R> => {
         let id = crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(id_l, id_r),
         };
         crate::phrase! {
@@ -2914,7 +2914,7 @@ Hint: Phrase<ast::Hint> = {
     <l:@L> "HINT_LPAREN" <id_l:@L> <id:HintId> <id_r:@R> <empty:@L> "RPAREN"
         <r:@R> => {
         let id = crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(id_l, id_r),
         };
         let exp = crate::phrase! {
@@ -3012,7 +3012,7 @@ RuleRule: ast::Rule = {
                 id_rule_raw.node[1..].to_owned()
             };
             let id_rule = crate::phrase! {
-                node: id_rule,
+                node: id_rule.into(),
                 span: id_rule_raw.span,
             };
             let r = prems

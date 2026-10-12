@@ -45,7 +45,7 @@ impl Context {
             ("int", typ::make::int()),
             ("text", typ::make::text()),
         ] {
-            let id = crate::phrase! { node: text_name.to_owned(), span: Span::default() };
+            let id = crate::phrase! { node: text_name.into(), span: Span::default() };
             menv.insert(id, typ);
         }
         Self { id_namespace: None, henv: HEnv::default(), menv }
@@ -106,7 +106,7 @@ impl Context {
     /// Reads alteration hints while retaining their expression locations.
     fn load_alter_hints(hints: &mut Hints, hints_sl: &[sl::Hint]) {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
-            let hint = match id_hint.node.as_str() {
+            let hint = match id_hint.node.as_ref() {
                 "prose" => &mut hints.node.prose,
                 "prose_in" => &mut hints.node.prose_in,
                 "prose_out" => &mut hints.node.prose_out,
@@ -126,7 +126,7 @@ impl Context {
     ) -> Result<(), ProseError> {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
             // Other hints belong to their own loaders
-            if id_hint.node != "prose_fields" {
+            if &*id_hint.node != "prose_fields" {
                 continue;
             }
             // Field hints require text names on every declaration kind

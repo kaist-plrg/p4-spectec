@@ -190,15 +190,17 @@ impl Block {
 /// Resolves a subject to its unqualified definition name.
 pub fn subject_name(subject: &Subject) -> Option<String> {
     match subject {
-        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => Some(id.node.clone()),
+        Subject::Function(id) | Subject::Relation(id) | Subject::Type(id) => {
+            Some(id.node.to_string())
+        }
     }
 }
 
 impl Link {
     fn target(&self, anchor_ctx: &AnchorContext<'_>) -> Option<String> {
         match self {
-            Link::Direct(id) => Some(id.node.clone()),
-            Link::Subject(Subject::Type(id)) => Some(id.node.clone()),
+            Link::Direct(id) => Some(id.node.to_string()),
+            Link::Subject(Subject::Type(id)) => Some(id.node.to_string()),
             Link::Subject(Subject::Function(id)) => anchor_ctx.func(Presentation::Prose, &id.node),
             Link::Subject(Subject::Relation(id)) => anchor_ctx.rel(Presentation::Prose, &id.node),
         }
@@ -653,7 +655,7 @@ pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
     let anchor_ctx = AnchorContext::default();
     Serializer::new(&anchor_ctx, &mut Vec::new(), BTreeMap::new()).ser_prose(
-        Some(&Link::Direct(crate::phrase! { node: String::new(), span: Span::default() })),
+        Some(&Link::Direct(crate::phrase! { node: "".into(), span: Span::default() })),
         false,
         prose,
     )

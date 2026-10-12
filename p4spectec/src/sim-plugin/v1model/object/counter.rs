@@ -123,7 +123,7 @@ impl Counter {
         }
         // Return without a value
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;

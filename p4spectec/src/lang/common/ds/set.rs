@@ -96,12 +96,12 @@ impl<K: SyntaxCmp> PhraseSet<K> {
 impl PhraseSet<Id> {
     /// Returns whether an equivalent key is present.
     pub fn contains(&self, key: &Id) -> bool {
-        self.entries.contains(&key.node)
+        self.entries.contains(&*key.node)
     }
 
     /// Removes and returns the stored key equivalent to `key`
     pub fn take(&mut self, key: &Id) -> Option<Id> {
-        self.entries.remove(&key.node).map(|key| key.0)
+        self.entries.remove(&*key.node).map(|key| key.0)
     }
 }
 

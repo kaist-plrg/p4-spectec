@@ -29,37 +29,37 @@ pub struct HEnv(BTreeMap<HintKey, Hints>);
 impl HEnv {
     /// Records the hints of a variant case.
     pub fn insert_case(&mut self, id_typ: &Id, mixop: &Mixop, hints: Hints) {
-        let key = HintKey::Case(id_typ.node.clone(), mixop.clone());
+        let key = HintKey::Case(id_typ.node.to_string(), mixop.clone());
         self.0.insert(key, hints);
     }
 
     /// Records the hints of a meta-function.
     pub fn insert_func(&mut self, id_func: &Id, hints: Hints) {
-        let key = HintKey::Func(id_func.node.clone());
+        let key = HintKey::Func(id_func.node.to_string());
         self.0.insert(key, hints);
     }
 
     /// Records the hints of a relation.
     pub fn insert_rel(&mut self, id_rel: &Id, hints: Hints) {
-        let key = HintKey::Rel(id_rel.node.clone());
+        let key = HintKey::Rel(id_rel.node.to_string());
         self.0.insert(key, hints);
     }
 
     /// The located hints of a variant case, if any.
     pub fn get_case(&self, id_typ: &Id, mixop: &Mixop) -> Option<&Hints> {
-        let key = HintKey::Case(id_typ.node.clone(), mixop.clone());
+        let key = HintKey::Case(id_typ.node.to_string(), mixop.clone());
         self.0.get(&key)
     }
 
     /// The located hints of a meta-function, if any.
     pub fn get_func(&self, id_func: &Id) -> Option<&Hints> {
-        let key = HintKey::Func(id_func.node.clone());
+        let key = HintKey::Func(id_func.node.to_string());
         self.0.get(&key)
     }
 
     /// The located hints of a relation, if any.
     pub fn get_rel(&self, id_rel: &Id) -> Option<&Hints> {
-        let key = HintKey::Rel(id_rel.node.clone());
+        let key = HintKey::Rel(id_rel.node.to_string());
         self.0.get(&key)
     }
 }

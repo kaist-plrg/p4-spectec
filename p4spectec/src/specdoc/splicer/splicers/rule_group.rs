@@ -37,7 +37,7 @@ fn init_from_el(spec_el: &el::Spec) -> BTreeMap<(String, String), &el::Def> {
         .iter()
         .filter_map(|def_el| match &def_el.node {
             el::DefKind::RuleGroup(def) => {
-                Some(((def.relid.node.clone(), def.groupid.node.clone()), def_el))
+                Some(((def.relid.node.to_string(), def.groupid.node.to_string()), def_el))
             }
             _ => None,
         })
@@ -51,7 +51,7 @@ fn init_from_pl(spec_pl: &pl::Spec) -> BTreeMap<(String, String), rule_group::Ru
     for def_pl in spec_pl {
         if let pl::DefKind::Rel(pl::RelDef::Defined(rel)) = &def_pl.node.node {
             for group in rule_group::collect_rule_groups(&rel.block) {
-                groups.insert((rel.id.node.clone(), group.id_group.node.clone()), group);
+                groups.insert((rel.id.node.to_string(), group.id_group.node.to_string()), group);
             }
         }
     }

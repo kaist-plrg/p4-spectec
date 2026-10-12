@@ -305,7 +305,7 @@ fn stamp_rulegroup_instr(
     mut instr_group: pl::RuleGroupInstr,
 ) -> pl::RuleGroupInstr {
     let fallthrough = fallthroughs
-        .get(&instr_group.id_group.node)
+        .get(&*instr_group.id_group.node)
         .expect("every dispatched group has a failure destination");
     instr_group.block = stamp_group_block(fallthrough, instr_group.block);
     instr_group
@@ -377,7 +377,7 @@ fn collect_fallthroughs(
         fallthroughs.extend(
             ids_group
                 .iter()
-                .map(|id_group| (id_group.node.clone(), fallthrough.clone())),
+                .map(|id_group| (id_group.node.to_string(), fallthrough.clone())),
         );
         let id_group_first = ids_group.first().expect("filtered empty groups");
         fallthrough = pl::Fallthrough::Group((**id_group_first).clone());

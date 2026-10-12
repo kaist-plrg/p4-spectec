@@ -147,7 +147,7 @@ impl PacketIn {
         let value_hdr = func::write_value_from_bits(ctx, value_hdr, 0, &bits)?;
         let value_ctx = rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "hdr", value_hdr)?;
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -285,7 +285,7 @@ impl PacketIn {
             value_hdr,
         )?;
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -346,7 +346,7 @@ impl PacketIn {
         let bits = &self.bits[self.idx..self.idx + size];
         let value_hdr = func::write_value_from_bits(ctx, value_hdr, 0, bits)?;
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt =
@@ -404,7 +404,7 @@ impl PacketIn {
         }
         let pkt = Self { idx: self.idx + size, ..self.clone() };
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -439,7 +439,7 @@ impl PacketIn {
         let value_len =
             pack::p4_fixed_bit(ctx.arena_mut(), 32.into(), self.len.div_ceil(8).into())?;
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt =

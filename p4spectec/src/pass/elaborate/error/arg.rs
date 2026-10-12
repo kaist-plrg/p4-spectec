@@ -273,7 +273,7 @@ pub(in crate::pass::elaborate) fn function_clause_type_parameter_mismatch(
                 "<{}>",
                 tparams
                     .iter()
-                    .map(|id| id.node.as_str())
+                    .map(|id| id.node.as_ref())
                     .collect::<Vec<_>>()
                     .join(", ")
             )

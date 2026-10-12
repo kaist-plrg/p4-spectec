@@ -65,7 +65,7 @@ where
     // No-op in the source simulator
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -121,7 +121,7 @@ where
     )?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -177,7 +177,7 @@ where
         rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value_result)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -255,7 +255,7 @@ where
     if !unpack::p4_bool(ctx.arena(), &value_condition)? {
         // Return without a value
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -287,7 +287,7 @@ where
     };
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -382,7 +382,7 @@ where
     if !unpack::p4_bool(ctx.arena(), &value_condition)? {
         // Return without a value
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -404,7 +404,7 @@ where
         rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "checksum", value_checksum)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -532,7 +532,7 @@ where
     let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -585,7 +585,7 @@ where
     let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -653,7 +653,7 @@ where
     let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -687,7 +687,7 @@ where
     ctx.external().write_log(&msg)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
@@ -755,7 +755,7 @@ where
     ctx.external().write_log(&text)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
-        crate::phrase!(node: "value".to_owned(), span: Span::default()),
+        crate::phrase!(node: "value".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;

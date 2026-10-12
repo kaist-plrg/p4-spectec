@@ -36,6 +36,12 @@ impl FreeIds for String {
     }
 }
 
+impl FreeIds for str {
+    fn free_ids(&self) -> IdSet {
+        IdSet::new()
+    }
+}
+
 // - Source annotations
 
 impl<T: FreeIds, N, S> FreeIds for NotePhrase<T, N, S> {

@@ -47,7 +47,7 @@ fn table_name(arena: &mut Arena, value_name: Value) -> Result<(Value, Option<Val
             .map(|name| value::make::text(arena, name.to_owned(), Span::default()))
             .collect::<Result<Vec<_>, _>>()?;
         let typ_id = typ::make::list(typ::make::var(
-            crate::phrase!(node: "nameIR".to_owned(), span: Span::default()),
+            crate::phrase!(node: "nameIR".into(), span: Span::default()),
             Vec::new(),
         ));
         Some(value::make::list(arena, typ_id.node.into(), values_name, Span::default())?)
@@ -156,7 +156,7 @@ where
                 }));
             }
             let typ_key = typ::make::var(
-                crate::phrase!(node: "tableKeyInterface".to_owned(), span: Span::default()),
+                crate::phrase!(node: "tableKeyInterface".into(), span: Span::default()),
                 Vec::new(),
             );
             let values_key = values_name

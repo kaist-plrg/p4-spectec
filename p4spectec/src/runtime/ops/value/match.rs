@@ -88,7 +88,7 @@ where
         // A named type: unfold its definition
         TypKind::Var(id, targs) => {
             let typdef = find_typdef_opt(id).ok_or_else(|| MatchError::TypeUndefined {
-                name: id.node.clone(),
+                name: id.node.to_string(),
                 span: typ.span,
             })?;
             match typdef {
@@ -199,7 +199,7 @@ where
         TypKind::Func(func_typ) => match arena.value.kind(value.node) {
             ValueKind::Func(id) => {
                 let func_typ_actual = find_func(&id.node).ok_or_else(|| {
-                    MatchError::FunctionUndefined { name: id.node.clone(), span: id.span }
+                    MatchError::FunctionUndefined { name: id.node.to_string(), span: id.span }
                 })?;
                 let equivalent =
                     equiv_func_typ(find_typdef_opt, &typ.span, func_typ, &func_typ_actual)?;

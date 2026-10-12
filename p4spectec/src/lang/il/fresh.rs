@@ -29,7 +29,7 @@ pub(crate) fn id(ids: &IdSet, id: &Id) -> Id {
     let mut fresh = id.clone();
     // Add primes until free
     while ids.contains(&fresh) {
-        fresh.node.push('\'');
+        fresh.node = format!("{}'", fresh.node).into();
     }
     fresh
 }
@@ -39,7 +39,7 @@ fn find_alias(metavars: &Metavars, span: &Span, typ: &Typ) -> Option<Var> {
     let typ_name = Print::to_string(typ);
     // An alias must have the type and not just be named after it
     let mut matching = metavars.iter().filter(|(id_alias, typ_alias)| {
-        typ.syntax_eq(typ_alias) && typ_name.as_str() != id_alias.node.as_str()
+        typ.syntax_eq(typ_alias) && typ_name.as_str() != id_alias.node.as_ref()
     });
     let (id_alias, typ_alias) = matching.next()?;
     // Two aliases would make the name ambiguous
@@ -73,7 +73,7 @@ fn var_from_typ_inner(metavars: &Metavars, span: &Span, typ: &Typ) -> Var {
         // Otherwise the printed type is the name
         _ => Var {
             id: crate::phrase! {
-                node: Print::to_string(typ),
+                node: Print::to_string(typ).into(),
                 span: *span,
             },
             typ: typ.clone(),
@@ -93,7 +93,7 @@ pub fn var_from_typ(metavars: &Metavars, ids: &IdSet, span: Span, typ: &Typ) -> 
 pub fn var_from_typ_wildcard(metavars: &Metavars, ids: &IdSet, span: Span, typ: &Typ) -> Var {
     let mut var = var_from_typ_inner(metavars, &span, typ);
     // Wildcards are marked with a leading underscore
-    var.id.node.insert(0, '_');
+    var.id.node = format!("_{}", var.id.node).into();
     var.id = id(ids, &var.id);
     var
 }

@@ -4,13 +4,15 @@
 //! that distinguishes occurrences of the same base name;
 //! `strip_suffix` recovers the base.
 
+use std::rc::Rc;
+
 use crate::lang::{
     common::source::Phrase,
     traits::print::{Print, Printer},
 };
 
-/// Source-annotated identifier.
-pub type Id = Phrase<String>;
+/// Source-annotated identifier, sharing its name between copies.
+pub type Id = Phrase<Rc<str>>;
 
 impl Print for Id {
     fn print(&self, printer: &mut Printer<'_>) -> std::fmt::Result {
@@ -21,10 +23,10 @@ impl Print for Id {
 impl Id {
     /// Strips identifier suffixes while preserving the source span.
     pub fn strip_suffix(&self) -> Self {
-        crate::phrase! {
-            node: strip_suffix(&self.node).to_owned(),
-            span: self.span,
-        }
+        // Share the name when there is no suffix to strip
+        let name = strip_suffix(&self.node);
+        let node = if name.len() == self.node.len() { Rc::clone(&self.node) } else { name.into() };
+        crate::phrase! { node: node, span: self.span }
     }
 }
 

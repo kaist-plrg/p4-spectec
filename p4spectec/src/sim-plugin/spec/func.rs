@@ -249,7 +249,7 @@ where
         .collect::<Result<Vec<_>, _>>()
         .map_err(ExternError::from)?;
     let typ_bits = crate::lang::data::typ::make::list(crate::lang::data::typ::make::var(
-        crate::phrase!(node: "bit".to_owned(), span: Span::default()),
+        crate::phrase!(node: "bit".into(), span: Span::default()),
         Vec::new(),
     ));
     let value_bits =

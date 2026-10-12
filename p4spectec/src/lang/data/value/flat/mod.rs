@@ -69,7 +69,7 @@ pub enum ValueKind {
     Tuple(#[serde(state)] Vec<Value>),
     Opt(#[serde(state)] Option<Value>),
     List(#[serde(state)] Vec<Value>),
-    Func(#[serde(state)] Id),
+    Func(Id),
     Extern(Rc<json>),
 }
 

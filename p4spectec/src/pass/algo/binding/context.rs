@@ -47,7 +47,7 @@ impl Context {
             ("int", typ::make::int()),
             ("text", typ::make::text()),
         ] {
-            let id = phrase!(node: name.to_owned(), span: Span::default());
+            let id = phrase!(node: name.into(), span: Span::default());
             menv.insert(id, typ);
         }
         Self { frees: IdSet::new(), venv: VEnv::new(), tdenv: TDEnv::new(), menv }

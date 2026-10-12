@@ -75,7 +75,7 @@ pub(in crate::interp::al) fn check_rel_inputs(
         .map(|idx| typs[idx.node].clone())
         .collect::<Vec<_>>();
     check_values(arena, ctx, id, &typs, values, || {
-        error::guard::relation_input_type_mismatch(id.node.clone())
+        error::guard::relation_input_type_mismatch(id.node.to_string())
     })
 }
 
@@ -103,7 +103,7 @@ pub(in crate::interp::al) fn check_func_inputs(
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the bound type parameters
     check_values(arena, &ctx_local, id, &typ.typs_params, values, || {
-        error::guard::function_input_type_mismatch(id.node.clone())
+        error::guard::function_input_type_mismatch(id.node.to_string())
     })
 }
 
@@ -119,7 +119,7 @@ fn check_values(
     // Subtyping resolves type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
     let find_func = |name: &str| {
-        let id = crate::phrase!(node: name.to_owned(), span: id.span);
+        let id = crate::phrase!(node: name.into(), span: id.span);
         ctx.find_func_typ(&id).ok()
     };
     // Check all values against their types at once
@@ -145,7 +145,7 @@ fn check_func_output(
     let typ = unwrap_from_result!(typ::subst_typ(&|id| theta.get(id), typ), &id.span);
     // Check the single result
     check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
-        error::guard::function_output_type_mismatch(id.node.clone())
+        error::guard::function_output_type_mismatch(id.node.to_string())
     })
 }
 
@@ -253,7 +253,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         let typs = rel.not_typ.node.args().to_vec();
         let (_, typs) = input::split(&rel.input_hint, typs).expect("input hint must fit relation");
         unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
-            error::guard::relation_output_type_mismatch(id.node.clone())
+            error::guard::relation_output_type_mismatch(id.node.to_string())
         }));
     }
     ok!(values)
@@ -316,11 +316,11 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     let result = if det {
         choose_deterministic(paths, &mut evaluate, |(group_a, path_a), (group_b, path_b)| {
             let diagnostic = error::call::relation_nondeterministic(
-                id.node.clone(),
-                group_a.id.node.clone(),
-                path_a.id.node.clone(),
-                group_b.id.node.clone(),
-                path_b.id.node.clone(),
+                id.node.to_string(),
+                group_a.id.node.to_string(),
+                path_a.id.node.to_string(),
+                group_b.id.node.to_string(),
+                path_b.id.node.to_string(),
             )
             .with_label(Label::primary(&id.span, ""));
             Box::new(Report::from(diagnostic))
@@ -560,9 +560,12 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     // Deterministic mode rejects two matching clauses
     let result = if det {
         choose_deterministic(0..defined_func.clauses.len(), &mut evaluate, |idx_a, idx_b| {
-            let diagnostic =
-                error::call::function_nondeterministic(defined_func.id.node.clone(), idx_a, idx_b)
-                    .with_label(Label::primary(&defined_func.id.span, ""));
+            let diagnostic = error::call::function_nondeterministic(
+                defined_func.id.node.to_string(),
+                idx_a,
+                idx_b,
+            )
+            .with_label(Label::primary(&defined_func.id.span, ""));
             Box::new(Report::from(diagnostic))
         })
     // Sequential mode takes the first matching clause

@@ -1985,8 +1985,8 @@ impl Prose {
     fn of_group_dispatch(span: &Span, id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
         let anchor_group = fallthrough::anchor_of_group(&id_rel.node, &id_group.node);
         let prose_group = Prose::link(
-            Link::Direct(crate::phrase! { node: anchor_group, span: *span }),
-            Prose::text(id_group.node.clone()),
+            Link::Direct(crate::phrase! { node: anchor_group.into(), span: *span }),
+            Prose::text(id_group.node.to_string()),
         );
         Prose::seq([Prose::text("goto "), prose_group])
     }
@@ -2380,7 +2380,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Build the forced binding heading with its failure continuation
         let code_l = Code::of_exp(&option_instr.exp_l);
         let link_get =
-            Link::Direct(crate::phrase! { node: "option_get".to_owned(), span: instr.node.span });
+            Link::Direct(crate::phrase! { node: "option_get".into(), span: instr.node.span });
         let prose_get = Prose::link(link_get, Prose::text("*!*"));
         let prose_r = Prose::of_exp(&option_instr.exp_r);
         let prose_fallthrough = Prose::of_fallthrough_link(ctx, instr);
@@ -2488,7 +2488,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let link = Link::Subject(Subject::Relation(
             crate::phrase! { node: id_rel.node.clone(), span: hints.span },
         ));
-        let prose_name = Prose::link(link.clone(), Prose::text(id_rel.node.clone()));
+        let prose_name = Prose::link(link.clone(), Prose::text(id_rel.node.to_string()));
         let prose_header = Prose::seq([prose_name, Prose::text(":")]);
         let block_header = Block::concat([Block::inline(prose_header), Block::raw("\n\n")]);
         // Select paired, input-only, truth, or notation prose

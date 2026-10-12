@@ -734,7 +734,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 let value_case =
                     notation::flat::Mixfix::new(arena_mixop, mixop, vec![value_width, value_int])
                         .expect("the literal shape has two positions");
-                let id_typ = phrase!(node: "integerLiteral".to_owned(), span: Span::default());
+                let id_typ = phrase!(node: "integerLiteral".into(), span: Span::default());
                 let value = Value::new(
                     &mut arena,
                     ValueKind::Case(value_case),

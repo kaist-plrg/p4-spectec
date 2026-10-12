@@ -26,7 +26,7 @@ fn init_from_el(spec_el: &el::Spec) -> BTreeMap<String, &el::Def> {
     spec_el
         .iter()
         .filter_map(|def_el| match &def_el.node {
-            el::DefKind::TableDef(def) => Some((def.id.node.clone(), def_el)),
+            el::DefKind::TableDef(def) => Some((def.id.node.to_string(), def_el)),
             _ => None,
         })
         .collect()
@@ -38,7 +38,7 @@ fn init_from_pl(spec_pl: &pl::Spec) -> BTreeMap<String, &pl::Def> {
         .iter()
         .filter_map(|def_pl| match &def_pl.node.node {
             pl::DefKind::MetaFunc(pl::MetaFuncDef::Table(func)) => {
-                Some((func.id.node.clone(), def_pl))
+                Some((func.id.node.to_string(), def_pl))
             }
             _ => None,
         })

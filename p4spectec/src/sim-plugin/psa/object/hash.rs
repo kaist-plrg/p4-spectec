@@ -136,7 +136,7 @@ impl HashExtern {
         let value_result = pack::p4_arbitrary_int(ctx.arena_mut(), int_hash)?;
         let value_result = func::cast_op(ctx, value_typ, value_result)?;
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(

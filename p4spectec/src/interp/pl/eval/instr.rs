@@ -284,7 +284,7 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         ast::HoldCase::NotHold(block, _) if !cond => evaluate_block(runner_ctx, ctx, block),
         // A failed hold condition retains its relation failure
         ast::HoldCase::Hold(..) => {
-            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.clone());
+            let diagnostic = error::prem::hold_condition_unmet(instr.id.node.to_string());
             let report = Report::from(diagnostic)
                 .with_span(&instr.id.span)
                 .with_children(errors);
@@ -293,7 +293,10 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         // A failed not-hold condition has no inner failure
         ast::HoldCase::NotHold(..) => ok!((
             ctx,
-            Flow::cont(instr.id.span, error::prem::not_hold_condition_unmet(instr.id.node.clone()),)
+            Flow::cont(
+                instr.id.span,
+                error::prem::not_hold_condition_unmet(instr.id.node.to_string()),
+            )
         )),
     }
 }

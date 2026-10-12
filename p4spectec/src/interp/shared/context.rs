@@ -287,8 +287,9 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     /// Finds a type in either scope or reports the lookup location.
     pub fn find_typdef<'a>(&'a self, id: &ast::Id) -> Result<&'a TypeDef, Error> {
         self.find_typdef_opt(id).ok_or_else(|| {
-            let diagnostic = error::context::binding_undefined(EntityKind::Type, id.node.clone())
-                .with_label(Label::primary(&id.span, ""));
+            let diagnostic =
+                error::context::binding_undefined(EntityKind::Type, id.node.to_string())
+                    .with_label(Label::primary(&id.span, ""));
             Box::new(Report::from(diagnostic))
         })
     }
@@ -304,7 +305,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     pub fn find_rel(&self, id: &ast::Id) -> Result<&'global Callable<R>, Error> {
         self.find_rel_opt(id).ok_or_else(|| {
             let diagnostic =
-                error::context::binding_undefined(EntityKind::Relation, id.node.clone())
+                error::context::binding_undefined(EntityKind::Relation, id.node.to_string())
                     .with_label(Label::primary(&id.span, ""));
             Box::new(Report::from(diagnostic))
         })
@@ -328,7 +329,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     ) -> Result<(Scope, &'a Rc<Callable<F>>), Error> {
         self.find_func_opt(id).ok_or_else(|| {
             let diagnostic =
-                error::context::binding_undefined(EntityKind::Function, id.node.clone())
+                error::context::binding_undefined(EntityKind::Function, id.node.to_string())
                     .with_label(Label::primary(&id.span, ""));
             Box::new(Report::from(diagnostic))
         })
@@ -341,8 +342,9 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     /// Binds a type locally; the id must be new in both scopes.
     pub fn add_typdef(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         if self.find_typdef_opt(&id).is_some() {
-            let diagnostic = error::context::binding_repeated(EntityKind::Type, id.node)
-                .with_label(Label::primary(&id.span, ""));
+            let diagnostic =
+                error::context::binding_repeated(EntityKind::Type, id.node.to_string())
+                    .with_label(Label::primary(&id.span, ""));
             return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.tdenv.insert(id, typdef);
@@ -391,7 +393,7 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
             TypeDef::Defined(tparams, def_typ) => Ok((tparams, def_typ)),
             _ => {
                 let diagnostic =
-                    error::context::binding_undefined(EntityKind::DefinedType, id.node.clone())
+                    error::context::binding_undefined(EntityKind::DefinedType, id.node.to_string())
                         .with_label(Label::primary(&id.span, ""));
                 Err(Box::new(Report::from(diagnostic)))
             }
@@ -419,8 +421,9 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
     fn add_typdef_local(&mut self, id: ast::Id, typdef: TypeDef) -> Result<(), Error> {
         // A type parameter may shadow a global definition
         if self.local.tdenv.contains_key(&id) {
-            let diagnostic = error::context::binding_repeated(EntityKind::Type, id.node)
-                .with_label(Label::primary(&id.span, ""));
+            let diagnostic =
+                error::context::binding_repeated(EntityKind::Type, id.node.to_string())
+                    .with_label(Label::primary(&id.span, ""));
             return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.tdenv.insert(id, typdef);
@@ -437,8 +440,9 @@ impl<R, F: FuncSignature> WriteContext for Context<'_, R, F> {
 
     fn add_func(&mut self, id: ast::Id, func: Rc<Callable<F>>) -> Result<(), Error> {
         if self.find_func_opt(&id).is_some() {
-            let diagnostic = error::context::binding_repeated(EntityKind::Function, id.node)
-                .with_label(Label::primary(&id.span, ""));
+            let diagnostic =
+                error::context::binding_repeated(EntityKind::Function, id.node.to_string())
+                    .with_label(Label::primary(&id.span, ""));
             return Err(Box::new(Report::from(diagnostic)));
         }
         self.local.fenv.insert(id, func);
