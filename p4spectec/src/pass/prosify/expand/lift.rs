@@ -175,7 +175,7 @@ impl LiftedCall {
         }
 
         // Bind the extracted call immediately before its owning instruction
-        let span = instr_sl.span.clone();
+        let span = instr_sl.span;
         crate::phrase! {
             node: sl::InstrKind::Let(sl::LetInstr {
                 exp_l: exp_new_sl,
@@ -285,10 +285,9 @@ fn try_lift_call(ids_used: &mut IdSet, exp_target_sl: &mut sl::Exp) -> Option<Li
     // Allocate the replacement variable from the call result type
     let typ_sl = crate::phrase! {
         node: exp_target_sl.note.as_ref().clone(),
-        span: exp_target_sl.span.clone(),
+        span: exp_target_sl.span,
     };
-    let var_new_sl =
-        il::fresh::var_from_typ(&IdMap::new(), ids_used, exp_target_sl.span.clone(), &typ_sl);
+    let var_new_sl = il::fresh::var_from_typ(&IdMap::new(), ids_used, exp_target_sl.span, &typ_sl);
     ids_used.insert(var_new_sl.id.clone());
     let exp_new_sl = il::var::as_exp(true, &var_new_sl);
     let exp_call_sl = std::mem::replace(exp_target_sl, exp_new_sl.clone());

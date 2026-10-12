@@ -133,14 +133,14 @@ impl P4Error {
         let notes = if span == Span::default() {
             Vec::new()
         } else {
-            let file = span.left.file.escape_debug();
+            let file = span.left.file.name().escape_debug();
             let loc = if span.left.line == 0 {
                 file.to_string()
             } else if span.left.file != span.right.file {
                 format!(
                     "{file}:{}-{}:{}",
                     span.left.line,
-                    span.right.file.escape_debug(),
+                    span.right.file.name().escape_debug(),
                     span.right.line
                 )
             } else if span.left.line != span.right.line {

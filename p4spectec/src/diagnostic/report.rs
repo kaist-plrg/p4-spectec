@@ -27,12 +27,12 @@ pub struct Label {
 impl Label {
     /// Labels the source occurrence responsible for a diagnostic.
     pub fn primary(span: &Span, message: impl Into<String>) -> Self {
-        Self { style: LabelStyle::Primary, span: span.clone(), message: message.into() }
+        Self { style: LabelStyle::Primary, span: *span, message: message.into() }
     }
 
     /// Relates another source occurrence to the responsible occurrence.
     pub fn secondary(span: &Span, message: impl Into<String>) -> Self {
-        Self { style: LabelStyle::Secondary, span: span.clone(), message: message.into() }
+        Self { style: LabelStyle::Secondary, span: *span, message: message.into() }
     }
 }
 

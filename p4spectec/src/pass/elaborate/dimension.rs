@@ -60,7 +60,7 @@ impl DimContext {
 
     /// Records one occurrence of `id` at dimension `dim`.
     fn add(&mut self, id: &Id, dim: Dim) {
-        let occurrence = phrase!(node: dim, span: id.span.clone());
+        let occurrence = phrase!(node: dim, span: id.span);
         if let Some(occurrences) = self.0.get_mut(id) {
             occurrences.push(occurrence);
         } else {
@@ -115,7 +115,7 @@ fn infer_exp(dim_ctx: &mut DimContext, exp: &ast::Exp, iters: &[ast::Iter]) {
         ast::ExpKind::Bool(_) | ast::ExpKind::Num(_) | ast::ExpKind::Text(_) => {}
         // An identifier occurs at its own type under the enclosing iterations
         ast::ExpKind::Id(id) => {
-            let typ = phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone());
+            let typ = phrase!(node: exp.note.as_ref().clone(), span: exp.span);
             dim_ctx.add(id, Dim::new(typ, iters.to_vec()));
         }
         // Unary forms collect from the operand
@@ -446,7 +446,7 @@ fn annotate_text_exp() -> Occurrences {
 // - Identifier expressions
 
 fn annotate_id_exp(span: &Span, typ_kind: &ast::TypKind, id: &Id) -> Occurrences {
-    let typ = phrase!(node: typ_kind.clone(), span: span.clone());
+    let typ = phrase!(node: typ_kind.clone(), span: *span);
     Occurrences::singleton(id, typ)
 }
 

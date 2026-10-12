@@ -78,7 +78,7 @@ fn sub_typ_inner(
                 Err(arity_mismatch) => {
                     let arity_mismatch = TypeArityMismatch::TypeArgument(arity_mismatch);
                     let error_kind = TypeErrorKind::ArityMismatch(arity_mismatch);
-                    let error = TypeError::new(error_kind, typ_source.span.clone());
+                    let error = TypeError::new(error_kind, typ_source.span);
                     return Err(error);
                 }
             };
@@ -87,7 +87,7 @@ fn sub_typ_inner(
                 Err(arity_mismatch) => {
                     let arity_mismatch = TypeArityMismatch::TypeArgument(arity_mismatch);
                     let error_kind = TypeErrorKind::ArityMismatch(arity_mismatch);
-                    let error = TypeError::new(error_kind, typ_target.span.clone());
+                    let error = TypeError::new(error_kind, typ_target.span);
                     return Err(error);
                 }
             };

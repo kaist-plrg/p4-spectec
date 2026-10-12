@@ -104,22 +104,22 @@ fn prosify_exp(ctx: &Context, exp_sl: &sl::Exp) -> Result<pl::Exp, ProseError> {
         il::ExpKind::Bool(value) => Ok(crate::annotated_note_phrase! {
             node: pl::ExpKind::Bool(*value),
             note: exp_sl.note.as_ref().clone(),
-            span: exp_sl.span.clone(),
+            span: exp_sl.span,
         }),
         il::ExpKind::Num(num) => Ok(crate::annotated_note_phrase! {
             node: pl::ExpKind::Num(num.clone()),
             note: exp_sl.note.as_ref().clone(),
-            span: exp_sl.span.clone(),
+            span: exp_sl.span,
         }),
         il::ExpKind::Text(text) => Ok(crate::annotated_note_phrase! {
             node: pl::ExpKind::Text(text.clone()),
             note: exp_sl.note.as_ref().clone(),
-            span: exp_sl.span.clone(),
+            span: exp_sl.span,
         }),
         il::ExpKind::Id(id) => Ok(crate::annotated_note_phrase! {
             node: pl::ExpKind::Id(id.clone()),
             note: exp_sl.note.as_ref().clone(),
-            span: exp_sl.span.clone(),
+            span: exp_sl.span,
         }),
         il::ExpKind::Un(op, op_typ, exp_inner_sl) => {
             prosify_un_exp(ctx, exp_sl, *op, *op_typ, exp_inner_sl)
@@ -181,7 +181,7 @@ fn prosify_un_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -202,7 +202,7 @@ fn prosify_bin_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -223,7 +223,7 @@ fn prosify_cmp_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -241,7 +241,7 @@ fn prosify_upcast_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -259,7 +259,7 @@ fn prosify_downcast_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -279,7 +279,7 @@ fn prosify_sub_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -297,7 +297,7 @@ fn prosify_match_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -314,7 +314,7 @@ fn prosify_tuple_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -332,7 +332,7 @@ fn prosify_case_exp(
     if let il::TypKind::Var(id_typ, _) = exp_sl.note.as_ref()
         && let Some(hints_case) = ctx.hints_case(id_typ, not_exp_sl.mixop().as_ref())
     {
-        hints.span = hints_case.span.clone();
+        hints.span = hints_case.span;
         hints.node.prose = hints_case.node.prose.clone();
         hints.node.prose_fields = hints_case.node.prose_fields.clone();
         // Holes and field names count the notation's arguments
@@ -344,7 +344,7 @@ fn prosify_case_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
         hints: hints,
     })
 }
@@ -366,7 +366,7 @@ fn prosify_struct_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -389,7 +389,7 @@ fn prosify_option_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -406,7 +406,7 @@ fn prosify_list_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -425,7 +425,7 @@ fn prosify_cons_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -444,7 +444,7 @@ fn prosify_cat_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -463,7 +463,7 @@ fn prosify_mem_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -480,7 +480,7 @@ fn prosify_len_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -498,7 +498,7 @@ fn prosify_dot_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -517,7 +517,7 @@ fn prosify_idx_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -539,7 +539,7 @@ fn prosify_slice_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -561,7 +561,7 @@ fn prosify_update_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -581,7 +581,7 @@ fn prosify_call_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
         hints: hints,
     })
 }
@@ -600,7 +600,7 @@ fn prosify_iter_exp(
     Ok(crate::annotated_note_phrase! {
         node: exp_kind_pl,
         note: exp_sl.note.as_ref().clone(),
-        span: exp_sl.span.clone(),
+        span: exp_sl.span,
     })
 }
 
@@ -631,7 +631,7 @@ fn prosify_path(ctx: &Context, path_sl: &sl::Path) -> Result<pl::Path, ProseErro
         il::PathKind::Root => Ok(crate::note_phrase! {
             node: pl::PathKind::Root,
             note: path_sl.note.as_ref().clone(),
-            span: path_sl.span.clone(),
+            span: path_sl.span,
         }),
         il::PathKind::Idx(path_inner_sl, exp_idx_sl) => {
             prosify_idx_path(ctx, path_sl, path_inner_sl, exp_idx_sl)
@@ -657,7 +657,7 @@ fn prosify_idx_path(
     Ok(crate::note_phrase! {
         node: pl::PathKind::Idx(Box::new(path_inner_pl), Box::new(exp_idx_pl)),
         note: path_sl.note.as_ref().clone(),
-        span: path_sl.span.clone(),
+        span: path_sl.span,
     })
 }
 
@@ -679,7 +679,7 @@ fn prosify_slice_path(
             Box::new(exp_len_pl),
         ),
         note: path_sl.note.as_ref().clone(),
-        span: path_sl.span.clone(),
+        span: path_sl.span,
     })
 }
 
@@ -694,7 +694,7 @@ fn prosify_dot_path(
     Ok(crate::note_phrase! {
         node: pl::PathKind::Dot(Box::new(path_inner_pl), atom.clone()),
         note: path_sl.note.as_ref().clone(),
-        span: path_sl.span.clone(),
+        span: path_sl.span,
     })
 }
 
@@ -706,7 +706,7 @@ fn prosify_arg(ctx: &Context, arg_sl: &sl::Arg) -> Result<pl::Arg, ProseError> {
         il::ArgKind::Exp(exp_sl) => prosify_exp_arg(ctx, arg_sl, exp_sl),
         il::ArgKind::Def(id) => Ok(crate::phrase! {
             node: pl::ArgKind::Def(id.clone()),
-            span: arg_sl.span.clone(),
+            span: arg_sl.span,
         }),
     }
 }
@@ -720,7 +720,7 @@ fn prosify_exp_arg(
     let exp_pl = prosify_exp(ctx, exp_sl)?;
     Ok(crate::phrase! {
         node: pl::ArgKind::Exp(Box::new(exp_pl)),
-        span: arg_sl.span.clone(),
+        span: arg_sl.span,
     })
 }
 
@@ -756,7 +756,7 @@ fn prosify_exp_param(
     let exp_pl = prosify_exp(ctx, exp_sl)?;
     Ok(crate::phrase! {
         node: pl::ParamKind::Exp(typ.clone(), Box::new(exp_pl)),
-        span: param_sl.span.clone(),
+        span: param_sl.span,
     })
 }
 
@@ -772,7 +772,7 @@ fn prosify_def_param(
     let params_pl = prosify_params(ctx, params_sl)?;
     Ok(crate::phrase! {
         node: pl::ParamKind::Def(id.clone(), tparams.to_vec(), params_pl, typ.clone()),
-        span: param_sl.span.clone(),
+        span: param_sl.span,
     })
 }
 
@@ -866,7 +866,7 @@ fn prosify_dispatch_hold_instr(
 ) -> Result<pl::DispatchBlock, ProseError> {
     let mut hints = annot::Hints::default();
     if let Some(hints_rel) = ctx.hints_rel(&instr_sl.id) {
-        hints.span = hints_rel.span.clone();
+        hints.span = hints_rel.span;
         hints.node.prose_true = hints_rel.node.prose_true.clone();
         hints.node.prose_false = hints_rel.node.prose_false.clone();
         // Holes count the notation's arguments
@@ -965,7 +965,7 @@ fn prosify_dispatch_let_instr(
                 prose_fields: exp_l_pl.hints.node.prose_fields.clone(),
                 ..annot::HintsKind::default()
             },
-            span: exp_l_pl.hints.span.clone(),
+            span: exp_l_pl.hints.span,
         }
     } else {
         annot::Hints::default()
@@ -1019,7 +1019,7 @@ fn prosify_dispatch_rulegroup_instr(
 ) -> Result<pl::DispatchBlock, ProseError> {
     let mut hints = annot::Hints::default();
     if let Some(hints_rel) = ctx.hints_rel(ctx.namespace()) {
-        hints.span = hints_rel.span.clone();
+        hints.span = hints_rel.span;
         hints.node.prose_in = hints_rel.node.prose_in.clone();
         hints.node.prose_true = hints_rel.node.prose_true.clone();
         // Group headings describe the relation inputs
@@ -1141,7 +1141,7 @@ fn prosify_group_hold_instr(
 ) -> Result<pl::GroupBlock, ProseError> {
     let mut hints = annot::Hints::default();
     if let Some(hints_rel) = ctx.hints_rel(&instr_sl.id) {
-        hints.span = hints_rel.span.clone();
+        hints.span = hints_rel.span;
         hints.node.prose_true = hints_rel.node.prose_true.clone();
         hints.node.prose_false = hints_rel.node.prose_false.clone();
         // Holes count the notation's arguments
@@ -1240,7 +1240,7 @@ fn prosify_group_let_instr(
                 prose_fields: exp_l_pl.hints.node.prose_fields.clone(),
                 ..annot::HintsKind::default()
             },
-            span: exp_l_pl.hints.span.clone(),
+            span: exp_l_pl.hints.span,
         }
     } else {
         annot::Hints::default()
@@ -1294,7 +1294,7 @@ fn prosify_group_rule_instr(
 ) -> Result<pl::GroupBlock, ProseError> {
     let mut hints = annot::Hints::default();
     if let Some(hints_rel) = ctx.hints_rel(&instr_sl.id) {
-        hints.span = hints_rel.span.clone();
+        hints.span = hints_rel.span;
         hints.node.prose_in = hints_rel.node.prose_in.clone();
         // Output holes are numbered after the inputs are removed
         hints.node.prose_out = hints_rel
@@ -1342,7 +1342,7 @@ fn prosify_group_result_instr(
 ) -> Result<pl::GroupBlock, ProseError> {
     let mut hints = annot::Hints::default();
     if let Some(hints_rel) = ctx.hints_rel(ctx.namespace()) {
-        hints.span = hints_rel.span.clone();
+        hints.span = hints_rel.span;
         // The output template is the enclosing relation's, realigned
         hints.node.prose_out = hints_rel
             .node
@@ -1552,7 +1552,7 @@ fn build_rel_hints(
             prose_output_exps,
             prose_fields: None,
         },
-        span: hints_rel.span.clone(),
+        span: hints_rel.span,
     };
     // Definition titles use full notation, input, and realigned output domains
     let num_args = rel_signature.not_typ.node.args().len();
@@ -1662,7 +1662,7 @@ fn build_func_hints(
             prose_false: hints_func.node.prose_false.clone(),
             ..annot::HintsKind::default()
         },
-        span: hints_func.span.clone(),
+        span: hints_func.span,
     };
     // Calls and definitions supply the argument count for their own use
     validate_hint_prose_in(&hints, num_args)?;

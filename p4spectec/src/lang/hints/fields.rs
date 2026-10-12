@@ -28,7 +28,7 @@ pub fn init(exp: &Exp) -> Result<FieldHint, &Exp> {
     // Preserve the element that violates the text-only contract
     let field = |exp: &Exp| match &exp.node {
         ExpKind::Text(text) => Some(crate::phrase! {
-            node: text.clone(), span: exp.span.clone(),
+            node: text.clone(), span: exp.span,
         }),
         _ => None,
     };
@@ -39,7 +39,7 @@ pub fn init(exp: &Exp) -> Result<FieldHint, &Exp> {
             .collect::<Result<_, _>>()?,
         _ => vec![field(exp).ok_or(exp)?],
     };
-    Ok(crate::phrase! { node: fields, span: exp.span.clone() })
+    Ok(crate::phrase! { node: fields, span: exp.span })
 }
 
 // == Validation

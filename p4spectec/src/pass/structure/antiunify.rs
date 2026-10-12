@@ -146,7 +146,7 @@ fn populate_iter_exp_template(
     let ExpIter { iter, vars: vars_template } = exp_iter_template;
     let ExpIter { vars, .. } = exp_iter;
     let prem = populate_id_exp_template(exp_template, exp);
-    let span = prem.span.clone();
+    let span = prem.span;
     let prem_iter =
         PremIter { iter: *iter, vars_bound: vars_template.clone(), vars_bind: vars.clone() };
     let prem = Box::new(prem);
@@ -201,7 +201,7 @@ fn antiunify_exp(frees: &mut IdSet, uenv: &mut UEnv, exp_template: &Exp, exp: &E
     crate::note_phrase! {
         node: exp_kind_template,
         note: exp_template.note.clone(),
-        span: exp_template.span.clone()
+        span: exp_template.span
     }
 }
 
@@ -395,7 +395,7 @@ fn antiunify_arg(frees: &mut IdSet, uenv: &mut UEnv, arg_template: &Arg, arg: &A
             let exp_template = antiunify_exp(frees, uenv, exp_template, exp);
             let exp_template = Box::new(exp_template);
             let arg_kind_template = ArgKind::Exp(exp_template);
-            crate::phrase! {node: arg_kind_template, span: arg_template.span.clone()}
+            crate::phrase! {node: arg_kind_template, span: arg_template.span}
         }
         // Function arguments must name the same function
         (ArgKind::Def(id_template), ArgKind::Def(id)) if id_template.syntax_eq(id) => {

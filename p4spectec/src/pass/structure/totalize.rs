@@ -87,7 +87,7 @@ fn totalize_case_instr(tdenv: &TDEnv, instr: CaseInstr) -> Result<InstrKind, Str
         .map(|case| totalize_case(tdenv, case))
         .collect::<Result<Vec<_>, _>>()?;
     let total = if let Some(mixops_case) = find_variant_case_analysis(tdenv, &cases)? {
-        let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone());
+        let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
         // Typed constructor guards and variant subtyping determine the target type
         let mixops_total =
             typ_as_variant(tdenv, &typ)?.expect("variant case analysis has a variant target");

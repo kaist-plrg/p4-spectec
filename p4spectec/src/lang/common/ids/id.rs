@@ -23,7 +23,7 @@ impl Id {
     pub fn strip_suffix(&self) -> Self {
         crate::phrase! {
             node: strip_suffix(&self.node).to_owned(),
-            span: self.span.clone(),
+            span: self.span,
         }
     }
 }

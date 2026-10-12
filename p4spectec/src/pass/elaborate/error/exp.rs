@@ -39,7 +39,7 @@ pub(in crate::pass::elaborate) fn operator_unop_type_mismatch(
     op: &il::UnOp,
     exp_il: &il::Exp,
 ) -> ElabError {
-    let typ_il = crate::phrase!(node: exp_il.note.as_ref().clone(), span: exp_il.span.clone());
+    let typ_il = crate::phrase!(node: exp_il.note.as_ref().clone(), span: exp_il.span);
     let text = typ_il.to_string();
     cause(
         OPERATOR_UNOP_TYPE_MISMATCH,
@@ -74,10 +74,8 @@ fn operator_pair_type_mismatch(
     exp_l_il: &il::Exp,
     exp_r_il: &il::Exp,
 ) -> ElabError {
-    let typ_l_il =
-        crate::phrase!(node: exp_l_il.note.as_ref().clone(), span: exp_l_il.span.clone());
-    let typ_r_il =
-        crate::phrase!(node: exp_r_il.note.as_ref().clone(), span: exp_r_il.span.clone());
+    let typ_l_il = crate::phrase!(node: exp_l_il.note.as_ref().clone(), span: exp_l_il.span);
+    let typ_r_il = crate::phrase!(node: exp_r_il.note.as_ref().clone(), span: exp_r_il.span);
     let text_l = typ_l_il.to_string();
     let text_r = typ_r_il.to_string();
     cause(

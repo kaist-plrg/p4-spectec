@@ -30,10 +30,10 @@ pub(crate) fn describe_token(source: &str, span: &Span, token: &Token) -> String
     let offset = |pos: &Position| {
         source
             .split_inclusive('\n')
-            .take(pos.line.saturating_sub(1))
+            .take((pos.line as usize).saturating_sub(1))
             .map(str::len)
             .sum::<usize>()
-            + pos.column
+            + pos.column as usize
     };
     let text = &source[offset(&span.left)..offset(&span.right)];
     format!("token {text:?}")

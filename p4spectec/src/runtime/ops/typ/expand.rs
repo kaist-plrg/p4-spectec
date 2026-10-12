@@ -30,7 +30,7 @@ pub(super) fn expand_typ_with<'a, 'env, P: ast::Stage>(
     // An unknown type name is an error, not a non-alias
     let Some(typdef) = find_typdef_opt(id) else {
         let error_kind = TypeErrorKind::TypeUndefined(id.node.clone());
-        let error = TypeError::new(error_kind, typ.span.clone());
+        let error = TypeError::new(error_kind, typ.span);
         return Err(error);
     };
     // Parameters and externs are opaque
@@ -47,7 +47,7 @@ pub(super) fn expand_typ_with<'a, 'env, P: ast::Stage>(
         Err(arity_mismatch) => {
             let arity_mismatch = TypeArityMismatch::TypeArgument(arity_mismatch);
             let error_kind = TypeErrorKind::ArityMismatch(arity_mismatch);
-            let error = TypeError::new(error_kind, typ.span.clone());
+            let error = TypeError::new(error_kind, typ.span);
             return Err(error);
         }
     };

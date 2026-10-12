@@ -148,7 +148,7 @@ pub fn equiv_func_typ<'env, P: ast::Stage>(
         let mismatch = ArityMismatch::new(tparams_l.len(), tparams_r.len());
         let mismatch = TypeArityMismatch::TypeParameter(mismatch);
         let kind = TypeErrorKind::ArityMismatch(mismatch);
-        let error = TypeError::new(kind, span.clone());
+        let error = TypeError::new(kind, *span);
         return Err(error);
     }
     let typs_params_l = &func_typ_l.typs_params;
@@ -158,7 +158,7 @@ pub fn equiv_func_typ<'env, P: ast::Stage>(
         let mismatch = ArityMismatch::new(typs_params_l.len(), typs_params_r.len());
         let mismatch = TypeArityMismatch::Parameter(mismatch);
         let kind = TypeErrorKind::ArityMismatch(mismatch);
-        let error = TypeError::new(kind, span.clone());
+        let error = TypeError::new(kind, *span);
         return Err(error);
     }
 

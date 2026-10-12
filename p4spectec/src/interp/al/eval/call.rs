@@ -61,7 +61,7 @@ pub(in crate::interp::al) fn check_rel_inputs(
         ast::RelDef::Defined(rel) => (&rel.not_typ, &rel.input_hint),
     };
     // Always check the input count, even without type guards
-    unwrap!(backtrack::check(inputs.indices().len() == values.len(), id.span.clone(), || {
+    unwrap!(backtrack::check(inputs.indices().len() == values.len(), id.span, || {
         error::guard::relation_input_arity_mismatch(inputs.indices().len(), values.len())
     }));
     if !guard {
@@ -90,10 +90,10 @@ pub(in crate::interp::al) fn check_func_inputs(
 ) -> Backtrack<()> {
     let typ = unwrap_from_result!(ctx.find_func_typ(id), &id.span);
     // Check type and value argument counts before binding them
-    unwrap!(backtrack::check(typ.tparams.len() == targs.len(), id.span.clone(), || {
+    unwrap!(backtrack::check(typ.tparams.len() == targs.len(), id.span, || {
         error::call::type_argument_arity_mismatch(typ.tparams.len(), targs.len())
     }));
-    unwrap!(backtrack::check(typ.typs_params.len() == values.len(), id.span.clone(), || {
+    unwrap!(backtrack::check(typ.typs_params.len() == values.len(), id.span, || {
         error::guard::function_input_arity_mismatch(typ.typs_params.len(), values.len())
     }));
     if !guard {
@@ -119,7 +119,7 @@ fn check_values(
     // Subtyping resolves type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
     let find_func = |name: &str| {
-        let id = crate::phrase!(node: name.to_owned(), span: id.span.clone());
+        let id = crate::phrase!(node: name.to_owned(), span: id.span);
         ctx.find_func_typ(&id).ok()
     };
     // Check all values against their types at once
@@ -127,7 +127,7 @@ fn check_values(
         value::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    backtrack::check(matches, id.span.clone(), diagnostic)
+    backtrack::check(matches, id.span, diagnostic)
 }
 
 /// Type-checks a function result with the type parameters substituted.
@@ -222,7 +222,7 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
             .insert(key, values.clone());
     }
     // Nest failures under the invocation trace
-    result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(id))
+    result.with_frame(id.span, || error::trace::message_rel_invocation(id))
 }
 
 // - Extern relation
@@ -245,7 +245,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     let (values, _) = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
     let len = rel.not_typ.node.args().len() - rel.input_hint.indices().len();
-    unwrap!(backtrack::check(len == values.len(), id.span.clone(), || {
+    unwrap!(backtrack::check(len == values.len(), id.span, || {
         error::guard::relation_output_arity_mismatch(len, values.len())
     }));
     if runner_ctx.interp().config.guard {
@@ -399,7 +399,7 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
         runner_ctx.interp_mut().cache.funcs.insert(key, *value);
     }
     // Nest failures under the invocation trace
-    result.with_frame(id.span.clone(), || error::trace::message_func_invocation(id, targs))
+    result.with_frame(id.span, || error::trace::message_func_invocation(id, targs))
 }
 
 // - Extern function

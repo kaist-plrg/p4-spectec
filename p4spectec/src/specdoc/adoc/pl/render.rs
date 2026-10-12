@@ -714,7 +714,7 @@ impl Code {
         let code_args = Code::of_args(args);
         let code_call = Code::seq([Code::token(text_id), Code::token(text_targs), code_args]);
         let link = Link::Subject(Subject::Function(
-            crate::phrase! { node: id.node.clone(), span: span_hint.clone() },
+            crate::phrase! { node: id.node.clone(), span: *span_hint },
         ));
         Code::link(link, code_call)
     }
@@ -871,7 +871,7 @@ impl Prose {
                     false,
                 );
                 let link = Link::Subject(Subject::Function(
-                    crate::phrase! { node: id.node.clone(), span: hint.span.clone() },
+                    crate::phrase! { node: id.node.clone(), span: hint.span },
                 ));
                 Some(Prose::link(link, prose_call))
             }
@@ -1015,7 +1015,7 @@ impl Prose {
                 false,
             );
             let link = Link::Subject(Subject::Type(
-                crate::phrase! { node: id_typ.node.clone(), span: hint.span.clone() },
+                crate::phrase! { node: id_typ.node.clone(), span: hint.span },
             ));
             return Prose::link(link, prose_case);
         }
@@ -1154,7 +1154,7 @@ impl Prose {
         let prose_call =
             alternate(hint, &|text_body| reindent_lines(0, text_body), &Prose::of_arg, args, false);
         let link = Link::Subject(Subject::Function(
-            crate::phrase! { node: id.node.clone(), span: hint.span.clone() },
+            crate::phrase! { node: id.node.clone(), span: hint.span },
         ));
         Prose::link(link, prose_call)
     }
@@ -1851,7 +1851,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             .as_ref()
             .map_or(&instr.hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: hold_instr.id.node.clone(), span: span.clone() },
+            crate::phrase! { node: hold_instr.id.node.clone(), span: *span },
         ));
         let prose_cond = match hint_opt {
             // Hinted relations describe the branch condition in prose
@@ -1985,7 +1985,7 @@ impl Prose {
     fn of_group_dispatch(span: &Span, id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
         let anchor_group = fallthrough::anchor_of_group(&id_rel.node, &id_group.node);
         let prose_group = Prose::link(
-            Link::Direct(crate::phrase! { node: anchor_group, span: span.clone() }),
+            Link::Direct(crate::phrase! { node: anchor_group, span: *span }),
             Prose::text(id_group.node.clone()),
         );
         Prose::seq([Prose::text("goto "), prose_group])
@@ -2093,7 +2093,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             _ => &instr.hints.span,
         };
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: rule_instr.id.node.clone(), span: span.clone() },
+            crate::phrase! { node: rule_instr.id.node.clone(), span: *span },
         ));
         let prose_rule = if let (Some(hint_input), Some(hint_output)) =
             (&instr.hints.node.prose_in, &instr.hints.node.prose_out)
@@ -2379,9 +2379,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Block {
         // Build the forced binding heading with its failure continuation
         let code_l = Code::of_exp(&option_instr.exp_l);
-        let link_get = Link::Direct(
-            crate::phrase! { node: "option_get".to_owned(), span: instr.node.span.clone() },
-        );
+        let link_get =
+            Link::Direct(crate::phrase! { node: "option_get".to_owned(), span: instr.node.span });
         let prose_get = Prose::link(link_get, Prose::text("*!*"));
         let prose_r = Prose::of_exp(&option_instr.exp_r);
         let prose_fallthrough = Prose::of_fallthrough_link(ctx, instr);
@@ -2436,7 +2435,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         crate::annotated_note_phrase! {
             node: exp_kind,
             note: exp_sl.note.as_ref().clone(),
-            span: exp_sl.span.clone(),
+            span: exp_sl.span,
         }
     }
 }
@@ -2487,7 +2486,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let exps_input = exps_synthesized.as_deref().unwrap_or(exps);
         // Build the shared linked heading before selecting the title form
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: id_rel.node.clone(), span: hints.span.clone() },
+            crate::phrase! { node: id_rel.node.clone(), span: hints.span },
         ));
         let prose_name = Prose::link(link.clone(), Prose::text(id_rel.node.clone()));
         let prose_header = Prose::seq([prose_name, Prose::text(":")]);
@@ -2797,7 +2796,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         };
         let span = hint_opt.map_or(&instr.hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: group_instr.id_rel.node.clone(), span: span.clone() },
+            crate::phrase! { node: group_instr.id_rel.node.clone(), span: *span },
         ));
         let prose_title = Prose::link(link, prose_body);
         // Render the group body below its linked title
@@ -2848,7 +2847,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         };
         let span = hint_opt.map_or(&hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Relation(
-            crate::phrase! { node: id_rel.node.clone(), span: span.clone() },
+            crate::phrase! { node: id_rel.node.clone(), span: *span },
         ));
         let prose_title = Prose::link(link, prose_body);
         // Render local arms while keeping relation fragment targets fixed
@@ -3005,7 +3004,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         };
         let span = hint_opt.map_or(&hints.span, |hint| &hint.span);
         let link = Link::Subject(Subject::Function(
-            crate::phrase! { node: id_func.node.clone(), span: span.clone() },
+            crate::phrase! { node: id_func.node.clone(), span: *span },
         ));
         Block::inline(Prose::link(link, prose_body))
     }

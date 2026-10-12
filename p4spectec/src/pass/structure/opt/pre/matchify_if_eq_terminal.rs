@@ -76,14 +76,14 @@ fn matchify_exp(exp: Exp) -> Exp {
             let pattern = Pattern::Case(Rc::clone(not_exp.mixop()));
             let exp_kind = ExpKind::Match(exp_l, pattern);
             let exp_match =
-                crate::note_phrase!(node: exp_kind, note: exp.note.clone(), span: exp.span.clone());
+                crate::note_phrase!(node: exp_kind, note: exp.note.clone(), span: exp.span);
             ExpKind::Un(UnOp::Bool(BoolUnOp::Not), OpTyp::Bool, Box::new(exp_match))
         }
         (CmpOp::Bool(BoolCmpOp::Ne), ExpKind::Case(not_exp), _) if not_exp.arity() == 0 => {
             let pattern = Pattern::Case(Rc::clone(not_exp.mixop()));
             let exp_kind = ExpKind::Match(exp_r, pattern);
             let exp_match =
-                crate::note_phrase!(node: exp_kind, note: exp.note.clone(), span: exp.span.clone());
+                crate::note_phrase!(node: exp_kind, note: exp.note.clone(), span: exp.span);
             ExpKind::Un(UnOp::Bool(BoolUnOp::Not), OpTyp::Bool, Box::new(exp_match))
         }
         _ => ExpKind::Cmp(op, op_typ, exp_l, exp_r),

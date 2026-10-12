@@ -49,7 +49,7 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
             || diagnostic
                 .labels
                 .iter()
-                .any(|label| label.span.left.file.as_ref() != path.to_string_lossy())
+                .any(|label| label.span.left.file.name() != path.to_string_lossy())
         {
             return Err(failure(&case.name, "unexpected backend diagnostic"));
         }

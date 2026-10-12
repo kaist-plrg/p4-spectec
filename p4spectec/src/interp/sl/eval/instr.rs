@@ -188,7 +188,7 @@ fn eval_if_instr<Iface: Interface, Ext: Extern>(
         eval_block(runner_ctx, ctx, &instr.block, tail)
     } else {
         ok!(Flow::cont(
-            instr.exp.span.clone(),
+            instr.exp.span,
             error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string()),
         ))
     }
@@ -243,7 +243,7 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
         }
         // Likewise, recording the failed not-hold condition
         ast::HoldCase::NotHold(..) => ok!(Flow::cont(
-            instr.id.span.clone(),
+            instr.id.span,
             error::prem::not_hold_condition_unmet(instr.id.node.clone()),
         )),
     }
@@ -268,7 +268,7 @@ fn eval_case_instr<Iface: Interface, Ext: Extern>(
     }
     // No guard accepted: fall through
     ok!(Flow::cont(
-        instr.exp.span.clone(),
+        instr.exp.span,
         error::prem::condition_unmet(format!(
             "case {}",
             instr.exp.view(&runner_ctx.arena().mixop).to_string()
@@ -387,7 +387,7 @@ fn eval_rule_tail_instr<Iface: Interface, Ext: Extern>(
     let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &instr.exps_input));
     ok!(Flow::TailRel(phrase!(
         node: (instr.id.clone(), values),
-        span: span.clone(),
+        span: *span,
     )))
 }
 
@@ -401,7 +401,7 @@ fn eval_result_instr<Iface: Interface, Ext: Extern>(
     instr: &ast::ResultInstr,
 ) -> Backtrack<Flow> {
     let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &instr.exps));
-    ok!(Flow::Result(phrase!(node: values, span: span.clone())))
+    ok!(Flow::Result(phrase!(node: values, span: *span)))
 }
 
 // - Return instruction
@@ -428,15 +428,15 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
         {
             let value =
                 unwrap!(SlInterp::invoke_func(runner_ctx, ctx.as_ref(), id, &targs, &values));
-            ok!(Flow::Return(phrase!(node: value, span: span.clone())))
+            ok!(Flow::Return(phrase!(node: value, span: *span)))
         // Global calls become tail calls for the invoker loop
         } else {
-            ok!(Flow::TailFunc(phrase!(node: (id.clone(), targs, values), span: span.clone())))
+            ok!(Flow::TailFunc(phrase!(node: (id.clone(), targs, values), span: *span)))
         }
     // Any other expression is evaluated and returned
     } else {
         let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp));
-        ok!(Flow::Return(phrase!(node: value, span: span.clone())))
+        ok!(Flow::Return(phrase!(node: value, span: *span)))
     }
 }
 

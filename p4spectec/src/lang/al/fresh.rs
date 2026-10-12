@@ -41,7 +41,7 @@ fn var_from_typ(menv: &MEnv, span: &Span, typ: &Typ) -> Var {
     });
     // Exactly one alias names the whole type
     if let (Some((id_alias, typ_alias)), None) = (vars_alias.next(), vars_alias.next()) {
-        let id = crate::phrase! { node: id_alias.node.clone(), span: span.clone() };
+        let id = crate::phrase! { node: id_alias.node.clone(), span: *span };
         return Var { id, typ: typ_alias.clone(), iters: vec![] };
     }
 
@@ -56,7 +56,7 @@ fn var_from_typ(menv: &MEnv, span: &Span, typ: &Typ) -> Var {
         _ => Var {
             id: crate::phrase! {
                 node: Print::to_string(typ),
-                span: span.clone(),
+                span: *span,
             },
             typ: typ.clone(),
             iters: vec![],

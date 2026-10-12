@@ -89,12 +89,12 @@ where
         TypKind::Var(id, targs) => {
             let typdef = find_typdef_opt(id).ok_or_else(|| MatchError::TypeUndefined {
                 name: id.node.clone(),
-                span: typ.span.clone(),
+                span: typ.span,
             })?;
             match typdef {
                 // Nothing inhabits a parameter or an unfinished type
                 TypeDef::Parameter | TypeDef::Defining(_) => {
-                    Err(MatchError::TypeVariableUnexpected { span: typ.span.clone() })
+                    Err(MatchError::TypeVariableUnexpected { span: typ.span })
                 }
                 // Extern types hold extern values
                 TypeDef::Extern => Ok(matches!(arena.value.kind(value.node), ValueKind::Extern(_))),
@@ -106,7 +106,7 @@ where
                         theta.map_err(|mismatch| MatchError::TypeArgumentCountMismatch {
                             expected: mismatch.expected,
                             actual: mismatch.actual,
-                            span: typ.span.clone(),
+                            span: typ.span,
                         })?;
                     match (&def_typ.node, arena.value.kind(value.node)) {
                         // An alias: test against the aliased type
@@ -199,7 +199,7 @@ where
         TypKind::Func(func_typ) => match arena.value.kind(value.node) {
             ValueKind::Func(id) => {
                 let func_typ_actual = find_func(&id.node).ok_or_else(|| {
-                    MatchError::FunctionUndefined { name: id.node.clone(), span: id.span.clone() }
+                    MatchError::FunctionUndefined { name: id.node.clone(), span: id.span }
                 })?;
                 let equivalent =
                     equiv_func_typ(find_typdef_opt, &typ.span, func_typ, &func_typ_actual)?;

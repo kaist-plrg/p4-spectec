@@ -123,7 +123,7 @@ impl FreeVars for Exp {
                 id: id.clone(),
                 typ: crate::phrase! {
                     node: self.note.as_ref().clone(),
-                    span: self.span.clone(),
+                    span: self.span,
                 },
                 iters: Vec::new(),
             }],

@@ -14,7 +14,7 @@ use super::ast::*;
 /// otherwise its binder list is empty.
 pub fn as_exp(is_dim: bool, var: &Var) -> Exp {
     // Start from the bare variable at its base type
-    let mut exp: Exp = crate::note_phrase!(node: ExpKind::Id(var.id.clone()), note: var.typ.node.clone(), span: var.id.span.clone());
+    let mut exp: Exp = crate::note_phrase!(node: ExpKind::Id(var.id.clone()), note: var.typ.node.clone(), span: var.id.span);
     let mut iters_prior = Vec::new();
     // Wrap one iteration at a time, lifting the type each time
     for iter in &var.iters {
@@ -22,16 +22,16 @@ pub fn as_exp(is_dim: bool, var: &Var) -> Exp {
             node: TypKind::Iter(
                 Box::new(crate::phrase! {
                     node: exp.note.as_ref().clone(),
-                    span: exp.span.clone(),
+                    span: exp.span,
                 }),
                 *iter,
             ),
-            span: var.typ.span.clone(),
+            span: var.typ.span,
         };
         // The binder names the variable as seen at this depth
         let var_binder =
             Var { id: var.id.clone(), typ: typ_iter.clone(), iters: iters_prior.clone() };
-        let span = exp.span.clone();
+        let span = exp.span;
         exp = crate::note_phrase! {
             node: ExpKind::Iter(
                 Box::new(exp),

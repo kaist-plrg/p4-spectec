@@ -417,7 +417,7 @@ fn lower_rule_prem(
     let mixop = Rc::clone(rule_prem_il.not_exp.mixop());
     let exps_il = rule_prem_il.not_exp.args().to_vec();
     let (exps_input_il, exps_output_il) = input::split(&rule_prem_il.input_hint, exps_il)
-        .map_err(|error| input_error(error, span.clone()))?;
+        .map_err(|error| input_error(error, *span))?;
     // Inputs are bound, outputs are binders
     let mut idxs_input = rule_prem_il.input_hint.indices().iter().collect::<Vec<_>>();
     idxs_input.sort_by_key(|idx| idx.node);
@@ -428,7 +428,7 @@ fn lower_rule_prem(
         analyze_exps_as_bind(ctx, &iter_ctx, &exps_output_il)?;
     let exps_al =
         input::combine(&rule_prem_il.input_hint, exps_input_il.clone(), exps_output_al.clone())
-            .map_err(|error| input_error(error, span.clone()))?;
+            .map_err(|error| input_error(error, *span))?;
     let not_exp_al = notation::Mixfix::new(mixop, exps_al)
         .expect("arguments obtained from the same mixfix must match its arity");
     let prem_al = phrase! {
@@ -437,7 +437,7 @@ fn lower_rule_prem(
             not_exp: not_exp_al,
             input_hint: rule_prem_il.input_hint.clone(),
         }),
-        span: span.clone(),
+        span: *span,
     };
     // Iterations use input variables as sources and bind output variables
     let venv_bound = dimension::infer_exps(&exps_input_il);
@@ -448,7 +448,7 @@ fn lower_rule_prem(
             .is_some_and(|dim_bound| dim_bound.sub(&Dim::new(var.typ.clone(), var.iters.clone())))
     });
     iter_ctx.add_vars_bind(dimension::infer_exps(&exps_output_al));
-    iter_ctx.validate(span.clone())?;
+    iter_ctx.validate(*span)?;
     let prem_al = iter_ctx.iterate_prem(prem_al);
     Ok((venv, prem_al, prem_sideconditions_al))
 }
@@ -473,7 +473,7 @@ fn lower_if_eq_prem(
                 node: al::ast::PremKind::If(al::ast::IfPrem {
                     exp: if_prem_il.exp.clone(),
                 }),
-                span: span.clone(),
+                span: *span,
             };
             Ok((VEnv::new(), iter_ctx.iterate_prem(prem_al), vec![]))
         }
@@ -504,7 +504,7 @@ fn lower_if_prem(
             node: al::ast::PremKind::If(al::ast::IfPrem {
                 exp: if_prem_il.exp.clone(),
             }),
-            span: span.clone(),
+            span: *span,
         };
         Ok((VEnv::new(), iter_ctx.iterate_prem(prem_al), vec![]))
     }
@@ -528,7 +528,7 @@ fn lower_if_hold_prem(
             id: if_prem_il.id.clone(),
             not_exp: if_prem_il.not_exp.clone(),
         }),
-        span: span.clone(),
+        span: *span,
     };
     Ok((VEnv::new(), iter_ctx.iterate_prem(prem_al), vec![]))
 }
@@ -551,7 +551,7 @@ fn lower_if_not_hold_prem(
             id: if_prem_il.id.clone(),
             not_exp: if_prem_il.not_exp.clone(),
         }),
-        span: span.clone(),
+        span: *span,
     };
     Ok((VEnv::new(), iter_ctx.iterate_prem(prem_al), vec![]))
 }
@@ -588,7 +588,7 @@ fn lower_let_prem(
             exp_l: exp_l_al.clone(),
             exp_r: exp_r_il.clone(),
         }),
-        span: span.clone(),
+        span: *span,
     };
     // Iterations use the right side's variables as sources and bind the left side's
     let venv_l = dimension::infer_exp(&exp_l_al);
@@ -600,7 +600,7 @@ fn lower_let_prem(
             .is_some_and(|dim_r| dim_r.sub(&Dim::new(var.typ.clone(), var.iters.clone())))
     });
     iter_ctx.add_vars_bind(venv_l);
-    iter_ctx.validate(span.clone())?;
+    iter_ctx.validate(*span)?;
     let prem_al = iter_ctx.iterate_prem(prem_al);
     Ok((venv, prem_al, prems_analyzed))
 }
@@ -639,7 +639,7 @@ fn lower_debug_prem(
         node: al::ast::PremKind::Debug(al::ast::DebugPrem {
             exp: debug_prem_il.exp.clone(),
         }),
-        span: span.clone(),
+        span: *span,
     };
     Ok((VEnv::new(), iter_ctx.iterate_prem(prem_al), vec![]))
 }
@@ -785,7 +785,7 @@ fn lower_else_group(
     // Reuse the rule group analysis on the single rule
     let rule_group_il = phrase! {
         node: ast::RuleGroupKind { id: id_group, rules: vec![rule_il] },
-        span: span.clone(),
+        span: span,
     };
     let rule_group_al = lower_rule_group(ctx, inputs, rule_group_il, Some(&otherwise))?;
     let rule_path_al = rule_group_al
@@ -821,9 +821,8 @@ fn lower_clause(
     ctx.add_bounds(&venv);
     let prems_analyzed = lower_prems(&mut ctx, prems_il)?;
     analyze_exp_as_bound(&ctx, &exp_il)?;
-    let otherwise = is_else.then(|| {
-        otherwise_opt.unwrap_or_else(|| phrase!(node: ast::OtherwiseKind, span: span.clone()))
-    });
+    let otherwise = is_else
+        .then(|| otherwise_opt.unwrap_or_else(|| phrase!(node: ast::OtherwiseKind, span: span)));
     // An otherwise clause may not contain partial premises
     let mut prems_all_analyzed = prems_generated;
     prems_all_analyzed.extend(prems_analyzed);
@@ -874,7 +873,7 @@ fn pattern_set_covered_by_exp(ctx: &Context, exp_al: &ast::Exp) -> Result<Patter
     match &exp_al.node {
         // A variable covers every case of its type
         ast::ExpKind::Id(_) => {
-            let typ = phrase!(node: exp_al.note.as_ref().clone(), span: exp_al.span.clone());
+            let typ = phrase!(node: exp_al.note.as_ref().clone(), span: exp_al.span);
             pattern_set_covered_by_typ(ctx, &typ)
         }
         // An upcast retains the source variable or case pattern
@@ -882,8 +881,8 @@ fn pattern_set_covered_by_exp(ctx: &Context, exp_al: &ast::Exp) -> Result<Patter
         // A case covers exactly its notation
         ast::ExpKind::Case(not_exp) => {
             let not_typ =
-                not_exp.map(|exp| phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone()));
-            let not_typ = phrase!(node: not_typ, span: exp_al.span.clone());
+                not_exp.map(|exp| phrase!(node: exp.note.as_ref().clone(), span: exp.span));
+            let not_typ = phrase!(node: not_typ, span: exp_al.span);
             Ok([not_typ].into_iter().collect())
         }
         // Row admission rejects every other top-level pattern shape
@@ -935,8 +934,8 @@ fn check_valid_table_rows(
     if !has_closer && !patterns_missing.is_empty() {
         let span = rows_al
             .last()
-            .map(|row| Span::new(row.span.right.clone(), row.span.right.clone()))
-            .unwrap_or_else(|| span.clone());
+            .map(|row| Span::new(row.span.right, row.span.right))
+            .unwrap_or_else(|| *span);
         return Err(error::table::table_pattern_incomplete(&span, &patterns_missing));
     }
     Ok(())
@@ -1075,7 +1074,7 @@ fn lower_defined_rel(
     let mut rule_groups_al = Vec::with_capacity(rule_groups.len());
     for rule_group_il in rule_groups {
         // The group keeps its source span
-        let span = rule_group_il.span.clone();
+        let span = rule_group_il.span;
         let mut rule_group_al = lower_rule_group(ctx, &input_hint, rule_group_il, None)?;
         rule_group_al.span = span;
         rule_groups_al.push(rule_group_al);

@@ -42,11 +42,11 @@ pub(super) fn field_hint_arity_mismatch(
     // Extra names identify the first excess; missing names follow the last field
     let fields = hint.node.as_slice();
     let span = if let Some(field) = fields.get(len_expect) {
-        field.span.clone()
+        field.span
     } else if let Some(field) = fields.last() {
-        Span::new(field.span.right.clone(), field.span.right.clone())
+        Span::new(field.span.right, field.span.right)
     } else {
-        hint.span.clone()
+        hint.span
     };
     // Match number agreement without hiding the actual and expected counts
     let names = if len_actual == 1 { "field name" } else { "field names" };

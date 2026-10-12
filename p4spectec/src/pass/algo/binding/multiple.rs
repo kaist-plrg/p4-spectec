@@ -103,7 +103,7 @@ fn rename_id_exp(ctx: &mut Context, renv: &mut RenameEnv, exp: &ast::Exp, id: &I
     let id_rename = if ids_rename.is_empty() { id.clone() } else { fresh_id(&ctx.frees, id) };
     ctx.add_free(id_rename.clone());
     ids_rename.push(id_rename.clone());
-    crate::note_phrase!(node: crate::lang::il::ast::ExpKind::Id(id_rename), note: exp.note.clone(), span: exp.span.clone())
+    crate::note_phrase!(node: crate::lang::il::ast::ExpKind::Id(id_rename), note: exp.note.clone(), span: exp.span)
 }
 
 /// Renames repeated binders inside an invertible expression.
@@ -181,7 +181,7 @@ pub fn rename_exp(ctx: &mut Context, renv: &mut RenameEnv, exp: &ast::Exp) -> as
         // Non-invertible nodes hold no binders
         _ => return exp.clone(),
     };
-    note_phrase!(node: kind, note: exp.note.clone(), span: exp.span.clone())
+    note_phrase!(node: kind, note: exp.note.clone(), span: exp.span)
 }
 
 pub fn rename_exps(ctx: &mut Context, renv: &mut RenameEnv, exps: &[ast::Exp]) -> Vec<ast::Exp> {
@@ -193,7 +193,7 @@ pub fn rename_arg(ctx: &mut Context, renv: &mut RenameEnv, arg: &ast::Arg) -> as
         return arg.clone();
     };
     let exp = rename_exp(ctx, renv, exp);
-    phrase!(node: ast::ArgKind::Exp(Box::new(exp)), span: arg.span.clone())
+    phrase!(node: ast::ArgKind::Exp(Box::new(exp)), span: arg.span)
 }
 
 pub fn rename_args(ctx: &mut Context, renv: &mut RenameEnv, args: &[ast::Arg]) -> Vec<ast::Arg> {
@@ -216,8 +216,8 @@ pub struct AnalyzedPrem {
 
 /// Builds `id = id_rename`.
 fn gen_exp_equality(id: &Id, id_rename: &Id, typ: &ast::Typ) -> ast::Exp {
-    let exp_l = crate::note_phrase!(node: crate::lang::il::ast::ExpKind::Id(id.clone()), note: typ.node.clone(), span: id.span.clone());
-    let exp_r = crate::note_phrase!(node: crate::lang::il::ast::ExpKind::Id(id_rename.clone()), note: typ.node.clone(), span: id.span.clone());
+    let exp_l = crate::note_phrase!(node: crate::lang::il::ast::ExpKind::Id(id.clone()), note: typ.node.clone(), span: id.span);
+    let exp_r = crate::note_phrase!(node: crate::lang::il::ast::ExpKind::Id(id_rename.clone()), note: typ.node.clone(), span: id.span);
     note_phrase! {
         node: ast::ExpKind::Cmp(
             ast::CmpOp::Bool(prim::bool::CmpOp::Eq),
@@ -226,7 +226,7 @@ fn gen_exp_equality(id: &Id, id_rename: &Id, typ: &ast::Typ) -> ast::Exp {
             Box::new(exp_r),
         ),
         note: ast::TypKind::Bool,
-        span: id.span.clone(),
+        span: id.span,
     }
 }
 
@@ -244,7 +244,7 @@ fn generate_side_condition(
     let id_bound = ids_rename.first()?.clone();
     // Locate the condition at the last occurrence
     let mut id_repeated = id.clone();
-    id_repeated.span = ids_rename.last()?.span.clone();
+    id_repeated.span = ids_rename.last()?.span;
     let mut exp = gen_exp_equality(&id_repeated, id_rename, &dim.typ);
     // Conjoin one equality per renamed occurrence
     for id_rename in ids_repeated {
@@ -257,12 +257,12 @@ fn generate_side_condition(
                 Box::new(exp_r),
             ),
             note: ast::TypKind::Bool,
-            span: id_repeated.span.clone(),
+            span: id_repeated.span,
         };
     }
     let prem = phrase! {
         node: al::ast::PremKind::If(al::ast::IfPrem { exp }),
-        span: id_repeated.span.clone(),
+        span: id_repeated.span,
     };
 
     // Iterate over the identifier's own dimension and the enclosing iterations
