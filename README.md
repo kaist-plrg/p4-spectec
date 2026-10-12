@@ -1,11 +1,45 @@
 # P4-SpecTec
 
-A mechanized formal specification for the P4 programming language, using the
-SpecTec framework. The implementation is written in Rust. It reuses work from
+A specification mechanization toolchain for the P4 programming language.
+As of March 2026, P4-SpecTec has been **conditionally accepted** as the
+official P4 specification authoring toolchain by the P4 Language Design Working
+Group (LDWG). This means that:
+
+* P4 language design will take place at the mechanized specification level
+  (in the `spec` directory).
+* The P4 language specification will be automatically generated from the
+  mechanized specification
+  ([preview](https://kaist-plrg.github.io/p4-spectec/p4/P4-16-spec-release.html)).
+* The mechanized specification will be tested using the `p4c` test suite.
+
+The implementation is written in Rust. It reimplements work from
 [Petr4](https://github.com/verified-network-toolchain/petr4), especially the
 parser and numerics implementation, and
 [Wasm-SpecTec](https://github.com/Wasm-DSL/spectec), especially the specification
 parser and the high-level architecture of the tool.
+
+## Tutorial
+
+* [Mechanizing the Nano-P4 Specification with P4-SpecTec](https://kaist-plrg.github.io/nano-p4-tutorial/):
+  a hands-on guide to syntax, type checking, evaluation, and prose generation
+  for an educational subset of P4.
+* [P4-SpecTec Tutorial: A Project-Based Introduction with Nano-P4](https://www.youtube.com/watch?v=wqshMP8Tz-k&t=30s):
+  a video tutorial from P4 Developer Days.
+
+## Publications and Talks
+
+* **P4 Workshop 2024**:
+  [P4-SpecTec: Mechanized Language Definition for P4](https://www.youtube.com/watch?v=AcxAYvM8pnA&t=4s).
+* **PLDI 2024**:
+  [Bringing the WebAssembly Standard up to Speed with SpecTec](https://dl.acm.org/doi/10.1145/3656440).
+* **P4 Developer Days 2025**:
+  [Mechanizing the P4 Language Specification with P4-SpecTec](https://www.youtube.com/watch?v=2BhqyE7c-Pw).
+* **PLSS 2025**:
+  [P4-SpecTec: Mechanized Language Definition for P4](https://www.youtube.com/watch?v=a97P7VvCg6k&t=1070s).
+* **HATRA 2025**:
+  [P4-SpecTec: A Language Mechanization Framework for P4](https://www.youtube.com/watch?v=Y_lRXfUszF0&t=1278s).
+* **OOPSLA 2026**:
+  [P4-SpecTec: Integrating a Language Mechanization Framework into the Real-World P4 Specification](https://dl.acm.org/doi/10.1145/3839535).
 
 ## Building
 
