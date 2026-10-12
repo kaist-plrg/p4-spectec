@@ -230,5 +230,5 @@ fn report_span(report: &Report) -> Option<Span> {
             .find(|label| label.style == LabelStyle::Primary)
             .map(|label| &label.span)?,
     };
-    (*span != Span::default()).then(|| span.clone())
+    (*span != Span::default()).then_some(*span)
 }

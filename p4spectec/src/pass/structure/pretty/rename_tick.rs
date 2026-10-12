@@ -33,11 +33,9 @@ use crate::pass::structure::{ol::ast::*, re::renamer::Renamer};
 /// its own spelling reserves no slot.
 fn find_rename_ticks(frees: &IdSet, id: &Id) -> Option<Id> {
     let mut id_rename = id.clone();
-    id_rename
-        .node
-        .truncate(id.node.trim_end_matches('\'').len());
+    id_rename.node = id.node.trim_end_matches('\'').into();
     while id_rename.node != id.node && frees.contains(&id_rename) {
-        id_rename.node.push('\'');
+        id_rename.node = format!("{}'", id_rename.node).into();
     }
     (id.node != id_rename.node).then_some(id_rename)
 }

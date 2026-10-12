@@ -134,7 +134,7 @@ pub(crate) fn sub(
 ) -> Backtrack<bool> {
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
     let find_func = |name: &str| {
-        let id = crate::phrase!(node: name.to_owned(), span: span.clone());
+        let id = crate::phrase!(node: name.into(), span: *span);
         ctx.find_func_typ(&id).ok()
     };
     backtrack::from_result(
@@ -408,7 +408,7 @@ pub(crate) fn access_index(
     match arena.value.kind(value_base.node) {
         // Text: a one-character slice
         ValueKind::Text(_) => {
-            let typ = crate::phrase!(node: arena.value.typ(value_base.note).clone(), span: arena.value.span(value_base.span).clone());
+            let typ = crate::phrase!(node: arena.value.typ(value_base.note).clone(), span: *arena.value.span(value_base.span));
             let value_len = unwrap_from_result!(
                 value::make::nat(arena, 1u64.into(), Span::default()),
                 span_idx

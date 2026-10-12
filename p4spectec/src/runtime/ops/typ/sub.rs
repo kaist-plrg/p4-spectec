@@ -6,7 +6,7 @@
 //! `optimize_sub_typ` reduces a static subtype relation
 //! to the runtime check still needed.
 
-use std::rc::Rc;
+use std::{borrow::Cow, rc::Rc};
 
 use crate::lang::common::prim::num;
 
@@ -78,7 +78,7 @@ fn sub_typ_inner(
                 Err(arity_mismatch) => {
                     let arity_mismatch = TypeArityMismatch::TypeArgument(arity_mismatch);
                     let error_kind = TypeErrorKind::ArityMismatch(arity_mismatch);
-                    let error = TypeError::new(error_kind, typ_source.span.clone());
+                    let error = TypeError::new(error_kind, typ_source.span);
                     return Err(error);
                 }
             };
@@ -87,25 +87,17 @@ fn sub_typ_inner(
                 Err(arity_mismatch) => {
                     let arity_mismatch = TypeArityMismatch::TypeArgument(arity_mismatch);
                     let error_kind = TypeErrorKind::ArityMismatch(arity_mismatch);
-                    let error = TypeError::new(error_kind, typ_target.span.clone());
+                    let error = TypeError::new(error_kind, typ_target.span);
                     return Err(error);
                 }
             };
 
             // Instantiate the cases of both sides
             let mut fresh = Fresh::default();
-            let mut not_typs_source = Vec::with_capacity(typ_cases_source.len());
-            for ast::TypCase { not_typ, .. } in typ_cases_source {
-                let not_typ_subst =
-                    subst_not_typ_inner(&mut fresh, &|id| theta_source.get(id), not_typ)?;
-                not_typs_source.push(not_typ_subst);
-            }
-            let mut not_typs_target = Vec::with_capacity(typ_cases_target.len());
-            for ast::TypCase { not_typ, .. } in typ_cases_target {
-                let not_typ_subst =
-                    subst_not_typ_inner(&mut fresh, &|id| theta_target.get(id), not_typ)?;
-                not_typs_target.push(not_typ_subst);
-            }
+            let not_typs_source =
+                instantiate_cases(&mut fresh, tparams_source, &theta_source, typ_cases_source)?;
+            let not_typs_target =
+                instantiate_cases(&mut fresh, tparams_target, &theta_target, typ_cases_target)?;
 
             // Each source case needs an equivalent target case
             for not_typ_source in not_typs_source {
@@ -148,6 +140,34 @@ fn sub_typ_inner(
         // No rule applies
         _ => Ok(false),
     }
+}
+
+/// Instantiates the cases of a variant under its type arguments.
+///
+/// Cases of a variant without type parameters are borrowed:
+/// substitution would only rename function-type binders,
+/// and equivalence never relates function types.
+fn instantiate_cases<'a>(
+    fresh: &mut Fresh,
+    tparams: &[ast::TParam],
+    theta: &Theta,
+    typ_cases: &'a [ast::TypCase],
+) -> Result<Vec<Cow<'a, ast::NotTyp>>, TypeError> {
+    // Borrow the declared cases when nothing is substituted
+    if tparams.is_empty() {
+        let not_typs = typ_cases
+            .iter()
+            .map(|typ_case| Cow::Borrowed(&typ_case.not_typ));
+        return Ok(not_typs.collect());
+    }
+    // Substitute the type arguments into each case
+    typ_cases
+        .iter()
+        .map(|typ_case| {
+            let not_typ = subst_not_typ_inner(fresh, &|id| theta.get(id), &typ_case.not_typ)?;
+            Ok(Cow::Owned(not_typ))
+        })
+        .collect()
 }
 
 // == Subtype checks

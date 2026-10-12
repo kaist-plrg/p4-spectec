@@ -80,7 +80,7 @@ pub(crate) fn subst_typ_inner<'env>(
             Some(_) if !targs.is_empty() => {
                 return Err(TypeError::new(
                     TypeErrorKind::HigherOrderSubstitutionUnsupported,
-                    typ.span.clone(),
+                    typ.span,
                 ));
             }
             // Replace the whole variable
@@ -107,7 +107,7 @@ pub(crate) fn subst_typ_inner<'env>(
             TypKind::Func(ast::FuncTyp { tparams, typs_params, typ_ret: Box::new(typ_ret) })
         }
     };
-    Ok(phrase!(node: typ_kind, span: typ.span.clone()))
+    Ok(phrase!(node: typ_kind, span: typ.span))
 }
 
 /// Substitutes type variables in a type list.
@@ -150,7 +150,7 @@ pub(crate) fn subst_not_typ_inner<'env, M: Clone>(
     let not_typ_kind = not_typ
         .node
         .try_map(|typ| subst_typ_inner(fresh, find_subst, typ))?;
-    Ok(phrase!(node: not_typ_kind, span: not_typ.span.clone()))
+    Ok(phrase!(node: not_typ_kind, span: not_typ.span))
 }
 
 // == Parameters
@@ -177,7 +177,7 @@ fn subst_param_inner<'env>(
     };
     Ok(crate::phrase! {
         node: kind,
-        span: param.span.clone(),
+        span: param.span,
     })
 }
 

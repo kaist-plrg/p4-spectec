@@ -78,7 +78,7 @@ impl ExternObject {
     pub fn to_value(&self, arena: &mut Arena, encoding: Encoding) -> Result<Value, ExternError> {
         let payload = encode_with(arena, encoding, self)?;
         let typ = typ::make::var(
-            crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
+            crate::phrase!(node: "objectState".into(), span: Span::default()),
             Vec::new(),
         );
         Ok(value::make::external(arena, typ.node.into(), payload.into(), Span::default())?)
@@ -136,10 +136,8 @@ where
 {
     let encoding = ctx.external().encoding;
     let payload = encode_with(ctx.arena(), encoding, &())?;
-    let typ = typ::make::var(
-        crate::phrase!(node: "archState".to_owned(), span: Span::default()),
-        Vec::new(),
-    );
+    let typ =
+        typ::make::var(crate::phrase!(node: "archState".into(), span: Span::default()), Vec::new());
     Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
 }
 
@@ -166,7 +164,7 @@ where
     } else {
         let payload = encode_with(ctx.arena(), encoding, &())?;
         let typ = typ::make::var(
-            crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
+            crate::phrase!(node: "objectState".into(), span: Span::default()),
             Vec::new(),
         );
         value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?

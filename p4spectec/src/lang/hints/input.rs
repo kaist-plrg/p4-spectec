@@ -89,14 +89,14 @@ pub fn init(hint_exp: &Exp) -> Option<InputHint> {
             .iter()
             .map(|hint_exp| match hint_exp.node {
                 ExpKind::Hole(Hole::Num(idx)) => {
-                    Some(crate::phrase!(node: idx, span: hint_exp.span.clone()))
+                    Some(crate::phrase!(node: idx, span: hint_exp.span))
                 }
                 _ => None,
             })
             .collect(),
         // A single hole
         ExpKind::Hole(Hole::Num(idx)) => {
-            Some(vec![crate::phrase!(node: *idx, span: hint_exp.span.clone())])
+            Some(vec![crate::phrase!(node: *idx, span: hint_exp.span)])
         }
         // Anything else is not an input hint
         _ => None,
@@ -118,14 +118,14 @@ pub fn validate(hint: &InputHint, arity: usize) -> Result<(), InputError> {
             .find(|idx_previous| idx_previous.node == idx.node)
         {
             return Err(InputError::IndexDuplicate {
-                idx: Box::new(idx.clone()),
-                idx_previous: Box::new(idx_previous.clone()),
+                idx: Box::new(*idx),
+                idx_previous: Box::new(*idx_previous),
             });
         }
     }
     // Every position within the arity
     if let Some(idx) = hint.indices.iter().find(|idx| idx.node >= arity) {
-        return Err(InputError::IndexOutOfBounds { idx: Box::new(idx.clone()), arity });
+        return Err(InputError::IndexOutOfBounds { idx: Box::new(*idx), arity });
     }
     Ok(())
 }

@@ -3,11 +3,11 @@
 //! Marker syntax is ASCII; untouched text is copied as UTF-8 slices.
 //! Positions use one-based lines and zero-based byte columns.
 
-use crate::lang::common::source::{Position, Span};
+use crate::lang::common::source::{FileId, Position, Span};
 
 /// A skeleton and its current byte offset.
 pub struct Source<'a> {
-    file: &'a str,
+    file: FileId,
     text: &'a str,
     pos: usize,
 }
@@ -15,7 +15,7 @@ pub struct Source<'a> {
 impl<'a> Source<'a> {
     /// Starts reading a skeleton at its first byte.
     pub fn new(file: &'a str, text: &'a str) -> Self {
-        Self { file, text, pos: 0 }
+        Self { file: FileId::intern(file), text, pos: 0 }
     }
 
     /// Reports whether the entire skeleton has been consumed.
@@ -53,7 +53,7 @@ impl<'a> Source<'a> {
     /// Locates the cursor without consuming input.
     pub fn span(&self) -> Span {
         let pos = self.position();
-        Span::new(pos.clone(), pos)
+        Span::new(pos, pos)
     }
 
     /// Advances by a byte count ending on a UTF-8 boundary.

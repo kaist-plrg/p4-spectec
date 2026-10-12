@@ -107,7 +107,7 @@ fn eval_if_hold_prem<'global, Iface: Interface, Ext: Extern>(
         fatal!(errors) => fatal!(errors),
         // It did not apply: the premise fails, naming the relation
         unmatch!(errors) => {
-            let diagnostic = error::prem::hold_condition_unmet(prem.id.node.clone());
+            let diagnostic = error::prem::hold_condition_unmet(prem.id.node.to_string());
             let report = Report::from(diagnostic)
                 .with_span(&prem.id.span)
                 .with_children(errors);
@@ -129,7 +129,7 @@ fn eval_if_not_hold_prem<'global, Iface: Interface, Ext: Extern>(
         // The relation applied: the premise fails
         ok!(_) => unmatch!(
             prem.id.span.clone(),
-            error::prem::not_hold_condition_unmet(prem.id.node.clone()),
+            error::prem::not_hold_condition_unmet(prem.id.node.to_string()),
         ),
         // Fatal errors propagate
         fatal!(errors) => fatal!(errors),

@@ -30,10 +30,8 @@ where
     Interp: Interpreter<Iface, Dummy>,
 {
     let payload = encode(ctx.arena(), &())?;
-    let typ = typ::make::var(
-        crate::phrase!(node: "archState".to_owned(), span: Span::default()),
-        Vec::new(),
-    );
+    let typ =
+        typ::make::var(crate::phrase!(node: "archState".into(), span: Span::default()), Vec::new());
     Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)
 }
 
@@ -52,7 +50,7 @@ where
 {
     let payload = encode(ctx.arena(), &())?;
     let typ = typ::make::var(
-        crate::phrase!(node: "objectState".to_owned(), span: Span::default()),
+        crate::phrase!(node: "objectState".into(), span: Span::default()),
         Vec::new(),
     );
     Ok(value::make::external(ctx.arena_mut(), typ.node.into(), payload.into(), Span::default())?)

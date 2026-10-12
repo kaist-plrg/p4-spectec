@@ -252,15 +252,15 @@ impl<'a> Context<'a> {
 
     /// The position behind a handle.
     pub(crate) fn location_get(&self, loc: Location) -> Position {
-        self.positions.borrow()[loc.position].clone()
+        self.positions.borrow()[loc.position]
     }
 
     /// The span between two handles.
     pub(crate) fn location_span(&self, loc_l: Location, loc_r: Location) -> Span {
         if loc_l == loc_r {
             // Menhir locates epsilon at the preceding token's end
-            let position = self.positions.borrow()[loc_l.previous].clone();
-            Span::new(position.clone(), position)
+            let position = self.positions.borrow()[loc_l.previous];
+            Span::new(position, position)
         } else {
             Span::new(self.location_get(loc_l), self.location_get(loc_r))
         }

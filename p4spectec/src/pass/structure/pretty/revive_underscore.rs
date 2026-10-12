@@ -45,7 +45,7 @@ fn candid_renamer(mut frees: IdSet, ids: &IdSet) -> (IdSet, Renamer) {
     let mut renamer = Renamer::empty();
     for id in ids.iter() {
         let mut id_strip = id.clone();
-        id_strip.node = id_strip.node.trim_start_matches('_').to_owned();
+        id_strip.node = id_strip.node.trim_start_matches('_').into();
         let id_revive = fresh::id(&frees, &id_strip);
         frees.insert(id_revive.clone());
         renamer.add(id.clone(), id_revive);

@@ -29,7 +29,9 @@ fn init_from_el(spec_el: &el::Spec) -> BTreeMap<String, Vec<&el::Def>> {
     // Append clauses to the function selected by their declaration identifier
     for def_el in spec_el {
         if let el::DefKind::FuncDef(def) = &def_el.node {
-            defs.entry(def.id.node.clone()).or_default().push(def_el);
+            defs.entry(def.id.node.to_string())
+                .or_default()
+                .push(def_el);
         }
     }
     defs
@@ -41,7 +43,7 @@ fn init_from_pl(spec_pl: &pl::Spec) -> BTreeMap<String, &pl::Def> {
         .iter()
         .filter_map(|def_pl| match &def_pl.node.node {
             pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => {
-                Some((func.id.node.clone(), def_pl))
+                Some((func.id.node.to_string(), def_pl))
             }
             _ => None,
         })

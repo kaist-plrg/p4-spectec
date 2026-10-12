@@ -57,14 +57,14 @@ fn sub_binding(typ: &pl::Typ, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> 
         ExpKind::DownCast(typ_cast, exp) => {
             typ.syntax_eq(typ_cast)
                 && same_variable(exp, exp_scrut)
-                && !exp_scrut.node.note.syntax_eq(&typ.node)
+                && !exp_scrut.node.note.as_ref().syntax_eq(&typ.node)
         }
         _ => same_variable(&instr_let.exp_r, exp_scrut),
     };
     // Keep the binding's type and presentation while retaining the original test
     same_source
-        && instr_let.exp_l.node.note.syntax_eq(&typ.node)
-        && instr_let.exp_r.node.note.syntax_eq(&typ.node)
+        && instr_let.exp_l.node.note.as_ref().syntax_eq(&typ.node)
+        && instr_let.exp_r.node.note.as_ref().syntax_eq(&typ.node)
         && instr_let.exp_l.hints.node == Default::default()
 }
 

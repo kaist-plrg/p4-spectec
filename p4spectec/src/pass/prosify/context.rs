@@ -45,7 +45,7 @@ impl Context {
             ("int", typ::make::int()),
             ("text", typ::make::text()),
         ] {
-            let id = crate::phrase! { node: text_name.to_owned(), span: Span::default() };
+            let id = crate::phrase! { node: text_name.into(), span: Span::default() };
             menv.insert(id, typ);
         }
         Self { id_namespace: None, henv: HEnv::default(), menv }
@@ -106,7 +106,7 @@ impl Context {
     /// Reads alteration hints while retaining their expression locations.
     fn load_alter_hints(hints: &mut Hints, hints_sl: &[sl::Hint]) {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
-            let hint = match id_hint.node.as_str() {
+            let hint = match id_hint.node.as_ref() {
                 "prose" => &mut hints.node.prose,
                 "prose_in" => &mut hints.node.prose_in,
                 "prose_out" => &mut hints.node.prose_out,
@@ -126,7 +126,7 @@ impl Context {
     ) -> Result<(), ProseError> {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
             // Other hints belong to their own loaders
-            if id_hint.node != "prose_fields" {
+            if id_hint.node.as_ref() != "prose_fields" {
                 continue;
             }
             // Field hints require text names on every declaration kind
@@ -175,7 +175,7 @@ impl Context {
     fn load_extern_typ_def(&mut self, def_typ_sl: &sl::ExternTyp) {
         let typ = crate::phrase! {
             node: il::ast::TypKind::Var(def_typ_sl.id.clone(), Vec::new()),
-            span: def_typ_sl.id.span.clone(),
+            span: def_typ_sl.id.span,
         };
         self.add_metavar(def_typ_sl.id.clone(), typ);
     }
@@ -186,7 +186,7 @@ impl Context {
         if def_typ_sl.tparams.is_empty() {
             let typ = crate::phrase! {
                 node: il::ast::TypKind::Var(def_typ_sl.id.clone(), Vec::new()),
-                span: def_typ_sl.id.span.clone(),
+                span: def_typ_sl.id.span,
             };
             self.add_metavar(def_typ_sl.id.clone(), typ);
         }
@@ -195,8 +195,7 @@ impl Context {
             return Ok(());
         };
         for il::ast::TypCase { not_typ, hints: hints_sl, .. } in cases {
-            let mut hints =
-                crate::phrase! { node: HintsKind::default(), span: not_typ.span.clone() };
+            let mut hints = crate::phrase! { node: HintsKind::default(), span: not_typ.span };
             Self::load_alter_hints(&mut hints, hints_sl);
             Self::load_field_hints(&mut hints, hints_sl, Some(not_typ.node.args().len()))?;
             self.henv
@@ -216,7 +215,7 @@ impl Context {
             sl::RelDef::Extern(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
             sl::RelDef::Defined(def_rel_sl) => (&def_rel_sl.id, &def_rel_sl.hints),
         };
-        let mut hints = crate::phrase! { node: HintsKind::default(), span: id_rel.span.clone() };
+        let mut hints = crate::phrase! { node: HintsKind::default(), span: id_rel.span };
         Self::load_alter_hints(&mut hints, hints_sl);
         Self::load_field_hints(&mut hints, hints_sl, None)?;
         self.henv.insert_rel(id_rel, hints);
@@ -231,7 +230,7 @@ impl Context {
             sl::MetaFuncDef::Table(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
             sl::MetaFuncDef::Defined(def_func_sl) => (&def_func_sl.id, &def_func_sl.hints),
         };
-        let mut hints = crate::phrase! { node: HintsKind::default(), span: id_func.span.clone() };
+        let mut hints = crate::phrase! { node: HintsKind::default(), span: id_func.span };
         Self::load_alter_hints(&mut hints, hints_sl);
         Self::load_field_hints(&mut hints, hints_sl, None)?;
         self.henv.insert_func(id_func, hints);

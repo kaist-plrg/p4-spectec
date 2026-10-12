@@ -35,8 +35,8 @@ use super::{
 /// Formats a span as file:line:column with one-based display columns.
 fn span_location(span: &Span) -> String {
     let loc = |pos: &Position| {
-        // Widen before adding one so even usize::MAX can be displayed
-        format!("{}:{}:{}", pos.file.escape_debug(), pos.line, pos.column as u128 + 1)
+        // Widen before adding one so even u32::MAX can be displayed
+        format!("{}:{}:{}", pos.file.name().escape_debug(), pos.line, u64::from(pos.column) + 1)
     };
     if span.left == span.right {
         loc(&span.left)
@@ -183,7 +183,7 @@ impl Renderer {
     // - invalid_*: span errors
 
     fn invalid_span(span: &Span, reason: &'static str) -> RenderError {
-        RenderError::SpanInvalid { span: Box::new(span.clone()), reason }
+        RenderError::SpanInvalid { span: Box::new(*span), reason }
     }
 
     // - register_*: source storage
@@ -227,23 +227,24 @@ impl Renderer {
     /// Resolves a one-based line and byte column without clamping either.
     fn resolve_offset(&self, id: usize, pos: &Position, span: &Span) -> Result<usize, RenderError> {
         let text = self.files.source(id)?;
+        let (line, column) = (pos.line as usize, pos.column as usize);
         // SimpleFiles permits an extra sentinel line; source spans do not
         let line_max = self.files.line_index(id, text.len())? + 1;
-        if pos.line == 0 || pos.line > line_max {
+        if line == 0 || line > line_max {
             return Err(Self::invalid_span(span, "line is outside the source"));
         }
 
         // A newline starts the next line; CR remains an original source byte
-        let range = self.files.line_range(id, pos.line - 1)?;
-        let line = text[range.clone()]
+        let range = self.files.line_range(id, line - 1)?;
+        let text_line = text[range.clone()]
             .strip_suffix('\n')
             .unwrap_or(&text[range.clone()]);
-        if pos.column > line.len() {
+        if column > text_line.len() {
             return Err(Self::invalid_span(span, "byte column is outside the line"));
         }
 
         // Coordinates must lie between complete UTF-8 characters
-        let offset = range.start + pos.column;
+        let offset = range.start + column;
         if !text.is_char_boundary(offset) {
             return Err(Self::invalid_span(span, "byte column splits a UTF-8 character"));
         }
@@ -286,17 +287,17 @@ impl Renderer {
         // Generated and file-only spans have no line to underline
         let file_only = span.left.line == 0 && span.left.column == 0 && span.left == span.right;
         if file_only {
-            let loc = if span.left.file.is_empty() {
+            let loc = if span.left.file.name().is_empty() {
                 "generated source".to_owned()
             } else {
-                span.left.file.escape_debug().to_string()
+                span.left.file.name().escape_debug().to_string()
             };
             Self::append_location_note(label, &loc, None, diagnostic);
             return Ok(());
         }
 
         // Missing source must not hide a responsible location behind related labels
-        let Some(source) = self.resolve_source(&span.left.file) else {
+        let Some(source) = self.resolve_source(span.left.file.name()) else {
             Self::append_location_note(
                 label,
                 &span_location(span),
@@ -374,7 +375,7 @@ impl Renderer {
                             } else {
                                 LabelStyle::Primary
                             },
-                            span: span.clone(),
+                            span: *span,
                             message: String::new(),
                         },
                         &mut rendered,

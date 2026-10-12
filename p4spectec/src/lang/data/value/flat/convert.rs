@@ -18,7 +18,7 @@ impl Value {
         tree::Value {
             node: arena.value.kind(self.node).into_tree(arena),
             note: arena.value.typ(self.note).as_ref().clone(),
-            span: arena.value.span(self.span).clone(),
+            span: *arena.value.span(self.span),
         }
     }
 }

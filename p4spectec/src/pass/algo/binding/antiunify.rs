@@ -72,7 +72,7 @@ fn overlap_exp(
             let exp_template = note_phrase! {
                 node: exp_kind_template,
                 note: exp_template.note.clone(),
-                span: exp_template.span.clone(),
+                span: exp_template.span,
             };
             return Ok(exp_template);
         }
@@ -83,14 +83,13 @@ fn overlap_exp(
     }
 
     // Fall back to a fresh unifier variable when the types agree
-    let typ_template =
-        phrase!(node: exp_template.note.as_ref().clone(), span: exp_template.span.clone());
-    let typ = phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone());
+    let typ_template = phrase!(node: exp_template.note.as_ref().clone(), span: exp_template.span);
+    let typ = phrase!(node: exp.note.as_ref().clone(), span: exp.span);
     let is_equivalent = equiv_typ(tdenv, &typ_template, &typ).map_err(OverlapFailure::Type)?;
     if !is_equivalent {
         return Err(OverlapFailure::Mismatch);
     }
-    let var_fresh = fresh::var_from_typ(menv, ids_free, exp_template.span.clone(), &typ_template);
+    let var_fresh = fresh::var_from_typ(menv, ids_free, exp_template.span, &typ_template);
     ids_free.insert(var_fresh.id.clone());
     ids_unifier.insert(var_fresh.id.clone());
     let exp_template = var::as_exp(true, &var_fresh);
@@ -261,7 +260,7 @@ fn overlap_exps_across_rules(
     // All rules must supply the same number of inputs
     for exps in exps_tail {
         if exps.len() != exps_head.len() {
-            let span = Span::over_iter(exps.iter().chain(exps_head).map(|exp| exp.span.clone()));
+            let span = Span::over_iter(exps.iter().chain(exps_head).map(|exp| exp.span));
             return Err(error::rule::rule_input_mismatch(&span));
         }
     }
@@ -349,7 +348,7 @@ fn populate_equality_prem(exp_template: &ast::Exp, exp: &ast::Exp) -> ast::Prem 
     let exp_match = note_phrase! {
         node: exp_kind,
         note: ast::TypKind::Bool,
-        span: span.clone(),
+        span: span,
     };
     let if_prem = ast::IfPrem { exp: exp_match };
     let prem_kind = ast::PremKind::If(if_prem);

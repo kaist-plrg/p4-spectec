@@ -101,7 +101,7 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
             eval_iter_exp(runner_ctx, ctx, exp, exp_inner, exp_iter)
         }
     })();
-    result.with_frame(exp.span.clone(), || {
+    result.with_frame(exp.span, || {
         format!("while evaluating expression {}", exp.view(&runner_ctx.arena().mixop).to_string())
     })
 }

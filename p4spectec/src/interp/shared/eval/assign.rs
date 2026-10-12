@@ -46,7 +46,7 @@ pub fn assign_tparams<Ctx: WriteContext>(
     assert_eq!(tparams.len(), targs.len(), "type argument arity mismatch at {span}");
     // Type arguments shadow global definitions in the callee scope
     for (tparam, targ) in tparams.iter().zip(targs) {
-        let def_typ = phrase!(node: ast::DefTypKind::Plain(targ.clone()), span: targ.span.clone());
+        let def_typ = phrase!(node: ast::DefTypKind::Plain(targ.clone()), span: targ.span);
         unwrap_from_result!(
             ctx.add_typdef_local(tparam.clone(), TypeDef::Defined(vec![], Box::new(def_typ))),
             &tparam.span
@@ -219,7 +219,7 @@ fn assign_cons_exp<Ctx: WriteContext>(
         .split_first()
         .expect("cons pattern must match a non-empty list");
     // Rebuild the tail as a list value of the same type
-    let typ = phrase!(node: arena.value.typ(value.note).clone(), span: exp.span.clone());
+    let typ = phrase!(node: arena.value.typ(value.note).clone(), span: exp.span);
     let value_tail = unwrap_from_result!(
         value::make::list(arena, typ.node.clone(), values_tail.to_vec(), Span::default()),
         &Span::default()

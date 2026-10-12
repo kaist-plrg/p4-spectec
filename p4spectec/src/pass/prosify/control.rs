@@ -29,12 +29,12 @@ use crate::lang::{common::prim, pl::ast as pl};
 
 /// Converts a nonbinding guard into a boolean predicate.
 fn exp_of_guard(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
-    let span = exp_scrut.node.span.clone();
+    let span = exp_scrut.node.span;
     let kind = match guard {
         pl::Guard::Bool(true) => return exp_scrut,
         pl::Guard::Bool(false) => {
             let exp_false = crate::annotated_note_phrase! {
-                node: pl::ExpKind::Bool(false), note: pl::TypKind::Bool, span: span.clone(),
+                node: pl::ExpKind::Bool(false), note: pl::TypKind::Bool, span: span,
             };
             pl::ExpKind::Cmp(
                 pl::CmpOp::Bool(prim::bool::CmpOp::Eq),

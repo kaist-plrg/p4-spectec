@@ -301,7 +301,7 @@ pub(in crate::pass::elaborate) fn type_parameter_mismatch(
                 "type parameters `<{}>`",
                 tparams
                     .iter()
-                    .map(|id| id.node.as_str())
+                    .map(|id| id.node.as_ref())
                     .collect::<Vec<_>>()
                     .join(", ")
             )
@@ -360,7 +360,7 @@ pub(in crate::pass::elaborate) fn type_definition_missing(id: &Id, tparams: &[Id
             "<{}>",
             tparams
                 .iter()
-                .map(|id| id.node.as_str())
+                .map(|id| id.node.as_ref())
                 .collect::<Vec<_>>()
                 .join(", ")
         )

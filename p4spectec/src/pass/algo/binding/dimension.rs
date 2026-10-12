@@ -14,7 +14,7 @@ use crate::runtime::{dim::Dim, envs::algo::VEnv};
 
 /// Records `id` at its dimension, keeping the smaller one when repeated.
 fn infer_id_exp(venv: &mut VEnv, exp: &ast::Exp, id: &ast::Id, iters: &[ast::Iter]) {
-    let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone());
+    let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
     let dim = Dim::new(typ, iters.to_vec());
     // A smaller dimension replaces the recorded one
     if venv

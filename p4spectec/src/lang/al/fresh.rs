@@ -37,11 +37,11 @@ fn var_from_typ(menv: &MEnv, span: &Span, typ: &Typ) -> Var {
     let typ_name = Print::to_string(typ);
     // An alias must have the type and not just be named after it
     let mut vars_alias = menv.iter().filter(|(id_alias, typ_alias)| {
-        typ.syntax_eq(typ_alias) && typ_name.as_str() != id_alias.node.as_str()
+        typ.syntax_eq(typ_alias) && typ_name.as_str() != id_alias.node.as_ref()
     });
     // Exactly one alias names the whole type
     if let (Some((id_alias, typ_alias)), None) = (vars_alias.next(), vars_alias.next()) {
-        let id = crate::phrase! { node: id_alias.node.clone(), span: span.clone() };
+        let id = crate::phrase! { node: id_alias.node.clone(), span: *span };
         return Var { id, typ: typ_alias.clone(), iters: vec![] };
     }
 
@@ -55,8 +55,8 @@ fn var_from_typ(menv: &MEnv, span: &Span, typ: &Typ) -> Var {
         // Otherwise the printed type is the name
         _ => Var {
             id: crate::phrase! {
-                node: Print::to_string(typ),
-                span: span.clone(),
+                node: Print::to_string(typ).into(),
+                span: *span,
             },
             typ: typ.clone(),
             iters: vec![],

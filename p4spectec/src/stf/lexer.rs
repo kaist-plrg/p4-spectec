@@ -6,9 +6,7 @@
 //! packet-data mode until newline or `$`. For example, `**` after `expect`
 //! becomes two packet wildcards rather than identifier punctuation.
 
-use std::rc::Rc;
-
-use crate::lang::common::source::{Phrase, Position, Span};
+use crate::lang::common::source::{FileId, Phrase, Position, Span};
 
 use crate::phrase;
 
@@ -92,7 +90,7 @@ enum Mode {
 /// A hand-written STF lexer with a mode-switching cursor.
 pub struct Lexer<'source> {
     source: &'source str,
-    file: Rc<str>,
+    file: FileId,
     index: usize,
     line: usize,
     column: usize,
@@ -105,23 +103,15 @@ impl<'source> Lexer<'source> {
     // - Construction
 
     /// Starts a lexer over `source` in command mode.
-    pub fn new(file: impl Into<Rc<str>>, source: &'source str) -> Self {
-        Self {
-            source,
-            file: file.into(),
-            index: 0,
-            line: 1,
-            column: 0,
-            mode: Mode::Command,
-            finished: false,
-        }
+    pub fn new(file: FileId, source: &'source str) -> Self {
+        Self { source, file, index: 0, line: 1, column: 0, mode: Mode::Command, finished: false }
     }
 
     // - Source cursor
 
     /// The current source position.
     fn source_position(&self) -> Position {
-        Position::new(Rc::clone(&self.file), self.line, self.column)
+        Position::new(self.file, self.line, self.column)
     }
 
     /// The span from `pos_l` to the cursor.

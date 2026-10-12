@@ -319,7 +319,7 @@ fn struct_rule_path(rel_signature: &ol::RelSignature, rule_path: al::RulePath) -
     let al::RulePath { prems, exps_output, .. } = rule_path;
     // Locate the result at the outputs, else the premises, else the signature
     let span = if exps_output.is_empty() {
-        if prems.is_empty() { rel_signature.not_typ.span.clone() } else { prems.at() }
+        if prems.is_empty() { rel_signature.not_typ.span } else { prems.at() }
     } else {
         exps_output.at()
     };
@@ -350,7 +350,7 @@ fn struct_rule_group(
         .collect();
     // Paths sharing a prefix are merged into one block
     let block = opt::merge::merge_blocks(blocks);
-    let span = id.span.clone();
+    let span = id.span;
     let instr_ol =
         ol::GroupInstr { id, rel_signature: rel_signature.clone(), exps: exps_signature, block };
     let instr_kind_ol = ol::InstrKind::Group(instr_ol);
@@ -374,7 +374,7 @@ fn struct_else_group(
     let al::RuleMatch { exps_signature, prems, .. } = rule_match;
     prems_unified.extend(prems);
     let block = struct_rule_path(rel_signature, rule_path);
-    let span = id.span.clone();
+    let span = id.span;
     let instr_ol =
         ol::GroupInstr { id, rel_signature: rel_signature.clone(), exps: exps_signature, block };
     let instr_kind_ol = ol::InstrKind::Group(instr_ol);
@@ -391,7 +391,7 @@ fn struct_else_group(
 
 /// Structures a clause's premises into a block ending in its return.
 fn struct_clause_path((prems, exp): (Vec<al::Prem>, al::Exp)) -> ol::Block {
-    let span = exp.span.clone();
+    let span = exp.span;
     let instr_ol = ol::ReturnInstr { exp };
     let instr_kind_ol = ol::InstrKind::Return(instr_ol);
     let instr_return = crate::phrase! {node: instr_kind_ol, span: span};

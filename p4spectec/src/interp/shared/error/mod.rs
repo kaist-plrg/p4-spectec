@@ -115,8 +115,8 @@ impl From<MatchError> for Error {
             MatchError::TypeUndefined { span, .. }
             | MatchError::TypeVariableUnexpected { span }
             | MatchError::TypeArgumentCountMismatch { span, .. }
-            | MatchError::FunctionUndefined { span, .. } => span.clone(),
-            MatchError::Type(error) => error.span.clone(),
+            | MatchError::FunctionUndefined { span, .. } => *span,
+            MatchError::Type(error) => error.span,
         };
         let mut diagnostic_error =
             diagnostic(MATCH_FAILED, MatchDisplay(&error).to_string(), Vec::new());

@@ -87,7 +87,7 @@ where
     // True: return nothing; false: reject with the given error
     let value_call_result = if check {
         let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".to_owned(), span: Span::default()),
+            crate::phrase!(node: "value".into(), span: Span::default()),
             Vec::new(),
         ));
         let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;

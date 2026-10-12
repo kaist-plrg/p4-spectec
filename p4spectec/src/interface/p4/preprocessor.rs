@@ -10,14 +10,14 @@ use std::{
     process::Command,
 };
 
-use crate::lang::common::source::{Position, Span};
+use crate::lang::common::source::{FileId, Position, Span};
 
 use super::error::{P4Error, P4ErrorKind};
 
 /// A span naming the file, for errors with no position.
 fn span_file(path: &Path) -> Span {
-    let position = Position::new(path.to_string_lossy().into_owned(), 0, 0);
-    Span::new(position.clone(), position)
+    let position = Position::new(FileId::intern(&path.to_string_lossy()), 0, 0);
+    Span::new(position, position)
 }
 
 /// Runs `cc -E` on the file and returns its output.

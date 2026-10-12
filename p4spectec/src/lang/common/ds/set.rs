@@ -48,13 +48,29 @@ impl<K: SyntaxCmp> PhraseSet<K> {
     }
 
     /// Moves every key from `set_other` into this set.
+    ///
+    /// The keys of the smaller set move into the larger one,
+    /// so no key is cloned unless a tree is shared elsewhere;
+    /// an equivalent key already stored here is kept either way.
     pub fn append(&mut self, set_other: Self)
     where
         K: Clone,
     {
-        // Only keys not already present move over, keeping ours
-        let entries_other = set_other.entries.relative_complement(self.entries.clone());
-        self.entries = self.entries.clone().union(entries_other);
+        // Move in the other keys missing here
+        if self.entries.len() >= set_other.entries.len() {
+            for key in set_other.entries {
+                if !self.entries.contains(&key) {
+                    self.entries.insert(key);
+                }
+            }
+            return;
+        }
+        // Move our keys into the larger set, replacing its equivalents
+        let mut entries = set_other.entries;
+        for key in std::mem::take(&mut self.entries) {
+            entries.insert(key);
+        }
+        self.entries = entries;
     }
 
     /// Returns the union with `set_other`
@@ -96,12 +112,12 @@ impl<K: SyntaxCmp> PhraseSet<K> {
 impl PhraseSet<Id> {
     /// Returns whether an equivalent key is present.
     pub fn contains(&self, key: &Id) -> bool {
-        self.entries.contains(&key.node)
+        self.entries.contains(key.node.as_ref())
     }
 
     /// Removes and returns the stored key equivalent to `key`
     pub fn take(&mut self, key: &Id) -> Option<Id> {
-        self.entries.remove(&key.node).map(|key| key.0)
+        self.entries.remove(key.node.as_ref()).map(|key| key.0)
     }
 }
 

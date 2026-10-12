@@ -130,7 +130,7 @@ impl Doc {
         }
         // Keep every suffix after the first underscore in one subscript
         let Some((text_base, text_sub)) = id.node.split_once('_') else {
-            return Doc::Styled(Style::Mathsf, id.node.clone());
+            return Doc::Styled(Style::Mathsf, id.node.to_string());
         };
         let tex_base = Doc::Styled(Style::Mathsf, text_base.to_owned());
         let tex_sub = Doc::Styled(Style::Mathsf, text_sub.to_owned());
@@ -138,11 +138,11 @@ impl Doc {
     }
 
     fn of_typid(id: &Id) -> Doc {
-        Doc::Styled(Style::Mathsf, id.node.clone())
+        Doc::Styled(Style::Mathsf, id.node.to_string())
     }
 
     fn of_defid(id: &Id) -> Doc {
-        Doc::Styled(Style::Mathrm, id.node.clone())
+        Doc::Styled(Style::Mathrm, id.node.to_string())
     }
 
     // - Numbers
@@ -1483,7 +1483,7 @@ impl Doc {
 /// Joins a relation and rule identifier, as in `Eval-ok`.
 fn text_of_rule_id(id_rel: &Id, id_rule: &Id) -> String {
     if id_rule.node.is_empty() {
-        id_rel.node.clone()
+        id_rel.node.to_string()
     } else {
         format!("{}-{}", id_rel.node, id_rule.node)
     }

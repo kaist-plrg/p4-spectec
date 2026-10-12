@@ -8,6 +8,8 @@
 //! variables, and mixops for the interpreter.
 //! Expressions and their containing syntax share the same stage.
 
+use std::rc::Rc;
+
 use crate::lang::{
     common::source::{NotePhrase, Phrase},
     data::notation::Mixfix,
@@ -75,8 +77,8 @@ pub type Subcheck<P = Source> = sl::ast::Subcheck<P>;
 
 // Expressions
 
-/// A typed expression before annotation.
-pub type ExpNode<P = Source> = NotePhrase<ExpKind<P>, TypKind>;
+/// A typed expression before annotation, sharing its SL type.
+pub type ExpNode<P = Source> = NotePhrase<ExpKind<P>, Rc<TypKind>>;
 /// A typed expression with prose hints.
 pub type Exp<P = Source> = annot::Annotated<ExpNode<P>>;
 #[derive(Clone, Debug, PartialEq)]
@@ -119,8 +121,8 @@ pub type Pattern<P = Source> = sl::ast::Pattern<P>;
 
 // Path
 
-/// A typed path into a value, for updates.
-pub type Path<P = Source> = NotePhrase<PathKind<P>, TypKind>;
+/// A typed path into a value, for updates, sharing its SL type.
+pub type Path<P = Source> = NotePhrase<PathKind<P>, Rc<TypKind>>;
 #[derive(Clone, Debug, PartialEq)]
 /// The steps of a path, from the root outward.
 pub enum PathKind<P: Stage = Source> {

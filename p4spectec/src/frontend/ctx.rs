@@ -81,7 +81,7 @@ impl Context {
 
     /// The position behind a handle.
     pub(crate) fn position(&self, loc: Location) -> Position {
-        self.positions.borrow()[loc.0].clone()
+        self.positions.borrow()[loc.0]
     }
 
     /// The span between two handles.
