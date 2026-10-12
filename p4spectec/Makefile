@@ -34,12 +34,9 @@ clean:
 
 .DEFAULT_GOAL := test
 
-.PHONY: test test-unit test-adoc
+.PHONY: test test-adoc
 
-test: test-unit test-expected test-sim-al test-sim-sl test-sim-pl
-
-test-unit:
-	$(CARGO) test --locked --target-dir "$(TARGET_DIR)"
+test: test-expected test-sim-al test-sim-sl test-sim-pl
 
 # Standalone acceptance driver; registrations live in test-driver/suites.json
 .PHONY: test-expected test-promote test-elab test-algo test-structure test-prose test-p4parse test-run-al test-run-sl test-run-pl

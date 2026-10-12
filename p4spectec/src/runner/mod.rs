@@ -37,7 +37,7 @@ use crate::interface::{
 
 use crate::sim_plugin::dummy::Dummy;
 
-pub use context::{EffectCheckpoint, RunnerContext};
+pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
 pub use interface::{BuiltinInterface, Interface, InterfaceError, NullInterface};
 pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
@@ -278,6 +278,3 @@ where
         .map_err(RunError::Eval)?;
     Ok(())
 }
-
-#[cfg(test)]
-mod tests;

@@ -13,7 +13,7 @@ use crate::runner::{Eval, Extern, Interface, Interpreter, InterpreterError, Side
 
 /// A snapshot of one runner's effect count, valid until that runner resets.
 #[derive(Clone, Copy)]
-pub struct EffectCheckpoint(u64);
+pub struct Checkpoint(u64);
 
 // == Runner context
 
@@ -85,14 +85,14 @@ where
     }
 
     /// Takes a snapshot without clearing effects of enclosing calls.
-    pub fn effect_checkpoint(&self) -> EffectCheckpoint {
-        EffectCheckpoint(*self.effects)
+    pub fn effect_checkpoint(&self) -> Checkpoint {
+        Checkpoint(*self.effects)
     }
 
     /// Reports effects since a checkpoint from this runner's current execution.
     ///
     /// A saturated counter conservatively reports Impure until reset.
-    pub fn effect_since(&self, checkpoint: EffectCheckpoint) -> SideEffect {
+    pub fn effect_since(&self, checkpoint: Checkpoint) -> SideEffect {
         if *self.effects == u64::MAX || *self.effects != checkpoint.0 {
             SideEffect::Impure
         } else {
