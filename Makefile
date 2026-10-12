@@ -24,7 +24,7 @@ fmt fmt-check lint rustdoc:
 	$(MAKE) -C $(RUST_DIR) CARGO_TARGET_DIR="$(CARGO_TARGET_DIR)" $@
 
 # End-to-end acceptance and explicit snapshot updates
-TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose \
+TEST_TARGETS := test test-runner test-expected test-elab test-algo test-structure test-prose \
   test-adoc test-p4parse test-run-al test-run-sl test-run-pl \
   test-sim-al test-sim-sl test-sim-pl test-diagnostics \
   test-promote test-diagnostics-promote

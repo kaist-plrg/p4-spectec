@@ -145,43 +145,40 @@ impl Run {
 // == Pipeline initialization
 
 /// Parses the program and initializes the pipeline in a fresh runner.
-pub fn init_pipe<Interp, Iface, Arch>(
-    runner: &mut Runner<Interp, Iface, Arch>,
+pub fn init_pipe<Iface, Arch>(
+    runner: &mut Runner<Iface, Arch>,
     includes: &[PathBuf],
     path: &Path,
 ) -> Result<Run, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
 {
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
     let program =
         parse::parse_file(runner.arena_mut(), includes, path).map_err(P4Error::into_report)?;
-    let state =
-        Arch::init_pipe(&mut runner.context(), program).map_err(ExternError::into_report)?;
+    let state = crate::runner::with_context!(runner, |ctx| Arch::init_pipe(&mut ctx, program))
+        .map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
 // == STF statements
 
 /// Executes one statement; returns the output packet it matched, if any.
-pub fn run_stf_stmt<Interp, Iface, Arch>(
-    runner: &mut Runner<Interp, Iface, Arch>,
+pub fn run_stf_stmt<Iface, Arch>(
+    runner: &mut Runner<Iface, Arch>,
     run: &mut Run,
     stmt: &Phrase<Statement>,
 ) -> Result<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
 {
     // Fresh output list; the architecture may rewrite the statement first
     run.state.txs.clear();
     let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
-    let mut ctx = runner.context();
-    let result = match stmt_kind {
+    let result = crate::runner::with_context!(runner, |ctx| match stmt_kind {
         // Packets drive the pipeline
         Statement::Packet { port, packet } => {
             run_stf_packet_stmt(&mut ctx, &stmt.span, run, port, packet)
@@ -228,7 +225,7 @@ where
         Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
         // Anything else is unsupported
         stmt => Err(error::statement_unsupported(Print::to_string(&stmt))),
-    };
+    });
     // Attach the statement's span to failures that have none
     let tx = result.map_err(|report| {
         if stmt.span == Span::default() {
@@ -630,8 +627,8 @@ where
 // == STF tests
 
 /// Runs a whole STF file against a P4 program; fails on the first problem.
-pub fn run_stf_test<Interp, Iface, Arch>(
-    runner: &mut Runner<Interp, Iface, Arch>,
+pub fn run_stf_test<Iface, Arch>(
+    runner: &mut Runner<Iface, Arch>,
     includes: &[PathBuf],
     path_p4: &Path,
     path_stf: &Path,
@@ -640,7 +637,6 @@ pub fn run_stf_test<Interp, Iface, Arch>(
 where
     Iface: Interface,
     Arch: Architecture,
-    Interp: Interpreter<Iface, Arch>,
 {
     let mut run = init_pipe(runner, includes, path_p4)?;
     let stmts = stf::parse::parse_file(path_stf)?;

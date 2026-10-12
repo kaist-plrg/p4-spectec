@@ -38,7 +38,7 @@ where
     Iface: Interface,
     Ext: Extern,
 {
-    pub(super) fn new(
+    pub(crate) fn new(
         arena: &'runner mut Arena,
         spec_env: &'runner Interp::SpecEnv,
         interp: &'runner mut Interp,

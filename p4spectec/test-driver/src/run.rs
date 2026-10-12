@@ -3,7 +3,7 @@ use std::{collections::BTreeSet, fs, path::PathBuf, sync::mpsc, thread, time::In
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spectec::runner::{self, BuiltinInterface, Config, Interpreter, Runner};
+use p4spectec::runner::{self, BuiltinInterface, Config, Runner};
 
 use p4spectec::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
 
@@ -70,15 +70,14 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
     }
 }
 
-fn run_with<Interp, Build>(
+fn run_with<Build>(
     config: &RunConfig,
     text_mode: &str,
     mut suites: Vec<CollectedSuite>,
     build_runner: Build,
 ) -> Result<()>
 where
-    Interp: Interpreter<BuiltinInterface, Dummy>,
-    Build: FnOnce() -> Result<Runner<Interp, BuiltinInterface, Dummy>>,
+    Build: FnOnce() -> Result<Runner<BuiltinInterface, Dummy>>,
 {
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
