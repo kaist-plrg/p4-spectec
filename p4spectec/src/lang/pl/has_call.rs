@@ -97,7 +97,10 @@ impl HasCall for Guard {
     fn nested_call(&self) -> Vec<&Self::Exp> {
         match self {
             Guard::Bool(_) | Guard::Sub(..) | Guard::Match(_) => vec![],
-            Guard::Cmp(_, _, exp) | Guard::Mem(exp) => exp.nested_call(),
+            Guard::Cmp(_, _, exp)
+            | Guard::LetSub(_, _, exp)
+            | Guard::LetMatch(_, exp)
+            | Guard::Mem(exp) => exp.nested_call(),
         }
     }
 }

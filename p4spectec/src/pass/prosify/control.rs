@@ -29,6 +29,9 @@ fn exp_of_guard(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
         }
         pl::Guard::Sub(typ, subcheck) => pl::ExpKind::Sub(Box::new(exp_scrut), typ, subcheck),
         pl::Guard::Match(pattern) => pl::ExpKind::Match(Box::new(exp_scrut), pattern),
+        pl::Guard::LetSub(..) | pl::Guard::LetMatch(..) => {
+            unreachable!("conditional bindings are introduced after classification")
+        }
         pl::Guard::Mem(exp_list) => pl::ExpKind::Mem(Box::new(exp_scrut), Box::new(exp_list)),
     };
     crate::annotated_note_phrase! { node: kind, note: pl::TypKind::Bool, span: span }
@@ -51,6 +54,9 @@ fn classify_instr_kind<Tier>(
     instr_kind: pl::InstrKind<Tier>,
 ) -> pl::InstrKind<Tier> {
     match instr_kind {
+        pl::InstrKind::IfLetSub(_) | pl::InstrKind::IfLetMatch(_) => {
+            unreachable!("conditional bindings are introduced after classification")
+        }
         pl::InstrKind::If(instr) => classify_if_instr(has_continuation, classify_tier, instr),
         pl::InstrKind::Check(instr) => classify_check_instr(has_continuation, classify_tier, instr),
         pl::InstrKind::Hold(instr) => classify_hold_instr(has_continuation, classify_tier, instr),

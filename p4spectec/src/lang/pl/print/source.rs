@@ -319,6 +319,43 @@ fn write_instr_with<Tier>(
             }
             Ok(())
         }
+        InstrKind::IfLetSub(IfLetSubInstr { exp_l, exp_r, block, dangle, typ, .. }) => {
+            write_order(output)?;
+            output.write_str("If let ")?;
+            exp_l.print(output)?;
+            output.write_str(" of type ")?;
+            typ.print(output)?;
+            output.write_str(" be ")?;
+            exp_r.print(output)?;
+            output.write_str(", then")?;
+            if !short {
+                output.write_str("\n\n")?;
+                write_block_with(output, block, tier_printer, level + 1, 0)?;
+                if *dangle {
+                    write!(output, "\n\n{order}Else Dangling")?;
+                }
+            }
+            Ok(())
+        }
+        InstrKind::IfLetMatch(IfLetMatchInstr { exp_l, exp_r, block, dangle, pattern, .. }) => {
+            write_order(output)?;
+            output.write_str("If let ")?;
+            exp_l.print(output)?;
+
+            output.write_str(" be ")?;
+            exp_r.print(output)?;
+            output.write_str(" matching pattern ")?;
+            pattern.print(output)?;
+            output.write_str(", then")?;
+            if !short {
+                output.write_str("\n\n")?;
+                write_block_with(output, block, tier_printer, level + 1, 0)?;
+                if *dangle {
+                    write!(output, "\n\n{order}Else Dangling")?;
+                }
+            }
+            Ok(())
+        }
         InstrKind::Check(CheckInstr { exp, iter_exps, block }) => {
             write_order(output)?;
             output.write_str("Check (")?;
@@ -598,6 +635,20 @@ impl Print for Guard {
                 printer.write_str("(% matches pattern ")?;
                 pattern.print(printer)?;
                 printer.write_char(')')
+            }
+            Guard::LetSub(typ, _, exp_l) => {
+                printer.write_str("(% has type ")?;
+                typ.print(printer)?;
+                printer.write_str(", let ")?;
+                exp_l.print(printer)?;
+                printer.write_str(" = %)")
+            }
+            Guard::LetMatch(pattern, exp_l) => {
+                printer.write_str("(% matches pattern ")?;
+                pattern.print(printer)?;
+                printer.write_str(", let ")?;
+                exp_l.print(printer)?;
+                printer.write_str(" = %)")
             }
             Guard::Mem(exp) => {
                 printer.write_str("(% is in ")?;

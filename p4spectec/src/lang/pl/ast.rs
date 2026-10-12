@@ -189,7 +189,7 @@ pub struct Case<Tier, P: Stage = Source> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-/// A nonbinding test on the case scrutinee.
+/// A case test with an optional binding encoded by its guard kind.
 pub enum Guard<P: Stage = Source> {
     /// The scrutinee is this boolean.
     Bool(bool),
@@ -197,8 +197,12 @@ pub enum Guard<P: Stage = Source> {
     Cmp(CmpOp, OpTyp, Exp<P>),
     /// The scrutinee has the type.
     Sub(Typ, Box<Subcheck<P>>),
+    /// The scrutinee has the type and binds the expression.
+    LetSub(Typ, Box<Subcheck<P>>, Exp<P>),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
+    /// The scrutinee matches the pattern and binds the expression.
+    LetMatch(Pattern<P>, Exp<P>),
     /// The scrutinee is an element of the list.
     Mem(Exp<P>),
 }
@@ -215,6 +219,10 @@ pub type Instr<Tier, P = Source> = annot::Annotated<InstrNode<Tier, P>>;
 pub enum InstrKind<Tier, P: Stage = Source> {
     /// Run the block if a condition holds.
     If(IfInstr<Tier, P>),
+    /// Test a subtype, bind the value, then run the block.
+    IfLetSub(IfLetSubInstr<Tier, P>),
+    /// Test a pattern, bind the value, then run the block.
+    IfLetMatch(IfLetMatchInstr<Tier, P>),
     /// Require a condition when no continuation can recover from its failure.
     Check(CheckInstr<Tier, P>),
     /// Run a branch by whether a relation applies.
@@ -236,6 +244,25 @@ pub enum InstrKind<Tier, P: Stage = Source> {
 pub struct IfInstr<Tier, P: Stage = Source> {
     pub exp: Exp<P>,
     pub iter_exps: Vec<ExpIter<P::Var>>,
+    pub block: Block<Tier, P>,
+    pub dangle: Dangle,
+}
+#[derive(Clone, Debug, PartialEq)]
+/// Bind a value with the required subtype and run the block.
+pub struct IfLetSubInstr<Tier, P: Stage = Source> {
+    pub typ: Typ,
+    pub subcheck: Box<Subcheck<P>>,
+    pub exp_l: Exp<P>,
+    pub exp_r: Exp<P>,
+    pub block: Block<Tier, P>,
+    pub dangle: Dangle,
+}
+#[derive(Clone, Debug, PartialEq)]
+/// Bind a value matching the pattern and run the block.
+pub struct IfLetMatchInstr<Tier, P: Stage = Source> {
+    pub pattern: Pattern<P>,
+    pub exp_l: Exp<P>,
+    pub exp_r: Exp<P>,
     pub block: Block<Tier, P>,
     pub dangle: Dangle,
 }

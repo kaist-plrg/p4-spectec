@@ -11,7 +11,7 @@ use crate::lang::{
     common::source::Span,
     data::value::flat::{self as value, Value},
     hints::input,
-    traits::print::Print,
+    traits::{eq::SyntaxEq, print::Print},
 };
 
 use crate::lang::pl::prepared as ast;
@@ -143,6 +143,12 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || match &instr.node.node {
         ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::IfLetSub(instr) => {
+            eval_if_let_sub_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
+        ast::InstrKind::IfLetMatch(instr) => {
+            eval_if_let_match_instr(runner_ctx, ctx, instr, evaluate_block)
+        }
         ast::InstrKind::Check(instr) => eval_check_instr(runner_ctx, ctx, instr, evaluate_block),
         ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, evaluate_block),
         ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, evaluate_block),
@@ -216,6 +222,79 @@ fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     ) -> Backtrack<(Context<'global>, Flow)>,
 ) -> Backtrack<(Context<'global>, Flow)> {
     eval_condition(runner_ctx, ctx, &instr.exp, &instr.iter_exps, &instr.block, evaluate_block)
+}
+
+// - Subtype binding instruction
+
+/// Tests and narrows the scrutinee once, keeping its binding inside the body.
+fn eval_if_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+    ctx: Context<'global>,
+    instr: &ast::IfLetSubInstr<Tier>,
+    evaluate_block: &mut impl FnMut(
+        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+        Context<'global>,
+        &ast::Block<Tier>,
+    ) -> Backtrack<(Context<'global>, Flow)>,
+) -> Backtrack<(Context<'global>, Flow)> {
+    // Test the original value before narrowing it for the binding
+    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
+    if !unwrap!(ops::sub(runner_ctx.arena(), &ctx, &instr.exp_r.node.span, &instr.subcheck, value))
+    {
+        let text = format!(
+            "({} has type {})",
+            instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
+            instr.typ.to_string()
+        );
+        return ok!((
+            ctx,
+            Flow::cont(instr.exp_r.node.span.clone(), error::prem::condition_unmet(text))
+        ));
+    }
+    // Same-type bindings do not introduce an otherwise absent cast
+    let value = if instr.exp_r.node.note.syntax_eq(&instr.typ.node) {
+        value
+    } else {
+        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, &instr.typ, value))
+    };
+    // Restore the enclosing bindings when the selected body finishes
+    let ctx_local =
+        unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
+    let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &instr.block));
+    ok!((ctx, flow))
+}
+
+// - Pattern binding instruction
+
+/// Tests the scrutinee once and runs the body with its pattern bindings.
+fn eval_if_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+    ctx: Context<'global>,
+    instr: &ast::IfLetMatchInstr<Tier>,
+    evaluate_block: &mut impl FnMut(
+        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+        Context<'global>,
+        &ast::Block<Tier>,
+    ) -> Backtrack<(Context<'global>, Flow)>,
+) -> Backtrack<(Context<'global>, Flow)> {
+    // Evaluate and test before introducing local bindings
+    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
+    if !ops::r#match(runner_ctx.arena(), &instr.pattern, value) {
+        let text = format!(
+            "({} matches pattern {})",
+            instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
+            instr.pattern.view(&runner_ctx.arena().mixop).to_string()
+        );
+        return ok!((
+            ctx,
+            Flow::cont(instr.exp_r.node.span.clone(), error::prem::condition_unmet(text))
+        ));
+    }
+    // Binding and body failures propagate after the condition succeeds
+    let ctx_local =
+        unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
+    let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &instr.block));
+    ok!((ctx, flow))
 }
 
 // - Check instruction
@@ -344,8 +423,23 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     // Try guards in source order from the enclosing bindings
     for case in &instr.cases {
         if unwrap!(eval_guard(runner_ctx, &ctx, value, &case.guard)) {
+            // Commit to the accepted guard before assigning its local binding
+            let ctx_local = match &case.guard {
+                ast::Guard::LetSub(typ, _, exp_l) => {
+                    let value = if instr.exp.node.note.syntax_eq(&typ.node) {
+                        value
+                    } else {
+                        unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value))
+                    };
+                    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), exp_l, value))
+                }
+                ast::Guard::LetMatch(_, exp_l) => {
+                    unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), exp_l, value))
+                }
+                _ => ctx.clone(),
+            };
             // Keep body bindings inside the selected case
-            let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx.clone(), &case.block));
+            let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_local, &case.block));
             return ok!((ctx, flow));
         }
     }
@@ -377,11 +471,11 @@ fn eval_guard<'global, Iface: Interface, Ext: Extern>(
             ops::cmpop(runner_ctx.arena(), &exp_r.node.span, op, value, value_r)
         }
         // Check membership before introducing any binding
-        ast::Guard::Sub(_, check) => {
+        ast::Guard::Sub(_, check) | ast::Guard::LetSub(_, check, _) => {
             ops::sub(runner_ctx.arena(), ctx, &Span::default(), check, value)
         }
         // Check the pattern before introducing any binding
-        ast::Guard::Match(pattern) => {
+        ast::Guard::Match(pattern) | ast::Guard::LetMatch(pattern, _) => {
             ok!(ops::r#match(runner_ctx.arena(), pattern, value))
         }
         // Test membership in the evaluated list

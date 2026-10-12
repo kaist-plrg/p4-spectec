@@ -94,6 +94,8 @@ impl<Tier: FreeIds> FreeIds for InstrKind<Tier> {
     fn free_ids(&self) -> IdSet {
         match self {
             Self::If(instr) => instr.free_ids(),
+            Self::IfLetSub(instr) => instr.free_ids(),
+            Self::IfLetMatch(instr) => instr.free_ids(),
             Self::Check(instr) => instr.free_ids(),
             Self::Hold(instr) => instr.free_ids(),
             Self::Case(instr) => instr.free_ids(),
@@ -108,6 +110,24 @@ impl<Tier: FreeIds> FreeIds for InstrKind<Tier> {
 impl<Tier: FreeIds> FreeIds for IfInstr<Tier> {
     fn free_ids(&self) -> IdSet {
         self.exp.free_ids().union(self.block.free_ids())
+    }
+}
+
+impl<Tier: FreeIds> FreeIds for IfLetSubInstr<Tier> {
+    fn free_ids(&self) -> IdSet {
+        self.exp_l
+            .free_ids()
+            .union(self.exp_r.free_ids())
+            .union(self.block.free_ids())
+    }
+}
+
+impl<Tier: FreeIds> FreeIds for IfLetMatchInstr<Tier> {
+    fn free_ids(&self) -> IdSet {
+        self.exp_l
+            .free_ids()
+            .union(self.exp_r.free_ids())
+            .union(self.block.free_ids())
     }
 }
 
@@ -235,7 +255,10 @@ impl<Tier: FreeIds> FreeIds for HoldCase<Tier> {
 impl FreeIds for Guard {
     fn free_ids(&self) -> IdSet {
         match self {
-            Self::Cmp(_, _, exp) | Self::Mem(exp) => exp.free_ids(),
+            Self::Cmp(_, _, exp)
+            | Self::LetSub(_, _, exp)
+            | Self::LetMatch(_, exp)
+            | Self::Mem(exp) => exp.free_ids(),
             Self::Bool(_) | Self::Sub(..) | Self::Match(_) => IdSet::new(),
         }
     }
