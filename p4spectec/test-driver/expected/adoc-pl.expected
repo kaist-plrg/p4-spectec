@@ -7416,7 +7416,7 @@ xref:add_var_t[``TC`` where ``id`` to ``varTypeIR`` is added to the ``p`` layer]
 . If ``p`` matches pattern ``+GLOBAL+``:
  .. Let ``typeFrame`` be ``TC.+GLOBAL+.+FRAME+``.
  .. Check that ``~``xref:in_set[``$in_set<id>(id,`` ``$dom_map<id,`` ``varTypeIR>(typeFrame))``].
- .. Let ``++_++`` ``typeIR`` ``++_++`` ``++_++^?^`` be ``varTypeIR``.
+ .. Let ``typeIR`` be the type of ``varTypeIR``.
  .. Let ``typeIR~unroll~`` be xref:unroll_typeIR[``typeIR`` with typedefs unrolled].
  .. Check that if ``id`` is equal to ``"main"``, then ``typeIR~unroll~`` has type ``packageObjectTypeIR``.
  .. Let ``typeFrame~update~`` be xref:add_map[``typeFrame`` where ``id`` to ``varTypeIR`` is added].
@@ -14040,7 +14040,7 @@ xref:Call_convention_arg_ok[Checking calling convention of ``argumentIR`` applie
  .. Check that ``direction`` is ``+OUT+``.
  .. The result is casted ``nameIR`` ``+'='+`` ``+'_'+``.
 . Else:
- .. Let ``++_++`` ``direction`` ``++_++`` ``++_++`` ``++_++`` be ``parameterIR``.
+ .. Let ``direction`` be the direction of ``parameterIR``.
  .. Check that ``direction`` is ``+OUT+``.
  .. The result is casted ``+'_'+``.
 
@@ -20883,7 +20883,7 @@ xref:Callee_eval[Finding callee ``typedExpressionIR`` ``+'.'+`` ``"setInvalid"``
 xref:Callee_eval[Finding callee ``typedExpressionIR~base~`` ``+'.'+`` ``nameIR`` ``+`(+`` ``·`` ``+`)+``, under context ``EC`` and state ``ARCH`` at ``p``]:
 
 . If ``nameIR`` is in ``+[+`` ``{quot}minSizeInBits{quot},`` ``{quot}minSizeInBytes{quot},`` ``{quot}maxSizeInBits{quot},`` ``{quot}maxSizeInBytes{quot}`` ``+]+``:
- .. Let ``++_++`` ``+'#'+`` ``+`(+`` ``typeIR~base~`` ``++_++`` ``+`)+`` be ``typedExpressionIR~base~``.
+ .. Let xref:expressionNoteIR[a pair of type ``typeIR~base~`` and compile-time known-ness ``++_++``] be the note of ``typedExpressionIR~base~``.
  .. Let ``builtinSizeMethodCallee`` be ``+BUILTIN_SIZE_OF+`` ``nameIR`` ``typeIR~base~``.
  .. The result is context ``EC``, state ``ARCH``, and callee ``{nbsp}~CONT~`` ``builtinSizeMethodCallee``.
 
@@ -22082,7 +22082,7 @@ xref:match_switchLabelIR_table[``id`` matches ``switchLabelIR``]
 
 . If ``switchLabelIR`` matches pattern ``+DEFAULT+``: return ``true``.
 . Else:
- .. Let ``expressionIR`` ``+'#'+`` ``++_++`` be ``switchLabelIR``.
+ .. Let ``expressionIR`` be the expression of ``switchLabelIR``.
  .. If let ``prefixedNameIR`` of type ``prefixedNameIR`` be ``expressionIR``:
   ... If let ``{nbsp}~BARE~`` ``id'`` be ``prefixedNameIR``:
    .... If ``id`` is equal to ``id'``: return ``true``.
@@ -22596,7 +22596,7 @@ xref:cast_control_plane[``typedExpressionIR`` from control plane cast to ``typeI
      ...... Return ``typedExpressionIR~cast~``.
   ... Then, try:
    .... If ``+ERROR+`` is equal to ``typeIR~to~``:
-    ..... Let ``expressionIR`` ``+'#'+`` ``+`(+`` ``typeIR`` ``ctk`` ``+`)+`` be ``typedExpressionIR``.
+    ..... Let ``expressionIR`` and xref:expressionNoteIR[a pair of type ``typeIR`` and compile-time known-ness ``ctk``] be the expression and the note of ``typedExpressionIR``.
     ..... If let ``integerLiteral`` of type ``integerLiteral`` be ``expressionIR``:
      ...... If let ``+D+`` ``i`` be ``integerLiteral``:
       ....... If ``i`` has type ``nat``:

@@ -16299,7 +16299,7 @@ def $add_var_t(p, TC, id, varTypeIR)
 
     2. Check (~$in_set<id>(id, $dom_map<id, varTypeIR>(typeFrame)))
 
-      1. (Let (_direction typeIR _ctk (_value)?{_value <- _value?}) be varTypeIR)
+      1. (Destruct (_direction, typeIR, _ctk, (_value)?{_value <- _value?}) = varTypeIR)
 
       2. (Let typeIR_unroll be $unroll_typeIR(typeIR))
 
@@ -27345,7 +27345,7 @@ relation Call_convention_arg_ok: p TC actctxt |- parameterIR '@' argumentIR : %
 
     4. Case (% matches pattern '_')
 
-      1. (Let (_annotationList direction _typeIR _id _parameterInitializerOptIR) be parameterIR)
+      1. (Destruct (_annotationList, direction, _typeIR, _id, _parameterInitializerOptIR) = parameterIR)
 
       2. Check ((direction matches pattern OUT))
 
@@ -39587,7 +39587,7 @@ Arm 2:
 
         1. If (nameIR is in ["minSizeInBits", "minSizeInBytes", "maxSizeInBits", "maxSizeInBytes"]), then
 
-          1. (Let (_expressionIR '#' (`( typeIR_base _ctk `))) be typedExpressionIR_base)
+          1. (Destruct (_expressionIR, (`( typeIR_base _ctk `))) = typedExpressionIR_base)
 
           2. (Let builtinSizeMethodCallee be (BUILTIN_SIZE_OF nameIR typeIR_base))
 
@@ -41782,7 +41782,7 @@ def $match_switchLabelIR_table(id, switchLabelIR)
 
   2. Case (% has type typedExpressionIR)
 
-    1. (Let (expressionIR '#' _expressionNoteIR) be (switchLabelIR as typedExpressionIR))
+    1. (Destruct (expressionIR, _expressionNoteIR) = (switchLabelIR as typedExpressionIR))
 
     2. If ((expressionIR has type prefixedNameIR)), then
 
@@ -42598,7 +42598,7 @@ Arm 2:
 
       1. If ((((ERROR) as typeIR) = typeIR_to)), then
 
-        1. (Let (expressionIR '#' (`( typeIR ctk `))) be typedExpressionIR)
+        1. (Destruct (expressionIR, (`( typeIR ctk `))) = typedExpressionIR)
 
         2. If ((expressionIR has type integerLiteral)), then
 
