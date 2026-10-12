@@ -5,12 +5,10 @@
 //! Both stop at the first fatal error.
 //! Deterministic choice retains every mismatch when nothing matches.
 
-use crate::runner::Eval;
-
 use crate::diagnostic::Report;
 
 use crate::interp::shared::{
-    backtrack::{fatal, ok, unmatch},
+    backtrack::{Backtrack, fatal, ok, unmatch},
     error::Error,
 };
 
@@ -28,22 +26,20 @@ fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
 /// Returns the first matching candidate or the deepest failure set.
 pub fn choose_sequential<C, T>(
     candidates: impl IntoIterator<Item = C>,
-    mut evaluate: impl FnMut(&C) -> Eval<T>,
-) -> Eval<T> {
-    Eval::with(|effect| {
-        let mut errors = Vec::new();
-        for candidate in candidates {
-            match effect.include(evaluate(&candidate)) {
-                // The first match wins
-                ok!(value) => return ok!(value),
-                // A fatal error stops the search
-                fatal!(errors) => return fatal!(errors),
-                // Retain the deepest failures before trying the next candidate
-                unmatch!(errors_post) => retain_deepest_errors(&mut errors, errors_post),
-            }
+    mut evaluate: impl FnMut(&C) -> Backtrack<T>,
+) -> Backtrack<T> {
+    let mut errors = Vec::new();
+    for candidate in candidates {
+        match evaluate(&candidate) {
+            // The first match wins
+            ok!(value) => return ok!(value),
+            // A fatal error stops the search
+            fatal!(errors) => return fatal!(errors),
+            // Retain the deepest failures before trying the next candidate
+            unmatch!(errors_post) => retain_deepest_errors(&mut errors, errors_post),
         }
-        unmatch!(errors)
-    })
+    }
+    unmatch!(errors)
 }
 
 // = Deterministic choice
@@ -51,36 +47,34 @@ pub fn choose_sequential<C, T>(
 /// Evaluates every candidate; a second match is reported through `nondet`.
 pub fn choose_deterministic<C, T>(
     candidates: impl IntoIterator<Item = C>,
-    mut evaluate: impl FnMut(&C) -> Eval<T>,
+    mut evaluate: impl FnMut(&C) -> Backtrack<T>,
     nondet: impl FnOnce(C, C) -> Error,
-) -> Eval<T> {
-    Eval::with(|effect| {
-        // Remember the first match and the mismatches seen before it
-        let mut success = None;
-        let mut errors = Vec::new();
-        for candidate in candidates {
-            match effect.include(evaluate(&candidate)) {
-                ok!(value) => {
-                    // A second match is nondeterminism
-                    if let Some((first, _)) = success {
-                        return fatal!(nondet(first, candidate));
-                    }
-                    success = Some((candidate, value));
-                    errors.clear();
+) -> Backtrack<T> {
+    // Remember the first match and the mismatches seen before it
+    let mut success = None;
+    let mut errors = Vec::new();
+    for candidate in candidates {
+        match evaluate(&candidate) {
+            ok!(value) => {
+                // A second match is nondeterminism
+                if let Some((first, _)) = success {
+                    return fatal!(nondet(first, candidate));
                 }
-                fatal!(errors) => return fatal!(errors),
-                // Mismatches only matter while nothing has matched
-                unmatch!(mut candidate_errors) => {
-                    if success.is_none() {
-                        errors.append(&mut candidate_errors);
-                    }
+                success = Some((candidate, value));
+                errors.clear();
+            }
+            fatal!(errors) => return fatal!(errors),
+            // Mismatches only matter while nothing has matched
+            unmatch!(mut candidate_errors) => {
+                if success.is_none() {
+                    errors.append(&mut candidate_errors);
                 }
             }
         }
-        // One match is the answer; none is a mismatch
-        match success {
-            Some((_, value)) => ok!(value),
-            None => unmatch!(errors),
-        }
-    })
+    }
+    // One match is the answer; none is a mismatch
+    match success {
+        Some((_, value)) => ok!(value),
+        None => unmatch!(errors),
+    }
 }

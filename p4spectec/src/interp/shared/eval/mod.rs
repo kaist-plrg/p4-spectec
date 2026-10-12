@@ -15,9 +15,9 @@ use crate::lang::data::value::flat::Value;
 
 use crate::lang::il::prepared as ast;
 
-use crate::runner::{Eval, Extern, Interface, Interpreter, RunnerContext};
+use crate::runner::{Extern, Interface, Interpreter, RunnerContext};
 
-use super::context::IterContext;
+use super::{backtrack::Backtrack, context::IterContext};
 
 // = Invocation
 
@@ -37,7 +37,7 @@ where
         id: &ast::Id,
         targs: &[ast::Typ],
         values: &[Value],
-    ) -> Eval<Value>;
+    ) -> Backtrack<Value>;
 
     /// Calls relation `id` with its evaluated inputs, returning the outputs.
     fn invoke_rel<'global>(
@@ -45,5 +45,5 @@ where
         ctx: &Self::Context<'global>,
         id: &ast::Id,
         values: &[Value],
-    ) -> Eval<Vec<Value>>;
+    ) -> Backtrack<Vec<Value>>;
 }

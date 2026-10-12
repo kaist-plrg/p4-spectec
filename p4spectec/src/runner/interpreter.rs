@@ -106,16 +106,6 @@ pub enum SideEffect {
     Impure,
 }
 
-impl SideEffect {
-    /// Includes a child evaluation's effect before exposing its result.
-    pub fn include<T, E>(&mut self, eval: Eval<T, E>) -> Result<T, E> {
-        if eval.effect == Self::Impure {
-            *self = Self::Impure;
-        }
-        eval.result
-    }
-}
-
 /// An evaluation result together with effects retained even on failure.
 #[derive(Debug)]
 #[must_use]
@@ -132,13 +122,6 @@ impl<T, E> Eval<T, E> {
         Self { result, effect }
     }
 
-    /// Evaluates a body with a local effect accumulator that survives `?`.
-    pub fn with(evaluate: impl FnOnce(&mut SideEffect) -> Result<T, E>) -> Self {
-        let mut effect = SideEffect::Pure;
-        let result = evaluate(&mut effect);
-        Self { result, effect }
-    }
-
     /// Converts an error while preserving the evaluation effect.
     pub fn map_err<F>(self, convert: impl FnOnce(E) -> F) -> Eval<T, F> {
         Eval { result: self.result.map_err(convert), effect: self.effect }
@@ -148,6 +131,9 @@ impl<T, E> Eval<T, E> {
 // == Interpreter contract
 
 /// A language stage's evaluator, parameterized by its host components.
+///
+/// Evaluators record effects through RunnerContext before returning a result.
+/// The context preserves those effects across errors and same-runner reentry.
 pub trait Interpreter<Iface, Ext>: Sized
 where
     Iface: Interface,
@@ -167,7 +153,7 @@ where
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Eval<Vec<Value>, InterpreterError>;
+    ) -> Result<Vec<Value>, InterpreterError>;
 
     /// Calls a relation by name.
     ///
@@ -177,7 +163,7 @@ where
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Eval<Vec<Value>, InterpreterError>;
+    ) -> Result<Vec<Value>, InterpreterError>;
 
     /// Calls a function by name with type arguments.
     ///
@@ -189,5 +175,5 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterpreterError>;
+    ) -> Result<Value, InterpreterError>;
 }

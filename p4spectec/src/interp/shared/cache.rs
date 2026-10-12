@@ -2,7 +2,7 @@
 //!
 //! Memo keys belong to the runner's arena.
 //! Public entries clear the memo tables.
-//! Evaluation carries its effects independently of memoization.
+//! RunnerContext records effects independently of memoization.
 
 use std::hash::{Hash, Hasher};
 

@@ -19,7 +19,7 @@ use crate::lang::{
     traits::print::Print,
 };
 
-use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::{
     core::object::PacketIn,
@@ -56,29 +56,27 @@ pub fn digest<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|_| {
-        // No-op in the source simulator
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    // No-op in the source simulator
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// mark_to_drop(`standard_metadata`) is a primitive action that modifies
@@ -95,48 +93,46 @@ pub fn mark_to_drop<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        // The drop port is 511 on 9 bits
-        let value_egress_spec = pack::p4_fixed_bit(ctx.arena_mut(), 9.into(), 511.into())?;
-        let value_ctx = effect.include(rel::lvalue_write_dot_local(
-            ctx,
-            value_ctx,
-            value_arch,
-            "standard_metadata",
-            "egress_spec",
-            value_egress_spec,
-        ))?;
-        // No multicast for a dropped packet
-        let value_mcast_grp = pack::p4_fixed_bit(ctx.arena_mut(), 16.into(), 0.into())?;
-        let value_ctx = effect.include(rel::lvalue_write_dot_local(
-            ctx,
-            value_ctx,
-            value_arch,
-            "standard_metadata",
-            "mcast_grp",
-            value_mcast_grp,
-        ))?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    // The drop port is 511 on 9 bits
+    let value_egress_spec = pack::p4_fixed_bit(ctx.arena_mut(), 9.into(), 511.into())?;
+    let value_ctx = rel::lvalue_write_dot_local(
+        ctx,
+        value_ctx,
+        value_arch,
+        "standard_metadata",
+        "egress_spec",
+        value_egress_spec,
+    )?;
+    // No multicast for a dropped packet
+    let value_mcast_grp = pack::p4_fixed_bit(ctx.arena_mut(), 16.into(), 0.into())?;
+    let value_ctx = rel::lvalue_write_dot_local(
+        ctx,
+        value_ctx,
+        value_arch,
+        "standard_metadata",
+        "mcast_grp",
+        value_mcast_grp,
+    )?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Calculate a hash function of the value specified by the data
@@ -160,46 +156,39 @@ pub fn hash<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let value_base = effect.include(func::find_var_e_local(ctx, value_ctx, "base"))?;
-        let int_base = unpack::p4_fixed_bit(ctx.arena(), &value_base)?.1;
-        let value_max = effect.include(func::find_var_e_local(ctx, value_ctx, "max"))?;
-        let int_max = unpack::p4_fixed_bit(ctx.arena(), &value_max)?.1;
-        let int = effect.include(compute_checksum(ctx, value_ctx, None))?;
-        // The source simulator uses max - base as the range divisor
-        let int = adjust(&int_base, &int_max, &int)?;
-        // Cast the arbitrary-precision result to the output type `O`
-        let value_typ = effect.include(func::find_type_e_local(ctx, value_ctx, "O"))?;
-        let value_result = pack::p4_arbitrary_int(ctx.arena_mut(), int)?;
-        let value_result = effect.include(func::cast_op(ctx, value_typ, value_result))?;
-        let value_ctx = effect.include(rel::lvalue_write_var_local(
-            ctx,
-            value_ctx,
-            value_arch,
-            "result",
-            value_result,
-        ))?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    let value_base = func::find_var_e_local(ctx, value_ctx, "base")?;
+    let int_base = unpack::p4_fixed_bit(ctx.arena(), &value_base)?.1;
+    let value_max = func::find_var_e_local(ctx, value_ctx, "max")?;
+    let int_max = unpack::p4_fixed_bit(ctx.arena(), &value_max)?.1;
+    let int = compute_checksum(ctx, value_ctx, None)?;
+    // The source simulator uses max - base as the range divisor
+    let int = adjust(&int_base, &int_max, &int)?;
+    // Cast the arbitrary-precision result to the output type `O`
+    let value_typ = func::find_type_e_local(ctx, value_ctx, "O")?;
+    let value_result = pack::p4_arbitrary_int(ctx.arena_mut(), int)?;
+    let value_result = func::cast_op(ctx, value_typ, value_result)?;
+    let value_ctx =
+        rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value_result)?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Folds `int` into `[base, rmax)`, or returns `base` when `rmax` is zero.
@@ -223,32 +212,30 @@ fn compute_checksum<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     payload: Option<&PacketIn>,
-) -> Eval<BigInt, ExternError>
+) -> Result<BigInt, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let value_data = effect.include(func::find_var_e_local(ctx, value_ctx, "data"))?;
-        let mut values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        // The payload is appended as 8-bit values
-        if let Some(packet_in) = payload {
-            for byte in packet_in.payload_bytes()? {
-                values.push(pack::p4_fixed_bit(ctx.arena_mut(), 8.into(), byte)?);
-            }
+    let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
+    let mut values = unpack::p4_tuple(ctx.arena(), &value_data)?;
+    // The payload is appended as 8-bit values
+    if let Some(packet_in) = payload {
+        for byte in packet_in.payload_bytes()? {
+            values.push(pack::p4_fixed_bit(ctx.arena_mut(), 8.into(), byte)?);
         }
-        let value_algo = effect.include(func::find_var_e_local(ctx, value_ctx, "algo"))?;
-        let (id_enum, id_field) = unpack::p4_enum(ctx.arena(), &value_algo)?;
-        // Only a `HashAlgorithm` enumerator selects the algorithm
-        if id_enum != "HashAlgorithm" {
-            return Err(error::hash_algorithm_invalid(format!(
-                "invalid HashAlgorithm enum value: {id_enum}.{id_field}"
-            ))
-            .into());
-        }
-        hash::compute_checksum(ctx.arena(), &id_field, None, &values)
-    })
+    }
+    let value_algo = func::find_var_e_local(ctx, value_ctx, "algo")?;
+    let (id_enum, id_field) = unpack::p4_enum(ctx.arena(), &value_algo)?;
+    // Only a `HashAlgorithm` enumerator selects the algorithm
+    if id_enum != "HashAlgorithm" {
+        return Err(error::hash_algorithm_invalid(format!(
+            "invalid HashAlgorithm enum value: {id_enum}.{id_field}"
+        ))
+        .into());
+    }
+    hash::compute_checksum(ctx.arena(), &id_field, None, &values)
 }
 
 /// Shared body of `verify_checksum` and its `_with_payload` variant.
@@ -257,50 +244,15 @@ fn do_verify_checksum<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     payload: Option<&PacketIn>,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let value_condition =
-            effect.include(func::find_var_e_local(ctx, value_ctx, "condition"))?;
-        // A false condition skips the checksum
-        if !unpack::p4_bool(ctx.arena(), &value_condition)? {
-            // Return without a value
-            let typ = typ::make::opt(typ::make::var(
-                crate::phrase!(node: "value".into(), span: Span::default()),
-                Vec::new(),
-            ));
-            let value_opt =
-                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-            let value_call_result = value::make::case_shaped! {
-                arena: ctx.arena_mut(),
-                shape: "RETURN value?",
-                args: vec![value_opt],
-                typ: "returnResult",
-                span: Span::default(),
-            }?;
-            return Ok((value_ctx, value_arch, value_call_result));
-        }
-        let value_checksum = effect.include(func::find_var_e_local(ctx, value_ctx, "checksum"))?;
-        let int_expect = unpack::p4_fixed_bit(ctx.arena(), &value_checksum)?.1;
-        let int_actual = effect.include(compute_checksum(ctx, value_ctx, payload))?;
-        // A mismatch sets `checksum_error` to 1
-        let value_ctx = if int_expect == int_actual {
-            value_ctx
-        } else {
-            let value_error = pack::p4_fixed_bit(ctx.arena_mut(), 1.into(), 1.into())?;
-            effect.include(rel::lvalue_write_dot_global(
-                ctx,
-                value_ctx,
-                value_arch,
-                "standard_metadata",
-                "checksum_error",
-                value_error,
-            ))?
-        };
+    let value_condition = func::find_var_e_local(ctx, value_ctx, "condition")?;
+    // A false condition skips the checksum
+    if !unpack::p4_bool(ctx.arena(), &value_condition)? {
         // Return without a value
         let typ = typ::make::opt(typ::make::var(
             crate::phrase!(node: "value".into(), span: Span::default()),
@@ -314,8 +266,39 @@ where
             typ: "returnResult",
             span: Span::default(),
         }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+        return Ok((value_ctx, value_arch, value_call_result));
+    }
+    let value_checksum = func::find_var_e_local(ctx, value_ctx, "checksum")?;
+    let int_expect = unpack::p4_fixed_bit(ctx.arena(), &value_checksum)?.1;
+    let int_actual = compute_checksum(ctx, value_ctx, payload)?;
+    // A mismatch sets `checksum_error` to 1
+    let value_ctx = if int_expect == int_actual {
+        value_ctx
+    } else {
+        let value_error = pack::p4_fixed_bit(ctx.arena_mut(), 1.into(), 1.into())?;
+        rel::lvalue_write_dot_global(
+            ctx,
+            value_ctx,
+            value_arch,
+            "standard_metadata",
+            "checksum_error",
+            value_error,
+        )?
+    };
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Verifies the checksum of the supplied data.  If this method detects
@@ -356,7 +339,7 @@ pub fn verify_checksum<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -373,7 +356,7 @@ pub fn verify_checksum_with_payload<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     packet_in: &PacketIn,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -388,45 +371,15 @@ fn do_update_checksum<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     payload: Option<&PacketIn>,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let value_condition =
-            effect.include(func::find_var_e_local(ctx, value_ctx, "condition"))?;
-        // A false condition skips the checksum
-        if !unpack::p4_bool(ctx.arena(), &value_condition)? {
-            // Return without a value
-            let typ = typ::make::opt(typ::make::var(
-                crate::phrase!(node: "value".into(), span: Span::default()),
-                Vec::new(),
-            ));
-            let value_opt =
-                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-            let value_call_result = value::make::case_shaped! {
-                arena: ctx.arena_mut(),
-                shape: "RETURN value?",
-                args: vec![value_opt],
-                typ: "returnResult",
-                span: Span::default(),
-            }?;
-            return Ok((value_ctx, value_arch, value_call_result));
-        }
-        let int = effect.include(compute_checksum(ctx, value_ctx, payload))?;
-        // Cast the arbitrary-precision result to the output type `O`
-        let value_typ = effect.include(func::find_type_e_local(ctx, value_ctx, "O"))?;
-        let value_checksum = pack::p4_arbitrary_int(ctx.arena_mut(), int)?;
-        let value_checksum = effect.include(func::cast_op(ctx, value_typ, value_checksum))?;
-        let value_ctx = effect.include(rel::lvalue_write_var_local(
-            ctx,
-            value_ctx,
-            value_arch,
-            "checksum",
-            value_checksum,
-        ))?;
+    let value_condition = func::find_var_e_local(ctx, value_ctx, "condition")?;
+    // A false condition skips the checksum
+    if !unpack::p4_bool(ctx.arena(), &value_condition)? {
         // Return without a value
         let typ = typ::make::opt(typ::make::var(
             crate::phrase!(node: "value".into(), span: Span::default()),
@@ -440,8 +393,29 @@ where
             typ: "returnResult",
             span: Span::default(),
         }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+        return Ok((value_ctx, value_arch, value_call_result));
+    }
+    let int = compute_checksum(ctx, value_ctx, payload)?;
+    // Cast the arbitrary-precision result to the output type `O`
+    let value_typ = func::find_type_e_local(ctx, value_ctx, "O")?;
+    let value_checksum = pack::p4_arbitrary_int(ctx.arena_mut(), int)?;
+    let value_checksum = func::cast_op(ctx, value_typ, value_checksum)?;
+    let value_ctx =
+        rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "checksum", value_checksum)?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Computes the checksum of the supplied data and writes it to the
@@ -479,7 +453,7 @@ pub fn update_checksum<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -496,7 +470,7 @@ pub fn update_checksum_with_payload<Interp, Iface, Ext>(
     value_ctx: Value,
     value_arch: Value,
     packet_in: &PacketIn,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
@@ -545,33 +519,31 @@ pub fn resubmit_preserving_field_list<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    Eval::with(|effect| {
-        let value_idx = effect.include(func::find_var_e_local(ctx, value_ctx, "index"))?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
-        // The scheduler acts on the request after the control returns
-        let mut arch = effect.include(pipe::find_arch_state(ctx, value_arch))?;
-        arch.action.resubmit_opt = Some(idx);
-        let value_arch = effect.include(pipe::update_arch_state(ctx, value_arch, &arch))?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
+    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+    // The scheduler acts on the request after the control returns
+    let mut arch = pipe::find_arch_state(ctx, value_arch)?;
+    arch.action.resubmit_opt = Some(idx);
+    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Calling recirculate_preserving_field_list during execution of the
@@ -600,33 +572,31 @@ pub fn recirculate_preserving_field_list<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    Eval::with(|effect| {
-        let value_idx = effect.include(func::find_var_e_local(ctx, value_ctx, "index"))?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
-        // The scheduler acts on the request after the control returns
-        let mut arch = effect.include(pipe::find_arch_state(ctx, value_arch))?;
-        arch.action.recirculate_opt = Some(idx);
-        let value_arch = effect.include(pipe::update_arch_state(ctx, value_arch, &arch))?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
+    let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+    // The scheduler acts on the request after the control returns
+    let mut arch = pipe::find_arch_state(ctx, value_arch)?;
+    arch.action.recirculate_opt = Some(idx);
+    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Calling clone_preserving_field_list during execution of the ingress
@@ -668,35 +638,33 @@ pub fn clone_preserving_field_list<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    Eval::with(|effect| {
-        // The scheduler acts on the request after the control returns
-        let mut arch = effect.include(pipe::find_arch_state(ctx, value_arch))?;
-        let value_type = effect.include(func::find_var_e_local(ctx, value_ctx, "type"))?;
-        let value_session = effect.include(func::find_var_e_local(ctx, value_ctx, "session"))?;
-        let value_idx = effect.include(func::find_var_e_local(ctx, value_ctx, "index"))?;
-        arch.action.clone_opt =
-            Some(CloneInfo::new(ctx.arena(), &value_type, &value_session, &value_idx)?);
-        let value_arch = effect.include(pipe::update_arch_state(ctx, value_arch, &arch))?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    // The scheduler acts on the request after the control returns
+    let mut arch = pipe::find_arch_state(ctx, value_arch)?;
+    let value_type = func::find_var_e_local(ctx, value_ctx, "type")?;
+    let value_session = func::find_var_e_local(ctx, value_ctx, "session")?;
+    let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
+    arch.action.clone_opt =
+        Some(CloneInfo::new(ctx.arena(), &value_type, &value_session, &value_idx)?);
+    let value_arch = pipe::update_arch_state(ctx, value_arch, &arch)?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Log user defined messages
@@ -709,31 +677,29 @@ pub fn log_msg<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    Eval::with(|effect| {
-        let value_msg = effect.include(func::find_var_e_local(ctx, value_ctx, "msg"))?;
-        let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
-        *effect = crate::runner::SideEffect::Impure;
-        ctx.external().write_log(&msg)?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
+    let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
+    ctx.record_effect(crate::runner::SideEffect::Impure);
+    ctx.external().write_log(&msg)?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }
 
 /// Expands `{}` holes in `fmt` with `args`; `{{` and `}}` are literal braces.
@@ -777,32 +743,30 @@ pub fn log_msg_format<Interp, Iface>(
     ctx: &mut RunnerContext<'_, Interp, Iface, V1Model>,
     value_ctx: Value,
     value_arch: Value,
-) -> Eval<(Value, Value, Value), ExternError>
+) -> Result<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Interp: Interpreter<Iface, V1Model>,
 {
-    Eval::with(|effect| {
-        let value_msg = effect.include(func::find_var_e_local(ctx, value_ctx, "msg"))?;
-        let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
-        let value_data = effect.include(func::find_var_e_local(ctx, value_ctx, "data"))?;
-        let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-        let text = format_braces(ctx.arena(), &msg, &values)?;
-        *effect = crate::runner::SideEffect::Impure;
-        ctx.external().write_log(&text)?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((value_ctx, value_arch, value_call_result))
-    })
+    let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
+    let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
+    let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
+    let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
+    let text = format_braces(ctx.arena(), &msg, &values)?;
+    ctx.record_effect(crate::runner::SideEffect::Impure);
+    ctx.external().write_log(&text)?;
+    // Return without a value
+    let typ = typ::make::opt(typ::make::var(
+        crate::phrase!(node: "value".into(), span: Span::default()),
+        Vec::new(),
+    ));
+    let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+    let value_call_result = value::make::case_shaped! {
+        arena: ctx.arena_mut(),
+        shape: "RETURN value?",
+        args: vec![value_opt],
+        typ: "returnResult",
+        span: Span::default(),
+    }?;
+    Ok((value_ctx, value_arch, value_call_result))
 }

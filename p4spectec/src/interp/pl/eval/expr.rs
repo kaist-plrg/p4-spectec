@@ -10,9 +10,9 @@ use crate::lang::data::value::flat::Value;
 
 use crate::lang::pl::prepared as ast;
 
-use crate::runner::{Eval, Extern, Interface, RunnerContext};
+use crate::runner::{Extern, Interface, RunnerContext};
 
-use crate::interp::shared::eval::expr as shared;
+use crate::interp::shared::{backtrack::Backtrack, eval::expr as shared};
 
 use crate::interp::pl::{PlInterp, context::Context};
 
@@ -25,11 +25,9 @@ pub(super) fn eval_exp<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     exp: &ast::Exp,
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        let exp_shared = strip_exp(exp);
-        effect.include(shared::eval_exp(runner_ctx, ctx, &exp_shared))
-    })
+) -> Backtrack<Value> {
+    let exp_shared = strip_exp(exp);
+    shared::eval_exp(runner_ctx, ctx, &exp_shared)
 }
 
 /// Evaluates PL expressions in order through the shared evaluator.
@@ -37,12 +35,10 @@ pub(super) fn eval_exps<Iface: Interface, Ext: Extern, T: Borrow<ast::Exp>>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: &Context<'_>,
     exps: &[T],
-) -> Eval<Vec<Value>> {
-    Eval::with(|effect| {
-        let exps_shared = exps
-            .iter()
-            .map(|exp| strip_exp(exp.borrow()))
-            .collect::<Vec<_>>();
-        effect.include(shared::eval_exps(runner_ctx, ctx, &exps_shared))
-    })
+) -> Backtrack<Vec<Value>> {
+    let exps_shared = exps
+        .iter()
+        .map(|exp| strip_exp(exp.borrow()))
+        .collect::<Vec<_>>();
+    shared::eval_exps(runner_ctx, ctx, &exps_shared)
 }

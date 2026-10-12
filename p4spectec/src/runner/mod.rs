@@ -37,7 +37,7 @@ use crate::interface::{
 
 use crate::sim_plugin::dummy::Dummy;
 
-pub use context::RunnerContext;
+pub use context::{EffectCheckpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
 pub use interface::{BuiltinInterface, Interface, InterfaceError, NullInterface};
 pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
@@ -143,6 +143,7 @@ where
     interp: Interp,
     interface: Iface,
     external: Ext,
+    effects: u64,
 }
 
 impl<Interp, Iface, Ext> Runner<Interp, Iface, Ext>
@@ -159,7 +160,14 @@ where
         interface: Iface,
         external: Ext,
     ) -> Self {
-        Self { arena: Arena::with_arena_mixop(arena_mixop), spec, interp, interface, external }
+        Self {
+            arena: Arena::with_arena_mixop(arena_mixop),
+            spec,
+            interp,
+            interface,
+            external,
+            effects: 0,
+        }
     }
 
     /// Borrows the assembled components for a stage-specific evaluation entry.
@@ -170,6 +178,7 @@ where
             &mut self.interp,
             &mut self.interface,
             &self.external,
+            &mut self.effects,
         )
     }
 
@@ -189,10 +198,7 @@ where
         name: &str,
         program: Value,
     ) -> Eval<Vec<Value>, InterpreterError> {
-        Eval::with(|effect| {
-            let mut ctx = self.context();
-            effect.include(ctx.call_program(name, program))
-        })
+        self.context().call_program(name, program)
     }
 
     // - Lifecycle
@@ -204,6 +210,7 @@ where
     /// Call this before parsing the next program,
     /// after discarding the preceding program's values.
     pub fn reset(&mut self) {
+        self.effects = 0;
         self.interp.reset();
         self.external.clear();
         self.interface.clear();

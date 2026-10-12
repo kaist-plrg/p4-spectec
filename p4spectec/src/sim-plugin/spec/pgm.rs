@@ -5,9 +5,7 @@
 
 use crate::lang::data::value::flat::{self as value, Value};
 
-use crate::runner::{
-    Eval, Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext,
-};
+use crate::runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext};
 
 // == eBPF
 
@@ -15,17 +13,15 @@ use crate::runner::{
 pub fn ebpf_init<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     program: Value,
-) -> Eval<(Value, Value), InterpreterError>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let values = effect.include(ctx.call_program("EBPF_init", program))?;
-        let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
-        Ok((*value_ctx, *value_arch))
-    })
+    let values = ctx.call_program("EBPF_init", program).result?;
+    let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
+    Ok((*value_ctx, *value_arch))
 }
 
 // == PSA
@@ -34,17 +30,15 @@ where
 pub fn psa_init<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     program: Value,
-) -> Eval<(Value, Value), InterpreterError>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let values = effect.include(ctx.call_program("PSA_init", program))?;
-        let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
-        Ok((*value_ctx, *value_arch))
-    })
+    let values = ctx.call_program("PSA_init", program).result?;
+    let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
+    Ok((*value_ctx, *value_arch))
 }
 
 // == v1model
@@ -53,15 +47,13 @@ where
 pub fn v1model_init<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     program: Value,
-) -> Eval<(Value, Value), InterpreterError>
+) -> Result<(Value, Value), InterpreterError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let values = effect.include(ctx.call_program("V1Model_init", program))?;
-        let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
-        Ok((*value_ctx, *value_arch))
-    })
+    let values = ctx.call_program("V1Model_init", program).result?;
+    let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
+    Ok((*value_ctx, *value_arch))
 }

@@ -13,7 +13,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::spec::func;
 
@@ -36,37 +36,34 @@ impl PacketOut {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Eval<(Self, Value, Value, Value), ExternError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        Eval::with(|effect| {
-            // Only a valid header serializes to bits
-            let value_hdr = effect.include(func::find_var_e_local(ctx, value_ctx, "hdr"))?;
-            let value_bits = effect.include(func::write_bits_from_value(ctx, value_hdr))?;
-            let bits = value::get::list(ctx.arena(), &value_bits)?
-                .iter()
-                .map(|value| value::get::bool(ctx.arena(), value))
-                .collect::<Result<Vec<_>, _>>()?;
-            // Append to a copy; objects are immutable values
-            let pkt = Self { bits: self.bits.iter().copied().chain(bits).collect() };
-            // `emit` returns nothing: a `RETURN` with no value
-            let typ = typ::make::opt(typ::make::var(
-                crate::phrase!(node: "value".into(), span: Span::default()),
-                Vec::new(),
-            ));
-            let value_opt =
-                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-            let value_call_result = value::make::case_shaped! {
-                arena: ctx.arena_mut(),
-                shape: "RETURN value?",
-                args: vec![value_opt],
-                typ: "returnResult",
-                span: Span::default(),
-            }?;
-            Ok((pkt, value_ctx, value_arch, value_call_result))
-        })
+        // Only a valid header serializes to bits
+        let value_hdr = func::find_var_e_local(ctx, value_ctx, "hdr")?;
+        let value_bits = func::write_bits_from_value(ctx, value_hdr)?;
+        let bits = value::get::list(ctx.arena(), &value_bits)?
+            .iter()
+            .map(|value| value::get::bool(ctx.arena(), value))
+            .collect::<Result<Vec<_>, _>>()?;
+        // Append to a copy; objects are immutable values
+        let pkt = Self { bits: self.bits.iter().copied().chain(bits).collect() };
+        // `emit` returns nothing: a `RETURN` with no value
+        let typ = typ::make::opt(typ::make::var(
+            crate::phrase!(node: "value".into(), span: Span::default()),
+            Vec::new(),
+        ));
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
+            arena: ctx.arena_mut(),
+            shape: "RETURN value?",
+            args: vec![value_opt],
+            typ: "returnResult",
+            span: Span::default(),
+        }?;
+        Ok((pkt, value_ctx, value_arch, value_call_result))
     }
 }

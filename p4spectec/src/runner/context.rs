@@ -3,12 +3,17 @@
 //! The context splits the runner into independent borrows for one evaluation.
 //! An extern receives the same context and can reenter the interpreter
 //! after its own shared borrow has been copied into a local reference.
+//! Effects remain in the runner even when a caller only consumes the result.
 
 use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::il::ast::{Id, Typ};
 
-use crate::runner::{Eval, Extern, Interface, Interpreter, InterpreterError};
+use crate::runner::{Eval, Extern, Interface, Interpreter, InterpreterError, SideEffect};
+
+/// A snapshot of one runner's effect count, valid until that runner resets.
+#[derive(Clone, Copy)]
+pub struct EffectCheckpoint(u64);
 
 // == Runner context
 
@@ -24,6 +29,7 @@ where
     interp: &'runner mut Interp,
     interface: &'runner mut Iface,
     external: &'runner Ext,
+    effects: &'runner mut u64,
 }
 
 impl<'runner, Interp, Iface, Ext> RunnerContext<'runner, Interp, Iface, Ext>
@@ -38,8 +44,9 @@ where
         interp: &'runner mut Interp,
         interface: &'runner mut Iface,
         external: &'runner Ext,
+        effects: &'runner mut u64,
     ) -> Self {
-        Self { arena, spec, interp, interface, external }
+        Self { arena, spec, interp, interface, external, effects }
     }
 
     // - Semantic components
@@ -68,6 +75,31 @@ where
         self.external
     }
 
+    // - Evaluation effects
+
+    /// Records a host or output effect independently of its result.
+    pub fn record_effect(&mut self, effect: SideEffect) {
+        if effect == SideEffect::Impure {
+            *self.effects = self.effects.saturating_add(1);
+        }
+    }
+
+    /// Takes a snapshot without clearing effects of enclosing calls.
+    pub fn effect_checkpoint(&self) -> EffectCheckpoint {
+        EffectCheckpoint(*self.effects)
+    }
+
+    /// Reports effects since a checkpoint from this runner's current execution.
+    ///
+    /// A saturated counter conservatively reports Impure until reset.
+    pub fn effect_since(&self, checkpoint: EffectCheckpoint) -> SideEffect {
+        if *self.effects == u64::MAX || *self.effects != checkpoint.0 {
+            SideEffect::Impure
+        } else {
+            SideEffect::Pure
+        }
+    }
+
     // - Evaluation dispatch
 
     /// Runs the interpreter's program entry.
@@ -78,14 +110,18 @@ where
         name: &str,
         program: Value,
     ) -> Eval<Vec<Value>, InterpreterError> {
-        Interp::eval_program(self, name, program)
+        let checkpoint = self.effect_checkpoint();
+        let result = Interp::eval_program(self, name, program);
+        Eval::new(result, self.effect_since(checkpoint))
     }
 
     /// Calls a relation by name through the interpreter.
     ///
     /// With type guards disabled, values must match the declared input types.
     pub fn call_rel(&mut self, name: &str, values: &[Value]) -> Eval<Vec<Value>, InterpreterError> {
-        Interp::eval_rel(self, name, values)
+        let checkpoint = self.effect_checkpoint();
+        let result = Interp::eval_rel(self, name, values);
+        Eval::new(result, self.effect_since(checkpoint))
     }
 
     /// Calls a function by name through the interpreter.
@@ -98,45 +134,49 @@ where
         targs: &[Typ],
         values: &[Value],
     ) -> Eval<Value, InterpreterError> {
-        Interp::eval_func(self, name, targs, values)
+        let checkpoint = self.effect_checkpoint();
+        let result = Interp::eval_func(self, name, targs, values);
+        Eval::new(result, self.effect_since(checkpoint))
     }
 
     // - Host dispatch
 
-    /// Calls a builtin; retains its effect even if the call fails.
+    /// Calls a builtin, recording its effect before exposing the result.
     pub fn call_builtin(
         &mut self,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterpreterError> {
-        self.interface
-            .call_builtin(self.arena, id, targs, values)
-            .map_err(Into::into)
+    ) -> Result<Value, InterpreterError> {
+        let eval = self.interface.call_builtin(self.arena, id, targs, values);
+        self.record_effect(eval.effect);
+        eval.result.map_err(Into::into)
     }
 
-    /// Calls a host relation; the extern receives this context to reenter.
+    /// Calls a host relation, recording effects in the context used for reentry.
     pub fn call_extern_rel(
         &mut self,
         name: &str,
         values: &[Value],
-    ) -> Eval<Vec<Value>, InterpreterError> {
+    ) -> Result<Vec<Value>, InterpreterError> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
-        external.eval_rel(self, name, values).map_err(Into::into)
+        let eval = external.eval_rel(self, name, values);
+        self.record_effect(eval.effect);
+        eval.result.map_err(Into::into)
     }
 
-    /// Calls a host function; the extern receives this context to reenter.
+    /// Calls a host function, recording effects in the context used for reentry.
     pub fn call_extern_func(
         &mut self,
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterpreterError> {
+    ) -> Result<Value, InterpreterError> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
-        external
-            .eval_func(self, name, targs, values)
-            .map_err(Into::into)
+        let eval = external.eval_func(self, name, targs, values);
+        self.record_effect(eval.effect);
+        eval.result.map_err(Into::into)
     }
 }

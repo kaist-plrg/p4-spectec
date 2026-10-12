@@ -17,7 +17,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::error;
 
@@ -62,24 +62,20 @@ pub fn find_table<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_arch: Value,
     value_name: Value,
-) -> Eval<Value, ExternError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let (value_unqualified, value_qualified) = table_name(ctx.arena_mut(), value_name)?;
-        if let Some(value_id) = value_qualified
-            && let Some(value_table) =
-                effect.include(func::find_object_qualified_e(ctx, value_arch, value_id))?
-        {
-            return Ok(value_table);
-        }
-        effect
-            .include(func::find_object_unqualified_e(ctx, value_arch, value_unqualified))?
-            .ok_or_else(|| error::table_undefined("table not found".to_owned()).into())
-    })
+    let (value_unqualified, value_qualified) = table_name(ctx.arena_mut(), value_name)?;
+    if let Some(value_id) = value_qualified
+        && let Some(value_table) = func::find_object_qualified_e(ctx, value_arch, value_id)?
+    {
+        return Ok(value_table);
+    }
+    func::find_object_unqualified_e(ctx, value_arch, value_unqualified)?
+        .ok_or_else(|| error::table_undefined("table not found".to_owned()).into())
 }
 
 /// Stores a table object back under the name it was found by.
@@ -88,32 +84,21 @@ pub fn update_table<Interp, Iface, Ext>(
     value_arch: Value,
     value_name: Value,
     value_table: Value,
-) -> Eval<Value, ExternError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        let (value_unqualified, value_qualified) = table_name(ctx.arena_mut(), value_name)?;
-        if let Some(value_id) = value_qualified
-            && effect
-                .include(func::find_object_qualified_e(ctx, value_arch, value_id))?
-                .is_some()
-        {
-            return effect
-                .include(func::update_object_qualified_e(ctx, value_arch, value_id, value_table))
-                .map_err(ExternError::from);
-        }
-        effect
-            .include(func::update_object_unqualified_e(
-                ctx,
-                value_arch,
-                value_unqualified,
-                value_table,
-            ))
-            .map_err(ExternError::from)
-    })
+    let (value_unqualified, value_qualified) = table_name(ctx.arena_mut(), value_name)?;
+    if let Some(value_id) = value_qualified
+        && func::find_object_qualified_e(ctx, value_arch, value_id)?.is_some()
+    {
+        return func::update_object_qualified_e(ctx, value_arch, value_id, value_table)
+            .map_err(ExternError::from);
+    }
+    func::update_object_unqualified_e(ctx, value_arch, value_unqualified, value_table)
+        .map_err(ExternError::from)
 }
 
 // == Table entries
@@ -127,88 +112,85 @@ pub fn add_entry<Interp, Iface, Ext>(
     value_priority: Value,
     value_keys: Value,
     value_action: Value,
-) -> Eval<Value, ExternError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        // Lookup table object
-        let value_table = effect.include(find_table(ctx, value_arch, value_name))?;
-        // Add entry to table object
-        let value_table = match effect.include(func::table_object_add_entry(
-            ctx,
-            value_ctx,
-            value_table,
-            value_priority,
-            value_keys,
-            value_action,
-        ))? {
-            Some(value_table) => value_table,
-            None => {
-                // Rejected: retry with the table's own key names, in order
-                let keys = effect.include(func::key_interface_of_table_object(ctx, value_table))?;
-                let mut values_name = Vec::new();
-                for (value_name, value_match_kind, _) in keys {
-                    // Selector keys take no STF value
-                    if value::get::text(ctx.arena(), &value_match_kind)? != "selector" {
-                        values_name.push(value_name);
-                    }
+    // Lookup table object
+    let value_table = find_table(ctx, value_arch, value_name)?;
+    // Add entry to table object
+    let value_table = match func::table_object_add_entry(
+        ctx,
+        value_ctx,
+        value_table,
+        value_priority,
+        value_keys,
+        value_action,
+    )? {
+        Some(value_table) => value_table,
+        None => {
+            // Rejected: retry with the table's own key names, in order
+            let keys = func::key_interface_of_table_object(ctx, value_table)?;
+            let mut values_name = Vec::new();
+            for (value_name, value_match_kind, _) in keys {
+                // Selector keys take no STF value
+                if value::get::text(ctx.arena(), &value_match_kind)? != "selector" {
+                    values_name.push(value_name);
                 }
-                let values_key = value::get::list(ctx.arena(), &value_keys)?
-                    .iter()
-                    .map(|value_key| value::get::tuple(ctx.arena(), value_key))
-                    .collect::<Result<Vec<_>, ValueError>>()?;
-                let values_key = values_key
-                    .into_iter()
-                    .map(|values| value::get::nth(values, 1).copied())
-                    .collect::<Result<Vec<_>, ValueError>>()?;
-                // Key count must then agree
-                if values_name.len() != values_key.len() {
-                    return Err(ExternError::from(ValueError::CountMismatch {
-                        expected: values_name.len(),
-                        actual: values_key.len(),
-                    }));
-                }
-                let typ_key = typ::make::var(
-                    crate::phrase!(node: "tableKeyInterface".into(), span: Span::default()),
-                    Vec::new(),
-                );
-                let values_key = values_name
-                    .into_iter()
-                    .zip(values_key)
-                    .map(|(value_name, value_key)| {
-                        value::make::tuple(
-                            ctx.arena_mut(),
-                            typ_key.node.clone().into(),
-                            vec![value_name, value_key],
-                            Span::default(),
-                        )
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                let value_keys = value::make::list(
-                    ctx.arena_mut(),
-                    typ::make::list(typ_key).node.into(),
-                    values_key,
-                    Span::default(),
-                )?;
-                // A second rejection is final
-                effect
-                    .include(func::table_object_add_entry(
-                        ctx,
-                        value_ctx,
-                        value_table,
-                        value_priority,
-                        value_keys,
-                        value_action,
-                    ))?
-                    .ok_or_else(|| error::table_entry_invalid("table entry rejected".to_owned()))?
             }
-        };
-        // Update arch with modified table object
-        effect.include(update_table(ctx, value_arch, value_name, value_table))
-    })
+            let values_key = value::get::list(ctx.arena(), &value_keys)?
+                .iter()
+                .map(|value_key| value::get::tuple(ctx.arena(), value_key))
+                .collect::<Result<Vec<_>, ValueError>>()?;
+            let values_key = values_key
+                .into_iter()
+                .map(|values| value::get::nth(values, 1).copied())
+                .collect::<Result<Vec<_>, ValueError>>()?;
+            // Key count must then agree
+            if values_name.len() != values_key.len() {
+                return Err(ExternError::from(ValueError::CountMismatch {
+                    expected: values_name.len(),
+                    actual: values_key.len(),
+                }));
+            }
+            let typ_key = typ::make::var(
+                crate::phrase!(node: "tableKeyInterface".into(), span: Span::default()),
+                Vec::new(),
+            );
+            let values_key = values_name
+                .into_iter()
+                .zip(values_key)
+                .map(|(value_name, value_key)| {
+                    value::make::tuple(
+                        ctx.arena_mut(),
+                        typ_key.node.clone().into(),
+                        vec![value_name, value_key],
+                        Span::default(),
+                    )
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            let value_keys = value::make::list(
+                ctx.arena_mut(),
+                typ::make::list(typ_key).node.into(),
+                values_key,
+                Span::default(),
+            )?;
+            // A second rejection is final
+            func::table_object_add_entry(
+                ctx,
+                value_ctx,
+                value_table,
+                value_priority,
+                value_keys,
+                value_action,
+            )?
+            .ok_or_else(|| error::table_entry_invalid("table entry rejected".to_owned()))?
+        }
+    };
+    // Update arch with modified table object
+    update_table(ctx, value_arch, value_name, value_table)
 }
 
 /// Sets a table's default action and writes the table back.
@@ -218,22 +200,16 @@ pub fn add_default_action<Interp, Iface, Ext>(
     value_arch: Value,
     value_name: Value,
     value_action: Value,
-) -> Eval<Value, ExternError>
+) -> Result<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    Eval::with(|effect| {
-        // Lookup table object
-        let value_table = effect.include(find_table(ctx, value_arch, value_name))?;
-        let value_table = effect.include(func::table_object_add_default_action(
-            ctx,
-            value_ctx,
-            value_table,
-            value_action,
-        ))?;
-        // Update arch with modified table object
-        effect.include(update_table(ctx, value_arch, value_name, value_table))
-    })
+    // Lookup table object
+    let value_table = find_table(ctx, value_arch, value_name)?;
+    let value_table =
+        func::table_object_add_default_action(ctx, value_ctx, value_table, value_action)?;
+    // Update arch with modified table object
+    update_table(ctx, value_arch, value_name, value_table)
 }

@@ -7,7 +7,7 @@
 
 use crate::lang::data::value::flat::Value;
 
-use crate::runner::{Eval, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 
 use super::externs;
 
@@ -29,7 +29,7 @@ impl externs::Impl for V1Model {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Eval<Value, ExternError>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -41,7 +41,7 @@ impl externs::Impl for V1Model {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Eval<Vec<Value>, ExternError>
+    ) -> Result<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -53,7 +53,7 @@ impl externs::Impl for V1Model {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Eval<Vec<Value>, ExternError>
+    ) -> Result<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -64,7 +64,7 @@ impl externs::Impl for V1Model {
     fn init_arch_state<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Eval<Value, ExternError>
+    ) -> Result<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,

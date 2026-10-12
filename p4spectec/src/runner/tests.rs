@@ -58,6 +58,12 @@ impl Extern for Host {
             ),
             "fail" => Eval::new(Err(ExternError::diagnostic_unconfigured()), SideEffect::Impure),
             "reenter" => ctx.call_func("effect", &[], &[]).map_err(Into::into),
+            "reenter_result" | "reenter_error" => {
+                let name = if name == "reenter_result" { "effect" } else { "mismatch" };
+                // Reentry effects belong to the context, even if only the result is used
+                let result = ctx.call_func(name, &[], &[]).result.map_err(Into::into);
+                Eval::new(result, SideEffect::Pure)
+            }
             _ => unreachable!(),
         }
     }
@@ -72,6 +78,8 @@ var n : nat
 extern dec $tick() : nat
 extern dec $fail() : nat
 extern dec $reenter() : nat
+extern dec $reenter_result() : nat
+extern dec $reenter_error() : nat
 extern dec $pure_host() : nat
 builtin dec $max_nat(nat*) : nat
 
@@ -197,6 +205,11 @@ where
     let eval = runner.context().call_func("reenter", &[], &[]);
     assert!(eval.result.is_ok());
     assert_eq!(eval.effect, SideEffect::Impure);
+    for name in ["reenter_result", "reenter_error"] {
+        let eval = runner.context().call_func(name, &[], &[]);
+        assert_eq!(eval.result.is_ok(), name == "reenter_result");
+        assert_eq!(eval.effect, SideEffect::Impure, "{name}");
+    }
     // Pure successes are cached independently of preceding impure siblings
     for (name, count, effect_expect) in [
         ("cached_twice", if cache { 1 } else { 2 }, SideEffect::Pure),
@@ -251,6 +264,21 @@ where
     // Entry validation happens before an effectful definition is executed
     let eval = runner.context().call_func("effect", &[], &[value]);
     assert!(eval.result.is_err());
+    assert_eq!(eval.effect, SideEffect::Pure);
+
+    // Counter saturation cannot make an effectful call look pure
+    runner.effects = u64::MAX - 1;
+    let eval = runner.context().call_func("effect", &[], &[]);
+    assert!(eval.result.is_ok());
+    assert_eq!(eval.effect, SideEffect::Impure);
+    let eval = runner.context().call_func("pure", &[], &[]);
+    assert!(eval.result.is_ok());
+    assert_eq!(eval.effect, SideEffect::Impure);
+
+    // Reset starts an independent execution with fresh effect tracking
+    runner.reset();
+    let eval = runner.context().call_func("pure", &[], &[]);
+    assert!(eval.result.is_ok());
     assert_eq!(eval.effect, SideEffect::Pure);
 }
 

@@ -15,7 +15,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::{
     error, hash,
@@ -70,18 +70,16 @@ impl HashExtern {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Eval<(Self, Value, Value, Value), ExternError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        Eval::with(|effect| {
-            let value_data = effect.include(func::find_var_e_local(ctx, value_ctx, "data"))?;
-            let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-            let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
-            effect.include(self.return_hash(ctx, value_ctx, value_arch, int_hash))
-        })
+        let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
+        let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
+        let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
+        self.return_hash(ctx, value_ctx, value_arch, int_hash)
     }
 
     /// Compute the hash for `data`, reduce it modulo `max`, then add `base`
@@ -99,28 +97,26 @@ impl HashExtern {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Eval<(Self, Value, Value, Value), ExternError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        Eval::with(|effect| {
-            let value_base = effect.include(func::find_var_e_local(ctx, value_ctx, "base"))?;
-            let base = unpack::p4_fixed_bit(ctx.arena(), &value_base)?.1;
-            let value_max = effect.include(func::find_var_e_local(ctx, value_ctx, "max"))?;
-            let max = unpack::p4_fixed_bit(ctx.arena(), &value_max)?.1;
-            let value_data = effect.include(func::find_var_e_local(ctx, value_ctx, "data"))?;
-            let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
-            let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
-            if max <= BigInt::zero() {
-                return Err(
-                    error::hash_range_invalid("hash modulus must be positive".to_owned()).into()
-                );
-            }
-            let int_hash = ((int_hash % &max) + &max) % &max + base;
-            effect.include(self.return_hash(ctx, value_ctx, value_arch, int_hash))
-        })
+        let value_base = func::find_var_e_local(ctx, value_ctx, "base")?;
+        let base = unpack::p4_fixed_bit(ctx.arena(), &value_base)?.1;
+        let value_max = func::find_var_e_local(ctx, value_ctx, "max")?;
+        let max = unpack::p4_fixed_bit(ctx.arena(), &value_max)?.1;
+        let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
+        let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
+        let int_hash = hash::compute_checksum(ctx.arena(), &self.algo, None, &values)?;
+        if max <= BigInt::zero() {
+            return Err(
+                error::hash_range_invalid("hash modulus must be positive".to_owned()).into()
+            );
+        }
+        let int_hash = ((int_hash % &max) + &max) % &max + base;
+        self.return_hash(ctx, value_ctx, value_arch, int_hash)
     }
 
     /// Casts the hash to the output type `O` and returns it.
@@ -130,34 +126,32 @@ impl HashExtern {
         value_ctx: Value,
         value_arch: Value,
         int_hash: BigInt,
-    ) -> Eval<(Self, Value, Value, Value), ExternError>
+    ) -> Result<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        Eval::with(|effect| {
-            let value_typ = effect.include(func::find_type_e_local(ctx, value_ctx, "O"))?;
-            let value_result = pack::p4_arbitrary_int(ctx.arena_mut(), int_hash)?;
-            let value_result = effect.include(func::cast_op(ctx, value_typ, value_result))?;
-            let typ = typ::make::opt(typ::make::var(
-                crate::phrase!(node: "value".into(), span: Span::default()),
-                Vec::new(),
-            ));
-            let value_opt = value::make::opt(
-                ctx.arena_mut(),
-                typ.node.into(),
-                Some(value_result),
-                Span::default(),
-            )?;
-            let value_call_result = value::make::case_shaped! {
-                arena: ctx.arena_mut(),
-                shape: "RETURN value?",
-                args: vec![value_opt],
-                typ: "returnResult",
-                span: Span::default(),
-            }?;
-            Ok((self, value_ctx, value_arch, value_call_result))
-        })
+        let value_typ = func::find_type_e_local(ctx, value_ctx, "O")?;
+        let value_result = pack::p4_arbitrary_int(ctx.arena_mut(), int_hash)?;
+        let value_result = func::cast_op(ctx, value_typ, value_result)?;
+        let typ = typ::make::opt(typ::make::var(
+            crate::phrase!(node: "value".into(), span: Span::default()),
+            Vec::new(),
+        ));
+        let value_opt = value::make::opt(
+            ctx.arena_mut(),
+            typ.node.into(),
+            Some(value_result),
+            Span::default(),
+        )?;
+        let value_call_result = value::make::case_shaped! {
+            arena: ctx.arena_mut(),
+            shape: "RETURN value?",
+            args: vec![value_opt],
+            typ: "returnResult",
+            span: Span::default(),
+        }?;
+        Ok((self, value_ctx, value_arch, value_call_result))
     }
 }

@@ -7,8 +7,6 @@
 //! remembering the caller so a failure still shows the whole call chain.
 //! With `guard` on, inputs and outputs are type-checked at the boundary.
 
-use crate::runner::{Eval, SideEffect};
-
 use std::{borrow::Cow, rc::Rc};
 
 use crate::lang::{
@@ -28,7 +26,7 @@ use crate::runtime::{
     ops::{typ, value},
 };
 
-use crate::runner::{Extern, Interface, RunnerContext};
+use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, ok, unmatch, unwrap, unwrap_from_result},
@@ -203,76 +201,68 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     ctx: &Context<'_>,
     id: &ast::Id,
     values: &[Value],
-) -> Eval<Vec<Value>> {
-    Eval::with(|effect| {
-        let mut id = Cow::Borrowed(id);
-        let mut values = Cow::Borrowed(values);
-        let mut ids_pending: Vec<ast::Id> = Vec::new();
-        loop {
-            // Serve from the cache when eligible
-            let cache = cache_rel(runner_ctx, ctx, &id);
-            if cache
-                && let Some(values) =
-                    runner_ctx
-                        .interp()
-                        .cache
-                        .find_rel(runner_ctx.arena(), &id.node, &values)
-            {
-                return ok!(values.clone());
-            }
-            let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
-            // Grow the stack while retaining the callee's evaluation effect
-            let eval = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-                Eval::with(|effect| {
-                    let rel = unwrap_from_result!(ctx.find_rel(&id), &id.span);
-                    let layout = &rel.layout;
-                    match &rel.def {
-                        ast::RelDef::Extern(rel) => {
-                            let values = unwrap!(
-                                effect
-                                    .include(invoke_extern_rel(runner_ctx, ctx, &id, rel, &values))
-                            );
-                            ok!(RelResult::Result(values))
-                        }
-                        ast::RelDef::Defined(rel) => effect
-                            .include(invoke_defined_rel(runner_ctx, ctx, layout, rel, &values)),
-                    }
-                })
-            });
-            let pure = eval.effect == SideEffect::Pure;
-            let result = effect.include(eval);
-            // Nest failures under this call and then under the tail-calling callers
-            let mut result =
-                result.with_frame(id.span, || error::trace::message_rel_invocation(&id));
-            if result.is_err() {
-                for id in ids_pending.iter().rev() {
-                    result =
-                        result.with_frame(id.span, || error::trace::message_rel_invocation(id));
+) -> Backtrack<Vec<Value>> {
+    let mut id = Cow::Borrowed(id);
+    let mut values = Cow::Borrowed(values);
+    let mut ids_pending: Vec<ast::Id> = Vec::new();
+    loop {
+        // Serve from the cache when eligible
+        let cache = cache_rel(runner_ctx, ctx, &id);
+        if cache
+            && let Some(values) =
+                runner_ctx
+                    .interp()
+                    .cache
+                    .find_rel(runner_ctx.arena(), &id.node, &values)
+        {
+            return ok!(values.clone());
+        }
+        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
+        // Track effects for memoization; grow the stack for deep recursion
+        let checkpoint = runner_ctx.effect_checkpoint();
+        let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+            let rel = unwrap_from_result!(ctx.find_rel(&id), &id.span);
+            let layout = &rel.layout;
+            match &rel.def {
+                ast::RelDef::Extern(rel) => {
+                    let values = unwrap!(invoke_extern_rel(runner_ctx, ctx, &id, rel, &values));
+                    ok!(RelResult::Result(values))
+                }
+                ast::RelDef::Defined(rel) => {
+                    invoke_defined_rel(runner_ctx, ctx, layout, rel, &values)
                 }
             }
-            // Fatal errors and mismatches leave the loop here
-            let result = unwrap!(result);
-            match result {
-                // Memoize a pure result
-                RelResult::Result(values) => {
-                    if pure && let Some(key) = key {
-                        runner_ctx
-                            .interp_mut()
-                            .cache
-                            .rels
-                            .insert(key, values.clone());
-                    }
-                    return ok!(values);
-                }
-                // Tail call: remember this callee for the trace and loop
-                RelResult::TailCall(id_tail, values_tail) => {
-                    ids_pending.push(id.into_owned());
-                    id = Cow::Owned(id_tail);
-                    values = Cow::Owned(values_tail);
-                }
+        });
+        // Nest failures under this call and then under the tail-calling callers
+        let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
+        let mut result = result.with_frame(id.span, || error::trace::message_rel_invocation(&id));
+        if result.is_err() {
+            for id in ids_pending.iter().rev() {
+                result = result.with_frame(id.span, || error::trace::message_rel_invocation(id));
             }
         }
-    })
+        // Fatal errors and mismatches leave the loop here
+        let result = unwrap!(result);
+        match result {
+            // Memoize a pure result
+            RelResult::Result(values) => {
+                if pure && let Some(key) = key {
+                    runner_ctx
+                        .interp_mut()
+                        .cache
+                        .rels
+                        .insert(key, values.clone());
+                }
+                return ok!(values);
+            }
+            // Tail call: remember this callee for the trace and loop
+            RelResult::TailCall(id_tail, values_tail) => {
+                ids_pending.push(id.into_owned());
+                id = Cow::Owned(id_tail);
+                values = Cow::Owned(values_tail);
+            }
+        }
+    }
 }
 
 // - Extern relation
@@ -284,29 +274,27 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     id: &ast::Id,
     rel: &ast::ExternRel,
     values: &[Value],
-) -> Eval<Vec<Value>> {
-    Eval::with(|effect| {
-        // The host reports whether the call had a side effect
-        let result = effect.include(runner_ctx.call_extern_rel(&id.node, values));
-        // Attach the call site to fatal host failures
-        let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
-        // Check the number of extern outputs before assigning them
-        let len = rel.rel_signature.not_typ.node.args().len()
-            - rel.rel_signature.input_hint.indices().len();
-        unwrap!(backtrack::check(len == values.len(), id.span, || {
-            error::guard::relation_output_arity_mismatch(len, values.len())
+) -> Backtrack<Vec<Value>> {
+    // Host dispatch records effects before exposing the result
+    let result = runner_ctx.call_extern_rel(&id.node, values);
+    // Attach the call site to fatal host failures
+    let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
+    // Check the number of extern outputs before assigning them
+    let len =
+        rel.rel_signature.not_typ.node.args().len() - rel.rel_signature.input_hint.indices().len();
+    unwrap!(backtrack::check(len == values.len(), id.span, || {
+        error::guard::relation_output_arity_mismatch(len, values.len())
+    }));
+    if runner_ctx.interp().config.guard {
+        // Output types are the notation arguments the hint leaves
+        let typs = rel.rel_signature.not_typ.node.args().to_vec();
+        let (_, typs) = input::split(&rel.rel_signature.input_hint, typs)
+            .expect("input hint must fit relation");
+        unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
+            error::guard::relation_output_type_mismatch(id.node.to_string())
         }));
-        if runner_ctx.interp().config.guard {
-            // Output types are the notation arguments the hint leaves
-            let typs = rel.rel_signature.not_typ.node.args().to_vec();
-            let (_, typs) = input::split(&rel.rel_signature.input_hint, typs)
-                .expect("input hint must fit relation");
-            unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
-                error::guard::relation_output_type_mismatch(id.node.to_string())
-            }));
-        }
-        ok!(values)
-    })
+    }
+    ok!(values)
 }
 
 // - Defined relation
@@ -318,36 +306,34 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     layout: &Rc<FrameLayout>,
     rel: &ast::DefinedRel,
     values: &[Value],
-) -> Eval<RelResult> {
-    Eval::with(|effect| {
-        // Inputs bind into a fresh frame
-        let ctx = unwrap!(assign::assign_exps(
-            runner_ctx.arena_mut(),
-            ctx.localize_with_layout(layout),
-            &rel.exps_input,
-            values
-        ));
-        // Run the body, falling back to the otherwise block
-        let flow = unwrap!(effect.include(instr::eval_block_with_else(
-            runner_ctx,
-            ctx,
-            &rel.block,
-            rel.block_else.as_deref()
-        )));
-        match flow {
-            // Results finish the relation
-            Flow::Result(values) => ok!(RelResult::Result(values.node)),
-            // Tail calls go back to the invoker loop
-            Flow::TailRel(call) => {
-                let (id, values) = call.node;
-                ok!(RelResult::TailCall(id, values))
-            }
-            // Falling through the whole body is a mismatch
-            Flow::Cont(errors) => unmatch!(errors),
-            // Function flows cannot appear in a relation
-            Flow::Return(_) | Flow::TailFunc(..) => unreachable!("function flow in relation body"),
+) -> Backtrack<RelResult> {
+    // Inputs bind into a fresh frame
+    let ctx = unwrap!(assign::assign_exps(
+        runner_ctx.arena_mut(),
+        ctx.localize_with_layout(layout),
+        &rel.exps_input,
+        values
+    ));
+    // Run the body, falling back to the otherwise block
+    let flow = unwrap!(instr::eval_block_with_else(
+        runner_ctx,
+        ctx,
+        &rel.block,
+        rel.block_else.as_deref()
+    ));
+    match flow {
+        // Results finish the relation
+        Flow::Result(values) => ok!(RelResult::Result(values.node)),
+        // Tail calls go back to the invoker loop
+        Flow::TailRel(call) => {
+            let (id, values) = call.node;
+            ok!(RelResult::TailCall(id, values))
         }
-    })
+        // Falling through the whole body is a mismatch
+        Flow::Cont(errors) => unmatch!(errors),
+        // Function flows cannot appear in a relation
+        Flow::Return(_) | Flow::TailFunc(..) => unreachable!("function flow in relation body"),
+    }
 }
 
 // = Function invocation
@@ -359,80 +345,73 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     id: &ast::Id,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        let mut id = Cow::Borrowed(id);
-        let mut targs = Cow::Borrowed(targs);
-        let mut values = Cow::Borrowed(values);
-        let mut calls_pending: Vec<(ast::Id, Vec<ast::Typ>)> = Vec::new();
-        loop {
-            // Serve from the cache when eligible
-            let cache = cache_func(runner_ctx, ctx, &id, &values);
-            if cache
-                && let Some(value) =
-                    runner_ctx
-                        .interp()
-                        .cache
-                        .find_func(runner_ctx.arena(), &id.node, &values)
-            {
-                return ok!(*value);
-            }
-            let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
-            // Grow the stack while retaining the callee's evaluation effect
-            let eval = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-                Eval::with(|effect| {
-                    let func = unwrap_from_result!(ctx.find_func(&id), &id.span);
-                    let layout = &func.layout;
-                    match &func.def {
-                        ast::MetaFuncDef::Extern(func) => {
-                            ok!(FuncResult::Return(unwrap!(effect.include(invoke_extern_func(
-                                runner_ctx, ctx, &id, func, &targs, &values
-                            )))))
-                        }
-                        ast::MetaFuncDef::Builtin(func) => {
-                            ok!(FuncResult::Return(unwrap!(effect.include(invoke_builtin_func(
-                                runner_ctx, ctx, &id, func, &targs, &values
-                            )))))
-                        }
-                        ast::MetaFuncDef::Table(func) => effect
-                            .include(invoke_table_func(runner_ctx, ctx, layout, func, &values)),
-                        ast::MetaFuncDef::Defined(func) => effect.include(invoke_defined_func(
-                            runner_ctx, ctx, layout, &id, func, &targs, &values,
-                        )),
-                    }
-                })
-            });
-            let pure = eval.effect == SideEffect::Pure;
-            let result = effect.include(eval);
-            // Nest failures under this call and then under the tail-calling callers
-            let mut result =
-                result.with_frame(id.span, || error::trace::message_func_invocation(&id, &targs));
-            if result.is_err() {
-                for (id, targs) in calls_pending.iter().rev() {
-                    result = result
-                        .with_frame(id.span, || error::trace::message_func_invocation(id, targs));
+) -> Backtrack<Value> {
+    let mut id = Cow::Borrowed(id);
+    let mut targs = Cow::Borrowed(targs);
+    let mut values = Cow::Borrowed(values);
+    let mut calls_pending: Vec<(ast::Id, Vec<ast::Typ>)> = Vec::new();
+    loop {
+        // Serve from the cache when eligible
+        let cache = cache_func(runner_ctx, ctx, &id, &values);
+        if cache
+            && let Some(value) =
+                runner_ctx
+                    .interp()
+                    .cache
+                    .find_func(runner_ctx.arena(), &id.node, &values)
+        {
+            return ok!(*value);
+        }
+        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, &values));
+        // Track effects for memoization; grow the stack for deep recursion
+        let checkpoint = runner_ctx.effect_checkpoint();
+        let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+            let func = unwrap_from_result!(ctx.find_func(&id), &id.span);
+            let layout = &func.layout;
+            match &func.def {
+                ast::MetaFuncDef::Extern(func) => ok!(FuncResult::Return(unwrap!(
+                    invoke_extern_func(runner_ctx, ctx, &id, func, &targs, &values)
+                ))),
+                ast::MetaFuncDef::Builtin(func) => ok!(FuncResult::Return(unwrap!(
+                    invoke_builtin_func(runner_ctx, ctx, &id, func, &targs, &values)
+                ))),
+                ast::MetaFuncDef::Table(func) => {
+                    invoke_table_func(runner_ctx, ctx, layout, func, &values)
+                }
+                ast::MetaFuncDef::Defined(func) => {
+                    invoke_defined_func(runner_ctx, ctx, layout, &id, func, &targs, &values)
                 }
             }
-            // Fatal errors and mismatches leave the loop here
-            let result = unwrap!(result);
-            match result {
-                // Memoize a pure result
-                FuncResult::Return(value) => {
-                    if pure && let Some(key) = key {
-                        runner_ctx.interp_mut().cache.funcs.insert(key, value);
-                    }
-                    return ok!(value);
-                }
-                // Tail call: remember this callee for the trace and loop
-                FuncResult::TailCall(id_tail, targs_tail, values_tail) => {
-                    calls_pending.push((id.into_owned(), targs.into_owned()));
-                    id = Cow::Owned(id_tail);
-                    targs = Cow::Owned(targs_tail);
-                    values = Cow::Owned(values_tail);
-                }
+        });
+        // Nest failures under this call and then under the tail-calling callers
+        let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
+        let mut result =
+            result.with_frame(id.span, || error::trace::message_func_invocation(&id, &targs));
+        if result.is_err() {
+            for (id, targs) in calls_pending.iter().rev() {
+                result =
+                    result.with_frame(id.span, || error::trace::message_func_invocation(id, targs));
             }
         }
-    })
+        // Fatal errors and mismatches leave the loop here
+        let result = unwrap!(result);
+        match result {
+            // Memoize a pure result
+            FuncResult::Return(value) => {
+                if pure && let Some(key) = key {
+                    runner_ctx.interp_mut().cache.funcs.insert(key, value);
+                }
+                return ok!(value);
+            }
+            // Tail call: remember this callee for the trace and loop
+            FuncResult::TailCall(id_tail, targs_tail, values_tail) => {
+                calls_pending.push((id.into_owned(), targs.into_owned()));
+                id = Cow::Owned(id_tail);
+                targs = Cow::Owned(targs_tail);
+                values = Cow::Owned(values_tail);
+            }
+        }
+    }
 }
 
 // - Extern function
@@ -445,26 +424,24 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     extern_func: &ast::ExternFunc,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // The host reports whether the call had a side effect
-        let result = effect.include(runner_ctx.call_extern_func(&id.node, &[], values));
-        // Attach the call site to fatal host failures
-        let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
-        // Guard the result against the declared type
-        if runner_ctx.interp().config.guard {
-            unwrap!(check_func_output(
-                runner_ctx.arena(),
-                ctx,
-                id,
-                &extern_func.tparams,
-                &extern_func.typ,
-                targs,
-                &value
-            ));
-        }
-        ok!(value)
-    })
+) -> Backtrack<Value> {
+    // Host dispatch records effects before exposing the result
+    let result = runner_ctx.call_extern_func(&id.node, &[], values);
+    // Attach the call site to fatal host failures
+    let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
+    // Guard the result against the declared type
+    if runner_ctx.interp().config.guard {
+        unwrap!(check_func_output(
+            runner_ctx.arena(),
+            ctx,
+            id,
+            &extern_func.tparams,
+            &extern_func.typ,
+            targs,
+            &value
+        ));
+    }
+    ok!(value)
 }
 
 // - Builtin function
@@ -477,30 +454,28 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     builtin_func: &ast::BuiltinFunc,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // Builtins report effects like host calls
-        let result = effect.include(runner_ctx.call_builtin(id, targs, values));
-        match result {
-            // Guard the result against the declared type
-            Ok(value) => {
-                if runner_ctx.interp().config.guard {
-                    unwrap!(check_func_output(
-                        runner_ctx.arena(),
-                        ctx,
-                        id,
-                        &builtin_func.tparams,
-                        &builtin_func.typ,
-                        targs,
-                        &value
-                    ));
-                }
-                ok!(value)
+) -> Backtrack<Value> {
+    // Builtin dispatch records effects before exposing the result
+    let result = runner_ctx.call_builtin(id, targs, values);
+    match result {
+        // Guard the result against the declared type
+        Ok(value) => {
+            if runner_ctx.interp().config.guard {
+                unwrap!(check_func_output(
+                    runner_ctx.arena(),
+                    ctx,
+                    id,
+                    &builtin_func.tparams,
+                    &builtin_func.typ,
+                    targs,
+                    &value
+                ));
             }
-            // Builtin failures let the caller try another candidate
-            Err(failure) => Err(failure.with_span(&id.span)),
+            ok!(value)
         }
-    })
+        // Builtin failures let the caller try another candidate
+        Err(failure) => Err(failure.with_span(&id.span)),
+    }
 }
 
 // - Table function
@@ -512,38 +487,32 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     layout: &Rc<FrameLayout>,
     func: &ast::TableFunc,
     values: &[Value],
-) -> Eval<FuncResult> {
-    Eval::with(|effect| {
-        // Parameters bind into a fresh frame
-        let ctx_local = unwrap!(assign::assign_params(
-            runner_ctx.arena_mut(),
-            ctx,
-            ctx.localize_with_layout(layout),
-            &func.params,
-            values
-        ));
-        // Rows are concatenated and run in tail position
-        let instrs = func.table_rows.iter().flat_map(|row| row.block.iter());
-        let flow = unwrap!(effect.include(instr::eval_block_sequential(
-            runner_ctx,
-            Cow::Owned(ctx_local),
-            instrs,
-            true
-        )));
-        match flow {
-            // A return is the table result
-            Flow::Return(value) => ok!(FuncResult::Return(value.node)),
-            // Tail calls go back to the invoker loop
-            Flow::TailFunc(call) => {
-                let (id, targs, values) = call.node;
-                ok!(FuncResult::TailCall(id, targs, values))
-            }
-            // Exhausting the rows preserves their recoverable failures
-            Flow::Cont(errors) => unmatch!(errors),
-            // Relation flows cannot appear in a function table
-            Flow::Result(_) | Flow::TailRel(..) => unreachable!("relation flow in table body"),
+) -> Backtrack<FuncResult> {
+    // Parameters bind into a fresh frame
+    let ctx_local = unwrap!(assign::assign_params(
+        runner_ctx.arena_mut(),
+        ctx,
+        ctx.localize_with_layout(layout),
+        &func.params,
+        values
+    ));
+    // Rows are concatenated and run in tail position
+    let instrs = func.table_rows.iter().flat_map(|row| row.block.iter());
+    let flow =
+        unwrap!(instr::eval_block_sequential(runner_ctx, Cow::Owned(ctx_local), instrs, true));
+    match flow {
+        // A return is the table result
+        Flow::Return(value) => ok!(FuncResult::Return(value.node)),
+        // Tail calls go back to the invoker loop
+        Flow::TailFunc(call) => {
+            let (id, targs, values) = call.node;
+            ok!(FuncResult::TailCall(id, targs, values))
         }
-    })
+        // Exhausting the rows preserves their recoverable failures
+        Flow::Cont(errors) => unmatch!(errors),
+        // Relation flows cannot appear in a function table
+        Flow::Result(_) | Flow::TailRel(..) => unreachable!("relation flow in table body"),
+    }
 }
 
 // - Defined function
@@ -557,42 +526,36 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     func: &ast::DefinedFunc,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<FuncResult> {
-    Eval::with(|effect| {
-        // Bind type arguments in the callee frame
-        let ctx_local = unwrap!(assign_tparams(
-            ctx.localize_with_layout(layout),
-            &func.tparams,
-            targs,
-            &id.span
-        ));
-        // Parameters bind after the type parameters, so their types resolve
-        let ctx_local = unwrap!(assign::assign_params(
-            runner_ctx.arena_mut(),
-            ctx,
-            ctx_local,
-            &func.params,
-            values
-        ));
-        // Run the body, falling back to the otherwise block
-        let flow = unwrap!(effect.include(instr::eval_block_with_else(
-            runner_ctx,
-            ctx_local,
-            &func.block,
-            func.block_else.as_deref()
-        )));
-        match flow {
-            // Returns finish the function
-            Flow::Return(value) => ok!(FuncResult::Return(value.node)),
-            // Tail calls go back to the invoker loop
-            Flow::TailFunc(call) => {
-                let (id, targs, values) = call.node;
-                ok!(FuncResult::TailCall(id, targs, values))
-            }
-            // Falling through the whole body is a mismatch
-            Flow::Cont(errors) => unmatch!(errors),
-            // Relation flows cannot appear in a function
-            Flow::Result(_) | Flow::TailRel(..) => unreachable!("relation flow in function body"),
+) -> Backtrack<FuncResult> {
+    // Bind type arguments in the callee frame
+    let ctx_local =
+        unwrap!(assign_tparams(ctx.localize_with_layout(layout), &func.tparams, targs, &id.span));
+    // Parameters bind after the type parameters, so their types resolve
+    let ctx_local = unwrap!(assign::assign_params(
+        runner_ctx.arena_mut(),
+        ctx,
+        ctx_local,
+        &func.params,
+        values
+    ));
+    // Run the body, falling back to the otherwise block
+    let flow = unwrap!(instr::eval_block_with_else(
+        runner_ctx,
+        ctx_local,
+        &func.block,
+        func.block_else.as_deref()
+    ));
+    match flow {
+        // Returns finish the function
+        Flow::Return(value) => ok!(FuncResult::Return(value.node)),
+        // Tail calls go back to the invoker loop
+        Flow::TailFunc(call) => {
+            let (id, targs, values) = call.node;
+            ok!(FuncResult::TailCall(id, targs, values))
         }
-    })
+        // Falling through the whole body is a mismatch
+        Flow::Cont(errors) => unmatch!(errors),
+        // Relation flows cannot appear in a function
+        Flow::Result(_) | Flow::TailRel(..) => unreachable!("relation flow in function body"),
+    }
 }

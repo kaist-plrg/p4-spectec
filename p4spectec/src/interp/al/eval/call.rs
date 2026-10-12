@@ -7,8 +7,6 @@
 //! rule paths of a defined relation likewise, then the otherwise group.
 //! With `guard` on, inputs and outputs are type-checked at the boundary.
 
-use crate::runner::{Eval, SideEffect};
-
 use std::rc::Rc;
 
 use crate::lang::{
@@ -28,7 +26,7 @@ use crate::runtime::{
     ops::{typ, value},
 };
 
-use crate::runner::{Extern, Interface, RunnerContext};
+use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
@@ -189,48 +187,42 @@ pub fn invoke_rel<Iface: Interface, Ext: Extern>(
     ctx: &Context<'_>,
     id: &ast::Id,
     values: &[Value],
-) -> Eval<Vec<Value>> {
-    Eval::with(|effect| {
-        // Serve from the cache when eligible
-        let cache = cache_rel(runner_ctx, ctx, id);
-        if cache
-            && let Some(values) =
-                runner_ctx
-                    .interp()
-                    .cache
-                    .find_rel(runner_ctx.arena(), &id.node, values)
-        {
-            return ok!(values.clone());
-        }
-        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
-        // Grow the stack while retaining the callee's evaluation effect
-        let eval = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-            Eval::with(|effect| {
-                let rel = unwrap_from_result!(ctx.find_rel(id), &id.span);
-                let layout = &rel.layout;
-                match &rel.def {
-                    ast::RelDef::Extern(rel) => {
-                        effect.include(invoke_extern_rel(runner_ctx, ctx, id, rel, values))
-                    }
-                    ast::RelDef::Defined(rel) => {
-                        effect.include(invoke_defined_rel(runner_ctx, ctx, layout, id, rel, values))
-                    }
-                }
-            })
-        });
-        let pure = eval.effect == SideEffect::Pure;
-        let result = effect.include(eval);
-        // Memoize a pure result
-        if pure && let (Some(key), ok!(values)) = (key, &result) {
+) -> Backtrack<Vec<Value>> {
+    // Serve from the cache when eligible
+    let cache = cache_rel(runner_ctx, ctx, id);
+    if cache
+        && let Some(values) =
             runner_ctx
-                .interp_mut()
+                .interp()
                 .cache
-                .rels
-                .insert(key, values.clone());
+                .find_rel(runner_ctx.arena(), &id.node, values)
+    {
+        return ok!(values.clone());
+    }
+    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    // Track effects for memoization; grow the stack for deep recursion
+    let checkpoint = runner_ctx.effect_checkpoint();
+    let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+        let rel = unwrap_from_result!(ctx.find_rel(id), &id.span);
+        let layout = &rel.layout;
+        match &rel.def {
+            ast::RelDef::Extern(rel) => invoke_extern_rel(runner_ctx, ctx, id, rel, values),
+            ast::RelDef::Defined(rel) => {
+                invoke_defined_rel(runner_ctx, ctx, layout, id, rel, values)
+            }
         }
-        // Nest failures under the invocation trace
-        result.with_frame(id.span, || error::trace::message_rel_invocation(id))
-    })
+    });
+    // Memoize a pure result
+    let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
+    if pure && let (Some(key), ok!(values)) = (key, &result) {
+        runner_ctx
+            .interp_mut()
+            .cache
+            .rels
+            .insert(key, values.clone());
+    }
+    // Nest failures under the invocation trace
+    result.with_frame(id.span, || error::trace::message_rel_invocation(id))
 }
 
 // - Extern relation
@@ -242,28 +234,25 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     id: &ast::Id,
     rel: &ast::ExternRel,
     values: &[Value],
-) -> Eval<Vec<Value>> {
-    Eval::with(|effect| {
-        // The host reports whether the call had a side effect
-        let result = effect.include(runner_ctx.call_extern_rel(&id.node, values));
-        // Attach the call site to fatal host failures
-        let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
-        // Check the number of extern outputs before assigning them
-        let len = rel.not_typ.node.args().len() - rel.input_hint.indices().len();
-        unwrap!(backtrack::check(len == values.len(), id.span, || {
-            error::guard::relation_output_arity_mismatch(len, values.len())
+) -> Backtrack<Vec<Value>> {
+    // Host dispatch records effects before exposing the result
+    let result = runner_ctx.call_extern_rel(&id.node, values);
+    // Attach the call site to fatal host failures
+    let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
+    // Check the number of extern outputs before assigning them
+    let len = rel.not_typ.node.args().len() - rel.input_hint.indices().len();
+    unwrap!(backtrack::check(len == values.len(), id.span, || {
+        error::guard::relation_output_arity_mismatch(len, values.len())
+    }));
+    if runner_ctx.interp().config.guard {
+        // Output types are the notation arguments the hint leaves
+        let typs = rel.not_typ.node.args().to_vec();
+        let (_, typs) = input::split(&rel.input_hint, typs).expect("input hint must fit relation");
+        unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
+            error::guard::relation_output_type_mismatch(id.node.to_string())
         }));
-        if runner_ctx.interp().config.guard {
-            // Output types are the notation arguments the hint leaves
-            let typs = rel.not_typ.node.args().to_vec();
-            let (_, typs) =
-                input::split(&rel.input_hint, typs).expect("input hint must fit relation");
-            unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
-                error::guard::relation_output_type_mismatch(id.node.to_string())
-            }));
-        }
-        ok!(values)
-    })
+    }
+    ok!(values)
 }
 
 // - Defined relation
@@ -276,23 +265,21 @@ fn eval_rule_path<Iface: Interface, Ext: Extern>(
     rule_match: &ast::RuleMatch,
     path: &ast::RulePath,
     values: &[Value],
-) -> Eval<Vec<Value>> {
-    Eval::with(|effect| {
-        // Input count must match the rule's input patterns
-        assert_eq!(rule_match.exps_input.len(), values.len(), "validated rule input arity");
-        // Inputs bind into a fresh frame for the rule
-        let ctx = unwrap!(assign::assign_exps(
-            runner_ctx.arena_mut(),
-            ctx.localize_with_layout(layout),
-            &rule_match.exps_input,
-            values
-        ));
-        // Shared premises of the group, then the path's own
-        let ctx = unwrap!(effect.include(eval_prems(runner_ctx, ctx, &rule_match.prems)));
-        let ctx = unwrap!(effect.include(eval_prems(runner_ctx, ctx, &path.prems)));
-        // Outputs evaluate in the extended context
-        effect.include(expr::eval_exps(runner_ctx, &ctx, &path.exps_output))
-    })
+) -> Backtrack<Vec<Value>> {
+    // Input count must match the rule's input patterns
+    assert_eq!(rule_match.exps_input.len(), values.len(), "validated rule input arity");
+    // Inputs bind into a fresh frame for the rule
+    let ctx = unwrap!(assign::assign_exps(
+        runner_ctx.arena_mut(),
+        ctx.localize_with_layout(layout),
+        &rule_match.exps_input,
+        values
+    ));
+    // Shared premises of the group, then the path's own
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &rule_match.prems));
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &path.prems));
+    // Outputs evaluate in the extended context
+    expr::eval_exps(runner_ctx, &ctx, &path.exps_output)
 }
 
 /// Tries the rule paths in order or all at once, then the otherwise group.
@@ -303,67 +290,61 @@ fn invoke_defined_rel<Iface: Interface, Ext: Extern>(
     id: &ast::Id,
     rel: &ast::DefinedRel,
     values: &[Value],
-) -> Eval<Vec<Value>> {
-    Eval::with(|effect| {
-        let det = runner_ctx.interp().config.det;
-        // Flatten the groups into (group, path) candidates
-        let paths: Vec<_> = rel
-            .rule_groups
-            .iter()
-            .flat_map(|group| {
-                group
-                    .node
-                    .rule_paths
-                    .iter()
-                    .map(move |path| (&group.node, path))
-            })
-            .collect();
-        // Evaluate each candidate without adding a rule-path frame
-        let mut evaluate = |&(group, path): &(&ast::RuleGroupKind, &ast::RulePath)| {
-            eval_rule_path(runner_ctx, ctx, layout, &group.rule_match, path, values)
-        };
-        // Deterministic mode rejects two matching paths
-        let result = if det {
-            effect.include(choose_deterministic(
-                paths,
-                &mut evaluate,
-                |(group_a, path_a), (group_b, path_b)| {
-                    let diagnostic = error::call::relation_nondeterministic(
-                        id.node.to_string(),
-                        group_a.id.node.to_string(),
-                        path_a.id.node.to_string(),
-                        group_b.id.node.to_string(),
-                        path_b.id.node.to_string(),
-                    )
-                    .with_label(Label::primary(&id.span, ""));
-                    Box::new(Report::from(diagnostic))
-                },
-            ))
-        // Sequential mode takes the first matching path
-        } else {
-            effect.include(choose_sequential(paths, &mut evaluate))
-        };
-        match result {
-            // A match is the answer
-            ok!(values) => ok!(values),
-            // A fatal error aborts
-            fatal!(errors) => fatal!(errors),
-            // No path matched: the otherwise group is the fallback
-            unmatch!(errors) => match &rel.else_group {
-                // The otherwise group runs like any path
-                Some(group) => effect.include(eval_rule_path(
-                    runner_ctx,
-                    ctx,
-                    layout,
-                    &group.node.rule_match,
-                    &group.node.rule_path,
-                    values,
-                )),
-                // No fallback: propagate the selected mismatches
-                None => unmatch!(errors),
-            },
-        }
-    })
+) -> Backtrack<Vec<Value>> {
+    let det = runner_ctx.interp().config.det;
+    // Flatten the groups into (group, path) candidates
+    let paths: Vec<_> = rel
+        .rule_groups
+        .iter()
+        .flat_map(|group| {
+            group
+                .node
+                .rule_paths
+                .iter()
+                .map(move |path| (&group.node, path))
+        })
+        .collect();
+    // Evaluate each candidate without adding a rule-path frame
+    let mut evaluate = |&(group, path): &(&ast::RuleGroupKind, &ast::RulePath)| {
+        eval_rule_path(runner_ctx, ctx, layout, &group.rule_match, path, values)
+    };
+    // Deterministic mode rejects two matching paths
+    let result = if det {
+        choose_deterministic(paths, &mut evaluate, |(group_a, path_a), (group_b, path_b)| {
+            let diagnostic = error::call::relation_nondeterministic(
+                id.node.to_string(),
+                group_a.id.node.to_string(),
+                path_a.id.node.to_string(),
+                group_b.id.node.to_string(),
+                path_b.id.node.to_string(),
+            )
+            .with_label(Label::primary(&id.span, ""));
+            Box::new(Report::from(diagnostic))
+        })
+    // Sequential mode takes the first matching path
+    } else {
+        choose_sequential(paths, &mut evaluate)
+    };
+    match result {
+        // A match is the answer
+        ok!(values) => ok!(values),
+        // A fatal error aborts
+        fatal!(errors) => fatal!(errors),
+        // No path matched: the otherwise group is the fallback
+        unmatch!(errors) => match &rel.else_group {
+            // The otherwise group runs like any path
+            Some(group) => eval_rule_path(
+                runner_ctx,
+                ctx,
+                layout,
+                &group.node.rule_match,
+                &group.node.rule_path,
+                values,
+            ),
+            // No fallback: propagate the selected mismatches
+            None => unmatch!(errors),
+        },
+    }
 }
 
 // = Function invocation
@@ -375,48 +356,46 @@ pub fn invoke_func<Iface: Interface, Ext: Extern>(
     id: &ast::Id,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // Serve from the cache when eligible
-        let cache = cache_func(runner_ctx, ctx, id, values);
-        if cache
-            && let Some(value) =
-                runner_ctx
-                    .interp()
-                    .cache
-                    .find_func(runner_ctx.arena(), &id.node, values)
-        {
-            return ok!(*value);
+) -> Backtrack<Value> {
+    // Serve from the cache when eligible
+    let cache = cache_func(runner_ctx, ctx, id, values);
+    if cache
+        && let Some(value) =
+            runner_ctx
+                .interp()
+                .cache
+                .find_func(runner_ctx.arena(), &id.node, values)
+    {
+        return ok!(*value);
+    }
+    let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
+    // Track effects for memoization; grow the stack for deep recursion
+    let checkpoint = runner_ctx.effect_checkpoint();
+    let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
+        let func = unwrap_from_result!(ctx.find_func(id), &id.span);
+        let layout = &func.layout;
+        match &func.def {
+            ast::MetaFuncDef::Extern(func) => {
+                invoke_extern_func(runner_ctx, ctx, id, func, targs, values)
+            }
+            ast::MetaFuncDef::Builtin(func) => {
+                invoke_builtin_func(runner_ctx, ctx, id, func, targs, values)
+            }
+            ast::MetaFuncDef::Table(func) => {
+                invoke_table_func(runner_ctx, ctx, layout, func, values)
+            }
+            ast::MetaFuncDef::Defined(func) => {
+                invoke_defined_func(runner_ctx, ctx, layout, func, targs, values)
+            }
         }
-        let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
-        // Grow the stack while retaining the callee's evaluation effect
-        let eval = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
-            Eval::with(|effect| {
-                let func = unwrap_from_result!(ctx.find_func(id), &id.span);
-                let layout = &func.layout;
-                match &func.def {
-                    ast::MetaFuncDef::Extern(func) => {
-                        effect.include(invoke_extern_func(runner_ctx, ctx, id, func, targs, values))
-                    }
-                    ast::MetaFuncDef::Builtin(func) => effect
-                        .include(invoke_builtin_func(runner_ctx, ctx, id, func, targs, values)),
-                    ast::MetaFuncDef::Table(func) => {
-                        effect.include(invoke_table_func(runner_ctx, ctx, layout, func, values))
-                    }
-                    ast::MetaFuncDef::Defined(func) => effect
-                        .include(invoke_defined_func(runner_ctx, ctx, layout, func, targs, values)),
-                }
-            })
-        });
-        let pure = eval.effect == SideEffect::Pure;
-        let result = effect.include(eval);
-        // Memoize a pure result
-        if pure && let (Some(key), ok!(value)) = (key, &result) {
-            runner_ctx.interp_mut().cache.funcs.insert(key, *value);
-        }
-        // Nest failures under the invocation trace
-        result.with_frame(id.span, || error::trace::message_func_invocation(id, targs))
-    })
+    });
+    // Memoize a pure result
+    let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
+    if pure && let (Some(key), ok!(value)) = (key, &result) {
+        runner_ctx.interp_mut().cache.funcs.insert(key, *value);
+    }
+    // Nest failures under the invocation trace
+    result.with_frame(id.span, || error::trace::message_func_invocation(id, targs))
 }
 
 // - Extern function
@@ -429,26 +408,24 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     extern_func: &ast::ExternFunc,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // The host reports whether the call had a side effect
-        let result = effect.include(runner_ctx.call_extern_func(&id.node, &[], values));
-        // Attach the call site to fatal host failures
-        let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
-        // Guard the result against the declared type
-        if runner_ctx.interp().config.guard {
-            unwrap!(check_func_output(
-                runner_ctx.arena(),
-                ctx,
-                id,
-                &extern_func.tparams,
-                &extern_func.typ,
-                targs,
-                &value
-            ));
-        }
-        ok!(value)
-    })
+) -> Backtrack<Value> {
+    // Host dispatch records effects before exposing the result
+    let result = runner_ctx.call_extern_func(&id.node, &[], values);
+    // Attach the call site to fatal host failures
+    let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
+    // Guard the result against the declared type
+    if runner_ctx.interp().config.guard {
+        unwrap!(check_func_output(
+            runner_ctx.arena(),
+            ctx,
+            id,
+            &extern_func.tparams,
+            &extern_func.typ,
+            targs,
+            &value
+        ));
+    }
+    ok!(value)
 }
 
 // - Builtin function
@@ -461,30 +438,28 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     builtin_func: &ast::BuiltinFunc,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // Builtins report effects like host calls
-        let result = effect.include(runner_ctx.call_builtin(id, targs, values));
-        match result {
-            // Guard the result against the declared type
-            Ok(value) => {
-                if runner_ctx.interp().config.guard {
-                    unwrap!(check_func_output(
-                        runner_ctx.arena(),
-                        ctx,
-                        id,
-                        &builtin_func.tparams,
-                        &builtin_func.typ,
-                        targs,
-                        &value
-                    ));
-                }
-                ok!(value)
+) -> Backtrack<Value> {
+    // Builtin dispatch records effects before exposing the result
+    let result = runner_ctx.call_builtin(id, targs, values);
+    match result {
+        // Guard the result against the declared type
+        Ok(value) => {
+            if runner_ctx.interp().config.guard {
+                unwrap!(check_func_output(
+                    runner_ctx.arena(),
+                    ctx,
+                    id,
+                    &builtin_func.tparams,
+                    &builtin_func.typ,
+                    targs,
+                    &value
+                ));
             }
-            // Builtin failures let the caller try another candidate
-            Err(failure) => Err(failure.with_span(&id.span)),
+            ok!(value)
         }
-    })
+        // Builtin failures let the caller try another candidate
+        Err(failure) => Err(failure.with_span(&id.span)),
+    }
 }
 
 // - Table function
@@ -496,22 +471,20 @@ fn eval_table_row<Iface: Interface, Ext: Extern>(
     layout: &Rc<FrameLayout>,
     table_row: &ast::TableRow,
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // Argument count must match the row
-        assert_eq!(table_row.node.args.len(), values.len(), "validated table row argument arity");
-        // Arguments bind into a fresh frame for the row
-        let ctx = unwrap!(assign::assign_args(
-            runner_ctx.arena_mut(),
-            ctx,
-            ctx.localize_with_layout(layout),
-            &table_row.node.args,
-            values
-        ));
-        // Premises, then the row body
-        let ctx = unwrap!(effect.include(eval_prems(runner_ctx, ctx, &table_row.node.prems)));
-        effect.include(expr::eval_exp(runner_ctx, &ctx, &table_row.node.exp))
-    })
+) -> Backtrack<Value> {
+    // Argument count must match the row
+    assert_eq!(table_row.node.args.len(), values.len(), "validated table row argument arity");
+    // Arguments bind into a fresh frame for the row
+    let ctx = unwrap!(assign::assign_args(
+        runner_ctx.arena_mut(),
+        ctx,
+        ctx.localize_with_layout(layout),
+        &table_row.node.args,
+        values
+    ));
+    // Premises, then the row body
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &table_row.node.prems));
+    expr::eval_exp(runner_ctx, &ctx, &table_row.node.exp)
 }
 
 /// Tries the table rows in order; the first matching row decides.
@@ -521,7 +494,7 @@ fn invoke_table_func<Iface: Interface, Ext: Extern>(
     layout: &Rc<FrameLayout>,
     table_func: &ast::TableFunc,
     values: &[Value],
-) -> Eval<Value> {
+) -> Backtrack<Value> {
     choose_sequential(&table_func.table_rows, |table_row| {
         eval_table_row(runner_ctx, ctx, layout, table_row, values)
     })
@@ -536,22 +509,20 @@ fn eval_clause<Iface: Interface, Ext: Extern>(
     ctx_callee: &Context<'_>,
     clause: &ast::Clause,
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // Argument count must match the clause
-        assert_eq!(clause.node.args.len(), values.len(), "validated clause argument arity");
-        // Arguments bind into the callee scope, evaluated in the caller's
-        let ctx = unwrap!(assign::assign_args(
-            runner_ctx.arena_mut(),
-            ctx_caller,
-            ctx_callee.clone(),
-            &clause.node.args,
-            values
-        ));
-        // Premises, then the clause body
-        let ctx = unwrap!(effect.include(eval_prems(runner_ctx, ctx, &clause.node.prems)));
-        effect.include(expr::eval_exp(runner_ctx, &ctx, &clause.node.exp))
-    })
+) -> Backtrack<Value> {
+    // Argument count must match the clause
+    assert_eq!(clause.node.args.len(), values.len(), "validated clause argument arity");
+    // Arguments bind into the callee scope, evaluated in the caller's
+    let ctx = unwrap!(assign::assign_args(
+        runner_ctx.arena_mut(),
+        ctx_caller,
+        ctx_callee.clone(),
+        &clause.node.args,
+        values
+    ));
+    // Premises, then the clause body
+    let ctx = unwrap!(eval_prems(runner_ctx, ctx, &clause.node.prems));
+    expr::eval_exp(runner_ctx, &ctx, &clause.node.exp)
 }
 
 /// Binds the type parameters, tries the clauses, then the otherwise clause.
@@ -562,53 +533,44 @@ fn invoke_defined_func<Iface: Interface, Ext: Extern>(
     defined_func: &ast::DefinedFunc,
     targs: &[ast::Typ],
     values: &[Value],
-) -> Eval<Value> {
-    Eval::with(|effect| {
-        // Bind type arguments in the callee frame
-        let ctx_local = unwrap!(assign_tparams(
-            ctx.localize_with_layout(layout),
-            &defined_func.tparams,
-            targs,
-            &defined_func.id.span
-        ));
-        let det = runner_ctx.interp().config.det;
-        // Clauses are candidates by index
-        let mut evaluate = |idx: &usize| {
-            eval_clause(runner_ctx, ctx, &ctx_local, &defined_func.clauses[*idx], values)
-        };
-        // Deterministic mode rejects two matching clauses
-        let result = if det {
-            effect.include(choose_deterministic(
-                0..defined_func.clauses.len(),
-                &mut evaluate,
-                |idx_a, idx_b| {
-                    let diagnostic = error::call::function_nondeterministic(
-                        defined_func.id.node.to_string(),
-                        idx_a,
-                        idx_b,
-                    )
-                    .with_label(Label::primary(&defined_func.id.span, ""));
-                    Box::new(Report::from(diagnostic))
-                },
-            ))
-        // Sequential mode takes the first matching clause
-        } else {
-            effect.include(choose_sequential(0..defined_func.clauses.len(), &mut evaluate))
-        };
-        match result {
-            // A match is the answer
-            ok!(value) => ok!(value),
-            // A fatal error aborts
-            fatal!(errors) => fatal!(errors),
-            // No clause matched: the otherwise clause is the fallback
-            unmatch!(errors) => match &defined_func.else_clause {
-                // The otherwise clause runs like any clause
-                Some(clause) => {
-                    effect.include(eval_clause(runner_ctx, ctx, &ctx_local, clause, values))
-                }
-                // No fallback: propagate the selected mismatches
-                None => unmatch!(errors),
-            },
-        }
-    })
+) -> Backtrack<Value> {
+    // Bind type arguments in the callee frame
+    let ctx_local = unwrap!(assign_tparams(
+        ctx.localize_with_layout(layout),
+        &defined_func.tparams,
+        targs,
+        &defined_func.id.span
+    ));
+    let det = runner_ctx.interp().config.det;
+    // Clauses are candidates by index
+    let mut evaluate =
+        |idx: &usize| eval_clause(runner_ctx, ctx, &ctx_local, &defined_func.clauses[*idx], values);
+    // Deterministic mode rejects two matching clauses
+    let result = if det {
+        choose_deterministic(0..defined_func.clauses.len(), &mut evaluate, |idx_a, idx_b| {
+            let diagnostic = error::call::function_nondeterministic(
+                defined_func.id.node.to_string(),
+                idx_a,
+                idx_b,
+            )
+            .with_label(Label::primary(&defined_func.id.span, ""));
+            Box::new(Report::from(diagnostic))
+        })
+    // Sequential mode takes the first matching clause
+    } else {
+        choose_sequential(0..defined_func.clauses.len(), &mut evaluate)
+    };
+    match result {
+        // A match is the answer
+        ok!(value) => ok!(value),
+        // A fatal error aborts
+        fatal!(errors) => fatal!(errors),
+        // No clause matched: the otherwise clause is the fallback
+        unmatch!(errors) => match &defined_func.else_clause {
+            // The otherwise clause runs like any clause
+            Some(clause) => eval_clause(runner_ctx, ctx, &ctx_local, clause, values),
+            // No fallback: propagate the selected mismatches
+            None => unmatch!(errors),
+        },
+    }
 }
