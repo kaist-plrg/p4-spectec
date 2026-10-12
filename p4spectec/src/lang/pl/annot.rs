@@ -3,6 +3,9 @@
 //! `Annotated<N>` wraps a node with the `Hints` its `prose*` hints attach,
 //! so the prose backend can alter or replace the rendered text of that node.
 //! Equality, free identifiers, and call detection see through the wrapper.
+//! Nodes share their hints, and nodes without hints share one empty value.
+
+use std::rc::Rc;
 
 use crate::lang::{
     common::{ds::set::IdSet, source::Phrase},
@@ -44,16 +47,35 @@ impl Default for Hints {
     }
 }
 
+impl Hints {
+    /// Returns the empty hints shared by every node without prose metadata.
+    pub fn empty() -> Rc<Self> {
+        thread_local! {
+            // Reuse one empty value instead of allocating per node
+            static HINTS_EMPTY: Rc<Hints> = Rc::new(Hints::default());
+        }
+        HINTS_EMPTY.with(Rc::clone)
+    }
+
+    /// Shares the hints, reusing the empty value when they equal it.
+    ///
+    /// Hints that carry only a declaration span stay distinct.
+    pub fn into_shared(self) -> Rc<Self> {
+        if self == Self::default() { Self::empty() } else { Rc::new(self) }
+    }
+}
+
 /// A PL node paired with prose metadata
 ///
 /// Does not implement `Deref`;
 /// access node and hints explicitly.
+/// Hints are shared, so cloning a node does not copy them.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Annotated<N> {
     /// The syntax node.
     pub node: N,
     /// Its prose hints, empty by default.
-    pub hints: Hints,
+    pub hints: Rc<Hints>,
 }
 
 impl<N: SyntaxEq> SyntaxEq for Annotated<N> {
@@ -71,7 +93,7 @@ impl<N: FreeIds> FreeIds for Annotated<N> {
 impl<N> Annotated<N> {
     /// Builds a node with no prose hints.
     pub fn new(node: N) -> Self {
-        Self { node, hints: Hints::default() }
+        Self { node, hints: Hints::empty() }
     }
 }
 
@@ -87,7 +109,7 @@ macro_rules! annotated {
                 node: $node,
                 span: $span.span.clone(),
             },
-            hints: $crate::lang::pl::annot::Hints::default(),
+            hints: $crate::lang::pl::annot::Hints::empty(),
         }
     };
 }
@@ -119,7 +141,7 @@ macro_rules! annotated_note_phrase {
             node: $node,
             note: $note,
             span: $span,
-            hints: $crate::lang::pl::annot::Hints::default(),
+            hints: $crate::lang::pl::annot::Hints::empty(),
         }
     };
 }

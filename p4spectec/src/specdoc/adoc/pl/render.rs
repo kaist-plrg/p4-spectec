@@ -1005,7 +1005,9 @@ impl Prose {
 
     fn of_case_exp(exp: &pl::Exp, not_exp: &pl::NotExp) -> Prose {
         // Hinted variant values link their prose to the type definition
-        if let (Some(hint), pl::TypKind::Var(id_typ, _)) = (&exp.hints.node.prose, &exp.node.note) {
+        if let (Some(hint), pl::TypKind::Var(id_typ, _)) =
+            (&exp.hints.node.prose, exp.node.note.as_ref())
+        {
             let exps = not_exp.args().iter().collect::<Vec<_>>();
             let prose_case = alternate(
                 hint,
@@ -2434,7 +2436,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         };
         crate::annotated_note_phrase! {
             node: exp_kind,
-            note: exp_sl.note.as_ref().clone(),
+            note: exp_sl.note.clone(),
             span: exp_sl.span,
         }
     }
