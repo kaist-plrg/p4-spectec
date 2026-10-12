@@ -27,40 +27,45 @@ use serde_derive_state::DeserializeState;
 pub struct FileId(u32);
 
 /// Interned names in id order, and the id of each name.
-struct FileTable {
-    names: Vec<&'static str>,
-    ids: HashMap<&'static str, FileId>,
+struct FileInterner {
+    items: Vec<&'static str>,
+    table: HashMap<&'static str, FileId>,
 }
 
-/// The process-wide file table, starting with the empty name.
-fn file_table() -> &'static Mutex<FileTable> {
-    static FILES: OnceLock<Mutex<FileTable>> = OnceLock::new();
+/// The process-wide file interner, starting with the empty name.
+fn file_interner() -> &'static Mutex<FileInterner> {
+    static FILES: OnceLock<Mutex<FileInterner>> = OnceLock::new();
     FILES.get_or_init(|| {
-        let names = vec![""];
-        let ids = HashMap::from([("", FileId(0))]);
-        Mutex::new(FileTable { names, ids })
+        let items = vec![""];
+        let table = HashMap::from([("", FileId(0))]);
+        Mutex::new(FileInterner { items, table })
     })
 }
 
 impl FileId {
     /// Interns a file name; the same name always yields the same id.
     pub fn intern(name: &str) -> Self {
-        let mut table = file_table().lock().unwrap_or_else(PoisonError::into_inner);
-        if let Some(file) = table.ids.get(name) {
+        let mut interner = file_interner()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if let Some(file) = interner.table.get(name) {
             return *file;
         }
         // Names live as long as the process, so they are handed out as static strs
         let name: &'static str = Box::leak(name.into());
-        let file = FileId(u32::try_from(table.names.len()).expect("fewer than 2^32 source files"));
-        table.names.push(name);
-        table.ids.insert(name, file);
+        let file =
+            FileId(u32::try_from(interner.items.len()).expect("fewer than 2^32 source files"));
+        interner.items.push(name);
+        interner.table.insert(name, file);
         file
     }
 
     /// Returns the interned name.
     pub fn name(self) -> &'static str {
-        let table = file_table().lock().unwrap_or_else(PoisonError::into_inner);
-        table.names[self.0 as usize]
+        let interner = file_interner()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        interner.items[self.0 as usize]
     }
 }
 
