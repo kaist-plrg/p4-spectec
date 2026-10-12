@@ -13,8 +13,16 @@ use crate::lang::{
 
 // == Conditional bindings
 
+/// Compares only plain variable references, retaining their type distinction.
+fn is_same_var_exp(exp_l: &pl::Exp, exp_r: &pl::Exp) -> bool {
+    matches!((&exp_l.node.node, &exp_r.node.node), (ExpKind::Id(id_l), ExpKind::Id(id_r)) if id_l.node == id_r.node)
+        && exp_l.node.note.syntax_eq(&exp_r.node.note)
+        && exp_l.hints.node == Default::default()
+        && exp_r.hints.node == Default::default()
+}
+
 /// Matches a guard to the binding shape produced by partial binding.
-fn matches_binding(pattern: &pl::Pattern, exp: &pl::Exp) -> bool {
+fn is_binding_pattern(pattern: &pl::Pattern, exp: &pl::Exp) -> bool {
     if exp.hints.node != Default::default() {
         return false;
     }
@@ -29,16 +37,37 @@ fn matches_binding(pattern: &pl::Pattern, exp: &pl::Exp) -> bool {
     }
 }
 
-/// Compares only plain variable references, retaining their type distinction.
-fn same_variable(exp_l: &pl::Exp, exp_r: &pl::Exp) -> bool {
-    matches!((&exp_l.node.node, &exp_r.node.node), (ExpKind::Id(id_l), ExpKind::Id(id_r)) if id_l.node == id_r.node)
-        && exp_l.node.note.syntax_eq(&exp_r.node.note)
-        && exp_l.hints.node == Default::default()
-        && exp_r.hints.node == Default::default()
+/// Checks that the subtype test accounts for the whole binding operation.
+fn is_sub_binding(typ: &pl::Typ, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> bool {
+    // Preserve narrowing casts, without inventing a cast for same-type bindings
+    let same_source = match &instr_let.exp_r.node.node {
+        ExpKind::DownCast(typ_cast, exp) => {
+            typ.syntax_eq(typ_cast)
+                && is_same_var_exp(exp, exp_scrut)
+                && !exp_scrut.node.note.as_ref().syntax_eq(&typ.node)
+        }
+        _ => is_same_var_exp(&instr_let.exp_r, exp_scrut),
+    };
+    // Keep the binding's type and presentation while retaining the original test
+    same_source
+        && instr_let.exp_l.node.note.as_ref().syntax_eq(&typ.node)
+        && instr_let.exp_r.node.note.as_ref().syntax_eq(&typ.node)
+        && instr_let.exp_l.hints.node == Default::default()
+}
+
+/// Checks that the match proves the binding shape on the same typed variable.
+fn is_match_binding(pattern: &pl::Pattern, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> bool {
+    is_same_var_exp(&instr_let.exp_r, exp_scrut)
+        && instr_let
+            .exp_l
+            .node
+            .note
+            .syntax_eq(&instr_let.exp_r.node.note)
+        && is_binding_pattern(pattern, &instr_let.exp_l)
 }
 
 /// Finds an unhinted, noniterated leading let eligible for a conditional binding.
-fn leading_let<Tier>(block: &[pl::Instr<Tier>]) -> Option<&pl::LetInstr> {
+fn find_leading_let_instr<Tier>(block: &[pl::Instr<Tier>]) -> Option<&pl::LetInstr> {
     let instr = block.first()?;
     if instr.hints.node != Default::default() {
         return None;
@@ -50,37 +79,8 @@ fn leading_let<Tier>(block: &[pl::Instr<Tier>]) -> Option<&pl::LetInstr> {
     Some(instr_let)
 }
 
-/// Checks that the subtype test accounts for the whole binding operation.
-fn sub_binding(typ: &pl::Typ, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> bool {
-    // Preserve narrowing casts, without inventing a cast for same-type bindings
-    let same_source = match &instr_let.exp_r.node.node {
-        ExpKind::DownCast(typ_cast, exp) => {
-            typ.syntax_eq(typ_cast)
-                && same_variable(exp, exp_scrut)
-                && !exp_scrut.node.note.as_ref().syntax_eq(&typ.node)
-        }
-        _ => same_variable(&instr_let.exp_r, exp_scrut),
-    };
-    // Keep the binding's type and presentation while retaining the original test
-    same_source
-        && instr_let.exp_l.node.note.as_ref().syntax_eq(&typ.node)
-        && instr_let.exp_r.node.note.as_ref().syntax_eq(&typ.node)
-        && instr_let.exp_l.hints.node == Default::default()
-}
-
-/// Checks that the match proves the binding shape on the same typed variable.
-fn match_binding(pattern: &pl::Pattern, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> bool {
-    same_variable(&instr_let.exp_r, exp_scrut)
-        && instr_let
-            .exp_l
-            .node
-            .note
-            .syntax_eq(&instr_let.exp_r.node.note)
-        && matches_binding(pattern, &instr_let.exp_l)
-}
-
 /// Removes the leading let after its binding has been validated.
-fn take_binding<Tier>(block: &mut pl::Block<Tier>) -> pl::Exp {
+fn take_binding_exp<Tier>(block: &mut pl::Block<Tier>) -> pl::Exp {
     let pl::InstrKind::Let(instr_let) = block.remove(0).node.node else {
         unreachable!("validated leading let")
     };
@@ -94,17 +94,19 @@ fn shorten_if_instr<Tier>(
 ) -> pl::InstrKind<Tier> {
     // Iterated conditions and hinted bindings keep their separate instructions
     let binding = instr_if.iter_exps.is_empty()
-        && leading_let(&instr_if.block).is_some_and(|instr_let| match &instr_if.exp.node.node {
-            ExpKind::Sub(exp, typ, _) => sub_binding(typ, exp, instr_let),
-            ExpKind::Match(exp, pattern) => match_binding(pattern, exp, instr_let),
-            _ => false,
+        && find_leading_let_instr(&instr_if.block).is_some_and(|instr_let| {
+            match &instr_if.exp.node.node {
+                ExpKind::Sub(exp, typ, _) => is_sub_binding(typ, exp, instr_let),
+                ExpKind::Match(exp, pattern) => is_match_binding(pattern, exp, instr_let),
+                _ => false,
+            }
         });
     if !binding {
         instr_if.block = shorten_block(instr_if.block);
         return pl::InstrKind::If(instr_if);
     }
     // Move the binding into syntax before shortening the remaining body
-    let exp_l = take_binding(&mut instr_if.block);
+    let exp_l = take_binding_exp(&mut instr_if.block);
     let block = shorten_block(instr_if.block);
     let dangle = instr_if.dangle;
     match instr_if.exp.node.node {
@@ -134,13 +136,14 @@ fn shorten_case_instr<Tier>(
 ) -> pl::InstrKind<Tier> {
     for case in &mut instr_case.cases {
         // Keep guards and bindings separate unless the guard proves the binding
-        let binding = leading_let(&case.block).is_some_and(|instr_let| match &case.guard {
-            pl::Guard::Sub(typ, _) => sub_binding(typ, &instr_case.exp, instr_let),
-            pl::Guard::Match(pattern) => match_binding(pattern, &instr_case.exp, instr_let),
-            _ => false,
-        });
+        let binding =
+            find_leading_let_instr(&case.block).is_some_and(|instr_let| match &case.guard {
+                pl::Guard::Sub(typ, _) => is_sub_binding(typ, &instr_case.exp, instr_let),
+                pl::Guard::Match(pattern) => is_match_binding(pattern, &instr_case.exp, instr_let),
+                _ => false,
+            });
         if binding {
-            let exp_l = take_binding(&mut case.block);
+            let exp_l = take_binding_exp(&mut case.block);
             case.guard = match &case.guard {
                 pl::Guard::Sub(typ, subcheck) => {
                     pl::Guard::LetSub(typ.clone(), subcheck.clone(), exp_l)
