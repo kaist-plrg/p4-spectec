@@ -1,6 +1,6 @@
 //! Memoized successful pure calls
 //!
-//! Memo keys belong to the runner's arena.
+//! Memo keys belong to the shared execution arena.
 //! Public entries clear the memo tables.
 //! RunnerContext records effects independently of memoization.
 

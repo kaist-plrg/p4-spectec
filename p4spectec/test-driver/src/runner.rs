@@ -5,6 +5,7 @@
 
 mod builtins;
 mod effects;
+mod interface;
 mod relay;
 
 use p4spectec::lang::{
@@ -166,6 +167,7 @@ pub fn run() -> Result<()> {
         }
     }
     effects::run();
+    interface::run()?;
     builtins::run()?;
     relay::run()?;
     eprintln!("runner: native, shared-arena, host, builtin, and nested-runner checks passed");

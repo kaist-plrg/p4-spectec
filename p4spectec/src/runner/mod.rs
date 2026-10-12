@@ -86,13 +86,8 @@ pub fn build_al<Ext: Extern>(
     external: Ext,
 ) -> Result<Runner<BuiltinInterface, Ext>, BuildError> {
     let spec = Spec::Al(spec);
-    // Builtins are chosen from the specification before it is consumed
     let interface = builtin::p4(&spec);
-    let Spec::Al(spec) = spec else { unreachable!() };
-    // Load and prepare the definitions
-    let spec_env = AlSpecEnv::load(&mut arena.mixop, spec)?;
-    let config = AlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(Backend::Al { spec_env, interp: AlInterp::new(config) }, interface, external))
+    Runner::new(arena, spec, config, interface, external)
 }
 
 /// Builds an SL runner from a specification, with the P4 builtins.
@@ -106,13 +101,8 @@ pub fn build_sl<Ext: Extern>(
     external: Ext,
 ) -> Result<Runner<BuiltinInterface, Ext>, BuildError> {
     let spec = Spec::Sl(spec);
-    // Builtins are chosen from the specification before it is consumed
     let interface = builtin::p4(&spec);
-    let Spec::Sl(spec) = spec else { unreachable!() };
-    // Load and prepare the definitions
-    let spec_env = SlSpecEnv::load(&mut arena.mixop, config.det, spec)?;
-    let config = SlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(Backend::Sl { spec_env, interp: SlInterp::new(config) }, interface, external))
+    Runner::new(arena, spec, config, interface, external)
 }
 
 /// Builds a PL runner from a specification, with the P4 builtins.
@@ -127,10 +117,7 @@ pub fn build_pl<Ext: Extern>(
 ) -> Result<Runner<BuiltinInterface, Ext>, BuildError> {
     let spec = Spec::Pl(spec);
     let interface = builtin::p4(&spec);
-    let Spec::Pl(spec) = spec else { unreachable!() };
-    let spec_env = PlSpecEnv::load(&mut arena.mixop, spec)?;
-    let config = PlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(Backend::Pl { spec_env, interp: PlInterp::new(config) }, interface, external))
+    Runner::new(arena, spec, config, interface, external)
 }
 
 // == Runner assembly
@@ -199,9 +186,31 @@ macro_rules! with_context {
 pub(crate) use with_context;
 
 impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
-    /// Assembles the components around the selected prepared specification.
-    fn new(backend: Backend, interface: Iface, external: Ext) -> Self {
-        Self { backend, interface, external, effects: 0 }
+    /// Prepares a specification with the supplied interface and extern state.
+    ///
+    /// Interns notation in `arena`; every evaluation must borrow that same arena.
+    pub fn new(
+        arena: &mut Arena,
+        spec: Spec,
+        config: Config,
+        interface: Iface,
+        external: Ext,
+    ) -> Result<Self, BuildError> {
+        let backend = match spec {
+            Spec::Al(spec) => Backend::Al {
+                spec_env: AlSpecEnv::load(&mut arena.mixop, spec)?,
+                interp: AlInterp::new(AlConfig::new(config.cache, config.det, config.guard)),
+            },
+            Spec::Sl(spec) => Backend::Sl {
+                spec_env: SlSpecEnv::load(&mut arena.mixop, config.det, spec)?,
+                interp: SlInterp::new(SlConfig::new(config.cache, config.det, config.guard)),
+            },
+            Spec::Pl(spec) => Backend::Pl {
+                spec_env: PlSpecEnv::load(&mut arena.mixop, spec)?,
+                interp: PlInterp::new(PlConfig::new(config.cache, config.det, config.guard)),
+            },
+        };
+        Ok(Self { backend, interface, external, effects: 0 })
     }
 
     // - Evaluation
