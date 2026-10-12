@@ -41,13 +41,17 @@ use num_bigint::BigInt;
 
 use crate::lang::{
     common::{
-        notation::{atom::Atom, mixfix::Mixfix},
+        notation::atom::Atom,
         prim::num::Natural,
         source::{Phrase, Position, Span},
     },
     data::{
+        notation::{self, tree::Mixop},
         typ,
-        value::{Value, make},
+        value::{
+            ValueError,
+            flat::{self as value, Value, ValueKind},
+        },
     },
 };
 
@@ -231,7 +235,7 @@ pub struct Lexer<'source, 'arena> {
 
 impl<'source, 'arena> Lexer<'source, 'arena> {
     /// Tokenizes preprocessed `source` using context-sensitive name classes.
-    pub fn new(file: Rc<str>, source: &'source str, ctx: Rc<Context<'arena>>) -> Self {
+    pub fn new(ctx: Rc<Context<'arena>>, file: Rc<str>, source: &'source str) -> Self {
         Self {
             source,
             index: 0,
@@ -440,8 +444,8 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
     /// and decides whether template arguments follow.
     fn classify_name(&mut self, value: &Value, span: &Span, next: LexerState) -> Phrase<Token> {
         let arena = self.ctx.arena();
-        let name = match arena.kind(value) {
-            crate::lang::data::value::ValueKind::Text(name) => name,
+        let name = match arena.value.kind(value.node) {
+            ValueKind::Text(name) => name,
             _ => return phrase!(node: Token::Identifier, span: span.clone()),
         };
         // Type names may start an expression; either kind may take `<...>`
@@ -606,7 +610,11 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 let token = match keyword(text) {
                     Some(token) => token,
                     None => {
-                        match make::text(&mut self.ctx.arena_mut(), text.to_owned(), span.clone()) {
+                        match value::make::text(
+                            &mut self.ctx.arena_mut(),
+                            text.to_owned(),
+                            span.clone(),
+                        ) {
                             Ok(value) => Token::Name(value),
                             Err(error) => return Some(Err(P4Error::new(span, error))),
                         }
@@ -627,7 +635,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             // Anything else is passed to the parser as an unexpected token
             let text = self.bump().expect("source is not empty").to_string();
             let span = self.span_from(pos_l);
-            let value = match make::text(&mut self.ctx.arena_mut(), text, span.clone()) {
+            let value = match value::make::text(&mut self.ctx.arena_mut(), text, span.clone()) {
                 Ok(value) => value,
                 Err(error) => return Some(Err(P4Error::new(span, error))),
             };
@@ -674,7 +682,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             }
         };
         // The value spans the literal; the token ends at the closing quote
-        let value = make::text(&mut self.ctx.arena_mut(), text, self.span_from(pos_l))?;
+        let value = value::make::text(&mut self.ctx.arena_mut(), text, self.span_from(pos_l))?;
         let token = Token::StringLiteral(value);
         let span = self.span_from(pos_quote);
         Ok(phrase!(node: token, span: span))
@@ -717,22 +725,26 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 let nat_width = Natural::try_from(int_width).map_err(|_| {
                     self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l.clone())
                 })?;
-                let value_width = make::nat(&mut self.ctx.arena_mut(), nat_width, span.clone())?;
-                let value_int = make::int(&mut self.ctx.arena_mut(), int, span.clone())?;
+                let value_width =
+                    value::make::nat(&mut self.ctx.arena_mut(), nat_width, span.clone())?;
+                let value_int = value::make::int(&mut self.ctx.arena_mut(), int, span.clone())?;
                 let atom = phrase!(
                     node: Atom::Keyword(sign.to_ascii_uppercase().to_string()),
                     span: span.clone()
                 );
-                let value_case = Mixfix::Seq(vec![
-                    Mixfix::Arg(value_width),
-                    Mixfix::Atom(atom),
-                    Mixfix::Arg(value_int),
-                ]);
+                // Each literal's atom has its own span, so its shape is not shared
+                let mixop = Mixop::Seq(vec![Mixop::Arg, Mixop::Atom(atom), Mixop::Arg]);
+                let mut arena = self.ctx.arena_mut();
+                let arena_mixop = &mut arena.mixop;
+                let mixop = arena_mixop.intern(&mixop).map_err(ValueError::from)?;
+                let value_case =
+                    notation::flat::Mixfix::new(arena_mixop, mixop, vec![value_width, value_int])
+                        .expect("the literal shape has two positions");
                 let id_typ = phrase!(node: "integerLiteral".to_owned(), span: Span::default());
-                let value = make::case(
-                    &mut self.ctx.arena_mut(),
+                let value = Value::new(
+                    &mut arena,
+                    ValueKind::Case(value_case),
                     (typ::make::var(id_typ, vec![])).node.into(),
-                    value_case,
                     span,
                 )?;
                 (value, digits.to_owned())
@@ -743,7 +755,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                     self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l.clone())
                 })?;
                 let span = self.span_from(pos_l.clone());
-                (make::int(&mut self.ctx.arena_mut(), int, span)?, spelling.to_owned())
+                (value::make::int(&mut self.ctx.arena_mut(), int, span)?, spelling.to_owned())
             }
         };
         let span = self.span_from(pos_l);

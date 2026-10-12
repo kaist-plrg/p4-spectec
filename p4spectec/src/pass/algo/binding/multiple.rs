@@ -234,8 +234,8 @@ fn gen_exp_equality(id: &Id, id_rename: &Id, typ: &ast::Typ) -> ast::Exp {
 ///
 /// Returns `None` when the identifier occurred only once.
 fn generate_side_condition(
-    dim: &Dim,
     iter_ctx: &ICtx,
+    dim: &Dim,
     id: &Id,
     ids_rename: &[Id],
 ) -> Option<AnalyzedPrem> {
@@ -290,7 +290,7 @@ pub fn generate_side_conditions(iter_ctx: &ICtx, renv: &RenameEnv) -> Vec<Analyz
     renv.iter()
         .filter_map(|(id, ids_rename)| {
             let dim = renv.dimension(id)?;
-            generate_side_condition(dim, iter_ctx, id, ids_rename)
+            generate_side_condition(iter_ctx, dim, id, ids_rename)
         })
         .collect()
 }

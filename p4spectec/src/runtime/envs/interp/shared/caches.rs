@@ -7,7 +7,7 @@
 
 use std::{collections::HashMap, rc::Rc};
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 // == Value cache
 

@@ -56,7 +56,7 @@ fn struct_params(ctx: &Context, params_al: Vec<al::Param>) -> Vec<sl::Param> {
 
 /// Pairs an expression parameter's type with a fresh input variable.
 fn struct_exp_param(ctx: &Context, frees: &mut IdSet, typ: al::Typ) -> sl::ParamKind {
-    let (frees_next, exp_input) = fresh::exp_from_typ(true, &ctx.menv, frees, &typ);
+    let (frees_next, exp_input) = fresh::exp_from_typ(&ctx.menv, true, frees, &typ);
     *frees = frees_next;
     let exp_input = Box::new(exp_input);
     sl::ParamKind::Exp(typ, exp_input)
@@ -489,8 +489,8 @@ fn struct_rel_exps_input(
     let mut frees = IdSet::new();
     let mut exps_input = vec![];
     for idx in input_hint.indices() {
-        let typ = typs[idx.node];
-        let (frees_next, exp_input) = fresh::exp_from_typ(true, &ctx.menv, &frees, typ);
+        let typ = &typs[idx.node];
+        let (frees_next, exp_input) = fresh::exp_from_typ(&ctx.menv, true, &frees, typ);
         frees = frees_next;
         exps_input.push(exp_input);
     }

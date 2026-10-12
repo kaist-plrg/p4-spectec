@@ -7,7 +7,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, ValueArena, make},
+    data::{
+        arena::Arena,
+        value::flat::{self as value, Value},
+    },
 };
 
 use crate::lang::il::ast::Typ;
@@ -24,7 +27,7 @@ pub fn init() {
 
 /// `dec $fresh_typeId() : typeId`, the next `FRESH__n` name.
 pub fn fresh_type_id(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -32,6 +35,6 @@ pub fn fresh_type_id(
     extract::zero(values)?;
     let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
     let type_id = format!("FRESH__{counter}");
-    let value = make::text(arena, type_id, Span::default())?;
+    let value = value::make::text(arena, type_id, Span::default())?;
     Ok(value)
 }

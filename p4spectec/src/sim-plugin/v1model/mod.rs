@@ -5,7 +5,7 @@
 //! the scheduler in `pipe` acts on them once the control returns.
 //! Stateful objects live in `object`, extern functions in `func`.
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 

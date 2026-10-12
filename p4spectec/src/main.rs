@@ -10,7 +10,7 @@ use std::{path::PathBuf, process::ExitCode};
 
 use clap::{Args, Parser, Subcommand};
 
-use p4spectec::lang::{data::value::external::Encoding, traits::print::Print};
+use p4spectec::lang::{data::encoding::Encoding, traits::print::Print};
 
 use p4spectec::diagnostic::{DisplayStyle, RenderConfig, Renderer, Report};
 

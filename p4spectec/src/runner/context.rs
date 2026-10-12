@@ -4,7 +4,7 @@
 //! An extern receives the same context and can reenter the interpreter
 //! after its own shared borrow has been copied into a local reference.
 
-use crate::lang::data::value::{Value, ValueArena};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::il::ast::{Id, Typ};
 
@@ -19,7 +19,7 @@ where
     Iface: Interface,
     Ext: Extern,
 {
-    arena: &'runner mut ValueArena,
+    arena: &'runner mut Arena,
     spec: &'runner Interp::Spec,
     interp: &'runner mut Interp,
     interface: &'runner mut Iface,
@@ -33,7 +33,7 @@ where
     Ext: Extern,
 {
     pub(super) fn new(
-        arena: &'runner mut ValueArena,
+        arena: &'runner mut Arena,
         spec: &'runner Interp::Spec,
         interp: &'runner mut Interp,
         interface: &'runner mut Iface,
@@ -56,11 +56,11 @@ where
         self.interp
     }
 
-    pub fn arena(&self) -> &ValueArena {
+    pub fn arena(&self) -> &Arena {
         self.arena
     }
 
-    pub fn arena_mut(&mut self) -> &mut ValueArena {
+    pub fn arena_mut(&mut self) -> &mut Arena {
         self.arena
     }
 

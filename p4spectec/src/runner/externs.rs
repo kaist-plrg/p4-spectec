@@ -11,7 +11,7 @@ use thiserror::Error;
 
 use crate::lang::{
     common::prim::num::NumericError,
-    data::value::{Value, ValueError},
+    data::value::{ValueError, flat::Value},
 };
 
 use crate::lang::il::ast::Typ;

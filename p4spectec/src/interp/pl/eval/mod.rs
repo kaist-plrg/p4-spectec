@@ -11,11 +11,13 @@ mod expr;
 mod instr;
 mod strip;
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
+
+use crate::lang::il::prepared as ast;
 
 use crate::runner::{Extern, Interface, RunnerContext};
 
-use crate::interp::shared::{backtrack::Backtrack, eval::Invoker, prepare::ast};
+use crate::interp::shared::{backtrack::Backtrack, eval::Invoker};
 
 use crate::interp::pl::{PlInterp, context};
 

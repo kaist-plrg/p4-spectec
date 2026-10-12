@@ -17,9 +17,9 @@ use std::{
 
 use lalrpop_util::ParseError;
 
-use crate::lang::common::{
-    notation::{mixfix::Mixfix, mixop::Mixop},
-    source::{Position, Span},
+use crate::lang::{
+    common::source::{Position, Span},
+    data::notation::tree::Mixop,
 };
 
 use crate::lang::el::ast::{self, Spec};
@@ -154,9 +154,9 @@ fn expand_path(path: &Path, files: &mut Vec<PathBuf>) -> Result<(), FrontendErro
 
 /// Lexes and parses one source text into definitions.
 fn parse_text_with_context(
+    ctx: &Context,
     name: Rc<str>,
     source: &str,
-    ctx: &Context,
 ) -> Result<Spec, FrontendError> {
     let lexer = Lexer::new(name, source, |id| ctx.find_id(id));
     let tokens = parser_tokens(ctx, lexer);
@@ -170,7 +170,7 @@ fn parse_text_with_context(
 
 /// Parses a UTF-8 source string with fresh variable bindings.
 pub fn parse_text(name: Rc<str>, source: &str) -> Result<Spec, FrontendError> {
-    parse_text_with_context(name, source, &Context::default())
+    parse_text_with_context(&Context::default(), name, source)
 }
 
 /// Validates UTF-8 bytes and parses them with fresh variable bindings.
@@ -208,7 +208,7 @@ where
         // Decode and parse each file with the shared variable bindings
         let source = decode_utf8(Rc::clone(&name), &bytes)?;
         let ctx = Context::with_bindings(Rc::clone(&bindings));
-        let defs = parse_text_with_context(name, source, &ctx)?;
+        let defs = parse_text_with_context(&ctx, name, source)?;
         spec.extend(defs);
     }
     Ok(spec)
@@ -222,28 +222,28 @@ pub fn parse_mixop(source: &str) -> Result<Mixop, FrontendError> {
     fn from_typ(typ: &ast::Typ) -> Mixop {
         match typ {
             // A plain type is an argument position
-            ast::Typ::Plain(_) => Mixfix::Arg(()),
+            ast::Typ::Plain(_) => Mixop::Arg,
             // Notation keeps its atoms and recurses into its parts
             ast::Typ::Notation(notation) => match &notation.node {
                 ast::NotTypKind::Atom(atom) => {
                     let atom = atom.clone();
-                    Mixfix::Atom(atom)
+                    Mixop::Atom(atom)
                 }
                 ast::NotTypKind::Seq(types) => {
-                    let mixfixes = types.iter().map(from_typ).collect();
-                    Mixfix::Seq(mixfixes)
+                    let mixops = types.iter().map(from_typ).collect();
+                    Mixop::Seq(mixops)
                 }
                 ast::NotTypKind::Infix(typ_l, atom, typ_r) => {
                     let typ_l = Box::new(from_typ(typ_l));
                     let atom = atom.clone();
                     let typ_r = Box::new(from_typ(typ_r));
-                    Mixfix::Infix(typ_l, atom, typ_r)
+                    Mixop::Infix(typ_l, atom, typ_r)
                 }
                 ast::NotTypKind::Brack(atom_l, typ_inner, atom_r) => {
                     let atom_l = atom_l.clone();
                     let typ_inner = Box::new(from_typ(typ_inner));
                     let atom_r = atom_r.clone();
-                    Mixfix::Brack(atom_l, typ_inner, atom_r)
+                    Mixop::Brack(atom_l, typ_inner, atom_r)
                 }
             },
         }

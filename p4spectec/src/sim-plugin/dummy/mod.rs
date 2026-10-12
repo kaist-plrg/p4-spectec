@@ -4,7 +4,7 @@
 //! Compile-time assertions such as `static_assert` are supported;
 //! runtime extern function and method calls are not.
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 

@@ -7,7 +7,7 @@
 //! Compile-time known calls (`static_assert`) are handled here
 //! for all architectures.
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 use crate::lang::il::ast::Typ;
 
@@ -151,12 +151,13 @@ where
         )
         .into());
     };
-    let name_func = crate::lang::data::value::get::text(ctx.arena(), value_name)?;
-    let values_name_param = crate::lang::data::value::get::list(ctx.arena(), value_names_param)?;
+    let name_func = crate::lang::data::value::flat::get::text(ctx.arena(), value_name)?;
+    let values_name_param =
+        crate::lang::data::value::flat::get::list(ctx.arena(), value_names_param)?;
     let names_param = values_name_param
         .iter()
         .map(|value| {
-            crate::lang::data::value::get::text(ctx.arena(), value).map_err(ExternError::from)
+            crate::lang::data::value::flat::get::text(ctx.arena(), value).map_err(ExternError::from)
         })
         .collect::<Result<Vec<_>, _>>()?;
     // Both overloads of `static_assert`; nothing else is known

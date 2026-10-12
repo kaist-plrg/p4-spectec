@@ -5,16 +5,18 @@
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, ValueArena, make},
+    data::{
+        arena::Arena,
+        value::flat::{self as value, Value},
+    },
     traits::print::Print,
 };
 
+use crate::lang::il::prepared as ast;
+
 use crate::runner::{Extern, Interface, RunnerContext};
 
-use crate::interp::shared::{
-    backtrack::{Backtrack, WithFrame, ok, unwrap, unwrap_from_result},
-    prepare::ast,
-};
+use crate::interp::shared::backtrack::{Backtrack, WithFrame, ok, unwrap, unwrap_from_result};
 
 use super::super::context::ReadContext;
 
@@ -31,7 +33,7 @@ fn eval_arg<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>
         ast::ArgKind::Def(id) => eval_def_arg(runner_ctx.arena_mut(), ctx, id, &arg.span),
     };
     result.with_frame(arg.span.clone(), || {
-        format!("while evaluating argument {}", Print::to_string(arg))
+        format!("while evaluating argument {}", arg.view(&runner_ctx.arena().mixop).to_string())
     })
 }
 
@@ -52,7 +54,7 @@ pub(crate) fn eval_args<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, 
 
 /// Builds the function value for a function argument from the function's type.
 fn eval_def_arg(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     ctx: &impl ReadContext,
     id: &ast::Id,
     span: &Span,
@@ -60,7 +62,7 @@ fn eval_def_arg(
     // A function value carries the referenced function's type
     let typ_func = unwrap_from_result!(ctx.find_func_typ(id), span);
     let value = unwrap_from_result!(
-        make::func(
+        value::make::func(
             arena,
             id.clone(),
             typ_func.tparams,

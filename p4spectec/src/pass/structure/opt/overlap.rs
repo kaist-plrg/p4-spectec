@@ -11,6 +11,8 @@
 //! disjoint conditions may leave cases uncovered.
 //! Fuzzy means the analysis cannot decide whether the conditions overlap.
 
+use std::rc::Rc;
+
 use crate::lang::{common::prim::bool, traits::eq::SyntaxEq};
 
 use crate::lang::il::ast::*;
@@ -276,7 +278,7 @@ pub(crate) fn overlap_exp(
 pub(crate) fn typ_as_variant(
     tdenv: &TDEnv,
     typ: &Typ,
-) -> Result<Option<Vec<Mixop>>, StructureError> {
+) -> Result<Option<Vec<Rc<Mixop>>>, StructureError> {
     // Only a defined variant type has constructors
     let typ_unrolled = expand_typ(tdenv, typ).map_err(error::type_operation_invalid)?;
     let TypKind::Var(id, _) = &typ_unrolled.node else {
@@ -287,7 +289,7 @@ pub(crate) fn typ_as_variant(
             DefTypKind::Variant(typ_cases) => Some(
                 typ_cases
                     .iter()
-                    .map(|TypCase { not_typ: nottyp, .. }| nottyp.node.to_mixop())
+                    .map(|TypCase { not_typ: nottyp, .. }| Rc::clone(nottyp.node.mixop()))
                     .collect(),
             ),
             _ => None,
@@ -313,7 +315,7 @@ fn overlap_sub_exp(
         // x <: bool vs x <: int -> Fuzzy: neither type is a variant
         return Ok(Overlap::Fuzzy);
     };
-    let contains = |mixops: &[Mixop], mixop: &Mixop| {
+    let contains = |mixops: &[Rc<Mixop>], mixop: &Rc<Mixop>| {
         mixops
             .iter()
             .any(|mixop_other| mixop.syntax_eq(mixop_other))
@@ -472,12 +474,13 @@ fn disjoint_exp_literal(exp_a: &Exp, exp_b: &Exp) -> bool {
         ),
         // A(1) vs B(1) -> disjoint; A(1) vs A(2) -> compare arguments
         (ExpKind::Case(notexp_a), ExpKind::Case(notexp_b)) => {
-            if !notexp_a.eq_shape(notexp_b) {
+            if !notexp_a.eq_mixop(notexp_b) {
                 return true;
             }
-            let exps_a = notexp_a.args();
-            let exps_b = notexp_b.args();
-            disjoint_exps_literal(&exps_a, &exps_b)
+            disjoint_exps_literal(
+                &notexp_a.args().iter().collect::<Vec<_>>(),
+                &notexp_b.args().iter().collect::<Vec<_>>(),
+            )
         }
         // [] vs [1] -> disjoint by length; [1] vs [2] -> compare elements
         (ExpKind::List(exps_a), ExpKind::List(exps_b)) => {

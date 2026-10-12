@@ -9,7 +9,11 @@ use std::hash::{Hash, Hasher};
 use foldhash::fast::RandomState;
 use hashbrown::{Equivalent, HashMap};
 
-use crate::lang::data::value::{CanonId, Value, ValueArena, ValueKind};
+use crate::lang::data::{
+    arena::Arena,
+    intern::CanonId,
+    value::flat::{Value, ValueKind},
+};
 
 // = Call identity
 
@@ -22,17 +26,20 @@ pub(crate) struct CallKey {
 
 impl CallKey {
     /// Builds the key; type arguments and annotations never distinguish calls.
-    pub(crate) fn new(arena: &ValueArena, name: &str, values: &[Value]) -> Self {
+    pub(crate) fn new(arena: &Arena, name: &str, values: &[Value]) -> Self {
         Self {
             name: name.to_owned(),
-            values: values.iter().map(|value| arena.canon_id(value)).collect(),
+            values: values
+                .iter()
+                .map(|value| arena.value.canon_id(value.node))
+                .collect(),
         }
     }
 }
 
 /// A borrowed call lookup that canonicalizes arguments without allocating.
 struct CallQuery<'a> {
-    arena: &'a ValueArena,
+    arena: &'a Arena,
     name: &'a str,
     values: &'a [Value],
 }
@@ -43,7 +50,7 @@ impl Hash for CallQuery<'_> {
         self.name.hash(hasher);
         self.values.len().hash(hasher);
         for value in self.values {
-            self.arena.canon_id(value).hash(hasher);
+            self.arena.value.canon_id(value.node).hash(hasher);
         }
     }
 }
@@ -56,7 +63,7 @@ impl Equivalent<CallKey> for CallQuery<'_> {
                 .values
                 .iter()
                 .zip(&key.values)
-                .all(|(value, id)| self.arena.canon_id(value) == *id)
+                .all(|(value, id)| self.arena.value.canon_id(value.node) == *id)
     }
 }
 
@@ -75,19 +82,14 @@ pub struct Cache {
 
 impl Cache {
     /// Looks up a function without allocating an owned call key.
-    pub(crate) fn find_func(
-        &self,
-        arena: &ValueArena,
-        name: &str,
-        values: &[Value],
-    ) -> Option<&Value> {
+    pub(crate) fn find_func(&self, arena: &Arena, name: &str, values: &[Value]) -> Option<&Value> {
         self.funcs.get(&CallQuery { arena, name, values })
     }
 
     /// Looks up a relation without allocating an owned call key.
     pub(crate) fn find_rel(
         &self,
-        arena: &ValueArena,
+        arena: &Arena,
         name: &str,
         values: &[Value],
     ) -> Option<&Vec<Value>> {

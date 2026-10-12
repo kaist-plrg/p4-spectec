@@ -3,7 +3,7 @@
 //! Extern calls reach the pipeline module;
 //! the only stateful object is a counter array.
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 use crate::runner::{ExternError, Interface, Interpreter, RunnerContext};
 

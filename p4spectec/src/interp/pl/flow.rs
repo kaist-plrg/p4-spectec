@@ -7,7 +7,7 @@
 
 use crate::lang::{
     common::source::{Phrase, Span},
-    data::value::Value,
+    data::value::flat::Value,
 };
 
 use crate::diagnostic::{Diagnostic, Label, Report};

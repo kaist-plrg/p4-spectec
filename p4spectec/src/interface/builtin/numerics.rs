@@ -13,8 +13,9 @@ use num_traits::{One, ToPrimitive, Zero};
 use crate::lang::{
     common::{prim::num, source::Span},
     data::{
+        arena::Arena,
         typ,
-        value::{Value, ValueArena, get, make},
+        value::flat::{self as value, Value},
     },
 };
 
@@ -30,40 +31,40 @@ const MAX_BIT_WIDTH: usize = 2048;
 // == Conversion between meta-bits and bit vectors
 
 /// The booleans of a bit-array value.
-fn bits_of_value(arena: &ValueArena, value: &Value) -> Result<Vec<bool>, BuiltinError> {
-    let values = get::list(arena, value).map_err(BuiltinError::from)?;
+fn bits_of_value(arena: &Arena, value: &Value) -> Result<Vec<bool>, BuiltinError> {
+    let values = value::get::list(arena, value).map_err(BuiltinError::from)?;
     let mut bits = Vec::with_capacity(values.len());
     for value in values {
-        let bit = get::bool(arena, value).map_err(BuiltinError::from)?;
+        let bit = value::get::bool(arena, value).map_err(BuiltinError::from)?;
         bits.push(bit);
     }
     Ok(bits)
 }
 
 /// A `bit` list value from booleans.
-fn value_of_bits(arena: &mut ValueArena, bits: Vec<bool>) -> Result<Value, BuiltinError> {
+fn value_of_bits(arena: &mut Arena, bits: Vec<bool>) -> Result<Value, BuiltinError> {
     let bit_id = crate::phrase!(node: "bit".to_owned(), span: Span::default());
     let typ = typ::make::var(bit_id, Vec::new());
     let mut bit_values = Vec::with_capacity(bits.len());
     for bit in bits {
-        let bit_value = make::bool(arena, bit, Span::default())?;
+        let bit_value = value::make::bool(arena, bit, Span::default())?;
         bit_values.push(bit_value);
     }
-    let value = make::list(arena, typ.node.into(), bit_values, Span::default())?;
+    let value = value::make::list(arena, typ.node.into(), bit_values, Span::default())?;
     Ok(value)
 }
 
 // == Conversion between meta-numerics and runtime numerics
 
 /// The integer in a number value.
-fn bigint_of_value<'a>(arena: &'a ValueArena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
-    let num = get::num(arena, value).map_err(BuiltinError::from)?;
+fn bigint_of_value<'a>(arena: &'a Arena, value: &Value) -> Result<&'a BigInt, BuiltinError> {
+    let num = value::get::num(arena, value).map_err(BuiltinError::from)?;
     Ok(num::to_int(num))
 }
 
 /// An integer value.
-fn value_of_bigint(arena: &mut ValueArena, value: BigInt) -> Result<Value, BuiltinError> {
-    let value = make::int(arena, value, Span::default())?;
+fn value_of_bigint(arena: &mut Arena, value: BigInt) -> Result<Value, BuiltinError> {
+    let value = value::make::int(arena, value, Span::default())?;
     Ok(value)
 }
 
@@ -103,7 +104,7 @@ fn pow2_value(width: &BigInt) -> Result<BigInt, BuiltinError> {
 // == Built-in implementations
 
 /// `dec $shl(int, int) : int`, the base shifted left.
-pub fn shl(arena: &mut ValueArena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+pub fn shl(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let (value_base, value_offset) = extract::two(values)?;
     let base = bigint_of_value(arena, value_base)?;
@@ -114,7 +115,7 @@ pub fn shl(arena: &mut ValueArena, targs: &[Typ], values: &[Value]) -> Result<Va
 }
 
 /// `dec $shr(int, int) : int`, the base shifted right, rounding toward zero.
-pub fn shr(arena: &mut ValueArena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+pub fn shr(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let (value_base, value_offset) = extract::two(values)?;
     let base = bigint_of_value(arena, value_base)?;
@@ -128,7 +129,7 @@ pub fn shr(arena: &mut ValueArena, targs: &[Typ], values: &[Value]) -> Result<Va
 /// `dec $shr_arith(int, int, int) : int`,
 /// an arithmetic right shift that adds `modulus` per step.
 pub fn shr_arith(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -147,11 +148,7 @@ pub fn shr_arith(
 }
 
 /// `dec $pow2(int) : int`, two to the power.
-pub fn pow2(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn pow2(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let value_width = extract::one(values)?;
     let width = bigint_of_value(arena, value_width)?;
@@ -162,7 +159,7 @@ pub fn pow2(
 /// `dec $bitstr_to_int(int, bitstr) : int`,
 /// the bit string read as a signed `width`-bit integer.
 pub fn bitstr_to_int(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -184,7 +181,7 @@ pub fn bitstr_to_int(
 /// `dec $int_to_bitstr(int, int) : bitstr`,
 /// the integer wrapped into `width` unsigned bits.
 pub fn int_to_bitstr(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -210,7 +207,7 @@ fn bits_to_int_unsigned_value(bits: &[bool]) -> BigInt {
 
 /// `dec $bits_to_int_unsigned(bool*) : int`, the bits read as unsigned.
 pub fn bits_to_int_unsigned(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -223,7 +220,7 @@ pub fn bits_to_int_unsigned(
 
 /// `dec $bits_to_int_signed(bool*) : int`, the bits read as two's complement.
 pub fn bits_to_int_signed(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -252,7 +249,7 @@ fn int_to_bits_unsigned_value(value: &BigInt, width: usize) -> Vec<bool> {
 
 /// `dec $int_to_bits_unsigned(int) : bool*`, the low `width` bits.
 pub fn int_to_bits_unsigned(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -268,7 +265,7 @@ pub fn int_to_bits_unsigned(
 /// `dec $int_to_bits_signed(int) : bool*`,
 /// the low `width` bits in two's complement.
 pub fn int_to_bits_signed(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {
@@ -285,11 +282,7 @@ pub fn int_to_bits_signed(
 }
 
 /// `dec $bneg(int) : int`, the bitwise complement.
-pub fn bneg(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn bneg(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let value = extract::one(values)?;
     let rawint = bigint_of_value(arena, value)?;
@@ -297,11 +290,7 @@ pub fn bneg(
 }
 
 /// `dec $band(int, int) : int`, the bitwise and.
-pub fn band(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn band(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let (value_l, value_r) = extract::two(values)?;
     let rawint_l = bigint_of_value(arena, value_l)?;
@@ -310,11 +299,7 @@ pub fn band(
 }
 
 /// `dec $bxor(int, int) : int`, the bitwise exclusive or.
-pub fn bxor(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn bxor(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let (value_l, value_r) = extract::two(values)?;
     let rawint_l = bigint_of_value(arena, value_l)?;
@@ -323,7 +308,7 @@ pub fn bxor(
 }
 
 /// `dec $bor(int, int) : int`, the bitwise or.
-pub fn bor(arena: &mut ValueArena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
+pub fn bor(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let (value_l, value_r) = extract::two(values)?;
     let rawint_l = bigint_of_value(arena, value_l)?;
@@ -333,11 +318,7 @@ pub fn bor(arena: &mut ValueArena, targs: &[Typ], values: &[Value]) -> Result<Va
 
 /// `dec $bitacc(int, int, int) : int`,
 /// bits `h` down to `l` of `b`, as an integer.
-pub fn bitacc(
-    arena: &mut ValueArena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
+pub fn bitacc(arena: &mut Arena, targs: &[Typ], values: &[Value]) -> Result<Value, BuiltinError> {
     extract::zero(targs)?;
     let (value_b, value_h, value_l) = extract::three(values)?;
     let rawint_b = bigint_of_value(arena, value_b)?;
@@ -361,7 +342,7 @@ pub fn bitacc(
 /// `dec $bitacc_replace(int, int, int, int) : int`,
 /// `b` with bits `h` down to `l` replaced by `rhs`.
 pub fn bitacc_replace(
-    arena: &mut ValueArena,
+    arena: &mut Arena,
     targs: &[Typ],
     values: &[Value],
 ) -> Result<Value, BuiltinError> {

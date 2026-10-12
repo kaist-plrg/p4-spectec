@@ -9,7 +9,7 @@ use crate::lang::{
     common::source::Span,
     data::{
         typ,
-        value::{Value, get, make},
+        value::flat::{self as value, Value},
     },
 };
 
@@ -45,9 +45,9 @@ impl PacketOut {
         // Only a valid header serializes to bits
         let value_hdr = func::find_var_e_local(ctx, value_ctx, "hdr")?;
         let value_bits = func::write_bits_from_value(ctx, value_hdr)?;
-        let bits = get::list(ctx.arena(), &value_bits)?
+        let bits = value::get::list(ctx.arena(), &value_bits)?
             .iter()
-            .map(|value| get::bool(ctx.arena(), value))
+            .map(|value| value::get::bool(ctx.arena(), value))
             .collect::<Result<Vec<_>, _>>()?;
         // Append to a copy; objects are immutable values
         let pkt = Self { bits: self.bits.iter().copied().chain(bits).collect() };
@@ -56,8 +56,8 @@ impl PacketOut {
             crate::phrase!(node: "value".to_owned(), span: Span::default()),
             Vec::new(),
         ));
-        let value_opt = make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = make::case_shaped! {
+        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+        let value_call_result = value::make::case_shaped! {
             arena: ctx.arena_mut(),
             shape: "RETURN value?",
             args: vec![value_opt],

@@ -3,7 +3,7 @@
 //! Each architecture's `_init` relation takes the parsed program
 //! and returns the initial context and architecture values.
 
-use crate::lang::data::value::{Value, get};
+use crate::lang::data::value::flat::{self as value, Value};
 
 use crate::runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext};
 
@@ -20,7 +20,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let values = ctx.call_program("EBPF_init", program)?;
-    let (value_ctx, value_arch) = get::two(&values).map_err(ExternError::from)?;
+    let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
 
@@ -37,7 +37,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let values = ctx.call_program("PSA_init", program)?;
-    let (value_ctx, value_arch) = get::two(&values).map_err(ExternError::from)?;
+    let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
 
@@ -54,6 +54,6 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let values = ctx.call_program("V1Model_init", program)?;
-    let (value_ctx, value_arch) = get::two(&values).map_err(ExternError::from)?;
+    let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }

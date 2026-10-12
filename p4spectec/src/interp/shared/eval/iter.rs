@@ -10,12 +10,14 @@ use std::rc::Rc;
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, make},
+    data::value::flat::{self as value, Value},
 };
+
+use crate::lang::il::prepared as ast;
 
 use crate::runner::{Extern, Interface, Interpreter, RunnerContext};
 
-use crate::interp::shared::{prepare::ast, util::iterate_vars};
+use crate::interp::shared::util::iterate_vars;
 
 use super::super::{
     backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
@@ -58,7 +60,7 @@ where
             } else {
                 None
             };
-            make::opt(runner_ctx.arena_mut(), typ.clone(), value, Span::default())
+            value::make::opt(runner_ctx.arena_mut(), typ.clone(), value, Span::default())
         }
         ast::Iter::List => {
             let values_by_var = unwrap_from_result!(
@@ -77,7 +79,7 @@ where
                 }
                 values.push(unwrap!(eval(runner_ctx, &ctx_sub)));
             }
-            make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default())
+            value::make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default())
         }
     };
     ok!(unwrap_from_result!(value, span))

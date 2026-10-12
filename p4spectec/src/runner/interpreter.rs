@@ -5,7 +5,7 @@
 //! so extern calls can reenter without a second mutable interpreter borrow.
 //! Mismatches allow another candidate; host failures always abort.
 
-use crate::lang::{common::source::Span, data::value::Value};
+use crate::lang::{common::source::Span, data::value::flat::Value};
 
 use crate::lang::il::ast::Typ;
 

@@ -10,7 +10,12 @@ pub mod frame;
 
 use crate::lang::common::ds::map::IdMap;
 
-use crate::runtime::typdef::TypeDef;
+use crate::lang::il::stage::Prepared;
+
+use crate::runtime::typdef;
+
+/// A type definition, prepared by default for execution.
+pub type TypeDef<P = Prepared> = typdef::TypeDef<P>;
 
 /// Type names to their definitions.
-pub type TDEnv = IdMap<TypeDef>;
+pub type TDEnv<P = Prepared> = IdMap<TypeDef<P>>;

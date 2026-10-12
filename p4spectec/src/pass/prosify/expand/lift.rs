@@ -333,7 +333,7 @@ fn lift_from_case_exp(
     nesting: CallNesting,
     not_exp_sl: &mut sl::NotExp,
 ) -> Option<LiftedCall> {
-    let mut exps_sl = not_exp_sl.args().into_iter().cloned().collect::<Vec<_>>();
+    let mut exps_sl = not_exp_sl.args().to_vec();
     let call_lifted = lift_from_exps(ids_used, nesting, &mut exps_sl)?;
     let mut exps_sl = exps_sl.into_iter();
     *not_exp_sl = not_exp_sl.map(|_| exps_sl.next().expect("lifting preserves notation arity"));
@@ -536,12 +536,7 @@ fn lift_from_let_instr(ids_used: &mut IdSet, instr_sl: &mut sl::LetInstr) -> Opt
 /// Lifts the leftmost eligible call from a rule instruction's inputs.
 fn lift_from_rule_instr(ids_used: &mut IdSet, instr_sl: &mut sl::RuleInstr) -> Option<LiftedCall> {
     // Separate relation inputs from result positions
-    let exps_sl = instr_sl
-        .not_exp
-        .args()
-        .into_iter()
-        .cloned()
-        .collect::<Vec<_>>();
+    let exps_sl = instr_sl.not_exp.args().to_vec();
     let (mut exps_input_sl, exps_output_sl) = input::split(&instr_sl.input_hint, exps_sl)
         .expect("elaboration validates relation inputs; lifting preserves notation arity");
     let call_lifted = lift_from_exps(ids_used, CallNesting::Outer, &mut exps_input_sl);
@@ -574,12 +569,7 @@ fn lift_from_rule_instr(ids_used: &mut IdSet, instr_sl: &mut sl::RuleInstr) -> O
 /// Lifts the leftmost eligible call from a hold instruction's arguments.
 fn lift_from_hold_instr(ids_used: &mut IdSet, instr_sl: &mut sl::HoldInstr) -> Option<LiftedCall> {
     // Lift only calls owned by notation arguments
-    let mut exps_sl = instr_sl
-        .not_exp
-        .args()
-        .into_iter()
-        .cloned()
-        .collect::<Vec<_>>();
+    let mut exps_sl = instr_sl.not_exp.args().to_vec();
     let call_lifted = lift_from_exps(ids_used, CallNesting::Outer, &mut exps_sl);
 
     // Restore notation only when an argument changed

@@ -5,7 +5,7 @@
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, get, make},
+    data::value::flat::{self as value, Value},
 };
 
 use crate::runner::{Extern, ExternError, Interface, Interpreter, InterpreterError, RunnerContext};
@@ -16,9 +16,9 @@ use crate::sim_plugin::error;
 
 /// The `LOCAL` cursor, selecting the current call's scope.
 pub(crate) fn local_cursor(
-    arena: &mut crate::lang::data::value::ValueArena,
+    arena: &mut crate::lang::data::arena::Arena,
 ) -> Result<Value, ExternError> {
-    Ok(make::case_shaped! {
+    Ok(value::make::case_shaped! {
         arena: arena,
         shape: "LOCAL",
         args: Vec::new(),
@@ -29,11 +29,11 @@ pub(crate) fn local_cursor(
 
 /// An unqualified `prefixedNameIR`.
 pub(crate) fn bare_name(
-    arena: &mut crate::lang::data::value::ValueArena,
+    arena: &mut crate::lang::data::arena::Arena,
     name: &str,
 ) -> Result<Value, ExternError> {
-    let value_name = make::text(arena, name.to_owned(), Span::default())?;
-    Ok(make::case_shaped! {
+    let value_name = value::make::text(arena, name.to_owned(), Span::default())?;
+    Ok(value::make::case_shaped! {
         arena: arena,
         shape: "_BARE nameIR",
         args: vec![value_name],
@@ -57,9 +57,9 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     // The name as a bare `prefixedNameIR`
-    let value_name =
-        make::text(ctx.arena_mut(), name.to_owned(), Span::default()).map_err(ExternError::from)?;
-    let value_name = make::case_shaped! {
+    let value_name = value::make::text(ctx.arena_mut(), name.to_owned(), Span::default())
+        .map_err(ExternError::from)?;
+    let value_name = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "_BARE nameIR",
         args: vec![value_name],
@@ -82,7 +82,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     // Same lookup at the `LOCAL` cursor
-    let value_cursor = make::case_shaped! {
+    let value_cursor = value::make::case_shaped! {
         arena: ctx.arena_mut(),
         shape: "LOCAL",
         args: Vec::new(),
@@ -123,10 +123,10 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_cursor = local_cursor(ctx.arena_mut())?;
-    let value_name =
-        make::text(ctx.arena_mut(), name.to_owned(), Span::default()).map_err(ExternError::from)?;
+    let value_name = value::make::text(ctx.arena_mut(), name.to_owned(), Span::default())
+        .map_err(ExternError::from)?;
     let value_opt = ctx.call_func("find_type_e", &[], &[value_cursor, value_ctx, value_name])?;
-    get::opt(ctx.arena(), &value_opt)
+    value::get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
         .ok_or_else(|| error::type_undefined(format!("type not found: {name}")).into())
 }
@@ -171,7 +171,7 @@ where
 {
     let value_size = ctx.call_func("sizeof_minSizeInBits'", &[], &[value_typ])?;
     Ok(crate::lang::common::prim::num::to_int(
-        get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
+        value::get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
     )
     .clone())
 }
@@ -188,7 +188,7 @@ where
 {
     let value_size = ctx.call_func("sizeof_maxSizeInBits'", &[], &[value_typ])?;
     Ok(crate::lang::common::prim::num::to_int(
-        get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
+        value::get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
     )
     .clone())
 }
@@ -235,7 +235,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     // The variable field size must be a natural
-    let value_varsize = make::nat(
+    let value_varsize = value::make::nat(
         ctx.arena_mut(),
         crate::lang::common::prim::num::Natural::try_from(num_bigint::BigInt::from(size_varsize))
             .expect("packet size is nonnegative"),
@@ -245,7 +245,7 @@ where
     // Bits travel as a `bit*` list of booleans
     let values_bits = bits
         .iter()
-        .map(|bit| make::bool(ctx.arena_mut(), *bit, Span::default()))
+        .map(|bit| value::make::bool(ctx.arena_mut(), *bit, Span::default()))
         .collect::<Result<Vec<_>, _>>()
         .map_err(ExternError::from)?;
     let typ_bits = crate::lang::data::typ::make::list(crate::lang::data::typ::make::var(
@@ -253,7 +253,7 @@ where
         Vec::new(),
     ));
     let value_bits =
-        make::list(ctx.arena_mut(), typ_bits.node.into(), values_bits, Span::default())
+        value::make::list(ctx.arena_mut(), typ_bits.node.into(), values_bits, Span::default())
             .map_err(ExternError::from)?;
     ctx.call_func("write_value_from_bits", &[], &[value_target, value_varsize, value_bits])
 }
@@ -287,13 +287,13 @@ where
 {
     // Each key is a (name, match kind, type) triple
     let value_keys = ctx.call_func("key_interface_of_tableObject", &[], &[value_table])?;
-    get::list(ctx.arena(), &value_keys)
+    value::get::list(ctx.arena(), &value_keys)
         .map_err(ExternError::from)?
         .iter()
         .map(|value_key| {
-            let values = get::tuple(ctx.arena(), value_key).map_err(ExternError::from)?;
+            let values = value::get::tuple(ctx.arena(), value_key).map_err(ExternError::from)?;
             let (value_name, value_match_kind, value_typ) =
-                get::three(values).map_err(ExternError::from)?;
+                value::get::three(values).map_err(ExternError::from)?;
             Ok((*value_name, *value_match_kind, *value_typ))
         })
         .collect()
@@ -318,7 +318,7 @@ where
         &[],
         &[value_ctx, value_table, value_priority, value_keys, value_action],
     )?;
-    Ok(get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
+    Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
 
 /// Sets a table object's default action.
@@ -352,7 +352,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx.call_func("find_object_qualified_e", &[], &[value_arch, value_id])?;
-    Ok(get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
+    Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
 
 /// Finds an object by bare name.
@@ -367,7 +367,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx.call_func("find_object_unqualified_e", &[], &[value_arch, value_id])?;
-    Ok(get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
+    Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
 
 // - Update
@@ -416,7 +416,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     let value_opt = ctx.call_func("find_objectState_e", &[], &[value_arch, value_id])?;
-    get::opt(ctx.arena(), &value_opt)
+    value::get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
         .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()).into())
 }
@@ -435,7 +435,7 @@ where
 {
     let value_opt =
         ctx.call_func("update_objectState_e", &[], &[value_arch, value_id, value_state])?;
-    get::opt(ctx.arena(), &value_opt)
+    value::get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
         .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()).into())
 }

@@ -15,6 +15,8 @@
 //! and `x != STOP` becomes `not (x matches STOP)` when `STOP` has no arguments.
 //! Only the outer comparison is rewritten; nested expressions are left alone.
 
+use std::rc::Rc;
+
 use crate::lang::common::{
     prim::bool::{CmpOp as BoolCmpOp, UnOp as BoolUnOp},
     source::Span,
@@ -48,13 +50,11 @@ fn matchify_exp(exp: Exp) -> Exp {
         }
         // x == STOP or STOP == x -> x matches STOP
         (CmpOp::Bool(BoolCmpOp::Eq), _, ExpKind::Case(not_exp)) if not_exp.arity() == 0 => {
-            let mixop = not_exp.to_mixop();
-            let pattern = Pattern::Case(Box::new(mixop));
+            let pattern = Pattern::Case(Rc::clone(not_exp.mixop()));
             ExpKind::Match(exp_l, pattern)
         }
         (CmpOp::Bool(BoolCmpOp::Eq), ExpKind::Case(not_exp), _) if not_exp.arity() == 0 => {
-            let mixop = not_exp.to_mixop();
-            let pattern = Pattern::Case(Box::new(mixop));
+            let pattern = Pattern::Case(Rc::clone(not_exp.mixop()));
             ExpKind::Match(exp_r, pattern)
         }
         // x != None or None != x -> x matches Some
@@ -73,16 +73,14 @@ fn matchify_exp(exp: Exp) -> Exp {
         }
         // x != STOP or STOP != x -> not (x matches STOP)
         (CmpOp::Bool(BoolCmpOp::Ne), _, ExpKind::Case(not_exp)) if not_exp.arity() == 0 => {
-            let mixop = not_exp.to_mixop();
-            let pattern = Pattern::Case(Box::new(mixop));
+            let pattern = Pattern::Case(Rc::clone(not_exp.mixop()));
             let exp_kind = ExpKind::Match(exp_l, pattern);
             let exp_match =
                 crate::note_phrase!(node: exp_kind, note: exp.note.clone(), span: exp.span.clone());
             ExpKind::Un(UnOp::Bool(BoolUnOp::Not), OpTyp::Bool, Box::new(exp_match))
         }
         (CmpOp::Bool(BoolCmpOp::Ne), ExpKind::Case(not_exp), _) if not_exp.arity() == 0 => {
-            let mixop = not_exp.to_mixop();
-            let pattern = Pattern::Case(Box::new(mixop));
+            let pattern = Pattern::Case(Rc::clone(not_exp.mixop()));
             let exp_kind = ExpKind::Match(exp_r, pattern);
             let exp_match =
                 crate::note_phrase!(node: exp_kind, note: exp.note.clone(), span: exp.span.clone());

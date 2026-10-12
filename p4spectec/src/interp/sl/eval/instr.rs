@@ -5,20 +5,21 @@
 //! Guards and conditions evaluate under their iterations (`eval_cond_iter`),
 //! bindings under theirs (`eval_instr_iter`).
 //! The `tail` flag marks the last instruction of a callee body,
-//! so a return or rule call there can become a tail call.
+//! so a function return there can become a tail call.
+//! Relation tail calls are selected when the specification is prepared.
 
 use std::borrow::Cow;
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, ValueKind, get},
+    data::value::flat::{self as value, Value, ValueKind},
     hints::input,
-    traits::{eq::SyntaxEq, print::Print},
+    traits::print::Print,
 };
 
-use crate::diagnostic::Report;
+use crate::lang::sl::{ast as source, prepared as ast};
 
-use crate::runtime::envs::interp::sl::ast_prepared as ast;
+use crate::diagnostic::Report;
 
 use crate::runner::{Extern, Interface, RunnerContext};
 
@@ -146,9 +147,10 @@ pub fn eval_instr<Iface: Interface, Ext: Extern>(
             ast::InstrKind::Let(instr) => {
                 Flow::cont_from_unmatch(eval_let_instr(runner_ctx, ctx, instr, tail))
             }
-            ast::InstrKind::Rule(instr) => {
-                Flow::cont_from_unmatch(eval_rule_instr(runner_ctx, ctx, span, instr, tail))
-            }
+            ast::InstrKind::Rule(instr) => Flow::cont_from_unmatch(match instr {
+                ast::RuleInstr::Call(instr) => eval_rule_instr(runner_ctx, ctx, instr, tail),
+                ast::RuleInstr::Tail(instr) => eval_rule_tail_instr(runner_ctx, ctx, span, instr),
+            }),
             ast::InstrKind::Result(instr) => {
                 Flow::cont_from_unmatch(eval_result_instr(runner_ctx, ctx, span, instr))
             }
@@ -178,7 +180,7 @@ fn eval_if_instr<Iface: Interface, Ext: Extern>(
         &instr.iter_exps,
         &mut |runner_ctx, ctx| {
             let value = unwrap!(eval_exp(runner_ctx, ctx, &instr.exp));
-            ok!(get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
+            ok!(value::get::bool(runner_ctx.arena(), &value).expect("condition must be a boolean"))
         }
     ));
     // Run the block, or fall through recording the failed condition
@@ -187,7 +189,7 @@ fn eval_if_instr<Iface: Interface, Ext: Extern>(
     } else {
         ok!(Flow::cont(
             instr.exp.span.clone(),
-            error::prem::condition_unmet(Print::to_string(&instr.exp)),
+            error::prem::condition_unmet(instr.exp.view(&runner_ctx.arena().mixop).to_string()),
         ))
     }
 }
@@ -208,7 +210,7 @@ fn eval_hold_instr<Iface: Interface, Ext: Extern>(
         ctx.as_ref(),
         &instr.iter_exps,
         &mut |runner_ctx, ctx| {
-            let values = unwrap!(eval_exps(runner_ctx, ctx, &instr.not_exp.args()));
+            let values = unwrap!(eval_exps(runner_ctx, ctx, instr.not_exp.args()));
             match SlInterp::invoke_rel(runner_ctx, ctx, &instr.id, &values) {
                 // A match means it holds
                 ok!(_) => ok!(true),
@@ -267,7 +269,10 @@ fn eval_case_instr<Iface: Interface, Ext: Extern>(
     // No guard accepted: fall through
     ok!(Flow::cont(
         instr.exp.span.clone(),
-        error::prem::condition_unmet(format!("case {}", Print::to_string(&instr.exp))),
+        error::prem::condition_unmet(format!(
+            "case {}",
+            instr.exp.view(&runner_ctx.arena().mixop).to_string()
+        )),
     ))
 }
 
@@ -281,14 +286,13 @@ fn eval_guard<Iface: Interface, Ext: Extern>(
 ) -> Backtrack<bool> {
     // The trivial guard reads the boolean itself
     if matches!(guard, ast::Guard::Bool(true)) {
-        return ok!(
-            get::bool(runner_ctx.arena(), &value).expect("boolean guard value must be a boolean")
-        );
+        return ok!(value::get::bool(runner_ctx.arena(), &value)
+            .expect("boolean guard value must be a boolean"));
     }
     (|| match guard {
         // Negation
         ast::Guard::Bool(_) => {
-            ok!(!get::bool(runner_ctx.arena(), &value)
+            ok!(!value::get::bool(runner_ctx.arena(), &value)
                 .expect("boolean guard value must be a boolean"))
         }
         // Comparison against the evaluated right side
@@ -347,35 +351,18 @@ fn eval_let_instr<Iface: Interface, Ext: Extern>(
 
 // - Rule instruction
 
-/// Calls the relation and binds its outputs, or becomes a tail call.
+/// Calls the relation, binds its outputs, and runs the continuation.
 fn eval_rule_instr<Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
     ctx: Cow<'_, Context<'_>>,
-    span: &Span,
-    instr: &ast::RuleInstr,
+    instr: &source::RuleInstr<ast::Prepared>,
     tail: bool,
 ) -> Backtrack<Flow> {
     // Split the notation arguments by the input hint
-    let (exps_input, exps_output) = input::split(&instr.input_hint, instr.not_exp.args())
-        .expect("input hint must fit relation");
-    // A tail-position call whose block just returns its outputs is a tail call
-    if tail
-        && instr.iter_instrs.is_empty()
-        && let [instr_result] = instr.block.as_slice()
-        && let ast::InstrKind::Result(instr_result) = &instr_result.node
-        && exps_output.len() == instr_result.exps.len()
-        && exps_output
-            .iter()
-            .zip(&instr_result.exps)
-            .all(|(exp_l, exp_r)| exp_l.syntax_eq(exp_r))
-    {
-        let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &exps_input));
-        return ok!(Flow::TailRel(phrase!(
-            node: (instr.id.clone(), values),
-            span: span.clone(),
-        )));
-    }
-    // Otherwise call, bind the outputs under the iterators, and run the block
+    let (exps_input, exps_output) =
+        input::split(&instr.input_hint, instr.not_exp.args().iter().collect())
+            .expect("input hint must fit relation");
+    // Call and bind the outputs under the iterators
     let ctx = unwrap!(eval_instr_iter(
         runner_ctx,
         ctx.into_owned(),
@@ -388,6 +375,20 @@ fn eval_rule_instr<Iface: Interface, Ext: Extern>(
     ));
     // The block sees the bound outputs
     eval_block(runner_ctx, Cow::Owned(ctx), &instr.block, tail)
+}
+
+/// Evaluates a prepared tail call's inputs for the invocation loop.
+fn eval_rule_tail_instr<Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, SlInterp, Iface, Ext>,
+    ctx: Cow<'_, Context<'_>>,
+    span: &Span,
+    instr: &ast::RuleTailInstr,
+) -> Backtrack<Flow> {
+    let values = unwrap!(eval_exps(runner_ctx, ctx.as_ref(), &instr.exps_input));
+    ok!(Flow::TailRel(phrase!(
+        node: (instr.id.clone(), values),
+        span: span.clone(),
+    )))
 }
 
 // - Result instruction
@@ -421,9 +422,9 @@ fn eval_return_instr<Iface: Interface, Ext: Extern>(
         let (scope, _) = unwrap_from_result!(ctx.find_func_with_scope(id), &id.span);
         // Local functions and function-valued arguments must be called here
         if scope == Scope::Local
-            || values
-                .iter()
-                .any(|value| matches!(runner_ctx.arena().kind(value), ValueKind::Func(_)))
+            || values.iter().any(|value| {
+                matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Func(_))
+            })
         {
             let value =
                 unwrap!(SlInterp::invoke_func(runner_ctx, ctx.as_ref(), id, &targs, &values));
@@ -449,13 +450,13 @@ fn eval_debug_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp));
-    println!("{}: {}", instr.exp.span, Print::to_string(&instr.exp));
+    println!("{}: {}", instr.exp.span, instr.exp.view(&runner_ctx.arena().mixop).to_string());
     // Print the value's source span when it has one
-    let span = runner_ctx.arena().span(&value).to_string();
+    let span = runner_ctx.arena().value.span(value.span).to_string();
     if span.is_empty() {
-        println!("{}", runner_ctx.arena().to_string(&value));
+        println!("{}", value.view(runner_ctx.arena()).to_string());
     } else {
-        println!("{span}: {}", runner_ctx.arena().to_string(&value));
+        println!("{span}: {}", value.view(runner_ctx.arena()).to_string());
     }
     eval_instr(runner_ctx, ctx, &instr.instr, tail)
 }

@@ -24,8 +24,11 @@
 //!
 //! Generated premises retain the iteration context of the source pattern.
 
+use std::rc::Rc;
+
 use crate::lang::{
-    common::{ds::set::IdSet, notation::mixop::Mixop, prim, source::Span},
+    common::{ds::set::IdSet, prim, source::Span},
+    data::notation::tree as notation,
     traits::free::FreeIds,
 };
 
@@ -160,9 +163,9 @@ impl AnalyzedPrem {
 /// anything else becomes an equality.
 fn gen_prem_bound(
     ctx: &Context,
+    iter_ctx: &ICtx,
     destination: &ast::Var,
     exp_from: &ast::Exp,
-    iter_ctx: &ICtx,
 ) -> Result<AnalyzedPrem, AlgoError> {
     let exp_l = var::as_exp(true, destination);
     let typ_from = phrase!(node: exp_from.note.as_ref().clone(), span: exp_from.span.clone());
@@ -173,7 +176,7 @@ fn gen_prem_bound(
             (
                 ast::ExpKind::Match(
                     Box::new(exp_l),
-                    ast::Pattern::Case(Box::new(not_exp.to_mixop())),
+                    ast::Pattern::Case(Rc::clone(not_exp.mixop())),
                 ),
                 Origin::Match(exp_from.span.clone(), "variant case"),
             )
@@ -228,10 +231,10 @@ fn gen_prem_bound(
 
 /// Builds `if x matches PATTERN` followed by `let PATTERN = x`.
 fn gen_prem_bind_match(
+    iter_ctx: &ICtx,
     destination: &ast::Var,
     pattern: &ast::Pattern,
     exp_from: &ast::Exp,
-    iter_ctx: &ICtx,
 ) -> Vec<AnalyzedPrem> {
     let exp_to = var::as_exp(true, destination);
     let exp_guard_match = note_phrase! {
@@ -299,11 +302,11 @@ fn gen_prem_bind_match(
 /// Builds a subtype guard on the destination, then a let with the downcast.
 fn gen_prem_bind_sub(
     ctx: &Context,
+    iter_ctx: &ICtx,
     destination: &ast::Var,
     typ_sub: &ast::Typ,
     exp_sub: &ast::Exp,
     exp_from: &ast::Exp,
-    iter_ctx: &ICtx,
 ) -> Result<Vec<AnalyzedPrem>, AlgoError> {
     let exp_to = var::as_exp(true, destination);
     // Compute the subtype check once
@@ -377,8 +380,8 @@ fn gen_prem_bind_sub(
 /// Builds the premises of one rename under the enclosing iterations.
 fn gen_prem(
     ctx: &Context,
-    rename: &Rename,
     iter_ctx_prem: &ICtx,
+    rename: &Rename,
 ) -> Result<Vec<AnalyzedPrem>, AlgoError> {
     // The rename's own iterations sit inside the premise's
     let mut iterations = rename.iter_ctx.as_slice().to_vec();
@@ -386,15 +389,15 @@ fn gen_prem(
     let iter_ctx = ICtx::from_iterations(iterations);
     match &rename.source {
         Source::Bound { exp_from } => {
-            let prem_analyzed = gen_prem_bound(ctx, &rename.destination, exp_from, &iter_ctx)?;
+            let prem_analyzed = gen_prem_bound(ctx, &iter_ctx, &rename.destination, exp_from)?;
             Ok(vec![prem_analyzed])
         }
         Source::BindMatch { pattern, exp_from } => {
-            let prems = gen_prem_bind_match(&rename.destination, pattern, exp_from, &iter_ctx);
+            let prems = gen_prem_bind_match(&iter_ctx, &rename.destination, pattern, exp_from);
             Ok(prems)
         }
         Source::BindSub { typ_sub, exp_sub, exp_from } => {
-            gen_prem_bind_sub(ctx, &rename.destination, typ_sub, exp_sub, exp_from, &iter_ctx)
+            gen_prem_bind_sub(ctx, &iter_ctx, &rename.destination, typ_sub, exp_sub, exp_from)
         }
     }
 }
@@ -407,7 +410,7 @@ pub fn gen_prems(
 ) -> Result<Vec<AnalyzedPrem>, AlgoError> {
     let mut prems = Vec::new();
     for rename in &renv.renames {
-        prems.extend(gen_prem(ctx, rename, iter_ctx_prem)?);
+        prems.extend(gen_prem(ctx, iter_ctx_prem, rename)?);
     }
     Ok(prems)
 }
@@ -472,9 +475,9 @@ fn rename_exp_bind_sub(
 /// Rewrites a pattern; sub-expressions without binders become bound checks.
 pub fn rename_exp(
     ctx: &mut Context,
-    binds: &IdSet,
     renv: &mut RenameEnv,
     iter_ctx: &mut ICtx,
+    binds: &IdSet,
     exp: ast::Exp,
 ) -> Result<ast::Exp, AlgoError> {
     let frees = exp.free_ids();
@@ -483,7 +486,7 @@ pub fn rename_exp(
         let exp = rename_exp_bound(ctx, renv, iter_ctx, exp);
         return Ok(exp);
     }
-    rename_exp_bind(ctx, binds, renv, iter_ctx, exp)
+    rename_exp_bind(ctx, renv, iter_ctx, binds, exp)
 }
 
 /// Replaces a bound sub-expression by a fresh variable, recording the rename.
@@ -515,9 +518,9 @@ fn rename_exp_bound(
 /// Rewrites a binder pattern node by node, injecting guards where needed.
 fn rename_exp_bind(
     ctx: &mut Context,
-    binds: &IdSet,
     renv: &mut RenameEnv,
     iter_ctx: &mut ICtx,
+    binds: &IdSet,
     exp: ast::Exp,
 ) -> Result<ast::Exp, AlgoError> {
     let span = exp.span;
@@ -525,7 +528,7 @@ fn rename_exp_bind(
     match exp.node {
         // Upcast: rewrite the inner pattern, then guard the subtype
         ast::ExpKind::UpCast(typ, exp_inner) => {
-            let exp_sub = rename_exp(ctx, binds, renv, iter_ctx, *exp_inner)?;
+            let exp_sub = rename_exp(ctx, renv, iter_ctx, binds, *exp_inner)?;
             let exp_from = note_phrase! {
                 node: ast::ExpKind::UpCast(typ, Box::new(exp_sub.clone())),
                 note: note,
@@ -536,15 +539,14 @@ fn rename_exp_bind(
             Ok(exp)
         }
         ast::ExpKind::Tuple(exps) => {
-            let exps = rename_exps(ctx, binds, renv, iter_ctx, exps)?;
+            let exps = rename_exps(ctx, renv, iter_ctx, binds, exps)?;
             let exp = note_phrase!(node: ast::ExpKind::Tuple(exps), note: note, span: span);
             Ok(exp)
         }
         ast::ExpKind::Case(not_exp) => {
-            let mixop = not_exp.to_mixop();
-            let args = not_exp.into_args();
-            let args = rename_exps(ctx, binds, renv, iter_ctx, args)?;
-            let not_exp = Mixop::fill(&mixop, args)
+            let (mixop, args) = (*not_exp).into_parts();
+            let args = rename_exps(ctx, renv, iter_ctx, binds, args)?;
+            let not_exp = notation::Mixfix::new(Rc::clone(&mixop), args)
                 .expect("arguments obtained from the same mixfix must match its arity");
             let exp_from = note_phrase! {
                 node: ast::ExpKind::Case(Box::new(not_exp)),
@@ -556,7 +558,7 @@ fn rename_exp_bind(
             if is_singleton_case(ctx, &typ)? {
                 Ok(exp_from)
             } else {
-                let pattern = ast::Pattern::Case(Box::new(mixop));
+                let pattern = ast::Pattern::Case(mixop);
                 let exp = rename_exp_bind_match(ctx, renv, iter_ctx, pattern, exp_from);
                 Ok(exp)
             }
@@ -566,7 +568,7 @@ fn rename_exp_bind(
                 .into_iter()
                 .map(|field| (field.atom, field.exp))
                 .unzip();
-            let exps = rename_exps(ctx, binds, renv, iter_ctx, exps)?;
+            let exps = rename_exps(ctx, renv, iter_ctx, binds, exps)?;
             let fields = atoms
                 .into_iter()
                 .zip(exps)
@@ -576,7 +578,7 @@ fn rename_exp_bind(
             Ok(exp)
         }
         ast::ExpKind::Opt(Some(exp_inner)) => {
-            let exp_inner = rename_exp(ctx, binds, renv, iter_ctx, *exp_inner)?;
+            let exp_inner = rename_exp(ctx, renv, iter_ctx, binds, *exp_inner)?;
             let exp_from = note_phrase! {
                 node: ast::ExpKind::Opt(Some(Box::new(exp_inner))),
                 note: note,
@@ -593,7 +595,7 @@ fn rename_exp_bind(
             Ok(exp)
         }
         ast::ExpKind::List(exps) => {
-            let exps = rename_exps(ctx, binds, renv, iter_ctx, exps)?;
+            let exps = rename_exps(ctx, renv, iter_ctx, binds, exps)?;
             let exps_len = exps.len();
             let exp_from = note_phrase! {
                 node: ast::ExpKind::List(exps),
@@ -611,8 +613,8 @@ fn rename_exp_bind(
             Ok(exp)
         }
         ast::ExpKind::Cons(exp_head, exp_tail) => {
-            let exp_head = rename_exp(ctx, binds, renv, iter_ctx, *exp_head)?;
-            let exp_tail = rename_exp(ctx, binds, renv, iter_ctx, *exp_tail)?;
+            let exp_head = rename_exp(ctx, renv, iter_ctx, binds, *exp_head)?;
+            let exp_tail = rename_exp(ctx, renv, iter_ctx, binds, *exp_tail)?;
             let exp_from = note_phrase! {
                 node: ast::ExpKind::Cons(Box::new(exp_head), Box::new(exp_tail)),
                 note: note,
@@ -626,7 +628,7 @@ fn rename_exp_bind(
             // Rewrite under a new iteration scope, keeping its variables
             let iteration = Iteration { iter, vars_bound: vars, vars_bind: vec![] };
             let mut iter_scope = iter_ctx.scope(iteration);
-            let exp_inner = rename_exp(ctx, binds, renv, &mut iter_scope, *exp_inner)?;
+            let exp_inner = rename_exp(ctx, renv, &mut iter_scope, binds, *exp_inner)?;
             let iteration = iter_scope.finish();
             let exp = note_phrase! {
                 node: ast::ExpKind::Iter(
@@ -646,15 +648,15 @@ fn rename_exp_bind(
 /// Rewrites patterns left to right, appending each pattern's renames in order.
 pub fn rename_exps(
     ctx: &mut Context,
-    binds: &IdSet,
     renv: &mut RenameEnv,
     iter_ctx: &mut ICtx,
+    binds: &IdSet,
     exps: Vec<ast::Exp>,
 ) -> Result<Vec<ast::Exp>, AlgoError> {
     let mut exps_renamed = Vec::with_capacity(exps.len());
     for exp in exps {
         let mut renv_post = RenameEnv::new();
-        let exp = rename_exp(ctx, binds, &mut renv_post, iter_ctx, exp)?;
+        let exp = rename_exp(ctx, &mut renv_post, iter_ctx, binds, exp)?;
         renv.append(renv_post);
         exps_renamed.push(exp);
     }
@@ -666,16 +668,16 @@ pub fn rename_exps(
 /// Rewrites an expression argument pattern; function arguments are unchanged.
 fn rename_arg(
     ctx: &mut Context,
-    binds: &IdSet,
     renv: &mut RenameEnv,
     iter_ctx: &mut ICtx,
+    binds: &IdSet,
     arg: ast::Arg,
 ) -> Result<ast::Arg, AlgoError> {
     let ast::ArgKind::Exp(exp) = arg.node else {
         return Ok(arg);
     };
     let mut renv_post = RenameEnv::new();
-    let exp = rename_exp(ctx, binds, &mut renv_post, iter_ctx, *exp)?;
+    let exp = rename_exp(ctx, &mut renv_post, iter_ctx, binds, *exp)?;
     renv.append(renv_post);
     let arg = phrase!(node: ast::ArgKind::Exp(Box::new(exp)), span: arg.span);
     Ok(arg)
@@ -683,14 +685,14 @@ fn rename_arg(
 
 pub fn rename_args(
     ctx: &mut Context,
-    binds: &IdSet,
     renv: &mut RenameEnv,
     iter_ctx: &mut ICtx,
+    binds: &IdSet,
     args: Vec<ast::Arg>,
 ) -> Result<Vec<ast::Arg>, AlgoError> {
     let mut args_renamed = Vec::with_capacity(args.len());
     for arg in args {
-        let arg = rename_arg(ctx, binds, renv, iter_ctx, arg)?;
+        let arg = rename_arg(ctx, renv, iter_ctx, binds, arg)?;
         args_renamed.push(arg);
     }
     Ok(args_renamed)

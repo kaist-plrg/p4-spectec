@@ -6,7 +6,7 @@
 
 use std::path::Path;
 
-use p4spectec::lang::{common::source::Span, data::value::make};
+use p4spectec::lang::{common::source::Span, data::value::flat as value};
 
 use p4spectec::diagnostic::{Report, ReportKind};
 
@@ -72,7 +72,7 @@ where
     Interp: Interpreter<BuiltinInterface, NullExtern>,
 {
     // Keep the entry relation and input common to all cases
-    let value = make::nat(runner.arena_mut(), 1.into(), Span::default())
+    let value = value::make::nat(runner.arena_mut(), 1.into(), Span::default())
         .map_err(|error| failure(name, error))?;
     let error = runner
         .context()

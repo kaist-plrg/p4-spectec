@@ -8,7 +8,7 @@ use std::{
 use expect_test::{ExpectFile, expect_file};
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spectec::lang::data::value::external::Encoding;
+use p4spectec::lang::data::encoding::Encoding;
 
 use p4spectec::runner::{Config, Spec};
 

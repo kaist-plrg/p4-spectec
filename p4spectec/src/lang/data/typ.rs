@@ -4,7 +4,10 @@
 //! primitives, named types with arguments, tuples, iterations, and functions.
 //! `make` builds types with default spans; `SyntaxCmp` orders them by shape.
 
-use std::cmp::Ordering;
+use std::{
+    cmp::Ordering,
+    fmt::{self, Write},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +17,10 @@ use crate::lang::{
         prim::num,
         source::{Phrase, Span},
     },
-    traits::cmp::SyntaxCmp,
+    traits::{
+        cmp::SyntaxCmp,
+        print::{Print, Printer},
+    },
 };
 
 use crate::phrase;
@@ -252,5 +258,47 @@ impl<'de, State> serde_state::DeserializeState<'de, State> for FuncTyp {
         Deserializer: serde::Deserializer<'de>,
     {
         Self::deserialize(deserializer)
+    }
+}
+
+// == Printing
+
+impl Print for Typ {
+    fn print(&self, printer: &mut Printer<'_>) -> fmt::Result {
+        match &self.node {
+            TypKind::Bool => printer.write_str("bool"),
+            TypKind::Num(num::Typ::Nat) => printer.write_str("nat"),
+            TypKind::Num(num::Typ::Int) => printer.write_str("int"),
+            TypKind::Text => printer.write_str("text"),
+            TypKind::Var(id, targs) => {
+                id.print(printer)?;
+                if !targs.is_empty() {
+                    printer.write_char('<')?;
+                    printer.separated(targs, ", ")?;
+                    printer.write_char('>')?;
+                }
+                Ok(())
+            }
+            TypKind::Tuple(typs) => {
+                printer.write_char('(')?;
+                printer.separated(typs, ", ")?;
+                printer.write_char(')')
+            }
+            TypKind::Iter(typ, iter) => {
+                typ.print(printer)?;
+                iter.print(printer)
+            }
+            TypKind::Func(func_typ) => {
+                if !func_typ.tparams.is_empty() {
+                    printer.write_char('<')?;
+                    printer.separated(&func_typ.tparams, ", ")?;
+                    printer.write_char('>')?;
+                }
+                printer.write_char('(')?;
+                printer.separated(&func_typ.typs_params, ", ")?;
+                printer.write_str(") : ")?;
+                func_typ.typ_ret.print(printer)
+            }
+        }
     }
 }

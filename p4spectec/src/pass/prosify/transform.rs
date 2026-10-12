@@ -14,7 +14,7 @@
 //! block, so the prose reads as consecutive numbered steps.
 
 use crate::lang::{
-    common::{ds::set::IdSet, notation::mixfix::Mixfix, source::Span},
+    common::{ds::set::IdSet, source::Span},
     hints::{alter, fields, input},
     traits::at::At,
 };
@@ -330,7 +330,7 @@ fn prosify_case_exp(
     // The variant is looked up by the expression's type and its mixfix operator
     let mut hints = annot::Hints::default();
     if let il::TypKind::Var(id_typ, _) = exp_sl.note.as_ref()
-        && let Some(hints_case) = ctx.hints_case(id_typ, &not_exp_sl.to_mixop())
+        && let Some(hints_case) = ctx.hints_case(id_typ, not_exp_sl.mixop().as_ref())
     {
         hints.span = hints_case.span.clone();
         hints.node.prose = hints_case.node.prose.clone();
@@ -620,31 +620,7 @@ fn prosify_exps(ctx: &Context, exps_sl: &[sl::Exp]) -> Result<Vec<pl::Exp>, Pros
 
 /// Converts the arguments of a notation, keeping its shape.
 fn prosify_not_exp(ctx: &Context, not_exp_sl: &sl::NotExp) -> Result<pl::NotExp, ProseError> {
-    let not_exp_pl = match not_exp_sl {
-        Mixfix::Arg(exp_sl) => {
-            let exp_pl = prosify_exp(ctx, exp_sl)?;
-            Mixfix::Arg(exp_pl)
-        }
-        Mixfix::Atom(atom) => Mixfix::Atom(atom.clone()),
-        Mixfix::Brack(atom_l, not_exp_inner_sl, atom_r) => {
-            let not_exp_inner_pl = prosify_not_exp(ctx, not_exp_inner_sl)?;
-            Mixfix::Brack(atom_l.clone(), Box::new(not_exp_inner_pl), atom_r.clone())
-        }
-        Mixfix::Infix(not_exp_l_sl, atom, not_exp_r_sl) => {
-            let not_exp_l_pl = prosify_not_exp(ctx, not_exp_l_sl)?;
-            let not_exp_r_pl = prosify_not_exp(ctx, not_exp_r_sl)?;
-            Mixfix::Infix(Box::new(not_exp_l_pl), atom.clone(), Box::new(not_exp_r_pl))
-        }
-        Mixfix::Seq(not_exps_sl) => {
-            let mut not_exps_pl = Vec::with_capacity(not_exps_sl.len());
-            for not_exp_sl in not_exps_sl {
-                let not_exp_pl = prosify_not_exp(ctx, not_exp_sl)?;
-                not_exps_pl.push(not_exp_pl);
-            }
-            Mixfix::Seq(not_exps_pl)
-        }
-    };
-    Ok(not_exp_pl)
+    not_exp_sl.try_map(|exp_sl| prosify_exp(ctx, exp_sl))
 }
 
 // == Paths
@@ -1542,13 +1518,7 @@ fn build_rel_hints(
         .map(|hint| alter::realign(hint, &rel_signature.input_hint));
     // Fresh expressions only when the relation has an input template
     let (prose_input_exps, prose_output_exps) = if hints_rel.node.prose_in.is_some() {
-        let typs = rel_signature
-            .not_typ
-            .node
-            .args()
-            .into_iter()
-            .cloned()
-            .collect::<Vec<_>>();
+        let typs = rel_signature.not_typ.node.args().to_vec();
         let (typs_input, typs_output) = input::split(&rel_signature.input_hint, typs)
             .expect("elaboration validates relation inputs; structure preserves signature arity");
         let fresh_exps_from_typs = |typs: Vec<sl::Typ>| {
@@ -1556,7 +1526,7 @@ fn build_rel_hints(
             typs.into_iter()
                 .map(|typ| {
                     let (ids_fresh, exp_sl) =
-                        al::fresh::exp_from_typ(true, ctx.menv(), &ids_used, &typ);
+                        al::fresh::exp_from_typ(ctx.menv(), true, &ids_used, &typ);
                     ids_used = ids_fresh;
                     exp_sl
                 })

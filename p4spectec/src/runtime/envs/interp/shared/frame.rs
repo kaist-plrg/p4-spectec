@@ -10,7 +10,7 @@ use std::{collections::HashMap, rc::Rc};
 use crate::lang::{
     common::{Id, Iter},
     data::{
-        value::Value,
+        value::flat::Value,
         var::{IdSlot, SlotIdx, Var, VarSlot},
     },
 };

@@ -10,7 +10,7 @@ mod eval;
 pub mod flow;
 mod prepare;
 
-use crate::lang::{common::source::Span, data::value::Value};
+use crate::lang::{common::source::Span, data::value::flat::Value};
 
 use crate::lang::pl::ast;
 

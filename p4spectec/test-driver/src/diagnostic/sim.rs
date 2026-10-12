@@ -6,7 +6,7 @@
 
 use std::path::Path;
 
-use p4spectec::lang::data::value::external::Encoding;
+use p4spectec::lang::data::encoding::Encoding;
 
 use p4spectec::diagnostic::{Report, ReportKind};
 

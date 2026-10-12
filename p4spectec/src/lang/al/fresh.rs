@@ -19,7 +19,7 @@ use super::{ast::*, var};
 // == Expressions
 
 /// Constructs a fresh variable expression for `typ`.
-pub fn exp_from_typ(is_dim: bool, menv: &MEnv, ids: &IdSet, typ: &Typ) -> (IdSet, Exp) {
+pub fn exp_from_typ(menv: &MEnv, is_dim: bool, ids: &IdSet, typ: &Typ) -> (IdSet, Exp) {
     // Name from an alias or the type, then make it unique
     let mut var = var_from_typ(menv, &typ.span, typ);
     var.id = il::fresh::id(ids, &var.id);

@@ -179,7 +179,7 @@ fn shorten_destruct<Tier>(instr: &mut pl::Instr<Tier>) {
         return;
     }
     let bindings = exps
-        .into_iter()
+        .iter()
         .zip(field_names)
         .map(|(exp, name)| (visible(exp).then(|| name.node.clone()), exp.clone()))
         .collect();

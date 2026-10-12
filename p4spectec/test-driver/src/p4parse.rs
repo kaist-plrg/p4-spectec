@@ -7,7 +7,7 @@ use std::{
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spectec::lang::data::value::ValueArena;
+use p4spectec::lang::data::arena::Arena;
 
 use p4spectec::interface::p4::{
     error::P4Error,
@@ -22,7 +22,7 @@ use crate::{
 };
 
 fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result<Outcome> {
-    let mut arena = ValueArena::new();
+    let mut arena = Arena::new();
     fs::File::open(path)?;
     let program = match parse_file(&mut arena, includes, path) {
         Ok(program) => program,
@@ -50,11 +50,12 @@ fn roundtrip(unparser: &P4Unparser, includes: &[PathBuf], path: &Path) -> Result
         },
     };
     // Canonical bodies ignore source spans and type notes, like IL value equality
-    let outcome = if arena.canon_id(&program) == arena.canon_id(&program_roundtrip) {
-        Outcome::Pass
-    } else {
-        Outcome::RoundtripFail
-    };
+    let outcome =
+        if arena.value.canon_id(program.node) == arena.value.canon_id(program_roundtrip.node) {
+            Outcome::Pass
+        } else {
+            Outcome::RoundtripFail
+        };
     Ok(outcome)
 }
 

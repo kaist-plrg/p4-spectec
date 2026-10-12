@@ -37,7 +37,7 @@ impl HasCall for Exp {
             }
             ExpKind::Case(not_exp) => not_exp
                 .args()
-                .into_iter()
+                .iter()
                 .flat_map(HasCall::nested_call)
                 .collect(),
             ExpKind::Str(fields) => fields

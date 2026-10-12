@@ -7,15 +7,14 @@
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, get, make},
+    data::value::flat::{self as value, Value},
 };
+
+use crate::lang::il::prepared as ast;
 
 use crate::runner::{Extern, Interface, RunnerContext};
 
-use crate::interp::shared::{
-    backtrack::{Backtrack, ok, unwrap, unwrap_from_result},
-    prepare::ast,
-};
+use crate::interp::shared::backtrack::{Backtrack, ok, unwrap, unwrap_from_result};
 
 use super::{Invoker, expr::eval_exp, ops};
 
@@ -204,17 +203,23 @@ fn eval_update_dot_path<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, 
 ) -> Backtrack<Value> {
     let typ = crate::phrase!(node: path.note.clone(), span: path.span.clone());
     let value = unwrap!(eval_access_path(runner_ctx, ctx, value_base, path));
-    let value_fields =
-        get::structure(runner_ctx.arena(), &value).expect("field update base must be a struct");
+    let value_fields = value::get::structure(runner_ctx.arena(), &value)
+        .expect("field update base must be a struct");
     // Replace the named field, keep the others
     let value_fields = value_fields
         .iter()
-        .map(|(field, value)| {
-            (field.clone(), if field.node == atom.node { value_upd } else { *value })
+        .map(|value_field| ast::ValueField {
+            atom: value_field.atom.clone(),
+            value: if value_field.atom.node == atom.node { value_upd } else { value_field.value },
         })
         .collect();
     let value = unwrap_from_result!(
-        make::structure(runner_ctx.arena_mut(), typ.node.clone(), value_fields, Span::default()),
+        value::make::structure(
+            runner_ctx.arena_mut(),
+            typ.node.clone(),
+            value_fields,
+            Span::default()
+        ),
         &Span::default()
     );
     eval_update_path(runner_ctx, ctx, value_base, path, value)

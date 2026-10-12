@@ -7,7 +7,7 @@
 //! List-shaped declarations are traversed left to right
 //! so every name is available to following tokens.
 
-use crate::lang::data::value::{Value, get};
+use crate::lang::data::value::flat::{self as value, Value};
 
 use super::{
     context::{Context, Namespace, TypeId},
@@ -40,11 +40,11 @@ pub(super) fn var(ctx: &Context, value: &Value, has_params: bool, type_ref: Opti
 
 /// Declares every name of a `nameList`, left to right.
 pub(super) fn vars(ctx: &Context, value: &Value) {
-    get::matches! { &ctx.arena(),
+    value::get::matches! { &ctx.arena(),
         value,
         "nameList ',' name" => |values| {
-            vars(ctx, values[0]);
-            var(ctx, values[1], false, None);
+            vars(ctx, &values[0]);
+            var(ctx, &values[1], false, None);
         },
         _ => var(ctx, value, false, None),
     }
@@ -52,11 +52,11 @@ pub(super) fn vars(ctx: &Context, value: &Value) {
 
 /// Declares every type parameter of a `typeParameterList`, left to right.
 pub(super) fn typs(ctx: &Context, value: &Value) {
-    get::matches! { &ctx.arena(),
+    value::get::matches! { &ctx.arena(),
         value,
         "typeParameterList ',' typeParameter" => |values| {
-            typs(ctx, values[0]);
-            typ(ctx, values[1], false);
+            typs(ctx, &values[0]);
+            typ(ctx, &values[1], false);
         },
         _ => typ(ctx, value, false),
     }

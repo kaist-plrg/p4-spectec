@@ -5,12 +5,14 @@
 //! `Renamer` first moves the local binder
 //! away from the replacement's free names.
 
+use std::rc::Rc;
+
 use crate::lang::{
     common::{
         ds::{map::IdMap, set::IdSet},
-        notation::mixop::Mixop,
         source::Span,
     },
+    data::notation::tree as notation,
     hints::input,
     traits::free::FreeIds,
 };
@@ -372,7 +374,7 @@ impl Replacer {
     fn replace_rule_instr(&self, instr_ol: ol::RuleInstr) -> ol::InstrKind {
         let ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block } = instr_ol;
         // Split the arguments by the input hint
-        let exps = not_exp.args().into_iter().cloned().collect();
+        let exps = not_exp.args().to_vec();
         // Elaboration validates hints; OL rewrites preserve notation arity
         let (exps_input, exps_output) =
             input::split(&input_hint, exps).expect("validated relation hints and argument counts");
@@ -389,9 +391,8 @@ impl Replacer {
         // Renaming preserves the argument counts returned by input::split
         let exps = input::combine(&input_hint, exps_input, exps_output)
             .expect("validated relation hints and argument counts");
-        let mixop = not_exp.to_mixop();
-        let not_exp =
-            Mixop::fill(&mixop, exps).expect("validated arguments preserve the mixfix arity");
+        let not_exp = notation::Mixfix::new(Rc::clone(not_exp.mixop()), exps)
+            .expect("validated arguments preserve the mixfix arity");
         let iter_instrs = replacer.replace_iterinstrs_bound(iter_instrs);
         let block = replacer.replace_block(block);
         ol::InstrKind::Rule(ol::RuleInstr { id, not_exp, input_hint, iter_instrs, block })

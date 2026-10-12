@@ -389,10 +389,10 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     /// Serializes token runs and individual links with the selected code style.
     fn ser_code(
         &mut self,
-        style: CodeStyle,
-        code: &Code,
         link_ctx: Option<&Link>,
         lint: bool,
+        style: CodeStyle,
+        code: &Code,
     ) -> String {
         let mut text = String::new();
         let mut text_pending = String::new();
@@ -407,16 +407,16 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //   PlainCode(Token("x y"))                 -> x y
 
     /// Serializes inline prose with the enclosing cross-reference context.
-    fn ser_prose(&mut self, prose: &Prose, link_ctx: Option<&Link>, lint: bool) -> String {
+    fn ser_prose(&mut self, link_ctx: Option<&Link>, lint: bool, prose: &Prose) -> String {
         match prose {
             Prose::Text(text) => Serializer::ser_text_prose(text),
-            Prose::Code(code) => self.ser_code(CodeStyle::Mono, code, link_ctx, lint),
-            Prose::PlainCode(code) => self.ser_code(CodeStyle::Plain, code, link_ctx, lint),
+            Prose::Code(code) => self.ser_code(link_ctx, lint, CodeStyle::Mono, code),
+            Prose::PlainCode(code) => self.ser_code(link_ctx, lint, CodeStyle::Plain, code),
             Prose::Link(link, prose_inner) => {
-                self.ser_link_prose(link, prose_inner, link_ctx, lint)
+                self.ser_link_prose(link_ctx, lint, link, prose_inner)
             }
             Prose::Fallthrough(target, label) => self.ser_fallthrough_prose(target, label),
-            Prose::Seq(proses) => self.ser_seq_prose(proses, link_ctx, lint),
+            Prose::Seq(proses) => self.ser_seq_prose(link_ctx, lint, proses),
             Prose::Empty => Serializer::ser_empty_prose(),
         }
     }
@@ -437,24 +437,24 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
 
     fn ser_link_prose(
         &mut self,
-        link: &Link,
-        prose_inner: &Prose,
         link_ctx: Option<&Link>,
         lint: bool,
+        link: &Link,
+        prose_inner: &Prose,
     ) -> String {
         // Preserve the body when the enclosing document has no target
         let Some(target) = link.target(self.anchor_ctx) else {
-            return self.ser_prose(prose_inner, link_ctx, lint);
+            return self.ser_prose(link_ctx, lint, prose_inner);
         };
         self.warn_empty_target(lint, link, &target);
         if let Some(link_outer) = link_ctx {
             // An outer link takes precedence over nested links
             self.warn_nested(lint, link_outer, link);
-            return self.ser_prose(prose_inner, link_ctx, lint);
+            return self.ser_prose(link_ctx, lint, prose_inner);
         }
 
         // Format the complete body before choosing link delimiters
-        let text = self.ser_prose(prose_inner, Some(link), lint);
+        let text = self.ser_prose(Some(link), lint, prose_inner);
         if lint && text.is_empty() {
             self.warn(error::link_body_empty(link));
         }
@@ -485,10 +485,10 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
     //
     //   Seq([Text("a"), Text("b")])   -> ab
 
-    fn ser_seq_prose(&mut self, proses: &[Prose], link_ctx: Option<&Link>, lint: bool) -> String {
+    fn ser_seq_prose(&mut self, link_ctx: Option<&Link>, lint: bool, proses: &[Prose]) -> String {
         proses
             .iter()
-            .map(|prose| self.ser_prose(prose, link_ctx, lint))
+            .map(|prose| self.ser_prose(link_ctx, lint, prose))
             .collect()
     }
 
@@ -511,7 +511,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         match block {
             Block::Empty => Serializer::ser_empty_block(),
             Block::Raw(text) => Serializer::ser_raw_block(text),
-            Block::Inline(prose) => self.ser_prose(prose, None, true),
+            Block::Inline(prose) => self.ser_prose(None, true, prose),
             Block::Concat(blocks) => self.ser_concat_block(blocks),
             Block::Seq(blocks) => self.ser_seq_block(blocks),
             Block::Item(item) => self.ser_item_block(item),
@@ -580,7 +580,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
             }
             ItemKind::Ordered(None) | ItemKind::Unordered => String::new(),
         };
-        let text_head = self.ser_prose(prose_head, None, true);
+        let text_head = self.ser_prose(None, true, prose_head);
         let mut text = format!("{text_bullet}{text_anchor}{text_head}");
         // Empty bodies leave no trailing newline
         let text_body = self.ser_block(block_body);
@@ -608,7 +608,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         let cols = header.len();
         let texts_header: Vec<String> = header
             .iter()
-            .map(|prose| self.ser_prose(prose, None, true))
+            .map(|prose| self.ser_prose(None, true, prose))
             .collect();
         let text_header = texts_header.join(" | ");
         // Resolve cell links in the enclosing document's context
@@ -616,7 +616,7 @@ impl<'ctx, 'a> Serializer<'ctx, 'a> {
         for row in rows {
             let texts_cell: Vec<String> = row
                 .iter()
-                .map(|code| self.ser_code(CodeStyle::Plain, code, None, false))
+                .map(|code| self.ser_code(None, false, CodeStyle::Plain, code))
                 .collect();
             texts_row.push(format!("| {}", texts_cell.join(" | ")));
         }
@@ -645,7 +645,7 @@ pub fn ser_prose(
     prose: &Prose,
 ) -> String {
     let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
-    serializer.ser_prose(prose, None, true)
+    serializer.ser_prose(None, true, prose)
 }
 
 /// Serializes a link label without creating nested cross-references.
@@ -653,16 +653,16 @@ pub fn ser_prose_in_link(prose: &Prose) -> String {
     // The empty outer target suppresses direct links as well as subjects
     let anchor_ctx = AnchorContext::default();
     Serializer::new(&anchor_ctx, &mut Vec::new(), BTreeMap::new()).ser_prose(
-        prose,
         Some(&Link::Direct(crate::phrase! { node: String::new(), span: Span::default() })),
         false,
+        prose,
     )
 }
 
 /// Serializes code without monospace markup and collects delimiter warnings.
 pub fn ser_code(anchor_ctx: &AnchorContext<'_>, warnings: &mut Vec<Report>, code: &Code) -> String {
     let mut serializer = Serializer::new(anchor_ctx, warnings, BTreeMap::new());
-    serializer.ser_code(CodeStyle::Plain, code, None, false)
+    serializer.ser_code(None, false, CodeStyle::Plain, code)
 }
 
 /// Resolves arm labels and collects warnings while serializing a fragment.

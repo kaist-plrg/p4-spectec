@@ -17,7 +17,7 @@ use std::{
 
 use crate::lang::{
     common::source::{Position, Span},
-    data::value::ValueArena,
+    data::arena::Arena,
 };
 
 use super::error::ContextError;
@@ -56,10 +56,10 @@ pub enum IdentKind {
     Ident { has_params: bool, type_id: TypeId },
 }
 
-/// The shared lexer and parser state over the value arena.
+/// The shared lexer and parser state over the arena.
 pub struct Context<'a> {
     /// The arena parse-tree values are built in.
-    arena: RefCell<&'a mut ValueArena>,
+    arena: RefCell<&'a mut Arena>,
     /// Global namespace followed by the currently active local namespaces.
     scopes: RefCell<Vec<Namespace>>,
     /// Local namespaces set aside while parsing a top-level-only production.
@@ -78,7 +78,7 @@ impl<'a> Context<'a> {
     // - Construction
 
     /// A context with only the global scope.
-    pub fn new(arena: &'a mut ValueArena) -> Self {
+    pub fn new(arena: &'a mut Arena) -> Self {
         Self {
             arena: RefCell::new(arena),
             scopes: RefCell::new(vec![Namespace::new()]),
@@ -90,12 +90,12 @@ impl<'a> Context<'a> {
     }
 
     /// Borrows the arena.
-    pub fn arena(&self) -> Ref<'_, ValueArena> {
+    pub fn arena(&self) -> Ref<'_, Arena> {
         Ref::map(self.arena.borrow(), |arena| &**arena)
     }
 
     /// Borrows the arena mutably.
-    pub fn arena_mut(&self) -> RefMut<'_, ValueArena> {
+    pub fn arena_mut(&self) -> RefMut<'_, Arena> {
         RefMut::map(self.arena.borrow_mut(), |arena| &mut **arena)
     }
 

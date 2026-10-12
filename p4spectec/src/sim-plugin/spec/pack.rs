@@ -7,7 +7,10 @@ use num_bigint::BigInt;
 
 use crate::lang::{
     common::source::Span,
-    data::value::{Value, ValueArena, make},
+    data::{
+        arena::Arena,
+        value::flat::{self as value, Value},
+    },
 };
 
 use crate::runner::ExternError;
@@ -15,9 +18,9 @@ use crate::runner::ExternError;
 // == P4 values
 
 /// `D int`, an arbitrary-precision integer.
-pub fn p4_arbitrary_int(arena: &mut ValueArena, int: BigInt) -> Result<Value, ExternError> {
-    let value_int = make::int(arena, int, Span::default())?;
-    Ok(make::case_shaped! {
+pub fn p4_arbitrary_int(arena: &mut Arena, int: BigInt) -> Result<Value, ExternError> {
+    let value_int = value::make::int(arena, int, Span::default())?;
+    Ok(value::make::case_shaped! {
         arena: arena,
         shape: "D int",
         args: vec![value_int],
@@ -27,18 +30,14 @@ pub fn p4_arbitrary_int(arena: &mut ValueArena, int: BigInt) -> Result<Value, Ex
 }
 
 /// `nat W int`, a fixed-width unsigned bit string; the width must be a natural.
-pub fn p4_fixed_bit(
-    arena: &mut ValueArena,
-    width: BigInt,
-    int: BigInt,
-) -> Result<Value, ExternError> {
+pub fn p4_fixed_bit(arena: &mut Arena, width: BigInt, int: BigInt) -> Result<Value, ExternError> {
     // The width must be a natural number
     let nat = width
         .try_into()
         .map_err(|error: crate::lang::common::prim::num::NumericError| ExternError::from(error))?;
-    let value_width = make::nat(arena, nat, Span::default())?;
-    let value_int = make::int(arena, int, Span::default())?;
-    Ok(make::case_shaped! {
+    let value_width = value::make::nat(arena, nat, Span::default())?;
+    let value_int = value::make::int(arena, int, Span::default())?;
+    Ok(value::make::case_shaped! {
         arena: arena,
         shape: "nat W int",
         args: vec![value_width, value_int],
@@ -48,10 +47,10 @@ pub fn p4_fixed_bit(
 }
 
 /// `tid . id`, an enum member.
-pub fn p4_enum(arena: &mut ValueArena, id_enum: &str, id: &str) -> Result<Value, ExternError> {
-    let value_enum = make::text(arena, id_enum.to_owned(), Span::default())?;
-    let value_id = make::text(arena, id.to_owned(), Span::default())?;
-    Ok(make::case_shaped! {
+pub fn p4_enum(arena: &mut Arena, id_enum: &str, id: &str) -> Result<Value, ExternError> {
+    let value_enum = value::make::text(arena, id_enum.to_owned(), Span::default())?;
+    let value_id = value::make::text(arena, id.to_owned(), Span::default())?;
+    Ok(value::make::case_shaped! {
         arena: arena,
         shape: "tid '.' id",
         args: vec![value_enum, value_id],

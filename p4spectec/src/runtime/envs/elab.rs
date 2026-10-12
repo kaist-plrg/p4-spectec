@@ -5,12 +5,12 @@
 
 use crate::lang::{common::ds::map::IdMap, hints::input::InputHint};
 
-use crate::lang::il::ast;
+use crate::lang::il::{ast, stage::Source};
 
 use crate::runtime::{dim::Dim, typdef::TypeDef};
 
 /// Type names to their definitions.
-pub type TDEnv = IdMap<TypeDef>;
+pub type TDEnv<P = Source> = IdMap<TypeDef<P>>;
 /// Variables to their bound dimension.
 pub type VEnv = IdMap<Dim>;
 /// Meta-variables to their types.

@@ -5,8 +5,8 @@
 //! and the relation or function being converted as the namespace.
 
 use crate::lang::{
-    common::{notation::mixop::Mixop, source::Span},
-    data::typ,
+    common::source::Span,
+    data::{notation::tree::Mixop, typ},
     hints::{alter, fields},
 };
 
@@ -200,7 +200,7 @@ impl Context {
             Self::load_alter_hints(&mut hints, hints_sl);
             Self::load_field_hints(&mut hints, hints_sl, Some(not_typ.node.args().len()))?;
             self.henv
-                .insert_case(&def_typ_sl.id, &not_typ.node.to_mixop(), hints);
+                .insert_case(&def_typ_sl.id, not_typ.node.mixop().as_ref(), hints);
         }
         Ok(())
     }

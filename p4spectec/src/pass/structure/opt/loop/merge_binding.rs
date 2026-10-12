@@ -97,7 +97,7 @@ impl<'a> Bind<'a> {
     /// Views a rule call, splitting its arguments by the input hint.
     fn from_rule(instr_rule: &'a RuleInstr) -> Self {
         let RuleInstr { id, not_exp, input_hint, iter_instrs, .. } = instr_rule;
-        let exps = not_exp.args();
+        let exps = not_exp.args().iter().collect();
         // Elaboration validates hints; OL rewrites preserve notation arity
         let (exps_input, exps_output) =
             input::split(input_hint, exps).expect("validated relation hints and argument counts");
@@ -255,11 +255,11 @@ fn collapse_case_exp(
     not_exp: &NotExp,
     not_exp_target: &NotExp,
 ) -> Option<Renamer> {
-    if !not_exp.eq_shape(not_exp_target) {
+    if !not_exp.eq_mixop(not_exp_target) {
         return None;
     }
-    let exps = not_exp.args();
-    let exps_target = not_exp_target.args();
+    let exps = not_exp.args().iter().collect();
+    let exps_target = not_exp_target.args().iter().collect();
     collapse_exps(renamer, exps, exps_target)
 }
 

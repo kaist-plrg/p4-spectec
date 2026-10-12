@@ -4,7 +4,7 @@
 //! through every specification call
 //! and written back here; `txs` collects the packets one input produced.
 
-use crate::lang::data::value::Value;
+use crate::lang::data::value::flat::Value;
 
 use super::io::Tx;
 

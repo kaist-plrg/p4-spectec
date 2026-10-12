@@ -10,22 +10,23 @@ use std::{borrow::Borrow, rc::Rc};
 use crate::lang::{
     common::source::Span,
     data::{
-        value::{Value, ValueKind, get, make},
+        value::flat::{self as value, Value, ValueKind},
         var::IdSlot,
     },
     traits::print::Print,
 };
 
+use crate::lang::il::prepared as ast;
+
 use crate::runtime::{
+    envs::interp::shared::TypeDef,
     ops::typ::{TypeError, subst_typ},
-    typdef::TypeDef,
 };
 
 use crate::runner::{Extern, Interface, RunnerContext};
 
 use crate::interp::shared::{
     backtrack::{Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
-    prepare::ast,
     util::find_slot_of_exp,
 };
 
@@ -45,15 +46,15 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
     let typ = &exp.note;
     let result = (|| match &exp.node {
         ast::ExpKind::Bool(value) => ok!(unwrap_from_result!(
-            make::bool(runner_ctx.arena_mut(), *value, Span::default()),
+            value::make::bool(runner_ctx.arena_mut(), *value, Span::default()),
             span
         )),
         ast::ExpKind::Num(value) => ok!(unwrap_from_result!(
-            make::num(runner_ctx.arena_mut(), value.clone(), Span::default()),
+            value::make::num(runner_ctx.arena_mut(), value.clone(), Span::default()),
             span
         )),
         ast::ExpKind::Text(value) => ok!(unwrap_from_result!(
-            make::text(runner_ctx.arena_mut(), value.clone(), Span::default()),
+            value::make::text(runner_ctx.arena_mut(), value.clone(), Span::default()),
             span
         )),
         ast::ExpKind::Id(id) => eval_id_exp(ctx, id),
@@ -101,7 +102,7 @@ pub(crate) fn eval_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, E
         }
     })();
     result.with_frame(exp.span.clone(), || {
-        format!("while evaluating expression {}", Print::to_string(exp))
+        format!("while evaluating expression {}", exp.view(&runner_ctx.arena().mixop).to_string())
     })
 }
 
@@ -174,8 +175,10 @@ fn eval_cmp_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
     let value_l = unwrap!(eval_exp(runner_ctx, ctx, exp_l));
     let value_r = unwrap!(eval_exp(runner_ctx, ctx, exp_r));
     let result = unwrap!(ops::cmpop(runner_ctx.arena(), span, op, value_l, value_r));
-    let value =
-        unwrap_from_result!(make::bool(runner_ctx.arena_mut(), result, Span::default()), span);
+    let value = unwrap_from_result!(
+        value::make::bool(runner_ctx.arena_mut(), result, Span::default()),
+        span
+    );
     ok!(value)
 }
 
@@ -214,8 +217,10 @@ fn eval_sub_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
 ) -> Backtrack<Value> {
     let value = unwrap!(eval_exp(runner_ctx, ctx, exp_inner));
     let matches = unwrap!(ops::sub(runner_ctx.arena(), ctx, span, subcheck, value));
-    let value =
-        unwrap_from_result!(make::bool(runner_ctx.arena_mut(), matches, Span::default()), span);
+    let value = unwrap_from_result!(
+        value::make::bool(runner_ctx.arena_mut(), matches, Span::default()),
+        span
+    );
     ok!(value)
 }
 
@@ -230,7 +235,7 @@ fn eval_match_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: E
     let value = unwrap!(eval_exp(runner_ctx, ctx, exp_inner));
     let matches = ops::r#match(runner_ctx.arena(), pattern, value);
     let value = unwrap_from_result!(
-        make::bool(runner_ctx.arena_mut(), matches, Span::default()),
+        value::make::bool(runner_ctx.arena_mut(), matches, Span::default()),
         &Span::default()
     );
     ok!(value)
@@ -247,7 +252,7 @@ fn eval_tuple_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: E
 ) -> Backtrack<Value> {
     let values = unwrap!(eval_exps(runner_ctx, ctx, exps));
     let value = unwrap_from_result!(
-        make::tuple(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
+        value::make::tuple(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
         span
     );
     ok!(value)
@@ -273,8 +278,10 @@ fn eval_case_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
         Ok(case) => case,
         Err(result) => return result,
     };
+    // The prepared shape already belongs to the arena
+    let kind = ValueKind::Case(case);
     let value = unwrap_from_result!(
-        make::case(runner_ctx.arena_mut(), typ.clone(), case, Span::default()),
+        Value::new(runner_ctx.arena_mut(), kind, typ.clone(), Span::default()),
         span
     );
     ok!(value)
@@ -291,10 +298,13 @@ fn eval_str_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
 ) -> Backtrack<Value> {
     let mut value_fields = Vec::with_capacity(exp_fields.len());
     for ast::ExpField { atom, exp } in exp_fields {
-        value_fields.push((atom.clone(), unwrap!(eval_exp(runner_ctx, ctx, exp))));
+        value_fields.push(ast::ValueField {
+            atom: atom.clone(),
+            value: unwrap!(eval_exp(runner_ctx, ctx, exp)),
+        });
     }
     let value = unwrap_from_result!(
-        make::structure(runner_ctx.arena_mut(), typ.clone(), value_fields, Span::default()),
+        value::make::structure(runner_ctx.arena_mut(), typ.clone(), value_fields, Span::default()),
         span
     );
     ok!(value)
@@ -314,7 +324,7 @@ fn eval_opt_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
         None => None,
     };
     let value = unwrap_from_result!(
-        make::opt(runner_ctx.arena_mut(), typ.clone(), value, Span::default()),
+        value::make::opt(runner_ctx.arena_mut(), typ.clone(), value, Span::default()),
         span
     );
     ok!(value)
@@ -331,7 +341,7 @@ fn eval_list_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
 ) -> Backtrack<Value> {
     let values = unwrap!(eval_exps(runner_ctx, ctx, exps));
     let value = unwrap_from_result!(
-        make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
+        value::make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
         span
     );
     ok!(value)
@@ -350,12 +360,12 @@ fn eval_cons_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ex
     let value_head = unwrap!(eval_exp(runner_ctx, ctx, exp_head));
     let value_tail = unwrap!(eval_exp(runner_ctx, ctx, exp_tail));
     // Prepend the head to the evaluated tail
-    let values_tail = unwrap_from_result!(get::list(runner_ctx.arena(), &value_tail), span);
+    let values_tail = unwrap_from_result!(value::get::list(runner_ctx.arena(), &value_tail), span);
     let mut values = Vec::with_capacity(values_tail.len() + 1);
     values.push(value_head);
     values.extend_from_slice(values_tail);
     let value = unwrap_from_result!(
-        make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
+        value::make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
         span
     );
     ok!(value)
@@ -374,18 +384,24 @@ fn eval_cat_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
 ) -> Backtrack<Value> {
     let value_l = unwrap!(eval_exp(runner_ctx, ctx, exp_l));
     let value_r = unwrap!(eval_exp(runner_ctx, ctx, exp_r));
-    let value = match (runner_ctx.arena().kind(&value_l), runner_ctx.arena().kind(&value_r)) {
+    let value = match (
+        runner_ctx.arena().value.kind(value_l.node),
+        runner_ctx.arena().value.kind(value_r.node),
+    ) {
         // Texts concatenate
         (ValueKind::Text(text_l), ValueKind::Text(text_r)) => {
             let text = format!("{text_l}{text_r}");
-            unwrap_from_result!(make::text(runner_ctx.arena_mut(), text, Span::default()), span)
+            unwrap_from_result!(
+                value::make::text(runner_ctx.arena_mut(), text, Span::default()),
+                span
+            )
         }
         // Lists concatenate
         (ValueKind::List(values_l), ValueKind::List(values_r)) => {
             let mut values = values_l.clone();
             values.extend_from_slice(values_r);
             unwrap_from_result!(
-                make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
+                value::make::list(runner_ctx.arena_mut(), typ.clone(), values, Span::default()),
                 span
             )
         }
@@ -407,8 +423,10 @@ fn eval_mem_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
     let value_elem = unwrap!(eval_exp(runner_ctx, ctx, exp_elem));
     let value_list = unwrap!(eval_exp(runner_ctx, ctx, exp_list));
     let contains = unwrap!(ops::mem(runner_ctx.arena(), span, value_elem, value_list));
-    let value =
-        unwrap_from_result!(make::bool(runner_ctx.arena_mut(), contains, Span::default()), span);
+    let value = unwrap_from_result!(
+        value::make::bool(runner_ctx.arena_mut(), contains, Span::default()),
+        span
+    );
     ok!(value)
 }
 
@@ -421,7 +439,7 @@ fn eval_len_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
     exp_inner: &ast::Exp,
 ) -> Backtrack<Value> {
     let value = unwrap!(eval_exp(runner_ctx, ctx, exp_inner));
-    let len = match runner_ctx.arena().kind(&value) {
+    let len = match runner_ctx.arena().value.kind(value.node) {
         // Texts count bytes, lists count elements; anything else is an error
         ValueKind::Text(text) => text.len(),
         ValueKind::List(values) => values.len(),
@@ -430,7 +448,7 @@ fn eval_len_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Ext
         }
     };
     let value = unwrap_from_result!(
-        make::nat(runner_ctx.arena_mut(), (len as u64).into(), Span::default()),
+        value::make::nat(runner_ctx.arena_mut(), (len as u64).into(), Span::default()),
         &Span::default()
     );
     ok!(value)
@@ -477,7 +495,7 @@ fn eval_slice_exp<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: E
     let value_idx = unwrap!(eval_exp(runner_ctx, ctx, exp_idx));
     let value_len = unwrap!(eval_exp(runner_ctx, ctx, exp_len));
     // Text slices report bounds errors at the index, lists at the length
-    let span_bounds = if matches!(runner_ctx.arena().kind(&value), ValueKind::Text(_)) {
+    let span_bounds = if matches!(runner_ctx.arena().value.kind(value.node), ValueKind::Text(_)) {
         &exp_idx.span
     } else {
         &exp_len.span
