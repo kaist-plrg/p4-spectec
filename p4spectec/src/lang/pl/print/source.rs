@@ -341,7 +341,6 @@ fn write_instr_with<Tier>(
             write_order(output)?;
             output.write_str("If let ")?;
             exp_l.print(output)?;
-
             output.write_str(" be ")?;
             exp_r.print(output)?;
             output.write_str(" matching pattern ")?;
