@@ -13,7 +13,7 @@ mod interpreter;
 
 use std::path::{Path, PathBuf};
 
-use crate::lang::data::{arena::Arena, notation::MixopArena, value::flat::Value};
+use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::al;
 
@@ -77,8 +77,10 @@ pub type BuildError = Box<Report>;
 
 /// Builds an AL runner from a specification, with the P4 builtins.
 ///
-/// Takes a spec after lowering. Panics if a global definition is repeated.
+/// Takes a spec after lowering and interns notation in the execution arena.
+/// Every evaluation must use this arena. Panics if a definition is repeated.
 pub fn build_al<Ext: Extern>(
+    arena: &mut Arena,
     spec: al::ast::Spec,
     config: Config,
     external: Ext,
@@ -88,21 +90,17 @@ pub fn build_al<Ext: Extern>(
     let interface = builtin::p4(&spec);
     let Spec::Al(spec) = spec else { unreachable!() };
     // Load and prepare the definitions
-    let mut arena_mixop = MixopArena::new();
-    let spec_env = AlSpecEnv::load(&mut arena_mixop, spec)?;
+    let spec_env = AlSpecEnv::load(&mut arena.mixop, spec)?;
     let config = AlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(
-        arena_mixop,
-        Backend::Al { spec_env, interp: AlInterp::new(config) },
-        interface,
-        external,
-    ))
+    Ok(Runner::new(Backend::Al { spec_env, interp: AlInterp::new(config) }, interface, external))
 }
 
 /// Builds an SL runner from a specification, with the P4 builtins.
 ///
-/// Takes a spec after lowering. Panics if a global definition is repeated.
+/// Takes a spec after lowering and interns notation in the execution arena.
+/// Every evaluation must use this arena. Panics if a definition is repeated.
 pub fn build_sl<Ext: Extern>(
+    arena: &mut Arena,
     spec: sl::ast::Spec,
     config: Config,
     external: Ext,
@@ -112,21 +110,17 @@ pub fn build_sl<Ext: Extern>(
     let interface = builtin::p4(&spec);
     let Spec::Sl(spec) = spec else { unreachable!() };
     // Load and prepare the definitions
-    let mut arena_mixop = MixopArena::new();
-    let spec_env = SlSpecEnv::load(&mut arena_mixop, config.det, spec)?;
+    let spec_env = SlSpecEnv::load(&mut arena.mixop, config.det, spec)?;
     let config = SlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(
-        arena_mixop,
-        Backend::Sl { spec_env, interp: SlInterp::new(config) },
-        interface,
-        external,
-    ))
+    Ok(Runner::new(Backend::Sl { spec_env, interp: SlInterp::new(config) }, interface, external))
 }
 
 /// Builds a PL runner from a specification, with the P4 builtins.
 ///
-/// Takes a spec after lowering. Panics if a global definition is repeated.
+/// Takes a spec after lowering and interns notation in the execution arena.
+/// Every evaluation must use this arena. Panics if a definition is repeated.
 pub fn build_pl<Ext: Extern>(
+    arena: &mut Arena,
     spec: pl::ast::Spec,
     config: Config,
     external: Ext,
@@ -134,15 +128,9 @@ pub fn build_pl<Ext: Extern>(
     let spec = Spec::Pl(spec);
     let interface = builtin::p4(&spec);
     let Spec::Pl(spec) = spec else { unreachable!() };
-    let mut arena_mixop = MixopArena::new();
-    let spec_env = PlSpecEnv::load(&mut arena_mixop, spec)?;
+    let spec_env = PlSpecEnv::load(&mut arena.mixop, spec)?;
     let config = PlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(
-        arena_mixop,
-        Backend::Pl { spec_env, interp: PlInterp::new(config) },
-        interface,
-        external,
-    ))
+    Ok(Runner::new(Backend::Pl { spec_env, interp: PlInterp::new(config) }, interface, external))
 }
 
 // == Runner assembly
@@ -154,9 +142,11 @@ pub(crate) enum Backend {
     Pl { spec_env: PlSpecEnv, interp: PlInterp },
 }
 
-/// An interpreter and its host components sharing one arena.
+/// Prepared definitions, interpreter state, and host components.
+///
+/// Values and notation belong to the arena supplied during preparation.
+/// All calls must borrow that same arena until this runner is dropped.
 pub struct Runner<Iface: Interface, Ext: Extern> {
-    pub(crate) arena: Arena,
     pub(crate) backend: Backend,
     pub(crate) interface: Iface,
     pub(crate) external: Ext,
@@ -165,12 +155,13 @@ pub struct Runner<Iface: Interface, Ext: Extern> {
 
 // Keep stage selection at the boundary, including native simulator operations
 macro_rules! with_context {
-    ($runner:expr, |$ctx:ident| $body:expr) => {{
+    ($runner:expr, $arena:expr, |$ctx:ident| $body:expr) => {{
         let runner = &mut *$runner;
+        let arena = &mut *$arena;
         match &mut runner.backend {
             $crate::runner::Backend::Al { spec_env, interp } => {
                 let mut $ctx = $crate::runner::RunnerContext::new(
-                    &mut runner.arena,
+                    arena,
                     spec_env,
                     interp,
                     &mut runner.interface,
@@ -181,7 +172,7 @@ macro_rules! with_context {
             }
             $crate::runner::Backend::Sl { spec_env, interp } => {
                 let mut $ctx = $crate::runner::RunnerContext::new(
-                    &mut runner.arena,
+                    arena,
                     spec_env,
                     interp,
                     &mut runner.interface,
@@ -192,7 +183,7 @@ macro_rules! with_context {
             }
             $crate::runner::Backend::Pl { spec_env, interp } => {
                 let mut $ctx = $crate::runner::RunnerContext::new(
-                    &mut runner.arena,
+                    arena,
                     spec_env,
                     interp,
                     &mut runner.interface,
@@ -209,22 +200,8 @@ pub(crate) use with_context;
 
 impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Assembles the components around the selected prepared specification.
-    fn new(arena_mixop: MixopArena, backend: Backend, interface: Iface, external: Ext) -> Self {
-        Self {
-            arena: Arena::with_arena_mixop(arena_mixop),
-            backend,
-            interface,
-            external,
-            effects: 0,
-        }
-    }
-
-    pub fn arena(&self) -> &Arena {
-        &self.arena
-    }
-
-    pub fn arena_mut(&mut self) -> &mut Arena {
-        &mut self.arena
+    fn new(backend: Backend, interface: Iface, external: Ext) -> Self {
+        Self { backend, interface, external, effects: 0 }
     }
 
     // - Evaluation
@@ -232,39 +209,49 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
     /// Runs the program entry through the selected interpreter.
     pub fn eval_program(
         &mut self,
+        arena: &mut Arena,
         name: &str,
         program: Value,
     ) -> Eval<Vec<Value>, InterpreterError> {
-        with_context!(self, |ctx| ctx.call_program(name, program))
+        with_context!(self, arena, |ctx| ctx.call_program(name, program))
     }
 
     /// Calls a relation through the selected interpreter.
-    pub fn eval_rel(&mut self, name: &str, values: &[Value]) -> Eval<Vec<Value>, InterpreterError> {
-        with_context!(self, |ctx| ctx.call_rel(name, values))
+    pub fn eval_rel(
+        &mut self,
+        arena: &mut Arena,
+        name: &str,
+        values: &[Value],
+    ) -> Eval<Vec<Value>, InterpreterError> {
+        with_context!(self, arena, |ctx| ctx.call_rel(name, values))
     }
 
     /// Calls a function through the selected interpreter.
     pub fn eval_func(
         &mut self,
+        arena: &mut Arena,
         name: &str,
         targs: &[Typ],
         values: &[Value],
     ) -> Eval<Value, InterpreterError> {
-        with_context!(self, |ctx| ctx.call_func(name, targs, values))
+        with_context!(self, arena, |ctx| ctx.call_func(name, targs, values))
     }
 
     // - Lifecycle
 
     /// Starts an independent program, keeping definitions and configuration.
     ///
-    /// Discards all value handles and cached results,
-    /// while retaining the notation shapes used by prepared definitions.
+    /// Clears this runner's caches, host state, and effects.
+    /// Reset every runner sharing an arena before calling `Arena::reset_values`.
     pub fn reset(&mut self) {
         self.effects = 0;
-        with_context!(self, |ctx| Interpreter::<Iface, Ext>::reset(ctx.interp_mut()));
+        match &mut self.backend {
+            Backend::Al { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
+            Backend::Sl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
+            Backend::Pl { interp, .. } => Interpreter::<Iface, Ext>::reset(interp),
+        }
         self.external.clear();
         self.interface.clear();
-        self.arena.reset_values();
     }
 }
 
@@ -292,35 +279,30 @@ pub fn run(
     includes: &[PathBuf],
     path_p4: &Path,
 ) -> Result<(), RunError> {
-    match spec {
-        Spec::Al(spec_al) => {
-            let runner = build_al(spec_al, config, Dummy).map_err(RunError::Build)?;
-            run_program(runner, relation, includes, path_p4)
-        }
-        Spec::Sl(spec_sl) => {
-            let runner = build_sl(spec_sl, config, Dummy).map_err(RunError::Build)?;
-            run_program(runner, relation, includes, path_p4)
-        }
-        Spec::Pl(spec_pl) => {
-            let runner = build_pl(spec_pl, config, Dummy).map_err(RunError::Build)?;
-            run_program(runner, relation, includes, path_p4)
-        }
+    let mut arena = Arena::new();
+    let runner = match spec {
+        Spec::Al(spec_al) => build_al(&mut arena, spec_al, config, Dummy),
+        Spec::Sl(spec_sl) => build_sl(&mut arena, spec_sl, config, Dummy),
+        Spec::Pl(spec_pl) => build_pl(&mut arena, spec_pl, config, Dummy),
     }
+    .map_err(RunError::Build)?;
+    run_program(&mut arena, runner, relation, includes, path_p4)
 }
 
-/// Parses P4 into the runner's arena and evaluates its entry relation.
+/// Parses P4 into the shared arena and evaluates its entry relation.
 fn run_program(
+    arena: &mut Arena,
     mut runner: Runner<BuiltinInterface, Dummy>,
     relation: &str,
     includes: &[PathBuf],
     path_p4: &Path,
 ) -> Result<(), RunError> {
-    // Parse the program into the arena used by evaluation
-    let program = parse_file(runner.arena_mut(), includes, path_p4).map_err(RunError::Parse)?;
+    // Parse the program into the arena used to prepare the specification
+    let program = parse_file(arena, includes, path_p4).map_err(RunError::Parse)?;
 
     // Discard effects at the command boundary, after evaluation has finished
     runner
-        .eval_program(relation, program)
+        .eval_program(arena, relation, program)
         .result
         .map_err(RunError::Eval)?;
     Ok(())

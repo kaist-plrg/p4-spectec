@@ -147,6 +147,7 @@ impl Run {
 /// Parses the program and initializes the pipeline in a fresh runner.
 pub fn init_pipe<Iface, Arch>(
     runner: &mut Runner<Iface, Arch>,
+    arena: &mut Arena,
     includes: &[PathBuf],
     path: &Path,
 ) -> Result<Run, SimError>
@@ -156,10 +157,11 @@ where
 {
     // Each program starts from an empty arena and cleared extern state
     runner.reset();
-    let program =
-        parse::parse_file(runner.arena_mut(), includes, path).map_err(P4Error::into_report)?;
-    let state = crate::runner::with_context!(runner, |ctx| Arch::init_pipe(&mut ctx, program))
-        .map_err(ExternError::into_report)?;
+    arena.reset_values();
+    let program = parse::parse_file(arena, includes, path).map_err(P4Error::into_report)?;
+    let state =
+        crate::runner::with_context!(runner, arena, |ctx| Arch::init_pipe(&mut ctx, program))
+            .map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -168,6 +170,7 @@ where
 /// Executes one statement; returns the output packet it matched, if any.
 pub fn run_stf_stmt<Iface, Arch>(
     runner: &mut Runner<Iface, Arch>,
+    arena: &mut Arena,
     run: &mut Run,
     stmt: &Phrase<Statement>,
 ) -> Result<Option<Tx>, SimError>
@@ -178,7 +181,7 @@ where
     // Fresh output list; the architecture may rewrite the statement first
     run.state.txs.clear();
     let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
-    let result = crate::runner::with_context!(runner, |ctx| match stmt_kind {
+    let result = crate::runner::with_context!(runner, arena, |ctx| match stmt_kind {
         // Packets drive the pipeline
         Statement::Packet { port, packet } => {
             run_stf_packet_stmt(&mut ctx, &stmt.span, run, port, packet)
@@ -629,6 +632,7 @@ where
 /// Runs a whole STF file against a P4 program; fails on the first problem.
 pub fn run_stf_test<Iface, Arch>(
     runner: &mut Runner<Iface, Arch>,
+    arena: &mut Arena,
     includes: &[PathBuf],
     path_p4: &Path,
     path_stf: &Path,
@@ -638,10 +642,10 @@ where
     Iface: Interface,
     Arch: Architecture,
 {
-    let mut run = init_pipe(runner, includes, path_p4)?;
+    let mut run = init_pipe(runner, arena, includes, path_p4)?;
     let stmts = stf::parse::parse_file(path_stf)?;
     for stmt in &stmts {
-        if let Some(tx) = run_stf_stmt(runner, &mut run, stmt)? {
+        if let Some(tx) = run_stf_stmt(runner, arena, &mut run, stmt)? {
             on_match(&tx);
         }
     }

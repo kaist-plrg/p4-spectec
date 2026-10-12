@@ -17,6 +17,11 @@ use crate::{Error, Result};
 
 const SOURCE: &str = r#"
 var n : nat
+syntax token = TOKEN nat | OTHER
+dec $wrap(nat) : token
+def $wrap(n) = TOKEN n
+dec $unwrap(token) : nat
+def $unwrap(TOKEN n) = n
 
 dec $increment(nat) : nat
 def $increment(n) = n + 7
@@ -45,26 +50,66 @@ fn check_value(arena: &Arena, eval: Eval<Value>, num_expect: u64) -> Result<()> 
 }
 
 /// Exercises one runner through every public evaluation entry.
-fn check(runner: &mut Runner<BuiltinInterface, NullExtern>) -> Result<()> {
-    let value =
-        value::make::nat(runner.arena_mut(), 35.into(), Span::default()).map_err(failure)?;
-    let eval = runner.eval_func("increment", &[], &[value]);
-    check_value(runner.arena(), eval, 42)?;
+fn check(arena: &mut Arena, runner: &mut Runner<BuiltinInterface, NullExtern>) -> Result<()> {
+    let value = value::make::nat(arena, 35.into(), Span::default()).map_err(failure)?;
+    let eval = runner.eval_func(arena, "increment", &[], &[value]);
+    check_value(arena, eval, 42)?;
 
     // Relation and program entries preserve the same output and effects
-    let evals = [runner.eval_rel("R", &[value]), runner.eval_program("R", value)];
+    let evals = [runner.eval_rel(arena, "R", &[value]), runner.eval_program(arena, "R", value)];
     for eval in evals {
         let values = eval.result.map_err(failure)?;
         let [value] = values.as_slice() else {
             return Err(failure("expected one relation output"));
         };
-        check_value(runner.arena(), Eval::new(Ok(*value), eval.effect), 42)?;
+        check_value(arena, Eval::new(Ok(*value), eval.effect), 42)?;
     }
 
     // A failed lookup must not run an effectful host operation
-    let eval = runner.eval_func("missing", &[], &[]);
+    let eval = runner.eval_func(arena, "missing", &[], &[]);
     if eval.result.is_ok() || eval.effect != SideEffect::Pure {
         return Err(failure("missing function must fail without effects"));
+    }
+    Ok(())
+}
+
+/// Keeps distinct definitions and cached results valid across a shared reset.
+fn check_shared(
+    arena: &mut Arena,
+    config: Config,
+    runners: &mut [Runner<BuiltinInterface, NullExtern>],
+) -> Result<()> {
+    // A second spec must not reuse the first spec's same-named definition
+    let source = SOURCE
+        .replace("n + 7", "n + 11")
+        .replace("OTHER", "ALTERNATE");
+    let spec_el = parse_text("runner-other.watsup".into(), &source).map_err(failure)?;
+    let spec_il = pass::elaborate::convert(spec_el).map_err(failure)?;
+    let spec_al = pass::algo::convert(spec_il).map_err(failure)?;
+    let mut runner_other = runner::build_al(arena, spec_al, config, NullExtern).map_err(failure)?;
+
+    for num in [10, 20] {
+        // Values returned by one runner are input handles for every other runner
+        let value = value::make::nat(arena, num.into(), Span::default()).map_err(failure)?;
+        let eval = runner_other.eval_func(arena, "increment", &[], &[value]);
+        let value_other = eval.result.map_err(failure)?;
+        let value_case = runner_other
+            .eval_func(arena, "wrap", &[], &[value_other])
+            .result
+            .map_err(failure)?;
+        for runner in runners.iter_mut() {
+            let eval = runner.eval_func(arena, "increment", &[], &[value_other]);
+            check_value(arena, eval, num + 18)?;
+            let eval = runner.eval_func(arena, "unwrap", &[], &[value_case]);
+            check_value(arena, eval, num + 11)?;
+        }
+
+        // Drop every cache and host state before invalidating shared value handles
+        for runner in runners.iter_mut() {
+            runner.reset();
+        }
+        runner_other.reset();
+        arena.reset_values();
     }
     Ok(())
 }
@@ -83,16 +128,18 @@ pub fn run() -> Result<()> {
             )
             .map_err(failure)?;
             let config = Config::new(cache, det, true);
+            let mut arena = Arena::new();
 
             // Runtime stage selection must not change the runner's public type
             let mut runners: Vec<Runner<BuiltinInterface, NullExtern>> = vec![
-                runner::build_al(spec_al, config, NullExtern).map_err(failure)?,
-                runner::build_sl(spec_sl, config, NullExtern).map_err(failure)?,
-                runner::build_pl(spec_pl, config, NullExtern).map_err(failure)?,
+                runner::build_al(&mut arena, spec_al, config, NullExtern).map_err(failure)?,
+                runner::build_sl(&mut arena, spec_sl, config, NullExtern).map_err(failure)?,
+                runner::build_pl(&mut arena, spec_pl, config, NullExtern).map_err(failure)?,
             ];
             for runner in &mut runners {
-                check(runner)?;
+                check(&mut arena, runner)?;
             }
+            check_shared(&mut arena, config, &mut runners)?;
         }
     }
     eprintln!("runner: 12 stage/cache/determinism combinations passed");

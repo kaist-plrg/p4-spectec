@@ -13,7 +13,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::lang::data::encoding::Encoding;
+use crate::lang::data::{arena::Arena, encoding::Encoding};
 
 use crate::runner::{self, BuiltinInterface, Runner};
 
@@ -42,6 +42,7 @@ pub use error::SimError;
 trait SimulatorRunner {
     fn run_stf_test(
         &mut self,
+        arena: &mut Arena,
         includes: &[PathBuf],
         path_p4: &Path,
         path_stf: &Path,
@@ -55,28 +56,30 @@ where
 {
     fn run_stf_test(
         &mut self,
+        arena: &mut Arena,
         includes: &[PathBuf],
         path_p4: &Path,
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
     ) -> Result<(), SimError> {
-        stf_runner::run_stf_test(self, includes, path_p4, path_stf, on_match).map(drop)
+        stf_runner::run_stf_test(self, arena, includes, path_p4, path_stf, on_match).map(drop)
     }
 }
 
 /// A built runner ready to execute STF tests.
 pub struct Simulator {
+    arena: Arena,
     /// The runner, erased over its architecture type.
     runner: Box<dyn SimulatorRunner>,
 }
 
 impl Simulator {
     /// Boxes a runner.
-    fn new<Arch>(runner: Runner<BuiltinInterface, Arch>) -> Self
+    fn new<Arch>(arena: Arena, runner: Runner<BuiltinInterface, Arch>) -> Self
     where
         Arch: Architecture + 'static,
     {
-        Self { runner: Box::new(runner) }
+        Self { arena, runner: Box::new(runner) }
     }
 
     /// Runs one STF test, calling `on_match` for each matched output packet.
@@ -88,7 +91,7 @@ impl Simulator {
         mut on_match: impl FnMut(&Tx),
     ) -> Result<(), SimError> {
         self.runner
-            .run_stf_test(includes, path_p4, path_stf, &mut on_match)
+            .run_stf_test(&mut self.arena, includes, path_p4, path_stf, &mut on_match)
     }
 }
 
@@ -127,9 +130,11 @@ fn build_for_arch<Arch: Architecture + 'static>(
     config: runner::Config,
     arch: Arch,
 ) -> Result<Simulator, SimError> {
-    match spec {
-        runner::Spec::Al(spec) => Ok(Simulator::new(runner::build_al(spec, config, arch)?)),
-        runner::Spec::Sl(spec) => Ok(Simulator::new(runner::build_sl(spec, config, arch)?)),
-        runner::Spec::Pl(spec) => Ok(Simulator::new(runner::build_pl(spec, config, arch)?)),
-    }
+    let mut arena = Arena::new();
+    let runner = match spec {
+        runner::Spec::Al(spec) => runner::build_al(&mut arena, spec, config, arch)?,
+        runner::Spec::Sl(spec) => runner::build_sl(&mut arena, spec, config, arch)?,
+        runner::Spec::Pl(spec) => runner::build_pl(&mut arena, spec, config, arch)?,
+    };
+    Ok(Simulator::new(arena, runner))
 }
