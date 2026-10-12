@@ -1,9 +1,7 @@
 //! Stateful fresh-type-id builtin
 //!
-//! A process-wide counter names fresh types `FRESH__0`, `FRESH__1`, ...;
-//! `init` restarts it for each program so runs are reproducible.
-
-use std::sync::atomic::{AtomicU64, Ordering};
+//! Each builtin instance names fresh types `FRESH__0`, `FRESH__1`, ...;
+//! clearing one instance restarts only that runner's sequence.
 
 use crate::lang::{
     common::source::Span,
@@ -15,26 +13,32 @@ use crate::lang::{
 
 use crate::lang::il::ast::Typ;
 
-use super::{BuiltinError, extract};
+use super::{BuiltinError, call::StatefulBuiltin, extract};
 
-/// Next fresh index.
-static COUNTER: AtomicU64 = AtomicU64::new(0);
-
-/// Restarts the counter.
-pub fn init() {
-    COUNTER.store(0, Ordering::Relaxed);
+/// Next fresh index owned by one builtin table.
+#[derive(Default)]
+pub(super) struct Fresh {
+    counter: u64,
 }
 
-/// `dec $fresh_typeId() : typeId`, the next `FRESH__n` name.
-pub fn fresh_type_id(
-    arena: &mut Arena,
-    targs: &[Typ],
-    values: &[Value],
-) -> Result<Value, BuiltinError> {
-    extract::zero(targs)?;
-    extract::zero(values)?;
-    let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
-    let type_id = format!("FRESH__{counter}");
-    let value = value::make::text(arena, type_id, Span::default())?;
-    Ok(value)
+impl StatefulBuiltin for Fresh {
+    fn invoke(
+        &mut self,
+        arena: &mut Arena,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Result<Value, BuiltinError> {
+        // Validate before advancing the local sequence
+        extract::zero(targs)?;
+        extract::zero(values)?;
+        let counter = self.counter;
+        self.counter = counter.wrapping_add(1);
+        let type_id = format!("FRESH__{counter}");
+        let value = value::make::text(arena, type_id, Span::default())?;
+        Ok(value)
+    }
+
+    fn clear(&mut self) {
+        self.counter = 0;
+    }
 }

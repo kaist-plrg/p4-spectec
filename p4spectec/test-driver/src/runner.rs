@@ -3,6 +3,7 @@
 //! The same host-facing runner type executes function, relation, and program
 //! entries in each language stage, preserving values and effects.
 
+mod builtins;
 mod effects;
 mod relay;
 
@@ -165,7 +166,8 @@ pub fn run() -> Result<()> {
         }
     }
     effects::run();
+    builtins::run()?;
     relay::run()?;
-    eprintln!("runner: 12 stage/cache/determinism combinations passed");
+    eprintln!("runner: native, shared-arena, host, builtin, and nested-runner checks passed");
     Ok(())
 }

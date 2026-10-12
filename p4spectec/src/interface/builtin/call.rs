@@ -4,7 +4,7 @@
 //! and then applies interface-specific overrides.
 //! Invocation resolves one name and calls its implementation;
 //! for example, `sum_nat` dispatches to `nats::sum_nat`,
-//! while `fresh_typeId` advances state hidden in `fresh`
+//! while `fresh_typeId` advances state owned by its builtin entry
 //! and is therefore marked impure, so its results are never cached.
 
 use crate::runner::{Eval, SideEffect};
@@ -22,12 +22,24 @@ use super::{BuiltinError, fresh, ints, lists, maps, nats, numerics, sets, texts}
 /// A builtin body: arena, type arguments, values in; a value out.
 pub type BuiltinImpl = Box<dyn FnMut(&mut Arena, &[Typ], &[Value]) -> Result<Value, BuiltinError>>;
 
+/// A builtin whose mutable state is reset between programs.
+pub(super) trait StatefulBuiltin {
+    fn invoke(
+        &mut self,
+        arena: &mut Arena,
+        targs: &[Typ],
+        values: &[Value],
+    ) -> Result<Value, BuiltinError>;
+
+    fn clear(&mut self);
+}
+
 /// A registered builtin and whether calling it has effects.
 enum BuiltinEntry {
     /// No effects; the interpreter may memoize the result.
     Pure(BuiltinImpl),
     /// Has effects; every call runs.
-    Impure(BuiltinImpl),
+    Impure(Box<dyn StatefulBuiltin>),
 }
 
 // == Builtin registry
@@ -94,7 +106,7 @@ impl Builtins {
             ("adds_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::adds_map))),
             ("update_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::update_map))),
             // Fresh type id
-            ("fresh_typeId".to_owned(), BuiltinEntry::Impure(Box::new(fresh::fresh_type_id))),
+            ("fresh_typeId".to_owned(), BuiltinEntry::Impure(Box::<fresh::Fresh>::default())),
             // Numerics
             ("shl".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shl))),
             ("shr".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shr))),
@@ -136,7 +148,12 @@ impl Builtins {
 
     /// Resets builtin state between programs.
     pub fn init(&mut self) {
-        fresh::init();
+        for entry in self.funcs.values_mut() {
+            // Pure entries have no program-owned state to reset
+            if let BuiltinEntry::Impure(builtin_impl) = entry {
+                builtin_impl.clear();
+            }
+        }
     }
 
     // - Calls
@@ -164,7 +181,7 @@ impl Builtins {
                 (result, effect)
             }
             BuiltinEntry::Impure(builtin_impl) => {
-                (builtin_impl(arena, targs, values), SideEffect::Impure)
+                (builtin_impl.invoke(arena, targs, values), SideEffect::Impure)
             }
         };
         Eval::new(result, effect)
