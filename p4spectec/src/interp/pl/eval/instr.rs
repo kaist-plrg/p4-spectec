@@ -142,22 +142,8 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Grow the stack for deep blocks
     stacker::maybe_grow(64 * 1024, 1024 * 1024, || match &instr.node.node {
-        ast::InstrKind::If(instr) => eval_condition(
-            runner_ctx,
-            ctx,
-            &instr.exp,
-            &instr.iter_exps,
-            &instr.block,
-            evaluate_block,
-        ),
-        ast::InstrKind::Check(instr) => eval_condition(
-            runner_ctx,
-            ctx,
-            &instr.exp,
-            &instr.iter_exps,
-            &instr.block,
-            evaluate_block,
-        ),
+        ast::InstrKind::If(instr) => eval_if_instr(runner_ctx, ctx, instr, evaluate_block),
+        ast::InstrKind::Check(instr) => eval_check_instr(runner_ctx, ctx, instr, evaluate_block),
         ast::InstrKind::Hold(instr) => eval_hold_instr(runner_ctx, ctx, instr, evaluate_block),
         ast::InstrKind::Case(instr) => eval_case_instr(runner_ctx, ctx, instr, evaluate_block),
         ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr),
@@ -217,6 +203,38 @@ fn eval_dispatch_tier<'global, Iface: Interface, Ext: Extern>(
 }
 
 // - If instruction
+
+/// Evaluates the if condition and its nested block.
+fn eval_if_instr<'global, Tier, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+    ctx: Context<'global>,
+    instr: &ast::IfInstr<Tier>,
+    evaluate_block: &mut impl FnMut(
+        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+        Context<'global>,
+        &ast::Block<Tier>,
+    ) -> Backtrack<(Context<'global>, Flow)>,
+) -> Backtrack<(Context<'global>, Flow)> {
+    eval_condition(runner_ctx, ctx, &instr.exp, &instr.iter_exps, &instr.block, evaluate_block)
+}
+
+// - Check instruction
+
+/// Evaluates the check condition and its nested block.
+fn eval_check_instr<'global, Tier, Iface: Interface, Ext: Extern>(
+    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+    ctx: Context<'global>,
+    instr: &ast::CheckInstr<Tier>,
+    evaluate_block: &mut impl FnMut(
+        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
+        Context<'global>,
+        &ast::Block<Tier>,
+    ) -> Backtrack<(Context<'global>, Flow)>,
+) -> Backtrack<(Context<'global>, Flow)> {
+    eval_condition(runner_ctx, ctx, &instr.exp, &instr.iter_exps, &instr.block, evaluate_block)
+}
+
+// - Conditions
 
 /// Runs the block when the condition holds under its iterations.
 fn eval_condition<'global, Tier, Iface: Interface, Ext: Extern>(
