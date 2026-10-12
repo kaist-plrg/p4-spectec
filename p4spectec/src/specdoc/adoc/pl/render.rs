@@ -54,27 +54,6 @@ use super::doc::{
 
 // == Conditional bindings
 
-/// Whether a subtype test only inspects value shape, without fallible lookup.
-fn structural_subcheck(subcheck: &pl::Subcheck) -> bool {
-    match subcheck {
-        pl::Subcheck::Skip | pl::Subcheck::Mixop(_) => true,
-        pl::Subcheck::Tuple(subchecks) => subchecks.iter().all(structural_subcheck),
-        pl::Subcheck::Iter(_, subcheck) => structural_subcheck(subcheck),
-        pl::Subcheck::Recurse(_) => false,
-    }
-}
-
-/// Whether omitting a guard can remove neither expression evaluation nor failure.
-fn elidable_guard(guard: &pl::Guard) -> bool {
-    match guard {
-        pl::Guard::Bool(_) | pl::Guard::Match(_) | pl::Guard::LetMatch(..) => true,
-        pl::Guard::Sub(_, subcheck) | pl::Guard::LetSub(_, subcheck, _) => {
-            structural_subcheck(subcheck)
-        }
-        pl::Guard::Cmp(..) | pl::Guard::Mem(_) => false,
-    }
-}
-
 impl Code {
     /// Renders binding shapes without erasing option or singleton-list wrappers.
     fn of_binding(exp: &pl::Exp) -> Code {
@@ -1959,10 +1938,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let num_cases = case_instr.cases.len();
         let mut blocks_case = Vec::with_capacity(num_cases);
         for (idx, case) in case_instr.cases.iter().enumerate() {
-            let is_else = idx > 0
-                && idx + 1 == num_cases
-                && case_instr.totality == pl::Totality::Total
-                && elidable_guard(&case.guard);
+            let is_else =
+                idx > 0 && idx + 1 == num_cases && case_instr.totality == pl::Totality::Total;
             let keyword = if idx == 0 { "If " } else { "Else if " };
             let prose_head = if is_else {
                 Prose::text("Else:")
