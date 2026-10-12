@@ -72,7 +72,7 @@ impl FileId {
 // == Positions
 
 /// A source position.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Position {
     /// Source file.
     pub file: FileId,
@@ -222,17 +222,8 @@ macro_rules! note_phrase {
 
 // - Encode
 
-/// The encoded shape of a position, naming its file.
-#[derive(Serialize)]
-#[serde(rename = "Position")]
-struct PositionEncode<'a> {
-    file: &'a str,
-    line: u32,
-    column: u32,
-}
-
 // Encode the file by name, so payloads keep their shape
-impl Serialize for Position {
+impl Serialize for FileId {
     fn serialize<Serializer>(
         &self,
         serializer: Serializer,
@@ -240,9 +231,7 @@ impl Serialize for Position {
     where
         Serializer: serde::Serializer,
     {
-        let position =
-            PositionEncode { file: self.file.name(), line: self.line, column: self.column };
-        position.serialize(serializer)
+        self.name().serialize(serializer)
     }
 }
 
@@ -289,23 +278,13 @@ where
 
 // - Decode
 
-/// The decoded shape of a position.
-#[derive(Deserialize)]
-#[serde(rename = "Position")]
-struct PositionDecode {
-    file: String,
-    line: u32,
-    column: u32,
-}
-
 // Intern the decoded file name
-impl<'de> Deserialize<'de> for Position {
+impl<'de> Deserialize<'de> for FileId {
     fn deserialize<Deserializer>(deserializer: Deserializer) -> Result<Self, Deserializer::Error>
     where
         Deserializer: serde::Deserializer<'de>,
     {
-        let PositionDecode { file, line, column } = PositionDecode::deserialize(deserializer)?;
-        Ok(Self { file: FileId::intern(&file), line, column })
+        Ok(Self::intern(&String::deserialize(deserializer)?))
     }
 }
 
