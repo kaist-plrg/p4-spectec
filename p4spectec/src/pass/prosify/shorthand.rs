@@ -1,145 +1,161 @@
-//! Recognize compact prose instructions after annotation
+//! Recognize conditional bindings and hinted destructuring in prose instructions
 //!
-//! Three shapes fold into one instruction each:
-//! a case arm or condition that renames its scrutinee
-//! (`CheckLetSub`, `CheckLetMatch`, and the `CheckLet*` guards),
-//! a let over a case notation with a `prose_fields` hint (`Destruct`),
-//! and a let followed by an `is Some` check that binds the content
-//! (`OptionGet`).
-//!
-//! For example, `let t = e; if t is Some { let ?(x) = t; B }` folds to the
-//! single `OptionGet` step `let x = !e { B }`.
+//! A let over case notation with a matching `prose_fields` hint becomes Destruct
+//! Binding analysis has already renamed repeated binders and extracted checks
+//! `if v matches C; let C(x) = v` becomes an explicit conditional binding
+//! Hinted and iterated lets remain intact for their own rendering
 
-use std::collections::VecDeque;
+use crate::lang::{
+    il::ast::{ListPattern, OptPattern, Pattern},
+    pl::ast::{self as pl, ExpKind},
+    traits::eq::SyntaxEq,
+};
 
-use crate::lang::il::ast::OptPattern;
+// == Conditional bindings
 
-use crate::lang::pl::ast as pl;
+/// Compares only plain variable references, retaining their type distinction.
+fn is_same_var_exp(exp_l: &pl::Exp, exp_r: &pl::Exp) -> bool {
+    matches!((&exp_l.node.node, &exp_r.node.node), (ExpKind::Id(id_l), ExpKind::Id(id_r)) if id_l.node == id_r.node)
+        && exp_l.node.note.syntax_eq(&exp_r.node.note)
+        && exp_l.hints.node == Default::default()
+        && exp_r.hints.node == Default::default()
+}
 
-// == Expression aliases
-
-/// Whether two expressions are the same variable, through iterations.
-fn is_eq_exp_var(exp_a: &pl::Exp, exp_b: &pl::Exp) -> bool {
-    match (&exp_a.node.node, &exp_b.node.node) {
-        (pl::ExpKind::Id(id_a), pl::ExpKind::Id(id_b)) => id_a.node == id_b.node,
-        (pl::ExpKind::Iter(exp_a, _), pl::ExpKind::Iter(exp_b, _)) => is_eq_exp_var(exp_a, exp_b),
+/// Matches a guard to the binding shape produced by partial binding.
+fn is_binding_pattern(pattern: &pl::Pattern, exp: &pl::Exp) -> bool {
+    if exp.hints.node != Default::default() {
+        return false;
+    }
+    match (pattern, &exp.node.node) {
+        (Pattern::Case(mixop), ExpKind::Case(not_exp)) => not_exp.mixop().syntax_eq(mixop),
+        (Pattern::List(ListPattern::Nil), ExpKind::List(exps)) => exps.is_empty(),
+        (Pattern::List(ListPattern::Fixed(len)), ExpKind::List(exps)) => exps.len() == *len,
+        (Pattern::List(ListPattern::Cons), ExpKind::Cons(..)) => true,
+        (Pattern::Opt(OptPattern::None), ExpKind::Opt(None)) => true,
+        (Pattern::Opt(OptPattern::Some), ExpKind::Opt(Some(_))) => true,
         _ => false,
     }
 }
 
-/// Whether `exp_r` is the scrutinee itself or a downcast of it.
-fn is_scrutinee_alias(exp_scrut: &pl::Exp, exp_r: &pl::Exp) -> bool {
-    match &exp_r.node.node {
-        pl::ExpKind::DownCast(_, exp_inner) => is_eq_exp_var(exp_scrut, exp_inner),
-        _ => is_eq_exp_var(exp_scrut, exp_r),
-    }
+/// Checks that the subtype test accounts for the whole binding operation.
+fn is_sub_binding(typ: &pl::Typ, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> bool {
+    // Preserve narrowing casts, without inventing a cast for same-type bindings
+    let same_source = match &instr_let.exp_r.node.node {
+        ExpKind::DownCast(typ_cast, exp) => {
+            typ.syntax_eq(typ_cast)
+                && is_same_var_exp(exp, exp_scrut)
+                && !exp_scrut.node.note.as_ref().syntax_eq(&typ.node)
+        }
+        _ => is_same_var_exp(&instr_let.exp_r, exp_scrut),
+    };
+    // Keep the binding's type and presentation while retaining the original test
+    same_source
+        && instr_let.exp_l.node.note.as_ref().syntax_eq(&typ.node)
+        && instr_let.exp_r.node.note.as_ref().syntax_eq(&typ.node)
+        && instr_let.exp_l.hints.node == Default::default()
 }
 
-/// Removes a leading `let x = scrutinee` from `block` and returns `x`.
-fn take_leading_rename<Tier>(exp_scrut: &pl::Exp, block: &mut pl::Block<Tier>) -> Option<pl::Exp> {
-    let is_leading_rename = matches!(
-        block.first(),
-        Some(instr) if matches!(
-            &instr.node.node,
-            pl::InstrKind::Let(pl::LetInstr { exp_r, iter_instrs, .. })
-                if iter_instrs.is_empty() && is_scrutinee_alias(exp_scrut, exp_r)
-        )
-    );
-    // Only a first instruction that renames the scrutinee qualifies
-    if !is_leading_rename {
+/// Checks that the match proves the binding shape on the same typed variable.
+fn is_match_binding(pattern: &pl::Pattern, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> bool {
+    is_same_var_exp(&instr_let.exp_r, exp_scrut)
+        && instr_let
+            .exp_l
+            .node
+            .note
+            .syntax_eq(&instr_let.exp_r.node.note)
+        && is_binding_pattern(pattern, &instr_let.exp_l)
+}
+
+/// Finds an unhinted, noniterated leading let eligible for a conditional binding.
+fn find_leading_let_instr<Tier>(block: &[pl::Instr<Tier>]) -> Option<&pl::LetInstr> {
+    let instr = block.first()?;
+    if instr.hints.node != Default::default() {
         return None;
     }
-    let instr = block.remove(0);
-    let pl::InstrKind::Let(pl::LetInstr { exp_l, .. }) = instr.node.node else {
+    let pl::InstrKind::Let(instr_let) = &instr.node.node else { return None };
+    if !instr_let.iter_instrs.is_empty() || instr_let.exp_r.hints.node != Default::default() {
         return None;
-    };
-    Some(exp_l)
+    }
+    Some(instr_let)
 }
 
-// == Case guards
-
-/// Folds a renaming let at the head of a subtype or match arm into its guard.
-fn shorten_case_guards<Tier>(instr: &mut pl::Instr<Tier>) {
-    let pl::InstrKind::Case(pl::CaseInstr { exp, cases, .. }) = &mut instr.node.node else {
-        return;
+/// Removes the leading let after its binding has been validated.
+fn take_binding_exp<Tier>(block: &mut pl::Block<Tier>) -> pl::Exp {
+    let pl::InstrKind::Let(instr_let) = block.remove(0).node.node else {
+        unreachable!("validated leading let")
     };
-    for case in cases {
-        let guard = match &case.guard {
-            // Subtype guard: `let x = scrut, scrut has type t`
-            pl::Guard::Sub(typ, subcheck) => {
-                take_leading_rename(exp, &mut case.block).map(|exp_target| {
-                    pl::Guard::CheckLetSub(typ.clone(), subcheck.clone(), exp_target)
-                })
+    instr_let.exp_l
+}
+
+/// Folds a safe leading let into its subtype or pattern condition.
+fn shorten_if_instr<Tier>(
+    shorten_block: fn(pl::Block<Tier>) -> pl::Block<Tier>,
+    mut instr_if: pl::IfInstr<Tier>,
+) -> pl::InstrKind<Tier> {
+    // Iterated conditions and hinted bindings keep their separate instructions
+    let binding = instr_if.iter_exps.is_empty()
+        && find_leading_let_instr(&instr_if.block).is_some_and(|instr_let| {
+            match &instr_if.exp.node.node {
+                ExpKind::Sub(exp, typ, _) => is_sub_binding(typ, exp, instr_let),
+                ExpKind::Match(exp, pattern) => is_match_binding(pattern, exp, instr_let),
+                _ => false,
             }
-            // Match guard: `let x = scrut, scrut matches p`
-            pl::Guard::Match(pattern) => take_leading_rename(exp, &mut case.block)
-                .map(|exp_target| pl::Guard::CheckLetMatch(pattern.clone(), exp_target)),
-            _ => None,
-        };
-        if let Some(guard) = guard {
-            case.guard = guard;
-        }
+        });
+    if !binding {
+        instr_if.block = shorten_block(instr_if.block);
+        return pl::InstrKind::If(instr_if);
+    }
+    // Move the binding into syntax before shortening the remaining body
+    let exp_l = take_binding_exp(&mut instr_if.block);
+    let block = shorten_block(instr_if.block);
+    let dangle = instr_if.dangle;
+    match instr_if.exp.node.node {
+        ExpKind::Sub(exp_r, typ, subcheck) => pl::InstrKind::IfLetSub(pl::IfLetSubInstr {
+            typ,
+            subcheck,
+            exp_l,
+            exp_r: *exp_r,
+            block,
+            dangle,
+        }),
+        ExpKind::Match(exp_r, pattern) => pl::InstrKind::IfLetMatch(pl::IfLetMatchInstr {
+            pattern,
+            exp_l,
+            exp_r: *exp_r,
+            block,
+            dangle,
+        }),
+        _ => unreachable!("validated conditional binding"),
     }
 }
 
-// == Checked bindings
-
-/// Folds `if scrut has type t { let x = scrut; .. }`, its match twin,
-/// or a single-arm case with such a guard, into a checked let.
-fn shorten_check_let<Tier>(instr: &mut pl::Instr<Tier>) {
-    /// The check a checked let performs.
-    enum Check {
-        Sub(pl::Typ, Box<pl::Subcheck>, pl::Exp),
-        Match(pl::Pattern, pl::Exp),
-    }
-
-    let check = match &instr.node.node {
-        // An un-iterated condition that is a subtype or match test
-        pl::InstrKind::If(pl::IfInstr { exp, iter_exps, .. }) if iter_exps.is_empty() => {
-            match &exp.node.node {
-                pl::ExpKind::Sub(exp_scrut, typ, subcheck) => {
-                    Some(Check::Sub(typ.clone(), subcheck.clone(), exp_scrut.as_ref().clone()))
-                }
-                pl::ExpKind::Match(exp_scrut, pattern) => {
-                    Some(Check::Match(pattern.clone(), exp_scrut.as_ref().clone()))
-                }
-                _ => None,
-            }
-        }
-        // A single-arm case with a subtype or match guard
-        pl::InstrKind::Case(pl::CaseInstr { exp, cases, .. }) if cases.len() == 1 => {
-            let case = &cases[0];
-            match &case.guard {
+/// Folds each safe leading let into its case guard before shortening the body.
+fn shorten_case_instr<Tier>(
+    shorten_block: fn(pl::Block<Tier>) -> pl::Block<Tier>,
+    mut instr_case: pl::CaseInstr<Tier>,
+) -> pl::InstrKind<Tier> {
+    for case in &mut instr_case.cases {
+        // Keep guards and bindings separate unless the guard proves the binding
+        let binding =
+            find_leading_let_instr(&case.block).is_some_and(|instr_let| match &case.guard {
+                pl::Guard::Sub(typ, _) => is_sub_binding(typ, &instr_case.exp, instr_let),
+                pl::Guard::Match(pattern) => is_match_binding(pattern, &instr_case.exp, instr_let),
+                _ => false,
+            });
+        if binding {
+            let exp_l = take_binding_exp(&mut case.block);
+            case.guard = match &case.guard {
                 pl::Guard::Sub(typ, subcheck) => {
-                    Some(Check::Sub(typ.clone(), subcheck.clone(), exp.clone()))
+                    pl::Guard::LetSub(typ.clone(), subcheck.clone(), exp_l)
                 }
-                pl::Guard::Match(pattern) => Some(Check::Match(pattern.clone(), exp.clone())),
-                _ => None,
-            }
+                pl::Guard::Match(pattern) => pl::Guard::LetMatch(pattern.clone(), exp_l),
+                _ => unreachable!("validated conditional binding"),
+            };
         }
-        _ => None,
-    };
-    let Some(check) = check else { return };
-
-    let block = match &mut instr.node.node {
-        pl::InstrKind::If(pl::IfInstr { block, .. }) => block,
-        pl::InstrKind::Case(pl::CaseInstr { cases, .. }) => &mut cases[0].block,
-        _ => unreachable!(),
-    };
-    let exp_scrut = match &check {
-        Check::Sub(_, _, exp_scrut) | Check::Match(_, exp_scrut) => exp_scrut,
-    };
-    // The block must start by renaming the scrutinee
-    let Some(exp_l) = take_leading_rename(exp_scrut, block) else { return };
-    let block = std::mem::take(block);
-    instr.node.node = match check {
-        Check::Sub(typ, subcheck, exp_r) => {
-            pl::InstrKind::CheckLetSub(pl::CheckLetSubInstr { typ, subcheck, exp_l, exp_r, block })
-        }
-        Check::Match(pattern, exp_r) => {
-            pl::InstrKind::CheckLetMatch(pl::CheckLetMatchInstr { pattern, exp_l, exp_r, block })
-        }
-    };
+        // Shorten the continuation after preserving its binding in the guard
+        case.block = shorten_block(std::mem::take(&mut case.block));
+    }
+    pl::InstrKind::Case(instr_case)
 }
 
 // == Destructuring
@@ -186,124 +202,11 @@ fn shorten_destruct<Tier>(instr: &mut pl::Instr<Tier>) {
     instr.node.node = pl::InstrKind::Destruct(pl::DestructInstr { bindings, exp: exp_r.clone() });
 }
 
-/// Applies the single-instruction shorthands in order.
-fn shorten_instr_shorthands<Tier>(mut instr: pl::Instr<Tier>) -> pl::Instr<Tier> {
-    shorten_case_guards(&mut instr);
-    shorten_check_let(&mut instr);
-    shorten_destruct(&mut instr);
-    instr
-}
-
-// == Option extraction
-
-/// Folds `let t = e` followed by `if t is Some { let ?(x) = t; .. }`
-/// into `let x = !e` with the block.
-fn shorten_option_get<Tier>(
-    instrs_pending: &mut VecDeque<pl::Instr<Tier>>,
-) -> Option<pl::Instr<Tier>> {
-    // Needs the let and the following if
-    if instrs_pending.len() < 2 {
-        return None;
-    }
-    // An un-iterated let followed by an un-iterated `is Some` test
-    let is_option_get =
-        match (&instrs_pending.front()?.node.node, &instrs_pending.get(1)?.node.node) {
-            (
-                pl::InstrKind::Let(pl::LetInstr {
-                    exp_l: exp_tmp,
-                    exp_r: exp_value,
-                    iter_instrs: iter_let,
-                }),
-                pl::InstrKind::If(pl::IfInstr {
-                    exp: exp_cond,
-                    iter_exps: iter_if,
-                    block: block_then,
-                    ..
-                }),
-            ) if iter_let.is_empty() && iter_if.is_empty() => {
-                let pl::ExpKind::Match(exp_scrut, pl::Pattern::Opt(OptPattern::Some)) =
-                    &exp_cond.node.node
-                else {
-                    return None;
-                };
-                let instr_then = block_then.first()?;
-                let pl::InstrKind::Let(pl::LetInstr { exp_l, exp_r, iter_instrs }) =
-                    &instr_then.node.node
-                else {
-                    return None;
-                };
-                let pl::ExpKind::Opt(Some(exp_target)) = &exp_l.node.node else {
-                    return None;
-                };
-                // The temporary must be what is tested and unwrapped
-                if !iter_instrs.is_empty()
-                    || !is_eq_exp_var(exp_tmp, exp_scrut)
-                    || !is_eq_exp_var(exp_tmp, exp_r)
-                {
-                    return None;
-                }
-                let _ = (exp_target, exp_value);
-                true
-            }
-            _ => false,
-        };
-    if !is_option_get {
-        return None;
-    }
-    // Consume both instructions and rebuild them as one
-    let instr_source = instrs_pending.pop_front()?;
-    let instr_if = instrs_pending.pop_front()?;
-    let pl::InstrKind::Let(pl::LetInstr { exp_r: exp_value, .. }) = instr_source.node.node else {
-        unreachable!();
-    };
-    let pl::InstrKind::If(pl::IfInstr { mut block, .. }) = instr_if.node.node else {
-        unreachable!();
-    };
-    let instr_target = block.remove(0);
-    let pl::InstrKind::Let(pl::LetInstr { exp_l, .. }) = instr_target.node.node else {
-        unreachable!();
-    };
-    let pl::ExpKind::Opt(Some(exp_target)) = exp_l.node.node else {
-        unreachable!();
-    };
-    Some(crate::annotated_note_phrase! {
-        node: pl::InstrKind::OptionGet(pl::OptionGetInstr {
-            exp_l: *exp_target,
-            exp_r: exp_value,
-            block,
-        }),
-        note: instr_source.node.note,
-        span: instr_source.node.span,
-        hints: instr_source.hints,
-    })
-}
-
-/// Folds pairs across a block, then each instruction on its own.
-fn shorten_block_shorthands<Tier>(block: pl::Block<Tier>) -> pl::Block<Tier> {
-    let mut instrs_pending = VecDeque::from(block);
-    let mut block_output = Vec::new();
-    while !instrs_pending.is_empty() {
-        // A pair fold consumes two instructions
-        if let Some(instr) = shorten_option_get(&mut instrs_pending) {
-            block_output.push(instr);
-        } else {
-            block_output.push(
-                instrs_pending
-                    .pop_front()
-                    .expect("pending instruction was checked as non-empty"),
-            );
-        }
-    }
-    block_output
-        .into_iter()
-        .map(shorten_instr_shorthands)
-        .collect()
-}
-
 // - Dispatch instruction
 
 /// Shortens a dispatch-tier instruction.
 fn shorten_dispatch_instr(mut instr: pl::Instr<pl::DispatchInstr>) -> pl::Instr<pl::DispatchInstr> {
+    shorten_destruct(&mut instr);
     instr.node.node = shorten_dispatch_instr_kind(instr.node.node);
     instr
 }
@@ -313,32 +216,24 @@ fn shorten_dispatch_instr_kind(
     instr_kind: pl::InstrKind<pl::DispatchInstr>,
 ) -> pl::InstrKind<pl::DispatchInstr> {
     match instr_kind {
-        pl::InstrKind::If(mut instr_if) => {
-            instr_if.block = shorten_dispatch_block(instr_if.block);
-            pl::InstrKind::If(instr_if)
+        pl::InstrKind::If(instr_if) => shorten_if_instr(shorten_dispatch_block, instr_if),
+        pl::InstrKind::IfLetSub(mut instr) => {
+            instr.block = shorten_dispatch_block(instr.block);
+            pl::InstrKind::IfLetSub(instr)
+        }
+        pl::InstrKind::IfLetMatch(mut instr) => {
+            instr.block = shorten_dispatch_block(instr.block);
+            pl::InstrKind::IfLetMatch(instr)
+        }
+        pl::InstrKind::Check(mut instr_check) => {
+            instr_check.block = shorten_dispatch_block(instr_check.block);
+            pl::InstrKind::Check(instr_check)
         }
         pl::InstrKind::Hold(mut instr_hold) => {
             instr_hold.hold_case = shorten_dispatch_hold_case(instr_hold.hold_case);
             pl::InstrKind::Hold(instr_hold)
         }
-        pl::InstrKind::Case(mut instr_case) => {
-            for case in &mut instr_case.cases {
-                case.block = shorten_dispatch_block(std::mem::take(&mut case.block));
-            }
-            pl::InstrKind::Case(instr_case)
-        }
-        pl::InstrKind::CheckLetSub(mut instr_check) => {
-            instr_check.block = shorten_dispatch_block(instr_check.block);
-            pl::InstrKind::CheckLetSub(instr_check)
-        }
-        pl::InstrKind::CheckLetMatch(mut instr_check) => {
-            instr_check.block = shorten_dispatch_block(instr_check.block);
-            pl::InstrKind::CheckLetMatch(instr_check)
-        }
-        pl::InstrKind::OptionGet(mut instr_get) => {
-            instr_get.block = shorten_dispatch_block(instr_get.block);
-            pl::InstrKind::OptionGet(instr_get)
-        }
+        pl::InstrKind::Case(instr_case) => shorten_case_instr(shorten_dispatch_block, instr_case),
         pl::InstrKind::Tier(instr_tier) => {
             let tier = shorten_dispatch_tier(instr_tier.tier);
             pl::InstrKind::Tier(pl::TierInstr { tier })
@@ -350,12 +245,9 @@ fn shorten_dispatch_instr_kind(
     }
 }
 
-/// Shortens a dispatch block, pairs first.
+/// Shortens a dispatch block and its nested bodies.
 fn shorten_dispatch_block(block: pl::DispatchBlock) -> pl::DispatchBlock {
-    shorten_block_shorthands(block)
-        .into_iter()
-        .map(shorten_dispatch_instr)
-        .collect()
+    block.into_iter().map(shorten_dispatch_instr).collect()
 }
 
 // - Holding condition
@@ -405,6 +297,7 @@ fn shorten_dispatch_tier(instr_dispatch: pl::DispatchInstr) -> pl::DispatchInstr
 
 /// Shortens a group-tier instruction.
 fn shorten_group_instr(mut instr: pl::Instr<pl::GroupInstr>) -> pl::Instr<pl::GroupInstr> {
+    shorten_destruct(&mut instr);
     instr.node.node = shorten_group_instr_kind(instr.node.node);
     instr
 }
@@ -414,32 +307,24 @@ fn shorten_group_instr_kind(
     instr_kind: pl::InstrKind<pl::GroupInstr>,
 ) -> pl::InstrKind<pl::GroupInstr> {
     match instr_kind {
-        pl::InstrKind::If(mut instr_if) => {
-            instr_if.block = shorten_group_block(instr_if.block);
-            pl::InstrKind::If(instr_if)
+        pl::InstrKind::If(instr_if) => shorten_if_instr(shorten_group_block, instr_if),
+        pl::InstrKind::IfLetSub(mut instr) => {
+            instr.block = shorten_group_block(instr.block);
+            pl::InstrKind::IfLetSub(instr)
+        }
+        pl::InstrKind::IfLetMatch(mut instr) => {
+            instr.block = shorten_group_block(instr.block);
+            pl::InstrKind::IfLetMatch(instr)
+        }
+        pl::InstrKind::Check(mut instr_check) => {
+            instr_check.block = shorten_group_block(instr_check.block);
+            pl::InstrKind::Check(instr_check)
         }
         pl::InstrKind::Hold(mut instr_hold) => {
             instr_hold.hold_case = shorten_group_hold_case(instr_hold.hold_case);
             pl::InstrKind::Hold(instr_hold)
         }
-        pl::InstrKind::Case(mut instr_case) => {
-            for case in &mut instr_case.cases {
-                case.block = shorten_group_block(std::mem::take(&mut case.block));
-            }
-            pl::InstrKind::Case(instr_case)
-        }
-        pl::InstrKind::CheckLetSub(mut instr_check) => {
-            instr_check.block = shorten_group_block(instr_check.block);
-            pl::InstrKind::CheckLetSub(instr_check)
-        }
-        pl::InstrKind::CheckLetMatch(mut instr_check) => {
-            instr_check.block = shorten_group_block(instr_check.block);
-            pl::InstrKind::CheckLetMatch(instr_check)
-        }
-        pl::InstrKind::OptionGet(mut instr_get) => {
-            instr_get.block = shorten_group_block(instr_get.block);
-            pl::InstrKind::OptionGet(instr_get)
-        }
+        pl::InstrKind::Case(instr_case) => shorten_case_instr(shorten_group_block, instr_case),
         pl::InstrKind::Tier(instr_tier) => {
             let tier = shorten_group_tier(instr_tier.tier);
             pl::InstrKind::Tier(pl::TierInstr { tier })
@@ -451,12 +336,9 @@ fn shorten_group_instr_kind(
     }
 }
 
-/// Shortens a group block, pairs first.
+/// Shortens a group block and its nested bodies.
 fn shorten_group_block(block: pl::GroupBlock) -> pl::GroupBlock {
-    shorten_block_shorthands(block)
-        .into_iter()
-        .map(shorten_group_instr)
-        .collect()
+    block.into_iter().map(shorten_group_instr).collect()
 }
 
 // - Holding condition

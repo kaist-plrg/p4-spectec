@@ -138,7 +138,7 @@ fn merge_hold_instr(
 // - Case instruction
 
 fn merge_case_instr(changed: &mut bool, instr: CaseInstr) -> InstrKind {
-    let CaseInstr { exp, cases, total } = instr;
+    let CaseInstr { exp, cases, totality } = instr;
     let cases = cases
         .into_iter()
         .map(|case| {
@@ -147,7 +147,7 @@ fn merge_case_instr(changed: &mut bool, instr: CaseInstr) -> InstrKind {
             Case { guard, block }
         })
         .collect();
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     InstrKind::Case(instr)
 }
 

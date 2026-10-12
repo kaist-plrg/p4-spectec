@@ -848,9 +848,8 @@ fn prosify_dispatch_if_instr(
         dangle: instr_sl.dangle,
     };
     let instr_kind_pl = pl::InstrKind::If(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
     };
     Ok(vec![instr_pl])
@@ -883,9 +882,8 @@ fn prosify_dispatch_hold_instr(
         hold_case: hold_case_pl,
     };
     let instr_kind_pl = pl::InstrKind::Hold(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
         hints: hints.into_shared(),
     };
@@ -939,11 +937,15 @@ fn prosify_dispatch_case_instr(
         let case_pl = prosify_dispatch_case(ctx, case_sl)?;
         cases_pl.push(case_pl);
     }
-    let instr_pl = pl::CaseInstr { exp: exp_pl, cases: cases_pl, dangle: instr_sl.dangle };
+    let instr_pl = pl::CaseInstr {
+        exp: exp_pl,
+        cases: cases_pl,
+        totality: instr_sl.totality,
+        dangle: instr_sl.dangle,
+    };
     let instr_kind_pl = pl::InstrKind::Case(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
     };
     Ok(vec![instr_pl])
@@ -974,9 +976,8 @@ fn prosify_dispatch_let_instr(
     let instr_pl =
         pl::LetInstr { exp_l: exp_l_pl, exp_r: exp_r_pl, iter_instrs: instr_sl.iter_instrs };
     let instr_kind_pl = pl::InstrKind::Let(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
         hints: hints.into_shared(),
     };
@@ -998,9 +999,8 @@ fn prosify_dispatch_debug_instr(
     let exp_pl = prosify_exp(ctx, &instr_sl.exp)?;
     let instr_pl = pl::DebugInstr { exp: exp_pl };
     let instr_kind_pl = pl::InstrKind::Debug(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
     };
     let instrs_follow_pl = prosify_dispatch_instr(ctx, *instr_sl.instr)?;
@@ -1039,9 +1039,8 @@ fn prosify_dispatch_rulegroup_instr(
     let tier_pl = pl::DispatchInstr::Group(instr_pl);
     let instr_pl = pl::TierInstr { tier: tier_pl };
     let instr_kind_pl = pl::InstrKind::Tier(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
         hints: hints.into_shared(),
     };
@@ -1074,9 +1073,8 @@ fn prosify_dispatch_block(
             let tier_pl = pl::DispatchInstr::Route(instr_pl);
             let instr_pl = pl::TierInstr { tier: tier_pl };
             let instr_kind_pl = pl::InstrKind::Tier(instr_pl);
-            let instr_pl = crate::annotated_note_phrase! {
+            let instr_pl = crate::annotated_phrase! {
                 node: instr_kind_pl,
-                note: None,
                 span: span,
             };
             Ok(vec![instr_pl])
@@ -1123,9 +1121,8 @@ fn prosify_group_if_instr(
         dangle: instr_sl.dangle,
     };
     let instr_kind_pl = pl::InstrKind::If(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
     };
     Ok(vec![instr_pl])
@@ -1158,9 +1155,8 @@ fn prosify_group_hold_instr(
         hold_case: hold_case_pl,
     };
     let instr_kind_pl = pl::InstrKind::Hold(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
         hints: hints.into_shared(),
     };
@@ -1214,11 +1210,15 @@ fn prosify_group_case_instr(
         let case_pl = prosify_group_case(ctx, case_sl)?;
         cases_pl.push(case_pl);
     }
-    let instr_pl = pl::CaseInstr { exp: exp_pl, cases: cases_pl, dangle: instr_sl.dangle };
+    let instr_pl = pl::CaseInstr {
+        exp: exp_pl,
+        cases: cases_pl,
+        totality: instr_sl.totality,
+        dangle: instr_sl.dangle,
+    };
     let instr_kind_pl = pl::InstrKind::Case(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
     };
     Ok(vec![instr_pl])
@@ -1249,9 +1249,8 @@ fn prosify_group_let_instr(
     let instr_pl =
         pl::LetInstr { exp_l: exp_l_pl, exp_r: exp_r_pl, iter_instrs: instr_sl.iter_instrs };
     let instr_kind_pl = pl::InstrKind::Let(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
         hints: hints.into_shared(),
     };
@@ -1273,9 +1272,8 @@ fn prosify_group_debug_instr(
     let exp_pl = prosify_exp(ctx, &instr_sl.exp)?;
     let instr_pl = pl::DebugInstr { exp: exp_pl };
     let instr_kind_pl = pl::InstrKind::Debug(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
     };
     let instrs_follow_pl = prosify_group_instr(ctx, *instr_sl.instr)?;
@@ -1319,9 +1317,8 @@ fn prosify_group_rule_instr(
     let tier_pl = pl::GroupInstr::Rule(instr_pl);
     let instr_pl = pl::TierInstr { tier: tier_pl };
     let instr_kind_pl = pl::InstrKind::Tier(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
         hints: hints.into_shared(),
     };
@@ -1357,9 +1354,8 @@ fn prosify_group_result_instr(
     let tier_pl = pl::GroupInstr::Result(instr_pl);
     let instr_pl = pl::TierInstr { tier: tier_pl };
     let instr_kind_pl = pl::InstrKind::Tier(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
         hints: hints.into_shared(),
     };
@@ -1379,9 +1375,8 @@ fn prosify_group_return_instr(
     let tier_pl = pl::GroupInstr::Return(instr_pl);
     let instr_pl = pl::TierInstr { tier: tier_pl };
     let instr_kind_pl = pl::InstrKind::Tier(instr_pl);
-    let instr_pl = crate::annotated_note_phrase! {
+    let instr_pl = crate::annotated_phrase! {
         node: instr_kind_pl,
-        note: None,
         span: span,
     };
     Ok(vec![instr_pl])
@@ -1410,9 +1405,8 @@ fn prosify_group_block(ctx: &Context, block_sl: sl::Block) -> Result<pl::GroupBl
             let tier_pl = pl::GroupInstr::Backtrack(instr_pl);
             let instr_pl = pl::TierInstr { tier: tier_pl };
             let instr_kind_pl = pl::InstrKind::Tier(instr_pl);
-            let instr_pl = crate::annotated_note_phrase! {
+            let instr_pl = crate::annotated_phrase! {
                 node: instr_kind_pl,
-                note: None,
                 span: span,
             };
             Ok(vec![instr_pl])
@@ -1806,7 +1800,7 @@ fn prosify_def(ctx: &mut Context, def_sl: sl::Def) -> Result<pl::Def, ProseError
 
 // == Entry point
 
-/// The whole conversion: load hints, expand calls, convert, shorten, stamp.
+/// The whole conversion: load hints, expand calls, convert, classify, shorten.
 pub(super) fn prosify_spec(spec_sl: sl::Spec) -> Result<pl::Spec, ProseError> {
     let mut ctx = Context::load(&spec_sl)?;
     let spec_sl = super::expand::expand_spec(spec_sl);
@@ -1815,7 +1809,7 @@ pub(super) fn prosify_spec(spec_sl: sl::Spec) -> Result<pl::Spec, ProseError> {
         let def_pl = prosify_def(&mut ctx, def_sl)?;
         spec_pl.push(def_pl);
     }
+    let spec_pl = super::control::classify_spec(spec_pl);
     let spec_pl = super::shorthand::shorten_spec(spec_pl);
-    let spec_pl = super::stamp::stamp_spec(spec_pl);
     Ok(spec_pl)
 }

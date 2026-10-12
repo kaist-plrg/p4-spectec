@@ -106,7 +106,7 @@ fn remove_case_instr(
     instr_ol: CaseInstr,
     span: Span,
 ) -> Result<Block, StructureError> {
-    let CaseInstr { exp, cases, total } = instr_ol;
+    let CaseInstr { exp, cases, totality } = instr_ol;
     let cases = cases
         .into_iter()
         .map(|case| {
@@ -116,7 +116,7 @@ fn remove_case_instr(
             Ok(case)
         })
         .collect::<Result<_, StructureError>>()?;
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     let instr = crate::phrase!(node: InstrKind::Case(instr), span: span);
     Ok(vec![instr])
 }

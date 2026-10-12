@@ -139,7 +139,7 @@ fn matchify_hold_instr(instr_ol: HoldInstr, span: Span) -> Instr {
 // - Case instruction
 
 fn matchify_case_instr(instr_ol: CaseInstr, span: Span) -> Instr {
-    let CaseInstr { exp, cases, total } = instr_ol;
+    let CaseInstr { exp, cases, totality } = instr_ol;
     let cases = cases
         .into_iter()
         .map(|case| {
@@ -148,7 +148,7 @@ fn matchify_case_instr(instr_ol: CaseInstr, span: Span) -> Instr {
             Case { guard, block }
         })
         .collect::<Vec<_>>();
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     crate::phrase! {node: InstrKind::Case(instr), span: span}
 }
 

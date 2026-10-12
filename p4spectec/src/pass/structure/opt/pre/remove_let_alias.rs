@@ -79,7 +79,7 @@ fn remove_hold_instr(instr_ol: HoldInstr, span: Span) -> Block {
 // - Case instruction
 
 fn remove_case_instr(instr_ol: CaseInstr, span: Span) -> Block {
-    let CaseInstr { exp, cases, total } = instr_ol;
+    let CaseInstr { exp, cases, totality } = instr_ol;
     let cases = cases
         .into_iter()
         .map(|case| {
@@ -88,7 +88,7 @@ fn remove_case_instr(instr_ol: CaseInstr, span: Span) -> Block {
             Case { guard, block }
         })
         .collect();
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     let instr = crate::phrase! {node: InstrKind::Case(instr), span: span};
     vec![instr]
 }

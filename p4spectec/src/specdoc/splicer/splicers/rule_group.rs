@@ -12,10 +12,7 @@ use crate::lang::pl::{ast as pl, rule_group};
 use crate::diagnostic::Report;
 
 use super::super::super::{
-    adoc::{
-        self,
-        pl::{Renderer, fallthrough},
-    },
+    adoc::{self, pl::Renderer},
     anchor::AnchorContext,
     latex,
 };
@@ -26,7 +23,7 @@ use super::super::{
     },
     error::Error,
     parser, source,
-    splicer::{Key, Kind, Selection},
+    splicer::{Key, Kind},
 };
 
 // == Splice initialization
@@ -65,8 +62,8 @@ impl Key for (String, String) {
         format!("{}/{}", self.0, self.1)
     }
 
-    fn to_anchor(&self) -> String {
-        fallthrough::anchor_of_group(&self.0, &self.1)
+    fn to_anchor(&self, anchor_ctx: &AnchorContext<'_>) -> String {
+        anchor_ctx.group(&self.0, &self.1)
     }
 
     fn parse(
@@ -98,12 +95,11 @@ impl<'spec> Kind<'spec> for Source {
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .map(|selection| adoc::el::render_def(selection.data))
+            .map(|value| adoc::el::render_def(value))
             .collect::<Vec<_>>()
             .join("\n\n"))
     }
@@ -131,10 +127,9 @@ impl<'spec> Kind<'spec> for Latex {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
-        latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))
+        latex::render_defs(anchor_ctx, values.iter().copied().copied())
     }
 }
 
@@ -160,20 +155,13 @@ impl<'spec> Kind<'spec> for Prose {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .map(|selection| {
-                let group = selection.data;
-                let anchor_prefix = format!(
-                    "{}:{}:{idx_request}:{}",
-                    Self::NAME,
-                    selection.key.to_string(),
-                    selection.idx_key,
-                );
-                let mut renderer = Renderer::new(anchor_ctx, warnings, &anchor_prefix);
+            .map(|value| {
+                let group = value;
+                let mut renderer = Renderer::new(anchor_ctx, warnings);
                 renderer.render_rulegroup(
                     group.hints,
                     group.id_rel,

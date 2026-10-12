@@ -10,7 +10,7 @@ var t : text
 
 def $ite<X>(b, X_t, X_f)
 
-1. Case analysis on b
+1. Case analysis on b (total)
 
   1. Case (% = true)
 
@@ -40,7 +40,7 @@ builtin def $split_text(t, t')
 
 def $concat_text(t*{t <- t*})
 
-1. Case analysis on t*{t <- t*}
+1. Case analysis on t*{t <- t*} (total)
 
   1. Case (% matches pattern [])
 
@@ -166,7 +166,7 @@ def $ends_with(t, t_suffix)
 
 def $strip_prefix_rec(t, t_prefix)
 
-1. Case analysis on $starts_with(t, t_prefix)
+1. Case analysis on $starts_with(t, t_prefix) (total)
 
   1. Case true
 
@@ -180,7 +180,7 @@ def $strip_prefix_rec(t, t_prefix)
 
 def $strip_suffix_rec(t, t_suffix)
 
-1. Case analysis on $ends_with(t, t_suffix)
+1. Case analysis on $ends_with(t, t_suffix) (total)
 
   1. Case true
 
@@ -208,7 +208,7 @@ def $contains'(n_len, n_len', t, t_c)
 
   1. If ((n_len < |t|)), then
 
-    1. Case analysis on t[n_len]
+    1. Case analysis on t[n_len] (total)
 
       1. Case (% = t_c)
 
@@ -224,7 +224,7 @@ def $contains'(n_len, n_len', t, t_c)
 
 def $is_some_<X>(X?{X <- X?})
 
-1. Case analysis on X?{X <- X?}
+1. Case analysis on X?{X <- X?} (total)
 
   1. Case (% matches pattern ())
 
@@ -236,7 +236,7 @@ def $is_some_<X>(X?{X <- X?})
 
 def $opt_as_seq_<X>(X'?{X' <- X'?})
 
-1. Case analysis on X'?{X' <- X'?}
+1. Case analysis on X'?{X' <- X'?} (total)
 
   1. Case (% matches pattern ())
 
@@ -250,7 +250,7 @@ def $opt_as_seq_<X>(X'?{X' <- X'?})
 
 def $exists_(b*{b <- b*})
 
-1. Case analysis on b*{b <- b*}
+1. Case analysis on b*{b <- b*} (total)
 
   1. Case (% matches pattern [])
 
@@ -264,7 +264,7 @@ def $exists_(b*{b <- b*})
 
 def $forall_(b*{b <- b*})
 
-1. Case analysis on b*{b <- b*}
+1. Case analysis on b*{b <- b*} (total)
 
   1. Case (% matches pattern [])
 
@@ -278,7 +278,7 @@ def $forall_(b*{b <- b*})
 
 def $init_(nat)
 
-1. Case analysis on nat
+1. Case analysis on nat (total)
 
   1. Case (% = 0)
 
@@ -298,7 +298,7 @@ def $init_(nat)
 
 def $repeat_<X>(X, nat)
 
-1. Case analysis on nat
+1. Case analysis on nat (total)
 
   1. Case (% = 0)
 
@@ -324,7 +324,7 @@ builtin def $partition_<X>(X*{X <- X*}, nat)
 
 def $filter_<X>(X*{X <- X*}, b*{b <- b*})
 
-1. Case analysis on X*{X <- X*}
+1. Case analysis on X*{X <- X*} (total)
 
   1. Case (% matches pattern [])
 
@@ -342,7 +342,7 @@ def $filter_<X>(X*{X <- X*}, b*{b <- b*})
 
         1. (Let b_h :: b_t*{b_t <- b_t*} be b*{b <- b*})
 
-          1. Case analysis on b_h
+          1. Case analysis on b_h (total)
 
             1. Case true
 
@@ -528,7 +528,7 @@ syntax nameList =
 
 def $flatten_nameList(nameList')
 
-1. Case analysis on nameList'
+1. Case analysis on nameList' (total)
 
   1. Case (% has type name)
 
@@ -640,7 +640,7 @@ syntax typeParameterList =
 
 def $flatten_typeParameterList(typeParameterList')
 
-1. Case analysis on typeParameterList'
+1. Case analysis on typeParameterList' (total)
 
   1. Case (% has type typeParameter)
 
@@ -660,7 +660,7 @@ syntax typeParameterListOpt =
 
 def $flatten_typeParameterListOpt(typeParameterListOpt)
 
-1. Case analysis on typeParameterListOpt
+1. Case analysis on typeParameterListOpt (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -724,7 +724,7 @@ syntax constructorParameterListOpt =
 
 def $flatten_constructorParameterListOpt(constructorParameterListOpt)
 
-1. Case analysis on constructorParameterListOpt
+1. Case analysis on constructorParameterListOpt (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -745,7 +745,7 @@ syntax namedExpressionList =
 
 def $flatten_namedExpressionList(namedExpressionList')
 
-1. Case analysis on namedExpressionList'
+1. Case analysis on namedExpressionList' (total)
 
   1. Case (% has type namedExpression)
 
@@ -955,7 +955,7 @@ syntax expressionList =
 
 def $flatten_expressionList(expressionList')
 
-1. Case analysis on expressionList'
+1. Case analysis on expressionList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -1188,7 +1188,7 @@ syntax callTargetNonBrace =
 
 def $expressionNonBrace_as_expression(expressionNonBrace')
 
-1. Case analysis on expressionNonBrace'
+1. Case analysis on expressionNonBrace' (total)
 
   1. Case (% has type literalExpression)
 
@@ -1240,7 +1240,7 @@ def $expressionNonBrace_as_expression(expressionNonBrace')
 
     1. (Let memberAccessBaseNonBrace '.' member be expressionNonBrace' as memberAccessExpressionNonBrace)
 
-      1. Case analysis on memberAccessBaseNonBrace
+      1. Case analysis on memberAccessBaseNonBrace (total)
 
         1. Case (% has type prefixedTypeName)
 
@@ -1268,7 +1268,7 @@ def $expressionNonBrace_as_expression(expressionNonBrace')
 
     1. (Let expressionNonBrace_base `[ expression_hi sliceop expression_lo `] be expressionNonBrace' as sliceAccessExpressionNonBrace)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -1286,13 +1286,13 @@ def $expressionNonBrace_as_expression(expressionNonBrace')
 
     1. (Let callExpressionNonBrace be expressionNonBrace' as callExpressionNonBrace)
 
-      1. Case analysis on callExpressionNonBrace
+      1. Case analysis on callExpressionNonBrace (total)
 
         1. Case (% matches pattern % `( % `))
 
           1. (Let callTargetNonBrace `( argumentList `) be callExpressionNonBrace)
 
-            1. Case analysis on callTargetNonBrace
+            1. Case analysis on callTargetNonBrace (total)
 
               1. Case (% has type expressionNonBrace)
 
@@ -1376,7 +1376,7 @@ def $expression_as_expressionNonBrace(expression')
 
     1. (Let memberAccessBase '.' member be expression' as memberAccessExpression)
 
-      1. Case analysis on memberAccessBase
+      1. Case analysis on memberAccessBase (total)
 
         1. Case (% has type prefixedTypeName)
 
@@ -1416,13 +1416,13 @@ def $expression_as_expressionNonBrace(expression')
 
     1. (Let callExpression be expression' as callExpression)
 
-      1. Case analysis on callExpression
+      1. Case analysis on callExpression (total)
 
         1. Case (% matches pattern % `( % `))
 
           1. (Let callTarget `( argumentList `) be callExpression)
 
-            1. Case analysis on callTarget
+            1. Case analysis on callTarget (total)
 
               1. Case (% has type expression)
 
@@ -1529,7 +1529,7 @@ syntax simpleKeysetExpressionList =
 
 def $flatten_simpleKeysetExpressionList(simpleKeysetExpressionList')
 
-1. Case analysis on simpleKeysetExpressionList'
+1. Case analysis on simpleKeysetExpressionList' (total)
 
   1. Case (% has type simpleKeysetExpression)
 
@@ -1638,7 +1638,7 @@ syntax realTypeArgumentList =
 
 def $flatten_realTypeArgumentList(realTypeArgumentList')
 
-1. Case analysis on realTypeArgumentList'
+1. Case analysis on realTypeArgumentList' (total)
 
   1. Case (% has type realTypeArgument)
 
@@ -1716,7 +1716,7 @@ syntax typeArgumentList =
 
 def $flatten_typeArgumentList(typeArgumentList')
 
-1. Case analysis on typeArgumentList'
+1. Case analysis on typeArgumentList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -1890,7 +1890,7 @@ syntax lvalue =
 
 def $lvalue_as_expression(lvalue')
 
-1. Case analysis on lvalue'
+1. Case analysis on lvalue' (total)
 
   1. Case (% has type referenceExpression)
 
@@ -1918,7 +1918,7 @@ def $lvalue_as_expression(lvalue')
 
     1. (Let lvalue_base `[ expression_hi sliceop expression_lo `] be lvalue')
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -1988,7 +1988,7 @@ def $expression_as_lvalue(expression')
 
     1. (Let expression_base `[ expression_hi sliceop expression_lo `] be expression' as sliceAccessExpression)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -2305,7 +2305,7 @@ syntax switchCaseList =
 
 def $flatten_switchCaseList(switchCaseList')
 
-1. Case analysis on switchCaseList'
+1. Case analysis on switchCaseList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2385,7 +2385,7 @@ syntax blockElementStatementList =
 
 def $flatten_blockElementStatementList(blockElementStatementList')
 
-1. Case analysis on blockElementStatementList'
+1. Case analysis on blockElementStatementList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2424,7 +2424,7 @@ syntax objectDeclarationList =
 
 def $flatten_objectDeclarationList(objectDeclarationList')
 
-1. Case analysis on objectDeclarationList'
+1. Case analysis on objectDeclarationList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2455,7 +2455,7 @@ syntax typeFieldList =
 
 def $flatten_typeFieldList(typeFieldList')
 
-1. Case analysis on typeFieldList'
+1. Case analysis on typeFieldList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2547,7 +2547,7 @@ syntax externConstructorOrMethodPrototypeList =
 
 def $flatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList')
 
-1. Case analysis on externConstructorOrMethodPrototypeList'
+1. Case analysis on externConstructorOrMethodPrototypeList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2575,7 +2575,7 @@ syntax selectCaseList =
 
 def $flatten_selectCaseList(selectCaseList')
 
-1. Case analysis on selectCaseList'
+1. Case analysis on selectCaseList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2627,7 +2627,7 @@ syntax parserBlockElementStatementList =
 
 def $flatten_parserBlockElementStatementList(parserBlockElementStatementList')
 
-1. Case analysis on parserBlockElementStatementList'
+1. Case analysis on parserBlockElementStatementList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2677,7 +2677,7 @@ syntax parserStateList =
 
 def $flatten_parserStateList(parserStateList')
 
-1. Case analysis on parserStateList'
+1. Case analysis on parserStateList' (total)
 
   1. Case (% has type parserState)
 
@@ -2704,7 +2704,7 @@ syntax parserLocalDeclarationList =
 
 def $flatten_parserLocalDeclarationList(parserLocalDeclarationList')
 
-1. Case analysis on parserLocalDeclarationList'
+1. Case analysis on parserLocalDeclarationList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2728,7 +2728,7 @@ syntax constOpt =
 
 def $flatten_constOpt(constOpt)
 
-1. Case analysis on constOpt
+1. Case analysis on constOpt (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2749,7 +2749,7 @@ syntax tableKeyList =
 
 def $flatten_tableKeyList(tableKeyList')
 
-1. Case analysis on tableKeyList'
+1. Case analysis on tableKeyList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2782,7 +2782,7 @@ syntax tableActionList =
 
 def $flatten_tableActionList(tableActionList')
 
-1. Case analysis on tableActionList'
+1. Case analysis on tableActionList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2808,7 +2808,7 @@ syntax tableEntryList =
 
 def $flatten_tableEntryList(tableEntryList')
 
-1. Case analysis on tableEntryList'
+1. Case analysis on tableEntryList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2832,7 +2832,7 @@ syntax tablePropertyList =
 
 def $flatten_tablePropertyList(tablePropertyList')
 
-1. Case analysis on tablePropertyList'
+1. Case analysis on tablePropertyList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -2866,7 +2866,7 @@ syntax controlLocalDeclarationList =
 
 def $flatten_controlLocalDeclarationList(controlLocalDeclarationList')
 
-1. Case analysis on controlLocalDeclarationList'
+1. Case analysis on controlLocalDeclarationList' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -3078,7 +3078,7 @@ syntax p4program =
 
 def $flatten_p4program(p4program')
 
-1. Case analysis on p4program'
+1. Case analysis on p4program' (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -3121,7 +3121,7 @@ builtin def $fresh_typeId
 
 def $fresh_typeIds(nat)
 
-1. Case analysis on nat
+1. Case analysis on nat (total)
 
   1. Case (% = 0)
 
@@ -3182,7 +3182,7 @@ def $callableId'(parameterList)
 
 def $constructorId(name, constructorParameterListOpt)
 
-1. Case analysis on constructorParameterListOpt
+1. Case analysis on constructorParameterListOpt (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -3378,13 +3378,13 @@ builtin def $int_to_bits_signed(nat, i)
 
 def $int_of_integerValue(integerValue)
 
-1. Case analysis on integerValue
+1. Case analysis on integerValue (total)
 
   1. Case (% has type integerLiteral)
 
     1. (Let integerLiteral be integerValue as integerLiteral)
 
-      1. Case analysis on integerLiteral
+      1. Case analysis on integerLiteral (total)
 
         1. Case (% matches pattern D %)
 
@@ -3426,7 +3426,7 @@ def $nat_of_integerValue(integerValue)
 
 def $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value)
 
-1. Case analysis on fieldValue*{fieldValue <- fieldValue*}
+1. Case analysis on fieldValue*{fieldValue <- fieldValue*} (total)
 
   1. Case (% matches pattern [])
 
@@ -3436,7 +3436,7 @@ def $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value)
 
     1. (Let value_field_h nameIR_field_h ';' :: fieldValue_t*{fieldValue_t <- fieldValue_t*} be fieldValue*{fieldValue <- fieldValue*})
 
-      1. Case analysis on nameIR_field_h
+      1. Case analysis on nameIR_field_h (total)
 
         1. Case (% = nameIR)
 
@@ -3448,7 +3448,7 @@ def $update_fieldValue(fieldValue*{fieldValue <- fieldValue*}, nameIR, value)
 
 def $update_headerUnion(fieldValue'*{fieldValue' <- fieldValue'*}, nameIR)
 
-1. Case analysis on fieldValue'*{fieldValue' <- fieldValue'*}
+1. Case analysis on fieldValue'*{fieldValue' <- fieldValue'*} (total)
 
   1. Case (% matches pattern [])
 
@@ -3458,7 +3458,7 @@ def $update_headerUnion(fieldValue'*{fieldValue' <- fieldValue'*}, nameIR)
 
     1. (Let value_field_h nameIR_field_h ';' :: fieldValue_t*{fieldValue_t <- fieldValue_t*} be fieldValue'*{fieldValue' <- fieldValue'*})
 
-      1. Case analysis on nameIR_field_h
+      1. Case analysis on nameIR_field_h (total)
 
         1. Case (% = nameIR)
 
@@ -3652,7 +3652,7 @@ def $write_value_from_bits'(value', n_var, b*{b <- b*})
 
       1. (Let n_max '.' _nat V i be integerValue)
 
-        1. Case analysis on n_var
+        1. Case analysis on n_var (total)
 
           1. Case (% = 0)
 
@@ -3686,7 +3686,7 @@ def $write_value_from_bits'(value', n_var, b*{b <- b*})
 
 def $write_values_from_bits'(value*{value <- value*}, n_var, b*{b <- b*})
 
-1. Case analysis on value*{value <- value*}
+1. Case analysis on value*{value <- value*} (total)
 
   1. Case (% matches pattern [])
 
@@ -3704,7 +3704,7 @@ def $write_values_from_bits'(value*{value <- value*}, n_var, b*{b <- b*})
 
 def $write_value_fields_from_bits'(fieldValue*{fieldValue <- fieldValue*}, n_var, b*{b <- b*})
 
-1. Case analysis on fieldValue*{fieldValue <- fieldValue*}
+1. Case analysis on fieldValue*{fieldValue <- fieldValue*} (total)
 
   1. Case (% matches pattern [])
 
@@ -4126,7 +4126,7 @@ def $unroll_aliasTypeIR(typeIR')
 
 def $width_of_integerTypeIR(integerTypeIR)
 
-1. Case analysis on integerTypeIR
+1. Case analysis on integerTypeIR (total)
 
   1. Case (% has type intTypeIR)
 
@@ -4524,7 +4524,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
 def $typeId_of_typeDefIR(typeDefIR)
 
-1. Case analysis on typeDefIR
+1. Case analysis on typeDefIR (total)
 
   1. Case (% has type nameTypeIR)
 
@@ -4606,7 +4606,7 @@ def $typeId_of_typeDefIR(typeDefIR)
 
 def $typeIR_of_typeDefIR(typeDefIR)
 
-1. Case analysis on typeDefIR
+1. Case analysis on typeDefIR (total)
 
   1. Case (% has type nameTypeDefIR)
 
@@ -4684,7 +4684,7 @@ def $typeIR_of_typeDefIR(typeDefIR)
 
 def $typeParameterListIR_of_typeDefIR(typeDefIR)
 
-1. Case analysis on typeDefIR
+1. Case analysis on typeDefIR (total)
 
   1. Case (% has type nameTypeDefIR)
 
@@ -4828,7 +4828,7 @@ syntax builtinMethodTypeIR =
 
 def $signature_of_builtinMethodTypeIR(builtinMethodTypeIR)
 
-1. Case analysis on builtinMethodTypeIR
+1. Case analysis on builtinMethodTypeIR (total)
 
   1. Case (% has type builtinIsValidMethodTypeIR)
 
@@ -5025,7 +5025,7 @@ def $callableTypeIR_of_callableTypeDefIR(callableTypeDefIR)
 
     1. (Let externMethodTypeDefIR be callableTypeDefIR as externMethodTypeDefIR)
 
-      1. Case analysis on externMethodTypeDefIR
+      1. Case analysis on externMethodTypeDefIR (total)
 
         1. Case (% matches pattern EXTERN_METHOD % `< % ',' % `> `( % `) ':' %)
 
@@ -5077,7 +5077,7 @@ def $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR)
 
     1. (Let externMethodTypeDefIR be callableTypeDefIR as externMethodTypeDefIR)
 
-      1. Case analysis on externMethodTypeDefIR
+      1. Case analysis on externMethodTypeDefIR (total)
 
         1. Case (% matches pattern EXTERN_METHOD % `< % ',' % `> `( % `) ':' %)
 
@@ -5103,7 +5103,7 @@ def $typeParameterListIR_of_callableTypeDefIR(callableTypeDefIR)
 
 def $parameterListIR_of_callableTypeDefIR(callableTypeDefIR)
 
-1. Case analysis on callableTypeDefIR
+1. Case analysis on callableTypeDefIR (total)
 
   1. Case (% has type actionTypeDefIR)
 
@@ -5129,7 +5129,7 @@ def $parameterListIR_of_actionTypeDefIR(_annotationList ACTION _nameIR `( parame
 
 def $parameterListIR_of_functionTypeDefIR(functionTypeDefIR)
 
-1. Case analysis on functionTypeDefIR
+1. Case analysis on functionTypeDefIR (total)
 
   1. Case (% has type definedFunctionTypeDefIR)
 
@@ -5153,7 +5153,7 @@ def $parameterListIR_of_externFunctionTypeDefIR(EXTERN_FUNCTION _nameIR `< _type
 
 def $parameterListIR_of_methodTypeDefIR(methodTypeDefIR)
 
-1. Case analysis on methodTypeDefIR
+1. Case analysis on methodTypeDefIR (total)
 
   1. Case (% has type externMethodTypeDefIR)
 
@@ -5181,7 +5181,7 @@ def $parameterListIR_of_methodTypeDefIR(methodTypeDefIR)
 
 def $parameterListIR_of_externMethodTypeDefIR(externMethodTypeDefIR)
 
-1. Case analysis on externMethodTypeDefIR
+1. Case analysis on externMethodTypeDefIR (total)
 
   1. Case (% matches pattern EXTERN_METHOD % `< % ',' % `> `( % `) ':' %)
 
@@ -5225,7 +5225,7 @@ var B : bound
 
 def $free_typeIR(typeIR')
 
-1. Case analysis on typeIR'
+1. Case analysis on typeIR' (total)
 
   1. Case (% has type baseTypeIR)
 
@@ -5345,7 +5345,7 @@ def $free_typeIR(typeIR')
 
     1. (Let sequenceTypeIR be typeIR' as sequenceTypeIR)
 
-      1. Case analysis on sequenceTypeIR
+      1. Case analysis on sequenceTypeIR (total)
 
         1. Case (% matches pattern SEQ `< % `>)
 
@@ -5363,7 +5363,7 @@ def $free_typeIR(typeIR')
 
     1. (Let recordTypeIR be typeIR' as recordTypeIR)
 
-      1. Case analysis on recordTypeIR
+      1. Case analysis on recordTypeIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -5409,7 +5409,7 @@ def $free_parameterIRs(parameterIR*{parameterIR <- parameterIR*})
 
 def $free_callableTypeIR(callableTypeIR)
 
-1. Case analysis on callableTypeIR
+1. Case analysis on callableTypeIR (total)
 
   1. Case (% has type actionTypeIR)
 
@@ -5447,7 +5447,7 @@ def $free_callableTypeIR(callableTypeIR)
 
     1. (Let externMethodTypeIR be callableTypeIR as externMethodTypeIR)
 
-      1. Case analysis on externMethodTypeIR
+      1. Case analysis on externMethodTypeIR (total)
 
         1. Case (% matches pattern EXTERN_METHOD % `( % `) ':' %)
 
@@ -5571,7 +5571,7 @@ def $subst_typeIR(set<pair<typeId, typeIR>>, typeIR)
 
 def $subst_typeIR'(theta, typeIR')
 
-1. Case analysis on typeIR'
+1. Case analysis on typeIR' (total)
 
   1. Case (% has type baseTypeIR)
 
@@ -5787,7 +5787,7 @@ def $subst_typeIR'(theta, typeIR')
 
     1. (Let sequenceTypeIR be typeIR' as sequenceTypeIR)
 
-      1. Case analysis on sequenceTypeIR
+      1. Case analysis on sequenceTypeIR (total)
 
         1. Case (% matches pattern SEQ `< % `>)
 
@@ -5809,7 +5809,7 @@ def $subst_typeIR'(theta, typeIR')
 
     1. (Let recordTypeIR be typeIR' as recordTypeIR)
 
-      1. Case analysis on recordTypeIR
+      1. Case analysis on recordTypeIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -5869,7 +5869,7 @@ def $subst_callableTypeIR(set<pair<typeId, typeIR>>, callableTypeIR)
 
 def $subst_callableTypeIR'(theta, callableTypeIR)
 
-1. Case analysis on callableTypeIR
+1. Case analysis on callableTypeIR (total)
 
   1. Case (% has type actionTypeIR)
 
@@ -5909,7 +5909,7 @@ def $subst_callableTypeIR'(theta, callableTypeIR)
 
     1. (Let externMethodTypeIR be callableTypeIR as externMethodTypeIR)
 
-      1. Case analysis on externMethodTypeIR
+      1. Case analysis on externMethodTypeIR (total)
 
         1. Case (% matches pattern EXTERN_METHOD % `( % `) ':' %)
 
@@ -6013,7 +6013,7 @@ def $subst_callableTypeDefIR'(theta, callableTypeDefIR)
 
     1. (Let externMethodTypeDefIR be callableTypeDefIR as externMethodTypeDefIR)
 
-      1. Case analysis on externMethodTypeDefIR
+      1. Case analysis on externMethodTypeDefIR (total)
 
         1. Case (% matches pattern EXTERN_METHOD % `< % ',' % `> `( % `) ':' %)
 
@@ -6197,7 +6197,7 @@ def $specialize_constructorTypeDefIR(CONSTRUCTOR `< typeParameterIR_expl*{typePa
 
 relation Type_alpha: typeIR ~~ typeIR'
 
-1. Case analysis on typeIR
+1. Case analysis on typeIR (total)
 
   1. Case (% has type baseTypeIR)
 
@@ -6575,7 +6575,7 @@ relation Type_alpha: typeIR ~~ typeIR'
 
         1. (Let sequenceTypeIR' be typeIR' as sequenceTypeIR)
 
-          1. Case analysis on sequenceTypeIR
+          1. Case analysis on sequenceTypeIR (total)
 
             1. Case (% matches pattern SEQ `< % `>)
 
@@ -6627,7 +6627,7 @@ relation Type_alpha: typeIR ~~ typeIR'
 
         1. (Let recordTypeIR' be typeIR' as recordTypeIR)
 
-          1. Case analysis on recordTypeIR
+          1. Case analysis on recordTypeIR (total)
 
             1. Case (% matches pattern RECORD `{ % `})
 
@@ -6749,7 +6749,7 @@ relation ParameterType_alpha: _annotationList direction typeIR_a _id _parameterI
 
 relation ExternMethodType_alpha: externMethodTypeIR ~~ externMethodTypeIR'
 
-1. Case analysis on externMethodTypeIR
+1. Case analysis on externMethodTypeIR (total)
 
   1. Case (% matches pattern EXTERN_METHOD % `( % `) ':' %)
 
@@ -6978,7 +6978,7 @@ builtin def $bitacc_replace(i, i', i'', i''')
 
 def $un_op(unop, value)
 
-1. Case analysis on unop
+1. Case analysis on unop (total)
 
   1. Case (% matches pattern '~')
 
@@ -7044,7 +7044,7 @@ def $un_plus(value)
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -7072,7 +7072,7 @@ def $un_minus(value)
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -7186,7 +7186,7 @@ def $bin_plus(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -7376,7 +7376,7 @@ def $bin_minus(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -7564,7 +7564,7 @@ def $bin_mul(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -7764,7 +7764,7 @@ def $bin_shl(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -7774,7 +7774,7 @@ def $bin_shl(value, value')
 
             1. (Let integerLiteral' be value' as integerLiteral)
 
-              1. Case analysis on integerLiteral'
+              1. Case analysis on integerLiteral' (total)
 
                 1. Case (% matches pattern D %)
 
@@ -7806,7 +7806,7 @@ def $bin_shl(value, value')
 
             1. (Let integerLiteral' be value' as integerLiteral)
 
-              1. Case analysis on integerLiteral'
+              1. Case analysis on integerLiteral' (total)
 
                 1. Case (% matches pattern D %)
 
@@ -7842,7 +7842,7 @@ def $bin_shl(value, value')
 
             1. (Let integerLiteral' be value' as integerLiteral)
 
-              1. Case analysis on integerLiteral'
+              1. Case analysis on integerLiteral' (total)
 
                 1. Case (% matches pattern D %)
 
@@ -7882,7 +7882,7 @@ def $bin_shr(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -7892,7 +7892,7 @@ def $bin_shr(value, value')
 
             1. (Let integerLiteral' be value' as integerLiteral)
 
-              1. Case analysis on integerLiteral'
+              1. Case analysis on integerLiteral' (total)
 
                 1. Case (% matches pattern D %)
 
@@ -7924,7 +7924,7 @@ def $bin_shr(value, value')
 
             1. (Let integerLiteral' be value' as integerLiteral)
 
-              1. Case analysis on integerLiteral'
+              1. Case analysis on integerLiteral' (total)
 
                 1. Case (% matches pattern D %)
 
@@ -7960,7 +7960,7 @@ def $bin_shr(value, value')
 
             1. (Let integerLiteral' be value' as integerLiteral)
 
-              1. Case analysis on integerLiteral'
+              1. Case analysis on integerLiteral' (total)
 
                 1. Case (% matches pattern D %)
 
@@ -8076,7 +8076,7 @@ def $bin_le(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -8152,7 +8152,7 @@ def $bin_ge(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -8228,7 +8228,7 @@ def $bin_lt(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -8304,7 +8304,7 @@ def $bin_gt(value, value')
 
   1. (Let integerLiteral be value as integerLiteral)
 
-    1. Case analysis on integerLiteral
+    1. Case analysis on integerLiteral (total)
 
       1. Case (% matches pattern D %)
 
@@ -8430,7 +8430,7 @@ def $bin_eq(value, value')
 
     1. (Let integerLiteral be value as integerLiteral)
 
-      1. Case analysis on integerLiteral
+      1. Case analysis on integerLiteral (total)
 
         1. Case (% matches pattern D %)
 
@@ -8654,7 +8654,7 @@ def $bin_eq(value, value')
 
     1. (Let enumValue be value as enumValue)
 
-      1. Case analysis on enumValue
+      1. Case analysis on enumValue (total)
 
         1. Case (% matches pattern % '.' %)
 
@@ -9342,7 +9342,7 @@ def $cast_to_enum(enumTypeIR, value)
 
 def $cast_to_enum'(typeId, typeIR, valueFieldIR*{valueFieldIR <- valueFieldIR*}, value_target)
 
-1. Case analysis on valueFieldIR*{valueFieldIR <- valueFieldIR*}
+1. Case analysis on valueFieldIR*{valueFieldIR <- valueFieldIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -9358,7 +9358,7 @@ def $cast_to_enum'(typeId, typeIR, valueFieldIR*{valueFieldIR <- valueFieldIR*},
 
       1. (Let nameIR '=' value ';' be valueFieldIR_h)
 
-        1. Case analysis on $bin_eq(value, value_target)
+        1. Case analysis on $bin_eq(value, value_target) (total)
 
           1. Case true
 
@@ -9450,7 +9450,7 @@ def $cast_int(typeIR', integerValue)
 
         1. (Let integerLiteral be integerValue as integerLiteral)
 
-          1. Case analysis on integerLiteral
+          1. Case analysis on integerLiteral (total)
 
             1. Case (% matches pattern D %)
 
@@ -9480,7 +9480,7 @@ def $cast_int(typeIR', integerValue)
 
         1. (Let integerLiteral be integerValue as integerLiteral)
 
-          1. Case analysis on integerLiteral
+          1. Case analysis on integerLiteral (total)
 
             1. Case (% matches pattern D %)
 
@@ -9518,7 +9518,7 @@ def $cast_int(typeIR', integerValue)
 
         1. (Let integerLiteral be integerValue as integerLiteral)
 
-          1. Case analysis on integerLiteral
+          1. Case analysis on integerLiteral (total)
 
             1. Case (% matches pattern D %)
 
@@ -9572,7 +9572,7 @@ def $cast_int(typeIR', integerValue)
 
         1. (Let integerLiteral be integerValue as integerLiteral)
 
-          1. Case analysis on integerLiteral
+          1. Case analysis on integerLiteral (total)
 
             1. Case (% matches pattern D %)
 
@@ -9628,7 +9628,7 @@ def $cast_int(typeIR', integerValue)
 
         1. (Let integerLiteral be integerValue as integerLiteral)
 
-          1. Case analysis on integerLiteral
+          1. Case analysis on integerLiteral (total)
 
             1. Case (% matches pattern D %)
 
@@ -9856,7 +9856,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
     1. (Let TUPLE `< typeIR*{typeIR <- typeIR*} `> be typeIR' as tupleTypeIR)
 
-      1. Case analysis on sequenceValue
+      1. Case analysis on sequenceValue (total)
 
         1. Case (% matches pattern SEQ `( % `))
 
@@ -9890,7 +9890,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
     1. (Let sequenceTypeIR be typeIR' as sequenceTypeIR)
 
-      1. Case analysis on sequenceTypeIR
+      1. Case analysis on sequenceTypeIR (total)
 
         1. Case (% matches pattern SEQ `< % `>)
 
@@ -9930,7 +9930,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
     1. (Let ARRAY typeIR `[ n_size `] be typeIR' as arrayTypeIR)
 
-      1. Case analysis on sequenceValue
+      1. Case analysis on sequenceValue (total)
 
         1. Case (% matches pattern SEQ `( % `))
 
@@ -9964,7 +9964,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
     1. (Let HEADER_STACK typeIR `[ n_size `] be typeIR' as headerStackTypeIR)
 
-      1. Case analysis on sequenceValue
+      1. Case analysis on sequenceValue (total)
 
         1. Case (% matches pattern SEQ `( % `))
 
@@ -10002,7 +10002,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
     1. (Let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} be typeIR' as structTypeIR)
 
-      1. Case analysis on sequenceValue
+      1. Case analysis on sequenceValue (total)
 
         1. Case (% matches pattern SEQ `( % `))
 
@@ -10042,7 +10042,7 @@ def $cast_sequence(typeIR', sequenceValue)
 
     1. (Let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_field nameIR_field ';'*{_annotationList <- _annotationList*, nameIR_field <- nameIR_field*, typeIR_field <- typeIR_field*} `} be typeIR' as headerTypeIR)
 
-      1. Case analysis on sequenceValue
+      1. Case analysis on sequenceValue (total)
 
         1. Case (% matches pattern SEQ `( % `))
 
@@ -10088,7 +10088,7 @@ def $cast_record(typeIR, recordValue)
 
     1. (Let STRUCT typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} be typeIR as structTypeIR)
 
-      1. Case analysis on recordValue
+      1. Case analysis on recordValue (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -10118,7 +10118,7 @@ def $cast_record(typeIR, recordValue)
 
     1. (Let HEADER typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _annotationList typeIR_t_field id_t_field ';'*{_annotationList <- _annotationList*, id_t_field <- id_t_field*, typeIR_t_field <- typeIR_t_field*} `} be typeIR as headerTypeIR)
 
-      1. Case analysis on recordValue
+      1. Case analysis on recordValue (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -10148,7 +10148,7 @@ def $cast_record(typeIR, recordValue)
 
     1. (Let recordTypeIR be typeIR as recordTypeIR)
 
-      1. Case analysis on recordTypeIR
+      1. Case analysis on recordTypeIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -10778,7 +10778,7 @@ syntax prefixedNameIR =
 
 def $prefixedNonTypeName(prefixedNonTypeName)
 
-1. Case analysis on prefixedNonTypeName
+1. Case analysis on prefixedNonTypeName (total)
 
   1. Case (% has type nonTypeName)
 
@@ -10794,7 +10794,7 @@ def $prefixedNonTypeName(prefixedNonTypeName)
 
 def $prefixedTypeName(prefixedTypeName)
 
-1. Case analysis on prefixedTypeName
+1. Case analysis on prefixedTypeName (total)
 
   1. Case (% has type typeName)
 
@@ -10810,7 +10810,7 @@ def $prefixedTypeName(prefixedTypeName)
 
 def $flatten_prefixedNameIR(prefixedNameIR)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
@@ -10985,7 +10985,7 @@ syntax keysetExpressionIR =
 
 def $flatten_keysetExpressionIR(keysetExpressionIR)
 
-1. Case analysis on keysetExpressionIR
+1. Case analysis on keysetExpressionIR (total)
 
   1. Case (% has type simpleKeysetExpressionIR)
 
@@ -11071,7 +11071,7 @@ def $typedLvalueIR_as_typedExpressionIR(lvalueIR '#' `( typeIR `))
 
     1. (Let typedLvalueIR_base `[ typedExpressionIR_hi sliceop typedExpressionIR_lo `] be lvalueIR)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -11147,7 +11147,7 @@ def $typedExpressionIR_as_typedLvalueIR(expressionIR '#' `( typeIR _ctk `))
 
     1. (Let typedExpressionIR_base `[ typedExpressionIR_hi sliceop typedExpressionIR_lo `] be expressionIR as sliceAccessExpressionIR)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -11245,7 +11245,7 @@ syntax switchCaseIR =
 
 def $switchLabelIR_of_switchCaseIR(switchCaseIR)
 
-1. Case analysis on switchCaseIR
+1. Case analysis on switchCaseIR (total)
 
   1. Case (% matches pattern % ':' %)
 
@@ -11644,7 +11644,7 @@ syntax p4programIR =
 
 def $partition_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, nameIR*{nameIR <- nameIR*}, nameIR'*{nameIR' <- nameIR'*})
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -11658,7 +11658,7 @@ def $partition_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, nameIR
 
         1. (Let _annotationList _direction _typeIR nameIR_h _parameterInitializerOptIR be parameterIR_h)
 
-          1. Case analysis on nameIR_h <- nameIR*{nameIR <- nameIR*}
+          1. Case analysis on nameIR_h <- nameIR*{nameIR <- nameIR*} (total)
 
             1. Case true
 
@@ -11693,7 +11693,7 @@ def $align_parameterListIR(parameterIR*{parameterIR <- parameterIR*}, argumentIR
 
 def $align_parameterListIR_given(`{ id ':' parameterIR*{id <- id*, parameterIR <- parameterIR*} `}, parameterIR'*{parameterIR' <- parameterIR'*}, argumentIR*{argumentIR <- argumentIR*})
 
-1. Case analysis on parameterIR'*{parameterIR' <- parameterIR'*}
+1. Case analysis on parameterIR'*{parameterIR' <- parameterIR'*} (total)
 
   1. Case (% matches pattern [])
 
@@ -11711,7 +11711,7 @@ def $align_parameterListIR_given(`{ id ':' parameterIR*{id <- id*, parameterIR <
 
         1. (Let argumentIR_h :: argumentIR_t*{argumentIR_t <- argumentIR_t*} be argumentIR*{argumentIR <- argumentIR*})
 
-          1. Case analysis on argumentIR_h
+          1. Case analysis on argumentIR_h (total)
 
             1. Case (% has type typedExpressionIR)
 
@@ -11788,7 +11788,7 @@ def $callTargetKey(nameIR_f, argumentIR*{argumentIR <- argumentIR*})
 
 def $callTargetKey'(argumentIR)
 
-1. Case analysis on argumentIR
+1. Case analysis on argumentIR (total)
 
   1. Case (% has type typedExpressionIR)
 
@@ -12034,7 +12034,7 @@ def $find_non_overloadeds<V>(set<pair<callableId, V>>, nameIR_f)
 
       1. (Let nameIR `( _id*{_id <- _id*} `) be callableId_h)
 
-        1. Case analysis on nameIR
+        1. Case analysis on nameIR (total)
 
           1. Case (% = nameIR_f)
 
@@ -12116,7 +12116,7 @@ def $find_name_annotation_opt(annotationList)
 
         1. (Let '@' name `( annotationBody `) be annotation)
 
-          1. Case analysis on "name"
+          1. Case analysis on "name" (total)
 
             1. Case (% = $name(name))
 
@@ -12158,7 +12158,7 @@ def $add_annotationList(annotationList, annotation'?{annotation' <- annotation'?
 
 1. Else Dangling
 
-2. Case analysis on annotationList
+2. Case analysis on annotationList (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -12224,7 +12224,7 @@ def $subexpressions_of_expressionIR(expressionIR)
 
     1. (Let sequenceExpressionIR be expressionIR as sequenceExpressionIR)
 
-      1. Case analysis on sequenceExpressionIR
+      1. Case analysis on sequenceExpressionIR (total)
 
         1. Case (% matches pattern SEQ `{ % `})
 
@@ -12242,7 +12242,7 @@ def $subexpressions_of_expressionIR(expressionIR)
 
     1. (Let recordExpressionIR be expressionIR as recordExpressionIR)
 
-      1. Case analysis on recordExpressionIR
+      1. Case analysis on recordExpressionIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -12284,7 +12284,7 @@ def $subexpressions_of_expressionIR(expressionIR)
 
     1. (Let callExpressionIR be expressionIR as callExpressionIR)
 
-      1. Case analysis on callExpressionIR
+      1. Case analysis on callExpressionIR (total)
 
         1. Case (% matches pattern % `( % `))
 
@@ -12382,7 +12382,7 @@ def $lift_nameIR_as_nonTypeName(t)
 
 def $lift_prefixedNameIR_as_prefixedNonTypeName(prefixedNameIR)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
@@ -12402,7 +12402,7 @@ def $lift_nameIR_as_typeName(nameIR)
 
 def $lift_prefixedNameIR_as_prefixedTypeName(prefixedNameIR)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
@@ -12460,7 +12460,7 @@ def $unflatten_nameList(name*{name <- name*})
 
 def $unflatten_nameList'(nameList, name*{name <- name*})
 
-1. Case analysis on name*{name <- name*}
+1. Case analysis on name*{name <- name*} (total)
 
   1. Case (% matches pattern [])
 
@@ -12578,7 +12578,7 @@ def $lift_baseTypeIR(baseTypeIR)
 
 def $lift_typeDefIR_as_typeName(typeDefIR)
 
-1. Case analysis on typeDefIR
+1. Case analysis on typeDefIR (total)
 
   1. Case (% has type nameTypeIR)
 
@@ -12706,7 +12706,7 @@ def $lift_nameTypeIR(_NAME typeId)
 
 def $lift_aliasTypeIR(aliasTypeIR)
 
-1. Case analysis on aliasTypeIR
+1. Case analysis on aliasTypeIR (total)
 
   1. Case (% has type typedefTypeIR)
 
@@ -12816,7 +12816,7 @@ def $lift_typeParameterListIR(typeParameterIR*{typeParameterIR <- typeParameterI
 
 def $unflatten_typeParameterListOpt(typeParameter*{typeParameter <- typeParameter*})
 
-1. Case analysis on typeParameter*{typeParameter <- typeParameter*}
+1. Case analysis on typeParameter*{typeParameter <- typeParameter*} (total)
 
   1. Case (% matches pattern [])
 
@@ -12840,7 +12840,7 @@ def $unflatten_typeParameterList(typeParameter*{typeParameter <- typeParameter*}
 
 def $unflatten_typeParameterList'(typeParameterList, typeParameter*{typeParameter <- typeParameter*})
 
-1. Case analysis on typeParameter*{typeParameter <- typeParameter*}
+1. Case analysis on typeParameter*{typeParameter <- typeParameter*} (total)
 
   1. Case (% matches pattern [])
 
@@ -12854,7 +12854,7 @@ def $unflatten_typeParameterList'(typeParameterList, typeParameter*{typeParamete
 
 def $lift_constantInitializerOptIR_as_initializerOpt(constantInitializerIR'?{constantInitializerIR' <- constantInitializerIR'?})
 
-1. Case analysis on constantInitializerIR'?{constantInitializerIR' <- constantInitializerIR'?}
+1. Case analysis on constantInitializerIR'?{constantInitializerIR' <- constantInitializerIR'?} (total)
 
   1. Case (% matches pattern ())
 
@@ -12892,7 +12892,7 @@ def $lift_parameterListIR(parameterIR*{parameterIR <- parameterIR*})
 
 def $unflatten_parameterList(parameter*{parameter <- parameter*})
 
-1. Case analysis on parameter*{parameter <- parameter*}
+1. Case analysis on parameter*{parameter <- parameter*} (total)
 
   1. Case (% matches pattern [])
 
@@ -12916,7 +12916,7 @@ def $unflatten_nonEmptyParameterList(parameter*{parameter <- parameter*})
 
 def $unflatten_nonEmptyParameterList'(nonEmptyParameterList, parameter*{parameter <- parameter*})
 
-1. Case analysis on parameter*{parameter <- parameter*}
+1. Case analysis on parameter*{parameter <- parameter*} (total)
 
   1. Case (% matches pattern [])
 
@@ -12942,7 +12942,7 @@ def $lift_constructorParameterListIR(constructorParameterIR*{constructorParamete
 
 def $unflatten_constructorParameterList(constructorParameter*{constructorParameter <- constructorParameter*})
 
-1. Case analysis on constructorParameter*{constructorParameter <- constructorParameter*}
+1. Case analysis on constructorParameter*{constructorParameter <- constructorParameter*} (total)
 
   1. Case (% matches pattern [])
 
@@ -12964,7 +12964,7 @@ def $lift_initializerIR('=' typedExpressionIR)
 
 def $lift_initializerOptIR(initializerIR'?{initializerIR' <- initializerIR'?})
 
-1. Case analysis on initializerIR'?{initializerIR' <- initializerIR'?}
+1. Case analysis on initializerIR'?{initializerIR' <- initializerIR'?} (total)
 
   1. Case (% matches pattern ())
 
@@ -13010,7 +13010,7 @@ def $unflatten_namedExpressionList(namedExpression*{namedExpression <- namedExpr
 
 def $unflatten_namedExpressionList'(namedExpressionList, namedExpression*{namedExpression <- namedExpression*})
 
-1. Case analysis on namedExpression*{namedExpression <- namedExpression*}
+1. Case analysis on namedExpression*{namedExpression <- namedExpression*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13052,13 +13052,13 @@ def $lift_literalExpressionIR(literalExpression)
 
 def $lift_referenceExpressionIR(prefixedNameIR)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
     1. (Let _BARE nameIR be prefixedNameIR)
 
-      1. Case analysis on nameIR
+      1. Case analysis on nameIR (total)
 
         1. Case (% = "this")
 
@@ -13110,7 +13110,7 @@ def $lift_castExpressionIR(`( typeIR `) typedExpressionIR)
 
 1. (Let typeIR_unroll be $unroll_typeIR(typeIR))
 
-  1. Case analysis on typeIR_unroll <: setTypeIR
+  1. Case analysis on typeIR_unroll <: setTypeIR (total)
 
     1. Case true
 
@@ -13184,7 +13184,7 @@ def $unflatten_recordElementExpression_with_default(namedExpression*{namedExpres
 
 def $lift_dataExpressionIR(dataExpressionIR)
 
-1. Case analysis on dataExpressionIR
+1. Case analysis on dataExpressionIR (total)
 
   1. Case (% has type invalidHeaderExpression)
 
@@ -13196,7 +13196,7 @@ def $lift_dataExpressionIR(dataExpressionIR)
 
     1. (Let sequenceExpressionIR be dataExpressionIR as sequenceExpressionIR)
 
-      1. Case analysis on sequenceExpressionIR
+      1. Case analysis on sequenceExpressionIR (total)
 
         1. Case (% matches pattern SEQ `{ % `})
 
@@ -13220,7 +13220,7 @@ def $lift_dataExpressionIR(dataExpressionIR)
 
     1. (Let recordExpressionIR be dataExpressionIR as recordExpressionIR)
 
-      1. Case analysis on recordExpressionIR
+      1. Case analysis on recordExpressionIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -13250,7 +13250,7 @@ def $lift_errorAccessExpressionIR(ERROR '.' nameIR)
 
 def $lift_memberAccessBaseIR(memberAccessBaseIR)
 
-1. Case analysis on memberAccessBaseIR
+1. Case analysis on memberAccessBaseIR (total)
 
   1. Case (% matches pattern TYPE %)
 
@@ -13296,7 +13296,7 @@ def $lift_sliceAccessExpressionIR(typedExpressionIR_base `[ typedExpressionIR_hi
 
 def $lift_accessExpressionIR(accessExpressionIR)
 
-1. Case analysis on accessExpressionIR
+1. Case analysis on accessExpressionIR (total)
 
   1. Case (% has type errorAccessExpressionIR)
 
@@ -13338,13 +13338,13 @@ def $lift_callableTargetIR_as_expression(callableTargetIR')
 
 1. Else Dangling
 
-2. Case analysis on callableTargetIR'
+2. Case analysis on callableTargetIR' (total)
 
   1. Case (% has type prefixedNameIR)
 
     1. (Let prefixedNameIR be callableTargetIR' as prefixedNameIR)
 
-      1. Case analysis on prefixedNameIR
+      1. Case analysis on prefixedNameIR (total)
 
         1. Case (% matches pattern _BARE %)
 
@@ -13388,7 +13388,7 @@ def $lift_callableTargetIR_as_expression(callableTargetIR')
 
       1. Else Dangling
 
-      2. Case analysis on prefixedNameIR
+      2. Case analysis on prefixedNameIR (total)
 
         1. Case (% matches pattern _BARE %)
 
@@ -13432,7 +13432,7 @@ def $lift_typeArgumentListIR_as_realTypeArgumentList(typeArgumentIR*{typeArgumen
 
 def $lift_callExpressionIR(callExpressionIR)
 
-1. Case analysis on callExpressionIR
+1. Case analysis on callExpressionIR (total)
 
   1. Case (% matches pattern % `( % `))
 
@@ -13440,7 +13440,7 @@ def $lift_callExpressionIR(callExpressionIR)
 
       1. (Let prefixedNameIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> be constructorTargetIR)
 
-        1. Case analysis on typeArgumentIR*{typeArgumentIR <- typeArgumentIR*}
+        1. Case analysis on typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} (total)
 
           1. Case (% matches pattern [])
 
@@ -13498,7 +13498,7 @@ def $lift_parenthesizedExpressionIR(`( typedExpressionIR `))
 
 def $lift_expressionIR(expressionIR)
 
-1. Case analysis on expressionIR
+1. Case analysis on expressionIR (total)
 
   1. Case (% has type literalExpressionIR)
 
@@ -13568,7 +13568,7 @@ def $lift_expressionIR(expressionIR)
 
 def $unflatten_expressionList(expression*{expression <- expression*})
 
-1. Case analysis on expression*{expression <- expression*}
+1. Case analysis on expression*{expression <- expression*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13582,7 +13582,7 @@ def $unflatten_expressionList(expression*{expression <- expression*})
 
 def $unflatten_expressionList'(expressionList, expression*{expression <- expression*})
 
-1. Case analysis on expression*{expression <- expression*}
+1. Case analysis on expression*{expression <- expression*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13596,7 +13596,7 @@ def $unflatten_expressionList'(expressionList, expression*{expression <- express
 
 def $lift_simpleKeysetExpressionIR(simpleKeysetExpressionIR)
 
-1. Case analysis on simpleKeysetExpressionIR
+1. Case analysis on simpleKeysetExpressionIR (total)
 
   1. Case (% has type typedExpressionIR)
 
@@ -13654,7 +13654,7 @@ def $unflatten_simpleKeysetExpressionList(simpleKeysetExpression*{simpleKeysetEx
 
 def $unflatten_simpleKeysetExpressionList'(simpleKeysetExpressionList, simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*})
 
-1. Case analysis on simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*}
+1. Case analysis on simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13732,7 +13732,7 @@ def $lift_tupleKeysetExpressionIR(tupleKeysetExpressionIR)
 
 def $lift_keysetExpressionIR(keysetExpressionIR)
 
-1. Case analysis on keysetExpressionIR
+1. Case analysis on keysetExpressionIR (total)
 
   1. Case (% has type simpleKeysetExpressionIR)
 
@@ -13770,7 +13770,7 @@ def $unflatten_realTypeArgumentList(realTypeArgument*{realTypeArgument <- realTy
 
 def $unflatten_realTypeArgumentList'(realTypeArgumentList, realTypeArgument*{realTypeArgument <- realTypeArgument*})
 
-1. Case analysis on realTypeArgument*{realTypeArgument <- realTypeArgument*}
+1. Case analysis on realTypeArgument*{realTypeArgument <- realTypeArgument*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13784,7 +13784,7 @@ def $unflatten_realTypeArgumentList'(realTypeArgumentList, realTypeArgument*{rea
 
 def $unflatten_typeArgumentList(typeArgument*{typeArgument <- typeArgument*})
 
-1. Case analysis on typeArgument*{typeArgument <- typeArgument*}
+1. Case analysis on typeArgument*{typeArgument <- typeArgument*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13798,7 +13798,7 @@ def $unflatten_typeArgumentList(typeArgument*{typeArgument <- typeArgument*})
 
 def $unflatten_typeArgumentList'(typeArgumentList, typeArgument*{typeArgument <- typeArgument*})
 
-1. Case analysis on typeArgument*{typeArgument <- typeArgument*}
+1. Case analysis on typeArgument*{typeArgument <- typeArgument*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13812,7 +13812,7 @@ def $unflatten_typeArgumentList'(typeArgumentList, typeArgument*{typeArgument <-
 
 def $lift_argumentIR(argumentIR)
 
-1. Case analysis on argumentIR
+1. Case analysis on argumentIR (total)
 
   1. Case (% has type typedExpressionIR)
 
@@ -13846,7 +13846,7 @@ def $lift_argumentIR(argumentIR)
 
 def $unflatten_argumentList(argument*{argument <- argument*})
 
-1. Case analysis on argument*{argument <- argument*}
+1. Case analysis on argument*{argument <- argument*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13870,7 +13870,7 @@ def $unflatten_argumentListNonEmpty(argument*{argument <- argument*})
 
 def $unflatten_argumentListNonEmpty'(argumentListNonEmpty, argument*{argument <- argument*})
 
-1. Case analysis on argument*{argument <- argument*}
+1. Case analysis on argument*{argument <- argument*} (total)
 
   1. Case (% matches pattern [])
 
@@ -13958,13 +13958,13 @@ def $lift_typedLvalueIR(lvalueIR '#' _lvalueNoteIR)
 
 1. Else Dangling
 
-2. Case analysis on lvalueIR
+2. Case analysis on lvalueIR (total)
 
   1. Case (% has type prefixedNameIR)
 
     1. (Let prefixedNameIR be lvalueIR as prefixedNameIR)
 
-      1. Case analysis on prefixedNameIR
+      1. Case analysis on prefixedNameIR (total)
 
         1. Case (% matches pattern _BARE %)
 
@@ -14046,13 +14046,13 @@ def $lift_callableTargetIR_as_lvalue(callableTargetIR')
 
 1. Else Dangling
 
-2. Case analysis on callableTargetIR'
+2. Case analysis on callableTargetIR' (total)
 
   1. Case (% has type prefixedNameIR)
 
     1. (Let prefixedNameIR be callableTargetIR' as prefixedNameIR)
 
-      1. Case analysis on prefixedNameIR
+      1. Case analysis on prefixedNameIR (total)
 
         1. Case (% matches pattern _BARE %)
 
@@ -14104,7 +14104,7 @@ def $lift_callableTargetIR_as_lvalue(callableTargetIR')
 
       1. Else Dangling
 
-      2. Case analysis on prefixedNameIR
+      2. Case analysis on prefixedNameIR (total)
 
         1. Case (% matches pattern _BARE %)
 
@@ -14188,7 +14188,7 @@ def $lift_directApplicationStatementIR(constructorTargetIR '.' APPLY `( argument
 
 def $lift_returnStatementIR(returnStatementIR)
 
-1. Case analysis on returnStatementIR
+1. Case analysis on returnStatementIR (total)
 
   1. Case (% matches pattern RETURN ';')
 
@@ -14230,7 +14230,7 @@ def $lift_variableDeclarationIR(annotationList typeIR nameIR initializerIR?{init
 
 def $lift_blockElementStatementIR(blockElementStatementIR)
 
-1. Case analysis on blockElementStatementIR
+1. Case analysis on blockElementStatementIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -14264,7 +14264,7 @@ def $unflatten_blockElementStatementList(blockElementStatement*{blockElementStat
 
 def $unflatten_blockElementStatementList'(blockElementStatementList, blockElementStatement*{blockElementStatement <- blockElementStatement*})
 
-1. Case analysis on blockElementStatement*{blockElementStatement <- blockElementStatement*}
+1. Case analysis on blockElementStatement*{blockElementStatement <- blockElementStatement*} (total)
 
   1. Case (% matches pattern [])
 
@@ -14286,7 +14286,7 @@ def $lift_blockStatementIR(annotationList `{ blockElementStatementIR*{blockEleme
 
 def $lift_conditionalStatementIR(conditionalStatementIR)
 
-1. Case analysis on conditionalStatementIR
+1. Case analysis on conditionalStatementIR (total)
 
   1. Case (% matches pattern IF `( % `) %)
 
@@ -14312,7 +14312,7 @@ def $lift_conditionalStatementIR(conditionalStatementIR)
 
 def $lift_switchLabelIR(switchLabelIR)
 
-1. Case analysis on switchLabelIR
+1. Case analysis on switchLabelIR (total)
 
   1. Case (% matches pattern DEFAULT)
 
@@ -14330,7 +14330,7 @@ def $lift_switchLabelIR(switchLabelIR)
 
 def $lift_switchCaseIR(switchCaseIR)
 
-1. Case analysis on switchCaseIR
+1. Case analysis on switchCaseIR (total)
 
   1. Case (% matches pattern % ':' %)
 
@@ -14364,7 +14364,7 @@ def $unflatten_switchCaseList(switchCase*{switchCase <- switchCase*})
 
 def $unflatten_switchCaseList'(switchCaseList, switchCase*{switchCase <- switchCase*})
 
-1. Case analysis on switchCase*{switchCase <- switchCase*}
+1. Case analysis on switchCase*{switchCase <- switchCase*} (total)
 
   1. Case (% matches pattern [])
 
@@ -14426,7 +14426,7 @@ def $lift_actionDeclarationIR(annotationList ACTION nameIR `( parameterIR*{param
 
 def $lift_objectDeclarationIR(objectDeclarationIR)
 
-1. Case analysis on objectDeclarationIR
+1. Case analysis on objectDeclarationIR (total)
 
   1. Case (% has type functionDeclarationIR)
 
@@ -14540,7 +14540,7 @@ def $unflatten_objectDeclarationList(objectDeclaration*{objectDeclaration <- obj
 
 def $unflatten_objectDeclarationList'(objectDeclarationList, objectDeclaration*{objectDeclaration <- objectDeclaration*})
 
-1. Case analysis on objectDeclaration*{objectDeclaration <- objectDeclaration*}
+1. Case analysis on objectDeclaration*{objectDeclaration <- objectDeclaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -14566,7 +14566,7 @@ def $lift_matchKindDeclarationIR(MATCH_KIND `{ nameIR*{nameIR <- nameIR*} `})
 
 def $lift_enumTypeDeclarationIR(enumTypeDeclarationIR)
 
-1. Case analysis on enumTypeDeclarationIR
+1. Case analysis on enumTypeDeclarationIR (total)
 
   1. Case (% matches pattern % ENUM % `{ % `})
 
@@ -14612,7 +14612,7 @@ def $unflatten_typeFieldList(typeField*{typeField <- typeField*})
 
 def $unflatten_typeFieldList'(typeFieldList, typeField*{typeField <- typeField*})
 
-1. Case analysis on typeField*{typeField <- typeField*}
+1. Case analysis on typeField*{typeField <- typeField*} (total)
 
   1. Case (% matches pattern [])
 
@@ -14656,7 +14656,7 @@ def $lift_headerUnionTypeDeclarationIR(annotationList HEADER_UNION nameIR `< typ
 
 def $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)
 
-1. Case analysis on derivedTypeDeclarationIR
+1. Case analysis on derivedTypeDeclarationIR (total)
 
   1. Case (% has type enumTypeDeclarationIR)
 
@@ -14684,7 +14684,7 @@ def $lift_derivedTypeDeclarationIR(derivedTypeDeclarationIR)
 
 def $lift_typedefIR(typedefIR)
 
-1. Case analysis on typedefIR
+1. Case analysis on typedefIR (total)
 
   1. Case (% has type typeIR)
 
@@ -14700,13 +14700,13 @@ def $lift_typedefIR(typedefIR)
 
 def $lift_typedefDeclarationIR(typedefDeclarationIR)
 
-1. Case analysis on typedefDeclarationIR
+1. Case analysis on typedefDeclarationIR (total)
 
   1. Case (% matches pattern % TYPEDEF % % ';')
 
     1. (Let annotationList TYPEDEF typedefIR nameIR ';' be typedefDeclarationIR)
 
-      1. Case analysis on typedefIR
+      1. Case analysis on typedefIR (total)
 
         1. Case (% has type typeIR)
 
@@ -14754,7 +14754,7 @@ def $lift_externConstructorPrototypeIR(annotationList nameIR `< ',' typeParamete
 
 def $lift_externMethodPrototypeIR(externMethodPrototypeIR)
 
-1. Case analysis on externMethodPrototypeIR
+1. Case analysis on externMethodPrototypeIR (total)
 
   1. Case (% matches pattern % % ';')
 
@@ -14778,7 +14778,7 @@ def $unflatten_externConstructorOrMethodPrototypeList(externConstructorOrMethodP
 
 def $unflatten_externConstructorOrMethodPrototypeList'(externConstructorOrMethodPrototypeList, externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*})
 
-1. Case analysis on externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*}
+1. Case analysis on externConstructorOrMethodPrototype*{externConstructorOrMethodPrototype <- externConstructorOrMethodPrototype*} (total)
 
   1. Case (% matches pattern [])
 
@@ -14808,7 +14808,7 @@ def $lift_externObjectDeclarationIR(annotationList EXTERN nameIR `< typeParamete
 
 def $lift_externDeclarationIR(externDeclarationIR)
 
-1. Case analysis on externDeclarationIR
+1. Case analysis on externDeclarationIR (total)
 
   1. Case (% has type externFunctionDeclarationIR)
 
@@ -14844,7 +14844,7 @@ def $unflatten_selectCaseList(selectCase*{selectCase <- selectCase*})
 
 def $unflatten_selectCaseList'(selectCaseList, selectCase*{selectCase <- selectCase*})
 
-1. Case analysis on selectCase*{selectCase <- selectCase*}
+1. Case analysis on selectCase*{selectCase <- selectCase*} (total)
 
   1. Case (% matches pattern [])
 
@@ -14866,7 +14866,7 @@ def $lift_selectExpressionIR(SELECT `( typedExpressionListIR `) `{ selectCaseIR*
 
 def $lift_stateExpressionIR(stateExpressionIR)
 
-1. Case analysis on stateExpressionIR
+1. Case analysis on stateExpressionIR (total)
 
   1. Case (% matches pattern % ';')
 
@@ -14938,7 +14938,7 @@ def $lift_parserTypeDeclarationIR(annotationList PARSER nameIR `< typeParameterI
 
 def $lift_parserStatementIR(parserStatementIR)
 
-1. Case analysis on parserStatementIR
+1. Case analysis on parserStatementIR (total)
 
   1. Case (% has type emptyStatementIR)
 
@@ -14978,7 +14978,7 @@ def $lift_parserStatementIR(parserStatementIR)
 
 def $lift_parserBlockElementStatementIR(parserBlockElementStatementIR)
 
-1. Case analysis on parserBlockElementStatementIR
+1. Case analysis on parserBlockElementStatementIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -15012,7 +15012,7 @@ def $unflatten_parserBlockElementStatementList(parserBlockElementStatement*{pars
 
 def $unflatten_parserBlockElementStatementList'(parserBlockElementStatementList, parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*})
 
-1. Case analysis on parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}
+1. Case analysis on parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15032,7 +15032,7 @@ def $lift_parserBlockStatementIR(annotationList `{ parserBlockElementStatementIR
 
 def $lift_parserConditionalStatementIR(parserConditionalStatementIR)
 
-1. Case analysis on parserConditionalStatementIR
+1. Case analysis on parserConditionalStatementIR (total)
 
   1. Case (% matches pattern IF `( % `) %)
 
@@ -15086,7 +15086,7 @@ def $unflatten_parserStateList(parserState*{parserState <- parserState*})
 
 def $unflatten_parserStateList'(parserStateList, parserState*{parserState <- parserState*})
 
-1. Case analysis on parserState*{parserState <- parserState*}
+1. Case analysis on parserState*{parserState <- parserState*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15100,7 +15100,7 @@ def $unflatten_parserStateList'(parserStateList, parserState*{parserState <- par
 
 def $lift_parserLocalDeclarationIR(parserLocalDeclarationIR)
 
-1. Case analysis on parserLocalDeclarationIR
+1. Case analysis on parserLocalDeclarationIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -15140,7 +15140,7 @@ def $unflatten_parserLocalDeclarationList(parserLocalDeclaration*{parserLocalDec
 
 def $unflatten_parserLocalDeclarationList'(parserLocalDeclarationList, parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*})
 
-1. Case analysis on parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}
+1. Case analysis on parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15208,7 +15208,7 @@ def $unflatten_tableKeyList(tableKey*{tableKey <- tableKey*})
 
 def $unflatten_tableKeyList'(tableKeyList, tableKey*{tableKey <- tableKey*})
 
-1. Case analysis on tableKey*{tableKey <- tableKey*}
+1. Case analysis on tableKey*{tableKey <- tableKey*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15256,7 +15256,7 @@ def $unflatten_tableActionList(tableAction*{tableAction <- tableAction*})
 
 def $unflatten_tableActionList'(tableActionList, tableAction*{tableAction <- tableAction*})
 
-1. Case analysis on tableAction*{tableAction <- tableAction*}
+1. Case analysis on tableAction*{tableAction <- tableAction*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15318,7 +15318,7 @@ def $unflatten_tableEntryList(tableEntry*{tableEntry <- tableEntry*})
 
 def $unflatten_tableEntryList'(tableEntryList, tableEntry*{tableEntry <- tableEntry*})
 
-1. Case analysis on tableEntry*{tableEntry <- tableEntry*}
+1. Case analysis on tableEntry*{tableEntry <- tableEntry*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15376,7 +15376,7 @@ def $lift_tableEntriesPropertyIR(annotationList constOptIR ENTRIES '=' `{ tableE
 
 def $lift_tablePropertyIR(tablePropertyIR)
 
-1. Case analysis on tablePropertyIR
+1. Case analysis on tablePropertyIR (total)
 
   1. Case (% has type tableKeysPropertyIR)
 
@@ -15422,7 +15422,7 @@ def $unflatten_tablePropertyList(tableProperty*{tableProperty <- tableProperty*}
 
 def $unflatten_tablePropertyList'(tablePropertyList, tableProperty*{tableProperty <- tableProperty*})
 
-1. Case analysis on tableProperty*{tableProperty <- tableProperty*}
+1. Case analysis on tableProperty*{tableProperty <- tableProperty*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15460,7 +15460,7 @@ def $lift_controlBodyIR(controlBodyIR)
 
 def $lift_controlLocalDeclarationIR(controlLocalDeclarationIR)
 
-1. Case analysis on controlLocalDeclarationIR
+1. Case analysis on controlLocalDeclarationIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -15506,7 +15506,7 @@ def $unflatten_controlLocalDeclarationList(controlLocalDeclaration*{controlLocal
 
 def $unflatten_controlLocalDeclarationList'(controlLocalDeclarationList, controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*})
 
-1. Case analysis on controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}
+1. Case analysis on controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15550,7 +15550,7 @@ def $lift_packageTypeDeclarationIR(annotationList PACKAGE nameIR `< typeParamete
 
 def $lift_typeDeclarationIR(typeDeclarationIR)
 
-1. Case analysis on typeDeclarationIR
+1. Case analysis on typeDeclarationIR (total)
 
   1. Case (% has type derivedTypeDeclarationIR)
 
@@ -15584,7 +15584,7 @@ def $lift_typeDeclarationIR(typeDeclarationIR)
 
 def $lift_declarationIR(declarationIR)
 
-1. Case analysis on declarationIR
+1. Case analysis on declarationIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -15664,7 +15664,7 @@ def $unflatten_p4program(declaration*{declaration <- declaration*})
 
 def $unflatten_p4program'(p4program, declaration*{declaration <- declaration*})
 
-1. Case analysis on declaration*{declaration <- declaration*}
+1. Case analysis on declaration*{declaration <- declaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15793,7 +15793,7 @@ def $empty_typingContext
 
 def $bound(p, TC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -15845,7 +15845,7 @@ def $set_loop_t(TC, loop)
 
 def $add_var_t(p, TC, id, varTypeIR)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -15915,7 +15915,7 @@ def $add_var_t(p, TC, id, varTypeIR)
 
 def $add_vars_t(p, TC, id*{id <- id*}, varTypeIR*{varTypeIR <- varTypeIR*})
 
-1. Case analysis on id*{id <- id*}
+1. Case analysis on id*{id <- id*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15943,7 +15943,7 @@ def $add_vars_t(p, TC, id*{id <- id*}, varTypeIR*{varTypeIR <- varTypeIR*})
 
 def $add_parameter_t(cursor, TC, _annotationList direction typeIR id _parameterInitializerOptIR)
 
-1. Case analysis on direction matches _EMPTY
+1. Case analysis on direction matches _EMPTY (total)
 
   1. Case true
 
@@ -15963,7 +15963,7 @@ def $add_parameter_t(cursor, TC, _annotationList direction typeIR id _parameterI
 
 def $add_parameters_t(cursor, TC, parameterIR*{parameterIR <- parameterIR*})
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -15989,7 +15989,7 @@ def $add_constructorParameter_t(TC, _annotationList direction typeIR id _paramet
 
 def $add_constructorParameters_t(TC, parameterIR*{parameterIR <- parameterIR*})
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -16007,7 +16007,7 @@ def $add_constructorParameters_t(TC, parameterIR*{parameterIR <- parameterIR*})
 
 def $add_typeDef_t(p, TC, typeId, typeDefIR)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -16053,7 +16053,7 @@ def $add_typeDef_t(p, TC, typeId, typeDefIR)
 
 def $add_typeDefs_t(p, TC, typeId*{typeId <- typeId*}, typeDefIR*{typeDefIR <- typeDefIR*})
 
-1. Case analysis on typeId*{typeId <- typeId*}
+1. Case analysis on typeId*{typeId <- typeId*} (total)
 
   1. Case (% matches pattern [])
 
@@ -16193,7 +16193,7 @@ def $add_constructorDef_non_overload_t(TC, callableId, constructorTypeDefIR)
 
 def $add_constructorDefs_t(TC, callableId*{callableId <- callableId*}, constructorTypeDefIR*{constructorTypeDefIR <- constructorTypeDefIR*})
 
-1. Case analysis on callableId*{callableId <- callableId*}
+1. Case analysis on callableId*{callableId <- callableId*} (total)
 
   1. Case (% matches pattern [])
 
@@ -16221,7 +16221,7 @@ def $add_constructorDefs_t(TC, callableId*{callableId <- callableId*}, construct
 
 def $find_var_t(prefixedNameIR, p, TC)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern '.' %)
 
@@ -16235,7 +16235,7 @@ def $find_var_t(prefixedNameIR, p, TC)
 
     1. (Let _BARE id be prefixedNameIR)
 
-      1. Case analysis on p
+      1. Case analysis on p (total)
 
         1. Case (% matches pattern GLOBAL)
 
@@ -16313,7 +16313,7 @@ def $find_typeDef_t(p, TC, prefixedNameIR)
 
 1. Else Dangling
 
-2. Case analysis on p
+2. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -16381,11 +16381,11 @@ def $find_typeDef_t(p, TC, prefixedNameIR)
 
 def $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
-    1. Case analysis on prefixedNameIR
+    1. Case analysis on prefixedNameIR (total)
 
       1. Case (% matches pattern '.' %)
 
@@ -16455,7 +16455,7 @@ def $find_callableDef_non_overloaded_t(p, TC, prefixedNameIR)
 
 1. Else Dangling
 
-2. Case analysis on p
+2. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -16503,7 +16503,7 @@ def $find_callableDef_non_overloaded_t(p, TC, prefixedNameIR)
 
 def $find_constructorDef_overloaded_t(TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern '.' %)
 
@@ -16549,7 +16549,7 @@ def $find_local_return_type_t(TC)
 
     1. (Let externMethodLocalKind be localKind as externMethodLocalKind)
 
-      1. Case analysis on externMethodLocalKind
+      1. Case analysis on externMethodLocalKind (total)
 
         1. Case (% matches pattern EXTERN_METHOD ':' %)
 
@@ -16658,7 +16658,7 @@ def $update_mode_tbl(TBLC, tableKeyIR*{tableKeyIR <- tableKeyIR*})
 
 1. (Let b_pri be $requires_priority(tableKeyIR))*{tableKeyIR <- tableKeyIR*, b_pri -> b_pri*}
 
-  1. Case analysis on $exists_(b_pri*{b_pri <- b_pri*})
+  1. Case analysis on $exists_(b_pri*{b_pri <- b_pri*}) (total)
 
     1. Case true
 
@@ -16714,7 +16714,7 @@ def $find_action(TBLC, prefixedNameIR)
 
 def $find_action'(matchAction*{matchAction <- matchAction*}, prefixedNameIR)
 
-1. Case analysis on matchAction*{matchAction <- matchAction*}
+1. Case analysis on matchAction*{matchAction <- matchAction*} (total)
 
   1. Case (% matches pattern [])
 
@@ -16726,7 +16726,7 @@ def $find_action'(matchAction*{matchAction <- matchAction*}, prefixedNameIR)
 
       1. (Let prefixedNameIR' `( parameterIR*{parameterIR <- parameterIR*} '@' argumentListIR `) be matchAction_h)
 
-        1. Case analysis on prefixedNameIR'
+        1. Case analysis on prefixedNameIR' (total)
 
           1. Case (% = prefixedNameIR)
 
@@ -16772,7 +16772,7 @@ def $set_priorities_of_tableEntryListIR(TBLC, TBLS*{TBLS <- TBLS*}, tableEntryIR
 
   1. Else Dangling
 
-3. Case analysis on tableEntryIR*{tableEntryIR <- tableEntryIR*}
+3. Case analysis on tableEntryIR*{tableEntryIR <- tableEntryIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -16846,7 +16846,7 @@ def $set_priorities_of_tableEntryListIR(TBLC, TBLS*{TBLS <- TBLS*}, tableEntryIR
 
 def $set_priorities_of_tableEntryListIR'(TBLC, n_last, tableEntryIR*{tableEntryIR <- tableEntryIR*})
 
-1. Case analysis on tableEntryIR*{tableEntryIR <- tableEntryIR*}
+1. Case analysis on tableEntryIR*{tableEntryIR <- tableEntryIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -16912,11 +16912,11 @@ def $set_priority_of_tableEntryIR(tableEntryIR, n)
 
 def $join_tableEntryState(TBLS, TBLS')
 
-1. Case analysis on TBLS
+1. Case analysis on TBLS (total)
 
   1. Case (% matches pattern NON_LPM)
 
-    1. Case analysis on TBLS'
+    1. Case analysis on TBLS' (total)
 
       1. Case (% matches pattern LPM %)
 
@@ -17022,7 +17022,7 @@ def $tableEntry_lpm_prefix'(value, n_prefix)
 
 relation Type_wf: B |- typeIR'
 
-1. Case analysis on typeIR'
+1. Case analysis on typeIR' (total)
 
   1. Case (% has type baseTypeIR)
 
@@ -17270,7 +17270,7 @@ relation Type_wf: B |- typeIR'
 
     1. (Let sequenceTypeIR be typeIR' as sequenceTypeIR)
 
-      1. Case analysis on sequenceTypeIR
+      1. Case analysis on sequenceTypeIR (total)
 
         1. Case (% matches pattern SEQ `< % `>)
 
@@ -17296,7 +17296,7 @@ relation Type_wf: B |- typeIR'
 
     1. (Let recordTypeIR be typeIR' as recordTypeIR)
 
-      1. Case analysis on recordTypeIR
+      1. Case analysis on recordTypeIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -17382,7 +17382,7 @@ relation TypeDef_wf: B |- typeDefIR
 
 relation ParameterType_wf: B |- annotationList direction typeIR _id parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?}
 
-1. Case analysis on parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?}
+1. Case analysis on parameterInitializerIR?{parameterInitializerIR <- parameterInitializerIR?} (total)
 
   1. Case (% matches pattern ())
 
@@ -17444,7 +17444,7 @@ relation ReturnType_wf: B |- typeIR_ret
 
 relation CallableType_wf: B |- callableTypeIR
 
-1. Case analysis on callableTypeIR
+1. Case analysis on callableTypeIR (total)
 
   1. Case (% has type actionTypeIR)
 
@@ -17522,7 +17522,7 @@ relation CallableType_wf: B |- callableTypeIR
 
     1. (Let externMethodTypeIR be callableTypeIR as externMethodTypeIR)
 
-      1. Case analysis on externMethodTypeIR
+      1. Case analysis on externMethodTypeIR (total)
 
         1. Case (% matches pattern EXTERN_METHOD % `( % `) ':' %)
 
@@ -18834,7 +18834,7 @@ def $directionless_trailing(direction*{direction <- direction*})
 
 def $directionless_trailing'(b, direction'*{direction' <- direction'*})
 
-1. Case analysis on direction'*{direction' <- direction'*}
+1. Case analysis on direction'*{direction' <- direction'*} (total)
 
   1. Case (% matches pattern [])
 
@@ -18850,7 +18850,7 @@ def $directionless_trailing'(b, direction'*{direction' <- direction'*})
 
       1. Else Dangling
 
-2. Case analysis on b
+2. Case analysis on b (total)
 
   1. Case (% = true)
 
@@ -19401,7 +19401,7 @@ relation Expr_eval_lctk: p TC |- expressionIR '#' expressionNoteIR ~> %
 
     1. (Let sequenceExpressionIR be expressionIR as sequenceExpressionIR)
 
-      1. Case analysis on sequenceExpressionIR
+      1. Case analysis on sequenceExpressionIR (total)
 
         1. Case (% matches pattern SEQ `{ % `})
 
@@ -19423,7 +19423,7 @@ relation Expr_eval_lctk: p TC |- expressionIR '#' expressionNoteIR ~> %
 
     1. (Let recordExpressionIR be expressionIR as recordExpressionIR)
 
-      1. Case analysis on recordExpressionIR
+      1. Case analysis on recordExpressionIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -19461,7 +19461,7 @@ relation Expr_eval_lctk: p TC |- expressionIR '#' expressionNoteIR ~> %
 
     1. (Let memberAccessBaseIR '.' nameIR be expressionIR as memberAccessExpressionIR)
 
-      1. Case analysis on memberAccessBaseIR
+      1. Case analysis on memberAccessBaseIR (total)
 
         1. Case (% matches pattern TYPE %)
 
@@ -19679,7 +19679,7 @@ relation Expr_eval_lctk: p TC |- expressionIR '#' expressionNoteIR ~> %
 
     1. (Let typedExpressionIR_base `[ typedExpressionIR sliceop typedExpressionIR' `] be expressionIR as sliceAccessExpressionIR)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -19709,7 +19709,7 @@ relation Expr_eval_lctk: p TC |- expressionIR '#' expressionNoteIR ~> %
 
         1. (Let callableTargetIR' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) be callExpressionIR)
 
-          1. Case analysis on callableTargetIR'
+          1. Case analysis on callableTargetIR' (total)
 
             1. Case (% has type prefixedNameIR)
 
@@ -19793,7 +19793,7 @@ relation Expr_eval_lctk: p TC |- expressionIR '#' expressionNoteIR ~> %
 
                     1. (Let ?(typeDefIR_base) be typeDefIR?{typeDefIR <- typeDefIR?})
 
-                      1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR_base)
+                      1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR_base) (total)
 
                         1. Case true
 
@@ -19867,7 +19867,7 @@ relation Argument_eval_lctk: p TC |- argumentIR ~> %
 
 relation Type_ok: p TC |- typeOrVoid : % '#' %
 
-1. Case analysis on typeOrVoid
+1. Case analysis on typeOrVoid (total)
 
   1. Case (% matches pattern VOID)
 
@@ -19877,7 +19877,7 @@ relation Type_ok: p TC |- typeOrVoid : % '#' %
 
     1. (Let baseType be typeOrVoid as baseType)
 
-      1. Case analysis on baseType
+      1. Case analysis on baseType (total)
 
         1. Case (% matches pattern BOOL)
 
@@ -20051,7 +20051,7 @@ relation Type_ok: p TC |- typeOrVoid : % '#' %
 
             1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
 
-              1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR)
+              1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR) (total)
 
                 1. Case true
 
@@ -20099,7 +20099,7 @@ relation Type_ok: p TC |- typeOrVoid : % '#' %
 
         1. (Let typeIR_base' be $unroll_typeIR(typeIR_base))
 
-          1. Case analysis on (typeIR_base' <: headerTypeIR \/ typeIR_base' <: headerUnionTypeIR)
+          1. Case analysis on (typeIR_base' <: headerTypeIR \/ typeIR_base' <: headerUnionTypeIR) (total)
 
             1. Case true
 
@@ -20229,7 +20229,7 @@ relation TypeArgument_ok: p TC |- typeArgument : % '#' %
 
 relation TypeArguments_ok: p TC |- typeArgument*{typeArgument <- typeArgument*} : % '#' %
 
-1. Case analysis on typeArgument*{typeArgument <- typeArgument*}
+1. Case analysis on typeArgument*{typeArgument <- typeArgument*} (total)
 
   1. Case (% matches pattern [])
 
@@ -20409,7 +20409,7 @@ relation Cast_expl_neq: typeIR -> typeIR' : %
 
     1. (Let sequenceTypeIR be typeIR as sequenceTypeIR)
 
-      1. Case analysis on sequenceTypeIR
+      1. Case analysis on sequenceTypeIR (total)
 
         1. Case (% matches pattern SEQ `< % `>)
 
@@ -20645,7 +20645,7 @@ relation Cast_expl_neq: typeIR -> typeIR' : %
 
     1. (Let recordTypeIR be typeIR as recordTypeIR)
 
-      1. Case analysis on recordTypeIR
+      1. Case analysis on recordTypeIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -20929,7 +20929,7 @@ relation Cast_impl_neq: typeIR -> typeIR' : %
 
     1. (Let sequenceTypeIR be typeIR as sequenceTypeIR)
 
-      1. Case analysis on sequenceTypeIR
+      1. Case analysis on sequenceTypeIR (total)
 
         1. Case (% matches pattern SEQ `< % `>)
 
@@ -21185,7 +21185,7 @@ relation Cast_impl_neq: typeIR -> typeIR' : %
 
     1. (Let recordTypeIR be typeIR as recordTypeIR)
 
-      1. Case analysis on recordTypeIR
+      1. Case analysis on recordTypeIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -21375,7 +21375,7 @@ relation Expr_ok: p TC |- expression'' : %
 
     1. (Let integerLiteral be expression'' as integerLiteral)
 
-      1. Case analysis on integerLiteral
+      1. Case analysis on integerLiteral (total)
 
         1. Case (% matches pattern D %)
 
@@ -21611,7 +21611,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                               1. (Let ctk_r_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_r_reduced))
 
-                                1. Case analysis on ctk_r_reduced matches LCTK
+                                1. Case analysis on ctk_r_reduced matches LCTK (total)
 
                                   1. Case true
 
@@ -21977,7 +21977,7 @@ relation Expr_ok: p TC |- expression'' : %
 
     1. (Let `{ sequenceOrRecordElementExpression _trailingCommaOpt `} be expression'' as sequenceOrRecordExpression)
 
-      1. Case analysis on sequenceOrRecordElementExpression
+      1. Case analysis on sequenceOrRecordElementExpression (total)
 
         1. Case (% has type expressionList)
 
@@ -21985,7 +21985,7 @@ relation Expr_ok: p TC |- expression'' : %
 
             1. (Let expression_e*{expression_e <- expression_e*} be $flatten_expressionList(expressionList))
 
-              1. Case analysis on '...' as expression <- expression_e*{expression_e <- expression_e*}
+              1. Case analysis on '...' as expression <- expression_e*{expression_e <- expression_e*} (total)
 
                 1. Case false
 
@@ -22043,7 +22043,7 @@ relation Expr_ok: p TC |- expression'' : %
 
           1. (Let recordElementExpression be sequenceOrRecordElementExpression as recordElementExpression)
 
-            1. Case analysis on recordElementExpression
+            1. Case analysis on recordElementExpression (total)
 
               1. Case (% matches pattern % '=' %)
 
@@ -22169,7 +22169,7 @@ relation Expr_ok: p TC |- expression'' : %
 
     1. (Let memberAccessBase '.' member be expression'' as memberAccessExpression)
 
-      1. Case analysis on memberAccessBase
+      1. Case analysis on memberAccessBase (total)
 
         1. Case (% has type prefixedTypeName)
 
@@ -22445,7 +22445,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                               1. (Let ARRAY typeIR `[ n_size `] be typeIR' as arrayTypeIR)
 
-                                1. Case analysis on ctk_index matches LCTK
+                                1. Case analysis on ctk_index matches LCTK (total)
 
                                   1. Case true
 
@@ -22485,7 +22485,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                               1. (Let HEADER_STACK typeIR `[ n_size `] be typeIR' as headerStackTypeIR)
 
-                                1. Case analysis on ctk_index matches LCTK
+                                1. Case analysis on ctk_index matches LCTK (total)
 
                                   1. Case true
 
@@ -22529,7 +22529,7 @@ relation Expr_ok: p TC |- expression'' : %
 
     1. (Let expression_base `[ expression sliceop expression' `] be expression'' as sliceAccessExpression)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -22671,7 +22671,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                                             1. (Let ctk_w_reduced be $ctk_of_typedExpressionIR(typedExpressionIR_w_reduced))
 
-                                              1. Case analysis on ctk_l_reduced matches LCTK
+                                              1. Case analysis on ctk_l_reduced matches LCTK (total)
 
                                                 1. Case true
 
@@ -22775,13 +22775,13 @@ relation Expr_ok: p TC |- expression'' : %
 
     1. (Let callExpression be expression'' as callExpression)
 
-      1. Case analysis on callExpression
+      1. Case analysis on callExpression (total)
 
         1. Case (% matches pattern % `( % `))
 
           1. (Let callTarget `( argumentList `) be callExpression)
 
-            1. Case analysis on callTarget
+            1. Case analysis on callTarget (total)
 
               1. Case (% has type prefixedTypeName)
 
@@ -22857,7 +22857,7 @@ relation Expr_ok: p TC |- expression'' : %
 
                               1. (Let ctk be $is_static_callableTypeIR(callableTypeIR))
 
-                                1. Case analysis on $is_static_assert_callableTypeIR(callableTypeIR)
+                                1. Case analysis on $is_static_assert_callableTypeIR(callableTypeIR) (total)
 
                                   1. Case true
 
@@ -22953,7 +22953,7 @@ relation Expr_ok: p TC |- expression'' : %
 
 relation Argument_ok: p TC |- argument : %
 
-1. Case analysis on argument
+1. Case analysis on argument (total)
 
   1. Case (% has type expression)
 
@@ -23137,7 +23137,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
                           1. (Let ?(typedExpressionIR_index_reduced) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                            1. Case analysis on ctk_index matches LCTK
+                            1. Case analysis on ctk_index matches LCTK (total)
 
                               1. Case true
 
@@ -23187,7 +23187,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
                           1. (Let ?(typedExpressionIR_index_reduced) be typedExpressionIR?{typedExpressionIR <- typedExpressionIR?})
 
-                            1. Case analysis on ctk_index matches LCTK
+                            1. Case analysis on ctk_index matches LCTK (total)
 
                               1. Case true
 
@@ -23229,7 +23229,7 @@ relation Lvalue_ok: p TC |- lvalue : %
 
     1. (Let lvalue_base `[ expression sliceop expression' `] be lvalue)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -23409,7 +23409,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
     1. (Let lvalue assignop expression ';' be statement' as assignmentStatement)
 
-      1. Case analysis on assignop matches '='
+      1. Case analysis on assignop matches '=' (total)
 
         1. Case true
 
@@ -23475,7 +23475,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
     1. (Let callStatement be statement' as callStatement)
 
-      1. Case analysis on callStatement
+      1. Case analysis on callStatement (total)
 
         1. Case (% matches pattern % `( % `) ';')
 
@@ -23491,7 +23491,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
                     1. (Call_ok: p TC |- callableTypeIR `< typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' typeId_impl*{typeId_impl <- typeId_impl*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_ret `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `))
 
-                      1. Case analysis on $is_static_assert_callableTypeIR(callableTypeIR)
+                      1. Case analysis on $is_static_assert_callableTypeIR(callableTypeIR) (total)
 
                         1. Case true
 
@@ -23619,7 +23619,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
     1. (Let conditionalStatement be statement' as conditionalStatement)
 
-      1. Case analysis on conditionalStatement
+      1. Case analysis on conditionalStatement (total)
 
         1. Case (% matches pattern IF `( % `) %)
 
@@ -23675,7 +23675,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
       1. (Let returnStatement be statement' as returnStatement)
 
-        1. Case analysis on returnStatement
+        1. Case analysis on returnStatement (total)
 
           1. Case (% matches pattern RETURN ';')
 
@@ -23731,7 +23731,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
       1. (Let forStatement be statement' as forStatement)
 
-        1. Case analysis on forStatement
+        1. Case analysis on forStatement (total)
 
           1. Case (% matches pattern % FOR `( % % IN % `) %)
 
@@ -23901,7 +23901,7 @@ relation Stmt_ok: p TC |- statement' : % %
 
 relation BlockElementStmt_ok: TC_0 |- blockElementStatement : % %
 
-1. Case analysis on blockElementStatement
+1. Case analysis on blockElementStatement (total)
 
   1. Case (% has type constantDeclaration)
 
@@ -23945,7 +23945,7 @@ relation Block_ok: TC_0 |- annotationList `{ blockElementStatementList `} : % %
 
 relation Parameter_ok: p TC |- annotationList direction type name initializerOpt : % '#' %
 
-1. Case analysis on initializerOpt
+1. Case analysis on initializerOpt (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -24043,7 +24043,7 @@ relation ConstructorParameterListOpt_ok: TC_0 |- constructorParameterListOpt : %
 
 def $callableId_of_externMethodPrototype(externMethodPrototype)
 
-1. Case analysis on externMethodPrototype
+1. Case analysis on externMethodPrototype (total)
 
   1. Case (% matches pattern % % ';')
 
@@ -24059,7 +24059,7 @@ def $callableId_of_externMethodPrototype(externMethodPrototype)
 
 def $type_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
-1. Case analysis on externMethodPrototypeIR
+1. Case analysis on externMethodPrototypeIR (total)
 
   1. Case (% matches pattern % % ';')
 
@@ -24083,7 +24083,7 @@ def $constructorId_of_externConstructorPrototype(_annotationList typeIdentifier 
 
 relation ExternMethod_ok: TC_0 typeId_extern |- externMethodPrototype : %
 
-1. Case analysis on externMethodPrototype
+1. Case analysis on externMethodPrototype (total)
 
   1. Case (% matches pattern % % ';')
 
@@ -24219,7 +24219,7 @@ relation ParserSelect_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- S
 
 relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} |- transitionStatement : %
 
-1. Case analysis on transitionStatement
+1. Case analysis on transitionStatement (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -24229,7 +24229,7 @@ relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} 
 
     1. (Let TRANSITION stateExpression be transitionStatement)
 
-      1. Case analysis on stateExpression
+      1. Case analysis on stateExpression (total)
 
         1. Case (% matches pattern % ';')
 
@@ -24255,7 +24255,7 @@ relation ParserTransition_ok: TC_0 nameIR_state*{nameIR_state <- nameIR_state*} 
 
 relation ParserStmt_ok: TC |- parserStatement : % %
 
-1. Case analysis on parserStatement
+1. Case analysis on parserStatement (total)
 
   1. Case (% has type emptyStatement)
 
@@ -24333,7 +24333,7 @@ relation ParserStmt_ok: TC |- parserStatement : % %
 
     1. (Let parserConditionalStatement be parserStatement as parserConditionalStatement)
 
-      1. Case analysis on parserConditionalStatement
+      1. Case analysis on parserConditionalStatement (total)
 
         1. Case (% matches pattern IF `( % `) %)
 
@@ -24371,7 +24371,7 @@ relation ParserStmt_ok: TC |- parserStatement : % %
 
 relation ParserBlockElementStmt_ok: TC_0 |- parserBlockElementStatement : % %
 
-1. Case analysis on parserBlockElementStatement
+1. Case analysis on parserBlockElementStatement (total)
 
   1. Case (% has type constantDeclaration)
 
@@ -24459,7 +24459,7 @@ relation ParserStateList_ok: TC |- parserStateList : %
 
 relation ParserLocalDecl_ok: TC_0 |- parserLocalDeclaration : % %
 
-1. Case analysis on parserLocalDeclaration
+1. Case analysis on parserLocalDeclaration (total)
 
   1. Case (% has type constantDeclaration)
 
@@ -24555,7 +24555,7 @@ relation TableKey_ok: TC TBLC_0 |- expression ':' name_matchkind annotationList 
 
 relation TableKeys_ok: TC TBLC |- tableKey*{tableKey <- tableKey*} : % %
 
-1. Case analysis on tableKey*{tableKey <- tableKey*}
+1. Case analysis on tableKey*{tableKey <- tableKey*} (total)
 
   1. Case (% matches pattern [])
 
@@ -24591,7 +24591,7 @@ relation Call_action_partial_ok: TC |- parameterIR*{parameterIR <- parameterIR*}
 
 relation TableAction_ok: TC TBLC_0 |- annotationList tableActionReference ';' : % %
 
-1. Case analysis on tableActionReference
+1. Case analysis on tableActionReference (total)
 
   1. Case (% has type prefixedNonTypeName)
 
@@ -24665,7 +24665,7 @@ relation TableAction_ok: TC TBLC_0 |- annotationList tableActionReference ';' : 
 
 relation TableActions_ok: TC TBLC |- tableAction*{tableAction <- tableAction*} : % %
 
-1. Case analysis on tableAction*{tableAction <- tableAction*}
+1. Case analysis on tableAction*{tableAction <- tableAction*} (total)
 
   1. Case (% matches pattern [])
 
@@ -24977,7 +24977,7 @@ relation TableEntry_keyset_ok: TC TBLC |- keysetExpression : % %
 
 relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
-1. Case analysis on tableActionReference
+1. Case analysis on tableActionReference (total)
 
   1. Case (% has type prefixedNonTypeName)
 
@@ -25025,7 +25025,7 @@ relation TableEntry_action_ok: TC TBLC |- tableActionReference : %
 
 relation TableEntry_priority_ok: TC |- tableEntryPriority : %
 
-1. Case analysis on tableEntryPriority
+1. Case analysis on tableEntryPriority (total)
 
   1. Case (% matches pattern PRIORITY '=' % ':')
 
@@ -25063,7 +25063,7 @@ relation TableEntry_priority_ok: TC |- tableEntryPriority : %
 
 relation TableEntry_ok: TC TBLC |- tableEntry : % %
 
-1. Case analysis on tableEntry
+1. Case analysis on tableEntry (total)
 
   1. Case (% matches pattern % % % ':' % % ';')
 
@@ -25099,7 +25099,7 @@ relation TableEntry_ok: TC TBLC |- tableEntry : % %
 
 relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
-1. Case analysis on tableProperty
+1. Case analysis on tableProperty (total)
 
   1. Case (% matches pattern KEY '=' `{ % `})
 
@@ -25281,7 +25281,7 @@ relation TableProperty_ok: TC TBLC_0 |- tableProperty : % %
 
 relation TableProperties_ok: TC TBLC |- tableProperty*{tableProperty <- tableProperty*} : % %
 
-1. Case analysis on tableProperty*{tableProperty <- tableProperty*}
+1. Case analysis on tableProperty*{tableProperty <- tableProperty*} (total)
 
   1. Case (% matches pattern [])
 
@@ -25367,7 +25367,7 @@ relation TableType_ok: TC_0 TBLC |- name : % %
 
 relation ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration : % %
 
-1. Case analysis on controlLocalDeclaration
+1. Case analysis on controlLocalDeclaration (total)
 
   1. Case (% has type constantDeclaration)
 
@@ -25433,7 +25433,7 @@ relation ControlLocalDeclList_ok: TC_0 |- controlLocalDeclarationList : % %
 
 relation VarDecl_ok: p TC_0 |- annotationList type name initializerOpt ';' : % %
 
-1. Case analysis on initializerOpt
+1. Case analysis on initializerOpt (total)
 
   1. Case (% matches pattern _EMPTY)
 
@@ -25533,7 +25533,7 @@ relation ConstDecl_ok: p TC_0 |- annotationList CONST type name '=' expression_v
 
 relation InstDecl_ok: p TC_0 |- instantiation : % %
 
-1. Case analysis on instantiation
+1. Case analysis on instantiation (total)
 
   1. Case (% matches pattern % % `( % `) % ';')
 
@@ -25653,7 +25653,7 @@ relation ActionDecl_ok: p TC_0 |- annotationList ACTION name `( parameterList `)
 
 relation Decl_ok: TC_0 |- declaration : % %
 
-1. Case analysis on declaration
+1. Case analysis on declaration (total)
 
   1. Case (% has type constantDeclaration)
 
@@ -25919,7 +25919,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
     1. (Let enumTypeDeclaration be declaration as enumTypeDeclaration)
 
-      1. Case analysis on enumTypeDeclaration
+      1. Case analysis on enumTypeDeclaration (total)
 
         1. Case (% matches pattern % ENUM % `{ % % `})
 
@@ -26085,13 +26085,13 @@ relation Decl_ok: TC_0 |- declaration : % %
 
     1. (Let typedefDeclaration be declaration as typedefDeclaration)
 
-      1. Case analysis on typedefDeclaration
+      1. Case analysis on typedefDeclaration (total)
 
         1. Case (% matches pattern % TYPEDEF % % ';')
 
           1. (Let annotationList TYPEDEF typedef name ';' be typedefDeclaration)
 
-            1. Case analysis on typedef
+            1. Case analysis on typedef (total)
 
               1. Case (% has type type)
 
@@ -26145,7 +26145,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
                                   1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
 
-                                    1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR)
+                                    1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR) (total)
 
                                       1. Case true
 
@@ -26313,7 +26313,7 @@ relation Decl_ok: TC_0 |- declaration : % %
 
 relation Decls_ok: TC |- declaration*{declaration <- declaration*} : % %
 
-1. Case analysis on declaration*{declaration <- declaration*}
+1. Case analysis on declaration*{declaration <- declaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -26361,7 +26361,7 @@ relation Call_convention_expr_ok: p TC actctxt |- _annotationList direction type
 
   2. Case (% matches pattern _EMPTY)
 
-    1. Case analysis on actctxt
+    1. Case analysis on actctxt (total)
 
       1. Case (% matches pattern ACTION)
 
@@ -26419,7 +26419,7 @@ relation Call_convention_expr_ok: p TC actctxt |- _annotationList direction type
 
 relation Call_convention_arg_ok: p TC actctxt |- parameterIR '@' argumentIR : %
 
-1. Case analysis on argumentIR
+1. Case analysis on argumentIR (total)
 
   1. Case (% has type typedExpressionIR)
 
@@ -26461,7 +26461,7 @@ relation Call_convention_arg_ok: p TC actctxt |- parameterIR '@' argumentIR : %
 
 relation Call_convention_ok: p TC actctxt |- parameterIR*{parameterIR <- parameterIR*} '@' argumentIR*{argumentIR <- argumentIR*} : %
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -26537,7 +26537,7 @@ relation CallableTarget_ok: p TC |- callableTarget : %
 
     1. (Let memberAccessBase '.' member be callableTarget as memberAccessExpression)
 
-      1. Case analysis on memberAccessBase
+      1. Case analysis on memberAccessBase (total)
 
         1. Case (% has type prefixedTypeName)
 
@@ -26897,7 +26897,7 @@ relation CallableType_ok: p TC |- callableTargetIR' `< typeArgumentIR*{typeArgum
 
 relation Call_ok: p TC |- callableTypeIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId*{typeId <- typeId*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : % `< % `> `( % `)
 
-1. Case analysis on callableTypeIR
+1. Case analysis on callableTypeIR (total)
 
   1. Case (% has type actionTypeIR)
 
@@ -27007,7 +27007,7 @@ relation Call_ok: p TC |- callableTypeIR `< typeArgumentIR*{typeArgumentIR <- ty
 
     1. (Let externMethodTypeIR be callableTypeIR as externMethodTypeIR)
 
-      1. Case analysis on externMethodTypeIR
+      1. Case analysis on externMethodTypeIR (total)
 
         1. Case (% matches pattern EXTERN_METHOD % `( % `) ':' %)
 
@@ -27249,7 +27249,7 @@ relation Inst_ok: p TC instctxt |- constructorTypeIR `< typeArgumentIR*{typeArgu
 
                   1. (Let typeIR_object_unroll be $unroll_typeIR(typeIR_object))
 
-                    1. Case analysis on typeIR_object_unroll <: packageObjectTypeIR
+                    1. Case analysis on typeIR_object_unroll <: packageObjectTypeIR (total)
 
                       1. Case true
 
@@ -27273,7 +27273,7 @@ relation Inst_ok: p TC instctxt |- constructorTypeIR `< typeArgumentIR*{typeArgu
 
 def $chain_casts(typeIR_cur*{typeIR_cur <- typeIR_cur*}, typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**})
 
-1. Case analysis on $concat_<typeIR>(typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**})
+1. Case analysis on $concat_<typeIR>(typeIR_chain*{typeIR_chain <- typeIR_chain*}*{typeIR_chain* <- typeIR_chain**}) (total)
 
   1. Case (% matches pattern [])
 
@@ -27291,7 +27291,7 @@ def $chain_casts(typeIR_cur*{typeIR_cur <- typeIR_cur*}, typeIR_chain*{typeIR_ch
 
 def $chain_casts'(typeIR_cur, typeIR*{typeIR <- typeIR*})
 
-1. Case analysis on typeIR*{typeIR <- typeIR*}
+1. Case analysis on typeIR*{typeIR <- typeIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -27367,7 +27367,7 @@ def $reduce_serenum_unary(typedExpressionIR, $check(typeIR) : bool)
 
 1. (Let _expressionIR '#' `( typeIR ctk `) be typedExpressionIR)
 
-  1. Case analysis on $check(typeIR)
+  1. Case analysis on $check(typeIR) (total)
 
     1. Case true
 
@@ -27395,7 +27395,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check(type
 
   1. (Let _expressionIR' '#' `( typeIR_r _ctk `) be typedExpressionIR_r)
 
-    1. Case analysis on $check(typeIR_l, typeIR_r)
+    1. Case analysis on $check(typeIR_l, typeIR_r) (total)
 
       1. Case true
 
@@ -27431,7 +27431,7 @@ def $reduce_serenum_binary(typedExpressionIR_l, typedExpressionIR_r, $check(type
 
 def $apply_cast(typedExpressionIR, typeIR*{typeIR <- typeIR*})
 
-1. Case analysis on typeIR*{typeIR <- typeIR*}
+1. Case analysis on typeIR*{typeIR <- typeIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -27473,7 +27473,7 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
     1. (Cast_impl: typeIR_l -> typeIR_r : castResult)
 
-      1. Case analysis on castResult
+      1. Case analysis on castResult (total)
 
         1. Case (% matches pattern OK %)
 
@@ -27487,7 +27487,7 @@ def $cast_binary(typedExpressionIR_l, typedExpressionIR_r)
 
           1. (Cast_impl: typeIR_r -> typeIR_l : castResult')
 
-            1. Case analysis on castResult'
+            1. Case analysis on castResult' (total)
 
               1. Case (% matches pattern OK %)
 
@@ -28301,7 +28301,7 @@ def $is_concrete_extern_object(typeIR)
 
 def $is_concrete_extern_object'(typeIR)
 
-1. Case analysis on typeIR <: externObjectTypeIR
+1. Case analysis on typeIR <: externObjectTypeIR (total)
 
   1. Case false
 
@@ -28331,7 +28331,7 @@ def $is_concrete_extern_object''(externMethodTypeDefIR)
 
 relation Parameters_ok: p TC |- parameter*{parameter <- parameter*} : % '#' %
 
-1. Case analysis on parameter*{parameter <- parameter*}
+1. Case analysis on parameter*{parameter <- parameter*} (total)
 
   1. Case (% matches pattern [])
 
@@ -28353,7 +28353,7 @@ relation Parameters_ok: p TC |- parameter*{parameter <- parameter*} : % '#' %
 
 relation ForUpdateStmt_ok: TC |- forUpdateStatement : %
 
-1. Case analysis on forUpdateStatement
+1. Case analysis on forUpdateStatement (total)
 
   1. Case (% matches pattern % `( % `))
 
@@ -28411,13 +28411,13 @@ relation ForUpdateStmtList_ok: TC |- forUpdateStatementList : %
 
 relation ForInitStmt_ok: TC |- forInitStatement : % %
 
-1. Case analysis on forInitStatement
+1. Case analysis on forInitStatement (total)
 
   1. Case (% matches pattern % % % %)
 
     1. (Let annotationList type name initializerOpt be forInitStatement)
 
-      1. Case analysis on initializerOpt
+      1. Case analysis on initializerOpt (total)
 
         1. Case (% matches pattern _EMPTY)
 
@@ -28485,7 +28485,7 @@ relation ForInitStmt_ok: TC |- forInitStatement : % %
 
 relation ForInitStmts_ok: TC |- forInitStatement*{forInitStatement <- forInitStatement*} : % %
 
-1. Case analysis on forInitStatement*{forInitStatement <- forInitStatement*}
+1. Case analysis on forInitStatement*{forInitStatement <- forInitStatement*} (total)
 
   1. Case (% matches pattern [])
 
@@ -28511,7 +28511,7 @@ relation ForInitStmtList_ok: TC_0 |- forInitStatementList : % %
 
 relation ForCollectionExpr_ok: TC typeIR_var |- forCollectionExpression : %
 
-1. Case analysis on forCollectionExpression
+1. Case analysis on forCollectionExpression (total)
 
   1. Case (% has type expression)
 
@@ -28647,7 +28647,7 @@ def $compat_range(typeIR, typeIR')
 
 def $check_switchLabelIR_default(switchLabelIR*{switchLabelIR <- switchLabelIR*})
 
-1. Case analysis on switchLabelIR*{switchLabelIR <- switchLabelIR*}
+1. Case analysis on switchLabelIR*{switchLabelIR <- switchLabelIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -28657,7 +28657,7 @@ def $check_switchLabelIR_default(switchLabelIR*{switchLabelIR <- switchLabelIR*}
 
     1. (Let switchLabelIR_h :: switchLabelIR_t*{switchLabelIR_t <- switchLabelIR_t*} be switchLabelIR*{switchLabelIR <- switchLabelIR*})
 
-      1. Case analysis on switchLabelIR_h matches DEFAULT
+      1. Case analysis on switchLabelIR_h matches DEFAULT (total)
 
         1. Case true
 
@@ -28717,7 +28717,7 @@ relation SwitchLabel_table_ok: TC typeId_table |- switchLabel : %
 
 relation SwitchCase_table_ok: TC_0 typeId_table |- switchCase : % %
 
-1. Case analysis on switchCase
+1. Case analysis on switchCase (total)
 
   1. Case (% matches pattern % ':' %)
 
@@ -28743,7 +28743,7 @@ relation SwitchCase_table_ok: TC_0 typeId_table |- switchCase : % %
 
 relation SwitchCases_table_ok: TC typeId_table |- switchCase*{switchCase <- switchCase*} : % %
 
-1. Case analysis on switchCase*{switchCase <- switchCase*}
+1. Case analysis on switchCase*{switchCase <- switchCase*} (total)
 
   1. Case (% matches pattern [])
 
@@ -28777,7 +28777,7 @@ relation Switch_table_ok: TC_0 |- SWITCH `( typeId_table_enum `) `{ switchCaseLi
 
 relation SwitchLabel_general_ok: TC typeIR |- switchLabel : %
 
-1. Case analysis on switchLabel
+1. Case analysis on switchLabel (total)
 
   1. Case (% matches pattern DEFAULT)
 
@@ -28809,7 +28809,7 @@ relation SwitchLabel_general_ok: TC typeIR |- switchLabel : %
 
 relation SwitchCase_general_ok: TC_0 typeIR_switch |- switchCase : % %
 
-1. Case analysis on switchCase
+1. Case analysis on switchCase (total)
 
   1. Case (% matches pattern % ':' %)
 
@@ -28835,7 +28835,7 @@ relation SwitchCase_general_ok: TC_0 typeIR_switch |- switchCase : % %
 
 relation SwitchCases_general_ok: TC_0 typeIR_switch |- switchCase*{switchCase <- switchCase*} : % %
 
-1. Case analysis on switchCase*{switchCase <- switchCase*}
+1. Case analysis on switchCase*{switchCase <- switchCase*} (total)
 
   1. Case (% matches pattern [])
 
@@ -28914,7 +28914,7 @@ relation Switch_general_ok: TC_0 |- SWITCH `( typedExpressionIR_switch `) `{ swi
 
 relation BlockElementStmts_ok: TC |- blockElementStatement*{blockElementStatement <- blockElementStatement*} : % %
 
-1. Case analysis on blockElementStatement*{blockElementStatement <- blockElementStatement*}
+1. Case analysis on blockElementStatement*{blockElementStatement <- blockElementStatement*} (total)
 
   1. Case (% matches pattern [])
 
@@ -28964,7 +28964,7 @@ relation InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTyp
 
 relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
 
-1. Case analysis on objectDeclaration
+1. Case analysis on objectDeclaration (total)
 
   1. Case (% has type instantiation)
 
@@ -29032,7 +29032,7 @@ relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclara
 
 relation ObjectDecls_ok: p TC typeFrame externMethodTypeDefEnv |- objectDeclaration*{objectDeclaration <- objectDeclaration*} : % % %
 
-1. Case analysis on objectDeclaration*{objectDeclaration <- objectDeclaration*}
+1. Case analysis on objectDeclaration*{objectDeclaration <- objectDeclaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -29202,7 +29202,7 @@ relation Enum_serializable_field_ok: TC_0 nameIR_enum typeIR |- name '=' express
 
 relation Enum_serializable_fields_ok: TC nameIR_enum typeIR |- namedExpression*{namedExpression <- namedExpression*} : % %
 
-1. Case analysis on namedExpression*{namedExpression <- namedExpression*}
+1. Case analysis on namedExpression*{namedExpression <- namedExpression*} (total)
 
   1. Case (% matches pattern [])
 
@@ -29230,7 +29230,7 @@ relation Enum_serializable_fieldList_ok: TC_0 nameIR_enum typeIR |- namedExpress
 
 relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : %
 
-1. Case analysis on simpleKeysetExpression
+1. Case analysis on simpleKeysetExpression (total)
 
   1. Case (% has type expression)
 
@@ -29242,7 +29242,7 @@ relation SelectCase_keyset_simple_ok: TC typeIR_key |- simpleKeysetExpression : 
 
           1. (Let typeIR' be $unroll_typeIR(typeIR))
 
-            1. Case analysis on typeIR' <: setTypeIR
+            1. Case analysis on typeIR' <: setTypeIR (total)
 
               1. Case true
 
@@ -29640,7 +29640,7 @@ relation SelectCase_ok: TC nameIR_state*{nameIR_state <- nameIR_state*} typeIR_k
 
 relation ParserBlockElementStmts_ok: TC |- parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} : % %
 
-1. Case analysis on parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*}
+1. Case analysis on parserBlockElementStatement*{parserBlockElementStatement <- parserBlockElementStatement*} (total)
 
   1. Case (% matches pattern [])
 
@@ -29658,7 +29658,7 @@ relation ParserBlockElementStmts_ok: TC |- parserBlockElementStatement*{parserBl
 
 relation ParserLocalDecls_ok: TC |- parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} : % %
 
-1. Case analysis on parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*}
+1. Case analysis on parserLocalDeclaration*{parserLocalDeclaration <- parserLocalDeclaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -29812,7 +29812,7 @@ def $compat_table_key(nameIR, typeIR)
 
 def $split_dataplane_parameters(parameterIR*{parameterIR <- parameterIR*})
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -29824,7 +29824,7 @@ def $split_dataplane_parameters(parameterIR*{parameterIR <- parameterIR*})
 
       1. (Let _annotationList direction _typeIR _id _parameterInitializerOptIR be parameterIR_h)
 
-        1. Case analysis on direction matches _EMPTY
+        1. Case analysis on direction matches _EMPTY (total)
 
           1. Case true
 
@@ -29854,7 +29854,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- typeIR_key ':' t '@' simpleKeys
 
     1. (Let expression be simpleKeysetExpression as expression)
 
-      1. Case analysis on t
+      1. Case analysis on t (total)
 
         1. Case (% = "lpm")
 
@@ -29886,7 +29886,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- typeIR_key ':' t '@' simpleKeys
 
         2. Case (% =/= "lpm")
 
-          1. Case analysis on $is_singleton_list_expression(expression)
+          1. Case analysis on $is_singleton_list_expression(expression) (total)
 
             1. Case true
 
@@ -30050,7 +30050,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- typeIR_key ':' t '@' simpleKeys
 
   3. Case (% matches pattern DEFAULT)
 
-    1. Case analysis on t
+    1. Case analysis on t (total)
 
       1. Case (% = "lpm")
 
@@ -30074,7 +30074,7 @@ relation TableEntry_keyset_simple_ok: TC TBLC |- typeIR_key ':' t '@' simpleKeys
 
   4. Case (% matches pattern '_')
 
-    1. Case analysis on t
+    1. Case analysis on t (total)
 
       1. Case (% = "lpm")
 
@@ -30154,7 +30154,7 @@ def $is_singleton_list_expression(expression)
 
 relation TableEntry_keysets_simple_ok: TC TBLC TBLS |- matchKey*{matchKey <- matchKey*} '@' simpleKeysetExpression*{simpleKeysetExpression <- simpleKeysetExpression*} : % %
 
-1. Case analysis on matchKey*{matchKey <- matchKey*}
+1. Case analysis on matchKey*{matchKey <- matchKey*} (total)
 
   1. Case (% matches pattern [])
 
@@ -30232,7 +30232,7 @@ def $is_tableLargestPriorityWinsProperty(tableProperty)
 
 def $insert_NoAction_tablePropertyIR(TBLC, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
-1. Case analysis on tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
+1. Case analysis on tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -30242,7 +30242,7 @@ def $insert_NoAction_tablePropertyIR(TBLC, tablePropertyIR*{tablePropertyIR <- t
 
     1. (Let tablePropertyIR_h :: tablePropertyIR_t*{tablePropertyIR_t <- tablePropertyIR_t*} be tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
-      1. Case analysis on tablePropertyIR_h <: tableActionsPropertyIR
+      1. Case analysis on tablePropertyIR_h <: tableActionsPropertyIR (total)
 
         1. Case true
 
@@ -30252,7 +30252,7 @@ def $insert_NoAction_tablePropertyIR(TBLC, tablePropertyIR*{tablePropertyIR <- t
 
               1. (Let tableActionReferenceIR_NoAction be '.' "NoAction" ?() `( [] `))
 
-                1. Case analysis on tableActionReferenceIR_NoAction <- tableActionReferenceIR*{tableActionReferenceIR <- tableActionReferenceIR*}
+                1. Case analysis on tableActionReferenceIR_NoAction <- tableActionReferenceIR*{tableActionReferenceIR <- tableActionReferenceIR*} (total)
 
                   1. Case false
 
@@ -30276,7 +30276,7 @@ def $insert_NoAction_tablePropertyIR(TBLC, tablePropertyIR*{tablePropertyIR <- t
 
 relation ControlLocalDecls_ok: TC |- controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} : % %
 
-1. Case analysis on controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*}
+1. Case analysis on controlLocalDeclaration*{controlLocalDeclaration <- controlLocalDeclaration*} (total)
 
   1. Case (% matches pattern [])
 
@@ -30316,7 +30316,7 @@ syntax inference = map<typeId, typeIR>
 
 def $infer(typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}, parameterIR_optional*{parameterIR_optional <- parameterIR_optional*}, argumentIR*{argumentIR <- argumentIR*})
 
-1. Case analysis on typeId*{typeId <- typeId*}
+1. Case analysis on typeId*{typeId <- typeId*} (total)
 
   1. Case (% matches pattern [])
 
@@ -30354,7 +30354,7 @@ def $infer(typeId*{typeId <- typeId*}, parameterIR*{parameterIR <- parameterIR*}
 
 def $infer_pair(constraint, parameterIR, argumentIR)
 
-1. Case analysis on argumentIR
+1. Case analysis on argumentIR (total)
 
   1. Case (% has type typedExpressionIR)
 
@@ -30616,7 +30616,7 @@ def $merge_constraint(constraint_pre, constraint_post)
 
 def $merge_constraint'(constraint_pre, constraint_post, typeId*{typeId <- typeId*}, constraint)
 
-1. Case analysis on typeId*{typeId <- typeId*}
+1. Case analysis on typeId*{typeId <- typeId*} (total)
 
   1. Case (% matches pattern [])
 
@@ -30686,7 +30686,7 @@ def $merge_constraint'(constraint_pre, constraint_post, typeId*{typeId <- typeId
 
                           1. (Cast_impl: typeIR_pre -> typeIR_post : castResult)
 
-                            1. Case analysis on castResult
+                            1. Case analysis on castResult (total)
 
                               1. Case (% matches pattern OK %)
 
@@ -30716,7 +30716,7 @@ def $merge_constraint'(constraint_pre, constraint_post, typeId*{typeId <- typeId
 
 def $merge_constraints(constraint_pre, constraint*{constraint <- constraint*})
 
-1. Case analysis on constraint*{constraint <- constraint*}
+1. Case analysis on constraint*{constraint <- constraint*} (total)
 
   1. Case (% matches pattern [])
 
@@ -30746,7 +30746,7 @@ def $resolve_constraint(strictness, set<pair<typeId, infer>>)
 
     1. (Let typeId_h ':' infer_h :: typeId_t ':' infer_t*{infer_t <- infer_t*, typeId_t <- typeId_t*} be pair<typeId, infer>*{pair<typeId, infer> <- pair<typeId, infer>*})
 
-      1. Case analysis on infer_h
+      1. Case analysis on infer_h (total)
 
         1. Case (% matches pattern KNOWN AS %)
 
@@ -30810,7 +30810,7 @@ def $resolve_type_alias(typeIR)
 
 def $instantiable_extern(p, TC, instctxt)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -30826,7 +30826,7 @@ def $instantiable_extern(p, TC, instctxt)
 
 def $instantiable_parser(p, TC, instctxt)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -30846,7 +30846,7 @@ def $instantiable_parser(p, TC, instctxt)
 
 def $instantiable_control(p, TC, instctxt)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -30866,7 +30866,7 @@ def $instantiable_control(p, TC, instctxt)
 
 def $instantiable_package(p, TC, instctxt)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -30884,7 +30884,7 @@ def $instantiable_package(p, TC, instctxt)
 
 def $instantiable_table(p, TC, instctxt)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -30930,7 +30930,7 @@ def $instantiable(p, TC, instctxt, typeIR)
 
 def $callable_action(p, TC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -30948,7 +30948,7 @@ def $callable_action(p, TC)
 
 def $callable_definedFunction(p, TC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -30968,11 +30968,11 @@ def $callable_definedFunction(p, TC)
 
 def $callable_externFunction(p, TC, nameIR)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
-    1. Case analysis on nameIR
+    1. Case analysis on nameIR (total)
 
       1. Case (% = "verify")
 
@@ -30984,7 +30984,7 @@ def $callable_externFunction(p, TC, nameIR)
 
   2. Case (% matches pattern BLOCK)
 
-    1. Case analysis on nameIR
+    1. Case analysis on nameIR (total)
 
       1. Case (% = "verify")
 
@@ -31000,7 +31000,7 @@ def $callable_externFunction(p, TC, nameIR)
 
   3. Case (% matches pattern LOCAL)
 
-    1. Case analysis on nameIR
+    1. Case analysis on nameIR (total)
 
       1. Case (% = "verify")
 
@@ -31014,7 +31014,7 @@ def $callable_externFunction(p, TC, nameIR)
 
 def $callable_externMethod(p, TC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31032,7 +31032,7 @@ def $callable_externMethod(p, TC)
 
 def $callable_parserApplyMethod(p, TC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31050,7 +31050,7 @@ def $callable_parserApplyMethod(p, TC)
 
 def $callable_controlApplyMethod(p, TC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31068,7 +31068,7 @@ def $callable_controlApplyMethod(p, TC)
 
 def $callable_tableApplyMethod(p, TC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31142,7 +31142,7 @@ syntax callableDef =
 
 def $parameterListIR_of_callableDef(callableDef)
 
-1. Case analysis on callableDef
+1. Case analysis on callableDef (total)
 
   1. Case (% has type actionDef)
 
@@ -31168,7 +31168,7 @@ def $parameterListIR_of_actionDef(annotationList ACTION _nameIR `( parameterList
 
 def $parameterListIR_of_functionDef(functionDef)
 
-1. Case analysis on functionDef
+1. Case analysis on functionDef (total)
 
   1. Case (% has type definedFunctionDef)
 
@@ -31192,7 +31192,7 @@ def $parameterListIR_of_externFunctionDef(EXTERN_FUNCTION _nameIR `< _typeParame
 
 def $parameterListIR_of_methodDef(methodDef)
 
-1. Case analysis on methodDef
+1. Case analysis on methodDef (total)
 
   1. Case (% has type externMethodDef)
 
@@ -31338,7 +31338,7 @@ syntax constructorDef =
 
 def $parameterListIR_of_constructorDef(constructorDef)
 
-1. Case analysis on constructorDef
+1. Case analysis on constructorDef (total)
 
   1. Case (% has type externObjectConstructorDef)
 
@@ -31498,7 +31498,7 @@ def $enter_path_i(IC, id)
 
 def $inherit_i(p, IC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31520,7 +31520,7 @@ def $inherit_i(p, IC)
 
 def $add_var_i(p, IC, id, value)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31562,7 +31562,7 @@ def $add_var_i(p, IC, id, value)
 
 def $add_vars_i(p, IC, id*{id <- id*}, value*{value <- value*})
 
-1. Case analysis on id*{id <- id*}
+1. Case analysis on id*{id <- id*} (total)
 
   1. Case (% matches pattern [])
 
@@ -31628,7 +31628,7 @@ def $add_type_i(p, IC, typeId, typeIR)
 
 def $add_types_i(p, IC, typeId*{typeId <- typeId*}, typeIR*{typeIR <- typeIR*})
 
-1. Case analysis on typeId*{typeId <- typeId*}
+1. Case analysis on typeId*{typeId <- typeId*} (total)
 
   1. Case (% matches pattern [])
 
@@ -31736,7 +31736,7 @@ def $find_callableDef_non_overload_i(p, IC, prefixedNameIR)
 
 1. Else Dangling
 
-2. Case analysis on p
+2. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31790,7 +31790,7 @@ def $add_constructorDef_i(IC, callableId, constructorDef)
 
 def $add_constructorDefs_i(IC, callableId*{callableId <- callableId*}, constructorDef*{constructorDef <- constructorDef*})
 
-1. Case analysis on callableId*{callableId <- callableId*}
+1. Case analysis on callableId*{callableId <- callableId*} (total)
 
   1. Case (% matches pattern [])
 
@@ -31818,7 +31818,7 @@ def $add_constructorDefs_i(IC, callableId*{callableId <- callableId*}, construct
 
 def $find_var_i(prefixedNameIR, p, IC)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern '.' %)
 
@@ -31838,7 +31838,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
     1. (Let _BARE id be prefixedNameIR)
 
-      1. Case analysis on p
+      1. Case analysis on p (total)
 
         1. Case (% matches pattern GLOBAL)
 
@@ -31890,7 +31890,7 @@ def $find_var_i(prefixedNameIR, p, IC)
 
 def $find_typeDef_i(_p, IC, prefixedNameIR)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
@@ -31906,7 +31906,7 @@ def $find_typeDef_i(_p, IC, prefixedNameIR)
 
 def $find_constructorDef_i(IC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
@@ -31926,7 +31926,7 @@ def $find_constructorDef_i(IC, prefixedNameIR, argumentIR*{argumentIR <- argumen
 
 def $subst_type_i(p, IC, typeIR)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -31954,7 +31954,7 @@ def $subst_type_i(p, IC, typeIR)
 
 relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
-1. Case analysis on expressionIR
+1. Case analysis on expressionIR (total)
 
   1. Case (% has type booleanLiteral)
 
@@ -32094,7 +32094,7 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
     1. (Let sequenceExpressionIR be expressionIR as sequenceExpressionIR)
 
-      1. Case analysis on sequenceExpressionIR
+      1. Case analysis on sequenceExpressionIR (total)
 
         1. Case (% matches pattern SEQ `{ % `})
 
@@ -32116,7 +32116,7 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
     1. (Let recordExpressionIR be expressionIR as recordExpressionIR)
 
-      1. Case analysis on recordExpressionIR
+      1. Case analysis on recordExpressionIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -32156,7 +32156,7 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
     1. (Let memberAccessBaseIR '.' nameIR be expressionIR as memberAccessExpressionIR)
 
-      1. Case analysis on memberAccessBaseIR
+      1. Case analysis on memberAccessBaseIR (total)
 
         1. Case (% matches pattern TYPE %)
 
@@ -32366,7 +32366,7 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
     1. (Let typedExpressionIR_base `[ typedExpressionIR sliceop typedExpressionIR' `] be expressionIR as sliceAccessExpressionIR)
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -32392,7 +32392,7 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
     1. (Let callExpressionIR be expressionIR as callExpressionIR)
 
-      1. Case analysis on callExpressionIR
+      1. Case analysis on callExpressionIR (total)
 
         1. Case (% matches pattern % `( % `))
 
@@ -32436,7 +32436,7 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
                       1. (Let ?(typeDefIR_base) be typeDefIR?{typeDefIR <- typeDefIR?})
 
-                        1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR_base)
+                        1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR_base) (total)
 
                           1. Case true
 
@@ -32484,7 +32484,7 @@ relation Expr_inst: p IC STO |- expressionIR '#' expressionNoteIR : % %
 
 relation Exprs_inst: p IC STO |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : % %
 
-1. Case analysis on typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}
+1. Case analysis on typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -32596,7 +32596,7 @@ relation Stmt_inst: p IC STO |- statementIR' : % % %
 
     1. (Let conditionalStatementIR be statementIR' as conditionalStatementIR)
 
-      1. Case analysis on conditionalStatementIR
+      1. Case analysis on conditionalStatementIR (total)
 
         1. Case (% matches pattern IF `( % `) %)
 
@@ -32620,7 +32620,7 @@ relation Stmt_inst: p IC STO |- statementIR' : % % %
 
     1. (Let forStatementIR' be statementIR' as forStatementIR)
 
-      1. Case analysis on forStatementIR'
+      1. Case analysis on forStatementIR' (total)
 
         1. Case (% matches pattern % FOR `( % % IN % `) %)
 
@@ -32706,7 +32706,7 @@ relation Stmt_inst: p IC STO |- statementIR' : % % %
 
 relation BlockElementStmt_inst: IC STO |- blockElementStatementIR : % % %
 
-1. Case analysis on blockElementStatementIR
+1. Case analysis on blockElementStatementIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -32732,7 +32732,7 @@ relation BlockElementStmt_inst: IC STO |- blockElementStatementIR : % % %
 
 relation BlockElementStmtList_inst: IC STO |- blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} : % % %
 
-1. Case analysis on blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
+1. Case analysis on blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -32756,7 +32756,7 @@ relation Block_inst: IC_0 STO_0 |- annotationList `{ blockElementStatementListIR
 
 relation ExternMethod_inst: IC_0 |- externMethodPrototypeIR : %
 
-1. Case analysis on externMethodPrototypeIR
+1. Case analysis on externMethodPrototypeIR (total)
 
   1. Case (% matches pattern % % ';')
 
@@ -32784,7 +32784,7 @@ relation ExternMethod_inst: IC_0 |- externMethodPrototypeIR : %
 
 relation ExternMethods_inst: IC |- externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} : %
 
-1. Case analysis on externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*}
+1. Case analysis on externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -32802,7 +32802,7 @@ relation ExternMethods_inst: IC |- externMethodPrototypeIR*{externMethodPrototyp
 
 relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
-1. Case analysis on parserStatementIR
+1. Case analysis on parserStatementIR (total)
 
   1. Case (% has type emptyStatementIR)
 
@@ -32872,7 +32872,7 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
     1. (Let parserConditionalStatementIR be parserStatementIR as parserConditionalStatementIR)
 
-      1. Case analysis on parserConditionalStatementIR
+      1. Case analysis on parserConditionalStatementIR (total)
 
         1. Case (% matches pattern IF `( % `) %)
 
@@ -32894,7 +32894,7 @@ relation ParserStmt_inst: IC_0 STO_0 |- parserStatementIR : % % %
 
 relation ParserBlockElementStmt_inst: IC STO |- parserBlockElementStatementIR : % % %
 
-1. Case analysis on parserBlockElementStatementIR
+1. Case analysis on parserBlockElementStatementIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -32920,7 +32920,7 @@ relation ParserBlockElementStmt_inst: IC STO |- parserBlockElementStatementIR : 
 
 relation ParserBlockElementStmtList_inst: IC STO |- parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} : % % %
 
-1. Case analysis on parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+1. Case analysis on parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -32960,7 +32960,7 @@ relation ParserState_inst: IC_0 STO_0 |- parserStateIR : % %
 
 relation ParserStates_inst: IC STO |- parserStateIR*{parserStateIR <- parserStateIR*} : % %
 
-1. Case analysis on parserStateIR*{parserStateIR <- parserStateIR*}
+1. Case analysis on parserStateIR*{parserStateIR <- parserStateIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -32978,7 +32978,7 @@ relation ParserStates_inst: IC STO |- parserStateIR*{parserStateIR <- parserStat
 
 relation ParserLocalDecl_inst: IC_0 STO |- parserLocalDeclarationIR : % % %
 
-1. Case analysis on parserLocalDeclarationIR
+1. Case analysis on parserLocalDeclarationIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -33038,7 +33038,7 @@ relation ParserLocalDecl_inst: IC_0 STO |- parserLocalDeclarationIR : % % %
 
 relation ParserLocalDecls_inst: IC STO |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} : % % %
 
-1. Case analysis on parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
+1. Case analysis on parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -33076,7 +33076,7 @@ relation TableAction_inst: IC STO |- annotationList tableActionReferenceIR '#' `
 
                   1. (Let [nameIR_anno] be nameIR'*{nameIR' <- nameIR'*})
 
-                    1. Case analysis on $starts_with(nameIR_anno, ".")
+                    1. Case analysis on $starts_with(nameIR_anno, ".") (total)
 
                       1. Case true
 
@@ -33118,7 +33118,7 @@ relation TableAction_inst: IC STO |- annotationList tableActionReferenceIR '#' `
 
 relation TableActions_inst: IC STO |- tableActionIR*{tableActionIR <- tableActionIR*} : % %
 
-1. Case analysis on tableActionIR*{tableActionIR <- tableActionIR*}
+1. Case analysis on tableActionIR*{tableActionIR <- tableActionIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -33136,7 +33136,7 @@ relation TableActions_inst: IC STO |- tableActionIR*{tableActionIR <- tableActio
 
 relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
-1. Case analysis on tablePropertyIR
+1. Case analysis on tablePropertyIR (total)
 
   1. Case (% has type tableKeysPropertyIR)
 
@@ -33170,7 +33170,7 @@ relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
     1. (Let tableCustomPropertyIR be tablePropertyIR as tableCustomPropertyIR)
 
-      1. Case analysis on tableCustomPropertyIR
+      1. Case analysis on tableCustomPropertyIR (total)
 
         1. Case (% matches pattern % % CUSTOM % % ';')
 
@@ -33194,7 +33194,7 @@ relation TableProperty_inst: IC STO |- tablePropertyIR : % %
 
 relation TableProperties_inst: IC STO |- tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} : % %
 
-1. Case analysis on tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
+1. Case analysis on tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -33212,7 +33212,7 @@ relation TableProperties_inst: IC STO |- tablePropertyIR*{tablePropertyIR <- tab
 
 relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
-1. Case analysis on controlLocalDeclarationIR
+1. Case analysis on controlLocalDeclarationIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -33302,7 +33302,7 @@ relation ControlLocalDecl_inst: IC_0 STO |- controlLocalDeclarationIR : % % %
 
 relation ControlLocalDecls_inst: IC STO |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : % % %
 
-1. Case analysis on controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
+1. Case analysis on controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -33314,7 +33314,7 @@ relation ControlLocalDecls_inst: IC STO |- controlLocalDeclarationIR*{controlLoc
 
       1. (ControlLocalDecl_inst: IC STO |- controlLocalDeclarationIR_h : IC_1 STO_1 controlLocalDeclarationIR'?{controlLocalDeclarationIR' <- controlLocalDeclarationIR'?})
 
-        1. Case analysis on controlLocalDeclarationIR'?{controlLocalDeclarationIR' <- controlLocalDeclarationIR'?}
+        1. Case analysis on controlLocalDeclarationIR'?{controlLocalDeclarationIR' <- controlLocalDeclarationIR'?} (total)
 
           1. Case (% matches pattern ())
 
@@ -33418,7 +33418,7 @@ relation ActionDecl_inst: p IC_0 |- annotationList ACTION nameIR `( parameterLis
 
 relation Decl_inst: IC_0 STO |- declarationIR : % %
 
-1. Case analysis on declarationIR
+1. Case analysis on declarationIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -33492,7 +33492,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     1. (Let annotationList EXTERN nameIR `< typeParameterListIR ',' `> `{ externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} externMethodPrototypeIR*{externMethodPrototypeIR <- externMethodPrototypeIR*} `} be declarationIR as externObjectDeclarationIR)
 
-      1. Case analysis on externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*}
+      1. Case analysis on externConstructorPrototypeIR*{externConstructorPrototypeIR <- externConstructorPrototypeIR*} (total)
 
         1. Case (% matches pattern [])
 
@@ -33566,7 +33566,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     1. (Let enumTypeDeclarationIR be declarationIR as enumTypeDeclarationIR)
 
-      1. Case analysis on enumTypeDeclarationIR
+      1. Case analysis on enumTypeDeclarationIR (total)
 
         1. Case (% matches pattern % ENUM % `{ % `})
 
@@ -33640,13 +33640,13 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
     1. (Let typedefDeclarationIR be declarationIR as typedefDeclarationIR)
 
-      1. Case analysis on typedefDeclarationIR
+      1. Case analysis on typedefDeclarationIR (total)
 
         1. Case (% matches pattern % TYPEDEF % % ';')
 
           1. (Let annotationList TYPEDEF typedefIR nameIR ';' be typedefDeclarationIR)
 
-            1. Case analysis on typedefIR
+            1. Case analysis on typedefIR (total)
 
               1. Case (% has type typeIR)
 
@@ -33676,7 +33676,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
                               1. (Let ?(typeDefIR) be typeDefIR'?{typeDefIR' <- typeDefIR'?})
 
-                                1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR)
+                                1. Case analysis on $is_monomorphic_typeDefIR(typeDefIR) (total)
 
                                   1. Case true
 
@@ -33756,7 +33756,7 @@ relation Decl_inst: IC_0 STO |- declarationIR : % %
 
 relation Decls_inst: IC STO |- declarationIR*{declarationIR <- declarationIR*} : % %
 
-1. Case analysis on declarationIR*{declarationIR <- declarationIR*}
+1. Case analysis on declarationIR*{declarationIR <- declarationIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -33796,7 +33796,7 @@ relation Copy_in_arg_inst: STO_0 p_caller IC_caller argumentIR '@' p_callee IC_c
 
 relation Copy_in_inst: STO p_caller IC_caller argumentIR*{argumentIR <- argumentIR*} '@' p_callee IC id*{id <- id*} ~> % %
 
-1. Case analysis on argumentIR*{argumentIR <- argumentIR*}
+1. Case analysis on argumentIR*{argumentIR <- argumentIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -33830,7 +33830,7 @@ relation Copy_in_arg_inst_default: STO p_caller IC_caller '@' p_callee IC_callee
 
     1. (Let ?(parameterInitializerIR) be parameterInitializerOptIR)
 
-      1. Case analysis on parameterInitializerIR
+      1. Case analysis on parameterInitializerIR (total)
 
         1. Case (% has type initializerIR)
 
@@ -33856,7 +33856,7 @@ relation Copy_in_arg_inst_default: STO p_caller IC_caller '@' p_callee IC_callee
 
 relation Copy_in_inst_default: STO p_caller IC_caller '@' p_callee IC parameterIR*{parameterIR <- parameterIR*} ~> % %
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -33942,7 +33942,7 @@ relation Constructor_inst: p IC |- prefixedNameIR `< typeArgumentIR'*{typeArgume
 
 relation Constructor_call: p IC STO_0 |- constructorDef `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : % %
 
-1. Case analysis on constructorDef
+1. Case analysis on constructorDef (total)
 
   1. Case (% has type externObjectConstructorDef)
 
@@ -34128,7 +34128,7 @@ relation Constructor_call: p IC STO_0 |- constructorDef `< typeArgumentIR*{typeA
 
 relation SwitchCase_inst: p IC STO |- switchCaseIR : % %
 
-1. Case analysis on switchCaseIR
+1. Case analysis on switchCaseIR (total)
 
   1. Case (% matches pattern % ':' %)
 
@@ -34152,7 +34152,7 @@ relation SwitchCase_inst: p IC STO |- switchCaseIR : % %
 
 relation SwitchCases_inst: p IC STO |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : % %
 
-1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*}
+1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -34202,7 +34202,7 @@ def $merge_externMethodDefEnvs(externMethodDefEnv, set<pair<callableId, callable
 
 relation ObjectDecl_inst: IC_0 STO |- objectDeclarationIR : % %
 
-1. Case analysis on objectDeclarationIR
+1. Case analysis on objectDeclarationIR (total)
 
   1. Case (% has type functionDeclarationIR)
 
@@ -34222,7 +34222,7 @@ relation ObjectDecl_inst: IC_0 STO |- objectDeclarationIR : % %
 
 relation ObjectDecls_inst: IC STO |- objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} : % %
 
-1. Case analysis on objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*}
+1. Case analysis on objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -34240,7 +34240,7 @@ relation ObjectDecls_inst: IC STO |- objectDeclarationIR*{objectDeclarationIR <-
 
 def $callableId_of_externMethodPrototypeIR(externMethodPrototypeIR)
 
-1. Case analysis on externMethodPrototypeIR
+1. Case analysis on externMethodPrototypeIR (total)
 
   1. Case (% matches pattern % % ';')
 
@@ -34388,7 +34388,7 @@ def $exit_e(EC)
 
 def $inherit_e(p, EC)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -34410,7 +34410,7 @@ def $inherit_e(p, EC)
 
 def $copy_e(p, EC_from, EC_to)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -34426,11 +34426,11 @@ def $copy_e(p, EC_from, EC_to)
 
 def $add_var_e(p, EC, prefixedNameIR, value)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
-    1. Case analysis on prefixedNameIR
+    1. Case analysis on prefixedNameIR (total)
 
       1. Case (% matches pattern '.' %)
 
@@ -34482,7 +34482,7 @@ def $add_var_e(p, EC, prefixedNameIR, value)
 
 def $add_vars_e(p, EC, prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}, value*{value <- value*})
 
-1. Case analysis on prefixedNameIR*{prefixedNameIR <- prefixedNameIR*}
+1. Case analysis on prefixedNameIR*{prefixedNameIR <- prefixedNameIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -34520,7 +34520,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
 1. Else Dangling
 
-2. Case analysis on p
+2. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -34548,7 +34548,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
         1. (Let frame be EC.BLOCK.FRAME)
 
-          1. Case analysis on $in_set<id>(id, $dom_map<id, value>(frame))
+          1. Case analysis on $in_set<id>(id, $dom_map<id, value>(frame)) (total)
 
             1. Case true
 
@@ -34580,7 +34580,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
             1. (Let frame_h :: frame_t*{frame_t <- frame_t*} be frame*{frame <- frame*})
 
-              1. Case analysis on $in_set<id>(id, $dom_map<id, value>(frame_h))
+              1. Case analysis on $in_set<id>(id, $dom_map<id, value>(frame_h)) (total)
 
                 1. Case true
 
@@ -34602,7 +34602,7 @@ def $update_var_e(p, EC, prefixedNameIR, value)
 
 def $find_var_e(prefixedNameIR, p, EC)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern '.' %)
 
@@ -34622,7 +34622,7 @@ def $find_var_e(prefixedNameIR, p, EC)
 
     1. (Let _BARE id be prefixedNameIR)
 
-      1. Case analysis on p
+      1. Case analysis on p (total)
 
         1. Case (% matches pattern GLOBAL)
 
@@ -34674,7 +34674,7 @@ def $find_var_e(prefixedNameIR, p, EC)
 
 def $find_typeDef_e(_p, EC, prefixedNameIR)
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
@@ -34718,11 +34718,11 @@ def $find_type_e(p, EC, nameIR)
 
 def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
-    1. Case analysis on prefixedNameIR
+    1. Case analysis on prefixedNameIR (total)
 
       1. Case (% matches pattern _BARE %)
 
@@ -34806,7 +34806,7 @@ def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, argumentIR*{argumentIR
 
 def $find_constructorDef_e(EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 
-1. Case analysis on prefixedNameIR
+1. Case analysis on prefixedNameIR (total)
 
   1. Case (% matches pattern _BARE %)
 
@@ -34830,7 +34830,7 @@ def $find_parserState_e(EC, nameIR)
 
 def $subst_type_e(p, EC, typeIR)
 
-1. Case analysis on p
+1. Case analysis on p (total)
 
   1. Case (% matches pattern GLOBAL)
 
@@ -35018,7 +35018,7 @@ syntax expressionResult =
 
 relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
-1. Case analysis on expressionIR
+1. Case analysis on expressionIR (total)
 
   1. Case (% has type booleanLiteral)
 
@@ -35070,7 +35070,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
       1. (Expr_eval: p EC ARCH |- typedExpressionIR : EC_1 ARCH_1 expressionResult')
 
-        1. Case analysis on expressionResult'
+        1. Case analysis on expressionResult' (total)
 
           1. Case (% has type abortResult)
 
@@ -35094,7 +35094,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
         1. (Exprs_eval: p EC ARCH |- [typedExpressionIR_l, typedExpressionIR_r] : EC_1 ARCH_1 expressionListResult)
 
-          1. Case analysis on expressionListResult
+          1. Case analysis on expressionListResult (total)
 
             1. Case (% has type abortResult)
 
@@ -35214,7 +35214,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
       1. (Expr_eval: p EC ARCH |- typedExpressionIR : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -35242,7 +35242,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
     1. (Let sequenceExpressionIR be expressionIR as sequenceExpressionIR)
 
-      1. Case analysis on sequenceExpressionIR
+      1. Case analysis on sequenceExpressionIR (total)
 
         1. Case (% matches pattern SEQ `{ % `})
 
@@ -35250,7 +35250,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
             1. (Exprs_eval: p EC ARCH |- typedExpressionListIR : EC_1 ARCH_1 expressionListResult)
 
-              1. Case analysis on expressionListResult
+              1. Case analysis on expressionListResult (total)
 
                 1. Case (% has type abortResult)
 
@@ -35272,7 +35272,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
             1. (Exprs_eval: p EC ARCH |- typedExpressionListIR : EC_1 ARCH_1 expressionListResult)
 
-              1. Case analysis on expressionListResult
+              1. Case analysis on expressionListResult (total)
 
                 1. Case (% has type abortResult)
 
@@ -35292,7 +35292,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
     1. (Let recordExpressionIR be expressionIR as recordExpressionIR)
 
-      1. Case analysis on recordExpressionIR
+      1. Case analysis on recordExpressionIR (total)
 
         1. Case (% matches pattern RECORD `{ % `})
 
@@ -35300,7 +35300,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
             1. (Exprs_eval: p EC ARCH |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : EC_1 ARCH_1 expressionListResult)
 
-              1. Case analysis on expressionListResult
+              1. Case analysis on expressionListResult (total)
 
                 1. Case (% has type abortResult)
 
@@ -35326,7 +35326,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
             1. (Exprs_eval: p EC ARCH |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : EC_1 ARCH_1 expressionListResult)
 
-              1. Case analysis on expressionListResult
+              1. Case analysis on expressionListResult (total)
 
                 1. Case (% has type abortResult)
 
@@ -35362,7 +35362,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
     1. (Let memberAccessBaseIR '.' nameIR be expressionIR as memberAccessExpressionIR)
 
-      1. Case analysis on memberAccessBaseIR
+      1. Case analysis on memberAccessBaseIR (total)
 
         1. Case (% matches pattern TYPE %)
 
@@ -35414,7 +35414,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
             1. (Expr_eval: p EC ARCH |- typedExpressionIR_base : EC_1 ARCH_1 expressionResult')
 
-              1. Case analysis on expressionResult'
+              1. Case analysis on expressionResult' (total)
 
                 1. Case (% has type abortResult)
 
@@ -35450,7 +35450,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
                                   1. (Let b_out_of_bounds be ((_nat < 1) \/ (_nat > n_size)))
 
-                                    1. Case analysis on b_out_of_bounds
+                                    1. Case analysis on b_out_of_bounds (total)
 
                                       1. Case true
 
@@ -35596,7 +35596,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
       1. (Exprs_eval: p EC ARCH |- [typedExpressionIR_base, typedExpressionIR_index] : EC_1 ARCH_1 expressionListResult)
 
-        1. Case analysis on expressionListResult
+        1. Case analysis on expressionListResult (total)
 
           1. Case (% has type abortResult)
 
@@ -35728,7 +35728,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
         1. Else Dangling
 
-      2. Case analysis on sliceop
+      2. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -35780,7 +35780,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
           1. (Callee_eval: p EC ARCH |- callableTargetIR `< '_' `> `( argumentIR*{argumentIR <- argumentIR*} `) : EC_1 ARCH_1 calleeResult)
 
-            1. Case analysis on calleeResult
+            1. Case analysis on calleeResult (total)
 
               1. Case (% has type abortResult)
 
@@ -35794,7 +35794,7 @@ relation Expr_eval: p EC ARCH |- expressionIR '#' _expressionNoteIR : % % %
 
                   1. (Call_eval: p EC_1 ARCH_1 |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : EC_2 ARCH_2 callResult)
 
-                    1. Case analysis on callResult
+                    1. Case analysis on callResult (total)
 
                       1. Case (% has type abortResult)
 
@@ -35831,7 +35831,7 @@ syntax expressionListResult =
 
 relation Exprs_eval: p EC ARCH |- typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} : % % %
 
-1. Case analysis on typedExpressionIR*{typedExpressionIR <- typedExpressionIR*}
+1. Case analysis on typedExpressionIR*{typedExpressionIR <- typedExpressionIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -35843,7 +35843,7 @@ relation Exprs_eval: p EC ARCH |- typedExpressionIR*{typedExpressionIR <- typedE
 
       1. (Expr_eval: p EC ARCH |- typedExpressionIR_h : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -35857,7 +35857,7 @@ relation Exprs_eval: p EC ARCH |- typedExpressionIR*{typedExpressionIR <- typedE
 
               1. (Exprs_eval: p EC_1 ARCH_1 |- typedExpressionIR_t*{typedExpressionIR_t <- typedExpressionIR_t*} : EC_2 ARCH_2 expressionListResult)
 
-                1. Case analysis on expressionListResult
+                1. Case analysis on expressionListResult (total)
 
                   1. Case (% has type abortResult)
 
@@ -35913,7 +35913,7 @@ syntax storageReferenceResult =
 
 relation Argument_eval_lvalue: p EC ARCH |- argumentIR : % % %
 
-1. Case analysis on argumentIR
+1. Case analysis on argumentIR (total)
 
   1. Case (% has type typedExpressionIR)
 
@@ -35957,7 +35957,7 @@ relation Argument_eval_lvalue: p EC ARCH |- argumentIR : % % %
 
 relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
-1. Case analysis on lvalueIR
+1. Case analysis on lvalueIR (total)
 
   1. Case (% has type referenceExpressionIR)
 
@@ -35971,7 +35971,7 @@ relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
       1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult')
 
-        1. Case analysis on storageReferenceResult'
+        1. Case analysis on storageReferenceResult' (total)
 
           1. Case (% has type abortResult)
 
@@ -35989,7 +35989,7 @@ relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
                   1. (Lvalue_read: p EC_1 ARCH_1 |- storageReference : value)
 
-                    1. Case analysis on value <: headerStackValue
+                    1. Case analysis on value <: headerStackValue (total)
 
                       1. Case true
 
@@ -36067,7 +36067,7 @@ relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
       1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult')
 
-        1. Case analysis on storageReferenceResult'
+        1. Case analysis on storageReferenceResult' (total)
 
           1. Case (% has type abortResult)
 
@@ -36085,7 +36085,7 @@ relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
                   1. (Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult)
 
-                    1. Case analysis on expressionResult
+                    1. Case analysis on expressionResult (total)
 
                       1. Case (% has type abortResult)
 
@@ -36115,7 +36115,7 @@ relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
       1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult')
 
-        1. Case analysis on storageReferenceResult'
+        1. Case analysis on storageReferenceResult' (total)
 
           1. Case (% has type abortResult)
 
@@ -36133,7 +36133,7 @@ relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
                   1. (Exprs_eval: p EC_1 ARCH_1 |- [typedExpressionIR_l, typedExpressionIR_r] : EC_2 ARCH_2 expressionListResult)
 
-                    1. Case analysis on expressionListResult
+                    1. Case analysis on expressionListResult (total)
 
                       1. Case (% has type abortResult)
 
@@ -36167,7 +36167,7 @@ relation Lvalue_eval: p EC ARCH |- lvalueIR '#' _lvalueNoteIR : % % %
 
 relation Lvalue_read: p EC ARCH |- storageReference' : %
 
-1. Case analysis on storageReference'
+1. Case analysis on storageReference' (total)
 
   1. Case (% has type prefixedNameIR)
 
@@ -36337,7 +36337,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                         1. (Let b_in_bounds be ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
 
-                          1. Case analysis on b_in_bounds
+                          1. Case analysis on b_in_bounds (total)
 
                             1. Case true
 
@@ -36385,7 +36385,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
                         1. (Let b_in_bounds be ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
 
-                          1. Case analysis on b_in_bounds
+                          1. Case analysis on b_in_bounds (total)
 
                             1. Case true
 
@@ -36429,7 +36429,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
     1. (Let storageReference `[ value' sliceop value'' `] be storageReference')
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -36449,7 +36449,7 @@ relation Lvalue_read: p EC ARCH |- storageReference' : %
 
 relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
-1. Case analysis on storageReference'
+1. Case analysis on storageReference' (total)
 
   1. Case (% has type prefixedNameIR)
 
@@ -36559,7 +36559,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
                                   1. (Let b_toggled be ((~b_valid_old /\ b_valid_new) \/ (b_valid_old /\ ~b_valid_new)))
 
-                                    1. Case analysis on b_toggled
+                                    1. Case analysis on b_toggled (total)
 
                                       1. Case false
 
@@ -36611,7 +36611,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
                         1. (Let b_in_bounds be ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
 
-                          1. Case analysis on b_in_bounds
+                          1. Case analysis on b_in_bounds (total)
 
                             1. Case true
 
@@ -36645,7 +36645,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
                         1. (Let b_in_bounds be ((i_idx < n_size as int) /\ (i_idx >= 0 as int)))
 
-                          1. Case analysis on b_in_bounds
+                          1. Case analysis on b_in_bounds (total)
 
                             1. Case true
 
@@ -36675,7 +36675,7 @@ relation Lvalue_write: p EC_0 ARCH |- storageReference' := value : %
 
     1. (Let storageReference `[ value' sliceop value'' `] be storageReference')
 
-      1. Case analysis on sliceop
+      1. Case analysis on sliceop (total)
 
         1. Case (% matches pattern ':')
 
@@ -36736,7 +36736,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
       1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult)
 
-        1. Case analysis on storageReferenceResult
+        1. Case analysis on storageReferenceResult (total)
 
           1. Case (% has type abortResult)
 
@@ -36752,13 +36752,13 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
                 1. (Let ?(storageReference) be storageReference'?{storageReference' <- storageReference'?})
 
-                  1. Case analysis on assignop matches '='
+                  1. Case analysis on assignop matches '=' (total)
 
                     1. Case true
 
                       1. (Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult)
 
-                        1. Case analysis on expressionResult
+                        1. Case analysis on expressionResult (total)
 
                           1. Case (% has type abortResult)
 
@@ -36778,7 +36778,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
                       1. (Expr_eval: p EC_1 ARCH_1 |- typedExpressionIR : EC_2 ARCH_2 expressionResult)
 
-                        1. Case analysis on expressionResult
+                        1. Case analysis on expressionResult (total)
 
                           1. Case (% has type abortResult)
 
@@ -36814,7 +36814,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
       1. (Callee_eval: p EC ARCH |- callableTargetIR `< '_' `> `( argumentIR*{argumentIR <- argumentIR*} `) : EC_1 ARCH_1 calleeResult)
 
-        1. Case analysis on calleeResult
+        1. Case analysis on calleeResult (total)
 
           1. Case (% has type abortResult)
 
@@ -36828,7 +36828,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
               1. (Call_eval: p EC_1 ARCH_1 |- callee '@' `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `> `( argumentIR*{argumentIR <- argumentIR*} `) : EC_2 ARCH_2 callResult)
 
-                1. Case analysis on callResult
+                1. Case analysis on callResult (total)
 
                   1. Case (% has type abortResult)
 
@@ -36862,7 +36862,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
     1. (Let conditionalStatementIR be statementIR' as conditionalStatementIR)
 
-      1. Case analysis on conditionalStatementIR
+      1. Case analysis on conditionalStatementIR (total)
 
         1. Case (% matches pattern IF `( % `) %)
 
@@ -36932,7 +36932,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
       1. (Let returnStatementIR be statementIR' as returnStatementIR)
 
-        1. Case analysis on returnStatementIR
+        1. Case analysis on returnStatementIR (total)
 
           1. Case (% matches pattern RETURN ';')
 
@@ -36944,7 +36944,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
               1. (Expr_eval: LOCAL EC ARCH |- typedExpressionIR : EC_1 ARCH_1 expressionResult)
 
-                1. Case analysis on expressionResult
+                1. Case analysis on expressionResult (total)
 
                   1. Case (% has type abortResult)
 
@@ -36962,7 +36962,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
       1. (Let forStatementIR be statementIR' as forStatementIR)
 
-        1. Case analysis on forStatementIR
+        1. Case analysis on forStatementIR (total)
 
           1. Case (% matches pattern % FOR `( % % IN % `) %)
 
@@ -36972,7 +36972,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
                 1. (ForCollectionExpr_eval: EC_1 ARCH |- forCollectionExpressionIR : EC_2 ARCH_1 expressionListResult)
 
-                  1. Case analysis on expressionListResult
+                  1. Case analysis on expressionListResult (total)
 
                     1. Case (% has type abortResult)
 
@@ -37054,7 +37054,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
         1. (Expr_eval: LOCAL EC ARCH |- typedExpressionIR : EC_1 ARCH_1 expressionResult)
 
-          1. Case analysis on expressionResult
+          1. Case analysis on expressionResult (total)
 
             1. Case (% has type abortResult)
 
@@ -37066,7 +37066,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
               1. (Let _CONT value be expressionResult as continueResult<value>)
 
-                1. Case analysis on value <: tableMetadataEnumValue
+                1. Case analysis on value <: tableMetadataEnumValue (total)
 
                   1. Case true
 
@@ -37088,7 +37088,7 @@ relation Stmt_eval: p EC ARCH |- statementIR' : % % %
 
 relation BlockElementStmt_eval: EC_0 ARCH |- blockElementStatementIR : % % %
 
-1. Case analysis on blockElementStatementIR
+1. Case analysis on blockElementStatementIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -37116,7 +37116,7 @@ relation BlockElementStmt_eval: EC_0 ARCH |- blockElementStatementIR : % % %
 
 relation BlockElementStmtList_eval: EC ARCH |- blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} : % % %
 
-1. Case analysis on blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*}
+1. Case analysis on blockElementStatementIR*{blockElementStatementIR <- blockElementStatementIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -37232,7 +37232,7 @@ relation ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : % % %
 
     1. (Let parserConditionalStatementIR be parserStatementIR as parserConditionalStatementIR)
 
-      1. Case analysis on parserConditionalStatementIR
+      1. Case analysis on parserConditionalStatementIR (total)
 
         1. Case (% matches pattern IF `( % `) %)
 
@@ -37296,7 +37296,7 @@ relation ParserStmt_eval: EC_0 ARCH_0 |- parserStatementIR : % % %
 
 relation ParserBlockElementStmt_eval: EC_0 ARCH |- parserBlockElementStatementIR : % % %
 
-1. Case analysis on parserBlockElementStatementIR
+1. Case analysis on parserBlockElementStatementIR (total)
 
   1. Case (% has type constantDeclarationIR)
 
@@ -37338,7 +37338,7 @@ relation ParserBlockElementStmt_eval: EC_0 ARCH |- parserBlockElementStatementIR
 
 relation ParserBlockElementStmtList_eval: EC ARCH |- parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} : % % %
 
-1. Case analysis on parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*}
+1. Case analysis on parserBlockElementStatementIR*{parserBlockElementStatementIR <- parserBlockElementStatementIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -37397,7 +37397,7 @@ relation ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : % % %
 
           1. (SelectCases_match: EC_1 ARCH_1 value_key*{value_key <- value_key*} |- selectCaseListIR : EC_2 ARCH_2 selectCaseMatchResult)
 
-            1. Case analysis on selectCaseMatchResult
+            1. Case analysis on selectCaseMatchResult (total)
 
               1. Case (% has type rejectTransitionResult)
 
@@ -37409,7 +37409,7 @@ relation ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : % % %
 
                 1. (Let _CONT nameIR_state?{nameIR_state <- nameIR_state?} be selectCaseMatchResult as continueResult<nameIR?>)
 
-                  1. Case analysis on nameIR_state?{nameIR_state <- nameIR_state?}
+                  1. Case analysis on nameIR_state?{nameIR_state <- nameIR_state?} (total)
 
                     1. Case (% matches pattern ())
 
@@ -37429,7 +37429,7 @@ relation ParserSelect_eval: EC_0 ARCH_0 |- selectExpressionIR : % % %
 
 relation ParserTransition_eval: EC ARCH |- TRANSITION stateExpressionIR : % % %
 
-1. Case analysis on stateExpressionIR
+1. Case analysis on stateExpressionIR (total)
 
   1. Case (% matches pattern % ';')
 
@@ -37471,7 +37471,7 @@ relation ParserState_eval: EC_0 ARCH_0 |- parserStateIR : % % %
 
     1. (ParserBlockElementStmtList_eval: EC_1 ARCH_0 |- parserBlockElementStatementListIR : EC_2 ARCH_1 parserStatementResult)
 
-      1. Case analysis on parserStatementResult
+      1. Case analysis on parserStatementResult (total)
 
         1. Case (% has type rejectTransitionResult)
 
@@ -37501,7 +37501,7 @@ relation ParserState_trans: EC_0 ARCH_0 |- TRANSITION nameIR : % % %
 
       1. (ParserState_eval: EC_0 ARCH_0 |- parserStateIR : EC_1 ARCH_1 transitionResult')
 
-        1. Case analysis on transitionResult'
+        1. Case analysis on transitionResult' (total)
 
           1. Case (% has type acceptTransitionResult)
 
@@ -37565,7 +37565,7 @@ relation ParserLocalDecl_eval: EC_0 ARCH |- parserLocalDeclarationIR : % % %
 
 relation ParserLocalDecls_eval: EC ARCH |- parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} : % % %
 
-1. Case analysis on parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*}
+1. Case analysis on parserLocalDeclarationIR*{parserLocalDeclarationIR <- parserLocalDeclarationIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -37577,7 +37577,7 @@ relation ParserLocalDecls_eval: EC ARCH |- parserLocalDeclarationIR*{parserLocal
 
       1. (ParserLocalDecl_eval: EC ARCH |- parserLocalDeclarationIR_h : EC_1 ARCH_1 parserDeclarationResult)
 
-        1. Case analysis on parserDeclarationResult
+        1. Case analysis on parserDeclarationResult (total)
 
           1. Case (% has type rejectTransitionResult)
 
@@ -37601,7 +37601,7 @@ relation Table_eval: EC_0 ARCH_0 |- typeId TBL : % % %
 
   1. (TableKeys_eval: EC_0 ARCH_0 |- tableKeyListIR : EC_1 ARCH_1 tableKeysResult)
 
-    1. Case analysis on tableKeysResult
+    1. Case analysis on tableKeysResult (total)
 
       1. Case (% has type exitResult)
 
@@ -37617,7 +37617,7 @@ relation Table_eval: EC_0 ARCH_0 |- typeId TBL : % % %
 
             1. (TableMatches_eval: EC_1 ARCH_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} '@' tableEntryListIR : EC_2 ARCH_2 tableMatchesResult)
 
-              1. Case analysis on tableMatchesResult
+              1. Case analysis on tableMatchesResult (total)
 
                 1. Case (% has type exitResult)
 
@@ -37729,7 +37729,7 @@ relation ControlLocalDecl_eval: EC_0 ARCH |- controlLocalDeclarationIR : % % %
 
 relation ControlLocalDecls_eval: EC ARCH |- controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} : % % %
 
-1. Case analysis on controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*}
+1. Case analysis on controlLocalDeclarationIR*{controlLocalDeclarationIR <- controlLocalDeclarationIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -37741,7 +37741,7 @@ relation ControlLocalDecls_eval: EC ARCH |- controlLocalDeclarationIR*{controlLo
 
       1. (ControlLocalDecl_eval: EC ARCH |- controlLocalDeclarationIR_h : EC_1 ARCH_1 controlLocalDeclarationResult')
 
-        1. Case analysis on controlLocalDeclarationResult'
+        1. Case analysis on controlLocalDeclarationResult' (total)
 
           1. Case (% has type exitResult)
 
@@ -37764,7 +37764,7 @@ syntax declarationResult =
 
 relation VarDecl_eval: p EC_0 ARCH |- annotationList typeIR nameIR initializerIR?{initializerIR <- initializerIR?} ';' : % % %
 
-1. Case analysis on initializerIR?{initializerIR <- initializerIR?}
+1. Case analysis on initializerIR?{initializerIR <- initializerIR?} (total)
 
   1. Case (% matches pattern ())
 
@@ -37782,7 +37782,7 @@ relation VarDecl_eval: p EC_0 ARCH |- annotationList typeIR nameIR initializerIR
 
       1. (Expr_eval: p EC_0 ARCH |- typedExpressionIR_init : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -38157,7 +38157,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
           1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult)
 
-            1. Case analysis on storageReferenceResult
+            1. Case analysis on storageReferenceResult (total)
 
               1. Case (% has type abortResult)
 
@@ -38233,7 +38233,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
             1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult)
 
-              1. Case analysis on storageReferenceResult
+              1. Case analysis on storageReferenceResult (total)
 
                 1. Case (% has type abortResult)
 
@@ -38341,7 +38341,7 @@ relation Callee_eval: p EC ARCH |- callableTargetIR' `< '_' `> `( argumentListIR
 
                 1. (Lvalue_eval: p EC ARCH |- typedLvalueIR : EC_1 ARCH_1 storageReferenceResult)
 
-                  1. Case analysis on storageReferenceResult
+                  1. Case analysis on storageReferenceResult (total)
 
                     1. Case (% has type abortResult)
 
@@ -38414,7 +38414,7 @@ relation Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 _annotationList direction t
 
   1. (Argument_eval: p_caller EC_caller_0 ARCH_0 |- argumentIR : EC_caller_1 ARCH_1 expressionResult)
 
-    1. Case analysis on expressionResult
+    1. Case analysis on expressionResult (total)
 
       1. Case (% has type abortResult)
 
@@ -38438,7 +38438,7 @@ relation Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 _annotationList direction t
 
     1. (Argument_eval_lvalue: p_caller EC_caller_0 ARCH_0 |- argumentIR : EC_caller_1 ARCH_1 storageReferenceResult)
 
-      1. Case analysis on storageReferenceResult
+      1. Case analysis on storageReferenceResult (total)
 
         1. Case (% has type abortResult)
 
@@ -38466,7 +38466,7 @@ relation Copy_in_arg: ARCH_0 |- p_caller EC_caller_0 _annotationList direction t
 
     1. (Argument_eval_lvalue: p_caller EC_caller_0 ARCH_0 |- argumentIR : EC_caller_1 ARCH_1 storageReferenceResult)
 
-      1. Case analysis on storageReferenceResult
+      1. Case analysis on storageReferenceResult (total)
 
         1. Case (% has type abortResult)
 
@@ -38495,7 +38495,7 @@ syntax copyInResult =
 
 relation Copy_in: p_shared ARCH |- p_caller EC parameterIR*{parameterIR <- parameterIR*} '@' p_callee EC_callee_0 argumentIR*{argumentIR <- argumentIR*} ~> % % % '#' %
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -38517,7 +38517,7 @@ relation Copy_in: p_shared ARCH |- p_caller EC parameterIR*{parameterIR <- param
 
           1. (Copy_in_arg: ARCH |- p_caller EC parameterIR_h '@' p_callee EC_callee_0 argumentIR_h ~> ARCH_1 EC_caller_1 EC_callee_1 '#' copyInArgumentResult)
 
-            1. Case analysis on copyInArgumentResult
+            1. Case analysis on copyInArgumentResult (total)
 
               1. Case (% has type abortResult)
 
@@ -38531,7 +38531,7 @@ relation Copy_in: p_shared ARCH |- p_caller EC parameterIR*{parameterIR <- param
 
                   1. (Copy_in: p_shared ARCH_1 |- p_caller EC_caller_1 parameterIR_t*{parameterIR_t <- parameterIR_t*} '@' p_callee EC_callee_1 argumentIR_t*{argumentIR_t <- argumentIR_t*} ~> ARCH_2 EC_caller_2 EC_callee_2 '#' copyInResult)
 
-                    1. Case analysis on copyInResult
+                    1. Case analysis on copyInResult (total)
 
                       1. Case (% has type abortResult)
 
@@ -38571,7 +38571,7 @@ relation Copy_in_default: parameterIR*{parameterIR <- parameterIR*} '@' p_callee
 
 relation Copy_out_argument: ARCH |- p_caller EC_caller_0 _annotationList direction typeIR nameIR _parameterInitializerOptIR '@' p_callee EC_callee storageReference'?{storageReference' <- storageReference'?} ~> %
 
-1. Case analysis on storageReference'?{storageReference' <- storageReference'?}
+1. Case analysis on storageReference'?{storageReference' <- storageReference'?} (total)
 
   1. Case (% matches pattern ())
 
@@ -38685,7 +38685,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                     1. (Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentListIR ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult)
 
-                      1. Case analysis on copyInResult
+                      1. Case analysis on copyInResult (total)
 
                         1. Case (% has type abortResult)
 
@@ -38729,7 +38729,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                     1. (Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_1 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_2 '#' copyInResult)
 
-                      1. Case analysis on copyInResult
+                      1. Case analysis on copyInResult (total)
 
                         1. Case (% has type abortResult)
 
@@ -38747,7 +38747,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                 1. (ExternFunctionCall_eval: EC_callee_3 ARCH_1 |- nameIR `( nameIR_param*{nameIR_param <- nameIR_param*} `) : EC_callee_4 ARCH_2 callResult)
 
-                                  1. Case analysis on callResult <: rejectTransitionResult
+                                  1. Case analysis on callResult <: rejectTransitionResult (total)
 
                                     1. Case true
 
@@ -39115,7 +39115,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
           1. (Let EXTERN_METHOD objectId '.' nameIR `< typeParameterIR*{typeParameterIR <- typeParameterIR*} `> `( parameterIR*{parameterIR <- parameterIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) `{ theta ';' frame ';' blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} `} be externMethodCallee)
 
-            1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+            1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} (total)
 
               1. Case (% matches pattern (_))
 
@@ -39137,7 +39137,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                 1. (Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' copyInResult)
 
-                                  1. Case analysis on copyInResult
+                                  1. Case analysis on copyInResult (total)
 
                                     1. Case (% has type abortResult)
 
@@ -39177,7 +39177,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                               1. (Copy_in: p_shared ARCH_0 |- p EC_0 parameterIR_aligned*{parameterIR_aligned <- parameterIR_aligned*} '@' LOCAL EC_callee_3 argumentIR*{argumentIR <- argumentIR*} ~> ARCH_1 EC_1 EC_callee_4 '#' copyInResult)
 
-                                1. Case analysis on copyInResult
+                                1. Case analysis on copyInResult (total)
 
                                   1. Case (% has type abortResult)
 
@@ -39195,7 +39195,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                                           1. (ExternMethodCall_eval: EC_callee_5 ARCH_1 |- objectId '.' nameIR `( nameIR_param*{nameIR_param <- nameIR_param*} `) : EC_callee_6 ARCH_2 callResult)
 
-                                            1. Case analysis on callResult <: rejectTransitionResult
+                                            1. Case analysis on callResult <: rejectTransitionResult (total)
 
                                               1. Case true
 
@@ -39247,7 +39247,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                           1. (ParserLocalDecls_eval: EC_callee_3 ARCH_1 |- parserLocalDeclarationListIR : EC_callee_4 ARCH_2 parserDeclarationResult)
 
-                            1. Case analysis on parserDeclarationResult
+                            1. Case analysis on parserDeclarationResult (total)
 
                               1. Case (% has type rejectTransitionResult)
 
@@ -39317,7 +39317,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                             1. (ControlLocalDecls_eval: EC_callee_3 ARCH_1 |- controlLocalDeclarationListIR : EC_callee_4 ARCH_2 controlLocalDeclarationResult)
 
-                              1. Case analysis on controlLocalDeclarationResult
+                              1. Case analysis on controlLocalDeclarationResult (total)
 
                                 1. Case (% has type exitResult)
 
@@ -39371,7 +39371,7 @@ relation Call_eval: p EC_0 ARCH_0 |- callee '@' `< typeArgumentListIR `> `( argu
 
                   1. (Table_eval: EC_callee_1 ARCH_0 |- typeId TBL : EC_callee_2 ARCH_1 tableResult)
 
-                    1. Case analysis on tableResult
+                    1. Case analysis on tableResult (total)
 
                       1. Case (% has type exitResult)
 
@@ -39437,7 +39437,7 @@ def $match_keysets(setValue'*{setValue' <- setValue'*}, value*{value <- value*})
 
             1. If (value_key_t*{value_key_t <- value_key_t*} matches _ :: _), then
 
-              1. Case analysis on $match_keyset(setValue_h, value_key_h)
+              1. Case analysis on $match_keyset(setValue_h, value_key_h) (total)
 
                 1. Case true
 
@@ -39463,7 +39463,7 @@ def $match_keysets(setValue'*{setValue' <- setValue'*}, value*{value <- value*})
 
 def $match_keyset(setValue, value_key)
 
-1. Case analysis on setValue
+1. Case analysis on setValue (total)
 
   1. Case (% matches pattern SET `{ '...' `})
 
@@ -39508,7 +39508,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
       1. (Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -39558,7 +39558,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
       1. (Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -39572,7 +39572,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
               1. (Expr_eval: LOCAL EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult')
 
-                1. Case analysis on expressionResult'
+                1. Case analysis on expressionResult' (total)
 
                   1. Case (% has type abortResult)
 
@@ -39594,7 +39594,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
       1. (Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -39608,7 +39608,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
               1. (Expr_eval: LOCAL EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult')
 
-                1. Case analysis on expressionResult'
+                1. Case analysis on expressionResult' (total)
 
                   1. Case (% has type abortResult)
 
@@ -39636,7 +39636,7 @@ relation Eval_keyset_simple: EC_0 ARCH_0 |- simpleKeysetExpressionIR : % % %
 
 relation Eval_keysets_simple: EC ARCH |- simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} : % % %
 
-1. Case analysis on simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*}
+1. Case analysis on simpleKeysetExpressionIR*{simpleKeysetExpressionIR <- simpleKeysetExpressionIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -39648,7 +39648,7 @@ relation Eval_keysets_simple: EC ARCH |- simpleKeysetExpressionIR*{simpleKeysetE
 
       1. (Eval_keyset_simple: EC ARCH |- simpleKeysetExpressionIR_h : EC_1 ARCH_1 simpleKeysetExpressionResult)
 
-        1. Case analysis on simpleKeysetExpressionResult
+        1. Case analysis on simpleKeysetExpressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -39662,7 +39662,7 @@ relation Eval_keysets_simple: EC ARCH |- simpleKeysetExpressionIR*{simpleKeysetE
 
               1. (Eval_keysets_simple: EC_1 ARCH_1 |- simpleKeysetExpressionIR_t*{simpleKeysetExpressionIR_t <- simpleKeysetExpressionIR_t*} : EC_2 ARCH_2 keysetExpressionResult')
 
-                1. Case analysis on keysetExpressionResult'
+                1. Case analysis on keysetExpressionResult' (total)
 
                   1. Case (% has type abortResult)
 
@@ -39680,7 +39680,7 @@ relation Eval_keysets_simple: EC ARCH |- simpleKeysetExpressionIR*{simpleKeysetE
 
 relation ForUpdateStmt_eval: EC_0 ARCH_0 |- forUpdateStatementIR : % % %
 
-1. Case analysis on forUpdateStatementIR
+1. Case analysis on forUpdateStatementIR (total)
 
   1. Case (% matches pattern % `< % `> `( % `))
 
@@ -39700,7 +39700,7 @@ relation ForUpdateStmt_eval: EC_0 ARCH_0 |- forUpdateStatementIR : % % %
 
 relation ForUpdateStmts_eval: EC ARCH |- forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} : % % %
 
-1. Case analysis on forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*}
+1. Case analysis on forUpdateStatementIR*{forUpdateStatementIR <- forUpdateStatementIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -39732,7 +39732,7 @@ relation ForUpdateStmts_eval: EC ARCH |- forUpdateStatementIR*{forUpdateStatemen
 
 relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
-1. Case analysis on forInitStatementIR
+1. Case analysis on forInitStatementIR (total)
 
   1. Case (% matches pattern % % % %)
 
@@ -39758,7 +39758,7 @@ relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
           1. (Expr_eval: LOCAL EC_0 ARCH |- typedExpressionIR_init : EC_1 ARCH_1 expressionResult)
 
-            1. Case analysis on expressionResult
+            1. Case analysis on expressionResult (total)
 
               1. Case (% has type abortResult)
 
@@ -39786,7 +39786,7 @@ relation ForInitStmt_eval: EC_0 ARCH |- forInitStatementIR : % % %
 
 relation ForInitStmts_eval: EC ARCH |- forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} : % % %
 
-1. Case analysis on forInitStatementIR*{forInitStatementIR <- forInitStatementIR*}
+1. Case analysis on forInitStatementIR*{forInitStatementIR <- forInitStatementIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -39888,7 +39888,7 @@ relation ForThreeClauseStmt_eval: EC_0 ARCH_0 |- typedExpressionIR statementIR f
 
 relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % %
 
-1. Case analysis on forCollectionExpressionIR
+1. Case analysis on forCollectionExpressionIR (total)
 
   1. Case (% has type typedExpressionIR)
 
@@ -39896,7 +39896,7 @@ relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % 
 
       1. (Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -39942,7 +39942,7 @@ relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % 
 
       1. (Expr_eval: LOCAL EC_0 ARCH_0 |- typedExpressionIR_l : EC_1 ARCH_1 expressionResult)
 
-        1. Case analysis on expressionResult
+        1. Case analysis on expressionResult (total)
 
           1. Case (% has type abortResult)
 
@@ -39956,7 +39956,7 @@ relation ForCollectionExpr_eval: EC_0 ARCH_0 |- forCollectionExpressionIR : % % 
 
               1. (Expr_eval: LOCAL EC_1 ARCH_1 |- typedExpressionIR_r : EC_2 ARCH_2 expressionResult')
 
-                1. Case analysis on expressionResult'
+                1. Case analysis on expressionResult' (total)
 
                   1. Case (% has type abortResult)
 
@@ -40006,7 +40006,7 @@ def $values_of_setValue(SET `< typeIR `>, setValue)
 
 relation ForInStmt_eval: EC ARCH |- nameIR value*{value <- value*} statementIR : % % %
 
-1. Case analysis on value*{value <- value*}
+1. Case analysis on value*{value <- value*} (total)
 
   1. Case (% matches pattern [])
 
@@ -40054,7 +40054,7 @@ relation Switch_table_eval: EC_0 ARCH_0 |- SWITCH `( id_enum `) `{ switchCaseIR*
 
 1. (SwitchCases_table_eval: id_enum |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
 
-  1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+  1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} (total)
 
     1. Case (% matches pattern ())
 
@@ -40070,7 +40070,7 @@ relation Switch_table_eval: EC_0 ARCH_0 |- SWITCH `( id_enum `) `{ switchCaseIR*
 
 def $match_switchLabelIR_table(id, switchLabelIR)
 
-1. Case analysis on switchLabelIR
+1. Case analysis on switchLabelIR (total)
 
   1. Case (% matches pattern DEFAULT)
 
@@ -40098,7 +40098,7 @@ def $match_switchLabelIR_table(id, switchLabelIR)
 
 relation SwitchCases_table_eval: id |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : %
 
-1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*}
+1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -40108,13 +40108,13 @@ relation SwitchCases_table_eval: id |- switchCaseIR*{switchCaseIR <- switchCaseI
 
     1. (Let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} be switchCaseIR*{switchCaseIR <- switchCaseIR*})
 
-      1. Case analysis on switchCaseIR_h
+      1. Case analysis on switchCaseIR_h (total)
 
         1. Case (% matches pattern % ':' %)
 
           1. (Let switchLabelIR_h ':' blockStatementIR_h be switchCaseIR_h)
 
-            1. Case analysis on $match_switchLabelIR_table(id, switchLabelIR_h)
+            1. Case analysis on $match_switchLabelIR_table(id, switchLabelIR_h) (total)
 
               1. Case true
 
@@ -40130,7 +40130,7 @@ relation SwitchCases_table_eval: id |- switchCaseIR*{switchCaseIR <- switchCaseI
 
           1. (Let switchLabelIR_h ':' be switchCaseIR_h)
 
-            1. Case analysis on $match_switchLabelIR_table(id, switchLabelIR_h)
+            1. Case analysis on $match_switchLabelIR_table(id, switchLabelIR_h) (total)
 
               1. Case true
 
@@ -40164,7 +40164,7 @@ relation SwitchCases_table_eval: id |- switchCaseIR*{switchCaseIR <- switchCaseI
 
 def $is_non_fallthrough_switchCaseIR(switchCaseIR)
 
-1. Case analysis on switchCaseIR
+1. Case analysis on switchCaseIR (total)
 
   1. Case (% matches pattern % ':' %)
 
@@ -40178,7 +40178,7 @@ relation Switch_general_eval: EC_0 ARCH_0 |- SWITCH `( value `) `{ switchCaseIR*
 
 1. (SwitchCases_general_eval: LOCAL EC_0 ARCH_0 value |- switchCaseIR*{switchCaseIR <- switchCaseIR*} : EC_1 ARCH_1 blockStatementIR'?{blockStatementIR' <- blockStatementIR'?})
 
-  1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?}
+  1. Case analysis on blockStatementIR'?{blockStatementIR' <- blockStatementIR'?} (total)
 
     1. Case (% matches pattern ())
 
@@ -40196,7 +40196,7 @@ relation SwitchLabel_general_eval: p EC_0 ARCH_0 |- switchLabelIR : % % %
 
 1. If (p matches LOCAL), then
 
-  1. Case analysis on switchLabelIR
+  1. Case analysis on switchLabelIR (total)
 
     1. Case (% matches pattern DEFAULT)
 
@@ -40228,7 +40228,7 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- switchCaseIR*{switchCa
 
 1. If (p matches LOCAL), then
 
-  1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*}
+  1. Case analysis on switchCaseIR*{switchCaseIR <- switchCaseIR*} (total)
 
     1. Case (% matches pattern [])
 
@@ -40238,7 +40238,7 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- switchCaseIR*{switchCa
 
       1. (Let switchCaseIR_h :: switchCaseIR_t*{switchCaseIR_t <- switchCaseIR_t*} be switchCaseIR*{switchCaseIR <- switchCaseIR*})
 
-        1. Case analysis on switchCaseIR_h
+        1. Case analysis on switchCaseIR_h (total)
 
           1. Case (% matches pattern % ':' %)
 
@@ -40250,7 +40250,7 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- switchCaseIR*{switchCa
 
                   1. (Let _CONT value_label be expressionResult as continueResult<value>)
 
-                    1. Case analysis on $match_switchLabelIR_general(value, value_label)
+                    1. Case analysis on $match_switchLabelIR_general(value, value_label) (total)
 
                       1. Case true
 
@@ -40274,7 +40274,7 @@ relation SwitchCases_general_eval: p EC_0 ARCH_0 value |- switchCaseIR*{switchCa
 
                   1. (Let _CONT value_label be expressionResult as continueResult<value>)
 
-                    1. Case analysis on $match_switchLabelIR_general(value, value_label)
+                    1. Case analysis on $match_switchLabelIR_general(value, value_label) (total)
 
                       1. Case true
 
@@ -40330,7 +40330,7 @@ relation SelectCase_match: EC_0 ARCH_0 value_key*{value_key <- value_key*} |- ke
 
       1. (Let _CONT setValue*{setValue <- setValue*} be keysetExpressionResult as continueResult<setValue*>)
 
-        1. Case analysis on $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
+        1. Case analysis on $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*}) (total)
 
           1. Case false
 
@@ -40344,7 +40344,7 @@ relation SelectCase_match: EC_0 ARCH_0 value_key*{value_key <- value_key*} |- ke
 
 relation SelectCases_match: EC ARCH value_key*{value_key <- value_key*} |- selectCaseIR*{selectCaseIR <- selectCaseIR*} : % % %
 
-1. Case analysis on selectCaseIR*{selectCaseIR <- selectCaseIR*}
+1. Case analysis on selectCaseIR*{selectCaseIR <- selectCaseIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -40356,7 +40356,7 @@ relation SelectCases_match: EC ARCH value_key*{value_key <- value_key*} |- selec
 
       1. (SelectCase_match: EC ARCH value_key*{value_key <- value_key*} |- selectCaseIR_h : EC_1 ARCH_1 selectCaseMatchResult')
 
-        1. Case analysis on selectCaseMatchResult'
+        1. Case analysis on selectCaseMatchResult' (total)
 
           1. Case (% has type rejectTransitionResult)
 
@@ -40419,7 +40419,7 @@ syntax tableKeysResult =
 
 relation TableKeys_eval: EC ARCH |- tableKeyIR*{tableKeyIR <- tableKeyIR*} : % % %
 
-1. Case analysis on tableKeyIR*{tableKeyIR <- tableKeyIR*}
+1. Case analysis on tableKeyIR*{tableKeyIR <- tableKeyIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -40431,7 +40431,7 @@ relation TableKeys_eval: EC ARCH |- tableKeyIR*{tableKeyIR <- tableKeyIR*} : % %
 
       1. (TableKey_eval: EC ARCH |- tableKeyIR_h : EC_1 ARCH_1 tableKeyResult)
 
-        1. Case analysis on tableKeyResult
+        1. Case analysis on tableKeyResult (total)
 
           1. Case (% has type exitResult)
 
@@ -40445,7 +40445,7 @@ relation TableKeys_eval: EC ARCH |- tableKeyIR*{tableKeyIR <- tableKeyIR*} : % %
 
               1. (TableKeys_eval: EC_1 ARCH_1 |- tableKeyIR_t*{tableKeyIR_t <- tableKeyIR_t*} : EC_2 ARCH_2 tableKeysResult)
 
-                1. Case analysis on tableKeysResult
+                1. Case analysis on tableKeysResult (total)
 
                   1. Case (% has type exitResult)
 
@@ -40463,7 +40463,7 @@ relation TableKeys_eval: EC ARCH |- tableKeyIR*{tableKeyIR <- tableKeyIR*} : % %
 
 def $get_tableEntryPriority(tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?})
 
-1. Case analysis on tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?}
+1. Case analysis on tableEntryPriorityIR?{tableEntryPriorityIR <- tableEntryPriorityIR?} (total)
 
   1. Case (% matches pattern ())
 
@@ -40512,7 +40512,7 @@ relation TableMatch_eval: EC_0 ARCH_0 |- tableKeyValue*{tableKeyValue <- tableKe
 
             1. (Let value_key ':' _nameIR be tableKeyValue)*{tableKeyValue <- tableKeyValue*, _nameIR -> _nameIR*, value_key -> value_key*}
 
-              1. Case analysis on $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*})
+              1. Case analysis on $match_keysets(setValue*{setValue <- setValue*}, value_key*{value_key <- value_key*}) (total)
 
                 1. Case false
 
@@ -40532,7 +40532,7 @@ syntax tableMatchesResult =
 
 relation TableMatches_eval: EC ARCH |- tableKeyValue*{tableKeyValue <- tableKeyValue*} '@' tableEntryIR*{tableEntryIR <- tableEntryIR*} : % % %
 
-1. Case analysis on tableEntryIR*{tableEntryIR <- tableEntryIR*}
+1. Case analysis on tableEntryIR*{tableEntryIR <- tableEntryIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -40544,7 +40544,7 @@ relation TableMatches_eval: EC ARCH |- tableKeyValue*{tableKeyValue <- tableKeyV
 
       1. (TableMatch_eval: EC ARCH |- tableKeyValue*{tableKeyValue <- tableKeyValue*} '@' tableEntryIR_h : EC_1 ARCH_1 tableMatchResult)
 
-        1. Case analysis on tableMatchResult
+        1. Case analysis on tableMatchResult (total)
 
           1. Case (% has type exitResult)
 
@@ -40558,7 +40558,7 @@ relation TableMatches_eval: EC ARCH |- tableKeyValue*{tableKeyValue <- tableKeyV
 
               1. (TableMatches_eval: EC_1 ARCH_1 |- tableKeyValue*{tableKeyValue <- tableKeyValue*} '@' tableEntryIR_t*{tableEntryIR_t <- tableEntryIR_t*} : EC_2 ARCH_2 tableMatchesResult)
 
-                1. Case analysis on tableMatchesResult
+                1. Case analysis on tableMatchesResult (total)
 
                   1. Case (% has type exitResult)
 
@@ -40650,7 +40650,7 @@ def $select_action(TBL, tableMatch'*{tableMatch' <- tableMatch'*})
 
         1. (Let (n_priority_sorted, tableActionReferenceIR_sorted)*{n_priority_sorted <- n_priority_sorted*, tableActionReferenceIR_sorted <- tableActionReferenceIR_sorted*} be $sort_<tableActionReferenceIR>((n_priority, tableActionReferenceIR)*{n_priority <- n_priority*, tableActionReferenceIR <- tableActionReferenceIR*}))
 
-          1. Case analysis on $largest_priority_wins(TBL)
+          1. Case analysis on $largest_priority_wins(TBL) (total)
 
             1. Case true
 
@@ -40680,7 +40680,7 @@ def $select_action(TBL, tableMatch'*{tableMatch' <- tableMatch'*})
 
 relation Copy_out_inner: ARCH |- p_caller EC parameterIR*{parameterIR <- parameterIR*} '@' p_callee EC_callee storageReference?{storageReference <- storageReference?}*{storageReference? <- storageReference?*} ~> %
 
-1. Case analysis on parameterIR*{parameterIR <- parameterIR*}
+1. Case analysis on parameterIR*{parameterIR <- parameterIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -40996,7 +40996,7 @@ syntax tableActionInterface = (nameIR, tableActionArgumentInterface*)
 
 def $text_of_number_tableKeyValueInterface(tableKeyValueInterface)
 
-1. Case analysis on tableKeyValueInterface
+1. Case analysis on tableKeyValueInterface (total)
 
   1. Case (% matches pattern _BIN %)
 
@@ -41510,7 +41510,7 @@ def $align_tableActionArgumentInterfaces'(`{ id_arg ':' i_arg*{i_arg <- i_arg*, 
 
 def $find_tableActionIR_qualified(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR)
 
-1. Case analysis on tableActionIR*{tableActionIR <- tableActionIR*}
+1. Case analysis on tableActionIR*{tableActionIR <- tableActionIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -41552,7 +41552,7 @@ def $find_tableActionIR_unqualified(tableActionIR*{tableActionIR <- tableActionI
 
 def $find_tableActionIR_unqualified'(tableActionIR*{tableActionIR <- tableActionIR*}, nameIR)
 
-1. Case analysis on tableActionIR*{tableActionIR <- tableActionIR*}
+1. Case analysis on tableActionIR*{tableActionIR <- tableActionIR*} (total)
 
   1. Case (% matches pattern [])
 
@@ -42498,13 +42498,13 @@ def $field_list_annotation_index'(annotation)
 
 def $fields_with_field_list_index(fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*}, integerLiteral)
 
-1. Case analysis on fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*}
+1. Case analysis on fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*} (total)
 
   1. Case (% matches pattern _ :: _)
 
     1. (Let fieldTypeIR_h :: fieldTypeIR_t*{fieldTypeIR_t <- fieldTypeIR_t*} be fieldTypeIR'*{fieldTypeIR' <- fieldTypeIR'*})
 
-      1. Case analysis on $field_has_field_list_index(fieldTypeIR_h, integerLiteral)
+      1. Case analysis on $field_has_field_list_index(fieldTypeIR_h, integerLiteral) (total)
 
         1. Case true
 
@@ -42574,7 +42574,7 @@ def $V1Model_meta_fields_of_index(ARCH, integerLiteral_index)
 
 relation V1Model_copy_meta_fields: EC_capture EC_0 ARCH |- nameIR*{nameIR <- nameIR*} : %
 
-1. Case analysis on nameIR*{nameIR <- nameIR*}
+1. Case analysis on nameIR*{nameIR <- nameIR*} (total)
 
   1. Case (% matches pattern [])
 

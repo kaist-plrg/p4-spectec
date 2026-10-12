@@ -71,12 +71,17 @@ fn insert_case(case_ol: ol::Case, dangle: bool) -> sl::Case {
 
 /// Lowers a case analysis; a total one never dangles.
 fn insert_case_instr(instr_ol: ol::CaseInstr, dangle: bool) -> sl::InstrKind {
-    let ol::CaseInstr { exp, cases: cases_ol, total } = instr_ol;
+    let ol::CaseInstr { exp, cases: cases_ol, totality } = instr_ol;
     let cases = cases_ol
         .into_iter()
         .map(|case_ol| insert_case(case_ol, dangle))
         .collect();
-    sl::InstrKind::Case(sl::CaseInstr { exp, cases, dangle: dangle && !total })
+    sl::InstrKind::Case(sl::CaseInstr {
+        exp,
+        cases,
+        totality,
+        dangle: dangle && totality == sl::Totality::Partial,
+    })
 }
 
 // - Group instruction

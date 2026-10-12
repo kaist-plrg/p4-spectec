@@ -1,9 +1,7 @@
 //! Prose language model
 //!
 //! Types, values, operators, and patterns are re-exported from SL.
-//! Expressions and definitions are `Annotated` so prose hints can attach;
-//! instructions carry an optional `Fallthrough` note saying where control goes
-//! when they do not conclude.
+//! Expressions, instructions, and definitions carry prose hints.
 //! Instructions are generic over a `Tier`, the instruction kind it alone has:
 //! `DispatchInstr` selects a rule group, `GroupInstr` runs its body.
 //! The stage parameter `P` (`stage::Stage`) resolves identifiers,
@@ -183,6 +181,8 @@ pub enum HoldCase<Tier, P: Stage = Source> {
 
 // Case analysis
 
+pub type Totality = sl::ast::Totality;
+
 #[derive(Clone, Debug, PartialEq)]
 /// One arm of a case analysis: a guard and its block.
 pub struct Case<Tier, P: Stage = Source> {
@@ -191,7 +191,7 @@ pub struct Case<Tier, P: Stage = Source> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-/// A test on the case scrutinee; the shorthands also bind it.
+/// A case test with an optional binding encoded by its guard kind.
 pub enum Guard<P: Stage = Source> {
     /// The scrutinee is this boolean.
     Bool(bool),
@@ -199,34 +199,20 @@ pub enum Guard<P: Stage = Source> {
     Cmp(CmpOp, OpTyp, Exp<P>),
     /// The scrutinee has the type.
     Sub(Typ, Box<Subcheck<P>>),
+    /// The scrutinee has the type and binds the expression.
+    LetSub(Typ, Box<Subcheck<P>>, Exp<P>),
     /// The scrutinee matches the pattern.
     Match(Pattern<P>),
+    /// The scrutinee matches the pattern and binds the expression.
+    LetMatch(Pattern<P>, Exp<P>),
     /// The scrutinee is an element of the list.
     Mem(Exp<P>),
-    // Shorthands
-    /// Let the expression be the scrutinee, which has the type.
-    CheckLetSub(Typ, Box<Subcheck<P>>, Exp<P>),
-    /// Let the expression be the scrutinee, which matches the pattern.
-    CheckLetMatch(Pattern<P>, Exp<P>),
 }
 
 // Instructions
 
-#[derive(Clone, Debug, PartialEq)]
-/// Where control goes when an instruction does not conclude.
-pub enum Fallthrough {
-    /// To the named rule group.
-    Group(Id),
-    /// To the next alternative.
-    Next,
-    /// To the otherwise block.
-    Else,
-    /// Nowhere: evaluation fails.
-    Fail,
-}
-
-/// An instruction with its fall-through note, before annotation.
-pub type InstrNode<Tier, P = Source> = NotePhrase<InstrKind<Tier, P>, Option<Fallthrough>>;
+/// An instruction before prose annotation.
+pub type InstrNode<Tier, P = Source> = Phrase<InstrKind<Tier, P>>;
 /// An instruction with prose hints.
 pub type Instr<Tier, P = Source> = annot::Annotated<InstrNode<Tier, P>>;
 
@@ -235,6 +221,12 @@ pub type Instr<Tier, P = Source> = annot::Annotated<InstrNode<Tier, P>>;
 pub enum InstrKind<Tier, P: Stage = Source> {
     /// Run the block if a condition holds.
     If(IfInstr<Tier, P>),
+    /// Test a subtype, bind the value, then run the block.
+    IfLetSub(IfLetSubInstr<Tier, P>),
+    /// Test a pattern, bind the value, then run the block.
+    IfLetMatch(IfLetMatchInstr<Tier, P>),
+    /// Require a condition when no continuation can recover from its failure.
+    Check(CheckInstr<Tier, P>),
     /// Run a branch by whether a relation applies.
     Hold(HoldInstr<Tier, P>),
     /// Run the first arm whose guard accepts.
@@ -245,12 +237,6 @@ pub enum InstrKind<Tier, P: Stage = Source> {
     Debug(DebugInstr<P>),
     /// Shorthand: bind several fields of one value at once.
     Destruct(DestructInstr<P>),
-    /// Shorthand: bind after a subtype check, then run the block.
-    CheckLetSub(CheckLetSubInstr<Tier, P>),
-    /// Shorthand: bind after a pattern match, then run the block.
-    CheckLetMatch(CheckLetMatchInstr<Tier, P>),
-    /// Shorthand: bind the content of a present option, then run the block.
-    OptionGet(OptionGetInstr<Tier, P>),
     /// The tier's own instruction.
     Tier(TierInstr<Tier>),
 }
@@ -262,6 +248,32 @@ pub struct IfInstr<Tier, P: Stage = Source> {
     pub iter_exps: Vec<ExpIter<P::Var>>,
     pub block: Block<Tier, P>,
     pub dangle: Dangle,
+}
+#[derive(Clone, Debug, PartialEq)]
+/// Bind a value with the required subtype and run the block.
+pub struct IfLetSubInstr<Tier, P: Stage = Source> {
+    pub typ: Typ,
+    pub subcheck: Box<Subcheck<P>>,
+    pub exp_l: Exp<P>,
+    pub exp_r: Exp<P>,
+    pub block: Block<Tier, P>,
+    pub dangle: Dangle,
+}
+#[derive(Clone, Debug, PartialEq)]
+/// Bind a value matching the pattern and run the block.
+pub struct IfLetMatchInstr<Tier, P: Stage = Source> {
+    pub pattern: Pattern<P>,
+    pub exp_l: Exp<P>,
+    pub exp_r: Exp<P>,
+    pub block: Block<Tier, P>,
+    pub dangle: Dangle,
+}
+#[derive(Clone, Debug, PartialEq)]
+/// A condition required to reach the conclusion, with bindings scoped to its block.
+pub struct CheckInstr<Tier, P: Stage = Source> {
+    pub exp: Exp<P>,
+    pub iter_exps: Vec<ExpIter<P::Var>>,
+    pub block: Block<Tier, P>,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Run a branch by whether the relation applies under its iterations.
@@ -277,6 +289,7 @@ pub struct CaseInstr<Tier, P: Stage = Source> {
     pub exp: Exp<P>,
     pub cases: Vec<Case<Tier, P>>,
     pub dangle: Dangle,
+    pub totality: Totality,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Bind `exp_l` to `exp_r` under the iterations.
@@ -295,30 +308,6 @@ pub struct DebugInstr<P: Stage = Source> {
 pub struct DestructInstr<P: Stage = Source> {
     pub bindings: Vec<(Option<String>, Exp<P>)>,
     pub exp: Exp<P>,
-}
-#[derive(Clone, Debug, PartialEq)]
-/// Bind `exp_l` to `exp_r` once it passes the subtype check, then the block.
-pub struct CheckLetSubInstr<Tier, P: Stage = Source> {
-    pub typ: Typ,
-    pub subcheck: Box<Subcheck<P>>,
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
-    pub block: Block<Tier, P>,
-}
-#[derive(Clone, Debug, PartialEq)]
-/// Bind `exp_l` to `exp_r` once it matches the pattern, then run the block.
-pub struct CheckLetMatchInstr<Tier, P: Stage = Source> {
-    pub pattern: Pattern<P>,
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
-    pub block: Block<Tier, P>,
-}
-#[derive(Clone, Debug, PartialEq)]
-/// Bind `exp_l` to the content of the option `exp_r`, then run the block.
-pub struct OptionGetInstr<Tier, P: Stage = Source> {
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
-    pub block: Block<Tier, P>,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// The tier-specific instruction.

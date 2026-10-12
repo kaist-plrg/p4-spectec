@@ -140,6 +140,13 @@ pub enum HoldCase<P: Stage = Source> {
 
 // Case analysis
 
+/// Whether case guards cover every value of the scrutinee type.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Totality {
+    Total,
+    Partial,
+}
+
 /// One arm of a case analysis: a guard and its block.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Case<P: Stage = Source> {
@@ -213,6 +220,7 @@ pub struct CaseInstr<P: Stage = Source> {
     pub exp: Exp<P>,
     pub cases: Vec<Case<P>>,
     pub dangle: Dangle,
+    pub totality: Totality,
 }
 /// A rule group's block, entered when the inputs match `exps`.
 #[derive(Clone, Debug, PartialEq)]

@@ -16,7 +16,7 @@ use super::super::super::{adoc::pl::Renderer, anchor::AnchorContext};
 use super::super::{
     config::{PREFIX_PROSE, SUFFIX_PROSE},
     error::Error,
-    splicer::{Kind, Selection},
+    splicer::Kind,
 };
 
 // == Splice initialization
@@ -54,20 +54,13 @@ impl<'spec> Kind<'spec> for Prose {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .map(|selection| {
-                let anchor_prefix = format!(
-                    "{}:{}:{idx_request}:{}",
-                    Self::NAME,
-                    selection.key,
-                    selection.idx_key,
-                );
-                let mut renderer = Renderer::new(anchor_ctx, warnings, &anchor_prefix);
-                renderer.render_defined_rel_def_dispatch(selection.data)
+            .map(|value| {
+                let mut renderer = Renderer::new(anchor_ctx, warnings);
+                renderer.render_defined_rel_def_dispatch(value)
             })
             .collect::<Vec<_>>()
             .join("\n\n"))

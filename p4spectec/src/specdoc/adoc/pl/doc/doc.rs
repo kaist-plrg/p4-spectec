@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! Prose::join(", ", [x, y])       -> Seq([x, Text(", "), y])
-//! Block::item_ordered(0, prose)   -> Item(Item { 0, Ordered(None), prose, Empty })
+//! Block::item_ordered(0, prose)   -> Item(Item { 0, Ordered, prose, Empty })
 //! ```
 
 use crate::lang::common::Id;
@@ -25,8 +25,6 @@ pub enum Prose {
     PlainCode(Code),
     /// Links the body, suppressing resolved links nested inside it.
     Link(Link, Box<Prose>),
-    /// Links to an arm or group using its anchor and displayed label.
-    Fallthrough(String, FallthroughLabel),
     /// Concatenates prose without inserting separators.
     Seq(Vec<Prose>),
     /// Emits no text and permits capitalization to continue.
@@ -80,26 +78,9 @@ pub enum Subject {
     Type(Id),
 }
 
-// - Fallthrough labels
-//
-//   Fallthrough("t", Explicit("else"))
-//   -> +++<sub class="bk-mark">[<a href="#t">→ else</a>]</sub>+++
-
-/// A fallthrough marker inferred from its target or supplied by a group.
-#[derive(Clone, Debug, PartialEq)]
-pub enum FallthroughLabel {
-    /// Uses the target arm's list marker from the same serialized block.
-    ///
-    /// Block serialization panics if the target has no ordered arm anchor.
-    /// Standalone prose serialization cannot resolve derived labels.
-    Derived,
-    /// Uses the supplied label, such as a group name or otherwise marker.
-    Explicit(String),
-}
-
 // - Blocks
 //
-//   Item { 0, Ordered(None), Text("A"), Empty }   -> . A
+//   Item { 0, Ordered, Text("A"), Empty }   -> . A
 //   Item { 1, Unordered, Text("B"), Empty }       ->  ** B
 //   Seq([Raw("x"), Raw("y")])                     -> x
 //                                                    y
@@ -127,9 +108,9 @@ pub enum Block {
 /// A list entry: its marker, heading, and continuation.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Item {
-    /// The zero-based nesting level used for bullets and arm labels.
+    /// The zero-based nesting level used for list markers.
     pub level: usize,
-    /// The list style and optional ordered arm anchor.
+    /// The list style.
     pub kind: ItemKind,
     /// The prose following the list marker.
     pub prose_head: Prose,
@@ -137,12 +118,12 @@ pub struct Item {
     pub block_body: Box<Block>,
 }
 
-/// The marker style of a list entry, optionally defining an ordered arm anchor.
+/// The marker style of a list entry.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ItemKind {
-    /// Advances the ordered list, optionally defining an arm anchor.
-    Ordered(Option<String>),
-    /// Emits a bullet and resets the ordered counter at this level.
+    /// Emits an ordered-list marker.
+    Ordered,
+    /// Emits an unordered-list marker.
     Unordered,
 }
 
@@ -185,7 +166,6 @@ impl Prose {
     //
     //   Prose::text("x")                           -> Text("x")
     //   Prose::link(link, prose)                   -> Link(link, prose)
-    //   Prose::fallthrough(a, l)                   -> Fallthrough(a, l)
     //   Prose::join(", ", [x, y])                  -> Seq([x, Text(", "), y])
     //   Prose::join_with(|idx| s_idx, [x, y, z])   -> Seq([x, s_1, y, s_2, z])
 
@@ -199,10 +179,6 @@ impl Prose {
 
     pub fn link(link: Link, prose: Prose) -> Prose {
         Prose::Link(link, Box::new(prose))
-    }
-
-    pub fn fallthrough(anchor: String, label: FallthroughLabel) -> Prose {
-        Prose::Fallthrough(anchor, label)
     }
 
     pub fn seq(proses: impl IntoIterator<Item = Prose>) -> Prose {
@@ -270,7 +246,7 @@ impl Block {
     // - Block constructors
     //
     //   Block::item(0, kind, prose, body)   -> Item { 0, kind, prose, body }
-    //   Block::item_ordered(0, prose)       -> Item { 0, Ordered(None), prose, Empty }
+    //   Block::item_ordered(0, prose)       -> Item { 0, Ordered, prose, Empty }
     //   Block::item_unordered(1, prose)     -> Item { 1, Unordered, prose, Empty }
 
     pub fn raw(text: impl Into<String>) -> Block {
@@ -294,7 +270,7 @@ impl Block {
     }
 
     pub fn item_ordered(level: usize, prose_head: Prose) -> Block {
-        Block::item(level, ItemKind::Ordered(None), prose_head, Block::Empty)
+        Block::item(level, ItemKind::Ordered, prose_head, Block::Empty)
     }
 
     pub fn item_unordered(level: usize, prose_head: Prose) -> Block {

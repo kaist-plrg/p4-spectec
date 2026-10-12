@@ -132,7 +132,7 @@ fn merge_case_instr(
     changed: &mut bool,
     instr: CaseInstr,
 ) -> Result<InstrKind, StructureError> {
-    let CaseInstr { exp, cases, total } = instr;
+    let CaseInstr { exp, cases, totality } = instr;
     let cases = cases
         .into_iter()
         .map(|case| {
@@ -142,7 +142,7 @@ fn merge_case_instr(
             Ok(case)
         })
         .collect::<Result<_, StructureError>>()?;
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     Ok(InstrKind::Case(instr))
 }
 

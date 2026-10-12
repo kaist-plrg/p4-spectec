@@ -319,6 +319,54 @@ fn write_instr_with<Tier>(
             }
             Ok(())
         }
+        InstrKind::IfLetSub(IfLetSubInstr { exp_l, exp_r, block, dangle, typ, .. }) => {
+            write_order(output)?;
+            output.write_str("If let ")?;
+            exp_l.print(output)?;
+            output.write_str(" of type ")?;
+            typ.print(output)?;
+            output.write_str(" be ")?;
+            exp_r.print(output)?;
+            output.write_str(", then")?;
+            if !short {
+                output.write_str("\n\n")?;
+                write_block_with(output, block, tier_printer, level + 1, 0)?;
+                if *dangle {
+                    write!(output, "\n\n{order}Else Dangling")?;
+                }
+            }
+            Ok(())
+        }
+        InstrKind::IfLetMatch(IfLetMatchInstr { exp_l, exp_r, block, dangle, pattern, .. }) => {
+            write_order(output)?;
+            output.write_str("If let ")?;
+            exp_l.print(output)?;
+            output.write_str(" be ")?;
+            exp_r.print(output)?;
+            output.write_str(" matching pattern ")?;
+            pattern.print(output)?;
+            output.write_str(", then")?;
+            if !short {
+                output.write_str("\n\n")?;
+                write_block_with(output, block, tier_printer, level + 1, 0)?;
+                if *dangle {
+                    write!(output, "\n\n{order}Else Dangling")?;
+                }
+            }
+            Ok(())
+        }
+        InstrKind::Check(CheckInstr { exp, iter_exps, block }) => {
+            write_order(output)?;
+            output.write_str("Check (")?;
+            exp.print(output)?;
+            output.write_char(')')?;
+            iter_exps.as_slice().print(output)?;
+            if !short {
+                output.write_str("\n\n")?;
+                write_block_with(output, block, tier_printer, level + 1, 0)?;
+            }
+            Ok(())
+        }
         // `If (rel: args) holds, then` in one of two shapes
         InstrKind::Hold(HoldInstr { id, not_exp, iter_exps, hold_case }) => {
             // The heading reads the same for holds and does-not-holds
@@ -362,10 +410,13 @@ fn write_instr_with<Tier>(
             }
         }
         // `Case analysis on` and the numbered arms
-        InstrKind::Case(CaseInstr { exp, cases, dangle }) => {
+        InstrKind::Case(CaseInstr { exp, cases, totality, dangle }) => {
             write_order(output)?;
             output.write_str("Case analysis on ")?;
             exp.print(output)?;
+            if *totality == Totality::Total {
+                output.write_str(" (total)")?;
+            }
             if !short {
                 output.write_str("\n\n")?;
                 write_cases_with(output, cases, tier_printer, level + 1)?;
@@ -406,56 +457,6 @@ fn write_instr_with<Tier>(
             output.write_char(')')
         }
         // `(Let x be e, e has type t)` and the block
-        InstrKind::CheckLetSub(CheckLetSubInstr { typ, exp_l, exp_r, block, .. }) => {
-            write_order(output)?;
-            output.write_str("(Let ")?;
-            exp_l.print(output)?;
-            output.write_str(" be ")?;
-            exp_r.print(output)?;
-            output.write_str(", ")?;
-            exp_r.print(output)?;
-            output.write_str(" has type ")?;
-            typ.print(output)?;
-            output.write_char(')')?;
-            if !short {
-                output.write_str("\n\n")?;
-                write_block_with(output, block, tier_printer, level + 1, 0)?;
-            }
-            Ok(())
-        }
-        // `(Let x be e, e matches pattern p)` and the block
-        InstrKind::CheckLetMatch(CheckLetMatchInstr { pattern, exp_l, exp_r, block }) => {
-            write_order(output)?;
-            output.write_str("(Let ")?;
-            exp_l.print(output)?;
-            output.write_str(" be ")?;
-            exp_r.print(output)?;
-            output.write_str(", ")?;
-            exp_r.print(output)?;
-            output.write_str(" matches pattern ")?;
-            pattern.print(output)?;
-            output.write_char(')')?;
-            if !short {
-                output.write_str("\n\n")?;
-                write_block_with(output, block, tier_printer, level + 1, 0)?;
-            }
-            Ok(())
-        }
-        // `(Let x be ! e)`, unwrapping the option, and the block
-        InstrKind::OptionGet(OptionGetInstr { exp_l, exp_r, block }) => {
-            write_order(output)?;
-            output.write_str("(Let ")?;
-            exp_l.print(output)?;
-            output.write_str(" be ! ")?;
-            exp_r.print(output)?;
-            output.write_char(')')?;
-            if !short {
-                output.write_str("\n\n")?;
-                write_block_with(output, block, tier_printer, level + 1, 0)?;
-            }
-            Ok(())
-        }
-        // The tier decides how its own instruction prints
         InstrKind::Tier(TierInstr { tier }) => tier_printer(output, tier, short, level, index),
     }
 }
@@ -634,23 +635,23 @@ impl Print for Guard {
                 pattern.print(printer)?;
                 printer.write_char(')')
             }
+            Guard::LetSub(typ, _, exp_l) => {
+                printer.write_str("(% has type ")?;
+                typ.print(printer)?;
+                printer.write_str(", let ")?;
+                exp_l.print(printer)?;
+                printer.write_str(" = %)")
+            }
+            Guard::LetMatch(pattern, exp_l) => {
+                printer.write_str("(% matches pattern ")?;
+                pattern.print(printer)?;
+                printer.write_str(", let ")?;
+                exp_l.print(printer)?;
+                printer.write_str(" = %)")
+            }
             Guard::Mem(exp) => {
                 printer.write_str("(% is in ")?;
                 exp.print(printer)?;
-                printer.write_char(')')
-            }
-            Guard::CheckLetSub(typ, _, exp) => {
-                printer.write_str("(let ")?;
-                exp.print(printer)?;
-                printer.write_str(" be %, % has type ")?;
-                typ.print(printer)?;
-                printer.write_char(')')
-            }
-            Guard::CheckLetMatch(pattern, exp) => {
-                printer.write_str("(let ")?;
-                exp.print(printer)?;
-                printer.write_str(" be %, % matches pattern ")?;
-                pattern.print(printer)?;
                 printer.write_char(')')
             }
         }

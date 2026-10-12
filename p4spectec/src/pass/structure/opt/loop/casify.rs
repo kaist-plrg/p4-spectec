@@ -116,7 +116,7 @@ fn casify_case_instr(
         instrs_tail.remove(idx);
         instr_case = instr_case_merged;
     }
-    let CaseInstr { exp, cases, total } = instr_case;
+    let CaseInstr { exp, cases, totality } = instr_case;
     let cases = cases
         .into_iter()
         .map(|case| {
@@ -126,7 +126,7 @@ fn casify_case_instr(
             Ok(case)
         })
         .collect::<Result<_, StructureError>>()?;
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     Ok(InstrKind::Case(instr))
 }
 
@@ -232,11 +232,11 @@ fn casify_if_then_if(
     instr_if: &mut IfInstr,
 ) -> Result<Option<CaseInstr>, StructureError> {
     let overlap = overlap_exp(tdenv, &instr_target.exp, &instr_if.exp)?;
-    let (exp, guard_a, guard_b, total) = match overlap {
+    let (exp, guard_a, guard_b, totality) = match overlap {
         // x = 1 and x = 2 leave other integer values uncovered
-        Overlap::Disjoint { exp, guard_a, guard_b } => (exp, guard_a, guard_b, false),
+        Overlap::Disjoint { exp, guard_a, guard_b } => (exp, guard_a, guard_b, Totality::Partial),
         // x = true and x = false cover both boolean values
-        Overlap::Partition { exp, guard_a, guard_b } => (exp, guard_a, guard_b, true),
+        Overlap::Partition { exp, guard_a, guard_b } => (exp, guard_a, guard_b, Totality::Total),
         Overlap::Identical | Overlap::Fuzzy => return Ok(None),
     };
     let block_a = std::mem::take(&mut instr_target.block);
@@ -244,7 +244,7 @@ fn casify_if_then_if(
     let block_b = std::mem::take(&mut instr_if.block);
     let case_b = Case { guard: guard_b, block: block_b };
     let cases = vec![case_a, case_b];
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     Ok(Some(instr))
 }
 
@@ -257,7 +257,7 @@ fn casify_if_then_case(
     instr_case: &mut CaseInstr,
 ) -> Result<Option<CaseInstr>, StructureError> {
     let IfInstr { exp: exp_cond_target, block: block_target, .. } = instr_target;
-    let CaseInstr { exp, cases, total } = instr_case;
+    let CaseInstr { exp, cases, totality } = instr_case;
     let Some(guard_target) = exp_as_guard(exp, exp_cond_target) else {
         return Ok(None);
     };
@@ -272,7 +272,7 @@ fn casify_if_then_case(
                 let block = merge_block(block_target, block);
                 let mut cases = std::mem::take(cases);
                 cases[idx].block = block;
-                let instr = CaseInstr { exp: exp.clone(), cases, total: *total };
+                let instr = CaseInstr { exp: exp.clone(), cases, totality: *totality };
                 return Ok(Some(instr));
             }
             Overlap::Disjoint { .. } | Overlap::Partition { .. } => {}
@@ -280,14 +280,14 @@ fn casify_if_then_case(
         }
     }
     // Refuse the grouping before either input body is moved
-    if *total {
+    if *totality == Totality::Total {
         return Ok(None);
     }
     let mut cases = std::mem::take(cases);
     let block = std::mem::take(block_target);
     let case = Case { guard: guard_target, block };
     cases.push(case);
-    let instr = CaseInstr { exp: exp.clone(), cases, total: *total };
+    let instr = CaseInstr { exp: exp.clone(), cases, totality: *totality };
     Ok(Some(instr))
 }
 
@@ -299,16 +299,16 @@ fn casify_case_then_if(
     instr_target: &mut CaseInstr,
     instr_if: &mut IfInstr,
 ) -> Result<Option<CaseInstr>, StructureError> {
-    let CaseInstr { exp, cases, total } = instr_target;
+    let CaseInstr { exp, cases, totality } = instr_target;
     let IfInstr { exp: exp_cond, block, .. } = instr_if;
     let Some(guard) = exp_as_guard(exp, exp_cond) else {
         return Ok(None);
     };
-    let Some(cases) = merge_case_and_if(tdenv, exp, *total, cases, guard, block)? else {
+    let Some(cases) = merge_case_and_if(tdenv, exp, *totality, cases, guard, block)? else {
         return Ok(None);
     };
     // Case followed by If becomes partial, even when the Case was total
-    let instr = CaseInstr { exp: exp.clone(), cases, total: false };
+    let instr = CaseInstr { exp: exp.clone(), cases, totality: Totality::Partial };
     Ok(Some(instr))
 }
 
@@ -320,7 +320,8 @@ fn casify_case_then_case(
     instr_target: &mut CaseInstr,
     instr_case: &mut CaseInstr,
 ) -> Result<Option<CaseInstr>, StructureError> {
-    let CaseInstr { exp: exp_target, cases: cases_target, total: total_target } = instr_target;
+    let CaseInstr { exp: exp_target, cases: cases_target, totality: totality_target } =
+        instr_target;
     let CaseInstr { exp, cases, .. } = instr_case;
     if !exp_target.syntax_eq(exp) {
         return Ok(None);
@@ -330,8 +331,13 @@ fn casify_case_then_case(
     let mut guards: Vec<_> = cases_target.iter().map(|case| &case.guard).collect();
     let mut idxs = Vec::with_capacity(cases.len());
     for case in cases.iter() {
-        let Some(idx) =
-            find_case_merge(tdenv, exp_target, guards.iter().copied(), *total_target, &case.guard)?
+        let Some(idx) = find_case_merge(
+            tdenv,
+            exp_target,
+            guards.iter().copied(),
+            *totality_target,
+            &case.guard,
+        )?
         else {
             return Ok(None);
         };
@@ -347,7 +353,8 @@ fn casify_case_then_case(
     for (case, idx) in cases.into_iter().zip(idxs) {
         apply_case_merge(idx, case, &mut cases_target);
     }
-    let instr = CaseInstr { exp: exp_target.clone(), cases: cases_target, total: *total_target };
+    let instr =
+        CaseInstr { exp: exp_target.clone(), cases: cases_target, totality: *totality_target };
     Ok(Some(instr))
 }
 
@@ -357,7 +364,7 @@ fn casify_case_then_case(
 fn merge_case_and_if(
     tdenv: &TDEnv,
     exp_target: &Exp,
-    total_target: bool,
+    totality_target: Totality,
     cases_target: &mut Vec<Case>,
     guard: Guard,
     block: &mut Block,
@@ -366,7 +373,7 @@ fn merge_case_and_if(
         tdenv,
         exp_target,
         cases_target.iter().map(|case| &case.guard),
-        total_target,
+        totality_target,
         &guard,
     )?
     else {
@@ -386,7 +393,7 @@ fn find_case_merge<'a>(
     tdenv: &TDEnv,
     exp_target: &Exp,
     guards_target: impl ExactSizeIterator<Item = &'a Guard>,
-    total_target: bool,
+    totality_target: Totality,
     guard: &Guard,
 ) -> Result<Option<usize>, StructureError> {
     let guards_len = guards_target.len();
@@ -398,7 +405,7 @@ fn find_case_merge<'a>(
         }
     }
     // Refuse the grouping before either input body is moved
-    if total_target {
+    if totality_target == Totality::Total {
         return Ok(None);
     }
     Ok(Some(guards_len))

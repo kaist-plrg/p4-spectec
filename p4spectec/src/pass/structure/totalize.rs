@@ -1,6 +1,6 @@
 //! Mark variant case analyses whose guards cover exactly all constructors
 //!
-//! For a type `A | B`, branches matching `A` and `B` set `total=true`.
+//! For a type `A | B`, branches matching `A` and `B` set `totality=Total`.
 
 use std::{collections::BTreeSet, rc::Rc};
 
@@ -81,12 +81,12 @@ fn totalize_case(tdenv: &TDEnv, case: Case) -> Result<Case, StructureError> {
 
 /// Marks a case analysis total when its guards cover every constructor.
 fn totalize_case_instr(tdenv: &TDEnv, instr: CaseInstr) -> Result<InstrKind, StructureError> {
-    let CaseInstr { exp, cases, total } = instr;
+    let CaseInstr { exp, cases, totality } = instr;
     let cases = cases
         .into_iter()
         .map(|case| totalize_case(tdenv, case))
         .collect::<Result<Vec<_>, _>>()?;
-    let total = if let Some(mixops_case) = find_variant_case_analysis(tdenv, &cases)? {
+    let totality = if let Some(mixops_case) = find_variant_case_analysis(tdenv, &cases)? {
         let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
         // Typed constructor guards and variant subtyping determine the target type
         let mixops_total =
@@ -94,11 +94,11 @@ fn totalize_case_instr(tdenv: &TDEnv, instr: CaseInstr) -> Result<InstrKind, Str
         // Compare the matched constructors with the type's constructors as sets
         let mixops_total: BTreeSet<_> = mixops_total.into_iter().collect();
         let mixops_case: BTreeSet<_> = mixops_case.into_iter().collect();
-        mixops_case == mixops_total
+        if mixops_case == mixops_total { Totality::Total } else { Totality::Partial }
     } else {
-        total
+        totality
     };
-    Ok(InstrKind::Case(CaseInstr { exp, cases, total }))
+    Ok(InstrKind::Case(CaseInstr { exp, cases, totality }))
 }
 
 // - Group instruction

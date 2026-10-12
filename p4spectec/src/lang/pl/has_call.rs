@@ -98,9 +98,9 @@ impl HasCall for Guard {
         match self {
             Guard::Bool(_) | Guard::Sub(..) | Guard::Match(_) => vec![],
             Guard::Cmp(_, _, exp)
-            | Guard::Mem(exp)
-            | Guard::CheckLetSub(_, _, exp)
-            | Guard::CheckLetMatch(_, exp) => exp.nested_call(),
+            | Guard::LetSub(_, _, exp)
+            | Guard::LetMatch(_, exp)
+            | Guard::Mem(exp) => exp.nested_call(),
         }
     }
 }

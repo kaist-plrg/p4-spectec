@@ -13,10 +13,7 @@ use crate::diagnostic::Report;
 
 use super::super::super::{adoc, anchor::AnchorContext};
 
-use super::super::{
-    error::Error,
-    splicer::{Kind, Selection},
-};
+use super::super::{error::Error, splicer::Kind};
 
 // == Splice initialization
 
@@ -54,12 +51,11 @@ impl<'spec> Kind<'spec> for Source {
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .map(|selection| adoc::el::render_def(selection.data))
+            .map(|value| adoc::el::render_def(value))
             .collect::<Vec<_>>()
             .join("\n\n"))
     }

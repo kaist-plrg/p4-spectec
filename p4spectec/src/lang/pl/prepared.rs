@@ -8,7 +8,7 @@ pub use crate::lang::il::prepared::*;
 
 use super::ast as source;
 
-pub use source::{Fallthrough, RelSignature, TierInstr};
+pub use source::{RelSignature, TierInstr};
 
 // == Prepared syntax
 
@@ -47,14 +47,14 @@ pub type Case<Tier> = source::Case<Tier, Prepared>;
 pub type Instr<Tier> = source::Instr<Tier, Prepared>;
 pub type InstrKind<Tier> = source::InstrKind<Tier, Prepared>;
 pub type IfInstr<Tier> = source::IfInstr<Tier, Prepared>;
+pub type IfLetSubInstr<Tier> = source::IfLetSubInstr<Tier, Prepared>;
+pub type IfLetMatchInstr<Tier> = source::IfLetMatchInstr<Tier, Prepared>;
+pub type CheckInstr<Tier> = source::CheckInstr<Tier, Prepared>;
 pub type HoldInstr<Tier> = source::HoldInstr<Tier, Prepared>;
 pub type CaseInstr<Tier> = source::CaseInstr<Tier, Prepared>;
 pub type LetInstr = source::LetInstr<Prepared>;
 pub type DebugInstr = source::DebugInstr<Prepared>;
 pub type DestructInstr = source::DestructInstr<Prepared>;
-pub type CheckLetSubInstr<Tier> = source::CheckLetSubInstr<Tier, Prepared>;
-pub type CheckLetMatchInstr<Tier> = source::CheckLetMatchInstr<Tier, Prepared>;
-pub type OptionGetInstr<Tier> = source::OptionGetInstr<Tier, Prepared>;
 pub type InstrIter = PremIter;
 
 // - Blocks
