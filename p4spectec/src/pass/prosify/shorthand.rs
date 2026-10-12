@@ -1,8 +1,9 @@
 //! Recognize conditional bindings and hinted destructuring in prose instructions
 //!
-//! A let over case notation with a matching `prose_fields` hint becomes Destruct.
-//! Safe leading lets under subtype and pattern tests become explicit bindings.
-//! Hinted and iterated lets remain intact for their own rendering.
+//! A let over case notation with a matching `prose_fields` hint becomes Destruct
+//! Binding analysis has already renamed repeated binders and extracted checks
+//! `if v matches C; let C(x) = v` becomes an explicit conditional binding
+//! Hinted and iterated lets remain intact for their own rendering
 
 use crate::lang::{
     il::ast::{ListPattern, OptPattern, Pattern},
@@ -12,51 +13,18 @@ use crate::lang::{
 
 // == Conditional bindings
 
-/// Whether a subtype test only inspects value shape, without fallible lookup.
-fn structural_subcheck(subcheck: &pl::Subcheck) -> bool {
-    match subcheck {
-        pl::Subcheck::Skip | pl::Subcheck::Mixop(_) => true,
-        pl::Subcheck::Tuple(subchecks) => subchecks.iter().all(structural_subcheck),
-        pl::Subcheck::Iter(_, subcheck) => structural_subcheck(subcheck),
-        pl::Subcheck::Recurse(_) => false,
-    }
-}
-
-/// Accepts distinct plain binders, rejecting every additional pattern constraint.
-fn simple_binder<'a>(exp: &'a pl::Exp, ids: &mut std::collections::HashSet<&'a str>) -> bool {
+/// Matches a guard to the binding shape produced by partial binding.
+fn matches_binding(pattern: &pl::Pattern, exp: &pl::Exp) -> bool {
     if exp.hints.node != Default::default() {
         return false;
     }
-    match &exp.node.node {
-        pl::ExpKind::Id(id) => ids.insert(&id.node),
-        _ => false,
-    }
-}
-
-/// Checks that the guard already proves the whole binding pattern's shape.
-fn implied_binding(pattern: &pl::Pattern, exp: &pl::Exp) -> bool {
-    if exp.hints.node != Default::default() {
-        return false;
-    }
-    let mut ids = std::collections::HashSet::new();
     match (pattern, &exp.node.node) {
-        (Pattern::Case(mixop), ExpKind::Case(not_exp)) => {
-            not_exp.mixop().syntax_eq(mixop)
-                && not_exp.args().len() == mixop.arity()
-                && not_exp
-                    .args()
-                    .iter()
-                    .all(|exp| simple_binder(exp, &mut ids))
-        }
+        (Pattern::Case(mixop), ExpKind::Case(not_exp)) => not_exp.mixop().syntax_eq(mixop),
         (Pattern::List(ListPattern::Nil), ExpKind::List(exps)) => exps.is_empty(),
-        (Pattern::List(ListPattern::Fixed(len)), ExpKind::List(exps)) => {
-            exps.len() == *len && exps.iter().all(|exp| simple_binder(exp, &mut ids))
-        }
-        (Pattern::List(ListPattern::Cons), ExpKind::Cons(exp_head, exp_tail)) => {
-            simple_binder(exp_head, &mut ids) && simple_binder(exp_tail, &mut ids)
-        }
+        (Pattern::List(ListPattern::Fixed(len)), ExpKind::List(exps)) => exps.len() == *len,
+        (Pattern::List(ListPattern::Cons), ExpKind::Cons(..)) => true,
         (Pattern::Opt(OptPattern::None), ExpKind::Opt(None)) => true,
-        (Pattern::Opt(OptPattern::Some), ExpKind::Opt(Some(exp))) => simple_binder(exp, &mut ids),
+        (Pattern::Opt(OptPattern::Some), ExpKind::Opt(Some(_))) => true,
         _ => false,
     }
 }
@@ -83,12 +51,7 @@ fn leading_let<Tier>(block: &[pl::Instr<Tier>]) -> Option<&pl::LetInstr> {
 }
 
 /// Checks that the subtype test accounts for the whole binding operation.
-fn sub_binding(
-    typ: &pl::Typ,
-    subcheck: &pl::Subcheck,
-    exp_scrut: &pl::Exp,
-    instr_let: &pl::LetInstr,
-) -> bool {
+fn sub_binding(typ: &pl::Typ, exp_scrut: &pl::Exp, instr_let: &pl::LetInstr) -> bool {
     // Preserve narrowing casts, without inventing a cast for same-type bindings
     let same_source = match &instr_let.exp_r.node.node {
         ExpKind::DownCast(typ_cast, exp) => {
@@ -98,12 +61,11 @@ fn sub_binding(
         }
         _ => same_variable(&instr_let.exp_r, exp_scrut),
     };
-    // Structural tests prove the binder's target shape without extra lookup
+    // Keep the binding's type and presentation while retaining the original test
     same_source
-        && structural_subcheck(subcheck)
         && instr_let.exp_l.node.note.syntax_eq(&typ.node)
         && instr_let.exp_r.node.note.syntax_eq(&typ.node)
-        && simple_binder(&instr_let.exp_l, &mut std::collections::HashSet::new())
+        && instr_let.exp_l.hints.node == Default::default()
 }
 
 /// Checks that the match proves the binding shape on the same typed variable.
@@ -114,7 +76,7 @@ fn match_binding(pattern: &pl::Pattern, exp_scrut: &pl::Exp, instr_let: &pl::Let
             .node
             .note
             .syntax_eq(&instr_let.exp_r.node.note)
-        && implied_binding(pattern, &instr_let.exp_l)
+        && matches_binding(pattern, &instr_let.exp_l)
 }
 
 /// Removes the leading let after its binding has been validated.
@@ -133,7 +95,7 @@ fn shorten_if_instr<Tier>(
     // Iterated conditions and hinted bindings keep their separate instructions
     let binding = instr_if.iter_exps.is_empty()
         && leading_let(&instr_if.block).is_some_and(|instr_let| match &instr_if.exp.node.node {
-            ExpKind::Sub(exp, typ, subcheck) => sub_binding(typ, subcheck, exp, instr_let),
+            ExpKind::Sub(exp, typ, _) => sub_binding(typ, exp, instr_let),
             ExpKind::Match(exp, pattern) => match_binding(pattern, exp, instr_let),
             _ => false,
         });
@@ -173,7 +135,7 @@ fn shorten_case_instr<Tier>(
     for case in &mut instr_case.cases {
         // Keep guards and bindings separate unless the guard proves the binding
         let binding = leading_let(&case.block).is_some_and(|instr_let| match &case.guard {
-            pl::Guard::Sub(typ, subcheck) => sub_binding(typ, subcheck, &instr_case.exp, instr_let),
+            pl::Guard::Sub(typ, _) => sub_binding(typ, &instr_case.exp, instr_let),
             pl::Guard::Match(pattern) => match_binding(pattern, &instr_case.exp, instr_let),
             _ => false,
         });
