@@ -1,9 +1,7 @@
 //! Prose language model
 //!
 //! Types, values, operators, and patterns are re-exported from SL.
-//! Expressions and definitions are `Annotated` so prose hints can attach;
-//! instructions carry an optional `Fallthrough` note saying where control goes
-//! when they do not conclude.
+//! Expressions, instructions, and definitions carry prose hints.
 //! Instructions are generic over a `Tier`, the instruction kind it alone has:
 //! `DispatchInstr` selects a rule group, `GroupInstr` runs its body.
 //! The stage parameter `P` (`stage::Stage`) resolves identifiers,
@@ -210,21 +208,8 @@ pub enum Guard<P: Stage = Source> {
 
 // Instructions
 
-#[derive(Clone, Debug, PartialEq)]
-/// Where control goes when an instruction does not conclude.
-pub enum Fallthrough {
-    /// To the named rule group.
-    Group(Id),
-    /// To the next alternative.
-    Next,
-    /// To the otherwise block.
-    Else,
-    /// Nowhere: evaluation fails.
-    Fail,
-}
-
-/// An instruction with its fall-through note, before annotation.
-pub type InstrNode<Tier, P = Source> = NotePhrase<InstrKind<Tier, P>, Option<Fallthrough>>;
+/// An instruction before prose annotation.
+pub type InstrNode<Tier, P = Source> = Phrase<InstrKind<Tier, P>>;
 /// An instruction with prose hints.
 pub type Instr<Tier, P = Source> = annot::Annotated<InstrNode<Tier, P>>;
 

@@ -279,12 +279,6 @@ impl<Tier: FreeIds> FreeIds for Block<Tier> {
     }
 }
 
-impl FreeIds for Fallthrough {
-    fn free_ids(&self) -> IdSet {
-        IdSet::new()
-    }
-}
-
 // - Table rows
 
 impl FreeIds for TableRow {

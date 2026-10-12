@@ -12,11 +12,8 @@ use crate::lang::pl::{ast as pl, rule_group};
 use crate::diagnostic::Report;
 
 use super::super::super::{
-    adoc::{
-        self,
-        pl::{Renderer, fallthrough},
-    },
-    anchor::AnchorContext,
+    adoc::{self, pl::Renderer},
+    anchor::{self, AnchorContext},
     latex,
 };
 
@@ -66,7 +63,7 @@ impl Key for (String, String) {
     }
 
     fn to_anchor(&self) -> String {
-        fallthrough::anchor_of_group(&self.0, &self.1)
+        anchor::anchor_of_group(&self.0, &self.1)
     }
 
     fn parse(
@@ -160,20 +157,14 @@ impl<'spec> Kind<'spec> for Prose {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        idx_request: usize,
+        _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
             .map(|selection| {
                 let group = selection.data;
-                let anchor_prefix = format!(
-                    "{}:{}:{idx_request}:{}",
-                    Self::NAME,
-                    selection.key.to_string(),
-                    selection.idx_key,
-                );
-                let mut renderer = Renderer::new(anchor_ctx, warnings, &anchor_prefix);
+                let mut renderer = Renderer::new(anchor_ctx, warnings);
                 renderer.render_rulegroup(
                     group.hints,
                     group.id_rel,

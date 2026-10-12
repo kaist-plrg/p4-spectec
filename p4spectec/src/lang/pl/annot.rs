@@ -92,7 +92,25 @@ macro_rules! annotated {
     };
 }
 
-/// Builds a source-annotated syntax node paired with prose metadata.
+/// Builds a source phrase paired with prose metadata.
+#[macro_export]
+macro_rules! annotated_phrase {
+    (node: $node:expr, span: $span:expr, hints: $hints:expr $(,)?) => {
+        $crate::annotated! {
+            node: $crate::phrase! { node: $node, span: $span },
+            hints: $hints,
+        }
+    };
+    (node: $node:expr, span: $span:expr $(,)?) => {
+        $crate::annotated_phrase! {
+            node: $node,
+            span: $span,
+            hints: $crate::lang::pl::annot::Hints::default(),
+        }
+    };
+}
+
+/// Builds a typed source phrase paired with prose metadata.
 #[macro_export]
 macro_rules! annotated_note_phrase {
     (

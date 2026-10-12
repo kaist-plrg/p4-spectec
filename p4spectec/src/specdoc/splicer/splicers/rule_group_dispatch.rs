@@ -54,19 +54,13 @@ impl<'spec> Kind<'spec> for Prose {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        idx_request: usize,
+        _idx_request: usize,
         values: &[Selection<'_, Self::Key, Self::Value>],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
             .map(|selection| {
-                let anchor_prefix = format!(
-                    "{}:{}:{idx_request}:{}",
-                    Self::NAME,
-                    selection.key,
-                    selection.idx_key,
-                );
-                let mut renderer = Renderer::new(anchor_ctx, warnings, &anchor_prefix);
+                let mut renderer = Renderer::new(anchor_ctx, warnings);
                 renderer.render_defined_rel_def_dispatch(selection.data)
             })
             .collect::<Vec<_>>()

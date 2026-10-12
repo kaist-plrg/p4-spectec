@@ -8,7 +8,7 @@ pub use crate::lang::il::prepared::*;
 
 use super::ast as source;
 
-pub use source::{Fallthrough, RelSignature, TierInstr};
+pub use source::{RelSignature, TierInstr};
 
 // == Prepared syntax
 

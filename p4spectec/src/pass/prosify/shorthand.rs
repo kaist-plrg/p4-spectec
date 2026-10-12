@@ -266,13 +266,12 @@ fn shorten_option_get<Tier>(
     let pl::ExpKind::Opt(Some(exp_target)) = exp_l.node.node else {
         unreachable!();
     };
-    Some(crate::annotated_note_phrase! {
+    Some(crate::annotated_phrase! {
         node: pl::InstrKind::OptionGet(pl::OptionGetInstr {
             exp_l: *exp_target,
             exp_r: exp_value,
             block,
         }),
-        note: instr_source.node.note,
         span: instr_source.node.span,
         hints: instr_source.hints,
     })

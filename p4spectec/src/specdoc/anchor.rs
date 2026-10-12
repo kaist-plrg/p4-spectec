@@ -2,7 +2,6 @@
 //!
 //! Callers supply function and relation lookups after collecting document titles.
 //! One context tracks emitted destinations across all fragments in the batch.
-//! Body namespaces and block numbering belong to each renderer invocation.
 
 use std::collections::BTreeSet;
 
@@ -62,4 +61,16 @@ impl<'a> AnchorContext<'a> {
     pub fn claim_anchor(&mut self, anchor: &str) -> bool {
         self.emitted.insert(anchor.to_owned())
     }
+}
+
+/// Returns a rule-group anchor, sanitizing path separators.
+pub fn anchor_of_group(namespace: &str, id_group: &str) -> String {
+    let namespace_sanitized = namespace.replace('/', "-");
+    let id_group_sanitized = id_group.replace('/', "-");
+    format!("{namespace_sanitized}-{id_group_sanitized}")
+}
+
+/// Returns the anchor of an otherwise block.
+pub fn anchor_of_else(namespace: &str) -> String {
+    format!("{namespace}-else")
 }

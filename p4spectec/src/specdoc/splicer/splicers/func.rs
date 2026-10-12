@@ -144,13 +144,13 @@ impl<'spec> Kind<'spec> for Prose {
         Ok(values
             .iter()
             .filter_map(|selection| {
-                let anchor_prefix = format!(
-                    "{}:{}:{idx_request}:{}",
+                let anchor_else = format!(
+                    "{}:{}:{idx_request}:{}-else",
                     Self::NAME,
                     selection.key,
                     selection.idx_key,
                 );
-                adoc::pl::render_def(anchor_ctx, warnings, &anchor_prefix, selection.data)
+                adoc::pl::render_def(anchor_ctx, warnings, Some(&anchor_else), selection.data)
             })
             .collect::<Vec<_>>()
             .join("\n\n"))

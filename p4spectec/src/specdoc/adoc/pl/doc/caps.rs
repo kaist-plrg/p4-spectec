@@ -37,9 +37,7 @@ impl Prose {
                     CapStep::Skip
                 }
             }
-            Prose::Code(_) | Prose::PlainCode(_) | Prose::Link(..) | Prose::Fallthrough(..) => {
-                CapStep::Stop
-            }
+            Prose::Code(_) | Prose::PlainCode(_) | Prose::Link(..) => CapStep::Stop,
             Prose::Seq(proses) => {
                 // Empty or punctuation-only pieces leave the next piece eligible
                 for prose in proses {
