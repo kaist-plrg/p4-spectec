@@ -7,7 +7,7 @@ use crate::lang::pl::ast as pl;
 
 /// Classifies a condition after classifying its nested body.
 fn classify_if<Tier>(instr_if: pl::IfInstr<Tier>, has_continuation: bool) -> pl::InstrKind<Tier> {
-    if has_continuation || !instr_if.iter_exps.is_empty() {
+    if has_continuation {
         pl::InstrKind::If(instr_if)
     } else {
         pl::InstrKind::Check(pl::CheckInstr {
