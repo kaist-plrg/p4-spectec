@@ -65,7 +65,7 @@ pub(crate) fn check_rel_inputs(
     // Always check the input count, even without type guards
     unwrap!(backtrack::check(
         signature.input_hint.indices().len() == values.len(),
-        id.span.clone(),
+        id.span,
         || {
             error::guard::relation_input_arity_mismatch(
                 signature.input_hint.indices().len(),
@@ -85,7 +85,7 @@ pub(crate) fn check_rel_inputs(
         .map(|idx| typs[idx.node].clone())
         .collect::<Vec<_>>();
     check_values(arena, ctx, id, &typs, values, || {
-        error::guard::relation_input_type_mismatch(id.node.clone())
+        error::guard::relation_input_type_mismatch(id.node.to_string())
     })
 }
 
@@ -100,10 +100,10 @@ pub(crate) fn check_func_inputs(
 ) -> Backtrack<()> {
     let typ = unwrap_from_result!(ctx.find_func_typ(id), &id.span);
     // Check type and value argument counts before binding them
-    unwrap!(backtrack::check(typ.tparams.len() == targs.len(), id.span.clone(), || {
+    unwrap!(backtrack::check(typ.tparams.len() == targs.len(), id.span, || {
         error::call::type_argument_arity_mismatch(typ.tparams.len(), targs.len())
     }));
-    unwrap!(backtrack::check(typ.typs_params.len() == values.len(), id.span.clone(), || {
+    unwrap!(backtrack::check(typ.typs_params.len() == values.len(), id.span, || {
         error::guard::function_input_arity_mismatch(typ.typs_params.len(), values.len())
     }));
     if !guard {
@@ -113,7 +113,7 @@ pub(crate) fn check_func_inputs(
     let ctx_local = unwrap!(assign_tparams(ctx.localize(), &typ.tparams, targs, &id.span));
     // Parameter types resolve against the local type bindings
     check_values(arena, &ctx_local, id, &typ.typs_params, values, || {
-        error::guard::function_input_type_mismatch(id.node.clone())
+        error::guard::function_input_type_mismatch(id.node.to_string())
     })
 }
 
@@ -129,7 +129,7 @@ fn check_values(
     // Resolve type names and function types through the context
     let find_typdef_opt = |id: &ast::Id| ctx.find_typdef_opt(id);
     let find_func = |name: &str| {
-        let id = crate::phrase!(node: name.to_owned(), span: id.span.clone());
+        let id = crate::phrase!(node: name.into(), span: id.span);
         ctx.find_func_typ(&id).ok()
     };
     // Check all values against their declared types
@@ -137,7 +137,7 @@ fn check_values(
         value::subs(arena, &find_typdef_opt, &find_func, typs, values),
         &id.span
     );
-    backtrack::check(matches, id.span.clone(), diagnostic)
+    backtrack::check(matches, id.span, diagnostic)
 }
 
 /// Type-checks a function result with its type arguments substituted.
@@ -155,7 +155,7 @@ fn check_func_output(
     let typ = unwrap_from_result!(typ::subst_typ(&|id| theta.get(id), typ), &id.span);
     // Check the single result
     check_values(arena, ctx, id, &[typ], std::slice::from_ref(value), || {
-        error::guard::function_output_type_mismatch(id.node.clone())
+        error::guard::function_output_type_mismatch(id.node.to_string())
     })
 }
 
@@ -223,7 +223,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result = result.with_frame(id.span.clone(), || error::trace::message_rel_invocation(id));
+    let result = result.with_frame(id.span, || error::trace::message_rel_invocation(id));
     let values = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {
@@ -257,7 +257,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     // Check the number of extern outputs before assigning them
     let len =
         rel.rel_signature.not_typ.node.args().len() - rel.rel_signature.input_hint.indices().len();
-    unwrap!(backtrack::check(len == values.len(), id.span.clone(), || {
+    unwrap!(backtrack::check(len == values.len(), id.span, || {
         error::guard::relation_output_arity_mismatch(len, values.len())
     }));
     // Guard the outputs against their declared types
@@ -267,7 +267,7 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
         let (_, typs) = input::split(&rel.rel_signature.input_hint, typs)
             .expect("input hint must fit relation");
         unwrap!(check_values(runner_ctx.arena(), ctx, id, &typs, &values, || {
-            error::guard::relation_output_type_mismatch(id.node.clone())
+            error::guard::relation_output_type_mismatch(id.node.to_string())
         },));
     }
     ok!(values)
@@ -358,8 +358,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     });
     let pure = runner_ctx.interp_mut().cache.end();
     // Nest failures under the invocation trace
-    let result =
-        result.with_frame(id.span.clone(), || error::trace::message_func_invocation(id, targs));
+    let result = result.with_frame(id.span, || error::trace::message_func_invocation(id, targs));
     let value = unwrap!(result);
     // Memoize only a pure result
     if pure && let Some(key) = key {

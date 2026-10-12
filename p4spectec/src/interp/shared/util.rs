@@ -42,7 +42,7 @@ pub fn find_var_of_exp(ctx: &impl ReadContext, exp: &ast::Exp) -> Option<VarSlot
             slot: id.slot,
             var: Var {
                 id: id.id.clone(),
-                typ: crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone()),
+                typ: crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span),
                 iters: vec![],
             },
         }),

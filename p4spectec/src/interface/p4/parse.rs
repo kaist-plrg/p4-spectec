@@ -14,7 +14,7 @@ use std::{
 use lalrpop_util::ParseError;
 
 use crate::lang::{
-    common::source::{Phrase, Position, Span},
+    common::source::{FileId, Phrase, Position, Span},
     data::{arena::Arena, value::flat::Value},
 };
 
@@ -57,7 +57,7 @@ fn translate_lalrpop_error(ctx: &Context, error: ParseError<Location, Token, P4E
         // Point errors span one location
         ParseError::InvalidToken { location } | ParseError::UnrecognizedEof { location, .. } => {
             let position = ctx.location_get(location);
-            Span::new(position.clone(), position)
+            Span::new(position, position)
         }
         // Token errors span the token
         ParseError::UnrecognizedToken { token: (location_l, _, location_r), .. }
@@ -78,10 +78,10 @@ pub fn parse_string(
     path: impl AsRef<Path>,
     source: &str,
 ) -> Result<Value, P4Error> {
-    let file: Rc<str> = Rc::from(path.as_ref().to_string_lossy().into_owned());
+    let file = FileId::intern(&path.as_ref().to_string_lossy());
     // The lexer and parser share one context for name classification
     let ctx = Rc::new(Context::new(arena));
-    let position = Position::new(Rc::clone(&file), 1, 0);
+    let position = Position::new(file, 1, 0);
     let mut lexer = Lexer::new(Rc::clone(&ctx), file, source);
     let input = parser_input(ctx.as_ref(), &mut lexer, position);
 

@@ -92,7 +92,7 @@ pub(crate) fn guard_as_exp(exp_target: &Exp, guard: &Guard) -> Exp {
         Guard::Match(pattern) => ExpKind::Match(Box::new(exp_target.clone()), pattern.clone()),
         Guard::Mem(exp) => ExpKind::Mem(Box::new(exp_target.clone()), Box::new(exp.clone())),
     };
-    crate::note_phrase!(node: exp_kind, note: TypKind::Bool, span: exp_target.span.clone())
+    crate::note_phrase!(node: exp_kind, note: TypKind::Bool, span: exp_target.span)
 }
 
 // == Condition overlap

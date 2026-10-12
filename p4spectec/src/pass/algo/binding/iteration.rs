@@ -176,7 +176,7 @@ impl ICtx {
     pub fn iterate_prem(&self, mut prem: al::ast::Prem) -> al::ast::Prem {
         // Wrap innermost first
         for entry in &self.0 {
-            let span = prem.span.clone();
+            let span = prem.span;
             let prem_iter = al::ast::PremIter {
                 iter: entry.iter,
                 vars_bound: entry.vars_bound.clone(),

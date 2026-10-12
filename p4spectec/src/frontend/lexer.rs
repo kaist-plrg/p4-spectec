@@ -45,13 +45,11 @@
 //! lexer:  TextLiteral("Hi")
 //! ```
 
-use std::rc::Rc;
-
 use num_bigint::BigInt;
 
 use crate::lang::common::{
     prim::num::Natural,
-    source::{Phrase, Position, Span},
+    source::{FileId, Phrase, Position, Span},
 };
 
 use super::error::{self, LexError};
@@ -184,8 +182,8 @@ struct Cursor {
 /// Input is valid UTF-8 by construction;
 /// file entry points must report decoding failures before constructing a lexer.
 pub struct Lexer<'input, Classify> {
-    /// File name for positions.
-    file: Rc<str>,
+    /// File of the positions.
+    file: FileId,
     /// The whole source text.
     source: &'input str,
     /// Where the next lexeme starts.
@@ -205,13 +203,9 @@ where
     Classify: FnMut(&str) -> bool,
 {
     /// Tokenizes `source` using the parser's uppercase-variable classifier.
-    pub fn new(
-        file: impl Into<Rc<str>>,
-        source: &'input str,
-        classify_uppercase: Classify,
-    ) -> Self {
+    pub fn new(file: FileId, source: &'input str, classify_uppercase: Classify) -> Self {
         Self {
-            file: file.into(),
+            file,
             source,
             cursor: Cursor { offset: 0, line: 1, line_start: 0 },
             finished: false,
@@ -329,7 +323,7 @@ where
 
     /// The source position of a cursor.
     fn position(&self, cursor: Cursor) -> Position {
-        Position::new(self.file.clone(), cursor.line, cursor.offset - cursor.line_start)
+        Position::new(self.file, cursor.line, cursor.offset - cursor.line_start)
     }
 
     /// The span from a start cursor to the current one.

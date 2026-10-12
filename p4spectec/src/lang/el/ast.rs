@@ -306,7 +306,7 @@ pub enum ParamKind {
 }
 
 /// A type parameter name.
-pub type TParam = Phrase<String>;
+pub type TParam = Id;
 
 /// A premise with its span.
 pub type Prem = Phrase<PremKind>;

@@ -71,7 +71,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PlInterp {
     ) -> Result<Vec<Value>, InterpreterError> {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
-        let id = crate::phrase!(node: name.to_owned(), span: Span::default());
+        let id = crate::phrase!(node: name.into(), span: Span::default());
         let ctx = context::Context::new(runner_ctx.spec());
         // Check the caller's inputs before running the definition
         eval::call::check_rel_inputs(
@@ -92,7 +92,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PlInterp {
     ) -> Result<Value, InterpreterError> {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
-        let id = crate::phrase!(node: name.to_owned(), span: Span::default());
+        let id = crate::phrase!(node: name.into(), span: Span::default());
         let ctx = context::Context::new(runner_ctx.spec());
         // Check the caller's inputs before running the definition
         eval::call::check_func_inputs(

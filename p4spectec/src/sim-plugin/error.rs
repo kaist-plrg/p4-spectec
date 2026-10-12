@@ -279,7 +279,7 @@ pub(super) fn statement_execution_failure(span: &Span, report: Box<Report>) -> S
     if *span == Span::default() {
         report
     } else {
-        Box::new(Report::frame(span.clone(), "while executing STF statement", vec![*report]))
+        Box::new(Report::frame(*span, "while executing STF statement", vec![*report]))
     }
 }
 

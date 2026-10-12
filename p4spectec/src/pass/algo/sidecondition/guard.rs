@@ -259,7 +259,7 @@ fn iterate_prem(iter: ast::Iter, vars: &[ast::Var], prem_al: ast::Prem) -> Optio
     if vars_bound.is_empty() {
         return None;
     }
-    let span = prem_al.span.clone();
+    let span = prem_al.span;
     let prem_iter = ast::PremIter { iter, vars_bound, vars_bind: vec![] };
     let prem_kind = ast::PremKind::Iter(ast::IterPrem { prem: Box::new(prem_al), prem_iter });
     let prem_al = phrase!(node: prem_kind, span: span);
@@ -294,12 +294,12 @@ fn gen_index_guard(
     exp_base_al: &ast::Exp,
     exp_idx_al: &ast::Exp,
 ) -> Vec<ast::Prem> {
-    let span = exp_al.span.clone();
+    let span = exp_al.span;
     // Guard: idx < |base|
     let exp_len_al = note_phrase! {
         node: ast::ExpKind::Len(Box::new(exp_base_al.clone())),
         note: ast::TypKind::Num(prim::num::Typ::Nat),
-        span: span.clone(),
+        span: span,
     };
     let exp_guard_al = note_phrase! {
         node: ast::ExpKind::Cmp(
@@ -309,7 +309,7 @@ fn gen_index_guard(
             Box::new(exp_len_al),
         ),
         note: ast::TypKind::Bool,
-        span: span.clone(),
+        span: span,
     };
     let prem_kind = ast::PremKind::If(ast::IfPrem { exp: exp_guard_al });
     let prem_guard_al = phrase!(node: prem_kind, span: span);
@@ -321,13 +321,13 @@ fn gen_exp_eq_epsilon(iter: ast::Iter, var: &ast::Var) -> ast::Exp {
     let mut var = var.clone();
     var.iters.push(iter);
     let exp_al = al::var::as_exp(true, &var);
-    let span = exp_al.span.clone();
+    let span = exp_al.span;
     let typ = exp_al.note.clone();
     // Compare the iterated option against the empty option
     let exp_epsilon_al = note_phrase! {
         node: ast::ExpKind::Opt(None),
         note: typ,
-        span: span.clone(),
+        span: span,
     };
     note_phrase! {
         node: ast::ExpKind::Cmp(
@@ -346,7 +346,7 @@ fn gen_exp_len(iter: ast::Iter, var: &ast::Var) -> ast::Exp {
     let mut var = var.clone();
     var.iters.push(iter);
     let exp_al = al::var::as_exp(true, &var);
-    let span = exp_al.span.clone();
+    let span = exp_al.span;
     note_phrase! {
         node: ast::ExpKind::Len(Box::new(exp_al)),
         note: ast::TypKind::Num(prim::num::Typ::Nat),
@@ -412,7 +412,7 @@ fn gen_iter_guard(exp_iter: &ast::ExpIter) -> Vec<ast::Prem> {
         exp_guard_al = gen_exp_and(exp_guard_al, exp_pair_al);
         exp_prev_al = exp_al;
     }
-    let span = exp_guard_al.span.clone();
+    let span = exp_guard_al.span;
     let prem_kind = ast::PremKind::If(ast::IfPrem { exp: exp_guard_al });
     let prem_guard_al = phrase!(node: prem_kind, span: span);
     vec![prem_guard_al]

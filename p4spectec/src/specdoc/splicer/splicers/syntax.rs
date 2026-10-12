@@ -25,8 +25,8 @@ fn init_from_el(spec_el: &el::Spec) -> BTreeMap<String, &el::Def> {
     spec_el
         .iter()
         .filter_map(|def_el| match &def_el.node {
-            el::DefKind::ExternSyntax(def) => Some((def.id.node.clone(), def_el)),
-            el::DefKind::Typ(def) => Some((def.id.node.clone(), def_el)),
+            el::DefKind::ExternSyntax(def) => Some((def.id.node.to_string(), def_el)),
+            el::DefKind::Typ(def) => Some((def.id.node.to_string(), def_el)),
             _ => None,
         })
         .collect()

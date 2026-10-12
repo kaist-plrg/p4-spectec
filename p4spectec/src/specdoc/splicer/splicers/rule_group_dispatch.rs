@@ -26,7 +26,7 @@ fn init_from_pl(spec_pl: &pl::Spec) -> BTreeMap<String, &pl::DefinedRel> {
     spec_pl
         .iter()
         .filter_map(|def_pl| match &def_pl.node.node {
-            pl::DefKind::Rel(pl::RelDef::Defined(rel)) => Some((rel.id.node.clone(), rel)),
+            pl::DefKind::Rel(pl::RelDef::Defined(rel)) => Some((rel.id.node.to_string(), rel)),
             _ => None,
         })
         .collect()

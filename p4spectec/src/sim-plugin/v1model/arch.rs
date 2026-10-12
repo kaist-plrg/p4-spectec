@@ -54,7 +54,7 @@ impl Arch {
     pub fn to_value(&self, arena: &mut Arena, encoding: Encoding) -> Result<Value, ExternError> {
         let payload = encode_with(arena, encoding, self).map_err(ExternError::from)?;
         let typ = typ::make::var(
-            crate::phrase!(node: "archState".to_owned(), span: Span::default()),
+            crate::phrase!(node: "archState".into(), span: Span::default()),
             Vec::new(),
         );
         Ok(value::make::external(arena, typ.node.into(), payload.into(), Span::default())?)

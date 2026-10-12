@@ -28,7 +28,7 @@ use crate::pass::structure::{StructureError, ol::ast::*, opt::overlap::typ_as_va
 fn is_singleton_match(tdenv: &TDEnv, exp: &Exp) -> Result<bool, StructureError> {
     match &exp.node {
         ExpKind::Match(exp, _) => {
-            let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span.clone());
+            let typ = crate::phrase!(node: exp.note.as_ref().clone(), span: exp.span);
             let mixops = typ_as_variant(tdenv, &typ)?;
             Ok(mixops.is_some_and(|mixops| mixops.len() == 1))
         }

@@ -18,7 +18,7 @@ use std::{
 use lalrpop_util::ParseError;
 
 use crate::lang::{
-    common::source::{Position, Span},
+    common::source::{FileId, Position, Span},
     data::notation::tree::Mixop,
 };
 
@@ -37,7 +37,7 @@ use super::{
 // - Source decoding
 
 /// Locates a UTF-8 error by counting newlines in the valid prefix.
-fn invalid_utf8_span(name: Rc<str>, bytes: &[u8], error: &str::Utf8Error) -> Span {
+fn invalid_utf8_span(file: FileId, bytes: &[u8], error: &str::Utf8Error) -> Span {
     let offset = error.valid_up_to();
     let valid_prefix = &bytes[..offset];
     // Line and column of the first invalid byte
@@ -51,20 +51,20 @@ fn invalid_utf8_span(name: Rc<str>, bytes: &[u8], error: &str::Utf8Error) -> Spa
     let invalid_length = error
         .error_len()
         .unwrap_or_else(|| bytes.len().saturating_sub(offset));
-    let pos_l = Position::new(Rc::clone(&name), line, column);
-    let pos_r = Position::new(name, line, column + invalid_length);
+    let pos_l = Position::new(file, line, column);
+    let pos_r = Position::new(file, line, column + invalid_length);
     Span::new(pos_l, pos_r)
 }
 
 /// Decodes UTF-8 bytes or reports the invalid sequence in its lexical context.
-fn decode_utf8(name: Rc<str>, bytes: &[u8]) -> Result<&str, FrontendError> {
+fn decode_utf8(file: FileId, bytes: &[u8]) -> Result<&str, FrontendError> {
     str::from_utf8(bytes).map_err(|error_utf8| {
-        let span = invalid_utf8_span(Rc::clone(&name), bytes, &error_utf8);
+        let span = invalid_utf8_span(file, bytes, &error_utf8);
         // Utf8Error guarantees that the prefix before valid_up_to is valid
         let prefix = str::from_utf8(&bytes[..error_utf8.valid_up_to()])
             .expect("UTF-8 decoder validated the prefix");
         // Classify comment encoding only when lexing reaches the invalid bytes
-        let mut lexer = Lexer::new(Rc::clone(&name), prefix, |_| false);
+        let mut lexer = Lexer::new(file, prefix, |_| false);
         while lexer.next().is_some_and(|token| token.is_ok()) {}
         if lexer.in_block_comment() {
             error::comment_encoding_invalid(span, bytes, &error_utf8)
@@ -115,8 +115,8 @@ fn expand_path(path: &Path, files: &mut Vec<PathBuf>) -> Result<(), FrontendErro
     let metadata = match fs::metadata(path) {
         Ok(metadata) => metadata,
         Err(error_io) => {
-            let pos = Position::new(path.to_string_lossy().into_owned(), 0, 0);
-            return Err(error::file_read_failed(Span::new(pos.clone(), pos), &error_io));
+            let pos = Position::new(FileId::intern(&path.to_string_lossy()), 0, 0);
+            return Err(error::file_read_failed(Span::new(pos, pos), &error_io));
         }
     };
     // A file is taken as given, whatever its extension
@@ -155,10 +155,10 @@ fn expand_path(path: &Path, files: &mut Vec<PathBuf>) -> Result<(), FrontendErro
 /// Lexes and parses one source text into definitions.
 fn parse_text_with_context(
     ctx: &Context,
-    name: Rc<str>,
+    file: FileId,
     source: &str,
 ) -> Result<Spec, FrontendError> {
-    let lexer = Lexer::new(name, source, |id| ctx.find_id(id));
+    let lexer = Lexer::new(file, source, |id| ctx.find_id(id));
     let tokens = parser_tokens(ctx, lexer);
     let result = parser::SpecParser::new().parse(ctx, tokens);
     result.map_err(|error| parse_error(ctx, source, error))
@@ -170,13 +170,14 @@ fn parse_text_with_context(
 
 /// Parses a UTF-8 source string with fresh variable bindings.
 pub fn parse_text(name: Rc<str>, source: &str) -> Result<Spec, FrontendError> {
-    parse_text_with_context(&Context::default(), name, source)
+    parse_text_with_context(&Context::default(), FileId::intern(&name), source)
 }
 
 /// Validates UTF-8 bytes and parses them with fresh variable bindings.
 pub fn parse_utf8_bytes(name: Rc<str>, bytes: &[u8]) -> Result<Spec, FrontendError> {
-    let source = decode_utf8(Rc::clone(&name), bytes)?;
-    parse_text(name, source)
+    let file = FileId::intern(&name);
+    let source = decode_utf8(file, bytes)?;
+    parse_text_with_context(&Context::default(), file, source)
 }
 
 // - Filesystem input
@@ -198,17 +199,17 @@ where
     // Variables bound in one file stay bound in the next
     let bindings = Rc::new(Bindings::default());
     let mut spec = Vec::new();
-    for file in files {
+    for path in files {
         // Read bytes with a file-only location for I/O failures
-        let name = Rc::<str>::from(file.to_string_lossy().into_owned());
-        let pos = Position::new(Rc::clone(&name), 0, 0);
-        let span = Span::new(pos.clone(), pos);
-        let bytes = fs::read(&file).map_err(|error_io| error::file_read_failed(span, &error_io))?;
+        let file = FileId::intern(&path.to_string_lossy());
+        let pos = Position::new(file, 0, 0);
+        let span = Span::new(pos, pos);
+        let bytes = fs::read(&path).map_err(|error_io| error::file_read_failed(span, &error_io))?;
 
         // Decode and parse each file with the shared variable bindings
-        let source = decode_utf8(Rc::clone(&name), &bytes)?;
+        let source = decode_utf8(file, &bytes)?;
         let ctx = Context::with_bindings(Rc::clone(&bindings));
-        let defs = parse_text_with_context(&ctx, name, source)?;
+        let defs = parse_text_with_context(&ctx, file, source)?;
         spec.extend(defs);
     }
     Ok(spec)
@@ -251,7 +252,7 @@ pub fn parse_mixop(source: &str) -> Result<Mixop, FrontendError> {
 
     // Parse as a type with a throwaway context
     let ctx = Context::default();
-    let lexer = Lexer::new(Rc::from("<mixop>"), source, |id| ctx.find_id(id));
+    let lexer = Lexer::new(FileId::intern("<mixop>"), source, |id| ctx.find_id(id));
     let tokens = parser_tokens(&ctx, lexer);
     let result = parser::CheckTypParser::new().parse(&ctx, tokens);
     let typ = result.map_err(|error_parse| match error_parse {

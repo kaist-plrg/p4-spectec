@@ -143,20 +143,17 @@ where
         // Two adjacent atoms get a `Sequence` between them; the lexeme waits
         if self.previous_token.as_ref().is_some_and(ends_sequence) && starts_sequence(&lexeme.node)
         {
-            let pos_l = self
-                .previous_right
-                .clone()
-                .expect("previous token position");
-            let pos_r = lexeme.span.left.clone();
+            let pos_l = self.previous_right.expect("previous token position");
+            let pos_r = lexeme.span.left;
             self.pending = Some(lexeme);
             self.previous_token = Some(Token::Sequence);
-            self.previous_right = Some(pos_r.clone());
+            self.previous_right = Some(pos_r);
             return Some(Ok((self.ctx.location(pos_l), Token::Sequence, self.ctx.location(pos_r))));
         }
 
         // Intern both ends and remember this token for the next call
         let loc_l = self.ctx.location(lexeme.span.left);
-        self.previous_right = Some(lexeme.span.right.clone());
+        self.previous_right = Some(lexeme.span.right);
         let loc_r = self.ctx.location(lexeme.span.right);
         self.previous_token = Some(lexeme.node.clone());
         Some(Ok((loc_l, lexeme.node, loc_r)))

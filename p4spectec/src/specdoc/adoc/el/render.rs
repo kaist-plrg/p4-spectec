@@ -61,15 +61,15 @@ impl Doc {
 
 impl Doc {
     fn of_varid(id_var: &Id) -> Doc {
-        Doc::text(id_var.node.clone())
+        Doc::text(id_var.node.to_string())
     }
 
     fn of_typid(id_typ: &Id) -> Doc {
-        Doc::text(id_typ.node.clone())
+        Doc::text(id_typ.node.to_string())
     }
 
     fn of_relid(id_rel: &Id) -> Doc {
-        Doc::text(id_rel.node.clone())
+        Doc::text(id_rel.node.to_string())
     }
 
     fn of_defid(id_def: &Id) -> Doc {
@@ -77,7 +77,7 @@ impl Doc {
     }
 
     fn of_tparam(tparam: &TParam) -> Doc {
-        Doc::text(tparam.node.clone())
+        Doc::text(tparam.node.to_string())
     }
 
     fn of_rule_suffix(id_suffix: &Id) -> Doc {

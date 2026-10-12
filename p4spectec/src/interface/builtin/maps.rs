@@ -66,7 +66,7 @@ fn make_pair(
     value_key: Value,
     value_value: Value,
 ) -> Result<Value, BuiltinError> {
-    let pair_id = crate::phrase!(node: "pair".to_owned(), span: Span::default());
+    let pair_id = crate::phrase!(node: "pair".into(), span: Span::default());
     let typ = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
     let value_case = notation::Mixfix::new(pair_mixop(), vec![value_key, value_value])
         .expect("the pair mixop has exactly two arguments");
@@ -134,11 +134,11 @@ fn value_of_map(
     map: ValueMap,
 ) -> Result<Value, BuiltinError> {
     // The pair list is typed `pair<K, V>*`, the case `map<K, V>`
-    let pair_id = crate::phrase!(node: "pair".to_owned(), span: Span::default());
+    let pair_id = crate::phrase!(node: "pair".into(), span: Span::default());
     let typ_pair = typ::make::var(pair_id, vec![typ_key.clone(), typ_value.clone()]);
     let typ_pairs = typ::make::list(typ_pair);
     let value_pairs = value::make::list(arena, typ_pairs.node.into(), map, Span::default())?;
-    let map_id = crate::phrase!(node: "map".to_owned(), span: Span::default());
+    let map_id = crate::phrase!(node: "map".into(), span: Span::default());
     let typ = typ::make::var(map_id, vec![typ_key.clone(), typ_value.clone()]);
     let value_case = notation::Mixfix::new(map_mixop(), vec![value_pairs])
         .expect("the map mixop has exactly one argument");

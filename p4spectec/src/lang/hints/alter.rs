@@ -75,7 +75,7 @@ pub fn init(exp: &Exp) -> AlterHint {
         // Anything else is kept as an expression for the renderer
         _ => AlterHintKind::Other(exp.clone()),
     };
-    crate::phrase! { node: hint_kind, span: exp.span.clone() }
+    crate::phrase! { node: hint_kind, span: exp.span }
 }
 
 // == Validation
@@ -97,14 +97,14 @@ pub fn validate(hint: &AlterHint, item_count: usize) -> Result<(), AlterationErr
             // `%` takes the item at the cursor
             AlterHintKind::Hole(Hole::Next) if cursor < item_count => Ok(cursor + 1),
             AlterHintKind::Hole(hole @ Hole::Next) => Err(AlterationError::IndexOutOfBounds {
-                hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span.clone() }),
+                hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span }),
                 index: cursor,
                 item_count,
             }),
             // `%N` leaves the cursor alone
             AlterHintKind::Hole(Hole::Num(idx)) if *idx < item_count => Ok(cursor),
             AlterHintKind::Hole(hole @ Hole::Num(idx)) => Err(AlterationError::IndexOutOfBounds {
-                hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span.clone() }),
+                hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span }),
                 index: *idx,
                 item_count,
             }),
@@ -166,7 +166,7 @@ pub fn realign(hint: &AlterHint, hint_input: &InputHint) -> AlterHint {
             ),
             _ => hint.node.clone(),
         };
-        crate::phrase! { node: hint_kind, span: hint.span.clone() }
+        crate::phrase! { node: hint_kind, span: hint.span }
     }
 
     let mut indices_output = Vec::new();
@@ -254,9 +254,7 @@ pub fn alternate<Item, R: Renderer<Item>>(
                 let item = items
                     .get(cursor)
                     .ok_or_else(|| AlterationError::IndexOutOfBounds {
-                        hole: Box::new(
-                            crate::phrase! { node: hole.clone(), span: hint.span.clone() },
-                        ),
+                        hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span }),
                         index: cursor,
                         item_count: items.len(),
                     })?;
@@ -267,9 +265,7 @@ pub fn alternate<Item, R: Renderer<Item>>(
                 let item = items
                     .get(*index)
                     .ok_or_else(|| AlterationError::IndexOutOfBounds {
-                        hole: Box::new(
-                            crate::phrase! { node: hole.clone(), span: hint.span.clone() },
-                        ),
+                        hole: Box::new(crate::phrase! { node: hole.clone(), span: hint.span }),
                         index: *index,
                         item_count: items.len(),
                     })?;

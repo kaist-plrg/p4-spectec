@@ -41,23 +41,23 @@ impl Decls {
             match &def.node {
                 // Relation declarations supply relation title targets
                 el::DefKind::ExternRel(rel) => {
-                    decls.rels.insert(rel.id.node.clone());
+                    decls.rels.insert(rel.id.node.to_string());
                 }
                 // Defined relations use the same reference namespace
                 el::DefKind::Rel(rel) => {
-                    decls.rels.insert(rel.id.node.clone());
+                    decls.rels.insert(rel.id.node.to_string());
                 }
                 // Function declarations supply function title targets
                 el::DefKind::ExternDec(func) => {
-                    decls.funcs.insert(func.id.node.clone());
+                    decls.funcs.insert(func.id.node.to_string());
                 }
                 // Builtin functions may also receive document titles
                 el::DefKind::BuiltinDec(func) => {
-                    decls.funcs.insert(func.id.node.clone());
+                    decls.funcs.insert(func.id.node.to_string());
                 }
                 // Defined functions are indexed by their declaration
                 el::DefKind::FuncDec(func) => {
-                    decls.funcs.insert(func.id.node.clone());
+                    decls.funcs.insert(func.id.node.to_string());
                 }
                 // Other definitions do not declare title targets
                 _ => {}

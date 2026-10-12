@@ -126,7 +126,7 @@ pub mod make {
     /// Wraps a type in each iterator from innermost to outermost.
     pub fn iterate(mut typ: Typ, iters: &[Iter]) -> Typ {
         for iter in iters {
-            let span = typ.span.clone();
+            let span = typ.span;
             let typ_inner = Box::new(typ);
             let typ_kind = TypKind::Iter(typ_inner, *iter);
             typ = phrase!(node: typ_kind, span: span);

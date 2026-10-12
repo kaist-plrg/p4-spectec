@@ -18,13 +18,13 @@ pub trait At {
 
 impl At for Span {
     fn at(&self) -> Span {
-        self.clone()
+        *self
     }
 }
 
 impl<T, N> At for NotePhrase<T, N, Span> {
     fn at(&self) -> Span {
-        self.span.clone()
+        self.span
     }
 }
 

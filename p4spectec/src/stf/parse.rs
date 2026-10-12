@@ -10,7 +10,7 @@ use std::{fs, path::Path, rc::Rc};
 
 use lalrpop_util::ParseError;
 
-use crate::lang::common::source::{Phrase, Position, Span};
+use crate::lang::common::source::{FileId, Phrase, Position, Span};
 
 use super::{
     ast::Program,
@@ -35,19 +35,19 @@ pub(crate) struct Location {
 impl Location {
     /// The line and column of a source position.
     fn from_position(position: Position) -> Self {
-        Self { line: position.line, column: position.column }
+        Self { line: position.line as usize, column: position.column as usize }
     }
 
     /// A source position in `file` at this location.
-    fn into_position(self, file: Rc<str>) -> Position {
+    fn into_position(self, file: FileId) -> Position {
         Position::new(file, self.line, self.column)
     }
 }
 
 /// The span between two locations in `file`.
-pub(crate) fn location_span(file: &Rc<str>, loc_l: Location, loc_r: Location) -> Span {
-    let pos_l = loc_l.into_position(Rc::clone(file));
-    let pos_r = loc_r.into_position(Rc::clone(file));
+pub(crate) fn location_span(file: FileId, loc_l: Location, loc_r: Location) -> Span {
+    let pos_l = loc_l.into_position(file);
+    let pos_r = loc_r.into_position(file);
     Span::new(pos_l, pos_r)
 }
 
@@ -67,10 +67,7 @@ where
 }
 
 /// Turns a LALRPOP error into an STF diagnostic with its span.
-fn translate_lalrpop_error(
-    file: &Rc<str>,
-    error: ParseError<Location, Token, StfError>,
-) -> StfError {
+fn translate_lalrpop_error(file: FileId, error: ParseError<Location, Token, StfError>) -> StfError {
     match error {
         ParseError::InvalidToken { location: loc } => {
             error::token_invalid(&location_span(file, loc, loc))
@@ -100,12 +97,16 @@ pub(crate) fn parse_priority(spelling: String, span: Span) -> Result<i64, StfErr
 // - Source strings
 
 /// Parses an STF source string and retains statement source spans.
-pub fn parse_str(file: impl Into<Rc<str>>, source: &str) -> Result<Program, StfError> {
-    let file = file.into();
-    let lexer = Lexer::new(Rc::clone(&file), source);
+pub fn parse_str(name: impl Into<Rc<str>>, source: &str) -> Result<Program, StfError> {
+    parse_source(FileId::intern(&name.into()), source)
+}
+
+/// Parses STF source text whose positions name `file`.
+fn parse_source(file: FileId, source: &str) -> Result<Program, StfError> {
+    let lexer = Lexer::new(file, source);
     let input = parser_input(lexer);
-    let result = parser::StatementsParser::new().parse(&file, input);
-    result.map_err(|error| translate_lalrpop_error(&file, error))
+    let result = parser::StatementsParser::new().parse(file, input);
+    result.map_err(|error| translate_lalrpop_error(file, error))
 }
 
 // - Source files
@@ -113,10 +114,10 @@ pub fn parse_str(file: impl Into<Rc<str>>, source: &str) -> Result<Program, StfE
 /// Reads and parses an STF file.
 pub fn parse_file(path: impl AsRef<Path>) -> Result<Program, StfError> {
     let path = path.as_ref();
-    let file = Rc::<str>::from(path.to_string_lossy().into_owned());
+    let file = FileId::intern(&path.to_string_lossy());
     let source = fs::read_to_string(path).map_err(|error| {
-        let position = Position::new(Rc::clone(&file), 0, 0);
-        error::input_unreadable(&Span::new(position.clone(), position), &error)
+        let position = Position::new(file, 0, 0);
+        error::input_unreadable(&Span::new(position, position), &error)
     })?;
-    parse_str(file, &source)
+    parse_source(file, &source)
 }

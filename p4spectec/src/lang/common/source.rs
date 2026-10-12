@@ -2,60 +2,136 @@
 //!
 //! Every syntax node is a `NotePhrase { node, note, span }`;
 //! `Phrase<T>` is the common case with no note.
+//! Positions name their file by an interned `FileId`, so spans are `Copy`.
 //! Spans print as `file:line.col-line.col`;
 //! the default span, used for generated syntax, prints only its file.
 //! The `serde_state` impls thread an encoding context through nested nodes.
 
-use std::{fmt, rc::Rc};
+use std::{
+    cmp::Ordering,
+    collections::HashMap,
+    fmt,
+    sync::{Mutex, OnceLock, PoisonError},
+};
 
 use serde::{Deserialize, Serialize};
 use serde_derive_state::DeserializeState;
 
+// == Files
+
+/// A source file name, interned once per process.
+///
+/// Positions hold the handle, so copying a span touches no reference count;
+/// id 0 is the empty name of generated syntax.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub struct FileId(u32);
+
+/// Interned names in id order, and the id of each name.
+struct FileInterner {
+    items: Vec<&'static str>,
+    table: HashMap<&'static str, FileId>,
+}
+
+/// The process-wide file interner, starting with the empty name.
+fn file_interner() -> &'static Mutex<FileInterner> {
+    static FILES: OnceLock<Mutex<FileInterner>> = OnceLock::new();
+    FILES.get_or_init(|| {
+        let items = vec![""];
+        let table = HashMap::from([("", FileId(0))]);
+        Mutex::new(FileInterner { items, table })
+    })
+}
+
+impl FileId {
+    /// Interns a file name; the same name always yields the same id.
+    pub fn intern(name: &str) -> Self {
+        let mut interner = file_interner()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if let Some(file) = interner.table.get(name) {
+            return *file;
+        }
+        // Names live as long as the process, so they are handed out as static strs
+        let name: &'static str = Box::leak(name.into());
+        let file =
+            FileId(u32::try_from(interner.items.len()).expect("fewer than 2^32 source files"));
+        interner.items.push(name);
+        interner.table.insert(name, file);
+        file
+    }
+
+    /// Returns the interned name.
+    pub fn name(self) -> &'static str {
+        let interner = file_interner()
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        interner.items[self.0 as usize]
+    }
+}
+
 // == Positions
 
 /// A source position.
-#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Position {
-    /// Source file, shared across positions.
-    pub file: Rc<str>,
+    /// Source file.
+    pub file: FileId,
     /// One-based line.
-    pub line: usize,
+    pub line: u32,
     /// Zero-based column; printed one-based.
-    pub column: usize,
+    pub column: u32,
 }
 
 impl Position {
     /// Constructs a source position.
-    pub fn new(file: impl Into<Rc<str>>, line: usize, column: usize) -> Self {
-        Self { file: file.into(), line, column }
+    pub fn new(file: FileId, line: usize, column: usize) -> Self {
+        let line = u32::try_from(line).expect("source line fits in u32");
+        let column = u32::try_from(column).expect("source column fits in u32");
+        Self { file, line, column }
+    }
+}
+
+/// Orders by file name, then line and column.
+///
+/// Comparing names rather than ids keeps the order independent of
+/// which file was interned first, so covering spans keeps its endpoints.
+impl Ord for Position {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // The same file needs no name lookup
+        let file_order = if self.file == other.file {
+            Ordering::Equal
+        } else {
+            self.file.name().cmp(other.file.name())
+        };
+        file_order
+            .then(self.line.cmp(&other.line))
+            .then(self.column.cmp(&other.column))
+    }
+}
+
+impl PartialOrd for Position {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
 impl fmt::Display for Position {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(fmt, "{}.{}", self.line, self.column + 1)
+        write!(fmt, "{}.{}", self.line, u64::from(self.column) + 1)
     }
 }
 
 // == Spans
 
 /// A source span between two positions.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
 pub struct Span {
     /// Start of the span.
     pub left: Position,
     /// End of the span.
     pub right: Position,
-}
-
-impl Default for Span {
-    fn default() -> Self {
-        thread_local! {
-            // Reuse the empty file names in generated source annotations
-            static SPAN_EMPTY: Span = Span::new(Position::default(), Position::default());
-        }
-        SPAN_EMPTY.with(Clone::clone)
-    }
 }
 
 impl Span {
@@ -66,7 +142,7 @@ impl Span {
 
     /// Covers all supplied spans.
     pub fn over(spans: &[Self]) -> Self {
-        Self::over_iter(spans.iter().cloned())
+        Self::over_iter(spans.iter().copied())
     }
 
     /// Covers a span iterator without collecting its elements.
@@ -85,10 +161,10 @@ impl fmt::Display for Span {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         // The default span prints only its file
         if self.left.line == 0 && self.left.column == 0 && self.left == self.right {
-            return fmt.write_str(&self.left.file);
+            return fmt.write_str(self.left.file.name());
         }
 
-        write!(fmt, "{}:{}", self.left.file, self.left)?;
+        write!(fmt, "{}:{}", self.left.file.name(), self.left)?;
         // A one-position span prints no end
         if self.left != self.right {
             write!(fmt, "-{}", self.right)?;
@@ -146,6 +222,30 @@ macro_rules! note_phrase {
 
 // - Encode
 
+/// The encoded shape of a position, naming its file.
+#[derive(Serialize)]
+#[serde(rename = "Position")]
+struct PositionEncode<'a> {
+    file: &'a str,
+    line: u32,
+    column: u32,
+}
+
+// Encode the file by name, so payloads keep their shape
+impl Serialize for Position {
+    fn serialize<Serializer>(
+        &self,
+        serializer: Serializer,
+    ) -> Result<Serializer::Ok, Serializer::Error>
+    where
+        Serializer: serde::Serializer,
+    {
+        let position =
+            PositionEncode { file: self.file.name(), line: self.line, column: self.column };
+        position.serialize(serializer)
+    }
+}
+
 impl<State> serde_state::SerializeState<State> for Span {
     fn serialize_state<Serializer>(
         &self,
@@ -188,6 +288,26 @@ where
 }
 
 // - Decode
+
+/// The decoded shape of a position.
+#[derive(Deserialize)]
+#[serde(rename = "Position")]
+struct PositionDecode {
+    file: String,
+    line: u32,
+    column: u32,
+}
+
+// Intern the decoded file name
+impl<'de> Deserialize<'de> for Position {
+    fn deserialize<Deserializer>(deserializer: Deserializer) -> Result<Self, Deserializer::Error>
+    where
+        Deserializer: serde::Deserializer<'de>,
+    {
+        let PositionDecode { file, line, column } = PositionDecode::deserialize(deserializer)?;
+        Ok(Self { file: FileId::intern(&file), line, column })
+    }
+}
 
 impl<'de, State> serde_state::DeserializeState<'de, State> for Span {
     fn deserialize_state<Deserializer>(

@@ -76,7 +76,7 @@ pub(super) fn strip_exp(exp: &ast::Exp) -> shared_ast::Exp {
         crate::note_phrase! {
             node: node,
             note: exp.node.note.clone(),
-            span: exp.node.span.clone(),
+            span: exp.node.span,
         }
     })
 }
@@ -104,7 +104,7 @@ fn strip_path(path: &ast::Path) -> shared_ast::Path {
             shared_ast::PathKind::Dot(Box::new(strip_path(path)), atom.clone())
         }
     };
-    crate::note_phrase!(node: node, note: path.note.clone(), span: path.span.clone())
+    crate::note_phrase!(node: node, note: path.note.clone(), span: path.span)
 }
 
 // = Arguments
@@ -114,5 +114,5 @@ fn strip_arg(arg: &ast::Arg) -> shared_ast::Arg {
         ast::ArgKind::Exp(exp) => shared_ast::ArgKind::Exp(Box::new(strip_exp(exp))),
         ast::ArgKind::Def(id) => shared_ast::ArgKind::Def(id.clone()),
     };
-    crate::phrase!(node: node, span: arg.span.clone())
+    crate::phrase!(node: node, span: arg.span)
 }

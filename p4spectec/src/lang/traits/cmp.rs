@@ -46,6 +46,12 @@ impl SyntaxCmp for String {
     }
 }
 
+impl SyntaxCmp for str {
+    fn syntax_cmp(&self, other: &Self) -> Ordering {
+        self.cmp(other)
+    }
+}
+
 impl<T: SyntaxCmp, N, S> SyntaxCmp for NotePhrase<T, N, S> {
     fn syntax_cmp(&self, other: &Self) -> Ordering {
         self.node.syntax_cmp(&other.node)

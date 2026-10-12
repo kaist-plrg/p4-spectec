@@ -142,7 +142,7 @@ Def: ast::Def = {
 DefCore: ast::Def = {
     // DefCore ::= RuleRule
     <l:@L> <rule:RuleRule> => {
-        let r = rule.span.right.clone();
+        let r = rule.span.right;
         let ast::RuleKind { id_rel, id_rule, .. } = rule.node.clone();
         let kind = DefKind::RuleGroup(RuleGroupDef {
             relid: id_rel,
@@ -164,8 +164,8 @@ DefKindRule: ast::Def = {
     <l:@L> "EXTERN" "SYNTAX" <id:VarId> <hints:Hints> => {
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| id.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(id.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::ExternSyntax(ExternSyntaxDef { id, hints }),
@@ -193,7 +193,7 @@ DefKindRule: ast::Def = {
         let def_typ = def_typ.ok_or_else(|| lalrpop_util::ParseError::User {
             error: error::syntax_body_missing(ctx.span(equal_r, equal_r)),
         })?;
-        let r = def_typ.span.right.clone();
+        let r = def_typ.span.right;
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         Ok(crate::phrase! {
             node: DefKind::Typ(TypDef {
@@ -215,7 +215,7 @@ DefKindRule: ast::Def = {
             let def_typ = def_typ.ok_or_else(|| lalrpop_util::ParseError::User {
                 error: error::syntax_body_missing(ctx.span(equal_r, equal_r)),
             })?;
-            let r = def_typ.span.right.clone();
+            let r = def_typ.span.right;
             let hints = hints.into_iter().map(|hint| hint.node).collect();
             Ok(crate::phrase! {
                 node: DefKind::Typ(TypDef {
@@ -232,8 +232,8 @@ DefKindRule: ast::Def = {
     <l:@L> "VAR" <id:VarIdBind> "COLON" <plain_typ:PlainTyp> <hints:Hints> => {
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| plain_typ.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(plain_typ.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::Var(VarDef { id, plain_typ, hints }),
@@ -246,8 +246,8 @@ DefKindRule: ast::Def = {
         <hints:Hints> => {
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| not_typ.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(not_typ.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::ExternRel(ExternRelDef { id, not_typ, hints }),
@@ -259,8 +259,8 @@ DefKindRule: ast::Def = {
     <l:@L> "RELATION" <id:RelId> "COLON" <not_typ:NotTyp> <hints:Hints> => {
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| not_typ.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(not_typ.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::Rel(RelDef { id, not_typ, hints }),
@@ -280,7 +280,7 @@ DefKindRule: ast::Def = {
             node: DefKind::RuleGroup(RuleGroupDef {
                 relid,
                 groupid: crate::phrase! {
-                    node: groupid,
+                    node: groupid.into(),
                     span: ruleids.span,
                 },
                 rules,
@@ -294,8 +294,8 @@ DefKindRule: ast::Def = {
         let (id, tparams, params, plain_typ, hints) = signature;
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| plain_typ.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(plain_typ.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::ExternDec(ExternDecDef { id, tparams, params, plain_typ, hints }),
@@ -308,8 +308,8 @@ DefKindRule: ast::Def = {
         let (id, tparams, params, plain_typ, hints) = signature;
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| plain_typ.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(plain_typ.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::BuiltinDec(BuiltinDecDef { id, tparams, params, plain_typ, hints }),
@@ -322,8 +322,8 @@ DefKindRule: ast::Def = {
         let (id, params, plain_typ, hints) = signature;
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| plain_typ.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(plain_typ.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::TableDec(TableDecDef { id, params, plain_typ, hints }),
@@ -336,8 +336,8 @@ DefKindRule: ast::Def = {
         let (id, tparams, params, plain_typ, hints) = signature;
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
-            .unwrap_or_else(|| plain_typ.span.right.clone());
+            .map(|hint| hint.span.right)
+            .unwrap_or(plain_typ.span.right);
         let hints = hints.into_iter().map(|hint| hint.node).collect();
         crate::phrase! {
             node: DefKind::FuncDec(FuncDecDef { id, tparams, params, plain_typ, hints }),
@@ -359,8 +359,8 @@ DefKindRule: ast::Def = {
         let (id, tparams, args, exp, prems) = signature;
         let r = prems
             .last()
-            .map(|prem| prem.span.right.clone())
-            .unwrap_or_else(|| exp.span.right.clone());
+            .map(|prem| prem.span.right)
+            .unwrap_or(exp.span.right);
         let prems = prems
             .into_iter()
             .filter_map(|prem| prem.node)
@@ -435,13 +435,13 @@ CommaList<T>: Vec<T> = Separated<T, Comma>;
 Id: ast::Id = {
     // Id ::= UPID
     <l:@L> <id:"UPID"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 
     // Id ::= LOID
     <l:@L> <id:"LOID"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -449,13 +449,13 @@ Id: ast::Id = {
 IdLParen: ast::Id = {
     // IdLParen ::= UPID_LPAREN
     <l:@L> <id:"UPID_LPAREN"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 
     // IdLParen ::= LOID_LPAREN
     <l:@L> <id:"LOID_LPAREN"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -463,13 +463,13 @@ IdLParen: ast::Id = {
 IdLAngle: ast::Id = {
     // IdLAngle ::= UPID_LANGLE
     <l:@L> <id:"UPID_LANGLE"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 
     // IdLAngle ::= LOID_LANGLE
     <l:@L> <id:"LOID_LANGLE"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -477,7 +477,7 @@ IdLAngle: ast::Id = {
 VarId: ast::Id = {
     // VarId ::= LOID
     <l:@L> <id:"LOID"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -493,7 +493,7 @@ VarIdBind: ast::Id = {
     <l:@L> <id:"UPID"> <r:@R> => {
         ctx.add_id(&id);
         crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(l, r),
         }
     },
@@ -502,7 +502,7 @@ VarIdBind: ast::Id = {
 VarIdLAngle: ast::Id = {
     // VarIdLAngle ::= LOID_LANGLE
     <l:@L> <id:"LOID_LANGLE"> <r:@R> => crate::phrase! {
-        node: id,
+        node: id.into(),
         span: ctx.span(l, r),
     },
 };
@@ -518,7 +518,7 @@ VarIdLAngleBind: ast::Id = {
     <l:@L> <id:"UPID_LANGLE"> <r:@R> => {
         ctx.add_id(&id);
         crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(l, r),
         }
     },
@@ -627,7 +627,7 @@ RuleIds: ast::Id = {
     // RuleIds ::= RuleIdSegment*
     <l:@L> <segments:RuleIdSegment*> <r:@R> => {
         crate::phrase! {
-            node: segments.concat(),
+            node: segments.concat().into(),
             span: ctx.span(l, r),
         }
     },
@@ -759,7 +759,7 @@ TypPrimary: Typ = {
 
     // TypPrimary ::= TypAtom
     <atom:TypAtom> => {
-        let span = atom.span.clone();
+        let span = atom.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Atom(atom),
             span: span,
@@ -768,7 +768,7 @@ TypPrimary: Typ = {
 
     // TypPrimary ::= TickLAngle Typ TickRAngle
     <l:TickLAngle> <typ:Typ> <r:TickRAngle> => {
-        let span = l.span.clone();
+        let span = l.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Brack(l, Box::new(typ), r),
             span: span,
@@ -777,7 +777,7 @@ TypPrimary: Typ = {
 
     // TypPrimary ::= TickLParen Typ TickRParen
     <l:TickLParen> <typ:Typ> <r:TickRParen> => {
-        let span = l.span.clone();
+        let span = l.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Brack(l, Box::new(typ), r),
             span: span,
@@ -786,7 +786,7 @@ TypPrimary: Typ = {
 
     // TypPrimary ::= TickLBrack Typ TickRBrack
     <l:TickLBrack> <typ:Typ> <r:TickRBrack> => {
-        let span = l.span.clone();
+        let span = l.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Brack(l, Box::new(typ), r),
             span: span,
@@ -795,7 +795,7 @@ TypPrimary: Typ = {
 
     // TypPrimary ::= TickLBrace Typ TickRBrace
     <l:TickLBrace> <typ:Typ> <r:TickRBrace> => {
-        let span = l.span.clone();
+        let span = l.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Brack(l, Box::new(typ), r),
             span: span,
@@ -806,10 +806,10 @@ TypPrimary: Typ = {
 Typ: Typ = {
     // Typ ::= RelationOperator Typ
     <op:RelationOperator> <r:Typ> => {
-        let span = op.span.clone();
+        let span = op.span;
         let l = Typ::Notation(crate::phrase! {
             node: NotTypKind::Seq(vec![]),
-            span: span.clone(),
+            span: span,
         });
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
@@ -824,7 +824,7 @@ Typ: Typ = {
 TypDoubleArrow: Typ = {
     // TypDoubleArrow ::= TypTurnstile DoubleArrowTypOperator TypDoubleArrow
     <l:TypTurnstile> <op:DoubleArrowTypOperator> <r:TypDoubleArrow> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -838,7 +838,7 @@ TypDoubleArrow: Typ = {
 TypTurnstile: Typ = {
     // TypTurnstile ::= TypTilesturn TurnstileOperator TypTilesturn
     <l:TypTilesturn> <op:TurnstileOperator> <r:TypTilesturn> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -852,7 +852,7 @@ TypTurnstile: Typ = {
 TypTilesturn: Typ = {
     // TypTilesturn ::= TypSquiggly TilesturnOperator TypSquiggly
     <l:TypSquiggly> <op:TilesturnOperator> <r:TypSquiggly> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -866,7 +866,7 @@ TypTilesturn: Typ = {
 TypSquiggly: Typ = {
     // TypSquiggly ::= TypColon SquigglyOperator TypSquiggly
     <l:TypColon> <op:SquigglyOperator> <r:TypSquiggly> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -880,7 +880,7 @@ TypSquiggly: Typ = {
 TypColon: Typ = {
     // TypColon ::= TypColon ColonTypOperator TypArrow
     <l:TypColon> <op:ColonTypOperator> <r:TypArrow> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -894,7 +894,7 @@ TypColon: Typ = {
 TypArrow: Typ = {
     // TypArrow ::= TypSemicolon ArrowTypOperator TypArrow
     <l:TypSemicolon> <op:ArrowTypOperator> <r:TypArrow> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -908,7 +908,7 @@ TypArrow: Typ = {
 TypSemicolon: Typ = {
     // TypSemicolon ::= TypSemicolon SemicolonOperator TypDot
     <l:TypSemicolon> <op:SemicolonOperator> <r:TypDot> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -922,7 +922,7 @@ TypSemicolon: Typ = {
 TypDot: Typ = {
     // TypDot ::= TypDot DotOperator TypBackslash
     <l:TypDot> <op:DotOperator> <r:TypBackslash> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -936,7 +936,7 @@ TypDot: Typ = {
 TypBackslash: Typ = {
     // TypBackslash ::= TypBackslash BackslashOperator TypPrefix
     <l:TypBackslash> <op:BackslashOperator> <r:TypPrefix> => {
-        let span = op.span.clone();
+        let span = op.span;
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -950,10 +950,10 @@ TypBackslash: Typ = {
 TypPrefix: Typ = {
     // TypPrefix ::= InfixOperator TypPrefix
     <op:InfixOperator> <r:TypPrefix> => {
-        let span = op.span.clone();
+        let span = op.span;
         let l = Typ::Notation(crate::phrase! {
             node: NotTypKind::Seq(vec![]),
-            span: span.clone(),
+            span: span,
         });
         Typ::Notation(crate::phrase! {
             node: NotTypKind::Infix(Box::new(l), op, Box::new(r)),
@@ -972,8 +972,8 @@ TypSeq: Typ = {
             first
         } else {
             let l = match &first {
-                Typ::Plain(plain_typ) => plain_typ.span.left.clone(),
-                Typ::Notation(not_typ) => not_typ.span.left.clone(),
+                Typ::Plain(plain_typ) => plain_typ.span.left,
+                Typ::Notation(not_typ) => not_typ.span.left,
             };
             let span = Span::new(l, ctx.position(first_r));
             let mut types = Vec::with_capacity(rest.len() + 1);
@@ -1015,7 +1015,7 @@ CaseTyp: (Typ, Vec<Phrase<ast::Hint>>, Position) = {
     <typ:Typ> <typ_r:@R> <hints:Hints> => {
         let r = hints
             .last()
-            .map(|hint| hint.span.right.clone())
+            .map(|hint| hint.span.right)
             .unwrap_or_else(|| ctx.position(typ_r));
         (typ, hints, r)
     },
@@ -1056,14 +1056,14 @@ DefTyp: ast::DefTyp = {
         let (cases, trailing) = case_list.unwrap_or_else(|| (vec![], None));
         let actual_r = trailing
             .map(|loc| ctx.position(loc))
-            .or_else(|| cases.last().map(|(_, _, r)| r.clone()))
+            .or_else(|| cases.last().map(|(_, _, r)| *r))
             .unwrap_or_else(|| ctx.position(bar_r));
-        let actual_r_location = ctx.location(actual_r.clone());
+        let actual_r_location = ctx.location(actual_r);
         // CaseTyp preserves hint spans until plain-type validation completes
         for (typ, hints, _) in &cases {
             if let (Typ::Plain(_), Some(hint)) = (typ, hints.first()) {
                 return Err(lalrpop_util::ParseError::User {
-                    error: error::plain_type_hint_unsupported(hint.span.clone()),
+                    error: error::plain_type_hint_unsupported(hint.span),
                 });
             }
         }
@@ -1093,13 +1093,13 @@ DefTyp: ast::DefTyp = {
         let (cases, trailing) = case_list;
         let actual_r = trailing
             .map(|loc| ctx.position(loc))
-            .or_else(|| cases.last().map(|(_, _, r)| r.clone()))
+            .or_else(|| cases.last().map(|(_, _, r)| *r))
             .expect("a non-empty case type list has a closing position");
         // CaseTyp preserves hint spans until plain-type validation completes
         for (typ, hints, _) in &cases {
             if let (Typ::Plain(_), Some(hint)) = (typ, hints.first()) {
                 return Err(lalrpop_util::ParseError::User {
-                    error: error::plain_type_hint_unsupported(hint.span.clone()),
+                    error: error::plain_type_hint_unsupported(hint.span),
                 });
             }
         }
@@ -1361,7 +1361,7 @@ Exp: ast::Exp = {
     #[precedence(level="2")]
     #[assoc(side="left")]
     <l:Exp> "SEQ" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         let mut exps = match l.node {
             ExpKind::Seq(exps) if exps.len() >= 2 => exps,
             exp_kind => vec![crate::phrase! {
@@ -1378,7 +1378,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp HASH Exp
     <exp_l:Exp> <l:@L> "HASH" <r:@R> <exp_r:Exp> => {
-        let span = Span::new(exp_l.span.left.clone(), exp_r.span.right.clone());
+        let span = Span::new(exp_l.span.left, exp_r.span.right);
         let op = crate::phrase! {
             node: FuseOpKind::Fuse,
             span: ctx.span(l, r),
@@ -1408,10 +1408,10 @@ Exp: ast::Exp = {
 
     // Exp ::= InfixOperator Exp
     <op:InfixOperator> <r:Exp> => {
-        let span = Span::new(op.span.left.clone(), r.span.right.clone());
+        let span = Span::new(op.span.left, r.span.right);
         let l = crate::phrase! {
             node: ExpKind::Seq(vec![]),
-            span: op.span.clone(),
+            span: op.span,
         };
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
@@ -1423,7 +1423,7 @@ Exp: ast::Exp = {
     #[precedence(level="4")]
     #[assoc(side="left")]
     <l:Exp> <_operator:StarOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mul), Box::new(r)),
             span: span,
@@ -1432,7 +1432,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp SLASH Exp
     <l:Exp> "SLASH" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Div), Box::new(r)),
             span: span,
@@ -1441,7 +1441,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp BACKSLASH Exp
     <l:Exp> "BACKSLASH" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mod), Box::new(r)),
             span: span,
@@ -1452,7 +1452,7 @@ Exp: ast::Exp = {
     #[precedence(level="5")]
     #[assoc(side="left")]
     <l:Exp> "PLUS" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Add), Box::new(r)),
             span: span,
@@ -1461,7 +1461,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp MINUS Exp
     <l:Exp> "MINUS" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Sub), Box::new(r)),
             span: span,
@@ -1470,7 +1470,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp PLUS2 Exp
     <l:Exp> "PLUS2" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cat(Box::new(l), Box::new(r)),
             span: span,
@@ -1481,7 +1481,7 @@ Exp: ast::Exp = {
     #[precedence(level="6")]
     #[assoc(side="left")]
     <l:Exp> <op:DotOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1492,7 +1492,7 @@ Exp: ast::Exp = {
     #[precedence(level="7")]
     #[assoc(side="left")]
     <l:Exp> <op:SemicolonOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1503,7 +1503,7 @@ Exp: ast::Exp = {
     #[precedence(level="8")]
     #[assoc(side="right")]
     <l:Exp> <op:ArrowTypOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1514,7 +1514,7 @@ Exp: ast::Exp = {
     #[precedence(level="9")]
     #[assoc(side="right")]
     <head:Exp> "COLON2" <tail:Exp> => {
-        let span = Span::new(head.span.left.clone(), tail.span.right.clone());
+        let span = Span::new(head.span.left, tail.span.right);
         crate::phrase! {
             node: ExpKind::Cons(Box::new(head), Box::new(tail)),
             span: span,
@@ -1525,7 +1525,7 @@ Exp: ast::Exp = {
     #[precedence(level="10")]
     #[assoc(side="right")]
     <l:Exp> "EQ" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Eq), Box::new(r)),
             span: span,
@@ -1534,7 +1534,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp NEQ Exp
     <l:Exp> "NEQ" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Ne), Box::new(r)),
             span: span,
@@ -1543,7 +1543,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp LANGLE_DASH Exp
     <l:Exp> "LANGLE_DASH" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Mem(Box::new(l), Box::new(r)),
             span: span,
@@ -1554,7 +1554,7 @@ Exp: ast::Exp = {
     #[precedence(level="11")]
     #[assoc(side="left")]
     <l:Exp> "SUB" <plain_typ:PlainTyp> => {
-        let span = Span::new(l.span.left.clone(), plain_typ.span.right.clone());
+        let span = Span::new(l.span.left, plain_typ.span.right);
         crate::phrase! {
             node: ExpKind::Sub(Box::new(l), plain_typ),
             span: span,
@@ -1563,7 +1563,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp ColonTypOperator Exp
     <l:Exp> <op:ColonTypOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1574,7 +1574,7 @@ Exp: ast::Exp = {
     #[precedence(level="12")]
     #[assoc(side="right")]
     <l:Exp> <op:SquigglyOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1585,7 +1585,7 @@ Exp: ast::Exp = {
     #[precedence(level="13")]
     #[assoc(side="none")]
     <l:Exp> <op:TilesturnOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1596,7 +1596,7 @@ Exp: ast::Exp = {
     #[precedence(level="14")]
     #[assoc(side="none")]
     <l:Exp> <op:TurnstileOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1607,7 +1607,7 @@ Exp: ast::Exp = {
     #[precedence(level="15")]
     #[assoc(side="left")]
     <l:Exp> "AND" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::And), Box::new(r)),
             span: span,
@@ -1618,7 +1618,7 @@ Exp: ast::Exp = {
     #[precedence(level="16")]
     #[assoc(side="left")]
     <l:Exp> "OR" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Or), Box::new(r)),
             span: span,
@@ -1629,7 +1629,7 @@ Exp: ast::Exp = {
     #[precedence(level="17")]
     #[assoc(side="right")]
     <l:Exp> "DOUBLE_ARROW" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Impl), Box::new(r)),
             span: span,
@@ -1638,7 +1638,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp DOUBLE_ARROW_BOTH Exp
     <l:Exp> "DOUBLE_ARROW_BOTH" <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Equiv), Box::new(r)),
             span: span,
@@ -1647,7 +1647,7 @@ Exp: ast::Exp = {
 
     // Exp ::= Exp DoubleArrowTypOperator Exp
     <l:Exp> <op:DoubleArrowTypOperator> <r:Exp> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1658,10 +1658,10 @@ Exp: ast::Exp = {
     #[precedence(level="18")]
     #[assoc(side="right")]
     <op:RelationOperator> <r:Exp> => {
-        let span = Span::new(op.span.left.clone(), r.span.right.clone());
+        let span = Span::new(op.span.left, r.span.right);
         let l = crate::phrase! {
             node: ExpKind::Seq(vec![]),
-            span: op.span.clone(),
+            span: op.span,
         };
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
@@ -1686,7 +1686,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="2")]
     #[assoc(side="left")]
     <l:ExpBin> "SEQ" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         let mut exps = match l.node {
             ExpKind::Seq(exps) if exps.len() >= 2 => exps,
             exp_kind => vec![crate::phrase! {
@@ -1703,7 +1703,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin HASH ExpBin
     <exp_l:ExpBin> <l:@L> "HASH" <r:@R> <exp_r:ExpBin> => {
-        let span = Span::new(exp_l.span.left.clone(), exp_r.span.right.clone());
+        let span = Span::new(exp_l.span.left, exp_r.span.right);
         let op = crate::phrase! {
             node: FuseOpKind::Fuse,
             span: ctx.span(l, r),
@@ -1733,10 +1733,10 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= InfixOperator ExpBin
     <op:InfixOperator> <r:ExpBin> => {
-        let span = Span::new(op.span.left.clone(), r.span.right.clone());
+        let span = Span::new(op.span.left, r.span.right);
         let l = crate::phrase! {
             node: ExpKind::Seq(vec![]),
-            span: op.span.clone(),
+            span: op.span,
         };
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
@@ -1748,7 +1748,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="4")]
     #[assoc(side="left")]
     <l:ExpBin> <_operator:StarOperator> <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mul), Box::new(r)),
             span: span,
@@ -1757,7 +1757,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin SLASH ExpBin
     <l:ExpBin> "SLASH" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Div), Box::new(r)),
             span: span,
@@ -1766,7 +1766,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin BACKSLASH ExpBin
     <l:ExpBin> "BACKSLASH" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mod), Box::new(r)),
             span: span,
@@ -1777,7 +1777,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="5")]
     #[assoc(side="left")]
     <l:ExpBin> "PLUS" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Add), Box::new(r)),
             span: span,
@@ -1786,7 +1786,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin MINUS ExpBin
     <l:ExpBin> "MINUS" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Sub), Box::new(r)),
             span: span,
@@ -1795,7 +1795,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin PLUS2 ExpBin
     <l:ExpBin> "PLUS2" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cat(Box::new(l), Box::new(r)),
             span: span,
@@ -1806,7 +1806,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="6")]
     #[assoc(side="left")]
     <l:ExpBin> <op:DotOperator> <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1817,7 +1817,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="7")]
     #[assoc(side="left")]
     <l:ExpBin> <op:SemicolonOperator> <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1828,7 +1828,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="8")]
     #[assoc(side="right")]
     <l:ExpBin> <op:ArrowTypOperator> <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -1839,7 +1839,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="9")]
     #[assoc(side="right")]
     <head:ExpBin> "COLON2" <tail:ExpBin> => {
-        let span = Span::new(head.span.left.clone(), tail.span.right.clone());
+        let span = Span::new(head.span.left, tail.span.right);
         crate::phrase! {
             node: ExpKind::Cons(Box::new(head), Box::new(tail)),
             span: span,
@@ -1850,7 +1850,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="10")]
     #[assoc(side="right")]
     <l:ExpBin> "EQ" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Eq), Box::new(r)),
             span: span,
@@ -1859,7 +1859,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin NEQ ExpBin
     <l:ExpBin> "NEQ" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cmp(Box::new(l), CmpOp::Bool(prim::bool::CmpOp::Ne), Box::new(r)),
             span: span,
@@ -1868,7 +1868,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin LANGLE_DASH ExpBin
     <l:ExpBin> "LANGLE_DASH" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Mem(Box::new(l), Box::new(r)),
             span: span,
@@ -1879,7 +1879,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="11")]
     #[assoc(side="left")]
     <l:ExpBin> "SUB" <plain_typ:PlainTyp> => {
-        let span = Span::new(l.span.left.clone(), plain_typ.span.right.clone());
+        let span = Span::new(l.span.left, plain_typ.span.right);
         crate::phrase! {
             node: ExpKind::Sub(Box::new(l), plain_typ),
             span: span,
@@ -1890,7 +1890,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="15")]
     #[assoc(side="left")]
     <l:ExpBin> "AND" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::And), Box::new(r)),
             span: span,
@@ -1901,7 +1901,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="16")]
     #[assoc(side="left")]
     <l:ExpBin> "OR" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Or), Box::new(r)),
             span: span,
@@ -1912,7 +1912,7 @@ ExpBin: ast::Exp = {
     #[precedence(level="17")]
     #[assoc(side="right")]
     <l:ExpBin> "DOUBLE_ARROW" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Impl), Box::new(r)),
             span: span,
@@ -1921,7 +1921,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin DOUBLE_ARROW_BOTH ExpBin
     <l:ExpBin> "DOUBLE_ARROW_BOTH" <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Equiv), Box::new(r)),
             span: span,
@@ -1930,7 +1930,7 @@ ExpBin: ast::Exp = {
 
     // ExpBin ::= ExpBin DoubleArrowTypOperator ExpBin
     <l:ExpBin> <op:DoubleArrowTypOperator> <r:ExpBin> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Infix(Box::new(l), op, Box::new(r)),
             span: span,
@@ -2001,7 +2001,7 @@ ExpAtomBase: ast::Exp = {
 
     // ExpAtomBase ::= AtomRule
     <atom:AtomRule> => {
-        let span = atom.span.clone();
+        let span = atom.span;
         crate::phrase! {
             node: ExpKind::Atom(atom),
             span: span,
@@ -2014,12 +2014,12 @@ ExpAtomBase: ast::Exp = {
             node: Atom::Keyword(id),
             span: ctx.span(l, id_r),
         };
-        let atom_span = atom.span.clone();
+        let atom_span = atom.span;
         let atom_exp = crate::phrase! {
             node: ExpKind::Atom(atom),
             span: atom_span,
         };
-        let paren_span = exp.span.clone();
+        let paren_span = exp.span;
         let paren_exp = crate::phrase! {
             node: ExpKind::Paren(Box::new(exp)),
             span: paren_span,
@@ -2080,7 +2080,7 @@ ExpPost: ast::Exp = {
                     let span = ctx.span(l, r);
                     let atom = crate::phrase! {
                         node: Atom::Keyword(format!("{prefix}.{suffix}")),
-                        span: span.clone(),
+                        span: span,
                     };
                     crate::phrase! {
                         node: ExpKind::Atom(atom),
@@ -2166,7 +2166,7 @@ ExpPrimary: ast::Exp = {
 
     // ExpPrimary ::= TickLAngle Exp TickRAngle
     <l:TickLAngle> <exp:Exp> <r:TickRAngle> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Brack(l, Box::new(exp), r),
             span: span,
@@ -2175,7 +2175,7 @@ ExpPrimary: ast::Exp = {
 
     // ExpPrimary ::= TickLParen Exp TickRParen
     <l:TickLParen> <exp:Exp> <r:TickRParen> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Brack(l, Box::new(exp), r),
             span: span,
@@ -2184,7 +2184,7 @@ ExpPrimary: ast::Exp = {
 
     // ExpPrimary ::= TickLBrack Exp TickRBrack
     <l:TickLBrack> <exp:Exp> <r:TickRBrack> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Brack(l, Box::new(exp), r),
             span: span,
@@ -2193,7 +2193,7 @@ ExpPrimary: ast::Exp = {
 
     // ExpPrimary ::= TickLBrace Exp TickRBrace
     <l:TickLBrace> <exp:Exp> <r:TickRBrace> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Brack(l, Box::new(exp), r),
             span: span,
@@ -2254,7 +2254,7 @@ ExpLiteral: ast::Exp = {
 ExpId: ast::Exp = {
     // ExpId ::= VarId
     <id:VarId> => {
-        let span = id.span.clone();
+        let span = id.span;
         crate::phrase! {
             node: ExpKind::Id(id),
             span: span,
@@ -2265,8 +2265,8 @@ ExpId: ast::Exp = {
     <l:@L> "BOOL" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "bool".to_owned(),
-            span: span.clone(),
+            node: "bool".into(),
+            span: span,
         };
         crate::phrase! {
             node: ExpKind::Id(id),
@@ -2278,8 +2278,8 @@ ExpId: ast::Exp = {
     <l:@L> "NAT" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "nat".to_owned(),
-            span: span.clone(),
+            node: "nat".into(),
+            span: span,
         };
         crate::phrase! {
             node: ExpKind::Id(id),
@@ -2291,8 +2291,8 @@ ExpId: ast::Exp = {
     <l:@L> "INT" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "int".to_owned(),
-            span: span.clone(),
+            node: "int".into(),
+            span: span,
         };
         crate::phrase! {
             node: ExpKind::Id(id),
@@ -2304,8 +2304,8 @@ ExpId: ast::Exp = {
     <l:@L> "TEXT" <r:@R> => {
         let span = ctx.span(l, r);
         let id = crate::phrase! {
-            node: "text".to_owned(),
-            span: span.clone(),
+            node: "text".into(),
+            span: span,
         };
         crate::phrase! {
             node: ExpKind::Id(id),
@@ -2404,13 +2404,11 @@ FieldExp: (ast::Atom, ast::Exp) = {
                 exps.first()
                     .expect("nonempty expressions")
                     .span
-                    .left
-                    .clone(),
+                    .left,
                 exps.last()
                     .expect("nonempty expressions")
                     .span
-                    .right
-                    .clone(),
+                    .right,
             );
             crate::phrase! {
                 node: ExpKind::Seq(exps),
@@ -2447,7 +2445,7 @@ Arith: ast::Exp = {
 ArithDoubleArrow: ast::Exp = {
     // ArithDoubleArrow ::= ArithOr DOUBLE_ARROW ArithDoubleArrow
     <l:ArithOr> "DOUBLE_ARROW" <r:ArithDoubleArrow> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Impl), Box::new(r)),
             span: span,
@@ -2456,7 +2454,7 @@ ArithDoubleArrow: ast::Exp = {
 
     // ArithDoubleArrow ::= ArithOr DOUBLE_ARROW_BOTH ArithDoubleArrow
     <l:ArithOr> "DOUBLE_ARROW_BOTH" <r:ArithDoubleArrow> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Equiv), Box::new(r)),
             span: span,
@@ -2470,7 +2468,7 @@ ArithDoubleArrow: ast::Exp = {
 ArithOr: ast::Exp = {
     // ArithOr ::= ArithOr OR ArithAnd
     <l:ArithOr> "OR" <r:ArithAnd> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::Or), Box::new(r)),
             span: span,
@@ -2484,7 +2482,7 @@ ArithOr: ast::Exp = {
 ArithAnd: ast::Exp = {
     // ArithAnd ::= ArithAnd AND ArithComparison
     <l:ArithAnd> "AND" <r:ArithComparison> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Bool(prim::bool::BinOp::And), Box::new(r)),
             span: span,
@@ -2498,7 +2496,7 @@ ArithAnd: ast::Exp = {
 ArithComparison: ast::Exp = {
     // ArithComparison ::= ArithAdd ArithCompareOperator ArithComparison
     <l:ArithAdd> <op:ArithCompareOperator> <r:ArithComparison> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cmp(Box::new(l), op, Box::new(r)),
             span: span,
@@ -2507,7 +2505,7 @@ ArithComparison: ast::Exp = {
 
     // ArithComparison ::= ArithAdd LANGLE_DASH ArithComparison
     <l:ArithAdd> "LANGLE_DASH" <r:ArithComparison> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Mem(Box::new(l), Box::new(r)),
             span: span,
@@ -2541,7 +2539,7 @@ ArithCompareOperator: CmpOp = {
 ArithAdd: ast::Exp = {
     // ArithAdd ::= ArithAdd PLUS ArithMul
     <l:ArithAdd> "PLUS" <r:ArithMul> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Add), Box::new(r)),
             span: span,
@@ -2550,7 +2548,7 @@ ArithAdd: ast::Exp = {
 
     // ArithAdd ::= ArithAdd MINUS ArithMul
     <l:ArithAdd> "MINUS" <r:ArithMul> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Sub), Box::new(r)),
             span: span,
@@ -2559,7 +2557,7 @@ ArithAdd: ast::Exp = {
 
     // ArithAdd ::= ArithAdd PLUS2 ArithMul
     <l:ArithAdd> "PLUS2" <r:ArithMul> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Cat(Box::new(l), Box::new(r)),
             span: span,
@@ -2573,7 +2571,7 @@ ArithAdd: ast::Exp = {
 ArithMul: ast::Exp = {
     // ArithMul ::= ArithMul StarOperator ArithUnary
     <l:ArithMul> <_operator:StarOperator> <r:ArithUnary> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mul), Box::new(r)),
             span: span,
@@ -2582,7 +2580,7 @@ ArithMul: ast::Exp = {
 
     // ArithMul ::= ArithMul SLASH ArithUnary
     <l:ArithMul> "SLASH" <r:ArithUnary> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Div), Box::new(r)),
             span: span,
@@ -2591,7 +2589,7 @@ ArithMul: ast::Exp = {
 
     // ArithMul ::= ArithMul BACKSLASH ArithUnary
     <l:ArithMul> "BACKSLASH" <r:ArithUnary> => {
-        let span = Span::new(l.span.left.clone(), r.span.right.clone());
+        let span = Span::new(l.span.left, r.span.right);
         crate::phrase! {
             node: ExpKind::Bin(Box::new(l), BinOp::Num(num::BinOp::Mod), Box::new(r)),
             span: span,
@@ -2655,7 +2653,7 @@ ArithPost: ast::Exp = {
                     let span = ctx.span(l, r);
                     let atom = crate::phrase! {
                         node: Atom::Keyword(format!("{prefix}.{suffix}")),
-                        span: span.clone(),
+                        span: span,
                     };
                     crate::phrase! {
                         node: ExpKind::Atom(atom),
@@ -2728,7 +2726,7 @@ ArithAtomBase: ast::Exp = {
 
     // ArithAtomBase ::= AtomRule
     <atom:AtomRule> => {
-        let span = atom.span.clone();
+        let span = atom.span;
         crate::phrase! {
             node: ExpKind::Atom(atom),
             span: span,
@@ -2745,7 +2743,7 @@ UpdatePath: ast::Path = {
 
     // UpdatePath ::= UpdatePath LBRACK Arith RBRACK
     <path:UpdatePath> "LBRACK" <index:Arith> "RBRACK" <r:@R> => {
-        let l = path.span.left.clone();
+        let l = path.span.left;
         crate::phrase! {
             node: PathKind::Idx(Box::new(path), Box::new(index)),
             span: Span::new(l, ctx.position(r)),
@@ -2755,7 +2753,7 @@ UpdatePath: ast::Path = {
     // UpdatePath ::= UpdatePath LBRACK Arith COLON Arith RBRACK
     <path:UpdatePath> "LBRACK" <start:Arith> "COLON" <end:Arith> "RBRACK"
         <r:@R> => {
-        let l = path.span.left.clone();
+        let l = path.span.left;
         crate::phrase! {
             node: PathKind::Slice(Box::new(path), Box::new(start), Box::new(end)),
             span: Span::new(l, ctx.position(r)),
@@ -2764,7 +2762,7 @@ UpdatePath: ast::Path = {
 
     // UpdatePath ::= UpdatePath DotId
     <path:UpdatePath> <field:DotId> <r:@R> => {
-        let l = path.span.left.clone();
+        let l = path.span.left;
         crate::phrase! {
             node: PathKind::Dot(Box::new(path), field),
             span: Span::new(l, ctx.position(r)),
@@ -2872,7 +2870,7 @@ PremKindRule: PremKind = {
         fn from_exp(exp: ast::Exp) -> PremKind {
             match exp.node {
                 ExpKind::Iter(exp, iter) => {
-                    let span = exp.span.clone();
+                    let span = exp.span;
                     PremKind::Iter(IterPrem {
                         prem: Box::new(crate::phrase! {
                             node: from_exp(*exp),
@@ -2901,7 +2899,7 @@ Hint: Phrase<ast::Hint> = {
     <l:@L> "HINT_LPAREN" <id_l:@L> <id:HintId> <id_r:@R> "SEQ"
         <exp:Exp> "RPAREN" <r:@R> => {
         let id = crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(id_l, id_r),
         };
         crate::phrase! {
@@ -2914,7 +2912,7 @@ Hint: Phrase<ast::Hint> = {
     <l:@L> "HINT_LPAREN" <id_l:@L> <id:HintId> <id_r:@R> <empty:@L> "RPAREN"
         <r:@R> => {
         let id = crate::phrase! {
-            node: id,
+            node: id.into(),
             span: ctx.span(id_l, id_r),
         };
         let exp = crate::phrase! {
@@ -2941,7 +2939,7 @@ TableBody: Vec<ast::TableRow> = {
 TableRow: ast::TableRow = {
     // TableRow ::= TablePattern DOUBLE_ARROW ExpBin
     <exp_pattern:TablePattern> "DOUBLE_ARROW" <exp_body:ExpBin> => {
-        let span = Span::new(exp_pattern.span.left.clone(), exp_body.span.right.clone());
+        let span = Span::new(exp_pattern.span.left, exp_body.span.right);
         crate::phrase! {
             node: ast::TableRowKind { exp_pattern, exp_body },
             span: span,
@@ -2956,7 +2954,7 @@ ExpSeq: ast::Exp = {
     // ExpSeq ::= ExpSeqStart ExpSeqTail*
     <first:ExpSeqStart> <rest:ExpSeqTail*> => {
         rest.into_iter().fold(first, |exp_l, (op, exp_r)| {
-            let span = Span::new(exp_l.span.left.clone(), exp_r.span.right.clone());
+            let span = Span::new(exp_l.span.left, exp_r.span.right);
             if let Some(op) = op {
                 crate::phrase! {
                     node: ExpKind::Fuse(Box::new(exp_l), op, Box::new(exp_r)),
@@ -3012,13 +3010,13 @@ RuleRule: ast::Rule = {
                 id_rule_raw.node[1..].to_owned()
             };
             let id_rule = crate::phrase! {
-                node: id_rule,
+                node: id_rule.into(),
                 span: id_rule_raw.span,
             };
             let r = prems
                 .last()
-                .map(|prem| prem.span.right.clone())
-                .unwrap_or_else(|| exp.span.right.clone());
+                .map(|prem| prem.span.right)
+                .unwrap_or(exp.span.right);
             let prems = prems
                 .into_iter()
                 .filter_map(|prem| prem.node)
