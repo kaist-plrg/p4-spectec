@@ -125,8 +125,10 @@ pub(super) fn classify_spec(mut spec: pl::Spec) -> pl::Spec {
                 }
             }
             pl::DefKind::MetaFunc(pl::MetaFuncDef::Table(def_func)) => {
-                for row in &mut def_func.rows {
-                    classify_group_block(&mut row.block, false);
+                let mut has_continuation = false;
+                for row in def_func.rows.iter_mut().rev() {
+                    classify_group_block(&mut row.block, has_continuation);
+                    has_continuation |= !row.block.is_empty();
                 }
             }
             _ => {}

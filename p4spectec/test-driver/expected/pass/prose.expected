@@ -4261,7 +4261,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -4269,7 +4269,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((ERROR) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type errorTypeIR))
+    1. If ((typeIR'' has type errorTypeIR)), then
 
       1. (Let errorTypeIR be (typeIR'' as errorTypeIR))
 
@@ -4277,7 +4277,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((STRING) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type stringTypeIR))
+    1. If ((typeIR'' has type stringTypeIR)), then
 
       1. (Let stringTypeIR be (typeIR'' as stringTypeIR))
 
@@ -4285,13 +4285,13 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : (integerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type integerTypeIR))
+    1. If ((typeIR'' has type integerTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $is_defaultable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -4299,7 +4299,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((TYPE _typeId typeIR) as typeIR) -> $is_defaultable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. (Let (TYPE _typeId typeIR) be (typeIR'' as newTypeIR))
 
@@ -4307,7 +4307,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) as typeIR) -> $forall_(($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type tupleTypeIR))
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
       1. (Let (TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) be (typeIR'' as tupleTypeIR))
 
@@ -4317,7 +4317,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((ARRAY typeIR `[ _nat `]) as typeIR) -> $is_defaultable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type arrayTypeIR))
+    1. If ((typeIR'' has type arrayTypeIR)), then
 
       1. (Let (ARRAY typeIR `[ _nat `]) be (typeIR'' as arrayTypeIR))
 
@@ -4325,7 +4325,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((HEADER_STACK typeIR `[ _nat `]) as typeIR) -> $is_defaultable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type headerStackTypeIR))
+    1. If ((typeIR'' has type headerStackTypeIR)), then
 
       1. (Let (HEADER_STACK typeIR `[ _nat `]) be (typeIR'' as headerStackTypeIR))
 
@@ -4333,7 +4333,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) as typeIR) -> $forall_(($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. (Let (STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) be (typeIR'' as structTypeIR))
 
@@ -4343,7 +4343,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((HEADER _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) as typeIR) -> $forall_(($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type headerTypeIR))
+    1. If ((typeIR'' has type headerTypeIR)), then
 
       1. (Let (HEADER _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) be (typeIR'' as headerTypeIR))
 
@@ -4353,7 +4353,7 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((HEADER_UNION _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) as typeIR) -> $forall_(($is_defaultable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type headerUnionTypeIR))
+    1. If ((typeIR'' has type headerUnionTypeIR)), then
 
       1. (Let (HEADER_UNION _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) be (typeIR'' as headerUnionTypeIR))
 
@@ -4363,13 +4363,13 @@ tbl def $is_defaultable_typeIR(typeIR'')
 
   Row : ((ENUM _typeId `{ (_nameIR)*{_nameIR <- _nameIR*} `}) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type simpleEnumTypeIR))
+    1. If ((typeIR'' has type simpleEnumTypeIR)), then
 
       1. Return true
 
   Row : ((ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) as typeIR) -> $is_defaultable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type serializableEnumTypeIR))
+    1. If ((typeIR'' has type serializableEnumTypeIR)), then
 
       1. (Let (ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be (typeIR'' as serializableEnumTypeIR))
 
@@ -4384,7 +4384,7 @@ tbl def $is_equalable_typeIR(typeIR'')
 
   Row : ((VOID) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type voidTypeIR))
+    1. If ((typeIR'' has type voidTypeIR)), then
 
       1. (Let voidTypeIR be (typeIR'' as voidTypeIR))
 
@@ -4392,13 +4392,13 @@ tbl def $is_equalable_typeIR(typeIR'')
 
   Row : ((_NAME typeId) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return false
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $is_equalable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -4406,37 +4406,37 @@ tbl def $is_equalable_typeIR(typeIR'')
 
   Row : (externObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type externObjectTypeIR))
+    1. If ((typeIR'' has type externObjectTypeIR)), then
 
       1. Return false
 
   Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return false
 
   Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
   Row : ((DEFAULT) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type defaultTypeIR))
+    1. If ((typeIR'' has type defaultTypeIR)), then
 
       1. (Let defaultTypeIR be (typeIR'' as defaultTypeIR))
 
@@ -4444,19 +4444,19 @@ tbl def $is_equalable_typeIR(typeIR'')
 
   Row : (sequenceTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type sequenceTypeIR))
+    1. If ((typeIR'' has type sequenceTypeIR)), then
 
       1. Return false
 
   Row : (recordTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type recordTypeIR))
+    1. If ((typeIR'' has type recordTypeIR)), then
 
       1. Return false
 
   Row : ((HEADER_INVALID) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type invalidHeaderTypeIR))
+    1. If ((typeIR'' has type invalidHeaderTypeIR)), then
 
       1. (Let invalidHeaderTypeIR be (typeIR'' as invalidHeaderTypeIR))
 
@@ -4464,13 +4464,13 @@ tbl def $is_equalable_typeIR(typeIR'')
 
   Row : (setTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type setTypeIR))
+    1. If ((typeIR'' has type setTypeIR)), then
 
       1. Return false
 
   Row : (tableMetadataTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableMetadataTypeIR))
+    1. If ((typeIR'' has type tableMetadataTypeIR)), then
 
       1. Return false
 
@@ -4483,7 +4483,7 @@ tbl def $is_assignable_typeIR(typeIR'')
 
   Row : ((VOID) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type voidTypeIR))
+    1. If ((typeIR'' has type voidTypeIR)), then
 
       1. (Let voidTypeIR be (typeIR'' as voidTypeIR))
 
@@ -4491,7 +4491,7 @@ tbl def $is_assignable_typeIR(typeIR'')
 
   Row : ((STRING) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type stringTypeIR))
+    1. If ((typeIR'' has type stringTypeIR)), then
 
       1. (Let stringTypeIR be (typeIR'' as stringTypeIR))
 
@@ -4499,7 +4499,7 @@ tbl def $is_assignable_typeIR(typeIR'')
 
   Row : ((INT) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -4507,7 +4507,7 @@ tbl def $is_assignable_typeIR(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $is_assignable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -4515,13 +4515,13 @@ tbl def $is_assignable_typeIR(typeIR'')
 
   Row : (objectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type objectTypeIR))
+    1. If ((typeIR'' has type objectTypeIR)), then
 
       1. Return false
 
   Row : (synthesizedTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type synthesizedTypeIR))
+    1. If ((typeIR'' has type synthesizedTypeIR)), then
 
       1. Return false
 
@@ -4534,7 +4534,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -4542,25 +4542,25 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((VARBIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type varBitTypeIR))
+    1. If ((typeIR'' has type varBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $is_serializable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -4568,7 +4568,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((TYPE _typeId typeIR) as typeIR) -> $is_serializable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. (Let (TYPE _typeId typeIR) be (typeIR'' as newTypeIR))
 
@@ -4576,7 +4576,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) as typeIR) -> $is_serializable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type serializableEnumTypeIR))
+    1. If ((typeIR'' has type serializableEnumTypeIR)), then
 
       1. (Let (ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be (typeIR'' as serializableEnumTypeIR))
 
@@ -4584,7 +4584,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) as typeIR) -> $forall_(($is_serializable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type tupleTypeIR))
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
       1. (Let (TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) be (typeIR'' as tupleTypeIR))
 
@@ -4594,7 +4594,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((ARRAY typeIR `[ _nat `]) as typeIR) -> $is_serializable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type arrayTypeIR))
+    1. If ((typeIR'' has type arrayTypeIR)), then
 
       1. (Let (ARRAY typeIR `[ _nat `]) be (typeIR'' as arrayTypeIR))
 
@@ -4602,7 +4602,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((HEADER_STACK typeIR `[ _nat `]) as typeIR) -> $is_serializable_typeIR(typeIR):
 
-    1. Check ((typeIR'' has type headerStackTypeIR))
+    1. If ((typeIR'' has type headerStackTypeIR)), then
 
       1. (Let (HEADER_STACK typeIR `[ _nat `]) be (typeIR'' as headerStackTypeIR))
 
@@ -4610,7 +4610,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) as typeIR) -> $forall_(($is_serializable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. (Let (STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) be (typeIR'' as structTypeIR))
 
@@ -4620,7 +4620,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((HEADER _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) as typeIR) -> $forall_(($is_serializable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type headerTypeIR))
+    1. If ((typeIR'' has type headerTypeIR)), then
 
       1. (Let (HEADER _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) be (typeIR'' as headerTypeIR))
 
@@ -4630,7 +4630,7 @@ tbl def $is_serializable_typeIR(typeIR'')
 
   Row : ((HEADER_UNION _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) as typeIR) -> $forall_(($is_serializable_typeIR(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type headerUnionTypeIR))
+    1. If ((typeIR'' has type headerUnionTypeIR)), then
 
       1. (Let (HEADER_UNION _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR <- typeIR*} `}) be (typeIR'' as headerUnionTypeIR))
 
@@ -18317,7 +18317,7 @@ tbl def $nestable_typedef(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18325,7 +18325,7 @@ tbl def $nestable_typedef(typeIR'')
 
   Row : ((ERROR) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type errorTypeIR))
+    1. If ((typeIR'' has type errorTypeIR)), then
 
       1. (Let errorTypeIR be (typeIR'' as errorTypeIR))
 
@@ -18333,7 +18333,7 @@ tbl def $nestable_typedef(typeIR'')
 
   Row : ((STRING) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type stringTypeIR))
+    1. If ((typeIR'' has type stringTypeIR)), then
 
       1. (Let stringTypeIR be (typeIR'' as stringTypeIR))
 
@@ -18341,19 +18341,19 @@ tbl def $nestable_typedef(typeIR'')
 
   Row : (integerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type integerTypeIR))
+    1. If ((typeIR'' has type integerTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_typedef(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18361,37 +18361,37 @@ tbl def $nestable_typedef(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : (dataTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type dataTypeIR))
+    1. If ((typeIR'' has type dataTypeIR)), then
 
       1. Return true
 
   Row : (externObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type externObjectTypeIR))
+    1. If ((typeIR'' has type externObjectTypeIR)), then
 
       1. Return true
 
   Row : (parserObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return true
 
   Row : (controlObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return true
 
   Row : (packageObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return true
 
@@ -18404,7 +18404,7 @@ tbl def $nestable_new(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18412,25 +18412,25 @@ tbl def $nestable_new(typeIR'')
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_new(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18438,7 +18438,7 @@ tbl def $nestable_new(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
@@ -18451,7 +18451,7 @@ tbl def $nestable_list(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18459,7 +18459,7 @@ tbl def $nestable_list(typeIR'')
 
   Row : ((ERROR) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type errorTypeIR))
+    1. If ((typeIR'' has type errorTypeIR)), then
 
       1. (Let errorTypeIR be (typeIR'' as errorTypeIR))
 
@@ -18467,7 +18467,7 @@ tbl def $nestable_list(typeIR'')
 
   Row : ((MATCH_KIND) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type matchKindTypeIR))
+    1. If ((typeIR'' has type matchKindTypeIR)), then
 
       1. (Let matchKindTypeIR be (typeIR'' as matchKindTypeIR))
 
@@ -18475,7 +18475,7 @@ tbl def $nestable_list(typeIR'')
 
   Row : ((STRING) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type stringTypeIR))
+    1. If ((typeIR'' has type stringTypeIR)), then
 
       1. (Let stringTypeIR be (typeIR'' as stringTypeIR))
 
@@ -18483,19 +18483,19 @@ tbl def $nestable_list(typeIR'')
 
   Row : (integerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type integerTypeIR))
+    1. If ((typeIR'' has type integerTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_list(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18503,49 +18503,49 @@ tbl def $nestable_list(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : (listTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type listTypeIR))
+    1. If ((typeIR'' has type listTypeIR)), then
 
       1. Return true
 
   Row : (tupleTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type tupleTypeIR))
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
       1. Return true
 
   Row : (headerStackTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerStackTypeIR))
+    1. If ((typeIR'' has type headerStackTypeIR)), then
 
       1. Return true
 
   Row : (structTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. Return true
 
   Row : (headerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerTypeIR))
+    1. If ((typeIR'' has type headerTypeIR)), then
 
       1. Return true
 
   Row : (headerUnionTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerUnionTypeIR))
+    1. If ((typeIR'' has type headerUnionTypeIR)), then
 
       1. Return true
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
@@ -18558,7 +18558,7 @@ tbl def $nestable_tuple(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18566,7 +18566,7 @@ tbl def $nestable_tuple(typeIR'')
 
   Row : ((ERROR) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type errorTypeIR))
+    1. If ((typeIR'' has type errorTypeIR)), then
 
       1. (Let errorTypeIR be (typeIR'' as errorTypeIR))
 
@@ -18574,31 +18574,31 @@ tbl def $nestable_tuple(typeIR'')
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((VARBIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type varBitTypeIR))
+    1. If ((typeIR'' has type varBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_tuple(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18606,19 +18606,19 @@ tbl def $nestable_tuple(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : (tupleTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type tupleTypeIR))
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
       1. Return true
 
   Row : ((ARRAY typeIR `[ _nat `]) as typeIR) -> $nestable_array_in_tuple(typeIR):
 
-    1. Check ((typeIR'' has type arrayTypeIR))
+    1. If ((typeIR'' has type arrayTypeIR)), then
 
       1. (Let (ARRAY typeIR `[ _nat `]) be (typeIR'' as arrayTypeIR))
 
@@ -18626,31 +18626,31 @@ tbl def $nestable_tuple(typeIR'')
 
   Row : (headerStackTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerStackTypeIR))
+    1. If ((typeIR'' has type headerStackTypeIR)), then
 
       1. Return true
 
   Row : (structTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. Return true
 
   Row : (headerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerTypeIR))
+    1. If ((typeIR'' has type headerTypeIR)), then
 
       1. Return true
 
   Row : (headerUnionTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerUnionTypeIR))
+    1. If ((typeIR'' has type headerUnionTypeIR)), then
 
       1. Return true
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
@@ -18663,7 +18663,7 @@ tbl def $nestable_array_in_tuple(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18671,31 +18671,31 @@ tbl def $nestable_array_in_tuple(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((VARBIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type varBitTypeIR))
+    1. If ((typeIR'' has type varBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_array_in_tuple(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18703,13 +18703,13 @@ tbl def $nestable_array_in_tuple(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : ((ARRAY typeIR `[ _nat `]) as typeIR) -> $nestable_array_in_tuple(typeIR):
 
-    1. Check ((typeIR'' has type arrayTypeIR))
+    1. If ((typeIR'' has type arrayTypeIR)), then
 
       1. (Let (ARRAY typeIR `[ _nat `]) be (typeIR'' as arrayTypeIR))
 
@@ -18717,13 +18717,13 @@ tbl def $nestable_array_in_tuple(typeIR'')
 
   Row : (structTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. Return true
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
@@ -18736,7 +18736,7 @@ tbl def $nestable_array(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18744,31 +18744,31 @@ tbl def $nestable_array(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((VARBIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type varBitTypeIR))
+    1. If ((typeIR'' has type varBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_array(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18776,31 +18776,31 @@ tbl def $nestable_array(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : (arrayTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type arrayTypeIR))
+    1. If ((typeIR'' has type arrayTypeIR)), then
 
       1. Return true
 
   Row : (structTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. Return true
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
   Row : (externObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type externObjectTypeIR))
+    1. If ((typeIR'' has type externObjectTypeIR)), then
 
       1. Return true
 
@@ -18813,13 +18813,13 @@ tbl def $nestable_headerStack(typeIR'')
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_headerStack(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18827,13 +18827,13 @@ tbl def $nestable_headerStack(typeIR'')
 
   Row : (headerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerTypeIR))
+    1. If ((typeIR'' has type headerTypeIR)), then
 
       1. Return true
 
   Row : (headerUnionTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerUnionTypeIR))
+    1. If ((typeIR'' has type headerUnionTypeIR)), then
 
       1. Return true
 
@@ -18850,7 +18850,7 @@ tbl def $nestable_header(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18858,31 +18858,31 @@ tbl def $nestable_header(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((VARBIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type varBitTypeIR))
+    1. If ((typeIR'' has type varBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_header(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18890,19 +18890,19 @@ tbl def $nestable_header(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : ((ENUM _typeId `< _typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type serializableEnumTypeIR))
+    1. If ((typeIR'' has type serializableEnumTypeIR)), then
 
       1. Return true
 
   Row : ((STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR_field _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} `}) as typeIR) -> $forall_(($nestable_struct_in_header(typeIR_field))*{typeIR_field <- typeIR_field*}):
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. (Let (STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR_field _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} `}) be (typeIR'' as structTypeIR))
 
@@ -18912,7 +18912,7 @@ tbl def $nestable_header(typeIR'')
 
   Row : ((ARRAY typeIR `[ _nat `]) as typeIR) -> $nestable_array_in_header(typeIR):
 
-    1. Check ((typeIR'' has type arrayTypeIR))
+    1. If ((typeIR'' has type arrayTypeIR)), then
 
       1. (Let (ARRAY typeIR `[ _nat `]) be (typeIR'' as arrayTypeIR))
 
@@ -18927,7 +18927,7 @@ tbl def $nestable_struct_in_header(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18935,25 +18935,25 @@ tbl def $nestable_struct_in_header(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_struct_in_header(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -18961,19 +18961,19 @@ tbl def $nestable_struct_in_header(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : ((ENUM _typeId `< _typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type serializableEnumTypeIR))
+    1. If ((typeIR'' has type serializableEnumTypeIR)), then
 
       1. Return true
 
   Row : ((STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR_field _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} `}) as typeIR) -> $forall_(($nestable_struct_in_header(typeIR_field))*{typeIR_field <- typeIR_field*}):
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. (Let (STRUCT _typeId `< (_typeArgumentIR)*{_typeArgumentIR <- _typeArgumentIR*} `> `{ ((_annotationList typeIR_field _nameIR ';'))*{_annotationList <- _annotationList*, _nameIR <- _nameIR*, typeIR_field <- typeIR_field*} `}) be (typeIR'' as structTypeIR))
 
@@ -18990,7 +18990,7 @@ tbl def $nestable_array_in_header(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -18998,31 +18998,31 @@ tbl def $nestable_array_in_header(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((VARBIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type varBitTypeIR))
+    1. If ((typeIR'' has type varBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_array_in_header(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19030,13 +19030,13 @@ tbl def $nestable_array_in_header(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : ((ARRAY typeIR `[ _nat `]) as typeIR) -> $nestable_array_in_header(typeIR):
 
-    1. Check ((typeIR'' has type arrayTypeIR))
+    1. If ((typeIR'' has type arrayTypeIR)), then
 
       1. (Let (ARRAY typeIR `[ _nat `]) be (typeIR'' as arrayTypeIR))
 
@@ -19044,13 +19044,13 @@ tbl def $nestable_array_in_header(typeIR'')
 
   Row : (structTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type structTypeIR))
+    1. If ((typeIR'' has type structTypeIR)), then
 
       1. Return true
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
@@ -19063,13 +19063,13 @@ tbl def $nestable_headerUnion(typeIR'')
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_headerUnion(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19077,7 +19077,7 @@ tbl def $nestable_headerUnion(typeIR'')
 
   Row : (headerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type headerTypeIR))
+    1. If ((typeIR'' has type headerTypeIR)), then
 
       1. Return true
 
@@ -19090,25 +19090,25 @@ tbl def $nestable_enum_serializable(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_enum_serializable(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19116,7 +19116,7 @@ tbl def $nestable_enum_serializable(typeIR'')
 
   Row : ((TYPE _typeId typeIR) as typeIR) -> $nestable_new_in_enum_serializable(typeIR):
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. (Let (TYPE _typeId typeIR) be (typeIR'' as newTypeIR))
 
@@ -19131,25 +19131,25 @@ tbl def $nestable_new_in_enum_serializable(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_new_in_enum_serializable(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19157,7 +19157,7 @@ tbl def $nestable_new_in_enum_serializable(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
@@ -19170,7 +19170,7 @@ tbl def $nestable_set(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -19178,7 +19178,7 @@ tbl def $nestable_set(typeIR'')
 
   Row : ((ERROR) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type errorTypeIR))
+    1. If ((typeIR'' has type errorTypeIR)), then
 
       1. (Let errorTypeIR be (typeIR'' as errorTypeIR))
 
@@ -19186,25 +19186,25 @@ tbl def $nestable_set(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_set(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19212,13 +19212,13 @@ tbl def $nestable_set(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : ((TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) as typeIR) -> $forall_(($nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type tupleTypeIR))
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
       1. (Let (TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) be (typeIR'' as tupleTypeIR))
 
@@ -19228,17 +19228,17 @@ tbl def $nestable_set(typeIR'')
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
   Row : ((SEQ `< (typeIR)*{typeIR <- typeIR*} `>) as typeIR) -> $forall_(($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type sequenceTypeIR))
+    1. If ((typeIR'' has type sequenceTypeIR)), then
 
       1. (Let sequenceTypeIR be (typeIR'' as sequenceTypeIR))
 
-      2. Check ((sequenceTypeIR matches pattern SEQ `< % `>))
+      2. If ((sequenceTypeIR matches pattern SEQ `< % `>)), then
 
         1. (Let (SEQ `< (typeIR)*{typeIR <- typeIR*} `>) be sequenceTypeIR)
 
@@ -19255,7 +19255,7 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -19263,25 +19263,25 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_tuple_in_set(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19289,13 +19289,13 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : ((TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) as typeIR) -> $forall_(($nestable_tuple_in_set(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type tupleTypeIR))
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
       1. (Let (TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) be (typeIR'' as tupleTypeIR))
 
@@ -19305,7 +19305,7 @@ tbl def $nestable_tuple_in_set(typeIR'')
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
@@ -19318,7 +19318,7 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -19326,25 +19326,25 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : (nameTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type nameTypeIR))
+    1. If ((typeIR'' has type nameTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_sequence_in_set(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19352,13 +19352,13 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
   Row : (newTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. Return true
 
   Row : ((TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) as typeIR) -> $forall_(($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type tupleTypeIR))
+    1. If ((typeIR'' has type tupleTypeIR)), then
 
       1. (Let (TUPLE `< (typeIR)*{typeIR <- typeIR*} `>) be (typeIR'' as tupleTypeIR))
 
@@ -19368,17 +19368,17 @@ tbl def $nestable_sequence_in_set(typeIR'')
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
   Row : ((SEQ `< (typeIR)*{typeIR <- typeIR*} `>) as typeIR) -> $forall_(($nestable_sequence_in_set(typeIR))*{typeIR <- typeIR*}):
 
-    1. Check ((typeIR'' has type sequenceTypeIR))
+    1. If ((typeIR'' has type sequenceTypeIR)), then
 
       1. (Let sequenceTypeIR be (typeIR'' as sequenceTypeIR))
 
-      2. Check ((sequenceTypeIR matches pattern SEQ `< % `>))
+      2. If ((sequenceTypeIR matches pattern SEQ `< % `>)), then
 
         1. (Let (SEQ `< (typeIR)*{typeIR <- typeIR*} `>) be sequenceTypeIR)
 
@@ -19447,7 +19447,7 @@ tbl def $nestable_action(typeIR'')
 
   Row : ((INT) as typeIR) -> false:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -19455,7 +19455,7 @@ tbl def $nestable_action(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_action(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19463,13 +19463,13 @@ tbl def $nestable_action(typeIR'')
 
   Row : (objectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type objectTypeIR))
+    1. If ((typeIR'' has type objectTypeIR)), then
 
       1. Return false
 
   Row : (synthesizedTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type synthesizedTypeIR))
+    1. If ((typeIR'' has type synthesizedTypeIR)), then
 
       1. Return false
 
@@ -19482,7 +19482,7 @@ tbl def $nestable_definedFunction(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_definedFunction(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19490,13 +19490,13 @@ tbl def $nestable_definedFunction(typeIR'')
 
   Row : (objectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type objectTypeIR))
+    1. If ((typeIR'' has type objectTypeIR)), then
 
       1. Return false
 
   Row : (synthesizedTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type synthesizedTypeIR))
+    1. If ((typeIR'' has type synthesizedTypeIR)), then
 
       1. Return false
 
@@ -19509,7 +19509,7 @@ tbl def $nestable_externFunction(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_externFunction(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19517,25 +19517,25 @@ tbl def $nestable_externFunction(typeIR'')
 
   Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return false
 
   Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19548,7 +19548,7 @@ tbl def $nestable_externMethod(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_externMethod(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19556,25 +19556,25 @@ tbl def $nestable_externMethod(typeIR'')
 
   Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return false
 
   Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19587,7 +19587,7 @@ tbl def $nestable_parserApplyMethod(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_parserApplyMethod(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19595,25 +19595,25 @@ tbl def $nestable_parserApplyMethod(typeIR'')
 
   Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return false
 
   Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19626,7 +19626,7 @@ tbl def $nestable_controlApplyMethod(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_controlApplyMethod(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19634,19 +19634,19 @@ tbl def $nestable_controlApplyMethod(typeIR'')
 
   Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19659,7 +19659,7 @@ tbl def $nestable_constructor_extern(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_constructor_extern(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19667,25 +19667,25 @@ tbl def $nestable_constructor_extern(typeIR'')
 
   Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return false
 
   Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19698,7 +19698,7 @@ tbl def $nestable_constructor_parser(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_constructor_parser(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19706,19 +19706,19 @@ tbl def $nestable_constructor_parser(typeIR'')
 
   Row : (controlObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19731,7 +19731,7 @@ tbl def $nestable_constructor_control(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_constructor_control(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19739,19 +19739,19 @@ tbl def $nestable_constructor_control(typeIR'')
 
   Row : (parserObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return false
 
   Row : (packageObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return false
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19764,7 +19764,7 @@ tbl def $nestable_constructor_package(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $nestable_constructor_package(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19772,7 +19772,7 @@ tbl def $nestable_constructor_package(typeIR'')
 
   Row : (tableObjectTypeIR as typeIR) -> false:
 
-    1. Check ((typeIR'' has type tableObjectTypeIR))
+    1. If ((typeIR'' has type tableObjectTypeIR)), then
 
       1. Return false
 
@@ -19785,7 +19785,7 @@ tbl def $definable_constructor(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $definable_constructor(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -19793,25 +19793,25 @@ tbl def $definable_constructor(typeIR'')
 
   Row : (externObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type externObjectTypeIR))
+    1. If ((typeIR'' has type externObjectTypeIR)), then
 
       1. Return true
 
   Row : (parserObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type parserObjectTypeIR))
+    1. If ((typeIR'' has type parserObjectTypeIR)), then
 
       1. Return true
 
   Row : (controlObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type controlObjectTypeIR))
+    1. If ((typeIR'' has type controlObjectTypeIR)), then
 
       1. Return true
 
   Row : (packageObjectTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type packageObjectTypeIR))
+    1. If ((typeIR'' has type packageObjectTypeIR)), then
 
       1. Return true
 
@@ -28458,7 +28458,7 @@ tbl def $compat_lnot(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -28466,7 +28466,7 @@ tbl def $compat_lnot(typeIR'')
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_lnot(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -28481,19 +28481,19 @@ tbl def $compat_bnot(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_bnot(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -28508,7 +28508,7 @@ tbl def $compat_uplusminus(typeIR'')
 
   Row : ((INT) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -28516,19 +28516,19 @@ tbl def $compat_uplusminus(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_uplusminus(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -29065,7 +29065,7 @@ tbl def $compat_array_index(typeIR'')
 
   Row : ((INT) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -29073,19 +29073,19 @@ tbl def $compat_array_index(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_array_index(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -29100,7 +29100,7 @@ tbl def $compat_bitslice_base(typeIR'')
 
   Row : ((INT) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -29108,7 +29108,7 @@ tbl def $compat_bitslice_base(typeIR'')
 
   Row : ((INT `< w `>) as typeIR) -> (w > 0):
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. (Let (INT `< w `>) be (typeIR'' as fixedIntTypeIR))
 
@@ -29116,13 +29116,13 @@ tbl def $compat_bitslice_base(typeIR'')
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_bitslice_base(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -29137,7 +29137,7 @@ tbl def $compat_bitslice_range_index(typeIR'')
 
   Row : ((INT) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -29145,19 +29145,19 @@ tbl def $compat_bitslice_range_index(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_bitslice_range_index(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -29172,7 +29172,7 @@ tbl def $compat_bitslice_offset_index(typeIR'')
 
   Row : ((INT) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -29180,19 +29180,19 @@ tbl def $compat_bitslice_offset_index(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_bitslice_offset_index(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -29207,7 +29207,7 @@ tbl def $compat_bitslice_offset_width(typeIR'')
 
   Row : ((INT) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -29215,19 +29215,19 @@ tbl def $compat_bitslice_offset_width(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_bitslice_offset_width(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -29860,7 +29860,7 @@ tbl def $compat_switch(typeIR'')
 
   Row : ((ERROR) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type errorTypeIR))
+    1. If ((typeIR'' has type errorTypeIR)), then
 
       1. (Let errorTypeIR be (typeIR'' as errorTypeIR))
 
@@ -29868,19 +29868,19 @@ tbl def $compat_switch(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_switch(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -29888,7 +29888,7 @@ tbl def $compat_switch(typeIR'')
 
   Row : (enumTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type enumTypeIR))
+    1. If ((typeIR'' has type enumTypeIR)), then
 
       1. Return true
 
@@ -30701,7 +30701,7 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -30709,7 +30709,7 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
   Row : ((ERROR) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type errorTypeIR))
+    1. If ((typeIR'' has type errorTypeIR)), then
 
       1. (Let errorTypeIR be (typeIR'' as errorTypeIR))
 
@@ -30717,13 +30717,13 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
   Row : (integerTypeIR as typeIR) -> true:
 
-    1. Check ((typeIR'' has type integerTypeIR))
+    1. If ((typeIR'' has type integerTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_table_exact_optional_key(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -30731,7 +30731,7 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
   Row : ((TYPE _typeId typeIR) as typeIR) -> $compat_table_exact_optional_key(typeIR):
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. (Let (TYPE _typeId typeIR) be (typeIR'' as newTypeIR))
 
@@ -30739,13 +30739,13 @@ tbl def $compat_table_exact_optional_key(typeIR'')
 
   Row : ((ENUM _typeId `{ (_nameIR)*{_nameIR <- _nameIR*} `}) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type simpleEnumTypeIR))
+    1. If ((typeIR'' has type simpleEnumTypeIR)), then
 
       1. Return true
 
   Row : ((ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) as typeIR) -> $compat_table_exact_optional_key(typeIR):
 
-    1. Check ((typeIR'' has type serializableEnumTypeIR))
+    1. If ((typeIR'' has type serializableEnumTypeIR)), then
 
       1. (Let (ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be (typeIR'' as serializableEnumTypeIR))
 
@@ -30760,7 +30760,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
   Row : ((BOOL) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type boolTypeIR))
+    1. If ((typeIR'' has type boolTypeIR)), then
 
       1. (Let boolTypeIR be (typeIR'' as boolTypeIR))
 
@@ -30768,7 +30768,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
   Row : ((INT) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type intTypeIR))
+    1. If ((typeIR'' has type intTypeIR)), then
 
       1. (Let intTypeIR be (typeIR'' as intTypeIR))
 
@@ -30776,19 +30776,19 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
   Row : ((INT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedIntTypeIR))
+    1. If ((typeIR'' has type fixedIntTypeIR)), then
 
       1. Return true
 
   Row : ((BIT `< _nat `>) as typeIR) -> true:
 
-    1. Check ((typeIR'' has type fixedBitTypeIR))
+    1. If ((typeIR'' has type fixedBitTypeIR)), then
 
       1. Return true
 
   Row : ((TYPEDEF _typeId typeIR) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR):
 
-    1. Check ((typeIR'' has type typedefTypeIR))
+    1. If ((typeIR'' has type typedefTypeIR)), then
 
       1. (Let (TYPEDEF _typeId typeIR) be (typeIR'' as typedefTypeIR))
 
@@ -30796,7 +30796,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
   Row : ((TYPE _typeId typeIR) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR):
 
-    1. Check ((typeIR'' has type newTypeIR))
+    1. If ((typeIR'' has type newTypeIR)), then
 
       1. (Let (TYPE _typeId typeIR) be (typeIR'' as newTypeIR))
 
@@ -30804,7 +30804,7 @@ tbl def $compat_table_lpm_ternary_range_key(typeIR'')
 
   Row : ((ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) as typeIR) -> $compat_table_lpm_ternary_range_key(typeIR):
 
-    1. Check ((typeIR'' has type serializableEnumTypeIR))
+    1. If ((typeIR'' has type serializableEnumTypeIR)), then
 
       1. (Let (ENUM _typeId `< typeIR `> `{ (_valueFieldIR)*{_valueFieldIR <- _valueFieldIR*} `}) be (typeIR'' as serializableEnumTypeIR))
 
