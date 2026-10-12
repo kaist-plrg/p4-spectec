@@ -177,15 +177,6 @@ where
             (InstrKind::Destruct(instr_l), InstrKind::Destruct(instr_r)) => {
                 instr_l.syntax_eq(instr_r)
             }
-            (InstrKind::CheckLetSub(instr_l), InstrKind::CheckLetSub(instr_r)) => {
-                instr_l.syntax_eq(instr_r)
-            }
-            (InstrKind::CheckLetMatch(instr_l), InstrKind::CheckLetMatch(instr_r)) => {
-                instr_l.syntax_eq(instr_r)
-            }
-            (InstrKind::OptionGet(instr_l), InstrKind::OptionGet(instr_r)) => {
-                instr_l.syntax_eq(instr_r)
-            }
             (InstrKind::Tier(instr_l), InstrKind::Tier(instr_r)) => instr_l.syntax_eq(instr_r),
             _ => false,
         }
@@ -248,41 +239,6 @@ impl SyntaxEq for DestructInstr {
                 |((name_l, exp_l), (name_r, exp_r))| name_l == name_r && exp_l.syntax_eq(exp_r),
             )
             && self.exp.syntax_eq(&other.exp)
-    }
-}
-
-impl<Tier> SyntaxEq for CheckLetSubInstr<Tier>
-where
-    Tier: SyntaxEq,
-{
-    fn syntax_eq(&self, other: &Self) -> bool {
-        self.typ.syntax_eq(&other.typ)
-            && self.exp_l.syntax_eq(&other.exp_l)
-            && self.exp_r.syntax_eq(&other.exp_r)
-            && self.block.syntax_eq(&other.block)
-    }
-}
-
-impl<Tier> SyntaxEq for CheckLetMatchInstr<Tier>
-where
-    Tier: SyntaxEq,
-{
-    fn syntax_eq(&self, other: &Self) -> bool {
-        self.pattern.syntax_eq(&other.pattern)
-            && self.exp_l.syntax_eq(&other.exp_l)
-            && self.exp_r.syntax_eq(&other.exp_r)
-            && self.block.syntax_eq(&other.block)
-    }
-}
-
-impl<Tier> SyntaxEq for OptionGetInstr<Tier>
-where
-    Tier: SyntaxEq,
-{
-    fn syntax_eq(&self, other: &Self) -> bool {
-        self.exp_l.syntax_eq(&other.exp_l)
-            && self.exp_r.syntax_eq(&other.exp_r)
-            && self.block.syntax_eq(&other.block)
     }
 }
 
@@ -410,12 +366,6 @@ impl SyntaxEq for Guard {
             (Guard::Sub(typ_l, _), Guard::Sub(typ_r, _)) => typ_l.syntax_eq(typ_r),
             (Guard::Match(pattern_l), Guard::Match(pattern_r)) => pattern_l.syntax_eq(pattern_r),
             (Guard::Mem(exp_l), Guard::Mem(exp_r)) => exp_l.syntax_eq(exp_r),
-            (Guard::CheckLetSub(typ_l, _, exp_l), Guard::CheckLetSub(typ_r, _, exp_r)) => {
-                typ_l.syntax_eq(typ_r) && exp_l.syntax_eq(exp_r)
-            }
-            (Guard::CheckLetMatch(pattern_l, exp_l), Guard::CheckLetMatch(pattern_r, exp_r)) => {
-                pattern_l.syntax_eq(pattern_r) && exp_l.syntax_eq(exp_r)
-            }
             _ => false,
         }
     }

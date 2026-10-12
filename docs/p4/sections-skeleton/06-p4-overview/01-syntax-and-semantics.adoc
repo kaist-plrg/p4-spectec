@@ -89,10 +89,10 @@ ${rulegroup-latex: Expr_ok/unaryExpression-lnot}
 ${rulegroup-prose: Expr_ok/unaryExpression-lnot}
 
 // Added
-The shorthand *!* in step 2 is explained in <<option_get>> and
-`$compat_lnot` is a helper function used to check compatibility of the
-operand with logical not expressions. And the following algorithm defines
-type checking of bitwise negation expressions. 
+`$compat_lnot` checks whether the operand is compatible with logical not.
+The algorithm checks that its optional result is present before binding the
+contained type. The following algorithm defines type checking of bitwise
+negation expressions.
 
 // Added
 ${rulegroup-source: Expr_ok/unaryExpression-bnot}
@@ -103,13 +103,11 @@ ${rulegroup-prose: Expr_ok/unaryExpression-bnot}
 And so on for other variants of P4 expressions. These prose algorithms are
 presented throughout this specification.
 
-[[option_get]]
-====== Prose algorithm shorthands
+====== Conditions and optional results
 
 // Added
-To make the prose algorithms concise, we often use the shorthand *!*.
-Some algorithms result in an optional result to indicate possible failure. The
-following example algorithm computes modulo of two natural numbers
+Some algorithms return an optional value to indicate possible failure.
+The following algorithm computes modulo of two natural numbers
 (including zero).
 
 // Added
@@ -127,9 +125,10 @@ ${func-latex: modulo_42}
 ${func-prose: modulo_42}
 
 // Added
-Here, *!* indicates unwrapping of the optional result. This shortened form is
-equivalent to first getting the optional result, checking that it is not
-`None`, and then unwrapping it.
+The algorithm first obtains the optional result, checks that it is present,
+and then binds its contained value. A failed check prevents this invocation
+from producing a result. When another alternative can still succeed, the
+condition is written as an `If` branch instead.
 
 ifdef::backend-html5[]
 ===== Formal inference rules

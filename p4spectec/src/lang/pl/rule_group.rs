@@ -8,9 +8,8 @@
 use super::{
     annot::Hints,
     ast::{
-        CaseInstr, CheckLetMatchInstr, CheckLetSubInstr, DispatchBlock, DispatchInstr, Exp,
-        GroupBlock, HoldCase, HoldInstr, Id, IfInstr, InstrKind, OptionGetInstr, RelSignature,
-        RouteInstr, RuleGroupInstr, TierInstr,
+        CaseInstr, DispatchBlock, DispatchInstr, Exp, GroupBlock, HoldCase, HoldInstr, Id, IfInstr,
+        InstrKind, RelSignature, RouteInstr, RuleGroupInstr, TierInstr,
     },
 };
 
@@ -45,11 +44,6 @@ pub fn collect_rule_groups(block: &DispatchBlock) -> Vec<RuleGroup<'_>> {
                 for case in cases {
                     rule_groups.extend(collect_rule_groups(&case.block));
                 }
-            }
-            InstrKind::CheckLetSub(CheckLetSubInstr { block, .. })
-            | InstrKind::CheckLetMatch(CheckLetMatchInstr { block, .. })
-            | InstrKind::OptionGet(OptionGetInstr { block, .. }) => {
-                rule_groups.extend(collect_rule_groups(block));
             }
             InstrKind::Tier(TierInstr { tier: DispatchInstr::Route(RouteInstr { blocks }) }) => {
                 for block in blocks {

@@ -1374,9 +1374,6 @@ impl Prose {
             pl::Guard::Sub(typ, _) => Prose::of_sub_guard(exp_scrut, typ),
             pl::Guard::Match(pattern) => Prose::of_match_guard(exp_scrut, pattern),
             pl::Guard::Mem(exp) => Prose::of_mem_guard(exp_scrut, exp),
-            pl::Guard::CheckLetSub(_, _, exp_target) | pl::Guard::CheckLetMatch(_, exp_target) => {
-                Prose::of_check_let_guard(exp_scrut, exp_target)
-            }
         }
     }
 
@@ -1439,21 +1436,6 @@ impl Prose {
         let prose_scrut = Prose::of_exp(exp_scrut);
         let prose_exp = Prose::of_exp(exp);
         Prose::seq([prose_scrut, Prose::text(" is in "), prose_exp])
-    }
-
-    // - Binding guards
-    //
-    //   t'*, bound to t_h   -> let ``t~h~`` be ``t'^{asterisk}^``
-
-    fn of_check_let_guard(exp_scrut: &pl::Exp, exp_target: &pl::Exp) -> Prose {
-        let code_target = Code::of_exp(exp_target);
-        let prose_scrut = Prose::of_exp(exp_scrut);
-        Prose::seq([
-            Prose::text("let "),
-            Prose::code(code_target),
-            Prose::text(" be "),
-            prose_scrut,
-        ])
     }
 }
 
@@ -1553,15 +1535,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             pl::InstrKind::Debug(debug_instr) => Self::render_debug_instr(level, debug_instr),
             pl::InstrKind::Destruct(destruct_instr) => {
                 Self::render_destruct_instr(level, destruct_instr)
-            }
-            pl::InstrKind::CheckLetSub(check_instr) => {
-                self.render_check_let_sub_instr(level, render_tier, check_instr)
-            }
-            pl::InstrKind::CheckLetMatch(check_instr) => {
-                self.render_check_let_match_instr(level, render_tier, check_instr)
-            }
-            pl::InstrKind::OptionGet(option_instr) => {
-                self.render_option_get_instr(level, render_tier, instr, option_instr)
             }
             pl::InstrKind::Tier(tier_instr) => {
                 self.render_tier_instr(level, render_tier, instr, tier_instr)
@@ -2182,88 +2155,6 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             Prose::text("."),
         ]);
         Block::item_ordered(level, prose_head)
-    }
-
-    // - Check-let instructions
-    //
-    //   def $join_text(t_h1 :: t_h2 :: t_t*, t_sep) = ...
-    //   -> .. Let!~type~ ``t~h2~`` ``{two-colons}`` ``t~t~^{asterisk}^`` be ``t^{asterisk}^``.
-
-    /// Renders a partial subtype binding.
-    fn render_check_let_sub_instr<Tier>(
-        &mut self,
-        level: usize,
-        render_tier: RenderTier<'ctx, 'a, Tier>,
-        check_instr: &pl::CheckLetSubInstr<Tier>,
-    ) -> Block {
-        let pl::CheckLetSubInstr { exp_l, exp_r, block, .. } = check_instr;
-        // Build the partial binding heading with its failure continuation
-        let code_l = Code::of_exp(exp_l);
-        let prose_r = Prose::of_exp(exp_r);
-        let prose_head = Prose::seq([
-            Prose::text("Let!~type~ "),
-            Prose::code(code_l),
-            Prose::text(" be "),
-            prose_r,
-            Prose::text("."),
-        ]);
-        let block_head = Block::item_ordered(level, prose_head);
-        self.render_continuation(level, block_head, render_tier, block)
-    }
-
-    /// Renders a partial pattern binding.
-    fn render_check_let_match_instr<Tier>(
-        &mut self,
-        level: usize,
-        render_tier: RenderTier<'ctx, 'a, Tier>,
-        check_instr: &pl::CheckLetMatchInstr<Tier>,
-    ) -> Block {
-        let pl::CheckLetMatchInstr { exp_l, exp_r, block, .. } = check_instr;
-        // Build the partial binding heading with its failure continuation
-        let code_l = Code::of_exp(exp_l);
-        let prose_r = Prose::of_exp(exp_r);
-        let prose_head = Prose::seq([
-            Prose::text("Let!~type~ "),
-            Prose::code(code_l),
-            Prose::text(" be "),
-            prose_r,
-            Prose::text("."),
-        ]);
-        let block_head = Block::item_ordered(level, prose_head);
-        self.render_continuation(level, block_head, render_tier, block)
-    }
-
-    // - Option-get instructions
-    //
-    //   -- if n_result = $modulo(n, 42)
-    //   -> . Let ``n~result~`` be xref:option_get[*!*] xref:modulo[``n`` mod ``42``].
-
-    /// Renders a forced option binding.
-    fn render_option_get_instr<Tier>(
-        &mut self,
-        level: usize,
-        render_tier: RenderTier<'ctx, 'a, Tier>,
-        instr: &pl::Instr<Tier>,
-        option_instr: &pl::OptionGetInstr<Tier>,
-    ) -> Block {
-        // Build the forced binding heading with its failure continuation
-        let code_l = Code::of_exp(&option_instr.exp_l);
-        let link_get = Link::Direct(
-            crate::phrase! { node: "option_get".to_owned(), span: instr.node.span.clone() },
-        );
-        let prose_get = Prose::link(link_get, Prose::text("*!*"));
-        let prose_r = Prose::of_exp(&option_instr.exp_r);
-        let prose_head = Prose::seq([
-            Prose::text("Let "),
-            Prose::code(code_l),
-            Prose::text(" be "),
-            prose_get,
-            Prose::text(" "),
-            prose_r,
-            Prose::text("."),
-        ]);
-        let block_head = Block::item_ordered(level, prose_head);
-        self.render_continuation(level, block_head, render_tier, &option_instr.block)
     }
 
     // - Tier instructions

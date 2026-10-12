@@ -187,7 +187,7 @@ pub struct Case<Tier, P: Stage = Source> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-/// A test on the case scrutinee; the shorthands also bind it.
+/// A nonbinding test on the case scrutinee.
 pub enum Guard<P: Stage = Source> {
     /// The scrutinee is this boolean.
     Bool(bool),
@@ -199,11 +199,6 @@ pub enum Guard<P: Stage = Source> {
     Match(Pattern<P>),
     /// The scrutinee is an element of the list.
     Mem(Exp<P>),
-    // Shorthands
-    /// Let the expression be the scrutinee, which has the type.
-    CheckLetSub(Typ, Box<Subcheck<P>>, Exp<P>),
-    /// Let the expression be the scrutinee, which matches the pattern.
-    CheckLetMatch(Pattern<P>, Exp<P>),
 }
 
 // Instructions
@@ -228,12 +223,6 @@ pub enum InstrKind<Tier, P: Stage = Source> {
     Debug(DebugInstr<P>),
     /// Shorthand: bind several fields of one value at once.
     Destruct(DestructInstr<P>),
-    /// Shorthand: bind after a subtype check, then run the block.
-    CheckLetSub(CheckLetSubInstr<Tier, P>),
-    /// Shorthand: bind after a pattern match, then run the block.
-    CheckLetMatch(CheckLetMatchInstr<Tier, P>),
-    /// Shorthand: bind the content of a present option, then run the block.
-    OptionGet(OptionGetInstr<Tier, P>),
     /// The tier's own instruction.
     Tier(TierInstr<Tier>),
 }
@@ -278,30 +267,6 @@ pub struct DebugInstr<P: Stage = Source> {
 pub struct DestructInstr<P: Stage = Source> {
     pub bindings: Vec<(Option<String>, Exp<P>)>,
     pub exp: Exp<P>,
-}
-#[derive(Clone, Debug, PartialEq)]
-/// Bind `exp_l` to `exp_r` once it passes the subtype check, then the block.
-pub struct CheckLetSubInstr<Tier, P: Stage = Source> {
-    pub typ: Typ,
-    pub subcheck: Box<Subcheck<P>>,
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
-    pub block: Block<Tier, P>,
-}
-#[derive(Clone, Debug, PartialEq)]
-/// Bind `exp_l` to `exp_r` once it matches the pattern, then run the block.
-pub struct CheckLetMatchInstr<Tier, P: Stage = Source> {
-    pub pattern: Pattern<P>,
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
-    pub block: Block<Tier, P>,
-}
-#[derive(Clone, Debug, PartialEq)]
-/// Bind `exp_l` to the content of the option `exp_r`, then run the block.
-pub struct OptionGetInstr<Tier, P: Stage = Source> {
-    pub exp_l: Exp<P>,
-    pub exp_r: Exp<P>,
-    pub block: Block<Tier, P>,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// The tier-specific instruction.

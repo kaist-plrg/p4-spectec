@@ -406,56 +406,6 @@ fn write_instr_with<Tier>(
             output.write_char(')')
         }
         // `(Let x be e, e has type t)` and the block
-        InstrKind::CheckLetSub(CheckLetSubInstr { typ, exp_l, exp_r, block, .. }) => {
-            write_order(output)?;
-            output.write_str("(Let ")?;
-            exp_l.print(output)?;
-            output.write_str(" be ")?;
-            exp_r.print(output)?;
-            output.write_str(", ")?;
-            exp_r.print(output)?;
-            output.write_str(" has type ")?;
-            typ.print(output)?;
-            output.write_char(')')?;
-            if !short {
-                output.write_str("\n\n")?;
-                write_block_with(output, block, tier_printer, level + 1, 0)?;
-            }
-            Ok(())
-        }
-        // `(Let x be e, e matches pattern p)` and the block
-        InstrKind::CheckLetMatch(CheckLetMatchInstr { pattern, exp_l, exp_r, block }) => {
-            write_order(output)?;
-            output.write_str("(Let ")?;
-            exp_l.print(output)?;
-            output.write_str(" be ")?;
-            exp_r.print(output)?;
-            output.write_str(", ")?;
-            exp_r.print(output)?;
-            output.write_str(" matches pattern ")?;
-            pattern.print(output)?;
-            output.write_char(')')?;
-            if !short {
-                output.write_str("\n\n")?;
-                write_block_with(output, block, tier_printer, level + 1, 0)?;
-            }
-            Ok(())
-        }
-        // `(Let x be ! e)`, unwrapping the option, and the block
-        InstrKind::OptionGet(OptionGetInstr { exp_l, exp_r, block }) => {
-            write_order(output)?;
-            output.write_str("(Let ")?;
-            exp_l.print(output)?;
-            output.write_str(" be ! ")?;
-            exp_r.print(output)?;
-            output.write_char(')')?;
-            if !short {
-                output.write_str("\n\n")?;
-                write_block_with(output, block, tier_printer, level + 1, 0)?;
-            }
-            Ok(())
-        }
-        // The tier decides how its own instruction prints
         InstrKind::Tier(TierInstr { tier }) => tier_printer(output, tier, short, level, index),
     }
 }
@@ -637,20 +587,6 @@ impl Print for Guard {
             Guard::Mem(exp) => {
                 printer.write_str("(% is in ")?;
                 exp.print(printer)?;
-                printer.write_char(')')
-            }
-            Guard::CheckLetSub(typ, _, exp) => {
-                printer.write_str("(let ")?;
-                exp.print(printer)?;
-                printer.write_str(" be %, % has type ")?;
-                typ.print(printer)?;
-                printer.write_char(')')
-            }
-            Guard::CheckLetMatch(pattern, exp) => {
-                printer.write_str("(let ")?;
-                exp.print(printer)?;
-                printer.write_str(" be %, % matches pattern ")?;
-                pattern.print(printer)?;
                 printer.write_char(')')
             }
         }

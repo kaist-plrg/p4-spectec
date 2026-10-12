@@ -175,12 +175,6 @@ impl Prepare<PrepareContext<'_>> for pl::Guard {
             pl::Guard::Sub(typ, check) => ast::Guard::Sub(typ, check.prepare(&mut ctx.il())),
             pl::Guard::Match(pattern) => ast::Guard::Match(pattern.prepare(&mut ctx.il())),
             pl::Guard::Mem(exp) => ast::Guard::Mem(exp.prepare(ctx)),
-            pl::Guard::CheckLetSub(typ, check, exp) => {
-                ast::Guard::CheckLetSub(typ, check.prepare(&mut ctx.il()), exp.prepare(ctx))
-            }
-            pl::Guard::CheckLetMatch(pattern, exp) => {
-                ast::Guard::CheckLetMatch(pattern.prepare(&mut ctx.il()), exp.prepare(ctx))
-            }
         }
     }
 }
@@ -206,11 +200,6 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
             pl::InstrKind::Let(instr) => ast::InstrKind::Let(instr.prepare(ctx)),
             pl::InstrKind::Debug(instr) => ast::InstrKind::Debug(instr.prepare(ctx)),
             pl::InstrKind::Destruct(instr) => ast::InstrKind::Destruct(instr.prepare(ctx)),
-            pl::InstrKind::CheckLetSub(instr) => ast::InstrKind::CheckLetSub(instr.prepare(ctx)),
-            pl::InstrKind::CheckLetMatch(instr) => {
-                ast::InstrKind::CheckLetMatch(instr.prepare(ctx))
-            }
-            pl::InstrKind::OptionGet(instr) => ast::InstrKind::OptionGet(instr.prepare(ctx)),
             pl::InstrKind::Tier(instr) => ast::InstrKind::Tier(instr.prepare(ctx)),
         }
     }
@@ -297,57 +286,6 @@ impl Prepare<PrepareContext<'_>> for pl::DestructInstr {
                 .map(|(name, exp)| (name, exp.prepare(ctx)))
                 .collect(),
             exp: self.exp.prepare(ctx),
-        }
-    }
-}
-
-// - Check let sub instruction
-
-impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>>
-    for pl::CheckLetSubInstr<Tier>
-{
-    type Output = ast::CheckLetSubInstr<Tier::Output>;
-
-    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::CheckLetSubInstr {
-            typ: self.typ,
-            subcheck: self.subcheck.prepare(&mut ctx.il()),
-            exp_l: self.exp_l.prepare(ctx),
-            exp_r: self.exp_r.prepare(ctx),
-            block: self.block.prepare(ctx),
-        }
-    }
-}
-
-// - Check let match instruction
-
-impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>>
-    for pl::CheckLetMatchInstr<Tier>
-{
-    type Output = ast::CheckLetMatchInstr<Tier::Output>;
-
-    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::CheckLetMatchInstr {
-            pattern: self.pattern.prepare(&mut ctx.il()),
-            exp_l: self.exp_l.prepare(ctx),
-            exp_r: self.exp_r.prepare(ctx),
-            block: self.block.prepare(ctx),
-        }
-    }
-}
-
-// - Option get instruction
-
-impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>>
-    for pl::OptionGetInstr<Tier>
-{
-    type Output = ast::OptionGetInstr<Tier::Output>;
-
-    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
-        ast::OptionGetInstr {
-            exp_l: self.exp_l.prepare(ctx),
-            exp_r: self.exp_r.prepare(ctx),
-            block: self.block.prepare(ctx),
         }
     }
 }

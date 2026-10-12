@@ -99,9 +99,6 @@ impl<Tier: FreeIds> FreeIds for InstrKind<Tier> {
             Self::Let(instr) => instr.free_ids(),
             Self::Debug(instr) => instr.free_ids(),
             Self::Destruct(instr) => instr.free_ids(),
-            Self::CheckLetSub(instr) => instr.free_ids(),
-            Self::CheckLetMatch(instr) => instr.free_ids(),
-            Self::OptionGet(instr) => instr.free_ids(),
             Self::Tier(instr) => instr.free_ids(),
         }
     }
@@ -143,33 +140,6 @@ impl FreeIds for DestructInstr {
             .iter()
             .fold(IdSet::new(), |free, (_, exp)| free.union(exp.free_ids()))
             .union(self.exp.free_ids())
-    }
-}
-
-impl<Tier: FreeIds> FreeIds for CheckLetSubInstr<Tier> {
-    fn free_ids(&self) -> IdSet {
-        self.exp_l
-            .free_ids()
-            .union(self.exp_r.free_ids())
-            .union(self.block.free_ids())
-    }
-}
-
-impl<Tier: FreeIds> FreeIds for CheckLetMatchInstr<Tier> {
-    fn free_ids(&self) -> IdSet {
-        self.exp_l
-            .free_ids()
-            .union(self.exp_r.free_ids())
-            .union(self.block.free_ids())
-    }
-}
-
-impl<Tier: FreeIds> FreeIds for OptionGetInstr<Tier> {
-    fn free_ids(&self) -> IdSet {
-        self.exp_l
-            .free_ids()
-            .union(self.exp_r.free_ids())
-            .union(self.block.free_ids())
     }
 }
 
@@ -259,7 +229,6 @@ impl FreeIds for Guard {
     fn free_ids(&self) -> IdSet {
         match self {
             Self::Cmp(_, _, exp) | Self::Mem(exp) => exp.free_ids(),
-            Self::CheckLetSub(_, _, exp) | Self::CheckLetMatch(_, exp) => exp.free_ids(),
             Self::Bool(_) | Self::Sub(..) | Self::Match(_) => IdSet::new(),
         }
     }

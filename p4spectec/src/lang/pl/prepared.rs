@@ -52,9 +52,6 @@ pub type CaseInstr<Tier> = source::CaseInstr<Tier, Prepared>;
 pub type LetInstr = source::LetInstr<Prepared>;
 pub type DebugInstr = source::DebugInstr<Prepared>;
 pub type DestructInstr = source::DestructInstr<Prepared>;
-pub type CheckLetSubInstr<Tier> = source::CheckLetSubInstr<Tier, Prepared>;
-pub type CheckLetMatchInstr<Tier> = source::CheckLetMatchInstr<Tier, Prepared>;
-pub type OptionGetInstr<Tier> = source::OptionGetInstr<Tier, Prepared>;
 pub type InstrIter = PremIter;
 
 // - Blocks

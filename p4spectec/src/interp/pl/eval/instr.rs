@@ -148,15 +148,6 @@ fn eval_instr<'global, Tier, Iface: Interface, Ext: Extern>(
         ast::InstrKind::Let(instr) => eval_let_instr(runner_ctx, ctx, instr),
         ast::InstrKind::Debug(instr) => eval_debug_instr(runner_ctx, ctx, instr),
         ast::InstrKind::Destruct(instr) => eval_destruct_instr(runner_ctx, ctx, instr),
-        ast::InstrKind::CheckLetSub(instr) => {
-            eval_check_let_sub_instr(runner_ctx, ctx, instr, evaluate_block)
-        }
-        ast::InstrKind::CheckLetMatch(instr) => {
-            eval_check_let_match_instr(runner_ctx, ctx, instr, evaluate_block)
-        }
-        ast::InstrKind::OptionGet(instr) => {
-            eval_option_get_instr(runner_ctx, ctx, instr, evaluate_block)
-        }
         ast::InstrKind::Tier(instr) => eval_tier(runner_ctx, ctx, &instr.tier),
     })
 }
@@ -303,7 +294,7 @@ fn eval_hold_instr<'global, Tier, Iface: Interface, Ext: Extern>(
 
 // - Case instruction
 
-/// Runs the first matching case with its checked bindings kept local.
+/// Runs the first matching case with its body bindings kept local.
 fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
     ctx: Context<'global>,
@@ -318,9 +309,9 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
     // Try guards in source order from the enclosing bindings
     for case in &instr.cases {
-        if let Some(ctx_arm) = unwrap!(eval_guard(runner_ctx, ctx.clone(), value, &case.guard)) {
-            // Keep guard bindings inside the selected case
-            let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_arm, &case.block));
+        if unwrap!(eval_guard(runner_ctx, &ctx, value, &case.guard)) {
+            // Keep body bindings inside the selected case
+            let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx.clone(), &case.block));
             return ok!((ctx, flow));
         }
     }
@@ -334,58 +325,37 @@ fn eval_case_instr<'global, Tier, Iface: Interface, Ext: Extern>(
     ))
 }
 
-/// Checks a case guard and binds its pattern only when it matches.
+/// Tests a case guard against the evaluated scrutinee without binding.
 fn eval_guard<'global, Iface: Interface, Ext: Extern>(
     runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
+    ctx: &Context<'global>,
     value: Value,
     guard: &ast::Guard,
-) -> Backtrack<Option<Context<'global>>> {
-    // Test the scrutinee before introducing checked bindings
-    let matched = match guard {
+) -> Backtrack<bool> {
+    match guard {
         // Compare the scrutinee with the expected boolean
         ast::Guard::Bool(expected) => ok!(value::get::bool(runner_ctx.arena(), &value)
             .expect("boolean guard value must be a boolean")
             == *expected),
         // Compare against the evaluated right side
         ast::Guard::Cmp(op, _, exp_r) => {
-            let value_r = unwrap!(eval_exp(runner_ctx, &ctx, exp_r));
+            let value_r = unwrap!(eval_exp(runner_ctx, ctx, exp_r));
             ops::cmpop(runner_ctx.arena(), &exp_r.node.span, op, value, value_r)
         }
         // Check membership before introducing any binding
-        ast::Guard::Sub(_, check) | ast::Guard::CheckLetSub(_, check, _) => {
-            ops::sub(runner_ctx.arena(), &ctx, &Span::default(), check, value)
+        ast::Guard::Sub(_, check) => {
+            ops::sub(runner_ctx.arena(), ctx, &Span::default(), check, value)
         }
         // Check the pattern before introducing any binding
-        ast::Guard::Match(pattern) | ast::Guard::CheckLetMatch(pattern, _) => {
+        ast::Guard::Match(pattern) => {
             ok!(ops::r#match(runner_ctx.arena(), pattern, value))
         }
         // Test membership in the evaluated list
         ast::Guard::Mem(exp_list) => {
-            let value_list = unwrap!(eval_exp(runner_ctx, &ctx, exp_list));
+            let value_list = unwrap!(eval_exp(runner_ctx, ctx, exp_list));
             ops::mem(runner_ctx.arena(), &exp_list.node.span, value, value_list)
         }
-    };
-    let matched = unwrap!(matched);
-    // A failed guard leaves the caller free to try another case
-    if !matched {
-        return ok!(None);
     }
-    // Only checked guards extend the selected case
-    let ctx = match guard {
-        // Downcast and bind the checked value
-        ast::Guard::CheckLetSub(typ, _, exp) => {
-            let value = unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, typ, value));
-            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx, exp, value))
-        }
-        // Bind the value accepted by the pattern
-        ast::Guard::CheckLetMatch(_, exp) => {
-            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx, exp, value))
-        }
-        // Ordinary guards do not extend the context
-        _ => ctx,
-    };
-    ok!(Some(ctx))
 }
 
 // - Let instruction
@@ -489,118 +459,6 @@ fn eval_destruct_instr<'global, Iface: Interface, Ext: Extern>(
     // Bind each extracted field to its pattern
     let ctx = unwrap!(assign::assign_exps(runner_ctx.arena_mut(), ctx, &exps, &values));
     ok!((ctx, Flow::Cont(vec![])))
-}
-
-// - CheckLetSub instruction
-
-/// Checks and downcasts a value before binding it in the nested block.
-fn eval_check_let_sub_instr<'global, Tier, Iface: Interface, Ext: Extern>(
-    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
-    instr: &ast::CheckLetSubInstr<Tier>,
-    evaluate_block: &mut impl FnMut(
-        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
-        &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
-) -> Backtrack<(Context<'global>, Flow)> {
-    // Check membership before casting and binding the value
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
-    let matches =
-        unwrap!(ops::sub(runner_ctx.arena(), &ctx, &instr.exp_r.node.span, &instr.subcheck, value));
-    // Cast only after the subtype check succeeds
-    if matches {
-        let value = unwrap!(ops::cast_down(runner_ctx.arena_mut(), &ctx, &instr.typ, value));
-        // Propagate binding failures before entering the nested block
-        let ctx_bound =
-            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
-        let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_bound, &instr.block));
-        ok!((ctx, flow))
-    } else {
-        ok!((
-            ctx,
-            Flow::cont(
-                instr.exp_r.node.span.clone(),
-                error::prem::condition_unmet(format!(
-                    "{} is not a subtype of {}",
-                    instr.exp_r.view(&runner_ctx.arena().mixop).to_string(),
-                    Print::to_string(&instr.typ)
-                ))
-            )
-        ))
-    }
-}
-
-// - CheckLetMatch instruction
-
-/// Checks a value against its pattern before binding it in the nested block.
-fn eval_check_let_match_instr<'global, Tier, Iface: Interface, Ext: Extern>(
-    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
-    instr: &ast::CheckLetMatchInstr<Tier>,
-    evaluate_block: &mut impl FnMut(
-        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
-        &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
-) -> Backtrack<(Context<'global>, Flow)> {
-    // Check the shape before assigning its pattern
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
-    if ops::r#match(runner_ctx.arena(), &instr.pattern, value) {
-        // The shorthand binding belongs to the nested block
-        let ctx_bound =
-            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
-        let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_bound, &instr.block));
-        ok!((ctx, flow))
-    } else {
-        ok!((
-            ctx,
-            Flow::cont(
-                instr.exp_r.node.span.clone(),
-                error::prem::condition_unmet(format!(
-                    "{} does not match the expected pattern",
-                    instr.exp_r.view(&runner_ctx.arena().mixop).to_string()
-                ))
-            )
-        ))
-    }
-}
-
-// - OptionGet instruction
-
-/// Binds a present option payload in the nested block; absence continues.
-fn eval_option_get_instr<'global, Tier, Iface: Interface, Ext: Extern>(
-    runner_ctx: &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-    ctx: Context<'global>,
-    instr: &ast::OptionGetInstr<Tier>,
-    evaluate_block: &mut impl FnMut(
-        &mut RunnerContext<'_, PlInterp, Iface, Ext>,
-        Context<'global>,
-        &ast::Block<Tier>,
-    ) -> Backtrack<(Context<'global>, Flow)>,
-) -> Backtrack<(Context<'global>, Flow)> {
-    // Only a present option enters the nested block
-    let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp_r));
-    if let Some(value) =
-        value::get::opt(runner_ctx.arena(), &value).expect("option binding value must be an option")
-    {
-        // The shorthand binding belongs to the nested block
-        let ctx_bound =
-            unwrap!(assign::assign_exp(runner_ctx.arena_mut(), ctx.clone(), &instr.exp_l, value));
-        let (_, flow) = unwrap!(evaluate_block(runner_ctx, ctx_bound, &instr.block));
-        ok!((ctx, flow))
-    } else {
-        ok!((
-            ctx,
-            Flow::cont(
-                instr.exp_r.node.span.clone(),
-                error::prem::condition_unmet(format!(
-                    "{} evaluated to an empty option",
-                    instr.exp_r.view(&runner_ctx.arena().mixop).to_string()
-                ))
-            )
-        ))
-    }
 }
 
 // - Backtrack instruction
