@@ -1418,9 +1418,9 @@ impl Prose {
             pl::Guard::Bool(false) => Prose::of_false_guard(exp_scrut),
             pl::Guard::Cmp(op, _, exp) => Prose::of_cmp_guard(exp_scrut, op, exp),
             pl::Guard::Sub(typ, _) => Prose::of_sub_guard(exp_scrut, typ),
-            pl::Guard::LetSub(typ, _, exp_l) => Prose::of_sub_binding(exp_l, exp_scrut, typ),
-            pl::Guard::LetMatch(_, exp_l) => Prose::of_binding(exp_l, exp_scrut, Prose::text("")),
+            pl::Guard::LetSub(typ, _, exp_l) => Prose::of_let_sub_guard(exp_scrut, typ, exp_l),
             pl::Guard::Match(pattern) => Prose::of_match_guard(exp_scrut, pattern),
+            pl::Guard::LetMatch(_, exp_l) => Prose::of_let_match_guard(exp_scrut, exp_l),
             pl::Guard::Mem(exp) => Prose::of_mem_guard(exp_scrut, exp),
         }
     }
@@ -1466,6 +1466,14 @@ impl Prose {
         Prose::seq([Prose::code(code_scrut), Prose::text(" has type "), Prose::code(code_typ)])
     }
 
+    // - Subtype binding guards
+    //
+    //   v, guarded by let x <: datum   -> let ``x`` of type ``datum`` be ``v``
+
+    fn of_let_sub_guard(exp_scrut: &pl::Exp, typ: &pl::Typ, exp_l: &pl::Exp) -> Prose {
+        Prose::of_sub_binding(exp_l, exp_scrut, typ)
+    }
+
     // - Pattern guards
     //
     //   t'*, guarded by []   -> ``t'^{asterisk}^`` matches pattern ``[]``
@@ -1474,6 +1482,14 @@ impl Prose {
         let prose_scrut = Prose::of_exp(exp_scrut);
         let code_pattern = Code::of_pattern(pattern);
         Prose::seq([prose_scrut, Prose::text(" matches pattern "), Prose::code(code_pattern)])
+    }
+
+    // - Pattern binding guards
+    //
+    //   v, guarded by let ?()   -> let ``?()`` be ``v``
+
+    fn of_let_match_guard(exp_scrut: &pl::Exp, exp_l: &pl::Exp) -> Prose {
+        Prose::of_binding(exp_l, exp_scrut, Prose::text(""))
     }
 
     // - Membership guards
