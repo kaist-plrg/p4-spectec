@@ -821,8 +821,8 @@ fn lower_clause(
     ctx.add_bounds(&venv);
     let prems_analyzed = lower_prems(&mut ctx, prems_il)?;
     analyze_exp_as_bound(&ctx, &exp_il)?;
-    let otherwise = is_else
-        .then(|| otherwise_opt.unwrap_or_else(|| phrase!(node: ast::OtherwiseKind, span: span)));
+    let otherwise =
+        is_else.then(|| otherwise_opt.unwrap_or(phrase!(node: ast::OtherwiseKind, span: span)));
     // An otherwise clause may not contain partial premises
     let mut prems_all_analyzed = prems_generated;
     prems_all_analyzed.extend(prems_analyzed);
@@ -935,7 +935,7 @@ fn check_valid_table_rows(
         let span = rows_al
             .last()
             .map(|row| Span::new(row.span.right, row.span.right))
-            .unwrap_or_else(|| *span);
+            .unwrap_or(*span);
         return Err(error::table::table_pattern_incomplete(&span, &patterns_missing));
     }
     Ok(())

@@ -17,7 +17,7 @@ fn covering_spans_orders_file_names() {
     .unwrap();
     let span = Span::over(&[span_z, span_a]);
     assert_eq!(
-        serde_json::to_value(&span).unwrap(),
+        serde_json::to_value(span).unwrap(),
         json!({
             "left": { "file": "a.watsup", "line": 5, "column": 6 },
             "right": { "file": "z.watsup", "line": 3, "column": 4 }
@@ -35,7 +35,7 @@ fn spans_roundtrip_file_names() {
     let span: Span = serde_json::from_value(json.clone()).unwrap();
     let span_other: Span = serde_json::from_value(json.clone()).unwrap();
     assert_eq!(span, span_other);
-    assert_eq!(serde_json::to_value(&span).unwrap(), json);
+    assert_eq!(serde_json::to_value(span).unwrap(), json);
     assert_eq!(span.to_string(), "source.watsup:2.4-2.8");
 }
 
