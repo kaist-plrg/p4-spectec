@@ -30,8 +30,6 @@ parser and the high-level architecture of the tool.
 
 * **P4 Workshop 2024**:
   [P4-SpecTec: Mechanized Language Definition for P4](https://www.youtube.com/watch?v=AcxAYvM8pnA&t=4s).
-* **PLDI 2024**:
-  [Bringing the WebAssembly Standard up to Speed with SpecTec](https://dl.acm.org/doi/10.1145/3656440).
 * **P4 Developer Days 2025**:
   [Mechanizing the P4 Language Specification with P4-SpecTec](https://www.youtube.com/watch?v=2BhqyE7c-Pw).
 * **PLSS 2025**:
