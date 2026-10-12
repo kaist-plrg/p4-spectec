@@ -18,7 +18,7 @@ use super::super::{
         PREFIX_LATEX, PREFIX_PROSE, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE,
     },
     error::Error,
-    splicer::{Kind, Selection},
+    splicer::Kind,
 };
 
 // == Splice initialization
@@ -70,12 +70,11 @@ impl<'spec> Kind<'spec> for Source {
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .flat_map(|selection| selection.data.iter().copied())
+            .flat_map(|value| value.iter().copied())
             .map(adoc::el::render_def)
             .collect::<Vec<_>>()
             .join("\n\n"))
@@ -104,15 +103,9 @@ impl<'spec> Kind<'spec> for Latex {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
-        latex::render_defs(
-            anchor_ctx,
-            values
-                .iter()
-                .flat_map(|selection| selection.data.iter().copied()),
-        )
+        latex::render_defs(anchor_ctx, values.iter().flat_map(|value| value.iter().copied()))
     }
 }
 
@@ -138,20 +131,11 @@ impl<'spec> Kind<'spec> for Prose {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .filter_map(|selection| {
-                let anchor_else = format!(
-                    "{}:{}:{idx_request}:{}-else",
-                    Self::NAME,
-                    selection.key,
-                    selection.idx_key,
-                );
-                adoc::pl::render_def(anchor_ctx, warnings, Some(&anchor_else), selection.data)
-            })
+            .filter_map(|value| adoc::pl::render_def(anchor_ctx, warnings, value))
             .collect::<Vec<_>>()
             .join("\n\n"))
     }

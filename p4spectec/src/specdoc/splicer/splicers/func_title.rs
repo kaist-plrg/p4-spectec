@@ -23,7 +23,7 @@ use super::super::{
     anchor::{Decls, Targets},
     config::{PREFIX_LATEX, PREFIX_SOURCE, SUFFIX_LATEX, SUFFIX_PROSE, SUFFIX_SOURCE},
     error::Error,
-    splicer::{Kind, Selection},
+    splicer::Kind,
 };
 
 // == Splice initialization
@@ -82,12 +82,11 @@ impl<'spec> Kind<'spec> for Source {
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .map(|selection| adoc::el::render_def(selection.data))
+            .map(|value| adoc::el::render_def(value))
             .collect::<Vec<_>>()
             .join("\n\n"))
     }
@@ -115,10 +114,9 @@ impl<'spec> Kind<'spec> for Latex {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
-        latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))
+        latex::render_defs(anchor_ctx, values.iter().copied().copied())
     }
 
     fn anchor(anchor_ctx: &AnchorContext<'_>, name: &str) -> Option<String> {
@@ -157,14 +155,11 @@ impl<'spec> Kind<'spec> for Prose {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .filter_map(|selection| {
-                adoc::pl::render_def_title(anchor_ctx, warnings, selection.data)
-            })
+            .filter_map(|value| adoc::pl::render_def_title(anchor_ctx, warnings, value))
             .collect::<Vec<_>>()
             .join("\n\n"))
     }

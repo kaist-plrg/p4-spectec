@@ -23,7 +23,7 @@ use super::super::{
     },
     error::Error,
     parser, source,
-    splicer::{Key, Kind, Selection},
+    splicer::{Key, Kind},
 };
 
 // == Splice initialization
@@ -95,12 +95,11 @@ impl<'spec> Kind<'spec> for Source {
     fn render(
         _anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .map(|selection| adoc::el::render_def(selection.data))
+            .map(|value| adoc::el::render_def(value))
             .collect::<Vec<_>>()
             .join("\n\n"))
     }
@@ -128,10 +127,9 @@ impl<'spec> Kind<'spec> for Latex {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         _warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
-        latex::render_defs(anchor_ctx, values.iter().map(|selection| *selection.data))
+        latex::render_defs(anchor_ctx, values.iter().copied().copied())
     }
 }
 
@@ -157,13 +155,12 @@ impl<'spec> Kind<'spec> for Prose {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        _idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error> {
         Ok(values
             .iter()
-            .map(|selection| {
-                let group = selection.data;
+            .map(|value| {
+                let group = value;
                 let mut renderer = Renderer::new(anchor_ctx, warnings);
                 renderer.render_rulegroup(
                     group.hints,

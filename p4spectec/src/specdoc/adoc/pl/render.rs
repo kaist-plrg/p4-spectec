@@ -1770,10 +1770,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //     -- otherwise
     //   -> . +++<span id="starts_with-else"></span>+++Otherwise: return ``false``.
 
-    /// Serializes an otherwise block with its optional anchor.
+    /// Serializes an otherwise block with its definition-based destination.
     fn render_elseblock<Tier>(
         &mut self,
-        anchor_else: Option<&str>,
+        id_def: &str,
         render_tier: RenderTier<'ctx, 'a, Tier>,
         block_opt: Option<&[pl::Instr<Tier>]>,
     ) -> String {
@@ -1781,11 +1781,13 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let Some(block) = block_opt.filter(|block| !block.is_empty()) else {
             return String::new();
         };
-        // Prefix the visible heading with its optional destination anchor
-        let text_anchor = anchor_else
-            .filter(|anchor| self.anchor_ctx.claim_anchor(anchor))
-            .map(|anchor| format!("+++<span id=\"{anchor}\"></span>+++"))
-            .unwrap_or_default();
+        // Declare each definition's otherwise destination once per document batch
+        let anchor_else = anchor::anchor_of_else(id_def);
+        let text_anchor = if self.anchor_ctx.claim_anchor(&anchor_else) {
+            format!("+++<span id=\"{anchor_else}\"></span>+++")
+        } else {
+            String::new()
+        };
         let block_body = self.render_instrs(1, None, render_tier, block);
         let text_body = serialize::ser_block(self.anchor_ctx, self.warnings, &block_body);
         let text_bullet = serialize::adoc_ordered_bullet(0);
@@ -2814,9 +2816,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Renders a relation otherwise fragment with its shared destination.
     pub fn render_rulegroup_else(&mut self, id_rel: &pl::Id, block: &pl::DispatchBlock) -> String {
-        let anchor_else = anchor::anchor_of_else(&id_rel.node);
         let text_else = self.render_elseblock(
-            Some(&anchor_else),
+            &format!("rel:{}", id_rel.node),
             Self::render_instr_dispatch_inline,
             Some(block),
         );
@@ -2858,16 +2859,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
 
     /// Builds a relation body with dispatch arms numbered before group arms.
     fn render_defined_rel_def(&mut self, hints: &Hints, rel: &pl::DefinedRel) -> Block {
-        // Reserve an otherwise anchor only for a visible block
-        let has_else = rel
-            .block_else_opt
-            .as_ref()
-            .is_some_and(|block| !block.is_empty());
-        let anchor_else = has_else.then(|| anchor::anchor_of_else(&rel.id.node));
         // Allocate dispatch arms, then otherwise arms, before rendering rule groups
         let text_dispatch = self.render_defined_rel_def_dispatch(rel);
         let text_else = self.render_elseblock(
-            anchor_else.as_deref(),
+            &format!("rel:{}", rel.id.node),
             Self::render_instr_dispatch_inline,
             rel.block_else_opt.as_deref(),
         );
@@ -3017,19 +3012,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //      . +++<span id="c_sign-else"></span>+++Otherwise: return ``"neg"``.
 
     /// Builds a function body and its optional otherwise clause.
-    fn render_defined_func_def(
-        &mut self,
-        hints: &Hints,
-        func: &pl::DefinedFunc,
-        anchor_else_input: Option<&str>,
-    ) -> Block {
-        // Reserve an otherwise anchor only for a visible block
-        let has_else = func
-            .block_else_opt
-            .as_ref()
-            .is_some_and(|block| !block.is_empty());
+    fn render_defined_func_def(&mut self, hints: &Hints, func: &pl::DefinedFunc) -> Block {
         // Choose the compact boolean or general body form
-        let (block_body, anchor_else) = match func.block.as_slice() {
+        let block_body = match func.block.as_slice() {
             [instr]
                 if let pl::InstrKind::Tier(tier_instr) = &instr.node.node
                     && let pl::GroupInstr::Return(return_instr) = &tier_instr.tier
@@ -3039,22 +3024,22 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 let code_exp = Code::of_exp(&return_instr.exp);
                 let prose_tail =
                     Prose::seq([Prose::text(" return "), Prose::code(code_exp), Prose::text(".")]);
-                (Block::inline(prose_tail), None)
+                Block::inline(prose_tail)
             }
             _ => {
-                // Render the general instruction sequence with an optional target
+                // Render the general instruction sequence
                 let blocks_rendered: Vec<Block> = func
                     .block
                     .iter()
                     .map(|instr| self.render_instr(0, Self::render_instr_group, instr))
                     .collect();
-                (Block::seq(blocks_rendered), anchor_else_input.filter(|_| has_else))
+                Block::seq(blocks_rendered)
             }
         };
         // Append the otherwise clause after the selected body form
         let block_header = Self::render_func_title(hints, &func.id, &func.tparams, &func.params);
         let text_else = self.render_elseblock(
-            anchor_else,
+            &format!("func:{}", func.id.node),
             Self::render_instr_group,
             func.block_else_opt.as_deref(),
         );
@@ -3070,8 +3055,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //   syntax rec = {LEFT nat, RIGHT nat}   -> None
     //   extern relation Oracle: nat ~> nat   -> Some("xref:Oracle[Oracle: ``nat`` ``+~>+`` ``%``]")
 
-    /// Renders a definition with an optional otherwise destination.
-    pub fn render_def(&mut self, def: &pl::Def, anchor_else: Option<&str>) -> Option<String> {
+    /// Renders a definition with destinations derived from its identifier.
+    pub fn render_def(&mut self, def: &pl::Def) -> Option<String> {
         let block = match &def.node.node {
             pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
             pl::DefKind::Rel(pl::RelDef::Extern(rel)) => {
@@ -3090,7 +3075,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
                 Self::render_table_func_def(&def.hints, func)
             }
             pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => {
-                self.render_defined_func_def(&def.hints, func, anchor_else)
+                self.render_defined_func_def(&def.hints, func)
             }
         };
         Some(serialize::ser_block(self.anchor_ctx, self.warnings, &block))
@@ -3130,14 +3115,13 @@ pub fn render_def_title(
 
 /// Renders one definition, omitting type and variable declarations.
 ///
-/// Share the anchor context and pass an otherwise destination for each body.
+/// Share the anchor context to suppress repeated destination declarations.
 pub fn render_def(
     anchor_ctx: &mut AnchorContext<'_>,
     warnings: &mut Vec<Report>,
-    anchor_else: Option<&str>,
     def: &pl::Def,
 ) -> Option<String> {
-    Renderer::new(anchor_ctx, warnings).render_def(def, anchor_else)
+    Renderer::new(anchor_ctx, warnings).render_def(def)
 }
 
 /// Renders a complete prose specification and collects markup warnings.
@@ -3145,21 +3129,7 @@ pub fn render_spec(warnings: &mut Vec<Report>, spec: &pl::Spec) -> String {
     let resolve = |_, id: &str| Some(id.to_owned());
     let mut anchor_ctx = AnchorContext::new(&resolve, &resolve);
     spec.iter()
-        .enumerate()
-        .filter_map(|(idx_def, def)| {
-            // Keep the definition name visible and its original position unique
-            let id = match &def.node.node {
-                pl::DefKind::Rel(pl::RelDef::Extern(rel)) => &rel.id,
-                pl::DefKind::Rel(pl::RelDef::Defined(rel)) => &rel.id,
-                pl::DefKind::MetaFunc(pl::MetaFuncDef::Extern(func)) => &func.id,
-                pl::DefKind::MetaFunc(pl::MetaFuncDef::Builtin(func)) => &func.id,
-                pl::DefKind::MetaFunc(pl::MetaFuncDef::Table(func)) => &func.id,
-                pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(func)) => &func.id,
-                pl::DefKind::Typ(_) | pl::DefKind::Var(_) => return None,
-            };
-            let anchor_else = anchor::anchor_of_else(&format!("spec:{}:{idx_def}", id.node));
-            render_def(&mut anchor_ctx, warnings, Some(&anchor_else), def)
-        })
+        .filter_map(|def| render_def(&mut anchor_ctx, warnings, def))
         .collect::<Vec<_>>()
         .join("\n\n")
 }

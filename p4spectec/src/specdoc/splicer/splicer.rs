@@ -50,19 +50,6 @@ impl Key for String {
     }
 }
 
-/// Borrows one selected definition with its key and original request position.
-///
-/// In `${func-prose: missing f}`, the selection for `f` retains index 1.
-/// Repeated keys stay separate even when they borrow the same data.
-pub(super) struct Selection<'a, Key, Value> {
-    /// Retains the key's position before missing definitions are skipped.
-    pub idx_key: usize,
-    /// Identifies the selected definition within this marker kind.
-    pub key: &'a Key,
-    /// Borrows the definition selected from the store.
-    pub data: &'a Value,
-}
-
 /// Supplies kind-specific operations while `Splicer` owns the mutable state.
 pub(super) trait Kind<'spec> {
     type Key: Key;
@@ -77,8 +64,7 @@ pub(super) trait Kind<'spec> {
     fn render(
         anchor_ctx: &mut AnchorContext<'_>,
         warnings: &mut Vec<Report>,
-        idx_request: usize,
-        values: &[Selection<'_, Self::Key, Self::Value>],
+        values: &[&Self::Value],
     ) -> Result<String, Error>;
 
     fn anchor(_anchor_ctx: &AnchorContext<'_>, _name: &str) -> Option<String> {
@@ -209,11 +195,11 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
         let mut headers = String::new();
         let mut values = Vec::with_capacity(keys.len());
         // Preserve repetitions while declaring each destination once
-        for (idx_key, key) in keys.iter().enumerate() {
+        for key in keys {
             let Some(entry) = self.store.entries.get(&key.node) else {
                 continue;
             };
-            values.push(Selection { idx_key, key: &key.node, data: &entry.data });
+            values.push(&entry.data);
             if let Some(anchor) = SpliceKind::anchor(anchor_ctx, &key.node.to_anchor())
                 && anchor_ctx.claim_anchor(&anchor)
             {
@@ -226,7 +212,7 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
         if !headers.is_empty() {
             headers.push_str("++++\n");
         }
-        let text = SpliceKind::render(anchor_ctx, warnings, idx_request, &values)?;
+        let text = SpliceKind::render(anchor_ctx, warnings, &values)?;
         Ok(format!("{headers}{}{text}{}", SpliceKind::PREFIX, SpliceKind::SUFFIX))
     }
 
