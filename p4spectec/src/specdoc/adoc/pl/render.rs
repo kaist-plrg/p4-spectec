@@ -45,7 +45,7 @@ use crate::lang::pl::{
 
 use crate::diagnostic::Report;
 
-use crate::specdoc::anchor::{self, AnchorContext};
+use crate::specdoc::anchor::{AnchorContext, DefKind};
 
 use super::doc::{
     doc::{Block, Code, ItemKind, Link, Prose, Subject, Table},
@@ -1672,11 +1672,12 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //
     //   def $starts_with(t, t_prefix) = false
     //     -- otherwise
-    //   -> . +++<span id="starts_with-else"></span>+++Otherwise: return ``false``.
+    //   -> . +++<span id="func:starts_with-else"></span>+++Otherwise: return ``false``.
 
     /// Serializes an otherwise block with its definition-based destination.
     fn render_elseblock<Tier>(
         &mut self,
+        def_kind: DefKind,
         id_def: &str,
         render_tier: RenderTier<'ctx, 'a, Tier>,
         block_opt: Option<&[pl::Instr<Tier>]>,
@@ -1686,7 +1687,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
             return String::new();
         };
         // Declare each definition's otherwise destination once per document batch
-        let anchor_else = anchor::anchor_of_else(id_def);
+        let anchor_else = self.anchor_ctx.otherwise(def_kind, id_def);
         let text_anchor = if self.anchor_ctx.claim_anchor(&anchor_else) {
             format!("+++<span id=\"{anchor_else}\"></span>+++")
         } else {
@@ -1999,8 +2000,13 @@ impl Prose {
     //
     //   Even/nil   -> goto xref:Even-nil[nil]
 
-    fn of_group_dispatch(span: &Span, id_rel: &pl::Id, id_group: &pl::Id) -> Prose {
-        let anchor_group = anchor::anchor_of_group(&id_rel.node, &id_group.node);
+    fn of_group_dispatch(
+        anchor_ctx: &AnchorContext<'_>,
+        span: &Span,
+        id_rel: &pl::Id,
+        id_group: &pl::Id,
+    ) -> Prose {
+        let anchor_group = anchor_ctx.group(&id_rel.node, &id_group.node);
         let prose_group = Prose::link(
             Link::Direct(crate::phrase! { node: anchor_group, span: span.clone() }),
             Prose::text(id_group.node.clone()),
@@ -2016,13 +2022,18 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //   nested Sign/zero              -> . Goto xref:Sign-zero[zero]
 
     fn render_group_instr_dispatch(
+        &self,
         span: &Span,
         level: usize,
         singleton: bool,
         group_instr: &pl::RuleGroupInstr,
     ) -> Rendered {
-        let prose_dispatch =
-            Prose::of_group_dispatch(span, &group_instr.id_rel, &group_instr.id_group);
+        let prose_dispatch = Prose::of_group_dispatch(
+            self.anchor_ctx,
+            span,
+            &group_instr.id_rel,
+            &group_instr.id_group,
+        );
         // A lone dispatch folds onto its heading
         if singleton {
             return Rendered::InlineGoto(Prose::seq([Prose::text(" "), prose_dispatch]));
@@ -2575,7 +2586,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Rendered {
         match tier {
             pl::DispatchInstr::Group(group_instr) => {
-                Self::render_group_instr_dispatch(&instr.node.span, level, singleton, group_instr)
+                self.render_group_instr_dispatch(&instr.node.span, level, singleton, group_instr)
             }
             pl::DispatchInstr::Route(route_instr) => self.render_route_instr(level, route_instr),
         }
@@ -2717,13 +2728,14 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     // - Otherwise fragments
     //
     //   rule Sign/other: i ~> "nonzero"  -- otherwise
-    //   -> . +++<span id="Sign-else"></span>+++Otherwise:
+    //   -> . +++<span id="rel:Sign-else"></span>+++Otherwise:
     //       .. xref:Sign[``i`` ``+~>+`` ``%``]: the result is ``"nonzero"``.
 
     /// Renders a relation otherwise fragment with its shared destination.
     pub fn render_rulegroup_else(&mut self, id_rel: &pl::Id, block: &pl::DispatchBlock) -> String {
         let text_else = self.render_elseblock(
-            &format!("rel:{}", id_rel.node),
+            DefKind::Rel,
+            &id_rel.node,
             Self::render_instr_dispatch_inline,
             Some(block),
         );
@@ -2755,7 +2767,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //      xref:Sign[``0`` ``+~>+`` ``%``]:
     //       the result is ``"zero"``.
     //
-    //      . +++<span id="Sign-else"></span>+++Otherwise:
+    //      . +++<span id="rel:Sign-else"></span>+++Otherwise:
     //       .. xref:Sign[``i`` ``+~>+`` ``%``]: the result is ``"nonzero"``.
     //
     //      Sign dispatch:
@@ -2768,7 +2780,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Allocate dispatch arms, then otherwise arms, before rendering rule groups
         let text_dispatch = self.render_defined_rel_def_dispatch(rel);
         let text_else = self.render_elseblock(
-            &format!("rel:{}", rel.id.node),
+            DefKind::Rel,
+            &rel.id.node,
             Self::render_instr_dispatch_inline,
             rel.block_else_opt.as_deref(),
         );
@@ -2915,7 +2928,7 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //       .. Check that ``i`` is greater than ``0``.
     //       .. Return ``"pos"``.
     //
-    //      . +++<span id="c_sign-else"></span>+++Otherwise: return ``"neg"``.
+    //      . +++<span id="func:c_sign-else"></span>+++Otherwise: return ``"neg"``.
 
     /// Builds a function body and its optional otherwise clause.
     fn render_defined_func_def(&mut self, hints: &Hints, func: &pl::DefinedFunc) -> Block {
@@ -2945,7 +2958,8 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         // Append the otherwise clause after the selected body form
         let block_header = Self::render_func_title(hints, &func.id, &func.tparams, &func.params);
         let text_else = self.render_elseblock(
-            &format!("func:{}", func.id.node),
+            DefKind::Func,
+            &func.id.node,
             Self::render_instr_group,
             func.block_else_opt.as_deref(),
         );

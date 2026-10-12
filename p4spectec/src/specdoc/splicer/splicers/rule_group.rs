@@ -13,7 +13,7 @@ use crate::diagnostic::Report;
 
 use super::super::super::{
     adoc::{self, pl::Renderer},
-    anchor::{self, AnchorContext},
+    anchor::AnchorContext,
     latex,
 };
 
@@ -62,8 +62,8 @@ impl Key for (String, String) {
         format!("{}/{}", self.0, self.1)
     }
 
-    fn to_anchor(&self) -> String {
-        anchor::anchor_of_group(&self.0, &self.1)
+    fn to_anchor(&self, anchor_ctx: &AnchorContext<'_>) -> String {
+        anchor_ctx.group(&self.0, &self.1)
     }
 
     fn parse(

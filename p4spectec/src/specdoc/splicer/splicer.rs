@@ -31,7 +31,7 @@ use super::{
 pub(super) trait Key: Ord {
     fn to_string(&self) -> String;
 
-    fn to_anchor(&self) -> String {
+    fn to_anchor(&self, _anchor_ctx: &AnchorContext<'_>) -> String {
         self.to_string()
     }
 
@@ -200,7 +200,7 @@ impl<'spec, SpliceKind: Kind<'spec>> Splice for Splicer<'spec, SpliceKind> {
                 continue;
             };
             values.push(&entry.data);
-            if let Some(anchor) = SpliceKind::anchor(anchor_ctx, &key.node.to_anchor())
+            if let Some(anchor) = SpliceKind::anchor(anchor_ctx, &key.node.to_anchor(anchor_ctx))
                 && anchor_ctx.claim_anchor(&anchor)
             {
                 if headers.is_empty() {
