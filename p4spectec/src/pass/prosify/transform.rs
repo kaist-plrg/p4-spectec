@@ -1800,7 +1800,7 @@ fn prosify_def(ctx: &mut Context, def_sl: sl::Def) -> Result<pl::Def, ProseError
 
 // == Entry point
 
-/// The whole conversion: load hints, expand calls, convert, normalize, classify, shorten.
+/// The whole conversion: load hints, expand calls, convert, classify, shorten.
 pub(super) fn prosify_spec(spec_sl: sl::Spec) -> Result<pl::Spec, ProseError> {
     let mut ctx = Context::load(&spec_sl)?;
     let spec_sl = super::expand::expand_spec(spec_sl);
@@ -1809,7 +1809,6 @@ pub(super) fn prosify_spec(spec_sl: sl::Spec) -> Result<pl::Spec, ProseError> {
         let def_pl = prosify_def(&mut ctx, def_sl)?;
         spec_pl.push(def_pl);
     }
-    let spec_pl = super::normalize::normalize_spec(spec_pl);
     let spec_pl = super::control::classify_spec(spec_pl);
     let spec_pl = super::shorthand::shorten_spec(spec_pl);
     Ok(spec_pl)

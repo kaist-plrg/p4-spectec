@@ -4,15 +4,14 @@
 //! `Context::load` collects `prose*` hints and meta-variable types,
 //! `expand` lifts nested calls into let instructions,
 //! `transform` converts each definition and splits instructions into tiers,
-//! `normalize` turns singleton cases into conditions,
-//! `control` classifies conditions by their remaining continuations,
+//! `control` normalizes singleton cases and classifies conditions
+//! by their remaining continuations,
 //! and `shorthand` recognizes hinted destructuring.
 
 mod context;
 mod control;
 mod error;
 mod expand;
-mod normalize;
 mod shorthand;
 mod transform;
 

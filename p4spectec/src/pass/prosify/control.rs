@@ -1,9 +1,35 @@
-//! Classify conditions using the continuations of the complete prose tree
+//! Normalize singleton cases and classify conditions by their continuations
 //!
 //! A condition becomes Check only when failure has no remaining instruction,
 //! alternative arm, or otherwise block in this definition. Calls are separate.
 
-use crate::lang::pl::ast as pl;
+use crate::lang::{common::prim, pl::ast as pl};
+
+/// Converts a nonbinding guard into a boolean predicate.
+fn guard_to_condition(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
+    let span = exp_scrut.node.span.clone();
+    let kind = match guard {
+        pl::Guard::Bool(true) => return exp_scrut,
+        pl::Guard::Bool(false) => {
+            let exp_false = crate::annotated_note_phrase! {
+                node: pl::ExpKind::Bool(false), note: pl::TypKind::Bool, span: span.clone(),
+            };
+            pl::ExpKind::Cmp(
+                pl::CmpOp::Bool(prim::bool::CmpOp::Eq),
+                pl::OpTyp::Bool,
+                Box::new(exp_scrut),
+                Box::new(exp_false),
+            )
+        }
+        pl::Guard::Cmp(op, op_typ, exp_r) => {
+            pl::ExpKind::Cmp(op, op_typ, Box::new(exp_scrut), Box::new(exp_r))
+        }
+        pl::Guard::Sub(typ, subcheck) => pl::ExpKind::Sub(Box::new(exp_scrut), typ, subcheck),
+        pl::Guard::Match(pattern) => pl::ExpKind::Match(Box::new(exp_scrut), pattern),
+        pl::Guard::Mem(exp_list) => pl::ExpKind::Mem(Box::new(exp_scrut), Box::new(exp_list)),
+    };
+    crate::annotated_note_phrase! { node: kind, note: pl::TypKind::Bool, span: span }
+}
 
 /// Classifies a condition after classifying its nested body.
 fn classify_if<Tier>(instr_if: pl::IfInstr<Tier>, has_continuation: bool) -> pl::InstrKind<Tier> {
@@ -52,7 +78,21 @@ fn classify_block<Tier>(
                 for case in &mut instr_case.cases {
                     classify_block(&mut case.block, has_continuation, classify_tier);
                 }
-                pl::InstrKind::Case(instr_case)
+                // Normalize singleton guards within the classification traversal
+                if instr_case.cases.len() == 1 {
+                    let case = instr_case.cases.pop().expect("singleton case");
+                    classify_if(
+                        pl::IfInstr {
+                            exp: guard_to_condition(instr_case.exp, case.guard),
+                            iter_exps: vec![],
+                            block: case.block,
+                            dangle: instr_case.dangle,
+                        },
+                        has_continuation,
+                    )
+                } else {
+                    pl::InstrKind::Case(instr_case)
+                }
             }
             pl::InstrKind::Tier(mut instr_tier) => {
                 classify_tier(&mut instr_tier.tier, has_continuation);
