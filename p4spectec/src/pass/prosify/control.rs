@@ -1,8 +1,27 @@
 //! Normalize singleton cases and classify conditions by their continuations
 //!
-//! A condition becomes Check only when failure has no remaining instruction,
-//! alternative arm, or otherwise block in this definition. Calls are separate.
-//! Table rows retain their matching blocks without prose classification.
+//! `classify_spec` turns singleton cases into conditions
+//! and walks blocks backwards to distinguish `If` from `Check`
+//!
+//! For a definition body without an otherwise clause:
+//!
+//! ```text
+//! If p { Return a }
+//! If q { Return b }
+//! ```
+//!
+//! becomes
+//!
+//! ```text
+//! If p { Return a }
+//! Check q { Return b }
+//! ```
+//!
+//! The first condition can fail into the next instruction
+//! The last condition must hold because no continuation remains
+//! Later alternative arms and otherwise clauses also provide continuations
+//! Other arms of a selected `Case` do not
+//! Table matching blocks are left unchanged
 
 use crate::lang::{common::prim, pl::ast as pl};
 
