@@ -25,7 +25,7 @@ where
     Ext: Extern,
 {
     arena: &'runner mut Arena,
-    spec: &'runner Interp::Spec,
+    spec_env: &'runner Interp::SpecEnv,
     interp: &'runner mut Interp,
     interface: &'runner mut Iface,
     external: &'runner Ext,
@@ -40,19 +40,19 @@ where
 {
     pub(super) fn new(
         arena: &'runner mut Arena,
-        spec: &'runner Interp::Spec,
+        spec_env: &'runner Interp::SpecEnv,
         interp: &'runner mut Interp,
         interface: &'runner mut Iface,
         external: &'runner Ext,
         effects: &'runner mut u64,
     ) -> Self {
-        Self { arena, spec, interp, interface, external, effects }
+        Self { arena, spec_env, interp, interface, external, effects }
     }
 
     // - Semantic components
 
-    pub fn spec(&self) -> &'runner Interp::Spec {
-        self.spec
+    pub fn spec_env(&self) -> &'runner Interp::SpecEnv {
+        self.spec_env
     }
 
     pub fn interp(&self) -> &Interp {

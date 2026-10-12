@@ -138,7 +138,7 @@ where
     Ext: Extern,
 {
     /// Loaded global definitions.
-    type Spec;
+    type SpecEnv;
 
     /// Clears cached results without invalidating arena values.
     fn clear(&mut self);

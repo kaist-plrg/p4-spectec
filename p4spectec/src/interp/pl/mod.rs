@@ -47,7 +47,7 @@ impl PlInterp {
 }
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PlInterp {
-    type Spec = context::Global;
+    type SpecEnv = context::SpecEnv;
 
     fn clear(&mut self) {
         self.cache.clear();
@@ -72,7 +72,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PlInterp {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.into(), span: Span::default());
-        let ctx = context::Context::new(runner_ctx.spec());
+        let ctx = context::Context::new(runner_ctx.spec_env());
         // Check the caller's inputs before running the definition
         eval::call::check_rel_inputs(
             runner_ctx.arena(),
@@ -93,7 +93,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for PlInterp {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.into(), span: Span::default());
-        let ctx = context::Context::new(runner_ctx.spec());
+        let ctx = context::Context::new(runner_ctx.spec_env());
         // Check the caller's inputs before running the definition
         eval::call::check_func_inputs(
             runner_ctx.arena(),

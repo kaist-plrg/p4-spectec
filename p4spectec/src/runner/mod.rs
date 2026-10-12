@@ -24,11 +24,11 @@ use crate::lang::pl;
 
 use crate::diagnostic::Report;
 
-use crate::interp::al::{AlInterp, Config as AlConfig, context::Global as AlGlobal};
+use crate::interp::al::{AlInterp, Config as AlConfig, context::SpecEnv as AlSpecEnv};
 
-use crate::interp::sl::{Config as SlConfig, SlInterp, context::Global as SlGlobal};
+use crate::interp::sl::{Config as SlConfig, SlInterp, context::SpecEnv as SlSpecEnv};
 
-use crate::interp::pl::{Config as PlConfig, PlInterp, context::Global as PlGlobal};
+use crate::interp::pl::{Config as PlConfig, PlInterp, context::SpecEnv as PlSpecEnv};
 
 use crate::interface::{
     self as builtin,
@@ -88,9 +88,9 @@ pub fn build_al<Ext: Extern>(
     let Spec::Al(spec) = spec else { unreachable!() };
     // Load and prepare the definitions
     let mut arena_mixop = MixopArena::new();
-    let global = AlGlobal::load(&mut arena_mixop, spec)?;
+    let spec_env = AlSpecEnv::load(&mut arena_mixop, spec)?;
     let config = AlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(arena_mixop, global, AlInterp::new(config), interface, external))
+    Ok(Runner::new(arena_mixop, spec_env, AlInterp::new(config), interface, external))
 }
 
 /// Builds an SL runner from a specification, with the P4 builtins.
@@ -107,9 +107,9 @@ pub fn build_sl<Ext: Extern>(
     let Spec::Sl(spec) = spec else { unreachable!() };
     // Load and prepare the definitions
     let mut arena_mixop = MixopArena::new();
-    let global = SlGlobal::load(&mut arena_mixop, config.det, spec)?;
+    let spec_env = SlSpecEnv::load(&mut arena_mixop, config.det, spec)?;
     let config = SlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(arena_mixop, global, SlInterp::new(config), interface, external))
+    Ok(Runner::new(arena_mixop, spec_env, SlInterp::new(config), interface, external))
 }
 
 /// Builds a PL runner from a specification, with the P4 builtins.
@@ -124,9 +124,9 @@ pub fn build_pl<Ext: Extern>(
     let interface = builtin::p4(&spec);
     let Spec::Pl(spec) = spec else { unreachable!() };
     let mut arena_mixop = MixopArena::new();
-    let global = PlGlobal::load(&mut arena_mixop, spec)?;
+    let spec_env = PlSpecEnv::load(&mut arena_mixop, spec)?;
     let config = PlConfig::new(config.cache, config.det, config.guard);
-    Ok(Runner::new(arena_mixop, global, PlInterp::new(config), interface, external))
+    Ok(Runner::new(arena_mixop, spec_env, PlInterp::new(config), interface, external))
 }
 
 // == Runner assembly
@@ -139,7 +139,7 @@ where
     Ext: Extern,
 {
     arena: Arena,
-    spec: Interp::Spec,
+    spec_env: Interp::SpecEnv,
     interp: Interp,
     interface: Iface,
     external: Ext,
@@ -155,14 +155,14 @@ where
     /// Assembles the components around an arena over the specification's shapes.
     pub fn new(
         arena_mixop: MixopArena,
-        spec: Interp::Spec,
+        spec_env: Interp::SpecEnv,
         interp: Interp,
         interface: Iface,
         external: Ext,
     ) -> Self {
         Self {
             arena: Arena::with_arena_mixop(arena_mixop),
-            spec,
+            spec_env,
             interp,
             interface,
             external,
@@ -174,7 +174,7 @@ where
     pub fn context(&mut self) -> RunnerContext<'_, Interp, Iface, Ext> {
         RunnerContext::new(
             &mut self.arena,
-            &self.spec,
+            &self.spec_env,
             &mut self.interp,
             &mut self.interface,
             &self.external,

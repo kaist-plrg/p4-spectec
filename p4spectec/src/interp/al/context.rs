@@ -1,6 +1,6 @@
 //! AL adapters for shared execution contexts
 //!
-//! `Global::load` prepares AL definitions into the shared environments.
+//! `SpecEnv::load` prepares AL definitions into the shared environments.
 //! `Context` retains the shared scope, binding, and iteration operations;
 //! `FuncSignature` extracts types from prepared AL function definitions.
 
@@ -26,14 +26,14 @@ use super::prepare::PrepareContext;
 pub use shared::Scope;
 
 /// Stores loaded AL definitions and prepared callables.
-pub type Global = shared::Global<ast::RelDef, ast::MetaFuncDef>;
+pub type SpecEnv = shared::SpecEnv<ast::RelDef, ast::MetaFuncDef>;
 
 /// Holds local AL bindings over borrowed global definitions.
 pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncDef>;
 
 // = Loading
 
-impl Global {
+impl SpecEnv {
     /// Loads a specification and prepares its callables for slot execution,
     /// interning their notations into `arena_mixop`.
     ///

@@ -1,6 +1,6 @@
 //! Loaded definitions, local bindings, and shared context access
 //!
-//! Stage-specific loaders prepare callables into `Global<R, F>`.
+//! Stage-specific loaders prepare callables into `SpecEnv<R, F>`.
 //! A `Context` borrows those globals and owns persistent local bindings;
 //! cloning preserves its scope, while `localize` starts a fresh one.
 //! `ReadContext`, `WriteContext`, and `IterContext` serve shared evaluation;
@@ -156,13 +156,13 @@ pub enum Scope {
 
 /// Stores type definitions and prepared relation and function callables.
 #[derive(Debug)]
-pub struct Global<R, F> {
+pub struct SpecEnv<R, F> {
     tdenv: TDEnv,
     renv: IdMap<Callable<R>>,
     fenv: IdMap<Rc<Callable<F>>>,
 }
 
-impl<R, F> Global<R, F> {
+impl<R, F> SpecEnv<R, F> {
     // == Constructors
 
     /// Creates empty environments for a stage-specific loader.
@@ -245,13 +245,13 @@ impl<F> Clone for Local<F> {
 /// Combines borrowed global definitions with local bindings of one call.
 #[derive(Debug)]
 pub struct Context<'global, R, F> {
-    global: &'global Global<R, F>,
+    spec_env: &'global SpecEnv<R, F>,
     local: Local<F>,
 }
 
 impl<R, F> Clone for Context<'_, R, F> {
     fn clone(&self) -> Self {
-        Self { global: self.global, local: self.local.clone() }
+        Self { spec_env: self.spec_env, local: self.local.clone() }
     }
 }
 
@@ -259,19 +259,19 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
     // == Constructors
 
     /// Creates a context with no local bindings.
-    pub fn new(global: &'global Global<R, F>) -> Self {
-        Self { global, local: Local::default() }
+    pub fn new(spec_env: &'global SpecEnv<R, F>) -> Self {
+        Self { spec_env, local: Local::default() }
     }
 
     /// Starts a fresh local scope over the same globals.
     pub fn localize(&self) -> Self {
-        Self::new(self.global)
+        Self::new(self.spec_env)
     }
 
     /// Starts a fresh local scope with the callee's frame layout.
     pub fn localize_with_layout(&self, layout: &Rc<FrameLayout>) -> Self {
         Self {
-            global: self.global,
+            spec_env: self.spec_env,
             local: Local {
                 tdenv: TDEnv::new(),
                 fenv: IdMap::new(),
@@ -298,7 +298,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
 
     /// Finds a relation in the global definitions.
     pub fn find_rel_opt(&self, id: &ast::Id) -> Option<&'global Callable<R>> {
-        self.global.renv.get(id)
+        self.spec_env.renv.get(id)
     }
 
     /// Finds a global relation or reports the lookup location.
@@ -318,7 +318,7 @@ impl<'global, R, F: FuncSignature> Context<'global, R, F> {
         if let Some(func) = self.local.fenv.get(id) {
             Some((Scope::Local, func))
         } else {
-            self.global.fenv.get(id).map(|func| (Scope::Global, func))
+            self.spec_env.fenv.get(id).map(|func| (Scope::Global, func))
         }
     }
 
@@ -382,7 +382,7 @@ impl<R, F: FuncSignature> ReadContext for Context<'_, R, F> {
     fn find_typdef_opt<'a>(&'a self, id: &ast::Id) -> Option<&'a TypeDef> {
         // Local type parameters shadow global types
         self.find_typdef_local_opt(id)
-            .or_else(|| self.global.tdenv.get(id))
+            .or_else(|| self.spec_env.tdenv.get(id))
     }
 
     fn find_defined_typdef<'a>(

@@ -20,7 +20,7 @@ use crate::runner::{Extern, Interface, Interpreter, InterpreterError, RunnerCont
 
 use crate::interp::shared::{cache::Cache, eval::Invoker};
 
-use context::{Context, Global};
+use context::{Context, SpecEnv};
 
 /// Configuration for the AL interpreter.
 pub struct Config {
@@ -51,7 +51,7 @@ impl AlInterp {
 }
 
 impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
-    type Spec = Global;
+    type SpecEnv = SpecEnv;
 
     fn clear(&mut self) {
         self.cache.clear();
@@ -77,7 +77,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.into(), span: Span::default());
-        let ctx = Context::new(runner_ctx.spec());
+        let ctx = Context::new(runner_ctx.spec_env());
         // Check the caller's inputs before running the definition
         eval::call::check_rel_inputs(
             runner_ctx.arena(),
@@ -98,7 +98,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for AlInterp {
         // Public entries start from a fresh cache
         runner_ctx.interp_mut().cache.clear();
         let id = crate::phrase!(node: name.into(), span: Span::default());
-        let ctx = Context::new(runner_ctx.spec());
+        let ctx = Context::new(runner_ctx.spec_env());
         // Check the caller's inputs before running the definition
         eval::call::check_func_inputs(
             runner_ctx.arena(),
