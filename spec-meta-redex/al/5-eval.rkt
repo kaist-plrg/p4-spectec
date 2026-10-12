@@ -16,7 +16,7 @@
          ->redex
          ->ctx
          ->al
-         focus-steps
+         focus-step
          (struct-out machine)
          frames-of
          al-machine
@@ -70,22 +70,19 @@
                                    ->ctx/eval-call-func
                                    ->ctx/eval-call-rel))
 
-;; Every (r_1 G L_1) that ->redex (with L_1 = L) or ->ctx gives for (r G L)
-(define (focus-steps triple)
-  (map cadr (focus-steps/names ->redex ->ctx triple)))
+;; The (r_1 G_1 L_1) that the first rule of ->redex (with G_1 = G and L_1 = L)
+;; or of ->ctx that applies gives for (r G L), or #f if none applies
+(define (focus-step triple)
+  (match (focus-step/name ->redex ->ctx triple)
+    [(list _ triple_1) triple_1]
+    [#f #f]))
 
-;; The same, each with the name of its rule. A relation that is #f has no
-;; rules.
-(define (focus-steps/names ->redex ->ctx triple)
+;; The same, with the name of the rule
+(define (focus-step/name ->redex ->ctx triple)
   (match-define (list r G L) triple)
-  (append
-   (for/list ([name+r_1 (in-list (if ->redex
-                                     (apply-reduction-relation/tag-with-names ->redex r)
-                                     '()))])
-     (list (car name+r_1) (list (cadr name+r_1) G L)))
-   (if ->ctx
-       (apply-reduction-relation/tag-with-names ->ctx triple)
-       '())))
+  (match (apply-first ->redex r)
+    [(list name r_1) (list name (list r_1 G L))]
+    [#f (apply-first ->ctx triple)]))
 
 ;;
 ;; The closure, on configurations
@@ -95,20 +92,20 @@
   (reduction-relation
    al
    (--> (G (in-hole E (IN L (in-hole F e_r))))
-        (G (in-hole E (IN L_1 (in-hole F e_1))))
-        (where (_ ... (e_1 G L_1) _ ...) ,(focus-steps (term (e_r G L))))
+        (G_1 (in-hole E (IN L_1 (in-hole F e_1))))
+        (where (e_1 G_1 L_1) ,(focus-step (term (e_r G L))))
         "closure")))
 
 ;;
 ;; The driver
 ;;
 ;; It holds (G (IN L e)) as a cursor at the last contractum. A step moves the
-;; cursor to the redex, applies the rules to it once, and puts the contractum
-;; and the new layer at the cursor. To reach the redex, the cursor climbs past
-;; the nodes whose subterm is done, and then descends through the one pending
-;; evaluation position of each node. So a step matches only the nodes it
-;; enters, not the whole path from the root. It fails on a node with two
-;; pending positions, on a redex that two rules apply to, and when it is stuck.
+;; cursor to the redex, applies the first rule that applies to it, and puts the
+;; contractum and the new layers at the cursor. To reach the redex, the cursor
+;; climbs past the nodes whose subterm is done, and then descends through the
+;; one pending evaluation position of each node. So a step matches only the
+;; nodes it enters, not the whole path from the root. It fails on a node with
+;; two pending positions, and when it is stuck.
 
 ;; frames maps a node to its one-level decompositions (in-hole Fr any), as
 ;; (Fr . subterm) pairs. The driver's steps are checked against ->al, if any.
@@ -196,8 +193,8 @@
     (match (settle m c)
       [#f (values #f #f)]
       [(cursor G path r L)
-       (define-values (r_1 L_1 rule) (reduce-redex m r G L))
-       (values (cursor G path r_1 L_1) rule)]))
+       (define-values (r_1 G_1 L_1 rule) (reduce-redex m r G L))
+       (values (cursor G_1 path r_1 L_1) rule)]))
   (when (and (cross-check?) (machine-->al m))
     (cross-check m conf (and next (cursor->conf next))))
   (values next rule))
@@ -238,21 +235,11 @@
               #:unless (done? (cdr Fr+sub)))
      Fr+sub)))
 
-;; The contractum of redex r under G and L, the new layer, and the rule's name.
-;; Only the rules for r's head symbol are tried.
+;; The contractum of redex r under G and L, the new layers, and the rule's name
 (define (reduce-redex m r G L)
-  (define triple (list r G L))
-  (match (focus-steps/names (relation-for-head (machine-->redex m) (term-head r))
-                            (relation-for-head (machine-->ctx m) (term-head triple))
-                            triple)
-    [(list (list rule triple))
-     (match triple
-       [(list r_1 G_1 L_1)
-        #:when (equal? G_1 G)
-        (values r_1 L_1 rule)]
-       [_ (error 'step "rule ~a gives no triple (r G L) with the same G, on ~e" rule r)])]
-    ['() (error 'step "stuck: no rule applies to ~e" r)]
-    [results (error 'step "rules ~a all apply to ~e" (map car results) r)]))
+  (match (focus-step/name (machine-->redex m) (machine-->ctx m) (list r G L))
+    [(list rule (list r_1 G_1 L_1)) (values r_1 G_1 L_1 rule)]
+    [#f (error 'step "stuck: no rule applies to ~e" r)]))
 
 (define (cross-check m conf next)
   (define expected (if next (list next) '()))

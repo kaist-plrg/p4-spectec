@@ -245,13 +245,15 @@ two through the contexts:
 (define ->al
   (reduction-relation al
    (--> (G (in-hole E (IN L (in-hole F e_r))))
-        (G (in-hole E (IN L_1 (in-hole F e_1))))
-        (where ((e_1 G L_1)) ,(focus-steps (term (e_r G L))))
+        (G_1 (in-hole E (IN L_1 (in-hole F e_1))))
+        (where (e_1 G_1 L_1) ,(focus-step (term (e_r G L))))
         "closure")))
 ```
 
-`focus-steps` returns every `(r' G L')` that `->redex` (with `L' = L`) or
-`->ctx` gives for the triple. `->al` is the specification that tests and
+`focus-step` tries the rules of `->redex` and then those of `->ctx`, in the
+order of the source, and returns the `(r' G' L')` of the first rule that
+applies to the triple, with `G' = G` and `L' = L` for `->redex`. Nothing
+checks that a step keeps `G`: the rules carry it through unchanged. `->al` is the specification that tests and
 figures refer to, and the relation `traces` can show. Programs are run by a
 driver that computes the same relation faster:
 
@@ -262,16 +264,16 @@ driver that computes the same relation faster:
    rebuilds each one. From the first node that is not `done`, it descends: at
    each node it matches `Fr` one level deep, and moves into the one evaluation
    position whose subterm is not `done`.
-3. The node where no such position exists is the redex. The driver applies
-   the rules of `->redex` and `->ctx` for the redex's head symbol to it once,
-   and puts `r'` in focus under `L'`.
+3. The node where no such position exists is the redex. The driver tries
+   the rules of `->redex` and `->ctx` for the redex's head symbol, as
+   `focus-step` does, applies the first one that applies, and puts `r'` in
+   focus under `G'` and `L'`.
 
 A node's other subterms do not change while its pending subterm is evaluated,
 so its pending position stays the same until that subterm is `done`. So a step
 matches `Fr` only at the nodes it enters, not along the whole path from the
 root. The driver fails loudly if two evaluation positions are pending at a
-node it enters, if the rules give two results, or if a configuration that is
-not final has no step. It loops with `apply-reduction-relation`, and never
+node it enters, or if a configuration that is not final has no step. It loops with `apply-reduction-relation`, and never
 uses `apply-reduction-relation*` (see below). The rules, the grammar, and
 `->al` are the specification; the driver adds no semantics. Tests check that
 its step equals `->al`'s on every step of small runs (see
@@ -337,8 +339,8 @@ slice out of bounds) raises out of the driver, as it does in OCaml.
 ### Determinism and disjoint clauses
 
 - **Reduction rules.** At most one rule of `->redex` and `->ctx` applies to any
-  redex. The driver checks this on every step, so the order of the rules never
-  matters. Each `otherwise` becomes complement rules, as in the example above.
+  redex, so the order of the rules never matters. The driver does not check
+  this: it stops at the first rule that applies. Each `otherwise` becomes complement rules, as in the example above.
 - **Metafunctions.** Their clauses are disjoint: for any input, at most one
   clause applies, whatever order the clauses are in. Each clause is told apart
   from the others by its input patterns and side-conditions. Redex does not
@@ -590,15 +592,15 @@ the watsup declaration. `SPECTEC_REDEX_CONTRACTS=0`, read when a module is
 compiled, drops the contracts.
 
 The fragments build their relations with `reduction-relation/forms`, in place
-of `reduction-relation`. It groups the rules by the head symbol of their
-left-hand side, which for a focus triple is the head of the redex. The
-relation is the union of one relation per run of consecutive rules with the
-same head, in the order of the source. `union-reduction-relations/forms`
-keeps the groups, and `(relation-for-head rel head)` gives the rules of `rel`
-for a head. A rule whose left-hand side has no literal head symbol, such as
+of `reduction-relation`. It keeps each rule as a relation of its own, with the
+head symbol of its left-hand side, which for a focus triple is the head of the
+redex. The relation is the union of the rules, in the order of the source.
+`union-reduction-relations/forms` keeps the rules in order, and
+`(apply-first rel t)` tries the rules of `rel` for `t`'s head one by one and
+returns the first result. A rule whose left-hand side has no literal head symbol, such as
 `(in-hole Fr-pass FAIL)` or `num`, belongs to every head. Every term that a
-rule's left-hand side matches has that rule's head, so the rules for a head
-give the same steps as the whole relation.
+rule's left-hand side matches has that rule's head, so the first rule for a
+head that applies is the first rule of the whole relation that applies.
 
 Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
 file's language with its own syntax: `stdlib` (the `var`s, sets and maps),
@@ -780,9 +782,9 @@ and decide with the user before deviating. Record each deviation here.
   watsup must not evaluate a premise. Such a case puts
   `(BIN DIV (NAT 1) (NAT 0))`, which raises, where a premise must not be
   evaluated.
-- **Determinism.** The driver fails on a step with two results, or a node with
-  two pending positions. So every test run checks that no two rules overlap on
-  the terms it reaches.
+- **Determinism.** The driver fails on a node with two pending positions. It
+  stops at the first rule that applies, so it does not detect two rules that
+  overlap, and neither does the cross-check, whose `->al` does the same.
 - **The driver against `->al`.** In cross-check mode, the driver also applies
   `->al` to each configuration, and fails unless `->al` gives exactly its
   successor. The check applies the rules a second time, so it runs only on

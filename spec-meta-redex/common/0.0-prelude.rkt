@@ -11,8 +11,7 @@
          contracts?
          reduction-relation/forms
          union-reduction-relations/forms
-         term-head
-         relation-for-head)
+         apply-first)
 
 ;; Safe only while impure operations stay in reduction rules, which Redex
 ;; does not cache. See CROSS_REDEX.md, "Caching".
@@ -48,31 +47,23 @@
            [(f any (... ...)) ⊥]))]))
 ;; (reduction-relation/forms lang rule ...)
 ;;
-;; The reduction-relation of the rules, built as the union of one relation per
-;; run of consecutive rules whose left-hand sides have the same head symbol, so
-;; relation-for-head can pick the rules for a term's head. A left-hand side
-;; (s ...) has the head s, and ((s ...) ...), as a focus triple, has the head
-;; of its first element. A rule without a literal head applies to every head.
+;; The reduction-relation of the rules. It keeps each rule as a relation of its
+;; own, with the head symbol of its left-hand side, so apply-first can try the
+;; rules for a term's head one by one. A left-hand side (s ...) has the head s,
+;; and ((s ...) ...), as a focus triple, has the head of its first element. A
+;; rule without a literal head applies to every head.
 (define-syntax (reduction-relation/forms stx)
   (syntax-parse stx
     [(_ lang rule ...)
-     (define rules (syntax->list #'(rule ...)))
      (define heads
-       (for/list ([rule (in-list rules)])
+       (for/list ([rule (in-list (syntax->list #'(rule ...)))])
          (syntax-parse rule
            [((~datum -->) lhs _ ...) (pattern-head (syntax->datum #'lhs))]
            [_ (raise-syntax-error #f "expected a --> rule" stx rule)])))
-     ;; Runs of consecutive rules with the same head, as (head rule ...)
-     (define runs
-       (reverse
-        (for/fold ([runs '()]) ([rule (in-list rules)] [head (in-list heads)])
-          (if (and (pair? runs) (eq? (caar runs) head))
-              (cons (append (car runs) (list rule)) (cdr runs))
-              (cons (list head rule) runs)))))
-     (with-syntax ([((head run-rule ...) ...) runs]
+     (with-syntax ([(head ...) heads]
                    [(literal-head ...) (remove-duplicates (filter values heads))])
        #'(make-forms-relation
-          (list (cons 'head (reduction-relation lang run-rule ...)) ...)
+          (list (cons 'head (reduction-relation lang rule)) ...)
           (list (cons 'literal-head (literal-pattern? (redex-match lang literal-head)
                                                       'literal-head))
                 ...)))]))
@@ -108,53 +99,47 @@
          [(pair? (car t)) (term-head (car t))]
          [else #f])))
 
-;; The relations of each literal head, in order, the ones of every head, and
-;; the relations already built by relation-for-head
-(struct forms (by-head any-head cache))
+;; The rules of a relation, as (head . relation) pairs in order, where the head
+;; #f applies to every head, and the rules already picked for each head
+(struct forms (rules by-head))
 
 ;; The forms of the relations that reduction-relation/forms and
 ;; union-reduction-relations/forms build
 (define forms-registry (make-weak-hasheq))
 
-(define (make-forms-relation runs literal?)
-  (define-values (by-head any-head)
-    (for/fold ([by-head (hasheq)] [any-head '()] #:result (values by-head (reverse any-head)))
-              ([run (in-list runs)])
-      (match-define (cons head rel) run)
-      (if (and head (cdr (assq head literal?)))
-          (values (hash-update by-head head (λ (rels) (append rels (list rel))) '()) any-head)
-          (values by-head (cons rel any-head)))))
-  (register-forms (union-all (map cdr runs)) by-head any-head))
+(define (make-forms-relation rules literal?)
+  (register-forms
+   (for/list ([head+rel (in-list rules)])
+     (match-define (cons head rel) head+rel)
+     (cons (and head (cdr (assq head literal?)) head) rel))))
 
-(define (register-forms rel by-head any-head)
-  (hash-set! forms-registry rel (forms by-head any-head (make-hasheq)))
+;; The union of the rules' relations, registered with the rules
+(define (register-forms rules)
+  (define rel
+    (match (map cdr rules)
+      [(list rel) rel]
+      [rels (apply union-reduction-relations rels)]))
+  (hash-set! forms-registry rel (forms rules (make-hasheq)))
   rel)
 
-(define (union-all rels)
-  (match rels
-    ['() #f]
-    [(list rel) rel]
-    [_ (apply union-reduction-relations rels)]))
-
-;; The union of the relations, with their forms. A relation without forms
-;; applies to every head.
+;; The union of the relations, with their rules in order
 (define (union-reduction-relations/forms . rels)
-  (define-values (by-head any-head)
-    (for/fold ([by-head (hasheq)] [any-head '()])
-              ([rel (in-list rels)])
-      (match (hash-ref forms-registry rel #f)
-        [(forms by-head_r any-head_r _)
-         (values (for/fold ([by-head by-head]) ([(head rels_h) (in-hash by-head_r)])
-                   (hash-update by-head head (λ (rels) (append rels rels_h)) '()))
-                 (append any-head any-head_r))]
-        [#f (values by-head (append any-head (list rel)))])))
-  (register-forms (union-all rels) by-head any-head))
+  (register-forms
+   (for*/list ([rel (in-list rels)]
+               [head+rel (in-list (forms-rules (hash-ref forms-registry rel)))])
+     head+rel)))
 
-;; The rules of rel that can apply to a term with the head symbol head, as one
-;; relation, or #f if there are none. A relation without forms is all of rel.
-(define (relation-for-head rel head)
-  (match (hash-ref forms-registry rel #f)
-    [#f rel]
-    [(forms by-head any-head cache)
-     (hash-ref! cache head
-                (λ () (union-all (append (hash-ref by-head head '()) any-head))))]))
+;; The first result of the first rule of rel that applies to t, as (name t_1),
+;; or #f if none applies. Only the rules for t's head are tried, in order.
+(define (apply-first rel t)
+  (match-define (forms rules by-head) (hash-ref forms-registry rel))
+  (define head (term-head t))
+  (define rels_h
+    (hash-ref! by-head head
+               (λ ()
+                 (for/list ([head+rel (in-list rules)]
+                            #:when (memq (car head+rel) (list #f head)))
+                   (cdr head+rel)))))
+  (for*/first ([rel_r (in-list rels_h)]
+               [result (in-list (apply-reduction-relation/tag-with-names rel_r t))])
+    result))
