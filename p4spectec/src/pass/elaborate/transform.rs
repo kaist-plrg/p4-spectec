@@ -1450,7 +1450,7 @@ fn elab_singleton_iter_exp(
     exp: &el::Exp,
 ) -> Backtrack<il::Exp> {
     // Wildcards and empty sequences are never singletons
-    if matches!(&exp.node, el::ExpKind::Id(id) if &*id.node == "_")
+    if matches!(&exp.node, el::ExpKind::Id(id) if id.node.as_ref() == "_")
         || matches!(&exp.node, el::ExpKind::Eps)
         || matches!(&exp.node, el::ExpKind::List(exps) if exps.is_empty())
     {
@@ -1511,7 +1511,7 @@ fn elab_exp_normal_fallback(
 ) -> Backtrack<il::Exp> {
     let typ_expect_il = expect.typ_il;
     // A wildcard `_` becomes a fresh variable of the expected type
-    if matches!(&exp.node, el::ExpKind::Id(id) if &*id.node == "_") {
+    if matches!(&exp.node, el::ExpKind::Id(id) if id.node.as_ref() == "_") {
         return elab_wildcard_exp(ctx, typ_expect_il, exp);
     }
     // Unfold a named expected type into its definition
@@ -3097,7 +3097,8 @@ fn fetch_input_hint(
 ) -> Result<input::InputHint, ElabError> {
     let arity = not_typ_il.node.arity();
     // Without a hint every position is an input
-    let Some(el::Hint { exp: exp_hint, .. }) = hints.iter().find(|hint| &*hint.id.node == "input")
+    let Some(el::Hint { exp: exp_hint, .. }) =
+        hints.iter().find(|hint| hint.id.node.as_ref() == "input")
     else {
         warnings.push(error::prem::relation_input_hint_missing(id, span));
         return Ok(input::InputHint::new(

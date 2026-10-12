@@ -126,7 +126,7 @@ impl Context {
     ) -> Result<(), ProseError> {
         for sl::Hint { id: id_hint, exp: exp_hint } in hints_sl {
             // Other hints belong to their own loaders
-            if &*id_hint.node != "prose_fields" {
+            if id_hint.node.as_ref() != "prose_fields" {
                 continue;
             }
             // Field hints require text names on every declaration kind

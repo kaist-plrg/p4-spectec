@@ -42,7 +42,7 @@ fn stripping_suffixes_preserves_names_and_spans() {
     ] {
         let id = id_at(name, 3);
         let id_base = id.strip_suffix();
-        assert_eq!(&*id_base.node, name_expect);
+        assert_eq!(id_base.node.as_ref(), name_expect);
         assert_eq!(id_base.span, id.span);
 
         // Unchanged names retain their allocation

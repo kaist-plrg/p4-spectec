@@ -52,7 +52,9 @@ fn insert_case_hints(
     };
     for TypCase { not_typ, hints: hints_case, .. } in cases {
         // Cases without a print hint fall back to their shape
-        let Some(Hint { exp, .. }) = hints_case.iter().find(|hint| &*hint.id.node == "print")
+        let Some(Hint { exp, .. }) = hints_case
+            .iter()
+            .find(|hint| hint.id.node.as_ref() == "print")
         else {
             continue;
         };

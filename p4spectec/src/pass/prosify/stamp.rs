@@ -305,7 +305,7 @@ fn stamp_rulegroup_instr(
     mut instr_group: pl::RuleGroupInstr,
 ) -> pl::RuleGroupInstr {
     let fallthrough = fallthroughs
-        .get(&*instr_group.id_group.node)
+        .get(instr_group.id_group.node.as_ref())
         .expect("every dispatched group has a failure destination");
     instr_group.block = stamp_group_block(fallthrough, instr_group.block);
     instr_group
