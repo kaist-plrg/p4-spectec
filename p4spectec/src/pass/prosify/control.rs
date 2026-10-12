@@ -2,11 +2,14 @@
 //!
 //! A condition becomes Check only when failure has no remaining instruction,
 //! alternative arm, or otherwise block in this definition. Calls are separate.
+//! Table rows retain their matching blocks without prose classification.
 
 use crate::lang::{common::prim, pl::ast as pl};
 
+// == Guards
+
 /// Converts a nonbinding guard into a boolean predicate.
-fn guard_to_condition(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
+fn exp_of_guard(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
     let span = exp_scrut.node.span.clone();
     let kind = match guard {
         pl::Guard::Bool(true) => return exp_scrut,
@@ -31,8 +34,43 @@ fn guard_to_condition(exp_scrut: pl::Exp, guard: pl::Guard) -> pl::Exp {
     crate::annotated_note_phrase! { node: kind, note: pl::TypKind::Bool, span: span }
 }
 
-/// Classifies a condition after classifying its nested body.
-fn classify_if<Tier>(instr_if: pl::IfInstr<Tier>, has_continuation: bool) -> pl::InstrKind<Tier> {
+// == Instructions
+
+fn classify_instr<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    mut instr: pl::Instr<Tier>,
+) -> pl::Instr<Tier> {
+    instr.node.node = classify_instr_kind(has_continuation, classify_tier, instr.node.node);
+    instr
+}
+
+fn classify_instr_kind<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    instr_kind: pl::InstrKind<Tier>,
+) -> pl::InstrKind<Tier> {
+    match instr_kind {
+        pl::InstrKind::If(instr) => classify_if_instr(has_continuation, classify_tier, instr),
+        pl::InstrKind::Check(instr) => classify_check_instr(has_continuation, classify_tier, instr),
+        pl::InstrKind::Hold(instr) => classify_hold_instr(has_continuation, classify_tier, instr),
+        pl::InstrKind::Case(instr) => classify_case_instr(has_continuation, classify_tier, instr),
+        pl::InstrKind::Tier(instr) => classify_tier_instr(has_continuation, classify_tier, instr),
+        instr_kind @ (pl::InstrKind::Let(_)
+        | pl::InstrKind::Debug(_)
+        | pl::InstrKind::Destruct(_)) => instr_kind,
+    }
+}
+
+// - If instruction
+
+/// Classifies the body and requires the condition when no continuation remains.
+fn classify_if_instr<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    mut instr_if: pl::IfInstr<Tier>,
+) -> pl::InstrKind<Tier> {
+    instr_if.block = classify_block(has_continuation, classify_tier, instr_if.block);
     if has_continuation {
         pl::InstrKind::If(instr_if)
     } else {
@@ -44,135 +82,251 @@ fn classify_if<Tier>(instr_if: pl::IfInstr<Tier>, has_continuation: bool) -> pl:
     }
 }
 
+// - Check instruction
+
+fn classify_check_instr<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    mut instr_check: pl::CheckInstr<Tier>,
+) -> pl::InstrKind<Tier> {
+    instr_check.block = classify_block(has_continuation, classify_tier, instr_check.block);
+    pl::InstrKind::Check(instr_check)
+}
+
+// - Hold instruction
+
+fn classify_hold_instr<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    mut instr_hold: pl::HoldInstr<Tier>,
+) -> pl::InstrKind<Tier> {
+    instr_hold.hold_case =
+        classify_hold_case(has_continuation, classify_tier, instr_hold.hold_case);
+    pl::InstrKind::Hold(instr_hold)
+}
+
+// - Case instruction
+
+/// Normalizes singleton guards and classifies each selected case body.
+fn classify_case_instr<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    mut instr_case: pl::CaseInstr<Tier>,
+) -> pl::InstrKind<Tier> {
+    // Normalize singleton guards before classifying their body once
+    if instr_case.cases.len() == 1 {
+        let case = instr_case.cases.pop().expect("singleton case");
+        let instr_if = pl::IfInstr {
+            exp: exp_of_guard(instr_case.exp, case.guard),
+            iter_exps: vec![],
+            block: case.block,
+            dangle: instr_case.dangle,
+        };
+        return classify_if_instr(has_continuation, classify_tier, instr_if);
+    }
+    // Case selection commits to its first matching guard
+    instr_case.cases = instr_case
+        .cases
+        .into_iter()
+        .map(|case| classify_case(has_continuation, classify_tier, case))
+        .collect();
+    pl::InstrKind::Case(instr_case)
+}
+
+// - Tier instruction
+
+fn classify_tier_instr<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    instr_tier: pl::TierInstr<Tier>,
+) -> pl::InstrKind<Tier> {
+    let tier = classify_tier(has_continuation, instr_tier.tier);
+    pl::InstrKind::Tier(pl::TierInstr { tier })
+}
+
+// == Holding conditions
+
+fn classify_hold_case<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    hold_case: pl::HoldCase<Tier>,
+) -> pl::HoldCase<Tier> {
+    match hold_case {
+        pl::HoldCase::Both(block_hold, block_not_hold) => pl::HoldCase::Both(
+            classify_block(has_continuation, classify_tier, block_hold),
+            classify_block(has_continuation, classify_tier, block_not_hold),
+        ),
+        pl::HoldCase::Hold(block, dangle) => {
+            pl::HoldCase::Hold(classify_block(has_continuation, classify_tier, block), dangle)
+        }
+        pl::HoldCase::NotHold(block, dangle) => {
+            pl::HoldCase::NotHold(classify_block(has_continuation, classify_tier, block), dangle)
+        }
+    }
+}
+
+// == Cases
+
+fn classify_case<Tier>(
+    has_continuation: bool,
+    classify_tier: fn(bool, Tier) -> Tier,
+    mut case: pl::Case<Tier>,
+) -> pl::Case<Tier> {
+    case.block = classify_block(has_continuation, classify_tier, case.block);
+    case
+}
+
+// == Group instructions
+
+fn classify_group_tier(has_continuation: bool, tier: pl::GroupInstr) -> pl::GroupInstr {
+    match tier {
+        pl::GroupInstr::Backtrack(instr) => classify_backtrack_instr(has_continuation, instr),
+        tier
+        @ (pl::GroupInstr::Result(_) | pl::GroupInstr::Return(_) | pl::GroupInstr::Rule(_)) => tier,
+    }
+}
+
+// - Backtrack instruction
+
+fn classify_backtrack_instr(
+    has_continuation: bool,
+    mut instr_backtrack: pl::BacktrackInstr,
+) -> pl::GroupInstr {
+    instr_backtrack.blocks =
+        classify_blocks(has_continuation, classify_group_tier, instr_backtrack.blocks);
+    pl::GroupInstr::Backtrack(instr_backtrack)
+}
+
+// == Dispatch instructions
+
+fn classify_dispatch_tier(has_continuation: bool, tier: pl::DispatchInstr) -> pl::DispatchInstr {
+    match tier {
+        pl::DispatchInstr::Group(instr) => classify_rule_group_instr(has_continuation, instr),
+        pl::DispatchInstr::Route(instr) => classify_route_instr(has_continuation, instr),
+    }
+}
+
+// - Rule group instruction
+
+fn classify_rule_group_instr(
+    has_continuation: bool,
+    mut instr_group: pl::RuleGroupInstr,
+) -> pl::DispatchInstr {
+    instr_group.block = classify_group_block(has_continuation, instr_group.block);
+    pl::DispatchInstr::Group(instr_group)
+}
+
+// - Route instruction
+
+fn classify_route_instr(
+    has_continuation: bool,
+    mut instr_route: pl::RouteInstr,
+) -> pl::DispatchInstr {
+    instr_route.blocks =
+        classify_blocks(has_continuation, classify_dispatch_tier, instr_route.blocks);
+    pl::DispatchInstr::Route(instr_route)
+}
+
+// == Blocks
+
 /// Visits a block backwards, counting every following instruction as a continuation.
 fn classify_block<Tier>(
-    block: &mut pl::Block<Tier>,
     mut has_continuation: bool,
-    classify_tier: fn(&mut Tier, bool),
-) {
+    classify_tier: fn(bool, Tier) -> Tier,
+    block: pl::Block<Tier>,
+) -> pl::Block<Tier> {
+    // Classify each instruction with all following instructions available
     let mut instrs = Vec::with_capacity(block.len());
-    for mut instr in std::mem::take(block).into_iter().rev() {
-        instr.node.node = match instr.node.node {
-            pl::InstrKind::If(mut instr_if) => {
-                classify_block(&mut instr_if.block, has_continuation, classify_tier);
-                classify_if(instr_if, has_continuation)
-            }
-            pl::InstrKind::Check(mut instr_check) => {
-                classify_block(&mut instr_check.block, has_continuation, classify_tier);
-                pl::InstrKind::Check(instr_check)
-            }
-            pl::InstrKind::Hold(mut instr_hold) => {
-                match &mut instr_hold.hold_case {
-                    pl::HoldCase::Both(block_hold, block_not_hold) => {
-                        classify_block(block_hold, has_continuation, classify_tier);
-                        classify_block(block_not_hold, has_continuation, classify_tier);
-                    }
-                    pl::HoldCase::Hold(block, _) | pl::HoldCase::NotHold(block, _) => {
-                        classify_block(block, has_continuation, classify_tier);
-                    }
-                }
-                pl::InstrKind::Hold(instr_hold)
-            }
-            pl::InstrKind::Case(mut instr_case) => {
-                // Case selection commits to its first matching guard
-                for case in &mut instr_case.cases {
-                    classify_block(&mut case.block, has_continuation, classify_tier);
-                }
-                // Normalize singleton guards within the classification traversal
-                if instr_case.cases.len() == 1 {
-                    let case = instr_case.cases.pop().expect("singleton case");
-                    classify_if(
-                        pl::IfInstr {
-                            exp: guard_to_condition(instr_case.exp, case.guard),
-                            iter_exps: vec![],
-                            block: case.block,
-                            dangle: instr_case.dangle,
-                        },
-                        has_continuation,
-                    )
-                } else {
-                    pl::InstrKind::Case(instr_case)
-                }
-            }
-            pl::InstrKind::Tier(mut instr_tier) => {
-                classify_tier(&mut instr_tier.tier, has_continuation);
-                pl::InstrKind::Tier(instr_tier)
-            }
-            kind @ (pl::InstrKind::Let(_)
-            | pl::InstrKind::Debug(_)
-            | pl::InstrKind::Destruct(_)) => kind,
-        };
-        instrs.push(instr);
+    for instr in block.into_iter().rev() {
+        instrs.push(classify_instr(has_continuation, classify_tier, instr));
         has_continuation = true;
     }
+    // Restore source order after propagating continuations backwards
     instrs.reverse();
-    *block = instrs;
+    instrs
 }
 
-/// Classifies alternatives with all later arms included in their continuation.
-fn classify_arms<Tier>(
-    blocks: &mut [pl::Block<Tier>],
+/// Classifies alternatives with all later blocks included in their continuation.
+fn classify_blocks<Tier>(
     mut has_continuation: bool,
-    classify_tier: fn(&mut Tier, bool),
-) {
-    for block in blocks.iter_mut().rev() {
-        classify_block(block, has_continuation, classify_tier);
+    classify_tier: fn(bool, Tier) -> Tier,
+    blocks: Vec<pl::Block<Tier>>,
+) -> Vec<pl::Block<Tier>> {
+    // Propagate the availability of later alternatives backwards
+    let mut blocks_classified = Vec::with_capacity(blocks.len());
+    for block in blocks.into_iter().rev() {
+        blocks_classified.push(classify_block(has_continuation, classify_tier, block));
         has_continuation = true;
     }
+    // Preserve alternative selection order
+    blocks_classified.reverse();
+    blocks_classified
 }
 
-/// Propagates group-level backtracking without analyzing called definitions.
-fn classify_group_tier(tier: &mut pl::GroupInstr, has_continuation: bool) {
-    if let pl::GroupInstr::Backtrack(instr) = tier {
-        classify_arms(&mut instr.blocks, has_continuation, classify_group_tier);
+fn classify_group_block(has_continuation: bool, block: pl::GroupBlock) -> pl::GroupBlock {
+    classify_block(has_continuation, classify_group_tier, block)
+}
+
+fn classify_dispatch_block(has_continuation: bool, block: pl::DispatchBlock) -> pl::DispatchBlock {
+    classify_block(has_continuation, classify_dispatch_tier, block)
+}
+
+// == Relation definitions
+
+fn classify_rel_def(def_rel: pl::RelDef) -> pl::RelDef {
+    match def_rel {
+        pl::RelDef::Defined(def_rel) => pl::RelDef::Defined(classify_defined_rel_def(def_rel)),
+        pl::RelDef::Extern(def_rel) => pl::RelDef::Extern(def_rel),
     }
 }
 
-/// Carries dispatch continuations across the rule-group tier boundary.
-fn classify_dispatch_tier(tier: &mut pl::DispatchInstr, has_continuation: bool) {
-    match tier {
-        pl::DispatchInstr::Group(instr) => classify_group_block(&mut instr.block, has_continuation),
-        pl::DispatchInstr::Route(instr) => {
-            classify_arms(&mut instr.blocks, has_continuation, classify_dispatch_tier);
+fn classify_defined_rel_def(mut def_rel: pl::DefinedRel) -> pl::DefinedRel {
+    def_rel.block = classify_dispatch_block(def_rel.block_else_opt.is_some(), def_rel.block);
+    def_rel.block_else_opt = def_rel
+        .block_else_opt
+        .map(|block| classify_dispatch_block(false, block));
+    def_rel
+}
+
+// == Meta-function definitions
+
+fn classify_func_def(def_func: pl::MetaFuncDef) -> pl::MetaFuncDef {
+    match def_func {
+        pl::MetaFuncDef::Defined(def_func) => {
+            pl::MetaFuncDef::Defined(classify_defined_func_def(def_func))
         }
+        def_func @ (pl::MetaFuncDef::Extern(_)
+        | pl::MetaFuncDef::Builtin(_)
+        | pl::MetaFuncDef::Table(_)) => def_func,
     }
 }
 
-/// Classifies a group body with its enclosing continuation.
-fn classify_group_block(block: &mut pl::GroupBlock, has_continuation: bool) {
-    classify_block(block, has_continuation, classify_group_tier);
+fn classify_defined_func_def(mut def_func: pl::DefinedFunc) -> pl::DefinedFunc {
+    def_func.block = classify_group_block(def_func.block_else_opt.is_some(), def_func.block);
+    def_func.block_else_opt = def_func
+        .block_else_opt
+        .map(|block| classify_group_block(false, block));
+    def_func
 }
 
-/// Classifies a dispatch body with its enclosing continuation.
-fn classify_dispatch_block(block: &mut pl::DispatchBlock, has_continuation: bool) {
-    classify_block(block, has_continuation, classify_dispatch_tier);
+// == Definitions
+
+fn classify_def(mut def: pl::Def) -> pl::Def {
+    def.node.node = classify_def_kind(def.node.node);
+    def
 }
+
+fn classify_def_kind(def_kind: pl::DefKind) -> pl::DefKind {
+    match def_kind {
+        pl::DefKind::Rel(def_rel) => pl::DefKind::Rel(classify_rel_def(def_rel)),
+        pl::DefKind::MetaFunc(def_func) => pl::DefKind::MetaFunc(classify_func_def(def_func)),
+        def_kind @ (pl::DefKind::Typ(_) | pl::DefKind::Var(_)) => def_kind,
+    }
+}
+
+// == Entry point
 
 /// Classifies canonical definitions before rendering or extracting rule groups.
-pub(super) fn classify_spec(mut spec: pl::Spec) -> pl::Spec {
-    for def in &mut spec {
-        match &mut def.node.node {
-            pl::DefKind::Rel(pl::RelDef::Defined(def_rel)) => {
-                classify_dispatch_block(&mut def_rel.block, def_rel.block_else_opt.is_some());
-                if let Some(block) = &mut def_rel.block_else_opt {
-                    classify_dispatch_block(block, false);
-                }
-            }
-            pl::DefKind::MetaFunc(pl::MetaFuncDef::Defined(def_func)) => {
-                classify_group_block(&mut def_func.block, def_func.block_else_opt.is_some());
-                if let Some(block) = &mut def_func.block_else_opt {
-                    classify_group_block(block, false);
-                }
-            }
-            pl::DefKind::MetaFunc(pl::MetaFuncDef::Table(def_func)) => {
-                let mut has_continuation = false;
-                for row in def_func.rows.iter_mut().rev() {
-                    classify_group_block(&mut row.block, has_continuation);
-                    has_continuation |= !row.block.is_empty();
-                }
-            }
-            _ => {}
-        }
-    }
-    spec
+pub(super) fn classify_spec(spec: pl::Spec) -> pl::Spec {
+    spec.into_iter().map(classify_def).collect()
 }
