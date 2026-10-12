@@ -43,6 +43,9 @@ pub enum P4SyntaxError {
 /// A lexical failure in P4 source.
 #[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum LexErrorKind {
+    /// A logical source position does not fit in a span.
+    #[error("source line or byte column exceeds {}", u32::MAX)]
+    PositionOutOfRange,
     /// The source ended inside a string.
     #[error("unterminated string literal")]
     StringUnterminated,
@@ -97,6 +100,7 @@ const TEXT_ESCAPE_UNSUPPORTED: &str = "p4/text-escape-unsupported";
 const BLOCK_COMMENT_INCOMPLETE: &str = "p4/block-comment-incomplete";
 const INTEGER_LITERAL_INVALID: &str = "p4/integer-literal-invalid";
 const INTEGER_WIDTH_INVALID: &str = "p4/integer-width-invalid";
+const SOURCE_POSITION_OUT_OF_RANGE: &str = "p4/source-position-out-of-range";
 const SYNTAX_INVALID: &str = "p4/syntax-invalid";
 
 impl P4Error {
@@ -112,6 +116,9 @@ impl P4Error {
         let code = match &kind {
             P4ErrorKind::Construction(_) => VALUE_INVALID,
             P4ErrorKind::Preprocess { .. } => PREPROCESSOR_FAILED,
+            P4ErrorKind::Syntax(P4SyntaxError::Lex(LexErrorKind::PositionOutOfRange)) => {
+                SOURCE_POSITION_OUT_OF_RANGE
+            }
             P4ErrorKind::Syntax(P4SyntaxError::Lex(LexErrorKind::StringUnterminated)) => {
                 TEXT_LITERAL_INCOMPLETE
             }

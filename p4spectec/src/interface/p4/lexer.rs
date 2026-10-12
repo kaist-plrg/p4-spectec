@@ -253,19 +253,27 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
 
     // - Source cursor
 
-    /// The position of the next character.
-    fn source_position(&self) -> Position {
-        Position::new(self.file, self.line, self.column)
+    /// Returns the next character's position, rejecting unrepresentable coordinates.
+    fn source_position(&self) -> Result<Position, P4Error> {
+        // An out-of-range position can only retain its logical file name
+        let (Ok(line), Ok(column)) = (u32::try_from(self.line), u32::try_from(self.column)) else {
+            let pos = Position::new(self.file, 0, 0);
+            return Err(P4Error::new(Span::new(pos, pos), LexErrorKind::PositionOutOfRange));
+        };
+        Ok(Position { file: self.file, line, column })
     }
 
     /// The span from `pos_l` to the next character.
-    fn span_from(&self, pos_l: Position) -> Span {
-        Span::new(pos_l, self.source_position())
+    fn span_from(&self, pos_l: Position) -> Result<Span, P4Error> {
+        Ok(Span::new(pos_l, self.source_position()?))
     }
 
     /// An error spanning from `pos_l` to here.
     fn error(&self, kind: LexErrorKind, pos_l: Position) -> P4Error {
-        P4Error::new(self.span_from(pos_l), kind)
+        match self.span_from(pos_l) {
+            Ok(span) => P4Error::new(span, kind),
+            Err(error) => error,
+        }
     }
 
     /// Consumes one character, tracking line and column.
@@ -306,7 +314,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             return Some(Ok(token));
         }
         loop {
-            let token = match self.tokenize()? {
+            let token = match self.tokenize().transpose()? {
                 Ok(token) => token,
                 Err(error) => return Some(Err(error)),
             };
@@ -527,19 +535,19 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
     // - Raw scanning
 
     /// Scans one raw token, or `End` once at the end.
-    fn tokenize(&mut self) -> Option<Result<Phrase<Token>, P4Error>> {
+    fn tokenize(&mut self) -> Result<Option<Phrase<Token>>, P4Error> {
         loop {
             // `End` is emitted exactly once
             if self.index == self.source.len() {
                 if self.finished {
-                    return None;
+                    return Ok(None);
                 }
                 self.finished = true;
-                let position = self.source_position();
+                let position = self.source_position()?;
                 let span = Span::new(position, position);
-                return Some(Ok(phrase!(node: Token::End, span: span)));
+                return Ok(Some(phrase!(node: Token::End, span: span)));
             }
-            let pos_l = self.source_position();
+            let pos_l = self.source_position()?;
             let rest = &self.source[self.index..];
 
             // A block comment spanning lines counts as a newline, for pragmas
@@ -552,13 +560,13 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                     crossed_newline |= self.bump() == Some('\n');
                 }
                 if self.index == self.source.len() {
-                    return Some(Err(self.error(LexErrorKind::CommentUnterminated, pos_l)));
+                    return Err(self.error(LexErrorKind::CommentUnterminated, pos_l));
                 }
                 self.bump();
                 self.bump();
                 if crossed_newline {
-                    let span = self.span_from(pos_l);
-                    return Some(Ok(phrase!(node: Token::PragmaEnd, span: span)));
+                    let span = self.span_from(pos_l)?;
+                    return Ok(Some(phrase!(node: Token::PragmaEnd, span: span)));
                 }
                 continue;
             }
@@ -570,12 +578,12 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             // Newlines are tokens so pragmas can end
             if rest.starts_with('\n') {
                 self.bump();
-                let span = self.span_from(pos_l);
-                return Some(Ok(phrase!(node: Token::PragmaEnd, span: span)));
+                let span = self.span_from(pos_l)?;
+                return Ok(Some(phrase!(node: Token::PragmaEnd, span: span)));
             }
             // String literal
             if rest.starts_with('"') {
-                return Some(self.string_token(pos_l));
+                return self.string_token(pos_l).map(Some);
             }
             // Other whitespace is skipped
             if rest.starts_with([' ', '\t', '\u{000c}', '\r']) {
@@ -592,12 +600,12 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 for _ in 0.."@pragma".len() {
                     self.bump();
                 }
-                let span = self.span_from(pos_l);
-                return Some(Ok(phrase!(node: Token::Pragma, span: span)));
+                let span = self.span_from(pos_l)?;
+                return Ok(Some(phrase!(node: Token::Pragma, span: span)));
             }
             // Number literal
             if rest.as_bytes()[0].is_ascii_digit() {
-                return Some(self.number_token(pos_l));
+                return self.number_token(pos_l).map(Some);
             }
             // Keyword or name; names are interned as text values
             if is_name_start(rest.as_bytes()[0]) {
@@ -605,17 +613,17 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 self.bump();
                 self.take_while(|character| character.is_ascii_alphanumeric() || character == '_');
                 let text = &self.source[start..self.index];
-                let span = self.span_from(pos_l);
+                let span = self.span_from(pos_l)?;
                 let token = match keyword(text) {
                     Some(token) => token,
                     None => {
                         match value::make::text(&mut self.ctx.arena_mut(), text.to_owned(), span) {
                             Ok(value) => Token::Name(value),
-                            Err(error) => return Some(Err(P4Error::new(span, error))),
+                            Err(error) => return Err(P4Error::new(span, error)),
                         }
                     }
                 };
-                return Some(Ok(phrase!(node: token, span: span)));
+                return Ok(Some(phrase!(node: token, span: span)));
             }
 
             // Punctuation by longest match
@@ -623,19 +631,19 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 for _ in 0..spelling.len() {
                     self.bump();
                 }
-                let span = self.span_from(pos_l);
-                return Some(Ok(phrase!(node: token, span: span)));
+                let span = self.span_from(pos_l)?;
+                return Ok(Some(phrase!(node: token, span: span)));
             }
 
             // Anything else is passed to the parser as an unexpected token
             let text = self.bump().expect("source is not empty").to_string();
-            let span = self.span_from(pos_l);
+            let span = self.span_from(pos_l)?;
             let value = match value::make::text(&mut self.ctx.arena_mut(), text, span) {
                 Ok(value) => value,
-                Err(error) => return Some(Err(P4Error::new(span, error))),
+                Err(error) => return Err(P4Error::new(span, error)),
             };
             let token = Token::UnexpectedToken(value);
-            return Some(Ok(phrase!(node: token, span: span)));
+            return Ok(Some(phrase!(node: token, span: span)));
         }
     }
 
@@ -647,7 +655,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
         self.bump();
         let mut text = String::new();
         let pos_quote = loop {
-            let pos_char = self.source_position();
+            let pos_char = self.source_position()?;
             // The source may not end inside the literal
             let Some(character) = self.bump() else {
                 return Err(self.error(LexErrorKind::StringUnterminated, pos_char));
@@ -658,7 +666,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 '\\' => {
                     let Some(escaped) = self.bump() else {
                         return Err(
-                            self.error(LexErrorKind::StringUnterminated, self.source_position())
+                            self.error(LexErrorKind::StringUnterminated, self.source_position()?)
                         );
                     };
                     match escaped {
@@ -677,9 +685,9 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
             }
         };
         // The value spans the literal; the token ends at the closing quote
-        let value = value::make::text(&mut self.ctx.arena_mut(), text, self.span_from(pos_l))?;
+        let value = value::make::text(&mut self.ctx.arena_mut(), text, self.span_from(pos_l)?)?;
         let token = Token::StringLiteral(value);
-        let span = self.span_from(pos_quote);
+        let span = self.span_from(pos_quote)?;
         Ok(phrase!(node: token, span: span))
     }
 
@@ -716,7 +724,7 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 if sign == 's' && int_width < BigInt::from(2) {
                     return Err(self.error(LexErrorKind::SignedWidthInvalid, pos_l));
                 }
-                let span = self.span_from(pos_l);
+                let span = self.span_from(pos_l)?;
                 let nat_width = Natural::try_from(int_width).map_err(|_| {
                     self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l)
                 })?;
@@ -748,11 +756,11 @@ impl<'source, 'arena> Lexer<'source, 'arena> {
                 let int = parse_integer(spelling).ok_or_else(|| {
                     self.error(LexErrorKind::IntegerInvalid(spelling.to_owned()), pos_l)
                 })?;
-                let span = self.span_from(pos_l);
+                let span = self.span_from(pos_l)?;
                 (value::make::int(&mut self.ctx.arena_mut(), int, span)?, spelling.to_owned())
             }
         };
-        let span = self.span_from(pos_l);
+        let span = self.span_from(pos_l)?;
         let token = if sign_index.is_some() {
             Token::Number(value, lexeme)
         } else {
