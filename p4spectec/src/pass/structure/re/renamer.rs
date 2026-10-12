@@ -369,10 +369,10 @@ impl Renamer {
     // - Case instruction
 
     fn rename_case_instr(&self, changed: &mut bool, instr_ol: ol::CaseInstr) -> ol::InstrKind {
-        let ol::CaseInstr { exp, cases, total } = instr_ol;
+        let ol::CaseInstr { exp, cases, totality } = instr_ol;
         let exp = self.rename_exp(changed, exp);
         let cases = self.rename_cases(changed, cases);
-        ol::InstrKind::Case(ol::CaseInstr { exp, cases, total })
+        ol::InstrKind::Case(ol::CaseInstr { exp, cases, totality })
     }
 
     // - Group instruction

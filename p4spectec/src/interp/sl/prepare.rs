@@ -133,7 +133,7 @@ impl Prepare<PrepareContext<'_>> for source::CaseInstr {
         ast::CaseInstr {
             exp: self.exp.prepare(&mut ctx.il()),
             cases: self.cases.prepare(ctx),
-            total: self.total,
+            totality: self.totality,
             dangle: self.dangle,
         }
     }

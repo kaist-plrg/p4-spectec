@@ -1,13 +1,15 @@
 //! Optimization language model
 //!
 //! OL instructions mirror SL instructions
-//! but keep `Hold` as two blocks and `Case` with a `total` flag
+//! but keep `Hold` as two blocks
 //! instead of SL's hold cases and dangle marks;
 //! expressions, guards, and iterators are shared with SL.
 
 use crate::lang::{common::source::Phrase, hints::input::InputHint};
 
-pub use crate::lang::sl::ast::{Exp, ExpIter, Guard, Id, InstrIter, NotExp, RelSignature};
+pub use crate::lang::sl::ast::{
+    Exp, ExpIter, Guard, Id, InstrIter, NotExp, RelSignature, Totality,
+};
 
 // == Syntax
 
@@ -54,8 +56,7 @@ pub struct HoldInstr {
 pub struct CaseInstr {
     pub exp: Exp,
     pub cases: Vec<Case>,
-    /// Whether the guards cover every constructor of the scrutinee type.
-    pub total: bool,
+    pub totality: Totality,
 }
 
 /// A rule group matching `exps` against the relation signature.

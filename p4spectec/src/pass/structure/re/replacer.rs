@@ -334,10 +334,10 @@ impl Replacer {
     // - Case instruction
 
     fn replace_case_instr(&self, instr_ol: ol::CaseInstr) -> ol::InstrKind {
-        let ol::CaseInstr { exp, cases, total } = instr_ol;
+        let ol::CaseInstr { exp, cases, totality } = instr_ol;
         let exp = self.replace_exp(exp);
         let cases = self.replace_cases(cases);
-        ol::InstrKind::Case(ol::CaseInstr { exp, cases, total })
+        ol::InstrKind::Case(ol::CaseInstr { exp, cases, totality })
     }
 
     // - Group instruction

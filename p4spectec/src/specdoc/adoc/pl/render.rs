@@ -2046,8 +2046,10 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         let num_cases = case_instr.cases.len();
         let mut blocks_case = Vec::with_capacity(num_cases);
         for (idx, case) in case_instr.cases.iter().enumerate() {
-            let is_else =
-                idx > 0 && idx + 1 == num_cases && case_instr.total && elidable_guard(&case.guard);
+            let is_else = idx > 0
+                && idx + 1 == num_cases
+                && case_instr.totality == pl::Totality::Total
+                && elidable_guard(&case.guard);
             let keyword = if idx == 0 { "If " } else { "Else if " };
             let view = if is_else {
                 None

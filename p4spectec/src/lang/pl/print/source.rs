@@ -374,11 +374,11 @@ fn write_instr_with<Tier>(
             }
         }
         // `Case analysis on` and the numbered arms
-        InstrKind::Case(CaseInstr { exp, cases, total, dangle }) => {
+        InstrKind::Case(CaseInstr { exp, cases, totality, dangle }) => {
             write_order(output)?;
             output.write_str("Case analysis on ")?;
             exp.print(output)?;
-            if *total {
+            if *totality == Totality::Total {
                 output.write_str(" (total)")?;
             }
             if !short {

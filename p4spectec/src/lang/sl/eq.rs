@@ -80,7 +80,7 @@ impl SyntaxEq for CaseInstr {
     fn syntax_eq(&self, other: &Self) -> bool {
         self.exp.syntax_eq(&other.exp)
             && self.cases.syntax_eq(&other.cases)
-            && self.total == other.total
+            && self.totality == other.totality
             && self.dangle == other.dangle
     }
 }

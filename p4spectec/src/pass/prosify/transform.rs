@@ -940,7 +940,7 @@ fn prosify_dispatch_case_instr(
     let instr_pl = pl::CaseInstr {
         exp: exp_pl,
         cases: cases_pl,
-        total: instr_sl.total,
+        totality: instr_sl.totality,
         dangle: instr_sl.dangle,
     };
     let instr_kind_pl = pl::InstrKind::Case(instr_pl);
@@ -1213,7 +1213,7 @@ fn prosify_group_case_instr(
     let instr_pl = pl::CaseInstr {
         exp: exp_pl,
         cases: cases_pl,
-        total: instr_sl.total,
+        totality: instr_sl.totality,
         dangle: instr_sl.dangle,
     };
     let instr_kind_pl = pl::InstrKind::Case(instr_pl);

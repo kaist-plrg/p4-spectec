@@ -179,6 +179,8 @@ pub enum HoldCase<Tier, P: Stage = Source> {
 
 // Case analysis
 
+pub type Totality = sl::ast::Totality;
+
 #[derive(Clone, Debug, PartialEq)]
 /// One arm of a case analysis: a guard and its block.
 pub struct Case<Tier, P: Stage = Source> {
@@ -258,8 +260,7 @@ pub struct CaseInstr<Tier, P: Stage = Source> {
     pub exp: Exp<P>,
     pub cases: Vec<Case<Tier, P>>,
     pub dangle: Dangle,
-    /// Whether the guards cover every value of the scrutinee type.
-    pub total: bool,
+    pub totality: Totality,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Bind `exp_l` to `exp_r` under the iterations.

@@ -116,7 +116,7 @@ fn upstream_hold_instr(changed: &mut bool, frees: &IdSet, instr_ol: HoldInstr) -
 // - Case instruction
 
 fn upstream_case_instr(changed: &mut bool, frees: &IdSet, instr_ol: CaseInstr) -> InstrKind {
-    let CaseInstr { exp, cases, total } = instr_ol;
+    let CaseInstr { exp, cases, totality } = instr_ol;
     let frees = exp.free_ids().union(frees.clone());
     let cases = cases
         .into_iter()
@@ -127,7 +127,7 @@ fn upstream_case_instr(changed: &mut bool, frees: &IdSet, instr_ol: CaseInstr) -
             Case { guard, block }
         })
         .collect();
-    let instr = CaseInstr { exp, cases, total };
+    let instr = CaseInstr { exp, cases, totality };
     InstrKind::Case(instr)
 }
 
