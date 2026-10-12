@@ -13,7 +13,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::{
     error,
@@ -80,28 +80,34 @@ impl Meter {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
+    ) -> Eval<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        // Metering is not modeled: always GREEN
-        let value_color = pack::p4_enum(ctx.arena_mut(), "PSA_MeterColor_t", "GREEN")?;
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt =
-            value::make::opt(ctx.arena_mut(), typ.node.into(), Some(value_color), Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        Eval::with(|_| {
+            // Metering is not modeled: always GREEN
+            let value_color = pack::p4_enum(ctx.arena_mut(), "PSA_MeterColor_t", "GREEN")?;
+            let typ = typ::make::opt(typ::make::var(
+                crate::phrase!(node: "value".into(), span: Span::default()),
+                Vec::new(),
+            ));
+            let value_opt = value::make::opt(
+                ctx.arena_mut(),
+                typ.node.into(),
+                Some(value_color),
+                Span::default(),
+            )?;
+            let value_call_result = value::make::case_shaped! {
+                arena: ctx.arena_mut(),
+                shape: "RETURN value?",
+                args: vec![value_opt],
+                typ: "returnResult",
+                span: Span::default(),
+            }?;
+            Ok((self, value_ctx, value_arch, value_call_result))
+        })
     }
 
     /// Perform a color blind meter update (see RFC 2698). This may call
@@ -113,13 +119,15 @@ impl Meter {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
+    ) -> Eval<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        // Color-blind update defers to the color-aware path, returning GREEN
-        self.execute_color_aware(ctx, value_ctx, value_arch)
+        Eval::with(|effect| {
+            // Color-blind update defers to the color-aware path, returning GREEN
+            effect.include(self.execute_color_aware(ctx, value_ctx, value_arch))
+        })
     }
 }

@@ -2,10 +2,13 @@
 //!
 //! Calls are delegated to an interface implementation
 //! and report whether they changed interface state.
-//! For example, `$fresh_typeId` returns `true` with its fresh identifier,
-//! while a pure builtin such as `$sum_nat` returns `false` with its value.
+//! For example, `$fresh_typeId` returns `Impure` with its fresh identifier,
+//! while a pure builtin such as `$sum_nat` returns `Pure` with its value.
+//! Host failures with unknown effects conservatively return `Impure`.
 //! Failures remain independent of source locations;
 //! the interpreter that evaluates a call owns that location.
+
+use crate::runner::{Eval, SideEffect};
 
 use thiserror::Error;
 
@@ -58,14 +61,14 @@ impl From<BuiltinError> for InterfaceError {
 
 /// Stateful specification builtins, called by name.
 pub trait Interface {
-    /// Calls a builtin; the flag reports an interface state change.
+    /// Calls a builtin; retains its effect even if the call fails.
     fn call_builtin(
         &mut self,
         arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), InterfaceError>;
+    ) -> Eval<Value, InterfaceError>;
 
     /// Resets builtin state between programs.
     fn clear(&mut self);
@@ -91,7 +94,7 @@ impl Interface for BuiltinInterface {
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), InterfaceError> {
+    ) -> Eval<Value, InterfaceError> {
         self.builtins
             .invoke(arena, id, targs, values)
             .map_err(InterfaceError::from)
@@ -112,8 +115,8 @@ impl Interface for NullInterface {
         _id: &Id,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Result<(Value, bool), InterfaceError> {
-        Err(InterfaceError::diagnostic_unconfigured())
+    ) -> Eval<Value, InterfaceError> {
+        Eval::new(Err(InterfaceError::diagnostic_unconfigured()), SideEffect::Impure)
     }
 
     fn clear(&mut self) {}

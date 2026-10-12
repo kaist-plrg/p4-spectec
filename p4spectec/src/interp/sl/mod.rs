@@ -17,7 +17,7 @@ use crate::lang::{common::source::Span, data::value::flat::Value};
 
 use crate::lang::sl::ast;
 
-use crate::runner::{Extern, Interface, Interpreter, InterpreterError, RunnerContext};
+use crate::runner::{Eval, Extern, Interface, Interpreter, InterpreterError, RunnerContext};
 
 use crate::interp::shared::{cache::Cache, eval::Invoker};
 
@@ -66,7 +66,7 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, InterpreterError> {
+    ) -> Eval<Vec<Value>, InterpreterError> {
         runner_ctx.call_rel(name, &[program])
     }
 
@@ -74,20 +74,22 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         runner_ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, InterpreterError> {
-        // Public entries start from a fresh cache
-        runner_ctx.interp_mut().cache.clear();
-        let id = crate::phrase!(node: name.into(), span: Span::default());
-        let ctx = Context::new(runner_ctx.spec());
-        // Check the caller's inputs before running the definition
-        eval::call::check_rel_inputs(
-            runner_ctx.arena(),
-            &ctx,
-            &id,
-            values,
-            runner_ctx.interp().config.guard,
-        )?;
-        Self::invoke_rel(runner_ctx, &ctx, &id, values)
+    ) -> Eval<Vec<Value>, InterpreterError> {
+        Eval::with(|effect| {
+            // Public entries start from a fresh cache
+            runner_ctx.interp_mut().cache.clear();
+            let id = crate::phrase!(node: name.into(), span: Span::default());
+            let ctx = Context::new(runner_ctx.spec());
+            // Check the caller's inputs before running the definition
+            eval::call::check_rel_inputs(
+                runner_ctx.arena(),
+                &ctx,
+                &id,
+                values,
+                runner_ctx.interp().config.guard,
+            )?;
+            effect.include(Self::invoke_rel(runner_ctx, &ctx, &id, values))
+        })
     }
 
     fn eval_func(
@@ -95,20 +97,22 @@ impl<Iface: Interface, Ext: Extern> Interpreter<Iface, Ext> for SlInterp {
         name: &str,
         targs: &[ast::Typ],
         values: &[Value],
-    ) -> Result<Value, InterpreterError> {
-        // Public entries start from a fresh cache
-        runner_ctx.interp_mut().cache.clear();
-        let id = crate::phrase!(node: name.into(), span: Span::default());
-        let ctx = Context::new(runner_ctx.spec());
-        // Check the caller's inputs before running the definition
-        eval::call::check_func_inputs(
-            runner_ctx.arena(),
-            &ctx,
-            &id,
-            targs,
-            values,
-            runner_ctx.interp().config.guard,
-        )?;
-        Self::invoke_func(runner_ctx, &ctx, &id, targs, values)
+    ) -> Eval<Value, InterpreterError> {
+        Eval::with(|effect| {
+            // Public entries start from a fresh cache
+            runner_ctx.interp_mut().cache.clear();
+            let id = crate::phrase!(node: name.into(), span: Span::default());
+            let ctx = Context::new(runner_ctx.spec());
+            // Check the caller's inputs before running the definition
+            eval::call::check_func_inputs(
+                runner_ctx.arena(),
+                &ctx,
+                &id,
+                targs,
+                values,
+                runner_ctx.interp().config.guard,
+            )?;
+            effect.include(Self::invoke_func(runner_ctx, &ctx, &id, targs, values))
+        })
     }
 }

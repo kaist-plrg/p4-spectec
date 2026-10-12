@@ -22,7 +22,7 @@ use crate::lang::{
     traits::print::Print,
 };
 
-use crate::runner::{ExternError, Interface, Interpreter, Runner, RunnerContext};
+use crate::runner::{Eval, ExternError, Interface, Interpreter, Runner, RunnerContext};
 
 use crate::interface::p4::{error::P4Error, parse};
 
@@ -159,8 +159,10 @@ where
     runner.reset();
     let program =
         parse::parse_file(runner.arena_mut(), includes, path).map_err(P4Error::into_report)?;
-    let state =
-        Arch::init_pipe(&mut runner.context(), program).map_err(ExternError::into_report)?;
+    // Effects are discarded only at this top-level simulator boundary
+    let state = Arch::init_pipe(&mut runner.context(), program)
+        .result
+        .map_err(ExternError::into_report)?;
     Ok(Run::new(state))
 }
 
@@ -181,10 +183,11 @@ where
     run.state.txs.clear();
     let stmt_kind = Arch::transform_stf_stmt(stmt.node.clone());
     let mut ctx = runner.context();
+    // Each statement completes at this top-level simulator boundary
     let result = match stmt_kind {
         // Packets drive the pipeline
         Statement::Packet { port, packet } => {
-            run_stf_packet_stmt(&mut ctx, &stmt.span, run, port, packet)
+            run_stf_packet_stmt(&mut ctx, &stmt.span, run, port, packet).result
         }
         // Expectations match outputs
         Statement::Expect { port, packet_expected, exact } => {
@@ -193,36 +196,41 @@ where
         // Table control plane
         Statement::Add { table, priority, matches, action, .. } => {
             run_stf_add_stmt(&mut ctx, &stmt.span, &mut run.state, table, priority, matches, action)
+                .result
         }
         Statement::SetDefault { table, action } => {
-            run_stf_set_default_stmt(&mut ctx, &stmt.span, &mut run.state, table, action)
+            run_stf_set_default_stmt(&mut ctx, &stmt.span, &mut run.state, table, action).result
         }
         // Mirror sessions
         Statement::MirroringAdd { session, port } => {
-            run_stf_mirroring_add_stmt(&mut ctx, &stmt.span, &mut run.state, session, port)
+            run_stf_mirroring_add_stmt(&mut ctx, &stmt.span, &mut run.state, session, port).result
         }
         Statement::MirroringAddMc { session, group_id } => {
             run_stf_mirroring_add_mc_stmt(&mut ctx, &stmt.span, &mut run.state, session, group_id)
+                .result
         }
         // Multicast groups and nodes
         Statement::McGroupCreate { group_id } => {
-            run_stf_mc_group_create_stmt(&mut ctx, &stmt.span, &mut run.state, group_id)
+            run_stf_mc_group_create_stmt(&mut ctx, &stmt.span, &mut run.state, group_id).result
         }
         Statement::McNodeCreate { replication_id, ports } => {
             run_stf_mc_node_create_stmt(&mut ctx, &stmt.span, &mut run.state, replication_id, ports)
+                .result
         }
         Statement::McNodeAssociate { group_id, handle } => {
             run_stf_mc_node_associate_stmt(&mut ctx, &stmt.span, &mut run.state, group_id, handle)
+                .result
         }
         // Registers
         Statement::RegisterRead { name, index } => {
-            run_stf_register_read_stmt(&mut ctx, &stmt.span, &mut run.state, name, index)
+            run_stf_register_read_stmt(&mut ctx, &stmt.span, &mut run.state, name, index).result
         }
         Statement::RegisterWrite { name, index, value } => {
             run_stf_register_write_stmt(&mut ctx, &stmt.span, &mut run.state, name, index, value)
+                .result
         }
         Statement::RegisterReset { name } => {
-            run_stf_register_reset_stmt(&mut ctx, &stmt.span, &mut run.state, name)
+            run_stf_register_reset_stmt(&mut ctx, &stmt.span, &mut run.state, name).result
         }
         // Statements with no effect here
         Statement::MirroringGet { .. } | Statement::Wait => Ok(None),
@@ -253,17 +261,20 @@ fn run_stf_packet_stmt<Interp, Iface, Arch>(
     run: &mut Run,
     port: String,
     packet: String,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    // Payloads compare in uppercase hex
-    let rx = Rx { port: parse_int::<usize>(&port)?, packet: packet.to_ascii_uppercase() };
-    Arch::drive_pipe(ctx, &mut run.state, &rx)
-        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    run.on_tx_output()
+    Eval::with(|effect| {
+        // Payloads compare in uppercase hex
+        let rx = Rx { port: parse_int::<usize>(&port)?, packet: packet.to_ascii_uppercase() };
+        effect
+            .include(Arch::drive_pipe(ctx, &mut run.state, &rx))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        run.on_tx_output()
+    })
 }
 
 /// Records an expectation, matching a queued output if one is waiting.
@@ -351,41 +362,44 @@ fn run_stf_add_stmt<Interp, Iface, Arch>(
     priority: Option<i64>,
     matches: Vec<TableMatch>,
     action: Action,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    // Add names use the same escaped spelling as P4 annotation names
-    let text_name = escape_text(&table.into_string());
-    let value_name =
-        value::make::text(ctx.arena_mut(), text_name, Span::default()).map_err(SimError::from)?;
-    // Priority is optional
-    let value_priority = priority
-        .map(|priority| value::make::int(ctx.arena_mut(), priority.into(), Span::default()))
-        .transpose()
+    Eval::with(|effect| {
+        // Add names use the same escaped spelling as P4 annotation names
+        let text_name = escape_text(&table.into_string());
+        let value_name = value::make::text(ctx.arena_mut(), text_name, Span::default())
+            .map_err(SimError::from)?;
+        // Priority is optional
+        let value_priority = priority
+            .map(|priority| value::make::int(ctx.arena_mut(), priority.into(), Span::default()))
+            .transpose()
+            .map_err(SimError::from)?;
+        let value_priority = value::make::opt(
+            ctx.arena_mut(),
+            typ::make::opt(typ::make::int()).node.into(),
+            value_priority,
+            Span::default(),
+        )
         .map_err(SimError::from)?;
-    let value_priority = value::make::opt(
-        ctx.arena_mut(),
-        typ::make::opt(typ::make::int()).node.into(),
-        value_priority,
-        Span::default(),
-    )
-    .map_err(SimError::from)?;
-    let value_keys = encode_table_keys(ctx.arena_mut(), &matches)?;
-    let value_action = encode_table_action(ctx.arena_mut(), &action)?;
-    state.value_arch = table::add_entry(
-        ctx,
-        state.value_ctx,
-        state.value_arch,
-        value_name,
-        value_priority,
-        value_keys,
-        value_action,
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+        let value_keys = encode_table_keys(ctx.arena_mut(), &matches)?;
+        let value_action = encode_table_action(ctx.arena_mut(), &action)?;
+        state.value_arch = effect
+            .include(table::add_entry(
+                ctx,
+                state.value_ctx,
+                state.value_arch,
+                value_name,
+                value_priority,
+                value_keys,
+                value_action,
+            ))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 /// Encodes an STF action as the specification's `tableActionInterface`.
@@ -435,20 +449,28 @@ fn run_stf_set_default_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     table: Name,
     action: Action,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    // Table name and action, then let the table module store it
-    let value_name = value::make::text(ctx.arena_mut(), table.into_string(), Span::default())
-        .map_err(SimError::from)?;
-    let value_action = encode_table_action(ctx.arena_mut(), &action)?;
-    state.value_arch =
-        table::add_default_action(ctx, state.value_ctx, state.value_arch, value_name, value_action)
+    Eval::with(|effect| {
+        // Table name and action, then let the table module store it
+        let value_name = value::make::text(ctx.arena_mut(), table.into_string(), Span::default())
+            .map_err(SimError::from)?;
+        let value_action = encode_table_action(ctx.arena_mut(), &action)?;
+        state.value_arch = effect
+            .include(table::add_default_action(
+                ctx,
+                state.value_ctx,
+                state.value_arch,
+                value_name,
+                value_action,
+            ))
             .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+        Ok(None)
+    })
 }
 
 // - Mirror session updates
@@ -460,20 +482,23 @@ fn run_stf_mirroring_add_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     session: String,
     port: String,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::add_mirror_session(
-        ctx,
-        state.value_arch,
-        parse_int::<usize>(&session)?,
-        parse_int::<usize>(&port)?,
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+    Eval::with(|effect| {
+        state.value_arch = effect
+            .include(Arch::add_mirror_session(
+                ctx,
+                state.value_arch,
+                parse_int::<usize>(&session)?,
+                parse_int::<usize>(&port)?,
+            ))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 /// Maps a mirror session to a multicast group.
@@ -483,20 +508,23 @@ fn run_stf_mirroring_add_mc_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     session: String,
     id_group: String,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::add_mirror_session_mc(
-        ctx,
-        state.value_arch,
-        parse_int::<usize>(&session)?,
-        parse_int::<usize>(&id_group)?,
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+    Eval::with(|effect| {
+        state.value_arch = effect
+            .include(Arch::add_mirror_session_mc(
+                ctx,
+                state.value_arch,
+                parse_int::<usize>(&session)?,
+                parse_int::<usize>(&id_group)?,
+            ))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 // - Multicast group updates
@@ -507,15 +535,18 @@ fn run_stf_mc_group_create_stmt<Interp, Iface, Arch>(
     span: &Span,
     state: &mut SimState,
     id_group: String,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?)
-        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+    Eval::with(|effect| {
+        state.value_arch = effect
+            .include(Arch::mc_mgrp_create(ctx, state.value_arch, parse_int::<usize>(&id_group)?))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 /// Creates a multicast node over the listed ports.
@@ -525,20 +556,23 @@ fn run_stf_mc_node_create_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     id_replication: String,
     ports: Vec<String>,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    let instance = parse_int::<usize>(&id_replication)?;
-    let ports = ports
-        .iter()
-        .map(|port| parse_int::<usize>(port))
-        .collect::<Result<Vec<_>, _>>()?;
-    state.value_arch = Arch::mc_node_create(ctx, state.value_arch, instance, &ports)
-        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+    Eval::with(|effect| {
+        let instance = parse_int::<usize>(&id_replication)?;
+        let ports = ports
+            .iter()
+            .map(|port| parse_int::<usize>(port))
+            .collect::<Result<Vec<_>, _>>()?;
+        state.value_arch = effect
+            .include(Arch::mc_node_create(ctx, state.value_arch, instance, &ports))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 /// Adds a multicast node to a group.
@@ -548,20 +582,23 @@ fn run_stf_mc_node_associate_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     id_group: String,
     handle: String,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::mc_node_associate(
-        ctx,
-        state.value_arch,
-        parse_int::<usize>(&id_group)?,
-        parse_int::<usize>(&handle)?,
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+    Eval::with(|effect| {
+        state.value_arch = effect
+            .include(Arch::mc_node_associate(
+                ctx,
+                state.value_arch,
+                parse_int::<usize>(&id_group)?,
+                parse_int::<usize>(&handle)?,
+            ))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 // - Register updates
@@ -573,16 +610,23 @@ fn run_stf_register_read_stmt<Interp, Iface, Arch>(
     state: &mut SimState,
     name: Name,
     idx: String,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch =
-        Arch::register_read(ctx, state.value_arch, name.as_str(), parse_int::<usize>(&idx)?)
+    Eval::with(|effect| {
+        state.value_arch = effect
+            .include(Arch::register_read(
+                ctx,
+                state.value_arch,
+                name.as_str(),
+                parse_int::<usize>(&idx)?,
+            ))
             .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+        Ok(None)
+    })
 }
 
 /// Writes a register cell.
@@ -593,21 +637,24 @@ fn run_stf_register_write_stmt<Interp, Iface, Arch>(
     name: Name,
     idx: String,
     value: String,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::register_write(
-        ctx,
-        state.value_arch,
-        name.as_str(),
-        parse_int::<usize>(&idx)?,
-        BigInt::from(parse_int::<i128>(&value)?),
-    )
-    .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+    Eval::with(|effect| {
+        state.value_arch = effect
+            .include(Arch::register_write(
+                ctx,
+                state.value_arch,
+                name.as_str(),
+                parse_int::<usize>(&idx)?,
+                BigInt::from(parse_int::<i128>(&value)?),
+            ))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 /// Clears a register.
@@ -616,15 +663,18 @@ fn run_stf_register_reset_stmt<Interp, Iface, Arch>(
     span: &Span,
     state: &mut SimState,
     name: Name,
-) -> Result<Option<Tx>, SimError>
+) -> Eval<Option<Tx>, SimError>
 where
     Iface: Interface,
     Arch: Architecture,
     Interp: Interpreter<Iface, Arch>,
 {
-    state.value_arch = Arch::register_reset(ctx, state.value_arch, name.as_str())
-        .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
-    Ok(None)
+    Eval::with(|effect| {
+        state.value_arch = effect
+            .include(Arch::register_reset(ctx, state.value_arch, name.as_str()))
+            .map_err(|error| error::statement_execution_failure(span, error.into_report()))?;
+        Ok(None)
+    })
 }
 
 // == STF tests

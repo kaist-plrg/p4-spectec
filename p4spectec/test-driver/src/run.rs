@@ -150,10 +150,12 @@ where
                             ))
                         })?;
                     let outcome = match parse_string(runner.arena_mut(), path, &source) {
-                        Ok(program) => match runner.eval_program(&suite.id_relation, program) {
-                            Ok(_) => Outcome::Pass,
-                            Err(_) => Outcome::Fail,
-                        },
+                        Ok(program) => {
+                            match runner.eval_program(&suite.id_relation, program).result {
+                                Ok(_) => Outcome::Pass,
+                                Err(_) => Outcome::Fail,
+                            }
+                        }
                         Err(P4Error {
                             kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_),
                             ..

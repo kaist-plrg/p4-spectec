@@ -17,7 +17,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::{
     error,
@@ -55,27 +55,29 @@ impl Register {
         value_targs: Value,
         value_ids: Value,
         value_args: Value,
-    ) -> Result<Self, ExternError>
+    ) -> Eval<Self, ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        let values_targ = crate::lang::data::value::flat::get::list(ctx.arena(), &value_targs)?;
-        // Exactly one type argument, the element type
-        let [value_typ] = values_targ else {
-            return Err(error::register_type_argument_arity_mismatch(format!(
-                "register constructor expects 1 type argument, but {} were given",
-                values_targ.len()
-            ))
-            .into());
-        };
-        let value_typ = *value_typ;
-        let args = args::assoc(ctx.arena(), value_ids, value_args)?;
-        let value_size = args::find(&args, "size")?;
-        let value_initial = func::default(ctx, value_typ)?;
-        let size = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_size)?.1)?;
-        Ok(Self { value_typ, values: vec![value_initial; size] })
+        Eval::with(|effect| {
+            let values_targ = crate::lang::data::value::flat::get::list(ctx.arena(), &value_targs)?;
+            // Exactly one type argument, the element type
+            let [value_typ] = values_targ else {
+                return Err(error::register_type_argument_arity_mismatch(format!(
+                    "register constructor expects 1 type argument, but {} were given",
+                    values_targ.len()
+                ))
+                .into());
+            };
+            let value_typ = *value_typ;
+            let args = args::assoc(ctx.arena(), value_ids, value_args)?;
+            let value_size = args::find(&args, "size")?;
+            let value_initial = effect.include(func::default(ctx, value_typ))?;
+            let size = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_size)?.1)?;
+            Ok(Self { value_typ, values: vec![value_initial; size] })
+        })
     }
 
     /// `read()` reads the state of the register array stored at the
@@ -97,34 +99,39 @@ impl Register {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
+    ) -> Eval<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
-        // Out of range: the default, since the result is unspecified
-        let value = match self.values.get(idx) {
-            Some(value) => *value,
-            None => func::default(ctx, self.value_typ)?,
-        };
-        let value_ctx = rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value)?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        Eval::with(|effect| {
+            let value_idx = effect.include(func::find_var_e_local(ctx, value_ctx, "index"))?;
+            let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+            // Out of range: the default, since the result is unspecified
+            let value = match self.values.get(idx) {
+                Some(value) => *value,
+                None => effect.include(func::default(ctx, self.value_typ))?,
+            };
+            let value_ctx = effect.include(rel::lvalue_write_var_local(
+                ctx, value_ctx, value_arch, "result", value,
+            ))?;
+            // Return without a value
+            let typ = typ::make::opt(typ::make::var(
+                crate::phrase!(node: "value".into(), span: Span::default()),
+                Vec::new(),
+            ));
+            let value_opt =
+                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+            let value_call_result = value::make::case_shaped! {
+                arena: ctx.arena_mut(),
+                shape: "RETURN value?",
+                args: vec![value_opt],
+                typ: "returnResult",
+                span: Span::default(),
+            }?;
+            Ok((self, value_ctx, value_arch, value_call_result))
+        })
     }
 
     /// `write()` writes the state of the register array at the specified
@@ -153,32 +160,35 @@ impl Register {
         ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
         value_ctx: Value,
         value_arch: Value,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
+    ) -> Eval<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
-        let value_target = func::find_var_e_local(ctx, value_ctx, "value")?;
-        // Out of range: ignored
-        if let Some(value) = self.values.get_mut(idx) {
-            *value = value_target;
-        }
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        Eval::with(|effect| {
+            let value_idx = effect.include(func::find_var_e_local(ctx, value_ctx, "index"))?;
+            let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+            let value_target = effect.include(func::find_var_e_local(ctx, value_ctx, "value"))?;
+            // Out of range: ignored
+            if let Some(value) = self.values.get_mut(idx) {
+                *value = value_target;
+            }
+            // Return without a value
+            let typ = typ::make::opt(typ::make::var(
+                crate::phrase!(node: "value".into(), span: Span::default()),
+                Vec::new(),
+            ));
+            let value_opt =
+                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+            let value_call_result = value::make::case_shaped! {
+                arena: ctx.arena_mut(),
+                shape: "RETURN value?",
+                args: vec![value_opt],
+                typ: "returnResult",
+                span: Span::default(),
+            }?;
+            Ok((self, value_ctx, value_arch, value_call_result))
+        })
     }
 }

@@ -40,7 +40,7 @@ use crate::sim_plugin::dummy::Dummy;
 pub use context::RunnerContext;
 pub use externs::{Extern, ExternError, NullExtern};
 pub use interface::{BuiltinInterface, Interface, InterfaceError, NullInterface};
-pub use interpreter::{Interpreter, InterpreterError};
+pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
 
 // == Runner construction
 
@@ -188,9 +188,11 @@ where
         &mut self,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, InterpreterError> {
-        let mut ctx = self.context();
-        ctx.call_program(name, program)
+    ) -> Eval<Vec<Value>, InterpreterError> {
+        Eval::with(|effect| {
+            let mut ctx = self.context();
+            effect.include(ctx.call_program(name, program))
+        })
     }
 
     // - Lifecycle
@@ -262,9 +264,13 @@ where
     // Parse the program into the arena used by evaluation
     let program = parse_file(runner.arena_mut(), includes, path_p4).map_err(RunError::Parse)?;
 
-    // Evaluate the entry without retaining arena-relative results
+    // Discard effects at the command boundary, after evaluation has finished
     runner
         .eval_program(relation, program)
+        .result
         .map_err(RunError::Eval)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

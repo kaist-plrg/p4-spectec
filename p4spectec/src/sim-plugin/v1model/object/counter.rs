@@ -16,7 +16,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::{
     core::object::PacketIn,
@@ -94,46 +94,49 @@ impl Counter {
         value_ctx: Value,
         value_arch: Value,
         packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
+    ) -> Eval<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        let value_idx = func::find_var_e_local(ctx, value_ctx, "index")?;
-        let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
-        // An out-of-range index leaves the array untouched
-        match &mut self {
-            Self::Packets(counts) => {
-                if let Some(count) = counts.get_mut(idx) {
-                    *count += BigInt::one();
+        Eval::with(|effect| {
+            let value_idx = effect.include(func::find_var_e_local(ctx, value_ctx, "index"))?;
+            let idx = usize::try_from(&unpack::p4_fixed_bit(ctx.arena(), &value_idx)?.1)?;
+            // An out-of-range index leaves the array untouched
+            match &mut self {
+                Self::Packets(counts) => {
+                    if let Some(count) = counts.get_mut(idx) {
+                        *count += BigInt::one();
+                    }
+                }
+                Self::Bytes(counts) => {
+                    if let Some(count) = counts.get_mut(idx) {
+                        *count += BigInt::from(packet_in.len);
+                    }
+                }
+                Self::PacketsAndBytes(counts) => {
+                    if let Some((count_packets, count_bytes)) = counts.get_mut(idx) {
+                        *count_packets += BigInt::one();
+                        *count_bytes += BigInt::from(packet_in.len);
+                    }
                 }
             }
-            Self::Bytes(counts) => {
-                if let Some(count) = counts.get_mut(idx) {
-                    *count += BigInt::from(packet_in.len);
-                }
-            }
-            Self::PacketsAndBytes(counts) => {
-                if let Some((count_packets, count_bytes)) = counts.get_mut(idx) {
-                    *count_packets += BigInt::one();
-                    *count_bytes += BigInt::from(packet_in.len);
-                }
-            }
-        }
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+            // Return without a value
+            let typ = typ::make::opt(typ::make::var(
+                crate::phrase!(node: "value".into(), span: Span::default()),
+                Vec::new(),
+            ));
+            let value_opt =
+                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+            let value_call_result = value::make::case_shaped! {
+                arena: ctx.arena_mut(),
+                shape: "RETURN value?",
+                args: vec![value_opt],
+                typ: "returnResult",
+                span: Span::default(),
+            }?;
+            Ok((self, value_ctx, value_arch, value_call_result))
+        })
     }
 }

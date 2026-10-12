@@ -7,6 +7,8 @@
 //! while `fresh_typeId` advances state hidden in `fresh`
 //! and is therefore marked impure, so its results are never cached.
 
+use crate::runner::{Eval, SideEffect};
+
 use std::collections::HashMap;
 
 use crate::lang::data::{arena::Arena, value::flat::Value};
@@ -139,31 +141,32 @@ impl Builtins {
 
     // - Calls
 
-    /// Calls a builtin by name; the flag reports whether it had effects.
+    /// Calls a builtin and retains effects on both success and failure.
     pub fn invoke(
         &mut self,
         arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), BuiltinError> {
-        // An undeclared builtin is a hard error, not a mismatch
-        let entry = self
-            .funcs
-            .get_mut(id.node.as_ref())
-            .ok_or_else(|| BuiltinError::implementation_missing(&id.node))?;
-        let (value, side_effected) = match entry {
-            // Pure results may be memoized by the interpreter
+    ) -> Eval<Value, BuiltinError> {
+        // Unknown host failures retain the conservative impure classification
+        let Some(entry) = self.funcs.get_mut(id.node.as_ref()) else {
+            return Eval::new(
+                Err(BuiltinError::implementation_missing(&id.node)),
+                SideEffect::Impure,
+            );
+        };
+        // Impure builtins remain impure even when their operation fails
+        let (result, effect) = match entry {
             BuiltinEntry::Pure(builtin_impl) => {
-                let value = builtin_impl(arena, targs, values)?;
-                (value, false)
+                let result = builtin_impl(arena, targs, values);
+                let effect = if result.is_err() { SideEffect::Impure } else { SideEffect::Pure };
+                (result, effect)
             }
-            // Impure results may not
             BuiltinEntry::Impure(builtin_impl) => {
-                let value = builtin_impl(arena, targs, values)?;
-                (value, true)
+                (builtin_impl(arena, targs, values), SideEffect::Impure)
             }
         };
-        Ok((value, side_effected))
+        Eval::new(result, effect)
     }
 }

@@ -15,7 +15,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::{
     core::object::PacketIn,
@@ -92,32 +92,37 @@ impl DirectMeter {
         value_ctx: Value,
         value_arch: Value,
         _packet_in: &PacketIn,
-    ) -> Result<(Self, Value, Value, Value), ExternError>
+    ) -> Eval<(Self, Value, Value, Value), ExternError>
     where
         Iface: Interface,
         Ext: Extern,
         Interp: Interpreter<Iface, Ext>,
     {
-        // The color width comes from the instantiated `T`
-        let value_typ = func::find_type_e_local(ctx, value_ctx, "T")?;
-        let value_typ = func::subst_type_e_local(ctx, value_ctx, value_typ)?;
-        let size = func::sizeof_max_size_in_bits(ctx, value_typ)?;
-        // Metering is not modeled: always GREEN
-        let value = pack::p4_fixed_bit(ctx.arena_mut(), size, BigInt::zero())?;
-        let value_ctx = rel::lvalue_write_var_local(ctx, value_ctx, value_arch, "result", value)?;
-        // Return without a value
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        let value_call_result = value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?;
-        Ok((self, value_ctx, value_arch, value_call_result))
+        Eval::with(|effect| {
+            // The color width comes from the instantiated `T`
+            let value_typ = effect.include(func::find_type_e_local(ctx, value_ctx, "T"))?;
+            let value_typ = effect.include(func::subst_type_e_local(ctx, value_ctx, value_typ))?;
+            let size = effect.include(func::sizeof_max_size_in_bits(ctx, value_typ))?;
+            // Metering is not modeled: always GREEN
+            let value = pack::p4_fixed_bit(ctx.arena_mut(), size, BigInt::zero())?;
+            let value_ctx = effect.include(rel::lvalue_write_var_local(
+                ctx, value_ctx, value_arch, "result", value,
+            ))?;
+            // Return without a value
+            let typ = typ::make::opt(typ::make::var(
+                crate::phrase!(node: "value".into(), span: Span::default()),
+                Vec::new(),
+            ));
+            let value_opt =
+                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+            let value_call_result = value::make::case_shaped! {
+                arena: ctx.arena_mut(),
+                shape: "RETURN value?",
+                args: vec![value_opt],
+                typ: "returnResult",
+                span: Span::default(),
+            }?;
+            Ok((self, value_ctx, value_arch, value_call_result))
+        })
     }
 }

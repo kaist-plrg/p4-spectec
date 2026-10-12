@@ -7,6 +7,8 @@
 //! `choose_sequential` takes the first non-continuing instruction;
 //! `choose_deterministic` runs all and rejects two that terminate.
 
+use crate::runner::Eval;
+
 use crate::lang::{
     common::source::{Phrase, Span},
     data::value::flat::Value,
@@ -79,28 +81,30 @@ fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<Report>) {
 /// Tries instructions in order; the last one runs in tail position.
 pub(crate) fn choose_sequential<C>(
     mut candidates: impl DoubleEndedIterator<Item = C>,
-    mut evaluate: impl FnMut(C, bool) -> Backtrack<Flow>,
-) -> Backtrack<Flow> {
-    // An empty block continues with no failures
-    let Some(candidate_last) = candidates.next_back() else {
-        return ok!(Flow::Cont(vec![]));
-    };
-    // Non-tail instructions run first; the first one that terminates wins
-    let mut errors = Vec::new();
-    for candidate in candidates {
-        match unwrap!(evaluate(candidate, false)) {
-            Flow::Cont(errors_post) => retain_deepest_errors(&mut errors, errors_post),
-            flow => return ok!(flow),
+    mut evaluate: impl FnMut(C, bool) -> Eval<Flow>,
+) -> Eval<Flow> {
+    Eval::with(|effect| {
+        // An empty block continues with no failures
+        let Some(candidate_last) = candidates.next_back() else {
+            return ok!(Flow::Cont(vec![]));
+        };
+        // Non-tail instructions run first; the first one that terminates wins
+        let mut errors = Vec::new();
+        for candidate in candidates {
+            match unwrap!(effect.include(evaluate(candidate, false))) {
+                Flow::Cont(errors_post) => retain_deepest_errors(&mut errors, errors_post),
+                flow => return ok!(flow),
+            }
         }
-    }
-    // The last instruction gets the tail flag
-    match unwrap!(evaluate(candidate_last, true)) {
-        Flow::Cont(errors_post) => {
-            retain_deepest_errors(&mut errors, errors_post);
-            ok!(Flow::Cont(errors))
+        // The last instruction gets the tail flag
+        match unwrap!(effect.include(evaluate(candidate_last, true))) {
+            Flow::Cont(errors_post) => {
+                retain_deepest_errors(&mut errors, errors_post);
+                ok!(Flow::Cont(errors))
+            }
+            flow => ok!(flow),
         }
-        flow => ok!(flow),
-    }
+    })
 }
 
 // = Deterministic choice
@@ -134,18 +138,20 @@ fn combine_deterministic(flow: Flow, flow_post: Flow) -> Backtrack<Flow> {
 /// Runs every instruction and merges the flows; mismatches are skipped.
 pub(crate) fn choose_deterministic<C>(
     candidates: impl IntoIterator<Item = C>,
-    mut evaluate: impl FnMut(C) -> Backtrack<Flow>,
-) -> Backtrack<Flow> {
-    // Start from an empty continuation
-    let mut flow = Flow::Cont(vec![]);
-    for candidate in candidates {
-        let flow_post = match evaluate(candidate) {
-            // A mismatching instruction contributes nothing
-            unmatch!(_) => continue,
-            result => unwrap!(result),
-        };
-        // Merge, rejecting a second terminating flow
-        flow = unwrap!(combine_deterministic(flow, flow_post));
-    }
-    ok!(flow)
+    mut evaluate: impl FnMut(C) -> Eval<Flow>,
+) -> Eval<Flow> {
+    Eval::with(|effect| {
+        // Start from an empty continuation
+        let mut flow = Flow::Cont(vec![]);
+        for candidate in candidates {
+            let flow_post = match effect.include(evaluate(candidate)) {
+                // A mismatching instruction contributes nothing
+                unmatch!(_) => continue,
+                result => unwrap!(result),
+            };
+            // Merge, rejecting a second terminating flow
+            flow = unwrap!(combine_deterministic(flow, flow_post));
+        }
+        ok!(flow)
+    })
 }

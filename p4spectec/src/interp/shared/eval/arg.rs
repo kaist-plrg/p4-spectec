@@ -14,7 +14,7 @@ use crate::lang::{
 
 use crate::lang::il::prepared as ast;
 
-use crate::runner::{Extern, Interface, RunnerContext};
+use crate::runner::{Eval, Extern, Interface, RunnerContext};
 
 use crate::interp::shared::backtrack::{Backtrack, WithFrame, ok, unwrap, unwrap_from_result};
 
@@ -27,13 +27,15 @@ fn eval_arg<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, Ext: Extern>
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     arg: &ast::Arg,
-) -> Backtrack<Value> {
-    let result = match &arg.node {
-        ast::ArgKind::Exp(exp) => eval_exp(runner_ctx, ctx, exp),
-        ast::ArgKind::Def(id) => eval_def_arg(runner_ctx.arena_mut(), ctx, id, &arg.span),
-    };
-    result.with_frame(arg.span, || {
-        format!("while evaluating argument {}", arg.view(&runner_ctx.arena().mixop).to_string())
+) -> Eval<Value> {
+    Eval::with(|effect| {
+        let result = match &arg.node {
+            ast::ArgKind::Exp(exp) => effect.include(eval_exp(runner_ctx, ctx, exp)),
+            ast::ArgKind::Def(id) => eval_def_arg(runner_ctx.arena_mut(), ctx, id, &arg.span),
+        };
+        result.with_frame(arg.span, || {
+            format!("while evaluating argument {}", arg.view(&runner_ctx.arena().mixop).to_string())
+        })
     })
 }
 
@@ -42,12 +44,14 @@ pub(crate) fn eval_args<'global, Interp: Invoker<Iface, Ext>, Iface: Interface, 
     runner_ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     ctx: &Interp::Context<'global>,
     args: &[ast::Arg],
-) -> Backtrack<Vec<Value>> {
-    let mut values = Vec::with_capacity(args.len());
-    for arg in args {
-        values.push(unwrap!(eval_arg(runner_ctx, ctx, arg)));
-    }
-    ok!(values)
+) -> Eval<Vec<Value>> {
+    Eval::with(|effect| {
+        let mut values = Vec::with_capacity(args.len());
+        for arg in args {
+            values.push(unwrap!(effect.include(eval_arg(runner_ctx, ctx, arg))));
+        }
+        ok!(values)
+    })
 }
 
 // - Function argument

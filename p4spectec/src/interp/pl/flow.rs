@@ -5,6 +5,8 @@
 //! `choose_deterministic` combines outcomes and rejects multiple conclusions.
 //! Evaluators supply candidates and manage their local bindings.
 
+use crate::runner::Eval;
+
 use crate::lang::{
     common::source::{Phrase, Span},
     data::value::flat::Value,
@@ -62,20 +64,22 @@ pub(super) fn retain_deepest_errors(errors: &mut Vec<Report>, errors_post: Vec<R
 /// Selects the first conclusion, propagating mismatches and fatal errors.
 pub(crate) fn choose_sequential<C>(
     candidates: impl IntoIterator<Item = C>,
-    mut evaluate: impl FnMut(C) -> Backtrack<Flow>,
-) -> Backtrack<Flow> {
-    // An empty candidate sequence continues without failures
-    let mut errors = Vec::new();
-    // Evaluate in order until a candidate concludes or aborts
-    for candidate in candidates {
-        match unwrap!(evaluate(candidate)) {
-            // Continuing candidates contribute their most specific failures
-            Flow::Cont(errors_post) => retain_deepest_errors(&mut errors, errors_post),
-            // The first conclusion ends sequential choice
-            flow => return ok!(flow),
+    mut evaluate: impl FnMut(C) -> Eval<Flow>,
+) -> Eval<Flow> {
+    Eval::with(|effect| {
+        // An empty candidate sequence continues without failures
+        let mut errors = Vec::new();
+        // Evaluate in order until a candidate concludes or aborts
+        for candidate in candidates {
+            match unwrap!(effect.include(evaluate(candidate))) {
+                // Continuing candidates contribute their most specific failures
+                Flow::Cont(errors_post) => retain_deepest_errors(&mut errors, errors_post),
+                // The first conclusion ends sequential choice
+                flow => return ok!(flow),
+            }
         }
-    }
-    ok!(Flow::Cont(errors))
+        ok!(Flow::Cont(errors))
+    })
 }
 
 // = Deterministic choice
@@ -110,20 +114,22 @@ fn combine_deterministic(flow: Flow, flow_post: Flow) -> Backtrack<Flow> {
 /// Evaluates candidates and merges their flows, skipping mismatches.
 pub(crate) fn choose_deterministic<C>(
     candidates: impl IntoIterator<Item = C>,
-    mut evaluate: impl FnMut(C) -> Backtrack<Flow>,
-) -> Backtrack<Flow> {
-    // Start from an empty continuation
-    let mut flow = Flow::Cont(vec![]);
-    // Every candidate must be checked for a second conclusion
-    for candidate in candidates {
-        let flow_post = match evaluate(candidate) {
-            // A mismatching candidate contributes nothing
-            unmatch!(_) => continue,
-            // Fatal failures abort selection
-            result => unwrap!(result),
-        };
-        // Reject multiple conclusions at the conflicting candidate
-        flow = unwrap!(combine_deterministic(flow, flow_post));
-    }
-    ok!(flow)
+    mut evaluate: impl FnMut(C) -> Eval<Flow>,
+) -> Eval<Flow> {
+    Eval::with(|effect| {
+        // Start from an empty continuation
+        let mut flow = Flow::Cont(vec![]);
+        // Every candidate must be checked for a second conclusion
+        for candidate in candidates {
+            let flow_post = match effect.include(evaluate(candidate)) {
+                // A mismatching candidate contributes nothing
+                unmatch!(_) => continue,
+                // Fatal failures abort selection
+                result => unwrap!(result),
+            };
+            // Reject multiple conclusions at the conflicting candidate
+            flow = unwrap!(combine_deterministic(flow, flow_post));
+        }
+        ok!(flow)
+    })
 }

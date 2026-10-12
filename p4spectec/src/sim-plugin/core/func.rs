@@ -12,7 +12,7 @@ use crate::lang::{
     },
 };
 
-use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext};
 
 use crate::sim_plugin::error;
 
@@ -37,30 +37,32 @@ pub fn static_assert<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: &Value,
     has_message: bool,
-) -> Result<Value, ExternError>
+) -> Eval<Value, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    // Arguments are bound as local variables of the call
-    let value_check = func::find_var_value_t_local(ctx, value_ctx, "check")?;
-    let value_message = if has_message {
-        Some(func::find_var_value_t_local(ctx, value_ctx, "message")?)
-    } else {
-        None
-    };
-    let check = unpack::p4_bool(ctx.arena(), &value_check)?;
-    // A passing assertion evaluates to its check
-    if check {
-        return Ok(value_check);
-    }
-    // The default message when the one-argument overload is used
-    let message = match value_message {
-        Some(value) => unpack::p4_string(ctx.arena(), &value)?,
-        None => "static_assert failed".to_owned(),
-    };
-    Err(error::assertion_unmet(message).into())
+    Eval::with(|effect| {
+        // Arguments are bound as local variables of the call
+        let value_check = effect.include(func::find_var_value_t_local(ctx, value_ctx, "check"))?;
+        let value_message = if has_message {
+            Some(effect.include(func::find_var_value_t_local(ctx, value_ctx, "message"))?)
+        } else {
+            None
+        };
+        let check = unpack::p4_bool(ctx.arena(), &value_check)?;
+        // A passing assertion evaluates to its check
+        if check {
+            return Ok(value_check);
+        }
+        // The default message when the one-argument overload is used
+        let message = match value_message {
+            Some(value) => unpack::p4_string(ctx.arena(), &value)?,
+            None => "static_assert failed".to_owned(),
+        };
+        Err(error::assertion_unmet(message).into())
+    })
 }
 
 /// Checks a predicate in the parser, leaving execution unchanged when true.
@@ -74,38 +76,41 @@ pub fn verify<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     value_ctx: Value,
     value_arch: Value,
-) -> Result<(Value, Value, Value), ExternError>
+) -> Eval<(Value, Value, Value), ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    // Arguments are bound as local variables of the call
-    let value_check = func::find_var_e_local(ctx, value_ctx, "check")?;
-    let value_signal = func::find_var_e_local(ctx, value_ctx, "toSignal")?;
-    let check = unpack::p4_bool(ctx.arena(), &value_check)?;
-    // True: return nothing; false: reject with the given error
-    let value_call_result = if check {
-        let typ = typ::make::opt(typ::make::var(
-            crate::phrase!(node: "value".into(), span: Span::default()),
-            Vec::new(),
-        ));
-        let value_opt = value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
-        value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "RETURN value?",
-            args: vec![value_opt],
-            typ: "returnResult",
-            span: Span::default(),
-        }?
-    } else {
-        value::make::case_shaped! {
-            arena: ctx.arena_mut(),
-            shape: "REJECT errorValue",
-            args: vec![value_signal],
-            typ: "rejectResult",
-            span: Span::default(),
-        }?
-    };
-    Ok((value_ctx, value_arch, value_call_result))
+    Eval::with(|effect| {
+        // Arguments are bound as local variables of the call
+        let value_check = effect.include(func::find_var_e_local(ctx, value_ctx, "check"))?;
+        let value_signal = effect.include(func::find_var_e_local(ctx, value_ctx, "toSignal"))?;
+        let check = unpack::p4_bool(ctx.arena(), &value_check)?;
+        // True: return nothing; false: reject with the given error
+        let value_call_result = if check {
+            let typ = typ::make::opt(typ::make::var(
+                crate::phrase!(node: "value".into(), span: Span::default()),
+                Vec::new(),
+            ));
+            let value_opt =
+                value::make::opt(ctx.arena_mut(), typ.node.into(), None, Span::default())?;
+            value::make::case_shaped! {
+                arena: ctx.arena_mut(),
+                shape: "RETURN value?",
+                args: vec![value_opt],
+                typ: "returnResult",
+                span: Span::default(),
+            }?
+        } else {
+            value::make::case_shaped! {
+                arena: ctx.arena_mut(),
+                shape: "REJECT errorValue",
+                args: vec![value_signal],
+                typ: "rejectResult",
+                span: Span::default(),
+            }?
+        };
+        Ok((value_ctx, value_arch, value_call_result))
+    })
 }

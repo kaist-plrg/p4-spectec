@@ -8,7 +8,7 @@ use crate::lang::data::{arena::Arena, value::flat::Value};
 
 use crate::lang::il::ast::{Id, Typ};
 
-use crate::runner::{Extern, Interface, Interpreter, InterpreterError};
+use crate::runner::{Eval, Extern, Interface, Interpreter, InterpreterError};
 
 // == Runner context
 
@@ -77,18 +77,14 @@ where
         &mut self,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, InterpreterError> {
+    ) -> Eval<Vec<Value>, InterpreterError> {
         Interp::eval_program(self, name, program)
     }
 
     /// Calls a relation by name through the interpreter.
     ///
     /// With type guards disabled, values must match the declared input types.
-    pub fn call_rel(
-        &mut self,
-        name: &str,
-        values: &[Value],
-    ) -> Result<Vec<Value>, InterpreterError> {
+    pub fn call_rel(&mut self, name: &str, values: &[Value]) -> Eval<Vec<Value>, InterpreterError> {
         Interp::eval_rel(self, name, values)
     }
 
@@ -101,21 +97,22 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, InterpreterError> {
+    ) -> Eval<Value, InterpreterError> {
         Interp::eval_func(self, name, targs, values)
     }
 
     // - Host dispatch
 
-    /// Calls a builtin; the flag reports an interface state change.
+    /// Calls a builtin; retains its effect even if the call fails.
     pub fn call_builtin(
         &mut self,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), InterpreterError> {
-        let result = self.interface.call_builtin(self.arena, id, targs, values)?;
-        Ok(result)
+    ) -> Eval<Value, InterpreterError> {
+        self.interface
+            .call_builtin(self.arena, id, targs, values)
+            .map_err(Into::into)
     }
 
     /// Calls a host relation; the extern receives this context to reenter.
@@ -123,7 +120,7 @@ where
         &mut self,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), InterpreterError> {
+    ) -> Eval<Vec<Value>, InterpreterError> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
         external.eval_rel(self, name, values).map_err(Into::into)
@@ -135,7 +132,7 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), InterpreterError> {
+    ) -> Eval<Value, InterpreterError> {
         // Copy the shared borrow so the extern can take `self` mutably
         let external = self.external;
         external

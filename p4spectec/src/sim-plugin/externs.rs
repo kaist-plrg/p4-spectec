@@ -7,6 +7,8 @@
 //! Compile-time known calls (`static_assert`) are handled here
 //! for all architectures.
 
+use crate::runner::{Eval, SideEffect};
+
 use crate::lang::data::value::flat::Value;
 
 use crate::lang::il::ast::Typ;
@@ -26,7 +28,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Value, ExternError>
+    ) -> Eval<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -36,7 +38,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
+    ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
@@ -49,7 +51,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
+    ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -59,7 +61,7 @@ pub(crate) trait Impl: Extern {
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
-    ) -> Result<Vec<Value>, ExternError>
+    ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -68,7 +70,7 @@ pub(crate) trait Impl: Extern {
     fn init_arch_state<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
-    ) -> Result<Value, ExternError>
+    ) -> Eval<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -82,25 +84,38 @@ impl<Ext: Impl> Extern for Ext {
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), ExternError>
+    ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        // The three extern relations the specification defines
-        let values = match name {
-            "ExternFunctionCall_eval_lctk" => self.eval_extern_func_lctk_call(ctx, values)?,
-            "ExternFunctionCall_eval" => self.eval_extern_func_call(ctx, values)?,
-            "ExternMethodCall_eval" => self.eval_extern_method_call(ctx, values)?,
-            _ => {
-                return Err(error::extern_relation_unsupported(format!(
-                    "unimplemented extern relation: {name}"
-                ))
-                .into());
-            }
-        };
-        // Extern state lives in the values, so calls report no hidden effect
-        Ok((values, false))
+        let mut eval = Eval::with(|effect| {
+            // The three extern relations the specification defines
+            let values = match name {
+                "ExternFunctionCall_eval_lctk" => {
+                    effect.include(self.eval_extern_func_lctk_call(ctx, values))?
+                }
+                "ExternFunctionCall_eval" => {
+                    effect.include(self.eval_extern_func_call(ctx, values))?
+                }
+                "ExternMethodCall_eval" => {
+                    effect.include(self.eval_extern_method_call(ctx, values))?
+                }
+                _ => {
+                    return Err(error::extern_relation_unsupported(format!(
+                        "unimplemented extern relation: {name}"
+                    ))
+                    .into());
+                }
+            };
+            // Extern state lives in the values, so calls report no hidden effect
+            Ok(values)
+        });
+        // Legacy host errors have no finer effect classification
+        if eval.result.is_err() {
+            eval.effect = SideEffect::Impure;
+        }
+        eval
     }
 
     fn eval_func<Interp, Iface>(
@@ -109,23 +124,30 @@ impl<Ext: Impl> Extern for Ext {
         name: &str,
         _targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), ExternError>
+    ) -> Eval<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        // The two extern functions the specification defines
-        let value = match name {
-            "init_objectState" => self.eval_extern_init(ctx, values)?,
-            "init_archState" => self.init_arch_state(ctx)?,
-            _ => {
-                return Err(error::extern_function_unsupported(format!(
-                    "unimplemented extern function: {name}"
-                ))
-                .into());
-            }
-        };
-        Ok((value, false))
+        let mut eval = Eval::with(|effect| {
+            // The two extern functions the specification defines
+            let value = match name {
+                "init_objectState" => effect.include(self.eval_extern_init(ctx, values))?,
+                "init_archState" => effect.include(self.init_arch_state(ctx))?,
+                _ => {
+                    return Err(error::extern_function_unsupported(format!(
+                        "unimplemented extern function: {name}"
+                    ))
+                    .into());
+                }
+            };
+            Ok(value)
+        });
+        // Legacy host errors have no finer effect classification
+        if eval.result.is_err() {
+            eval.effect = SideEffect::Impure;
+        }
+        eval
     }
 
     fn clear(&mut self) {}
@@ -137,41 +159,44 @@ impl<Ext: Impl> Extern for Ext {
 pub(crate) fn eval_func_lctk<Interp, Iface, Ext>(
     ctx: &mut RunnerContext<'_, Interp, Iface, Ext>,
     values: &[Value],
-) -> Result<Vec<Value>, ExternError>
+) -> Eval<Vec<Value>, ExternError>
 where
     Iface: Interface,
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    // Arguments: context, function name, parameter names
-    let [value_ctx, value_name, value_names_param] = values else {
-        return Err(error::extern_argument_arity_mismatch(
-            "unexpected number of arguments to local compile-time known extern function call"
-                .to_owned(),
-        )
-        .into());
-    };
-    let name_func = crate::lang::data::value::flat::get::text(ctx.arena(), value_name)?;
-    let values_name_param =
-        crate::lang::data::value::flat::get::list(ctx.arena(), value_names_param)?;
-    let names_param = values_name_param
-        .iter()
-        .map(|value| {
-            crate::lang::data::value::flat::get::text(ctx.arena(), value).map_err(ExternError::from)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    // Both overloads of `static_assert`; nothing else is known
-    let has_message = match (name_func, names_param.as_slice()) {
-        ("static_assert", ["check", "message"]) => true,
-        ("static_assert", ["check"]) => false,
-        _ => {
-            return Err(error::extern_function_unsupported(format!(
-                "unsupported local compile-time known extern function call: {name_func}({})",
-                names_param.join(", ")
-            ))
+    Eval::with(|effect| {
+        // Arguments: context, function name, parameter names
+        let [value_ctx, value_name, value_names_param] = values else {
+            return Err(error::extern_argument_arity_mismatch(
+                "unexpected number of arguments to local compile-time known extern function call"
+                    .to_owned(),
+            )
             .into());
-        }
-    };
-    let value = core::func::static_assert(ctx, value_ctx, has_message)?;
-    Ok(vec![value])
+        };
+        let name_func = crate::lang::data::value::flat::get::text(ctx.arena(), value_name)?;
+        let values_name_param =
+            crate::lang::data::value::flat::get::list(ctx.arena(), value_names_param)?;
+        let names_param = values_name_param
+            .iter()
+            .map(|value| {
+                crate::lang::data::value::flat::get::text(ctx.arena(), value)
+                    .map_err(ExternError::from)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        // Both overloads of `static_assert`; nothing else is known
+        let has_message = match (name_func, names_param.as_slice()) {
+            ("static_assert", ["check", "message"]) => true,
+            ("static_assert", ["check"]) => false,
+            _ => {
+                return Err(error::extern_function_unsupported(format!(
+                    "unsupported local compile-time known extern function call: {name_func}({})",
+                    names_param.join(", ")
+                ))
+                .into());
+            }
+        };
+        let value = effect.include(core::func::static_assert(ctx, value_ctx, has_message))?;
+        Ok(vec![value])
+    })
 }

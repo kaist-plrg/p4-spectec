@@ -94,6 +94,57 @@ impl std::fmt::Display for InterpreterError {
 }
 impl std::error::Error for InterpreterError {}
 
+// == Evaluation effects
+
+/// Whether evaluation changed host state or performed an observable effect.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SideEffect {
+    /// No observable effect occurred.
+    #[default]
+    Pure,
+    /// At least one observable effect occurred.
+    Impure,
+}
+
+impl SideEffect {
+    /// Includes a child evaluation's effect before exposing its result.
+    pub fn include<T, E>(&mut self, eval: Eval<T, E>) -> Result<T, E> {
+        if eval.effect == Self::Impure {
+            *self = Self::Impure;
+        }
+        eval.result
+    }
+}
+
+/// An evaluation result together with effects retained even on failure.
+#[derive(Debug)]
+#[must_use]
+pub struct Eval<T, E = InterpreterError> {
+    /// The computed value or evaluation failure.
+    pub result: Result<T, E>,
+    /// Effects of every child that actually ran, including failed candidates.
+    pub effect: SideEffect,
+}
+
+impl<T, E> Eval<T, E> {
+    /// Pairs a result with its evaluation effect.
+    pub fn new(result: Result<T, E>, effect: SideEffect) -> Self {
+        Self { result, effect }
+    }
+
+    /// Evaluates a body with a local effect accumulator that survives `?`.
+    pub fn with(evaluate: impl FnOnce(&mut SideEffect) -> Result<T, E>) -> Self {
+        let mut effect = SideEffect::Pure;
+        let result = evaluate(&mut effect);
+        Self { result, effect }
+    }
+
+    /// Converts an error while preserving the evaluation effect.
+    pub fn map_err<F>(self, convert: impl FnOnce(E) -> F) -> Eval<T, F> {
+        Eval { result: self.result.map_err(convert), effect: self.effect }
+    }
+}
+
 // == Interpreter contract
 
 /// A language stage's evaluator, parameterized by its host components.
@@ -116,7 +167,7 @@ where
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         program: Value,
-    ) -> Result<Vec<Value>, InterpreterError>;
+    ) -> Eval<Vec<Value>, InterpreterError>;
 
     /// Calls a relation by name.
     ///
@@ -126,7 +177,7 @@ where
         ctx: &mut RunnerContext<'_, Self, Iface, Ext>,
         name: &str,
         values: &[Value],
-    ) -> Result<Vec<Value>, InterpreterError>;
+    ) -> Eval<Vec<Value>, InterpreterError>;
 
     /// Calls a function by name with type arguments.
     ///
@@ -138,5 +189,5 @@ where
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<Value, InterpreterError>;
+    ) -> Eval<Value, InterpreterError>;
 }

@@ -2,10 +2,12 @@
 //!
 //! Each call receives the operation-local runner context
 //! and may reenter the interpreter through it.
-//! The result carries its own side-effect flag,
+//! The result carries its own SideEffect,
 //! so the extern keeps all architecture-specific state bookkeeping.
 //! Failures describe the host operation;
 //! the calling interpreter owns the source location.
+
+use crate::runner::{Eval, SideEffect};
 
 use thiserror::Error;
 
@@ -114,25 +116,25 @@ impl From<InterpreterError> for ExternError {
 
 /// Total host relations and functions: each call returns values or a fatal error.
 pub trait Extern: Sized {
-    /// Evaluates a host relation; the flag reports a side effect.
+    /// Evaluates a host relation; retains effects on success and failure.
     fn eval_rel<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), ExternError>
+    ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
 
-    /// Evaluates a host function; the flag reports a side effect.
+    /// Evaluates a host function; retains effects on success and failure.
     fn eval_func<Interp, Iface>(
         &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), ExternError>
+    ) -> Eval<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>;
@@ -152,13 +154,12 @@ impl Extern for NullExtern {
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         _values: &[Value],
-    ) -> Result<(Vec<Value>, bool), ExternError>
+    ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::diagnostic_unconfigured();
-        Err(error)
+        Eval::new(Err(ExternError::diagnostic_unconfigured()), SideEffect::Impure)
     }
 
     fn eval_func<Interp, Iface>(
@@ -167,13 +168,12 @@ impl Extern for NullExtern {
         _name: &str,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Result<(Value, bool), ExternError>
+    ) -> Eval<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        let error = ExternError::diagnostic_unconfigured();
-        Err(error)
+        Eval::new(Err(ExternError::diagnostic_unconfigured()), SideEffect::Impure)
     }
 
     fn clear(&mut self) {}

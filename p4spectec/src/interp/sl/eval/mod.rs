@@ -13,9 +13,9 @@ use crate::lang::data::value::flat::Value;
 
 use crate::lang::sl::prepared as ast;
 
-use crate::runner::{Extern, Interface, RunnerContext};
+use crate::runner::{Eval, Extern, Interface, RunnerContext};
 
-use crate::interp::shared::{backtrack::Backtrack, eval::Invoker};
+use crate::interp::shared::eval::Invoker;
 
 use super::{SlInterp, context::Context};
 
@@ -28,7 +28,7 @@ impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for SlInterp {
         id: &ast::Id,
         targs: &[ast::Typ],
         values: &[Value],
-    ) -> Backtrack<Value> {
+    ) -> Eval<Value> {
         call::invoke_func(runner_ctx, ctx, id, targs, values)
     }
 
@@ -37,7 +37,7 @@ impl<Iface: Interface, Ext: Extern> Invoker<Iface, Ext> for SlInterp {
         ctx: &Context<'global>,
         id: &ast::Id,
         values: &[Value],
-    ) -> Backtrack<Vec<Value>> {
+    ) -> Eval<Vec<Value>> {
         call::invoke_rel(runner_ctx, ctx, id, values)
     }
 }

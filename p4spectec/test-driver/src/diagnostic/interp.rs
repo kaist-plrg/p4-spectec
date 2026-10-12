@@ -77,6 +77,7 @@ where
     let error = runner
         .context()
         .call_rel("R", &[value])
+        .result
         .err()
         .ok_or_else(|| failure(name, "relation unexpectedly matched"))?;
 

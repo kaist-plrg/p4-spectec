@@ -1,8 +1,8 @@
-//! Successful call results and invocation-local effect tracking
+//! Memoized successful pure calls
 //!
 //! Memo keys belong to the runner's arena.
-//! Public entries clear the memo tables;
-//! active effect frames survive reentry and propagate taint back to callers.
+//! Public entries clear the memo tables.
+//! Evaluation carries its effects independently of memoization.
 
 use std::hash::{Hash, Hasher};
 
@@ -69,15 +69,13 @@ impl Equivalent<CallKey> for CallQuery<'_> {
 
 // = Call cache
 
-/// Memoized call results and the stack of active invocation effect frames.
+/// Memoized pure call results.
 #[derive(Default)]
 pub struct Cache {
     /// Function results by call.
     pub(crate) funcs: HashMap<CallKey, Value, RandomState>,
     /// Relation outputs by call.
     pub(crate) rels: HashMap<CallKey, Vec<Value>, RandomState>,
-    /// One flag per active invocation: whether it had a side effect so far.
-    effects: Vec<bool>,
 }
 
 impl Cache {
@@ -98,31 +96,9 @@ impl Cache {
 
     // - Lifecycle
 
-    /// Drops memoized results; effect frames survive.
+    /// Drops memoized results.
     pub(crate) fn clear(&mut self) {
         self.funcs.clear();
         self.rels.clear();
-    }
-
-    // - Invocation effects
-
-    /// Opens an invocation frame.
-    pub(crate) fn begin(&mut self) {
-        self.effects.push(false);
-    }
-
-    /// Records a side effect on the innermost frame.
-    pub(crate) fn mark_effect(&mut self, side_effected: bool) {
-        if let Some(effect) = self.effects.last_mut() {
-            *effect |= side_effected;
-        }
-    }
-
-    /// Finishes an invocation and reports whether it remained pure.
-    pub(crate) fn end(&mut self) -> bool {
-        // Taint propagates to the caller's frame
-        let side_effected = self.effects.pop().expect("active invocation frame");
-        self.mark_effect(side_effected);
-        !side_effected
     }
 }
