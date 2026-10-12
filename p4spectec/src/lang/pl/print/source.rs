@@ -319,6 +319,18 @@ fn write_instr_with<Tier>(
             }
             Ok(())
         }
+        InstrKind::Check(CheckInstr { exp, iter_exps, block }) => {
+            write_order(output)?;
+            output.write_str("Check (")?;
+            exp.print(output)?;
+            output.write_char(')')?;
+            iter_exps.as_slice().print(output)?;
+            if !short {
+                output.write_str("\n\n")?;
+                write_block_with(output, block, tier_printer, level + 1, 0)?;
+            }
+            Ok(())
+        }
         // `If (rel: args) holds, then` in one of two shapes
         InstrKind::Hold(HoldInstr { id, not_exp, iter_exps, hold_case }) => {
             // The heading reads the same for holds and does-not-holds

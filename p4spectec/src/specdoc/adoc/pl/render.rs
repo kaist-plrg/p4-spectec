@@ -1525,6 +1525,9 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     ) -> Block {
         match &instr.node.node {
             pl::InstrKind::If(if_instr) => self.render_if_instr(level, render_tier, if_instr),
+            pl::InstrKind::Check(check_instr) => {
+                self.render_check_instr(level, render_tier, check_instr)
+            }
             pl::InstrKind::Hold(hold_instr) => {
                 self.render_hold_instr(level, render_tier, instr, hold_instr)
             }
@@ -1723,24 +1726,36 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
         Block::item(level, ItemKind::Ordered, prose_head, block_body)
     }
 
-    // - If instructions
-    //
-    //   -- if $(n < m)   -> . Check that ``n`` is less than ``m``.
+    // - Conditions
 
-    /// Renders a conditional check and its continuation.
+    /// Renders a conditional with its body nested under the heading.
     fn render_if_instr<Tier>(
         &mut self,
         level: usize,
         render_tier: RenderTier<'ctx, 'a, Tier>,
-        if_instr: &pl::IfInstr<Tier>,
+        instr_if: &pl::IfInstr<Tier>,
     ) -> Block {
-        // Build the check heading
-        let prose_cond = Prose::of_exp(&if_instr.exp);
-        let prose_suffix = Prose::of_iterexp_suffix(&if_instr.iter_exps);
+        let prose_cond = Prose::of_exp(&instr_if.exp);
+        let prose_suffix = Prose::of_iterexp_suffix(&instr_if.iter_exps);
+        let prose_head =
+            Prose::seq([Prose::text("If "), prose_cond, prose_suffix, Prose::text(":")]);
+        let block_head = Block::item_ordered(level, prose_head);
+        self.render_instrs(level + 1, Some(block_head), render_tier, &instr_if.block)
+    }
+
+    /// Renders a required condition followed by its body at the same level.
+    fn render_check_instr<Tier>(
+        &mut self,
+        level: usize,
+        render_tier: RenderTier<'ctx, 'a, Tier>,
+        instr_check: &pl::CheckInstr<Tier>,
+    ) -> Block {
+        let prose_cond = Prose::of_exp(&instr_check.exp);
+        let prose_suffix = Prose::of_iterexp_suffix(&instr_check.iter_exps);
         let prose_head =
             Prose::seq([Prose::text("Check that "), prose_cond, prose_suffix, Prose::text(".")]);
         let block_head = Block::item_ordered(level, prose_head);
-        self.render_continuation(level, block_head, render_tier, &if_instr.block)
+        self.render_continuation(level, block_head, render_tier, &instr_check.block)
     }
 
     // - Hold instructions
@@ -1832,22 +1847,13 @@ impl<'ctx, 'a> Renderer<'ctx, 'a> {
     //   -> . If ``t'^{asterisk}^`` matches pattern ``[]``: return ``""``.
     //      . Else if let ``t~h~`` be ``t'^{asterisk}^``: return ``t~h~``.
 
-    /// Renders a check or an if/else-if case ladder with explicit guards.
+    /// Renders an if/else-if case ladder with explicit guards.
     fn render_case_instr<Tier>(
         &mut self,
         level: usize,
         render_tier: RenderTier<'ctx, 'a, Tier>,
         case_instr: &pl::CaseInstr<Tier>,
     ) -> Block {
-        // Render a single arm as a check without an if ladder
-        if let [case] = case_instr.cases.as_slice() {
-            let prose_guard = Prose::of_guard(&case_instr.exp, &case.guard);
-            let prose_head =
-                Prose::seq([Prose::text("Check that "), prose_guard, Prose::text(".")]);
-            let block_head = Block::item_ordered(level, prose_head);
-            return self.render_continuation(level, block_head, render_tier, &case.block);
-        }
-
         let num_cases = case_instr.cases.len();
         let mut blocks_case = Vec::with_capacity(num_cases);
         for (idx, case) in case_instr.cases.iter().enumerate() {

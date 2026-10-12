@@ -84,6 +84,10 @@ fn shorten_dispatch_instr_kind(
             instr_if.block = shorten_dispatch_block(instr_if.block, true);
             pl::InstrKind::If(instr_if)
         }
+        pl::InstrKind::Check(mut instr_check) => {
+            instr_check.block = shorten_dispatch_block(instr_check.block, true);
+            pl::InstrKind::Check(instr_check)
+        }
         pl::InstrKind::Hold(mut instr_hold) => {
             instr_hold.hold_case = shorten_dispatch_hold_case(instr_hold.hold_case);
             pl::InstrKind::Hold(instr_hold)
@@ -175,6 +179,10 @@ fn shorten_group_instr_kind(
         pl::InstrKind::If(mut instr_if) => {
             instr_if.block = shorten_group_block(instr_if.block, true);
             pl::InstrKind::If(instr_if)
+        }
+        pl::InstrKind::Check(mut instr_check) => {
+            instr_check.block = shorten_group_block(instr_check.block, true);
+            pl::InstrKind::Check(instr_check)
         }
         pl::InstrKind::Hold(mut instr_hold) => {
             instr_hold.hold_case = shorten_group_hold_case(instr_hold.hold_case);

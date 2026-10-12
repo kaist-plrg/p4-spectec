@@ -94,6 +94,7 @@ impl<Tier: FreeIds> FreeIds for InstrKind<Tier> {
     fn free_ids(&self) -> IdSet {
         match self {
             Self::If(instr) => instr.free_ids(),
+            Self::Check(instr) => instr.free_ids(),
             Self::Hold(instr) => instr.free_ids(),
             Self::Case(instr) => instr.free_ids(),
             Self::Let(instr) => instr.free_ids(),
@@ -105,6 +106,12 @@ impl<Tier: FreeIds> FreeIds for InstrKind<Tier> {
 }
 
 impl<Tier: FreeIds> FreeIds for IfInstr<Tier> {
+    fn free_ids(&self) -> IdSet {
+        self.exp.free_ids().union(self.block.free_ids())
+    }
+}
+
+impl<Tier: FreeIds> FreeIds for CheckInstr<Tier> {
     fn free_ids(&self) -> IdSet {
         self.exp.free_ids().union(self.block.free_ids())
     }

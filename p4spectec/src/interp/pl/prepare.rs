@@ -195,6 +195,7 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
     fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
         match self {
             pl::InstrKind::If(instr) => ast::InstrKind::If(instr.prepare(ctx)),
+            pl::InstrKind::Check(instr) => ast::InstrKind::Check(instr.prepare(ctx)),
             pl::InstrKind::Hold(instr) => ast::InstrKind::Hold(instr.prepare(ctx)),
             pl::InstrKind::Case(instr) => ast::InstrKind::Case(instr.prepare(ctx)),
             pl::InstrKind::Let(instr) => ast::InstrKind::Let(instr.prepare(ctx)),
@@ -216,6 +217,20 @@ impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::
             iter_exps: self.iter_exps.prepare(&mut ctx.il()),
             block: self.block.prepare(ctx),
             dangle: self.dangle,
+        }
+    }
+}
+
+// - Check instruction
+
+impl<'a, Tier: Prepare<PrepareContext<'a>>> Prepare<PrepareContext<'a>> for pl::CheckInstr<Tier> {
+    type Output = ast::CheckInstr<Tier::Output>;
+
+    fn prepare(self, ctx: &mut PrepareContext<'a>) -> Self::Output {
+        ast::CheckInstr {
+            exp: self.exp.prepare(ctx),
+            iter_exps: self.iter_exps.prepare(&mut ctx.il()),
+            block: self.block.prepare(ctx),
         }
     }
 }

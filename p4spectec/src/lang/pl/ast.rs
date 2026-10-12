@@ -213,6 +213,8 @@ pub type Instr<Tier, P = Source> = annot::Annotated<InstrNode<Tier, P>>;
 pub enum InstrKind<Tier, P: Stage = Source> {
     /// Run the block if a condition holds.
     If(IfInstr<Tier, P>),
+    /// Require a condition when no continuation can recover from its failure.
+    Check(CheckInstr<Tier, P>),
     /// Run a branch by whether a relation applies.
     Hold(HoldInstr<Tier, P>),
     /// Run the first arm whose guard accepts.
@@ -234,6 +236,13 @@ pub struct IfInstr<Tier, P: Stage = Source> {
     pub iter_exps: Vec<ExpIter<P::Var>>,
     pub block: Block<Tier, P>,
     pub dangle: Dangle,
+}
+#[derive(Clone, Debug, PartialEq)]
+/// A condition required to reach the conclusion, with bindings scoped to its block.
+pub struct CheckInstr<Tier, P: Stage = Source> {
+    pub exp: Exp<P>,
+    pub iter_exps: Vec<ExpIter<P::Var>>,
+    pub block: Block<Tier, P>,
 }
 #[derive(Clone, Debug, PartialEq)]
 /// Run a branch by whether the relation applies under its iterations.

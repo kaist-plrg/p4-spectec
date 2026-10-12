@@ -170,6 +170,7 @@ where
     fn syntax_eq(&self, other: &Self) -> bool {
         match (self, other) {
             (InstrKind::If(instr_l), InstrKind::If(instr_r)) => instr_l.syntax_eq(instr_r),
+            (InstrKind::Check(instr_l), InstrKind::Check(instr_r)) => instr_l.syntax_eq(instr_r),
             (InstrKind::Hold(instr_l), InstrKind::Hold(instr_r)) => instr_l.syntax_eq(instr_r),
             (InstrKind::Case(instr_l), InstrKind::Case(instr_r)) => instr_l.syntax_eq(instr_r),
             (InstrKind::Let(instr_l), InstrKind::Let(instr_r)) => instr_l.syntax_eq(instr_r),
@@ -192,6 +193,14 @@ where
             && self.iter_exps.syntax_eq(&other.iter_exps)
             && self.block.syntax_eq(&other.block)
             && self.dangle == other.dangle
+    }
+}
+
+impl<Tier: SyntaxEq> SyntaxEq for CheckInstr<Tier> {
+    fn syntax_eq(&self, other: &Self) -> bool {
+        self.exp.syntax_eq(&other.exp)
+            && self.iter_exps.syntax_eq(&other.iter_exps)
+            && self.block.syntax_eq(&other.block)
     }
 }
 

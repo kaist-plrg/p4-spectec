@@ -47,6 +47,7 @@ pub type Case<Tier> = source::Case<Tier, Prepared>;
 pub type Instr<Tier> = source::Instr<Tier, Prepared>;
 pub type InstrKind<Tier> = source::InstrKind<Tier, Prepared>;
 pub type IfInstr<Tier> = source::IfInstr<Tier, Prepared>;
+pub type CheckInstr<Tier> = source::CheckInstr<Tier, Prepared>;
 pub type HoldInstr<Tier> = source::HoldInstr<Tier, Prepared>;
 pub type CaseInstr<Tier> = source::CaseInstr<Tier, Prepared>;
 pub type LetInstr = source::LetInstr<Prepared>;
