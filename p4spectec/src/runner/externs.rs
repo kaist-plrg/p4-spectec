@@ -118,7 +118,6 @@ impl From<InterpreterError> for ExternError {
 pub trait Extern: Sized {
     /// Evaluates a host relation; retains effects on success and failure.
     fn eval_rel<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
@@ -129,7 +128,6 @@ pub trait Extern: Sized {
 
     /// Evaluates a host function; retains effects on success and failure.
     fn eval_func<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         targs: &[Typ],
@@ -150,7 +148,6 @@ pub struct NullExtern;
 
 impl Extern for NullExtern {
     fn eval_rel<Interp, Iface>(
-        &self,
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         _values: &[Value],
@@ -163,7 +160,6 @@ impl Extern for NullExtern {
     }
 
     fn eval_func<Interp, Iface>(
-        &self,
         _ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         _name: &str,
         _targs: &[Typ],

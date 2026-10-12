@@ -165,7 +165,7 @@ macro_rules! with_context {
                     spec_env,
                     interp,
                     &mut runner.interface,
-                    &runner.external,
+                    &mut runner.external,
                     &mut runner.effects,
                 );
                 $body
@@ -176,7 +176,7 @@ macro_rules! with_context {
                     spec_env,
                     interp,
                     &mut runner.interface,
-                    &runner.external,
+                    &mut runner.external,
                     &mut runner.effects,
                 );
                 $body
@@ -187,7 +187,7 @@ macro_rules! with_context {
                     spec_env,
                     interp,
                     &mut runner.interface,
-                    &runner.external,
+                    &mut runner.external,
                     &mut runner.effects,
                 );
                 $body

@@ -2,7 +2,7 @@
 //!
 //! The context splits the runner into independent borrows for one evaluation.
 //! An extern receives the same context and can reenter the interpreter
-//! after its own shared borrow has been copied into a local reference.
+//! after releasing any borrow of the host component it used.
 //! Effects remain in the runner even when a caller only consumes the result.
 
 use crate::lang::data::{arena::Arena, value::flat::Value};
@@ -28,7 +28,7 @@ where
     spec_env: &'runner Interp::SpecEnv,
     interp: &'runner mut Interp,
     interface: &'runner mut Iface,
-    external: &'runner Ext,
+    external: &'runner mut Ext,
     effects: &'runner mut u64,
 }
 
@@ -43,7 +43,7 @@ where
         spec_env: &'runner Interp::SpecEnv,
         interp: &'runner mut Interp,
         interface: &'runner mut Iface,
-        external: &'runner Ext,
+        external: &'runner mut Ext,
         effects: &'runner mut u64,
     ) -> Self {
         Self { arena, spec_env, interp, interface, external, effects }
@@ -71,8 +71,22 @@ where
         self.arena
     }
 
-    pub fn external(&self) -> &'runner Ext {
+    pub fn external(&self) -> &Ext {
         self.external
+    }
+
+    pub fn external_mut(&mut self) -> &mut Ext {
+        self.external
+    }
+
+    /// Borrows the arena and extern state together for a nested runner call.
+    pub fn arena_external_mut(&mut self) -> (&mut Arena, &mut Ext) {
+        (self.arena, self.external)
+    }
+
+    /// Borrows the arena and interface state for builtin dispatch.
+    pub fn arena_interface_mut(&mut self) -> (&mut Arena, &mut Iface) {
+        (self.arena, self.interface)
     }
 
     // - Evaluation effects
@@ -148,7 +162,7 @@ where
         targs: &[Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
-        let eval = self.interface.call_builtin(self.arena, id, targs, values);
+        let eval = Iface::call_builtin(self, id, targs, values);
         self.record_effect(eval.effect);
         eval.result.map_err(Into::into)
     }
@@ -159,9 +173,7 @@ where
         name: &str,
         values: &[Value],
     ) -> Result<Vec<Value>, InterpreterError> {
-        // Copy the shared borrow so the extern can take `self` mutably
-        let external = self.external;
-        let eval = external.eval_rel(self, name, values);
+        let eval = Ext::eval_rel(self, name, values);
         self.record_effect(eval.effect);
         eval.result.map_err(Into::into)
     }
@@ -173,9 +185,7 @@ where
         targs: &[Typ],
         values: &[Value],
     ) -> Result<Value, InterpreterError> {
-        // Copy the shared borrow so the extern can take `self` mutably
-        let external = self.external;
-        let eval = external.eval_func(self, name, targs, values);
+        let eval = Ext::eval_func(self, name, targs, values);
         self.record_effect(eval.effect);
         eval.result.map_err(Into::into)
     }

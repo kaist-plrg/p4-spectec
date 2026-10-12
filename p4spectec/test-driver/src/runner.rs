@@ -3,6 +3,9 @@
 //! The same host-facing runner type executes function, relation, and program
 //! entries in each language stage, preserving values and effects.
 
+mod effects;
+mod relay;
+
 use p4spectec::lang::{
     common::{prim::num::Number, source::Span},
     data::{
@@ -10,7 +13,9 @@ use p4spectec::lang::{
         value::flat::{self as value, Value},
     },
 };
-use p4spectec::runner::{self, BuiltinInterface, Config, Eval, NullExtern, Runner, SideEffect};
+use p4spectec::runner::{
+    self, BuiltinInterface, Config, Eval, Extern, NullExtern, Runner, SideEffect, Spec,
+};
 use p4spectec::{frontend::parse::parse_text, pass};
 
 use crate::{Error, Result};
@@ -114,34 +119,53 @@ fn check_shared(
     Ok(())
 }
 
+/// Compiles the same source through all three production interpreter passes.
+fn compile(source: &str) -> Result<[Spec; 3]> {
+    let spec_el = parse_text("runner.watsup".into(), source).map_err(failure)?;
+    let spec_il = pass::elaborate::convert(spec_el).map_err(failure)?;
+    let spec_al = pass::algo::convert(spec_il).map_err(failure)?;
+    let spec_sl = pass::structure::convert(spec_al.clone(), true).map_err(failure)?;
+    let spec_pl =
+        pass::prosify::convert(pass::structure::convert(spec_al.clone(), false).map_err(failure)?)
+            .map_err(failure)?;
+    Ok([Spec::Al(spec_al), Spec::Sl(spec_sl), Spec::Pl(spec_pl)])
+}
+
+/// Prepares the selected stage with one concrete host implementation.
+fn build<Ext: Extern>(
+    arena: &mut Arena,
+    spec: Spec,
+    config: Config,
+    external: Ext,
+) -> Result<Runner<BuiltinInterface, Ext>> {
+    match spec {
+        Spec::Al(spec) => runner::build_al(arena, spec, config, external),
+        Spec::Sl(spec) => runner::build_sl(arena, spec, config, external),
+        Spec::Pl(spec) => runner::build_pl(arena, spec, config, external),
+    }
+    .map_err(failure)
+}
+
 /// Runs the runner contract in all native stages and cache/determinism modes.
 pub fn run() -> Result<()> {
     for cache in [false, true] {
         for det in [false, true] {
-            // Compile real definitions through each stage's production passes
-            let spec_el = parse_text("runner.watsup".into(), SOURCE).map_err(failure)?;
-            let spec_il = pass::elaborate::convert(spec_el).map_err(failure)?;
-            let spec_al = pass::algo::convert(spec_il).map_err(failure)?;
-            let spec_sl = pass::structure::convert(spec_al.clone(), true).map_err(failure)?;
-            let spec_pl = pass::prosify::convert(
-                pass::structure::convert(spec_al.clone(), false).map_err(failure)?,
-            )
-            .map_err(failure)?;
             let config = Config::new(cache, det, true);
             let mut arena = Arena::new();
 
             // Runtime stage selection must not change the runner's public type
-            let mut runners: Vec<Runner<BuiltinInterface, NullExtern>> = vec![
-                runner::build_al(&mut arena, spec_al, config, NullExtern).map_err(failure)?,
-                runner::build_sl(&mut arena, spec_sl, config, NullExtern).map_err(failure)?,
-                runner::build_pl(&mut arena, spec_pl, config, NullExtern).map_err(failure)?,
-            ];
+            let mut runners: Vec<Runner<BuiltinInterface, NullExtern>> = compile(SOURCE)?
+                .into_iter()
+                .map(|spec| build(&mut arena, spec, config, NullExtern))
+                .collect::<Result<_>>()?;
             for runner in &mut runners {
                 check(&mut arena, runner)?;
             }
             check_shared(&mut arena, config, &mut runners)?;
         }
     }
+    effects::run();
+    relay::run()?;
     eprintln!("runner: 12 stage/cache/determinism combinations passed");
     Ok(())
 }

@@ -8,11 +8,11 @@
 //! Failures remain independent of source locations;
 //! the interpreter that evaluates a call owns that location.
 
-use crate::runner::{Eval, SideEffect};
+use crate::runner::{Eval, Extern, Interpreter, RunnerContext, SideEffect};
 
 use thiserror::Error;
 
-use crate::lang::data::{arena::Arena, value::flat::Value};
+use crate::lang::data::value::flat::Value;
 
 use crate::lang::il::ast::{Id, Typ};
 
@@ -60,15 +60,17 @@ impl From<BuiltinError> for InterfaceError {
 // == Interface contract
 
 /// Stateful specification builtins, called by name.
-pub trait Interface {
+pub trait Interface: Sized {
     /// Calls a builtin; retains its effect even if the call fails.
-    fn call_builtin(
-        &mut self,
-        arena: &mut Arena,
+    fn call_builtin<Interp, Ext>(
+        ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterfaceError>;
+    ) -> Eval<Value, InterfaceError>
+    where
+        Ext: Extern,
+        Interp: Interpreter<Self, Ext>;
 
     /// Resets builtin state between programs.
     fn clear(&mut self);
@@ -88,14 +90,19 @@ impl BuiltinInterface {
 }
 
 impl Interface for BuiltinInterface {
-    fn call_builtin(
-        &mut self,
-        arena: &mut Arena,
+    fn call_builtin<Interp, Ext>(
+        ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Eval<Value, InterfaceError> {
-        self.builtins
+    ) -> Eval<Value, InterfaceError>
+    where
+        Ext: Extern,
+        Interp: Interpreter<Self, Ext>,
+    {
+        let (arena, interface) = ctx.arena_interface_mut();
+        interface
+            .builtins
             .invoke(arena, id, targs, values)
             .map_err(InterfaceError::from)
     }
@@ -109,13 +116,16 @@ impl Interface for BuiltinInterface {
 pub struct NullInterface;
 
 impl Interface for NullInterface {
-    fn call_builtin(
-        &mut self,
-        _arena: &mut Arena,
+    fn call_builtin<Interp, Ext>(
+        _ctx: &mut RunnerContext<'_, Interp, Self, Ext>,
         _id: &Id,
         _targs: &[Typ],
         _values: &[Value],
-    ) -> Eval<Value, InterfaceError> {
+    ) -> Eval<Value, InterfaceError>
+    where
+        Ext: Extern,
+        Interp: Interpreter<Self, Ext>,
+    {
         Eval::new(Err(InterfaceError::diagnostic_unconfigured()), SideEffect::Impure)
     }
 

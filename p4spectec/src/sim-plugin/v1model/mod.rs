@@ -26,7 +26,6 @@ pub use pipe::{V1Model, drive_pipe, init_pipe, transform_stf_stmt};
 /// Hands every extern hook to the pipeline module.
 impl externs::Impl for V1Model {
     fn eval_extern_init<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
     ) -> Result<Value, ExternError>
@@ -38,7 +37,6 @@ impl externs::Impl for V1Model {
     }
 
     fn eval_extern_func_call<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
     ) -> Result<Vec<Value>, ExternError>
@@ -50,7 +48,6 @@ impl externs::Impl for V1Model {
     }
 
     fn eval_extern_method_call<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
     ) -> Result<Vec<Value>, ExternError>
@@ -62,7 +59,6 @@ impl externs::Impl for V1Model {
     }
 
     fn init_arch_state<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
     ) -> Result<Value, ExternError>
     where
