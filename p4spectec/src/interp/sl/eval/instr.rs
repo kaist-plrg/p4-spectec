@@ -450,6 +450,7 @@ fn eval_debug_instr<Iface: Interface, Ext: Extern>(
     tail: bool,
 ) -> Backtrack<Flow> {
     let value = unwrap!(eval_exp(runner_ctx, ctx.as_ref(), &instr.exp));
+    runner_ctx.record_effect(crate::runner::SideEffect::Impure);
     println!("{}: {}", instr.exp.span, instr.exp.view(&runner_ctx.arena().mixop).to_string());
     // Print the value's source span when it has one
     let span = runner_ctx.arena().value.span(value.span).to_string();

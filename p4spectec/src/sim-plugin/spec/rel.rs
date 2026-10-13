@@ -36,7 +36,9 @@ where
     .map_err(ExternError::from)?;
     let value_name = super::func::bare_name(ctx.arena_mut(), name)?;
     // The relation returns the single value read
-    let values = ctx.call_rel("Lvalue_read", &[value_cursor, value_ctx, value_arch, value_name])?;
+    let values = ctx
+        .call_rel("Lvalue_read", &[value_cursor, value_ctx, value_arch, value_name])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -75,7 +77,9 @@ where
     }
     .map_err(ExternError::from)?;
     // The relation returns the single value read
-    let values = ctx.call_rel("Lvalue_read", &[value_cursor, value_ctx, value_arch, value_ref])?;
+    let values = ctx
+        .call_rel("Lvalue_read", &[value_cursor, value_ctx, value_arch, value_ref])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -97,8 +101,9 @@ where
     // Writing returns the updated context
     let value_cursor = super::func::local_cursor(ctx.arena_mut())?;
     let value_name = super::func::bare_name(ctx.arena_mut(), name)?;
-    let values =
-        ctx.call_rel("Lvalue_write", &[value_cursor, value_ctx, value_arch, value_name, value])?;
+    let values = ctx
+        .call_rel("Lvalue_write", &[value_cursor, value_ctx, value_arch, value_name, value])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -138,8 +143,9 @@ where
     }
     .map_err(ExternError::from)?;
     // Writing returns the updated context
-    let values =
-        ctx.call_rel("Lvalue_write", &[value_cursor, value_ctx, value_arch, value_ref, value])?;
+    let values = ctx
+        .call_rel("Lvalue_write", &[value_cursor, value_ctx, value_arch, value_ref, value])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -179,8 +185,9 @@ where
     }
     .map_err(ExternError::from)?;
     // Writing returns the updated context
-    let values =
-        ctx.call_rel("Lvalue_write", &[value_cursor, value_ctx, value_arch, value_ref, value])?;
+    let values = ctx
+        .call_rel("Lvalue_write", &[value_cursor, value_ctx, value_arch, value_ref, value])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -200,7 +207,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("EBPF_init_packet_in", &[value_ctx, value_arch, value_packet])?;
+    let values = ctx
+        .call_rel("EBPF_init_packet_in", &[value_ctx, value_arch, value_packet])
+        .result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -216,7 +225,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("EBPF_init_globals", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("EBPF_init_globals", &[value_ctx, value_arch])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -233,7 +244,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("EBPF_parse", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("EBPF_parse", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -250,7 +263,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("EBPF_filter", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("EBPF_filter", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -272,8 +287,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values =
-        ctx.call_rel("PSA_ingress_init_packet_in", &[value_ctx, value_arch, value_packet])?;
+    let values = ctx
+        .call_rel("PSA_ingress_init_packet_in", &[value_ctx, value_arch, value_packet])
+        .result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -290,8 +306,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values =
-        ctx.call_rel("PSA_ingress_init_packet_out", &[value_ctx, value_arch, value_packet])?;
+    let values = ctx
+        .call_rel("PSA_ingress_init_packet_out", &[value_ctx, value_arch, value_packet])
+        .result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -315,7 +332,9 @@ where
         crate::lang::common::source::Span::default(),
     )
     .map_err(ExternError::from)?;
-    let values = ctx.call_rel("PSA_ingress_init_globals", &[value_ctx, value_arch, value_port])?;
+    let values = ctx
+        .call_rel("PSA_ingress_init_globals", &[value_ctx, value_arch, value_port])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -338,7 +357,8 @@ where
     let value_path =
         make::text(ctx.arena_mut(), path.to_owned(), Span::default()).map_err(ExternError::from)?;
     let values = ctx
-        .call_rel("PSA_ingress_init_metadata", &[value_ctx, value_arch, value_port, value_path])?;
+        .call_rel("PSA_ingress_init_metadata", &[value_ctx, value_arch, value_port, value_path])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -355,7 +375,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("PSA_ingress_parser", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("PSA_ingress_parser", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -372,7 +394,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("PSA_ingress", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("PSA_ingress", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -389,7 +413,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("PSA_ingress_deparser", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("PSA_ingress_deparser", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -409,8 +435,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values =
-        ctx.call_rel("PSA_egress_init_packet_in", &[value_ctx, value_arch, value_packet])?;
+    let values = ctx
+        .call_rel("PSA_egress_init_packet_in", &[value_ctx, value_arch, value_packet])
+        .result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -427,8 +454,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values =
-        ctx.call_rel("PSA_egress_init_packet_out", &[value_ctx, value_arch, value_packet])?;
+    let values = ctx
+        .call_rel("PSA_egress_init_packet_out", &[value_ctx, value_arch, value_packet])
+        .result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -452,7 +480,9 @@ where
         crate::lang::common::source::Span::default(),
     )
     .map_err(ExternError::from)?;
-    let values = ctx.call_rel("PSA_egress_init_globals", &[value_ctx, value_arch, value_port])?;
+    let values = ctx
+        .call_rel("PSA_egress_init_globals", &[value_ctx, value_arch, value_port])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -481,10 +511,12 @@ where
         make::int(ctx.arena_mut(), cos.into(), Span::default()).map_err(ExternError::from)?;
     let value_instance =
         make::int(ctx.arena_mut(), instance.into(), Span::default()).map_err(ExternError::from)?;
-    let values = ctx.call_rel(
-        "PSA_egress_init_metadata",
-        &[value_ctx, value_arch, value_port, value_path, value_cos, value_instance],
-    )?;
+    let values = ctx
+        .call_rel(
+            "PSA_egress_init_metadata",
+            &[value_ctx, value_arch, value_port, value_path, value_cos, value_instance],
+        )
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -501,7 +533,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("PSA_egress_parser", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("PSA_egress_parser", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -518,7 +552,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("PSA_egress", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("PSA_egress", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -535,7 +571,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("PSA_egress_deparser", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("PSA_egress_deparser", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -557,7 +595,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_init_packet_in", &[value_ctx, value_arch, value_packet])?;
+    let values = ctx
+        .call_rel("V1Model_init_packet_in", &[value_ctx, value_arch, value_packet])
+        .result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -574,7 +614,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_init_packet_out", &[value_ctx, value_arch, value_packet])?;
+    let values = ctx
+        .call_rel("V1Model_init_packet_out", &[value_ctx, value_arch, value_packet])
+        .result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -598,7 +640,9 @@ where
         crate::lang::common::source::Span::default(),
     )
     .map_err(ExternError::from)?;
-    let values = ctx.call_rel("V1Model_init_globals", &[value_ctx, value_arch, value_port])?;
+    let values = ctx
+        .call_rel("V1Model_init_globals", &[value_ctx, value_arch, value_port])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }
 
@@ -615,7 +659,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_parser", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("V1Model_parser", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -632,7 +678,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_verify", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("V1Model_verify", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -649,7 +697,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_ingress", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("V1Model_ingress", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -666,7 +716,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_egress", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("V1Model_egress", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -683,7 +735,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_check", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("V1Model_check", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -700,7 +754,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_rel("V1Model_deparse", &[value_ctx, value_arch])?;
+    let values = ctx
+        .call_rel("V1Model_deparse", &[value_ctx, value_arch])
+        .result?;
     let (value_ctx, value_arch, value_call_result) =
         value::get::three(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch, *value_call_result))
@@ -720,7 +776,8 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values =
-        ctx.call_rel("V1Model_setup_preserved_meta_fields", &[value_ctx, value_arch, value_idx])?;
+    let values = ctx
+        .call_rel("V1Model_setup_preserved_meta_fields", &[value_ctx, value_arch, value_idx])
+        .result?;
     Ok(*value::get::one(&values).map_err(ExternError::from)?)
 }

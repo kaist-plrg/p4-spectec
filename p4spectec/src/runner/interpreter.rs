@@ -15,7 +15,39 @@ use crate::runner::{ExternError, InterfaceError};
 
 use super::{Extern, Interface, RunnerContext};
 
-// == Interpreter errors
+/// An evaluation result together with effects retained even on failure.
+#[derive(Debug)]
+#[must_use]
+pub struct Eval<T, E = InterpreterError> {
+    /// The computed value or evaluation failure.
+    pub result: Result<T, E>,
+    /// Effects of every child that actually ran, including failed candidates.
+    pub effect: SideEffect,
+}
+
+impl<T, E> Eval<T, E> {
+    /// Pairs a result with its evaluation effect.
+    pub fn new(result: Result<T, E>, effect: SideEffect) -> Self {
+        Self { result, effect }
+    }
+
+    /// Converts an error while preserving the evaluation effect.
+    pub fn map_err<F>(self, convert: impl FnOnce(E) -> F) -> Eval<T, F> {
+        Eval { result: self.result.map_err(convert), effect: self.effect }
+    }
+}
+
+/// Whether evaluation changed host state or performed an observable effect.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SideEffect {
+    /// No observable effect occurred.
+    #[default]
+    Pure,
+    /// At least one observable effect occurred.
+    Impure,
+}
+
+// == Interpreter Errors
 
 /// Separates aborting execution from trying another candidate.
 #[derive(Debug)]
@@ -97,13 +129,16 @@ impl std::error::Error for InterpreterError {}
 // == Interpreter contract
 
 /// A language stage's evaluator, parameterized by its host components.
+///
+/// Evaluators record effects through RunnerContext before returning a result.
+/// The context preserves those effects across errors and same-runner reentry.
 pub trait Interpreter<Iface, Ext>: Sized
 where
     Iface: Interface,
     Ext: Extern,
 {
     /// Loaded global definitions.
-    type Spec;
+    type SpecEnv;
 
     /// Clears cached results without invalidating arena values.
     fn clear(&mut self);

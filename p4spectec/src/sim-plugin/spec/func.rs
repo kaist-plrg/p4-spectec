@@ -68,6 +68,7 @@ where
     }
     .map_err(ExternError::from)?;
     ctx.call_func("find_var_value_t", &[], &[value_name, *value_cursor, *value_ctx])
+        .result
 }
 
 /// Looks a local variable's value up.
@@ -107,6 +108,7 @@ where
     let value_cursor = local_cursor(ctx.arena_mut())?;
     let value_name = bare_name(ctx.arena_mut(), name)?;
     ctx.call_func("find_var_e", &[], &[value_name, value_cursor, value_ctx])
+        .result
 }
 
 // == Types
@@ -125,7 +127,9 @@ where
     let value_cursor = local_cursor(ctx.arena_mut())?;
     let value_name = value::make::text(ctx.arena_mut(), name.to_owned(), Span::default())
         .map_err(ExternError::from)?;
-    let value_opt = ctx.call_func("find_type_e", &[], &[value_cursor, value_ctx, value_name])?;
+    let value_opt = ctx
+        .call_func("find_type_e", &[], &[value_cursor, value_ctx, value_name])
+        .result?;
     value::get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
         .ok_or_else(|| error::type_undefined(format!("type not found: {name}")).into())
@@ -144,6 +148,7 @@ where
 {
     let value_cursor = local_cursor(ctx.arena_mut())?;
     ctx.call_func("subst_type_e", &[], &[value_cursor, value_ctx, value_typ])
+        .result
 }
 
 /// The default value of a type.
@@ -156,7 +161,7 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    ctx.call_func("default", &[], &[value_typ])
+    ctx.call_func("default", &[], &[value_typ]).result
 }
 
 /// The minimum size of a type in bits.
@@ -169,7 +174,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let value_size = ctx.call_func("sizeof_minSizeInBits'", &[], &[value_typ])?;
+    let value_size = ctx
+        .call_func("sizeof_minSizeInBits'", &[], &[value_typ])
+        .result?;
     Ok(crate::lang::common::prim::num::to_int(
         value::get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
     )
@@ -186,7 +193,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let value_size = ctx.call_func("sizeof_maxSizeInBits'", &[], &[value_typ])?;
+    let value_size = ctx
+        .call_func("sizeof_maxSizeInBits'", &[], &[value_typ])
+        .result?;
     Ok(crate::lang::common::prim::num::to_int(
         value::get::num(ctx.arena(), &value_size).map_err(ExternError::from)?,
     )
@@ -204,7 +213,7 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    ctx.call_func("cast_op", &[], &[value_typ, value])
+    ctx.call_func("cast_op", &[], &[value_typ, value]).result
 }
 
 // == Bits
@@ -220,6 +229,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("write_bits_from_value", &[], &[value_source])
+        .result
 }
 
 /// Fills a value from bits, sizing its variable field to `size_varsize`.
@@ -256,6 +266,7 @@ where
         value::make::list(ctx.arena_mut(), typ_bits.node.into(), values_bits, Span::default())
             .map_err(ExternError::from)?;
     ctx.call_func("write_value_from_bits", &[], &[value_target, value_varsize, value_bits])
+        .result
 }
 
 /// Extracts the bit range `hi..lo` of a value.
@@ -271,6 +282,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("bitacc_range_op", &[], &[value_base, value_hi, value_lo])
+        .result
 }
 
 // == Tables
@@ -286,7 +298,9 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     // Each key is a (name, match kind, type) triple
-    let value_keys = ctx.call_func("key_interface_of_tableObject", &[], &[value_table])?;
+    let value_keys = ctx
+        .call_func("key_interface_of_tableObject", &[], &[value_table])
+        .result?;
     value::get::list(ctx.arena(), &value_keys)
         .map_err(ExternError::from)?
         .iter()
@@ -313,11 +327,13 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let value_opt = ctx.call_func(
-        "tableObject_add_entry",
-        &[],
-        &[value_ctx, value_table, value_priority, value_keys, value_action],
-    )?;
+    let value_opt = ctx
+        .call_func(
+            "tableObject_add_entry",
+            &[],
+            &[value_ctx, value_table, value_priority, value_keys, value_action],
+        )
+        .result?;
     Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
 
@@ -334,6 +350,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("tableObject_add_default_action", &[], &[value_ctx, value_table, value_action])
+        .result
 }
 
 // == Objects
@@ -351,7 +368,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let value_opt = ctx.call_func("find_object_qualified_e", &[], &[value_arch, value_id])?;
+    let value_opt = ctx
+        .call_func("find_object_qualified_e", &[], &[value_arch, value_id])
+        .result?;
     Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
 
@@ -366,7 +385,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let value_opt = ctx.call_func("find_object_unqualified_e", &[], &[value_arch, value_id])?;
+    let value_opt = ctx
+        .call_func("find_object_unqualified_e", &[], &[value_arch, value_id])
+        .result?;
     Ok(value::get::opt(ctx.arena(), &value_opt).map_err(ExternError::from)?)
 }
 
@@ -385,6 +406,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("update_object_qualified_e", &[], &[value_arch, value_id, value_object])
+        .result
 }
 
 /// Replaces an object found by bare name.
@@ -400,6 +422,7 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("update_object_unqualified_e", &[], &[value_arch, value_id, value_object])
+        .result
 }
 
 // == Object state
@@ -415,7 +438,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let value_opt = ctx.call_func("find_objectState_e", &[], &[value_arch, value_id])?;
+    let value_opt = ctx
+        .call_func("find_objectState_e", &[], &[value_arch, value_id])
+        .result?;
     value::get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
         .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()).into())
@@ -433,8 +458,9 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let value_opt =
-        ctx.call_func("update_objectState_e", &[], &[value_arch, value_id, value_state])?;
+    let value_opt = ctx
+        .call_func("update_objectState_e", &[], &[value_arch, value_id, value_state])
+        .result?;
     value::get::opt(ctx.arena(), &value_opt)
         .map_err(ExternError::from)?
         .ok_or_else(|| error::object_state_undefined("object state not found".to_owned()).into())
@@ -452,7 +478,7 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    ctx.call_func("find_archState_e", &[], &[value_arch])
+    ctx.call_func("find_archState_e", &[], &[value_arch]).result
 }
 
 /// Replaces the architecture state.
@@ -467,4 +493,5 @@ where
     Interp: Interpreter<Iface, Ext>,
 {
     ctx.call_func("update_archState_e", &[], &[value_arch, value_state])
+        .result
 }

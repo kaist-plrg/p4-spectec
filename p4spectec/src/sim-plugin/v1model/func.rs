@@ -684,6 +684,7 @@ where
 {
     let value_msg = func::find_var_e_local(ctx, value_ctx, "msg")?;
     let msg = unpack::p4_string(ctx.arena(), &value_msg)?;
+    ctx.record_effect(crate::runner::SideEffect::Impure);
     ctx.external().write_log(&msg)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(
@@ -752,6 +753,7 @@ where
     let value_data = func::find_var_e_local(ctx, value_ctx, "data")?;
     let values = unpack::p4_tuple(ctx.arena(), &value_data)?;
     let text = format_braces(ctx.arena(), &msg, &values)?;
+    ctx.record_effect(crate::runner::SideEffect::Impure);
     ctx.external().write_log(&text)?;
     // Return without a value
     let typ = typ::make::opt(typ::make::var(

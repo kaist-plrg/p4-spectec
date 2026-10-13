@@ -1,7 +1,7 @@
-//! Storage for a specification's notation shapes and a run's values
+//! Storage for prepared specifications' notation shapes and a run's values
 //!
 //! An `Arena` holds a `MixopArena` beside the value storage.
-//! The shapes are the specification's, shared with its prepared syntax,
+//! The shapes are shared by every specification prepared in the arena,
 //! and outlive `reset_values`; a case body's notation is one of them.
 //! `value` allocates values into the arena and reads them back.
 
@@ -9,7 +9,7 @@ use super::{notation::MixopArena, value::ValueArena};
 
 // = Arena storage
 
-/// Storage for a specification's notation shapes and the values of one run.
+/// Storage for prepared specifications' notation shapes and the values of one run.
 ///
 /// Shapes survive `reset_values`; value, type, and span handles do not.
 #[derive(Debug, Default)]
@@ -37,6 +37,7 @@ impl Arena {
     ///
     /// Value, type, and span handles issued before become invalid
     /// and numbering starts over; shape handles stay valid.
+    /// Clear every sharing runner's caches and host state first.
     pub fn reset_values(&mut self) {
         self.value = ValueArena::default();
     }

@@ -556,6 +556,7 @@ fn eval_debug_instr<'global, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<(Context<'global>, Flow)> {
     // Evaluate before printing so expression failures keep their trace
     let value = unwrap!(eval_exp(runner_ctx, &ctx, &instr.exp));
+    runner_ctx.record_effect(crate::runner::SideEffect::Impure);
     println!("{}", value.view(runner_ctx.arena()).to_string());
     ok!((ctx, Flow::Cont(vec![])))
 }

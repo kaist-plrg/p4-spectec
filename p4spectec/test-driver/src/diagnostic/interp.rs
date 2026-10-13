@@ -6,13 +6,14 @@
 
 use std::path::Path;
 
-use p4spectec::lang::{common::source::Span, data::value::flat as value};
+use p4spectec::lang::{
+    common::source::Span,
+    data::{arena::Arena, value::flat as value},
+};
 
 use p4spectec::diagnostic::{Report, ReportKind};
 
-use p4spectec::runner::{
-    self, BuiltinInterface, Config, Interpreter, InterpreterError, NullExtern, Runner,
-};
+use p4spectec::runner::{self, BuiltinInterface, Config, InterpreterError, NullExtern, Runner};
 
 use crate::Result;
 
@@ -62,21 +63,19 @@ fn codes(report: &Report) -> Vec<&str> {
 // = Execution
 
 /// Checks that R fails with the expected kind and code.
-pub(super) fn reject<Interp>(
+pub(super) fn reject(
     name: &str,
-    mut runner: Runner<Interp, BuiltinInterface, NullExtern>,
+    arena: &mut Arena,
+    mut runner: Runner<BuiltinInterface, NullExtern>,
     kind_expect: FailureKind,
     code: &str,
-) -> Result<Vec<Report>>
-where
-    Interp: Interpreter<BuiltinInterface, NullExtern>,
-{
+) -> Result<Vec<Report>> {
     // Keep the entry relation and input common to all cases
-    let value = value::make::nat(runner.arena_mut(), 1.into(), Span::default())
-        .map_err(|error| failure(name, error))?;
+    let value =
+        value::make::nat(arena, 1.into(), Span::default()).map_err(|error| failure(name, error))?;
     let error = runner
-        .context()
-        .call_rel("R", &[value])
+        .eval_rel(arena, "R", &[value])
+        .result
         .err()
         .ok_or_else(|| failure(name, "relation unexpectedly matched"))?;
 
@@ -123,26 +122,28 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
     let config = Config::new(true, det, false);
     let path = case.path_input();
 
+    let mut arena = Arena::new();
+
     // Keep parse, elaboration, lowering, and loading failures out of snapshots
     match stage.as_str() {
         "al" => {
             let spec_al = p4spectec::algo(&[path]).map_err(|error| failure(name, error))?;
-            let runner = runner::build_al(spec_al, config, NullExtern)
+            let runner = runner::build_al(&mut arena, spec_al, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
-            reject(name, runner, kind, code)
+            reject(name, &mut arena, runner, kind, code)
         }
         "sl" => {
             let spec_sl =
                 p4spectec::structure(&[path], true).map_err(|error| failure(name, error))?;
-            let runner = runner::build_sl(spec_sl, config, NullExtern)
+            let runner = runner::build_sl(&mut arena, spec_sl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
-            reject(name, runner, kind, code)
+            reject(name, &mut arena, runner, kind, code)
         }
         "pl" => {
             let spec_pl = p4spectec::prosify(&[path]).map_err(|error| failure(name, error))?;
-            let runner = runner::build_pl(spec_pl, config, NullExtern)
+            let runner = runner::build_pl(&mut arena, spec_pl, config, NullExtern)
                 .map_err(|error| failure(name, error))?;
-            reject(name, runner, kind, code)
+            reject(name, &mut arena, runner, kind, code)
         }
         _ => Err(failure(name, "unknown interpreter stage")),
     }

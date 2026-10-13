@@ -3,7 +3,9 @@ use std::{collections::BTreeSet, fs, path::PathBuf, sync::mpsc, thread, time::In
 use expect_test::expect_file;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use p4spectec::runner::{self, BuiltinInterface, Config, Interpreter, Runner};
+use p4spectec::lang::data::arena::Arena;
+
+use p4spectec::runner::{self, BuiltinInterface, Config, Runner};
 
 use p4spectec::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
 
@@ -44,41 +46,40 @@ pub fn run(config: &RunConfig, language: Language, options: ExecutionOptions) ->
     }
     match language {
         Language::Al => {
-            run_with(config, &format!("AL cache={text_cache} det={det}"), suites, || {
+            run_with(config, &format!("AL cache={text_cache} det={det}"), suites, |arena| {
                 let spec_al = p4spectec::algo(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_al(spec_al, Config::new(cache_on, det, false), Dummy)
+                runner::build_al(arena, spec_al, Config::new(cache_on, det, false), Dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
             })
         }
         Language::Sl => {
-            run_with(config, &format!("SL cache={text_cache} det={det}"), suites, || {
+            run_with(config, &format!("SL cache={text_cache} det={det}"), suites, |arena| {
                 let spec_sl = p4spectec::structure(&config.spec, true)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_sl(spec_sl, Config::new(cache_on, det, false), Dummy)
+                runner::build_sl(arena, spec_sl, Config::new(cache_on, det, false), Dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
             })
         }
         Language::Pl => {
-            run_with(config, &format!("PL cache={text_cache} det={det}"), suites, || {
+            run_with(config, &format!("PL cache={text_cache} det={det}"), suites, |arena| {
                 let spec_pl = p4spectec::prosify(&config.spec)
                     .map_err(|error| Error::Invalid(error.to_string()))?;
-                runner::build_pl(spec_pl, Config::new(cache_on, det, false), Dummy)
+                runner::build_pl(arena, spec_pl, Config::new(cache_on, det, false), Dummy)
                     .map_err(|error| Error::Invalid(error.to_string()))
             })
         }
     }
 }
 
-fn run_with<Interp, Build>(
+fn run_with<Build>(
     config: &RunConfig,
     text_mode: &str,
     mut suites: Vec<CollectedSuite>,
     build_runner: Build,
 ) -> Result<()>
 where
-    Interp: Interpreter<BuiltinInterface, Dummy>,
-    Build: FnOnce() -> Result<Runner<Interp, BuiltinInterface, Dummy>>,
+    Build: FnOnce(&mut Arena) -> Result<Runner<BuiltinInterface, Dummy>>,
 {
     let start = Instant::now();
     let mut excludes = BTreeSet::new();
@@ -95,7 +96,8 @@ where
         "{text_mode}: collected={collected} excluded={excluded} to execute={}; preparing specification",
         collected - excluded
     );
-    let mut runner = build_runner()?;
+    let mut arena = Arena::new();
+    let mut runner = build_runner(&mut arena)?;
     let includes = &config.includes;
     for path in includes {
         fs::read_dir(path)?;
@@ -137,6 +139,7 @@ where
                 } else {
                     // Reset before parsing: no value may cross this program boundary
                     runner.reset();
+                    arena.reset_values();
                     fs::File::open(path)?;
                     let source = receiver
                         .recv()
@@ -149,11 +152,16 @@ where
                                 path.display()
                             ))
                         })?;
-                    let outcome = match parse_string(runner.arena_mut(), path, &source) {
-                        Ok(program) => match runner.eval_program(&suite.id_relation, program) {
-                            Ok(_) => Outcome::Pass,
-                            Err(_) => Outcome::Fail,
-                        },
+                    let outcome = match parse_string(&mut arena, path, &source) {
+                        Ok(program) => {
+                            match runner
+                                .eval_program(&mut arena, &suite.id_relation, program)
+                                .result
+                            {
+                                Ok(_) => Outcome::Pass,
+                                Err(_) => Outcome::Fail,
+                            }
+                        }
                         Err(P4Error {
                             kind: p4spectec::interface::p4::error::P4ErrorKind::Syntax(_),
                             ..

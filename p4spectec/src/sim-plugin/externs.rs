@@ -11,7 +11,7 @@ use crate::lang::data::value::flat::Value;
 
 use crate::lang::il::ast::Typ;
 
-use crate::runner::{Extern, ExternError, Interface, Interpreter, RunnerContext};
+use crate::runner::{Eval, Extern, ExternError, Interface, Interpreter, RunnerContext, SideEffect};
 
 use crate::sim_plugin::error;
 
@@ -23,7 +23,6 @@ use super::core;
 pub(crate) trait Impl: Extern {
     /// Creates the initial state of an extern object instance.
     fn eval_extern_init<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
     ) -> Result<Value, ExternError>
@@ -33,7 +32,6 @@ pub(crate) trait Impl: Extern {
 
     /// Evaluates a compile-time known extern function call; shared by default.
     fn eval_extern_func_lctk_call<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
     ) -> Result<Vec<Value>, ExternError>
@@ -46,7 +44,6 @@ pub(crate) trait Impl: Extern {
 
     /// Evaluates an extern function call.
     fn eval_extern_func_call<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
     ) -> Result<Vec<Value>, ExternError>
@@ -56,7 +53,6 @@ pub(crate) trait Impl: Extern {
 
     /// Evaluates a method call on an extern object.
     fn eval_extern_method_call<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         values: &[Value],
     ) -> Result<Vec<Value>, ExternError>
@@ -66,7 +62,6 @@ pub(crate) trait Impl: Extern {
 
     /// Creates the architecture's initial state.
     fn init_arch_state<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
     ) -> Result<Value, ExternError>
     where
@@ -78,54 +73,53 @@ pub(crate) trait Impl: Extern {
 
 impl<Ext: Impl> Extern for Ext {
     fn eval_rel<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         values: &[Value],
-    ) -> Result<(Vec<Value>, bool), ExternError>
+    ) -> Eval<Vec<Value>, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        // The three extern relations the specification defines
-        let values = match name {
-            "ExternFunctionCall_eval_lctk" => self.eval_extern_func_lctk_call(ctx, values)?,
-            "ExternFunctionCall_eval" => self.eval_extern_func_call(ctx, values)?,
-            "ExternMethodCall_eval" => self.eval_extern_method_call(ctx, values)?,
-            _ => {
-                return Err(error::extern_relation_unsupported(format!(
-                    "unimplemented extern relation: {name}"
-                ))
-                .into());
-            }
+        let checkpoint = ctx.effect_checkpoint();
+        let result = match name {
+            "ExternFunctionCall_eval_lctk" => Self::eval_extern_func_lctk_call(ctx, values),
+            "ExternFunctionCall_eval" => Self::eval_extern_func_call(ctx, values),
+            "ExternMethodCall_eval" => Self::eval_extern_method_call(ctx, values),
+            _ => Err(error::extern_relation_unsupported(format!(
+                "unimplemented extern relation: {name}"
+            ))
+            .into()),
         };
-        // Extern state lives in the values, so calls report no hidden effect
-        Ok((values, false))
+        // State is in the values; reentry and output can still have effects
+        let effect =
+            if result.is_err() { SideEffect::Impure } else { ctx.effect_since(checkpoint) };
+        Eval::new(result, effect)
     }
 
     fn eval_func<Interp, Iface>(
-        &self,
         ctx: &mut RunnerContext<'_, Interp, Iface, Self>,
         name: &str,
         _targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), ExternError>
+    ) -> Eval<Value, ExternError>
     where
         Iface: Interface,
         Interp: Interpreter<Iface, Self>,
     {
-        // The two extern functions the specification defines
-        let value = match name {
-            "init_objectState" => self.eval_extern_init(ctx, values)?,
-            "init_archState" => self.init_arch_state(ctx)?,
-            _ => {
-                return Err(error::extern_function_unsupported(format!(
-                    "unimplemented extern function: {name}"
-                ))
-                .into());
-            }
+        let checkpoint = ctx.effect_checkpoint();
+        let result = match name {
+            "init_objectState" => Self::eval_extern_init(ctx, values),
+            "init_archState" => Self::init_arch_state(ctx),
+            _ => Err(error::extern_function_unsupported(format!(
+                "unimplemented extern function: {name}"
+            ))
+            .into()),
         };
-        Ok((value, false))
+        // Preserve the conservative effect classification of host failures
+        let effect =
+            if result.is_err() { SideEffect::Impure } else { ctx.effect_since(checkpoint) };
+        Eval::new(result, effect)
     }
 
     fn clear(&mut self) {}

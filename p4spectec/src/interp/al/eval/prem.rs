@@ -173,6 +173,7 @@ fn eval_debug_prem<'global, Iface: Interface, Ext: Extern>(
 ) -> Backtrack<Context<'global>> {
     let value = unwrap!(expr::eval_exp(runner_ctx, &ctx, &prem.exp));
     let exp_text = prem.exp.view(&runner_ctx.arena().mixop).to_string();
+    runner_ctx.record_effect(crate::runner::SideEffect::Impure);
     println!("{}: {}", prem.exp.span, exp_text);
     // Print the value's source span when it has one
     let span_text = runner_ctx.arena().value.span(value.span).to_string();

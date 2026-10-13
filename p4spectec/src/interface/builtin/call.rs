@@ -4,8 +4,10 @@
 //! and then applies interface-specific overrides.
 //! Invocation resolves one name and calls its implementation;
 //! for example, `sum_nat` dispatches to `nats::sum_nat`,
-//! while `fresh_typeId` advances state hidden in `fresh`
+//! while `fresh_typeId` advances state owned by its builtin entry
 //! and is therefore marked impure, so its results are never cached.
+
+use crate::runner::{Eval, SideEffect};
 
 use std::collections::HashMap;
 
@@ -20,12 +22,28 @@ use super::{BuiltinError, fresh, ints, lists, maps, nats, numerics, sets, texts}
 /// A builtin body: arena, type arguments, values in; a value out.
 pub type BuiltinImpl = Box<dyn FnMut(&mut Arena, &[Typ], &[Value]) -> Result<Value, BuiltinError>>;
 
+/// A builtin whose successful result may be memoized.
+type PureBuiltin = BuiltinImpl;
+
+/// A builtin body and the factory that recreates its initial state.
+struct ImpureBuiltin {
+    builtin_impl: BuiltinImpl,
+    make: fn() -> BuiltinImpl,
+}
+
+impl ImpureBuiltin {
+    /// Creates a builtin and retains its factory for resets.
+    fn new(make: fn() -> BuiltinImpl) -> Self {
+        Self { builtin_impl: make(), make }
+    }
+}
+
 /// A registered builtin and whether calling it has effects.
 enum BuiltinEntry {
     /// No effects; the interpreter may memoize the result.
-    Pure(BuiltinImpl),
+    Pure(PureBuiltin),
     /// Has effects; every call runs.
-    Impure(BuiltinImpl),
+    Impure(ImpureBuiltin),
 }
 
 // == Builtin registry
@@ -92,7 +110,7 @@ impl Builtins {
             ("adds_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::adds_map))),
             ("update_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::update_map))),
             // Fresh type id
-            ("fresh_typeId".to_owned(), BuiltinEntry::Impure(Box::new(fresh::fresh_type_id))),
+            ("fresh_typeId".to_owned(), BuiltinEntry::Impure(ImpureBuiltin::new(fresh::make))),
             // Numerics
             ("shl".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shl))),
             ("shr".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shr))),
@@ -134,36 +152,42 @@ impl Builtins {
 
     /// Resets builtin state between programs.
     pub fn init(&mut self) {
-        fresh::init();
+        for entry in self.funcs.values_mut() {
+            // Pure entries have no program-owned state to reset
+            if let BuiltinEntry::Impure(builtin) = entry {
+                builtin.builtin_impl = (builtin.make)();
+            }
+        }
     }
 
     // - Calls
 
-    /// Calls a builtin by name; the flag reports whether it had effects.
+    /// Calls a builtin and retains effects on both success and failure.
     pub fn invoke(
         &mut self,
         arena: &mut Arena,
         id: &Id,
         targs: &[Typ],
         values: &[Value],
-    ) -> Result<(Value, bool), BuiltinError> {
-        // An undeclared builtin is a hard error, not a mismatch
-        let entry = self
-            .funcs
-            .get_mut(id.node.as_ref())
-            .ok_or_else(|| BuiltinError::implementation_missing(&id.node))?;
-        let (value, side_effected) = match entry {
-            // Pure results may be memoized by the interpreter
+    ) -> Eval<Value, BuiltinError> {
+        // Unknown host failures retain the conservative impure classification
+        let Some(entry) = self.funcs.get_mut(id.node.as_ref()) else {
+            return Eval::new(
+                Err(BuiltinError::implementation_missing(&id.node)),
+                SideEffect::Impure,
+            );
+        };
+        // Impure builtins remain impure even when their operation fails
+        let (result, effect) = match entry {
             BuiltinEntry::Pure(builtin_impl) => {
-                let value = builtin_impl(arena, targs, values)?;
-                (value, false)
+                let result = builtin_impl(arena, targs, values);
+                let effect = if result.is_err() { SideEffect::Impure } else { SideEffect::Pure };
+                (result, effect)
             }
-            // Impure results may not
-            BuiltinEntry::Impure(builtin_impl) => {
-                let value = builtin_impl(arena, targs, values)?;
-                (value, true)
+            BuiltinEntry::Impure(builtin) => {
+                ((builtin.builtin_impl)(arena, targs, values), SideEffect::Impure)
             }
         };
-        Ok((value, side_effected))
+        Eval::new(result, effect)
     }
 }

@@ -10,7 +10,7 @@ use super::io::Tx;
 
 /// Mutable pipeline state, held outside the runner
 ///
-/// Values belong to the accompanying runner's arena.
+/// Values belong to the shared execution arena.
 /// `value_arch` includes architecture work queues;
 /// `txs` holds one input packet's outputs in order.
 pub struct SimState {

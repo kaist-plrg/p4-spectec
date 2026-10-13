@@ -25,7 +25,7 @@ use crate::runtime::{
     ops::{typ, value},
 };
 
-use crate::runner::{Extern, Interface, RunnerContext};
+use crate::runner::{Extern, Interface, RunnerContext, SideEffect};
 
 use crate::interp::shared::{
     backtrack::{self, Backtrack, WithFrame, fatal, ok, unmatch, unwrap, unwrap_from_result},
@@ -211,7 +211,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
     }
     let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
     // Track effects for memoization; grow the stack for deep recursion
-    runner_ctx.interp_mut().cache.begin();
+    let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let callable = unwrap_from_result!(ctx.find_rel(id), &id.span);
         match &callable.def {
@@ -221,7 +221,7 @@ pub(crate) fn invoke_rel<Iface: Interface, Ext: Extern>(
             }
         }
     });
-    let pure = runner_ctx.interp_mut().cache.end();
+    let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
     // Nest failures under the invocation trace
     let result = result.with_frame(id.span, || error::trace::message_rel_invocation(id));
     let values = unwrap!(result);
@@ -246,14 +246,10 @@ fn invoke_extern_rel<Iface: Interface, Ext: Extern>(
     rel: &ast::ExternRel,
     values: &[Value],
 ) -> Backtrack<Vec<Value>> {
-    // The host reports whether the call had a side effect
+    // Host dispatch records effects before exposing the result
     let result = runner_ctx.call_extern_rel(&id.node, values);
-    runner_ctx
-        .interp_mut()
-        .cache
-        .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
     // Attach the call site to fatal host failures
-    let (values, _) = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
+    let values = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Check the number of extern outputs before assigning them
     let len =
         rel.rel_signature.not_typ.node.args().len() - rel.rel_signature.input_hint.indices().len();
@@ -338,7 +334,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
     }
     let key = cache.then(|| CallKey::new(runner_ctx.arena(), &id.node, values));
     // Track effects for memoization; grow the stack for deep recursion
-    runner_ctx.interp_mut().cache.begin();
+    let checkpoint = runner_ctx.effect_checkpoint();
     let result = stacker::maybe_grow(64 * 1024, 1024 * 1024, || {
         let func = unwrap_from_result!(ctx.find_func(id), &id.span);
         match &func.def {
@@ -356,7 +352,7 @@ pub(crate) fn invoke_func<Iface: Interface, Ext: Extern>(
             }
         }
     });
-    let pure = runner_ctx.interp_mut().cache.end();
+    let pure = runner_ctx.effect_since(checkpoint) == SideEffect::Pure;
     // Nest failures under the invocation trace
     let result = result.with_frame(id.span, || error::trace::message_func_invocation(id, targs));
     let value = unwrap!(result);
@@ -378,14 +374,10 @@ fn invoke_extern_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // The host reports whether the call had a side effect
+    // Host dispatch records effects before exposing the result
     let result = runner_ctx.call_extern_func(&id.node, &[], values);
-    runner_ctx
-        .interp_mut()
-        .cache
-        .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
     // Attach the call site to fatal host failures
-    let (value, _) = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
+    let value = unwrap!(result.map_err(|failure| failure.with_span(&id.span)));
     // Guard the outputs against their declared types
     if runner_ctx.interp().config.guard {
         unwrap!(check_func_output(
@@ -412,15 +404,11 @@ fn invoke_builtin_func<Iface: Interface, Ext: Extern>(
     targs: &[ast::Typ],
     values: &[Value],
 ) -> Backtrack<Value> {
-    // Builtins report effects like host calls
+    // Builtin dispatch records effects before exposing the result
     let result = runner_ctx.call_builtin(id, targs, values);
-    runner_ctx
-        .interp_mut()
-        .cache
-        .mark_effect(result.as_ref().map_or(true, |(_, effect)| *effect));
     match result {
         // A successful builtin result may still fail its output guard
-        Ok((value, _)) => {
+        Ok(value) => {
             if runner_ctx.interp().config.guard {
                 unwrap!(check_func_output(
                     runner_ctx.arena(),

@@ -1,6 +1,6 @@
 //! SL adapters for shared execution contexts
 //!
-//! `Global::load` prepares SL definitions into the shared environments.
+//! `SpecEnv::load` prepares SL definitions into the shared environments.
 //! `Context` retains the shared scope, binding, and iteration operations;
 //! `FuncSignature` extracts types from prepared SL function definitions.
 
@@ -26,14 +26,14 @@ use super::prepare::PrepareContext;
 pub use shared::Scope;
 
 /// Stores loaded SL definitions and prepared callables.
-pub type Global = shared::Global<ast::RelDef, ast::MetaFuncDef>;
+pub type SpecEnv = shared::Global<ast::RelDef, ast::MetaFuncDef>;
 
 /// Holds local SL bindings over borrowed global definitions.
 pub type Context<'global> = shared::Context<'global, ast::RelDef, ast::MetaFuncDef>;
 
 // = Loading
 
-impl Global {
+impl SpecEnv {
     /// Loads a specification and prepares its callables for slot execution,
     /// interning their notations and lowering calls for the selected `det` mode.
     ///

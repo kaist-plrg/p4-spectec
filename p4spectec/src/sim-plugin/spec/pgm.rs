@@ -19,7 +19,7 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_program("EBPF_init", program)?;
+    let values = ctx.call_program("EBPF_init", program).result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -36,7 +36,7 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_program("PSA_init", program)?;
+    let values = ctx.call_program("PSA_init", program).result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
@@ -53,7 +53,7 @@ where
     Ext: Extern,
     Interp: Interpreter<Iface, Ext>,
 {
-    let values = ctx.call_program("V1Model_init", program)?;
+    let values = ctx.call_program("V1Model_init", program).result?;
     let (value_ctx, value_arch) = value::get::two(&values).map_err(ExternError::from)?;
     Ok((*value_ctx, *value_arch))
 }
