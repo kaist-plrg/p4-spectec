@@ -1,7 +1,7 @@
 #lang racket/base
 ;; spec-meta/common/2-env.watsup.
 
-(require "0.0-prelude.rkt"
+(require redex/reduction-semantics
          "0.1-stdlib.rkt"
          "1-syntax.rkt")
 (provide common-env

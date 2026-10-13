@@ -2,7 +2,7 @@
 ;; spec-meta/common/1-syntax.watsup.
 
 (require json
-         "0.0-prelude.rkt"
+         redex/reduction-semantics
          "0.1-stdlib.rkt")
 (provide common)
 

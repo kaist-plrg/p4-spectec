@@ -1,7 +1,7 @@
 #lang racket/base
 ;; spec-meta/common/5.0-eval-typ.watsup.
 
-(require "0.0-prelude.rkt"
+(require redex/reduction-semantics
          "0.1-stdlib.rkt"
          "4-relation.rkt")
 (provide subst-typ

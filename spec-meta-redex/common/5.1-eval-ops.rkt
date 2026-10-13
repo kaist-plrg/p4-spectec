@@ -5,7 +5,7 @@
 ;; undefined result (division by zero, a negative exponent) raises an error, as
 ;; num.ml's `assert false` does.
 
-(require "0.0-prelude.rkt"
+(require redex/reduction-semantics
          "4-relation.rkt")
 (provide unop-number
          binop-bool

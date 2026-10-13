@@ -5,7 +5,7 @@
 ;; The relations have no `otherwise`, so an input that no rule matches has no
 ;; derivation, and its caller fails: here it reduces to FAIL directly.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/0.1-stdlib.rkt"
          "../common/2-env.rkt"
          "3-context.rkt"
@@ -15,7 +15,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-assign
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Assigning to an expression
@@ -139,7 +139,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-assign
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Assigning to an expression

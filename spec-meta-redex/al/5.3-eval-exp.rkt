@@ -7,7 +7,7 @@
 ;; subterm just evaluated fits no rule, "<group>/fail" where the last one
 ;; does not, and "<group>/<rule>/fail" where a rule's own premise fails.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/0.1-stdlib.rkt"
          "../common/2-env.rkt"
          "../common/5.1-eval-ops.rkt"
@@ -27,7 +27,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-exp
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Boolean, number, and text evaluation rules
@@ -419,7 +419,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-exp
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Variable evaluation rules

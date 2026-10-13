@@ -5,7 +5,7 @@
 ;; alone otherwise. A ctx result is the new L. $load and $empty_ctx keep ctx.
 ;; A record update C[ .LOCAL.VAL = x ] is a pattern that rebuilds the layer.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/0.1-stdlib.rkt"
          "../common/2-env.rkt"
          "2-env.rkt")

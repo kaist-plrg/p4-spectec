@@ -7,7 +7,7 @@
 ;;
 ;; An intermediate form is named after the rule, or the group, that builds it.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "3-context.rkt")
 (provide al)
 

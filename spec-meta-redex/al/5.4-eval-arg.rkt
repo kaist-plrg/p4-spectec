@@ -4,7 +4,7 @@
 ;; An arg evaluates in place, as an exp does. Eval_arg/fail is "frame/fail"
 ;; on (EXP hole): no other input fails.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/2-env.rkt"
          "../common/5.0-eval-typ.rkt"
          "3-context.rkt"
@@ -14,7 +14,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-arg
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Argument evaluation rules
@@ -29,7 +29,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-arg
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Type argument evaluation rules

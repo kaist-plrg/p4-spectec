@@ -7,7 +7,7 @@
 ;; never a metafunction.
 
 (require json
-         "0.0-prelude.rkt"
+         redex/reduction-semantics
          "0.2-extern-json.rkt"
          "0.3-extern-ffi.rkt"
          "3-context.rkt")

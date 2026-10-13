@@ -10,19 +10,19 @@
 ;; k-run-p4.sh does. -i adds a P4 include directory, and --p4 needs at least
 ;; one. Entry's debug messages go to stderr.
 ;;
-;;   racket spec-meta-redex/al/6-entry.rkt FILE.watsup
-;;   racket spec-meta-redex/al/6-entry.rkt --p4 PROGRAM.p4 -i DIR [-i DIR]... spec
+;;   racket spec-meta-redex/al/7-entry.rkt FILE.watsup
+;;   racket spec-meta-redex/al/7-entry.rkt --p4 PROGRAM.p4 -i DIR [-i DIR]... spec
 
 (require json
          racket/cmdline
          racket/match
-         "../common/0.0-prelude.rkt"
+         redex/reduction-semantics
          "../common/0.1-stdlib.rkt"
          "../common/0.2-extern-json.rkt"
          "../common/0.3-extern-ffi.rkt"
          "0-boot.rkt"
          "3-context.rkt"
-         "5-eval.rkt")
+         "6-driver.rkt")
 (provide entry
          entry-p4
          load-script
@@ -79,7 +79,7 @@
   (define includes '())
   (define path
     (command-line
-     #:program "6-entry.rkt"
+     #:program "7-entry.rkt"
      #:once-each
      [("--p4") program "Run Program_ok of the spec FILE on a P4 program"
                (set! p4 program)]
@@ -88,7 +88,7 @@
              (set! includes (append includes (list dir)))]
      #:args (file) file))
   (when (and p4 (null? includes))
-    (raise-user-error '6-entry.rkt "-i is required with --p4"))
+    (raise-user-error '7-entry.rkt "-i is required with --p4"))
   (parameterize ([host-spec path])
     (displayln
      (if p4

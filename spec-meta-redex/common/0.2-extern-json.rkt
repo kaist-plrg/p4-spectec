@@ -4,8 +4,7 @@
 ;; a result in the same encoding.
 
 (require json
-         racket/match
-         (for-syntax racket/base))
+         racket/match)
 (provide val->jsexpr
          jsexpr->val
          typ->jsexpr
@@ -107,27 +106,23 @@
 ;;            | {"fail": null}
 ;;            | {"error": <text>}   ffi.ml, on an OCaml exception
 
-;; An object with key as its only field
-(define-match-expander only-field
-  (syntax-rules ()
-    [(_ key pat) (and (hash-table (key pat)) (app hash-count 1))]))
-
 ;; A builtin or extern-func response, as a valres; an error raises.
 (define (response->valres js)
   (match js
-    [(only-field 'ok val) (list 'OK (jsexpr->val val))]
+    [(hash-table ('ok val)) #:when (= (hash-count js) 1) (list 'OK (jsexpr->val val))]
     [_ (response->fail js)]))
 
 ;; An extern-rel response, as a valsres; an error raises.
 (define (response->valsres js)
   (match js
-    [(only-field 'ok (? list? vals)) (list 'OK (map jsexpr->val vals))]
+    [(hash-table ('ok (? list? vals))) #:when (= (hash-count js) 1)
+     (list 'OK (map jsexpr->val vals))]
     [_ (response->fail js)]))
 
 (define (response->fail js)
   (match js
-    [(only-field 'fail (== (json-null))) 'FAIL]
-    [(only-field 'error (? string? msg)) (error 'host "~a" msg)]
+    [(hash-table ('fail (== (json-null)))) #:when (= (hash-count js) 1) 'FAIL]
+    [(hash-table ('error (? string? msg))) #:when (= (hash-count js) 1) (error 'host "~a" msg)]
     [_ (malformed "a response" js)]))
 
 (define (malformed what js)

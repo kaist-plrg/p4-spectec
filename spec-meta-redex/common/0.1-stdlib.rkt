@@ -5,7 +5,7 @@
 ;; Type parameters are dropped: `any` stands for them in contracts.
 
 (require racket/list
-         "0.0-prelude.rkt")
+         redex/reduction-semantics)
 (provide stdlib
          ite
          opt-as-seq-

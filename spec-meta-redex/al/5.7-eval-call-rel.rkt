@@ -6,7 +6,7 @@
 ;; has no `otherwise`, so an unknown relation reduces to FAIL directly, as
 ;; Eval_prem/fail does for the premise.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/4-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
@@ -21,7 +21,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-call-rel
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Rule path evaluation
@@ -94,7 +94,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-call-rel
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Rule path sequence evaluation

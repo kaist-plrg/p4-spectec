@@ -5,7 +5,7 @@
 ;; to OK. Eval_prem/fail becomes complement rules, and "frame/fail" where a
 ;; premise's sub-relation fails.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/0.1-stdlib.rkt"
          "../common/2-env.rkt"
          "3-context.rkt"
@@ -15,7 +15,7 @@
 
 ;; The rules on the redex
 (define ->redex/eval-prem
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; Relation premises
@@ -85,7 +85,7 @@
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-prem
-  (reduction-relation/forms
+  (reduction-relation
    al
 
    ;;; If-not-hold premises

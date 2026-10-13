@@ -172,7 +172,7 @@ RSPECDIR = spec-meta-redex
 RFFI_SO = _build/default/p4spec/bin/ffi.so
 RSHIM_SRC = $(RSPECDIR)/ffi/shim.c
 RSHIM_SO = $(RSPECDIR)/ffi/shim.so
-RENTRY = $(RSPECDIR)/al/6-entry.rkt
+RENTRY = $(RSPECDIR)/al/7-entry.rkt
 RTYPECHECK = $(RSPECDIR)/test/p4-typecheck.rkt
 
 # spectec-boot boots scripts and P4 programs; ffi.so and shim.so are the host

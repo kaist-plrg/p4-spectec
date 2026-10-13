@@ -29,7 +29,7 @@
          "../common/0.2-extern-json.rkt"
          "../common/0.3-extern-ffi.rkt"
          "../al/0-boot.rkt"
-         "../al/6-entry.rkt")
+         "../al/7-entry.rkt")
 
 ;; The repository root, which .exclude entries are relative to, as in K's and
 ;; OCaml's tests

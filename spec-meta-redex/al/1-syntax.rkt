@@ -1,7 +1,7 @@
 #lang racket/base
 ;; spec-meta/al/1-syntax.watsup.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/1-syntax.rkt")
 (provide al-syntax)
 

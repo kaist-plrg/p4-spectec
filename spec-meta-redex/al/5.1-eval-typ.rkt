@@ -4,7 +4,7 @@
 ;; A clause whose premise results decide between it and `otherwise` computes
 ;; them once, and a helper branches on them.
 
-(require "../common/0.0-prelude.rkt"
+(require redex/reduction-semantics
          "../common/0.1-stdlib.rkt"
          "../common/5.0-eval-typ.rkt"
          "../common/5.1-eval-ops.rkt"
