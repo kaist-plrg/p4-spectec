@@ -11,7 +11,7 @@
          iter-vari
          iter-varr)
 
-(define-extended-language common-env common
+(define-extended-language common-env common-syntax
   ;; Value environment
   (varr ::= (id (iter ...)))
   (venv ::= ((varr val) ...))

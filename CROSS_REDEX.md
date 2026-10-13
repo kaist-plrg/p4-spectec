@@ -98,7 +98,11 @@ applies. Complement rules end in `fail`:
   `"eval-exp/binary/fail-left"`;
 - `".../fail"` where the last subterm evaluated fits no rule;
 - `".../<rule>/fail"` where a rule's own premise fails, as in
-  `"eval-exp/binary/number/fail"`, where `binop-number` has no derivation.
+  `"eval-exp/binary/number/fail"`, where `binop-number` has no derivation;
+- `".../<rule>/fail-<premise>"` where that name would not tell the failing
+  premise apart: `"eval-targs/fail-theta"` and `"eval-targs/fail-subst"` for
+  the two premises of `Eval_targs`, and `"eval-prem/ifholdpr/nothold/fail-rel"`,
+  since `".../nothold/fail"` is the complement of the rule's next stage.
 
 A sequence that evaluates in place (see [Premises](#premises)) finishes with a
 rule named after its form: `"eval-prems"`, `"assign-exps/each"`, and
@@ -218,14 +222,14 @@ form that a rule builds is a frame around an `e`, since a result is an `e`.
 
 The rules are written on the redex, not on the whole configuration:
 
-- `->redex` holds the rules that neither read nor write the context. They
-  rewrite a redex `r` to `r'`. Most rules are here.
-- `->ctx` holds the rules that read `G` or `L`, or write `L`. They rewrite a
-  focus triple `(r G L)` to `(r' G L')`. The redex comes first; see
-  [Patterns and their cost](#patterns-and-their-cost).
+- `->term` holds the rules that neither read nor write the context. They
+  rewrite a term `r` to `r'`. Most rules are here.
+- `->term+ctx` holds the rules that read `G` or `L`, or write `L`. They
+  rewrite a term and its context, `(r G L)`, to `(r' G L')`. The term comes
+  first; see [Patterns and their cost](#patterns-and-their-cost).
 
 ```racket
-;; rulegroup Eval_exp/unary, in ->redex
+;; rulegroup Eval_exp/unary, in ->term
 (--> (UN NOT (OK (BOOL b))) (OK (BOOL b_res))
      (where b_res ,(not (term b)))
      "eval-exp/unary/boolean")
@@ -237,7 +241,7 @@ The rules are written on the redex, not on the whole configuration:
      (side-condition (not (redex-match? al (numunop (OK num)) (term (unop (OK val))))))
      "eval-exp/unary/fail")
 
-;; rule Eval_exp/variable, in ->ctx
+;; rule Eval_exp/variable, in ->term+ctx
 (--> ((VAR id) G L) ((OK val) G L)
      (where (val) (find-varr L (id ())))
      "eval-exp/variable")
@@ -245,7 +249,7 @@ The rules are written on the redex, not on the whole configuration:
      (where () (find-varr L (id ())))
      "eval-exp/variable/fail")
 
-;; rule Assign_exp/variable, in ->ctx
+;; rule Assign_exp/variable, in ->term+ctx
 (--> ((assign-exp (VAR id) val) G L) (OK G (add-varr L (id ()) val))
      "assign-exp/variable")
 ```
@@ -258,19 +262,19 @@ configurations, as the closure of the two through the contexts:
 ```racket
 (define ->al
   (union-reduction-relations
-   (context-closure ->redex al (G (in-hole E (IN L F))))
+   (context-closure ->term al (G (in-hole E (IN L F))))
    (reduction-relation
     al
     (--> (G (in-hole E (IN L (in-hole F e_r))))
          (G (in-hole E (IN L_1 (in-hole F e_1))))
          (where (_ ... (any_name (e_1 G L_1)) _ ...)
-                ,(apply-reduction-relation/tag-with-names ->ctx (term (e_r G L))))
+                ,(apply-reduction-relation/tag-with-names ->term+ctx (term (e_r G L))))
          (computed-name (term any_name))))))
 ```
 
 `context-closure` matches the context and the redex apart, so the context's
 `L` does not constrain the rules' own variables, and it keeps the rules'
-names. The rule for `->ctx` gives every successor of the focus triple, under
+names. The rule for `->term+ctx` gives every successor of `(e_r G L)`, under
 the name of the rule that gives it, through `computed-name`. Its repeated `G`
 states that no step changes `G`. So `->al` gives every successor of a
 configuration, with the names of the rules applied. `->al` is the
@@ -286,7 +290,7 @@ same relation faster:
    each node it matches `Fr` one level deep, and moves into the one evaluation
    position whose subterm is not `done`.
 3. The node where no such position exists is the redex. The driver applies
-   `->redex` to it, or `->ctx` to its focus triple if no rule of `->redex`
+   `->term` to it, or `->term+ctx` to `(r G L)` if no rule of `->term`
    applies. It puts the first successor `r'` in focus under `L'`, keeping
    `G`.
 
@@ -361,8 +365,8 @@ slice out of bounds) raises out of the driver, as it does in OCaml.
 
 ### Determinism and disjoint clauses
 
-- **Reduction rules.** At most one rule of `->redex` and `->ctx` applies to any
-  redex, so the order of the rules never matters. Nothing checks this at run
+- **Reduction rules.** At most one rule of `->term` and `->term+ctx` applies to
+  any redex, so the order of the rules never matters. Nothing checks this at run
   time: the driver takes the first successor it finds. Each `otherwise`
   becomes complement rules, as in the example above.
 - **Metafunctions and judgment forms.** Their clauses are disjoint: for any
@@ -453,22 +457,22 @@ performance, not for correctness:
 ### Patterns and their cost
 
 Patterns use the precise nonterminals, as close to watsup as possible,
-including `G` and `L` (aliases of `layer`) in every `->ctx` rule and in
+including `G` and `L` (aliases of `layer`) in every `->term+ctx` rule and in
 metafunction contracts. This is affordable only with caching on and with the
-redex first in focus triples. The probe used 150 rules, the booted `spec/`
+term first in `(r G L)`. The probe used 150 rules, the booted `spec/`
 loaded into `G`, and a precise `layer` check for `G` and `L` *(measured)*:
 
 | One application of 150 rules | Caching on | Caching off |
 | --- | --- | --- |
-| focus triple `(G L r)` | 9.75 ms | 38 s |
-| focus triple `(r G L)` | 0.05 ms | 0.24 s |
-| `with` shortcut lifting redex rules to `(r G L)` | 10.35 ms | 34 s |
+| triple `(G L r)` | 9.75 ms | 38 s |
+| triple `(r G L)` | 0.05 ms | 0.24 s |
+| `with` shortcut lifting the rules on terms to `(r G L)` | 10.35 ms | 34 s |
 
-Redex matches a list pattern left to right. With the redex first, a rule whose
-redex does not match fails before it checks `G`, and the one rule that matches
+Redex matches a list pattern left to right. With the term first, a rule whose
+term does not match fails before it checks `G`, and the one rule that matches
 finds `G` in the matcher's memo. A `with` shortcut matches its outer pattern
-first, which is why the rules on the redex alone form a relation of their own
-instead of being lifted into triples.
+first, which is why the rules on a term alone form a relation of their own,
+`->term`, instead of being lifted into triples.
 
 `$load` is precise too, but not transcribed as watsup's recursion. With
 precise patterns, every recursive call rechecks the context and the rest of
@@ -610,7 +614,7 @@ spec-meta-redex/
     0.1-stdlib.rkt        language stdlib; $ite, $opt_as_seq_, $exists_, ...; builtins; text and list helpers; debug
     0.2-extern-json.rkt   codec for the extern JSON wire
     0.3-extern-ffi.rkt    transport to the OCaml host, over ffi2
-    1-syntax.rkt          language common
+    1-syntax.rkt          language common-syntax
     2-env.rkt             language common-env; $extend_tdenv, $theta_of_tdenv, $is_iter_on_var, ...
     3-context.rkt         language common-context (cursor)
     4-relation.rkt        language common-relation (unitres, res<X>); host procedures for the three extern relations
@@ -629,7 +633,7 @@ spec-meta-redex/
     5.5-eval-prem.rkt     rules of Eval_prem, Eval_prems
     5.6-eval-call-func.rkt  rules of Eval_clause(s), Eval_tblrow(s), Call_*_func, Call_func
     5.7-eval-call-rel.rkt   rules of Eval_rul(s), Eval_rulgroup(s), Call_*_rel, Call_rel
-    5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al
+    5-eval.rkt            the IN and FAIL rules; ->term, ->term+ctx, ->al
     6-driver.rkt          the driver: run
     7-entry.rkt           Entry: load, then run $main() or a relation; the command line
   test/                   unnumbered
@@ -645,8 +649,8 @@ them.
 
 Each file in `common/` from `0.1-stdlib` to `4-relation` extends the previous
 file's language with its own syntax: `stdlib` (the `var`s, sets and maps),
-`common`, `common-env`, `common-context`, and `common-relation`. `al-syntax`
-extends `common` with `al/1-syntax`. `al-base` (in `al/2-env.rkt`) is the
+`common-syntax`, `common-env`, `common-context`, and `common-relation`.
+`al-syntax` extends `common-syntax` with `al/1-syntax`. `al-base` (in `al/2-env.rkt`) is the
 `define-union-language` of `common-relation` and `al-syntax`. `al-env`,
 `al-context`, and then `al` extend it with `al/2-env`, `al/3-context`, and
 `al/4-relation`. Metafunctions defined on a `common/` language work on `al`
@@ -917,7 +921,7 @@ Then, for example:
 ```racket
 (term (load (empty-ctx) ,(boot-script "examples/add.watsup")))   ; a loaded context
 (redex-match? al-context layer (term (empty-layer)))             ; grammar membership
-(apply-reduction-relation/tag-with-names ->redex (term (UN NOT (OK (BOOL #t)))))
+(apply-reduction-relation/tag-with-names ->term (term (UN NOT (OK (BOOL #t)))))
 (judgment-holds (find-vari {TYP () REL () FUNC () VAL ((("x" ()) (NAT 1)))} ("x" NAT ()) val) val)  ; a partial def
 (current-traced-metafunctions '(find-vari sub-list))             ; print calls and results
 (current-traced-metafunctions '())
@@ -934,7 +938,7 @@ To see a language or the rules as a figure:
 
 ```sh
 racket -e '(require racket/class pict redex/pict (file "spec-meta-redex/al/5-eval.rkt"))
-           (send (pict->bitmap (reduction-relation->pict ->redex)) save-file "/tmp/redex.png" (quote png))'
+           (send (pict->bitmap (reduction-relation->pict ->term)) save-file "/tmp/term.png" (quote png))'
 ```
 
 ### Oracles

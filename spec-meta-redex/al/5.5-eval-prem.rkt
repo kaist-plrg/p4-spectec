@@ -10,11 +10,11 @@
          "../common/2-env.rkt"
          "3-context.rkt"
          "4-relation.rkt")
-(provide ->redex/eval-prem
-         ->ctx/eval-prem)
+(provide ->term/eval-prem
+         ->term+ctx/eval-prem)
 
-;; The rules on the redex
-(define ->redex/eval-prem
+;; The rules on a term
+(define ->term/eval-prem
   (reduction-relation
    al
 
@@ -47,14 +47,14 @@
         (eval-prem/ifholdpr/hold (call-rel id (val_input ...)))
         "eval-prem/ifholdpr/hold")
    (--> (eval-prem/ifholdpr/hold (OK ())) OK
-        "eval-prem/ifholdpr/hold/result")
+        "eval-prem/ifholdpr/hold/succ")
    (--> (eval-prem/ifholdpr/hold (OK (val_h val_t ...))) FAIL
         ;; otherwise: the relation has outputs
         "eval-prem/ifholdpr/hold/fail")
 
-   ;; rule Eval_prem/nothold, once the relation is called (see ->ctx)
+   ;; rule Eval_prem/nothold, once the relation is called (see ->term+ctx)
    (--> (eval-prem/ifholdpr/nothold FAIL) OK
-        "eval-prem/ifholdpr/nothold/result")
+        "eval-prem/ifholdpr/nothold/succ")
    (--> (eval-prem/ifholdpr/nothold (OK (val_out ...))) FAIL
         ;; otherwise: the relation holds
         "eval-prem/ifholdpr/nothold/fail")
@@ -79,8 +79,8 @@
    (--> (eval-prems (OK ...)) OK
         "eval-prems")))
 
-;; The rules on the focus triple (r G L)
-(define ->ctx/eval-prem
+;; The rules on a term and its context (r G L)
+(define ->term+ctx/eval-prem
   (reduction-relation
    al
 

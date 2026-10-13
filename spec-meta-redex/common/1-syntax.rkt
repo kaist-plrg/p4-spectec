@@ -4,9 +4,9 @@
 (require json
          redex/reduction-semantics
          "0.1-stdlib.rkt")
-(provide common)
+(provide common-syntax)
 
-(define-extended-language common stdlib
+(define-extended-language common-syntax stdlib
   ;; Identifiers
   (id ::= text)
   (atom ::= text)

@@ -10,8 +10,8 @@
          "../common/4-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
-(provide ->redex/eval-call-rel
-         ->ctx/eval-call-rel
+(provide ->term/eval-call-rel
+         ->term+ctx/eval-call-rel
          elsgroup-as-rulgroup)
 
 ;; $elsgroup_as_rulgroup
@@ -19,8 +19,8 @@
   elsgroup-as-rulgroup : elsgroup -> rulgroup
   [(elsgroup-as-rulgroup (id rulmatch rulpath)) (id rulmatch (rulpath))])
 
-;; The rules on the redex
-(define ->redex/eval-call-rel
+;; The rules on a term
+(define ->term/eval-call-rel
   (reduction-relation
    al
 
@@ -92,8 +92,8 @@
         (where valsres ,(host-call-extern-rel (term id) (term (val ...))))
         "call-extern-rel")))
 
-;; The rules on the focus triple (r G L)
-(define ->ctx/eval-call-rel
+;; The rules on a term and its context (r G L)
+(define ->term+ctx/eval-call-rel
   (reduction-relation
    al
 

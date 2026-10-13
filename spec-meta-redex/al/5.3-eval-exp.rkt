@@ -14,8 +14,8 @@
          "3-context.rkt"
          "4-relation.rkt"
          "5.1-eval-typ.rkt")
-(provide ->redex/eval-exp
-         ->ctx/eval-exp)
+(provide ->term/eval-exp
+         ->term+ctx/eval-exp)
 
 ;; A field of the struct that Eval_path_upd/dot updates: val if its atom is
 ;; atom, and unchanged otherwise
@@ -25,8 +25,8 @@
   [(update-field atom val (atom_field val_field)) (atom_field val_field)
    (side-condition (not (equal? (term atom) (term atom_field))))])
 
-;; The rules on the redex
-(define ->redex/eval-exp
+;; The rules on a term
+(define ->term/eval-exp
   (reduction-relation
    al
 
@@ -417,8 +417,8 @@
    (--> (eval-exp/iter/list ((OK val) ...)) (OK (LIST (val ...)))
         "eval-exp/iter/list/collect")))
 
-;; The rules on the focus triple (r G L)
-(define ->ctx/eval-exp
+;; The rules on a term and its context (r G L)
+(define ->term+ctx/eval-exp
   (reduction-relation
    al
 

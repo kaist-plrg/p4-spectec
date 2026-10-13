@@ -11,11 +11,11 @@
          "../common/4-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
-(provide ->redex/eval-call-func
-         ->ctx/eval-call-func)
+(provide ->term/eval-call-func
+         ->term+ctx/eval-call-func)
 
-;; The rules on the redex
-(define ->redex/eval-call-func
+;; The rules on a term
+(define ->term/eval-call-func
   (reduction-relation
    al
 
@@ -39,7 +39,7 @@
 
    ;;; Table meta-function invocation
 
-   ;; rule Eval_tblrow/succ (see ->ctx), once the output is evaluated
+   ;; rule Eval_tblrow/succ (see ->term+ctx), once the output is evaluated
    (--> (eval-tblrow/succ OK OK (OK val_out)) (OK val_out)
         "eval-tblrow/succ/output")
 
@@ -61,7 +61,7 @@
 
    ;;; Defined meta-function invocation
 
-   ;; rule Call_defined_func (see ->ctx)
+   ;; rule Call_defined_func (see ->term+ctx)
    (--> (call-defined-func definedFuncDef (typ ...) (val ...)) FAIL
         ;; otherwise: as many types as type parameters
         (where (DEF (tparam ...) (clause ...) (elsclause ...)) definedFuncDef)
@@ -99,8 +99,8 @@
         (where valres ,(host-call-builtin-func (term id) (term (typ ...)) (term (val ...))))
         "call-builtin-func")))
 
-;; The rules on the focus triple (r G L)
-(define ->ctx/eval-call-func
+;; The rules on a term and its context (r G L)
+(define ->term+ctx/eval-call-func
   (reduction-relation
    al
 

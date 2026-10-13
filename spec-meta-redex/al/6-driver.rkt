@@ -2,8 +2,8 @@
 ;; A driver that computes ->al's steps.
 ;;
 ;; It holds (G (IN L e)) as a cursor at the last contractum. A step moves the
-;; cursor to the redex, applies ->redex to it, or ->ctx to its focus triple if
-;; no rule of ->redex applies, and puts the contractum and the new layer at the
+;; cursor to the redex, applies ->term to it, or ->term+ctx to (r G L) if no
+;; rule of ->term applies, and puts the contractum and the new layer at the
 ;; cursor. To reach the redex,
 ;; the cursor climbs past the nodes whose subterm is done, and then descends
 ;; through the one pending evaluation position of each node. So a step matches
@@ -49,10 +49,10 @@
       [(cons (path-fr Fr) path_1) (loop path_1 (plug Fr t) L)]
       [(cons (path-in L_outer) path_1) (loop path_1 (list 'IN L t) L_outer)])))
 
-;; c moved to the redex, or #f if c's configuration is final. A node whose
+;; c moved to the next redex, or #f if c's configuration is final. A node whose
 ;; pending subterm is not done keeps that position, so the cursor climbs only
 ;; past done subterms.
-(define (settle c)
+(define (next-redex c)
   (match-define (cursor G path t L) c)
   (let climb ([path path] [t t] [L L])
     (cond
@@ -93,17 +93,17 @@
 ;; The contractum of redex r under G and L, and the new layer. The rules are
 ;; disjoint, so the first successor found is the only one.
 (define (reduce-redex r G L)
-  (match (apply-reduction-relation ->redex r)
+  (match (apply-reduction-relation ->term r)
     [(cons r_1 _) (values r_1 L)]
     ['()
-     (match (apply-reduction-relation ->ctx (list r G L))
+     (match (apply-reduction-relation ->term+ctx (list r G L))
        [(cons (list r_1 _ L_1) _) (values r_1 L_1)]
        ['() (error 'step "stuck: no rule applies to ~e" r)])]))
 
 ;; The final configuration that conf reduces to
 (define (run conf)
   (let loop ([c (conf->cursor conf)])
-    (match (settle c)
+    (match (next-redex c)
       [#f (cursor->conf c)]
       [(cursor G path r L)
        (define-values (r_1 L_1) (reduce-redex r G L))

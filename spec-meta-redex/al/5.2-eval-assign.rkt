@@ -10,11 +10,11 @@
          "../common/2-env.rkt"
          "3-context.rkt"
          "4-relation.rkt")
-(provide ->redex/eval-assign
-         ->ctx/eval-assign)
+(provide ->term/eval-assign
+         ->term+ctx/eval-assign)
 
-;; The rules on the redex
-(define ->redex/eval-assign
+;; The rules on a term
+(define ->term/eval-assign
   (reduction-relation
    al
 
@@ -126,8 +126,8 @@
         (side-condition (not (= (length (term (arg ...))) (length (term (val ...))))))
         "assign-args/fail")))
 
-;; The rules on the focus triple (r G L)
-(define ->ctx/eval-assign
+;; The rules on a term and its context (r G L)
+(define ->term+ctx/eval-assign
   (reduction-relation
    al
 

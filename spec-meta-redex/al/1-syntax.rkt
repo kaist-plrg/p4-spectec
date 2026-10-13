@@ -5,7 +5,7 @@
          "../common/1-syntax.rkt")
 (provide al-syntax)
 
-(define-extended-language al-syntax common
+(define-extended-language al-syntax common-syntax
   ;; Parameters
   (param ::=
          (EXP typ)

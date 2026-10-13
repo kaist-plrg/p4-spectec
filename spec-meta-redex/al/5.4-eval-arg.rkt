@@ -9,11 +9,11 @@
          "../common/5.0-eval-typ.rkt"
          "3-context.rkt"
          "4-relation.rkt")
-(provide ->redex/eval-arg
-         ->ctx/eval-arg)
+(provide ->term/eval-arg
+         ->term+ctx/eval-arg)
 
-;; The rules on the redex
-(define ->redex/eval-arg
+;; The rules on a term
+(define ->term/eval-arg
   (reduction-relation
    al
 
@@ -27,8 +27,8 @@
    (--> (FUN id) (OK (FUNC id))
         "eval-arg/fun")))
 
-;; The rules on the focus triple (r G L)
-(define ->ctx/eval-arg
+;; The rules on a term and its context (r G L)
+(define ->term+ctx/eval-arg
   (reduction-relation
    al
 
