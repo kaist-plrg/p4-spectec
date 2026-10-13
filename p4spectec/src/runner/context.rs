@@ -24,11 +24,17 @@ where
     Iface: Interface,
     Ext: Extern,
 {
+    /// Caller-owned arena used for this evaluation.
     arena: &'runner mut Arena,
+    /// Prepared definitions for the selected interpreter stage.
     spec_env: &'runner Interp::SpecEnv,
+    /// Interpreter state, including configuration and caches.
     interp: &'runner mut Interp,
+    /// Interface state used for builtin dispatch.
     interface: &'runner mut Iface,
+    /// Host state used by extern relation and function calls.
     external: &'runner mut Ext,
+    /// Runner effect count shared across nested calls.
     effects: &'runner mut u64,
 }
 
