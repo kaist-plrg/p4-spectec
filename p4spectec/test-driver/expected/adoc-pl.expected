@@ -7371,22 +7371,26 @@ xref:find_callableDef_overloaded_t[The overloaded callable definition of ``prefi
   ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
   ... Return xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
 . Else if ``p`` matches pattern ``+BLOCK+``:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Let ``callableTypeDefEnv`` be ``TC.+BLOCK+.+CALLABLE+``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
- .. Try:
-  ... Let ``callResolution<callableTypeDefIR>^?^`` be xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
-  ... If ``callResolution<callableTypeDefIR>^?^`` is defined:
-   .... Let ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableTypeDefIR>^?^``.
-   .... Return ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
- .. Then, try:
-  ... Check that xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``] is none.
-  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Let ``callableTypeDefEnv`` be ``TC.+BLOCK+.+CALLABLE+``.
+  ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
+  ... Try:
+   .... Let ``callResolution<callableTypeDefIR>^?^`` be xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``].
+   .... If ``callResolution<callableTypeDefIR>^?^`` is defined:
+    ..... Let ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableTypeDefIR>^?^``.
+    ..... Return ``callableId`` ``+':'+`` ``callableTypeDefIR`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
+  ... Then, try:
+   .... Check that xref:find_overloaded[finding the item in ``callableTypeDefEnv`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableTypeDefIR``] is none.
+   .... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``+'.'+`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
 . Else:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+BLOCK+`` layer of ``TC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+BLOCK+`` layer of ``TC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_t[the overloaded callable definition of ``+'.'+`` ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+`` from the ``+GLOBAL+`` layer of ``TC``].
 
 xref:find_callableDef_non_overloaded_t[The non-overloaded callable definition of ``prefixedNameIR`` from the ``p`` layer of ``TC``]
 
@@ -18450,21 +18454,25 @@ xref:find_callableDef_overloaded_e[The overloaded callable definition of ``prefi
    .... Check that xref:find_overloaded[finding the item in ``EC.+GLOBAL+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.
    .... Return ``·``.
 . Else if ``p`` matches pattern ``+BLOCK+``:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
- .. Try:
-  ... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
-  ... If ``callResolution<callableDef>^?^`` is defined:
-   .... Let ``callableId`` ``+':'+`` ``callableDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.
-   .... Return ``callableId`` ``+':'+`` ``(`` ``+BLOCK+,`` ``callableDef`` ``)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
- .. Then, try:
-  ... Check that xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.
-  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Let ``callTargetKey`` be xref:callTargetKey[the call target key for ``nameIR`` ``+`(+`` ``argumentIR^{asterisk}^`` ``+`)+``].
+  ... Try:
+   .... Let ``callResolution<callableDef>^?^`` be xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``].
+   .... If ``callResolution<callableDef>^?^`` is defined:
+    ..... Let ``callableId`` ``+':'+`` ``callableDef`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^`` be ``callResolution<callableDef>^?^``.
+    ..... Return ``callableId`` ``+':'+`` ``(`` ``+BLOCK+,`` ``callableDef`` ``)`` ``+'#'+`` ``id~default~^{asterisk}^`` ``+'#'+`` ``id~optional~^{asterisk}^``.
+  ... Then, try:
+   .... Check that xref:find_overloaded[finding the item in ``EC.+BLOCK+.+CALLABLE+`` matching ``callTargetKey`` using parameter getter ``$parameterListIR_of_callableDef``] is none.
+   .... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``+'.'+`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
 . Else:
- .. Check that ``prefixedNameIR`` matches pattern ``{nbsp}~BARE~`` ``%``.
- .. Let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``.
- .. Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+BLOCK+`` layer of ``EC``].
+ .. If let ``{nbsp}~BARE~`` ``nameIR`` be ``prefixedNameIR``:
+  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``{nbsp}~BARE~`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+BLOCK+`` layer of ``EC``].
+ .. Else:
+  ... Let ``+'.'+`` ``nameIR`` be ``prefixedNameIR``.
+  ... Return xref:find_callableDef_overloaded_e[the overloaded callable definition of ``+'.'+`` ``nameIR``( ``argumentIR^{asterisk}^`` ) in the ``+GLOBAL+`` layer of ``EC``].
 
 xref:find_constructorDef_e[$find_constructorDef_e(EC, prefixedNameIR, argumentIR^{asterisk}^)]
 

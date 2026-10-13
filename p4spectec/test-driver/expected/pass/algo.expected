@@ -11523,6 +11523,16 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
   -- if prefixedNameIR matches _BARE %
   -- let _BARE nameIR = prefixedNameIR
 
+  clause 5 : (p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches BLOCK
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
+
+  clause 6 : (p, TC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches LOCAL
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
+
 def $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR) : (callableId, callableTypeDefIR)? =
 
   clause 0 : (p, TC, prefixedNameIR) = $find_non_overloaded<callableTypeDefIR>(TC.GLOBAL.CALLABLE, nameIR)
@@ -27040,6 +27050,16 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if p matches LOCAL
   -- if prefixedNameIR matches _BARE %
   -- let _BARE nameIR = prefixedNameIR
+
+  clause 7 : (p, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches BLOCK
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
+
+  clause 8 : (p, EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+  -- if p matches LOCAL
+  -- if prefixedNameIR matches '.' %
+  -- let '.' nameIR = prefixedNameIR
 
 def $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*) : callResolution<constructorDef>? =
 

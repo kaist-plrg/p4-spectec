@@ -16433,41 +16433,53 @@ def $find_callableDef_overloaded_t(p, TC, prefixedNameIR, argumentIR*{argumentIR
 
   2. Case (% matches pattern BLOCK)
 
-    1. If (prefixedNameIR matches _BARE %), then
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let _BARE nameIR be prefixedNameIR)
+      1. Case (% matches pattern _BARE %)
 
-        1. (Let callableTypeDefEnv be TC.BLOCK.CALLABLE)
+        1. (Let _BARE nameIR be prefixedNameIR)
 
-          1. (Let callTargetKey be $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*}))
+          1. (Let callableTypeDefEnv be TC.BLOCK.CALLABLE)
 
-            1. (Let callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} be $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR))
+            1. (Let callTargetKey be $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*}))
 
-              1. If (callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} matches (_)), then
+              1. (Let callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} be $find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR))
 
-                1. (Let ?(callableId ':' callableTypeDefIR '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*}) be callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?})
+                1. If (callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?} matches (_)), then
 
-                  1. Return ?(callableId ':' callableTypeDefIR '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*})
+                  1. (Let ?(callableId ':' callableTypeDefIR '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*}) be callResolution<callableTypeDefIR>?{callResolution<callableTypeDefIR> <- callResolution<callableTypeDefIR>?})
 
-              1. Else Dangling
+                    1. Return ?(callableId ':' callableTypeDefIR '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*})
 
-            2. If ($find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR) matches ()), then
+                1. Else Dangling
 
-              1. Return $find_callableDef_overloaded_t(GLOBAL, TC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
+              2. If ($find_overloaded<callableTypeDefIR>(callableTypeDefEnv, callTargetKey, $parameterListIR_of_callableTypeDefIR) matches ()), then
 
-            2. Else Dangling
+                1. Return $find_callableDef_overloaded_t(GLOBAL, TC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-    1. Else Dangling
+              2. Else Dangling
+
+      2. Case (% matches pattern '.' %)
+
+        1. (Let '.' nameIR be prefixedNameIR)
+
+          1. Return $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
 
   3. Case (% matches pattern LOCAL)
 
-    1. If (prefixedNameIR matches _BARE %), then
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let _BARE nameIR be prefixedNameIR)
+      1. Case (% matches pattern _BARE %)
 
-        1. Return $find_callableDef_overloaded_t(BLOCK, TC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
+        1. (Let _BARE nameIR be prefixedNameIR)
 
-    1. Else Dangling
+          1. Return $find_callableDef_overloaded_t(BLOCK, TC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
+
+      2. Case (% matches pattern '.' %)
+
+        1. (Let '.' nameIR be prefixedNameIR)
+
+          1. Return $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
 
 def $find_callableDef_non_overloaded_t(p, TC, prefixedNameIR)
 
@@ -34804,39 +34816,51 @@ def $find_callableDef_overloaded_e(p, EC, prefixedNameIR, argumentIR*{argumentIR
 
   2. Case (% matches pattern BLOCK)
 
-    1. If (prefixedNameIR matches _BARE %), then
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let _BARE nameIR be prefixedNameIR)
+      1. Case (% matches pattern _BARE %)
 
-        1. (Let callTargetKey be $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*}))
+        1. (Let _BARE nameIR be prefixedNameIR)
 
-          1. (Let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} be $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef))
+          1. (Let callTargetKey be $callTargetKey(nameIR, argumentIR*{argumentIR <- argumentIR*}))
 
-            1. If (callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)), then
+            1. (Let callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} be $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef))
 
-              1. (Let ?(callableId ':' callableDef '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*}) be callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?})
+              1. If (callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?} matches (_)), then
 
-                1. Return ?(callableId ':' (BLOCK, callableDef) '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*})
+                1. (Let ?(callableId ':' callableDef '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*}) be callResolution<callableDef>?{callResolution<callableDef> <- callResolution<callableDef>?})
 
-            1. Else Dangling
+                  1. Return ?(callableId ':' (BLOCK, callableDef) '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*})
 
-          2. If ($find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef) matches ()), then
+              1. Else Dangling
 
-            1. Return $find_callableDef_overloaded_e(GLOBAL, EC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
+            2. If ($find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef) matches ()), then
 
-          2. Else Dangling
+              1. Return $find_callableDef_overloaded_e(GLOBAL, EC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
 
-    1. Else Dangling
+            2. Else Dangling
+
+      2. Case (% matches pattern '.' %)
+
+        1. (Let '.' nameIR be prefixedNameIR)
+
+          1. Return $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
 
   3. Case (% matches pattern LOCAL)
 
-    1. If (prefixedNameIR matches _BARE %), then
+    1. Case analysis on prefixedNameIR (total)
 
-      1. (Let _BARE nameIR be prefixedNameIR)
+      1. Case (% matches pattern _BARE %)
 
-        1. Return $find_callableDef_overloaded_e(BLOCK, EC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
+        1. (Let _BARE nameIR be prefixedNameIR)
 
-    1. Else Dangling
+          1. Return $find_callableDef_overloaded_e(BLOCK, EC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
+
+      2. Case (% matches pattern '.' %)
+
+        1. (Let '.' nameIR be prefixedNameIR)
+
+          1. Return $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
 
 def $find_constructorDef_e(EC, prefixedNameIR, argumentIR*{argumentIR <- argumentIR*})
 

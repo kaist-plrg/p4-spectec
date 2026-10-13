@@ -7931,6 +7931,10 @@ def $find_callableDef_overloaded_t(cursor, typingContext, prefixedNameIR, argume
 
   clause 4 : (LOCAL, TC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(BLOCK, TC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
 
+  clause 5 : (BLOCK, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+
+  clause 6 : (LOCAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_t(GLOBAL, TC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+
 def $find_callableDef_non_overloaded_t(cursor, typingContext, prefixedNameIR) : (callableId, callableTypeDefIR)? =
 
   clause 0 : (p, TC, '.' nameIR) = $find_non_overloaded<callableTypeDefIR>(TC.GLOBAL.CALLABLE, nameIR)
@@ -15518,6 +15522,10 @@ def $find_callableDef_overloaded_e(cursor, evalContext, prefixedNameIR, argument
   -- if (?() = $find_overloaded<callableDef>(EC.BLOCK.CALLABLE, callTargetKey, $parameterListIR_of_callableDef))
 
   clause 6 : (LOCAL, EC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(BLOCK, EC, _BARE nameIR, argumentIR*{argumentIR <- argumentIR*})
+
+  clause 7 : (BLOCK, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
+
+  clause 8 : (LOCAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*}) = $find_callableDef_overloaded_e(GLOBAL, EC, '.' nameIR, argumentIR*{argumentIR <- argumentIR*})
 
 def $find_constructorDef_e(evalContext, prefixedNameIR, argumentIR*) : callResolution<constructorDef>? =
 
