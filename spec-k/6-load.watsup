@@ -1,0 +1,295 @@
+;;
+;; Loading a definition: the axioms that are executed
+;;
+;;
+
+;;; KORE also holds what symbolic execution and proofs use: properties of
+;;; symbols, simplification rules, ensures clauses. As the LLVM backend's
+;;; matching/Parser.scala, only rewrite rules and equations are executed.
+
+var KD : kdefinition
+var EM : map<symid, equation*>
+
+;; Attributes
+
+dec $attr_name(kattr) : text
+def $attr_name(KATTR text sort* kore*) = text
+
+dec $has_attr(text, kattr*) : bool
+  hint(prose_in %1 "has the attribute" %0)
+def $has_attr(text, kattr*) = text <- $attr_name(kattr)*
+
+dec $attr_named(text, kattr*) : kattr?
+  hint(prose_in "the attribute" %0 "of" %1)
+def $attr_named(text, eps) = eps
+def $attr_named(text, (KATTR text_h sort* kore*) :: kattr_t*)
+  = KATTR text_h sort* kore*
+  -- if text_h = text
+def $attr_named(text, (KATTR text_h sort* kore*) :: kattr_t*)
+  = $attr_named(text, kattr_t*)
+  -- if text_h =/= text
+
+;; The attributes that give the priority of a rule or an equation
+
+dec $exec_attr(kattr) : attr*
+def $exec_attr(KATTR "owise" sort* kore*) = [ OWISE ]
+def $exec_attr(KATTR "cool" sort* kore*) = [ COOL ]
+def $exec_attr(KATTR "cool-like" sort* kore*) = [ COOLLIKE ]
+def $exec_attr(KATTR "priority" sort* ([KSTR text])) = [ PRIORITY n ]
+  -- if i = $string_to_int(text)
+  -- if n = $nat_of(i)
+def $exec_attr(kattr) = eps
+  -- otherwise
+
+dec $exec_attrs(kattr*) : attr*
+def $exec_attrs(kattr*) = $concat_<attr>($exec_attr(kattr)*)
+
+;; Axioms left out by their attributes, as Parser.scala; other properties are
+;; left out by their form ($load_form)
+
+dec $is_proof_attr(kattr) : bool
+def $is_proof_attr(kattr) = $attr_name(kattr)
+  <- [ "assoc", "comm", "unit", "idem", "simplification", "non-executable" ]
+
+dec $proof_only(kattr*) : bool
+  hint(prose_in "an axiom with" %0 "is not executed")
+def $proof_only(kattr*) = $exists_($is_proof_attr(kattr)*)
+
+;; Symbols
+
+;; A hook comes before the equations of a function, as the LLVM backend calls
+;; the hook
+
+dec $kind_by_attrs(kattr*) : symkind
+def $kind_by_attrs(kattr*) = HOOKED hookid
+  -- if (KATTR "hook" sort* ([KSTR hookid])) = $attr_named("hook", kattr*)
+def $kind_by_attrs(kattr*) = FUNCTION
+  -- if ~$has_attr("hook", kattr*)
+  -- if $has_attr("function", kattr*)
+def $kind_by_attrs(kattr*) = ANYWHERE
+  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
+  -- if $has_attr("anywhere", kattr*)
+def $kind_by_attrs(kattr*) = BINDER
+  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
+  -- if ~$has_attr("anywhere", kattr*) /\ $has_attr("binder", kattr*)
+def $kind_by_attrs(kattr*) = CONSTRUCTOR
+  -- if ~$has_attr("hook", kattr*) /\ ~$has_attr("function", kattr*)
+  -- if ~$has_attr("anywhere", kattr*) /\ ~$has_attr("binder", kattr*)
+
+dec $symdecls(map<symid, ksymdecl>) : map<symid, symdecl>
+def $symdecls(`{ (symid ':' (KSYMBOL sort_a* '->' sort kattr*))* `})
+  = `{ (symid ':' (sort_a* '->' sort $kind_by_attrs(kattr*)))* `}
+
+dec $is_hooked(kdefinition, symid) : bool
+def $is_hooked(KD, symid) = $has_attr("hook", kattr*)
+  -- if (KSYMBOL sort_a* '->' sort kattr*)
+       = $find_map<symid, ksymdecl>(KD.KSYMBOLS, symid)
+def $is_hooked(KD, symid) = false
+  -- if eps = $find_map<symid, ksymdecl>(KD.KSYMBOLS, symid)
+
+;; Patterns of rules and equations
+
+dec $pattern(kore) : pattern
+def $pattern(KVAR varid sort) = VAR varid sort
+def $pattern(KVAL pattern) = pattern
+def $pattern(KAPP symid sort* kore*) = APP symid sort* $pattern(kore)*
+def $pattern(KML "and" ([sort]) ([kore_1, kore_2]))
+  = AND sort $pattern(kore_1) $pattern(kore_2)
+def $pattern(KML "or" ([sort]) ([kore_1, kore_2]))
+  = OR sort $pattern(kore_1) $pattern(kore_2)
+;; a longer \or is read from the right
+def $pattern(KML "or" ([sort]) (kore_h :: kore_t*))
+  = OR sort $pattern(kore_h) $pattern(KML "or" ([sort]) kore_t*)
+  -- if $(|kore_t*| > 1)
+
+;; Conditions: the predicates of a rule or an equation
+
+dec $is_predicate(kore) : bool
+def $is_predicate(KML "and" sort* kore*) = $forall_($is_predicate(kore)*)
+def $is_predicate(KML text sort* kore*) = true
+  -- if text <- [ "top", "not", "in", "ceil", "equals" ]
+def $is_predicate(kore) = false
+  -- otherwise
+
+syntax condition =
+  | REQUIRES kore         ;; the requires clause
+  | ARGUMENT varid kore   ;; the argument X of an equation has this pattern
+
+;; The requires clause is \equals(c, true); \in(X, p) gives the pattern of an
+;; equation's argument X. The \not kompile adds to owise ones is dropped, as
+;; Parser.scala: they are tried last by priority instead.
+
+dec $conditions(kore) : condition*
+def $conditions(KML "top" sort* eps) = eps
+def $conditions(KML "not" sort* kore*) = eps
+def $conditions(KML "equals" sort* ([kore_c, KVAL (BOOL true)]))
+  = [ REQUIRES kore_c ]
+def $conditions(KML "in" sort* ([KVAR varid sort_x, kore_p]))
+  = [ ARGUMENT varid kore_p ]
+def $conditions(KML "and" sort* kore*)
+  = $concat_<condition>($conditions(kore)*)
+
+dec $requires_of(condition) : kore*
+def $requires_of(REQUIRES kore) = [ kore ]
+def $requires_of(ARGUMENT varid kore) = eps
+
+dec $requires(condition*) : pattern?
+  hint(prose_in "the requires clause of" %0)
+def $requires(condition*) = eps
+  -- if eps = $concat_<kore>($requires_of(condition)*)
+def $requires(condition*) = $pattern(kore)
+  -- if [ kore ] = $concat_<kore>($requires_of(condition)*)
+
+dec $argument_pattern(condition, kore) : kore*
+def $argument_pattern(ARGUMENT varid_c kore_p, KVAR varid sort) = [ kore_p ]
+  -- if varid_c = varid
+def $argument_pattern(condition, kore) = eps
+  -- otherwise
+
+dec $argument(condition*, kore) : kore
+def $argument(condition*, kore) = kore
+  -- if eps = $concat_<kore>($argument_pattern(condition, kore)*)
+def $argument(condition*, kore) = kore_p
+  -- if kore_p :: kore_t* = $concat_<kore>($argument_pattern(condition, kore)*)
+
+dec $arguments(condition*, kore*) : pattern*
+def $arguments(condition*, eps) = eps
+def $arguments(condition*, kore_h :: kore_t*)
+  = $pattern($argument(condition*, kore_h)) :: $arguments(condition*, kore_t*)
+
+;; A side of a rule, \and(pattern, predicate) in either order: on the left,
+;; the predicate holds the requires clause; on the right, the ensures clause.
+
+dec $split_side(kore) : (kore, kore*)
+def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_1, [ kore_2 ])
+  -- if ~$is_predicate(kore_1) /\ $is_predicate(kore_2)
+def $split_side(KML "and" sort* ([kore_1, kore_2])) = (kore_2, [ kore_1 ])
+  -- if $is_predicate(kore_1) /\ ~$is_predicate(kore_2)
+def $split_side(kore) = (kore, eps)
+  -- otherwise
+
+dec $side_conditions(kore*) : condition*
+def $side_conditions(kore*) = $concat_<condition>($conditions(kore)*)
+
+;; The ensures clause is not used, as in the LLVM backend
+
+dec $without_ensures(kore) : kore
+def $without_ensures(kore) = kore_p
+  -- if (kore_p, kore_e*) = $split_side(kore)
+
+;; The parts of the definition an axiom gives
+
+syntax loaded =
+  | LRULE krule
+  | LEQUATION symid equation
+  | LSUBSORT subsort
+  | LOVERLOAD overload
+
+;; A rewrite rule: \rewrites(\and(lhs, requires), \and(rhs, ensures))
+
+dec $rule(kore, kore, kattr*) : krule
+def $rule(kore_l, kore_r, kattr*)
+  = RULE $pattern(kore_p) '=>' $pattern($without_ensures(kore_r))
+      'requires' $requires($side_conditions(kore_c*)) $exec_attrs(kattr*)
+  -- if (kore_p, kore_c*) = $split_side(kore_l)
+
+;; An equation f(args) = rhs under conditions, of a symbol without a hook
+
+dec $equation(kdefinition, symid, kore*, kore, kore, kattr*) : loaded*
+def $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*) = eps
+  -- if $is_hooked(KD, symid)
+def $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*)
+  = [ LEQUATION symid
+        (EQN symid $arguments(condition*, kore_a*)
+           '=' $pattern($without_ensures(kore_r))
+           'requires' $requires(condition*) $exec_attrs(kattr*)) ]
+  -- if ~$is_hooked(KD, symid)
+  -- if condition* = $conditions(kore_c)
+
+;; By its form, an axiom is a rewrite rule, an equation
+;; \implies(conditions, \equals(f(args), rhs)) or \equals(f(args), rhs), or a
+;; property
+
+dec $load_form(kdefinition, kore, kattr*) : loaded*
+def $load_form(KD, KML "rewrites" sort* ([kore_l, kore_r]), kattr*)
+  = [ LRULE $rule(kore_l, kore_r, kattr*) ]
+def $load_form(KD, KML "implies" sort*
+      ([kore_c, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r])]),
+    kattr*)
+  = $equation(KD, symid, kore_a*, kore_c, kore_r, kattr*)
+def $load_form(KD, KML "equals" sort_e* ([KAPP symid sort_f* kore_a*, kore_r]),
+    kattr*)
+  = $equation(KD, symid, kore_a*, KML "top" eps eps, kore_r, kattr*)
+def $load_form(KD, kore, kattr*) = eps
+  -- otherwise
+
+;; Subsorts and overloads are read from attributes; an overload axiom is also
+;; an equation of the more general symbol
+
+dec $load_axiom(kdefinition, kaxiom) : loaded*
+def $load_axiom(KD, AXIOM kore kattr*) = [ LSUBSORT (sort_1 '<' sort_2) ]
+  -- if (KATTR "subsort" ([sort_1, sort_2]) kore_s*)
+       = $attr_named("subsort", kattr*)
+def $load_axiom(KD, AXIOM kore kattr*) = eps
+  -- if ~$has_attr("subsort", kattr*)
+  -- if $proof_only(kattr*)
+def $load_axiom(KD, AXIOM kore kattr*)
+  = LOVERLOAD (symid_f '>' symid_g) :: $load_form(KD, kore, kattr*)
+  -- if ~$has_attr("subsort", kattr*) /\ ~$proof_only(kattr*)
+  -- if (KATTR "symbol-overload" sort*
+         ([KAPP symid_f sort_f* kore_f*, KAPP symid_g sort_g* kore_g*]))
+       = $attr_named("symbol-overload", kattr*)
+def $load_axiom(KD, AXIOM kore kattr*) = $load_form(KD, kore, kattr*)
+  -- if ~$has_attr("subsort", kattr*) /\ ~$proof_only(kattr*)
+  -- if ~$has_attr("symbol-overload", kattr*)
+
+;; The definition from what the axioms give, equations grouped by the symbol
+;; they define, in file order
+
+dec $rules_of(loaded) : krule*
+def $rules_of(LRULE krule) = [ krule ]
+def $rules_of(loaded) = eps
+  -- otherwise
+
+dec $subsorts_of(loaded) : subsort*
+def $subsorts_of(LSUBSORT subsort) = [ subsort ]
+def $subsorts_of(loaded) = eps
+  -- otherwise
+
+dec $overloads_of(loaded) : overload*
+def $overloads_of(LOVERLOAD overload) = [ overload ]
+def $overloads_of(loaded) = eps
+  -- otherwise
+
+dec $equations_of_loaded(loaded) : loaded*
+def $equations_of_loaded(LEQUATION symid eqn) = [ LEQUATION symid eqn ]
+def $equations_of_loaded(loaded) = eps
+  -- otherwise
+
+dec $group_equations(map<symid, equation*>, loaded*) : map<symid, equation*>
+def $group_equations(EM, eps) = EM
+def $group_equations(EM, (LEQUATION symid eqn) :: loaded_t*)
+  = $group_equations(
+      $add_map<symid, equation*>(EM, symid, eqn_e* ++ [ eqn ]), loaded_t*)
+  -- if (eqn_e*) = $find_map<symid, equation*>(EM, symid)
+def $group_equations(EM, (LEQUATION symid eqn) :: loaded_t*)
+  = $group_equations($add_map<symid, equation*>(EM, symid, [ eqn ]), loaded_t*)
+  -- if eps = $find_map<symid, equation*>(EM, symid)
+
+relation Load:
+  kdefinition ~> definition
+  hint(input %0)
+  hint(prose_in "loading" %0)
+  hint(prose_out %1)
+
+rule Load:
+  KD ~> { SYMBOLS $symdecls(KD.KSYMBOLS),
+          SUBSORTS $concat_<subsort>($subsorts_of(loaded)*),
+          OVERLOADS $concat_<overload>($overloads_of(loaded)*),
+          RULES $concat_<krule>($rules_of(loaded)*),
+          EQUATIONS $group_equations($empty_map<symid, equation*>,
+                      $concat_<loaded>($equations_of_loaded(loaded)*)),
+          PARAMS KD.KPARAMS,
+          NATSORTS KD.KNATSORTS }
+  -- if kaxiom* = KD.AXIOMS
+  -- if loaded* = $concat_<loaded>($load_axiom(KD, kaxiom)*)

@@ -1,14 +1,12 @@
 (* Loading KORE into values of the K spec (spec-k/1-syntax.watsup).
 
-   Only syntactic clean-up happens here, matching
-   what the LLVM backend's matching/Parser.scala does before compiling rules:
-   - drop axioms that are not executed (logical properties, simplifications)
-     and equations of hooked symbols;
-   - split rewrite rules and equations into left-hand side, requires, and
-     right-hand side, dropping the negated condition kompile adds to owise;
-   - read domain values of hooked sorts (INT.Int, BOOL.Bool, STRING.String,
-     FLOAT.Float in canonical form, BYTES.Bytes);
-   - expand \left-assoc and \right-assoc. *)
+   Only the text is read here; which axioms are executed, and how, is for
+   the spec to decide (spec-k/6-load.watsup). Every axiom is passed on with
+   its attributes, after:
+   - expanding aliases, as the LLVM backend's matching/Parser.scala does;
+   - writing out \left-assoc and \right-assoc;
+   - reading domain values of hooked sorts (INT.Int, BOOL.Bool, STRING.String,
+     FLOAT.Float in canonical form, BYTES.Bytes, MINT.MInt). *)
 
 open Ast
 module Value = Runtime.Value
@@ -81,14 +79,12 @@ let sort_hook (info : info) (s : sort) : string option =
 let typ (name : string) = Typ.Make.var (name $ no_region) []
 let typ_sort = typ "sort"
 let typ_pattern = typ "pattern"
-let typ_attr = typ "attr"
 let text_as (name : string) (s : string) = Value.Make.((text s) #@@ name)
 
 let case (mixop : string) (args : Value.t list) (name : string) =
   Value.Make.(mixop <| args <<| name)
 
 let list (t : Typ.t) (vs : Value.t list) = Value.Make.list (Typ.Make.list t) vs
-let opt (t : Typ.t) (v : Value.t option) = Value.Make.opt (Typ.Make.opt t) v
 
 let rec value_of_sort (s : sort) : Value.t =
   match s with
@@ -210,126 +206,83 @@ let rec value_of_pattern (info : info) (p : pattern) : Value.t =
         ]
         "pattern"
 
-(* Attributes that affect execution *)
+(* KORE as kompile writes it (kore in spec-k/1-syntax.watsup): connectives
+   named without their backslash, domain values read as above *)
 
-let value_of_attrs (attrs : attr list) : Value.t =
-  let flag name mixop =
-    if has_attr name attrs then [ case mixop [] "attr" ] else []
-  in
-  let priority =
-    match string_attr "priority" attrs with
-    | Some n ->
-        [ case "PRIORITY nat" [ Value.Make.nat (Bigint.of_string n) ] "attr" ]
-    | None -> []
-  in
-  list typ_attr
-    (flag "owise" "OWISE" @ priority @ flag "cool" "COOL"
-    @ flag "cool-like" "COOLLIKE")
+let typ_kore = typ "kore"
+let typ_kattr = typ "kattr"
 
-(* Splitting axioms *)
-
-let is_true = function
-  | App ("\\dv", [ Sort ("SortBool", []) ], [ Str "true" ]) -> true
-  | _ -> false
-
-let rec is_predicate = function
-  | App (("\\top" | "\\not" | "\\in" | "\\ceil"), _, _) -> true
-  | App ("\\equals", _, _) -> true
-  | App ("\\and", _, ps) -> List.for_all is_predicate ps
-  | _ -> false
-
-(* The requires clause of a conjunction of predicates. \in conditions are
-   returned separately (function arguments); \not is the owise condition. *)
-let rec split_predicate (p : pattern) : pattern list * (pattern * pattern) list
-    =
+let rec value_of_kore (info : info) (p : pattern) : Value.t =
   match p with
-  | App ("\\top", _, []) -> ([], [])
-  | App ("\\not", _, _) -> ([], [])
-  | App ("\\equals", _, [ req; t ]) when is_true t -> ([ req ], [])
-  | App ("\\in", _, [ x; pat ]) -> ([], [ (x, pat) ])
-  | App ("\\and", _, ps) ->
-      List.fold_left
-        (fun (reqs, ins) q ->
-          let reqs', ins' = split_predicate q in
-          (reqs @ reqs', ins @ ins'))
-        ([], []) ps
-  | _ -> error "unsupported condition %s" (string_of_pattern p)
+  | Var (name, s) ->
+      case "KVAR varid sort" [ text_as "varid" name; value_of_sort s ] "kore"
+  | SetVar (name, s) ->
+      case "KSETVAR varid sort" [ text_as "varid" name; value_of_sort s ] "kore"
+  | Str s -> case "KSTR text" [ Value.Make.text s ] "kore"
+  | App ("\\dv", [ s ], [ Str text ]) ->
+      case "KVAL pattern" [ value_of_dv info s text ] "kore"
+  | App (("\\left-assoc" | "\\right-assoc"), _, _) ->
+      value_of_kore info (desugar_assoc p)
+  | App (name, sorts, args) when name.[0] = '\\' ->
+      case "KML text sort* kore*"
+        [
+          Value.Make.text (String.sub name 1 (String.length name - 1));
+          list typ_sort (List.map value_of_sort sorts);
+          list typ_kore (List.map (value_of_kore info) args);
+        ]
+        "kore"
+  | App (name, sorts, args) ->
+      if not (Hashtbl.mem info.symbols name) then
+        error "undeclared symbol %s" name;
+      case "KAPP symid sort* kore*"
+        [
+          text_as "symid" name;
+          list typ_sort (List.map value_of_sort sorts);
+          list typ_kore (List.map (value_of_kore info) args);
+        ]
+        "kore"
 
-let one_requires = function
-  | [] -> None
-  | [ req ] -> Some req
-  | _ -> error "more than one requires clause"
+(* Arguments of attributes may name symbols that are not declared *)
+let rec value_of_attr_arg (p : pattern) : Value.t =
+  match p with
+  | Var (name, s) ->
+      case "KVAR varid sort" [ text_as "varid" name; value_of_sort s ] "kore"
+  | SetVar (name, s) ->
+      case "KSETVAR varid sort" [ text_as "varid" name; value_of_sort s ] "kore"
+  | Str s -> case "KSTR text" [ Value.Make.text s ] "kore"
+  | App (name, sorts, args) when name.[0] = '\\' ->
+      case "KML text sort* kore*"
+        [
+          Value.Make.text (String.sub name 1 (String.length name - 1));
+          list typ_sort (List.map value_of_sort sorts);
+          list typ_kore (List.map value_of_attr_arg args);
+        ]
+        "kore"
+  | App (name, sorts, args) ->
+      case "KAPP symid sort* kore*"
+        [
+          text_as "symid" name;
+          list typ_sort (List.map value_of_sort sorts);
+          list typ_kore (List.map value_of_attr_arg args);
+        ]
+        "kore"
 
-(* \and(pattern, predicate) in either order *)
-let split_side (side : pattern) : pattern * pattern list =
-  match side with
-  | App ("\\and", _, [ a; b ]) when is_predicate b && not (is_predicate a) ->
-      (a, fst (split_predicate b))
-  | App ("\\and", _, [ a; b ]) when is_predicate a && not (is_predicate b) ->
-      (b, fst (split_predicate a))
-  | App ("\\and", _, [ App ("\\not", _, _); App ("\\and", _, [ a; b ]) ])
-    when is_predicate a ->
-      (b, fst (split_predicate a))
-  | _ -> (side, [])
+let value_of_kattr (a : attr) : Value.t =
+  match a with
+  | App (name, sorts, args) ->
+      case "KATTR text sort* kore*"
+        [
+          Value.Make.text name;
+          list typ_sort (List.map value_of_sort sorts);
+          list typ_kore (List.map value_of_attr_arg args);
+        ]
+        "kattr"
+  | _ -> error "malformed attribute %s" (string_of_pattern a)
 
-let opt_pattern info p = opt typ_pattern (Option.map (value_of_pattern info) p)
+let value_of_kattrs (attrs : attr list) : Value.t =
+  list typ_kattr (List.map value_of_kattr attrs)
 
-let value_of_rule (info : info) (lhs_side : pattern) (rhs_side : pattern)
-    (attrs : attr list) : Value.t =
-  let lhs, reqs = split_side lhs_side in
-  (* ensures clauses are dropped: the LLVM backend keeps them in AxiomInfo
-     (matching/.../Parser.scala) but never uses them, and its code takes the
-     right-hand side X of \and(X, _) (lib/ast/pattern_matching.cpp) *)
-  let rhs, _ens = split_side rhs_side in
-  case "RULE pattern '=>' pattern 'requires' pattern? attr*"
-    [
-      value_of_pattern info lhs;
-      value_of_pattern info rhs;
-      opt_pattern info (one_requires reqs);
-      value_of_attrs attrs;
-    ]
-    "krule"
-
-let value_of_equation (info : info) (cond : pattern) (f : string)
-    (xs : pattern list) (rhs_side : pattern) (attrs : attr list) : Value.t =
-  let reqs, ins = split_predicate cond in
-  let rhs, _ens = split_side rhs_side in
-  let arg x =
-    match List.find_opt (fun (y, _) -> y = x) ins with
-    | Some (_, pat) -> pat
-    | None -> x
-  in
-  case "EQN symid pattern* '=' pattern 'requires' pattern? attr*"
-    [
-      text_as "symid" f;
-      list typ_pattern (List.map (fun x -> value_of_pattern info (arg x)) xs);
-      value_of_pattern info rhs;
-      opt_pattern info (one_requires reqs);
-      value_of_attrs attrs;
-    ]
-    "equation"
-
-(* Axioms that the LLVM backend does not execute *)
-let logical_attrs =
-  [
-    "constructor";
-    "functional";
-    "total";
-    "assoc";
-    "comm";
-    "unit";
-    "idem";
-    "non-executable";
-    "simplification";
-    "ceil";
-  ]
-
-type loaded = {
-  info : info;
-  definition : Value.t;
-  rules : int;
-  equations : int;
-}
+type loaded = { info : info; definition : Value.t; axioms : int }
 
 (* Aliases (alias f(X1, ..., Xn) := body) are abbreviations: each use
    f(p1, ..., pn) in an axiom is replaced by body with Xi := pi, as the LLVM
@@ -394,94 +347,43 @@ let expand_aliases (defn : definition) : definition =
 let load_definition (defn : definition) : loaded =
   let defn = expand_aliases defn in
   let info = info_of_definition defn in
-  let rules = ref []
-  and equations = ref []
-  and subsorts = ref []
-  and overloads = ref [] in
-  let is_hooked f =
-    match Hashtbl.find_opt info.symbols f with
-    | Some { hook = Some _; _ } -> true
-    | _ -> false
+  (* every axiom, in file order *)
+  let axioms =
+    List.concat_map
+      (fun (m : module_) ->
+        List.filter_map
+          (function
+            | Axiom { pattern; attrs; _ } ->
+                Some
+                  (case "AXIOM kore kattr*"
+                     [ value_of_kore info pattern; value_of_kattrs attrs ]
+                     "kaxiom")
+            | _ -> None)
+          m.sentences)
+      defn.modules
   in
+  let symbol_attrs = Hashtbl.create 512 in
   List.iter
     (fun (m : module_) ->
       List.iter
         (function
-          | Axiom { pattern; attrs; _ } -> (
-              match find_attr "subsort" attrs with
-              | Some (App (_, [ s1; s2 ], _)) ->
-                  subsorts := (s1, s2) :: !subsorts
-              | Some _ -> error "malformed subsort attribute"
-              | None when List.exists (fun a -> has_attr a attrs) logical_attrs
-                ->
-                  ()
-              | None when has_attr "symbol-overload" attrs -> (
-                  (match find_attr "symbol-overload" attrs with
-                  | Some (App (_, _, [ App (f, _, _); App (g, _, _) ])) ->
-                      overloads := (f, g) :: !overloads
-                  | _ -> error "malformed symbol-overload attribute");
-                  (* the axiom itself is an equation of the anywhere symbol f *)
-                  match pattern with
-                  | App ("\\equals", _, [ App (f, _, xs); rhs ]) ->
-                      equations :=
-                        ( f,
-                          value_of_equation info
-                            (App ("\\top", [], []))
-                            f xs rhs attrs )
-                        :: !equations
-                  | _ ->
-                      error "unsupported overload axiom %s"
-                        (string_of_pattern pattern))
-              | None -> (
-                  match pattern with
-                  | App ("\\rewrites", _, [ lhs; rhs ]) ->
-                      rules := value_of_rule info lhs rhs attrs :: !rules
-                  | App
-                      ( "\\implies",
-                        _,
-                        [ cond; App ("\\equals", _, [ App (f, _, xs); rhs ]) ]
-                      ) ->
-                      if not (is_hooked f) then
-                        equations :=
-                          (f, value_of_equation info cond f xs rhs attrs)
-                          :: !equations
-                  | App ("\\equals", _, [ App (f, _, xs); rhs ])
-                    when Hashtbl.mem info.symbols f ->
-                      if not (is_hooked f) then
-                        equations :=
-                          ( f,
-                            value_of_equation info
-                              (App ("\\top", [], []))
-                              f xs rhs attrs )
-                          :: !equations
-                  | _ ->
-                      error "unsupported axiom %s" (string_of_pattern pattern)))
+          | SymbolDecl { name; attrs; _ } ->
+              Hashtbl.replace symbol_attrs name attrs
           | _ -> ())
         m.sentences)
     defn.modules;
   let symdecls =
     Hashtbl.fold (fun name sym acc -> (name, sym) :: acc) info.symbols []
     |> List.sort compare
-    |> List.map
-         (fun
-           (name, { args; result; hook; is_function; is_binder; is_anywhere; _ })
-         ->
-           let kind =
-             match hook with
-             | Some h -> case "HOOKED hookid" [ text_as "hookid" h ] "symkind"
-             | None when is_function -> case "FUNCTION" [] "symkind"
-             | None when is_anywhere -> case "ANYWHERE" [] "symkind"
-             | None when is_binder -> case "BINDER" [] "symkind"
-             | None -> case "CONSTRUCTOR" [] "symkind"
-           in
+    |> List.map (fun (name, { args; result; _ }) ->
            ( text_as "symid" name,
-             case "sort* '->' sort symkind"
+             case "KSYMBOL sort* '->' sort kattr*"
                [
                  list typ_sort (List.map value_of_sort args);
                  value_of_sort result;
-                 kind;
+                 value_of_kattrs (Hashtbl.find symbol_attrs name);
                ]
-               "symdecl" ))
+               "ksymdecl" ))
   in
   (* map<K, V> is set<pair<K, V>> (spec-meta/common/0-stdlib.watsup) *)
   let map_value (typ_k : Typ.t) (typ_v : Typ.t)
@@ -500,30 +402,7 @@ let load_definition (defn : definition) : loaded =
       <|! [ list typ_pair pairs ]
       <<|! Typ.Make.var ("map" $ no_region) targs)
   in
-  let symbols = map_value (typ "symid") (typ "symdecl") symdecls in
-  (* equations grouped by the symbol they define, in file order *)
-  let equations_by_symbol =
-    let typ_eqn = typ "equation" in
-    let groups = Hashtbl.create 256 and order = ref [] in
-    List.iter
-      (fun (f, e) ->
-        match Hashtbl.find_opt groups f with
-        | Some es -> Hashtbl.replace groups f (e :: es)
-        | None ->
-            order := f :: !order;
-            Hashtbl.replace groups f [ e ])
-      (List.rev !equations);
-    List.rev !order
-    |> List.map (fun f ->
-           (text_as "symid" f, list typ_eqn (List.rev (Hashtbl.find groups f))))
-    |> map_value (typ "symid") (Typ.Make.list typ_eqn)
-  in
-  let subsorts =
-    List.rev_map
-      (fun (s1, s2) ->
-        case "sort '<' sort" [ value_of_sort s1; value_of_sort s2 ] "subsort")
-      !subsorts
-  in
+  let symbols = map_value (typ "symid") (typ "ksymdecl") symdecls in
   let params =
     Hashtbl.fold
       (fun name sym acc ->
@@ -549,29 +428,14 @@ let load_definition (defn : definition) : loaded =
   in
   let field name v = (Atom.Keyword name $ no_region, v) in
   let definition =
-    Value.Make.str (typ "definition")
+    Value.Make.str (typ "kdefinition")
       [
-        field "SYMBOLS" symbols;
-        field "SUBSORTS" (list (typ "subsort") subsorts);
-        field "OVERLOADS"
-          (list (typ "overload")
-             (List.rev_map
-                (fun (f, g) ->
-                  case "symid '>' symid"
-                    [ text_as "symid" f; text_as "symid" g ]
-                    "overload")
-                !overloads));
-        field "RULES" (list (typ "krule") (List.rev !rules));
-        field "EQUATIONS" equations_by_symbol;
-        field "PARAMS" params;
-        field "NATSORTS" natsorts;
+        field "KSYMBOLS" symbols;
+        field "AXIOMS" (list (typ "kaxiom") axioms);
+        field "KPARAMS" params;
+        field "KNATSORTS" natsorts;
       ]
   in
-  {
-    info;
-    definition;
-    rules = List.length !rules;
-    equations = List.length !equations;
-  }
+  { info; definition; axioms = List.length axioms }
 
 let load_pattern (info : info) (p : pattern) : Value.t = value_of_pattern info p

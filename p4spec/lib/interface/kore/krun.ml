@@ -41,8 +41,7 @@ let run ((module Runner : Run.RUNNER) : (module Run.RUNNER)) (spec : Run.spec)
           ( loaded,
             Load.load_pattern loaded.info (Parse.pattern_of_file path_init) ))
     in
-    Format.printf "loaded %d rules, %d equations (%.2fs)\n" loaded.rules
-      loaded.equations t_load;
+    Format.printf "read %d axioms (%.2fs)\n" loaded.axioms t_load;
     let value_depth =
       Value.Make.opt
         (Runtime.Type.Typ.Make.opt Runtime.Type.Typ.Make.nat)

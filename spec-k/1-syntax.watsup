@@ -1,5 +1,5 @@
 ;;
-;; K in P4-SpecTec: the executable fragment of KORE
+;; K in P4-SpecTec: KORE, and the fragment of it that is executed
 ;;
 
 ;; Names, kept verbatim from KORE
@@ -96,3 +96,26 @@ syntax definition =
     EQUATIONS map<symid, equation*>,  ;; by the symbol defined, in file order
     PARAMS map<symid, sortid*>,       ;; sort parameters, e.g. of MInt{Width}
     NATSORTS map<sortid, nat> }       ;; sorts standing for a number, e.g. Sort8
+
+;; KORE as kompile writes it, every axiom with its attributes; loading picks
+;; the definition above from it (6-load)
+
+syntax kore =
+  | KVAR varid sort
+  | KSETVAR varid sort      ;; a set variable, in properties only
+  | KAPP symid sort* kore*  ;; symbol application
+  | KML text sort* kore*    ;; a connective, e.g. "rewrites" for \rewrites
+  | KVAL pattern            ;; a domain value: DV, INT, BOOL, STRING, ...
+  | KSTR text               ;; a string, as in attributes
+
+syntax kattr = KATTR text sort* kore*  ;; e.g. owise{}(), priority{}("50")
+
+syntax kaxiom = AXIOM kore kattr*
+
+syntax ksymdecl = KSYMBOL sort* '->' sort kattr*
+
+syntax kdefinition =
+  { KSYMBOLS map<symid, ksymdecl>,
+    AXIOMS kaxiom*,                 ;; in file order
+    KPARAMS map<symid, sortid*>,
+    KNATSORTS map<sortid, nat> }
