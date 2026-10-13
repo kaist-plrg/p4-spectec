@@ -164,6 +164,15 @@ kompile = [
   "--gen-glr-bison-parser",
   "-O3",
 ]
+skip = [
+  # the spec does not end them within the timeout of 7,200 seconds: it runs 70
+  # to 100 steps a second on KWasm, and they take (krun steps) 517,177,
+  # 6,966,501, 6,817,093, and 12,585,667 steps
+  "conformance-call.wast",
+  "conformance-memory_copy.wast",
+  "conformance-memory_fill.wast",
+  "conformance-memory_grow.wast",
+]
 quick = [
   "conformance-local_set.wast",
   "conformance-table.wast",
@@ -429,6 +438,11 @@ skip = [
   # a function recursing 2^19 deep in one step: the LLVM backend makes it a
   # tail call, the spec nests it (about 12 KB a level)
   "iterated-map-pointer-residual",
+  # the spec does not end them within the timeout of 7,200 seconds: 266,050 to
+  # 1,632,181 krun steps (imp-with-rangemaps-4, 408,117 steps, took 3,304
+  # seconds), and 2,000,006 steps (test-gc-stringbuffer)
+  "imp-with-rangemaps",
+  "test-gc-stringbuffer",
 ]
 quick = [
   "lambda/closed-variable-capture.in",
