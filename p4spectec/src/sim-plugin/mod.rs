@@ -15,7 +15,9 @@ use std::{
 
 use crate::lang::data::{arena::Arena, encoding::Encoding};
 
-use crate::runner::{self, BuiltinInterface, Runner};
+use crate::interface::p4::P4Interface;
+
+use crate::runner::{self, Runner};
 
 use self::{arch::Architecture, ebpf::Ebpf, io::Tx, psa::Psa, v1model::V1Model};
 
@@ -50,7 +52,7 @@ trait SimulatorRunner {
     ) -> Result<(), SimError>;
 }
 
-impl<Arch> SimulatorRunner for Runner<BuiltinInterface, Arch>
+impl<Arch> SimulatorRunner for Runner<P4Interface, Arch>
 where
     Arch: Architecture + 'static,
 {
@@ -75,7 +77,7 @@ pub struct Simulator {
 
 impl Simulator {
     /// Boxes a runner.
-    fn new<Arch>(arena: Arena, runner: Runner<BuiltinInterface, Arch>) -> Self
+    fn new<Arch>(arena: Arena, runner: Runner<P4Interface, Arch>) -> Self
     where
         Arch: Architecture + 'static,
     {

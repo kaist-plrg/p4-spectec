@@ -20,6 +20,9 @@ pub struct P4Error {
 /// Why reading a P4 program failed.
 #[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum P4ErrorKind {
+    /// The input does not contain exactly one P4 translation unit.
+    #[error("exactly one P4 file must be provided, got {0}")]
+    InputCountInvalid(usize),
     /// The lexer or parser rejected the source.
     #[error(transparent)]
     Syntax(#[from] P4SyntaxError),
@@ -93,6 +96,7 @@ pub enum P4UnparseError {
     Alteration(#[from] AlterationError),
 }
 
+const INPUT_COUNT_INVALID: &str = "p4/input-count-invalid";
 const VALUE_INVALID: &str = "p4/value-invalid";
 const PREPROCESSOR_FAILED: &str = "p4/preprocessor-failed";
 const TEXT_LITERAL_INCOMPLETE: &str = "p4/text-literal-incomplete";
@@ -114,6 +118,7 @@ impl P4Error {
         let Self { span, kind } = self;
         // Select the stable check code while retaining the local failure message
         let code = match &kind {
+            P4ErrorKind::InputCountInvalid(_) => INPUT_COUNT_INVALID,
             P4ErrorKind::Construction(_) => VALUE_INVALID,
             P4ErrorKind::Preprocess { .. } => PREPROCESSOR_FAILED,
             P4ErrorKind::Syntax(P4SyntaxError::Lex(LexErrorKind::PositionOutOfRange)) => {
