@@ -25,6 +25,7 @@ pub mod specdoc;
 
 pub mod interface;
 pub mod interp;
+pub mod metacirc;
 pub mod runner;
 #[path = "sim-plugin/mod.rs"]
 pub mod sim_plugin;
