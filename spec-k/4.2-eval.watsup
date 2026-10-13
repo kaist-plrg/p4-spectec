@@ -21,7 +21,7 @@ relation Equation_applies:
   hint(prose_out %3)
 
 relation First_holding:
-  definition |- subst* pattern? : applies<subst>
+  definition |- way* pattern? : applies<subst>
   hint(input %0 %1 %2)
   hint(prose_in "the first of" %1 "under which" %2 "holds")
   hint(prose_out %3)
@@ -194,27 +194,31 @@ rule Equation/next:
 
 rule Equation_applies:
   D |- (EQN symid pattern_a* '=' pattern_r 'requires' pattern_c? attr*) term* : matched
-  -- Match_list: D $empty_map<varid, term> |- pattern_a* ~~ term* : subst*
-  -- First_holding: D |- subst* pattern_c? : matched
+  -- Match_list: D (OK $empty_map<varid, term>) |- pattern_a* ~~ term* : way*
+  -- First_holding: D |- way* pattern_c? : matched
 
 ;;; Among the ways a left-hand side matches, in order, the first one under
-;;; which the requires clause holds, unless one before cannot evaluate it
+;;; which the requires clause holds, unless one before is stuck or cannot
+;;; evaluate it
 
 rule First_holding/none:
   D |- eps pattern_c? : SKIPS
 
+rule First_holding/stuck:
+  D |- (FAIL :: way_t*) pattern_c? : UNDEFINED
+
 rule First_holding/first:
-  D |- (subst_h :: subst_t*) pattern_c? : APPLIES subst_h
+  D |- (OK subst_h :: way_t*) pattern_c? : APPLIES subst_h
   -- Holds: D subst_h |- pattern_c? : OK true
 
 rule First_holding/undefined:
-  D |- (subst_h :: subst_t*) pattern_c? : UNDEFINED
+  D |- (OK subst_h :: way_t*) pattern_c? : UNDEFINED
   -- Holds: D subst_h |- pattern_c? : FAIL
 
 rule First_holding/next:
-  D |- (subst_h :: subst_t*) pattern_c? : matched
+  D |- (OK subst_h :: way_t*) pattern_c? : matched
   -- Holds: D subst_h |- pattern_c? : OK false
-  -- First_holding: D |- subst_t* pattern_c? : matched
+  -- First_holding: D |- way_t* pattern_c? : matched
 
 ;;; A requires clause holds when there is none, or it evaluates to true; it
 ;;; fails when it cannot be evaluated (a function in it is stuck)

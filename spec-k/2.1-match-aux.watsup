@@ -9,6 +9,22 @@ var S : set<term>
 
 syntax subst = map<varid, term>
 
+;; Whether the variables of a pattern are bound
+
+dec $bound(subst, pattern) : bool
+  hint(prose_in "the variables of" %1 "are bound in" %0)
+def $bound(subst, VAR varid sort) = true
+  -- if term = $find_map<varid, term>(subst, varid)
+def $bound(subst, VAR varid sort) = false
+  -- if eps = $find_map<varid, term>(subst, varid)
+def $bound(subst, APP symid sort* pattern*) = $forall_($bound(subst, pattern)*)
+def $bound(subst, AND sort pattern_1 pattern_2)
+  = $bound(subst, pattern_1) /\ $bound(subst, pattern_2)
+def $bound(subst, OR sort pattern_1 pattern_2)
+  = $bound(subst, pattern_1) /\ $bound(subst, pattern_2)
+def $bound(subst, pattern) = true
+  -- otherwise
+
 ;; Definition lookups
 
 dec $find_symdecl(definition, symid) : symdecl?

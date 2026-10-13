@@ -1,13 +1,15 @@
 // Programs on which krun ends with an error: a hook given an invalid argument,
-// a function with no equation for its arguments (also in a requires clause,
-// where the rules after it are not tried), or the initial term. The K
-// spec must fail at the same step. Arguments come from the program, so that
-// kompile does not fold them.
+// a function with no equation for its arguments (also in a requires clause or
+// a left-hand side, where the rules after it are not tried), or the initial
+// term. The K spec must fail at the same step. Arguments come from the
+// program, so that kompile does not fold them. The *ok programs end without
+// an error.
 module ERRORS
   imports INT
   imports STRING
   imports LIST
   imports MAP
+  imports SET
   imports BYTES
   imports FLOAT
   imports RANGEMAP
@@ -25,6 +27,7 @@ module ERRORS
                | rangelookup(Int) | rangeempty(Int) | rangeconcat(Int) | rangefind(Int) | rangechoice(RangeMap)
                | float2int(Float) | int2float(Int)
                | noequation(Int) | norequires(Int) | norequireseq(Int)
+               | mapkey(Int) | setelement(Int) | listindex(Int)
 
   // the error comes after one step
   rule <k> later(I) => step(I) </k>
@@ -81,4 +84,17 @@ module ERRORS
   rule h(I) => 1 requires g(I) ==Int 1
   rule h(_) => 2 [owise]
   rule <k> norequireseq(I) => h(I) </k>
+
+  // a function on the left, in a map key, a set element, or a list index,
+  // whose variables are bound: matching evaluates it
+  syntax KItem ::= inMap(Int, Map) | inSet(Int, Set) | inList(Int, List)
+  rule <k> mapkey(I) => inMap(I, 1 |-> 3) </k>
+  rule <k> inMap(I, g(I) |-> V _:Map) => V </k>
+  rule <k> inMap(_, _) => 0 </k> [owise]
+  rule <k> setelement(I) => inSet(I, SetItem(1)) </k>
+  rule <k> inSet(I, SetItem(g(I)) _:Set) => 1 </k>
+  rule <k> inSet(_, _) => 0 </k> [owise]
+  rule <k> listindex(I) => inList(I, ListItem(5) ListItem(6)) </k>
+  rule <k> inList(I, _ [ g(I) <- V ]) => V </k>
+  rule <k> inList(_, _) => 0 </k> [owise]
 endmodule

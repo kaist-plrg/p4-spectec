@@ -8,7 +8,8 @@
 
 ;; Keys of map patterns and elements of set patterns are evaluated when their
 ;; variables are bound (e.g. #ContextLookup(IDS, I) |-> ADDR in KWasm);
-;; otherwise the entries are tried in turn. The rules of Eval are in 4.2-eval.
+;; otherwise the entries are tried in turn. A function stuck there makes the
+;; match stuck, which ends the run. The rules of Eval are in 4.2-eval.
 
 relation Eval:
   definition subst |- pattern : res<term>
@@ -18,188 +19,226 @@ relation Eval:
 
 var result : res<term>
 
-;; Matching: the ways a pattern matches a term, extending a substitution, in
-;; the order the LLVM backend tries them
+;; Matching: the ways a pattern matches a term, extending a substitution. A
+;; way is a substitution, or FAIL where a function in the pattern is stuck.
+;; Elements of maps and sets are tried in the order of their values; the LLVM
+;; backend uses the order of its hash tries.
+
+syntax way = res<subst>
 
 relation Match:
-  definition subst |- pattern ~~ term : subst*
+  definition way |- pattern ~~ term : way*
   hint(input %0 %1 %2 %3)
   hint(prose_in "the ways" %2 "matches" %3 "extending" %1)
   hint(prose_out %4)
 
 relation Match_list:
-  definition subst |- pattern* ~~ term* : subst*
+  definition way |- pattern* ~~ term* : way*
   hint(input %0 %1 %2 %3)
   hint(prose_in "the ways" %2 "match" %3 "extending" %1)
   hint(prose_out %4)
 
 relation Match_rest:
-  definition subst |- pattern* ~~ term : subst*
+  definition way |- pattern* ~~ term : way*
   hint(input %0 %1 %2 %3)
   hint(prose_in "the ways the other parts" %2 "match what is left," %3)
   hint(prose_out %4)
 
 relation Match_map:
-  definition subst |- pattern* pattern* ~~ sort map<term, term> : subst*
+  definition way |- pattern* pattern* ~~ sort map<term, term> : way*
   hint(input %0 %1 %2 %3 %4 %5)
   hint(prose_in "the ways the entries" %2 "and the other parts" %3 "match the map" %5)
   hint(prose_out %6)
 
 relation Choose_map:
-  definition subst |- pattern pattern pattern* pattern* ~~ sort map<term, term> (term, term)* : subst*
+  definition way |- pattern pattern pattern* pattern* ~~ sort map<term, term> (term, term)* : way*
   hint(input %0 %1 %2 %3 %4 %5 %6 %7 %8)
   hint(prose_in "the ways the entry" %2 "|->" %3 "matches one of" %8)
   hint(prose_out %9)
 
 relation Match_set:
-  definition subst |- pattern* pattern* ~~ sort set<term> : subst*
+  definition way |- pattern* pattern* ~~ sort set<term> : way*
   hint(input %0 %1 %2 %3 %4 %5)
   hint(prose_in "the ways the elements" %2 "and the other parts" %3 "match the set" %5)
   hint(prose_out %6)
 
 relation Choose_set:
-  definition subst |- pattern pattern* pattern* ~~ sort set<term> term* : subst*
+  definition way |- pattern pattern* pattern* ~~ sort set<term> term* : way*
   hint(input %0 %1 %2 %3 %4 %5 %6 %7)
   hint(prose_in "the ways the element" %2 "matches one of" %7)
   hint(prose_out %8)
 
 relation Match_seq:
-  definition subst |- pattern* ~~ sort term* : subst*
+  definition way |- pattern* ~~ sort term* : way*
   hint(input %0 %1 %2 %3 %4)
   hint(prose_in "the ways" %2 "match the list" %4)
   hint(prose_out %5)
 
+;;; Matching after a stuck way stays stuck
+
+rule Match/stuck:
+  D FAIL |- pattern ~~ term : [ FAIL ]
+
+rule Match_list/stuck:
+  D FAIL |- pattern* ~~ term* : [ FAIL ]
+
+rule Match_rest/stuck:
+  D FAIL |- pattern* ~~ term : [ FAIL ]
+
+rule Match_map/stuck-before:
+  D FAIL |- pattern_e* pattern_o* ~~ sort M : [ FAIL ]
+
+rule Choose_map/stuck-before:
+  D FAIL |- pattern_k pattern_v pattern_e* pattern_o* ~~ sort M (term_k, term_v)* : [ FAIL ]
+
+rule Match_set/stuck-before:
+  D FAIL |- pattern_e* pattern_o* ~~ sort S : [ FAIL ]
+
+rule Choose_set/stuck-before:
+  D FAIL |- pattern pattern_e* pattern_o* ~~ sort S term* : [ FAIL ]
+
+rule Match_seq/stuck:
+  D FAIL |- pattern* ~~ sort term* : [ FAIL ]
+
 ;;; Variables bind the term, or must agree with an earlier binding
 
 rule Match/bind:
-  D subst |- VAR varid sort ~~ term : [ $add_map<varid, term>(subst, varid, term) ]
+  D (OK subst) |- VAR varid sort ~~ term : [ OK $add_map<varid, term>(subst, varid, term) ]
   -- if eps = $find_map<varid, term>(subst, varid)
 
 rule Match/bound:
-  D subst |- VAR varid sort ~~ term : [ subst ]
+  D (OK subst) |- VAR varid sort ~~ term : [ OK subst ]
   -- if term' = $find_map<varid, term>(subst, varid)
   -- if $term_eq(term', term)
 
 ;;; As-patterns: the term matches both sides
 
 rule Match/and:
-  D subst |- AND sort pattern_1 pattern_2 ~~ term : $concat_<subst>(subst_2**)
-  -- Match: D subst |- pattern_1 ~~ term : subst_1*
-  -- (Match: D subst_1 |- pattern_2 ~~ term : subst_2*)*
+  D (OK subst) |- AND sort pattern_1 pattern_2 ~~ term : $concat_<way>(way_2**)
+  -- Match: D (OK subst) |- pattern_1 ~~ term : way_1*
+  -- (Match: D way_1 |- pattern_2 ~~ term : way_2*)*
 
 ;;; Or-patterns: the ways the left side matches, then those of the right side,
 ;;; as the LLVM backend expands them into one row each (expandOr in
 ;;; matching/pattern/Pattern.scala)
 
 rule Match/or:
-  D subst |- OR sort pattern_1 pattern_2 ~~ term : subst_1* ++ subst_2*
-  -- Match: D subst |- pattern_1 ~~ term : subst_1*
-  -- Match: D subst |- pattern_2 ~~ term : subst_2*
+  D (OK subst) |- OR sort pattern_1 pattern_2 ~~ term : way_1* ++ way_2*
+  -- Match: D (OK subst) |- pattern_1 ~~ term : way_1*
+  -- Match: D (OK subst) |- pattern_2 ~~ term : way_2*
 
 ;;; Domain values
 
 rule Match/token:
-  D subst |- DV sort t ~~ DV sort' t' : [ subst ]
+  D (OK subst) |- DV sort t ~~ DV sort' t' : [ OK subst ]
   -- if sort = sort' /\ t = t'
 
 rule Match/integer:
-  D subst |- INT i ~~ INT i' : [ subst ]
+  D (OK subst) |- INT i ~~ INT i' : [ OK subst ]
   -- if i = i'
 
 rule Match/boolean:
-  D subst |- BOOL b ~~ BOOL b' : [ subst ]
+  D (OK subst) |- BOOL b ~~ BOOL b' : [ OK subst ]
   -- if b = b'
 
 rule Match/string:
-  D subst |- STRING t ~~ STRING t' : [ subst ]
+  D (OK subst) |- STRING t ~~ STRING t' : [ OK subst ]
   -- if t = t'
 
 rule Match/float:
-  D subst |- FLOAT t ~~ FLOAT t' : [ subst ]
+  D (OK subst) |- FLOAT t ~~ FLOAT t' : [ OK subst ]
   -- if t = t'
 
 rule Match/bytes:
-  D subst |- BYTES n* ~~ BYTES n'* : [ subst ]
+  D (OK subst) |- BYTES n* ~~ BYTES n'* : [ OK subst ]
   -- if n* = n'*
 
 rule Match/mint:
-  D subst |- MINT n_w n_v ~~ MINT n_w' n_v' : [ subst ]
+  D (OK subst) |- MINT n_w n_v ~~ MINT n_w' n_v' : [ OK subst ]
   -- if n_w = n_w' /\ n_v = n_v'
 
 ;;; Injections into the same sort from a smaller sort:
 ;;; inj{A,C}(p) matches inj{B,C}(t) with B < A by matching p against inj{B,A}(t)
 
 rule Match/injection:
-  D subst |- APP "inj" ([sort_a, sort_c]) ([pattern]) ~~ APP "inj" ([sort_b, sort_c']) ([term]) : subst'*
+  D (OK subst) |- APP "inj" ([sort_a, sort_c]) ([pattern]) ~~ APP "inj" ([sort_b, sort_c']) ([term]) : way*
   -- if sort_c = sort_c' /\ sort_a =/= sort_b
   -- if $is_subsort(D, sort_b, sort_a)
-  -- Match: D subst |- pattern ~~ APP "inj" ([sort_b, sort_a]) ([term]) : subst'*
+  -- Match: D (OK subst) |- pattern ~~ APP "inj" ([sort_b, sort_a]) ([term]) : way*
 
 ;;; Symbol applications with the same symbol and sort arguments
 
 rule Match/application:
-  D subst |- APP symid sort_p* pattern* ~~ APP symid' sort_t* term* : subst'*
+  D (OK subst) |- APP symid sort_p* pattern* ~~ APP symid' sort_t* term* : way*
   -- if symid = symid' /\ sort_p* = sort_t*
-  -- Match_list: D subst |- pattern* ~~ term* : subst'*
+  -- Match_list: D (OK subst) |- pattern* ~~ term* : way*
 
 ;;; Overloads: f(p1, ..., pn) matches inj{B,S}(g(t1, ..., tn)) when g is a
 ;;; more specific overload of f, injecting each ti as needed (isValidOverload)
 
 rule Match/overload:
-  D subst |- APP symid_f sort_p* pattern* ~~ APP "inj" ([sort_b, sort_s]) ([APP symid_g sort_t* term*]) : subst'*
+  D (OK subst) |- APP symid_f sort_p* pattern* ~~ APP "inj" ([sort_b, sort_s]) ([APP symid_g sort_t* term*]) : way*
   -- if (symid_f '>' symid_g) <- D.OVERLOADS
   -- if (sort_f* '->' sort_rf kind_f) = $find_symdecl(D, symid_f)
   -- if (sort_g* '->' sort_rg kind_g) = $find_symdecl(D, symid_g)
   -- if sort_rf = sort_s /\ sort_rg = sort_b
-  -- Match_list: D subst |- pattern* ~~ $coerce_all(sort_g*, sort_f*, term*) : subst'*
+  -- Match_list: D (OK subst) |- pattern* ~~ $coerce_all(sort_g*, sort_f*, term*) : way*
 
 ;;; Collection patterns against collection values
 
 rule Match/map:
-  D subst |- pattern ~~ MAP sort M : subst'*
+  D (OK subst) |- pattern ~~ MAP sort M : way*
   -- if "MAP" = $collection_of(D, pattern)
   -- if pattern_p* = $parts(D, "MAP", pattern)
-  -- Match_map: D subst |- $elements(D, "MAP", pattern_p*) $others(D, "MAP", pattern_p*) ~~ sort M : subst'*
+  -- Match_map: D (OK subst) |- $elements(D, "MAP", pattern_p*) $others(D, "MAP", pattern_p*) ~~ sort M : way*
 
 rule Match/set:
-  D subst |- pattern ~~ SET sort S : subst'*
+  D (OK subst) |- pattern ~~ SET sort S : way*
   -- if "SET" = $collection_of(D, pattern)
   -- if pattern_p* = $parts(D, "SET", pattern)
-  -- Match_set: D subst |- $elements(D, "SET", pattern_p*) $others(D, "SET", pattern_p*) ~~ sort S : subst'*
+  -- Match_set: D (OK subst) |- $elements(D, "SET", pattern_p*) $others(D, "SET", pattern_p*) ~~ sort S : way*
 
 rule Match/list:
-  D subst |- pattern ~~ LIST sort term* : subst'*
+  D (OK subst) |- pattern ~~ LIST sort term* : way*
   -- if "LIST" = $collection_of(D, pattern)
-  -- Match_seq: D subst |- $parts(D, "LIST", pattern) ~~ sort term* : subst'*
+  -- Match_seq: D (OK subst) |- $parts(D, "LIST", pattern) ~~ sort term* : way*
 
-;;; L[I <- V] on the left is a lookup: the element at index I, which must
-;;; evaluate, matches V, and L matches the whole list (ListGetP in the LLVM
-;;; backend's matching/Generator.scala; hook_LIST_get_null finds the element)
+;;; L[I <- V] on the left is a lookup: the element at index I matches V, and
+;;; L matches the whole list (ListGetP in the LLVM backend's
+;;; matching/Generator.scala; hook_LIST_get_null finds the element). The
+;;; match is stuck if I cannot be evaluated.
 
 rule Match/list-update:
-  D subst |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : $concat_<subst>(subst_f**)
+  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : $concat_<way>(way_f**)
   -- if $hook_of(D, symid) = "LIST.update"
+  -- if $bound(subst, pattern_k)
   -- Eval: D subst |- pattern_k : OK (INT i)
   -- if term_e = $list_at(term*, i)
-  -- Match: D subst |- pattern_v ~~ term_e : subst_v*
-  -- (Match: D subst_v |- pattern_f ~~ LIST sort term* : subst_f*)*
+  -- Match: D (OK subst) |- pattern_v ~~ term_e : way_v*
+  -- (Match: D way_v |- pattern_f ~~ LIST sort term* : way_f*)*
+
+rule Match/list-update-stuck:
+  D (OK subst) |- APP symid sort_p* ([pattern_f, pattern_k, pattern_v]) ~~ LIST sort term* : [ FAIL ]
+  -- if $hook_of(D, symid) = "LIST.update"
+  -- if $bound(subst, pattern_k)
+  -- Eval: D subst |- pattern_k : FAIL
 
 ;;; Anything else fails
 
 rule Match/fail:
-  D subst |- pattern ~~ term : eps
+  D (OK subst) |- pattern ~~ term : eps
   -- otherwise
 
 ;;; Arguments, left to right
 
 rule Match_list/nil:
-  D subst |- eps ~~ eps : [ subst ]
+  D (OK subst) |- eps ~~ eps : [ OK subst ]
 
 rule Match_list/cons:
-  D subst |- (pattern_h :: pattern_t*) ~~ (term_h :: term_t*) : $concat_<subst>(subst_t**)
-  -- Match: D subst |- pattern_h ~~ term_h : subst_h*
-  -- (Match_list: D subst_h |- pattern_t* ~~ term_t* : subst_t*)*
+  D (OK subst) |- (pattern_h :: pattern_t*) ~~ (term_h :: term_t*) : $concat_<way>(way_t**)
+  -- Match: D (OK subst) |- pattern_h ~~ term_h : way_h*
+  -- (Match_list: D way_h |- pattern_t* ~~ term_t* : way_t*)*
 
 rule Match_list/fail:
-  D subst |- pattern* ~~ term* : eps
+  D (OK subst) |- pattern* ~~ term* : eps
   -- otherwise
