@@ -80,12 +80,12 @@ where
     }
 
     /// Borrows the arena and extern state together for a nested runner call.
-    pub fn arena_external_mut(&mut self) -> (&mut Arena, &mut Ext) {
+    pub fn arena_and_external_mut(&mut self) -> (&mut Arena, &mut Ext) {
         (self.arena, self.external)
     }
 
     /// Borrows the arena and interface state for builtin dispatch.
-    pub fn arena_interface_mut(&mut self) -> (&mut Arena, &mut Iface) {
+    pub fn arena_and_interface_mut(&mut self) -> (&mut Arena, &mut Iface) {
         (self.arena, self.interface)
     }
 

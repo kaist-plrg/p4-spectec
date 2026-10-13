@@ -100,7 +100,7 @@ impl Interface for BuiltinInterface {
         Ext: Extern,
         Interp: Interpreter<Self, Ext>,
     {
-        let (arena, interface) = ctx.arena_interface_mut();
+        let (arena, interface) = ctx.arena_and_interface_mut();
         interface
             .builtins
             .invoke(arena, id, targs, values)
