@@ -65,8 +65,23 @@ pub fn case<'a>(arena: &'a Arena, value: &Value) -> Result<&'a ValueCase, ValueE
     }
 }
 
-/// Matches a case value against mixop texts, binding its arguments per arm.
+/// Matches a case value against mixop texts or a shared shape constant.
 macro_rules! matches {
+    ($arena:expr, $value:expr, $shape:path) => {{
+        let value = $value;
+        let arena = &*($arena);
+        match arena.value.kind(value.node) {
+            $crate::lang::data::value::flat::ValueKind::Case(value_case) => {
+                use $crate::lang::traits::eq::SyntaxEq as _;
+
+                let mixop = value_case.mixop().into_tree(&arena.mixop);
+                let mixop_expect =
+                    $crate::lang::data::notation::tree::parse::mixop($shape);
+                mixop.syntax_eq(mixop_expect.as_ref())
+            }
+            _ => false,
+        }
+    }};
     (
         @arms $arena:ident, $value_case:ident;
         $shape:literal $(| $shape_alt:literal)* => |$values:ident| $body:expr,

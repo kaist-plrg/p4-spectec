@@ -1,29 +1,7 @@
 //! Constructor notation shared by AL encoders and decoders
 //!
-//! These shapes follow `spec-meta/1-syntax.watsup`. Shape comparison uses
-//! notation trees so quoted operators and silent tags remain distinct.
-
-use super::Error;
-
-use crate::lang::{
-    data::{
-        arena::Arena,
-        notation::{flat::Mixop as FlatMixop, tree::parse},
-        value::ValueError,
-    },
-    traits::eq::SyntaxEq,
-};
-
-/// Compares constructor canonical identities in the caller's arena.
-pub(super) fn is(arena: &mut Arena, mixop: FlatMixop, shape: &str) -> Result<bool, Error> {
-    let mixop_expect = arena
-        .mixop
-        .intern(parse::mixop(shape).as_ref())
-        .map_err(ValueError::from)?;
-    Ok(mixop
-        .view(&arena.mixop)
-        .syntax_eq(&mixop_expect.view(&arena.mixop)))
-}
+//! These shapes follow `spec-meta/1-syntax.watsup` and are shared by the
+//! encoders and decoders.
 
 // == Iterations and variables
 

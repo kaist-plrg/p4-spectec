@@ -22,6 +22,7 @@ pub mod decode;
 pub mod encode;
 mod error;
 mod mixops;
+mod stub;
 
 pub use error::{Error, ErrorKind};
 

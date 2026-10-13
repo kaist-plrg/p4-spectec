@@ -4,11 +4,8 @@
 //! Syntax is reconstructed canonically for editing and re-encoding
 //! Runtime payload decoding allocates only in that same arena
 
-use super::{Error, mixops as m};
-use crate::lang::{
-    common::prim::num::Number,
-    hints::input::{self, InputHint},
-};
+use super::{Error, mixops as m, stub};
+use crate::lang::common::prim::num::Number;
 use crate::{
     frontend::parse::parse_mixop,
     lang::{
@@ -22,7 +19,7 @@ use crate::{
         data::{
             arena::Arena,
             notation::{
-                flat::{Mixfix as FlatMixfix, Mixop as FlatMixop},
+                flat::Mixop as FlatMixop,
                 tree::{Mixfix as TreeMixfix, Mixop},
             },
             typ::make as make_typ,
@@ -48,50 +45,14 @@ pub trait Decode: Sized {
 // == Helpers
 
 /// Copies a case's children before recursive decoding or allocation.
-fn case(arena: &Arena, value_meta: Value) -> Result<(FlatMixop, Vec<Value>, Span), Error> {
+fn case(arena: &Arena, value_meta: Value) -> Result<(Vec<Value>, Span), Error> {
     let value_case = get::case(arena, &value_meta)?;
-    Ok((*value_case.mixop(), value_case.args().to_vec(), *arena.value.span(value_meta.span)))
+    Ok((value_case.args().to_vec(), *arena.value.span(value_meta.span)))
 }
 
-/// Rebuilds relation notation with contiguous input positions.
-fn relation_notation<T>(
-    args_input: Vec<T>,
-    args_output: Vec<T>,
-    span: Span,
-) -> Result<(TreeMixfix<T>, InputHint), Error> {
-    // Input positions are canonical, independently of the original notation
-    let input_hint = InputHint::new(
-        (0..args_input.len())
-            .map(|idx| phrase!(node: idx, span: span))
-            .collect(),
-    );
-    // Separate canonical input and output positions with the relation arrow
-    let mixop_input = Mixop::Seq(vec![Mixop::Arg; args_input.len()]);
-    let mixop_output = Mixop::Seq(vec![Mixop::Arg; args_output.len()]);
-    let atom_arrow = phrase!(node: Atom::Operator("->".into()), span: span);
-    let mixop_notation =
-        Rc::new(Mixop::Infix(Box::new(mixop_input), atom_arrow, Box::new(mixop_output)));
-    // Validate the operational hint, including the zero-arity case
-    let args_notation = input::combine(&input_hint, args_input, args_output)?;
-    Ok((TreeMixfix::new(mixop_notation, args_notation)?, input_hint))
-}
+// == Decoding
 
-/// Identifies the meta constructor used for a typed mixfix value.
-trait MixfixElement: Decode {
-    const MIXOP: &'static str;
-}
-
-impl MixfixElement for il::Typ {
-    const MIXOP: &'static str = m::TYPCASE;
-}
-
-impl MixfixElement for Value {
-    const MIXOP: &'static str = m::VALCASE;
-}
-
-impl MixfixElement for il::Exp {
-    const MIXOP: &'static str = m::EXPCASE;
-}
+// - Containers
 
 /// Decodes a checked meta list element by element.
 impl<T: Decode> Decode for Vec<T> {
@@ -112,8 +73,6 @@ impl<T: Decode> Decode for Option<T> {
             .transpose()
     }
 }
-
-// == Decoding
 
 // - Identifiers
 
@@ -205,15 +164,15 @@ impl Decode for FlatMixop {
 
 // - Mixfixes
 
-/// Decodes tree notation with one argument per position.
-impl<T: MixfixElement> Decode for TreeMixfix<T> {
+/// Decodes a type notation case.
+impl Decode for TreeMixfix<il::Typ> {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_mixop, values_arg] if m::is(arena, mixop_meta, T::MIXOP)? => {
+            [value_mixop, values_arg] if get::matches!(arena, &value_meta, m::TYPCASE) => {
                 Ok(TreeMixfix::new(
                     Rc::<Mixop>::decode(arena, *value_mixop)?,
-                    Vec::<T>::decode(arena, *values_arg)?,
+                    Vec::<il::Typ>::decode(arena, *values_arg)?,
                 )?)
             }
             _ => Err(Error::unexpected(arena, value_meta, "mixop elem*")),
@@ -221,15 +180,32 @@ impl<T: MixfixElement> Decode for TreeMixfix<T> {
     }
 }
 
-/// Decodes flat notation with one argument per position.
-impl<T: MixfixElement> Decode for FlatMixfix<T> {
+/// Decodes a runtime value notation case.
+impl Decode for TreeMixfix<Value> {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_mixop, values_arg] if m::is(arena, mixop_meta, T::MIXOP)? => {
-                let mixop_target = FlatMixop::decode(arena, *value_mixop)?;
-                let args_target = Vec::<T>::decode(arena, *values_arg)?;
-                Ok(FlatMixfix::new(&arena.mixop, mixop_target, args_target)?)
+            [value_mixop, values_arg] if get::matches!(arena, &value_meta, m::VALCASE) => {
+                Ok(TreeMixfix::new(
+                    Rc::<Mixop>::decode(arena, *value_mixop)?,
+                    Vec::<Value>::decode(arena, *values_arg)?,
+                )?)
+            }
+            _ => Err(Error::unexpected(arena, value_meta, "mixop elem*")),
+        }
+    }
+}
+
+/// Decodes an expression notation case.
+impl Decode for TreeMixfix<il::Exp> {
+    fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
+        let (values_meta, _) = case(arena, value_meta)?;
+        match values_meta.as_slice() {
+            [value_mixop, values_arg] if get::matches!(arena, &value_meta, m::EXPCASE) => {
+                Ok(TreeMixfix::new(
+                    Rc::<Mixop>::decode(arena, *value_mixop)?,
+                    Vec::<il::Exp>::decode(arena, *values_arg)?,
+                )?)
             }
             _ => Err(Error::unexpected(arena, value_meta, "mixop elem*")),
         }
@@ -241,10 +217,10 @@ impl<T: MixfixElement> Decode for FlatMixfix<T> {
 /// Decodes an iterator with its nullary constructor checked.
 impl Decode for Iter {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [] if m::is(arena, mixop_meta, m::QUEST)? => Ok(Iter::Opt),
-            [] if m::is(arena, mixop_meta, m::STAR)? => Ok(Iter::List),
+            [] if get::matches!(arena, &value_meta, m::QUEST) => Ok(Iter::Opt),
+            [] if get::matches!(arena, &value_meta, m::STAR) => Ok(Iter::List),
             _ => Err(Error::unexpected(arena, value_meta, "QUEST or STAR")),
         }
     }
@@ -255,9 +231,9 @@ impl Decode for Iter {
 /// Decodes a variable's underlying type and dimensions.
 impl Decode for il::Var {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_id, value_typ, value_iters] if m::is(arena, mixop_meta, m::VARI)? => {
+            [value_id, value_typ, value_iters] if get::matches!(arena, &value_meta, m::VARI) => {
                 Ok(il::Var {
                     id: Id::decode(arena, *value_id)?,
                     typ: il::Typ::decode(arena, *value_typ)?,
@@ -274,24 +250,30 @@ impl Decode for il::Var {
 /// Decodes a source type, checking every constructor's shape.
 impl Decode for il::Typ {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let typ_kind_al = match values_meta.as_slice() {
-            [] if m::is(arena, mixop_meta, m::BOOL_TYP)? => il::TypKind::Bool,
-            [] if m::is(arena, mixop_meta, m::NAT_TYP)? => il::TypKind::Num(num::Typ::Nat),
-            [] if m::is(arena, mixop_meta, m::INT_TYP)? => il::TypKind::Num(num::Typ::Int),
-            [] if m::is(arena, mixop_meta, m::TEXT_TYP)? => il::TypKind::Text,
-            [value_id, value_typs] if m::is(arena, mixop_meta, m::VAR_TYP)? => il::TypKind::Var(
-                Id::decode(arena, *value_id)?,
-                Vec::<il::Typ>::decode(arena, *value_typs)?,
-            ),
-            [value_typs] if m::is(arena, mixop_meta, m::TUP_TYP)? => {
+            [] if get::matches!(arena, &value_meta, m::BOOL_TYP) => il::TypKind::Bool,
+            [] if get::matches!(arena, &value_meta, m::NAT_TYP) => il::TypKind::Num(num::Typ::Nat),
+            [] if get::matches!(arena, &value_meta, m::INT_TYP) => il::TypKind::Num(num::Typ::Int),
+            [] if get::matches!(arena, &value_meta, m::TEXT_TYP) => il::TypKind::Text,
+            [value_id, value_typs] if get::matches!(arena, &value_meta, m::VAR_TYP) => {
+                il::TypKind::Var(
+                    Id::decode(arena, *value_id)?,
+                    Vec::<il::Typ>::decode(arena, *value_typs)?,
+                )
+            }
+            [value_typs] if get::matches!(arena, &value_meta, m::TUP_TYP) => {
                 il::TypKind::Tuple(Vec::<il::Typ>::decode(arena, *value_typs)?)
             }
-            [value_typ, value_iter] if m::is(arena, mixop_meta, m::ITER_TYP)? => il::TypKind::Iter(
-                Box::new(il::Typ::decode(arena, *value_typ)?),
-                Iter::decode(arena, *value_iter)?,
-            ),
-            [value_ids, value_typs, value_ret] if m::is(arena, mixop_meta, m::FUNC_TYP)? => {
+            [value_typ, value_iter] if get::matches!(arena, &value_meta, m::ITER_TYP) => {
+                il::TypKind::Iter(
+                    Box::new(il::Typ::decode(arena, *value_typ)?),
+                    Iter::decode(arena, *value_iter)?,
+                )
+            }
+            [value_ids, value_typs, value_ret]
+                if get::matches!(arena, &value_meta, m::FUNC_TYP) =>
+            {
                 il::TypKind::Func(il::FuncTyp {
                     tparams: Vec::<Id>::decode(arena, *value_ids)?,
                     typs_params: Vec::<il::Typ>::decode(arena, *value_typs)?,
@@ -315,15 +297,15 @@ impl Decode for il::Typ {
 /// Decodes an alias, struct, or variant without general hints.
 impl Decode for il::DefTyp {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let deftyp_kind_al = match values_meta.as_slice() {
-            [value_typ] if m::is(arena, mixop_meta, m::ALIAS)? => {
+            [value_typ] if get::matches!(arena, &value_meta, m::ALIAS) => {
                 il::DefTypKind::Plain(il::Typ::decode(arena, *value_typ)?)
             }
-            [value_fields] if m::is(arena, mixop_meta, m::STRUCT)? => {
+            [value_fields] if get::matches!(arena, &value_meta, m::STRUCT) => {
                 il::DefTypKind::Struct(Vec::<il::TypField>::decode(arena, *value_fields)?)
             }
-            [value_cases] if m::is(arena, mixop_meta, m::VARIANT)? => {
+            [value_cases] if get::matches!(arena, &value_meta, m::VARIANT) => {
                 il::DefTypKind::Variant(Vec::<il::TypCase>::decode(arena, *value_cases)?)
             }
             _ => return Err(Error::unexpected(arena, value_meta, "ALIAS, STRUCT, or VARIANT")),
@@ -335,12 +317,14 @@ impl Decode for il::DefTyp {
 /// Decodes one struct type field.
 impl Decode for il::TypField {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_atom, value_typ] if m::is(arena, mixop_meta, m::TYPFIELD)? => Ok(il::TypField {
-                atom: il::Atom::decode(arena, *value_atom)?,
-                typ: il::Typ::decode(arena, *value_typ)?,
-            }),
+            [value_atom, value_typ] if get::matches!(arena, &value_meta, m::TYPFIELD) => {
+                Ok(il::TypField {
+                    atom: il::Atom::decode(arena, *value_atom)?,
+                    typ: il::Typ::decode(arena, *value_typ)?,
+                })
+            }
             _ => Err(Error::unexpected(arena, value_meta, "atom typ")),
         }
     }
@@ -351,14 +335,10 @@ impl Decode for il::TypCase {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
         let span = *arena.value.span(value_meta.span);
         let mixfix_typ_al = TreeMixfix::<il::Typ>::decode(arena, value_meta)?;
-        // Supply the canonical origin omitted from the meta representation
-        let id_origin_al = phrase!(node: "".into(), span: span);
-        let typ_origin_al =
-            phrase!(node: il::TypOriginKind { id: id_origin_al, targs: vec![] }, span: span);
         Ok(il::TypCase {
             not_typ: phrase!(node: mixfix_typ_al, span: span),
-            typ_origin: typ_origin_al,
-            hints: vec![],
+            typ_origin: stub::typ_origin(),
+            hints: stub::hints(),
         })
     }
 }
@@ -368,102 +348,60 @@ impl Decode for il::TypCase {
 /// Decodes a runtime payload, allocating only in the supplied arena.
 impl Decode for Value {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let value_target = match values_meta.as_slice() {
-            [value_bool] if m::is(arena, mixop_meta, m::BOOL)? => {
+            [value_bool] if get::matches!(arena, &value_meta, m::BOOL) => {
                 let value_bool = get::bool(arena, value_bool)?;
                 make::bool(arena, value_bool, span)?
             }
-            [value_num] if m::is(arena, mixop_meta, m::NAT)? => {
+            [value_num] if get::matches!(arena, &value_meta, m::NAT) => {
                 let Number::Nat(nat) = get::num(arena, value_num)? else {
                     return Err(Error::unexpected(arena, *value_num, "a natural-number payload"));
                 };
                 let nat_target = nat.clone();
                 make::nat(arena, nat_target, span)?
             }
-            [value_num] if m::is(arena, mixop_meta, m::INT)? => {
+            [value_num] if get::matches!(arena, &value_meta, m::INT) => {
                 let num_target = get::num(arena, value_num)?.clone();
                 make::int(arena, num::to_int(&num_target).clone(), span)?
             }
-            [value_text] if m::is(arena, mixop_meta, m::TEXT)? => {
+            [value_text] if get::matches!(arena, &value_meta, m::TEXT) => {
                 let text_target = get::text(arena, value_text)?.to_owned();
                 make::text(arena, text_target, span)?
             }
-            [value_fields] if m::is(arena, mixop_meta, m::STR)? => {
+            [value_fields] if get::matches!(arena, &value_meta, m::STR) => {
                 let fields_target = Vec::<ValueField>::decode(arena, *value_fields)?;
-                make::structure(
-                    arena,
-                    make_typ::var(phrase!(node: "val".into(), span: Span::default()), vec![])
-                        .node
-                        .into(),
-                    fields_target,
-                    span,
-                )?
+                make::structure(arena, stub::value_typ().node.into(), fields_target, span)?
             }
-            [value_case] if m::is(arena, mixop_meta, m::INJ)? => {
+            [value_case] if get::matches!(arena, &value_meta, m::INJ) => {
                 let mixfix_target = TreeMixfix::<Value>::decode(arena, *value_case)?;
-                make::case(
-                    arena,
-                    make_typ::var(phrase!(node: "val".into(), span: Span::default()), vec![])
-                        .node
-                        .into(),
-                    mixfix_target,
-                    span,
-                )?
+                make::case(arena, stub::value_typ().node.into(), mixfix_target, span)?
             }
-            [value_values] if m::is(arena, mixop_meta, m::TUP)? => {
+            [value_values] if get::matches!(arena, &value_meta, m::TUP) => {
                 let values_target = Vec::<Value>::decode(arena, *value_values)?;
-                make::tuple(
-                    arena,
-                    make_typ::var(phrase!(node: "val".into(), span: Span::default()), vec![])
-                        .node
-                        .into(),
-                    values_target,
-                    span,
-                )?
+                make::tuple(arena, stub::value_typ().node.into(), values_target, span)?
             }
-            [value_opt] if m::is(arena, mixop_meta, m::OPT)? => {
+            [value_opt] if get::matches!(arena, &value_meta, m::OPT) => {
                 let value_target = Option::<Value>::decode(arena, *value_opt)?;
-                make::opt(
-                    arena,
-                    make_typ::iter(
-                        make_typ::var(phrase!(node: "val".into(), span: Span::default()), vec![]),
-                        Iter::Opt,
-                    )
-                    .node
-                    .into(),
-                    value_target,
-                    span,
-                )?
+                make::opt(arena, make_typ::opt(stub::value_typ()).node.into(), value_target, span)?
             }
-            [value_values] if m::is(arena, mixop_meta, m::LIST)? => {
+            [value_values] if get::matches!(arena, &value_meta, m::LIST) => {
                 let values_target = Vec::<Value>::decode(arena, *value_values)?;
                 make::list(
                     arena,
-                    make_typ::iter(
-                        make_typ::var(phrase!(node: "val".into(), span: Span::default()), vec![]),
-                        Iter::List,
-                    )
-                    .node
-                    .into(),
+                    make_typ::list(stub::value_typ()).node.into(),
                     values_target,
                     span,
                 )?
             }
-            [value_id] if m::is(arena, mixop_meta, m::FUNC)? => {
+            [value_id] if get::matches!(arena, &value_meta, m::FUNC) => {
                 let id_target = Id::decode(arena, *value_id)?;
-                make::func(arena, id_target, vec![], vec![], make_typ::bool(), span)?
+                let (tparams_target, typs_target, typ_target) = stub::func_typ_params();
+                make::func(arena, id_target, tparams_target, typs_target, typ_target, span)?
             }
-            [value_json] if m::is(arena, mixop_meta, m::EXT)? => {
+            [value_json] if get::matches!(arena, &value_meta, m::EXT) => {
                 let json_target = get::external(arena, value_json)?.clone();
-                make::external(
-                    arena,
-                    make_typ::var(phrase!(node: "json".into(), span: Span::default()), vec![])
-                        .node
-                        .into(),
-                    json_target,
-                    span,
-                )?
+                make::external(arena, stub::json_typ().node.into(), json_target, span)?
             }
             _ => {
                 return Err(Error::unexpected(
@@ -480,12 +418,14 @@ impl Decode for Value {
 /// Decodes one runtime struct field.
 impl Decode for ValueField {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_atom, value_inner] if m::is(arena, mixop_meta, m::VALFIELD)? => Ok(ValueField {
-                atom: il::Atom::decode(arena, *value_atom)?,
-                value: Value::decode(arena, *value_inner)?,
-            }),
+            [value_atom, value_inner] if get::matches!(arena, &value_meta, m::VALFIELD) => {
+                Ok(ValueField {
+                    atom: il::Atom::decode(arena, *value_atom)?,
+                    value: Value::decode(arena, *value_inner)?,
+                })
+            }
             _ => Err(Error::unexpected(arena, value_meta, "atom val")),
         }
     }
@@ -496,31 +436,31 @@ impl Decode for ValueField {
 /// Reconstructs an expression suitable for editing and re-encoding.
 impl Decode for il::Exp {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let exp_kind_al = match values_meta.as_slice() {
-            [value_bool] if m::is(arena, mixop_meta, m::BOOL)? => {
+            [value_bool] if get::matches!(arena, &value_meta, m::BOOL) => {
                 il::ExpKind::Bool(get::bool(arena, value_bool)?)
             }
-            [value_num] if m::is(arena, mixop_meta, m::NAT)? => {
+            [value_num] if get::matches!(arena, &value_meta, m::NAT) => {
                 let Number::Nat(nat) = get::num(arena, value_num)? else {
                     return Err(Error::unexpected(arena, *value_num, "a natural-number payload"));
                 };
                 il::ExpKind::Num(Number::Nat(nat.clone()))
             }
-            [value_num] if m::is(arena, mixop_meta, m::INT)? => {
+            [value_num] if get::matches!(arena, &value_meta, m::INT) => {
                 il::ExpKind::Num(Number::Int(num::to_int(get::num(arena, value_num)?).clone()))
             }
-            [value_text] if m::is(arena, mixop_meta, m::TEXT)? => {
+            [value_text] if get::matches!(arena, &value_meta, m::TEXT) => {
                 il::ExpKind::Text(get::text(arena, value_text)?.into())
             }
-            [value_id] if m::is(arena, mixop_meta, m::VAR_EXP)? => {
+            [value_id] if get::matches!(arena, &value_meta, m::VAR_EXP) => {
                 il::ExpKind::Id(Id::decode(arena, *value_id)?)
             }
-            [value_op, value_exp] if m::is(arena, mixop_meta, m::UN)? => {
+            [value_op, value_exp] if get::matches!(arena, &value_meta, m::UN) => {
                 let (op_al, typ_op_al) = <(il::UnOp, il::OpTyp)>::decode(arena, *value_op)?;
                 il::ExpKind::Un(op_al, typ_op_al, Box::new(il::Exp::decode(arena, *value_exp)?))
             }
-            [value_op, value_l, value_r] if m::is(arena, mixop_meta, m::BIN)? => {
+            [value_op, value_l, value_r] if get::matches!(arena, &value_meta, m::BIN) => {
                 let (op_al, typ_op_al) = <(il::BinOp, il::OpTyp)>::decode(arena, *value_op)?;
                 il::ExpKind::Bin(
                     op_al,
@@ -529,7 +469,7 @@ impl Decode for il::Exp {
                     Box::new(il::Exp::decode(arena, *value_r)?),
                 )
             }
-            [value_op, value_l, value_r] if m::is(arena, mixop_meta, m::CMP)? => {
+            [value_op, value_l, value_r] if get::matches!(arena, &value_meta, m::CMP) => {
                 let (op_al, typ_op_al) = <(il::CmpOp, il::OpTyp)>::decode(arena, *value_op)?;
                 il::ExpKind::Cmp(
                     op_al,
@@ -538,94 +478,106 @@ impl Decode for il::Exp {
                     Box::new(il::Exp::decode(arena, *value_r)?),
                 )
             }
-            [value_typ, value_exp] if m::is(arena, mixop_meta, m::UPCAST)? => il::ExpKind::UpCast(
-                Box::new(il::Typ::decode(arena, *value_typ)?),
-                Box::new(il::Exp::decode(arena, *value_exp)?),
-            ),
-            [value_typ, value_exp] if m::is(arena, mixop_meta, m::DOWNCAST)? => {
+            [value_typ, value_exp] if get::matches!(arena, &value_meta, m::UPCAST) => {
+                il::ExpKind::UpCast(
+                    Box::new(il::Typ::decode(arena, *value_typ)?),
+                    Box::new(il::Exp::decode(arena, *value_exp)?),
+                )
+            }
+            [value_typ, value_exp] if get::matches!(arena, &value_meta, m::DOWNCAST) => {
                 il::ExpKind::DownCast(
                     Box::new(il::Typ::decode(arena, *value_typ)?),
                     Box::new(il::Exp::decode(arena, *value_exp)?),
                 )
             }
-            [value_exp, value_typ] if m::is(arena, mixop_meta, m::SUB_EXP)? => {
+            [value_exp, value_typ] if get::matches!(arena, &value_meta, m::SUB_EXP) => {
                 let typ_al = il::Typ::decode(arena, *value_typ)?;
-                let subcheck_al = il::Subcheck::Recurse(typ_al.clone());
+                let subcheck_al = stub::subcheck(typ_al.clone());
                 il::ExpKind::Sub(
                     Box::new(il::Exp::decode(arena, *value_exp)?),
                     Box::new(typ_al),
                     Box::new(subcheck_al),
                 )
             }
-            [value_exp, value_pattern] if m::is(arena, mixop_meta, m::MATCH)? => {
+            [value_exp, value_pattern] if get::matches!(arena, &value_meta, m::MATCH) => {
                 il::ExpKind::Match(
                     Box::new(il::Exp::decode(arena, *value_exp)?),
                     il::Pattern::decode(arena, *value_pattern)?,
                 )
             }
-            [value_exps] if m::is(arena, mixop_meta, m::TUP)? => {
+            [value_exps] if get::matches!(arena, &value_meta, m::TUP) => {
                 il::ExpKind::Tuple(Vec::<il::Exp>::decode(arena, *value_exps)?)
             }
-            [value_case] if m::is(arena, mixop_meta, m::INJ)? => {
+            [value_case] if get::matches!(arena, &value_meta, m::INJ) => {
                 il::ExpKind::Case(Box::new(TreeMixfix::<il::Exp>::decode(arena, *value_case)?))
             }
-            [value_fields] if m::is(arena, mixop_meta, m::STR)? => {
+            [value_fields] if get::matches!(arena, &value_meta, m::STR) => {
                 il::ExpKind::Str(Vec::<il::ExpField>::decode(arena, *value_fields)?)
             }
-            [value_opt] if m::is(arena, mixop_meta, m::OPT)? => {
+            [value_opt] if get::matches!(arena, &value_meta, m::OPT) => {
                 il::ExpKind::Opt(Option::<il::Exp>::decode(arena, *value_opt)?.map(Box::new))
             }
-            [value_exps] if m::is(arena, mixop_meta, m::LIST)? => {
+            [value_exps] if get::matches!(arena, &value_meta, m::LIST) => {
                 il::ExpKind::List(Vec::<il::Exp>::decode(arena, *value_exps)?)
             }
-            [value_head, value_tail] if m::is(arena, mixop_meta, m::CONS)? => il::ExpKind::Cons(
-                Box::new(il::Exp::decode(arena, *value_head)?),
-                Box::new(il::Exp::decode(arena, *value_tail)?),
-            ),
-            [value_l, value_r] if m::is(arena, mixop_meta, m::CAT)? => il::ExpKind::Cat(
+            [value_head, value_tail] if get::matches!(arena, &value_meta, m::CONS) => {
+                il::ExpKind::Cons(
+                    Box::new(il::Exp::decode(arena, *value_head)?),
+                    Box::new(il::Exp::decode(arena, *value_tail)?),
+                )
+            }
+            [value_l, value_r] if get::matches!(arena, &value_meta, m::CAT) => il::ExpKind::Cat(
                 Box::new(il::Exp::decode(arena, *value_l)?),
                 Box::new(il::Exp::decode(arena, *value_r)?),
             ),
-            [value_elem, value_list] if m::is(arena, mixop_meta, m::MEM)? => il::ExpKind::Mem(
-                Box::new(il::Exp::decode(arena, *value_elem)?),
-                Box::new(il::Exp::decode(arena, *value_list)?),
-            ),
-            [value_exp] if m::is(arena, mixop_meta, m::LEN)? => {
+            [value_elem, value_list] if get::matches!(arena, &value_meta, m::MEM) => {
+                il::ExpKind::Mem(
+                    Box::new(il::Exp::decode(arena, *value_elem)?),
+                    Box::new(il::Exp::decode(arena, *value_list)?),
+                )
+            }
+            [value_exp] if get::matches!(arena, &value_meta, m::LEN) => {
                 il::ExpKind::Len(Box::new(il::Exp::decode(arena, *value_exp)?))
             }
-            [value_base, value_atom] if m::is(arena, mixop_meta, m::DOT)? => il::ExpKind::Dot(
-                Box::new(il::Exp::decode(arena, *value_base)?),
-                il::Atom::decode(arena, *value_atom)?,
-            ),
-            [value_base, value_idx] if m::is(arena, mixop_meta, m::IDX)? => il::ExpKind::Idx(
-                Box::new(il::Exp::decode(arena, *value_base)?),
-                Box::new(il::Exp::decode(arena, *value_idx)?),
-            ),
-            [value_base, value_idx, value_len] if m::is(arena, mixop_meta, m::SLICE)? => {
+            [value_base, value_atom] if get::matches!(arena, &value_meta, m::DOT) => {
+                il::ExpKind::Dot(
+                    Box::new(il::Exp::decode(arena, *value_base)?),
+                    il::Atom::decode(arena, *value_atom)?,
+                )
+            }
+            [value_base, value_idx] if get::matches!(arena, &value_meta, m::IDX) => {
+                il::ExpKind::Idx(
+                    Box::new(il::Exp::decode(arena, *value_base)?),
+                    Box::new(il::Exp::decode(arena, *value_idx)?),
+                )
+            }
+            [value_base, value_idx, value_len] if get::matches!(arena, &value_meta, m::SLICE) => {
                 il::ExpKind::Slice(
                     Box::new(il::Exp::decode(arena, *value_base)?),
                     Box::new(il::Exp::decode(arena, *value_idx)?),
                     Box::new(il::Exp::decode(arena, *value_len)?),
                 )
             }
-            [value_base, value_path, value_upd] if m::is(arena, mixop_meta, m::UPD)? => {
+            [value_base, value_path, value_upd] if get::matches!(arena, &value_meta, m::UPD) => {
                 il::ExpKind::Upd(
                     Box::new(il::Exp::decode(arena, *value_base)?),
                     Box::new(il::Path::decode(arena, *value_path)?),
                     Box::new(il::Exp::decode(arena, *value_upd)?),
                 )
             }
-            [value_id, value_typs, value_args] if m::is(arena, mixop_meta, m::CALL)? => {
+            [value_id, value_typs, value_args] if get::matches!(arena, &value_meta, m::CALL) => {
                 il::ExpKind::Call(
                     Id::decode(arena, *value_id)?,
                     Vec::<il::Typ>::decode(arena, *value_typs)?,
                     Vec::<il::Arg>::decode(arena, *value_args)?,
                 )
             }
-            [value_exp, value_iter] if m::is(arena, mixop_meta, m::ITER_EXP)? => il::ExpKind::Iter(
-                Box::new(il::Exp::decode(arena, *value_exp)?),
-                il::ExpIter::decode(arena, *value_iter)?,
-            ),
+            [value_exp, value_iter] if get::matches!(arena, &value_meta, m::ITER_EXP) => {
+                il::ExpKind::Iter(
+                    Box::new(il::Exp::decode(arena, *value_exp)?),
+                    il::ExpIter::decode(arena, *value_iter)?,
+                )
+            }
             _ => {
                 return Err(Error::unexpected(
                     arena,
@@ -634,19 +586,21 @@ impl Decode for il::Exp {
                 ));
             }
         };
-        Ok(note_phrase!(node: exp_kind_al, note: il::TypKind::Bool, span: span))
+        Ok(note_phrase!(node: exp_kind_al, note: stub::exp_note(), span: span))
     }
 }
 
 /// Decodes one source struct-expression field.
 impl Decode for il::ExpField {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_atom, value_exp] if m::is(arena, mixop_meta, m::EXPFIELD)? => Ok(il::ExpField {
-                atom: il::Atom::decode(arena, *value_atom)?,
-                exp: il::Exp::decode(arena, *value_exp)?,
-            }),
+            [value_atom, value_exp] if get::matches!(arena, &value_meta, m::EXPFIELD) => {
+                Ok(il::ExpField {
+                    atom: il::Atom::decode(arena, *value_atom)?,
+                    exp: il::Exp::decode(arena, *value_exp)?,
+                })
+            }
             _ => Err(Error::unexpected(arena, value_meta, "atom exp")),
         }
     }
@@ -655,12 +609,14 @@ impl Decode for il::ExpField {
 /// Decodes an expression iterator and its variables.
 impl Decode for il::ExpIter {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_iter, value_vars] if m::is(arena, mixop_meta, m::ITEREXP)? => Ok(il::ExpIter {
-                iter: Iter::decode(arena, *value_iter)?,
-                vars: Vec::<il::Var>::decode(arena, *value_vars)?,
-            }),
+            [value_iter, value_vars] if get::matches!(arena, &value_meta, m::ITEREXP) => {
+                Ok(il::ExpIter {
+                    iter: Iter::decode(arena, *value_iter)?,
+                    vars: Vec::<il::Var>::decode(arena, *value_vars)?,
+                })
+            }
             _ => Err(Error::unexpected(arena, value_meta, "iter vari*")),
         }
     }
@@ -669,12 +625,12 @@ impl Decode for il::ExpIter {
 /// Decodes a value or function argument.
 impl Decode for il::Arg {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let arg_kind_al = match values_meta.as_slice() {
-            [value_exp] if m::is(arena, mixop_meta, m::EXP_ARG)? => {
+            [value_exp] if get::matches!(arena, &value_meta, m::EXP_ARG) => {
                 il::ArgKind::Exp(Box::new(il::Exp::decode(arena, *value_exp)?))
             }
-            [value_id] if m::is(arena, mixop_meta, m::FUN_ARG)? => {
+            [value_id] if get::matches!(arena, &value_meta, m::FUN_ARG) => {
                 il::ArgKind::Def(Id::decode(arena, *value_id)?)
             }
             _ => return Err(Error::unexpected(arena, value_meta, "EXP exp or FUN id")),
@@ -688,15 +644,15 @@ impl Decode for il::Arg {
 /// Decodes a case, list, or option shape pattern.
 impl Decode for il::Pattern {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         Ok(match values_meta.as_slice() {
-            [value_mixop] if m::is(arena, mixop_meta, m::CASE_PATTERN)? => {
+            [value_mixop] if get::matches!(arena, &value_meta, m::CASE_PATTERN) => {
                 il::Pattern::Case(Rc::<Mixop>::decode(arena, *value_mixop)?)
             }
-            [] if m::is(arena, mixop_meta, m::CONS_PATTERN)? => {
+            [] if get::matches!(arena, &value_meta, m::CONS_PATTERN) => {
                 il::Pattern::List(il::ListPattern::Cons)
             }
-            [value_nat] if m::is(arena, mixop_meta, m::FIXED)? => {
+            [value_nat] if get::matches!(arena, &value_meta, m::FIXED) => {
                 let Number::Nat(nat) = get::num(arena, value_nat)? else {
                     return Err(Error::unexpected(arena, *value_nat, "a natural list length"));
                 };
@@ -705,9 +661,15 @@ impl Decode for il::Pattern {
                 })?;
                 il::Pattern::List(il::ListPattern::Fixed(num_len))
             }
-            [] if m::is(arena, mixop_meta, m::NIL)? => il::Pattern::List(il::ListPattern::Nil),
-            [] if m::is(arena, mixop_meta, m::SOME)? => il::Pattern::Opt(il::OptPattern::Some),
-            [] if m::is(arena, mixop_meta, m::NONE)? => il::Pattern::Opt(il::OptPattern::None),
+            [] if get::matches!(arena, &value_meta, m::NIL) => {
+                il::Pattern::List(il::ListPattern::Nil)
+            }
+            [] if get::matches!(arena, &value_meta, m::SOME) => {
+                il::Pattern::Opt(il::OptPattern::Some)
+            }
+            [] if get::matches!(arena, &value_meta, m::NONE) => {
+                il::Pattern::Opt(il::OptPattern::None)
+            }
             _ => return Err(Error::unexpected(arena, value_meta, "an AL shape pattern")),
         })
     }
@@ -718,27 +680,31 @@ impl Decode for il::Pattern {
 /// Decodes a source update path.
 impl Decode for il::Path {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let path_kind_al = match values_meta.as_slice() {
-            [] if m::is(arena, mixop_meta, m::ROOT)? => il::PathKind::Root,
-            [value_path, value_idx] if m::is(arena, mixop_meta, m::IDX)? => il::PathKind::Idx(
-                Box::new(il::Path::decode(arena, *value_path)?),
-                Box::new(il::Exp::decode(arena, *value_idx)?),
-            ),
-            [value_path, value_idx, value_len] if m::is(arena, mixop_meta, m::SLICE)? => {
+            [] if get::matches!(arena, &value_meta, m::ROOT) => il::PathKind::Root,
+            [value_path, value_idx] if get::matches!(arena, &value_meta, m::IDX) => {
+                il::PathKind::Idx(
+                    Box::new(il::Path::decode(arena, *value_path)?),
+                    Box::new(il::Exp::decode(arena, *value_idx)?),
+                )
+            }
+            [value_path, value_idx, value_len] if get::matches!(arena, &value_meta, m::SLICE) => {
                 il::PathKind::Slice(
                     Box::new(il::Path::decode(arena, *value_path)?),
                     Box::new(il::Exp::decode(arena, *value_idx)?),
                     Box::new(il::Exp::decode(arena, *value_len)?),
                 )
             }
-            [value_path, value_atom] if m::is(arena, mixop_meta, m::DOT)? => il::PathKind::Dot(
-                Box::new(il::Path::decode(arena, *value_path)?),
-                il::Atom::decode(arena, *value_atom)?,
-            ),
+            [value_path, value_atom] if get::matches!(arena, &value_meta, m::DOT) => {
+                il::PathKind::Dot(
+                    Box::new(il::Path::decode(arena, *value_path)?),
+                    il::Atom::decode(arena, *value_atom)?,
+                )
+            }
             _ => return Err(Error::unexpected(arena, value_meta, "an AL update path")),
         };
-        Ok(note_phrase!(node: path_kind_al, note: il::TypKind::Bool, span: span))
+        Ok(note_phrase!(node: path_kind_al, note: stub::exp_note(), span: span))
     }
 }
 
@@ -747,15 +713,15 @@ impl Decode for il::Path {
 /// Decodes a unary operator.
 impl Decode for (il::UnOp, il::OpTyp) {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [] if m::is(arena, mixop_meta, m::NOT)? => {
+            [] if get::matches!(arena, &value_meta, m::NOT) => {
                 Ok((il::UnOp::Bool(boolean::UnOp::Not), il::OpTyp::Bool))
             }
-            [] if m::is(arena, mixop_meta, m::PLUS)? => {
+            [] if get::matches!(arena, &value_meta, m::PLUS) => {
                 Ok((il::UnOp::Num(num::UnOp::Plus), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::MINUS)? => {
+            [] if get::matches!(arena, &value_meta, m::MINUS) => {
                 Ok((il::UnOp::Num(num::UnOp::Minus), il::OpTyp::Nat))
             }
             _ => Err(Error::unexpected(arena, value_meta, "a nullary unop constructor")),
@@ -766,36 +732,36 @@ impl Decode for (il::UnOp, il::OpTyp) {
 /// Decodes a binary operator.
 impl Decode for (il::BinOp, il::OpTyp) {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [] if m::is(arena, mixop_meta, m::AND)? => {
+            [] if get::matches!(arena, &value_meta, m::AND) => {
                 Ok((il::BinOp::Bool(boolean::BinOp::And), il::OpTyp::Bool))
             }
-            [] if m::is(arena, mixop_meta, m::OR)? => {
+            [] if get::matches!(arena, &value_meta, m::OR) => {
                 Ok((il::BinOp::Bool(boolean::BinOp::Or), il::OpTyp::Bool))
             }
-            [] if m::is(arena, mixop_meta, m::IMPL)? => {
+            [] if get::matches!(arena, &value_meta, m::IMPL) => {
                 Ok((il::BinOp::Bool(boolean::BinOp::Impl), il::OpTyp::Bool))
             }
-            [] if m::is(arena, mixop_meta, m::EQUIV)? => {
+            [] if get::matches!(arena, &value_meta, m::EQUIV) => {
                 Ok((il::BinOp::Bool(boolean::BinOp::Equiv), il::OpTyp::Bool))
             }
-            [] if m::is(arena, mixop_meta, m::ADD)? => {
+            [] if get::matches!(arena, &value_meta, m::ADD) => {
                 Ok((il::BinOp::Num(num::BinOp::Add), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::SUB)? => {
+            [] if get::matches!(arena, &value_meta, m::SUB) => {
                 Ok((il::BinOp::Num(num::BinOp::Sub), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::MUL)? => {
+            [] if get::matches!(arena, &value_meta, m::MUL) => {
                 Ok((il::BinOp::Num(num::BinOp::Mul), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::DIV)? => {
+            [] if get::matches!(arena, &value_meta, m::DIV) => {
                 Ok((il::BinOp::Num(num::BinOp::Div), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::MOD)? => {
+            [] if get::matches!(arena, &value_meta, m::MOD) => {
                 Ok((il::BinOp::Num(num::BinOp::Mod), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::POW)? => {
+            [] if get::matches!(arena, &value_meta, m::POW) => {
                 Ok((il::BinOp::Num(num::BinOp::Pow), il::OpTyp::Nat))
             }
             _ => Err(Error::unexpected(arena, value_meta, "a nullary binop constructor")),
@@ -806,24 +772,24 @@ impl Decode for (il::BinOp, il::OpTyp) {
 /// Decodes a comparison operator.
 impl Decode for (il::CmpOp, il::OpTyp) {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [] if m::is(arena, mixop_meta, m::EQ)? => {
+            [] if get::matches!(arena, &value_meta, m::EQ) => {
                 Ok((il::CmpOp::Bool(boolean::CmpOp::Eq), il::OpTyp::Bool))
             }
-            [] if m::is(arena, mixop_meta, m::NE)? => {
+            [] if get::matches!(arena, &value_meta, m::NE) => {
                 Ok((il::CmpOp::Bool(boolean::CmpOp::Ne), il::OpTyp::Bool))
             }
-            [] if m::is(arena, mixop_meta, m::LT)? => {
+            [] if get::matches!(arena, &value_meta, m::LT) => {
                 Ok((il::CmpOp::Num(num::CmpOp::Lt), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::LE)? => {
+            [] if get::matches!(arena, &value_meta, m::LE) => {
                 Ok((il::CmpOp::Num(num::CmpOp::Le), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::GT)? => {
+            [] if get::matches!(arena, &value_meta, m::GT) => {
                 Ok((il::CmpOp::Num(num::CmpOp::Gt), il::OpTyp::Nat))
             }
-            [] if m::is(arena, mixop_meta, m::GE)? => {
+            [] if get::matches!(arena, &value_meta, m::GE) => {
                 Ok((il::CmpOp::Num(num::CmpOp::Ge), il::OpTyp::Nat))
             }
             _ => Err(Error::unexpected(arena, value_meta, "a nullary cmpop constructor")),
@@ -836,87 +802,87 @@ impl Decode for (il::CmpOp, il::OpTyp) {
 /// Decodes one definition without inventing omitted general hints.
 impl Decode for al::Def {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let def_kind_al = match values_meta.as_slice() {
-            [value_id] if m::is(arena, mixop_meta, m::EXTTYP)? => {
+            [value_id] if get::matches!(arena, &value_meta, m::EXTTYP) => {
                 al::DefKind::Typ(al::TypDef::Extern(al::ExternTyp {
                     id: Id::decode(arena, *value_id)?,
-                    hints: vec![],
+                    hints: stub::hints(),
                 }))
             }
-            [value_id, value_ids, value_typ] if m::is(arena, mixop_meta, m::TYP_DEF)? => {
+            [value_id, value_ids, value_typ] if get::matches!(arena, &value_meta, m::TYP_DEF) => {
                 al::DefKind::Typ(al::TypDef::Defined(Box::new(al::DefinedTyp {
                     id: Id::decode(arena, *value_id)?,
                     tparams: Vec::<Id>::decode(arena, *value_ids)?,
                     def_typ: il::DefTyp::decode(arena, *value_typ)?,
-                    hints: vec![],
+                    hints: stub::hints(),
                 })))
             }
-            [value_id, value_input, value_output] if m::is(arena, mixop_meta, m::EXTREL)? => {
-                let (not_typ, input_hint) = relation_notation(
+            [value_id, value_input, value_output]
+                if get::matches!(arena, &value_meta, m::EXTREL) =>
+            {
+                let (not_typ, input_hint) = stub::not_typ(
                     Vec::<il::Typ>::decode(arena, *value_input)?,
                     Vec::<il::Typ>::decode(arena, *value_output)?,
-                    span,
                 )?;
                 al::DefKind::Rel(al::RelDef::Extern(Box::new(al::ExternRel {
                     id: Id::decode(arena, *value_id)?,
-                    not_typ: phrase!(node: not_typ, span: span),
+                    not_typ,
                     input_hint,
-                    hints: vec![],
+                    hints: stub::hints(),
                 })))
             }
             [value_id, value_input, value_output, value_groups, value_else]
-                if m::is(arena, mixop_meta, m::REL_DEF)? =>
+                if get::matches!(arena, &value_meta, m::REL_DEF) =>
             {
-                let (not_typ, input_hint) = relation_notation(
+                let (not_typ, input_hint) = stub::not_typ(
                     Vec::<il::Typ>::decode(arena, *value_input)?,
                     Vec::<il::Typ>::decode(arena, *value_output)?,
-                    span,
                 )?;
                 al::DefKind::Rel(al::RelDef::Defined(Box::new(al::DefinedRel {
                     id: Id::decode(arena, *value_id)?,
-                    not_typ: phrase!(node: not_typ, span: span),
+                    not_typ,
                     input_hint,
                     rule_groups: Vec::<al::RuleGroup>::decode(arena, *value_groups)?,
                     else_group: Option::<al::ElseGroup>::decode(arena, *value_else)?,
-                    hints: vec![],
+                    hints: stub::hints(),
                 })))
             }
             [value_id, value_ids, value_params, value_typ]
-                if m::is(arena, mixop_meta, m::EXTFUNC)? =>
+                if get::matches!(arena, &value_meta, m::EXTFUNC) =>
             {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Extern(al::ExternFunc {
                     id: Id::decode(arena, *value_id)?,
                     tparams: Vec::<Id>::decode(arena, *value_ids)?,
                     params: Vec::<al::Param>::decode(arena, *value_params)?,
                     typ: il::Typ::decode(arena, *value_typ)?,
-                    hints: vec![],
+                    hints: stub::hints(),
                 }))
             }
             [value_id, value_ids, value_params, value_typ]
-                if m::is(arena, mixop_meta, m::BUILTINFUNC)? =>
+                if get::matches!(arena, &value_meta, m::BUILTINFUNC) =>
             {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(al::BuiltinFunc {
                     id: Id::decode(arena, *value_id)?,
                     tparams: Vec::<Id>::decode(arena, *value_ids)?,
                     params: Vec::<al::Param>::decode(arena, *value_params)?,
                     typ: il::Typ::decode(arena, *value_typ)?,
-                    hints: vec![],
+                    hints: stub::hints(),
                 }))
             }
             [value_id, value_params, value_typ, value_rows]
-                if m::is(arena, mixop_meta, m::TABLEFUNC)? =>
+                if get::matches!(arena, &value_meta, m::TABLEFUNC) =>
             {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Table(al::TableFunc {
                     id: Id::decode(arena, *value_id)?,
                     params: Vec::<al::Param>::decode(arena, *value_params)?,
                     typ: il::Typ::decode(arena, *value_typ)?,
                     table_rows: Vec::<al::TableRow>::decode(arena, *value_rows)?,
-                    hints: vec![],
+                    hints: stub::hints(),
                 }))
             }
             [value_id, value_ids, value_params, value_typ, value_clauses, value_else]
-                if m::is(arena, mixop_meta, m::FUNC_DEF)? =>
+                if get::matches!(arena, &value_meta, m::FUNC_DEF) =>
             {
                 al::DefKind::MetaFunc(al::MetaFuncDef::Defined(Box::new(al::DefinedFunc {
                     id: Id::decode(arena, *value_id)?,
@@ -925,7 +891,7 @@ impl Decode for al::Def {
                     typ: il::Typ::decode(arena, *value_typ)?,
                     clauses: Vec::<al::Clause>::decode(arena, *value_clauses)?,
                     else_clause: Option::<al::Clause>::decode(arena, *value_else)?,
-                    hints: vec![],
+                    hints: stub::hints(),
                 })))
             }
             _ => {
@@ -945,13 +911,13 @@ impl Decode for al::Def {
 /// Decodes a value or higher-order function parameter.
 impl Decode for al::Param {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let param_kind_al = match values_meta.as_slice() {
-            [value_typ] if m::is(arena, mixop_meta, m::EXP_PARAM)? => {
+            [value_typ] if get::matches!(arena, &value_meta, m::EXP_PARAM) => {
                 al::ParamKind::Exp(il::Typ::decode(arena, *value_typ)?)
             }
             [value_id, value_ids, value_params, value_typ]
-                if m::is(arena, mixop_meta, m::FUN_PARAM)? =>
+                if get::matches!(arena, &value_meta, m::FUN_PARAM) =>
             {
                 al::ParamKind::Def(
                     Id::decode(arena, *value_id)?,
@@ -971,13 +937,14 @@ impl Decode for al::Param {
 /// Decodes an AL premise.
 impl Decode for al::Prem {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         let prem_kind_al = match values_meta.as_slice() {
-            [value_id, value_input, value_output] if m::is(arena, mixop_meta, m::REL_PREM)? => {
-                let (not_exp, input_hint) = relation_notation(
+            [value_id, value_input, value_output]
+                if get::matches!(arena, &value_meta, m::REL_PREM) =>
+            {
+                let (not_exp, input_hint) = stub::not_exp(
                     Vec::<il::Exp>::decode(arena, *value_input)?,
                     Vec::<il::Exp>::decode(arena, *value_output)?,
-                    span,
                 )?;
                 al::PremKind::Rule(al::RulePrem {
                     id: Id::decode(arena, *value_id)?,
@@ -985,35 +952,35 @@ impl Decode for al::Prem {
                     input_hint,
                 })
             }
-            [value_exp] if m::is(arena, mixop_meta, m::IF)? => {
+            [value_exp] if get::matches!(arena, &value_meta, m::IF) => {
                 al::PremKind::If(al::IfPrem { exp: il::Exp::decode(arena, *value_exp)? })
             }
-            [value_id, value_exps] if m::is(arena, mixop_meta, m::IFHOLD)? => {
+            [value_id, value_exps] if get::matches!(arena, &value_meta, m::IFHOLD) => {
                 let (not_exp, _) =
-                    relation_notation(Vec::<il::Exp>::decode(arena, *value_exps)?, vec![], span)?;
+                    stub::not_exp(Vec::<il::Exp>::decode(arena, *value_exps)?, vec![])?;
                 al::PremKind::IfHold(al::IfHoldPrem { id: Id::decode(arena, *value_id)?, not_exp })
             }
-            [value_id, value_exps] if m::is(arena, mixop_meta, m::IFNOTHOLD)? => {
+            [value_id, value_exps] if get::matches!(arena, &value_meta, m::IFNOTHOLD) => {
                 let (not_exp, _) =
-                    relation_notation(Vec::<il::Exp>::decode(arena, *value_exps)?, vec![], span)?;
+                    stub::not_exp(Vec::<il::Exp>::decode(arena, *value_exps)?, vec![])?;
                 al::PremKind::IfNotHold(al::IfNotHoldPrem {
                     id: Id::decode(arena, *value_id)?,
                     not_exp,
                 })
             }
-            [value_l, value_r] if m::is(arena, mixop_meta, m::LET)? => {
+            [value_l, value_r] if get::matches!(arena, &value_meta, m::LET) => {
                 al::PremKind::Let(al::LetPrem {
                     exp_l: il::Exp::decode(arena, *value_l)?,
                     exp_r: il::Exp::decode(arena, *value_r)?,
                 })
             }
-            [value_prem, value_iter] if m::is(arena, mixop_meta, m::ITER_PREM)? => {
+            [value_prem, value_iter] if get::matches!(arena, &value_meta, m::ITER_PREM) => {
                 al::PremKind::Iter(al::IterPrem {
                     prem: Box::new(al::Prem::decode(arena, *value_prem)?),
                     prem_iter: al::PremIter::decode(arena, *value_iter)?,
                 })
             }
-            [value_exp] if m::is(arena, mixop_meta, m::DEBUG)? => {
+            [value_exp] if get::matches!(arena, &value_meta, m::DEBUG) => {
                 al::PremKind::Debug(al::DebugPrem { exp: il::Exp::decode(arena, *value_exp)? })
             }
             _ => return Err(Error::unexpected(arena, value_meta, "an AL premise")),
@@ -1025,9 +992,11 @@ impl Decode for al::Prem {
 /// Decodes bound and bound-by-iteration variable lists in order.
 impl Decode for al::PremIter {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_iter, value_bound, value_bind] if m::is(arena, mixop_meta, m::ITERPREM)? => {
+            [value_iter, value_bound, value_bind]
+                if get::matches!(arena, &value_meta, m::ITERPREM) =>
+            {
                 Ok(al::PremIter {
                     iter: Iter::decode(arena, *value_iter)?,
                     vars_bound: Vec::<il::Var>::decode(arena, *value_bound)?,
@@ -1044,12 +1013,12 @@ impl Decode for al::PremIter {
 /// Decodes a rule match without its printing signature.
 impl Decode for al::RuleMatch {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_exps, value_prems] if m::is(arena, mixop_meta, m::RULMATCH)? => {
+            [value_exps, value_prems] if get::matches!(arena, &value_meta, m::RULMATCH) => {
                 let exps_input = Vec::<il::Exp>::decode(arena, *value_exps)?;
                 Ok(al::RuleMatch {
-                    exps_signature: exps_input.clone(),
+                    exps_signature: stub::rule_match_signature(&exps_input),
                     exps_input,
                     prems: Vec::<al::Prem>::decode(arena, *value_prems)?,
                 })
@@ -1062,9 +1031,11 @@ impl Decode for al::RuleMatch {
 /// Decodes a rule path and its outputs.
 impl Decode for al::RulePath {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+        let (values_meta, _) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_id, value_exps, value_prems] if m::is(arena, mixop_meta, m::RULPATH)? => {
+            [value_id, value_exps, value_prems]
+                if get::matches!(arena, &value_meta, m::RULPATH) =>
+            {
                 Ok(al::RulePath {
                     id: Id::decode(arena, *value_id)?,
                     exps_output: Vec::<il::Exp>::decode(arena, *value_exps)?,
@@ -1079,9 +1050,11 @@ impl Decode for al::RulePath {
 /// Decodes a rule group with its shared match.
 impl Decode for al::RuleGroup {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_id, value_match, value_paths] if m::is(arena, mixop_meta, m::RULGROUP)? => {
+            [value_id, value_match, value_paths]
+                if get::matches!(arena, &value_meta, m::RULGROUP) =>
+            {
                 Ok(phrase!(node: al::RuleGroupKind {
                     id: Id::decode(arena, *value_id)?,
                     rule_match: al::RuleMatch::decode(arena, *value_match)?,
@@ -1096,9 +1069,11 @@ impl Decode for al::RuleGroup {
 /// Decodes an otherwise group with one rule path.
 impl Decode for al::ElseGroup {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_id, value_match, value_path] if m::is(arena, mixop_meta, m::ELSGROUP)? => {
+            [value_id, value_match, value_path]
+                if get::matches!(arena, &value_meta, m::ELSGROUP) =>
+            {
                 Ok(phrase!(node: al::ElseGroupKind {
                     id: Id::decode(arena, *value_id)?,
                     rule_match: al::RuleMatch::decode(arena, *value_match)?,
@@ -1115,9 +1090,11 @@ impl Decode for al::ElseGroup {
 /// Decodes a function clause.
 impl Decode for al::Clause {
     fn decode(arena: &mut Arena, value_meta: Value) -> Result<Self, Error> {
-        let (mixop_meta, values_meta, span) = case(arena, value_meta)?;
+        let (values_meta, span) = case(arena, value_meta)?;
         match values_meta.as_slice() {
-            [value_args, value_exp, value_prems] if m::is(arena, mixop_meta, m::CLAUSE)? => {
+            [value_args, value_exp, value_prems]
+                if get::matches!(arena, &value_meta, m::CLAUSE) =>
+            {
                 Ok(phrase!(node: al::ClauseKind {
                     args: Vec::<il::Arg>::decode(arena, *value_args)?,
                     exp: il::Exp::decode(arena, *value_exp)?,
@@ -1135,7 +1112,7 @@ impl Decode for al::TableRow {
         let clause_al = al::Clause::decode(arena, value_meta)?;
         let al::ClauseKind { args: args_al, exp: exp_al, prems: prems_al } = clause_al.node;
         Ok(phrase!(node: al::TableRowKind {
-            exps_signature: vec![],
+            exps_signature: stub::table_row_signature(),
             args: args_al,
             exp: exp_al,
             prems: prems_al,

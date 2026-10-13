@@ -41,47 +41,43 @@ pub trait Encode {
 
 // == Helpers
 
-/// Adapts encoding to the arena-first list mapper.
-fn encode_ref<T: Encode + ?Sized>(arena: &mut Arena, source: &T) -> Result<T::Output, Error> {
-    source.encode(arena)
-}
-
 /// Constructs a typed meta case after its children have been encoded.
 fn case(
     arena: &mut Arena,
-    shape: &str,
-    name: &str,
+    text_shape: &str,
+    text_typ: &str,
     values_meta: Vec<Value>,
     span: Span,
 ) -> Result<Value, Error> {
-    let mixfix_meta = Mixfix::new(parse::mixop(shape), values_meta)?;
-    Ok(make::case(
+    let mixfix_meta = Mixfix::new(parse::mixop(text_shape), values_meta)
+        .map_err(|error| Error::from(error).at(span))?;
+    make::case(
         arena,
-        make_typ::var(phrase!(node: name.into(), span: Span::default()), vec![])
+        make_typ::var(phrase!(node: text_typ.into(), span: Span::default()), vec![])
             .node
             .into(),
         mixfix_meta,
         span,
-    )?)
+    )
+    .map_err(|error| Error::from(error).at(span))
 }
 
 /// Maps a source list and annotates its meta element type.
-fn list<T>(
+fn list<T: Encode<Output = Value>>(
     arena: &mut Arena,
-    name: &str,
-    source: &[T],
-    mut func_encode: impl FnMut(&mut Arena, &T) -> Result<Value, Error>,
+    text_elem_typ: &str,
+    values_source: &[T],
 ) -> Result<Value, Error> {
-    let values_meta = source
+    let values_meta = values_source
         .iter()
-        .map(|value_source| func_encode(arena, value_source))
+        .map(|value_source| value_source.encode(arena))
         .collect::<Result<_, _>>()?;
     Ok(make::list(
         arena,
-        make_typ::iter(
-            make_typ::var(phrase!(node: name.into(), span: Span::default()), vec![]),
-            Iter::List,
-        )
+        make_typ::list(make_typ::var(
+            phrase!(node: text_elem_typ.into(), span: Span::default()),
+            vec![],
+        ))
         .node
         .into(),
         values_meta,
@@ -90,21 +86,20 @@ fn list<T>(
 }
 
 /// Maps an optional source value and retains its meta element type.
-fn opt<T>(
+fn opt<T: Encode<Output = Value>>(
     arena: &mut Arena,
-    name: &str,
-    source: Option<&T>,
-    func_encode: impl FnOnce(&mut Arena, &T) -> Result<Value, Error>,
+    text_elem_typ: &str,
+    value_source: Option<&T>,
 ) -> Result<Value, Error> {
-    let value_meta = source
-        .map(|value_source| func_encode(arena, value_source))
+    let value_meta = value_source
+        .map(|value_source| value_source.encode(arena))
         .transpose()?;
     Ok(make::opt(
         arena,
-        make_typ::iter(
-            make_typ::var(phrase!(node: name.into(), span: Span::default()), vec![]),
-            Iter::Opt,
-        )
+        make_typ::opt(make_typ::var(
+            phrase!(node: text_elem_typ.into(), span: Span::default()),
+            vec![],
+        ))
         .node
         .into(),
         value_meta,
@@ -112,33 +107,17 @@ fn opt<T>(
     )?)
 }
 
-fn split_mixop<'a>(
-    mixop_al: &'a Mixop,
-    atoms_tail_al: &mut Vec<&'a il::Atom>,
-    atoms_rows_al: &mut Vec<Vec<&'a il::Atom>>,
-) {
-    match mixop_al {
-        Mixop::Arg => atoms_rows_al.push(std::mem::take(atoms_tail_al)),
-        Mixop::Atom(atom_al) => atoms_tail_al.push(atom_al),
-        Mixop::Brack(atom_l_al, mixop_inner_al, atom_r_al) => {
-            atoms_tail_al.push(atom_l_al);
-            split_mixop(mixop_inner_al, atoms_tail_al, atoms_rows_al);
-            atoms_tail_al.push(atom_r_al);
-        }
-        Mixop::Infix(mixop_l_al, atom_al, mixop_r_al) => {
-            split_mixop(mixop_l_al, atoms_tail_al, atoms_rows_al);
-            atoms_tail_al.push(atom_al);
-            split_mixop(mixop_r_al, atoms_tail_al, atoms_rows_al);
-        }
-        Mixop::Seq(mixops_al) => {
-            for mixop_al in mixops_al {
-                split_mixop(mixop_al, atoms_tail_al, atoms_rows_al);
-            }
-        }
+// == Encoding
+
+// - References
+
+impl<T: Encode + ?Sized> Encode for &T {
+    type Output = T::Output;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
+        (*self).encode(arena)
     }
 }
-
-// == Encoding
 
 // - Identifiers
 
@@ -170,16 +149,12 @@ impl Encode for Mixop {
 
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         // Split atoms at argument holes, including empty boundary rows
-        let mut atoms_rows_al = Vec::new();
-        let mut atoms_tail_al = Vec::new();
-        split_mixop(self, &mut atoms_tail_al, &mut atoms_rows_al);
-        atoms_rows_al.push(atoms_tail_al);
+        let atoms_rows_al = self.atoms_matrix();
 
         // Encode every row before allocating the outer matrix
         let mut values_meta = Vec::with_capacity(atoms_rows_al.len());
         for atoms_row_al in atoms_rows_al {
-            values_meta
-                .push(list(arena, "atom", &atoms_row_al, |arena, atom_al| atom_al.encode(arena))?);
+            values_meta.push(list(arena, "atom", &atoms_row_al)?);
         }
 
         // Retain both list dimensions even when a row is empty
@@ -214,24 +189,9 @@ impl Encode for il::Var {
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         let value_id = self.id.encode(arena)?;
         let value_typ = self.typ.encode(arena)?;
-        let value_iters = list(arena, "iter", &self.iters, encode_ref)?;
+        let value_iters = list(arena, "iter", &self.iters)?;
         case(arena, m::VARI, "vari", vec![value_id, value_typ, value_iters], self.id.span)
     }
-}
-
-// - Results
-
-/// Encodes a successful function result as `OK val : valres`.
-pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> {
-    let span = *arena.value.span(value_target.span);
-    let value_meta = value_target.encode(arena)?;
-    case(arena, m::OK, "valres", vec![value_meta], span)
-}
-
-/// Encodes successful relation outputs as `OK val* : valsres`.
-pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
-    let values_meta = values_target.encode(arena)?;
-    case(arena, m::OK, "valsres", vec![values_meta], Span::default())
 }
 
 // - Types
@@ -244,50 +204,31 @@ impl Encode for il::Typ {
         let typ_al = self;
         let span = typ_al.span;
         match &typ_al.node {
-            il::TypKind::Bool => {
-                case(arena, m::BOOL_TYP, "typ", vec![], span).map_err(|error| error.at(span))
-            }
-            il::TypKind::Num(num::Typ::Nat) => {
-                case(arena, m::NAT_TYP, "typ", vec![], span).map_err(|error| error.at(span))
-            }
-            il::TypKind::Num(num::Typ::Int) => {
-                case(arena, m::INT_TYP, "typ", vec![], span).map_err(|error| error.at(span))
-            }
-            il::TypKind::Text => {
-                case(arena, m::TEXT_TYP, "typ", vec![], span).map_err(|error| error.at(span))
-            }
+            il::TypKind::Bool => case(arena, m::BOOL_TYP, "typ", vec![], span),
+            il::TypKind::Num(num::Typ::Nat) => case(arena, m::NAT_TYP, "typ", vec![], span),
+            il::TypKind::Num(num::Typ::Int) => case(arena, m::INT_TYP, "typ", vec![], span),
+            il::TypKind::Text => case(arena, m::TEXT_TYP, "typ", vec![], span),
             il::TypKind::Var(id_al, targs_al) => {
-                let values_meta = vec![id_al.encode(arena)?, targs_al.encode(arena)?];
-                case(arena, m::VAR_TYP, "typ", values_meta, span).map_err(|error| error.at(span))
+                let values_meta = vec![id_al.encode(arena)?, list(arena, "typ", targs_al)?];
+                case(arena, m::VAR_TYP, "typ", values_meta, span)
             }
             il::TypKind::Tuple(typs_al) => {
-                let value_typs = typs_al.encode(arena)?;
+                let value_typs = list(arena, "typ", typs_al)?;
                 case(arena, m::TUP_TYP, "typ", vec![value_typs], span)
-                    .map_err(|error| error.at(span))
             }
             il::TypKind::Iter(typ_inner_al, iter_al) => {
                 let values_meta = vec![typ_inner_al.encode(arena)?, iter_al.encode(arena)?];
-                case(arena, m::ITER_TYP, "typ", values_meta, span).map_err(|error| error.at(span))
+                case(arena, m::ITER_TYP, "typ", values_meta, span)
             }
             il::TypKind::Func(typ_func_al) => {
                 let values_meta = vec![
-                    list(arena, "id", &typ_func_al.tparams, encode_ref)?,
-                    typ_func_al.typs_params.encode(arena)?,
+                    list(arena, "id", &typ_func_al.tparams)?,
+                    list(arena, "typ", &typ_func_al.typs_params)?,
                     typ_func_al.typ_ret.encode(arena)?,
                 ];
-                case(arena, m::FUNC_TYP, "typ", values_meta, span).map_err(|error| error.at(span))
+                case(arena, m::FUNC_TYP, "typ", values_meta, span)
             }
         }
-    }
-}
-
-/// Encodes a list of source types.
-impl Encode for [il::Typ] {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let typs_al = self;
-        list(arena, "typ", typs_al, encode_ref)
     }
 }
 
@@ -300,10 +241,10 @@ impl Encode for il::DefTyp {
         let (shape, values_meta) = match &deftyp_al.node {
             il::DefTypKind::Plain(typ_al) => (m::ALIAS, vec![typ_al.encode(arena)?]),
             il::DefTypKind::Struct(typ_fields_al) => {
-                (m::STRUCT, vec![list(arena, "typfield", typ_fields_al, encode_ref)?])
+                (m::STRUCT, vec![list(arena, "typfield", typ_fields_al)?])
             }
             il::DefTypKind::Variant(typ_cases_al) => {
-                (m::VARIANT, vec![list(arena, "typcase", typ_cases_al, encode_ref)?])
+                (m::VARIANT, vec![list(arena, "typcase", typ_cases_al)?])
             }
         };
         case(arena, shape, "deftyp", values_meta, deftyp_al.span)
@@ -325,8 +266,10 @@ impl Encode for il::TypCase {
     type Output = Value;
 
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let values_meta =
-            vec![self.not_typ.node.mixop().encode(arena)?, self.not_typ.node.args().encode(arena)?];
+        let values_meta = vec![
+            self.not_typ.node.mixop().encode(arena)?,
+            list(arena, "typ", self.not_typ.node.args())?,
+        ];
         case(arena, m::TYPCASE, "typcase", values_meta, self.not_typ.span)
     }
 }
@@ -344,7 +287,7 @@ impl Encode for Value {
             ValueKind::Bool(value_bool) => {
                 let value_bool = *value_bool;
                 let values_meta = vec![make::bool(arena, value_bool, span)?];
-                case(arena, m::BOOL, "val", values_meta, span).map_err(|error| error.at(span))
+                case(arena, m::BOOL, "val", values_meta, span)
             }
             ValueKind::Num(num) => {
                 let num_target = num.clone();
@@ -353,48 +296,45 @@ impl Encode for Value {
                     Number::Int(_) => m::INT,
                 };
                 let values_meta = vec![make::num(arena, num_target, span)?];
-                case(arena, shape, "val", values_meta, span).map_err(|error| error.at(span))
+                case(arena, shape, "val", values_meta, span)
             }
             ValueKind::Text(text) => {
                 let text_target = text.clone();
                 let values_meta = vec![make::text(arena, text_target, span)?];
-                case(arena, m::TEXT, "val", values_meta, span).map_err(|error| error.at(span))
+                case(arena, m::TEXT, "val", values_meta, span)
             }
             ValueKind::Struct(value_fields) => {
                 let value_fields = value_fields.clone();
-                let values_meta = vec![list(arena, "valfield", &value_fields, encode_ref)?];
-                case(arena, m::STR, "val", values_meta, span).map_err(|error| error.at(span))
+                let values_meta = vec![list(arena, "valfield", &value_fields)?];
+                case(arena, m::STR, "val", values_meta, span)
             }
             ValueKind::Case(value_case) => {
                 let mixop_target = value_case.mixop().into_tree(&arena.mixop);
                 let values_target = value_case.args().to_vec();
                 let values_case =
-                    vec![mixop_target.encode(arena)?, values_target.as_slice().encode(arena)?];
+                    vec![mixop_target.encode(arena)?, list(arena, "val", &values_target)?];
                 let values_meta = vec![case(arena, m::VALCASE, "valcase", values_case, span)?];
-                case(arena, m::INJ, "val", values_meta, span).map_err(|error| error.at(span))
+                case(arena, m::INJ, "val", values_meta, span)
             }
             ValueKind::Tuple(values_target) => {
                 let values_target = values_target.clone();
-                let values_meta = vec![values_target.as_slice().encode(arena)?];
-                case(arena, m::TUP, "val", values_meta, span).map_err(|error| error.at(span))
+                let values_meta = vec![list(arena, "val", &values_target)?];
+                case(arena, m::TUP, "val", values_meta, span)
             }
             ValueKind::Opt(value_inner) => {
                 let value_inner = *value_inner;
-                let values_meta =
-                    vec![opt(arena, "val", value_inner.as_ref(), |arena, value_inner| {
-                        (*value_inner).encode(arena)
-                    })?];
-                case(arena, m::OPT, "val", values_meta, span).map_err(|error| error.at(span))
+                let values_meta = vec![opt(arena, "val", value_inner.as_ref())?];
+                case(arena, m::OPT, "val", values_meta, span)
             }
             ValueKind::List(values_target) => {
                 let values_target = values_target.clone();
-                let values_meta = vec![values_target.as_slice().encode(arena)?];
-                case(arena, m::LIST, "val", values_meta, span).map_err(|error| error.at(span))
+                let values_meta = vec![list(arena, "val", &values_target)?];
+                case(arena, m::LIST, "val", values_meta, span)
             }
             ValueKind::Func(id_target) => {
                 let id_target = id_target.clone();
                 let values_meta = vec![id_target.encode(arena)?];
-                case(arena, m::FUNC, "val", values_meta, span).map_err(|error| error.at(span))
+                case(arena, m::FUNC, "val", values_meta, span)
             }
             ValueKind::Extern(json) => {
                 let json_target = json.clone();
@@ -406,19 +346,9 @@ impl Encode for Value {
                     json_target,
                     span,
                 )?;
-                case(arena, m::EXT, "val", vec![value_json], span).map_err(|error| error.at(span))
+                case(arena, m::EXT, "val", vec![value_json], span)
             }
         }
-    }
-}
-
-/// Encodes target values as a meta `val*`.
-impl Encode for [Value] {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let values_target = self;
-        list(arena, "val", values_target, |arena, value_target| (*value_target).encode(arena))
     }
 }
 
@@ -474,19 +404,17 @@ impl Encode for il::Exp {
             il::ExpKind::Match(exp_al, pattern_al) => {
                 (m::MATCH, vec![exp_al.encode(arena)?, pattern_al.encode(arena)?])
             }
-            il::ExpKind::Tuple(exps_al) => (m::TUP, vec![exps_al.encode(arena)?]),
+            il::ExpKind::Tuple(exps_al) => (m::TUP, vec![list(arena, "exp", exps_al)?]),
             il::ExpKind::Case(exp_case_al) => {
-                let values_case =
-                    vec![exp_case_al.mixop().encode(arena)?, exp_case_al.args().encode(arena)?];
+                let values_case = vec![
+                    exp_case_al.mixop().encode(arena)?,
+                    list(arena, "exp", exp_case_al.args())?,
+                ];
                 (m::INJ, vec![case(arena, m::EXPCASE, "expcase", values_case, span)?])
             }
-            il::ExpKind::Str(fields_al) => {
-                (m::STR, vec![list(arena, "expfield", fields_al, encode_ref)?])
-            }
-            il::ExpKind::Opt(exp_al) => {
-                (m::OPT, vec![opt(arena, "exp", exp_al.as_deref(), encode_ref)?])
-            }
-            il::ExpKind::List(exps_al) => (m::LIST, vec![exps_al.encode(arena)?]),
+            il::ExpKind::Str(fields_al) => (m::STR, vec![list(arena, "expfield", fields_al)?]),
+            il::ExpKind::Opt(exp_al) => (m::OPT, vec![opt(arena, "exp", exp_al.as_deref())?]),
+            il::ExpKind::List(exps_al) => (m::LIST, vec![list(arena, "exp", exps_al)?]),
             il::ExpKind::Cons(exp_head_al, exp_tail_al) => {
                 (m::CONS, vec![exp_head_al.encode(arena)?, exp_tail_al.encode(arena)?])
             }
@@ -515,8 +443,8 @@ impl Encode for il::Exp {
                 m::CALL,
                 vec![
                     id_al.encode(arena)?,
-                    targs_al.encode(arena)?,
-                    list(arena, "arg", args_al, encode_ref)?,
+                    list(arena, "typ", targs_al)?,
+                    list(arena, "arg", args_al)?,
                 ],
             ),
             il::ExpKind::Iter(exp_al, exp_iter_al) => {
@@ -524,16 +452,6 @@ impl Encode for il::Exp {
             }
         };
         case(arena, shape, "exp", values_meta, span)
-    }
-}
-
-/// Encodes a list of source expressions.
-impl Encode for [il::Exp] {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let exps_al = self;
-        list(arena, "exp", exps_al, encode_ref)
     }
 }
 
@@ -552,8 +470,7 @@ impl Encode for il::ExpIter {
     type Output = Value;
 
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let values_meta =
-            vec![self.iter.encode(arena)?, list(arena, "vari", &self.vars, encode_ref)?];
+        let values_meta = vec![self.iter.encode(arena)?, list(arena, "vari", &self.vars)?];
         case(arena, m::ITEREXP, "iterexp", values_meta, Span::default())
     }
 }
@@ -719,7 +636,7 @@ impl Encode for al::Def {
                 m::TYP_DEF,
                 vec![
                     typdef_al.id.encode(arena)?,
-                    list(arena, "id", &typdef_al.tparams, encode_ref)?,
+                    list(arena, "id", &typdef_al.tparams)?,
                     typdef_al.def_typ.encode(arena)?,
                 ],
             ),
@@ -730,8 +647,8 @@ impl Encode for al::Def {
                     m::EXTREL,
                     vec![
                         rel_al.id.encode(arena)?,
-                        typs_input_al.encode(arena)?,
-                        typs_output_al.encode(arena)?,
+                        list(arena, "typ", &typs_input_al)?,
+                        list(arena, "typ", &typs_output_al)?,
                     ],
                 )
             }
@@ -742,10 +659,10 @@ impl Encode for al::Def {
                     m::REL_DEF,
                     vec![
                         rel_al.id.encode(arena)?,
-                        typs_input_al.encode(arena)?,
-                        typs_output_al.encode(arena)?,
-                        list(arena, "rulgroup", &rel_al.rule_groups, encode_ref)?,
-                        opt(arena, "elsgroup", rel_al.else_group.as_ref(), encode_ref)?,
+                        list(arena, "typ", &typs_input_al)?,
+                        list(arena, "typ", &typs_output_al)?,
+                        list(arena, "rulgroup", &rel_al.rule_groups)?,
+                        opt(arena, "elsgroup", rel_al.else_group.as_ref())?,
                     ],
                 )
             }
@@ -753,8 +670,8 @@ impl Encode for al::Def {
                 m::EXTFUNC,
                 vec![
                     func_al.id.encode(arena)?,
-                    list(arena, "id", &func_al.tparams, encode_ref)?,
-                    list(arena, "param", &func_al.params, encode_ref)?,
+                    list(arena, "id", &func_al.tparams)?,
+                    list(arena, "param", &func_al.params)?,
                     func_al.typ.encode(arena)?,
                 ],
             ),
@@ -762,8 +679,8 @@ impl Encode for al::Def {
                 m::BUILTINFUNC,
                 vec![
                     func_al.id.encode(arena)?,
-                    list(arena, "id", &func_al.tparams, encode_ref)?,
-                    list(arena, "param", &func_al.params, encode_ref)?,
+                    list(arena, "id", &func_al.tparams)?,
+                    list(arena, "param", &func_al.params)?,
                     func_al.typ.encode(arena)?,
                 ],
             ),
@@ -771,20 +688,20 @@ impl Encode for al::Def {
                 m::TABLEFUNC,
                 vec![
                     func_al.id.encode(arena)?,
-                    list(arena, "param", &func_al.params, encode_ref)?,
+                    list(arena, "param", &func_al.params)?,
                     func_al.typ.encode(arena)?,
-                    list(arena, "tblrow", &func_al.table_rows, encode_ref)?,
+                    list(arena, "tblrow", &func_al.table_rows)?,
                 ],
             ),
             al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => (
                 m::FUNC_DEF,
                 vec![
                     func_al.id.encode(arena)?,
-                    list(arena, "id", &func_al.tparams, encode_ref)?,
-                    list(arena, "param", &func_al.params, encode_ref)?,
+                    list(arena, "id", &func_al.tparams)?,
+                    list(arena, "param", &func_al.params)?,
                     func_al.typ.encode(arena)?,
-                    list(arena, "clause", &func_al.clauses, encode_ref)?,
-                    opt(arena, "elsclause", func_al.else_clause.as_ref(), encode_ref)?,
+                    list(arena, "clause", &func_al.clauses)?,
+                    opt(arena, "elsclause", func_al.else_clause.as_ref())?,
                 ],
             ),
         };
@@ -805,8 +722,8 @@ impl Encode for al::Param {
                 m::FUN_PARAM,
                 vec![
                     id_al.encode(arena)?,
-                    list(arena, "id", tparams_al, encode_ref)?,
-                    list(arena, "param", params_al, encode_ref)?,
+                    list(arena, "id", tparams_al)?,
+                    list(arena, "param", params_al)?,
                     typ_al.encode(arena)?,
                 ],
             ),
@@ -831,19 +748,25 @@ impl Encode for al::Prem {
                     m::REL_PREM,
                     vec![
                         prem_rule_al.id.encode(arena)?,
-                        exps_input_al.encode(arena)?,
-                        exps_output_al.encode(arena)?,
+                        list(arena, "exp", &exps_input_al)?,
+                        list(arena, "exp", &exps_output_al)?,
                     ],
                 )
             }
             al::PremKind::If(prem_inner_al) => (m::IF, vec![prem_inner_al.exp.encode(arena)?]),
             al::PremKind::IfHold(prem_inner_al) => (
                 m::IFHOLD,
-                vec![prem_inner_al.id.encode(arena)?, prem_inner_al.not_exp.args().encode(arena)?],
+                vec![
+                    prem_inner_al.id.encode(arena)?,
+                    list(arena, "exp", prem_inner_al.not_exp.args())?,
+                ],
             ),
             al::PremKind::IfNotHold(prem_inner_al) => (
                 m::IFNOTHOLD,
-                vec![prem_inner_al.id.encode(arena)?, prem_inner_al.not_exp.args().encode(arena)?],
+                vec![
+                    prem_inner_al.id.encode(arena)?,
+                    list(arena, "exp", prem_inner_al.not_exp.args())?,
+                ],
             ),
             al::PremKind::Let(prem_inner_al) => (
                 m::LET,
@@ -868,8 +791,8 @@ impl Encode for al::PremIter {
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         let values_meta = vec![
             self.iter.encode(arena)?,
-            list(arena, "vari", &self.vars_bound, encode_ref)?,
-            list(arena, "vari", &self.vars_bind, encode_ref)?,
+            list(arena, "vari", &self.vars_bound)?,
+            list(arena, "vari", &self.vars_bind)?,
         ];
         case(arena, m::ITERPREM, "iterprem", values_meta, Span::default())
     }
@@ -883,7 +806,7 @@ impl Encode for al::RuleMatch {
 
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         let values_meta =
-            vec![self.exps_input.encode(arena)?, list(arena, "prem", &self.prems, encode_ref)?];
+            vec![list(arena, "exp", &self.exps_input)?, list(arena, "prem", &self.prems)?];
         case(arena, m::RULMATCH, "rulmatch", values_meta, Span::default())
     }
 }
@@ -895,8 +818,8 @@ impl Encode for al::RulePath {
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         let values_meta = vec![
             self.id.encode(arena)?,
-            self.exps_output.encode(arena)?,
-            list(arena, "prem", &self.prems, encode_ref)?,
+            list(arena, "exp", &self.exps_output)?,
+            list(arena, "prem", &self.prems)?,
         ];
         case(arena, m::RULPATH, "rulpath", values_meta, self.id.span)
     }
@@ -910,7 +833,7 @@ impl Encode for al::RuleGroup {
         let values_meta = vec![
             self.node.id.encode(arena)?,
             self.node.rule_match.encode(arena)?,
-            list(arena, "rulpath", &self.node.rule_paths, encode_ref)?,
+            list(arena, "rulpath", &self.node.rule_paths)?,
         ];
         case(arena, m::RULGROUP, "rulgroup", values_meta, self.span)
     }
@@ -938,9 +861,9 @@ impl Encode for al::Clause {
 
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         let values_meta = vec![
-            list(arena, "arg", &self.node.args, encode_ref)?,
+            list(arena, "arg", &self.node.args)?,
             self.node.exp.encode(arena)?,
-            list(arena, "prem", &self.node.prems, encode_ref)?,
+            list(arena, "prem", &self.node.prems)?,
         ];
         case(arena, m::CLAUSE, "clause", values_meta, self.span)
     }
@@ -952,10 +875,25 @@ impl Encode for al::TableRow {
 
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         let values_meta = vec![
-            list(arena, "arg", &self.node.args, encode_ref)?,
+            list(arena, "arg", &self.node.args)?,
             self.node.exp.encode(arena)?,
-            list(arena, "prem", &self.node.prems, encode_ref)?,
+            list(arena, "prem", &self.node.prems)?,
         ];
         case(arena, m::CLAUSE, "tblrow", values_meta, self.span)
     }
+}
+
+// - Results
+
+/// Encodes a successful function result as `OK val : valres`.
+pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> {
+    let span = *arena.value.span(value_target.span);
+    let value_meta = value_target.encode(arena)?;
+    case(arena, m::OK, "valres", vec![value_meta], span)
+}
+
+/// Encodes successful relation outputs as `OK val* : valsres`.
+pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
+    let values_meta = list(arena, "val", values_target)?;
+    case(arena, m::OK, "valsres", vec![values_meta], Span::default())
 }
