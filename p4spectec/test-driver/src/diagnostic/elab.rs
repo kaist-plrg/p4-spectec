@@ -31,10 +31,8 @@ fn run_case(case: &Case) -> Result<Vec<Report>> {
 
     // Preserve warnings emitted before the final elaboration result
     let (result, mut reports) = convert_with_warnings(spec_el);
-    // Only explicitly registered baseline controls may elaborate successfully
-    if result.is_ok() && !case.allow_success {
-        return Err(failure(name, "elaboration accepted negative input"));
-    }
+    // Check success and failure independently of the emitted warnings
+    case.check_outcome(result.is_ok())?;
     if let Err(report) = result {
         reports.push(*report);
     }
