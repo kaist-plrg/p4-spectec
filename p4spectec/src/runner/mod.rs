@@ -31,16 +31,13 @@ use crate::interp::sl::{Config as SlConfig, SlInterp, context::SpecEnv as SlSpec
 
 use crate::interp::pl::{Config as PlConfig, PlInterp, context::SpecEnv as PlSpecEnv};
 
-use crate::interface::{
-    self as builtin,
-    p4::{error::P4Error, parse::parse_file},
-};
+use crate::interface::{self as builtin, p4::P4Interface};
 
 use crate::sim_plugin::dummy::Dummy;
 
 pub use context::{Checkpoint, RunnerContext};
 pub use externs::{Extern, ExternError, NullExtern};
-pub use interface::{BuiltinInterface, Interface, InterfaceError, NullInterface};
+pub use interface::{Interface, InterfaceError, NullInterface};
 pub use interpreter::{Eval, Interpreter, InterpreterError, SideEffect};
 
 // == Runner construction
@@ -75,7 +72,7 @@ impl Config {
 /// A diagnostic produced while building a runner.
 pub type BuildError = Box<Report>;
 
-/// Builds an AL runner from a specification, with the P4 builtins.
+/// Builds an AL runner from a specification, with the P4 interface.
 ///
 /// Takes a spec after lowering and interns notation in the execution arena.
 /// Every evaluation must use this arena. Panics if a definition is repeated.
@@ -84,13 +81,13 @@ pub fn build_al<Ext: Extern>(
     spec: al::ast::Spec,
     config: Config,
     external: Ext,
-) -> Result<Runner<BuiltinInterface, Ext>, BuildError> {
+) -> Result<Runner<P4Interface, Ext>, BuildError> {
     let spec = Spec::Al(spec);
     let interface = builtin::p4(&spec);
     Runner::new(arena, spec, config, interface, external)
 }
 
-/// Builds an SL runner from a specification, with the P4 builtins.
+/// Builds an SL runner from a specification, with the P4 interface.
 ///
 /// Takes a spec after lowering and interns notation in the execution arena.
 /// Every evaluation must use this arena. Panics if a definition is repeated.
@@ -99,13 +96,13 @@ pub fn build_sl<Ext: Extern>(
     spec: sl::ast::Spec,
     config: Config,
     external: Ext,
-) -> Result<Runner<BuiltinInterface, Ext>, BuildError> {
+) -> Result<Runner<P4Interface, Ext>, BuildError> {
     let spec = Spec::Sl(spec);
     let interface = builtin::p4(&spec);
     Runner::new(arena, spec, config, interface, external)
 }
 
-/// Builds a PL runner from a specification, with the P4 builtins.
+/// Builds a PL runner from a specification, with the P4 interface.
 ///
 /// Takes a spec after lowering and interns notation in the execution arena.
 /// Every evaluation must use this arena. Panics if a definition is repeated.
@@ -114,7 +111,7 @@ pub fn build_pl<Ext: Extern>(
     spec: pl::ast::Spec,
     config: Config,
     external: Ext,
-) -> Result<Runner<BuiltinInterface, Ext>, BuildError> {
+) -> Result<Runner<P4Interface, Ext>, BuildError> {
     let spec = Spec::Pl(spec);
     let interface = builtin::p4(&spec);
     Runner::new(arena, spec, config, interface, external)
@@ -166,6 +163,20 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
             },
         };
         Ok(Self { backend, interface, external, effects: 0 })
+    }
+
+    // - Parsing
+
+    /// Parses input files through the interface into the shared arena.
+    ///
+    /// Uses the same arena supplied when preparing this runner.
+    pub fn parse_program(
+        &mut self,
+        arena: &mut Arena,
+        includes: &[PathBuf],
+        paths: &[PathBuf],
+    ) -> Result<Value, InterfaceError> {
+        self.interface.parse_program(arena, includes, paths)
     }
 
     // - Evaluation
@@ -305,15 +316,15 @@ impl<Iface: Interface, Ext: Extern> Runner<Iface, Ext> {
 
 // == Program execution
 
-/// A failure while building a runner, parsing P4, or evaluating a program.
+/// A failure while building a runner, parsing, or evaluating a program.
 #[derive(Debug, thiserror::Error)]
 pub enum RunError {
     /// A diagnostic from runner construction.
     #[error(transparent)]
     Build(BuildError),
-    /// A P4 preprocessing or syntax failure.
+    /// A program input or parsing failure.
     #[error(transparent)]
-    Parse(P4Error),
+    Parse(InterfaceError),
     /// An aborting evaluation or unmatched relation.
     #[error(transparent)]
     Eval(InterpreterError),
@@ -337,16 +348,18 @@ pub fn run(
     run_program(&mut arena, runner, relation, includes, path_p4)
 }
 
-/// Parses P4 into the shared arena and evaluates its entry relation.
-fn run_program(
+/// Parses through the runner's interface and evaluates the entry relation.
+fn run_program<Iface: Interface, Ext: Extern>(
     arena: &mut Arena,
-    mut runner: Runner<BuiltinInterface, Dummy>,
+    mut runner: Runner<Iface, Ext>,
     relation: &str,
     includes: &[PathBuf],
-    path_p4: &Path,
+    path: &Path,
 ) -> Result<(), RunError> {
     // Parse the program into the arena used to prepare the specification
-    let program = parse_file(arena, includes, path_p4).map_err(RunError::Parse)?;
+    let program = runner
+        .parse_program(arena, includes, &[path.to_path_buf()])
+        .map_err(RunError::Parse)?;
 
     // Discard effects at the command boundary, after evaluation has finished
     runner

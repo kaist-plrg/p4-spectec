@@ -13,7 +13,9 @@ use p4spectec::lang::{
 
 use p4spectec::diagnostic::{Report, ReportKind};
 
-use p4spectec::runner::{self, BuiltinInterface, Config, InterpreterError, NullExtern, Runner};
+use p4spectec::interface::p4::P4Interface;
+
+use p4spectec::runner::{self, Config, InterpreterError, NullExtern, Runner};
 
 use crate::Result;
 
@@ -66,7 +68,7 @@ fn codes(report: &Report) -> Vec<&str> {
 pub(super) fn reject(
     name: &str,
     arena: &mut Arena,
-    mut runner: Runner<BuiltinInterface, NullExtern>,
+    mut runner: Runner<P4Interface, NullExtern>,
     kind_expect: FailureKind,
     code: &str,
 ) -> Result<Vec<Report>> {

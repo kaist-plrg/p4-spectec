@@ -5,9 +5,11 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use p4spectec::lang::data::arena::Arena;
 
-use p4spectec::runner::{self, BuiltinInterface, Config, Runner};
+use p4spectec::runner::{self, Config, Runner};
 
-use p4spectec::interface::p4::{error::P4Error, parse::parse_string, preprocessor::preprocess};
+use p4spectec::interface::p4::{
+    P4Interface, error::P4Error, parse::parse_string, preprocessor::preprocess,
+};
 
 use p4spectec::sim_plugin::dummy::Dummy;
 
@@ -79,7 +81,7 @@ fn run_with<Build>(
     build_runner: Build,
 ) -> Result<()>
 where
-    Build: FnOnce(&mut Arena) -> Result<Runner<BuiltinInterface, Dummy>>,
+    Build: FnOnce(&mut Arena) -> Result<Runner<P4Interface, Dummy>>,
 {
     let start = Instant::now();
     let mut excludes = BTreeSet::new();

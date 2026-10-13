@@ -264,7 +264,7 @@ fn run_command(args: RunArgs) -> Result<(), ()> {
                 render_report(&mut renderer, &report);
             }
             RunError::Parse(error) => {
-                // Keep P4 input failures rich
+                // Render the input diagnostic without compacting its details
                 render_report(&mut renderer, &error.into_report());
             }
             RunError::Eval(error) => {
