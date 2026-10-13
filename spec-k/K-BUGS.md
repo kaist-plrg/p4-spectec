@@ -3,7 +3,7 @@
 K in P4-SpecTec follows the K documentation where the documentation says what
 K does. Running it against `krun` therefore shows where K v7.1.337 (LLVM
 backend `f02284f`, v0.1.140) does not do what its documentation says. This
-file collects nine such places. Each has a test in
+file collects ten such places. Each has a test in
 `spec-k/tests/manual/behavior/`, listed as `known` in `spec-k/tests/suites.toml`
 because K in P4-SpecTec and `krun` are expected to differ on it.
 
@@ -245,7 +245,37 @@ checks the value only after that
 ([`bytes.cpp`:369-373](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/strings/bytes.cpp#L369-L373)),
 though the test covers only `padRightBytes`.
 
-## 8. Overlapping occurrences in strings
+## 8. `^%Int` with a negative exponent
+
+Diff test: [`tests/manual/behavior/powmod`](tests/manual/behavior/powmod/)
+
+`A ^%Int B C` raises `A` to the power `B` modulo `C`. The documentation defines
+it by `^Int` and `%Int`
+([`domains.md`:1229-1231](https://github.com/runtimeverification/k/blob/4a46d1231473b599c699160132fd6e76a5c46406/k-distribution/include/kframework/builtin/domains.md?plain=1#L1229-L1231)):
+
+> `A ^%Int B C` is equal in value to `(A ^Int B) %Int C`, but has a better
+> asymptotic complexity.
+
+`2 ^Int -1` has no value in `krun`: it stops with `Exponent out of range: 2 ^
+-1` (the test `tests/manual/errors/pow`). So `(2 ^Int -1) %Int 5` has none
+either, and neither should `2 ^%Int -1 5`. The test computes it:
+
+```k
+rule <k> run(B, C) => 2 ^%Int B C </k>
+```
+
+| Program | `krun` | K in P4-SpecTec |
+|---|---|---|
+| `run(-1, 5)` | `3` | fails |
+
+`krun` gives 3, the inverse of 2 modulo 5. For a negative exponent the LLVM
+backend takes the modular inverse (GMP `mpz_powm`), while `^Int` rejects any
+exponent that is not a nonnegative machine integer
+([`int.cpp`:159-185](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/arithmetic/int.cpp#L159-L185)).
+The two sides of the documented equation thus differ in `krun` itself. K in
+P4-SpecTec fails on a negative exponent, as `^Int` does.
+
+## 9. Overlapping occurrences in strings
 
 Diff test: [`tests/manual/behavior/overlapping-occurrences`](tests/manual/behavior/overlapping-occurrences/)
 
@@ -289,7 +319,7 @@ So `"aaa"` becomes `"b"`, all of `"aaaaaaa"` becomes one `"b"`, and with the
 longer replacement `"xyz"` the result is cut in the middle, `"xyzxy"`. These
 results are wrong even if occurrences were meant to overlap.
 
-## 9. `Float` literals beyond the exponent range
+## 10. `Float` literals beyond the exponent range
 
 Diff test: [`tests/manual/behavior/float-literal-range`](tests/manual/behavior/float-literal-range/)
 
