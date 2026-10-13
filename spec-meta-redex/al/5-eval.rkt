@@ -10,8 +10,7 @@
          "5.5-eval-prem.rkt"
          "5.6-eval-call-func.rkt"
          "5.7-eval-call-rel.rkt")
-(provide ->redex/eval
-         ->redex
+(provide ->redex
          ->ctx
          ->al)
 

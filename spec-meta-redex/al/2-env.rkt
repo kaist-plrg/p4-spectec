@@ -4,8 +4,7 @@
 (require redex/reduction-semantics
          "../common/4-relation.rkt"
          "1-syntax.rkt")
-(provide al-base
-         al-env)
+(provide al-env)
 
 ;; The common languages and the AL syntax
 (define-union-language al-base common-relation al-syntax)

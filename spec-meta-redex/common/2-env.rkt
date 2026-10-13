@@ -29,10 +29,8 @@
 (define-metafunction common-env
   extend-tdenv : tdenv tdenv -> tdenv
   [(extend-tdenv tdenv_global ()) tdenv_global]
-  [(extend-tdenv tdenv_global ((id typdef) ...))
-   (adds-map tdenv_global (id ...) (typdef ...))
-   ;; otherwise
-   (side-condition (not (null? (term ((id typdef) ...)))))])
+  [(extend-tdenv tdenv_global ((id_h typdef_h) (id_t typdef_t) ...))
+   (adds-map tdenv_global (id_h id_t ...) (typdef_h typdef_t ...))])
 
 (define-judgment-form common-env
   #:mode (theta-of-tdenv I O)

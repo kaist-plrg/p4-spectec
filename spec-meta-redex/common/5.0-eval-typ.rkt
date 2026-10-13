@@ -14,10 +14,9 @@
   #:mode (subst-typ I I O)
   #:contract (subst-typ theta typ typ)
   [(subst-typ () typ typ)]
-  [(side-condition ,(pair? (term theta)))
-   (subst-typ-inner theta typ typ_subst)
+  [(subst-typ-inner theta typ typ_subst)
    ----------------------------------------
-   (subst-typ theta typ typ_subst)])
+   (subst-typ (name theta ((id_h typ_h) (id_t typ_t) ...)) typ typ_subst)])
 
 ;; $subst_typ'
 (define-judgment-form common-relation
