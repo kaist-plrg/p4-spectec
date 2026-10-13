@@ -25,7 +25,7 @@ use p4spectec::{
     phrase,
 };
 
-use crate::{MetaRunner, Result, check_guard, meta_runner};
+use super::{MetaRunner, Result, check_guard, meta_runner};
 
 /// Checks wrappers and malformed data using the real meta result types.
 pub fn run() -> Result<()> {

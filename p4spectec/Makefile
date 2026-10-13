@@ -17,17 +17,14 @@ build release:
 fmt:
 	$(CARGO) fmt
 	$(CARGO) fmt --manifest-path test-driver/Cargo.toml
-	$(CARGO) fmt --manifest-path test-metacirc/Cargo.toml
 
 fmt-check:
 	$(CARGO) fmt --check
 	$(CARGO) fmt --manifest-path test-driver/Cargo.toml --check
-	$(CARGO) fmt --manifest-path test-metacirc/Cargo.toml --check
 
 lint:
 	$(CARGO) clippy --locked --all-targets --no-deps --target-dir "$(TARGET_DIR)"
 	$(CARGO) clippy --locked --all-targets --no-deps --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)"
-	$(CARGO) clippy --locked --all-targets --no-deps --manifest-path test-metacirc/Cargo.toml --target-dir "$(TARGET_DIR)"
 
 rustdoc:
 	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --locked --no-deps --target-dir "$(TARGET_DIR)"
@@ -115,8 +112,8 @@ test-diagnostics-promote: diagnostic-cli
 .PHONY: test-metacirc test-metacirc-parse
 
 test-metacirc:
-	$(CARGO) run --locked --release --manifest-path test-metacirc/Cargo.toml --target-dir "$(TARGET_DIR)" --
+	$(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin p4spectec-test-metacirc --
 
 # AL interface parsing without interpreter execution
 test-metacirc-parse:
-	$(CARGO) run --locked --manifest-path test-metacirc/Cargo.toml --target-dir "$(TARGET_DIR)" --bin parse-interface
+	$(CARGO) run --locked --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin p4spectec-test-metacirc -- --parse-only

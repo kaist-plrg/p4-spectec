@@ -11,7 +11,7 @@ use std::path::Path;
 
 use p4spectec::lang::{al::ast, data::arena::Arena, traits::eq::SyntaxEq};
 
-use crate::{MetaRunner, Result, check_guard, fixture, meta_runner, source};
+use super::{MetaRunner, Result, check_guard, fixture, meta_runner, source};
 
 /// Checks source AL from the target fixture and both complete specifications.
 pub fn run() -> Result<()> {

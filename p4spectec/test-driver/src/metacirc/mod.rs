@@ -1,10 +1,11 @@
 //! Standalone acceptance checks for the AL meta representation
 //!
-//! `main` checks compiler snapshots, source AL codec boundaries,
+//! `run` checks compiler snapshots, source AL codec boundaries,
 //! and DSL semantic regressions through guarded native interpreters.
 //! Fixture paths resolve from this crate independently of the working directory.
 
 mod boundary;
+pub mod parse;
 mod script;
 mod semantics;
 mod snapshot;
@@ -23,10 +24,12 @@ use p4spectec::{
     runner::{Config, NullExtern, Runner, Spec},
 };
 
-type Result<T> = std::result::Result<T, Box<dyn Error>>;
+/// The result of a meta representation acceptance check.
+pub type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type MetaRunner = Runner<AlInterface, NullExtern>;
 
-fn main() -> Result<()> {
+/// Checks snapshots, codecs, and guarded semantic regressions.
+pub fn run() -> Result<()> {
     snapshot::run()?;
     script::run()?;
     boundary::run()?;
@@ -37,7 +40,7 @@ fn main() -> Result<()> {
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("fixtures")
+        .join("fixtures/metacirc")
         .join(name)
 }
 

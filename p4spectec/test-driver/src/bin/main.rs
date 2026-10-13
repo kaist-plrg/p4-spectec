@@ -1,37 +1,12 @@
-mod corpus;
-mod snapshot;
-mod suite;
-
-mod elab;
-
-mod algo;
-
-mod structure;
-
-mod prose;
-
-mod adoc;
-
-mod p4parse;
-mod run;
-mod sim;
-
-mod diagnostic;
-
 use std::{path::PathBuf, process::ExitCode};
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
-use suite::{Index, Language};
-
-#[derive(Debug, thiserror::Error)]
-enum Error {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error("{0}")]
-    Invalid(String),
-}
-type Result<T> = std::result::Result<T, Error>;
+use p4spectec_test::{
+    Error, ExecutionOptions, Result, adoc, algo, diagnostic, elab, p4parse, prose, run, sim,
+    structure,
+    suite::{self, Index, Language},
+};
 
 /// Source and expected-file acceptance for the Rust implementation
 #[derive(Parser)]
@@ -85,17 +60,6 @@ enum Command {
         #[arg(long = "cli", value_name = "PATH")]
         path_cli: Option<PathBuf>,
     },
-}
-
-/// Configures interpreter execution consistently for run and sim.
-#[derive(Clone, Copy, Args)]
-struct ExecutionOptions {
-    /// Reject nondeterministic candidate selection
-    #[arg(long, global = true)]
-    det: bool,
-    /// Enable or disable interpreter caching
-    #[arg(long, global = true, default_value_t = true, action = clap::ArgAction::Set)]
-    cache_on: bool,
 }
 
 fn execute(mut cli: Cli) -> Result<()> {

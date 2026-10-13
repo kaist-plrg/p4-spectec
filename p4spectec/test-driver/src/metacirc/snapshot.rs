@@ -3,11 +3,11 @@
 //! Elaboration, AL lowering, and structure lowering have separate expectations.
 //! Comparisons ignore renderer decoration at line ends and never rewrite files.
 
-use std::{fs, path::Path};
+use std::path::Path;
 
 use p4spectec::lang::traits::print::Print;
 
-use crate::{Result, source};
+use super::{Result, source};
 
 /// Checks the three compiler stages against the preserved meta snapshots.
 pub fn run() -> Result<()> {
@@ -21,28 +21,11 @@ pub fn run() -> Result<()> {
     Ok(())
 }
 
-/// Reports the first differing line without dumping a whole specification.
+/// Compares a compiler stage without rewriting its expectation.
 fn check(name: &str, text_actual: &str) -> Result<()> {
-    // Remove only decorative spaces emitted after declarations and headers
-    let text_actual = (text_actual.to_owned() + "\n")
-        .split('\n')
-        .map(|text| text.trim_end_matches([' ', '\t']))
-        .collect::<Vec<_>>()
-        .join("\n");
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("expected")
+        .join("expected/metacirc")
         .join(format!("{name}.expected"));
-    let text_expect = fs::read_to_string(&path)?;
-
-    // Equal prefixes with different line counts still fail the snapshot
-    if text_actual != text_expect {
-        let num_line = text_actual
-            .lines()
-            .zip(text_expect.lines())
-            .position(|(text_a, text_b)| text_a != text_b)
-            .unwrap_or_else(|| text_actual.lines().count().min(text_expect.lines().count()))
-            + 1;
-        return Err(format!("{}: snapshot differs at line {num_line}", path.display()).into());
-    }
+    crate::snapshot::check_readonly(&path, &(text_actual.to_owned() + "\n"))?;
     Ok(())
 }

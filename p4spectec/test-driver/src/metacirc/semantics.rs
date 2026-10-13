@@ -9,7 +9,7 @@ use p4spectec::{
     runner::{Config, NullExtern, Runner},
 };
 
-use crate::{Result, check_guard, fixture, source};
+use super::{Result, check_guard, fixture, source};
 
 /// Runs semantic fixtures through every native preparation path.
 pub fn run() -> Result<()> {
