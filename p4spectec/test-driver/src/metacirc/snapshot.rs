@@ -23,9 +23,9 @@ pub fn run() -> Result<()> {
 
 /// Compares a compiler stage without rewriting its expectation.
 fn check(name: &str, text_actual: &str) -> Result<()> {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("expected/metacirc")
-        .join(format!("{name}.expected"));
+    let path = crate::suite::expected_path(
+        &Path::new("expected/metacirc").join(format!("{name}.expected")),
+    );
     crate::snapshot::check_readonly(&path, &(text_actual.to_owned() + "\n"))?;
     Ok(())
 }
