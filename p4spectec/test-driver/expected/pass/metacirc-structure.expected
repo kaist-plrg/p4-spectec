@@ -1418,7 +1418,7 @@ relation Eval_exp: C |- exp'' : %
 
             1. (Let OK val_input be res<val>)*{res<val> <- res<val>*, val_input -> val_input*}
 
-              1. (Call_func: C |- id targ*{targ <- targ*} val_input*{val_input <- val_input*} : valres)
+              1. (Call_func: C |- id typ_input*{typ_input <- typ_input*} val_input*{val_input <- val_input*} : valres)
 
                 1. Result in: % |- % : valres
 
@@ -3600,21 +3600,21 @@ relation Eval_path: C |- val_b path' : %
 
   1. Result in: % |- % % : FAIL
 
-relation Eval_path_upd: C |- val_b path' := val_n : %
+relation Eval_path_upd: C |- val_b path' := val_n' : %
 
 1. Case analysis on path' (total)
 
   1. Case (% matches pattern ROOT)
 
-    1. Result in: % |- % % := % : OK val_n
+    1. Result in: % |- % % := % : OK val_n'
 
   2. Case (% matches pattern IDX % %)
 
     1. (Let IDX path exp_i be path')
 
-      1. If (val_n matches TEXT %), then
+      1. If (val_n' matches TEXT %), then
 
-        1. (Let TEXT t_n be val_n)
+        1. (Let TEXT t_n be val_n')
 
           1. (Eval_path: C |- val_b path : res<val>)
 
@@ -3670,7 +3670,7 @@ relation Eval_path_upd: C |- val_b path' := val_n : %
 
                             1. (Let NAT n_target be num)
 
-                              1. (Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_target] = val_n] : valres)
+                              1. (Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_target] = val_n'] : valres)
 
                                 1. Result in: % |- % % := % : valres
 
@@ -3678,95 +3678,103 @@ relation Eval_path_upd: C |- val_b path' := val_n : %
 
     1. (Let SLICE path exp_i exp_n be path')
 
-      1. If (val_n matches TEXT %), then
+      1. Case analysis on val_n'
 
-        1. (Let TEXT t_n be val_n)
+        1. Case (% matches pattern TEXT %)
 
-          1. (Eval_path: C |- val_b path : res<val>)
+          1. (Let TEXT t_n be val_n')
 
-            1. If (res<val> matches OK %), then
+            1. (Eval_path: C |- val_b path : res<val>)
 
-              1. (Let OK val be res<val>)
+              1. If (res<val> matches OK %), then
 
-                1. If (val matches TEXT %), then
+                1. (Let OK val be res<val>)
 
-                  1. (Let TEXT t be val)
+                  1. If (val matches TEXT %), then
 
-                    1. (Eval_exp: C |- exp_i : res<val>')
+                    1. (Let TEXT t be val)
 
-                      1. If (res<val>' matches OK %), then
+                      1. (Eval_exp: C |- exp_i : res<val>')
 
-                        1. (Let OK val' be res<val>')
+                        1. If (res<val>' matches OK %), then
 
-                          1. If (val' <: num), then
+                          1. (Let OK val' be res<val>')
 
-                            1. (Let num be val' as num)
+                            1. If (val' <: num), then
 
-                              1. If (num matches NAT %), then
+                              1. (Let num be val' as num)
 
-                                1. (Let NAT n_i be num)
+                                1. If (num matches NAT %), then
 
-                                  1. (Eval_exp: C |- exp_n : res<val>'')
+                                  1. (Let NAT n_i be num)
 
-                                    1. If (res<val>'' matches OK %), then
+                                    1. (Eval_exp: C |- exp_n : res<val>'')
 
-                                      1. (Let OK val'' be res<val>'')
+                                      1. If (res<val>'' matches OK %), then
 
-                                        1. If (val'' <: num), then
+                                        1. (Let OK val'' be res<val>'')
 
-                                          1. (Let num' be val'' as num)
+                                          1. If (val'' <: num), then
 
-                                            1. If (num' matches NAT %), then
+                                            1. (Let num' be val'' as num)
 
-                                              1. (Let NAT n_n be num')
+                                              1. If (num' matches NAT %), then
 
-                                                1. If ((|t_n| = n_n)), then
+                                                1. (Let NAT n_n be num')
 
-                                                  1. (Eval_path_upd: C |- val_b path := TEXT t[[n_i : n_n] = t_n] : valres)
+                                                  1. If ((|t_n| = n_n)), then
 
-                                                    1. Result in: % |- % % := % : valres
+                                                    1. (Eval_path_upd: C |- val_b path := TEXT t[[n_i : n_n] = t_n] : valres)
 
-      2. (Eval_path: C |- val_b path : res<val>)
+                                                      1. Result in: % |- % % := % : valres
 
-        1. If (res<val> matches OK %), then
+        2. Case (% matches pattern LIST %)
 
-          1. (Let OK val' be res<val>)
+          1. (Let LIST val_n*{val_n <- val_n*} be val_n')
 
-            1. If (val' matches LIST %), then
+            1. (Eval_path: C |- val_b path : res<val>)
 
-              1. (Let LIST val*{val <- val*} be val')
+              1. If (res<val> matches OK %), then
 
-                1. (Eval_exp: C |- exp_i : res<val>')
+                1. (Let OK val' be res<val>)
 
-                  1. If (res<val>' matches OK %), then
+                  1. If (val' matches LIST %), then
 
-                    1. (Let OK val'' be res<val>')
+                    1. (Let LIST val*{val <- val*} be val')
 
-                      1. If (val'' <: num), then
+                      1. (Eval_exp: C |- exp_i : res<val>')
 
-                        1. (Let num be val'' as num)
+                        1. If (res<val>' matches OK %), then
 
-                          1. If (num matches NAT %), then
+                          1. (Let OK val'' be res<val>')
 
-                            1. (Let NAT n_i be num)
+                            1. If (val'' <: num), then
 
-                              1. (Eval_exp: C |- exp_n : res<val>'')
+                              1. (Let num be val'' as num)
 
-                                1. If (res<val>'' matches OK %), then
+                                1. If (num matches NAT %), then
 
-                                  1. (Let OK val''' be res<val>'')
+                                  1. (Let NAT n_i be num)
 
-                                    1. If (val''' <: num), then
+                                    1. (Eval_exp: C |- exp_n : res<val>'')
 
-                                      1. (Let num' be val''' as num)
+                                      1. If (res<val>'' matches OK %), then
 
-                                        1. If (num' matches NAT %), then
+                                        1. (Let OK val''' be res<val>'')
 
-                                          1. (Let NAT n_n be num')
+                                          1. If (val''' <: num), then
 
-                                            1. (Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_i : n_n] = [val_n]] : valres)
+                                            1. (Let num' be val''' as num)
 
-                                              1. Result in: % |- % % := % : valres
+                                              1. If (num' matches NAT %), then
+
+                                                1. (Let NAT n_n be num')
+
+                                                  1. If ((|val_n*{val_n <- val_n*}| = n_n)), then
+
+                                                    1. (Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_i : n_n] = val_n*{val_n <- val_n*}] : valres)
+
+                                                      1. Result in: % |- % % := % : valres
 
   4. Case (% matches pattern DOT % %)
 
@@ -3784,7 +3792,7 @@ relation Eval_path_upd: C |- val_b path' := val_n : %
 
                 1. (Let atom_field val_field be valfield)*{valfield <- valfield*, atom_field -> atom_field*, val_field -> val_field*}
 
-                  1. (Let valfield_new be atom_field $ite<val>((atom = atom_field), val_n, val_field))*{atom_field <- atom_field*, val_field <- val_field*, valfield_new -> valfield_new*}
+                  1. (Let valfield_new be atom_field $ite<val>((atom = atom_field), val_n', val_field))*{atom_field <- atom_field*, val_field <- val_field*, valfield_new -> valfield_new*}
 
                     1. (Eval_path_upd: C |- val_b path := STR valfield_new*{valfield_new <- valfield_new*} : valres)
 

@@ -1257,7 +1257,7 @@ relation Eval_exp: ctx |- exp : res<val>
     -- (Eval_arg: C |- arg : res<val>)*{arg <- arg*, res<val> -> res<val>*}
     -- (if res<val> matches OK %)*{res<val> <- res<val>*}
     -- (let OK val_input = res<val>)*{res<val> <- res<val>*, val_input -> val_input*}
-    -- Call_func: C |- id targ*{targ <- targ*} val_input*{val_input <- val_input*} : valres
+    -- Call_func: C |- id typ_input*{typ_input <- typ_input*} val_input*{val_input <- val_input*} : valres
     -- output: % |- % : valres
 
   rulegroup iter
@@ -3015,27 +3015,30 @@ relation Eval_path_upd: ctx |- val path := val : res<val>
     -- output: % |- % % := % : valres
 
     rulepath list
-    -- let val_n = val'
+    -- let val'' = val'
+    -- if val'' matches LIST %
+    -- let LIST val_n*{val_n <- val_n*} = val''
     -- Eval_path: C |- val_b path : res<val>
     -- if res<val> matches OK %
-    -- let OK val'' = res<val>
-    -- if val'' matches LIST %
-    -- let LIST val*{val <- val*} = val''
+    -- let OK val''' = res<val>
+    -- if val''' matches LIST %
+    -- let LIST val*{val <- val*} = val'''
     -- Eval_exp: C |- exp_i : res<val>'
     -- if res<val>' matches OK %
-    -- let OK val''' = res<val>'
-    -- if val''' <: num
-    -- let num = val''' as num
+    -- let OK val'''' = res<val>'
+    -- if val'''' <: num
+    -- let num = val'''' as num
     -- if num matches NAT %
     -- let NAT n_i = num
     -- Eval_exp: C |- exp_n : res<val>''
     -- if res<val>'' matches OK %
-    -- let OK val'''' = res<val>''
-    -- if val'''' <: num
-    -- let num' = val'''' as num
+    -- let OK val''''' = res<val>''
+    -- if val''''' <: num
+    -- let num' = val''''' as num
     -- if num' matches NAT %
     -- let NAT n_n = num'
-    -- Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_i : n_n] = [val_n]] : valres
+    -- if (|val_n*{val_n <- val_n*}| = n_n)
+    -- Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_i : n_n] = val_n*{val_n <- val_n*}] : valres
     -- output: % |- % % := % : valres
 
   rulegroup dot

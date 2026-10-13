@@ -758,7 +758,7 @@ relation Eval_exp: ctx |- exp : res<val>
     rule call: C |- CALL id targ*{targ <- targ*} arg*{arg <- arg*} : valres
     -- Eval_targs: C |- targ*{targ <- targ*} : typ_input*{typ_input <- typ_input*}
     -- (Eval_arg: C |- arg : OK val_input)*{arg <- arg*, val_input <- val_input*}
-    -- Call_func: C |- id targ*{targ <- targ*} val_input*{val_input <- val_input*} : valres
+    -- Call_func: C |- id typ_input*{typ_input <- typ_input*} val_input*{val_input <- val_input*} : valres
 
   rulegroup iter
 
@@ -1449,11 +1449,12 @@ relation Eval_path_upd: ctx |- val path := val : res<val>
     -- if (|t_n| = n_n)
     -- Eval_path_upd: C |- val_b path := TEXT t[[n_i : n_n] = t_n] : valres
 
-    rule list: C |- val_b SLICE path exp_i exp_n := val_n : valres
+    rule list: C |- val_b SLICE path exp_i exp_n := LIST val_n*{val_n <- val_n*} : valres
     -- Eval_path: C |- val_b path : OK LIST val*{val <- val*}
     -- Eval_exp: C |- exp_i : OK NAT n_i as val
     -- Eval_exp: C |- exp_n : OK NAT n_n as val
-    -- Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_i : n_n] = [val_n]] : valres
+    -- if (|val_n*{val_n <- val_n*}| = n_n)
+    -- Eval_path_upd: C |- val_b path := LIST val*{val <- val*}[[n_i : n_n] = val_n*{val_n <- val_n*}] : valres
 
   rulegroup dot
 
