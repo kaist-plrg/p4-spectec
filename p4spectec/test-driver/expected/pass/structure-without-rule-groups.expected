@@ -25349,11 +25349,29 @@ relation Table_ok: TC |- tableProperty*{tableProperty <- tableProperty*} : % %
 
             1. (TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
-              1. (Let tablePropertyIR_default_action be _EMPTY ?() DEFAULT_ACTION '=' _BARE "NoAction" ?() `( [] `) ';' as tablePropertyIR)
+              1. (Let (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} be $find_callableDef_non_overloaded_t(LOCAL, TC, '.' "NoAction"))
 
-                1. (Let (TBLC_2, tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*}) be $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}))
+                1. If ((callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches (_)), then
 
-                  1. Result in: % |- % : TBLC_2 tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
+                  1. (Let ?((_callableId, callableTypeDefIR)) be (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?})
+
+                    1. If (callableTypeDefIR <: actionTypeIR), then
+
+                      1. (Let _annotationList ACTION _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) be callableTypeDefIR as actionTypeIR)
+
+                        1. If (parameterIR*{parameterIR <- parameterIR*} matches []), then
+
+                          1. (Let tablePropertyIR_default_action be _EMPTY ?() DEFAULT_ACTION '=' _BARE "NoAction" ?() `( [] `) ';' as tablePropertyIR)
+
+                            1. (Let (TBLC_2, tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*}) be $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}))
+
+                              1. Result in: % |- % : TBLC_2 tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
+
+                        1. Else Dangling
+
+                    1. Else Dangling
+
+                1. Else Dangling
 
         1. Else Dangling
 

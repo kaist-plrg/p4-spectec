@@ -18947,6 +18947,12 @@ relation Table_ok: typingContext |- tableProperty* : tableContext tablePropertyL
     -- if (|$filter_<tableProperty>(tableProperty*{tableProperty <- tableProperty*}, $is_tableLargestPriorityWinsProperty(tableProperty)*{tableProperty <- tableProperty*})| <= 1)
     -- let TBLC_0 = $empty_tableContext
     -- TableProperties_ok: TC TBLC_0 |- tableProperty*{tableProperty <- tableProperty*} : TBLC_1 tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
+    -- let (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} = $find_callableDef_non_overloaded_t(LOCAL, TC, '.' "NoAction")
+    -- if (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches (_)
+    -- let ?((_callableId, callableTypeDefIR)) = (callableId, callableTypeDefIR)?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?}
+    -- if callableTypeDefIR <: actionTypeIR
+    -- let _annotationList ACTION _nameIR `( parameterIR*{parameterIR <- parameterIR*} `) = callableTypeDefIR as actionTypeIR
+    -- if parameterIR*{parameterIR <- parameterIR*} matches []
     -- let tablePropertyIR_default_action = _EMPTY ?() DEFAULT_ACTION '=' _BARE "NoAction" ?() `( [] `) ';' as tablePropertyIR
     -- let (TBLC_2, tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*}) = $insert_NoAction_tablePropertyIR(TBLC_1, tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
     -- output: % |- % : TBLC_2 tablePropertyIR_updated*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]

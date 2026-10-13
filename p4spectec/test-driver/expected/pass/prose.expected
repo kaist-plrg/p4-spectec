@@ -23709,11 +23709,23 @@ relation Table_ok: TC |- (tableProperty)*{tableProperty <- tableProperty*} : % %
 
             2. (TableProperties_ok: TC TBLC_0 |- (tableProperty)*{tableProperty <- tableProperty*} : TBLC_1 (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*})
 
-            3. (Let tablePropertyIR_default_action be (((_EMPTY) ?() DEFAULT_ACTION '=' ((_BARE "NoAction") ?() `( [] `)) ';') as tablePropertyIR))
+            3. (Let ((callableId, callableTypeDefIR))?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} be $find_callableDef_non_overloaded_t((LOCAL), TC, ('.' "NoAction")))
 
-            4. (Let (TBLC_2, (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*}) be $insert_NoAction_tablePropertyIR(TBLC_1, (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*}))
+            4. Check ((((callableId, callableTypeDefIR))?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?} matches pattern (_)))
 
-            5. Result in: % |- % : TBLC_2 (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
+              1. (Let ?((_callableId, callableTypeDefIR)) be ((callableId, callableTypeDefIR))?{(callableId, callableTypeDefIR) <- (callableId, callableTypeDefIR)?})
+
+              2. Check ((callableTypeDefIR has type actionTypeIR))
+
+                1. (Let (_annotationList ACTION _nameIR `( (parameterIR)*{parameterIR <- parameterIR*} `)) be (callableTypeDefIR as actionTypeIR))
+
+                2. Check (((parameterIR)*{parameterIR <- parameterIR*} matches pattern []))
+
+                  1. (Let tablePropertyIR_default_action be (((_EMPTY) ?() DEFAULT_ACTION '=' ((_BARE "NoAction") ?() `( [] `)) ';') as tablePropertyIR))
+
+                  2. (Let (TBLC_2, (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*}) be $insert_NoAction_tablePropertyIR(TBLC_1, (tablePropertyIR)*{tablePropertyIR <- tablePropertyIR*}))
+
+                  3. Result in: % |- % : TBLC_2 (tablePropertyIR_updated)*{tablePropertyIR_updated <- tablePropertyIR_updated*} ++ [tablePropertyIR_default_action]
 
         2. Case (% = 1)
 
