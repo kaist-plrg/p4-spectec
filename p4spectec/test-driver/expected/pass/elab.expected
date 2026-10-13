@@ -4362,33 +4362,49 @@ def $bin_eq(value, value) : bool =
 
   clause 7 : (w_max_a '.' _nat V i_a as value, w_max_b '.' _nat' V i_b as value) = ((w_max_a = w_max_b) /\ (i_a = i_b))
 
-  clause 8 : (LIST `[ value_a*{value_a <- value_a*} `] as value, LIST `[ value_b*{value_b <- value_b*} `] as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 8 : (LIST `[ value_a*{value_a <- value_a*} `] as value, LIST `[ value_b*{value_b <- value_b*} `] as value) = false
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
 
-  clause 9 : (TUPLE `( value_a*{value_a <- value_a*} `) as value, TUPLE `( value_b*{value_b <- value_b*} `) as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 9 : (LIST `[ value_a*{value_a <- value_a*} `] as value, LIST `[ value_b*{value_b <- value_b*} `] as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
+  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 10 : (SEQ `( value_a*{value_a <- value_a*} `) as value, SEQ `( value_b*{value_b <- value_b*} `) as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 10 : (TUPLE `( value_a*{value_a <- value_a*} `) as value, TUPLE `( value_b*{value_b <- value_b*} `) as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
 
-  clause 11 : (ARRAY `[ value_a*{value_a <- value_a*} `] as value, ARRAY `[ value_b*{value_b <- value_b*} `] as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 11 : (SEQ `( value_a*{value_a <- value_a*} `) as value, SEQ `( value_b*{value_b <- value_b*} `) as value) = false
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
 
-  clause 12 : (HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] as value, HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] as value) = ((|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|) /\ $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*}))
+  clause 12 : (SEQ `( value_a*{value_a <- value_a*} `) as value, SEQ `( value_b*{value_b <- value_b*} `) as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
+  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
 
-  clause 13 : (STRUCT typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} as value, STRUCT typeId_b `{ fieldValue_b*{fieldValue_b <- fieldValue_b*} `} as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 13 : (ARRAY `[ value_a*{value_a <- value_a*} `] as value, ARRAY `[ value_b*{value_b <- value_b*} `] as value) = false
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
+
+  clause 14 : (ARRAY `[ value_a*{value_a <- value_a*} `] as value, ARRAY `[ value_b*{value_b <- value_b*} `] as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
+  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
+
+  clause 15 : (HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] as value, HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] as value) = false
+  -- if (|value_a*{value_a <- value_a*}| =/= |value_b*{value_b <- value_b*}|)
+
+  clause 16 : (HEADER_STACK `[ value_a*{value_a <- value_a*} `( _nat `) `] as value, HEADER_STACK `[ value_b*{value_b <- value_b*} `( _nat' `) `] as value) = $forall_($bin_eq(value_a, value_b)*{value_a <- value_a*, value_b <- value_b*})
+  -- if (|value_a*{value_a <- value_a*}| = |value_b*{value_b <- value_b*}|)
+
+  clause 17 : (STRUCT typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} as value, STRUCT typeId_b `{ fieldValue_b*{fieldValue_b <- fieldValue_b*} `} as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- (if (value_field_a nameIR_field_a ';' = fieldValue_a))*{fieldValue_a <- fieldValue_a*, nameIR_field_a <- nameIR_field_a*, value_field_a <- value_field_a*}
   -- (if (value_field_b nameIR_field_b ';' = fieldValue_b))*{fieldValue_b <- fieldValue_b*, nameIR_field_b <- nameIR_field_b*, value_field_b <- value_field_b*}
 
-  clause 14 : (HEADER typeId_a `{ _b ';' fieldValue_a*{fieldValue_a <- fieldValue_a*} `} as value, HEADER typeId_b `{ _b' ';' fieldValue_b*{fieldValue_b <- fieldValue_b*} `} as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 18 : (HEADER typeId_a `{ _b ';' fieldValue_a*{fieldValue_a <- fieldValue_a*} `} as value, HEADER typeId_b `{ _b' ';' fieldValue_b*{fieldValue_b <- fieldValue_b*} `} as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- (if (value_field_a nameIR_field_a ';' = fieldValue_a))*{fieldValue_a <- fieldValue_a*, nameIR_field_a <- nameIR_field_a*, value_field_a <- value_field_a*}
   -- (if (value_field_b nameIR_field_b ';' = fieldValue_b))*{fieldValue_b <- fieldValue_b*, nameIR_field_b <- nameIR_field_b*, value_field_b <- value_field_b*}
 
-  clause 15 : (HEADER_UNION typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} as value, HEADER_UNION typeId_b `{ fieldValue_b*{fieldValue_b <- fieldValue_b*} `} as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+  clause 19 : (HEADER_UNION typeId_a `{ fieldValue_a*{fieldValue_a <- fieldValue_a*} `} as value, HEADER_UNION typeId_b `{ fieldValue_b*{fieldValue_b <- fieldValue_b*} `} as value) = ((((typeId_a = typeId_b) /\ (|fieldValue_a*{fieldValue_a <- fieldValue_a*}| = |fieldValue_b*{fieldValue_b <- fieldValue_b*}|)) /\ $forall_($bin_eq(value_field_a, value_field_b)*{value_field_a <- value_field_a*, value_field_b <- value_field_b*})) /\ $forall_((nameIR_field_a = nameIR_field_b)*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
   -- (if (value_field_a nameIR_field_a ';' = fieldValue_a))*{fieldValue_a <- fieldValue_a*, nameIR_field_a <- nameIR_field_a*, value_field_a <- value_field_a*}
   -- (if (value_field_b nameIR_field_b ';' = fieldValue_b))*{fieldValue_b <- fieldValue_b*, nameIR_field_b <- nameIR_field_b*, value_field_b <- value_field_b*}
 
-  clause 16 : (typeId_a '.' nameIR_field_a as value, typeId_b '.' nameIR_field_b as value) = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
+  clause 20 : (typeId_a '.' nameIR_field_a as value, typeId_b '.' nameIR_field_b as value) = ((typeId_a = typeId_b) /\ (nameIR_field_a = nameIR_field_b))
 
-  clause 17 : (typeId_a '.' _nameIR '.' value_field_a as value, typeId_b '.' _nameIR' '.' value_field_b as value) = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
+  clause 21 : (typeId_a '.' _nameIR '.' value_field_a as value, typeId_b '.' _nameIR' '.' value_field_b as value) = ((typeId_a = typeId_b) /\ $bin_eq(value_field_a, value_field_b))
 
-  clause 18 : ('{#}' as value, '{#}' as value) = true
+  clause 22 : ('{#}' as value, '{#}' as value) = true
 
 def $bin_ne(value, value) : bool =
 

@@ -7720,15 +7720,25 @@ Arm 1:
 
       1. If let (LIST `[ (value_b)*{value_b <- value_b*} `]) of type listValue be value', then
 
-        1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+        1. Block (2 arms)
 
-          1. (Let bool' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool' -> bool'*}
+        Arm 1:
 
-          2. (Let bool be $forall_((bool')*{bool' <- bool'*}))
+          1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool)
+            1. Return false
 
-        1. Else Dangling
+          1. Else Dangling
+
+        Arm 2:
+
+          1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+            1. (Let bool be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool -> bool*}
+
+            2. Return $forall_((bool)*{bool <- bool*})
+
+          1. Else Dangling
 
       1. Else Dangling
 
@@ -7738,11 +7748,11 @@ Arm 1:
 
         1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
 
-          1. (Let bool''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''' -> bool'''*}
+          1. (Let bool'' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool'' -> bool''*}
 
-          2. (Let bool'' be $forall_((bool''')*{bool''' <- bool'''*}))
+          2. (Let bool' be $forall_((bool'')*{bool'' <- bool''*}))
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'')
+          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool')
 
         1. Else Dangling
 
@@ -7756,15 +7766,25 @@ Arm 1:
 
           1. If let (SEQ `( (value_b)*{value_b <- value_b*} `)) be sequenceValue' matching pattern SEQ `( % `), then
 
-            1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+            1. Block (2 arms)
 
-              1. (Let bool''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''' -> bool'''''*}
+            Arm 1:
 
-              2. (Let bool'''' be $forall_((bool''''')*{bool''''' <- bool'''''*}))
+              1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-              3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'''')
+                1. Return false
 
-            1. Else Dangling
+              1. Else Dangling
+
+            Arm 2:
+
+              1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+                1. (Let bool''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''' -> bool'''*}
+
+                2. Return $forall_((bool''')*{bool''' <- bool'''*})
+
+              1. Else Dangling
 
           1. Else Dangling
 
@@ -7776,15 +7796,25 @@ Arm 1:
 
       1. If let (ARRAY `[ (value_b)*{value_b <- value_b*} `]) of type arrayValue be value', then
 
-        1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+        1. Block (2 arms)
 
-          1. (Let bool''''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''''' -> bool'''''''*}
+        Arm 1:
 
-          2. (Let bool'''''' be $forall_((bool''''''')*{bool''''''' <- bool'''''''*}))
+          1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'''''')
+            1. Return false
 
-        1. Else Dangling
+          1. Else Dangling
+
+        Arm 2:
+
+          1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+            1. (Let bool'''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool'''' -> bool''''*}
+
+            2. Return $forall_((bool'''')*{bool'''' <- bool''''*})
+
+          1. Else Dangling
 
       1. Else Dangling
 
@@ -7792,15 +7822,25 @@ Arm 1:
 
       1. If let (HEADER_STACK `[ (value_b)*{value_b <- value_b*} `( _nat' `) `]) of type headerStackValue be value', then
 
-        1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+        1. Block (2 arms)
 
-          1. (Let bool''''''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''''''' -> bool'''''''''*}
+        Arm 1:
 
-          2. (Let bool'''''''' be $forall_((bool''''''''')*{bool''''''''' <- bool'''''''''*}))
+          1. If ((|(value_a)*{value_a <- value_a*}| =/= |(value_b)*{value_b <- value_b*}|)), then
 
-          3. Return ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|) /\ bool'''''''')
+            1. Return false
 
-        1. Else Dangling
+          1. Else Dangling
+
+        Arm 2:
+
+          1. If ((|(value_a)*{value_a <- value_a*}| = |(value_b)*{value_b <- value_b*}|)), then
+
+            1. (Let bool''''' be $bin_eq(value_a, value_b))*{value_a <- value_a*, value_b <- value_b*, bool''''' -> bool'''''*}
+
+            2. Return $forall_((bool''''')*{bool''''' <- bool'''''*})
+
+          1. Else Dangling
 
       1. Else Dangling
 
@@ -7816,13 +7856,13 @@ Arm 1:
 
           1. If ((|(nameIR_field_a)*{nameIR_field_a <- nameIR_field_a*}| = |(nameIR_field_b)*{nameIR_field_b <- nameIR_field_b*}|)), then
 
-            1. (Let bool'''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''''''' -> bool''''''''''''*}
+            1. (Let bool'''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''' -> bool''''''''*}
 
-            2. (Let bool'''''''''' be $forall_((bool'''''''''''')*{bool'''''''''''' <- bool''''''''''''*}))
+            2. (Let bool'''''' be $forall_((bool'''''''')*{bool'''''''' <- bool''''''''*}))
 
-            3. (Let bool''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+            3. (Let bool''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
 
-            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''''''') /\ bool''''''''''')
+            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''') /\ bool''''''')
 
           1. Else Dangling
 
@@ -7842,13 +7882,13 @@ Arm 1:
 
           1. If ((|(nameIR_field_a)*{nameIR_field_a <- nameIR_field_a*}| = |(nameIR_field_b)*{nameIR_field_b <- nameIR_field_b*}|)), then
 
-            1. (Let bool''''''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool''''''''''''''' -> bool'''''''''''''''*}
+            1. (Let bool''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool''''''''''' -> bool'''''''''''*}
 
-            2. (Let bool''''''''''''' be $forall_((bool''''''''''''''')*{bool''''''''''''''' <- bool'''''''''''''''*}))
+            2. (Let bool''''''''' be $forall_((bool''''''''''')*{bool''''''''''' <- bool'''''''''''*}))
 
-            3. (Let bool'''''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+            3. (Let bool'''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
 
-            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool''''''''''''') /\ bool'''''''''''''')
+            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool''''''''') /\ bool'''''''''')
 
           1. Else Dangling
 
@@ -7868,13 +7908,13 @@ Arm 1:
 
           1. If ((|(nameIR_field_a)*{nameIR_field_a <- nameIR_field_a*}| = |(nameIR_field_b)*{nameIR_field_b <- nameIR_field_b*}|)), then
 
-            1. (Let bool'''''''''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''''''''''''' -> bool''''''''''''''''''*}
+            1. (Let bool'''''''''''''' be $bin_eq(value_field_a, value_field_b))*{value_field_a <- value_field_a*, value_field_b <- value_field_b*, bool'''''''''''''' -> bool''''''''''''''*}
 
-            2. (Let bool'''''''''''''''' be $forall_((bool'''''''''''''''''')*{bool'''''''''''''''''' <- bool''''''''''''''''''*}))
+            2. (Let bool'''''''''''' be $forall_((bool'''''''''''''')*{bool'''''''''''''' <- bool''''''''''''''*}))
 
-            3. (Let bool''''''''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
+            3. (Let bool''''''''''''' be $forall_(((nameIR_field_a = nameIR_field_b))*{nameIR_field_a <- nameIR_field_a*, nameIR_field_b <- nameIR_field_b*}))
 
-            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''''''''''''') /\ bool''''''''''''''''')
+            4. Return ((((typeId_a = typeId_b) /\ (|(fieldValue_a)*{fieldValue_a <- fieldValue_a*}| = |(fieldValue_b)*{fieldValue_b <- fieldValue_b*}|)) /\ bool'''''''''''') /\ bool''''''''''''')
 
           1. Else Dangling
 
@@ -7904,9 +7944,9 @@ Arm 1:
 
             1. If let (typeId_b '.' _nameIR' '.' value_field_b) be enumValue' matching pattern % '.' % '.' %, then
 
-              1. (Let bool''''''''''''''''''' be $bin_eq(value_field_a, value_field_b))
+              1. (Let bool''''''''''''''' be $bin_eq(value_field_a, value_field_b))
 
-              2. Return ((typeId_a = typeId_b) /\ bool''''''''''''''''''')
+              2. Return ((typeId_a = typeId_b) /\ bool''''''''''''''')
 
             1. Else Dangling
 

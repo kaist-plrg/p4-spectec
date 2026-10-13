@@ -4806,22 +4806,41 @@ def $bin_eq(w_a S i_a, w_b S i_b) = (w_a = w_b) /\ (i_a = i_b)
 def $bin_eq(w_max_a '.' _ V i_a, w_max_b '.' _ V i_b)
   = (w_max_a = w_max_b) /\ (i_a = i_b)
 
+def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `]) = false
+  -- if |value_a*| =/= |value_b*|
+
 def $bin_eq(LIST `[ value_a* `], LIST `[ value_b* `])
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
 
 def $bin_eq(TUPLE `( value_a* `), TUPLE `( value_b* `))
   = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
 
+def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `)) = false
+  -- if |value_a*| =/= |value_b*|
+
 def $bin_eq(SEQ `( value_a* `), SEQ `( value_b* `))
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
+
+def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `]) = false
+  -- if |value_a*| =/= |value_b*|
 
 def $bin_eq(ARRAY `[ value_a* `], ARRAY `[ value_b* `])
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
 
 def $bin_eq(
     HEADER_STACK `[ value_a* `( _ `) `],
     HEADER_STACK `[ value_b* `( _ `) `])
-  = |value_a*| = |value_b*| /\ $forall_($bin_eq(value_a, value_b)*)
+  = false
+  -- if |value_a*| =/= |value_b*|
+
+def $bin_eq(
+    HEADER_STACK `[ value_a* `( _ `) `],
+    HEADER_STACK `[ value_b* `( _ `) `])
+  = $forall_($bin_eq(value_a, value_b)*)
+  -- if |value_a*| = |value_b*|
 
 def $bin_eq(
     STRUCT typeId_a `{ fieldValue_a* `},
