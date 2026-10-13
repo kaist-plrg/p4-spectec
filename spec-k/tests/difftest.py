@@ -295,7 +295,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-k", "--kompiled", required=True, help="the <name>-kompiled directory")
     ap.add_argument("programs", nargs="+", help="program files or directories")
-    ap.add_argument("--ext", default=None, help="extension of programs in directories (e.g. imp)")
+    ap.add_argument("--ext", default=None, help="extension of the programs in directories (e.g. imp)")
     ap.add_argument("--timeout", type=float, default=1800, help="seconds per run of the spec")
     ap.add_argument("--krun-arg", action="append", default=[], help="extra argument for krun")
     ap.add_argument("--depth", type=int, default=None, help="stop krun and the spec after this many steps")
@@ -329,12 +329,14 @@ def main():
                          "with krun's run (nondeterministic programs); :N checks only the first N steps")
     args = ap.parse_args()
 
+    # a directory gives its files with the extension; <program>.in and
+    # <program>.out beside them are the input and the expected output
     programs = []
     for p in args.programs:
         if os.path.isdir(p):
-            programs += sorted(f for f in glob.glob(os.path.join(p, "*." + args.ext if args.ext else "*"))
-                               if os.path.isfile(f)
-                               and (args.kore_input or not f.endswith((".out", ".in"))))
+            if not args.ext:
+                sys.exit("--ext is needed with a directory of programs (%s)" % p)
+            programs += sorted(f for f in glob.glob(os.path.join(p, "*." + args.ext)) if os.path.isfile(f))
         else:
             programs.append(p)
     programs = [p for p in programs
