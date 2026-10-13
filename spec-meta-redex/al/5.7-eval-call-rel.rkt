@@ -7,7 +7,6 @@
 ;; Eval_prem/fail does for the premise.
 
 (require "../common/0.0-prelude.rkt"
-         "../common/0.1-stdlib.rkt"
          "../common/4-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
@@ -28,11 +27,10 @@
    ;;; Rule path evaluation
 
    ;; rule Eval_rul/succ
-   (--> (eval-rul rulmatch rulpath (val ...))
-        (eval-rul/succ (assign-exps (exp ...) (val ...)) (eval-prems (prem ...)) (exp_out ...))
-        (where (id (exp_out ...) (prem_path ...)) rulpath)
-        (where ((exp ...) (prem_match ...)) rulmatch)
-        (where (prem ...) (prem_match ... prem_path ...))
+   (--> (eval-rul ((exp ...) (prem_match ...)) (id (exp_out ...) (prem_path ...)) (val ...))
+        (eval-rul/succ (assign-exps (exp ...) (val ...))
+                       (eval-prems (prem_match ... prem_path ...))
+                       (exp_out ...))
         "eval-rul/succ")
    (--> (eval-rul/succ OK OK ((OK val_out) ...)) (OK (val_out ...))
         "eval-rul/succ/output")
@@ -52,8 +50,8 @@
 
    ;; rules Eval_rulgroup/succ and Eval_rulgroup/fail: the group's result is
    ;; that of Eval_ruls
-   (--> (eval-rulgroup rulgroup (val ...)) (eval-ruls rulmatch (rulpath ...) (val ...))
-        (where (id rulmatch (rulpath ...)) rulgroup)
+   (--> (eval-rulgroup (id rulmatch (rulpath ...)) (val ...))
+        (eval-ruls rulmatch (rulpath ...) (val ...))
         "eval-rulgroup")
 
    ;;; Rule group sequence evaluation
@@ -74,12 +72,9 @@
 
    ;; rule Call_defined_rel
    (--> (call-defined-rel definedRelDef (val ...))
-        (IN L_local (eval-rulgroups (rulgroup_all ...) (val ...)))
+        (IN (empty-layer)
+            (eval-rulgroups (rulgroup ... (elsgroup-as-rulgroup elsgroup) ...) (val ...)))
         (where (DEF (rulgroup ...) (elsgroup ...)) definedRelDef)
-        (where (rulgroup_els ...) ((elsgroup-as-rulgroup elsgroup) ...))
-        (where (rulgroup_else ...) (opt-as-seq- (rulgroup_els ...)))
-        (where (rulgroup_all ...) (rulgroup ... rulgroup_else ...))
-        (where L_local (empty-layer))
         "call-defined-rel")
 
    ;;; Relation dispatch

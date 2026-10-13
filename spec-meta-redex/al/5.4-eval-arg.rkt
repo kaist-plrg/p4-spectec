@@ -35,19 +35,19 @@
    ;;; Type argument evaluation rules
 
    ;; rule Eval_targs
-   (--> ((eval-targs (targ ...)) G L) ((OK (typ_subst ...)) G L)
-        (where {TYP tdenv REL renv FUNC fenv VAL venv} L)
+   (--> ((eval-targs (targ ...)) G (name L {TYP tdenv REL renv FUNC fenv VAL venv}))
+        ((OK (typ_subst ...)) G L)
         (judgment-holds (theta-of-tdenv tdenv theta))
         (judgment-holds (subst-typs theta (targ ...) (typ_subst ...)))
         "eval-targs")
-   (--> ((eval-targs (targ ...)) G L) (FAIL G L)
+   (--> ((eval-targs (targ ...)) G (name L {TYP tdenv REL renv FUNC fenv VAL venv}))
+        (FAIL G L)
         ;; otherwise: the local types are not all aliases
-        (where {TYP tdenv REL renv FUNC fenv VAL venv} L)
         (side-condition (not (judgment-holds (theta-of-tdenv tdenv any))))
         "eval-targs/fail-theta")
-   (--> ((eval-targs (targ ...)) G L) (FAIL G L)
+   (--> ((eval-targs (targ ...)) G (name L {TYP tdenv REL renv FUNC fenv VAL venv}))
+        (FAIL G L)
         ;; otherwise: some substitution fails
-        (where {TYP tdenv REL renv FUNC fenv VAL venv} L)
         (judgment-holds (theta-of-tdenv tdenv theta))
         (side-condition (not (judgment-holds (subst-typs theta (targ ...) any))))
         "eval-targs/fail-subst")))

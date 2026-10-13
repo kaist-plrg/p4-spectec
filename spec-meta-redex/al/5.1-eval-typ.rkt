@@ -2,7 +2,7 @@
 ;; spec-meta/al/5.1-eval-typ.watsup.
 ;;
 ;; A clause whose premise results decide between it and `otherwise` computes
-;; them once, and a helper named after the clause branches on them.
+;; them once, and a helper branches on them.
 
 (require "../common/0.0-prelude.rkt"
          "../common/0.1-stdlib.rkt"
@@ -26,19 +26,20 @@
   [(upcast G L INT (NAT n)) (OK (INT n))]
   [(upcast G L INT val) FAIL
    (side-condition (not (redex-match? al-context num (term val))))]
-  [(upcast G L (VAR id (targ ...)) val) (upcast/var G L (typdef ...) (targ ...) val)
-   (where (typdef ...) (find-typ G L id))]
-  [(upcast G L (TUP (typ ..._n)) (TUP (val ..._n))) (upcast/tup (TUP (val ...)) (valres ...))
-   (where (valres ...) ((upcast G L typ val) ...))]
+  [(upcast G L (VAR id (targ ...)) val) (upcast/var G L (find-typ G L id) (targ ...) val)]
+  [(upcast G L (TUP (typ ..._n)) (TUP (val ..._n)))
+   (cast-components (TUP (val ...)) ((upcast G L typ val) ...))]
   [(upcast G L (TUP (typ ...)) val) FAIL
    (where #f (is-tup val))]
-  [(upcast G L (ITER typ QUEST) (OPT (val ...))) (upcast/opt (OPT (val ...)) (valres ...))
-   (where (valres ...) ((upcast G L typ val) ...))]
-  [(upcast G L (ITER typ STAR) (LIST (val ...))) (upcast/list (LIST (val ...)) (valres ...))
-   (where (valres ...) ((upcast G L typ val) ...))]
+  [(upcast G L (ITER typ QUEST) (OPT (val ...)))
+   (cast-components (OPT (val ...)) ((upcast G L typ val) ...))]
+  [(upcast G L (ITER typ STAR) (LIST (val ...)))
+   (cast-components (LIST (val ...)) ((upcast G L typ val) ...))]
   ;; otherwise, for the inputs no clause above applies to
-  [(upcast G L typ val) (OK val)
-   (side-condition (memq (term typ) '(BOOL NAT TEXT FUNC)))]
+  [(upcast G L BOOL val) (OK val)]
+  [(upcast G L NAT val) (OK val)]
+  [(upcast G L TEXT val) (OK val)]
+  [(upcast G L FUNC val) (OK val)]
   [(upcast G L (TUP (typ ...)) (TUP (val ...))) (OK (TUP (val ...)))
    (side-condition (not (= (length (term (typ ...))) (length (term (val ...))))))]
   [(upcast G L (ITER typ QUEST) val) (OK val)
@@ -62,55 +63,30 @@
     (not (redex-match? al-context (((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n))
                        (term ((typdef ...) (targ ...))))))])
 
-;; The TUP clause of $upcast, given the upcasts of the components.
-(define-metafunction al-context
-  upcast/tup : val (valres ...) -> valres
-  [(upcast/tup val ((OK val_upcast) ...)) (OK (TUP (val_upcast ...)))]
-  [(upcast/tup val (valres ...)) (OK val)
-   ;; otherwise: some component upcast fails
-   (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
-
-;; The OPT clause of $upcast, given the upcast of the component, if any.
-(define-metafunction al-context
-  upcast/opt : val (valres ...) -> valres
-  [(upcast/opt val ((OK val_upcast) ...)) (OK (OPT (val_upcast ...)))]
-  [(upcast/opt val (valres ...)) (OK val)
-   ;; otherwise: the component upcast fails
-   (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
-
-;; The LIST clause of $upcast, given the upcasts of the elements.
-(define-metafunction al-context
-  upcast/list : val (valres ...) -> valres
-  [(upcast/list val ((OK val_upcast) ...)) (OK (LIST (val_upcast ...)))]
-  [(upcast/list val (valres ...)) (OK val)
-   ;; otherwise: some element upcast fails
-   (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
-
 ;;; Downcasts
 
 (define-metafunction al-context
   downcast : G L typ val -> valres
   [(downcast G L NAT (NAT n)) (OK (NAT n))]
-  [(downcast G L NAT (INT i)) (OK (NAT n))
-   (where n i)]
+  [(downcast G L NAT (INT n)) (OK (NAT n))]
   [(downcast G L NAT val) FAIL
    (side-condition (not (redex-match? al-context num (term val))))]
-  [(downcast G L (VAR id (targ ...)) val) (downcast/var G L (typdef ...) (targ ...) val)
-   (where (typdef ...) (find-typ G L id))]
+  [(downcast G L (VAR id (targ ...)) val) (downcast/var G L (find-typ G L id) (targ ...) val)]
   [(downcast G L (TUP (typ ..._n)) (TUP (val ..._n)))
-   (downcast/tup (TUP (val ...)) (valres ...))
-   (where (valres ...) ((downcast G L typ val) ...))]
+   (cast-components (TUP (val ...)) ((downcast G L typ val) ...))]
   [(downcast G L (TUP (typ ...)) val) FAIL
    (where #f (is-tup val))]
-  [(downcast G L (ITER typ QUEST) (OPT (val ...))) (downcast/opt (OPT (val ...)) (valres ...))
-   (where (valres ...) ((downcast G L typ val) ...))]
-  [(downcast G L (ITER typ STAR) (LIST (val ...))) (downcast/list (LIST (val ...)) (valres ...))
-   (where (valres ...) ((downcast G L typ val) ...))]
+  [(downcast G L (ITER typ QUEST) (OPT (val ...)))
+   (cast-components (OPT (val ...)) ((downcast G L typ val) ...))]
+  [(downcast G L (ITER typ STAR) (LIST (val ...)))
+   (cast-components (LIST (val ...)) ((downcast G L typ val) ...))]
   ;; otherwise, for the inputs no clause above applies to
   [(downcast G L NAT (INT i)) (OK (INT i))
    (side-condition (negative? (term i)))]
-  [(downcast G L typ val) (OK val)
-   (side-condition (memq (term typ) '(BOOL INT TEXT FUNC)))]
+  [(downcast G L BOOL val) (OK val)]
+  [(downcast G L INT val) (OK val)]
+  [(downcast G L TEXT val) (OK val)]
+  [(downcast G L FUNC val) (OK val)]
   [(downcast G L (TUP (typ ...)) (TUP (val ...))) (OK (TUP (val ...)))
    (side-condition (not (= (length (term (typ ...))) (length (term (val ...))))))]
   [(downcast G L (ITER typ QUEST) val) (OK val)
@@ -134,28 +110,18 @@
     (not (redex-match? al-context (((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n))
                        (term ((typdef ...) (targ ...))))))])
 
-;; The TUP clause of $downcast, given the downcasts of the components.
-(define-metafunction al-context
-  downcast/tup : val (valres ...) -> valres
-  [(downcast/tup val ((OK val_downcast) ...)) (OK (TUP (val_downcast ...)))]
-  [(downcast/tup val (valres ...)) (OK val)
-   ;; otherwise: some component downcast fails
-   (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
+;;; Components
 
-;; The OPT clause of $downcast, given the downcast of the component, if any.
+;; The TUP, OPT, and LIST clauses of $upcast and $downcast, given the casts of
+;; the components: the value of the cast components if every cast succeeds,
+;; and the value itself otherwise.
 (define-metafunction al-context
-  downcast/opt : val (valres ...) -> valres
-  [(downcast/opt val ((OK val_downcast) ...)) (OK (OPT (val_downcast ...)))]
-  [(downcast/opt val (valres ...)) (OK val)
-   ;; otherwise: the component downcast fails
-   (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
-
-;; The LIST clause of $downcast, given the downcasts of the elements.
-(define-metafunction al-context
-  downcast/list : val (valres ...) -> valres
-  [(downcast/list val ((OK val_downcast) ...)) (OK (LIST (val_downcast ...)))]
-  [(downcast/list val (valres ...)) (OK val)
-   ;; otherwise: some element downcast fails
+  cast-components : val (valres ...) -> valres
+  [(cast-components (TUP (val ...)) ((OK val_cast) ...)) (OK (TUP (val_cast ...)))]
+  [(cast-components (OPT (val ...)) ((OK val_cast) ...)) (OK (OPT (val_cast ...)))]
+  [(cast-components (LIST (val ...)) ((OK val_cast) ...)) (OK (LIST (val_cast ...)))]
+  [(cast-components val (valres ...)) (OK val)
+   ;; otherwise: some cast fails
    (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
 
 ;;
@@ -169,14 +135,11 @@
   [(subtyp tdenv NAT (INT i)) ,(>= (term i) 0)]
   [(subtyp tdenv INT num) #t]
   [(subtyp tdenv TEXT (TEXT t)) #t]
-  [(subtyp tdenv (VAR id (targ ...)) val) (subtyp/var tdenv (typdef ...) (targ ...) val)
-   (where (typdef ...) (find-map tdenv id))]
-  [(subtyp tdenv (TUP (typ ..._n)) (TUP (val ..._n))) (forall- (b ...))
-   (where (b ...) ((subtyp tdenv typ val) ...))]
+  [(subtyp tdenv (VAR id (targ ...)) val) (subtyp/var tdenv (find-map tdenv id) (targ ...) val)]
+  [(subtyp tdenv (TUP (typ ..._n)) (TUP (val ..._n))) (forall- ((subtyp tdenv typ val) ...))]
   [(subtyp tdenv (ITER typ QUEST) (OPT (val))) (subtyp tdenv typ val)]
   [(subtyp tdenv (ITER typ QUEST) (OPT ())) #t]
-  [(subtyp tdenv (ITER typ STAR) (LIST (val ...))) (forall- (b ...))
-   (where (b ...) ((subtyp tdenv typ val) ...))]
+  [(subtyp tdenv (ITER typ STAR) (LIST (val ...))) (forall- ((subtyp tdenv typ val) ...))]
   [(subtyp tdenv typ val) #f
    ;; otherwise: no pattern above matches
    (side-condition (not (redex-match? al-context (BOOL (BOOL b)) (term (typ val)))))
@@ -205,18 +168,16 @@
    (judgment-holds (subst-typ theta typ typ_subst))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
                (targ ..._n) (INJ (mixop (val ..._m))))
-   (forall- (b ...))
+   (forall- ((subtyp tdenv typ_case_found_subst val) ...))
    (where theta ((tparam targ) ...))
    (side-condition (member (term mixop) (term (mixop_case ...))))
    (where ((typ_case_found ..._m)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
-   (judgment-holds (subst-typs theta (typ_case_found ...) (typ_case_found_subst ...)))
-   (where (b ...) ((subtyp tdenv typ_case_found_subst val) ...))]
+   (judgment-holds (subst-typs theta (typ_case_found ...) (typ_case_found_subst ...)))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
                (targ ..._n) (STR ((atom val_field) ...)))
-   (forall- (b ...))
+   (forall- ((subtyp tdenv typ_field_subst val_field) ...))
    (where theta ((tparam targ) ...))
-   (judgment-holds (subst-typs theta (typ_field ...) (typ_field_subst ...)))
-   (where (b ...) ((subtyp tdenv typ_field_subst val_field) ...))]
+   (judgment-holds (subst-typs theta (typ_field ...) (typ_field_subst ...)))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) #f
    ;; otherwise: the substitution fails
    (where theta ((tparam targ) ...))
@@ -267,8 +228,7 @@
 
 (define-metafunction al-context
   subtyps : tdenv (typ ...) (val ...) -> bool
-  [(subtyps tdenv (typ ..._n) (val ..._n)) (forall- (b ...))
-   (where (b ...) ((subtyp tdenv typ val) ...))]
+  [(subtyps tdenv (typ ..._n) (val ..._n)) (forall- ((subtyp tdenv typ val) ...))]
   [(subtyps tdenv (typ ...) (val ...)) #f
    ;; otherwise: the lengths differ
    (side-condition (not (= (length (term (typ ...))) (length (term (val ...))))))])

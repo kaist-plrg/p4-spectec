@@ -37,17 +37,11 @@
 
 (define-metafunction al-context
   empty-layer : -> layer
-  [(empty-layer) {TYP tdenv REL renv FUNC fenv VAL venv}
-   (where tdenv (empty-map))
-   (where renv (empty-map))
-   (where fenv (empty-map))
-   (where venv (empty-map))])
+  [(empty-layer) {TYP (empty-map) REL (empty-map) FUNC (empty-map) VAL (empty-map)}])
 
 (define-metafunction al-context
   empty-ctx : -> ctx
-  [(empty-ctx) {GLOBAL layer_g LOCAL layer_l}
-   (where layer_g (empty-layer))
-   (where layer_l (empty-layer))])
+  [(empty-ctx) {GLOBAL (empty-layer) LOCAL (empty-layer)}])
 
 ;;
 ;; Loading context from a script
@@ -92,42 +86,36 @@
 (define-metafunction al-context
   add-vari : L vari val -> L
   [(add-vari {TYP tdenv REL renv FUNC fenv VAL venv} (id typ (iter ...)) val)
-   {TYP tdenv REL renv FUNC fenv VAL venv_update}
-   (where venv_update (add-map venv (id (iter ...)) val))])
+   {TYP tdenv REL renv FUNC fenv VAL (add-map venv (id (iter ...)) val)}])
 
 (define-metafunction al-context
   add-varr : L varr val -> L
   [(add-varr {TYP tdenv REL renv FUNC fenv VAL venv} varr val)
-   {TYP tdenv REL renv FUNC fenv VAL venv_update}
-   (where venv_update (add-map venv varr val))])
+   {TYP tdenv REL renv FUNC fenv VAL (add-map venv varr val)}])
 
 (define-metafunction al-context
   add-varis : L (vari ...) (val ...) -> L
   [(add-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...) (val ...))
-   {TYP tdenv REL renv FUNC fenv VAL venv_update}
-   (where venv_update (adds-map venv ((id (iter ...)) ...) (val ...)))])
+   {TYP tdenv REL renv FUNC fenv VAL (adds-map venv ((id (iter ...)) ...) (val ...))}])
 
 (define-metafunction al-context
   add-varrs : L (varr ...) (val ...) -> L
   [(add-varrs {TYP tdenv REL renv FUNC fenv VAL venv} (varr ...) (val ...))
-   {TYP tdenv REL renv FUNC fenv VAL venv_update}
-   (where venv_update (adds-map venv (varr ...) (val ...)))])
+   {TYP tdenv REL renv FUNC fenv VAL (adds-map venv (varr ...) (val ...))}])
 
 ;;; Typedef adders
 
 (define-metafunction al-context
   add-typ : L id typdef -> L
   [(add-typ {TYP tdenv REL renv FUNC fenv VAL venv} id typdef)
-   {TYP tdenv_update REL renv FUNC fenv VAL venv}
-   (where tdenv_update (add-map tdenv id typdef))])
+   {TYP (add-map tdenv id typdef) REL renv FUNC fenv VAL venv}])
 
 ;;; Function adders
 
 (define-metafunction al-context
   add-func : L id funcdef -> L
   [(add-func {TYP tdenv REL renv FUNC fenv VAL venv} id funcdef)
-   {TYP tdenv REL renv FUNC fenv_update VAL venv}
-   (where fenv_update (add-map fenv id funcdef))])
+   {TYP tdenv REL renv FUNC (add-map fenv id funcdef) VAL venv}])
 
 ;;
 ;; Finders

@@ -69,22 +69,19 @@
 (define-metafunction stdlib
   exists- : (bool ...) -> bool
   [(exists- ()) #f]
-  [(exists- (b_h b_t ...)) ,(or (term b_h) (term b_r))
-   (where b_r (exists- (b_t ...)))])
+  [(exists- (b_h b_t ...)) ,(or (term b_h) (term (exists- (b_t ...))))])
 
 (define-metafunction stdlib
   forall- : (bool ...) -> bool
   [(forall- ()) #t]
-  [(forall- (b_h b_t ...)) ,(and (term b_h) (term b_r))
-   (where b_r (forall- (b_t ...)))])
+  [(forall- (b_h b_t ...)) ,(and (term b_h) (term (forall- (b_t ...))))])
 
 (define-metafunction stdlib
   repeat- : any nat -> (any ...)
   [(repeat- any 0) ()]
   [(repeat- any n) (any any_r ...)
    (side-condition (not (= (term n) 0)))
-   (where n_1 ,(- (term n) 1))
-   (where (any_r ...) (repeat- any n_1))])
+   (where (any_r ...) (repeat- any ,(- (term n) 1)))])
 
 (define-metafunction stdlib
   rev- : (any ...) -> (any ...)

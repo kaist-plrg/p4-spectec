@@ -101,10 +101,11 @@
    (--> (assign-exps/cons OK (exp_t ...) (val_t ...))
         (assign-exps (exp_t ...) (val_t ...))
         "assign-exps/cons/tail")
-   (--> (assign-exps (exp ...) (val ...)) FAIL
-        ;; otherwise: one sequence is longer
-        (side-condition (not (eq? (null? (term (exp ...))) (null? (term (val ...))))))
-        "assign-exps/fail")
+   ;; otherwise: one sequence is longer
+   (--> (assign-exps (exp_h exp_t ...) ()) FAIL
+        "assign-exps/fail-exp")
+   (--> (assign-exps () (val_h val_t ...)) FAIL
+        "assign-exps/fail-val")
 
    ;;; Assigning to an argument
 
@@ -130,10 +131,11 @@
    (--> (assign-args/cons L_caller OK (arg_t ...) (val_t ...))
         (assign-args L_caller (arg_t ...) (val_t ...))
         "assign-args/cons/tail")
-   (--> (assign-args L_caller (arg ...) (val ...)) FAIL
-        ;; otherwise: one sequence is longer
-        (side-condition (not (eq? (null? (term (arg ...))) (null? (term (val ...))))))
-        "assign-args/fail")))
+   ;; otherwise: one sequence is longer
+   (--> (assign-args L_caller (arg_h arg_t ...) ()) FAIL
+        "assign-args/fail-arg")
+   (--> (assign-args L_caller () (val_h val_t ...)) FAIL
+        "assign-args/fail-val")))
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-assign
@@ -143,30 +145,26 @@
    ;;; Assigning to an expression
 
    ;; rule Assign_exp/variable
-   (--> ((assign-exp (VAR id) val) G L) (OK G L_1)
-        (where L_1 (add-varr L (id ()) val))
+   (--> ((assign-exp (VAR id) val) G L) (OK G (add-varr L (id ()) val))
         "assign-exp/variable")
 
    ;; rulegroup Assign_exp/iter
 
-   (--> ((assign-exp (ITER exp iterexp) val) G L) (OK G L_1)
+   (--> ((assign-exp (ITER exp iterexp) val) G L) (OK G (add-varr L varr val))
         (where (varr) (is-iter-on-var (ITER exp iterexp)))
-        (where L_1 (add-varr L varr val))
         "assign-exp/iter/simple")
 
-   (--> ((assign-exp (ITER exp (QUEST (vari ...))) (OPT ())) G L) (OK G L_1)
+   (--> ((assign-exp (ITER exp (QUEST (vari ...))) (OPT ())) G L)
+        (OK G (add-varis L ((iter-vari vari QUEST) ...)
+                         (repeat- (OPT ()) ,(length (term (vari ...))))))
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
-        (where (vari_iter ...) ((iter-vari vari QUEST) ...))
-        (where (val_bind ...) (repeat- (OPT ()) ,(length (term (vari_iter ...)))))
-        (where L_1 (add-varis L (vari_iter ...) (val_bind ...)))
         "assign-exp/iter/opt-none")
 
    ;; Assign_exp/iter/opt-some, once the inner assignment has updated L.
    ;; It adds (OPT val_sub)*, where spec-meta adds each OPT val_sub on its own.
-   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L) (OK G L_1)
-        (where (vari_iter ...) ((iter-vari vari QUEST) ...))
+   (--> ((assign-exp/iter/opt-some OK (vari ...)) G L)
+        (OK G (add-varis L ((iter-vari vari QUEST) ...) ((OPT (val_sub)) ...)))
         (where ((val_sub ...)) (find-varis L (vari ...)))
-        (where L_1 (add-varis L (vari_iter ...) ((OPT (val_sub)) ...)))
         "assign-exp/iter/opt-some/bind")
    (--> ((assign-exp/iter/opt-some OK (vari ...)) G L) (FAIL G L)
         ;; otherwise: some variable is unbound
@@ -175,17 +173,18 @@
 
    ;; Assign_exp/iter/list: each element is assigned under C_local, which has
    ;; no values
-   (--> ((assign-exp (ITER exp (STAR (vari ...))) (LIST (val ...))) G L)
-        ((assign-exp/iter/list ((IN L_local (assign-exp exp val)) ...) (vari ...)) G L)
+   (--> ((assign-exp (ITER exp (STAR (vari ...))) (LIST (val ...)))
+         G
+         (name L {TYP tdenv REL renv FUNC fenv VAL venv}))
+        ((assign-exp/iter/list
+          ((IN {TYP tdenv REL renv FUNC fenv VAL (empty-map)} (assign-exp exp val)) ...)
+          (vari ...))
+         G L)
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
-        (where {TYP tdenv REL renv FUNC fenv VAL venv} L)
-        (where venv_local (empty-map))
-        (where L_local {TYP tdenv REL renv FUNC fenv VAL venv_local})
         "assign-exp/iter/list")
-   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L) (OK G L_1)
-        (where (vari_iter ...) ((iter-vari vari STAR) ...))
+   (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L)
+        (OK G (add-varis L ((iter-vari vari STAR) ...) ((LIST (val_sub ...)) ...)))
         (where (((val_sub ...)) ...) ((finds-vari (L_sub ...) vari) ...))
-        (where L_1 (add-varis L (vari_iter ...) ((LIST (val_sub ...)) ...)))
         "assign-exp/iter/list/bind")
    (--> ((assign-exp/iter/list ((IN L_sub OK) ...) (vari ...)) G L) (FAIL G L)
         ;; otherwise: some variable is unbound in some element's layer
@@ -197,9 +196,9 @@
    ;;; Assigning to an argument
 
    ;; rule Assign_arg/fun
-   (--> ((assign-arg L_caller (FUN id_callee) (FUNC id_caller)) G L) (OK G L_1)
+   (--> ((assign-arg L_caller (FUN id_callee) (FUNC id_caller)) G L)
+        (OK G (add-func L id_callee funcdef))
         (where (funcdef) (find-func G L_caller id_caller))
-        (where L_1 (add-func L id_callee funcdef))
         "assign-arg/fun")
    (--> ((assign-arg L_caller (FUN id_callee) (FUNC id_caller)) G L) (FAIL G L)
         ;; otherwise: the caller has no such function

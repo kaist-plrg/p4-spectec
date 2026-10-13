@@ -56,9 +56,7 @@
 (define-metafunction common-env
   is-iter-on-var : exp -> () ∨ (varr)
   [(is-iter-on-var (VAR id)) ((id ()))]
-  [(is-iter-on-var (ITER exp iterexp))
-   (is-iter-on-var/iter (varr ...) iterexp)
-   (where (varr ...) (is-iter-on-var exp))]
+  [(is-iter-on-var (ITER exp iterexp)) (is-iter-on-var/iter (is-iter-on-var exp) iterexp)]
   [(is-iter-on-var exp) ()
    ;; otherwise
    (side-condition (not (redex-match? common-env (VAR id) (term exp))))

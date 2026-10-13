@@ -17,6 +17,14 @@
 (provide ->redex/eval-exp
          ->ctx/eval-exp)
 
+;; A field of the struct that Eval_path_upd/dot updates: val if its atom is
+;; atom, and unchanged otherwise
+(define-metafunction al
+  update-field : atom val valfield -> valfield
+  [(update-field atom val (atom val_field)) (atom val)]
+  [(update-field atom val (atom_field val_field)) (atom_field val_field)
+   (side-condition (not (equal? (term atom) (term atom_field))))])
+
 ;; The rules on the redex
 (define ->redex/eval-exp
   (reduction-relation/forms
@@ -38,8 +46,7 @@
    (--> (UN NOT (OK (BOOL b))) (OK (BOOL b_res))
         (where b_res ,(not (term b)))
         "eval-exp/unary/boolean")
-   (--> (UN numunop (OK num)) (OK val_res)
-        (where val_res (unop-number numunop num))
+   (--> (UN numunop (OK num)) (OK (unop-number numunop num))
         "eval-exp/unary/number")
    (--> (UN unop (OK val)) FAIL
         ;; otherwise
@@ -48,8 +55,7 @@
         "eval-exp/unary/fail")
 
    ;; rulegroup Eval_exp/binary
-   (--> (BIN boolbinop (OK (BOOL b_l)) (OK (BOOL b_r))) (OK (BOOL b_res))
-        (where b_res (binop-bool boolbinop b_l b_r))
+   (--> (BIN boolbinop (OK (BOOL b_l)) (OK (BOOL b_r))) (OK (BOOL (binop-bool boolbinop b_l b_r)))
         "eval-exp/binary/boolean")
    (--> (BIN numbinop (OK num_l) (OK num_r)) (OK val_res)
         (judgment-holds (binop-number numbinop num_l num_r val_res))
@@ -72,8 +78,7 @@
         "eval-exp/binary/fail")
 
    ;; rulegroup Eval_exp/compare
-   (--> (CMP polycmpop (OK val_l) (OK val_r)) (OK (BOOL b_res))
-        (where b_res (cmpop-poly polycmpop val_l val_r))
+   (--> (CMP polycmpop (OK val_l) (OK val_r)) (OK (BOOL (cmpop-poly polycmpop val_l val_r)))
         "eval-exp/compare/poly")
    (--> (CMP numcmpop (OK num_l) (OK num_r)) (OK (BOOL b_res))
         (judgment-holds (cmpop-number numcmpop num_l num_r b_res))
@@ -183,10 +188,8 @@
    ;;; Membership evaluation rules
 
    ;; rule Eval_exp/mem
-   (--> (MEM (OK val_e) (OK (LIST (val ...)))) (OK (BOOL b_res))
-        (where (b ...) ,(for/list ([v (in-list (term (val ...)))])
-                          (equal? (term val_e) v)))
-        (where b_res (exists- (b ...)))
+   (--> (MEM (OK val_e) (OK (LIST (val ...))))
+        (OK (BOOL (exists- ((cmpop-poly EQ val_e val) ...))))
         "eval-exp/mem")
    (--> (MEM (OK val_e) (OK val)) FAIL
         ;; otherwise: not a list
@@ -383,11 +386,8 @@
    (--> (eval-path-upd val_b (DOT path atom) val_n)
         (eval-path-upd/dot (eval-path val_b path) atom val_b path val_n)
         "eval-path-upd/dot")
-   (--> (eval-path-upd/dot (OK (STR ((atom_field val_field) ...))) atom val_b path val_n)
-        (eval-path-upd val_b path (STR ((atom_field val_new) ...)))
-        (where (b ...) ,(for/list ([a (in-list (term (atom_field ...)))])
-                          (equal? (term atom) a)))
-        (where (val_new ...) ((ite b val_n val_field) ...))
+   (--> (eval-path-upd/dot (OK (STR (valfield ...))) atom val_b path val_n)
+        (eval-path-upd val_b path (STR ((update-field atom val_n valfield) ...)))
         "eval-path-upd/dot/field")
    (--> (eval-path-upd/dot (OK val) atom val_b path val_n) FAIL
         ;; otherwise: not a struct
@@ -436,21 +436,18 @@
    ;;; Upcasting, downcasting, and subtyping evaluation rules
 
    ;; rule Eval_exp/upcast
-   (--> ((UPCAST typ (OK val)) G L) (valres G L)
-        (where valres (upcast G L typ val))
+   (--> ((UPCAST typ (OK val)) G L) ((upcast G L typ val) G L)
         "eval-exp/upcast")
 
    ;; rule Eval_exp/downcast
-   (--> ((DOWNCAST typ (OK val)) G L) (valres G L)
-        (where valres (downcast G L typ val))
+   (--> ((DOWNCAST typ (OK val)) G L) ((downcast G L typ val) G L)
         "eval-exp/downcast")
 
    ;; rule Eval_exp/subtype
-   (--> ((SUB (OK val) typ) G L) ((OK (BOOL b)) G L)
-        (where {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g} G)
-        (where {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} L)
-        (where tdenv (extend-tdenv tdenv_g tdenv_l))
-        (where b (subtyp tdenv typ val))
+   (--> ((SUB (OK val) typ)
+         (name G {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g})
+         (name L {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l}))
+        ((OK (BOOL (subtyp (extend-tdenv tdenv_g tdenv_l) typ val))) G L)
         "eval-exp/subtype")
 
    ;;; Iterated expression evaluation rules

@@ -8,7 +8,6 @@
 ;; Eval_exp/fail does for the call.
 
 (require "../common/0.0-prelude.rkt"
-         "../common/0.1-stdlib.rkt"
          "../common/4-relation.rkt"
          "3-context.rkt"
          "4-relation.rkt")
@@ -23,9 +22,8 @@
    ;;; Clause invocation
 
    ;; rule Eval_clause/succ
-   (--> (eval-clause L_caller clause (val ...))
+   (--> (eval-clause L_caller ((arg ...) exp_out (prem ...)) (val ...))
         (eval-clause/succ (assign-args L_caller (arg ...) (val ...)) (eval-prems (prem ...)) exp_out)
-        (where ((arg ...) exp_out (prem ...)) clause)
         "eval-clause/succ")
    (--> (eval-clause/succ OK OK (OK val_out)) (OK val_out)
         "eval-clause/succ/output")
@@ -57,8 +55,8 @@
         "eval-tblrows/cons-fail")
 
    ;; rule Call_table_func
-   (--> (call-table-func tableFuncDef (val ...)) (eval-tblrows (tblrow ...) (val ...))
-        (where (TABLE _ (tblrow ...)) tableFuncDef)
+   (--> (call-table-func (TABLE (param ...) (tblrow ...)) (val ...))
+        (eval-tblrows (tblrow ...) (val ...))
         "call-table-func")
 
    ;;; Defined meta-function invocation
@@ -75,9 +73,8 @@
    ;; rulegroup Call_func_dispatch
    (--> (call-func-dispatch (EXT id) (typ ...) (val ...)) (call-extern-func id (typ ...) (val ...))
         "call-func-dispatch/extern")
-   (--> (call-func-dispatch builtinFuncDef (typ ...) (val ...))
+   (--> (call-func-dispatch (BUILTIN id (tparam ...) (param ...)) (typ ...) (val ...))
         (call-builtin-func id (typ ...) (val ...))
-        (where (BUILTIN id _ _) builtinFuncDef)
         "call-func-dispatch/builtin")
    (--> (call-func-dispatch tableFuncDef () (val ...)) (call-table-func tableFuncDef (val ...))
         "call-func-dispatch/table")
@@ -121,13 +118,11 @@
 
    ;; rule Eval_tblrow/succ: the row runs in a layer of its own, with the
    ;; caller's layer L
-   (--> ((eval-tblrow tblrow (val ...)) G L)
-        ((IN L_callee (eval-tblrow/succ (assign-args L (arg ...) (val ...))
-                                        (eval-prems (prem ...))
-                                        exp_out))
+   (--> ((eval-tblrow ((arg ...) exp_out (prem ...)) (val ...)) G L)
+        ((IN (empty-layer) (eval-tblrow/succ (assign-args L (arg ...) (val ...))
+                                             (eval-prems (prem ...))
+                                             exp_out))
          G L)
-        (where ((arg ...) exp_out (prem ...)) tblrow)
-        (where L_callee (empty-layer))
         "eval-tblrow/succ")
 
    ;;; Defined meta-function invocation
@@ -135,13 +130,11 @@
    ;; rule Call_defined_func: the callee's layer binds the type parameters,
    ;; and L is the caller's
    (--> ((call-defined-func definedFuncDef (typ ..._n) (val ...)) G L)
-        ((IN L_callee (eval-clauses L (clause_all ...) (val ...))) G L)
+        ((IN {TYP ((tparam (DEF () (ALIAS typ))) ...) REL renv FUNC fenv VAL venv}
+             (eval-clauses L (clause ... elsclause ...) (val ...)))
+         G L)
         (where (DEF (tparam ..._n) (clause ...) (elsclause ...)) definedFuncDef)
-        (where tdenv ((tparam (DEF () (ALIAS typ))) ...))
         (where {TYP tdenv_empty REL renv FUNC fenv VAL venv} (empty-layer))
-        (where L_callee {TYP tdenv REL renv FUNC fenv VAL venv})
-        (where (clause_else ...) (opt-as-seq- (elsclause ...)))
-        (where (clause_all ...) (clause ... clause_else ...))
         "call-defined-func")
 
    ;;; Meta-function call

@@ -105,11 +105,10 @@
    ;;; Iteration premises - optional
 
    ;; rulegroup Eval_prem/iterpr-opt
-   (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L) (OK G L_res)
+   (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L)
+        (OK G (add-varis L ((iter-vari vari_bind QUEST) ...)
+                         (repeat- (OPT ()) ,(length (term (vari_bind ...))))))
         (judgment-holds (sub-opt L (vari_bound ...) ()))
-        (where (vari_bind_iter ...) ((iter-vari vari_bind QUEST) ...))
-        (where (val_bind ...) (repeat- (OPT ()) ,(length (term (vari_bind ...)))))
-        (where L_res (add-varis L (vari_bind_iter ...) (val_bind ...)))
         "eval-prem/iterpr-opt/none")
    (--> ((ITER prem (QUEST (vari_bound ...) (vari_bind ...))) G L)
         ((eval-prem/iterpr-opt/some (IN L_sub prem) (vari_bind ...)) G L)
@@ -121,10 +120,9 @@
         "eval-prem/iterpr-opt/fail")
 
    ;; Eval_prem/some, once prem has updated C_sub to C_sub_res
-   (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L) (OK G L_res)
-        (where (vari_bind_iter ...) ((iter-vari vari_bind QUEST) ...))
+   (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L)
+        (OK G (add-varis L ((iter-vari vari_bind QUEST) ...) ((OPT (val_bind)) ...)))
         (where ((val_bind ...)) (find-varis L_sub_res (vari_bind ...)))
-        (where L_res (add-varis L (vari_bind_iter ...) ((OPT (val_bind)) ...)))
         "eval-prem/iterpr-opt/some/bind")
    (--> ((eval-prem/iterpr-opt/some (IN L_sub_res OK) (vari_bind ...)) G L) (FAIL G L)
         ;; otherwise: some variable is unbound
@@ -134,11 +132,10 @@
    ;;; Iteration premises - list
 
    ;; rulegroup Eval_prem/iterpr-list
-   (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L) (OK G L_res)
+   (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L)
+        (OK G (add-varis L ((iter-vari vari_bind STAR) ...)
+                         (repeat- (LIST ()) ,(length (term (vari_bind ...))))))
         (judgment-holds (sub-list L (vari_bound ...) ()))
-        (where (vari_bind_iter ...) ((iter-vari vari_bind STAR) ...))
-        (where (val_bind ...) (repeat- (LIST ()) ,(length (term (vari_bind ...)))))
-        (where L_res (add-varis L (vari_bind_iter ...) (val_bind ...)))
         "eval-prem/iterpr-list/empty")
    (--> ((ITER prem (STAR (vari_bound ...) (vari_bind ...))) G L)
         ((eval-prem/iterpr-list/list ((IN L_sub prem) ...) (vari_bind ...)) G L)
@@ -151,12 +148,10 @@
         "eval-prem/iterpr-list/fail")
 
    ;; Eval_prem/list, once prem has updated each C_sub to C_sub_res
-   (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L) (OK G L_res)
+   (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L)
+        (OK G (add-varis L ((iter-vari vari_bind STAR) ...) ((LIST (val_bind ...)) ...)))
         (where (((val_sub_bind ...)) ...) ((find-varis L_sub_res (vari_bind ...)) ...))
         (where ((val_bind ...) ...) (transpose- ((val_sub_bind ...) ...)))
-        (where (val_res_bind ...) ((LIST (val_bind ...)) ...))
-        (where (vari_bind_iter ...) ((iter-vari vari_bind STAR) ...))
-        (where L_res (add-varis L (vari_bind_iter ...) (val_res_bind ...)))
         "eval-prem/iterpr-list/list/bind")
    (--> ((eval-prem/iterpr-list/list ((IN L_sub_res OK) ...) (vari_bind ...)) G L) (FAIL G L)
         ;; otherwise: some variable is unbound in some sub-context
