@@ -12,11 +12,18 @@ use crate::{
         data::{arena::Arena, value::flat::Value},
         il::ast::{Id, Typ},
     },
-    metacirc::al::encode,
     runner::{Eval, Extern, Interface, InterfaceError, Interpreter, RunnerContext},
 };
 
 use super::builtin::call::Builtins;
+use encode::Encode;
+
+pub mod decode;
+pub mod encode;
+mod error;
+mod mixops;
+
+pub use error::{Error, ErrorKind};
 
 /// Provides AL script parsing and the standard specification builtins.
 pub struct AlInterface {
@@ -40,7 +47,9 @@ impl Interface for AlInterface {
         // Lower ordered specification inputs to source AL
         let spec_al = crate::algo(paths).map_err(InterfaceError::from)?;
         // Encode the program in the caller's arena and retain codec diagnostics
-        encode::spec(arena, &spec_al).map_err(|error| InterfaceError::from(error.into_report()))
+        spec_al
+            .encode(arena)
+            .map_err(|error| InterfaceError::from(error.into_report()))
     }
 
     fn call_builtin<Interp, Ext>(

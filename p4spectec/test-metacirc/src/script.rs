@@ -3,12 +3,13 @@
 //! The small fixture exposes canonical input positions and otherwise groups.
 //! Complete meta and P4 specifications exercise real definitions and syntax.
 
+use p4spectec::interface::al::encode::Encode;
+
+use p4spectec::interface::al::decode::Decode;
+
 use std::path::Path;
 
-use p4spectec::{
-    lang::{al::ast, data::arena::Arena, traits::eq::SyntaxEq},
-    metacirc::al::{decode, encode},
-};
+use p4spectec::lang::{al::ast, data::arena::Arena, traits::eq::SyntaxEq};
 
 use crate::{MetaRunner, Result, check_guard, fixture, meta_runner, source};
 
@@ -53,8 +54,8 @@ fn check_script(arena: &mut Arena, runner: &mut MetaRunner, path: &Path) -> Resu
         .count();
 
     // Variable declarations have no executable meta definition
-    let value_meta = encode::spec(arena, &spec_al)?;
-    let spec_decode_al = decode::spec(arena, value_meta)?;
+    let value_meta = Encode::encode(&spec_al, arena)?;
+    let spec_decode_al = <ast::Spec as Decode>::decode(arena, value_meta)?;
     assert_eq!(spec_decode_al.len() + num_vars, spec_al.len());
     assert!(
         !spec_decode_al
@@ -63,7 +64,7 @@ fn check_script(arena: &mut Arena, runner: &mut MetaRunner, path: &Path) -> Resu
     );
 
     // Canonical metadata may change, but the complete encoded script must not
-    let value_again = encode::spec(arena, &spec_decode_al)?;
+    let value_again = Encode::encode(&spec_decode_al, arena)?;
     assert!(
         value_meta.view(arena).syntax_eq(&value_again.view(arena)),
         "{}: script round trip",
@@ -88,9 +89,9 @@ fn check_script(arena: &mut Arena, runner: &mut MetaRunner, path: &Path) -> Resu
 
 /// Checks each compiler-produced type definition with its own meta guard.
 fn check_deftyp(arena: &mut Arena, runner: &mut MetaRunner, deftyp_al: &ast::DefTyp) -> Result<()> {
-    let value_meta = encode::deftyp(arena, deftyp_al)?;
-    let deftyp_decode_al = decode::deftyp(arena, value_meta)?;
-    let value_again = encode::deftyp(arena, &deftyp_decode_al)?;
+    let value_meta = Encode::encode(deftyp_al, arena)?;
+    let deftyp_decode_al = <ast::DefTyp as Decode>::decode(arena, value_meta)?;
+    let value_again = Encode::encode(&deftyp_decode_al, arena)?;
     assert!(value_meta.view(arena).syntax_eq(&value_again.view(arena)));
     check_guard(runner, arena, "check_deftyp", &[value_meta])
 }

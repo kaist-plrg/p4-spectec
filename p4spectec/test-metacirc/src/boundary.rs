@@ -3,10 +3,15 @@
 //! Successful values pass native meta guards before decoding.
 //! Malformed constructors, arities, and payloads must fail without panicking.
 
+use p4spectec::interface::al::encode::Encode;
+
+use p4spectec::{interface::al::decode::Decode, lang::al::ast as al};
+
 use std::rc::Rc;
 
 use p4spectec::{
     frontend::parse::parse_mixop,
+    interface::al::encode,
     lang::{
         common::source::Span,
         data::{
@@ -17,7 +22,6 @@ use p4spectec::{
         },
         traits::eq::SyntaxEq,
     },
-    metacirc::al::{decode, encode},
     phrase,
 };
 
@@ -60,8 +64,8 @@ fn check_function_types(arena: &mut Arena, runner: &mut MetaRunner) -> Result<()
 
     // Match the native type and the meta guard for each complete signature
     for typ_al in [typ_func_al, typ_nested_al] {
-        let value_meta = encode::typ(arena, &typ_al)?;
-        let typ_decode_al = decode::typ(arena, value_meta)?;
+        let value_meta = Encode::encode(&typ_al, arena)?;
+        let typ_decode_al = <al::Typ as Decode>::decode(arena, value_meta)?;
         assert!(typ_al.syntax_eq(&typ_decode_al));
         check_guard(runner, arena, "check_typ", &[value_meta])?;
     }
@@ -84,7 +88,7 @@ fn check_value(arena: &mut Arena, runner: &mut MetaRunner, value: Value) -> Resu
 
     // Exactly one meta val occupies the wrapper's only argument
     let value_payload = *get::one(get::case(arena, &value_result)?.args())?;
-    let value_decode = decode::value(arena, value_payload)?;
+    let value_decode = <Value as Decode>::decode(arena, value_payload)?;
     assert!(value.view(arena).syntax_eq(&value_decode.view(arena)));
     check_guard(runner, arena, "check_val", &[value_payload])
 }
@@ -103,7 +107,7 @@ fn check_values(arena: &mut Arena, runner: &mut MetaRunner, values: &[Value]) ->
             .is_err()
     );
     let value_payload = *get::one(get::case(arena, &value_result)?.args())?;
-    let values_decode = decode::values(arena, value_payload)?;
+    let values_decode = <Vec<Value> as Decode>::decode(arena, value_payload)?;
     assert_eq!(values.len(), values_decode.len());
 
     // Compare payload contents as well as cardinality
@@ -138,7 +142,10 @@ fn check_malformed(arena: &mut Arena, runner: &mut MetaRunner) -> Result<()> {
         ["BOGUS", "BOOL", "BOOL nat nat", "BOOL nat", "NAT nat", "LIST nat", "OPT nat", "STR nat"]
     {
         let value_meta = malformed(arena, text, "val", value_bad)?;
-        assert!(decode::value(arena, value_meta).is_err(), "value decoder accepted {text}");
+        assert!(
+            <Value as Decode>::decode(arena, value_meta).is_err(),
+            "value decoder accepted {text}"
+        );
         assert!(
             runner
                 .eval_func(arena, "check_val", &[], &[value_meta])
@@ -149,13 +156,16 @@ fn check_malformed(arena: &mut Arena, runner: &mut MetaRunner) -> Result<()> {
     }
 
     // Types and expressions also reject non-case payloads and invalid arities
-    assert!(decode::typ(arena, value_bad).is_err());
-    assert!(decode::spec(arena, value_bad).is_err());
+    assert!(<al::Typ as Decode>::decode(arena, value_bad).is_err());
+    assert!(<al::Spec as Decode>::decode(arena, value_bad).is_err());
     for text in
         ["BOGUS", "BOOL", "BOOL nat nat", "CALL nat", "SUB nat nat nat", "OPT nat", "ITER nat nat"]
     {
         let value_meta = malformed(arena, text, "exp", value_bad)?;
-        assert!(decode::exp(arena, value_meta).is_err(), "expression decoder accepted {text}");
+        assert!(
+            <al::Exp as Decode>::decode(arena, value_meta).is_err(),
+            "expression decoder accepted {text}"
+        );
     }
     Ok(())
 }

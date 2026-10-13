@@ -4,6 +4,12 @@
 //! without evaluating an AL, SL, or PL program
 //! Compiler errors retain their complete diagnostic trees
 
+use p4spectec::{
+    interface::al::{decode::Decode, encode::Encode},
+    lang::al::ast as al,
+};
+use std::rc::Rc;
+
 use std::{error::Error, path::PathBuf};
 
 use p4spectec::{
@@ -11,15 +17,16 @@ use p4spectec::{
     interface,
     lang::{
         al::ast,
-        common::source::Span,
+        common::{notation::atom::Atom, source::Span},
         data::{
             arena::Arena,
-            typ::TypKind,
+            notation::tree::{Mixfix, Mixop},
+            typ::{TypKind, make as make_typ},
             value::flat::{Value, get, make},
         },
         traits::eq::SyntaxEq,
     },
-    metacirc::al::decode,
+    phrase,
     runner::{Config, Interface, NullExtern, Runner, Spec},
 };
 
@@ -34,16 +41,16 @@ fn main() -> Result<()> {
 
     // Compile ordered files into one meta script in the supplied arena
     let value_meta = iface.parse_program(&mut arena, &[fixture("unused-include")], &paths)?;
-    check_script(&arena, value_meta)?;
+    check_script(&mut arena, value_meta)?;
     let value_dir = iface.parse_program(&mut arena, &[], &[fixture("valid")])?;
     assert!(value_meta.view(&arena).syntax_eq(&value_dir.view(&arena)));
 
     // Clearing interface state must not invalidate the caller's values
     iface.clear();
     assert!(get::bool(&arena, &value_existing)?);
-    check_script(&arena, value_meta)?;
+    check_script(&mut arena, value_meta)?;
     let value_empty = iface.parse_program(&mut arena, &[], &[])?;
-    assert!(decode::spec(&arena, value_empty)?.is_empty());
+    assert!(<al::Spec as Decode>::decode(&mut arena, value_empty)?.is_empty());
 
     // Exercise Runner delegation without calling an evaluation entry point
     let mut runner = Runner::new(
@@ -70,6 +77,7 @@ fn main() -> Result<()> {
             .into_report();
         check_report(&report, &report_expect);
     }
+    check_codecs(&mut arena)?;
     eprintln!("AL interface parsing: ordered files, directory, empty input, arena, diagnostics");
     Ok(())
 }
@@ -81,11 +89,11 @@ fn fixture(name: &str) -> PathBuf {
 }
 
 /// Checks the meta annotation and source definitions after decoding.
-fn check_script(arena: &Arena, value_meta: Value) -> Result<()> {
+fn check_script(arena: &mut Arena, value_meta: Value) -> Result<()> {
     assert!(
         matches!(arena.value.typ(value_meta.note).as_ref(), TypKind::Var(id, targs) if id.node.as_ref() == "script" && targs.is_empty())
     );
-    let spec_al = decode::spec(arena, value_meta)?;
+    let spec_al = <al::Spec as Decode>::decode(arena, value_meta)?;
     let [def_typ_al, def_func_al] = spec_al.as_slice() else {
         panic!("expected one type and one function; variable declarations must be omitted");
     };
@@ -105,4 +113,59 @@ fn check_report(report: &Report, report_expect: &Report) {
     for (report_child, report_expect_child) in report.children.iter().zip(&report_expect.children) {
         check_report(report_child, report_expect_child);
     }
+}
+
+/// Checks source and runtime round trips without interpreting a specification.
+fn check_codecs(arena: &mut Arena) -> Result<()> {
+    // Exercise the definition and expression dispatchers on compiler output
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    for path in [root.join("fixtures/target.watsup"), root.join("../../spec-meta")] {
+        let spec_al = p4spectec::algo(&[path])?;
+        let value_meta = spec_al.encode(arena)?;
+        let spec_decode_al = al::Spec::decode(arena, value_meta)?;
+        let value_again = spec_decode_al.encode(arena)?;
+        assert!(value_meta.view(arena).syntax_eq(&value_again.view(arena)));
+    }
+
+    // Retain complete polymorphic signatures through the type trait
+    let id = phrase!(node: "X".into(), span: Span::default());
+    let typ_param_al = make_typ::var(id.clone(), vec![]);
+    let typ_al = make_typ::func(vec![id], vec![typ_param_al], make_typ::nat());
+    let value_meta = typ_al.encode(arena)?;
+    let typ_decode_al = al::Typ::decode(arena, value_meta)?;
+    assert!(typ_al.syntax_eq(&typ_decode_al));
+
+    // Equal constructors with different atom spans still decode successfully
+    let mut span = Span::default();
+    span.left.line = 7;
+    span.right.line = 7;
+    span.right.column = 4;
+    let value_bool = make::bool(arena, true, span)?;
+    let typ_meta = make_typ::var(phrase!(node: "val".into(), span: span), vec![]);
+    let mixop_meta = Mixop::Seq(vec![
+        Mixop::Atom(phrase!(node: Atom::Keyword("BOOL".into()), span: span)),
+        Mixop::Arg,
+    ]);
+    let value_meta = make::case(
+        arena,
+        typ_meta.node.clone().into(),
+        Mixfix::new(Rc::new(mixop_meta), vec![value_bool])?,
+        span,
+    )?;
+    let value_decode = Value::decode(arena, value_meta)?;
+    assert!(get::bool(arena, &value_decode)?);
+
+    // Silent tags and quoted operators must not alias concrete keywords
+    for atom in [Atom::tag("BOOL")?, Atom::operator("BOOL")?] {
+        let mixop_meta = Mixop::Seq(vec![Mixop::Atom(phrase!(node: atom, span: span)), Mixop::Arg]);
+        let value_bad = make::case(
+            arena,
+            typ_meta.node.clone().into(),
+            Mixfix::new(Rc::new(mixop_meta), vec![value_bool])?,
+            span,
+        )?;
+        assert!(Value::decode(arena, value_bad).is_err());
+    }
+    eprintln!("AL codecs: scripts, signatures, constructor spans and atom kinds");
+    Ok(())
 }
