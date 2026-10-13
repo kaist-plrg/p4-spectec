@@ -96,4 +96,3 @@ The fixture uses the full P4 specification and a small constant declaration,
 without requiring the p4c submodule.
 
 Native/AL/AL→AL performance measurements are follow-up work.
-
