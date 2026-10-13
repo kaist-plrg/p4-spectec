@@ -16,7 +16,7 @@
          elsgroup-as-rulgroup)
 
 ;; $elsgroup_as_rulgroup
-(define-dec al
+(define-metafunction al
   elsgroup-as-rulgroup : elsgroup -> rulgroup
   [(elsgroup-as-rulgroup (id rulmatch rulpath)) (id rulmatch (rulpath))])
 

@@ -20,7 +20,7 @@
 
 ;;; Upcasts
 
-(define-dec al-context
+(define-metafunction al-context
   upcast : G L typ val -> valres
   [(upcast G L INT (INT i)) (OK (INT i))]
   [(upcast G L INT (NAT n)) (OK (INT n))]
@@ -47,15 +47,15 @@
    (side-condition (not (redex-match? al-context (LIST (val ...)) (term val))))])
 
 ;; The VAR clause of $upcast, given the type definition found for id.
-(define-dec al-context
+(define-metafunction al-context
   upcast/var : G L (typdef ...) (targ ...) val -> valres
   [(upcast/var G L ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) (upcast G L typ_1 val)
    (where theta ((tparam targ) ...))
-   (where typ_1 (subst-typ theta typ))]
+   (judgment-holds (subst-typ theta typ typ_1))]
   [(upcast/var G L ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) (OK val)
    ;; otherwise: the substitution fails
    (where theta ((tparam targ) ...))
-   (where ⊥ (subst-typ theta typ))]
+   (side-condition (not (judgment-holds (subst-typ theta typ any))))]
   [(upcast/var G L (typdef ...) (targ ...) val) (OK val)
    ;; otherwise: id is not an alias with as many parameters as targ*
    (side-condition
@@ -63,7 +63,7 @@
                        (term ((typdef ...) (targ ...))))))])
 
 ;; The TUP clause of $upcast, given the upcasts of the components.
-(define-dec al-context
+(define-metafunction al-context
   upcast/tup : val (valres ...) -> valres
   [(upcast/tup val ((OK val_upcast) ...)) (OK (TUP (val_upcast ...)))]
   [(upcast/tup val (valres ...)) (OK val)
@@ -71,7 +71,7 @@
    (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
 
 ;; The OPT clause of $upcast, given the upcast of the component, if any.
-(define-dec al-context
+(define-metafunction al-context
   upcast/opt : val (valres ...) -> valres
   [(upcast/opt val ((OK val_upcast) ...)) (OK (OPT (val_upcast ...)))]
   [(upcast/opt val (valres ...)) (OK val)
@@ -79,7 +79,7 @@
    (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
 
 ;; The LIST clause of $upcast, given the upcasts of the elements.
-(define-dec al-context
+(define-metafunction al-context
   upcast/list : val (valres ...) -> valres
   [(upcast/list val ((OK val_upcast) ...)) (OK (LIST (val_upcast ...)))]
   [(upcast/list val (valres ...)) (OK val)
@@ -88,7 +88,7 @@
 
 ;;; Downcasts
 
-(define-dec al-context
+(define-metafunction al-context
   downcast : G L typ val -> valres
   [(downcast G L NAT (NAT n)) (OK (NAT n))]
   [(downcast G L NAT (INT i)) (OK (NAT n))
@@ -119,15 +119,15 @@
    (side-condition (not (redex-match? al-context (LIST (val ...)) (term val))))])
 
 ;; The VAR clause of $downcast, given the type definition found for id.
-(define-dec al-context
+(define-metafunction al-context
   downcast/var : G L (typdef ...) (targ ...) val -> valres
   [(downcast/var G L ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) (downcast G L typ_1 val)
    (where theta ((tparam targ) ...))
-   (where typ_1 (subst-typ theta typ))]
+   (judgment-holds (subst-typ theta typ typ_1))]
   [(downcast/var G L ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) (OK val)
    ;; otherwise: the substitution fails
    (where theta ((tparam targ) ...))
-   (where ⊥ (subst-typ theta typ))]
+   (side-condition (not (judgment-holds (subst-typ theta typ any))))]
   [(downcast/var G L (typdef ...) (targ ...) val) (OK val)
    ;; otherwise: id is not an alias with as many parameters as targ*
    (side-condition
@@ -135,7 +135,7 @@
                        (term ((typdef ...) (targ ...))))))])
 
 ;; The TUP clause of $downcast, given the downcasts of the components.
-(define-dec al-context
+(define-metafunction al-context
   downcast/tup : val (valres ...) -> valres
   [(downcast/tup val ((OK val_downcast) ...)) (OK (TUP (val_downcast ...)))]
   [(downcast/tup val (valres ...)) (OK val)
@@ -143,7 +143,7 @@
    (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
 
 ;; The OPT clause of $downcast, given the downcast of the component, if any.
-(define-dec al-context
+(define-metafunction al-context
   downcast/opt : val (valres ...) -> valres
   [(downcast/opt val ((OK val_downcast) ...)) (OK (OPT (val_downcast ...)))]
   [(downcast/opt val (valres ...)) (OK val)
@@ -151,7 +151,7 @@
    (side-condition (not (redex-match? al-context ((OK val) ...) (term (valres ...)))))])
 
 ;; The LIST clause of $downcast, given the downcasts of the elements.
-(define-dec al-context
+(define-metafunction al-context
   downcast/list : val (valres ...) -> valres
   [(downcast/list val ((OK val_downcast) ...)) (OK (LIST (val_downcast ...)))]
   [(downcast/list val (valres ...)) (OK val)
@@ -162,7 +162,7 @@
 ;; Value-type matching
 ;;
 
-(define-dec al-context
+(define-metafunction al-context
   subtyp : tdenv typ val -> bool
   [(subtyp tdenv BOOL (BOOL b)) #t]
   [(subtyp tdenv NAT (NAT n)) #t]
@@ -196,31 +196,31 @@
 
 ;; The VAR clauses of $subtyp, given the type definition found for id. They
 ;; are disjoint by its kind.
-(define-dec al-context
+(define-metafunction al-context
   subtyp/var : tdenv (typdef ...) (targ ...) val -> bool
   [(subtyp/var tdenv (EXT) (targ ...) (EXT json)) #t]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val)
    (subtyp tdenv typ_subst val)
    (where theta ((tparam targ) ...))
-   (where typ_subst (subst-typ theta typ))]
+   (judgment-holds (subst-typ theta typ typ_subst))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
                (targ ..._n) (INJ (mixop (val ..._m))))
    (forall- (b ...))
    (where theta ((tparam targ) ...))
    (side-condition (member (term mixop) (term (mixop_case ...))))
-   (where ((typ_case_found ...)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
-   (where (typ_case_found_subst ..._m) ((subst-typ theta typ_case_found) ...))
+   (where ((typ_case_found ..._m)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
+   (judgment-holds (subst-typs theta (typ_case_found ...) (typ_case_found_subst ...)))
    (where (b ...) ((subtyp tdenv typ_case_found_subst val) ...))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
                (targ ..._n) (STR ((atom val_field) ...)))
    (forall- (b ...))
    (where theta ((tparam targ) ...))
-   (where (typ_field_subst ...) ((subst-typ theta typ_field) ...))
+   (judgment-holds (subst-typs theta (typ_field ...) (typ_field_subst ...)))
    (where (b ...) ((subtyp tdenv typ_field_subst val_field) ...))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (ALIAS typ))) (targ ..._n) val) #f
    ;; otherwise: the substitution fails
    (where theta ((tparam targ) ...))
-   (where ⊥ (subst-typ theta typ))]
+   (side-condition (not (judgment-holds (subst-typ theta typ any))))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
                (targ ..._n) (INJ (mixop (val ...))))
    #f
@@ -229,20 +229,25 @@
   [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
                (targ ..._n) (INJ (mixop (val ...))))
    #f
-   ;; otherwise: the case's types fail to substitute, or are not as many as val*
-   (where theta ((tparam targ) ...))
+   ;; otherwise: the case's types are not as many as val*
    (side-condition (member (term mixop) (term (mixop_case ...))))
    (where ((typ_case_found ...)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
    (side-condition
-    (not (redex-match? al-context ((typ ..._m) (val ..._m))
-                       (term (((subst-typ theta typ_case_found) ...) (val ...))))))]
+    (not (= (length (term (typ_case_found ...))) (length (term (val ...))))))]
+  [(subtyp/var tdenv ((DEF (tparam ..._n) (VARIANT ((mixop_case (typ_case ...)) ...))))
+               (targ ..._n) (INJ (mixop (val ..._m))))
+   #f
+   ;; otherwise: the case's types fail to substitute
+   (where theta ((tparam targ) ...))
+   (side-condition (member (term mixop) (term (mixop_case ...))))
+   (where ((typ_case_found ..._m)) (assoc- mixop ((mixop_case (typ_case ...)) ...)))
+   (side-condition (not (judgment-holds (subst-typs theta (typ_case_found ...) any))))]
   [(subtyp/var tdenv ((DEF (tparam ..._n) (STRUCT ((atom typ_field) ...))))
                (targ ..._n) (STR ((atom val_field) ...)))
    #f
    ;; otherwise: a field's type fails to substitute
    (where theta ((tparam targ) ...))
-   (side-condition
-    (not (redex-match? al-context (typ ...) (term ((subst-typ theta typ_field) ...)))))]
+   (side-condition (not (judgment-holds (subst-typs theta (typ_field ...) any))))]
   [(subtyp/var tdenv (typdef ...) (targ ...) val) #f
    ;; otherwise: no pattern above matches
    (side-condition
@@ -260,7 +265,7 @@
                                    (targ ..._n) (STR ((atom val) ...)))
                        (term ((typdef ...) (targ ...) val)))))])
 
-(define-dec al-context
+(define-metafunction al-context
   subtyps : tdenv (typ ...) (val ...) -> bool
   [(subtyps tdenv (typ ..._n) (val ..._n)) (forall- (b ...))
    (where (b ...) ((subtyp tdenv typ val) ...))]

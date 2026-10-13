@@ -35,7 +35,7 @@
   (layer G L ::= {TYP tdenv REL renv FUNC fenv VAL venv})
   (ctx C ::= {GLOBAL layer LOCAL layer}))
 
-(define-dec al-context
+(define-metafunction al-context
   empty-layer : -> layer
   [(empty-layer) {TYP tdenv REL renv FUNC fenv VAL venv}
    (where tdenv (empty-map))
@@ -43,7 +43,7 @@
    (where fenv (empty-map))
    (where venv (empty-map))])
 
-(define-dec al-context
+(define-metafunction al-context
   empty-ctx : -> ctx
   [(empty-ctx) {GLOBAL layer_g LOCAL layer_l}
    (where layer_g (empty-layer))
@@ -89,25 +89,25 @@
 
 ;;; Value adders
 
-(define-dec al-context
+(define-metafunction al-context
   add-vari : L vari val -> L
   [(add-vari {TYP tdenv REL renv FUNC fenv VAL venv} (id typ (iter ...)) val)
    {TYP tdenv REL renv FUNC fenv VAL venv_update}
    (where venv_update (add-map venv (id (iter ...)) val))])
 
-(define-dec al-context
+(define-metafunction al-context
   add-varr : L varr val -> L
   [(add-varr {TYP tdenv REL renv FUNC fenv VAL venv} varr val)
    {TYP tdenv REL renv FUNC fenv VAL venv_update}
    (where venv_update (add-map venv varr val))])
 
-(define-dec al-context
+(define-metafunction al-context
   add-varis : L (vari ...) (val ...) -> L
   [(add-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...) (val ...))
    {TYP tdenv REL renv FUNC fenv VAL venv_update}
    (where venv_update (adds-map venv ((id (iter ...)) ...) (val ...)))])
 
-(define-dec al-context
+(define-metafunction al-context
   add-varrs : L (varr ...) (val ...) -> L
   [(add-varrs {TYP tdenv REL renv FUNC fenv VAL venv} (varr ...) (val ...))
    {TYP tdenv REL renv FUNC fenv VAL venv_update}
@@ -115,7 +115,7 @@
 
 ;;; Typedef adders
 
-(define-dec al-context
+(define-metafunction al-context
   add-typ : L id typdef -> L
   [(add-typ {TYP tdenv REL renv FUNC fenv VAL venv} id typdef)
    {TYP tdenv_update REL renv FUNC fenv VAL venv}
@@ -123,7 +123,7 @@
 
 ;;; Function adders
 
-(define-dec al-context
+(define-metafunction al-context
   add-func : L id funcdef -> L
   [(add-func {TYP tdenv REL renv FUNC fenv VAL venv} id funcdef)
    {TYP tdenv REL renv FUNC fenv_update VAL venv}
@@ -135,26 +135,28 @@
 
 ;;; Value finders
 
-;; No clause for an unbound variable: ⊥, never ().
-(define-dec al-context
-  find-vari : L vari -> () ∨ (val)
-  [(find-vari {TYP tdenv REL renv FUNC fenv VAL venv} (id typ (iter ...))) (val)
-   (where (val) (find-map venv (id (iter ...))))])
+(define-judgment-form al-context
+  #:mode (find-vari I I O)
+  #:contract (find-vari L vari val)
+  [(where (val) (find-map venv (id (iter ...))))
+   ----------------------------------------
+   (find-vari {TYP tdenv REL renv FUNC fenv VAL venv} (id typ (iter ...)) val)])
 
-(define-dec al-context
+(define-metafunction al-context
   find-varr : L varr -> () ∨ (val)
   [(find-varr {TYP tdenv REL renv FUNC fenv VAL venv} varr) (find-map venv varr)])
 
-(define-dec al-context
+(define-metafunction al-context
   find-varis : L (vari ...) -> () ∨ ((val ...))
-  [(find-varis L (vari ...)) ((val ...))
-   (where ((val) ...) ((find-vari L vari) ...))]
-  [(find-varis L (vari ...)) ()
+  [(find-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...)) ((val ...))
+   (where ((val) ...) ((find-map venv (id (iter ...))) ...))]
+  [(find-varis {TYP tdenv REL renv FUNC fenv VAL venv} ((id typ (iter ...)) ...)) ()
    ;; otherwise: some lookup fails
    (side-condition
-    (not (redex-match? al-context ((val) ...) (term ((find-vari L vari) ...)))))])
+    (not (redex-match? al-context ((val) ...)
+                       (term ((find-map venv (id (iter ...))) ...)))))])
 
-(define-dec al-context
+(define-metafunction al-context
   find-varrs : L (varr ...) -> () ∨ ((val ...))
   [(find-varrs {TYP tdenv REL renv FUNC fenv VAL venv} (varr ...)) ((val ...))
    (where ((val) ...) ((find-map venv varr) ...))]
@@ -163,7 +165,7 @@
    (side-condition
     (not (redex-match? al-context ((val) ...) (term ((find-map venv varr) ...)))))])
 
-(define-dec al-context
+(define-metafunction al-context
   finds-vari : (L ...) vari -> () ∨ ((val ...))
   [(finds-vari ({TYP tdenv REL renv FUNC fenv VAL venv} ...) (id typ (iter ...))) ((val ...))
    (where ((val) ...) ((find-map venv (id (iter ...))) ...))]
@@ -175,7 +177,7 @@
 
 ;;; Typedef finders
 
-(define-dec al-context
+(define-metafunction al-context
   find-typ : G L id -> () ∨ (typdef)
   [(find-typ G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (typdef)
    (where (typdef) (find-map tdenv_l id))]
@@ -187,7 +189,7 @@
 
 ;;; Function finders
 
-(define-dec al-context
+(define-metafunction al-context
   find-func : G L id -> () ∨ (funcdef)
   [(find-func G {TYP tdenv_l REL renv_l FUNC fenv_l VAL venv_l} id) (funcdef)
    (where (funcdef) (find-map fenv_l id))]
@@ -207,7 +209,7 @@
 
 ;;; Relation finders
 
-(define-dec al-context
+(define-metafunction al-context
   find-rel : G L id -> () ∨ (reldef)
   [(find-rel {TYP tdenv_g REL renv_g FUNC fenv_g VAL venv_g} L id) (find-map renv_g id)])
 
@@ -215,22 +217,25 @@
 ;; Sub-context construction for iteration
 ;;
 
-(define-dec al-context
-  sub-opt : L (vari ...) -> () ∨ (L)
-  [(sub-opt L (vari ...)) (L_1)
+(define-judgment-form al-context
+  #:mode (sub-opt I I O)
+  #:contract (sub-opt L (vari ...) (L ...))
+  [(where (vari_iter ...) ((iter-vari vari QUEST) ...))
+   (find-vari L vari_iter (OPT (val))) ...
+   ----------------------------------------
+   (sub-opt L (vari ...) ((add-varis L (vari ...) (val ...))))]
+  [;; An empty vari* is the first rule's, as watsup takes the first clause.
+   (side-condition ,(pair? (term (vari ...))))
    (where (vari_iter ...) ((iter-vari vari QUEST) ...))
-   (where (((OPT (val))) ...) ((find-vari L vari_iter) ...))
-   (where L_1 (add-varis L (vari ...) (val ...)))]
-  [(sub-opt L (vari ...)) ()
-   ;; An empty vari* matches both clauses, and watsup takes the first.
-   (side-condition (pair? (term (vari ...))))
-   (where (vari_iter ...) ((iter-vari vari QUEST) ...))
-   (where (((OPT ())) ...) ((find-vari L vari_iter) ...))])
+   (find-vari L vari_iter (OPT ())) ...
+   ----------------------------------------
+   (sub-opt L (vari ...) ())])
 
-(define-dec al-context
-  sub-list : L (vari ...) -> (L ...)
-  [(sub-list L (vari ...)) (L_1 ...)
-   (where (vari_iter ...) ((iter-vari vari STAR) ...))
-   (where (((LIST (val ...))) ...) ((find-vari L vari_iter) ...))
+(define-judgment-form al-context
+  #:mode (sub-list I I O)
+  #:contract (sub-list L (vari ...) (L ...))
+  [(where (vari_iter ...) ((iter-vari vari STAR) ...))
+   (find-vari L vari_iter (LIST (val ...))) ...
    (where ((val_trans ...) ...) (transpose- ((val ...) ...)))
-   (where (L_1 ...) ((add-varis L (vari ...) (val_trans ...)) ...))])
+   ----------------------------------------
+   (sub-list L (vari ...) ((add-varis L (vari ...) (val_trans ...)) ...))])

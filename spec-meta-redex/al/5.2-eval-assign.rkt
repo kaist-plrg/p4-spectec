@@ -165,12 +165,12 @@
    ;; It adds (OPT val_sub)*, where spec-meta adds each OPT val_sub on its own.
    (--> ((assign-exp/iter/opt-some OK (vari ...)) G L) (OK G L_1)
         (where (vari_iter ...) ((iter-vari vari QUEST) ...))
-        (where ((val_sub) ...) ((find-vari L vari) ...))
+        (where ((val_sub ...)) (find-varis L (vari ...)))
         (where L_1 (add-varis L (vari_iter ...) ((OPT (val_sub)) ...)))
         "assign-exp/iter/opt-some/bind")
    (--> ((assign-exp/iter/opt-some OK (vari ...)) G L) (FAIL G L)
         ;; otherwise: some variable is unbound
-        (side-condition (not (redex-match? al ((val) ...) (term ((find-vari L vari) ...)))))
+        (where () (find-varis L (vari ...)))
         "assign-exp/iter/opt-some/fail")
 
    ;; Assign_exp/iter/list: each element is assigned under C_local, which has

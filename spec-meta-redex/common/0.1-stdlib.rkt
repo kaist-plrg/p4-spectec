@@ -48,7 +48,7 @@
 ;; General bool functions
 ;;
 
-(define-dec stdlib
+(define-metafunction stdlib
   ite : bool any any -> any
   [(ite #t any_t any_f) any_t]
   [(ite #f any_t any_f) any_f])
@@ -57,7 +57,7 @@
 ;; General option functions
 ;;
 
-(define-dec stdlib
+(define-metafunction stdlib
   opt-as-seq- : (any ...) -> (any ...)
   [(opt-as-seq- ()) ()]
   [(opt-as-seq- (any)) (any)])
@@ -66,19 +66,19 @@
 ;; General sequence functions
 ;;
 
-(define-dec stdlib
+(define-metafunction stdlib
   exists- : (bool ...) -> bool
   [(exists- ()) #f]
   [(exists- (b_h b_t ...)) ,(or (term b_h) (term b_r))
    (where b_r (exists- (b_t ...)))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   forall- : (bool ...) -> bool
   [(forall- ()) #t]
   [(forall- (b_h b_t ...)) ,(and (term b_h) (term b_r))
    (where b_r (forall- (b_t ...)))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   repeat- : any nat -> (any ...)
   [(repeat- any 0) ()]
   [(repeat- any n) (any any_r ...)
@@ -86,16 +86,16 @@
    (where n_1 ,(- (term n) 1))
    (where (any_r ...) (repeat- any n_1))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   rev- : (any ...) -> (any ...)
   [(rev- (any ...)) ,(reverse (term (any ...)))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   assoc- : any ((any any) ...) -> () ∨ (any)
   [(assoc- any_k ((any_x any_y) ...))
    ,(lookup (term ((any_x any_y) ...)) (term any_k))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   transpose- : ((any ...) ...) -> ((any ...) ...)
   [(transpose- ((any ...) ...)) ,(transpose (term ((any ...) ...)))])
 
@@ -103,7 +103,7 @@
 ;; General set functions
 ;;
 
-(define-dec stdlib
+(define-metafunction stdlib
   empty-set : -> set
   [(empty-set) ()])
 
@@ -111,23 +111,23 @@
 ;; General map functions
 ;;
 
-(define-dec stdlib
+(define-metafunction stdlib
   empty-map : -> map
   [(empty-map) ()])
 
-(define-dec stdlib
+(define-metafunction stdlib
   find-map : map any -> () ∨ (any)
   [(find-map map any_k) ,(lookup (term map) (term any_k))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   find-maps : (map ...) any -> () ∨ (any)
   [(find-maps (map ...) any_k) ,(lookups (term (map ...)) (term any_k))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   add-map : map any any -> map
   [(add-map map any_k any_v) ,(update (term map) (term any_k) (term any_v))])
 
-(define-dec stdlib
+(define-metafunction stdlib
   adds-map : map (any ...) (any ...) -> map
   [(adds-map map (any_k ...) (any_v ...))
    ,(updates (term map) (term (any_k ...)) (term (any_v ...)))])

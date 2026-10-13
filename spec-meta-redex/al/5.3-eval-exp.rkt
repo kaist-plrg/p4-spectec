@@ -52,11 +52,11 @@
         (where b_res (binop-bool boolbinop b_l b_r))
         "eval-exp/binary/boolean")
    (--> (BIN numbinop (OK num_l) (OK num_r)) (OK val_res)
-        (where val_res (binop-number numbinop num_l num_r))
+        (judgment-holds (binop-number numbinop num_l num_r val_res))
         "eval-exp/binary/number")
    (--> (BIN numbinop (OK num_l) (OK num_r)) FAIL
         ;; otherwise: one operand is a nat and the other an int
-        (where ⊥ (binop-number numbinop num_l num_r))
+        (side-condition (not (judgment-holds (binop-number numbinop num_l num_r any))))
         "eval-exp/binary/number/fail")
    (--> (BIN binop (OK val_l) exp_r) FAIL
         ;; otherwise: the right operand is not evaluated
@@ -76,11 +76,11 @@
         (where b_res (cmpop-poly polycmpop val_l val_r))
         "eval-exp/compare/poly")
    (--> (CMP numcmpop (OK num_l) (OK num_r)) (OK (BOOL b_res))
-        (where b_res (cmpop-number numcmpop num_l num_r))
+        (judgment-holds (cmpop-number numcmpop num_l num_r b_res))
         "eval-exp/compare/number")
    (--> (CMP numcmpop (OK num_l) (OK num_r)) FAIL
         ;; otherwise: one operand is a nat and the other an int
-        (where ⊥ (cmpop-number numcmpop num_l num_r))
+        (side-condition (not (judgment-holds (cmpop-number numcmpop num_l num_r any))))
         "eval-exp/compare/number/fail")
    (--> (CMP numcmpop (OK val_l) exp_r) FAIL
         ;; otherwise: the right operand is not evaluated
@@ -468,20 +468,20 @@
    (--> ((ITER exp (QUEST (vari ...))) G L)
         ((eval-exp/iter/opt ((IN L_sub exp) ...)) G L)
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
-        (where (L_sub ...) (sub-opt L (vari ...)))
+        (judgment-holds (sub-opt L (vari ...) (L_sub ...)))
         "eval-exp/iter/opt")
    (--> ((ITER exp (QUEST (vari ...))) G L) (FAIL G L)
         ;; otherwise: there is no sub-context
         (where () (is-iter-on-var (ITER exp (QUEST (vari ...)))))
-        (where ⊥ (sub-opt L (vari ...)))
+        (side-condition (not (judgment-holds (sub-opt L (vari ...) any))))
         "eval-exp/iter/opt/fail")
    (--> ((ITER exp (STAR (vari ...))) G L)
         ((eval-exp/iter/list ((IN L_sub exp) ...)) G L)
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
-        (where (L_sub ...) (sub-list L (vari ...)))
+        (judgment-holds (sub-list L (vari ...) (L_sub ...)))
         "eval-exp/iter/list")
    (--> ((ITER exp (STAR (vari ...))) G L) (FAIL G L)
         ;; otherwise: there are no sub-contexts
         (where () (is-iter-on-var (ITER exp (STAR (vari ...)))))
-        (where ⊥ (sub-list L (vari ...)))
+        (side-condition (not (judgment-holds (sub-list L (vari ...) any))))
         "eval-exp/iter/list/fail")))
