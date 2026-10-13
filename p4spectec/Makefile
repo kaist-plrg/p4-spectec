@@ -108,12 +108,8 @@ test-diagnostics: diagnostic-cli
 test-diagnostics-promote: diagnostic-cli
 	UPDATE_EXPECT=1 $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
 
-# Independent AL meta codec and semantics acceptance
-.PHONY: test-metacirc test-metacirc-parse
+# Independent AL meta compiler snapshots
+.PHONY: test-metacirc
 
 test-metacirc:
-	$(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test --
-
-# AL interface parsing without interpreter execution
-test-metacirc-parse:
-	$(CARGO) run --locked --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test -- --parse-only
+	env -u UPDATE_EXPECT $(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test

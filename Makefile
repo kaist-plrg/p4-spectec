@@ -27,7 +27,7 @@ fmt fmt-check lint rustdoc:
 TEST_TARGETS := test test-expected test-elab test-algo test-structure test-prose \
   test-adoc test-p4parse test-run-al test-run-sl test-run-pl \
   test-sim-al test-sim-sl test-sim-pl test-diagnostics \
-  test-promote test-diagnostics-promote test-metacirc test-metacirc-parse
+  test-promote test-diagnostics-promote test-metacirc
 
 .PHONY: $(TEST_TARGETS)
 $(TEST_TARGETS):
