@@ -10,8 +10,7 @@
 ;; to pass, or with --neg to fail. Progress, the summary, and the programs
 ;; without the expected result go to stdout and a result file. The result file
 ;; also gets the stderr and error message of each program that raises.
-;; raco test runs only the empty test submodule; run this with
-;; `make redex-test`, or:
+;; Run this with `make redex-test`, or:
 ;;
 ;;   raco make spec-meta-redex/test/p4-typecheck.rkt
 ;;   racket spec-meta-redex/test/p4-typecheck.rkt --p4-dir DIR -e DIR -i DIR [--neg] SPEC
@@ -25,8 +24,6 @@
          racket/runtime-path
          racket/set
          racket/string
-         json
-         "../common/0.2-extern-json.rkt"
          "../common/0.3-extern-ffi.rkt"
          "../al/0-boot.rkt"
          "../al/7-entry.rkt")
@@ -114,47 +111,40 @@
       (define expected (if neg? 'fail 'pass))
       (define total (length programs))
       (define started (current-inexact-monotonic-milliseconds))
-      (parameterize ([host-spec spec])
-        (define C (load-script (boot-script spec)))
-        ;; Starts the host, so the first program's time leaves out host_init.
-        (host-eval (jsexpr->string (builtin-request "rev_" '(NAT) '((LIST ())))))
-        (report (format "loaded spec in ~as" (~r (seconds-since started) #:precision '(= 2))))
-        (define passed 0)
-        (define failing
-          (for/fold ([failing '()] #:result (reverse failing))
-                    ([program (in-list programs)]
-                     [i (in-naturals 1)])
-            (define-values (status elapsed reason) (typecheck C program includes))
-            (when (eq? status 'pass)
-              (set! passed (add1 passed)))
-            (report (format "[~a/~a] ~a ~as  ~a" i total (~a status #:min-width 7)
-                            (~r elapsed #:precision '(= 2) #:min-width 7) program))
-            (when reason
-              (for ([line (in-list (string-split reason "\n"))])
-                (fprintf result "    ~a\n" line))
-              (flush-output result))
-            (if (eq? status expected) failing (cons program failing))))
-        (report)
-        (report (make-string 60 #\=))
-        (report (format "pass ~a  fail ~a  of ~a in ~a min"
-                        passed (- total passed)
-                        total (~r (/ (seconds-since started) 60) #:precision '(= 1))))
-        (report (format "result: ~a" result-path))
-        (unless (null? failing)
-          (report (format "\nfailing (~a):" (length failing)))
-          (for ([program (in-list failing)])
-            (report (string-append "  " program))))
-        (null? failing)))))
-
-;; raco test runs this, not the sample run.
-(module test racket/base)
+      (host-init! spec)
+      (define C (load-script (boot-script spec)))
+      (report (format "loaded spec in ~as" (~r (seconds-since started) #:precision '(= 2))))
+      (define passed 0)
+      (define failing
+        (for/fold ([failing '()] #:result (reverse failing))
+                  ([program (in-list programs)]
+                   [i (in-naturals 1)])
+          (define-values (status elapsed reason) (typecheck C program includes))
+          (when (eq? status 'pass)
+            (set! passed (add1 passed)))
+          (report (format "[~a/~a] ~a ~as  ~a" i total (~a status #:min-width 7)
+                          (~r elapsed #:precision '(= 2) #:min-width 7) program))
+          (when reason
+            (for ([line (in-list (string-split reason "\n"))])
+              (fprintf result "    ~a\n" line))
+            (flush-output result))
+          (if (eq? status expected) failing (cons program failing))))
+      (report)
+      (report (make-string 60 #\=))
+      (report (format "pass ~a  fail ~a  of ~a in ~a min"
+                      passed (- total passed)
+                      total (~r (/ (seconds-since started) 60) #:precision '(= 1))))
+      (report (format "result: ~a" result-path))
+      (unless (null? failing)
+        (report (format "\nfailing (~a):" (length failing)))
+        (for ([program (in-list failing)])
+          (report (string-append "  " program))))
+      (null? failing))))
 
 (module+ main
   (define p4-dirs '())
   (define exclude-dirs '())
   (define includes '())
-  (define result-path #f)
-  (define dry-run? #f)
   (define neg? #f)
   (define spec
     (command-line
@@ -169,10 +159,6 @@
      #:once-each
      [("-n" "--neg") "Expect each program to fail, for negative tests"
                      (set! neg? #t)]
-     [("-o" "--output") file "Result file (default: spec-meta-redex/p4-typecheck-pos.result, or -neg.result with --neg)"
-                        (set! result-path (path->complete-path file))]
-     [("-d" "--dry-run") "List the programs that would be checked, then exit"
-                         (set! dry-run? #t)]
      #:args (spec) spec))
   (for ([flag (in-list '("--p4-dir" "-e" "-i"))]
         [dirs (in-list (list p4-dirs exclude-dirs includes))])
@@ -181,11 +167,6 @@
     (for ([dir (in-list dirs)] #:unless (directory-exists? dir))
       (raise-user-error 'p4-typecheck "~a: no such directory: ~a" flag dir)))
   (define programs (collect-programs p4-dirs exclude-dirs))
-  (cond
-    [dry-run?
-     (for-each displayln programs)
-     (eprintf "\n~a program(s)\n" (length programs))]
-    [(null? programs) (displayln "nothing to do")]
-    [else
-     (define path (or result-path (default-result neg?)))
-     (exit (if (check-all spec includes programs path neg?) 0 1))]))
+  (if (null? programs)
+      (displayln "nothing to do")
+      (exit (if (check-all spec includes programs (default-result neg?) neg?) 0 1))))

@@ -7,20 +7,14 @@
          racket/runtime-path
          racket/string)
 (provide boot-script
-         boot-p4
-         decode-ext)
+         boot-p4)
 
-(define-runtime-path spectec-boot-default "../../spectec-boot")
+(define-runtime-path spectec-boot-path "../../spectec-boot")
 
-;; SPECTEC_BOOT overrides the binary, as in spec-meta-k/scripts.
 (define (spectec-boot)
-  (define env (getenv "SPECTEC_BOOT"))
-  (define exe (if env
-                  (or (find-executable-path env) env)
-                  spectec-boot-default))
-  (unless (file-exists? exe)
-    (error 'spectec-boot "~a not found; run `make boot`" exe))
-  exe)
+  (unless (file-exists? spectec-boot-path)
+    (error 'spectec-boot "~a not found; run `make boot`" (simplify-path spectec-boot-path)))
+  spectec-boot-path)
 
 ;; Runs spectec-boot with args, and reads the one datum it prints.
 (define (read-spectec-boot . args)
@@ -53,7 +47,7 @@
   (read-spectec-boot "sexp" (path-arg path)))
 
 ;; A P4 program as a `val`. includes are the P4 include directories.
-(define (boot-p4 path #:includes [includes '()])
+(define (boot-p4 path #:includes includes)
   (decode-ext
    (apply read-spectec-boot "sexp-p4" "-p" (path-arg path)
           (for*/list ([include (in-list includes)]

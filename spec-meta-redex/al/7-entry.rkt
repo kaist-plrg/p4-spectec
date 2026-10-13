@@ -2,7 +2,7 @@
 ;; spec-meta/al/6-entry.watsup: load a script, then run $main() through the
 ;; driver. entry-p4 runs Program_ok on a P4 program instead, as K's afterLoad
 ;; does, under a context that load-script gives, so one load can serve many
-;; programs.
+;; programs. Both need the host started on the spec first, with host-init!.
 ;;
 ;; As a program, it runs $main() of a SpecTec script through Entry, and
 ;; prints its value in k-run.sh's JSON format, or `fail`. With --p4, it runs
@@ -25,8 +25,7 @@
          "6-driver.rkt")
 (provide entry
          entry-p4
-         load-script
-         result->output)
+         load-script)
 
 ;; rule Entry:
 ;;   |- script : val
@@ -89,9 +88,9 @@
      #:args (file) file))
   (when (and p4 (null? includes))
     (raise-user-error '7-entry.rkt "-i is required with --p4"))
-  (parameterize ([host-spec path])
-    (displayln
-     (if p4
-         (let ([val_p4 (boot-p4 p4 #:includes includes)])
-           (result-p4->output (entry-p4 (load-script (boot-script path)) val_p4)))
-         (result->output (entry (boot-script path)))))))
+  (host-init! path)
+  (displayln
+   (if p4
+       (let ([val_p4 (boot-p4 p4 #:includes includes)])
+         (result-p4->output (entry-p4 (load-script (boot-script path)) val_p4)))
+       (result->output (entry (boot-script path))))))
