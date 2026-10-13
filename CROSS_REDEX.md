@@ -1,6 +1,6 @@
 # Specifying P4-SpecTec AL in PLT Redex
 
-Status: done. Steps 1 to 15 are done.
+Status: done. Steps 1 to 16 are done.
 
 `spec-meta-redex/` will hold a PLT Redex specification of the P4-SpecTec AL
 meta-language, as a small-step reduction semantics. It transcribes the AL
@@ -87,7 +87,8 @@ Rule names combine the relation, the rulegroup, and the rule, for example
 across groups and relations, and `union-reduction-relations` rejects two rules
 with the same name *(measured)*. A rule that runs in stages keeps its name for
 the first stage, and each later stage adds a word for what it does:
-`"assign-exp/cons"` assigns the head, and `"assign-exp/cons/tail"` the tail.
+`"eval-prem/relpr"` calls the relation, and `"eval-prem/relpr/assign"` assigns
+its outputs.
 Two rules that share their first premise share that stage, which is named
 after the common part of their names: `"eval-clauses/cons"` runs the head
 clause, and then `"eval-clauses/cons-succ"` or `"eval-clauses/cons-fail"`
@@ -99,8 +100,10 @@ applies. Complement rules end in `fail`:
 - `".../<rule>/fail"` where a rule's own premise fails, as in
   `"eval-exp/binary/number/fail"`, where `binop-number` has no derivation.
 
-The complements of a sequence assignment are named after what is left over:
-`"assign-exps/fail-exp"` and `"assign-exps/fail-val"`.
+A sequence that evaluates in place (see [Premises](#premises)) finishes with a
+rule named after its form: `"eval-prems"`, `"assign-exps/each"`, and
+`"assign-args/each"`. A sequence assignment whose lengths differ fails with
+`"assign-exps/fail"` or `"assign-args/fail"`.
 
 ### Configurations
 
@@ -200,12 +203,15 @@ evaluated only when the left one fits a rule, as in watsup.
 
 `Fr` lists every evaluation position of every machine form, and the pending
 positions keep their precise nonterminals: `(BIN binop hole exp)`,
-`(TUP ((OK val) ... hole exp ...))`. `Fr-catch` holds the frames where watsup
+`(TUP ((OK val) ... hole exp ...))`. Premise and assignment sequences have
+frames of the same shape: `(eval-prems (OK ... hole prem ...))` and
+`(assign-exps/each (OK ... hole (assign-exp exp val) ...))`. `Fr-catch` holds the frames where watsup
 looks at a `FAIL` (see [FAIL and backtracking](#fail-and-backtracking)).
 Nonterminals defined with `in-hole` work *(measured)*. Every redex has the
 form `(G (in-hole E (IN L (in-hole F r))))`, so `L` is the layer of the
 innermost `IN` around `r`. `e` lists the forms that rules start from, and the
-iterations over nothing, which have no evaluation position. Every intermediate
+iterations over nothing, which have no evaluation position, such as
+`(assign-exps/each ())`. Every intermediate
 form that a rule builds is a frame around an `e`, since a result is an `e`.
 
 ### The notion of reduction and its closure
@@ -280,17 +286,20 @@ same relation faster:
    each node it matches `Fr` one level deep, and moves into the one evaluation
    position whose subterm is not `done`.
 3. The node where no such position exists is the redex. The driver applies
-   `->redex` to it and `->ctx` to its focus triple, and puts `r'` in focus
-   under `L'`, keeping `G`.
+   `->redex` to it, or `->ctx` to its focus triple if no rule of `->redex`
+   applies. It puts the first successor `r'` in focus under `L'`, keeping
+   `G`.
 
 A node's other subterms do not change while its pending subterm is evaluated,
 so its pending position stays the same until that subterm is `done`. So a step
 matches `Fr` only at the nodes it enters, not along the whole path from the
 root. The driver fails loudly if two evaluation positions are pending at a
-node it enters, if no rule applies to a redex of a configuration that is not
-final, or if more than one does. It loops with
-`apply-reduction-relation/tag-with-names`, and never uses
-`apply-reduction-relation*` (see below). The rules, the grammar, and `->al` are
+node it enters, or if no rule applies to a redex of a configuration that is
+not final. It does not check that only one rule applies: the rules are
+disjoint by construction (see
+[Determinism and disjoint clauses](#determinism-and-disjoint-clauses)), so the
+first successor is the only one. It loops with `apply-reduction-relation`,
+and never uses `apply-reduction-relation*` (see below). The rules, the grammar, and `->al` are
 the specification; the driver adds no semantics.
 
 The tutorial's style, with the contexts in every rule's left-hand side, costs
@@ -353,9 +362,9 @@ slice out of bounds) raises out of the driver, as it does in OCaml.
 ### Determinism and disjoint clauses
 
 - **Reduction rules.** At most one rule of `->redex` and `->ctx` applies to any
-  redex, so the order of the rules never matters. The driver checks this: it
-  applies whole relations, and fails when more than one rule applies. Each
-  `otherwise` becomes complement rules, as in the example above.
+  redex, so the order of the rules never matters. Nothing checks this at run
+  time: the driver takes the first successor it finds. Each `otherwise`
+  becomes complement rules, as in the example above.
 - **Metafunctions and judgment forms.** Their clauses are disjoint: for any
   input, at most one clause applies, whatever order the clauses are in. Each
   clause is told apart from the others by its input patterns and
@@ -562,6 +571,26 @@ checks any, so the two differ only when a later element raises an error or has
 a side effect. The same holds for tuples, lists, arguments, and iterated
 premises and expressions.
 
+A rule's premises (`Eval_prems`), and the assignments of `Assign_exps` and
+`Assign_args`, evaluate in place, left to right, as the components of a tuple
+do. watsup threads `C` through a recursive rulegroup for these sequences,
+since an iteration cannot thread it. The machine updates the layer in place,
+so it needs no threading:
+
+```racket
+(--> (assign-exps (exp ..._n) (val ..._n))
+     (assign-exps/each ((assign-exp exp val) ...))
+     "assign-exps")
+(--> (assign-exps/each (OK ...)) OK
+     "assign-exps/each")
+```
+
+A `FAIL` stops the sequence through `"frame/fail"`, as `Eval_prems/head-fail`
+does. An assignment sequence of the wrong length fails before it assigns
+anything; watsup's recursion fails once the shorter list runs out, and the two
+give the same result. `Assign_exp/cons` assigns its head and tail as a
+sequence of two.
+
 ### Layout and languages
 
 Racket modules cannot require each other in a cycle. The AL relations are
@@ -601,7 +630,7 @@ spec-meta-redex/
     5.6-eval-call-func.rkt  rules of Eval_clause(s), Eval_tblrow(s), Call_*_func, Call_func
     5.7-eval-call-rel.rkt   rules of Eval_rul(s), Eval_rulgroup(s), Call_*_rel, Call_rel
     5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al
-    6-driver.rkt          the driver: run, run/trace
+    6-driver.rkt          the driver: run
     7-entry.rkt           Entry: load, then run $main() or a relation; the command line
   test/                   unnumbered
     p4-typecheck.rkt      make redex-test: type-checks the P4 samples; raco test skips it
@@ -639,8 +668,8 @@ frames its rules need.
   a `val`.
 
 Racket's `read` parses this output directly, so Redex needs no parser.
-`al/0-boot.rkt` runs these subcommands and `read`s their output, with
-`SPECTEC_BOOT` overriding the binary as in the K scripts. `spec/` boots to
+`al/0-boot.rkt` runs these subcommands, with the `spectec-boot` at the
+repository root, and `read`s their output. `spec/` boots to
 2.8 MB. `sexp-p4` writes the JSON of `EXT json` as a string of JSON text, and
 `boot-p4` decodes it with `string->jsexpr`. A value arriving over the extern
 wire in Step 12 is decoded by the same library, so both have one encoding.
@@ -700,25 +729,24 @@ checked the stanza:
     `{"error": ...}` reply as K's shim. So the Racket side declares it as
     `(-> string_t string_t)`, which copies the reply into a Racket string
     before the next call, and needs no `free` or length function.
-- **Loading.** `0.3-extern-ffi.rkt` loads `shim.so` on the first extern call,
-  so a run without one never loads it. If the file is missing, the error names
+- **Loading.** `0.3-extern-ffi.rkt` loads `shim.so` the first time
+  `host-init!` or `host-eval` runs. If the file is missing, the error names
   `make redex`. It binds each function with
   `(ffi2-procedure (ffi2-lib-ref lib "host_eval") (-> string_t string_t))`.
   The docs give `(ffi2-lib-ref name lib)`, but ffi2-lib 1.1 takes the library
   first. The spec path goes as `string_t`: ffi2's `path_t` accepts only path
   objects. `dlopen` takes 12 ms.
 - **Initialization.** As with K's `<specdir>`, the spec path is the file being
-  run: the script, or `spec/` for a P4 program. `entry` takes a booted script,
-  so the path comes from a parameter, `host-spec`, that the command-line
-  driver and the tests set. A call while it is `#f` raises. The path goes to
+  run: the script, or `spec/` for a P4 program. A process runs one spec.
+  `entry` takes a booted script, so the command line and the P4 runner start
+  the host themselves, with `(host-init! spec)`, before anything reaches it.
+  An extern call before that gets the shim's error reply. The path goes to
   OCaml as a complete path, since OCaml resolves a relative one against the
-  process's working directory, not Racket's `current-directory`. A call under
-  a different path runs `host_init` again. That replaces the runner, while
-  `$fresh_typeId`'s counter keeps counting. If `host_init` fails, the previous
-  runner stays. The runner cannot be built from a script with a relation that
-  has no input hint, so a test script that is also `host-spec` gives each
-  relation a `hint(input ...)`. `host_init` takes 95 to 115 ms on the
-  examples and 1.1 s on `spec/`.
+  process's working directory, not Racket's `current-directory`. `host-init!`
+  raises if the host cannot build a runner from the spec. That happens to a
+  script with a relation that has no input hint, so a script that the command
+  line runs gives each relation a `hint(input ...)`. `host_init` takes 95 to
+  115 ms on the examples and 1.1 s on `spec/`.
 - **Calls.** Text crosses as UTF-8 in both directions. A small builtin call
   takes 5 µs (20,000 calls); Racket's JSON encoding and decoding added about
   10 µs per call in an earlier probe. `{"fail": null}` becomes `FAIL`.
@@ -786,32 +814,22 @@ and decide with the user before deviating. Record each deviation here.
   and `al/7-entry.rkt` prints them on stderr, so its stdout is the last line
   of `k-run.sh`'s. Where K differs from watsup, compare with the meta-circular
   run.
-- **Unit tests.** `test-equal` and `test-match` go under `spec-meta-redex/test/`
-  and run with `raco test spec-meta-redex/test`. Machine tests run a term
-  under a given `G` and `L` through the driver, with helpers in
-  `test/machine.rkt`. They check the result and the final layer. They include
-  inputs on both sides of every complement, and a case for every point where
-  watsup must not evaluate a premise. Such a case puts
-  `(BIN DIV (NAT 1) (NAT 0))`, which raises, where a premise must not be
-  evaluated.
-- **Determinism.** The driver fails on a node with two pending positions, and
-  on a redex to which more than one rule applies.
-- **Coverage.** A test file ends by checking that every rule of the relations
-  it exercises was applied. The helpers
-  in `test/machine.rkt` count the rules that the driver applies, by name, as
-  it applies them, so a run that raises still counts the rules before.
-  Redex's `make-coverage` is not used: it counts a rule once the rule's
-  left-hand side and first `where` match, even when a later premise fails (see
-  Step 7), and `->al` applies the rules at every candidate position.
-- **Disjoint metafunctions.** The tests cover both sides of every complement.
-- **Caching.** The `$fresh_typeId` test in Step 12 catches an impure call
-  that reached a cached metafunction.
+- **The P4 samples.** `make redex-test` type-checks the programs of
+  `p4c/testdata/p4_16_samples`, which must pass, and of
+  `p4c/testdata/p4_16_errors`, which must fail (see
+  [Type-checking the P4 samples](#type-checking-the-p4-samples)).
+- **Refactoring.** A change to the port must keep every result: the value of
+  each example, and `passed` or `fail` for each P4 program. Step counts and
+  rule counts may change.
+- **Determinism.** The rules are disjoint by construction, and nothing checks
+  that at run time. The driver fails on a node with two pending positions,
+  and on a redex to which no rule applies.
+- **Caching.** It is safe by construction: every impure call happens in a
+  reduction rule (see [Caching](#caching)).
 - **Contracts.** Every metafunction and judgment form has a contract from its
-  watsup declaration, which catches transcription slips early. With caching
-  on, a contract check on `G` or `L` costs a memo lookup.
-- **Grammar.** In debug mode, the driver checks every configuration against
-  `conf`. That costs a full match per step, so the tests use it only on small
-  runs.
+  watsup declaration, which catches transcription slips early. Redex checks a
+  contract only on a cache miss. Removing all of them sped up `$load` of
+  `spec/` from 1.0 s to 0.6 s, and made the driver no faster (Step 16).
 
 ## Checking it yourself
 
@@ -855,7 +873,7 @@ is loaded without a check of its dependencies, so run `make redex`, or
 ```sh
 raco make spec-meta-redex/al/7-entry.rkt
 racket spec-meta-redex/al/7-entry.rkt examples/add.watsup   # ["intN","119"]; debug messages on stderr
-racket spec-meta-redex/al/7-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include spec   # passed, in about 18 s
+racket spec-meta-redex/al/7-entry.rkt --p4 p4c/testdata/p4_16_samples/action-bind.p4 -i p4c/p4include spec   # passed, in about 16 s
 ```
 
 `--p4` takes `-i DIR` for each P4 include directory, and needs at least one.
@@ -873,15 +891,13 @@ racket spec-meta-redex/test/p4-typecheck.rkt \
 `--p4-dir p4c/testdata/p4_16_samples`, whose programs must pass, and with
 `--p4-dir p4c/testdata/p4_16_errors --neg`, whose programs must fail. It
 fails if either run does. `--p4-dir`, `-e`, `-i`, and the spec are required.
-Each of the three flags can be repeated. `-d` lists the programs that would
-be checked. Entries in the `.exclude` files are relative to the repository
-root. The 11 micro programs take about 5 minutes.
+Each of the three flags can be repeated. Entries in the `.exclude` files are
+relative to the repository root. The 11 micro programs take about 5 minutes.
 
-`make redex-test` does not run the other tests in `spec-meta-redex/test`, and
-`raco test` does not run `p4-typecheck.rkt`'s programs. There is no timeout.
+There is no timeout.
 Each program passes or fails, and one that raises fails. The outcomes go to
 `spec-meta-redex/p4-typecheck-pos.result`, or `p4-typecheck-neg.result` with
-`--neg`, as they come; `-o FILE` names another. Under each program that
+`--neg`, as they come. Under each program that
 raises, the result file also has its stderr and error message, indented.
 The programs without the expected result are listed at the end, under
 `failing`.
@@ -906,6 +922,9 @@ Then, for example:
 (current-traced-metafunctions '(find-vari sub-list))             ; print calls and results
 (current-traced-metafunctions '())
 ```
+
+A run that reaches the host needs it started first, with
+`(host-init! "examples/add.watsup")` from `common/0.3-extern-ffi.rkt`.
 
 A small run can be stepped through in Redex's GUI, with `(traces ->al conf)`
 from `redex/gui`. `traces` explores the reduction graph like
@@ -2065,3 +2084,84 @@ Outcome:
   310 s for about 1.43 million steps. The rules applied most often are
   `assign-exp/variable` (118,633 times), `eval-exp/variable` (96,807), and
   `assign-exps/cons` (89,209).
+
+### Step 16: A leaner driver, sequences in place, and an explicit host
+
+After Step 15, some code was still not the specification:
+
+- debugging aids, and options that nothing turned on;
+- the driver's determinism check;
+- sequences threaded through K-style continuation forms;
+- two Racket escapes that a pattern can express;
+- provides that no other module used.
+
+The user decided, on 2026-10-13:
+
+1. Safety checks stay as they are, except for decision 2.
+2. The driver doesn't check determinism.
+3. A process runs one spec, so the host starts explicitly.
+4. Contracts stay.
+5. Only the results must stay the same. Step counts and rule counts may
+   change.
+
+Outcome:
+
+- Done, in four commits: the driver; patterns and provides; sequences in
+  place; the host and the command lines. After each, every example and the
+  three P4 programs below gave the same results.
+- The driver provides only `run`. It applies `->redex`, then `->ctx` only
+  when `->redex` gives nothing, and takes the first successor. `run/trace`
+  and `check-conf?` are gone. The driver still fails on a configuration of
+  the wrong shape, on two pending positions, and on a stuck redex. Before
+  the change, an instrumented copy of the driver showed that its
+  `remove-duplicates` never removed anything, on every example and on both
+  `action-bind.p4` programs.
+- Contracts cost little: Redex checks one only on a cache miss *(measured)*:
+
+  | Run | With contracts | Without |
+  | --- | --- | --- |
+  | `$load` of `spec/` | 0.99 s, 1.00 s | 0.60 s, 0.56 s |
+  | driver, the three P4 programs | 33.4 s, 33.2 s | 33.8 s, 31.9 s |
+  | driver, the examples | 2.85 s | 2.66 s |
+
+- Before Phase 3, a third of `action-bind.p4`'s 73,932 steps went to
+  threading sequences: 11,515 to `assign-exps/*`, 7,905 to `eval-prems/*`, and
+  4,578 to `assign-args/*`. These sequences now evaluate in place (see
+  [Premises](#premises)), and `check-redundancy` reports no overlap among the
+  frames on the examples and the three P4 programs. The steps now:
+
+  | Run | Steps before | Steps after |
+  | --- | --- | --- |
+  | `add` | 27 | 24 |
+  | `builtin-extra` | 308 | 273 |
+  | `builtin-list` | 179 | 150 |
+  | `builtin-map` | 187 | 159 |
+  | `builtin-nested` | 803 | 693 |
+  | `fibo` | 6,478 | 5,948 |
+  | `iter-nontrivial` | 170 | 145 |
+  | `iter-sequence` | 1,937 | 1,648 |
+  | `mutual-recursion` | 5,638 | 4,474 |
+  | `relation-typing` | 1,284 | 1,071 |
+  | `variant-tree` | 963 | 801 |
+  | `p4_16_samples/action-bind.p4` | 73,932 | 57,117 |
+  | `p4_16_errors/action-bind.p4` | 24,444 | 19,048 |
+  | `p4_16_samples/action-uses.p4` | 67,911 | 52,324 |
+
+- `host-init!` starts the host, in place of `host-spec`. `SPECTEC_BOOT`, the
+  P4 runner's `-o` and `-d`, its warm-up call and empty `test` submodule, and
+  the unused provides are gone.
+- Times of `run` alone, in one process after `$load`, *(measured)*:
+
+  | Program | Result | Before | After Phase 1 | After |
+  | --- | --- | --- | --- | --- |
+  | `p4_16_samples/action-bind.p4` | `passed` | 15.5 s | 15.1 s | 11.6 s, 11.8 s |
+  | `p4_16_errors/action-bind.p4` | `fail` | 5.0 s | 4.4 s | 3.6 s, 3.8 s |
+  | `p4_16_samples/action-uses.p4` | `passed` | 13.6 s | 11.9 s | 10.2 s, 10.1 s |
+
+  `$load` stays at 1.0 s. Most of the gain comes from Phase 3; the driver
+  change alone is within noise.
+- `test/p4-typecheck.rkt` passes `action-bind.p4` (14.3 s) and
+  `action-uses.p4` (11.9 s), and with `--neg` fails the negative
+  `action-bind.p4` (5.3 s). `racket spec-meta-redex/al/7-entry.rkt
+  examples/add.watsup` prints `["intN","119"]`, and `--p4` on
+  `action-bind.p4` prints `passed` in 16.3 s.
