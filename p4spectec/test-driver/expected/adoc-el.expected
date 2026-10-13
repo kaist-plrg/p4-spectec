@@ -7225,6 +7225,15 @@ def $name_annotation_default(annotationList, nameIR) = nameIR
 
 
 
+dec $has_at_most_one_name_annotation(annotationList) : bool
+
+def $has_at_most_one_name_annotation(annotationList)
+  = $(|$name_annotation(annotationList)| <= 1)
+
+
+
+
+
 dec $find_name_annotation_opt(annotationList) : annotation?
 
 def $find_name_annotation_opt(_EMPTY) = eps
@@ -16441,6 +16450,7 @@ rule InstDecl_non_objectInitializer_ok:
       |- annotationList prefixedTypeName `< typeArgumentList `>
       `( argumentList `) name ';'
           : TC_1 instantiationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- TypeArgumentList_ok:
       p TC_0 |- typeArgumentList : typeArgumentIR* '#' typeId_impl*
   -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
@@ -16619,6 +16629,7 @@ rule InstDecl_objectInitializer_ok:
       |- annotationList prefixedTypeName `< typeArgumentList `>
       `( argumentList `) name '=' `{ objectDeclarationList `} ';'
           : TC_2 instantiationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- TypeArgumentList_ok:
       p TC_0 |- typeArgumentList : typeArgumentIR* '#' typeId_impl*
   -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*
@@ -16758,6 +16769,7 @@ rule ActionDecl_ok:
   p TC_0
       |- annotationList ACTION name `( parameterList `) blockStatement
           : TC_4 actionDeclarationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- if TC_1 = TC_0[LOCAL.KIND = ACTION]
   -- if TC_2 = TC_1[CONTROL = CONT][LOOP = OUT]
   -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR* '#' eps
@@ -18980,6 +18992,7 @@ rule ControlLocalDecl_ok/tableDeclaration:
   TC_0
       |- annotationList TABLE name `{ tablePropertyList `}
           : TC_3 tableDeclarationIR
+  -- if $has_at_most_one_name_annotation(annotationList)
   -- if TC_1 = TC_0[LOCAL.KIND = TABLE_APPLY_METHOD]
   -- if tableProperty* = $flatten_tablePropertyList(tablePropertyList)
   -- Table_ok: TC_1 |- tableProperty* : TBLC tablePropertyIR*

@@ -99,6 +99,8 @@ rule InstDecl_non_objectInitializer_ok:
   p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `>
               `( argumentList `) name ';'
           : TC_1 instantiationIR
+  ---- ;; check that there is at most one name annotation
+  -- if $has_at_most_one_name_annotation(annotationList)
   ---- ;; check type arguments
   -- TypeArgumentList_ok:
       p TC_0 |- typeArgumentList : typeArgumentIR* '#' typeId_impl*
@@ -303,6 +305,8 @@ rule InstDecl_objectInitializer_ok:
               prefixedTypeName `< typeArgumentList `> `( argumentList `)
               name '=' `{ objectDeclarationList `} ';'
           : TC_2 instantiationIR
+  ---- ;; check that there is at most one name annotation
+  -- if $has_at_most_one_name_annotation(annotationList)
   ---- ;; check type arguments
   -- TypeArgumentList_ok:
       p TC_0 |- typeArgumentList : typeArgumentIR* '#' typeId_impl*
@@ -455,6 +459,8 @@ rule Decl_ok/functionDeclaration:
 rule ActionDecl_ok:
   p TC_0 |- annotationList ACTION name `( parameterList `) blockStatement
           : TC_4 actionDeclarationIR
+  ---- ;; check that there is at most one name annotation
+  -- if $has_at_most_one_name_annotation(annotationList)
   ---- ;; set local context
   -- if TC_1 = TC_0 [ .LOCAL.KIND = ACTION ]
   -- if TC_2 = TC_1 [ .CONTROL = CONT ][ .LOOP = OUT ]

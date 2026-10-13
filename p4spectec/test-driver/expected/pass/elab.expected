@@ -5869,6 +5869,10 @@ def $name_annotation_default(annotationList, nameIR) : nameIR =
   clause 1 : (annotationList, nameIR) = nameIR
   -- if ([] = $name_annotation(annotationList))
 
+def $has_at_most_one_name_annotation(annotationList) : bool =
+
+  clause 0 : (annotationList) = (|$name_annotation(annotationList)| <= 1)
+
 def $find_name_annotation_opt(annotationList) : annotation? =
 
   clause 0 : (_EMPTY) = ?()
@@ -11452,6 +11456,7 @@ relation ControlLocalDecl_ok: typingContext |- controlLocalDeclaration : typingC
   rulegroup tableDeclaration
 
     rule tableDeclaration: TC_0 |- annotationList TABLE name `{ tablePropertyList `} as controlLocalDeclaration : TC_3 tableDeclarationIR as controlLocalDeclarationIR
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- if (TC_1 = TC_0[LOCAL.KIND = TABLE_APPLY_METHOD as localKind])
     -- if (tableProperty*{tableProperty <- tableProperty*} = $flatten_tablePropertyList(tablePropertyList))
     -- Table_ok: TC_1 |- tableProperty*{tableProperty <- tableProperty*} : TBLC tablePropertyIR*{tablePropertyIR <- tablePropertyIR*}
@@ -11546,6 +11551,7 @@ relation ActionDecl_ok: cursor typingContext |- actionDeclaration : typingContex
   rulegroup
 
     rule : p TC_0 |- annotationList ACTION name `( parameterList `) blockStatement : TC_4 actionDeclarationIR
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- if (TC_1 = TC_0[LOCAL.KIND = ACTION as localKind])
     -- if (TC_2 = TC_1[CONTROL = CONT][LOOP = OUT])
     -- ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR*{parameterIR <- parameterIR*} '#' []
@@ -12891,6 +12897,7 @@ relation InstDecl_non_objectInitializer_ok: cursor typingContext |- annotationLi
   rulegroup
 
     rule : p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name ';' : TC_1 instantiationIR
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*}
     -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- if (prefixedNameIR = $prefixedTypeName(prefixedTypeName))
@@ -12968,6 +12975,7 @@ relation InstDecl_objectInitializer_ok: cursor typingContext |- annotationList p
   rulegroup
 
     rule : p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name '=' `{ objectDeclarationList `} ';' : TC_2 instantiationIR
+    -- if $has_at_most_one_name_annotation(annotationList)
     -- TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*}
     -- ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*}
     -- if (prefixedNameIR = $prefixedTypeName(prefixedTypeName))

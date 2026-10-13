@@ -12124,6 +12124,10 @@ def $name_annotation_default(annotationList, nameIR)
 
 2. Else Dangling
 
+def $has_at_most_one_name_annotation(annotationList)
+
+1. Return (|$name_annotation(annotationList)| <= 1)
+
 def $find_name_annotation_opt(annotationList)
 
 1. Case analysis on annotationList
@@ -25459,23 +25463,27 @@ relation ControlLocalDecl_ok: TC_0 |- controlLocalDeclaration : % %
 
     1. (Let annotationList TABLE name `{ tablePropertyList `} be controlLocalDeclaration as tableDeclaration)
 
-      1. (Let TC_1 be TC_0[LOCAL.KIND = TABLE_APPLY_METHOD as localKind])
+      1. If ($has_at_most_one_name_annotation(annotationList)), then
 
-        1. (Let tableProperty*{tableProperty <- tableProperty*} be $flatten_tablePropertyList(tablePropertyList))
+        1. (Let TC_1 be TC_0[LOCAL.KIND = TABLE_APPLY_METHOD as localKind])
 
-          1. (Table_ok: TC_1 |- tableProperty*{tableProperty <- tableProperty*} : TBLC tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
+          1. (Let tableProperty*{tableProperty <- tableProperty*} be $flatten_tablePropertyList(tablePropertyList))
 
-            1. (Let nameIR be $name(name))
+            1. (Table_ok: TC_1 |- tableProperty*{tableProperty <- tableProperty*} : TBLC tablePropertyIR*{tablePropertyIR <- tablePropertyIR*})
 
-              1. (TableType_ok: TC_1 TBLC |- name : TC_2 typeIR_table)
+              1. (Let nameIR be $name(name))
 
-                1. (Let varTypeIR be _EMPTY typeIR_table DYN ?())
+                1. (TableType_ok: TC_1 TBLC |- name : TC_2 typeIR_table)
 
-                  1. (Let TC_3 be $add_var_t(BLOCK, TC_2, nameIR, varTypeIR))
+                  1. (Let varTypeIR be _EMPTY typeIR_table DYN ?())
 
-                    1. (Let tableDeclarationIR be annotationList TABLE typeIR_table nameIR `{ tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} `})
+                    1. (Let TC_3 be $add_var_t(BLOCK, TC_2, nameIR, varTypeIR))
 
-                      1. Result in: % |- % : TC_3 tableDeclarationIR as controlLocalDeclarationIR
+                      1. (Let tableDeclarationIR be annotationList TABLE typeIR_table nameIR `{ tablePropertyIR*{tablePropertyIR <- tablePropertyIR*} `})
+
+                        1. Result in: % |- % : TC_3 tableDeclarationIR as controlLocalDeclarationIR
+
+      1. Else Dangling
 
 relation ControlLocalDeclList_ok: TC_0 |- controlLocalDeclarationList : % %
 
@@ -25677,33 +25685,37 @@ relation FuncDecl_ok: p TC_0 |- annotationList typeOrVoid name typeParameterList
 
 relation ActionDecl_ok: p TC_0 |- annotationList ACTION name `( parameterList `) blockStatement : % %
 
-1. (Let TC_1 be TC_0[LOCAL.KIND = ACTION as localKind])
+1. If ($has_at_most_one_name_annotation(annotationList)), then
 
-  1. (Let TC_2 be TC_1[CONTROL = CONT][LOOP = OUT])
+  1. (Let TC_1 be TC_0[LOCAL.KIND = ACTION as localKind])
 
-    1. (ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR*{parameterIR <- parameterIR*} '#' typeId*{typeId <- typeId*})
+    1. (Let TC_2 be TC_1[CONTROL = CONT][LOOP = OUT])
 
-      1. If (typeId*{typeId <- typeId*} matches []), then
+      1. (ParameterList_ok: LOCAL TC_2 |- parameterList : TC_3 parameterIR*{parameterIR <- parameterIR*} '#' typeId*{typeId <- typeId*})
 
-        1. (Block_ok: TC_3 |- blockStatement : _TC blockStatementIR)
+        1. If (typeId*{typeId <- typeId*} matches []), then
 
-          1. (Let callableId be $callableId(name, parameterList))
+          1. (Block_ok: TC_3 |- blockStatement : _TC blockStatementIR)
 
-            1. (Let nameIR be $name(name))
+            1. (Let callableId be $callableId(name, parameterList))
 
-              1. (Let actionTypeDefIR be annotationList ACTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `))
+              1. (Let nameIR be $name(name))
 
-                1. If (CallableTypeDef_wf: $bound(p, TC_0) |- actionTypeDefIR as callableTypeDefIR) holds, then
+                1. (Let actionTypeDefIR be annotationList ACTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `))
 
-                  1. (Let TC_4 be $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR as callableTypeDefIR))
+                  1. If (CallableTypeDef_wf: $bound(p, TC_0) |- actionTypeDefIR as callableTypeDefIR) holds, then
 
-                    1. (Let actionDeclarationIR be annotationList ACTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) blockStatementIR)
+                    1. (Let TC_4 be $add_callableDef_non_overload_t(p, TC_0, callableId, actionTypeDefIR as callableTypeDefIR))
 
-                      1. Result in: % % |- % : TC_4 actionDeclarationIR
+                      1. (Let actionDeclarationIR be annotationList ACTION nameIR `( parameterIR*{parameterIR <- parameterIR*} `) blockStatementIR)
 
-                1. Else Dangling
+                        1. Result in: % % |- % : TC_4 actionDeclarationIR
 
-      1. Else Dangling
+                  1. Else Dangling
+
+        1. Else Dangling
+
+1. Else Dangling
 
 relation Decl_ok: TC_0 |- declaration : % %
 
@@ -28992,35 +29004,39 @@ relation BlockElementStmts_ok: TC |- blockElementStatement*{blockElementStatemen
 
 relation InstDecl_non_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name ';' : % %
 
-1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*})
+1. If ($has_at_most_one_name_annotation(annotationList)), then
 
-  1. (ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*})
+  1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*})
 
-    1. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
+    1. (ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*})
 
-      1. (Let constructorTargetIR be prefixedNameIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `>)
+      1. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
-        1. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( argumentIR*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' typeId_inserted*{typeId_inserted <- typeId_inserted*} `> `( '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `))
+        1. (Let constructorTargetIR be prefixedNameIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `>)
 
-          1. (Let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} be typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ _NAME typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*})
+          1. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( argumentIR*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' typeId_inserted*{typeId_inserted <- typeId_inserted*} `> `( '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `))
 
-            1. (Let typeId_infer*{typeId_infer <- typeId_infer*} be typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*})
+            1. (Let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} be typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ _NAME typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*})
 
-              1. (Inst_ok: p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_object `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `))
+              1. (Let typeId_infer*{typeId_infer <- typeId_infer*} be typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*})
 
-                1. If ($is_concrete_extern_object(typeIR_object)), then
+                1. (Inst_ok: p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_object `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `))
 
-                  1. (Let nameIR be $name(name))
+                  1. If ($is_concrete_extern_object(typeIR_object)), then
 
-                    1. (Let TC_1 be $add_var_t(p, TC_0, nameIR, _EMPTY typeIR_object CTK ?()))
+                    1. (Let nameIR be $name(name))
 
-                      1. (Let constructorTargetIR_inferred be prefixedNameIR `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>)
+                      1. (Let TC_1 be $add_var_t(p, TC_0, nameIR, _EMPTY typeIR_object CTK ?()))
 
-                        1. (Let instantiationIR be annotationList typeIR_object constructorTargetIR_inferred `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?() ';')
+                        1. (Let constructorTargetIR_inferred be prefixedNameIR `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>)
 
-                          1. Result in: % % |- % % `< % `> `( % `) % ';' : TC_1 instantiationIR
+                          1. (Let instantiationIR be annotationList typeIR_object constructorTargetIR_inferred `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?() ';')
 
-                1. Else Dangling
+                            1. Result in: % % |- % % `< % `> `( % `) % ';' : TC_1 instantiationIR
+
+                  1. Else Dangling
+
+1. Else Dangling
 
 relation ObjectDecl_ok: p TC_0 typeFrame externMethodTypeDefEnv |- objectDeclaration : % % %
 
@@ -29164,51 +29180,55 @@ def $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, set<pair<callab
 
 relation InstDecl_objectInitializer_ok: p TC_0 |- annotationList prefixedTypeName `< typeArgumentList `> `( argumentList `) name '=' `{ objectDeclarationList `} ';' : % %
 
-1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*})
+1. If ($has_at_most_one_name_annotation(annotationList)), then
 
-  1. (ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*})
+  1. (TypeArgumentList_ok: p TC_0 |- typeArgumentList : typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} '#' typeId_impl*{typeId_impl <- typeId_impl*})
 
-    1. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
+    1. (ArgumentList_ok: p TC_0 |- argumentList : argumentIR*{argumentIR <- argumentIR*})
 
-      1. (Let constructorTargetIR be prefixedNameIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `>)
+      1. (Let prefixedNameIR be $prefixedTypeName(prefixedTypeName))
 
-        1. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( argumentIR*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' typeId_inserted*{typeId_inserted <- typeId_inserted*} `> `( '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `))
+        1. (Let constructorTargetIR be prefixedNameIR `< typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} `>)
 
-          1. (Let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} be typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ _NAME typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*})
+          1. (ConstructorType_ok: p TC_0 |- constructorTargetIR `( argumentIR*{argumentIR <- argumentIR*} `) : constructorTypeIR `< '#' typeId_inserted*{typeId_inserted <- typeId_inserted*} `> `( '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `))
 
-            1. (Let typeId_infer*{typeId_infer <- typeId_infer*} be typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*})
+            1. (Let typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} be typeArgumentIR*{typeArgumentIR <- typeArgumentIR*} ++ _NAME typeId_inserted as typeIR*{typeId_inserted <- typeId_inserted*})
 
-              1. (Inst_ok: p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_object `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `))
+              1. (Let typeId_infer*{typeId_infer <- typeId_infer*} be typeId_impl*{typeId_impl <- typeId_impl*} ++ typeId_inserted*{typeId_inserted <- typeId_inserted*})
 
-                1. (Let typeIR be $unroll_typeIR(typeIR_object))
+                1. (Inst_ok: p TC_0 NAMED |- constructorTypeIR `< typeArgumentIR_infer*{typeArgumentIR_infer <- typeArgumentIR_infer*} '#' typeId_infer*{typeId_infer <- typeId_infer*} `> `( argumentIR*{argumentIR <- argumentIR*} '#' id_default*{id_default <- id_default*} '#' id_optional*{id_optional <- id_optional*} `) : typeIR_object `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `> `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `))
 
-                  1. If (typeIR <: externObjectTypeIR), then
+                  1. (Let typeIR be $unroll_typeIR(typeIR_object))
 
-                    1. (Let EXTERN typeId_extern `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_extern be typeIR as externObjectTypeIR)
+                    1. If (typeIR <: externObjectTypeIR), then
 
-                      1. (Let TC_1 be $add_var_t(LOCAL, TC_0, "this", _EMPTY typeIR_object CTK ?()))
+                      1. (Let EXTERN typeId_extern `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_extern be typeIR as externObjectTypeIR)
 
-                        1. (ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
+                        1. (Let TC_1 be $add_var_t(LOCAL, TC_0, "this", _EMPTY typeIR_object CTK ?()))
 
-                          1. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
+                          1. (ObjectDeclList_ok: p TC_1 |- objectDeclarationList : typeFrame_init externMethodTypeDefEnv_init objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*})
 
-                            1. (Let typeIR_object_init be EXTERN typeId_extern `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_init_subst as typeIR)
+                            1. (Let externMethodTypeDefEnv_init_subst be $subst_externMethodTypeDefEnv(externMethodTypeDefEnv_extern, externMethodTypeDefEnv_init))
 
-                              1. If ($is_concrete_extern_object(typeIR_object_init)), then
+                              1. (Let typeIR_object_init be EXTERN typeId_extern `< typeIR_arg*{typeIR_arg <- typeIR_arg*} `> externMethodTypeDefEnv_init_subst as typeIR)
 
-                                1. (Let nameIR be $name(name))
+                                1. If ($is_concrete_extern_object(typeIR_object_init)), then
 
-                                  1. (Let TC_2 be $add_var_t(p, TC_0, nameIR, _EMPTY typeIR_object_init CTK ?()))
+                                  1. (Let nameIR be $name(name))
 
-                                    1. (Let constructorTargetIR_inferred be prefixedNameIR `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>)
+                                    1. (Let TC_2 be $add_var_t(p, TC_0, nameIR, _EMPTY typeIR_object_init CTK ?()))
 
-                                      1. (Let instantiationIR be annotationList typeIR_object_init constructorTargetIR_inferred `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?('=' `{ objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} `}) ';')
+                                      1. (Let constructorTargetIR_inferred be prefixedNameIR `< typeArgumentIR_inferred*{typeArgumentIR_inferred <- typeArgumentIR_inferred*} `>)
 
-                                        1. Result in: % % |- % % `< % `> `( % `) % '=' `{ % `} ';' : TC_2 instantiationIR
+                                        1. (Let instantiationIR be annotationList typeIR_object_init constructorTargetIR_inferred `( argumentIR_cast*{argumentIR_cast <- argumentIR_cast*} `) nameIR ?('=' `{ objectDeclarationIR*{objectDeclarationIR <- objectDeclarationIR*} `}) ';')
 
-                              1. Else Dangling
+                                          1. Result in: % % |- % % `< % `> `( % `) % '=' `{ % `} ';' : TC_2 instantiationIR
 
-                  1. Else Dangling
+                                1. Else Dangling
+
+                    1. Else Dangling
+
+1. Else Dangling
 
 def $split_externConstructorOrMethodPrototypeList(externConstructorOrMethodPrototypeList)
 
