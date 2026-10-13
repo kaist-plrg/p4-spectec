@@ -28,7 +28,14 @@ type PureBuiltin = BuiltinImpl;
 /// A builtin body and the factory that recreates its initial state.
 struct ImpureBuiltin {
     builtin_impl: BuiltinImpl,
-    init: fn() -> BuiltinImpl,
+    make: fn() -> BuiltinImpl,
+}
+
+impl ImpureBuiltin {
+    /// Creates a builtin and retains its factory for resets.
+    fn new(make: fn() -> BuiltinImpl) -> Self {
+        Self { builtin_impl: make(), make }
+    }
 }
 
 /// A registered builtin and whether calling it has effects.
@@ -103,13 +110,7 @@ impl Builtins {
             ("adds_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::adds_map))),
             ("update_map".to_owned(), BuiltinEntry::Pure(Box::new(maps::update_map))),
             // Fresh type id
-            (
-                "fresh_typeId".to_owned(),
-                BuiltinEntry::Impure(ImpureBuiltin {
-                    builtin_impl: fresh::init(),
-                    init: fresh::init,
-                }),
-            ),
+            ("fresh_typeId".to_owned(), BuiltinEntry::Impure(ImpureBuiltin::new(fresh::make))),
             // Numerics
             ("shl".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shl))),
             ("shr".to_owned(), BuiltinEntry::Pure(Box::new(numerics::shr))),
@@ -154,7 +155,7 @@ impl Builtins {
         for entry in self.funcs.values_mut() {
             // Pure entries have no program-owned state to reset
             if let BuiltinEntry::Impure(builtin) = entry {
-                builtin.builtin_impl = (builtin.init)();
+                builtin.builtin_impl = (builtin.make)();
             }
         }
     }
