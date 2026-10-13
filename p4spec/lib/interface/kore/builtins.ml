@@ -378,6 +378,19 @@ let int_to_float : impl =
   let i, p, e = Extract.three at vs in
   float add (Floats.of_int (z i) (small p) (small e))
 
+(* dec $float_literal(text) : text? -- a KORE float literal in the format
+   the backend prints, or none when it is not one *)
+let float_literal : impl =
+ fun add at targs vs ->
+  Extract.zero at targs;
+  let v =
+    match Floats.normalize (Value.Get.text (Extract.one at vs)) with
+    | s -> Some (Value.Make.text s)
+    | exception Floats.Bad_float _ -> None
+  in
+  Option.iter add v;
+  ret add (Value.Make.opt (Typ.Make.opt Typ.Make.text) v)
+
 (* dec $float_to_int(text) : int? *)
 let float_to_int : impl =
  fun add at targs vs ->
@@ -521,6 +534,7 @@ let entries : (string * impl) list =
     ("float_root", float_root);
     ("float_round", float_round);
     ("int_to_float", int_to_float);
+    ("float_literal", float_literal);
     ("float_to_int", float_to_int);
     ("float_max_value", float_max_value);
     ("float_precision", float_precision);

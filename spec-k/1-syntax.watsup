@@ -103,19 +103,20 @@ syntax definition =
 syntax kore =
   | KVAR varid sort
   | KSETVAR varid sort      ;; a set variable, in properties only
-  | KAPP symid sort* kore*  ;; symbol application
+  | KAPP symid sort* kore*  ;; application of a symbol or an alias
   | KML text sort* kore*    ;; a connective, e.g. "rewrites" for \rewrites
-  | KVAL pattern            ;; a domain value: DV, INT, BOOL, STRING, ...
-  | KSTR text               ;; a string, as in attributes
+  | KSTR text               ;; a string, e.g. of a domain value \dv{S}("1")
 
 syntax kattr = KATTR text sort* kore*  ;; e.g. owise{}(), priority{}("50")
 
 syntax kaxiom = AXIOM kore kattr*
 
-syntax ksymdecl = KSYMBOL sort* '->' sort kattr*
+syntax ksymdecl = KSYMBOL sortid* sort* '->' sort kattr*  ;; with parameters
+
+syntax kalias = ALIAS varid* ':=' kore  ;; alias f(X1, ..., Xn) := body
 
 syntax kdefinition =
-  { KSYMBOLS map<symid, ksymdecl>,
-    AXIOMS kaxiom*,                 ;; in file order
-    KPARAMS map<symid, sortid*>,
-    KNATSORTS map<sortid, nat> }
+  { KSORTS map<sortid, kattr*>,
+    KSYMBOLS map<symid, ksymdecl>,
+    KALIASES map<symid, kalias>,
+    AXIOMS kaxiom* }               ;; in file order

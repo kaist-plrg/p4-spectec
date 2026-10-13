@@ -64,15 +64,16 @@ rule Start/initfail:
   -- if D' = D_s[ .EQUATIONS = $sorted_equations(D.EQUATIONS) ]
   -- Eval: D' $empty_map<varid, term> |- pattern : FAIL
 
-;; krun: the definition is loaded from KORE (6-load), then run
+;; krun: the definition is loaded from KORE (6-load), then run from the
+;; initial term
 
 relation Krun:
-  kdefinition |- pattern nat? : runres
+  kdefinition |- kore nat? : runres
   hint(input %0 %1 %2)
   hint(prose_in "running" %1 "under" %0)
   hint(prose_out %3)
 
 rule Krun:
-  KD |- pattern n_max? : runres
+  KD |- kore n_max? : runres
   -- Load: KD ~> D
-  -- Start: D |- pattern n_max? : runres
+  -- Start: D |- $pattern(KD, kore) n_max? : runres

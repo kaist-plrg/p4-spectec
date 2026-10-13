@@ -9,6 +9,23 @@ module Num = Lang.Xl.Num
 let get (v : Value.t) (mixop : string) : Value.t list option =
   Value.Get.(v |>>? mixop)
 
+(* \left-assoc{}(f(a, b, c)) = f(f(a, b), c), \right-assoc{}(f(a, b, c)) = f(a, f(b, c)) *)
+let rec desugar_assoc (p : pattern) : pattern =
+  match p with
+  | App ("\\left-assoc", [], [ App (f, sorts, a :: rest) ]) ->
+      List.fold_left
+        (fun acc x -> App (f, sorts, [ acc; desugar_assoc x ]))
+        (desugar_assoc a) rest
+  | App ("\\right-assoc", [], [ App (f, sorts, args) ]) -> (
+      match List.rev args with
+      | [] -> App (f, sorts, [])
+      | last :: rev_init ->
+          List.fold_left
+            (fun acc x -> App (f, sorts, [ desugar_assoc x; acc ]))
+            (desugar_assoc last) rev_init)
+  | App (f, sorts, args) -> App (f, sorts, List.map desugar_assoc args)
+  | p -> p
+
 let rec sort_of_value (v : Value.t) : sort =
   match get v "SORT sortid sort*" with
   | Some [ name; sorts ] ->

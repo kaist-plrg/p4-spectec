@@ -39,7 +39,7 @@ let run ((module Runner : Run.RUNNER) : (module Run.RUNNER)) (spec : Run.spec)
             Load.load_definition (Parse.definition_of_file path_def)
           in
           ( loaded,
-            Load.load_pattern loaded.info (Parse.pattern_of_file path_init) ))
+            Load.load_term loaded.info (Parse.pattern_of_file path_init) ))
     in
     Format.printf "read %d axioms (%.2fs)\n" loaded.axioms t_load;
     let value_depth =
