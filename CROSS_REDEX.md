@@ -291,9 +291,7 @@ node it enters, if no rule applies to a redex of a configuration that is not
 final, or if more than one does. It loops with
 `apply-reduction-relation/tag-with-names`, and never uses
 `apply-reduction-relation*` (see below). The rules, the grammar, and `->al` are
-the specification; the driver adds no semantics. In cross-check mode, it
-checks that its step equals `->al`'s on every step (see
-[Verification](#verification)).
+the specification; the driver adds no semantics.
 
 The tutorial's style, with the contexts in every rule's left-hand side, costs
 far too much:
@@ -420,9 +418,8 @@ value twice *(measured)*. So never call an impure Racket procedure from a
 metafunction, or from anything a metafunction calls.
 
 The driver applies the rules once per step, so each side effect happens once.
-Anything else that applies them again repeats the side effects. This includes
-the `->al` cross-check and a second `apply-reduction-relation` on the same
-term.
+Anything else that applies them again repeats the side effects, such as
+applying `->al`, or a second `apply-reduction-relation`, to the same term.
 
 The cache makes precise patterns affordable (see the next section), and
 memoizes hot pure metafunctions such as `$subtyp`. Its limits matter for
@@ -604,7 +601,7 @@ spec-meta-redex/
     5.6-eval-call-func.rkt  rules of Eval_clause(s), Eval_tblrow(s), Call_*_func, Call_func
     5.7-eval-call-rel.rkt   rules of Eval_rul(s), Eval_rulgroup(s), Call_*_rel, Call_rel
     5-eval.rkt            the IN and FAIL rules; ->redex, ->ctx, ->al
-    6-driver.rkt          the driver: run, run/trace, the cross-check
+    6-driver.rkt          the driver: run, run/trace
     7-entry.rkt           Entry: load, then run $main() or a relation; the command line
   test/                   unnumbered
     p4-typecheck.rkt      make redex-test: type-checks the P4 samples; raco test skips it
@@ -799,11 +796,6 @@ and decide with the user before deviating. Record each deviation here.
   evaluated.
 - **Determinism.** The driver fails on a node with two pending positions, and
   on a redex to which more than one rule applies.
-- **The driver against `->al`.** In cross-check mode, the driver also applies
-  `->al` to each configuration, and fails unless `->al` gives exactly its
-  successor, under the same rule name. The check applies the rules a second
-  time, so it runs only on scripts without externs, builtins, or `debug`
-  output that matters.
 - **Coverage.** A test file ends by checking that every rule of the relations
   it exercises was applied. The helpers
   in `test/machine.rkt` count the rules that the driver applies, by name, as
@@ -2065,6 +2057,8 @@ Outcome:
   `action-uses.p4` (12.6 s), and with `--neg` fails the negative
   `action-bind.p4` (5.2 s). `racket spec-meta-redex/al/7-entry.rkt
   examples/add.watsup` prints `["intN","119"]`.
+- Afterwards, at the user's request, the cross-check against `->al` was
+  removed from the driver. `->al` stays as the specification.
 - `p4_16_samples/action-synth.p4` passes, in 1,432,675 steps. `run/trace`
   took 477 s, the whole run 8 minutes, and the peak resident memory was
   554 MB *(measured)*. An earlier measurement, with dispatch, took about

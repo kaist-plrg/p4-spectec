@@ -17,12 +17,7 @@
          "5-eval.rkt")
 (provide run
          run/trace
-         cross-check?
          check-conf?)
-
-;; Whether to check every step against ->al. That applies the rules a second
-;; time, so their side effects happen twice.
-(define cross-check? (make-parameter #f))
 
 ;; Whether to check every configuration against conf
 (define check-conf? (make-parameter #f))
@@ -63,18 +58,15 @@
 ;; The cursor after the step of c's configuration and the name of the rule
 ;; applied, or #f and #f if the configuration is final
 (define (cursor-step c)
-  (define conf (and (or (check-conf?) (cross-check?)) (cursor->conf c)))
-  (when (and (check-conf?) (not (conf? conf)))
-    (error 'step "not a configuration (G e), with e: ~e" (conf-term conf)))
-  (define-values (next rule)
-    (match (settle c)
-      [#f (values #f #f)]
-      [(cursor G path r L)
-       (define-values (r_1 L_1 rule) (reduce-redex r G L))
-       (values (cursor G path r_1 L_1) rule)]))
-  (when (cross-check?)
-    (cross-check conf rule (and next (cursor->conf next))))
-  (values next rule))
+  (when (check-conf?)
+    (define conf (cursor->conf c))
+    (unless (conf? conf)
+      (error 'step "not a configuration (G e), with e: ~e" (conf-term conf))))
+  (match (settle c)
+    [#f (values #f #f)]
+    [(cursor G path r L)
+     (define-values (r_1 L_1 rule) (reduce-redex r G L))
+     (values (cursor G path r_1 L_1) rule)]))
 
 ;; c moved to the redex, or #f if c's configuration is final. A node whose
 ;; pending subterm is not done keeps that position, so the cursor climbs only
@@ -133,19 +125,6 @@
     [(list (list rule r_1 L_1)) (values r_1 L_1 rule)]
     ['() (error 'step "stuck: no rule applies to ~e" r)]
     [_ (error 'step "~a rules apply to ~e: ~a" (length steps) r (map car steps))]))
-
-;; Checks that the step from conf to next by rule is the one step of ->al
-(define (cross-check conf rule next)
-  (define expected (if next (list (list rule next)) '()))
-  (define actual
-    (remove-duplicates
-     (parameterize ([relation-coverage '()])
-       (apply-reduction-relation/tag-with-names ->al conf))))
-  (unless (equal? actual expected)
-    (error 'step "the driver's step differs from ->al's on ~e:\n driver: ~e\n ->al: ~e"
-           (conf-term conf)
-           (for/list ([step expected]) (list (car step) (conf-term (cadr step))))
-           (for/list ([step actual]) (list (car step) (conf-term (cadr step)))))))
 
 ;; The final configuration that conf reduces to
 (define (run conf)
