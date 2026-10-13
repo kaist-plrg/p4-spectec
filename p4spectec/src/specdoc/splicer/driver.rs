@@ -1,9 +1,7 @@
-//! Ordered marker dispatch and document-batch rendering
+//! Ordered marker dispatch and string-batch rendering
 //!
 //! A fresh registry and rendering context are built for each invocation.
 //! The target prepass covers every input before any replacement is rendered.
-
-use std::{fs, path::PathBuf};
 
 use crate::lang::el::ast as el;
 
@@ -15,8 +13,7 @@ use super::super::anchor::AnchorContext;
 
 use super::{
     anchor,
-    error::{self, Error},
-    file::PendingFile,
+    error::Error,
     parser,
     source::Source,
     splicer::{Splice, Splicer},
@@ -171,42 +168,6 @@ fn splice_strings_impl(
     Ok(texts)
 }
 
-/// Renders all inputs before staging and replacing output files.
-///
-/// Parsing and rendering failures leave every destination untouched.
-/// Replacements are atomic per file; an I/O failure during the final rename
-/// sequence can leave earlier files committed.
-fn splice_files_impl(
-    warnings: &mut Vec<Report>,
-    spec_el: &el::Spec,
-    spec_pl: &pl::Spec,
-    path_pairs: &[(PathBuf, PathBuf)],
-) -> Result<(), Error> {
-    // Read all inputs before any path can be replaced by another output
-    let mut sources = Vec::with_capacity(path_pairs.len());
-    for (path_input, _) in path_pairs {
-        let text =
-            fs::read_to_string(path_input).map_err(|source| error::io(path_input, source))?;
-        sources.push((path_input.to_string_lossy().into_owned(), text));
-    }
-    // Complete the target prepass and rendering before filesystem mutations
-    let sources: Vec<_> = sources
-        .iter()
-        .map(|(file, text)| (file.as_str(), text.as_str()))
-        .collect();
-    let texts = splice_strings_impl(warnings, spec_el, spec_pl, &sources)?;
-    // Stage every output before starting the per-file commit sequence
-    let mut pending = Vec::with_capacity(path_pairs.len());
-    for ((_, path_output), text) in path_pairs.iter().zip(texts) {
-        pending.push(PendingFile::new(path_output, &text)?);
-    }
-    // Rename in the caller's order, retaining earlier commits on I/O failure
-    for file in pending {
-        file.commit()?;
-    }
-    Ok(())
-}
-
 // == Entry points
 
 /// Renders skeletons with batch-wide anchors, discarding nonfatal warnings.
@@ -226,31 +187,5 @@ pub fn splice_strings_with_warnings(
 ) -> (Result<Vec<String>, Error>, Vec<Report>) {
     let mut warnings = Vec::new();
     let result = splice_strings_impl(&mut warnings, spec_el, spec_pl, sources);
-    (result, warnings)
-}
-
-/// Renders and replaces output files, discarding nonfatal warnings.
-///
-/// Parsing and rendering failures leave every destination untouched.
-/// Replacements are atomic per file; a later rename failure can leave
-/// earlier files committed.
-pub fn splice_files(
-    spec_el: &el::Spec,
-    spec_pl: &pl::Spec,
-    path_pairs: &[(PathBuf, PathBuf)],
-) -> Result<(), Error> {
-    splice_files_with_warnings(spec_el, spec_pl, path_pairs).0
-}
-
-/// Replaces output files and retains warnings even when rendering or I/O fails.
-///
-/// File replacement follows the same staging and commit order as [`splice_files`].
-pub fn splice_files_with_warnings(
-    spec_el: &el::Spec,
-    spec_pl: &pl::Spec,
-    path_pairs: &[(PathBuf, PathBuf)],
-) -> (Result<(), Error>, Vec<Report>) {
-    let mut warnings = Vec::new();
-    let result = splice_files_impl(&mut warnings, spec_el, spec_pl, path_pairs);
     (result, warnings)
 }

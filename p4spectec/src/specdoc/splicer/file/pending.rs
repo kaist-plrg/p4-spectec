@@ -13,7 +13,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use super::error::{self, Error};
+use super::super::error::{self, Error};
 
 /// Resolves output links without requiring their final target to exist.
 fn resolve_output(path: &Path) -> std::io::Result<PathBuf> {

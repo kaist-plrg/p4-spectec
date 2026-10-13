@@ -41,7 +41,7 @@ pub use pass::{
 
 // == Document generation APIs
 
-pub use specdoc::splicer::splice_files_with_warnings;
+pub use specdoc::splicer::{PreparedSplice, prepare_splice_files_with_warnings};
 
 // == Execution APIs
 

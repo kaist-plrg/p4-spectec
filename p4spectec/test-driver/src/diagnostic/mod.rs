@@ -199,8 +199,8 @@ fn load(path: &Path, cli_only: bool) -> Result<Vec<Group>> {
                 return Err(failure(&group.name, "empty or duplicate case"));
             }
             // Complete invocations belong in the argument file
-            if case.uses_cli() && (!case.inputs.is_empty() || !case.args.is_empty()) {
-                return Err(failure(&case.name, "arguments and inputs belong in the .args file"));
+            if case.uses_cli() && !case.args.is_empty() {
+                return Err(failure(&case.name, "arguments belong in the .args file"));
             }
             if cli_only && !case.uses_cli() {
                 return Err(failure(&case.name, "requires an .args input"));
@@ -210,7 +210,7 @@ fn load(path: &Path, cli_only: bool) -> Result<Vec<Group>> {
                     return Err(failure(&case.name, format!("missing file {}", path.display())));
                 }
             }
-            // API fixtures may declare additional source inputs
+            // Inputs supply API sources or isolated copies for CLI cases
             for path in &case.inputs {
                 if !crate::suite::expected_path(path).exists() {
                     return Err(failure(&case.name, format!("missing input {}", path.display())));

@@ -177,9 +177,15 @@ fn splice_command(args: SpliceArgs) -> Result<(), ()> {
     // Retain source definitions alongside the annotated prose representation
     let (spec_el, spec_pl) = report_warnings(p4spectec::specdoc_spec_with_warnings(&args.paths))
         .map_err(|report| render_report(&report))?;
-    // Render accumulated splice warnings before propagating the file result
-    report_warnings(p4spectec::splice_files_with_warnings(&spec_el, &spec_pl, &path_pairs))
-        .map_err(|report| render_report(&report))?;
+    // Render diagnostics while the original input files are still present
+    let prepared = report_warnings(p4spectec::prepare_splice_files_with_warnings(
+        &spec_el,
+        &spec_pl,
+        &path_pairs,
+    ))
+    .map_err(|report| render_report(&report))?;
+    // Replace destinations after all preparation diagnostics have been rendered
+    prepared.commit().map_err(|report| render_report(&report))?;
     Ok(())
 }
 
