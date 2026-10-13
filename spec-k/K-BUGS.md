@@ -190,7 +190,62 @@ with 40 it grows to 40. The LLVM backend checks that `S` fits only when `I` is
 not 0
 ([`lists.cpp`:181-188](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/collections/lists.cpp#L181-L188)).
 
-## 6. Overlapping occurrences in strings
+## 6. `String2Int` and `String2Base`
+
+Diff test: [`tests/manual/behavior/string2int-syntax`](tests/manual/behavior/string2int-syntax/)
+
+`String2Int(S)` reads an integer from a string, and `String2Base(S, R)` reads
+one in radix `R`. The documentation says which strings and radixes they take
+([`domains.md`:1820-1828](https://github.com/runtimeverification/k/blob/4a46d1231473b599c699160132fd6e76a5c46406/k-distribution/include/kframework/builtin/domains.md?plain=1#L1820-L1828)):
+
+> The String will be represented in the syntax of the `INT` module (i.e., a
+> nonempty sequence of digits optionally prefixed by a sign). […] This radix
+> can be anywhere between 2 and 36.
+
+The test gives a string with spaces, and a radix of 37:
+
+| Program | `krun` | K in P4-SpecTec |
+|---|---|---|
+| `int(" 1 23")` | `123` | fails |
+| `base("10", 37)` | `37` | fails |
+
+The LLVM backend drops a leading `+` and passes the string to the GMP function
+`mpz_init_set_str`
+([`strings.cpp`:214-235](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/strings/strings.cpp#L214-L235)),
+which has its own syntax: it skips white space anywhere in the string, and
+takes radixes up to 62.
+
+## 7. `padRightBytes`
+
+Diff test: [`tests/manual/behavior/padright-value`](tests/manual/behavior/padright-value/)
+
+`padRightBytes(B, N, V)` pads the bytes `B` on the right with the byte `V` up
+to length `N`. A byte is at most 255, and the documentation says other values
+fail
+([`domains.md`:2176-2177](https://github.com/runtimeverification/k/blob/4a46d1231473b599c699160132fd6e76a5c46406/k-distribution/include/kframework/builtin/domains.md?plain=1#L2176-L2177)):
+
+> The result is `#False` if `value` is not in the range `[0..255]`, or if the
+> length is negative.
+
+The test pads two bytes to length 1 with the value 999. No byte needs to be
+added, but the value is not a byte:
+
+```k
+rule <k> run(V) => padRightBytes(Int2Bytes(2, 258, BE), 1, V) </k>
+```
+
+| Program | `krun` | K in P4-SpecTec |
+|---|---|---|
+| `run(999)` | `b"\x01\x02"` | fails |
+
+The LLVM backend returns the bytes as they are when they are long enough, and
+checks the value only after that
+([`bytes.cpp`:338-342](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/strings/bytes.cpp#L338-L342)).
+`padLeftBytes` is written the same way
+([`bytes.cpp`:369-373](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/strings/bytes.cpp#L369-L373)),
+though the test covers only `padRightBytes`.
+
+## 8. Overlapping occurrences in strings
 
 Diff test: [`tests/manual/behavior/overlapping-occurrences`](tests/manual/behavior/overlapping-occurrences/)
 
@@ -233,61 +288,6 @@ overlap, 3 − 2 × (2 − 1) = 1, and copies until that length
 So `"aaa"` becomes `"b"`, all of `"aaaaaaa"` becomes one `"b"`, and with the
 longer replacement `"xyz"` the result is cut in the middle, `"xyzxy"`. These
 results are wrong even if occurrences were meant to overlap.
-
-## 7. `String2Int` and `String2Base`
-
-Diff test: [`tests/manual/behavior/string2int-syntax`](tests/manual/behavior/string2int-syntax/)
-
-`String2Int(S)` reads an integer from a string, and `String2Base(S, R)` reads
-one in radix `R`. The documentation says which strings and radixes they take
-([`domains.md`:1820-1828](https://github.com/runtimeverification/k/blob/4a46d1231473b599c699160132fd6e76a5c46406/k-distribution/include/kframework/builtin/domains.md?plain=1#L1820-L1828)):
-
-> The String will be represented in the syntax of the `INT` module (i.e., a
-> nonempty sequence of digits optionally prefixed by a sign). […] This radix
-> can be anywhere between 2 and 36.
-
-The test gives a string with spaces, and a radix of 37:
-
-| Program | `krun` | K in P4-SpecTec |
-|---|---|---|
-| `int(" 1 23")` | `123` | fails |
-| `base("10", 37)` | `37` | fails |
-
-The LLVM backend drops a leading `+` and passes the string to the GMP function
-`mpz_init_set_str`
-([`strings.cpp`:214-235](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/strings/strings.cpp#L214-L235)),
-which has its own syntax: it skips white space anywhere in the string, and
-takes radixes up to 62.
-
-## 8. `padRightBytes`
-
-Diff test: [`tests/manual/behavior/padright-value`](tests/manual/behavior/padright-value/)
-
-`padRightBytes(B, N, V)` pads the bytes `B` on the right with the byte `V` up
-to length `N`. A byte is at most 255, and the documentation says other values
-fail
-([`domains.md`:2176-2177](https://github.com/runtimeverification/k/blob/4a46d1231473b599c699160132fd6e76a5c46406/k-distribution/include/kframework/builtin/domains.md?plain=1#L2176-L2177)):
-
-> The result is `#False` if `value` is not in the range `[0..255]`, or if the
-> length is negative.
-
-The test pads two bytes to length 1 with the value 999. No byte needs to be
-added, but the value is not a byte:
-
-```k
-rule <k> run(V) => padRightBytes(Int2Bytes(2, 258, BE), 1, V) </k>
-```
-
-| Program | `krun` | K in P4-SpecTec |
-|---|---|---|
-| `run(999)` | `b"\x01\x02"` | fails |
-
-The LLVM backend returns the bytes as they are when they are long enough, and
-checks the value only after that
-([`bytes.cpp`:338-342](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/strings/bytes.cpp#L338-L342)).
-`padLeftBytes` is written the same way
-([`bytes.cpp`:369-373](https://github.com/runtimeverification/llvm-backend/blob/f02284f09858cd2b9f310ad0142b3e04054295ec/runtime/strings/bytes.cpp#L369-L373)),
-though the test covers only `padRightBytes`.
 
 ## 9. `Float` literals beyond the exponent range
 
