@@ -62,7 +62,7 @@ where
         path_stf: &Path,
         on_match: &mut dyn FnMut(&Tx),
     ) -> Result<(), SimError> {
-        stf_runner::run_stf_test(self, arena, includes, path_p4, path_stf, on_match).map(drop)
+        stf_runner::run_stf_test(arena, self, includes, path_p4, path_stf, on_match).map(drop)
     }
 }
 

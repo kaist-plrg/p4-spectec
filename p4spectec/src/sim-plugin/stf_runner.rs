@@ -146,8 +146,8 @@ impl Run {
 
 /// Parses the program and initializes the pipeline in a fresh runner.
 pub fn init_pipe<Iface, Arch>(
-    runner: &mut Runner<Iface, Arch>,
     arena: &mut Arena,
+    runner: &mut Runner<Iface, Arch>,
     includes: &[PathBuf],
     path: &Path,
 ) -> Result<Run, SimError>
@@ -202,8 +202,8 @@ where
 
 /// Executes one statement; returns the output packet it matched, if any.
 pub fn run_stf_stmt<Iface, Arch>(
-    runner: &mut Runner<Iface, Arch>,
     arena: &mut Arena,
+    runner: &mut Runner<Iface, Arch>,
     run: &mut Run,
     stmt: &Phrase<Statement>,
 ) -> Result<Option<Tx>, SimError>
@@ -711,8 +711,8 @@ where
 
 /// Runs a whole STF file against a P4 program; fails on the first problem.
 pub fn run_stf_test<Iface, Arch>(
-    runner: &mut Runner<Iface, Arch>,
     arena: &mut Arena,
+    runner: &mut Runner<Iface, Arch>,
     includes: &[PathBuf],
     path_p4: &Path,
     path_stf: &Path,
@@ -722,10 +722,10 @@ where
     Iface: Interface,
     Arch: Architecture,
 {
-    let mut run = init_pipe(runner, arena, includes, path_p4)?;
+    let mut run = init_pipe(arena, runner, includes, path_p4)?;
     let stmts = stf::parse::parse_file(path_stf)?;
     for stmt in &stmts {
-        if let Some(tx) = run_stf_stmt(runner, arena, &mut run, stmt)? {
+        if let Some(tx) = run_stf_stmt(arena, runner, &mut run, stmt)? {
             on_match(&tx);
         }
     }
