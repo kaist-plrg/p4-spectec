@@ -28,6 +28,9 @@ pub struct Error {
 /// The cause of a conversion failure.
 #[derive(Debug, thiserror::Error)]
 pub enum ErrorKind {
+    /// Relation input positions are invalid.
+    #[error(transparent)]
+    Input(#[from] crate::lang::hints::input::InputError),
     /// A value projection or arena allocation failed.
     #[error(transparent)]
     Value(#[from] ValueError),
@@ -101,5 +104,11 @@ impl From<notation::ArityMismatch> for Error {
 impl From<Box<Report>> for Error {
     fn from(report: Box<Report>) -> Self {
         Self { span: Span::default(), kind: ErrorKind::Syntax(report) }
+    }
+}
+
+impl From<crate::lang::hints::input::InputError> for Error {
+    fn from(error: crate::lang::hints::input::InputError) -> Self {
+        Self { span: Span::default(), kind: error.into() }
     }
 }

@@ -3,6 +3,7 @@
 //! Source syntax only borrows the arena. Runtime-value decoding allocates in
 //! that same arena and copies child handles before recursive allocation.
 
+mod def;
 mod exp;
 mod typ;
 mod value;
@@ -25,6 +26,7 @@ use crate::{
 };
 use std::rc::Rc;
 
+pub use def::{def, spec};
 pub use exp::{exp, exps};
 
 pub use typ::{deftyp, typ, typs};

@@ -3,6 +3,7 @@
 //! Helpers construct typed lists, options, and meta cases after recursively
 //! encoding their children. No conversion resets or owns the arena.
 
+mod def;
 mod exp;
 mod typ;
 mod value;
@@ -22,6 +23,7 @@ use crate::{
     metacirc::Error,
 };
 
+pub use def::{def, spec};
 pub use exp::{exp, exps};
 
 pub use typ::{deftyp, typ, typs};
