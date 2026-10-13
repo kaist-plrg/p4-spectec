@@ -74,14 +74,10 @@
 
    ;;; Premise sequences
 
-   ;; rulegroup Eval_prems. head-fail and head-succ share the head premise,
-   ;; and head-fail is "frame/fail".
-   (--> (eval-prems ()) OK
-        "eval-prems/empty")
-   (--> (eval-prems (prem_h prem_t ...)) (eval-prems/head prem_h (prem_t ...))
-        "eval-prems/head")
-   (--> (eval-prems/head OK (prem_t ...)) (eval-prems (prem_t ...))
-        "eval-prems/head-succ")))
+   ;; rulegroup Eval_prems: the premises evaluate in place, left to right, each
+   ;; under the layer the previous ones updated. head-fail is "frame/fail".
+   (--> (eval-prems (OK ...)) OK
+        "eval-prems")))
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-prem

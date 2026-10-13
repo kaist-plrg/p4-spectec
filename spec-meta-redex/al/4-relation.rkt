@@ -45,6 +45,7 @@
      (call-extern-rel id (val ...))
      ;; iterations over nothing, which have no evaluation position
      (eval-exp/iter/opt ()) (eval-exp/iter/list ()) (assign-exp/iter/list () (vari ...))
+     (assign-exps/each ()) (assign-args/each ())
      (in-hole Fr e))
 
   ;; Finished subterms
@@ -54,11 +55,10 @@
   ;; where a rule looks at FAIL
   (Fr-pass ::=
            ;; Assign_exp(s), Assign_arg(s)
-           (assign-exp/cons hole exp (LIST (val ...)))
            (assign-exp/iter/opt-some hole (vari ...))
            (assign-exp/iter/list ((IN L OK) ... hole (IN L (assign-exp exp val)) ...) (vari ...))
-           (assign-exps/cons hole (exp ...) (val ...))
-           (assign-args/cons L hole (arg ...) (val ...))
+           (assign-exps/each (OK ... hole (assign-exp exp val) ...))
+           (assign-args/each (OK ... hole (assign-arg L arg val) ...))
            ;; Eval_exp
            (UN unop hole)
            (BIN binop hole exp)
@@ -126,7 +126,7 @@
            (eval-prem/iterpr-opt/some hole (vari ...))
            (eval-prem/iterpr-list/list ((IN L OK) ... hole (IN L prem) ...) (vari ...))
            (DEBUG hole)
-           (eval-prems/head hole (prem ...))
+           (eval-prems (OK ... hole prem ...))
            ;; Eval_clause, Eval_tblrow
            (eval-clause/succ hole (eval-prems (prem ...)) exp)
            (eval-clause/succ OK hole exp)

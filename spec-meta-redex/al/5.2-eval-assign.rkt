@@ -48,13 +48,10 @@
         (assign-exps (exp ...) (val ...))
         "assign-exp/list")
 
-   ;; rule Assign_exp/cons
+   ;; rule Assign_exp/cons: the head, then the tail
    (--> (assign-exp (CONS exp_h exp_t) (LIST (val_h val_t ...)))
-        (assign-exp/cons (assign-exp exp_h val_h) exp_t (LIST (val_t ...)))
+        (assign-exps (exp_h exp_t) (val_h (LIST (val_t ...))))
         "assign-exp/cons")
-   (--> (assign-exp/cons OK exp_t (LIST (val_t ...)))
-        (assign-exp exp_t (LIST (val_t ...)))
-        "assign-exp/cons/tail")
 
    ;; rule Assign_exp/iter/opt-some, until the inner assignment is done
    (--> (assign-exp (ITER exp (QUEST (vari ...))) (OPT (val)))
@@ -91,21 +88,17 @@
 
    ;;; Assigning to a sequence of expressions
 
-   ;; rulegroup Assign_exps
-   (--> (assign-exps () ())
-        OK
-        "assign-exps/nil")
-   (--> (assign-exps (exp_h exp_t ...) (val_h val_t ...))
-        (assign-exps/cons (assign-exp exp_h val_h) (exp_t ...) (val_t ...))
-        "assign-exps/cons")
-   (--> (assign-exps/cons OK (exp_t ...) (val_t ...))
-        (assign-exps (exp_t ...) (val_t ...))
-        "assign-exps/cons/tail")
-   ;; otherwise: one sequence is longer
-   (--> (assign-exps (exp_h exp_t ...) ()) FAIL
-        "assign-exps/fail-exp")
-   (--> (assign-exps () (val_h val_t ...)) FAIL
-        "assign-exps/fail-val")
+   ;; rulegroup Assign_exps: each exp is assigned its val in place, left to
+   ;; right
+   (--> (assign-exps (exp ..._n) (val ..._n))
+        (assign-exps/each ((assign-exp exp val) ...))
+        "assign-exps")
+   (--> (assign-exps/each (OK ...)) OK
+        "assign-exps/each")
+   ;; otherwise: the lengths differ
+   (--> (assign-exps (exp ...) (val ...)) FAIL
+        (side-condition (not (= (length (term (exp ...))) (length (term (val ...))))))
+        "assign-exps/fail")
 
    ;;; Assigning to an argument
 
@@ -121,21 +114,17 @@
 
    ;;; Assigning to a sequence of arguments
 
-   ;; rulegroup Assign_args
-   (--> (assign-args L_caller () ())
-        OK
-        "assign-args/nil")
-   (--> (assign-args L_caller (arg_h arg_t ...) (val_h val_t ...))
-        (assign-args/cons L_caller (assign-arg L_caller arg_h val_h) (arg_t ...) (val_t ...))
-        "assign-args/cons")
-   (--> (assign-args/cons L_caller OK (arg_t ...) (val_t ...))
-        (assign-args L_caller (arg_t ...) (val_t ...))
-        "assign-args/cons/tail")
-   ;; otherwise: one sequence is longer
-   (--> (assign-args L_caller (arg_h arg_t ...) ()) FAIL
-        "assign-args/fail-arg")
-   (--> (assign-args L_caller () (val_h val_t ...)) FAIL
-        "assign-args/fail-val")))
+   ;; rulegroup Assign_args: each arg is assigned its val in place, left to
+   ;; right
+   (--> (assign-args L_caller (arg ..._n) (val ..._n))
+        (assign-args/each ((assign-arg L_caller arg val) ...))
+        "assign-args")
+   (--> (assign-args/each (OK ...)) OK
+        "assign-args/each")
+   ;; otherwise: the lengths differ
+   (--> (assign-args L_caller (arg ...) (val ...)) FAIL
+        (side-condition (not (= (length (term (arg ...))) (length (term (val ...))))))
+        "assign-args/fail")))
 
 ;; The rules on the focus triple (r G L)
 (define ->ctx/eval-assign
