@@ -16,7 +16,10 @@ use crate::{
         },
         data::{
             arena::Arena,
-            notation::tree::{Mixfix, Mixop, parse},
+            notation::{
+                items::Item,
+                tree::{Mixfix, Mixop, parse},
+            },
             typ::make as make_typ,
             value::{
                 ValueError,
@@ -40,6 +43,16 @@ pub trait Encode {
 }
 
 // == Helpers
+
+/// Separates notation atoms at each argument position.
+fn atoms_matrix(mixop_al: &Mixop) -> Vec<Vec<&il::Atom>> {
+    let mut atoms_matrix_al = vec![vec![]];
+    mixop_al.visit(|item| match item {
+        Item::Arg(_) => atoms_matrix_al.push(vec![]),
+        Item::Atom(atom_al) => atoms_matrix_al.last_mut().unwrap().push(atom_al),
+    });
+    atoms_matrix_al
+}
 
 /// Constructs a typed meta case after its children have been encoded.
 fn case(
@@ -149,12 +162,12 @@ impl Encode for Mixop {
 
     fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
         // Split atoms at argument holes, including empty boundary rows
-        let atoms_rows_al = self.atoms_matrix();
+        let atoms_matrix_al = atoms_matrix(self);
 
         // Encode every row before allocating the outer matrix
-        let mut values_meta = Vec::with_capacity(atoms_rows_al.len());
-        for atoms_row_al in atoms_rows_al {
-            values_meta.push(list(arena, "atom", &atoms_row_al)?);
+        let mut values_meta = Vec::with_capacity(atoms_matrix_al.len());
+        for atoms_al in atoms_matrix_al {
+            values_meta.push(list(arena, "atom", &atoms_al)?);
         }
 
         // Retain both list dimensions even when a row is empty
@@ -231,6 +244,8 @@ impl Encode for il::Typ {
         }
     }
 }
+
+// - Defined types
 
 /// Encodes an alias, struct, or variant definition.
 impl Encode for il::DefTyp {
@@ -362,6 +377,75 @@ impl Encode for ValueField {
     }
 }
 
+// - Results
+
+/// Encodes a successful function result as `OK val : valres`.
+pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> {
+    let span = *arena.value.span(value_target.span);
+    let value_meta = value_target.encode(arena)?;
+    case(arena, m::OK, "valres", vec![value_meta], span)
+}
+
+/// Encodes successful relation outputs as `OK val* : valsres`.
+pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
+    let values_meta = list(arena, "val", values_target)?;
+    case(arena, m::OK, "valsres", vec![values_meta], Span::default())
+}
+
+// - Operators
+
+/// Encodes a unary operator.
+impl Encode for il::UnOp {
+    type Output = Value;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
+        let shape = match self {
+            il::UnOp::Bool(boolean::UnOp::Not) => m::NOT,
+            il::UnOp::Num(num::UnOp::Plus) => m::PLUS,
+            il::UnOp::Num(num::UnOp::Minus) => m::MINUS,
+        };
+        case(arena, shape, "unop", vec![], Span::default())
+    }
+}
+
+/// Encodes a binary operator.
+impl Encode for il::BinOp {
+    type Output = Value;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
+        let shape = match self {
+            il::BinOp::Bool(boolean::BinOp::And) => m::AND,
+            il::BinOp::Bool(boolean::BinOp::Or) => m::OR,
+            il::BinOp::Bool(boolean::BinOp::Impl) => m::IMPL,
+            il::BinOp::Bool(boolean::BinOp::Equiv) => m::EQUIV,
+            il::BinOp::Num(num::BinOp::Add) => m::ADD,
+            il::BinOp::Num(num::BinOp::Sub) => m::SUB,
+            il::BinOp::Num(num::BinOp::Mul) => m::MUL,
+            il::BinOp::Num(num::BinOp::Div) => m::DIV,
+            il::BinOp::Num(num::BinOp::Mod) => m::MOD,
+            il::BinOp::Num(num::BinOp::Pow) => m::POW,
+        };
+        case(arena, shape, "binop", vec![], Span::default())
+    }
+}
+
+/// Encodes a comparison operator.
+impl Encode for il::CmpOp {
+    type Output = Value;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
+        let shape = match self {
+            il::CmpOp::Bool(boolean::CmpOp::Eq) => m::EQ,
+            il::CmpOp::Bool(boolean::CmpOp::Ne) => m::NE,
+            il::CmpOp::Num(num::CmpOp::Lt) => m::LT,
+            il::CmpOp::Num(num::CmpOp::Le) => m::LE,
+            il::CmpOp::Num(num::CmpOp::Gt) => m::GT,
+            il::CmpOp::Num(num::CmpOp::Ge) => m::GE,
+        };
+        case(arena, shape, "cmpop", vec![], Span::default())
+    }
+}
+
 // - Expressions
 
 /// Encodes every source expression form without native optimization data.
@@ -475,19 +559,6 @@ impl Encode for il::ExpIter {
     }
 }
 
-/// Encodes a value or function argument.
-impl Encode for il::Arg {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let (shape, value) = match &self.node {
-            il::ArgKind::Exp(exp_al) => (m::EXP_ARG, exp_al.encode(arena)?),
-            il::ArgKind::Def(id_al) => (m::FUN_ARG, id_al.encode(arena)?),
-        };
-        case(arena, shape, "arg", vec![value], self.span)
-    }
-}
-
 // - Patterns
 
 /// Encodes a case, list, or option shape pattern.
@@ -541,174 +612,6 @@ impl Encode for il::Path {
     }
 }
 
-// - Operators
-
-/// Encodes a unary operator.
-impl Encode for il::UnOp {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let shape = match self {
-            il::UnOp::Bool(boolean::UnOp::Not) => m::NOT,
-            il::UnOp::Num(num::UnOp::Plus) => m::PLUS,
-            il::UnOp::Num(num::UnOp::Minus) => m::MINUS,
-        };
-        case(arena, shape, "unop", vec![], Span::default())
-    }
-}
-
-/// Encodes a binary operator.
-impl Encode for il::BinOp {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let shape = match self {
-            il::BinOp::Bool(boolean::BinOp::And) => m::AND,
-            il::BinOp::Bool(boolean::BinOp::Or) => m::OR,
-            il::BinOp::Bool(boolean::BinOp::Impl) => m::IMPL,
-            il::BinOp::Bool(boolean::BinOp::Equiv) => m::EQUIV,
-            il::BinOp::Num(num::BinOp::Add) => m::ADD,
-            il::BinOp::Num(num::BinOp::Sub) => m::SUB,
-            il::BinOp::Num(num::BinOp::Mul) => m::MUL,
-            il::BinOp::Num(num::BinOp::Div) => m::DIV,
-            il::BinOp::Num(num::BinOp::Mod) => m::MOD,
-            il::BinOp::Num(num::BinOp::Pow) => m::POW,
-        };
-        case(arena, shape, "binop", vec![], Span::default())
-    }
-}
-
-/// Encodes a comparison operator.
-impl Encode for il::CmpOp {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let shape = match self {
-            il::CmpOp::Bool(boolean::CmpOp::Eq) => m::EQ,
-            il::CmpOp::Bool(boolean::CmpOp::Ne) => m::NE,
-            il::CmpOp::Num(num::CmpOp::Lt) => m::LT,
-            il::CmpOp::Num(num::CmpOp::Le) => m::LE,
-            il::CmpOp::Num(num::CmpOp::Gt) => m::GT,
-            il::CmpOp::Num(num::CmpOp::Ge) => m::GE,
-        };
-        case(arena, shape, "cmpop", vec![], Span::default())
-    }
-}
-
-// - Definitions
-
-/// Encodes a whole source AL script, omitting only variable definitions.
-impl Encode for al::Spec {
-    type Output = Value;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let spec_al = self;
-        // Preserve definition order while filtering the explicitly omitted form
-        let mut values_meta = Vec::with_capacity(spec_al.len());
-        for def_al in spec_al {
-            if let Some(value) = def_al.encode(arena)? {
-                values_meta.push(value);
-            }
-        }
-        Ok(make::list(
-            arena,
-            make_typ::var(phrase!(node: "script".into(), span: Span::default()), vec![])
-                .node
-                .into(),
-            values_meta,
-            Span::default(),
-        )?)
-    }
-}
-
-/// Encodes a definition; only a Var definition returns None.
-impl Encode for al::Def {
-    type Output = Option<Value>;
-
-    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
-        let span = self.span;
-        let (shape, values_meta) = match &self.node {
-            al::DefKind::Var(_) => return Ok(None),
-            al::DefKind::Typ(al::TypDef::Extern(typdef_al)) => {
-                (m::EXTTYP, vec![typdef_al.id.encode(arena)?])
-            }
-            al::DefKind::Typ(al::TypDef::Defined(typdef_al)) => (
-                m::TYP_DEF,
-                vec![
-                    typdef_al.id.encode(arena)?,
-                    list(arena, "id", &typdef_al.tparams)?,
-                    typdef_al.def_typ.encode(arena)?,
-                ],
-            ),
-            al::DefKind::Rel(al::RelDef::Extern(rel_al)) => {
-                let (typs_input_al, typs_output_al) =
-                    input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
-                (
-                    m::EXTREL,
-                    vec![
-                        rel_al.id.encode(arena)?,
-                        list(arena, "typ", &typs_input_al)?,
-                        list(arena, "typ", &typs_output_al)?,
-                    ],
-                )
-            }
-            al::DefKind::Rel(al::RelDef::Defined(rel_al)) => {
-                let (typs_input_al, typs_output_al) =
-                    input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
-                (
-                    m::REL_DEF,
-                    vec![
-                        rel_al.id.encode(arena)?,
-                        list(arena, "typ", &typs_input_al)?,
-                        list(arena, "typ", &typs_output_al)?,
-                        list(arena, "rulgroup", &rel_al.rule_groups)?,
-                        opt(arena, "elsgroup", rel_al.else_group.as_ref())?,
-                    ],
-                )
-            }
-            al::DefKind::MetaFunc(al::MetaFuncDef::Extern(func_al)) => (
-                m::EXTFUNC,
-                vec![
-                    func_al.id.encode(arena)?,
-                    list(arena, "id", &func_al.tparams)?,
-                    list(arena, "param", &func_al.params)?,
-                    func_al.typ.encode(arena)?,
-                ],
-            ),
-            al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(func_al)) => (
-                m::BUILTINFUNC,
-                vec![
-                    func_al.id.encode(arena)?,
-                    list(arena, "id", &func_al.tparams)?,
-                    list(arena, "param", &func_al.params)?,
-                    func_al.typ.encode(arena)?,
-                ],
-            ),
-            al::DefKind::MetaFunc(al::MetaFuncDef::Table(func_al)) => (
-                m::TABLEFUNC,
-                vec![
-                    func_al.id.encode(arena)?,
-                    list(arena, "param", &func_al.params)?,
-                    func_al.typ.encode(arena)?,
-                    list(arena, "tblrow", &func_al.table_rows)?,
-                ],
-            ),
-            al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => (
-                m::FUNC_DEF,
-                vec![
-                    func_al.id.encode(arena)?,
-                    list(arena, "id", &func_al.tparams)?,
-                    list(arena, "param", &func_al.params)?,
-                    func_al.typ.encode(arena)?,
-                    list(arena, "clause", &func_al.clauses)?,
-                    opt(arena, "elsclause", func_al.else_clause.as_ref())?,
-                ],
-            ),
-        };
-        Ok(Some(case(arena, shape, "defn", values_meta, span)?))
-    }
-}
-
 // - Parameters
 
 /// Encodes a value or higher-order function parameter.
@@ -729,6 +632,21 @@ impl Encode for al::Param {
             ),
         };
         case(arena, shape, "param", values_meta, self.span)
+    }
+}
+
+// - Arguments
+
+/// Encodes a value or function argument.
+impl Encode for il::Arg {
+    type Output = Value;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
+        let (shape, value) = match &self.node {
+            il::ArgKind::Exp(exp_al) => (m::EXP_ARG, exp_al.encode(arena)?),
+            il::ArgKind::Def(id_al) => (m::FUN_ARG, id_al.encode(arena)?),
+        };
+        case(arena, shape, "arg", vec![value], self.span)
     }
 }
 
@@ -869,6 +787,8 @@ impl Encode for al::Clause {
     }
 }
 
+// - Table rows
+
 /// Encodes a table row without its printing signature.
 impl Encode for al::TableRow {
     type Output = Value;
@@ -883,17 +803,118 @@ impl Encode for al::TableRow {
     }
 }
 
-// - Results
+// - Definitions
 
-/// Encodes a successful function result as `OK val : valres`.
-pub fn ok_value(arena: &mut Arena, value_target: Value) -> Result<Value, Error> {
-    let span = *arena.value.span(value_target.span);
-    let value_meta = value_target.encode(arena)?;
-    case(arena, m::OK, "valres", vec![value_meta], span)
+/// Encodes a definition; only a Var definition returns None.
+impl Encode for al::Def {
+    type Output = Option<Value>;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
+        let span = self.span;
+        let (shape, values_meta) = match &self.node {
+            al::DefKind::Var(_) => return Ok(None),
+            al::DefKind::Typ(al::TypDef::Extern(typdef_al)) => {
+                (m::EXTTYP, vec![typdef_al.id.encode(arena)?])
+            }
+            al::DefKind::Typ(al::TypDef::Defined(typdef_al)) => (
+                m::TYP_DEF,
+                vec![
+                    typdef_al.id.encode(arena)?,
+                    list(arena, "id", &typdef_al.tparams)?,
+                    typdef_al.def_typ.encode(arena)?,
+                ],
+            ),
+            al::DefKind::Rel(al::RelDef::Extern(rel_al)) => {
+                let (typs_input_al, typs_output_al) =
+                    input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
+                (
+                    m::EXTREL,
+                    vec![
+                        rel_al.id.encode(arena)?,
+                        list(arena, "typ", &typs_input_al)?,
+                        list(arena, "typ", &typs_output_al)?,
+                    ],
+                )
+            }
+            al::DefKind::Rel(al::RelDef::Defined(rel_al)) => {
+                let (typs_input_al, typs_output_al) =
+                    input::split(&rel_al.input_hint, rel_al.not_typ.node.args().to_vec())?;
+                (
+                    m::REL_DEF,
+                    vec![
+                        rel_al.id.encode(arena)?,
+                        list(arena, "typ", &typs_input_al)?,
+                        list(arena, "typ", &typs_output_al)?,
+                        list(arena, "rulgroup", &rel_al.rule_groups)?,
+                        opt(arena, "elsgroup", rel_al.else_group.as_ref())?,
+                    ],
+                )
+            }
+            al::DefKind::MetaFunc(al::MetaFuncDef::Extern(func_al)) => (
+                m::EXTFUNC,
+                vec![
+                    func_al.id.encode(arena)?,
+                    list(arena, "id", &func_al.tparams)?,
+                    list(arena, "param", &func_al.params)?,
+                    func_al.typ.encode(arena)?,
+                ],
+            ),
+            al::DefKind::MetaFunc(al::MetaFuncDef::Builtin(func_al)) => (
+                m::BUILTINFUNC,
+                vec![
+                    func_al.id.encode(arena)?,
+                    list(arena, "id", &func_al.tparams)?,
+                    list(arena, "param", &func_al.params)?,
+                    func_al.typ.encode(arena)?,
+                ],
+            ),
+            al::DefKind::MetaFunc(al::MetaFuncDef::Table(func_al)) => (
+                m::TABLEFUNC,
+                vec![
+                    func_al.id.encode(arena)?,
+                    list(arena, "param", &func_al.params)?,
+                    func_al.typ.encode(arena)?,
+                    list(arena, "tblrow", &func_al.table_rows)?,
+                ],
+            ),
+            al::DefKind::MetaFunc(al::MetaFuncDef::Defined(func_al)) => (
+                m::FUNC_DEF,
+                vec![
+                    func_al.id.encode(arena)?,
+                    list(arena, "id", &func_al.tparams)?,
+                    list(arena, "param", &func_al.params)?,
+                    func_al.typ.encode(arena)?,
+                    list(arena, "clause", &func_al.clauses)?,
+                    opt(arena, "elsclause", func_al.else_clause.as_ref())?,
+                ],
+            ),
+        };
+        Ok(Some(case(arena, shape, "defn", values_meta, span)?))
+    }
 }
 
-/// Encodes successful relation outputs as `OK val* : valsres`.
-pub fn ok_values(arena: &mut Arena, values_target: &[Value]) -> Result<Value, Error> {
-    let values_meta = list(arena, "val", values_target)?;
-    case(arena, m::OK, "valsres", vec![values_meta], Span::default())
+// - Specifications
+
+/// Encodes a whole source AL script, omitting only variable definitions.
+impl Encode for al::Spec {
+    type Output = Value;
+
+    fn encode(&self, arena: &mut Arena) -> Result<Self::Output, Error> {
+        let spec_al = self;
+        // Preserve definition order while filtering the explicitly omitted form
+        let mut values_meta = Vec::with_capacity(spec_al.len());
+        for def_al in spec_al {
+            if let Some(value) = def_al.encode(arena)? {
+                values_meta.push(value);
+            }
+        }
+        Ok(make::list(
+            arena,
+            make_typ::var(phrase!(node: "script".into(), span: Span::default()), vec![])
+                .node
+                .into(),
+            values_meta,
+            Span::default(),
+        )?)
+    }
 }

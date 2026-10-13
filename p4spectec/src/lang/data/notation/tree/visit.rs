@@ -8,18 +8,8 @@ use super::Mixop;
 // = Traversal
 
 impl Mixop {
-    /// Collects the atoms before, between, and after argument positions.
-    pub fn atoms_matrix(&self) -> Vec<Vec<&super::super::AtomPhrase>> {
-        let mut atoms_rows = vec![vec![]];
-        self.visit(|item| match item {
-            Item::Arg(_) => atoms_rows.push(vec![]),
-            Item::Atom(atom) => atoms_rows.last_mut().unwrap().push(atom),
-        });
-        atoms_rows
-    }
-
     /// Visits atoms and argument positions in reading order.
-    pub(super) fn visit<'a>(&'a self, mut visit_item: impl FnMut(Item<'a, usize>)) {
+    pub(crate) fn visit<'a>(&'a self, mut visit_item: impl FnMut(Item<'a, usize>)) {
         let mut pos = 0;
         self.visit_inner(&mut pos, &mut visit_item);
     }
