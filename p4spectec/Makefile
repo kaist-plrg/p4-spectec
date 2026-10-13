@@ -1,4 +1,4 @@
-# Rust builds and end-to-end acceptance through the registered driver
+# Rust builds and independent acceptance executables
 
 CARGO := cargo
 TARGET_DIR := $(if $(CARGO_TARGET_DIR),$(CARGO_TARGET_DIR),target)
@@ -17,14 +17,17 @@ build release:
 fmt:
 	$(CARGO) fmt
 	$(CARGO) fmt --manifest-path test-driver/Cargo.toml
+	$(CARGO) fmt --manifest-path test-metacirc/Cargo.toml
 
 fmt-check:
 	$(CARGO) fmt --check
 	$(CARGO) fmt --manifest-path test-driver/Cargo.toml --check
+	$(CARGO) fmt --manifest-path test-metacirc/Cargo.toml --check
 
 lint:
 	$(CARGO) clippy --locked --all-targets --no-deps --target-dir "$(TARGET_DIR)"
 	$(CARGO) clippy --locked --all-targets --no-deps --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)"
+	$(CARGO) clippy --locked --all-targets --no-deps --manifest-path test-metacirc/Cargo.toml --target-dir "$(TARGET_DIR)"
 
 rustdoc:
 	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --locked --no-deps --target-dir "$(TARGET_DIR)"
@@ -107,3 +110,9 @@ test-diagnostics: diagnostic-cli
 
 test-diagnostics-promote: diagnostic-cli
 	UPDATE_EXPECT=1 $(DRIVER) diagnostics --cli "$(DIAGNOSTIC_CLI)"
+
+# Independent AL meta codec and semantics acceptance
+.PHONY: test-metacirc
+
+test-metacirc:
+	$(CARGO) run --locked --release --manifest-path test-metacirc/Cargo.toml --target-dir "$(TARGET_DIR)" --
