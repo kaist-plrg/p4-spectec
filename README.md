@@ -75,7 +75,16 @@ path is resolved from the directory where Make is invoked:
 make build CARGO_TARGET_DIR=target
 ```
 
-Docker images and a Nix development shell are currently not provided.
+A `Dockerfile` provides a development environment with the pinned toolchain
+and the document dependencies below.
+Initialize the `p4c` submodule first, then build and enter the image:
+
+```shell
+docker build -t p4spectec .
+docker run --rm -it p4spectec
+```
+
+Inside the container, `p4spectec` is on `PATH` and all Make targets work.
 
 ## Processing the specification
 
