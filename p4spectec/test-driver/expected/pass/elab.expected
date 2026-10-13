@@ -11992,6 +11992,9 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rule builtinMethodTypeIR-header-stack-push-front: p TC |- typedExpressionIR_base '.' "push_front" `< [] `> `( [argumentIR] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_STACK typeIR `[ _nat `] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (?(typedLvalueIR_base) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+    -- if (lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base))
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- if (methodTypeIR = BUILTIN_PUSH_FRONT as methodTypeIR)
 
   rulegroup builtinMethodTypeIR-header-stack-pop-front
@@ -11999,6 +12002,9 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rule builtinMethodTypeIR-header-stack-pop-front: p TC |- typedExpressionIR_base '.' "pop_front" `< [] `> `( [argumentIR] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER_STACK typeIR `[ _nat `] as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (?(typedLvalueIR_base) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+    -- if (lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base))
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- if (methodTypeIR = BUILTIN_POP_FRONT as methodTypeIR)
 
   rulegroup builtinMethodTypeIR-header
@@ -12011,11 +12017,17 @@ relation CallableType_ok: cursor typingContext |- callableTargetIR `< typeArgume
     rule setValid: p TC |- typedExpressionIR_base '.' "setValid" `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (?(typedLvalueIR_base) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+    -- if (lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base))
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- if (methodTypeIR = BUILTIN_SET_VALID as methodTypeIR)
 
     rule setInvalid: p TC |- typedExpressionIR_base '.' "setInvalid" `< [] `> `( [] `) : methodTypeIR as callableTypeIR `< '#' [] `> `( '#' [] '#' [] `)
     -- if (typeIR_base = $type_of_typedExpressionIR(typedExpressionIR_base))
     -- if (HEADER _typeId `< _typeArgumentIR*{_typeArgumentIR <- _typeArgumentIR*} `> `{ _fieldTypeIR*{_fieldTypeIR <- _fieldTypeIR*} `} as typeIR = $unroll_typeIR(typeIR_base))
+    -- if (?(typedLvalueIR_base) = $typedExpressionIR_as_typedLvalueIR(typedExpressionIR_base))
+    -- if (lvalue_base = $lift_typedLvalueIR(typedLvalueIR_base))
+    -- Lvalue_ok: p TC |- lvalue_base : _typedLvalueIR
     -- if (methodTypeIR = BUILTIN_SET_INVALID as methodTypeIR)
 
   rulegroup builtinMethodTypeIR-header-union
