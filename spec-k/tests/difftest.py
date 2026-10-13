@@ -7,8 +7,8 @@ allows, as K leaves some choices open (rules of the same priority, the order
 of map elements).
 
 usage:
-  spec-k/scripts/difftest.py -k imp-kompiled tests/*.imp
-  spec-k/scripts/difftest.py -k imp-kompiled tests/ --ext imp --timeout 600 -j 2
+  spec-k/tests/difftest.py -k imp-kompiled tests/*.imp
+  spec-k/tests/difftest.py -k imp-kompiled tests/ --ext imp --timeout 600 -j 2
 
 spectec-boot must be built (make boot).
 """

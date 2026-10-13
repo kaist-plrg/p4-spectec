@@ -3,11 +3,11 @@
 suites.toml, the regression tests of K, and the tests of the LLVM backend.
 
 usage:
-  spec-k/scripts/ktest.py                    # the quick run: the quick lists of suites.toml
-  spec-k/scripts/ktest.py --full             # all programs of all suites
-  spec-k/scripts/ktest.py imp lambda         # all programs of some suites
-  spec-k/scripts/ktest.py kwasm --only conformance-i32.wast
-  spec-k/scripts/ktest.py regression/list-set
+  spec-k/tests/ktest.py                 # the quick run: the quick lists of suites.toml
+  spec-k/tests/ktest.py --full          # all programs of all suites
+  spec-k/tests/ktest.py imp lambda      # all programs of some suites
+  spec-k/tests/ktest.py kwasm --only conformance-i32.wast
+  spec-k/tests/ktest.py regression/list-set
 
 Programs marked skip in suites.toml never run. Each run of the spec may take
 two hours (--timeout).
@@ -70,7 +70,7 @@ def run_difftest(name, t, args, jobs=None):
                     if os.path.exists(q) and os.path.basename(q) in only]
         if not programs:
             return True, "no program among those named"
-    cmd = [sys.executable, os.path.join(ROOT, "spec-k/scripts/difftest.py"), "-k", kompiled,
+    cmd = [sys.executable, os.path.join(ROOT, "spec-k/tests/difftest.py"), "-k", kompiled,
            "--timeout", str(args.timeout or 7200),
            "--keep", os.path.join(work, name, "runs"), "-j", str(jobs or args.jobs), "--ext", t["ext"]] + programs
     cmd += ["--krun-arg=" + a for a in t.get("krun", [])]
@@ -152,7 +152,7 @@ def kevm_programs(src, work):
     out = os.path.join(work, "kevm", "programs")
     gst = "tests/ethereum-tests/BlockchainTests/GeneralStateTests/VMTests"
     files = sorted(glob.glob(os.path.join(src, gst, "**", "*.json"), recursive=True))
-    script = os.path.join(ROOT, "spec-k/scripts/kevm_inputs.py")
+    script = os.path.join(ROOT, "spec-k/tests/kevm_inputs.py")
     # made once (about 10 s): the stamp names the script, the mode, and the
     # files with their sizes and times, so a change makes them again
     h = hashlib.sha256(open(script, "rb").read() + b"VMTESTS DEFAULT")
@@ -182,7 +182,7 @@ def kmir_programs(src, work, kompiled):
     data = os.path.join(src, "kmir/src/tests/integration/data")
     files = sorted(glob.glob(os.path.join(data, "exec-smir/*/*.smir.json"))
                    + glob.glob(os.path.join(data, "run-rs/*/*.rs")) + glob.glob(os.path.join(data, "ub/*.rs")))
-    script = os.path.join(ROOT, "spec-k/scripts/kmir_inputs.py")
+    script = os.path.join(ROOT, "spec-k/tests/kmir_inputs.py")
     # made once: the stamp names the script, the kompiled definition, and the
     # files with their sizes and times, so a change makes them again
     h = hashlib.sha256(open(script, "rb").read())
@@ -361,8 +361,8 @@ def main():
                          "(uv sync --project kmir; env KMIR_SRC, default ../mir-semantics)")
     ap.add_argument("--llvm-src", default=os.environ.get("LLVM_SRC", os.path.join(ROOT, "../llvm-backend")),
                     help="checkout of runtimeverification/llvm-backend f02284f (env LLVM_SRC, default ../llvm-backend)")
-    ap.add_argument("--work", default=os.path.join(ROOT, "spec-k/_k-test"),
-                    help="directory for kompiled definitions and results (default spec-k/_k-test)")
+    ap.add_argument("--work", default=os.path.join(ROOT, "spec-k/tests/_work"),
+                    help="directory for kompiled definitions and results (default spec-k/tests/_work)")
     ap.add_argument("--only", action="append", default=[],
                     help="run only this program (file name; repeatable); results go only to the screen")
     ap.add_argument("--timeout", type=float, default=None, help="seconds per run of the spec (default 7200)")
