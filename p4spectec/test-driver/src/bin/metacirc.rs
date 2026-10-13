@@ -8,7 +8,7 @@ use p4spectec_test::metacirc::{self, Result};
 
 /// Selects AL representation acceptance checks.
 #[derive(Parser)]
-#[command(name = "p4spectec-test-metacirc")]
+#[command(name = "metacirc-test")]
 struct Cli {
     /// Check parsing and codecs without evaluating a specification
     #[arg(long)]

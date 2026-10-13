@@ -112,8 +112,8 @@ test-diagnostics-promote: diagnostic-cli
 .PHONY: test-metacirc test-metacirc-parse
 
 test-metacirc:
-	$(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin p4spectec-test-metacirc --
+	$(CARGO) run --locked --release --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test --
 
 # AL interface parsing without interpreter execution
 test-metacirc-parse:
-	$(CARGO) run --locked --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin p4spectec-test-metacirc -- --parse-only
+	$(CARGO) run --locked --manifest-path test-driver/Cargo.toml --target-dir "$(TARGET_DIR)" --bin metacirc-test -- --parse-only
