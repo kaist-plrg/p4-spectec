@@ -79,6 +79,7 @@ def run_difftest(name, t, args, jobs=None):
     cmd += ["--krun-cache", os.path.join(work, "krun-cache"), "--k-version", k_version()]
     cmd += ["--input-dir", t["inputs"]] if "inputs" in t else []
     cmd += sum((["--exclude", e] for e in t.get("exclude", [])), [])
+    cmd += sum((["--known", e] for e in t.get("known", [])), [])
     cmd += sum((["--check-steps-for", e] for e in t.get("check_steps", [])), [])
     if args.cover:
         cmd += ["--cover-dir", os.path.join(work, "coverage", name)]

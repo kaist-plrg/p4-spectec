@@ -280,6 +280,13 @@ def test_program(prog, root, definition, args):
         verdict = judge(spec, k_steps, fails_at, True, limit)
         verdict = verdict.replace("pass (each step is one K allows)",
                                   "pass by steps (%s; each step is one K allows)" % differs)
+    # a known failure: where the spec follows K's documentation and krun does
+    # not; such a program must still fail
+    if any(fnmatch.fnmatchcase(name, k) for k in args.known):
+        if verdict.startswith("FAIL: "):
+            verdict = "known failure: " + verdict[len("FAIL: "):]
+        elif verdict.startswith("pass"):
+            verdict = "FAIL: passes, but is a known failure"
     steps = "-" if spec.steps is None else spec.steps
     return "| %s | %s | %s | %s | %.1f | %.1f |" % (name, k_steps, steps, verdict, k_secs, spec.secs), verdict
 
@@ -297,6 +304,9 @@ def main():
                     help="read <name>.in from this directory instead of beside the program")
     ap.add_argument("--exclude", action="append", default=[],
                     help="skip programs whose file name matches this (a glob pattern)")
+    ap.add_argument("--known", action="append", default=[],
+                    help="a known failure (a glob pattern): reported as such when it fails, and as a "
+                         "failure when it passes")
     ap.add_argument("--memory-max", default="2500M" if shutil.which("systemd-run") else "",
                     help="memory cap for each run of the spec (systemd-run MemoryMax; empty for none, "
                          "the default without systemd)")
@@ -351,8 +361,10 @@ def main():
             verdicts.append(verdict)
     passed = sum(1 for v in verdicts if v.startswith("pass"))
     skipped = sum(1 for v in verdicts if v.startswith("skip"))
-    failures = len(verdicts) - passed - skipped
-    print("\n%d passed, %d failed, %d skipped (work files: %s)" % (passed, failures, skipped, root))
+    known = sum(1 for v in verdicts if v.startswith("known failure"))
+    failures = len(verdicts) - passed - skipped - known
+    print("\n%d passed, %d failed, %s%d skipped (work files: %s)"
+          % (passed, failures, "%d known failures, " % known if known else "", skipped, root))
     sys.exit(1 if failures else 0)
 
 
