@@ -20,7 +20,9 @@ use crate::{
 #[derive(Debug, thiserror::Error)]
 #[error("{kind}")]
 pub struct Error {
+    /// The nearest available source location.
     pub span: Span,
+    /// The underlying conversion failure.
     #[source]
     pub kind: ErrorKind,
 }

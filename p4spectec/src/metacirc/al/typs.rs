@@ -18,7 +18,7 @@ pub(super) fn named(name: &str) -> Rc<TypKind> {
 }
 
 /// Constructs an iteration over a named meta type.
-pub(super) fn iter(name: &str, iter: Iter) -> Rc<TypKind> {
+pub(super) fn iter(name: &str, iter_kind: Iter) -> Rc<TypKind> {
     let typ = phrase!(node: (*named(name)).clone(), span: Span::default());
-    Rc::new(make::iter(typ, iter).node)
+    Rc::new(make::iter(typ, iter_kind).node)
 }

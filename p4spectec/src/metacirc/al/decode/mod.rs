@@ -1,7 +1,8 @@
 //! Decodes AL meta data with constructor and payload checks
 //!
-//! Source syntax only borrows the arena. Runtime-value decoding allocates in
-//! that same arena and copies child handles before recursive allocation.
+//! `spec`, `exp`, and `typ` reconstruct source syntax while borrowing the arena
+//! `value` allocates runtime payloads in that arena,
+//! copying child handles before recursive allocation
 
 mod def;
 mod exp;
@@ -43,11 +44,11 @@ pub fn id(arena: &Arena, value_meta: Value) -> Result<Id, Error> {
 pub(super) fn list<T>(
     arena: &Arena,
     value_meta: Value,
-    decode: impl Fn(&Arena, Value) -> Result<T, Error>,
+    func_decode: impl Fn(&Arena, Value) -> Result<T, Error>,
 ) -> Result<Vec<T>, Error> {
     get::list(arena, &value_meta)?
         .iter()
-        .map(|value| decode(arena, *value))
+        .map(|value_elem| func_decode(arena, *value_elem))
         .collect()
 }
 
@@ -78,26 +79,32 @@ pub(super) fn atom(arena: &Arena, value_meta: Value) -> Result<ast::Atom, Error>
         "`]" => Atom::RBrack,
         "`{" => Atom::LBrace,
         "`}" => Atom::RBrace,
-        _ => match parse_mixop(text).map_err(|report| Error::from(report).at(span))? {
-            Mixop::Atom(atom) => atom.node,
-            _ => return Err(Error::unexpected(arena, value_meta, "one notation atom")),
-        },
+        _ => decode_atom(arena, value_meta, text, span)?,
     };
     Ok(phrase!(node: atom_kind, span: span))
 }
 
+fn decode_atom(arena: &Arena, value_meta: Value, text: &str, span: Span) -> Result<Atom, Error> {
+    match parse_mixop(text).map_err(|report| Error::from(report).at(span))? {
+        Mixop::Atom(atom_parsed) => Ok(atom_parsed.node),
+        _ => Err(Error::unexpected(arena, value_meta, "one notation atom")),
+    }
+}
+
 /// Reconstructs notation from atoms between argument positions.
 pub(super) fn mixop(arena: &Arena, value_meta: Value) -> Result<Rc<Mixop>, Error> {
-    let rows = list(arena, value_meta, |arena, value| list(arena, value, atom))?;
+    let atoms_rows = list(arena, value_meta, |arena, value_row| list(arena, value_row, atom))?;
     let span = *arena.value.span(value_meta.span);
     // A matrix with n holes has n + 1 rows, including empty boundary rows
-    if rows.is_empty() {
+    if atoms_rows.is_empty() {
         return Err(Error::unexpected(arena, value_meta, "a nonempty atom matrix"));
     }
-    if rows.len() == 1 && rows[0].is_empty() {
+    // Preserve empty notation as the single empty boundary row
+    if atoms_rows.len() == 1 && atoms_rows[0].is_empty() {
         return Ok(Rc::new(Mixop::Seq(vec![])));
     }
-    let text = rows
+    // Insert one parser argument between each pair of boundary rows
+    let text = atoms_rows
         .iter()
         .map(|atoms| {
             atoms
@@ -108,48 +115,60 @@ pub(super) fn mixop(arena: &Arena, value_meta: Value) -> Result<Rc<Mixop>, Error
         })
         .collect::<Vec<_>>()
         .join(" nat ");
-    let mixop = parse_mixop(&text).map_err(|report| Error::from(report).at(span))?;
+    let mixop_parsed = parse_mixop(&text).map_err(|report| Error::from(report).at(span))?;
     // Atom text must not inject additional argument positions
-    if mixop.arity() + 1 != rows.len() {
+    if mixop_parsed.arity() + 1 != atoms_rows.len() {
         return Err(Error::unexpected(
             arena,
             value_meta,
             "an atom matrix with one row per argument boundary",
         ));
     }
-    Ok(Rc::new(mixop))
+    Ok(Rc::new(mixop_parsed))
 }
 
 /// Decodes an iterator with its nullary constructor checked.
 pub(super) fn iter(arena: &Arena, value_meta: Value) -> Result<Iter, Error> {
-    let (mixop, values, _) = case(arena, value_meta)?;
-    match values.as_slice() {
-        [] if m::is(&mixop, m::QUEST) => Ok(Iter::Opt),
-        [] if m::is(&mixop, m::STAR) => Ok(Iter::List),
+    let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+    match values_meta.as_slice() {
+        [] if m::is(&mixop_meta, m::QUEST) => Ok(Iter::Opt),
+        [] if m::is(&mixop_meta, m::STAR) => Ok(Iter::List),
         _ => Err(Error::unexpected(arena, value_meta, "QUEST or STAR")),
     }
 }
 
 /// Decodes a variable's underlying type and dimensions.
 pub fn var(arena: &Arena, value_meta: Value) -> Result<ast::Var, Error> {
-    let (mixop, values, _) = case(arena, value_meta)?;
-    match values.as_slice() {
-        [value_id, value_typ, value_iters] if m::is(&mixop, m::VARI) => Ok(ast::Var {
-            id: id(arena, *value_id)?,
-            typ: typ(arena, *value_typ)?,
-            iters: list(arena, *value_iters, iter)?,
-        }),
+    let (mixop_meta, values_meta, _) = case(arena, value_meta)?;
+    match values_meta.as_slice() {
+        [value_id, value_typ, value_iters] if m::is(&mixop_meta, m::VARI) => {
+            decode_var(arena, *value_id, *value_typ, *value_iters)
+        }
         _ => Err(Error::unexpected(arena, value_meta, "id typ iter*")),
     }
+}
+
+/// Reconstructs a variable's type and iteration dimensions.
+fn decode_var(
+    arena: &Arena,
+    value_id: Value,
+    value_typ: Value,
+    value_iters: Value,
+) -> Result<ast::Var, Error> {
+    Ok(ast::Var {
+        id: id(arena, value_id)?,
+        typ: typ(arena, value_typ)?,
+        iters: list(arena, value_iters, iter)?,
+    })
 }
 
 /// Maps a checked optional meta value.
 pub(super) fn opt<T>(
     arena: &Arena,
     value_meta: Value,
-    decode: impl FnOnce(&Arena, Value) -> Result<T, Error>,
+    func_decode: impl FnOnce(&Arena, Value) -> Result<T, Error>,
 ) -> Result<Option<T>, Error> {
     get::opt(arena, &value_meta)?
-        .map(|value| decode(arena, value))
+        .map(|value_inner| func_decode(arena, value_inner))
         .transpose()
 }
