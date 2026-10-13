@@ -44,16 +44,6 @@ pub trait Encode {
 
 // == Helpers
 
-/// Separates notation atoms at each argument position.
-fn atoms_matrix(mixop_al: &Mixop) -> Vec<Vec<&il::Atom>> {
-    let mut atoms_matrix_al = vec![vec![]];
-    mixop_al.visit(|item| match item {
-        Item::Arg(_) => atoms_matrix_al.push(vec![]),
-        Item::Atom(atom_al) => atoms_matrix_al.last_mut().unwrap().push(atom_al),
-    });
-    atoms_matrix_al
-}
-
 /// Constructs a typed meta case after its children have been encoded.
 fn case(
     arena: &mut Arena,
@@ -155,6 +145,16 @@ impl Encode for il::Atom {
 }
 
 // - Mixops
+
+/// Separates notation atoms at each argument position.
+fn atoms_matrix(mixop_al: &Mixop) -> Vec<Vec<&il::Atom>> {
+    let mut atoms_matrix_al = vec![vec![]];
+    mixop_al.visit(|item| match item {
+        Item::Arg(_) => atoms_matrix_al.push(vec![]),
+        Item::Atom(atom_al) => atoms_matrix_al.last_mut().unwrap().push(atom_al),
+    });
+    atoms_matrix_al
+}
 
 /// Encodes atoms between argument positions as a nonempty matrix.
 impl Encode for Mixop {
